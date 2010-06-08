@@ -1,0 +1,14 @@
+syntax: glob
+*.dvi
+*.aux
+*.cp
+*.cps
+*.fn
+hla.fns
+hla.ky
+hla.log
+hla.pg
+hla.toc
+hla.tp
+hla.tps
+hla.vr

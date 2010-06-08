@@ -1,0 +1,1369 @@
+\input texinfo @c -*-texinfo-*-
+@setfilename hla.info
+@settitle High Level Applications
+@finalout
+@c %**end of header
+
+@dircategory Scientific software
+@direntry
+* hla: (hla).               High Level Applications
+@end direntry
+
+@tex
+% Mathematical macros taken from the GNU Calc Manual
+% ==================================================
+%
+% Some special kludges to make TeX formatting prettier.
+% Because makeinfo.c exists, we can't just define new commands.
+% So instead, we take over little-used existing commands.
+%
+% Redefine @cite{text} to act like $text$ in regular TeX.
+% Info will typeset this same as @samp{text}.
+\gdef\goodtex{\tex \let\rm\goodrm \let\t\ttfont \turnoffactive}
+\gdef\goodrm{\fam0\tenrm}
+\gdef\math{\goodtex$\mathxxx}
+\gdef\mathxxx#1{#1$\endgroup}
+\global\let\oldxrefX=\xrefX
+\gdef\xrefX[#1]{\begingroup\let\math=\dfn\oldxrefX[#1]\endgroup}
+%
+% Redefine @i{text} to be equivalent to @cite{text}, i.e., to use math mode.
+% This looks the same in TeX but omits the surrounding ` ' in Info.
+%\global\let\i=\cite
+%\global\let\math=\cite
+%
+% Redefine @c{tex-stuff} \n @whatever{info-stuff}.
+\gdef\c{\futurelet\next\mycxxx}
+\gdef\mycxxx{%
+  \ifx\next\bgroup \goodtex\let\next\mycxxy
+  \else\ifx\next\mindex \let\next\relax
+  \else\ifx\next\kindex \let\next\relax
+  \else\ifx\next\starindex \let\next\relax \else \let\next\comment
+  \fi\fi\fi\fi \next
+}
+\gdef\mycxxy#1#2{#1\endgroup\mycxxz}
+\gdef\mycxxz#1{}
+%
+% Define \Hat to take over from \hat as an accent
+\gdef\Hat{\mathaccent "705E}
+%
+%\gdef\beforedisplay{\vskip-10pt}
+%\gdef\afterdisplay{\vskip-5pt}
+\gdef\beforedisplay{}
+\gdef\afterdisplay{}
+{\globaldefs = 1
+\abovedisplayskip=7pt plus 2pt minus 1pt
+\belowdisplayskip=7pt plus 2pt minus 1pt
+\abovedisplayshortskip=7pt plus 2pt minus 1pt
+\belowdisplayshortskip=7pt plus 2pt minus 1pt}
+%\abovedisplayskip=12pt plus 3pt minus 3pt
+%\belowdisplayskip=12pt plus 3pt minus 3pt
+%\abovedisplayshortskip=7pt plus 1pt minus 1pt
+%\belowdisplayshortskip=7pt plus 1pt minus 1pt
+%\gdef\beforedisplayh{\vskip-25pt}
+%\gdef\afterdisplayh{\vskip-10pt}
+%
+\gdef\arcsec{\hbox{\rm arcsec}}
+\gdef\arccsc{\hbox{\rm arccsc}}
+\gdef\arccot{\hbox{\rm arccot}}
+\gdef\sech{\hbox{\rm sech}}
+\gdef\csch{\hbox{\rm csch}}
+\gdef\coth{\hbox{\rm coth}}
+\gdef\arcsinh{\hbox{\rm arcsinh}}
+\gdef\arccosh{\hbox{\rm arccosh}}
+\gdef\arctanh{\hbox{\rm arctanh}}
+\gdef\arcsech{\hbox{\rm arcsech}}
+\gdef\arccsch{\hbox{\rm arccsch}}
+\gdef\arccoth{\hbox{\rm arccoth}}
+%
+\gdef\Re{\hbox{\rm Re}}
+\gdef\Im{\hbox{\rm Im}}
+\gdef\Sin{\hbox{\rm Sin}}
+\gdef\Cos{\hbox{\rm Cos}}
+\gdef\Log{\hbox{\rm Log}}
+%
+\gdef\erf{\hbox{\rm erf}}
+\gdef\erfc{\hbox{\rm erfc}}
+\gdef\sinc{\hbox{\rm sinc}}
+\gdef\sgn{\hbox{\rm sgn}}
+\gdef\sign{\hbox{\rm sign}}
+\gdef\det{\hbox{\rm det}}
+\gdef\Var{\hbox{\rm Var}}
+\gdef\arg{\hbox{\rm arg}} % avoid temporary clobbering of arg in texinfo-4.8
+@end tex
+
+@copying
+Copyright @copyright{} 2010 The NSLS-II Project.
+
+@c Permission is granted to copy, distribute and/or modify this document
+@c under the terms of the GNU Free Documentation License, Version 1.3 or
+@c any later version published by the Free Software Foundation; with the
+@c Invariant Sections being ``GNU General Public License'' and ``Free Software
+@c Needs Free Documentation'', the Front-Cover text being ``A GNU Manual'',
+@c and with the Back-Cover Text being (a) (see below).  A copy of the
+@c license is included in the section entitled ``GNU Free Documentation
+@c License''.
+
+@c (a) The Back-Cover Text is: ``You have the freedom to copy and modify this
+@c GNU Manual.''
+@end copying
+
+@titlepage
+@title High Level Applications
+@subtitle Tools for Accelerator Commissioning and Physics
+
+This extension package is meant to be a set of applications and client APIs for for accelerator physics and commitioning. 
+
+@vskip 5ex
+@itemize @bullet
+@item 12/01/2011--02/29/2012, LINAC front end commissioning
+@item 03/30/2012--07/28/2012, LINAC
+@item 05/29/2012--06/28/2012, LBTL
+@item 07/28/2012--08/27/2012, LBTL
+@item 08/27/2012--12/25/2012, Booster
+@item 12/15/2012--01/14/2013, BSTL in Booster
+@item 01/14/2013--01/24/2013, BSTL
+@item 01/24/2013--09/21/2013, Storage Ring Commissioning Part 1
+@item 09/21/2013--11/20/2013, ID installation
+@item 11/20/2013--02/18/2014, Storage Ring Commissioning Part 2
+@end itemize
+
+@vskip 5ex
+DRAFT-[@today{}]
+@author Jinhyuk Choi, Guobao Shen, Lingyun Yang
+@email{lyyang@@bnl.gov}
+@comment @email{tuomo.keskitalo@iki.fi}
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+
+
+
+
+@node Introduction
+@chapter Introduction
+
+@node Requirement
+@chapter Requirement
+
+@c @cindex differential equations, initial value problems
+@c @cindex initial value problems, differential equations
+@c @cindex ordinary differential equations, initial value problem
+@c @cindex ODEs, initial value problems
+
+This chapter describes software requirement for HLA (High Level
+Applications). This list is mainly from @cite{Assumptions on NSLS-II
+Accelerator Commissioning} and @cite{NSLS-II Storage Ring
+Commissioning}, plus some personal experience.
+
+
+@menu
+* General Operation::
+* Operations Software::
+* Major Subsystem::
+* Beam Diagnostics::
+* Safty Systems::
+* Utility Control::
+* Accelerator Physics Applications Toolkit::
+@end menu
+
+@node General Operation
+@section General Operation
+
+@itemize @bullet
+@item Overall status page
+@item Status, Alarm and warning monitor
+@item Permit system monitor and control
+@item Data logger and data display
+@item Electronic logbook
+@end itemize
+ 
+@node Operations Software
+@section Operations Software
+
+@itemize @bullet
+@item Accelerator parameter store/restore (*)
+      @enumerate
+      @item With file-manager, editing capability
+      @item smoothly ramp from one stage to another.
+      @item (compare two stages)
+      @end enumerate
+@item Injection Control
+@item Power supply control
+@item RF control
+@item Fast orbit feedback control
+@item Front-end monitoring and control
+@item Machine protection system display and control
+@item Magnet temperature interlock display and control
+@item Scraper and movable mask operations (*)
+@end itemize
+
+
+@node Major Subsystem Control
+@section Major Subsystem Control
+
+@itemize @bullet
+@item Power supply page which lists for all PS:
+      @enumerate
+      @item setting or waveform, read back
+      @item difference between DCCTs, status
+      @item recent history.
+      @end enumerate
+@item RF page with all relevant settings, read back, status, parameters
+@item Vacuum display and control
+@item Cryogenics system display and control
+@item Pulsed magnet systems monitor and control
+@end itemize
+
+
+@node Beam Diagnostics
+@section Beam Diagnostics
+
+@itemize @bullet
+@item Beam orbit page with closed orbit, turn by turn, single turn, status information, difference (referecne orbit display)
+@item Beam current history and lifetime display
+@item Bunch intensity display and history display/analysis
+@item Beam emittance display
+@item Injection element display and control page
+@item Timing system display and control
+@item Synchronization system display and control
+@item Tune display and control (*)
+@item Temperature monitoring display
+@end itemize
+
+@node Safety Systems
+@section Safety Systems
+
+@itemize @bullet
+@item Personal protection system status display
+@item Equipment protection status display and control
+@item Beam containment status display and control
+@item Top-off status monitor
+@end itemize
+
+@node Utility Control
+@section Utility Control
+
+@itemize @bullet
+@item Tunnel air temperature and humidity monitor
+@item Mechanical utilities status and controls
+@item Electrical utilities status and controls
+@item Equipment enclosure monitor
+@item Water colling system display
+@item Controls network monitor
+@end itemize
+
+@node Accelerator Physics Applications Toolkit (*)
+@section Accelerator Physics Applications Toolkit (*)
+
+@itemize @bullet
+@item Static orbit corrections
+@item First turn steering
+@item Chromatic correction
+@item Response matrix measurements
+@item Phase advance measurements
+@item Beam based alignment of quadrupoles
+@item BPM test programs
+@item Beam optics measurement
+@item Beam based alignment of sextupoles.
+@item Analysis on nonlinear dynamics.
+@item Dispersion measurement and correction
+@item Closed orbit bump page
+@item Magnetic field measurement and modeling, determine calibration
+@item Develop lattice model using measured fields, linear/nonlinear optics.
+@item Wakefield modeling and tracking studies, develop model for impedance and wakefields, caculation and measurement, estimate instability thresholds, simulate bunch-by-bunch feedback with realistic bunches and wakefields.
+@item Verify named devices in control system, control proper hardware
+@item Check polarity of all magnets.
+@item Complete survey of magnetic elements
+@item Test diagnostic equipment without beam
+@item BTS transport line, obtain good transmission through septum and good transverse phase space match, set timing of pulsed magnets.
+@item Obtain first turn in storage ring using single kicker
+  @itemize @minus
+  @item Center beam in single downstream single kicker
+  @item Adjust kicker strength to place beam on design orbit.
+  @item Use single turn BPMs to steer beam trajectory around ring and estimate linear optics and tune.
+  @item Use flag to obtain beam size information at injection point and after one turn.
+  @end itemize
+@item Look for magnet errors that may have been missed in testing.
+@item Measure and improve orbit and tune, with hundreds of turns beam.
+@item Obtain circulating beam using four kicker magnets to make local injection bump.
+@item Commission loss control minitoring system
+@item Use visible synchrotron light monitor to study transverse beam profile and disturbance due to kickers.
+@item Reduce beta beat
+@item Study lifetime and vacuum pressure vs. amp-hours.
+@item Correct coupling using skew quadrupoles
+@item Measure dependence of lifetime on vertical beam size using pinhold camera, estimate Touschek lifetime.
+@item Measure dependence of lifetime on position of beam scrapers to get information on physical and dynamic aperture.
+@item Refine LOCO characterization of linear optics.
+@item Beam based alignment of BPMs/Quadrupoles.
+@item Test fast orbit feedback system.
+@item Determine nonlinear dispersion and chromaticity
+@item Use Pinger to measure tune shift with amplitude, dynamic aperture and characterize sextupole distribution
+@item Commission transverse bunch-by-bunch feedback
+@item Measure variation of coherent tune with current
+@item Characterize ring impedance using beam.
+@item Study increasing chromaticity from +2/+2 to +5/+5
+@item Commission undulator gap control in control room
+@item Establish and save reference orbit (low current 5mA)
+@item Calibration/Testing of Equipment Protection Interlock System
+  @itemize @minus
+  @item Center photon beam in exit slot
+  @item Verify gap open/close status is properly reported to interlock system
+  @item Measure interlock BPM offset and scale factors.
+  @item Adjust the hardware trip points on the local logic chassis
+  @item Verify beam is dumped at the specified position offsets.
+  @item Set the values in the interlock test file
+  @item Set the values in the micro
+  @item Verify the proper operation of the interlock test
+  @end itemize
+@item ID
+      @itemize @minus
+      @item When necessary compensate the linear optics for ID
+      @item Observe orbit and tune shift vs gap
+      @item Measure lifetime vs gap
+      @item Observe beam stability vs current
+      @item Measure change in impedance due to ID chamber
+      @item Prepare look-up tables for feed forward orbit correction coils.
+      @item Measure effect on tune shift with amplitude, chromaticity, and emittance coupling.
+      @item Measure impedance vs gap for IVUs
+      @item Commission undulator gap control for users
+      @item Measure flux and brightness
+      @end itemize
+@item Top-off Injection
+      @itemize @minus 
+      @item Check position of apertures in ring and beamline
+      @item Test interlocks
+      @item Characterize injection transient on transverse orbit, contribution from septum and kickers.
+      @item Test transverse feedback with injection transient
+      @end itemize
+@item Concerns: accuracy of magnet calibration-two types of dipoles, magnetic field quality (IRMIS data).
+@end itemize
+
+@node User Preferences
+@chapter User Preferences
+
+@enumerate 
+@item Interactive control
+@item Fast script prototyping
+@item Full set of mathematical functions. e.g. FFT, polynomial fitting, statistics, histogram.
+@item Visualization
+@item GUI ability
+@item Online modification: in control room within a shift, want to change code temporary to fullfil a job on time.
+@end enumerate 
+
+
+@node High Level Software Available for Commissioning
+@section High Level Software Available for Commissioning
+
+@itemize 
+@item The software will provide overall status of the ring, and give warnings when the readback differs from setting point larger than its threshhold. The status includes:
+      @itemize @minus
+    @item Closed orbit, orbit feedback status, orbit stability (drift and variation). 
+    @item Single shot beam position, turn by turn BPM reading and orbit analysis.
+    @item Magnets (Quadrupole, sextupole, orbit correctors) settings and readback. Gives warnings when they differs more than threshold, or the settings larger than limit.
+    @item Vacuum status.
+    @item Logging all necessary machine settings data, and retrive the historical data for analysis.
+    @end itemize
+@item The accelerator physics group will use High level software to achieve the following tasks:
+      @itemize @minus 
+    @item BPM testing, stability, polarity, current dependency, resolution.
+    @item orbit corrector test, polarity, strength
+    @item First turn beam steering. Turn by turn BPM data visulization and analysis
+    @item Measure the orbit response matrix, with flexible number of BPMs and correctors.
+    @item Static orbit correction with flexible list of correctors.
+    @item Measure and adjust tune. (tune scan ?)
+    @item Measure and correct the chromaticity. 
+    @item Measure beam optics including phase advance, beta functions, dispersion.
+    @item Closed orbit bump.
+    @item Beam based alignment.
+    @item Set/Read any main magnet.
+    @item Ramping from one magnet setting to another.
+    @item Monitoring stability of any readings and online data: magnet readback, orbit, temperature, vacuum.
+    @item Linear optics fitting and optimization with LOCO.
+    @item Analyze chamber movement.
+    @end itemize
+@end itemize
+
+@node Client APIs
+@chapter Client APIs
+
+This section describes the high level API which is used in the HLAs and
+the interactive environment.
+
+The client APIs are a set of high level functions with physics
+meanings. It hides the low level function calls from its users, who are
+mainly accelerator physicists, operators and high level GUI application
+developers. We assume that the user of CAPI has no knowledge of EPICS
+channel access, she only knows magnets name, location, family, ....
+
+The internals of CAPI needs a configure file which links abstract magnet
+name, their location or any abstract symbol representing them to real
+EPICS channels.
+
+Roughly speaking, CAPI is a subset of Matlab Middle Layer, while High
+Level Applications/Scripts (HLA) are not
+
+I recommend that the name of the API has no short-naming, e.g. not
+@code{meas} but @code{measure}, except for well known terminologies
+which have been used in accelerator physics or control systems everyday,
+like BPM, RM, Setpoint, treat them as one word: @strong{Bpm} (beam
+position monitor), @strong{Rm} (response matrix), @strong{Sp}
+(setpoint), @strong{Rb} (readback), (many environment,
+i.e. @code{iPython}, has auto complete function)
+
+The GUI part will not be included here.
+
+Here is a demo of how a short script looks like:
+
+@example
+#!/usr/bin/env python
+import nsls2capi as sr
+import numpy as np
+import time
+# returns all element name belongs to family ``CELL30''
+c30elems = sr.getMembers(family=''CELL30'')
+# get orbit at cell 30, neglect non-bpm elements in ``CELL30'' family
+orbit1 = sr.getOrbit(family=''CELL30'')
+orbit_variation = np.sum(orbit1*orbit1)
+time.sleep(2)
+# exactly same as before, get all BPMs in cell 30
+bpms2 = sr.getMembers(family=''P*C30*'')
+orbit2 = sr.getOrbit(family=``P*C30*'')
+orbit_variation = np.sum(orbit2*orbit2)
+orbit_diff = np.zeros(len(orbit2), 'd')
+for i,bpm in enumerate(bpms2):
+    orbit_diff[i] = orbit2[i] - orbit1[bpms1.index(bpm)]
+@end example
+
+These APIs are available in interactive environment in a slight different
+form due to different language binding, e.g. getOrbit in interactive
+environment may looks like ::
+
+@example
+#!/usr/bin/env python
+import matplotlib.pylab as plt
+import nsls2capi as sr
+# get orbit at PH1G2C30A, PM1G4C30A (index starts at 0)
+orbit = sr.getOrbit(sequence=[[0,0], [0,2]])
+plt.plot(bpmlocation, orbit[:,0], '-o', label=''H'')
+plt.plot(bpmlocation, orbit[:,1], '-x', label=''V'')
+@end example
+
+while in a C/C++ bindings (typically in a matured HLA, who evolved from a
+script to a standalone stable application) ::
+
+@example
+#include ``hla.h''
+int main(int argc, char* argv[])
+@{
+    getOrbit(x, y, bpmlist);
+    getOrbit(x, y, "PM[1-2]*C20*");
+@}
+@end example
+
+@cindex family
+
+Each magnet can belong to one or more families, the family name can be
+used to indicate its symmetry, purpose, position or people's
+preferences. e.g. QH1G2A can have family names ``QH1'', ``QH''. 
+The element belongs to the family which has only himself. 
+
+Candidates of family name:
+@itemize
+@item Magnet with same power supply or lattice symmetry. 
+@item BPM, Corrector, Quadrupole, Sextupole, SkewQuadrupole
+@item BBA, Orbit, Tune, Chromaticity
+@item ``Sam's test BPM'', ``Weiming's Toy'', ...
+@end itemize
+
+The family name matching should support a subset of regular expression
+(need more details on ``subset'', how small/large is this set). If we
+are using BASH wildcards:
+@itemize
+@item @strong{*}, zero or more characters
+@item @strong{?}, exactly one character
+@item @strong{[abcde]}, exactly one character listed
+@item @strong{[a-e]}, exactly one character in the given range
+@item @strong{[!abcde]}, any character that is not listed
+@item @strong{[!a-e]}, any character that is not in the given range
+@item @strong{@{debian,linux@}}, exactly one entire word in the options given
+@end itemize
+
+@cindex sequence
+
+We suggest the sequence number of BPMs to be a pair (1,2), one for cell
+number, one for its index. Since we are using Python/C/C++, the index
+starts from 0.
+
+A short summary of API prefix. It serves as guideline but may have exceptions.
+@itemize
+@item @strong{measure} may perturb the beam, and may affect users.
+@item @strong{get} is either read history or the output of online instrument.
+@item @strong{set} will change the settings of an online instrument. The value will be gone after next injection(non-topoff)
+@item @strong{save} operates on file, read machine to file/DB. (set operates on real machine, on a smaller scale, single element/family). The new value will take effect in next injection/run. 
+@item @strong{load} operates on files/DB and set to memory/machine.
+@item @strong{calculate/analyze} is simple/complex algorithm routine.
+@item @strong{enable/disable} makes element online/offline
+@c @item @strong{download/upload} works with remote central managed info, like golden orbit, response matrix. 
+@end itemize
+
+Whenever the value is an array, sort it in increasing order of @math{s} location.
+
+
+@node Data Management
+@section Data Management
+
+There are many global configurations and data are needed to be
+organized, and also centralized. Update one should be visiable to other
+applications if those applications are in same framework as HLA.
+
+The data required for machine operation needs to be in centralized
+space, while user data/plots can be on a file system.
+
+@enumerate
+@item Current operation mode. One mode is like one brand new storage ring. The data includes
+      @enumerate
+      @item @emph{mode name}, ``simulator'', ``operation'', ``AP1'', ``low alpha''
+      @item @emph{create date},
+      @item @emph{modified date},
+      @item @emph{description},
+      @item @emph{creator}. 
+      @end enumerate 
+      
+We can use these APIs: @code{getMode}, @code{getModeInfo}, @code{getOperationModes}.
+@item Lattice and organization:
+      @enumerate
+      @item @emph{magnet/element full name}, unique
+      @item @emph{magnet/element s-location}, unique number
+      @item @emph{element families}, multiple string, can be added by users. For export to elegant, need a family name for its type like ``Quadrupole'', ``Sextupole'', ``RF''
+      @item @emph{step size}, sigle number
+      @item @emph{setting/reading channels}, readback/setpoint, may have more channels associated with one magnet/element
+      @item @emph{setting/reading channel limits}, lower and upper bound
+      @item @emph{channel set/read unit}, unit for each channel
+      @item @emph{channel label}, when plotting, default label
+      @item @emph{unit convertion table}, a table convert engineer(current, voltage) number to physics (mm, rad) number
+      @item @emph{online(enabled)/offline(disabled) status}
+      @item @emph{cell number, girder number}
+      @item @emph{bpm sequence number}
+      @end enumerate
+The configure file may look like the following ::
+
+@example
+  <?xml version="1.0" encoding="UTF-8">
+  <lattice>
+      <ring name="NSLS-II">
+          <cell name="1">
+              <girder name="2">
+                  <element>
+                      <name link="Ha">CH1YSP01</name>
+                      <family>Corrector</family>
+                      <family>VCorrector</family>
+                      <family>BeamBasedAlignment</family>
+                      <setpoint>
+                          <nominal>0.0</nominal>
+                          <lowalpha>0.0</lowalpha>
+                      </setpoint>
+                      <pv name="SR:C01-MG:G03A.SP">HKICK</pv>
+                      <location>3.5</location>
+                   </element>
+                   <element> ... </element>
+               </girder>
+               <girder> ... </girder>
+           </cell>
+           <cell> ... </cell>
+       </ring>
+       <ring name="BOOSTER"> ... </ring>
+   </lattice>
+@end example
+
+This is a horizontal orbit corrector @code{CH1YSP01}, it belongs to @code{section 1},
+@code{girder 2}, together with other elements, it is in two families called
+@code{Corrector} and @code{HCorrector}, it is also linked to a power supply @code{Ha},
+to which other horizontal corrector may belongs. The family name
+@code{BeamBasedAlignment} also implies that this corrector will be used for
+beam based alignment.
+
+More information can be added to this configure file. 
+
+     @itemize
+     @item Orbit correction ?
+     @item Tune correction ?
+     @item Chromaticity correction ?
+     @end itemize
+
+This file is needed by HLAs, and easily ported to other storage
+rings. We can provide a local copy of this file or access it from
+network (API or network file system).
+
+Related APIs: @code{getFamilies}, @code{getLocation}, @code{getAllFamilies}, @code{getNeighbors}
+@item Golden orbit, phase advance, beta function, dispersion and chromaticity:
+      @enumerate 
+      @item @emph{golden orbit}, element name and orbit value (timestamp ?)
+      @item @emph{phase/phase advance}, element name, phase value (timestamp ?)
+      @item @emph{beta function}, element name and beta value (timestamp ?)
+      @item @emph{dispersion}, element name and dispersion (timestamp ?)
+      @item @emph{chromaticity}, horizontal and vertical chromaticity (timestamp ?)
+      @end enumerate
+Related APIs: @code{getGoldenOrbit}, @code{setGoldenOrbit}, @code{saveGoldenOrbit}, @code{loadGoldenOrbit}.
+@item Orbit response matrix:
+      @enumerate 
+      @item @emph{orbit response matrix}, 2-d (matrix) data, (timestamp ?)
+      @item @emph{correctors}, a list of element names
+      @item @emph{bpms}, a list of element names
+      @item @emph{tunes}, value
+      @item @emph{chromaticity},
+      @item @emph{RF voltage}, 
+      @item @emph{corrector name/strength pair}
+      @item @emph{closed orbit shift}, for each corrector setting, we have one set of closed orbit
+      @end enumerate
+Related APIs: @code{getOrbitRm}
+@item Tune correction matrix:
+      @enumerate
+      @item @emph{tune RM matrix}
+      @item @emph{quadrupole used}
+      @item @emph{quadrupole values}
+      @item @emph{tune values}
+      @end enumerate
+@item Chromaticity correction matrix:
+      @enumerate
+      @item @emph{chromaticity RM matrix}
+      @item @emph{sextupole used}
+      @item @emph{sextupole values}
+      @item @emph{tune values}
+      @item @emph{fitted polynomial coeffients}, 5 values ?
+      @item @emph{RF voltage}
+      @end enumerate
+@item Unit conversion
+      @enumerate
+      @item Sextupole/Quadrupole K-value vs. current
+      @item Corrector current vs. angle/orbit shift
+      @end enumerate
+These data are associated with each magnet. 
+@item Step size for magnet ramping/scan, (already in lattice ? or define independently)
+@end enumerate
+
+
+@node Data Management API
+@section Data Management API
+
+@table @code
+
+@deftypefun {mode =} getMode () 
+@deftypefunx {modes =} getOperationModes()
+Get current operation mode with @code{getMode}, and all operation modes
+@code{getOperationModes()}. The operation mode is used to group
+different response matrix, tunes, beta and ramping for different storage
+ring settings. One mode can be norminal operation mode, the others can
+be accelerator physics mode, single bunch mode, different working
+point(tunes), low alpha mode, ...
+@end deftypefun
+
+@deftypefun {} addFamily ( @var{family} )
+@deftypefunx {} removeFamily ( @var{family} )
+@deftypefunx {} addFamilyMember ( @var{family}, @var{members} )
+@deftypefunx {} removeFamilyMember ( @var{family}, @var{members} )
+They operate on family/member
+management. @code{addFamily}/@code{removeFamily} adds/removes a family,
+and @code{addFamilyMember}/@code{removeFamilyMember} adds/removes
+members from certain family. These @var{members} support
+wildcards. @code{removeFamily} should clean up the relations of members
+to this family (may call @var{removeFamilyMember}) or @strong{remove a
+nonempty family is forbiden}, like @code{rmdir} in Linux.
+
+All operation modes share same family settings. We can use a new family
+name for various mode. e.g. If some correctors only works in ``physics''
+mode, we can have a family name for them.
+
+@strong{WARNING}: for some family, it would be nice to be readonly, too dangerous to change in script. 
+@end deftypefun
+
+@deftypefun {families =} getFamilies ( @var{element} )
+@deftypefunx {members =} getMembers ( @var{family} )
+@deftypefunx {families =} getAllFamilies ( )
+@code{getFamilies} returns family name list to which a specific element
+belongs.  The element name should be uniqe in lattice. @code{getMembers}
+returns all elements in a family or families. The order of @var{members}
+does matter, must be in increasing order of
+@math{s}. @code{getAllFamilies} returns all families available in the
+system.
+@end deftypefun
+
+@deftypefun {s =} getLocation ( @var{family} )
+Returns location of certain @var{family}, the order matters.
+@end deftypefun
+
+@deftypefun {} getGroundMotion ( )
+@deftypefunx {} getChamberMotion ( )
+(Choi, ???) 
+@end deftypefun
+
+@deftypefun {phase =} getPhase ( @var{mode}, @var{family} )
+@deftypefunx {beta =} getBeta ( @var{mode}, @var{family} )
+@deftypefunx {eta =} getDispersion ( @var{mode}, @var{family} )
+@deftypefunx {} getChromaticity ( @var{mode}, @var{hori}, @var{vert} )
+@deftypefunx {} getTune ( @var{nux}, @var{nuy} )
+@code{getChromaticity} return the horizontal and vertical chromaticity.
+As all @code{get*} functions, this is just a readout, i.e. a stored
+value, not real time measurement. The chromaticity value should be saved
+together with the @var{mode} of current lattice: ``operation'', ``AP mode
+1'', ``AP mode 2''. @code{getTune} is a readout of online tune measurement.
+
+They need to access the DB/file to read the norminal values (same for
+phase, beta, dispersion, tune).
+@end deftypefun
+
+@deftypefun {} savePhase( @var{mode}, @var{phase}, @var{info} )
+@deftypefunx {} saveBeta ( @var{mode}, @var{beta}, @var{info} )
+@deftypefunx {} saveDispersion ( @var{mode}, @var{disp}, @var{info} )
+@deftypefunx {} saveTune ( @var{mode}, @var{tune}, @var{info} )
+@deftypefunx {} saveTuneRm ( @var{mode}, @var{rm}, @var{info} )
+@deftypefunx {} saveChromaticity ( @var{mode}, @var{chrom}, @var{info} )
+@deftypefunx {} saveChromaticityRm ( @var{mode}, @var{rm}, @var{info} )
+Save data to DB, make it permanent across reinject/restart machine. These data may contains some information on timestamp, user name and description.
+@end deftypefun
+
+
+@deftypefun {chm =} getChromaticityRm ( @var{mode} )
+@deftypefunx {chm =} getChromaticityRmInfo ( @var{mode} )
+@deftypefunx {num =} getTuneRm ( @var{mode} )
+@deftypefunx {num =} getTuneRmInfo ( @var{mode} )
+@code{getChromaticityRm} Get the stored response matrix(Jacobian) of
+chromaticity, it is with respect to sextupoles in dispersive
+region. @code{getChromaticityRmInfo} will give full information, such as
+timestamp, tune, ...
+
+They need DB access to the configuration data.  @code{getTune}, get real
+time tune.  @code{getTuneRm} gets stored tune response matrix, with
+respect to two quadrupoles. @code{getTuneRmInfo} will give more details
+about when and how it was measured.
+@end deftypefun
+
+ 
+@deftypefun {elements, distance =} getNeighbors ( @var{element}, @var{neighbor}, @var{n} )
+This return a list of @math{n} elements belongs to family
+@var{neighbor}. The list is sorted according to the distance to this
+element.
+
+@code{getNearbyBpm} are built upon this routine, and it returns nearby
+BPMs for magnets
+@end deftypefun
+
+@deftypefun {stepsize =} getStepsize ( @var{element} )
+This returns the stepsize for scanning an element, this information is stored in lattice DB.
+@end deftypefun
+
+@deftypefun {} setCurrentDependency ( )
+@deftypefunx {} calibrate ( ) 
+@deftypefunx {} getVibrationFrequency ( )
+@deftypefunx {} getVibrationSource ( )
+@deftypefunx {} Bpm2PbpmReading ( )
+(Choi, ???)
+@end deftypefun
+
+@deftypefun {} convertUnit ( )
+Converts between physics and engineering units. (@strong{Needs more information})
+@end deftypefun
+@end table
+
+
+@node Orbit Control and Analysis
+@section Orbit Control and Analysis
+
+This chapter focus on orbit related functions. 
+
+@enumerate
+@item Obtain static orbit: @code{getOrbit}, @code{getOrbitX}, @code{getOrbitY}, @code{getOrbitDrift}, 
+@item Get turn-by-turn orbit: @code{getTbtOrbit}
+@item Orbit correct: @code{correctOrbit}
+@end enumerate
+
+@node Orbit Control and Analysis API
+@section Orbit Control and Analysis API
+
+@table @code
+@deftypefun {orbit =} getOrbit ( @var{sequence}, @var{family}, @var{synchronized=False})
+@deftypefunx {orbit =} getOrbitX ( @var{sequence}, @var{family}, @var{synchronized=False})
+@deftypefunx {orbit =} getOrbitY ( @var{sequence}, @var{family}, @var{synchronized=False})
+@tpindex getOrbit
+@tpindex getOrbitX
+@tpindex getOrbitY
+This function returns an array of orbit at BPMs specified by input
+@var{sequence} and @var{family}. The @var{sequence} can be an array of
+index (1d ? or 2d ?). @var{family} is a preconfigured string in global
+property, e.g. ``FOFB'' can be used for BPMs in fast orbit feedback
+systems. These orbits are with respect to golden orbit.
+
+Use @code{getMembers} to find out locations of the orbit.
+
+@code{getOrbit}, @code{getOrbitX}, Return horizontal and vertical orbit
+at all BPMs(family), @code{getOrbitY} single BPM, or one cell. It hould
+be able to deal with dead BPM automatically (need set up a convention).
+Requirement: 1. getOrbit(), get orbit at all BPMs; 2. getOrbit("*C01"),
+get orbit of BPMs whoes name matches (one "*C01"; 3. getOrbit([[1,1],
+[2,3]]), get orbit at the 1st BPM in cell 1, 3rd BPM in cell 2;
+4. getOrbit(2,3) (? 3rd in cell 2 ?)  4. sychronized to same turn if
+required.  @code{getOrbitSnapshot}, @code{getOrbitSnapshotX},
+@code{getOrbitSnapshotY} shot only, no average. How about synchromized
+to same turn ? in this API or a new one ?)
+@end deftypefun
+
+
+@deftypefun {orbit =} getTbtOrbit ( @var{sequence},  @var{family}, @var{turn})
+@deftypefunx {orbit =} getOrbitSnapshot ( @var{sequence}, @var{family} )
+@deftypefunx {orbit =} getOrbitSnapshotX ( @var{sequence}, @var{family} )
+@deftypefunx {orbit =} getOrbitSnapshotY ( @var{sequence}, @var{family} )
+@code{getTbtOrbit} returns the TBT(turn by turn) orbit from specified
+BPMs, each has @var{turn} turns. @code{getOrbitSnapshot*} returns only
+one shot of the orbit, no average made (need more discussion with diagnostics).
+@end deftypefun
+
+@deftypefun {} setBpmReference ( @var{family}, @var{ref} )
+@code{setBpmReference}, Same as setGoldenOrbit, but only for one
+specific BPM. 
+
+@strong{DANGEROUS}: This setting is only valid for one session, not
+saved for future Golden orbit(next ramp/injection/run)
+                                                                                              
+Requirement: May not be able to implemented for other applications using
+this information: if I set in one application, is it able to be
+reflected in orbit feedback ?  Yes ? no ? or do I really want to ?
+@end deftypefun
+
+@deftypefun {orbit =} getGoldenOrbit ( @var{mode},  @var{sequence=None}, @var{family=None} )
+@deftypefunx {orbit =} loadGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{family=None}, @var{source=''golden_orbit.txt''} )
+@deftypefunx {status =} setGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{name=None} )
+@deftypefunx {status =} saveGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{name=None}, @var{destination=''golden_orbit.txt''} )
+These APIs working on golden orbits, get/load returns the golden orbit
+for specified operation mode, while get just using online golden orbit,
+load uses golden orbit in a file or database which is the norminal
+one. We can temporary change golden orbit of online mode, but keep
+database untouched, and use @code{loadGoldenOrbit} to reset to the
+default one for the current operation mode. Save will take online golden
+orbit to a file or database.
+@end deftypefun
+
+@deftypefun {respm =} getOrbitRm ( @var{mode}, @var{corrector}, @var{bpm} )
+@deftypefunx {respm =} getOrbitRmInfo ( @var{mode} )
+@deftypefunx {respm =} loadOrbitRm ( @var{mode} )
+@deftypefunx {status =} setOrbitRm ( @var{mode}, @var{corrector}, @var{bpm} )
+@deftypefunx {status =} saveOrbitRm ( @var{mode}, @var{info} )
+@code{getOrbitRm} get the orbit response matrix. Requirement: 1. Read
+the configuration DB to get this RM.  @code{saveOrbitRM}
+(@code{setOrbitRm}) save the measured Orbit RM. @strong{NOTE}: the column and row
+are related to the list of correctors and BPMs, they might be changing
+from time to time, we keep track of the correctors and BPMs using @var{info}
+@end deftypefun
+
+
+@deftypefun {bpm =} getLiveBpm ( )
+@deftypefunx {bpm =} getDeadBpm ( )
+@deftypefunx {} disableBpm ( @var{family} )
+@deftypefunx {} enableBpm ( @var{family} )
+@deftypefunx {cor =} getLiveCorrector ( )
+@deftypefunx {cor =} getDeadCorrector ( )
+@deftypefunx {} disableCorrector ( )
+@deftypefunx {} enableCorrector ( @var{family} )
+@deftypefunx {} saveBpmStatus ( @var{family}, @var{status} )
+@deftypefunx {} saveCorrectorStatus ( @var{family}, @var{status} )
+Operates on status of BPMs and correctors. enable/disable will not
+operate on DB, but @code{save*Status} will mark the dead elements and
+take effect across restart.
+@end deftypefun
+
+@end table
+
+@c -----------------------------------------------------------------------------
+
+@node Diagnostics
+@section Diagnostics
+
+@node Diagnostics API
+@section Diagnostics API
+
+@strong{This part need more discussion with diagnostics group}
+
+@table @code
+@deftypefun {freq =} getRfFrequency ( )
+@deftypefunx {h =} getRfHarmonic ( )
+@deftypefunx {v =} getRfVoltage ( )
+@deftypefunx {phi =} getRfPhase ( )
+Retrieve RF information, frequency, harmonic number, voltage, phase ?
+@end deftypefun
+
+
+@deftypefun {min, max =} getPsLimit ( )
+Returns lower and upper limits of one power supply (or channel of a magnet ?)
+@end deftypefun
+
+@deftypefn {Ext} {major, minor, patch =} version ()
+Return version number
+@end deftypefn
+
+@deftypefun {var =} getChannelVariance ( @var{period} )
+@deftypefunx {min,max =} getChannelRange ( @var{channel} )
+@deftypefunx {min,max =} getChannelBoundary ( @var{channel} )
+
+@end deftypefun
+
+
+@deftypefun {current =} getBeamCurrent ( )
+@deftypefunx {lifetime =} getBeamLifetime ( )
+@deftypefunx {sigmax, sigmay =} getBeamSize ( )
+@deftypefunx {} getBeamProfile ( )
+Returns beam current, lifetime, size. The profile can be an image (can we do it in EPICS ?)
+@end deftypefun
+
+@deftypefun {pres =} getPressure ( @var{loc} )
+Vacuum information along the ring (or at specific location ?).
+@end deftypefun
+
+@deftypefun {min, max, avg, var =} measureSetGetAgreement ( @var{channel}, @var{min}, @var{max}, @var{n} )
+Randomly set @math{n} values between @var{min} and @var{max}, check statistics of @math{Rb-Sp}, i.e. the difference of readback and setpoint.
+@end deftypefun
+
+@deftypefun {loss =} getLossAt ( @var{loc} )
+(Choi, ???) beam loss monitor system
+@end deftypefun
+
+@end table
+
+
+@node Direct Channel Access
+@section Direct Channel Access,
+
+In this part, the API talks with real EPICS channels in case we need low
+level access. These API can be used for interactive environment to
+increase the ability of control. They are also useful in general
+plotting/monitoring specified channels when usually the GUI application
+was not designed for.
+
+@table @code
+@deftypefun {val =} getAm ( @var{am} )
+@deftypefunx {val =} getSp ( @var{channel} )
+@deftypefunx {val =} setSp ( @var{channel}, @var{value} )
+@end deftypefun
+
+@deftypefun {} stepSp ( @var{channel}, @var{low}, @var{high}, @var{n} )
+@deftypefunx {} stepSp ( @var{channel}, @var{n} )
+change by a small amount. This amount could be different for different
+channel/element.  A method “setStepSize” for a channel may be needed.
+@end deftypefun
+
+@deftypefun {channels =} getChannels ( @var{element} )
+given an element, return all the channel names this element has (confusing with @code{getPv}?)
+@end deftypefun
+
+@deftypefun {element =} getChannelOwner ( @var{channel} )
+input a channel, return the element name it belongs to. (not a good name ?)
+@end deftypefun
+
+@deftypefun {avg, var =} measureChannelResponse ( @var{channel}, @var{n} )
+Measure how fast set/get response, try @math{n} times, return average and variation in unit of @emph{seconds}
+@end deftypefun
+
+@deftypefun {} inChannelLimits ( @var{channel}, @var{setpoint} )
+Check whether this setpoint is within the limits.
+@end deftypefun
+
+@deftypefun {} getChannelLabel ( @var{channel} )
+Get the label for specific channel when do plotting.
+@end deftypefun
+
+@end table
+
+
+@c -----------------------------------------------------------------------------
+
+@node Extended CAPI
+@chapter Extended CAPI
+
+These APIs are not using service directly, but composed of fundamental CAPIs introduced before.
+
+@table @code
+
+@deftypefn {Ext} {} getNearbyBpm ( @var{family} )
+return two BPMs bound each element in this family
+@end deftypefn
+
+@deftypefn {Ext} {} measureBeamLifetime ( @var{delay}, @var{npoints}, @var{order} )
+Instead of @code{getBeamLifetime} which runs continuously, this routine
+get the current and analyze lifetime by fitting a polynomial of certain
+order.
+@end deftypefn
+
+@deftypefn {Ext} {} measureOrbitRm ( ) 
+@code{measureOrbitRm} set orbit corrector, measure colosed orbit shift.
+Requirement: 1. get the list of correctors, in the "orbit correction"
+family, from configuration DB; 2. get the list of BPMs, in the "orbit
+correction"; 3. set one corrector, get orbit at thoese BPMs;
+@end deftypefn
+
+@deftypefn {Ext} {} getTrimQuad ( )
+get trim quadrupoles used for tune correction, and their strength ?
+Requirement: Read the configuration DB. get the magnet in a certain
+"family" or "group name"
+@end deftypefn
+
+@deftypefn {Ext} {} measureChromaticity ( )
+@code{measureChromaticity} Measure the chromaticity of current lattice
+Requirement: 1. Measure tunes; 2. set(step) RF frequency; 3.  store the
+measured chromaticity, overwrite the old one or copy create to a new
+one, and set the new one to be default(for this mode) 4. numerical
+fitting (polynomial), linear and 2nd order
+@end deftypefn
+
+@deftypefn {Ext} {} measureChromaticityRm ( )
+@code{measureChromaticityRm} Measure the RM of chromaticity for
+chromaticity correction.  Requirement: 1. measure linear chromaticity;
+2. change sextupole settings.
+@end deftypefn
+
+@deftypefn {Ext} {} correctChromaticity ( )
+@code{correctChromaticity} It is called with desired chromaticity, and
+uses chromaticity response matrix to correct the chromaticity and return
+the final chromaticity, None if the job is not achieved.
+                                                                                              
+Requirement: 1. get stored chromaticity RM data. 2. change the sextupole
+values (two values for H/V, 30 cells are identical)
+@end deftypefn
+
+@deftypefn {Ext} {} setLocalBump ( )
+@code{setLocalBump} create a three kicker bump or four kicker local
+bump. check the orbit against original state outside of the
+bump. Requirement: 1. set 3 or 4 correctors; 2. get whole orbit; 3. get
+the location of each corrector and BPMs, so filter the BPMs outside of
+the bump.
+@end deftypefn
+
+@deftypefn {Ext} {} getBbaQuad ( )
+@end deftypefn
+
+@c @deftypefun {drift =} getOrbitDrift ( @var{sequence}, @var{family}, @var{delay})
+@deftypefn {Ext} {min,max =} getOrbitDrift ( @var{sequence}, @var{family}, @var{delay} )
+@deftypefnx {Ext} {var =} getOrbitVariance ( @var{sequence}, @var{family}, @var{delay} )
+@tpindex getOrbitDrift
+This returns the orbit drift after @var{delay} seconds.
+@end deftypefn
+@c end deftypefun
+
+@deftypefn {Ext} {} measureTune ( @var{bpm} )
+@deftypefnx {Ext} {} measureBeta ( )
+@deftypefnx {Ext} {} measurePhase ( )
+@deftypefnx {Ext} {} measureDispersion ( )
+@code{measureTune} uses turn by turn BPM data to get tune
+@end deftypefn
+
+
+@deftypefn {Ext} {} measureTuneRm ( @var{trimx}, @var{trimy} )
+@end deftypefn
+
+@deftypefn {Ext} {} getTrimQuad ( )
+@end deftypefn
+
+@deftypefn {Ext} {orbit =} correctOrbit ( @var{corrector}, @var{bpm}, @var{iter} )
+@deftypefnx {Ext} {orbit =} correctOrbitX ( @var{corrector}, @var{bpm}, @var{iter} )
+@deftypefnx {Ext} {orbit =} correctOrbitY ( @var{corrector}, @var{bpm}, @var{iter} )
+This function do the orbit correction using default measured orbit response matrix
+@end deftypefn
+
+@deftypefn {Ext} {} setCoupling ( @var{couple} )
+@end deftypefn
+
+@deftypefn {Ext} {} analyzeCoupling
+@end deftypefn
+
+@deftypefn {Ext} {} getBpmVariance ( @var{period} )
+@code{getBpmVariance} monitor the variance of BPM reading. Same
+signature as getOrbit/getOrbitX/getOrbitY, monitor the beam statistics
+for a certain time @var{period}. 1sec ? 10 sec ?  From current state or from a given
+reference values.
+                                                                                              
+Requirement: read BPM orbit, can call getOrbit, getOrbitX, getOrbitY
+@end deftypefn
+
+@deftypefn {Ext} {} analyzeTbtOrbitPhase ( )
+@end deftypefn
+
+
+@end table
+
+
+@node Features/Functions for Server APIs (SAPI)
+@chapter Features/Functions for Server APIs (SAPI)
+
+In brief, the server APIs do to things, query the lattice settings, and do the settings. 
+
+For example, a HLA wants to do *getOrbit("P\*G2C0?")* (get BPM at girder
+2, cell [1,2,3,4,5,6,7,8,9]), the server should be able do two thing:
+
+@enumerate
+@item tell what are these elements: (PH1G2C01A, PH2G2C01A, PM1G4C01A,PM1G4C01B, ...)
+@item get the orbit of these elements(BPMs), if there is a requirement on the timestamp, apply it. 
+@end enumerate
+
+The overview requirementfor SAPI
+
+@itemize 
+@item *Lattice Manager*, it manages a lattice as a configure for every HLA, here the manage means: read, set, change these information. 
+      @itemize @minus
+      @item physics name(unique), logic name(family) of each element.
+      @item location (or sequence? we can get this from its location).
+      @item channels for setting and reading
+      @item limits of each channel
+      @item unit convertion infomation (from engineering, e.g. current, to physics value)
+      @item risk level (?? warning or not if applications try to set this channel)
+      @item ramp speed
+      @item step size of setting it
+      @item delay for each step when do continues ramping (?? needed or not ??)
+      @item used for specified purpose ? (this can be organized as family, quadrupoles used for beam based alignment can be in "BBA" family)
+      @item nominal setting (operation lattice)
+      @item set point for various set purpose ( for example low alpha lattice, this quadrupole will have different strength. operation lattice is one instance of these set)
+      @item query families it belongs to, how many set of values it can be.
+      @item data archiever info, location, frequency, (we can get the history from it)
+      @item realtime status? disabled or enabled ? especially for BPM and corrector ?
+      @item golden orbit, read/write
+      @end itemize
+@item I/O, if SAPI has storage integrated, we can use it as a config for I/O
+      @itemize @minus
+      @item default location for storage
+      @end itemize
+@item Next block is doing the set/read. After get the information from lattice manager, then we should know how to set the magnet via a server(I here call it a gateway)
+      @itemize @minus
+      @item call this gateway with an abstract name ? or a channel ? or a list of channels ?
+      @item consider the timestamp synchronization ? time out ?
+      @item get the value only when the variance of this channel or the other channel is below some threshold ?
+      @item get a value in the future, (wait 20ms) ?
+      @item get values in a specific time range ? e.g. in the next 10 sec.
+      @end itemize
+@end itemize
+
+@node Applications
+@chapter Applications
+
+Here are several applications for machine commissioning and accelerator
+physics study. 
+
+
+One interactive python environment is also provided for interactive
+control of the storage ring. Together with this environment, a set of APIs
+are also provided to make physicists who has no knowledge of EPICS or low
+level channel access be able to do many measurements and diagnostics.
+
+This interactive mode can also run as batch mode, which makes the
+prototyping of new HLA and algorithms more easier.
+
+The plotting features are only in interactive environment and GUI
+applications.
+
+The HLA and Controls are divided into three layers: HLA applictions and scripts, client
+API and server API.
+
+@itemize 
+@item BBA and LOCO are HLA applications, turn by turn beam measurement and analysis can be a HLA script.
+@item Client APIs are a group of physics logics, e.g. measureOrbitRm, measureChromaticity, getGoldenOrbit, ...
+@item Server APIs are called by client APIs across the network, and will not be seen by HLA applications or scripts. The server APIs have two major functions:
+      @itemize @minus
+      @item manage the accelerator magnets/lattice information, e.g. logic family of a magnet, whether it is used by BBA or LOCO or orbit measurement etc. The basic information is contained in the XML file in the following sections, (the implementation may not be a XML file, but a Database).
+      @item control the magnets via a control server, this server will call low level APIs to do PV readings and settings.
+      @end itemize
+@end itemize
+
+
+@enumerate
+@item Orbit Display and Correction
+      @itemize @minus
+      @item plot static orbit
+      @item plot single shot orbit
+      @item correct static orbit
+      @item absolute orbit offset, with respect to golden orbit
+      @item plot orbit change from now on
+      @item orbit statistics
+      @item select BPMs for plotting/orbit correction.
+      @item select correctors for orbit correction
+      @item set reference for orbit reading
+      @end itemize
+@item @strong{Beam Based Alignment}. 
+Input: A list of live BPMs and correctors. A list of
+corrector-BPM-quadrupole pairs.  The BPMs in corrector-BPM-quadrupole
+pair is a subset of live BPM.  This needs to get the golden orbit, set
+the golden orbit, line fitting, step the quadrupole, step the
+corrector(this can be a ¡°macro step¡±, e.g. 10 times than normal step
+size). Many raw data needs to be saved in certain format (plain text, C
+binary, HDF5, SDDS, Matlab ?).
+
+      @itemize @minus
+      @item steering beam go through center of quadrupoles
+      @item measurement
+      @item analysis ( plotting, calculation )
+      @end itemize
+      It requires:
+      @enumerate
+      @item A list of BPM-Corrector-Quadrupole pairs.
+      @item static orbit change
+      @item change corrector
+      @item step quadrupole
+      @end enumerate
+We would prefer to have all data saved, corrector settings/readings, BPM
+readings and Quadrupole settings/readings.
+
+The measurement and analysis can be separated conceptually, which makes the
+post processing more easier, i.e. we can analyze any historical data. 
+@item @strong{Linear Lattice Fitting (LOCO)}
+      @itemize @minus
+      @item analyze quadrupole gradient error.
+      @item analyze BPM gain error.
+      @end itemize
+ It requires:
+      @enumerate
+      @item Designed orbit response matrix (ROM)
+      @item change specified correctors 
+      @item get closed orbit change at specified BPM
+      @end enumerate
+
+This application needs mathematical package to do minimization and
+singular value decomposition (SVD).
+@item @strong{Measure TWISS Parameters}
+      @itemize @minus
+      @item measure beta functions, dispersion, chromaticity, coupling, couplingRm
+      @item Model Independent Analysis (Choi,???)
+      @end itemize
+@item @strong{Smooth Ramping}
+      @itemize @minus
+      @item list channels we are interested.
+      @item ramp whole group at certain rate.
+      @end itemize
+It requires:
+      @enumerate
+      @item searching for channels (regular expression, wild-card)
+      @item save state/read stage.
+      @end enumerate
+The control group may provide ramping for whole storage ring, here this
+application can ramp specified channels between two states.
+@item @strong{History Analyzer}
+      @itemize @minus
+      @item view archive data in certain time frame.
+      @item link to logbook to view reasons for shutdown, current drop (?)
+      @item simple statistic for the data: average, variance, maximum, minimum.
+      @item print, save figures.
+      @end itemize
+Input/Dependent:
+      @enumerate
+      @item channel access
+      @end enumerate
+@item @strong{Insertion Device Related (Matching)}
+      @itemize @minus
+      @item get/correct closed orbit distortion
+      @item get correct phase distortion
+      @item get/correct coupling distortion (Choi, ???)
+      @end itemize
+@item @strong{Misc}
+      @itemize  @minus
+      @item RF feedback (Choi, ???)
+      @item Slow orbit feedback (Choi, ???)
+      @item check quad and bpm polarity
+      @item check reproducibility (Choi, ???)
+      @item monitor loss (Choi, ???)
+      @end itemize
+@end enumerate
+
+@iftex
+@normalbottom
+@end iftex
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@node Function Index, Variable Index
+@unnumbered Function Index
+
+@printindex fn
+
+
+
+@node Notes
+@unnumbered Note
+
+@enumerate
+@item How long to fix (or by pass) an unpredicted situation(or more worse, a bug?) in control room, in a two hours shift ?
+@item Server side log ?
+@item How to keep the server(manager) most updated
+@end enumerate
+
+@node Coding Style
+@heading Coding Style
+
+@enumerate
+@item Use @code{doxygen} for @code{C/C++} ?
+@item write @code{__doc__} in Python ?
+@item Use @code{sphinx} for Python ?
+@item 4 spaces per indentation level.
+@item never mix tabs and spaces. Use space to replace tab
+@item limit all lines to a maximum of 79 characters.
+@item document well and in detail.
+@end enumerate
+
+@node Summary of Meetings
+@heading Summary of Meetings
+@c unnumbered Summary of Meetings
+
+@enumerate
+@item @strong{2010/04/23, Bob, Choi, Don, Guobao and Lingyun}
+      @itemize @minus
+      @item Guobao showed implementations of two server, a use case of global
+     orbit is presented. Exposed some details to us, and helpful to
+     implement a CAPI, and a guide for defining the SAPI.
+     @item Should we have a server side log ? like Apache log in linux ?
+   @item We should be able to define "a set of magnets" and save it, leave
+     comments and username. So in the future, we can recall this set, and monitor the data
+   @item We will have a more detailed description of CAPI, for Guobao and Don
+     to define the SAPI.
+   @item We will have an example of "creating local orbit bump" based on this
+     architecture, and show them in AP group, and have more discussions.
+   @item On the server side, we agreed to have more discussions on what kind of functions can be provided to CAPI, and how to use them. Take the "creating local orbit bump" as an example to move toward the CAPI requirement. After several discussions, two groups from two sides can merge together with a complete set of CAPI/SAPI.
+@end itemize
+@end enumerate
+
+@node Tools/Coding/Documentation
+@heading Tools/Coding/Documentation
+
+@itemize
+@item C/C++ and Python would be the main language for HLAs development and data process.
+@item Python_ + iPython_ + matplotlib_ + numpy_ are preferred for
+   *Interactive Environment*. For people who prefer MATLAB, we also provide MATLAB Middle Layer Toolkit (MMLT) by Greg Portman at Lawrence Berkeley National Laboratory as an option.
+@item The HLAs can be written in Python, in this case we prefer PyQt as GUI
+   library. This makes the sharing of API between interactive environment
+   and HLAs easy. However, we can also use C bindings of EPICS, then
+   Qt/C++ as GUI library. For applications use only low level API
+   (operates on channels directly) this can also be a recommended choice.
+ @item Other monitoring applications can be constructed from MEDM or CSS.
+ @item A central repository will be set up, and code review (or other form of
+   discussion the code we have written) will also be arranged.
+ @item A running virtual accelerator is already running, and use for testing
+   the HLAs.
+@end itemize
+
+@node Links
+@heading Links
+@itemize
+@item @uref{http://www.python.org/, Python.org}
+@item @uref{http://ipython.scipy.org/moin/, iPython}
+@item @uref{http://matplotlib.sourceforge.net/, matploblib}
+@item @uref{http://numpy.scipy.org/}
+@end itemize
+
+
+@node Reference
+@section Reference
+
+@itemize @asis
+@item
+F. Willeke, @cite{Assumptions on NSLS-II Accelerator Commissioning}, November 22, 2009
+
+@item 
+S. Krinsky, @cite{NSLS-II Storage Ring Commissioning}, NSLS-II ASD Retreat, May 13, 2010.
+@end itemize
+
+@bye
