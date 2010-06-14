@@ -157,7 +157,7 @@ compiled major based on the following documents:
 @end itemize
 
 @node Terminology definition for application
-@section terminology definition for application
+@section Terminology definition for application
 
 The terminology should follow the definition of project nomenclature
 standard as below:
@@ -167,11 +167,15 @@ standard as below:
 Requirements Document, Storage Ring Physics Nomenclature Standard},
 @end itemize
 
+
 @cindex family
 @cindex group
 
 @enumerate
-@item family (or group?)
+
+@vskip 1ex
+
+@item Family (or Group?)
 
 Family (or should be called group) is to group a set of element, and
 its name can be used to indicate its symmetry, purpose, position or
@@ -206,6 +210,7 @@ are using BASH wildcards:
 
 @cindex sequence
 @item sequence
+
 Lingyun suggestes a sequence for the convenient use of some routine
 operation on some hardware such as beam position monitor, and
 correctors including both fast and slow type. Suggested sequence could
@@ -228,14 +233,16 @@ A mml similar definition can be atopted. This part should be discuss carefully.
 @cindex coordinate
 @cindex original point
 @item coordinate definition
+
 The coordinate, especially the original point, should be defined
 clearly. 
+
 [TBD]
 
 @end enumerate
 
 @node Terminology definition for control system
-@section terminology definition for control system
+@section Terminology definition for control system
 @itemize
 @enumerate
 @item EPICS
