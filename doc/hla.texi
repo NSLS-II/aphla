@@ -126,7 +126,7 @@ Copyright @copyright{} 2010 The NSLS-II Project.
 @end itemize
 
 @vskip 5ex
-DRAFT-[@today{}]
+@include hlaversion.texi
 @author Jinhyuk Choi, Guobao Shen, Lingyun Yang
 @email{lyyang@@bnl.gov}
 @comment @email{tuomo.keskitalo@iki.fi}
