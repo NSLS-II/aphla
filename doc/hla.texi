@@ -142,12 +142,12 @@ Copyright @copyright{} 2010 The NSLS-II Project.
 
 This extension package is meant to be a set of applications and client
 APIs for accelerator physics study and commissioning. The document is
-compiled based on the following documents:
+compiled based on the following documents (@pxref{Reference}):
 @itemize @bullet
-@item @cite{NSLS-II: Model Based Control - A Use Case Approach}
-@item @cite{Assumptions on NSLS-II Accelerator Commissioning}
-@item @cite{The Path to Accelerator Commissioning}
-@item @cite{NSLS-II Storage Ring Commissioning}
+@item 2008, @cite{NSLS-II: Model Based Control - A Use Case Approach}
+@item 2009, @cite{Assumptions on NSLS-II Accelerator Commissioning}
+@item 2010, @cite{The Path to Accelerator Commissioning}
+@item 2010, @cite{NSLS-II Storage Ring Commissioning}
 @end itemize
 
 @node Schedule for beam commissioning
@@ -167,11 +167,12 @@ compiled based on the following documents:
 @item 11/20/2013--02/18/2014, Storage Ring Commissioning Part 2
 @end itemize
 
-@node Terminology definition for application
-@section Terminology definition for application
+@node Terminology for High Level Applications
+@section Terminology for High Level Applications
 
-The terminology should follow the definition of project nomenclature
-standard as below:
+The naming convension and terminology should follow the definition of
+project nomenclature standard as below:
+
 @itemize @bullet
 @item @cite{National Synchrotron Light Source II - Nomenclature Standard},
 @item @cite{National Synchrotron Light Source II - Accelerator Systems
@@ -179,13 +180,26 @@ Requirements Document, Storage Ring Physics Nomenclature Standard},
 @end itemize
 
 @c @cindex family
-@cindex group
 
 @enumerate
-@item @b{Group} is used to represent a set of elements when they are sharing similar position, symmetry, purpose, connections or user's preferences. We can group all sextupoles together and give a group name @code{Sextupole}. From lattice point of view, we can have a group name @code{QH1} for all quadrupoles with this symmetry. Each element or magnet can belong to one or more families.  For consistance, the element belongs to the group which has only himself.
+@item Mode
+is used for separating different machine settings. It can be
+``operational mode'', ``accelerator physics beam study mode'', ``short
+bunch mode'', ``low current mode''. With this separation, all the other
+settings can be same or different for two modes.
+@item Group
+@cindex group
+is used to represent a set of elements when they are sharing similar
+position, symmetry, purpose, connections or user's preferences. We can
+group all sextupoles together and give a group name
+@code{Sextupole}. From lattice point of view, we can have a group name
+@code{QH1} for all quadrupoles with this symmetry. Each element or
+magnet can belong to one or more families.  For consistance, the element
+belongs to the group which has only himself.
 
-The pre-defined group name should be discussed carefully, and stored in a
-relational database, IRMIS for example. Users can also define their own group name which does not overwrite system defined group name.
+The pre-defined group name should be discussed carefully, and stored in
+a relational database, IRMIS for example. Users can also define their
+own group name which does not overwrite system defined group name.
 
 The suggested candidates of group name are:
 @itemize
@@ -195,6 +209,7 @@ The suggested candidates of group name are:
 @item ``Sam's test BPM'', ``Weiming's Toy'', ...
 @end itemize
 
+@cindex wildcard
 When searching for a group, the name matching should support a subset of regular expression
 (need more details on ``subset'', how small/large is this set). If we
 are using BASH wildcards:
@@ -210,9 +225,12 @@ are using BASH wildcards:
 
 @cindex sequence
 @item @strong{Sequence}
-Lingyun suggestes that we can also use sequence to inditify one element, usually BPM or corrector. For the convenience purpose when looping over BPM or correctors one after the other along the ring, we can use number as its order, instead their names. Suggested sequence could
-be a pair [@code{cell}, @code{index}], and @code{cell} is the cell number following the
-name convention as below:
+Lingyun suggestes that we can also use sequence to inditify one element,
+usually BPM or corrector. For the convenience purpose when looping over
+BPM or correctors one after the other along the ring, we can use number
+as its order, instead their names. Suggested sequence could be a pair
+[@code{cell}, @code{index}], and @code{cell} is the cell number
+following the name convention as below:
 
 @itemize @bullet
 @item @cite{National Synchrotron Light Source II - Nomenclature Standard},
@@ -237,15 +255,23 @@ A definition similar to @code{MML (Matlab Middle Layer)} can be atopted. This pa
 @itemize
 @enumerate
 @item EPICS
+@cindex EPICS
 @item Channel
+@cindex Channel
 @item Record
+@cindex Record
 @item PV (Process Variable)
+@cindex PV
+@cindex Process Variable
 @item CA (Channel Access)
+@cindex CA
+@cindex Channel Access
 @end enumerate
 @end itemize
 
 @node API prefix
 @section API prefix
+
 A short summary of API prefix. It serves as guideline but may have exceptions.
 @itemize
 @item @strong{meas} is for measurement routines. They may perturb the beam, and affect users.
@@ -253,11 +279,13 @@ A short summary of API prefix. It serves as guideline but may have exceptions.
 @item @strong{set} will change the settings of an online instrument. The value will be gone after next injection(non-topoff)
 @item @strong{save} operates on file, read machine to file/DB. (set operates on real machine, on a smaller scale, single element/family). The new value will take effect in next injection/run. 
 @item @strong{load} operates on files/DB and set to memory/machine.
-@item @strong{calc} is for routines doing simple calculation.
-@item @strong{anal} is for routines more complicated than @code{calc}.
+@item @strong{calc} is for routines doing calculation and analysis. This is calculation only, does not perturb the beam.
+@c @item @strong{anal} is for routines more complicated than @code{calc}, the results are a set of results.
 @item @strong{enable/disable} makes element online/offline
 @c @item @strong{download/upload} works with remote central managed info, like golden orbit, response matrix. 
 @end itemize
+
+Check the @xref{Function Index, Variable Index} for a complete list.
 
 @node array data arrangement
 @section Array data arrangement
@@ -266,14 +294,15 @@ Whenever the value is an array, sort it in the beam direction, for
 example, increasing order of @math{s} location.
 
 
-@node Requirement
-@chapter Requirement
+@node Software Requirement
+@chapter Software Requirement
 
 This chapter describes software requirement for HLA (High Level
 Applications). This list is mainly from @cite{Assumptions on NSLS-II
 Accelerator Commissioning} and @cite{NSLS-II Storage Ring
 Commissioning}, plus some personal experience.
 
+The items marked with (*) are closely related to HLA development.
 
 @menu
 * General Operation::
@@ -285,7 +314,7 @@ Commissioning}, plus some personal experience.
 * Accelerator Physics Applications Toolkit::
 @end menu
 
-@node General Operation
+@node General Operation 
 @section General Operation
 
 @itemize @bullet
@@ -1134,7 +1163,7 @@ Returns beam current, lifetime, size. The profile can be an image (can we do it 
 Vacuum information along the ring (or at specific location ?).
 @end deftypefun
 
-@deftypefun {min, max, avg, var =} measureSetGetAgreement ( @var{channel}, @var{min}, @var{max}, @var{n} )
+@deftypefun {min, max, avg, var =} measSetGetAgreement ( @var{channel}, @var{min}, @var{max}, @var{n} )
 Randomly set @math{n} values between @var{min} and @var{max}, check statistics of @math{Rb-Sp}, i.e. the difference of readback and setpoint.
 @end deftypefun
 
@@ -1174,7 +1203,7 @@ given an element, return all the channel names this element has (confusing with 
 input a channel, return the element name it belongs to. (not a good name ?)
 @end deftypefun
 
-@deftypefun {avg, var =} measureChannelResponse ( @var{channel}, @var{n} )
+@deftypefun {avg, var =} measChannelResponse ( @var{channel}, @var{n} )
 Measure how fast set/get response, try @math{n} times, return average and variation in unit of @emph{seconds}
 @end deftypefun
 
@@ -1202,14 +1231,14 @@ These APIs are not using service directly, but composed of fundamental CAPIs int
 return two BPMs bound each element in this family
 @end deftypefn
 
-@deftypefn {Ext} {} measureBeamLifetime ( @var{delay}, @var{npoints}, @var{order} )
+@deftypefn {Ext} {} measBeamLifetime ( @var{delay}, @var{npoints}, @var{order} )
 Instead of @code{getBeamLifetime} which runs continuously, this routine
 get the current and analyze lifetime by fitting a polynomial of certain
 order.
 @end deftypefn
 
-@deftypefn {Ext} {} measureOrbitRm ( ) 
-@code{measureOrbitRm} set orbit corrector, measure colosed orbit shift.
+@deftypefn {Ext} {} measOrbitRm ( ) 
+@code{measOrbitRm} set orbit corrector, measure colosed orbit shift.
 Requirement: 1. get the list of correctors, in the "orbit correction"
 family, from configuration DB; 2. get the list of BPMs, in the "orbit
 correction"; 3. set one corrector, get orbit at thoese BPMs;
@@ -1221,16 +1250,16 @@ Requirement: Read the configuration DB. get the magnet in a certain
 "family" or "group name"
 @end deftypefn
 
-@deftypefn {Ext} {} measureChromaticity ( )
-@code{measureChromaticity} Measure the chromaticity of current lattice
+@deftypefn {Ext} {} measChromaticity ( )
+@code{measChromaticity} Measure the chromaticity of current lattice
 Requirement: 1. Measure tunes; 2. set(step) RF frequency; 3.  store the
 measured chromaticity, overwrite the old one or copy create to a new
 one, and set the new one to be default(for this mode) 4. numerical
 fitting (polynomial), linear and 2nd order
 @end deftypefn
 
-@deftypefn {Ext} {} measureChromaticityRm ( )
-@code{measureChromaticityRm} Measure the RM of chromaticity for
+@deftypefn {Ext} {} measChromaticityRm ( )
+@code{measChromaticityRm} Measure the RM of chromaticity for
 chromaticity correction.  Requirement: 1. measure linear chromaticity;
 2. change sextupole settings.
 @end deftypefn
@@ -1263,15 +1292,15 @@ This returns the orbit drift after @var{delay} seconds.
 @end deftypefn
 @c end deftypefun
 
-@deftypefn {Ext} {} measureTune ( @var{bpm} )
-@deftypefnx {Ext} {} measureBeta ( )
-@deftypefnx {Ext} {} measurePhase ( )
-@deftypefnx {Ext} {} measureDispersion ( )
-@code{measureTune} uses turn by turn BPM data to get tune
+@deftypefn {Ext} {} measTune ( @var{bpm} )
+@deftypefnx {Ext} {} measBeta ( )
+@deftypefnx {Ext} {} measPhase ( )
+@deftypefnx {Ext} {} measDispersion ( )
+@code{measTune} uses turn by turn BPM data to get tune
 @end deftypefn
 
 
-@deftypefn {Ext} {} measureTuneRm ( @var{trimx}, @var{trimy} )
+@deftypefn {Ext} {} measTuneRm ( @var{trimx}, @var{trimy} )
 @end deftypefn
 
 @deftypefn {Ext} {} getTrimQuad ( )
@@ -1286,7 +1315,7 @@ This function do the orbit correction using default measured orbit response matr
 @deftypefn {Ext} {} setCoupling ( @var{couple} )
 @end deftypefn
 
-@deftypefn {Ext} {} analyzeCoupling
+@deftypefn {Ext} {} calcCoupling
 @end deftypefn
 
 @deftypefn {Ext} {} getBpmVariance ( @var{period} )
@@ -1298,7 +1327,7 @@ reference values.
 Requirement: read BPM orbit, can call getOrbit, getOrbitX, getOrbitY
 @end deftypefn
 
-@deftypefn {Ext} {} analyzeTbtOrbitPhase ( )
+@deftypefn {Ext} {} calcTbtOrbitPhase ( )
 @end deftypefn
 
 
