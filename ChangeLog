@@ -1,0 +1,4 @@
+2010-06-16  Lingyun Yang  <lyyang@svd>
+
+	* .hgignore (syntax): ignore more tmp files
+

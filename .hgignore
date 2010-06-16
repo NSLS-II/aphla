@@ -12,3 +12,5 @@ hla.toc
 hla.tp
 hla.tps
 hla.vr
+hlaversion.texi
+*.pyc
