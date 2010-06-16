@@ -136,6 +136,8 @@ Schedule:
 @insertcopying
 @end titlepage
 
+@contents
+
 
 @node Introduction
 @chapter Introduction
@@ -154,7 +156,6 @@ compiled based on the following documents (@pxref{Reference}):
 @node Schedule for beam commissioning
 @section Schedule for beam commissioning
 
-@vskip 5ex
 @itemize @bullet
 @item 12/01/2011--02/29/2012, LINAC front end commissioning
 @item 03/30/2012--07/28/2012, LINAC
@@ -433,35 +434,17 @@ It is better that the HLA can have the following features:
 
 
 
+@c -------------------------------------------------------------
+
+
 @node Accelerator Physics Applications Toolkit
 @chapter Accelerator Physics Applications Toolkit
 
 This chapter is a more detailed list of control software for NSLS-II
 commissioning. The functions here contains more accelerator physics
-concepts and the beam control and manipulation. For the specification of these tools, @pxref{Specification for Accelerator Physics Toolkit}
+concepts and the beam control and manipulation. For the specification of
+these tools, @pxref{Specification for Accelerator Physics Toolkit}
 
-@node Machine status
-@section Machine status
-
-The applications will provide overall status of the whole machine, and give
-warnings when any abnormal beam behaviour is detected, for example a
-readback differs from setting point larger than its threshhold. The
-status includes beam information, and hardware status including magnet
-and its power supply, vacuum, RF, and so on.
-
-@itemize @bullet
-@item Orbit
-    @enumerate
-    @item Closed orbit display
-    @item Orbit feedback status
-    @item Orbit stability, especially drift and variation
-    @item Turn by turn BPM reading vistualization when available/enabled
-    @end enumerate
-@item Tunes
-@item Magnets
-@item Vacuum status.
-@item Logging all necessary machine settings data, and retrive the historical data for analysis.
-@end itemize
 
 
 @node Requirement
@@ -471,77 +454,63 @@ and its power supply, vacuum, RF, and so on.
 @node Physics tasks
 @subsection Physics tasks
 
-data archiving and retriving, and historical data analysis.
+
+In @cite{NSLS-II Storage Ring Commissioning}, we have defined steps for
+commissioning. Here we only summarize the functions needed, and neglect
+the order of using them in the commissioning.
 
 @itemize @bullet
-    @item BPM testing, stability, polarity, current dependency, resolution.
-    @item orbit corrector test, polarity, strength
-    @item First turn beam steering. Turn by turn BPM data visulization and analysis
-    @item Measure the orbit response matrix, with flexible number of BPMs and correctors.
-    @item Static orbit correction with flexible list of correctors and BPMs.
-    @item Measure and adjust tune. (tune scan ?)
-    @item Measure and correct the chromaticity. 
-    @item Measure beam optics including phase advance, beta functions, dispersion.
-    @item Local closed orbit bump.
-    @item Beam based alignment.
-    @item Set/Read any main magnet. Converting between machine unit and physics unit.
-    @item Ramping from one magnet setting to another.
-    @item Monitoring stability of any readings and online data: magnet readback, orbit, temperature, vacuum.
-    @item Linear optics fitting and optimization with LOCO.
-    @item Analyze chamber movement (Choi ???).
-@end itemize
-
-@node Accelerator Physics Applications
-@subsection Accelerator Physics Applications
-
-@itemize @bullet
-    @item Logging all necessary machine settings data, and retrive the historical data for analysis.
-    @item Single shot beam position, turn by turn BPM reading and orbit analysis.
-@item Static orbit corrections
-@item First turn steering
-@item Chromatic correction
-@item Response matrix measurements
-@item Phase advance measurements
-@item Beam based alignment of quadrupoles
-@item BPM test programs
-@item Beam optics measurement
-@item Beam based alignment of sextupoles.
-@item Analysis on nonlinear dynamics.
-@item Dispersion measurement and correction
-@item Closed orbit bump page
-@item Magnetic field measurement and modeling, determine calibration
-@item Develop lattice model using measured fields, linear/nonlinear optics.
-@item Wakefield modeling and tracking studies, develop model for impedance and wakefields, caculation and measurement, estimate instability thresholds, simulate bunch-by-bunch feedback with realistic bunches and wakefields.
-@item Verify named devices in control system, control proper hardware
-@item Check polarity of all magnets.
-@item Complete survey of magnetic elements
-@item Test diagnostic equipment without beam
+@item Hardware/Control checking and testing
+      @itemize @minus
+      @item BPM testing programs: stability, polarity, current dependency, resolution.
+      @item Orbit corrector test, polarity, strength.
+      @item Set/Read any main magnet. Converting between machine unit and physics unit.
+      @item Ramping from one magnet setting to another.
+      @item Monitoring stability of any readings and online data: magnet readback, orbit, temperature, vacuum.
+      @item Magnetic field measurement and modeling, determine calibration
+      @item Verify named devices in control system, control proper hardware
+      @item Check polarity of all magnets.
+      @item Complete survey of magnetic elements
+      @item Test diagnostic equipment without beam
+      @end itemize
 @item BTS transport line, obtain good transmission through septum and good transverse phase space match, set timing of pulsed magnets.
-@item Obtain first turn in storage ring using single kicker
-  @itemize @minus
-  @item Center beam in single downstream single kicker
-  @item Adjust kicker strength to place beam on design orbit.
-  @item Use single turn BPMs to steer beam trajectory around ring and estimate linear optics and tune.
-  @item Use flag to obtain beam size information at injection point and after one turn.
-  @end itemize
+@item Linear and nonlinear lattice modeling
+      @itemize @minus
+      @item First turn beam steering. Turn by turn BPM data visulization and analysis
+      @item Obtain first turn in storage ring using single kicker
+        @itemize @minus
+        @item Center beam in single downstream single kicker
+        @item Adjust kicker strength to place beam on design orbit.
+        @item Use single turn BPMs to steer beam trajectory around ring and estimate linear optics and tune.
+        @item Use flag to obtain beam size information at injection point and after one turn.
+        @end itemize
+      @item Single shot beam position, turn by turn BPM reading and orbit analysis.
+      @item Measure the orbit response matrix, with flexible number of BPMs and correctors.
+      @item Static orbit correction with flexible list of correctors and BPMs.
+      @item Local closed orbit bump (one page, particularly for injection).
+      @item Measure and adjust tune. (tune scan ?)
+      @item Measure and correct the chromaticity (linear and nonlinear). 
+      @item Measure beam optics including phase advance, beta functions, dispersion.
+      @item Dispersion measurement and correction
+      @item Beam based alignment (quadrupole and BPM).
+      @item Beam based alignment of sextupoles.
+      @item Linear optics fitting and optimization with LOCO.
+      @item Develop lattice model using measured fields, linear/nonlinear optics.
+      @item Reduce beta beat
+      @item Correct coupling using skew quadrupoles
+      @item Analysis on nonlinear dynamics.
+      @item Use Pinger to measure tune shift with amplitude, dynamic aperture and characterize sextupole distribution
+      @item Wakefield modeling and tracking studies, develop model for impedance and wakefields, caculation and measurement, estimate instability thresholds, simulate bunch-by-bunch feedback with realistic bunches and wakefields.
+      @item Characterize ring impedance using beam.
+      @end itemize
+@item Logging all necessary machine settings data, and retrive the historical data for analysis.
 @item Look for magnet errors that may have been missed in testing.
-@item Measure and improve orbit and tune, with hundreds of turns beam.
-@item Obtain circulating beam using four kicker magnets to make local injection bump.
 @item Commission loss control minitoring system
-@item Use visible synchrotron light monitor to study transverse beam profile and disturbance due to kickers.
-@item Reduce beta beat
-@item Study lifetime and vacuum pressure vs. amp-hours.
-@item Correct coupling using skew quadrupoles
-@item Measure dependence of lifetime on vertical beam size using pinhold camera, estimate Touschek lifetime.
-@item Measure dependence of lifetime on position of beam scrapers to get information on physical and dynamic aperture.
-@item Refine LOCO characterization of linear optics.
-@item Beam based alignment of BPMs/Quadrupoles.
+@item Use visible synchrotron light monitor to study transverse beam profile and disturbance due to kickers. @code{getBeamProfile}
+@item Study lifetime versus vacuum pressure, vertical beam size, scraper, dynamic aperture.
 @item Test fast orbit feedback system.
-@item Determine nonlinear dispersion and chromaticity
-@item Use Pinger to measure tune shift with amplitude, dynamic aperture and characterize sextupole distribution
 @item Commission transverse bunch-by-bunch feedback
 @item Measure variation of coherent tune with current
-@item Characterize ring impedance using beam.
 @item Study increasing chromaticity from +2/+2 to +5/+5
 @item Commission undulator gap control in control room
 @item Establish and save reference orbit (low current 5mA)
@@ -557,31 +526,31 @@ data archiving and retriving, and historical data analysis.
   @item Verify the proper operation of the interlock test
   @end itemize
 @item ID
-      @itemize @minus
-      @item When necessary compensate the linear optics for ID
-      @item Observe orbit and tune shift vs gap
-      @item Measure lifetime vs gap
-      @item Observe beam stability vs current
-      @item Measure change in impedance due to ID chamber
-      @item Prepare look-up tables for feed forward orbit correction coils.
-      @item Measure effect on tune shift with amplitude, chromaticity, and emittance coupling.
-      @item Measure impedance vs gap for IVUs
-      @item Commission undulator gap control for users
-      @item Measure flux and brightness
-      @end itemize
+  @itemize @minus
+  @item When necessary compensate the linear optics for ID
+  @item Observe orbit and tune shift vs gap
+  @item Measure lifetime vs gap
+  @item Observe beam stability vs current
+  @item Measure change in impedance due to ID chamber
+  @item Prepare look-up tables for feed forward orbit correction coils.
+  @item Measure effect on tune shift with amplitude, chromaticity, and emittance coupling.
+  @item Measure impedance vs gap for IVUs
+  @item Commission undulator gap control for users
+  @item Measure flux and brightness
+  @end itemize
 @item Top-off Injection
-      @itemize @minus 
-      @item Check position of apertures in ring and beamline
-      @item Test interlocks
-      @item Characterize injection transient on transverse orbit, contribution from septum and kickers.
-      @item Test transverse feedback with injection transient
-      @end itemize
+  @itemize @minus 
+  @item Check position of apertures in ring and beamline
+  @item Test interlocks
+  @item Characterize injection transient on transverse orbit, contribution from septum and kickers.
+  @item Test transverse feedback with injection transient
+  @end itemize
 @item Concerns: accuracy of magnet calibration-two types of dipoles, magnetic field quality (IRMIS data).
 @end itemize
 
 
-@node Applications
-@section Applications
+@node HLA Scripts and Applications
+@section HLA Scripts and Applications
 
 Here are several applications for machine commissioning and accelerator
 physics study. 
@@ -609,6 +578,30 @@ scripts, client API @pxref{Client APIs (CAPI)} and server API @pxref{Server APIs
       @item manage the accelerator magnets/lattice information, e.g. logic group of a magnet, whether it is used by BBA or LOCO or orbit measurement etc. The basic information is contained in a XML file or a database in the following sections, (the implementation may not be a XML file, but a Database).
       @item control the magnets via a control server, this server will call low level APIs to do PV readings and settings.
       @end itemize
+@end itemize
+
+
+@node Machine status
+@subsection Machine status
+
+The applications will provide overall status of the whole machine, and give
+warnings when any abnormal beam behaviour is detected, for example a
+readback differs from setting point larger than its threshhold. The
+status includes beam information, and hardware status including magnet
+and its power supply, vacuum, RF, and so on.
+
+@itemize @bullet
+@item Orbit
+    @enumerate
+    @item Closed orbit display
+    @item Orbit feedback status
+    @item Orbit stability, especially drift and variation
+    @item Turn by turn BPM reading vistualization when available/enabled
+    @end enumerate
+@item Tunes
+@item Magnets
+@item Vacuum status.
+@item Logging all necessary machine settings data, and retrive the historical data for analysis.
 @end itemize
 
 
@@ -642,23 +635,13 @@ corrector (this can be a ``macro step'', e.g. 10 times than normal step
 size). Many raw data needs to be saved in certain format (@strong{DISCUSSION}:
 plain text, C binary, HDF5, SDDS, Matlab ?).
 
-@itemize @minus
-@item steering beam go through center of quadrupoles
-@item measurement
-@item analysis ( plotting, calculation )
-@end itemize
-It requires:
-@enumerate
-@item A list of BPM-Corrector-Quadrupole pairs.
-@item static orbit change
-@item change corrector
-@item step quadrupole
-@end enumerate
 We would prefer to have all data saved, corrector settings/readings, BPM
 readings and Quadrupole settings/readings.
 
 The measurement and analysis can be separated conceptually, which makes the
 post processing more easier, i.e. we can analyze any historical data. 
+
+It should work on separate set of quadrupoles, and combine data with previous measurement.
 
 @node Linear Lattice Fitting (LOCO)
 @subsection Linear Lattice Fitting (LOCO)
@@ -969,7 +952,7 @@ We can use these APIs: @code{getMode}, @code{getModeInfo}, @code{getOperationMod
       @enumerate
       @item @emph{magnet/element full name}, unique
       @item @emph{magnet/element s-location}, unique number
-      @item @emph{element families}, multiple string, can be added by users. For export to elegant, need a family name for its type like ``Quadrupole'', ``Sextupole'', ``RF''
+      @item @emph{element groups}, multiple string, can be added by users. For export to elegant, need a group name for its type like ``Quadrupole'', ``Sextupole'', ``RF''
       @item @emph{step size}, sigle number
       @item @emph{setting/reading channels}, readback/setpoint, may have more channels associated with one magnet/element
       @item @emph{setting/reading channel limits}, lower and upper bound
@@ -984,36 +967,28 @@ The configure file may look like the following ::
 
 @example
   <?xml version="1.0" encoding="UTF-8">
-  <lattice>
-      <ring name="NSLS-II">
-          <cell name="1">
-              <girder name="2">
-                  <element>
-                      <name link="Ha">CH1YSP01</name>
-                      <family>Corrector</family>
-                      <family>VCorrector</family>
-                      <family>BeamBasedAlignment</family>
-                      <setpoint>
-                          <nominal>0.0</nominal>
-                          <lowalpha>0.0</lowalpha>
-                      </setpoint>
-                      <pv name="SR:C01-MG:G03A.SP">HKICK</pv>
-                      <location>3.5</location>
-                   </element>
-                   <element> ... </element>
-               </girder>
-               <girder> ... </girder>
-           </cell>
-           <cell> ... </cell>
-       </ring>
-       <ring name="BOOSTER"> ... </ring>
+  <lattice name="NSLS-II" mode=''nominal''>
+      <element>
+          <name link="Ha">CH1YSP01</name>
+          <cell>1</cell>
+          <girder>2</girder>
+          <group>Corrector</group>
+          <group>VCorrector</group>
+          <group>BeamBasedAlignment</group>
+          <setpoint>0.0</setpoint>
+          <pv name="SR:C01-MG:G03A.SP">HKICK</pv>
+          <location>3.5</location>
+      </element>
+      <element> ... </element>
+   </lattice>
+   <lattice name=''booster'' mode=''default>
    </lattice>
 @end example
 
 This is a horizontal orbit corrector @code{CH1YSP01}, it belongs to @code{section 1},
 @code{girder 2}, together with other elements, it is in two families called
 @code{Corrector} and @code{HCorrector}, it is also linked to a power supply @code{Ha},
-to which other horizontal corrector may belongs. The family name
+to which other horizontal corrector may belongs. The group name
 @code{BeamBasedAlignment} also implies that this corrector will be used for
 beam based alignment.
 
@@ -1092,38 +1067,38 @@ be accelerator physics mode, single bunch mode, different working
 point(tunes), low alpha mode, ...
 @end deftypefun
 
-@deftypefun {} addFamily ( @var{family} )
-@deftypefunx {} removeFamily ( @var{family} )
-@deftypefunx {} addFamilyMember ( @var{family}, @var{members} )
-@deftypefunx {} removeFamilyMember ( @var{family}, @var{members} )
-They operate on family/member
-management. @code{addFamily}/@code{removeFamily} adds/removes a family,
-and @code{addFamilyMember}/@code{removeFamilyMember} adds/removes
-members from certain family. These @var{members} support
-wildcards. @code{removeFamily} should clean up the relations of members
-to this family (may call @var{removeFamilyMember}) or @strong{remove a
-nonempty family is forbiden}, like @code{rmdir} in Linux.
+@deftypefun {} addGroup ( @var{group} )
+@deftypefunx {} removeGroup ( @var{group} )
+@deftypefunx {} addGroupMember ( @var{group}, @var{members} )
+@deftypefunx {} removeGroupMember ( @var{group}, @var{members} )
+They operate on group/member
+management. @code{addGroup}/@code{removeGroup} adds/removes a group,
+and @code{addGroupMember}/@code{removeGroupMember} adds/removes
+members from certain group. These @var{members} support
+wildcards. @code{removeGroup} should clean up the relations of members
+to this group (may call @var{removeGroupMember}) or @strong{remove a
+nonempty group is forbiden}, like @code{rmdir} in Linux.
 
-All operation modes share same family settings. We can use a new family
+All operation modes share same group settings. We can use a new group
 name for various mode. e.g. If some correctors only works in ``physics''
-mode, we can have a family name for them.
+mode, we can have a group name for them.
 
-@strong{WARNING}: for some family, it would be nice to be readonly, too dangerous to change in script. 
+@strong{WARNING}: for some group, it would be nice to be readonly, too dangerous to change in script. 
 @end deftypefun
 
 @deftypefun {families =} getFamilies ( @var{element} )
-@deftypefunx {members =} getMembers ( @var{family} )
+@deftypefunx {members =} getMembers ( @var{group} )
 @deftypefunx {families =} getAllFamilies ( )
-@code{getFamilies} returns family name list to which a specific element
+@code{getFamilies} returns group name list to which a specific element
 belongs.  The element name should be uniqe in lattice. @code{getMembers}
-returns all elements in a family or families. The order of @var{members}
+returns all elements in a group or families. The order of @var{members}
 does matter, must be in increasing order of
 @math{s}. @code{getAllFamilies} returns all families available in the
 system.
 @end deftypefun
 
-@deftypefun {s =} getLocation ( @var{family} )
-Returns location of certain @var{family}, the order matters.
+@deftypefun {s =} getLocation ( @var{group} )
+Returns location of certain @var{group}, the order matters.
 @end deftypefun
 
 @deftypefun {} getGroundMotion ( )
@@ -1131,9 +1106,9 @@ Returns location of certain @var{family}, the order matters.
 (Choi, ???) 
 @end deftypefun
 
-@deftypefun {phase =} getPhase ( @var{mode}, @var{family} )
-@deftypefunx {beta =} getBeta ( @var{mode}, @var{family} )
-@deftypefunx {eta =} getDispersion ( @var{mode}, @var{family} )
+@deftypefun {phase =} getPhase ( @var{mode}, @var{group} )
+@deftypefunx {beta =} getBeta ( @var{mode}, @var{group} )
+@deftypefunx {eta =} getDispersion ( @var{mode}, @var{group} )
 @deftypefunx {} getChromaticity ( @var{mode}, @var{hori}, @var{vert} )
 @deftypefunx {} getTune ( @var{nux}, @var{nuy} )
 @code{getChromaticity} return the horizontal and vertical chromaticity.
@@ -1174,7 +1149,7 @@ about when and how it was measured.
 
  
 @deftypefun {elements, distance =} getNeighbors ( @var{element}, @var{neighbor}, @var{n} )
-This return a list of @math{n} elements belongs to family
+This return a list of @math{n} elements belongs to group
 @var{neighbor}. The list is sorted according to the distance to this
 element.
 
@@ -1215,22 +1190,22 @@ This chapter focus on orbit related functions.
 @section Orbit Control and Analysis API
 
 @table @code
-@deftypefun {orbit =} getOrbit ( @var{sequence}, @var{family}, @var{synchronized=False})
-@deftypefunx {orbit =} getOrbitX ( @var{sequence}, @var{family}, @var{synchronized=False})
-@deftypefunx {orbit =} getOrbitY ( @var{sequence}, @var{family}, @var{synchronized=False})
+@deftypefun {orbit =} getOrbit ( @var{sequence}, @var{group}, @var{synchronized=False})
+@deftypefunx {orbit =} getOrbitX ( @var{sequence}, @var{group}, @var{synchronized=False})
+@deftypefunx {orbit =} getOrbitY ( @var{sequence}, @var{group}, @var{synchronized=False})
 @tpindex getOrbit
 @tpindex getOrbitX
 @tpindex getOrbitY
 This function returns an array of orbit at BPMs specified by input
-@var{sequence} and @var{family}. The @var{sequence} can be an array of
-index (1d ? or 2d ?). @var{family} is a preconfigured string in global
+@var{sequence} and @var{group}. The @var{sequence} can be an array of
+index (1d ? or 2d ?). @var{group} is a preconfigured string in global
 property, e.g. ``FOFB'' can be used for BPMs in fast orbit feedback
 systems. These orbits are with respect to golden orbit.
 
 Use @code{getMembers} to find out locations of the orbit.
 
 @code{getOrbit}, @code{getOrbitX}, Return horizontal and vertical orbit
-at all BPMs(family), @code{getOrbitY} single BPM, or one cell. It hould
+at all BPMs(group), @code{getOrbitY} single BPM, or one cell. It hould
 be able to deal with dead BPM automatically (need set up a convention).
 Requirement: 1. getOrbit(), get orbit at all BPMs; 2. getOrbit("*C01"),
 get orbit of BPMs whoes name matches (one "*C01"; 3. getOrbit([[1,1],
@@ -1242,16 +1217,16 @@ to same turn ? in this API or a new one ?)
 @end deftypefun
 
 
-@deftypefun {orbit =} getTbtOrbit ( @var{sequence},  @var{family}, @var{turn})
-@deftypefunx {orbit =} getOrbitSnapshot ( @var{sequence}, @var{family} )
-@deftypefunx {orbit =} getOrbitSnapshotX ( @var{sequence}, @var{family} )
-@deftypefunx {orbit =} getOrbitSnapshotY ( @var{sequence}, @var{family} )
+@deftypefun {orbit =} getTbtOrbit ( @var{sequence},  @var{group}, @var{turn})
+@deftypefunx {orbit =} getOrbitSnapshot ( @var{sequence}, @var{group} )
+@deftypefunx {orbit =} getOrbitSnapshotX ( @var{sequence}, @var{group} )
+@deftypefunx {orbit =} getOrbitSnapshotY ( @var{sequence}, @var{group} )
 @code{getTbtOrbit} returns the TBT(turn by turn) orbit from specified
 BPMs, each has @var{turn} turns. @code{getOrbitSnapshot*} returns only
 one shot of the orbit, no average made (need more discussion with diagnostics).
 @end deftypefun
 
-@deftypefun {} setBpmReference ( @var{family}, @var{ref} )
+@deftypefun {} setBpmReference ( @var{group}, @var{ref} )
 @code{setBpmReference}, Same as setGoldenOrbit, but only for one
 specific BPM. 
 
@@ -1263,8 +1238,8 @@ this information: if I set in one application, is it able to be
 reflected in orbit feedback ?  Yes ? no ? or do I really want to ?
 @end deftypefun
 
-@deftypefun {orbit =} getGoldenOrbit ( @var{mode},  @var{sequence=None}, @var{family=None} )
-@deftypefunx {orbit =} loadGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{family=None}, @var{source=''golden_orbit.txt''} )
+@deftypefun {orbit =} getGoldenOrbit ( @var{mode},  @var{sequence=None}, @var{group=None} )
+@deftypefunx {orbit =} loadGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{group=None}, @var{source=''golden_orbit.txt''} )
 @deftypefunx {status =} setGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{name=None} )
 @deftypefunx {status =} saveGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{name=None}, @var{destination=''golden_orbit.txt''} )
 These APIs working on golden orbits, get/load returns the golden orbit
@@ -1291,14 +1266,14 @@ from time to time, we keep track of the correctors and BPMs using @var{info}
 
 @deftypefun {bpm =} getLiveBpm ( )
 @deftypefunx {bpm =} getDeadBpm ( )
-@deftypefunx {} disableBpm ( @var{family} )
-@deftypefunx {} enableBpm ( @var{family} )
+@deftypefunx {} disableBpm ( @var{group} )
+@deftypefunx {} enableBpm ( @var{group} )
 @deftypefunx {cor =} getLiveCorrector ( )
 @deftypefunx {cor =} getDeadCorrector ( )
 @deftypefunx {} disableCorrector ( )
-@deftypefunx {} enableCorrector ( @var{family} )
-@deftypefunx {} saveBpmStatus ( @var{family}, @var{status} )
-@deftypefunx {} saveCorrectorStatus ( @var{family}, @var{status} )
+@deftypefunx {} enableCorrector ( @var{group} )
+@deftypefunx {} saveBpmStatus ( @var{group}, @var{status} )
+@deftypefunx {} saveCorrectorStatus ( @var{group}, @var{status} )
 Operates on status of BPMs and correctors. enable/disable will not
 operate on DB, but @code{save*Status} will mark the dead elements and
 take effect across restart.
@@ -1423,8 +1398,8 @@ These APIs are not using service directly, but composed of fundamental CAPIs int
 
 @table @code
 
-@deftypefn {Ext} {} getNearbyBpm ( @var{family} )
-return two BPMs bound each element in this family
+@deftypefn {Ext} {} getNearbyBpm ( @var{group} )
+return two BPMs bound each element in this group
 @end deftypefn
 
 @deftypefn {Ext} {} measBeamLifetime ( @var{delay}, @var{npoints}, @var{order} )
@@ -1436,14 +1411,14 @@ order.
 @deftypefn {Ext} {} measOrbitRm ( ) 
 @code{measOrbitRm} set orbit corrector, measure colosed orbit shift.
 Requirement: 1. get the list of correctors, in the "orbit correction"
-family, from configuration DB; 2. get the list of BPMs, in the "orbit
+group, from configuration DB; 2. get the list of BPMs, in the "orbit
 correction"; 3. set one corrector, get orbit at thoese BPMs;
 @end deftypefn
 
 @deftypefn {Ext} {} getTrimQuad ( )
 get trim quadrupoles used for tune correction, and their strength ?
 Requirement: Read the configuration DB. get the magnet in a certain
-"family" or "group name"
+"group" or "group name"
 @end deftypefn
 
 @deftypefn {Ext} {} measChromaticity ( )
@@ -1480,9 +1455,9 @@ the bump.
 @deftypefn {Ext} {} getBbaQuad ( )
 @end deftypefn
 
-@c @deftypefun {drift =} getOrbitDrift ( @var{sequence}, @var{family}, @var{delay})
-@deftypefn {Ext} {min,max =} getOrbitDrift ( @var{sequence}, @var{family}, @var{delay} )
-@deftypefnx {Ext} {var =} getOrbitVariance ( @var{sequence}, @var{family}, @var{delay} )
+@c @deftypefun {drift =} getOrbitDrift ( @var{sequence}, @var{group}, @var{delay})
+@deftypefn {Ext} {min,max =} getOrbitDrift ( @var{sequence}, @var{group}, @var{delay} )
+@deftypefnx {Ext} {var =} getOrbitVariance ( @var{sequence}, @var{group}, @var{delay} )
 @tpindex getOrbitDrift
 This returns the orbit drift after @var{delay} seconds.
 @end deftypefn
@@ -1548,7 +1523,7 @@ The overview requirementfor SAPI
 @itemize 
 @item *Lattice Manager*, it manages a lattice as a configure for every HLA, here the manage means: read, set, change these information. 
       @itemize @minus
-      @item physics name(unique), logic name(family) of each element.
+      @item physics name(unique), logic name(group) of each element.
       @item location (or sequence? we can get this from its location).
       @item channels for setting and reading
       @item limits of each channel
@@ -1557,7 +1532,7 @@ The overview requirementfor SAPI
       @item ramp speed
       @item step size of setting it
       @item delay for each step when do continues ramping (?? needed or not ??)
-      @item used for specified purpose ? (this can be organized as family, quadrupoles used for beam based alignment can be in "BBA" family)
+      @item used for specified purpose ? (this can be organized as group, quadrupoles used for beam based alignment can be in "BBA" group)
       @item nominal setting (operation lattice)
       @item set point for various set purpose ( for example low alpha lattice, this quadrupole will have different strength. operation lattice is one instance of these set)
       @item query families it belongs to, how many set of values it can be.
@@ -1579,6 +1554,31 @@ The overview requirementfor SAPI
       @end itemize
 @end itemize
 
+
+@node Reference
+@unnumbered Reference
+
+@itemize @asis
+@enumerate
+@item J. Bengtsson, B. Dalesio, T. Shaftan, T. Tanabe, @cite{NSLS-II:
+Model Based Control - A Use Case Approach}, Tech-note 51, Oct 2008 
+
+@item F. Willeke, @cite{Assumptions on NSLS-II Accelerator Commissioning}, November 22, 2009
+
+@item F. Willeke, @cite{The Path to Accelerator Commissioning}, talk
+on ASD Project Meeting, Jan 2010
+
+@item S. Krinsky, @cite{NSLS-II Storage Ring Commissioning}, NSLS-II ASD Retreat, May 13, 2010.
+
+@item @cite{National Synchrotron Light Source II - Nomenclature Standard},
+LT-ENG-RSI-STD-002, Jan 21, 2009, Rev 2
+
+@item @cite{National Synchrotron Light Source II - Accelerator Systems
+Requirements Document, Storage Ring Physics Nomenclature Standard},
+RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
+@end enumerate
+
+@end itemize
 
 @iftex
 @normalbottom
@@ -1660,6 +1660,7 @@ The overview requirementfor SAPI
 
 @node Links
 @heading Links
+
 @itemize
 @item @uref{http://www.python.org/, Python.org}
 @item @uref{http://ipython.scipy.org/moin/, iPython}
@@ -1668,40 +1669,16 @@ The overview requirementfor SAPI
 @end itemize
 
 
-@node Appendix
-@chapter Appendix
+@c @node Appendix
+@c chapter Appendix
 
 @node Revision History
-@section Revision History
+@heading Revision History
 
 @itemize @bullet
 @item 2010-06-08, Lingyun Yang, init
 @item 2010-06-14, Guobao Shen, rev 1
 @end itemize
 
-@node Reference
-@section Reference
-
-@itemize @asis
-@enumerate
-@item J. Bengtsson, B. Dalesio, T. Shaftan, T. Tanabe, @cite{NSLS-II:
-Model Based Control - A Use Case Approach}, Tech-note 51, Oct 2008 
-
-@item F. Willeke, @cite{Assumptions on NSLS-II Accelerator Commissioning}, November 22, 2009
-
-@item F. Willeke, @cite{The Path to Accelerator Commissioning}, talk
-on ASD Project Meeting, Jan 2010
-
-@item S. Krinsky, @cite{NSLS-II Storage Ring Commissioning}, NSLS-II ASD Retreat, May 13, 2010.
-
-@item @cite{National Synchrotron Light Source II - Nomenclature Standard},
-LT-ENG-RSI-STD-002, Jan 21, 2009, Rev 2
-
-@item @cite{National Synchrotron Light Source II - Accelerator Systems
-Requirements Document, Storage Ring Physics Nomenclature Standard},
-RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
-@end enumerate
-
-@end itemize
 
 @bye
