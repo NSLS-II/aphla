@@ -867,23 +867,31 @@ the interactive environment.
 The client APIs are a set of high level functions with physics
 meanings. It hides the low level function calls from its users, who are
 mainly accelerator physicists, operators and high level GUI application
-developers. We assume that the user of CAPI has no knowledge of EPICS
-channel access, she only knows magnets name, location, family, ....
+developers. It is not required for a user of CAPI to have any
+knowledge of EPICS system such as channel access and/or pv name. A
+user can get all desired data with hardware name (magnets for
+example), location, group, .... 
 
-The internals of CAPI needs a configure file which links abstract magnet
-name, their location or any abstract symbol representing them to real
-EPICS channels.
+The internals of CAPI needs a configure file which links abstract
+hardware name, their location or any abstract symbol representing them
+to real EPICS channels.
 
 Roughly speaking, CAPI is a subset of Matlab Middle Layer, while High
-Level Applications/Scripts (HLA) are not
+Level Applications/Scripts (HLA) are not.
 
-I recommend that the name of the API has no short-naming, e.g. not
-@code{meas} but @code{measure}, except for well known terminologies
-which have been used in accelerator physics or control systems everyday,
-like BPM, RM, Setpoint, treat them as one word: @strong{Bpm} (beam
-position monitor), @strong{Rm} (response matrix), @strong{Sp}
-(setpoint), @strong{Rb} (readback), (many environment,
-i.e. @code{iPython}, has auto complete function)
+The API name follows the convention as described in chapter 1 section
+"API prefix". Addtion to that, some routine used abbreviation is
+treated as one word, and first letter is in capital and other in small
+as below: 
+
+@itemize
+@item @strong{Bpm} (beam position monitor)
+@item @strong{Rm} (response matrix)
+@item @strong{Sp} (setpoint)
+@item @strong{Rb} (readback) 
+@item @strong{Rf} (Radio Frequency) 
+@end itemize
+
 
 The GUI part will not be included here.
 
@@ -894,15 +902,15 @@ Here is a demo of how a short script looks like:
 import capi as sr
 import numpy as np
 import time
-# returns all element name belongs to family ``CELL30''
-c30elems = sr.getMembers(family=''CELL30'')
-# get orbit at cell 30, neglect non-bpm elements in ``CELL30'' family
-orbit1 = sr.getOrbit(family=''CELL30'')
+# returns all channels belongs to group "CELL30" and "BPMx"
+bpms1 = sr.getMembers(group="CELL30", group="BPMx")
+# get orbit at cell 30
+orbit1 = sr.getOrbit(bpms1)
 orbit_variation = np.sum(orbit1*orbit1)
 time.sleep(2)
 # exactly same as before, get all BPMs in cell 30
-bpms2 = sr.getMembers(family=''P*C30*'')
-orbit2 = sr.getOrbit(family=``P*C30*'')
+bpms2 = sr.getMembers(group="P*C30*", group="BPMx")
+orbit2 = sr.getOrbit(bpms2)
 orbit_variation = np.sum(orbit2*orbit2)
 orbit_diff = np.zeros(len(orbit2), 'd')
 for i,bpm in enumerate(bpms2):
