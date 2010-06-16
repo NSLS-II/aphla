@@ -438,117 +438,29 @@ It is better that the HLA can have the following features:
 
 This chapter is a more detailed list of control software for NSLS-II
 commissioning. The functions here contains more accelerator physics
-concepts and the beam control and manipulation.
+concepts and the beam control and manipulation. For the specification of these tools, @pxref{Specification for Accelerator Physics Toolkit}
 
 @node Machine status
 @section Machine status
 
-The applications provide overall status of the whole machine, and give
+The applications will provide overall status of the whole machine, and give
 warnings when any abnormal beam behaviour is detected, for example a
 readback differs from setting point larger than its threshhold. The
 status includes beam information, and hardware status including magnet
 and its power supply, vacuum, RF, and so on.
 
 @itemize @bullet
-    @item Orbit
+@item Orbit
     @enumerate
     @item Closed orbit display
-
-        Description: 
-        
-        Repetition rate: .5Hz
-        
-        Related APIs: @code{getOrbit}, @code{getLocation}
-        
-        Data structure: One dimension array, time stamp, BPM status
-        (Bad or Good), severity.
-
-        Other requirement: Bad BPM identification should be done in
-        other application. Data synchronization to be done in low
-        level server part.
-
     @item Orbit feedback status
-
-        Description: 
-        
-        Repetition rate: .1Hz
-        
-        Related APIs: @code{getFOFStatus(???)}
-        
-        Data structure: Status only? To be defined.
-
-        Other requirement: TBD. Hostoric plotting can be done using
-        strip tool or CSS (Control System Studio).
-
     @item Orbit stability, especially drift and variation
-
-        Repetition rate: 
-        
-        Related APIs: 
-        
-        Data structure:
-
-        Other requirement:
-
-    @item Turn by turn BPM reading vistualization if available
-
-        Description: 
-        
-        Repetition rate: .01Hz
-        
-        Related APIs: @code{getTbtBpmBuf(???)}
-        
-        Data structure: One dimension array, time stamp, severity.
-
-        Other requirement: TBD. 
-
+    @item Turn by turn BPM reading vistualization when available/enabled
     @end enumerate
-
-    @item Tunes
-
-        Description: 
-        
-        Repetition rate: 1Hz
-        
-        Related APIs: @code{getTune}
-        
-        Data structure: [tune_x, tune_y], time stamp, severity.
-
-        Other requirement: TBD. Hostoric plotting can be done using
-        strip tool or CSS (Control System Studio).
-
-    @item Magnets
-
-    Description: The status presents all status, such as ON/OFF, set
-                 point, read back, temperature and so on for all
-                 magnets and their power supply  including main
-                 dipole, quadrupole, sextupole, correctors. Gives
-                 warnings when they differs more than threshold, or
-                 the settings larger than limit.
-
-    Repetition rate: 
-        
-    Related APIs: 
-  
-    Data structure: 
-
-    Other requirement: TBD. 
-
-    @item Vacuum status.
-
-    Description: The status presents all status, such as ON/OFF, set
-                 point, read back, temperature, pressure and so on for
-                 all vaccum devices. Gives warnings for example when
-                 vacuum pressure is over threshold. 
-
-    Repetition rate: 
-        
-    Related APIs: 
-  
-    Data structure: 
-
-    Other requirement: TBD. 
-
+@item Tunes
+@item Magnets
+@item Vacuum status.
+@item Logging all necessary machine settings data, and retrive the historical data for analysis.
 @end itemize
 
 
@@ -835,6 +747,115 @@ simulator has a simple form instead of complete mimic of a real machine.
 @end itemize
 @c @end enumerate
 
+
+
+@node Specification for Accelerator Physics Toolkit
+@chapter Specification for Accelerator Physics Toolkit
+
+@node Orbit
+@section Orbit
+
+@itemize @bullet
+    @item Orbit
+    @enumerate
+    @item Closed orbit display
+
+        Description: 
+        
+        Repetition rate: .5Hz
+        
+        Related APIs: @code{getOrbit}, @code{getLocation}
+        
+        Data structure: One dimension array, time stamp, BPM status
+        (Bad or Good), severity.
+
+        Other requirement: Bad BPM identification should be done in
+        other application. Data synchronization to be done in low
+        level server part.
+
+    @item Orbit feedback status
+
+        Description: 
+        
+        Repetition rate: .1Hz
+        
+        Related APIs: @code{getFofbStatus}
+        
+        Data structure: Status only? To be defined.
+
+        Other requirement: @strong{TBD}. Hostoric plotting can be done using
+        strip tool or CSS (Control System Studio).
+
+    @item Orbit stability, especially drift and variation
+
+        Repetition rate: 
+        
+        Related APIs: 
+        
+        Data structure:
+
+        Other requirement:
+
+    @item Turn by turn BPM reading vistualization if available
+
+        Description: 
+        
+        Repetition rate: .01Hz
+        
+        Related APIs: @code{getTbtBpmBuffer}
+        
+        Data structure: One dimension array, time stamp, severity.
+
+        Other requirement: @strong{TBD}. 
+
+    @end enumerate
+
+    @item Tunes
+
+        Description: 
+        
+        Repetition rate: 1Hz
+        
+        Related APIs: @code{getTune}
+        
+        Data structure: [tune_x, tune_y], time stamp, severity.
+
+        Other requirement: @strong{TBD}. Hostoric plotting can be done using
+        strip tool or CSS (Control System Studio).
+
+    @item Magnets
+
+    Description: The status presents all status, such as ON/OFF, set
+                 point, read back, temperature and so on for all
+                 magnets and their power supply  including main
+                 dipole, quadrupole, sextupole, correctors. Gives
+                 warnings when they differs more than threshold, or
+                 the settings larger than limit.
+
+    Repetition rate: 
+        
+    Related APIs: 
+  
+    Data structure: 
+
+    Other requirement: @strong{TBD}. 
+
+    @item Vacuum status.
+
+    Description: The status presents all status, such as ON/OFF, set
+                 point, read back, temperature, pressure and so on for
+                 all vaccum devices. Gives warnings for example when
+                 vacuum pressure is over threshold. 
+
+    Repetition rate: 
+        
+    Related APIs: 
+  
+    Data structure: 
+
+    Other requirement: @strong{TBD}. 
+
+@end itemize
 
 
 @node Client APIs (CAPI)
