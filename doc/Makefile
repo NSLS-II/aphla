@@ -4,7 +4,7 @@ HGREV = $(shell hg -q id -n)
 HGVERSION = $(shell hg id)
 hla.pdf: hla.texi
 	echo "HG version: ${HGVERSION}"
-	echo "[Revision: r${HGREV}]@*" > hlaversion.texi
+	echo "[Revision: Rev${HGREV}]@*" > hlaversion.texi
 	echo "[Modified: `hg parents --template '{date|date}'`]" >> hlaversion.texi
 	texi2pdf -V hla.texi
 

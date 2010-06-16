@@ -438,31 +438,128 @@ It is better that the HLA can have the following features:
 
 This chapter is a more detailed list of control software for NSLS-II
 commissioning. The functions here contains more accelerator physics
-concepts and their control.
+concepts and the beam control and manipulation.
+
+@node Machine status
+@section Machine status
+
+The applications provide overall status of the whole machine, and give
+warnings when any abnormal beam behaviour is detected, for example a
+readback differs from setting point larger than its threshhold. The
+status includes beam information, and hardware status including magnet
+and its power supply, vacuum, RF, and so on.
+
+@itemize @bullet
+    @item Orbit
+    @enumerate
+    @item Closed orbit display
+
+        Description: 
+        
+        Repetition rate: .5Hz
+        
+        Related APIs: @code{getOrbit}, @code{getLocation}
+        
+        Data structure: One dimension array, time stamp, BPM status
+        (Bad or Good), severity.
+
+        Other requirement: Bad BPM identification should be done in
+        other application. Data synchronization to be done in low
+        level server part.
+
+    @item Orbit feedback status
+
+        Description: 
+        
+        Repetition rate: .1Hz
+        
+        Related APIs: @code{getFOFStatus(???)}
+        
+        Data structure: Status only? To be defined.
+
+        Other requirement: TBD. Hostoric plotting can be done using
+        strip tool or CSS (Control System Studio).
+
+    @item Orbit stability, especially drift and variation
+
+        Repetition rate: 
+        
+        Related APIs: 
+        
+        Data structure:
+
+        Other requirement:
+
+    @item Turn by turn BPM reading vistualization if available
+
+        Description: 
+        
+        Repetition rate: .01Hz
+        
+        Related APIs: @code{getTbtBpmBuf(???)}
+        
+        Data structure: One dimension array, time stamp, severity.
+
+        Other requirement: TBD. 
+
+    @end enumerate
+
+    @item Tunes
+
+        Description: 
+        
+        Repetition rate: 1Hz
+        
+        Related APIs: @code{getTune}
+        
+        Data structure: [tune_x, tune_y], time stamp, severity.
+
+        Other requirement: TBD. Hostoric plotting can be done using
+        strip tool or CSS (Control System Studio).
+
+    @item Magnets
+
+    Description: The status presents all status, such as ON/OFF, set
+                 point, read back, temperature and so on for all
+                 magnets and their power supply  including main
+                 dipole, quadrupole, sextupole, correctors. Gives
+                 warnings when they differs more than threshold, or
+                 the settings larger than limit.
+
+    Repetition rate: 
+        
+    Related APIs: 
+  
+    Data structure: 
+
+    Other requirement: TBD. 
+
+    @item Vacuum status.
+
+    Description: The status presents all status, such as ON/OFF, set
+                 point, read back, temperature, pressure and so on for
+                 all vaccum devices. Gives warnings for example when
+                 vacuum pressure is over threshold. 
+
+    Repetition rate: 
+        
+    Related APIs: 
+  
+    Data structure: 
+
+    Other requirement: TBD. 
+
+@end itemize
+
 
 @node Requirement
 @section Requirement
 
-@node Machine status
-@subsection Machine status
-
-The software will provide overall status of the ring, and give
-warnings when the readback differs from setting point larger than its
-threshhold. The status includes beam information, hardware status for
-example magnet and/or vacuum system, data archiving and retriving, and
-historical data analysis.
-
-@itemize @bullet
-    @item Closed orbit, orbit feedback status, orbit stability (drift and variation). 
-    @item Single shot beam position, turn by turn BPM reading and orbit analysis.
-    @item Tunes, if they are available online.
-    @item Magnets (Quadrupole, sextupole, orbit correctors) settings and readback. Gives warnings when they differs more than threshold, or the settings larger than limit.
-    @item Vacuum status.
-    @item Logging all necessary machine settings data, and retrive the historical data for analysis.
-@end itemize
 
 @node Physics tasks
 @subsection Physics tasks
+
+data archiving and retriving, and historical data analysis.
 
 @itemize @bullet
     @item BPM testing, stability, polarity, current dependency, resolution.
@@ -486,6 +583,8 @@ historical data analysis.
 @subsection Accelerator Physics Applications
 
 @itemize @bullet
+    @item Logging all necessary machine settings data, and retrive the historical data for analysis.
+    @item Single shot beam position, turn by turn BPM reading and orbit analysis.
 @item Static orbit corrections
 @item First turn steering
 @item Chromatic correction
