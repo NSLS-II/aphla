@@ -937,31 +937,88 @@ The data required for machine operation needs to be in centralized
 space, while user data/plots can be on a file system.
 
 @enumerate
-@item Current operation mode. One mode is like one brand new storage ring. The data includes
+@item Operation mode. 
+
+      One mode is like one brand new storage ring. The mode returns
+      only properties like mode name, description, and so
+      on. Associated machine configuration, magnet power supply
+      setting for example is stored separatedly, and can be retrieved
+      using the mode name. The data structure is as below: 
+
       @enumerate
-      @item @emph{mode name}, ``simulator'', ``operation'', ``AccPhys1'', ``low alpha'', ``low beta''
-      @item @emph{create date},
-      @item @emph{modified date},
+      @item @emph{mode name},
+
+            The mode name is treated as a string, such as "simulator", "operation", "AccPhys1", "low alpha", "low beta"
+
       @item @emph{description},
+
+            Any description is added here when this mode is created,
+            and/or modified.
+
+            Date format: @strong{TDB}
+
+      @item @emph{create date},
+
+            This identifies the first time that this mode is created.
+
+            Date format: @strong{TDB}
+
+      @item @emph{modified date},
+
+            This identifies the last date that this mode is modified.
+
+            Date format: @strong{TDB}
+
       @item @emph{creator}. 
+
+            This identifies who creates this model.
+
       @end enumerate 
-      
-We can use these APIs: @code{getMode}, @code{getModeInfo}, @code{getOperationModes}.
+
+      Related APIs: @code{getCurrentMode}, @code{getModeInfo}, @code{getOperationModes}.
+
 @item Lattice and organization:
       @enumerate
-      @item @emph{magnet/element full name}, unique
-      @item @emph{magnet/element s-location}, unique number
-      @item @emph{element groups}, multiple string, can be added by users. For export to elegant, need a group name for its type like ``Quadrupole'', ``Sextupole'', ``RF''
-      @item @emph{step size}, sigle number
-      @item @emph{setting/reading channels}, readback/setpoint, may have more channels associated with one magnet/element
-      @item @emph{setting/reading channel limits}, lower and upper bound
+      @item @emph{magnet/element full name} 
+
+      The element physics name, which follows the NSLS-II nomenclature
+      standard, and each name is unique.
+
+      @item @emph{magnet/element s-location}
+
+      The element position along @emph{s} direction. The value depends
+      on the coordinate definition. Should it be unique?
+
+      @item @emph{element groups}
+
+      multiple string, can be added by users. For export to elegant, need a group name for its type like "Quadrupole", "Sextupole", "RF"
+      
+      @item @emph{step size}
+
+      sigle number
+
+      @item @emph{setting/reading channels}
+
+      readback/setpoint, may have more channels associated with one magnet/element
+      
+      @item @emph{setting/reading channel limits}
+
+      lower and upper bound
+      
       @item @emph{channel set/read unit}, unit for each channel
+      
       @item @emph{channel label}, when plotting, default label
+      
       @item @emph{unit convertion table}, a table convert engineer(current, voltage) number to physics (mm, rad) number
+      
       @item @emph{online(enabled)/offline(disabled) status}
+      
       @item @emph{cell number, girder number}
+      
       @item @emph{bpm sequence number}
+      
       @end enumerate
+
 The configure file may look like the following ::
 
 @example
@@ -1056,9 +1113,9 @@ These data are associated with each magnet.
 
 @table @code
 
-@deftypefun {mode =} getMode () 
+@deftypefun {mode =} getCurrentMode () 
 @deftypefunx {modes =} getOperationModes()
-Get current operation mode with @code{getMode}, and all operation modes
+Get current operation mode with @code{getCurrentMode}, and all operation modes
 @code{getOperationModes()}. The operation mode is used to group
 different response matrix, tunes, beta and ramping for different storage
 ring settings. One mode can be norminal operation mode, the others can
