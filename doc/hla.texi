@@ -227,7 +227,7 @@ this set). If we are using BASH wildcards:
 
 @cindex sequence
 @item @dfn{Sequence}
-Lingyun suggestes that we can also use sequence to inditify one element,
+Lingyun suggestes that we can also use sequence to identify one element,
 usually BPM or corrector. For the convenience purpose when looping over
 BPM or correctors one after the other along the ring, we can use number
 as its order, instead their names. Suggested sequence could be a pair
@@ -719,14 +719,13 @@ simulator has a simple form instead of complete mimic of a real machine.
 @subsection Misc
 
 @itemize  @minus
-@item RF feedback. Choi proposed a RF feedback application, which detects orbit drift and change RF frequency.
+@item RF feedback. Choi proposed a RF feedback application, which detects horizontal orbit expansion or contraction and change RF frequency to keep the photon beam positions from drifting.
 @item Current dependency of BPM and orbit feedback. Choi proposed to measure the current dependency of BPM readings and compensate that for orbit feedback.
-@item PBPM matching. Choi proposed to read both BPM and PBPM, and use BPM to predict the PBPM values, since he thought PBPM is not as reliable as RF BPM. 
+@item PBPM matching. Choi proposed to read both BPM and PBPM, and use BPM to predict the PBPM values, since he thought PBPM reading can be affected by local status including Front End.
 @item get groud motion and chamber motion if there are available readings (Choi proposed)
-@item check reproducibility (Choi, ???)
 @item monitor loss. Get loss monitor readings from beam containment system (beam loss monitor).
 @item Identify MPS (magnet power sypply) ripples.
-@item Magenet reproducibility. Choi proposed that test magnet setting reproducibility by setting same values for several timesm and check the variance/average of its result, which could be orbit shift, tune change, etc.
+@item Magenet reproducibility. Choi proposed that test magnet setting reproducibility by setting same values for several times and check the variance/average of its result, which could be orbit shift, tune change, etc. Check and confirm that the hystereses of correctors do not affect the orbit stability. Also identify the correctors with excessive hystereses if there are any.
 @end itemize
 @c @end enumerate
 
@@ -766,7 +765,7 @@ simulator has a simple form instead of complete mimic of a real machine.
         
         Data structure: Status only? To be defined.
 
-        Other requirement: @strong{TBD}. Hostoric plotting can be done using
+        Other requirement: @strong{TBD}. Historic plotting can be done using
         strip tool or CSS (Control System Studio).
 
     @item Orbit stability, especially drift and variation
@@ -1101,9 +1100,12 @@ system.
 Returns location of certain @var{group}, the order matters.
 @end deftypefun
 
-@deftypefun {} getGroundMotion ( )
-@deftypefunx {} getChamberMotion ( )
-(Choi, ???) 
+@deftypefun {} getGroundLevel ( )
+In case devices monitoring the level of ground and/or girder are installed, this function returns the reading values.
+These values can be used to calibrate the BPM readings.
+@deftypefunx {} getChamberOffset ( )
+In case devices monitoring the vacuum chamber offset are installed, this function returns the reading values.
+These values can be used to calibrate the BPM readings.
 @end deftypefun
 
 @deftypefun {phase =} getPhase ( @var{mode}, @var{group} )
