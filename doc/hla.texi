@@ -196,7 +196,7 @@ position, symmetry, purpose, connections or user's preferences. We can
 group all sextupoles together and give a group name
 @code{Sextupole}. From lattice point of view, we can have a group name
 @code{QH1} for all quadrupoles with this symmetry. Each element or
-magnet can belong to one or more families.  For consistance, the element
+magnet can belong to one or more groups.  For consistance, the element
 belongs to the group which has only himself.
 
 The pre-defined group name should be discussed carefully, and stored in
@@ -275,8 +275,8 @@ injection.
 @end enumerate
 @end itemize
 
-@node API prefix
-@section API prefix
+@node API Prefix
+@section API Prefix
 
 A short summary of API prefix. It serves as guideline but may have
 exceptions.
@@ -284,7 +284,7 @@ exceptions.
 @item @strong{meas} is for measurement routines. They may perturb the beam, and affect users.
 @item @strong{get} is either read history or the output of online instrument.
 @item @strong{set} will change the settings of an online instrument. The value will be gone after next injection(non-topoff)
-@item @strong{save} operates on file, read machine to file/DB. (set operates on real machine, on a smaller scale, single element/family). The new value will take effect in next injection/run. 
+@item @strong{save} operates on file, read machine to file/DB. (set operates on real machine, on a smaller scale, single element/group). The new value will take effect in next injection/run. 
 @item @strong{load} operates on files/DB and set to memory/machine.
 @item @strong{calc} is for routines doing calculation and analysis. This is calculation only, does not perturb the beam.
 @c @item @strong{anal} is for routines more complicated than @code{calc}, the results are a set of results.
@@ -861,21 +861,15 @@ to real EPICS channels.
 Roughly speaking, CAPI is a subset of Matlab Middle Layer, while High
 Level Applications/Scripts (HLA) are not.
 
-The API name follows the convention as described in chapter 1 section
-"API prefix". Addtion to that, some routine used abbreviation is
-treated as one word, and first letter is in capital and other in small
-as below: 
-
-@itemize
-@item @strong{Bpm} (beam position monitor)
-@item @strong{Rm} (response matrix)
-@item @strong{Sp} (setpoint)
-@item @strong{Rb} (readback) 
-@item @strong{Rf} (Radio Frequency) 
-@end itemize
+The API name follows the convention as described (@pxref{API
+Prefix}). Addtion to that, some commonly used abbreviation is treated as
+one word, only the first letter is in upper case. e.g. @strong{Bpm}
+(beam position monitor), @strong{Rm} (response matrix), @strong{Sp}
+(setpoint), @strong{Rb} (readback), @strong{Rf} (Radio Frequency).
 
 
-The GUI part will not be included here.
+The GUI part will not be included here. But Lingyun suggested that
+@code{PyQt} is a good candidate. It is easier to use and full of features.
 
 Here is a demo of how a short script looks like:
 
@@ -888,12 +882,12 @@ import time
 bpms1 = sr.getMembers(group="CELL30", group="BPMx")
 # get orbit at cell 30
 orbit1 = sr.getOrbit(bpms1)
-orbit_variation = np.sum(orbit1*orbit1)
+orbit_sq2 = np.sum(orbit1*orbit1)
 time.sleep(2)
 # exactly same as before, get all BPMs in cell 30
 bpms2 = sr.getMembers(group="P*C30*", group="BPMx")
 orbit2 = sr.getOrbit(bpms2)
-orbit_variation = np.sum(orbit2*orbit2)
+orbit_sq2 = np.sum(orbit2*orbit2)
 orbit_diff = np.zeros(len(orbit2), 'd')
 for i,bpm in enumerate(bpms2):
     orbit_diff[i] = orbit2[i] - orbit1[bpms1.index(bpm)]
@@ -939,85 +933,85 @@ space, while user data/plots can be on a file system.
 @enumerate
 @item Operation mode. 
 
-      One mode is like one brand new storage ring. The mode returns
-      only properties like mode name, description, and so
-      on. Associated machine configuration, magnet power supply
-      setting for example is stored separatedly, and can be retrieved
-      using the mode name. The data structure is as below: 
+One mode is like one brand new storage ring. The mode returns only
+properties like mode name, description, and so on. Associated machine
+configuration, magnet power supply setting for example is stored
+separatedly, and can be retrieved using the mode name. The data
+structure is as below:
 
-      @enumerate
-      @item @emph{mode name},
+    @enumerate
+    @item @emph{mode name},
 
-            The mode name is treated as a string, such as "simulator", "operation", "AccPhys1", "low alpha", "low beta"
+    The mode name is treated as a string, such as "simulator", "operation", "AccPhys1", "low alpha", "low beta"
 
-      @item @emph{description},
+    @item @emph{description},
 
-            Any description is added here when this mode is created,
-            and/or modified.
+    Any description is added here when this mode is created, and/or
+    modified.
 
-            Date format: @strong{TDB}
+    Date format: Simple string, approximately with the size of one paragraph.
 
-      @item @emph{create date},
+    @item @emph{create date},
 
-            This identifies the first time that this mode is created.
+    This identifies the first time that this mode is created.
 
-            Date format: @strong{TDB}
+    Date format: ISO 8601 format, ``YYYY-MM-DDTHH:MM:SS.mmmmmm'', e.g. '2002-12-25T00:00:00' or '2002-12-25 00:00:00', need discussion on @strong{UTC} or @strong{local} time with daylight saving ?
 
-      @item @emph{modified date},
+    @item @emph{modified date},
 
-            This identifies the last date that this mode is modified.
+    This identifies the last date that this mode is modified.
 
-            Date format: @strong{TDB}
+    Date format: ISO 8601
 
-      @item @emph{creator}. 
+    @item @emph{creator}. 
 
-            This identifies who creates this model.
+    This identifies who creates this model.
 
-      @end enumerate 
+    @end enumerate 
 
-      Related APIs: @code{getCurrentMode}, @code{getModeInfo}, @code{getOperationModes}.
+    Related APIs: @code{getCurrentMode}, @code{getModeInfo}, @code{getAllModes}.
 
 @item Lattice and organization:
-      @enumerate
-      @item @emph{magnet/element full name} 
+    @enumerate
+    @item @emph{magnet/element full name} 
 
-      The element physics name, which follows the NSLS-II nomenclature
-      standard, and each name is unique.
+    The element physics name, which follows the NSLS-II nomenclature
+    standard, and each name is unique.
 
-      @item @emph{magnet/element s-location}
+    @item @emph{magnet/element s-location}
 
-      The element position along @emph{s} direction. The value depends
-      on the coordinate definition. Should it be unique?
+    The element position along @emph{s} direction. The value depends on
+    the coordinate definition. Should it be unique?
 
-      @item @emph{element groups}
+    @item @emph{element groups}
 
-      multiple string, can be added by users. For export to elegant, need a group name for its type like "Quadrupole", "Sextupole", "RF"
+    multiple string, can be added by users. For export to elegant, need a group name for its type like "Quadrupole", "Sextupole", "RF"
       
-      @item @emph{step size}
+    @item @emph{step size}
 
-      sigle number
+    sigle number
 
-      @item @emph{setting/reading channels}
+    @item @emph{setting/reading channels}
 
-      readback/setpoint, may have more channels associated with one magnet/element
+    readback/setpoint, may have more channels associated with one magnet/element
       
-      @item @emph{setting/reading channel limits}
+    @item @emph{setting/reading channel limits}
 
-      lower and upper bound
+    lower and upper bound
       
-      @item @emph{channel set/read unit}, unit for each channel
+    @item @emph{channel set/read unit}, unit for each channel
       
-      @item @emph{channel label}, when plotting, default label
+    @item @emph{channel label}, when plotting, default label
       
-      @item @emph{unit convertion table}, a table convert engineer(current, voltage) number to physics (mm, rad) number
+    @item @emph{unit convertion table}, a table convert engineer(current, voltage) number to physics (mm, rad) number
       
-      @item @emph{online(enabled)/offline(disabled) status}
+    @item @emph{online(enabled)/offline(disabled) status}
       
-      @item @emph{cell number, girder number}
+    @item @emph{cell number, girder number}
       
-      @item @emph{bpm sequence number}
+    @item @emph{bpm sequence number}
       
-      @end enumerate
+    @end enumerate
 
 The configure file may look like the following ::
 
@@ -1042,7 +1036,7 @@ The configure file may look like the following ::
 @end example
 
 This is a horizontal orbit corrector @code{CH1YSP01}, it belongs to @code{section 1},
-@code{girder 2}, together with other elements, it is in two families called
+@code{girder 2}, together with other elements, it is in two groups called
 @code{Corrector} and @code{HCorrector}, it is also linked to a power supply @code{Ha},
 to which other horizontal corrector may belongs. The group name
 @code{BeamBasedAlignment} also implies that this corrector will be used for
@@ -1060,7 +1054,7 @@ This file is needed by HLAs, and easily ported to other storage
 rings. We can provide a local copy of this file or access it from
 network (API or network file system).
 
-Related APIs: @code{getFamilies}, @code{getLocation}, @code{getAllFamilies}, @code{getNeighbors}
+Related APIs: @code{getGroups}, @code{getLocation}, @code{getAllGroups}, @code{getNeighbors}
 @item Golden orbit, phase advance, beta function, dispersion and chromaticity:
       @enumerate 
       @item @emph{golden orbit}, element name and orbit value (timestamp ?)
@@ -1114,9 +1108,9 @@ These data are associated with each magnet.
 @table @code
 
 @deftypefun {mode =} getCurrentMode () 
-@deftypefunx {modes =} getOperationModes()
+@deftypefunx {modes =} getAllModes()
 Get current operation mode with @code{getCurrentMode}, and all operation modes
-@code{getOperationModes()}. The operation mode is used to group
+@code{getAllModes()}. The operation mode is used to group
 different response matrix, tunes, beta and ramping for different storage
 ring settings. One mode can be norminal operation mode, the others can
 be accelerator physics mode, single bunch mode, different working
@@ -1139,18 +1133,21 @@ All operation modes share same group settings. We can use a new group
 name for various mode. e.g. If some correctors only works in ``physics''
 mode, we can have a group name for them.
 
-@strong{WARNING}: for some group, it would be nice to be readonly, too dangerous to change in script. 
+@strong{WARNING}: for some group, it would be nice to be readonly, too
+dangerous to change in script.
 @end deftypefun
 
-@deftypefun {families =} getFamilies ( @var{element} )
+@deftypefun {groups =} getGroups ( @var{element} )
+@c @deftypefunx {info=} getGroupInfo ( @var{group} )
 @deftypefunx {members =} getMembers ( @var{group} )
-@deftypefunx {families =} getAllFamilies ( )
-@code{getFamilies} returns group name list to which a specific element
+@deftypefunx {groups =} getAllGroups ( )
+@code{getGroups} returns group name list to which a specific element
 belongs.  The element name should be uniqe in lattice. @code{getMembers}
-returns all elements in a group or families. The order of @var{members}
+returns all elements in a group or groups. The order of @var{members}
 does matter, must be in increasing order of
-@math{s}. @code{getAllFamilies} returns all families available in the
-system.
+@math{s}. @code{getAllGroups} returns all groups available in the
+system. 
+@c @code{getGroupInfo} returns the information of this single group (no wildcard/regular expression matching).
 @end deftypefun
 
 @deftypefun {s =} getLocation ( @var{group} )
@@ -1158,11 +1155,13 @@ Returns location of certain @var{group}, the order matters.
 @end deftypefun
 
 @deftypefun {} getGroundLevel ( )
-In case devices monitoring the level of ground and/or girder are installed, this function returns the reading values.
-These values can be used to calibrate the BPM readings.
+In case devices monitoring the level of ground and/or girder are
+installed, this function returns the reading values.  These values can
+be used to calibrate the BPM readings.
 @deftypefunx {} getChamberOffset ( )
-In case devices monitoring the vacuum chamber offset are installed, this function returns the reading values.
-These values can be used to calibrate the BPM readings.
+In case devices monitoring the vacuum chamber offset are installed, this
+function returns the reading values.  These values can be used to
+calibrate the BPM readings.
 @end deftypefun
 
 @deftypefun {phase =} getPhase ( @var{mode}, @var{group} )
@@ -1594,7 +1593,7 @@ The overview requirementfor SAPI
       @item used for specified purpose ? (this can be organized as group, quadrupoles used for beam based alignment can be in "BBA" group)
       @item nominal setting (operation lattice)
       @item set point for various set purpose ( for example low alpha lattice, this quadrupole will have different strength. operation lattice is one instance of these set)
-      @item query families it belongs to, how many set of values it can be.
+      @item query groups it belongs to, how many set of values it can be.
       @item data archiever info, location, frequency, (we can get the history from it)
       @item realtime status? disabled or enabled ? especially for BPM and corrector ?
       @item golden orbit, read/write
