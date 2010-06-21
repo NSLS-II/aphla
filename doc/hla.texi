@@ -971,26 +971,111 @@ structure is as below:
 
     Related APIs: @code{getCurrentMode}, @code{getModeInfo}, @code{getAllModes}.
 
-@item Lattice and organization:
+@item Lattice organization:
+
+    The bare lattice can be saved and restored with this information.
+
     @enumerate
-    @item @emph{magnet/element full name} 
+    @item @emph{element full name} 
 
     The element physics name, which follows the NSLS-II nomenclature
     standard, and each name is unique.
 
-    @item @emph{magnet/element s-location}
+    @item @emph{element type}
 
-    The element position along @emph{s} direction. The value depends on
-    the coordinate definition. Should it be unique?
+    This information is used to define a 
 
+    @itemize @bullet
+    @item MARK, a marker  
+    @item DRIF, drift space
+    @item DIPOLE, main dipole
+    @item QUAD, quadrupole
+    @item SEXT, sextupole
+    @item *TRIM*, corrector, for example, in NSLS-II bare lattice,
+    use TRIMX for horizontal corrector, TRIMY for vertical corrector,
+    TRIMD for corrector with combined function (horizontal & vertical).
+
+    @item BPM, beam position monitor
+    @item RF, radio frequency
+    @end itemize
+
+    @item @emph{element s-location}
+
+    The element position along @emph{s} direction. The value depends
+    on the coordinate definition. Should it be unique?
+
+    Unit: [meter]
+
+    @item @emph{element length}
+
+    The element length.
+
+    Unit: [meter]
+
+    @item @emph{K1 value}
+
+    The default K1 value. Typically, this is for bare lattice.
+
+    Unit: [1/meter^2]
+
+    @item @emph{K2 value}
+
+    The default K2 value. Typically, this is for bare lattice.
+
+    Unit: [1/meter^3]
+
+
+    @item @emph{angle}
+
+    The default bending angle. Typically, this is for main dipole. The
+    bending angle should be zero for other type magnet.
+
+    Unit: [rad]
+
+    @item @emph{...}
+
+    Other information to be added here.
+
+    Unit: [a.u.]
+
+    @end enumerate
+
+    Related APIs: @code{getBareLattice} @code{saveBareLattice}
+
+@item Machine configuration:
+
+    @enumerate
     @item @emph{element groups}
 
-    multiple string, can be added by users. For export to elegant, need a group name for its type like "Quadrupole", "Sextupole", "RF"
+    multiple string, can be added by users. For export to elegant,
+    need a group name for its type like "Quadrupole", "Sextupole",
+    "RF"
+
+    Default groups for each subsystems:
+    @itemize @bullet
+    @item magnet
+    @itemize @bullet
+    @item dipole
+    @item quad
+    @item sext
+    @item correctorX
+    @item correctorY
+    @item ...
+    @end itemize
+    @item power supply
+    @item diagnostic
+    @itemize @bullet
+    @item BPMx
+    @item BPMy
+    @item ...
+    @end itemize
+    @item vaccum
+    @item RF (Radio Frequency)
+    @item PPS (Personal Protection System)
+    @item EPS (Equipment Protection System)
+    @item ...
+    @end itemize
       
-    @item @emph{step size}
-
-    sigle number
-
     @item @emph{setting/reading channels}
 
     readback/setpoint, may have more channels associated with one magnet/element
@@ -1003,14 +1088,22 @@ structure is as below:
       
     @item @emph{channel label}, when plotting, default label
       
-    @item @emph{unit convertion table}, a table convert engineer(current, voltage) number to physics (mm, rad) number
-      
     @item @emph{online(enabled)/offline(disabled) status}
       
     @item @emph{cell number, girder number}
       
     @item @emph{bpm sequence number}
-      
+
+    @item @emph{alignment error}
+    @itemize @bullet
+    @item dx. alignment error at @emph{x} direction
+    @item dy. alignment error at @emph{y} direction
+    @item ds. alignment error at @emph{s} direction
+    @item pitch. alignment error at @emph{???} direction
+    @item yaw. alignment error at @emph{???} direction
+    @item roll. alignment error at @emph{???} direction
+    @end itemize
+
     @end enumerate
 
 The configure file may look like the following ::
@@ -1054,51 +1147,77 @@ This file is needed by HLAs, and easily ported to other storage
 rings. We can provide a local copy of this file or access it from
 network (API or network file system).
 
-Related APIs: @code{getGroups}, @code{getLocation}, @code{getAllGroups}, @code{getNeighbors}
-@item Golden orbit, phase advance, beta function, dispersion and chromaticity:
+Related APIs: @code{getGroups}, @code{getLocation},
+@code{getAllGroups}, @code{getNeighbors}, @code{getDevice},
+@code{getAlignment}, @code{getChannel}, @code{getStatus}
+
+@item Golden orbit
+
+Include phase advance, beta function, dispersion and 
+chromaticity. All are for both horizontal and vertical planes.
       @enumerate 
-      @item @emph{golden orbit}, element name and orbit value (timestamp ?)
-      @item @emph{phase/phase advance}, element name, phase value (timestamp ?)
-      @item @emph{beta function}, element name and beta value (timestamp ?)
-      @item @emph{dispersion}, element name and dispersion (timestamp ?)
-      @item @emph{chromaticity}, horizontal and vertical chromaticity (timestamp ?)
+      @item @emph{golden orbit}, BPM name, orbit value, unit and timestamp
+      @item @emph{phase/phase advance}, BPM name, phase value, and timestamp
+      @item @emph{beta function}, BPM name, beta value, and timestamp
+      @item @emph{dispersion}, BPM name, dispersion, andtimestamp
+      @item @emph{chromaticity}, BPM name, chromaticity, and timestamp
       @end enumerate
 Related APIs: @code{getGoldenOrbit}, @code{setGoldenOrbit}, @code{saveGoldenOrbit}, @code{loadGoldenOrbit}.
+
 @item Orbit response matrix:
+
+Include tune, chromaticity, RF phase and voltage. All are for both horizontal and vertical planes.
       @enumerate 
-      @item @emph{orbit response matrix}, 2-d (matrix) data, (timestamp ?)
+      @item @emph{orbit response matrix}, 2-d (matrix) data, unit and timestamp
       @item @emph{correctors}, a list of element names
       @item @emph{bpms}, a list of element names
       @item @emph{tunes}, value
       @item @emph{chromaticity},
       @item @emph{RF voltage}, 
+      @item @emph{RF phase}, 
       @item @emph{corrector name/strength pair}
       @item @emph{closed orbit shift}, for each corrector setting, we have one set of closed orbit
       @end enumerate
-Related APIs: @code{getOrbitRm}
+Related APIs: @code{getOrbitRm}, @code{saveOrbitRm}
+
 @item Tune correction matrix:
+
+Include quadrupole setting. All are for both horizontal and vertical planes.
       @enumerate
-      @item @emph{tune RM matrix}
+      @item @emph{tune RM matrix}, 2-d (matrix) data, unit and timestamp
       @item @emph{quadrupole used}
       @item @emph{quadrupole values}
       @item @emph{tune values}
       @end enumerate
+Related APIs: @code{getTuneRm}, @code{saveTuneRm}
+
 @item Chromaticity correction matrix:
       @enumerate
-      @item @emph{chromaticity RM matrix}
+      @item @emph{chromaticity RM matrix}, 2-d (matrix) data, unit and timestamp
       @item @emph{sextupole used}
       @item @emph{sextupole values}
       @item @emph{tune values}
       @item @emph{fitted polynomial coeffients}, 5 values ?
       @item @emph{RF voltage}
       @end enumerate
+Related APIs: @code{getChromRm}, @code{saveChromRm}
+
 @item Unit conversion
       @enumerate
+      @item @emph{unit convertion table}, a table convert engineer(current, voltage) number to physics (mm, rad) number
       @item Sextupole/Quadrupole K-value vs. current
       @item Corrector current vs. angle/orbit shift
       @end enumerate
 These data are associated with each magnet. 
+Related APIs: @code{TBD}
+
 @item Step size for magnet ramping/scan, (already in lattice ? or define independently)
+    @enumerate
+    @item @emph{step size}
+
+    sigle number
+    @end enumerate
+Related APIs: @code{TBD}
 @end enumerate
 
 
