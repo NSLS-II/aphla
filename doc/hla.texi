@@ -153,8 +153,8 @@ compiled based on the following documents (@pxref{Reference}):
 @item 2010, @cite{NSLS-II Storage Ring Commissioning}
 @end itemize
 
-@node Schedule for beam commissioning
-@section Schedule for beam commissioning
+@node Schedule for Beam Commissioning
+@section Schedule for Beam Commissioning
 
 @itemize @bullet
 @item 12/01/2011--02/29/2012, LINAC front end commissioning
@@ -173,7 +173,7 @@ compiled based on the following documents (@pxref{Reference}):
 @section Terminology for High Level Applications
 
 The naming convension and terminology should follow the definition of
-project nomenclature standard as below:
+project nomenclature standard (@pxref{Reference}):
 
 @itemize @bullet
 @item @cite{National Synchrotron Light Source II - Nomenclature Standard},
@@ -255,8 +255,8 @@ vertical and longitudinal plane. The @math{s=0} (septum?) point is the
 injection.
 @end enumerate
 
-@node Terminology definition for control system
-@section Terminology definition for control system
+@node Terminology Definition for Control System
+@section Terminology Definition for Control System
 
 @itemize
 @enumerate
@@ -296,7 +296,7 @@ There are exceptions that some APIs have prefix not mentioned
 above. Check the @xref{Function Index, Variable Index} for a complete
 list.
 
-@node array data arrangement
+@node Array Data Arrangement
 @section Array Data Arrangement
 
 Whenever the value is an array, sort it in the beam direction, for
@@ -450,12 +450,16 @@ these tools, @pxref{Specification for Accelerator Physics Toolkit}
 @node Requirement
 @section Requirement
 
+We have compiled a set of requirements for high level control software,
+and design the APIs as a common library. The high level applications
+will use these APIs to fufil comissioning, operations and physics
+studies. We need more input from operation group to make these tools more operator-friendly.
 
-@node Physics tasks
-@subsection Physics tasks
+@node Physics Tasks
+@subsection Physics Tasks
 
 
-In @cite{NSLS-II Storage Ring Commissioning}, we have defined steps for
+In @cite{NSLS-II Storage Ring Commissioning} (@pxref{Reference}), we have defined steps for
 commissioning. Here we only summarize the functions needed, and neglect
 the order of using them in the commissioning.
 
@@ -581,8 +585,8 @@ scripts, client API @pxref{Client APIs (CAPI)} and server API @pxref{Server APIs
 @end itemize
 
 
-@node Machine status
-@subsection Machine status
+@node Machine Status
+@subsection Machine Status
 
 The applications will provide overall status of the whole machine, and give
 warnings when any abnormal beam behaviour is detected, for example a
@@ -591,16 +595,16 @@ status includes beam information, and hardware status including magnet
 and its power supply, vacuum, RF, and so on.
 
 @itemize @bullet
-@item Orbit
+@item Orbit, plots, numbers, status.
     @enumerate
     @item Closed orbit display
     @item Orbit feedback status
     @item Orbit stability, especially drift and variation
     @item Turn by turn BPM reading vistualization when available/enabled
     @end enumerate
-@item Tunes
-@item Magnets
-@item Vacuum status.
+@item Tunes, numbers
+@item Magnets, tables of data
+@item Vacuum status, plots, tables.
 @item Logging all necessary machine settings data, and retrive the historical data for analysis.
 @end itemize
 
@@ -719,7 +723,7 @@ simulator has a simple form instead of complete mimic of a real machine.
 @subsection Misc
 
 @itemize  @minus
-@item RF feedback. Choi proposed a RF feedback application, which detects horizontal orbit expansion or contraction and change RF frequency to keep the photon beam positions from drifting.
+@item RF feedback. Choi proposed a RF feedback application, which detects orbit drift and change RF frequency.
 @item Current dependency of BPM and orbit feedback. Choi proposed to measure the current dependency of BPM readings and compensate that for orbit feedback.
 @item PBPM matching. Choi proposed to read both BPM and PBPM, and use BPM to predict the PBPM values, since he thought PBPM reading can be affected by local status including Front End.
 @item get groud motion and chamber motion if there are available readings (Choi proposed)
@@ -926,6 +930,9 @@ int main(int argc, char* argv[])
 There are many global configurations and data are needed to be
 organized, and also centralized. Update one should be visiable to other
 applications if those applications are in same framework as HLA.
+
+Operators or accelerator physicists can have their own directory for
+storing data, and it is separated from machine setup or different mode.
 
 The data required for machine operation needs to be in centralized
 space, while user data/plots can be on a file system.
