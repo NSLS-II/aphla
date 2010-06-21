@@ -1203,12 +1203,14 @@ Related APIs: @code{getTuneRm}, @code{saveTuneRm}
 Related APIs: @code{getChromRm}, @code{saveChromRm}
 
 @item Unit conversion
+
+These data are associated with each magnet.
       @enumerate
       @item @emph{unit convertion table}, a table convert engineer(current, voltage) number to physics (mm, rad) number
       @item Sextupole/Quadrupole K-value vs. current
       @item Corrector current vs. angle/orbit shift
       @end enumerate
-These data are associated with each magnet. 
+
 Related APIs: @code{TBD}
 
 @item Step size for magnet ramping/scan, (already in lattice ? or define independently)
