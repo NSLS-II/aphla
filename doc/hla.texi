@@ -869,11 +869,13 @@ The API name follows the convention as described (@pxref{API
 Prefix}). Addtion to that, some commonly used abbreviation is treated as
 one word, only the first letter is in upper case. e.g. @strong{Bpm}
 (beam position monitor), @strong{Rm} (response matrix), @strong{Sp}
-(setpoint), @strong{Rb} (readback), @strong{Rf} (Radio Frequency).
+(setpoint), @strong{Rb} (readback), @strong{Rf} (radio frequency),
+@strong{Fofb} (fast orbit feedback), @strong{Sofb} (slow orbit
+feedback).
 
 
 The GUI part will not be included here. But Lingyun suggested that
-@code{PyQt} is a good candidate. It is easier to use and full of features.
+@code{PyQt} is a good candidate for Python. It is easier to use and full of features.
 
 Here is a demo of how a short script looks like:
 
@@ -993,11 +995,11 @@ structure is as below:
     This information is used to define a 
 
     @itemize @bullet
-    @item MARK, a marker  
-    @item DRIF, drift space
+    @item MARKER, a marker  
+    @item DRIFT, drift space
     @item DIPOLE, main dipole
-    @item QUAD, quadrupole
-    @item SEXT, sextupole
+    @item QUADRUPOLE, quadrupole
+    @item SEXTUPOLE, sextupole
     @item *TRIM*, corrector, for example, in NSLS-II bare lattice,
     use TRIMX for horizontal corrector, TRIMY for vertical corrector,
     TRIMD for corrector with combined function (horizontal & vertical).
@@ -1060,23 +1062,23 @@ structure is as below:
 
     Default groups for each subsystems:
     @itemize @bullet
-    @item magnet
+    @item Magnet
     @itemize @bullet
-    @item dipole
-    @item quad
-    @item sext
-    @item correctorX
-    @item correctorY
+    @item DIPOLE
+    @item QUADRUPOLE
+    @item SEXTUPOLE
+    @item CORRECTORX
+    @item CORRECTORY
     @item ...
     @end itemize
-    @item power supply
-    @item diagnostic
+    @item Power Supply
+    @item Diagnostic
     @itemize @bullet
     @item BPMx
     @item BPMy
     @item ...
     @end itemize
-    @item vaccum
+    @item Vaccum
     @item RF (Radio Frequency)
     @item PPS (Personal Protection System)
     @item EPS (Equipment Protection System)
@@ -1106,8 +1108,8 @@ structure is as below:
     @item dx. alignment error at @emph{x} direction
     @item dy. alignment error at @emph{y} direction
     @item ds. alignment error at @emph{s} direction
-    @item pitch. alignment error at @emph{???} direction
-    @item yaw. alignment error at @emph{???} direction
+    @c @item pitch. alignment error at @emph{???} direction
+    @c @item yaw. alignment error at @emph{???} direction
     @item roll. alignment error at @emph{???} direction
     @end itemize
 
