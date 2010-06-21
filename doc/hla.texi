@@ -1229,23 +1229,76 @@ Related APIs: @code{TBD}
 @table @code
 
 @deftypefun {mode =} getCurrentMode () 
-@deftypefunx {modes =} getAllModes()
-Get current operation mode with @code{getCurrentMode}, and all operation modes
-@code{getAllModes()}. The operation mode is used to group
-different response matrix, tunes, beta and ramping for different storage
-ring settings. One mode can be norminal operation mode, the others can
-be accelerator physics mode, single bunch mode, different working
-point(tunes), low alpha mode, ...
+Get current operation mode with @code{getCurrentMode}.
+
+Data structure:
+@enumerate
+@item params: None
+@item return: Current machine operation mode(@pxref{Data Management}: Operation mode)
+@end enumerate
+
+@deftypefunx {[modes] =} getAllModes()
+Get all operation modes with @code{getAllModes()}. 
+
+Data structure:
+@enumerate
+@item params: None
+@item return: An array of operation mode. Each mode as (@pxref{Data Management}: Operation mode)
+@end enumerate
+
+The operation mode is used to group different response matrix, tunes,
+beta and ramping for different storage ring settings. One mode can be
+norminal operation mode, the others can be accelerator physics mode,
+single bunch mode, different working point(tunes), low alpha mode,
+low beta mode, high beta mode, ... 
+
 @end deftypefun
 
-@deftypefun {} addGroup ( @var{group} )
-@deftypefunx {} removeGroup ( @var{group} )
-@deftypefunx {} addGroupMember ( @var{group}, @var{members} )
-@deftypefunx {} removeGroupMember ( @var{group}, @var{members} )
-They operate on group/member
-management. @code{addGroup}/@code{removeGroup} adds/removes a group,
-and @code{addGroupMember}/@code{removeGroupMember} adds/removes
-members from certain group. These @var{members} support
+@deftypefun {status =} addGroup ( @var{group} )
+Add and create a new group with given group name with @code{addGroup()}. 
+
+Data structure:
+@enumerate
+@item params: group - string; new group name 
+@item return: status - integer. 0 - successful; 1 - fault; 2 - already exist 
+@end enumerate
+
+@deftypefunx {status =} removeGroup ( @var{group} )
+Delete an existing group with given group name with @code{removeGroup()}. 
+
+Data structure:
+@enumerate
+@item params: group - string; group name to be deleted
+@item return: status - integer. 0 - successful; 1 - fault; 2 - group
+is not empty; 3 - group name does not exist
+@end enumerate
+
+@deftypefunx {status =} addGroupMember ( @var{group}, @var{members} )
+Add members to an existing group with @code{addGroupMembers()}. 
+If a member exists in this group, update it.
+
+Data structure:
+@enumerate
+@item params: group - string; group name to add members to.
+@item params: members - string array; member list to be added
+Definition of members @strong{TBD}. Could be channel name, or magnet
+physics name.
+@item return: status - integer. 0 - successful; 1 - fault; 2 - group
+name does not exist
+@end enumerate
+
+@deftypefunx {status =} removeGroupMember ( @var{group}, @var{members} )
+Remove member(s) from specified group @code{removeGroupMember()}. 
+
+Data structure:
+@enumerate
+@item params: group - string; group name to be deleted
+@item params: members - string array; member list to be deleted
+@item return: status - integer. 0 - successful; 1 - fault; 2 - group
+name does not exist
+@end enumerate
+
+They operate on group/member management. These @var{members} support
 wildcards. @code{removeGroup} should clean up the relations of members
 to this group (may call @var{removeGroupMember}) or @strong{remove a
 nonempty group is forbiden}, like @code{rmdir} in Linux.
@@ -1258,46 +1311,141 @@ mode, we can have a group name for them.
 dangerous to change in script.
 @end deftypefun
 
-@deftypefun {groups =} getGroups ( @var{element} )
+@deftypefun {[groups] =} getGroups ( @var{element} )
+Get group(s) that given element name belongs to with @code{getGroups()}. 
+
+Data structure:
+@enumerate
+@item params: element - string; Element name.
+@item return: group(s) - string array. Empty if element does not
+either belong to any group nor exist.
+@end enumerate
+
 @c @deftypefunx {info=} getGroupInfo ( @var{group} )
-@deftypefunx {members =} getMembers ( @var{group} )
-@deftypefunx {groups =} getAllGroups ( )
+
+@deftypefunx {[members] =} getMembers ( @var{group} )
+Get members(s) that belongs to certain group with @code{getMembers()}. 
+
+Data structure:
+@enumerate
+@item params: group - string; Group name.
+@item return: member(s) - string array. Empty if group does not
+either have any member nor exist.
+@end enumerate
+
+@deftypefunx {[groups] =} getAllGroups ( )
+Get all group name(s) with @code{getAllGroups()}. 
+
+@strong{To be discussed}. What is this for? How this should be processed?
+
+Data structure:
+@enumerate
+@item params: None.
+@item return: group(s) - string array. Empty if there is no group defined.
+@end enumerate
+
 @code{getGroups} returns group name list to which a specific element
 belongs.  The element name should be uniqe in lattice. @code{getMembers}
 returns all elements in a group or groups. The order of @var{members}
 does matter, must be in increasing order of
 @math{s}. @code{getAllGroups} returns all groups available in the
 system. 
+
 @c @code{getGroupInfo} returns the information of this single group (no wildcard/regular expression matching).
 @end deftypefun
 
-@deftypefun {s =} getLocation ( @var{group} )
-Returns location of certain @var{group}, the order matters.
+@deftypefun {[s] =} getLocation ( @var{group} )
+Get @math{s} location of all element belongs to certain @var{group}, the order matters.
+
+Data structure:
+@enumerate
+@item params: group - string; Group name.
+@item return: s - numeric (double) array. Empty if group does not
+either have any member nor exist.
+@item unit: [meter].
+@end enumerate
+
 @end deftypefun
 
-@deftypefun {} getGroundLevel ( )
-In case devices monitoring the level of ground and/or girder are
-installed, this function returns the reading values.  These values can
-be used to calibrate the BPM readings.
-@deftypefunx {} getChamberOffset ( )
-In case devices monitoring the vacuum chamber offset are installed, this
-function returns the reading values.  These values can be used to
-calibrate the BPM readings.
-@end deftypefun
+@deftypefun {[phase] =} getPhase ( @var{mode}, @var{group}, @var{plane} )
+Get phase advance at each element belonging to certain group.
 
-@deftypefun {phase =} getPhase ( @var{mode}, @var{group} )
-@deftypefunx {beta =} getBeta ( @var{mode}, @var{group} )
-@deftypefunx {eta =} getDispersion ( @var{mode}, @var{group} )
-@deftypefunx {} getChromaticity ( @var{mode}, @var{hori}, @var{vert} )
-@deftypefunx {} getTune ( @var{nux}, @var{nuy} )
-@code{getChromaticity} return the horizontal and vertical chromaticity.
-As all @code{get*} functions, this is just a readout, i.e. a stored
-value, not real time measurement. The chromaticity value should be saved
-together with the @var{mode} of current lattice: ``operation'', ``AP mode
-1'', ``AP mode 2''. @code{getTune} is a readout of online tune measurement.
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: group - string; Group name.
+@item params: plane - numeric; 0 - horizontal plane; 1 - vertical plane.
+@item return: phase - numeric (double) array. Empty if group does not
+either have any member nor exist, or mode does not exist.
+Simulation value if the mode is "simulator", otherwise, measuredvalue.
+@item unit: [rad].
+@end enumerate
 
-They need to access the DB/file to read the norminal values (same for
-phase, beta, dispersion, tune).
+@deftypefunx {[beta] =} getBeta ( @var{mode}, @var{group}, @var{plane} )
+
+Get beta at each element belonging to certain group.
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: group - string; Group name.
+@item params: plane - numeric; 0 - horizontal plane; 1 - vertical plane.
+@item return: beta - numeric (double) array. Empty if group does not
+either have any member nor exist, or mode does not exist.
+Simulation value if the mode is "simulator", otherwise, measuredvalue.
+@item unit: [meter].
+@end enumerate
+
+@deftypefunx {eta =} getDispersion ( @var{mode}, @var{group}, @var{plane} )
+
+Get dispersion at each element belonging to certain group.
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: group - string; Group name.
+@item params: plane - numeric; 0 - horizontal plane; 1 - vertical plane.
+@item return: eta - numeric (double) array. Empty if group does not
+either have any member nor exist, or mode does not exist.
+Simulation value if the mode is "simulator", otherwise, measuredvalue.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {[@var{hori}, @var{vert}] =} getChromaticity ( @var{mode} )
+
+Get chromaticity at certain mode.
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item return: [hori, vert] - numeric (double) array. Empty if mode does not exist.
+Simulation value if the mode is "simulator", otherwise, measuredvalue.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {[@var{nux}, @var{nuy}] =} getTune ( @var{mode} )
+
+Get tune at certain mode.
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item return: [nux, nuy] - numeric (double) array. Empty if mode does not exist.
+Simulation value if the mode is "simulator", otherwise, measuredvalue.
+@item unit: [TBD].
+@end enumerate
+
+All @code{get*} functions are just readout, i.e. a stored value, not
+real time measurement, for example @code{getChromaticity}, which
+returns the horizontal and vertical chromaticity. The chromaticity
+value should be saved together with the @var{mode} of current lattice:
+"operation", "AP mode 1", "AP mode 2". They need to access the DB/file
+to read the norminal values (same for phase, beta, dispersion, tune).
+One excepation is @code{getTune}, which is a readout of online tune
+measurement. 
+
+@strong{To be discussed}: How to store simulation data?
+
 @end deftypefun
 
 @deftypefun {} savePhase( @var{mode}, @var{phase}, @var{info} )
@@ -1353,6 +1501,29 @@ Converts between physics and engineering units. (@strong{Needs more information}
 @end deftypefun
 @end table
 
+@deftypefun {[???] =} getGroundLevel(???)
+This API is only available in case devices monitoring the level of
+ground and/or girder are installed. It returns the reading
+values. These values can be used to calibrate the BPM readings.
+
+Data structure:
+@enumerate
+@item params: ???
+@item return: ???
+@end enumerate
+
+@deftypefunx {[???] =} getChamberOffset(???)
+This API is only available in case devices monitoring the vacuum
+chamber offset are installed. It returns the reading values. These
+values can be used to calibrate the BPM readings.
+
+Data structure:
+@enumerate
+@item params: ???
+@item return: ???
+@end enumerate
+
+@end deftypefun
 
 @node Orbit Control and Analysis
 @section Orbit Control and Analysis
