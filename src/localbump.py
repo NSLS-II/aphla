@@ -144,7 +144,7 @@ if __name__ == "__main__":
     plt.plot(s, y, 'go-')
     plt.savefig("orbit-00.png")
 
-    c1 = 1e-6
+    c1 = 1e-5
     catools.caput(hc1, c1)
     c2, c3 = theoretical_strength(lat, (hc1, hc2, hc3), c1)
 
