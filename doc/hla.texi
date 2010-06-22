@@ -881,7 +881,14 @@ feedback).
 
 The error processing of these APIs are in defined global constant or in
 forms of exception, instead of meaningless integer numbers.
-
+integer. Some error codes are proposed as below:
+@enumerate @bullet
+@item @math{0}: successful
+@item @math{1}: fault
+@item @math{2}: object, group for example, is not empty
+@item @math{3}: object, element/group name for example, does not exist
+@item @math{4}: object, element/group for example, already exist
+@end enumerate
 
 The GUI part will not be included here. But Lingyun suggested that
 @code{PyQt} is a good candidate for Python. It is easier to use and full of features.
