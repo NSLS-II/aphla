@@ -1228,7 +1228,7 @@ Related APIs: @code{TBD}
 
     sigle number
     @end enumerate
-Related APIs: @code{TBD}
+Related APIs: @code{getStepsize}
 @end enumerate
 
 
@@ -1405,7 +1405,7 @@ Simulation value if the mode is "simulator", otherwise, measuredvalue.
 @item unit: [meter].
 @end enumerate
 
-@deftypefunx {eta =} getDispersion ( @var{mode}, @var{group}, @var{plane} )
+@deftypefunx {[eta] =} getDisp ( @var{mode}, @var{group}, @var{plane} )
 
 Get dispersion at each element belonging to certain group.
 
@@ -1420,7 +1420,7 @@ Simulation value if the mode is "simulator", otherwise, measuredvalue.
 @item unit: [TBD].
 @end enumerate
 
-@deftypefunx {[@var{hori}, @var{vert}] =} getChromaticity ( @var{mode} )
+@deftypefunx {[@var{chromx}, @var{chromy}] =} getChrom ( @var{mode} )
 
 Get chromaticity at certain mode.
 
@@ -1440,77 +1440,246 @@ Data structure:
 @enumerate
 @item params: mode - string; Mode name.
 @item return: [nux, nuy] - numeric (double) array. Empty if mode does not exist.
-Simulation value if the mode is "simulator", otherwise, measuredvalue.
+Simulation value if the mode is "simulator", otherwise, measured value.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {[@var{nux}, @var{nuy}] =} getTune ( )
+
+Get measured tune in real time.
+
+Data structure:
+@enumerate
+@item params: None.
+@item return: [nux, nuy] - numeric (double) array. Empty if failed.
 @item unit: [TBD].
 @end enumerate
 
 All @code{get*} functions are just readout, i.e. a stored value, not
-real time measurement, for example @code{getChromaticity}, which
+real time measurement, for example @code{getChrom}, which
 returns the horizontal and vertical chromaticity. The chromaticity
 value should be saved together with the @var{mode} of current lattice:
 "operation", "AP mode 1", "AP mode 2". They need to access the DB/file
 to read the norminal values (same for phase, beta, dispersion, tune).
-One excepation is @code{getTune}, which is a readout of online tune
+One excepation is @code{getTune( )}, which is a readout of online tune
 measurement. 
 
 @strong{To be discussed}: How to store simulation data?
 
 @end deftypefun
 
-@deftypefun {} savePhase( @var{mode}, @var{phase}, @var{info} )
-@deftypefunx {} saveBeta ( @var{mode}, @var{beta}, @var{info} )
-@deftypefunx {} saveDispersion ( @var{mode}, @var{disp}, @var{info} )
-@deftypefunx {} saveTune ( @var{mode}, @var{tune}, @var{info} )
+@deftypefun {status =} savePhase( @var{mode}, @var{phase}, @var{info} )
+
+Save phase advance to database. Data is permanent across
+reinject/restart machine. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: phase - numeric (double).
+@item params: info - timestamp, user name, device name(either channel
+name or physics name), plane, and description.
+@item return: status - integer. 0 - successful; 1 - fault.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} saveBeta ( @var{mode}, @var{beta}, @var{info} )
+
+Save beta to database. Data is permanent across reinject/restart machine. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: beta - numeric (double).
+@item params: info - timestamp, user name, device name(either channel
+name or physics name), plane, and description.
+@item return: status - integer. 0 - successful; 1 - fault.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} saveDispersion ( @var{mode}, @var{disp}, @var{info} )
+
+Save dispersion to database. Data is permanent across
+reinject/restart machine. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: disp - numeric (double).
+@item params: info - timestamp, user name, device name(either channel
+name or physics name), plane, and description.
+@item return: status - integer. 0 - successful; 1 - fault.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} saveTune ( @var{mode}, @var{tune}, @var{info} )
+
+Save phase advance to database. Data is permanent across
+reinject/restart machine. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: tune - numeric (double) [nux, nuy].
+@item params: info - timestamp, user name, device name(either channel
+name or physics name), plane, and description.
+@item return: status - integer. 0 - successful; 1 - fault.
+@item unit: [TBD].
+@end enumerate
+
 @deftypefunx {} saveTuneRm ( @var{mode}, @var{rm}, @var{info} )
-@deftypefunx {} saveChromaticity ( @var{mode}, @var{chrom}, @var{info} )
-@deftypefunx {} saveChromaticityRm ( @var{mode}, @var{rm}, @var{info} )
-Save data to DB, make it permanent across reinject/restart machine. These data may contains some information on timestamp, user name and description.
+
+Save tune response matrix to database. Data is permanent across
+reinject/restart machine. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: rm - numeric 2-d array (double).
+@item params: info - timestamp, user name, device name(either channel
+name or physics name), plane, and description (@pxref{Data
+Management}: Tune correction matrix).
+@item return: status - integer. 0 - successful; 1 - fault.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} saveChrom ( @var{mode}, @var{chrom}, @var{info} )
+
+Save chromaticity to database. Data is permanent across
+reinject/restart machine. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: tune - numeric (double) [chromx, chromy].
+@item params: info - timestamp, user name, device name(either channel
+name or physics name), plane, and description.
+@item return: status - integer. 0 - successful; 1 - fault.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {} saveChromRm ( @var{mode}, @var{rm}, @var{info} )
+
+Save chromaticity response matrix to database. Data is permanent across
+reinject/restart machine. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: rm - numeric 2-d array (double).
+@item params: info - timestamp, user name, device name(either channel
+name or physics name), plane, and description (@pxref{Data
+Management}: Chromaticity correction matrix).
+@item return: status - integer. 0 - successful; 1 - fault.
+@item unit: [TBD].
+@end enumerate
+
 @end deftypefun
 
 
-@deftypefun {chm =} getChromaticityRm ( @var{mode} )
-@deftypefunx {chm =} getChromaticityRmInfo ( @var{mode} )
-@deftypefunx {num =} getTuneRm ( @var{mode} )
-@deftypefunx {num =} getTuneRmInfo ( @var{mode} )
-@code{getChromaticityRm} Get the stored response matrix(Jacobian) of
-chromaticity, it is with respect to sextupoles in dispersive
-region. @code{getChromaticityRmInfo} will give full information, such as
-timestamp, tune, ...
+@deftypefun {chmRm =} getChromRm ( @var{mode} )
 
-They need DB access to the configuration data.  @code{getTune}, get real
-time tune.  @code{getTuneRm} gets stored tune response matrix, with
-respect to two quadrupoles. @code{getTuneRmInfo} will give more details
-about when and how it was measured.
+Get the stored response matrix(Jacobian) of chromaticity, it is with
+respect to sextupoles in dispersive region.
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item return: chmRm - numeric array (double), subset data structure of
+(@pxref{Data Management}: Chromaticity correction matrix). 
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {chmRmInfo =} getChromRmInfo ( @var{mode} )
+
+Give full information, such as timestamp, tune, ..., related to
+chromaticity response matrix from database.  
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item return: chmRmInfo - subset data structure of (@pxref{Data
+Management}: Chromaticity correction matrix).  
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {nuRm =} getTuneRm ( @var{mode} )
+
+Get tune response matrix from database with respect to (two) quadrupoles.
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item return: nuRm - numeric array (double), subset data structure of
+(@pxref{Data Management}: Tune correction matrix). 
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {nuRmInfo =} getTuneRmInfo ( @var{mode} )
+
+Give all details about when and how the tune response matrix was
+measured from database. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item return: nuRmInfo - subset data structure of (@pxref{Data
+Management}: Tune correction matrix).  
+@item unit: [TBD].
+@end enumerate
 @end deftypefun
 
  
-@deftypefun {elements, distance =} getNeighbors ( @var{element}, @var{neighbor}, @var{n} )
-This return a list of @math{n} elements belongs to group
-@var{neighbor}. The list is sorted according to the distance to this
-element.
+@deftypefun {[[elems], [s]] =} getNeighbors ( @var{element}, @var{group}, @var{n} )
+
+Get a list of @math{n} elements belongs to @var{group}. The list is
+sorted along @math{s} (the beam direction).
 
 @code{getNearbyBpm} are built upon this routine, and it returns nearby
 BPMs for magnets
+
+Data structure:
+@enumerate
+@item params: element - string; element physics name.
+@item params: group - string; group name.
+@item params: n - numeric (integer); number of elements nearby. Total
+elements will be @math{2*n + 1}
+@item return: a 2-d array. [elems] contains all element physics name,
+and [s] contains all element @math{s} location.
+@end enumerate
+
 @end deftypefun
 
 @deftypefun {stepsize =} getStepsize ( @var{element} )
-This returns the stepsize for scanning an element, this information is stored in lattice DB.
-@end deftypefun
+Get stepsize for scanning an element. This information is described (@pxref{Data
+Management}: Step size).
 
-@deftypefun {} setCurrentDependency ( )
-@deftypefunx {} calibrate ( ) 
-@deftypefunx {} getVibrationFrequency ( )
-@deftypefunx {} getVibrationSource ( )
-@deftypefunx {} Bpm2PbpmReading ( )
-(Choi, ???)
+Data structure:
+@enumerate
+@item params: element - string; element physics name.
+@item return: stepsize - numeric (double). 0 if an element does not
+have this property.
+@end enumerate
+
 @end deftypefun
 
 @deftypefun {} convertUnit ( )
+
 Converts between physics and engineering units. (@strong{Needs more information})
+
+Input/output data flow needs to be clarified.
+
 @end deftypefun
-@end table
+
+
+
+@strong{Who can explain the following API and give input/output for
+them, choi???}
 
 @deftypefun {[???] =} getGroundLevel(???)
+
+(Choi, ???)
+
 This API is only available in case devices monitoring the level of
 ground and/or girder are installed. It returns the reading
 values. These values can be used to calibrate the BPM readings.
@@ -1522,6 +1691,9 @@ Data structure:
 @end enumerate
 
 @deftypefunx {[???] =} getChamberOffset(???)
+
+(Choi, ???)
+
 This API is only available in case devices monitoring the vacuum
 chamber offset are installed. It returns the reading values. These
 values can be used to calibrate the BPM readings.
@@ -1533,6 +1705,30 @@ Data structure:
 @end enumerate
 
 @end deftypefun
+
+@deftypefun {} setCurrentDependency ( )
+
+(Choi, ???)
+
+@deftypefunx {} calibrate ( ) 
+
+(Choi, ???)
+
+@deftypefunx {} getVibrationFrequency ( )
+
+(Choi, ???)
+
+@deftypefunx {} getVibrationSource ( )
+
+(Choi, ???)
+
+@deftypefunx {} Bpm2PbpmReading ( )
+
+(Choi, ???)
+
+@end deftypefun
+
+@end table
 
 @node Orbit Control and Analysis
 @section Orbit Control and Analysis
