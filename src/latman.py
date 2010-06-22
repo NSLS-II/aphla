@@ -4,15 +4,20 @@ class LatticeManager:
     def __init__(self, db):
         dat = open(db, "r").readlines()
         self.idx, self.elem, self.group, self.s = [], [], [], []
+        self.elem1, self.group1 = [], []
         self.pvrb, self.pvsp = [], []
-        for line in dat:
+        self.length = []
+        for line in dat[1:]:
             d = line.split()
             self.idx.append(int(d[0]))
-            self.elem.append(d[1])
+            self.elem1.append(d[1])
             self.pvrb.append(d[2].strip()[1:-1])
             self.pvsp.append(d[3].strip()[1:-1])
-            self.group.append(d[4])
+            self.group1.append(d[4])
             self.s.append(float(d[5]))
+            self.elem.append(d[6])
+            self.group.append(d[7])
+            self.length.append(float(d[8]))
 
     def pvindex(self, pv):
         if pv in self.pvrb:

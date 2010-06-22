@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
-# orbit_monitor.py --- Simple Qt4 application embedding matplotlib canvases
+# orbit_monitor.pyw --- Simple Qt4 application embedding matplotlib canvases
 #
-# Copyright (C) 2005 Florent Rougon
-#               2006 Darren Dale
+# Lingyun Yang (lyyang@bnl.gov)
 #
-# This file is an example program for matplotlib. It may be used and
-# modified with no restriction; raw copies as well as modified versions
-# may be distributed without limitation.
 
 import sys, os, random, time
 from PyQt4 import QtGui, QtCore
@@ -89,13 +85,15 @@ class MyDynamicMplCanvas(MyMplCanvas):
             for i in range(len(self.t)):
                 f.write("%f %f\n" %(self.t[i], self.current[i]))
             f.close()
-            print self.t[-1], self.current[-1]
+            #print self.t[-1], self.current[-1]
         self.t.append((time.time() - 1276896402.0)/3600.0)
         self.current.append(float(cur))
         if len(self.t) > self.MAX_LEN:
             self.t.pop(0)
             self.current.pop(0)
-        self.axes.plot(self.t, self.current, 'r-')
+        #self.axes.fill(self.t, self.current, 'r.')
+        self.axes.plot(self.t, self.current, 'ro-')
+        self.axes.grid(True)
         self.draw()
 
 
@@ -108,7 +106,7 @@ class OrbitPlotCanvas(MyMplCanvas):
         QtCore.QObject.connect(timer, QtCore.SIGNAL("timeout()"), self.update_figure)
         timer.start(3000)
         self.axes.hold(True)
-        self.lat = latman.LatticeManager("../nsls2/conf/lattice_channels.txt")
+        self.lat = latman.LatticeManager("../nsls2/conf/lat_conf_table.txt")
         #print self.t, self.current
 
     def get_orbit(self, lat, delay=2):
@@ -119,7 +117,7 @@ class OrbitPlotCanvas(MyMplCanvas):
         if not self.BPM_ONLY:
             return vs, vx, vy
         #print len(vs), len(vx), len(vy)
-        bpm = lat.group_index("@BpmX")
+        bpm = lat.group_index("BPMX")
         #print bpm
         s = [vs[i] for i in bpm]
         x = [vx[i] for i in bpm]

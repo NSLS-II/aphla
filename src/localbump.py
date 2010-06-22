@@ -13,8 +13,8 @@ def theo_local_bump1(lat):
     # all elements
     betax = [v for v in catools.caget("SR:C00-Glb:G00<BETA:00>RB:X")]
     phix = [v for v in catools.caget("SR:C00-Glb:G00<PHI:00>RB:X")]
-    bpm_idx = lat.group_index("@BpmX")
-    ch_idx = lat.group_index("@CorrectorX")
+    bpm_idx = lat.group_index("BPMX")
+    ch_idx = lat.group_index("TRIMX")
 
     # two kicker, 11*2pi phase advance.
     hc1="SR:C01-MG:G02A<HCM:H1>Fld:SP"
@@ -39,8 +39,8 @@ def theo_local_bump1(lat):
 def theoretical_strength(lat, hclst, theta):
     betax = [v for v in catools.caget("SR:C00-Glb:G00<BETA:00>RB:X")]
     phix = [v*2.0*3.1415926 for v in catools.caget("SR:C00-Glb:G00<PHI:00>RB:X")]
-    bpm_idx = lat.group_index("@BpmX")
-    ch_idx = lat.group_index("@CorrectorX")
+    bpm_idx = lat.group_index("BPMX")
+    ch_idx = lat.group_index("TRIMX")
 
     # three kicker
     ic1 = lat.pvindex(hclst[0])
@@ -80,7 +80,7 @@ def get_orbit(lat, delay=2):
     vx = [v for v in catools.caget("SR:C00-Glb:G00<ORBIT:00>RB:X")]
     vy = [v for v in catools.caget("SR:C00-Glb:G00<ORBIT:00>RB:Y")]
     #print len(vs), len(vx), len(vy)
-    bpm = lat.group_index("@BpmX")
+    bpm = lat.group_index("BPMX")
     #print bpm
     s = [vs[i] for i in bpm]
     x = [vx[i] for i in bpm]
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     hc1="SR:C01-MG:G02A<HCM:H1>Fld:SP"
     hc2="SR:C01-MG:G02A<HCM:H2>Fld:SP"
     hc3="SR:C01-MG:G04B<HCM:M1>Fld:SP"
-    lat = latman.LatticeManager("../nsls2/conf/lattice_channels.txt")
+    lat = latman.LatticeManager("../nsls2/conf/lat_conf_table.txt")
     catools.caput(hc1, 0.0)
     catools.caput(hc2, 0.0)
     catools.caput(hc3, 0.0)

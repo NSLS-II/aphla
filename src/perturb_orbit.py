@@ -45,7 +45,7 @@ def random_set(pvs, amp = 1e-6):
     return pvs[i]
 
 if __name__ == "__main__":
-    pvlst = read_correctors('../nsls2/conf/lattice_channels.txt')
+    pvlst = read_correctors('../nsls2/conf/lat_conf_table.txt')
     #print pv
     reset_hvcm(pvlst)
     pvlst = filter_corrector(pvlst)
