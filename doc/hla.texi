@@ -92,19 +92,25 @@
 @end tex
 
 @copying
+
+This manual is for tools for accelerator commissioning and physics. It
+is original for NSLS-II (National Synchrotron Light Source II)
+project, which is under construction at Brookhaven National
+Laboratory. 
+
 Copyright @copyright{} 2010 The NSLS-II Project.
 
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
-@c Invariant Sections being ``GNU General Public License'' and ``Free Software
-@c Needs Free Documentation'', the Front-Cover text being ``A GNU Manual'',
+@c Invariant Sections being "GNU General Public License" and "Free Software
+@c Needs Free Documentation", the Front-Cover text being "A GNU Manual",
 @c and with the Back-Cover Text being (a) (see below).  A copy of the
-@c license is included in the section entitled ``GNU Free Documentation
-@c License''.
+@c license is included in the section entitled "GNU Free Documentation
+@c License".
 
-@c (a) The Back-Cover Text is: ``You have the freedom to copy and modify this
-@c GNU Manual.''
+@c (a) The Back-Cover Text is: "You have the freedom to copy and modify this
+@c GNU Manual."
 @end copying
 
 @titlepage
@@ -128,8 +134,9 @@ Schedule:
 
 @vskip 5ex
 @include hlaversion.texi
-@author Jinhyuk Choi, Guobao Shen, Lingyun Yang
-@email{lyyang@@bnl.gov}
+@author Jinhyuk Choi
+@author Guobao Shen (@email{shengb@@bnl.gov})
+@author Lingyun Yang (@email{lyyang@@bnl.gov})
 @comment @email{tuomo.keskitalo@iki.fi}
 @page
 @vskip 0pt plus 1filll
@@ -279,6 +286,40 @@ straight ?) point is the injection.
 @cindex Channel Access
 @end enumerate
 @end itemize
+
+@node Overview of system architecture
+@section Overview of system architecture
+
+The high level applications developed by accelerator physicists should
+be able to achieve their goals by focusing on algorithms while being
+released from tedious data acquisition and manipulation issues. This
+is the design strategy for the software architecture. With a clean and
+carefully designed interface, collaborators, who have different areas
+of expertise such as GUI design, numerical analysis, accelerator
+physics, data acquisition, hardware control, and so on, can work
+together effectively and productively.
+
+The software framework for commissioning the NSLS-II storage ring beam
+adopts a client/server model, and consists of various servers for data
+acquisition, communication and management. Based on this structure,
+physics applications can be developed to satisfy the requirements of
+both day-1 beam commissioning, future beam study, and daily operation.
+The system architecture is shown as below:
+
+@center @image{HLA_Architecture, 5.in, 2.94in}
+@center @strong{Fig. 1 A client/cerver based architecture for HLA}
+
+Briefly, the system consists of
+@itemize @bullet
+@item data source layer, which can be low level hardware control
+system, or a relational database;
+@item a service layer, which provides services to gather data from the
+data source layer, and perform data manipulations such as constructing an
+orbit using BPM data; 
+@item a presentation layer, which present machine status to operators,
+and provides an interface for machine control 
+@end itemize
+
 
 @node API Prefix
 @section API Prefix
