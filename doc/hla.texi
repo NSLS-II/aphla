@@ -2497,6 +2497,8 @@ Measure the derivatie of @var{channel_read} with respect to @var{channel_set} by
 @node Server APIs (SAPI)
 @chapter Server APIs (SAPI)
 
+@node Overview
+@section overview
 In brief, the server APIs do to things, query the lattice settings, and do the settings. 
 
 For example, a HLA wants to do *getOrbit("P\*G2C0?")* (get BPM at girder
@@ -2542,6 +2544,24 @@ The overview requirementfor SAPI
       @item get values in a specific time range ? e.g. in the next 10 sec.
       @end itemize
 @end itemize
+
+@node Data storage API
+@section Data storage API
+
+The strategy for data storage is based on the server adopted for
+NSLS-II project. For example, the data archiving system, and or
+machine status snapshot so-call logscore system. The API described
+here is for a data server to retrieve from data archiving system for
+example to provide them to client in a pre-defined structure.
+
+@node Data archiving API
+@subsection Data archiving API
+Coming soon.
+
+@node Logscore API
+@subsection Logscore API
+Coming soon.
+
 
 
 @node Reference
