@@ -244,7 +244,8 @@ usually BPM or corrector. For the convenience purpose when looping over
 BPM or correctors one after the other along the ring, we can use number
 as its order, instead of their names. Suggested sequence could be a pair
 [@dfn{cell}, @dfn{index}], and @dfn{cell} is the cell number
-following the name convention as below:
+following the name convention as below, which is an integer between 1
+and 30:
 
 @itemize @bullet
 @item @cite{National Synchrotron Light Source II - Nomenclature Standard},
@@ -1857,47 +1858,132 @@ This chapter focus on orbit related functions.
 @item Orbit correct: @code{correctOrbit}
 @end enumerate
 
+The APIs should be able to deal with dead BPM automatically (need set
+up a convention). 
+
 @node Orbit Control and Analysis API
 @section Orbit Control and Analysis API
 
 @table @code
-@deftypefun {orbit =} getOrbit ( @var{sequence}, @var{group}, @var{synchronized=False})
-@deftypefunx {orbit =} getOrbitX ( @var{sequence}, @var{group}, @var{synchronized=False})
-@deftypefunx {orbit =} getOrbitY ( @var{sequence}, @var{group}, @var{synchronized=False})
+@deftypefun {(orbit, ts, status) =} getOrbit ( @var{sequence}, @var{group}, @var{sync=False})
 @tpindex getOrbit
-@tpindex getOrbitX
-@tpindex getOrbitY
-This function returns an array of orbit at BPMs specified by input
-@var{sequence} and @var{group}. The @var{sequence} can be an array of
-index (1d ? or 2d ?). @var{group} is a preconfigured string in global
-property, e.g. ``FOFB'' can be used for BPMs in fast orbit feedback
-systems. These orbits are with respect to golden orbit.
+
+This function returns an array of both horizontal and vertical orbit
+at BPMs specified by input @var{sequence} and @var{group}. The
+@var{sequence} can be an array of index (1d ? or 2d ?). @var{group} is
+a preconfigured string in global property, e.g. ``FOFB'' can be used
+for BPMs in fast orbit feedback systems. These orbits are with respect
+to golden orbit. 
 
 Use @code{getMembers} to find out locations of the orbit.
 
-@code{getOrbit}, @code{getOrbitX}, Return horizontal and vertical orbit
-at all BPMs(group), @code{getOrbitY} single BPM, or one cell. It hould
-be able to deal with dead BPM automatically (need set up a convention).
-Requirement: 1. getOrbit(), get orbit at all BPMs; 2. getOrbit("*C01"),
-get orbit of BPMs whoes name matches (one "*C01"; 3. getOrbit([[1,1],
-[2,3]]), get orbit at the 1st BPM in cell 1, 3rd BPM in cell 2;
-4. getOrbit(2,3) (? 3rd in cell 2 ?)  4. sychronized to same turn if
-required.  @code{getOrbitSnapshot}, @code{getOrbitSnapshotX},
-@code{getOrbitSnapshotY} shot only, no average. How about synchromized
-to same turn ? in this API or a new one ?)
+Requirement: 
+@enumerate
+@item @code{getOrbit()}, get orbit at all BPMs;
+@item @code{getOrbit("*C01")}, get orbit of BPMs whoes name matches (one "*C01";
+@item @code{getOrbit([[1,1], [2,3]])}, get orbit at the 1st BPM in cell 1, 3rd BPM in cell 2; 
+@item @code{getOrbit(2,3)} (? 3rd in cell 2 ?) 
+@item sychronized to same turn if required. 
+@end enumerate
+
+Data structure:
+@enumerate
+@item params: sequence - pair; sequence pair (@pxref{Terminology for High Level Applications}).
+@item params: group - string; group name.
+@item params: sync - boolean; synchronized data? False by default
+@item return: orbit - numeric (double) array (2-d);
+
+ts - time stamp array;
+
+status - boolean array;
+
+@item unit: [TBD].
+@end enumerate
+
+
+@deftypefunx {(orbit, ts, status) =} getOrbitX ( @var{sequence}, @var{group}, @var{sync=False})
+@tpindex getOrbitX
+
+@code{getOrbitX}, returns horizontal orbit. It can be any combination
+of single BPM, all in one cell, or whole facility.
+
+Data structure:
+@enumerate
+@item params: sequence - pair; sequence pair (@pxref{Terminology for High Level Applications}).
+@item params: group - string; group name.
+@item params: sync - boolean; synchronized data? False by default
+@item return: orbit - numeric (double) array (1-d);
+
+ts - time stamp array;
+
+status - boolean array;
+
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {(orbit, ts, status) =} getOrbitY ( @var{sequence}, @var{group}, @var{sync=False})
+@tpindex getOrbitY
+
+@code{getOrbitY}, returns vertical orbit. It can be any combination of
+single BPM, all in one cell, or whole facility.
+
+Data structure:
+@enumerate
+@item params: sequence - pair; sequence pair (@pxref{Terminology for High Level Applications}).
+@item params: group - string; group name.
+@item params: sync - boolean; synchronized data? False by default
+@item return: orbit - numeric (double) array (1-d);
+
+ts - time stamp array;
+
+status - boolean array;
+
+@item unit: [TBD].
+@end enumerate
+
 @end deftypefun
 
-
-@deftypefun {orbit =} getTbtOrbit ( @var{sequence},  @var{group}, @var{turn})
-@deftypefunx {orbit =} getOrbitSnapshot ( @var{sequence}, @var{group} )
-@deftypefunx {orbit =} getOrbitSnapshotX ( @var{sequence}, @var{group} )
-@deftypefunx {orbit =} getOrbitSnapshotY ( @var{sequence}, @var{group} )
+@deftypefun {(orbit, ts) =} getTbtOrbit ( @var{sequence},  @var{group}, @var{turn})
 @code{getTbtOrbit} returns the TBT(turn by turn) orbit from specified
-BPMs, each has @var{turn} turns. @code{getOrbitSnapshot*} returns only
-one shot of the orbit, no average made (need more discussion with diagnostics).
+BPMs, each has @var{turn} turns. 
+
+Data structure:
+@enumerate
+@item params: sequence - pair; sequence pair (@pxref{Terminology for High Level Applications}).
+@item params: group - string; group name, the BPMs in this group have
+to have the TBT capability.
+@item params: turn - integer; number of how many turn to fetch.
+@item return: orbit - numeric (double) array; TBT orbit;
+
+ts - time stamp (array);
+
+@item unit: [TBD].
+@end enumerate
+
 @end deftypefun
 
-@deftypefun {} setBpmReference ( @var{group}, @var{ref} )
+
+@strong{The definition of three APIs, @code{getOrbitSnapshot},
+@code{getOrbitSnapshotX}, @code{getOrbitSnapshotY}, are not
+clear. shot only, no average, what does this stand for? How about
+synchronized to same turn? in this API or a new one?}
+
+@deftypefun {orbit =} getOrbitSnapshot ( @var{sequence}, @var{group} )
+@code{getOrbitSnapshot*} returns only one shot of the orbit, no
+average made (need more discussion with diagnostics). 
+
+@deftypefunx {orbit =} getOrbitSnapshotX ( @var{sequence}, @var{group} )
+@code{getOrbitSnapshot*} returns only one shot of the orbit, no
+average made (need more discussion with diagnostics).
+
+@deftypefunx {orbit =} getOrbitSnapshotY ( @var{sequence}, @var{group} )
+@code{getOrbitSnapshot*} returns only one shot of the orbit, no
+average made (need more discussion with diagnostics).
+
+@end deftypefun
+
+
+@deftypefun {status =} setBpmReference ( @var{group}, @var{ref} )
 @code{setBpmReference}, Same as setGoldenOrbit, but only for one
 specific BPM. 
 
@@ -1906,49 +1992,275 @@ saved for future Golden orbit(next ramp/injection/run)
                                                                                               
 Requirement: May not be able to implemented for other applications using
 this information: if I set in one application, is it able to be
-reflected in orbit feedback ?  Yes ? no ? or do I really want to ?
+reflected in orbit feedback ?  Yes ? no ? or do I really want to?
+
+Data structure:
+@enumerate
+@item params: group - string; group name.
+@item params: ref - numeric (double) array; reference value for each BPM
+@item return: status 
+@item unit: [TBD].
+@end enumerate
+
 @end deftypefun
 
-@deftypefun {orbit =} getGoldenOrbit ( @var{mode},  @var{sequence=None}, @var{group=None} )
-@deftypefunx {orbit =} loadGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{group=None}, @var{source=''golden_orbit.txt''} )
-@deftypefunx {status =} setGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{name=None} )
-@deftypefunx {status =} saveGoldenOrbit ( @var{mode}, @var{sequence=None}, @var{name=None}, @var{destination=''golden_orbit.txt''} )
-These APIs working on golden orbits, get/load returns the golden orbit
-for specified operation mode, while get just using online golden orbit,
-load uses golden orbit in a file or database which is the norminal
-one. We can temporary change golden orbit of online mode, but keep
+@deftypefun {orbit =} getGoldenOrbit ( @var{mode} )
+
+@code{getGoldenOrbit} returns the golden orbit for specified operation
+mode. This golden orbit is used for online.
+
+Data structure:
+@enumerate
+@item params: mode - string; mode name. online golden value if empty
+@item return: orbit - numeric (double) array (2-d)
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {orbit =} loadGoldenOrbit ( @var{mode}, @var{source="golden_orbit.txt"} )
+@code{loadGoldenOrbit} returns the golden orbit for specified
+operation mode from a file or database, which is the norminal one. 
+We can temporary change golden orbit of online mode, but keep
 database untouched, and use @code{loadGoldenOrbit} to reset to the
-default one for the current operation mode. Save will take online golden
-orbit to a file or database.
+default one for the current operation mode. 
+
+Data structure:
+@enumerate
+@item params: mode - string; mode name. Default golden value if empty.
+@item params: source - TBD; where to load from, file or database.
+@item return: orbit - numeric (double) array (2-d)
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} setGoldenOrbit ( @var{mode}, @var{orbit} )
+@code{setGoldenOrbit} sets golden orbit for specified operation mode,
+with given @var{orbit}. 
+
+Data structure:
+@enumerate
+@item params: mode - string; mode name. Current machine mode if empty.
+@item params: orbit - numeric array (2-d);
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} saveGoldenOrbit ( @var{mode}, @var{orbit}, @var{destination="golden_orbit.txt"} )
+@code{saveGoldenOrbit} save @var{orbit} to specified @var{destination}.
+
+Data structure:
+@enumerate
+@item params: mode - string; mode name. Current machine mode if empty.
+@item params: orbit - numeric array (2-d);
+@item params: destination - TBD; where to store, a file or database.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
+@c These APIs working on golden orbits, returns the golden orbit for specified
+@c operation mode, from a file or database, which is the norminal one. 
+@c We can temporary change golden orbit of online mode, but keep
+@c database untouched, and use @code{loadGoldenOrbit} to reset to the
+@c default one for the current operation mode. Save will take online golden
+@c orbit to a file or database.
 @end deftypefun
 
-@deftypefun {respm =} getOrbitRm ( @var{mode}, @var{corrector}, @var{bpm} )
-@deftypefunx {respm =} getOrbitRmInfo ( @var{mode} )
-@deftypefunx {respm =} loadOrbitRm ( @var{mode} )
+@deftypefun {orbitRm =} getOrbitRm ( @var{mode}, @var{corrector}, @var{bpm} )
+
+Get orbit response matrix from database with given @var{corrector} and
+@var{bpm}.
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name. Current machine mode by default.
+@item params: corrector - string array; list of corrector physics/channel name.
+@item params: bpm - string array; list of bpm physics/channel name.
+@item return: orbitRm - numeric array (double), subset data structure of
+(@pxref{Data Management}: Orbit response matrix). 
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {orbitRmInfo =} getOrbitRmInfo ( @var{mode} )
+Give all details about when and how the orbit response matrix was
+measured from database with given @var{mode}. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item return: orbitRmInfo - subset data structure of (@pxref{Data
+Management}: Orbit response matrix).  
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {orbitRm =} loadOrbitRm ( @var{mode}, @var{source} )
+
+@code{loadOrbitRm} returns the orbit response matrix for specified
+operation mode from a file or database. Use @code{loadGoldenOrbit} to
+reset to the default one for the current operation mode. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: source - TBD; where to load from.
+@item return: orbit response matrix; 
+@item unit: [TBD].
+@end enumerate
+
+
 @deftypefunx {status =} setOrbitRm ( @var{mode}, @var{corrector}, @var{bpm} )
-@deftypefunx {status =} saveOrbitRm ( @var{mode}, @var{info} )
-@code{getOrbitRm} get the orbit response matrix. Requirement: 1. Read
-the configuration DB to get this RM.  @code{saveOrbitRM}
-(@code{setOrbitRm}) save the measured Orbit RM. @strong{NOTE}: the column and row
-are related to the list of correctors and BPMs, they might be changing
-from time to time, we keep track of the correctors and BPMs using @var{info}
+
+@code{loadOrbitRm} returns the orbit response matrix for specified
+operation mode from a file or database. Use @code{loadGoldenOrbit} to
+reset to the default one for the current operation mode. 
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: corrector - string array; list of corrector physics/channel name.
+@item params: bpm - string array; list of bpm physics/channel name.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} saveOrbitRm ( @var{mode}, @var{destination}, @var{info} )
+
+@code{saveOrbitRm} save orbit response matrix to specified @var{destinatoin}.
+
+Data structure:
+@enumerate
+@item params: mode - string; Mode name.
+@item params: destination - TBD; where to save
+@item params: info - ;.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
+
+@c @code{getOrbitRm} get the orbit response matrix. Requirement: 1. Read
+@c the configuration DB to get this RM.  @code{saveOrbitRM}
+@c (@code{setOrbitRm}) save the measured Orbit RM. @strong{NOTE}: the column and row
+@c are related to the list of correctors and BPMs, they might be changing
+@c from time to time, we keep track of the correctors and BPMs using @var{info}
+
 @end deftypefun
 
 
 @deftypefun {bpm =} getLiveBpm ( )
+
+@code{getLiveBpm} get a list of all live BPM.
+
+Data structure:
+@enumerate
+@item return: bpm - string array; a list of bpm physics/channel name.
+@item unit: [TBD].
+@end enumerate
+
 @deftypefunx {bpm =} getDeadBpm ( )
-@deftypefunx {} disableBpm ( @var{group} )
-@deftypefunx {} enableBpm ( @var{group} )
+
+@code{getDeadBpm} get a list of all dead BPM. Those bpm are removed
+are not included.
+
+Data structure:
+@enumerate
+@item return: bpm - string array; a list of bpm physics/channel name.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} disableBpm ( @var{group} )
+
+@code{disableBpm} disable all bpm(s) belong to certain @var{group}.
+A single bpm can be disabled using its physics/channel name.
+
+Data structure:
+@enumerate
+@item params: group - string; group name.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} enableBpm ( @var{group} )
+
+@code{enableBpm} enable all bpm(s) belong to certain @var{group}.
+A single bpm can enabled using its physics/channel name.
+
+Data structure:
+@enumerate
+@item params: group - string; group name.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} saveBpmStatus ( @var{group}, @var{status} )
+
+@code{saveBpmStatus} save status of bpm(s) belong to certain @var{group}.
+
+Data structure:
+@enumerate
+@item params: group - string; group name.
+@item params: status - boolean; bpm boolean status.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
 @deftypefunx {cor =} getLiveCorrector ( )
+
+@code{getLiveCorrector} get a list of all live corrector.
+
+Data structure:
+@enumerate
+@item return: cor - string array; a list of corrector physics/channel name.
+@item unit: [TBD].
+@end enumerate
+
 @deftypefunx {cor =} getDeadCorrector ( )
-@deftypefunx {} disableCorrector ( )
-@deftypefunx {} enableCorrector ( @var{group} )
-@deftypefunx {} saveBpmStatus ( @var{group}, @var{status} )
-@deftypefunx {} saveCorrectorStatus ( @var{group}, @var{status} )
-Operates on status of BPMs and correctors. enable/disable will not
-operate on DB, but @code{save*Status} will mark the dead elements and
-take effect across restart.
+
+@code{getDeadCorrector} get a list of all dead corrector.
+
+Data structure:
+@enumerate
+@item return: cor - string array; a list of corrector physics/channel name.
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} disableCorrector ( @var{group} )
+
+@code{disableCorrector} disable corrector(s) belong to certain @var{group}.
+A single corrector can be disabled using its physics/channel name.
+
+Data structure:
+@enumerate
+@item params: group - string; group name.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} enableCorrector ( @var{group} )
+
+@code{enableCorrector} enable corrector(s) belong to certain @var{group}.
+A single corrector can be enabled using its physics/channel name.
+
+Data structure:
+@enumerate
+@item params: group - string; group name.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
+@deftypefunx {status =} saveCorrectorStatus ( @var{group}, @var{status} )
+
+@code{saveCorrectorStatus} save status of corrector(s) belong to certain @var{group}.
+
+Data structure:
+@enumerate
+@item params: group - string; group name.
+@item params: status - boolean; bpm boolean status.
+@item return: status
+@item unit: [TBD].
+@end enumerate
+
 @end deftypefun
+
+@strong{NOTE: Operates on status of BPMs and correctors. enable/disable will not
+operate on DB, but @code{save*Status} will mark the dead elements and
+take effect across restart.}
 
 @end table
 
