@@ -423,7 +423,7 @@ Applications Toolkit})
       @item recent history.
       @end enumerate
 @item RF page with all relevant settings, read back, status, parameters
-@item Vacuum display and control
+@item Vacuum display and control. ``Water flow'' or 3D plot of vacuum status along the ring with time line info.
 @item Cryogenics system display and control
 @item Pulsed magnet systems monitor and control
 @end itemize
@@ -442,6 +442,7 @@ Applications Toolkit})
 @item Synchronization system display and control
 @item Tune display and control (*)
 @item Temperature monitoring display
+@item Bunch length and profile if it is available (*)
 @end itemize
 
 @node Safety Systems
@@ -548,7 +549,7 @@ the order of using them in the commissioning.
       @item Linear optics fitting and optimization with LOCO.
       @item Develop lattice model using measured fields, linear/nonlinear optics.
       @item Reduce beta beat
-      @item Correct coupling using skew quadrupoles
+      @item Correct coupling using skew quadrupoles, local and global.
       @item Analysis on nonlinear dynamics.
       @item Use Pinger to measure tune shift with amplitude, dynamic aperture and characterize sextupole distribution
       @item Wakefield modeling and tracking studies, develop model for impedance and wakefields, caculation and measurement, estimate instability thresholds, simulate bunch-by-bunch feedback with realistic bunches and wakefields.
@@ -733,6 +734,11 @@ and its power supply, vacuum, RF, and so on.
 @item set reference for orbit reading.
 @item get/plot turn-by-turn BPM signal, including orbit and sub/diff
 @end itemize
+
+Interplay with feedback system when creating local bump: update the
+reference orbit to feedback ? or share same orbit difference from a
+dedicated IOC ? the feedback should check golden orbit at 10-50Hz rate
+if real-time orbit difference is not available to it.
 
 
 @node Beam Based Alignment (BBA)
@@ -2310,7 +2316,12 @@ output is not always the same.
 @deftypefunx {lifetime =} getBeamLifetime ( )
 @deftypefunx {sigmax, sigmay =} getBeamSize ( )
 @deftypefunx {} getBeamProfile ( )
-Returns beam current, lifetime, size. The profile can be an image (can we do it in EPICS ?)
+@deftypefunx {} getBunchLength ( )
+@deftypefunx {} getBunchProfile ( )
+Returns beam current, lifetime, size. The profile can be an image (can
+we do it in EPICS ?), @code{getBeamProfile} is transverse, and
+@code{getBunchProfile} is longitudinal from streak camera type of
+instruments.
 @end deftypefun
 
 @deftypefun {pres =} getPressure ( @var{loc} )
@@ -2433,7 +2444,7 @@ values (two values for H/V, 30 cells are identical)
 bump. check the orbit against original state outside of the
 bump. Requirement: 1. set 3 or 4 correctors; 2. get whole orbit; 3. get
 the location of each corrector and BPMs, so filter the BPMs outside of
-the bump.
+the bump. Interplay with feedback system, need flexibility on zero-cross location. need synchronize with other feedforwad table ?
 @end deftypefn
 
 @deftypefn {Ext} {} getBbaQuad ( )
@@ -2685,8 +2696,9 @@ RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
 @heading Revision History
 
 @itemize @bullet
-@item 2010-06-08, Lingyun Yang, init
+@item 2010-06-24, discuss with group leaders and ASD head.
 @item 2010-06-14, Guobao Shen, rev 1
+@item 2010-06-08, Lingyun Yang, init
 @end itemize
 
 
