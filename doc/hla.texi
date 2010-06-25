@@ -501,8 +501,8 @@ and design the APIs as a common library. The high level applications
 will use these APIs to fulfil comissioning, operations and physics
 studies. We need more input from operation group to make these tools more operator-friendly.
 
-@node Physics Tasks
-@subsection Physics Tasks
+@node Physics Tasks for Storage Ring
+@subsection Physics Tasks for Storage Ring
 
 
 In @cite{NSLS-II Storage Ring Commissioning} (@pxref{Reference}), we have defined steps for
@@ -598,6 +598,66 @@ the order of using them in the commissioning.
 @item Concerns: accuracy of magnet calibration-two types of dipoles, magnetic field quality (IRMIS data).
 @end itemize
 
+
+@node Physics Tasks for Injector
+@subsection Physics Tasks for Injector
+
+Software routines needed for the injector commissioning and operation
+are listed in this section. Some of these routines will be delivered
+by linac and booster vendors, others have to be developed by ourselves.
+
+@itemize
+
+@item Linac
+@itemize
+@item Diagnostics calibration       
+@item Routines for optimization of linac performance 
+@item Energy feedback
+@item Charge feedback
+@item Specification of bunch train format    
+@item Beam loading compensation      
+@item Energy measurement     
+@item Energy spread measurement      
+@item Emittance measurement (3 screens)      
+@item Emittance measurement (quad scans)     
+@item Matching of Twiss parameters into booster septum       
+@item Beam stacking  
+@item Beam transmission optimization 
+@item TL quad centering      
+@item Integration of safety devices/interlocks       
+@end itemize
+
+@item Booster
+@itemize
+@item Diagnostics calibration       
+@item Orbit correction       
+@item Tune measurement system
+@item Energy measurement     
+@item Momentum compaction measurement
+@item Emittance measurements 
+@item Beam stacking  
+@item Extraction optimization
+@item Ramp optimization      
+@item LOCO-type machine characterization     
+@item MIA in transport line -- booster acceptance testing    
+@item Orbit feedback 
+@item Synchrotron Radiation diagnostics      
+@item Bunch cleaning system  
+@item TL quad centering      
+@item Integration of safety devices/interlocks       
+@end itemize 
+@item SR
+
+
+In addition to what has been already specified by Accelerator Physics:
+
+@itemize
+@item Closed bump optimization: A and t     
+@item Simultaneous measurements of injected/stored beam orbits       
+@item Measurement of injection efficiency
+@end itemize
+
+@end itemize
 
 @node HLA Scripts and Applications
 @section HLA Scripts and Applications
