@@ -443,6 +443,7 @@ Applications Toolkit})
 @item Tune display and control (*)
 @item Temperature monitoring display
 @item Bunch length and profile if it is available (*)
+@item Measure BPM linearity
 @end itemize
 
 @node Safety Systems
@@ -543,7 +544,7 @@ the order of using them in the commissioning.
       @item Measure and adjust tune. (tune scan ?)
       @item Measure and correct the chromaticity (linear and nonlinear). 
       @item Measure beam optics including phase advance, beta functions, dispersion.
-      @item Dispersion measurement and correction
+      @item Dispersion measurement and correction, optimal set of quads
       @item Beam based alignment (quadrupole and BPM).
       @item Beam based alignment of sextupoles.
       @item Linear optics fitting and optimization with LOCO.
@@ -1555,8 +1556,8 @@ Simulation value if the mode is "simulator", otherwise, measuredvalue.
 @item unit: [TBD].
 @end enumerate
 
-@deftypefunx {(@var{nux}, @var{nuy}) =} getTune ( @var{mode} )
-
+@deftypefun {(@var{nux}, @var{nuy}) =} getTune ( @var{mode} )
+@deftypefunx {(@var{nux}, @var{nuy}) =} getFftTune ( @var{mode} )
 Get tune at certain mode.
 
 Data structure:
@@ -1794,6 +1795,9 @@ Input/output data flow needs to be clarified.
 
 @end deftypefun
 
+@deftypefun {} getDataDirectory ( )
+get the directory for storing measurement/analysis data
+@end deftypefun
 
 
 @strong{Who can explain the following API and give input/output for
@@ -1857,6 +1861,8 @@ Data structure:
 @section Orbit Control and Analysis
 
 This chapter focus on orbit related functions. 
+
+Do we need to monitorOrbit ? with call back or return ? monitor channel in general ?
 
 @enumerate
 @item Obtain static orbit: @code{getOrbit}, @code{getOrbitX}, @code{getOrbitY}, @code{getOrbitDrift}, 
@@ -2381,6 +2387,10 @@ Check whether this setpoint is within the limits.
 Get the label for specific channel when do plotting.
 @end deftypefun
 
+@deftypefun {} getChannelTolerance ( @var{channel} )
+return the tolerance of a channel, i.e. maximum allowed abs(am-sp).
+@end deftypefun
+
 @end table
 
 
@@ -2395,6 +2405,10 @@ These APIs are not using service directly, but composed of fundamental CAPIs int
 
 @deftypefn {Ext} {} getNearbyBpm ( @var{group} )
 return two BPMs bound each element in this group
+@end deftypefn
+
+@deftypefn {Ext} {} measBpmLinearity ( @var{bpm} )
+MML has this function, test the linearity of BPM readings.
 @end deftypefn
 
 @deftypefn {Ext} {} measBeamLifetime ( @var{delay}, @var{npoints}, @var{order} )
@@ -2444,7 +2458,7 @@ values (two values for H/V, 30 cells are identical)
 bump. check the orbit against original state outside of the
 bump. Requirement: 1. set 3 or 4 correctors; 2. get whole orbit; 3. get
 the location of each corrector and BPMs, so filter the BPMs outside of
-the bump. Interplay with feedback system, need flexibility on zero-cross location. need synchronize with other feedforwad table ?
+the bump. Interplay with feedback system, need flexibility on zero-cross location. need synchronize with other feedforwad table ? (MML has several methods to look at)
 @end deftypefn
 
 @deftypefn {Ext} {} getBbaQuad ( )
@@ -2462,6 +2476,7 @@ This returns the orbit drift after @var{delay} seconds.
 @deftypefnx {Ext} {} measBeta ( )
 @deftypefnx {Ext} {} measPhase ( )
 @deftypefnx {Ext} {} measDispersion ( )
+@deftypefnx {Ext} {} correctDispersion ( )
 @code{measTune} uses turn by turn BPM data to get tune
 @end deftypefn
 
@@ -2484,6 +2499,15 @@ This function do the orbit correction using default measured orbit response matr
 @deftypefn {Ext} {} calcCoupling
 @end deftypefn
 
+@deftypefn {Ext} {} getMaxBumpedOrbit ( @var{kickstrength} )
+Given certain increase to kicker, what is the maximum orbit shift. This is an estimate of maximum kick strength. The results is tune/beta/mode dependent.
+@end deftypefn
+
+@deftypefn {Ext} {} getDeviceList ( @var{sector} )
+get device list in certain sector, magnets only, no drift space if using lattice file.
+@end deftypefn
+
+
 @deftypefn {Ext} {} getBpmVariance ( @var{period} )
 @code{getBpmVariance} monitor the variance of BPM reading. Same
 signature as getOrbit/getOrbitX/getOrbitY, monitor the beam statistics
@@ -2494,6 +2518,7 @@ Requirement: read BPM orbit, can call getOrbit, getOrbitX, getOrbitY
 @end deftypefn
 
 @deftypefn {Ext} {} calcTbtOrbitPhase ( )
+calculate phase from turn by turn BPM data.
 @end deftypefn
 
 @deftypefn {Ext} {der =} measChannelDerivative ( @var{channel_set},  @var{stepsize}, @var{channel_read} )
