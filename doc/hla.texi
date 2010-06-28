@@ -1529,7 +1529,7 @@ Simulation value if the mode is "simulator", otherwise, measuredvalue.
 @item unit: [meter].
 @end enumerate
 
-@deftypefunx {[eta] =} getDisp ( @var{mode}, @var{group}, @var{plane} )
+@deftypefunx {[eta] =} getDispersion ( @var{mode}, @var{group}, @var{plane} )
 
 Get dispersion at each element belonging to certain group.
 
@@ -1544,7 +1544,7 @@ Simulation value if the mode is "simulator", otherwise, measuredvalue.
 @item unit: [TBD].
 @end enumerate
 
-@deftypefunx {[@var{chromx}, @var{chromy}] =} getChrom ( @var{mode} )
+@deftypefunx {[@var{chromx}, @var{chromy}] =} getChromaticity ( @var{mode} )
 
 Get chromaticity at certain mode.
 
@@ -1556,7 +1556,7 @@ Simulation value if the mode is "simulator", otherwise, measuredvalue.
 @item unit: [TBD].
 @end enumerate
 
-@deftypefun {(@var{nux}, @var{nuy}) =} getTune ( @var{mode} )
+@deftypefunx {(@var{nux}, @var{nuy}) =} getTune ( @var{mode} )
 @deftypefunx {(@var{nux}, @var{nuy}) =} getFftTune ( @var{mode} )
 Get tune at certain mode.
 
@@ -1833,6 +1833,7 @@ Data structure:
 
 @end deftypefun
 
+
 @deftypefun {} setCurrentDependency ( )
 
 (Choi, ???)
@@ -1856,6 +1857,7 @@ Data structure:
 @end deftypefun
 
 @end table
+
 
 @node Orbit Control and Analysis
 @section Orbit Control and Analysis
