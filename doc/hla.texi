@@ -1373,6 +1373,16 @@ Data structure:
 @item return: Current machine operation mode(@pxref{Data Management}: Operation mode)
 @end enumerate
 
+@deftypefunx {status =} saveMode (@var{mode}, @var{destination="mode_name.txt"} ) 
+Save operation mode with @code{saveMode}.
+
+Data structure:
+@enumerate
+@item params: mode; mode info to be saved
+@item params: destination; where to save
+@item return: status
+@end enumerate
+
 @deftypefunx {[modes] =} getAllModes()
 Get all operation modes with @code{getAllModes()}. 
 
@@ -1496,6 +1506,39 @@ Data structure:
 @item return: s - numeric (double) array. Empty if group does not
 either have any member nor exist.
 @item unit: [meter].
+@end enumerate
+
+@end deftypefun
+
+@deftypefun {[[elems], [s]] =} getNeighbors ( @var{element}, @var{group}, @var{n} )
+
+Get a list of @math{n} elements belongs to @var{group}. The list is
+sorted along @math{s} (the beam direction).
+
+@code{getNearbyBpm} are built upon this routine, and it returns nearby
+BPMs for magnets
+
+Data structure:
+@enumerate
+@item params: element - string; element physics name.
+@item params: group - string; group name.
+@item params: n - numeric (integer); number of elements nearby. Total
+elements will be @math{2*n + 1}
+@item return: a 2-d array. [elems] contains all element physics name,
+and [s] contains all element @math{s} location.
+@end enumerate
+
+@end deftypefun
+
+@deftypefun {stepsize =} getStepsize ( @var{element} )
+Get stepsize for scanning an element. This information is described (@pxref{Data
+Management}: Step size).
+
+Data structure:
+@enumerate
+@item params: element - string; element physics name.
+@item return: stepsize - numeric (double). 0 if an element does not
+have this property.
 @end enumerate
 
 @end deftypefun
@@ -1751,40 +1794,6 @@ Data structure:
 Management}: Tune correction matrix).  
 @item unit: [TBD].
 @end enumerate
-@end deftypefun
-
- 
-@deftypefun {[[elems], [s]] =} getNeighbors ( @var{element}, @var{group}, @var{n} )
-
-Get a list of @math{n} elements belongs to @var{group}. The list is
-sorted along @math{s} (the beam direction).
-
-@code{getNearbyBpm} are built upon this routine, and it returns nearby
-BPMs for magnets
-
-Data structure:
-@enumerate
-@item params: element - string; element physics name.
-@item params: group - string; group name.
-@item params: n - numeric (integer); number of elements nearby. Total
-elements will be @math{2*n + 1}
-@item return: a 2-d array. [elems] contains all element physics name,
-and [s] contains all element @math{s} location.
-@end enumerate
-
-@end deftypefun
-
-@deftypefun {stepsize =} getStepsize ( @var{element} )
-Get stepsize for scanning an element. This information is described (@pxref{Data
-Management}: Step size).
-
-Data structure:
-@enumerate
-@item params: element - string; element physics name.
-@item return: stepsize - numeric (double). 0 if an element does not
-have this property.
-@end enumerate
-
 @end deftypefun
 
 @deftypefun {} convertUnit ( )
