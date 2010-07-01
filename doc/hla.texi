@@ -349,6 +349,7 @@ list).
 Whenever the value is an array, sort it in the beam direction, for
 example, in increasing order of @math{s} location.
 
+A policy to determine who is first should be discussed 
 
 @node Software Requirement
 @chapter Software Requirement
