@@ -483,6 +483,14 @@ It is better that the HLA can have the following features:
 @item Online modification: in control room within a shift, want to change code temporary to fullfil a job on time.
 @end enumerate 
 
+@node Beam Status Diagnostics
+@section Beam Status Diagnostics
+
+A set of API should be provided to allow physicists to fetch data from
+circular buffer of related sub-system, especially diagnostic
+instrument, and RF. Detailed requirement can be found in
+@cite{Circular Buffer Diagnostic} (@pxref{Reference}). 
+
 
 
 @c -------------------------------------------------------------
@@ -2633,6 +2641,8 @@ LT-ENG-RSI-STD-002, Jan 21, 2009, Rev 2
 @item @cite{National Synchrotron Light Source II - Accelerator Systems
 Requirements Document, Storage Ring Physics Nomenclature Standard},
 RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
+
+@item G.Shen, Y. Hu, B. Dalesio, @cite{Circular Buffer Diagnostic}
 @end enumerate
 
 @end itemize
