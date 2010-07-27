@@ -1,15 +1,20 @@
 #!/usr/bin/env python
-import sys, os, time
+import sys
+import os
+import time
 from numpy import arange, sin, pi, random, sqrt
 from scipy.optimize import fmin, fmin_cg, fmin_powell
 import matplotlib.pylab as plt
 
-import cothread
 import cothread.catools as catools
 import latman
 
+# export
+#__all__ = []
 
 def theo_local_bump1(lat):
+    """Given a lattice list, calculate the theoretical local bump
+    """
     # all elements
     betax = [v for v in catools.caget("SR:C00-Glb:G00<BETA:00>RB:X")]
     phix = [v for v in catools.caget("SR:C00-Glb:G00<PHI:00>RB:X")]

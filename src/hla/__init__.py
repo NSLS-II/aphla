@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os
+from hla.capi import *
 
 _family = []
 
