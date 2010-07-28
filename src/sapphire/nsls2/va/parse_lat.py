@@ -535,17 +535,17 @@ class gen_vioc_db:
         params.update(kw)
 
         record = 'record(ai, "%(rec)s") {\n'
-        record = '    field(INP,  "%(recCalc)s")\n'
-        record = '    field(SCAN, "Passive")\n'
-        record = '    }\n'
-        record = 'record(calc, "%(recCalc)s") {\n'
-        record = '    field(SCAN, "5 second")\n'
-        record = '    field(CALC, "A<120?300:A*(1-5/(8*3600.0))")\n'
-        record = '    field(INPA, "%(rec)s")\n'
-        record = '    field(FLNK, "%(rec)s")\n'
-        record = '    }\n'
+        record += '    field(INP,  "%(recCalc)s")\n'
+        record += '    field(SCAN, "Passive")\n'
+        record += '    }\n'
+        record += 'record(calc, "%(recCalc)s") {\n'
+        record += '    field(SCAN, "5 second")\n'
+        record += '    field(CALC, "A<120?300:A*(1-5/(8*3600.0))")\n'
+        record += '    field(INPA, "%(rec)s")\n'
+        record += '    field(FLNK, "%(rec)s")\n'
+        record += '    }\n'
 
-        self.records.append(record)
+        self.records.append(record % params)
 
     def buildDb(self):
         for elem in self.elems:
