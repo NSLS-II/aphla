@@ -2601,6 +2601,16 @@ The overview requirementfor SAPI
       @end itemize
 @end itemize
 
+@node Name Convention for Server Record
+@section Name Convention for Server Record
+
+The server is designed against EPICS-4. It provides a capability to
+create a a record dnamically. User should follow the NSLS-II name
+convention when creating any record.{ @cite{National Synchrotron Light
+Source II - Nomenclature Standard}, @cite{National Synchrotron Light
+Source II - Accelerator Systems Requirements Document, Storage Ring
+Physics Nomenclature Standard}, @pxref{Reference}}. 
+
 @node Data storage API
 @section Data storage API
 
