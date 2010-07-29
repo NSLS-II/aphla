@@ -797,9 +797,19 @@ class gen_vioc_db:
     def corr(self, attrs):
         if attrs[1] == 'FTRIM' or attrs[1] == 'TRIMD':
             self.index += 1
-        
+        phyName = attrs[0]
+        elemType = attrs[1]
         devId = 'HCM'
-        devInst = attrs[0][1:3]
+        if elemType == 'SQUAD':
+            devInst = phyName[2:3]
+            attrs[0] = 'CX' + phyName[2:]
+        elif elemType == 'FTRIM': 
+            devInst = phyName[1:3]
+            attrs[0] = 'CFX' + phyName[1:]
+        else:
+            devInst = attrs[0][1:3]
+            attrs[0] = 'CX' + phyName[1:]
+        
         attrs[1] = 'TRIMX'
 
         self.doRecord(attrs, 'MG', devId, devInst, \
@@ -808,7 +818,16 @@ class gen_vioc_db:
 
         self.index += 1
         devId = 'VCM'
-        devInst = attrs[0][1:3]
+        if elemType == 'SQUAD':
+            devInst = phyName[2:3]
+            attrs[0] = 'CY' + phyName[2:]
+        elif elemType == 'FTRIM': 
+            devInst = phyName[1:3]
+            attrs[0] = 'CFY' + phyName[1:]
+        else:
+            devInst = phyName[1:3]
+            attrs[0] = 'CY' + phyName[1:]
+#        devInst = attrs[0][1:3]
 
         attrs[1] = 'TRIMY'
         self.doRecord(attrs, 'MG', devId, devInst, \

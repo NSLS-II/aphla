@@ -37,7 +37,7 @@ class parseConfig:
     def __init__(self):
         self.document = os.getenv('MACHINE')
         
-        print self.document
+        #print self.document
             
         self.machine = {}
         self.groups = {}
@@ -87,7 +87,7 @@ class parseConfig:
     def buildElemSeq(self, sequences):
         for child in sequences:
             expr = "/%s/sequence[@id='%s']" % (self.facility.tag, child.get('id'))
-#            print expr
+            #print expr, child.get('type')
             sequences = self.facility.xpath(expr)
             if len(sequences) > 1:
                 print 'More than 1 sequence defined in the beam line for %s' % sequences[0].get('id')
@@ -105,8 +105,8 @@ class parseConfig:
                 nodeDict['status'] = [node.get('status')]
                 
                 # add group information
-                exprGroup = expr+"/node[@id='%s']/group/group" %id
-#                print exprGroup
+                exprGroup = expr+"/node[@id='%s']/group/group" %(id)
+#                print exprGroup, node.get('type')
                 groups = self.facility.xpath(exprGroup)
                 for group in groups:
                     groupId = group.get('id')
@@ -120,13 +120,16 @@ class parseConfig:
                         nodeDict['group'] = [groupId]
                 
                 # add channel information
-                exprChan = expr+"/node[@id='%s']/channelsuite/channel" %id
+                exprChan = expr+"/node[@id='%s']/channelsuite/channel" %(id)
                 channels = self.facility.xpath(exprChan)
+                locDict = {}
                 for chan in channels:
-                    nodeDict['channel'] = [chan.get('signal')]
-                    nodeDict['channel'].append(chan.get('handle'))
-                    nodeDict['channel'].append(chan.get('settable'))
-                
+                    locDict[chan.get('handle')] = [chan.get('signal'), chan.get('settable')]
+#                    if nodeDict.has_key('channel'):
+#                        nodeDict['channel'].append(locDict)
+#                    else:
+#                        nodeDict['channel'] = [locDict]
+                nodeDict['channel'] = locDict
                 if self.machine.has_key(id):
                     self.machine[id].append(nodeDict)
                 else:
