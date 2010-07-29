@@ -15,7 +15,7 @@ class sapphire:
         keys = os.environ.keys()
         for key in keys:
             if not re.search('MACHINE', key):
-                os.environ['MACHINE']='/home/shen/nsls-ii/nsls2-hla/src/sapphire/lattice/nsls2.xml'
+                os.environ['MACHINE']='/home/shen/nsls-ii/nsls2-hla/src/seasail/lattice/nsls2.xml'
     
         self.pc = parse_config.parseConfig()
         self.pc.parse()

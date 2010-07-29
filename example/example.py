@@ -4,7 +4,7 @@ Created on Jul 22, 2010
 @author: shen
 '''
 
-from sapphire import sapphire
+from seasail import seasail
 import re
 
 if __name__ == '__main__':
