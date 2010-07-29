@@ -5,10 +5,9 @@ Created on Jul 22, 2010
 '''
 
 from seasail import seasail
-import re
 
 if __name__ == '__main__':
-    sph = sapphire()
+    sph = seasail()
     groups = sph.getAllGroups()
     print groups
     

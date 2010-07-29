@@ -10,7 +10,7 @@ from lattice import parse_config
 import os
 import re
 
-class sapphire:
+class seasail:
     def __init__(self):
         keys = os.environ.keys()
         for key in keys:
