@@ -853,12 +853,22 @@ if __name__ == '__main__':
     f1=open('lat_conf_table.txt', 'w')
     for lat in vdb.latTable:
         f1.write(lat)
+
+    tuneRec = '0   	%s	NULL                       	TUNE 	0.0000	0.0	TUNE\n' %(vdb.tuneX) 
+    f1.write(tuneRec)
+    tuneRec = '0   	%s	NULL                       	TUNE	0.0000	0.0	TUNE\n' %(vdb.tuneY)
+    f1.write(tuneRec)
+
+    dcctRec = '0   	%s	NULL                       	DCCT	0.0000	0.0	DCCT\n' %(vdb.cur)
+    f1.write(dcctRec)
+    
     f1.close()
 
     f2=open('glob_rec.txt', 'w')
     f2.write('#rec type         rec name               elem #\n')
     f2.write('ai         %s      1\n'   %vdb.tuneX)
     f2.write('ai         %s      1\n'   %vdb.tuneY)
+    f2.write('ai         %s     1\n'   %vdb.cur)
     f2.write('waveform   %s     %d\n'   %(vdb.alphaX, vdb.index))
     f2.write('waveform   %s     %d\n'   %(vdb.alphaY, vdb.index))
     f2.write('waveform   %s      %d\n'  %(vdb.betaX, vdb.index))
