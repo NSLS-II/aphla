@@ -2,99 +2,99 @@
 
 """This script read a table file, and convert it to a XML conf file"""
 
-import sys, os
-from time import gmtime, strftime
+import sys
+from time import strftime
 
 class buildConfig:
-  def __init__(self, latfile):
-      self.latfile = latfile
-      self.comboid = ''
-      self.prenode = ''
-      self.comboseq = '  <comboseq id="SR">\n'
+    def __init__(self, latfile):
+        self.latfile = latfile
+        self.comboid = ''
+        self.prenode = ''
+        self.comboseq = '  <comboseq id="SR">\n'
 
-  def createBpmNode(self, rec):
-      node = '       <group>\n'
-      ## node += '          <group type="telem"  id="%s" />\n' % rec[1]
-      ## node += '          <group type="tgroup" id="%s" />\n' % rec[4][:-1]
-      ## node += '          <group type="type"   id="%s" />\n' % rec[7][:-1]
-      node += '          <group id="%s" />\n' % rec[6]
-      node += '       </group>\n'
+    def createBpmNode(self, rec):
+        node = '       <group>\n'
+        ## node += '          <group type="telem"  id="%s" />\n' % rec[1]
+        ## node += '          <group type="tgroup" id="%s" />\n' % rec[4][:-1]
+        ## node += '          <group type="type"   id="%s" />\n' % rec[7][:-1]
+        node += '          <group id="%s" />\n' % rec[6]
+        node += '       </group>\n'
+    
+        node += '       <attributes>\n'
+        node += '          <align x="0.0" y="0.0" z="0.0" pitch="0" yaw="0" roll="0"/>\n'
+        node += '          <aperture shape="0" x=""/>\n'
+        node += '       </attributes>\n'
+    
+        node += '       <channelsuite name="bpmsuite">\n'
+    
+        node += '          <channel handle="xAvg" signal="%s" settable="false"/>\n' \
+                % (rec[1].replace('<', '&lt;')).replace('>', '&gt;')
+        node += '          <channel handle="yAvg" signal="%sY" settable="false"/>\n' \
+                % (rec[1][:-1].replace('<', '&lt;')).replace('>', '&gt;')
+        node += '          <channel handle="xTBT" signal="" settable="false"/>\n'
+        node += '          <channel handle="yTBT" signal="" settable="false"/>\n'
+        node += '       </channelsuite>\n'
+    
+        return node
 
-      node += '       <attributes>\n'
-      node += '          <align x="0.0" y="0.0" z="0.0" pitch="0" yaw="0" roll="0"/>\n'
-      node += '          <aperture shape="0" x=""/>\n'
-      node += '       </attributes>\n'
+    def createCavNode(self, rec):
+        node = '       <group>\n'
+        ## node += '          <group type="telem"  id="%s" />\n' % rec[1]
+        ## node += '          <group type="tgroup" id="%s" />\n' % rec[4][:-1]
+        ## node += '          <group type="type"   id="%s" />\n' % rec[7][:-1]
+        node += '          <group id="%s" />\n' % rec[6]
+        node += '       </group>\n'
 
-      node += '       <channelsuite name="bpmsuite">\n'
+        node += '       <attributes>\n'
+        node += '          <align x="0.0" y="0.0" z="0.0" pitch="0" yaw="0" roll="0"/>\n'
+        node += '          <aperture shape="0" x=""/>\n'
+        node += '       </attributes>\n'
 
-      node += '          <channel handle="xAvg" signal="%s" settable="false"/>\n' \
-              % (rec[1].replace('<', '&lt;')).replace('>', '&gt;')
-      node += '          <channel handle="yAvg" signal="%sY" settable="false"/>\n' \
-              % (rec[1][:-1].replace('<', '&lt;')).replace('>', '&gt;')
-      node += '          <channel handle="xTBT" signal="" settable="false"/>\n'
-      node += '          <channel handle="yTBT" signal="" settable="false"/>\n'
-      node += '       </channelsuite>\n'
+        node += '       <channelsuite name="rfsuite">\n'
 
-      return node
-
-  def createCavNode(self, rec):
-      node = '       <group>\n'
-      ## node += '          <group type="telem"  id="%s" />\n' % rec[1]
-      ## node += '          <group type="tgroup" id="%s" />\n' % rec[4][:-1]
-      ## node += '          <group type="type"   id="%s" />\n' % rec[7][:-1]
-      node += '          <group id="%s" />\n' % rec[6]
-      node += '       </group>\n'
-
-      node += '       <attributes>\n'
-      node += '          <align x="0.0" y="0.0" z="0.0" pitch="0" yaw="0" roll="0"/>\n'
-      node += '          <aperture shape="0" x=""/>\n'
-      node += '       </attributes>\n'
-
-      node += '       <channelsuite name="rfsuite">\n'
-
-      voltSP = ''
-      voltRB = ''
-      freqSP = ''
-      freqRB = ''  
-      if rec[3] == 'RFFREQ':
-          freqSP = (rec[2].replace('<', '&lt;')).replace('>', '&gt;')
-          freqRB = (rec[1].replace('<', '&lt;')).replace('>', '&gt;')
-          voltSP = freqSP.replace('Freq', 'Volt')
-          voltRB = freqRB.replace('Freq', 'Volt')
-      elif rec[3] == 'RFVOLT':
-          voltSP = (rec[2].replace('<', '&lt;')).replace('>', '&gt;')
-          voltRB = (rec[1].replace('<', '&lt;')).replace('>', '&gt;')
-          freqSP = voltSP.replace('Volt', 'Freq')
-          freqRB = voltRB.replace('Volt', 'Freq')
-      else:
-          print 'RF format error.'
-          return
+        voltSP = ''
+        voltRB = ''
+        freqSP = ''
+        freqRB = ''  
+        if rec[3] == 'RFFREQ':
+            freqSP = (rec[2].replace('<', '&lt;')).replace('>', '&gt;')
+            freqRB = (rec[1].replace('<', '&lt;')).replace('>', '&gt;')
+            voltSP = freqSP.replace('Freq', 'Volt')
+            voltRB = freqRB.replace('Freq', 'Volt')
+        elif rec[3] == 'RFVOLT':
+            voltSP = (rec[2].replace('<', '&lt;')).replace('>', '&gt;')
+            voltRB = (rec[1].replace('<', '&lt;')).replace('>', '&gt;')
+            freqSP = voltSP.replace('Volt', 'Freq')
+            freqRB = voltRB.replace('Volt', 'Freq')
+        else:
+            print 'RF format error.'
+            return
           
-      node += '          <channel handle="voltSP" signal="%s" settable="true"/>\n'  % voltSP
-      node += '          <channel handle="voltRB" signal="%s" settable="false"/>\n' % voltRB
-      node += '          <channel handle="fregSP" signal="%s" settable="true"/>\n'  % freqSP
-      node += '          <channel handle="freqRB" signal="%s" settable="false"/>\n' % freqRB
-      node += '       </channelsuite>\n'
+        node += '          <channel handle="voltSP" signal="%s" settable="true"/>\n'  % voltSP
+        node += '          <channel handle="voltRB" signal="%s" settable="false"/>\n' % voltRB
+        node += '          <channel handle="fregSP" signal="%s" settable="true"/>\n'  % freqSP
+        node += '          <channel handle="freqRB" signal="%s" settable="false"/>\n' % freqRB
+        node += '       </channelsuite>\n'
 
-      return node
+        return node
 
-  def createMagNode(self, rec):
-      node = '       <group>\n'
-      ## node += '          <group type="telem"  id="%s" />\n' % rec[1]
-      ## node += '          <group type="tgroup" id="%s" />\n' % rec[4]
-      ## node += '          <group type="type"   id="%s" />\n' % rec[7]
-      node += '          <group id="%s" />\n' % rec[6]
-      node += '       </group>\n'
+    def createMagNode(self, rec):
+        node = '       <group>\n'
+        ## node += '          <group type="telem"  id="%s" />\n' % rec[1]
+        ## node += '          <group type="tgroup" id="%s" />\n' % rec[4]
+        ## node += '          <group type="type"   id="%s" />\n' % rec[7]
+        node += '          <group id="%s" />\n' % rec[6]
+        node += '       </group>\n'
 
-      node += '       <attributes>\n'
-      node += '          <magnet len="%s" polarity="" dfltMagFld=""/>\n' % rec[4]
-      node += '          <align x="0.0" y="0.0" z="0.0" pitch="0" yaw="0" roll="0"/>\n'
-      node += '          <aperture shape="0" x=""/>\n'
-      node += '       </attributes>\n'
+        node += '       <attributes>\n'
+        node += '          <magnet len="%s" polarity="" dfltMagFld=""/>\n' % rec[4]
+        node += '          <align x="0.0" y="0.0" z="0.0" pitch="0" yaw="0" roll="0"/>\n'
+        node += '          <aperture shape="0" x=""/>\n'
+        node += '       </attributes>\n'
 
-      node += '       <ps main="%s_PS"/>\n' % rec[3]
+        node += '       <ps main="%s_PS"/>\n' % rec[3]
 
-      node += '       <channelsuite name="magnetsuite">\n'
+        node += '       <channelsuite name="magnetsuite">\n'
 
 #Character Name 	Entity Reference 	Character Reference 	Numeric Reference
 #Ampersand 	                &amp; 		& 						&#38;#38;
@@ -104,75 +104,75 @@ class buildConfig:
 #Apostrophe             	&apos; 		' 						&#34;
 # ref: http://support.microsoft.com/kb/316063
 
-      node += '          <channel handle="fieldRB" signal="%s" settable="false"/>\n' \
-              % (rec[1].replace('<', '&lt;')).replace('>', '&gt;')
-      node += '          <channel handle="fieldSP" signal="%s" settable="true"/>\n' \
-              % (rec[2].replace('<', '&lt;')).replace('>', '&gt;')
-      node += '       </channelsuite>\n'
+        node += '          <channel handle="fieldRB" signal="%s" settable="false"/>\n' \
+                % (rec[1].replace('<', '&lt;')).replace('>', '&gt;')
+        node += '          <channel handle="fieldSP" signal="%s" settable="true"/>\n' \
+                % (rec[2].replace('<', '&lt;')).replace('>', '&gt;')
+        node += '       </channelsuite>\n'
 
-      return node
+        return node
 
-  def addComboNode(self, comboid):
-      self.comboseq += '    <sequence id="%s"/>\n' % comboid
+    def addComboNode(self, comboid):
+        self.comboseq += '    <sequence id="%s"/>\n' % comboid
 
-  def getComboSeq(self):
-      self.comboseq += '  </comboseq>\n'
-      return self.comboseq
+    def getComboSeq(self):
+        self.comboseq += '  </comboseq>\n'
+        return self.comboseq
 
-  def addNode(self, rec):
-      typeName = ''
-      body = ''
-      seq = rec[3][-4:-1]
-      if rec[6] == 'CAVITY':
-          seq=rec[6]
-          typeName = 'RF'
-      if seq != self.comboid:
-          if self.comboid != '':
-              body += '  </sequence>\n'
-          self.addComboNode(seq)
-          body += '  <sequence type="%s" id="%s" len="">\n' % (typeName, seq)
-          self.comboid = seq
+    def addNode(self, rec):
+        typeName = ''
+        body = ''
+        seq = rec[3][-4:-1]
+        if rec[6] == 'CAVITY':
+            seq=rec[6]
+            typeName = 'RF'
+        if seq != self.comboid:
+            if self.comboid != '':
+                body += '  </sequence>\n'
+            self.addComboNode(seq)
+            body += '  <sequence type="%s" id="%s" len="">\n' % (typeName, seq)
+            self.comboid = seq
 
-      if rec[6] == 'BPM':
-          body += '    <node type="%s" id="%s" pos="%s" len="%s" status="true">\n' \
-                  % (rec[6], rec[3], rec[5], rec[4])
-          body += self.createBpmNode(rec)
-      elif rec[6] == 'CAVITY':
-          body += '    <node type="%s" id="%s" pos="%s" len="%s" status="true">\n' \
-                  % ('RF', rec[6], rec[5], rec[4])
-          body += self.createCavNode(rec)
-      else:
-          body += '    <node type="%s" id="%s" pos="%s" len="%s" status="true">\n' \
-                  % (rec[6], rec[3], rec[5], rec[4])
-          body += self.createMagNode(rec)
-      body += '    </node>\n'
+        if rec[6] == 'BPM':
+            body += '    <node type="%s" id="%s" pos="%s" len="%s" status="true">\n' \
+                    % (rec[6], rec[3], rec[5], rec[4])
+            body += self.createBpmNode(rec)
+        elif rec[6] == 'CAVITY':
+            body += '    <node type="%s" id="%s" pos="%s" len="%s" status="true">\n' \
+                    % ('RF', rec[6], rec[5], rec[4])
+            body += self.createCavNode(rec)
+        else:
+            body += '    <node type="%s" id="%s" pos="%s" len="%s" status="true">\n' \
+                    % (rec[6], rec[3], rec[5], rec[4])
+            body += self.createMagNode(rec)
+        body += '    </node>\n'
 
-      return body
+        return body
 
-  def getHead(self):
-      ## t = strftime("%a %d %b %Y %H:%M:%S %Z", gmtime())
-      t = strftime("%a, %d %b %Y, %H:%M:%S %Z")
+    def getHead(self):
+        ## t = strftime("%a %d %b %Y %H:%M:%S %Z", gmtime())
+        t = strftime("%a, %d %b %Y, %H:%M:%S %Z")
 
-      head = '<?xml version="1.0" encoding="UTF-8"?>\n'
-      head += '<lattice system="NSLS2" ver="" date="%s">\n' % t
-      head += '<!--pos is the end of an element along s direction -->\n'
+        head = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        head += '<lattice system="NSLS2" ver="" date="%s">\n' % t
+        head += '<!--pos is the end of an element along s direction -->\n'
 
-      return head
+        return head
 
-  def getBody(self):
-      latable = open(self.latfile, 'r').readlines()
-      body = ''
-      for line in latable:
-          if not (line.startswith('!') or line.startswith('#')):
-              rec = line.split()
-              if rec[6] != self.prenode:
-                  body += self.addNode(rec)
-              self.prenode = rec[6]
-      body += '  </sequence>\n'
-      return body
+    def getBody(self):
+        latable = open(self.latfile, 'r').readlines()
+        body = ''
+        for line in latable:
+            if not (line.startswith('!') or line.startswith('#')):
+                rec = line.split()
+                if rec[6] != self.prenode:
+                    body += self.addNode(rec)
+                self.prenode = rec[6]
+        body += '  </sequence>\n'
+        return body
 
-  def getTail(self):
-      return '</lattice>\n'
+    def getTail(self):
+        return '</lattice>\n'
 
 if __name__ == "__main__":
     write2File = False
@@ -196,10 +196,10 @@ if __name__ == "__main__":
     if write2File:
         f = open(latfile, 'w')
 
-        f.write(head)
-        f.write(combo)
-        f.write(body)
-        f.write(tail)
+        f.write_nsls2(head)
+        f.write_nsls2(combo)
+        f.write_nsls2(body)
+        f.write_nsls2(tail)
 
         f.close()
     else:
