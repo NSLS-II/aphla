@@ -3,8 +3,11 @@
 This script parses a flat lattice configuration file,
 generate a lattice deck for tracy, and an EPICS database for virtual ioc.
 """
-from time import gmtime, strftime
+from time import strftime
 import re
+
+import sys
+sys.path.append('../../utils/')
 import odict
 
 class parse_lat:
@@ -404,7 +407,7 @@ class gen_tracy:
             print lattice
         else:
             f = open(filename, 'w')
-            f.write_nsls2(lattice)
+            f.write(lattice)
             f.close()
    
 
@@ -847,43 +850,43 @@ if __name__ == '__main__':
 
     f=open('nsls2.db', 'w')
     for rec in vdb.records:
-        f.write_nsls2(rec)
+        f.write(rec)
     f.close()
 
     f1=open('lat_conf_table.txt', 'w')
     for lat in vdb.latTable:
-        f1.write_nsls2(lat)
+        f1.write(lat)
 
     tuneRec = '0   	%s	NULL                       	TUNE 	0.0000	0.0	TUNE\n' %(vdb.tuneX) 
-    f1.write_nsls2(tuneRec)
+    f1.write(tuneRec)
     tuneRec = '0   	%s	NULL                       	TUNE	0.0000	0.0	TUNE\n' %(vdb.tuneY)
-    f1.write_nsls2(tuneRec)
+    f1.write(tuneRec)
 
     dcctRec = '0   	%s	NULL                       	DCCT	0.0000	0.0	DCCT\n' %(vdb.cur)
-    f1.write_nsls2(dcctRec)
+    f1.write(dcctRec)
     
     f1.close()
 
     f2=open('glob_rec.txt', 'w')
-    f2.write_nsls2('#rec type         rec name               elem #\n')
-    f2.write_nsls2('ai         %s      1\n'   %vdb.tuneX)
-    f2.write_nsls2('ai         %s      1\n'   %vdb.tuneY)
-    f2.write_nsls2('ai         %s     1\n'   %vdb.cur)
-    f2.write_nsls2('waveform   %s     %d\n'   %(vdb.alphaX, vdb.index))
-    f2.write_nsls2('waveform   %s     %d\n'   %(vdb.alphaY, vdb.index))
-    f2.write_nsls2('waveform   %s      %d\n'  %(vdb.betaX, vdb.index))
-    f2.write_nsls2('waveform   %s      %d\n'  %(vdb.betaY, vdb.index))
-    f2.write_nsls2('waveform   %s       %d\n' %(vdb.etaX, vdb.index))
-    f2.write_nsls2('waveform   %s       %d\n' %(vdb.etaY, vdb.index))
-    f2.write_nsls2('waveform   %s       %d\n' %(vdb.phiX, vdb.index))
-    f2.write_nsls2('waveform   %s       %d\n' %(vdb.phiY, vdb.index))
-    f2.write_nsls2('waveform   %s     %d\n'   %(vdb.orbitX, vdb.index))
-    f2.write_nsls2('waveform   %s     %d\n'   %(vdb.orbitY, vdb.index))
-    f2.write_nsls2('waveform   %s       %d\n' %(vdb.posS, vdb.index))
+    f2.write('#rec type         rec name               elem #\n')
+    f2.write('ai         %s      1\n'   %vdb.tuneX)
+    f2.write('ai         %s      1\n'   %vdb.tuneY)
+    f2.write('ai         %s     1\n'   %vdb.cur)
+    f2.write('waveform   %s     %d\n'   %(vdb.alphaX, vdb.index))
+    f2.write('waveform   %s     %d\n'   %(vdb.alphaY, vdb.index))
+    f2.write('waveform   %s      %d\n'  %(vdb.betaX, vdb.index))
+    f2.write('waveform   %s      %d\n'  %(vdb.betaY, vdb.index))
+    f2.write('waveform   %s       %d\n' %(vdb.etaX, vdb.index))
+    f2.write('waveform   %s       %d\n' %(vdb.etaY, vdb.index))
+    f2.write('waveform   %s       %d\n' %(vdb.phiX, vdb.index))
+    f2.write('waveform   %s       %d\n' %(vdb.phiY, vdb.index))
+    f2.write('waveform   %s     %d\n'   %(vdb.orbitX, vdb.index))
+    f2.write('waveform   %s     %d\n'   %(vdb.orbitY, vdb.index))
+    f2.write('waveform   %s       %d\n' %(vdb.posS, vdb.index))
     f2.close()
 
     f3=open('init.cmd', 'w')
     for rec in vdb.initrec:
-        f3.write_nsls2(rec)
+        f3.write(rec)
     f3.close()
     
