@@ -28,7 +28,8 @@ usage: python build_if_db.py lat_conf_table.txt rdb_host rdb_user rdb_pw
 """
 import os
 import sys
-import MySQLdb
+
+import irmis_connect as ic
 
 __version_info__ = ('0', '1', '0')
 __version__ = '.'.join(__version_info__)
@@ -36,31 +37,20 @@ __version__ = '.'.join(__version_info__)
 __author__ = 'Guobao Shen (shengb@bnl.gov)'
 
 class build_if_db:
-    def __init__(self, config, host='localhost', user='test' , pw='test_pw', db='itemfinder', port=3306):
+    def __init__(self, config, db, cursor):
         self.vowner = "virtual"
         self.elem_id = 0
         self.prop_id = 0
         self.prev_elem = ''
-        self.host = host
-        self.user = user
-        self.pw = pw
         self.elem_id = 0
         self.prop_id = 0
-        self.dbname = db
-        self.port = port
         self.config = config
+        self.db = db
+        self.cursor = cursor
             
     def fail(self, emesg, retcode):
         print >>sys.stderr, "%s: ERROR: %s" % (sys.argv[0],emesg)
         sys.exit(retcode)
-    
-    def connect_if_db(self):
-        try:
-            self.db= MySQLdb.connect(host=self.host, user=self.user, passwd=self.pw, db=self.dbname, port=self.port)
-            self.cursor= self.db.cursor()
-        except:
-            print ('wrong user name and password for database: ' + self.dbname)
-            raise
     
     def clean_tables(self):
         # start with new tables;
@@ -209,6 +199,10 @@ class build_if_db:
 
 if __name__ == "__main__":
     config = '../nsls2/va/lat_conf_table.txt'
+    host = ''
+    user = ''
+    pw = ''
+
     if len(sys.argv) > 3:
         host = sys.argv[1]
         user = sys.argv[2]
@@ -217,8 +211,12 @@ if __name__ == "__main__":
             config = sys.argv[4]
     else:
         print 'usage: python build_if_db.py rdb_host rdb_user rdb_pw [lat_conf_table.txt]'
-        
-    ifdb = build_if_db(config, host=host, user=user, pw=pw)
-    ifdb.connect_if_db()
+    
+    irmis = ic.irmis_connect('itemfinder', host=host, user=user, pw=pw)
+    irmis.connect()
+    ifdb = build_if_db(config, irmis.db, irmis.cursor)
+#    ifdb.connect_if_db()
     ifdb.clean_tables()
     ifdb.execute()
+#    ifdb.connect_close()
+    irmis.close()

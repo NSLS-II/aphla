@@ -22,8 +22,8 @@ This has to be improved later to support multiple version decks.
 """
 import sys
 import os
-import MySQLdb
 
+import irmis_connect as ic
 sys.path.append('../utils/')
 import odict
 
@@ -43,27 +43,15 @@ class build_lat_db:
     """
     This script assumes what the database named 'tlattice' exist already.
     """
-    def __init__(self, lattice, host='localhost', user='django_user' , pw='djpw', db='tlattice', port=3306):
+    def __init__(self, lattice, db, cursor):
         self.deck = lattice
-        self.host = host
-        self.user = user
-        self.pw = pw
-        self.dbname = db
-        self.port = port
         self.element_table = 'telement'
         self.element_rel = 'telement_rel'
         self.z0 = 0.0 #to zero fill telement, telement_rel attributes
         self.index = 0
         self.pre_gird = ''
-    
-    def connect_irmis(self):
-        try:
-            self.db= MySQLdb.connect(host=self.host, user=self.user, passwd=self.pw, db=self.dbname, port=self.port)
-            self.cursor= self.db.cursor()
-
-        except:
-            print 'wrong user name and password for database: %s' %self.dbname
-            raise
+        self.db = db
+        self.cursor = cursor
     
     def connect_close(self):
         self.db.close()
@@ -82,7 +70,7 @@ class build_lat_db:
         self.db.commit()
         self.cursor.execute("select last_insert_id() as id")
         self.lattice_id = self.cursor.fetchone()[0]
-        print "lattice_id = %s" %self.lattice_id
+#        print "lattice_id = %s" %self.lattice_id
     
     def get_index(self):
         self.index += 1
@@ -232,13 +220,10 @@ if __name__ == '__main__':
         print 'usage: python build_lat_db.py rdb_host rdb_user rdb_pw [lat_conf_table.txt]'
         exit()
     
-    lat = build_lat_db(lattice, host=host, user=user, pw=pw)
-    
-    lat.connect_irmis()
+    irmis = ic.irmis_connect('tlattice', host=host, user=user, pw=pw)
+    irmis.connect()
+    lat = build_lat_db(lattice, irmis.db, irmis.cursor)
     lat.clean_tables()
     lat.lat_glob()
-    
     lat.write_nsls2()
-
-    lat.connect_close()
-    
+    irmis.close()
