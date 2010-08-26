@@ -249,7 +249,12 @@ class odict(dict):
     def clear(self):
         del self._keys[:]
         dict.clear(self)
-
+    
+    def isempty(self):
+        if len(self._keys) == 0:
+            return True
+        return False
+    
     def copy(self):
         return self.__class__(self)
 

@@ -41,6 +41,7 @@ class irmis_lattice_db_sql:
         print "  `k1` double(15, 6),"
         print "  `k2` double(15, 6),"
         print "  `angle` double(15, 6),"
+        print "  `indx` int(11),"
         print "  PRIMARY KEY  (`%s_id`)" %self.element_table
         print ") ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;"
     
