@@ -37,7 +37,7 @@ __version__ = '.'.join(__version_info__)
 __author__ = 'Guobao Shen (shengb@bnl.gov)'
 
 class build_if_db:
-    def __init__(self, config, db, cursor):
+    def __init__(self, config, db, cursor, element='element', property='property'):
         self.vowner = "virtual"
         self.elem_id = 0
         self.prop_id = 0
@@ -47,6 +47,8 @@ class build_if_db:
         self.config = config
         self.db = db
         self.cursor = cursor
+        self.element = element
+        self.property = property
             
     def fail(self, emesg, retcode):
         print >>sys.stderr, "%s: ERROR: %s" % (sys.argv[0],emesg)
@@ -54,13 +56,13 @@ class build_if_db:
     
     def clean_tables(self):
         # start with new tables;
-        self.cursor.execute("delete from property;")
-        self.cursor.execute("delete from element;")
+        self.cursor.execute("delete from %s;" %self.property)
+        self.cursor.execute("delete from %s;" %self.element)
 
     def insert_element(self, name, owner):
         self.elem_id = self.elem_id + 1;
 #        print "INSERT INTO element (id,name,owner) VALUE ("+`self.elem_id`+",'"+name+"','"+owner+"');"
-        cmd = "INSERT INTO element (id,name,owner) VALUE (%d, '%s', '%s');" %(self.elem_id, name, owner)
+        cmd = "INSERT INTO %s (id,name,owner) VALUE (%d, '%s', '%s');" %(self.element, self.elem_id, name, owner)
 #        self.cursor.execute("INSERT INTO element (id,name,owner) VALUE (%d, '%s', '%s');" %(self.elem_id, name, owner))
 #        print cmd
         self.cursor.execute(cmd)
@@ -68,7 +70,9 @@ class build_if_db:
     
     def insert_property_begin(self, elem, name, owner, value):
         self.prop_id = self.prop_id + 1
-        return "INSERT INTO property (id,element_id,property,owner,value) VALUES ("+`self.prop_id`+","+`elem`+",'"+name+"','"+owner+"','"+value+"')"    
+        cmd = "INSERT INTO %s (id,%s_id,property,owner,value) VALUES (%s,%s,'%s','%s','%s')" \
+                %(self.property, self.element, self.prop_id, elem, name, owner, value)
+        return cmd    
 #        print "INSERT INTO property (id,element_id,property,owner,value) VALUES ("+`self.prop_id`+","+`elem`+",'"+name+"','"+owner+"','"+value+"')",
     
     def insert_property(self, elem, name, owner, value):
