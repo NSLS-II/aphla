@@ -120,12 +120,12 @@ Copyright @copyright{} 2010 The NSLS-II Project.
 @vskip 5ex
 Schedule:
 @itemize @bullet
-@item 12/01/2011--02/29/2012, LINAC front end commissioning
+@item 12/01/2011--02/29/2012, LINAC front end
 @item 03/30/2012--07/28/2012, LINAC
-@item 05/29/2012--06/28/2012, LBTL
+@item 05/29/2012--06/28/2012, LBTL in LINAC
 @item 07/28/2012--08/27/2012, LBTL
 @item 08/27/2012--12/25/2012, Booster
-@item 12/15/2012--01/14/2013, BSTL in Booster
+@item 12/15/2012--01/14/2013, BSTL in Booster tunnel
 @item 01/14/2013--01/24/2013, BSTL
 @item 01/24/2013--09/21/2013, Storage Ring Commissioning Part 1
 @item 09/21/2013--11/20/2013, ID installation
@@ -134,7 +134,7 @@ Schedule:
 
 @vskip 5ex
 @include hlaversion.texi
-@author Jinhyuk Choi
+@comment @author Jinhyuk Choi
 @author Guobao Shen (@email{shengb@@bnl.gov})
 @author Lingyun Yang (@email{lyyang@@bnl.gov})
 @comment @email{tuomo.keskitalo@iki.fi}
@@ -150,9 +150,9 @@ Schedule:
 @chapter Introduction
 
 
-This extension package is meant to be a set of applications and client
-APIs for accelerator physics study and commissioning. The document is
-compiled based on the requirements from the following documents
+This extension package is meant to be a set of APIs and applications for
+accelerator physics study and commissioning. The document is compiled
+based on the requirements from the following documents
 (@pxref{Reference}):
 @itemize @bullet
 @item 2008, @cite{NSLS-II: Model Based Control - A Use Case Approach}
@@ -167,11 +167,11 @@ compiled based on the requirements from the following documents
 @vskip 5ex
 @itemize @bullet
 @item 12/01/2011--02/29/2012, LINAC front end commissioning
-@item 03/30/2012--07/28/2012, LINAC
-@item 05/29/2012--06/28/2012, LBTL
-@item 07/28/2012--08/27/2012, LBTL
-@item 08/27/2012--12/25/2012, Booster
-@item 12/15/2012--01/14/2013, BSTL in Booster
+@item 03/30/2012--07/28/2012, LINAC commissioning
+@item 05/29/2012--06/28/2012, LBTL in LINAC commissioning
+@item 07/28/2012--08/27/2012, LBTL commissioning
+@item 08/27/2012--12/25/2012, Booster commissioning
+@item 12/15/2012--01/14/2013, BSTL in booster tunnel
 @item 01/14/2013--01/24/2013, BSTL
 @item 01/24/2013--09/21/2013, Storage Ring Commissioning Part 1
 @item 09/21/2013--11/20/2013, ID installation
@@ -195,39 +195,43 @@ A set of commonly used words are explained in the following:
 
 @enumerate
 @item @dfn{Mode}
+@cindex mode
 is used for separating different machine settings. There could be
-``operational mode'', ``accelerator physics beam study mode'', ``short
+``production mode'', ``accelerator physics beam study mode'', ``short
 bunch mode'', ``low current mode''. With this separation, all the other
 settings can be same or different for two modes. 
+
 @item @dfn{Group}
 @cindex group
 represents a set of elements when they are sharing similar position,
 symmetry, purpose, connections or user's preferences. For example, we
-can group all sextupoles together with a group name
-@code{Sextupole}. From lattice point of view, we can have a group name
-@code{QH1} for all quadrupoles with this symmetry. Each element or
+can assign all sextupoles with a group name @code{sextupole} and all
+magnets on the second girder in each cell a group name
+@code{girder2}. From lattice point of view, we can have a group name
+@code{qh1} for all quadrupoles with this symmetry. Each element or
 magnet can belong to one or more groups.  For consistancy, the element
 belongs to the group which has only himself and the group name is same
 as its element name (the element name is guaranteed unique).
 
 We can have some predefined group names, and they will be commonly used
-for their type or symmetry, e.g. @code{Quadrupole}, @code{SH1}. The
+for their type or symmetry, e.g. @code{quadrupole}, @code{sh1}. The
 pre-defined group name should be discussed carefully, and stored in a
-relational database, IRMIS for example. Users can also define their own
-group name which does not overwrite system defined group name.
+relational database, @code{IRMIS} for example. Users can also define
+their own group name which should not overwrite any system defined group
+names.
 
 The suggested candidates of group name are:
 @itemize
 @item Magnet with same power supply or lattice symmetry. 
-@item BPM, Corrector, Quadrupole, Sextupole, SkewQuadrupole
-@item BBA, Orbit, Tune, Chromaticity
+@item @code{bpm}, @code{corrector}, @code{quadrupole}, @code{sextupole}, @code{skewquadrupole}, ...
+@item @code{bba}, @code{orbit}, @code{tune}, @code{chromaticity}
 @item ``Sam's test BPM'', ``Weiming's Toy'', ...
 @end itemize
 
 @cindex wildcard
 When searching for a group, the name matching should support a subset of
 regular expression (need more details on ``subset'', how small/large is
-this set). If we are using BASH wildcards:
+this set). One choice is the BASH wildcards:
 @itemize
 @item @strong{*}, zero or more characters
 @item @strong{?}, exactly one character
@@ -240,54 +244,31 @@ this set). If we are using BASH wildcards:
 
 @cindex sequence
 @item @dfn{Sequence}
-Lingyun suggestes that we can also use sequence to identify one element,
-usually BPM or corrector. For the convenience purpose when looping over
-BPM or correctors one after the other along the ring, we can use number
-as its order, instead of their names. Suggested sequence could be a pair
-[@dfn{cell}, @dfn{index}], and @dfn{cell} is the cell number
-following the name convention as below, which is an integer between 1
-and 30:
-
-@itemize @bullet
-@item @cite{National Synchrotron Light Source II - Nomenclature Standard},
-@item @cite{National Synchrotron Light Source II - Accelerator Systems
-Requirements Document, Storage Ring Physics Nomenclature Standard},
-@end itemize
-
-The index is the order (according to s-location) in that cell,
-and index starts from 0 to follow some language conversion such as
-Python/C/C++.
-
-A definition similar to @code{MML (Matlab Middle Layer)} can be
+We can also use sequence to identify one element, usually BPM or
+corrector. For the convenience purpose when looping over BPM or
+correctors one after the other along the ring, we can use number as its
+order, instead of their names. Suggested sequence could be a pair
+[@dfn{cell}, @dfn{index}], and @dfn{cell} is the cell number following
+the name convention as below, which is an integer between 1 and 30
+according to the NSLS-II nomenclature (see @pxref{Reference}). The index
+is the order (according to s-location) in that cell, and index starts
+from 0 to follow some language conversion such as Python/C/C++. A
+definition similar to @code{MML (Matlab Middle Layer)} can be
 atopted. This part should be discuss carefully to avoid ambiguity.
 
 @cindex coordinate
 @cindex original point
 @item @dfn{Coordinate definition},
 we always use @code{x}, @code{y} and @code{s} specify the horizontal,
-vertical and longitudinal plane. The @math{s=0} (septum or center of
-straight ?) point is the injection.
+vertical and longitudinal plane. The @math{s=0} is defined as the
+injection (in Cell 30).
+
+@item @dfn{Control System}
+A dictionary for common control system terminologies are in
+@pxref{Terminology Definition for Control System}.
+
 @end enumerate
 
-@node Terminology Definition for Control System
-@section Terminology Definition for Control System
-
-@itemize
-@enumerate
-@item EPICS
-@cindex EPICS
-@item Channel
-@cindex Channel
-@item Record
-@cindex Record
-@item PV (Process Variable)
-@cindex PV
-@cindex Process Variable
-@item CA (Channel Access)
-@cindex CA
-@cindex Channel Access
-@end enumerate
-@end itemize
 
 @node Overview of system architecture
 @section Overview of system architecture
@@ -301,15 +282,16 @@ of expertise such as GUI design, numerical analysis, accelerator
 physics, data acquisition, hardware control, and so on, can work
 together effectively and productively.
 
-The software framework for commissioning the NSLS-II storage ring beam
-adopts a client/server model, and consists of various servers for data
-acquisition, communication and management. Based on this structure,
-physics applications can be developed to satisfy the requirements of
-both day-1 beam commissioning, future beam study, and daily operation.
-The system architecture is shown as below:
-
+The software framework adopts a client/server model, and consists of
+various servers for data acquisition, communication and
+management. Based on this structure, physics applications can be
+developed to satisfy the requirements of both day-1 beam commissioning,
+future beam study, and daily operation.  The system architecture is
+shown as below:
+@vskip 4ex
 @center @image{HLA_Architecture, 5.in, 2.94in}
 @center @strong{Fig. 1 A client/cerver based architecture for HLA}
+@vskip 4ex
 
 Briefly, the system consists of
 @itemize @bullet
@@ -340,7 +322,7 @@ exceptions.
 @c @item @strong{download/upload} works with remote central managed info, like golden orbit, response matrix. 
 @end itemize
 
-There are exceptions that some APIs have prefix not mentioned
+There are exceptions that a few APIs have prefix not mentioned
 above (@pxref{Function Index, Variable Index} for a complete
 list).
 
@@ -348,9 +330,9 @@ list).
 @section Array Data Arrangement
 
 Whenever the value is an array, sort it in the beam direction, for
-example, in increasing order of @math{s} location.
+example, in increasing order of @math{s} location. This may be confusing for the injection cell, where s=0 does not aligned with begin/end of a cell, but in the middle. 
 
-A policy to determine who is first should be discussed 
+A policy to determine who is the first element should be discussed. (s=0 location) 
 
 @node Software Requirement
 @chapter Software Requirement
@@ -358,7 +340,7 @@ A policy to determine who is first should be discussed
 This chapter describes software requirement for NSLS-II
 commissioning. This list is mainly from @cite{Assumptions on NSLS-II
 Accelerator Commissioning} and @cite{NSLS-II Storage Ring
-Commissioning}, plus some personal experience.
+Commissioning}, plus some personal experiences.
 
 The items marked with (*) are closely related to HLA (High Level
 Applications) development, where we need algorithms instead of straight
@@ -392,16 +374,16 @@ Applications Toolkit})
 @item Electronic logbook
 @end itemize
 
- 
+
 @node Operations Software
 @subsection Operations Software
 
 @itemize @bullet
 @item Accelerator parameter store/restore (*)
       @enumerate
-      @item With file-manager, editing capability
+      @item manage, editing capability for stored accelerator status.
       @item smoothly ramp from one stage to another.
-      @item (compare two stages)
+      @item compare two stages, online and saved data, two data file.
       @end enumerate
 @item Injection Control
 @item Power supply control
@@ -473,14 +455,14 @@ Applications Toolkit})
 @node User Preferences
 @section User Preferences
 
-It is better that the HLA can have the following features:
+The HLA will use native Python programming language, and have the following features:
 
 @enumerate 
 @item Interactive control.
 @item Fast script prototyping.
 @item Full set of mathematical functions. e.g. FFT, polynomial fitting, statistics, histogram.
-@item Visualization.
-@item GUI ability.
+@item Visualization. High quality multiple format of picture .
+@item GUI ability. Full support.
 @item Online modification: in control room within a shift, want to change code temporary to fullfil a job on time.
 @end enumerate 
 
@@ -659,8 +641,8 @@ by linac and booster vendors, others have to be developed by ourselves.
 @item TL quad centering      
 @item Integration of safety devices/interlocks       
 @end itemize 
-@item SR
 
+@item SR
 
 In addition to what has been already specified by Accelerator Physics:
 
@@ -688,7 +670,7 @@ This interactive mode can also run as batch mode, which makes the
 prototyping of new HLA and algorithms more easier.
 
 The plotting features are only in interactive environment and GUI
-applications.
+applications. Scripts and save pictures in @code{png}, @code{jpeg}, @code{pdf} and @code{eps} format.
 
 The HLA and Controls are divided into three layers: HLA applictions and
 scripts, client API (@pxref{Client APIs (CAPI)}) and server API
@@ -699,7 +681,7 @@ scripts, client API (@pxref{Client APIs (CAPI)}) and server API
 @item Client APIs are a group of physics logics, e.g. @code{measOrbitRm}, @code{measChromaticity}, @code{getGoldenOrbit}, ...
 @item Server APIs are called by client APIs across the network, and will not be seen by HLA applications or scripts. The server APIs have two major functions:
       @itemize @minus
-      @item manage the accelerator magnets/lattice information, e.g. logic group of a magnet, whether it is used by BBA or LOCO or orbit measurement etc. The basic information is contained in a XML file or a database in the following sections, (the implementation may not be a XML file, but a Database).
+      @item manage the accelerator magnets/lattice information, e.g. logic group of a magnet, whether it is used by BBA or LOCO or orbit measurement etc. The basic information is contained in a XML file or a database in the following sections, (the implementation may not be a XML file, but a Database). lattice layout. (optional: nearby vacuum and temperator sensor information, power supply name and location)
       @item control the magnets via a control server, this server will call low level APIs to do PV readings and settings.
       @end itemize
 @end itemize
@@ -1819,59 +1801,25 @@ get the directory for storing measurement/analysis data
 @end deftypefun
 
 
-@strong{Who can explain the following API and give input/output for
-them, choi???}
-
-@deftypefun {[???] =} getGroundLevel(???)
-
-(Choi, ???)
+@deftypefun {} getGroundLevel ()
 
 This API is only available in case devices monitoring the level of
 ground and/or girder are installed. It returns the reading
 values. These values can be used to calibrate the BPM readings.
 
-Data structure:
-@enumerate
-@item params: ???
-@item return: ???
-@end enumerate
-
-@deftypefunx {[???] =} getChamberOffset(???)
-
-(Choi, ???)
+@deftypefunx {} getChamberOffset ()
 
 This API is only available in case devices monitoring the vacuum
 chamber offset are installed. It returns the reading values. These
 values can be used to calibrate the BPM readings.
-
-Data structure:
-@enumerate
-@item params: ???
-@item return: ???
-@end enumerate
-
 @end deftypefun
 
 
 @deftypefun {} setCurrentDependency ( )
-
-(Choi, ???)
-
 @deftypefunx {} calibrate ( ) 
-
-(Choi, ???)
-
 @deftypefunx {} getVibrationFrequency ( )
-
-(Choi, ???)
-
 @deftypefunx {} getVibrationSource ( )
-
-(Choi, ???)
-
 @deftypefunx {} Bpm2PbpmReading ( )
-
-(Choi, ???)
 
 @end deftypefun
 
@@ -2750,10 +2698,31 @@ RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
 @c @node Appendix
 @c chapter Appendix
 
+@node Terminology Definition for Control System
+@heading Terminology Definition for Control System
+
+@itemize
+@enumerate
+@item EPICS
+@cindex EPICS
+@item Channel
+@cindex Channel
+@item Record
+@cindex Record
+@item PV (Process Variable)
+@cindex PV
+@cindex Process Variable
+@item CA (Channel Access)
+@cindex CA
+@cindex Channel Access
+@end enumerate
+@end itemize
+
 @node Revision History
 @heading Revision History
 
 @itemize @bullet
+@item 2010-10-14, ASAC review
 @item 2010-06-24, discuss with group leaders and ASD head.
 @item 2010-06-14, Guobao Shen, rev 1
 @item 2010-06-08, Lingyun Yang, init
