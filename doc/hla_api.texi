@@ -1810,7 +1810,9 @@ LT-ENG-RSI-STD-002, Jan 21, 2009, Rev 2
 Requirements Document, Storage Ring Physics Nomenclature Standard},
 RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
 
-@item G.Shen, Y. Hu, B. Dalesio, @cite{Circular Buffer Diagnostic}
+@item G. Shen, Y. Hu, B. Dalesio, @cite{Circular Buffer Diagnostic}
+
+@item G. Shen, L. Yang, @cite{User Guide of High Level Applications}
 
 @item @cite{Python}, @uref{http://www.python.org/}
 
@@ -1903,26 +1905,6 @@ RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
 
 @c @node Appendix
 @c chapter Appendix
-
-@node Terminology Definition for Control System
-@heading Terminology Definition for Control System
-
-@itemize
-@enumerate
-@item EPICS
-@cindex EPICS
-@item Channel
-@cindex Channel
-@item Record
-@cindex Record
-@item PV (Process Variable)
-@cindex PV
-@cindex Process Variable
-@item CA (Channel Access)
-@cindex CA
-@cindex Channel Access
-@end enumerate
-@end itemize
 
 @node Revision History
 @heading Revision History
