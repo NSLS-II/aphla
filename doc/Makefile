@@ -19,6 +19,7 @@ hla.pdf: hla.texi
 	cp hla.pdf ${FILENAME}
 
 hla_ug.pdf: hla_ug.tex
+#	echo "Revision: r${HGREV}\\\newline Modified: ${DATE}" > hla_version.tex
 	pdflatex hla_ug
 	makeindex hla_ug
 #	bibtex hla_ug
