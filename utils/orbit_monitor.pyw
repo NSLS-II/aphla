@@ -106,7 +106,7 @@ class OrbitPlotCanvas(MyMplCanvas):
         QtCore.QObject.connect(timer, QtCore.SIGNAL("timeout()"), self.update_figure)
         timer.start(3000)
         self.axes.hold(True)
-        self.lat = latman.LatticeManager("../nsls2/conf/lat_conf_table.txt")
+        self.lat = latman.LatticeManager("../machine/nsls2/conf/lat_conf_table.txt")
         #print self.t, self.current
 
     def get_orbit(self, lat, delay=2):
