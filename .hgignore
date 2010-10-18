@@ -19,6 +19,7 @@ syntax: glob
 doc/hlaversion.texi
 *.pyc
 doc/_build
+seasail.egg-info
 
 syntax:regexp
 ^build/
