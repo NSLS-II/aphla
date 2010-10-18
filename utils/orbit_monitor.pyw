@@ -9,8 +9,11 @@ import sys, os, random, time
 from PyQt4 import QtGui, QtCore
 
 from numpy import arange, sin, pi
+import matplotlib.pylab as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from matplotlib.dates import date2num, DateFormatter
+from datetime import datetime
 
 import cothread
 import cothread.catools as catools
@@ -54,7 +57,11 @@ class MyStaticMplCanvas(MyMplCanvas):
 class MyDynamicMplCanvas(MyMplCanvas):
     """A canvas that updates itself every second with a new plot."""
     def __init__(self, *args, **kwargs):
-        cur = catools.caget("SR:C00-BI:G00<DCCT:00>CUR:RB")
+        try:
+            cur = catools.caget("SR:C00-BI:G00<DCCT:00>CUR-RB")
+        except cothread.cothread.Timedout:
+            print "Time out"
+            cur = 0
         self.MAX_LEN = 20000
         if os.path.exists("beam.txt"):
             dat = open("beam.txt", 'r').readlines()
@@ -63,7 +70,7 @@ class MyDynamicMplCanvas(MyMplCanvas):
                 self.t.append(float(line.split()[0]))
                 self.current.append(float(line.split()[1]))
         else:
-            self.t = [(time.time() - 1276896402.0)/3600.0]
+            self.t = [date2num(datetime.now())]
             self.current = [float(cur)]
         MyMplCanvas.__init__(self, *args, **kwargs)
         timer = QtCore.QTimer(self)
@@ -78,7 +85,11 @@ class MyDynamicMplCanvas(MyMplCanvas):
     def update_figure(self):
         # Build a list of 4 random integers between 0 and 10 (both inclusive)
         #l = [ random.randint(0, 10) for i in xrange(4) ]
-        cur = catools.caget("SR:C00-BI:G00<DCCT:00>CUR:RB")
+        try:
+            cur = catools.caget("SR:C00-BI:G00<DCCT:00>CUR-RB")
+        except cothread.cothread.Timedout:
+            print "Time out"
+            cur = 0.0
         #print self.t, self.current
         if len(self.t) % 100 == 0:
             f = open("beam.txt", 'w')
@@ -86,13 +97,16 @@ class MyDynamicMplCanvas(MyMplCanvas):
                 f.write("%f %f\n" %(self.t[i], self.current[i]))
             f.close()
             #print self.t[-1], self.current[-1]
-        self.t.append((time.time() - 1276896402.0)/3600.0)
+        self.t.append(date2num(datetime.now()))
         self.current.append(float(cur))
         if len(self.t) > self.MAX_LEN:
             self.t.pop(0)
             self.current.pop(0)
         #self.axes.fill(self.t, self.current, 'r.')
-        self.axes.plot(self.t, self.current, 'ro-')
+        self.axes.plot_date(self.t, self.current, 'b-')
+        self.axes.xaxis.set_major_formatter(DateFormatter('%m-%d-%H-%M'))
+        labels = self.axes.get_xticklabels()
+        plt.setp(labels, rotation=30, fontsize = 10)
         self.axes.grid(True)
         self.draw()
 
@@ -111,13 +125,25 @@ class OrbitPlotCanvas(MyMplCanvas):
 
     def get_orbit(self, lat, delay=2):
         time.sleep(delay)
-        vs = [v for v in catools.caget("SR:C00-Glb:G00<POS:00>RB:S")]
-        vx = [v for v in catools.caget("SR:C00-Glb:G00<ORBIT:00>RB:X")]
-        vy = [v for v in catools.caget("SR:C00-Glb:G00<ORBIT:00>RB:Y")]
+        bpm = lat.group_index("BPMX")
+        try:
+            d = catools.caget("SR:C00-Glb:G00<POS:00>RB-S")
+            vs = [v for v in d]
+            d = catools.caget("SR:C00-Glb:G00<ORBIT:00>RB-X")
+            vx = [v for v in d]
+            d = catools.caget("SR:C00-Glb:G00<ORBIT:00>RB-Y")
+            vy = [v for v in d]
+        except cothread.cothread.Timedout:
+            print "Time out when retrieve orbit"
+            n = max(bpm) + 1
+            #n = 1
+            vs = arange(n)
+            vx = [0.0] * n
+            vy = [0.0] * n
+
         if not self.BPM_ONLY:
             return vs, vx, vy
         #print len(vs), len(vx), len(vy)
-        bpm = lat.group_index("BPMX")
         #print bpm
         s = [vs[i] for i in bpm]
         x = [vx[i] for i in bpm]
@@ -179,7 +205,6 @@ class ApplicationWindow(QtGui.QMainWindow):
     def about(self):
         QtGui.QMessageBox.about(self, "About %s" % progname,
 u"""%(prog)s version %(version)s
-Copyright \N{COPYRIGHT SIGN} 2005 Florent Rougon, 2006 Darren Dale
 
 This program is a simple example of a Qt4 application embedding matplotlib
 canvases.

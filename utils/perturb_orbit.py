@@ -13,22 +13,23 @@ def read_correctors(f):
     dat = open(f, 'r').readlines()
     pv = []
     for line in dat:
-        pv.append(line.split()[3])
-    #print pv
+        if line.split()[2] == 'NULL': continue
+        if line.split()[-1].find('TRIM') < 0: continue
+        pv.append(line.split()[2])
+        #print line.strip()
     return pv
 
 def reset_hvcm(pvlst):
     for pv in pvlst:
-        if pv.find("CM") > 0:
-            print "Setting ", pv[1:-1]
-            catools.caput(pv[1:-1], 0.0)
+        if pv.find("CM") > 0 and pv.find("SP") > 0:
+            print "Setting ", pv
+            catools.caput(pv, 0.0)
         
 def filter_corrector(pvlst):
     pvs = []
     for pv in pvlst:
-        if pv.find("CM") > 0:
-            # remove \"\" at both ends.
-            pvs.append(pv.strip()[1:-1])
+        if pv.find("CM") > 0 and pv.find("SP") > 0:
+            pvs.append(pv)
     return pvs
 
 def random_set(pvs, amp = 1e-6):
@@ -45,15 +46,16 @@ def random_set(pvs, amp = 1e-6):
     return pvs[i]
 
 if __name__ == "__main__":
-    pvlst = read_correctors('../nsls2/conf/lat_conf_table.txt')
+    pvlst = read_correctors('../machine/nsls2/va/lat_conf_table.txt')
     #print pv
     reset_hvcm(pvlst)
     pvlst = filter_corrector(pvlst)
-    sys.exit(0)
+    #print pvlst
+    #sys.exit(0)
 
     for i in range(30):
         print i, 
-        pv = random_set(pvlst, 2e-8)
+        pv = random_set(pvlst, 2e-6)
         sys.stdout.flush()
         #time.sleep(20)
         #catools.caput(pv, 0.0)

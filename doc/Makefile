@@ -1,39 +1,89 @@
-all: hla.pdf
-HLA_TMP=hla.tps hla.fns hla.cps hla.vr hla.pg hla.ky hla.tp hla.toc hla.fn hla.cp hla.aux hla.log hlaversion.texi
-HLA_UG_TMP=hla_ug.log hla_ug.aux hla_ug.ind hla_ug.ilg hla_ug.toc hla_ug.out hla_ug.blg hla_ug.bbl hla_ug.idx
-HLA_API_TMP=hla_api.tps hla_api.fns hla_api.cps hla_api.vr hla_api.pg hla_api.ky hla_api.tp hla_api.toc hla_api.fn hla_api.cp hla_api.aux hla_api.log hlaversion.texi
-HGREV = $(shell hg -q id -n)
-HGVERSION = $(shell hg id)
+# Makefile for Sphinx documentation
+#
 
-DATE = $(shell hg parents --template '{date|shortdate}')
-FILE = $(join HLA_Spec_, ${DATE})
-FILENAME = $(addsuffix .pdf, $(FILE))
+# You can set these variables from the command line.
+SPHINXOPTS    =
+SPHINXBUILD   = sphinx-build
+PAPER         =
+BUILDDIR      = _build
 
-all: hla.pdf hla_ug.pdf hla_api.pdf
+# Internal variables.
+PAPEROPT_a4     = -D latex_paper_size=a4
+PAPEROPT_letter = -D latex_paper_size=letter
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-hla.pdf: hla.texi
-	echo "HG version: ${HGVERSION}"
-	echo "[Revision: r${HGREV}]@*" > hlaversion.texi
-	echo "[Modified: `hg parents --template '{date|date}'`]" >> hlaversion.texi
-	texi2pdf -V hla.texi
-	cp hla.pdf ${FILENAME}
+.PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
-hla_ug.pdf: hla_ug.tex
-#	echo "Revision: r${HGREV}\\\newline Modified: ${DATE}" > hla_version.tex
-	pdflatex hla_ug
-	makeindex hla_ug
-#	bibtex hla_ug
-	pdflatex hla_ug
-	pdflatex hla_ug
-hla_api.pdf: hla_api.texi
-	echo "HG version: ${HGVERSION}"
-	echo "[Revision: r${HGREV}]@*" > hlaversion.texi
-	echo "[Modified: `hg parents --template '{date|date}'`]" >> hlaversion.texi
-	texi2pdf -V hla_api.texi
+help:
+	@echo "Please use \`make <target>' where <target> is one of"
+	@echo "  html      to make standalone HTML files"
+	@echo "  dirhtml   to make HTML files named index.html in directories"
+	@echo "  pickle    to make pickle files"
+	@echo "  json      to make JSON files"
+	@echo "  htmlhelp  to make HTML files and a HTML help project"
+	@echo "  qthelp    to make HTML files and a qthelp project"
+	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
+	@echo "  changes   to make an overview of all changed/added/deprecated items"
+	@echo "  linkcheck to check all external links for integrity"
+	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	rm -f ${HLA_TMP} ${HLA_UG_TMP} ${HLA_API_TMP}
+	-rm -rf $(BUILDDIR)/*
 
-clean-all:
-	rm -f ${HLA_TMP} hla.pdf hla.dvi
+html:
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	@echo
+	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
+dirhtml:
+	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
+	@echo
+	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
+
+pickle:
+	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(BUILDDIR)/pickle
+	@echo
+	@echo "Build finished; now you can process the pickle files."
+
+json:
+	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json
+	@echo
+	@echo "Build finished; now you can process the JSON files."
+
+htmlhelp:
+	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
+	@echo
+	@echo "Build finished; now you can run HTML Help Workshop with the" \
+	      ".hhp project file in $(BUILDDIR)/htmlhelp."
+
+qthelp:
+	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(BUILDDIR)/qthelp
+	@echo
+	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
+	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/Seasail.qhcp"
+	@echo "To view the help file:"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/Seasail.qhc"
+
+latex:
+	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	@echo
+	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
+	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
+	      "run these through (pdf)latex."
+
+changes:
+	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) $(BUILDDIR)/changes
+	@echo
+	@echo "The overview file is in $(BUILDDIR)/changes."
+
+linkcheck:
+	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(BUILDDIR)/linkcheck
+	@echo
+	@echo "Link check complete; look for any errors in the above output " \
+	      "or in $(BUILDDIR)/linkcheck/output.txt."
+
+doctest:
+	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
+	@echo "Testing of doctests in the sources finished, look at the " \
+	      "results in $(BUILDDIR)/doctest/output.txt."
