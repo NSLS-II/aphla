@@ -2,19 +2,19 @@
 doc
 =======
 
-nsls2
-=======
+  - export PYTHONPATH if can not import hla for building the doc
 
-NSLS2 specific configuration and test data
 
 src
 =======
 
 Source code
 
-reference
-==========
 
-Reference for nsls2 projects
+machine
+========
 
+Save the config for different machine.
+
+Since all config is from IRMIS, in the future this directory is dynamic data from IRMIS export.
 

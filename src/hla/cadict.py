@@ -72,7 +72,8 @@ class CADict:
                         elp = self.findElement(elem.name)
                         elp.ca.append(elem.ca[0])
                         elp.handle.append(elem.handle[0])
-                        # did not check if same element appears with difference sequence
+                        # did not check if same element appears with
+                        # difference sequence
                 self.findElementCa(subnode.childNodes, elem)
                 if subnode.tagName in ["lattice", "sequence"]:
                     elem.sequence.pop(-1)
