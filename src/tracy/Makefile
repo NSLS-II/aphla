@@ -1,5 +1,5 @@
-TRACY_HOME=/home/lyyang/devel/nsls2ctr/tracy
-NUMREC_HOME=/home/lyyang/devel/nsls2ctr/num_rec
+TRACY_HOME=tracy-3.5
+NUMREC_HOME=../num_rec
 LIB=-L${TRACY_HOME}/tracy/src -L ${NUMREC_HOME}/src \
     -L${TRACY_HOME}/TPSA/
 INC=-I${TRACY_HOME}/tracy/inc

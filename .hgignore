@@ -26,3 +26,5 @@ syntax:regexp
 ^build/
 ^src/num_rec/src/.deps
 ^src/num_rec/autom4te.cache
+^src/.*.o
+^src/.*.a

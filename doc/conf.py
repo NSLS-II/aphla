@@ -18,7 +18,7 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.append(os.path.abspath('.'))
 sys.path.append(os.path.abspath('sphinxext'))
-sys.path.append(os.path.abspath('../seasail'))
+sys.path.append(os.path.abspath('../hla'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -47,8 +47,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Seasail'
-copyright = u'2010, Guobao Shen, Lingyun Yang'
+project = u'HLA'
+copyright = u'2010, J. Choi, G. Shen, L. Yang'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -177,12 +177,12 @@ htmlhelp_basename = 'Seasaildoc'
 #latex_paper_size = 'letter'
 
 # The font size ('10pt', '11pt' or '12pt').
-#latex_font_size = '10pt'
+latex_font_size = '11pt'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Seasail.tex', u'Seasail Documentation',
+  ('index', 'seasail.tex', u'Seasail Documentation',
    u'Guobao Shen, Lingyun Yang', 'manual'),
 ]
 
