@@ -20,6 +20,9 @@ doc/hlaversion.texi
 *.pyc
 doc/_build
 seasail.egg-info
+*~
 
 syntax:regexp
 ^build/
+^src/num_rec/src/.deps
+^src/num_rec/autom4te.cache
