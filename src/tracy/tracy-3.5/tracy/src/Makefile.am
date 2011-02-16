@@ -8,5 +8,6 @@ INCLUDES = -I../inc -I$(NUM_REC)/inc
 #INCLUDES = -I../inc -I$(NUM_REC)/inc \
 #	   -I/usr/include/c++/3.3.6
 
-CXXFLAGS = -g -O0 -Wall -fno-implicit-templates -fPIC
+#CXXFLAGS = -g -O0 -Wall -fno-implicit-templates -fPIC
+CXXFLAGS = -g -ggdb3 -Wall -fno-implicit-templates
 #CXXFLAGS = -g -O2 -Wall -frepo
