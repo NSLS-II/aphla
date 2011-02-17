@@ -1,4 +1,4 @@
-.. Seasail documentation master file, created by
+.. HLA documentation master file, created by
    sphinx-quickstart on Wed Oct  6 15:27:47 2010.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.

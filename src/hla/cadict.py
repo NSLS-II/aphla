@@ -43,7 +43,7 @@ class CADict:
         
         elem = CAElement()
 
-        self.findElementCa(dom.childNodes, elem)
+        self.parseElementCa(dom.childNodes, elem)
     
     def elementExists(self, element):
         for elem in self.elements:
@@ -55,17 +55,30 @@ class CADict:
             if elem.name == elemname: return elem
         return None
 
-    def findElementCa(self, nodeList, elem):
+    def findGroup(self, group):
+        ret = []
+        print len(self.elements), group
+        for elem in self.elements:
+            if group == elem.type or group == elem.name:
+                ret.append(elem.name)
+            elif group in elem.group:
+                ret.append(elem.name)
+            else:
+                #print elem.name, elem.type, elem.group
+                pass
+        return ret
+
+    def parseElementCa(self, nodeList, elem):
         #print "start"
         for subnode in nodeList:
             if subnode.nodeType == subnode.ELEMENT_NODE:
                 if subnode.tagName in ["lattice", "sequence"]:
                     elem.sequence.append(subnode.getAttribute("id"))
                 if subnode.tagName == "node":
-                    elem.name     = subnode.getAttribute("id")
-                    elem.elemtype = subnode.getAttribute("type")
-                    elem.pos      = float(subnode.getAttribute("pos"))
-                    elem.length   = float(subnode.getAttribute("len"))
+                    elem.name   = subnode.getAttribute("id")
+                    elem.type   = subnode.getAttribute("type")
+                    elem.pos    = float(subnode.getAttribute("pos"))
+                    elem.length = float(subnode.getAttribute("len"))
                 elif subnode.tagName == "channel":
                     elem.ca     = [subnode.getAttribute("signal")]
                     elem.handle = [subnode.getAttribute("handle")]
@@ -73,7 +86,7 @@ class CADict:
                         self.elements.append(CAElement())
                         #print "Exists:", elem.name, len(self.elements)
                         self.elements[-1].name     = elem.name
-                        self.elements[-1].elemtype = elem.elemtype
+                        self.elements[-1].type     = elem.type
                         self.elements[-1].pos      = elem.pos
                         self.elements[-1].length   = elem.length
                         self.elements[-1].ca       = [elem.ca[0]]
@@ -85,7 +98,7 @@ class CADict:
                         elp.handle.append(elem.handle[0])
                         # did not check if same element appears with
                         # difference sequence
-                self.findElementCa(subnode.childNodes, elem)
+                self.parseElementCa(subnode.childNodes, elem)
                 if subnode.tagName in ["lattice", "sequence"]:
                     elem.sequence.pop(-1)
                     #print elem.sequence.pop(-1), subnode.getAttribute("id")
@@ -93,19 +106,42 @@ class CADict:
                 #print "text:", subnode.data
                 pass
 
+    def getChannels(self, elems, mode="readback"):
+        """Return PVs for a list of elements"""
+        pv = []
+        for e in self.elements:
+            if e.name in elems:
+                for i,h in enumerate(e.handle):
+                    if h == mode:
+                        pv.append(e.ca[i])
+        return pv
+
+    def getGroups(self, cat='short'):
+        """List all the groups"""
+        grp = []
+        for e in self.elements:
+            for g in e.group:
+                if not g in grp: grp.append(g)
+            if cat == 'long' and not e.name in grp:
+                grp.append(e.name)
+                
+        return grp
+
     def __repr__(self):
         s = ""
         for elem in self.elements:
             for seq in elem.sequence:
                 s = s + "%s/" % seq
 
-            s = s + "%s %12.6f %f  : %7s\n" % (elem.name, elem.pos, elem.length, elem.elemtype)
+            s = s + "%s %12.6f %f  : %7s\n" % (
+                elem.name, elem.pos, elem.length, elem.type)
             for i in range(len(elem.handle)):
                 s = s + "    %s/%s \n" % (elem.ca[i], elem.handle[i])
             s = s +'\n'
         return s
 
-
+#
+#
 if __name__ == "__main__":
     ca = CADict("/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml")
     print ca

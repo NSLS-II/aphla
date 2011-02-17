@@ -16,7 +16,7 @@
    version="1.1"
    inkscape:version="0.48.0 r9654"
    sodipodi:docname="hla.svg"
-   inkscape:export-filename="/home/lyyang/hla_arch.png"
+   inkscape:export-filename="/home/lyyang/devel/nsls2-hla/doc/_static/hla_arch.png"
    inkscape:export-xdpi="60.407719"
    inkscape:export-ydpi="60.407719">
   <defs
@@ -330,7 +330,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.5515433"
      inkscape:cx="820.93397"
-     inkscape:cy="371.81652"
+     inkscape:cy="232.87854"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -837,12 +837,6 @@
        inkscape:connection-start-point="d4"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart);marker-end:url(#Arrow1Mend);display:inline"
-       d="m 380,2923.2361 0,-50"
-       id="path13320"
-       inkscape:connector-type="polyline"
-       inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#Arrow1Mstart);marker-end:url(#Arrow1Mend)"
        d="M 717.03233,454.93304 710,404.09448"
