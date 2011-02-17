@@ -16,5 +16,7 @@
 """
 
 def getLocation(group):
+    """
+    """
     return None
 

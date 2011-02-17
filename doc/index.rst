@@ -28,7 +28,7 @@ Contents:
    intro.rst
    ref.rst
 
-.. automodule:: hla
+   
 
 
 Indices and tables
