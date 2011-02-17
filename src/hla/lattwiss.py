@@ -16,6 +16,11 @@
 """
 
 def getPhase(group, plane, mode):
+    """The commands
+    :func:`~hla.latmode.getCurrentMode` is good !
+    :class:`~hla.cadict.CAElement` is also good.
+    :class:`~hla.cadict.CADict` is also good.
+    """
     return None
 
 

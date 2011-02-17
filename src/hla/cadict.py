@@ -1,14 +1,24 @@
 #!/usr/bin/env python
 
+"""
+cadict
+~~~~~~~
+
+:author: Lingyun Yang
+:license:
+
+A dictionary for channel access info of all elements.
+
+It flatten XML configure file, organizes lattice element and channel info
+into a list
+"""
+
 from xml.dom import minidom
 import sys, copy
 
-"""A dictionary for channel access info of all elements.
-
-It flatten XML configure file, organizes lattice element and channel info
-into a list"""
 
 class CAElement:
+    """CA element"""
     def __init__(self, name = "", elemtype = ""):
         self.name = name
         self.type = elemtype
@@ -25,6 +35,7 @@ class CAElement:
         self.sequence = [ s for s in sequence]
 
 class CADict:
+    """CA Dict"""
     def __init__(self, mainxml):
         self.input = mainxml
         self.elements = []
@@ -93,6 +104,7 @@ class CADict:
                 s = s + "    %s/%s \n" % (elem.ca[i], elem.handle[i])
             s = s +'\n'
         return s
+
 
 if __name__ == "__main__":
     ca = CADict("/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml")
