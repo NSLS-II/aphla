@@ -1,0 +1,17 @@
+TODO
+=======
+
+- IRMIS/Database support for Tracy simulator and results.
+
+    - Lattice
+    - Simulated results
+
+- Virtual accelerator on a separated server (done)
+- Keep working on design doc, reflect the real code.
+- Fill Python interface, make some of them working even without lower level support.
+- Python interface to Tracy
+- Integrated testing when subsystem is done.
+- GUI: orbit
+- GUI: beam based alignment
+
+   
