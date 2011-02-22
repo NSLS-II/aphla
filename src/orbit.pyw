@@ -6,9 +6,27 @@ if 0:
     sip.settracemask(0x3f)
 
 import sys
-from PyQt4 import Qt, QtCore
+from PyQt4 import Qt, QtCore, QtGui
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
+class Spy(Qt.QObject):
+    
+    def __init__(self, parent):
+        Qt.QObject.__init__(self, parent)
+        parent.setMouseTracking(True)
+        parent.installEventFilter(self)
+
+    # __init__()
+
+    def eventFilter(self, _, event):
+        if event.type() == Qt.QEvent.MouseMove:
+            self.emit(Qt.SIGNAL("MouseMove"), event.pos())
+        return False
+
+    # eventFilter()
+
+# class Spy
+
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
@@ -232,34 +250,31 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
 # class OrbitPlotCurve
 
-class OrbitPlotMainWindow(Qt.QMainWindow):
+class OrbitPlot(Qwt.QwtPlot):
+    def __init__(self, *args):
+        Qwt.QwtPlot.__init__(self, *args)
+        
+        self.setCanvasBackground(Qt.Qt.white)
+        #self.alignScales()
 
-    def __init__(self, parent = None):
-        Qt.QMainWindow.__init__(self, parent)
-
-        # initialize a QwtPlot central widget
-        # create a plot with a white canvas
-        self.plot = Qwt.QwtPlot(Qwt.QwtText("Errorbar Demonstation"))
-        self.plot.setCanvasBackground(Qt.Qt.white)
-        self.plot.plotLayout().setAlignCanvasToScales(True)
-
-        grid = Qwt.QwtPlotGrid()
-        grid.attach(self.plot)
-        grid.setPen(Qt.QPen(Qt.Qt.black, 0, Qt.Qt.DotLine))
-    
-        # calculate data and errors for a curve with error bars
-        x = arange(0, 10.1, 0.5, Float)
-        y = sin(x)
-        dy = 0.2 * abs(y)
+        # Initialize data
+        self.x = arange(0.0, 100.1, 1.)
+        self.y = sin(self.x)
+        dy = 0.2 * abs(self.y)
         # uncomment for asymmetric error bars
         # dy = (0.15 * abs(y), 0.25 * abs(y)) 
         dx = 0.2 # all error bars the same size
         errorOnTop = False # uncomment to draw the curve on top of the error bars
         # errorOnTop = True # uncomment to draw the error bars on top of the curve
 
-        curve = OrbitPlotCurve(
-            x = x,
-            y = y,
+        self.setTitle("An Orbit Plot")
+        #self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
+
+        self.plotLayout().setAlignCanvasToScales(True)
+
+        self.curve1 = OrbitPlotCurve(
+            x = self.x,
+            y = cos(self.x),
             dx = dx,
             dy = dy,
             curvePen = Qt.QPen(Qt.Qt.black, 2),
@@ -271,29 +286,140 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
             errorCap = 10,
             errorOnTop = errorOnTop,
             )
-        curve.attach(self.plot)
+        #curve1.attach(self.plot1)
         #.resize(400, 300)
+        grid1 = Qwt.QwtPlotGrid()
+        grid1.attach(self)
+        grid1.setPen(Qt.QPen(Qt.Qt.black, 0, Qt.Qt.DotLine))
 
-        zoomer = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
-                                   Qwt.QwtPlot.yLeft,
-                                   Qwt.QwtPicker.DragSelection,
-                                   Qwt.QwtPicker.AlwaysOff,
-                                   self.plot.canvas())
-        zoomer.setRubberBandPen(Qt.QPen(Qt.Qt.green))
-        picker = Qwt.QwtPlotPicker(Qwt.QwtPlot.xBottom,
+        picker1 = Qwt.QwtPlotPicker(Qwt.QwtPlot.xBottom,
                                    Qwt.QwtPlot.yLeft,
                                    Qwt.QwtPicker.NoSelection,
                                    Qwt.QwtPlotPicker.CrossRubberBand,
                                    Qwt.QwtPicker.AlwaysOn,
-                                   self.plot.canvas())
-        picker.setTrackerPen(Qt.QPen(Qt.Qt.red))
+                                   self.canvas())
+        picker1.setTrackerPen(Qt.QPen(Qt.Qt.red))
         
-        self.setCentralWidget(self.plot)
+        self.curve1.attach(self)
+        self.timerId = self.startTimer(100)
+
+        #self.phase = 0.0
+
+    def alignScales(self):
+        self.canvas().setFrameStyle(Qt.QFrame.Box | Qt.QFrame.Plain)
+        self.canvas().setLineWidth(1)
+        for i in range(Qwt.QwtPlot.axisCnt):
+            scaleWidget = self.axisWidget(i)
+            if scaleWidget:
+                scaleWidget.setMargin(0)
+            scaleDraw = self.axisScaleDraw(i)
+            if scaleDraw:
+                scaleDraw.enableComponent(
+                    Qwt.QwtAbstractScaleDraw.Backbone, False)
+
+    # alignScales()
+
+    def timerEvent(self, e):
+        # y moves from left to right:
+        # shift y array right and assign new value y[0]
+        #self.y = concatenate((self.y[:1], self.y[:-1]), 1)
+        self.y = sin(self.x) + .2*random.random(len(self.x))
+        
+        dy = 0.2 * abs(self.y)
+        # uncomment for asymmetric error bars
+        # dy = (0.15 * abs(y), 0.25 * abs(y)) 
+        dx = random.random() # all error bars the same size
+
+        self.curve1.setData(self.x, self.y, dx, dy)
+
+        #self.setAxisScale(Qwt.QwtPlot.xBottom, min(self.x), max(self.x))
+        #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 2)
+
+        #self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
+        #self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+        
+        self.replot()
+        #self.zoomer1.setZoomBase()
+
+    def liveData(self, on):
+        print "Working on timer:", self.timerId, 
+        if on:
+            self.timerId = self.startTimer(100)
+            print "Enable timer:", self.timerId
+        else:
+            self.killTimer(self.timerId)
+            print "Disabled timer:", self.timerId
+            self.timerId = 0
+
+class OrbitPlotMainWindow(Qt.QMainWindow):
+
+    def __init__(self, parent = None):
+        Qt.QMainWindow.__init__(self, parent)
+
+        # initialize a QwtPlot central widget
+        # create a plot with a white canvas
+
+        self.plot1 = OrbitPlot(self)
+        self.plot2 = OrbitPlot(self)
+
+        self.plot1.plotLayout().setCanvasMargin(4)
+        self.plot1.plotLayout().setAlignCanvasToScales(True)
+
+        self.plot2.plotLayout().setCanvasMargin(4)
+        self.plot2.plotLayout().setAlignCanvasToScales(True)
+
+        wid = QtGui.QWidget()
+        vbox = QtGui.QVBoxLayout()
+        vbox.addWidget(self.plot1)
+        vbox.addWidget(self.plot2)
+        wid.setLayout(vbox)
+        self.setCentralWidget(wid)
+
+        self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
+                                        Qwt.QwtPlot.yLeft,
+                                        Qwt.QwtPicker.DragSelection,
+                                        Qwt.QwtPicker.AlwaysOff,
+                                        self.plot1.canvas())
+        self.zoomer1.setRubberBandPen(Qt.QPen(Qt.Qt.black))
+
+        self.zoomer2 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
+                                        Qwt.QwtPlot.yLeft,
+                                        Qwt.QwtPicker.DragSelection,
+                                        Qwt.QwtPicker.AlwaysOff,
+                                        self.plot2.canvas())
+        self.zoomer2.setRubberBandPen(Qt.QPen(Qt.Qt.black))
+
+        #self.setCentralWidget(OrbitPlot())
+
         toolbar = Qt.QToolBar(self)
         self.addToolBar(toolbar)
         
         self.statusBar().showMessage('Hello;')
+
+        #fileNewAction = self.createAction(
+        #    "&New...", self.fileNew, Qt.QKeySequence.New,
+        #    "filenew", "Create a file")
+        fileQuitAction = Qt.QAction("&Quit", self)
+        fileQuitAction.setShortcut("Ctrl+Q")
+        fileQuitAction.setToolTip("Quit the application")
+        fileQuitAction.setStatusTip("Quit the application")
+        self.connect(fileQuitAction, Qt.SIGNAL("triggered()"),
+                     self.close)
+        
+        fileLiveAction = Qt.QAction("Live", self)
+        fileLiveAction.setCheckable(True)
+        fileLiveAction.setChecked(True)
+        self.connect(fileLiveAction, Qt.SIGNAL("toggled(bool)"),
+                     self.liveData)
+
         self.fileMenu = self.menuBar().addMenu("&File")
+        #self.fileMenuActions = (fileQuitAction, fileLiveAction)
+        self.fileMenu.addAction(fileLiveAction)
+        self.fileMenu.addAction(fileQuitAction)
+
+    def liveData(self, on):
+        self.plot1.liveData(on)
+        self.plot2.liveData(on)
 
 
 def main(args):
