@@ -5,12 +5,15 @@ cadict
 ~~~~~~~
 
 :author: Lingyun Yang
-:license:
+:license: GPL
 
 A dictionary for channel access info of all elements.
 
+The raw data should be from database, and the XML file can serve as a
+local copy of database.
+
 It flatten XML configure file, organizes lattice element and channel info
-into a list
+into a list. 
 """
 
 from xml.dom import minidom
@@ -18,7 +21,9 @@ import sys, copy
 
 
 class CAElement:
-    """CA element"""
+    """CA element stores structure of an element, which has channels,
+    group, sequence, postion information stored
+    """
     def __init__(self, name = "", elemtype = ""):
         self.name = name
         self.type = elemtype
@@ -30,12 +35,18 @@ class CAElement:
         self.group = []
 
     def addCa(channel, handle, sequence = []):
+        """Add one PV channel, with specific handle(readback or
+        setpoint). Extend its sequence to a larger one.
+        """
         self.ca.append(channel)
         self.handle.append(handle)
-        self.sequence = [ s for s in sequence]
+        #self.sequence = [ s for s in sequence]
+        self.sequence.extend(sequence)
 
 class CADict:
-    """CA Dict"""
+    """CA Dict manages a list of elements. The elements are CAElement
+    instances.
+    """
     def __init__(self, mainxml):
         self.input = mainxml
         self.elements = []
@@ -46,16 +57,19 @@ class CADict:
         self.parseElementCa(dom.childNodes, elem)
     
     def elementExists(self, element):
+        """Does the element exist?"""
         for elem in self.elements:
             if elem.name == element: return True
         return False
 
     def findElement(self, elemname):
+        """Return elements with given name"""
         for elem in self.elements:
             if elem.name == elemname: return elem
         return None
 
     def findGroup(self, group):
+        """Return elements in given group"""
         ret = []
         print len(self.elements), group
         for elem in self.elements:
@@ -68,7 +82,7 @@ class CADict:
                 pass
         return ret
 
-    def parseElementCa(self, nodeList, elem):
+    def __parseElementCa(self, nodeList, elem):
         #print "start"
         for subnode in nodeList:
             if subnode.nodeType == subnode.ELEMENT_NODE:
@@ -142,7 +156,7 @@ class CADict:
 
 #
 #
-if __name__ == "__main__":
-    ca = CADict("/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml")
-    print ca
+#if __name__ == "__main__":
+#    ca = CADict("/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml")
+#    print ca
 

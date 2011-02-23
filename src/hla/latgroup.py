@@ -36,6 +36,12 @@ def getGroups(element = ''):
     """Get all groups own this element, '' returns all"""
     return None
 
-def getGroupMembers(group):
+def getGroupMembers(group, op = None):
+    """Get all elements in a group. If group is a list, consider which op:
+
+    - op = "union", consider elements in the union of the groups
+    - op = "intersect", consider elements in the intersect of the groups
+    """
+
     return None
 

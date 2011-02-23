@@ -44,6 +44,9 @@ from latmode import *
 from latgroup import *
 from latgeom import *
 from meastwiss import *
+from measorm import *
 
-measBeta(quad[:5], ca=ca)
 
+def test():
+    measBeta(quad[:5], ca=ca)
+    
