@@ -27,11 +27,59 @@ class Spy(Qt.QObject):
 
 # class Spy
 
+class OrbitData(Qt.QObject):
+    def __init__(self, parent = None):
+        super(OrbitData, self).__init__(parent)
+        self.nsample = 10
+        self.isample = 0
+        self.points = 20
+        self.__x = zeros((self.nsample, self.points), 'd')
+        self.__y = zeros((self.nsample, self.points), 'd')
+        self.__dx = zeros(self.points, 'd')
+        self.__dy = zeros(self.points, 'd')
+
+        self.timerId = self.startTimer(200)
+
+    def timerEvent(self, e):
+        self.isample = (self.isample + 1) % self.nsample
+        
+        t = arange(self.points)
+        self.__x[self.isample, :] = t + .1*random.random(self.points)
+        self.__y[self.isample, :] = sin(0.3*t) + 0.3*random.random(self.points)
+        
+    def setSamples(self, n):
+        if n == self.nsample: return
+        tx, ty = self.__x, self.__y
+        self.__x = zeros((n, self.points), 'd')
+        self.__y = zeros((n, self.points), 'd')
+        self.__x[:self.nsample, :] = tx[:, :]
+        self.__y[:self.nsample, :] = ty[:, :]
+        self.nsample = n
+
+    def x(self):
+        return self.__x[self.isample,:]
+
+    def y(self):
+        return self.__y[self.isample,:]
+
+    def dx(self):
+        return std(self.__x[:,:], axis=0)
+
+    def dy(self):
+        return std(self.__y[:,:], axis=0)
+
+    def stop(self):
+        self.killTimer(self.timerId)
+        self.timerId = -1
+
+    def start(self):
+        if self.timerId > 0:
+            self.killTimer(self.timerId)
+        self.timerId = self.startTimer() 
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
     def __init__(self,
-                 x = [], y = [], dx = None, dy = None,
                  curvePen = Qt.QPen(Qt.Qt.NoPen),
                  curveStyle = Qwt.QwtPlotCurve.Lines,
                  curveSymbol = Qwt.QwtSymbol(),
@@ -44,30 +92,18 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         Horizontal error bars are plotted if dx is not None.
         Vertical error bars are plotted if dy is not None.
 
-        x and y must be sequences with a shape (N,) and dx and dy must be
-        sequences (if not None) with a shape (), (N,), or (2, N):
-        - if dx or dy has a shape () or (N,), the error bars are given by
-          (x-dx, x+dx) or (y-dy, y+dy),
-        - if dx or dy has a shape (2, N), the error bars are given by
-          (x-dx[0], x+dx[1]) or (y-dy[0], y+dy[1]).
+        - curvePen is the pen used to plot the curve
+        - curveStyle is the style used to plot the curve
+        - curveSymbol is the symbol used to plot the symbols
+        - errorPen is the pen used to plot the error bars
+        - errorCap is the size of the error bar caps
+        - errorOnTop is a boolean:
 
-        curvePen is the pen used to plot the curve
-        
-        curveStyle is the style used to plot the curve
-        
-        curveSymbol is the symbol used to plot the symbols
-        
-        errorPen is the pen used to plot the error bars
-        
-        errorCap is the size of the error bar caps
-        
-        errorOnTop is a boolean:
-        - if True, plot the error bars on top of the curve,
-        - if False, plot the curve on top of the error bars.
+            - if True, plot the error bars on top of the curve,
+            - if False, plot the curve on top of the error bars.
         """
 
         Qwt.QwtPlotCurve.__init__(self)
-        self.setData(x, y, dx, dy)
         self.setPen(curvePen)
         self.setStyle(curveStyle)
         self.setSymbol(curveSymbol)
@@ -75,6 +111,10 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.errorCap = errorCap
         self.errorOnTop = errorOnTop
 
+        self.__x = None
+        self.__y = None
+        self.__dx = None
+        self.__dy = None
 
     # __init__()
 
@@ -123,6 +163,9 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
     def boundingRect(self):
         """Return the bounding rectangle of the data, error bars included.
         """
+        if self.__x is None and self.__y is None:
+            return Qt.QRectF(.0, 1.0, 1.0, 0.0)
+
         if self.__dx is None:
             xmin = min(self.__x)
             xmax = max(self.__x)
@@ -254,29 +297,22 @@ class OrbitPlot(Qwt.QwtPlot):
     def __init__(self, *args):
         Qwt.QwtPlot.__init__(self, *args)
         
+        self.data = OrbitData()
+
         self.setCanvasBackground(Qt.Qt.white)
         #self.alignScales()
 
         # Initialize data
-        self.x = arange(0.0, 100.1, 1.)
-        self.y = sin(self.x)
-        dy = 0.2 * abs(self.y)
-        # uncomment for asymmetric error bars
-        # dy = (0.15 * abs(y), 0.25 * abs(y)) 
-        dx = 0.2 # all error bars the same size
         errorOnTop = False # uncomment to draw the curve on top of the error bars
         # errorOnTop = True # uncomment to draw the error bars on top of the curve
-
-        self.setTitle("An Orbit Plot")
+        
+        #self.setTitle("An Orbit Plot")
         #self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
 
+        #self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 100)
         self.plotLayout().setAlignCanvasToScales(True)
 
         self.curve1 = OrbitPlotCurve(
-            x = self.x,
-            y = cos(self.x),
-            dx = dx,
-            dy = dy,
             curvePen = Qt.QPen(Qt.Qt.black, 2),
             curveSymbol = Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
                                         Qt.QBrush(Qt.Qt.red),
@@ -286,7 +322,13 @@ class OrbitPlot(Qwt.QwtPlot):
             errorCap = 10,
             errorOnTop = errorOnTop,
             )
-        #curve1.attach(self.plot1)
+
+        self.curve1.setData(self.data.x(), self.data.y(),
+                            self.data.dx(), self.data.dy())
+
+        self.curve1.attach(self)
+        self.bound = self.curve1.boundingRect()
+        #print "BD",self.bound
         #.resize(400, 300)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
@@ -300,8 +342,8 @@ class OrbitPlot(Qwt.QwtPlot):
                                    self.canvas())
         picker1.setTrackerPen(Qt.QPen(Qt.Qt.red))
         
-        self.curve1.attach(self)
-        self.timerId = self.startTimer(100)
+        
+        self.timerId = self.startTimer(300)
 
         #self.phase = 0.0
 
@@ -323,33 +365,64 @@ class OrbitPlot(Qwt.QwtPlot):
         # y moves from left to right:
         # shift y array right and assign new value y[0]
         #self.y = concatenate((self.y[:1], self.y[:-1]), 1)
-        self.y = sin(self.x) + .2*random.random(len(self.x))
-        
-        dy = 0.2 * abs(self.y)
-        # uncomment for asymmetric error bars
-        # dy = (0.15 * abs(y), 0.25 * abs(y)) 
-        dx = random.random() # all error bars the same size
 
-        self.curve1.setData(self.x, self.y, dx, dy)
+        self.curve1.setData(self.data.x(), self.data.y(),
+                            self.data.dx(), self.data.dy())
 
         #self.setAxisScale(Qwt.QwtPlot.xBottom, min(self.x), max(self.x))
         #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 2)
 
         #self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
         #self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+        #print self.curve1.boundingRect()
+        #print self.bound
+
+        #self.bound.united(self.curve1.boundingRect())
+        #bd = self.curve1.boundingRect()
+        #print "returned", bd.left(), bd.right(), bd.top(), bd.bottom()
+        #self.bound = self.bound.united(self.curve1.boundingRect())
+        #print self.bound.left(), self.bound.right()
+        #print "B-T",self.bound.bottom(), self.bound.top()
+
+        #self.setAxisScale(Qwt.QwtPlot.xBottom,
+        #                  self.bound.left(), self.bound.right())
+        #self.setAxisScale(Qwt.QwtPlot.yLeft,
+        #                  self.bound.top(), self.bound.bottom())
         
+        #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 2)
+
         self.replot()
         #self.zoomer1.setZoomBase()
 
+
     def liveData(self, on):
-        print "Working on timer:", self.timerId, 
+        #print "Working on timer:", self.timerId, 
         if on:
             self.timerId = self.startTimer(100)
-            print "Enable timer:", self.timerId
+            #print "Enable timer:", self.timerId
         else:
             self.killTimer(self.timerId)
-            print "Disabled timer:", self.timerId
+            #print "Disabled timer:", self.timerId
             self.timerId = 0
+            
+    def scaleVertical(self, factor):
+        scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        dy = (sr - sl)*(factor - 1)/2.0
+        #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+        self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
+
+    def zoomAuto(self):
+        bound = self.curve1.boundingRect()
+        w = bound.width()
+        h = bound.height()
+        xmin = bound.left() - w*.05
+        xmax = bound.right() + w*.05
+        ymin = bound.top() - h*.08
+        ymax = bound.bottom() + h*.08
+
+        self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+        self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
 
 class OrbitPlotMainWindow(Qt.QMainWindow):
 
@@ -357,16 +430,16 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         Qt.QMainWindow.__init__(self, parent)
 
         # initialize a QwtPlot central widget
-        # create a plot with a white canvas
 
         self.plot1 = OrbitPlot(self)
         self.plot2 = OrbitPlot(self)
 
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
-
+        self.plot1.setTitle("Horizontal Orbit")
         self.plot2.plotLayout().setCanvasMargin(4)
         self.plot2.plotLayout().setAlignCanvasToScales(True)
+        self.plot2.setTitle("Vertical Orbit")
 
         wid = QtGui.QWidget()
         vbox = QtGui.QVBoxLayout()
@@ -396,31 +469,64 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         
         self.statusBar().showMessage('Hello;')
 
-        #fileNewAction = self.createAction(
-        #    "&New...", self.fileNew, Qt.QKeySequence.New,
-        #    "filenew", "Create a file")
+        #
+        # file menu
+        #
+        self.fileMenu = self.menuBar().addMenu("&File")
         fileQuitAction = Qt.QAction("&Quit", self)
         fileQuitAction.setShortcut("Ctrl+Q")
         fileQuitAction.setToolTip("Quit the application")
         fileQuitAction.setStatusTip("Quit the application")
         self.connect(fileQuitAction, Qt.SIGNAL("triggered()"),
                      self.close)
-        
-        fileLiveAction = Qt.QAction("Live", self)
-        fileLiveAction.setCheckable(True)
-        fileLiveAction.setChecked(True)
-        self.connect(fileLiveAction, Qt.SIGNAL("toggled(bool)"),
-                     self.liveData)
-
-        self.fileMenu = self.menuBar().addMenu("&File")
-        #self.fileMenuActions = (fileQuitAction, fileLiveAction)
-        self.fileMenu.addAction(fileLiveAction)
+        #
         self.fileMenu.addAction(fileQuitAction)
 
+        # view
+        self.viewMenu = self.menuBar().addMenu("&View")
+        # live data
+        viewLiveAction = Qt.QAction("Live", self)
+        viewLiveAction.setCheckable(True)
+        viewLiveAction.setChecked(True)
+        self.connect(viewLiveAction, Qt.SIGNAL("toggled(bool)"),
+                     self.liveData)
+        # scale
+        viewZoomOut15Action = Qt.QAction("Zoom out x1.5", self)
+        self.connect(viewZoomOut15Action, Qt.SIGNAL("triggered()"),
+                     self.zoomOut15)
+        viewZoomIn15Action = Qt.QAction("Zoom in x1.5", self)
+        self.connect(viewZoomIn15Action, Qt.SIGNAL("triggered()"),
+                     self.zoomIn15)
+        viewZoomAutoAction = Qt.QAction("Auto Fit", self)
+        self.connect(viewZoomAutoAction, Qt.SIGNAL("triggered()"),
+                     self.zoomAuto)
+
+        self.viewMenu.addAction(viewZoomOut15Action)
+        self.viewMenu.addAction(viewZoomIn15Action)
+        self.viewMenu.addAction(viewZoomAutoAction)
+        self.viewMenu.addSeparator()
+        self.viewMenu.addAction(viewLiveAction)
+
+        # help
+        self.helpMenu = self.menuBar().addMenu("&Help")
+        
+
     def liveData(self, on):
+        """Switch on/off live data taking"""
         self.plot1.liveData(on)
         self.plot2.liveData(on)
 
+    def zoomOut15(self):
+        self.plot1.scaleVertical(1.5)
+        self.plot2.scaleVertical(1.5)
+
+    def zoomIn15(self):
+        self.plot1.scaleVertical(1.0/1.5)
+        self.plot2.scaleVertical(1.0/1.5)
+
+    def zoomAuto(self):
+        self.plot1.zoomAuto()
+        self.plot2.zoomAuto()
 
 def main(args):
     app = Qt.QApplication(args)
