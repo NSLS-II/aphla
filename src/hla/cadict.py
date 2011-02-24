@@ -54,7 +54,7 @@ class CADict:
         
         elem = CAElement()
 
-        self.parseElementCa(dom.childNodes, elem)
+        self.__parseElementCa(dom.childNodes, elem)
     
     def elementExists(self, element):
         """Does the element exist?"""
@@ -112,7 +112,7 @@ class CADict:
                         elp.handle.append(elem.handle[0])
                         # did not check if same element appears with
                         # difference sequence
-                self.parseElementCa(subnode.childNodes, elem)
+                self.__parseElementCa(subnode.childNodes, elem)
                 if subnode.tagName in ["lattice", "sequence"]:
                     elem.sequence.pop(-1)
                     #print elem.sequence.pop(-1), subnode.getAttribute("id")

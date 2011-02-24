@@ -45,6 +45,7 @@ from latgroup import *
 from latgeom import *
 from meastwiss import *
 from measorm import *
+from orbit import *
 
 
 def test():

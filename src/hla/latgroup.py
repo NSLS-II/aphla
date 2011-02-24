@@ -18,22 +18,27 @@
 
 def addGroup(group):
     """Add a new group"""
+    raise NotImplementedError()
     return None
 
 def removeGroup(group):
     """Remove a group if it is empty"""
+    raise NotImplementedError()
     return None
 
 def addGroupMember(group, member):
     """Add a new member to group"""
+    raise NotImplementedError()
     return None
   
 def removeGroupMember(group, member):
     """Remove a member from group"""
+    raise NotImplementedError()
     return None
 
 def getGroups(element = ''):
     """Get all groups own this element, '' returns all"""
+    raise NotImplementedError()
     return None
 
 def getGroupMembers(group, op = None):
@@ -42,6 +47,19 @@ def getGroupMembers(group, op = None):
     - op = "union", consider elements in the union of the groups
     - op = "intersect", consider elements in the intersect of the groups
     """
+    raise NotImplementedError()
+    
+    return None
 
+def getNeighbors(group, n):
+    """Get a list of n elements belongs to group. The list is sorted along
+    s (the beam direction).
+    """
+    raise NotImplementedError()
+    return None
+
+def getStepSize(element):
+    """Return default stepsize of a given element"""
+    raise NotImplementedError()
     return None
 
