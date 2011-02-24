@@ -9,6 +9,9 @@ import sys
 from PyQt4 import Qt, QtCore, QtGui
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
+
+import qrc_resources
+
 class Spy(Qt.QObject):
     
     def __init__(self, parent):
@@ -464,40 +467,43 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
 
         #self.setCentralWidget(OrbitPlot())
 
-        toolbar = Qt.QToolBar(self)
-        self.addToolBar(toolbar)
-        
         self.statusBar().showMessage('Hello;')
 
         #
         # file menu
         #
         self.fileMenu = self.menuBar().addMenu("&File")
-        fileQuitAction = Qt.QAction("&Quit", self)
+        fileQuitAction = Qt.QAction(Qt.QIcon(":/filequit.png"), "&Quit", self)
         fileQuitAction.setShortcut("Ctrl+Q")
         fileQuitAction.setToolTip("Quit the application")
         fileQuitAction.setStatusTip("Quit the application")
+        #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
         self.connect(fileQuitAction, Qt.SIGNAL("triggered()"),
                      self.close)
+        
         #
         self.fileMenu.addAction(fileQuitAction)
 
         # view
         self.viewMenu = self.menuBar().addMenu("&View")
         # live data
-        viewLiveAction = Qt.QAction("Live", self)
+        viewLiveAction = Qt.QAction(Qt.QIcon(":/viewlive.png"),
+                                    "Live", self)
         viewLiveAction.setCheckable(True)
         viewLiveAction.setChecked(True)
         self.connect(viewLiveAction, Qt.SIGNAL("toggled(bool)"),
                      self.liveData)
         # scale
-        viewZoomOut15Action = Qt.QAction("Zoom out x1.5", self)
+        viewZoomOut15Action = Qt.QAction(Qt.QIcon(":/viewzoomout.png"),
+                                         "Zoom out x1.5", self)
         self.connect(viewZoomOut15Action, Qt.SIGNAL("triggered()"),
                      self.zoomOut15)
-        viewZoomIn15Action = Qt.QAction("Zoom in x1.5", self)
+        viewZoomIn15Action = Qt.QAction(Qt.QIcon(":/viewzoomin.png"),
+                                        "Zoom in x1.5", self)
         self.connect(viewZoomIn15Action, Qt.SIGNAL("triggered()"),
                      self.zoomIn15)
-        viewZoomAutoAction = Qt.QAction("Auto Fit", self)
+        viewZoomAutoAction = Qt.QAction(Qt.QIcon(":/viewzoomauto.png"),
+                                        "Auto Fit", self)
         self.connect(viewZoomAutoAction, Qt.SIGNAL("triggered()"),
                      self.zoomAuto)
 
@@ -509,7 +515,20 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
-        
+
+        #toolbar
+        #toolbar = Qt.QToolBar(self)
+        #self.addToolBar(toolbar)
+        fileToolBar = self.addToolBar("File")
+        fileToolBar.setObjectName("FileToolBar")
+        fileToolBar.addAction(fileQuitAction)
+        #
+        viewToolBar = self.addToolBar("View")
+        viewToolBar.setObjectName("ViewToolBar")
+        viewToolBar.addAction(viewZoomOut15Action)
+        viewToolBar.addAction(viewZoomIn15Action)
+        viewToolBar.addAction(viewZoomAutoAction)
+        viewToolBar.addAction(viewLiveAction)
 
     def liveData(self, on):
         """Switch on/off live data taking"""

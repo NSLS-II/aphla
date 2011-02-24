@@ -1,0 +1,10 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+<file alias="filequit.png">images/filequit.png</file>
+<file alias="fileopen.png">images/fileopen.png</file>
+<file alias="viewlive.png">images/viewlive.png</file>
+<file alias="viewzoomin.png">images/viewzoomin.png</file>
+<file alias="viewzoomout.png">images/viewzoomout.png</file>
+<file alias="viewzoomauto.png">images/viewzoomauto.png</file>
+</qresource>
+</RCC>
