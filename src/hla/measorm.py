@@ -497,6 +497,7 @@ def measChromRm():
 def __clearTrims():
     print "Clear trim strength, Waiting..."
     for i, d in enumerate(trim):
+	print caget(d[0])
         caput(d[0], 0.0)
         caput(d[1], 0.0)
     time.sleep(2)

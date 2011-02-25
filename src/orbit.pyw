@@ -37,12 +37,15 @@ class OrbitData(Qt.QObject):
     def __init__(self, parent = None):
         super(OrbitData, self).__init__(parent)
         self.nsample = 10
-        self.isample = 0
+        self.isample = -1
         self.points = 20
         self.__x = zeros((self.nsample, self.points), 'd')
         self.__y = zeros((self.nsample, self.points), 'd')
         self.__dx = zeros(self.points, 'd')
         self.__dy = zeros(self.points, 'd')
+        self.__s = arange(self.points)
+
+        self.timerEvent(None)
 
         self.__dt = 500
         self.timerId = self.startTimer(self.__dt)
@@ -50,10 +53,11 @@ class OrbitData(Qt.QObject):
     def timerEvent(self, e):
         self.isample = (self.isample + 1) % self.nsample
         
-        t = arange(self.points)
-        self.__x[self.isample, :] = t + .1*random.random(self.points)
+        t = self.__s
+        self.__x[self.isample, :] = sin(0.15*t) + .1*random.random(self.points)
         self.__y[self.isample, :] = sin(0.3*t) + 0.3*random.random(self.points)
-        
+        #self.isample = (self.isample + 1) % self.nsample
+
     def setSamples(self, n):
         if n == self.nsample: return
         tx, ty = self.__x, self.__y
@@ -61,7 +65,11 @@ class OrbitData(Qt.QObject):
         self.__y = zeros((n, self.points), 'd')
         self.__x[:self.nsample, :] = tx[:, :]
         self.__y[:self.nsample, :] = ty[:, :]
+        
         self.nsample = n
+
+    def s(self):
+        return self.__s[:]
 
     def x(self):
         return self.__x[self.isample,:]
@@ -89,20 +97,30 @@ class OrbitCaData(Qt.QObject):
         super(OrbitCaData, self).__init__(parent)
         d = np.array(getOrbit())
         self.nsample = 50
-        self.isample = 0
+        self.isample = -1
+        self.samplefull = False
         self.points = len(d)
         self.__x  = zeros((self.nsample, self.points), 'd')
         self.__y  = zeros((self.nsample, self.points), 'd')
         self.__dx = zeros(self.points, 'd')
         self.__dy = zeros(self.points, 'd')
         self.__s  = zeros(self.points, 'd')
+        self.__live = True
 
         self.__s[:] = d[:,0]
+        self.update()
+ 
         self.__dt = 500
         self.timerId = self.startTimer(500)
 
     def timerEvent(self, e):
+        self.update()
+
+    def update(self):
+        if not self.__live: return
+
         self.isample = (self.isample + 1) % self.nsample
+        if self.isample == 0: self.samplefull = True
 
         d = np.array(getOrbit())
         self.__s[:] = d[:,0]
@@ -128,23 +146,31 @@ class OrbitCaData(Qt.QObject):
         return self.__y[self.isample,:]
 
     def dx(self):
-        return std(self.__x[:,:], axis=0)
+        if self.samplefull:
+            return std(self.__x[:,:], axis=0)
+        else:
+            return std(self.__x[:self.isample,:], axis=0)
 
     def dy(self):
-        return std(self.__y[:,:], axis=0)
+        if self.samplefull:
+            return std(self.__y[:,:], axis=0)
+        else:
+            return std(self.__y[:self.isample,:], axis=0)
 
     def stop(self):
-        self.killTimer(self.timerId)
-        self.timerId = -1
+        self.__live = False
+        #self.killTimer(self.timerId)
+        #self.timerId = -1
 
     def start(self):
-        if self.timerId > 0:
-            self.killTimer(self.timerId)
-        self.timerId = self.startTimer(self.__dt) 
+        self.__live = True
+        #if self.timerId > 0:
+        #    self.killTimer(self.timerId)
+        #self.timerId = self.startTimer(self.__dt) 
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
-    def __init__(self,
+    def __init__(self, data, plane,
                  curvePen = Qt.QPen(Qt.Qt.NoPen),
                  curveStyle = Qwt.QwtPlotCurve.Lines,
                  curveSymbol = Qwt.QwtSymbol(),
@@ -180,8 +206,20 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.__y = None
         self.__dx = None
         self.__dy = None
+        self.plane = plane
+        self.data = data
+        #self.live = True
+
+        self.update()
 
     # __init__()
+
+    def update(self):
+        #if not self.live: return None
+
+        if self.plane == 'H': 
+            self.setData(self.data.s(), self.data.x(), None, self.data.dx())
+        else: self.setData(self.data.s(), self.data.y(), None, self.data.dy())
 
     def setData(self, x, y, dx = None, dy = None):
         """Set x versus y data with error bars in dx and dy.
@@ -355,16 +393,27 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
             Qwt.QwtPlotCurve.drawFromTo(self, painter, xMap, yMap, first, last)
 
     # drawFromTo()
+    def liveData(self, on):
+        #print "Working on timer:", self.timerId,
+        if on:
+            self.data.start()
+            #self.timerId = self.startTimer(500)
+            #print "Enable timer:", self.timerId
+        else:
+            self.data.stop()
+            #self.killTimer(self.timerId)
+            #print "Disabled timer:", self.timerId
+            #self.timerId = -1
 
 # class OrbitPlotCurve
 
 class OrbitPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None, plane = 'H'):
+    def __init__(self, parent = None, data = None, plane = 'H'):
         super(OrbitPlot, self).__init__(parent)
         #Qwt.QwtPlot.__init__(self, *args)
         
         #self.data = OrbitData()
-        self.data = OrbitCaData()
+        #self.data = OrbitCaData()
         self.plane = plane
         self.setCanvasBackground(Qt.Qt.white)
         #self.alignScales()
@@ -379,7 +428,7 @@ class OrbitPlot(Qwt.QwtPlot):
         #self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 100)
         self.plotLayout().setAlignCanvasToScales(True)
 
-        self.curve1 = OrbitPlotCurve(
+        self.curve1 = OrbitPlotCurve(data, plane,
             curvePen = Qt.QPen(Qt.Qt.black, 2),
             curveSymbol = Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
                                         Qt.QBrush(Qt.Qt.red),
@@ -390,8 +439,8 @@ class OrbitPlot(Qwt.QwtPlot):
             errorOnTop = errorOnTop,
             )
 
-        self.curve1.setData(self.data.x(), self.data.y(),
-                            self.data.dx(), self.data.dy())
+        #self.curve1.setData(self.data.x(), self.data.y(),
+        #                    self.data.dx(), self.data.dy())
 
         self.curve1.attach(self)
         self.bound = self.curve1.boundingRect()
@@ -433,12 +482,7 @@ class OrbitPlot(Qwt.QwtPlot):
         # shift y array right and assign new value y[0]
         #self.y = concatenate((self.y[:1], self.y[:-1]), 1)
 
-        if self.plane == 'V':
-            self.curve1.setData(self.data.s(), self.data.y(),
-                                None, self.data.dy())
-        else:
-            self.curve1.setData(self.data.s(), self.data.x(),
-                                None, self.data.dx())
+        self.curve1.update()
 
         #self.setAxisScale(Qwt.QwtPlot.xBottom, min(self.x), max(self.x))
         #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 2)
@@ -470,6 +514,9 @@ class OrbitPlot(Qwt.QwtPlot):
         self.plane = plane
 
     def liveData(self, on):
+        self.curve1.liveData(on)
+        return None
+
         #print "Working on timer:", self.timerId, 
         if on:
             self.data.start()
@@ -496,9 +543,12 @@ class OrbitPlot(Qwt.QwtPlot):
         xmax = bound.right() + w*.05
         ymin = bound.top() - h*.08
         ymax = bound.bottom() + h*.08
+        #print "Width:", w, "   Height:", h
+        if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+        else: self.setAxisAutoScale(Qwt.Qwt.Plot.xBottom)
 
-        self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
-        self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+        if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+        else: self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
 
 class OrbitPlotMainWindow(Qt.QMainWindow):
 
@@ -507,8 +557,9 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
 
         # initialize a QwtPlot central widget
 
-        self.plot1 = OrbitPlot(self, plane = 'H')
-        self.plot2 = OrbitPlot(self, plane = 'V')
+        self.data = OrbitCaData()
+        self.plot1 = OrbitPlot(self, data = self.data, plane = 'H')
+        self.plot2 = OrbitPlot(self, data = self.data, plane = 'V')
 
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
