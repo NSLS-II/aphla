@@ -13,7 +13,7 @@ from PyQt4.Qwt5.anynumpy import *
 import qrc_resources
 import numpy as np
 
-from hla import getOrbit
+from hla import getOrbit, getFullOrbit
 
 class Spy(Qt.QObject):
     
@@ -95,7 +95,9 @@ class OrbitData(Qt.QObject):
 class OrbitCaData(Qt.QObject):
     def __init__(self, parent = None):
         super(OrbitCaData, self).__init__(parent)
-        d = np.array(getOrbit())
+        
+        d = np.array(getFullOrbit())
+        
         self.nsample = 50
         self.isample = -1
         self.samplefull = False
@@ -107,22 +109,26 @@ class OrbitCaData(Qt.QObject):
         self.__s  = zeros(self.points, 'd')
         self.__live = True
 
-        self.__s[:] = d[:,0]
+        #self.__s[:] = d[:,0]
         self.update()
  
         self.__dt = 500
         self.timerId = self.startTimer(500)
 
     def timerEvent(self, e):
+        if not self.__live: return
         self.update()
 
     def update(self):
-        if not self.__live: return
 
         self.isample = (self.isample + 1) % self.nsample
         if self.isample == 0: self.samplefull = True
 
-        d = np.array(getOrbit())
+        # slow version, read BPM one by one
+        #d = np.array(getOrbit())
+        # fast, read BPM waveform
+        d = np.array(getFullOrbit())
+
         self.__s[:] = d[:,0]
         self.__x[self.isample, :] = d[:,1]
         self.__y[self.isample, :] = d[:,2]
@@ -208,6 +214,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.__dy = None
         self.plane = plane
         self.data = data
+        
+        self.__errorbar = True
         #self.live = True
 
         self.update()
@@ -216,10 +224,20 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
     def update(self):
         #if not self.live: return None
-
-        if self.plane == 'H': 
-            self.setData(self.data.s(), self.data.x(), None, self.data.dx())
-        else: self.setData(self.data.s(), self.data.y(), None, self.data.dy())
+        if self.__errorbar and self.plane == 'H':
+            x = self.data.x()
+            dx = self.data.dx()
+        elif self.__errorbar and self.plane == 'V':
+            x = self.data.y()
+            dx = self.data.dy()
+        elif self.plane == 'H':
+            x = self.data.x()
+            dx = None
+        elif self.plane == 'V':
+            x = self.data.y()
+            dx = None
+        
+        self.setData(self.data.s(), x, None, dx)
 
     def setData(self, x, y, dx = None, dy = None):
         """Set x versus y data with error bars in dx and dy.
@@ -404,6 +422,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
             #self.killTimer(self.timerId)
             #print "Disabled timer:", self.timerId
             #self.timerId = -1
+    def setErrorBar(self, on):
+        self.__errorbar = on
 
 # class OrbitPlotCurve
 
@@ -528,6 +548,9 @@ class OrbitPlot(Qwt.QwtPlot):
             #print "Disabled timer:", self.timerId
             self.timerId = -1
             
+    def setErrorBar(self, on):
+        self.curve1.setErrorBar(on)
+
     def scaleVertical(self, factor):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
         sr, sl = scalediv.upperBound(), scalediv.lowerBound()
@@ -617,6 +640,14 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         viewLiveAction.setChecked(True)
         self.connect(viewLiveAction, Qt.SIGNAL("toggled(bool)"),
                      self.liveData)
+        # errorbar
+        viewErrorBarAction = Qt.QAction(Qt.QIcon(":/viewerrorbar.png"),
+                                    "Live", self)
+        viewErrorBarAction.setCheckable(True)
+        viewErrorBarAction.setChecked(True)
+        self.connect(viewErrorBarAction, Qt.SIGNAL("toggled(bool)"),
+                     self.errorBar)
+
         # scale
         viewZoomOut15Action = Qt.QAction(Qt.QIcon(":/viewzoomout.png"),
                                          "Zoom out x1.5", self)
@@ -636,6 +667,7 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         self.viewMenu.addAction(viewZoomAutoAction)
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(viewLiveAction)
+        self.viewMenu.addAction(viewErrorBarAction)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -653,11 +685,16 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         viewToolBar.addAction(viewZoomIn15Action)
         viewToolBar.addAction(viewZoomAutoAction)
         viewToolBar.addAction(viewLiveAction)
+        viewToolBar.addAction(viewErrorBarAction)
 
     def liveData(self, on):
         """Switch on/off live data taking"""
         self.plot1.liveData(on)
         self.plot2.liveData(on)
+    
+    def errorBar(self, on):
+        self.plot1.setErrorBar(on)
+        self.plot2.setErrorBar(on)
 
     def zoomOut15(self):
         self.plot1.scaleVertical(1.5)

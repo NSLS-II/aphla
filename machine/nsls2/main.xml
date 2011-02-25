@@ -20773,7 +20773,7 @@
        <channelsuite name="rfsuite">
           <channel handle="voltSP" signal="SR:C00-RF:G00&lt;RF:00&gt;Volt-SP" settable="true"/>
           <channel handle="voltRB" signal="SR:C00-RF:G00&lt;RF:00&gt;Volt-RB" settable="false"/>
-          <channel handle="fregSP" signal="SR:C00-RF:G00&lt;RF:00&gt;Freq-SP" settable="true"/>
+          <channel handle="freqSP" signal="SR:C00-RF:G00&lt;RF:00&gt;Freq-SP" settable="true"/>
           <channel handle="freqRB" signal="SR:C00-RF:G00&lt;RF:00&gt;Freq-RB" settable="false"/>
        </channelsuite>
     </node>

@@ -15,16 +15,15 @@
     IRMIS/E4Service or local XML file.
 """
 
+import numpy as np
 from cothread.catools import caget, caput, camonitor
+from . import conf
 
-bpmhpv = {}
-bpmvpv = {}
+bpmhpv = []
+bpmvpv = []
+bpms = []
 
-def __init_pv__():
-    """Initialize bpm pv dictionary"""
-    pass
-
-def getOrbit(group = '*', sequence = None):
+def getFullOrbit(group = '*', sequence = None):
     """Return orbit"""
     x = caget("SR:C00-Glb:G00<ORBIT:00>RB-X")
     y = caget("SR:C00-Glb:G00<ORBIT:00>RB-Y")
@@ -32,6 +31,20 @@ def getOrbit(group = '*', sequence = None):
     ret = []
     for i in range(len(s)):
         ret.append([s[i], x[i], y[i]])
+    return ret
+
+def getOrbit(group = '*', sequence = None):
+    """Return orbit"""
+    elem = conf.ca.findGroup("BPM")
+    hpv = conf.ca.getChannels(elem, mode="xAvg")
+    vpv = conf.ca.getChannels(elem, mode="yAvg")
+    s = conf.ca.getPositions(elem)
+    ret = []
+    print "Reading PV data"
+    for i in range(len(s)):
+        x = caget(hpv[i])
+        y = caget(vpv[i])
+        ret.append([s[i], x, y])
     return ret
 
 def getOrbitRm():
@@ -43,6 +56,6 @@ def perturbOrbit(hcm = 'SR:C30-MG:G04B<HCM:M1>Fld-SP',
     caput(hcm, .0002)
     caput(vcm, .0001)
 
-                 
-# initialize pv list
-__init_pv__()
+if __name__ == "__main__":
+    ret = getOrbit()
+    print ret
