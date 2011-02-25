@@ -46,7 +46,7 @@ from latgeom import *
 from meastwiss import *
 from measorm import *
 from orbit import *
-
+from current import *
 
 def test():
     measBeta(quad[:5], ca=ca)
