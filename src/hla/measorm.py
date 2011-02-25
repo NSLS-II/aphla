@@ -14,6 +14,7 @@ import cadict
 import os, sys, time
 from os.path import join
 from cothread.catools import caget, caput
+import numpy as np
 
 bpmpv = [
     ["SR:C30-BI:G02A<BPM:H1>Pos-X", "SR:C30-BI:G02A<BPM:H1>Pos-Y"],
@@ -469,27 +470,89 @@ trim = [
     ["SR:C29-MG:G06B<HCM:H1>Fld-SP","SR:C29-MG:G06B<VCM:H1>Fld-SP","CH1G6C29B","TRIMD", 0.2],
     ["SR:C30-MG:G01A<HCM:H1>Fld-SP","SR:C30-MG:G01A<VCM:H1>Fld-SP","FH1G1C30A","FTRIM", 0.044]]
 
+class Orm:
+    def __init__(self, bpm, trimsp, trimrb):
+        self.__bpm = bpm[:]
+        self.__trimsp = trimsp[:]
+        self.__trimrb = trimrb[:]
 
+        self.__npoints = 4
 
-def measOrbitRm(elem, # element or list
-             neighbor_quad = True, # use nearby Quad
-             num_points = 3, ca=None):
+        self.__rawmatrix = None
+        self.__m = None
+
+    def __meas_orbit_rm4(self, kickerpv, bpmpvlist, kref = 0.0, dkick = 1e-6):
+        """Measure the RM by change one kicker. 4 points method.
+        """
+        if not getattr(dkick, '__iter__', False):
+            # not iterable ?
+            pass
+        kx0 = caget(kickerpv)
+        ret = np.zeros((6, len(bpmpvlist)), 'd')
+
+        for j, bpm in enumerate(bpmpvlist):
+            ret[0,j] = caget(bpm)
+
+        kstrength = [kx0, kx0-2*dkick, kx0-dkick, kx0+dkick, kx0+2*dkick, kx0]
+        for i,kx in enumerate(kstrength[1:]):
+            caput(kickerpv, kx)
+            time.sleep(2)
+            for j,bpm in enumerate(bpmpvlist):
+                ret[i,j] = caget(bpm)
+
+        # 4 points
+        v = (-ret[4,:] + 8.0*ret[3,:] - 8*ret[2,:] + ret[1,:])/12.0/dkick
+
+        return v, kstrength, ret
+
+    def measure(self, bpm = None, trimsp = None, trimrb = None):
+        if bpm:
+            self.__bpm = bpm[:]
+        if trimsp:
+            self.__trimsp = trimsp[:]
+        if trimrb:
+            self.__trimrb = trimrb[:]
+
+        # 3d raw data
+        self.__rawmatrix = np.zeros((self.__npoints+2, len(self.__bpm),
+                                   len(self.__trimsp)), 'd')
+        self.__rawkick = np.zeros((len(self.__trimsp), self.__npoints+2), 'd')
+        self.__m = np.zeros((len(self.__bpm), len(self.__trimsp)), 'd')
+        for i, trim in enumerate(self.__trimsp):
+            kref = caget(self.__trimrb[i])
+            if True: print i, self.__trimsp[i], kref
+            v, kstrength, ret = self.__meas_orbit_rm4(trim, self.__bpm, kref=kref)
+            self.__rawkick[i, :] = kstrength[:]
+            self.__rawmatrix[:,:,i] = ret[:,:]
+            self.__m[:,i] = v[:]
+            time.sleep(3)
+
+    def save(self, filename, format = 'HDF5'):
+        import h5py
+        f = h5py.File(filename, 'w')
+        dst = f.create_dataset("orm", data = self.__m)
+        dst = f.create_dataset("bpm_pvrb", data = self.__bpm)
+        dst = f.create_dataset("trim_pvsp", data = self.__trimsp)
+        dst = f.create_dataset("trim_pvrb", data = self.__trimrb)
+
+        grp = f.create_group("_rawdata_")
+        dst = grp.create_dataset("matrix", data = self.__rawmatrix)
+        dst = grp.create_dataset("kicker_sp", data = self.__rawkick)
+        f.close()
+
+def measOrbitRm(bpm, trimsp, trimrb):
     """Measure the beta function by varying quadrupole strength"""
-    pv = ca.getChannels(elem, mode='fieldRB')
-    print pv
     print os.environ['EPICS_CA_MAX_ARRAY_BYTES']
     print "env", os.environ['EPICS_CA_ADDR_LIST']
     #print caget('SR:C30-MG:G02A<QDP:H1>Fld-RB')
     #print caget(u'SR:C30-MG:G02A<QDP:H1>Fld-RB')
-    print caget(pv[0].encode('ascii', 'ignore'))
+
+    orm = Orm(bpm, trimsp, trimrb)
+    orm.measure()
+    orm.save("test.hdf5")
+
 # testing ...
 
-def __meas_orbit_rm(kickerpv, bpmpvlist, dkick = 1e-6, points=3):
-    """Measure the RM by change one kicker.
-    """
-    if not getattr(dkick, '__iter__', False):
-        # not iterable ?
-        pass
 
 def measChromRm():
     pass
@@ -497,10 +560,13 @@ def measChromRm():
 def __clearTrims():
     print "Clear trim strength, Waiting..."
     for i, d in enumerate(trim):
-	print caget(d[0])
+	print "%4d:%f" % (i,caget(d[0])),
+        if i % 5 == 4: print ""
+
         caput(d[0], 0.0)
         caput(d[1], 0.0)
     time.sleep(2)
+    print "DONE"
 
 if __name__ == "__main__":
     pt = os.path.dirname(os.path.abspath(__file__))
@@ -511,12 +577,20 @@ if __name__ == "__main__":
     quad = ca.findGroup("QUAD")
     #measBeta(quad[1:3])
     
-    for i, d in enumerate(trim):
-        print "%d/%d" % (i, len(trim)), d[2], d[3], d[4]
-        x, y = caget(d[0]), caget(d[1])
-        caput(d[0], .001)
-        caput(d[1], .001)
-        time.sleep(2)
-        caput(d[0], x)
-        caput(d[1], y)
+    __clearTrims()
+    # horizontal and vertical BPM
+    b = []
+    for i in range(6): b.append(bpmpv[i][0]) 
+    for i in range(6): b.append(bpmpv[i][1]) 
+
+    ksp, krb = [], []
+    for i in range(8):
+        ksp.append(trim[i][0])
+        krb.append(trim[i][0].replace("-SP", "-RB"))
+    for i in range(8):
+        ksp.append(trim[i][1])
+        krb.append(trim[i][1].replace("-SP", "-RB"))
+
+    measOrbitRm(b, ksp, krb)
+    
 
