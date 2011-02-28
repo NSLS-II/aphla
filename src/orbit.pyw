@@ -107,7 +107,8 @@ class OrbitCaData(Qt.QObject):
         self.__dx = zeros(self.points, 'd')
         self.__dy = zeros(self.points, 'd')
         self.__s  = zeros(self.points, 'd')
-        self.__live = True
+
+        self.__live = False
 
         #self.__s[:] = d[:,0]
         self.update()
@@ -117,10 +118,10 @@ class OrbitCaData(Qt.QObject):
 
     def timerEvent(self, e):
         if not self.__live: return
-        self.update()
+        else: self.update()
+        #print "Updated orbit", self.isample
 
     def update(self):
-
         self.isample = (self.isample + 1) % self.nsample
         if self.isample == 0: self.samplefull = True
 
@@ -128,6 +129,7 @@ class OrbitCaData(Qt.QObject):
         #d = np.array(getOrbit())
         # fast, read BPM waveform
         d = np.array(getFullOrbit())
+        #print "Update ca data", self.isample
 
         self.__s[:] = d[:,0]
         self.__x[self.isample, :] = d[:,1]
@@ -167,9 +169,11 @@ class OrbitCaData(Qt.QObject):
         self.__live = False
         #self.killTimer(self.timerId)
         #self.timerId = -1
+        #print "Data stop: ", self.__live
 
     def start(self):
         self.__live = True
+        #print "Data start:", self.__live
         #if self.timerId > 0:
         #    self.killTimer(self.timerId)
         #self.timerId = self.startTimer(self.__dt) 
@@ -214,7 +218,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.__dy = None
         self.plane = plane
         self.data = data
-        
+        self.__live = False
+
         self.__errorbar = True
         #self.live = True
 
@@ -223,7 +228,9 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
     # __init__()
 
     def update(self):
+        #self.data.update()
         #if not self.live: return None
+        #print "update curve" 
         if self.__errorbar and self.plane == 'H':
             x = self.data.x()
             dx = self.data.dx()
@@ -413,6 +420,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
     # drawFromTo()
     def liveData(self, on):
         #print "Working on timer:", self.timerId,
+        print "Curve: ", on
         if on:
             self.data.start()
             #self.timerId = self.startTimer(500)
@@ -425,6 +433,11 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
     def setErrorBar(self, on):
         self.__errorbar = on
 
+    def singleShot(self):
+        #print "Curve single shot"
+        self.data.update()
+        self.update()
+        
 # class OrbitPlotCurve
 
 class OrbitPlot(Qwt.QwtPlot):
@@ -479,6 +492,7 @@ class OrbitPlot(Qwt.QwtPlot):
         picker1.setTrackerPen(Qt.QPen(Qt.Qt.red))
         
         
+        self.__live = False
         self.timerId = self.startTimer(500)
 
         #self.phase = 0.0
@@ -501,6 +515,7 @@ class OrbitPlot(Qwt.QwtPlot):
         # y moves from left to right:
         # shift y array right and assign new value y[0]
         #self.y = concatenate((self.y[:1], self.y[:-1]), 1)
+        if not self.__live: return
 
         self.curve1.update()
 
@@ -533,7 +548,15 @@ class OrbitPlot(Qwt.QwtPlot):
     def setPlane(plane = 'H'):
         self.plane = plane
 
+    def singleShot(self):
+        #print "Plot :: singleShot"
+        self.curve1.singleShot()
+        self.replot()
+
+        pass
+
     def liveData(self, on):
+        self.__live = on
         self.curve1.liveData(on)
         return None
 
@@ -637,12 +660,18 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         viewLiveAction = Qt.QAction(Qt.QIcon(":/viewlive.png"),
                                     "Live", self)
         viewLiveAction.setCheckable(True)
-        viewLiveAction.setChecked(True)
+        viewLiveAction.setChecked(False)
         self.connect(viewLiveAction, Qt.SIGNAL("toggled(bool)"),
                      self.liveData)
+
+        viewSingleShotAction = Qt.QAction(Qt.QIcon(":/viewsingleshot.png"),
+                                       "Single Shot", self)
+        self.connect(viewSingleShotAction, Qt.SIGNAL("triggered()"),
+                     self.singleShot)
+
         # errorbar
         viewErrorBarAction = Qt.QAction(Qt.QIcon(":/viewerrorbar.png"),
-                                    "Live", self)
+                                    "Errorbar", self)
         viewErrorBarAction.setCheckable(True)
         viewErrorBarAction.setChecked(True)
         self.connect(viewErrorBarAction, Qt.SIGNAL("toggled(bool)"),
@@ -667,6 +696,8 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         self.viewMenu.addAction(viewZoomAutoAction)
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(viewLiveAction)
+        self.viewMenu.addAction(viewSingleShotAction)
+        self.viewMenu.addSeparator()
         self.viewMenu.addAction(viewErrorBarAction)
 
         # help
@@ -685,10 +716,12 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         viewToolBar.addAction(viewZoomIn15Action)
         viewToolBar.addAction(viewZoomAutoAction)
         viewToolBar.addAction(viewLiveAction)
+        viewToolBar.addAction(viewSingleShotAction)
         viewToolBar.addAction(viewErrorBarAction)
-
+        
     def liveData(self, on):
         """Switch on/off live data taking"""
+        #print "MainWindow: liveData", on
         self.plot1.liveData(on)
         self.plot2.liveData(on)
     
@@ -707,6 +740,11 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
     def zoomAuto(self):
         self.plot1.zoomAuto()
         self.plot2.zoomAuto()
+
+    def singleShot(self):
+        #print "Main: Singleshot"
+        self.plot1.singleShot()
+        self.plot2.singleShot()
 
 def main(args):
     app = Qt.QApplication(args)

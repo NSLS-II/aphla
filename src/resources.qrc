@@ -3,6 +3,7 @@
 <file alias="filequit.png">images/filequit.png</file>
 <file alias="viewlive.png">images/viewlive.png</file>
 <file alias="viewerrorbar.png">images/viewerrorbar.png</file>
+<file alias="viewsingleshot.png">images/viewsingleshot.png</file>
 <file alias="viewzoomin.png">images/viewzoomin.png</file>
 <file alias="viewzoomout.png">images/viewzoomout.png</file>
 <file alias="viewzoomauto.png">images/viewzoomauto.png</file>

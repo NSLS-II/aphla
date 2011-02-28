@@ -580,14 +580,14 @@ if __name__ == "__main__":
     __clearTrims()
     # horizontal and vertical BPM
     b = []
-    for i in range(6): b.append(bpmpv[i][0]) 
-    for i in range(6): b.append(bpmpv[i][1]) 
+    for i in range(len(bpmpv)): b.append(bpmpv[i][0]) 
+    for i in range(len(bpmpv)): b.append(bpmpv[i][1]) 
 
     ksp, krb = [], []
-    for i in range(8):
+    for i in range(len(trim)):
         ksp.append(trim[i][0])
         krb.append(trim[i][0].replace("-SP", "-RB"))
-    for i in range(8):
+    for i in range(len(trim)):
         ksp.append(trim[i][1])
         krb.append(trim[i][1].replace("-SP", "-RB"))
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-from . import cadict
+import cadict
 
 root={
     "nsls2" : "machine/nsls2"
