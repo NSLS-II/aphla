@@ -481,7 +481,7 @@ class Orm:
         self.__rawmatrix = None
         self.__m = None
 
-    def __meas_orbit_rm4(self, kickerpv, bpmpvlist, kref = 0.0, dkick = 1e-6):
+    def __meas_orbit_rm4(self, kickerpv, bpmpvlist, kref = 0.0, dkick = 1e-5):
         """Measure the RM by change one kicker. 4 points method.
         """
         if not getattr(dkick, '__iter__', False):
