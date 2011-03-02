@@ -60,7 +60,7 @@ class CorrCurve(Qwt.QwtPlotCurve):
         self.setSymbol(Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
                                         Qt.QBrush(Qt.Qt.red),
                                         Qt.QPen(Qt.Qt.black, 2),
-                                        Qt.QSize(9, 9)))
+                                        Qt.QSize(6, 6)))
         self.errorPen = Qt.QPen(Qt.Qt.blue, 2)
 
         self.x  = []
@@ -71,6 +71,7 @@ class CorrCurve(Qwt.QwtPlotCurve):
         self.pv = [pvx, pvy]
 
         self.__errorbar = False
+        self.scale = 1.0
 
     def update(self):
         #if not self.live: return None
@@ -128,6 +129,12 @@ class CorrPlot(Qwt.QwtPlot):
         self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
         self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
         
+    def minimumSizeHint(self):
+        return Qt.QSize(600, 450)
+
+    def sizeHing(self):
+        return Qt.QSize(800, 600)
+
     def appendVariables(self, argx, argy):
         self.xpv.append(argx)
         self.ypv.append(argy)
@@ -150,8 +157,6 @@ class CorrPlot(Qwt.QwtPlot):
         for c in self.curve:
             c.update()
         self.replot()
-
-    # alignScales()
 
     def scaleVertical(self, factor):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
@@ -187,12 +192,20 @@ class CorrPlotMainWindow(Qt.QMainWindow):
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
         self.plot1.setTitle("Horizontal Orbit")
-
+        #self.plot1.setSize
+        self.pvLineEdit = QtGui.QLineEdit(self)
+        self.pvTable = QtGui.QTableWidget(self)
+        self.pvTable.setColumnCount(3)
+        self.pvTable.setHorizontalHeaderLabels(('PV', 'key', 'scale'))
+        vbox = QtGui.QVBoxLayout()
+        vbox.addWidget(self.pvLineEdit)
+        vbox.addWidget(self.pvTable)
 
         wid = QtGui.QWidget()
-        vbox = QtGui.QHBoxLayout()
-        vbox.addWidget(self.plot1)
-        wid.setLayout(vbox)
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(self.plot1)
+        hbox.addItem(vbox)
+        wid.setLayout(hbox)
         self.setCentralWidget(wid)
 
         self.statusBar().showMessage('Hello;')

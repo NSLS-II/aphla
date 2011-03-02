@@ -8,13 +8,14 @@
 
 """
 
-import conf
+import hla.conf as conf
 import cadict
 
 import os, sys, time
 from os.path import join
 from cothread.catools import caget, caput
 import numpy as np
+import matplotlib.pylab as plt
 
 bpmpv = [
     ["SR:C30-BI:G02A<BPM:H1>Pos-X", "SR:C30-BI:G02A<BPM:H1>Pos-Y"],
@@ -480,8 +481,10 @@ class Orm:
 
         self.__rawmatrix = None
         self.__m = None
+        self.__mask = None
 
-    def __meas_orbit_rm4(self, kickerpv, bpmpvlist, kref = 0.0, dkick = 1e-5):
+    def __meas_orbit_rm4(self, kickerpv, bpmpvlist, mask,
+                         kref = 0.0, dkick = 1e-6, verbose = 0):
         """Measure the RM by change one kicker. 4 points method.
         """
         if not getattr(dkick, '__iter__', False):
@@ -489,23 +492,42 @@ class Orm:
             pass
         kx0 = caget(kickerpv)
         ret = np.zeros((6, len(bpmpvlist)), 'd')
-
+        tsleep = 20
         for j, bpm in enumerate(bpmpvlist):
-            ret[0,j] = caget(bpm)
+            if mask[j]: ret[0,j] = 0
+            else: ret[0,j] = caget(bpm)
 
+        
         kstrength = [kx0, kx0-2*dkick, kx0-dkick, kx0+dkick, kx0+2*dkick, kx0]
         for i,kx in enumerate(kstrength[1:]):
             caput(kickerpv, kx)
-            time.sleep(2)
+            if verbose: 
+                print "Setting trim: ", kickerpv, kx, caget(kickerpv)
+            time.sleep(tsleep)
             for j,bpm in enumerate(bpmpvlist):
-                ret[i,j] = caget(bpm)
-
+                if mask[j]: ret[i+1,j] = 0
+                else: ret[i+1,j] = caget(bpm)
+                print "  %4d" % j, bpm, ret[i+1,j]
+                sys.stdout.flush()
+            print ""
         # 4 points
         v = (-ret[4,:] + 8.0*ret[3,:] - 8*ret[2,:] + ret[1,:])/12.0/dkick
+        
+        # polyfit
+        p, residuals, rank, singular_values, rcond = \
+            np.polyfit(kstrength[1:-1], ret[1:-1,:], 1, full=True)
+        print ""
+        print "Shape:", np.shape(kstrength[1:-1]), np.shape(ret[1:-1,:])
+        print "Shape:",np.shape(p), np.shape(residuals)
 
+        for i in range(len(bpmpvlist)):
+            if abs((v[i] - p[0, i])/v[i]) > .1:
+                print kickerpv, bpmpvlist[i], v[i], p[0,i]
+        
         return v, kstrength, ret
 
-    def measure(self, bpm = None, trimsp = None, trimrb = None):
+    def measure(self, bpm = None, trimsp = None, trimrb = None,
+                coupled=False, verbose = 0):
         if bpm:
             self.__bpm = bpm[:]
         if trimsp:
@@ -516,12 +538,27 @@ class Orm:
         # 3d raw data
         self.__rawmatrix = np.zeros((self.__npoints+2, len(self.__bpm),
                                    len(self.__trimsp)), 'd')
+        self.__mask = np.zeros((len(self.__bpm), len(self.__trimsp)))
+
+        if not coupled:
+            # mask out H-V term
+            for i, bpm in enumerate(self.__bpm):
+                for j,trim in enumerate(self.__trimsp):
+                    if self.__bpm[i].find("Pos-X") > 0 and \
+                            self.__trimsp[j].find("VCM") > 0:
+                        self.__mask[i, j] = 1
+                    if self.__bpm[i].find("Pos-Y") > 0 and \
+                            self.__trimsp[j].find("HCM") > 0:
+                        self.__mask[i, j] = 1
+                    
         self.__rawkick = np.zeros((len(self.__trimsp), self.__npoints+2), 'd')
         self.__m = np.zeros((len(self.__bpm), len(self.__trimsp)), 'd')
         for i, trim in enumerate(self.__trimsp):
             kref = caget(self.__trimrb[i])
-            if True: print i, self.__trimsp[i], kref
-            v, kstrength, ret = self.__meas_orbit_rm4(trim, self.__bpm, kref=kref)
+            #if True: print i, self.__trimsp[i], kref,
+            v, kstrength, ret = self.__meas_orbit_rm4(
+                trim, self.__bpm, mask = self.__mask[:,i], kref=kref,
+                verbose=verbose)
             self.__rawkick[i, :] = kstrength[:]
             self.__rawmatrix[:,:,i] = ret[:,:]
             self.__m[:,i] = v[:]
@@ -538,21 +575,98 @@ class Orm:
         grp = f.create_group("_rawdata_")
         dst = grp.create_dataset("matrix", data = self.__rawmatrix)
         dst = grp.create_dataset("kicker_sp", data = self.__rawkick)
+        dst = grp.create_dataset("mask", data = self.__mask)
+
         f.close()
+
+    def load(self, filename, format = 'HDF5'):
+        import h5py
+        f = h5py.File(filename, 'r')
+        self.__m = f["orm"]
+        self.__bpm = f["bpm_pvrb"]
+        self.__trimsp = f["trim_pvsp"]
+        self.__trimrb = f["trim_pvrb"]
+        self.__rawmatrix = f["_rawdata_"]["matrix"]
+        self.__rawkick   = f["_rawdata_"]["kicker_sp"]
+        self.__mask      = f["_rawdata_"]["mask"]
+
+    def checkLinearity(self):
+        npoints, nbpm, ntrim = np.shape(self.__rawmatrix)
+        #print npoints, nbpm, ntrim
+        res = []
+        n = 0
+        for j in range(ntrim):
+            #print j, self.__rawkick[0, 1:npoints-1]
+            for i in range(nbpm):
+                if self.__mask[i, j]: continue
+
+                k = self.__rawkick[j, 1:npoints-1]
+                m = self.__rawmatrix[1:npoints-1, i, j]
+                p, residuals, rank, singular_values, rcond = \
+                    np.polyfit(k, m, 1, full=True)
+                #if residuals[0] > 1e-11:
+                #    print "x [%f %f]" % (k[0], k[-1]), residuals, p[0], \
+                #        " calc:", self.__m[i, j]
+                if self.__bpm[i].find("Pos-X") > 0 and \
+                        self.__trimrb[j].find("VCM") > 0:
+                    continue
+
+                if self.__bpm[i].find("Pos-Y") > 0 and \
+                        self.__trimrb[j].find("HCM") > 0:
+                    continue
+
+                tag = 'o'
+                if abs((p[0] - self.__m[i,j])/p[0]) > .1:
+                    print "%8d: bpm %3d, trim %3d" % (n, i, j), \
+                        self.__bpm[i], self.__trimrb[j]
+                    print "        ", residuals, \
+                        p[0], " calc:", self.__m[i, j]
+                    tag = 'e'
+                if True:
+                    n = n + 1
+                    t = np.linspace(min(k)*1e6, max(k)*1e6, 100)
+                    plt.clf()
+                    plt.plot(t, p[0]*t + p[1]*1e6, '-')
+                    plt.plot(k*1e6, m*1e6, '-o')
+                    #plt.annotate('A', xy=(self.__rawkick[j,0],
+                    #                      self.__rawmatrix[0,i,j]),
+                    #             xycoords='data')
+                    #plt.annotate('B', xy=(self.__rawkick[j,-1],
+                    #                      self.__rawmatrix[-1,i,j]),
+                    #             xycoords='data')
+                    #plt.annotate('%s\n%s' % (self.__bpm[i], self.__trimsp[j]),
+                    #             xy = (min(k*1000), max(m*1000)),
+                    #             xycoords='data', verticalalignment='top')
+                    #plt.title("%s / %s" % (self.__bpm[i], self.__trimsp[j]))
+                    plt.ylabel(self.__bpm[i] + "  x1e6")
+                    plt.xlabel(self.__trimsp[j] + "  x1e6")
+                    plt.savefig("orm-check-%07d-%s.png" % (n, tag))
+
+                if tag == 'e':
+                    f = open("test.sh", 'w')
+                    f.write("#!/bin/bash\n")
+                    for ki in range(npoints):
+                        f.write("caput '%s' %e\n" % (self.__trimsp[j],  
+                                                 self.__rawkick[j, ki]))
+                        f.write("sleep 3\n")
+                        f.write("caget '%s'\n" % self.__bpm[i])
+                    f.close()
+
+                if n > 10: return
+                if p[0] < 1e-10: continue
+                res.append(residuals[0])
+        print len(res), np.average(res), np.var(res)
 
 def measOrbitRm(bpm, trimsp, trimrb):
     """Measure the beta function by varying quadrupole strength"""
-    print os.environ['EPICS_CA_MAX_ARRAY_BYTES']
-    print "env", os.environ['EPICS_CA_ADDR_LIST']
-    #print caget('SR:C30-MG:G02A<QDP:H1>Fld-RB')
-    #print caget(u'SR:C30-MG:G02A<QDP:H1>Fld-RB')
+    print "EPICS_CA_MAX_ARRAY_BYTES:", os.environ['EPICS_CA_MAX_ARRAY_BYTES']
+    print "EPICS_CA_ADDR_LIST      :", os.environ['EPICS_CA_ADDR_LIST']
 
     orm = Orm(bpm, trimsp, trimrb)
-    orm.measure()
+    orm.measure(verbose=1)
     orm.save("test.hdf5")
 
 # testing ...
-
 
 def measChromRm():
     pass
@@ -568,29 +682,56 @@ def __clearTrims():
     time.sleep(2)
     print "DONE"
 
+def test():
+    x = []
+    t0 = 1299032723.0
+    for k in [.0, -2e-6, -1e-6, 1e-6, 2e-6, 0.]:
+        caput('SR:C30-MG:G01A<VCM:H2>Fld-SP', k)
+        t1 = time.time()
+        x1 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
+        for i in range(200):
+            #time.sleep(4)
+            #print time.time()
+            x2 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
+            #time.sleep(4)
+            if abs(x2 - x1) > 1e-12:
+                print k, "%4d" % i, time.time() - t1, x1
+                break
+            x1 = x2
+            time.sleep(3)
+            #t2 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
+        #print k, t1, t2
+        #x.append([k, t1, t2])
+    print x
+
+
 if __name__ == "__main__":
-    pt = os.path.dirname(os.path.abspath(__file__))
-    xmlconf = "%s/../../%s/main.xml" % (pt, conf.root['nsls2'])
-    print "Using conf file:", xmlconf
-    ca = cadict.CADict(xmlconf)
-    #print ca
-    quad = ca.findGroup("QUAD")
-    #measBeta(quad[1:3])
-    
-    __clearTrims()
+    #__clearTrims()
+    #test()
+    #sys.exit(0)
+
     # horizontal and vertical BPM
+    nbpm, ntrim = len(bpmpv), len(trim)
+    #nbpm, ntrim = 3, 1
+
     b = []
-    for i in range(len(bpmpv)): b.append(bpmpv[i][0]) 
-    for i in range(len(bpmpv)): b.append(bpmpv[i][1]) 
+    for i in range(nbpm): 
+        # horizontal and vertical
+        b.append(bpmpv[i][0]) 
+        b.append(bpmpv[i][1]) 
 
     ksp, krb = [], []
-    for i in range(len(trim)):
+    for i in range(ntrim):
+        # horizontal
         ksp.append(trim[i][0])
         krb.append(trim[i][0].replace("-SP", "-RB"))
-    for i in range(len(trim)):
+        # vertical
         ksp.append(trim[i][1])
         krb.append(trim[i][1].replace("-SP", "-RB"))
 
     measOrbitRm(b, ksp, krb)
+    #orm = Orm(b, ksp, krb)
+    #orm.load("test.hdf5")
+    #orm.checkLinearity()
     
 

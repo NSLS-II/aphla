@@ -458,7 +458,9 @@ class OrbitPlot(Qwt.QwtPlot):
         #self.setTitle("An Orbit Plot")
         #self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
 
-        #self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 100)
+        self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
+        self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+
         self.plotLayout().setAlignCanvasToScales(True)
 
         self.curve1 = OrbitPlotCurve(data, plane,
@@ -467,7 +469,7 @@ class OrbitPlot(Qwt.QwtPlot):
                                         Qt.QBrush(Qt.Qt.red),
                                         Qt.QPen(Qt.Qt.black, 2),
                                         Qt.QSize(9, 9)),
-            errorPen = Qt.QPen(Qt.Qt.blue, 2),
+            errorPen = Qt.QPen(Qt.Qt.blue, 1),
             errorCap = 10,
             errorOnTop = errorOnTop,
             )
