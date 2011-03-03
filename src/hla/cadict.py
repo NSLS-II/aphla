@@ -52,8 +52,8 @@ class CAElement:
             if girder: self.girder = a.groups()[0]
             if cell: self.cell = a.groups()[1]
             if symmetry: self.symmetry = a.groups()[2]
-        else:
-            print self.name
+        #else:
+        #    #print self.name
 
         # fix a broken name
         if self.name == "CAVITY":

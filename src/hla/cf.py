@@ -98,7 +98,7 @@ class ChannelFinderAgent:
                     msg = '%s is not in tags' % tag
                     break
             if agreed: ret.append(pv)
-        if len(ret) == 0: print msg
+        #if len(ret) == 0: print msg
         return ret
     
     def getChannel(self, handle = '', prop = {}, tags = []):
@@ -117,7 +117,8 @@ if __name__ == "__main__":
     d.save('test.shelve')
     d1 = ChannelFinderAgent()
     d1.load('test.shelve')
-    c = d1.getChannel(prop = {'cell':'C01'})
-    print c
+    c = d1.getChannel(prop = {'cell':'C01', 'girder':'G2'})
+    for k,v in c.items():
+        print k, v
     #print d1
 
