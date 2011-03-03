@@ -420,7 +420,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
     # drawFromTo()
     def liveData(self, on):
         #print "Working on timer:", self.timerId,
-        print "Curve: ", on
+        #print "Curve: ", on
         if on:
             self.data.start()
             #self.timerId = self.startTimer(500)

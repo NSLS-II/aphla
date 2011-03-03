@@ -15,3 +15,5 @@ TODO
 - GUI: beam based alignment
 
    
+- CAVITY: cell ? girder ? symmetry ?
+
