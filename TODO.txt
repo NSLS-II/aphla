@@ -15,5 +15,7 @@ TODO
 - GUI: beam based alignment
 
    
-- CAVITY: cell ? girder ? symmetry ?
+- CAVITY: cell ? girder ? symmetry ? --L.Y.
+
+- Split Sextupoles ? two PV now in Virtual ACC --L.Y.
 
