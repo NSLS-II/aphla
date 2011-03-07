@@ -13,6 +13,8 @@
    HLA
 """
 
+import os, sys
+
 import conf
 
 #
@@ -30,3 +32,5 @@ from current import *
 def test():
     measBeta(quad[:5], ca=ca)
     
+def init(lat):
+    print lat

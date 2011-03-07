@@ -15,12 +15,26 @@
     IRMIS/E4Service or local XML file.
 """
 
+from cothread.catools import caget, caput
+import numpy as np
+import conf
+
+class Twiss:
+    def __init__(self):
+        self.s     = np.zeros(3, 'd')
+        self.beta  = np.zeros((3, 2), 'd')
+        self.gamma = np.zeros((3, 2), 'd')
+        self.eta   = np.zeros((3, 2), 'd')
+        self.phi   = np.zeros((3, 2), 'd')
+        self.elemname = ''
+
 def getPhase(group, plane = 'hv', mode = ''):
     """The commands
     :func:`~hla.latmode.getCurrentMode` is good !
     :class:`~hla.cadict.CAElement` is also good.
     :class:`~hla.cadict.CADict` is also good.
     """
+    
     raise NotImplementedError()
     
     return None

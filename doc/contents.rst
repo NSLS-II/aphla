@@ -23,7 +23,7 @@ Contents:
    Download `PDF <./hla.pdf>`_
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    intro.rst
    ref.rst

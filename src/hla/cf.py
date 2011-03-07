@@ -9,6 +9,7 @@ This module builds a local cache of channel finder service.
 
 import cadict
 import re, shelve
+from fnmatch import fnmatch
 from time import gmtime, strftime
 import sys
 
@@ -17,6 +18,7 @@ class ChannelFinderAgent:
         self.__d = {}
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
         self.__elempv = {}
+        self.__elemidx = {}
 
     def importXml(self, fname):
         """OBSOLETE - the main.xml file does not have latest pv list
@@ -75,38 +77,56 @@ class ChannelFinderAgent:
         d = []
         for s in f[1:]:
             t = s.split()
-            d.append([int(t[0]), t[1].strip(), t[2].strip(), t[3].strip()])
-            d[-1].extend([float(t[i]) for i in range(4, 6)])
-            d[-1].append(t[6].strip())
-            #print d[-1]
-            k = 6
-            if cnt.has_key(d[-1][k]): cnt[d[-1][k]] += 1
+            idx  = int(t[0])     # index
+            rb   = t[1].strip()  # PV readback
+            sp   = t[2].strip()  # PV setpoint
+            phy  = t[3].strip()  # name
+            L    = float(t[4])   # length
+            s2   = float(t[5])   # s_end location
+            grp  = t[6].strip()  # group
+
             # parse cell/girder/symmetry from name
-            cell, girder, symmetry = self.__parseElementName(d[-1][3])
+            cell, girder, symmetry = self.__parseElementName(phy)
+
+            # count element numbers in each type
+            if cnt.has_key(grp): cnt[grp] += 1
+
             # add the readback pv
-            self.addChannel(d[-1][1], {'handle': 'get', 
-                                     'elementname': d[-1][3],
-                                     'elementtype': d[-1][6],
-                                     'cell': cell,
-                                     'girder': girder,
-                                     'symmetry': symmetry}, None)
+            if rb != 'NULL':
+                self.addChannel(rb,
+                                {'handle': 'get', 'elementname': phy,
+                                 'elementtype': grp, 'cell': cell, 
+                                 'girder': girder, 'symmetry': symmetry,
+                                 'elemindex': idx, 's_end': s2}, None)
+            if sp != 'NULL':
+                self.addChannel(sp,
+                                {'handle': 'get', 'elementname': phy,
+                                 'elementtype': grp, 'cell': cell,
+                                 'girder': girder, 'symmetry': symmetry,
+                                 'elemindex': idx, 's_end': s2}, None)
+            self.__elemidx[phy] = idx
         print "Summary:"
         for k,v in cnt.items():
-            print " %8s %4d" % (k, v)
-        return d
+            print " %8s %5d" % (k, v)
+        print "--"
+        print " %8s %5d" % ("Elements", len(self.__elemidx.keys()))
+        print " %8s %5d" % ("PVs",len(self.__d.keys()))
+        #return d
 
-    def save(self, fname):
-        f = shelve.open(fname, 'c')
-        f['cfa.d'] = self.__d
-        f['cfa.cdate'] = self.__cdate
-        f['cfa.elempv'] = self.__elempv
+    def save(self, fname, mode = 'c'):
+        f = shelve.open(fname, mode)
+        f['cfa.d']       = self.__d
+        f['cfa.cdate']   = self.__cdate
+        f['cfa.elempv']  = self.__elempv
+        f['cfa.elemidx'] = self.__elemidx
         f.close()
 
     def load(self, fname):
         f = shelve.open(fname, 'r')
-        self.__d = f['cfa.d']
-        self.__cdate = f['cfa.cdate']
-        self.__elempv = f['cfa.elempv']
+        self.__d       = f['cfa.d']
+        self.__cdate   = f['cfa.cdate']
+        self.__elempv  = f['cfa.elempv']
+        self.__elemidx = f['cfa.elemidx']
         f.close()
 
     def addChannel(self, pv, props, tags):
@@ -160,12 +180,30 @@ class ChannelFinderAgent:
         #if len(ret) == 0: print msg
         return ret
     
-    def getChannel(self, handle = '', prop = {}, tags = []):
+    def getChannels(self, handle = '', prop = {}, tags = []):
         ret = {}
         for elem in self.__elempv.keys():
             pvs = self.getElementChannel(elem, handle, prop, tags)
             if pvs: ret[elem] = pvs
         return ret
+
+    def getElements(self, group, cell = [], girder = [],
+                    sequence = []):
+        """
+        """
+        elem = []
+        for pv in self.__d.keys():
+            elemname = self.__d[pv]['elementname']
+            elemtype = self.__d[pv]['elementtype']
+            if group and not fnmatch(elemname, group) \
+                    and not fnmatch(elemtype, group):
+                continue
+            if cell and not self.__d[pv]['cell'] in cell: continue
+            if girder and not self.__d[pv]['girder'] in girder: continue
+            elem.append(elemname)
+
+        # may have duplicate element
+        return [v for v in set(elem)]
 
     def testChannels(self):
         import cothread
@@ -189,22 +227,29 @@ class ChannelFinderAgent:
         print ""
         for k,v in rec.items():
             print k, v
-        
+    
+    def checkMissingChannels(self, pvlist):
+        for i, line in enumerate(open(pvlist, 'r').readlines()):
+            if self.__d.has_key(line.strip() ): continue
+            print "Line: %d %s" % (i, line.strip())
+        print "-- DONE --"
 
 if __name__ == "__main__":
+    import os, sys
     d = ChannelFinderAgent()
     #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
-    d.importLatticeTable('/home/lyyang/devel/nsls2-hla/machine/nsls2/lat_conf_table.txt')
-    d.testChannels()
-    #print d
-    sys.exit(0)
-
-    #print d
-    d.save('test.shelve')
-    d1 = ChannelFinderAgent()
-    d1.load('test.shelve')
-    c = d1.getChannel(prop = {'cell':'C01', 'girder':'G2'})
-    for k,v in c.items():
-        print k, v
+    hlaroot = '/home/lyyang/devel/nsls2-hla/'
+    d.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
+    #d.testChannels()
+    print d.getElements('P*G2C2*', cell=['C21'])
+    d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
+    d.save(hlaroot + 'machine/nsls2/hla.pkl')
+    
+    # testing ...
+    #d1 = ChannelFinderAgent()
+    #d1.load('')
+    #c = d1.getChannel(prop = {'cell':'C01', 'girder':'G2'})
+    #for k,v in c.items():
+    #    print k, v
     #print d1
 

@@ -8,8 +8,8 @@
 
 """
 
-import hla.conf as conf
-import hla.cadict as cadict
+#from . import conf
+#from . import cadict 
 
 import os
 from os.path import join

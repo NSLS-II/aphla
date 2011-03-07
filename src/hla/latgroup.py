@@ -15,9 +15,13 @@
     IRMIS/E4Service or local XML file.
 """
 
+from . import conf
+
 
 def addGroup(group):
     """Add a new group"""
+    #print conf.ca
+
     raise NotImplementedError()
     return None
 
@@ -62,4 +66,7 @@ def getStepSize(element):
     """Return default stepsize of a given element"""
     raise NotImplementedError()
     return None
+
+def getElements(group):
+    return conf.ca.getElements(group)
 

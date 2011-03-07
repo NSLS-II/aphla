@@ -17,11 +17,14 @@
     XML file. 
 """
 
+import conf
+
 def getLocation(group):
     """
     Get the location of a group, either returned as a dictionary in which
     the key is element physics name, value is the location.
     """
-
+    
     return None
+
 
