@@ -8,7 +8,6 @@
 
 """
 
-import hla.conf as conf
 import cadict
 
 import os, sys, time

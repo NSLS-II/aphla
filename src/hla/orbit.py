@@ -17,7 +17,6 @@
 
 import numpy as np
 from cothread.catools import caget, caput, camonitor
-from . import conf
 
 bpmhpv = []
 bpmvpv = []

@@ -8,6 +8,7 @@ from cothread.catools import caget
 
 class TestConf(unittest.TestCase):
     def setUp(self):
+        hla.clean_init()
         pass
 
     def test_pvExists(self):
@@ -31,9 +32,9 @@ class TestConf(unittest.TestCase):
 
     def test_elements(self):
         elem = hla.getElements('P*')
-        s    = hla.getLocation('P*')
-        print s,
-        print elem
+        s    = hla.getLocations('P*')
+        print "S=", s
+        print "Element=", elem
         print len(s), len(elem)
         for i in range(len(s)):
             print s[i], elem[i]

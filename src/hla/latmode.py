@@ -16,17 +16,3 @@
 """
 
 
-def getCurrentMode(self):
-    """Get the current operation mode"""
-    raise NotImplementedError()
-    return current_mode
-
-def getModes(self):
-    raise NotImplementedError()
-    return None
-
-def saveMode(self, mode, dest):
-    """Save current states to a new mode"""
-    raise NotImplementedError()
-
-

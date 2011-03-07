@@ -10,11 +10,7 @@ import cadict
 import re, shelve, sys, os
 from fnmatch import fnmatch
 from time import gmtime, strftime
-
-import lattwiss
-
-# are we using virtual ac
-virtac = True
+from lattice import parseElementName
 
 class ChannelFinderAgent:
     """
@@ -57,24 +53,6 @@ class ChannelFinderAgent:
 
             #print elem.sequence
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
-
-    def __parseElementName(self, name):
-        # for NSLS-2 convention of element name
-        a = re.match(r'.+(G\d{1,2})(C\d{1,2})(.)', name)
-        if a:
-            girder   = a.groups()[0]
-            cell     = a.groups()[1]
-            symmetry = a.groups()[2]
-        elif name == "CAVITY":
-            # fix a broken name
-            girder   = "CAVITY"
-            cell     = "CAVITY"
-            symmetry = "CAVITY"
-        else:
-            girder   = 'G0'
-            cell     = 'C00'
-            symmetry = '0'
-        return cell, girder, symmetry
 
     def importLatticeTable(self, lattable):
         """
@@ -126,7 +104,7 @@ class ChannelFinderAgent:
             if sp != 'NULL': self.__elempv[phy].append(sp)
 
             # parse cell/girder/symmetry from name
-            cell, girder, symmetry = self.__parseElementName(phy)
+            cell, girder, symmetry = parseElementName(phy)
 
             # count element numbers in each type
             if cnt.has_key(grp): cnt[grp] += 1
@@ -286,11 +264,12 @@ class ChannelFinderAgent:
         """
         call signature::
         
-          getElements(self, group, cell=[], girder=[], sequence=[])c
+          getElements(self, group, cell=[], girder=[], sequence=[])
 
         Get a list of elements
         """
         elem = []
+        #print group
         for pv in self.__d.keys():
             elemname = self.__d[pv]['elementname']
             elemtype = self.__d[pv]['elementtype']
@@ -320,68 +299,4 @@ class ChannelFinderAgent:
             print elem, self.__elemloc[self.__elemname.index(elem)]
 
 
-class Element:
-    def __init__(self):
-        self.name = ''
-        self.type = ''
-        self.s_beg = 0.0
-        self.s_end = 0.0
-        self.len = 0.0
-        self.cell = 0
-        self.girder = 0
-        self.sequence = [0, 0]
 
-        
-class Lattice:
-    def __init__(self):
-        self.__group = {}
-        self.element = []
-        self.twiss = []
-        self.mode = ''
-
-    def save(self, fname, dbmode = 'c'):
-        pass
-
-    def load(self, fname, mode = 'default'):
-        pass
-
-
-#
-# root of stored data
-root={
-    "nsls2" : "machine/nsls2"
-}
-
-ca = ChannelFinderAgent()
-__lat = Lattice()
-    
-# get the HLA root directory
-pt = os.path.dirname(os.path.abspath(__file__))
-
-def init(lat):
-    """Initialize HLA"""
-    ca.load("%s/../../%s/hla.pkl" % (pt, root[lat]))
-    __lat.load("%s/../../%s/hla.pkl" % (pt, root[lat]))
-
-#
-# initialize the configuration 
-init("nsls2")
-
-if __name__ == "__main__":
-    import os, sys
-    d = ChannelFinderAgent()
-
-    #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
-    hlaroot = '/home/lyyang/devel/nsls2-hla/'
-    d.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
-
-    # example
-    print d.getElements('P*G2C2*', cell=['C21'])
-    elem = d.getElements('P*')
-    print elem[1:3]
-    r = d.sortElements(elem)
-
-    d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
-    d.save(hlaroot + 'machine/nsls2/hla.pkl')
-    
-    
