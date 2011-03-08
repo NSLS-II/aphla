@@ -217,7 +217,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.__dx = None
         self.__dy = None
         self.plane = plane
-        self.data = data
+        self.__data = data
         self.__live = False
 
         self.__errorbar = True
@@ -227,24 +227,35 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
     # __init__()
 
+    def dx(self): return self.dx
+    def dy(self): return self.dy
+
     def update(self):
         #self.data.update()
         #if not self.live: return None
         #print "update curve" 
+        self.__x = self.__data.x()
+        self.__dx = self.__data.dx()
+        self.__y = self.__data.y()
+        self.__dy = self.__data.dy()
+
         if self.__errorbar and self.plane == 'H':
-            x = self.data.x()
-            dx = self.data.dx()
+            #x = self.__data.x()
+            #dx = self.__data.dx()
+            self.setData(self.__data.s(), self.__x, None, self.__dx)
         elif self.__errorbar and self.plane == 'V':
-            x = self.data.y()
-            dx = self.data.dy()
+            #x = self.__data.y()
+            #dx = self.__data.dy()
+            self.setData(self.__data.s(), self.__y, None, self.__dy)
         elif self.plane == 'H':
-            x = self.data.x()
-            dx = None
+            #x = self.__data.x()
+            #dx = None
+            self.setData(self.__data.s(), self.__x, None, None)
         elif self.plane == 'V':
-            x = self.data.y()
-            dx = None
-        
-        self.setData(self.data.s(), x, None, dx)
+            #x = self.__data.y()
+            #dx = None
+            self.setData(self.__data.s(), self.__y, None, None)
+
 
     def setData(self, x, y, dx = None, dy = None):
         """Set x versus y data with error bars in dx and dy.
@@ -422,11 +433,11 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         #print "Working on timer:", self.timerId,
         #print "Curve: ", on
         if on:
-            self.data.start()
+            self.__data.start()
             #self.timerId = self.startTimer(500)
             #print "Enable timer:", self.timerId
         else:
-            self.data.stop()
+            self.__data.stop()
             #self.killTimer(self.timerId)
             #print "Disabled timer:", self.timerId
             #self.timerId = -1
@@ -435,7 +446,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
     def singleShot(self):
         #print "Curve single shot"
-        self.data.update()
+        self.__data.update()
         self.update()
         
 # class OrbitPlotCurve
@@ -555,7 +566,6 @@ class OrbitPlot(Qwt.QwtPlot):
         self.curve1.singleShot()
         self.replot()
 
-        pass
 
     def liveData(self, on):
         self.__live = on
@@ -575,6 +585,11 @@ class OrbitPlot(Qwt.QwtPlot):
             
     def setErrorBar(self, on):
         self.curve1.setErrorBar(on)
+        #d = self.curve1.data()
+        #x = [d.x(i) for i in range(d.size())]
+        #y = [d.y(i) for i in range(d.size())]
+        #self.curve1.setData(x, y, self.curve1.dx(), self.curve1.dy())
+        self.replot()
 
     def scaleVertical(self, factor):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)

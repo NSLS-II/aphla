@@ -55,6 +55,3 @@ def perturbOrbit(hcm = 'SR:C30-MG:G04B<HCM:M1>Fld-SP',
     caput(hcm, .0002)
     caput(vcm, .0001)
 
-if __name__ == "__main__":
-    ret = getOrbit()
-    print ret

@@ -117,7 +117,7 @@ class Lattice:
         Data are deliminated by spaces.
         """
 
-        print "Importing file:", lattable
+        #print "Importing file:", lattable
 
         cnt = {'BPM':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
 
@@ -163,15 +163,16 @@ class Lattice:
         phiy   = caget('SR:C00-Glb:G00<PHI:00>RB-Y')
         nux = caget('SR:C00-Glb:G00<TUNE:00>RB-X')
         nuy = caget('SR:C00-Glb:G00<TUNE:00>RB-Y')
-        print len(s), s[0], s[-1]
-        print len(alphax), s[0], s[-1]
-        print len(alphay), s[0], s[-1]
-        print len(betax), s[0], s[-1]
-        print len(betay), s[0], s[-1]
-        print len(etax), s[0], s[-1]
-        print len(etay), s[0], s[-1]
-        print len(orbx), len(orby)
-        print len(phix), len(phiy)
+
+        #print len(s), s[0], s[-1]
+        #print len(alphax), s[0], s[-1]
+        #print len(alphay), s[0], s[-1]
+        #print len(betax), s[0], s[-1]
+        #print len(betay), s[0], s[-1]
+        #print len(etax), s[0], s[-1]
+        #print len(etay), s[0], s[-1]
+        #print len(orbx), len(orby)
+        #print len(phix), len(phiy)
         #return None
         
         for e in self.element:
@@ -190,19 +191,112 @@ class Lattice:
             self.twiss[-1].eta[-1,1]  = etay[i]
             self.twiss[-1].phi[-1,0]  = phix[i]
             self.twiss[-1].phi[-1,1]  = phiy[i]
-            
+
+    def init_virtac_group(self):
+        for elem in self.element:
+            self.addGroup(elem.cell)
+            self.addGroupMember(elem.cell, elem.name)
+            self.addGroup(elem.girder)
+            self.addGroupMember(elem.girder, elem.name)
+            self.addGroup(elem.symmetry)
+            self.addGroupMember(elem.symmetry, elem.name)
+
     def getElements(self, group, point = ''):
         ret, loc = [], []
         s = point.lower()
+        #print "... get elements ...", s
         for e in self.element:
-            if fnmatch(group, e.name) or fnmatch(group, e.family):
+            #print group, e.name, e.family,
+            if fnmatch(e.name, group) or fnmatch(e.family, group):
                 ret.append(e.name)
                 if s == 'begin': loc.append(e.s_beg)
                 elif s == 'end': loc.append(e.s_end)
                 elif s == 'middle': loc.append(e.s_mid)
-                else: loc.append(e.s_end())
+                else: loc.append(e.s_end)
         if point: return ret, loc
         else: return ret
+
+    def __illegalGroupName(self, group):
+        # found character not in [a-zA-Z0-9_]
+        if re.search(r'[^\w]+', group):
+            raise ValueError("Group name must be in [a-zA-Z0-9_]+")
+            #return False
+        else: return False
+
+    def addGroup(self, group):
+        """
+        call signature::
+        
+          addGroup(self, group)
+          
+        *group* is a combination of alphabetic and numeric characters and
+         underscores. i.e. [a-zA-Z0-9_]+
+        """
+        if self.__illegalGroupName(group): return
+        if not self.__group.has_key(group):
+            self.__group[group] = []
+
+    def removeGroup(self, group):
+        """
+        call signature::
+
+          removeGroup(self, group)
+
+        remove a group only when it is empty
+        """
+        if self.__illegalGroupName(group): return
+        if not self.__group.has_key(group):
+            raise ValueError("Group %s does not exist" % group)
+        if len(self.__group[group]) > 0:
+            raise ValueError("Group %s is not empty" % group)
+        # remove it!
+        self.__group.pop(group)
+
+    def addGroupMember(self, group, member):
+        if self.__group.has_key(group):
+            self.__group[group].append(member)
+        else:
+            raise ValueError("Group %s does not exist" % group)
+
+    def hasGroup(self, group):
+        return self.__group.has_key(group)
+
+    def removeGroupMember(self, group, member):
+        if not self.hasGroup(group):
+            raise ValueError("Group %s does not exist" % group)
+        if member in self.__group[group]:
+            self.__group[group].remove(member)
+        else:
+            raise ValueError("%s not in group %s" % (member, group))
+
+    def getGroups(self, element):
+        ret = []
+        for k, elems in self.__group.items():
+            for e in elems:
+                if fnmatch(e, element):
+                    ret.append(k)
+                    break
+        return ret
+
+    def getGroupMembers(self, groups, op):
+        ret = {}
+        for g in groups:
+            ret[g] = []
+            for k, elems in self.__group.items():
+                if fnmatch(k, g): ret[g].extend(elems)
+            #print g, ret[g]
+
+        r = set(ret[groups[0]])
+        if op.lower() == 'union':
+            for g, v in ret.items():
+                r = r.union(set(v))
+        elif op.lower() == 'intersection':
+            for g, v in ret.items():
+                r = r.intersection(set(v))
+        else:
+            raise ValueError("%s not defined" % op)
+
+        return list(r)
 
     def __repr__(self):
         s = ''

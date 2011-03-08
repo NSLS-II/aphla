@@ -22,7 +22,7 @@ from . import _lat, _cfa
 #
 #
 
-__all__ = ['getElements', 'getLocations']
+#__all__ = ['getElements', 'getLocations']
 
 def getElements(group):
     return _lat.getElements(group, '')
@@ -32,45 +32,38 @@ def getLocations(group, s='end'):
     Get the location of a group, either returned as a dictionary in which
     the key is element physics name, value is the location.
     """
-    elem, loc = _lat.getElements(group, s)
+
+    elem, loc = _lat.getElements(group, 'end')
     return loc
 
 def addGroup(group):
     """Add a new group"""
     #print conf.ca
-
-    raise NotImplementedError()
-    return None
+    _lat.addGroup(group)
 
 def removeGroup(group):
     """Remove a group if it is empty"""
-    raise NotImplementedError()
-    return None
+    _lat.removeGroup(group)
 
 def addGroupMember(group, member):
     """Add a new member to group"""
-    raise NotImplementedError()
-    return None
+    _lat.addGroupMember(group, member)
   
 def removeGroupMember(group, member):
     """Remove a member from group"""
-    raise NotImplementedError()
-    return None
+    _lat.removeGroupMember(group, member)
 
-def getGroups(element = ''):
+def getGroups(element = '*'):
     """Get all groups own this element, '' returns all"""
-    raise NotImplementedError()
-    return None
+    return _lat.getGroups(element)
 
-def getGroupMembers(group, op = None):
+def getGroupMembers(groups, op = 'intersection'):
     """Get all elements in a group. If group is a list, consider which op:
 
     - op = "union", consider elements in the union of the groups
-    - op = "intersect", consider elements in the intersect of the groups
+    - op = "intersection", consider elements in the intersect of the groups
     """
-    raise NotImplementedError()
-    
-    return None
+    return _lat.getGroupMembers(groups, op)
 
 def getNeighbors(group, n):
     """Get a list of n elements belongs to group. The list is sorted along
@@ -84,10 +77,9 @@ def getStepSize(element):
     raise NotImplementedError()
     return None
 
-def getElements(group):
-    #print _cfa
-    return _cfa.getElements(group)
-
+#
+#
+#
 def getPhase(group, plane = 'hv', mode = ''):
     """The commands
     :func:`~hla.latmode.getCurrentMode` is good !

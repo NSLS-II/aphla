@@ -8,11 +8,13 @@ from cothread.catools import caget
 
 class TestConf(unittest.TestCase):
     def setUp(self):
-        hla.clean_init()
+        #print "HLA clean init() "
+        #hla.clean_init()
         pass
 
     def test_pvExists(self):
         return True
+
         rec = {}
         n = 0
         for k, v in enumerate(hla.conf.ca.getChannels()):
@@ -33,13 +35,21 @@ class TestConf(unittest.TestCase):
     def test_elements(self):
         elem = hla.getElements('P*')
         s    = hla.getLocations('P*')
-        print "S=", s
-        print "Element=", elem
-        print len(s), len(elem)
-        for i in range(len(s)):
-            print s[i], elem[i]
+        #print len(s), len(elem)
+        #for i in range(len(s)):
+        #    print s[i], elem[i]
+    
+    def test_group(self):
+        hla.addGroup('BPM')
+        try:
+            hla.addGroup("h*")
+        except ValueError as e:
+            print __file__, e
+        print __file__, hla.getGroups('P*')
+        print __file__, hla.getGroupMembers(['BPM', 'C02'], op = 'intersection')
 
 if __name__ == "__main__":
+    hla.clean_init()
     unittest.main()
 
 

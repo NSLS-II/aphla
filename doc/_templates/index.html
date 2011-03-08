@@ -3,55 +3,21 @@
 
  
 {% block body %}
-  <h1>intro</h1>
+  <h1>Intro</h1>
 
-  <p>matplotlib is a python 2D plotting library which produces
-  publication quality figures in a variety of hardcopy formats and
-  interactive environments across platforms.  matplotlib can be used
-  in python scripts, the python and <a
-  href="http://ipython.scipy.org">ipython</a> shell (ala matlab or
-  mathematica), web application servers, and six graphical user
-  interface toolkits.</p>
+  <p>HLA is a python library for accelerator physics commissioning and
+ experiments. It is developed at NSLS-II, BNL. It is based on EPICS-3/-4
+ and other general services, e.g. channel finder service, model service
+ and pv service</p>
 
   <pre>
-  >>> from pylab import randn, hist
-  >>> x = randn(10000)
-  >>> hist(x, 100)</pre>
+  >>> import hla
+  >>> hla.init('nsls2')
+  >>> hla.getOrbit('BPM')
+  </pre>
 
-  <p>For the power user, you have full control of line styles, font
-  properties, axes properties, etc, via an object oriented interface
-  or via a set of functions familiar to Matlab&reg; users.
-  The pylab mode provides all of the <a href="api/pyplot_api.html">pyplot</a> plotting
-  functions listed below, as well as non-plotting functions from
-  <a href="http://scipy.org/Numpy_Example_List_With_Doc">numpy</a> and
-  <a href="api/mlab_api.html">matplotlib.mlab</a>.</p>
+  <p>For the power user, you have full control of each PV </p>
 
-  <h3>plotting commands</h3> <br/>
+  <h3>Control Commands</h3> <br/>
 
-  <table border="1" cellpadding="3" cellspacing="2">
-
-  <tr><th>Function</th><th>Description</th></tr>
-    <tr>
-      <th align="left">
-        <a href="api/pyplot_api.html#matplotlib.pyplot.acorr">acorr</a>
-
-      </th>
-
-      <td align="left">
-        plot the autocorrelation function
-      </td>
-
-    </tr>
-    <tr>
-      <th align="left">
-        <a href="api/pyplot_api.html#matplotlib.pyplot.annotate">annotate</a>
-
-      </th>
-
-      <td align="left">
-        annotate something in the figure
-      </td>
-
-    </tr>
-  </table>
 {% endblock %}

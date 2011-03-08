@@ -73,6 +73,7 @@ def clean_init():
     lat = lattice.Lattice()
     lat.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
     lat.init_virtac_twiss()
+    lat.init_virtac_group()
     lat.save(hlaroot + 'machine/nsls2/hla.pkl')
     #print lat
     

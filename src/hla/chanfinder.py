@@ -78,7 +78,7 @@ class ChannelFinderAgent:
         Data are deliminated by spaces.
         """
 
-        print "Importing file:", lattable
+        #print "Importing file:", lattable
 
         cnt = {'BPM':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
 
@@ -123,12 +123,14 @@ class ChannelFinderAgent:
                                  'girder': girder, 'symmetry': symmetry,
                                  'elemindex': idx, 's_end': s2}, None)
             self.__elemidx[phy] = idx
-        print "Summary:"
-        for k,v in cnt.items():
-            print " %8s %5d" % (k, v)
-        print "--"
-        print " %8s %5d" % ("Elements", len(self.__elemidx.keys()))
-        print " %8s %5d" % ("PVs",len(self.__d.keys()))
+
+        if False:
+            print "Summary:"
+            for k,v in cnt.items():
+                print " %8s %5d" % (k, v)
+            print "--"
+            print " %8s %5d" % ("Elements", len(self.__elemidx.keys()))
+            print " %8s %5d" % ("PVs",len(self.__d.keys()))
         #return d
 
     def save(self, fname, dbmode = 'c'):
