@@ -3,8 +3,10 @@
 import hla
 import unittest
 import sys
+import numpy as np
 
 from cothread.catools import caget
+import matplotlib.pylab as plt
 
 class TestConf(unittest.TestCase):
     def setUp(self):
@@ -36,38 +38,77 @@ class TestConf(unittest.TestCase):
     def test_elements(self):
         elem = hla.getElements('P*')
         s    = hla.getLocations('P*')
+        self.assertEqual(len(elem), 180)
+        self.assertEqual(len(s), 180)
+
         s = hla.getLocations(['PH2G6C29B', 'CFYH2G1C30A', 'C'])
-        #print s
-        #print len(s), len(elem)
-        #for i in range(len(s)):
-        #    print s[i], elem[i]
-    
+        self.assertEqual(len(s), 3)
+        self.assertEqual(s[-1], None)
+
     def test_group(self):
         """
         >>> hla.getGroups('P*C01*')
         ['A', 'BPM', 'C01', 'G6', 'G4', 'G2', 'B']
         """
         hla.addGroup('BPM')
-        try:
-            hla.addGroup("h*")
-        except ValueError as e:
-            print __file__, e
-        print __file__, hla.getGroups('P*C01*')
-        print __file__, hla.getGroupMembers(['BPM', 'C02'], op = 'intersection')
+        self.assertRaises(ValueError, hla.addGroup, "h*")
+        grp = hla.getGroups('P*C01*')
+        for g in ['A', 'BPM', 'G6', 'G4', 'G2', 'BPMY', 'C01', 'BPMX', 'B']:
+            self.assertTrue(g in grp)
 
-    def test_neighbors(self):
-        print __file__, "neighbors", hla.getNeighbors('CFYH2G1C30A', 'BPM')
+        g1 = hla.getGroupMembers(['BPM', 'C02'], op = 'intersection')
+        g2 = hla.getElements('P*C02*')
+        for g in g1:
+            self.assertTrue(g in g2)
+        for g in g2:
+            self.assertTrue(g in g1)
+
+    def test_neighbors1(self):
+        # find BPMs near CFYH2G1C30A
+        vcm = 'CFYH2G1C30A'
+        n = 3
+        nb = hla.getNeighbors(vcm, 'BPM', n)
+        s0 = hla.getLocations(vcm)
+        self.assertEqual(len(s0), 1)
+        self.assertEqual(len(nb), 2*n)
         
+        isep = 2*n
+        if nb[-1][1] < nb[0][1]:
+            # its a ring.
+            for i in range(2*n-1, 0, -1):
+                if nb[i][1] > nb[i-1][1]: continue
+                isep = i
+                break
+        
+        for i, v in enumerate(nb[:isep-1]):
+            self.assertTrue(nb[i][1] < nb[i+1][1])
+        for i, v in enumerate(nb[isep:]):
+            self.assertTrue(nb[i][1] > nb[i-1][1])
+
+
     def test_twiss(self):
-        print hla.getPhase('P*C01*')
-        print hla.getBeta('P*C02*')
-        print hla.getDispersion('P*C03*')
-        print hla.getTunes()
+        self.assertEqual(len(hla.getTunes()), 2)
 
+        phi = hla.getPhase('P*C01*')
+        beta = hla.getBeta('*')
+        s = hla.getLocations('*')
+        eta = hla.getDispersion('P*')
+        s2 = hla.getLocations('P*')
+        
+        plt.clf()
+        plt.subplot(211)
+        plt.plot(s, beta)
+        plt.subplot(212)
+        plt.plot(s2, eta)
+        plt.savefig("test-twiss.png")
+        
     def test_pvget(self):
-        print __file__, hla.eget('P*C01*')
+        #print __file__, hla.eget('P*C01*')
+        self.assertEqual(len(hla.eget('P*C0*A')), 27)
 
+ 
     def test_pvset(self):
+        return True
         elem = hla.getElements('C[XY]*C01*A')
         print __file__, elem
         print __file__, hla.eget(elem)
@@ -77,6 +118,25 @@ class TestConf(unittest.TestCase):
         print __file__, hla.eget(elem)
 
         pass
+
+    def test_orbit(self):
+        elem = hla.getElements('P*C02*')
+        s1 = hla.getLocations(elem)
+        x1, y1 = hla.getOrbit(elem)
+
+        s = hla.getLocations('BPMX')
+        x,y = hla.getOrbit('*')
+        
+        r = np.array(hla.getFullOrbit())
+
+        plt.clf()
+        plt.plot(s, x, 'rx-')
+        plt.plot(s, y, 'gx-')
+        plt.plot(s1, x1, 'ro')
+        plt.plot(s1, y1, 'gx')
+        plt.plot(r[:,0], r[:,1], 'k--')
+        plt.xlim([0, r[-1,0]/15.0])
+        plt.savefig('test.png')
 
 if __name__ == "__main__":
     hla.clean_init()

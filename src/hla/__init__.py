@@ -53,9 +53,6 @@ pt = os.path.dirname(os.path.abspath(__file__))
 #
 
 from latmanage import *
-from meastwiss import *
-from measorm import *
-from orbit import *
 from current import *
 
 def test():
@@ -76,6 +73,7 @@ def clean_init():
     hlaroot = '/home/lyyang/devel/nsls2-hla/'
     d.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
     d.import_virtac_pvs()
+    d.fix_bpm_xy()
     #print d.getElements("P*")
 
     #d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
@@ -101,13 +99,17 @@ def check():
     _cfa.checkMissingChannels('/home/lyyang/devel/nsls2-hla/machine/nsls2/pvlist_2011_03_03.txt')
 
 
-def eget(element):
+def eget(element, full = False, tags = [], unique = False):
     """easier get"""
+    # some tags + the "default"
+    chtags = ['default']
+    if tags: chtags.extend(tags)
+    #print __file__, tags, chtags
     if isinstance(element, str):
         ret = {}
         elemlst = getElements(element)
         pvl = _cfa.getElementChannel(elemlst, {'handle': 'get'}, 
-                                     ['default'], unique = False)
+                                     chtags, unique = unique)
         for i, pvs in enumerate(pvl):
             if len(pvs) == 1:
                 ret[elemlst[i]] = caget(pvs[0])
@@ -117,16 +119,19 @@ def eget(element):
                     ret[elemlst[i]].append(caget(pv))
             else: ret[elemlst[i]] = None
             #print __file__, elemlst[i], pvs, _cfa.getElementChannel([elemlst[i]], unique = False)
-        return ret
+        if full:
+            return ret, pvl
+        else: return ret
     elif isinstance(element, list):
         ret = []
-        pvl = _cfa.getElementChannel(element, {'handle': 'get'}, ['default'], unique = False)
+        pvl = _cfa.getElementChannel(element, {'handle': 'get'}, chtags, unique = False)
         for i, pv in enumerate(pvl):
             if len(pv) == 1:
                 ret.append(caget(pv[0]))
             elif len(pv) > 1:
                 ret.append(caget(pv))
-        return ret
+        if full: return ret, pvl
+        else: return ret
     else:
         raise ValueError("element can only be a list or group name")
 
@@ -145,3 +150,6 @@ def eset(element, value):
         
 #print caget(['SR:C01-MG:G02A<VCM:L1>Fld-RB', 'SR:C01-MG:G02A<HCM:L2>Fld-RB'])
 
+#from meastwiss import *
+#from measorm import *
+from orbit import *

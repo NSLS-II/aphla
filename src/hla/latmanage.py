@@ -26,6 +26,10 @@ def getLocations(group, s='end'):
         return loc
     else:
         raise ValueError("parameter *group* must be a list of string")
+def getRbChannels(elemlist):
+    """get the pv names for a list of elements"""
+    
+    return _cfa.getElementChannel(elemlist, {'handle': 'get'}, tags = ['default'], unique=False)
 
 def addGroup(group):
     """

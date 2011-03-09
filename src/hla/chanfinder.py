@@ -167,6 +167,20 @@ class ChannelFinderAgent:
         self.addChannel('SR:C00-Glb:G00<POS:00>RB-S', \
                             {'handle': 'get', 'elementname': 'Glb:POS'}, \
                             ['default'])
+    def fix_bpm_xy(self):
+        for k,v in self.__d.items():
+            if k[-7:] == 'Freq-RB': pass
+            elif k[-7:] == 'Volt-RB': pass
+            elif k[-7:] == 'Freq-SP': pass
+            elif k[-7:] == 'Volt-SP': pass
+            elif k[-6:] == 'Fld-SP': pass
+            elif k[-6:] == 'Fld-RB': pass
+            elif k[-6:] == 'CUR-RB': pass
+            elif k[-2:] == '-X': self.__d[k]['~tags'].append('H')
+            elif k[-2:] == '-Y': self.__d[k]['~tags'].append('V')
+            elif k[-2:] == '-S': self.__d[k]['~tags'].append('S')
+            else:
+                raise ValueError("not recognized: %s" % k)
 
     def save(self, fname, dbmode = 'c'):
         """
@@ -326,7 +340,7 @@ class ChannelFinderAgent:
         for i, line in enumerate(open(pvlist, 'r').readlines()):
             if self.__d.has_key(line.strip() ): continue
             print "Line: %d %s" % (i, line.strip())
-        print "-- DONE --"
+        #print "-- DONE --"
 
     def __cmp_elem_loc(self, a, b):
         return self.__elemname.index(a) - self.__elemname.index(b)

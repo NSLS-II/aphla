@@ -68,7 +68,9 @@ class Lattice:
     """Lattice"""
     def __init__(self):
         self.__group = {}
+        # guaranteed in the order of s.
         self.element = []
+        # same order of element
         self.twiss = []
         self.mode = ''
         self.tune = [ 0.0, 0.0]
@@ -134,7 +136,9 @@ class Lattice:
 
         #print "Importing file:", lattable
 
-        cnt = {'BPM':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+        cnt = {'BPM':0, 'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+
+        for k in cnt.keys(): self.__group[k] = []
 
         f = open(lattable, 'r').readlines()
         for s in f[1:]:
@@ -158,9 +162,26 @@ class Lattice:
 
             if self.__group.has_key(grp): self.__group[grp].append(phy)
             else: self.__group[grp] = [phy]
+            
+            # in lat_conf_table, used only BPM as groupname, not BPMX/BPMY
+            if grp == 'BPM':
+                if rb[-2:] == '-X':
+                    self.__group['BPMX'].append(phy)
+                    cnt['BPMX'] += 1
+                elif rb[-2:] == '-Y': 
+                    self.__group['BPMY'].append(phy)
+                    cnt['BPMY'] += 1
+                else:
+                    raise ValueError("pv %s pattern not recognized" % rb)
+
+
         # adjust s_beg
         for e in self.element:
             e.s_beg = e.s_end - e.len_eff
+
+        if False:
+            for k,v in self.__group.items():
+                print k, len(v)
 
     def init_virtac_twiss(self):
         """Only works from virtac.nsls2.bnl.gov"""
@@ -231,6 +252,21 @@ class Lattice:
             self.addGroup(elem.symmetry)
             self.addGroupMember(elem.symmetry, elem.name)
 
+    def sortElements(self, elemlist):
+        ret = []
+        for e in self.element:
+            if e.name in ret: continue
+            if e.name in elemlist:
+                ret.append(e.name)
+
+        #
+        if len(ret) < len(elemlist):
+            raise ValueError("Some elements are missing in the results")
+        elif len(ret) > len(elemlist):
+            raise ValueError("something wrong on sorting element list")
+ 
+        return ret[:]
+
     def getLocations(self, elems, point):
         """
         if elems is a string, do exact match. return single number.  if
@@ -260,13 +296,17 @@ class Lattice:
         elements. For a nonempty string, it returns s at the 'end'.
 
         if *point* == "", location is not returned. 
+
+        no duplicate element name outputed.
         """
         ret, loc = [], []
         s = point.lower()
         #print "... get elements ...", s
         for e in self.element:
             #print group, e.name, e.family,
-            if fnmatch(e.name, group) or fnmatch(e.family, group):
+            if e.name in ret: continue
+            if fnmatch(e.name, group) or fnmatch(e.family, group) or\
+                    (self.__group.has_key(group) and e.name in self.__group[group]):
                 ret.append(e.name)
                 if s == 'begin': loc.append(e.s_beg)
                 elif s == 'end': loc.append(e.s_end)
@@ -367,7 +407,9 @@ class Lattice:
         return ret
 
     def getGroupMembers(self, groups, op):
+        if groups == None: return None
         ret = {}
+        #print __file__, groups
         for g in groups:
             ret[g] = []
             for k, elems in self.__group.items():
@@ -380,11 +422,12 @@ class Lattice:
                 r = r.union(set(v))
         elif op.lower() == 'intersection':
             for g, v in ret.items():
+                #print __file__, g, len(v), len(r)
                 r = r.intersection(set(v))
         else:
             raise ValueError("%s not defined" % op)
-
-        return list(r)
+        
+        return self.sortElements(r)
 
     def getNeighbors(self, element, group, n):
         """Assuming self.element is in s order"""

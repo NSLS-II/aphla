@@ -17,10 +17,7 @@
 
 import numpy as np
 from cothread.catools import caget, caput, camonitor
-
-bpmhpv = []
-bpmvpv = []
-bpms = []
+from . import _lat, eget
 
 def getFullOrbit(group = '*', sequence = None):
     """Return orbit"""
@@ -32,19 +29,22 @@ def getFullOrbit(group = '*', sequence = None):
         ret.append([s[i], x[i], y[i]])
     return ret
 
-def getOrbit(group = '*', sequence = None):
+def getOrbit(group = '*'):
     """Return orbit"""
-    elem = conf.ca.findGroup("BPM")
-    hpv = conf.ca.getChannels(elem, mode="xAvg")
-    vpv = conf.ca.getChannels(elem, mode="yAvg")
-    s = conf.ca.getPositions(elem)
-    ret = []
-    print "Reading PV data"
-    for i in range(len(s)):
-        x = caget(hpv[i])
-        y = caget(vpv[i])
-        ret.append([s[i], x, y])
-    return ret
+    if isinstance(group, str):
+        #print __file__, "group = ", group
+        elemx = _lat.getGroupMembers([group, 'BPMX'], op = 'intersection')
+        elemy = _lat.getGroupMembers([group, 'BPMY'], op = 'intersection')
+    elif isinstance(group, list):
+        elemx = group[:]
+        elemy = group[:]
+    orbx, pvx = eget(elemx, full=True, tags=['H'], unique=True)
+    orby, pvy = eget(elemy, full=True, tags=['V'], unique=True)
+    #print __file__, len(elemx), len(elemy), len(orbx), len(orby)
+    #print __file__, orbx[0], elemx[0], pvx[0], caget(pvx[0][0])
+    #print __file__, orbx, orby
+    return orbx, orby
+
 
 def getOrbitRm():
     raise NotImplementedError()
