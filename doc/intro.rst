@@ -650,8 +650,6 @@ A set of commonly used words are explained in the following:
     - **[a-e]**, exactly one character in the given range
     - **[!abcde]**, any character that is not listed
     - **[!a-e]**, any character that is not in the given range
-    - **{debian,linux}**, exactly one entire word in the options
-      given
 
 - **Sequence** We can also use sequence to identify one element, usually
   BPM or corrector. For the convenience purpose when looping over BPM or
@@ -735,6 +733,23 @@ different models. These model provide the access to the following data:
 - Linear lattice parameter, i.e. the twiss parameters from simulators
 - Potential values: orbit response matrix, tune and chromaticity
   correction matrix. (or a link/tag to the binary file which stores them)
+
+Examples
+=========
+
+Example 1
+
+.. doctest::
+
+   >>> import hla
+   >>> hla.clean_init()
+   >>> bpm = hla.getElements('BPM', cell='C20')
+   >>> print bpm
+   ['PH1G2C20A', 'PH2G2C20A', 'PM1G4C20A', 'PM1G4C20B', 'PL2G6C20B', 'PL1G6C20B']
+   >>> hla.getLocations(bpm, 'end')
+   [532.90700000000004, 535.43200000000002, 541.11699999999996, 543.34900000000005, 548.21900000000005, 550.78300000000002]
+   >>> hla.getGroups('P*C01*A')
+   ['A', 'BPM', 'C01', 'G4', 'G2']
 
 
 

@@ -18,7 +18,8 @@ into a list.
 
 from xml.dom import minidom
 import sys, copy
-
+from cothread.catools import caget, caput
+import re
 
 class CAElement:
     """CA element stores structure of an element, which has channels,
@@ -34,7 +35,8 @@ class CAElement:
         self.sequence = []
         self.group = []
 
-    def addCa(channel, handle, sequence = []):
+
+    def addCa(self, channel, handle, sequence = []):
         """Add one PV channel, with specific handle(readback or
         setpoint). Extend its sequence to a larger one.
         """
@@ -42,6 +44,31 @@ class CAElement:
         self.handle.append(handle)
         #self.sequence = [ s for s in sequence]
         self.sequence.extend(sequence)
+    
+    def parseElementName(self, cell = True, girder = True, symmetry = True):
+        # for NSLS-2 convention of element name
+        a = re.match(r'.+(G\d{1,2})(C\d{1,2})(.)', self.name)
+        if a:
+            if girder: self.girder = a.groups()[0]
+            if cell: self.cell = a.groups()[1]
+            if symmetry: self.symmetry = a.groups()[2]
+        #else:
+        #    #print self.name
+
+        # fix a broken name
+        if self.name == "CAVITY":
+            self.girder = "CAVITY"
+            self.cell = "CAVITY"
+            self.symmetry = "CAVITY"
+
+    def __repr__(self):
+        s = ""
+        s = s + self.name + ": " + self.type + \
+            " s=%e l=%e" % (self.pos, self.length)
+        s = s + " "
+        s = s + '\n'
+        return s
+
 
 class CADict:
     """CA Dict manages a list of elements. The elements are CAElement
@@ -93,8 +120,9 @@ class CADict:
                     elem.type   = subnode.getAttribute("type")
                     elem.pos    = float(subnode.getAttribute("pos"))
                     elem.length = float(subnode.getAttribute("len"))
+                    elem.parseElementName()
                 elif subnode.tagName == "channel":
-                    elem.ca     = [subnode.getAttribute("signal")]
+                    elem.ca     = [subnode.getAttribute("signal").encode('ascii')]
                     elem.handle = [subnode.getAttribute("handle")]
                     if not self.elementExists(elem.name):
                         self.elements.append(CAElement())
@@ -106,6 +134,7 @@ class CADict:
                         self.elements[-1].ca       = [elem.ca[0]]
                         self.elements[-1].handle   = [elem.handle[0]]
                         self.elements[-1].sequence = elem.sequence[:]
+                        self.elements[-1].parseElementName()
                     else:
                         elp = self.findElement(elem.name)
                         elp.ca.append(elem.ca[0])
@@ -128,6 +157,14 @@ class CADict:
                 for i,h in enumerate(e.handle):
                     if h == mode:
                         pv.append(e.ca[i])
+        return pv
+
+    def getPositions(self, elems):
+        """Return PVs for a list of elements"""
+        pv = []
+        for e in self.elements:
+            if e.name in elems:
+                pv.append(e.pos)
         return pv
 
     def getGroups(self, cat='short'):
@@ -154,7 +191,23 @@ class CADict:
             s = s +'\n'
         return s
 
-#
+    def testAll(self):
+        for elem in self.elements:
+            print elem.name, elem.length, elem.pos
+            print "  group   : ",
+            for g in elem.group:
+                print g,
+            print ""
+            print "  sequence: ",
+            for sq in elem.sequence:
+                print sq,
+            print ""
+            for i,hd in enumerate(elem.handle):
+                print hd,
+                if elem.ca[i]:
+                    print elem.ca[i], caget(elem.ca[i]),
+                print ""
+            print "-"
 #
 #if __name__ == "__main__":
 #    ca = CADict("/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml")

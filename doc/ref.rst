@@ -1,23 +1,31 @@
 References
 ===========
 
+.. toctree::
+   :maxdepth: 2
+
 .. automodule:: hla
-
-.. automodule:: hla.latgeom
    :members:
 
-.. automodule:: hla.latgroup
+
+Modules
+---------
+
+
+.. automodule:: hla.lattice
    :members:
 
-.. automodule:: hla.lattwiss
+.. automodule:: hla.chanfinder
    :members:
 
-.. automodule:: hla.latmode
+.. automodule:: hla.latmanage
    :members:
 
-.. automodule:: hla.cadict
-   :members:
+.. sourcecode:: ipython
 
-.. automodule:: hla.conf
-   :members:
+    In [69]: lines = plot([1,2,3])
+
+.. math::
+
+  G(s,s_0)=\dfrac{\sqrt{\beta(s)\beta(s_0)}}{2\sin\pi\nu}\cos(\pi\nu-\left|\psi(s)-\psi(s_0)\right|)
 

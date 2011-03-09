@@ -8,8 +8,8 @@
 
 """
 
-import conf
-import cadict
+#from . import conf
+#from . import cadict 
 
 import os
 from os.path import join
@@ -28,10 +28,11 @@ def measBeta(elem, # element or list
     print caget(pv[0].encode('ascii', 'ignore'))
 # testing ...
 
+
 if __name__ == "__main__":
     pt = os.path.dirname(os.path.abspath(__file__))
     xmlconf = "%s/../../%s/main.xml" % (pt, conf.root['nsls2'])
-    print "Using conf file:", xmlconf
+    print "Using conf file:", xmlconf, "in meastwiss.py"
     ca = cadict.CADict(xmlconf)
     #print ca
     quad = ca.findGroup("QUAD")

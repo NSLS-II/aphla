@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% set title = 'HLA: high level applications' %}
+
+ 
+{% block body %}
+  <h1>Intro</h1>
+
+  <p>HLA is a python library for accelerator physics commissioning and
+ experiments. It is developed at NSLS-II, BNL. It is based on EPICS-3/-4
+ and other general services, e.g. channel finder service, model service
+ and pv service</p>
+
+  <pre>
+  >>> import hla
+  >>> hla.init('nsls2')
+  >>> hla.getOrbit('BPM')
+  </pre>
+
+  <p>For the power user, you have full control of each PV </p>
+
+  <h3>Control Commands</h3> <br/>
+
+{% endblock %}

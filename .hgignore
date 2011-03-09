@@ -21,10 +21,16 @@ doc/hlaversion.texi
 doc/_build
 seasail.egg-info
 *~
+*.o
+*.a
+src/tracy/tracy-3.5/Makefile
+src/tracy/tracy-3.5/tracy/src/Makefile
+src/tracy/tracy-3.5/TPSA/Makefile
+src/tracy/tracy-3.5/autom4te.cache
+*.deps
+src/qrc_resources.py
 
 syntax:regexp
 ^build/
 ^src/num_rec/src/.deps
 ^src/num_rec/autom4te.cache
-^src/.*.o
-^src/.*.a
