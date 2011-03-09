@@ -115,13 +115,13 @@ class ChannelFinderAgent:
                                 {'handle': 'get', 'elementname': phy,
                                  'elementtype': grp, 'cell': cell, 
                                  'girder': girder, 'symmetry': symmetry,
-                                 'elemindex': idx, 's_end': s2}, None)
+                                 'elemindex': idx, 's_end': s2}, ['default'])
             if sp != 'NULL':
                 self.addChannel(sp,
-                                {'handle': 'get', 'elementname': phy,
+                                {'handle': 'set', 'elementname': phy,
                                  'elementtype': grp, 'cell': cell,
                                  'girder': girder, 'symmetry': symmetry,
-                                 'elemindex': idx, 's_end': s2}, None)
+                                 'elemindex': idx, 's_end': s2}, ['default'])
             self.__elemidx[phy] = idx
 
         if False:
@@ -132,6 +132,41 @@ class ChannelFinderAgent:
             print " %8s %5d" % ("Elements", len(self.__elemidx.keys()))
             print " %8s %5d" % ("PVs",len(self.__d.keys()))
         #return d
+
+    def import_virtac_pvs(self):
+        self.addChannel('SR:C00-Glb:G00<ALPHA:00>RB-X', \
+                            {'handle': 'get', 'elementname': 'Glb:ALPHA-X'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<ALPHA:00>RB-Y', \
+                            {'handle': 'get', 'elementname': 'Glb:ALPHA-Y'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<BETA:00>RB-X', \
+                            {'handle': 'get', 'elementname': 'Glb:BETA-X'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<BETA:00>RB-Y', \
+                            {'handle': 'get', 'elementname': 'Glb:BETA-Y'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<ETA:00>RB-X', \
+                             {'handle': 'get', 'elementname': 'Glb:ETA-X'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<ETA:00>RB-Y', \
+                             {'handle': 'get', 'elementname': 'Glb:ETA-Y'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<ORBIT:00>RB-X', \
+                             {'handle': 'get', 'elementname': 'Glb:ORBIT-X'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<ORBIT:00>RB-Y', \
+                             {'handle': 'get', 'elementname': 'Glb:ORBIT-Y'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<PHI:00>RB-X', \
+                             {'handle': 'get', 'elementname': 'Glb:PHI-X'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<PHI:00>RB-Y', \
+                             {'handle': 'get', 'elementname': 'Glb:PHI-Y'}, \
+                            ['default'])
+        self.addChannel('SR:C00-Glb:G00<POS:00>RB-S', \
+                            {'handle': 'get', 'elementname': 'Glb:POS'}, \
+                            ['default'])
 
     def save(self, fname, dbmode = 'c'):
         """
@@ -177,7 +212,7 @@ class ChannelFinderAgent:
 
     def __matchProperties(self, pv, prop = {}):
         if not prop: return True
-        for  k, v in prop.keys():
+        for  k, v in prop.items():
             if not self.__d[pv].has_key(k) or \
                     self.__d[pv][k] != v:
                 return False
@@ -214,7 +249,32 @@ class ChannelFinderAgent:
             s = s + '\n'
         return s
 
-    def getElementChannel(self, element, prop = {}, tags = []):
+    def getElementChannel(self, elemlist, prop = {}, tags = [], unique=True):
+        """
+        each element in *elemlst* may have several PVs fits *prop* and *tags*.
+
+        return 2D list
+        """
+        if isinstance(elemlist, str):
+            elemlst = [elemlist]
+            #raise ValueError("expecting a list of element")
+        elif isinstance(elemlist, list):
+            elemlst = elemlist[:]
+        else:
+            raise ValueError("expecting a list of elements or single element")
+
+        ret = []
+        for elem in elemlst:
+            pvl = self.__getElementChannels(elem, prop, tags)
+            if unique and len(pvl) > 1:
+                raise ValueError("Channel of %s is not unique: %s" % (elem, ', '.join(pvl)))
+            elif unique:
+                ret.extend(pvl)
+            else:
+                ret.append(pvl)
+        return ret[:]
+                    
+    def getGroupChannel(self, element, prop = {}, tags = []):
         if not self.__elempv.has_key(element):
             return None
         if len(self.__elempv[element]) == 0: return None
@@ -238,8 +298,9 @@ class ChannelFinderAgent:
                     msg = '%s is not in tags' % tag
                     break
             if agreed: ret.append(pv)
-        #if len(ret) == 0: print msg
-        return ret
+        if len(ret) == 0: return None
+        elif len(ret) == 1: return ret[0]
+        else: return ret
     
     def getChannels(self, prop = {}, tags = []):
         ret = []
@@ -253,7 +314,7 @@ class ChannelFinderAgent:
         """*elem* is the exact name of an element.
 
         Returns a list of matched PVs."""
-        if not self.__elempv._has_key(elem): return []
+        if not self.__elempv.has_key(elem): return []
         ret = []
         for pv in self.__elempv[elem]:
             if self.__matchProperties(pv, prop) and \
@@ -261,31 +322,6 @@ class ChannelFinderAgent:
                 ret.append(pv)
         return ret
 
-    def getElements(self, group, cell = [], girder = [],
-                    sequence = []):
-        """
-        call signature::
-        
-          getElements(self, group, cell=[], girder=[], sequence=[])
-
-        Get a list of elements
-        """
-        elem = []
-        #print group
-        for pv in self.__d.keys():
-            elemname = self.__d[pv]['elementname']
-            elemtype = self.__d[pv]['elementtype']
-            if group and not fnmatch(elemname, group) \
-                    and not fnmatch(elemtype, group):
-                continue
-            if cell and not self.__d[pv]['cell'] in cell: continue
-            if girder and not self.__d[pv]['girder'] in girder: continue
-            elem.append(elemname)
-
-        # may have duplicate element
-        return [v for v in set(elem)]
-
-    
     def checkMissingChannels(self, pvlist):
         for i, line in enumerate(open(pvlist, 'r').readlines()):
             if self.__d.has_key(line.strip() ): continue

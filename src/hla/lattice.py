@@ -1,5 +1,9 @@
 #!/usr/env/python
 
+"""
+defines lattice related classes and functions.
+"""
+
 import re
 from math import log10
 import shelve
@@ -10,6 +14,10 @@ from fnmatch import fnmatch
 from cothread.catools import caget, caput
 
 def parseElementName(name):
+    """
+    searching G*C*A type of string. e.g. "CFXH1G1C30A" will be parsed as
+    girder="G1", cell="C30", symmetry="A"
+    """
     # for NSLS-2 convention of element name
     a = re.match(r'.+(G\d{1,2})(C\d{1,2})(.)', name)
     if a:
@@ -29,6 +37,7 @@ def parseElementName(name):
 
 
 class Element:
+    """Element"""
     def __init__(self, name = '', family = '', s_beg = 0.0, s_end = 0.0,
                  effective_length = 0, cell = 0, girder = 0, symmetry = '',
                  sequence = [0, 0]):
@@ -45,6 +54,7 @@ class Element:
         self.sequence = sequence[:]
 
 class Twiss:
+    """twiss"""
     def __init__(self):
         self.s     = np.zeros(3, 'd')
         self.alpha = np.zeros((3, 2), 'd')
@@ -55,6 +65,7 @@ class Twiss:
         self.elemname = ''
         
 class Lattice:
+    """Lattice"""
     def __init__(self):
         self.__group = {}
         self.element = []
@@ -76,6 +87,8 @@ class Lattice:
         f['lat.element'] = self.element
         f['lat.twiss']   = self.twiss
         f['lat.mode']    = self.mode
+        f['lat.tune']    = self.tune
+        f['lat.chromaticity'] = self.chromaticity
         f.close()
 
     def load(self, fname, mode = 'default'):
@@ -91,6 +104,8 @@ class Lattice:
         self.element  = f['lat.element']
         self.twiss    = f['lat.twiss']
         self.mode     = f['lat.mode']
+        self.tune     = f['lat.tune']
+        self.chromaticity = f['lat.chromaticity']
         f.close()
 
     def importLatticeTable(self, lattable):
@@ -150,31 +165,29 @@ class Lattice:
     def init_virtac_twiss(self):
         """Only works from virtac.nsls2.bnl.gov"""
         # s location
-        s = caget('SR:C00-Glb:G00<POS:00>RB-S')
-        alphax = caget('SR:C00-Glb:G00<ALPHA:00>RB-X')
-        alphay = caget('SR:C00-Glb:G00<ALPHA:00>RB-Y')
-        betax  = caget('SR:C00-Glb:G00<BETA:00>RB-X')
-        betay  = caget('SR:C00-Glb:G00<BETA:00>RB-Y')
-        etax   = caget('SR:C00-Glb:G00<ETA:00>RB-X')
-        etay   = caget('SR:C00-Glb:G00<ETA:00>RB-Y')
-        orbx   = caget('SR:C00-Glb:G00<ORBIT:00>RB-X')
-        orby   = caget('SR:C00-Glb:G00<ORBIT:00>RB-Y')
-        phix   = caget('SR:C00-Glb:G00<PHI:00>RB-X')
-        phiy   = caget('SR:C00-Glb:G00<PHI:00>RB-Y')
+        s      = [v for v in caget('SR:C00-Glb:G00<POS:00>RB-S')]
+        # twiss at s_end (from Tracy)
+        alphax = [v for v in caget('SR:C00-Glb:G00<ALPHA:00>RB-X')]
+        alphay = [v for v in caget('SR:C00-Glb:G00<ALPHA:00>RB-Y')]
+        betax  = [v for v in caget('SR:C00-Glb:G00<BETA:00>RB-X')]
+        betay  = [v for v in caget('SR:C00-Glb:G00<BETA:00>RB-Y')]
+        etax   = [v for v in caget('SR:C00-Glb:G00<ETA:00>RB-X')]
+        etay   = [v for v in caget('SR:C00-Glb:G00<ETA:00>RB-Y')]
+        orbx   = [v for v in caget('SR:C00-Glb:G00<ORBIT:00>RB-X')]
+        orby   = [v for v in caget('SR:C00-Glb:G00<ORBIT:00>RB-Y')]
+        phix   = [v for v in caget('SR:C00-Glb:G00<PHI:00>RB-X')]
+        phiy   = [v for v in caget('SR:C00-Glb:G00<PHI:00>RB-Y')]
         nux = caget('SR:C00-Glb:G00<TUNE:00>RB-X')
         nuy = caget('SR:C00-Glb:G00<TUNE:00>RB-Y')
 
-        #print len(s), s[0], s[-1]
-        #print len(alphax), s[0], s[-1]
-        #print len(alphay), s[0], s[-1]
-        #print len(betax), s[0], s[-1]
-        #print len(betay), s[0], s[-1]
-        #print len(etax), s[0], s[-1]
-        #print len(etay), s[0], s[-1]
-        #print len(orbx), len(orby)
-        #print len(phix), len(phiy)
-        #return None
-        
+        self.tune[0], self.tune[1] = nux, nuy
+        #print __file__, len(s), len(betax)
+        # fix the Tracy bug by adding a new element at the end
+        for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
+                  phix, phiy]:
+            x.append(x[-1])
+
+        #print __file__, len(s), len(betax)
         for e in self.element:
             i = e.index
             #print e.name, e.family, s[i]
@@ -182,6 +195,8 @@ class Lattice:
                 print "Missing element in PV waveform", e.name, e.family
                 continue
             self.twiss.append(Twiss())
+            # the first one is marker, index > 0
+            # PV gets twiss at s_end
             self.twiss[-1].s[-1]       = s[i]
             self.twiss[-1].beta[-1,0] = betax[i]
             self.twiss[-1].beta[-1,1] = betay[i]
@@ -192,6 +207,21 @@ class Lattice:
             self.twiss[-1].phi[-1,0]  = phix[i]
             self.twiss[-1].phi[-1,1]  = phiy[i]
 
+            # s_beg, assuming i > 0
+            if i == 0: k = 0
+            else: k = i - 1
+            self.twiss[-1].s[0]       = s[k]
+            self.twiss[-1].beta[0,0] = betax[k]
+            self.twiss[-1].beta[0,1] = betay[k]
+            self.twiss[-1].alpha[0,0]= alphax[k]
+            self.twiss[-1].alpha[0,1]= alphay[k]
+            self.twiss[-1].eta[0,0]  = etax[k]
+            self.twiss[-1].eta[0,1]  = etay[k]
+            self.twiss[-1].phi[0,0]  = phix[k]
+            self.twiss[-1].phi[0,1]  = phiy[k]
+            
+        # set s_beg
+            
     def init_virtac_group(self):
         for elem in self.element:
             self.addGroup(elem.cell)
@@ -201,7 +231,36 @@ class Lattice:
             self.addGroup(elem.symmetry)
             self.addGroupMember(elem.symmetry, elem.name)
 
+    def getLocations(self, elems, point):
+        """
+        if elems is a string, do exact match. return single number.  if
+        elems is a list do exact match on each of them, return a
+        list. None if the element in this list is not found.
+        """
+        if isinstance(elems, str):
+            return self.getElements(elems)
+        elif isinstance(elems, list):
+            ret = [None] * len(elems)
+            for elem in self.element:
+                if elem.name in elems:
+                    idx = elems.index(elem.name)
+                    if point == 'begin': ret[idx] = elem.s_beg
+                    elif point == 'end': ret[idx] = elem.s_end
+                    elif point == 'middle': ret[idx] = elem.s_mid
+                    else: ret[idx] = elem.s_end
+                
+            return ret
+        
     def getElements(self, group, point = ''):
+        """
+        get elements and their locations.
+
+        parameter *point* = ['begin', 'middle', 'end'] tells the s location
+        returned with element name at at the begin, middle or end of the
+        elements. For a nonempty string, it returns s at the 'end'.
+
+        if *point* == "", location is not returned. 
+        """
         ret, loc = [], []
         s = point.lower()
         #print "... get elements ...", s
@@ -215,6 +274,35 @@ class Lattice:
                 else: loc.append(e.s_end)
         if point: return ret, loc
         else: return ret
+
+    def getElementsCgs(self, group, cell = [], girder = [],
+                    sequence = []):
+        """
+        call signature::
+        
+          getElementsCgs(self, group, cell=[], girder=[], sequence=[])
+
+        Get a list of elements from cell, girder and sequence
+        """
+        elem = []
+        #print group
+        for e in self.element:
+            # self.element is unique on each name, but just in case ....
+            if e.name in elem: continue
+            if group and not fnmatch(e.name, group) \
+                    and not fnmatch(e.family, group):
+                continue
+            if cell and e.cell != cell: continue
+            if girder and e.girder != girder: continue
+            if sequence and (e.sequence[0] != sequence[0] \
+                                 or e.sequence[1] != sequence[1]):
+                continue
+
+            elem.append(e.name)
+
+        # may have duplicate element
+        #return [v for v in set(elem)]
+        return elem
 
     def __illegalGroupName(self, group):
         # found character not in [a-zA-Z0-9_]
@@ -230,7 +318,7 @@ class Lattice:
           addGroup(self, group)
           
         *group* is a combination of alphabetic and numeric characters and
-         underscores. i.e. [a-zA-Z0-9_]+
+         underscores. i.e. "[a-zA-Z0-9\_]" 
         """
         if self.__illegalGroupName(group): return
         if not self.__group.has_key(group):
@@ -298,6 +386,27 @@ class Lattice:
 
         return list(r)
 
+    def getNeighbors(self, element, group, n):
+        """Assuming self.element is in s order"""
+        e0, s0 = self.getElements(element, point = 'end')
+        if len(e0) > 1:
+            raise ValueError("element %s is not unique" % element)
+        e, s = self.getElements(group, point = 'end')
+
+        i1, i2 = 0, 0
+        ret = []
+        for i in range(0, len(s)):
+            if s[i] > s0[0]:
+                #return e[i-1], s[i-1], e[i], s[i]
+                i1, i2 = i - 1, i
+                break 
+            #else: print "s", s0[0], s[i]
+        for i in range(n):
+            ret.insert(0, [e[i1-i], s[i1-i]])
+            ret.append([e[i2+i], s[i2+i]])
+
+        return ret
+        
     def __repr__(self):
         s = ''
         ml_name, ml_family = 0, 0
@@ -312,4 +421,55 @@ class Lattice:
             s = s + fmt % (i, e.name, e.family, e.s_beg, e.s_end)
         return s
 
+
+    def getPhase(self, elemlst, loc = 'end'):
+        idx = [-1] * len(elemlst)
+        phi = np.zeros((len(elemlst), 2), 'd')
+        for i,e in enumerate(self.element):
+            if e.name in elemlst: idx[elemlst.index(e.name)] = i
+        if loc == 'begin': 
+            for i, k in enumerate(idx):
+                phi[i, :] = self.twiss[k].phi[0, :]
+        elif loc == 'middle': 
+            raise NotImplementedError()
+        else:
+            # loc == 'end': 
+            for i, k in enumerate(idx):
+                phi[i, :] = self.twiss[k].phi[-1, :]
+        return phi
+
+    def getBeta(self, elemlst, loc = 'end'):
+        idx = [-1] * len(elemlst)
+        beta = np.zeros((len(elemlst), 2), 'd')
+        for i,e in enumerate(self.element):
+            if e.name in elemlst: idx[elemlst.index(e.name)] = i
+        if loc == 'begin': 
+            for i, k in enumerate(idx):
+                beta[i, :] = self.twiss[k].beta[0, :]
+        elif loc == 'middle': 
+            raise NotImplementedError()
+        else:
+            # loc == 'end': 
+            for i, k in enumerate(idx):
+                beta[i, :] = self.twiss[k].beta[-1, :]
+        return beta
+
+    def getEta(self, elemlst, loc = 'end'):
+        idx = [-1] * len(elemlst)
+        eta = np.zeros((len(elemlst), 2), 'd')
+        for i,e in enumerate(self.element):
+            if e.name in elemlst: idx[elemlst.index(e.name)] = i
+        if loc == 'begin': 
+            for i, k in enumerate(idx):
+                eta[i, :] = self.twiss[k].eta[0, :]
+        elif loc == 'middle': 
+            raise NotImplementedError()
+        else:
+            # loc == 'end': 
+            for i, k in enumerate(idx):
+                eta[i, :] = self.twiss[k].eta[-1, :]
+        return eta
+    
+    def getTunes(self):
+        return self.tune[0], self.tune[1]
 

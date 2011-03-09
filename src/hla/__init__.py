@@ -2,15 +2,27 @@
 
 
 """
-   HLA Module
-   -----------
+HLA Module
+-----------
 
-   HLA module
+This is an object-orient high level accelerator control library.
+
+A procedural interface is provided.
+
    
-   :author:
-   :license:
+:author:
+:license:
 
-   HLA
+Modules include:
+
+    :mod:`hla.lattice`
+
+        define the :class:`~hla.lattice.Element`, :class:`~hla.lattice.Twiss`,
+        :class:`~hla.lattice.Lattice` class
+
+    :mod:`hla.chanfinder`
+
+        defines the :class:`~hla.chanfinder.ChannelFinderAgent` class
 """
 
 import os, sys
@@ -63,6 +75,7 @@ def clean_init():
     #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
     hlaroot = '/home/lyyang/devel/nsls2-hla/'
     d.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
+    d.import_virtac_pvs()
     #print d.getElements("P*")
 
     #d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
@@ -78,4 +91,57 @@ def clean_init():
     #print lat
     
     init("nsls2")
+
+def check():
+    """
+    .. note::
+
+        Used by Lingyun Yang for testing
+    """
+    _cfa.checkMissingChannels('/home/lyyang/devel/nsls2-hla/machine/nsls2/pvlist_2011_03_03.txt')
+
+
+def eget(element):
+    """easier get"""
+    if isinstance(element, str):
+        ret = {}
+        elemlst = getElements(element)
+        pvl = _cfa.getElementChannel(elemlst, {'handle': 'get'}, 
+                                     ['default'], unique = False)
+        for i, pvs in enumerate(pvl):
+            if len(pvs) == 1:
+                ret[elemlst[i]] = caget(pvs[0])
+            elif len(pvs) > 1:
+                ret[elemlst[i]] = []
+                for pv in pvs:
+                    ret[elemlst[i]].append(caget(pv))
+            else: ret[elemlst[i]] = None
+            #print __file__, elemlst[i], pvs, _cfa.getElementChannel([elemlst[i]], unique = False)
+        return ret
+    elif isinstance(element, list):
+        ret = []
+        pvl = _cfa.getElementChannel(element, {'handle': 'get'}, ['default'], unique = False)
+        for i, pv in enumerate(pvl):
+            if len(pv) == 1:
+                ret.append(caget(pv[0]))
+            elif len(pv) > 1:
+                ret.append(caget(pv))
+        return ret
+    else:
+        raise ValueError("element can only be a list or group name")
+
+
+def eset(element, value):
+    if isinstance(element, list) and len(element) != len(value):
+        raise ValueError("element list must have same size as value list")
+    elif isinstance(element, str):
+        val = [value]
+    else: val = value[:]
+
+    pvl = _cfa.getElementChannel(element, {'handle': 'set'}, ['default'])
+    
+    for i, pv in enumerate(pvl):
+        caput(pv, val[i])
+        
+#print caget(['SR:C01-MG:G02A<VCM:L1>Fld-RB', 'SR:C01-MG:G02A<HCM:L2>Fld-RB'])
 

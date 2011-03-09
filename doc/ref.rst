@@ -1,8 +1,16 @@
 References
 ===========
 
+.. toctree::
+   :maxdepth: 2
+
 .. automodule:: hla
    :members:
+
+
+Modules
+---------
+
 
 .. automodule:: hla.lattice
    :members:
