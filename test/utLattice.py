@@ -70,7 +70,7 @@ class TestConf(unittest.TestCase):
         nb = hla.getNeighbors(vcm, 'BPM', n)
         s0 = hla.getLocations(vcm)
         self.assertEqual(len(s0), 1)
-        self.assertEqual(len(nb), 2*n)
+        self.assertEqual(len(nb), 2*n+1)
         
         isep = 2*n
         if nb[-1][1] < nb[0][1]:
@@ -105,8 +105,9 @@ class TestConf(unittest.TestCase):
     def test_pvget(self):
         #print __file__, hla.eget('P*C01*')
         self.assertEqual(len(hla.eget('P*C0*A')), 27)
+        self.assertEqual(len(hla.eget('C')), 0)
+        #print hla.eget('QH3*')
 
- 
     def test_pvset(self):
         return True
         elem = hla.getElements('C[XY]*C01*A')

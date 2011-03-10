@@ -54,10 +54,8 @@ pt = os.path.dirname(os.path.abspath(__file__))
 
 from latmanage import *
 from current import *
+from rf import *
 
-def test():
-    measBeta(quad[:5], ca=ca)
-    
 def init(lat):
     """Initialize HLA"""
     _cfa.load("%s/../../%s/hla.pkl" % (pt, root[lat]))
@@ -68,6 +66,13 @@ def init(lat):
 # init("nsls2")
 
 def clean_init():
+    """Clean initialization, will call init
+
+    .. warning::
+
+      Only used for testing software while the real machine is not built
+      yet. --L.Y.
+    """
     d = chanfinder.ChannelFinderAgent()
     #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
     hlaroot = '/home/lyyang/devel/nsls2-hla/'
@@ -75,6 +80,7 @@ def clean_init():
     d.import_virtac_pvs()
     d.fix_bpm_xy()
     #print d.getElements("P*")
+    #d.clear_trim_settings()
 
     #d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
     d.save(hlaroot + 'machine/nsls2/hla.pkl')
@@ -87,7 +93,10 @@ def clean_init():
     lat.init_virtac_group()
     lat.save(hlaroot + 'machine/nsls2/hla.pkl')
     #print lat
-    
+
+    # set RF frequency
+    caput('SR:C00-RF:G00<RF:00>Freq-SP', 499.680528631)
+
     init("nsls2")
 
 def check():
@@ -136,7 +145,10 @@ def eget(element, full = False, tags = [], unique = False):
         raise ValueError("element can only be a list or group name")
 
 
-def eset(element, value):
+def eput(element, value):
+    """
+    easier put
+    """
     if isinstance(element, list) and len(element) != len(value):
         raise ValueError("element list must have same size as value list")
     elif isinstance(element, str):

@@ -21,6 +21,22 @@ Modules
 .. automodule:: hla.latmanage
    :members:
 
+.. automodule:: hla.orbit
+   :members:
+
+.. automodule:: hla.rf
+   :members:
+
+.. automodule:: hla.current
+   :members:
+
+.. automodule:: hla.measorm
+   :members:
+
+.. automodule:: hla.meastwiss
+   :members:
+
+
 .. sourcecode:: ipython
 
     In [69]: lines = plot([1,2,3])

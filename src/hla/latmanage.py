@@ -13,6 +13,9 @@ from cothread.catools import caget, caput
 #__all__ = ['getElements', 'getLocations']
 
 def getElements(group, cell = [], girder = [], sequence = []):
+    """
+    return list of elements, given cell girder and sequence.
+    """
     return _lat.getElementsCgs(group, cell, girder, sequence)
 
 def getLocations(group, s='end'):
@@ -104,12 +107,12 @@ def getPhase(group, loc = 'end'):
     """
     get the phase from stored data
     """
-    elem = getElements(group)
-
-    if isinstance(elem, list):
-        return _lat.getPhase(elem)
-    elif isinstance(elem, str):
-        return _lat.getPhase(elemlst = [elem])
+ 
+    if isinstance(group, list):
+        return _lat.getPhase(group)
+    elif isinstance(group, str):
+        elem = getElements(group)
+        return _lat.getPhase(elemlst = elem)
     else:
         return None
 
@@ -119,12 +122,11 @@ def getBeta(group, loc = 'end'):
     """
     get the beta function from stored data
     """
-    elem = getElements(group)
-
-    if isinstance(elem, list):
+    if isinstance(group, str):
+        elem = getElements(group)
         return _lat.getBeta(elem)
-    elif isinstance(elem, str):
-        return _lat.getBeta(elemlst = [elem])
+    elif isinstance(group, list):
+        return _lat.getBeta(elemlst = group)
     else:
         return None
 
@@ -138,20 +140,26 @@ def getEta(group, loc = 'end'):
     """
     get the dispersion from stored data
     """
-    elem = getElements(group)
 
-    if isinstance(elem, list):
-        return _lat.getEta(elem)
-    elif isinstance(elem, str):
-        return _lat.getEta(elemlst = [elem])
+    if isinstance(group, list):
+        return _lat.getEta(group)
+    elif isinstance(group, str):
+        elem = getElements(group)
+        return _lat.getEta(elemlst = elem)
     else:
         return None
 
 def getChromaticity(group, plane = 'hv', mode = ''):
+    """
+    get chromaticity
+    """
     raise NotImplementedError()
     return None
 
 def getTunes(source='machine'):
+    """
+    get tunes
+    """
     if source == 'machine':
         pv = _cfa.getElementChannel(['TUNEX', 'TUNEY'], {'handle': 'get'})
         nux = caget(pv[0])
@@ -163,6 +171,9 @@ def getTunes(source='machine'):
         return _lat.getTunes()
 
 def getTune(plane = 'hv'):
+    """
+    get tune
+    """
     nux, nuy = getTunes()
     if plane == 'h': return nux
     elif plane == 'v': return nuy
@@ -170,6 +181,9 @@ def getTune(plane = 'hv'):
         raise ValueError("plane must be h/v")
 
 def getFftTune(plane = 'hv', mode = ''):
+    """
+    get tune from FFT
+    """
     raise NotImplementedError()
     return None
 

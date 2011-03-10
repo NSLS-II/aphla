@@ -244,6 +244,11 @@ class Lattice:
         # set s_beg
             
     def init_virtac_group(self):
+        """
+        initialize the "group" settings, add member to group of its
+        *cell*, *girder* and *symmetry* parsed from its name
+        """
+
         for elem in self.element:
             self.addGroup(elem.cell)
             self.addGroupMember(elem.cell, elem.name)
@@ -253,6 +258,9 @@ class Lattice:
             self.addGroupMember(elem.symmetry, elem.name)
 
     def sortElements(self, elemlist):
+        """
+        sort the element list to the order of *s*
+        """
         ret = []
         for e in self.element:
             if e.name in ret: continue
@@ -381,15 +389,26 @@ class Lattice:
         self.__group.pop(group)
 
     def addGroupMember(self, group, member):
+        """
+        add member to group
+
+        group must exist before.
+        """
         if self.__group.has_key(group):
             self.__group[group].append(member)
         else:
             raise ValueError("Group %s does not exist" % group)
 
     def hasGroup(self, group):
+        """
+        check group exists or not.
+        """
         return self.__group.has_key(group)
 
     def removeGroupMember(self, group, member):
+        """
+        remove member from group
+        """
         if not self.hasGroup(group):
             raise ValueError("Group %s does not exist" % group)
         if member in self.__group[group]:
@@ -398,6 +417,9 @@ class Lattice:
             raise ValueError("%s not in group %s" % (member, group))
 
     def getGroups(self, element):
+        """
+        return a list of groups this element is in
+        """
         ret = []
         for k, elems in self.__group.items():
             for e in elems:
@@ -407,6 +429,11 @@ class Lattice:
         return ret
 
     def getGroupMembers(self, groups, op):
+        """
+        return members in a list of groups. 
+
+        can take a union or intersections of members in each group
+        """
         if groups == None: return None
         ret = {}
         #print __file__, groups
@@ -437,7 +464,7 @@ class Lattice:
         e, s = self.getElements(group, point = 'end')
 
         i1, i2 = 0, 0
-        ret = []
+        ret = [[element[:], s0]]
         for i in range(0, len(s)):
             if s[i] > s0[0]:
                 #return e[i-1], s[i-1], e[i], s[i]
@@ -466,6 +493,10 @@ class Lattice:
 
 
     def getPhase(self, elemlst, loc = 'end'):
+        """
+        return phase
+        """
+
         idx = [-1] * len(elemlst)
         phi = np.zeros((len(elemlst), 2), 'd')
         for i,e in enumerate(self.element):
@@ -482,6 +513,9 @@ class Lattice:
         return phi
 
     def getBeta(self, elemlst, loc = 'end'):
+        """
+        return beta function
+        """
         idx = [-1] * len(elemlst)
         beta = np.zeros((len(elemlst), 2), 'd')
         for i,e in enumerate(self.element):
@@ -498,6 +532,10 @@ class Lattice:
         return beta
 
     def getEta(self, elemlst, loc = 'end'):
+        """
+        return dispersion
+        """
+
         idx = [-1] * len(elemlst)
         eta = np.zeros((len(elemlst), 2), 'd')
         for i,e in enumerate(self.element):
@@ -514,5 +552,8 @@ class Lattice:
         return eta
     
     def getTunes(self):
+        """
+        return tunes
+        """
         return self.tune[0], self.tune[1]
 
