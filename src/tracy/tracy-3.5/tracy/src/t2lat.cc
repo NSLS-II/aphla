@@ -52,7 +52,7 @@ typedef enum
  * Note: Line breaker spent 0.0 seconds, 5000 tries on line 603 [251] */
 
 
-#define SETBITS  (4*(unsigned)sizeof(long int))
+#define SETBITS  32 //(4*(unsigned)sizeof(long int))
 
 const int  max_set = (solsym-bndsym+1)/SETBITS + 2;
 

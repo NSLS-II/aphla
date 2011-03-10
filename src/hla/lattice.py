@@ -437,7 +437,7 @@ class Lattice:
         e, s = self.getElements(group, point = 'end')
 
         i1, i2 = 0, 0
-        ret = []
+        ret = [[element[:], s0]]
         for i in range(0, len(s)):
             if s[i] > s0[0]:
                 #return e[i-1], s[i-1], e[i], s[i]

@@ -33,8 +33,11 @@ int main(int argc, char* argv[])
 
     //Cell_SetdP(dP);
 
+
     double dP = 0.0;
     Ring_GetTwiss(true, dP);
+
+    printglob();
 
     CellType Cell;
     getelem(0, &Cell);

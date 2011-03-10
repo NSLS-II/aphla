@@ -12,6 +12,8 @@ from fnmatch import fnmatch
 from time import gmtime, strftime
 from lattice import parseElementName
 
+from cothread.catools import caget, caput
+
 class ChannelFinderAgent:
     """
     Channel Finder Agent
@@ -341,6 +343,15 @@ class ChannelFinderAgent:
             if self.__d.has_key(line.strip() ): continue
             print "Line: %d %s" % (i, line.strip())
         #print "-- DONE --"
+
+    def clear_trim_settings(self):
+        i = 0
+        for k, v in self.__d.items():
+            if v['handle'] == 'get': continue
+            if fnmatch(v['elementname'], 'C*'):
+                caput(k, 0.0)
+                i += 1
+        print "reset %d trims", i
 
     def __cmp_elem_loc(self, a, b):
         return self.__elemname.index(a) - self.__elemname.index(b)

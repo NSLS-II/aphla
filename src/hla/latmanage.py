@@ -104,12 +104,12 @@ def getPhase(group, loc = 'end'):
     """
     get the phase from stored data
     """
-    elem = getElements(group)
-
-    if isinstance(elem, list):
-        return _lat.getPhase(elem)
-    elif isinstance(elem, str):
-        return _lat.getPhase(elemlst = [elem])
+ 
+    if isinstance(group, list):
+        return _lat.getPhase(group)
+    elif isinstance(group, str):
+        elem = getElements(group)
+        return _lat.getPhase(elemlst = elem)
     else:
         return None
 
@@ -119,12 +119,11 @@ def getBeta(group, loc = 'end'):
     """
     get the beta function from stored data
     """
-    elem = getElements(group)
-
-    if isinstance(elem, list):
+    if isinstance(group, str):
+        elem = getElements(group)
         return _lat.getBeta(elem)
-    elif isinstance(elem, str):
-        return _lat.getBeta(elemlst = [elem])
+    elif isinstance(group, list):
+        return _lat.getBeta(elemlst = group)
     else:
         return None
 
@@ -138,12 +137,12 @@ def getEta(group, loc = 'end'):
     """
     get the dispersion from stored data
     """
-    elem = getElements(group)
 
-    if isinstance(elem, list):
-        return _lat.getEta(elem)
-    elif isinstance(elem, str):
-        return _lat.getEta(elemlst = [elem])
+    if isinstance(group, list):
+        return _lat.getEta(group)
+    elif isinstance(group, str):
+        elem = getElements(group)
+        return _lat.getEta(elemlst = elem)
     else:
         return None
 

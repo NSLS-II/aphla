@@ -54,6 +54,7 @@ pt = os.path.dirname(os.path.abspath(__file__))
 
 from latmanage import *
 from current import *
+from rf import *
 
 def test():
     measBeta(quad[:5], ca=ca)
@@ -75,6 +76,7 @@ def clean_init():
     d.import_virtac_pvs()
     d.fix_bpm_xy()
     #print d.getElements("P*")
+    #d.clear_trim_settings()
 
     #d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
     d.save(hlaroot + 'machine/nsls2/hla.pkl')
@@ -87,7 +89,10 @@ def clean_init():
     lat.init_virtac_group()
     lat.save(hlaroot + 'machine/nsls2/hla.pkl')
     #print lat
-    
+
+    # set RF frequency
+    caput('SR:C00-RF:G00<RF:00>Freq-SP', 499.680528631)
+
     init("nsls2")
 
 def check():
@@ -136,7 +141,7 @@ def eget(element, full = False, tags = [], unique = False):
         raise ValueError("element can only be a list or group name")
 
 
-def eset(element, value):
+def eput(element, value):
     if isinstance(element, list) and len(element) != len(value):
         raise ValueError("element list must have same size as value list")
     elif isinstance(element, str):
