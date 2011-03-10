@@ -13,6 +13,9 @@ from cothread.catools import caget, caput
 #__all__ = ['getElements', 'getLocations']
 
 def getElements(group, cell = [], girder = [], sequence = []):
+    """
+    return list of elements, given cell girder and sequence.
+    """
     return _lat.getElementsCgs(group, cell, girder, sequence)
 
 def getLocations(group, s='end'):
@@ -147,10 +150,16 @@ def getEta(group, loc = 'end'):
         return None
 
 def getChromaticity(group, plane = 'hv', mode = ''):
+    """
+    get chromaticity
+    """
     raise NotImplementedError()
     return None
 
 def getTunes(source='machine'):
+    """
+    get tunes
+    """
     if source == 'machine':
         pv = _cfa.getElementChannel(['TUNEX', 'TUNEY'], {'handle': 'get'})
         nux = caget(pv[0])
@@ -162,6 +171,9 @@ def getTunes(source='machine'):
         return _lat.getTunes()
 
 def getTune(plane = 'hv'):
+    """
+    get tune
+    """
     nux, nuy = getTunes()
     if plane == 'h': return nux
     elif plane == 'v': return nuy
@@ -169,6 +181,9 @@ def getTune(plane = 'hv'):
         raise ValueError("plane must be h/v")
 
 def getFftTune(plane = 'hv', mode = ''):
+    """
+    get tune from FFT
+    """
     raise NotImplementedError()
     return None
 

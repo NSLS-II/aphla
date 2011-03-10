@@ -56,9 +56,6 @@ from latmanage import *
 from current import *
 from rf import *
 
-def test():
-    measBeta(quad[:5], ca=ca)
-    
 def init(lat):
     """Initialize HLA"""
     _cfa.load("%s/../../%s/hla.pkl" % (pt, root[lat]))
@@ -69,6 +66,13 @@ def init(lat):
 # init("nsls2")
 
 def clean_init():
+    """Clean initialization, will call init
+
+    .. warning::
+
+      Only used for testing software while the real machine is not built
+      yet. --L.Y.
+    """
     d = chanfinder.ChannelFinderAgent()
     #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
     hlaroot = '/home/lyyang/devel/nsls2-hla/'
@@ -142,6 +146,9 @@ def eget(element, full = False, tags = [], unique = False):
 
 
 def eput(element, value):
+    """
+    easier put
+    """
     if isinstance(element, list) and len(element) != len(value):
         raise ValueError("element list must have same size as value list")
     elif isinstance(element, str):
