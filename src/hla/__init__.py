@@ -10,7 +10,7 @@ This is an object-orient high level accelerator control library.
 A procedural interface is provided.
 
    
-:author:
+:author: Lingyun Yang
 :license:
 
 Modules include:
@@ -23,6 +23,10 @@ Modules include:
     :mod:`hla.chanfinder`
 
         defines the :class:`~hla.chanfinder.ChannelFinderAgent` class
+
+    :mod:`hla.orbit`
+
+        defines orbit retrieve routines
 """
 
 import os, sys

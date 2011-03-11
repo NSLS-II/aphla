@@ -1,6 +1,12 @@
 #!/usr/env/python
 
 """
+lattice
+~~~~~~~
+
+:author: Lingyun Yang
+:license:
+
 defines lattice related classes and functions.
 """
 
