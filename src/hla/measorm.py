@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
-"""Response Matrix Measurement
-   ----------------------------------
+"""
+Response Matrix Measurement
+----------------------------------
 
-   :author: Lingyun Yang
-   :license:
+:author: Lingyun Yang
+:license:
+
+:class:`~hla.measorm.Orm` is an Orbit Response Matrix (ORM) 
+
 
 """
 
@@ -16,26 +20,125 @@ from cothread.catools import caget, caput
 import numpy as np
 import matplotlib.pylab as plt
 
+from . import _lat
+from . import _cfa
+from . import getSpChannels, getRbChannels
+
 class Orm:
-    def __init__(self, bpm, trimsp, trimrb):
-        self.__bpm    = [v for v in bpm]
-        self.__trimsp = [ v for v in trimsp]
+    """
+    Orbit Response Matrix
+    """
+    def __init__(self, bpm, trim):
+        print trim, getSpChannels(trim)
+        #print _cfa
+        #print _cfa.getElementChannel(trim)
+        print _cfa.getElementChannel(trim, {'handle': 'set'}, ['default'])
+
+        trimsp = [v[0] for v in getSpChannels(trim)]
+        trimrb = [v[0] for v in getRbChannels(trim)]
+        bpmrb  = [v[0] for v in getRbChannels(bpm)]
+        print trimsp, trimrb, bpmrb
+
+        self.bpm  = [v for v in bpm]
+        self.trim = [v for v in trim]
+        self.__bpmrb  = [v for v in bpmrb]
+        self.__trimsp = [v for v in trimsp]
         self.__trimrb = [v for v in trimrb]
 
         self.__npoints = 4
 
-        nbpm, ntrim = len(self.__bpm), len(self.__trimsp)
+        nbpm, ntrim = len(self.bpm), len(self.trim)
 
         # 3d raw data
-        self.__rawmatrix = np.zeros((self.__npoints+2, nbpm, ntrimsp), 'd')
+        self.__rawmatrix = np.zeros((self.__npoints+2, nbpm, ntrim), 'd')
         self.__mask = np.zeros((nbpm, ntrim), 'i')
         self.__rawkick = np.zeros((ntrim, self.__npoints+2), 'd')
         self.__m = np.zeros((nbpm, ntrim), 'd')
 
-    def __meas_orbit_rm4(kickerpv, bpmpvlist, mask,
-                         kref = 0.0, dkick = 1e-6, verbose = 0):
-        """Measure the RM by change one kicker. 4 points method.
+    def save(self, filename, format = 'HDF5'):
         """
+        save the orm data into one file:
+
+        =======  =====================================
+        Data     Description
+        =======  =====================================
+        orm      matrix
+        bpm      list
+        trim     list
+        rawm     raw orbit change
+        rawkick  raw trim strength change
+        mask     matrix for ignoring certain ORM terms
+        =======  =====================================
+
+        current default format: HDF5 
+        """
+        if format == 'HDF5':
+            import h5py
+            f = h5py.File(filename, 'w')
+            dst = f.create_dataset("orm", data = self.__m)
+            dst = f.create_dataset("bpm", data = self.bpm)
+            dst = f.create_dataset("trim", data = self.trim)
+            dst = f.create_dataset("bpm_pvrb", data = self.__bpmrb)
+            dst = f.create_dataset("trim_pvsp", data = self.__trimsp)
+            dst = f.create_dataset("trim_pvrb", data = self.__trimrb)
+
+            grp = f.create_group("_rawdata_")
+            dst = grp.create_dataset("matrix", data = self.__rawmatrix)
+            dst = grp.create_dataset("kicker_sp", data = self.__rawkick)
+            dst = grp.create_dataset("mask", data = self.__mask)
+
+            f.close()
+        elif format == 'shelve':
+            import shelve
+            f = shelve.open(filename, 'c')
+            f['orm.m'] = self.__m
+            f['orm.bpm'] = self.bpm
+            f['orm.trim'] = self.trim
+            f['orm.bpm_pvrb']  = self.__bpm
+            f['orm.trim_pvsp'] = self.__trimsp
+            f['orm.trim_pvrb'] = self.__trimrb
+            f['orm._rawdata_.matrix']    = self.__rawmatrix
+            f['orm._rawdata_.kicker_sp'] = self.__rawkick
+            f['orm._rawdata_.mask']      = self.__mask
+        else:
+            raise ValueError("not supported file format: %s" % format)
+
+    def load(self, filename, format = 'HDF5'):
+        """
+        load orm data from binary file
+        """
+        if format == 'HDF5':
+            import h5py
+            f = h5py.File(filename, 'r')
+            self.__m = f["orm"]
+            self.__bpm = f["bpm_pvrb"]
+            self.__trimsp = f["trim_pvsp"]
+            self.__trimrb = f["trim_pvrb"]
+            self.__rawmatrix = f["_rawdata_"]["matrix"]
+            self.__rawkick   = f["_rawdata_"]["kicker_sp"]
+            self.__mask      = f["_rawdata_"]["mask"]
+        elif format == 'shelve':
+            import h5py
+            f = h5py.File(filename, 'r')
+            self.__m = f["orm.m"]
+            self.__bpm    = f["orm.bpm_pvrb"]
+            self.__trimsp = f["orm.trim_pvsp"]
+            self.__trimrb = f["orm.trim_pvrb"]
+            self.__rawmatrix = f["orm._rawdata_.matrix"]
+            self.__rawkick   = f["orm._rawdata_.kicker_sp"]
+            self.__mask      = f["orm._rawdata_.mask"]
+        else:
+            raise ValueError("format %s is not supported yet" % format)
+
+
+    def __meas_orbit_rm4(self, kickerpv, bpmpvlist, mask,
+                         kref = 0.0, dkick = 1e-6, verbose = 0):
+        """
+        Measure the RM by change one kicker. 4 points method.
+        """
+
+        print __file__, kickerpv
+        print __file__, bpmpvlist
         if not getattr(dkick, '__iter__', False):
             # not iterable ?
             pass
@@ -76,55 +179,27 @@ class Orm:
         return v, kstrength, ret
 
     def measure(self, coupled=False, verbose = 0):
-        if not coupled:
-            # mask out H-V term
-            for i, bpm in enumerate(self.__bpm):
-                for j,trim in enumerate(self.__trimsp):
-                    if self.__bpm[i].find("Pos-X") > 0 and \
-                            self.__trimsp[j].find("VCM") > 0:
-                        self.__mask[i, j] = 1
-                    if self.__bpm[i].find("Pos-Y") > 0 and \
-                            self.__trimsp[j].find("HCM") > 0:
-                        self.__mask[i, j] = 1
-                    
+        """
+        Measure the ORM, ignore the Horizontal(kicker)-Vertical(bpm)
+        coupled terms or not.
+        """
+
         for i, trim in enumerate(self.__trimsp):
             kref = caget(self.__trimrb[i])
             #if True: print i, self.__trimsp[i], kref,
-            v, kstrength, ret = Orm.__meas_orbit_rm4(
-                trim, self.__bpm, mask = self.__mask[:,i], kref=kref,
+            v, kstrength, ret = self.__meas_orbit_rm4(
+                trim, self.__bpmrb, mask = self.__mask[:,i], kref=kref,
                 verbose=verbose)
             self.__rawkick[i, :] = kstrength[:]
             self.__rawmatrix[:,:,i] = ret[:,:]
             self.__m[:,i] = v[:]
             time.sleep(3)
 
-    def save(self, filename, format = 'HDF5'):
-        import h5py
-        f = h5py.File(filename, 'w')
-        dst = f.create_dataset("orm", data = self.__m)
-        dst = f.create_dataset("bpm_pvrb", data = self.__bpm)
-        dst = f.create_dataset("trim_pvsp", data = self.__trimsp)
-        dst = f.create_dataset("trim_pvrb", data = self.__trimrb)
-
-        grp = f.create_group("_rawdata_")
-        dst = grp.create_dataset("matrix", data = self.__rawmatrix)
-        dst = grp.create_dataset("kicker_sp", data = self.__rawkick)
-        dst = grp.create_dataset("mask", data = self.__mask)
-
-        f.close()
-
-    def load(self, filename, format = 'HDF5'):
-        import h5py
-        f = h5py.File(filename, 'r')
-        self.__m = f["orm"]
-        self.__bpm = f["bpm_pvrb"]
-        self.__trimsp = f["trim_pvsp"]
-        self.__trimrb = f["trim_pvrb"]
-        self.__rawmatrix = f["_rawdata_"]["matrix"]
-        self.__rawkick   = f["_rawdata_"]["kicker_sp"]
-        self.__mask      = f["_rawdata_"]["mask"]
-
     def merge(self, src):
+        """
+        merge two orm into one
+        """
+
         print "Merging ..."
         nbpm, ntrim = len(self.__bpm), len(self.__trimsp)
         # index of src bpm/trim in the new bpm/trim list
@@ -179,6 +254,11 @@ class Orm:
         return dst
 
     def checkLinearity(self, dev = .1, plot=False):
+        """
+        check the linearity of each orm term.
+
+        This routine detects the BPMs which do not reponse to trim well. 
+        """
         npoints, nbpm, ntrim = np.shape(self.__rawmatrix)
         #print npoints, nbpm, ntrim
         res = []
@@ -248,30 +328,23 @@ class Orm:
                 plt.savefig("orm-check-%07d.png" % (j))
         print len(res), np.average(res), np.var(res)
 
-def measOrbitRm(bpm, trimsp, trimrb):
+def measOrbitRm(bpm, trim):
     """Measure the beta function by varying quadrupole strength"""
     print "EPICS_CA_MAX_ARRAY_BYTES:", os.environ['EPICS_CA_MAX_ARRAY_BYTES']
     print "EPICS_CA_ADDR_LIST      :", os.environ['EPICS_CA_ADDR_LIST']
 
-    orm = Orm(bpm, trimsp, trimrb)
+    orm = Orm(bpm, trim)
     orm.measure(verbose=1)
     orm.save("test.hdf5")
+    return orm
 
 # testing ...
 
 def measChromRm():
+    """
+    measure chromaticity response matrix
+    """
     pass
-
-def __clearTrims():
-    print "Clear trim strength, Waiting..."
-    for i, d in enumerate(trim):
-	print "%4d:%f" % (i,caget(d[0])),
-        if i % 5 == 4: print ""
-
-        caput(d[0], 0.0)
-        caput(d[1], 0.0)
-    time.sleep(2)
-    print "DONE"
 
 def test():
     x = []
@@ -314,40 +387,4 @@ def check():
         print ""
         #x.append([k, t1, t2])
     #print x
-
-if __name__ == "__main__":
-    #__clearTrims()
-    #test()
-    #check()
-    #sys.exit(0)
-
-    # horizontal and vertical BPM
-    #nbpm, ntrim = len(bpmpv), len(trim)
-    nbpm, ntrim = 3, 1
-
-    b = []
-    for i in range(nbpm): 
-        # horizontal and vertical
-        b.append(bpmpv[i][0]) 
-        b.append(bpmpv[i][1]) 
-
-    ksp, krb = [], []
-    for i in range(ntrim):
-        # horizontal
-        ksp.append(trim[i][0])
-        krb.append(trim[i][0].replace("-SP", "-RB"))
-        # vertical
-        ksp.append(trim[i][1])
-        krb.append(trim[i][1].replace("-SP", "-RB"))
-
-    measOrbitRm(b, ksp, krb)
-    sys.exit(0)
-    orm = Orm(b, ksp, krb)
-    orm.load("orm3.hdf5")
-    #orm.checkLinearity()
-    
-    orm2 = Orm(b, ksp, krb)
-    orm2.load("orm3a.hdf5")
-    orm3 = orm.merge(orm2)
-    if orm3: orm3.save("test.h5")
 

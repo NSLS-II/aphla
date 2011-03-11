@@ -22,7 +22,7 @@ if __name__ == '__main__':
     gamma = 3.0e3/.511
     eta = alphac - 1/gamma/gamma
     # orbit at cell 3-6 BPMs
-    bpm = hla.getElements('P*C03*')
+    bpm = hla.getElements('P*C0[3-6]*')
     s1 = hla.getLocations(bpm)
     eta0 = hla.getDispersion(bpm)
     # f in MHz

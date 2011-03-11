@@ -142,7 +142,8 @@ class Lattice:
 
         #print "Importing file:", lattable
 
-        cnt = {'BPM':0, 'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+        cnt = {'BPM':0, 'BPMX':0, 'BPMY':0, 'TRIM':0, \
+                   'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
 
         for k in cnt.keys(): self.__group[k] = []
 
@@ -179,7 +180,8 @@ class Lattice:
                     cnt['BPMY'] += 1
                 else:
                     raise ValueError("pv %s pattern not recognized" % rb)
-
+            if grp[:4] == 'TRIM':
+                self.__group['TRIM'].append(phy)
 
         # adjust s_beg
         for e in self.element:
@@ -338,6 +340,9 @@ class Lattice:
 
         Get a list of elements from cell, girder and sequence
         """
+        if group in self.__group.keys():
+            return self.__group[group][:]
+
         elem = []
         #print group
         for e in self.element:

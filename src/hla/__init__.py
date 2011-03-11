@@ -48,7 +48,7 @@ _lat = lattice.Lattice()
 
 import chanfinder
 _cfa = chanfinder.ChannelFinderAgent()
-    
+
 # get the HLA root directory
 pt = os.path.dirname(os.path.abspath(__file__))
 
@@ -166,6 +166,10 @@ def eput(element, value):
         
 #print caget(['SR:C01-MG:G02A<VCM:L1>Fld-RB', 'SR:C01-MG:G02A<HCM:L2>Fld-RB'])
 
+def reset_trims():
+    trimx = getElements('TRIMX')
+    for e in trimx: eput(e, 0.0)
+
 #from meastwiss import *
-#from measorm import *
+from measorm import *
 from orbit import *
