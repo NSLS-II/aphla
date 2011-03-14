@@ -79,7 +79,7 @@ def clean_init():
     """
     d = chanfinder.ChannelFinderAgent()
     #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
-    hlaroot = os.path.join(pt, "../..")
+    hlaroot = os.path.join(pt, "../../")
     print "Root dir: ", hlaroot
     d.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
     d.import_virtac_pvs()
