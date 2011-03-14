@@ -438,22 +438,3 @@ def test():
         #x.append([k, t1, t2])
     print x
 
-def check():
-    x = []
-    t0 = 1299032723.0
-    for k in [.0, -2e-6, -1e-6, 1e-6, 2e-6, 0.]:
-        caput('SR:C01-MG:G04A<VCM:M>Fld-SP', k)
-        t1 = time.time()
-        x1 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
-        time.sleep(10)
-        for i in range(5):
-            #print time.time()
-            x2 = caget(bpmpv[i][1])*1e6
-            print "%12.8f" % x2,
-            #time.sleep(4)
-            #t2 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
-        #print k, t1, t2
-        print ""
-        #x.append([k, t1, t2])
-    #print x
-

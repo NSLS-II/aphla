@@ -15,7 +15,6 @@ class TestConf(unittest.TestCase):
         pass
 
     def test_pvExists(self):
-        hla.check()
         return True
 
         rec = {}

@@ -40,7 +40,7 @@ INF = 1e30
 #
 # root of stored data
 root={
-    "nsls2" : "machine/nsls2"
+    "nsls2" : "nsls2"
 }
 
 import lattice
@@ -51,6 +51,7 @@ _cfa = chanfinder.ChannelFinderAgent()
 
 # get the HLA root directory
 pt = os.path.dirname(os.path.abspath(__file__))
+hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
 
 #
 # testing, bypass the IRMIS database.
@@ -62,8 +63,13 @@ from rf import *
 
 def init(lat):
     """Initialize HLA"""
-    _cfa.load("%s/../../%s/hla.pkl" % (pt, root[lat]))
-    _lat.load("%s/../../%s/hla.pkl" % (pt, root[lat]))
+    cfg_pkl = os.path.join(hlaroot, "machine", root[lat], 'hla.pkl')
+    if not os.path.exists(cfg_pkl):
+        raise ValueError("pkl files can not be found: " + cfg_pkl)
+
+    print "HLA main configure: ", cfg_pkl
+    _cfa.load(cfg_pkl)
+    _lat.load(cfg_pkl)
 
 #
 # initialize the configuration 
@@ -79,24 +85,25 @@ def clean_init():
     """
     d = chanfinder.ChannelFinderAgent()
     #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
-    hlaroot = os.path.join(pt, "../../")
+    #hlaroot = os.path.normpath(os.path.join(pt, "..", ".."))
     print "Root dir: ", hlaroot
-    d.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
+    lattable = os.path.join(hlaroot, 'machine/nsls2/lat_conf_table.txt')
+    d.importLatticeTable(lattable)
     d.import_virtac_pvs()
     d.fix_bpm_xy()
     #print d.getElements("P*")
     #d.clear_trim_settings()
 
     #d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
-    d.save(hlaroot + 'machine/nsls2/hla.pkl')
+    d.save(os.path.join(hlaroot, 'machine', 'nsls2', 'hla.pkl'))
     #print d
 
     # load lattice
     lat = lattice.Lattice()
-    lat.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
+    lat.importLatticeTable(lattable)
     lat.init_virtac_twiss()
     lat.init_virtac_group()
-    lat.save(hlaroot + 'machine/nsls2/hla.pkl')
+    lat.save(os.path.join(hlaroot, 'machine', 'nsls2', 'hla.pkl'))
     #print lat
 
     # set RF frequency
