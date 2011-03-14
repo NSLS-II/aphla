@@ -22,7 +22,7 @@ if __name__ == '__main__':
     theta1 = 3e-5
     theta2 = 1e-5
     
-    trim.insert(0, trim1)
+    #trim.insert(0, trim1)
     #print trim
     beta = hla.getBeta(trim)
     phi = hla.getPhase(trim)

@@ -10,7 +10,7 @@ This is an object-orient high level accelerator control library.
 A procedural interface is provided.
 
    
-:author:
+:author: Lingyun Yang
 :license:
 
 Modules include:
@@ -23,6 +23,10 @@ Modules include:
     :mod:`hla.chanfinder`
 
         defines the :class:`~hla.chanfinder.ChannelFinderAgent` class
+
+    :mod:`hla.orbit`
+
+        defines orbit retrieve routines
 """
 
 import os, sys
@@ -36,7 +40,7 @@ INF = 1e30
 #
 # root of stored data
 root={
-    "nsls2" : "machine/nsls2"
+    "nsls2" : "nsls2"
 }
 
 import lattice
@@ -44,9 +48,10 @@ _lat = lattice.Lattice()
 
 import chanfinder
 _cfa = chanfinder.ChannelFinderAgent()
-    
+
 # get the HLA root directory
 pt = os.path.dirname(os.path.abspath(__file__))
+hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
 
 #
 # testing, bypass the IRMIS database.
@@ -58,8 +63,13 @@ from rf import *
 
 def init(lat):
     """Initialize HLA"""
-    _cfa.load("%s/../../%s/hla.pkl" % (pt, root[lat]))
-    _lat.load("%s/../../%s/hla.pkl" % (pt, root[lat]))
+    cfg_pkl = os.path.join(hlaroot, "machine", root[lat], 'hla.pkl')
+    if not os.path.exists(cfg_pkl):
+        raise ValueError("pkl files can not be found: " + cfg_pkl)
+
+    print "HLA main configure: ", cfg_pkl
+    _cfa.load(cfg_pkl)
+    _lat.load(cfg_pkl)
 
 #
 # initialize the configuration 
@@ -75,23 +85,25 @@ def clean_init():
     """
     d = chanfinder.ChannelFinderAgent()
     #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
-    hlaroot = '/home/lyyang/devel/nsls2-hla/'
-    d.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
+    #hlaroot = os.path.normpath(os.path.join(pt, "..", ".."))
+    print "Root dir: ", hlaroot
+    lattable = os.path.join(hlaroot, 'machine/nsls2/lat_conf_table.txt')
+    d.importLatticeTable(lattable)
     d.import_virtac_pvs()
     d.fix_bpm_xy()
     #print d.getElements("P*")
     #d.clear_trim_settings()
 
     #d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
-    d.save(hlaroot + 'machine/nsls2/hla.pkl')
+    d.save(os.path.join(hlaroot, 'machine', 'nsls2', 'hla.pkl'))
     #print d
 
     # load lattice
     lat = lattice.Lattice()
-    lat.importLatticeTable(hlaroot + 'machine/nsls2/lat_conf_table.txt')
+    lat.importLatticeTable(lattable)
     lat.init_virtac_twiss()
     lat.init_virtac_group()
-    lat.save(hlaroot + 'machine/nsls2/hla.pkl')
+    lat.save(os.path.join(hlaroot, 'machine', 'nsls2', 'hla.pkl'))
     #print lat
 
     # set RF frequency
@@ -162,6 +174,10 @@ def eput(element, value):
         
 #print caget(['SR:C01-MG:G02A<VCM:L1>Fld-RB', 'SR:C01-MG:G02A<HCM:L2>Fld-RB'])
 
+def reset_trims():
+    trimx = getElements('TRIMX')
+    for e in trimx: eput(e, 0.0)
+
 #from meastwiss import *
-#from measorm import *
+from measorm import *
 from orbit import *

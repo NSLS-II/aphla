@@ -15,7 +15,6 @@ class TestConf(unittest.TestCase):
         pass
 
     def test_pvExists(self):
-        hla.check()
         return True
 
         rec = {}
@@ -40,6 +39,7 @@ class TestConf(unittest.TestCase):
         s    = hla.getLocations('P*')
         self.assertEqual(len(elem), 180)
         self.assertEqual(len(s), 180)
+        
 
         s = hla.getLocations(['PH2G6C29B', 'CFYH2G1C30A', 'C'])
         self.assertEqual(len(s), 3)
@@ -63,6 +63,21 @@ class TestConf(unittest.TestCase):
         for g in g2:
             self.assertTrue(g in g1)
 
+        # popular group name
+        self.assertEqual(len(hla.getElements('TRIM')), 540)
+        self.assertEqual(len(hla.getElements('TRIMX')), 270)
+        self.assertEqual(len(hla.getElements('TRIMY')), 270)
+        self.assertEqual(len(hla.getElements('BPM')), 360)
+        self.assertEqual(len(hla.getElements('BPMX')), 180)
+        self.assertEqual(len(hla.getElements('BPMY')), 180)
+        self.assertEqual(len(hla.getElements('QUAD')), 300)
+
+        self.assertEqual(len(hla.getElements('C01')), 52)
+        self.assertEqual(len(hla.getElements('C30')), 52)
+        self.assertEqual(len(hla.getElements('C11')), 52)
+
+        self.assertEqual(len(hla.getElements('G2')), 435)
+
     def test_neighbors1(self):
         # find BPMs near CFYH2G1C30A
         vcm = 'CFYH2G1C30A'
@@ -72,6 +87,9 @@ class TestConf(unittest.TestCase):
         self.assertEqual(len(s0), 1)
         self.assertEqual(len(nb), 2*n+1)
         
+        nb2 = hla.getNeighbors(vcm, 'P*', n)
+        self.assertEqual(nb, nb2)
+
         isep = 2*n
         if nb[-1][1] < nb[0][1]:
             # its a ring.

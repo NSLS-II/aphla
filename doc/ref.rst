@@ -6,7 +6,7 @@ References
 
 .. automodule:: hla
    :members:
-
+   :undoc-members:
 
 Modules
 ---------
