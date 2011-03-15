@@ -18,7 +18,6 @@ import os, sys, time
 from os.path import join
 from cothread.catools import caget, caput
 import numpy as np
-import matplotlib.pylab as plt
 import shelve
 
 from . import _lat
@@ -311,6 +310,7 @@ class Orm:
 
         This routine detects the BPMs which do not reponse to trim well. 
         """
+        import matplotlib.pylab as plt
         npoints, nbpm, ntrim = np.shape(self.__rawmatrix)
         print self.trim
         #print npoints, nbpm, ntrim
