@@ -28,6 +28,7 @@ class Orm:
     """
     Orbit Response Matrix
     """
+    tsleep = 25
     def __init__(self, bpm, trim):
         #print trim, getSpChannels(trim)
         #print _cfa
@@ -41,7 +42,8 @@ class Orm:
             trimsp = [v[0] for v in getSpChannels(trim)]
             trimrb = [v[0] for v in getRbChannels(trim)]
             
-            bpmrb  = [v[0] for v in getRbChannels(bpm)]
+            #
+            bpmrb  = [v[1] for v in getRbChannels(bpm)]
             #print trimsp, trimrb, bpmrb
 
             self.bpm  = [v for v in bpm]
@@ -165,7 +167,7 @@ class Orm:
             pass
         kx0 = caget(kickerpv)
         ret = np.zeros((6, len(bpmpvlist)), 'd')
-        tsleep = 20
+        #tsleep = 20
         for j, bpm in enumerate(bpmpvlist):
             if mask[j]: ret[0,j] = 0
             else: ret[0,j] = caget(bpm)
@@ -176,11 +178,12 @@ class Orm:
             caput(kickerpv, kx)
             if verbose: 
                 print "Setting trim: ", kickerpv, kx, caget(kickerpv)
-            time.sleep(tsleep)
+            time.sleep(self.tsleep)
             for j,bpm in enumerate(bpmpvlist):
                 if mask[j]: ret[i+1,j] = 0
                 else: ret[i+1,j] = caget(bpm)
-                print "  %4d" % j, bpm, ret[i+1,j]
+                if j < 3 or j >= len(bpmpvlist)-3:
+                    print "  %4d" % j, bpm, ret[i+1,j]
                 sys.stdout.flush()
             print ""
         # 4 points
@@ -247,10 +250,10 @@ class Orm:
             #return None
 
         # 3d raw data, assuming src and self has same __npoints
-        dst.__rawmatrix = np.zeros((dst.__npoints+2, len(dst.__bpmrb),
+        dst.__rawmatrix = np.zeros((npts, len(dst.__bpmrb),
                                    len(dst.__trimsp)), 'd')
         dst.__mask = np.zeros((len(dst.__bpmrb), len(dst.__trimsp)))
-        dst.__rawkick = np.zeros((len(dst.__trimsp), dst.__npoints+2), 'd')
+        dst.__rawkick = np.zeros((len(dst.__trimsp), npts), 'd')
         dst.__m = np.zeros((len(dst.__bpmrb), len(dst.__trimsp)), 'd')
 
         for j,pvj in enumerate(self.__trimsp):
@@ -259,11 +262,11 @@ class Orm:
             jj = dst.__trimsp.index(pvj)
             for i,pvi in enumerate(self.__bpmrb):
                 ii = dst.__bpmrb.index(pvi)
-                for k in range(npts+2):
+                for k in range(npts):
                     dst.__rawmatrix[k, ii, jj] = self.__rawmatrix[k, i, j]
                 dst.__mask[ii, jj] = self.__mask[i, j]
                 dst.__m[ii, jj] = self.__m[i, j]
-            for k in range(dst.__npoints+2):
+            for k in range(npts):
                 dst.__rawkick[jj, k] = self.__rawkick[j, k]
         print "Step 1"
         for j,pvj in enumerate(src.__trimsp):
@@ -272,11 +275,11 @@ class Orm:
             jj = dst.__trimsp.index(pvj)
             for i,pvi in enumerate(src.__bpmrb):
                 ii = dst.__bpmrb.index(pvi)
-                for k in range(src.__npoints+2):
+                for k in range(npts):
                     dst.__rawmatrix[k, ii, jj] = src.__rawmatrix[k, i, j]
                 dst.__mask[ii, jj] = src.__mask[i, j]
                 dst.__m[ii, jj] = src.__m[i, j]
-            for k in range(src.__npoints+2):
+            for k in range(npts):
                 dst.__rawkick[jj, k] = src.__rawkick[j, k]
         print "Step 2"
         return dst
@@ -388,8 +391,8 @@ class Orm:
             for j in range(len(trim)):
                 s = s + m[i,j]*kick[j]
             diff = (s-caget(self.__bpmrb[i1]))/s
-            print s, diff*100.0,
-            if diff > .1: print " *"
+            print s, diff*100.0,'%',
+            if diff > .05: print " *"
             else: print ""
 
         for i,t in enumerate(trim):
@@ -401,10 +404,12 @@ def measOrbitRm(bpm, trim):
     """Measure the beta function by varying quadrupole strength"""
     print "EPICS_CA_MAX_ARRAY_BYTES:", os.environ['EPICS_CA_MAX_ARRAY_BYTES']
     print "EPICS_CA_ADDR_LIST      :", os.environ['EPICS_CA_ADDR_LIST']
+    print "BPM: ", len(bpm)
+    print "TRIM:", len(trim)
 
     orm = Orm(bpm, trim)
     orm.measure(verbose=1)
-    orm.save("test.hdf5")
+    #orm.save("test.hdf5")
     return orm
 
 # testing ...
