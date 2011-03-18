@@ -183,6 +183,12 @@ class ChannelFinderAgent:
             elif k[-2:] == '-S': self.__d[k]['~tags'].append('S')
             else:
                 raise ValueError("not recognized: %s" % k)
+        
+            if v.has_key('elementtype') and v['elementtype'] == 'BPM':
+                if k[-2:] == '-Y':
+                    v['elementtype'] == 'BPMY'
+                if k[-2:] == '-X':
+                    v['elementtype'] == 'BPMX'
 
     def save(self, fname, dbmode = 'c'):
         """

@@ -194,7 +194,7 @@ class Lattice:
     def init_virtac_twiss(self):
         """Only works from virtac.nsls2.bnl.gov"""
         # s location
-        s      = [v for v in caget('SR:C00-Glb:G00<POS:00>RB-S')]
+        s      = [v for v in caget('SR:C00-Glb:G00<POS:00>RB-S', timeout=30)]
         # twiss at s_end (from Tracy)
         alphax = [v for v in caget('SR:C00-Glb:G00<ALPHA:00>RB-X')]
         alphay = [v for v in caget('SR:C00-Glb:G00<ALPHA:00>RB-Y')]

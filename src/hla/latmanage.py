@@ -30,10 +30,17 @@ def getLocations(group, s='end'):
     else:
         raise ValueError("parameter *group* must be a list of string")
 
-def getRbChannels(elemlist):
-    """get the pv names for a list of elements"""
+def getRbChannels(elemlist, tags = ['default']):
+    """
+    get the pv names for a list of elements
     
-    return _cfa.getElementChannel(elemlist, {'handle': 'get'}, tags = ['default'], unique=False)
+    .. warning::
+
+      elements like BPM will return both H/V channels. In case we want
+      unique, use channelfinder.
+    """
+    
+    return _cfa.getElementChannel(elemlist, {'handle': 'get'}, tags = tags, unique=False)
 
 def getSpChannels(elemlist):
     """get the pv names for a list of elements"""

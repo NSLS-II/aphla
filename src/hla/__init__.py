@@ -177,6 +177,8 @@ def eput(element, value):
 def reset_trims():
     trimx = getElements('TRIMX')
     for e in trimx: eput(e, 0.0)
+    trimx = getElements('TRIMY')
+    for e in trimx: eput(e, 0.0)
 
 #from meastwiss import *
 from measorm import *
