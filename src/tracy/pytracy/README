@@ -1,0 +1,39 @@
+Making pytracy.so
+
+	sip -c . pytracy.sip
+	python configure.py
+	make
+	(make install)
+
+Exposed Variables:
+
+	globval
+        * Not all members are exposed.
+
+
+Exposed Functions:
+
+	void Read_Lattice(char * infile);
+        void Ring_GetTwiss(bool chrom, double dp)
+	void GetNu(Py_ListObject, Py_ListObject)
+
+Helper Functions:
+
+        Py_ListObject getS();
+        Py_ListObject getBetaX();
+        Py_ListObject getBetaY();
+        Py_ListObject getAlphaX();
+        Py_ListObject getAlphaY();
+        Py_ListObject getEtaX();
+        Py_ListObject getEtaY();
+        Py_ListObject getEtaXp();
+        Py_ListObject getEtaYp();
+        Py_ListObject getPhiX();
+        Py_ListObject getPhiY();
+        Py_ListObject getX();
+        Py_ListObject getXp();
+        Py_ListObject getY();
+        Py_ListObject getYp();
+        Py_ListObject getDp();
+        Py_ListObject getDt();
+
