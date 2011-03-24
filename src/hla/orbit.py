@@ -21,9 +21,9 @@ from . import _lat, eget
 
 def getFullOrbit(group = '*', sequence = None):
     """Return orbit"""
-    x = caget("SR:C00-Glb:G00<ORBIT:00>RB-X")
-    y = caget("SR:C00-Glb:G00<ORBIT:00>RB-Y")
-    s = caget("SR:C00-Glb:G00<POS:00>RB-S")
+    x = caget("SR:C00-Glb:G00{ORBIT:00}RB-X")
+    y = caget("SR:C00-Glb:G00{ORBIT:00}RB-Y")
+    s = caget("SR:C00-Glb:G00{POS:00}RB-S")
     ret = []
     for i in range(len(s)):
         ret.append([s[i], x[i], y[i]])
@@ -38,6 +38,7 @@ def getOrbit(group = '*'):
     elif isinstance(group, list):
         elemx = group[:]
         elemy = group[:]
+
     orbx, pvx = eget(elemx, full=True, tags=['H'], unique=True)
     orby, pvy = eget(elemy, full=True, tags=['V'], unique=True)
     #print __file__, len(elemx), len(elemy), len(orbx), len(orby)

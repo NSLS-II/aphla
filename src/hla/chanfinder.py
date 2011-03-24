@@ -24,15 +24,11 @@ class ChannelFinderAgent:
         self.__d = {}
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
         self.__elempv = {}
-        self.__elemidx = {}
-        self.__elemname = []
-        self.__elemtype = []
-        self.__elemlen = []
-        self.__elemloc = []
+        self.__devpv = {}
 
     def importXml(self, fname):
 
-        raise NotImplementedError()
+        raise RuntimeError("OBSOLETE function: importXML")
 
         #OBSOLETE - the main.xml file does not have latest pv list
         #"""
@@ -57,6 +53,8 @@ class ChannelFinderAgent:
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
 
     def importLatticeTable(self, lattable):
+        raise RuntimeError("OBSOLETE function: importLatticeTable")
+
         """
         call signature::
         
@@ -82,7 +80,7 @@ class ChannelFinderAgent:
 
         #print "Importing file:", lattable
 
-        cnt = {'BPM':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+        cnt = {'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
 
         f = open(lattable, 'r').readlines()
         for s in f[1:]:
@@ -210,29 +208,34 @@ class ChannelFinderAgent:
         ======   ==========================================
         """
         f = shelve.open(fname, dbmode)
-        f['cfa.d']       = self.__d
-        f['cfa.cdate']   = self.__cdate
-        f['cfa.elempv']  = self.__elempv
-        f['cfa.elemidx'] = self.__elemidx
-        f['cfa.elemname'] = self.__elemname
-        f['cfa.elemtype'] = self.__elemtype
-        f['cfa.elemlen']  = self.__elemlen
-        f['cfa.elemloc']  = self.__elemloc
+        f['cfa.data']        = self.__d
+        f['cfa.create_date'] = self.__cdate
         f.close()
 
     def load(self, fname):
         f = shelve.open(fname, 'r')
-        self.__d       = f['cfa.d']
-        self.__cdate   = f['cfa.cdate']
-        self.__elempv  = f['cfa.elempv']
-        self.__elemidx = f['cfa.elemidx']
-        self.__elemname = f['cfa.elemname']
-        self.__elemtype = f['cfa.elemtype']
-        self.__elemlen  = f['cfa.elemlen']
-        self.__elemloc  = f['cfa.elemloc']
+        self.__d       = f['cfa.data']
+        self.__cdate   = f['cfa.create_date']
+        # rebuild the elempv and devpv dict
+        self.__elempv = {}
+        self.__devpv = {}
+        for k, v in self.__d.items():
+            # elempv
+            if self.__elempv.has_key(v['elem_name']):
+                self.__elempv[v['elem_name']].append(k)
+            else:
+                self.__elempv[v['elem_name']] = [k]
+            # devpv
+            if self.__devpv.has_key(v['dev_name']):
+                self.__devpv[v['dev_name']].append(k)
+            else:
+                self.__devpv[v['dev_name']] = [k]
         f.close()
 
     def __matchProperties(self, pv, prop = {}):
+        """
+        check if all given properties are defined for this pv.
+        """
         if not prop: return True
         for  k, v in prop.items():
             if not self.__d[pv].has_key(k) or \
@@ -242,12 +245,17 @@ class ChannelFinderAgent:
         return True
 
     def __matchTags(self, pv, tags = []):
+        """
+        check if given tags are defined for this pv.
+        """
         if not tags: return True
         for tag in tags:
             if not tag in self.__d[pv]['~tags']: return False
         return True
             
     def addChannel(self, pv, props, tags):
+        raise RuntimeError("Agent does not add new channels")
+
         if not self.__d.has_key(pv):
             self.__d[pv] = {'~tags':[]}
         #
@@ -326,17 +334,17 @@ class ChannelFinderAgent:
     
     def getChannels(self, prop = {}, tags = []):
         ret = []
-        for elem in self.__elempv.keys():
+        for k,v in self.__d.items():
             #print elem,
-            pvs = self.getElementChannel(elem, prop, tags)
-            if pvs: ret.extend(pvs)
+            if self.__matchProperties(k, prop) and self.__matchTags(k, tags):
+                ret.append(k)
         return ret
 
     def __getElementChannels(self, elem, prop = {}, tags = []):
         """*elem* is the exact name of an element.
 
         Returns a list of matched PVs."""
-        if not self.__elempv.has_key(elem): return []
+        if not self.__elempv.has_key(elem): return None
         ret = []
         for pv in self.__elempv[elem]:
             if self.__matchProperties(pv, prop) and \
