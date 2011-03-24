@@ -802,7 +802,7 @@ sp(setpoint), rb(readback) are common acronyms.
     Nomenclature Standard*, RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
 .. [Shencbd] G.~Shen, Y.~Hu, B. Dalesio, *Circular Buffer
     Diagnostic*
-.. _EPICS: www.aps.anl.gov/epics/
+.. _EPICS: http://www.aps.anl.gov/epics/
 .. _Python: http://www.python.org/
 .. _iPython: http://ipython.scipy.org/moin/
 .. _matplotlib: http://matplotlib.sourceforge.net/
