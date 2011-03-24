@@ -8,7 +8,6 @@ import numpy as np
 from cothread.catools import caget
 
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pylab as plt
 
 class TestConf(unittest.TestCase):
