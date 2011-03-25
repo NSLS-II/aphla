@@ -2282,10 +2282,10 @@
 3243	SR:C30-MG:G01A{VCM:FH1}Fld-I	SR:C30-MG:G01A{VCM:FH1}Fld-SP	FYH1G1C30A	0.044	787.793	TRIMY
 3245	SR:C00-RF:G00{RF:00}Freq-RB	SR:C00-RF:G00{RF:00}Freq-SP	RFFREQ	0.0000	791.958	CAVITY
 3245	SR:C00-RF:G00{RF:00}Volt-RB	SR:C00-RF:G00{RF:00}Volt-SP	RFVOLT	0.0000	791.958	CAVITY
-0   	SR:C00-Glb:G00{TUNE:00}RB-X	NULL                       	TUNE 	0.0000	0.0	TUNE
-0   	SR:C00-Glb:G00{TUNE:00}RB-Y	NULL                       	TUNE	0.0000	0.0	TUNE
+0   	SR:C00-Glb:G00{TUNE:00}RB-X	NULL                       	TUNEX 	0.0000	0.0	TUNE
+0   	SR:C00-Glb:G00{TUNE:00}RB-Y	NULL                       	TUNEY	0.0000	0.0	TUNE
 0       SR:C00-BI:G00{DCCT:00}CUR-RB    NULL                           DCCT    0.0000    0.0    DCCT
-0       SR:C00-Glb:G00{CHROM:00}RB-X    NULL                           CHROM    0.0000    0.0    CHROM
-0       SR:C00-Glb:G00{CHROM:00}RB-Y    NULL                           CHROM    0.0000    0.0    CHROM
+0       SR:C00-Glb:G00{CHROM:00}RB-X    NULL                           CHROMX    0.0000    0.0    CHROM
+0       SR:C00-Glb:G00{CHROM:00}RB-Y    NULL                           CHROMY    0.0000    0.0    CHROM
 0       SR:C00-Glb:G00{ALPHAC:00}RB-I    NULL                           MCF    0.0000    0.0    MCF
 0       SR:C00-Glb:G00{OMEGA:00}RB-I    NULL                           OMEGA    0.0000    0.0    OMEGA

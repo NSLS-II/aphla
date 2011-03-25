@@ -45,11 +45,11 @@ def parseElementName(name):
 class Element:
     """Element"""
     def __init__(self, name = '', family = '', s_beg = 0.0, s_end = 0.0,
-                 effective_length = 0, cell = 0, girder = 0, symmetry = '',
+                 effective_length = 0, cell = '', girder = '', symmetry = '',
                  sequence = [0, 0]):
         self.index = -1
-        self.name = name
-        self.family = family
+        self.name = name[:]
+        self.family = family[:]
         self.s_beg = s_beg
         self.s_end = s_end
         self.len_eff = effective_length
@@ -72,13 +72,16 @@ class Twiss:
         
 class Lattice:
     """Lattice"""
+    # ginore those "element" when construct the lattice object
+    IGN = ['MCF', 'CHROM', 'TUNE', 'OMEGA', 'DCCT', 'CAVITY']
+
     def __init__(self):
         self.__group = {}
         # guaranteed in the order of s.
         self.element = []
         # same order of element
         self.twiss = []
-        self.mode = ''
+        self.mode = 'undefined'
         self.tune = [ 0.0, 0.0]
         self.chromaticity = [0.0, 0.0]
 
@@ -91,12 +94,13 @@ class Lattice:
         save the lattice into binary data, using writing *dbmode*
         """
         f = shelve.open(fname, dbmode)
-        f['lat.group']   = self.__group
-        f['lat.element'] = self.element
-        f['lat.twiss']   = self.twiss
-        f['lat.mode']    = self.mode
-        f['lat.tune']    = self.tune
-        f['lat.chromaticity'] = self.chromaticity
+        pref = "lat.%s." % self.mode
+        f[pref+'group']   = self.__group
+        f[pref+'element'] = self.element
+        f[pref+'twiss']   = self.twiss
+        f[pref+'mode']    = self.mode
+        f[pref+'tune']    = self.tune
+        f[pref+'chromaticity'] = self.chromaticity
         f.close()
 
     def load(self, fname, mode = 'default'):
@@ -108,13 +112,93 @@ class Lattice:
         load the lattice from binary data
         """
         f = shelve.open(fname, 'r')
-        self.__group  = f['lat.group']
-        self.element  = f['lat.element']
-        self.twiss    = f['lat.twiss']
-        self.mode     = f['lat.mode']
-        self.tune     = f['lat.tune']
-        self.chromaticity = f['lat.chromaticity']
+        pref = 'lat.%s.' % mode
+        self.__group  = f[pref+'group']
+        self.element  = f[pref+'element']
+        self.twiss    = f[pref+'twiss']
+        self.mode     = f[pref+'mode']
+        self.tune     = f[pref+'tune']
+        self.chromaticity = f[pref+'chromaticity']
         f.close()
+
+    def importChannelFinderData(self, cfa):
+        """
+        call signature::
+        
+          importChannelFinderData(self, cfa)
+
+        .. seealso::
+
+          :class:`~hla.chanfinder.ChannelFinderAgent`
+
+        load info from channel finder server/data
+        """
+        elems = cfa.sortElements(cfa.getElements())
+        cnt = {'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+        # ignore MCF/TUNE/ORBIT ....
+        for e in elems:
+            prop = cfa.getElementProperties(e)
+            if prop[cfa.ELEMTYPE] in self.IGN: continue
+
+            #counting each family
+            if cnt.has_key(prop[cfa.ELEMTYPE]):
+                cnt[prop[cfa.ELEMTYPE]] += 1
+            else:
+                cnt[prop[cfa.ELEMTYPE]] = 0
+
+            #
+            #print prop
+            self.element.append(
+                Element(prop[cfa.ELEMNAME], prop[cfa.ELEMTYPE], 0.0,
+                        prop[cfa.SPOSITION], prop[cfa.LENGTH], prop[cfa.CELL], 
+                        prop[cfa.GIRDER], prop[cfa.ELEMSYM]))
+            self.element[-1].index = prop[cfa.ELEMIDX]
+            for g in [prop[cfa.ELEMTYPE], prop[cfa.CELL], prop[cfa.GIRDER],
+                      prop[cfa.ELEMSYM]]:
+                if self.__group.has_key(g):
+                    self.__group[g].append(prop[cfa.ELEMNAME])
+                else: self.__group[g] = [prop[cfa.ELEMNAME]]
+            
+        # adjust s_beg
+        for e in self.element:
+            e.s_beg = e.s_end - e.len_eff
+        #print "# import elements:", len(self.element)
+        #print cnt
+        
+        # since single element (BPM) can be both BPMX/BPMY, we need scan
+        # pv record again
+        for pv in cfa.getChannels():
+            prop = cfa.getChannelProperties(pv)
+            if not self.__group.has_key(prop[cfa.ELEMTYPE]):
+                self.__group[prop[cfa.ELEMTYPE]] = [prop[cfa.ELEMNAME]]
+            elif not prop[cfa.ELEMNAME] in self.__group[prop[cfa.ELEMTYPE]]:
+                self.__group[prop[cfa.ELEMTYPE]].append(prop[cfa.ELEMNAME])
+        
+
+    def mergeGroups(self, parent, children):
+        """
+        merge child group(s) into a parent group
+        
+        Example::
+
+            mergeGroups('BPM', ['BPMX', 'BPMY'])
+            mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
+        """
+        if isinstance(children, str):
+            chlst = [children]
+        elif isinstance(children, list):
+            chlist = children[:]
+        else:
+            raise ValueError("children can be string or list of string")
+
+        if not self.__group.has_key(parent):
+            self.__group[parent] = []
+
+        for child in chlist:
+            if not self.__group.has_key(child): continue
+            for elem in self.__group[child]:
+                if elem in self.__group[parent]: continue
+                self.__group[parent].append(elem)
 
     def importLatticeTable(self, lattable):
         """
@@ -194,20 +278,20 @@ class Lattice:
     def init_virtac_twiss(self):
         """Only works from virtac.nsls2.bnl.gov"""
         # s location
-        s      = [v for v in caget('SR:C00-Glb:G00<POS:00>RB-S', timeout=30)]
+        s      = [v for v in caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=30)]
         # twiss at s_end (from Tracy)
-        alphax = [v for v in caget('SR:C00-Glb:G00<ALPHA:00>RB-X')]
-        alphay = [v for v in caget('SR:C00-Glb:G00<ALPHA:00>RB-Y')]
-        betax  = [v for v in caget('SR:C00-Glb:G00<BETA:00>RB-X')]
-        betay  = [v for v in caget('SR:C00-Glb:G00<BETA:00>RB-Y')]
-        etax   = [v for v in caget('SR:C00-Glb:G00<ETA:00>RB-X')]
-        etay   = [v for v in caget('SR:C00-Glb:G00<ETA:00>RB-Y')]
-        orbx   = [v for v in caget('SR:C00-Glb:G00<ORBIT:00>RB-X')]
-        orby   = [v for v in caget('SR:C00-Glb:G00<ORBIT:00>RB-Y')]
-        phix   = [v for v in caget('SR:C00-Glb:G00<PHI:00>RB-X')]
-        phiy   = [v for v in caget('SR:C00-Glb:G00<PHI:00>RB-Y')]
-        nux = caget('SR:C00-Glb:G00<TUNE:00>RB-X')
-        nuy = caget('SR:C00-Glb:G00<TUNE:00>RB-Y')
+        alphax = [v for v in caget('SR:C00-Glb:G00{ALPHA:00}RB-X')]
+        alphay = [v for v in caget('SR:C00-Glb:G00{ALPHA:00}RB-Y')]
+        betax  = [v for v in caget('SR:C00-Glb:G00{BETA:00}RB-X')]
+        betay  = [v for v in caget('SR:C00-Glb:G00{BETA:00}RB-Y')]
+        etax   = [v for v in caget('SR:C00-Glb:G00{ETA:00}RB-X')]
+        etay   = [v for v in caget('SR:C00-Glb:G00{ETA:00}RB-Y')]
+        orbx   = [v for v in caget('SR:C00-Glb:G00{ORBIT:00}RB-X')]
+        orby   = [v for v in caget('SR:C00-Glb:G00{ORBIT:00}RB-Y')]
+        phix   = [v for v in caget('SR:C00-Glb:G00{PHI:00}RB-X')]
+        phiy   = [v for v in caget('SR:C00-Glb:G00{PHI:00}RB-Y')]
+        nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
+        nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
 
         self.tune[0], self.tune[1] = nux, nuy
         #print __file__, len(s), len(betax)
@@ -469,10 +553,20 @@ class Lattice:
 
     def getNeighbors(self, element, group, n):
         """Assuming self.element is in s order"""
+        #elem = [i for i in range(len(self.element)) \
+        #            if self.element[i].name == element]
+        #print element,elem
+
         e0, s0 = self.getElements(element, point = 'end')
+        #print element,e0, s0
+        #return
         if len(e0) > 1:
             raise ValueError("element %s is not unique" % element)
+        elif e0 == None or len(e0) == 0:
+            raise ValueError("element %s does not exist" % element)
+
         e, s = self.getElements(group, point = 'end')
+        #print e, s
 
         i1, i2 = 0, 0
         ret = [[element[:], s0]]
