@@ -20,173 +20,24 @@ class ChannelFinderAgent:
 
     This module builds a local cache of channel finder service.
     """
+    ELEMIDX   = 'ordinal'
+    ELEMNAME  = 'elem_name'
+    ELEMTYPE  = 'elem_type'
+    ELEMSYM   = 'symmetry'
+    CELL      = 'cell'
+    GIRDER    = 'girder'
+    DEVNAME   = 'dev_name'
+    LENGTH    = 'length'
+    SPOSITION = 's_position'
+    ACCSYSTEM = 'system'
+    PVHANDLE  = 'handle'
+    TAGSKEY   = '~tags'
+
     def __init__(self):
-        self.__d = {}
+        self.__d = None
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
-        self.__elempv = {}
-        self.__devpv = {}
-
-    def importXml(self, fname):
-
-        raise RuntimeError("OBSOLETE function: importXML")
-
-        #OBSOLETE - the main.xml file does not have latest pv list
-        #"""
-        ca = cadict.CADict(fname)
-        for elem in ca.elements:
-            #print elem
-            self.__elempv[elem.name] = []
-            if len(elem.ca) == 0: continue
-            for i, pv in enumerate(elem.ca):
-                # for each pv and handle
-                #print "'%s'" % pv, 
-                if len(pv.strip()) == 0: continue
-                self.addChannel(pv, {'handle':elem.handle[i], 
-                                     'elementname':elem.name,
-                                     'elementtype':elem.type,
-                                     'cell': elem.cell,
-                                     'girder': elem.girder,
-                                     'symmetry': elem.symmetry}, None)
-                self.__elempv[elem.name].append(pv)
-
-            #print elem.sequence
-        self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
-
-    def importLatticeTable(self, lattable):
-        raise RuntimeError("OBSOLETE function: importLatticeTable")
-
-        """
-        call signature::
-        
-          importLatticeTable(self, lattable)
-
-        Import the table used for Tracy-VirtualIOC. The table has columns
-        in the following order:
-
-        =======   =============================================
-        Index     Description
-        =======   =============================================
-        1         element index in the whole beam line
-        2         channel for read back
-        3         channel for set point
-        4         element phys name (unique)
-        5         element length (effective)
-        6         s location of its exit
-        7         magnet family(type)
-        =======   =============================================
-
-        Data are deliminated by spaces.
-        """
-
-        #print "Importing file:", lattable
-
-        cnt = {'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
-
-        f = open(lattable, 'r').readlines()
-        for s in f[1:]:
-            t = s.split()
-            idx  = int(t[0])     # index
-            rb   = t[1].strip()  # PV readback
-            sp   = t[2].strip()  # PV setpoint
-            phy  = t[3].strip()  # name
-            L    = float(t[4])   # length
-            s2   = float(t[5])   # s_end location
-            grp  = t[6].strip()  # group
-
-            self.__elemname.append(phy)
-            self.__elemtype.append(grp)
-            self.__elemlen.append(L)
-            self.__elemloc.append(s2)
-
-            if not self.__elempv.has_key(phy):
-                self.__elempv[phy] = []
-            if rb != 'NULL': self.__elempv[phy].append(rb)
-            if sp != 'NULL': self.__elempv[phy].append(sp)
-
-            # parse cell/girder/symmetry from name
-            cell, girder, symmetry = parseElementName(phy)
-
-            # count element numbers in each type
-            if cnt.has_key(grp): cnt[grp] += 1
-
-            # add the readback pv
-            if rb != 'NULL':
-                self.addChannel(rb,
-                                {'handle': 'get', 'elementname': phy,
-                                 'elementtype': grp, 'cell': cell, 
-                                 'girder': girder, 'symmetry': symmetry,
-                                 'elemindex': idx, 's_end': s2}, ['default'])
-            if sp != 'NULL':
-                self.addChannel(sp,
-                                {'handle': 'set', 'elementname': phy,
-                                 'elementtype': grp, 'cell': cell,
-                                 'girder': girder, 'symmetry': symmetry,
-                                 'elemindex': idx, 's_end': s2}, ['default'])
-            self.__elemidx[phy] = idx
-
-        if False:
-            print "Summary:"
-            for k,v in cnt.items():
-                print " %8s %5d" % (k, v)
-            print "--"
-            print " %8s %5d" % ("Elements", len(self.__elemidx.keys()))
-            print " %8s %5d" % ("PVs",len(self.__d.keys()))
-        #return d
-
-    def import_virtac_pvs(self):
-        self.addChannel('SR:C00-Glb:G00<ALPHA:00>RB-X', \
-                            {'handle': 'get', 'elementname': 'Glb:ALPHA-X'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<ALPHA:00>RB-Y', \
-                            {'handle': 'get', 'elementname': 'Glb:ALPHA-Y'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<BETA:00>RB-X', \
-                            {'handle': 'get', 'elementname': 'Glb:BETA-X'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<BETA:00>RB-Y', \
-                            {'handle': 'get', 'elementname': 'Glb:BETA-Y'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<ETA:00>RB-X', \
-                             {'handle': 'get', 'elementname': 'Glb:ETA-X'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<ETA:00>RB-Y', \
-                             {'handle': 'get', 'elementname': 'Glb:ETA-Y'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<ORBIT:00>RB-X', \
-                             {'handle': 'get', 'elementname': 'Glb:ORBIT-X'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<ORBIT:00>RB-Y', \
-                             {'handle': 'get', 'elementname': 'Glb:ORBIT-Y'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<PHI:00>RB-X', \
-                             {'handle': 'get', 'elementname': 'Glb:PHI-X'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<PHI:00>RB-Y', \
-                             {'handle': 'get', 'elementname': 'Glb:PHI-Y'}, \
-                            ['default'])
-        self.addChannel('SR:C00-Glb:G00<POS:00>RB-S', \
-                            {'handle': 'get', 'elementname': 'Glb:POS'}, \
-                            ['default'])
-    def fix_bpm_xy(self):
-        for k,v in self.__d.items():
-            if k[-7:] == 'Freq-RB': pass
-            elif k[-7:] == 'Volt-RB': pass
-            elif k[-7:] == 'Freq-SP': pass
-            elif k[-7:] == 'Volt-SP': pass
-            elif k[-6:] == 'Fld-SP': pass
-            elif k[-6:] == 'Fld-RB': pass
-            elif k[-6:] == 'CUR-RB': pass
-            elif k[-2:] == '-X': self.__d[k]['~tags'].append('H')
-            elif k[-2:] == '-Y': self.__d[k]['~tags'].append('V')
-            elif k[-2:] == '-S': self.__d[k]['~tags'].append('S')
-            else:
-                raise ValueError("not recognized: %s" % k)
-        
-            if v.has_key('elementtype') and v['elementtype'] == 'BPM':
-                if k[-2:] == '-Y':
-                    v['elementtype'] == 'BPMY'
-                if k[-2:] == '-X':
-                    v['elementtype'] == 'BPMX'
+        self.__elempv = None
+        self.__devpv = None
 
     def save(self, fname, dbmode = 'c'):
         """
@@ -216,27 +67,48 @@ class ChannelFinderAgent:
         f = shelve.open(fname, 'r')
         self.__d       = f['cfa.data']
         self.__cdate   = f['cfa.create_date']
+        f.close()
+
         # rebuild the elempv and devpv dict
         self.__elempv = {}
         self.__devpv = {}
         for k, v in self.__d.items():
             # elempv
-            if self.__elempv.has_key(v['elem_name']):
-                self.__elempv[v['elem_name']].append(k)
+            if self.__elempv.has_key(v[self.ELEMNAME]):
+                self.__elempv[v[self.ELEMNAME]].append(k)
             else:
-                self.__elempv[v['elem_name']] = [k]
+                self.__elempv[v[self.ELEMNAME]] = [k]
             # devpv
-            if self.__devpv.has_key(v['dev_name']):
-                self.__devpv[v['dev_name']].append(k)
+            if self.__devpv.has_key(v[self.DEVNAME]):
+                self.__devpv[v[self.DEVNAME]].append(k)
             else:
-                self.__devpv[v['dev_name']] = [k]
-        f.close()
+                self.__devpv[v[self.DEVNAME]] = [k]
 
-    def __matchProperties(self, pv, prop = {}):
+            # fix the chrom/tune
+            if v[self.ELEMNAME] == 'TUNE':
+                if k.find('RB-X') > -1:
+                    v[self.ELEMNAME] = v[self.ELEMNAME] + 'X'
+                    if v[self.ELEMTYPE][-1] == 'X': v[self.ELEMTYPE] = v[self.ELEMTYPE][:-1]
+                if k.find('RB-Y') > -1:
+                    v[self.ELEMNAME] = v[self.ELEMNAME] + 'Y'
+                    if v[self.ELEMTYPE][-1] == 'Y': v[self.ELEMTYPE] = v[self.ELEMTYPE][:-1]
+                
+            if v[self.ELEMNAME] == 'CHROM':
+                if k.find('RB-X') > -1:
+                    v[self.ELEMNAME] = v[self.ELEMNAME] + 'X'
+                    if v[self.ELEMTYPE][-1] == 'X': v[self.ELEMTYPE] = v[self.ELEMTYPE][:-1]
+                if k.find('RB-Y') > -1:
+                    v[self.ELEMNAME] = v[self.ELEMNAME] + 'Y'
+                    if v[self.ELEMTYPE][-1] == 'Y': v[self.ELEMTYPE] = v[self.ELEMTYPE][:-1]
+
+
+    def matchProperties(self, pv, prop=None):
         """
         check if all given properties are defined for this pv.
         """
+        if not self.__d.has_key(pv): return False
         if not prop: return True
+
         for  k, v in prop.items():
             if not self.__d[pv].has_key(k) or \
                     self.__d[pv][k] != v:
@@ -244,28 +116,54 @@ class ChannelFinderAgent:
 
         return True
 
-    def __matchTags(self, pv, tags = []):
+    def matchTags(self, pv, tags=None):
         """
         check if given tags are defined for this pv.
+
+        Example::
+
+          matchTags('SR:C30-MG:G01A{VCM:FH2}Fld-I', 'default.get')
+          matchTags('SR:C30-MG:G01A{VCM:FH2}Fld-I', ['default.get', 'orm'])
+          
+        if the pv does not exist, return False.
+
+        it always return True if pv exists but no tags are given.
         """
+        if not self.__d.has_key(pv): return False
         if not tags: return True
+
+        if isinstance(tags, str):
+            taglst = [ tags ]
+        elif isinstance(tags, list):
+            taglst = [tag for tag in tags]
+        else:
+            raise ValueError("tags can only be string or a list")
+
         for tag in tags:
-            if not tag in self.__d[pv]['~tags']: return False
+            if not tag in self.__d[pv][self.TAGSKEY]: return False
         return True
             
-    def addChannel(self, pv, props, tags):
-        raise RuntimeError("Agent does not add new channels")
+    def matchRecord(self, pv, propt=None, tags=None):
+        """
+        check if the given property and tags match with pv
+        
+        Example::
+        
+            matchRecord('SR:C30-MG:G01A{VCM:FH2}Fld-I', {'cell':'C30', 'girder':'G01'}, 'default.set')
+            matchRecord('SR:C30-MG:G01A{VCM:FH2}Fld-I', {'cell':'C30'}, ['default.set', 'orm'])
+        """
+        if not self.__d.has_key(pv): return False
 
-        if not self.__d.has_key(pv):
-            self.__d[pv] = {'~tags':[]}
-        #
-        if props:
-            for prop, val in props.items(): self.__d[pv][prop] = val
-
+        parentpropt = self.__d[pv]
+        if propt:
+            for k,v in propt.items():
+                if not parentpropt.has_key(k) or \
+                        parentpropt[k] != v: return False
         if tags:
-            for tag in tags: 
-                if tag in self.__d[pv]['~tags']: continue
-                self.__d[pv]['~tags'].append(tag)
+            for tag in tags:
+                if not tag in parentpropt[self.TAGSKEY]:
+                    return False
+        return True
 
     def __repr__(self):
         s = ""
@@ -279,7 +177,7 @@ class ChannelFinderAgent:
             s = s + '\n'
         return s
 
-    def getElementChannel(self, elemlist, prop = {}, tags = [], unique=True):
+    def getElementChannel(self, elemlist, prop=None, tags=None, unique=True):
         """
         each element in *elemlst* may have several PVs fits *prop* and *tags*.
 
@@ -368,12 +266,51 @@ class ChannelFinderAgent:
         print "reset %d trims", i
 
     def __cmp_elem_loc(self, a, b):
-        return self.__elemname.index(a) - self.__elemname.index(b)
+        # elements must exist
+        i = self.__d[self.__elempv[a][0]]['ordinal']
+        j = self.__d[self.__elempv[b][0]]['ordinal']
+        return i-j
 
     def sortElements(self, elemlst):
         ret = sorted(elemlst, self.__cmp_elem_loc )
-        for elem in ret:
-            print elem, self.__elemloc[self.__elemname.index(elem)]
+        #for elem in ret:
+        #    print elem, self.__d[self.__elempv[elem][0]]['s_position']
+        return ret
 
+    def getChannels(self):
+        return self.__d.keys()
+
+    def getChannelProperties(self, pv):
+        if not self.__d.has_key(pv): return None
+        return self.__d[pv]
+
+    def getElements(self):
+        return self.__elempv.keys()
+
+    def getElementProperties(self, elem, prop=None):
+        if not self.__elempv.has_key(elem):
+            return None
+
+        # consider only one PV, assuming records agrees on properties
+        pv = self.__elempv[elem][0]
+
+        # if it is None, return all properties of 
+        if prop == None or len(prop) == 0:
+            return self.__d[pv]
+
+        #
+        ret = {}
+        for p in prop:
+            if self.__d[pv].has_key(p): ret[p] = self.__d[pv][p]
+            else: ret[p] = None
+        return ret
+
+    def checkUniversalProperty(self, prop = ['elem_type']):
+        """
+        for element with several PVs, its properties are duplicated in
+        each record of channel finder server. This routine checkes whether
+        each record agrees with each other.
+        """
+        pass
 
 

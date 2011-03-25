@@ -45,11 +45,11 @@ def parseElementName(name):
 class Element:
     """Element"""
     def __init__(self, name = '', family = '', s_beg = 0.0, s_end = 0.0,
-                 effective_length = 0, cell = 0, girder = 0, symmetry = '',
+                 effective_length = 0, cell = '', girder = '', symmetry = '',
                  sequence = [0, 0]):
         self.index = -1
-        self.name = name
-        self.family = family
+        self.name = name[:]
+        self.family = family[:]
         self.s_beg = s_beg
         self.s_end = s_end
         self.len_eff = effective_length
@@ -72,6 +72,9 @@ class Twiss:
         
 class Lattice:
     """Lattice"""
+    # ginore those "element" when construct the lattice object
+    IGN = ['MCF', 'CHROM', 'TUNE', 'OMEGA', 'DCCT', 'CAVITY']
+
     def __init__(self):
         self.__group = {}
         # guaranteed in the order of s.
@@ -115,6 +118,74 @@ class Lattice:
         self.tune     = f['lat.tune']
         self.chromaticity = f['lat.chromaticity']
         f.close()
+
+    def importChannelFinderData(self, cfa):
+        """
+        call signature::
+        
+          importChannelFinderData(self, cfa)
+
+        .. seealso::
+
+          :class:`~hla.chanfinder.ChannelFinderAgent`
+
+        load info from channel finder server/data
+        """
+        elems = cfa.sortElements(cfa.getElements())
+        cnt = {'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+        # ignore MCF/TUNE/ORBIT ....
+        for e in elems:
+            prop = cfa.getElementProperties(e)
+            if prop[cfa.ELEMTYPE] in self.IGN: continue
+
+            #counting each family
+            if cnt.has_key(prop[cfa.ELEMTYPE]):
+                cnt[prop[cfa.ELEMTYPE]] += 1
+            else:
+                cnt[prop[cfa.ELEMTYPE]] = 0
+
+            #
+            #print prop
+            self.element.append(
+                Element(prop[cfa.ELEMNAME], prop[cfa.ELEMTYPE], 0.0,
+                        prop[cfa.SPOSITION], prop[cfa.LENGTH], prop[cfa.CELL], 
+                        prop[cfa.GIRDER], prop[cfa.ELEMSYM]))
+            self.element[-1].index = prop[cfa.ELEMIDX]
+            for g in [prop[cfa.ELEMTYPE], prop[cfa.CELL], prop[cfa.GIRDER],
+                      prop[cfa.ELEMSYM]]:
+                if self.__group.has_key(g):
+                    self.__group[g].append(prop[cfa.ELEMNAME])
+                else: self.__group[g] = [prop[cfa.ELEMNAME]]
+            
+        # adjust s_beg
+        for e in self.element:
+            e.s_beg = e.s_end - e.len_eff
+        #print "# import elements:", len(self.element)
+        #print cnt
+        
+        # since single element (BPM) can be both BPMX/BPMY, we need scan pv record again
+        for pv in cfa.getChannels():
+            prop = cfa.getChannelProperties(pv)
+            if not self.__group.has_key(prop[cfa.ELEMTYPE]):
+                self.__group[prop[cfa.ELEMTYPE]] = [prop[cfa.ELEMNAME]]
+            elif not prop[cfa.ELEMNAME] in self.__group[prop[cfa.ELEMTYPE]]:
+                self.__group[prop[cfa.ELEMTYPE]].append(prop[cfa.ELEMNAME])
+        
+        # adjust BPMX/BPMY, TRIMX/TRIMY
+        if not self.__group.has_key('TRIM'):
+            self.__group['TRIM'] = []
+        if self.__group.has_key('TRIMX'):
+            self.__group['TRIM'].extend(self.__group['TRIMX'])
+        if self.__group.has_key('TRIMY'):
+            self.__group['TRIM'].extend(self.__group['TRIMY'])
+
+        if not self.__group.has_key('BPM'):
+            self.__group['BPM'] = []
+        if self.__group.has_key('BPMX'):
+            self.__group['BPM'].extend(self.__group['BPMX'])
+        if self.__group.has_key('BPMY'):
+            self.__group['BPM'].extend(self.__group['BPMY'])
+        
 
     def importLatticeTable(self, lattable):
         """
@@ -473,6 +544,7 @@ class Lattice:
         if len(e0) > 1:
             raise ValueError("element %s is not unique" % element)
         e, s = self.getElements(group, point = 'end')
+        print e, s
 
         i1, i2 = 0, 0
         ret = [[element[:], s0]]
