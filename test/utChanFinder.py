@@ -19,25 +19,6 @@ class TestChanFinderAgent(unittest.TestCase):
         self.cfa.load('chanfinder.pkl')
         pass
 
-    def test_pvExists(self):
-        pvs = self.cfa.getChannels()
-        self.assertTrue(len(pvs) > 2000)
-
-        live, dead = [], []
-        n = 0
-        for k, v in enumerate(pvs):
-            n += 1
-            #print k, v, len(live), len(dead)
-            try:
-                x = caget(v.encode('ascii'), timeout=5)
-                live.append(v)
-            except:
-                dead.append(v)
-            self.assertEqual(n, len(live))
-
-        print "Live:", len(live), " Dead:", len(dead),
-        self.assertTrue(len(dead) == 0)
-
     def test_match_properties1(self):
         self.assertTrue(
             self.cfa.matchProperties(
