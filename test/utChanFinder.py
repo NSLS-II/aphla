@@ -20,7 +20,6 @@ class TestChanFinderAgent(unittest.TestCase):
         pass
 
     def test_pvExists(self):
-        return
         pvs = self.cfa.getChannels()
         self.assertTrue(len(pvs) > 2000)
 

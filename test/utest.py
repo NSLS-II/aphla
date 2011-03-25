@@ -1,3 +1,4 @@
+import sys, os
 import unittest
 
 import utChanFinder
@@ -15,4 +16,7 @@ suite.addTests(loader.loadTestsFromModule(utLattice))
 
 runner = unittest.TextTestRunner(verbosity=2)
 result = runner.run(suite)
+
+sys.exit(len(result.failures))
+
 
