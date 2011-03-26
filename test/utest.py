@@ -17,6 +17,7 @@ suite.addTests(loader.loadTestsFromModule(utLattice))
 runner = unittest.TextTestRunner(verbosity=2)
 result = runner.run(suite)
 
+print result
 sys.exit(len(result.failures))
 
 

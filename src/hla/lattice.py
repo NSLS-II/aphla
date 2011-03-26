@@ -313,6 +313,7 @@ class Lattice:
 
         self.tune[0], self.tune[1] = nux, nuy
         #print __file__, len(s), len(betax)
+
         # fix the Tracy bug by adding a new element at the end
         for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
                   phix, phiy]:
@@ -352,6 +353,7 @@ class Lattice:
             self.twiss[-1].phi[0,1]  = phiy[k]
             
         # set s_beg
+        #print self.twiss
             
     def init_virtac_group(self):
         """
@@ -392,7 +394,8 @@ class Lattice:
         list. None if the element in this list is not found.
         """
         if isinstance(elems, str):
-            return self.getElements(elems)
+            e, s = self.getElements(elems, point)
+            return s
         elif isinstance(elems, list):
             ret = [None] * len(elems)
             for elem in self.element:
@@ -615,10 +618,17 @@ class Lattice:
         return s
 
 
-    def getPhase(self, elemlst, loc = 'end'):
+    def getPhase(self, elem, loc = 'end'):
         """
         return phase
         """
+
+        if isinstance(elem, str):
+           elemlst = self.getElements(elem)
+        elif isinstance(elem, list):
+           elemlst = elem[:]
+        else:
+           raise ValueError("elem can only be string or list")
 
         idx = [-1] * len(elemlst)
         phi = np.zeros((len(elemlst), 2), 'd')
@@ -635,10 +645,17 @@ class Lattice:
                 phi[i, :] = self.twiss[k].phi[-1, :]
         return phi
 
-    def getBeta(self, elemlst, loc = 'end'):
+    def getBeta(self, elem, loc = 'end'):
         """
         return beta function
         """
+        if isinstance(elem, str):
+           elemlst = self.getElements(elem)
+        elif isinstance(elem, list):
+           elemlst = elem[:]
+        else:
+           raise ValueError("elem can only be string or list")
+
         idx = [-1] * len(elemlst)
         beta = np.zeros((len(elemlst), 2), 'd')
         for i,e in enumerate(self.element):
@@ -654,10 +671,17 @@ class Lattice:
                 beta[i, :] = self.twiss[k].beta[-1, :]
         return beta
 
-    def getEta(self, elemlst, loc = 'end'):
+    def getEta(self, elem, loc = 'end'):
         """
         return dispersion
         """
+        if isinstance(elem, str):
+           elemlst = self.getElements(elem)
+        elif isinstance(elem, list):
+           elemlst = elem[:]
+        else:
+           raise ValueError("elem can only be string or list")
+
 
         idx = [-1] * len(elemlst)
         eta = np.zeros((len(elemlst), 2), 'd')

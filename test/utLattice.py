@@ -25,12 +25,6 @@ class TestLattice(unittest.TestCase):
         self.lat.save('lattice.pkl')
         self.lat.load('lattice.pkl')
 
-        #
-        x, y = self.lat.getBeamlineProfile(0.0, 50)
-        print x, y
-        plt.plot(x, y, '-')
-        plt.savefig('test.png')
-        sys.exit(0)
 
     def test_elements(self):
         elem = self.lat.getElements('P*')
@@ -38,6 +32,7 @@ class TestLattice(unittest.TestCase):
         self.assertEqual(len(elem), 180)
         self.assertEqual(len(s), 180)
         
+        self.assertEqual(len(self.lat.getElements('*')), len(set(self.lat.getElements('*'))))
 
         s = self.lat.getLocations(['PH2G6C29B', 'CFYH2G1C30A', 'C'], point='end')
         self.assertEqual(len(s), 3)
@@ -105,14 +100,24 @@ class TestLattice(unittest.TestCase):
             self.assertTrue(nb[i][1] > nb[i-1][1])
 
     def test_twiss(self):
-        return
         self.assertEqual(len(self.lat.getTunes()), 2)
+        elem = self.lat.getElements('*')
+        #print self.lat.getBeta(elem)
+        
+        self.assertEqual(len(self.lat.getPhase(elem)), len(self.lat.getElements('*')))
+        self.assertEqual(len(self.lat.getPhase(elem)), len(self.lat.getElements('*')))
+        self.assertEqual(len(self.lat.getBeta(elem)), len(self.lat.getElements('*')))
+        self.assertEqual(len(self.lat.getBeta(elem)), len(self.lat.getElements('*')))
 
         phi = self.lat.getPhase('P*C01*')
-        beta = self.lat.getBeta('*')
-        s = self.lat.getLocations('*')
-        eta = self.lat.getDispersion('P*')
-        s2 = self.lat.getLocations('P*')
+        beta = self.lat.getBeta(elem)
+        s = self.lat.getLocations(elem, 'end')
+        elem2 = self.lat.getElements('P*')
+        eta = self.lat.getEta('P*')
+        s2 = self.lat.getLocations('P*', 'end')
+
+        #print len(s), len(eta), len(phi), len(beta), len(s2)
+        #print s2, eta
         
         plt.clf()
         plt.subplot(211)
@@ -162,7 +167,7 @@ class TestLattice(unittest.TestCase):
 
     def test_beamlinepfole(self):
         #
-        prof = lat.getBeamlineProfile(0.0, 30)
+        prof = self.lat.getBeamlineProfile(0.0, 30)
         for p in prof:
             plt.plot(p[0], p[1], p[2])
         #plt.plot([prof[0][0], prof[-1][0]], [0,0], 'k')
