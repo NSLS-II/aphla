@@ -11,7 +11,7 @@ import utAllPVs
 loader = unittest.TestLoader()
 
 suite = loader.loadTestsFromModule(utChanFinder)
-suite.addTests(loader.loadTestsFromModule(utAllPVs))
+#suite.addTests(loader.loadTestsFromModule(utAllPVs))
 suite.addTests(loader.loadTestsFromModule(utLattice))
 
 runner = unittest.TextTestRunner(verbosity=2)

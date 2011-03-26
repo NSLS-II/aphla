@@ -25,6 +25,13 @@ class TestLattice(unittest.TestCase):
         self.lat.save('lattice.pkl')
         self.lat.load('lattice.pkl')
 
+        #
+        x, y = self.lat.getBeamlineProfile(0.0, 50)
+        print x, y
+        plt.plot(x, y, '-')
+        plt.savefig('test.png')
+        sys.exit(0)
+
     def test_elements(self):
         elem = self.lat.getElements('P*')
         s    = self.lat.getLocations('P*', point='end')
@@ -153,7 +160,15 @@ class TestLattice(unittest.TestCase):
         plt.xlim([0, r[-1,0]/15.0])
         plt.savefig('test.png')
 
+    def test_beamlinepfole(self):
+        #
+        prof = lat.getBeamlineProfile(0.0, 30)
+        for p in prof:
+            plt.plot(p[0], p[1], p[2])
+        #plt.plot([prof[0][0], prof[-1][0]], [0,0], 'k')
+        plt.ylim([-2.5, 2.5])
+        plt.savefig('test_beamline_profile.png')
+
 if __name__ == "__main__":
     unittest.main()
-
 

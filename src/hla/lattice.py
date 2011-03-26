@@ -59,6 +59,24 @@ class Element:
         self.symmetry = symmetry
         self.sequence = sequence[:]
 
+    def profile(self, vscale=1.0):
+        b, e = self.s_beg, self.s_end
+        h = vscale
+        if self.family == 'QUAD':
+            return [b, b, e, e], [0, h, h, 0], 'k'
+        elif self.family == 'DIPOLE':
+            return [b, b, e, e, b, b, e, e], [0, h, h, -h, -h, h, h, 0], 'k'
+        elif self.family == 'SEXT':
+            return [b, b, e, e], [0, 1.25*h, 1.25*h, 0], 'k'
+        elif self.family in ['TRIMX', 'TRIMY']:
+            return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
+                [0, 0, h, 0, 0], 'r'
+        elif self.family in ['BPMX', 'BPMY']:
+            return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
+                [0, 0, h, 0, 0], 'b'        
+        else:
+            return [b, e], [0, 0], 'k'
+
 class Twiss:
     """twiss"""
     def __init__(self):
@@ -661,4 +679,19 @@ class Lattice:
         return tunes
         """
         return self.tune[0], self.tune[1]
+
+    def getBeamlineProfile(self, s1=0.0, s2=1e10):
+        prof = []
+        for elem in self.element:
+            if elem.s_end < s1: continue
+            elif elem.s_beg > s2: continue
+            x1, y1, c = elem.profile()
+            prof.append((x1, y1, c))
+        ret = [prof[0]]
+        for p in prof[1:]:
+            if abs(p[0][0] - ret[-1][0][-1]) >  1e-10:
+                ret.append(([ret[-1][0][-1], p[0][0]], [0, 0], 'k'))
+            ret.append(p)
+        return ret
+
 
