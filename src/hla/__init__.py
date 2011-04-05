@@ -29,11 +29,12 @@ Modules include:
         defines orbit retrieve routines
 """
 
-import os, sys
+import os, sys, re
 
 # are we using virtual ac
 virtac = True
 INF = 1e30
+ORBIT_WAIT=5
 
 #from chanfinder import ChannelFinderAgent
 #from lattice import Lattice
@@ -61,65 +62,30 @@ from latmanage import *
 from current import *
 from rf import *
 
-def init(lat):
-    """Initialize HLA"""
-    cfg_pkl = os.path.join(hlaroot, "machine", root[lat], 'hla.pkl')
-    if not os.path.exists(cfg_pkl):
-        raise ValueError("pkl files can not be found: " + cfg_pkl)
+"""Initialize HLA"""
+cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
+if not os.path.exists(cfg_pkl):
+    raise ValueError("pkl files can not be found: " + cfg_pkl)
 
-    print "HLA main configure: ", cfg_pkl
-    _cfa.load(cfg_pkl)
-    _lat.load(cfg_pkl)
+print "HLA main configure: ", cfg_pkl
+_lat.load(cfg_pkl, mode='virtac')
+#_lat.mode = 'virtac'
+#_lat.save(cfg_pkl)
+
+
+cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
+if not os.path.exists(cfa_pkl):
+    raise ValueError("pkl files can not be found: " + cfa_pkl)
+
+print "HLA channel finder configure: ", cfa_pkl
+_cfa.load(cfa_pkl)
+
+# set RF frequency
+caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+
 
 #
-# initialize the configuration 
-# init("nsls2")
-
-def clean_init():
-    """Clean initialization, will call init
-
-    .. warning::
-
-      Only used for testing software while the real machine is not built
-      yet. --L.Y.
-    """
-    d = chanfinder.ChannelFinderAgent()
-    #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
-    #hlaroot = os.path.normpath(os.path.join(pt, "..", ".."))
-    print "Root dir: ", hlaroot
-    lattable = os.path.join(hlaroot, 'machine/nsls2/lat_conf_table.txt')
-    d.importLatticeTable(lattable)
-    d.import_virtac_pvs()
-    d.fix_bpm_xy()
-    #print d.getElements("P*")
-    #d.clear_trim_settings()
-
-    #d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
-    d.save(os.path.join(hlaroot, 'machine', 'nsls2', 'hla.pkl'))
-    #print d
-
-    # load lattice
-    lat = lattice.Lattice()
-    lat.importLatticeTable(lattable)
-    lat.init_virtac_twiss()
-    lat.init_virtac_group()
-    lat.save(os.path.join(hlaroot, 'machine', 'nsls2', 'hla.pkl'))
-    #print lat
-
-    # set RF frequency
-    caput('SR:C00-RF:G00<RF:00>Freq-SP', 499.680528631)
-
-    init("nsls2")
-
-def check():
-    """
-    .. note::
-
-        Used by Lingyun Yang for testing
-    """
-    _cfa.checkMissingChannels('/home/lyyang/devel/nsls2-hla/machine/nsls2/pvlist_2011_03_03.txt')
-
-
+#
 def eget(element, full = False, tags = [], unique = False):
     """easier get"""
     # some tags + the "default"
@@ -183,3 +149,18 @@ def reset_trims():
 #from meastwiss import *
 from measorm import *
 from orbit import *
+
+
+def removeLatticeMode(mode):
+    cfg = cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
+    f = shelve.open(cfg, 'c')
+    modes = []
+    #del f['lat.twiss']
+    #for k in f.keys(): print k
+    for k in f.keys():
+        if re.match(r'lat\.\w+\.mode', k): print "mode:", k[4:-5]
+    if not mode:
+        pref = "lat."
+    else:
+        pref = 'lat.%s.' % mode
+    f.close()

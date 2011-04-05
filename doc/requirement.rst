@@ -14,18 +14,19 @@ The items marked with (*) will get more focus, since they usually contains
 more physics or algorithm. Parameters tuning or even new algorithms may be
 needed. 
 
-:hla:`Software implemented as part of the HLA is marked`. Finished software/scripts are :hladone:`also marked`.
+:hla:`Software implemented as part of the HLA is marked`. Finished
+software/scripts are :hladone:`also marked`.
 
 General Operation
 ------------------
 
 - Overall status page (warning when read/set are different too much ?)
+    - The status includes beam information, and hardware status including
+      magnet and its power supply, vacuum, RF, and so on.
     - The applications will provide overall status of the whole machine,
       and give warnings when any abnormal beam behaviour is detected, for
       example a readback differs from setting point larger than its
-      threshhold. The status includes beam information, and hardware
-      status including magnet and its power supply, vacuum, RF, and so on.
-- Status, Alarm and warning monitor
+      threshhold. 
     - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)`
 - Permit system monitor and control
 - Data logger and data display
@@ -88,7 +89,8 @@ General Operation
 Beam Diagnostics
 ------------------------------
 
-- :hladone:`Measure the orbit response matrix, with flexible number of BPMs and correctors.`
+- :hladone:`Measure the orbit response matrix, with flexible number of
+  BPMs and correctors.`
     - :hla:`Import/Export orbit response matrix for orbit correction`
     - :hla:`Import/Export ORM for feedback`
 
@@ -103,9 +105,10 @@ Beam Diagnostics
       variation`
     - :hla:`BPM testing stability, polarity.`
     - BPM current dependency, resolution.
-    - :hla:`Absolute orbit offset and orbit offset with respect to golden orbit`
+    - :hla:`Absolute orbit offset and orbit offset with respect to golden
+      orbit`
 
-- :hla:`Beam orbit control`
+- :hla:`Static beam orbit control`
     - :hla:`Edit golden orbit control (also affect feedback system)`
         - Interplay with feedback system when creating local bump: update
           the reference orbit to feedback ? or share same orbit difference
@@ -118,6 +121,8 @@ Beam Diagnostics
     - :hla:`Enable/disable correctors for orbit correction and feedback`
 
 - :hla:`Turn-by-turn BPM data`
+    - :hla:`closed orbit established using corrector and single shot BPM
+      data`
     - :hla:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
     - :hla:`Realtime tune based on turn-by-turn BPM`
     - :hla:`BPM buttons readout.`
@@ -212,20 +217,16 @@ previous measurement.
 :hla:`Linear Lattice Fitting (LOCO)`
 -------------------------------------
 
-- analyze quadrupole gradient error.
-- analyze BPM gain error.
+- analyze quadrupole gradient/tilt error.
+- analyze BPM gain/tilt error.
 
 It requires:
 
 - Designed orbit response matrix (ROM)
 - change specified correctors 
 - get closed orbit change at specified BPM
-- Simulator. This is required for online lattice fitting,
-  e.g. LOCO. Tacy-v3 will be a choice.
-
-This application needs mathematical package to do minimization and
-singular value decomposition (SVD). It also requires simulator for
-fitting.
+- Simulator and interface to Python. This is required for online lattice
+  fitting, e.g. LOCO. Tacy-v3 will be a choice.
 
 
 

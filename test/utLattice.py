@@ -21,9 +21,9 @@ class TestLattice(unittest.TestCase):
         self.lat.mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
         self.lat.mergeGroups('BPM', ['BPMX', 'BPMY'])
         self.lat.init_virtac_twiss()
-        self.lat.mode = 'default'
+        self.lat.mode = 'virtac'
         self.lat.save('lattice.pkl')
-        self.lat.load('lattice.pkl')
+        self.lat.load('lattice.pkl', mode='virtac')
 
 
     def test_elements(self):

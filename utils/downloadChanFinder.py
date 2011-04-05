@@ -30,18 +30,21 @@ if __name__ == "__main__":
         d[channel.Name] = {'~tags': []}
         props = channel.getProperties()
         tags  = channel.getTags()
-        for k, v in props.items():
-            #print "    %s:" % k, v, type(v)
-            if k in conv_int:
-                d[channel.Name][k] = int(v)
-            elif k in conv_float:
-                d[channel.Name][k] = float(v)
-            elif k == 'cell' and v[0] != 'C':
-                d[channel.Name][k] = u'C'+v
-            elif k == 'girder' and v[0] != 'G':
-                d[channel.Name][k] = u'G'+v
-            else:
-                d[channel.Name][k] = v
+        if not props:
+            print "Empty prop: ", channel.Name
+        else:
+            for k, v in props.items():
+                #print "    %s:" % k, v, type(v)
+                if k in conv_int:
+                    d[channel.Name][k] = int(v)
+                elif k in conv_float:
+                    d[channel.Name][k] = float(v)
+                elif k == 'cell' and v[0] != 'C':
+                    d[channel.Name][k] = u'C'+v
+                elif k == 'girder' and v[0] != 'G':
+                    d[channel.Name][k] = u'G'+v
+                else:
+                    d[channel.Name][k] = v
         if tags:
             print "    TAGS:",
             for t in tags:

@@ -121,16 +121,22 @@ class Lattice:
         f[pref+'chromaticity'] = self.chromaticity
         f.close()
 
-    def load(self, fname, mode = 'default'):
+    def load(self, fname, mode = ''):
         """
         call signature::
         
-          load(self, fname, mode='default')
+          load(self, fname, mode='')
 
         load the lattice from binary data
         """
         f = shelve.open(fname, 'r')
-        pref = 'lat.%s.' % mode
+        #modes = []
+        #for k in f.keys():
+        #    if re.match(r'lat\.\w+\.mode', k): print "mode:", k
+        if not mode:
+            pref = "lat."
+        else:
+            pref = 'lat.%s.' % mode
         self.__group  = f[pref+'group']
         self.element  = f[pref+'element']
         self.twiss    = f[pref+'twiss']
