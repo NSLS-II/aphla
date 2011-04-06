@@ -15,7 +15,7 @@ Response Matrix Measurement
 import cadict
 
 import os, sys, time
-from os.path import join
+from os.path import join, splitext
 from cothread.catools import caget, caput
 import numpy as np
 import shelve
@@ -29,11 +29,8 @@ class Orm:
     Orbit Response Matrix
     """
     tsleep = 25
+    fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, bpm, trim):
-        #print trim, getSpChannels(trim)
-        #print _cfa
-        #print _cfa.getElementChannel(trim)
-        #print _cfa.getElementChannel(trim, {'handle': 'set'}, ['default'])
 
         # points for trim setting when calc dx/dkick
         npts = 4
@@ -44,7 +41,6 @@ class Orm:
             
             #
             bpmrb  = [v[1] for v in getRbChannels(bpm)]
-            #print trimsp, trimrb, bpmrb
 
             self.bpm  = [v for v in bpm]
             self.trim = [v for v in trim]
@@ -66,7 +62,17 @@ class Orm:
         self.__rawkick = np.zeros((ntrim, npts+2), 'd')
         self.__m = np.zeros((nbpm, ntrim), 'd')
 
-    def save(self, filename, format = 'HDF5'):
+    def __io_format(self, filename, format):
+        rt, ext = splitext(filename)
+        if format == '' and ext in self.fmtdict.keys():
+            fmt = self.fmtdict[ext]
+        elif format:
+            fmt = format
+        else:
+            fmt = 'HDF5'
+        return fmt
+
+    def save(self, filename, format = ''):
         """
         save the orm data into one file:
 
@@ -80,10 +86,11 @@ class Orm:
         rawkick  raw trim strength change
         mask     matrix for ignoring certain ORM terms
         =======  =====================================
-
-        current default format: HDF5 
         """
-        if format == 'HDF5':
+
+        fmt = self.__io_format(filename, format)
+
+        if fmt == 'HDF5':
             import h5py
             f = h5py.File(filename, 'w')
             dst = f.create_dataset("orm", data = self.__m)
@@ -99,7 +106,7 @@ class Orm:
             dst = grp.create_dataset("mask", data = self.__mask)
 
             f.close()
-        elif format == 'shelve':
+        elif fmt == 'shelve':
             import shelve
             f = shelve.open(filename, 'c')
             f['orm.m'] = self.__m
@@ -114,11 +121,13 @@ class Orm:
         else:
             raise ValueError("not supported file format: %s" % format)
 
-    def load(self, filename, format = 'HDF5'):
+    def load(self, filename, format = ''):
         """
         load orm data from binary file
         """
-        if format == 'HDF5':
+        fmt = self.__io_format(filename, format)
+            
+        if fmt == 'HDF5':
             import h5py
             f = h5py.File(filename, 'r')
             self.bpm = [ b for b in f["bpm"]]
@@ -138,7 +147,7 @@ class Orm:
             self.__rawmatrix[:,:,:] = f["_rawdata_"]["matrix"][:,:,:]
             self.__mask = np.zeros((nbpm, ntrim))
             self.__mask[:,:] = f["_rawdata_"]["mask"][:,:]
-        elif format == 'shelve':
+        elif fmt == 'shelve':
             f = shelve.open(filename, 'r')
             self.bpm = f["orm.bpm"]
             self.trim = f["orm.trim"]
@@ -399,6 +408,19 @@ class Orm:
             i1 = self.trim.index(t)
             caput(self.__trimsp[i1], 0.0)
         pass
+
+    def rename(self, src, dst):
+        for e in self.trim:
+            if e == src: e = dst
+        for e in self.bpm:
+            if e == src: e = dst
+
+    def __str__(self):
+        s = "Orbit Response Matrix\n" \
+            " trim %d, bpm %d, matrix (%d, %d)" % \
+            (len(self.trim), len(self.bpm),
+             np.shape(self.__m)[0], np.shape(self.__m)[1])
+        return s
 
 def measOrbitRm(bpm, trim):
     """Measure the beta function by varying quadrupole strength"""

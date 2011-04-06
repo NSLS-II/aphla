@@ -67,7 +67,7 @@ cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
 if not os.path.exists(cfg_pkl):
     raise ValueError("pkl files can not be found: " + cfg_pkl)
 
-print "HLA main configure: ", cfg_pkl
+print "= HLA main configure: ", cfg_pkl
 _lat.load(cfg_pkl, mode='virtac')
 #_lat.mode = 'virtac'
 #_lat.save(cfg_pkl)
@@ -77,13 +77,14 @@ cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
 if not os.path.exists(cfa_pkl):
     raise ValueError("pkl files can not be found: " + cfa_pkl)
 
-print "HLA channel finder configure: ", cfa_pkl
+print "= HLA channel finder configure: ", cfa_pkl
 _cfa.load(cfa_pkl)
 
 # set RF frequency
 from cothread import catools, Timedout
 try:
     catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+    print "= Network is fine, using online PVs"
 except Timedout:
     NETWORK_DOWN = True
     pass
@@ -170,3 +171,27 @@ def removeLatticeMode(mode):
     else:
         pref = 'lat.%s.' % mode
     f.close()
+
+
+def levenshtein_distance(first, second):
+    """Find the Levenshtein distance between two strings."""
+    if len(first) > len(second):
+        first, second = second, first
+    if len(second) == 0:
+        return len(first)
+    first_length = len(first) + 1
+    second_length = len(second) + 1
+    distance_matrix = [[0] * second_length for x in range(first_length)]
+    for i in range(first_length):
+       distance_matrix[i][0] = i
+    for j in range(second_length):
+       distance_matrix[0][j]=j
+    for i in xrange(1, first_length):
+        for j in range(1, second_length):
+            deletion = distance_matrix[i-1][j] + 1
+            insertion = distance_matrix[i][j-1] + 1
+            substitution = distance_matrix[i-1][j-1]
+            if first[i-1] != second[j-1]:
+                substitution += 1
+            distance_matrix[i][j] = min(insertion, deletion, substitution)
+    return distance_matrix[first_length-1][second_length-1]

@@ -195,6 +195,8 @@ class ChannelFinderAgent:
         for elem in elemlst:
             pvl = self.__getElementChannels(elem, prop, tags)
             if unique and len(pvl) > 1:
+                for pp in pvl:
+                    print pp, self.__d[pp]
                 raise ValueError("Channel of %s is not unique: %s" % (elem, ', '.join(pvl)))
             elif unique:
                 ret.extend(pvl)
@@ -245,8 +247,8 @@ class ChannelFinderAgent:
         if not self.__elempv.has_key(elem): return None
         ret = []
         for pv in self.__elempv[elem]:
-            if self.__matchProperties(pv, prop) and \
-                    self.__matchTags(pv, tags):
+            if self.matchProperties(pv, prop) and \
+                    self.matchTags(pv, tags):
                 ret.append(pv)
         return ret
 

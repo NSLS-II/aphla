@@ -10,8 +10,6 @@ import matplotlib.pylab as plt
 
 class TestConf(unittest.TestCase):
     def setUp(self):
-        #print "HLA clean init() "
-        #hla.clean_init()
         pass
 
     def test_measure_orm(self):
