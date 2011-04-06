@@ -35,7 +35,7 @@ import os, sys, re
 virtac = True
 INF = 1e30
 ORBIT_WAIT=5
-
+NETWORK_DOWN=False
 #from chanfinder import ChannelFinderAgent
 #from lattice import Lattice
 #
@@ -81,7 +81,13 @@ print "HLA channel finder configure: ", cfa_pkl
 _cfa.load(cfa_pkl)
 
 # set RF frequency
-caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+from cothread import catools, Timedout
+try:
+    catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+except Timedout:
+    NETWORK_DOWN = True
+    pass
+
 
 
 #

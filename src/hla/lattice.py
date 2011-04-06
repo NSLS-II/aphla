@@ -432,13 +432,16 @@ class Lattice:
         for e in self.element:
             #print group, e.name, e.family,
             if e.name in ret: continue
-            if fnmatch(e.name, group) or fnmatch(e.family, group) or\
+            if fnmatch(e.name, group) or fnmatch(e.family, group) or \
                     (self.__group.has_key(group) and e.name in self.__group[group]):
                 ret.append(e.name)
                 if s == 'begin': loc.append(e.s_beg)
                 elif s == 'end': loc.append(e.s_end)
                 elif s == 'middle': loc.append(e.s_mid)
                 else: loc.append(e.s_end)
+            else:
+                #print e.name
+                pass
         if point: return ret, loc
         else: return ret
 
