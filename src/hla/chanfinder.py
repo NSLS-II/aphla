@@ -165,6 +165,16 @@ class ChannelFinderAgent:
                     return False
         return True
 
+    def _repr_channel(self, pv):
+        s = pv + '\n'
+        if not self.__d.has_key(pv): return s
+        rec = self.__d[pv]
+        for prop in rec:
+            if prop == '~tags': continue
+            s = s + " %s: %s\n" % (prop, rec[prop])
+        s = s + " " + ', '.join(rec['~tags']) + '\n'
+        return s
+
     def __repr__(self):
         s = ""
         for k,v in self.__d.items():
@@ -176,6 +186,9 @@ class ChannelFinderAgent:
             s = s + ', '.join(v['~tags'])
             s = s + '\n'
         return s
+
+    def channel(self, pv):
+        return self._repr_channel(pv)
 
     def getElementChannel(self, elemlist, prop=None, tags=None, unique=True):
         """

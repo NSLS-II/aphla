@@ -11,6 +11,8 @@ from cothread.catools import caget
 import matplotlib.pylab as plt
 
 class TestChanFinderAgent(unittest.TestCase):
+    _eget = 'default.get'
+    _eput = 'default.put'
 
     def setUp(self):
         self.assertTrue(os.path.exists('chanfinder.pkl'))
@@ -60,9 +62,15 @@ class TestChanFinderAgent(unittest.TestCase):
                 self.assertTrue(self.cfa.matchProperties(pv2, {'ordinal':idx}))
 
     def test_match_tags(self):
+        print self.cfa.channel('SR:C30-MG:G04A{VCM:FM1}Fld-SP')
+        print self.cfa.channel('SR:C30-MG:G01A{HCM:FH2}Fld-I')
+
         self.assertTrue(
             self.cfa.matchTags(
                 'SR:C30-MG:G04A{VCM:FM1}Fld-SP'))
+        self.assertTrue(
+            self.cfa.matchTags('SR:C30-MG:G01A{HCM:FH2}Fld-I',
+                               tags = [self._eget]))
 
     def test_properties(self):
         prop = self.cfa.getElementProperties('PH1G2C30A')

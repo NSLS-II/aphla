@@ -13,13 +13,13 @@ class TestConf(unittest.TestCase):
         pass
 
     def test_measure_orm(self):
-        return True
         #trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
         #print hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
-        trimx = ['CFXL2G1C07A', 'CFXL2G1C11A', 'CXH1G6C15B']
+        trimx = ['FXL2G1C07A', 'FXL2G1C11A', 'CXH1G6C15B']
         #print hla.getSpChannels(trimx)
 
         bpmx = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
+        self.assertTrue(len(bpmx) > 0)
 
         trimxsp = [v[0] for v in hla.getSpChannels(trimx)]
         trimxrb = [v[0] for v in hla.getRbChannels(trimx)]
@@ -87,7 +87,7 @@ class TestConf(unittest.TestCase):
         orm.checkOrbitReproduce(bpm, trim, kick)
         
 if __name__ == "__main__":
-    hla.clean_init()
+    #hla.clean_init()
     unittest.main()
 
 
