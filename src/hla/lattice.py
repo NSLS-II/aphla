@@ -17,7 +17,8 @@ from . import INF
 import numpy as np
 from fnmatch import fnmatch
 
-from cothread.catools import caget, caput
+#from cothread.catools import caget, caput
+from catools import caget, caput
 
 def parseElementName(name):
     """

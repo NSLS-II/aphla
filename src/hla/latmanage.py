@@ -6,7 +6,7 @@
 """
 
 from . import _lat, _cfa
-from cothread.catools import caget, caput
+from catools import caget, caput
 
 #
 
@@ -29,23 +29,6 @@ def getLocations(group, s='end'):
         return loc
     else:
         raise ValueError("parameter *group* must be a list of string")
-
-def getRbChannels(elemlist, tags = ['default']):
-    """
-    get the pv names for a list of elements
-    
-    .. warning::
-
-      elements like BPM will return both H/V channels. In case we want
-      unique, use channelfinder.
-    """
-    
-    return _cfa.getElementChannel(elemlist, {'handle': 'get'}, tags = tags, unique=False)
-
-def getSpChannels(elemlist):
-    """get the pv names for a list of elements"""
-    
-    return _cfa.getElementChannel(elemlist, {'handle': 'set'}, tags = ['default'], unique=False)
 
 def addGroup(group):
     """
@@ -248,3 +231,16 @@ def saveMode(self, mode, dest):
     raise NotImplementedError()
 
 
+def removeLatticeMode(mode):
+    cfg = cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
+    f = shelve.open(cfg, 'c')
+    modes = []
+    #del f['lat.twiss']
+    #for k in f.keys(): print k
+    for k in f.keys():
+        if re.match(r'lat\.\w+\.mode', k): print "mode:", k[4:-5]
+    if not mode:
+        pref = "lat."
+    else:
+        pref = 'lat.%s.' % mode
+    f.close()

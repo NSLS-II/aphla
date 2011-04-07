@@ -11,19 +11,19 @@
 
 """
 
-from cothread.catools import caget, caput
+from catools import caget, caput
 
 def getRfFrequency():
     """Get the RF frequency"""
-    return caget("SR:C00-RF:G00<RF:00>Freq-RB")
+    return caget("SR:C00-RF:G00{RF:00}Freq-RB")
 
 def putRfFrequency(f):
     """set the rf frequency"""
-    caput("SR:C00-RF:G00<RF:00>Freq-SP", f)
+    caput("SR:C00-RF:G00{RF:00}Freq-SP", f)
 
 def getRfVoltage():
     """Return RF voltage"""
-    return caget("SR:C00-RF:G00<RF:00>Volt-RB")
+    return caget("SR:C00-RF:G00{RF:00}Volt-RB")
 
 
 

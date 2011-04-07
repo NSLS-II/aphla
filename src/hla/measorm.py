@@ -16,13 +16,14 @@ import cadict
 
 import os, sys, time
 from os.path import join, splitext
-from cothread.catools import caget, caput
+#from cothread.catools import caget, caput
 import numpy as np
 import shelve
 
 from . import _lat
 from . import _cfa
 from . import getSpChannels, getRbChannels
+from catools import caget, caput
 
 class Orm:
     """
@@ -186,13 +187,14 @@ class Orm:
         for i,kx in enumerate(kstrength[1:]):
             caput(kickerpv, kx)
             if verbose: 
-                print "Setting trim: ", kickerpv, kx, caget(kickerpv)
+                print "Setting trim: ", kickerpv, kx, caget(kickerpv), 
+                print "  waiting %d sec" % self.tsleep
             time.sleep(self.tsleep)
             for j,bpm in enumerate(bpmpvlist):
                 if mask[j]: ret[i+1,j] = 0
                 else: ret[i+1,j] = caget(bpm)
                 if j < 3 or j >= len(bpmpvlist)-3:
-                    print "  %4d" % j, bpm, ret[i+1,j]
+                    print "  %4d" % j, bpm, "%13.4e" % ret[i+1,j]
                 sys.stdout.flush()
             print ""
         # 4 points
@@ -441,27 +443,4 @@ def measChromRm():
     measure chromaticity response matrix
     """
     pass
-
-def test():
-    x = []
-    t0 = 1299032723.0
-    for k in [.0, -2e-6, -1e-6, 1e-6, 2e-6, 0.]:
-        #caput('SR:C30-MG:G01A<VCM:H2>Fld-SP', k)
-        caput('SR:C01-MG:G04A<VCM:M>Fld-SP', k)
-        t1 = time.time()
-        x1 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
-        for i in range(200):
-            #time.sleep(4)
-            #print time.time()
-            x2 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
-            #time.sleep(4)
-            if abs(x2 - x1) > 1e-12:
-                print k, "%4d" % i, time.time() - t1, x1
-                break
-            x1 = x2
-            time.sleep(3)
-            #t2 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
-        #print k, t1, t2
-        #x.append([k, t1, t2])
-    print x
 

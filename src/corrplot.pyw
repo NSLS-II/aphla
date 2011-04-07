@@ -14,8 +14,8 @@ import qrc_resources
 import numpy as np
 import time
 import hla
-
-from cothread.catools import caget, caput
+from hla import caget, caput
+#from cothread.catools import caget, caput
 
 class Spy(Qt.QObject):
     

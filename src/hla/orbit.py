@@ -16,8 +16,9 @@
 """
 
 import numpy as np
-from cothread.catools import caget, caput, camonitor
+#from cothread.catools import caget, caput, camonitor
 from . import _lat, eget
+from catools import caget, caput
 
 def getFullOrbit(group = '*', sequence = None):
     """Return orbit"""

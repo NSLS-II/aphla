@@ -11,13 +11,14 @@
 
 """
 
-from cothread.catools import caget, caput
+#from cothread.catools import caget, caput
 import numpy as np
 import datetime, time
+from catools import caget, caput
 
 def getCurrent():
     """Get the current"""
-    return caget("SR:C00-BI:G00<DCCT:00>CUR-RB")
+    return caget("SR:C00-BI:G00{DCCT:00}CUR-RB")
 
 def getLifetime(verbose = 0):
     """

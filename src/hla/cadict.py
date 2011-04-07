@@ -18,7 +18,6 @@ into a list.
 
 from xml.dom import minidom
 import sys, copy
-from cothread.catools import caget, caput
 import re
 
 class CAElement:

@@ -13,7 +13,7 @@
 
 import os
 from os.path import join
-from cothread.catools import caget, caput
+from catools import caget, caput
 
 def measBeta(elem, # element or list
              neighbor_quad = True, # use nearby Quad
@@ -23,8 +23,6 @@ def measBeta(elem, # element or list
     print pv
     print os.environ['EPICS_CA_MAX_ARRAY_BYTES']
     print "env", os.environ['EPICS_CA_ADDR_LIST']
-    #print caget('SR:C30-MG:G02A<QDP:H1>Fld-RB')
-    #print caget(u'SR:C30-MG:G02A<QDP:H1>Fld-RB')
     print caget(pv[0].encode('ascii', 'ignore'))
 # testing ...
 
