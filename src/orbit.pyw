@@ -777,6 +777,7 @@ def main(args):
 
 # Admire!
 if __name__ == '__main__':
+    #hla.clean_init()
     main(sys.argv)
 
 # Local Variables: ***
