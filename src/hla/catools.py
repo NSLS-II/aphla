@@ -30,7 +30,7 @@ def caput(pvs, values, timeout=5, throw=True):
         raise ValueError("Unknown type " + str(type(pvs)))
 
     try:
-        return ct.caput(pvs2, values, timeout=timeout, throw=throw)
+        return ct.caput(pvs2, values, timeout=timeout, wait=True, throw=throw)
     except cothread.Timedout:
         print "TIMEOUT: ", pvs
         sys.exit(0)

@@ -131,13 +131,13 @@ def test_2(dt = 20, dup=True):
     # stabilize the system
     print "\n# waiting for stable beam ..."
     for i in range(7):
-        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', 0.0)
+        caput('SR:C01-MG:G04A{VCor:M}Fld-SP', 0.0)
         time.sleep(3)
         print "# %d" % i, caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
     print "# beam is stable now, if output is not changing much"
     
     t0 = time.time()
-    k0 = caget('SR:C01-MG:G04A{VCM:M}Fld-SP')
+    k0 = caget('SR:C01-MG:G04A{VCor:M}Fld-SP')
     dk = [1e-6, 2e-6, 1e-6, 0.0, -1e-6, -2e-6, -1e-6, 0.0]
     print "\n# if waiting=%d sec is long enough for Tracy," % dt
     print "# two dx should be same"
@@ -146,35 +146,37 @@ def test_2(dt = 20, dup=True):
     for i in range(6):
         k = k0 + dk[i%len(dk)]
         
-        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k)
+        caput('SR:C01-MG:G04A{VCor:M}Fld-SP', k, wait=True)
         time.sleep(dt)
+        t1 = time.time()
         x2 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
         
         if dup:
-            caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k)
+            caput('SR:C01-MG:G04A{VCor:M}Fld-SP', k)
             time.sleep(4)
+            t2 = time.time()
             x3 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
 
         if dup:
-            print "%3d kick=% .2e dx=% .4e dx=% .4e" % (i, k, x2, x3)
+            print "%3d kick=% .2e dx=% .4e dx=% .4e" % (i, k, x2, x3), t2-t0
         else:
-            print "%3d kick=% .2e dx=% .4e" % (i, k, x2)
+            print "%3d kick=% .2e dx=% .4e" % (i, k, x2), t1 - t0
 
     # stabilize the beam, I believe 3sec*7 is good enough
     print "\n# waiting for stable beam"
     for i in range(7):
-        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', 0.0)
+        caput('SR:C01-MG:G04A{VCor:M}Fld-SP', 0.0)
         time.sleep(3)
         print "# %d" % i, caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
     print "# beam is stable now, if output is not changing much"
 
 if __name__ == "__main__":
-    test_2(dt=10, dup=True)
+    test_2(dt=6, dup=True)
     print "# in the above output, second column of dx is more correct"
     print ""
     print "--- Now next experiment ..."
     print ""
-    test_2(dt=25, dup=False)
+    test_2(dt=10, dup=False)
     #hla.clean_init()
     #hla.reset_trims()
     #test_1()

@@ -29,7 +29,7 @@ class Orm:
     """
     Orbit Response Matrix
     """
-    tsleep = 25
+    tsleep = 10
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, bpm, trim):
 
