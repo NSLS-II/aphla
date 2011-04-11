@@ -254,7 +254,7 @@ class ChannelFinderAgent:
         ret = []
         for k,v in self.__d.items():
             #print elem,
-            if self.__matchProperties(k, prop) and self.__matchTags(k, tags):
+            if self.matchProperties(k, prop) and self.matchTags(k, tags):
                 ret.append(k)
         return ret
 
@@ -287,9 +287,6 @@ class ChannelFinderAgent:
         #for elem in ret:
         #    print elem, self.__d[self.__elempv[elem][0]]['s_position']
         return ret
-
-    def getChannels(self):
-        return self.__d.keys()
 
     def getChannelProperties(self, pv):
         if not self.__d.has_key(pv): return None
@@ -386,12 +383,18 @@ class ChannelFinderAgent:
              if not self.__devpv.has_key(dev): self.__devpv[dev] = []
              elemprop = {self.ELEMNAME: phy, self.ELEMTYPE: grp, self.DEVNAME: dev,
                          self.ELEMIDX: idx, self.SPOSITION: s2, self.LENGTH: L}
+             tags = []
+             if grp in ['BPMX', 'TRIMX']: tags.append('X')
+             elif grp in ['BPMY', 'TRIMY']: tags.append('Y')
              if rb != 'NULL':
                  # read back
                  if not self.__d.has_key(rb):
                      self.__d[rb] = {self.TAGSKEY: []}
                  elemprop.update(self.__parsePvCellGirder(rb))
-                 self.updateChannel(rb, elemprop, ['default.eget'])  
+                 if rb.find('}GOLDEN') < 0 and rb.find('}BBA') < 0:
+                     tags.append('default.eget')
+                 # for BPM
+                 self.updateChannel(rb, elemprop, tags)  
                  self.__elempv[phy].append(rb)
                  self.__devpv[dev].append(rb)
              if sp != 'NULL':
@@ -399,7 +402,8 @@ class ChannelFinderAgent:
                  if not self.__d.has_key(sp):
                      self.__d[sp] = {self.TAGSKEY: []}
                  elemprop.update(self.__parsePvCellGirder(sp))
-                 self.updateChannel(sp, elemprop, ['default.eput'])       
+                 tags.append('default.eput')
+                 self.updateChannel(sp, elemprop, tags)       
                  self.__elempv[phy].append(sp)
                  self.__devpv[dev].append(sp)
                  

@@ -1,16 +1,7 @@
 import sys, os
 import unittest
 
-if not 'HLA_ROOT' in os.environ:
-    rt,ext = os.path.splitext(os.path.realpath(sys.argv[0]))
-    HLA_ROOT = os.path.split(os.path.split(rt)[0])[0]
-    os.environ['HLA_ROOT'] = HLA_ROOT
-else:
-    HLA_ROOT = os.environ['HLA_ROOT']
-    
-print "= HLA root directory: ", HLA_ROOT
-sys.path.append(os.path.join(HLA_ROOT, 'src'))
-sys.path.append(os.path.join(HLA_ROOT, 'test'))
+from conf import *
 
 import utChanFinder
 import utLattice
@@ -22,8 +13,8 @@ import utAllPVs
 loader = unittest.TestLoader()
 
 suite = loader.loadTestsFromModule(utChanFinder)
-#suite.addTests(loader.loadTestsFromModule(utAllPVs))
 suite.addTests(loader.loadTestsFromModule(utLattice))
+#suite.addTests(loader.loadTestsFromModule(utAllPVs))
 
 runner = unittest.TextTestRunner(verbosity=2)
 result = runner.run(suite)

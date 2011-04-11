@@ -8,35 +8,42 @@ import numpy as np
 from cothread.catools import caget, caput
 import matplotlib.pylab as plt
 
+from conf import *
+
 class TestConf(unittest.TestCase):
     def setUp(self):
+        wait_for_svr()
         pass
 
+    def tearDown(self):
+        reset_svr()
+
     def test_measure_orm(self):
-        #trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
-        #print hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
         trimx = ['FXL2G1C07A', 'CXH1G6C15B']
         #print hla.getSpChannels(trimx)
         for tr in trimx:
             self.assertTrue(len(hla.getLocations(tr)) == 1)
-        print hla.getRbChannels(trimx)
-        print hla.getSpChannels(trimx)
+
+        self.assertEqual(len(hla.getRbChannels(trimx)), 2)
+        self.assertEqual(len(hla.getSpChannels(trimx)), 2)
 
         bpmx = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
         self.assertTrue(len(bpmx) > 0)
+        print hla.getSpChannels(trimx, tags=['default.eput', 'X'])
+        print hla.getRbChannels(trimx, tags=['default.eget', 'X'])
+        trimxsp = [v[0] for v in \
+                       hla.getSpChannels(trimx, tags=['default.eput', 'X'])]
+        trimxrb = [v[0] for v in \
+                   hla.getRbChannels(trimx, tags=['default.eget', 'X'])]
+        bpmxrb  = [v[0] for v in \
+                   hla.getRbChannels(bpmx, tags=['default.eget', 'X'])]
+        print bpmxrb, trimxsp, trimxrb
 
-        trimxsp = [v[0] for v in hla.getSpChannels(trimx)]
-        trimxrb = [v[0] for v in hla.getRbChannels(trimx)]
-        bpmxrb  = [v[0] for v in hla.getRbChannels(bpmx)]
-
-        for i in range(len(trimx)):
-            print i, trimx[i], trimxsp[i], trimxrb[i]
-        for i in range(len(bpmx)):
-            print i, bpmx[i], bpmxrb[i]
+        self.assertEqual(len(trimx), len(trimxsp))
+        self.assertEqual(len(trimx), len(trimxrb))
+        self.assertEqual(len(bpmx), len(bpmxrb))
 
         orm = hla.measOrbitRm(bpm = bpmx, trim = trimx)
-        #orm = hla.measorm.Orm(bpm = [], trim = [])
-        #orm.load('test.hdf5')
         orm.checkLinearity()
         pass
 
@@ -45,7 +52,7 @@ class TestConf(unittest.TestCase):
         return True
         orm = hla.measorm.Orm(bpm = [], trim = [])
         orm.load('test.hdf5')
-        orm.checkLinearity()
+        orm.checkLinearity(plot=True)
         pass
 
     def test_merge(self):
@@ -117,11 +124,11 @@ def test_1():
     for k in [k0, k0-1e-6, k0-.5e-6, k0+.5e-6, k0+1e-6, k0]:
         t1 = time.time()
         #caput('SR:C30-MG:G01A<VCM:H2>Fld-SP', k)
-        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k)
+        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k, wait=True)
         time.sleep(hla.ORBIT_WAIT)
         x3 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
 
-        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k)
+        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k, wait=True)
         time.sleep(hla.ORBIT_WAIT)
         x2 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
         print k, x3, x2
@@ -171,15 +178,15 @@ def test_2(dt = 20, dup=True):
     print "# beam is stable now, if output is not changing much"
 
 if __name__ == "__main__":
-    test_2(dt=6, dup=True)
-    print "# in the above output, second column of dx is more correct"
-    print ""
-    print "--- Now next experiment ..."
-    print ""
-    test_2(dt=10, dup=False)
+    #test_2(dt=6, dup=True)
+    #print "# in the above output, second column of dx is more correct"
+    #print ""
+    #print "--- Now next experiment ..."
+    #print ""
+    #test_2(dt=10, dup=False)
     #hla.clean_init()
     #hla.reset_trims()
     #test_1()
     #test_delay()
-    #unittest.main()
+    unittest.main()
 

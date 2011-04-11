@@ -10,8 +10,7 @@ from cothread.catools import caget
 
 import matplotlib.pylab as plt
 
-CFAPKL=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'chanfinder.pkl')
-LATCONF=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'lat_conf_table.txt')
+from conf import *
 
 class TestChanFinderAgent(unittest.TestCase):
     """
@@ -99,7 +98,31 @@ class TestChanFinderAgent(unittest.TestCase):
         elem2 = self.cfa.sortElements([elem[i] for i in idx])
         for i in range(2, len(elem2)):
             self.assertTrue(elem2[i-1] < elem2[i])
-        
+
+    def test_default_eget(self):
+        for s in open(LATCONF).readlines()[1:]:
+            idx = int(s.split()[0])
+            pv1 = s.split()[1]
+            pv2 = s.split()[2]
+            phy = s.split()[3]
+            L   = float(s.split()[4])
+            spos = float(s.split()[5])
+            grp  = s.split()[6]
+            dev  = s.split()[7]
+            
+            pvget = self.cfa.getChannels(prop={'elem_name': phy}, tags=['default.eget'])
+            pvput = self.cfa.getChannels(prop={'elem_name': phy}, tags=['default.eput'])
+            if grp in [ 'BPMX', 'BPMY' ]:
+                self.assertEqual(len(pvget), 2)
+                self.assertEqual(len(pvput), 0)
+            elif grp in ['SEXT'] and phy == 'SM2HG4C29B':
+                pass
+            elif grp in ['CHROM', 'OMEGA', 'MCF', 'TUNE', 'DCCT']:
+                pass
+            else:
+                self.assertEqual(len(pvget), 1)
+                self.assertEqual(len(pvput), 1)
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -15,10 +15,9 @@ def getRbChannels(elemlist, tags = ['default.eget']):
     
     return _cfa.getElementChannel(elemlist, None, tags = tags, unique=False)
 
-def getSpChannels(elemlist):
+def getSpChannels(elemlist, tags = ['default.eput']):
     """get the pv names for a list of elements"""
-    
-    return _cfa.getElementChannel(elemlist, None, tags = ['default.eput'], unique=False)
+    return _cfa.getElementChannel(elemlist, None, tags = tags, unique=False)
 
 #
 #
@@ -73,7 +72,6 @@ def eput(element, value):
     for i, pv in enumerate(pvl):
         caput(pv, val[i])
         
-#print caget(['SR:C01-MG:G02A<VCM:L1>Fld-RB', 'SR:C01-MG:G02A<HCM:L2>Fld-RB'])
 
 def reset_trims():
     trimx = _lat.getElementsCgs('TRIMX')
