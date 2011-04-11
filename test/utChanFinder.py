@@ -10,6 +10,8 @@ from cothread.catools import caget
 
 import matplotlib.pylab as plt
 
+CFAPKL=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'chanfinder.pkl')
+LATCONF=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'lat_conf_table.txt')
 
 class TestChanFinderAgent(unittest.TestCase):
     """
@@ -23,11 +25,9 @@ class TestChanFinderAgent(unittest.TestCase):
     _eput = 'default.eput'
 
     def setUp(self):
-        self.assertTrue(os.path.exists('chanfinder.pkl'))
-
+        self.assertTrue(os.path.exists(CFAPKL))
         self.cfa = hla.chanfinder.ChannelFinderAgent()
-        self.cfa.load('chanfinder.pkl')
-        #print self.cfa.channel('SR:C30-MG:G02A{HCM:H}Fld-I')
+        self.cfa.load(CFAPKL)
         pass
 
     def test_match_properties1(self):
@@ -42,9 +42,9 @@ class TestChanFinderAgent(unittest.TestCase):
         
         
     def test_lat_conf_table(self):
-        self.assertTrue(os.path.exists('lat_conf_table.txt'))
+        self.assertTrue(os.path.exists(LATCONF))
 
-        for s in open('lat_conf_table.txt').readlines()[1:]:
+        for s in open(LATCONF).readlines()[1:]:
             idx = int(s.split()[0])
             pv1 = s.split()[1]
             pv2 = s.split()[2]
