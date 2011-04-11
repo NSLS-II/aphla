@@ -637,7 +637,7 @@ void SetMpoleBsys(SIP_PYOBJECT,SIP_PYOBJECT,SIP_PYOBJECT); //, SIP_PYOBJECT);
         int kidnum;
 	int *kidlist;
 
-        if (PyString_AsStringAndSize(a0, &ptr, &length) == -1 || !PyLong_Check(a1) || !PyFloat_Check(a2))
+        if (PyString_AsStringAndSize(a0, &ptr, &length) == -1 || !PyLong_Check(a1) || !PyNumber_Check(a2))
         {
            sipIsErr = 1;
         }
@@ -758,7 +758,7 @@ void set_L(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
 	long Fnum, Knum;
 	double len;
-       if ((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2))
+       if ((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2))
         {
           sipIsErr = 1;
         }
@@ -782,7 +782,7 @@ void set_L_all(SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long Fnum;
         double len;
-       if ((Fnum=PyLong_AsLong(a0))<0 || !PyFloat_Check(a1))
+       if ((Fnum=PyLong_AsLong(a0))<0 || !PyNumber_Check(a1))
         {
           sipIsErr = 1;
         }
@@ -807,7 +807,7 @@ void set_dL(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
 	long Fnum, Knum;
 	double dl;
-       if ((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2))
+       if ((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2))
         {
           sipIsErr = 1;
         }
@@ -904,7 +904,7 @@ void set_bn_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, 
 	int Fnum, Knum, n;
 	double bn, an;
 
-	if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyFloat_Check(a3) || !PyFloat_Check(a4))
+	if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -934,7 +934,7 @@ void set_dbn_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT,
         int Fnum, Knum, n;
         double dbn, dan;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyFloat_Check(a3) || !PyFloat_Check(a4))
+        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -964,7 +964,7 @@ void set_bn_design_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
         int Fnum, Knum, n;
         double bn, an;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
           sipIsErr = 1;
         }
@@ -995,7 +995,7 @@ void set_dbn_design_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
         int Fnum, n;
         double dbn, dan;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
           sipIsErr = 1;
         }
@@ -1025,7 +1025,7 @@ void set_bnL_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT,
         int Fnum, Knum, n;
         double bnL, anL;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyFloat_Check(a3) || !PyFloat_Check(a4))
+        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -1056,7 +1056,7 @@ void set_dbnL_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT
         int Fnum, Knum, n;
         double dbnL, danL;
                           
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyFloat_Check(a3) || !PyFloat_Check(a4))
+        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -1086,7 +1086,7 @@ void set_dbnL_design_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
         int Fnum, n;
         double dbnL, danL;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
           sipIsErr = 1;
         }
@@ -1117,7 +1117,7 @@ void set_bnL_design_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
         int Fnum, Knum, n;
         double bnL, anL;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
           sipIsErr = 1;
         }
@@ -1148,7 +1148,7 @@ void set_bnL_design_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
         int type, n;
         double bnL, anL;
 
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
           sipIsErr = 1;
         }
@@ -1167,7 +1167,7 @@ void set_bnL_sys_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
         int Fnum, Knum, n;
         double bnL, anL;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyFloat_Check(a3) || !PyFloat_Check(a4))
+        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -1198,7 +1198,7 @@ void set_bnL_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
         int Fnum, n;
         double bnL, anL;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
           sipIsErr = 1;
         }
@@ -1228,7 +1228,7 @@ void set_bnL_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
         int type, n;
         double bnL, anL;
 
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
           sipIsErr = 1;
         }
@@ -1248,7 +1248,7 @@ void set_bnL_rms_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
         double bnL, anL;
 	bool new_rnd=false;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyFloat_Check(a3) || !PyFloat_Check(a4) || !PyBool_Check(a5))
+        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4) || !PyBool_Check(a5))
         {
           sipIsErr = 1;
         }
@@ -1280,7 +1280,7 @@ void set_bnL_rms_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP
         double bnL, anL;
         bool new_rnd=false;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3) || !PyBool_Check(a4))
+        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyBool_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -1313,7 +1313,7 @@ void set_bnL_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
         double bnL, anL;
         bool new_rnd=false; 
 
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3) || !PyBool_Check(a4))
+        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyBool_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -1331,9 +1331,9 @@ void set_bnL_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 void set_bnr_sys_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         int Fnum, Knum, n;
-        double bnL, anL;
+        double bnr, anr;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyFloat_Check(a3) || !PyFloat_Check(a4))
+        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -1349,9 +1349,9 @@ void set_bnr_sys_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 	  }
 	  else
 	  {
-            bnL = PyFloat_AsDouble(a3);
-            anL = PyFloat_AsDouble(a4);
-            set_bnr_sys_elem(Fnum, Knum, n, bnL, anL);
+            bnr = PyFloat_AsDouble(a3);
+            anr = PyFloat_AsDouble(a4);
+            set_bnr_sys_elem(Fnum, Knum, n, bnr, anr);
 	  }
         }
 %End
@@ -1361,11 +1361,13 @@ void set_bnr_sys_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 void set_bnr_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         int Fnum, n;
-        double bnL, anL;
+        double bnr, anr;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
+          printf("PyFloat Check Failed\n");
           sipIsErr = 1;
+	  return NULL;
         }
         else
         {
@@ -1379,9 +1381,9 @@ void set_bnr_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 	  }
 	  else
 	  {
-            bnL = PyFloat_AsDouble(a2);
-            anL = PyFloat_AsDouble(a3);
-            set_bnr_sys_fam(Fnum, n, bnL, anL);
+            bnr = PyFloat_AsDouble(a2);
+            anr = PyFloat_AsDouble(a3);
+            set_bnr_sys_fam(Fnum, n, bnr, anr);
 	  }
         }
 %End
@@ -1392,17 +1394,17 @@ void set_bnr_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 void set_bnr_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         int type, n;
-        double bnL, anL;
+        double bnr, anr;
 
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3))
+        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
         {
           sipIsErr = 1;
         }
         else
         {
-          bnL = PyFloat_AsDouble(a2);
-          anL = PyFloat_AsDouble(a3);
-          set_bnr_sys_type(type, n, bnL, anL);
+          bnr = PyFloat_AsDouble(a2);
+          anr = PyFloat_AsDouble(a3);
+          set_bnr_sys_type(type, n, bnr, anr);
         }
 %End
 
@@ -1411,10 +1413,10 @@ void set_bnr_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 void set_bnr_rms_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         int Fnum, Knum, n;
-        double bnL, anL;
+        double bnr, anr;
         bool new_rnd=false;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyFloat_Check(a3) || !PyFloat_Check(a4) || !PyBool_Check(a5))
+        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4) || !PyBool_Check(a5))
         {
           sipIsErr = 1;
         }
@@ -1430,10 +1432,10 @@ void set_bnr_rms_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 	  }
 	  else
 	  {
-            bnL = PyFloat_AsDouble(a3);
-            anL = PyFloat_AsDouble(a4);
+            bnr = PyFloat_AsDouble(a3);
+            anr = PyFloat_AsDouble(a4);
             if (a5 == Py_True) new_rnd=true;
-            set_bnr_rms_elem(Fnum, Knum, n, bnL, anL, new_rnd);
+            set_bnr_rms_elem(Fnum, Knum, n, bnr, anr, new_rnd);
 	  }
         }
 %End
@@ -1443,10 +1445,10 @@ void set_bnr_rms_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 void set_bnr_rms_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         int Fnum, n;
-        double bnL, anL;
+        double bnr, anr;
         bool new_rnd=false;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3) || !PyBool_Check(a4))
+        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyBool_Check(a4))
         {
           sipIsErr = 1;
         }
@@ -1462,10 +1464,10 @@ void set_bnr_rms_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP
 	  }
 	  else
 	  {
-            bnL = PyFloat_AsDouble(a2);
-            anL = PyFloat_AsDouble(a3);
+            bnr = PyFloat_AsDouble(a2);
+            anr = PyFloat_AsDouble(a3);
             if (a4 == Py_True) new_rnd=true;
-            set_bnr_rms_fam(Fnum, n, bnL, anL, new_rnd);
+            set_bnr_rms_fam(Fnum, n, bnr, anr, new_rnd);
 	  }
         }
 %End
@@ -1476,19 +1478,19 @@ void set_bnr_rms_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP
 void set_bnr_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         int type, n;
-        double bnL, anL;
+        double bnr, anr;
         bool new_rnd=false;
 
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyFloat_Check(a2) || !PyFloat_Check(a3) || !PyBool_Check(a4))
+        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyBool_Check(a4))
         {
           sipIsErr = 1;
         }
         else
         {
-          bnL = PyFloat_AsDouble(a2);
-          anL = PyFloat_AsDouble(a3);
+          bnr = PyFloat_AsDouble(a2);
+          anr = PyFloat_AsDouble(a3);
           if (a4 == Py_True) new_rnd=true;
-          set_bnr_rms_type(type, n, bnL, anL, new_rnd);
+          set_bnr_rms_type(type, n, bnr, anr, new_rnd);
         }
 %End
 
