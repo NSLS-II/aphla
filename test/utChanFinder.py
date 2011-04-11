@@ -25,11 +25,11 @@ class TestChanFinderAgent(unittest.TestCase):
     def test_match_properties1(self):
         self.assertTrue(
             self.cfa.matchProperties(
-                'SR:C30-MG:G02A{HCM:H}Fld-I',
+                'SR:C30-MG:G02A{HCor:H}Fld-I',
                 {'cell':'C30', 'girder':'G02'}))
         self.assertTrue(
             self.cfa.matchProperties(
-                'SR:C30-MG:G02A{HCM:H}Fld-I',
+                'SR:C30-MG:G02A{HCor:H}Fld-I',
                 {'elem_name': 'CXHG2C30A', 'elem_type':'TRIMX'}))
         
         
@@ -54,9 +54,18 @@ class TestChanFinderAgent(unittest.TestCase):
             #if prpt: print "'%s' '%d' '%s'" % (phy, prpt['ordinal'], prpt['elem_name']), grp
             #sys.stdout.flush()
             if pv1 != 'NULL':
-                self.assertTrue(self.cfa.matchProperties(pv1, {'elem_name':phy}))
+                try:
+                    self.assertTrue(self.cfa.matchProperties(pv1, {'elem_name':phy}))
+                except AssertionError:
+                    print phy, self.cfa.channel(pv1)
+                    raise AssertionError("%s != %s" % (phy, self.cfa.channel(pv1)))
+
                 self.assertTrue(self.cfa.matchProperties(pv1, {'elem_type':grp}))
-                self.assertTrue(self.cfa.matchProperties(pv1, {'ordinal':idx}))
+                try:
+                    self.assertTrue(self.cfa.matchProperties(pv1, {'ordinal':idx}))
+                except AssertionError:
+                    print idx, self.cfa.channel(pv1)
+
             if pv2 != 'NULL':
                 self.assertTrue(self.cfa.matchProperties(pv2, {'elem_name':phy}))
                 self.assertTrue(self.cfa.matchProperties(pv2, {'elem_type':grp}))
@@ -68,9 +77,9 @@ class TestChanFinderAgent(unittest.TestCase):
 
         self.assertTrue(
             self.cfa.matchTags(
-                'SR:C30-MG:G04A{VCM:FM1}Fld-SP'))
+                'SR:C30-MG:G04A{VFCor:FM1}Fld-SP'))
         self.assertTrue(
-            self.cfa.matchTags('SR:C30-MG:G01A{HCM:FH2}Fld-I',
+            self.cfa.matchTags('SR:C30-MG:G01A{HFCor:FH2}Fld-I',
                                tags = [self._eget]))
 
     def test_properties(self):
