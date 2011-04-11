@@ -10,15 +10,19 @@ from cothread.catools import caget
 import matplotlib
 import matplotlib.pylab as plt
 
+HLAPKL=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'hla.pkl')
+CFAPKL=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'chanfinder.pkl')
+LATCONF=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'lat_conf_table.txt')
+
 class TestLattice(unittest.TestCase):
     def setUp(self):
-        self.assertTrue(os.path.exists('chanfinder.pkl'))
+        self.assertTrue(os.path.exists(CFAPKL))
 
         self.cfa = hla.chanfinder.ChannelFinderAgent()
-        self.cfa.load('chanfinder.pkl')
+        self.cfa.load(CFAPKL)
         self.lat = hla.lattice.Lattice()
         #self.lat.importChannelFinderData(self.cfa)
-        self.lat.load('hla.pkl', mode='virtac')
+        self.lat.load(HLAPKL, mode='virtac')
         self.lat.mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
         self.lat.mergeGroups('BPM', ['BPMX', 'BPMY'])
         #self.lat.init_virtac_twiss()
