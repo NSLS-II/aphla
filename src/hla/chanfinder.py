@@ -195,7 +195,7 @@ class ChannelFinderAgent:
             if t in self.__d[pv][self.TAGSKEY]: continue
             self.__d[pv][self.TAGSKEY].append(t)
 
-    def getElementChannel(self, elemlist, prop=None, tags=None, unique=True):
+    def getElementChannel(self, elemlist, prop=None, tags=None, unique=False):
         """
         each element in *elemlst* may have several PVs fits *prop* and *tags*.
 

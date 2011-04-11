@@ -1,6 +1,16 @@
 import sys, os
 import unittest
 
+if not 'HLA_ROOT' in os.environ:
+    rt,ext = os.path.splitext(os.path.realpath(sys.argv[0]))
+    HLA_ROOT = os.path.split(os.path.split(rt)[0])[0]
+else:
+    HLA_ROOT = os.environ['HLA_ROOT']
+    
+print "HLA root directory: ", HLA_ROOT
+sys.path.append(os.path.join(HLA_ROOT, 'src'))
+sys.path.append(os.path.join(HLA_ROOT, 'test'))
+
 import utChanFinder
 import utLattice
 import utAllPVs
