@@ -511,3 +511,12 @@ ul.keywordmatches li.goodmatch a {
     text-decoration:line-through;
 }
 
+.hla {
+    color: #FF3300;
+    font-weight: bold;
+}
+
+.hladone {
+    color: gray;
+    text-decoration:line-through;
+}

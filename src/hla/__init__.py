@@ -29,12 +29,13 @@ Modules include:
         defines orbit retrieve routines
 """
 
-import os, sys
+import os, sys, re
 
 # are we using virtual ac
 virtac = True
 INF = 1e30
-
+ORBIT_WAIT=8
+NETWORK_DOWN=False
 #from chanfinder import ChannelFinderAgent
 #from lattice import Lattice
 #
@@ -42,6 +43,9 @@ INF = 1e30
 root={
     "nsls2" : "nsls2"
 }
+
+# local catools
+from catools import *
 
 import lattice
 _lat = lattice.Lattice()
@@ -60,126 +64,39 @@ hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
 from latmanage import *
 from current import *
 from rf import *
+from hlalib import *
 
-def init(lat):
-    """Initialize HLA"""
-    cfg_pkl = os.path.join(hlaroot, "machine", root[lat], 'hla.pkl')
-    if not os.path.exists(cfg_pkl):
-        raise ValueError("pkl files can not be found: " + cfg_pkl)
+"""Initialize HLA"""
+cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
+if not os.path.exists(cfg_pkl):
+    raise ValueError("pkl files can not be found: " + cfg_pkl)
 
-    print "HLA main configure: ", cfg_pkl
-    _cfa.load(cfg_pkl)
-    _lat.load(cfg_pkl)
-
-#
-# initialize the configuration 
-# init("nsls2")
-
-def clean_init():
-    """Clean initialization, will call init
-
-    .. warning::
-
-      Only used for testing software while the real machine is not built
-      yet. --L.Y.
-    """
-    d = chanfinder.ChannelFinderAgent()
-    #d.importXml('/home/lyyang/devel/nsls2-hla/machine/nsls2/main.xml')
-    #hlaroot = os.path.normpath(os.path.join(pt, "..", ".."))
-    print "Root dir: ", hlaroot
-    lattable = os.path.join(hlaroot, 'machine/nsls2/lat_conf_table.txt')
-    d.importLatticeTable(lattable)
-    d.import_virtac_pvs()
-    d.fix_bpm_xy()
-    #print d.getElements("P*")
-    #d.clear_trim_settings()
-
-    #d.checkMissingChannels(hlaroot + 'machine/nsls2/pvlist_2011_03_03.txt')
-    d.save(os.path.join(hlaroot, 'machine', 'nsls2', 'hla.pkl'))
-    #print d
-
-    # load lattice
-    lat = lattice.Lattice()
-    lat.importLatticeTable(lattable)
-    lat.init_virtac_twiss()
-    lat.init_virtac_group()
-    lat.save(os.path.join(hlaroot, 'machine', 'nsls2', 'hla.pkl'))
-    #print lat
-
-    # set RF frequency
-    caput('SR:C00-RF:G00<RF:00>Freq-SP', 499.680528631)
-
-    init("nsls2")
-
-def check():
-    """
-    .. note::
-
-        Used by Lingyun Yang for testing
-    """
-    _cfa.checkMissingChannels('/home/lyyang/devel/nsls2-hla/machine/nsls2/pvlist_2011_03_03.txt')
+print "= HLA main configure: ", cfg_pkl
+_lat.load(cfg_pkl, mode='virtac')
+#_lat.mode = 'virtac'
+#_lat.save(cfg_pkl)
 
 
-def eget(element, full = False, tags = [], unique = False):
-    """easier get"""
-    # some tags + the "default"
-    chtags = ['default']
-    if tags: chtags.extend(tags)
-    #print __file__, tags, chtags
-    if isinstance(element, str):
-        ret = {}
-        elemlst = getElements(element)
-        pvl = _cfa.getElementChannel(elemlst, {'handle': 'get'}, 
-                                     chtags, unique = unique)
-        for i, pvs in enumerate(pvl):
-            if len(pvs) == 1:
-                ret[elemlst[i]] = caget(pvs[0])
-            elif len(pvs) > 1:
-                ret[elemlst[i]] = []
-                for pv in pvs:
-                    ret[elemlst[i]].append(caget(pv))
-            else: ret[elemlst[i]] = None
-            #print __file__, elemlst[i], pvs, _cfa.getElementChannel([elemlst[i]], unique = False)
-        if full:
-            return ret, pvl
-        else: return ret
-    elif isinstance(element, list):
-        ret = []
-        pvl = _cfa.getElementChannel(element, {'handle': 'get'}, chtags, unique = False)
-        for i, pv in enumerate(pvl):
-            if len(pv) == 1:
-                ret.append(caget(pv[0]))
-            elif len(pv) > 1:
-                ret.append(caget(pv))
-        if full: return ret, pvl
-        else: return ret
-    else:
-        raise ValueError("element can only be a list or group name")
+cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
+if not os.path.exists(cfa_pkl):
+    raise ValueError("pkl files can not be found: " + cfa_pkl)
 
+print "= HLA channel finder configure: ", cfa_pkl
+_cfa.load(cfa_pkl)
 
-def eput(element, value):
-    """
-    easier put
-    """
-    if isinstance(element, list) and len(element) != len(value):
-        raise ValueError("element list must have same size as value list")
-    elif isinstance(element, str):
-        val = [value]
-    else: val = value[:]
+# set RF frequency
+from cothread import catools, Timedout
+try:
+    catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+    print "= Network is fine, using online PVs"
+except Timedout:
+    NETWORK_DOWN = True
+    pass
 
-    pvl = _cfa.getElementChannel(element, {'handle': 'set'}, ['default'])
-    
-    for i, pv in enumerate(pvl):
-        caput(pv, val[i])
-        
-#print caget(['SR:C01-MG:G02A<VCM:L1>Fld-RB', 'SR:C01-MG:G02A<HCM:L2>Fld-RB'])
-
-def reset_trims():
-    trimx = getElements('TRIMX')
-    for e in trimx: eput(e, 0.0)
-    trimx = getElements('TRIMY')
-    for e in trimx: eput(e, 0.0)
 
 #from meastwiss import *
 from measorm import *
 from orbit import *
+
+
+

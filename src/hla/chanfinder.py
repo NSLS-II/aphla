@@ -12,7 +12,6 @@ from fnmatch import fnmatch
 from time import gmtime, strftime
 from lattice import parseElementName
 
-from cothread.catools import caget, caput
 
 class ChannelFinderAgent:
     """
@@ -34,10 +33,10 @@ class ChannelFinderAgent:
     TAGSKEY   = '~tags'
 
     def __init__(self):
-        self.__d = None
+        self.__d = {}
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
-        self.__elempv = None
-        self.__devpv = None
+        self.__elempv = {}
+        self.__devpv = {}
 
     def save(self, fname, dbmode = 'c'):
         """
@@ -165,6 +164,16 @@ class ChannelFinderAgent:
                     return False
         return True
 
+    def _repr_channel(self, pv):
+        s = pv + '\n'
+        if not self.__d.has_key(pv): return s
+        rec = self.__d[pv]
+        for prop in rec:
+            if prop == '~tags': continue
+            s = s + " %s: %s\n" % (prop, rec[prop])
+        s = s + " TAGS: [ " + ', '.join(rec['~tags']) + ' ]\n'
+        return s
+
     def __repr__(self):
         s = ""
         for k,v in self.__d.items():
@@ -172,10 +181,19 @@ class ChannelFinderAgent:
             for prop in v.keys():
                 if prop == '~tags': continue
                 s = s + " %s: %s\n" % (prop, v[prop])
-            s = s + " "
-            s = s + ', '.join(v['~tags'])
-            s = s + '\n'
+            s = s + " TAGS: " + ', '.join(v['~tags']) + '\n'
         return s
+
+    def channel(self, pv):
+        return self._repr_channel(pv)
+    
+    def updateChannel(self, pv, props={}, tags=[]):
+        for k,v in props.items():
+            if k == self.TAGSKEY: continue
+            self.__d[pv][k] = v
+        for t in tags:
+            if t in self.__d[pv][self.TAGSKEY]: continue
+            self.__d[pv][self.TAGSKEY].append(t)
 
     def getElementChannel(self, elemlist, prop=None, tags=None, unique=True):
         """
@@ -195,6 +213,8 @@ class ChannelFinderAgent:
         for elem in elemlst:
             pvl = self.__getElementChannels(elem, prop, tags)
             if unique and len(pvl) > 1:
+                for pp in pvl:
+                    print pp, self.__d[pp]
                 raise ValueError("Channel of %s is not unique: %s" % (elem, ', '.join(pvl)))
             elif unique:
                 ret.extend(pvl)
@@ -245,8 +265,8 @@ class ChannelFinderAgent:
         if not self.__elempv.has_key(elem): return None
         ret = []
         for pv in self.__elempv[elem]:
-            if self.__matchProperties(pv, prop) and \
-                    self.__matchTags(pv, tags):
+            if self.matchProperties(pv, prop) and \
+                    self.matchTags(pv, tags):
                 ret.append(pv)
         return ret
 
@@ -255,15 +275,6 @@ class ChannelFinderAgent:
             if self.__d.has_key(line.strip() ): continue
             print "Line: %d %s" % (i, line.strip())
         #print "-- DONE --"
-
-    def clear_trim_settings(self):
-        i = 0
-        for k, v in self.__d.items():
-            if v['handle'] == 'get': continue
-            if fnmatch(v['elementname'], 'C*'):
-                caput(k, 0.0)
-                i += 1
-        print "reset %d trims", i
 
     def __cmp_elem_loc(self, a, b):
         # elements must exist
@@ -313,4 +324,104 @@ class ChannelFinderAgent:
         """
         pass
 
+    def cleanup(self):
+        self.__d = {}
+        self.__elempv = {}
+        self.__devpv = {}
+        self.__cdata = ''
 
+    def __parsePvCellGirder(self, pv):
+        m = re.match(r".+:(C\d\d).+:(G\d\d)(.)", pv)
+        if not m: return {}
+        cell = m.group(1)
+        girder = m.group(2)
+        symm = m.group(3)
+        if not symm in ['A', 'B', 'a', 'b']: symm = ''
+        print pv, cell, girder, symm
+        return {self.CELL: cell, self.GIRDER: girder, self.ELEMSYM: symm}
+
+    def importLatticeTable(self, lattable):
+         """
+         call signature::
+         
+           importLatticeTable(self, lattable)
+ 
+         Import the table used for Tracy-VirtualIOC. The table has columns
+         in the following order:
+ 
+         =======   =============================================
+         Index     Description
+         =======   =============================================
+         1         element index in the whole beam line
+         2         channel for read back
+         3         channel for set point
+         4         element phys name (unique)
+         5         element length (effective)
+         6         s location of its exit
+         7         magnet family(type)
+         =======   =============================================
+ 
+         Data are deliminated by spaces.
+
+         """
+ 
+         #print "Importing file:", lattable
+         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
+         cnt = {'BPM':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+ 
+         f = open(lattable, 'r').readlines()
+         for s in f[1:]:
+             if s[0] == '#': continue
+             t = s.split()
+             idx  = int(t[0])     # index
+             rb   = t[1].strip()  # PV readback
+             sp   = t[2].strip()  # PV setpoint
+             phy  = t[3].strip()  # name
+             L    = float(t[4])   # length
+             s2   = float(t[5])   # s_end location
+             grp  = t[6].strip()  # group
+             dev  = t[7].strip()
+             # 
+             if not self.__elempv.has_key(phy): self.__elempv[phy] = []
+             if not self.__devpv.has_key(dev): self.__devpv[dev] = []
+             elemprop = {self.ELEMNAME: phy, self.ELEMTYPE: grp, self.DEVNAME: dev,
+                         self.ELEMIDX: idx, self.SPOSITION: s2, self.LENGTH: L}
+             if rb != 'NULL':
+                 # read back
+                 if not self.__d.has_key(rb):
+                     self.__d[rb] = {self.TAGSKEY: []}
+                 elemprop.update(self.__parsePvCellGirder(rb))
+                 self.updateChannel(rb, elemprop, ['default.eget'])  
+                 self.__elempv[phy].append(rb)
+                 self.__devpv[dev].append(rb)
+             if sp != 'NULL':
+                 # set point
+                 if not self.__d.has_key(sp):
+                     self.__d[sp] = {self.TAGSKEY: []}
+                 elemprop.update(self.__parsePvCellGirder(sp))
+                 self.updateChannel(sp, elemprop, ['default.eput'])       
+                 self.__elempv[phy].append(sp)
+                 self.__devpv[dev].append(sp)
+                 
+         # need to update elempv and devpv
+         # remove lost ones
+         for elem,pvlst in self.__elempv.items():
+             for pv in pvlst:
+                 if self.__d[pv][self.ELEMNAME] != elem:
+                     self.__elempv[pv].remove(elem)
+         for dev,pvlst in self.__devpv.items():
+             for pv in pvlst:
+                 if self.__d[pv][self.DEVNAME] != dev:
+                     self.__devpv[pv].remove(dev)
+         # add new ones
+         for pv, props in self.__d.items():
+             if props.has_key(self.ELEMNAME):
+                 elem = props[self.ELEMNAME]
+                 if not pv in self.__elempv[elem]:
+                     self.__elempv[elem].append(pv)
+             if props.has_key(self.DEVNAME):
+                 dev = props[self.DEVNAME]
+                 if not pv in self.__devpv[dev]:
+                     self.__devpv[dev].append(pv)
+         # done!
+                 

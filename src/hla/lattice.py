@@ -17,7 +17,8 @@ from . import INF
 import numpy as np
 from fnmatch import fnmatch
 
-from cothread.catools import caget, caput
+#from cothread.catools import caget, caput
+from catools import caget, caput
 
 def parseElementName(name):
     """
@@ -59,6 +60,24 @@ class Element:
         self.symmetry = symmetry
         self.sequence = sequence[:]
 
+    def profile(self, vscale=1.0):
+        b, e = self.s_beg, self.s_end
+        h = vscale
+        if self.family == 'QUAD':
+            return [b, b, e, e], [0, h, h, 0], 'k'
+        elif self.family == 'DIPOLE':
+            return [b, b, e, e, b, b, e, e], [0, h, h, -h, -h, h, h, 0], 'k'
+        elif self.family == 'SEXT':
+            return [b, b, e, e], [0, 1.25*h, 1.25*h, 0], 'k'
+        elif self.family in ['TRIMX', 'TRIMY']:
+            return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
+                [0, 0, h, 0, 0], 'r'
+        elif self.family in ['BPMX', 'BPMY']:
+            return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
+                [0, 0, h, 0, 0], 'b'        
+        else:
+            return [b, e], [0, 0], 'k'
+
 class Twiss:
     """twiss"""
     def __init__(self):
@@ -81,7 +100,7 @@ class Lattice:
         self.element = []
         # same order of element
         self.twiss = []
-        self.mode = ''
+        self.mode = 'undefined'
         self.tune = [ 0.0, 0.0]
         self.chromaticity = [0.0, 0.0]
 
@@ -94,29 +113,37 @@ class Lattice:
         save the lattice into binary data, using writing *dbmode*
         """
         f = shelve.open(fname, dbmode)
-        f['lat.group']   = self.__group
-        f['lat.element'] = self.element
-        f['lat.twiss']   = self.twiss
-        f['lat.mode']    = self.mode
-        f['lat.tune']    = self.tune
-        f['lat.chromaticity'] = self.chromaticity
+        pref = "lat.%s." % self.mode
+        f[pref+'group']   = self.__group
+        f[pref+'element'] = self.element
+        f[pref+'twiss']   = self.twiss
+        f[pref+'mode']    = self.mode
+        f[pref+'tune']    = self.tune
+        f[pref+'chromaticity'] = self.chromaticity
         f.close()
 
-    def load(self, fname, mode = 'default'):
+    def load(self, fname, mode = ''):
         """
         call signature::
         
-          load(self, fname, mode='default')
+          load(self, fname, mode='')
 
         load the lattice from binary data
         """
         f = shelve.open(fname, 'r')
-        self.__group  = f['lat.group']
-        self.element  = f['lat.element']
-        self.twiss    = f['lat.twiss']
-        self.mode     = f['lat.mode']
-        self.tune     = f['lat.tune']
-        self.chromaticity = f['lat.chromaticity']
+        #modes = []
+        #for k in f.keys():
+        #    if re.match(r'lat\.\w+\.mode', k): print "mode:", k
+        if not mode:
+            pref = "lat."
+        else:
+            pref = 'lat.%s.' % mode
+        self.__group  = f[pref+'group']
+        self.element  = f[pref+'element']
+        self.twiss    = f[pref+'twiss']
+        self.mode     = f[pref+'mode']
+        self.tune     = f[pref+'tune']
+        self.chromaticity = f[pref+'chromaticity']
         f.close()
 
     def importChannelFinderData(self, cfa):
@@ -163,7 +190,8 @@ class Lattice:
         #print "# import elements:", len(self.element)
         #print cnt
         
-        # since single element (BPM) can be both BPMX/BPMY, we need scan pv record again
+        # since single element (BPM) can be both BPMX/BPMY, we need scan
+        # pv record again
         for pv in cfa.getChannels():
             prop = cfa.getChannelProperties(pv)
             if not self.__group.has_key(prop[cfa.ELEMTYPE]):
@@ -171,21 +199,31 @@ class Lattice:
             elif not prop[cfa.ELEMNAME] in self.__group[prop[cfa.ELEMTYPE]]:
                 self.__group[prop[cfa.ELEMTYPE]].append(prop[cfa.ELEMNAME])
         
-        # adjust BPMX/BPMY, TRIMX/TRIMY
-        if not self.__group.has_key('TRIM'):
-            self.__group['TRIM'] = []
-        if self.__group.has_key('TRIMX'):
-            self.__group['TRIM'].extend(self.__group['TRIMX'])
-        if self.__group.has_key('TRIMY'):
-            self.__group['TRIM'].extend(self.__group['TRIMY'])
 
-        if not self.__group.has_key('BPM'):
-            self.__group['BPM'] = []
-        if self.__group.has_key('BPMX'):
-            self.__group['BPM'].extend(self.__group['BPMX'])
-        if self.__group.has_key('BPMY'):
-            self.__group['BPM'].extend(self.__group['BPMY'])
+    def mergeGroups(self, parent, children):
+        """
+        merge child group(s) into a parent group
         
+        Example::
+
+            mergeGroups('BPM', ['BPMX', 'BPMY'])
+            mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
+        """
+        if isinstance(children, str):
+            chlst = [children]
+        elif isinstance(children, list):
+            chlist = children[:]
+        else:
+            raise ValueError("children can be string or list of string")
+
+        if not self.__group.has_key(parent):
+            self.__group[parent] = []
+
+        for child in chlist:
+            if not self.__group.has_key(child): continue
+            for elem in self.__group[child]:
+                if elem in self.__group[parent]: continue
+                self.__group[parent].append(elem)
 
     def importLatticeTable(self, lattable):
         """
@@ -265,23 +303,24 @@ class Lattice:
     def init_virtac_twiss(self):
         """Only works from virtac.nsls2.bnl.gov"""
         # s location
-        s      = [v for v in caget('SR:C00-Glb:G00<POS:00>RB-S', timeout=30)]
+        s      = [v for v in caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=30)]
         # twiss at s_end (from Tracy)
-        alphax = [v for v in caget('SR:C00-Glb:G00<ALPHA:00>RB-X')]
-        alphay = [v for v in caget('SR:C00-Glb:G00<ALPHA:00>RB-Y')]
-        betax  = [v for v in caget('SR:C00-Glb:G00<BETA:00>RB-X')]
-        betay  = [v for v in caget('SR:C00-Glb:G00<BETA:00>RB-Y')]
-        etax   = [v for v in caget('SR:C00-Glb:G00<ETA:00>RB-X')]
-        etay   = [v for v in caget('SR:C00-Glb:G00<ETA:00>RB-Y')]
-        orbx   = [v for v in caget('SR:C00-Glb:G00<ORBIT:00>RB-X')]
-        orby   = [v for v in caget('SR:C00-Glb:G00<ORBIT:00>RB-Y')]
-        phix   = [v for v in caget('SR:C00-Glb:G00<PHI:00>RB-X')]
-        phiy   = [v for v in caget('SR:C00-Glb:G00<PHI:00>RB-Y')]
-        nux = caget('SR:C00-Glb:G00<TUNE:00>RB-X')
-        nuy = caget('SR:C00-Glb:G00<TUNE:00>RB-Y')
+        alphax = [v for v in caget('SR:C00-Glb:G00{ALPHA:00}RB-X')]
+        alphay = [v for v in caget('SR:C00-Glb:G00{ALPHA:00}RB-Y')]
+        betax  = [v for v in caget('SR:C00-Glb:G00{BETA:00}RB-X')]
+        betay  = [v for v in caget('SR:C00-Glb:G00{BETA:00}RB-Y')]
+        etax   = [v for v in caget('SR:C00-Glb:G00{ETA:00}RB-X')]
+        etay   = [v for v in caget('SR:C00-Glb:G00{ETA:00}RB-Y')]
+        orbx   = [v for v in caget('SR:C00-Glb:G00{ORBIT:00}RB-X')]
+        orby   = [v for v in caget('SR:C00-Glb:G00{ORBIT:00}RB-Y')]
+        phix   = [v for v in caget('SR:C00-Glb:G00{PHI:00}RB-X')]
+        phiy   = [v for v in caget('SR:C00-Glb:G00{PHI:00}RB-Y')]
+        nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
+        nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
 
         self.tune[0], self.tune[1] = nux, nuy
         #print __file__, len(s), len(betax)
+
         # fix the Tracy bug by adding a new element at the end
         for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
                   phix, phiy]:
@@ -321,6 +360,7 @@ class Lattice:
             self.twiss[-1].phi[0,1]  = phiy[k]
             
         # set s_beg
+        #print self.twiss
             
     def init_virtac_group(self):
         """
@@ -361,7 +401,8 @@ class Lattice:
         list. None if the element in this list is not found.
         """
         if isinstance(elems, str):
-            return self.getElements(elems)
+            e, s = self.getElements(elems, point)
+            return s
         elif isinstance(elems, list):
             ret = [None] * len(elems)
             for elem in self.element:
@@ -392,13 +433,16 @@ class Lattice:
         for e in self.element:
             #print group, e.name, e.family,
             if e.name in ret: continue
-            if fnmatch(e.name, group) or fnmatch(e.family, group) or\
+            if fnmatch(e.name, group) or fnmatch(e.family, group) or \
                     (self.__group.has_key(group) and e.name in self.__group[group]):
                 ret.append(e.name)
                 if s == 'begin': loc.append(e.s_beg)
                 elif s == 'end': loc.append(e.s_end)
                 elif s == 'middle': loc.append(e.s_mid)
                 else: loc.append(e.s_end)
+            else:
+                #print e.name
+                pass
         if point: return ret, loc
         else: return ret
 
@@ -540,11 +584,20 @@ class Lattice:
 
     def getNeighbors(self, element, group, n):
         """Assuming self.element is in s order"""
+        #elem = [i for i in range(len(self.element)) \
+        #            if self.element[i].name == element]
+        #print element,elem
+
         e0, s0 = self.getElements(element, point = 'end')
+        #print element,e0, s0
+        #return
         if len(e0) > 1:
             raise ValueError("element %s is not unique" % element)
+        elif e0 == None or len(e0) == 0:
+            raise ValueError("element %s does not exist" % element)
+
         e, s = self.getElements(group, point = 'end')
-        print e, s
+        #print e, s
 
         i1, i2 = 0, 0
         ret = [[element[:], s0]]
@@ -575,10 +628,17 @@ class Lattice:
         return s
 
 
-    def getPhase(self, elemlst, loc = 'end'):
+    def getPhase(self, elem, loc = 'end'):
         """
         return phase
         """
+
+        if isinstance(elem, str):
+           elemlst = self.getElements(elem)
+        elif isinstance(elem, list):
+           elemlst = elem[:]
+        else:
+           raise ValueError("elem can only be string or list")
 
         idx = [-1] * len(elemlst)
         phi = np.zeros((len(elemlst), 2), 'd')
@@ -595,10 +655,17 @@ class Lattice:
                 phi[i, :] = self.twiss[k].phi[-1, :]
         return phi
 
-    def getBeta(self, elemlst, loc = 'end'):
+    def getBeta(self, elem, loc = 'end'):
         """
         return beta function
         """
+        if isinstance(elem, str):
+           elemlst = self.getElements(elem)
+        elif isinstance(elem, list):
+           elemlst = elem[:]
+        else:
+           raise ValueError("elem can only be string or list")
+
         idx = [-1] * len(elemlst)
         beta = np.zeros((len(elemlst), 2), 'd')
         for i,e in enumerate(self.element):
@@ -614,10 +681,17 @@ class Lattice:
                 beta[i, :] = self.twiss[k].beta[-1, :]
         return beta
 
-    def getEta(self, elemlst, loc = 'end'):
+    def getEta(self, elem, loc = 'end'):
         """
         return dispersion
         """
+        if isinstance(elem, str):
+           elemlst = self.getElements(elem)
+        elif isinstance(elem, list):
+           elemlst = elem[:]
+        else:
+           raise ValueError("elem can only be string or list")
+
 
         idx = [-1] * len(elemlst)
         eta = np.zeros((len(elemlst), 2), 'd')
@@ -639,4 +713,19 @@ class Lattice:
         return tunes
         """
         return self.tune[0], self.tune[1]
+
+    def getBeamlineProfile(self, s1=0.0, s2=1e10):
+        prof = []
+        for elem in self.element:
+            if elem.s_end < s1: continue
+            elif elem.s_beg > s2: continue
+            x1, y1, c = elem.profile()
+            prof.append((x1, y1, c))
+        ret = [prof[0]]
+        for p in prof[1:]:
+            if abs(p[0][0] - ret[-1][0][-1]) >  1e-10:
+                ret.append(([ret[-1][0][-1], p[0][0]], [0, 0], 'k'))
+            ret.append(p)
+        return ret
+
 

@@ -17,7 +17,15 @@ class TestLattice(unittest.TestCase):
         self.cfa = hla.chanfinder.ChannelFinderAgent()
         self.cfa.load('chanfinder.pkl')
         self.lat = hla.lattice.Lattice()
-        self.lat.importChannelFinderData(self.cfa)
+        #self.lat.importChannelFinderData(self.cfa)
+        self.lat.load('hla.pkl', mode='virtac')
+        self.lat.mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
+        self.lat.mergeGroups('BPM', ['BPMX', 'BPMY'])
+        #self.lat.init_virtac_twiss()
+        #self.lat.mode = 'virtac'
+        #self.lat.save('lattice.pkl')
+        #self.lat.load('lattice.pkl', mode='virtac')
+        
 
     def test_elements(self):
         elem = self.lat.getElements('P*')
@@ -25,6 +33,8 @@ class TestLattice(unittest.TestCase):
         self.assertEqual(len(elem), 180)
         self.assertEqual(len(s), 180)
         
+        self.assertEqual(len(self.lat.getElements('*')), 
+                         len(set(self.lat.getElements('*'))))
 
         s = self.lat.getLocations(['PH2G6C29B', 'CFYH2G1C30A', 'C'], point='end')
         self.assertEqual(len(s), 3)
@@ -38,11 +48,11 @@ class TestLattice(unittest.TestCase):
         self.lat.addGroup('BPM')
         self.assertRaises(ValueError, self.lat.addGroup, "h*")
         grp = self.lat.getGroups('P*C01*')
-        #print grp
-        for g in ['A', 'BPM', 'G06', 'G04', 'G02', 'BPMY', 'C01', 'BPMX', 'B']:
+        #print "group:", grp
+        for g in ['A', 'BPM', 'G6', 'G4', 'G2', 'BPMY', 'C01', 'BPMX', 'B']:
             #print g,
             self.assertTrue(g in grp)
-
+        #print self.lat.getGroups('FYH2G1C30A')
         g1 = self.lat.getGroupMembers(['BPM', 'C02'], op = 'intersection')
         g2 = self.lat.getElements('P*C02*')
         for g in g1:
@@ -64,15 +74,16 @@ class TestLattice(unittest.TestCase):
         self.assertEqual(len(self.lat.getElements('C30')), 46)
         self.assertEqual(len(self.lat.getElements('C11')), 46)
 
-        self.assertEqual(len(self.lat.getElements('G02')), 375)
+        self.assertEqual(len(self.lat.getElements('G2')), 375)
 
     def test_neighbors1(self):
-        return
         # find BPMs near CFYH2G1C30A
-        vcm = 'CFYH2G1C30A'
+        vcm = 'FYH2G1C30A'
+        self.assertEqual(self.lat.getElements(vcm), [vcm])
+
         n = 3
         nb = self.lat.getNeighbors(vcm, 'BPM', n)
-        s0 = self.lat.getLocations(vcm)
+        s0 = self.lat.getLocations(vcm, 'end')
         self.assertEqual(len(s0), 1)
         self.assertEqual(len(nb), 2*n+1)
         
@@ -93,14 +104,30 @@ class TestLattice(unittest.TestCase):
             self.assertTrue(nb[i][1] > nb[i-1][1])
 
     def test_twiss(self):
-        return
         self.assertEqual(len(self.lat.getTunes()), 2)
+        self.assertTrue(len(self.lat.twiss) > 1)
+
+        elem = self.lat.getElements('*')
+        #print len(elem), self.lat.getBeta(elem)
+        
+        self.assertEqual(len(self.lat.getPhase(elem)),
+                         len(self.lat.getElements('*')))
+        self.assertEqual(len(self.lat.getPhase(elem)),
+                         len(self.lat.getElements('*')))
+        self.assertEqual(len(self.lat.getBeta(elem)),
+                         len(self.lat.getElements('*')))
+        self.assertEqual(len(self.lat.getBeta(elem)),
+                         len(self.lat.getElements('*')))
 
         phi = self.lat.getPhase('P*C01*')
-        beta = self.lat.getBeta('*')
-        s = self.lat.getLocations('*')
-        eta = self.lat.getDispersion('P*')
-        s2 = self.lat.getLocations('P*')
+        beta = self.lat.getBeta(elem)
+        s = self.lat.getLocations(elem, 'end')
+        elem2 = self.lat.getElements('P*')
+        eta = self.lat.getEta('P*')
+        s2 = self.lat.getLocations('P*', 'end')
+
+        #print len(s), len(eta), len(phi), len(beta), len(s2)
+        #print s2, eta
         
         plt.clf()
         plt.subplot(211)
@@ -148,7 +175,15 @@ class TestLattice(unittest.TestCase):
         plt.xlim([0, r[-1,0]/15.0])
         plt.savefig('test.png')
 
+    def test_beamlineprofile(self):
+        #
+        prof = self.lat.getBeamlineProfile(0.0, 30)
+        for p in prof:
+            plt.plot(p[0], p[1], p[2])
+        #plt.plot([prof[0][0], prof[-1][0]], [0,0], 'k')
+        plt.ylim([-2.5, 2.5])
+        plt.savefig('test_beamline_profile.png')
+
 if __name__ == "__main__":
     unittest.main()
-
 

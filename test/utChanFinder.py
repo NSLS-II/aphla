@@ -11,41 +11,25 @@ from cothread.catools import caget
 import matplotlib.pylab as plt
 
 class TestChanFinderAgent(unittest.TestCase):
+    _eget = 'default.eget'
+    _eput = 'default.eput'
 
     def setUp(self):
         self.assertTrue(os.path.exists('chanfinder.pkl'))
 
         self.cfa = hla.chanfinder.ChannelFinderAgent()
         self.cfa.load('chanfinder.pkl')
+        #print self.cfa.channel('SR:C30-MG:G02A{HCM:H}Fld-I')
         pass
-
-    def test_pvExists(self):
-        pvs = self.cfa.getChannels()
-        self.assertTrue(len(pvs) > 2000)
-
-        live, dead = [], []
-        n = 0
-        for k, v in enumerate(pvs):
-            n += 1
-            #print k, v, len(live), len(dead)
-            try:
-                x = caget(v.encode('ascii'), timeout=5)
-                live.append(v)
-            except:
-                dead.append(v)
-            self.assertEqual(n, len(live))
-
-        print "Live: ", len(live), "  Dead:", len(dead)
-        self.assertTrue(len(dead) == 0)
 
     def test_match_properties1(self):
         self.assertTrue(
             self.cfa.matchProperties(
-                'SR:C30-MG:G02A{HCM:H}Fld-I',
+                'SR:C30-MG:G02A{HCor:H}Fld-I',
                 {'cell':'C30', 'girder':'G02'}))
         self.assertTrue(
             self.cfa.matchProperties(
-                'SR:C30-MG:G02A{HCM:H}Fld-I',
+                'SR:C30-MG:G02A{HCor:H}Fld-I',
                 {'elem_name': 'CXHG2C30A', 'elem_type':'TRIMX'}))
         
         
@@ -70,18 +54,33 @@ class TestChanFinderAgent(unittest.TestCase):
             #if prpt: print "'%s' '%d' '%s'" % (phy, prpt['ordinal'], prpt['elem_name']), grp
             #sys.stdout.flush()
             if pv1 != 'NULL':
-                self.assertTrue(self.cfa.matchProperties(pv1, {'elem_name':phy}))
+                try:
+                    self.assertTrue(self.cfa.matchProperties(pv1, {'elem_name':phy}))
+                except AssertionError:
+                    print phy, self.cfa.channel(pv1)
+                    raise AssertionError("%s != %s" % (phy, self.cfa.channel(pv1)))
+
                 self.assertTrue(self.cfa.matchProperties(pv1, {'elem_type':grp}))
-                self.assertTrue(self.cfa.matchProperties(pv1, {'ordinal':idx}))
+                try:
+                    self.assertTrue(self.cfa.matchProperties(pv1, {'ordinal':idx}))
+                except AssertionError:
+                    print idx, self.cfa.channel(pv1)
+
             if pv2 != 'NULL':
                 self.assertTrue(self.cfa.matchProperties(pv2, {'elem_name':phy}))
                 self.assertTrue(self.cfa.matchProperties(pv2, {'elem_type':grp}))
                 self.assertTrue(self.cfa.matchProperties(pv2, {'ordinal':idx}))
 
     def test_match_tags(self):
+        #print self.cfa.channel('SR:C30-MG:G04A{VCM:FM1}Fld-SP')
+        #print self.cfa.channel('SR:C30-MG:G01A{HCM:FH2}Fld-I')
+
         self.assertTrue(
             self.cfa.matchTags(
-                'SR:C30-MG:G04A{VCM:FM1}Fld-SP'))
+                'SR:C30-MG:G04A{VFCor:FM1}Fld-SP'))
+        self.assertTrue(
+            self.cfa.matchTags('SR:C30-MG:G01A{HFCor:FH2}Fld-I',
+                               tags = [self._eget]))
 
     def test_properties(self):
         prop = self.cfa.getElementProperties('PH1G2C30A')
