@@ -10,9 +10,7 @@ from cothread.catools import caget
 import matplotlib
 import matplotlib.pylab as plt
 
-HLAPKL=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'hla.pkl')
-CFAPKL=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'chanfinder.pkl')
-LATCONF=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'lat_conf_table.txt')
+from conf import *
 
 class TestLattice(unittest.TestCase):
     def setUp(self):

@@ -29,7 +29,7 @@ class Orm:
     """
     Orbit Response Matrix
     """
-    tsleep = 10
+    TSLEEP = 10
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, bpm, trim):
 
@@ -170,48 +170,45 @@ class Orm:
         Measure the RM by change one kicker. 4 points method.
         """
 
-        #print __file__, kickerpv
-        #print __file__, bpmpvlist
-        if not getattr(dkick, '__iter__', False):
-            # not iterable ?
-            pass
         kx0 = caget(kickerpv)
+        # bpm read out
         ret = np.zeros((6, len(bpmpvlist)), 'd')
-        #tsleep = 20
+        # initial bpm data
         for j, bpm in enumerate(bpmpvlist):
             if mask[j]: ret[0,j] = 0
             else: ret[0,j] = caget(bpm)
 
-        
         kstrength = [kx0, kx0-2*dkick, kx0-dkick, kx0+dkick, kx0+2*dkick, kx0]
         for i,kx in enumerate(kstrength[1:]):
             caput(kickerpv, kx)
             if verbose: 
                 print "Setting trim: ", kickerpv, kx, caget(kickerpv), 
-                print "  waiting %d sec" % self.tsleep
-            time.sleep(self.tsleep)
+                print "  waiting %d sec" % self.TSLEEP
+            time.sleep(self.TSLEEP)
             for j,bpm in enumerate(bpmpvlist):
                 if mask[j]: ret[i+1,j] = 0
                 else: ret[i+1,j] = caget(bpm)
-                if j < 3 or j >= len(bpmpvlist)-3:
-                    print "  %4d" % j, bpm, "%13.4e" % ret[i+1,j]
-                sys.stdout.flush()
-            print ""
+                if verbose:
+                    if j < 3 or j >= len(bpmpvlist)-3:
+                        print "  %4d" % j, bpm, "%13.4e" % ret[i+1,j]
+                    sys.stdout.flush()
+            if verbose:
+                print ""
         # 4 points
         v = (-ret[4,:] + 8.0*ret[3,:] - 8*ret[2,:] + ret[1,:])/12.0/dkick
         
         # polyfit
         p, residuals, rank, singular_values, rcond = \
             np.polyfit(kstrength[1:-1], ret[1:-1,:], 1, full=True)
-        print ""
-        print "Shape:", np.shape(kstrength[1:-1]), np.shape(ret[1:-1,:])
-        print "Shape:",np.shape(p), np.shape(residuals)
+        #print ""
+        #print "Shape:", np.shape(kstrength[1:-1]), np.shape(ret[1:-1,:])
+        #print "Shape:",np.shape(p), np.shape(residuals)
 
         for i in range(len(bpmpvlist)):
             if abs((v[i] - p[0, i])/v[i]) > .1:
-                print kickerpv, bpmpvlist[i], v[i], p[0,i]
+                print "WARNING", kickerpv, bpmpvlist[i], v[i], p[0,i]
         
-        return v, kstrength, ret
+        return v, kstrength, ret, 
 
     def measure(self, coupled=False, verbose = 0):
         """

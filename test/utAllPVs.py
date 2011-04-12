@@ -8,20 +8,25 @@ import random
 
 from cothread.catools import caget
 
-HLAPKL=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'hla.pkl')
-CFAPKL=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'chanfinder.pkl')
-LATCONF=os.path.join(os.environ['HLA_ROOT'], 'machine', 'nsls2', 'lat_conf_table.txt')
+from conf import *
 
 class TestChanFinderAgent(unittest.TestCase):
 
     def setUp(self):
+        if hla.NETWORK_DOWN: return
+        wait_for_svr()
         self.assertTrue(os.path.exists(CFAPKL))
 
         self.cfa = hla.chanfinder.ChannelFinderAgent()
         self.cfa.load(CFAPKL)
-
+        
+    def tearDown(self):
+        if hla.NETWORK_DOWN: return
+        reset_svr()
 
     def test_pvExists(self):
+        if hla.NETWORK_DOWN: return
+
         pvs = self.cfa.getChannels()
         self.assertTrue(len(pvs) > 2000)
 
@@ -39,7 +44,7 @@ class TestChanFinderAgent(unittest.TestCase):
 
         print "Live:", len(live), " Dead:", len(dead),
         self.assertTrue(len(dead) == 0)
-
+    
 if __name__ == "__main__":
     unittest.main()
 
