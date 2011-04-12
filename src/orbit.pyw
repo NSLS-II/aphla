@@ -96,8 +96,9 @@ class OrbitCaData(Qt.QObject):
     def __init__(self, parent = None):
         super(OrbitCaData, self).__init__(parent)
         
-        d = np.array(getFullOrbit())
-        
+        # d = np.array(getFullOrbit())
+        d = np.array(getOrbit(spos=True))
+
         self.nsample = 50
         self.isample = -1
         self.samplefull = False
@@ -126,9 +127,10 @@ class OrbitCaData(Qt.QObject):
         if self.isample == 0: self.samplefull = True
 
         # slow version, read BPM one by one
-        #d = np.array(getOrbit())
+        d = np.array(getOrbit(spos=True))
+        # full orbit as a wave form
         # fast, read BPM waveform
-        d = np.array(getFullOrbit())
+        #d = np.array(getFullOrbit())
         #print "Update ca data", self.isample
 
         self.__s[:] = d[:,0]

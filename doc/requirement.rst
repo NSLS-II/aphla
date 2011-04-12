@@ -10,12 +10,9 @@ This chapter describes software requirement for NSLS-II
 commissioning. This list is mainly from [Willeke2009]_ and [Krinsky2010]_,
 plus some personal experiences.
 
-The items marked with (*) will get more focus, since they usually contains
-more physics or algorithm. Parameters tuning or even new algorithms may be
-needed. 
-
 :hla:`Software implemented as part of the HLA is marked`. Finished
-software/scripts are :hladone:`also marked`.
+software/scripts are :hladone:`also marked`. The functions which need only
+simple monitoring in HLA is not marked as a HLA feature.
 
 General Operation
 ------------------
@@ -31,12 +28,14 @@ General Operation
 - Permit system monitor and control
 - Data logger and data display
 - Electronic logbook
-- :hla:`Converting between machine unit and physics unit.`
-- :hla:`Smooth Ramping`
+- :hla:`Converting between machine unit and physics unit.` (G.Shen)
+- :hla:`Smooth Ramping` (G.Shen)
     - :hla:`list channels we are interested.`
-    - :hla:`ramp whole group at certain rate.`
+    - :hla:`ramp (i.e. linear interpolation) whole group at certain rate.`
     - :hla:`searching for channels with wild-card`
-    - save state/read stage.
+    - save state of the machine, read back and set the machine. (for small
+      set of PVs, HLA can implement.)
+    - :hla:`linear interpolation to a saved state.`
 
   The control group may provide ramping for whole storage ring, here this
   application can ramp specified channels between two states.
@@ -59,7 +58,7 @@ General Operation
     - Magnet temperature interlock display and control
     - Cryogenics system display and control
     - Pulsed magnet systems monitor and control
-    - Fast orbit feedback control
+    - :hla:`Fast orbit feedback control above cell level` (L.Yang, Y.Hu)
 	- :hla:`turn on/off`
 	- :hla:`disable/enable certain trim/BPM`
 	- :hla:`update(import/export) RespMatrix`
@@ -72,7 +71,7 @@ General Operation
     - Beam containment status display and control
     - Top-off status monitor
     - Machine protection system display and control
-- :hla:`Accelerator parameter store/restore (*)`
+- :hla:`Accelerator parameter store/restore (*)` (G.Shen)
     - :hla:`manage, editing capability for stored accelerator status.`
     - :hla:`smoothly ramp from one stage to another.`
     - :hla:`smooth ramping of one set of magnets (PVs)`
@@ -89,15 +88,14 @@ General Operation
 Beam Diagnostics
 ------------------------------
 
-- :hladone:`Measure the orbit response matrix, with flexible number of
-  BPMs and correctors.`
+- :hladone:`Measure the orbit response matrix, with flexible number of BPMs and correctors.`  (L.Yang)
     - :hla:`Import/Export orbit response matrix for orbit correction`
     - :hla:`Import/Export ORM for feedback`
 
-- :hla:`Beam orbit display`.
+- :hla:`Beam orbit display`. (L.Yang)
     - :hladone:`display closed orbit (static), 1Hz rate`
-    - :hla:`turn by turn bpm reading (including single turn)`
-    - :hla:`single turn`
+    - :hla:`turn by turn bpm reading (including single turn)` (Y.Hu)
+    - :hla:`single turn` (Y.Hu)
     - :hla:`Plot orbit change from now on.`
     - :hla:`BPM status information`
     - :hla:`difference (referecne orbit display)`
@@ -108,7 +106,7 @@ Beam Diagnostics
     - :hla:`Absolute orbit offset and orbit offset with respect to golden
       orbit`
 
-- :hla:`Static beam orbit control`
+- :hla:`Static beam orbit control` (L.Yang)
     - :hla:`Edit golden orbit control (also affect feedback system)`
         - Interplay with feedback system when creating local bump: update
           the reference orbit to feedback ? or share same orbit difference
@@ -120,7 +118,7 @@ Beam Diagnostics
     - :hla:`Enable/disable BPMs for orbit correction and feedback.`
     - :hla:`Enable/disable correctors for orbit correction and feedback`
 
-- :hla:`Turn-by-turn BPM data`
+- :hla:`Turn-by-turn BPM data` (Y.Hu, L.Yang)
     - :hla:`closed orbit established using corrector and single shot BPM
       data`
     - :hla:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
@@ -128,21 +126,22 @@ Beam Diagnostics
     - :hla:`BPM buttons readout.`
     - :hla:`Correct orbit based on single shot orbit`
 
-- :hla:`Beam current history and lifetime display`
-- :hla:`Bunch intensity display and history display/analysis (*)`
-- :hla:`Beam emittance display (*)`
-- :hla:`Injection element display and control page (*)`
-- :hla:`Injection efficiency`
+- :hla:`Beam current history and lifetime display` (Y.Hu, L.Yang)
+- :hla:`Bunch intensity display and history display/analysis (*)` (Y.Hu, L.Yang)
+- :hla:`Beam emittance display (*)` (Y.Hu, L.Yang)
+- :hla:`Injection element display and control page (*)` (G.Wang)
+- :hla:`Injection efficiency` (G.Wang)
+- :hla:`Injection filling pattern` (G.Wang, Y.Hu)
 - Timing system display and control 
 - Synchronization system display and control
-- :hla:`Tune display and control (*)`
+- :hla:`Tune display and control (*)` (Y.Hu)
     - horizontal/vertical tune number, 1Hz update
     - FFT of turn by turn BPM data, choice of any live BPM.
     - 2D tune footprint with resonance lines
 
-- Beam profile: current, size, rms, center, image.
-- Bunch length and profile if it is available (*)
-- :hla:`Measure BPM linearity`
+- :hla:`Beam profile: current, size, rms, center, image.` (Y.Hu, etc.)
+- :hla:`Bunch length and profile if it is available (*)` (Y.Hu, etc.)
+- :hla:`Measure BPM linearity` (Y.Hu, etc.)
 - Bad BPM identification should be done in other application. Data
   synchronization to be done in low level server part.
 
@@ -192,8 +191,8 @@ and booster vendors, others have to be developed by ourselves.
     - Integration of safety devices/interlocks       
 
 
-:hla:`Beam Based Alignment (BBA)`
----------------------------------
+:hla:`Beam Based Alignment (BBA)` (L.Yang)
+------------------------------------------
 
 BBA use a list of correctors, BPMs and nearby quadrupoles, to steer the
 beam through center of these quadrupoles. The input is a list of
@@ -214,8 +213,8 @@ and replay them.
 It should work on separate set of quadrupoles, and combine data with
 previous measurement.
 
-:hla:`Linear Lattice Fitting (LOCO)`
--------------------------------------
+:hla:`Linear Lattice Fitting (LOCO)` (J.Choi)
+---------------------------------------------
 
 - analyze quadrupole gradient/tilt error.
 - analyze BPM gain/tilt error.
@@ -230,8 +229,8 @@ It requires:
 
 
 
-:hla:`Measure TWISS Parameters`
-----------------------------------
+:hla:`Measure TWISS Parameters` (L.Yang)
+----------------------------------------
 
 - measure beta functions
 - measure dispersion

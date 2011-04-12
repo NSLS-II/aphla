@@ -30,7 +30,7 @@ def getFullOrbit(group = '*', sequence = None):
         ret.append([s[i], x[i], y[i]])
     return ret
 
-def getOrbit(group = '*'):
+def getOrbit(group = '*', spos=False):
     """Return orbit"""
     if isinstance(group, str):
         #print __file__, "group = ", group
@@ -40,13 +40,20 @@ def getOrbit(group = '*'):
         elemx = group[:]
         elemy = group[:]
 
-    orbx, pvx = eget(elemx, full=True, tags=['H'], unique=True)
-    orby, pvy = eget(elemy, full=True, tags=['V'], unique=True)
+    s = _lat.getLocations(elemx, 'end')
+    orbx, pvx = eget(elemx, full=True, tags=['X'], unique=True)
+    orby, pvy = eget(elemy, full=True, tags=['Y'], unique=True)
     #print __file__, len(elemx), len(elemy), len(orbx), len(orby)
     #print __file__, orbx[0], elemx[0], pvx[0], caget(pvx[0][0])
     #print __file__, orbx, orby
-    return orbx, orby
-
+    ret = []
+    if spos:
+        for i in range(len(s)):
+            ret.append([s[i], orbx[i], orby[i]])
+    else:
+        for i in range(len(s)):
+            ret.append([orbx[i], orby[i]])
+    return ret
 
 def getOrbitRm():
     raise NotImplementedError()
