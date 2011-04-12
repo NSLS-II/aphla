@@ -12,13 +12,17 @@ from conf import *
 
 class TestConf(unittest.TestCase):
     def setUp(self):
+        if hla.NETWORK_DOWN: return None
         wait_for_svr()
         pass
 
     def tearDown(self):
+        if hla.NETWORK_DOWN: return None
         reset_svr()
 
     def test_measure_orm(self):
+        if hla.NETWORK_DOWN: return True
+
         trimx = ['FXL2G1C07A', 'CXH1G6C15B']
         #print hla.getSpChannels(trimx)
         for tr in trimx:
@@ -49,29 +53,29 @@ class TestConf(unittest.TestCase):
 
 
     def test_linearity(self):
-        return True
-        orm = hla.measorm.Orm(bpm = [], trim = [])
-        orm.load('test.hdf5')
-        orm.checkLinearity(plot=True)
+        if hla.NETWORK_DOWN: return True
+        #orm = hla.measorm.Orm(bpm = [], trim = [])
+        #orm.load('test.hdf5')
+        #orm.checkLinearity(plot=True)
         pass
 
     def test_merge(self):
-        return True
-        orm1 = hla.measorm.Orm(bpm = [], trim = [])
-        orm1.load('a.hdf5')
-        orm2 = hla.measorm.Orm(bpm = [], trim = [])
-        orm2.load('b.hdf5')
-        orm = orm1.merge(orm2)
-        orm.checkLinearity()
-        orm.save('c.hdf5')
+        if hla.NETWORK_DOWN: return True
+        #orm1 = hla.measorm.Orm(bpm = [], trim = [])
+        #orm1.load('a.hdf5')
+        #orm2 = hla.measorm.Orm(bpm = [], trim = [])
+        #orm2.load('b.hdf5')
+        #orm = orm1.merge(orm2)
+        #orm.checkLinearity()
+        #orm.save('c.hdf5')
         
     def test_shelve(self):
-        return True
-        orm = hla.measorm.Orm(bpm = [], trim = [])
-        orm.load('c.hdf5')
-        orm.save('o1.pkl', format='shelve')
-        orm.load('o1.pkl', format='shelve')
-        orm.checkLinearity()
+        if hla.NETWORK_DOWN: return True
+        #orm = hla.measorm.Orm(bpm = [], trim = [])
+        #orm.load('c.hdf5')
+        #orm.save('o1.pkl', format='shelve')
+        #orm.load('o1.pkl', format='shelve')
+        #orm.checkLinearity()
 
     def test_orbitreproduce(self):
         """
@@ -85,17 +89,17 @@ class TestConf(unittest.TestCase):
         PH1G6C03B 3.04211635453e-06 3.04305096591e-06 0.000307129717625
         """
 
-        return True
-        orm = hla.measorm.Orm(bpm = [], trim = [])
-        orm.load('o1.pkl', format = 'shelve')
-        bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
-        trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
-        kick = None
+        if hla.NETWORK_DOWN: return True
+        #orm = hla.measorm.Orm(bpm = [], trim = [])
+        #orm.load('o1.pkl', format = 'shelve')
+        #bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
+        #trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+        #kick = None
         #print orm.getSubMatrix(bpm = bpm, trim = trim)
         #bpm = ['PH1G6C03B']
         #trim = ['CXHG2C30A', 'CXH2G2C30A', 'CXHG2C02A']
         #kick = [1e-6] * len(trim)
-        orm.checkOrbitReproduce(bpm, trim, kick)
+        #orm.checkOrbitReproduce(bpm, trim, kick)
         
 def test_delay():
     rx, rt = [], []

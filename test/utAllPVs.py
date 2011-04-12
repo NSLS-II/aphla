@@ -13,6 +13,7 @@ from conf import *
 class TestChanFinderAgent(unittest.TestCase):
 
     def setUp(self):
+        if hla.NETWORK_DOWN: return
         wait_for_svr()
         self.assertTrue(os.path.exists(CFAPKL))
 
@@ -20,9 +21,12 @@ class TestChanFinderAgent(unittest.TestCase):
         self.cfa.load(CFAPKL)
         
     def tearDown(self):
+        if hla.NETWORK_DOWN: return
         reset_svr()
 
     def test_pvExists(self):
+        if hla.NETWORK_DOWN: return
+
         pvs = self.cfa.getChannels()
         self.assertTrue(len(pvs) > 2000)
 

@@ -378,22 +378,28 @@ class ChannelFinderAgent:
              s2   = float(t[5])   # s_end location
              grp  = t[6].strip()  # group
              dev  = t[7].strip()
-             # 
+             
+             # append x/y for BPMX/BPMY to make eput/eget work on unique pv
+             #if grp == 'BPMX': phy = phy + 'X'
+             #elif grp == 'BPMY': phy = phy + 'Y'
+             
              if not self.__elempv.has_key(phy): self.__elempv[phy] = []
              if not self.__devpv.has_key(dev): self.__devpv[dev] = []
              elemprop = {self.ELEMNAME: phy, self.ELEMTYPE: grp, self.DEVNAME: dev,
                          self.ELEMIDX: idx, self.SPOSITION: s2, self.LENGTH: L}
-             tags = []
-             if grp in ['BPMX', 'TRIMX']: tags.append('X')
-             elif grp in ['BPMY', 'TRIMY']: tags.append('Y')
+ 
              if rb != 'NULL':
                  # read back
                  if not self.__d.has_key(rb):
                      self.__d[rb] = {self.TAGSKEY: []}
                  elemprop.update(self.__parsePvCellGirder(rb))
-                 if rb.find('}GOLDEN') < 0 and rb.find('}BBA') < 0:
-                     tags.append('default.eget')
+                 tags = [ 'default.eget' ]
+                 if rb.find('}GOLDEN') >= 0 or rb.find('}BBA') >= 0:
+                     tags.remove('default.eget')
                  # for BPM
+                 if grp in ['BPMX', 'TRIMX']: tags.append('X')
+                 elif grp in ['BPMY', 'TRIMY']: tags.append('Y')
+
                  self.updateChannel(rb, elemprop, tags)  
                  self.__elempv[phy].append(rb)
                  self.__devpv[dev].append(rb)
@@ -402,7 +408,9 @@ class ChannelFinderAgent:
                  if not self.__d.has_key(sp):
                      self.__d[sp] = {self.TAGSKEY: []}
                  elemprop.update(self.__parsePvCellGirder(sp))
-                 tags.append('default.eput')
+                 tags = [ 'default.eput' ]
+                 if grp in ['BPMX', 'TRIMX']: tags.append('X')
+                 elif grp in ['BPMY', 'TRIMY']: tags.append('Y')
                  self.updateChannel(sp, elemprop, tags)       
                  self.__elempv[phy].append(sp)
                  self.__devpv[dev].append(sp)
