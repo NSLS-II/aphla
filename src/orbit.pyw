@@ -96,8 +96,8 @@ class OrbitCaData(Qt.QObject):
     def __init__(self, parent = None):
         super(OrbitCaData, self).__init__(parent)
         
-        # d = np.array(getFullOrbit())
-        d = np.array(getOrbit(spos=True))
+        d = np.array(getFullOrbit())
+        #d = np.array(getOrbit(spos=True))
 
         self.nsample = 50
         self.isample = -1
@@ -621,7 +621,7 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         Qt.QMainWindow.__init__(self, parent)
 
         # initialize a QwtPlot central widget
-
+        
         self.data = OrbitCaData()
         self.plot1 = OrbitPlot(self, data = self.data, plane = 'H')
         self.plot2 = OrbitPlot(self, data = self.data, plane = 'V')
@@ -633,7 +633,11 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         self.plot2.plotLayout().setAlignCanvasToScales(True)
         self.plot2.setTitle("Vertical Orbit")
 
-        wid = QtGui.QWidget()
+        #wid = QtGui.QWidget()
+        wid = QtGui.QTabWidget()
+        wid.addTab(QtGui.QWidget(), "test1")
+        wid.addTab(Qt.QLabel("Hello"), "test2")
+        wid.addTab(QtGui.QLabel("H3"), "test3")
         vbox = QtGui.QVBoxLayout()
         vbox.addWidget(self.plot1)
         vbox.addWidget(self.plot2)

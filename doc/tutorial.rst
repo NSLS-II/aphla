@@ -76,3 +76,40 @@ Example 1
    ['A', 'BPM', 'G4', 'G2', 'BPMY', 'C01', 'BPMX']
 
 
+Code Repository
+===================
+
+Our code is in a Mercurial repository, which keeps every version anyone
+checked in. Version controlled repository not only keeps track of the
+change of the code, but also support branch and merges of each revision.
+
+I will skip the introduction of the version control tools and only talk
+about what/how you should do to work with the HLA code in repository.
+
+A typical work flow is the following. (All under linux)
+
+The very first time, please take a look at ~/.hgrc:
+
+::
+
+  [ui]
+  username = Lingyun Yang <lyyang@bnl.gov>
+
+This marks who you are.
+
+::
+
+  $ hg clone http://code.nsls2.bnl.gov/hg/nsls2-hla
+  $ cd nsls2-hla
+  $ (working .....)
+  $ hg add newfile.py (if you have created a new file)
+  $ hg status  ( list the status of current working directory)
+  $ hg commit -m "I have improved the code" (check in the code with a message)
+  $ hg push (push you change to the server)
+
+If it has been a long time after you checkout the code from the server, you can 
+
+::
+
+  $ hg pull (update the local files with server's)
+

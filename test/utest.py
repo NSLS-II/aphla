@@ -15,6 +15,7 @@ loader = unittest.TestLoader()
 suite = loader.loadTestsFromModule(utChanFinder)
 suite.addTests(loader.loadTestsFromModule(utLattice))
 suite.addTests(loader.loadTestsFromModule(utAllPVs))
+suite.addTests(loader.loadTestsFromModule(utOrbit))
 
 runner = unittest.TextTestRunner(verbosity=2)
 result = runner.run(suite)
