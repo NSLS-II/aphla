@@ -98,5 +98,6 @@ except Timedout:
 from measorm import *
 from orbit import *
 
+_orbit = Orbit(_cfa)
 
 

@@ -13,6 +13,8 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
         pvs2 = pvs.encode("ascii")
     elif isinstance(pvs, list):
         pvs2 = [pv.encode("ascii") for pv in pvs]
+    elif isinstance(pvs, tuple):
+        pvs2 = [pv.encode("ascii") for pv in pvs]
     else:
         raise ValueError("Unknown type " + str(type(pvs)))
 

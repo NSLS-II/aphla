@@ -396,10 +396,11 @@ class ChannelFinderAgent:
                  tags = [ 'default.eget' ]
                  if rb.find('}GOLDEN') >= 0 or rb.find('}BBA') >= 0:
                      tags.remove('default.eget')
+                 if rb.find('}GOLDEN') >= 0: tags.append('OFFSET')
                  # for BPM
                  if grp in ['BPMX', 'TRIMX']: tags.append('X')
                  elif grp in ['BPMY', 'TRIMY']: tags.append('Y')
-
+                 
                  self.updateChannel(rb, elemprop, tags)  
                  self.__elempv[phy].append(rb)
                  self.__devpv[dev].append(rb)
