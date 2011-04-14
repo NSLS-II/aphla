@@ -76,6 +76,14 @@ Example 1
    ['A', 'BPM', 'G4', 'G2', 'BPMY', 'C01', 'BPMX']
 
 
+Software
+=========
+
+::
+
+  $ apt-get install mercurial pyqt4-dev-tools
+
+
 Code Repository
 ===================
 
