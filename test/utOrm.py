@@ -49,20 +49,15 @@ class TestConf(unittest.TestCase):
         self.assertEqual(len(bpmx), len(bpmxrb))
 
     def test_measure_orm(self):
+        return True
         if hla.NETWORK_DOWN: return True
 
-        #alltrim = hla.getGroupMembers(['*', 'TRIMX'], inter)
-        #print alltrim
-
-        #return True
-
-        trimx = ['CXH1G6C15B', 'CYHG2C30A', 'CXL2G6C14B', 'CYHG2C16A']
+        trimx = ['CXH1G6C15B', 'CYHG2C30A', 'CXL2G6C14B']
         #trimx = ['CXH1G6C15B']
-        bpmx = ['PH1G2C30A', 'PL1G2C01A', 'PH1G6C29B']
-        print "resetting trims..."
+        bpmx = ['PH1G2C30A', 'PL1G2C01A', 'PH1G6C29B', 'PH2G2C30A', 'PM1G4C30A']
         #hla.reset_trims()
         orm = hla.measorm.Orm(bpm = bpmx, trim = trimx)
-        orm.measure(verbose=1)
+        orm.measure(verbose=0)
         orm.save("orm-test.pkl")
         #orm.checkLinearity()
         pass
@@ -70,8 +65,11 @@ class TestConf(unittest.TestCase):
 
     def test_linearity(self):
         if hla.NETWORK_DOWN: return True
-        #orm = hla.measorm.Orm(bpm = [], trim = [])
-        #orm.load('test.hdf5')
+        orm = hla.measorm.Orm(bpm = [], trim = [])
+        #orm.load('orm-test.pkl')
+        orm.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl')
+        orm.maskCrossTerms()
+        print orm
         #orm.checkLinearity(plot=True)
         pass
 
@@ -94,28 +92,16 @@ class TestConf(unittest.TestCase):
         #orm.checkLinearity()
 
     def test_orbitreproduce(self):
-        """
-        # all G2 Trim
-        #BPM, caget, sum M*K, relative diff. 
-        PL1G2C03A 2.76106332459e-06 2.76028400607e-06 -0.000282332730237
-        PL2G2C03A 2.74567973141e-06 2.74376513312e-06 -0.000697799627985
-        PM1G4C03A -3.82555373792e-06 -3.82634380577e-06 0.000206481143403
-        PM1G4C03B -2.68739708579e-06 -2.68552390336e-06 -0.000697510989897
-        PH2G6C03B 1.68442774752e-06 1.68525899299e-06 0.000493244940091
-        PH1G6C03B 3.04211635453e-06 3.04305096591e-06 0.000307129717625
-        """
-
+        return True
         if hla.NETWORK_DOWN: return True
-        #orm = hla.measorm.Orm(bpm = [], trim = [])
-        #orm.load('o1.pkl', format = 'shelve')
-        #bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
-        #trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
-        #kick = None
-        #print orm.getSubMatrix(bpm = bpm, trim = trim)
-        #bpm = ['PH1G6C03B']
-        #trim = ['CXHG2C30A', 'CXH2G2C30A', 'CXHG2C02A']
-        #kick = [1e-6] * len(trim)
-        #orm.checkOrbitReproduce(bpm, trim, kick)
+        orm = hla.measorm.Orm(bpm = [], trim = [])
+        orm.load(ORM_PKL, format = 'shelve')
+        #print orm
+        bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
+        trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+        ibpm = np.random.randint(len(bpm))
+        itrim = np.random.randint(len(trim))
+        orm.checkOrbitReproduce([bpm[ibpm]], [trim[itrim]])
         
 def test_delay():
     rx, rt = [], []

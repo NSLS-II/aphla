@@ -23,6 +23,7 @@ LATCONF = os.path.join(__RT, 'machine', 'nsls2', 'lat_conf_table.txt')
 
 ORMX = os.path.join(__RT, 'machine', 'nsls2', 'ormx.pkl')
 ORMY = os.path.join(__RT, 'machine', 'nsls2', 'ormy.pkl')
+ORM_PKL = os.path.join(__RT, 'machine', 'nsls2', 'orm.pkl')
 
 def wait_for_svr(val = [0], newval = 2):
     wt = 0
