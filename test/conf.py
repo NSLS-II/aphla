@@ -31,7 +31,7 @@ def wait_for_svr(val = [0], newval = 2):
             caput('SVR:LOCKED', newval, wait=True)
             if wt > 0: print ''
             break
-        if wt == 0: sys.stdout.write("Waiting ")
+        if wt == 0: sys.stdout.write("\nWaiting for SVR:LOCKED released ")
         else: sys.stdout.write('.'),
         sys.stdout.flush()
         wt = wt + 1

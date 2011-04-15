@@ -53,8 +53,10 @@ class ChannelFinderAgent:
         ======   ==========================================
         'r'      Open existing database for reading only(default)
         'w'      Open existing database for reading and writing
-        'c'      Open database for reading and writing, creating one if it doesn't exist.
-        'n'      Always create a new, empty database, open for reading and writing
+        'c'      Open database for reading and writing, creating one if it
+                 doesn't exist.
+        'n'      Always create a new, empty database, open for reading and
+                 writing
         ======   ==========================================
         """
         f = shelve.open(fname, dbmode)
@@ -63,6 +65,9 @@ class ChannelFinderAgent:
         f.close()
 
     def load(self, fname):
+        """
+        load the saved file, clean up existing data.
+        """
         f = shelve.open(fname, 'r')
         self.__d       = f['cfa.data']
         self.__cdate   = f['cfa.create_date']
@@ -133,7 +138,7 @@ class ChannelFinderAgent:
 
         if isinstance(tags, str):
             taglst = [ tags ]
-        elif isinstance(tags, list):
+        elif isinstance(tags, list) or isinstance(tags, set):
             taglst = [tag for tag in tags]
         else:
             raise ValueError("tags can only be string or a list")
@@ -185,9 +190,11 @@ class ChannelFinderAgent:
         return s
 
     def channel(self, pv):
+        """return str form of a channel"""
         return self._repr_channel(pv)
     
     def updateChannel(self, pv, props={}, tags=[]):
+        """update the channel data with new ones"""
         for k,v in props.items():
             if k == self.TAGSKEY: continue
             self.__d[pv][k] = v
@@ -288,9 +295,21 @@ class ChannelFinderAgent:
         #    print elem, self.__d[self.__elempv[elem][0]]['s_position']
         return ret
 
+    def getChannelTags(self, pv):
+        """return the tags list of a channel"""
+        if not self.__d.has_key(pv):
+            return None
+        elif not self.__d[pv].has_key(self.TAGSKEY):
+            return None
+        return self.__d[pv][self.TAGSKEY][:]
+
     def getChannelProperties(self, pv):
+        """return the properties of a channel as a dictionary"""
         if not self.__d.has_key(pv): return None
-        return self.__d[pv]
+        ret = self.__d[pv].copy()
+        del ret[self.TAGSKEY]
+        return ret
+
 
     def getElements(self):
         return self.__elempv.keys()

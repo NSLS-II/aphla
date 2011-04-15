@@ -4,6 +4,8 @@ import os, sys, shelve, re
 import hla
 from cothread.catools import caget, caput
 from cothread import Timedout
+import numpy as np
+import matplotlib.pylab as plt
 
 def renameHlaElement():
     lat = hla.lattice.Lattice()
@@ -124,9 +126,125 @@ def updateOrmPv(safe=True):
     f.close()
     print "replaced: ", cnt
 
+def combineOrm(safe=True):
+    pklx = '/home/lyyang/devel/nsls2-hla/machine/nsls2/ormx.pkl'
+    pkly = '/home/lyyang/devel/nsls2-hla/machine/nsls2/ormy.pkl'
+    pkl  = '/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl'
+    fx = shelve.open(pklx, 'r')
+    fy = shelve.open(pkly, 'r')
+    f  = shelve.open(pkl, 'c')
+
+    rawmaskx  = fx['orm._rawdata_.mask']
+    rawkickx  = fx['orm._rawdata_.kicker_sp']
+    rawmatrixx = fx['orm._rawdata_.matrix']
+    bpm_pvrbx = fx['orm.bpm_pvrb']
+    trim_pvspx = fx['orm.trim_pvsp']
+    trim_pvrbx = fx['orm.trim_pvrb']
+    trimx = fx['orm.trim']
+    bpmx  = fx['orm.bpm']
+    mx    = fx['orm.m']
+    
+    rawmasky  = fy['orm._rawdata_.mask']
+    rawkicky  = fy['orm._rawdata_.kicker_sp']
+    rawmatrixy = fy['orm._rawdata_.matrix']
+    bpm_pvrby = fy['orm.bpm_pvrb']
+    trim_pvspy = fy['orm.trim_pvsp']
+    trim_pvrby = fy['orm.trim_pvrb']
+    trimy = fy['orm.trim']
+    bpmy  = fy['orm.bpm']
+    my    = fy['orm.m']
+    print np.shape(rawmatrixx), np.shape(rawmatrixy)
+
+    nx1, nx2 = len(bpm_pvrbx), len(trim_pvspx)
+    ny1, ny2 = len(bpm_pvrby), len(trim_pvspy)
+
+    rawmask = np.ones((nx1+ny1, nx2+ny2))
+    rawmask[:nx1,:nx2] = rawmaskx[:,:]
+    rawmask[nx1:,nx2:] = rawmasky[:,:]
+    f['orm._rawdata_.mask'] = rawmask
+
+    nkx1, npx = np.shape(rawkickx)
+    nky1, npy = np.shape(rawkicky)
+    rawkick = np.zeros((nkx1+nky1, npx), 'd')
+    rawkick[:nkx1,:] = rawkickx[:,:]
+    rawkick[nkx1:,:] = rawkicky[:,:]
+    f['orm._rawdata_.kicker_sp'] = rawkick
+    
+    rawmatrix = np.zeros((npx, nx1+ny1, nx2+ny2), 'd')
+    rawmatrix[:,:nx1,:nx2] = rawmatrixx[:,:,:]
+    rawmatrix[:,nx1:,nx2:] = rawmatrixy[:,:,:]
+    f['orm._rawdata_.matrix'] = rawmatrix
+
+    m = np.zeros((nx1+ny1, nx2+ny2), 'd')
+    m[:nx1, :nx2] = mx[:,:]
+    m[nx1:, nx2:] = my[:,:]
+    f['orm.m'] = m
+
+    residuals = np.zeros((nx1+ny1, nx2+ny2), 'd')
+    for i in range(nx1+ny1):
+        for j in range(nx2+ny2):
+            if rawmask[i,j]: continue
+            p, resi, rank, singular_values, rcond = \
+                np.polyfit(rawkick[j,1:-1], rawmatrix[1:-1,i,j], 1, full=True)
+            residuals[i,j] = resi
+        print i,
+        sys.stdout.flush()
+    f['orm._rawdata_.residuals'] = residuals
+
+    bpm = []
+    for i in range(nx1):
+        bpm.append((bpmx[i], 'X', bpm_pvrbx[i]))
+    for i in range(ny1):
+        bpm.append((bpmy[i], 'Y', bpm_pvrby[i]))
+    f['orm.bpm'] = bpm
+
+    trim = []
+    for i in range(nx2):
+        trim.append((trimx[i], 'X', trim_pvrbx[i], trim_pvspx[i]))
+    for i in range(ny2):
+        trim.append((trimy[i], 'Y', trim_pvrby[i], trim_pvspy[i]))
+    f['orm.trim'] = trim
+
+    #print type(rawmasky)
+    print "#", os.environ['EPICS_CA_ADDR_LIST']
+    print "#", fx.keys()
+    print "#", f.keys()
+    f.close()
+    fx.close()
+    fy.close()
+
+def ormhist():
+    pkl  = '/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl'
+    f  = shelve.open(pkl, 'r')
+    d = f['orm._rawdata_.residuals']
+    msk = f['orm._rawdata_.mask']
+    r = []
+    n1, n2 = np.shape(d)
+    print n1, n2
+    for i in range(n1):
+        for j in range(n2):
+            if msk[i,j]: continue
+            r.append(d[i,j])
+        print len(r),
+        sys.stdout.flush()
+    print len(r)
+
+    plt.hist(r, 50, facecolor='green', alpha=0.75)
+    plt.savefig('orm-residuals.png')
+
+    
+def ormtest():
+    pkl  = '/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl'
+    orm = hla.measorm.Orm(bpm=[], trim=[])
+    orm.load(pkl)
+    orm.save('test.pkl')
+
 if __name__ == "__main__":
     if len(sys.argv) == 1: safe = True
     elif sys.argv[1] == '--real': safe = False
     #renameElement()
     #renameOrmElement()
-    updateOrmPv(safe=safe)
+    #updateOrmPv(safe=safe)
+    #combineOrm()
+    #ormhist()
+    ormtest()

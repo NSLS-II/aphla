@@ -1,23 +1,31 @@
 #!/usr/bin/env python
 
 from . import _cfa, _lat
+
 from catools import caget, caput
 
-def getRbChannels(elemlist, tags = ['default.eget']):
+def getRbChannels(elemlist, tags = []):
     """
     get the pv names for a list of elements
     
     .. warning::
 
       elements like BPM will return both H/V channels. In case we want
-      unique, use channelfinder.
-    """
-    
-    return _cfa.getElementChannel(elemlist, None, tags = tags, unique=False)
+      unique, use channelfinder class.
 
-def getSpChannels(elemlist, tags = ['default.eput']):
+    .. seealso::
+
+      :meth:`~hla.chanfinder.ChannelFinderAgent.getElementChannel`
+    """
+    t = ['default.eget']
+    t.extend(tags)
+    return _cfa.getElementChannel(elemlist, None, tags = set(t), unique=False)
+
+def getSpChannels(elemlist, tags = []):
     """get the pv names for a list of elements"""
-    return _cfa.getElementChannel(elemlist, None, tags = tags, unique=False)
+    t = ['default.eput']
+    t.extend(tags)
+    return _cfa.getElementChannel(elemlist, None, tags = set(t), unique=False)
 
 #
 #

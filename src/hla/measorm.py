@@ -25,43 +25,67 @@ from . import _cfa
 from . import getSpChannels, getRbChannels
 from catools import caget, caput
 
+import matplotlib.pylab as plt
+
 class Orm:
     """
     Orbit Response Matrix
     """
-    TSLEEP = 10
+    TSLEEP = 8
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, bpm, trim):
+        """
+        Initialize an Orm object with a list of BPMs and Trims
 
+        .. highlight:: python
+        
+          orm = Orm(['BPM1', 'BPM2'], ['TRIM1', 'TRIM2'])
+        
+        """
         # points for trim setting when calc dx/dkick
         npts = 4
 
+        self.bpm = []
+        self.trim = []
+        
         if trim and bpm:
-            trimsp = [v[0] for v in getSpChannels(trim)]
-            trimrb = [v[0] for v in getRbChannels(trim)]
-            
+            # one trim may have two (x/y) pv or one only
+            trimsp = reduce(lambda x,y: x+y, getSpChannels(trim))
+            trimrb = reduce(lambda x,y: x+y, getRbChannels(trim))
+            for i in range(len(trimsp)):
+                prop = _cfa.getChannelProperties(trimsp[i])
+                tags = _cfa.getChannelTags(trimsp[i])
+                if 'X' in tags: plane = 'X'
+                elif 'Y' in tags: plane = 'Y'
+                else:
+                    raise ValueError("channel %s of trim %s in unknown plane ('X' or 'Y')"
+                                     % (trimsp[i], prop[_cfa.ELEMNAME]))
+
+                self.trim.append((prop[_cfa.ELEMNAME], plane, trimrb[i], trimsp[i]))
+
             #
-            bpmrb  = [v[1] for v in getRbChannels(bpm)]
+            bpmrb  = reduce(lambda x,y: x+y, getRbChannels(bpm))
+            for i in range(len(bpmrb)):
+                prop = _cfa.getChannelProperties(bpmrb[i])
+                tags = _cfa.getChannelTags(bpmrb[i])
+                if 'X' in tags: plane = 'X'
+                elif 'Y' in tags: plane = 'Y'
+                else:
+                    raise ValueError("channel %s of bpm %s in unknown plane ('X' or 'Y')"
+                                     % (bpmrb[i], prop[_cfa.ELEMNAME]))
+                self.bpm.append((prop[_cfa.ELEMNAME], plane, bpmrb[i]))
 
-            self.bpm  = [v for v in bpm]
-            self.trim = [v for v in trim]
-            self.__bpmrb  = [v for v in bpmrb]
-            self.__trimsp = [v for v in trimsp]
-            self.__trimrb = [v for v in trimrb]
-        else:
-            self.bpm = []
-            self.trim = []
-            self.__bpmrb = []
-            self.__trimsp = []
-            self.__trimrb = []
+        # count the dimension of matrix
+        nbpm  = len(set([b[0] for b in self.bpm]))
+        ntrim = len(set([t[0] for t in self.trim]))
+        nbpmpv, ntrimpv = len(self.bpm), len(self.trim)
 
-        nbpm, ntrim = len(self.bpm), len(self.trim)
-
+        #self.__bpmmon = np.zeros((nbpmpv, 5)
         # 3d raw data
-        self.__rawmatrix = np.zeros((npts+2, nbpm, ntrim), 'd')
-        self.__mask = np.zeros((nbpm, ntrim), 'i')
-        self.__rawkick = np.zeros((ntrim, npts+2), 'd')
-        self.__m = np.zeros((nbpm, ntrim), 'd')
+        self.__rawmatrix = np.zeros((npts+2, nbpmpv, ntrimpv), 'd')
+        self.__mask = np.zeros((nbpmpv, ntrimpv), 'i')
+        self.__rawkick = np.zeros((ntrimpv, npts+2), 'd')
+        self.m = np.zeros((nbpmpv, ntrimpv), 'd')
 
     def __io_format(self, filename, format):
         rt, ext = splitext(filename)
@@ -97,9 +121,6 @@ class Orm:
             dst = f.create_dataset("orm", data = self.__m)
             dst = f.create_dataset("bpm", data = self.bpm)
             dst = f.create_dataset("trim", data = self.trim)
-            dst = f.create_dataset("bpm_pvrb", data = self.__bpmrb)
-            dst = f.create_dataset("trim_pvsp", data = self.__trimsp)
-            dst = f.create_dataset("trim_pvrb", data = self.__trimrb)
 
             grp = f.create_group("_rawdata_")
             dst = grp.create_dataset("matrix", data = self.__rawmatrix)
@@ -110,12 +131,9 @@ class Orm:
         elif fmt == 'shelve':
             import shelve
             f = shelve.open(filename, 'c')
-            f['orm.m'] = self.__m
+            f['orm.m'] = self.m
             f['orm.bpm'] = self.bpm
             f['orm.trim'] = self.trim
-            f['orm.bpm_pvrb']  = self.__bpmrb
-            f['orm.trim_pvsp'] = self.__trimsp
-            f['orm.trim_pvrb'] = self.__trimrb
             f['orm._rawdata_.matrix']    = self.__rawmatrix
             f['orm._rawdata_.kicker_sp'] = self.__rawkick
             f['orm._rawdata_.mask']      = self.__mask
@@ -123,6 +141,9 @@ class Orm:
             raise ValueError("not supported file format: %s" % format)
 
     def load(self, filename, format = ''):
+        self.__load_v2(filename, format)
+
+    def __load_v2(self, filename, format = ''):
         """
         load orm data from binary file
         """
@@ -136,9 +157,6 @@ class Orm:
             nbpm, ntrim = len(self.bpm), len(self.trim)
             self.__m = np.zeros((nbpm, ntrim), 'd')
             self.__m[:,:] = f["orm"][:,:]
-            self.__bpmrb = [b.strip() for b in f["bpm_pvrb"]]
-            self.__trimsp = [b for b in f["trim_pvsp"]]
-            self.__trimrb = [b for b in f["trim_pvrb"]]
             t, npts = f["_rawdata_"]["kicker_sp"].shape
             self.__rawkick = np.zeros((ntrim, npts), 'd')
             #print np.shape(self.__rawkick)
@@ -150,12 +168,9 @@ class Orm:
             self.__mask[:,:] = f["_rawdata_"]["mask"][:,:]
         elif fmt == 'shelve':
             f = shelve.open(filename, 'r')
-            self.bpm = f["orm.bpm"]
-            self.trim = f["orm.trim"]
-            self.__m = f["orm.m"]
-            self.__bpmrb  = f["orm.bpm_pvrb"]
-            self.__trimsp = f["orm.trim_pvsp"]
-            self.__trimrb = f["orm.trim_pvrb"]
+            bpm = f["orm.bpm"]
+            trim = f["orm.trim"]
+            self.m = f["orm.m"]
             self.__rawmatrix = f["orm._rawdata_.matrix"]
             self.__rawkick   = f["orm._rawdata_.kicker_sp"]
             self.__mask      = f["orm._rawdata_.mask"]
@@ -171,6 +186,7 @@ class Orm:
         """
 
         kx0 = caget(kickerpv)
+        print "Kicker: read %f rb(write) %f" % (kref, kx0)
         # bpm read out
         ret = np.zeros((6, len(bpmpvlist)), 'd')
         # initial bpm data
@@ -194,21 +210,9 @@ class Orm:
                     sys.stdout.flush()
             if verbose:
                 print ""
-        # 4 points
-        v = (-ret[4,:] + 8.0*ret[3,:] - 8*ret[2,:] + ret[1,:])/12.0/dkick
-        
-        # polyfit
-        p, residuals, rank, singular_values, rcond = \
-            np.polyfit(kstrength[1:-1], ret[1:-1,:], 1, full=True)
-        #print ""
-        #print "Shape:", np.shape(kstrength[1:-1]), np.shape(ret[1:-1,:])
-        #print "Shape:",np.shape(p), np.shape(residuals)
 
-        for i in range(len(bpmpvlist)):
-            if abs((v[i] - p[0, i])/v[i]) > .1:
-                print "WARNING", kickerpv, bpmpvlist[i], v[i], p[0,i]
-        
-        return v, kstrength, ret, 
+        return np.array(kstrength), ret
+
 
     def measure(self, coupled=False, verbose = 0):
         """
@@ -216,16 +220,44 @@ class Orm:
         coupled terms or not.
         """
 
-        for i, trim in enumerate(self.__trimsp):
-            kref = caget(self.__trimrb[i])
+        bpmrb = [b[2] for b in self.bpm]
+        for i, rec in enumerate(self.trim):
+            # get the readback of one trim
+            trim_pv_sp = rec[2]
+            trim_pv_rb = rec[3]
+            kickref = caget(trim_pv_sp)
+
+            dkick = 2e-6
             #if True: print i, self.__trimsp[i], kref,
-            v, kstrength, ret = self.__meas_orbit_rm4(
-                trim, self.__bpmrb, mask = self.__mask[:,i], kref=kref,
-                verbose=verbose)
+            kstrength, ret = self.__meas_orbit_rm4(
+                trim_pv_rb, bpmrb, mask = self.__mask[:,i], kref=kickref,
+                dkick = dkick, verbose=verbose)
+
+            # 4 points
+            v = (-ret[4,:] + 8.0*ret[3,:] - 8*ret[2,:] + ret[1,:])/12.0/dkick
+        
+            # polyfit
+            p, residuals, rank, singular_values, rcond = \
+                np.polyfit(kstrength[1:-1], ret[1:-1,:], 1, full=True)
+
+            ###
+            ### it is better to skip coupling, at low slop, error is large ...
+            for j in range(len(self.bpm)):
+                if abs((v[j] - p[0, j])/v[j]) > .1 and abs(v[j]) > .01:
+                    print "WARNING", trim_pv_sp, self.bpm[j][0], v[j], p[0,j]
+
             self.__rawkick[i, :] = kstrength[:]
             self.__rawmatrix[:,:,i] = ret[:,:]
-            self.__m[:,i] = v[:]
-            time.sleep(3)
+            self.m[:,i] = v[:]
+            if verbose:
+                plt.clf()
+                for j in range(len(self.bpm)):
+                    # skip the coupling
+                    if rec[1] != self.bpm[j][1]: continue
+                    plt.plot(self.__rawkick[i,:]*1e6, ret[:,j]*1e3, '-o')
+                plt.savefig("orm-kick-%s.png" % rec[0])
+
+            time.sleep(self.TSLEEP)
 
     def merge(self, src):
         """
@@ -430,7 +462,6 @@ def measOrbitRm(bpm, trim):
 
     orm = Orm(bpm, trim)
     orm.measure(verbose=1)
-    #orm.save("test.hdf5")
     return orm
 
 # testing ...

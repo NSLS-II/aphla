@@ -5,8 +5,10 @@ import sys
 import cothread
 import cothread.catools as ct
 
+
 def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
            count=0, throw=True):
+
     if isinstance(pvs, str):
         pvs2 = pvs
     elif isinstance(pvs, unicode):
@@ -40,3 +42,5 @@ def caput(pvs, values, timeout=5, throw=True):
     except cothread.Timedout:
         print "TIMEOUT: ", pvs
         sys.exit(0)
+
+caget.__doc__ = ct.caget.__doc__

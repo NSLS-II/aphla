@@ -36,6 +36,8 @@ Modules
 .. automodule:: hla.meastwiss
    :members:
 
+.. automodule:: hla.hlalib
+   :members:
 
 .. sourcecode:: ipython
 

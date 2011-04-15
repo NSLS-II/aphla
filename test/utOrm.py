@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from conf import *
+
 import hla
 import unittest
 import sys, time
@@ -8,7 +10,6 @@ import numpy as np
 from cothread.catools import caget, caput
 import matplotlib.pylab as plt
 
-from conf import *
 
 class TestConf(unittest.TestCase):
     def setUp(self):
@@ -20,9 +21,7 @@ class TestConf(unittest.TestCase):
         if hla.NETWORK_DOWN: return None
         reset_svr()
 
-    def test_measure_orm(self):
-        if hla.NETWORK_DOWN: return True
-
+    def test_trim_bpm(self):
         trimx = ['FXL2G1C07A', 'CXH1G6C15B']
         #print hla.getSpChannels(trimx)
         for tr in trimx:
@@ -33,22 +32,39 @@ class TestConf(unittest.TestCase):
 
         bpmx = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
         self.assertTrue(len(bpmx) > 0)
-        print hla.getSpChannels(trimx, tags=['default.eput', 'X'])
-        print hla.getRbChannels(trimx, tags=['default.eget', 'X'])
         trimxsp = [v[0] for v in \
                        hla.getSpChannels(trimx, tags=['default.eput', 'X'])]
+        self.assertTrue(len(trimxsp) > 0)
+
         trimxrb = [v[0] for v in \
                    hla.getRbChannels(trimx, tags=['default.eget', 'X'])]
+        self.assertTrue(len(trimxrb) > 0)
+
         bpmxrb  = [v[0] for v in \
                    hla.getRbChannels(bpmx, tags=['default.eget', 'X'])]
-        print bpmxrb, trimxsp, trimxrb
+        self.assertTrue(len(bpmxrb) > 0)
 
         self.assertEqual(len(trimx), len(trimxsp))
         self.assertEqual(len(trimx), len(trimxrb))
         self.assertEqual(len(bpmx), len(bpmxrb))
 
-        orm = hla.measOrbitRm(bpm = bpmx, trim = trimx)
-        orm.checkLinearity()
+    def test_measure_orm(self):
+        if hla.NETWORK_DOWN: return True
+
+        #alltrim = hla.getGroupMembers(['*', 'TRIMX'], inter)
+        #print alltrim
+
+        #return True
+
+        trimx = ['CXH1G6C15B', 'CYHG2C30A', 'CXL2G6C14B', 'CYHG2C16A']
+        #trimx = ['CXH1G6C15B']
+        bpmx = ['PH1G2C30A', 'PL1G2C01A', 'PH1G6C29B']
+        print "resetting trims..."
+        #hla.reset_trims()
+        orm = hla.measorm.Orm(bpm = bpmx, trim = trimx)
+        orm.measure(verbose=1)
+        orm.save("orm-test.pkl")
+        #orm.checkLinearity()
         pass
 
 
