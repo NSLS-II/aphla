@@ -62,14 +62,29 @@ class TestConf(unittest.TestCase):
         #orm.checkLinearity()
         pass
 
-
+    def test_measure_full_orm(self):
+        bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
+        trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+        trimy = hla.getGroupMembers(['*', 'TRIMY'], op='intersection')
+        trim = trimx[:]
+        trim.extend(trimy)
+        #print bpm, trim
+        print "start:", time.time()
+        orm = hla.measorm.Orm(bpm=bpm, trim=trim)
+        orm.measure(verbose=0)
+        orm.save("orm-full.pkl")
+        print "Done", time.time()
+        
     def test_linearity(self):
-        if hla.NETWORK_DOWN: return True
+        #return True
+        #if hla.NETWORK_DOWN: return True
         orm = hla.measorm.Orm(bpm = [], trim = [])
         #orm.load('orm-test.pkl')
         orm.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl')
         orm.maskCrossTerms()
-        print orm
+        #print orm
+        for i,b in enumerate(orm.bpm):
+            print i, b[0], b[2]
         #orm.checkLinearity(plot=True)
         pass
 
@@ -95,13 +110,12 @@ class TestConf(unittest.TestCase):
         return True
         if hla.NETWORK_DOWN: return True
         orm = hla.measorm.Orm(bpm = [], trim = [])
-        orm.load(ORM_PKL, format = 'shelve')
-        #print orm
-        bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
-        trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
-        ibpm = np.random.randint(len(bpm))
-        itrim = np.random.randint(len(trim))
-        orm.checkOrbitReproduce([bpm[ibpm]], [trim[itrim]])
+        #orm.load('orm-test.pkl')
+        orm.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl')
+        orm.maskCrossTerms()
+
+        orm.checkOrbitReproduce(['PH1G2C30A', 'PM1G4C30A', 'PL2G6C30B'],
+                                ['CXL2G6C30B', 'CYL1G2C01A'])
         
 def test_delay():
     rx, rt = [], []

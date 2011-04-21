@@ -384,7 +384,7 @@ class ChannelFinderAgent:
          #print "Importing file:", lattable
          self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
          cnt = {'BPM':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
- 
+         
          f = open(lattable, 'r').readlines()
          for s in f[1:]:
              if s[0] == '#': continue

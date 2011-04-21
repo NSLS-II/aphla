@@ -58,10 +58,12 @@ class Orm:
                 if 'X' in tags: plane = 'X'
                 elif 'Y' in tags: plane = 'Y'
                 else:
-                    raise ValueError("channel %s of trim %s in unknown plane ('X' or 'Y')"
-                                     % (trimsp[i], prop[_cfa.ELEMNAME]))
+                    raise ValueError(
+                        "channel %s of trim %s in unknown plane ('X' or 'Y')"
+                        % (trimsp[i], prop[_cfa.ELEMNAME]))
 
-                self.trim.append((prop[_cfa.ELEMNAME], plane, trimrb[i], trimsp[i]))
+                self.trim.append(
+                    (prop[_cfa.ELEMNAME], plane, trimrb[i], trimsp[i]))
 
             #
             bpmrb  = reduce(lambda x,y: x+y, getRbChannels(bpm))
@@ -71,8 +73,9 @@ class Orm:
                 if 'X' in tags: plane = 'X'
                 elif 'Y' in tags: plane = 'Y'
                 else:
-                    raise ValueError("channel %s of bpm %s in unknown plane ('X' or 'Y')"
-                                     % (bpmrb[i], prop[_cfa.ELEMNAME]))
+                    raise ValueError(
+                        "channel %s of bpm %s in unknown plane ('X' or 'Y')"
+                        % (bpmrb[i], prop[_cfa.ELEMNAME]))
                 self.bpm.append((prop[_cfa.ELEMNAME], plane, bpmrb[i]))
 
         # count the dimension of matrix
@@ -240,8 +243,11 @@ class Orm:
             ###
             ### it is better to skip coupling, at low slop, error is large ...
             for j in range(len(self.bpm)):
-                if abs((v[j] - p[0, j])/v[j]) > .1 and abs(v[j]) > .01:
-                    print "WARNING", trim_pv_sp, self.bpm[j][0], v[j], p[0,j]
+                # do not warn if it is coupling terms
+                if abs((v[j] - p[0, j])/v[j]) > .05 and \
+                       rec[1] == self.bpm[j][1]:
+                    print "WARNING", trim_pv_sp, self.bpm[j][0], \
+                          self.bpm[j][1], v[j], p[0,j]
 
             self.__rawkick[i, :] = kstrength[:]
             self.__rawmatrix[:,:,i] = ret[:,:]
@@ -426,36 +432,47 @@ class Orm:
             # end of all bpm
             if n > 0:
                 #plt.ylabel(self.__bpm[i] + "  x1e6")
-                plt.title("Failed: %d/%d (%s)" % (n, len(self.bpm[i][2]), self.trim[j][2]))
+                plt.title("Failed: %d/%d (%s)" % \
+                          (n, len(self.bpm[i][2]), self.trim[j][2]))
                 plt.xlabel(self.trim[j][0] + "  x1e6")
                 plt.savefig("orm-check-%07d.png" % (j))
         print len(res), np.average(res), np.var(res)
 
-    def checkOrbitReproduce(self, bpm, trim, kick = None):
+    def checkOrbitReproduce(self, bpm, trim):
         print "checking ..."
         print "    bpm:", bpm
         print "    trim:", trim
-        if kick == None:
-            kick = np.random.rand(len(trim)) * 1e-6
-        for i,t in enumerate(trim):
-            i1 = self.trim.index(t)
-            caput(self.trim[i1][3], kick[i])
-        print "RB:", len(self.bpm)
+        itrim, ibpm = [], []
+        for i, b in enumerate(self.bpm):
+            if b[0] in bpm: ibpm.append(i)
+        for i, t in enumerate(self.trim):
+            if t[0] in trim: itrim.append(i)
+        kick0 = np.zeros(len(itrim), 'd')
+        for j,jt in enumerate(itrim):
+            kick0[j] = caget(self.trim[jt][3])
+        kick = np.random.rand(len(itrim))*6e-6
+        x0 = np.zeros(len(ibpm), 'd')
+        for i,ib in enumerate(ibpm):
+            x0[i] = caget(self.bpm[ib][2])
+        print x0
+        
+        dx = np.zeros(len(ibpm), 'd')
+        for i,ib in enumerate(ibpm):
+            for j,jt in enumerate(itrim):
+                dx[i] = dx[i] + self.m[ib, jt]*kick[j]
+        for j, jt in itrim:
+            caput(self.trim[jt][3], kick[j])
         time.sleep(self.TSLEEP)
-        for i,b in enumerate(bpm):
-            i1 = self.bpm.index(b)
-            print b, caget(self.__bpmrb[i1]),
-            s = 0.0
-            for j in range(len(trim)):
-                s = s + m[i,j]*kick[j]
-            diff = (s-caget(self.__bpmrb[i1]))/s
-            print s, diff*100.0,'%',
-            if diff > .05: print " *"
-            else: print ""
+        
+        for j,jt in enumerate(itrim):
+            caput(self.trim[jt][3], kick0[j])
 
-        for i,t in enumerate(trim):
-            i1 = self.trim.index(t)
-            caput(self.__trimsp[i1], 0.0)
+        x1 = np.zeros(len(ibpm), 'd')
+        for i,ib in enumerate(ibpm):
+            x1[i] = caget(self.bpm[ib][2])
+        print x1
+        print (x1-x0) - dx
+
         pass
 
     def __str__(self):
