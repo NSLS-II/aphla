@@ -63,7 +63,7 @@ class TestConf(unittest.TestCase):
         pass
 
     def test_measure_full_orm(self):
-        print __file__, "Measure full matrix"
+        #print __file__, "Measure full matrix"
         bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
         trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
         trimy = hla.getGroupMembers(['*', 'TRIMY'], op='intersection')
@@ -71,37 +71,10 @@ class TestConf(unittest.TestCase):
         trim.extend(trimy)
         #print bpm, trim
         print "start:", time.time()
-        orm = hla.measorm.Orm(bpm=bpm, trim=trim[:5])
+        orm = hla.measorm.Orm(bpm=bpm, trim=trim)
         orm.TSLEEP = 5
-        orm.measure(output="orm-full2.pkl", verbose=0)
+        orm.measure(output="orm-full.pkl", verbose=0)
 
-        orm2 = hla.measorm.Orm([], [])
-        orm2.load("orm-full2.pkl")
-        print orm2
-        print "delay: ", orm2.TSLEEP
-        orm2.maskCrossTerms()
-        x0, x1, dx = orm2.checkOrbitReproduce(bpm, trim[:5])
-        ratio = (x1-x0-dx)/x0
-        for i in range(len(x0)):
-            if x0[i] < 1e-7: ratio[i] = 0.0
-        plt.clf()
-        plt.plot(ratio, '-o')
-        plt.ylabel("[(x1-x0)-dx]/x0")
-        plt.savefig("orm-orbit-reproduce-1.png")
-        
-        plt.clf()
-        plt.plot(x0, '--', label='orbit 0')
-        plt.plot(x1, '-', label='orbit 1')
-        plt.plot(x0+dx, 'x', label='ORM predict')
-        
-        plt.ylabel("orbit")
-        plt.savefig("orm-orbit-reproduce-2.png")
-
-        for i in range(len(bpm)):
-            if x0[i]+dx[i] - x1[i] > 1e-4:
-                print "Not agree well:", i,bpm[i], x0[i]+dx[i], x1[i]
-        print "Done", time.time()
-        
     def test_linearity(self):
         #return True
         #if hla.NETWORK_DOWN: return True
@@ -134,15 +107,42 @@ class TestConf(unittest.TestCase):
         #orm.checkLinearity()
 
     def test_orbitreproduce(self):
-        return True
         if hla.NETWORK_DOWN: return True
-        orm = hla.measorm.Orm(bpm = [], trim = [])
-        #orm.load('orm-test.pkl')
-        orm.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl')
-        orm.maskCrossTerms()
 
-        orm.checkOrbitReproduce(['PH1G2C30A', 'PM1G4C30A', 'PL2G6C30B'],
-                                ['CXL2G6C30B', 'CYL1G2C01A'])
+        bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
+        trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+        trimy = hla.getGroupMembers(['*', 'TRIMY'], op='intersection')
+        trim = trimx[:]
+        trim.extend(trimy)
+        #print bpm, trim
+        print "start:", time.time()
+
+        orm2 = hla.measorm.Orm([], [])
+        orm2.load("orm-full.pkl")
+        print orm2
+        print "delay: ", orm2.TSLEEP
+        orm2.maskCrossTerms()
+        x0, x1, dx = orm2.checkOrbitReproduce(bpm, trim[:5])
+        ratio = (x1-x0-dx)/x0
+        for i in range(len(x0)):
+            if x0[i] < 1e-7: ratio[i] = 0.0
+        plt.clf()
+        plt.plot(ratio, '-o')
+        plt.ylabel("[(x1-x0)-dx]/x0")
+        plt.savefig("orm-orbit-reproduce-1.png")
+        
+        plt.clf()
+        plt.plot(x0, '--', label='orbit 0')
+        plt.plot(x1, '-', label='orbit 1')
+        plt.plot(x0+dx, 'x', label='ORM predict')
+        
+        plt.ylabel("orbit")
+        plt.savefig("orm-orbit-reproduce-2.png")
+
+        for i in range(len(bpm)):
+            if x0[i]+dx[i] - x1[i] > 1e-4:
+                print "Not agree well:", i,bpm[i], x0[i]+dx[i], x1[i]
+        print "Done", time.time()
         
 def test_delay():
     rx, rt = [], []
