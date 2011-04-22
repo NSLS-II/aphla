@@ -23,7 +23,7 @@ import shelve
 from . import _lat
 from . import _cfa
 from . import getSpChannels, getRbChannels
-from catools import caget, caput
+from catools import caget, caput, Timedout
 
 import matplotlib.pylab as plt
 
@@ -64,7 +64,6 @@ class Orm:
 
                 self.trim.append(
                     (prop[_cfa.ELEMNAME], plane, trimrb[i], trimsp[i]))
-
             #
             bpmrb  = reduce(lambda x,y: x+y, getRbChannels(bpm))
             for i in range(len(bpmrb)):
@@ -89,6 +88,8 @@ class Orm:
         self.__rawkick = np.zeros((ntrimpv, npts+2), 'd')
         self.m = np.zeros((nbpmpv, ntrimpv), 'd')
 
+        #print __file__, "Done initialization"
+        
     def __io_format(self, filename, format):
         rt, ext = splitext(filename)
         if format == '' and ext in self.fmtdict.keys():
@@ -186,7 +187,7 @@ class Orm:
         """
 
         kx0 = caget(kickerpv)
-        print "Kicker: read %f rb(write) %f" % (kref, kx0)
+        print "Kicker: read %f rb(write) %f" % (kref, kx0), 
         # bpm read out
         ret = np.zeros((6, len(bpmpvlist)), 'd')
         # initial bpm data
@@ -198,8 +199,11 @@ class Orm:
         for i,kx in enumerate(kstrength[1:]):
             caput(kickerpv, kx)
             if verbose: 
-                print "Setting trim: ", kickerpv, kx, caget(kickerpv), 
+                print "\nSetting trim: ", kickerpv, kx, caget(kickerpv), 
                 print "  waiting %d sec" % self.TSLEEP
+            else:
+                print kx,
+                sys.stdout.flush()
             time.sleep(self.TSLEEP)
             for j,bpm in enumerate(bpmpvlist):
                 if mask[j]: ret[i+1,j] = 0
@@ -210,16 +214,19 @@ class Orm:
                     sys.stdout.flush()
             if verbose:
                 print ""
+        print ""
 
         return np.array(kstrength), ret
 
 
-    def measure(self, coupled=False, verbose = 0):
+    def measure(self, output="orm.pkl", verbose = 0):
         """
         Measure the ORM, ignore the Horizontal(kicker)-Vertical(bpm)
         coupled terms or not.
         """
-
+        t_start = time.time()
+        t0 = t_start
+        
         bpmrb = [b[2] for b in self.bpm]
         for i, rec in enumerate(self.trim):
             # get the readback of one trim
@@ -227,12 +234,18 @@ class Orm:
             trim_pv_rb = rec[3]
             kickref = caget(trim_pv_sp)
 
-            dkick = 2e-6
-            #if True: print i, self.__trimsp[i], kref,
-            kstrength, ret = self.__meas_orbit_rm4(
-                trim_pv_rb, bpmrb, mask = self.__mask[:,i], kref=kickref,
-                dkick = dkick, verbose=verbose)
-
+            dkick = 2e-5
+            try:
+                kstrength, ret = self.__meas_orbit_rm4(
+                    trim_pv_rb, bpmrb, mask = self.__mask[:,i], kref=kickref,
+                    dkick = dkick, verbose=verbose)
+                if True:
+                    print "%3d/%d" % (i,len(self.trim)), time.time() - t0, 
+                    t0 = time.time()
+            except Timedout:
+                save(output)
+                raise Timedout
+            
             # 4 points
             v = (-ret[4,:] + 8.0*ret[3,:] - 8*ret[2,:] + ret[1,:])/12.0/dkick
         
@@ -244,14 +257,19 @@ class Orm:
             ### it is better to skip coupling, at low slop, error is large ...
             for j in range(len(self.bpm)):
                 # do not warn if it is coupling terms
-                if abs((v[j] - p[0, j])/v[j]) > .05 and \
+                if abs((v[j] - p[0, j])/v[j]) > .05 and abs(v[j]) > .1 and \
                        rec[1] == self.bpm[j][1]:
                     print "WARNING", trim_pv_sp, self.bpm[j][0], \
                           self.bpm[j][1], v[j], p[0,j]
-
+                    plt.plot(kstrength[1:-1], ret[1:-1,j], 'o')
+                    tx = np.linspace(kstrength[1], kstrength[-1], 20)
+                    plt.plot(tx, tx*p[0,j] + p[1,j], '-')
+                    plt.savefig("orm-trim-%03d-bpm-%03d.png" % (i,j))
+                    
             self.__rawkick[i, :] = kstrength[:]
             self.__rawmatrix[:,:,i] = ret[:,:]
-            self.m[:,i] = v[:]
+            #self.m[:,i] = v[:]
+            self.m[:,i] = p[0,:]
             if verbose:
                 plt.clf()
                 for j in range(len(self.bpm)):
@@ -261,6 +279,11 @@ class Orm:
                 plt.savefig("orm-kick-%s.png" % rec[0])
 
             time.sleep(self.TSLEEP)
+
+            # save for every trim settings
+            self.save(output)
+        t_end = time.time()
+        print "Time cost: ", "%.2f" % ((t_end - t_start)/60.0), " min"
 
     def hasBpm(self, bpm):
         """
@@ -440,46 +463,61 @@ class Orm:
 
     def checkOrbitReproduce(self, bpm, trim):
         print "checking ..."
-        print "    bpm:", bpm
+        print "    bpm:", len(bpm)
         print "    trim:", trim
+
+        # skip the masked value
         itrim, ibpm = [], []
         for i, b in enumerate(self.bpm):
             if b[0] in bpm: ibpm.append(i)
         for i, t in enumerate(self.trim):
             if t[0] in trim: itrim.append(i)
+        if len(itrim) == 0:
+            # No trim specified.
+            return
+        
         kick0 = np.zeros(len(itrim), 'd')
         for j,jt in enumerate(itrim):
+            # read the setpoint
             kick0[j] = caget(self.trim[jt][3])
-        kick = np.random.rand(len(itrim))*6e-6
+        dkick = np.random.rand(len(itrim))*5e-5 + 6e-5
+
+        # get the initial orbit
         x0 = np.zeros(len(ibpm), 'd')
         for i,ib in enumerate(ibpm):
             x0[i] = caget(self.bpm[ib][2])
-        print x0
         
         dx = np.zeros(len(ibpm), 'd')
         for i,ib in enumerate(ibpm):
             for j,jt in enumerate(itrim):
-                dx[i] = dx[i] + self.m[ib, jt]*kick[j]
-        for j, jt in itrim:
-            caput(self.trim[jt][3], kick[j])
+                # skip the masked ORM elements
+                if self.__mask[ib, jt]: continue
+                dx[i] = dx[i] + self.m[ib, jt]*dkick[j]
+        for j, jt in enumerate(itrim):
+            caput(self.trim[jt][3], kick0[j] + dkick[j])
         time.sleep(self.TSLEEP)
-        
-        for j,jt in enumerate(itrim):
-            caput(self.trim[jt][3], kick0[j])
 
+        # get the final orbit
         x1 = np.zeros(len(ibpm), 'd')
         for i,ib in enumerate(ibpm):
             x1[i] = caget(self.bpm[ib][2])
-        print x1
-        print (x1-x0) - dx
+        #print x1
 
-        pass
+        # reset the trims
+        for j,jt in enumerate(itrim):
+            caput(self.trim[jt][3], kick0[j])
+        time.sleep(self.TSLEEP)
+
+        # return experiment and theory
+        return x0, x1, dx
 
     def __str__(self):
         nbpm, ntrim = np.shape(self.m)
         s = "Orbit Response Matrix\n" \
-            " trim %d, bpm %d, matrix (%d, %d)" % \
-            (len(self.trim), len(self.bpm), nbpm, ntrim)
+            " trim %d, bpm %d, matrix (%d, %d)\n" \
+            " masked %d / %d" % \
+            (len(self.trim), len(self.bpm), nbpm, ntrim,
+             np.sum(self.__mask), len(self.trim)*len(self.bpm))
         return s
 
 def measOrbitRm(bpm, trim):

@@ -82,6 +82,7 @@ Software
 ::
 
   $ apt-get install mercurial pyqt4-dev-tools
+  $ apt-get install python-qt4 python-qt4-dev
 
 
 Code Repository
