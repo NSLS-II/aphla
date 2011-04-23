@@ -88,6 +88,9 @@ class Orm:
         self.__rawkick = np.zeros((ntrimpv, npts+2), 'd')
         self.m = np.zeros((nbpmpv, ntrimpv), 'd')
 
+        self.bpmrb = bpmrb[:]
+        self.trimsp = trimsp[:]
+        
         #print __file__, "Done initialization"
         
     def __io_format(self, filename, format):
@@ -259,8 +262,8 @@ class Orm:
                 # do not warn if it is coupling terms
                 if abs((v[j] - p[0, j])/v[j]) > .05 and abs(v[j]) > .1 and \
                        rec[1] == self.bpm[j][1]:
-                    print "WARNING", trim_pv_sp, self.bpm[j][0], \
-                          self.bpm[j][1], v[j], p[0,j]
+                    print "WARNING", trim_pv_sp, self.trim[i][0], \
+                          self.bpm[j][0], self.bpm[j][1], v[j], p[0,j]
                     plt.plot(kstrength[1:-1], ret[1:-1,j], 'o')
                     tx = np.linspace(kstrength[1], kstrength[-1], 20)
                     plt.plot(tx, tx*p[0,j] + p[1,j], '-')
@@ -308,94 +311,72 @@ class Orm:
                 # b[1] = ['X'|'Y'], similar for t[1]
                 if b[1] != t[1]: self.__mask[i,j] = 1
 
-    def merge(self, src):
+    def __pv_index(self, pv):
+        """
+        return pv index of BPM, TRIM
+        """
+        for i,b in enumerate(self.bpm):
+            if b[2] == pv: return i
+        for j,t in enumerate(self.trim):
+            if b[2] == pv or b[3] == pv:
+                return j
+        return -1
+    
+    def update(self, src):
         """
         merge two orm into one
         """
+        # copy
+        bpm, trim = self.bpm[:], self.trim[:]
 
-        raise NotImplementedError()
-
-        print "Merging ..."
-        nbpm, ntrim = len(self.bpm), len(self.trim)
-        ntrim1, npts = np.shape(self.__rawkick)
-        if ntrim != ntrim:
-            raise ValueError("Internal data dimension does not match")
+        for i,b in enumerate(src.bpm):
+            if self.__pv_index(b[2]) < 0:
+                bpm.append(b)
+        for j,t in enumerate(src.trim):
+            if self.__pv_index(t[2]) < 0:
+                trim.append(t)
+        npts, nbpm0, ntrim0 = np.shape(self.__rawmatrix)
         
-        # index of src bpm/trim in the new bpm/trim list
-        ibpm, itrim = range(len(src.__bpmrb)), range(len(src.__trimsp))
+        nbpm, ntrim = len(bpm), len(trim)
+        print "(%d,%d) -> (%d,%d)" % (nbpm0, ntrim0, nbpm, ntrim)
+        # the merged is larger
+        rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
+        mask      = np.zeros((nbpm, ntrim), 'i')
+        rawkick   = np.zeros((ntrim, npts), 'd')
+        m         = np.zeros((nbpm, ntrim), 'd')
 
-        # new header
-        bpm = [b for b in set(self.bpm).union(set(src.bpm))]
-        trim = [ t for t in set(self.trim).union(set(src.trim))]
-        print bpm, trim
+        rawmatrix[:, :nbpm0, :ntrim0] = self.__rawmatrix[:,:,:]
+        mask[:nbpm0, :ntrim0]         = self.__mask[:,:]
+        rawkick[:ntrim0, : ]          = self.__rawkick[:,:]
+        m[:nbpm0, :ntrim0]            = self.m[:,:]
 
-        # merge the matrix data
-        dst = Orm(bpm = bpm, trim = trim)
+        # find the index
+        bpmrb = [b[2] for b in bpm]
+        trimsp = [t[3] for t in trim]
+        ibpm  = [ bpmrb.index(b[2]) for b in src.bpm ]
+        itrim = [ trimsp.index(t[3]) for t in src.trim ]
+        
+        for j, t in enumerate(src.trim):
+            jj = itrim[j]
+            rawkick[jj,:] = src.__rawkick[j,:]
+            for i, b in enumerate(src.bpm):
+                ii = ibpm[i]
+                rawmatrix[:,ii,jj] = src.__rawmatrix[:,i,j]
+                mask[ii,jj] = src.__mask[i,j]
+                m[ii,jj] = src.m[i,j]
+        self.__rawmatrix = rawmatrix
+        self.__mask = mask
+        self.__rawkick = rawkick
+        self.m = m
 
-        print len(self.__trimsp), len(src.__trimsp), len(dst.__trimsp)
-        for pv in src.__trimsp:
-            if list(src.__trimsp).count(pv) > 1: print pv
-            #return None
-
-        # 3d raw data, assuming src and self has same __npoints
-        dst.__rawmatrix = np.zeros((npts, len(dst.__bpmrb),
-                                   len(dst.__trimsp)), 'd')
-        dst.__mask = np.zeros((len(dst.__bpmrb), len(dst.__trimsp)))
-        dst.__rawkick = np.zeros((len(dst.__trimsp), npts), 'd')
-        dst.__m = np.zeros((len(dst.__bpmrb), len(dst.__trimsp)), 'd')
-
-        for j,pvj in enumerate(self.__trimsp):
-            print j,
-            sys.stdout.flush()
-            jj = dst.__trimsp.index(pvj)
-            for i,pvi in enumerate(self.__bpmrb):
-                ii = dst.__bpmrb.index(pvi)
-                for k in range(npts):
-                    dst.__rawmatrix[k, ii, jj] = self.__rawmatrix[k, i, j]
-                dst.__mask[ii, jj] = self.__mask[i, j]
-                dst.__m[ii, jj] = self.__m[i, j]
-            for k in range(npts):
-                dst.__rawkick[jj, k] = self.__rawkick[j, k]
-        print "Step 1"
-        for j,pvj in enumerate(src.__trimsp):
-            print j,
-            sys.stdout.flush()
-            jj = dst.__trimsp.index(pvj)
-            for i,pvi in enumerate(src.__bpmrb):
-                ii = dst.__bpmrb.index(pvi)
-                for k in range(npts):
-                    dst.__rawmatrix[k, ii, jj] = src.__rawmatrix[k, i, j]
-                dst.__mask[ii, jj] = src.__mask[i, j]
-                dst.__m[ii, jj] = src.__m[i, j]
-            for k in range(npts):
-                dst.__rawkick[jj, k] = src.__rawkick[j, k]
-        print "Step 2"
-        return dst
-
+        self.bpmrb, self.trimsp = bpmrb, trimsp
+        
     def getSubMatrix(self, bpm, trim):
+        """
+        if only bpm name given, the return matrix will not equal to
+        len(bpm),len(trim), since one bpm can have two lines (x,y) data.
+        """
         raise NotImplementedError()
-
-        if isinstance(bpm, str): bpmlst = [bpm]
-        elif isinstance(bpm, list): bpmlst = bpm[:]
-        if isinstance(trim, str): trimlst = [trim]
-        elif isinstance(trim, list): trimlst = trim[:]
-        
-        for b in bpmlst:
-            if not b in self.bpm:
-                print b
-                print self.bpm
-                raise ValueError("bpm %s is not in ORM" % b)
-        for t in trimlst:
-            if not t in self.trim:
-                raise ValueError("trim %s is not in ORM" % t)
-            
-        d = np.zeros((len(bpmlst), len(trimlst)), 'd')
-        for i,b in enumerate(bpmlst):
-            for j,t in enumerate(trimlst):
-                i1 = self.bpm.index(b)
-                j1 = self.trim.index(t)
-                d[i,j] = self.__m[i1,j1]
-        return d
 
     def checkLinearity(self, dev = .1, plot=False):
         """

@@ -11,10 +11,20 @@ from cothread.catools import caget, caput
 import matplotlib.pylab as plt
 
 
+def hg_parent_rev():
+    import commands
+    stat, out = commands.getstatusoutput("hg summary")
+    if stat == 0:
+        for s in out.split('\n'):
+            if s[:7] == 'parent:':
+                return int(s.split(":")[1])
+    return 0
+
 class TestConf(unittest.TestCase):
     def setUp(self):
         if hla.NETWORK_DOWN: return None
         wait_for_svr()
+        self.full_orm = "orm-full-%04d.pkl" % hg_parent_rev()
         pass
 
     def tearDown(self):
@@ -72,8 +82,8 @@ class TestConf(unittest.TestCase):
         #print bpm, trim
         print "start:", time.time()
         orm = hla.measorm.Orm(bpm=bpm, trim=trim)
-        orm.TSLEEP = 5
-        orm.measure(output="orm-full.pkl", verbose=0)
+        orm.TSLEEP = 6
+        orm.measure(output=self.full_orm, verbose=0)
 
     def test_linearity(self):
         #return True
@@ -118,7 +128,7 @@ class TestConf(unittest.TestCase):
         print "start:", time.time()
 
         orm2 = hla.measorm.Orm([], [])
-        orm2.load("orm-full.pkl")
+        orm2.load(self.full_orm)
         print orm2
         print "delay: ", orm2.TSLEEP
         orm2.maskCrossTerms()
