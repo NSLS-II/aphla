@@ -73,6 +73,7 @@ class TestConf(unittest.TestCase):
         pass
 
     def test_measure_orm_sub1(self):
+        return True
         if hla.NETWORK_DOWN: return True
 
         trim = ['CXL1G2C05A', 'CXH2G6C05B', 'CXH1G6C05B', 'FXH2G1C10A',
@@ -83,14 +84,16 @@ class TestConf(unittest.TestCase):
         
         #hla.reset_trims()
         orm = hla.measorm.Orm(bpm = bpmx, trim = trim)
-        orm.TSLEEP=12
+        orm.TSLEEP=15
         orm.measure(output="orm-sub1.pkl", verbose=0)
         #orm.checkLinearity()
         pass
 
     def test_measure_full_orm(self):
-        return True
+        #return True
         #print __file__, "Measure full matrix"
+        if hla.NETWORK_DOWN: return True
+
         bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
         trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
         trimy = hla.getGroupMembers(['*', 'TRIMY'], op='intersection')
@@ -99,7 +102,7 @@ class TestConf(unittest.TestCase):
         #print bpm, trim
         print "start:", time.time()
         orm = hla.measorm.Orm(bpm=bpm, trim=trim)
-        orm.TSLEEP = 6
+        orm.TSLEEP = 12
         orm.measure(output=self.full_orm, verbose=0)
 
     def test_linearity(self):
@@ -145,6 +148,8 @@ class TestConf(unittest.TestCase):
         print "start:", time.time()
 
         orm2 = hla.measorm.Orm([], [])
+        if not os.path.exists(self.full_orm): return True
+
         orm2.load(self.full_orm)
         print orm2
         print "delay: ", orm2.TSLEEP
