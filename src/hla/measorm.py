@@ -77,6 +77,8 @@ class Orm:
                         % (bpmrb[i], prop[_cfa.ELEMNAME]))
                 self.bpm.append((prop[_cfa.ELEMNAME], plane, bpmrb[i]))
 
+            self.bpmrb = bpmrb[:]
+            self.trimsp = trimsp[:]
         # count the dimension of matrix
         nbpm  = len(set([b[0] for b in self.bpm]))
         ntrim = len(set([t[0] for t in self.trim]))
@@ -88,8 +90,8 @@ class Orm:
         self.__rawkick = np.zeros((ntrimpv, npts+2), 'd')
         self.m = np.zeros((nbpmpv, ntrimpv), 'd')
 
-        self.bpmrb = bpmrb[:]
-        self.trimsp = trimsp[:]
+        #self.bpmrb = bpmrb[:]
+        #self.trimsp = trimsp[:]
         
         #print __file__, "Done initialization"
         

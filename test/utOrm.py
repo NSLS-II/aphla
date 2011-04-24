@@ -72,7 +72,24 @@ class TestConf(unittest.TestCase):
         #orm.checkLinearity()
         pass
 
+    def test_measure_orm_sub1(self):
+        if hla.NETWORK_DOWN: return True
+
+        trim = ['CXL1G2C05A', 'CXH2G6C05B', 'CXH1G6C05B', 'FXH2G1C10A',
+                'CXM1G4C12A', 'CXH2G6C15B', 'CXL1G2C25A', 'FXH1G1C28A',
+                'CYL2G6C30B', 'FYH1G1C16A']
+        #trimx = ['CXH1G6C15B']
+        bpmx = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
+        
+        #hla.reset_trims()
+        orm = hla.measorm.Orm(bpm = bpmx, trim = trim)
+        orm.TSLEEP=12
+        orm.measure(output="orm-sub1.pkl", verbose=0)
+        #orm.checkLinearity()
+        pass
+
     def test_measure_full_orm(self):
+        return True
         #print __file__, "Measure full matrix"
         bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
         trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
