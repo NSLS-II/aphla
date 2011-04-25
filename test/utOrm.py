@@ -90,7 +90,7 @@ class TestConf(unittest.TestCase):
         pass
 
     def test_measure_full_orm(self):
-        #return True
+        return True
         #print __file__, "Measure full matrix"
         if hla.NETWORK_DOWN: return True
 

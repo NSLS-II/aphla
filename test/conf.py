@@ -5,7 +5,8 @@ from cothread.catools import caget, caput
 
 # set up directories
 if not 'HLA_ROOT' in os.environ:
-    rt,ext = os.path.splitext(os.path.realpath(sys.argv[0]))
+    #rt,ext = os.path.splitext(os.path.realpath(sys.argv[0]))
+    rt,ext = os.path.splitext(os.path.realpath(__file__))
     HLA_ROOT = os.path.split(os.path.split(rt)[0])[0]
     os.environ['HLA_ROOT'] = HLA_ROOT
 else:

@@ -85,9 +85,9 @@ class Orm:
         nbpmpv, ntrimpv = len(self.bpm), len(self.trim)
 
         # 3d raw data
-        self.__rawmatrix = np.zeros((npts+2, nbpmpv, ntrimpv), 'd')
-        self.__mask = np.zeros((nbpmpv, ntrimpv), 'i')
-        self.__rawkick = np.zeros((ntrimpv, npts+2), 'd')
+        self._rawmatrix = np.zeros((npts+2, nbpmpv, ntrimpv), 'd')
+        self._mask = np.zeros((nbpmpv, ntrimpv), 'i')
+        self._rawkick = np.zeros((ntrimpv, npts+2), 'd')
         self.m = np.zeros((nbpmpv, ntrimpv), 'd')
 
         #self.bpmrb = bpmrb[:]
@@ -95,7 +95,7 @@ class Orm:
         
         #print __file__, "Done initialization"
         
-    def __io_format(self, filename, format):
+    def _io_format(self, filename, format):
         rt, ext = splitext(filename)
         if format == '' and ext in self.fmtdict.keys():
             fmt = self.fmtdict[ext]
@@ -121,7 +121,7 @@ class Orm:
         =======  =====================================
         """
 
-        fmt = self.__io_format(filename, format)
+        fmt = self._io_format(filename, format)
 
         if fmt == 'HDF5':
             import h5py
@@ -131,9 +131,9 @@ class Orm:
             dst = f.create_dataset("trim", data = self.trim)
 
             grp = f.create_group("_rawdata_")
-            dst = grp.create_dataset("matrix", data = self.__rawmatrix)
-            dst = grp.create_dataset("kicker_sp", data = self.__rawkick)
-            dst = grp.create_dataset("mask", data = self.__mask)
+            dst = grp.create_dataset("matrix", data = self._rawmatrix)
+            dst = grp.create_dataset("kicker_sp", data = self._rawkick)
+            dst = grp.create_dataset("mask", data = self._mask)
 
             f.close()
         elif fmt == 'shelve':
@@ -142,20 +142,20 @@ class Orm:
             f['orm.m'] = self.m
             f['orm.bpm'] = self.bpm
             f['orm.trim'] = self.trim
-            f['orm._rawdata_.matrix']    = self.__rawmatrix
-            f['orm._rawdata_.kicker_sp'] = self.__rawkick
-            f['orm._rawdata_.mask']      = self.__mask
+            f['orm._rawdata_.matrix']    = self._rawmatrix
+            f['orm._rawdata_.kicker_sp'] = self._rawkick
+            f['orm._rawdata_.mask']      = self._mask
         else:
             raise ValueError("not supported file format: %s" % format)
 
     def load(self, filename, format = ''):
-        self.__load_v2(filename, format)
+        self._load_v2(filename, format)
 
-    def __load_v2(self, filename, format = ''):
+    def _load_v2(self, filename, format = ''):
         """
         load orm data from binary file
         """
-        fmt = self.__io_format(filename, format)
+        fmt = self._io_format(filename, format)
             
         if fmt == 'HDF5':
             import h5py
@@ -166,26 +166,26 @@ class Orm:
             self.m = np.zeros((nbpm, ntrim), 'd')
             self.m[:,:] = f["orm"][:,:]
             t, npts = f["_rawdata_"]["kicker_sp"].shape
-            self.__rawkick = np.zeros((ntrim, npts), 'd')
-            self.__rawkick[:,:] = f["_rawdata_"]["kicker_sp"][:,:]
-            self.__rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
-            self.__rawmatrix[:,:,:] = f["_rawdata_"]["matrix"][:,:,:]
-            self.__mask = np.zeros((nbpm, ntrim))
-            self.__mask[:,:] = f["_rawdata_"]["mask"][:,:]
+            self._rawkick = np.zeros((ntrim, npts), 'd')
+            self._rawkick[:,:] = f["_rawdata_"]["kicker_sp"][:,:]
+            self._rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
+            self._rawmatrix[:,:,:] = f["_rawdata_"]["matrix"][:,:,:]
+            self._mask = np.zeros((nbpm, ntrim))
+            self._mask[:,:] = f["_rawdata_"]["mask"][:,:]
         elif fmt == 'shelve':
             f = shelve.open(filename, 'r')
             self.bpm = f["orm.bpm"]
             self.trim = f["orm.trim"]
             self.m = f["orm.m"]
-            self.__rawmatrix = f["orm._rawdata_.matrix"]
-            self.__rawkick   = f["orm._rawdata_.kicker_sp"]
-            self.__mask      = f["orm._rawdata_.mask"]
+            self._rawmatrix = f["orm._rawdata_.matrix"]
+            self._rawkick   = f["orm._rawdata_.kicker_sp"]
+            self._mask      = f["orm._rawdata_.mask"]
         else:
             raise ValueError("format %s is not supported yet" % format)
 
         #print self.trim
 
-    def __meas_orbit_rm4(self, kickerpv, bpmpvlist, mask,
+    def _meas_orbit_rm4(self, kickerpv, bpmpvlist, mask,
                          kref = 0.0, dkick = 1e-6, verbose = 0):
         """
         Measure the RM by change one kicker. 4 points method.
@@ -241,8 +241,8 @@ class Orm:
 
             dkick = 2e-5
             try:
-                kstrength, ret = self.__meas_orbit_rm4(
-                    trim_pv_rb, bpmrb, mask = self.__mask[:,i], kref=kickref,
+                kstrength, ret = self._meas_orbit_rm4(
+                    trim_pv_rb, bpmrb, mask = self._mask[:,i], kref=kickref,
                     dkick = dkick, verbose=verbose)
                 if True:
                     print "%3d/%d" % (i,len(self.trim)), time.time() - t0, 
@@ -271,8 +271,8 @@ class Orm:
                     plt.plot(tx, tx*p[0,j] + p[1,j], '-')
                     plt.savefig("orm-trim-%03d-bpm-%03d.png" % (i,j))
                     
-            self.__rawkick[i, :] = kstrength[:]
-            self.__rawmatrix[:,:,i] = ret[:,:]
+            self._rawkick[i, :] = kstrength[:]
+            self._rawmatrix[:,:,i] = ret[:,:]
             #self.m[:,i] = v[:]
             self.m[:,i] = p[0,:]
             if verbose:
@@ -280,7 +280,7 @@ class Orm:
                 for j in range(len(self.bpm)):
                     # skip the coupling
                     if rec[1] != self.bpm[j][1]: continue
-                    plt.plot(self.__rawkick[i,:]*1e6, ret[:,j]*1e3, '-o')
+                    plt.plot(self._rawkick[i,:]*1e6, ret[:,j]*1e3, '-o')
                 plt.savefig("orm-kick-%s.png" % rec[0])
 
             time.sleep(self.TSLEEP)
@@ -311,33 +311,39 @@ class Orm:
         for i,b in enumerate(self.bpm):
             for j,t in enumerate(self.trim):
                 # b[1] = ['X'|'Y'], similar for t[1]
-                if b[1] != t[1]: self.__mask[i,j] = 1
+                if b[1] != t[1]: self._mask[i,j] = 1
 
-    def __pv_index(self, pv):
+    def _pv_index(self, pv):
         """
         return pv index of BPM, TRIM
         """
         for i,b in enumerate(self.bpm):
             if b[2] == pv: return i
         for j,t in enumerate(self.trim):
-            if b[2] == pv or b[3] == pv:
+            if t[2] == pv or t[3] == pv:
                 return j
         return -1
     
-    def update(self, src):
+    def update(self, src, masked=False):
         """
         merge two orm into one
+        masked = True, update with a masked value
+        masked = False, if the new value is masked, skip it.
+
+        rawkick is still updated regardless of masked or not.
+
+        It is advised that both orm use same rawkick for measurement.
         """
         # copy
         bpm, trim = self.bpm[:], self.trim[:]
 
         for i,b in enumerate(src.bpm):
-            if self.__pv_index(b[2]) < 0:
+            if self._pv_index(b[2]) < 0:
                 bpm.append(b)
         for j,t in enumerate(src.trim):
-            if self.__pv_index(t[2]) < 0:
+            if self._pv_index(t[2]) < 0:
                 trim.append(t)
-        npts, nbpm0, ntrim0 = np.shape(self.__rawmatrix)
+        npts, nbpm0, ntrim0 = np.shape(self._rawmatrix)
         
         nbpm, ntrim = len(bpm), len(trim)
         print "(%d,%d) -> (%d,%d)" % (nbpm0, ntrim0, nbpm, ntrim)
@@ -347,10 +353,11 @@ class Orm:
         rawkick   = np.zeros((ntrim, npts), 'd')
         m         = np.zeros((nbpm, ntrim), 'd')
 
-        rawmatrix[:, :nbpm0, :ntrim0] = self.__rawmatrix[:,:,:]
-        mask[:nbpm0, :ntrim0]         = self.__mask[:,:]
-        rawkick[:ntrim0, : ]          = self.__rawkick[:,:]
+        rawmatrix[:, :nbpm0, :ntrim0] = self._rawmatrix[:,:,:]
+        mask[:nbpm0, :ntrim0]         = self._mask[:,:]
         m[:nbpm0, :ntrim0]            = self.m[:,:]
+        # still updating rawkick, even it is masked
+        rawkick[:ntrim0, : ]          = self._rawkick[:,:]
 
         # find the index
         bpmrb = [b[2] for b in bpm]
@@ -360,15 +367,17 @@ class Orm:
         
         for j, t in enumerate(src.trim):
             jj = itrim[j]
-            rawkick[jj,:] = src.__rawkick[j,:]
+            rawkick[jj,:] = src._rawkick[j,:]
             for i, b in enumerate(src.bpm):
+                # next, if not updating with a masked value
+                if not masked and src._mask[i,j]: continue
                 ii = ibpm[i]
-                rawmatrix[:,ii,jj] = src.__rawmatrix[:,i,j]
-                mask[ii,jj] = src.__mask[i,j]
+                rawmatrix[:,ii,jj] = src._rawmatrix[:,i,j]
+                mask[ii,jj] = src._mask[i,j]
                 m[ii,jj] = src.m[i,j]
-        self.__rawmatrix = rawmatrix
-        self.__mask = mask
-        self.__rawkick = rawkick
+        self._rawmatrix = rawmatrix
+        self._mask = mask
+        self._rawkick = rawkick
         self.m = m
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
@@ -380,69 +389,69 @@ class Orm:
         """
         raise NotImplementedError()
 
-    def checkLinearity(self, dev = .1, plot=False):
+    def checkLinearity(self, dev = .01, plot=False):
         """
         check the linearity of each orm term.
 
         This routine detects the BPMs which do not reponse to trim well. 
         """
         import matplotlib.pylab as plt
-        npoints, nbpm, ntrim = np.shape(self.__rawmatrix)
-        res = []
+        npoints, nbpm, ntrim = np.shape(self._rawmatrix)
 
         # unmasked matrix
         um = []
         for i in range(nbpm):
             for j in range(ntrim):
-                if self.__mask[i,j]: continue
+                if self._mask[i,j]: continue
                 um.append(self.m[i,j])
+        plt.clf()
         plt.hist(um, 50, normed=0)
-        plt.savefig("orm-hist.png")
+        plt.savefig("orm-hist-m.png")
 
+        res = []
+        deadbpm, deadtrim = [], []
         for j in range(ntrim):
-            #print j, self.__rawkick[0, 1:npoints-1]
-            plt.clf()
             n = 0
             for i in range(nbpm):
-                if self.__mask[i, j]: continue
+                if self._mask[i, j]: continue
 
-                k = self.__rawkick[j, 1:npoints-1]
-                m = self.__rawmatrix[1:npoints-1, i, j]
+                k = self._rawkick[j, 1:npoints-1]
+                m = self._rawmatrix[1:npoints-1, i, j]
                 p, residuals, rank, singular_values, rcond = \
                     np.polyfit(k, m, 1, full=True)
 
-                tag = 'o'
-                if abs((p[0] - self.m[i,j])/p[0]) > dev:
-                    print "%8d: bpm %3d, trim %3d" % (n, i, j), \
-                        self.bpm[i][0], self.trim[j][0]
-                    print "        ", residuals, \
-                        p[0], " calc:", self.m[i, j]
-                    n = n + 1
-                    tag = 'e'
-                if tag == 'e' or plot:
-                    t = np.linspace(min(k)*1e6, max(k)*1e6, 100)
-                    plt.plot(t, p[0]*t + p[1]*1e6, '-')
-                    plt.plot(k*1e6, m*1e6, '-o')
-                if tag == 'e':
-                    f = open("test.sh", 'w')
-                    f.write("#!/bin/bash\n")
-                    for ki in range(npoints):
-                        f.write("caput '%s' %e\n" % (self.trim[j][3],  
-                                                 self.__rawkick[j, ki]))
-                        f.write("sleep 3\n")
-                        f.write("caget '%s'\n" % self.bpm[i][2])
-                    f.close()
-
                 if p[0] < 1e-10: continue
+                relerr = abs((p[0] - self.m[i,j])/p[0])
+                print "%3d,%3d" %(i,j), self.bpm[i][0], self.trim[j][0], \
+                    p[0], self.m[i,j], relerr, residuals
+
+                # check if the reading is repeating.
+                distavg = (max(m) - min(m))/(len(m)-1)
+                deadreading = False
+                for ik in range(1, len(m)):
+                    if (m[ik] - m[ik-1]) < 0.05*distavg:
+                        deadreading = True
+
+                if residuals[0] > 1e-11:
+                    if not i in deadbpm: deadbpm.append(i)
+                    if not j in deadtrim: deadtrim.append(j)
+                    print i,j, "mask=",self._mask[i,j],residuals[0]
+                    plt.clf()
+                    plt.plot(k, m, '-o', label="%s/%s" % (
+                            self.bpm[i][0], self.trim[j][0]))
+                    plt.title("k= %.4f res= %.4e" % (p[0], residuals[0]))
+                    plt.savefig("orm-check-m-%04d-%04d.png" % (i,j))
+                    if deadreading:
+                        self._mask[i,j] = 1
+
                 res.append(residuals[0])
             # end of all bpm
-            if n > 0:
-                #plt.ylabel(self.__bpm[i] + "  x1e6")
-                plt.title("Failed: %d/%d (%s)" % \
-                          (n, len(self.bpm[i][2]), self.trim[j][2]))
-                plt.xlabel(self.trim[j][0] + "  x1e6")
-                plt.savefig("orm-check-%07d.png" % (j))
         print len(res), np.average(res), np.var(res)
+        plt.clf()
+        plt.hist(np.log10(res), 50, normed=0, log=True)
+        plt.savefig("orm-hist-residuals.png")
+        print "Dead bpm:", deadbpm
+        print "Dead trim:", deadtrim
 
     def checkOrbitReproduce(self, bpm, trim):
         print "checking ..."
@@ -474,7 +483,7 @@ class Orm:
         for i,ib in enumerate(ibpm):
             for j,jt in enumerate(itrim):
                 # skip the masked ORM elements
-                if self.__mask[ib, jt]: continue
+                if self._mask[ib, jt]: continue
                 dx[i] = dx[i] + self.m[ib, jt]*dkick[j]
         for j, jt in enumerate(itrim):
             caput(self.trim[jt][3], kick0[j] + dkick[j])
@@ -500,7 +509,7 @@ class Orm:
             " trim %d, bpm %d, matrix (%d, %d)\n" \
             " masked %d / %d" % \
             (len(self.trim), len(self.bpm), nbpm, ntrim,
-             np.sum(self.__mask), len(self.trim)*len(self.bpm))
+             np.sum(self._mask), len(self.trim)*len(self.bpm))
         return s
 
 def measOrbitRm(bpm, trim):
