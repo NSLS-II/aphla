@@ -239,6 +239,33 @@ def ormtest():
     orm.load(pkl)
     orm.save('test.pkl')
 
+def rename_orm_trimpv():
+    pkl = '/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl'
+    orm = hla.measorm.Orm(bpm=[], trim=[])
+    orm.load(pkl)
+    for i,b in enumerate(orm.trim):
+        b2, b3 = b[2], b[3]
+        if b[0].find('CF') == 0: b = (b[0][1:], b[1], b[2], b[3])
+        if b[2].find('CM:F') > 0:
+            b2 = b[2].replace('CM:F', 'FCor:F')
+            b3 = b[3].replace('CM:F', 'FCor:F')
+        elif b[2].find('CM:') > 0:
+            b2 = b[2].replace('CM:', 'Cor:')
+            b3 = b[3].replace('CM:', 'Cor:')
+        #print hla._cfa.channel(b2)
+        prop2 = hla._cfa.getChannelProperties(b2)
+        if prop2[hla._cfa.ELEMNAME] != b[0]: print b[0], prop2[hla._cfa.ELEMNAME]
+        prop3 = hla._cfa.getChannelProperties(b3)
+        if prop3[hla._cfa.ELEMNAME] != b[0]: print b[0], prop3[hla._cfa.ELEMNAME]
+        
+        orm.trim[i] = (b[0], b[1], b2, b3)
+        #print "%4d" % i, hla._cfa.channel(b2)
+        #print "    ", hla._cfa.channel(b3)
+
+        print orm.trim[i]
+
+    orm.save('orm0.pkl')
+
 if __name__ == "__main__":
     if len(sys.argv) == 1: safe = True
     elif sys.argv[1] == '--real': safe = False
@@ -247,4 +274,6 @@ if __name__ == "__main__":
     #updateOrmPv(safe=safe)
     #combineOrm()
     #ormhist()
-    ormtest()
+    #ormtest()
+    rename_orm_trimpv()
+

@@ -7,7 +7,6 @@ import unittest
 import sys, time
 import numpy as np
 
-from cothread.catools import caget, caput
 import matplotlib.pylab as plt
 
 
@@ -61,14 +60,15 @@ class TestConf(unittest.TestCase):
     def test_measure_orm(self):
         return True
         if hla.NETWORK_DOWN: return True
-
+        hla.reset_trims()
         trimx = ['CXH1G6C15B', 'CYHG2C30A', 'CXL2G6C14B']
         #trimx = ['CXH1G6C15B']
         bpmx = ['PH1G2C30A', 'PL1G2C01A', 'PH1G6C29B', 'PH2G2C30A', 'PM1G4C30A']
         #hla.reset_trims()
         orm = hla.measorm.Orm(bpm = bpmx, trim = trimx)
-        orm.measure(verbose=0)
-        orm.save("orm-test.pkl")
+        orm.measure("orm-test.pkl", verbose=0)
+        orm.measure_update(bpm=bpmx, trim=trimx[:2], verbose=1, dkick=5e-5)
+        orm.save("orm-test-update.pkl")
         #orm.checkLinearity()
         pass
 
@@ -90,10 +90,9 @@ class TestConf(unittest.TestCase):
         pass
 
     def test_measure_full_orm(self):
-        return True
-        #print __file__, "Measure full matrix"
+        #return True
         if hla.NETWORK_DOWN: return True
-
+        hla.reset_trims()
         bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
         trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
         trimy = hla.getGroupMembers(['*', 'TRIMY'], op='intersection')
@@ -106,12 +105,27 @@ class TestConf(unittest.TestCase):
         orm.measure(output=self.full_orm, verbose=0)
 
     def test_linearity(self):
-        #return True
+        return True
         #if hla.NETWORK_DOWN: return True
         orm = hla.measorm.Orm(bpm = [], trim = [])
         #orm.load('orm-test.pkl')
-        orm.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl')
-        orm.maskCrossTerms()
+        #orm.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl')
+        hla.reset_trims()
+        orm.load('./dat/orm-full-0181.pkl')
+        #orm.maskCrossTerms()
+        bpmpv = [b[2] for i,b in enumerate(orm.bpm)]
+        for i,t in enumerate(orm.trim):
+            k0 = hla.caget(t[3])
+            v0 = np.array(hla.caget(bpmpv))
+            caput(t[3], k0 + 1e-6)
+            for j in range(10):
+                time.sleep(2)
+                v1 = np.array(hla.caget(bpmpv))
+                print np.std(v1-v0),
+                sys.stdout.flush()
+            print ""
+            caput(t[3], k0)
+            if i > 20: break
         #print orm
         #for i,b in enumerate(orm.bpm):
         #    print i, b[0], b[2]
@@ -137,45 +151,86 @@ class TestConf(unittest.TestCase):
         #orm.checkLinearity()
 
     def test_orbitreproduce(self):
+        return True
+
         if hla.NETWORK_DOWN: return True
 
-        bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
-        trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
-        trimy = hla.getGroupMembers(['*', 'TRIMY'], op='intersection')
-        trim = trimx[:]
-        trim.extend(trimy)
-        #print bpm, trim
-        print "start:", time.time()
+        t0 = time.time()
+        hla.reset_trims()
+        #time.sleep(10)
+        t1 = time.time()
 
-        orm2 = hla.measorm.Orm([], [])
-        if not os.path.exists(self.full_orm): return True
+        pkl = './dat/orm-full-0181.pkl'
+        orm = hla.measorm.Orm([], [])
+        if not os.path.exists(pkl): return True
+        else: orm.load(pkl)
+        print orm
+        #print "delay: ", orm.TSLEEP, " seconds"
 
-        orm2.load(self.full_orm)
-        print orm2
-        print "delay: ", orm2.TSLEEP
-        orm2.maskCrossTerms()
-        x0, x1, dx = orm2.checkOrbitReproduce(bpm, trim[:5])
-        ratio = (x1-x0-dx)/x0
-        for i in range(len(x0)):
-            if x0[i] < 1e-7: ratio[i] = 0.0
-        plt.clf()
-        plt.plot(ratio, '-o')
-        plt.ylabel("[(x1-x0)-dx]/x0")
-        plt.savefig("orm-orbit-reproduce-1.png")
-        
-        plt.clf()
-        plt.plot(x0, '--', label='orbit 0')
-        plt.plot(x1, '-', label='orbit 1')
-        plt.plot(x0+dx, 'x', label='ORM predict')
-        
-        plt.ylabel("orbit")
-        plt.savefig("orm-orbit-reproduce-2.png")
+        dk = 2e-4
+        bpm_pvs = [b[2] for i,b in enumerate(orm.bpm)]
+        x0 = np.zeros(len(bpm_pvs), 'd')
+        #print bpm_pvs[:10]
+        trim_k = np.zeros((len(orm.trim), 3), 'd')
+        for j,t in enumerate(orm.trim):
+            k0 = hla.caget(t[3])
+            klst = np.linspace(1000*(k0-dk), 1000*(k0+dk), 20)
+            print "%4d/%d" % (j, len(orm.trim)), t, k0
+            trim_k[j,1] = k0
+            x = np.zeros((len(bpm_pvs), 5), 'd')
+            x0 = hla.caget(bpm_pvs)
+            x[:,0] = x0
+            x[:,2] = x0
+            #print bpm_pvs[0], x[0,0], x[0,2]
 
-        for i in range(len(bpm)):
-            if x0[i]+dx[i] - x1[i] > 1e-4:
-                print "Not agree well:", i,bpm[i], x0[i]+dx[i], x1[i]
-        print "Done", time.time()
-        
+            t2 = time.time()
+            hla.caputwait(t[3], k0-dk, bpm_pvs[0])
+            #time.sleep(orm.TSLEEP)
+            trim_k[j,0] = k0 - dk
+            x[:,1] = hla.caget(bpm_pvs)
+            #print time.time() - t2, bpm_pvs[0], x[0,1]
+            #time.sleep(orm.TSLEEP)
+
+            hla.caputwait(t[3], k0+dk, bpm_pvs[0])
+            #time.sleep(orm.TSLEEP)
+            trim_k[j,2] = k0+dk
+            
+            x[:,3] = hla.caget(bpm_pvs)
+            x[:,3] = hla.caget(bpm_pvs)
+            #print bpm_pvs[0], x[0,3]
+
+            hla.caputwait(t[3], k0, bpm_pvs[0])
+            #time.sleep(3)
+            #print x[0,:]
+
+            mask = np.zeros(len(bpm_pvs), 'i')
+            x1 = x0[:] - orm.m[:,j] * dk
+            x2 = x0[:] + orm.m[:,j] * dk
+            for i,b in enumerate(orm.bpm):
+                if abs(x2[i] - x1[i]) < 3e-6: continue
+                if abs(x2[i] - x[i,3]) < 5e-6 and abs(x1[i]-x[i,1]) < 5e-6:
+                    continue
+                plt.clf()
+                plt.subplot(211)
+                plt.plot(trim_k[j,:]*1000.0, np.transpose(1000.*x[i,1:4]), '--o')
+                plt.plot(1000*orm._rawkick[j,:], 1000*orm._rawmatrix[:,i,j], 'x')
+                plt.plot(klst, 1000.0*x0[i] + orm.m[i,j]*klst, '-')
+                plt.grid(True)
+                if orm._mask[i,j]: plt.title("%s.%s (masked)" % (t[0], t[1]))
+                else: plt.title("%s.%s" % (t[0], t[1]))
+                plt.xlabel("angle [mrad]")
+                plt.ylabel('orbit [mm]')
+                plt.subplot(212)
+                plt.plot(1000*orm._rawkick[j,:], 1e6*((orm._rawmatrix[:,i,j] - orm._rawmatrix[0,i,j]) - \
+                             orm.m[i,j]*orm._rawkick[j,:]), 'x')
+                plt.plot(trim_k[j,:]*1000.0, 1e6*((x[i,1:4] - x[i,0])- trim_k[j,:]*orm.m[i,j]), 'o')
+                plt.ylabel("Difference from prediction [um]")
+                plt.xlabel("kick [mrad]")
+                plt.savefig("orm-check-t%03d-%03d.png" % (j,i))
+                if i > 100: break
+            break
+        print "Time:", time.time() - t1
+
 def test_delay():
     rx, rt = [], []
     t0 = time.time()

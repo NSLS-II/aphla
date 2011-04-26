@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import sys
+import sys, time
 import cothread
 import cothread.catools as ct
 from cothread import Timedout
@@ -42,5 +42,21 @@ def caput(pvs, values, timeout=5, throw=True):
     except cothread.Timedout:
         print "TIMEOUT: ", pvs
         sys.exit(0)
+
+def caputwait(pv, value, pvmonitor, change=("REL", 0.1), wait=3, \
+                  maxtrial=10):
+    v0 = caget(pvmonitor)
+    ntrial = 0
+    while True:
+        caput(pv, value)
+        time.sleep(wait)
+        ntrial = ntrial + 1
+        v1 = caget(pvmonitor)
+        if change[0] == "REL" and abs((v1-v0)/v0) > change[1]:
+            break
+        elif change[0] == "ABS" and abs(v1-v0) > change[1]:
+            break
+        if ntrial > maxtrial: break
+
 
 caget.__doc__ = ct.caget.__doc__

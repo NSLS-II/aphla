@@ -82,15 +82,14 @@ def eput(element, value):
         
 
 def reset_trims():
-    trimx = _lat.getElementsCgs('TRIMX')
-    for e in trimx: eput(e, 0.0)
-    trimy = _lat.getElementsCgs('TRIMY')
-    for e in trimy: eput(e, 0.0)
-
-    for e in trimx:
-        print e, eget(e)
-    for e in trimy:
-        print e, eget(e)
+    trimx = _lat.getGroupMembers(['*', 'TRIMX'], op='intersection')
+    trimy = _lat.getGroupMembers(['*', 'TRIMY'], op='intersection')
+    pvx = getSpChannels(trimx, tags=['default.eput', 'X'])
+    pvy = getSpChannels(trimy, tags=['default.eput', 'Y'])
+    pv = [p[0] for p in pvx]
+    pv.extend([p[0] for p in pvy])
+    v = [0]*len(pv)
+    caput(pv, v)
 
 
 def levenshtein_distance(first, second):

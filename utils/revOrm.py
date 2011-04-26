@@ -80,10 +80,11 @@ def test_orbit(f):
 
     npoint, nbpm, ntrim = np.shape(orm2._rawmatrix)
 
-    for i in range(20):
-        ibpm = np.random.randint(nbpm)
+    for i in range(5):
+        #itrim = np.random.randint(ntrim)
+        itrim = 0
         while True:
-            itrim = np.random.randint(ntrim)
+            ibpm = np.random.randint(nbpm)
             if orm2.trim[itrim][1] == orm2.bpm[ibpm][1]: break
         #print hla.getOrbit()
         bpmrb = orm2.bpm[ibpm][2]
@@ -98,10 +99,15 @@ def test_orbit(f):
         print trimsp, "% .2e" % k, bpmrb, \
             "% .4e % .4e % .4e % .4e" % (x0, x1, x1-x0, dx)
         caput(trimsp, k)
+        time.sleep(orm2.TSLEEP)
 
         plt.clf()
-        plt.plot(orm2._rawkick[itrim, 1:-1], orm2._rawmatrix[1:-1,ibpm,itrim], '-o')
+        plt.plot(orm2._rawkick[itrim, 1:-1], orm2._rawmatrix[1:-1,ibpm,itrim],
+                 '-o')
         plt.plot([k, k+dk], [x0, x1], '-x')
+        plt.grid(True)
+        plt.title("%s.%s/%s.%s" % (orm2.bpm[ibpm][0], orm2.bpm[ibpm][1],
+                                   orm2.trim[itrim][0], orm2.trim[itrim][1]))
         plt.savefig('orm-test-%03d.png' % i)
 
     return True
