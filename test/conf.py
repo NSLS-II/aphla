@@ -44,3 +44,11 @@ def reset_svr(val = 0):
     caput('SVR:LOCKED', val, wait=True)
 
 
+def hg_parent_rev():
+    import commands
+    stat, out = commands.getstatusoutput("hg summary")
+    if stat == 0:
+        for s in out.split('\n'):
+            if s[:7] == 'parent:':
+                return int(s.split(":")[1])
+    return 0

@@ -43,7 +43,7 @@ class Orm:
         
         """
         # points for trim setting when calc dx/dkick
-        npts = 4
+        npts = 6
 
         self.bpm = []
         self.trim = []
@@ -109,16 +109,16 @@ class Orm:
         """
         save the orm data into one file:
 
-        =======  =====================================
-        Data     Description
-        =======  =====================================
-        orm      matrix
-        bpm      list
-        trim     list
-        rawm     raw orbit change
-        rawkick  raw trim strength change
-        mask     matrix for ignoring certain ORM terms
-        =======  =====================================
+        =================   =====================================
+        Data                Description
+        =================   =====================================
+        m                   matrix
+        bpm                 list
+        trim                list
+        _rawdata_.matrix    raw orbit change
+        _rawdata_.rawkick   raw trim strength change
+        _rawdata_.mask      matrix for ignoring certain ORM terms
+        =================   =====================================
         """
 
         fmt = self._io_format(filename, format)
@@ -126,13 +126,13 @@ class Orm:
         if fmt == 'HDF5':
             import h5py
             f = h5py.File(filename, 'w')
-            dst = f.create_dataset("orm", data = self.m)
+            dst = f.create_dataset("m", data = self.m)
             dst = f.create_dataset("bpm", data = self.bpm)
             dst = f.create_dataset("trim", data = self.trim)
 
             grp = f.create_group("_rawdata_")
-            dst = grp.create_dataset("matrix", data = self._rawmatrix)
-            dst = grp.create_dataset("kicker_sp", data = self._rawkick)
+            dst = grp.create_dataset("rawmatrix", data = self._rawmatrix)
+            dst = grp.create_dataset("rawkick", data = self._rawkick)
             dst = grp.create_dataset("mask", data = self._mask)
 
             f.close()
@@ -142,8 +142,8 @@ class Orm:
             f['orm.m'] = self.m
             f['orm.bpm'] = self.bpm
             f['orm.trim'] = self.trim
-            f['orm._rawdata_.matrix']    = self._rawmatrix
-            f['orm._rawdata_.kicker_sp'] = self._rawkick
+            f['orm._rawdata_.rawmatrix'] = self._rawmatrix
+            f['orm._rawdata_.rawkick']   = self._rawkick
             f['orm._rawdata_.mask']      = self._mask
         else:
             raise ValueError("not supported file format: %s" % format)
@@ -165,11 +165,11 @@ class Orm:
             nbpm, ntrim = len(self.bpm), len(self.trim)
             self.m = np.zeros((nbpm, ntrim), 'd')
             self.m[:,:] = f["orm"][:,:]
-            t, npts = f["_rawdata_"]["kicker_sp"].shape
+            t, npts = f["_rawdata_"]["rawkick"].shape
             self._rawkick = np.zeros((ntrim, npts), 'd')
-            self._rawkick[:,:] = f["_rawdata_"]["kicker_sp"][:,:]
+            self._rawkick[:,:] = f["_rawdata_"]["rawkick"][:,:]
             self._rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
-            self._rawmatrix[:,:,:] = f["_rawdata_"]["matrix"][:,:,:]
+            self._rawmatrix[:,:,:] = f["_rawdata_"]["rawmatrix"][:,:,:]
             self._mask = np.zeros((nbpm, ntrim))
             self._mask[:,:] = f["_rawdata_"]["mask"][:,:]
         elif fmt == 'shelve':
@@ -177,8 +177,8 @@ class Orm:
             self.bpm = f["orm.bpm"]
             self.trim = f["orm.trim"]
             self.m = f["orm.m"]
-            self._rawmatrix = f["orm._rawdata_.matrix"]
-            self._rawkick   = f["orm._rawdata_.kicker_sp"]
+            self._rawmatrix = f["orm._rawdata_.rawmatrix"]
+            self._rawkick   = f["orm._rawdata_.rawkick"]
             self._mask      = f["orm._rawdata_.mask"]
         else:
             raise ValueError("format %s is not supported yet" % format)
@@ -186,7 +186,7 @@ class Orm:
         #print self.trim
 
     def _set_wait_stable(
-        self, pvs, values, monipv, diffstd = 1e-6, timeout=30):
+        self, pvs, values, monipv, diffstd = 1e-6, timeout=120):
         """
         set pv to a value, waiting for timeout or the std of monipv is
         greater than diffstd
@@ -207,9 +207,9 @@ class Orm:
         return dt
 
     def _meas_orbit_rm4(self, kickerpv, bpmpvlist, mask,
-                         kref = 0.0, dkick = 1e-4, verbose = 0, points=4):
+                         kref = 0.0, dkick = 1e-4, verbose = 0, points=6):
         """
-        Measure the RM by change one kicker. 4 points method.
+        Measure the RM by change one kicker. 
         """
 
         kx0 = caget(kickerpv)
@@ -319,8 +319,6 @@ class Orm:
             if verbose:
                 print ""
                 sys.stdout.flush()
-            # 4 points
-            #v = (-ret[4,:] + 8.0*ret[3,:] - 8*ret[2,:] + ret[1,:])/12.0/dkick
         
             # polyfit
             p, residuals, rank, singular_values, rcond = \
@@ -367,7 +365,7 @@ class Orm:
                 print "%3d/%d %s %.1f sec" % \
                     (i,len(self.trim),trim_pv_sp, time.time() - t0)
         t_end = time.time()
-        print "Time cost: ", "%.2f" % ((t_end - t_start)/60.0), " min"
+        print "-- Time cost: %.2f min" % ((t_end - t_start)/60.0)
 
     def hasBpm(self, bpm):
         """
@@ -387,6 +385,14 @@ class Orm:
         return False
 
     def maskCrossTerms(self):
+        """
+        mask the H/V and V/H terms. 
+
+        If the coupling between horizontal/vertical kick and
+        vertical/horizontal BPM readings, it's reasonable to mask out
+        these coupling terms.
+        """
+
         for i,b in enumerate(self.bpm):
             for j,t in enumerate(self.trim):
                 # b[1] = ['X'|'Y'], similar for t[1]

@@ -10,14 +10,6 @@ import numpy as np
 import matplotlib.pylab as plt
 
 
-def hg_parent_rev():
-    import commands
-    stat, out = commands.getstatusoutput("hg summary")
-    if stat == 0:
-        for s in out.split('\n'):
-            if s[:7] == 'parent:':
-                return int(s.split(":")[1])
-    return 0
 
 class TestConf(unittest.TestCase):
     def setUp(self):
@@ -99,7 +91,7 @@ class TestConf(unittest.TestCase):
         trim = trimx[:]
         trim.extend(trimy)
         #print bpm, trim
-        print "start:", time.time()
+        print "start:", time.time(), " version:", hg_parent_rev()
         orm = hla.measorm.Orm(bpm=bpm, trim=trim)
         orm.TSLEEP = 12
         orm.measure(output=self.full_orm, verbose=0)
