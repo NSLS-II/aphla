@@ -474,7 +474,7 @@ class Orm:
         """
         raise NotImplementedError()
 
-    def checkLinearity(self, dev = .01, plot=False):
+    def checkLinearity(self, verbose=0):
         """
         check the linearity of each orm term.
 
@@ -507,8 +507,9 @@ class Orm:
 
                 if p[0] < 1e-10: continue
                 relerr = abs((p[0] - self.m[i,j])/p[0])
-                print "%3d,%3d" %(i,j), self.bpm[i][0], self.trim[j][0], \
-                    p[0], self.m[i,j], relerr, residuals
+                if verbose:
+                    print "%3d,%3d" %(i,j), self.bpm[i][0], self.trim[j][0], \
+                        p[0], self.m[i,j], relerr, residuals
 
                 # check if the reading is repeating.
                 distavg = (max(m) - min(m))/(len(m)-1)
@@ -517,12 +518,12 @@ class Orm:
                     if (m[ik] - m[ik-1]) < 0.05*distavg:
                         deadreading = True
 
-                if residuals[0] > 1e-11:
+                if residuals[0] > 2e-11:
                     if not i in deadbpm: deadbpm.append(i)
                     if not j in deadtrim: deadtrim.append(j)
                     print i,j, "mask=",self._mask[i,j],residuals[0]
                     plt.clf()
-                    plt.plot(k, m, '-o', label="%s/%s" % (
+                    plt.plot(k, m, '--o', label="%s/%s" % (
                             self.bpm[i][0], self.trim[j][0]))
                     plt.title("k= %.4f res= %.4e" % (p[0], residuals[0]))
                     plt.savefig("orm-check-m-%04d-%04d.png" % (i,j))
@@ -531,12 +532,17 @@ class Orm:
 
                 res.append(residuals[0])
             # end of all bpm
+            if not verbose:
+                print j,
+                sys.stdout.flush()
         print len(res), np.average(res), np.var(res)
         plt.clf()
         plt.hist(np.log10(res), 50, normed=0, log=True)
         plt.savefig("orm-hist-residuals.png")
         print "Dead bpm:", deadbpm
-        print "Dead trim:", deadtrim
+        print "Dead trim:", 
+        for i in deadtrim: print self.trim[i][0],
+        print ""
 
     def checkOrbitReproduce(self, bpm, trim):
         print "checking ..."

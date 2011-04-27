@@ -130,6 +130,62 @@ def test_orbit(f):
             print "Not agree well:", i,bpm[i], x0[i]+dx[i], x1[i]
     print "Done", time.time()
 
+def update_orm(f):
+    orm = hla.measorm.Orm([], [])
+    if not os.path.exists(f): return True
+    orm.load(f)
+
+    npoint, nbpm, ntrim = np.shape(orm._rawmatrix)
+    bpm = list(set([b[0] for i,b in enumerate(orm.bpm)]))
+    #orm.measure_update(bpm=bpm, trim = ['CXHG2C30A', 'CXHG2C06A', 'CXHG2C10A', 'CXL1G6C12B', 'CXHG2C14A', 'CXHG2C18A', 'CXHG2C20A', 'CXHG2C22A', 'CXHG2C24A', 'CXHG2C26A', 'FYL1G1C21A'], verbose=1)
+    orm.checkLinearity(verbose=1)
+    #orm.save("orm-full-update.pkl")
+    
+def correct_orbit(f):
+    orm = hla.measorm.Orm([], [])
+    if not os.path.exists(f): return True
+    orm.load(f)
+    hla.reset_trims()
+    time.sleep(5)
+    npoint, nbpm, ntrim = np.shape(orm._rawmatrix)
+    bpm = []
+    for c in range(10):
+        cc = "C%02d" % c
+        b = hla.getGroupMembers(['*', 'BPMX', cc], op='intersection')
+        print cc,b
+        bpm.extend(b)
+    print len(bpm), bpm
+    ntrim_used = ntrim
+    m = np.zeros((len(bpm), ntrim_used), 'd')
+    sel = [0] * nbpm
+    bpmpv = []
+    bpmfullpv = [b[2] for i,b in enumerate(orm.bpm)]
+    for i,b in enumerate(orm.bpm):
+        if not b[0] in bpm: continue
+        sel[i] = 1
+        bpmpv.append(b[2])
+    v0 = np.array(hla.caget(bpmfullpv))
+    v = np.array(hla.caget(bpmpv))
+    plt.clf()
+    plt.plot(v0, 'r-')
+    plt.plot(v, 'ro')
+    plt.savefig("orbit-00.png")
+    m = np.compress(sel, orm.m[:,:ntrim_used], axis=0)
+    print np.shape(m)
+    #u,s,vh = np.linalg.svd(m)
+    #print u, s, vh
+    dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v)
+    print dk
+    trimpv = [t[3] for i,t in enumerate(orm.trim)]
+    hla.caput(trimpv[:ntrim_used], dk)
+    for i in range(1,10):
+        time.sleep(2)
+        plt.clf()
+        v1 =  np.array(hla.caget(bpmfullpv))
+        plt.plot(v1, '-o')
+        plt.savefig("orbit-%02d.png" % i)
+        
+        
 
 if __name__ == "__main__":
     #filter_orm('../test/dat/orm-full-0179.pkl')
@@ -140,4 +196,7 @@ if __name__ == "__main__":
     #merge_orm('../test/dat/orm-full-0179.pkl',
     #          '../test/dat/orm-full-0181.pkl')
     #merge_orm('../test/dat/orm-full-0181.pkl', 'orm.pkl')
-    test_orbit('../test/dat/orm-full-0181.pkl')
+    #test_orbit('../test/dat/orm-full-0181.pkl')
+    #update_orm('../test/dat/orm-full-0184.pkl')
+    #update_orm('orm-full-update.pkl')
+    correct_orbit('orm-full-update.pkl')

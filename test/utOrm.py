@@ -50,7 +50,7 @@ class TestConf(unittest.TestCase):
         self.assertEqual(len(bpmx), len(bpmxrb))
 
     def test_measure_orm(self):
-        return True
+        #return True
         if hla.NETWORK_DOWN: return True
         hla.reset_trims()
         trimx = ['CXH1G6C15B', 'CYHG2C30A', 'CXL2G6C14B']
@@ -58,7 +58,7 @@ class TestConf(unittest.TestCase):
         bpmx = ['PH1G2C30A', 'PL1G2C01A', 'PH1G6C29B', 'PH2G2C30A', 'PM1G4C30A']
         #hla.reset_trims()
         orm = hla.measorm.Orm(bpm = bpmx, trim = trimx)
-        orm.measure("orm-test.pkl", verbose=0)
+        orm.measure("orm-test.pkl", verbose=1)
         orm.measure_update(bpm=bpmx, trim=trimx[:2], verbose=1, dkick=5e-5)
         orm.save("orm-test-update.pkl")
         #orm.checkLinearity()
@@ -82,7 +82,7 @@ class TestConf(unittest.TestCase):
         pass
 
     def test_measure_full_orm(self):
-        #return True
+        return True
         if hla.NETWORK_DOWN: return True
         hla.reset_trims()
         bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
