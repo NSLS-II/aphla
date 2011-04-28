@@ -15,25 +15,23 @@ Response Matrix Measurement
 import cadict
 
 import os, sys, time
-from os.path import join
-from cothread.catools import caget, caput
+from os.path import join, splitext
+#from cothread.catools import caget, caput
 import numpy as np
 import shelve
 
 from . import _lat
 from . import _cfa
 from . import getSpChannels, getRbChannels
+from catools import caget, caput
 
 class Orm:
     """
     Orbit Response Matrix
     """
-    tsleep = 25
+    TSLEEP = 10
+    fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, bpm, trim):
-        #print trim, getSpChannels(trim)
-        #print _cfa
-        #print _cfa.getElementChannel(trim)
-        #print _cfa.getElementChannel(trim, {'handle': 'set'}, ['default'])
 
         # points for trim setting when calc dx/dkick
         npts = 4
@@ -44,7 +42,6 @@ class Orm:
             
             #
             bpmrb  = [v[1] for v in getRbChannels(bpm)]
-            #print trimsp, trimrb, bpmrb
 
             self.bpm  = [v for v in bpm]
             self.trim = [v for v in trim]
@@ -66,7 +63,17 @@ class Orm:
         self.__rawkick = np.zeros((ntrim, npts+2), 'd')
         self.__m = np.zeros((nbpm, ntrim), 'd')
 
-    def save(self, filename, format = 'HDF5'):
+    def __io_format(self, filename, format):
+        rt, ext = splitext(filename)
+        if format == '' and ext in self.fmtdict.keys():
+            fmt = self.fmtdict[ext]
+        elif format:
+            fmt = format
+        else:
+            fmt = 'HDF5'
+        return fmt
+
+    def save(self, filename, format = ''):
         """
         save the orm data into one file:
 
@@ -80,10 +87,11 @@ class Orm:
         rawkick  raw trim strength change
         mask     matrix for ignoring certain ORM terms
         =======  =====================================
-
-        current default format: HDF5 
         """
-        if format == 'HDF5':
+
+        fmt = self.__io_format(filename, format)
+
+        if fmt == 'HDF5':
             import h5py
             f = h5py.File(filename, 'w')
             dst = f.create_dataset("orm", data = self.__m)
@@ -99,7 +107,7 @@ class Orm:
             dst = grp.create_dataset("mask", data = self.__mask)
 
             f.close()
-        elif format == 'shelve':
+        elif fmt == 'shelve':
             import shelve
             f = shelve.open(filename, 'c')
             f['orm.m'] = self.__m
@@ -114,11 +122,13 @@ class Orm:
         else:
             raise ValueError("not supported file format: %s" % format)
 
-    def load(self, filename, format = 'HDF5'):
+    def load(self, filename, format = ''):
         """
         load orm data from binary file
         """
-        if format == 'HDF5':
+        fmt = self.__io_format(filename, format)
+            
+        if fmt == 'HDF5':
             import h5py
             f = h5py.File(filename, 'r')
             self.bpm = [ b for b in f["bpm"]]
@@ -138,7 +148,7 @@ class Orm:
             self.__rawmatrix[:,:,:] = f["_rawdata_"]["matrix"][:,:,:]
             self.__mask = np.zeros((nbpm, ntrim))
             self.__mask[:,:] = f["_rawdata_"]["mask"][:,:]
-        elif format == 'shelve':
+        elif fmt == 'shelve':
             f = shelve.open(filename, 'r')
             self.bpm = f["orm.bpm"]
             self.trim = f["orm.trim"]
@@ -160,47 +170,45 @@ class Orm:
         Measure the RM by change one kicker. 4 points method.
         """
 
-        #print __file__, kickerpv
-        #print __file__, bpmpvlist
-        if not getattr(dkick, '__iter__', False):
-            # not iterable ?
-            pass
         kx0 = caget(kickerpv)
+        # bpm read out
         ret = np.zeros((6, len(bpmpvlist)), 'd')
-        #tsleep = 20
+        # initial bpm data
         for j, bpm in enumerate(bpmpvlist):
             if mask[j]: ret[0,j] = 0
             else: ret[0,j] = caget(bpm)
 
-        
         kstrength = [kx0, kx0-2*dkick, kx0-dkick, kx0+dkick, kx0+2*dkick, kx0]
         for i,kx in enumerate(kstrength[1:]):
             caput(kickerpv, kx)
             if verbose: 
-                print "Setting trim: ", kickerpv, kx, caget(kickerpv)
-            time.sleep(self.tsleep)
+                print "Setting trim: ", kickerpv, kx, caget(kickerpv), 
+                print "  waiting %d sec" % self.TSLEEP
+            time.sleep(self.TSLEEP)
             for j,bpm in enumerate(bpmpvlist):
                 if mask[j]: ret[i+1,j] = 0
                 else: ret[i+1,j] = caget(bpm)
-                if j < 3 or j >= len(bpmpvlist)-3:
-                    print "  %4d" % j, bpm, ret[i+1,j]
-                sys.stdout.flush()
-            print ""
+                if verbose:
+                    if j < 3 or j >= len(bpmpvlist)-3:
+                        print "  %4d" % j, bpm, "%13.4e" % ret[i+1,j]
+                    sys.stdout.flush()
+            if verbose:
+                print ""
         # 4 points
         v = (-ret[4,:] + 8.0*ret[3,:] - 8*ret[2,:] + ret[1,:])/12.0/dkick
         
         # polyfit
         p, residuals, rank, singular_values, rcond = \
             np.polyfit(kstrength[1:-1], ret[1:-1,:], 1, full=True)
-        print ""
-        print "Shape:", np.shape(kstrength[1:-1]), np.shape(ret[1:-1,:])
-        print "Shape:",np.shape(p), np.shape(residuals)
+        #print ""
+        #print "Shape:", np.shape(kstrength[1:-1]), np.shape(ret[1:-1,:])
+        #print "Shape:",np.shape(p), np.shape(residuals)
 
         for i in range(len(bpmpvlist)):
             if abs((v[i] - p[0, i])/v[i]) > .1:
-                print kickerpv, bpmpvlist[i], v[i], p[0,i]
+                print "WARNING", kickerpv, bpmpvlist[i], v[i], p[0,i]
         
-        return v, kstrength, ret
+        return v, kstrength, ret, 
 
     def measure(self, coupled=False, verbose = 0):
         """
@@ -400,6 +408,19 @@ class Orm:
             caput(self.__trimsp[i1], 0.0)
         pass
 
+    def rename(self, src, dst):
+        for e in self.trim:
+            if e == src: e = dst
+        for e in self.bpm:
+            if e == src: e = dst
+
+    def __str__(self):
+        s = "Orbit Response Matrix\n" \
+            " trim %d, bpm %d, matrix (%d, %d)" % \
+            (len(self.trim), len(self.bpm),
+             np.shape(self.__m)[0], np.shape(self.__m)[1])
+        return s
+
 def measOrbitRm(bpm, trim):
     """Measure the beta function by varying quadrupole strength"""
     print "EPICS_CA_MAX_ARRAY_BYTES:", os.environ['EPICS_CA_MAX_ARRAY_BYTES']
@@ -419,27 +440,4 @@ def measChromRm():
     measure chromaticity response matrix
     """
     pass
-
-def test():
-    x = []
-    t0 = 1299032723.0
-    for k in [.0, -2e-6, -1e-6, 1e-6, 2e-6, 0.]:
-        #caput('SR:C30-MG:G01A<VCM:H2>Fld-SP', k)
-        caput('SR:C01-MG:G04A<VCM:M>Fld-SP', k)
-        t1 = time.time()
-        x1 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
-        for i in range(200):
-            #time.sleep(4)
-            #print time.time()
-            x2 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
-            #time.sleep(4)
-            if abs(x2 - x1) > 1e-12:
-                print k, "%4d" % i, time.time() - t1, x1
-                break
-            x1 = x2
-            time.sleep(3)
-            #t2 = caget('SR:C30-BI:G02A<BPM:H2>Pos-Y')
-        #print k, t1, t2
-        #x.append([k, t1, t2])
-    print x
 
