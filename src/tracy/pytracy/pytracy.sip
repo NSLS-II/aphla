@@ -1603,7 +1603,7 @@ void InitRand(SIP_PYOBJECT,SIP_PYOBJECT);
 
 //int GetnKid(const int Fnum1) { return (ElemFam[Fnum1-1].nKid); }
 
-SIP_PYOBJECT GetnKid(SIP_PYOBJECT)
+SIP_PYOBJECT GetnKid(SIP_PYOBJECT);
 %MethodCode
 	int Fnum, Knum;
 
@@ -1633,7 +1633,7 @@ SIP_PYOBJECT GetnKid(SIP_PYOBJECT)
 %End
 
 //void Cell_SetdP(const double dP)
-void Cell_SetdP(SIP_PYOBJECT)
+void Cell_SetdP(SIP_PYOBJECT);
 %MethodCode
 	double dP;
 
@@ -1653,7 +1653,7 @@ void Cell_SetdP(SIP_PYOBJECT)
 %End
 
 //void Cell_Pass(const long i0, const long i1, ss_vect<T> &x, long &lastpos)
-SIP_PYOBJECT Cell_Pass(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
+SIP_PYOBJECT Cell_Pass(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long i0, i1, ilast;
 	Vector x;
@@ -1689,7 +1689,7 @@ SIP_PYOBJECT Cell_Pass(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
 
 
 //void Cell_Pass_M(long i0, long i1, Vector &xref, Matrix &mat, long &lastpos)
-SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
+SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long i0, i1, ilast;
         Vector x;
@@ -1740,7 +1740,7 @@ SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
 
 
 // void Cell_fPass(ss_vect<double> &x, long &lastpos)
-SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT)
+SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT);
 %MethodCode
         long ilast;
         Vector x;
@@ -1774,8 +1774,8 @@ SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT)
         }
 %End
 
-void Cell_fPass_M(ss_vect<double> &xref, Matrix &mat, long &lastpos)
-SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT)
+//void Cell_fPass_M(ss_vect<double> &xref, Matrix &mat, long &lastpos)
+SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long ilast;
         Vector x;
@@ -2173,7 +2173,7 @@ void Reset_Mpole(SIP_PYOBJECT);
 
 
 void get_alphac();
-%MethCode
+%MethodCode
   CellType  Cell;
 
   getelem(globval.Cell_nLoc, &Cell);
@@ -2181,8 +2181,8 @@ void get_alphac();
 %End
 
 
-SIP_PYLIST get_alphac2()
-%MethCode
+SIP_PYLIST get_alphac2();
+%MethodCode
   /* Note, do not extract from M[5][4], i.e. around delta
      dependent fixed point.                                */
 
