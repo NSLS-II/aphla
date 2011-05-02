@@ -70,8 +70,11 @@ def latex2png(inline, latex, filename, fontset='cm'):
           call(["latex","__tmp.tex"])
 #         call(["latex2png","-m", "-d","100","__tmp.tex"])
           call(["dvipng","-D","100", "-o","__tmp.png","__tmp.dvi"])
+          call(["pwd"])
           call(["convert","-crop","0x0", "-density","100x100","__tmp.png","__tmp.png"])
+          call(["pwd"])
           call(["convert","-trim","__tmp.png","__tmp.png"])
+          call(["pwd"])
           call(["convert","-crop","0x0+0+100", "__tmp.png","__tmp.png"])
           call(["mv", "__tmp.png",filename])
           depth=99

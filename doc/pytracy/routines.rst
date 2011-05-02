@@ -259,6 +259,64 @@ Tracking Routines
          0-th means the starting point and n-th is the value at the end of the element.
    :rtype: List
 
+.. py:function:: [fx, fz, nb_freq] = Get_NAFF(nterm, ndata, T)
+
+   Compute quasiperiodic approximation of a phase space trajectory
+   using NAFF Algorithm ((c) Laskar, IMCCE)
+
+   :arg nterm: number of frequencies to look for
+             if not multiple of 6, truncated to lower value
+   :arg ndata: size of the data to analyse
+   :arg T:     6D vector to analyse
+
+   :return fx: frequencies found in the H-plane
+   :return fz: frequencies found in the V-plane
+   :return nb_freq: number of frequencies found out in each plane
+
+  	    double  Tab[6][NTURN];
+	    int     nb_freq[2] = { 0, 0 };  /* frequency number to look for */
+
+	    /* initializations */^M
+	    for (i = 0; i < nterm; i++)
+	    {
+	        fx[i] = 0.0; fz[i] = 0.0;
+	    }
+	    /* end init *
+	    Get_NAFF(nterm, ndata*6, Tab, fx, fz, nb_freq);
+
+	    PyObject * PyRet = PyList_New(3);
+	    PyObject * Fx = PyList_New(nb_freq[0]);
+	    PyObject * Fz = PyList_New(nb_freq[1]);
+	    PyObject * Nb_Freq = PyList_New(2);
+
+	    for (i=0; i<nb_freq[0]; ++i) PyList_SetItem(Fx, i, PyFloat_FromDouble(fx[i]));
+	    for (i=0; i<nb_freq[1]; ++i) PyList_SetItem(Fz, i, PyFloat_FromDouble(fz[i]));
+	    for (i=0; i<2; ++i) PyList_SetItem(Nb_Freq, i, PyLong_FromLong(nb_freq[i]));
+
+	    PyList_SetItem(PyRet, 0, Fx);
+	    PyList_SetItem(PyRet, 1, Fz);
+	    PyList_SetItem(PyRet, 2, Nb_Freq);
+
+	    return PyRet;
+
+/****************************************************************************/
+.. py:function::  Trac_Simple(x, px, y, py, dp, nmax, double Tx[][NTURN], bool *status)
+
+   Single particle tracking around the closed orbit for NTURN turns
+   The 6D phase trajectory is saved in a array
+
+   :arg x, px, y, py: 4 transverses coordinates
+   :arg dp:           energy offset
+   :arg nmax:         number of turns
+   :arg pos:          starting position for tracking
+   :arg aperture:     global physical aperture
+
+   Output:
+      lastn         last n (should be nmax if  not lost)
+      lastpos       last position in the ring
+      Tx            6xNTURN matrix of phase trajectory
+
+
 Element Info Routines
 -------------------------------
 

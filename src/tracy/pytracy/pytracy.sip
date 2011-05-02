@@ -1603,7 +1603,7 @@ void InitRand(SIP_PYOBJECT,SIP_PYOBJECT);
 
 //int GetnKid(const int Fnum1) { return (ElemFam[Fnum1-1].nKid); }
 
-SIP_PYOBJECT GetnKid(SIP_PYOBJECT)
+SIP_PYOBJECT GetnKid(SIP_PYOBJECT);
 %MethodCode
 	int Fnum, Knum;
 
@@ -1633,7 +1633,7 @@ SIP_PYOBJECT GetnKid(SIP_PYOBJECT)
 %End
 
 //void Cell_SetdP(const double dP)
-void Cell_SetdP(SIP_PYOBJECT)
+void Cell_SetdP(SIP_PYOBJECT);
 %MethodCode
 	double dP;
 
@@ -1653,11 +1653,12 @@ void Cell_SetdP(SIP_PYOBJECT)
 %End
 
 //void Cell_Pass(const long i0, const long i1, ss_vect<T> &x, long &lastpos)
-SIP_PYOBJECT Cell_Pass(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
+SIP_PYOBJECT Cell_Pass(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long i0, i1, ilast;
 	Vector x;
 	PyObject *lastpos ;
+        int i;
 
         if ((i0=PyLong_AsLong(a0))<0 || (i1=PyLong_AsLong(a1))<0 || !PyList_Check(a2))
         {
@@ -1666,14 +1667,14 @@ SIP_PYOBJECT Cell_Pass(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
         }
         else if (i1>globval.Cell_nLoc || i0>i1 || PyList_GET_SIZE(a2) != 6)
         {
-	  pirntf("Argument not Correct\n")
+	  printf("Argument not Correct\n");
 	  return NULL;
 	}
 	else
 	{
             Py_BEGIN_ALLOW_THREADS
 
-            for (int i=0; i<6; ++i)
+            for (i=0; i<6; ++i)
 	      x[i] = PyFloat_AsDouble(PyList_GetItem(a2,i));
             Cell_Pass(i0, i1, x, ilast);
 
@@ -1689,7 +1690,7 @@ SIP_PYOBJECT Cell_Pass(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
 
 
 //void Cell_Pass_M(long i0, long i1, Vector &xref, Matrix &mat, long &lastpos)
-SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
+SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long i0, i1, ilast;
         Vector x;
@@ -1703,7 +1704,7 @@ SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
         }
         else if (i1>globval.Cell_nLoc || i0>i1 || PyList_GET_SIZE(a2) != 6 || PyList_GET_SIZE(a3) != 6)
         {
-          pirntf("Argument not Correct\n")
+          printf("Argument not Correct\n");
           return NULL;
         }
         else
@@ -1716,7 +1717,7 @@ SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
               x[i] = PyFloat_AsDouble(PyList_GetItem(a2,i));
 	      PyObject * row = PyList_GetItem(a3,i);
 	      for (j=0; j<6; ++j)
-		M[i][j]=PyFloat_AsDouble(PyList_GetItem(row,j);
+		M[i][j]=PyFloat_AsDouble(PyList_GetItem(row,j));
             }
 
             Cell_Pass_M(i0, i1, x, M, ilast);
@@ -1740,11 +1741,12 @@ SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
 
 
 // void Cell_fPass(ss_vect<double> &x, long &lastpos)
-SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT)
+SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT);
 %MethodCode
         long ilast;
         Vector x;
         PyObject *lastpos ;
+	int i;
 
         if (!PyList_Check(a0))
         {
@@ -1753,14 +1755,14 @@ SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT)
         }
         else if (PyList_GET_SIZE(a0) != 6)
         {
-          pirntf("Argument not Correct\n")
+          printf("Argument not Correct\n");
           return NULL;
         }
         else
         {
             Py_BEGIN_ALLOW_THREADS
 
-            for (int i=0; i<6; ++i)
+            for (i=0; i<6; ++i)
               x[i] = PyFloat_AsDouble(PyList_GetItem(a0,i));
             Cell_fPass(x, ilast);
 
@@ -1774,8 +1776,8 @@ SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT)
         }
 %End
 
-void Cell_fPass_M(ss_vect<double> &xref, Matrix &mat, long &lastpos)
-SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT)
+// void Cell_fPass_M(ss_vect<double> &xref, Matrix &mat, long &lastpos)
+SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long ilast;
         Vector x;
@@ -1787,9 +1789,9 @@ SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT)
           sipIsErr = 1;
           return NULL;
         }
-        else if (PyList_GET_SIZE(a2) != 6 || PyList_GET_SIZE(a3) != 6)
+        else if (PyList_GET_SIZE(a0) != 6 || PyList_GET_SIZE(a1) != 6)
         {
-          pirntf("Argument not Correct\n")
+          printf("Argument not Correct\n");
           return NULL;
         }
         else
@@ -1799,10 +1801,10 @@ SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT)
             int i,j;
             for (i=0; i<6; ++i)
             {
-              x[i] = PyFloat_AsDouble(PyList_GetItem(a2,i));
-              PyObject * row = PyList_GetItem(a3,i);
+              x[i] = PyFloat_AsDouble(PyList_GetItem(a0,i));
+              PyObject * row = PyList_GetItem(a1,i);
               for (j=0; j<6; ++j)
-                M[i][j]=PyFloat_AsDouble(PyList_GetItem(row,j);
+                M[i][j]=PyFloat_AsDouble(PyList_GetItem(row,j));
             }
 
             Cell_fPass_M(x, M, ilast);
@@ -1844,13 +1846,14 @@ void Cell_Concat(SIP_PYOBJECT);
         }
 %End
 
-// bool getCOD(long imax, double eps, double dP, long &lastpos)
-SIP_PYOBJECT getCOD(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+// bool GetCOD(long imax, double eps, double dP, long &lastpos)
+SIP_PYOBJECT GetCOD(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long imax, ilast;
         double eps;
         bool success;
-        PyObject Out;
+        PyObject * Out;
+        double dP;
 
         if((imax=PyLong_AsLong(a0))<0 || !PyNumber_Check(a1) || !PyNumber_Check(a2)) 
         {
@@ -1860,7 +1863,7 @@ SIP_PYOBJECT getCOD(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
         {
           eps = PyFloat_AsDouble(a1);
           dP = PyFloat_AsDouble(a2);
-          success=getCOD(imax, eps, dP, ilast);
+          success=GetCOD(imax, eps, dP, ilast);
 	  if (!success) ilast = -1;
           Out = PyLong_FromLong(ilast);
           return Out;
@@ -1875,9 +1878,10 @@ void Ring_Fittune(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PY
 %MethodCode
 	Vector2 nu;
 	double eps;
-	iVector2 &nq;
+	iVector2 nq;
 	double dkL;
-	long imax;
+	long imax, i0;
+        int i;
 
 
         if (!PyList_Check(a0) || !PyNumber_Check(a1) || !PyList_Check(a2) || !PyList_Check(a3) || !PyList_Check(a4) || !PyNumber_Check(a5) || (i0=PyLong_AsLong(a6))<0 )
@@ -1889,14 +1893,14 @@ void Ring_Fittune(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PY
         {
            Py_BEGIN_ALLOW_THREADS
 
-	   for(int i=0; i<2; i++)
+	   for(i=0; i<2; i++)
 	   {
 	     nu[i] = PyFloat_AsDouble(PyList_GetItem(a0,i));
 	     nq[i] = PyLong_AsLong(PyList_GetItem(a2,i));
 	   }
 
-	   nqf = nq[0];
-	   nqd = nq[1];
+	   int nqf = nq[0];
+	   int nqd = nq[1];
 
 	   eps = PyFloat_AsDouble(a1);
 
@@ -1930,7 +1934,7 @@ void FitTune(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
         long qf, qd;
         double nux, nuy;
 
-        if ((qf=PyLong_AsLong(a0))<0 || (qd=PyLong_AsLong(a1)<0 || !PyNumber_Check(a2) ||  !PyNumber_Check(a3))
+        if ((qf=PyLong_AsLong(a0))<0 || (qd=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) ||  !PyNumber_Check(a3))
         {
           sipIsErr = 1;
           return NULL;
@@ -1954,9 +1958,10 @@ void Ring_Fitchrom(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_P
 %MethodCode
 	Vector2 ksi;
 	double eps;
-	iVector2 &ns;
+	iVector2 ns;
 	double dkpL;
-	long imax;
+	long imax, i0;
+	int i;
 
         if (!PyList_Check(a0) || !PyNumber_Check(a1) || !PyList_Check(a2) || !PyList_Check(a3) || !PyList_Check(a4) || !PyNumber_Check(a5) || (i0=PyLong_AsLong(a6))<0 )
         {
@@ -1967,14 +1972,14 @@ void Ring_Fitchrom(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_P
         {
             Py_BEGIN_ALLOW_THREADS
 
-	   for(int i=0; i<2; i++)
+	   for(i=0; i<2; i++)
 	   {
 	     ksi[i] = PyFloat_AsDouble(PyList_GetItem(a0,i));
-	     ns[i] = PyLong_AsLong(PyList_GetItem(a2,i);
+	     ns[i] = PyLong_AsLong(PyList_GetItem(a2,i));
 	   }
 
-	   nsf = ns[0];
-	   nsd = ns[1];
+	   int nsf = ns[0];
+	   int nsd = ns[1];
 
 	   eps = PyFloat_AsDouble(a1);
 
@@ -2007,7 +2012,7 @@ void FitChrom(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
         long sf, sd;
         double ksix, ksiy;
 
-        if ((sf=PyLong_AsLong(a0))<0 || (sd=PyLong_AsLong(a1)<0 || !PyNumber_Check(a2) ||  !PyNumber_Check(a3))
+        if ((sf=PyLong_AsLong(a0))<0 || (sd=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) ||  !PyNumber_Check(a3))
         {
           sipIsErr = 1;
           return NULL;
@@ -2032,8 +2037,8 @@ void Ring_FitDisp(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PY
 %MethodCode
 	long pos, imax, nq;
 	double eta, eps, dkL;
-
-        if ((pos=PyLong_FromLong(a0))<1 || !PyNumber_Check(a1) || !PyNumber_Check(a2) || (nq=PyLong_FromLong(a3))<1 
+        int i;
+        if ((pos=PyLong_AsLong(a0))<1 || !PyNumber_Check(a1) || !PyNumber_Check(a2) || (nq=PyLong_AsLong(a3))<1 
                                                   || !PyList_Check(a4) || !PyNumber_Check(a5) || (imax=PyLong_AsLong(a6))<0 )
         {
           sipIsErr = 1;
@@ -2056,22 +2061,22 @@ void Ring_FitDisp(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PY
             
             Ring_FitDisp(pos, eta, eps, nq, q, dkL, imax);
 
-	   for(i=0; i<2; i++)
-	   {
+//	   for(i=0; i<2; i++)
+//	   {
 //	     PyList_SetItem(a0,i,PyFloat_FromDouble(nu[i])); No meaning at current version. I'll ask to make output the achived tunes.
 //	     PyList_SetItem(a2,i,PyLong_FromLong(nq[i]));
-	   }
+//	   }
     	   Py_END_ALLOW_THREADS
 	}
 %End
 
 // void FitDisp(long q, long pos, double eta)
-void FitDiap(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void FitDisp(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
         long q, pos;
         double eta;
 
-        if ((sf=PyLong_AsLong(a0))<0 || (sd=PyLong_AsLong(a1)<0 || !PyNumber_Check(a2))
+        if ((q=PyLong_AsLong(a0))<0 || (pos=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2))
         {
           sipIsErr = 1;
           return NULL;
@@ -2087,10 +2092,6 @@ void FitDiap(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
            Py_END_ALLOW_THREADS 
         }
 %End
-
-
-
-
 
 
 // void Mpole_Init(int Fnum1)
@@ -2173,7 +2174,7 @@ void Reset_Mpole(SIP_PYOBJECT);
 
 
 void get_alphac();
-%MethCode
+%MethodCode
   CellType  Cell;
 
   getelem(globval.Cell_nLoc, &Cell);
@@ -2181,8 +2182,8 @@ void get_alphac();
 %End
 
 
-SIP_PYLIST get_alphac2()
-%MethCode
+SIP_PYLIST get_alphac2();
+%MethodCode
   /* Note, do not extract from M[5][4], i.e. around delta
      dependent fixed point.                                */
 
@@ -2225,7 +2226,7 @@ void TraceABN(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJE
 
 	int i;
 
-       if ((i0=PyLong_FromLong(a0))<1 || (i1=PyLong_FromLong(a1))<1 || !PyList_Check(a2) || !PyList_Check(a3) || !PyList_Check(a4) || !PyList_Check(a5) || !PyNumber_Check(a6)) 
+       if ((i0=PyLong_AsLong(a0))<1 || (i1=PyLong_AsLong(a1))<1 || !PyList_Check(a2) || !PyList_Check(a3) || !PyList_Check(a4) || !PyList_Check(a5) || !PyNumber_Check(a6)) 
         {
           sipIsErr = 1;
           return NULL;
@@ -2242,9 +2243,65 @@ void TraceABN(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJE
 	     etap[i]  = PyFloat_AsDouble(PyList_GetItem(a5,i));	   	   
 	   }
             dP = PyFloat_AsDouble(a6);
-	    imax = PyLong_AsLong(a6);
             
             TraceABN(i0, i1, alpha, beta, eta, etap, dP);
+
+	    Py_END_ALLOW_THREADS
 	}
 %End
 
+// = { 0, 0 }; // /* frequency number to look for */
+//****************************************************************************/
+//* void Get_NAFF(int nterm, long ndata, double T[DIM][NTURN], double *fx, double *fz, int nb_freq[2])
+SIP_PYLIST Get_NAFF(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYLIST);
+%MethodCode
+  	double  Tab[6][NTURN];
+	int     nb_freq[2];
+	int nterm, ndata;
+	int i,j;
+
+        if ((nterm=(int) PyLong_AsLong(a0))<1 || (ndata=(int) PyLong_AsLong(a1))<1 || !PyList_Check(a2) )
+        {
+          sipIsErr = 1;
+          return NULL;
+        }
+        else
+        {
+           Py_BEGIN_ALLOW_THREADS
+
+	   double  fx[nterm], fz[nterm];
+
+	   for (i=0;i<6;++i)
+	   {
+		PyObject * row = PyList_GetItem(a2,i);
+		for (j=0;j<ndata;++j)
+		{
+		    Tab[i][j] = PyFloat_AsDouble(PyList_GetItem(row,j));
+		}
+	    }
+	    /* initializations */
+	    for (i = 0; i < nterm; i++)
+	    {
+	        fx[i] = 0.0; fz[i] = 0.0;
+	    }
+	    /* end init */
+	    Get_NAFF(nterm, ndata*6, Tab, fx, fz, nb_freq);
+
+	    PyObject * PyRet = PyList_New(3);
+	    PyObject * Fx = PyList_New(nb_freq[0]);
+	    PyObject * Fz = PyList_New(nb_freq[1]);
+	    PyObject * Nb_Freq = PyList_New(2);
+
+	    for (i=0; i<nb_freq[0]; ++i) PyList_SetItem(Fx, i, PyFloat_FromDouble(fx[i]));
+	    for (i=0; i<nb_freq[1]; ++i) PyList_SetItem(Fz, i, PyFloat_FromDouble(fz[i]));
+	    for (i=0; i<2; ++i) PyList_SetItem(Nb_Freq, i, PyLong_FromLong(nb_freq[i]));
+
+	    PyList_SetItem(PyRet, 0, Fx);
+	    PyList_SetItem(PyRet, 1, Fz);
+	    PyList_SetItem(PyRet, 2, Nb_Freq);
+
+	    return PyRet;
+
+	    Py_END_ALLOW_THREADS
+	}
+%End
