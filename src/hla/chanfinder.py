@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 """
+hla.chanfinder
+~~~~~~~~~~~~~~~
+
 This module mimics Channel Finder service, and makes developing HLA earlier.
 
 It also manages configuration data of HLA.

@@ -1,5 +1,15 @@
 #!/usr/bin/env python
 
+"""
+HLA Libraries
+~~~~~~~~~~~~~~
+
+:author: Lingyun Yang
+:license:
+
+Defines the procedural interface of HLA to the users.
+"""
+
 from . import _cfa, _lat
 
 from catools import caget, caput
@@ -30,7 +40,17 @@ def getSpChannels(elemlist, tags = []):
 #
 #
 def eget(element, full = False, tags = [], unique = False):
-    """easier get"""
+    """
+    easier get with element name(s)
+
+    This relies on channel finder service, and searching for "default.eget"
+    tag of the element.
+
+    Example::
+
+      >>> eget('QM1G4C01B')
+      >>> eget(['CXM1G4C01B', 'CYM1G4C01B'])
+    """
     # some tags + the "default"
     chtags = ['default.eget']
     if tags: chtags.extend(tags)
@@ -68,6 +88,14 @@ def eget(element, full = False, tags = [], unique = False):
 def eput(element, value):
     """
     easier put
+
+    This relies on channel finder service, and searching for "default.eput"
+    tag of the element.
+
+    Example::
+
+      >>> eput('QM1G4C01B', 1.0)
+      >>> eput(['CXM1G4C01B', 'CYM1G4C01B'], [0.001, .001])
     """
     if isinstance(element, list) and len(element) != len(value):
         raise ValueError("element list must have same size as value list")
@@ -82,6 +110,9 @@ def eput(element, value):
         
 
 def reset_trims():
+    """
+    reset all trims in group "TRIMX" and "TRIMY"
+    """
     trimx = _lat.getGroupMembers(['*', 'TRIMX'], op='intersection')
     trimy = _lat.getGroupMembers(['*', 'TRIMY'], op='intersection')
     pvx = getSpChannels(trimx, tags=['default.eput', 'X'])

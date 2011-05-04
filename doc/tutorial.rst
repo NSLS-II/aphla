@@ -84,6 +84,17 @@ Software
   $ apt-get install mercurial pyqt4-dev-tools
   $ apt-get install python-qt4 python-qt4-dev
 
+By using BNL Debian/Ubuntu repository fron Controls group
+
+::
+
+  deb http://epics.nsls2.bnl.gov/debian/ lenny main contrib
+  deb-src http://epics.nsls2.bnl.gov/debian/ lenny main contrib
+
+::
+
+  $ apt-get install python-cothread epics-catools
+
 
 Code Repository
 ===================
@@ -121,4 +132,14 @@ If it has been a long time after you checkout the code from the server, you can
 ::
 
   $ hg pull (update the local files with server's)
+
+
+
+.. sourcecode:: ipython
+
+    In [69]: lines = plot([1,2,3])
+
+.. math::
+
+  G(s,s_0)=\dfrac{\sqrt{\beta(s)\beta(s_0)}}{2\sin\pi\nu}\cos(\pi\nu-\left|\psi(s)-\psi(s_0)\right|)
 

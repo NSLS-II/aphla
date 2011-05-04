@@ -182,8 +182,8 @@ latex_font_size = '11pt'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('intro', 'hla.tex', u'Seasail Documentation',
-   u'Guobao Shen, Lingyun Yang', 'manual'),
+  ('intro', 'hla.tex', u'HLA Documentation',
+   u'Jinhyuk Choi, Guobao Shen, Lingyun Yang', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
