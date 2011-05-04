@@ -76,3 +76,70 @@ Example 1
    ['A', 'BPM', 'G4', 'G2', 'BPMY', 'C01', 'BPMX']
 
 
+Software
+=========
+
+::
+
+  $ apt-get install mercurial pyqt4-dev-tools
+  $ apt-get install python-qt4 python-qt4-dev
+
+By using BNL Debian/Ubuntu repository fron Controls group
+
+::
+
+  deb http://epics.nsls2.bnl.gov/debian/ lenny main contrib
+  deb-src http://epics.nsls2.bnl.gov/debian/ lenny main contrib
+
+::
+
+  $ apt-get install python-cothread epics-catools
+
+
+Code Repository
+===================
+
+Our code is in a Mercurial repository, which keeps every version anyone
+checked in. Version controlled repository not only keeps track of the
+change of the code, but also support branch and merges of each revision.
+
+I will skip the introduction of the version control tools and only talk
+about what/how you should do to work with the HLA code in repository.
+
+A typical work flow is the following. (All under linux)
+
+The very first time, please take a look at ~/.hgrc:
+
+::
+
+  [ui]
+  username = Lingyun Yang <lyyang@bnl.gov>
+
+This marks who you are.
+
+::
+
+  $ hg clone http://code.nsls2.bnl.gov/hg/nsls2-hla
+  $ cd nsls2-hla
+  $ (working .....)
+  $ hg add newfile.py (if you have created a new file)
+  $ hg status  ( list the status of current working directory)
+  $ hg commit -m "I have improved the code" (check in the code with a message)
+  $ hg push (push you change to the server)
+
+If it has been a long time after you checkout the code from the server, you can 
+
+::
+
+  $ hg pull (update the local files with server's)
+
+
+
+.. sourcecode:: ipython
+
+    In [69]: lines = plot([1,2,3])
+
+.. math::
+
+  G(s,s_0)=\dfrac{\sqrt{\beta(s)\beta(s_0)}}{2\sin\pi\nu}\cos(\pi\nu-\left|\psi(s)-\psi(s_0)\right|)
+

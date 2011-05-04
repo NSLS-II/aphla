@@ -17,7 +17,7 @@ import datetime, time
 from catools import caget, caput
 
 def getCurrent():
-    """Get the current"""
+    """Get the current from channel "SR:C00-BI:G00{DCCT:00}CUR-RB" """
     return caget("SR:C00-BI:G00{DCCT:00}CUR-RB")
 
 def getLifetime(verbose = 0):

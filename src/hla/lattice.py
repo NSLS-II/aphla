@@ -24,6 +24,11 @@ def parseElementName(name):
     """
     searching G*C*A type of string. e.g. "CFXH1G1C30A" will be parsed as
     girder="G1", cell="C30", symmetry="A"
+
+    Example::
+    
+      >>> parseElementName('CFXH1G1C30A')
+      'C30', 'G1', 'A'
     """
     # for NSLS-2 convention of element name
     a = re.match(r'.+(G\d{1,2})(C\d{1,2})(.)', name)
@@ -95,7 +100,7 @@ class Lattice:
     IGN = ['MCF', 'CHROM', 'TUNE', 'OMEGA', 'DCCT', 'CAVITY']
 
     def __init__(self):
-        self.__group = {}
+        self._group = {}
         # guaranteed in the order of s.
         self.element = []
         # same order of element
@@ -114,7 +119,7 @@ class Lattice:
         """
         f = shelve.open(fname, dbmode)
         pref = "lat.%s." % self.mode
-        f[pref+'group']   = self.__group
+        f[pref+'group']   = self._group
         f[pref+'element'] = self.element
         f[pref+'twiss']   = self.twiss
         f[pref+'mode']    = self.mode
@@ -126,7 +131,7 @@ class Lattice:
         """
         call signature::
         
-          load(self, fname, mode='')
+          load(fname, mode='')
 
         load the lattice from binary data
         """
@@ -138,7 +143,7 @@ class Lattice:
             pref = "lat."
         else:
             pref = 'lat.%s.' % mode
-        self.__group  = f[pref+'group']
+        self._group  = f[pref+'group']
         self.element  = f[pref+'element']
         self.twiss    = f[pref+'twiss']
         self.mode     = f[pref+'mode']
@@ -180,9 +185,9 @@ class Lattice:
             self.element[-1].index = prop[cfa.ELEMIDX]
             for g in [prop[cfa.ELEMTYPE], prop[cfa.CELL], prop[cfa.GIRDER],
                       prop[cfa.ELEMSYM]]:
-                if self.__group.has_key(g):
-                    self.__group[g].append(prop[cfa.ELEMNAME])
-                else: self.__group[g] = [prop[cfa.ELEMNAME]]
+                if self._group.has_key(g):
+                    self._group[g].append(prop[cfa.ELEMNAME])
+                else: self._group[g] = [prop[cfa.ELEMNAME]]
             
         # adjust s_beg
         for e in self.element:
@@ -194,10 +199,10 @@ class Lattice:
         # pv record again
         for pv in cfa.getChannels():
             prop = cfa.getChannelProperties(pv)
-            if not self.__group.has_key(prop[cfa.ELEMTYPE]):
-                self.__group[prop[cfa.ELEMTYPE]] = [prop[cfa.ELEMNAME]]
-            elif not prop[cfa.ELEMNAME] in self.__group[prop[cfa.ELEMTYPE]]:
-                self.__group[prop[cfa.ELEMTYPE]].append(prop[cfa.ELEMNAME])
+            if not self._group.has_key(prop[cfa.ELEMTYPE]):
+                self._group[prop[cfa.ELEMTYPE]] = [prop[cfa.ELEMNAME]]
+            elif not prop[cfa.ELEMNAME] in self._group[prop[cfa.ELEMTYPE]]:
+                self._group[prop[cfa.ELEMTYPE]].append(prop[cfa.ELEMNAME])
         
 
     def mergeGroups(self, parent, children):
@@ -216,14 +221,14 @@ class Lattice:
         else:
             raise ValueError("children can be string or list of string")
 
-        if not self.__group.has_key(parent):
-            self.__group[parent] = []
+        if not self._group.has_key(parent):
+            self._group[parent] = []
 
         for child in chlist:
-            if not self.__group.has_key(child): continue
-            for elem in self.__group[child]:
-                if elem in self.__group[parent]: continue
-                self.__group[parent].append(elem)
+            if not self._group.has_key(child): continue
+            for elem in self._group[child]:
+                if elem in self._group[parent]: continue
+                self._group[parent].append(elem)
 
     def importLatticeTable(self, lattable):
         """
@@ -254,7 +259,7 @@ class Lattice:
         cnt = {'BPM':0, 'BPMX':0, 'BPMY':0, 'TRIM':0, \
                    'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
 
-        for k in cnt.keys(): self.__group[k] = []
+        for k in cnt.keys(): self._group[k] = []
 
         f = open(lattable, 'r').readlines()
         for s in f[1:]:
@@ -276,28 +281,28 @@ class Lattice:
             # count element numbers in each type
             if cnt.has_key(grp): cnt[grp] += 1
 
-            if self.__group.has_key(grp): self.__group[grp].append(phy)
-            else: self.__group[grp] = [phy]
+            if self._group.has_key(grp): self._group[grp].append(phy)
+            else: self._group[grp] = [phy]
             
             # in lat_conf_table, used only BPM as groupname, not BPMX/BPMY
             if grp == 'BPM':
                 if rb[-2:] == '-X':
-                    self.__group['BPMX'].append(phy)
+                    self._group['BPMX'].append(phy)
                     cnt['BPMX'] += 1
                 elif rb[-2:] == '-Y': 
-                    self.__group['BPMY'].append(phy)
+                    self._group['BPMY'].append(phy)
                     cnt['BPMY'] += 1
                 else:
                     raise ValueError("pv %s pattern not recognized" % rb)
             if grp[:4] == 'TRIM':
-                self.__group['TRIM'].append(phy)
+                self._group['TRIM'].append(phy)
 
         # adjust s_beg
         for e in self.element:
             e.s_beg = e.s_end - e.len_eff
 
         if False:
-            for k,v in self.__group.items():
+            for k,v in self._group.items():
                 print k, len(v)
 
     def init_virtac_twiss(self):
@@ -434,7 +439,7 @@ class Lattice:
             #print group, e.name, e.family,
             if e.name in ret: continue
             if fnmatch(e.name, group) or fnmatch(e.family, group) or \
-                    (self.__group.has_key(group) and e.name in self.__group[group]):
+                    (self._group.has_key(group) and e.name in self._group[group]):
                 ret.append(e.name)
                 if s == 'begin': loc.append(e.s_beg)
                 elif s == 'end': loc.append(e.s_end)
@@ -455,8 +460,8 @@ class Lattice:
 
         Get a list of elements from cell, girder and sequence
         """
-        if group in self.__group.keys():
-            return self.__group[group][:]
+        if group in self._group.keys():
+            return self._group[group][:]
 
         elem = []
         #print group
@@ -478,7 +483,7 @@ class Lattice:
         #return [v for v in set(elem)]
         return elem
 
-    def __illegalGroupName(self, group):
+    def _illegalGroupName(self, group):
         # found character not in [a-zA-Z0-9_]
         if re.search(r'[^\w]+', group):
             raise ValueError("Group name must be in [a-zA-Z0-9_]+")
@@ -489,14 +494,14 @@ class Lattice:
         """
         call signature::
         
-          addGroup(self, group)
+          addGroup(group)
           
         *group* is a combination of alphabetic and numeric characters and
          underscores. i.e. "[a-zA-Z0-9\_]" 
         """
-        if self.__illegalGroupName(group): return
-        if not self.__group.has_key(group):
-            self.__group[group] = []
+        if self._illegalGroupName(group): return
+        if not self._group.has_key(group):
+            self._group[group] = []
 
     def removeGroup(self, group):
         """
@@ -506,13 +511,13 @@ class Lattice:
 
         remove a group only when it is empty
         """
-        if self.__illegalGroupName(group): return
-        if not self.__group.has_key(group):
+        if self._illegalGroupName(group): return
+        if not self._group.has_key(group):
             raise ValueError("Group %s does not exist" % group)
-        if len(self.__group[group]) > 0:
+        if len(self._group[group]) > 0:
             raise ValueError("Group %s is not empty" % group)
         # remove it!
-        self.__group.pop(group)
+        self._group.pop(group)
 
     def addGroupMember(self, group, member):
         """
@@ -520,8 +525,8 @@ class Lattice:
 
         group must exist before.
         """
-        if self.__group.has_key(group):
-            self.__group[group].append(member)
+        if self._group.has_key(group):
+            self._group[group].append(member)
         else:
             raise ValueError("Group %s does not exist" % group)
 
@@ -529,7 +534,7 @@ class Lattice:
         """
         check group exists or not.
         """
-        return self.__group.has_key(group)
+        return self._group.has_key(group)
 
     def removeGroupMember(self, group, member):
         """
@@ -537,8 +542,8 @@ class Lattice:
         """
         if not self.hasGroup(group):
             raise ValueError("Group %s does not exist" % group)
-        if member in self.__group[group]:
-            self.__group[group].remove(member)
+        if member in self._group[group]:
+            self._group[group].remove(member)
         else:
             raise ValueError("%s not in group %s" % (member, group))
 
@@ -547,7 +552,7 @@ class Lattice:
         return a list of groups this element is in
         """
         ret = []
-        for k, elems in self.__group.items():
+        for k, elems in self._group.items():
             for e in elems:
                 if fnmatch(e, element):
                     ret.append(k)
@@ -565,7 +570,7 @@ class Lattice:
         #print __file__, groups
         for g in groups:
             ret[g] = []
-            for k, elems in self.__group.items():
+            for k, elems in self._group.items():
                 if fnmatch(k, g): ret[g].extend(elems)
             #print g, ret[g]
 

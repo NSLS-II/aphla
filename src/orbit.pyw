@@ -6,6 +6,10 @@ if 0:
     sip.settracemask(0x3f)
 
 import sys
+import cothread, hla
+from cothread.catools import camonitor
+app = cothread.iqt()
+
 from PyQt4 import Qt, QtCore, QtGui
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
@@ -13,7 +17,6 @@ from PyQt4.Qwt5.anynumpy import *
 import qrc_resources
 import numpy as np
 
-from hla import getOrbit, getFullOrbit
 
 class Spy(Qt.QObject):
     
@@ -33,154 +36,10 @@ class Spy(Qt.QObject):
 
 # class Spy
 
-class OrbitData(Qt.QObject):
-    def __init__(self, parent = None):
-        super(OrbitData, self).__init__(parent)
-        self.nsample = 10
-        self.isample = -1
-        self.points = 20
-        self.__x = zeros((self.nsample, self.points), 'd')
-        self.__y = zeros((self.nsample, self.points), 'd')
-        self.__dx = zeros(self.points, 'd')
-        self.__dy = zeros(self.points, 'd')
-        self.__s = arange(self.points)
-
-        self.timerEvent(None)
-
-        self.__dt = 500
-        self.timerId = self.startTimer(self.__dt)
-
-    def timerEvent(self, e):
-        self.isample = (self.isample + 1) % self.nsample
-        
-        t = self.__s
-        self.__x[self.isample, :] = sin(0.15*t) + .1*random.random(self.points)
-        self.__y[self.isample, :] = sin(0.3*t) + 0.3*random.random(self.points)
-        #self.isample = (self.isample + 1) % self.nsample
-
-    def setSamples(self, n):
-        if n == self.nsample: return
-        tx, ty = self.__x, self.__y
-        self.__x = zeros((n, self.points), 'd')
-        self.__y = zeros((n, self.points), 'd')
-        self.__x[:self.nsample, :] = tx[:, :]
-        self.__y[:self.nsample, :] = ty[:, :]
-        
-        self.nsample = n
-
-    def s(self):
-        return self.__s[:]
-
-    def x(self):
-        return self.__x[self.isample,:]
-
-    def y(self):
-        return self.__y[self.isample,:]
-
-    def dx(self):
-        return std(self.__x[:,:], axis=0)
-
-    def dy(self):
-        return std(self.__y[:,:], axis=0)
-
-    def stop(self):
-        self.killTimer(self.timerId)
-        self.timerId = -1
-
-    def start(self):
-        if self.timerId > 0:
-            self.killTimer(self.timerId)
-        self.timerId = self.startTimer(self.__dt) 
-
-class OrbitCaData(Qt.QObject):
-    def __init__(self, parent = None):
-        super(OrbitCaData, self).__init__(parent)
-        
-        d = np.array(getFullOrbit())
-        
-        self.nsample = 50
-        self.isample = -1
-        self.samplefull = False
-        self.points = len(d)
-        self.__x  = zeros((self.nsample, self.points), 'd')
-        self.__y  = zeros((self.nsample, self.points), 'd')
-        self.__dx = zeros(self.points, 'd')
-        self.__dy = zeros(self.points, 'd')
-        self.__s  = zeros(self.points, 'd')
-
-        self.__live = False
-
-        #self.__s[:] = d[:,0]
-        self.update()
- 
-        self.__dt = 500
-        self.timerId = self.startTimer(500)
-
-    def timerEvent(self, e):
-        if not self.__live: return
-        else: self.update()
-        #print "Updated orbit", self.isample
-
-    def update(self):
-        self.isample = (self.isample + 1) % self.nsample
-        if self.isample == 0: self.samplefull = True
-
-        # slow version, read BPM one by one
-        #d = np.array(getOrbit())
-        # fast, read BPM waveform
-        d = np.array(getFullOrbit())
-        #print "Update ca data", self.isample
-
-        self.__s[:] = d[:,0]
-        self.__x[self.isample, :] = d[:,1]
-        self.__y[self.isample, :] = d[:,2]
-        
-    def setSamples(self, n):
-        if n == self.nsample: return
-        tx, ty = self.__x, self.__y
-        self.__x = zeros((n, self.points), 'd')
-        self.__y = zeros((n, self.points), 'd')
-        self.__x[:self.nsample, :] = tx[:, :]
-        self.__y[:self.nsample, :] = ty[:, :]
-        self.nsample = n
-
-    def s(self):
-        return self.__s[:]
-
-    def x(self):
-        return self.__x[self.isample,:]
-
-    def y(self):
-        return self.__y[self.isample,:]
-
-    def dx(self):
-        if self.samplefull:
-            return std(self.__x[:,:], axis=0)
-        else:
-            return std(self.__x[:self.isample,:], axis=0)
-
-    def dy(self):
-        if self.samplefull:
-            return std(self.__y[:,:], axis=0)
-        else:
-            return std(self.__y[:self.isample,:], axis=0)
-
-    def stop(self):
-        self.__live = False
-        #self.killTimer(self.timerId)
-        #self.timerId = -1
-        #print "Data stop: ", self.__live
-
-    def start(self):
-        self.__live = True
-        #print "Data start:", self.__live
-        #if self.timerId > 0:
-        #    self.killTimer(self.timerId)
-        #self.timerId = self.startTimer(self.__dt) 
-
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
-    def __init__(self, data, plane,
+    SAMPLES = 10
+    def __init__(self, pvs,
                  curvePen = Qt.QPen(Qt.Qt.NoPen),
                  curveStyle = Qwt.QwtPlotCurve.Lines,
                  curveSymbol = Qwt.QwtSymbol(),
@@ -211,120 +70,38 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.errorPen = errorPen
         self.errorCap = errorCap
         self.errorOnTop = errorOnTop
-
-        self.__x = None
-        self.__y = None
-        self.__dx = None
-        self.__dy = None
-        self.plane = plane
-        self.__data = data
+        
+        n = len(pvs)
+        self.pvs = pvs
+        #self.x = np.zeros(n, 'd')
+        self.x = np.array(range(n))
+        self.y = np.zeros((n, self.SAMPLES), 'd')
+        self.y2 = np.zeros(n, 'd')
         self.__live = False
 
+        self.moni = camonitor(pvs, self.updatePvs)
+
         self.__errorbar = True
-        #self.live = True
 
         self.update()
 
-    # __init__()
-
-    def dx(self): return self.dx
-    def dy(self): return self.dy
+    def updatePvs(self, val, idx):
+        self.y[idx, 1:] = self.y[idx,:-1]
+        self.y[idx, 0] = val
+        self.y2[idx] = np.std(self.y[idx,:])
 
     def update(self):
-        #self.data.update()
-        #if not self.live: return None
-        #print "update curve" 
-        self.__x = self.__data.x()
-        self.__dx = self.__data.dx()
-        self.__y = self.__data.y()
-        self.__dy = self.__data.dy()
-
-        if self.__errorbar and self.plane == 'H':
-            #x = self.__data.x()
-            #dx = self.__data.dx()
-            self.setData(self.__data.s(), self.__x, None, self.__dx)
-        elif self.__errorbar and self.plane == 'V':
-            #x = self.__data.y()
-            #dx = self.__data.dy()
-            self.setData(self.__data.s(), self.__y, None, self.__dy)
-        elif self.plane == 'H':
-            #x = self.__data.x()
-            #dx = None
-            self.setData(self.__data.s(), self.__x, None, None)
-        elif self.plane == 'V':
-            #x = self.__data.y()
-            #dx = None
-            self.setData(self.__data.s(), self.__y, None, None)
-
-
-    def setData(self, x, y, dx = None, dy = None):
-        """Set x versus y data with error bars in dx and dy.
-
-        Horizontal error bars are plotted if dx is not None.
-        Vertical error bars are plotted if dy is not None.
-
-        x and y must be sequences with a shape (N,) and dx and dy must be
-        sequences (if not None) with a shape (), (N,), or (2, N):
-        - if dx or dy has a shape () or (N,), the error bars are given by
-          (x-dx, x+dx) or (y-dy, y+dy),
-        - if dx or dy has a shape (2, N), the error bars are given by
-          (x-dx[0], x+dx[1]) or (y-dy[0], y+dy[1]).
-        """
-        
-        self.__x = asarray(x, Float)
-        if len(self.__x.shape) != 1:
-            raise RuntimeError, 'len(asarray(x).shape) != 1'
-
-        self.__y = asarray(y, Float)
-        if len(self.__y.shape) != 1:
-            raise RuntimeError, 'len(asarray(y).shape) != 1'
-        if len(self.__x) != len(self.__y):
-            raise RuntimeError, 'len(asarray(x)) != len(asarray(y))' 
-
-        if dx is None:
-            self.__dx = None
-        else:
-            self.__dx = asarray(dx, Float)
-            if len(self.__dx.shape) not in [0, 1, 2]:
-                raise RuntimeError, 'len(asarray(dx).shape) not in [0, 1, 2]'
-            
-        if dy is None:
-            self.__dy = dy
-        else:
-            self.__dy = asarray(dy, Float)
-            if len(self.__dy.shape) not in [0, 1, 2]:
-                raise RuntimeError, 'len(asarray(dy).shape) not in [0, 1, 2]'
-        
-        Qwt.QwtPlotCurve.setData(self, self.__x, self.__y)
+        Qwt.QwtPlotCurve.setData(self, self.x, self.y[:,0])
 
     # setData()
         
     def boundingRect(self):
         """Return the bounding rectangle of the data, error bars included.
         """
-        if self.__x is None and self.__y is None:
-            return Qt.QRectF(.0, 1.0, 1.0, 0.0)
-
-        if self.__dx is None:
-            xmin = min(self.__x)
-            xmax = max(self.__x)
-        elif len(self.__dx.shape) in [0, 1]:
-            xmin = min(self.__x - self.__dx)
-            xmax = max(self.__x + self.__dx)
-        else:
-            xmin = min(self.__x - self.__dx[0])
-            xmax = max(self.__x + self.__dx[1])
-
-        if self.__dy is None:
-            ymin = min(self.__y)
-            ymax = max(self.__y)
-        elif len(self.__dy.shape) in [0, 1]:
-            ymin = min(self.__y - self.__dy)
-            ymax = max(self.__y + self.__dy)
-        else:
-            ymin = min(self.__y - self.__dy[0])
-            ymax = max(self.__y + self.__dy[1])
-
+        xmin = min(self.x)
+        xmax = max(self.x)
+        ymin = min(self.y[:,0] - self.y2)
+        ymax = max(self.y[:,0] + self.y2)
         return Qt.QRectF(xmin, ymin, xmax-xmin, ymax-ymin)
         
     # boundingRect()
@@ -354,50 +131,16 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         painter.save()
         painter.setPen(self.errorPen)
 
-        # draw the error bars with caps in the x direction
-        if self.__dx is not None:
-            # draw the bars
-            if len(self.__dx.shape) in [0, 1]:
-                xmin = (self.__x - self.__dx)
-                xmax = (self.__x + self.__dx)
-            else:
-                xmin = (self.__x - self.__dx[0])
-                xmax = (self.__x + self.__dx[1])
-            y = self.__y
-            n, i = len(y), 0
-            lines = []
-            while i < n:
-                yi = yMap.transform(y[i])
-                lines.append(Qt.QLine(xMap.transform(xmin[i]), yi,
-                                          xMap.transform(xmax[i]), yi))
-                i += 1
-            painter.drawLines(lines)
-            if self.errorCap > 0:
-                # draw the caps
-                cap = self.errorCap/2
-                n, i, = len(y), 0
-                lines = []
-                while i < n:
-                    yi = yMap.transform(y[i])
-                    lines.append(
-                        Qt.QLine(xMap.transform(xmin[i]), yi - cap,
-                                     xMap.transform(xmin[i]), yi + cap))
-                    lines.append(
-                        Qt.QLine(xMap.transform(xmax[i]), yi - cap,
-                                     xMap.transform(xmax[i]), yi + cap))
-                    i += 1
-            painter.drawLines(lines)
-
         # draw the error bars with caps in the y direction
-        if self.__dy is not None:
+        if self.y2 is not None:
             # draw the bars
-            if len(self.__dy.shape) in [0, 1]:
-                ymin = (self.__y - self.__dy)
-                ymax = (self.__y + self.__dy)
+            if len(self.y2.shape) in [0, 1]:
+                ymin = (self.y[:,0] - self.y2)
+                ymax = (self.y[:,0] + self.y2)
             else:
-                ymin = (self.__y - self.__dy[0])
-                ymax = (self.__y + self.__dy[1])
-            x = self.__x
+                ymin = (self.y[:,0] - self.y2[0])
+                ymax = (self.y[:,0] + self.y2[1])
+            x = self.x
             n, i, = len(x), 0
             lines = []
             while i < n:
@@ -430,35 +173,20 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
     # drawFromTo()
     def liveData(self, on):
-        #print "Working on timer:", self.timerId,
-        #print "Curve: ", on
-        if on:
-            self.__data.start()
-            #self.timerId = self.startTimer(500)
-            #print "Enable timer:", self.timerId
-        else:
-            self.__data.stop()
-            #self.killTimer(self.timerId)
-            #print "Disabled timer:", self.timerId
-            #self.timerId = -1
+        pass
+
     def setErrorBar(self, on):
         self.__errorbar = on
 
     def singleShot(self):
         #print "Curve single shot"
-        self.__data.update()
         self.update()
         
-# class OrbitPlotCurve
-
 class OrbitPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None, data = None, plane = 'H'):
+    def __init__(self, parent = None, pvs = None, plane = 'H'):
         super(OrbitPlot, self).__init__(parent)
         #Qwt.QwtPlot.__init__(self, *args)
         
-        #self.data = OrbitData()
-        #self.data = OrbitCaData()
-        self.plane = plane
         self.setCanvasBackground(Qt.Qt.white)
         #self.alignScales()
 
@@ -474,19 +202,18 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.plotLayout().setAlignCanvasToScales(True)
 
-        self.curve1 = OrbitPlotCurve(data, plane,
+        self.curve1 = OrbitPlotCurve(
+            pvs,
             curvePen = Qt.QPen(Qt.Qt.black, 2),
-            curveSymbol = Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
-                                        Qt.QBrush(Qt.Qt.red),
-                                        Qt.QPen(Qt.Qt.black, 2),
-                                        Qt.QSize(9, 9)),
+            curveSymbol = Qwt.QwtSymbol(
+                Qwt.QwtSymbol.Ellipse,
+                Qt.QBrush(Qt.Qt.red),
+                Qt.QPen(Qt.Qt.black, 2),
+                Qt.QSize(9, 9)),
             errorPen = Qt.QPen(Qt.Qt.blue, 1),
             errorCap = 10,
             errorOnTop = errorOnTop,
             )
-
-        #self.curve1.setData(self.data.x(), self.data.y(),
-        #                    self.data.dx(), self.data.dy())
 
         self.curve1.attach(self)
         self.bound = self.curve1.boundingRect()
@@ -558,9 +285,6 @@ class OrbitPlot(Qwt.QwtPlot):
         #self.zoomer1.setZoomBase()
 
 
-    def setPlane(plane = 'H'):
-        self.plane = plane
-
     def singleShot(self):
         #print "Plot :: singleShot"
         self.curve1.singleShot()
@@ -619,10 +343,11 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         Qt.QMainWindow.__init__(self, parent)
 
         # initialize a QwtPlot central widget
+        pvx = [p[0] for p in hla._orbit.pvrb]
+        pvy = [p[1] for p in hla._orbit.pvrb]
 
-        self.data = OrbitCaData()
-        self.plot1 = OrbitPlot(self, data = self.data, plane = 'H')
-        self.plot2 = OrbitPlot(self, data = self.data, plane = 'V')
+        self.plot1 = OrbitPlot(self, pvx)
+        self.plot2 = OrbitPlot(self, pvy)
 
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
@@ -631,11 +356,15 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         self.plot2.plotLayout().setAlignCanvasToScales(True)
         self.plot2.setTitle("Vertical Orbit")
 
-        wid = QtGui.QWidget()
+        wid1 = QtGui.QWidget()
         vbox = QtGui.QVBoxLayout()
         vbox.addWidget(self.plot1)
         vbox.addWidget(self.plot2)
-        wid.setLayout(vbox)
+        wid1.setLayout(vbox)
+        wid = QtGui.QTabWidget()
+        wid.addTab(wid1, "test1")
+        wid.addTab(Qt.QLabel("Hello"), "test2")
+        wid.addTab(QtGui.QLabel("H3"), "test3")
         self.setCentralWidget(wid)
 
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
@@ -764,13 +493,13 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         self.plot2.singleShot()
 
 def main(args):
-    app = Qt.QApplication(args)
-
+    #app = Qt.QApplication(args)
     demo = OrbitPlotMainWindow()
     demo.resize(800,600)
     demo.show()
 
-    sys.exit(app.exec_())
+    #sys.exit(app.exec_())
+    cothread.WaitForQuit()
 
 # main()
 

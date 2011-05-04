@@ -8,7 +8,7 @@ import random
 
 from cothread.catools import caget
 
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 
 from conf import *
 

@@ -27,6 +27,12 @@ Modules include:
     :mod:`hla.orbit`
 
         defines orbit retrieve routines
+
+    :mod:`hla.hlalib`
+
+        defines procedural interface
+
+        
 """
 
 import os, sys, re
@@ -71,7 +77,7 @@ cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
 if not os.path.exists(cfg_pkl):
     raise ValueError("pkl files can not be found: " + cfg_pkl)
 
-print "= HLA main configure: ", cfg_pkl
+print >> sys.stderr, "= HLA main configure: ", cfg_pkl
 _lat.load(cfg_pkl, mode='virtac')
 #_lat.mode = 'virtac'
 #_lat.save(cfg_pkl)
@@ -81,14 +87,14 @@ cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
 if not os.path.exists(cfa_pkl):
     raise ValueError("pkl files can not be found: " + cfa_pkl)
 
-print "= HLA channel finder configure: ", cfa_pkl
+print >> sys.stderr, "= HLA channel finder configure: ", cfa_pkl
 _cfa.load(cfa_pkl)
 
 # set RF frequency
 from cothread import catools, Timedout
 try:
     catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
-    print "= Network is fine, using online PVs"
+    print >> sys.stderr, "= Network is fine, using online PVs"
 except Timedout:
     NETWORK_DOWN = True
     pass
@@ -98,5 +104,6 @@ except Timedout:
 from measorm import *
 from orbit import *
 
+_orbit = Orbit(_cfa)
 
 

@@ -86,7 +86,8 @@ def getNeighbors(element, group, n = 3):
     .. seealso::
         
         :class:`~hla.lattice.Lattice`
-        :meth:`~hla.lattice.Lattice.getNeighbors` For getting list of neighbors. :py:func:`hla.lattice.Lattice.getNeighbors`
+        :meth:`~hla.lattice.Lattice.getNeighbors` For getting list of
+        neighbors. :py:func:`hla.lattice.Lattice.getNeighbors`
     """
     return _lat.getNeighbors(element, group, n)
 

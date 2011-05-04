@@ -7,7 +7,7 @@ import numpy as np
 
 from cothread.catools import caget
 
-import matplotlib
+#import matplotlib
 import matplotlib.pylab as plt
 
 from conf import *
