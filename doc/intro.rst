@@ -51,7 +51,7 @@ developed especially for the first turn beam monitoring and manipulations.
 
 The new developement will be based on Python language, integrated with
 libraries for numerical analysis, data input/output, image processing,
-network, visualization, statistics and EPICS_ channel access. This
+network, visualization, statistics and [EPICS]_ channel access. This
 environment will have both interactive control terminal and batch (script)
 processing mode. High level applications and APIs will be developed to
 make beam manipulation and hardware control friendly to physicists and

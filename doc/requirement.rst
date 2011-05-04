@@ -89,8 +89,7 @@ General Operation
 Beam Diagnostics
 ------------------------------
 
-- :hladone:`Measure the orbit response matrix, with flexible number of
-  BPMs and correctors.`
+- :hladone:`Measure the orbit response matrix, with flexible number of BPMs and correctors.`
     - :hla:`Import/Export orbit response matrix for orbit correction`
     - :hla:`Import/Export ORM for feedback`
 
