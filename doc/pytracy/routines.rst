@@ -273,6 +273,11 @@ Tracking Routines
    :return fz: frequencies found in the V-plane
    :return nb_freq: number of frequencies found out in each plane
 
+..
+
+
+    
+
   	    double  Tab[6][NTURN];
 	    int     nb_freq[2] = { 0, 0 };  /* frequency number to look for */
 
@@ -299,22 +304,175 @@ Tracking Routines
 
 	    return PyRet;
 
-/****************************************************************************/
-.. py:function::  Trac_Simple(x, px, y, py, dp, nmax, double Tx[][NTURN], bool *status)
+
+.. py:function::  [status, Tx] = Trac_Simple(x, px, y, py, dp, nmax)
 
    Single particle tracking around the closed orbit for NTURN turns
    The 6D phase trajectory is saved in a array
 
-   :arg x, px, y, py: 4 transverses coordinates
+   :arg x: 
+   :arg px:
+   :arg y:
+   :arg py: 4 transverses coordinates
    :arg dp:           energy offset
    :arg nmax:         number of turns
    :arg pos:          starting position for tracking
    :arg aperture:     global physical aperture
+   :return status:   True if beam survived otherwise False
+   :return Tx:        saved 6 x nmax coordinates
 
-   Output:
-      lastn         last n (should be nmax if  not lost)
-      lastpos       last position in the ring
-      Tx            6xNTURN matrix of phase trajectory
+
+.. py:function::  [xis, xiz] = GetChromTrac(Nb, Nbtour, emax)
+
+   Computes chromaticities by tracking
+
+   :arg Nb:      point number
+   :arg Nbtour:  turn number
+   :arg emax:    energy step
+
+   :return xix: horizontal chromaticity
+   :return xiz: vertical chromaticity
+
+
+
+
+// 4D tracking in normal or Floquet space over nmax turns
+
+.. py:function:: [lastn, lastpos] = track(file_name, ic1, ic2, ic3, ic4, dp, nmax, floqs, double f_rf)
+
+   Single particle tracking around closed orbit:
+   Track particle nmax turns around the closed orbti. Data is
+   stored in the file tracking.dat. Ring_Gettwiss must be called first.
+
+   :arg ic1: 
+   :arg ic2:
+   :arg ic3:
+   :arg ic4: 4 transverses coordinates
+   :arg dp:           energy offset
+   :arg nmax:         number of turns
+   :arg floqs:
+   :arg f_rf:
+   :return lastn:
+   :return lastpos:
+
+============================= ======== =======================================
+         Output                floqs
+============================= ======== =======================================
+       Phase Space               0     [x, px, y, py, delta, ct]
+       Floquet Space             1     [x^, px^, y^, py^, delta, ct]
+       Action-Angle Variables    2     [2Jx, phx, 2Jy, phiy, delta, ct]
+============================= ======== =======================================
+
+example::
+
+	Ring_gettwiss(true, delta);
+	track(x0, px0, y0, py0, delta,nturn, lastn, lastpos, true);
+	if lastn <> nturn then writeln('Particle lost duringturn ', nturn:1, ' , at element ', lastpos:1);
+
+
+.. py:function:: xf = getfloqs(x)
+
+   Transform to Floquet space
+
+   :arg	x:
+   :return xf:
+
+
+.. py:function:: [x, px, y, py] = gettrack(filename, nbuff)
+
+   Get tracking data from file. Track must be called first.
+
+   :arg fname:
+   :arg nbuff:
+   :return : [x, px, y, py]
+
+example::
+	Ring_gettwiss(true, delta);
+	last = track('track.data', x0, px0, y0, py0, delta, nturn, 1, 0.0);
+	if lastn <> n then writeln('Particle lost during turn', n:1, ' , at element ', lastpos:1);
+	out = gettrack('track.data', 512)n, x, px, y, py);
+
+
+
+.. py:function:: rout = getdynap(rin, phi, delta, eps, nturn, floqs)
+
+   Get dynamical aperture
+
+   :arg rin:
+   :arg phi:
+   :arg delta:
+   :arg eps:
+   :arg nturn:
+   :arg flos:
+   :type floqs: Bool
+   :return rout:
+   
+
+Alignment Routines
+-------------------------------------
+.. py:function:: misalign_rms_elem(Fnum, Knum, dx_rms, dy_rms, dr_rms, new_rnd)
+
+   Assign random misalignment errors for the given element
+
+   :arg Fnum: Family number
+   :arg Knum: Kid number
+   :arg dx_rms: rms for the misalignment in horizontal direction
+   :arg dy_rms: rms for the misalignment in vertical direction
+   :arg dr_rms: rms for the misalignment in longitudinal direction
+   :arg new_rnd: If True. give the misalignment to the elements
+   :type new_rnd: Bool
+
+.. py:function:: misalign_sys_elem(Fnum, Knum, dx_sys, dy_sys, dr_sys)
+
+   Assign systematic misalignment errors for the given element
+
+   :arg Fnum: Family number
+   :arg Knum: Kid number
+   :arg dx_sys: Systematic misalignment in horizontal direction
+   :arg dy_sys: Systematic misalignment in vertical direction
+   :arg dr_sys: Systematic misalignment in longitudinal direction
+
+.. py:function:: misalign_rms_fam(Fnum, dx_rms, dy_rms, dr_rms, new_rnd)
+
+   Assign random misalignment errors for the given family
+
+   :arg Fnum: Family number
+   :arg dx_rms: rms for the misalignment in horizontal direction
+   :arg dy_rms: rms for the misalignment in vertical direction
+   :arg dr_rms: rms for the misalignment in longitudinal direction
+   :arg new_rnd: If True. give the misalignment to the elements
+   :type new_rnd: Bool
+
+.. py:function:: misalign_sys_fam(Fnum, dx_sys, dy_sys, dr_sys)
+
+   Assign systematic misalignment errors for the given family
+
+   :arg Fnum: Family number
+   :arg dx_sys: Systematic misalignment in horizontal direction
+   :arg dy_sys: Systematic misalignment in vertical direction
+   :arg dr_sys: Systematic misalignment in longitudinal direction
+
+.. py:function:: misalign_rms_type(type, dx_rms,dy_rms, dr_rms, new_rnd)
+
+   Assign random misalignment errors for the given type
+
+   :arg type: Element type
+   :arg dx_rms: rms for the misalignment in horizontal direction
+   :arg dy_rms: rms for the misalignment in vertical direction
+   :arg dr_rms: rms for the misalignment in longitudinal direction
+   :arg new_rnd: If True. give the misalignment to the elements
+   :type new_rnd: Bool
+
+.. py:function:: misalign_sys_type(type, dx_sys, dy_sys, dr_sys)
+
+   Assign systematic misalignment errors for the given type
+
+   :arg type: Element type
+   :arg dx_sys: Systematic misalignment in horizontal direction
+   :arg dy_sys: Systematic misalignment in vertical direction
+   :arg dr_sys: Systematic misalignment in longitudinal direction
+
+
 
 
 Element Info Routines

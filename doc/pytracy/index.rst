@@ -12,8 +12,8 @@ Contents:
    :maxdepth: 2
 
    introduction
-   routines
    physics
+   routines
    acknowledgement
 
 Indices and tables

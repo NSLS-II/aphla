@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # PyTracy documentation build configuration file, created by
-# sphinx-quickstart on Tue Apr 26 06:40:05 2011.
+# sphinx-quickstart on Mon May  2 20:44:42 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -26,7 +26,7 @@ sys.path.append(os.path.abspath('sphinxext'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.pngmath', 'mathmpl']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'mathmpl']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
