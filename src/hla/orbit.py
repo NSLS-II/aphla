@@ -17,7 +17,7 @@
 
 import numpy as np
 #from cothread.catools import caget, caput, camonitor
-from . import _lat, _cfa, eget
+from . import _lat, _cfa, eget, TAG_DEFAULT_PUT, TAG_DEFAULT_GET
 from catools import caget, caput
 
 class Orbit:
@@ -47,10 +47,14 @@ class Orbit:
         sy = [_cfa.getElementProperties(e, [_cfa.SPOSITION])[_cfa.SPOSITION] \
                   for e in elemy]
         self.s = zip(sx, sy)
+        #print self.s
+        pvx = _cfa.getElementChannel(elemx, tags=[TAG_DEFAULT_GET, 'X'])
+        pvy = _cfa.getElementChannel(elemx, tags=[TAG_DEFAULT_GET, 'Y'])
 
-        pvx = _cfa.getElementChannel(elemx, tags=['default.eget', 'X'])
-        pvy = _cfa.getElementChannel(elemx, tags=['default.eget', 'Y'])
-        self.pvrb = zip([p[0] for p in pvx], [p[0] for p in pvy])
+        if not pvx or not pvy:
+            self.pvrb = []
+        else:
+            self.pvrb = zip([p[0] for p in pvx], [p[0] for p in pvy])
 
         pvx = _cfa.getElementChannel(elemx, tags=['OFFSET', 'X'])
         pvy = _cfa.getElementChannel(elemx, tags=['OFFSET', 'Y'])
@@ -129,8 +133,4 @@ def getOrbitRm():
     raise NotImplementedError()
     return None
 
-def perturbOrbit(hcm = 'SR:C30-MG:G04B<HCM:M1>Fld-SP',
-                 vcm = 'SR:C30-MG:G02A<VCM:H>Fld-SP'):
-    caput(hcm, .0002)
-    caput(vcm, .0001)
 

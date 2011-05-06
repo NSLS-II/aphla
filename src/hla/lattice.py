@@ -108,6 +108,7 @@ class Lattice:
         self.mode = 'undefined'
         self.tune = [ 0.0, 0.0]
         self.chromaticity = [0.0, 0.0]
+        self.circumference = 0.0
 
     def save(self, fname, dbmode = 'c'):
         """
@@ -149,6 +150,8 @@ class Lattice:
         self.mode     = f[pref+'mode']
         self.tune     = f[pref+'tune']
         self.chromaticity = f[pref+'chromaticity']
+        if self.element:
+            self.circumference = self.element[-1].s_end
         f.close()
 
     def importChannelFinderData(self, cfa):
@@ -164,7 +167,8 @@ class Lattice:
         load info from channel finder server/data
         """
         elems = cfa.sortElements(cfa.getElements())
-        cnt = {'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+        cnt = {'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0,
+               'SEXT':0, 'QUAD':0}
         # ignore MCF/TUNE/ORBIT ....
         for e in elems:
             prop = cfa.getElementProperties(e)
@@ -203,7 +207,8 @@ class Lattice:
                 self._group[prop[cfa.ELEMTYPE]] = [prop[cfa.ELEMNAME]]
             elif not prop[cfa.ELEMNAME] in self._group[prop[cfa.ELEMTYPE]]:
                 self._group[prop[cfa.ELEMTYPE]].append(prop[cfa.ELEMNAME])
-        
+
+        self.circumference = self.element[-1].s_end
 
     def mergeGroups(self, parent, children):
         """
@@ -301,6 +306,7 @@ class Lattice:
         for e in self.element:
             e.s_beg = e.s_end - e.len_eff
 
+        self.circumference = self.element[-1].s_end
         if False:
             for k,v in self._group.items():
                 print k, len(v)

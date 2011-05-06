@@ -10,7 +10,7 @@ HLA Libraries
 Defines the procedural interface of HLA to the users.
 """
 
-from . import _cfa, _lat
+from . import _cfa, _lat, TAG_DEFAULT_GET, TAG_DEFAULT_PUT
 
 from catools import caget, caput
 
@@ -27,13 +27,13 @@ def getRbChannels(elemlist, tags = []):
 
       :meth:`~hla.chanfinder.ChannelFinderAgent.getElementChannel`
     """
-    t = ['default.eget']
+    t = [TAG_DEFAULT_GET]
     t.extend(tags)
     return _cfa.getElementChannel(elemlist, None, tags = set(t), unique=False)
 
 def getSpChannels(elemlist, tags = []):
     """get the pv names for a list of elements"""
-    t = ['default.eput']
+    t = [TAG_DEFAULT_PUT]
     t.extend(tags)
     return _cfa.getElementChannel(elemlist, None, tags = set(t), unique=False)
 
@@ -52,7 +52,7 @@ def eget(element, full = False, tags = [], unique = False):
       >>> eget(['CXM1G4C01B', 'CYM1G4C01B'])
     """
     # some tags + the "default"
-    chtags = ['default.eget']
+    chtags = [TAG_DEFAULT_GET]
     if tags: chtags.extend(tags)
     #print __file__, tags, chtags
     if isinstance(element, str):
@@ -103,7 +103,7 @@ def eput(element, value):
         val = [value]
     else: val = value[:]
 
-    pvl = _cfa.getElementChannel(element, None, ['default.eput'])
+    pvl = _cfa.getElementChannel(element, None, [TAG_DEFAULT_PUT])
     
     for i, pv in enumerate(pvl):
         caput(pv, val[i])
@@ -115,8 +115,8 @@ def reset_trims():
     """
     trimx = _lat.getGroupMembers(['*', 'TRIMX'], op='intersection')
     trimy = _lat.getGroupMembers(['*', 'TRIMY'], op='intersection')
-    pvx = getSpChannels(trimx, tags=['default.eput', 'X'])
-    pvy = getSpChannels(trimy, tags=['default.eput', 'Y'])
+    pvx = getSpChannels(trimx, tags=[TAG_DEFAULT_PUT, 'X'])
+    pvy = getSpChannels(trimy, tags=[TAG_DEFAULT_PUT, 'Y'])
     pv = [p[0] for p in pvx]
     pv.extend([p[0] for p in pvy])
     v = [0]*len(pv)

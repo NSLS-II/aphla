@@ -158,10 +158,10 @@ def getTunes(source='machine'):
     get tunes
     """
     if source == 'machine':
-        pv = _cfa.getElementChannel(['TUNEX', 'TUNEY'], {'handle': 'get'})
+        pv = _cfa.getElementChannel(['TUNEX', 'TUNEY'])
         nux = caget(pv[0])
         nuy = caget(pv[1])
-        return nux, nuy
+        return nux[0], nuy[0]
     elif source == 'model':
         pass
     elif source == 'database':

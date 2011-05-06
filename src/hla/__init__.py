@@ -42,6 +42,10 @@ virtac = True
 INF = 1e30
 ORBIT_WAIT=8
 NETWORK_DOWN=False
+
+TAG_DEFAULT_GET='default.eget'
+TAG_DEFAULT_PUT='default.eput'
+
 #from chanfinder import ChannelFinderAgent
 #from lattice import Lattice
 #
@@ -103,6 +107,7 @@ except Timedout:
 #from meastwiss import *
 from measorm import *
 from orbit import *
+from aptools import *
 
 _orbit = Orbit(_cfa)
 
