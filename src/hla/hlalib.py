@@ -29,13 +29,13 @@ def getRbChannels(elemlist, tags = []):
     """
     t = [TAG_DEFAULT_GET]
     t.extend(tags)
-    return _cfa.getElementChannel(elemlist, None, tags = set(t), unique=False)
+    return _cfa.getElementChannels(elemlist, None, tags = set(t), unique=False)
 
 def getSpChannels(elemlist, tags = []):
     """get the pv names for a list of elements"""
     t = [TAG_DEFAULT_PUT]
     t.extend(tags)
-    return _cfa.getElementChannel(elemlist, None, tags = set(t), unique=False)
+    return _cfa.getElementChannels(elemlist, None, tags = set(t), unique=False)
 
 #
 #
