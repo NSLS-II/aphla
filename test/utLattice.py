@@ -19,11 +19,11 @@ class TestLattice(unittest.TestCase):
         self.cfa = hla.chanfinder.ChannelFinderAgent()
         self.cfa.load(CFAPKL)
         self.lat = hla.lattice.Lattice()
-        #self.lat.importChannelFinderData(self.cfa)
-        self.lat.load(HLAPKL, mode='virtac')
+        self.lat._importChannelFinderData(self.cfa)
+        self.lat.init_virtac_twiss()
+        #self.lat.load(HLAPKL, mode='virtac')
         self.lat.mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
         self.lat.mergeGroups('BPM', ['BPMX', 'BPMY'])
-        #self.lat.init_virtac_twiss()
         #self.lat.mode = 'virtac'
         #self.lat.save('lattice.pkl')
         #self.lat.load('lattice.pkl', mode='virtac')
@@ -31,14 +31,14 @@ class TestLattice(unittest.TestCase):
 
     def test_elements(self):
         elem = self.lat.getElements('P*')
-        s    = self.lat.getLocations('P*', point='end')
+        s    = self.lat.getLocations('P*', point='e')
         self.assertEqual(len(elem), 180)
         self.assertEqual(len(s), 180)
         
         self.assertEqual(len(self.lat.getElements('*')), 
                          len(set(self.lat.getElements('*'))))
 
-        s = self.lat.getLocations(['PH2G6C29B', 'CFYH2G1C30A', 'C'], point='end')
+        s = self.lat.getLocations(['PH2G6C29B', 'CFYH2G1C30A', 'C'], point='e')
         self.assertEqual(len(s), 3)
         self.assertEqual(s[-1], None)
 
@@ -52,7 +52,7 @@ class TestLattice(unittest.TestCase):
         grp = self.lat.getGroups('P*C01*')
         #print "group:", grp
         for g in ['A', 'BPM', 'G6', 'G4', 'G2', 'BPMY', 'C01', 'BPMX', 'B']:
-            #print g,
+            print g,
             self.assertTrue(g in grp)
         #print self.lat.getGroups('FYH2G1C30A')
         g1 = self.lat.getGroupMembers(['BPM', 'C02'], op = 'intersection')
@@ -66,6 +66,7 @@ class TestLattice(unittest.TestCase):
         self.assertEqual(len(self.lat.getElements('TRIM')), 540)
         self.assertEqual(len(self.lat.getElements('TRIMX')), 270)
         self.assertEqual(len(self.lat.getElements('TRIMY')), 270)
+
         # BPMX = BPMY = BPM, all same name
         self.assertEqual(len(self.lat.getElements('BPM')), 180)
         self.assertEqual(len(self.lat.getElements('BPMX')), 180)
@@ -85,7 +86,7 @@ class TestLattice(unittest.TestCase):
 
         n = 3
         nb = self.lat.getNeighbors(vcm, 'BPM', n)
-        s0 = self.lat.getLocations(vcm, 'end')
+        s0 = self.lat.getLocations(vcm, 'e')
         self.assertEqual(len(s0), 1)
         self.assertEqual(len(nb), 2*n+1)
         
@@ -123,10 +124,10 @@ class TestLattice(unittest.TestCase):
 
         phi = self.lat.getPhase('P*C01*')
         beta = self.lat.getBeta(elem)
-        s = self.lat.getLocations(elem, 'end')
+        s = self.lat.getLocations(elem, 'e')
         elem2 = self.lat.getElements('P*')
         eta = self.lat.getEta('P*')
-        s2 = self.lat.getLocations('P*', 'end')
+        s2 = self.lat.getLocations('P*', 'e')
 
         #print len(s), len(eta), len(phi), len(beta), len(s2)
         #print s2, eta

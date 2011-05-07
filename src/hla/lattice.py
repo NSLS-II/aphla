@@ -1,13 +1,9 @@
 #!/usr/env/python
 
 """
-lattice
-~~~~~~~
+defines lattice related classes and functions.
 
 :author: Lingyun Yang
-:license:
-
-defines lattice related classes and functions.
 """
 
 import re
@@ -22,8 +18,8 @@ from catools import caget, caput
 
 def parseElementName(name):
     """
-    searching G*C*A type of string. e.g. "CFXH1G1C30A" will be parsed as
-    girder="G1", cell="C30", symmetry="A"
+    searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
+    girder='G1', cell='C30', symmetry='A'
 
     Example::
     
@@ -49,24 +45,56 @@ def parseElementName(name):
 
 
 class Element:
-    """Element"""
-    def __init__(self, name = '', family = '', s_beg = 0.0, s_end = 0.0,
-                 effective_length = 0, cell = '', girder = '', symmetry = '',
-                 sequence = [0, 0]):
-        self.index = -1
-        self.name = name[:]
-        self.family = family[:]
-        self.s_beg = s_beg
-        self.s_end = s_end
-        self.len_eff = effective_length
-        self.len_phy = 0.0
-        self.cell = cell
-        self.girder = girder
-        self.symmetry = symmetry
-        self.sequence = sequence[:]
+    """
+    Element
 
+    ==========  ===================================================
+    Variable    Meaning
+    ==========  ===================================================
+    *name*      element name
+    *index*     index
+    *devname*   device name
+    *phylen*    physical length
+    *family*    family
+    *sb*        s position of the entrance
+    *sc*        s position of the middle point
+    *se*        s position of the exit
+    *efflen*    effective length (=send - sbeg, if not across circ)
+    *cell*      cell name
+    *girder*    girder name
+    *symmetry*  symmetry type
+    *sequence*  sequence tuple
+    ==========  ===================================================
+    """
+    def __init__(self, name, **kwargs):
+        #family = '', s_beg = 0.0, s_end = 0.0,
+        #         effective_length = 0, cell = '', girder = '', symmetry = '',
+        #         sequence = [0, 0]):
+        self.name     = name[:]
+        self.devname  = ''
+        self.phylen   = 0.0
+        self.index    = kwargs.get('index', -1)
+        self.family   = kwargs.get('family', None)
+        self.sb       = kwargs.get('sb', 0.0)
+        #self.sc       = kwargs.get('sc', 0.0)
+        self.se       = kwargs.get('se', 0.0)
+        self.efflen   = kwargs.get('efflen', 0.0)
+        self.cell     = kwargs.get('cell')
+        self.girder   = kwargs.get('girder')
+        self.symmetry = kwargs.get('symmetry')
+        self.sequence = kwargs.get('sequence', (0, 0))
+
+        self.sc = 0.5*(self.sb + self.se)
+        
     def profile(self, vscale=1.0):
-        b, e = self.s_beg, self.s_end
+        """
+        - 'QUAD', quadrupole
+        - 'DIPOLE', dipole
+        - 'SEXT', sextupole
+        - ['TRIMX' | 'TRIMY'], corrector
+        - ['BPMX' | 'BPMY'], beam position monitor
+        """
+        b, e = self.sb, self.se
         h = vscale
         if self.family == 'QUAD':
             return [b, b, e, e], [0, h, h, 0], 'k'
@@ -84,7 +112,27 @@ class Element:
             return [b, e], [0, 0], 'k'
 
 class Twiss:
-    """twiss"""
+    """
+    twiss
+
+    ===============  =======================================================
+    Twiss(Variable)  Description
+    ===============  =======================================================
+    *s*              location
+    *alpha*          alpha
+    *beta*           beta
+    *gamma*          gamma
+    *eta*            dispersion
+    *phi*            phase
+    *elemname*       element name
+    *set*            available data. 'c'/'b'/'e' for center, begin and end.
+                     They can be combined. 'cbe'
+    ===============  =======================================================
+
+    Values are stored for 'bce', i.e. begin/center/entrance, of one
+    element. Depending on the value of *set*, could only partial data are
+    non-zeros.
+    """
     def __init__(self):
         self.s     = np.zeros(3, 'd')
         self.alpha = np.zeros((3, 2), 'd')
@@ -93,18 +141,21 @@ class Twiss:
         self.eta   = np.zeros((3, 2), 'd')
         self.phi   = np.zeros((3, 2), 'd')
         self.elemname = ''
+        self.set   = ''
         
 class Lattice:
     """Lattice"""
     # ginore those "element" when construct the lattice object
-    IGN = ['MCF', 'CHROM', 'TUNE', 'OMEGA', 'DCCT', 'CAVITY']
+    _IGN = ['MCF', 'CHROM', 'TUNE', 'OMEGA', 'DCCT', 'CAVITY']
 
     def __init__(self):
+        # group name and its element
         self._group = {}
         # guaranteed in the order of s.
         self.element = []
         # same order of element
         self.twiss = []
+        # data set
         self.mode = 'undefined'
         self.tune = [ 0.0, 0.0]
         self.chromaticity = [0.0, 0.0]
@@ -135,11 +186,11 @@ class Lattice:
           load(fname, mode='')
 
         load the lattice from binary data
+
+        In the db file, all lattice has a key with prefix 'lat.mode.'. If the
+        given mode is empty string, then use 'lat.'
         """
         f = shelve.open(fname, 'r')
-        #modes = []
-        #for k in f.keys():
-        #    if re.match(r'lat\.\w+\.mode', k): print "mode:", k
         if not mode:
             pref = "lat."
         else:
@@ -154,65 +205,11 @@ class Lattice:
             self.circumference = self.element[-1].s_end
         f.close()
 
-    def importChannelFinderData(self, cfa):
-        """
-        call signature::
-        
-          importChannelFinderData(self, cfa)
-
-        .. seealso::
-
-          :class:`~hla.chanfinder.ChannelFinderAgent`
-
-        load info from channel finder server/data
-        """
-        elems = cfa.sortElements(cfa.getElements())
-        cnt = {'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0,
-               'SEXT':0, 'QUAD':0}
-        # ignore MCF/TUNE/ORBIT ....
-        for e in elems:
-            prop = cfa.getElementProperties(e)
-            if prop[cfa.ELEMTYPE] in self.IGN: continue
-
-            #counting each family
-            if cnt.has_key(prop[cfa.ELEMTYPE]):
-                cnt[prop[cfa.ELEMTYPE]] += 1
-            else:
-                cnt[prop[cfa.ELEMTYPE]] = 0
-
-            #
-            #print prop
-            self.element.append(
-                Element(prop[cfa.ELEMNAME], prop[cfa.ELEMTYPE], 0.0,
-                        prop[cfa.SPOSITION], prop[cfa.LENGTH], prop[cfa.CELL], 
-                        prop[cfa.GIRDER], prop[cfa.ELEMSYM]))
-            self.element[-1].index = prop[cfa.ELEMIDX]
-            for g in [prop[cfa.ELEMTYPE], prop[cfa.CELL], prop[cfa.GIRDER],
-                      prop[cfa.ELEMSYM]]:
-                if self._group.has_key(g):
-                    self._group[g].append(prop[cfa.ELEMNAME])
-                else: self._group[g] = [prop[cfa.ELEMNAME]]
-            
-        # adjust s_beg
-        for e in self.element:
-            e.s_beg = e.s_end - e.len_eff
-        #print "# import elements:", len(self.element)
-        #print cnt
-        
-        # since single element (BPM) can be both BPMX/BPMY, we need scan
-        # pv record again
-        for pv in cfa.getChannels():
-            prop = cfa.getChannelProperties(pv)
-            if not self._group.has_key(prop[cfa.ELEMTYPE]):
-                self._group[prop[cfa.ELEMTYPE]] = [prop[cfa.ELEMNAME]]
-            elif not prop[cfa.ELEMNAME] in self._group[prop[cfa.ELEMTYPE]]:
-                self._group[prop[cfa.ELEMTYPE]].append(prop[cfa.ELEMNAME])
-
-        self.circumference = self.element[-1].s_end
-
     def mergeGroups(self, parent, children):
         """
         merge child group(s) into a parent group
+
+        the new parent group is replaced by this new merge of children groups
         
         Example::
 
@@ -221,13 +218,13 @@ class Lattice:
         """
         if isinstance(children, str):
             chlst = [children]
-        elif isinstance(children, list):
+        elif hasattr(children, '__iter__'):
             chlist = children[:]
         else:
             raise ValueError("children can be string or list of string")
 
-        if not self._group.has_key(parent):
-            self._group[parent] = []
+        #if not self._group.has_key(parent):
+        self._group[parent] = []
 
         for child in chlist:
             if not self._group.has_key(child): continue
@@ -249,11 +246,12 @@ class Lattice:
         =======   =============================================
         1         element index in the whole beam line
         2         channel for read back
-        3         channel for set point
-        4         element phys name (unique)
+        3         channel for set point (NULL for readonly element)
+        4         element physics name (unique)
         5         element length (effective)
         6         s location of its exit
         7         magnet family(type)
+        8         element device name
         =======   =============================================
 
         Data are deliminated by spaces.
@@ -292,7 +290,7 @@ class Lattice:
             # in lat_conf_table, used only BPM as groupname, not BPMX/BPMY
             if grp == 'BPM':
                 if rb[-2:] == '-X':
-                    self._group['BPMX'].append(phy)
+                    self.addGroupMember('BPMX', phy)
                     cnt['BPMX'] += 1
                 elif rb[-2:] == '-Y': 
                     self._group['BPMY'].append(phy)
@@ -304,13 +302,14 @@ class Lattice:
 
         # adjust s_beg
         for e in self.element:
-            e.s_beg = e.s_end - e.len_eff
+            e.sbeg = e.send - e.efflen
 
-        self.circumference = self.element[-1].s_end
+        self.circumference = self.element[-1].send
         if False:
             for k,v in self._group.items():
                 print k, len(v)
-
+        print cnt
+        
     def init_virtac_twiss(self):
         """Only works from virtac.nsls2.bnl.gov"""
         # s location
@@ -405,12 +404,15 @@ class Lattice:
  
         return ret[:]
 
-    def getLocations(self, elems, point):
+    def getLocations(self, elems, point = 'e'):
         """
         if elems is a string, do exact match. return single number.  if
         elems is a list do exact match on each of them, return a
         list. None if the element in this list is not found.
         """
+        if not point in ('b', 'c', 'e'):
+            raise ValueError("point must be in 'b', 'c', 'e'")
+        
         if isinstance(elems, str):
             e, s = self.getElements(elems, point)
             return s
@@ -419,10 +421,10 @@ class Lattice:
             for elem in self.element:
                 if elem.name in elems:
                     idx = elems.index(elem.name)
-                    if point == 'begin': ret[idx] = elem.s_beg
-                    elif point == 'end': ret[idx] = elem.s_end
-                    elif point == 'middle': ret[idx] = elem.s_mid
-                    else: ret[idx] = elem.s_end
+                    if point == 'b': ret[idx] = elem.sb
+                    elif point == 'e': ret[idx] = elem.se
+                    elif point == 'c': ret[idx] = elem.sc
+                    else: ret[idx] = elem.se
                 
             return ret
         
@@ -430,7 +432,7 @@ class Lattice:
         """
         get elements and their locations.
 
-        parameter *point* = ['begin', 'middle', 'end'] tells the s location
+        parameter *point* = ['', 'b', 'c', 'e'] tells the s location
         returned with element name at at the begin, middle or end of the
         elements. For a nonempty string, it returns s at the 'end'.
 
@@ -438,21 +440,23 @@ class Lattice:
 
         no duplicate element name outputed.
         """
+        if not point in ('', 'b', 'c', 'e'):
+            raise ValueError("point must be in '', 'b', 'c' and 'e'")
+        
         ret, loc = [], []
-        s = point.lower()
-        #print "... get elements ...", s
+        #print "... get elements ...", group, len(self.element)
         for e in self.element:
-            #print group, e.name, e.family,
+            #print __file__, group, e.name, e.family
             if e.name in ret: continue
             if fnmatch(e.name, group) or fnmatch(e.family, group) or \
                     (self._group.has_key(group) and e.name in self._group[group]):
                 ret.append(e.name)
-                if s == 'begin': loc.append(e.s_beg)
-                elif s == 'end': loc.append(e.s_end)
-                elif s == 'middle': loc.append(e.s_mid)
-                else: loc.append(e.s_end)
+                if point == 'b': loc.append(e.sb)
+                elif point == 'e': loc.append(e.se)
+                elif point == 'c': loc.append(e.sc)
+                else: loc.append(e.se)
             else:
-                #print e.name
+                #print "Not agree", e.name
                 pass
         if point: return ret, loc
         else: return ret
@@ -525,16 +529,21 @@ class Lattice:
         # remove it!
         self._group.pop(group)
 
-    def addGroupMember(self, group, member):
+    def addGroupMember(self, group, member, newgroup = False):
         """
         add member to group
 
-        group must exist before.
+        if *newgroup*==False, the group must exist before.
         """
+        
         if self._group.has_key(group):
-            self._group[group].append(member)
+            if not member in self._group[group]:
+                self._group[group].append(member)
+        elif newgroup:
+            self._group[group] = [member]
         else:
-            raise ValueError("Group %s does not exist" % group)
+            raise ValueError("Group %s does not exist."
+                             "use newgroup=True to add it" % group)
 
     def hasGroup(self, group):
         """
@@ -599,7 +608,7 @@ class Lattice:
         #            if self.element[i].name == element]
         #print element,elem
 
-        e0, s0 = self.getElements(element, point = 'end')
+        e0, s0 = self.getElements(element, point = 'e')
         #print element,e0, s0
         #return
         if len(e0) > 1:
@@ -607,7 +616,7 @@ class Lattice:
         elif e0 == None or len(e0) == 0:
             raise ValueError("element %s does not exist" % element)
 
-        e, s = self.getElements(group, point = 'end')
+        e, s = self.getElements(group, point = 'e')
         #print e, s
 
         i1, i2 = 0, 0
@@ -639,7 +648,7 @@ class Lattice:
         return s
 
 
-    def getPhase(self, elem, loc = 'end'):
+    def getPhase(self, elem, loc = 'e'):
         """
         return phase
         """
@@ -655,10 +664,10 @@ class Lattice:
         phi = np.zeros((len(elemlst), 2), 'd')
         for i,e in enumerate(self.element):
             if e.name in elemlst: idx[elemlst.index(e.name)] = i
-        if loc == 'begin': 
+        if loc == 'b': 
             for i, k in enumerate(idx):
                 phi[i, :] = self.twiss[k].phi[0, :]
-        elif loc == 'middle': 
+        elif loc == 'c': 
             raise NotImplementedError()
         else:
             # loc == 'end': 
@@ -666,7 +675,7 @@ class Lattice:
                 phi[i, :] = self.twiss[k].phi[-1, :]
         return phi
 
-    def getBeta(self, elem, loc = 'end'):
+    def getBeta(self, elem, loc = 'e'):
         """
         return beta function
         """
@@ -681,10 +690,10 @@ class Lattice:
         beta = np.zeros((len(elemlst), 2), 'd')
         for i,e in enumerate(self.element):
             if e.name in elemlst: idx[elemlst.index(e.name)] = i
-        if loc == 'begin': 
+        if loc == 'b': 
             for i, k in enumerate(idx):
                 beta[i, :] = self.twiss[k].beta[0, :]
-        elif loc == 'middle': 
+        elif loc == 'c': 
             raise NotImplementedError()
         else:
             # loc == 'end': 
@@ -728,8 +737,8 @@ class Lattice:
     def getBeamlineProfile(self, s1=0.0, s2=1e10):
         prof = []
         for elem in self.element:
-            if elem.s_end < s1: continue
-            elif elem.s_beg > s2: continue
+            if elem.se < s1: continue
+            elif elem.sb > s2: continue
             x1, y1, c = elem.profile()
             prof.append((x1, y1, c))
         ret = [prof[0]]
@@ -739,4 +748,56 @@ class Lattice:
             ret.append(p)
         return ret
 
+    def _importChannelFinderData(self, cfa):
+        """
+        call signature::
+        
+          importChannelFinderData(self, cfa)
+
+        .. seealso::
+
+          :class:`~hla.chanfinder.ChannelFinderAgent`
+
+        load info from channel finder server/data
+        """
+        elems = cfa.sortElements(cfa.getElements())
+        cnt = {'BPMX':0, 'BPMY':0, 'TRIMD':0, 'TRIMX':0, 'TRIMY':0,
+               'SEXT':0, 'QUAD':0}
+        # ignore MCF/TUNE/ORBIT ....
+        for e in elems:
+            prop = cfa.getElementProperties(e)
+            if prop[cfa.ELEMTYPE] in self._IGN: continue
+
+            #counting each family
+            if cnt.has_key(prop[cfa.ELEMTYPE]):
+                cnt[prop[cfa.ELEMTYPE]] += 1
+            else:
+                cnt[prop[cfa.ELEMTYPE]] = 0
+
+            #
+            #print prop
+            param = {'family':prop[cfa.ELEMTYPE],
+                     'se':prop[cfa.SPOSITION],
+                     'sb':prop[cfa.SPOSITION] - prop[cfa.LENGTH],
+                     'efflen': prop[cfa.LENGTH],
+                     'girder': prop[cfa.GIRDER],
+                     'cell': prop[cfa.CELL],
+                     'symmetry': prop[cfa.ELEMSYM],
+                     'index': prop[cfa.ELEMIDX]}
+            elemname = prop[cfa.ELEMNAME]
+            self.element.append(Element(elemname, **param))
+            self.addGroupMember(prop[cfa.ELEMTYPE], elemname, True)
+            self.addGroupMember(prop[cfa.CELL], elemname, True)
+            self.addGroupMember(prop[cfa.GIRDER], elemname, True)
+            self.addGroupMember(prop[cfa.ELEMSYM], elemname, True)
+        # since single element (BPM) can be both BPMX/BPMY, we need scan
+        # pv record again
+        for pv in cfa.getChannels():
+            prop = cfa.getChannelProperties(pv)
+            self.addGroupMember(prop[cfa.ELEMTYPE], prop[cfa.ELEMNAME], True)
+            self.addGroupMember(prop[cfa.ELEMNAME], prop[cfa.ELEMNAME], True)
+
+        self.circumference = self.element[-1].se
+        #print __file__, "Imported elements:", len(self.element)
+        #print __file__, cnt
 

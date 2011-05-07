@@ -48,16 +48,16 @@ class Orbit:
                   for e in elemy]
         self.s = zip(sx, sy)
         #print self.s
-        pvx = _cfa.getElementChannel(elemx, tags=[TAG_DEFAULT_GET, 'X'])
-        pvy = _cfa.getElementChannel(elemx, tags=[TAG_DEFAULT_GET, 'Y'])
+        pvx = _cfa.getElementChannels(elemx, tags=[TAG_DEFAULT_GET, 'X'])
+        pvy = _cfa.getElementChannels(elemx, tags=[TAG_DEFAULT_GET, 'Y'])
 
         if not pvx or not pvy:
             self.pvrb = []
         else:
             self.pvrb = zip([p[0] for p in pvx], [p[0] for p in pvy])
 
-        pvx = _cfa.getElementChannel(elemx, tags=['OFFSET', 'X'])
-        pvy = _cfa.getElementChannel(elemx, tags=['OFFSET', 'Y'])
+        pvx = _cfa.getElementChannels(elemx, tags=['OFFSET', 'X'])
+        pvy = _cfa.getElementChannels(elemx, tags=['OFFSET', 'Y'])
         self.offset = zip([p[0] for p in pvx], [p[0] for p in pvy])
         
         self.WAVEFORM = True
