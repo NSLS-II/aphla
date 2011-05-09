@@ -111,6 +111,10 @@ class Element:
         else:
             return [b, e], [0, 0], 'k'
 
+    def __str__(self):
+        return "%4d %s %s %6.2f %6.2f" % (
+            self.index, self.name, self.family, self.sb, self.se)
+
 class Twiss:
     """
     twiss
@@ -148,7 +152,7 @@ class Lattice:
     # ginore those "element" when construct the lattice object
     _IGN = ['MCF', 'CHROM', 'TUNE', 'OMEGA', 'DCCT', 'CAVITY']
 
-    def __init__(self):
+    def __init__(self, mode = 'undefined'):
         # group name and its element
         self._group = {}
         # guaranteed in the order of s.
@@ -156,7 +160,7 @@ class Lattice:
         # same order of element
         self.twiss = []
         # data set
-        self.mode = 'undefined'
+        self.mode = mode
         self.tune = [ 0.0, 0.0]
         self.chromaticity = [0.0, 0.0]
         self.circumference = 0.0
@@ -167,7 +171,7 @@ class Lattice:
         
           save(self, fname, dbmode='c')
 
-        save the lattice into binary data, using writing *dbmode*
+        save the lattice into binary data, using writing *dbmode*. The exact dataset name is defined by *mode*, default is 'undefined'.
         """
         f = shelve.open(fname, dbmode)
         pref = "lat.%s." % self.mode
@@ -202,7 +206,7 @@ class Lattice:
         self.tune     = f[pref+'tune']
         self.chromaticity = f[pref+'chromaticity']
         if self.element:
-            self.circumference = self.element[-1].s_end
+            self.circumference = self.element[-1].se
         f.close()
 
     def mergeGroups(self, parent, children):
@@ -533,7 +537,7 @@ class Lattice:
         """
         add member to group
 
-        if *newgroup*==False, the group must exist before.
+        if newgroup == False, the group must exist before.
         """
         
         if self._group.has_key(group):
@@ -603,10 +607,9 @@ class Lattice:
         return self.sortElements(r)
 
     def getNeighbors(self, element, group, n):
-        """Assuming self.element is in s order"""
-        #elem = [i for i in range(len(self.element)) \
-        #            if self.element[i].name == element]
-        #print element,elem
+        """
+        Assuming self.element is in s order
+        """
 
         e0, s0 = self.getElements(element, point = 'e')
         #print element,e0, s0
@@ -644,7 +647,7 @@ class Lattice:
         fmt = "%%%dd %%%ds  %%%ds  %%9.4f  %%9.4f\n" % (idx, ml_name, ml_family)
         #print fmt
         for i, e in enumerate(self.element):
-            s = s + fmt % (i, e.name, e.family, e.s_beg, e.s_end)
+            s = s + fmt % (i, e.name, e.family, e.sb, e.se)
         return s
 
 
@@ -701,7 +704,7 @@ class Lattice:
                 beta[i, :] = self.twiss[k].beta[-1, :]
         return beta
 
-    def getEta(self, elem, loc = 'end'):
+    def getEta(self, elem, loc = 'e'):
         """
         return dispersion
         """
@@ -717,10 +720,10 @@ class Lattice:
         eta = np.zeros((len(elemlst), 2), 'd')
         for i,e in enumerate(self.element):
             if e.name in elemlst: idx[elemlst.index(e.name)] = i
-        if loc == 'begin': 
+        if loc == 'b': 
             for i, k in enumerate(idx):
                 eta[i, :] = self.twiss[k].eta[0, :]
-        elif loc == 'middle': 
+        elif loc == 'c': 
             raise NotImplementedError()
         else:
             # loc == 'end': 

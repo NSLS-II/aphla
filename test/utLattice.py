@@ -52,7 +52,7 @@ class TestLattice(unittest.TestCase):
         grp = self.lat.getGroups('P*C01*')
         #print "group:", grp
         for g in ['A', 'BPM', 'G6', 'G4', 'G2', 'BPMY', 'C01', 'BPMX', 'B']:
-            print g,
+            #print g,
             self.assertTrue(g in grp)
         #print self.lat.getGroups('FYH2G1C30A')
         g1 = self.lat.getGroupMembers(['BPM', 'C02'], op = 'intersection')

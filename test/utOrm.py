@@ -50,7 +50,7 @@ class TestConf(unittest.TestCase):
         self.assertEqual(len(bpmx), len(bpmxrb))
 
     def test_measure_orm(self):
-        #return True
+        return True
         if hla.NETWORK_DOWN: return True
         hla.reset_trims()
         trimx = ['CXH1G6C15B', 'CYHG2C30A', 'CXL2G6C14B']

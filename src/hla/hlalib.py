@@ -25,17 +25,17 @@ def getRbChannels(elemlist, tags = []):
 
     .. seealso::
 
-      :meth:`~hla.chanfinder.ChannelFinderAgent.getElementChannel`
+      :meth:`~hla.chanfinder.ChannelFinderAgent.getElementChannels`
     """
     t = [TAG_DEFAULT_GET]
     t.extend(tags)
-    return _cfa.getElementChannels(elemlist, None, tags = set(t), unique=False)
+    return _cfa.getElementChannels(elemlist, None, tags = set(t))
 
 def getSpChannels(elemlist, tags = []):
     """get the pv names for a list of elements"""
     t = [TAG_DEFAULT_PUT]
     t.extend(tags)
-    return _cfa.getElementChannels(elemlist, None, tags = set(t), unique=False)
+    return _cfa.getElementChannels(elemlist, None, tags = set(t))
 
 #
 #
@@ -58,7 +58,7 @@ def eget(element, full = False, tags = [], unique = False):
     if isinstance(element, str):
         ret = {}
         elemlst = _lat.getElementsCgs(element)
-        pvl = _cfa.getElementChannel(elemlst, None, chtags, unique = unique)
+        pvl = _cfa.getElementChannels(elemlst, None, chtags)
         for i, pvs in enumerate(pvl):
             if len(pvs) == 1:
                 ret[elemlst[i]] = caget(pvs[0])
@@ -67,13 +67,12 @@ def eget(element, full = False, tags = [], unique = False):
                 for pv in pvs:
                     ret[elemlst[i]].append(caget(pv))
             else: ret[elemlst[i]] = None
-            #print __file__, elemlst[i], pvs, _cfa.getElementChannel([elemlst[i]], unique = False)
         if full:
             return ret, pvl
         else: return ret
     elif isinstance(element, list):
         ret = []
-        pvl = _cfa.getElementChannel(element, None, chtags, unique = False)
+        pvl = _cfa.getElementChannels(element, None, chtags)
         for i, pv in enumerate(pvl):
             if len(pv) == 1:
                 ret.append(caget(pv[0]))
@@ -103,7 +102,7 @@ def eput(element, value):
         val = [value]
     else: val = value[:]
 
-    pvl = _cfa.getElementChannel(element, None, [TAG_DEFAULT_PUT])
+    pvl = _cfa.getElementChannels(element, None, [TAG_DEFAULT_PUT])
     
     for i, pv in enumerate(pvl):
         caput(pv, val[i])
