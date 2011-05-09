@@ -42,7 +42,7 @@ Welcome to HLA documentation!
 .. [Shencbd] G.~Shen, Y.~Hu, B. Dalesio, *Circular Buffer
     Diagnostic*
 
-.. [EPICS] http://www.aps.anl.gov/epics/
+.. _EPICS: http://www.aps.anl.gov/epics
 .. _Python: http://www.python.org/
 .. _iPython: http://ipython.scipy.org/moin/
 .. _matplotlib: http://matplotlib.sourceforge.net/

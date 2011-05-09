@@ -18,14 +18,14 @@ def getElements(group, cell = [], girder = [], sequence = []):
     """
     return _lat.getElementsCgs(group, cell, girder, sequence)
 
-def getLocations(group, s='end'):
+def getLocations(group, s='e'):
     """Get the location of a group, either returned as a dictionary in
     which the key is element physics name, value is the location.
     """
     if isinstance(group, list):
         return _lat.getLocations(group, s)
     elif isinstance(group, str):
-        elem, loc = _lat.getElements(group, 'end')
+        elem, loc = _lat.getElements(group, 'e')
         return loc
     else:
         raise ValueError("parameter *group* must be a list of string")
@@ -100,7 +100,7 @@ def getStepSize(element):
 #
 #
 #
-def getPhase(group, loc = 'end'):
+def getPhase(group, loc = 'e'):
     """
     get the phase from stored data
     """
@@ -115,7 +115,7 @@ def getPhase(group, loc = 'end'):
 
 #
 #
-def getBeta(group, loc = 'end'):
+def getBeta(group, loc = 'e'):
     """
     get the beta function from stored data
     """
@@ -127,13 +127,13 @@ def getBeta(group, loc = 'end'):
     else:
         return None
 
-def getDispersion(group, loc = 'end'):
+def getDispersion(group, loc = 'e'):
     """
     get the dispersion
     """
     return getEta(group, loc)
 
-def getEta(group, loc = 'end'):
+def getEta(group, loc = 'e'):
     """
     get the dispersion from stored data
     """
@@ -158,10 +158,10 @@ def getTunes(source='machine'):
     get tunes
     """
     if source == 'machine':
-        pv = _cfa.getElementChannel(['TUNEX', 'TUNEY'], {'handle': 'get'})
+        pv = _cfa.getElementChannel(['TUNEX', 'TUNEY'])
         nux = caget(pv[0])
         nuy = caget(pv[1])
-        return nux, nuy
+        return nux[0], nuy[0]
     elif source == 'model':
         pass
     elif source == 'database':

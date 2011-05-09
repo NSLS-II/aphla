@@ -10,7 +10,7 @@ HLA Libraries
 Defines the procedural interface of HLA to the users.
 """
 
-from . import _cfa, _lat
+from . import _cfa, _lat, TAG_DEFAULT_GET, TAG_DEFAULT_PUT
 
 from catools import caget, caput
 
@@ -25,17 +25,17 @@ def getRbChannels(elemlist, tags = []):
 
     .. seealso::
 
-      :meth:`~hla.chanfinder.ChannelFinderAgent.getElementChannel`
+      :meth:`~hla.chanfinder.ChannelFinderAgent.getElementChannels`
     """
-    t = ['default.eget']
+    t = [TAG_DEFAULT_GET]
     t.extend(tags)
-    return _cfa.getElementChannel(elemlist, None, tags = set(t), unique=False)
+    return _cfa.getElementChannels(elemlist, None, tags = set(t))
 
 def getSpChannels(elemlist, tags = []):
     """get the pv names for a list of elements"""
-    t = ['default.eput']
+    t = [TAG_DEFAULT_PUT]
     t.extend(tags)
-    return _cfa.getElementChannel(elemlist, None, tags = set(t), unique=False)
+    return _cfa.getElementChannels(elemlist, None, tags = set(t))
 
 #
 #
@@ -52,13 +52,13 @@ def eget(element, full = False, tags = [], unique = False):
       >>> eget(['CXM1G4C01B', 'CYM1G4C01B'])
     """
     # some tags + the "default"
-    chtags = ['default.eget']
+    chtags = [TAG_DEFAULT_GET]
     if tags: chtags.extend(tags)
     #print __file__, tags, chtags
     if isinstance(element, str):
         ret = {}
         elemlst = _lat.getElementsCgs(element)
-        pvl = _cfa.getElementChannel(elemlst, None, chtags, unique = unique)
+        pvl = _cfa.getElementChannels(elemlst, None, chtags)
         for i, pvs in enumerate(pvl):
             if len(pvs) == 1:
                 ret[elemlst[i]] = caget(pvs[0])
@@ -67,13 +67,12 @@ def eget(element, full = False, tags = [], unique = False):
                 for pv in pvs:
                     ret[elemlst[i]].append(caget(pv))
             else: ret[elemlst[i]] = None
-            #print __file__, elemlst[i], pvs, _cfa.getElementChannel([elemlst[i]], unique = False)
         if full:
             return ret, pvl
         else: return ret
     elif isinstance(element, list):
         ret = []
-        pvl = _cfa.getElementChannel(element, None, chtags, unique = False)
+        pvl = _cfa.getElementChannels(element, None, chtags)
         for i, pv in enumerate(pvl):
             if len(pv) == 1:
                 ret.append(caget(pv[0]))
@@ -103,7 +102,7 @@ def eput(element, value):
         val = [value]
     else: val = value[:]
 
-    pvl = _cfa.getElementChannel(element, None, ['default.eput'])
+    pvl = _cfa.getElementChannels(element, None, [TAG_DEFAULT_PUT])
     
     for i, pv in enumerate(pvl):
         caput(pv, val[i])
@@ -115,8 +114,8 @@ def reset_trims():
     """
     trimx = _lat.getGroupMembers(['*', 'TRIMX'], op='intersection')
     trimy = _lat.getGroupMembers(['*', 'TRIMY'], op='intersection')
-    pvx = getSpChannels(trimx, tags=['default.eput', 'X'])
-    pvy = getSpChannels(trimy, tags=['default.eput', 'Y'])
+    pvx = getSpChannels(trimx, tags=[TAG_DEFAULT_PUT, 'X'])
+    pvy = getSpChannels(trimy, tags=[TAG_DEFAULT_PUT, 'Y'])
     pv = [p[0] for p in pvx]
     pv.extend([p[0] for p in pvy])
     v = [0]*len(pv)

@@ -33,7 +33,7 @@ class TestChanFinderAgent(unittest.TestCase):
         self.assertTrue(
             self.cfa.matchProperties(
                 'SR:C30-MG:G02A{HCor:H}Fld-I',
-                {'cell':'C30', 'girder':'G02'}))
+                {'cell':'C30', 'girder':'G2'}))
         self.assertTrue(
             self.cfa.matchProperties(
                 'SR:C30-MG:G02A{HCor:H}Fld-I',
@@ -78,7 +78,7 @@ class TestChanFinderAgent(unittest.TestCase):
 
         self.assertTrue(
             self.cfa.matchTags(
-                'SR:C30-MG:G04A{VFCor:FM1}Fld-SP'))
+                'SR:C30-MG:G04A{VFCor:FM1}Fld-SP', None))
         self.assertTrue(
             self.cfa.matchTags('SR:C30-MG:G01A{HFCor:FH2}Fld-I',
                                tags = [self._eget]))
@@ -86,7 +86,7 @@ class TestChanFinderAgent(unittest.TestCase):
     def test_properties(self):
         prop = self.cfa.getElementProperties('PH1G2C30A')
         self.assertEqual(prop['cell'], 'C30')
-        self.assertEqual(prop['girder'], 'G02')
+        self.assertEqual(prop['girder'], 'G2')
         self.assertEqual(prop['elem_name'], 'PH1G2C30A')
 
     def test_sortelement(self):

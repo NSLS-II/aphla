@@ -266,6 +266,14 @@ def rename_orm_trimpv():
 
     orm.save('orm0.pkl')
 
+def renameLattice(safe):
+    #f = shelve.open('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl', 'r')
+    lat = hla.lattice.Lattice('virtac')
+    lat._importChannelFinderData(hla._cfa)
+    lat.init_virtac_twiss()
+    lat.save('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl', )
+    print lat
+
 if __name__ == "__main__":
     if len(sys.argv) == 1: safe = True
     elif sys.argv[1] == '--real': safe = False
@@ -275,5 +283,5 @@ if __name__ == "__main__":
     #combineOrm()
     #ormhist()
     #ormtest()
-    rename_orm_trimpv()
-
+    #rename_orm_trimpv()
+    renameLattice(safe)

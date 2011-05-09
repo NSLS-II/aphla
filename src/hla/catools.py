@@ -62,31 +62,21 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
         print "TIMEOUT: ", pvs
         raise cothread.Timedout
 
-def caputwait(pv, value, pvmonitor, change=("REL", 0.1), wait=3, \
-                  maxtrial=10):
+def caputwait(pv, value, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
     """
     set a pv(or list of pvs), monitoring certain PV until certain change
-
-    change could be relative "REL" or absolute "ABS". It tries no more than
-    `maxtrial` times. Each trial wait certain seconds.
-
-    Example::
-
-      caputwait("PV1", "PVMON", ("ABS", .1), maxtrial=20)
-      
     """
-    v0 = caget(pvmonitor)
+    v0 = np.array(caget(pvmonitors))
     ntrial = 0
     while True:
         caput(pv, value)
         time.sleep(wait)
         ntrial = ntrial + 1
-        v1 = caget(pvmonitor)
-        if change[0] == "REL" and abs((v1-v0)/v0) > change[1]:
-            break
-        elif change[0] == "ABS" and abs(v1-v0) > change[1]:
-            break
-        if ntrial > maxtrial: break
+        v1 = np.array(caget(pvmonitors))
+        if np.std(v1 - v0) > diffstd:
+            return True
+        elif ntrial > maxtrial:
+            return False
 
 
 #caget.__doc__ = caget.__doc__ + ct.caget.__doc__

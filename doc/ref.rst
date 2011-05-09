@@ -153,3 +153,15 @@ splitext Split the extension from a pathname.
 .. automodule:: hla.rf
    :members:
 
+Lattice
+********
+
+.. automodule:: hla.lattice
+  :members:
+
+Channel Finder Service
+***********************
+
+.. automodule:: hla.chanfinder
+   :members:
+
