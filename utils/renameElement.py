@@ -271,9 +271,34 @@ def renameLattice(safe):
     lat = hla.lattice.Lattice('virtac')
     lat._importChannelFinderData(hla._cfa)
     lat.init_virtac_twiss()
-    lat.save('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl', )
+    lat.mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
+    lat.mergeGroups('BPM', ['BPMX', 'BPMY'])
+    lat.save('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl')
     print lat
 
+
+def test():
+    #hla._cfa.exportTextRecord('')
+    #bx = hla._lat._getElementsCgs('BPMX', cell='C02')
+    #by = hla._lat._getElementsCgs('BPMY', cell='C02')
+    #hla._cfa.exportTextRecord('')
+    #print hla._cfa.getElementChannels(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
+    #print len(bx), bx
+    #print len(by), by
+    #print hla.getElements('BPMX', cell='C02')
+    #print hla.getElements('BPM', cell='C02')
+    #print hla._lat._group.keys()
+    #print hla.getElements('BPMX', cell='C02')
+    #print hla.getElements('BPMY', cell='C02')
+    #lat = hla.lattice.Lattice()
+    #lat.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl', mode='virtac')
+    #bpmx = lat.getGroupMembers(['BPMX'], 'union')
+    #print len(bpmx), bpmx
+    print hla.getBeta('P*G2*C03*A')
+    bpm = hla.getElements('P*G2*C03*A')
+    print hla.getBeta(bpm)
+    print hla.getBeta(bpm, 'b')
+    
 if __name__ == "__main__":
     if len(sys.argv) == 1: safe = True
     elif sys.argv[1] == '--real': safe = False
@@ -284,4 +309,6 @@ if __name__ == "__main__":
     #ormhist()
     #ormtest()
     #rename_orm_trimpv()
-    renameLattice(safe)
+    #renameLattice(safe)
+    test()
+    

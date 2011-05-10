@@ -240,7 +240,7 @@ class Lattice:
         """
         call signature::
         
-          importLatticeTable(self, lattable)
+          importLatticeTable(lattable)
 
         Import the table used for Tracy-VirtualIOC. The table has columns
         in the following order:
@@ -465,36 +465,91 @@ class Lattice:
         if point: return ret, loc
         else: return ret
 
-    def getElementsCgs(self, group, cell = [], girder = [],
-                    sequence = []):
+    def _matchElementCgs(self, elem, **kwargs):
+        """
+        check properties of an element
+        
+        - *cell*
+        - *girder*
+        - *symmetry*
+        """
+
+        cell = kwargs.get("cell", None)
+        
+        if isinstance(cell, str) and elem.cell != cell:
+            return False
+        elif hasattr(cell, "__iter__") and not elem.cell in cell:
+            return False
+
+        girder = kwargs.get("girder", None)
+        
+        if isinstance(girder, str) and elem.girder != girder:
+            return False
+        elif hasattr(girder, "__iter__") and not elem.girder in girder:
+            return False
+
+        symmetry = kwargs.get("symmetry", None)
+        
+        if isinstance(symmetry, str) and elem.symmetry != symmetry:
+            return False
+        elif hasattr(symmetry, "__iter__") and not elem.symmetry in symmetry:
+            return False
+
+        return True
+
+        
+        
+    def _getElementsCgs(self, group = '*', **kwargs):
         """
         call signature::
         
-          getElementsCgs(self, group, cell=[], girder=[], sequence=[])
+          getElementsCgs(group)
 
         Get a list of elements from cell, girder and sequence
+
+        - *cell*
+        - *girder*
+        - *symmetry*
+
+        Example::
+
+          getElementsCgs('BPMX', cell=['C20'], girder=['G2'])
+
+        When given a general group name, check the following:
+
+        - element name
+        - element family
+        - existing *group*: 'BPM', 'BPMX', 'BPMY', 'A', 'C02', 'G4'
+
+            - cell
+            - girder
+            - symmetry
         """
-        if group in self._group.keys():
-            return self._group[group][:]
 
+        # return empty set if not specified the group
+        if not group: return None
+        
         elem = []
-        #print group
         for e in self.element:
-            # self.element is unique on each name, but just in case ....
+            # skip for duplicate
+            #print e.name,
             if e.name in elem: continue
-            if group and not fnmatch(e.name, group) \
-                    and not fnmatch(e.family, group):
-                continue
-            if cell and e.cell != cell: continue
-            if girder and e.girder != girder: continue
-            if sequence and (e.sequence[0] != sequence[0] \
-                                 or e.sequence[1] != sequence[1]):
-                continue
 
-            elem.append(e.name)
-
-        # may have duplicate element
-        #return [v for v in set(elem)]
+            if not self._matchElementCgs(e, **kwargs):
+                continue
+            
+            if e.name in self._group.get(group, []):
+                elem.append(e.name)
+            elif fnmatch(e.name, group):
+                elem.append(e.name)
+            else:
+                #print "skiped"
+                pass
+                
+            #if cell and not e.cell in cell: continue
+            #if girder and not e.girder in girder: continue
+            #if symmetry and not e.symmetry in symmetry: continue
+        
         return elem
 
     def _illegalGroupName(self, group):
@@ -798,7 +853,7 @@ class Lattice:
         for pv in cfa.getChannels():
             prop = cfa.getChannelProperties(pv)
             self.addGroupMember(prop[cfa.ELEMTYPE], prop[cfa.ELEMNAME], True)
-            self.addGroupMember(prop[cfa.ELEMNAME], prop[cfa.ELEMNAME], True)
+            #self.addGroupMember(prop[cfa.ELEMNAME], prop[cfa.ELEMNAME], True)
 
         self.circumference = self.element[-1].se
         #print __file__, "Imported elements:", len(self.element)

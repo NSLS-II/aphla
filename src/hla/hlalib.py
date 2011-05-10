@@ -56,28 +56,34 @@ def eget(element, full = False, tags = [], unique = False):
     if tags: chtags.extend(tags)
     #print __file__, tags, chtags
     if isinstance(element, str):
-        ret = {}
-        elemlst = _lat.getElementsCgs(element)
+        ret = []
+        elemlst = _lat._getElementsCgs(element)
         pvl = _cfa.getElementChannels(elemlst, None, chtags)
         for i, pvs in enumerate(pvl):
             if len(pvs) == 1:
-                ret[elemlst[i]] = caget(pvs[0])
+                ret.append((elemlst[i], caget(pvs[0])))
             elif len(pvs) > 1:
-                ret[elemlst[i]] = []
+                rec = []
                 for pv in pvs:
-                    ret[elemlst[i]].append(caget(pv))
-            else: ret[elemlst[i]] = None
+                    rec.append(caget(pv))
+                ret.append((elemlst[i], rec))
+            else: ret = None
         if full:
             return ret, pvl
         else: return ret
     elif isinstance(element, list):
         ret = []
         pvl = _cfa.getElementChannels(element, None, chtags)
+        if not pvl:
+            raise ValueError("no channels found for " + str(element))
+        
         for i, pv in enumerate(pvl):
-            if len(pv) == 1:
-                ret.append(caget(pv[0]))
+            if not pv:
+                ret.append((element[i],None))
+            elif len(pv) == 1:
+                ret.append((element[i], caget(pv[0])))
             elif len(pv) > 1:
-                ret.append(caget(pv))
+                ret.append((element[i], caget(pv)))
         if full: return ret, pvl
         else: return ret
     else:

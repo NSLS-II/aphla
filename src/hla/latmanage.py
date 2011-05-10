@@ -12,11 +12,15 @@ from catools import caget, caput
 
 #__all__ = ['getElements', 'getLocations']
 
-def getElements(group, cell = [], girder = [], sequence = []):
+def getElements(group, **kwargs):
     """
-    return list of elements, given cell girder and sequence.
+    return list of elements.
+
+    - *cell* a list of cell name
+    - *girder* a list of girder name
+    - *symmetry* a list of symmetry: 'A' or 'B'
     """
-    return _lat.getElementsCgs(group, cell, girder, sequence)
+    return _lat._getElementsCgs(group, **kwargs)
 
 def getLocations(group, s='e'):
     """Get the location of a group, either returned as a dictionary in
@@ -29,6 +33,7 @@ def getLocations(group, s='e'):
         return loc
     else:
         raise ValueError("parameter *group* must be a list of string")
+
 
 def addGroup(group):
     """
@@ -119,13 +124,7 @@ def getBeta(group, loc = 'e'):
     """
     get the beta function from stored data
     """
-    if isinstance(group, str):
-        elem = getElements(group)
-        return _lat.getBeta(elem)
-    elif isinstance(group, list):
-        return _lat.getBeta(elemlst = group)
-    else:
-        return None
+    return _lat.getBeta(group, loc)
 
 def getDispersion(group, loc = 'e'):
     """
@@ -146,11 +145,16 @@ def getEta(group, loc = 'e'):
     else:
         return None
 
-def getChromaticity(group, plane = 'hv', mode = ''):
+def getChromaticity(source='machine'):
     """
     get chromaticity
     """
-    raise NotImplementedError()
+    if source == 'machine':
+        raise NotImplementedError()
+    elif source == 'model':
+        raise NotImplementedError()
+    elif source == 'database':
+        raise NotImplementedError()
     return None
 
 def getTunes(source='machine'):
@@ -163,7 +167,7 @@ def getTunes(source='machine'):
         nuy = caget(pv[1])
         return nux[0], nuy[0]
     elif source == 'model':
-        pass
+        raise NotImplementedError()
     elif source == 'database':
         return _lat.getTunes()
 
@@ -232,7 +236,7 @@ def saveMode(self, mode, dest):
     raise NotImplementedError()
 
 
-def removeLatticeMode(mode):
+def _removeLatticeMode(mode):
     cfg = cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
     f = shelve.open(cfg, 'c')
     modes = []
@@ -245,3 +249,10 @@ def removeLatticeMode(mode):
     else:
         pref = 'lat.%s.' % mode
     f.close()
+
+def saveMode(self, mode, dest):
+    """Save current states to a new mode"""
+    #current_mode
+    raise NotImplementedError("Not implemented yet")
+    pass
+

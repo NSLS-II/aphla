@@ -49,10 +49,4 @@ def getLifetime(verbose = 0):
     lft_hour = np.average(ret[:,1]) / (dI / dt)
     return lft_hour
 
-def saveMode(self, mode, dest):
-    """Save current states to a new mode"""
-    #current_mode
-    raise NotImplementedError("Not implemented yet")
-    pass
-
 

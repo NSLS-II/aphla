@@ -51,17 +51,18 @@ developed especially for the first turn beam monitoring and manipulations.
 
 The new developement will be based on Python language, integrated with
 libraries for numerical analysis, data input/output, image processing,
-network, visualization, statistics and `EPICS
-<http://www.aps.anl.gov/epics/>`_ channel access. This environment will have
-both interactive control terminal and batch (script) processing mode. High
-level applications and APIs will be developed to make beam manipulation and
-hardware control friendly to physicists and operators.
+network, visualization, statistics and EPICS_ channel access. This environment
+will have both interactive control terminal and batch (script) processing
+mode. High level applications and APIs will be developed to make beam
+manipulation and hardware control friendly to physicists and operators.
 
 The new Python based package will have certain overlap with MML, and will
 have better integration with the global database, where all related
 information are stored: from magnet bentchmark data to user profile.
 
 This work is done by both controls group and accelerator physics group.
+
+.. _EPICS: http://www.aps.anl.gov/epics
 
 HLA Architecture
 --------------------

@@ -399,6 +399,25 @@ class ChannelFinderAgent:
         print pv, cell, girder, symm
         return {self.CELL: cell, self.GIRDER: girder, self.ELEMSYM: symm}
 
+    def exportTextRecord(self, txtfile):
+        print "#", self.__cdate
+        for k in sorted(self.__d.iterkeys()):
+            print "%s,"% (k,), 
+            tags = []
+            for p in sorted(self.__d[k].iterkeys()):
+                if p.startswith('~'):
+                    tags.append(p)
+                    continue
+                print "%s=%s," % (p, self.__d[k][p]),
+            for t in tags:
+                print "%s=" % t,
+                for v in self.__d[k][t]:
+                    print v,
+            print ""
+            
+    def importTextRecord(self, txtfile):
+        pass
+    
     def importLatticeTable(self, lattable):
          """
          call signature::
