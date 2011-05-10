@@ -64,7 +64,14 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
 
 def caputwait(pv, value, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
     """
-    set a pv(or list of pvs), monitoring certain PV until certain change
+    set a pv(or list of pvs), monitoring  PVs until certain degree of changes.
+
+    - *wait* [seconds] minimum wait between each check.
+    - *maxtrial* maximum number of checks.
+    - *diffstd* return if the std of pvmonitors chenges:  std(after-before),
+      exceed this number.
+
+    It is good to use for ORM measurement. Set a trim observing a list of BPM.
     """
     v0 = np.array(caget(pvmonitors))
     ntrial = 0
