@@ -142,7 +142,7 @@ def update_orm(f):
     #orm.save("orm-full-update.pkl")
     
 def correct_orbit(f):
-    orm = hla.measorm.Orm([], [])
+    orm = hla.orm.Orm([], [])
     if not os.path.exists(f): return True
     orm.load(f)
     hla.reset_trims()
@@ -177,6 +177,8 @@ def correct_orbit(f):
     dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v)
     print dk
     trimpv = [t[3] for i,t in enumerate(orm.trim)]
+    print [t[0] for i,t in enumerate(orm.trim)]
+    
     hla.caput(trimpv[:ntrim_used], dk)
     for i in range(1,10):
         time.sleep(2)

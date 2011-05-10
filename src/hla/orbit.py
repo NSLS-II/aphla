@@ -114,20 +114,24 @@ def getOrbit(group = '*', spos=False):
         elemx = group[:]
         elemy = group[:]
 
-    s = _lat.getLocations(elemx, 'end')
-    orbx, pvx = eget(elemx, full=True, tags=['X'], unique=True)
-    orby, pvy = eget(elemy, full=True, tags=['Y'], unique=True)
+    orbx, pvx = eget(elemx, full=True, tags=['X'])
+    orby, pvy = eget(elemy, full=True, tags=['Y'])
     #print __file__, len(elemx), len(elemy), len(orbx), len(orby)
     #print __file__, orbx[0], elemx[0], pvx[0], caget(pvx[0][0])
     #print __file__, orbx, orby
-    ret = []
+
     if spos:
-        for i in range(len(s)):
-            ret.append([s[i], orbx[i], orby[i]])
+        ret = np.zeros((len(orbx), 3), 'd')
+        ret[:, 0] = _lat.getLocations(elemx, 'e')
+        ret[:, 1] = orbx
+        ret[:, 2] = orby
     else:
-        for i in range(len(s)):
-            ret.append([orbx[i], orby[i]])
+        ret = np.zeros((len(orbx), 2), 'd')
+        ret[:, 0] = orbx
+        ret[:, 1] = orby
+
     return ret
+
 
 def getOrbitRm():
     raise NotImplementedError()

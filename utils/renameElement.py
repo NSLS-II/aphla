@@ -294,10 +294,20 @@ def test():
     #lat.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl', mode='virtac')
     #bpmx = lat.getGroupMembers(['BPMX'], 'union')
     #print len(bpmx), bpmx
-    print hla.getBeta('P*G2*C03*A')
-    bpm = hla.getElements('P*G2*C03*A')
-    print hla.getBeta(bpm)
-    print hla.getBeta(bpm, 'b')
+    #print hla.getBeta('P*G2*C03*A')
+    #bpm = hla.getElements('P*G2*C03*A')
+    #print hla.getBeta(bpm)
+    #print hla.getBeta(bpm, 'b')
+
+    #v, elem, pv = hla.eget('SL1*', full=True)
+    #print np.average(v)
+    #hla.eput(elem, -0.978795832057)
+    #print hla.getOrbit(spos=True)
+
+    hla.reset_trims()
+    bpm = hla.getElements('P*C1[0-9]*')
+    trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+    hla.correctOrbit(bpm, trim)
     
 if __name__ == "__main__":
     if len(sys.argv) == 1: safe = True

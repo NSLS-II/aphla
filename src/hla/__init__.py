@@ -38,7 +38,7 @@ Modules include:
 import os, sys, re
 
 # are we using virtual ac
-virtac = True
+VIRTAC = True
 INF = 1e30
 ORBIT_WAIT=8
 NETWORK_DOWN=False
@@ -76,6 +76,7 @@ from current import *
 from rf import *
 from hlalib import *
 
+
 """Initialize HLA"""
 cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
 if not os.path.exists(cfg_pkl):
@@ -83,8 +84,6 @@ if not os.path.exists(cfg_pkl):
 
 print >> sys.stderr, "= HLA main configure: ", cfg_pkl
 _lat.load(cfg_pkl, mode='virtac')
-#_lat.mode = 'virtac'
-#_lat.save(cfg_pkl)
 
 
 cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
@@ -93,6 +92,13 @@ if not os.path.exists(cfa_pkl):
 
 print >> sys.stderr, "= HLA channel finder configure: ", cfa_pkl
 _cfa.load(cfa_pkl)
+
+import orm
+_orm = orm.Orm(bpm=[], trim=[])
+orm_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'orm.pkl')
+print >> sys.stderr, "= HLA orbit resp mat: ", orm_pkl
+_orm.load(orm_pkl)
+
 
 # set RF frequency
 from cothread import catools, Timedout

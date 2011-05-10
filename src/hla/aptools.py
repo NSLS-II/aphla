@@ -10,7 +10,7 @@ Accelerator Physics Tools
 """
 
 from . import getElements, getLocations, getDispersion, getRfFrequency, \
-     putRfFrequency, getOrbit, getTunes
+     putRfFrequency, getOrbit, getTunes, getSubOrm, eput, eget
 import numpy as np
 import time, shelve
 import matplotlib.pylab as plt
@@ -144,3 +144,23 @@ def measDispersion():
     f["dispersion"] = dat
     f.close()
     
+
+def correctOrbit(bpm, trim, plane='XX'):
+    m = getSubOrm(bpm, trim, plane)
+    if plane[0] == 'X': v = getOrbit(bpm)[:,0]
+    elif plane[0] == 'Y': v = getOrbit(bpm)[:,1]
+
+    v0 = getOrbit(bpm)[:,0]
+    dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0)
+    eput(trim, dk)
+    
+    v1 = getOrbit(bpm)[:,0]
+    print np.shape(m), np.shape(v)
+
+    import matplotlib.pylab as plt
+    plt.clf()
+    plt.plot(v0, '--')
+    plt.plot(v1, '-x')
+    plt.savefig('tmp.png')
+    pass
+

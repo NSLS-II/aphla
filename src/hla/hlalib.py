@@ -39,7 +39,7 @@ def getSpChannels(elemlist, tags = []):
 
 #
 #
-def eget(element, full = False, tags = [], unique = False):
+def eget(element, full = False, tags = []):
     """
     easier get with element name(s)
 
@@ -61,15 +61,15 @@ def eget(element, full = False, tags = [], unique = False):
         pvl = _cfa.getElementChannels(elemlst, None, chtags)
         for i, pvs in enumerate(pvl):
             if len(pvs) == 1:
-                ret.append((elemlst[i], caget(pvs[0])))
+                ret.append(caget(pvs[0]))
             elif len(pvs) > 1:
                 rec = []
                 for pv in pvs:
                     rec.append(caget(pv))
-                ret.append((elemlst[i], rec))
+                ret.append(rec)
             else: ret = None
         if full:
-            return ret, pvl
+            return ret, elemlst, pvl
         else: return ret
     elif isinstance(element, list):
         ret = []
@@ -79,11 +79,11 @@ def eget(element, full = False, tags = [], unique = False):
         
         for i, pv in enumerate(pvl):
             if not pv:
-                ret.append((element[i],None))
+                ret.append(None)
             elif len(pv) == 1:
-                ret.append((element[i], caget(pv[0])))
+                ret.append(caget(pv[0]))
             elif len(pv) > 1:
-                ret.append((element[i], caget(pv)))
+                ret.append(caget(pv))
         if full: return ret, pvl
         else: return ret
     else:
@@ -101,18 +101,19 @@ def eput(element, value):
 
       >>> eput('QM1G4C01B', 1.0)
       >>> eput(['CXM1G4C01B', 'CYM1G4C01B'], [0.001, .001])
-    """
-    if isinstance(element, list) and len(element) != len(value):
-        raise ValueError("element list must have same size as value list")
-    elif isinstance(element, str):
-        val = [value]
-    else: val = value[:]
 
-    pvl = _cfa.getElementChannels(element, None, [TAG_DEFAULT_PUT])
+    It does not do any wildcard matching. call getElements before hand to get
+    a list of element.
+
+    - *element* a single explicit element name or a list of element names
+    - *value*, match the size of *element*
+    """
+
+    pvls = _cfa.getElementChannels(element, None, [TAG_DEFAULT_PUT])
+    # use the first one of default put, ignore the rest
+    pvl = [pv[0] for pv in pvls]
     
-    for i, pv in enumerate(pvl):
-        caput(pv, val[i])
-        
+    caput(pvl, value)
 
 def reset_trims():
     """

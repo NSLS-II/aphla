@@ -2,7 +2,7 @@ Tutorial
 =========
 
 The HLA and Controls are divided into three layers: HLA applictions and
-scripts, client APIs and server API~([Shen]_).  The users
+scripts, client APIs (CAPI) and server API (SAPI)~([Shen]_).  The users
 (accelerator physicists, operators and beamline scientists) will normally
 access the first two forms: use applications/scripts by mouse clicks, and
 the APIs in an interactive command line.
@@ -61,7 +61,7 @@ instrument, and RF. Detailed requirement can be found in [Shencbd]_.
 
 
 Software
-=========
+-----------
 
 ::
 
@@ -94,7 +94,7 @@ You should see the beam current of virtual accelerator. Then see if it changes::
 
 
 Code Repository
-===================
+-------------------
 
 Our code is in a Mercurial repository, which keeps every version anyone
 checked in. Version controlled repository not only keeps track of the
@@ -133,7 +133,7 @@ If it has been a long time after you checkout the code from the server, you can
 
 
 Examples
-=========
+--------------
 
 First import some modules, including HLA and plotting routines
 
@@ -147,6 +147,7 @@ First import some modules, including HLA and plotting routines
    >>> import hla
    >>> import numpy as np
    >>> import matplotlib.pylab as plt
+   >>> import time
 
 Then is the examples:
 
@@ -155,11 +156,24 @@ Then is the examples:
    >>> hla.getElements('BPM', cell='C02')
    ['PH1G2C02A', 'PH2G2C02A', 'PM1G4C02A', 'PM1G4C02B', 'PL2G6C02B', 'PL1G6C02B']
 
+Each element has a set of properties associated:
+
+- *family* (element type). e.g. 'QUAD', 'BPMX'
+- *cell*. The DBA cell it belongs. e.g. 'C02', 'C30'
+- *girder*, girder name where it sits. e.g. 'G2', 'G1'
+- *symmetry*, 'A' or 'B' symmetry
+- *group*. One element belongs to many groups. e.g. 'BPMX', 'BPM'
+
+A element can only belongs to one *family*, *cell*, *girder* and *symmetry*. But it can be in many groups:
+
    >>> hla.getGroups('PM1G4C02B')
    ['BPM', 'G4', 'BPMY', 'BPMX', 'C02', 'B']
 
    >>> hla.getElements('BPMX', cell='C15', girder='G4')
    ['PM1G4C15A', 'PM1G4C15B']
+
+   >>> hla.getElements('C02', girder='G2')
+   ['SH1G2C02A', 'PH1G2C02A', 'QH1G2C02A', 'SQHG2C02A', 'CXHG2C02A', 'CYHG2C02A', 'QH2G2C02A', 'SH3G2C02A', 'QH3G2C02A', 'PH2G2C02A', 'SH4G2C02A', 'CXH2G2C02A', 'CYH2G2C02A']
 
    >>> bpm = hla.getElements('BPM')
    >>> s = hla.getLocations(bpm, 'e')
@@ -186,12 +200,24 @@ Then is the examples:
    >>> hla.getLifetime() #doctest: +SKIP
    7.2359460167254399
 
-   >>> print hla.eget('PL1G2C05A')
-   [('PL1G2C05A', [-0.0001042862911482232, 9.4271237903876306e-05])]
-   >>> print hla.eget(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
-   []
+   >>> print hla.eget('PL1G2C05A') #doctest: +SKIP
+   [[-0.0001042862911482232, 9.4271237903876306e-05]]
+   >>> print hla.eget(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A']) #doctest: +SKIP
+   [0.0, 1.222326512542153, 0.0, [0.0002459691616303813, 5.0642830477320241e-05]]
 
    
+Plotting the orbit
+
+.. doctest::
+   >>> sobt = hla.getOrbit(spos = True)
+   >>> plt.clf()
+   >>> plt.plot(sobt[:,0], sobt[:,1], '-x', label='X')
+   >>> plt.plot(sobt[:,0], sobt[:,2], '-o', label='Y')
+   >>> plt.xlabel('S [m]')
+   >>> plt.savefig('hla_tut_orbit.png')
+
+.. image:: hla_tut_orbit.png
+
 Twiss parameters
 
 .. doctest::
@@ -209,7 +235,46 @@ Twiss parameters
    array([[  8.71242537,  11.67212006],
    	  [ 10.27574586,  22.11703928]])
 
-   >>> hla.getChromaticity()
+Plotting the beta function of cell 'C02' and 'C03'
+
+.. doctest::
+
+   >>> elem = hla.getElements('*', cell=['C01', 'C02'])
+   >>> s = hla.getLocations(elem)
+   >>> beta = hla.getBeta(elem)
+   >>> plt.clf()
+   >>> plt.plot(s, beta, '-o')
+   >>> plt.savefig("hla_tut_twiss_c0203.png")
+
+
+.. image:: hla_tut_twiss_c0203.png
+
+
+Correct the orbit:
+
+.. doctest::
+
+   >>> s = hla.getLocations('P*')
+   >>> bpm = hla.getElements('P*C1[0-9]*')
+   >>> trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+   >>> v0 = hla.getOrbit()
+   >>> hla.correctOrbit(bpm, trim)
+   >>> time.sleep(3)
+   >>> v1 = hla.getOrbit()
+   >>> plt.clf()
+   >>> plt.subplot(211)
+   >>> plt.plot(s, v0[:,0], 'r-x', label='X')
+   >>> plt.plot(s, v0[:,1], 'g-o', label='Y')
+   >>> plt.subplot(212)
+   >>> plt.plot(s, v1[:,0], 'r-x', label='X')
+   >>> plt.plot(s, v1[:,1], 'g-o', label='Y')
+   >>> plt.savefig("hla_tut_orbit_correct.png")
+
+.. image:: hla_tut_orbit_correct.png
+
+.. doctest::
+
+   >>> hla.getChromaticity() #doctest:+SKIP
 
 .. sourcecode:: ipython
 

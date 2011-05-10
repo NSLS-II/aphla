@@ -23,8 +23,9 @@ def getElements(group, **kwargs):
     return _lat._getElementsCgs(group, **kwargs)
 
 def getLocations(group, s='e'):
-    """Get the location of a group, either returned as a dictionary in
-    which the key is element physics name, value is the location.
+    """
+    Get the location of a group, either returned as a dictionary in which the
+    key is element physics name, value is the location.
     """
     if isinstance(group, list):
         return _lat.getLocations(group, s)
