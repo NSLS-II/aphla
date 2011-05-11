@@ -145,7 +145,23 @@ def measDispersion():
     f.close()
     
 
-def correctOrbit(bpm, trim, plane='XX'):
+def correctOrbit(bpm, trim, **kwargs):
+    """
+    correct the orbit with given BPMs and Trims
+
+    Example::
+
+      correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
+
+    Since each bpm can have the 'X' or 'Y' reading, there is a parameter to specify the plane:
+
+    - *plane* ['XX', 'XY', 'YY', 'YX']. The first 'X' or 'Y' is BPM and second
+       is Trim. If that BPM or Trim does not have readings from such plane,
+       this element should be ignored.
+
+    """
+    plane = kwargs.get('plane', 'XX')
+    
     m = getSubOrm(bpm, trim, plane)
     if plane[0] == 'X': v = getOrbit(bpm)[:,0]
     elif plane[0] == 'Y': v = getOrbit(bpm)[:,1]
@@ -155,12 +171,12 @@ def correctOrbit(bpm, trim, plane='XX'):
     eput(trim, dk)
     
     v1 = getOrbit(bpm)[:,0]
-    print np.shape(m), np.shape(v)
+    #print np.shape(m), np.shape(v)
 
-    import matplotlib.pylab as plt
-    plt.clf()
-    plt.plot(v0, '--')
-    plt.plot(v1, '-x')
-    plt.savefig('tmp.png')
-    pass
+    #import matplotlib.pylab as plt
+    #plt.clf()
+    #plt.plot(v0, '--')
+    #plt.plot(v1, '-x')
+    #plt.savefig('tmp.png')
+    #pass
 

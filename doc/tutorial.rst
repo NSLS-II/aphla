@@ -211,9 +211,12 @@ Plotting the orbit
 .. doctest::
    >>> sobt = hla.getOrbit(spos = True)
    >>> plt.clf()
-   >>> plt.plot(sobt[:,0], sobt[:,1], '-x', label='X')
-   >>> plt.plot(sobt[:,0], sobt[:,2], '-o', label='Y')
-   >>> plt.xlabel('S [m]')
+   >>> plt.plot(sobt[:,0], sobt[:,1], '-x', label='X') #doctest: +ELLIPSIS
+   [<matplotlib.lines.Line2D object at 0x...>]
+   >>> plt.plot(sobt[:,0], sobt[:,2], '-o', label='Y') #doctest: +ELLIPSIS
+   [<matplotlib.lines.Line2D object at 0x...>]
+   >>> plt.xlabel('S [m]') #doctest: +ELLIPSIS
+   <matplotlib.text.Text object at 0x...>
    >>> plt.savefig('hla_tut_orbit.png')
 
 .. image:: hla_tut_orbit.png
@@ -243,14 +246,15 @@ Plotting the beta function of cell 'C02' and 'C03'
    >>> s = hla.getLocations(elem)
    >>> beta = hla.getBeta(elem)
    >>> plt.clf()
-   >>> plt.plot(s, beta, '-o')
+   >>> plt.plot(s, beta, '-o') #doctest: +ELLIPSIS
+   [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
    >>> plt.savefig("hla_tut_twiss_c0203.png")
 
 
 .. image:: hla_tut_twiss_c0203.png
 
 
-Correct the orbit:
+Correct the orbit and plot the orbits before/after the correction:
 
 .. doctest::
 
@@ -262,12 +266,12 @@ Correct the orbit:
    >>> time.sleep(3)
    >>> v1 = hla.getOrbit()
    >>> plt.clf()
-   >>> plt.subplot(211)
-   >>> plt.plot(s, v0[:,0], 'r-x', label='X')
-   >>> plt.plot(s, v0[:,1], 'g-o', label='Y')
-   >>> plt.subplot(212)
-   >>> plt.plot(s, v1[:,0], 'r-x', label='X')
-   >>> plt.plot(s, v1[:,1], 'g-o', label='Y')
+   >>> ax = plt.subplot(211) 
+   >>> fig = plt.plot(s, v0[:,0], 'r-x', label='X') 
+   >>> fig = plt.plot(s, v0[:,1], 'g-o', label='Y')
+   >>> ax = plt.subplot(212)
+   >>> fig = plt.plot(s, v1[:,0], 'r-x', label='X')
+   >>> fig = plt.plot(s, v1[:,1], 'g-o', label='Y')
    >>> plt.savefig("hla_tut_orbit_correct.png")
 
 .. image:: hla_tut_orbit_correct.png

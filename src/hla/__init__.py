@@ -71,7 +71,6 @@ hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
 # testing, bypass the IRMIS database.
 #
 
-from latmanage import *
 from current import *
 from rf import *
 from hlalib import *

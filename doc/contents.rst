@@ -44,10 +44,6 @@ symbol                                   description
 ======================================== ==================================================
 :func:`~hla.hlalib.eget`                 easier get with element name(s)         
 :func:`~hla.hlalib.eput`                 easier put                              
-:func:`~hla.hlalib.getRbChannels`        get the pv names for a list of elements 
-:func:`~hla.hlalib.getSpChannels`        get the pv names for a list of elements 
-:func:`~hla.hlalib.levenshtein_distance` Find the Levenshtein distance between two strings.
-:func:`~hla.hlalib.reset_trims`          reset all trims in group "TRIMX" and "TRIMY"
 ======================================== ==================================================
 
 :mod:`hla.latmanage`
@@ -59,9 +55,9 @@ symbol                                    description
 :func:`~hla.latmanage.addGroup`           add a new group, *group* should be plain string, characters in
 :func:`~hla.latmanage.addGroupMembers`    Add a new member to a existing group     
 :func:`~hla.latmanage.getBeta`            get the beta function from stored data   
-:func:`~hla.latmanage.getChromaticity`    get chromaticity                         
-:func:`~hla.latmanage.getChromaticityRm`  TODO                                     
-:func:`~hla.latmanage.getCurrentMode`     TODO                                     
+:func:`~hla.latmanage.getChromaticity`    TODO                         
+:func:`~hla.latmanage.getChromaticityRm`  TODO                                 
+:func:`~hla.latmanage.getCurrentMode`     TODO
 :func:`~hla.latmanage.getDispersion`      get the dispersion                       
 :func:`~hla.latmanage.getElements`        return list of elements, given cell girder and sequence.
 :func:`~hla.latmanage.getEta`             get the dispersion from stored data      
