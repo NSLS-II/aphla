@@ -3,6 +3,8 @@
 import sys, os, time
 from cothread.catools import caget, caput
 
+TEST_CONF_VERSION = 1
+
 # set up directories
 if not 'HLA_ROOT' in os.environ:
     #rt,ext = os.path.splitext(os.path.realpath(sys.argv[0]))

@@ -12,7 +12,6 @@ it is linked.
 import re, shelve, sys, os
 from fnmatch import fnmatch
 from time import gmtime, strftime
-from lattice import parseElementName
 
 
 class ChannelFinderAgent:
@@ -400,21 +399,23 @@ class ChannelFinderAgent:
         return {self.CELL: cell, self.GIRDER: girder, self.ELEMSYM: symm}
 
     def exportTextRecord(self, txtfile):
-        print "#", self.__cdate
+        f = open(txtfile, 'w')
+        f.write("# %s\n" % self.__cdate)
         for k in sorted(self.__d.iterkeys()):
-            print "%s,"% (k,), 
+            f.write("%s; " % (k,)) 
             tags = []
             for p in sorted(self.__d[k].iterkeys()):
                 if p.startswith('~'):
                     tags.append(p)
                     continue
-                print "%s=%s," % (p, self.__d[k][p]),
+                f.write(" %s=%s," % (p, self.__d[k][p]))
             for t in tags:
-                print "%s=" % t,
+                f.write("; %s=" % t)
                 for v in self.__d[k][t]:
-                    print v,
-            print ""
-            
+                    f.write(" %s" % v)
+            f.write("\n")
+        f.close()
+        
     def importTextRecord(self, txtfile):
         pass
     

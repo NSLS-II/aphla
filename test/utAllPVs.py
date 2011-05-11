@@ -10,7 +10,7 @@ from cothread.catools import caget
 
 from conf import *
 
-class TestChanFinderAgent(unittest.TestCase):
+class TestAllPvAgent(unittest.TestCase):
 
     def setUp(self):
         if hla.NETWORK_DOWN: return
@@ -26,25 +26,37 @@ class TestChanFinderAgent(unittest.TestCase):
 
     def test_pvExists(self):
         if hla.NETWORK_DOWN: return
-
-        pvs = self.cfa.getChannels()
+        log_txt = "log_allpv.txt"
+        #print "VERSION:", TEST_CONF_VERSION
+        if os.path.exists(log_txt):
+            f = open(log_txt, 'r').readlines()
+            if len(f) >= 1 and TEST_CONF_VERSION <= int(f[0]): return
+            
+        pvs = [v.encode('ascii') for v in self.cfa.getChannels()]
         self.assertTrue(len(pvs) > 2000)
 
-        live, dead = [], []
-        n = 0
-        for k, v in enumerate(pvs):
-            n += 1
-            #print k, v, len(live), len(dead)
-            try:
-                x = caget(v.encode('ascii'), timeout=5)
-                live.append(v)
-            except:
-                dead.append(v)
+        #
+        try:
+            x = caget(pvs, timeout=5)
+        except:
+            live, dead = [], []
+            n = 0
+            for k, v in enumerate(pvs):
+                n += 1
+                try:
+                    x = caget(v.encode('ascii'), timeout=5)
+                    live.append(v)
+                except:
+                    dead.append(v)
             self.assertEqual(n, len(live))
 
-        print "Live:", len(live), " Dead:", len(dead),
-        self.assertTrue(len(dead) == 0)
-    
+            print "Live:", len(live), " Dead:", len(dead),
+            self.assertTrue(len(dead) == 0)
+
+        f = open(log_txt, 'w')
+        f.write("%d\n" % TEST_CONF_VERSION)
+        f.close()
+        
 if __name__ == "__main__":
     unittest.main()
 

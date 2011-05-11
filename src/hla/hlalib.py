@@ -10,9 +10,38 @@ HLA Libraries
 Defines the procedural interface of HLA to the users.
 """
 
+import numpy as np
 from . import _cfa, _lat, TAG_DEFAULT_GET, TAG_DEFAULT_PUT
 
 from catools import caget, caput
+
+def parseElementName(name):
+    """
+    searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
+    girder='G1', cell='C30', symmetry='A'
+
+    Example::
+    
+      >>> parseElementName('CFXH1G1C30A')
+      'C30', 'G1', 'A'
+    """
+    # for NSLS-2 convention of element name
+    a = re.match(r'.+(G\d{1,2})(C\d{1,2})(.)', name)
+    if a:
+        girder   = a.groups()[0]
+        cell     = a.groups()[1]
+        symmetry = a.groups()[2]
+    elif name == "CAVITY":
+        # fix a broken name
+        girder   = "CAVITY"
+        cell     = "CAVITY"
+        symmetry = "CAVITY"
+    else:
+        girder   = 'G0'
+        cell     = 'C00'
+        symmetry = '0'
+    return cell, girder, symmetry
+
 
 def getRbChannels(elemlist, tags = []):
     """
@@ -268,22 +297,26 @@ def getBeta(group, loc = 'e'):
     """
     return _lat.getBeta(group, loc)
 
-def getDispersion(group, loc = 'e'):
+def getDispersion(group, **kwargs):
     """
     get the dispersion
-    """
-    return getEta(group, loc)
 
-def getEta(group, loc = 'e'):
+    .. seealso:: :func:`~hla.hlalib.getEta`
+    """
+    return getEta(group, **kwargs)
+
+def getEta(group, **kwargs):
     """
     get the dispersion from stored data
+
+    .. seealso:: :func:`~hla.lattice.Lattice.getEta`
     """
 
     if isinstance(group, list):
         return _lat.getEta(group)
     elif isinstance(group, str):
         elem = getElements(group)
-        return _lat.getEta(elemlst = elem)
+        return _lat.getEta(elem)
     else:
         return None
 
@@ -397,4 +430,44 @@ def saveMode(self, mode, dest):
     #current_mode
     raise NotImplementedError("Not implemented yet")
     pass
+
+def getFullOrbit(group = '*', sequence = None):
+    """Return orbit"""
+    x = caget("SR:C00-Glb:G00{ORBIT:00}RB-X")
+    y = caget("SR:C00-Glb:G00{ORBIT:00}RB-Y")
+    s = caget("SR:C00-Glb:G00{POS:00}RB-S")
+    ret = []
+    for i in range(len(s)):
+        ret.append([s[i], x[i], y[i]])
+    return ret
+
+def getOrbit(group = '*', spos=False):
+    """Return orbit"""
+    if isinstance(group, str):
+        #print __file__, "group = ", group
+        elemx = _lat.getGroupMembers([group, 'BPMX'], op = 'intersection')
+        elemy = _lat.getGroupMembers([group, 'BPMY'], op = 'intersection')
+    elif isinstance(group, list):
+        elemx = group[:]
+        elemy = group[:]
+
+    orbx, pvx = eget(elemx, full=True, tags=['X'])
+    orby, pvy = eget(elemy, full=True, tags=['Y'])
+    #print __file__, len(elemx), len(elemy), len(orbx), len(orby)
+    #print __file__, orbx[0], elemx[0], pvx[0], caget(pvx[0][0])
+    #print __file__, orbx, orby
+
+    if spos:
+        ret = np.zeros((len(orbx), 3), 'd')
+        ret[:, 0] = _lat.getLocations(elemx, 'e')
+        ret[:, 1] = orbx
+        ret[:, 2] = orby
+    else:
+        ret = np.zeros((len(orbx), 2), 'd')
+        ret[:, 0] = orbx
+        ret[:, 1] = orby
+
+    return ret
+
+
 

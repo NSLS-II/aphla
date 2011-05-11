@@ -245,9 +245,12 @@ Plotting the beta function of cell 'C02' and 'C03'
    >>> elem = hla.getElements('*', cell=['C01', 'C02'])
    >>> s = hla.getLocations(elem)
    >>> beta = hla.getBeta(elem)
+   >>> eta = hla.getDispersion(elem)
    >>> plt.clf()
-   >>> plt.plot(s, beta, '-o') #doctest: +ELLIPSIS
-   [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
+   >>> fig1 = plt.subplot(211)
+   >>> fig=plt.plot(s, beta, '-o', label=r'$\beta_{x,y}$')
+   >>> fig2 = plt.subplot(212)
+   >>> fig=plt.plot(s, eta, '-o', label=r'$\eta_{x,y}$')
    >>> plt.savefig("hla_tut_twiss_c0203.png")
 
 

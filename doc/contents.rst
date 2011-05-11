@@ -44,45 +44,37 @@ symbol                                   description
 ======================================== ==================================================
 :func:`~hla.hlalib.eget`                 easier get with element name(s)         
 :func:`~hla.hlalib.eput`                 easier put                              
-======================================== ==================================================
-
-:mod:`hla.latmanage`
-********************
-
-========================================= =====================================================================
-symbol                                    description                                                          
-========================================= =====================================================================
-:func:`~hla.latmanage.addGroup`           add a new group, *group* should be plain string, characters in
-:func:`~hla.latmanage.addGroupMembers`    Add a new member to a existing group     
-:func:`~hla.latmanage.getBeta`            get the beta function from stored data   
-:func:`~hla.latmanage.getChromaticity`    TODO                         
-:func:`~hla.latmanage.getChromaticityRm`  TODO                                 
-:func:`~hla.latmanage.getCurrentMode`     TODO
-:func:`~hla.latmanage.getDispersion`      get the dispersion                       
-:func:`~hla.latmanage.getElements`        return list of elements, given cell girder and sequence.
-:func:`~hla.latmanage.getEta`             get the dispersion from stored data      
-:func:`~hla.latmanage.getFftTune`         get tune from FFT                        
-:func:`~hla.latmanage.getGroupMembers`    Get all elements in a group. If group is a list, consider which op:
-:func:`~hla.latmanage.getGroups`          Get all groups own these elements, '*' returns all possible groups,
-:func:`~hla.latmanage.getLocations`       Get the location of a group, either returned as a dictionary in
-:func:`~hla.latmanage.getModes`           TODO                                     
-:func:`~hla.latmanage.getNeighbors`       Get a list of n elements belongs to group. The list is sorted along s
-:func:`~hla.latmanage.getPhase`           get the phase from stored data           
-:func:`~hla.latmanage.getStepSize`        Return default stepsize of a given element
-:func:`~hla.latmanage.getTune`            get tune                                 
-:func:`~hla.latmanage.getTuneRm`          TODO                                     
-:func:`~hla.latmanage.getTunes`           get tunes                                
-:func:`~hla.latmanage.removeGroup`        Remove a group if it is empty            
-:func:`~hla.latmanage.removeGroupMembers` Remove a member from group               
-:func:`~hla.latmanage.removeLatticeMode`  TODO                                     
-:func:`~hla.latmanage.saveBeta`           TODO                                     
-:func:`~hla.latmanage.saveChromaticity`   TODO                                     
-:func:`~hla.latmanage.saveChromaticityRm` TODO                                     
-:func:`~hla.latmanage.saveDispersion`     TODO                                     
-:func:`~hla.latmanage.savePhase`          TODO                                     
-:func:`~hla.latmanage.saveTune`           TODO                                     
-:func:`~hla.latmanage.saveTuneRm`         TODO                                     
-========================================= =====================================================================
+:func:`~hla.hlalib.addGroup`             add a new group, *group* should be plain string, characters in
+:func:`~hla.hlalib.addGroupMembers`      Add a new member to a existing group     
+:func:`~hla.hlalib.getBeta`              get the beta function from stored data   
+:func:`~hla.hlalib.getChromaticity`      TODO                         
+:func:`~hla.hlalib.getChromaticityRm`    TODO                                 
+:func:`~hla.hlalib.getCurrentMode`       TODO
+:func:`~hla.hlalib.getDispersion`        get the dispersion                       
+:func:`~hla.hlalib.getElements`          return list of elements, given cell girder and sequence.
+:func:`~hla.hlalib.getEta`               get the dispersion from stored data      
+:func:`~hla.hlalib.getFftTune`           get tune from FFT                        
+:func:`~hla.hlalib.getGroupMembers`      Get all elements in a group. If group is a list, consider which op:
+:func:`~hla.hlalib.getGroups`            Get all groups own these elements, '*' returns all possible groups,
+:func:`~hla.hlalib.getLocations`         Get the location of a group, either returned as a dictionary in
+:func:`~hla.hlalib.getModes`             TODO                                     
+:func:`~hla.hlalib.getNeighbors`         Get a list of n elements belongs to group. The list is sorted along s
+:func:`~hla.hlalib.getPhase`             get the phase from stored data           
+:func:`~hla.hlalib.getStepSize`          Return default stepsize of a given element
+:func:`~hla.hlalib.getTune`              get tune                                 
+:func:`~hla.hlalib.getTuneRm`            TODO                                     
+:func:`~hla.hlalib.getTunes`             get tunes                                
+:func:`~hla.hlalib.removeGroup`          Remove a group if it is empty            
+:func:`~hla.hlalib.removeGroupMembers`   Remove a member from group               
+:func:`~hla.hlalib.removeLatticeMode`    TODO                                     
+:func:`~hla.hlalib.saveBeta`             TODO                                     
+:func:`~hla.hlalib.saveChromaticity`     TODO                                     
+:func:`~hla.hlalib.saveChromaticityRm`   TODO                                     
+:func:`~hla.hlalib.saveDispersion`       TODO                                     
+:func:`~hla.hlalib.savePhase`            TODO                                     
+:func:`~hla.hlalib.saveTune`             TODO                                     
+:func:`~hla.hlalib.saveTuneRm`           TODO                                     
+======================================== =====================================================================
 
 :mod:`hla.measorm`
 ******************

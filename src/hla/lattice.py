@@ -16,34 +16,6 @@ from fnmatch import fnmatch
 #from cothread.catools import caget, caput
 from catools import caget, caput
 
-def parseElementName(name):
-    """
-    searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
-    girder='G1', cell='C30', symmetry='A'
-
-    Example::
-    
-      >>> parseElementName('CFXH1G1C30A')
-      'C30', 'G1', 'A'
-    """
-    # for NSLS-2 convention of element name
-    a = re.match(r'.+(G\d{1,2})(C\d{1,2})(.)', name)
-    if a:
-        girder   = a.groups()[0]
-        cell     = a.groups()[1]
-        symmetry = a.groups()[2]
-    elif name == "CAVITY":
-        # fix a broken name
-        girder   = "CAVITY"
-        cell     = "CAVITY"
-        symmetry = "CAVITY"
-    else:
-        girder   = 'G0'
-        cell     = 'C00'
-        symmetry = '0'
-    return cell, girder, symmetry
-
-
 class Element:
     """
     Element
@@ -859,3 +831,19 @@ class Lattice:
         #print __file__, "Imported elements:", len(self.element)
         #print __file__, cnt
 
+
+class LatticeSet:
+    """
+    Manage a set of lattice data
+    """
+
+    def __init__(self):
+        pass
+
+    def load(self, f):
+        pass
+
+    def save(self, f):
+        pass
+
+    

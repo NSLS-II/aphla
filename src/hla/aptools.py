@@ -153,7 +153,8 @@ def correctOrbit(bpm, trim, **kwargs):
 
       correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
 
-    Since each bpm can have the 'X' or 'Y' reading, there is a parameter to specify the plane:
+    Since each bpm can have the 'X' or 'Y' reading, there is a parameter to
+    specify the plane:
 
     - *plane* ['XX', 'XY', 'YY', 'YX']. The first 'X' or 'Y' is BPM and second
        is Trim. If that BPM or Trim does not have readings from such plane,
@@ -170,7 +171,7 @@ def correctOrbit(bpm, trim, **kwargs):
     dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0)
     eput(trim, dk)
     
-    v1 = getOrbit(bpm)[:,0]
+    #v1 = getOrbit(bpm)[:,0]
     #print np.shape(m), np.shape(v)
 
     #import matplotlib.pylab as plt

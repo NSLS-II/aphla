@@ -9,9 +9,6 @@ import utAllPVs
 import utOrm
 import utOrbit
 
-#import ut1
-#import ut2
-
 loader = unittest.TestLoader()
 
 suite = loader.loadTestsFromModule(utChanFinder)
