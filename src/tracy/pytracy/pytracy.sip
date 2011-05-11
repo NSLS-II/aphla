@@ -2313,10 +2313,11 @@ SIP_PYLIST Trac_Simple(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, S
 	double  Tab[6][NTURN];
 	double  x, px, y, py, dp, ctau;
 	long    nmax;
-        double  Tab[6][NTURN];
 	int i,j;
 
-	PyObject * pyRet, pyTab, pyStatus;
+	PyObject * pyRet;
+	PyObject * pyTab; 
+	PyObject * pyStatus;
 
         if (!PyNumber_Check(a0) || !PyNumber_Check(a1) || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyNumber_Check(a4)
                                                                               || !PyNumber_Check(a5) || (nmax= PyLong_AsLong(a6))<1)
@@ -2334,16 +2335,17 @@ SIP_PYLIST Trac_Simple(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, S
 
 	   Trac_Simple(x,px, y, py, dp,ctau, nmax, Tab, &status);
 
-	   pyStatus = PyBool_FromBool(status);
+	   if (status) pyStatus = Py_True;
+	   else pyStatus = Py_False;
 
-	   pyTab = PyList_New(6)
+	   pyTab = PyList_New(6);
 
 	   for (i=0;i<6;++i)
 	   {
 		PyObject * row = PyList_New(nmax);
 		for (j=0;j<nmax;++j)
 		{
-		   PyList_SetItem(row,j,PyFloat_AsDouble(Tab[i][j]));
+		   PyList_SetItem(row,j,PyFloat_FromDouble(Tab[i][j]));
 		}
 		PyList_SetItem(pyTab,i,row);
 	    }
@@ -2379,14 +2381,14 @@ SIP_PYLIST GetChromTrac(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 	    emax = PyFloat_AsDouble(a2);
 
 	   
-	    GetChromTrac(Nb, Nbtour, emax, &xix, &xiz)
+	    GetChromTrac(Nb, Nbtour, emax, &xix, &xiz);
 
-	    PyObject * PyRet = PyList_New(2);
+	    PyObject * pyRet = PyList_New(2);
 
-	    PyList_SetItem(PyRet, 0, PyFloat_FromDouble(xix));
-	    PyList_SetItem(PyRet, 1, PyFloat_FromDouble(xiz));
+	    PyList_SetItem(pyRet, 0, PyFloat_FromDouble(xix));
+	    PyList_SetItem(pyRet, 1, PyFloat_FromDouble(xiz));
 
-	    return PyRet;
+	    return pyRet;
 
 	    Py_END_ALLOW_THREADS
 	}
@@ -2407,9 +2409,9 @@ SIP_PYLIST GetChromTrac(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 //  */
 SIP_PYLIST track(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %MethodCode
-	int       i;
 	long int  lastpos, lastn;
 	double    ic1, ic2, ic3, ic4, dp, f_rf;
+	long nmax, floqs;
 
         if (!PyString_Check(a0) || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3)|| !PyNumber_Check(a4)|| !PyNumber_Check(a5) 
                                                       || (nmax = PyLong_AsLong(a6))<1 || (floqs = PyLong_AsLong(a7))<0 || !PyNumber_Check(a8) )
@@ -2471,10 +2473,10 @@ SIP_PYLIST track(SIP_PYLIST);
 
 	   for (i=0;i<6;++i)
 	   {
-		PyList_SetItem(pyRet,i, PyFloat_AsDouble(x[i]));
+		PyList_SetItem(pyRet,i, PyFloat_FromDouble(x[i]));
 	    }
 
-	    return PyRet;
+	    return pyRet;
 
 	    Py_END_ALLOW_THREADS
 	}
@@ -2514,10 +2516,10 @@ SIP_PYLIST GetTrack(SIP_PYOBJECT, SIP_PYOBJECT);
 
 	   for (i=0;i<n;++i)
 	   {
-		PyList_SetItem(pyX, i, PyFloat_AsDouble(x[i]));
-		PyList_SetItem(pyPx,i, PyFloat_AsDouble(px[i]));
-		PyList_SetItem(pyY, i, PyFloat_AsDouble(y[i]));
-		PyList_SetItem(pyPy,i, PyFloat_AsDouble(py[i]));
+		PyList_SetItem(pyX, i, PyFloat_FromDouble(x[i]));
+		PyList_SetItem(pyPx,i, PyFloat_FromDouble(px[i]));
+		PyList_SetItem(pyY, i, PyFloat_FromDouble(y[i]));
+		PyList_SetItem(pyPy,i, PyFloat_FromDouble(py[i]));
 	   }
 
 	   PyList_SetItem(pyRet,0, pyX);
@@ -2525,7 +2527,7 @@ SIP_PYLIST GetTrack(SIP_PYOBJECT, SIP_PYOBJECT);
 	   PyList_SetItem(pyRet,2, pyY);
 	   PyList_SetItem(pyRet,3, pyPy);
 
-	   return PyRet;
+	   return pyRet;
 
 	   Py_END_ALLOW_THREADS
 	}
@@ -2536,7 +2538,7 @@ SIP_PYOBJECT getdynap(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 %MethodCode
 	double r, phi, delta, eps;
 	long nturn;
-	bool floqs;
+	bool floqs=false;
 
 
         if ( !PyNumber_Check(a0)|| !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3)|| (nturn = PyLong_AsLong(a4))<1 || !PyBool_Check(a5) )
@@ -2552,14 +2554,14 @@ SIP_PYOBJECT getdynap(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 	    phi   = PyFloat_AsDouble(a1);
 	    delta = PyFloat_AsDouble(a2);
 	    eps   = PyFloat_AsDouble(a3);
-	    floqs = PyBool_AsBool(a5);
+	    if (a5 == Py_True) floqs = true;
 	   
 
-	    getdynap(r, phi, delta, eps, nturn, floqs)
+	    getdynap(r, phi, delta, eps, nturn, floqs);
 
 	    PyObject * pyRet = PyFloat_FromDouble(r);
 
-	    return PyRet;
+	    return pyRet;
 
 	    Py_END_ALLOW_THREADS
 	}
@@ -2570,9 +2572,9 @@ void misalign_rms_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, S
 %MethodCode
 	double dx_rms, dy_rms, dr_rms;
 	long Fnum, Knum;
-	bool new_rnd;
+	bool new_rnd=false;
 
-        if ( (Fnum = PyLong_AsLong(a0))<1)|| (Knum = PyLong_AsLong(a1))<1|| !PyNumber_Check(a2)|| !PyNumber_Check(a3)|| !PyNumber_Check(a4) || !PyBool_Check(a5) )
+        if ( (Fnum = PyLong_AsLong(a0))<1 || (Knum = PyLong_AsLong(a1))<1|| !PyNumber_Check(a2)|| !PyNumber_Check(a3)|| !PyNumber_Check(a4) || !PyBool_Check(a5) )
         {
             sipIsErr = 1;
         }
@@ -2584,7 +2586,7 @@ void misalign_rms_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, S
 	    dy_rms = PyFloat_AsDouble(a3);
 	    dr_rms = PyFloat_AsDouble(a4);
 
-	    new_rnd = PyBool_AsBool(a5);
+	    if (a5 == Py_True) new_rnd = true;
 	   
 	    misalign_rms_elem(Fnum, Knum, dx_rms, dy_rms, dr_rms, new_rnd);
 
@@ -2598,7 +2600,7 @@ void misalign_sys_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, S
 	double dx_sys, dy_sys, dr_sys;
 	long Fnum, Knum;
 
-        if ( (Fnum = PyLong_AsLong(a0))<1)|| (Knum = PyLong_AsLong(a1))<1|| !PyNumber_Check(a2)|| !PyNumber_Check(a3)|| !PyNumber_Check(a4) )
+        if ( (Fnum = PyLong_AsLong(a0))<1 || (Knum = PyLong_AsLong(a1))<1|| !PyNumber_Check(a2)|| !PyNumber_Check(a3)|| !PyNumber_Check(a4) )
         {
             sipIsErr = 1;
         }
@@ -2623,7 +2625,7 @@ void misalign_rms_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 	long Fnum;
 	bool new_rnd;
 
-        if ( (Fnum = PyLong_AsLong(a0))<1) || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) || !PyBool_Check(a4) )
+        if ( (Fnum = PyLong_AsLong(a0))<1  || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) || !PyBool_Check(a4) )
         {
             sipIsErr = 1;
         }
@@ -2635,7 +2637,7 @@ void misalign_rms_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 	    dy_rms = PyFloat_AsDouble(a2);
 	    dr_rms = PyFloat_AsDouble(a3);
 
-	    new_rnd = PyBool_AsBool(a5);
+	    if (a4 == Py_True) new_rnd = true;
 	   
 	    misalign_rms_fam(Fnum, dx_rms, dy_rms, dr_rms, new_rnd);
 
@@ -2649,7 +2651,7 @@ void misalign_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 	double dx_sys, dy_sys, dr_sys;
 	long Fnum;
 
-        if ( (Fnum = PyLong_AsLong(a0))<1)|| !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) )
+        if ( (Fnum = PyLong_AsLong(a0))<1 || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) )
         {
             sipIsErr = 1;
         }
@@ -2661,7 +2663,7 @@ void misalign_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 	    dy_sys = PyFloat_AsDouble(a2);
 	    dr_sys = PyFloat_AsDouble(a3);
 	   
-	    misalign_sys_fam(Fnum dx_sys, dy_sys, dr_sys);
+	    misalign_sys_fam(Fnum, dx_sys, dy_sys, dr_sys);
 
 	    Py_END_ALLOW_THREADS
 	}
@@ -2674,7 +2676,7 @@ void misalign_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, S
 	long type;
 	bool new_rnd;
 
-        if ( (type = PyLong_AsLong(a0))<1) || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) || !PyBool_Check(a4) )
+        if ( (type = PyLong_AsLong(a0))<1 || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) || !PyBool_Check(a4) )
         {
             sipIsErr = 1;
         }
@@ -2686,7 +2688,7 @@ void misalign_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, S
 	    dy_rms = PyFloat_AsDouble(a2);
 	    dr_rms = PyFloat_AsDouble(a3);
 
-	    new_rnd = PyBool_AsBool(a5);
+	    if (a4 == Py_True) new_rnd = true;
 	   
 	    misalign_rms_type(type, dx_rms, dy_rms, dr_rms, new_rnd);
 
@@ -2700,7 +2702,7 @@ void misalign_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 	double dx_sys, dy_sys, dr_sys;
 	long type;
 
-        if ( (type = PyLong_AsLong(a0))<1)|| !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) )
+        if ( (type = PyLong_AsLong(a0))<1 || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) )
         {
             sipIsErr = 1;
         }
@@ -2712,10 +2714,288 @@ void misalign_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 	    dy_sys = PyFloat_AsDouble(a2);
 	    dr_sys = PyFloat_AsDouble(a3);
 	   
-	    misalign_sys_type(type dx_sys, dy_sys, dr_sys);
+	    misalign_sys_type(type, dx_sys, dy_sys, dr_sys);
 
 	    Py_END_ALLOW_THREADS
 	}
 %End
+
+// ======================= Not yet documented
+SIP_PYLIST getSextList();
+%MethodCode
+
+        PyObject * list;
+
+        if ((list = PyList_New(0)))
+        {
+            Py_BEGIN_ALLOW_THREADS
+            for (int i=0 ; i<=globval.Cell_nLoc ;i++)
+            {
+	      if (Cell[i].Elem.Pkind == Mpole && Cell[i].Elem.M->n_design==Sext)
+                PyList_Append(list, PyLong_FromLong(i));
+            }
+            Py_END_ALLOW_THREADS
+            return list;
+        }
+        else
+        {
+            // PyList_New() will have raised the exception.
+            sipIsErr = 1;
+            return NULL;
+        }
+%End
+
+//SIP_PYLIST findM44(SIP_PYOBJECT);
+//%MethodCode
+//
+//	PyObject * 435;
+ //   % optimal differentiation step - Numerical Recipes
+//	double d = 6.055454452393343e-006;
+//	if (PyList_Check(a0))
+//	{
+	    
+
+
+SIP_PYLIST findM44_M(SIP_PYOBJECT);
+%MethodCode
+// Replce them by Elem_Pass_M ? No because Cell[i].BeamPos changed but Insertion_Pass_M should be added
+	Matrix mat;
+	UnitMat(4, mat);
+	int i, j, k;
+
+	PyObject * ret;
+
+	if (PyLong_Check(a0))
+	{
+	    long elem = PyLong_AsLong(a0);
+	    if (elem < 1 || elem > globval.Cell_nLoc) return NULL;
+	    else
+	    {
+		ret = PyList_New(4);
+		for (i=0; i<3; ++i)
+		{
+		    PyObject * row = PyList_New(4);
+		    for (j=0; j<3; ++j)
+		    {
+	    		if (Cell[elem].Elem.Pkind == drift)
+			    PyList_SetItem(row, j, PyFloat_FromDouble(Cell[elem].Elem.D->D55[i][j]));
+	    		else if (Cell[elem].Elem.Pkind == Wigl)
+			    PyList_SetItem(row, j, PyFloat_FromDouble(Cell[elem].Elem.W->W55[i][j]));
+	    		else if (Cell[elem].Elem.Pkind == Mpole)
+			{
+			    MulLMat(4,Cell[i].Elem.M->AU55, mat);
+			    MulLMat(4,Cell[i].Elem.M->AD55, mat);
+			    PyList_SetItem(row, j, PyFloat_FromDouble(mat[i][j]));
+			}
+			else
+			    PyList_SetItem(row, j, PyFloat_FromDouble(mat[i][j]));
+		    }
+		    PyList_SetItem(ret, i, row);
+		}
+		return ret;
+	    }
+	}
+	else if (PyList_Check(a0))
+	{
+	    long nSize = PyList_Size(a0);
+	    ret = PyList_New(nSize-1);
+	    
+	    for (i=0; i<nSize-1; ++i)
+	    {
+		long i0 = PyLong_AsLong(PyList_GetItem(a0,i));
+		long i1 = PyLong_AsLong(PyList_GetItem(a0,i+1));
+		if (i1 > i0)
+		{
+		    PyObject * trmat = PyList_New(4);
+		    for (j=i0; j<=i1; j++)
+		    {
+	    		if (Cell[i].Elem.Pkind == drift)
+			    MulLMat(4,Cell[i].Elem.D->D55,mat);
+	    		else if (Cell[i].Elem.Pkind == Wigl)
+			    MulLMat(4,Cell[i].Elem.W->W55,mat);
+	    		else if (Cell[i].Elem.Pkind == Mpole)
+			{
+			    MulLMat(4,Cell[i].Elem.M->AU55, mat);
+			    MulLMat(4,Cell[i].Elem.M->AD55, mat);
+			}
+		    }
+		    for (k=0; k<4; ++i)
+		    {
+		        PyObject * row = PyList_New(4);
+		        for (j=0; j<4; ++j)
+		        {
+			   PyList_SetItem(row, j, PyFloat_FromDouble(mat[k][j]));
+		        }
+			PyList_SetItem(trmat, k, row);
+		    }
+		    PyList_SetItem(ret, i, trmat);
+		}
+		else
+		{
+		    PyObject * trmat = PyList_New(4);
+		    for (j=i0; j<=globval.Cell_nLoc; j++)
+		    {
+	    		if (Cell[i].Elem.Pkind == drift)
+			    MulLMat(4,Cell[i].Elem.D->D55,mat);
+	    		else if (Cell[i].Elem.Pkind == Wigl)
+			    MulLMat(4,Cell[i].Elem.W->W55,mat);
+	    		else if (Cell[i].Elem.Pkind == Mpole)
+			{
+			    MulLMat(4,Cell[i].Elem.M->AU55, mat);
+			    MulLMat(4,Cell[i].Elem.M->AD55, mat);
+			}
+		    }
+		    for (j=1; j<=i1; j++)
+		    {
+	    		if (Cell[i].Elem.Pkind == drift)
+			    MulLMat(4,Cell[i].Elem.D->D55,mat);
+	    		else if (Cell[i].Elem.Pkind == Wigl)
+			    MulLMat(4,Cell[i].Elem.W->W55,mat);
+	    		else if (Cell[i].Elem.Pkind == Mpole)
+			{
+			    MulLMat(4,Cell[i].Elem.M->AU55, mat);
+			    MulLMat(4,Cell[i].Elem.M->AD55, mat);
+			}
+		    }
+		    for (k=0; k<4; ++i)
+		    {
+		        PyObject * row = PyList_New(4);
+		        for (j=0; j<4; ++j)
+		        {
+			    PyList_SetItem(row, j, PyFloat_FromDouble(mat[k][j]));
+		        }
+			PyList_SetItem(trmat, k, row);
+		    }
+		    PyList_SetItem(ret, i, trmat);
+		} // if i0 < i1
+	    } // for i
+	    return ret;
+	} // if list
+
+%End
+
+
+// void Elem_Pass(const long i, ss_vect<T> &x)
+SIP_PYOBJECT Elem_Pass(SIP_PYOBJECT, SIP_PYOBJECT);
+%MethodCode
+	int elem;
+	ss_vect<double> x;
+	PyObject * ret;
+	int i;
+	
+        if ((elem=PyLong_AsLong(a0)) < 1 || !PyList_Check(a1) )
+        {
+            sipIsErr = 1;
+        }
+        else
+        {
+            Py_BEGIN_ALLOW_THREADS
+
+	    for (i=0; i<6; i++)  x[i] = PyFloat_AsDouble(PyList_GetItem(a1,i));
+	   
+	    Elem_Pass(elem, x);
+
+	    ret = PyList_New(6);
+
+	    for (i=0; i<6; i++)  PyList_SetItem(ret, i, PyFloat_FromDouble(x[i]));
+
+	    return ret;
+
+	    Py_END_ALLOW_THREADS
+	}
+%End
+
+SIP_PYLIST findM44(SIP_PYOBJECT, SIP_PYOBJECT);
+%MethodCode
+	ss_vect<double> x0, x11, x12, x21, x22, x31, x32, x41, x42;
+	double dp  = 6.055454452393343e-006;
+	PyObject * ret;
+	int i,j,k;
+	
+        if ( !(PyList_Check(a0)) || !PyList_Check(a1) )
+        {
+            sipIsErr = 1;
+        }
+        else
+        {
+            Py_BEGIN_ALLOW_THREADS
+
+	    for (i=0; i<4; i++)  
+	    {
+		x0[i] = PyFloat_AsDouble(PyList_GetItem(a1,i));
+		x11[i] = x0[i]; x12[i] = x0[i];
+		x21[i] = x0[i]; x22[i] = x0[i];
+		x31[i] = x0[i]; x32[i] = x0[i];
+		x41[i] = x0[i]; x42[i] = x0[i];
+	    }
+	    x11[4]=0; x12[4]=0; x11[5]=0; x12[5]=0;
+	    x21[4]=0; x22[4]=0; x21[5]=0; x22[5]=0;
+	    x31[4]=0; x32[4]=0; x31[5]=0; x32[5]=0;
+	    x41[4]=0; x42[4]=0; x41[5]=0; x42[5]=0;
+
+	    x11[0] -= dp; x12[0] += dp;
+	    x21[1] -= dp; x22[1] += dp;
+	    x31[2] -= dp; x32[2] += dp;
+	    x41[3] -= dp; x42[3] += dp;
+
+	    long nSize = PyList_Size(a0);
+	    ret = PyList_New(nSize-1);
+	    
+	    for (i=0; i<nSize-1; ++i)
+	    {
+		long i0 = PyLong_AsLong(PyList_GetItem(a0,i));
+		long i1 = PyLong_AsLong(PyList_GetItem(a0,i+1));
+		PyObject * trmat = PyList_New(4);
+		PyObject * rows[4];
+		for (k=0; k<4; ++k) rows[k] = PyList_New(4);
+		if (i1 > i0)
+		{
+		    for (j=i0; j<=i1; j++)
+		    {
+	    		Elem_Pass(j, x11);Elem_Pass(j, x12);
+	    		Elem_Pass(j, x21);Elem_Pass(j, x22);
+	    		Elem_Pass(j, x31);Elem_Pass(j, x32);
+	    		Elem_Pass(j, x41);Elem_Pass(j, x42);
+		    }
+
+		}
+		else
+		{
+		    for (j=i0; j<=globval.Cell_nLoc; j++)
+		    {
+	    		Elem_Pass(j, x11);Elem_Pass(j, x12);
+	    		Elem_Pass(j, x21);Elem_Pass(j, x22);
+	    		Elem_Pass(j, x31);Elem_Pass(j, x32);
+	    		Elem_Pass(j, x41);Elem_Pass(j, x42);
+		    }
+		    for (j=1; j<=i1; j++)
+		    {
+	    		Elem_Pass(j, x11);Elem_Pass(j, x12);
+	    		Elem_Pass(j, x21);Elem_Pass(j, x22);
+	    		Elem_Pass(j, x31);Elem_Pass(j, x32);
+	    		Elem_Pass(j, x41);Elem_Pass(j, x42);
+		    }
+		} // if i0 < i1
+		for (k=0; k<4; ++k)
+		{
+		    PyList_SetItem(rows[k], 0, PyFloat_FromDouble((x12[k]-x11[k])/(2.0*dp)));
+		    PyList_SetItem(rows[k], 1, PyFloat_FromDouble((x22[k]-x21[k])/(2.0*dp)));
+		    PyList_SetItem(rows[k], 2, PyFloat_FromDouble((x32[k]-x31[k])/(2.0*dp)));
+		    PyList_SetItem(rows[k], 3, PyFloat_FromDouble((x42[k]-x41[k])/(2.0*dp)));
+		}
+
+		for (k=0; k<4; ++k) PyList_SetItem(trmat, k, rows[k]);
+
+		PyList_SetItem(ret, i, trmat);
+
+	    } // for i
+	    return ret;
+
+	    Py_END_ALLOW_THREADS
+	}
+%End
+
+
+
 
 
