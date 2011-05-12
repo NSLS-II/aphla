@@ -11,8 +11,8 @@ used by HLA.
 import os, sys
 import re, time
 
-from channelfinder.ChannelFinderClient import ChannelFinderClient
-from channelfinder.Channel import Channel, Property, Tag
+from channelfinder.core.ChannelFinderClient import ChannelFinderClient
+from channelfinder.core.Channel import Channel, Property, Tag
 
 import hla
 
@@ -84,8 +84,8 @@ def test():
         print c.name,
         
 if __name__ == "__main__":
-    out = 'cfa.txt'
-    dump_hla_cfa(out)
-    initialize_cfs(out)
+    #out = 'cfa.txt'
+    #dump_hla_cfa(out)
+    if len(sys.argv) > 1 and os.path.exists(sys.argv[1]): initialize_cfs(sys.argv[1])
     #test()
     

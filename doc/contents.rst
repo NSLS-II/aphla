@@ -39,42 +39,50 @@ symbol                           description
 :mod:`hla.hlalib`
 *****************
 
-======================================== ==================================================
-symbol                                   description                                       
-======================================== ==================================================
+======================================== =========================================================================
+symbol                                   description                                                              
+======================================== =========================================================================
+:func:`~hla.hlalib.addGroup`             add a new group, *group* should be plain string, characters in
+:func:`~hla.hlalib.addGroupMembers`      Add a new member to a existing group    
 :func:`~hla.hlalib.eget`                 easier get with element name(s)         
 :func:`~hla.hlalib.eput`                 easier put                              
-:func:`~hla.hlalib.addGroup`             add a new group, *group* should be plain string, characters in
-:func:`~hla.hlalib.addGroupMembers`      Add a new member to a existing group     
-:func:`~hla.hlalib.getBeta`              get the beta function from stored data   
-:func:`~hla.hlalib.getChromaticity`      TODO                         
-:func:`~hla.hlalib.getChromaticityRm`    TODO                                 
-:func:`~hla.hlalib.getCurrentMode`       TODO
-:func:`~hla.hlalib.getDispersion`        get the dispersion                       
-:func:`~hla.hlalib.getElements`          return list of elements, given cell girder and sequence.
-:func:`~hla.hlalib.getEta`               get the dispersion from stored data      
-:func:`~hla.hlalib.getFftTune`           get tune from FFT                        
+:func:`~hla.hlalib.getBeta`              get the beta function from stored data  
+:func:`~hla.hlalib.getChromaticity`      get chromaticity                        
+:func:`~hla.hlalib.getChromaticityRm`    TODO                                    
+:func:`~hla.hlalib.getCurrentMode`       TODO                                    
+:func:`~hla.hlalib.getDispersion`        get the dispersion                      
+:func:`~hla.hlalib.getElements`          return list of elements.                
+:func:`~hla.hlalib.getEta`               get the dispersion from stored data     
+:func:`~hla.hlalib.getFftTune`           get tune from FFT                       
+:func:`~hla.hlalib.getFullOrbit`         Return orbit                            
 :func:`~hla.hlalib.getGroupMembers`      Get all elements in a group. If group is a list, consider which op:
 :func:`~hla.hlalib.getGroups`            Get all groups own these elements, '*' returns all possible groups,
-:func:`~hla.hlalib.getLocations`         Get the location of a group, either returned as a dictionary in
-:func:`~hla.hlalib.getModes`             TODO                                     
+:func:`~hla.hlalib.getLocations`         Get the location of a group, either returned as a dictionary in which the
+:func:`~hla.hlalib.getModes`             TODO                                    
 :func:`~hla.hlalib.getNeighbors`         Get a list of n elements belongs to group. The list is sorted along s
-:func:`~hla.hlalib.getPhase`             get the phase from stored data           
+:func:`~hla.hlalib.getOrbit`             Return orbit                            
+:func:`~hla.hlalib.getPhase`             get the phase from stored data          
+:func:`~hla.hlalib.getRbChannels`        get the pv names for a list of elements 
+:func:`~hla.hlalib.getSpChannels`        get the pv names for a list of elements 
 :func:`~hla.hlalib.getStepSize`          Return default stepsize of a given element
-:func:`~hla.hlalib.getTune`              get tune                                 
-:func:`~hla.hlalib.getTuneRm`            TODO                                     
-:func:`~hla.hlalib.getTunes`             get tunes                                
-:func:`~hla.hlalib.removeGroup`          Remove a group if it is empty            
-:func:`~hla.hlalib.removeGroupMembers`   Remove a member from group               
-:func:`~hla.hlalib.removeLatticeMode`    TODO                                     
-:func:`~hla.hlalib.saveBeta`             TODO                                     
-:func:`~hla.hlalib.saveChromaticity`     TODO                                     
-:func:`~hla.hlalib.saveChromaticityRm`   TODO                                     
-:func:`~hla.hlalib.saveDispersion`       TODO                                     
-:func:`~hla.hlalib.savePhase`            TODO                                     
-:func:`~hla.hlalib.saveTune`             TODO                                     
-:func:`~hla.hlalib.saveTuneRm`           TODO                                     
-======================================== =====================================================================
+:func:`~hla.hlalib.getTune`              get tune                                
+:func:`~hla.hlalib.getTuneRm`            TODO                                    
+:func:`~hla.hlalib.getTunes`             get tunes                               
+:func:`~hla.hlalib.levenshtein_distance` Find the Levenshtein distance between two strings.
+:func:`~hla.hlalib.parseElementName`     searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
+:func:`~hla.hlalib.removeGroup`          Remove a group if it is empty           
+:func:`~hla.hlalib.removeGroupMembers`   Remove a member from group              
+:func:`~hla.hlalib.reset_trims`          reset all trims in group "TRIMX" and "TRIMY"
+:func:`~hla.hlalib.saveBeta`             TODO                                    
+:func:`~hla.hlalib.saveChromaticity`     TODO                                    
+:func:`~hla.hlalib.saveChromaticityRm`   TODO                                    
+:func:`~hla.hlalib.saveDispersion`       TODO                                    
+:func:`~hla.hlalib.saveMode`             Save current states to a new mode       
+:func:`~hla.hlalib.savePhase`            TODO                                    
+:func:`~hla.hlalib.saveTune`             TODO                                    
+:func:`~hla.hlalib.saveTuneRm`           TODO                                    
+======================================== =========================================================================
+
 
 :mod:`hla.measorm`
 ******************
