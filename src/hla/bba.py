@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-import ca
 import matplotlib.pylab as plt
 import numpy as np
 import time
 import os
 import sys
 import pickle
+
+from catools import caget, caput
 
 """
 Remember:
@@ -17,49 +18,7 @@ Remember:
 """
 
 
-def getFakeOrbit(sindex, goldenx, goldeny):
-    """
-    Get the orbit with respect to golden orbit.
-    """
-    obx = np.zeros(len(sindex), 'd')
-    oby = np.zeros(len(sindex), 'd')
-
-    x = ca.Get('SR:C00-Glb:G00<ORBIT:00>RB:X')
-    y = ca.Get('SR:C00-Glb:G00<ORBIT:00>RB:Y')
-    for i, si in enumerate(sindex):
-        obx[i] = x[si]
-        oby[i] = y[si]
-        # offset w.r.t golden orbit
-        obx[i] = obx[i] - goldenx[i]
-        oby[i] = oby[i] - goldeny[i]
-    del x,y
-    return obx, oby
-
-def getOrbit(sindex):
-    x = ca.Get('SR:C00-Glb:G00<ORBIT:00>RB:X')
-    y = ca.Get('SR:C00-Glb:G00<ORBIT:00>RB:Y')
-    #print x, y
-    obx = np.zeros(len(sindex), 'd')
-    oby = np.zeros(len(sindex), 'd')
-    for i, si in enumerate(sindex):
-        #print x[i], y[i]
-        obx[i] = x[si]
-        oby[i] = y[si]
-    del x,y
-    return obx, oby
-
-def randomGoldenOrbit(n, xampl, yampl):
-    #goldenx = (2.0*np.random.rand(n) - 1) * xampl
-    #goldeny = (2.0*np.random.rand(n) - 1) * yampl
-    goldenx = np.zeros(n, 'd')
-    goldeny = np.zeros(n, 'd')
-    r = open('bba-random.txt').readlines()
-
-    for i,s in enumerate(r):
-        goldenx[i] = float(s)
-    return goldenx, goldeny
-
-def filtSmallSlope(x, y, varcut=1e10):
+def _filtSmallSlope(x, y, varcut=1e10):
     """
     Filt half of the points with small slope
     """
@@ -91,126 +50,155 @@ def filtSmallSlope(x, y, varcut=1e10):
     return np.array(a), np.array(b), bh1, bh2
 
 class BBA:
-    def __init__(self, elementTable):
+    def __init__(self):
         """
         Read config from a big table, link quadrupole, bpm and correctors
         """
-        self.bpmCa, self.bpmIndex, self.bpmS = [], [], []
-        self.quadCa, self.quadIndex, self.quadS = [], [], []
-        self.hcmCa, self.hcmIndex, self.hcmS = [], [], []
-        self.vcmCa, self.vcmIndex, self.vcmS = [], [], []
-        self.hcmRange, self.vcmRange = [], []
+        # bpm,trim,quad triplet
+        self._bpm  = []
+        self._quad = []
+        self._trim = []
+        self._bcqpv   = []
+        self._rawdkick = None
+        self._rawdqk1  = None
+        self._rawdorb  = None
 
-        rec = open(elementTable, 'r').readlines()
-        for s in rec:
-            r = s.split()
-            self.bpmCa.append(r[0])
-            self.bpmIndex.append(int(r[1]))
-            self.bpmS.append(float(r[2]))
+    def _setBpm(self, bpmpv, bpmname):
+        """
+        clear existing bpm, use the new set
+        """
+        self._bpm = []
+        N = max([len(bpmname), len(bpmpv)])
+        for i in range(N):
+            self._bpm.append([bpmpv[i], bpmname[i]])
 
-            self.quadCa.append(r[3])
-            self.quadIndex.append(int(r[4]))
-            self.quadS.append(float(r[5]))
+    def _setTrim(self, trimpv, trimname, dkick):
+        """
+        clear existing trim, use the new set
+        """
+        self._trim = []
+        N = max([len(trimname), len(trimpv), len(dkick)])
+        for i in range(N):
+            self._trim.append([trimpv[i], trimpv[i], dkick[i]])
 
-            self.hcmCa.append(r[6])
-            self.hcmIndex.append(int(r[7]))
-            self.hcmS.append(float(r[8]))
-            self.hcmRange.append([float(r[9]), float(r[10])])
+    def _setQuad(self, quadpv, quadname, dqk1):
+        """
+        clear existing quad, use the new set
+        """
+        self._quad = []
+        N = max([len(quadname), len(quadpv), len(dqk1)])
+        for i in range(N):
+            self._bpm.append([quadpv[i], quadname[i], dqk1[i]])
 
-            self.vcmCa.append(r[11])
-            self.vcmIndex.append(int(r[12]))
-            self.vcmS.append(float(r[13]))
-            self.vcmRange.append([float(r[14]), float(r[15])])
-        del rec
-        self.NQUAD = self.NBPM = len(self.bpmCa)
-        # the change of each quad
-        self.quadK = [0.0] * self.NQUAD
-        self.quadDk = [0.001] * self.NQUAD
-        # the range of kicker
-        #self.hcmRange = [[-0.0005, 0.0005]] * len(self.hcmCa)
-        #self.vcmRange = [[-0.0005, 0.0005]] * len(self.vcmCa)
-        self.goldenx, self.goldeny = randomGoldenOrbit(self.NBPM, 1.0e-3, .0e-3)
-        self.newgoldenx = self.goldenx.copy()
-        self.newgoldeny = self.goldeny.copy()
-        #print self.newgoldenx, self.newgoldeny
+    def appendBpmQuadTrim(self, bpms, quads, trims):
+        """
+        append triplet. each are (pv, name) pair.
 
-        self.nkick = 5
-        # orbit before/after changing Quad
-        self.orbit0 = np.zeros((self.nkick, self.NBPM), 'd')
-        self.orbit1 = np.zeros((self.nkick, self.NBPM), 'd')
-
-        # the corrector strength making beam go through center of quad
-        self.hcmProper = np.zeros(self.NQUAD, 'd')
-        self.vcmProper = np.zeros(self.NQUAD, 'd')
-
-        self.hcmOriginal = np.zeros(self.NQUAD, 'd')
-        self.vcmOriginal = np.zeros(self.NQUAD, 'd')
-
-        self.dt = 3 # 3 seconds delay
-
-    def alignBpmQuad(self, iquad):
-        if iquad >= self.NQUAD: return None
-        #self.quadK[iquad] = ca.Get(self.quadCa[iquad] + ":RB")
-        #self.hcmOriginal[iquad] = ca.Get(self.hcmCa[iquad] + ":RB")
-        self.quadK[iquad] = ca.Get(self.quadCa[iquad] + ":SP")
-        self.hcmOriginal[iquad] = ca.Get(self.hcmCa[iquad] + ":SP")
-
-        truekick = np.zeros((self.nkick, 2), 'd')
-        # list of orbit corrector strength
-        dxp = np.linspace(self.hcmRange[iquad][0], self.hcmRange[iquad][1], 
-                          self.nkick)
-
-        # get orbit at ([kick], qk0)
-        print "Kick@qk=%5.2f" % self.quadK[iquad],
-        for i,k in enumerate(dxp): 
-            print k,
-            ca.Put(self.hcmCa[iquad] + ":SP", k)
-            time.sleep(self.dt)
-            #truekick[i, 0] = ca.Get(self.hcmCa[iquad] + ":RB")
-            truekick[i, 0] = ca.Get(self.hcmCa[iquad] + ":SP")
-            obx, oby = getFakeOrbit(self.bpmIndex, self.newgoldenx, self.newgoldeny)
-            for j,x in enumerate(obx):
-                self.orbit0[i,j] = obx[j]
-            del obx, oby
-        print ""
-
-        # adjust Quad (qk0 -> qk0+delta)
-        newquadk = self.quadK[iquad]*(1+self.quadDk[iquad])
-        ca.Put(self.hcmCa[iquad] + ":SP", self.hcmOriginal[iquad])
-        ca.Put(self.quadCa[iquad] + ":SP", newquadk)
-        time.sleep(self.dt)
-        print "Change",self.quadCa[iquad],"from",self.quadK[iquad],"to",newquadk
-        print "Tune Changed X:", ca.Get('SR:C00-Glb:G00<TUNE:00>RB:X')
-        print "Tune Changed Y:", ca.Get('SR:C00-Glb:G00<TUNE:00>RB:Y')
+        - *bpms* ['bpmpv', 'bpmname']
+        - *quads* ['quadpv', 'quadname', (dk1, dk1, ...)]
+        - *trims* ['trimpv', 'trimname', (dkick, dkick, ...)]
+        """
+        self._bpm.append(bpms)
+        self._quad.append(quads)
+        self._trim.append(trims)
         
-        # get orbit at ([kick], qk0+delta)
-        print "Kick@qk1=%5.2f" % newquadk,
-        for i,k in enumerate(dxp): 
-            print k,
-            ca.Put(self.hcmCa[iquad] + ":SP", k)
-            time.sleep(self.dt)
-            #truekick[i, 1] = ca.Get(self.hcmCa[iquad] + ":RB")
-            truekick[i, 1] = ca.Get(self.hcmCa[iquad] + ":SP")
-            obx, oby = getFakeOrbit(self.bpmIndex, self.newgoldenx, self.newgoldeny)
-            for j,x in enumerate(obx):
-                self.orbit1[i,j] = obx[j]
-            del obx, oby
-        print ""
+    def setBpmQuadTrim(self, bpms, quads, trims):
+        """
+        """
+        self._bpm = bpms
+        self._quad = quads
+        self._trim = trims
+    
+    def _set_wait_stable(
+        self, pvs, values, monipv, diffstd = 1e-6, timeout=120):
+        """
+        set pv to a value, waiting for timeout or the std of monipv is
+        greater than diffstd
+        """
+        if isinstance(monipv, str) or isinstance(monipv, unicode):
+            pvlst = [monipv]
+        else:
+            pvlst = monipv[:]
+
+        v0 = np.array(caget(monipv))
+        caput(pvs, values)
+        dt = 0
+        while dt < timeout:
+            time.sleep(2)
+            v1 = np.array(caget(monipv))
+            dt = dt + 2.0
+            if np.std(v1 - v0) > diffstd: break
+        return dt
+
+
+    def _calculateKick(self, dkick, data):
+        # The last column of nbpm is zero quad change
+        ntrim, nquad, nbpm = np.shape(data)
+        k, pick = [], []
+        for i in range(nquad - 1):
+            v = data[:, i, :] - data[:, -1, :]
+            p, res, rank, sigv, rcond = \
+               np.polyfit(dkick, v, 1, full=True)
+            pavg = np.average(np.abs(p[-1,:]))
+            resavg = np.average(np.abs(res))
+            pick_c = np.logical_and(abs(p[-1,:])>pavg, res < resavg)
+            psub = np.compress(pick_c, p, axis=1)
+            k.append(np.average(-psub[-1,:]/psub[-2,:]))
+            pick.append(pick_c)
+        return k, pick
+    
+    def alignBpmQuad(self, iquad):
+        if iquad >= len(self._quad): return None
+
+        quadpv = self._quad[iquad][0]
+        bpmpv  = self._bpm[iquad][0]
+        trimpv = self._trim[iquad][0]
+        #print "BPM: ", caget(bpmpv)
+        
+        # WARNING: reading using sp channel
+        qk1 = caget(quadpv)
+        xp  = caget(trimpv)
+
+        #print xp, qk1
+        
+        full_bpm_pv = [p[0] for p in self._bpm]
+        dqklist = [v for v in self._quad[iquad][2]]
+        dqklist.append(0.0)
+        #print "bpms: ", len(full_bpm_pv)
+        # check how many points in quad and trim
+        ntrimsp = len(self._trim[iquad][2])
+        nquadsp = len(self._quad[iquad][2]) + 1
+
+        # the orbit data is a (ntrim, nquad+1) matrix
+        data = np.zeros((ntrimsp, nquadsp, len(full_bpm_pv)), 'd')
+
+        for i,dqk in enumerate(dqklist):
+            for j,dxp in enumerate(self._trim[iquad][2]):
+                qk2 = dqk + qk1
+                xp2 = dxp + xp
+                dt = self._set_wait_stable(
+                    [quadpv, trimpv], [qk2, xp2], full_bpm_pv)
+                data[j,i,:] = caget(full_bpm_pv)
+
+        dk, pick = self._calculateKick(self._trim[iquad][2], data)
+
+        #print dk[0]+xp
+        self._set_wait_stable(trimpv, xp+dk[0], full_bpm_pv)
+        print "BPM:", caget(bpmpv), self._quad[iquad]
 
         plt.clf()
-        plt.subplot(211)
-        plt.plot(truekick[:,0]*1000, 1000*(self.orbit1 - self.orbit0), 'ro-')
-        plt.xlabel("kick [mrad]")
-        plt.ylabel("dx orbit [mm]")
-        #plt.ylabel(r"$\Delta x(K_0\to K_0+\delta K)~[mm]$")
-        plt.subplot(212)
-        plt.plot(truekick[:,1]*1000, 1000*(self.orbit1 - self.orbit0), 'ro-')
+        plt.plot((xp+np.array(self._trim[iquad][2]))*1000,
+                 1000*(data[:,0,:] - data[:,-1,:]), 'k--')
+        plt.plot((xp+np.array(self._trim[iquad][2]))*1000,
+                 1000*np.compress(pick[0], data[:,0,:] - data[:,-1,:], axis=1), 'ro-')
         plt.xlabel("kick [mrad]")
         plt.ylabel("dx orbit [mm]")
         #plt.ylabel(r"$\Delta x(K_0\to K_0+\delta K)~[mm]$")
         plt.savefig("bba-q%05d-03-bowtie.png" % iquad)
         # change the quadrupole
                 
+        return
+    
         dx = self.orbit1 - self.orbit0
         a, b, isel, iselstrict = filtSmallSlope(truekick[:,1], dx, 1e-12)
 
@@ -375,4 +363,5 @@ if __name__ == "__main__":
 
     print "Tune X:", ca.Get('SR:C00-Glb:G00<TUNE:00>RB:X')
     print "Tune Y:", ca.Get('SR:C00-Glb:G00<TUNE:00>RB:Y')
+    
     

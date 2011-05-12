@@ -57,6 +57,8 @@ root={
 # local catools
 from catools import *
 
+import bba
+
 import lattice
 _lat = lattice.Lattice()
 
