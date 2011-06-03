@@ -15,33 +15,6 @@ from . import _cfa, _lat, TAG_DEFAULT_GET, TAG_DEFAULT_PUT
 
 from catools import caget, caput
 
-def parseElementName(name):
-    """
-    searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
-    girder='G1', cell='C30', symmetry='A'
-
-    Example::
-    
-      >>> parseElementName('CFXH1G1C30A')
-      'C30', 'G1', 'A'
-    """
-    # for NSLS-2 convention of element name
-    a = re.match(r'.+(G\d{1,2})(C\d{1,2})(.)', name)
-    if a:
-        girder   = a.groups()[0]
-        cell     = a.groups()[1]
-        symmetry = a.groups()[2]
-    elif name == "CAVITY":
-        # fix a broken name
-        girder   = "CAVITY"
-        cell     = "CAVITY"
-        symmetry = "CAVITY"
-    else:
-        girder   = 'G0'
-        cell     = 'C00'
-        symmetry = '0'
-    return cell, girder, symmetry
-
 
 def getRbChannels(elemlist, tags = []):
     """
@@ -139,10 +112,13 @@ def eput(element, value):
     """
 
     pvls = _cfa.getElementChannels(element, None, [TAG_DEFAULT_PUT])
+
+    print pvls
     # use the first one of default put, ignore the rest
-    pvl = [pv[0] for pv in pvls]
-    
-    caput(pvl, value)
+    if isinstance(pvls, str):
+        caput(pvls, value)
+    else:
+        caput(pvls, value)
 
 def reset_trims():
     """

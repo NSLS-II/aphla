@@ -160,6 +160,7 @@ def correctOrbit(bpm, trim, **kwargs):
        is Trim. If that BPM or Trim does not have readings from such plane,
        this element should be ignored.
 
+    .. seealso:: `hla.getSubOrm`
     """
     plane = kwargs.get('plane', 'XX')
     

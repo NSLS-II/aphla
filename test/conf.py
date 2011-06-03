@@ -16,6 +16,7 @@ else:
     
 print "= HLA root directory: ", HLA_ROOT
 sys.path.append(os.path.join(HLA_ROOT, 'src'))
+sys.path.append(os.path.join(HLA_ROOT, 'src', 'hla'))
 sys.path.append(os.path.join(HLA_ROOT, 'test'))
 
 __RT=os.environ['HLA_ROOT']

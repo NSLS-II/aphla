@@ -9,116 +9,13 @@ defines lattice related classes and functions.
 import re
 from math import log10
 import shelve
-from . import INF
 import numpy as np
 from fnmatch import fnmatch
 
-#from cothread.catools import caget, caput
 from catools import caget, caput
+from element import Element
+from twiss import Twiss
 
-class Element:
-    """
-    Element
-
-    ==========  ===================================================
-    Variable    Meaning
-    ==========  ===================================================
-    *name*      element name
-    *index*     index
-    *devname*   device name
-    *phylen*    physical length
-    *family*    family
-    *sb*        s position of the entrance
-    *sc*        s position of the middle point
-    *se*        s position of the exit
-    *efflen*    effective length (=send - sbeg, if not across circ)
-    *cell*      cell name
-    *girder*    girder name
-    *symmetry*  symmetry type
-    *sequence*  sequence tuple
-    ==========  ===================================================
-    """
-    def __init__(self, name, **kwargs):
-        #family = '', s_beg = 0.0, s_end = 0.0,
-        #         effective_length = 0, cell = '', girder = '', symmetry = '',
-        #         sequence = [0, 0]):
-        self.name     = name[:]
-        self.devname  = ''
-        self.phylen   = 0.0
-        self.index    = kwargs.get('index', -1)
-        self.family   = kwargs.get('family', None)
-        self.sb       = kwargs.get('sb', 0.0)
-        #self.sc       = kwargs.get('sc', 0.0)
-        self.se       = kwargs.get('se', 0.0)
-        self.efflen   = kwargs.get('efflen', 0.0)
-        self.cell     = kwargs.get('cell')
-        self.girder   = kwargs.get('girder')
-        self.symmetry = kwargs.get('symmetry')
-        self.sequence = kwargs.get('sequence', (0, 0))
-
-        self.sc = 0.5*(self.sb + self.se)
-        
-    def profile(self, vscale=1.0):
-        """
-        - 'QUAD', quadrupole
-        - 'DIPOLE', dipole
-        - 'SEXT', sextupole
-        - ['TRIMX' | 'TRIMY'], corrector
-        - ['BPMX' | 'BPMY'], beam position monitor
-        """
-        b, e = self.sb, self.se
-        h = vscale
-        if self.family == 'QUAD':
-            return [b, b, e, e], [0, h, h, 0], 'k'
-        elif self.family == 'DIPOLE':
-            return [b, b, e, e, b, b, e, e], [0, h, h, -h, -h, h, h, 0], 'k'
-        elif self.family == 'SEXT':
-            return [b, b, e, e], [0, 1.25*h, 1.25*h, 0], 'k'
-        elif self.family in ['TRIMX', 'TRIMY']:
-            return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
-                [0, 0, h, 0, 0], 'r'
-        elif self.family in ['BPMX', 'BPMY']:
-            return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
-                [0, 0, h, 0, 0], 'b'        
-        else:
-            return [b, e], [0, 0], 'k'
-
-    def __str__(self):
-        return "%4d %s %s %6.2f %6.2f" % (
-            self.index, self.name, self.family, self.sb, self.se)
-
-class Twiss:
-    """
-    twiss
-
-    ===============  =======================================================
-    Twiss(Variable)  Description
-    ===============  =======================================================
-    *s*              location
-    *alpha*          alpha
-    *beta*           beta
-    *gamma*          gamma
-    *eta*            dispersion
-    *phi*            phase
-    *elemname*       element name
-    *set*            available data. 'c'/'b'/'e' for center, begin and end.
-                     They can be combined. 'cbe'
-    ===============  =======================================================
-
-    Values are stored for 'bce', i.e. begin/center/entrance, of one
-    element. Depending on the value of *set*, could only partial data are
-    non-zeros.
-    """
-    def __init__(self):
-        self.s     = np.zeros(3, 'd')
-        self.alpha = np.zeros((3, 2), 'd')
-        self.beta  = np.zeros((3, 2), 'd')
-        self.gamma = np.zeros((3, 2), 'd')
-        self.eta   = np.zeros((3, 2), 'd')
-        self.phi   = np.zeros((3, 2), 'd')
-        self.elemname = ''
-        self.set   = ''
-        
 class Lattice:
     """Lattice"""
     # ginore those "element" when construct the lattice object
@@ -128,22 +25,60 @@ class Lattice:
         # group name and its element
         self._group = {}
         # guaranteed in the order of s.
-        self.element = []
+        self._elements = []
         # same order of element
-        self.twiss = []
+        self._twiss = []
         # data set
         self.mode = mode
         self.tune = [ 0.0, 0.0]
         self.chromaticity = [0.0, 0.0]
         self.circumference = 0.0
 
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._elements[key]
+        elif isinstance(key, str) or isinstance(key, unicode):
+            return self._find_element(name=key)
+
+    def _find_element(self, name):
+        for e in self._elements:
+            if e.name == name: return e
+        return None
+
+    def hasElement(self, name):
+        if self._find_element(name): return True
+        else: return False
+
+    def insertElement(self, i, elem):
+        self._elements.insert(i, elem)
+        for g in elem.group:
+            if not g: continue
+            self.addGroupMember(g, elem.name, newgroup=True)
+            
+    def appendElement(self, elem):
+        """
+        append a new element to lattice. callers are responsible for avoiding
+        duplicate elements (call hasElement before).
+        """
+        self._elements.append(elem)
+        for g in elem.group:
+            if not g: continue
+            self.addGroupMember(g, elem.name, newgroup=True)
+            
+    def size(self):
+        """
+        total number of elements, including magnets and diagnostic instruments
+        """
+        return len(self._elements)
+    
     def save(self, fname, dbmode = 'c'):
         """
         call signature::
         
           save(self, fname, dbmode='c')
 
-        save the lattice into binary data, using writing *dbmode*. The exact dataset name is defined by *mode*, default is 'undefined'.
+        save the lattice into binary data, using writing *dbmode*. The exact
+        dataset name is defined by *mode*, default is 'undefined'.
         """
         f = shelve.open(fname, dbmode)
         pref = "lat.%s." % self.mode
@@ -208,84 +143,6 @@ class Lattice:
                 if elem in self._group[parent]: continue
                 self._group[parent].append(elem)
 
-    def importLatticeTable(self, lattable):
-        """
-        call signature::
-        
-          importLatticeTable(lattable)
-
-        Import the table used for Tracy-VirtualIOC. The table has columns
-        in the following order:
-
-        =======   =============================================
-        Index     Description
-        =======   =============================================
-        1         element index in the whole beam line
-        2         channel for read back
-        3         channel for set point (NULL for readonly element)
-        4         element physics name (unique)
-        5         element length (effective)
-        6         s location of its exit
-        7         magnet family(type)
-        8         element device name
-        =======   =============================================
-
-        Data are deliminated by spaces.
-        """
-
-        #print "Importing file:", lattable
-
-        cnt = {'BPM':0, 'BPMX':0, 'BPMY':0, 'TRIM':0, \
-                   'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
-
-        for k in cnt.keys(): self._group[k] = []
-
-        f = open(lattable, 'r').readlines()
-        for s in f[1:]:
-            t = s.split()
-            idx  = int(t[0])     # index
-            rb   = t[1].strip()  # PV readback
-            sp   = t[2].strip()  # PV setpoint
-            phy  = t[3].strip()  # name
-            L    = float(t[4])   # length
-            s2   = float(t[5])   # s_end location
-            grp  = t[6].strip()  # group
-
-            # parse cell/girder/symmetry from name
-            cell, girder, symmetry = parseElementName(phy)
-            self.element.append(Element(phy, grp, 0.0, s2, L,
-                                        cell, girder, symmetry))
-            self.element[-1].index = idx
-
-            # count element numbers in each type
-            if cnt.has_key(grp): cnt[grp] += 1
-
-            if self._group.has_key(grp): self._group[grp].append(phy)
-            else: self._group[grp] = [phy]
-            
-            # in lat_conf_table, used only BPM as groupname, not BPMX/BPMY
-            if grp == 'BPM':
-                if rb[-2:] == '-X':
-                    self.addGroupMember('BPMX', phy)
-                    cnt['BPMX'] += 1
-                elif rb[-2:] == '-Y': 
-                    self._group['BPMY'].append(phy)
-                    cnt['BPMY'] += 1
-                else:
-                    raise ValueError("pv %s pattern not recognized" % rb)
-            if grp[:4] == 'TRIM':
-                self._group['TRIM'].append(phy)
-
-        # adjust s_beg
-        for e in self.element:
-            e.sbeg = e.send - e.efflen
-
-        self.circumference = self.element[-1].send
-        if False:
-            for k,v in self._group.items():
-                print k, len(v)
-        print cnt
-        
     def init_virtac_twiss(self):
         """Only works from virtac.nsls2.bnl.gov"""
         # s location
@@ -313,37 +170,37 @@ class Lattice:
             x.append(x[-1])
 
         #print __file__, len(s), len(betax)
-        for e in self.element:
+        for e in self._elements:
             i = e.index
             #print e.name, e.family, s[i]
             if i >= len(s): 
                 print "Missing element in PV waveform", e.name, e.family
                 continue
-            self.twiss.append(Twiss())
+            self._twiss.append(Twiss())
             # the first one is marker, index > 0
             # PV gets twiss at s_end
-            self.twiss[-1].s[-1]       = s[i]
-            self.twiss[-1].beta[-1,0] = betax[i]
-            self.twiss[-1].beta[-1,1] = betay[i]
-            self.twiss[-1].alpha[-1,0]= alphax[i]
-            self.twiss[-1].alpha[-1,1]= alphay[i]
-            self.twiss[-1].eta[-1,0]  = etax[i]
-            self.twiss[-1].eta[-1,1]  = etay[i]
-            self.twiss[-1].phi[-1,0]  = phix[i]
-            self.twiss[-1].phi[-1,1]  = phiy[i]
+            self._twiss[-1]._s[-1]       = s[i]
+            self._twiss[-1]._beta[-1,0] = betax[i]
+            self._twiss[-1]._beta[-1,1] = betay[i]
+            self._twiss[-1]._alpha[-1,0]= alphax[i]
+            self._twiss[-1]._alpha[-1,1]= alphay[i]
+            self._twiss[-1]._eta[-1,0]  = etax[i]
+            self._twiss[-1]._eta[-1,1]  = etay[i]
+            self._twiss[-1]._phi[-1,0]  = phix[i]
+            self._twiss[-1]._phi[-1,1]  = phiy[i]
 
             # s_beg, assuming i > 0
             if i == 0: k = 0
             else: k = i - 1
-            self.twiss[-1].s[0]       = s[k]
-            self.twiss[-1].beta[0,0] = betax[k]
-            self.twiss[-1].beta[0,1] = betay[k]
-            self.twiss[-1].alpha[0,0]= alphax[k]
-            self.twiss[-1].alpha[0,1]= alphay[k]
-            self.twiss[-1].eta[0,0]  = etax[k]
-            self.twiss[-1].eta[0,1]  = etay[k]
-            self.twiss[-1].phi[0,0]  = phix[k]
-            self.twiss[-1].phi[0,1]  = phiy[k]
+            self._twiss[-1]._s[0]       = s[k]
+            self._twiss[-1]._beta[0,0] = betax[k]
+            self._twiss[-1]._beta[0,1] = betay[k]
+            self._twiss[-1]._alpha[0,0]= alphax[k]
+            self._twiss[-1]._alpha[0,1]= alphay[k]
+            self._twiss[-1]._eta[0,0]  = etax[k]
+            self._twiss[-1]._eta[0,1]  = etay[k]
+            self._twiss[-1]._phi[0,0]  = phix[k]
+            self._twiss[-1]._phi[0,1]  = phiy[k]
             
         # set s_beg
         #print self.twiss
@@ -362,10 +219,14 @@ class Lattice:
             self.addGroup(elem.symmetry)
             self.addGroupMember(elem.symmetry, elem.name)
 
-    def sortElements(self, elemlist):
+    def sortElements(self, elemlist = None):
         """
         sort the element list to the order of *s*
         """
+        if not elemlist:
+            self._elements = sorted(self._elements)
+            return
+        
         ret = []
         for e in self.element:
             if e.name in ret: continue
@@ -418,10 +279,15 @@ class Lattice:
         """
         if not point in ('', 'b', 'c', 'e'):
             raise ValueError("point must be in '', 'b', 'c' and 'e'")
-        
+
+        elem = self._find_element(group)
+        if elem:
+            if point == 'b': return elem, elem.sb
+            else: return elem
+            
         ret, loc = [], []
         #print "... get elements ...", group, len(self.element)
-        for e in self.element:
+        for e in self._elements:
             #print __file__, group, e.name, e.family
             if e.name in ret: continue
             if fnmatch(e.name, group) or fnmatch(e.family, group) or \
@@ -430,7 +296,7 @@ class Lattice:
                 if point == 'b': loc.append(e.sb)
                 elif point == 'e': loc.append(e.se)
                 elif point == 'c': loc.append(e.sc)
-                else: loc.append(e.se)
+                else: loc.append(e.sb)
             else:
                 #print "Not agree", e.name
                 pass
@@ -530,6 +396,17 @@ class Lattice:
             raise ValueError("Group name must be in [a-zA-Z0-9_]+")
             #return False
         else: return False
+
+    def buildGroups(self):
+        """
+        clear the old groups, fill with new data
+        """
+        # cleanr everything
+        self._group = {}
+        for e in self._elements:
+            for g in e.group:
+                if not self._group.has_key(g): self._group[g] = []
+                self._group[g].append(e.name)
 
     def addGroup(self, group):
         """
@@ -696,20 +573,20 @@ class Lattice:
             if e.name in elemlst: idx[elemlst.index(e.name)] = i
         if loc == 'b': 
             for i, k in enumerate(idx):
-                phi[i, :] = self.twiss[k].phi[0, :]
+                phi[i, :] = self._twiss[k].phi[0, :]
         elif loc == 'c': 
             raise NotImplementedError()
         else:
             # loc == 'end': 
             for i, k in enumerate(idx):
-                phi[i, :] = self.twiss[k].phi[-1, :]
+                phi[i, :] = self._twiss[k].phi[-1, :]
         return phi
 
     def getBeta(self, elem, loc = 'e'):
         """
         return beta function
         """
-        if isinstance(elem, str):
+        if isinstance(elem, str) or isinstance(elem, unicode):
            elemlst = self.getElements(elem)
         elif isinstance(elem, list):
            elemlst = elem[:]
@@ -718,17 +595,11 @@ class Lattice:
 
         idx = [-1] * len(elemlst)
         beta = np.zeros((len(elemlst), 2), 'd')
-        for i,e in enumerate(self.element):
-            if e.name in elemlst: idx[elemlst.index(e.name)] = i
-        if loc == 'b': 
-            for i, k in enumerate(idx):
-                beta[i, :] = self.twiss[k].beta[0, :]
-        elif loc == 'c': 
-            raise NotImplementedError()
-        else:
-            # loc == 'end': 
-            for i, k in enumerate(idx):
-                beta[i, :] = self.twiss[k].beta[-1, :]
+        for i,e in enumerate(self._elements):
+            if not e.name in elemlst: continue
+            j = elemlst.index(e.name)
+            idx[j] = i
+            beta[j, :] = self._twiss[i].beta(loc)
         return beta
 
     def getEta(self, elem, loc = 'e'):
@@ -749,13 +620,13 @@ class Lattice:
             if e.name in elemlst: idx[elemlst.index(e.name)] = i
         if loc == 'b': 
             for i, k in enumerate(idx):
-                eta[i, :] = self.twiss[k].eta[0, :]
+                eta[i, :] = self._twiss[k].eta[0, :]
         elif loc == 'c': 
             raise NotImplementedError()
         else:
             # loc == 'end': 
             for i, k in enumerate(idx):
-                eta[i, :] = self.twiss[k].eta[-1, :]
+                eta[i, :] = self._twiss[k].eta[-1, :]
         return eta
     
     def getTunes(self):
@@ -831,6 +702,200 @@ class Lattice:
         #print __file__, "Imported elements:", len(self.element)
         #print __file__, cnt
 
+def parseElementName(name):
+    """
+    searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
+    girder='G1', cell='C30', symmetry='A'
+
+    Example::
+    
+      >>> parseElementName('CFXH1G1C30A')
+      'C30', 'G1', 'A'
+    """
+    # for NSLS-2 convention of element name
+    a = re.match(r'.+(G\d{1,2})(C\d{1,2})(.)', name)
+    if a:
+        girder   = a.groups()[0]
+        cell     = a.groups()[1]
+        symmetry = a.groups()[2]
+    else:
+        girder   = 'G0'
+        cell     = 'C00'
+        symmetry = '-'
+    return cell, girder, symmetry
+
+def createLatticeFromCf():
+    """
+    create a lattice from channel finder
+    """
+    from channelfinder.core.ChannelFinderClient import ChannelFinderClient
+    from channelfinder.core.Channel import Channel, Property, Tag
+
+    lat = Lattice('channelfinder')
+    cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
+    cf = ChannelFinderClient(BaseURL = cfsurl, username='boss', password='1234')
+    ch = cf.find(tagName='HLA.*')
+    for c in ch:
+        #print c.Name, 
+        pv = c.Name
+        prpt = c.getProperties()
+        if not prpt or not prpt.has_key('ELEM_NAME'):
+            #print ""
+            continue
+        name = prpt['ELEM_NAME']
+        elem = lat._find_element(name=name)
+        if not elem:
+            elem = Element(cfs=prpt)
+            lat.appendElement(elem)
+        else:
+            elem.updateCfsProperties(pv, prpt)
+        # update element with new
+        tags = c.getTags()
+        elem.updateCfsTags(pv, tags)
+        if 'HLA.EGET' in tags:
+            elem.appendEget((caget, pv, prpt['HANDLE']))
+        if 'HLA.EPUT' in tags:
+            elem.appendEput((caput, pv, prpt['HANDLE']))
+        if not 'HLA.EPUT' in tags and not 'HLA.EGET' in tags:
+            elem.appendStatusPv((caget, pv, prpt['HANDLE']))
+        #print name, ""
+
+    # group info is a redundant info, needs rebuild based on each element
+    lat.buildGroups()
+    lat.mergeGroups("BPM", ['BPMX', 'BPMY'])
+    # !IMPORTANT! since Channel finder has no order, but lat class has
+    lat.sortElements()
+
+    # create virtual hla elements
+    bpmx = lat.getElements('BPMX')
+    bpmy = lat.getElements('BPMY')
+    nbpmx, nbpmy = len(bpmx), len(bpmy)
+    elemxpv, elemypv = ['']*nbpmx, [''] * nbpmy
+    ch = cf.find(tagName='HLA.*')
+    for c in ch:
+        #print c.Name, c.getTags()
+        tags = c.getTags()
+        prpt = c.getProperties()
+        if not u'HLA.EGET' in tags: continue
+        if not prpt.has_key('ELEM_TYPE'): continue
+        if not prpt['ELEM_TYPE'].startswith(u'BPM'): continue
+        if u'HLA.X' in tags:
+            elemxpv[bpmx.index(c.getProperties()['ELEM_NAME'])] = c.Name
+        if u'HLA.Y' in tags:
+            elemypv[bpmy.index(c.getProperties()['ELEM_NAME'])] = c.Name
+    elem = Element(name='HLA:BPMX')
+    for i in range(nbpmx):
+        elem.appendEget((caget, elemxpv[i], bpmx[i]))
+    lat.insertElement(0, elem)
+
+    elem = Element(name='HLA:BPMY')
+    for i in range(nbpmy):
+        elem.appendEget((caget, elemypv[i], bpmy[i]))
+    lat.insertElement(1, elem)
+    return lat
+
+
+def createLatticeFromTxtTable(lattable):
+    """
+    call signature::
+
+      createLatticeFromTxtTable(lattable)
+
+    create lattice object from the table used for Tracy-VirtualIOC. The table
+    has columns in the following order:
+
+    =======   =============================================
+    Index     Description
+    =======   =============================================
+    1         element index in the whole beam line
+    2         channel for read back
+    3         channel for set point (NULL for readonly element)
+    4         element physics name (unique)
+    5         element length (effective)
+    6         s location of its exit
+    7         magnet family(type)
+    8         element device name
+    =======   =============================================
+
+    Data are deliminated by spaces.
+    """
+
+    #print "Importing file:", lattable
+
+    cnt = {'BPM':0, 'BPMX':0, 'BPMY':0, 'TRIM':0, \
+               'TRIMD':0, 'TRIMX':0, 'TRIMY':0, 'SEXT':0, 'QUAD':0}
+
+    lat = Lattice()
+    f = open(lattable, 'r').readlines()
+    for s in f[1:]:
+        rec = {}
+        t = s.split()
+        rec['index']   = int(t[0])     # index
+        rb   = t[1].strip()  # PV readback
+        sp   = t[2].strip()  # PV setpoint
+        phy  = t[3].strip()  # name
+        rec['length']  = float(t[4])   # length
+        rec['sb']      = float(t[5])   # s_end location
+        rec['family']  = t[6].strip()  # group
+        rec['devname'] = t[7].strip()
+
+        # parse cell/girder/symmetry from name
+        rec['cell'], rec['girder'], rec['symmetry'] = parseElementName(phy)
+
+        if not lat.hasElement(phy):
+            elem = Element(phy, **rec)
+            lat._elements.append(elem)
+            lat._twiss.append(Twiss())
+        else:
+            elem = lat[phy]
+
+        if rb != 'NULL': elem.appendStatusPv((caget, rb, 'readback'))
+        if sp != 'NULL': elem.appendStatusPv((caget, sp, 'setpoint'))
+
+    # ---- modify the default channel -----
+    # most of the magnets have two PV, read/set
+    # BPM has 6 so far
+    for i in range(lat.size()):
+        if len(lat[i]._status) == 2 and lat[i]._status[0][-1] == 'readback' \
+               and lat[i]._status[1][-1] == 'setpoint':
+            f, x, desc = lat[i]._status[0]
+            lat[i].updateEget((f, x, desc))
+            f, x, desc = lat[i]._status[1]
+            lat[i].updateEput((f, x, desc))
+            continue
+        elif lat[i].family.startswith('BPM') and len(lat[i]._status) == 6:
+            for rec in lat[i]._status:
+                f, x, desc = rec
+                if x.endswith('BBA:X') or x.endswith('BBA:Y'): continue
+                if x.endswith('-I'):
+                    lat[i].updateEget((f, x, desc))
+                elif x.endswith('GOLDEN:X') or x.endswith('GOLDEN:Y'):
+                    lat[i].updateEput((f, x, 'golden'))
+                else:
+                    print lat[i].name, len(lat[i]._status)
+        elif lat[i].family.startswith('SEXT') and len(lat[i]._status) > 2:
+            for rec in lat[i]._status:
+                f, x, desc = rec
+                if x.find('Sext_P') > 0: continue
+                if x.endswith('-I'):
+                    lat[i].updateEget((f, x, desc))
+                elif x.endswith('-SP'):
+                    lat[i].updateEput((f, x, desc))
+                else:
+                    print lat[i].name, len(lat[i]._status)
+        elif lat[i].name in ['TUNEX', 'TUNEY', 'CHROMX', 'CHROMY', 'DCCT', 'MCF', 'OMEGA']:
+            lat[i].updateEget(lat[i]._status[0])
+        else:
+            print lat[i].name
+
+    # check the default
+    for i in range(lat.size()):
+        if not lat[i]._eget_val or not lat[i]._eput_val:
+            print lat[i] #, lat[i]._eget_val, lat[i]._eput_val
+            #print lat[i]._status
+
+    print "Lattice size:", lat.size()
+    return lat
 
 class LatticeSet:
     """
@@ -846,4 +911,5 @@ class LatticeSet:
     def save(self, f):
         pass
 
+    
     

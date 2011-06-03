@@ -43,12 +43,13 @@ INF = 1e30
 ORBIT_WAIT=8
 NETWORK_DOWN=False
 
-TAG_DEFAULT_GET='default.eget'
-TAG_DEFAULT_PUT='default.eput'
+TAG_DEFAULT_GET='HLA.EGET'
+TAG_DEFAULT_PUT='HLA.EPUT'
 
-#from chanfinder import ChannelFinderAgent
-#from lattice import Lattice
-#
+# get the HLA root directory
+pt = os.path.dirname(os.path.abspath(__file__))
+hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
+
 # root of stored data
 root={
     "nsls2" : "nsls2"
@@ -57,21 +58,8 @@ root={
 # local catools
 from catools import *
 
-import bba
-
 import lattice
-_lat = lattice.Lattice()
-
-import chanfinder
-_cfa = chanfinder.ChannelFinderAgent()
-
-# get the HLA root directory
-pt = os.path.dirname(os.path.abspath(__file__))
-hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
-
-#
-# testing, bypass the IRMIS database.
-#
+_lat = lattice.createLatticeFromCf()
 
 from current import *
 from rf import *

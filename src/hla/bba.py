@@ -110,7 +110,7 @@ class BBA:
         self._trim = trims
     
     def _set_wait_stable(
-        self, pvs, values, monipv, diffstd = 1e-6, timeout=120):
+        self, pvs, values, monipv, diffstd = 1e-6, timeout=30):
         """
         set pv to a value, waiting for timeout or the std of monipv is
         greater than diffstd
@@ -146,18 +146,15 @@ class BBA:
             k.append(np.average(-psub[-1,:]/psub[-2,:]))
             pick.append(pick_c)
         return k, pick
-    
-    def alignBpmQuad(self, iquad):
-        if iquad >= len(self._quad): return None
 
+    def _bowtieAlign(self, iquad):
         quadpv = self._quad[iquad][0]
         bpmpv  = self._bpm[iquad][0]
         trimpv = self._trim[iquad][0]
-        #print "BPM: ", caget(bpmpv)
         
         # WARNING: reading using sp channel
-        qk1 = caget(quadpv)
-        xp  = caget(trimpv)
+        qk0 = caget(quadpv)
+        xp0  = caget(trimpv)
 
         #print xp, qk1
         
@@ -168,6 +165,16 @@ class BBA:
         # check how many points in quad and trim
         ntrimsp = len(self._trim[iquad][2])
         nquadsp = len(self._quad[iquad][2]) + 1
+
+        ##
+        ## initial orbit-quad
+        v00 = np.array(caget(full_bpm_pv))
+        #print "step up quad"
+        self._set_wait_stable(quadpv, qk1 + .05, full_bpm_pv)
+        v01 = np.array(caget(full_bpm_pv))
+        #print "step down quad"
+        self._set_wait_stable(quadpv, qk1, full_bpm_pv, diffstd=1e-7)
+        v02 = np.array(caget(full_bpm_pv))
 
         # the orbit data is a (ntrim, nquad+1) matrix
         data = np.zeros((ntrimsp, nquadsp, len(full_bpm_pv)), 'd')
@@ -182,8 +189,30 @@ class BBA:
 
         dk, pick = self._calculateKick(self._trim[iquad][2], data)
 
+        #self._set_wait_stable(quadpv, qk1
         #print dk[0]+xp
+        #print "Set new kick"
         self._set_wait_stable(trimpv, xp+dk[0], full_bpm_pv)
+
+        ret = caget(bpmpv)
+        v10 = np.array(caget(full_bpm_pv))
+        #print "step up quad"
+        self._set_wait_stable(quadpv, qk1 + .05, full_bpm_pv, diffstd=1e-7)
+        v11 = np.array(caget(full_bpm_pv))
+        #print "step down quad"
+        self._set_wait_stable(quadpv, qk1, full_bpm_pv, diffstd=1e-7)
+        v12 = np.array(caget(full_bpm_pv))
+
+        # orbit change due to quad
+        plt.clf()
+        plt.subplot(211)
+        plt.title("Orbit change due to quad strength change 0.01")
+        plt.plot(1.0e6*(v01-v00), 'r-')
+        plt.subplot(212)
+        plt.plot(1.0e6*(v11-v10), 'g-o')
+        plt.savefig("bba-q%05d-orbit-quad.png" % iquad)
+        
+        #self._set_wait_stable(trimpv, xp, full_bpm_pv)
         print "BPM:", caget(bpmpv), self._quad[iquad]
 
         plt.clf()
@@ -196,98 +225,13 @@ class BBA:
         #plt.ylabel(r"$\Delta x(K_0\to K_0+\delta K)~[mm]$")
         plt.savefig("bba-q%05d-03-bowtie.png" % iquad)
         # change the quadrupole
-                
-        return
+        
+        return dk[0], ret
+            
+    def alignBpmQuad(self, iquad, bowtie=False):
+        if iquad >= len(self._quad): return None
+        return self._bowtieAlign(iquad)
     
-        dx = self.orbit1 - self.orbit0
-        a, b, isel, iselstrict = filtSmallSlope(truekick[:,1], dx, 1e-12)
-
-        khcm = np.zeros(len(isel), 'd')
-        for i,ik in enumerate(isel):
-            khcm[i] = -b[ik]/a[ik]
-
-        #plt.figure()
-        plt.clf()
-        for i in isel:
-            plt.plot(1000*truekick[:,1], 1000*(a[i]*truekick[:,1]+b[i]), 'r-')
-            plt.plot(1000*truekick[:,1], 1000*(self.orbit1[:,i] - self.orbit0[:,i]), 'ro')
-        plt.xlabel("kick [mrad]")
-        plt.ylabel("dx [mm]")
-        plt.title("Filted half of the lines")
-        plt.savefig("bba-q%05d-04-boutie-b.png" % iquad)
-
-        #plt.figure()
-        plt.clf()
-        for i in isel[:2]:
-            plt.plot(1000*truekick[:,1], 1000*(a[i]*truekick[:,1]+b[i]), 'r-')
-            plt.plot(1000*truekick[:,1], 1000*(self.orbit1[:,i] - self.orbit0[:,i]), 'ro')
-        plt.xlabel("kick [mrad]")
-        plt.ylabel("dx [mm]")
-        plt.title("Filted half of the lines, sample")
-        plt.savefig("bba-q%05d-04-boutie-c.png" % iquad)
-
-
-        #plt.figure()
-        plt.clf()
-        n, bins, patches = plt.hist(khcm*1000, 10, 
-                                    normed=1, facecolor='green', alpha=0.75)
-        plt.xlabel("Proper Kicker strength [mrad]")
-        plt.grid(True)
-        plt.savefig("bba-q%05d-05-kicker-hist.png" % iquad)
-
-        
-        self.hcmProper[iquad] = np.mean(khcm)
-        if self.hcmProper[iquad] < self.hcmRange[iquad][1] and self.hcmProper[iquad] > self.hcmRange[iquad][0]:
-            L = self.hcmRange[iquad][1] - self.hcmRange[iquad][0]
-            self.hcmRange[iquad][1] = self.hcmProper[iquad] + L/6
-            self.hcmRange[iquad][0] = self.hcmProper[iquad] - L/6
-            print "proper strength of hcm is",np.mean(khcm)
-            print "adjust range [mrad] of hcm to",self.hcmRange[iquad][0]*1000, self.hcmRange[iquad][1]*1000
-            self.quadDk[iquad] = self.quadDk[iquad]*2
-
-        if len(iselstrict) > len(isel)/2:
-            ca.Put(self.hcmCa[iquad] + ":SP", np.mean(khcm))
-            time.sleep(self.dt)
-            obx1, oby1 = getFakeOrbit(self.bpmIndex, self.newgoldenx, self.newgoldeny)
-
-            ca.Put(self.quadCa[iquad] + ":SP", self.quadK[iquad])
-            time.sleep(self.dt)
-            obx0, oby0 = getFakeOrbit(self.bpmIndex, self.newgoldenx, self.newgoldeny)
-
-            #plt.figure()
-            plt.clf()
-            plt.plot(self.bpmS, 1000*(obx1-obx0), 'ro-')
-            plt.ylabel("dx [mm]")
-            plt.title("Orbit shift with proper kick")
-            plt.savefig("bba-q%05d-06-shift-proper-kick.png" % iquad)
-            print obx0[iquad], obx1[iquad], self.goldenx[iquad], self.newgoldenx[iquad]
-        
-            print "Proper kick strength (k/var)", np.mean(khcm), np.var(khcm)
-            print "Orbit at aligned quad:", obx0[iquad],self.goldenx[iquad]
-            print "Golden orbit change [mm]:", self.newgoldenx[iquad]*1000,
-            self.newgoldenx[iquad] = obx0[iquad] + self.newgoldenx[iquad]
-            print self.newgoldenx[iquad]*1000
-
-            del obx0, oby0
-        #obx0, oby0 = getFakeOrbit(self.bpmIndex, self.goldenx, self.goldeny)
-        #obx1, oby1 = getFakeOrbit(self.bpmIndex, self.newgoldenx, self.newgoldeny)
-
-        #plt.figure()
-        plt.clf()
-        plt.plot(self.bpmS, self.goldenx*1000, 'bx-', label="initial")
-        plt.plot(self.bpmS, self.newgoldenx*1000, 'ro-', linewidth=2, label="new")
-        plt.legend()
-        plt.ylabel("Golden Orbit [mm]")
-        plt.xlabel("S [m]")
-        plt.savefig("bba-q%05d-07-golden-orbit.png" % iquad)
-
-        #del obx0, oby0, obx1, oby1
-
-        # restore
-        ca.Put(self.quadCa[iquad] + ":SP", self.quadK[iquad])
-        ca.Put(self.hcmCa[iquad] + ":SP", self.hcmOriginal[iquad])
-        time.sleep(self.dt)
-
     def __print__(self):
         for i in range(self.NQUAD):
             print self.goldenx[i], self.goldeny[i],self.newgoldenx[i],self.newgoldeny[i]
