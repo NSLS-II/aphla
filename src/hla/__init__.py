@@ -63,47 +63,47 @@ _lat = lattice.createLatticeFromCf()
 
 from current import *
 from rf import *
-from hlalib import *
+#from hlalib import *
 
 
-"""Initialize HLA"""
-cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
-if not os.path.exists(cfg_pkl):
-    raise ValueError("pkl files can not be found: " + cfg_pkl)
+## """Initialize HLA"""
+## cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
+## if not os.path.exists(cfg_pkl):
+##     raise ValueError("pkl files can not be found: " + cfg_pkl)
 
-print >> sys.stderr, "= HLA main configure: ", cfg_pkl
-_lat.load(cfg_pkl, mode='virtac')
-
-
-cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
-if not os.path.exists(cfa_pkl):
-    raise ValueError("pkl files can not be found: " + cfa_pkl)
-
-print >> sys.stderr, "= HLA channel finder configure: ", cfa_pkl
-_cfa.load(cfa_pkl)
-
-import orm
-_orm = orm.Orm(bpm=[], trim=[])
-orm_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'orm.pkl')
-print >> sys.stderr, "= HLA orbit resp mat: ", orm_pkl
-_orm.load(orm_pkl)
+## print >> sys.stderr, "= HLA main configure: ", cfg_pkl
+## _lat.load(cfg_pkl, mode='virtac')
 
 
-# set RF frequency
-from cothread import catools, Timedout
-try:
-    catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
-    print >> sys.stderr, "= Network is fine, using online PVs"
-except Timedout:
-    NETWORK_DOWN = True
-    pass
+## cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
+## if not os.path.exists(cfa_pkl):
+##     raise ValueError("pkl files can not be found: " + cfa_pkl)
+
+## print >> sys.stderr, "= HLA channel finder configure: ", cfa_pkl
+## _cfa.load(cfa_pkl)
+
+## import orm
+## _orm = orm.Orm(bpm=[], trim=[])
+## orm_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'orm.pkl')
+## print >> sys.stderr, "= HLA orbit resp mat: ", orm_pkl
+## _orm.load(orm_pkl)
 
 
-#from meastwiss import *
-from measorm import *
-from orbit import *
-from aptools import *
+## # set RF frequency
+## from cothread import catools, Timedout
+## try:
+##     catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+##     print >> sys.stderr, "= Network is fine, using online PVs"
+## except Timedout:
+##     NETWORK_DOWN = True
+##     pass
 
-_orbit = Orbit(_cfa)
+
+## #from meastwiss import *
+## from measorm import *
+## from orbit import *
+## from aptools import *
+
+## _orbit = Orbit(_cfa)
 
 

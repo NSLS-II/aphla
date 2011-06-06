@@ -736,11 +736,9 @@ def createLatticeFromCf():
     cf = ChannelFinderClient(BaseURL = cfsurl, username='boss', password='1234')
     ch = cf.find(tagName='HLA.*')
     for c in ch:
-        #print c.Name, 
         pv = c.Name
         prpt = c.getProperties()
         if not prpt or not prpt.has_key('ELEM_NAME'):
-            #print ""
             continue
         name = prpt['ELEM_NAME']
         elem = lat._find_element(name=name)
