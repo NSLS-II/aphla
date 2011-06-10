@@ -14,7 +14,7 @@ import re, time
 from channelfinder.core.ChannelFinderClient import ChannelFinderClient
 from channelfinder.core.Channel import Channel, Property, Tag
 
-import hla
+#import hla
 
 def dump_hla_cfa(out):
     hla._cfa.exportTextRecord(out)
@@ -63,18 +63,18 @@ def initialize_cfs(out):
             
             tags.append(r)
         #print pv, prop, tags
-        cfprop = [Property(k, 'vioc', v) for k,v in prop.items()]
-        cftags = [Tag(t, 'vioc') for t in tags]
-        cfchannels.append(Channel(u'%s' % pv, 'vioc', properties=cfprop, tags=cftags))
-        #cf.update(channel = Channel(pv, 'vioc'), properties=cfprop,
+        cfprop = [Property(k, 'HLA', v) for k,v in prop.items()]
+        cftags = [Tag(t, 'HLA') for t in tags]
+        cfchannels.append(Channel(u'%s' % pv, 'HLA', properties=cfprop, tags=cftags))
+        #cf.update(channel = Channel(pv, 'HLA'), properties=cfprop,
         #          tags = cftags)
         
     print ""
     print all_keys
     print all_tags
-    cfprop = [Property(p, 'vioc', 'N.A.') for p in all_keys]
+    cfprop = [Property(p, 'HLA', 'N.A.') for p in all_keys]
     cf.set(properties = cfprop)
-    cftags = [Tag(t, 'vioc') for t in all_tags]
+    cftags = [Tag(t, 'HLA') for t in all_tags]
     cf.set(tags = cftags)    
     cf.set(channels=cfchannels)
 
@@ -92,12 +92,11 @@ def update_cfs(out):
     for line in open(out, 'r').readlines():
         if line.strip()[0] == '#': continue
         # three parts, "pv; properties; tags"
-        rec = line.split(';')
-        pv, pstr, tagstr = rec
+        pv, pstr, tagstr = [r.strip() for r in line.split(';')]
         chs = cf.find(name=pv.strip())
         if not chs:
-            print "Did not find", pv
-            #cf.set(channel=Channel(pv, 'vioc'))
+            print "Did not find '%s'" % pv
+            #cf.set(channel=Channel(pv, 'HLA'))
             #continue
         elif len(chs) > 1:
             print "PV is not unique:", pv
@@ -113,19 +112,18 @@ def update_cfs(out):
             prop[k] = v
             if not k in all_keys: all_keys.append(k)
 
-        for r in tagstr.split()[1:]:
-            if r == 'default.eput': r = 'HLA.EPUT'
-            elif r == 'default.eget': r = 'HLA.EGET'
-            elif not r.startswith('HLA.'): r = 'HLA.' + r
+        for r in tagstr.split(','):
+            tg = r.strip()
+            if tg == '~tags=': continue
 
-            if not r in all_tags: all_tags.append(r)
+            if not tg in all_tags: all_tags.append(tg)
             
-            tags.append(r)
+            tags.append(tg)
         #print pv, prop, tags
-        cfprop = [Property(k, 'vioc', v) for k,v in prop.items()]
-        cftags = [Tag(t, 'vioc') for t in tags]
-        cfchannels.append(Channel(u'%s' % pv, 'vioc', properties=cfprop, tags=cftags))
-        #cf.update(channel = Channel(pv, 'vioc'), properties=cfprop,
+        cfprop = [Property(k, 'HLA', v) for k,v in prop.items()]
+        cftags = [Tag(t, 'HLA') for t in tags]
+        cfchannels.append(Channel(u'%s' % pv, 'HLA', properties=cfprop, tags=cftags))
+        #cf.update(channel = Channel(pv, 'HLA'), properties=cfprop,
         #          tags = cftags)
         
     print ""
@@ -133,13 +131,21 @@ def update_cfs(out):
     print "tags:", all_tags
     print "channels:", len(cfchannels)
     if all_keys:
-        cfprop = [Property(p, 'vioc', 'N.A.') for p in all_keys]
-        cf.set(properties = cfprop)
+        cfprop = [Property(p, 'HLA', 'N.A.') for p in all_keys]
+        #cf.set(properties = cfprop)
+        #for p in cfprop:
+        #    cf.update(p)
     if all_tags:
-        cftags = [Tag(t, 'vioc') for t in all_tags]
+        cftags = [Tag(t, 'HLA') for t in all_tags]
         cf.set(tags = cftags)    
-    cf.set(channels=cfchannels)
-    
+        #for t in cftags:
+        #    cf.update(t)
+    #for ch in cfchannels:
+    #    cf.update(channel=ch)
+    cf.set(channels = cfchannels)
+    #for c in cfchannels:
+    #    print c.Name, c.getProperties(), c.getTags()
+
 def test():
     cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
     cf = ChannelFinderClient(BaseURL = cfsurl, username='boss', password='1234')
