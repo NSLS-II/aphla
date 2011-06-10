@@ -439,7 +439,7 @@ class Lattice:
 
     def addGroupMember(self, group, member, newgroup = False):
         """
-        add member to group
+        add a member to group
 
         if newgroup == False, the group must exist before.
         """
@@ -455,13 +455,13 @@ class Lattice:
 
     def hasGroup(self, group):
         """
-        check group exists or not.
+        check if group exists or not.
         """
         return self._group.has_key(group)
 
     def removeGroupMember(self, group, member):
         """
-        remove member from group
+        remove a member from group
         """
         if not self.hasGroup(group):
             raise ValueError("Group %s does not exist" % group)
@@ -472,7 +472,14 @@ class Lattice:
 
     def getGroups(self, element):
         """
-        return a list of groups this element is in
+        return a list of groups this element belongs to
+
+        ::
+
+          getGroups('*')
+          getGroups('Q?')
+
+        The input string is wildcard matched against each element.
         """
         ret = []
         for k, elems in self._group.items():
@@ -487,6 +494,8 @@ class Lattice:
         return members in a list of groups. 
 
         can take a union or intersections of members in each group
+
+        - op = ['union' | 'intersection']
         """
         if groups == None: return None
         ret = {}
@@ -513,6 +522,8 @@ class Lattice:
     def getNeighbors(self, element, group, n):
         """
         Assuming self.element is in s order
+
+        the element matched with input 'element' string should be unique.
         """
 
         e0, s0 = self.getElements(element, point = 'e')
@@ -733,7 +744,7 @@ def createLatticeFromCf():
 
     lat = Lattice('channelfinder')
     cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
-    cf = ChannelFinderClient(BaseURL = cfsurl, username='boss', password='1234')
+    cf = ChannelFinderClient(BaseURL = cfsurl)
     ch = cf.find(tagName='HLA.*')
     for c in ch:
         pv = c.Name
@@ -764,6 +775,12 @@ def createLatticeFromCf():
     # !IMPORTANT! since Channel finder has no order, but lat class has
     lat.sortElements()
 
+    # self diagnostics
+    # check dipole numbers
+    bend = lat.getElements('DIPOLE')
+    if len(bend) != 60:
+        raise ValueError("dipole number is not 60 (%d)" % len(bend))
+    
     # create virtual hla elements
     bpmx = lat.getElements('BPMX')
     bpmy = lat.getElements('BPMY')
@@ -781,6 +798,8 @@ def createLatticeFromCf():
             elemxpv[bpmx.index(c.getProperties()['ELEM_NAME'])] = c.Name
         if u'HLA.Y' in tags:
             elemypv[bpmy.index(c.getProperties()['ELEM_NAME'])] = c.Name
+
+    # create two virtual elements, HLA:BPMX/Y
     elem = Element(name='HLA:BPMX')
     for i in range(nbpmx):
         elem.appendEget((caget, elemxpv[i], bpmx[i]))

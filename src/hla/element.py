@@ -165,6 +165,9 @@ class Element(AbstractElement):
         - *pvs* a list of tuple: (func,pv,description) for related status
         - *eget* the default get action (func, pv)
         - *eput* the default put action (func, pv)
+
+        An element is homogeneous means, it use same get/put function on a
+        list of variables to speed up.
         """
         AbstractElement.__init__(self, **kwargs)
         self._status   = kwargs.get('pvs', [])
@@ -211,7 +214,9 @@ class Element(AbstractElement):
         else:
             #
             pvs = [x for f,x,desc in self._eget_val]
-            return self._eget_val[0][0](pvs)
+            ret = self._eget_val[0][0](pvs)
+            if len(ret) == 1: return ret[0]
+            else: return ret
 
     @value.setter
     def value(self, v):
@@ -222,6 +227,7 @@ class Element(AbstractElement):
                 if f and x: ret.append(f(x, v))
             return ret
         else:
+            # speed up using pv list when calling caget/caput
             pvs = [x for f,x,desc in self._eget_val]
             return self._eget_val[0][0](pvs)
         

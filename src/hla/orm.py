@@ -14,12 +14,10 @@ Response Matrix
 
 import os, sys, time
 from os.path import join, splitext
-#from cothread.catools import caget, caput
 import numpy as np
 import shelve
 
 from . import _lat
-from . import _cfa
 from . import getSpChannels, getRbChannels
 from catools import caget, caput, caputwait, Timedout
 

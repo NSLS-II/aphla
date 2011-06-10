@@ -11,12 +11,18 @@ Defines the procedural interface of HLA to the users.
 """
 
 import numpy as np
-from . import _cfa, _lat, TAG_DEFAULT_GET, TAG_DEFAULT_PUT
+from . import _lat, TAG_DEFAULT_GET, TAG_DEFAULT_PUT
 
 from catools import caget, caput
 
 
-def getRbChannels(elemlist, tags = []):
+def getCurrent():
+    """Get the current from channel"""
+    _current = _lat.getElements('DCCT')
+    return _current.value
+
+
+def getRbChannels(elemlist):
     """
     get the pv names for a list of elements
     
@@ -29,9 +35,9 @@ def getRbChannels(elemlist, tags = []):
 
       :meth:`~hla.chanfinder.ChannelFinderAgent.getElementChannels`
     """
-    t = [TAG_DEFAULT_GET]
-    t.extend(tags)
-    return _cfa.getElementChannels(elemlist, None, tags = set(t))
+    pvs = [None] * len(elemlist)
+    #for elem in _lat.
+    return pvs
 
 def getSpChannels(elemlist, tags = []):
     """get the pv names for a list of elements"""

@@ -5,8 +5,6 @@ import unittest
 import sys
 import numpy as np
 
-from cothread.catools import caget
-
 import matplotlib
 import matplotlib.pylab as plt
 

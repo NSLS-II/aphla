@@ -20,10 +20,6 @@ Modules include:
         define the :class:`~hla.lattice.Element`, :class:`~hla.lattice.Twiss`,
         :class:`~hla.lattice.Lattice` class
 
-    :mod:`hla.chanfinder`
-
-        defines the :class:`~hla.chanfinder.ChannelFinderAgent` class
-
     :mod:`hla.orbit`
 
         defines orbit retrieve routines
@@ -31,7 +27,6 @@ Modules include:
     :mod:`hla.hlalib`
 
         defines procedural interface
-
         
 """
 
@@ -46,6 +41,10 @@ NETWORK_DOWN=False
 TAG_DEFAULT_GET='HLA.EGET'
 TAG_DEFAULT_PUT='HLA.EPUT'
 
+os.environ['EPICS_CA_ADDR_LIST'] = 'virtac.nsls2.bnl.gov'
+os.environ['EPICS_cA_MAX_ARRAY_BYTES'] = '100000'
+
+
 # get the HLA root directory
 pt = os.path.dirname(os.path.abspath(__file__))
 hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
@@ -58,12 +57,15 @@ root={
 # local catools
 from catools import *
 
+# initialize the NSLS2
+#_lat = None
 import lattice
 _lat = lattice.createLatticeFromCf()
 
-from current import *
+
+#from current import *
 from rf import *
-#from hlalib import *
+from hlalib import *
 
 
 ## """Initialize HLA"""

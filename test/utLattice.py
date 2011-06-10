@@ -18,7 +18,8 @@ class TestLattice(unittest.TestCase):
         bpmy = self.cfslat.getElements('HLA:BPMY')
         #print bpmx.status
         #print bpmy.status
-
+        self.current = self.cfslat['DCCT']
+        
     def test_getelements(self):
         elems = self.cfslat.getElements('HLA*')
         self.assertTrue(len(elems) == 2)
@@ -29,6 +30,13 @@ class TestLattice(unittest.TestCase):
             #s = self.cfslat[i].status
             pass
 
+    def test_current(self):
+        self.assertTrue(self.cfslat.hasElement('DCCT'))
+        
+        print self.current
+        cur = self.cfslat.getElements('DCCT')
+        print cur
+        
 if __name__ == "__main__":
     unittest.main()
 
