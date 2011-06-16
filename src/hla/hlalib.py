@@ -11,14 +11,13 @@ Defines the procedural interface of HLA to the users.
 """
 
 import numpy as np
-from . import _lat, TAG_DEFAULT_GET, TAG_DEFAULT_PUT
 
 from catools import caget, caput
-
+import machines
 
 def getCurrent():
     """Get the current from channel"""
-    _current = _lat.getElements('DCCT')
+    _current = machines._lat.getElements('DCCT')
     return _current.value
 
 
@@ -65,7 +64,7 @@ def eget(element, full = False, tags = []):
     #print __file__, tags, chtags
     if isinstance(element, str):
         ret = []
-        elemlst = _lat._getElementsCgs(element)
+        elemlst = machines._lat._getElementsCgs(element)
         pvl = _cfa.getElementChannels(elemlst, None, chtags)
         for i, pvs in enumerate(pvl):
             if len(pvs) == 1:
@@ -130,8 +129,8 @@ def reset_trims():
     """
     reset all trims in group "TRIMX" and "TRIMY"
     """
-    trimx = _lat.getGroupMembers(['*', 'TRIMX'], op='intersection')
-    trimy = _lat.getGroupMembers(['*', 'TRIMY'], op='intersection')
+    trimx = machines._lat.getGroupMembers(['*', 'TRIMX'], op='intersection')
+    trimy = machines._lat.getGroupMembers(['*', 'TRIMY'], op='intersection')
     pvx = getSpChannels(trimx, tags=[TAG_DEFAULT_PUT, 'X'])
     pvy = getSpChannels(trimy, tags=[TAG_DEFAULT_PUT, 'Y'])
     pv = [p[0] for p in pvx]
@@ -164,29 +163,38 @@ def levenshtein_distance(first, second):
     return distance_matrix[first_length-1][second_length-1]
 
 
-def getElements(group, **kwargs):
+def getElements(group):
     """
     return list of elements.
 
-    - *cell* a list of cell name
-    - *girder* a list of girder name
-    - *symmetry* a list of symmetry: 'A' or 'B'
+    *group* is an exact name of element or group, or a pattern
     """
-    return _lat._getElementsCgs(group, **kwargs)
 
-def getLocations(group, s='e'):
-    """
-    Get the location of a group, either returned as a dictionary in which the
-    key is element physics name, value is the location.
-    """
-    if isinstance(group, list):
-        return _lat.getLocations(group, s)
-    elif isinstance(group, str):
-        elem, loc = _lat.getElements(group, 'e')
-        return loc
-    else:
-        raise ValueError("parameter *group* must be a list of string")
+    return machines._lat.getElements(group)
 
+def getLocations(elements):
+    """
+    Get the location of an element or a list of elements
+
+    *elements* is :
+
+    - an element object
+    - an element name
+    - a list of element object
+    - a list of element name
+
+    .. example::
+
+      elem = getElements('BPMX')
+      s = getLocations(elem)
+
+      s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
+    """
+    
+    if isinstance(elements, list) and isinstance(elements[0], str):
+        return machines._lat.getLocations(elements)
+    elif isinstance(elements, list):
+        return [x.s for x in elements]
 
 def addGroup(group):
     """
@@ -225,7 +233,7 @@ def getGroups(element = '*'):
     Get all groups own these elements, '*' returns all possible groups,
     since it matches every element
     """
-    return _lat.getGroups(element)
+    return machines._lat.getGroups(element)
 
 def getGroupMembers(groups, op = 'intersection'):
     """
@@ -316,23 +324,22 @@ def getChromaticity(source='machine'):
 
 def getTunes(source='machine'):
     """
-    get tunes
+    get tunes from ['machine']
     """
     if source == 'machine':
-        pv = _cfa.getElementChannel(['TUNEX', 'TUNEY'])
-        nux = caget(pv[0])
-        nuy = caget(pv[1])
-        return nux[0], nuy[0]
+        nux = machines._lat.getElements('TUNEX')
+        nuy = machines._lat.getElements('TUNEY')
+        return nux.value, nuy.value
     elif source == 'model':
         raise NotImplementedError()
     elif source == 'database':
-        return _lat.getTunes()
+        raise NotImplementedError()
 
-def getTune(plane = 'hv'):
+def getTune(source='machine', plane = 'hv'):
     """
     get tune
     """
-    nux, nuy = getTunes()
+    nux, nuy = getTunes(source)
     if plane == 'h': return nux
     elif plane == 'v': return nuy
     else:

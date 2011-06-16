@@ -41,6 +41,9 @@ class Lattice:
             return self._find_element(name=key)
 
     def _find_element(self, name):
+        """
+        exact matching of element name
+        """
         for e in self._elements:
             if e.name == name: return e
         return None
@@ -83,7 +86,7 @@ class Lattice:
         f = shelve.open(fname, dbmode)
         pref = "lat.%s." % self.mode
         f[pref+'group']   = self._group
-        f[pref+'element'] = self.element
+        f[pref+'elements'] = self._elements
         f[pref+'twiss']   = self.twiss
         f[pref+'mode']    = self.mode
         f[pref+'tune']    = self.tune
@@ -107,13 +110,13 @@ class Lattice:
         else:
             pref = 'lat.%s.' % mode
         self._group  = f[pref+'group']
-        self.element  = f[pref+'element']
+        self._elements  = f[pref+'elements']
         self.twiss    = f[pref+'twiss']
         self.mode     = f[pref+'mode']
         self.tune     = f[pref+'tune']
         self.chromaticity = f[pref+'chromaticity']
-        if self.element:
-            self.circumference = self.element[-1].se
+        if self._elements:
+            self.circumference = self._elements[-1].se
         f.close()
 
     def mergeGroups(self, parent, children):
@@ -128,7 +131,7 @@ class Lattice:
             mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
         """
         if isinstance(children, str):
-            chlst = [children]
+            chlist = [children]
         elif hasattr(children, '__iter__'):
             chlist = children[:]
         else:
@@ -138,7 +141,9 @@ class Lattice:
         self._group[parent] = []
 
         for child in chlist:
-            if not self._group.has_key(child): continue
+            if not self._group.has_key(child):
+                print __file__, "WARNING: no %s group found" % child
+                continue
             for elem in self._group[child]:
                 if elem in self._group[parent]: continue
                 self._group[parent].append(elem)
@@ -211,7 +216,7 @@ class Lattice:
         *cell*, *girder* and *symmetry* parsed from its name
         """
 
-        for elem in self.element:
+        for elem in self._elements:
             self.addGroup(elem.cell)
             self.addGroupMember(elem.cell, elem.name)
             self.addGroup(elem.girder)
@@ -219,89 +224,91 @@ class Lattice:
             self.addGroup(elem.symmetry)
             self.addGroupMember(elem.symmetry, elem.name)
 
-    def sortElements(self, elemlist = None):
+    def sortElements(self, namelist = None):
         """
         sort the element list to the order of *s*
+
+        use sorted() for a list of element object.
         """
-        if not elemlist:
+        if not namelist:
             self._elements = sorted(self._elements)
             return
         
         ret = []
-        for e in self.element:
+        for e in self._elements:
             if e.name in ret: continue
-            if e.name in elemlist:
+            if e.name in namelist:
                 ret.append(e.name)
 
         #
-        if len(ret) < len(elemlist):
+        if len(ret) < len(namelist):
             raise ValueError("Some elements are missing in the results")
-        elif len(ret) > len(elemlist):
+        elif len(ret) > len(namelist):
             raise ValueError("something wrong on sorting element list")
  
         return ret[:]
 
-    def getLocations(self, elems, point = 'e'):
+    def getLocations(self, elemsname):
         """
-        if elems is a string, do exact match. return single number.  if
-        elems is a list do exact match on each of them, return a
-        list. None if the element in this list is not found.
-        """
-        if not point in ('b', 'c', 'e'):
-            raise ValueError("point must be in 'b', 'c', 'e'")
+        if elems is a string(element name), do exact match and return
+        single number.  if elems is a list do exact match on each of them,
+        return a list. None if the element in this list is not found.
+
+        .. warning::
         
-        if isinstance(elems, str):
-            e, s = self.getElements(elems, point)
-            return s
-        elif isinstance(elems, list):
-            ret = [None] * len(elems)
-            for elem in self.element:
-                if elem.name in elems:
-                    idx = elems.index(elem.name)
-                    if point == 'b': ret[idx] = elem.sb
-                    elif point == 'e': ret[idx] = elem.se
-                    elif point == 'c': ret[idx] = elem.sc
-                    else: ret[idx] = elem.se
-                
+          If there are duplicate elements in *elems*, only first
+          appearance has location returned.
+        """
+
+        if isinstance(elemsname, str):
+            e = self._find_element(elemsname)
+            return e.sb
+        elif isinstance(elemsname, list):
+            ret = [None] * len(elemsname)
+            for elem in self._elements:
+                if elem.name in elemsname:
+                    idx = elemsname.index(elem.name)
+                    ret[idx] = elem.s
             return ret
-        
-    def getElements(self, group, point = ''):
+        else:
+            raise ValueError("not recognized type of *elems*")
+
+    def getElements(self, group):
         """
-        get elements and their locations.
-
-        parameter *point* = ['', 'b', 'c', 'e'] tells the s location
-        returned with element name at at the begin, middle or end of the
-        elements. For a nonempty string, it returns s at the 'end'.
-
-        if *point* == "", location is not returned. 
-
-        no duplicate element name outputed.
+        get elements.
         """
-        if not point in ('', 'b', 'c', 'e'):
-            raise ValueError("point must be in '', 'b', 'c' and 'e'")
 
-        elem = self._find_element(group)
-        if elem:
-            if point == 'b': return elem, elem.sb
-            else: return elem
-            
-        ret, loc = [], []
-        #print "... get elements ...", group, len(self.element)
-        for e in self._elements:
-            #print __file__, group, e.name, e.family
-            if e.name in ret: continue
-            if fnmatch(e.name, group) or fnmatch(e.family, group) or \
-                    (self._group.has_key(group) and e.name in self._group[group]):
-                ret.append(e.name)
-                if point == 'b': loc.append(e.sb)
-                elif point == 'e': loc.append(e.se)
-                elif point == 'c': loc.append(e.sc)
-                else: loc.append(e.sb)
-            else:
-                #print "Not agree", e.name
-                pass
-        if point: return ret, loc
-        else: return ret
+        if isinstance(group, str) or isinstance(group, unicode):
+            # do exact element name match first
+            #print __file__, "element ..."
+            elem = self._find_element(group)
+            if elem:
+                #print "found exact element", group, elem
+                return elem
+
+            # do exact group name match
+            #print __file__, "group ...", group, self._group.keys()
+            if group in self._group.keys():
+                #print "found exact group", group
+                #print self._group.keys()
+                return self._group[group]
+
+            # do pattern match on element name
+            ret, names = [], []
+            #print __file__, "matching ..."
+            for e in self._elements:
+                if e.name in names: continue
+                if fnmatch(e.name, group):
+                    ret.append(e)
+                    names.append(e.name)
+            return ret
+        elif isinstance(group, list):
+            #print __file__, "list ..", group
+            # exact one-by-one match
+            ret = [None] * len(group)
+            for elem in self._elements:
+                if elem.name in group: ret[group.index(elem.name)] = elem
+            return ret
 
     def _matchElementCgs(self, elem, **kwargs):
         """
@@ -368,7 +375,7 @@ class Lattice:
         if not group: return None
         
         elem = []
-        for e in self.element:
+        for e in self._elements:
             # skip for duplicate
             #print e.name,
             if e.name in elem: continue
@@ -392,9 +399,10 @@ class Lattice:
 
     def _illegalGroupName(self, group):
         # found character not in [a-zA-Z0-9_]
-        if re.search(r'[^\w]+', group):
-            raise ValueError("Group name must be in [a-zA-Z0-9_]+")
-            #return False
+        if not group: return True
+        elif re.search(r'[^\w]+', group):
+            #raise ValueError("Group name must be in [a-zA-Z0-9_]+")
+            return True
         else: return False
 
     def buildGroups(self):
@@ -405,9 +413,11 @@ class Lattice:
         self._group = {}
         for e in self._elements:
             for g in e.group:
-                if not self._group.has_key(g): self._group[g] = []
-                self._group[g].append(e.name)
-
+                if self._illegalGroupName(g): continue
+                self.addGroupMember(g, e.name, newgroup=True)
+        #print __file__, "test a group", self._group['DIPOLE']
+        #print __file__, self._group.keys()
+        
     def addGroup(self, group):
         """
         call signature::
@@ -443,12 +453,20 @@ class Lattice:
 
         if newgroup == False, the group must exist before.
         """
-        
-        if self._group.has_key(group):
-            if not member in self._group[group]:
-                self._group[group].append(member)
+
+        if not self.hasElement(member): 
+            raise ValueError("element %s is not defined" % member)
+        elem = self.getElements(member)
+        if self.hasGroup(group):
+            if elem in self._group[group]: return
+            for i,e in enumerate(self._group[group]):
+                if e.s < elem.s: continue
+                self._group[group].insert(i, elem)
+                break
+            else:
+                self._group[group].append(elem)
         elif newgroup:
-            self._group[group] = [member]
+            self._group[group] = [elem]
         else:
             raise ValueError("Group %s does not exist."
                              "use newgroup=True to add it" % group)
@@ -484,7 +502,7 @@ class Lattice:
         ret = []
         for k, elems in self._group.items():
             for e in elems:
-                if fnmatch(e, element):
+                if fnmatch(e.name, element):
                     ret.append(k)
                     break
         return ret
@@ -495,6 +513,7 @@ class Lattice:
 
         can take a union or intersections of members in each group
 
+        - group in *groups* can be exact name or pattern.
         - op = ['union' | 'intersection']
         """
         if groups == None: return None
@@ -503,7 +522,7 @@ class Lattice:
         for g in groups:
             ret[g] = []
             for k, elems in self._group.items():
-                if fnmatch(k, g): ret[g].extend(elems)
+                if fnmatch(k, g): ret[g].extend([e.name for e in elems])
             #print g, ret[g]
 
         r = set(ret[groups[0]])
@@ -517,11 +536,11 @@ class Lattice:
         else:
             raise ValueError("%s not defined" % op)
         
-        return self.sortElements(r)
+        return self.getElements(self.sortElements(r))
 
     def getNeighbors(self, element, group, n):
         """
-        Assuming self.element is in s order
+        Assuming self._elements is in s order
 
         the element matched with input 'element' string should be unique.
         """
@@ -554,15 +573,16 @@ class Lattice:
     def __repr__(self):
         s = ''
         ml_name, ml_family = 0, 0
-        for e in self.element:
+        for e in self._elements:
             if len(e.name) > ml_name: ml_name = len(e.name)
-            if len(e.family) > ml_family: ml_family = len(e.family)
+            if e.family and len(e.family) > ml_family:
+                ml_family = len(e.family)
 
-        idx = int(1.0+log10(len(self.element)))
-        fmt = "%%%dd %%%ds  %%%ds  %%9.4f  %%9.4f\n" % (idx, ml_name, ml_family)
+        idx = int(1.0+log10(len(self._elements)))
+        fmt = "%%%dd %%%ds  %%%ds  %%9.4f %%9.4f\n" % (idx, ml_name, ml_family)
         #print fmt
-        for i, e in enumerate(self.element):
-            s = s + fmt % (i, e.name, e.family, e.sb, e.se)
+        for i, e in enumerate(self._elements):
+            s = s + fmt % (i, e.name, e.family, e.s, e.length)
         return s
 
 
@@ -580,7 +600,7 @@ class Lattice:
 
         idx = [-1] * len(elemlst)
         phi = np.zeros((len(elemlst), 2), 'd')
-        for i,e in enumerate(self.element):
+        for i,e in enumerate(self._elements):
             if e.name in elemlst: idx[elemlst.index(e.name)] = i
         if loc == 'b': 
             for i, k in enumerate(idx):
@@ -627,7 +647,7 @@ class Lattice:
 
         idx = [-1] * len(elemlst)
         eta = np.zeros((len(elemlst), 2), 'd')
-        for i,e in enumerate(self.element):
+        for i,e in enumerate(self._elements):
             if e.name in elemlst: idx[elemlst.index(e.name)] = i
         if loc == 'b': 
             for i, k in enumerate(idx):
@@ -648,7 +668,7 @@ class Lattice:
 
     def getBeamlineProfile(self, s1=0.0, s2=1e10):
         prof = []
-        for elem in self.element:
+        for elem in self._elements:
             if elem.se < s1: continue
             elif elem.sb > s2: continue
             x1, y1, c = elem.profile()
@@ -697,7 +717,7 @@ class Lattice:
                      'symmetry': prop[cfa.ELEMSYM],
                      'index': prop[cfa.ELEMIDX]}
             elemname = prop[cfa.ELEMNAME]
-            self.element.append(Element(elemname, **param))
+            self._elements.append(Element(elemname, **param))
             self.addGroupMember(prop[cfa.ELEMTYPE], elemname, True)
             self.addGroupMember(prop[cfa.CELL], elemname, True)
             self.addGroupMember(prop[cfa.GIRDER], elemname, True)
@@ -709,7 +729,7 @@ class Lattice:
             self.addGroupMember(prop[cfa.ELEMTYPE], prop[cfa.ELEMNAME], True)
             #self.addGroupMember(prop[cfa.ELEMNAME], prop[cfa.ELEMNAME], True)
 
-        self.circumference = self.element[-1].se
+        self.circumference = self._elements[-1].se
         #print __file__, "Imported elements:", len(self.element)
         #print __file__, cnt
 
@@ -735,81 +755,6 @@ def parseElementName(name):
         symmetry = '-'
     return cell, girder, symmetry
 
-def createLatticeFromCf():
-    """
-    create a lattice from channel finder
-    """
-    from channelfinder.core.ChannelFinderClient import ChannelFinderClient
-    from channelfinder.core.Channel import Channel, Property, Tag
-
-    lat = Lattice('channelfinder')
-    cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
-    cf = ChannelFinderClient(BaseURL = cfsurl)
-    ch = cf.find(tagName='HLA.*')
-    for c in ch:
-        pv = c.Name
-        prpt = c.getProperties()
-        if not prpt or not prpt.has_key('ELEM_NAME'):
-            continue
-        name = prpt['ELEM_NAME']
-        elem = lat._find_element(name=name)
-        if not elem:
-            elem = Element(cfs=prpt)
-            lat.appendElement(elem)
-        else:
-            elem.updateCfsProperties(pv, prpt)
-        # update element with new
-        tags = c.getTags()
-        elem.updateCfsTags(pv, tags)
-        if 'HLA.EGET' in tags:
-            elem.appendEget((caget, pv, prpt['HANDLE']))
-        if 'HLA.EPUT' in tags:
-            elem.appendEput((caput, pv, prpt['HANDLE']))
-        if not 'HLA.EPUT' in tags and not 'HLA.EGET' in tags:
-            elem.appendStatusPv((caget, pv, prpt['HANDLE']))
-        #print name, ""
-
-    # group info is a redundant info, needs rebuild based on each element
-    lat.buildGroups()
-    lat.mergeGroups("BPM", ['BPMX', 'BPMY'])
-    # !IMPORTANT! since Channel finder has no order, but lat class has
-    lat.sortElements()
-
-    # self diagnostics
-    # check dipole numbers
-    bend = lat.getElements('DIPOLE')
-    if len(bend) != 60:
-        raise ValueError("dipole number is not 60 (%d)" % len(bend))
-    
-    # create virtual hla elements
-    bpmx = lat.getElements('BPMX')
-    bpmy = lat.getElements('BPMY')
-    nbpmx, nbpmy = len(bpmx), len(bpmy)
-    elemxpv, elemypv = ['']*nbpmx, [''] * nbpmy
-    ch = cf.find(tagName='HLA.*')
-    for c in ch:
-        #print c.Name, c.getTags()
-        tags = c.getTags()
-        prpt = c.getProperties()
-        if not u'HLA.EGET' in tags: continue
-        if not prpt.has_key('ELEM_TYPE'): continue
-        if not prpt['ELEM_TYPE'].startswith(u'BPM'): continue
-        if u'HLA.X' in tags:
-            elemxpv[bpmx.index(c.getProperties()['ELEM_NAME'])] = c.Name
-        if u'HLA.Y' in tags:
-            elemypv[bpmy.index(c.getProperties()['ELEM_NAME'])] = c.Name
-
-    # create two virtual elements, HLA:BPMX/Y
-    elem = Element(name='HLA:BPMX')
-    for i in range(nbpmx):
-        elem.appendEget((caget, elemxpv[i], bpmx[i]))
-    lat.insertElement(0, elem)
-
-    elem = Element(name='HLA:BPMY')
-    for i in range(nbpmy):
-        elem.appendEget((caget, elemypv[i], bpmy[i]))
-    lat.insertElement(1, elem)
-    return lat
 
 
 def createLatticeFromTxtTable(lattable):

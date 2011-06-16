@@ -1,12 +1,16 @@
 from setuptools import setup, find_packages
 setup(
-    name = "seasail",
-    version = "0.1",
-    packages = find_packages(),
+    name = "hla",
+    version = "0.0.1a1",
+    #packages = ['hla'],
+    package_dir = {'hla': 'src/hla'},
+    package_data = {'hla': ['machine/nsls2/*']},
+    py_modules = ['hla.catools', 'hla.machines', 'hla.element', 'hla.lattice',
+                  'hla.twiss', 'hla.hlalib', 'hla.rf'],
     install_requires = ['docutils >= 0.3'],
     description = "Accelerator control and experiment toolkit",
-    author = "Guobao Shen, Lingyun Yang",
-    #py_modules=['seasail.hla'],
-    #package_dir={'': 'seasail'},
+    author = "Lingyun Yang, Jinhyuk Choi",
+    maintainer = "Lingyun Yang",
+    maintainer_email = "lyyang@bnl.gov",
 )
 

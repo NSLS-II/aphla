@@ -15,6 +15,11 @@ A procedural interface is provided.
 
 Modules include:
 
+    :mod:`hla.machines`
+
+        define machine specific settings, create lattice from channel
+        finder service for different accelerator complex.
+
     :mod:`hla.lattice`
 
         define the :class:`~hla.lattice.Element`, :class:`~hla.lattice.Twiss`,
@@ -32,41 +37,12 @@ Modules include:
 
 import os, sys, re
 
-# are we using virtual ac
-VIRTAC = True
-INF = 1e30
-ORBIT_WAIT=8
-NETWORK_DOWN=False
-
-TAG_DEFAULT_GET='HLA.EGET'
-TAG_DEFAULT_PUT='HLA.EPUT'
-
-os.environ['EPICS_CA_ADDR_LIST'] = 'virtac.nsls2.bnl.gov'
-os.environ['EPICS_cA_MAX_ARRAY_BYTES'] = '100000'
-
-
-# get the HLA root directory
-pt = os.path.dirname(os.path.abspath(__file__))
-hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
-
-# root of stored data
-root={
-    "nsls2" : "nsls2"
-}
-
-# local catools
 from catools import *
-
-# initialize the NSLS2
-#_lat = None
-import lattice
-_lat = lattice.createLatticeFromCf()
-
+from machines import initNSLS2VSR
 
 #from current import *
 from rf import *
 from hlalib import *
-
 
 ## """Initialize HLA"""
 ## cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')

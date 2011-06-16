@@ -19,8 +19,8 @@ class AbstractElement(object):
     *devname*   device name
     *phylen*    physical(yoke) length
     *family*    family
-    *sb*        s position of the entrance
-    *length*    effective(magnetic) length (=se - sb, if not across circ)
+    *s*         s position
+    *length*    effective(magnetic) length 
     *cell*      cell name
     *girder*    girder name
     *symmetry*  symmetry type
@@ -38,7 +38,7 @@ class AbstractElement(object):
            'length': u'LENGTH',
            'index': u'ORDINAL',
            'symmetry': u'SYMMETRY',
-           'sb': u'S_POSITION',
+           's': u'S_POSITION',
            'cell': u'CELL',
            'phylen': None,
            'sequence': None}
@@ -56,7 +56,7 @@ class AbstractElement(object):
             self.phylen   = float(d.get(self.CFS['phylen'], 0.0))
             self.index    = int(d.get(self.CFS['index'], -1))
             self.family   = d.get(self.CFS['family'], None)
-            self.sb       = float(d.get(self.CFS['sb'], 0.0))
+            self.s        = float(d.get(self.CFS['s'], 0.0))
             self.length   = float(d.get(self.CFS['length'], 0.0))
             self.cell     = d.get(self.CFS['cell'], None)
             self.girder   = d.get(self.CFS['girder'], None)
@@ -68,7 +68,7 @@ class AbstractElement(object):
             self.phylen   = kwargs.get('phylen', 0.0)
             self.index    = kwargs.get('index', -1)
             self.family   = kwargs.get('family', None)
-            self.sb       = kwargs.get('sb', 0.0)
+            self.s        = kwargs.get('s', 0.0)
             self.length   = kwargs.get('length', 0.0)
             self.cell     = kwargs.get('cell', None)
             self.girder   = kwargs.get('girder', None)
@@ -91,7 +91,7 @@ class AbstractElement(object):
         - ['TRIMX' | 'TRIMY'], corrector
         - ['BPMX' | 'BPMY'], beam position monitor
         """
-        b, e = self.sb, self.se
+        b, e = self.s, self.s + self.length
         h = vscale
         if self.family == 'QUAD':
             return [b, b, e, e], [0, h, h, 0], 'k'
@@ -110,17 +110,17 @@ class AbstractElement(object):
 
     def __str__(self):
         return Element.STR_FORMAT % (
-            self.index, self.name, self.family, self.sb, self.length,
+            self.index, self.name, self.family, self.s, self.length,
             self.devname, self.cell, self.girder, self.symmetry, self.sequence)
 
     def __lt__(self, other):
-        return self.sb < other.sb
+        return self.s < other.s
 
     def __gt__(self, other):
-        return self.sb > other.sb
+        return self.s > other.s
 
     def __eq__(self, other):
-        return self.sb == other.sb and \
+        return self.s == other.s and \
                self.length == other.length and \
                self.name == other.name
 
@@ -147,8 +147,8 @@ class AbstractElement(object):
             self.phylen = float(prpt[self.CFS['phylen']])
         if prpt.has_key(self.CFS['length']):
             self.length = float(prpt[self.CFS['length']])
-        if prpt.has_key(self.CFS['sb']):
-            self.sb = float(prpt[self.CFS['sb']])
+        if prpt.has_key(self.CFS['s']):
+            self.s = float(prpt[self.CFS['s']])
         if prpt.has_key(self.CFS['index']):
             self.index = int(prpt[self.CFS['index']])
 
