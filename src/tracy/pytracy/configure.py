@@ -54,7 +54,7 @@ try:
 except IOError:
   print "Couldn't open file"
 
-mod[10]= mod[10].replace("\n"," -L../tracy-3.5/tracy/src -L../tracy-3.5/TPSA -L../../num_rec/src\n");
+mod[10]= mod[10].replace("\n"," -L../tracy-3.5/tracy/src -L../tracy-3.5/TPSA -L../../num_rec/lib\n");
 # I then did my regex matching on the mod array, before commiting back to a file using
 
 try:

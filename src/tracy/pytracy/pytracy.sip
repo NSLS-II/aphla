@@ -5,7 +5,7 @@
 #include <../tracy-3.5/tracy/inc/tracy_lib.h>
 void Mpole_Setmatrix(int Fnum1, int Knum1, double K);
 %End
-
+ 
 int ss_dim;
 
 struct globvalrec {
@@ -189,7 +189,134 @@ for (int index = 0; index < 3; index++)
     int           RingType;       // 1 if a ring (0 if transfer line)
 };
 
+//struct DriftType {
+//    Matrix D55; // Linear matrix
+//};
 
+struct elemtype {
+//    partsName PName;   /* Element name */
+    SIP_PYOBJECT PName;
+%GetCode
+sipPy = PyString_FromString(sipCpp->PName);
+%End
+%SetCode
+  strcpy(sipCpp->PName, PyString_AsString(sipPy));
+%End
+      double PL;         /* Length[m]    */
+//    PartsKind Pkind;   /* Enumeration  for magnet types */
+	long Pkind;
+%GetCode
+sipPy = (PyLong_FromLong(sipCpp->Pkind));
+%End
+%SetCode
+  sipCpp->Pkind = PartsKind(PyLong_AsLong(sipPy));
+%End
+    //union
+    //{
+//        DriftType      *D;   // Drift
+//        MpoleType      *M;   // Multipole
+//        WigglerType    *W;   // Wiggler
+//        FieldMapType   *FM;  // Field Map
+//        InsertionType  *ID;  // Insertion
+//        CavityType     *C;   // Cavity
+//        SpreaderType   *Spr; // Spreader
+//        RecombinerType *Rec; // Recombiner
+//        SolenoidType   *Sol; // Solenoid
+    //};
+};
+
+struct CellType {
+    int              Fnum;        // Element Family #
+    int              Knum;        // Element Kid #
+    double           S;           // Position in the ring
+    //CellType*        next_ptr;    // pointer to next cell (for tracking)
+    SIP_PYOBJECT     dS;          // Vector2, Transverse displacement
+%GetCode
+sipPy = PyList_New(2);
+for (int index = 0; index < 2; index++)
+    PyList_SetItem(sipPy, index, PyFloat_FromDouble((double)sipCpp->dS[index]));
+%End
+%SetCode
+for (int index = 0; index < 2; index++)
+  sipCpp->dS[index] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(sipPy,index));
+%End
+     SIP_PYOBJECT    dT;          // Vector2, dT = (cos(dT), sin(dT))
+%GetCode
+sipPy = PyList_New(2);
+for (int index = 0; index < 2; index++)
+    PyList_SetItem(sipPy, index, PyFloat_FromDouble((double)sipCpp->dT[index]));
+%End
+%SetCode
+for (int index = 0; index < 2; index++)
+  sipCpp->dT[index] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(sipPy,index));
+%End
+    elemtype         Elem;        // Structure (name, type)
+    SIP_PYOBJECT          Nu;          //Vector2 Phase advances
+%GetCode
+sipPy = PyList_New(2);
+for (int index = 0; index < 2; index++)
+    PyList_SetItem(sipPy, index, PyFloat_FromDouble((double)sipCpp->Nu[index]));
+%End
+%SetCode
+for (int index = 0; index < 2; index++)
+  sipCpp->Nu[index] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(sipPy,index));
+%End
+    SIP_PYOBJECT          Alpha;       //Vector2 Alpha functions (redundant)
+%GetCode
+sipPy = PyList_New(2);
+for (int index = 0; index < 2; index++)
+    PyList_SetItem(sipPy, index, PyFloat_FromDouble((double)sipCpp->Alpha[index]));
+%End
+%SetCode
+for (int index = 0; index < 2; index++)
+  sipCpp->Alpha[index] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(sipPy,index));
+%End
+    SIP_PYOBJECT          Beta;        //Vector2 beta fonctions (redundant)
+%GetCode
+sipPy = PyList_New(2);
+for (int index = 0; index < 2; index++)
+    PyList_SetItem(sipPy, index, PyFloat_FromDouble((double)sipCpp->Beta[index]));
+%End
+%SetCode
+for (int index = 0; index < 2; index++)
+  sipCpp->Beta[index] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(sipPy,index));
+%End
+    SIP_PYOBJECT          Eta;		//Vector2
+%GetCode
+sipPy = PyList_New(2);
+for (int index = 0; index < 2; index++)
+    PyList_SetItem(sipPy, index, PyFloat_FromDouble((double)sipCpp->Eta[index]));
+%End
+%SetCode
+for (int index = 0; index < 2; index++)
+  sipCpp->Eta[index] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(sipPy,index));
+%End
+    SIP_PYOBJECT          Etap;        //Vector2 dispersion and its derivative (redundant)
+%GetCode
+sipPy = PyList_New(2);
+for (int index = 0; index < 2; index++)
+    PyList_SetItem(sipPy, index, PyFloat_FromDouble((double)sipCpp->Etap[index]));
+%End
+%SetCode
+for (int index = 0; index < 2; index++)
+  sipCpp->Etap[index] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(sipPy,index));
+%End
+    SIP_PYOBJECT           BeamPos;     //Vector Last position of the beam this cell
+%GetCode
+sipPy = PyList_New(ss_dim);
+for (int index=0;index<ss_dim;index++)
+  PyList_SetItem(sipPy, index, PyFloat_FromDouble((double) sipCpp->BeamPos[index]));
+%End
+%SetCode
+for (int index = 0; index < ss_dim; index++)
+  sipCpp->BeamPos[index] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(sipPy,index));
+%End
+//    Matrix           A;           // Floquet space to phase space transformation
+//    Matrix           sigma;       // sigma matrix (redundant)
+//    Vector2          maxampl[PLANES]; // Horizontal and vertical physical apertures:
+                                      //   maxampl[X_][0] < x < maxampl[X_][1]
+                                      //   maxampl[Y_][0] < y < maxampl[Y_][1]
+};
 
 globvalrec globval;
 
@@ -626,20 +753,13 @@ SIP_PYLIST GetNu(SIP_PYOBJECT);
 	    }
 %End
 
-SIP_PYOBJECT getElemName(SIP_PYOBJECT);
+SIP_PYOBJECT getElemName(int);
 %MethodCode
-        int i= (int) PyLong_AsLong(a0);
-	if (i<1) 
-	{ 
-	  printf("Family Number must be a positive integer\n");
-	  return NULL;
-	}
-	else
-           return PyString_FromString(ElemFam[i-1].ElemF.PName);
+           return PyString_FromString(ElemFam[a0-1].ElemF.PName);
 %End
 
 /*
-void SetMpoleBsys(SIP_PYOBJECT,SIP_PYOBJECT,SIP_PYOBJECT); //, SIP_PYOBJECT);
+void SetMpoleBsys(SIP_PYOBJECT,SIP_PYOBJECT,SIP_PYOBJECT); //, SIP_PYOBJECT;
 %MethodCode
         partsName  name;
         char *ptr;
@@ -665,7 +785,7 @@ void SetMpoleBsys(SIP_PYOBJECT,SIP_PYOBJECT,SIP_PYOBJECT); //, SIP_PYOBJECT);
 	  name[i]=tolower(ptr[i]);
         
           for (i=0; i<global.Elem_nFam; ++i)
-	    if (!strncmp(name, ElemFam[i].ElemF.PName, sizeof(alfa_))
+	    if (!strncmp(name, ElemFam[i].ElemF.PName, sizeof(alfa_)))
 	    {
  	      kidnum = ElemFam[i].nKid;
 	      kidlist= ElemFam[i].KidList;
@@ -715,834 +835,244 @@ SIP_PYOBJECT getFnumByName(SIP_PYOBJECT);
 
 // long Elem_GetPos(const int Fnum1, const int Knum1)
 
-SIP_PYOBJECT Elem_GetPos(SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYOBJECT Elem_GetPos(long, long);
 %MethodCode
-        long Fnum, Knum;
         long loc;
-        if ((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0)
-        {
-          sipIsErr = 1;
-          return NULL;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	    return NULL;
-	  }
-	  else
-	  {
-            loc = Elem_GetPos(Fnum,Knum);
-            return PyLong_FromLong(loc);
-	  }
-        }
+        loc = Elem_GetPos(a0,a1);
+        return PyLong_FromLong(loc);
 %End
 
 // double get_L(const int Fnum, const int Knum)
  
-SIP_PYOBJECT get_L(SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYOBJECT get_L(long, long);
 %MethodCode
-	long Fnum, Knum;
 	double len;
-	if ((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0)
-	{
-	  sipIsErr = 1;
-	  return NULL;
-	}
-	else
-	{
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	    return NULL;
-	  }
-	  else
-	  {
-	    len = get_L(Fnum,Knum);
-	    return PyFloat_FromDouble(len);
-	  }
-	}
+	len = get_L(a0,a1);
+	return PyFloat_FromDouble(len);
 %End
 	
 
 // void set_L(const int Fnum, const int Knum, const double L)
 
-void set_L(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_L(long, long, double);
 %MethodCode
-	long Fnum, Knum;
-	double len;
-       if ((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else
-	  {
-            len = PyFloat_AsDouble(a2);
-	    set_L(Fnum,Knum,len);
-	  }
-        }
+
+	set_L(a0,a1,a2);
+
 %End
 
 // void set_L(const int Fnum, const double L)
 
-void set_L_all(SIP_PYOBJECT, SIP_PYOBJECT);
+void set_L_all(long, double);
 %MethodCode
-        long Fnum;
-        double len;
-       if ((Fnum=PyLong_AsLong(a0))<0 || !PyNumber_Check(a1))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else
-	  {
-            len = PyFloat_AsDouble(a1);
-            set_L(Fnum,len);
-	  }
-        }
+        set_L(a0,a1);
 %End
 
 
 // void set_dL(const int Fnum, const int Knum, const double dL)
 
-void set_dL(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_dL(long, long, double);
 %MethodCode
-	long Fnum, Knum;
-	double dl;
-       if ((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else
-	  {
-            dl = PyFloat_AsDouble(a2);
-	    set_dL(Fnum,Knum,dl);
-	  }
-        }
+            
+	set_dL(a0, a1, a2);
 %End
 
 // void get_bn_design_elem(const int Fnum, const int Knum, const int n, double &bn, double &an)
 
-SIP_PYLIST get_bn_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYLIST get_bn_design_elem(long, long, long);
 %MethodCode
 	PyObject * B;
-	int Fnum, Knum, n;
 	double bn,an;
 
-        if((Fnum=(int) PyLong_AsLong(a0))<0 || (Knum=(int) PyLong_AsLong(a1))<0 || (n=(int) PyLong_AsLong(a2))<0)
-        {
-          sipIsErr = 1;
-	  return NULL;
-        }
-	else
-	{
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	    return NULL;
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	    return NULL;
-	  }
-	  else
-	  {
-  	    get_bn_design_elem(Fnum, Knum, n, bn, an);
-	    B = PyList_New(2);
-	    PyList_SetItem(B, 0, PyFloat_FromDouble(bn));
-	    PyList_SetItem(B, 1, PyFloat_FromDouble(an));
-	    return B;
-	  }
-	}
+  	get_bn_design_elem(a0, a1, a2, bn, an);
+	B = PyList_New(2);
+	PyList_SetItem(B, 0, PyFloat_FromDouble(bn));
+	PyList_SetItem(B, 1, PyFloat_FromDouble(an));
+	return B;
 %End
 
-SIP_PYLIST get_bn_rnd_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYLIST get_bn_rnd_elem(long, long, long);
 %MethodCode
         PyObject * B;
-        int Fnum, Knum, n;
         double bn,an;
 	int Enum;
 
-        if((Fnum=(int) PyLong_AsLong(a0))<0 || (Knum=(int) PyLong_AsLong(a1))<0 || (n=(int) PyLong_AsLong(a2))<0)
-        {
-          sipIsErr = 1;
-          return NULL;
-        }
-        else
-        {
-          if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-          {
-            printf("The indeces are not out of range\n");
-            return NULL;
-          }
-          else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-          {
-            printf("Fnum:%d is not a multipole\n", Fnum);
-            return NULL;
-          }
-          else
-          {
-	    Enum = ElemFam[Fnum-1].KidList[Knum-1];
-	    bn = Cell[Enum].Elem.M->PBrnd[HOMmax+n];
-	    an = Cell[Enum].Elem.M->PBrnd[HOMmax-n];
-            B = PyList_New(2);
-            PyList_SetItem(B, 0, PyFloat_FromDouble(bn));
-            PyList_SetItem(B, 1, PyFloat_FromDouble(an));
-            return B;
-          }
-        }
+	Enum = ElemFam[a0-1].KidList[a1-1];
+	bn = Cell[Enum].Elem.M->PBrnd[HOMmax+a2];
+	an = Cell[Enum].Elem.M->PBrnd[HOMmax-a2];
+        B = PyList_New(2);
+        PyList_SetItem(B, 0, PyFloat_FromDouble(bn));
+        PyList_SetItem(B, 1, PyFloat_FromDouble(an));
+        return B;
 %End
 
 // void get_bnL_design_elem(const int Fnum, const int Knum, const int n, double &bnL, double &anL)
 
-SIP_PYLIST get_bnL_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYLIST get_bnL_design_elem(long, long, long);
 %MethodCode
         PyObject * BL;
-        int Fnum, Knum, n;
         double bnL,anL;
 
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0)
-        {
-          sipIsErr = 1;
-          return NULL;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	    return NULL;
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	    return NULL;
-	  }
-	  else
-	  {
-            get_bnL_design_elem(Fnum, Knum, n, bnL, anL);
-            BL = PyList_New(2);
-            PyList_SetItem(BL, 0, PyFloat_FromDouble(bnL));
-            PyList_SetItem(BL, 1, PyFloat_FromDouble(anL));
-            return BL;
-	  }
-        }
+        get_bnL_design_elem(a0, a1, a2, bnL, anL);
+        BL = PyList_New(2);
+        PyList_SetItem(BL, 0, PyFloat_FromDouble(bnL));
+        PyList_SetItem(BL, 1, PyFloat_FromDouble(anL));
+        return BL;
 %End
 
 // void set_bn_design_elem(const int Fnum, const int Knum, const int n, const double bn, const double an)
 
-void set_bn_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bn_design_elem(long, long, long, double, double);
 %MethodCode
-	int Fnum, Knum, n;
-	double bn, an;
-
-	if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-	    bn = PyFloat_AsDouble(a3);
-	    an = PyFloat_AsDouble(a4);
-            set_bn_design_elem(Fnum, Knum, n, bn, an);
-	  }
-	}
+        set_bn_design_elem(a0, a1, a2, a3, a4);
 %End
 
 // void set_dbn_design_elem(const int Fnum, const int Knum, const int n, const double dbn, const double dan)
 
-void set_dbn_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_dbn_design_elem(long, long, long, double, double);
 %MethodCode
-        int Fnum, Knum, n;
-        double dbn, dan;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            dbn = PyFloat_AsDouble(a3);
-            dan = PyFloat_AsDouble(a4);
-            set_dbn_design_elem(Fnum, Knum, n, dbn, dan);
-	  }
-        }
+        set_dbn_design_elem(a0, a1, a2, a3, a4);
 %End
 
 // void set_bn_design_fam(const int Fnum, const int n, const double bn, const double an)
 
-void set_bn_design_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bn_design_fam(long, long, double, double);
 %MethodCode
-        int Fnum, n;
-        double bn, an;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bn = PyFloat_AsDouble(a2);
-            an = PyFloat_AsDouble(a3);
-            set_bn_design_fam(Fnum, n, bn, an);
-	  }
-        }
+        set_bn_design_fam(a0, a1, a2, a3);
 %End
 
 
 // void set_dbn_design_fam(const int Fnum, const int n, const double dbn, const double dan)
 
-void set_dbn_design_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_dbn_design_fam(int, int, double, double);
 %MethodCode
-        int Fnum, n;
-        double dbn, dan;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            dbn = PyFloat_AsDouble(a2);
-            dan = PyFloat_AsDouble(a3);
-            set_dbn_design_fam(Fnum, n, dbn, dan);
-	  }
-        }
+        set_dbn_design_fam(a0, a1, a2, a3);
 %End
 
 // void set_bnL_design_elem(const int Fnum, const int Knum, const int n, const double bnL, const double anL)
 
-void set_bnL_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_design_elem(long, long, long, double, double);
 %MethodCode
-        int Fnum, Knum, n;
-        double bnL, anL;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnL = PyFloat_AsDouble(a3);
-            anL = PyFloat_AsDouble(a4);
-            set_bnL_design_elem(Fnum, Knum, n, bnL, anL);
-	  }
-        }
+        set_bnL_design_elem(a0, a1, a2, a3, a4);
 %End
 
 
 // void set_dbnL_design_elem(const int Fnum, const int Knum, const int n, const double dbnL, const double danL)
 
-void set_dbnL_design_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_dbnL_design_elem(long, long, long, double, double);
 %MethodCode
-        int Fnum, Knum, n;
-        double dbnL, danL;
-                          
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            dbnL = PyFloat_AsDouble(a3);
-            danL = PyFloat_AsDouble(a4);
-            set_dbnL_design_elem(Fnum, Knum, n, dbnL, danL);
-	  }
-        }
+        set_dbnL_design_elem(a0, a1, a2, a3, a4);
 %End
 
 // void set_dbnL_design_fam(const int Fnum, const int n, const double dbnL, const double danL)
 
-void set_dbnL_design_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_dbnL_design_fam(long, long, double, double);
 %MethodCode
-        int Fnum, n;
-        double dbnL, danL;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            dbnL = PyFloat_AsDouble(a2);
-            danL = PyFloat_AsDouble(a3);
-            set_dbnL_design_fam(Fnum, n, dbnL, danL);
-	  }
-        }
+       set_dbnL_design_fam(a0, a1, a2, a3);
 %End
 
 
 // void set_bnL_design_fam(const int Fnum, const int n, const double bnL, const double anL)
 
-void set_bnL_design_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_design_fam(long, long, double, double);
 %MethodCode
-        int Fnum, n;
-        double bnL, anL;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnL = PyFloat_AsDouble(a2);
-            anL = PyFloat_AsDouble(a3);
-            set_bnL_design_fam(Fnum, n, bnL, anL);
-	  }
-        }
+       set_bnL_design_fam(a0, a1, a2, a3);
 %End
 
 
 // void set_bnL_design_type(const int type, const int n, const double bnL, const double anL)
 
-void set_bnL_design_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_design_type(long, long, double, double);
 %MethodCode
-        int type, n;
-        double bnL, anL;
-
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-          bnL = PyFloat_AsDouble(a2);
-          anL = PyFloat_AsDouble(a3);
-          set_bnL_design_type(type, n, bnL, anL);
-        }
+        set_bnL_design_type(a0, a1, a2, a3);
 %End
 
 // void set_bnL_sys_elem(const int Fnum, const int Knum, const int n, const double bnL, const double anL)
 
-void set_bnL_sys_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_sys_elem(long, long, long, double, double);
 %MethodCode
-        int Fnum, Knum, n;
-        double bnL, anL;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnL = PyFloat_AsDouble(a3);
-            anL = PyFloat_AsDouble(a4);
-            set_bnL_sys_elem(Fnum, Knum, n, bnL, anL);
-	  }
-        }
+        set_bnL_sys_elem(a0, a1, a2, a3, a4);
 %End
 
 
 // void set_bnL_sys_fam(const int Fnum, const int n, const double bnL, const double anL)
 
-void set_bnL_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_sys_fam(long, long, double, double);
 %MethodCode
-        int Fnum, n;
-        double bnL, anL;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnL = PyFloat_AsDouble(a2);
-            anL = PyFloat_AsDouble(a3);
-            set_bnL_sys_fam(Fnum, n, bnL, anL);
-	  }
-        }
+        set_bnL_sys_fam(a0, a1, a2, a3);
 %End
 
 // void set_bnL_sys_type(const int type, const int n, const double bnL, const double anL)
 
-void set_bnL_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_sys_type(long, long, double, double);
 %MethodCode
-        int type, n;
-        double bnL, anL;
-
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-          bnL = PyFloat_AsDouble(a2);
-          anL = PyFloat_AsDouble(a3);
-          set_bnL_sys_type(type, n, bnL, anL);
-        }
+        set_bnL_sys_type(a0, a1, a2, a3);
 %End
 
 // void set_bnL_rms_elem(const int Fnum, const int Knum, const int n, const double bnL, const double anL, const bool new_rnd)
 
-void set_bnL_rms_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_rms_elem(long, long, long, double, double, bool);
 %MethodCode
-        int Fnum, Knum, n;
-        double bnL, anL;
-	bool new_rnd=false;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4) || !PyBool_Check(a5))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnL = PyFloat_AsDouble(a3);
-            anL = PyFloat_AsDouble(a4);
-	    if (a5 == Py_True) new_rnd=true;
-            set_bnL_rms_elem(Fnum, Knum, n, bnL, anL, new_rnd);
-	  }
-        }
+        set_bnL_rms_elem(a0, a1, a2, a3, a4, a5);
 %End
 
 // void set_bnL_rms_fam(const int Fnum, const int n, const double bnL, const double anL, const bool new_rnd)
 
-void set_bnL_rms_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_rms_fam(long, long, double, double, bool);
 %MethodCode
-        int Fnum, n;
-        double bnL, anL;
-        bool new_rnd=false;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyBool_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnL = PyFloat_AsDouble(a2);
-            anL = PyFloat_AsDouble(a3);
-            if (a4 == Py_True) new_rnd=true;
-            set_bnL_rms_fam(Fnum, n, bnL, anL, new_rnd);
-	  }
-        }
+        set_bnL_rms_fam(a0, a1, a2, a3, a4);
 %End
 
 
 // void set_bnL_rms_type(const int type, const int n, const double bnL, const double anL, const bool new_rnd)
 
-void set_bnL_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnL_rms_type(long, long, double, double, bool);
 %MethodCode
-        int type, n;
-        double bnL, anL;
-        bool new_rnd=false; 
-
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyBool_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-          bnL = PyFloat_AsDouble(a2);
-          anL = PyFloat_AsDouble(a3);
-          if (a4 == Py_True) new_rnd=true;
-          set_bnL_rms_type(type, n, bnL, anL, new_rnd);
-        }
+        set_bnL_rms_type(a0, a1, a2, a3, a4);
 %End
 
 // void set_bnr_sys_elem(const int Fnum, const int Knum, const int n, const double bnr, const double anr)
 
-void set_bnr_sys_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnr_sys_elem(long, long, long, double, double);
 %MethodCode
-        int Fnum, Knum, n;
-        double bnr, anr;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnr = PyFloat_AsDouble(a3);
-            anr = PyFloat_AsDouble(a4);
-            set_bnr_sys_elem(Fnum, Knum, n, bnr, anr);
-	  }
-        }
+        set_bnr_sys_elem(a0, a1, a2, a3, a4);
 %End
 
 // void set_bnr_sys_fam(const int Fnum, const int n, const double bnr, const double anr)
 
-void set_bnr_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnr_sys_fam(long, long, double, double);
 %MethodCode
-        int Fnum, n;
-        double bnr, anr;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          printf("PyFloat Check Failed\n");
-          sipIsErr = 1;
-	  return NULL;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnr = PyFloat_AsDouble(a2);
-            anr = PyFloat_AsDouble(a3);
-            set_bnr_sys_fam(Fnum, n, bnr, anr);
-	  }
-        }
+        set_bnr_sys_fam(a0, a1, a2, a3);
 %End
 
 
 // void set_bnr_sys_type(const int type, const int n, const double bnr, const double anr)
 
-void set_bnr_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnr_sys_type(long, long, double, double);
 %MethodCode
-        int type, n;
-        double bnr, anr;
-
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-          bnr = PyFloat_AsDouble(a2);
-          anr = PyFloat_AsDouble(a3);
-          set_bnr_sys_type(type, n, bnr, anr);
-        }
+        set_bnr_sys_type(a0, a1, a2, a3);
 %End
 
 // void set_bnr_rms_elem(const int Fnum, const int Knum, const int n, const double bnr, const double anr, const bool new_rnd)
 
-void set_bnr_rms_elem(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnr_rms_elem(long, long, long, double, double, bool);
 %MethodCode
-        int Fnum, Knum, n;
-        double bnr, anr;
-        bool new_rnd=false;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (Knum=PyLong_AsLong(a1))<0 || (n=PyLong_AsLong(a2))<0 || !PyNumber_Check(a3) || !PyNumber_Check(a4) || !PyBool_Check(a5))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Knum <1 || Fnum > globval.Elem_nFam || Knum > ElemFam[Fnum-1].nKid)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnr = PyFloat_AsDouble(a3);
-            anr = PyFloat_AsDouble(a4);
-            if (a5 == Py_True) new_rnd=true;
-            set_bnr_rms_elem(Fnum, Knum, n, bnr, anr, new_rnd);
-	  }
-        }
+        set_bnr_rms_elem(a0, a1, a2, a3, a4, a5);
 %End
 
 // void set_bnr_rms_fam(const int Fnum, const int n, const double bnr, const double anr, const bool new_rnd)
 
-void set_bnr_rms_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnr_rms_fam(long, long, double, double, bool);
 %MethodCode
-        int Fnum, n;
-        double bnr, anr;
-        bool new_rnd=false;
-
-        if((Fnum=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyBool_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-	  if (Fnum < 1 || Fnum > globval.Elem_nFam)
-	  {
-	    printf("The indeces are not out of range\n");
-	  }
-	  else if (ElemFam[Fnum-1].ElemF.Pkind != Mpole)
-	  {
-	    printf("Fnum:%d is not a multipole\n", Fnum);
-	  }
-	  else
-	  {
-            bnr = PyFloat_AsDouble(a2);
-            anr = PyFloat_AsDouble(a3);
-            if (a4 == Py_True) new_rnd=true;
-            set_bnr_rms_fam(Fnum, n, bnr, anr, new_rnd);
-	  }
-        }
+        set_bnr_rms_fam(a0, a1, a2, a3, a4);
 %End
 
 
 // void set_bnr_rms_type(const int type, const int n, const double bnr, const double anr, const bool new_rnd)
 
-void set_bnr_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void set_bnr_rms_type(long, long, double, double, bool);
 %MethodCode
-        int type, n;
-        double bnr, anr;
-        bool new_rnd=false;
-
-        if((type=PyLong_AsLong(a0))<0 || (n=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyBool_Check(a4))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-          bnr = PyFloat_AsDouble(a2);
-          anr = PyFloat_AsDouble(a3);
-          if (a4 == Py_True) new_rnd=true;
-          set_bnr_rms_type(type, n, bnr, anr, new_rnd);
-        }
+        set_bnr_rms_type(a0, a1, a2, a3, a4);
 %End
 
 /*
@@ -1585,51 +1115,26 @@ SIP_PYOBJECT Mpole_GetPB(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 %End
 */
 
-void InitRand(SIP_PYOBJECT,SIP_PYOBJECT);
+void InitRand(int,double);
 %MethodCode
-        int seed;
-
-        if((seed=PyLong_AsLong(a0))<0 || !PyNumber_Check(a1) )
-        {
-           sipIsErr = 1;
-        }
-	else
-	{
-	  rseed0 = seed;
-	  rseed  = seed;
-	  normcut_ = (double) PyFloat_AsDouble(a1);
-	}
+	rseed0 = a0;
+	rseed  = a0;
+	normcut_ = a1;
 %End
 
 //int GetnKid(const int Fnum1) { return (ElemFam[Fnum1-1].nKid); }
 
-SIP_PYOBJECT GetnKid(SIP_PYOBJECT);
+SIP_PYOBJECT GetnKid(int);
 %MethodCode
-	int Fnum, Knum;
+	int Knum;
 
-        if ((Fnum=PyLong_AsLong(a0)) < 0 )
-        {
-           sipIsErr = 1;
-           return NULL;
-        }
-        else
-        {
-          if (Fnum < 1 || Fnum > globval.Elem_nFam )
-          {
-            printf("The indeces are not out of range\n");
-            return NULL;
-          }
-          else
-          {
-            Py_BEGIN_ALLOW_THREADS
+        Py_BEGIN_ALLOW_THREADS
 
-            Knum=GetnKid(Fnum);
+        Knum=GetnKid(a0);
 
-            Py_END_ALLOW_THREADS
+        Py_END_ALLOW_THREADS
 
-            return PyLong_FromLong((long) Knum);
-          }
-        }
+        return PyLong_FromLong((long) Knum);
 %End
 
 //void Cell_SetdP(const double dP)
@@ -1682,9 +1187,9 @@ SIP_PYOBJECT Cell_Pass(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
             for (i=0; i<6; ++i)
 	      PyList_SetItem(a2,i,PyFloat_FromDouble(x[i]));
 
-	    return lastpos;
-
             Py_END_ALLOW_THREADS
+
+	    return lastpos;
         }
 %End
 
@@ -1733,9 +1238,9 @@ SIP_PYOBJECT Cell_Pass_M(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT)
             }
 	    lastpos = PyLong_FromLong(ilast);
 
-            return lastpos;
-
             Py_END_ALLOW_THREADS
+
+            return lastpos;
         }
 %End
 
@@ -1745,8 +1250,12 @@ SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT);
 %MethodCode
         long ilast;
         Vector x;
-        PyObject *lastpos ;
+	PyObject *xout;
+	PyObject *ret;
 	int i;
+
+	xout = PyList_New(6);
+	ret = PyList_New(2);
 
         if (!PyList_Check(a0))
         {
@@ -1766,13 +1275,15 @@ SIP_PYOBJECT Cell_fPass(SIP_PYOBJECT);
               x[i] = PyFloat_AsDouble(PyList_GetItem(a0,i));
             Cell_fPass(x, ilast);
 
-            lastpos = PyLong_FromLong(ilast);
             for (i=0; i<6; ++i)
-              PyList_SetItem(a0,i,PyFloat_FromDouble(x[i]));
+              PyList_SetItem(xout,i,PyFloat_FromDouble(x[i]));
 
-            return lastpos;
-
+	    PyList_SetItem(ret, 0, xout);
+	    PyList_SetItem(ret, 1, PyLong_FromLong(ilast));
             Py_END_ALLOW_THREADS
+
+
+            return ret;
         }
 %End
 
@@ -1782,7 +1293,13 @@ SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT);
         long ilast;
         Vector x;
         Matrix M;
-        PyObject *lastpos ;
+        PyObject *ret ;
+	PyObject *xout;
+	PyObject *mout;
+	xout = PyList_New(6);
+	mout = PyList_New(6);
+	ret = PyList_New(3);
+	
 
         if (!PyList_Check(a0) || !PyList_Check(a1))
         {
@@ -1809,20 +1326,21 @@ SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT);
 
             Cell_fPass_M(x, M, ilast);
 
-            lastpos = PyLong_FromLong(ilast);
-
             for (i=0; i<6; ++i)
             {
-              PyList_SetItem(a0,i,PyFloat_FromDouble(x[i]));
+              PyList_SetItem(xout,i,PyFloat_FromDouble(x[i]));
               PyObject * row = PyList_GetItem(a1,i);
               for (j=0; j<6; ++j)
                 PyList_SetItem(row,j,PyFloat_FromDouble(M[i][j]));
+	      PyList_SetItem(mout,i,row);
             }
-            lastpos = PyLong_FromLong(ilast);
-
-            return lastpos;
+	    PyList_SetItem(ret, 0, xout);
+	    PyList_SetItem(ret, 1, mout);
+            PyList_SetItem(ret, 2, PyLong_FromLong(ilast));
 
             Py_END_ALLOW_THREADS
+
+            return ret;
         }
 %End
 
@@ -1831,43 +1349,22 @@ SIP_PYOBJECT Cell_fPass_M(SIP_PYOBJECT, SIP_PYOBJECT);
 
 
 // void Cell_Concat(double dP)
-void Cell_Concat(SIP_PYOBJECT);
+void Cell_Concat(double);
 %MethodCode
-        double dP;
-
-        if(!PyNumber_Check(a0))
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-          dP = PyFloat_AsDouble(a0);
-          Cell_Concat(dP);
-        }
+          Cell_Concat(a0);
 %End
 
 // bool GetCOD(long imax, double eps, double dP, long &lastpos)
-SIP_PYOBJECT GetCOD(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYOBJECT GetCOD(long, double, double);
 %MethodCode
-        long imax, ilast;
-        double eps;
+        long  ilast;
         bool success;
         PyObject * Out;
-        double dP;
 
-        if((imax=PyLong_AsLong(a0))<0 || !PyNumber_Check(a1) || !PyNumber_Check(a2)) 
-        {
-          sipIsErr = 1;
-        }
-        else
-        {
-          eps = PyFloat_AsDouble(a1);
-          dP = PyFloat_AsDouble(a2);
-          success=GetCOD(imax, eps, dP, ilast);
-	  if (!success) ilast = -1;
-          Out = PyLong_FromLong(ilast);
-          return Out;
-        } 
+        success=GetCOD(a0, a1, a2, ilast);
+	if (!success) ilast = -1;
+        Out = PyLong_FromLong(ilast);
+        return Out;
 %End    
 
 
@@ -2007,39 +1504,19 @@ void Ring_Fitchrom(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_P
 %End
 
 //void FitChrom(long sf, long sd, double ksix, double ksiy)
-void FitChrom(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void FitChrom(long, long, double, double);
 %MethodCode
-        long sf, sd;
-        double ksix, ksiy;
 
-        if ((sf=PyLong_AsLong(a0))<0 || (sd=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2) ||  !PyNumber_Check(a3))
-        {
-          sipIsErr = 1;
-          return NULL;
-        }
-        else
-        {
-           Py_BEGIN_ALLOW_THREADS
+        FitChrom(a0, a1, a2, a3);
 
-           ksix = PyFloat_AsDouble(a2);
-           ksiy = PyFloat_AsDouble(a3);
-           
-
-           FitChrom(sf, sd, ksix, ksiy);
-
-           Py_END_ALLOW_THREADS 
-        }
 %End
 
 
 //void Ring_FitDisp(long pos, double eta, double eps, long nq, long q[], double dkL, long imax)
-void Ring_FitDisp(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void Ring_FitDisp(long, double, double, long, SIP_PYOBJECT, double, long);
 %MethodCode
-	long pos, imax, nq;
-	double eta, eps, dkL;
         int i;
-        if ((pos=PyLong_AsLong(a0))<1 || !PyNumber_Check(a1) || !PyNumber_Check(a2) || (nq=PyLong_AsLong(a3))<1 
-                                                  || !PyList_Check(a4) || !PyNumber_Check(a5) || (imax=PyLong_AsLong(a6))<0 )
+        if ( !PyList_Check(a4) )
         {
           sipIsErr = 1;
           return NULL;
@@ -2048,18 +1525,12 @@ void Ring_FitDisp(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PY
         {
            Py_BEGIN_ALLOW_THREADS
 
-	   long q[nq];
+	   long q[a3];
 
-	   eta = PyFloat_AsDouble(a1);
-	   eps = PyFloat_AsDouble(a2);	   	   
-
-	   for (i=0; i<nq; ++i)
+	   for (i=0; i<a3; ++i)
                q[i] = PyLong_AsLong(PyList_GetItem(a4,i));
 
-            dkL = PyFloat_AsDouble(a5);
-	    imax = PyLong_AsLong(a6);
-            
-            Ring_FitDisp(pos, eta, eps, nq, q, dkL, imax);
+            Ring_FitDisp(a0, a1, a2, a3, q, a5, a6);
 
 //	   for(i=0; i<2; i++)
 //	   {
@@ -2071,28 +1542,12 @@ void Ring_FitDisp(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PY
 %End
 
 // void FitDisp(long q, long pos, double eta)
-void FitDisp(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void FitDisp(long, long, double);
 %MethodCode
-        long q, pos;
-        double eta;
 
-        if ((q=PyLong_AsLong(a0))<0 || (pos=PyLong_AsLong(a1))<0 || !PyNumber_Check(a2))
-        {
-          sipIsErr = 1;
-          return NULL;
-        }
-        else
-        {
-           Py_BEGIN_ALLOW_THREADS
+        FitDisp(a0, a1, a2);
 
-           eta = PyFloat_AsDouble(a2);
-
-           FitDisp(q, pos, eta);
-
-           Py_END_ALLOW_THREADS 
-        }
 %End
-
 
 // void Mpole_Init(int Fnum1)
 void Reset_Mpole(SIP_PYOBJECT);
@@ -2218,15 +1673,13 @@ SIP_PYLIST get_alphac2();
 %End
 
 //void TraceABN(long i0, long i1, const Vector2 &alpha, const Vector2 &beta, const Vector2 &eta, const Vector2 &etap, const double dP)
-void TraceABN(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+void TraceABN(long, long, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, double);
 %MethodCode
-	long i0, i1;
-	double dP;
 	Vector2 alpha, beta, eta, etap;
 
 	int i;
 
-       if ((i0=PyLong_AsLong(a0))<1 || (i1=PyLong_AsLong(a1))<1 || !PyList_Check(a2) || !PyList_Check(a3) || !PyList_Check(a4) || !PyList_Check(a5) || !PyNumber_Check(a6)) 
+       if (!PyList_Check(a2) || !PyList_Check(a3) || !PyList_Check(a4) || !PyList_Check(a5))
         {
           sipIsErr = 1;
           return NULL;
@@ -2242,9 +1695,8 @@ void TraceABN(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJE
 	     eta[i]   = PyFloat_AsDouble(PyList_GetItem(a4,i));
 	     etap[i]  = PyFloat_AsDouble(PyList_GetItem(a5,i));	   	   
 	   }
-            dP = PyFloat_AsDouble(a6);
             
-            TraceABN(i0, i1, alpha, beta, eta, etap, dP);
+            TraceABN(a0, a1, alpha, beta, eta, etap, a6);
 
 	    Py_END_ALLOW_THREADS
 	}
@@ -2253,14 +1705,14 @@ void TraceABN(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJE
 // = { 0, 0 }; // /* frequency number to look for */
 //****************************************************************************/
 //* void Get_NAFF(int nterm, long ndata, double T[DIM][NTURN], double *fx, double *fz, int nb_freq[2])
-SIP_PYLIST Get_NAFF(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYLIST);
+SIP_PYLIST Get_NAFF(int, long, SIP_PYLIST);
 %MethodCode
   	double  Tab[6][NTURN];
 	int     nb_freq[2];
-	int nterm, ndata;
 	int i,j;
+	PyObject * pyRet = PyList_New(3);
 
-        if ((nterm=(int) PyLong_AsLong(a0))<1 || (ndata=(int) PyLong_AsLong(a1))<1 || !PyList_Check(a2) )
+	if (!PyList_Check(a2) )
         {
           sipIsErr = 1;
           return NULL;
@@ -2269,25 +1721,24 @@ SIP_PYLIST Get_NAFF(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYLIST);
         {
            Py_BEGIN_ALLOW_THREADS
 
-	   double  fx[nterm], fz[nterm];
+	   double  fx[a0], fz[a0];
 
 	   for (i=0;i<6;++i)
 	   {
 		PyObject * row = PyList_GetItem(a2,i);
-		for (j=0;j<ndata;++j)
+		for (j=0;j<a1;++j)
 		{
 		    Tab[i][j] = PyFloat_AsDouble(PyList_GetItem(row,j));
 		}
 	    }
 	    /* initializations */
-	    for (i = 0; i < nterm; i++)
+	    for (i = 0; i < a0; i++)
 	    {
 	        fx[i] = 0.0; fz[i] = 0.0;
 	    }
 	    /* end init */
-	    Get_NAFF(nterm, ndata*6, Tab, fx, fz, nb_freq);
+	    Get_NAFF(a0, a1*6, Tab, fx, fz, nb_freq);
 
-	    PyObject * pyRet = PyList_New(3);
 	    PyObject * Fx = PyList_New(nb_freq[0]);
 	    PyObject * Fz = PyList_New(nb_freq[1]);
 	    PyObject * Nb_Freq = PyList_New(2);
@@ -2300,158 +1751,100 @@ SIP_PYLIST Get_NAFF(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYLIST);
 	    PyList_SetItem(pyRet, 1, Fz);
 	    PyList_SetItem(pyRet, 2, Nb_Freq);
 
-	    return pyRet;
-
 	    Py_END_ALLOW_THREADS
+
+	    return pyRet;
 	}
 %End
 
-//* void Trac_Simple(double x, double px, double y, double py, double dp, double ctau, long nmax, double Tx[][NTURN], bool *status2)
-SIP_PYLIST Trac_Simple(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+//  void Trac_Simple(double x, double px, double y, double py, double dp, double ctau, long nmax, double Tx[][NTURN], bool *status2)
+SIP_PYLIST Trac_Simple(double, double, double, double, double, double, long);
 %MethodCode
   	bool    status = true;
 	double  Tab[6][NTURN];
-	double  x, px, y, py, dp, ctau;
-	long    nmax;
 	int i,j;
 
 	PyObject * pyRet;
 	PyObject * pyTab; 
 	PyObject * pyStatus;
 
-        if (!PyNumber_Check(a0) || !PyNumber_Check(a1) || !PyNumber_Check(a2) || !PyNumber_Check(a3) || !PyNumber_Check(a4)
-                                                                              || !PyNumber_Check(a5) || (nmax= PyLong_AsLong(a6))<1)
-        {
-          sipIsErr = 1;
-          return NULL;
-        }
-        else
-        {
-           Py_BEGIN_ALLOW_THREADS
+        Py_BEGIN_ALLOW_THREADS
 
-	   x = PyFloat_AsDouble(a0);  px = PyFloat_AsDouble(a1);
-	   y = PyFloat_AsDouble(a2);  py = PyFloat_AsDouble(a3);
-	   dp = PyFloat_AsDouble(a4);  ctau = PyFloat_AsDouble(a5);
+	Trac_Simple(a0, a1, a2, a3, a4, a5, a6, Tab, &status);
 
-	   Trac_Simple(x,px, y, py, dp,ctau, nmax, Tab, &status);
+	if (status) pyStatus = Py_True;
+	else pyStatus = Py_False;
 
-	   if (status) pyStatus = Py_True;
-	   else pyStatus = Py_False;
+	pyTab = PyList_New(6);
 
-	   pyTab = PyList_New(6);
-
-	   for (i=0;i<6;++i)
-	   {
-		PyObject * row = PyList_New(nmax);
-		for (j=0;j<nmax;++j)
+	for (i=0;i<6;++i)
+	{
+		PyObject * row = PyList_New(a6);
+		for (j=0;j<a6;++j)
 		{
 		   PyList_SetItem(row,j,PyFloat_FromDouble(Tab[i][j]));
 		}
 		PyList_SetItem(pyTab,i,row);
-	    }
+	 }
 
-	    pyRet = PyList_New(2);
+	 pyRet = PyList_New(2);
 	    
-	    PyList_SetItem(pyRet, 0, pyStatus);
-	    PyList_SetItem(pyRet, 1, pyTab);
+	 PyList_SetItem(pyRet, 0, pyStatus);
+	 PyList_SetItem(pyRet, 1, pyTab);
 
-	    return pyRet;
+	 Py_END_ALLOW_THREADS
 
-	    Py_END_ALLOW_THREADS
-	}
+	 return pyRet;
 %End
 
 
 
 // void GetChromTrac(long Nb, long Nbtour, double emax, double *xix, double *xiz)
-SIP_PYLIST GetChromTrac(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYLIST GetChromTrac(long, long, double);
 %MethodCode
-	long    Nb, Nbtour;
-        double  emax, xix, xiz;
+        double  xix, xiz;
+	PyObject * pyRet;
 
-        if ((Nb = PyLong_AsLong(a0))<1 || (Nbtour = PyLong_AsLong(a1))<1 || !PyNumber_Check(a2) )
-        {
-          sipIsErr = 1;
-          return NULL;
-        }
-        else
-        {
-            Py_BEGIN_ALLOW_THREADS
+        Py_BEGIN_ALLOW_THREADS
 
-	    emax = PyFloat_AsDouble(a2);
+	GetChromTrac(a0, a1, a2, &xix, &xiz);
 
-	   
-	    GetChromTrac(Nb, Nbtour, emax, &xix, &xiz);
+	pyRet = PyList_New(2);
 
-	    PyObject * pyRet = PyList_New(2);
+	PyList_SetItem(pyRet, 0, PyFloat_FromDouble(xix));
+	PyList_SetItem(pyRet, 1, PyFloat_FromDouble(xiz));
 
-	    PyList_SetItem(pyRet, 0, PyFloat_FromDouble(xix));
-	    PyList_SetItem(pyRet, 1, PyFloat_FromDouble(xiz));
+	Py_END_ALLOW_THREADS
 
-	    return pyRet;
-
-	    Py_END_ALLOW_THREADS
-	}
+	return pyRet;
 %End
 
 
-// void track(const char *file_name, double ic1, double ic2, double ic3, double ic4, double dp,
-//           long int nmax, long int &lastn, long int &lastpos, int floqs, double f_rf)
-//{
-//  /* Single particle tracking around closed orbit:
-//
-//          Output                floqs
-//
-//        Phase Space               0     [x, px, y, py, delta, ct]
-//        Floquet Space             1     [x^, px^, y^, py^, delta, ct]
-//        Action-Angle Variables    2     [2Jx, phx, 2Jy, phiy, delta, ct]
-//
-//  */
-SIP_PYLIST track(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYLIST track(char *, double, double, double, double, double, int, int, bool);
 %MethodCode
-	long int  lastpos, lastn;
-	double    ic1, ic2, ic3, ic4, dp, f_rf;
-	long nmax, floqs;
+        long lastpos, lastn;
+        PyObject * PyRet;
+	PyRet = PyList_New(2);
 
-        if (!PyString_Check(a0) || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3)|| !PyNumber_Check(a4)|| !PyNumber_Check(a5) 
-                                                      || (nmax = PyLong_AsLong(a6))<1 || (floqs = PyLong_AsLong(a7))<0 || !PyNumber_Check(a8) )
-        {
-          sipIsErr = 1;
-          return NULL;
-        }
-        else
-        {
-            Py_BEGIN_ALLOW_THREADS
+        Py_BEGIN_ALLOW_THREADS
 
-	    const char   *file_name = PyString_AsString(a0);
+        track(a0, a1, a2, a3, a4, a5, a6, lastn, lastpos, a7, a8);
 
-	    ic1 = PyFloat_AsDouble(a1);
-	    ic2 = PyFloat_AsDouble(a2);
-	    ic3 = PyFloat_AsDouble(a3);
-	    ic4 = PyFloat_AsDouble(a4);
+        PyList_SetItem(PyRet, 0, PyLong_FromLong(lastn));
+        PyList_SetItem(PyRet, 1, PyLong_FromLong(lastpos));
 
-	    dp  = PyFloat_AsDouble(a5);
+        Py_END_ALLOW_THREADS
 
-	    f_rf= PyFloat_AsDouble(a8);
-	   
-	    track(file_name, ic1, ic2, ic3, ic4, dp, nmax, lastn, lastpos, floqs, f_rf);
-
-	    PyObject * PyRet = PyList_New(2);
-
-	    PyList_SetItem(PyRet, 0, PyLong_FromLong(lastn));
-	    PyList_SetItem(PyRet, 1, PyLong_FromLong(lastpos));
-
-	    return PyRet;
-
-	    Py_END_ALLOW_THREADS
-	}
+        return PyRet;
 %End
+
 
 // void getfloqs(Vector &x)
-SIP_PYLIST track(SIP_PYLIST);
+SIP_PYLIST getfloqs(SIP_PYLIST);
 %MethodCode
 	int       i;
 	Vector x;
+	PyObject * pyRet = PyList_New(6); 
 
         if (!PyList_Check(a0) )
         {
@@ -2469,16 +1862,14 @@ SIP_PYLIST track(SIP_PYLIST);
 
 	   getfloqs(x);
 
-	   PyObject * pyRet = PyList_New(6); 
-
 	   for (i=0;i<6;++i)
 	   {
 		PyList_SetItem(pyRet,i, PyFloat_FromDouble(x[i]));
 	    }
 
-	    return pyRet;
-
 	    Py_END_ALLOW_THREADS
+
+	    return pyRet;
 	}
 %End
 
@@ -2489,6 +1880,7 @@ SIP_PYLIST GetTrack(SIP_PYOBJECT, SIP_PYOBJECT);
 	int       i;
 	long 	  n;
 	long nbuff;
+	PyObject * pyRet;
 
 
         if (!PyString_Check(a0) || (nbuff = PyLong_AsLong(a1))<1)
@@ -2507,7 +1899,7 @@ SIP_PYLIST GetTrack(SIP_PYOBJECT, SIP_PYOBJECT);
 
 	   GetTrack(file_name, &n, x, px, y, py);
 
-	   PyObject * pyRet = PyList_New(4);
+	   pyRet = PyList_New(4);
 
 	   PyObject * pyX  = PyList_New(n);
 	   PyObject * pyPx = PyList_New(n);
@@ -2527,9 +1919,9 @@ SIP_PYLIST GetTrack(SIP_PYOBJECT, SIP_PYOBJECT);
 	   PyList_SetItem(pyRet,2, pyY);
 	   PyList_SetItem(pyRet,3, pyPy);
 
-	   return pyRet;
-
 	   Py_END_ALLOW_THREADS
+
+	   return pyRet;
 	}
 %End
 
@@ -2539,6 +1931,7 @@ SIP_PYOBJECT getdynap(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 	double r, phi, delta, eps;
 	long nturn;
 	bool floqs=false;
+	PyObject * pyRet;
 
 
         if ( !PyNumber_Check(a0)|| !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3)|| (nturn = PyLong_AsLong(a4))<1 || !PyBool_Check(a5) )
@@ -2556,14 +1949,13 @@ SIP_PYOBJECT getdynap(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SI
 	    eps   = PyFloat_AsDouble(a3);
 	    if (a5 == Py_True) floqs = true;
 	   
-
 	    getdynap(r, phi, delta, eps, nturn, floqs);
 
-	    PyObject * pyRet = PyFloat_FromDouble(r);
-
-	    return pyRet;
+	    pyRet = PyFloat_FromDouble(r);
 
 	    Py_END_ALLOW_THREADS
+
+	    return pyRet;
 	}
 %End
 
@@ -2669,58 +2061,61 @@ void misalign_sys_fam(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
 	}
 %End
 
+void misalign_rms_type(const int type, const double dx_rms, const double dy_rms, const double dr_rms, const bool new_rnd);
+
 // void misalign_rms_type(const int type, const double dx_rms, const double dy_rms, const double dr_rms, const bool new_rnd)
-void misalign_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
-%MethodCode
-	double dx_rms, dy_rms, dr_rms;
-	long type;
-	bool new_rnd;
+// void misalign_rms_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+// %MethodCode
+//	double dx_rms, dy_rms, dr_rms;
+//	long type;
+//	bool new_rnd;
+//
+//        if ( (type = PyLong_AsLong(a0))<1 || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) || !PyBool_Check(a4) )
+//        {
+//            sipIsErr = 1;
+//        }
+//        else
+//        {
+//            Py_BEGIN_ALLOW_THREADS
+//
+//	    dx_rms = PyFloat_AsDouble(a1);
+//	    dy_rms = PyFloat_AsDouble(a2);
+//	    dr_rms = PyFloat_AsDouble(a3);
+//
+//	    if (a4 == Py_True) new_rnd = true;
+//	   
+//	    misalign_rms_type(type, dx_rms, dy_rms, dr_rms, new_rnd);
+//
+//	    Py_END_ALLOW_THREADS
+//	}
+// %End
 
-        if ( (type = PyLong_AsLong(a0))<1 || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) || !PyBool_Check(a4) )
-        {
-            sipIsErr = 1;
-        }
-        else
-        {
-            Py_BEGIN_ALLOW_THREADS
-
-	    dx_rms = PyFloat_AsDouble(a1);
-	    dy_rms = PyFloat_AsDouble(a2);
-	    dr_rms = PyFloat_AsDouble(a3);
-
-	    if (a4 == Py_True) new_rnd = true;
-	   
-	    misalign_rms_type(type, dx_rms, dy_rms, dr_rms, new_rnd);
-
-	    Py_END_ALLOW_THREADS
-	}
-%End
+void misalign_sys_type(int, double, double, double);
 
 // void misalign_sys_type(const int type, const double dx_sys, const double dy_sys, const double dr_sys)
-void misalign_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
-%MethodCode
-	double dx_sys, dy_sys, dr_sys;
-	long type;
+//void misalign_sys_type(SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT, SIP_PYOBJECT);
+//%MethodCode
+//	double dx_sys, dy_sys, dr_sys;
+//	long type;
+//
+//        if ( (type = PyLong_AsLong(a0))<1 || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) )
+//        {
+//            sipIsErr = 1;
+//        }
+//        else
+//        {
+//            Py_BEGIN_ALLOW_THREADS
+//
+//	    dx_sys = PyFloat_AsDouble(a1);
+//	    dy_sys = PyFloat_AsDouble(a2);
+//	    dr_sys = PyFloat_AsDouble(a3);
+//	   
+//	    misalign_sys_type(type, dx_sys, dy_sys, dr_sys);
+//
+//	    Py_END_ALLOW_THREADS
+//	}
+//%End
 
-        if ( (type = PyLong_AsLong(a0))<1 || !PyNumber_Check(a1)|| !PyNumber_Check(a2)|| !PyNumber_Check(a3) )
-        {
-            sipIsErr = 1;
-        }
-        else
-        {
-            Py_BEGIN_ALLOW_THREADS
-
-	    dx_sys = PyFloat_AsDouble(a1);
-	    dy_sys = PyFloat_AsDouble(a2);
-	    dr_sys = PyFloat_AsDouble(a3);
-	   
-	    misalign_sys_type(type, dx_sys, dy_sys, dr_sys);
-
-	    Py_END_ALLOW_THREADS
-	}
-%End
-
-// ======================= Not yet documented
 SIP_PYLIST getSextList();
 %MethodCode
 
@@ -2745,6 +2140,56 @@ SIP_PYLIST getSextList();
         }
 %End
 
+SIP_PYLIST getQuadList();
+%MethodCode
+
+        PyObject * list;
+
+        if ((list = PyList_New(0)))
+        {
+            Py_BEGIN_ALLOW_THREADS
+            for (int i=0 ; i<=globval.Cell_nLoc ;i++)
+            {
+              if (Cell[i].Elem.Pkind == Mpole && Cell[i].Elem.M->n_design==Quad)
+                PyList_Append(list, PyLong_FromLong(i));
+            }
+            Py_END_ALLOW_THREADS
+            return list;
+        }
+        else
+        {
+            // PyList_New() will have raised the exception.
+            sipIsErr = 1;
+            return NULL;
+        }
+%End
+
+/* should be implemented
+SIP_PYLIST getCHList(int);
+%MethodCode
+
+        PyObject * list;
+
+        if ((list = PyList_New(0)))
+        {
+            Py_BEGIN_ALLOW_THREADS
+            for (int i=0 ; i<=globval.Cell_nLoc ;i++)
+            {
+	      if (Cell[i].Elem.Pkind == Mpole && Cell[i].Elem.M->n_design==Sext)
+                PyList_Append(list, PyLong_FromLong(i));
+            }
+            Py_END_ALLOW_THREADS
+            return list;
+        }
+        else
+        {
+            // PyList_New() will have raised the exception.
+            sipIsErr = 1;
+            return NULL;
+        }
+%End
+*/
+
 //SIP_PYLIST findM44(SIP_PYOBJECT);
 //%MethodCode
 //
@@ -2752,7 +2197,6 @@ SIP_PYLIST getSextList();
  //   % optimal differentiation step - Numerical Recipes
 //	double d = 6.055454452393343e-006;
 //	if (PyList_Check(a0))
-//	{
 	    
 
 
@@ -2760,9 +2204,9 @@ SIP_PYLIST findM44_M(SIP_PYOBJECT);
 %MethodCode
 // Replce them by Elem_Pass_M ? No because Cell[i].BeamPos changed but Insertion_Pass_M should be added
 	Matrix mat;
-	UnitMat(4, mat);
 	int i, j, k;
 
+	UnitMat(4, mat);
 	PyObject * ret;
 
 	if (PyLong_Check(a0))
@@ -2772,10 +2216,10 @@ SIP_PYLIST findM44_M(SIP_PYOBJECT);
 	    else
 	    {
 		ret = PyList_New(4);
-		for (i=0; i<3; ++i)
+		for (i=0; i<4; ++i)
 		{
 		    PyObject * row = PyList_New(4);
-		    for (j=0; j<3; ++j)
+		    for (j=0; j<4; ++j)
 		    {
 	    		if (Cell[elem].Elem.Pkind == drift)
 			    PyList_SetItem(row, j, PyFloat_FromDouble(Cell[elem].Elem.D->D55[i][j]));
@@ -2871,21 +2315,26 @@ SIP_PYLIST findM44_M(SIP_PYOBJECT);
 	    } // for i
 	    return ret;
 	} // if list
-
+	else
+	{
+	    printf("Type should be matched: Long or List\n");
+	    return NULL;
+	}
 %End
 
 
 // void Elem_Pass(const long i, ss_vect<T> &x)
-SIP_PYOBJECT Elem_Pass(SIP_PYOBJECT, SIP_PYOBJECT);
+SIP_PYOBJECT Elem_Pass(long, SIP_PYOBJECT);
 %MethodCode
-	int elem;
 	ss_vect<double> x;
 	PyObject * ret;
 	int i;
 	
-        if ((elem=PyLong_AsLong(a0)) < 1 || !PyList_Check(a1) )
+        if (!PyList_Check(a1) )
         {
             sipIsErr = 1;
+	    printf("Type is not matched: Long and List\n");
+	    return NULL;
         }
         else
         {
@@ -2893,15 +2342,15 @@ SIP_PYOBJECT Elem_Pass(SIP_PYOBJECT, SIP_PYOBJECT);
 
 	    for (i=0; i<6; i++)  x[i] = PyFloat_AsDouble(PyList_GetItem(a1,i));
 	   
-	    Elem_Pass(elem, x);
+	    Elem_Pass(a0, x);
 
 	    ret = PyList_New(6);
 
 	    for (i=0; i<6; i++)  PyList_SetItem(ret, i, PyFloat_FromDouble(x[i]));
 
-	    return ret;
-
 	    Py_END_ALLOW_THREADS
+
+	    return ret;
 	}
 %End
 
@@ -2915,6 +2364,8 @@ SIP_PYLIST findM44(SIP_PYOBJECT, SIP_PYOBJECT);
         if ( !(PyList_Check(a0)) || !PyList_Check(a1) )
         {
             sipIsErr = 1;
+	    printf("Type Mis-mateched: List and List");
+	    return NULL;
         }
         else
         {
@@ -2989,13 +2440,125 @@ SIP_PYLIST findM44(SIP_PYOBJECT, SIP_PYOBJECT);
 		PyList_SetItem(ret, i, trmat);
 
 	    } // for i
-	    return ret;
-
 	    Py_END_ALLOW_THREADS
+
+	    return ret;
 	}
 %End
 
 
 
 
+SIP_PYLIST getCellInfo(int);
+%MethodCode
+	PartsKind kind;
+	PyObject * dict;	
+	int n_design, order;
+	double ang1, ang2;
+	PyObject * Bn;
+	PyObject * An;
+	int i;
+//	CellType  *elemfamp;
+//	elemtype     *elemp;
+	
+	if (a0<0 || a0>globval.Cell_nLoc) return NULL;
 
+//	elemfamp  = &Cell[a0]; 
+//	elemp = &elemfamp->Elem;
+
+	dict = PyDict_New();
+
+	PyDict_SetItemString(dict,"Name", PyString_FromString(Cell[a0].Elem.PName));
+	PyDict_SetItemString(dict,"Length", PyFloat_FromDouble(Cell[a0].Elem.PL));
+
+	kind = Cell[a0].Elem.Pkind;
+
+	PyDict_SetItemString(dict,"Fnum", PyLong_FromLong(Cell[a0].Fnum));
+	PyDict_SetItemString(dict,"Knum", PyLong_FromLong(Cell[a0].Knum));
+	PyDict_SetItemString(dict,"Kind", PyLong_FromLong((long) kind));
+	if (kind == Mpole)
+	{
+	    n_design = Cell[a0].Elem.M->n_design;
+	    PyDict_SetItemString(dict,"n_design",PyLong_FromLong(n_design));
+	    order = Cell[a0].Elem.M->Porder;
+	// order can be found by len(Bn)
+	//    PyDict_SetItemString(dict,"Order",PyLong_FromLong(order));
+	    Bn = PyList_New(order);
+	    An = PyList_New(order);
+	    for (i=0; i<order; ++i)
+	    {
+		PyList_SetItem(Bn, i, PyFloat_FromDouble(Cell[a0].Elem.M->PBpar[HOMmax+i+1]));
+		PyList_SetItem(An, i, PyFloat_FromDouble(Cell[a0].Elem.M->PBpar[HOMmax-i-1]));
+	    }
+	    PyDict_SetItemString(dict, "Bn", Bn);
+	    PyDict_SetItemString(dict, "An", An);
+	    if (n_design == Dip)
+	    {
+	        ang1 = Cell[a0].Elem.M->PTx1;
+	        ang2 = Cell[a0].Elem.M->PTx2;
+	 	PyDict_SetItemString(dict, "EntAngle", PyFloat_FromDouble(ang1));
+	 	PyDict_SetItemString(dict, "ExtAngle", PyFloat_FromDouble(ang2));
+	    }
+	}
+	
+	return  dict;
+%End
+
+SIP_PYOBJECT getFamInfo(int);
+%MethodCode
+	ElemFamType  *elemfamp;
+	elemtype     *elemp;
+	PyObject * kidlist;
+	PartsKind kind;
+	PyObject * dict;	
+	int n_design, order;
+	double ang1, ang2;
+	PyObject * Bn;
+	PyObject * An;
+	int i;
+
+	if (a0<1 || a0>globval.Elem_nFam) return NULL;
+
+	elemfamp  = &ElemFam[a0-1]; elemp = &elemfamp->ElemF;
+
+	dict = PyDict_New();
+	PyDict_SetItemString(dict,"Name", PyString_FromString(elemp->PName));
+	PyDict_SetItemString(dict,"Length", PyFloat_FromDouble(elemp->PL));
+
+	int nKid = elemfamp->nKid;
+	kidlist = PyList_New(nKid);
+	for (i=0; i<nKid; ++i)
+	   PyList_SetItem(kidlist, i, PyLong_FromLong(elemfamp->KidList[i]));
+	PyDict_SetItemString(dict,"KidList", kidlist);
+	
+	kind = elemp->Pkind;
+
+	PyDict_SetItemString(dict,"Kind", PyLong_FromLong((long) kind));
+	if (kind == Mpole)
+	{
+	    n_design = elemp->M->n_design;
+	    PyDict_SetItemString(dict,"n_design",PyLong_FromLong(n_design));
+	    order = elemp->M->Porder;
+	// order can be found by len(Bn)
+	//    PyDict_SetItemString(dict,"Order",PyLong_FromLong(order));
+	    Bn = PyList_New(order);
+	    An = PyList_New(order);
+	    for (i=0; i<order; ++i)
+	    {
+		PyList_SetItem(Bn, i, PyFloat_FromDouble(elemp->M->PBpar[HOMmax+i+1]));
+		PyList_SetItem(An, i, PyFloat_FromDouble(elemp->M->PBpar[HOMmax-i-1]));
+	    }
+	    PyDict_SetItemString(dict, "Bn", Bn);
+	    PyDict_SetItemString(dict, "An", An);
+	    if (n_design == Dip)
+	    {
+	        ang1 = elemp->M->PTx1;
+	        ang2 = elemp->M->PTx2;
+	 	PyDict_SetItemString(dict, "EntAngle", PyFloat_FromDouble(ang1));
+	 	PyDict_SetItemString(dict, "ExtAngle", PyFloat_FromDouble(ang2));
+	    }
+	}
+	return dict;
+%End
+
+// ======================= Not yet documented

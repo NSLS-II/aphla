@@ -11,9 +11,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   routines
+..
+
    introduction
    physics
-   routines
    acknowledgement
 
 Indices and tables

@@ -10,39 +10,39 @@ globvalrec globval
 ============  ==============  ==================================================
    Type          Name                                      Use            
 ============  ==============  ==================================================
-double        dPcommon;       dp for numerical differentiation
-double        dPparticle;     energy deviation
-double        delta_RF;       RF acceptance
-Vector2       TotalTune;      transverse tunes
+double        dPcommon        dp for numerical differentiation
+double        dPparticle      energy deviation
+double        delta_RF        RF acceptance
+Vector2       TotalTune       transverse tunes
 double        Omega   
-double        U0;             energy lost per turn in keV
-double        Alphac;         alphap
-Vector2       Chrom;          chromaticities
-double        Energy;         ring energy
-long          Cell_nLoc;      number of elements
-long          Elem_nFam;      number of families
-long          CODimax;        maximum number of cod search before failing 
-double        CODeps;         precision for closed orbit finder
-Vector        CODvect;        closed orbit
-int           bpm;            bpm number
-int           hcorr;          horizontal corrector number
-int           vcorr;          vertical corrector number
-int           qt;             vertical corrector number
-int           gs;             girder start marker
-int           ge;             girder end marker
-Matrix        OneTurnMat;     oneturn matrix
+double        U0              energy lost per turn in keV
+double        Alphac          alphap
+Vector2       Chrom           chromaticities
+double        Energy          ring energy
+long          Cell_nLoc       number of elements
+long          Elem_nFam       number of families
+long          CODimax         maximum number of cod search before failing 
+double        CODeps          precision for closed orbit finder
+Vector        CODvect         closed orbit
+int           bpm             bpm number
+int           hcorr           horizontal corrector number
+int           vcorr           vertical corrector number
+int           qt              vertical corrector number
+int           gs              girder start marker
+int           ge              girder end marker
+Matrix        OneTurnMat      oneturn matrix
 Matrix        Ascr            \ 
 Matrix        Ascrinv         \ 
-Matrix        Vr;             real part of the eigenvectors
-Matrix        Vi;             imaginal par of the eigenvectors
+Matrix        Vr              real part of the eigenvectors
+Matrix        Vi              imaginal par of the eigenvectors
 \             \               \ 
-bool          MatMeth;        matrix method
-bool          Cavity_on;      if true, cavity turned on
-bool          radiation;      if true, radiation turned on
-bool          emittance;
-bool          quad_fringe;    dipole- and quadrupole hard-edge fringe fields.
-bool          H_exact;        "small ring" Hamiltonian.
-bool          pathlength;     absolute path length
+bool          MatMeth         matrix method
+bool          Cavity_on       if true, cavity turned on
+bool          radiation       if true, radiation turned on
+bool          emittance 
+bool          quad_fringe     dipole- and quadrupole hard-edge fringe fields.
+bool          H_exact         "small ring" Hamiltonian.
+bool          pathlength      absolute path length
 bool          stable          \ 
 bool          Aperture_on     \ 
 bool          EPU             \ 
@@ -50,17 +50,17 @@ bool          wake_on         \
 \             \               \  
 double        dE              energy loss
 double        alpha_rad[DOF]  damping coeffs.
-double        D_rad[DOF];     diffusion coeffs (Floquet space)
-double        J[DOF];         partition numbers
-double        tau[DOF];       damping times
-bool          IBS;            intrabeam scattering
-double        Qb;             bunch charge
-double        D_IBS[DOF];     diffusion matrix (Floquet space)
-Vector        wr;             \ 
-Vector        wi;             real and imaginary part of eigenvalues
-Vector3       eps;            3 motion invariants
-Vector3       epsp;           transverse and longitudinal projected emittances
-int           RingType;       1 if a ring (0 if transfer line)
+double        D_rad[DOF]      diffusion coeffs (Floquet space)
+double        J[DOF]          partition numbers
+double        tau[DOF]        damping times
+bool          IBS             intrabeam scattering
+double        Qb              bunch charge
+double        D_IBS[DOF]      diffusion matrix (Floquet space)
+Vector        wr              \ 
+Vector        wi              real and imaginary part of eigenvalues
+Vector3       eps             3 motion invariants
+Vector3       epsp            transverse and longitudinal projected emittances
+int           RingType        1 if a ring (0 if transfer line)
 ============  ==============  ==================================================
 
 Input Output Routines
@@ -191,17 +191,19 @@ Twiss Routines
 
 .. py:function:: TraceABN(i0, i1, alpha, beta, eta, etap, dP)
  
-   Get alpha and beta from i0 to i1
+   Get alpha and beta values from i0 to i1 and store them in *globval*.
+
+   The method depends on *globval.MatMeth*
 
    :arg i0: start position
    :arg i1: end position
-   :arg alpha: :math: [`\alpha_x`, :math:`\alpha_y`] at i0
+   :arg alpha: [:math:`\alpha_x`, :math:`\alpha_y`] at i0
    :type alpha: List
-   :arg beta: :math: [`\beta_x`, :math:`\beta_y`] at i0
+   :arg beta: [:math:`\beta_x`, :math:`\beta_y`] at i0
    :type beta: List
-   :arg eta: :math: [`\eta_x`, :math:`\eta_y`] at i0
+   :arg eta: [:math:`\eta_x`, :math:`\eta_y`] at i0
    :type eta: List
-   :arg etap: :math: [`\eta_{px}`,d :math:`\eta_{py}`] at i0
+   :arg etap: [:math:`\eta_{px}`,d :math:`\eta_{py}`] at i0
    :type etap: List
    :arg dP: energy deviaiont
 
@@ -259,91 +261,16 @@ Tracking Routines
          0-th means the starting point and n-th is the value at the end of the element.
    :rtype: List
 
-.. py:function:: [fx, fz, nb_freq] = Get_NAFF(nterm, ndata, T)
-
-   Compute quasiperiodic approximation of a phase space trajectory
-   using NAFF Algorithm ((c) Laskar, IMCCE)
-
-   :arg nterm: number of frequencies to look for
-             if not multiple of 6, truncated to lower value
-   :arg ndata: size of the data to analyse
-   :arg T:     6D vector to analyse
-
-   :return fx: frequencies found in the H-plane
-   :return fz: frequencies found in the V-plane
-   :return nb_freq: number of frequencies found out in each plane
-
-..
-
-
-    
-
-  	    double  Tab[6][NTURN];
-	    int     nb_freq[2] = { 0, 0 };  /* frequency number to look for */
-
-	    /* initializations */^M
-	    for (i = 0; i < nterm; i++)
-	    {
-	        fx[i] = 0.0; fz[i] = 0.0;
-	    }
-	    /* end init *
-	    Get_NAFF(nterm, ndata*6, Tab, fx, fz, nb_freq);
-
-	    PyObject * PyRet = PyList_New(3);
-	    PyObject * Fx = PyList_New(nb_freq[0]);
-	    PyObject * Fz = PyList_New(nb_freq[1]);
-	    PyObject * Nb_Freq = PyList_New(2);
-
-	    for (i=0; i<nb_freq[0]; ++i) PyList_SetItem(Fx, i, PyFloat_FromDouble(fx[i]));
-	    for (i=0; i<nb_freq[1]; ++i) PyList_SetItem(Fz, i, PyFloat_FromDouble(fz[i]));
-	    for (i=0; i<2; ++i) PyList_SetItem(Nb_Freq, i, PyLong_FromLong(nb_freq[i]));
-
-	    PyList_SetItem(PyRet, 0, Fx);
-	    PyList_SetItem(PyRet, 1, Fz);
-	    PyList_SetItem(PyRet, 2, Nb_Freq);
-
-	    return PyRet;
-
-
-.. py:function::  [status, Tx] = Trac_Simple(x, px, y, py, dp, nmax)
-
-   Single particle tracking around the closed orbit for NTURN turns
-   The 6D phase trajectory is saved in a array
-
-   :arg x: 
-   :arg px:
-   :arg y:
-   :arg py: 4 transverses coordinates
-   :arg dp:           energy offset
-   :arg nmax:         number of turns
-   :arg pos:          starting position for tracking
-   :arg aperture:     global physical aperture
-   :return status:   True if beam survived otherwise False
-   :return Tx:        saved 6 x nmax coordinates
-
-
-.. py:function::  [xis, xiz] = GetChromTrac(Nb, Nbtour, emax)
-
-   Computes chromaticities by tracking
-
-   :arg Nb:      point number
-   :arg Nbtour:  turn number
-   :arg emax:    energy step
-
-   :return xix: horizontal chromaticity
-   :return xiz: vertical chromaticity
-
-
-
-
-// 4D tracking in normal or Floquet space over nmax turns
+.. 4D tracking in normal or Floquet space over nmax turns
 
 .. py:function:: [lastn, lastpos] = track(file_name, ic1, ic2, ic3, ic4, dp, nmax, floqs, double f_rf)
 
    Single particle tracking around closed orbit:
+   using Cell_fPass or Cell_Pass depending on globval.MatMeth
    Track particle nmax turns around the closed orbti. Data is
    stored in the file tracking.dat. Ring_Gettwiss must be called first.
 
+   :arg file_name: The file where the result is stored
    :arg ic1: 
    :arg ic2:
    :arg ic3:
@@ -351,23 +278,17 @@ Tracking Routines
    :arg dp:           energy offset
    :arg nmax:         number of turns
    :arg floqs:
-   :arg f_rf:
-   :return lastn:
-   :return lastpos:
+   :arg f_rf: if positive value is given, the phase in degree will be written as the longitudinal displacement
+   :return lastn: final turn tracked. if less than nmax, the particle is lost
+   :return lastpos: position where the track terminates (lost position when the particle is lost)
 
 ============================= ======== =======================================
          Output                floqs
 ============================= ======== =======================================
-       Phase Space               0     [x, px, y, py, delta, ct]
-       Floquet Space             1     [x^, px^, y^, py^, delta, ct]
-       Action-Angle Variables    2     [2Jx, phx, 2Jy, phiy, delta, ct]
+       Phase Space               0     :math:`[x, p_x, y, p_y, \delta, ct]`
+       Floquet Space             1     :math:`[\hat x, \hat p_x, \hat y, \hat p_y, \delta, ct]`
+       Action-Angle Variables    2     :math:`[2J_x, \phi_x, 2J_y, \phi_y, \delta, ct]`
 ============================= ======== =======================================
-
-example::
-
-	Ring_gettwiss(true, delta);
-	track(x0, px0, y0, py0, delta,nturn, lastn, lastpos, true);
-	if lastn <> nturn then writeln('Particle lost duringturn ', nturn:1, ' , at element ', lastpos:1);
 
 
 .. py:function:: xf = getfloqs(x)
@@ -387,23 +308,25 @@ example::
    :return : [x, px, y, py]
 
 example::
+
 	Ring_gettwiss(true, delta);
 	last = track('track.data', x0, px0, y0, py0, delta, nturn, 1, 0.0);
-	if lastn <> n then writeln('Particle lost during turn', n:1, ' , at element ', lastpos:1);
+	if lastn != n:
+	    print "Particle lost during turn', n:1, ' , at element ', lastpos:1);
 	out = gettrack('track.data', 512)n, x, px, y, py);
 
 
 
 .. py:function:: rout = getdynap(rin, phi, delta, eps, nturn, floqs)
 
-   Get dynamical aperture
+   Get dynamical aperture by tracking the particle upto nturn
 
-   :arg rin:
-   :arg phi:
-   :arg delta:
-   :arg eps:
-   :arg nturn:
-   :arg flos:
+   :arg rin: the distance from the origin to the location of the starting point
+   :arg phi: the angle to the x axis
+   :arg delta: energy deviation
+   :arg eps: if the next search is within eps the iteration terminates
+   :arg nturn: the number of turns for tracking
+   :arg flos: whether the coordinate is in Floquet space
    :type floqs: Bool
    :return rout:
    
@@ -475,7 +398,7 @@ Alignment Routines
 
 
 
-Element Info Routines
+Info Routines
 -------------------------------
 
 .. py:function:: Fname = getElemName(Fnum)
@@ -508,9 +431,6 @@ Element Info Routines
 
    :arg Fnum: Family number
    :arg nKid: Number of kids in the family
-
-Element Length Routines
---------------------------------
  
 .. py:function:: L = get_L(Fnum, Knum)
 
@@ -520,28 +440,31 @@ Element Length Routines
    :arg Knum: kid number in the family
    :return L: Length of the element
  
-.. py:function:: set_L(Fnum, Knum, L)
 
-   Set the length of the element
- 
-   :arg Fnum: Family number
-   :arg Knum: kid number in the family
-   :arg L: length
+.. py:function:: InfoDict = getCellInfo(elemNo);
 
-.. py:function:: set_L_all(Fnum,  L)
+   Get the information of elemNo's element of the Cell structure in Dictionary data type.
+   :return InfoDict["Name"]: Fimily name of the element
+   :return InfoDict["Length"]: Length of the element
+   :return InfoDict["Fnum"]: Family number of the element
+   :return InfoDict["Knum"]: Kid number of the element
+   :return InfoDict["Kind"]: Type of the element (drift = 0, Wigl = 1, Mpole = 2, Cavity = 3, marker = 4,
+                 undef = 5, Insertion = 6, FieldMap = 7,
+                 Spreader = 8, Recombiner = 9, Solenoid = 10
+   When the element is type of multi pole the following keys are defined.
+   :return InfoDict["n_design"]: Designed multipole (Dip = 1, Quad = 2, Sext = 3, Oct = 4, Dec = 5, Dodec = 6)
+   :return InfoDict["Order"]: Maximum order of the multipole component
+   :return InfoDict["Bn"]: List of normal components of multipoles up to "Order"
+   :return InfoDict["An"]: List of skew components of multipoles up to "Order"
+   When the element is Dipole the follwoing keys are defined.
+   :return InfoDict["EntAngle"]: Entrance angle
+   :return InfoDict["ExtAngle"]: Exit angle
 
-   Set the length of all the element of the family.
+.. py:function::InfoDict = getFamInfo(famNo)
 
-   :arg Fnum: Family number
-   :arg L: length
-
-.. py:function:: set_dL(Fnum, Knum, dL)
-
-   Change the length of the element
- 
-   :arg Fnum: Family number
-   :arg Knum: kid number in the family
-   :arg dL: variation of the length
+   Get the information of family famNo in Dectionary Data type.
+   All keys except "Knum" for getCellInfo are defined.
+   Instead of "Knum", "Kind" is defined which returns the list of the elements in the Cell structure.
 
 Multipole Routines
 --------------------
@@ -809,7 +732,7 @@ Multipole Routines
 
 .. py:function:: [xout,lastpos] = Cell_Pass(i0, i1, x0)
 
-   Track particle from i0 to i1
+   Track particle from i0 to i1 using Elem_Pass (symplectic integrator)
 
    :arg i0: initial position
    :arg i1: final position
@@ -819,7 +742,8 @@ Multipole Routines
 
 .. py:function:: [matout, lastpos] = Cell_Pass_M(i0, i1, xref, mat);
 
-   Track matrix from i0 to i1 around ref. orbit using transfer matrix
+   Track the point and matrix from i0 to i1 around ref. orbit using transfer matrix (Elem_Pass_M)
+   Elem_Pass_M includes the alignments
 
    :arg i0: initial position
    :arg i1: final position
@@ -861,7 +785,6 @@ Multipole Routines
    :arg imax: maximum number of iteration
    :arg eps: precision
    :arg dP: Mommendum deviation
-
 
    :return laspos:
 
@@ -942,8 +865,110 @@ Correction routines
    :arg pos: target position
    :arg eta: target dispersion
 
+NAFF Routines
+------------------
 
-Other Routine
+.. py:function:: [fx, fz, nb_freq] = Get_NAFF(nterm, ndata, T)
+
+   Compute quasiperiodic approximation of a phase space trajectory
+   using NAFF Algorithm ((c) Laskar, IMCCE)
+
+   :arg nterm: number of frequencies to look for
+    :arg ndata: size of the data to analyse will be 6*ndata
+   :arg T:     6D vector to analyse
+
+   :return fx: frequencies found in the H-plane
+   :return fz: frequencies found in the V-plane
+   :return nb_freq: number of frequencies found out in each plane
+
+..
+            double  Tab[6][NTURN];
+            int     nb_freq[2] = { 0, 0 };  /* frequency number to look for */
+
+            /* initializations */^M
+            for (i = 0; i < nterm; i++)
+            {
+                fx[i] = 0.0; fz[i] = 0.0;
+            }
+            /* end init *
+            Get_NAFF(nterm, ndata*6, Tab, fx, fz, nb_freq);
+
+            PyObject * PyRet = PyList_New(3);
+            PyObject * Fx = PyList_New(nb_freq[0]);
+            PyObject * Fz = PyList_New(nb_freq[1]);
+            PyObject * Nb_Freq = PyList_New(2);
+
+            for (i=0; i<nb_freq[0]; ++i) PyList_SetItem(Fx, i, PyFloat_FromDouble(fx[i]));
+            for (i=0; i<nb_freq[1]; ++i) PyList_SetItem(Fz, i, PyFloat_FromDouble(fz[i]));
+            for (i=0; i<2; ++i) PyList_SetItem(Nb_Freq, i, PyLong_FromLong(nb_freq[i]));
+
+            PyList_SetItem(PyRet, 0, Fx);
+            PyList_SetItem(PyRet, 1, Fz);
+            PyList_SetItem(PyRet, 2, Nb_Freq);
+
+            return PyRet;
+
+.. py:function::  [status, Tx] = Trac_Simple(x, px, y, py, dp, nmax)
+
+   Single particle tracking around the closed orbit for NTURN turns
+   using Cell_fPass or Cell_Pass depending on globval.MatMeth
+   The main purpose is getting the data for Get_NAFF using Cell_fPass
+   The 6D phase trajectory is saved in a array
+
+   :arg x:
+   :arg px:
+   :arg y:
+   :arg py: 4 transverses coordinates
+   :arg dp:           energy offset
+   :arg nmax:         number of turns
+   :arg pos:          starting position for tracking
+   :arg aperture:     global physical aperture
+   :return status:   True if beam survived otherwise False
+   :return Tx:        saved 6 x nmax coordinates
+
+
+.. py:function::  [xis, xiz] = GetChromTrac(Nb, Nbtour, emax)
+
+   Computes chromaticities by tracking (Trac_Simple and Get_NAFF)
+
+   :arg Nb:      point number
+   :arg Nbtour:  turn number
+   :arg emax:    energy step
+
+   :return xix: horizontal chromaticity
+   :return xiz: vertical chromaticity
+
+
+
+
+
+LOCO Routines
+-----------------------------
+
+.. py:function:: M44 = findM44_M(elem)
+
+   Get the saved 4x4 transfer matrix for the given element
+
+   :arg elem: element number in Cell structure
+   :return M44: 4x4 transfer matrix for the element
+
+.. py:function:: x1 = Elem_Pass(elem, x0)
+
+   Get the position of the particle at the phase space which entered the element with given initial position x0
+
+   :arg elem: element number in Cell structure
+   :return x1: 
+
+.. py:function:: M44_List = findM44(element_list, x0)
+
+   Get the list of transfer matrices which are obtained by tracking
+
+   :arg element_list: the list of elements in Cell structure
+   :arg x0: the position where the matrices are calculated
+   :return M44_List: the transfer matrices from the first element of the input list and to the rest of the element_list
+
+
+Other Routines
 -----------------------------
 
 .. py:function:: [nux, nuy] = GetNu(mat)
@@ -960,6 +985,28 @@ Other Routine
 
    :arg dP: Energy deviaion
 
+.. py:function:: set_L(Fnum, Knum, L)
+
+   Set the length of the element
+ 
+   :arg Fnum: Family number
+   :arg Knum: kid number in the family
+   :arg L: length
+
+.. py:function:: set_L_all(Fnum,  L)
+
+   Set the length of all the element of the family.
+
+   :arg Fnum: Family number
+   :arg L: length
+
+.. py:function:: set_dL(Fnum, Knum, dL)
+
+   Change the length of the element
+ 
+   :arg Fnum: Family number
+   :arg Knum: kid number in the family
+   :arg dL: variation of the length
 
 .. py:function:: InitRand(Seed, rms_cut)
 
@@ -967,5 +1014,17 @@ Other Routine
 
    :arg Seed: seed number
    :arg rms_cut: maximum limit in normal width when assigning the random values
+
+.. py:function:: setx_list = getSextList();
+
+   Get the list of element numbers for all sextupoles
+
+   :return sext_list:
+
+.. py:function:: setx_list = getQuadList();
+
+   Get the list of element numbers for all quadrupoles
+
+   :return sext_list:
 
 
