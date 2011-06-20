@@ -183,7 +183,7 @@ def getLocations(elements):
     - a list of element object
     - a list of element name
 
-    .. example::
+    Example::
 
       elem = getElements('BPMX')
       s = getLocations(elem)

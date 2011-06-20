@@ -12,6 +12,7 @@ import lattice, element
 from cothread.catools import caget
 
 class TestLattice(unittest.TestCase):
+    #class TestLattice:
     def setUp(self):
         #self.lat = lattice.createLatticeFromTxtTable(LATCONF)
         machines.initNSLS2VSR()
@@ -36,19 +37,19 @@ class TestLattice(unittest.TestCase):
         for i,e in enumerate(elem):
             if e.name.startswith('HLA'): continue
             if i == 0: continue
-            self.assertTrue(elem[i].s >= elem[i-1].s)
+            self.assertTrue(elem[i].sb >= elem[i-1].sb)
 
         elem = self.cfslat.getElements('BPMX')
         for i,e in enumerate(elem):
             if i == 0: continue
-            self.assertTrue(elem[i].s >= elem[i-1].s,
-                            "%f (%s) %f (%s)" % (elem[i].s, elem[i].name,
-                                                 elem[i-1].s, elem[i-1].name))
+            self.assertTrue(elem[i].sb >= elem[i-1].sb,
+                            "%f (%s) %f (%s)" % (elem[i].sb, elem[i].name,
+                                                 elem[i-1].sb, elem[i-1].name))
 
         elem = self.cfslat.getElements('QUAD')
         for i,e in enumerate(elem):
             if i == 0: continue
-            self.assertTrue(elem[i].s >= elem[i-1].s)
+            self.assertTrue(elem[i].sb >= elem[i-1].sb)
 
 
         pass
@@ -64,7 +65,7 @@ class TestLattice(unittest.TestCase):
         self.assertTrue(self.cfslat.hasElement('DCCT'))
         
         cur = self.cfslat.getElements('DCCT')
-        self.assertTrue(cur.s == 0.0)
+        self.assertTrue(cur.sb == 0.0)
         self.assertTrue(self.current.value > 0.0)
         self.assertTrue(cur.value > 0.0)
 
@@ -90,9 +91,27 @@ class TestLattice(unittest.TestCase):
         self.assertTrue(len(elem) > 120)
         for i,e in enumerate(elem):
             if i == 0: continue
-            self.assertTrue(elem[i].s >= elem[i-1].s)
+            self.assertTrue(elem[i].sb >= elem[i-1].sb)
+
+    def test_lines(self):
+        elem = self.cfslat.getElements('DIPOLE')
+        s0, s1 = elem[0].sb, elem[0].se
+        i,l = self.cfslat._find_element_s((s0+s1)/2.0)
+        self.assertTrue(l)
+        l = self.cfslat.getLine(srange=(0, 25))
+        self.assertTrue(len(l) > 1)
+
+class TestLatticeTxt(unittest.TestCase):
+    def setUp(self):
+        machines.initNSLS2VSRTxt()
+        self.lat = machines._lat
+
+    def test_all(self):
+        dip = self.lat.getElements('DIPOLE')
+        self.assertTrue(len(dip) == 60)
 
 
 if __name__ == "__main__":
+    #machines.initNSLS2VSR()
     unittest.main()
 

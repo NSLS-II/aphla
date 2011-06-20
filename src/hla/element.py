@@ -30,50 +30,25 @@ class AbstractElement(object):
 
     # format string for __str__
     STR_FORMAT = "%d %s %s %.3f %.3f %s %s %s %s %s"
-    CFS = {'name': u'ELEM_NAME',
-           'devname': u'DEV_NAME',
-           'family': u'ELEM_TYPE',
-           'girder': u'GIRDER',
-           'handle': u'HANDLE',
-           'length': u'LENGTH',
-           'index': u'ORDINAL',
-           'symmetry': u'SYMMETRY',
-           's': u'S_POSITION',
-           'cell': u'CELL',
-           'phylen': None,
-           'sequence': None}
     
     def __init__(self, **kwargs):
         """
         create an element from Channel Finder Service data or explicit
         parameters.
         """
-        if kwargs.has_key('cfs'):
-            #print "Using CFS data", kwargs['cfs']
-            d = kwargs['cfs']
-            self.name     = d.get(self.CFS['name'], None)
-            self.devname  = d.get(self.CFS['devname'], None)
-            self.phylen   = float(d.get(self.CFS['phylen'], 0.0))
-            self.index    = int(d.get(self.CFS['index'], -1))
-            self.family   = d.get(self.CFS['family'], None)
-            self.s        = float(d.get(self.CFS['s'], 0.0))
-            self.length   = float(d.get(self.CFS['length'], 0.0))
-            self.cell     = d.get(self.CFS['cell'], None)
-            self.girder   = d.get(self.CFS['girder'], None)
-            self.symmetry = d.get(self.CFS['symmetry'], None)
-            self.sequence = d.get(self.CFS['sequence'], (0, 0))
-        else:
-            self.name     = kwargs.get('name', None)
-            self.devname  = kwargs.get('devname', None)
-            self.phylen   = kwargs.get('phylen', 0.0)
-            self.index    = kwargs.get('index', -1)
-            self.family   = kwargs.get('family', None)
-            self.s        = kwargs.get('s', 0.0)
-            self.length   = kwargs.get('length', 0.0)
-            self.cell     = kwargs.get('cell', None)
-            self.girder   = kwargs.get('girder', None)
-            self.symmetry = kwargs.get('symmetry', None)
-            self.sequence = kwargs.get('sequence', (0, 0))
+        #print kwargs
+        self.name     = kwargs.get('name', None)
+        self.devname  = kwargs.get('devname', None)
+        self.phylen   = float(kwargs.get('phylen', '0.0'))
+        self.index    = int(kwargs.get('index', '-1'))
+        self.family   = kwargs.get('family', None)
+        self.se       = float(kwargs.get('se', '0.0'))
+        self.sb       = float(kwargs.get('sb', 0.0))
+        self.length   = float(kwargs.get('length', 0.0))
+        self.cell     = kwargs.get('cell', None)
+        self.girder   = kwargs.get('girder', None)
+        self.symmetry = kwargs.get('symmetry', None)
+        self.sequence = kwargs.get('sequence', (0, 0))
 
         self.group = [self.family, self.cell, self.girder, self.symmetry]
         
@@ -91,7 +66,7 @@ class AbstractElement(object):
         - ['TRIMX' | 'TRIMY'], corrector
         - ['BPMX' | 'BPMY'], beam position monitor
         """
-        b, e = self.s, self.s + self.length
+        b, e = self.sb, self.sb + self.length
         h = vscale
         if self.family == 'QUAD':
             return [b, b, e, e], [0, h, h, 0], 'k'
@@ -110,47 +85,57 @@ class AbstractElement(object):
 
     def __str__(self):
         return Element.STR_FORMAT % (
-            self.index, self.name, self.family, self.s, self.length,
+            self.index, self.name, self.family, self.sb, self.length,
             self.devname, self.cell, self.girder, self.symmetry, self.sequence)
 
     def __lt__(self, other):
-        return self.s < other.s
+        return self.sb < other.sb
 
     def __gt__(self, other):
-        return self.s > other.s
+        return self.sb > other.sb
 
     def __eq__(self, other):
-        return self.s == other.s and \
+        return self.sb == other.sb and \
                self.length == other.length and \
                self.name == other.name
 
     def updateCfsProperties(self, prpt):
         """
+        - *devname* Device name
+        - *cell* Cell
+        - *girder* Girder
+        - *symmetry* Symmetry
+        - *phylen* Physical length
+        - *length* Effective/magnetic length
+        - *s*  s-loc (not specified for entrance/midpoint/exit)
+        - *index* index in lattice
         """
-        if prpt.has_key(self.CFS['family']):
+        if prpt.has_key('family'):
             # rename the family name, append to group. The family name is kept
             # unique, but "pushed" old family name to group name
-            newfam = prpt[self.CFS['family']]
+            newfam = prpt['family']
             if not newfam in self.group: self.group.append(newfam)
             self.family = newfam
             
-        if prpt.has_key(self.CFS['devname']):
-            self.devname = prpt[self.CFS['devname']]
-        if prpt.has_key(self.CFS['cell']):
-            self.cell = prpt[self.CFS['cell']]
-        if prpt.has_key(self.CFS['girder']):
-            self.girder = prpt[self.CFS['girder']]
-        if prpt.has_key(self.CFS['symmetry']):
-            self.symmetry = prpt[self.CFS['symmetry']]
+        if prpt.has_key('devname'):
+            self.devname = prpt['devname']
+        if prpt.has_key('cell'):
+            self.cell = prpt['cell']
+        if prpt.has_key('girder'):
+            self.girder = prpt['girder']
+        if prpt.has_key('symmetry'):
+            self.symmetry = prpt['symmetry']
             
-        if prpt.has_key(self.CFS['phylen']):
-            self.phylen = float(prpt[self.CFS['phylen']])
-        if prpt.has_key(self.CFS['length']):
-            self.length = float(prpt[self.CFS['length']])
-        if prpt.has_key(self.CFS['s']):
-            self.s = float(prpt[self.CFS['s']])
-        if prpt.has_key(self.CFS['index']):
-            self.index = int(prpt[self.CFS['index']])
+        if prpt.has_key('phylen'):
+            self.phylen = float(prpt['phylen'])
+        if prpt.has_key('length'):
+            self.length = float(prpt['length'])
+        if prpt.has_key('se'):
+            self.se = float(prpt['se'])
+        if prpt.has_key('sb'):
+            self.sb = float(prpt['sb'])
+        if prpt.has_key('index'):
+            self.index = int(prpt['index'])
 
     def updateCfsTags(self, tags):
         pass

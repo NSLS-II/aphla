@@ -7,8 +7,9 @@ Twiss
 """
 
 import numpy as np
+from catools import caget, caput
 
-class Twiss:
+class TwissItem:
     """
     twiss
 
@@ -24,94 +25,67 @@ class Twiss:
     *gamma*          gamma
     *eta*            dispersion
     *phi*            phase
-    *elemname*       element name
-    *set*            available data. 'c'/'b'/'e' for center, begin and end.
-                     They can be combined. 'cbe'
     ===============  =======================================================
-
-    Values are stored for 'bce', i.e. begin/center/entrance, of one
-    element. Depending on the value of *set*, could only partial data are
-    non-zeros.
-
-    default location is the end point.
     """
 
-    def __init__(self):
-        self._s     = np.zeros(3, 'd')
-        self._alpha = np.zeros((3, 2), 'd')
-        self._beta  = np.zeros((3, 2), 'd')
-        self._gamma = np.zeros((3, 2), 'd')
-        self._eta   = np.zeros((3, 2), 'd')
-        self._phi   = np.zeros((3, 2), 'd')
-        self._elemname = ''
-        self._set   = ''
+    def __init__(self, **kwargs):
+        self._s     = kwargs.get('s', 0.0)
+        self._alpha = kwargs.get('alpha', (0.0, 0.0))
+        self._beta  = kwargs.get('beta', (0.0, 0.0))
+        self._gamma = kwargs.get('gamma', (0.0, 0.0))
+        self._eta   = kwargs.get('eta', (0.0, 0.0))
+        self._phi   = kwargs.get('phi', (0.0, 0.0))
 
-    def _valid_data_set(self, loc):
-        ret = []
-        for s in loc:
-            if s == 'b': ret.append(0)
-            elif s == 'c': ret.append(1)
-            elif s == 'e': ret.append(2)
-        return ret
+    def _str_head(self):
+        return "# s  alpha  beta  eta  phi"
+
+    def __repr__(self):
+        return "%.3f % .2f % .2f  % .2f % .2f  % .2f % .2f  % .2f % .2f" % \
+            (self._s, self._alpha[0], self._alpha[1],
+             self._beta[0], self._beta[1], self._eta[0], self._eta[1],
+             self._phi[0], self._phi[1])
+
     
-    def s(self, loc = ''):
-        if loc == '':
-            return self._s[2]
+class Twiss:
+    """
+    Twiss table
+
+    
+    """
+    def __init__(self, name):
+        self._elements = []
+        self._twlist = []
+        self._name = name
+        self.tune = (0, 0)
+
+    def _find_element(self, elemname):
+        try:
+            i = self._elements.index(elemname)
+            return i
+        except:
+            raise
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            i = key
+            return self._twlist[i]
+        elif isinstance(key, str) or isinstance(key, unicode):
+            i = self._find_element(key)
+            return self._twlist[i]
         else:
-            ret = self._valid_data_set(loc)
-            return self._s[ret]
+            return None
 
-    def _get_data(self, data, loc):
-        if loc == '':
-            return data[2]
-        else:
-            ret = self._valid_data_set(loc)
-            return data[ret]
-        
-    def beta(self, loc = ''):
-        return self._get_data(self._beta, loc)
+    def __repr__(self):
+        if not self._elements or not self._twlist: return ''
 
-    def betax(self, loc = ''):
-        return self._get_data(self._beta[:,0], loc)
+        s = "# %d " % len(self._elements) + self._twlist[0]._str_head() + '\n'
+        for i,e in enumerate(self._elements):
+            s = s + "%16s " % e + self._twlist[i].__repr__() + '\n'
+        return s
 
-    def betay(self, loc = ''):
-        return self._get_data(self._beta[:,0], loc)
+    def append(self, twi):
+        self._twlist.append(twi)
 
-    def eta(self, loc = ''):
-        return self._get_data(self._eta, loc)
-
-    def etax(self, loc = ''):
-        return self._get_data(self._eta[:,0], loc)
-
-    def etay(self, loc = ''):
-        return self._get_data(self._eta[:,0], loc)
-
-    def gamma(self, loc = ''):
-        return self._get_data(self._gamma, loc)
-
-    def gammax(self, loc = ''):
-        return self._get_data(self._gamma[:,0], loc)
-
-    def gammay(self, loc = ''):
-        return self._get_data(self._gamma[:,0], loc)
-
-    def phi(self, loc = ''):
-        return self._get_data(self._phi, loc)
-
-    def phix(self, loc = ''):
-        return self._get_data(self._phi[:,0], loc)
-
-    def phiy(self, loc = ''):
-        return self._get_data(self._phi[:,0], loc)
-
-    def alpha(self, loc = ''):
-        return self._get_data(self._alpha, loc)
-
-    def alphax(self, loc = ''):
-        return self._get_data(self._alpha[:,0], loc)
-
-    def alphay(self, loc = ''):
-        return self._get_data(self._alpha[:,0], loc)
 
 if __name__ == "__main__":
     tw = Twiss()

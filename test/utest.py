@@ -5,6 +5,7 @@ from conf import *
 
 #import utChanFinder
 import utLattice
+import utTwiss
 #import utAllPVs
 #import utOrm
 #import utOrbit
@@ -12,6 +13,8 @@ import utLattice
 loader = unittest.TestLoader()
 
 suite = loader.loadTestsFromModule(utLattice)
+suite.addTests(loader.loadTestsFromModule(utTwiss))
+
 #suite.addTests(loader.loadTestsFromModule(utLattice))
 #suite.addTests(loader.loadTestsFromModule(utAllPVs))
 #suite.addTests(loader.loadTestsFromModule(utOrbit))
