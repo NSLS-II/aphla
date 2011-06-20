@@ -207,6 +207,10 @@ Twiss Routines
    :type etap: List
    :arg dP: energy deviaiont
 
+.. py:fuction:: GetEmittance(RF_FamNum)
+
+
+
 Tracking Routines
 --------------------------
 
@@ -465,6 +469,8 @@ Info Routines
    Get the information of family famNo in Dectionary Data type.
    All keys except "Knum" for getCellInfo are defined.
    Instead of "Knum", "Kind" is defined which returns the list of the elements in the Cell structure.
+
+.. py:function::RF_FamNumList = getCavityFamNums()
 
 Multipole Routines
 --------------------

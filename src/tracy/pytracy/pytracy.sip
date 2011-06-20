@@ -76,10 +76,88 @@ for (int i=0; i<ss_dim; ++i)
     sipCpp->OneTurnMat[i][j] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(pyRow,j));
 }
 %End
-//  SIP_PYOBJECT  Ascr;           //Matrix
-//  SIP_PYOBJECT  Ascrinv;        //Matrix
-//  SIP_PYOBJECT  Vr;             //Matrix, real part of the eigenvectors 
-//  SIP_PYOBJECT  Vi;             //Matrix, imaginal par of the eigenvectors 
+
+SIP_PYOBJECT  Ascr;           //Matrix
+%GetCode
+sipPy=PyList_New(ss_dim);
+for (int i=0; i<ss_dim; ++i)
+{
+    PyObject * row = PyList_New(ss_dim);
+    for (int j=0; j<ss_dim; ++j)
+      PyList_SetItem(row, j, PyFloat_FromDouble(sipCpp->Ascr[i][j]));
+    PyList_SetItem(sipPy,i,row);
+}
+%End
+%SetCode
+for (int i=0; i<ss_dim; ++i)
+{
+  PyObject * pyRow = (PyObject *) PyList_GetItem(sipPy,i);
+  for (int j=0; j<ss_dim; ++j)
+    sipCpp->Ascr[i][j] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(pyRow,j));
+}
+%End
+
+SIP_PYOBJECT  Ascrinv;        //Matrix
+%GetCode
+sipPy=PyList_New(ss_dim);
+for (int i=0; i<ss_dim; ++i)
+{
+    PyObject * row = PyList_New(ss_dim);
+    for (int j=0; j<ss_dim; ++j)
+      PyList_SetItem(row, j, PyFloat_FromDouble(sipCpp->Ascrinv[i][j]));
+    PyList_SetItem(sipPy,i,row);
+}
+%End
+%SetCode
+for (int i=0; i<ss_dim; ++i)
+{
+  PyObject * pyRow = (PyObject *) PyList_GetItem(sipPy,i);
+  for (int j=0; j<ss_dim; ++j)
+    sipCpp->Ascrinv[i][j] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(pyRow,j));
+}
+%End
+
+
+SIP_PYOBJECT  Vr;             //Matrix, real part of the eigenvectors 
+%GetCode
+sipPy=PyList_New(ss_dim);         
+for (int i=0; i<ss_dim; ++i)      
+{
+    PyObject * row = PyList_New(ss_dim);
+    for (int j=0; j<ss_dim; ++j)  
+      PyList_SetItem(row, j, PyFloat_FromDouble(sipCpp->Vr[i][j]));
+    PyList_SetItem(sipPy,i,row);
+}   
+%End
+%SetCode
+for (int i=0; i<ss_dim; ++i)
+{
+  PyObject * pyRow = (PyObject *) PyList_GetItem(sipPy,i);
+  for (int j=0; j<ss_dim; ++j)
+    sipCpp->Vr[i][j] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(pyRow,j));
+}
+%End
+
+SIP_PYOBJECT  Vi;             //Matrix, imaginal par of the eigenvectors 
+%GetCode
+sipPy=PyList_New(ss_dim);         
+for (int i=0; i<ss_dim; ++i)      
+{
+    PyObject * row = PyList_New(ss_dim);
+    for (int j=0; j<ss_dim; ++j)  
+      PyList_SetItem(row, j, PyFloat_FromDouble(sipCpp->Vi[i][j]));
+    PyList_SetItem(sipPy,i,row);
+}   
+%End
+%SetCode
+for (int i=0; i<ss_dim; ++i)
+{
+  PyObject * pyRow = (PyObject *) PyList_GetItem(sipPy,i);
+  for (int j=0; j<ss_dim; ++j)
+    sipCpp->Vi[i][j] = (double) PyFloat_AsDouble((PyObject*) PyList_GetItem(pyRow,j));
+}
+%End
+
 
     bool          MatMeth;        // matrix method 
     bool          Cavity_on;      // if true, cavity turned on 
@@ -721,6 +799,12 @@ SIP_PYOBJECT getDt();
             sipIsErr = 1;
             return NULL;
         }
+%End
+
+//void GetEmittance(const int Fnum, const bool prt)
+void getEmittance(int);
+%MethodCode
+	GetEmittance(a0, false);
 %End
 
 SIP_PYLIST GetNu(SIP_PYOBJECT);
@@ -2189,6 +2273,31 @@ SIP_PYLIST getCHList(int);
         }
 %End
 */
+
+SIP_PYLIST getRfFamNums();
+%MethodCode
+
+        PyObject * list;
+
+        if ((list = PyList_New(0)))
+        {
+            Py_BEGIN_ALLOW_THREADS
+            for (int i=0 ; i<=globval.Elem_nFam ;i++)
+            {
+              if (ElemFam[i].ElemF.Pkind == Cavity)
+                PyList_Append(list, PyLong_FromLong(i+1));
+            }
+            Py_END_ALLOW_THREADS
+            return list;
+        }
+        else
+        {
+            // PyList_New() will have raised the exception.
+            sipIsErr = 1;
+            return NULL;
+        }
+%End
+
 
 //SIP_PYLIST findM44(SIP_PYOBJECT);
 //%MethodCode
