@@ -38,7 +38,7 @@ Modules include:
 import os, sys, re
 
 from catools import *
-from machines import initNSLS2VSR
+from machines import initNSLS2VSR, initNSLS2VSRTwiss
 
 #from current import *
 from rf import *

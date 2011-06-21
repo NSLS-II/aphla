@@ -124,8 +124,11 @@ def initNSLS2VSR():
 
     #HLA_CFS_URL = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
     #HLA_CFS_URL = 'http://web01.nsls2.bnl.gov:8080/ChannelFinder'
-    cfsurl = os.environ.get('HLA_CFS_URL', '')
+    cfsurl = HLA_CFS_URL
     args = {'name': 'SR:*', 'tagName': 'aphla.*'}
+
+    if HLA_DEBUG > 0:
+        print "# channel finder: %s" % HLA_CFS_URL
 
     global _lat, _lattice_dict
     _lattice_dict['ltb'] = createLatticeFromCf(

@@ -218,7 +218,7 @@ class Element(AbstractElement):
         
     @property
     def status(self):
-        ret = self.name + '\n'
+        ret = self.name
         if self.homogeneous:
             pvs = [x for f, x, desc in self._eget_val]
             descs = [desc for f, x, desc in self._eget_val]
@@ -230,12 +230,12 @@ class Element(AbstractElement):
             else: f = None
             val = f(pvs)
             for i in range(len(pvs)):
-                ret += "  %s (%s): %s\n" % (descs[i], pvs[i], val[i])
+                ret += "\n  %s (%s): %s" % (descs[i], pvs[i], val[i])
         else:
             for f, x, desc in self._eget_val:
-                ret += "  %s (%s): %s\n" % (desc, x, f(x))
+                ret += "\n  %s (%s): %s" % (desc, x, f(x))
             for f, x, desc in self._status:
-                ret += "  %s (%s): %s\n" % (desc, x, f(x))
+                ret += "\n  %s (%s): %s" % (desc, x, f(x))
         return ret
 
     def updateCfsProperties(self, pv, prpt):

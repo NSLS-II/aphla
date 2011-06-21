@@ -49,8 +49,8 @@ applications. Scripts and save pictures in *png*, *jpeg*,
 *pdf* and *eps* format.
 
 
-Software
------------
+Installation
+-------------
 
 There are some packages required before using HLA. In the following, we will
 take Debian/Ubuntu Linux as an example to show how to install them.
@@ -60,7 +60,7 @@ take Debian/Ubuntu Linux as an example to show how to install them.
   $ sudo apt-get install mercurial pyqt4-dev-tools
   $ sudo apt-get install python-qt4 python-qt4-dev
 
-By using BNL Debian/Ubuntu repository fron Controls group, we can install some
+By using BNL Debian/Ubuntu repository from Controls group, we can install some
 EPICS tools easily:
 
 ::
@@ -143,6 +143,14 @@ First import some modules, including HLA and plotting routines
 
    The text after '#' are comments for that line
 
+.. docsetup:: *
+
+   >>> import os
+   >>> os.environ['HLA_DATA_DIRS'] = '/home/lyyang/deve/nsls2-hla'
+   >>> os.environ['HLA_CFS_URL'] = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
+   >>> os.environ['HLA_CFS_URL'] = 'http://web01.nsls2.bnl.gov:8080/ChannelFinder'
+   >>> os.environ['HLA_MACHINE'] = 'nsls2'
+   >>> os.environ['HLA_DEBUG'] = '2'
 
 .. doctest::
 
@@ -150,6 +158,12 @@ First import some modules, including HLA and plotting routines
    >>> import numpy as np
    >>> import matplotlib.pylab as plt
    >>> import time
+
+.. doctest::
+
+   >>> print hla.machines.HLA_CFS_URL
+   >>> hla.initNSLS2VSR()
+   >>> hla.initNSLS2VSRTwiss()
 
 Then is the examples:
 
@@ -159,9 +173,9 @@ Then is the examples:
    >>> len(bpm)
    180
    >>> bpm[0].name
-   'PH1G2C30A'
+   u'PH1G2C30A'
    >>> bpm[0].family, bpm[0].cell, bpm[0].girder
-   ('BPM', 'C30', 'G2')
+   (u'BPM', u'C30', u'G2')
 
 Each element has a set of properties associated:
 
@@ -169,7 +183,8 @@ Each element has a set of properties associated:
 - *cell*. The DBA cell it belongs. e.g. 'C02', 'C30'
 - *girder*, girder name where it sits. e.g. 'G2', 'G1'
 - *symmetry*, 'A' or 'B' symmetry
-- *group*. One element belongs to many groups. e.g. 'BPMX', 'BPM'
+- *group*. A BPM in girder 2 cell 2 could be in group 'C02', 'G2', 'BPM'
+   and more
 
 A element can only belongs to one *family*, *cell*, *girder* and
 *symmetry*. But it can be in many groups:
@@ -177,7 +192,7 @@ A element can only belongs to one *family*, *cell*, *girder* and
 .. doctest::
 
    >>> hla.getGroups('PM1G4C02B')
-   ['BPM', 'G4', 'C02', 'B']
+   [u'BPM', u'C02', u'G4', u'B']
 
 To find the elements in certain cell or/and girder, use *getGroupMembers* and
 take *union* or *intersection* of them.
@@ -189,7 +204,7 @@ take *union* or *intersection* of them.
    PM1G4C15A 407.882 0.0
    PM1G4C15B 410.115 0.0
 
-   >>> el = hla.getElements(['BPM', 'C0[2-3]', 'G2'])
+   >>> el = hla.getGroupMembers(['BPM', 'C0[2-3]', 'G2'])
    >>> for e in el: print e.name, e.sb, e.cell, e.girder, e.symmetry
    PH1G2C02A 57.7322 C02 G2 A
    PH2G2C02A 60.2572 C02 G2 A
@@ -197,7 +212,7 @@ take *union* or *intersection* of them.
    PL2G2C03A 85.3495 C03 G2 A
 
    >>> hla.getGroups('P*C01*A')
-   ['BPM', 'A', 'C01', 'G4', 'G2']
+   [u'BPM', u'C01', u'G4', u'G2', u'A']
 
    >>> hla.getCurrent() #doctest: +SKIP
    292.1354803937125
@@ -207,13 +222,26 @@ take *union* or *intersection* of them.
 
    >>> print hla.eget('PL1G2C05A') #doctest: +SKIP
    [[-0.0001042862911482232, 9.4271237903876306e-05]]
-   >>> el = hla.getElements(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A']) #doctest: +SKIP
-   >>> for e in el: print e.status
+   >>> el = hla.getElements(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
+   >>> for e in el: print e.status #doctest: +SKIP
+   SQMG4C05A
+     READBACK (SR:C05-MG:G04A{SQuad:M1}Fld-I): 0.0
+   QM2G4C05B
+     READBACK (SR:C05-MG:G04B{Quad:M2}Fld-I): 1.22232651254
+   CXH2G6C05B
+     READBACK (SR:C05-MG:G06B{HCor:H2}Fld-I): 0.0
+   PM1G4C05A
+     READBACK (SR:C05-BI:G04A{BPM:M1}SA:X-I): 0.00024594511233
+     READBACK (SR:C05-BI:G04A{BPM:M1}SA:Y-I): 5.06446641306e-05
+     READBACK (SR:C05-BI:G04A{BPM:M1}BBA:X): 0.0
+     READBACK (SR:C05-BI:G04A{BPM:M1}BBA:Y): 0.0
+
 
    
 Plotting the orbit
 
 .. doctest::
+
    >>> sobt = hla.getOrbit(spos = True)
    >>> plt.clf()
    >>> plt.plot(sobt[:,0], sobt[:,1], '-x', label='X') #doctest: +ELLIPSIS
