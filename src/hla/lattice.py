@@ -1,6 +1,9 @@
 #!/usr/env/python
 
 """
+Lattice
+~~~~~~~~
+
 defines lattice related classes and functions.
 
 :author: Lingyun Yang
@@ -484,7 +487,7 @@ class Lattice:
                     break
         return ret
 
-    def getGroupMembers(self, groups, op):
+    def getGroupMembers(self, groups, op, **kwargs):
         """
         return members in a list of groups. 
 
@@ -495,6 +498,9 @@ class Lattice:
         """
         if groups == None: return None
         ret = {}
+        cell = kwargs.get('cell', '*')
+        girder = kwargs.get('girder', '*')
+        symmetry = kwargs.get('symmetry', '*')
         #print __file__, groups
         for g in groups:
             ret[g] = []
@@ -557,7 +563,7 @@ class Lattice:
         fmt = "%%%dd %%%ds  %%%ds  %%9.4f %%9.4f\n" % (idx, ml_name, ml_family)
         #print fmt
         for i, e in enumerate(self._elements):
-            s = s + fmt % (i, e.name, e.family, e.s, e.length)
+            s = s + fmt % (i, e.name, e.family, e.sb, e.length)
         return s
 
 

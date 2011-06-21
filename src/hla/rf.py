@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 """
-    hla.rf
-    ~~~~~~
+RF Control
+~~~~~~~~~~
 
-    RF related
+RF related
 
-    :author: Lingyun Yang
-    :license: (empty ? GPL ? EPICS ?)
+:author: Lingyun Yang
+:license: (empty ? GPL ? EPICS ?)
 
 """
 

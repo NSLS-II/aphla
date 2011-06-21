@@ -1,5 +1,6 @@
 """
 Twiss
+~~~~~~
 
 
 :author: Lingyun Yang
@@ -11,7 +12,7 @@ from catools import caget, caput
 
 class TwissItem:
     """
-    twiss
+    twiss item
 
     Stores twiss parameter for one element at begin(b), center(c), exit(e) or
     all three locations.
@@ -50,14 +51,16 @@ class Twiss:
     """
     Twiss table
 
-    
+    A list of twiss items and related element names. It has tunes and
+    chromaticities.
     """
     def __init__(self, name):
         self._elements = []
         self._twlist = []
         self._name = name
         self.tune = (0, 0)
-
+        self.chrom = (0, 0)
+        
     def _find_element(self, elemname):
         try:
             i = self._elements.index(elemname)

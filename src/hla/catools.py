@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+"""
+CA Tools
+~~~~~~~~
+
+Channel access tools.
+
+:author: Lingyun Yang
+"""
 
 import sys, time
 import cothread

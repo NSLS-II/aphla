@@ -13,10 +13,13 @@ References
 .. automodule:: hla.rf
    :members:
 
-Lattice
-********
-
 .. automodule:: hla.lattice
-  :members:
+   :members:
 
+.. automodule:: hla.twiss
+   :members:
+
+
+.. automodule:: hla.machines
+   :members:
 

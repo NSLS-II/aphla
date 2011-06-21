@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 """
+Machines
+~~~~~~~~
+
 The initialization of machines
 """
 
@@ -15,12 +18,29 @@ _lat = None
 _lattice_dict = {}
 _twiss = None
 
-TAG_DEFAULT_GET = 'aphla.eget'
-TAG_DEFAULT_PUT = 'aphla.eput'
+#
+HLA_TAG_EGET = 'aphla.eget'
+HLA_TAG_EPUT = 'aphla.eput'
 
-HLA_DATA_DIRS=os.environ.get('HLA_DATA_DIRS', None)
-HLA_MACHINE=os.environ.get('HLA_MACHINE', None)
-HLA_CFS_URL= os.environ.get('HLA_CFS_URL', '')
+HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
+HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
+HLA_CFS_URL   = os.environ.get('HLA_CFS_URL', '')
+HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
+
+# map Element init parameters to CF properties
+HLA_CFS_KEYMAP = {'name': u'elemName',
+                  'devname': u'devName',
+                  'family': u'elemType',
+                  'girder': u'girder',
+                  'handle': u'handle',
+                  'length': u'length',
+                  'index': u'ordinal',
+                  'symmetry': u'symmetry',
+                  'se': u'sEnd',
+                  'system': u'system',
+                  'cell': u'cell',
+                  'phylen': None,
+                  'sequence': None}
 
 def createLatticeFromCf(cfsurl, **kwargs):
     """
@@ -32,22 +52,8 @@ def createLatticeFromCf(cfsurl, **kwargs):
     from channelfinder.core.ChannelFinderClient import ChannelFinderClient
     from channelfinder.core.Channel import Channel, Property, Tag
 
-    # map Element init parameters to CF properties
-    ELEMENT_CFS_MAP = {'name': u'elemName',
-                       'devname': u'devName',
-                       'family': u'elemType',
-                       'girder': u'girder',
-                       'handle': u'handle',
-                       'length': u'length',
-                       'index': u'ordinal',
-                       'symmetry': u'symmetry',
-                       'se': u'sEnd',
-                       'system': u'system',
-                       'cell': u'cell',
-                       'phylen': None,
-                       'sequence': None}
     # reverse map, skip the None values
-    CFS_MAP = dict((v,k) for k,v in ELEMENT_CFS_MAP.iteritems() if v)
+    CFS_MAP = dict((v,k) for k,v in HLA_CFS_KEYMAP.iteritems() if v)
 
     lat = Lattice('channelfinder')
     cf = ChannelFinderClient(BaseURL = cfsurl)
@@ -60,6 +66,10 @@ def createLatticeFromCf(cfsurl, **kwargs):
                         if CFS_MAP.has_key(k))
         prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
+        # fix BPMX/BPMY for same bpm name
+        if prpt['family'] == u'BPMX' or prpt['family'] == u'BPMY':
+            prpt['family'] = u'BPM'
+            
         # skip if this pv has no element name
         if not name: continue
         #print pv, name, prpt
@@ -85,47 +95,19 @@ def createLatticeFromCf(cfsurl, **kwargs):
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
-    lat.mergeGroups(u"BPM", [u'BPMX', u'BPMY'])
     # !IMPORTANT! since Channel finder has no order, but lat class has
     lat.sortElements()
-    #print __file__, lat._group['BPMX']
     lat.circumference = lat[-1].se
 
-    # create virtual hla elements
-    bpmx = lat.getElements(u'BPMX')
-    bpmy = lat.getElements(u'BPMY')
-    nbpmx, nbpmy = len(bpmx), len(bpmy)
-    elemxpv, elemypv = ['']*nbpmx, [''] * nbpmy
-    ch = cf.find(**kwargs)
-    for c in ch:
-        #print c.Name, c.getTags()
-        tags = c.getTags()
-        prpt = c.getProperties()
-        if not u'aphla.eget' in tags: continue
-        if not prpt.has_key('ELEM_TYPE'): continue
-        if not prpt['ELEM_TYPE'].startswith(u'BPM'): continue
-        elemname = c.getProperties().get('ELEM_NAME', None)
-        idx = [i for i,x in enumerate(bpmx) if x.name == elemname]
-        #print __file__, elemname, idx, len(bpmx)
-        if u'aphla.x' in tags:
-            elemxpv[idx[0]] = c.Name
-        if u'aphla.y' in tags:
-            elemypv[idx[0]] = c.Name
-
-    # create two virtual elements, HLA:BPMX/Y
-    elem = Element(name='HLA:BPMX')
-    for i in range(nbpmx):
-        elem.appendEget((caget, elemxpv[i], bpmx[i]))
-    lat.insertElement(0, elem)
-
-    elem = Element(name='HLA:BPMY')
-    for i in range(nbpmy):
-        elem.appendEget((caget, elemypv[i], bpmy[i]))
-    lat.insertElement(1, elem)
+    if HLA_DEBUG > 0:
+        print "# mode: %s" % lat.mode 
+        print "# elements: %d" % lat.size()
+    if HLA_DEBUG > 1:
+        for g in sorted(lat._group.keys()):
+            print "# %10s: %d" % (g, len(lat._group[g]))
+            
     return lat
 
-def init(site, system):
-    pass
 
 def initNSLS2VSR():
     # are we using virtual ac
@@ -148,9 +130,11 @@ def initNSLS2VSR():
     global _lat, _lattice_dict
     _lattice_dict['ltb'] = createLatticeFromCf(
         cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
+    _lattice_dict['ltb'].mode = 'channelfinder-ltb'
     #_lat = _lattice_dict['ltb']
     _lattice_dict['sr'] = createLatticeFromCf(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
+    _lattice_dict['sr'].mode = 'channelfinder-sr'
     _lat = _lattice_dict['sr']
 
     # self diagnostics
@@ -169,22 +153,8 @@ def createLatticeFromTxt(f, **kwargs):
     tagName = kwargs.get('tagName', '*') 
     lat = Lattice('channelfinder-txt')
 
-    # map Element init parameters to CF properties
-    ELEMENT_CFS_MAP = {'name': u'elemName',
-                       'devname': u'devName',
-                       'family': u'elemType',
-                       'girder': u'girder',
-                       'handle': u'handle',
-                       'length': u'length',
-                       'index': u'ordinal',
-                       'symmetry': u'symmetry',
-                       'se': u'sEnd',
-                       'system': u'system',
-                       'cell': u'cell',
-                       'phylen': None,
-                       'sequence': None}
     # reverse map, skip the None values
-    CFS_MAP = dict((v,k) for k,v in ELEMENT_CFS_MAP.iteritems() if v)
+    CFS_MAP = dict((v,k) for k,v in HLA_CFS_KEYMAP.iteritems() if v)
 
     for cl in open(f, 'r').readlines():
         # skip the comment lines
@@ -233,7 +203,7 @@ def createLatticeFromTxt(f, **kwargs):
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
-    lat.mergeGroups(u"BPM", [u'BPMX', u'BPMY'])
+    #lat.mergeGroups(u"BPM", [u'BPMX', u'BPMY'])
     # !IMPORTANT! since Channel finder has no order, but lat class has
     lat.sortElements()
     #print __file__, lat._group['BPMX']
@@ -246,12 +216,14 @@ def initNSLS2VSRTxt(data = ''):
     os.environ['EPICS_CA_ADDR_LIST'] = 'virtac.nsls2.bnl.gov'
     os.environ['EPICS_cA_MAX_ARRAY_BYTES'] = '100000'
 
+    global HLA_TAG_EGET, HLA_TAG_EPUT
+    HLA_TAG_EGET='aphla.eget'
+    HLA_TAG_EPUT='aphla.eput'
+    
     INF = 1e30
     ORBIT_WAIT=8
     NETWORK_DOWN=False
 
-    TAG_DEFAULT_GET='aphla.eget'
-    TAG_DEFAULT_PUT='aphla.eput'
 
     if data:
         cfsurl = data
@@ -260,11 +232,11 @@ def initNSLS2VSRTxt(data = ''):
                               HLA_MACHINE, 'channel_finder_server.txt')
 
     global _lat, _lattice_dict
-    _lattice_dict['ltb'] = createLatticeFromTxt(
+    _lattice_dict['ltb-txt'] = createLatticeFromTxt(
         cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
-    _lattice_dict['sr'] = createLatticeFromTxt(
+    _lattice_dict['sr-txt'] = createLatticeFromTxt(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
-    _lat = _lattice_dict['sr']
+    _lat = _lattice_dict['sr-txt']
 
     # self diagnostics
     # check dipole numbers
@@ -332,8 +304,28 @@ def initNSLS2VSRTwiss():
         _twiss.append(tw)
 
 def use(lattice):
+    """
+    switch to a lattice
+
+    use :func:`~hla.machines.lattices` to get a dict of lattices and its mode
+    name
+    """
     global _lat, _lattice_dict
     if _lattice_dict.get(lattice, None):
         _lat = _lattice_dict[lattice]
     else:
         raise ValueError("no lattice %s was defined" % lattice)
+    return _lat
+
+def lattices():
+    """
+    get a dictionary of lattice name and mode
+
+    Example::
+
+      >>> lattices()
+      { 'ltb': 'channelfinder-ltb', 'ltb-txt': 'channelfinder-txt',
+      'sr': 'channelfinder-sr', 'sr-txt': 'channelfinder-txt' }
+      >>> use('ltb-txt')
+    """
+    return dict((k, v.mode) for k,v in _lattice_dict.iteritems())

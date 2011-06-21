@@ -235,14 +235,14 @@ def getGroups(element = '*'):
     """
     return machines._lat.getGroups(element)
 
-def getGroupMembers(groups, op = 'intersection'):
+def getGroupMembers(groups, op = 'intersection', **kwargs):
     """
     Get all elements in a group. If group is a list, consider which op:
 
     - op = "union", consider elements in the union of the groups
     - op = "intersection", consider elements in the intersect of the groups
     """
-    return _lat.getGroupMembers(groups, op)
+    return machines._lat.getGroupMembers(groups, op, **kwargs)
 
 def getNeighbors(element, group, n = 3):
     """
@@ -255,7 +255,7 @@ def getNeighbors(element, group, n = 3):
         :meth:`~hla.lattice.Lattice.getNeighbors` For getting list of
         neighbors. :py:func:`hla.lattice.Lattice.getNeighbors`
     """
-    return _lat.getNeighbors(element, group, n)
+    return machines._lat.getNeighbors(element, group, n)
 
 
 def getStepSize(element):
