@@ -39,54 +39,50 @@ symbol                           description
 :mod:`hla.hlalib`
 *****************
 
-======================================== ==================================================
-symbol                                   description                                       
-======================================== ==================================================
+======================================== =========================================================================
+symbol                                   description                                                              
+======================================== =========================================================================
+:func:`~hla.hlalib.addGroup`             add a new group, *group* should be plain string, characters in
+:func:`~hla.hlalib.addGroupMembers`      Add a new member to a existing group    
 :func:`~hla.hlalib.eget`                 easier get with element name(s)         
 :func:`~hla.hlalib.eput`                 easier put                              
+:func:`~hla.hlalib.getBeta`              get the beta function from stored data  
+:func:`~hla.hlalib.getChromaticity`      get chromaticity                        
+:func:`~hla.hlalib.getChromaticityRm`    TODO                                    
+:func:`~hla.hlalib.getCurrentMode`       TODO                                    
+:func:`~hla.hlalib.getDispersion`        get the dispersion                      
+:func:`~hla.hlalib.getElements`          return list of elements.                
+:func:`~hla.hlalib.getEta`               get the dispersion from stored data     
+:func:`~hla.hlalib.getFftTune`           get tune from FFT                       
+:func:`~hla.hlalib.getFullOrbit`         Return orbit                            
+:func:`~hla.hlalib.getGroupMembers`      Get all elements in a group. If group is a list, consider which op:
+:func:`~hla.hlalib.getGroups`            Get all groups own these elements, '*' returns all possible groups,
+:func:`~hla.hlalib.getLocations`         Get the location of a group, either returned as a dictionary in which the
+:func:`~hla.hlalib.getModes`             TODO                                    
+:func:`~hla.hlalib.getNeighbors`         Get a list of n elements belongs to group. The list is sorted along s
+:func:`~hla.hlalib.getOrbit`             Return orbit                            
+:func:`~hla.hlalib.getPhase`             get the phase from stored data          
 :func:`~hla.hlalib.getRbChannels`        get the pv names for a list of elements 
 :func:`~hla.hlalib.getSpChannels`        get the pv names for a list of elements 
+:func:`~hla.hlalib.getStepSize`          Return default stepsize of a given element
+:func:`~hla.hlalib.getTune`              get tune                                
+:func:`~hla.hlalib.getTuneRm`            TODO                                    
+:func:`~hla.hlalib.getTunes`             get tunes                               
 :func:`~hla.hlalib.levenshtein_distance` Find the Levenshtein distance between two strings.
+:func:`~hla.hlalib.parseElementName`     searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
+:func:`~hla.hlalib.removeGroup`          Remove a group if it is empty           
+:func:`~hla.hlalib.removeGroupMembers`   Remove a member from group              
 :func:`~hla.hlalib.reset_trims`          reset all trims in group "TRIMX" and "TRIMY"
-======================================== ==================================================
+:func:`~hla.hlalib.saveBeta`             TODO                                    
+:func:`~hla.hlalib.saveChromaticity`     TODO                                    
+:func:`~hla.hlalib.saveChromaticityRm`   TODO                                    
+:func:`~hla.hlalib.saveDispersion`       TODO                                    
+:func:`~hla.hlalib.saveMode`             Save current states to a new mode       
+:func:`~hla.hlalib.savePhase`            TODO                                    
+:func:`~hla.hlalib.saveTune`             TODO                                    
+:func:`~hla.hlalib.saveTuneRm`           TODO                                    
+======================================== =========================================================================
 
-:mod:`hla.latmanage`
-********************
-
-========================================= =====================================================================
-symbol                                    description                                                          
-========================================= =====================================================================
-:func:`~hla.latmanage.addGroup`           add a new group, *group* should be plain string, characters in
-:func:`~hla.latmanage.addGroupMembers`    Add a new member to a existing group     
-:func:`~hla.latmanage.getBeta`            get the beta function from stored data   
-:func:`~hla.latmanage.getChromaticity`    get chromaticity                         
-:func:`~hla.latmanage.getChromaticityRm`  TODO                                     
-:func:`~hla.latmanage.getCurrentMode`     TODO                                     
-:func:`~hla.latmanage.getDispersion`      get the dispersion                       
-:func:`~hla.latmanage.getElements`        return list of elements, given cell girder and sequence.
-:func:`~hla.latmanage.getEta`             get the dispersion from stored data      
-:func:`~hla.latmanage.getFftTune`         get tune from FFT                        
-:func:`~hla.latmanage.getGroupMembers`    Get all elements in a group. If group is a list, consider which op:
-:func:`~hla.latmanage.getGroups`          Get all groups own these elements, '*' returns all possible groups,
-:func:`~hla.latmanage.getLocations`       Get the location of a group, either returned as a dictionary in
-:func:`~hla.latmanage.getModes`           TODO                                     
-:func:`~hla.latmanage.getNeighbors`       Get a list of n elements belongs to group. The list is sorted along s
-:func:`~hla.latmanage.getPhase`           get the phase from stored data           
-:func:`~hla.latmanage.getStepSize`        Return default stepsize of a given element
-:func:`~hla.latmanage.getTune`            get tune                                 
-:func:`~hla.latmanage.getTuneRm`          TODO                                     
-:func:`~hla.latmanage.getTunes`           get tunes                                
-:func:`~hla.latmanage.removeGroup`        Remove a group if it is empty            
-:func:`~hla.latmanage.removeGroupMembers` Remove a member from group               
-:func:`~hla.latmanage.removeLatticeMode`  TODO                                     
-:func:`~hla.latmanage.saveBeta`           TODO                                     
-:func:`~hla.latmanage.saveChromaticity`   TODO                                     
-:func:`~hla.latmanage.saveChromaticityRm` TODO                                     
-:func:`~hla.latmanage.saveDispersion`     TODO                                     
-:func:`~hla.latmanage.savePhase`          TODO                                     
-:func:`~hla.latmanage.saveTune`           TODO                                     
-:func:`~hla.latmanage.saveTuneRm`         TODO                                     
-========================================= =====================================================================
 
 :mod:`hla.measorm`
 ******************
@@ -123,45 +119,9 @@ symbol                         description
 :func:`~hla.rf.putRfFrequency` set the rf frequency          
 ============================== ========================================
 
-cothread.cothread
-*****************
-
-======== ========================================
-symbol   description                             
-======== ========================================
-Timedout Waiting for event timed out.
-======== ========================================
-
-posixpath
-*********
-
-======== ==============================================================
-symbol   description                                                   
-======== ==============================================================
-join     Join two or more pathname components, inserting '/' as needed.
-splitext Split the extension from a pathname.
-======== ==============================================================
 
 
 
-.. [Bengtsson2008] J. Bengtsson, B. Dalesio, T. Shaftan, T. Tanabe,
-   *NSLS-II: Model Based Control - A Use Case Approach*, Tech-note 51, Oct
-   2008
-.. [Willeke2009] F. Willeke, *Assumptions on
-    NSLS-II Accelerator Commissioning*, November 22, 2009
-.. [Willeke2010] F. Willeke, *The Path to Accelerator
-    Commissioning*, talk on ASD Project Meeting, Jan 2010
-.. [Krinsky2010] S. Krinsky, *NSLS-II Storage Ring
-    Commissioning*, NSLS-II ASD Retreat, May 13, 2010.
-.. [Shen] G.~Shen, L.~Yang, *High level applications -
-    APIs*
-.. [LT2009nomenclature] *National Synchrotron Light Source II
-    - Nomenclature Standard*, LT-ENG-RSI-STD-002, Jan 21, 2009, Rev 2
-.. [LT2008nomenclature] *National Synchrotron Light Source II
-    - Accelerator Systems Requirements Document, Storage Ring Physics
-    Nomenclature Standard*, RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
-.. [Shencbd] G.~Shen, Y.~Hu, B. Dalesio, *Circular Buffer
-    Diagnostic*
 
 .. _EPICS: http://www.aps.anl.gov/epics
 .. _Python: http://www.python.org/

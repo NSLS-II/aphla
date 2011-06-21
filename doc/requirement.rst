@@ -191,8 +191,8 @@ and booster vendors, others have to be developed by ourselves.
     - Integration of safety devices/interlocks       
 
 
-:hla:`Beam Based Alignment (BBA)` (L.Yang)
-------------------------------------------
+Beam Based Alignment (BBA) (L.Yang)
+-------------------------------------------
 
 BBA use a list of correctors, BPMs and nearby quadrupoles, to steer the
 beam through center of these quadrupoles. The input is a list of
@@ -213,7 +213,7 @@ and replay them.
 It should work on separate set of quadrupoles, and combine data with
 previous measurement.
 
-:hla:`Linear Lattice Fitting (LOCO)` (J.Choi)
+Linear Lattice Fitting (LOCO) (J.Choi)
 ---------------------------------------------
 
 - analyze quadrupole gradient/tilt error.
@@ -229,7 +229,7 @@ It requires:
 
 
 
-:hla:`Measure TWISS Parameters` (L.Yang)
+Measure TWISS Parameters (L.Yang)
 ----------------------------------------
 
 - measure beta functions
@@ -244,7 +244,7 @@ It requires:
 
 
 
-:hla:`Insertion Device Related (Matching)`
+Insertion Device Related (Matching)
 -------------------------------------------
 
 - get/correct closed orbit distortion

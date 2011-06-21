@@ -30,6 +30,7 @@ class TestChanFinderAgent(unittest.TestCase):
         pass
 
     def test_match_properties1(self):
+        #print TEST_CONF_VERSION
         self.assertTrue(
             self.cfa.matchProperties(
                 'SR:C30-MG:G02A{HCor:H}Fld-I',

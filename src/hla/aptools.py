@@ -10,13 +10,43 @@ Accelerator Physics Tools
 """
 
 from . import getElements, getLocations, getDispersion, getRfFrequency, \
-     putRfFrequency, getOrbit, getTunes
+     putRfFrequency, getOrbit, getTunes, getSubOrm, eput, eget
 import numpy as np
 import time, shelve
 import matplotlib.pylab as plt
 
 
 alphac = 3.6261976841792413e-04
+
+def getLifetime(verbose = 0):
+    """
+    Monitor current change with, calculate lifetime dI/dt
+
+    It takes about 30 seconds, 10 points will be recorded, about 3 seconds
+    delay between each.
+
+    least square linear fitting is applied for slop dI/dt
+    """
+
+    N = 10
+    ret = np.zeros((N, 2), 'd')
+    d0 = datetime.datetime.now()
+    ret[0, 1] = getCurrent()
+    for i in range(1, N):
+        time.sleep(3)
+        ret[i,1] = getCurrent()
+        dt = datetime.datetime.now() - d0
+        ret[i,0] = (dt.microseconds/1000000.0 + dt.seconds)/3600.0 + \
+            dt.days*24.0
+        if verbose:
+            print i, dt, ret[i,1]
+    dI = max(ret[:,1]) - min(ret[:,1]) 
+    dt = max(ret[:,0]) - min(ret[:,0])
+    #print np.average(ret[:,1]), dI, dt
+    #print np.average(ret[:,1]) / (dI / dt), "H"
+    lft_hour = np.average(ret[:,1]) / (dI / dt)
+    return lft_hour
+
 
 def measChromaticity():
     """
@@ -144,3 +174,41 @@ def measDispersion():
     f["dispersion"] = dat
     f.close()
     
+
+def correctOrbit(bpm, trim, **kwargs):
+    """
+    correct the orbit with given BPMs and Trims
+
+    Example::
+
+      correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
+
+    Since each bpm can have the 'X' or 'Y' reading, there is a parameter to
+    specify the plane:
+
+    - *plane* ['XX', 'XY', 'YY', 'YX']. The first 'X' or 'Y' is BPM and second
+       is Trim. If that BPM or Trim does not have readings from such plane,
+       this element should be ignored.
+
+    .. seealso:: `hla.getSubOrm`
+    """
+    plane = kwargs.get('plane', 'XX')
+    
+    m = getSubOrm(bpm, trim, plane)
+    if plane[0] == 'X': v = getOrbit(bpm)[:,0]
+    elif plane[0] == 'Y': v = getOrbit(bpm)[:,1]
+
+    v0 = getOrbit(bpm)[:,0]
+    dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0)
+    eput(trim, dk)
+    
+    #v1 = getOrbit(bpm)[:,0]
+    #print np.shape(m), np.shape(v)
+
+    #import matplotlib.pylab as plt
+    #plt.clf()
+    #plt.plot(v0, '--')
+    #plt.plot(v1, '-x')
+    #plt.savefig('tmp.png')
+    #pass
+

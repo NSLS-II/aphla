@@ -1,178 +1,163 @@
+#!/usr/bin/env python
+
 """
-This module is a client which provides a interface to access channel finder
-service to get channel information.  The Channel Finder service uses a web
-service, and http protocol to provide EPICS channel name, and its related
-properties, tags. The properties supported so far are, which is developed
-against NSLS II storage ring.:
+This script initialized some PVs in channel finder. The PVs are only those
+used by HLA.
 
-    'elem_type':   element type
-    'elem_name':   element name
-    'length':      element length
-    's_position':  s position along beam trajectory
-    'ordinal':     index in simulation code (for NSLS II storage ring, tracy)
-    'system':      system, for example, storage ring
-    'cell':        cell information
-    'girder':      girder information
-    'handle':      handle, either setpoint or readback
-    'symmetry':    symmetry (A or B for NSLS II storage ring, following the naming convention)
-    
-  
-
-Created on Mar 14, 2011
-         National Synchrotron Radiation Facility II
-         Brookhaven National Laboratory
-         PO Box 5000, Upton, New York, 11973-5000
-
-@author: G. Shen, L. Yang
-
-Last Modified: 2011-05-06 17:17
+:author: Lingyun Yang
+:date: 2011-05-11 16:22
 """
 
-import sys
-import time
-import re
+import os, sys
+import re, time
 
-from channelfinder.ChannelFinderClient import ChannelFinderClient
-from channelfinder.Channel import Channel
-from channelfinder.Channel import Property
+from channelfinder.core.ChannelFinderClient import ChannelFinderClient
+from channelfinder.core.Channel import Channel, Property, Tag
 
-def addProps(cf):
-    # every property has to be added first before using it.
-    properties = []
+#import hla
+
+def dump_hla_cfa(out):
+    hla._cfa.exportTextRecord(out)
+
+def clean_small_cases_ones():
+    pass
+
+def initialize_cfs(out):
+    all_keys, all_tags = [], []
+    cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
+    cf = ChannelFinderClient(BaseURL = cfsurl, username='boss', password='1234')
+
+    # clean up
+    props = cf.getAllProperties()
+    #cf.set(properties = [Property('ORDINAL', '85')])
+    cfchannels = []
+    for line in open(out, 'r').readlines():
+        if line.strip()[0] == '#': continue
+        # three parts, "pv; properties; tags"
+        rec = line.split(';')
+        pv, pstr, tagstr = rec
+        chs = cf.find(name=pv.strip())
+        if not chs:
+            print "Did not find", pv
+            continue
+        if len(chs) > 1:
+            print "PV is not unique:", pv
+            continue
+        
+        prop, tags = {}, []
+        for r in pstr.split(','):
+            if not r: continue
+            # all in upper cases
+            k,v = r.upper().split('=')
+            k = k.strip()
+            v = v.strip()
+            prop[k] = v
+            if not k in all_keys: all_keys.append(k)
+
+        for r in tagstr.split()[1:]:
+            if r == 'default.eput': r = 'HLA.EPUT'
+            elif r == 'default.eget': r = 'HLA.EGET'
+            elif not r.startswith('HLA.'): r = 'HLA.' + r
+
+            if not r in all_tags: all_tags.append(r)
+            
+            tags.append(r)
+        #print pv, prop, tags
+        cfprop = [Property(k, 'HLA', v) for k,v in prop.items()]
+        cftags = [Tag(t, 'HLA') for t in tags]
+        cfchannels.append(Channel(u'%s' % pv, 'HLA', properties=cfprop, tags=cftags))
+        #cf.update(channel = Channel(pv, 'HLA'), properties=cfprop,
+        #          tags = cftags)
+        
+    print ""
+    print all_keys
+    print all_tags
+    cfprop = [Property(p, 'HLA', 'N.A.') for p in all_keys]
+    cf.set(properties = cfprop)
+    cftags = [Tag(t, 'HLA') for t in all_tags]
+    cf.set(tags = cftags)    
+    cf.set(channels=cfchannels)
+
+def update_cfs(out):
+    # same as initi_cfs for now
+    #
+    all_keys, all_tags = [], []
+    cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
+    cf = ChannelFinderClient(BaseURL = cfsurl, username='boss', password='1234')
+
+    # clean up
+    props = cf.getAllProperties()
+    #cf.set(properties = [Property('ORDINAL', '85')])
+    cfchannels = []
+    for line in open(out, 'r').readlines():
+        if line.strip()[0] == '#': continue
+        # three parts, "pv; properties; tags"
+        pv, pstr, tagstr = [r.strip() for r in line.split(';')]
+        chs = cf.find(name=pv.strip())
+        if not chs:
+            print "Did not find '%s'" % pv
+            #cf.set(channel=Channel(pv, 'HLA'))
+            #continue
+        elif len(chs) > 1:
+            print "PV is not unique:", pv
+            continue
+        
+        prop, tags = {}, []
+        for r in pstr.split(','):
+            if not r: continue
+            # all in upper cases
+            k,v = r.upper().split('=')
+            k = k.strip()
+            v = v.strip()
+            prop[k] = v
+            if not k in all_keys: all_keys.append(k)
+
+        for r in tagstr.split(','):
+            tg = r.strip()
+            if tg == '~tags=': continue
+
+            if not tg in all_tags: all_tags.append(tg)
+            
+            tags.append(tg)
+        #print pv, prop, tags
+        cfprop = [Property(k, 'HLA', v) for k,v in prop.items()]
+        cftags = [Tag(t, 'HLA') for t in tags]
+        cfchannels.append(Channel(u'%s' % pv, 'HLA', properties=cfprop, tags=cftags))
+        #cf.update(channel = Channel(pv, 'HLA'), properties=cfprop,
+        #          tags = cftags)
+        
+    print ""
+    print "keys:", all_keys
+    print "tags:", all_tags
+    print "channels:", len(cfchannels)
+    if all_keys:
+        cfprop = [Property(p, 'HLA', 'N.A.') for p in all_keys]
+        #cf.set(properties = cfprop)
+        #for p in cfprop:
+        #    cf.update(p)
+    if all_tags:
+        cftags = [Tag(t, 'HLA') for t in all_tags]
+        cf.set(tags = cftags)    
+        #for t in cftags:
+        #    cf.update(t)
+    #for ch in cfchannels:
+    #    cf.update(channel=ch)
+    cf.set(channels = cfchannels)
+    #for c in cfchannels:
+    #    print c.Name, c.getProperties(), c.getTags()
+
+def test():
+    cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
+    cf = ChannelFinderClient(BaseURL = cfsurl, username='boss', password='1234')
+    ch = cf.find(name='SR*')
+    for c in ch:
+        print c.name,
+        
+if __name__ == "__main__":
+    #out = 'cfa.txt'
+    #dump_hla_cfa(out)
+    if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
+        #initialize_cfs(sys.argv[1])
+        update_cfs(sys.argv[1])
+    #test()
     
-    # connect to server is time-consuming
-    # A bad example to set multiple properties
-#    beg = time.time()
-#    if cf.findProperty('dev_type') == None:
-#        properties.append(Property('dev_type', 'vioc'))
-#    if cf.findProperty('elem_name') == None:
-#        properties.append(Property('elem_name', 'vioc'))
-#    if cf.findProperty('length') == None:
-#        properties.append(Property('length', 'vioc'))
-#    if cf.findProperty('s_position') == None:
-#        properties.append(Property('s_position', 'vioc'))
-#    if cf.findProperty('ordinal') == None:
-#        properties.append(Property('ordinal', 'vioc'))
-#    if cf.findProperty('system') == None:
-#        properties.append(Property('system', 'vioc'))
-#    if cf.findProperty('cell') == None:
-#        properties.append(Property('cell', 'vioc'))
-#    if cf.findProperty('girder') == None:
-#        properties.append(Property('girder', 'vioc'))
-#    if cf.findProperty('ch_type') == None:
-#        properties.append(Property('ch_type', 'vioc'))
-#    end = time.time()
-#    print ('%.6f' % (end - beg))
-
-    # This method works better
-#    beg1 = time.time()
-    propDict = {'elem_type': 'vioc', \
-                'elem_name': 'vioc', \
-                'dev_name': 'vioc', \
-                'length': 'vioc', \
-                's_position': 'vioc', \
-                'ordinal': 'vioc', \
-                'system': 'vioc', \
-                'cell': 'vioc', \
-                'girder': 'vioc', \
-                'handle': 'vioc', \
-                'symmetry': 'vioc'
-                }
-
-    properties1 = cf.getAllProperties()
-    for prop in properties1:
-        try:
-            del propDict[prop.Name]
-        except KeyError:
-            pass
-    if len(propDict) > 0:
-        for key in propDict.iterkeys():
-            properties.append(Property(key, propDict[key]))
-#    end1 = time.time()
-#    print ('%.6f' % (end1 - beg1))
-
-    if len(properties) > 0:
-        cf.set(properties=properties)
-    else:
-        print 'all properties are in database already.'
-
-def buildProps(results, channame, chtype):
-    properties = [Property('elem_type', 'vioc', results[6]),
-                  Property('elem_name', 'vioc', results[3]),
-                  Property('dev_name', 'vioc', results[7]),
-                  Property('length', 'vioc', results[4]),
-                  Property('s_position', 'vioc', results[5]),
-                  Property('ordinal', 'vioc', results[0])]
-
-    # SR stands for storage ring
-    if channame.startswith('SR'):
-        properties.append(Property('system', 'vioc', 'storage ring'))
-
-    # C00 stands for global pv                
-    if channame.find('C00') == -1:
-#        tmp = channame.split(':')
-#        properties.append(Property('cell', 'vioc', tmp[1][1:3]))
-#        properties.append(Property('girder', 'vioc', tmp[2][1:3]))
-#        properties.append(Property('symmetry', 'vioc', tmp[2][3:4]))
-#        print channame
-        try:
-            tmp = re.match(r'.*(C\d{1,2}).*(G\d{1,2})(.).*', channame)
-            properties.append(Property('cell', 'vioc', tmp.groups()[0]))
-            properties.append(Property('girder', 'vioc', tmp.groups()[1]))
-            properties.append(Property('symmetry', 'vioc', tmp.groups()[2]))
-#        properties.append(Property('cell', 'vioc', tmp.groups()[0]))
-#        properties.append(Property('girder', 'vioc', tmp.groups()[1]))
-#        properties.append(Property('symmetry', 'vioc', tmp.groups()[2]))
-        except:
-            raise
-
-    properties.append(Property('handle', 'vioc', chtype))
-    return properties
-
-if __name__ == '__main__':
-    baseurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
-    client = ChannelFinderClient(BaseURL=baseurl, username='boss', password='1234')
-    # you can use browser to view results
-    # http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder/resources/channels?~name=SR*
-    
-    addProps(client)
-
-    try:
-        # the file has the following attributes:
-        #index, read back, set point, phys name, len[m], s[m], type
-        f = open('lat_conf_table.txt', 'r')
-        lines = f.readlines()
-        channels = []
-        for line in lines:
-            if not (line.startswith('#') or line.startswith('!') or not line.strip()):
-                results = line.split()
-                if len(results) < 7:
-                    # input file format problem
-                    raise
-                
-                if results[1] != 'NULL':
-                    channels.append(Channel((u'%s' %results[1]), 'vioc', properties=buildProps(results, results[1], 'readback')))
-                    #name = u'%s' % result[1]
-                    #channels.append(Channel(name, 'vioc', properties=buildProps(results, results[1], 'readback')))
-                    #client.set(channel = Channel((u'%s' %results[1]), 'vioc', properties=buildProps(results, results[1], 'readback')))
-                if results[2] != 'NULL':
-                    channels.append(Channel((u'%s' %results[2]), 'vioc', properties=buildProps(results, results[2], 'setpoint')))
-                    #name = u'%s' % result[2]
-                    #channels.append(Channel(name, 'vioc', properties=buildProps(results, results[2], 'readback')))
-                    #client.set(channel = Channel((u'%s' %results[2]), 'vioc', properties=buildProps(results, results[2], 'setpoint')))
-        beg = time.time()
-        client.set(channels=channels)
-        end = time.time()
-        print ('%.6f' % (end-beg))
-    finally:
-        f.close()
-    
-#    channels = client.getAllChannels()
-    channels = client.find(name='SR*')
-    print len(channels)
-#    beg = time.time()
-    for channel in channels:
-        print channel.Name
-#        client.remove(channelName=(u'%s' % channel.Name))
-    end = time.time()
-#    print ('%.6f' % (end-beg))

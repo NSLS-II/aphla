@@ -28,3 +28,9 @@ mysqladmin create hla --user root -p
 mysql -u root -p
 mysql> GRANT ALL ON hla.* TO hla@localhost IDENTIFIED BY 'hlabnl'
 
+
+
+WARNING
+========
+
+SM2HG4C29B is not unique, starts at different s location, 4 associated PVs.
