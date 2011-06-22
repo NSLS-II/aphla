@@ -167,7 +167,16 @@ def getElements(group):
     """
     return list of elements.
 
-    *group* is an exact name of element or group, or a pattern
+    *group* is an exact name of element or group, or a pattern.
+
+    ::
+
+      >>> getElements('FH2G1C30A')
+      >>> getElements('BPM')
+      >>> getElements('F*G1C0*')
+      >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
+
+    .. seealso:: :func:`~hla.lattice.Lattice.getElements`
     """
 
     return machines._lat.getElements(group)
@@ -200,6 +209,10 @@ def addGroup(group):
     """
     add a new group, *group* should be plain string, characters in
     \[a-zA-Z0-9\_\]
+
+    raise *ValueError* if *group* is an illegal name.
+
+    .. seealso:: :func:`~hla.lattice.Lattice.addGroup`
     """
     return _lat.addGroup(group)
 
@@ -253,8 +266,9 @@ def getNeighbors(element, group, n = 3):
         
         :class:`~hla.lattice.Lattice`
         :meth:`~hla.lattice.Lattice.getNeighbors` For getting list of
-        neighbors. :py:func:`hla.lattice.Lattice.getNeighbors`
+        neighbors. 
     """
+
     return machines._lat.getNeighbors(element, group, n)
 
 

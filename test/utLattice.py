@@ -17,9 +17,9 @@ class TestLattice(unittest.TestCase):
         #self.lat = lattice.createLatticeFromTxtTable(LATCONF)
         #machines.initNSLS2VSR()
         machines.initNSLS2VSR()
-        self.cfslat_cf  = machines.use('sr')
+        self.cfslat_cf  = machines.getLattice('sr')
         machines.initNSLS2VSRTxt()
-        self.cfslat_txt = machines.use('sr-txt')
+        self.cfslat_txt = machines.getLattice('sr-txt')
         
 
     def test_getelements(self):
@@ -95,6 +95,19 @@ class TestLattice(unittest.TestCase):
         self.assertTrue(cur1a.sb == 0.0)
         self.assertTrue(cur1a.value > 0.0)
         self.assertTrue(cur1b.value > 0.0)
+
+    def test_groups(self):
+        grp = 'HLATEST'
+        self.assertFalse(self.cfslat_cf.hasGroup(grp))
+        self.assertFalse(self.cfslat_txt.hasGroup(grp))
+        self.cfslat_cf.addGroup(grp)
+        self.assertTrue(self.cfslat_cf.hasGroup(grp))
+        try:
+            self.cfslat_cf.addGroupMember(grp, 'A')
+        except ValueError as e:
+            pass
+        self.cfslat_cf.removeGroup(grp)
+        self.assertFalse(self.cfslat_cf.hasGroup(grp))
 
     def test_groupmembers(self):
         bpm1 = self.cfslat_cf.getElements('BPM')

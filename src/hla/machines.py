@@ -85,12 +85,14 @@ def createLatticeFromCf(cfsurl, **kwargs):
         # update element with new
         tags = c.getTags()
         elem.updateCfsTags(pv, tags)
-        if 'aphla.eget' in tags:
-            elem.appendEget((caget, pv, prpt['handle']))
-        if 'aphla.eput' in tags:
-            elem.appendEput((caput, pv, prpt['handle']))
-        if not 'aphla.eput' in tags and not 'aphla.eget' in tags:
-            elem.appendStatusPv((caget, pv, prpt['handle']))
+        if HLA_TAG_EGET in tags:
+            elem.appendEget((caget, pv, "%s %s" % \
+                                 (prpt['handle'], HLA_TAG_EGET)))
+        if HLA_TAG_EPUT in tags:
+            elem.appendEput((caput, pv, "%s %s" % \
+                                 (prpt['handle'], HLA_TAG_EPUT)))
+        #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
+        elem.appendStatusPv((caget, pv, prpt['handle']))
         #print name, ""
 
     # group info is a redundant info, needs rebuild based on each element
@@ -112,8 +114,6 @@ def createLatticeFromCf(cfsurl, **kwargs):
 def initNSLS2VSR():
     # are we using virtual ac
     VIRTAC = True
-    os.environ['EPICS_CA_ADDR_LIST'] = 'virtac.nsls2.bnl.gov'
-    os.environ['EPICS_cA_MAX_ARRAY_BYTES'] = '100000'
 
     INF = 1e30
     ORBIT_WAIT=8
@@ -195,13 +195,14 @@ def createLatticeFromTxt(f, **kwargs):
             elem.updateCfsProperties(pv, prpt)
         # update element with new
         elem.updateCfsTags(pv, tags)
-        if 'aphla.eget' in tags:
-            #print pv, tags
-            elem.appendEget((caget, pv, prpt['handle']))
-        if 'aphla.eput' in tags:
-            elem.appendEput((caput, pv, prpt['handle']))
-        if not 'aphla.eput' in tags and not 'hla.eget' in tags:
-            elem.appendStatusPv((caget, pv, prpt['handle']))
+        if HLA_TAG_EGET in tags:
+            elem.appendEget((caget, pv, "%s %s" % \
+                                 (prpt['handle'], HLA_TAG_EGET)))
+        if HLA_TAG_EPUT in tags:
+            elem.appendEput((caput, pv, "%s %s" % \
+                                 (prpt['handle'], HLA_TAG_EPUT)))
+        #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
+        elem.appendStatusPv((caget, pv, prpt['handle']))
         #print name, ""
 
     # group info is a redundant info, needs rebuild based on each element
@@ -216,8 +217,6 @@ def createLatticeFromTxt(f, **kwargs):
 def initNSLS2VSRTxt(data = ''):
     # are we using virtual ac
     VIRTAC = True
-    os.environ['EPICS_CA_ADDR_LIST'] = 'virtac.nsls2.bnl.gov'
-    os.environ['EPICS_cA_MAX_ARRAY_BYTES'] = '100000'
 
     global HLA_TAG_EGET, HLA_TAG_EPUT
     HLA_TAG_EGET='aphla.eget'
@@ -318,7 +317,9 @@ def use(lattice):
         _lat = _lattice_dict[lattice]
     else:
         raise ValueError("no lattice %s was defined" % lattice)
-    return _lat
+
+def getLattice(lat):
+    return _lattice_dict.get(lat, None)
 
 def lattices():
     """
