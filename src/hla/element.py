@@ -158,6 +158,7 @@ class Element(AbstractElement):
         self._status   = kwargs.get('pvs', [])
         self._eget_val = kwargs.get('eget', [])
         self._eput_val = kwargs.get('eput', [])
+        self.pvtags = {}
         self.homogeneous = True
         
     def hasPv(self, pv):
@@ -243,4 +244,10 @@ class Element(AbstractElement):
     
     def updateCfsTags(self, pv, tags):
         AbstractElement.updateCfsTags(self, tags)
+        if not pv in self.pvtags.keys():
+            self.pvtags[pv] = []
+        for t in tags:
+            if t in self.pvtags[pv]: continue
+            self.pvtags[pv].append(t)
+
         

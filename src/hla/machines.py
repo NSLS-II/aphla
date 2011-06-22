@@ -135,11 +135,25 @@ def initNSLS2VSR():
         cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
     _lattice_dict['ltb'].mode = 'channelfinder-ltb'
     #_lat = _lattice_dict['ltb']
+    # create BPMX
+    bpmx = Element(**{'name':'HLA:BPMX'})
+    bpmx.sb = []
+    for e in _lattice_dict['ltb'].getElements('BPM'):
+        for pv,t in e.pvtags.items():
+            if 'aphla.x' in t:
+                bpmx.appendEget((caget, pv, e.name))
+                bpmx.sb.append(e.sb)
+    _lattice_dict['ltb'].appendElement(bpmx)
+
+    bpmy = Element(**{'name':'HLA:BPMY'})
+    bpmy.sb = []
+
     _lattice_dict['sr'] = createLatticeFromCf(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
     _lattice_dict['sr'].mode = 'channelfinder-sr'
     _lat = _lattice_dict['sr']
 
+    
     # self diagnostics
     # check dipole numbers
     bend = _lat.getElements(u'B1G3C14A')

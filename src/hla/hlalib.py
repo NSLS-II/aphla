@@ -430,8 +430,10 @@ def getFullOrbit(group = '*', sequence = None):
         ret.append([s[i], x[i], y[i]])
     return ret
 
-def getOrbit(group = '*', spos=False):
-    """Return orbit"""
+def getOrbit(pat = '*', spos=False):
+    """
+    Return orbit
+    """
     if isinstance(group, str):
         #print __file__, "group = ", group
         elemx = _lat.getGroupMembers([group, 'BPMX'], op = 'intersection')
