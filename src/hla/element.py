@@ -5,6 +5,8 @@ Element
 :date: 2011-05-13 10:28
 """
 
+import os
+
 class AbstractElement(object):
     """
     AbstractElement
@@ -153,6 +155,8 @@ class Element(AbstractElement):
 
         An element is homogeneous means, it use same get/put function on a
         list of variables to speed up.
+
+        HLA_DEBUG is used for enabling debug.
         """
         AbstractElement.__init__(self, **kwargs)
         self._status   = kwargs.get('pvs', [])
@@ -160,7 +164,19 @@ class Element(AbstractElement):
         self._eput_val = kwargs.get('eput', [])
         self.pvtags = {}
         self.homogeneous = True
+        self.debug = 0
+        if os.environ.has_key('HLA_DEBUG') and os.environ['HLA_DEBUG']:
+            self.debug = int(os.environ['HLA_DEBUG'])
         
+    def pv(self, tag='eget'):
+        if tag == 'eget' and self._eget_val:
+            return [p[1] for p in self._eget_val]
+        elif tag == 'eput' and self._eput_val:
+            return [p[1] for p in self._eput_val]
+        elif tag == 'status' and self._status:
+            return [p[1] for p in self._status]
+        else: return []
+
     def hasPv(self, pv):
         for p in self._status:
             if p[1] == pv: return True
@@ -206,26 +222,36 @@ class Element(AbstractElement):
 
     @value.setter
     def value(self, v):
-        if not self._eput_val: return None
+        if not self._eput_val:
+            if self.debug:
+                print "# %s empty eput_pv" % self.name
+            return None
         if not self.homogeneous:
             ret = []
             for f, x, desc in self._eput_val:
-                if f and x: ret.append(f(x, v))
+                if f and x:
+                    print "# setting %s %f" % (x, v)
+                    ret.append(f(x, v))
             return ret
         else:
             # speed up using pv list when calling caget/caput
-            pvs = [x for f,x,desc in self._eget_val]
-            return self._eget_val[0][0](pvs)
+            if self.debug:
+                print "# group setting %s" % self.name, self._eput_val
+            pvs = [x for f,x,desc in self._eput_val]
+            return self._eput_val[0][0](pvs, v)
         
     @property
     def status(self):
         ret = self.name
         if self.homogeneous:
-            pvs = [x for f, x, desc in self._eget_val]
-            descs = [desc for f, x, desc in self._eget_val]
-            for f,x,desc in self._status:
-                pvs.append(x)
-                descs.append(desc)
+            pvs, descs = [], []
+            pvs.extend([x for f, x, desc in self._eget_val])
+            descs.extend([desc for f, x, desc in self._eget_val])
+            pvs.extend([x for f, x, desc in self._eput_val])
+            descs.extend([desc for f, x, desc in self._eput_val])
+            pvs.extend([x for f, x, desc in self._status])
+            descs.extend([desc for f, x, desc in self._status])
+
             if self._eget_val: f = self._eget_val[0][0]
             elif self._status: f = self._status[0][0]
             else: f = None
@@ -234,7 +260,9 @@ class Element(AbstractElement):
                 ret += "\n  %s (%s): %s" % (descs[i], pvs[i], val[i])
         else:
             for f, x, desc in self._eget_val:
-                ret += "\n  %s (%s): %s" % (desc, x, f(x))
+                ret += "\n  eget: %s (%s): %s" % (desc, x, f(x))
+            for f, x, desc in self._eput_val:
+                ret += "\n  eput: %s (%s): %s" % (desc, x, f(x))
             for f, x, desc in self._status:
                 ret += "\n  %s (%s): %s" % (desc, x, f(x))
         return ret
@@ -245,9 +273,15 @@ class Element(AbstractElement):
     def updateCfsTags(self, pv, tags):
         AbstractElement.updateCfsTags(self, tags)
         if not pv in self.pvtags.keys():
-            self.pvtags[pv] = []
-        for t in tags:
-            if t in self.pvtags[pv]: continue
-            self.pvtags[pv].append(t)
+            self.pvtags[pv] = set([])
+        self.pvtags[pv].update(tags)
 
-        
+    def getValues(self, tags = []):
+        tagset = set(tags)
+        ret = []
+        for f,x,desc in self._status:
+            if not self.pvtags[x].issuperset(tagset): continue
+            ret.append(f(x))
+        if len(ret) == 0: return None
+        elif len(ret) == 1: return ret[0]
+        else: return ret

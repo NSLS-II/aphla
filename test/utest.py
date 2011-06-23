@@ -3,6 +3,9 @@ import unittest
 
 from conf import *
 
+import hla
+print "= HLA used:", hla.__path__
+
 #import utChanFinder
 import utLattice
 import utTwiss

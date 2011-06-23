@@ -19,12 +19,14 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
     """
     channel access read, a simple wrap of cothread.catools, support UTF8 string
 
-    Example::
+    ::
 
       >>> caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
       >>> caget(['SR:C01-MG:G04B{HCor:M1}Fld-I', 'SR:C01-MG:G04B{VCor:M1}Fld-I'])
 
     Throw cothread.Timedout exception when timeout.
+
+    see original cothread.catools.caget for details
     """
     if isinstance(pvs, str):
         pvs2 = pvs
@@ -48,12 +50,14 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
     """
     channel access write, wrap to support UTF8 string
 
-    Example::
+    ::
 
       caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
       caput(['SR:C01-MG:G04B{HCor:M1}Fld-I', 'SR:C01-MG:G04B{VCor:M1}Fld-I'], [0.1, 0.2])
 
     Throw cothread.Timedout exception when timeout.
+    
+    see original cothread.catools.caput for details
     """
     if isinstance(pvs, str):
         pvs2 = pvs
@@ -79,7 +83,8 @@ def caputwait(pv, value, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
     - *diffstd* return if the std of pvmonitors chenges:  std(after-before),
       exceed this number.
 
-    It is good to use for ORM measurement. Set a trim observing a list of BPM.
+    It is good for ORM measurement where setting a trim and observing a
+    list of BPM.
     """
     v0 = np.array(caget(pvmonitors))
     ntrial = 0
@@ -93,6 +98,3 @@ def caputwait(pv, value, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
         elif ntrial > maxtrial:
             return False
 
-
-#caget.__doc__ = caget.__doc__ + ct.caget.__doc__
-#caput.__doc__ = caput.__doc__ + ct.caput.__doc__

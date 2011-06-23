@@ -11,38 +11,17 @@ Defines the procedural interface of HLA to the users.
 """
 
 import numpy as np
-
+from fnmatch import fnmatch
 from catools import caget, caput
 import machines
 
+
 def getCurrent():
-    """Get the current from channel"""
+    """
+    Get the current from element with a name 'DCCT'
+    """
     _current = machines._lat.getElements('DCCT')
     return _current.value
-
-
-def getRbChannels(elemlist):
-    """
-    get the pv names for a list of elements
-    
-    .. warning::
-
-      elements like BPM will return both H/V channels. In case we want
-      unique, use channelfinder class.
-
-    .. seealso::
-
-      :meth:`~hla.chanfinder.ChannelFinderAgent.getElementChannels`
-    """
-    pvs = [None] * len(elemlist)
-    #for elem in _lat.
-    return pvs
-
-def getSpChannels(elemlist, tags = []):
-    """get the pv names for a list of elements"""
-    t = [TAG_DEFAULT_PUT]
-    t.extend(tags)
-    return _cfa.getElementChannels(elemlist, None, tags = set(t))
 
 #
 #
@@ -167,7 +146,16 @@ def getElements(group):
     """
     return list of elements.
 
-    *group* is an exact name of element or group, or a pattern
+    *group* is an exact name of element or group, or a pattern.
+
+    ::
+
+      >>> getElements('FH2G1C30A')
+      >>> getElements('BPM')
+      >>> getElements('F*G1C0*')
+      >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
+
+    .. seealso:: :func:`~hla.lattice.Lattice.getElements`
     """
 
     return machines._lat.getElements(group)
@@ -200,6 +188,10 @@ def addGroup(group):
     """
     add a new group, *group* should be plain string, characters in
     \[a-zA-Z0-9\_\]
+
+    raise *ValueError* if *group* is an illegal name.
+
+    .. seealso:: :func:`~hla.lattice.Lattice.addGroup`
     """
     return _lat.addGroup(group)
 
@@ -253,8 +245,9 @@ def getNeighbors(element, group, n = 3):
         
         :class:`~hla.lattice.Lattice`
         :meth:`~hla.lattice.Lattice.getNeighbors` For getting list of
-        neighbors. :py:func:`hla.lattice.Lattice.getNeighbors`
+        neighbors. 
     """
+
     return machines._lat.getNeighbors(element, group, n)
 
 
@@ -420,6 +413,12 @@ def saveMode(self, mode, dest):
     raise NotImplementedError("Not implemented yet")
     pass
 
+def getBpms():
+    """
+    return a list of bpms object.
+    """
+    return machines._lat.getGroupMembers('BPM', op='union')
+
 def getFullOrbit(group = '*', sequence = None):
     """Return orbit"""
     x = caget("SR:C00-Glb:G00{ORBIT:00}RB-X")
@@ -430,35 +429,55 @@ def getFullOrbit(group = '*', sequence = None):
         ret.append([s[i], x[i], y[i]])
     return ret
 
-def getOrbit(pat = '*', spos=False):
+def getOrbit(pat = '', spos = False):
     """
-    Return orbit
+    Return orbit::
+
+      >>> getOrbit()
+      >>> getOrbit('*')
+      >>> getOrbit('*', spos=True)
+      >>> getOrbit(['PL1G6C24B', 'PH2G6C25B'])
+
+    If *pat* is not provided, use the group read of every BPMs, this is
+    faster than read BPM one by one with getOrbit('*').
+
+    The return value is a (n,4) or (n,2) 2D array, where n is the number
+    of matched BPMs. The first two columns are x/y orbit, the last two
+    columns are s location for x and y BPMs.
+
+    When the element is not found or not a BPM, return NaN in its positon.
+
+    .. warning::
+
+      This depends on channel finder using 'aphla.x', 'aphla.y', 'aphla.eget' tags.
+
     """
-    if isinstance(group, str):
-        #print __file__, "group = ", group
-        elemx = _lat.getGroupMembers([group, 'BPMX'], op = 'intersection')
-        elemy = _lat.getGroupMembers([group, 'BPMY'], op = 'intersection')
-    elif isinstance(group, list):
-        elemx = group[:]
-        elemy = group[:]
+    if not pat:
+        bpmx = machines._lat.getElements(machines.HLA_VBPMX)
+        bpmy = machines._lat.getElements(machines.HLA_VBPMY)
+        n = max([len(bpmx.sb), len(bpmy.sb)])
+        if spos:
+            ret = np.zeros((n, 4), 'd')
+            ret[:,2] = bpmx.sb
+            ret[:,3] = bpmy.sb
+        else:
+            ret = np.zeros((n,2), 'd')
+        ret[:,0] = bpmx.value
+        ret[:,1] = bpmy.value
+        return ret
+    # need match the element name
+    if isinstance(pat, (unicode,str)):
+        elem = [e for e in getBpms() if fnmatch(e.name, pat)]
+        x = [(e.getValues(tags=['aphla.eget', 'aphla.x']), e.getValues(tags=['aphla.y', 'aphla.eget']), e.sb) for e in elem]
+        return np.array(x, 'd')
+    elif isinstance(pat, (list,)):
+        elem = machines._lat.getElements(pat)
+        ret = []
+        for e in elem:
+            if not e or e.family != 'BPM': ret.append([None, None, None])
+            else: ret.append([e.getValues(tags=['aphla.eget', 'aphla.x']), e.getValues(tags=['aphla.eget', 'aphla.y']), e.sb])
+        return np.array(ret, 'd')
 
-    orbx, pvx = eget(elemx, full=True, tags=['X'])
-    orby, pvy = eget(elemy, full=True, tags=['Y'])
-    #print __file__, len(elemx), len(elemy), len(orbx), len(orby)
-    #print __file__, orbx[0], elemx[0], pvx[0], caget(pvx[0][0])
-    #print __file__, orbx, orby
-
-    if spos:
-        ret = np.zeros((len(orbx), 3), 'd')
-        ret[:, 0] = _lat.getLocations(elemx, 'e')
-        ret[:, 1] = orbx
-        ret[:, 2] = orby
-    else:
-        ret = np.zeros((len(orbx), 2), 'd')
-        ret[:, 0] = orbx
-        ret[:, 1] = orby
-
-    return ret
 
 
 

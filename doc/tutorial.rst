@@ -59,6 +59,7 @@ take Debian/Ubuntu Linux as an example to show how to install them.
 
   $ sudo apt-get install mercurial pyqt4-dev-tools
   $ sudo apt-get install python-qt4 python-qt4-dev
+  $ sudo apt-get install python-docutils
 
 By using BNL Debian/Ubuntu repository from Controls group, we can install some
 EPICS tools easily:
@@ -70,15 +71,13 @@ EPICS tools easily:
 
 ::
 
-  $ apt-get install python-cothread epics-catools
+  $ sudo apt-get install python-cothread epics-catools
 
-Set environment for channel access, append to ~/.bashrc::
+Set environment for channel access and HLA. Append the following to
+~/.bashrc::
 
   export EPICS_CA_MAX_ARRAY_BYTES=500000
-  export EPICS_CA_ADDR_LIST=virtac.nsls2.bnl.gov
-  export HLA_DATA_DIRS=/home/lyyang/devel/nsls2-hla
-  export HLA_MACHINE=nsls2
-  export HLA_CFS_URL=http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder
+  export EPICS_CA_ADDR_LIST="virtac.nsls2.bnl.gov vioc01.nsls2.bnl.gov"
 
 Try to see if virtual accelerator is accessible::
 
@@ -88,9 +87,9 @@ You should see the beam current of virtual accelerator. Then see if it changes::
 
   $ camonitor 'SR:C00-BI:G00{DCCT:00}CUR-RB'
 
-Then install the hla package::
+Download the *hla-v0.1.0a1.egg* file, then install::
 
-  $ python setup.py install --home=~
+  $ sudo easy_install hla-v0.1.0a1.egg
 
 
 Code Repository
@@ -137,20 +136,24 @@ If it has been a long time after you checkout the code from the server, you can
 Examples
 --------------
 
-First import some modules, including HLA and plotting routines
+Before using HLA, we need some environment variables, like EPICS, put the
+following in to ~/.bashrc::
+
+  export HLA_DATA_DIRS=/home/lyyang/devel/nsls2-hla
+  export HLA_MACHINE=nsls2
+  export HLA_CFS_URL=http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder
+
+I am using **HLA_DATA_DIRS** as place to store data, the machine name
+working on is *nsls2* and the channel finder service URL is at
+**HLA_CFS_URL**.
+
+Import some modules, including HLA and plotting routines
 
 .. note::
 
    The text after '#' are comments for that line
 
-.. docsetup:: *
-
-   >>> import os
-   >>> os.environ['HLA_DATA_DIRS'] = '/home/lyyang/deve/nsls2-hla'
-   >>> os.environ['HLA_CFS_URL'] = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
-   >>> os.environ['HLA_CFS_URL'] = 'http://web01.nsls2.bnl.gov:8080/ChannelFinder'
-   >>> os.environ['HLA_MACHINE'] = 'nsls2'
-   >>> os.environ['HLA_DEBUG'] = '2'
+Import modules:
 
 .. doctest::
 
@@ -159,9 +162,10 @@ First import some modules, including HLA and plotting routines
    >>> import matplotlib.pylab as plt
    >>> import time
 
+Initialize the NSLS2 Virtual Storage Ring lattice and twiss:
+
 .. doctest::
 
-   >>> print hla.machines.HLA_CFS_URL
    >>> hla.initNSLS2VSR()
    >>> hla.initNSLS2VSRTwiss()
 
@@ -179,7 +183,7 @@ Then is the examples:
 
 Each element has a set of properties associated:
 
-- *family* (element type). e.g. 'QUAD', 'BPMX'
+- *family* (element type). e.g. 'QUAD', 'BPM'
 - *cell*. The DBA cell it belongs. e.g. 'C02', 'C30'
 - *girder*, girder name where it sits. e.g. 'G2', 'G1'
 - *symmetry*, 'A' or 'B' symmetry
@@ -236,12 +240,30 @@ take *union* or *intersection* of them.
      READBACK (SR:C05-BI:G04A{BPM:M1}BBA:X): 0.0
      READBACK (SR:C05-BI:G04A{BPM:M1}BBA:Y): 0.0
 
-
+   >>> for e in el: print e.name, e.pv('eget'), e.value #doctest: +SKIP
+   SQMG4C05A [u'SR:C05-MG:G04A{SQuad:M1}Fld-I'] 0.0
+   QM2G4C05B [u'SR:C05-MG:G04B{Quad:M2}Fld-I'] 1.22232651254
+   CXH2G6C05B [u'SR:C05-MG:G06B{HCor:H2}Fld-I'] 0.0
+   PM1G4C05A [u'SR:C05-BI:G04A{BPM:M1}SA:X-I', u'SR:C05-BI:G04A{BPM:M1}SA:Y-I'] [0.00024599597546417758, 5.0644899005954578e-05]
    
-Plotting the orbit
+It is easy to read/write the default value of an element:
 
 .. doctest::
 
+   >>> e = hla.getElements('CXH2G2C30A')
+   >>> print e.status
+   CXH2G2C30A
+     READBACK (SR:C30-MG:G02A{HCor:H2}Fld-I): 0.0
+   >>> print e.value #doctest: +SKIP
+   0.0
+   >>> e.value = 1e-7 #doctest: +SKIP
+   >>> e.value
+   9.998240253299763e-08
+
+Plotting the orbit
+ 
+.. doctest::
+ 
    >>> sobt = hla.getOrbit(spos = True)
    >>> plt.clf()
    >>> plt.plot(sobt[:,0], sobt[:,1], '-x', label='X') #doctest: +ELLIPSIS
@@ -295,7 +317,7 @@ Correct the orbit and plot the orbits before/after the correction:
 .. doctest::
 
    >>> s = hla.getLocations('P*')
-   >>> bpm = hla.getElements('P*C1[0-9]*')
+   >>> bpm = hla.getElements('P*C1[09]*')
    >>> trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
    >>> v0 = hla.getOrbit()
    >>> hla.correctOrbit(bpm, trim)
@@ -315,10 +337,6 @@ Correct the orbit and plot the orbits before/after the correction:
 .. doctest::
 
    >>> hla.getChromaticity() #doctest:+SKIP
-
-.. sourcecode:: ipython
-
-    In [69]: lines = plot([1,2,3])
 
 .. math::
 

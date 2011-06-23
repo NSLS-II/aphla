@@ -3,7 +3,6 @@
 import unittest
 import sys, os
 import numpy as np
-import matplotlib.pylab as plt
 
 from conf import *
 import machines
@@ -17,10 +16,13 @@ class TestLattice(unittest.TestCase):
         #self.lat = lattice.createLatticeFromTxtTable(LATCONF)
         #machines.initNSLS2VSR()
         machines.initNSLS2VSR()
-        self.cfslat_cf  = machines.use('sr')
+        self.cfslat_cf  = machines.getLattice('sr')
         machines.initNSLS2VSRTxt()
-        self.cfslat_txt = machines.use('sr-txt')
-        
+        self.cfslat_txt = machines.getLattice('sr-txt')
+
+    def test_virtualelements(self):
+        elem = self.cfslat_cf.getElements('HLA:*')
+        self.assertTrue(elem)
 
     def test_getelements(self):
 
@@ -43,7 +45,7 @@ class TestLattice(unittest.TestCase):
     def test_locations(self):
         elem1 = self.cfslat_cf.getElements('*')
         elem2 = self.cfslat_txt.getElements('*')
-        self.assertTrue(len(elem1) == len(elem2))
+        self.assertTrue(len(elem1) == len(elem2), '%d != %d' % (len(elem1), len(elem2)))
         for i in range(len(elem1)):
             if elem1[i].name.startswith('HLA'): continue
             if elem2[i].name.startswith('HLA'): continue
@@ -95,6 +97,19 @@ class TestLattice(unittest.TestCase):
         self.assertTrue(cur1a.sb == 0.0)
         self.assertTrue(cur1a.value > 0.0)
         self.assertTrue(cur1b.value > 0.0)
+
+    def test_groups(self):
+        grp = 'HLATEST'
+        self.assertFalse(self.cfslat_cf.hasGroup(grp))
+        self.assertFalse(self.cfslat_txt.hasGroup(grp))
+        self.cfslat_cf.addGroup(grp)
+        self.assertTrue(self.cfslat_cf.hasGroup(grp))
+        try:
+            self.cfslat_cf.addGroupMember(grp, 'A')
+        except ValueError as e:
+            pass
+        self.cfslat_cf.removeGroup(grp)
+        self.assertFalse(self.cfslat_cf.hasGroup(grp))
 
     def test_groupmembers(self):
         bpm1 = self.cfslat_cf.getElements('BPM')

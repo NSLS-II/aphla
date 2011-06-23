@@ -210,7 +210,7 @@ class Lattice:
           If there are duplicate elements in *elems*, only first
           appearance has location returned.
 
-          >>> getLocations(['BPM1', 'BPM1', 'BPM1'])
+          >>> getLocations(['BPM1', 'BPM1', 'BPM1']) #doctest: +SKIP
           [0.1, None, None]
 
         """
@@ -256,6 +256,22 @@ class Lattice:
     def getElements(self, group):
         """
         get elements.
+
+        ::
+
+          >>> getElements('BPM')
+          >>> getElements('PL*')
+          >>> getElements('C02')
+          >>> getElements(['BPM'])
+          [None]
+
+        The input *group* is an element name, a pattern or group name. It
+        is treated as an exact name first, and compared with element
+        nmame, then group name. If no elements matched, it will treat
+        input as a pattern and match with the element name.
+
+        When the input *group* is a list, each string in this list will be
+        treated as exact string instead of pattern.
         """
 
         if isinstance(group, str) or isinstance(group, unicode):
@@ -387,7 +403,8 @@ class Lattice:
 
     def buildGroups(self):
         """
-        clear the old groups, fill with new data
+        clear the old groups, fill with new data by collecting group name
+        that each element belongs to.
         """
         # cleanr everything
         self._group = {}
@@ -400,16 +417,23 @@ class Lattice:
         
     def addGroup(self, group):
         """
-        call signature::
+        create a new group
+
+        ::
         
-          addGroup(group)
+          >>> addGroup(group)
           
-        *group* is a combination of alphabetic and numeric characters and
-         underscores. i.e. "[a-zA-Z0-9\_]" 
+        Input *group* is a combination of alphabetic and numeric
+        characters and underscores. i.e. "[a-zA-Z0-9\_]"
+
+        raise ValueError if the name is illegal or the group already exists.
         """
-        if self._illegalGroupName(group): return
+        if self._illegalGroupName(group):
+            raise ValueError('illegal group name %s' % group)
         if not self._group.has_key(group):
             self._group[group] = []
+        else:
+            raise ValueError('group %s exists' % group)
 
     def removeGroup(self, group):
         """
@@ -468,17 +492,20 @@ class Lattice:
         else:
             raise ValueError("%s not in group %s" % (member, group))
 
-    def getGroups(self, element):
+    def getGroups(self, element = ''):
         """
         return a list of groups this element belongs to
 
         ::
 
-          getGroups('*')
-          getGroups('Q?')
-
+          >>> getGroups() # list all groups, including the empty groups
+          >>> getGroups('*') # all groups, not including empty ones
+          >>> getGroups('Q?')
+          
         The input string is wildcard matched against each element.
         """
+        if not element: return self._group.keys()
+
         ret = []
         for k, elems in self._group.items():
             for e in elems:
@@ -495,12 +522,20 @@ class Lattice:
 
         - group in *groups* can be exact name or pattern.
         - op = ['union' | 'intersection']
+
+        ::
+        
+          >>> getGroupMembers(['C02'], op = 'union')
         """
         if groups == None: return None
         ret = {}
         cell = kwargs.get('cell', '*')
         girder = kwargs.get('girder', '*')
         symmetry = kwargs.get('symmetry', '*')
+
+        if groups in self._group.keys():
+            return self._group[groups]
+
         #print __file__, groups
         for g in groups:
             ret[g] = []
