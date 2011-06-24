@@ -21,6 +21,9 @@ _twiss = None
 #
 HLA_TAG_EGET = 'aphla.eget'
 HLA_TAG_EPUT = 'aphla.eput'
+HLA_TAG_X    = 'aphla.x'
+HLA_TAG_Y    = 'aphla.y'
+
 #
 HLA_VFAMILY = 'HLA:VFAMILY'
 HLA_VBPMX  = 'HLA:BPMX'
@@ -153,6 +156,7 @@ def initNSLS2VSR():
             if 'aphla.y' in t:
                 bpmy.appendEget((caget, pv, e.name))
                 bpmy.sb.append(e.sb)
+    bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['ltb'].appendElement(bpmx)
     _lattice_dict['ltb'].appendElement(bpmy)
 
@@ -171,6 +175,7 @@ def initNSLS2VSR():
             if 'aphla.y' in t and HLA_TAG_EGET in t:
                 bpmy.appendEget((caget, pv, e.name))
                 bpmy.sb.append(e.sb)
+    bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['sr'].appendElement(bpmx)
     _lattice_dict['sr'].appendElement(bpmy)
     
@@ -285,6 +290,7 @@ def initNSLS2VSRTxt(data = ''):
             if 'aphla.y' in t and HLA_TAG_EGET in t:
                 bpmy.appendEget((caget, pv, e.name))
                 bpmy.sb.append(e.sb)
+    bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['ltb-txt'].appendElement(bpmx)
     _lattice_dict['ltb-txt'].appendElement(bpmy)
 
@@ -303,6 +309,7 @@ def initNSLS2VSRTxt(data = ''):
             if 'aphla.y' in t and HLA_TAG_EGET in t:
                 bpmy.appendEget((caget, pv, e.name))
                 bpmy.sb.append(e.sb)
+    bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['sr-txt'].appendElement(bpmx)
     _lattice_dict['sr-txt'].appendElement(bpmy)
 
@@ -365,12 +372,15 @@ def initNSLS2VSRTwiss():
             #print "Overlap:\n  ",
             #for e in elem: print e.name, 
             #print ""
-            _twiss._elements.append(elem[0].name)
+            for e in elem:
+                if e in elem: continue
+                _twiss._elements.append(e.name)
+                _twiss.append(tw)
         else:
             #print "Found ", s[i], elem.name
             _twiss._elements.append(elem.name)
+            _twiss.append(tw)
         #print _twiss[-1]
-        _twiss.append(tw)
 
 def use(lattice):
     """

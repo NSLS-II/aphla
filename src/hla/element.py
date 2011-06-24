@@ -165,6 +165,7 @@ class Element(AbstractElement):
         self.pvtags = {}
         self.homogeneous = True
         self.debug = 0
+        self.virtual = 0
         if os.environ.has_key('HLA_DEBUG') and os.environ['HLA_DEBUG']:
             self.debug = int(os.environ['HLA_DEBUG'])
         

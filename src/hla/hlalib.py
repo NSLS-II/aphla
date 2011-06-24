@@ -160,7 +160,7 @@ def getElements(group):
 
     return machines._lat.getElements(group)
 
-def getLocations(elements):
+def getLocations(group):
     """
     Get the location of an element or a list of elements
 
@@ -179,10 +179,10 @@ def getLocations(elements):
       s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
     """
     
-    if isinstance(elements, list) and isinstance(elements[0], str):
-        return machines._lat.getLocations(elements)
-    elif isinstance(elements, list):
-        return [x.s for x in elements]
+    elem = getElements(group)
+    if isinstance(elem, list):
+        return [e.sb for e in elem]
+    else: return elem.sb
 
 def addGroup(group):
     """
@@ -259,26 +259,28 @@ def getStepSize(element):
 #
 #
 #
-def getPhase(group, loc = 'e'):
+def getPhase(group, **kwargs):
     """
     get the phase from stored data
     """
- 
-    if isinstance(group, list):
-        return _lat.getPhase(group)
-    elif isinstance(group, str):
-        elem = getElements(group)
-        return _lat.getPhase(elemlst = elem)
-    else:
-        return None
-
+    if not machines._twiss: return None
+    elem = getElements(group)
+    col = ('phi',)
+    if kwargs.get('spos', False): col = ('phi', 's')
+    
+    return machines._twiss.getTwiss([e.name for e in elem], col=col, **kwargs)
 #
 #
-def getBeta(group, loc = 'e'):
+def getBeta(group, **kwargs):
     """
     get the beta function from stored data
     """
-    return _lat.getBeta(group, loc)
+    if not machines._twiss: return None
+    elem = getElements(group)
+    col = ('beta',)
+    if kwargs.get('spos', False): col = ('beta', 's')
+    
+    return machines._twiss.getTwiss([e.name for e in elem], col=col, **kwargs)
 
 def getDispersion(group, **kwargs):
     """
@@ -295,13 +297,12 @@ def getEta(group, **kwargs):
     .. seealso:: :func:`~hla.lattice.Lattice.getEta`
     """
 
-    if isinstance(group, list):
-        return _lat.getEta(group)
-    elif isinstance(group, str):
-        elem = getElements(group)
-        return _lat.getEta(elem)
-    else:
-        return None
+    if not machines._twiss: return None
+    elem = getElements(group)
+    col = ('eta',)
+    if kwargs.get('spos', False): col = ('eta', 's')
+    
+    return machines._twiss.getTwiss([e.name for e in elem], col=col, **kwargs)
 
 def getChromaticity(source='machine'):
     """
