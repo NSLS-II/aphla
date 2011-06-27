@@ -15,8 +15,12 @@ import utTwiss
 
 loader = unittest.TestLoader()
 
-suite = loader.loadTestsFromModule(utLattice)
-suite.addTests(loader.loadTestsFromModule(utTwiss))
+
+suite = unittest.TestSuite()
+#suite.addTests(loader.loadTestsFromModule(utLattice))
+suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeTxt))
+suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeCf))
+#suite.addTests(loader.loadTestsFromModule(utTwiss))
 
 #suite.addTests(loader.loadTestsFromModule(utLattice))
 #suite.addTests(loader.loadTestsFromModule(utAllPVs))

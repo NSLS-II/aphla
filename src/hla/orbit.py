@@ -16,25 +16,24 @@
 """
 
 import numpy as np
-#from cothread.catools import caget, caput, camonitor
-from . import _lat, _cfa, eget, TAG_DEFAULT_PUT, TAG_DEFAULT_GET
-from catools import caget, caput
+import machines
+from element import Element
 
 class Orbit:
-    def __init__(self, cfa = None):
-        if cfa == None:
-            self.bpm = []
-            self.bpm_mask = []
-            self.pvrb = []
-            self.offset = []
-            self.WAVEFORM = False
-            self.bpm_wave_idx = []
-            self.wavepv = None
-            self.spv = None
-            self.s = []
-        else:
-            self.initializeBpmPv(cfa)
-        
+    def __init__(self, bpm):
+        if isinstance(bpm, (str, unicode)) or len(bpm) < 2: 
+            raise ValueError('need two and more BPMs')
+
+        pvx = [e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET]) 
+               for e in bpm]
+        pvy = [e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET])
+               for e in bpm]
+        #print "pvx = ", pvx
+        #print "pvy = ", pvy
+        self.bpmx = Element(**{'name':'HLA:ORBIT:X',
+                               'eget': [(bpm[0].eget(), pvx, "x")]})
+        self.bpmy = Element(**{'name':'HLA:ORBIT:Y',
+                               'eget': [(bpm[0].eget(), pvx, "y")]})
 
     def initializeBpmPv(self, cfa):
         elemx = _lat.getGroupMembers(['*', 'BPMX'], op = 'intersection')

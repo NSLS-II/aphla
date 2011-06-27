@@ -13,10 +13,13 @@ from catools import caget, caput
 from lattice import Element, Lattice
 from twiss import Twiss, TwissItem
 from fnmatch import fnmatch
+from ormdata import OrmData
 
 _lat = None
 _lattice_dict = {}
 _twiss = None
+
+_orm = {}
 
 #
 HLA_TAG_EGET = 'aphla.eget'
@@ -36,6 +39,7 @@ HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
 # map Element init parameters to CF properties
 HLA_CFS_KEYMAP = {'name': u'elemName',
+                  'field': u'elemField',
                   'devname': u'devName',
                   'family': u'elemType',
                   'girder': u'girder',
@@ -138,17 +142,20 @@ def initNSLS2VSR():
         print "# channel finder: %s" % HLA_CFS_URL
 
     global _lat, _lattice_dict
-    _lattice_dict['ltb'] = createLatticeFromCf(
+
+    #
+    # LTB 
+    _lattice_dict['LTB'] = createLatticeFromCf(
         cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
-    _lattice_dict['ltb'].mode = 'channelfinder-ltb'
-    #_lat = _lattice_dict['ltb']
+    _lattice_dict['LTB'].mode = 'channelfinder-LTB'
+    #_lat = _lattice_dict['LTB']
 
     # create virtual element BPMX and BPMY
     bpmx = Element(**{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []
     bpmy = Element(**{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
-    for e in _lattice_dict['ltb'].getElements('BPM'):
+    for e in _lattice_dict['LTB'].getElements('BPM'):
         for pv,t in e.pvtags.items():
             if 'aphla.x' in t:
                 bpmx.appendEget((caget, pv, e.name))
@@ -157,17 +164,19 @@ def initNSLS2VSR():
                 bpmy.appendEget((caget, pv, e.name))
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
-    _lattice_dict['ltb'].appendElement(bpmx)
-    _lattice_dict['ltb'].appendElement(bpmy)
+    _lattice_dict['LTB'].appendElement(bpmx)
+    _lattice_dict['LTB'].appendElement(bpmy)
 
-    _lattice_dict['sr'] = createLatticeFromCf(
+    #
+    # SR
+    _lattice_dict['SR'] = createLatticeFromCf(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
-    _lattice_dict['sr'].mode = 'channelfinder-sr'
+    _lattice_dict['SR'].mode = 'channelfinder-SR'
     bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []
     bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
-    for e in _lattice_dict['sr'].getElements('BPM'):
+    for e in _lattice_dict['SR'].getElements('BPM'):
         for pv,t in e.pvtags.items():
             if 'aphla.x' in t and HLA_TAG_EGET in t:
                 bpmx.appendEget((caget, pv, e.name))
@@ -176,10 +185,12 @@ def initNSLS2VSR():
                 bpmy.appendEget((caget, pv, e.name))
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
-    _lattice_dict['sr'].appendElement(bpmx)
-    _lattice_dict['sr'].appendElement(bpmy)
-    
-    _lat = _lattice_dict['sr']
+    _lattice_dict['SR'].appendElement(bpmx)
+    _lattice_dict['SR'].appendElement(bpmy)
+    _lattice_dict['SR'].orm = OrmData(
+        os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'orm.pkl'))
+
+    _lat = _lattice_dict['SR']
 
     # self diagnostics
     # check dipole numbers
@@ -204,7 +215,13 @@ def createLatticeFromTxt(f, **kwargs):
         # skip the comment lines
         if cl.strip().startswith('#'): continue
         # prepare the pv,properties,tags
-        rawpv, rawprpt, rawtag = [r.strip() for r in cl.split(';')]
+        try:
+            rawpv, rawprpt, rawtag = [r.strip() for r in cl.split(';')]
+        except:
+            print cl
+            print [r.strip() for r in cl.split(';')]
+            raise
+
         if not rawprpt.strip(): continue
         pv = rawpv.strip()
         prpt0 = dict([re.split(r'\s*=\s*', k) for k in 
@@ -272,17 +289,17 @@ def initNSLS2VSRTxt(data = ''):
     if data:
         cfsurl = data
     else:
-        cfsurl = os.path.join(HLA_DATA_DIRS, 'machine', 
+        cfsurl = os.path.join(HLA_DATA_DIRS, 
                               HLA_MACHINE, 'channel_finder_server.txt')
 
     global _lat, _lattice_dict
-    _lattice_dict['ltb-txt'] = createLatticeFromTxt(
+    _lattice_dict['LTB-txt'] = createLatticeFromTxt(
         cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
     bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
     bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
-    for e in _lattice_dict['ltb-txt'].getElements('BPM'):
+    for e in _lattice_dict['LTB-txt'].getElements('BPM'):
         for pv,t in e.pvtags.items(): 
             if 'aphla.x' in t and HLA_TAG_EGET in t:
                 bpmx.appendEget((caget, pv, e.name))
@@ -291,17 +308,17 @@ def initNSLS2VSRTxt(data = ''):
                 bpmy.appendEget((caget, pv, e.name))
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
-    _lattice_dict['ltb-txt'].appendElement(bpmx)
-    _lattice_dict['ltb-txt'].appendElement(bpmy)
+    _lattice_dict['LTB-txt'].appendElement(bpmx)
+    _lattice_dict['LTB-txt'].appendElement(bpmy)
 
-    _lattice_dict['sr-txt'] = createLatticeFromTxt(
+    _lattice_dict['SR-txt'] = createLatticeFromTxt(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
     # create virtual bpms
     bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
     bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
-    for e in _lattice_dict['sr-txt'].getElements('BPM'):
+    for e in _lattice_dict['SR-txt'].getElements('BPM'):
         for pv,t in e.pvtags.items(): 
             if 'aphla.x' in t and HLA_TAG_EGET in t:
                 bpmx.appendEget((caget, pv, e.name))
@@ -310,10 +327,13 @@ def initNSLS2VSRTxt(data = ''):
                 bpmy.appendEget((caget, pv, e.name))
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
-    _lattice_dict['sr-txt'].appendElement(bpmx)
-    _lattice_dict['sr-txt'].appendElement(bpmy)
+    _lattice_dict['SR-txt'].appendElement(bpmx)
+    _lattice_dict['SR-txt'].appendElement(bpmy)
+    _lattice_dict['SR-txt'].orm = OrmData(
+        os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'orm.pkl'))
 
-    _lat = _lattice_dict['sr-txt']
+
+    _lat = _lattice_dict['SR-txt']
 
     # self diagnostics
     # check dipole numbers
@@ -396,6 +416,11 @@ def use(lattice):
         raise ValueError("no lattice %s was defined" % lattice)
 
 def getLattice(lat):
+    """
+    return a :class:`~hla.lattice.Lattice` object with given name.
+
+    .. seealso:: :func:`~hla.machines.lattices`
+    """
     return _lattice_dict.get(lat, None)
 
 def lattices():
@@ -405,8 +430,8 @@ def lattices():
     Example::
 
       >>> lattices()
-      { 'ltb': 'channelfinder-ltb', 'ltb-txt': 'channelfinder-txt',
-      'sr': 'channelfinder-sr', 'sr-txt': 'channelfinder-txt' }
-      >>> use('ltb-txt')
+      { 'LTB': 'channelfinder-LTB', 'LTB-txt': 'channelfinder-txt',
+      'SR': 'channelfinder-SR', 'SR-txt': 'channelfinder-txt' }
+      >>> use('LTB-txt')
     """
     return dict((k, v.mode) for k,v in _lattice_dict.iteritems())

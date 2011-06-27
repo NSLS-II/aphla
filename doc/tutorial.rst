@@ -24,6 +24,15 @@ The HLA applications are those have a stable algorithm and data
 flow. Each is in a standalone form.
 
 
+.. warning::
+
+   Some notes:
+
+   - channel finder, ordinal/elemName/elemType should be
+     matched. i.e. once the elemName is known, its ordinal and elemType is
+     know. It is one-to-one.
+
+
 .. _Accelerator Physics Toolkit:
 
 Accelerator Physics Toolkit

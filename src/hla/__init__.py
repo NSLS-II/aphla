@@ -43,6 +43,8 @@ from machines import initNSLS2VSR, initNSLS2VSRTwiss
 #from current import *
 from rf import *
 from hlalib import *
+from orbit import Orbit
+from ormdata import OrmData
 
 ## """Initialize HLA"""
 ## cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
@@ -69,12 +71,13 @@ from hlalib import *
 
 ## # set RF frequency
 ## from cothread import catools, Timedout
-## try:
-##     catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
-##     print >> sys.stderr, "= Network is fine, using online PVs"
-## except Timedout:
-##     NETWORK_DOWN = True
-##     pass
+NETWORK_DOWN=False
+try:
+    catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+    print >> sys.stderr, "= Network is fine, using online PVs"
+except Timedout:
+    NETWORK_DOWN = True
+    pass
 
 
 ## #from meastwiss import *

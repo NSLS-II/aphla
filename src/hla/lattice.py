@@ -32,6 +32,7 @@ class Lattice:
         self.tune = [ 0.0, 0.0]
         self.chromaticity = [0.0, 0.0]
         self.circumference = 0.0
+        self.orm = None
 
     def __getitem__(self, key):
         if isinstance(key, int):

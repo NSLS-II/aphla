@@ -1,41 +1,33 @@
 '''
-Created on Jul 22, 2010
-
-@author: shen
 '''
 
-from seasail import seasail
+import time
+import hla
+import matplotlib.pylab as plt
+
+hla.initNSLS2VSRTxt()
+hla.initNSLS2VSRTwiss()
 
 if __name__ == '__main__':
-    sph = seasail()
-    groups = sph.getAllGroups()
-    print groups
+    print hla.machines.lattices()
+    bpm = hla.getElements('P*C1[09]*')
+    trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
     
-    groupMembers, memberPos = sph.getMembers('BPM')
-#    print groupMembers
-#    print memberPos
+    v0 = hla.getOrbit()
+    obt = hla.orbit.Orbit(bpm)
+    print obt.bpmx.value
+    print hla.machines._lat.orm.bpm
+    print hla.machines._lat.orm.trim
 
-    print sph.getLocation('BPM')
-#    print sph.getChannels(group='BPM', type='xavg')
-#    print sph.getChannels(group='BPM', type='yAvg')
-#    print sph.getChannels(group='BPM', type='xTBT')
-#    print sph.getChannels(group='BPM', type='yTBT')
-#    print sph.getChannels(group='QUAD', type='SP')
-#    print sph.getChannels(group='QUAD', type='RB')
-    
-    
-    print sph.getLocation('TRIMX')
-    print sph.getChannels(group='TRIMX', type='SP')
-    print sph.getChannels(group='TRIMX', type='RB')
+    time.sleep(3)
 
-    print sph.getChannels(group='TRIMY', type='SP')
-    print sph.getChannels(group='TRIMY', type='RB')
+    v1 = hla.getOrbit()
 
-#    for k, v in groups.items():
-#        if re.match('^BPM', k):
-#            print v
-    
-#    spg.getChannels()
-#    machines = sph.getMachine()
-#    for k, v in machines.items():
-#        print k
+    plt.clf()
+    ax = plt.subplot(211)
+    fig = plt.plot(s, v0[:,0], 'r-x', label='X')
+    fig = plt.plot(s, v0[:,1], 'g-o', label='Y')
+    ax = plt.subplot(212)
+    fig = plt.plot(s, v1[:,0], 'r-x', label='X')
+    fig = plt.plot(s, v1[:,1], 'g-o', label='Y')
+    plt.savefig("hla_tut_orbit_correct.png")
