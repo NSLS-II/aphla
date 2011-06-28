@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
     name = "hla",
-    version = "0.1.0a3",
+    version = "0.1.0b1",
     #packages = ['hla'],
     package_dir = {'hla': 'src/hla'},
     package_data = {'hla': ['machine/nsls2/*']},
