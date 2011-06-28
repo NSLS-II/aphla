@@ -167,3 +167,24 @@ class TestLatticeTxt(TestLattice):
         machines.initNSLS2VSRTxt()
         self.lat = machines.getLattice('SR-txt')
 
+    def test_field(self):
+        bpm = self.lat.getElements('BPM')
+        self.assertTrue(len(bpm) > 0)
+        for e in bpm: 
+            self.assertTrue(abs(e.x) > 0)
+            self.assertTrue(abs(e.y) > 0)
+
+        hcor = self.lat.getElements('HCOR')
+        self.assertTrue(len(bpm) > 0)
+        for e in hcor: 
+            k = e.x
+            e.x = 1e-8
+            self.assertTrue(abs(e.x) >= 0)
+            e.x = k
+            try:
+                k = e.y
+            except:
+                pass
+            else:
+                self.assertTrue(False,
+                                "AttributeError exception expected")

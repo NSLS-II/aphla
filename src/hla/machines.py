@@ -262,6 +262,15 @@ def createLatticeFromTxt(f, **kwargs):
         #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
         elem.appendStatusPv((caget, pv, prpt['handle']))
         #print name, ""
+        if prpt.has_key('field'):
+            if not prpt.has_key('handle'):
+                pass
+            elif prpt['handle'] == 'READBACK':
+                elem.setFieldGetAction(prpt['field'],
+                                       (caget, pv, prpt['handle']))
+            elif prpt['handle'] == 'SETPOINT':
+                elem.setFieldPutAction(prpt['field'],
+                                       (caput, pv, prpt['handle']))
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()

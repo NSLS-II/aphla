@@ -162,6 +162,7 @@ class Element(AbstractElement):
         self._status   = kwargs.get('pvs', [])
         self._eget_val = kwargs.get('eget', [])
         self._eput_val = kwargs.get('eput', [])
+        self._field = {}
         self.homogeneous = kwargs.get('homogeneous', True)
         self.pvtags = {}
         self.debug = 0
@@ -288,11 +289,41 @@ class Element(AbstractElement):
         return ret
 
     def __getattr__(self, att):
-        f, x = self._field[att]
+        if not self._field.has_key(att):
+            raise AttributeError("element %s has no attribute(field) %s" % 
+                                 (self.name, att))
+
+        f, x, desc = self._field[att][0]
+        #print "reading ", att
         return f(x)
-            
+
+    def __setattr__(self, att, val):
+        if not self.__dict__.has_key('_field'):
+           self.__dict__[att] = val
+        elif self.__dict__['_field'].has_key(att):
+           # use the var in '_field'
+           #print "setting ", att, val
+           f,x,desc = self.__dict__['_field'][att][1]
+           f(x, val)
+        else:
+           self.__dict__[att] = val
+
+    def setFieldGetAction(self, field, action):
+        if not self._field.has_key(field):
+            self._field[field] = [None, None]
+        self._field[field][0] = action
+
+    def setFieldPutAction(self, field, action):
+        if not self._field.has_key(field):
+            self._field[field] = [None, None]
+        self._field[field][1] = action
+
+    def fields(self):
+        return self._field.keys()
+
     def updateCfsProperties(self, pv, prpt):
         AbstractElement.updateCfsProperties(self, prpt)
+        field = prpt.get('field', None)
         
     def updateCfsTags(self, pv, tags):
         AbstractElement.updateCfsTags(self, tags)
@@ -300,6 +331,14 @@ class Element(AbstractElement):
             self.pvtags[pv] = set([])
         self.pvtags[pv].update(tags)
 
+    def updateCfsRecord(self, pv, prpt, tags):
+        AbstractElement.updateCfsProperties(self, prpt)
+        AbstractElement.updateCfsTags(self, tags)
+
+        if not pv in self.pvtags.keys(): self.pvtags[pv] = set([])
+        self.pvtags[pv].update(tags)
+
+        
     def getValues(self, tags = []):
         tagset = set(tags)
         ret = []
