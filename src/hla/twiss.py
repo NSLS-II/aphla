@@ -66,7 +66,7 @@ class Twiss:
             i = self._elements.index(elemname)
             return i
         except:
-            raise
+            return -1
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -89,6 +89,62 @@ class Twiss:
     def append(self, twi):
         self._twlist.append(twi)
 
+    def getTwiss(self, elem, col, **kwargs):
+        """
+        return a list of twiss functions when given a list of element name.
+        
+        - *col*, a list of columns : 's', 'beta', 'betax', 'betay',
+          'alpha', 'alphax', 'alphay', 'phi', 'phix', 'phiy'.
+        - *clean*, skip the unknown elements 
+        ::
+
+          >>> getTwiss(['E1', 'E2'], col=('s', 'beta'))
+
+        'beta', 'alpha' and 'phi' will be expanded to two columns.
+        """
+
+        if not col: return None
+        clean = kwargs.get('clean', False)
+
+        iret = []
+        for e in elem:
+            i = self._find_element(e)
+            if i >= 0: iret.append(i)
+            elif clean: continue
+            else: iret.append(None)
+            
+        ncol = 0
+        for c in col:
+            if c in ('s', 'betax', 'betay', 'alphax', 'alphay', 
+                     'etax', 'etay', 'phix', 'phiy'):
+                ncol += 1
+            elif c in ('beta', 'alpha', 'eta', 'phi'):
+                ncol += 2
+        ret = []
+        for i in iret:
+            if i == None:
+                ret.append([None]*ncol)
+                continue
+            row = []
+            tw = self._twlist[i]
+            for c in col:
+                if c == 's': row.append(tw._s)
+                elif c == 'phix': row.append(tw._phi[0])
+                elif c == 'phiy': row.append(tw._phi[1])
+                elif c == 'phi': row.extend([tw._phi[0], tw._phi[1]])
+                elif c == 'etax': row.append(tw._eta[0])
+                elif c == 'etay': row.append(tw._eta[1])
+                elif c == 'eta': row.extend([tw._eta[0], tw._eta[1]])
+                elif c == 'betax': row.append(tw._beta[0])
+                elif c == 'betay': row.append(tw._beta[1])
+                elif c == 'beta': row.extend([tw._beta[0], tw._beta[1]])
+                elif c == 'alphax': row.append(tw._alpha[0])
+                elif c == 'alphay': row.append(tw._alpha[1])
+                elif c == 'alpha': row.extend([tw._alpha[0], tw._alpha[1]])
+                else:
+                    row.append(None)
+            ret.append(row)
+        return np.array(ret, 'd')
 
 if __name__ == "__main__":
     tw = Twiss()

@@ -21,6 +21,7 @@ Welcome to HLA documentation!
    ref.rst
    todo.rst
    appendix.rst
+   history.rst
 
 HLA Routines
 ==============

@@ -24,6 +24,15 @@ The HLA applications are those have a stable algorithm and data
 flow. Each is in a standalone form.
 
 
+.. warning::
+
+   Some notes:
+
+   - channel finder, ordinal/elemName/elemType should be
+     matched. i.e. once the elemName is known, its ordinal and elemType is
+     know. It is one-to-one.
+
+
 .. _Accelerator Physics Toolkit:
 
 Accelerator Physics Toolkit
@@ -69,7 +78,7 @@ EPICS tools easily:
   deb http://epics.nsls2.bnl.gov/debian/ lenny main contrib
   deb-src http://epics.nsls2.bnl.gov/debian/ lenny main contrib
 
-::
+.. code-block:: bash
 
   $ sudo apt-get install python-cothread epics-catools
 
@@ -79,15 +88,21 @@ Set environment for channel access and HLA. Append the following to
   export EPICS_CA_MAX_ARRAY_BYTES=500000
   export EPICS_CA_ADDR_LIST="virtac.nsls2.bnl.gov vioc01.nsls2.bnl.gov"
 
-Try to see if virtual accelerator is accessible::
+Try to see if virtual accelerator is accessible
+
+.. code-block:: bash
 
   $ caget 'SR:C00-BI:G00{DCCT:00}CUR-RB'
 
-You should see the beam current of virtual accelerator. Then see if it changes::
+You should see the beam current of virtual accelerator. Then see if it changes
+
+.. code-block:: bash
 
   $ camonitor 'SR:C00-BI:G00{DCCT:00}CUR-RB'
 
-Download the *hla-v0.1.0a1.egg* file, then install::
+Download the *hla-v0.1.0a1.egg* file, then install
+
+.. code-block:: bash
 
   $ sudo easy_install hla-v0.1.0a1.egg
 
@@ -115,7 +130,7 @@ The very first time, please take a look at ~/.hgrc:
 
 This marks who you are.
 
-::
+.. code-block:: bash
 
   $ hg clone http://code.nsls2.bnl.gov/hg/ap/hla
   $ cd hla
@@ -127,7 +142,7 @@ This marks who you are.
 
 If it has been a long time after you checkout the code from the server, you can 
 
-::
+.. code-block:: bash
 
   $ hg pull (update the local files with server's)
 
@@ -251,14 +266,95 @@ It is easy to read/write the default value of an element:
 .. doctest::
 
    >>> e = hla.getElements('CXH2G2C30A')
-   >>> print e.status
+   >>> print e.status #doctest: +SKIP
    CXH2G2C30A
      READBACK (SR:C30-MG:G02A{HCor:H2}Fld-I): 0.0
+     SETPOINT aphla.eput (SR:C30-MG:G02A{HCor:H2}Fld-SP): 1e-07
+     READBACK (SR:C30-MG:G02A{HCor:H2}Fld-I): 9.9982402533e-08
+     SETPOINT (SR:C30-MG:G02A{HCor:H2}Fld-SP): 1e-07
+
    >>> print e.value #doctest: +SKIP
    0.0
    >>> e.value = 1e-7 #doctest: +SKIP
    >>> e.value
    9.998240253299763e-08
+
+Plotting the orbit
+ 
+.. doctest::
+ 
+   >>> sobt = hla.getOrbit(spos = True)
+   >>> plt.clf()
+   >>> plt.plot(sobt[:,2], sobt[:,0], '-x', label='X') #doctest: +ELLIPSIS
+   [<matplotlib.lines.Line2D object at 0x...>]
+   >>> plt.plot(sobt[:,3], sobt[:,1], '-o', label='Y') #doctest: +ELLIPSIS
+   [<matplotlib.lines.Line2D object at 0x...>]
+   >>> plt.xlabel('S [m]') #doctest: +ELLIPSIS
+   <matplotlib.text.Text object at 0x...>
+   >>> plt.savefig('hla_tut_orbit.png')
+
+.. image:: hla_tut_orbit.png
+
+Twiss parameters
+
+.. doctest::
+
+   >>> hla.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
+   array([[  8.71...,  11.67...],
+   	  [ 10.27...,  22.11...]])
+
+   >>> bpm = hla.getElements('P*G2*C03*A')
+   >>> hla.getBeta([e.name for e in bpm]) #doctest: +ELLIPSIS
+   array([[  8.71...,  11.67...],
+   	  [ 10.27...,  22.11...]])
+
+   >>> hla.getBeta('P*G2*C03*A', loc='b') #doctest: +ELLIPSIS
+   array([[  8.71...,  11.67...],
+   	  [ 10.27...,  22.11...]])
+
+Plotting the beta function of cell 'C02' and 'C03'
+
+.. doctest::
+
+   >>> elem = hla.getGroupMembers(['C01', 'C02'], op='union')
+   >>> beta = hla.getBeta([e.name for e in elem], spos=True, clean=True)
+   >>> eta = hla.getDispersion([e.name for e in elem], spos=True, clean=True)
+   >>> plt.clf()
+   >>> fig1 = plt.subplot(211)
+   >>> fig=plt.plot(beta[:,-1], beta[:,:-1], '-o', label=r'$\beta_{x,y}$')
+   >>> fig2 = plt.subplot(212)
+   >>> fig=plt.plot(eta[:,-1], eta[:,:-1], '-o', label=r'$\eta_{x,y}$')
+   >>> plt.savefig("hla_tut_twiss_c0203.png")
+
+
+.. image:: hla_tut_twiss_c0203.png
+
+
+Correct the orbit and plot the orbits before/after the correction:
+
+.. doctest::
+
+   >>> s = hla.getLocations('P*')
+   >>> bpm = hla.getElements('P*C1[09]*')
+   >>> trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+   >>> v0 = hla.getOrbit()
+   >>> hla.correctOrbit(bpm, trim)
+   >>> time.sleep(3)
+   >>> v1 = hla.getOrbit()
+   >>> plt.clf()
+   >>> ax = plt.subplot(211) 
+   >>> fig = plt.plot(s, v0[:,0], 'r-x', label='X') 
+   >>> fig = plt.plot(s, v0[:,1], 'g-o', label='Y')
+   >>> ax = plt.subplot(212)
+   >>> fig = plt.plot(s, v1[:,0], 'r-x', label='X')
+   >>> fig = plt.plot(s, v1[:,1], 'g-o', label='Y')
+   >>> plt.savefig("hla_tut_orbit_correct.png")
+
+.. image:: hla_tut_orbit_correct.png
+
+.. doctest::
+
+   >>> hla.getChromaticity() #doctest:+SKIP
 
 .. math::
 

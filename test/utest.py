@@ -3,7 +3,11 @@ import unittest
 
 from conf import *
 
+import hla
+print "= HLA used:", hla.__path__
+
 #import utChanFinder
+import utElement
 import utLattice
 import utTwiss
 #import utAllPVs
@@ -12,10 +16,13 @@ import utTwiss
 
 loader = unittest.TestLoader()
 
-suite = loader.loadTestsFromModule(utLattice)
+
+suite = unittest.TestSuite()
+suite.addTests(loader.loadTestsFromModule(utElement))
+suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeTxt))
+suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeCf))
 suite.addTests(loader.loadTestsFromModule(utTwiss))
 
-#suite.addTests(loader.loadTestsFromModule(utLattice))
 #suite.addTests(loader.loadTestsFromModule(utAllPVs))
 #suite.addTests(loader.loadTestsFromModule(utOrbit))
 #suite.addTests(loader.loadTestsFromModule(utOrm))

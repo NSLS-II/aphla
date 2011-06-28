@@ -7,11 +7,7 @@ import unittest
 import sys, time
 import numpy as np
 
-import matplotlib.pylab as plt
-
-
-
-class TestConf(unittest.TestCase):
+class TestOrm(unittest.TestCase):
     def setUp(self):
         if hla.NETWORK_DOWN: return None
         wait_for_svr()
@@ -24,30 +20,13 @@ class TestConf(unittest.TestCase):
 
     def test_trim_bpm(self):
         trimx = ['FXL2G1C07A', 'CXH1G6C15B']
-        #print hla.getSpChannels(trimx)
-        for tr in trimx:
-            self.assertTrue(len(hla.getLocations(tr)) == 1)
 
-        self.assertEqual(len(hla.getRbChannels(trimx)), 2)
-        self.assertEqual(len(hla.getSpChannels(trimx)), 2)
+        bpmx = hla.getGroupMembers(['BPM', 'C0[2-4]'], op='intersection')
+        self.assertTrue(len(bpmx) == 18)
+        ormc = hla.orm.Orm([e.name for e in bpmx], trimx)
+        print ormc.bpm
+        print ormc.trim
 
-        bpmx = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
-        self.assertTrue(len(bpmx) > 0)
-        trimxsp = [v[0] for v in \
-                       hla.getSpChannels(trimx, tags=['default.eput', 'X'])]
-        self.assertTrue(len(trimxsp) > 0)
-
-        trimxrb = [v[0] for v in \
-                   hla.getRbChannels(trimx, tags=['default.eget', 'X'])]
-        self.assertTrue(len(trimxrb) > 0)
-
-        bpmxrb  = [v[0] for v in \
-                   hla.getRbChannels(bpmx, tags=['default.eget', 'X'])]
-        self.assertTrue(len(bpmxrb) > 0)
-
-        self.assertEqual(len(trimx), len(trimxsp))
-        self.assertEqual(len(trimx), len(trimxrb))
-        self.assertEqual(len(bpmx), len(bpmxrb))
 
     def test_measure_orm(self):
         return True
@@ -314,5 +293,7 @@ if __name__ == "__main__":
     #hla.reset_trims()
     #test_1()
     #test_delay()
+    hla.initNSLS2VSR()
+    hla.initNSLS2VSRTwiss()
     unittest.main()
 

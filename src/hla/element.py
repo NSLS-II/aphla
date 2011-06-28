@@ -162,18 +162,37 @@ class Element(AbstractElement):
         self._status   = kwargs.get('pvs', [])
         self._eget_val = kwargs.get('eget', [])
         self._eput_val = kwargs.get('eput', [])
-        self.homogeneous = True
+        self._field = {}
+        self.homogeneous = kwargs.get('homogeneous', True)
+        self.pvtags = {}
         self.debug = 0
+        self.virtual = 0
         if os.environ.has_key('HLA_DEBUG') and os.environ['HLA_DEBUG']:
             self.debug = int(os.environ['HLA_DEBUG'])
         
-    def pv(self, tag='eget'):
+    def eget(self):
+        if self._eget_val: return self._eget_val[0][0]
+        else: return None
+
+    def eput(self):
+        if self._eput_val: return self._eput_val[0][0]
+        else: return None
+
+    def pv(self, **kwargs):
+        tag = kwargs.get('tag', None)
+        tags = kwargs.get('tags', [])
         if tag == 'eget' and self._eget_val:
             return [p[1] for p in self._eget_val]
         elif tag == 'eput' and self._eput_val:
             return [p[1] for p in self._eput_val]
         elif tag == 'status' and self._status:
             return [p[1] for p in self._status]
+        elif tags:
+            tagset = set(tags)
+            ret = [pv for pv,ts in self.pvtags.iteritems()
+                   if tagset.issubset(ts)] 
+            if len(ret) == 1: return ret[0]
+            else: return ret
         else: return []
 
     def hasPv(self, pv):
@@ -206,18 +225,19 @@ class Element(AbstractElement):
     @property
     def value(self):
         if not self._eget_val: return None
-        if not self.homogeneous:
+        if len(self._eget_val) == 1:
+            f,x,desc = self._eget_val[0]
+            return f(x)
+        elif not self.homogeneous:
             ret = []
             for f, x, desc in self._eget_val:
                 if f and x: ret.append(f(x))
-            if len(ret) == 1: return ret[0]
-            else: return ret
+            return ret
         else:
             #
             pvs = [x for f,x,desc in self._eget_val]
             ret = self._eget_val[0][0](pvs)
-            if len(ret) == 1: return ret[0]
-            else: return ret
+            return ret
 
     @value.setter
     def value(self, v):
@@ -243,17 +263,19 @@ class Element(AbstractElement):
     def status(self):
         ret = self.name
         if self.homogeneous:
-            pvs, descs = [], []
-            pvs.extend([x for f, x, desc in self._eget_val])
-            descs.extend([desc for f, x, desc in self._eget_val])
-            pvs.extend([x for f, x, desc in self._eput_val])
-            descs.extend([desc for f, x, desc in self._eput_val])
-            pvs.extend([x for f, x, desc in self._status])
-            descs.extend([desc for f, x, desc in self._status])
+            #pvs, descs = [], []
+            #pvs.extend([x for f, x, desc in self._eget_val])
+            #descs.extend([desc for f, x, desc in self._eget_val])
+            #pvs.extend([x for f, x, desc in self._eput_val])
+            #descs.extend([desc for f, x, desc in self._eput_val])
+            pvs = [x for f, x, desc in self._status]
+            descs = [desc for f, x, desc in self._status]
 
-            if self._eget_val: f = self._eget_val[0][0]
-            elif self._status: f = self._status[0][0]
-            else: f = None
+            for f,x,desc in self._eget_val:
+                ret += "\n  %s %s: %s" % ('eget', x, f(x))
+            #if self._eput_val:
+            #    f,x,desc = self._eput_val
+            #    ret += "\n  %s %s: %s" % ('eput', x, f(x))
             val = f(pvs)
             for i in range(len(pvs)):
                 ret += "\n  %s (%s): %s" % (descs[i], pvs[i], val[i])
@@ -266,9 +288,63 @@ class Element(AbstractElement):
                 ret += "\n  %s (%s): %s" % (desc, x, f(x))
         return ret
 
+    def __getattr__(self, att):
+        if not self._field.has_key(att):
+            raise AttributeError("element %s has no attribute(field) %s" % 
+                                 (self.name, att))
+
+        f, x, desc = self._field[att][0]
+        #print "reading ", att
+        return f(x)
+
+    def __setattr__(self, att, val):
+        if not self.__dict__.has_key('_field'):
+           self.__dict__[att] = val
+        elif self.__dict__['_field'].has_key(att):
+           # use the var in '_field'
+           #print "setting ", att, val
+           f,x,desc = self.__dict__['_field'][att][1]
+           f(x, val)
+        else:
+           self.__dict__[att] = val
+
+    def setFieldGetAction(self, field, action):
+        if not self._field.has_key(field):
+            self._field[field] = [None, None]
+        self._field[field][0] = action
+
+    def setFieldPutAction(self, field, action):
+        if not self._field.has_key(field):
+            self._field[field] = [None, None]
+        self._field[field][1] = action
+
+    def fields(self):
+        return self._field.keys()
+
     def updateCfsProperties(self, pv, prpt):
         AbstractElement.updateCfsProperties(self, prpt)
-    
+        field = prpt.get('field', None)
+        
     def updateCfsTags(self, pv, tags):
         AbstractElement.updateCfsTags(self, tags)
+        if not pv in self.pvtags.keys():
+            self.pvtags[pv] = set([])
+        self.pvtags[pv].update(tags)
+
+    def updateCfsRecord(self, pv, prpt, tags):
+        AbstractElement.updateCfsProperties(self, prpt)
+        AbstractElement.updateCfsTags(self, tags)
+
+        if not pv in self.pvtags.keys(): self.pvtags[pv] = set([])
+        self.pvtags[pv].update(tags)
+
         
+    def getValues(self, tags = []):
+        tagset = set(tags)
+        ret = []
+        for f,x,desc in self._status:
+            if not self.pvtags[x].issuperset(tagset): continue
+            ret.append(f(x))
+        if len(ret) == 0: return None
+        elif len(ret) == 1: return ret[0]
+        else: return ret

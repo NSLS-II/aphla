@@ -32,6 +32,7 @@ class Lattice:
         self.tune = [ 0.0, 0.0]
         self.chromaticity = [0.0, 0.0]
         self.circumference = 0.0
+        self.orm = None
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -56,6 +57,7 @@ class Lattice:
         if not loc in ['left', 'right']:
             raise ValueError('loc must be in ["left", "right"]')
 
+        # normalize s into [0, C]
         sn = s
         if s > self.circumference: sn = s - self.circumference
         if s < 0: sn = s + self.circumference
@@ -63,18 +65,17 @@ class Lattice:
         if sn < 0 or sn > self.circumference:
             raise ValueError("s= %f out of boundary ([%f, %f])"
                              % (s, -self.circumference, self.circumference))
-
-        ileft, eleft = None, None
-        iright, eright = None, None
+        ileft, eleft = -1, self.circumference
+        iright, eright = -1, self.circumference
         for i,e in enumerate(self._elements):
+            if e.virtual > 0: continue
             # assuming elements is in order
-            if e.sb-eps <= sn and e.sb + e.length+eps >= sn:
-                # element sit on this point
-                return i, e
-            if loc == 'left' and e.sb >= sn:
-                return i-1, self._elements[i-1]
-            if loc == 'right' and e.sb >= sn:
-                return i, e
+            if abs(e.sb-s) <= eleft:
+                ileft, eleft = i, abs(e.sb-s)
+            if abs(e.se-s) <= eright:
+                iright, eright = i, abs(e.se-s)
+        if loc == 'left': return ileft
+        elif loc == 'right': return iright
 
     def hasElement(self, name):
         if self._find_element(name): return True
@@ -241,11 +242,11 @@ class Lattice:
         """
         s0, s1 = srange[0], srange[1]
 
-        i0, e0 = self._find_element_s(s0, loc='right')
-        i1, e1 = self._find_element_s(s1, loc='left')
+        i0 = self._find_element_s(s0, loc='right')
+        i1 = self._find_element_s(s1, loc='left')
 
         if i0 == None or i1 == None: return None
-        elif i0 == i1: return e0
+        elif i0 == i1: return self._elements[i0]
         elif i0 < i1:
             ret = self._elements[i0:i1+1]
         else:
@@ -522,12 +523,20 @@ class Lattice:
 
         - group in *groups* can be exact name or pattern.
         - op = ['union' | 'intersection']
+
+        ::
+        
+          >>> getGroupMembers(['C02'], op = 'union')
         """
         if groups == None: return None
         ret = {}
         cell = kwargs.get('cell', '*')
         girder = kwargs.get('girder', '*')
         symmetry = kwargs.get('symmetry', '*')
+
+        if groups in self._group.keys():
+            return self._group[groups]
+
         #print __file__, groups
         for g in groups:
             ret[g] = []

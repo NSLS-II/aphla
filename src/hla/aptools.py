@@ -9,12 +9,10 @@ Accelerator Physics Tools
 
 """
 
-from . import getElements, getLocations, getDispersion, getRfFrequency, \
-     putRfFrequency, getOrbit, getTunes, getSubOrm, eput, eget
 import numpy as np
 import time, shelve
 import matplotlib.pylab as plt
-
+from orbit import Orbit
 
 alphac = 3.6261976841792413e-04
 
@@ -175,6 +173,25 @@ def measDispersion():
     f.close()
     
 
+def correctOrbitPv(bpm, trim, ormdata):
+    """
+    correct orbit use direct pv and catools
+    """
+    m = np.zeros((len(bpm), len(trim)), 'd')
+    for i,b in bpm:
+        im = ormdata.index(b)
+        if im < 0: raise ValueError("PV %s is not found in ormdata" % b)
+        for j,t in trim:
+            jm = ormdata.index(t)
+            if jm < 0: raise ValueError("pv %s is not found in ormdata" % t)
+            # did not check if the item is masked.
+            m[i,j] = ormdata.m[im,jm]
+
+    v0 = caget(bpm)
+    dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0)
+    k0 = np.array(caget(trim), 'd')
+    caput(trim, k0+dk)
+
 def correctOrbit(bpm, trim, **kwargs):
     """
     correct the orbit with given BPMs and Trims
@@ -189,12 +206,33 @@ def correctOrbit(bpm, trim, **kwargs):
     - *plane* ['XX', 'XY', 'YY', 'YX']. The first 'X' or 'Y' is BPM and second
        is Trim. If that BPM or Trim does not have readings from such plane,
        this element should be ignored.
-
+    - *pv* use PV instead of element name
     .. seealso:: `hla.getSubOrm`
     """
+
+    # an orbit based these bpm
+    obt = Orbit(bpm)
+
+    # pv for trim
+    pvxrb = [e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET]) 
+             for e in trim]
+    pvyrb = [e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET])
+             for e in trim]
+    pvxsp = [e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT]) 
+             for e in trim]
+    pvysp = [e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
+             for e in trim]
+
+    trimx = Element(**{'name':'HLA:ORBIT:X',
+                       'eget': [(trim[0].eget(), pvxrb, "x")],
+                       'eput': [(trim[0].eput(), pvxsp, "x")]})
+    trimy = Element(**{'name':'HLA:ORBIT:Y',
+                       'eget': [(trim[0].eget(), pvyrb, "y")],
+                       'eput': [(trim[0].eput(), pvysp, "y")]})
+
     plane = kwargs.get('plane', 'XX')
     
-    m = getSubOrm(bpm, trim, plane)
+    m = getSubOrm([e.name for e in bpm], [e.name for e in trim], plane)
     if plane[0] == 'X': v = getOrbit(bpm)[:,0]
     elif plane[0] == 'Y': v = getOrbit(bpm)[:,1]
 

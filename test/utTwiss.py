@@ -3,7 +3,6 @@
 import unittest
 import sys, os
 import numpy as np
-import matplotlib.pylab as plt
 
 from conf import *
 import machines
@@ -16,8 +15,8 @@ class TestLattice(unittest.TestCase):
         machines.initNSLS2VSR()
         machines.initNSLS2VSRTwiss()
         machines.initNSLS2VSRTxt()
-        self.cfslat_cf = machines.use('sr')
-        self.cfslat_txt = machines.use('sr-txt')
+        self.cfslat_cf = machines.use('SR')
+        self.cfslat_txt = machines.use('SR-txt')
         
     def test_element(self):
         #print machines._twiss[-1]

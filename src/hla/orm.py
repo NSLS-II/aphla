@@ -17,10 +17,7 @@ from os.path import join, splitext
 import numpy as np
 import shelve
 
-from . import _lat
-from . import getSpChannels, getRbChannels
-from catools import caget, caput, caputwait, Timedout
-
+import machines
 import matplotlib.pylab as plt
 
 class Orm:
@@ -46,38 +43,29 @@ class Orm:
         
         if trim and bpm:
             # one trim may have two (x/y) pv or one only
-            trimsp = reduce(lambda x,y: x+y, getSpChannels(trim))
-            trimrb = reduce(lambda x,y: x+y, getRbChannels(trim))
-            for i in range(len(trimsp)):
-                prop = _cfa.getChannelProperties(trimsp[i])
-                tags = _cfa.getChannelTags(trimsp[i])
-                if 'X' in tags: plane = 'X'
-                elif 'Y' in tags: plane = 'Y'
-                else:
-                    raise ValueError(
-                        "channel %s of trim %s in unknown plane ('X' or 'Y')"
-                        % (trimsp[i], prop[_cfa.ELEMNAME]))
+            el = machines._lat.getElements(trim)
+            ex = [(e.name, 'X',
+                   e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET]),
+                   e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT]))
+                  for e in el]
+            ey = [(e.name, 'Y',
+                   e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET]),
+                   e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT]))
+                  for e in el]
+            self.trim = [ e for e in ex + ey if e[2] and e[3] ]
 
-                self.trim.append(
-                    (prop[_cfa.ELEMNAME], plane, trimrb[i], trimsp[i]))
-            #
-            bpmrb  = reduce(lambda x,y: x+y, getRbChannels(bpm))
-            for i in range(len(bpmrb)):
-                prop = _cfa.getChannelProperties(bpmrb[i])
-                tags = _cfa.getChannelTags(bpmrb[i])
-                if 'X' in tags: plane = 'X'
-                elif 'Y' in tags: plane = 'Y'
-                else:
-                    raise ValueError(
-                        "channel %s of bpm %s in unknown plane ('X' or 'Y')"
-                        % (bpmrb[i], prop[_cfa.ELEMNAME]))
-                self.bpm.append((prop[_cfa.ELEMNAME], plane, bpmrb[i]))
+            el = machines._lat.getElements(bpm)
+            ex = [(e.name, 'X',
+                   e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET]))
+                  for e in el]
+            ey = [(e.name, 'Y',
+                   e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET]))
+                  for e in el]
+            self.bpm = [ e for e in ex + ey if e[2] ]
 
-            self.bpmrb = bpmrb[:]
-            self.trimsp = trimsp[:]
+
         # count the dimension of matrix
-        nbpm  = len(set([b[0] for b in self.bpm]))
-        ntrim = len(set([t[0] for t in self.trim]))
+        nbpm, ntrim  = len(set(bpm)), len(set(trim))
         nbpmpv, ntrimpv = len(self.bpm), len(self.trim)
 
         # 3d raw data
@@ -86,100 +74,16 @@ class Orm:
         self._rawkick = np.zeros((ntrimpv, npts+2), 'd')
         self.m = np.zeros((nbpmpv, ntrimpv), 'd')
 
-        #self.bpmrb = bpmrb[:]
-        #self.trimsp = trimsp[:]
-        
         #print __file__, "Done initialization"
         
-    def _io_format(self, filename, format):
-        rt, ext = splitext(filename)
-        if format == '' and ext in self.fmtdict.keys():
-            fmt = self.fmtdict[ext]
-        elif format:
-            fmt = format
-        else:
-            fmt = 'HDF5'
-        return fmt
-
     def save(self, filename, format = ''):
         """
         save the orm data into one file:
-
-        =================   =====================================
-        Data                Description
-        =================   =====================================
-        m                   matrix
-        bpm                 list
-        trim                list
-        _rawdata_.matrix    raw orbit change
-        _rawdata_.rawkick   raw trim strength change
-        _rawdata_.mask      matrix for ignoring certain ORM terms
-        =================   =====================================
         """
-
-        fmt = self._io_format(filename, format)
-
-        if fmt == 'HDF5':
-            import h5py
-            f = h5py.File(filename, 'w')
-            dst = f.create_dataset("m", data = self.m)
-            dst = f.create_dataset("bpm", data = self.bpm)
-            dst = f.create_dataset("trim", data = self.trim)
-
-            grp = f.create_group("_rawdata_")
-            dst = grp.create_dataset("rawmatrix", data = self._rawmatrix)
-            dst = grp.create_dataset("rawkick", data = self._rawkick)
-            dst = grp.create_dataset("mask", data = self._mask)
-
-            f.close()
-        elif fmt == 'shelve':
-            import shelve
-            f = shelve.open(filename, 'c')
-            f['orm.m'] = self.m
-            f['orm.bpm'] = self.bpm
-            f['orm.trim'] = self.trim
-            f['orm._rawdata_.rawmatrix'] = self._rawmatrix
-            f['orm._rawdata_.rawkick']   = self._rawkick
-            f['orm._rawdata_.mask']      = self._mask
-        else:
-            raise ValueError("not supported file format: %s" % format)
+        self.ormdata.save(filename, format)
 
     def load(self, filename, format = ''):
-        self._load_v2(filename, format)
-
-    def _load_v2(self, filename, format = ''):
-        """
-        load orm data from binary file
-        """
-        fmt = self._io_format(filename, format)
-            
-        if fmt == 'HDF5':
-            import h5py
-            f = h5py.File(filename, 'r')
-            self.bpm = [ b for b in f["bpm"]]
-            self.trim = [t for t in f["trim"]]
-            nbpm, ntrim = len(self.bpm), len(self.trim)
-            self.m = np.zeros((nbpm, ntrim), 'd')
-            self.m[:,:] = f["orm"][:,:]
-            t, npts = f["_rawdata_"]["rawkick"].shape
-            self._rawkick = np.zeros((ntrim, npts), 'd')
-            self._rawkick[:,:] = f["_rawdata_"]["rawkick"][:,:]
-            self._rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
-            self._rawmatrix[:,:,:] = f["_rawdata_"]["rawmatrix"][:,:,:]
-            self._mask = np.zeros((nbpm, ntrim))
-            self._mask[:,:] = f["_rawdata_"]["mask"][:,:]
-        elif fmt == 'shelve':
-            f = shelve.open(filename, 'r')
-            self.bpm = f["orm.bpm"]
-            self.trim = f["orm.trim"]
-            self.m = f["orm.m"]
-            self._rawmatrix = f["orm._rawdata_.rawmatrix"]
-            self._rawkick   = f["orm._rawdata_.rawkick"]
-            self._mask      = f["orm._rawdata_.mask"]
-        else:
-            raise ValueError("format %s is not supported yet" % format)
-
-        #print self.trim
+        self.ormdata.load(filename, format)
 
     def _set_wait_stable(
         self, pvs, values, monipv, diffstd = 1e-6, timeout=120):
