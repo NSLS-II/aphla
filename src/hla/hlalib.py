@@ -108,12 +108,13 @@ def reset_trims():
     """
     reset all trims in group "TRIMX" and "TRIMY"
     """
-    trimx = machines._lat.getGroupMembers(['*', 'TRIMX'], op='intersection')
-    trimy = machines._lat.getGroupMembers(['*', 'TRIMY'], op='intersection')
-    pvx = getSpChannels(trimx, tags=[TAG_DEFAULT_PUT, 'X'])
-    pvy = getSpChannels(trimy, tags=[TAG_DEFAULT_PUT, 'Y'])
-    pv = [p[0] for p in pvx]
-    pv.extend([p[0] for p in pvy])
+    trimx = machines._lat.getGroupMembers(['*', 'HCOR'], op='intersection')
+    trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
+    pvx = [e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT])
+           for e in trimx]
+    pvy = [e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
+           for e in trimy]
+    pv = list(set(pvx + pvy))
     v = [0]*len(pv)
     caput(pv, v)
 

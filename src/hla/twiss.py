@@ -96,6 +96,7 @@ class Twiss:
         - *col*, a list of columns : 's', 'beta', 'betax', 'betay',
           'alpha', 'alphax', 'alphay', 'phi', 'phix', 'phiy'.
         - *clean*, skip the unknown elements 
+        
         ::
 
           >>> getTwiss(['E1', 'E2'], col=('s', 'beta'))

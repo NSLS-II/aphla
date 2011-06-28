@@ -183,6 +183,7 @@ Initialize the NSLS2 Virtual Storage Ring lattice and twiss:
 
    >>> hla.initNSLS2VSR()
    >>> hla.initNSLS2VSRTwiss()
+   >>> hla.machines.initNSLS2VSRTxt()
 
 Then is the examples:
 
@@ -334,20 +335,21 @@ Correct the orbit and plot the orbits before/after the correction:
 
 .. doctest::
 
-   >>> s = hla.getLocations('P*')
-   >>> bpm = hla.getElements('P*C1[09]*')
-   >>> trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
-   >>> v0 = hla.getOrbit()
-   >>> hla.correctOrbit(bpm, trim)
-   >>> time.sleep(3)
-   >>> v1 = hla.getOrbit()
+   >>> print hla.__path__
+   >>> bpm = hla.getElements('P*C1[0-3]*')
+   >>> trim = hla.getGroupMembers(['*', '[HV]COR'], op='intersection')
+   >>> print len(bpm), len(trim) #doctest: +SKIP
+   >>> v0 = hla.getOrbit('P*', spos=True)
+   >>> hla.correctOrbit([e.name for e in bpm], [e.name for e in trim])
+   >>> time.sleep(4)
+   >>> v1 = hla.getOrbit('P*', spos=True)
    >>> plt.clf()
    >>> ax = plt.subplot(211) 
-   >>> fig = plt.plot(s, v0[:,0], 'r-x', label='X') 
-   >>> fig = plt.plot(s, v0[:,1], 'g-o', label='Y')
+   >>> fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X') 
+   >>> fig = plt.plot(v0[:,-1], v0[:,1], 'g-o', label='Y')
    >>> ax = plt.subplot(212)
-   >>> fig = plt.plot(s, v1[:,0], 'r-x', label='X')
-   >>> fig = plt.plot(s, v1[:,1], 'g-o', label='Y')
+   >>> fig = plt.plot(v1[:,-1], v1[:,0], 'r-x', label='X')
+   >>> fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y')
    >>> plt.savefig("hla_tut_orbit_correct.png")
 
 .. image:: hla_tut_orbit_correct.png
