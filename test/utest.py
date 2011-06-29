@@ -19,8 +19,12 @@ loader = unittest.TestLoader()
 
 suite = unittest.TestSuite()
 suite.addTests(loader.loadTestsFromModule(utElement))
-suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeTxt))
-suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeCf))
+
+suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeSrCf))
+suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeSrTxt))
+suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeLtbCf))
+suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeLtbTxt))
+
 suite.addTests(loader.loadTestsFromModule(utTwiss))
 
 #suite.addTests(loader.loadTestsFromModule(utAllPVs))

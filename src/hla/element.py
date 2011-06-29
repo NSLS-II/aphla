@@ -159,29 +159,24 @@ class Element(AbstractElement):
         HLA_DEBUG is used for enabling debug.
         """
         AbstractElement.__init__(self, **kwargs)
-        self._status   = kwargs.get('pvs', [])
-        self._eget_val = kwargs.get('eget', [])
-        self._eput_val = kwargs.get('eput', [])
-        self._field = {}
-        self.homogeneous = kwargs.get('homogeneous', True)
-        self.pvtags = {}
-        self.debug = 0
+        self._eget = kwargs.get('eget', None)
+        self._eput = kwargs.get('eput', None)
+        self._field = {'value': {'eget':[], 'eput':[], 'desc':[]},
+                       'status': {'eget':[], 'desc': []}}
+        self._pvtags = {}
         self.virtual = 0
-        if os.environ.has_key('HLA_DEBUG') and os.environ['HLA_DEBUG']:
-            self.debug = int(os.environ['HLA_DEBUG'])
+        self.debug = 0
         
     def eget(self):
-        if self._eget_val: return self._eget_val[0][0]
-        else: return None
+        return self._eget
 
     def eput(self):
-        if self._eput_val: return self._eput_val[0][0]
-        else: return None
+        return self._eput
 
     def pv(self, **kwargs):
         tag = kwargs.get('tag', None)
         tags = kwargs.get('tags', [])
-        if tag == 'eget' and self._eget_val:
+        if tag == 'eget' and self._field['value']:
             return [p[1] for p in self._eget_val]
         elif tag == 'eput' and self._eput_val:
             return [p[1] for p in self._eput_val]
@@ -195,156 +190,104 @@ class Element(AbstractElement):
             else: return ret
         else: return []
 
+    def _insert_in_order(self, lst, v):
+        if len(lst) == 0:
+            lst.append(v)
+            return 0
+
+        for i,x in enumerate(lst):
+            if x < v: continue
+            lst.insert(i, v)
+            return i
+
+        lst.append(v)
+        return len(lst) - 1
+
     def hasPv(self, pv):
-        for p in self._status:
-            if p[1] == pv: return True
-        for p in self._eget_val:
-            if p[1] == pv: return True
-        for p in self._eput_val:
-            if p[1] == pv: return True
-        else: return False
+        return self._pvtags.has_key(pv)
         
-    def appendStatusPv(self, pvact):
+    def appendStatusPv(self, pv, desc):
         """
         append (func, pv, description) to status
         """
-        self._status.append(pvact)
+        i = self._insert_in_order(self._field['status']['eget'], pv)
+        self._field['status']['desc'].insert(i, desc)
 
-    def appendEget(self, eget):
-        self._eget_val.append(eget)
-        
-    def updateEget(self, eget):
-        self._eget_val = eget
-
-    def appendEput(self, eput):
-        self._eput_val.append(eput)
-        
-    def updateEput(self, eput):
-        self._eput_val = eput
-        
-    @property
-    def value(self):
-        if not self._eget_val: return None
-        if len(self._eget_val) == 1:
-            f,x,desc = self._eget_val[0]
-            return f(x)
-        elif not self.homogeneous:
-            ret = []
-            for f, x, desc in self._eget_val:
-                if f and x: ret.append(f(x))
-            return ret
+    def addEGet(self, pv):
+        vf = self._field['value']
+        if pv in vf['eget']: return
         else:
-            #
-            pvs = [x for f,x,desc in self._eget_val]
-            ret = self._eget_val[0][0](pvs)
-            return ret
-
-    @value.setter
-    def value(self, v):
-        if not self._eput_val:
-            if self.debug:
-                print "# %s empty eput_pv" % self.name
-            return None
-        if not self.homogeneous:
-            ret = []
-            for f, x, desc in self._eput_val:
-                if f and x:
-                    print "# setting %s %f" % (x, v)
-                    ret.append(f(x, v))
-            return ret
-        else:
-            # speed up using pv list when calling caget/caput
-            if self.debug:
-                print "# group setting %s" % self.name, self._eput_val
-            pvs = [x for f,x,desc in self._eput_val]
-            return self._eput_val[0][0](pvs, v)
+            self._insert_in_order(vf['eget'], pv)
         
-    @property
-    def status(self):
-        ret = self.name
-        if self.homogeneous:
-            #pvs, descs = [], []
-            #pvs.extend([x for f, x, desc in self._eget_val])
-            #descs.extend([desc for f, x, desc in self._eget_val])
-            #pvs.extend([x for f, x, desc in self._eput_val])
-            #descs.extend([desc for f, x, desc in self._eput_val])
-            pvs = [x for f, x, desc in self._status]
-            descs = [desc for f, x, desc in self._status]
-
-            for f,x,desc in self._eget_val:
-                ret += "\n  %s %s: %s" % ('eget', x, f(x))
-            #if self._eput_val:
-            #    f,x,desc = self._eput_val
-            #    ret += "\n  %s %s: %s" % ('eput', x, f(x))
-            val = f(pvs)
-            for i in range(len(pvs)):
-                ret += "\n  %s (%s): %s" % (descs[i], pvs[i], val[i])
+    def addEPut(self, pv):
+        vf = self._field['value']
+        if pv in vf['eput']: return
         else:
-            for f, x, desc in self._eget_val:
-                ret += "\n  eget: %s (%s): %s" % (desc, x, f(x))
-            for f, x, desc in self._eput_val:
-                ret += "\n  eput: %s (%s): %s" % (desc, x, f(x))
-            for f, x, desc in self._status:
-                ret += "\n  %s (%s): %s" % (desc, x, f(x))
-        return ret
-
+            self._insert_in_order(vf['eput'], pv)
+        
     def __getattr__(self, att):
         if not self._field.has_key(att):
             raise AttributeError("element %s has no attribute(field) %s" % 
                                  (self.name, att))
-
-        f, x, desc = self._field[att][0]
+        elif att == 'status':
+            pv, desc = self._field[att]['eget'], self._field[att]['desc']
+            ret = self.name
+            if pv and desc:
+               val = self._eget(pv)
+               for i,v in enumerate(pv):
+                   ret = ret + '\n  %s (%s) %f' % (desc[i], pv[i], val[i])
+            return ret
+        else:
+            x = self._field[att]['eget']
         #print "reading ", att
-        return f(x)
+        ret = self._eget(x)
+        if len(x) == 1: return ret[0]
+        else: return ret
 
     def __setattr__(self, att, val):
         if not self.__dict__.has_key('_field'):
-           self.__dict__[att] = val
-        elif self.__dict__['_field'].has_key(att):
-           # use the var in '_field'
-           #print "setting ", att, val
-           f,x,desc = self.__dict__['_field'][att][1]
-           f(x, val)
+            # too early
+            self.__dict__[att] = val
+        elif att in self.__dict__['_field'].keys():
+            act = self.__dict__['_field'][att]['eput']
+            if act:
+                self._eput(act, val)
+            else: raise AttributeError("no writable channel associated with property '%s'" % att)
         else:
-           self.__dict__[att] = val
+            # new property
+            self.__dict__[att] = val
 
-    def setFieldGetAction(self, field, action):
+    def setFieldGetAction(self, field, v, desc):
         if not self._field.has_key(field):
-            self._field[field] = [None, None]
-        self._field[field][0] = action
+            self._field[field] = {'eget': v, 'eput': None, 'desc': desc}
+        else:
+            self._field[field]['eget'] = v
+            self._field[field]['desc'] = desc
 
-    def setFieldPutAction(self, field, action):
+    def setFieldPutAction(self, field, v, desc):
         if not self._field.has_key(field):
-            self._field[field] = [None, None]
-        self._field[field][1] = action
+            self._field[field] = {'eget': None, 'eput': v, 'desc': desc}
+        else:
+            self._field[field]['eput'] = v
+            self._field[field]['desc'] = v
 
     def fields(self):
         return self._field.keys()
 
     def updateCfsProperties(self, pv, prpt):
         AbstractElement.updateCfsProperties(self, prpt)
-        field = prpt.get('field', None)
         
     def updateCfsTags(self, pv, tags):
         AbstractElement.updateCfsTags(self, tags)
-        if not pv in self.pvtags.keys():
-            self.pvtags[pv] = set([])
-        self.pvtags[pv].update(tags)
+        if not pv in self._pvtags.keys():
+            self._pvtags[pv] = set([])
+        self._pvtags[pv].update(tags)
 
     def updateCfsRecord(self, pv, prpt, tags):
         AbstractElement.updateCfsProperties(self, prpt)
         AbstractElement.updateCfsTags(self, tags)
 
-        if not pv in self.pvtags.keys(): self.pvtags[pv] = set([])
-        self.pvtags[pv].update(tags)
+        if not pv in self._pvtags.keys(): self._pvtags[pv] = set([])
+        self._pvtags[pv].update(tags)
 
-        
-    def getValues(self, tags = []):
-        tagset = set(tags)
-        ret = []
-        for f,x,desc in self._status:
-            if not self.pvtags[x].issuperset(tagset): continue
-            ret.append(f(x))
-        if len(ret) == 0: return None
-        elif len(ret) == 1: return ret[0]
-        else: return ret
+

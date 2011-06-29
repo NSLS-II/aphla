@@ -88,7 +88,7 @@ def createLatticeFromCf(cfsurl, **kwargs):
         elem = lat._find_element(name=name)
         if not elem:
             #print prpt
-            elem = Element(**prpt)
+            elem = Element(eget=caget, eput=caput, **prpt)
             lat.appendElement(elem)
         else:
             #print prpt
@@ -96,14 +96,10 @@ def createLatticeFromCf(cfsurl, **kwargs):
         # update element with new
         tags = c.getTags()
         elem.updateCfsTags(pv, tags)
-        if HLA_TAG_EGET in tags:
-            elem.appendEget((caget, pv, "%s %s" % \
-                                 (prpt['handle'], HLA_TAG_EGET)))
-        if HLA_TAG_EPUT in tags:
-            elem.appendEput((caput, pv, "%s %s" % \
-                                 (prpt['handle'], HLA_TAG_EPUT)))
+        if HLA_TAG_EGET in tags: elem.addEGet(pv)
+        if HLA_TAG_EPUT in tags: elem.addEPut(pv)
         #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
-        elem.appendStatusPv((caget, pv, prpt['handle']))
+        #elem.appendStatusPv((caget, pv, prpt['handle']))
         #print name, ""
 
     # group info is a redundant info, needs rebuild based on each element
@@ -125,7 +121,7 @@ def createLatticeFromCf(cfsurl, **kwargs):
 def initNSLS2VSR():
     # are we using virtual ac
     VIRTAC = True
-
+    #print "= initializing NSLS2 VSR"
     INF = 1e30
     ORBIT_WAIT=8
     NETWORK_DOWN=False
@@ -151,17 +147,17 @@ def initNSLS2VSR():
     #_lat = _lattice_dict['LTB']
 
     # create virtual element BPMX and BPMY
-    bpmx = Element(**{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput, **{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []
-    bpmy = Element(**{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput, **{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['LTB'].getElements('BPM'):
-        for pv,t in e.pvtags.items():
+        for pv,t in e._pvtags.items():
             if 'aphla.x' in t:
-                bpmx.appendEget((caget, pv, e.name))
+                bpmx.addEGet(pv)
                 bpmx.sb.append(e.sb)
             if 'aphla.y' in t:
-                bpmy.appendEget((caget, pv, e.name))
+                bpmy.addEGet(pv)
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['LTB'].appendElement(bpmx)
@@ -172,17 +168,17 @@ def initNSLS2VSR():
     _lattice_dict['SR'] = createLatticeFromCf(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
     _lattice_dict['SR'].mode = 'channelfinder-SR'
-    bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []
-    bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['SR'].getElements('BPM'):
-        for pv,t in e.pvtags.items():
+        for pv,t in e._pvtags.items():
             if 'aphla.x' in t and HLA_TAG_EGET in t:
-                bpmx.appendEget((caget, pv, e.name))
+                bpmx.addEGet(pv)
                 bpmx.sb.append(e.sb)
             if 'aphla.y' in t and HLA_TAG_EGET in t:
-                bpmy.appendEget((caget, pv, e.name))
+                bpmy.addEGet(pv)
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['SR'].appendElement(bpmx)
@@ -228,7 +224,7 @@ def createLatticeFromTxt(f, **kwargs):
                       re.split(r'\s*,\s*', rawprpt) if len(k.split('=')) > 1])
         prpt = dict((CFS_MAP[k], v) for k,v in prpt0.iteritems())
         prpt['sb'] = float(prpt['se']) - float(prpt['length'])
-        tags = set(re.split(r'\s*,\s*', rawtag))
+        tags = set(re.split(r'\s*,\s*', rawtag.strip()))
         
         # match against pvname and tag
         if not fnmatch(name=rawpv.strip(), pat=pvname):
@@ -247,30 +243,24 @@ def createLatticeFromTxt(f, **kwargs):
         
         if not elem:
             #print pv, prpt
-            elem = Element(**prpt)
+            elem = Element(eget=caget, eput=caput, **prpt)
             lat.appendElement(elem)
         else:
             elem.updateCfsProperties(pv, prpt)
         # update element with new
         elem.updateCfsTags(pv, tags)
-        if HLA_TAG_EGET in tags:
-            elem.appendEget((caget, pv, "%s %s" % \
-                                 (prpt['handle'], HLA_TAG_EGET)))
-        if HLA_TAG_EPUT in tags:
-            elem.appendEput((caput, pv, "%s %s" % \
-                                 (prpt['handle'], HLA_TAG_EPUT)))
+        if HLA_TAG_EGET in tags: elem.addEGet(pv)
+        if HLA_TAG_EPUT in tags: elem.addEPut(pv)
         #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
-        elem.appendStatusPv((caget, pv, prpt['handle']))
+        #elem.appendStatusPv((caget, pv, prpt['handle']))
         #print name, ""
         if prpt.has_key('field'):
             if not prpt.has_key('handle'):
                 pass
-            elif prpt['handle'] == 'READBACK':
-                elem.setFieldGetAction(prpt['field'],
-                                       (caget, pv, prpt['handle']))
-            elif prpt['handle'] == 'SETPOINT':
-                elem.setFieldPutAction(prpt['field'],
-                                       (caput, pv, prpt['handle']))
+            elif prpt['handle'].upper() == 'READBACK':
+                elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
+            elif prpt['handle'].upper() == 'SETPOINT':
+                elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
@@ -285,6 +275,7 @@ def createLatticeFromTxt(f, **kwargs):
 def initNSLS2VSRTxt(data = ''):
     # are we using virtual ac
     VIRTAC = True
+    #print "= initializing NSLS2 VSR Txt"
 
     global HLA_TAG_EGET, HLA_TAG_EPUT
     HLA_TAG_EGET='aphla.eget'
@@ -304,17 +295,17 @@ def initNSLS2VSRTxt(data = ''):
     global _lat, _lattice_dict
     _lattice_dict['LTB-txt'] = createLatticeFromTxt(
         cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
-    bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
-    bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['LTB-txt'].getElements('BPM'):
-        for pv,t in e.pvtags.items(): 
+        for pv,t in e._pvtags.items(): 
             if 'aphla.x' in t and HLA_TAG_EGET in t:
-                bpmx.appendEget((caget, pv, e.name))
+                bpmx.addEGet(pv)
                 bpmx.sb.append(e.sb)  
             if 'aphla.y' in t and HLA_TAG_EGET in t:
-                bpmy.appendEget((caget, pv, e.name))
+                bpmy.addEGet(pv)
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['LTB-txt'].appendElement(bpmx)
@@ -323,17 +314,17 @@ def initNSLS2VSRTxt(data = ''):
     _lattice_dict['SR-txt'] = createLatticeFromTxt(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
     # create virtual bpms
-    bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
-    bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['SR-txt'].getElements('BPM'):
-        for pv,t in e.pvtags.items(): 
+        for pv,t in e._pvtags.items(): 
             if 'aphla.x' in t and HLA_TAG_EGET in t:
-                bpmx.appendEget((caget, pv, e.name))
+                bpmx.addEGet(pv)
                 bpmx.sb.append(e.sb)  
             if 'aphla.y' in t and HLA_TAG_EGET in t:
-                bpmy.appendEget((caget, pv, e.name))
+                bpmy.addEGet(pv)
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['SR-txt'].appendElement(bpmx)

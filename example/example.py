@@ -1,15 +1,24 @@
 '''
 '''
 
-import time
+import time, sys, os, re
 import hla
 import matplotlib.pylab as plt
 
 hla.machines.initNSLS2VSRTxt()
 hla.machines.initNSLS2VSRTwiss()
 
+def ex01():
+    hla.machines.use('LTB-txt')
+    elem = hla.getElements('P1')
+    print elem._field
+    print hla.getOrbit()
 
 if __name__ == '__main__':
+
+    ex01()
+    sys.exit(0)
+
     print "reset the trims:"
     trim1 = [e.pv(tags=[hla.machines.HLA_TAG_X, hla.machines.HLA_TAG_EPUT])
              for e in hla.getElements('HCOR')]

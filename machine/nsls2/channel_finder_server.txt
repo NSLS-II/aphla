@@ -3493,93 +3493,93 @@ SR:C30-MG:G06B{VCor:L1}Fld-SP; handle=SETPOINT, cell=C30, devName=CL1G6C30B, ele
 SR:C30-MG:G06B{VCor:L2}Fld-I; handle=READBACK, cell=C30, devName=CL2G6C30B, elemName=CYL2G6C30B, elemField=y, elemType=VCOR, girder=G6, length=0.2, ordinal=85, sEnd=20.8925, symmetry=B;  aphla.eget, aphla.y
 SR:C30-MG:G06B{VCor:L2}Fld-SP; handle=SETPOINT, cell=C30, devName=CL2G6C30B, elemName=CYL2G6C30B, elemField=y, elemType=VCOR, girder=G6, length=0.2, ordinal=85, sEnd=20.8925, symmetry=B;  aphla.eput, aphla.y
 #   read back           ;             Properties; Tag
-LTB:BI{BPM:1}SA:X-I;  handle=readback, ordinal= 3,  elemName=P1, elemField=x, devName=P1,length=0.16, sEnd=0.258044, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
-LTB:BI{BPM:1}SA:Y-I;  handle=readback, ordinal= 3,  elemName=P1, elemField=y, devName=P1,length=0.16, sEnd=0.258044, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{HCor:1}Fld-I;  handle=readback, ordinal= 9,  elemName=CX1, elemField=x, devName=C1,length=0.15, sEnd=0.642092, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
-LTB:MG{VCor:1}Fld-I;  handle=readback, ordinal= 10,  elemName=CY1, elemField=y, devName=C1,length=0.15, sEnd=0.642092, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Quad:1}Fld-I;  handle=readback, ordinal= 13,  elemName=Q1, devName=Q1,length=0.15, sEnd=0.839362, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{Quad:2}Fld-I;  handle=readback, ordinal= 17,  elemName=Q2, devName=Q2,length=0.15, sEnd=1.233562, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{Quad:3}Fld-I;  handle=readback, ordinal= 19,  elemName=Q3, devName=Q3,length=0.15, sEnd=1.627498, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{HCor:2}Fld-I;  handle=readback, ordinal= 22,  elemName=CX2, elemField=x, devName=C2,length=0.15, sEnd=1.8186, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
-LTB:MG{VCor:2}Fld-I;  handle=readback, ordinal= 23,  elemName=CY2, elemField=y, devName=C2,length=0.15, sEnd=1.8186, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Bend:1}Fld-I;  handle=readback, ordinal= 27,  elemName=B1, devName=B1,length=0.35, sEnd=2.454754, elemType=BEND, system=LTB  ; aphla.eget
-LTB:MG{Quad:4}Fld-I;  handle=readback, ordinal= 29,  elemName=Q4, devName=Q4,length=0.15, sEnd=3.364591, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{HCor:3}Fld-I;  handle=readback, ordinal= 32,  elemName=CX3, elemField=x, devName=C3,length=0.2, sEnd=4.861117, elemType=HCOR,  system=LTB  ; aphla.eget, aphla.x
-LTB:MG{VCor:3}Fld-I;  handle=readback, ordinal= 33,  elemName=CY3, elemField=y, devName=C3,length=0.2, sEnd=4.861117, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Quad:5}Fld-I;  handle=readback, ordinal= 36,  elemName=Q5, devName=Q5,length=0.25, sEnd=5.404298, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:BI{BPM:2}SA:X-I;  handle=readback, ordinal= 40,  elemName=P2, elemField=x, devName=P2,length=0.16, sEnd=5.933728, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
-LTB:BI{BPM:2}SA:Y-I;  handle=readback, ordinal= 40,  elemName=P2, elemField=y, devName=P2,length=0.16, sEnd=5.933728, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Quad:6}Fld-I;  handle=readback, ordinal= 47,  elemName=Q6, devName=Q6,length=0.25, sEnd=7.344132, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{HCor:4}Fld-I;  handle=readback, ordinal= 50,  elemName=CX4, elemField=x, devName=C4,length=0.2, sEnd=7.861414, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
-LTB:MG{VCor:4}Fld-I;  handle=readback, ordinal= 51,  elemName=CY4, elemField=y, devName=C4,length=0.2, sEnd=7.861414, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Bend:2}Fld-I;  handle=readback, ordinal= 54,  elemName=B2, devName=B2,length=0.35, sEnd=8.454135, elemType=BEND, system=LTB  ; aphla.eget
-LTB:MG{Quad:7}Fld-I;  handle=readback, ordinal= 57,  elemName=Q7, devName=Q7,length=0.15, sEnd=9.481803, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{Quad:8}Fld-I;  handle=readback, ordinal= 59,  elemName=Q8, devName=Q8,length=0.15, sEnd=10.03576, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{Quad:9}Fld-I;  handle=readback, ordinal= 63,  elemName=Q9, devName=Q9,length=0.15, sEnd=11.02652, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{HCor:5}Fld-I;  handle=readback, ordinal= 66,  elemName=CX5, elemField=x, devName=C5,length=0.15, sEnd=11.21483, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
-LTB:MG{VCor:5}Fld-I;  handle=readback, ordinal= 67,  elemName=CY5, elemField=y, devName=C5,length=0.15, sEnd=11.21483, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
-LTB:BI{BPM:3}SA:X-I;  handle=readback, ordinal= 71,  elemName=P3, elemField=x, devName=P3,length=0.16, sEnd=11.43301, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
-LTB:BI{BPM:3}SA:Y-I;  handle=readback, ordinal= 71,  elemName=P3, elemField=y, devName=P3,length=0.16, sEnd=11.43301, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Bend:3}Fld-I;  handle=readback, ordinal= 79,  elemName=B3, devName=B3,length=0.35, sEnd=13.68857, elemType=BEND, system=LTB  ; aphla.eget
-LTB:BI{BPM:4}SA:X-I;  handle=readback, ordinal= 82,  elemName=P4, elemField=x, devName=P4,length=0.16, sEnd=13.99277, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
-LTB:BI{BPM:4}SA:Y-I;  handle=readback, ordinal= 82,  elemName=P4, elemField=y, devName=P4,length=0.16, sEnd=13.99277, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Quad:10}Fld-I;   handle=readback, ordinal= 87,  elemName=Q10, devName=Q10,  length=0.15, sEnd=14.6631, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{Bend:4}Fld-I;   handle=readback, ordinal= 89,  elemName=B4, devName=B4,length=0.35, sEnd=15.83762, elemType=BEND, system=LTB  ; aphla.eget
-LTB:BI{BPM:5}SA:X-I;  handle=readback, ordinal= 92,  elemName=P5, elemField=x, devName=P5,length=0.16, sEnd=16.14178, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
-LTB:BI{BPM:5}SA:Y-I;  handle=readback, ordinal= 92,  elemName=P5, elemField=y, devName=P5,length=0.16, sEnd=16.14178, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{HCor:6}Fld-I;  handle=readback, ordinal= 96,  elemName=CX6, elemField=x, devName=C6,length=0.15, sEnd=16.39698, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
-LTB:MG{VCor:6}Fld-I;  handle=readback, ordinal= 97,  elemName=CY6, elemField=y, devName=C6,length=0.15, sEnd=16.39698, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Quad:11}Fld-I;   handle=readback, ordinal= 100,  elemName=Q11, devName=Q11,  length=0.15, sEnd=16.74827, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{Quad:12}Fld-I;   handle=readback, ordinal= 102,  elemName=Q12, devName=Q12,  length=0.15, sEnd=17.66527, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{HCor:7}Fld-I;  handle=readback, ordinal= 105,  elemName=CX7, elemField=x, devName=C7,length=0.15, sEnd=18.11317, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
-LTB:MG{VCor:7}Fld-I;  handle=readback, ordinal= 106,  elemName=CY7, elemField=y, devName=C7,length=0.15, sEnd=18.11317, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Quad:13}Fld-I;   handle=readback, ordinal= 109,  elemName=Q13, devName=Q13,  length=0.15, sEnd=18.58237, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{Quad:14}Fld-I;   handle=readback, ordinal= 117,  elemName=Q14, devName=Q14,  length=0.15, sEnd=19.49937, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{Quad:15}Fld-I;   handle=readback, ordinal= 119,  elemName=Q15, devName=Q15,  length=0.15, sEnd=20.41637, elemType=QUAD, system=LTB  ; aphla.eget
-LTB:MG{HCor:8}Fld-I;  handle=readback, ordinal= 122,  elemName=CX8, elemField=x, devName=C8,length=0.15, sEnd=20.67106, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
-LTB:MG{VCor:8}Fld-I;  handle=readback, ordinal= 123,  elemName=CY8, elemField=y, devName=C8,length=0.15, sEnd=20.67106, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
-LTB:BI{BPM:6}SA:X-I;  handle=readback, ordinal= 127,  elemName=P6, elemField=x, devName=P6,length=0.16, sEnd=21.5368, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
-LTB:BI{BPM:6}SA:Y-I;  handle=readback, ordinal= 127,  elemName=P6, elemField=y, devName=P6,length=0.16, sEnd=21.5368, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Bend:P1SI}Fld-I; handle=readback, ordinal= 130,  elemName=SP1SI, devName=SP1SI, length=0.75, sEnd=22.99876, elemType=BEND, system=LTB  ; aphla.eget
-LTB:MG{Bend:U3SI}Fld-I; handle=readback, ordinal= 133,  elemName=BU3SI, devName=BU3SI, length=0.2, sEnd=24.38856, elemType=BEND, system=LTB  ; aphla.eget
-LTB:BI{BPM:2SI}SA:X-I; handle=readback, ordinal= 136,  elemName=P2SI, elemField=x, devName=P2SI,length=0.09, sEnd=25.75888, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
-LTB:BI{BPM:2SI}SA:Y-I; handle=readback, ordinal= 136,  elemName=P2SI, elemField=y, devName=P2SI,length=0.09, sEnd=25.75888, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
-LTB:MG{Bend:U4SI}Fld-I; handle=readback, ordinal= 139,  elemName=BU4SI, devName=BU4SI, length=0.2, sEnd=26.5139, elemType=BEND, system=LTB  ; aphla.eget
-LTB:MG{HCor:1}Fld-SP;  handle=setpoint, ordinal= 9,  elemName=CX1, elemField=x, devName=C1, length=0.15, sEnd=0.642092, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x 
-LTB:MG{VCor:1}Fld-SP;  handle=setpoint, ordinal= 10,  elemName=CY1, elemField=y, devName=C1, length=0.15, sEnd=0.642092, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y          
-LTB:MG{Quad:1}Fld-SP;  handle=setpoint, ordinal= 13,  elemName=Q1, devName=Q1, length=0.15, sEnd=0.839362, elemType=QUAD, system=LTB  ; aphla.eput
-LTB:MG{Quad:2}Fld-SP;  handle=setpoint, ordinal= 17,  elemName=Q2, devName=Q2, length=0.15, sEnd=1.233562, elemType=QUAD, system=LTB  ; aphla.eput
-LTB:MG{Quad:3}Fld-SP;  handle=setpoint, ordinal= 19,  elemName=Q3, devName=Q3, length=0.15, sEnd=1.627498, elemType=QUAD, system=LTB  ; aphla.eput                 
-LTB:MG{HCor:2}Fld-SP;  handle=setpoint, ordinal= 22,  elemName=CX2, elemField=x, devName=C2, length=0.15, sEnd=1.8186, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x          
-LTB:MG{VCor:2}Fld-SP;  handle=setpoint, ordinal= 23,  elemName=CY2, elemField=y, devName=C2, length=0.15, sEnd=1.8186, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y          
-LTB:MG{Bend:1}Fld-SP;  handle=setpoint, ordinal= 27,  elemName=B1, devName=B1, length=0.35, sEnd=2.454754, elemType=BEND, system=LTB  ; aphla.eput                 
-LTB:MG{Quad:4}Fld-SP;  handle=setpoint, ordinal= 29,  elemName=Q4, devName=Q4, length=0.15, sEnd=3.364591, elemType=QUAD, system=LTB  ; aphla.eput                 
-LTB:MG{HCor:3}Fld-SP;  handle=setpoint, ordinal= 32,  elemName=CX3, elemField=x, devName=C3, length=0.2, sEnd=4.861117, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x          
-LTB:MG{VCor:3}Fld-SP;  handle=setpoint, ordinal= 33,  elemName=CY3, elemField=y, devName=C3, length=0.2, sEnd=4.861117, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y          
-LTB:MG{Quad:5}Fld-SP;  handle=setpoint, ordinal= 36,  elemName=Q5, devName=Q5, length=0.25, sEnd=5.404298, elemType=QUAD, system=LTB  ; aphla.eput                         
-LTB:MG{Quad:6}Fld-SP;  handle=setpoint, ordinal= 47,  elemName=Q6, devName=Q6, length=0.25, sEnd=7.344132, elemType=QUAD, system=LTB  ; aphla.eput              
-LTB:MG{HCor:4}Fld-SP;  handle=setpoint, ordinal= 50,  elemName=CX4, elemField=x, devName=C4, length=0.2, sEnd=7.861414, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
-LTB:MG{VCor:4}Fld-SP;  handle=setpoint, ordinal= 51,  elemName=CY4, elemField=y, devName=C4, length=0.2, sEnd=7.861414, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
-LTB:MG{Bend:2}Fld-SP;  handle=setpoint, ordinal= 54,  elemName=B2, devName=B2, length=0.35, sEnd=8.454135, elemType=BEND, system=LTB  ; aphla.eput              
-LTB:MG{Quad:7}Fld-SP;  handle=setpoint, ordinal= 57,  elemName=Q7, devName=Q7, length=0.15, sEnd=9.481803, elemType=QUAD, system=LTB  ; aphla.eput              
-LTB:MG{Quad:8}Fld-SP;  handle=setpoint, ordinal= 59,  elemName=Q8, devName=Q8, length=0.15, sEnd=10.03576, elemType=QUAD, system=LTB  ; aphla.eput              
-LTB:MG{Quad:9}Fld-SP;  handle=setpoint, ordinal= 63,  elemName=Q9, devName=Q9, length=0.15, sEnd=11.02652, elemType=QUAD, system=LTB  ; aphla.eput              
-LTB:MG{HCor:5}Fld-SP;  handle=setpoint, ordinal= 66,  elemName=CX5, elemField=x, devName=C5, length=0.15, sEnd=11.21483, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
-LTB:MG{VCor:5}Fld-SP;  handle=setpoint, ordinal= 67,  elemName=CY5, elemField=y, devName=C5, length=0.15, sEnd=11.21483, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
-LTB:MG{Bend:3}Fld-SP;  handle=setpoint, ordinal= 79,  elemName=B3, devName=B3, length=0.35, sEnd=13.68857, elemType=BEND, system=LTB  ; aphla.eput              
-LTB:MG{Quad:10}Fld-SP; handle=setpoint, ordinal= 87,  elemName=Q10, devName=Q10, length=0.15, sEnd=14.6631, elemType=QUAD, system=LTB  ; aphla.eput       
-LTB:MG{Bend:4}Fld-SP; handle=setpoint, ordinal= 89,  elemName=B4, devName=B4, length=0.35, sEnd=15.83762, elemType=BEND, system=LTB  ; aphla.eput         
-LTB:MG{HCor:6}Fld-SP;   handle=setpoint, ordinal= 96,  elemName=CX6, elemField=x, devName=C6, length=0.15, sEnd=16.39698, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
-LTB:MG{VCor:6}Fld-SP;   handle=setpoint, ordinal= 97,  elemName=CY6, elemField=y, devName=C6, length=0.15, sEnd=16.39698, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
-LTB:MG{Quad:11}Fld-SP; handle=setpoint, ordinal= 100,  elemName=Q11, devName=Q11, length=0.15, sEnd=16.74827, elemType=QUAD, system=LTB  ; aphla.eput            
-LTB:MG{Quad:12}Fld-SP; handle=setpoint, ordinal= 102,  elemName=Q12, devName=Q12, length=0.15, sEnd=17.66527, elemType=QUAD, system=LTB  ; aphla.eput            
-LTB:MG{HCor:7}Fld-SP;   handle=setpoint, ordinal= 105,  elemName=CX7, elemField=x, devName=C7, length=0.15, sEnd=18.11317, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
-LTB:MG{VCor:7}Fld-SP;   handle=setpoint, ordinal= 106,  elemName=CY7, elemField=y, devName=C7, length=0.15, sEnd=18.11317, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
-LTB:MG{Quad:13}Fld-SP; handle=setpoint, ordinal= 109,  elemName=Q13, devName=Q13, length=0.15, sEnd=18.58237, elemType=QUAD, system=LTB  ; aphla.eput            
-LTB:MG{Quad:14}Fld-SP; handle=setpoint, ordinal= 117,  elemName=Q14, devName=Q14, length=0.15, sEnd=19.49937, elemType=QUAD, system=LTB  ; aphla.eput            
-LTB:MG{Quad:15}Fld-SP; handle=setpoint, ordinal= 119,  elemName=Q15, devName=Q15, length=0.15, sEnd=20.41637, elemType=QUAD, system=LTB  ; aphla.eput            
-LTB:MG{HCor:8}Fld-SP;   handle=setpoint, ordinal= 122,  elemName=CX8, elemField=x, devName=C8, length=0.15, sEnd=20.67106, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
-LTB:MG{VCor:8}Fld-SP;   handle=setpoint, ordinal= 123,  elemName=CY8, elemField=y, devName=C8, length=0.15, sEnd=20.67106, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
-LTB:MG{Bend:P1SI}Fld-SP;handle=setpoint, ordinal= 130,  elemName=SP1SI, devName=SP1SI, length=0.75, sEnd=22.99876, elemType=BEND, system=LTB  ; aphla.eput 
-LTB:MG{Bend:U3SI}Fld-SP;handle=setpoint, ordinal= 133,  elemName=BU3SI, devName=BU3SI, length=0.2, sEnd=24.38856, elemType=BEND, system=LTB  ; aphla.eput 
-LTB:MG{Bend:U4SI}Fld-SP;handle=setpoint, ordinal= 139,  elemName=BU4SI, devName=BU4SI, length=0.2, sEnd=26.5139, elemType=BEND, system=LTB  ; aphla.eput
+LTB:BI{BPM:1}SA:X-I;  handle=READBACK, ordinal= 3,  elemName=P1, elemField=x, devName=P1,length=0.16, sEnd=0.258044, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
+LTB:BI{BPM:1}SA:Y-I;  handle=READBACK, ordinal= 3,  elemName=P1, elemField=y, devName=P1,length=0.16, sEnd=0.258044, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{HCor:1}Fld-I;  handle=READBACK, ordinal= 9,  elemName=CX1, elemField=x, devName=C1,length=0.15, sEnd=0.642092, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
+LTB:MG{VCor:1}Fld-I;  handle=READBACK, ordinal= 10,  elemName=CY1, elemField=y, devName=C1,length=0.15, sEnd=0.642092, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Quad:1}Fld-I;  handle=READBACK, ordinal= 13,  elemName=Q1, devName=Q1,length=0.15, sEnd=0.839362, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{Quad:2}Fld-I;  handle=READBACK, ordinal= 17,  elemName=Q2, devName=Q2,length=0.15, sEnd=1.233562, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{Quad:3}Fld-I;  handle=READBACK, ordinal= 19,  elemName=Q3, devName=Q3,length=0.15, sEnd=1.627498, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{HCor:2}Fld-I;  handle=READBACK, ordinal= 22,  elemName=CX2, elemField=x, devName=C2,length=0.15, sEnd=1.8186, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
+LTB:MG{VCor:2}Fld-I;  handle=READBACK, ordinal= 23,  elemName=CY2, elemField=y, devName=C2,length=0.15, sEnd=1.8186, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Bend:1}Fld-I;  handle=READBACK, ordinal= 27,  elemName=B1, devName=B1,length=0.35, sEnd=2.454754, elemType=BEND, system=LTB  ; aphla.eget
+LTB:MG{Quad:4}Fld-I;  handle=READBACK, ordinal= 29,  elemName=Q4, devName=Q4,length=0.15, sEnd=3.364591, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{HCor:3}Fld-I;  handle=READBACK, ordinal= 32,  elemName=CX3, elemField=x, devName=C3,length=0.2, sEnd=4.861117, elemType=HCOR,  system=LTB  ; aphla.eget, aphla.x
+LTB:MG{VCor:3}Fld-I;  handle=READBACK, ordinal= 33,  elemName=CY3, elemField=y, devName=C3,length=0.2, sEnd=4.861117, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Quad:5}Fld-I;  handle=READBACK, ordinal= 36,  elemName=Q5, devName=Q5,length=0.25, sEnd=5.404298, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:BI{BPM:2}SA:X-I;  handle=READBACK, ordinal= 40,  elemName=P2, elemField=x, devName=P2,length=0.16, sEnd=5.933728, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
+LTB:BI{BPM:2}SA:Y-I;  handle=READBACK, ordinal= 40,  elemName=P2, elemField=y, devName=P2,length=0.16, sEnd=5.933728, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Quad:6}Fld-I;  handle=READBACK, ordinal= 47,  elemName=Q6, devName=Q6,length=0.25, sEnd=7.344132, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{HCor:4}Fld-I;  handle=READBACK, ordinal= 50,  elemName=CX4, elemField=x, devName=C4,length=0.2, sEnd=7.861414, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
+LTB:MG{VCor:4}Fld-I;  handle=READBACK, ordinal= 51,  elemName=CY4, elemField=y, devName=C4,length=0.2, sEnd=7.861414, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Bend:2}Fld-I;  handle=READBACK, ordinal= 54,  elemName=B2, devName=B2,length=0.35, sEnd=8.454135, elemType=BEND, system=LTB  ; aphla.eget
+LTB:MG{Quad:7}Fld-I;  handle=READBACK, ordinal= 57,  elemName=Q7, devName=Q7,length=0.15, sEnd=9.481803, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{Quad:8}Fld-I;  handle=READBACK, ordinal= 59,  elemName=Q8, devName=Q8,length=0.15, sEnd=10.03576, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{Quad:9}Fld-I;  handle=READBACK, ordinal= 63,  elemName=Q9, devName=Q9,length=0.15, sEnd=11.02652, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{HCor:5}Fld-I;  handle=READBACK, ordinal= 66,  elemName=CX5, elemField=x, devName=C5,length=0.15, sEnd=11.21483, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
+LTB:MG{VCor:5}Fld-I;  handle=READBACK, ordinal= 67,  elemName=CY5, elemField=y, devName=C5,length=0.15, sEnd=11.21483, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
+LTB:BI{BPM:3}SA:X-I;  handle=READBACK, ordinal= 71,  elemName=P3, elemField=x, devName=P3,length=0.16, sEnd=11.43301, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
+LTB:BI{BPM:3}SA:Y-I;  handle=READBACK, ordinal= 71,  elemName=P3, elemField=y, devName=P3,length=0.16, sEnd=11.43301, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Bend:3}Fld-I;  handle=READBACK, ordinal= 79,  elemName=B3, devName=B3,length=0.35, sEnd=13.68857, elemType=BEND, system=LTB  ; aphla.eget
+LTB:BI{BPM:4}SA:X-I;  handle=READBACK, ordinal= 82,  elemName=P4, elemField=x, devName=P4,length=0.16, sEnd=13.99277, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
+LTB:BI{BPM:4}SA:Y-I;  handle=READBACK, ordinal= 82,  elemName=P4, elemField=y, devName=P4,length=0.16, sEnd=13.99277, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Quad:10}Fld-I;   handle=READBACK, ordinal= 87,  elemName=Q10, devName=Q10,  length=0.15, sEnd=14.6631, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{Bend:4}Fld-I;   handle=READBACK, ordinal= 89,  elemName=B4, devName=B4,length=0.35, sEnd=15.83762, elemType=BEND, system=LTB  ; aphla.eget
+LTB:BI{BPM:5}SA:X-I;  handle=READBACK, ordinal= 92,  elemName=P5, elemField=x, devName=P5,length=0.16, sEnd=16.14178, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
+LTB:BI{BPM:5}SA:Y-I;  handle=READBACK, ordinal= 92,  elemName=P5, elemField=y, devName=P5,length=0.16, sEnd=16.14178, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{HCor:6}Fld-I;  handle=READBACK, ordinal= 96,  elemName=CX6, elemField=x, devName=C6,length=0.15, sEnd=16.39698, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
+LTB:MG{VCor:6}Fld-I;  handle=READBACK, ordinal= 97,  elemName=CY6, elemField=y, devName=C6,length=0.15, sEnd=16.39698, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Quad:11}Fld-I;   handle=READBACK, ordinal= 100,  elemName=Q11, devName=Q11,  length=0.15, sEnd=16.74827, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{Quad:12}Fld-I;   handle=READBACK, ordinal= 102,  elemName=Q12, devName=Q12,  length=0.15, sEnd=17.66527, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{HCor:7}Fld-I;  handle=READBACK, ordinal= 105,  elemName=CX7, elemField=x, devName=C7,length=0.15, sEnd=18.11317, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
+LTB:MG{VCor:7}Fld-I;  handle=READBACK, ordinal= 106,  elemName=CY7, elemField=y, devName=C7,length=0.15, sEnd=18.11317, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Quad:13}Fld-I;   handle=READBACK, ordinal= 109,  elemName=Q13, devName=Q13,  length=0.15, sEnd=18.58237, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{Quad:14}Fld-I;   handle=READBACK, ordinal= 117,  elemName=Q14, devName=Q14,  length=0.15, sEnd=19.49937, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{Quad:15}Fld-I;   handle=READBACK, ordinal= 119,  elemName=Q15, devName=Q15,  length=0.15, sEnd=20.41637, elemType=QUAD, system=LTB  ; aphla.eget
+LTB:MG{HCor:8}Fld-I;  handle=READBACK, ordinal= 122,  elemName=CX8, elemField=x, devName=C8,length=0.15, sEnd=20.67106, elemType=HCOR, system=LTB  ; aphla.eget, aphla.x
+LTB:MG{VCor:8}Fld-I;  handle=READBACK, ordinal= 123,  elemName=CY8, elemField=y, devName=C8,length=0.15, sEnd=20.67106, elemType=VCOR, system=LTB  ; aphla.eget, aphla.y
+LTB:BI{BPM:6}SA:X-I;  handle=READBACK, ordinal= 127,  elemName=P6, elemField=x, devName=P6,length=0.16, sEnd=21.5368, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
+LTB:BI{BPM:6}SA:Y-I;  handle=READBACK, ordinal= 127,  elemName=P6, elemField=y, devName=P6,length=0.16, sEnd=21.5368, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Bend:P1SI}Fld-I; handle=READBACK, ordinal= 130,  elemName=SP1SI, devName=SP1SI, length=0.75, sEnd=22.99876, elemType=BEND, system=LTB  ; aphla.eget
+LTB:MG{Bend:U3SI}Fld-I; handle=READBACK, ordinal= 133,  elemName=BU3SI, devName=BU3SI, length=0.2, sEnd=24.38856, elemType=BEND, system=LTB  ; aphla.eget
+LTB:BI{BPM:2SI}SA:X-I; handle=READBACK, ordinal= 136,  elemName=P2SI, elemField=x, devName=P2SI,length=0.09, sEnd=25.75888, elemType=BPM, system=LTB  ; aphla.eget, aphla.x
+LTB:BI{BPM:2SI}SA:Y-I; handle=READBACK, ordinal= 136,  elemName=P2SI, elemField=y, devName=P2SI,length=0.09, sEnd=25.75888, elemType=BPM, system=LTB  ; aphla.eget, aphla.y
+LTB:MG{Bend:U4SI}Fld-I; handle=READBACK, ordinal= 139,  elemName=BU4SI, devName=BU4SI, length=0.2, sEnd=26.5139, elemType=BEND, system=LTB  ; aphla.eget
+LTB:MG{HCor:1}Fld-SP;  handle=SETPOINT, ordinal= 9,  elemName=CX1, elemField=x, devName=C1, length=0.15, sEnd=0.642092, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x 
+LTB:MG{VCor:1}Fld-SP;  handle=SETPOINT, ordinal= 10,  elemName=CY1, elemField=y, devName=C1, length=0.15, sEnd=0.642092, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y          
+LTB:MG{Quad:1}Fld-SP;  handle=SETPOINT, ordinal= 13,  elemName=Q1, devName=Q1, length=0.15, sEnd=0.839362, elemType=QUAD, system=LTB  ; aphla.eput
+LTB:MG{Quad:2}Fld-SP;  handle=SETPOINT, ordinal= 17,  elemName=Q2, devName=Q2, length=0.15, sEnd=1.233562, elemType=QUAD, system=LTB  ; aphla.eput
+LTB:MG{Quad:3}Fld-SP;  handle=SETPOINT, ordinal= 19,  elemName=Q3, devName=Q3, length=0.15, sEnd=1.627498, elemType=QUAD, system=LTB  ; aphla.eput                 
+LTB:MG{HCor:2}Fld-SP;  handle=SETPOINT, ordinal= 22,  elemName=CX2, elemField=x, devName=C2, length=0.15, sEnd=1.8186, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x          
+LTB:MG{VCor:2}Fld-SP;  handle=SETPOINT, ordinal= 23,  elemName=CY2, elemField=y, devName=C2, length=0.15, sEnd=1.8186, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y          
+LTB:MG{Bend:1}Fld-SP;  handle=SETPOINT, ordinal= 27,  elemName=B1, devName=B1, length=0.35, sEnd=2.454754, elemType=BEND, system=LTB  ; aphla.eput                 
+LTB:MG{Quad:4}Fld-SP;  handle=SETPOINT, ordinal= 29,  elemName=Q4, devName=Q4, length=0.15, sEnd=3.364591, elemType=QUAD, system=LTB  ; aphla.eput                 
+LTB:MG{HCor:3}Fld-SP;  handle=SETPOINT, ordinal= 32,  elemName=CX3, elemField=x, devName=C3, length=0.2, sEnd=4.861117, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x          
+LTB:MG{VCor:3}Fld-SP;  handle=SETPOINT, ordinal= 33,  elemName=CY3, elemField=y, devName=C3, length=0.2, sEnd=4.861117, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y          
+LTB:MG{Quad:5}Fld-SP;  handle=SETPOINT, ordinal= 36,  elemName=Q5, devName=Q5, length=0.25, sEnd=5.404298, elemType=QUAD, system=LTB  ; aphla.eput                         
+LTB:MG{Quad:6}Fld-SP;  handle=SETPOINT, ordinal= 47,  elemName=Q6, devName=Q6, length=0.25, sEnd=7.344132, elemType=QUAD, system=LTB  ; aphla.eput              
+LTB:MG{HCor:4}Fld-SP;  handle=SETPOINT, ordinal= 50,  elemName=CX4, elemField=x, devName=C4, length=0.2, sEnd=7.861414, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
+LTB:MG{VCor:4}Fld-SP;  handle=SETPOINT, ordinal= 51,  elemName=CY4, elemField=y, devName=C4, length=0.2, sEnd=7.861414, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
+LTB:MG{Bend:2}Fld-SP;  handle=SETPOINT, ordinal= 54,  elemName=B2, devName=B2, length=0.35, sEnd=8.454135, elemType=BEND, system=LTB  ; aphla.eput              
+LTB:MG{Quad:7}Fld-SP;  handle=SETPOINT, ordinal= 57,  elemName=Q7, devName=Q7, length=0.15, sEnd=9.481803, elemType=QUAD, system=LTB  ; aphla.eput              
+LTB:MG{Quad:8}Fld-SP;  handle=SETPOINT, ordinal= 59,  elemName=Q8, devName=Q8, length=0.15, sEnd=10.03576, elemType=QUAD, system=LTB  ; aphla.eput              
+LTB:MG{Quad:9}Fld-SP;  handle=SETPOINT, ordinal= 63,  elemName=Q9, devName=Q9, length=0.15, sEnd=11.02652, elemType=QUAD, system=LTB  ; aphla.eput              
+LTB:MG{HCor:5}Fld-SP;  handle=SETPOINT, ordinal= 66,  elemName=CX5, elemField=x, devName=C5, length=0.15, sEnd=11.21483, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
+LTB:MG{VCor:5}Fld-SP;  handle=SETPOINT, ordinal= 67,  elemName=CY5, elemField=y, devName=C5, length=0.15, sEnd=11.21483, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
+LTB:MG{Bend:3}Fld-SP;  handle=SETPOINT, ordinal= 79,  elemName=B3, devName=B3, length=0.35, sEnd=13.68857, elemType=BEND, system=LTB  ; aphla.eput              
+LTB:MG{Quad:10}Fld-SP; handle=SETPOINT, ordinal= 87,  elemName=Q10, devName=Q10, length=0.15, sEnd=14.6631, elemType=QUAD, system=LTB  ; aphla.eput       
+LTB:MG{Bend:4}Fld-SP; handle=SETPOINT, ordinal= 89,  elemName=B4, devName=B4, length=0.35, sEnd=15.83762, elemType=BEND, system=LTB  ; aphla.eput         
+LTB:MG{HCor:6}Fld-SP;   handle=SETPOINT, ordinal= 96,  elemName=CX6, elemField=x, devName=C6, length=0.15, sEnd=16.39698, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
+LTB:MG{VCor:6}Fld-SP;   handle=SETPOINT, ordinal= 97,  elemName=CY6, elemField=y, devName=C6, length=0.15, sEnd=16.39698, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
+LTB:MG{Quad:11}Fld-SP; handle=SETPOINT, ordinal= 100,  elemName=Q11, devName=Q11, length=0.15, sEnd=16.74827, elemType=QUAD, system=LTB  ; aphla.eput            
+LTB:MG{Quad:12}Fld-SP; handle=SETPOINT, ordinal= 102,  elemName=Q12, devName=Q12, length=0.15, sEnd=17.66527, elemType=QUAD, system=LTB  ; aphla.eput            
+LTB:MG{HCor:7}Fld-SP;   handle=SETPOINT, ordinal= 105,  elemName=CX7, elemField=x, devName=C7, length=0.15, sEnd=18.11317, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
+LTB:MG{VCor:7}Fld-SP;   handle=SETPOINT, ordinal= 106,  elemName=CY7, elemField=y, devName=C7, length=0.15, sEnd=18.11317, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
+LTB:MG{Quad:13}Fld-SP; handle=SETPOINT, ordinal= 109,  elemName=Q13, devName=Q13, length=0.15, sEnd=18.58237, elemType=QUAD, system=LTB  ; aphla.eput            
+LTB:MG{Quad:14}Fld-SP; handle=SETPOINT, ordinal= 117,  elemName=Q14, devName=Q14, length=0.15, sEnd=19.49937, elemType=QUAD, system=LTB  ; aphla.eput            
+LTB:MG{Quad:15}Fld-SP; handle=SETPOINT, ordinal= 119,  elemName=Q15, devName=Q15, length=0.15, sEnd=20.41637, elemType=QUAD, system=LTB  ; aphla.eput            
+LTB:MG{HCor:8}Fld-SP;   handle=SETPOINT, ordinal= 122,  elemName=CX8, elemField=x, devName=C8, length=0.15, sEnd=20.67106, elemType=HCOR, system=LTB  ; aphla.eput, aphla.x       
+LTB:MG{VCor:8}Fld-SP;   handle=SETPOINT, ordinal= 123,  elemName=CY8, elemField=y, devName=C8, length=0.15, sEnd=20.67106, elemType=VCOR, system=LTB  ; aphla.eput, aphla.y       
+LTB:MG{Bend:P1SI}Fld-SP;handle=SETPOINT, ordinal= 130,  elemName=SP1SI, devName=SP1SI, length=0.75, sEnd=22.99876, elemType=BEND, system=LTB  ; aphla.eput 
+LTB:MG{Bend:U3SI}Fld-SP;handle=SETPOINT, ordinal= 133,  elemName=BU3SI, devName=BU3SI, length=0.2, sEnd=24.38856, elemType=BEND, system=LTB  ; aphla.eput 
+LTB:MG{Bend:U4SI}Fld-SP;handle=SETPOINT, ordinal= 139,  elemName=BU4SI, devName=BU4SI, length=0.2, sEnd=26.5139, elemType=BEND, system=LTB  ; aphla.eput
