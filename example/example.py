@@ -10,9 +10,15 @@ hla.machines.initNSLS2VSRTwiss()
 
 def ex01():
     hla.machines.use('LTB-txt')
-    elem = hla.getElements('P1')
-    print elem._field
+    #elem = hla.getElements('P1')
+    #print elem._field
+    #print hla.getOrbit()
+    #print [e.name for e in hla.getNeighbors('PH2G6C25B', 'P*C10*', 2)]
+    #print [e.sb for e in hla.getNeighbors('PH2G6C25B', 'P*C10*', 2)]
     print hla.getOrbit()
+    print hla.getOrbit('P*')
+    print hla.getOrbit('*')
+    print hla.getOrbit('P*C10*')
 
 if __name__ == '__main__':
 

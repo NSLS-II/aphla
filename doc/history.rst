@@ -5,6 +5,8 @@ History
 v0.1.0
 -------
 
+  - orbit.pyw works with new hla
+  - fix bug in getElements, where a copy must be returned instead of pointer.
   - fix bug where "value" blocked by general "field"
   - *correctOrbit* and *correctOrbitPv* works on new lattice infrastructure.
   - separate orm data from orm measurement

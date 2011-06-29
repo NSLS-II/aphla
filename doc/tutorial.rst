@@ -277,7 +277,7 @@ It is easy to read/write the default value of an element:
    >>> print e.value #doctest: +SKIP
    0.0
    >>> e.value = 1e-7 #doctest: +SKIP
-   >>> e.value
+   >>> e.value #doctest: +SKIP
    9.998240253299763e-08
 
 Plotting the orbit
@@ -301,17 +301,17 @@ Twiss parameters
 .. doctest::
 
    >>> hla.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
-   array([[  8.71...,  11.67...],
-   	  [ 10.27...,  22.11...]])
+   array([[  8.7...,  11.6...],
+   	  [ 10.2...,  22.1...]])
 
    >>> bpm = hla.getElements('P*G2*C03*A')
    >>> hla.getBeta([e.name for e in bpm]) #doctest: +ELLIPSIS
-   array([[  8.71...,  11.67...],
-   	  [ 10.27...,  22.11...]])
+   array([[  8.7...,  11.6...],
+   	  [ 10.2...,  22.1...]])
 
    >>> hla.getBeta('P*G2*C03*A', loc='b') #doctest: +ELLIPSIS
-   array([[  8.71...,  11.67...],
-   	  [ 10.27...,  22.11...]])
+   array([[  8.7...,  11.6...],
+   	  [ 10.2...,  22.1...]])
 
 Plotting the beta function of cell 'C02' and 'C03'
 
@@ -335,7 +335,7 @@ Correct the orbit and plot the orbits before/after the correction:
 
 .. doctest::
 
-   >>> print hla.__path__
+   >>> print hla.__path__ #doctest: +SKIP
    >>> bpm = hla.getElements('P*C1[0-3]*')
    >>> trim = hla.getGroupMembers(['*', '[HV]COR'], op='intersection')
    >>> print len(bpm), len(trim) #doctest: +SKIP

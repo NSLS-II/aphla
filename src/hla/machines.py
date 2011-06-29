@@ -132,8 +132,6 @@ def initNSLS2VSR():
     #HLA_CFS_URL = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
     #HLA_CFS_URL = 'http://web01.nsls2.bnl.gov:8080/ChannelFinder'
     cfsurl = HLA_CFS_URL
-    args = {'name': 'SR:*', 'tagName': 'aphla.*'}
-
     if HLA_DEBUG > 0:
         print "# channel finder: %s" % HLA_CFS_URL
 
@@ -143,13 +141,16 @@ def initNSLS2VSR():
     # LTB 
     _lattice_dict['LTB'] = createLatticeFromCf(
         cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
-    _lattice_dict['LTB'].mode = 'channelfinder-LTB'
+    _lattice_dict['LTB'].mode = 'LTB-channelfinder'
+    _lattice_dict['LTB'].loop = False
     #_lat = _lattice_dict['LTB']
 
     # create virtual element BPMX and BPMY
-    bpmx = Element(eget=caget, eput=caput, **{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput,
+                   **{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []
-    bpmy = Element(eget=caget, eput=caput, **{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput,
+                   **{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['LTB'].getElements('BPM'):
         for pv,t in e._pvtags.items():
@@ -167,10 +168,14 @@ def initNSLS2VSR():
     # SR
     _lattice_dict['SR'] = createLatticeFromCf(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
-    _lattice_dict['SR'].mode = 'channelfinder-SR'
-    bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    _lattice_dict['SR'].mode = 'SR-channelfinder'
+    _lattice_dict['SR'].loop = True
+
+    bpmx = Element(eget=caget, eput=caput,
+                   **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []
-    bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput,
+                   **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['SR'].getElements('BPM'):
         for pv,t in e._pvtags.items():
@@ -295,6 +300,8 @@ def initNSLS2VSRTxt(data = ''):
     global _lat, _lattice_dict
     _lattice_dict['LTB-txt'] = createLatticeFromTxt(
         cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
+    _lattice_dict['LTB-txt'].mode = 'LTB-txt'
+    _lattice_dict['LTB-txt'].loop = False
     bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
     bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
@@ -313,6 +320,9 @@ def initNSLS2VSRTxt(data = ''):
 
     _lattice_dict['SR-txt'] = createLatticeFromTxt(
         cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
+    _lattice_dict['SR-txt'].mode = 'SR-text-ver'
+    _lattice_dict['SR-txt'].loop = True
+
     # create virtual bpms
     bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 

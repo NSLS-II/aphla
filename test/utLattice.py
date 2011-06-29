@@ -25,6 +25,24 @@ class TestLattice(unittest.TestCase):
         self.lat = machines.getLattice('SR')
         self.assertTrue(self.lat)
 
+    def test_neighbors(self):
+        bpm = self.lat.getElements('BPM')
+        self.assertTrue(bpm)
+        
+        if len(bpm) >= 5:
+            el = self.lat.getNeighbors(bpm[2].name, 'BPM', 2)
+            self.assertTrue(len(el) == 5)
+            #print [e.name for e in el]
+            #print [e.name for e in bpm[:5]]
+            for i in range(5):
+                self.assertTrue(el[i].name == bpm[i].name,
+                                "%d: %s != %s" % (i, el[i].name, bpm[i].name))
+        elif len(bpm) >= 3:
+            el = self.lat.getNeighbors(bpm[1].name, 'BPM', 1)
+            self.assertTrue(len(el) == 3)
+            for i in range(3): self.assertTrue(el[i].name == bpm[i].name)
+            
+
     #class TestLattice:
     def test_virtualelements(self):
         elem = self.lat.getElements('HLA:*')
@@ -89,6 +107,12 @@ class TestLatticeSr(TestLattice):
         self.lat = machines.getLattice('SR')
         pass
 
+    def test_tunes(self):
+        tx = self.lat.getElements('TUNEX')
+        ty = self.lat.getElements('TUNEY')
+        self.assertTrue(abs(tx.value) > 0)
+        self.assertTrue(abs(ty.value) > 0)
+        
     def test_current(self):
         self.assertTrue(self.lat.hasElement('DCCT'))
         

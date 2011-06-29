@@ -27,8 +27,9 @@ suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeLtbTxt))
 
 suite.addTests(loader.loadTestsFromModule(utTwiss))
 
+suite.addTests(loader.loadTestsFromModule(utOrbit))
+
 #suite.addTests(loader.loadTestsFromModule(utAllPVs))
-#suite.addTests(loader.loadTestsFromModule(utOrbit))
 #suite.addTests(loader.loadTestsFromModule(utOrm))
 
 runner = unittest.TextTestRunner(verbosity=2)

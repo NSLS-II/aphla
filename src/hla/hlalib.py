@@ -29,6 +29,10 @@ def eget(element, full = False, tags = []):
     """
     easier get with element name(s)
 
+    .. warning::
+
+      deprecated
+
     This relies on channel finder service, and searching for "default.eget"
     tag of the element.
 
@@ -37,6 +41,8 @@ def eget(element, full = False, tags = []):
       >>> eget('QM1G4C01B')
       >>> eget(['CXM1G4C01B', 'CYM1G4C01B'])
     """
+    raise DeprecationWarning
+
     # some tags + the "default"
     chtags = [TAG_DEFAULT_GET]
     if tags: chtags.extend(tags)
@@ -80,6 +86,10 @@ def eput(element, value):
     """
     easier put
 
+    .. warning::
+
+      deprecated
+
     This relies on channel finder service, and searching for "default.eput"
     tag of the element.
 
@@ -95,6 +105,8 @@ def eput(element, value):
     - *value*, match the size of *element*
     """
 
+    raise DeprecationWarning
+
     pvls = _cfa.getElementChannels(element, None, [TAG_DEFAULT_PUT])
 
     print pvls
@@ -104,9 +116,9 @@ def eput(element, value):
     else:
         caput(pvls, value)
 
-def reset_trims():
+def _reset_trims():
     """
-    reset all trims in group "TRIMX" and "TRIMY"
+    reset all trims in group "HCOR" and "VCOR"
     """
     trimx = machines._lat.getGroupMembers(['*', 'HCOR'], op='intersection')
     trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
@@ -115,11 +127,10 @@ def reset_trims():
     pvy = [e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
            for e in trimy]
     pv = list(set(pvx + pvy))
-    v = [0]*len(pv)
-    caput(pv, v)
+    caput(pv, 0.0)
 
 
-def levenshtein_distance(first, second):
+def _levenshtein_distance(first, second):
     """Find the Levenshtein distance between two strings."""
     if len(first) > len(second):
         first, second = second, first
@@ -156,32 +167,27 @@ def getElements(group):
       >>> getElements('F*G1C0*')
       >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
 
-    .. seealso:: :func:`~hla.lattice.Lattice.getElements`
+    this calls :func:`~hla.lattice.Lattice.getElements` of the current lattice.
     """
 
     return machines._lat.getElements(group)
 
 def getLocations(group):
     """
-    Get the location of an element or a list of elements
-
-    *elements* is :
-
-    - an element object
-    - an element name
-    - a list of element object
-    - a list of element name
+    Get the location of a group, i.e. a family, an element or a list of
+    elements
 
     Example::
 
-      elem = getElements('BPMX')
-      s = getLocations(elem)
+      >>> s = getLocations('BPM')
+      >>> s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
 
-      s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
+    It has a same input as :func:`getElements` and accepts group name,
+    element name, element name pattern and a list of element names.
     """
     
     elem = getElements(group)
-    if isinstance(elem, list):
+    if isinstance(elem, (list, set, tuple)):
         return [e.sb for e in elem]
     else: return elem.sb
 
@@ -192,18 +198,29 @@ def addGroup(group):
 
     raise *ValueError* if *group* is an illegal name.
 
-    .. seealso:: :func:`~hla.lattice.Lattice.addGroup`
+    it calls :func:`~hla.lattice.Lattice.addGroup` of the current lattice.
     """
     return _lat.addGroup(group)
 
 def removeGroup(group):
     """
-    Remove a group if it is empty
+    Remove a group if it is empty. It calls
+    :func:`~hla.lattice.Lattice.removeGroup` of the current lattice.
     """
     _lat.removeGroup(group)
 
 def addGroupMembers(group, member):
-    """Add a new member to a existing group"""
+    """
+    add new members to an existing group
+
+    ::
+
+      >>> addGroupMembers('HCOR', 'CX1')
+      >>> addGroupMembers('HCOR', ['CX1', 'CX2']) 
+
+    it calls :meth:`~hla.lattice.Lattice.addGroupMember` of the current
+    lattice.
+    """
     if isinstance(member, str):
         _lat.addGroupMember(group, member)
     elif isinstance(member, list):
@@ -213,7 +230,17 @@ def addGroupMembers(group, member):
         raise ValueError("member can only be string or list")
 
 def removeGroupMembers(group, member):
-    """Remove a member from group"""
+    """
+    Remove a member from group
+
+    ::
+
+      >>> removeGroupMembers('HCOR', 'CX1')
+      >>> removeGroupMembers('HCOR', ['CX1', 'CX2'])
+
+    it calls :meth:`~hla.lattice.Lattice.removeGroupMember` of the current
+    lattice.
+    """
     if isinstance(member, str):
         _lat.removeGroupMember(group, member)
     elif isinstance(member, list):
@@ -225,6 +252,8 @@ def getGroups(element = '*'):
     """
     Get all groups own these elements, '*' returns all possible groups,
     since it matches every element
+    
+    it calls :func:`~hla.lattice.Lattice.getGroups` of the current lattice.
     """
     return machines._lat.getGroups(element)
 
@@ -234,6 +263,9 @@ def getGroupMembers(groups, op = 'intersection', **kwargs):
 
     - op = "union", consider elements in the union of the groups
     - op = "intersection", consider elements in the intersect of the groups
+
+    it calls :func:`~hla.lattice.Lattice.getGroupMembers` of the current
+    lattice.
     """
     return machines._lat.getGroupMembers(groups, op, **kwargs)
 
@@ -242,18 +274,40 @@ def getNeighbors(element, group, n = 3):
     Get a list of n elements belongs to group. The list is sorted along s
     (the beam direction).
 
-    .. seealso::
-        
-        :class:`~hla.lattice.Lattice`
-        :meth:`~hla.lattice.Lattice.getNeighbors` For getting list of
-        neighbors. 
+    it calls :meth:`~hla.lattice.Lattice.getNeighbors` of the current
+    lattice to get neighbors.
+
+    ::
+
+      >>> getNeighbors('PM1G4C27B', 'BPM', 2)
+      >>> getNeighbors('PM1G4C27B', 'QUAD', 1)
+      >>> el = hla.getNeighbors('PH2G6C25B', 'P*C10*', 2)
+      >>> [e.name for e in el]
+      ['PL2G6C10B', 'PL1G6C10B', 'PH2G6C25B', 'PH1G2C10A', 'PH2G2C10A']
+      >>> [e.sb for e in el]
+      [284.233, 286.797, 678.903, 268.921, 271.446]
     """
 
     return machines._lat.getNeighbors(element, group, n)
 
 
+def getBeamlineProfile(s1 = 0, s2 = 1e10):
+    """
+    return the beamline profile from s1 to s2
+
+    it calls :meth:`~hla.lattice.Lattice.getBeamlineProfile` of the
+    current lattice.
+    """
+    return machines._lat.getBeamlineProfile(s1, s2)
+
 def getStepSize(element):
-    """Return default stepsize of a given element"""
+    """
+    Return default stepsize of a given element
+
+    .. warning::
+
+      Not implemented
+    """
     raise NotImplementedError()
     return None
 
@@ -263,6 +317,8 @@ def getStepSize(element):
 def getPhase(group, **kwargs):
     """
     get the phase from stored data
+
+    this calls :func:`~hla.twiss.Twiss.getTwiss` of the current twiss data.
     """
     if not machines._twiss: return None
     elem = getElements(group)
@@ -274,7 +330,9 @@ def getPhase(group, **kwargs):
 #
 def getBeta(group, **kwargs):
     """
-    get the beta function from stored data
+    get the beta function from stored data.
+
+    this calls :func:`~hla.twiss.Twiss.getTwiss` of the current twiss data.
     """
     if not machines._twiss: return None
     elem = getElements(group)
@@ -287,7 +345,7 @@ def getDispersion(group, **kwargs):
     """
     get the dispersion
 
-    .. seealso:: :func:`~hla.hlalib.getEta`
+    this calls :func:`~hla.hlalib.getEta`.
     """
     return getEta(group, **kwargs)
 
@@ -295,7 +353,8 @@ def getEta(group, **kwargs):
     """
     get the dispersion from stored data
 
-    .. seealso:: :func:`~hla.lattice.Lattice.getEta`
+    similar to :func:`getBeta`, it calls :func:`~hla.twiss.Twiss.getTwiss`
+    of the current twiss data.
     """
 
     if not machines._twiss: return None
@@ -308,6 +367,10 @@ def getEta(group, **kwargs):
 def getChromaticity(source='machine'):
     """
     get chromaticity
+
+    .. warning::
+
+      Not implemented yet.
     """
     if source == 'machine':
         raise NotImplementedError()
@@ -343,6 +406,10 @@ def getTune(source='machine', plane = 'hv'):
 def getFftTune(plane = 'hv', mode = ''):
     """
     get tune from FFT
+
+    .. warning::
+
+      Not Implemented Yet
     """
     raise NotImplementedError()
     return None
@@ -418,18 +485,12 @@ def saveMode(self, mode, dest):
 def getBpms():
     """
     return a list of bpms object.
+
+    this calls :func:`~hla.lattice.Lattice.getGroupMembers` of current
+    lattice and take a "union".
     """
     return machines._lat.getGroupMembers('BPM', op='union')
 
-def getFullOrbit(group = '*', sequence = None):
-    """Return orbit"""
-    x = caget("SR:C00-Glb:G00{ORBIT:00}RB-X")
-    y = caget("SR:C00-Glb:G00{ORBIT:00}RB-Y")
-    s = caget("SR:C00-Glb:G00{POS:00}RB-S")
-    ret = []
-    for i in range(len(s)):
-        ret.append([s[i], x[i], y[i]])
-    return ret
 
 def getOrbit(pat = '', spos = False):
     """
@@ -445,14 +506,10 @@ def getOrbit(pat = '', spos = False):
 
     The return value is a (n,4) or (n,2) 2D array, where n is the number
     of matched BPMs. The first two columns are x/y orbit, the last two
-    columns are s location for x and y BPMs.
+    columns are s location for x and y BPMs. returns (n,3) 2D array if x/y
+    have same *s* position.
 
     When the element is not found or not a BPM, return NaN in its positon.
-
-    .. warning::
-
-      This depends on channel finder using 'aphla.x', 'aphla.y', 'aphla.eget' tags.
-
     """
     if not pat:
         bpmx = machines._lat.getElements(machines.HLA_VBPMX)
@@ -467,18 +524,24 @@ def getOrbit(pat = '', spos = False):
         ret[:,0] = bpmx.value
         ret[:,1] = bpmy.value
         return ret
+
     # need match the element name
-    if isinstance(pat, (unicode,str)):
+    if isinstance(pat, (unicode, str)):
         elem = [e for e in getBpms() if fnmatch(e.name, pat)]
-        x = [(e.getValues(tags=['aphla.eget', 'aphla.x']), e.getValues(tags=['aphla.y', 'aphla.eget']), e.sb) for e in elem]
-        return np.array(x, 'd')
+        if not elem: return None
+        ret = [[e.x, e.y, e.sb] for e in elem]
     elif isinstance(pat, (list,)):
         elem = machines._lat.getElements(pat)
+        if not elem: return None
+        bpm = [e.name for e in getBpms()]
         ret = []
         for e in elem:
-            if not e or e.family != 'BPM': ret.append([None, None, None])
-            else: ret.append([e.getValues(tags=['aphla.eget', 'aphla.x']), e.getValues(tags=['aphla.eget', 'aphla.y']), e.sb])
-        return np.array(ret, 'd')
+            if not e.name in bpm: ret.append([None, None, None])
+            else: ret.append([e.x, e.y, e.sb])
+    if not ret: return None
+    obt = np.array(ret, 'd')
+    if not spos: return obt[:,:2]
+    else: return obt
 
 
 

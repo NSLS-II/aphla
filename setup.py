@@ -5,6 +5,7 @@ setup(
     #packages = ['hla'],
     package_dir = {'hla': 'src/hla'},
     package_data = {'hla': ['machine/nsls2/*']},
+    scripts=['src/orbit.pyw'],
     py_modules = ['hla.catools', 'hla.machines', 'hla.element', 'hla.lattice',
                   'hla.twiss', 'hla.hlalib', 'hla.rf', 'hla.orbit', 
                   'hla.ormdata', 'hla.aptools'],

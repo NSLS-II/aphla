@@ -173,21 +173,30 @@ class Element(AbstractElement):
     def eput(self):
         return self._eput
 
-    def pv(self, **kwargs):
-        tag = kwargs.get('tag', None)
-        tags = kwargs.get('tags', [])
-        if tag == 'eget' and self._field['value']:
-            return [p[1] for p in self._eget_val]
-        elif tag == 'eput' and self._eput_val:
-            return [p[1] for p in self._eput_val]
-        elif tag == 'status' and self._status:
-            return [p[1] for p in self._status]
-        elif tags:
-            tagset = set(tags)
-            ret = [pv for pv,ts in self.pvtags.iteritems()
+    def _pv_1(self, **kwargs):
+        """One input"""
+        ret = None
+        if kwargs.get('tag', None):
+            tag = kwargs['tag']
+            ret = [pv for pv,ts in self._pvtags.iteritems()
+                       if tag in ts]
+        elif kwargs.get('tags', None):
+            tagset = set(kwargs['tags'])
+            ret = [pv for pv,ts in self._pvtags.iteritems()
                    if tagset.issubset(ts)] 
-            if len(ret) == 1: return ret[0]
-            else: return ret
+        elif kwargs.get('field', None):
+            att = kwargs['field']
+            ret = [self._field[att]['eget'][:], self._field[att]['eput'][:]]
+
+        if not ret: return None
+        elif len(ret) == 1: return ret[0]
+        else: return ret
+            
+    def pv(self, **kwargs):
+        if len(kwargs) == 1:
+            return self._pv_1(**kwargs)
+        elif len(kwargs) == 2:
+            pass
         else: return []
 
     def _insert_in_order(self, lst, v):
