@@ -12,7 +12,7 @@ import utLattice
 import utTwiss
 #import utAllPVs
 #import utOrm
-#import utOrbit
+import utOrbit
 
 loader = unittest.TestLoader()
 
