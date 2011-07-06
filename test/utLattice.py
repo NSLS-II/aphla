@@ -166,24 +166,6 @@ class TestLatticeSr(TestLattice):
                                             op='intersection')
         self.assertTrue(len(el1) == 4)
 
-class TestLatticeSrCf(TestLatticeSr):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSR()
-            machine_initialized = True
-        self.lat = machines.getLattice('SR')
-        
-class TestLatticeSrTxt(TestLatticeSr):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSRTxt()
-            machine_initialized = True
-        self.lat = machines.getLattice('SR-txt')
-
     def test_field(self):
         bpm = self.lat.getElements('BPM')
         self.assertTrue(len(bpm) > 0)
@@ -206,6 +188,24 @@ class TestLatticeSrTxt(TestLatticeSr):
                 self.assertTrue(False,
                                 "AttributeError exception expected")
 
+class TestLatticeSrCf(TestLatticeSr):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            #machines.initNSLS2VSR()
+            machine_initialized = True
+        self.lat = machines.getLattice('SR')
+        
+class TestLatticeSrTxt(TestLatticeSr):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            #machines.initNSLS2VSRTxt()
+            machine_initialized = True
+        self.lat = machines.getLattice('SR-txt')
+
 
 class TestLatticeLtb(TestLattice):
     def setUp(self):
@@ -215,25 +215,6 @@ class TestLatticeLtb(TestLattice):
             #machines.initNSLS2VSR()
             machine_initialized = True
         self.lat  = machines.getLattice('LTB')
-
-
-class TestLatticeLtbCf(TestLatticeLtb):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSR()
-            machine_initialized = True
-        self.lat  = machines.getLattice('LTB')
-
-
-class TestLatticeLtbTxt(TestLatticeLtb):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSRTxt()
-        self.lat = machines.getLattice('LTB-txt')
 
     def test_field(self):
         bpm = self.lat.getElements('BPM')
@@ -256,6 +237,25 @@ class TestLatticeLtbTxt(TestLatticeLtb):
             else:
                 self.assertTrue(False,
                                 "AttributeError exception expected")
+
+
+class TestLatticeLtbCf(TestLatticeLtb):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            #machines.initNSLS2VSR()
+            machine_initialized = True
+        self.lat  = machines.getLattice('LTB')
+
+
+class TestLatticeLtbTxt(TestLatticeLtb):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            #machines.initNSLS2VSRTxt()
+        self.lat = machines.getLattice('LTB-txt')
 
     def test_cor(self):
         hcor = self.lat.getElements('HCOR')

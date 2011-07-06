@@ -77,9 +77,6 @@ def createLatticeFromCf(cfsurl, **kwargs):
                         if CFS_MAP.has_key(k))
         prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
-        # fix BPMX/BPMY for same bpm name
-        if prpt['family'] == u'BPMX' or prpt['family'] == u'BPMY':
-            prpt['family'] = u'BPM'
             
         # skip if this pv has no element name
         if not name: continue
@@ -101,6 +98,14 @@ def createLatticeFromCf(cfsurl, **kwargs):
         #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
         #elem.appendStatusPv((caget, pv, prpt['handle']))
         #print name, ""
+        if prpt.has_key('field'):
+            if not prpt.has_key('handle'):
+                pass
+            elif prpt['handle'].upper() == 'READBACK':
+                elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
+            elif prpt['handle'].upper() == 'SETPOINT':
+                elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
+
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
