@@ -219,7 +219,7 @@ def createLatticeFromTxt(f, **kwargs):
 
     for cl in open(f, 'r').readlines():
         # skip the comment lines
-        if cl.strip().startswith('#'): continue
+        if not cl.strip() or cl.strip().startswith('#'): continue
         # prepare the pv,properties,tags
         try:
             rawpv, rawprpt, rawtag = [r.strip() for r in cl.split(';')]

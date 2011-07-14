@@ -4,6 +4,12 @@
 This script initialized some PVs in channel finder. The PVs are only those
 used by HLA.
 
+To use this script, create a file 'conf.py' similar to the following::
+
+  username = 'your username'
+  password = 'your password'
+
+
 :author: Lingyun Yang
 :date: 2011-05-11 16:22
 """
@@ -11,104 +17,136 @@ used by HLA.
 import os, sys
 import re, time
 
-from channelfinder.core.ChannelFinderClient import ChannelFinderClient
-from channelfinder.core.Channel import Channel, Property, Tag
+import channelfinder
+
+from channelfinder import ChannelFinderClient
+from channelfinder import Channel, Property, Tag
 
 import conf
 
-cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
+cfsurl = 'https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder'
 cfinput = {
     'BaseURL': cfsurl,
     'username': conf.username,
     'password': conf.password}
 
-def add_tag(pv):
+def simple_test():
     cf = ChannelFinderClient(**cfinput)
-    t1=Tag('testtag2', 'lyyang')
-    cf.set(tag=t1)
-    chs = cf.find(name=pv)
-    cf.update(tag=t1, channelName=chs[0].Name)
-    cf.delete(tag=t1, channelName=chs[0].Name)
+    cf.set(property=Property('test-prop1', 'cf-asd', 'v1'))
+    cf.set(property=Property('test-prop2', 'cf-asd', 'v2'))
+    cf.set(property=Property('test-prop3', 'lyyang'))
+    cf.set(property=Property('test-prop4', 'lyyang'))
+    cf.delete(propertyName='test-prop1')
+    cf.delete(propertyName='test-prop3')
 
+    pvname='SR:C00-BI:G00{DCCT:00}CUR-RB'
+    cf.update(property=Property('test-prop2', 'cf-asd', 'v1'),
+              channelName=pvname)
+    cf.delete(propertyName='test-prop2', channelName=pvname)
 
-def add_test_prop(pv):
+def update_cfs_from_txt(txt, subline = 'LTB'):
+    """
+    skip the line if not found the 'subline'
+
+    This is not for importing huge amount of channels. It updates channels
+    one by one.
+
+    The properties are updated as 'cf-asd' account, and tags in 'cf-aphla'
+    """
+
     cf = ChannelFinderClient(**cfinput)
 
-    cf.set(property=Property('testProp1', 'cf-asd'))
-    for p in cf.getAllProperties():
-        print p.Name, p.Owner
-
-    cf.update(channelName = pv, property=Property('testProp1', 'cf-asd'))
-    for ch in cf.find(name=pv):
-        print ch.Name
-        ch.getProperties()
-        print "  ", k, v
-
-
-def test_update(pv):
-    cf = ChannelFinderClient(**cfinput)
-    #cf.set(property=Property('elemField', 'cf-asd', 'x'))
-    #cf.update(property=Property('elemField', 'cf-asd', 'x'))
-    #cf.set(property=Property('elemField', 'cf-asd', 'y'))
-    # clean up
-    cf.update(channelName=pv, property=Property('elemField', 'cf-asd', 'x'))
-    for ch in cf.find(name=pv):
-        print ch.Name
-        for k,v in ch.Properties:
-            print "  ", k, v
-
-
-
-
-def update_cfs_from_txt(txt):
-    cf = ChannelFinderClient(**cfinput)
-    #cf.set(property=Property('elemField', 'cf-asd', 'x'))
-    #cf.update(property=Property('elemField', 'cf-asd', 'x'))
-    #cf.set(property=Property('elemField', 'cf-asd', 'y'))
-    # clean up
-    props = cf.getAllProperties()
-    for p in props: print p.Name, p.Owner, p.Value
+    #for p in props: print p.Name, p.Owner, p.Value
 
     pvs = []
+    
+    for i,line in enumerate(open(txt, 'r').readlines()):
+        if not line.strip(): continue
+        if line.strip().find('#') == 0: continue
+        # skip this line if I did not find 'subline'
+        if line.find(subline) < 0: continue
 
-    for line in open(txt, 'r').readlines():
-        if line.find('LTB') < 0: continue
-        pv, prptlst, tags = [s.strip() for s in line.split(';')]
-        g = re.match(r'.+(elemName)\s*=\s*([a-zA-Z0-9_]+)\s*,', prptlst)
-        prpt, val = g.group(1), g.group(2)
-        print "'%s'" % (pv,), prpt, val
+        # call every time, updated from server. Slow but reliable.
+        allprops = [p.Name for p in cf.getAllProperties()]
+        alltags  = [t.Name for t in cf.getAllTags()]
+
+
+        pv, prptlst, taglst = [s.strip() for s in line.split(';')]
+        prpt = {}
+        for pair in prptlst.split(','):
+            if not pair.strip(): continue
+            if pair.find('=') < 0:
+                print "skipping", pair
+                continue
+            k, v = pair.split('=')
+            prpt[k.strip()] = v.strip()
+        prpts = [Property(k, 'cf-asd', v) for k,v in prpt.iteritems()]
+        tags = [Tag(t.strip(), 'cf-aphla') for t in taglst.split(',') \
+                    if t.strip()]
+        print i, pv, 
+        print [p.Name for p in prpts], [p.Value for p in prpts], [t.Name for t in tags]
+
+        # updating
+        for t in tags:
+            if not t.Name in alltags:
+                print "Adding new tag:", t.Name
+                cf.set(tag=t)
+            try:
+                cf.update(channelName=pv, tag = t)
+            except:
+                print "ERROR: ", pv, t.Name
+
+        for p in prpts:
+            if not p.Name in allprops:
+                print "Adding new property:", p.Name
+                cf.set(property=p)
+            try:
+                cf.update(channelName=pv, property=p)
+            except:
+                print "ERROR: ", pv, p.Name, p.Value
+
+        print '/'.join([p.Name for p in prpts]), \
+            '+'.join([t.Name for t in tags])
+
+
+def renameTags():
+    cf = ChannelFinderClient(**cfinput)
+    #cf.update(tag=Tag('aphla.sys.LTB', 'cf-aphla'),
+    #          originalTagName='aphla.sys.ltb')
+    cf.update(tag=Tag('aphla.sys.LTD1', 'cf-aphla'),
+              originalTagName='aphla.sys.ltd1')
+    cf.update(tag=Tag('aphla.sys.LTD2', 'cf-aphla'),
+              originalTagName='aphla.sys.ltd2')
+
+def updateTags():
+    pvs = []
+    for i,s in enumerate(open(sys.argv[1], 'r').readlines()):
+        if s.find('aphla.sys.SR') < 0: continue
+        pv = s.split(';')[0].strip()
         pvs.append(pv)
-        cf.update(property=Property(prpt, 'cf-asd', val), channelName=pv)
+    cf = ChannelFinderClient(**cfinput)
+    cf.update(tag=Tag('aphla.sys.SR', 'cf-aphla'), channelNames=pvs)
 
-    # for line in open(txt, 'r').readlines():
-    #     if line.find('BPM') < 0: continue
-    #     pv, prptlst, tags = [s.strip() for s in line.split(';')]
-    #     g = re.match(r'.+(elemType)\s*=\s*([a-zA-Z0-9_]+)\s*,', prptlst)
-    #     prpt, val = g.group(1), g.group(2)
-    #     print "'%s'" % (pv,), prpt, val
-    #     pvs.append(pv)
-    #     #cf.update(property=Property(prpt, 'cf-asd', val), channelName=pv)
-    # cf.update(property=Property('elemType', 'cf-asd', 'BPM'), channelNames=pvs)
-
-
-    #for line in open(txt, 'r').readlines():
-    #    if line.find('elemField') < 0: continue
-    #    pv, prptlst, tags = [s.strip() for s in line.split(';')]
-    #    g = re.match(r'.+(elemField)\s*=\s*([a-zA-Z0-9_]+)\s*,', prptlst)
-    #    prpt, val = g.group(1), g.group(2)
-    #    print "'%s'" % (pv,), prpt, val
-    #    cf.update(property=Property(prpt, 'cf-asd', val), channelName=pv)
-    #    #break
+    
+def addNewTags():
+    tagname = 'aphla.sys.SR'
+    cf = ChannelFinderClient(**cfinput)
+    cf.set(tag=Tag(tagname, 'cf-aphla'))
 
 if __name__ == "__main__":
-    #out = 'cfa.txt'
-    #dump_hla_cfa(out)
+    print channelfinder.__file__,
+    print time.ctime(os.path.getmtime(channelfinder.__file__))
+
+    #updateTags()
+    #addNewTags()
+    #renameTags()
+    sys.exit(0)
+
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
-        #initialize_cfs(sys.argv[1])
         update_cfs_from_txt(sys.argv[1])
-        #test_update('SR:C01-MG:G02A{HCor:L1}Fld-I')
         pass
-    #add_test_prop('SR:C01-MG:G02A{HCor:L1}Fld-I')
-    #add_tag('SR:C01-MG:G02A{HCor:L1}Fld-I')
-    #test()
-    
+    elif len(sys.argv) > 1 and sys.argv[1] == '--test':
+        simple_test()
+    else:
+        print "Usage: %s txtfile" % (sys.argv[0],)
+        

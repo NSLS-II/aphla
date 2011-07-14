@@ -8,6 +8,7 @@ from conf import *
 import machines
 
 import lattice, element
+import cothread
 from cothread.catools import caget
 
 machine_initialized = False
@@ -220,8 +221,12 @@ class TestLatticeLtb(TestLattice):
         bpm = self.lat.getElements('BPM')
         self.assertTrue(len(bpm) > 0)
         for e in bpm: 
-            self.assertTrue(abs(e.x) >= 0)
-            self.assertTrue(abs(e.y) >= 0)
+            try:
+                self.assertTrue(abs(e.x) >= 0)
+                self.assertTrue(abs(e.y) >= 0)
+            except cothread.Timedout:
+                print "Timeout: ", e.name
+                pass
 
         hcor = self.lat.getElements('HCOR')
         self.assertTrue(len(bpm) > 0)
