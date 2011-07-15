@@ -140,7 +140,7 @@ if __name__ == "__main__":
     #updateTags()
     #addNewTags()
     #renameTags()
-    sys.exit(0)
+    #sys.exit(0)
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
         update_cfs_from_txt(sys.argv[1])

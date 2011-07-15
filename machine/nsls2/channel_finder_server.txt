@@ -3696,3 +3696,4 @@ LTB-BI:BD2{VF1}Size:Y-I; devName = VF1VD2, elemName = VF1VD2, elemType = FLAG, h
 # updated: Thu, 14 Jul 2011 18:32:46 +0000, ../machine/nsls2/channel_finder_server.txt LTB-bd1-tags1.txt ../machine/nsls2/channel_finder_server.txt
 # updated: Thu, 14 Jul 2011 18:33:02 +0000, ../machine/nsls2/channel_finder_server.txt LTB-tags1.txt ../machine/nsls2/channel_finder_server.txt
 # updated: Thu, 14 Jul 2011 20:30:51 +0000, ../machine/nsls2/channel_finder_server.txt srnewtag.txt ../machine/nsls2/channel_finder_server.txt
+# updated: Fri, 15 Jul 2011 20:17:55 +0000, ../machine/nsls2/channel_finder_server.txt ltb-correct-setpoint.txt ../machine/nsls2/channel_finder_server.txt

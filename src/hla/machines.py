@@ -92,6 +92,8 @@ def createLatticeFromCf(cfsurl, **kwargs):
             elem.updateCfsProperties(pv, prpt)
         # update element with new
         tags = c.getTags()
+        #if name == 'CX1': print pv, prpt, tags
+
         elem.updateCfsTags(pv, tags)
         if HLA_TAG_EGET in tags: elem.addEGet(pv)
         if HLA_TAG_EPUT in tags: elem.addEPut(pv)
@@ -103,9 +105,23 @@ def createLatticeFromCf(cfsurl, **kwargs):
                 pass
             elif prpt['handle'].upper() == 'READBACK':
                 elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
+                if HLA_TAG_EPUT in tags:
+                    print "'%s': %s and READBACK ? could be a bug" % (
+                        pv, HLA_TAG_EPUT)
             elif prpt['handle'].upper() == 'SETPOINT':
                 elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
-
+                if HLA_TAG_EGET in tags:
+                    print "'%s': %s and SETPOINT ? could be a bug" % (
+                        pv, HLA_TAG_EGET)
+            # debug
+        # check
+        if prpt.has_key('handle'):
+            if prpt['handle'].upper() == 'READBACK' and HLA_TAG_EPUT in tags:
+                print "'%s': %s and READBACK ? could be a bug" % (
+                        pv, HLA_TAG_EPUT)
+            elif prpt['handle'].upper() == 'SETPOINT' and HLA_TAG_EGET in tags:
+                print "'%s': %s and SETPOINT ? could be a bug" % (
+                        pv, HLA_TAG_EGET)
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
@@ -145,7 +161,7 @@ def initNSLS2VSR():
     #
     # LTB 
     _lattice_dict['LTB'] = createLatticeFromCf(
-        cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
+        cfsurl, **{'name':'LTB*', 'tagName': 'aphla.*'})
     _lattice_dict['LTB'].mode = 'LTB-channelfinder'
     _lattice_dict['LTB'].loop = False
     #_lat = _lattice_dict['LTB']
@@ -304,7 +320,7 @@ def initNSLS2VSRTxt(data = ''):
 
     global _lat, _lattice_dict
     _lattice_dict['LTB-txt'] = createLatticeFromTxt(
-        cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
+        cfsurl, **{'name':'LTB*', 'tagName': 'aphla.*'})
     _lattice_dict['LTB-txt'].mode = 'LTB-txt'
     _lattice_dict['LTB-txt'].loop = False
     bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})

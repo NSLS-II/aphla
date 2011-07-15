@@ -278,7 +278,7 @@ class Element(AbstractElement):
             self._field[field] = {'eget': None, 'eput': v, 'desc': desc}
         else:
             self._field[field]['eput'] = v
-            self._field[field]['desc'] = v
+            self._field[field]['desc'] = desc
 
     def fields(self):
         return self._field.keys()
