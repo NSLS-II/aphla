@@ -133,14 +133,24 @@ def addNewTags():
     cf = ChannelFinderClient(**cfinput)
     cf.set(tag=Tag(tagname, 'cf-aphla'))
 
+def removeTagsFromPv():
+    cf = ChannelFinderClient(**cfinput)
+    pv = 'LTB:MG{Quad:6}Fld-SP'
+    cf.delete(tag=Tag('aphla.eget', 'cf-aphla'), channelName=pv)
+
+    pv = 'LTB:MG{Bend:1}Fld-SP'
+    cf.delete(tag=Tag('aphla.eget', 'cf-aphla'), channelName=pv)
+
 if __name__ == "__main__":
     print channelfinder.__file__,
     print time.ctime(os.path.getmtime(channelfinder.__file__))
 
+    
+    removeTagsFromPv()
     #updateTags()
     #addNewTags()
     #renameTags()
-    #sys.exit(0)
+    sys.exit(0)
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
         update_cfs_from_txt(sys.argv[1])
