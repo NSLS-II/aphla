@@ -26,6 +26,7 @@ HLA_TAG_EGET = 'aphla.eget'
 HLA_TAG_EPUT = 'aphla.eput'
 HLA_TAG_X    = 'aphla.x'
 HLA_TAG_Y    = 'aphla.y'
+HLA_TAG_SYS_PREFIX = 'aphla.sys.'
 
 #
 HLA_VFAMILY = 'HLA:VFAMILY'
@@ -53,6 +54,7 @@ HLA_CFS_KEYMAP = {'name': u'elemName',
                   'phylen': None,
                   'sequence': None}
 
+
 def createLatticeFromCf(cfsurl, **kwargs):
     """
     create a lattice from channel finder
@@ -60,8 +62,7 @@ def createLatticeFromCf(cfsurl, **kwargs):
     - *cfsurl* the URL of channel finder service
     - *tagName*
     """
-    from channelfinder.core.ChannelFinderClient import ChannelFinderClient
-    from channelfinder.core.Channel import Channel, Property, Tag
+    from channelfinder import ChannelFinderClient, Channel, Property, Tag
 
     # reverse map, skip the None values
     CFS_MAP = dict((v,k) for k,v in HLA_CFS_KEYMAP.iteritems() if v)
@@ -150,19 +151,28 @@ def initNSLS2VSR():
     TAG_DEFAULT_GET='aphla.eget'
     TAG_DEFAULT_PUT='aphla.eput'
 
-    #HLA_CFS_URL = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
-    #HLA_CFS_URL = 'http://web01.nsls2.bnl.gov:8080/ChannelFinder'
-    cfsurl = HLA_CFS_URL
+    from channelfinder import ChannelFinderClient, Channel, Property, Tag
+
+    cf = ChannelFinderClient(HLA_CFS_URL)
+    alltags = [t.Name for t in cf.getAllTags()]
+    print alltags
+
     if HLA_DEBUG > 0:
         print "# channel finder: %s" % HLA_CFS_URL
 
     global _lat, _lattice_dict
 
+    for tag in alltags:
+        if not tag.startswith(HLA_TAG_SYS_PREFIX): continue
+        latsys = tag[len(HLA_TAG_SYS_PREFIX):]
+        if latsys:
+            print "Creating '%s'" % latsys
+            _lattice_dict[latsys] = createLatticeFromCf(
+                HLA_CFS_URL, **{'tagName': tag})
+            _lattice_dict[latsys].mode = tag
+    
     #
     # LTB 
-    _lattice_dict['LTB'] = createLatticeFromCf(
-        cfsurl, **{'name':'LTB*', 'tagName': 'aphla.*'})
-    _lattice_dict['LTB'].mode = 'LTB-channelfinder'
     _lattice_dict['LTB'].loop = False
     #_lat = _lattice_dict['LTB']
 
@@ -187,9 +197,6 @@ def initNSLS2VSR():
 
     #
     # SR
-    _lattice_dict['SR'] = createLatticeFromCf(
-        cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
-    _lattice_dict['SR'].mode = 'SR-channelfinder'
     _lattice_dict['SR'].loop = True
 
     bpmx = Element(eget=caget, eput=caput,

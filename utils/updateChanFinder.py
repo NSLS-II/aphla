@@ -141,15 +141,26 @@ def removeTagsFromPv():
     pv = 'LTB:MG{Bend:1}Fld-SP'
     cf.delete(tag=Tag('aphla.eget', 'cf-aphla'), channelName=pv)
 
+def removeTags():
+    cf = ChannelFinderClient(**cfinput)
+    #cf.delete(tagName='aphla.offset aphla.eput aphla.x')
+    #cf.delete(tagName="aphla.offset aphla.eput aphla.y")
+    cf.delete(tagName="aphla.eget aphla.x")
+    cf.delete(tagName="aphla.eget aphla.y")
+    cf.delete(tagName="aphla.eput aphla.x")
+    cf.delete(tagName="aphla.eput aphla.y")
+    cf.delete(tagName="testtag2")
+
 if __name__ == "__main__":
     print channelfinder.__file__,
     print time.ctime(os.path.getmtime(channelfinder.__file__))
 
     
-    removeTagsFromPv()
+    #removeTagsFromPv()
     #updateTags()
     #addNewTags()
     #renameTags()
+    removeTags()
     sys.exit(0)
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
