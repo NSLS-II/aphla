@@ -160,7 +160,9 @@ following in to ~/.bashrc::
 
 I am using **HLA_DATA_DIRS** as place to store data, the machine name
 working on is *nsls2* and the channel finder service URL is at
-**HLA_CFS_URL**.
+**HLA_CFS_URL**. As an example, the orbit response matrix (ORM) data for
+nsls2 would be saved in directory **HLA_DATA_DIRS/HLA_MACHINE**,
+i.e. **/home/lyyang/devel/nsls2-hla/nsls2**.
 
 Import some modules, including HLA and plotting routines
 
@@ -177,12 +179,18 @@ Import modules:
    >>> import matplotlib.pylab as plt
    >>> import time
 
-Initialize the NSLS2 Virtual Storage Ring lattice and twiss:
+Initialize the NSLS2 Virtual Storage Ring lattice and twiss (from channel
+finder server):
 
 .. doctest::
 
    >>> hla.initNSLS2VSR()
    >>> hla.initNSLS2VSRTwiss()
+
+if the network is not available and a copy of text-version-channel-finder-server data is in local machine, we can initialize HLA by the following command:
+
+.. doctest::
+
    >>> hla.machines.initNSLS2VSRTxt()
 
 Then is the examples:

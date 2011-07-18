@@ -15,4 +15,9 @@ HLA FAQ (Frequently Asked Questions)
 
 - Why I can not find element ...
 
-  Are you using the proper 
+  Are you using the proper lattice layout by *hla.machines.use('SR')*
+
+- How many lattice layout are there ?
+
+  Try *hla.machines.lattices()*. They are created by looking at tags
+  'aphla.sys.*' in Channel Finder Service data.

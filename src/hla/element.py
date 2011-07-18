@@ -215,12 +215,16 @@ class Element(AbstractElement):
     def hasPv(self, pv):
         return self._pvtags.has_key(pv)
         
-    def appendStatusPv(self, pv, desc):
+    def appendStatusPv(self, pv, desc, order=True):
         """
         append (func, pv, description) to status
         """
-        i = self._insert_in_order(self._field['status']['eget'], pv)
-        self._field['status']['desc'].insert(i, desc)
+        if order:
+            i = self._insert_in_order(self._field['status']['eget'], pv)
+            self._field['status']['desc'].insert(i, desc)
+        else:
+            self._field['status']['eget'].append(pv)
+            self._field['status']['eget'].append(desc)
 
     def addEGet(self, pv):
         vf = self._field['value']
