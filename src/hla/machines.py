@@ -155,7 +155,7 @@ def initNSLS2VSR():
 
     cf = ChannelFinderClient(HLA_CFS_URL)
     alltags = [t.Name for t in cf.getAllTags()]
-    print alltags
+    #print alltags
 
     if HLA_DEBUG > 0:
         print "# channel finder: %s" % HLA_CFS_URL
@@ -166,7 +166,7 @@ def initNSLS2VSR():
         if not tag.startswith(HLA_TAG_SYS_PREFIX): continue
         latsys = tag[len(HLA_TAG_SYS_PREFIX):]
         if latsys:
-            print "Creating '%s'" % latsys
+            if HLA_DEBUG > 0: print "Creating '%s'" % latsys
             _lattice_dict[latsys] = createLatticeFromCf(
                 HLA_CFS_URL, **{'tagName': tag})
             _lattice_dict[latsys].mode = tag
