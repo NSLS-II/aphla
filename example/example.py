@@ -22,9 +22,9 @@ def ex01():
 
 def ex02():
     hla.machines.initNSLS2VSR()
-    hla.machines.use('SR')
-    bpms = hla.getElements('BPM')
-    print bpms[0].status
+    hla.machines.use('LTD1')
+    hc = hla.getElements('HCOR')
+    print hc[0].status
 
 if __name__ == '__main__':
 
