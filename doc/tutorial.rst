@@ -1,6 +1,9 @@
 Tutorial
 =========
 
+.. htmlonly::
+   :Date: |today|
+
 The HLA and Controls are divided into three layers: HLA applictions and
 scripts, client APIs (CAPI) and server API (SAPI)~([Shen]_).  The users
 (accelerator physicists, operators and beamline scientists) will normally
