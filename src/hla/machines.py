@@ -271,8 +271,8 @@ def createLatticesFromTxt(f, **kwargs):
             if not lat_dict.has_key(latname):
                 print "Creating lattice layout: '%s'" % latname
                 lat_dict[latname] = Lattice('txt')
-            lat = lat_dict[latname]
 
+            lat = lat_dict[latname]
             elem = lat._find_element(name=name)
         
             if not elem:
@@ -326,7 +326,7 @@ def initNSLS2VSRTxt(data = ''):
                               HLA_MACHINE, 'channel_finder_server.txt')
 
     global _lat, _lattice_dict
-    _lattice_dict = createLatticesFromTxt(cfsurl)
+    _lattice_dict.update(createLatticesFromTxt(cfsurl))
 
     _lattice_dict['LTB-txt'].mode = 'LTB-txt'
     _lattice_dict['LTB-txt'].loop = False
@@ -372,6 +372,7 @@ def initNSLS2VSRTxt(data = ''):
 
 
     _lat = _lattice_dict['SR-txt']
+    #for k,v in _lattice_dict.iteritems(): print k, v.mode
 
     # self diagnostics
     # check dipole numbers
@@ -459,6 +460,9 @@ def getLattice(lat):
 
     .. seealso:: :func:`~hla.machines.lattices`
     """
+    global _lattice_dict
+    #for k, v in _lattice_dict.items():
+    #    print k, v.mode
     return _lattice_dict.get(lat, None)
 
 def lattices():

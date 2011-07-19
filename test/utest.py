@@ -32,7 +32,13 @@ suite.addTests(loader.loadTestsFromModule(utOrbit))
 #suite.addTests(loader.loadTestsFromModule(utAllPVs))
 #suite.addTests(loader.loadTestsFromModule(utOrm))
 
-runner = unittest.TextTestRunner(verbosity=2)
+#print '%x' % sys.hexversion, sys.hexversion
+
+if sys.hexversion < 0x02070000:
+    runner = unittest.TextTestRunner(verbosity=2)
+else:
+    runner = unittest.TextTestRunner(verbosity=2, failfast=True)
+
 result = runner.run(suite)
 
 print "= Results:", result, len(result.failures), len(result.errors)

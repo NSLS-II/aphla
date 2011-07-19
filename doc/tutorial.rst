@@ -61,6 +61,13 @@ applications. Scripts and save pictures in *png*, *jpeg*,
 Installation
 -------------
 
+
+.. warning::
+
+   The most easy way is sending ITD an email requesting an account on
+   **lsasd2.ls.bnl.gov** (please CC to Lingyun Yang also). It is a Linux
+   server with all HLA software installed.
+
 There are some packages required before using HLA. In the following, we will
 take Debian/Ubuntu Linux as an example to show how to install them.
 

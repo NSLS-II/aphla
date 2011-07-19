@@ -219,6 +219,8 @@ class TestLatticeLtb(TestLattice):
             #machines.initNSLS2VSR()
             machine_initialized = True
         self.lat  = machines.getLattice('LTB')
+        if not self.lat:
+            raise ValueError("lattice LTB is not found")
 
     def test_field(self):
         bpm = self.lat.getElements('BPM')
@@ -252,18 +254,20 @@ class TestLatticeLtbCf(TestLatticeLtb):
     def setUp(self):
         global machine_initialized
         if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSR()
+            #initialize_the_machine()
+            machines.initNSLS2VSR()
             machine_initialized = True
         self.lat  = machines.getLattice('LTB')
-
+        if not self.lat:
+            print machines.lattices()
+            raise ValueError("lattice LTB is not found")
 
 class TestLatticeLtbTxt(TestLatticeLtb):
     def setUp(self):
         global machine_initialized
         if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSRTxt()
+            #initialize_the_machine()
+            machines.initNSLS2VSRTxt()
         self.lat = machines.getLattice('LTB-txt')
 
     def test_cor(self):
