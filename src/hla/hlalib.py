@@ -15,6 +15,13 @@ from fnmatch import fnmatch
 from catools import caget, caput
 import machines
 
+__all__ = [
+    'getCurrent', 'getElements', 'getLocations', 'addGroup', 'removeGroup',
+    'addGroupMembers', 'removeGroupMembers', 'getGroups', 'getGroupMembers',
+    'getNeighbors', 'getBeamlineProfile', 
+    'getPhase', 'getBeta', 'getDispersion', 'getEta',
+    'getOrbit', 'getTune', 'getTunes', 'getBpms'
+]
 
 def getCurrent():
     """
@@ -25,7 +32,7 @@ def getCurrent():
 
 #
 #
-def eget(element, full = False, tags = []):
+def __eget(element, full = False, tags = []):
     """
     easier get with element name(s)
 
@@ -82,7 +89,7 @@ def eget(element, full = False, tags = []):
         raise ValueError("element can only be a list or group name")
 
 
-def eput(element, value):
+def __eput(element, value):
     """
     easier put
 
@@ -393,15 +400,17 @@ def getTunes(source='machine'):
     elif source == 'database':
         raise NotImplementedError()
 
-def getTune(source='machine', plane = 'hv'):
+def getTune(source='machine', plane = 'h'):
     """
     get tune
+
+    >>> getTune(plane='v')
     """
     nux, nuy = getTunes(source)
     if plane == 'h': return nux
     elif plane == 'v': return nuy
     else:
-        raise ValueError("plane must be h/v")
+        raise ValueError("plane must be h or v")
 
 def getFftTune(plane = 'hv', mode = ''):
     """

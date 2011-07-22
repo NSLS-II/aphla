@@ -68,7 +68,7 @@ def update_cfs_from_txt(txt, subline = 'LTB'):
         if line.find(subline) < 0: continue
 
         # skip non TRIM lines
-        if line.find('COR') < 0: continue
+        #if line.find('COR') < 0: continue
         
         # call every time, updated from server. Slow but reliable.
         allprops = [p.Name for p in cf.getAllProperties()]
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     #sys.exit(0)
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
-        update_cfs_from_txt(sys.argv[1], subline='SR')
+        update_cfs_from_txt(sys.argv[1], subline='LTB')
         pass
     elif len(sys.argv) > 1 and sys.argv[1] == '--test':
         simple_test()

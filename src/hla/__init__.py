@@ -35,7 +35,10 @@ Modules include:
         
 """
 
-import os, sys, re
+__version__ = "0.1.1"
+
+#import os, sys, re
+import sys
 
 from catools import *
 from machines import initNSLS2VSR, initNSLS2VSRTwiss

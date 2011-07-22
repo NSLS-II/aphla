@@ -17,6 +17,11 @@ import machines
 from orbit import Orbit
 from catools import caput, caget 
 
+__all__ = [
+    'getLifetime',  'measChromaticity', 'measDispersion',
+    'correctOrbitPv', 'correctOrbit'
+]
+
 alphac = 3.6261976841792413e-04
 
 def getLifetime(verbose = 0):

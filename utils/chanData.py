@@ -87,7 +87,7 @@ class ChannelFinderData:
         for k in sorted(self._data.keys()):
             s = s + k + '; '
             for p in sorted(self._data[k]['properties'].keys()):
-                s = s + p + '=' + self._data[k]['properties'][p] + ', '
+                s = s + p + '=%s, ' % self._data[k]['properties'][p]
             if s[-2:] == ', ': s = s[:-2] + '; '
             for t in sorted(self._data[k]['tags']):
                 s = s + t + ', '
