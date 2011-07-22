@@ -53,7 +53,8 @@ def update_cfs_from_txt(txt, subline = 'LTB'):
 
     The properties are updated as 'cf-asd' account, and tags in 'cf-aphla'
     """
-
+    print "Updating CFS from text file:", txt
+    
     cf = ChannelFinderClient(**cfinput)
 
     #for p in props: print p.Name, p.Owner, p.Value
@@ -66,6 +67,9 @@ def update_cfs_from_txt(txt, subline = 'LTB'):
         # skip this line if I did not find 'subline'
         if line.find(subline) < 0: continue
 
+        # skip non TRIM lines
+        if line.find('COR') < 0: continue
+        
         # call every time, updated from server. Slow but reliable.
         allprops = [p.Name for p in cf.getAllProperties()]
         alltags  = [t.Name for t in cf.getAllTags()]
@@ -160,11 +164,11 @@ if __name__ == "__main__":
     #updateTags()
     #addNewTags()
     #renameTags()
-    removeTags()
-    sys.exit(0)
+    #removeTags()
+    #sys.exit(0)
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
-        update_cfs_from_txt(sys.argv[1])
+        update_cfs_from_txt(sys.argv[1], subline='SR')
         pass
     elif len(sys.argv) > 1 and sys.argv[1] == '--test':
         simple_test()

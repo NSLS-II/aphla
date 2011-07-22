@@ -16,22 +16,18 @@ import sys
 import shelve
 from time import gmtime, strftime
 
+from channelfinder import ChannelFinderClient, Channel, Tag, Property
+
+cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
+
 if __name__ == "__main__":
-    sys.path.append('/home/lyyang/Downloads/python.channelfinder.api/src')
-    from ChannelFinderClient import ChannelFinderClient
-    cf = ChannelFinderClient(BaseURL = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder')
-    channels = cf.find(name='SR*')
+    
+    cf = ChannelFinderClient(BaseURL = cfsurl)
+    channels = cf.find(tagName='aphla.sys.SR')
     # a dict k=PV, v = property + tags
-    d = {}
-    conv_float = ['length', 's_position']
-    conv_int = ['ordinal']
-    for channel in channels:
-        #print channel.Name, type(channel.Name)
-        d[channel.Name] = {'~tags': []}
-        props = channel.getProperties()
-        tags  = channel.getTags()
-        if not props:
-            print "Empty prop: ", channel.Name
+    f = open('output.txt', 'w')
+    for ch in channels:
+        f.write("%s; " % ch.Name)
         else:
             for k, v in props.items():
                 #print "    %s:" % k, v, type(v)
