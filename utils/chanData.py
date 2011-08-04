@@ -32,7 +32,7 @@ class ChannelFinderData:
             if not t in self._tags: self._tags.append(t)
 
     def __sub__(self, x):
-        print "Substract ..."
+        #print "Substract ..."
         ret = ChannelFinderData()
         for k in sorted(self._data.keys()):
             if not k in x._data.keys():
@@ -96,6 +96,13 @@ class ChannelFinderData:
         s = s + '\n'
         return s
 
+    def removeProperties(self, prpts):
+        for k,v in self._data.iteritems():
+            if not v.has_key('properties'): continue
+            for p in prpts:
+                if v['properties'].has_key(p):
+                    v['properties'].pop(p)
+            
 
 if __name__ == "__main__":
     d1 = ChannelFinderData()

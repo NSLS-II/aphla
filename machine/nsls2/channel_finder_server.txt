@@ -3592,13 +3592,13 @@ LTB:MG{Quad:2BD1}Fld-I; devName = Q2BD1, elemName = Q2BD1, elemType = QUAD, hand
 LTB-BI{VF1}Img1:ArrayData; devName = VF1, elemName = VF1, elemType = FLAG, handle = READBACK, length = 0., ordinal = 6, sEnd = 3.628390e-001, system = LTB; aphla.eget, aphla.image, aphla.sys.LTB, aphla.sys.LTD1, aphla.sys.LTD2
 LTB-BI{VF1}Size:X-I; devName = VF1, elemField = x, elemName = VF1, elemType = FLAG, handle = READBACK, length = 0., ordinal = 6, sEnd = 3.628390e-001, system = LTB; aphla.eget, aphla.sys.LTB, aphla.sys.LTD1, aphla.sys.LTD2, aphla.x
 LTB-BI{VF1}Size:Y-I; devName = VF1, elemField = y, elemName = VF1, elemType = FLAG, handle = READBACK, length = 0., ordinal = 6, sEnd = 3.628390e-001, system = LTB; aphla.eget, aphla.sys.LTB, aphla.sys.LTD1, aphla.sys.LTD2, aphla.y
-LTB-BI:BD1{VF1}Img1:ArrayData; devName = VF1BD1, elemName = VF1BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 41, sEnd = 5.67, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD1
+LTB-BI:BD1{VF1}Img1:ArrayData; devName = VF1BD1, elemName = VF1BD1, elemField = image, elemType = FLAG, handle = READBACK, length = 0, ordinal = 41, sEnd = 5.67, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD1
 LTB-BI:BD1{VF1}Size:X-I; devName = VF1BD1, elemField = x, elemName = VF1BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 41, sEnd = 5.67, system = LTB; aphla.eget, aphla.x, aphla.sys.LTD1
 LTB-BI:BD1{VF1}Size:Y-I; devName = VF1BD1, elemField = y, elemName = VF1BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 41, sEnd = 5.67, system = LTB; aphla.eget, aphla.y, aphla.sys.LTD1
-LTB-BI:BD1{VF2}Img1:ArrayData; devName = VF2BD1, elemName = VF2BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 44, sEnd = 6.75, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD1
+LTB-BI:BD1{VF2}Img1:ArrayData; devName = VF2BD1, elemName = VF2BD1, elemField = image, elemType = FLAG, handle = READBACK, length = 0, ordinal = 44, sEnd = 6.75, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD1
 LTB-BI:BD1{VF2}Size:X-I; devName = VF2BD1, elemField = x, elemName = VF2BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 44, sEnd = 6.75, system = LTB; aphla.eget, aphla.x, aphla.sys.LTD1
 LTB-BI:BD1{VF2}Size:Y-I; devName = VF2BD1, elemField = y, elemName = VF2BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 44, sEnd = 6.75, system = LTB; aphla.eget, aphla.y, aphla.sys.LTD1
-LTB-BI:BD1{VF3}Img1:ArrayData; devName = VF3BD1, elemName = VF3BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 46, sEnd = 7.76, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD1
+LTB-BI:BD1{VF3}Img1:ArrayData; devName = VF3BD1, elemName = VF3BD1, elemField = image, elemType = FLAG, handle = READBACK, length = 0, ordinal = 46, sEnd = 7.76, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD1
 LTB-BI:BD1{VF3}Size:X-I; devName = VF3BD1, elemField = x, elemName = VF3BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 46, sEnd = 7.76, system = LTB; aphla.eget, aphla.x, aphla.sys.LTD1
 LTB-BI:BD1{VF3}Size:Y-I; devName = VF3BD1, elemField = y, elemName = VF3BD1, elemType = FLAG, handle = READBACK, length = 0, ordinal = 46, sEnd = 7.76, system = LTB; aphla.eget, aphla.y, aphla.sys.LTD1
 LTB-BI{ICT:1}Q-I; devName = ICT1, elemName = ICT1, elemType = ICT, handle = READBACK, length = 0, ordinal = 15, sEnd = 0.96, system = LTB; aphla.current, aphla.eget, aphla.sys.LTB, aphla.sys.LTD1, aphla.sys.LTD2
@@ -3622,45 +3622,18 @@ LTB-BI{VF5}Size:Y-I; devName = VF5, elemField = y, elemName = VF5, elemType = FL
 LTB-BI{VF5}Img1:ArrayData; devName = VF5, elemName = VF5, elemType = FLAG, handle = READBACK, length = 0., ordinal = 111, sEnd = 1.880820e+001, system = LTB; aphla.eget, aphla.image, aphla.sys.LTB
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 LTB-BI:BD2{VF1}Img1:ArrayData; devName = VF1VD2, elemName = VF1VD2, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD2
 LTB-BI:BD2{VF1}Size:X-I; devName = VF1VD2, elemName = VF1VD2, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.x, aphla.sys.LTD2
 LTB-BI:BD2{VF1}Size:Y-I; devName = VF1VD2, elemName = VF1VD2, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.y, aphla.sys.LTD2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+LTB:MG{HCor:1BD1}Fld-I; devName=C1BD1, elemField=x, elemName=CX1BD1, elemType=HCOR, handle=READBACK, length=0.15, ordinal=28, sEnd=3.682898, system=LTB; aphla.eget, aphla.sys.LTD1, aphla.x
+LTB:MG{HCor:1BD1}Fld-SP; devName=C1BD1, elemField=x, elemName=CX1BD1, elemType=HCOR, handle=SETPOINT, length=0.15, ordinal=28, sEnd=3.682898, system=LTB; aphla.eput, aphla.sys.LTD1, aphla.x
+LTB:MG{HCor:2BD1}Fld-I; devName=C2BD1, elemField=x, elemName=CX2BD1, elemType=HCOR, handle=READBACK, length=0.15, ordinal=37, sEnd=5.434607, system=LTB; aphla.eget, aphla.sys.LTD1, aphla.x
+LTB:MG{HCor:2BD1}Fld-SP; devName=C2BD1, elemField=x, elemName=CX2BD1, elemType=HCOR, handle=SETPOINT, length=0.15, ordinal=37, sEnd=5.434607, system=LTB; aphla.eput, aphla.sys.LTD1, aphla.x
+LTB:MG{VCor:1BD1}Fld-I; devName=C1BD1, elemField=y, elemName=CY1BD1, elemType=VCOR, handle=READBACK, length=0.15, ordinal=29, sEnd=3.682898, system=LTB; aphla.eget, aphla.sys.LTD1, aphla.y
+LTB:MG{VCor:1BD1}Fld-SP; devName=C1BD1, elemField=y, elemName=CY1BD1, elemType=VCOR, handle=SETPOINT, length=0.15, ordinal=29, sEnd=3.682898, system=LTB; aphla.eput, aphla.sys.LTD1, aphla.y
+LTB:MG{VCor:2BD1}Fld-I; devName=C2BD1, elemField=y, elemName=CY2BD1, elemType=VCOR, handle=READBACK, length=0.15, ordinal=38, sEnd=5.434607, system=LTB; aphla.eget, aphla.sys.LTD1, aphla.y
+LTB:MG{VCor:2BD1}Fld-SP; devName=C2BD1, elemField=y, elemName=CY2BD1, elemType=VCOR, handle=SETPOINT, length=0.15, ordinal=38, sEnd=5.434607, system=LTB; aphla.eput, aphla.sys.LTD1, aphla.y
 
 # updated: Thu, 14 Jul 2011 16:17:02 +0000, ../machine/nsls2/channel_finder_server.txt PVLTBmore.txt ../machine/nsls2/channel_finder_server.txt
 # updated: Thu, 14 Jul 2011 16:17:36 +0000, ../machine/nsls2/channel_finder_server.txt LTB-bd1-tags.txt ../machine/nsls2/channel_finder_server.txt

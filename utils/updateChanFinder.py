@@ -113,14 +113,17 @@ def update_cfs_from_txt(txt, subline = 'LTB'):
             '+'.join([t.Name for t in tags])
 
 
+def renamePvTags():
+    pass
+
 def renameTags():
     cf = ChannelFinderClient(**cfinput)
     #cf.update(tag=Tag('aphla.sys.LTB', 'cf-aphla'),
     #          originalTagName='aphla.sys.ltb')
-    cf.update(tag=Tag('aphla.sys.LTD1', 'cf-aphla'),
-              originalTagName='aphla.sys.ltd1')
-    cf.update(tag=Tag('aphla.sys.LTD2', 'cf-aphla'),
-              originalTagName='aphla.sys.ltd2')
+    #cf.update(tag=Tag('aphla.sys.LTD1', 'cf-aphla'),
+    #          originalTagName='aphla.sys.ltd1')
+    #cf.update(tag=Tag('aphla.sys.LTD2', 'cf-aphla'),
+    #          originalTagName='aphla.sys.ltd2')
 
 def updateTags():
     pvs = []
@@ -137,6 +140,11 @@ def addNewTags():
     cf = ChannelFinderClient(**cfinput)
     cf.set(tag=Tag(tagname, 'cf-aphla'))
 
+def addPvTags(pv, tag):
+    cf = ChannelFinderClient(**cfinput)
+    cf.update(channelName=pv, tag=Tag(tag, 'cf-aphla'))
+
+
 def removeTagsFromPv():
     cf = ChannelFinderClient(**cfinput)
     pv = 'LTB:MG{Quad:6}Fld-SP'
@@ -144,6 +152,10 @@ def removeTagsFromPv():
 
     pv = 'LTB:MG{Bend:1}Fld-SP'
     cf.delete(tag=Tag('aphla.eget', 'cf-aphla'), channelName=pv)
+
+def updatePvProperties(pv, p, v):
+    cf = ChannelFinderClient(**cfinput)
+    cf.update(channelName=pv, property=Property(p, 'cf-asd', v))
 
 def removeTags():
     cf = ChannelFinderClient(**cfinput)
@@ -159,13 +171,18 @@ if __name__ == "__main__":
     print channelfinder.__file__,
     print time.ctime(os.path.getmtime(channelfinder.__file__))
 
-    
+    #addPvTags('LTB:MG{HCor:2BD1}Fld-SP', 'aphla.sys.LTD1')
+    #addPvTags('LTB:MG{VCor:2BD1}Fld-SP', 'aphla.sys.LTD1')
+    #updatePvProperties('LTB-BI:BD1{VF1}Size:X-I', 'elemField', 'x')
+    #updatePvProperties('LTB-BI:BD1{VF1}Size:Y-I', 'elemField', 'y')
+    #updatePvProperties('LTB-BI:BD1{VF1}Img1:ArrayData', 'elemField', 'image')
+
     #removeTagsFromPv()
     #updateTags()
     #addNewTags()
     #renameTags()
     #removeTags()
-    #sys.exit(0)
+    sys.exit(0)
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
         update_cfs_from_txt(sys.argv[1], subline='LTB')

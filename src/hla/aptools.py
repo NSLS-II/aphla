@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 """
 hla.aptools
 ~~~~~~~~~~~
@@ -10,7 +12,7 @@ Accelerator Physics Tools
 """
 
 import numpy as np
-import time, shelve
+import time, shelve, sys
 import matplotlib.pylab as plt
 
 import machines
@@ -45,7 +47,7 @@ def getLifetime(verbose = 0):
         ret[i,0] = (dt.microseconds/1000000.0 + dt.seconds)/3600.0 + \
             dt.days*24.0
         if verbose:
-            print i, dt, ret[i,1]
+            print(i, dt, ret[i,1])
     dI = max(ret[:,1]) - min(ret[:,1]) 
     dt = max(ret[:,0]) - min(ret[:,0])
     #print np.average(ret[:,1]), dI, dt
@@ -63,7 +65,7 @@ def measChromaticity():
 
     f0 = getRfFrequency()
     nu0 = getTunes()
-    print f0, nu0
+    print(f0, nu0)
 
     f = np.linspace(f0 - 1e-3, f0 + 1e-3, 6)
     nu = np.zeros((len(f), 2), 'd')
@@ -75,10 +77,10 @@ def measChromaticity():
     df = f - f0
     dnu = nu - np.array(nu0)
     p, resi, rank, sing, rcond = np.polyfit(df, dnu, deg=2, full=True)
-    print "Coef:", p
-    print "Resi:", resi
+    print("Coef:", p)
+    print("Resi:", resi)
     chrom = p[-2,:] * (-f0*eta)
-    print "Chromx:", chrom
+    print("Chromx:", chrom)
     
     t = np.linspace(1.1*df[0], 1.1*df[-1], 100)
     plt.clf()
@@ -139,7 +141,7 @@ def measDispersion():
         time.sleep(6)
         obt = np.array(getOrbit(bpm))
         x2, y2  = obt[:,0], obt[:,1]
-        print i, getRfFrequency(), x1[0], x2[0], x1[2], x2[2]
+        print(i, getRfFrequency(), x1[0], x2[0], x1[2], x2[2])
         codx[i,:] = x2[:]
         cody[i,:] = y2[:]
 
@@ -155,11 +157,11 @@ def measDispersion():
         codx0[i,:] = x0[:]
     dxc = codx - codx0
     df = -(f - f0)/f0/eta
-    print df
-    print dxc
+    print(df)
+    print(dxc)
     # p[0,len(bpm)]
     p = np.polyfit(df, dxc, 1)
-    print "first order:", p[0,:]
+    print("first order:", p[0,:])
     t = np.linspace(df[0], df[-1], 20)
     plt.clf()
     for i in range(len(bpm)):
@@ -168,7 +170,7 @@ def measDispersion():
     plt.savefig('test-disp.png')
 
 
-    print eta, f0
+    print(eta, f0)
     plt.clf()
     plt.plot(s1, eta0[:,0], 'x-', label="Twiss Calc")
     plt.plot(s1, p[0,:], 'o--', label="Fit")
@@ -243,12 +245,12 @@ def correctOrbit(bpm, trim, **kwargs):
         else: trimpv.extend(pv)
 
     if 'H' in plane and len(pvx) > 0 and len(pvxsp) == 0:
-        print "WARNING: no HCOR for horizontal orbit correction"
+        print("WARNING: no HCOR for horizontal orbit correction", file=sys.stderr)
     if 'V' in plane and len(pvy) > 0 and len(pvysp) == 0:
-        print "WARNING: no VCOR for vertical orbit correction"
+        print("WARNING: no VCOR for vertical orbit correction", file=sys.stderr)
 
     if not machines._lat.orm:
-        print "ERROR: this lattice setting has no ORM data"
+        print("ERROR: this lattice setting has no ORM data", file=sys.stderr)
     else:
         correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), machines._lat.orm)
 

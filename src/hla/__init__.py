@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 
 """
 HLA Module
@@ -36,6 +38,7 @@ Modules include:
 """
 
 __version__ = "0.1.1"
+
 
 #import os, sys, re
 import sys
@@ -77,7 +80,7 @@ from ormdata import OrmData
 NETWORK_DOWN=False
 try:
     catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
-    print >> sys.stderr, "= Network is fine, using online PVs"
+    print("= Network is fine, using online PVs", file= sys.stderr)
 except Timedout:
     NETWORK_DOWN = True
     pass
