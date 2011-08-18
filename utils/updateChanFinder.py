@@ -157,6 +157,10 @@ def updatePvProperties(pv, p, v):
     cf = ChannelFinderClient(**cfinput)
     cf.update(channelName=pv, property=Property(p, 'cf-asd', v))
 
+def removeProperties(p):
+    cf = ChannelFinderClient(**cfinput)
+    cf.delete(propertyName=p)
+
 def removeTags():
     cf = ChannelFinderClient(**cfinput)
     #cf.delete(tagName='aphla.offset aphla.eput aphla.x')
@@ -182,6 +186,7 @@ if __name__ == "__main__":
     #addNewTags()
     #renameTags()
     #removeTags()
+    removeProperties('test-prop2')
     sys.exit(0)
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):

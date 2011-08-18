@@ -255,7 +255,7 @@ class Lattice:
             ret.extend(self._elements[:i1+1])
         return ret
 
-    def getElements(self, group):
+    def getElements(self, group, alwayslist=False):
         """
         get elements.
 
@@ -274,14 +274,18 @@ class Lattice:
 
         When the input *group* is a list, each string in this list will be
         treated as exact string instead of pattern.
+
+        *alwayslist* whether return list when returning a single element.
         """
 
         if isinstance(group, str) or isinstance(group, unicode):
             # do exact element name match first
             #print __file__, "element ..."
             elem = self._find_element(group)
-            if elem:
+            if elem and alwayslist:
                 #print "found exact element", group, elem
+                return [elem]
+            elif elem:
                 return elem
 
             # do exact group name match
@@ -596,6 +600,38 @@ class Lattice:
             fac, r = divmod(i0 + i, len(el))
             ret.append(el[r])
         return ret
+        
+    def getClosest(self, element, group):
+        """
+        Assuming self._elements is in s order
+
+        the element matched with input 'element' string should be unique
+        and exact.
+
+        If the input *element* name is also in *group*, return itself.
+
+        ::
+
+          >>> getClosest('P4', 'BPM')
+          >>> getClosest('Q3', 'BPM')
+        """
+
+        e0 = self._find_element(element)
+        if not e0: raise ValueError("element %s does not exist" % element)
+
+        el = self.getElements(group, alwayslist=True)
+
+        if not el: raise ValueError("elements/group %s does not exist" % group)
+
+        # if the element is part of group, return it
+        if e0 in el: return e0
+
+        idx, ds = 0, el[-1].sb
+        for i,e in enumerate(el):
+            if abs(e.sb - e0.sb) < ds:
+                idx = i
+                ds = abs(e.sb - e0.sb)
+        return el[idx]
         
     def __repr__(self):
         s = ''

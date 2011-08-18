@@ -18,7 +18,7 @@ import machines
 __all__ = [
     'getCurrent', 'getElements', 'getLocations', 'addGroup', 'removeGroup',
     'addGroupMembers', 'removeGroupMembers', 'getGroups', 'getGroupMembers',
-    'getNeighbors', 'getBeamlineProfile', 
+    'getNeighbors', 'getClosest', 'getBeamlineProfile', 
     'getPhase', 'getBeta', 'getDispersion', 'getEta',
     'getOrbit', 'getTune', 'getTunes', 'getBpms'
 ]
@@ -297,6 +297,18 @@ def getNeighbors(element, group, n = 3):
 
     return machines._lat.getNeighbors(element, group, n)
 
+def getClosest(element, group):
+    """
+    Get the closest element in *group*
+
+    ::
+
+      >>> getClosest('PM1G4C27B', 'BPM')
+
+    It calls :meth:`~hla.lattice.Lattice.getClosest`
+    """
+
+    return machines._lat.getClosest(element, group)
 
 def getBeamlineProfile(s1 = 0, s2 = 1e10):
     """
@@ -317,6 +329,18 @@ def getStepSize(element):
     """
     raise NotImplementedError()
     return None
+
+def getDistance(elem1, elem2, absolute=True):
+    e1 = getElements(elem1)
+    e2 = getElements(elem2)
+
+    ds = e2.sb - e1.sb
+    C = machines._lat.circumference
+    if machines._lat.loop and C > 0:
+        while ds < -C: ds = ds + C
+        while ds > C: ds = ds - C
+    if absolute: return abs(ds)
+    else: return ds
 
 #
 #

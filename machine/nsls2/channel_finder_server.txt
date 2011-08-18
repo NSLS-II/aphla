@@ -3622,9 +3622,9 @@ LTB-BI{VF5}Size:Y-I; devName = VF5, elemField = y, elemName = VF5, elemType = FL
 LTB-BI{VF5}Img1:ArrayData; devName = VF5, elemName = VF5, elemType = FLAG, handle = READBACK, length = 0., ordinal = 111, sEnd = 1.880820e+001, system = LTB; aphla.eget, aphla.image, aphla.sys.LTB
 
 
-LTB-BI:BD2{VF1}Img1:ArrayData; devName = VF1VD2, elemName = VF1VD2, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD2
-LTB-BI:BD2{VF1}Size:X-I; devName = VF1VD2, elemName = VF1VD2, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.x, aphla.sys.LTD2
-LTB-BI:BD2{VF1}Size:Y-I; devName = VF1VD2, elemName = VF1VD2, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.y, aphla.sys.LTD2
+LTB-BI:BD2{VF1}Img1:ArrayData; devName = VF1BD2, elemName = VF1BD2, elemField=image, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.image, aphla.sys.LTD2
+LTB-BI:BD2{VF1}Size:X-I; devName = VF1BD2, elemName = VF1BD2, elemField=x, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.x, aphla.sys.LTD2
+LTB-BI:BD2{VF1}Size:Y-I; devName = VF1BD2, elemName = VF1BD2, elemField=y, elemType = FLAG, handle = READBACK, length = 0, ordinal = 55, sEnd = 10.28, system = LTB; aphla.eget, aphla.y, aphla.sys.LTD2
 
 LTB:MG{HCor:1BD1}Fld-I; devName=C1BD1, elemField=x, elemName=CX1BD1, elemType=HCOR, handle=READBACK, length=0.15, ordinal=28, sEnd=3.682898, system=LTB; aphla.eget, aphla.sys.LTD1, aphla.x
 LTB:MG{HCor:1BD1}Fld-SP; devName=C1BD1, elemField=x, elemName=CX1BD1, elemType=HCOR, handle=SETPOINT, length=0.15, ordinal=28, sEnd=3.682898, system=LTB; aphla.eput, aphla.sys.LTD1, aphla.x

@@ -79,7 +79,7 @@ from ormdata import OrmData
 ## from cothread import catools, Timedout
 NETWORK_DOWN=False
 try:
-    catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+    caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
     print("= Network is fine, using online PVs", file= sys.stderr)
 except Timedout:
     NETWORK_DOWN = True
@@ -90,7 +90,7 @@ except Timedout:
 ## from measorm import *
 ## from orbit import *
 from aptools import *
-
+import bba
 ## _orbit = Orbit(_cfa)
 
 

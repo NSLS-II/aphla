@@ -174,8 +174,8 @@ class TestLatticeSr(TestLattice):
         bpm = self.lat.getElements('BPM')
         self.assertTrue(len(bpm) > 0)
         for e in bpm: 
-            self.assertTrue(abs(e.x) > 0)
-            self.assertTrue(abs(e.y) > 0)
+            self.assertTrue(abs(e.x) >= 0)
+            self.assertTrue(abs(e.y) >= 0)
 
         hcor = self.lat.getElements('HCOR')
         self.assertTrue(len(bpm) > 0)

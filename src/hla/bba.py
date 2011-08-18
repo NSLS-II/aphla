@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-import matplotlib.pylab as plt
-import numpy as np
-import time
-import os
-import sys
-import pickle
-
+from hlalib import getElements, getNeighbors, getDistance, getOrbit
 from catools import caget, caput
+import time
+import numpy as np
+import matplotlib.pylab as plt
 
 """
 Remember:
@@ -18,7 +15,7 @@ Remember:
 """
 
 
-def _filtSmallSlope(x, y, varcut=1e10):
+def _filterSmallSlope(x, y, varcut=1e10):
     """
     Filt half of the points with small slope
     """
@@ -50,187 +47,287 @@ def _filtSmallSlope(x, y, varcut=1e10):
     return np.array(a), np.array(b), bh1, bh2
 
 class BBA:
-    def __init__(self):
+    def __init__(self, **kwargs):
         """
         Read config from a big table, link quadrupole, bpm and correctors
         """
         # bpm,trim,quad triplet
         self._bpm  = []
-        self._quad = []
+        self._quad = kwargs.get('quad', [])
         self._trim = []
-        self._bcqpv   = []
-        self._rawdkick = None
-        self._rawdqk1  = None
-        self._rawdorb  = None
 
-    def _setBpm(self, bpmpv, bpmname):
-        """
-        clear existing bpm, use the new set
-        """
-        self._bpm = []
-        N = max([len(bpmname), len(bpmpv)])
-        for i in range(N):
-            self._bpm.append([bpmpv[i], bpmname[i]])
+        self._rawdkick = []
+        self._rawdqk1  = []
+        self._rawdorb  = []
+        self._kicklim  = []
+        self._rawdata  = []
+        self._rawdata_mask = []
+        self._fitdkick = []
+        self._quadcenter = []
 
-    def _setTrim(self, trimpv, trimname, dkick):
-        """
-        clear existing trim, use the new set
-        """
-        self._trim = []
-        N = max([len(trimname), len(trimpv), len(dkick)])
-        for i in range(N):
-            self._trim.append([trimpv[i], trimpv[i], dkick[i]])
+        self.orbit_diffstd = 1e-7
 
-    def _setQuad(self, quadpv, quadname, dqk1):
+        if not self._quad:
+            for q in self._quad:
+                self._bpm.append(getClosest(q, 'BPM').name)
+                self._trim.append(None)
+                self._rawdqk1.append([0.0, 0.0])
+                self._rawdkick.append([])
+                self._fitdkick.append(0.0)
+                self._quadcenter.append([0.0, 0.0])
+                self._rawdata.append(None)
+                self._rawdata_mask.append(None)
+
+    def useBpm(self, bpmname, quadname):
+        """
+        use bpm for quad
+        """
+        if not quadname in self._quad:
+            raise ValueError('quadrupole "%s" is not in BBA')
+        i = self._quad.index(quadname)
+        if getElements(bpmname): self._bpm[i] = bpmname
+
+    def useCorrector(self, corrector, quad):
+        """
+        use corrector for quad
+        """
+        if not quad in self._quad:
+            raise ValueError('quadrupole "%s" is not in BBA')
+        i = self._quad.index(quad)
+        if getElements(corrector): self._trim[i] = corrector
+
+    def setQuad(self, quadname, dk1, **kwargs):
         """
         clear existing quad, use the new set
-        """
-        self._quad = []
-        N = max([len(quadname), len(quadpv), len(dqk1)])
-        for i in range(N):
-            self._bpm.append([quadpv[i], quadname[i], dqk1[i]])
 
-    def appendBpmQuadTrim(self, bpms, quads, trims):
-        """
-        append triplet. each are (pv, name) pair.
+        - *dqk1*
+        - *autoadd* [True|False] add the quadrupole if does not exist.
 
-        - *bpms* ['bpmpv', 'bpmname']
-        - *quads* ['quadpv', 'quadname', (dk1, dk1, ...)]
-        - *trims* ['trimpv', 'trimname', (dkick, dkick, ...)]
         """
-        self._bpm.append(bpms)
-        self._quad.append(quads)
-        self._trim.append(trims)
+        autoadd = kwargs.get('autoadd', False)
+        if quadname in self._quad:
+            i = self._quad.index(quadname)
+            self._rawdqk1[i, 1] = dk1
+        elif autoadd:
+            self._quad.append(quadname)
+            self._bpm.append(getClosest(quadname, 'BPM').name)
+            self._trim.append(None)
+            self._rawdkick.append([])
+            self._rawdqk1.append([0.0, 0.0])
+            self._rawdata.append(None)
+            self._rawdata_mask.append(None)
+
+    def setQuadBpmTrim(self, quad, bpm, trim, **kwargs):
+        """
+        set triplet.
+
+        - *bpm* 
+        - *quad* 
+        - *trim* 
+        - *dqk1*
+        - *dkick*
         
-    def setBpmQuadTrim(self, bpms, quads, trims):
+        create a new record, if quad does not exist.
         """
-        """
-        self._bpm = bpms
-        self._quad = quads
-        self._trim = trims
-    
-    def _set_wait_stable(
-        self, pvs, values, monipv, diffstd = 1e-6, timeout=30):
+        
+        if quad in self._quad:
+            # dqk1, dkick may exist, even it is default value
+            dqk1  = kwargs.get('dqk1', False)
+            dkick = kwargs.get('dkick', False)
+
+            i = self._quad.index(quad)
+            self._bpm[i] = bpm
+            self._trim[i] = trim
+            if dqk1 != False: self._rawdqk1[i] = [0.0, dqk1]
+            if dkick != False: self._rawdkick[i] = dkick
+        else:
+            dqk1 = kwargs.get('dqk1', 0.0)
+            dkick = kwargs.get('dkick', [])
+            self._quad.append(quad)
+            self._bpm.append(bpm)
+            self._trim.append(trim)
+            self._rawdqk1.append([0.0, dqk1])
+            self._rawdkick.append(dkick)
+            self._fitdkick.append(0.0)
+            self._quadcenter.append([0.0, 0.0])
+            self._rawdata.append(None)
+            self._rawdata_mask.append(None)
+
+            #print dqk1, dkick
+            #print self._rawdqk1[-1]
+
+    def _wait_stable_orbit(self, reforbit, **kwargs):
         """
         set pv to a value, waiting for timeout or the std of monipv is
         greater than diffstd
+
+        - *diffstd* = 1e-7
+        - *minwait* = 2
+        - *maxwait* =30
+        - *step* = 2
+        - *diffstd_list* = False
         """
-        if isinstance(monipv, str) or isinstance(monipv, unicode):
-            pvlst = [monipv]
-        else:
-            pvlst = monipv[:]
 
-        v0 = np.array(caget(monipv))
-        caput(pvs, values)
-        dt = 0
-        while dt < timeout:
-            time.sleep(2)
-            v1 = np.array(caget(monipv))
-            dt = dt + 2.0
-            if np.std(v1 - v0) > diffstd: break
-        return dt
+        diffstd = kwargs.get('diffstd', 1e-7)
+        minwait = kwargs.get('minwait', 2)
+        maxwait = kwargs.get('maxwait', 30)
+        step    = kwargs.get('step', 2)
+        diffstd_list = kwargs.get('diffstd_list', False)
+        verbose = kwargs.get('verbose', 0)
 
+        t0 = time.time()
+        time.sleep(minwait)
+        dv = getOrbit() - reforbit
+        dvstd = [dv.std()]
+        timeout = False
+
+        while dv.std() < diffstd:
+            time.sleep(step)
+            dt = time.time() - t0
+            if dt  > maxwait:
+                timeout = True
+                break
+            dv = getOrbit() - reforbit
+            dvstd.append(dv.std())
+
+        if diffstd_list:
+            return timeout, dvstd
 
     def _calculateKick(self, dkick, data):
         # The last column of nbpm is zero quad change
         ntrim, nquad, nbpm = np.shape(data)
-        k, pick = [], []
-        for i in range(nquad - 1):
-            v = data[:, i, :] - data[:, -1, :]
-            p, res, rank, sigv, rcond = \
-               np.polyfit(dkick, v, 1, full=True)
-            pavg = np.average(np.abs(p[-1,:]))
-            resavg = np.average(np.abs(res))
-            pick_c = np.logical_and(abs(p[-1,:])>pavg, res < resavg)
-            psub = np.compress(pick_c, p, axis=1)
-            k.append(np.average(-psub[-1,:]/psub[-2,:]))
-            pick.append(pick_c)
-        return k, pick
 
-    def _bowtieAlign(self, iquad):
-        quadpv = self._quad[iquad][0]
-        bpmpv  = self._bpm[iquad][0]
-        trimpv = self._trim[iquad][0]
-        
-        # WARNING: reading using sp channel
-        qk0 = caget(quadpv)
-        xp0  = caget(trimpv)
+        dobt = data[:,1,:] - data[:,0,:]
+        p, res, rank, sigv, rcond = np.polyfit(dkick, dobt, 1, full=True)
+        pavg = np.average(np.abs(p[-1,:]))
+        resavg = np.average(np.abs(res))
+        pick_c = np.logical_and(abs(p[-1,:])>pavg, res < resavg)
+        psub = np.compress(pick_c, p, axis=1)
 
-        #print xp, qk1
-        
-        full_bpm_pv = [p[0] for p in self._bpm]
-        dqklist = [v for v in self._quad[iquad][2]]
-        dqklist.append(0.0)
-        #print "bpms: ", len(full_bpm_pv)
-        # check how many points in quad and trim
-        ntrimsp = len(self._trim[iquad][2])
-        nquadsp = len(self._quad[iquad][2]) + 1
+        return np.average(-psub[-1,:]/psub[-2,:]), pick_c
 
+
+    def _bowtieAlign(self, iquad, **kwargs):
+        verbose = kwargs.get('verbose', 0)
+
+        quad = getElements(self._quad[iquad])
+        bpm  = getElements(self._bpm[iquad])
+        trim = getElements(self._trim[iquad])
+
+        qk0 = quad.value
+        xp0  = trim.value
+
+        self._rawdqk1[iquad][0] = qk0
+        dqk1 = self._rawdqk1[iquad][1]
+        if verbose: print "qk1= ", qk0, "dqk1=", dqk1
         ##
         ## initial orbit-quad
-        v00 = np.array(caget(full_bpm_pv))
-        #print "step up quad"
-        self._set_wait_stable(quadpv, qk1 + .05, full_bpm_pv)
-        v01 = np.array(caget(full_bpm_pv))
+        obt00 = getOrbit()
+        quad.value = qk0 + dqk1
+        timeout, log = self._wait_stable_orbit(obt00, diffstd_list=True, verbose=verbose, diffstd=self.orbit_diffstd)
+        if verbose:
+            print "timeout=", timeout, "diffstd=", log
+
+        obt01 = getOrbit()
         #print "step down quad"
-        self._set_wait_stable(quadpv, qk1, full_bpm_pv, diffstd=1e-7)
-        v02 = np.array(caget(full_bpm_pv))
+        timeout, log = self._wait_stable_orbit(obt01, diffstd=self.orbit_diffstd, diffstd_list=True)
+        if verbose:  print "timeout=", timeout, "diffstd=", log
 
-        # the orbit data is a (ntrim, nquad+1) matrix
-        data = np.zeros((ntrimsp, nquadsp, len(full_bpm_pv)), 'd')
+        obt02 = getOrbit()
 
-        for i,dqk in enumerate(dqklist):
-            for j,dxp in enumerate(self._trim[iquad][2]):
-                qk2 = dqk + qk1
-                xp2 = dxp + xp
-                dt = self._set_wait_stable(
-                    [quadpv, trimpv], [qk2, xp2], full_bpm_pv)
-                data[j,i,:] = caget(full_bpm_pv)
+        # 2 quad settings
+        ntrimsp, nquadsp, nbpmobt = len(self._rawdkick[iquad]), 2, len(obt00)
+        if verbose: print "trimsteps= %d, quad steps= %d, orbit points= %d" % (ntrimsp, nquadsp, nbpmobt)
 
-        dk, pick = self._calculateKick(self._trim[iquad][2], data)
+        # store x,y orbit
+        data = np.zeros((ntrimsp, nquadsp, nbpmobt*2), 'd')
+        quad.value = qk0
+        timeout, log = self._wait_stable_orbit(obt02, diffstd=self.orbit_diffstd, diffstd_list=True)
+        if verbose:  print "timeout=", timeout, "diffstd=", log
 
-        #self._set_wait_stable(quadpv, qk1
-        #print dk[0]+xp
-        #print "Set new kick"
-        self._set_wait_stable(trimpv, xp+dk[0], full_bpm_pv)
+        # initial qk
+        for j,dxp in enumerate(self._rawdkick[iquad]):
+            xp2 = xp0 + dxp
+            obt = getOrbit()
+            trim.value = xp2
+            timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True)
+            if verbose: print "j=", j, "timeout=", timeout, "diffstd=", log
 
-        ret = caget(bpmpv)
-        v10 = np.array(caget(full_bpm_pv))
-        #print "step up quad"
-        self._set_wait_stable(quadpv, qk1 + .05, full_bpm_pv, diffstd=1e-7)
-        v11 = np.array(caget(full_bpm_pv))
-        #print "step down quad"
-        self._set_wait_stable(quadpv, qk1, full_bpm_pv, diffstd=1e-7)
-        v12 = np.array(caget(full_bpm_pv))
+            obt1 = getOrbit()
+            print j, np.shape(obt1), np.shape(data)
+            data[j, 0, :nbpmobt] = obt1[:,0]
+            data[j, 0, nbpmobt:] = obt1[:,1]
 
+        # adjust qk
+        obt = getOrbit()
+        trim.value = xp0
+        quad.value = qk0 + dqk1
+        timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list= True)
+        if verbose: print "timeout=", timeout, "diffstd=", log
+
+        obt = getOrbit()
+        for j,dxp in enumerate(self._rawdkick[iquad]):
+            xp2 = xp0 + dxp
+            trim.value = xp2
+            timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True)
+            if verbose: print "j=", j, "timeout=", timeout, "diffstd=", log
+
+            obt = getOrbit()
+            data[j, 1, :nbpmobt] = obt[:,0]
+            data[j, 1, nbpmobt:] = obt[:,1]
+
+        # calculate the x part
+        dkx, maskx = self._calculateKick(self._rawdkick[iquad], data[:,:,:nbpmobt])
+        dky, masky = self._calculateKick(self._rawdkick[iquad], data[:,:,nbpmobt:])
+
+        # save x part
+        self._rawdata[iquad] = data[:,:,:nbpmobt]
+        self._rawdata_mask[iquad] = maskx
+
+        self._fitdkick[iquad] = (dkx, dky)
+
+        obt = getOrbit()
+        trim.value = xp0 + dkx
+        quad.value = qk0
+        timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True, verbose=verbose)
+        print "Set corrector dxp=", dkx
+        print "Quad center:", bpm.value
+        self._quadcenter[iquad] = bpm.value
+        
+
+    def exportFigures(self, iquad, format):
+        
         # orbit change due to quad
+        d = self._rawdata[iquad]
+        dsub = np.compress(self._rawdata_mask[iquad], self._rawdata[iquad], axis=2)
+
         plt.clf()
         plt.subplot(211)
         plt.title("Orbit change due to quad strength change 0.01")
-        plt.plot(1.0e6*(v01-v00), 'r-')
+        plt.plot(self._rawdkick[iquad], 1.0e6*(d[:,1,:]-d[:,0,:]), 'o-')
         plt.subplot(212)
-        plt.plot(1.0e6*(v11-v10), 'g-o')
-        plt.savefig("bba-q%05d-orbit-quad.png" % iquad)
+        plt.plot(self._rawdkick[iquad], 1.0e6*(dsub[:,1,:] - dsub[:,0,:]), 'o-')
+        plt.savefig("bba-%s.%s" % (self._quad[iquad], format))
         
-        #self._set_wait_stable(trimpv, xp, full_bpm_pv)
-        print "BPM:", caget(bpmpv), self._quad[iquad]
+        # #self._set_wait_stable(trimpv, xp, full_bpm_pv)
+        # print "BPM:", caget(bpmpv), self._quad[iquad]
 
-        plt.clf()
-        plt.plot((xp+np.array(self._trim[iquad][2]))*1000,
-                 1000*(data[:,0,:] - data[:,-1,:]), 'k--')
-        plt.plot((xp+np.array(self._trim[iquad][2]))*1000,
-                 1000*np.compress(pick[0], data[:,0,:] - data[:,-1,:], axis=1), 'ro-')
-        plt.xlabel("kick [mrad]")
-        plt.ylabel("dx orbit [mm]")
-        #plt.ylabel(r"$\Delta x(K_0\to K_0+\delta K)~[mm]$")
-        plt.savefig("bba-q%05d-03-bowtie.png" % iquad)
-        # change the quadrupole
+        # plt.clf()
+        # plt.plot((xp+np.array(self._trim[iquad][2]))*1000,
+        #          1000*(data[:,0,:] - data[:,-1,:]), 'k--')
+        # plt.plot((xp+np.array(self._trim[iquad][2]))*1000,
+        #          1000*np.compress(pick[0], data[:,0,:] - data[:,-1,:], axis=1), 'ro-')
+        # plt.xlabel("kick [mrad]")
+        # plt.ylabel("dx orbit [mm]")
+        # #plt.ylabel(r"$\Delta x(K_0\to K_0+\delta K)~[mm]$")
+        # plt.savefig("bba-q%05d-03-bowtie.png" % iquad)
+        # # change the quadrupole
         
-        return dk[0], ret
+        # return dk[0], ret
             
-    def alignBpmQuad(self, iquad, bowtie=False):
+    def alignQuad(self, iquad, bowtie=False):
         if iquad >= len(self._quad): return None
-        return self._bowtieAlign(iquad)
+        return self._bowtieAlign(iquad, verbose=1)
     
     def __print__(self):
         for i in range(self.NQUAD):
@@ -309,3 +406,86 @@ if __name__ == "__main__":
     print "Tune Y:", ca.Get('SR:C00-Glb:G00<TUNE:00>RB:Y')
     
     
+def align(quad, bpmfamily='BPM', correctorfamily='HCOR'):
+    q = getElements(quad)
+    bpms = getNeighbors(q.name, bpmfamily, 1)
+    print q.name
+    for b in bpms:
+        print "BPM:", b.name, b.sb - q.sb
+    if getDistance(bpms[0].name, q.name) > getDistance(bpms[-1].name, q.name):
+        bpm = bpms[-1]
+    else:
+        bpm = bpms[0]
+
+    cors = getNeighbors(bpm.name, correctorfamily, 1)
+    for c in cors:
+        print "Corr:", c.name, c.sb - bpm.sb
+    hcor = cors[0]
+
+    # we have the bpm and corrector
+    print "Ready:"
+    print hcor.name, hcor.sb, hcor.value
+    print bpm.name, bpm.sb, bpm.value
+    print q.name, q.sb, q.value
+    
+    #hcor.x = 1e-5
+    time.sleep(3)
+    print bpm.name, bpm.sb, bpm.value
+    print q.name, q.sb, q.value
+    #hcor.x = 0
+    #return None
+
+    k0 = q.value
+    k1 = k0 * 1.1
+
+    v0 = getOrbit()
+    m,n = np.shape(v0)
+
+    #print v0
+    t0 = hcor.x
+    t = t0 + np.linspace(-.5e-6, .5e-6, 5)
+    va = np.zeros((len(t), m, n), 'd')
+    vb = np.zeros((len(t), m, n), 'd')
+    for i,t1 in enumerate(t):
+        hcor.x = t1
+        print i, hcor.x
+        time.sleep(4)
+        v1 = getOrbit()
+        va[i,:,:] = v1[:,:]
+
+    for i in range(m):
+        plt.plot(t, va[:,i,0]-v0[i,0], '-o')
+    plt.xlabel("Horizontal Kick")
+    plt.ylabel("Orbit Shift with Quad(k0)")
+    plt.savefig('boutie-1.png')
+
+    time.sleep(5)
+    q.value = k1
+    time.sleep(5)
+    for i,t1 in enumerate(t):
+        hcor.x = t1
+        time.sleep(4)
+        v1 = getOrbit()
+        vb[i,:,:] = v1[:,:]
+
+    for i in range(m):
+        plt.plot(t, vb[:,i,0]-v0[i,0], '-o')    
+    plt.xlabel("Horizontal Kick")
+    plt.ylabel("Orbit Shift with Quad(k0+dk)")
+    plt.savefig('boutie-2.png')
+
+
+    q.value = k0
+    hcor.x = t0
+    
+    plt.clf()
+    for i in range(m):
+        plt.plot(t, vb[:,i,0] - va[:,i,0], '-o')
+    plt.xlabel("Horizontal Kick")
+    plt.ylabel("Orbit Shift between k1,k0")
+    plt.grid(True)
+    plt.savefig('boutie.png')
+
+
+
+
