@@ -23,7 +23,7 @@ from bba import BBA
 
 __all__ = [
     'getLifetime',  'measChromaticity', 'measDispersion',
-    'correctOrbitPv', 'correctOrbit', 'alignQuadrupole'
+    'correctOrbitPv', 'correctOrbit', 'alignQuadrupole', 'createLocalBump'
 ]
 
 alphac = 3.6261976841792413e-04
@@ -185,7 +185,7 @@ def measDispersion():
     f.close()
     
 
-def correctOrbitPv(bpm, trim, ormdata):
+def correctOrbitPv(bpm, trim, ormdata, ref = None):
     """
     correct orbit use direct pv and catools
 
@@ -202,18 +202,94 @@ def correctOrbitPv(bpm, trim, ormdata):
             # did not check if the item is masked.
             m[i,j] = ormdata.m[im,jm]
 
+    print(len(ref), len(bpm))
     v0 = np.array(caget(bpm), 'd')
+    if ref != None: v0 = v0 - ref
+
     dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0)
     k0 = np.array(caget(trim), 'd')
     caput(trim, k0+dk)
 
+def createLocalBump(bpm, trim, ref, **kwargs):
+    """
+    create a local bump at certain BPM, while keep all other orbit untouched
+    
+    - *bpm* a list of BPM name
+    - *trim* corrector (group/family/list)
+    - *ref* target orbit, (len(bpm),2), if the ref[i][j] == None, use the current hardware result.
+    """
+    plane = kwargs.get('plane', 'HV')
+
+    bpmlst = getElements(bpm, alwayslist=True)
+    if len(bpm) != len(bpmlst):
+        raise ValueError("bpm must be a list of qualified BPM names")
+    for i,b in enumerate(bpmlst):
+        if b.name != bpm[i]:
+            raise ValueError("bpm must be a list of qualified BPM names")
+
+    bpmfulllst = getElements('BPM')
+    bpmpv, bpmref = [], []
+    pvx, pvy = [], []
+    for b in bpmfulllst:
+        xpv = b.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET])
+        ypv = b.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET])
+        if xpv: pvx.append(xpv)
+        if ypv: pvy.append(ypv)
+        bpmpv.append(xpv)
+        bpmpv.append(ypv)
+        x0, y0 = b.value
+        if b in bpmlst:
+            idx = bpmlst.index(b)
+            if ref[idx][0] == None:
+                bpmref.append(x0)
+            else:
+                bpmref.append(ref[idx][0])
+
+            if ref[idx][1] == None:
+                bpmref.append(y0)
+            else:
+                bpmref.append(ref[idx][1])
+        else:
+            bpmref.append(caget(xpv))
+            bpmref.append(caget(ypv))
+
+    # did not check duplicate PV
+    # pv for trim
+    trimlst = machines._lat.getElements(trim)
+
+    trimpv, pvxsp, pvysp = [], [], []
+    for e in trimlst:
+        pv = e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT])
+        if pv: pvxsp.append(pv)
+        if isinstance(pv, (str, unicode)): trimpv.append(pv)
+        elif pv: trimpv.extend(pv)
+        
+        pv = e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
+        if pv: pvysp.append(pv)
+        if isinstance(pv, (str, unicode)): trimpv.append(pv)
+        elif pv: trimpv.extend(pv)
+
+    if 'H' in plane and len(pvx) > 0 and len(pvxsp) == 0:
+        print("WARNING: no HCOR for horizontal orbit correction", file=sys.stderr)
+    if 'V' in plane and len(pvy) > 0 and len(pvysp) == 0:
+        print("WARNING: no VCOR for vertical orbit correction", file=sys.stderr)
+
+    if not machines._lat.orm:
+        print("ERROR: this lattice setting has no ORM data", file=sys.stderr)
+    else:
+        correctOrbitPv(bpmpv, trimpv, machines._lat.orm, np.array(bpmref))
+
+    
+    
 def correctOrbit(bpm, trim, **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
     Example::
 
-      correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
+      >>> correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
+
+    The orbit not in BPM list may change.
 
     .. seealso:: :func:`hla.getSubOrm`
     """
@@ -237,14 +313,16 @@ def correctOrbit(bpm, trim, **kwargs):
     trimpv, pvxsp, pvysp = [], [], []
     for e in trimlst:
         pv = e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT])
+        print(e.name, pv)
         if pv: pvxsp.append(pv)
         if isinstance(pv, (str, unicode)): trimpv.append(pv)
         elif pv: trimpv.extend(pv)
         
         pv = e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
+        print(str(e.name), pv)
         if pv: pvysp.append(pv)
         if isinstance(pv, (str, unicode)): trimpv.append(pv)
-        else: trimpv.extend(pv)
+        elif pv: trimpv.extend(pv)
 
     if 'H' in plane and len(pvx) > 0 and len(pvxsp) == 0:
         print("WARNING: no HCOR for horizontal orbit correction", file=sys.stderr)

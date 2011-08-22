@@ -22,9 +22,19 @@ def ex01():
 
 def ex02():
     hla.machines.initNSLS2VSR()
-    hla.machines.use('LTD1')
+    hla.hlalib._reset_trims()
+    time.sleep(2)
+    #hla.machines.use('LTD1')
     hc = hla.getElements('HCOR')
     print hc[0].status
+    print hc[0].pv(tags=[hla.machines.HLA_TAG_X, hla.machines.HLA_TAG_EGET])
+    bpmlst = [b.name for b in hla.getElements('BPM')]
+    bpmquad = ['PH1G2C04A', 'PH1G2C06A']
+    ref = []
+    for b in bpmlst:
+        if b in bpmquad: ref.append([1e-6, None])
+        else: ref.append([0.0, None])
+    hla.createLocalBump(bpmlst, 'HCOR', ref, plane='H') 
 
 if __name__ == '__main__':
 

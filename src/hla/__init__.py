@@ -80,7 +80,7 @@ from ormdata import OrmData
 NETWORK_DOWN=False
 try:
     caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
-    print("= Network is fine, using online PVs", file= sys.stderr)
+    print("# Network is fine, using online PVs", file= sys.stderr)
 except Timedout:
     NETWORK_DOWN = True
     pass

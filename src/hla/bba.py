@@ -230,56 +230,54 @@ class BBA:
         obt00 = self._get_orbit()
         quad.value = qk0 + dqk1
         timeout, log = self._wait_stable_orbit(obt00, diffstd_list=True, verbose=verbose, diffstd=self.orbit_diffstd)
-        if verbose:
-            print "timeout=", timeout, "diffstd=", log
 
         obt01 = self._get_orbit()
         #print "step down quad"
-        timeout, log = self._wait_stable_orbit(obt01, diffstd=self.orbit_diffstd, diffstd_list=True)
-        if verbose:  print "timeout=", timeout, "diffstd=", log
+        timeout, log = self._wait_stable_orbit(obt01, diffstd=self.orbit_diffstd, verbose=verbose, diffstd_list=True)
 
         obt02 = self._get_orbit()
 
         # 2 quad settings
         ntrimsp, nquadsp, nbpmobt = len(self._rawdkick[iquad]), 2, len(obt00)
-        if verbose: print "trimsteps= %d, quad steps= %d, orbit points= %d" % (ntrimsp, nquadsp, nbpmobt)
+        #if verbose: print "trimsteps= %d, quad steps= %d, orbit points= %d" % (ntrimsp, nquadsp, nbpmobt)
 
-        # store x,y orbit
+        # store orbit
         data = np.zeros((ntrimsp, nquadsp, nbpmobt), 'd')
         quad.value = qk0
-        timeout, log = self._wait_stable_orbit(obt02, diffstd=self.orbit_diffstd, diffstd_list=True)
-        if verbose:  print "timeout=", timeout, "diffstd=", log
+        timeout, log = self._wait_stable_orbit(obt02, diffstd=self.orbit_diffstd,
+                                               diffstd_list=True, verbose=verbose)
 
         # initial qk
         for j,dxp in enumerate(self._rawdkick[iquad]):
             xp2 = xp0 + dxp
             obt = self._get_orbit()
             trim.value = xp2
-            timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True)
-            if verbose: print "j=", j, "timeout=", timeout, "diffstd=", log
+            timeout, log = self._wait_stable_orbit(obt, 
+                                                   diffstd=self.orbit_diffstd, 
+                                                   diffstd_list=True, verbose=verbose)
 
             obt1 = self._get_orbit()
-            print j, np.shape(obt1), np.shape(data)
+            #print j, np.shape(obt1), np.shape(data)
             data[j, 0, :] = obt1[:]
 
         # adjust qk
         obt = self._get_orbit()
         trim.value = xp0
         quad.value = qk0 + dqk1
-        timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list= True)
-        if verbose: print "timeout=", timeout, "diffstd=", log
+        timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd,
+                                               diffstd_list= True, verbose=verbose)
 
         obt = self._get_orbit()
         for j,dxp in enumerate(self._rawdkick[iquad]):
             xp2 = xp0 + dxp
             trim.value = xp2
-            timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True)
-            if verbose: print "j=", j, "timeout=", timeout, "diffstd=", log
+            timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, 
+                                                   diffstd_list=True, verbose=verbose)
 
             obt = self._get_orbit()
             data[j, 1, :] = obt[:]
 
-        print "Calculating ..."
+        if verbose > 0: print "# Calculating ..."
         # calculate the x part
         dkx, maskx = self._calculateKick(self._rawdkick[iquad], data)
 
@@ -293,12 +291,18 @@ class BBA:
         trim.value = xp0 + dkx
         quad.value = qk0
         timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True, verbose=verbose)
-        print "Set corrector dxp=", dkx
-        print "Quad center:", bpm.value
 
-        if self.plane == 'H': self._quadcenter[iquad] = bpm.value[0]
-        elif self.plane == 'V': self._quadcenter[iquad] = bpm.value[1]
-        else: raise ValueError("BBA does not recognize plane '%s'" % self.plane)
+        if verbose:
+            print "# Set corrector dxp=", dkx
+
+        if self.plane == 'H':
+            self._quadcenter[iquad] = bpm.value[0]
+            if verbose: print "# Quad center:", self.plane, bpm.value[0]
+        elif self.plane == 'V':
+            self._quadcenter[iquad] = bpm.value[1]
+            if verbose: print "# Quad center:", self.plane, bpm.value[1]
+        else: 
+            raise ValueError("BBA does not recognize plane '%s'" % self.plane)
         
 
     def exportFigures(self, iquad, format):
@@ -329,9 +333,11 @@ class BBA:
         for fmt in out: plt.savefig(fmt)
 
         
-    def alignQuad(self, iquad, bowtie=False):
+    def alignQuad(self, iquad, **kwargs):
+        verbose = kwargs.get('verbose', 0)
+
         if iquad >= len(self._quad): return None
-        return self._bowtieAlign(iquad, verbose=1)
+        return self._bowtieAlign(iquad, verbose=verbose)
     
     def checkAlignment(self, iquad, **kwargs):
         """

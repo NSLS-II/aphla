@@ -255,7 +255,7 @@ class Lattice:
             ret.extend(self._elements[:i1+1])
         return ret
 
-    def getElements(self, group, alwayslist=False):
+    def getElements(self, group, **kwargs):
         """
         get elements.
 
@@ -277,6 +277,8 @@ class Lattice:
 
         *alwayslist* whether return list when returning a single element.
         """
+
+        alwayslist=kwargs.get('alwayslist', False)
 
         if isinstance(group, str) or isinstance(group, unicode):
             # do exact element name match first
@@ -305,7 +307,9 @@ class Lattice:
                     names.append(e.name)
             return ret
         elif isinstance(group, list):
-            #print __file__, "list ..", group
+            if not group and alwayslist: return []
+            elif not group: return None
+
             # exact one-by-one match
             ret = [None] * len(group)
             for elem in self._elements:

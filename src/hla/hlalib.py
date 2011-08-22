@@ -161,7 +161,7 @@ def _levenshtein_distance(first, second):
     return distance_matrix[first_length-1][second_length-1]
 
 
-def getElements(group):
+def getElements(group, alwayslist=False):
     """
     return list of elements.
 
@@ -177,7 +177,7 @@ def getElements(group):
     this calls :func:`~hla.lattice.Lattice.getElements` of the current lattice.
     """
 
-    return machines._lat.getElements(group)
+    return machines._lat.getElements(group, alwayslist=alwayslist)
 
 def getLocations(group):
     """
