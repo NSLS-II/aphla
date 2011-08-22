@@ -52,6 +52,7 @@ class BBA:
         Read config from a big table, link quadrupole, bpm and correctors
         """
         # bpm,trim,quad triplet
+        self.plane = kwargs.get('plane', 'H')
         self._bpm  = []
         self._quad = kwargs.get('quad', [])
         self._trim = []
@@ -177,7 +178,7 @@ class BBA:
 
         t0 = time.time()
         time.sleep(minwait)
-        dv = getOrbit() - reforbit
+        dv = self._get_orbit() - reforbit
         dvstd = [dv.std()]
         timeout = False
 
@@ -187,7 +188,7 @@ class BBA:
             if dt  > maxwait:
                 timeout = True
                 break
-            dv = getOrbit() - reforbit
+            dv = self._get_orbit() - reforbit
             dvstd.append(dv.std())
 
         if diffstd_list:
@@ -206,6 +207,10 @@ class BBA:
 
         return np.average(-psub[-1,:]/psub[-2,:]), pick_c
 
+    def _get_orbit(self,**kwargs):
+        if self.plane == 'H': return getOrbit()[:,0]
+        elif self.plane == 'V': return getOrbit()[:,1]
+        else: raise ValueError("BBA does not recognize the plane '%s'" % self.plane)
 
     def _bowtieAlign(self, iquad, **kwargs):
         verbose = kwargs.get('verbose', 0)
@@ -222,25 +227,25 @@ class BBA:
         if verbose: print "qk1= ", qk0, "dqk1=", dqk1
         ##
         ## initial orbit-quad
-        obt00 = getOrbit()
+        obt00 = self._get_orbit()
         quad.value = qk0 + dqk1
         timeout, log = self._wait_stable_orbit(obt00, diffstd_list=True, verbose=verbose, diffstd=self.orbit_diffstd)
         if verbose:
             print "timeout=", timeout, "diffstd=", log
 
-        obt01 = getOrbit()
+        obt01 = self._get_orbit()
         #print "step down quad"
         timeout, log = self._wait_stable_orbit(obt01, diffstd=self.orbit_diffstd, diffstd_list=True)
         if verbose:  print "timeout=", timeout, "diffstd=", log
 
-        obt02 = getOrbit()
+        obt02 = self._get_orbit()
 
         # 2 quad settings
         ntrimsp, nquadsp, nbpmobt = len(self._rawdkick[iquad]), 2, len(obt00)
         if verbose: print "trimsteps= %d, quad steps= %d, orbit points= %d" % (ntrimsp, nquadsp, nbpmobt)
 
         # store x,y orbit
-        data = np.zeros((ntrimsp, nquadsp, nbpmobt*2), 'd')
+        data = np.zeros((ntrimsp, nquadsp, nbpmobt), 'd')
         quad.value = qk0
         timeout, log = self._wait_stable_orbit(obt02, diffstd=self.orbit_diffstd, diffstd_list=True)
         if verbose:  print "timeout=", timeout, "diffstd=", log
@@ -248,87 +253,109 @@ class BBA:
         # initial qk
         for j,dxp in enumerate(self._rawdkick[iquad]):
             xp2 = xp0 + dxp
-            obt = getOrbit()
+            obt = self._get_orbit()
             trim.value = xp2
             timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True)
             if verbose: print "j=", j, "timeout=", timeout, "diffstd=", log
 
-            obt1 = getOrbit()
+            obt1 = self._get_orbit()
             print j, np.shape(obt1), np.shape(data)
-            data[j, 0, :nbpmobt] = obt1[:,0]
-            data[j, 0, nbpmobt:] = obt1[:,1]
+            data[j, 0, :] = obt1[:]
 
         # adjust qk
-        obt = getOrbit()
+        obt = self._get_orbit()
         trim.value = xp0
         quad.value = qk0 + dqk1
         timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list= True)
         if verbose: print "timeout=", timeout, "diffstd=", log
 
-        obt = getOrbit()
+        obt = self._get_orbit()
         for j,dxp in enumerate(self._rawdkick[iquad]):
             xp2 = xp0 + dxp
             trim.value = xp2
             timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True)
             if verbose: print "j=", j, "timeout=", timeout, "diffstd=", log
 
-            obt = getOrbit()
-            data[j, 1, :nbpmobt] = obt[:,0]
-            data[j, 1, nbpmobt:] = obt[:,1]
+            obt = self._get_orbit()
+            data[j, 1, :] = obt[:]
 
+        print "Calculating ..."
         # calculate the x part
-        dkx, maskx = self._calculateKick(self._rawdkick[iquad], data[:,:,:nbpmobt])
-        dky, masky = self._calculateKick(self._rawdkick[iquad], data[:,:,nbpmobt:])
+        dkx, maskx = self._calculateKick(self._rawdkick[iquad], data)
 
         # save x part
-        self._rawdata[iquad] = data[:,:,:nbpmobt]
+        self._rawdata[iquad] = data[:,:,:]
         self._rawdata_mask[iquad] = maskx
 
-        self._fitdkick[iquad] = (dkx, dky)
+        self._fitdkick[iquad] = dkx
 
-        obt = getOrbit()
+        obt = self._get_orbit()
         trim.value = xp0 + dkx
         quad.value = qk0
         timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True, verbose=verbose)
         print "Set corrector dxp=", dkx
         print "Quad center:", bpm.value
-        self._quadcenter[iquad] = bpm.value
+
+        if self.plane == 'H': self._quadcenter[iquad] = bpm.value[0]
+        elif self.plane == 'V': self._quadcenter[iquad] = bpm.value[1]
+        else: raise ValueError("BBA does not recognize plane '%s'" % self.plane)
         
 
     def exportFigures(self, iquad, format):
-        
+        """
+        export the bowtie figure.
+
+        ::
+
+          >>> exportFigures(0, 'png')
+          >>> exportFigures(1, ['pdf', 'png'])
+        """
+
         # orbit change due to quad
         d = self._rawdata[iquad]
         dsub = np.compress(self._rawdata_mask[iquad], self._rawdata[iquad], axis=2)
 
+        if isinstance(format, (str, unicode)):
+            out = ["bba-%s-%s.%s" % (self._quad[iquad], self.plane, format)]
+        else:
+            out = ["bba-%s-%s.%s" % (self._quad[iquad], self.plane, fmt) for fmt in format]
+
         plt.clf()
         plt.subplot(211)
-        plt.title("Orbit change due to quad strength change 0.01")
+        plt.title("Orbit change due to quad strength change")
         plt.plot(self._rawdkick[iquad], 1.0e6*(d[:,1,:]-d[:,0,:]), 'o-')
         plt.subplot(212)
         plt.plot(self._rawdkick[iquad], 1.0e6*(dsub[:,1,:] - dsub[:,0,:]), 'o-')
-        plt.savefig("bba-%s.%s" % (self._quad[iquad], format))
-        
-        # #self._set_wait_stable(trimpv, xp, full_bpm_pv)
-        # print "BPM:", caget(bpmpv), self._quad[iquad]
+        for fmt in out: plt.savefig(fmt)
 
-        # plt.clf()
-        # plt.plot((xp+np.array(self._trim[iquad][2]))*1000,
-        #          1000*(data[:,0,:] - data[:,-1,:]), 'k--')
-        # plt.plot((xp+np.array(self._trim[iquad][2]))*1000,
-        #          1000*np.compress(pick[0], data[:,0,:] - data[:,-1,:], axis=1), 'ro-')
-        # plt.xlabel("kick [mrad]")
-        # plt.ylabel("dx orbit [mm]")
-        # #plt.ylabel(r"$\Delta x(K_0\to K_0+\delta K)~[mm]$")
-        # plt.savefig("bba-q%05d-03-bowtie.png" % iquad)
-        # # change the quadrupole
         
-        # return dk[0], ret
-            
     def alignQuad(self, iquad, bowtie=False):
         if iquad >= len(self._quad): return None
         return self._bowtieAlign(iquad, verbose=1)
     
+    def checkAlignment(self, iquad, **kwargs):
+        """
+        check the orbit shift due to changing quadruple strength.
+
+        - *dqk1*, 0.05, change of quadrupole strength.
+        - *wait*, 10, wait 10 seconds to read orbit after changing the quadrupole.
+        """
+        dqk1 = kwargs.get('dqk1', 0.05)
+        wait = kwargs.get('wait', 10)
+
+        v0 = getOrbit(spos = True)
+        quad = getElements(self._quad[iquad])
+        quad.value = quad.value + dqk1
+        time.sleep(wait)
+        v1 = getOrbit(spos=True)
+        quad.value = quad.value - dqk1
+        return v0, v1
+
+    def getQuadCenter(self):
+        """
+        """
+        return self._quadcenter[:]
+
     def __print__(self):
         for i in range(self.NQUAD):
             print self.goldenx[i], self.goldeny[i],self.newgoldenx[i],self.newgoldeny[i]

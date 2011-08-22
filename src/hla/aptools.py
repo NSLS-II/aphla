@@ -18,10 +18,12 @@ import matplotlib.pylab as plt
 import machines
 from orbit import Orbit
 from catools import caput, caget 
+from hlalib import getElements, getNeighbors, getClosest
+from bba import BBA
 
 __all__ = [
     'getLifetime',  'measChromaticity', 'measDispersion',
-    'correctOrbitPv', 'correctOrbit'
+    'correctOrbitPv', 'correctOrbit', 'alignQuadrupole'
 ]
 
 alphac = 3.6261976841792413e-04
@@ -256,3 +258,61 @@ def correctOrbit(bpm, trim, **kwargs):
 
 
     
+def alignQuadrupole(quad, **kwargs):
+    trim = kwargs.get('trim', None)
+    bpm = kwargs.get('bpm', None)
+    plane = kwargs.get('plane', 'H')
+    dqk1 = kwargs.get('dqk1', 0.05)
+    dkick = kwargs.get('dkick', np.linspace(-1e-6, 1e-6, 5).tolist())
+    export_figures = kwargs.get('export_figures', True)
+
+    if isinstance(quad, (str, unicode)):
+        quadlst = [quad]
+    else:
+        quadlst = [q for q in quad]
+        
+    if plane == 'H': trim_type = 'HCOR'
+    elif plane == 'V': trim_type = 'VCOR'
+    else:
+        raise ValueError('Unknnow plane type: "%s"' % plane)
+
+    if trim == None:
+        trimlst = []
+        for q in quadlst:
+            ch = getNeighbors(q, trim_type, 1)
+            trimlst.append(ch[0].name)
+    else:
+        trimlst = [t for t in trim]
+
+    if bpm == None:
+        bpmlst = []
+        for q in quadlst:
+            bpmlst.append(getClosest(q, 'BPM').name)
+    else:
+        bpmlst = [b for b in bpm]
+
+    # now we get a list of Quad,BPM,Trim names.
+    bb = BBA(plane=plane)
+    for i in range(len(quadlst)):
+        bb.setQuadBpmTrim(quadlst[i], bpmlst[i], trimlst[i], dqk1=dqk1, dkick=dkick)
+        
+    for i in range(len(quadlst)):
+        cva0, cva1 = bb.checkAlignment(i)
+
+        #print "Initial quad value: ", quad.name, quad.value
+        bb.alignQuad(i)
+        cvb0, cvb1 = bb.checkAlignment(i)
+
+        if export_figures:
+            # plot 
+            plt.clf()
+            plt.plot(cva0[:,-1], (cva1-cva0)[:,0], '-o', label="before BBA")
+            plt.plot(cvb0[:,-1], (cvb1-cvb0)[:,0], '-v', label="after BBA")    
+            plt.title("Orbit change due to quad")
+            plt.savefig("bba-%s-check.png" % quadlst[i])
+
+            bb.exportFigures(i, 'png')
+            bb.exportFigures(i, 'pdf')
+            #print "final quad value: ", quad.name, quad.value
+    return bb.getQuadCenter()
+
