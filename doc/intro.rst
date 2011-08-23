@@ -21,7 +21,7 @@ documents:
 
 The details of each API can be found in the reference manual distributed
 with the source code. A less detailed list of APIs is in
-another manual by same authors [Shen]_.
+another manual by same authors [Shenhla]_.
 
 Schedule for Beam Commissioning
 -------------------------------
@@ -92,7 +92,7 @@ name instead of long abstract channel name. e.g. the setpoint of
 horizontal orbit corrector in cell 1 girder 3 is presented to accelerator
 physicists as *CH1[0]* instead of *SR:C01-MG:G03A.SP*. This makes them to
 write high level control scripts easier. The client API which encapsulate
-low level control details are listed in [Shen]_. They usually contains
+low level control details are listed in [Shenhla]_. They usually contains
 physics logic or accelerator dependent quantities
 inside. e.g. **getChannelVariance**, **measureChromaticity**.
 
@@ -123,20 +123,18 @@ physics, data acquisition, hardware control, and so on, can work
 together effectively and productively.
 
 
-.. [Bengtsson2008] J. Bengtsson, B. Dalesio, T. Shaftan, T. Tanabe,
-   *NSLS-II: Model Based Control - A Use Case Approach*, Tech-note 51, Oct
-   2008
-.. [Willeke2009] F. Willeke, *Assumptions on NSLS-II Accelerator Commissioning*, November 22, 2009
-.. [Willeke2010] F. Willeke, *The Path to Accelerator
-    Commissioning*, talk on ASD Project Meeting, Jan 2010
+.. [Bengtsson2008] `J. Bengtsson`, B. Dalesio, T. Shaftan, T. Tanabe, *NSLS-II: Model Based Control - A Use Case Approach*, Tech-note 51, Oct 2008
+.. [Willeke2009] F. Willeke, *Assumptions on NSLS-II Accelerator Commissioning*,
+   November 22, 2009
+.. [Willeke2010] F. Willeke, *The Path to Accelerator Commissioning*,
+   talk on ASD Project Meeting, Jan 2010
 .. [Krinsky2010] S. Krinsky, *NSLS-II Storage Ring
     Commissioning*, NSLS-II ASD Retreat, May 13, 2010.
-.. [Shen] G.~Shen, L.~Yang, *High level applications -
+.. [Shenhla] Guobao Shen, Lingyun Yang, *High level applications -
     APIs*
 .. [LT2009nomenclature] *National Synchrotron Light Source II
     - Nomenclature Standard*, LT-ENG-RSI-STD-002, Jan 21, 2009, Rev 2
 .. [LT2008nomenclature] *National Synchrotron Light Source II
     - Accelerator Systems Requirements Document, Storage Ring Physics
     Nomenclature Standard*, RSI Document 1.3.4-001, Feb 17, 2008, Rev 1
-.. [Shencbd] G.~Shen, Y.~Hu, B. Dalesio, *Circular Buffer
-    Diagnostic*
+.. [Shencbd] Guobao Shen, Yong Hu, Bob Dalesio, *Circular Buffer Diagnostic*

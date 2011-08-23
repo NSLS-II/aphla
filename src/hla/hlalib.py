@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-HLA Libraries
-~~~~~~~~~~~~~~
+Core HLA Libraries
+~~~~~~~~~~~~~~~~~~
 
 :author: Lingyun Yang
 :license:
@@ -20,7 +20,8 @@ __all__ = [
     'addGroupMembers', 'removeGroupMembers', 'getGroups', 'getGroupMembers',
     'getNeighbors', 'getClosest', 'getBeamlineProfile', 
     'getPhase', 'getBeta', 'getDispersion', 'getEta',
-    'getOrbit', 'getTune', 'getTunes', 'getBpms'
+    'getOrbit', 'getTune', 'getTunes', 'getBpms',
+    'eget'
 ]
 
 def getCurrent():
@@ -32,59 +33,49 @@ def getCurrent():
 
 #
 #
-def __eget(element, full = False, tags = []):
+def eget(element, full = False, tags = []):
     """
     easier get with element name(s)
 
-    .. warning::
-
-      deprecated
-
-    This relies on channel finder service, and searching for "default.eget"
+    This relies on channel finder service, and searching for :attr:`~hla.machines.HLA_TAG_EGET`
     tag of the element.
 
     Example::
 
       >>> eget('QM1G4C01B')
       >>> eget(['CXM1G4C01B', 'CYM1G4C01B'])
+      >>> eget('PL1G2C05A', tags='aphla.x')
+
+    - single element name, it returns one value or a list of values depending on matched PVs.
+    - list of element name, it returns a list, each could also be a list, a value or None.
+
+    The value is None if element is not found or no PV is found.
     """
-    raise DeprecationWarning
 
     # some tags + the "default"
-    chtags = [TAG_DEFAULT_GET]
+    chtags = [machines.HLA_TAG_EGET]
     if tags: chtags.extend(tags)
     #print __file__, tags, chtags
-    if isinstance(element, str):
+    if isinstance(element, (unicode, str)):
         ret = []
-        elemlst = machines._lat._getElementsCgs(element)
-        pvl = _cfa.getElementChannels(elemlst, None, chtags)
-        for i, pvs in enumerate(pvl):
-            if len(pvs) == 1:
-                ret.append(caget(pvs[0]))
-            elif len(pvs) > 1:
-                rec = []
-                for pv in pvs:
-                    rec.append(caget(pv))
-                ret.append(rec)
-            else: ret = None
+        elem = machines._lat.getElements(element)
+        pvl = elem.pv(tags=chtags)
+        #print element, chtags, pvl
+        ret = caget(pvl)
         if full:
-            return ret, elemlst, pvl
+            return pvl, ret
         else: return ret
-    elif isinstance(element, list):
+    elif isinstance(element, (tuple, set, list)):
         ret = []
-        pvl = _cfa.getElementChannels(element, None, chtags)
-        if not pvl:
-            raise ValueError("no channels found for " + str(element))
-        
-        for i, pv in enumerate(pvl):
-            if not pv:
+        elemlst = machines._lat.getElements(element)
+        for elem in elemlst:
+            if not elem:
                 ret.append(None)
-            elif len(pv) == 1:
-                ret.append(caget(pv[0]))
-            elif len(pv) > 1:
-                ret.append(caget(pv))
-        if full: return ret, pvl
-        else: return ret
+                continue
+            pvl = elem.pv(tags=chtags)
+            if pvl: ret.append(caget(pvl))
+            else: ret.append(None)
+        return ret
     else:
         raise ValueError("element can only be a list or group name")
 
@@ -527,7 +518,9 @@ def getBpms():
 
 def getOrbit(pat = '', spos = False):
     """
-    Return orbit::
+    Return orbit
+
+    ::
 
       >>> getOrbit()
       >>> getOrbit('*')

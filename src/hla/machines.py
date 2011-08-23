@@ -144,6 +144,9 @@ def createLatticeFromCf(cfsurl, **kwargs):
 
 
 def initNSLS2VSR():
+    """
+    initialize the virtual accelerator from channel finder
+    """
     # are we using virtual ac
     VIRTAC = True
     #print "= initializing NSLS2 VSR"

@@ -340,5 +340,3 @@ As a check, these activities will use HLA implemented above.
     - Equipment enclosure monitor
     - Controls network monitor
 
-
-

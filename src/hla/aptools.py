@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 
 """
-hla.aptools
-~~~~~~~~~~~
+Accelerator Physics Tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:author: Lingyun Yang
 
 Accelerator Physics Tools
 
-
 """
+
+from __future__ import print_function
 
 import numpy as np
 import time, shelve, sys
@@ -38,11 +40,13 @@ def getLifetime(verbose = 0):
     least square linear fitting is applied for slop dI/dt
     """
 
+    # data points
     N = 10
     ret = np.zeros((N, 2), 'd')
     d0 = datetime.datetime.now()
     ret[0, 1] = getCurrent()
     for i in range(1, N):
+        # sleep for next reading
         time.sleep(3)
         ret[i,1] = getCurrent()
         dt = datetime.datetime.now() - d0
@@ -337,6 +341,14 @@ def correctOrbit(bpm, trim, **kwargs):
 
     
 def alignQuadrupole(quad, **kwargs):
+    """
+    align quadrupole with nearby BPM using beam based alignment
+
+    Example::
+
+      >>> alignQuadrupole('Q1')
+      >>> alignQuadrupole(['Q1', 'Q2'])
+    """
     trim = kwargs.get('trim', None)
     bpm = kwargs.get('bpm', None)
     plane = kwargs.get('plane', 'H')

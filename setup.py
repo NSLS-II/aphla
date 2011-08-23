@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 setup(
     name = "hla",
-    version = "0.1.0",
+    version = "0.2.0",
     #packages = ['hla'],
     package_dir = {'hla': 'src/hla'},
-    package_data = {'hla': ['machine/nsls2/*']},
+    package_data = {'hla': ['machine/nsls2/channel_finder_server.txt']},
     scripts=['src/orbit.pyw'],
     py_modules = ['hla.catools', 'hla.machines', 'hla.element', 'hla.lattice',
                   'hla.twiss', 'hla.hlalib', 'hla.rf', 'hla.orbit', 

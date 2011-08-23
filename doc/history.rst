@@ -1,6 +1,13 @@
 History
 ========
 
+v0.2.0
+-------
+
+  - add local bump
+  - add beam based alignment
+  - bring back eget
+
 
 v0.1.0
 -------

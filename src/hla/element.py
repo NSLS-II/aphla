@@ -188,16 +188,38 @@ class Element(AbstractElement):
             att = kwargs['field']
             ret = [self._field[att]['eget'][:], self._field[att]['eput'][:]]
 
-        if not ret: return None
-        elif len(ret) == 1: return ret[0]
-        else: return ret
+        return ret
             
     def pv(self, **kwargs):
-        if len(kwargs) == 1:
-            return self._pv_1(**kwargs)
+        """
+        search for pv
+
+        Example::
+
+          >>> pv() # returns all pvs.
+          >>> pv(tag='aphla.X')
+          >>> pv(tags=['aphla.EGET', 'aphla.Y'])
+        """
+        if len(kwargs) == 0:
+            ret = []
+            for k,v in self._field.iteritems():
+                #print k, v
+                for k2 in ['eget', 'eput']:
+                    v2 = v.get(k2, [])
+                    if not v2: continue
+                    if isinstance(v2, (str, unicode)): ret.append(v2)
+                    else: ret.extend(v2)
+            ret = [v for v in set(ret)]
+        elif len(kwargs) == 1:
+            ret = self._pv_1(**kwargs)
         elif len(kwargs) == 2:
+            ret = []
             pass
         else: return []
+
+        if not ret: return None
+        elif len(ret) == 1: return ret[0]
+        else: return sorted(ret)
 
     def _insert_in_order(self, lst, v):
         if len(lst) == 0:
@@ -227,12 +249,18 @@ class Element(AbstractElement):
             self._field['status']['eget'].append(desc)
 
     def addEGet(self, pv):
+        """
+        add *pv* for `eget` action
+        """
         vf = self._field['value']
         if pv in vf['eget']: return
         else:
             self._insert_in_order(vf['eget'], pv)
         
     def addEPut(self, pv):
+        """
+        add *pv* for `eset` action
+        """
         vf = self._field['value']
         if pv in vf['eput']: return
         else:
@@ -271,6 +299,9 @@ class Element(AbstractElement):
             self.__dict__[att] = val
 
     def setFieldGetAction(self, field, v, desc):
+        """
+        set the action when reading *field*
+        """
         if not self._field.has_key(field):
             self._field[field] = {'eget': v, 'eput': None, 'desc': desc}
         else:
@@ -278,6 +309,9 @@ class Element(AbstractElement):
             self._field[field]['desc'] = desc
 
     def setFieldPutAction(self, field, v, desc):
+        """
+        set the action for writing *field*
+        """
         if not self._field.has_key(field):
             self._field[field] = {'eget': None, 'eput': v, 'desc': desc}
         else:
@@ -285,6 +319,9 @@ class Element(AbstractElement):
             self._field[field]['desc'] = desc
 
     def fields(self):
+        """
+        return element's fields
+        """
         return self._field.keys()
 
     def updateCfsProperties(self, pv, prpt):

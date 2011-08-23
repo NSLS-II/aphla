@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
 """
-    hla.orbit
-    ~~~~~~~~~~~~~~~~
+hla.orbit
+~~~~~~~~~~~~~~~~
 
-    Lattice mode management
+Lattice mode management
 
-    :author: Lingyun Yang
-    :license: (empty ? GPL ? EPICS ?)
+:author: Lingyun Yang
+:license: (empty ? GPL ? EPICS ?)
 
 
-    Lattice mode information are stored in IRMIS, and have a service for
-    retrieve it. This module provides routines operating on
-    IRMIS/E4Service or local XML file.
+Lattice mode information are stored in IRMIS, and have a service for
+retrieve it. This module provides routines operating on IRMIS/E4Service or
+local XML file.
 """
 
 import numpy as np
@@ -20,6 +20,9 @@ import machines
 from element import Element
 
 class Orbit:
+    """
+    Orbit class
+    """
     def __init__(self, bpm):
         if isinstance(bpm, (str, unicode)) or len(bpm) < 2: 
             raise ValueError('need two and more BPMs')

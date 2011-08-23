@@ -31,30 +31,33 @@ for k in keys:
         elif mod.startswith('numpy'):
             #k = '`%s <%s>`_'%(k, 'http://scipy.org/Numpy_Example_List_With_Doc#%s'%k)
             k = '`%s <%s>`_'%(k, 'http://sd-2116.dedibox.fr/pydocweb/doc/%s.%s'%(mod, k))
+        elif mod.startswith('cothread'):
+            k = '`%s <%s>`_'%(k, 'http://controls.diamond.ac.uk/downloads/python/cothread/')
 
-
-    if doc is None: doc = 'TODO'
-
+    if doc is None: doc = ' '
+    
     mod, k, doc = mod.strip(), k.strip(), doc.strip()[:80]
-    modd.setdefault(mod, []).append((k, doc))
+    #print mod, k, doc
+    if mod.startswith('cothread'): continue
 
-print "References"
-print "==========="
-print ""
-print ".. toctree::"
-print "   :maxdepth: 2"
-print ""
-#print "Routines List"
-#print "--------------"
+    #modd.setdefault(mod, []).append((k, doc))
+    modd.setdefault('hla', []).append((k, doc))
+
+#print "References"
+#print "==========="
+#print ""
+#print ".. toctree::"
+#print "   :maxdepth: 2"
 #print ""
 
 mods = modd.keys()
 mods.sort()
 for mod in mods:
-    border = '*'*len(mod)
-    print mod
-    print border
-
+    #border = '*'*len(mod)
+    # skip the mod
+    #print mod
+    #print border
+    
     print
     funcs, docs = zip(*modd[mod])
     maxfunc = max([len(f) for f in funcs])
@@ -75,9 +78,9 @@ for mod in mods:
 #print "------------------"
 #print ""
 
-for mod in mods:
-    if not mod.startswith(':mod'): continue
-    print ".. automodule::", mod[6:-1]
-    print "   :members:"
-    print ""
+#for mod in mods:
+#    if not mod.startswith(':mod'): continue
+#    print ".. automodule::", mod[6:-1]
+#    print "   :members:"
+#    print ""
     

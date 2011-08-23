@@ -15,7 +15,9 @@ HLA FAQ (Frequently Asked Questions)
 
 - Why I can not find element ...
 
-  Are you using the proper lattice layout by *hla.machines.use('SR')*
+  - Are you using the proper lattice layout by *hla.machines.use('SR')* ?
+  - Did you export the channel finder environment *HLA_CFS_URL* ?
+  - Did you initialize the machine with, e.g. *hla.initNSLS2VSR()* or *hla.initNSLS2VSRTxt()* ?
 
 - How many lattice layout are there ?
 
