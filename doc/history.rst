@@ -1,11 +1,18 @@
 History
 ========
 
+v0.2.1
+------
+
+  - add beta function measurement :func:`~hla.meastwiss.measBeta`
+  - bug fix of :func:`~hla.machines.initNSLS2VSRTwiss`
+
+
 v0.2.0
 -------
 
   - add local bump
-  - add beam based alignment
+  - add beam based alignment :mod:`~hla.bba`
   - bring back eget
 
 

@@ -144,6 +144,7 @@ class Twiss:
                 elif c == 'alpha': row.extend([tw._alpha[0], tw._alpha[1]])
                 else:
                     row.append(None)
+                    raise ValueError("column '%s' not supported in twiss" % c)
             ret.append(row)
         return np.array(ret, 'd')
 

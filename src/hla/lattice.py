@@ -275,16 +275,16 @@ class Lattice:
         When the input *group* is a list, each string in this list will be
         treated as exact string instead of pattern.
 
-        *alwayslist* whether return list when returning a single element.
+        *return_list* whether return list even when returning a single element.
         """
 
-        alwayslist=kwargs.get('alwayslist', False)
+        return_list=kwargs.get('return_list', False)
 
         if isinstance(group, str) or isinstance(group, unicode):
             # do exact element name match first
             #print __file__, "element ..."
             elem = self._find_element(group)
-            if elem and alwayslist:
+            if elem and return_list:
                 #print "found exact element", group, elem
                 return [elem]
             elif elem:
@@ -307,7 +307,7 @@ class Lattice:
                     names.append(e.name)
             return ret
         elif isinstance(group, list):
-            if not group and alwayslist: return []
+            if not group and return_list: return []
             elif not group: return None
 
             # exact one-by-one match
@@ -623,7 +623,7 @@ class Lattice:
         e0 = self._find_element(element)
         if not e0: raise ValueError("element %s does not exist" % element)
 
-        el = self.getElements(group, alwayslist=True)
+        el = self.getElements(group, return_list=True)
 
         if not el: raise ValueError("elements/group %s does not exist" % group)
 

@@ -43,3 +43,10 @@ HLA Summary List
 .. autoclass:: hla.element.Element
    :members:
 
+.. automodule:: hla.meastwiss
+   :members:
+
+.. automodule:: hla.bba
+   :members:
+
+

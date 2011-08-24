@@ -11,6 +11,7 @@ Defines the procedural interface of HLA to the users.
 """
 
 import numpy as np
+import time
 from fnmatch import fnmatch
 from catools import caget, caput
 import machines
@@ -21,7 +22,7 @@ __all__ = [
     'getNeighbors', 'getClosest', 'getBeamlineProfile', 
     'getPhase', 'getBeta', 'getDispersion', 'getEta',
     'getOrbit', 'getTune', 'getTunes', 'getBpms',
-    'eget'
+    'eget', 'waitStableOrbit'
 ]
 
 def getCurrent():
@@ -128,6 +129,7 @@ def _reset_trims():
     caput(pv, 0.0)
 
 
+
 def _levenshtein_distance(first, second):
     """Find the Levenshtein distance between two strings."""
     if len(first) > len(second):
@@ -152,7 +154,7 @@ def _levenshtein_distance(first, second):
     return distance_matrix[first_length-1][second_length-1]
 
 
-def getElements(group, alwayslist=False):
+def getElements(group, return_list=False):
     """
     return list of elements.
 
@@ -168,7 +170,7 @@ def getElements(group, alwayslist=False):
     this calls :func:`~hla.lattice.Lattice.getElements` of the current lattice.
     """
 
-    return machines._lat.getElements(group, alwayslist=alwayslist)
+    return machines._lat.getElements(group, return_list=return_list)
 
 def getLocations(group):
     """
@@ -354,10 +356,17 @@ def getBeta(group, **kwargs):
     """
     get the beta function from stored data.
 
+    ::
+
+      >>> getBeta('Q*', spos = True)
+
     this calls :func:`~hla.twiss.Twiss.getTwiss` of the current twiss data.
     """
-    if not machines._twiss: return None
+    if not machines._twiss:
+        print "ERROR: No twiss data loaeded"
+        return None
     elem = getElements(group)
+
     col = ('beta',)
     if kwargs.get('spos', False): col = ('beta', 's')
     
@@ -570,5 +579,58 @@ def getOrbit(pat = '', spos = False):
     else: return obt
 
 
+def _reset_quad():
+    qtag = {'H2': (1.47765, 30), 
+            'H3': (-1.70755, 30),
+            'H1': (-0.633004, 30),
+            'M1': (-0.803148, 60),
+            'M2': (1.2223, 60),
+            'L2': (1.81307, 30),
+            'L3': (-1.48928, 30),
+            'L1': (-1.56216, 30)}
+    
+    for tag, v in qtag.items():
+        qlst = getElements('Q%s*' % tag)
+        qval, qnum = v
+        if len(qlst) != qnum:
+            raise ValueError("ring does not have exactly %d %s (%d)" % (qnum, tag, len(qlst)))
+        for q in qlst:
+            q.value = qval
 
+def waitStableOrbit(reforbit, **kwargs):
+    """
+    set pv to a value, waiting for timeout or the std of monipv is greater
+    than diffstd
+
+    - *diffstd* = 1e-7
+    - *minwait* = 2
+    - *maxwait* =30
+    - *step* = 2
+    - *diffstd_list* = False
+    """
+
+    diffstd = kwargs.get('diffstd', 1e-7)
+    minwait = kwargs.get('minwait', 2)
+    maxwait = kwargs.get('maxwait', 30)
+    step    = kwargs.get('step', 2)
+    diffstd_list = kwargs.get('diffstd_list', False)
+    verbose = kwargs.get('verbose', 0)
+
+    t0 = time.time()
+    time.sleep(minwait)
+    dv = getOrbit() - reforbit
+    dvstd = [dv.std()]
+    timeout = False
+
+    while dv.std() < diffstd:
+        time.sleep(step)
+        dt = time.time() - t0
+        if dt  > maxwait:
+            timeout = True
+            break
+        dv = getOrbit() - reforbit
+        dvstd.append(dv.std())
+
+    if diffstd_list:
+        return timeout, dvstd
 

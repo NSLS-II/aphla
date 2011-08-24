@@ -8,6 +8,7 @@ The initialization of machines
 """
 
 import os, re
+import numpy as np
 
 from catools import caget, caput
 from lattice import Element, Lattice
@@ -389,7 +390,9 @@ def initNSLS2VSRTxt(data = ''):
     #print _lat.getElements('BPMX')
 
 def initNSLS2VSRTwiss():
-    """Only works from virtac.nsls2.bnl.gov"""
+    """
+    Only works from virtac.nsls2.bnl.gov
+    """
     # s location
     s      = [float(v) for v in caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=30)]
     # twiss at s_end (from Tracy)
@@ -406,9 +409,11 @@ def initNSLS2VSRTwiss():
     nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
     nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
 
-    #print __file__, len(s), len(betax)
+    N = len(s)
 
-    # fix the Tracy bug by adding a new element at the end
+    print __file__, "Reading twiss items:", len(s), len(betax)
+
+    # fix the Tracy convension by adding a new element at the end
     for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
               phix, phiy]:
         x.append(x[-1])
@@ -418,7 +423,14 @@ def initNSLS2VSRTwiss():
 
     _twiss.tune = (nux, nuy)
     #print __file__, len(s), len(betax)
-    for i in range(len(s)):
+    
+    nps = np.array(s, 'd')
+    for ielem in range(_lat.size()):
+        elem = _lat._elements[ielem]
+        if elem.family == HLA_VFAMILY: continue
+
+        i = np.argmin(np.abs(nps - elem.sb))
+
         gammax = (1 + alphax[i]**2)/betax[i]
         gammay = (1 + alphay[i]**2)/betay[i]
         tw = TwissItem(s = s[i], alpha=(alphax[i], alphay[i]),
@@ -426,23 +438,9 @@ def initNSLS2VSRTwiss():
                        gamma=(gammax, gammay),
                        eta=(etax[i], etay[i]),
                        phi=(phix[i], phiy[i]))
-        elem = _lat.getLine((s[i], s[i]), eps=1e-6)
-        if not elem:
-            #print "not found at: (%d) %f" % (i, s[i])
-            continue
-        elif isinstance(elem, list):
-            #print "Overlap:\n  ",
-            #for e in elem: print e.name, 
-            #print ""
-            for e in elem:
-                if e in elem: continue
-                _twiss._elements.append(e.name)
-                _twiss.append(tw)
-        else:
-            #print "Found ", s[i], elem.name
-            _twiss._elements.append(elem.name)
-            _twiss.append(tw)
-        #print _twiss[-1]
+
+        _twiss._elements.append(elem.name)
+        _twiss.append(tw)
 
 def use(lattice):
     """
@@ -450,6 +448,8 @@ def use(lattice):
 
     use :func:`~hla.machines.lattices` to get a dict of lattices and its mode
     name
+
+    When switching lattice, twiss data is not sychronized.
     """
     global _lat, _lattice_dict
     if _lattice_dict.get(lattice, None):

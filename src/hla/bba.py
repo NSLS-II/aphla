@@ -1,18 +1,22 @@
 #!/usr/bin/env python
 
+"""
+Beam-Based Alignment
+~~~~~~~~~~~~~~~~~~~~~
+
+:author: Lingyun Yang
+:license: 
+
+Remember:
+1. Kicker has strength limit, check before set.
+"""
+
 from hlalib import getElements, getNeighbors, getDistance, getOrbit
 from catools import caget, caput
 import time
 import numpy as np
 import matplotlib.pylab as plt
 
-"""
-Remember:
-1. Kicker has strength limit, check before set.
-2. Do not start plt.figure() in a loop, mem leak.
-3. Bowtie may not appear
-4. 
-"""
 
 
 def _filterSmallSlope(x, y, varcut=1e10):
@@ -47,6 +51,9 @@ def _filterSmallSlope(x, y, varcut=1e10):
     return np.array(a), np.array(b), bh1, bh2
 
 class BBA:
+    """
+    beam based alignment
+    """
     def __init__(self, **kwargs):
         """
         Read config from a big table, link quadrupole, bpm and correctors
@@ -334,6 +341,9 @@ class BBA:
 
         
     def alignQuad(self, iquad, **kwargs):
+        """
+        align the quad
+        """
         verbose = kwargs.get('verbose', 0)
 
         if iquad >= len(self._quad): return None
@@ -359,6 +369,7 @@ class BBA:
 
     def getQuadCenter(self):
         """
+        get the results of alignment
         """
         return self._quadcenter[:]
 

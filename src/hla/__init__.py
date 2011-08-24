@@ -37,7 +37,7 @@ Modules include:
         
 """
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 
 #import os, sys, re
@@ -91,6 +91,7 @@ except Timedout:
 ## from orbit import *
 from aptools import *
 import bba
+import meastwiss
 ## _orbit = Orbit(_cfa)
 
 

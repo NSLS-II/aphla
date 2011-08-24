@@ -1,11 +1,18 @@
 '''
 '''
 
-import time, sys, os, re
-import hla
+import time, sys, os, re, shelve
+import numpy as np
 import matplotlib.pylab as plt
 
+import hla
+
+
 hla.machines.initNSLS2VSRTxt()
+
+hla.hlalib._reset_trims()
+hla.hlalib._reset_quad()
+
 hla.machines.initNSLS2VSRTwiss()
 
 def ex01():
@@ -21,7 +28,7 @@ def ex01():
     print hla.getOrbit('P*C10*')
 
 def ex02():
-    hla.machines.initNSLS2VSR()
+    #hla.machines.initNSLS2VSR()
     hla.hlalib._reset_trims()
     time.sleep(2)
     #hla.machines.use('LTD1')
@@ -36,9 +43,50 @@ def ex02():
         else: ref.append([0.0, None])
     hla.createLocalBump(bpmlst, 'HCOR', ref, plane='H') 
 
+def ex03():
+    """
+    measure beta
+    """
+    if False:
+        nux, nuy = hla.getTunes()
+        #k1, nu, beta = hla.meastwiss.measBeta('QH1G2C04A', num_points=5)
+        k1, nu, beta = hla.meastwiss.measBeta('Q*C0[4-5]*', num_points=5, verbose=1)
+    
+        # save
+        d = shelve.open('ex03.pkl')
+        d['nux'] = nux
+        d['nuy'] = nuy
+        d['k1'] = k1
+        d['nu'] = nu
+        d['beta'] = beta
+        d.close()
+    if True:
+        d = shelve.open('ex03.pkl', 'r')
+        nux, nuy = d['nux'], d['nuy']
+        k1, nu = d['k1'], d['nu']
+        beta = d['beta']
+
+    npoint, nquad = np.shape(k1)
+    
+    for i in range(nquad):
+        plt.clf()
+        plt.plot(k1[:,i], nu[:,2*i] - nux, 'o--')
+        plt.plot(k1[:,i], nu[:,2*i+1] - nuy, 'x--')
+        plt.savefig('twiss-%02d.png' % i)
+
+        print beta[:,i]
+    
+    bta = hla.getBeta('*', spos=True)
+    s = [q.sb for q in hla.getElements('Q*C0[4-5]*')]
+    plt.clf()
+    plt.plot(s, beta[0,:], 'o--')
+    plt.plot(bta[:,-1], bta[:,0], '-')
+    plt.xlim([min(s), max(s)])
+    plt.savefig('twiss-beta.png')
+
 if __name__ == '__main__':
 
-    ex02()
+    ex03()
     sys.exit(0)
 
     print "reset the trims:"
