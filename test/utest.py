@@ -5,7 +5,7 @@ from conf import *
 LOCK_ID = 1
 import hla
 
-hla._wait_for_lock(LOCK_ID, maxwait=3600)
+hla.hlalib._wait_for_lock(LOCK_ID, maxwait=3600)
 
 print "= HLA used:", hla.__path__
 
