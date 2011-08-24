@@ -9,6 +9,10 @@ RF related
 :author: Lingyun Yang
 :license: (empty ? GPL ? EPICS ?)
 
+.. warning::
+
+  Hard coded, simple but not fixed yet.
+
 """
 
 from catools import caget, caput
@@ -25,5 +29,8 @@ def getRfVoltage():
     """Return RF voltage"""
     return caget("SR:C00-RF:G00{RF:00}Volt-RB")
 
+
+def _reset_rf():
+    caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
 
 

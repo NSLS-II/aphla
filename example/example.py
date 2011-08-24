@@ -8,11 +8,11 @@ import matplotlib.pylab as plt
 import hla
 
 
-hla.machines.initNSLS2VSRTxt()
 
+hla.machines.initNSLS2VSRTxt()
+hla.hlalib._wait_for_lock(11)
 hla.hlalib._reset_trims()
 hla.hlalib._reset_quad()
-
 hla.machines.initNSLS2VSRTwiss()
 
 def ex01():
@@ -84,9 +84,25 @@ def ex03():
     plt.xlim([min(s), max(s)])
     plt.savefig('twiss-beta.png')
 
+
+def ex04():
+    elem = 'P*C0[1-4]*'
+    etax, etay = hla.meastwiss.measDispersion(elem, verbose=1)
+    eta0 = hla.getEta(elem, spos = True)
+
+    print np.shape(etax), etax
+    print np.shape(etay), etay
+    plt.clf()
+    plt.plot(eta0[:,-1], eta0[:,0], '-', label='Simulation')
+    plt.plot(eta0[:,-1], etax, 'o')
+    plt.plot(eta0[:,-1], etay, 'x')
+    plt.savefig('twiss-eta.png')
+
+    hla.hlalib._release_lock(11)
+
 if __name__ == '__main__':
 
-    ex03()
+    ex04()
     sys.exit(0)
 
     print "reset the trims:"
