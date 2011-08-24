@@ -10,6 +10,8 @@ import cothread, hla
 from cothread.catools import camonitor
 app = cothread.iqt(use_timer=True)
 
+hla.initNSLS2VSR()
+
 from PyQt4 import Qt, QtCore, QtGui
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
@@ -84,9 +86,11 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
         self.__errorbar = True
 
+        self.update_count = 0
         self.update()
 
     def updatePvs(self, val, idx):
+        self.update_count += 1
         self.y[idx, 1:] = self.y[idx,:-1]
         self.y[idx, 0] = val
         self.y2[idx] = np.std(self.y[idx,:])
@@ -286,7 +290,7 @@ class OrbitPlot(Qwt.QwtPlot):
     # alignScales()
 
     def drawMagnetProfile(self):
-        prof = hla._lat.getBeamlineProfile()
+        prof = hla.getBeamlineProfile()
         x = []
         y = []
         c = []
@@ -303,7 +307,7 @@ class OrbitPlot(Qwt.QwtPlot):
                 y.append(box[1][i] * 0.1*h - 0.8*h)
                 c.append(box[2])
         self.curvemag.setData(x, y)
-        print min(x), max(x), min(y), max(y)
+        #print min(x), max(x), min(y), max(y)
         
     def timerEvent(self, e):
         # y moves from left to right:
@@ -410,24 +414,31 @@ class OrbitPlot(Qwt.QwtPlot):
 
     def maskIndex(self, i):
         self.curve1.maskIndex(i)
-        
+
+    def countUpdates(self):
+        return self.curve1.update_count
+
 class OrbitPlotMainWindow(Qt.QMainWindow):
 
     def __init__(self, parent = None):
         Qt.QMainWindow.__init__(self, parent)
 
         # initialize a QwtPlot central widget
-        pvx = [p[0] for p in hla._orbit.pvrb]
-        pvy = [p[1] for p in hla._orbit.pvrb]
-        pvsx = [s[0] for s in hla._orbit.s]
-        pvsy = [s[0] for s in hla._orbit.s]
-        self.bpm = hla._orbit.bpm[:]
+        bpm = hla.getElements('BPM')
+        pvx = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_X])
+               for e in bpm]
+        #print pvx
+        pvy = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_Y])
+               for e in bpm]
+        pvsx = [e.sb for e in bpm]
+        pvsy = [e.sb for e in bpm]
+        self.bpm = [e.name for e in bpm]
         
         #for i in range(len(pvx)):
         #    print pvsx[i], self.bpm[i], pvx[i], pvy[i]
         
-        self.plot1 = OrbitPlot(self, pvsx, pvx)
-        self.plot2 = OrbitPlot(self, pvsy, pvy)
+        self.plot1 = OrbitPlot(self, pvsx, [p.encode('ascii') for p in pvx])
+        self.plot2 = OrbitPlot(self, pvsy, [p.encode('ascii') for p in pvy])
 
         #for i in range(10):
         #    self.plot1.maskIndex(i)
@@ -582,6 +593,8 @@ class OrbitPlotMainWindow(Qt.QMainWindow):
         
     def singleShot(self):
         #print "Main: Singleshot"
+        self.statusBar().showMessage("Updated: (%d,%d)"  % \
+            (self.plot1.countUpdates(), self.plot2.countUpdates()))
         self.plot1.singleShot()
         self.plot2.singleShot()
 

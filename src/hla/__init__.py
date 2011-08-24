@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 
 """
 HLA Module
@@ -35,7 +37,11 @@ Modules include:
         
 """
 
-import os, sys, re
+__version__ = "0.2.0"
+
+
+#import os, sys, re
+import sys
 
 from catools import *
 from machines import initNSLS2VSR, initNSLS2VSRTwiss
@@ -73,8 +79,8 @@ from ormdata import OrmData
 ## from cothread import catools, Timedout
 NETWORK_DOWN=False
 try:
-    catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
-    print >> sys.stderr, "= Network is fine, using online PVs"
+    caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+    print("# Network is fine, using online PVs", file= sys.stderr)
 except Timedout:
     NETWORK_DOWN = True
     pass
@@ -84,7 +90,8 @@ except Timedout:
 ## from measorm import *
 ## from orbit import *
 from aptools import *
-
+import bba
+import meastwiss
 ## _orbit = Orbit(_cfa)
 
 

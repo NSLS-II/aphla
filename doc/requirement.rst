@@ -1,5 +1,5 @@
-HLA Requirement (List of Applications/Scripts)
-===============================================
+NSLS2 HLA Requirement (List of Applications/Scripts)
+=====================================================
 
 .. _Software Requirement:
 
@@ -114,9 +114,9 @@ Beam Diagnostics
           10-50Hz rate if real-time orbit difference is not available to
           it.
 
-    - :hla:`Correct static orbit with selected correctors and BPMs`
-    - :hla:`Enable/disable BPMs for orbit correction and feedback.`
-    - :hla:`Enable/disable correctors for orbit correction and feedback`
+    - :hladone:`Correct static orbit with selected correctors and BPMs`
+    - :hladone:`Enable/disable BPMs for orbit correction and feedback.`
+    - :hladone:`Enable/disable correctors for orbit correction and feedback`
 
 - :hla:`Turn-by-turn BPM data` (Y.Hu, L.Yang)
     - :hla:`closed orbit established using corrector and single shot BPM
@@ -339,6 +339,4 @@ As a check, these activities will use HLA implemented above.
     - Electrical utilities status and controls
     - Equipment enclosure monitor
     - Controls network monitor
-
-
 

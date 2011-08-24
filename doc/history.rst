@@ -1,10 +1,27 @@
 History
 ========
 
+v0.2.1
+------
+
+  - add beta function measurement :func:`~hla.meastwiss.measBeta`
+  - bug fix of :func:`~hla.machines.initNSLS2VSRTwiss`
+
+
+v0.2.0
+-------
+
+  - add local bump
+  - add beam based alignment :mod:`~hla.bba`
+  - bring back eget
+
 
 v0.1.0
 -------
 
+  - orbit.pyw works with new hla
+  - fix bug in getElements, where a copy must be returned instead of pointer.
+  - fix bug where "value" blocked by general "field"
   - *correctOrbit* and *correctOrbitPv* works on new lattice infrastructure.
   - separate orm data from orm measurement
   - add fields (x/y) for BPM/HCOR, change TRIMX/TRIMY to HCOR/VCOR and HFCOR/VFCOR.

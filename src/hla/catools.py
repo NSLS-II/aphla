@@ -9,10 +9,15 @@ Channel access tools.
 :author: Lingyun Yang
 """
 
+__all__ = [
+    'caget', 'caput', 'Timedout'
+]
+
 import sys, time
 import cothread
 import cothread.catools as ct
 from cothread import Timedout
+
 
 def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
            count=0, throw=True):

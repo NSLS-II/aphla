@@ -14,17 +14,26 @@ import numpy as np
 
 if __name__ == '__main__':
     # initialize when no real machine exists
-    hla.clean_init()
+    hla.initNSLS2VSR()
+    hla.machines.use('SR')
 
     # orbit at cell 3-6 BPMs
     bpm = hla.getElements('P*C0[3-6]*')
-    s1 = hla.getLocations(bpm)
-    x1, y1 = hla.getOrbit(bpm)
+    s1 = [b.sb for b in bpm]
+    x1 = [b.x for b in bpm]
+    y1 = [b.y for b in bpm]
     
-    s2x = hla.getLocations('BPMX')
-    x2, y2 = hla.getOrbit()
+    allbpms = hla.getElements('BPM')
+    s2x = [b.sb for b in allbpms]
+
+    # for each element, do data acquisition to b.x and b.y (slow)
+    #obt = np.array([(b.x, b.y) for b in allbpms], 'd')
+
+    # get the orbit and locations of BPMS: (x,y,s)
+    obt2 = np.array(hla.getOrbit(spos = True), 'd')
 
     plt.clf()
     plt.plot(s1, x1, 'x-')
-    plt.plot(s2x, x2, '--')
-    plt.savefig('test.png')
+    #plt.plot(s2x, obt[:,0], '--')
+    plt.plot(obt2[:,-1], obt2[:,0], '--')
+    plt.savefig('orbit.png')

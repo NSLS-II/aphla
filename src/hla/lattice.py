@@ -33,6 +33,7 @@ class Lattice:
         self.chromaticity = [0.0, 0.0]
         self.circumference = 0.0
         self.orm = None
+        self.loop = True
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -254,7 +255,7 @@ class Lattice:
             ret.extend(self._elements[:i1+1])
         return ret
 
-    def getElements(self, group):
+    def getElements(self, group, **kwargs):
         """
         get elements.
 
@@ -273,14 +274,20 @@ class Lattice:
 
         When the input *group* is a list, each string in this list will be
         treated as exact string instead of pattern.
+
+        *return_list* whether return list even when returning a single element.
         """
+
+        return_list=kwargs.get('return_list', False)
 
         if isinstance(group, str) or isinstance(group, unicode):
             # do exact element name match first
             #print __file__, "element ..."
             elem = self._find_element(group)
-            if elem:
+            if elem and return_list:
                 #print "found exact element", group, elem
+                return [elem]
+            elif elem:
                 return elem
 
             # do exact group name match
@@ -288,7 +295,7 @@ class Lattice:
             if group in self._group.keys():
                 #print "found exact group", group
                 #print self._group.keys()
-                return self._group[group]
+                return self._group[group][:]
 
             # do pattern match on element name
             ret, names = [], []
@@ -300,7 +307,9 @@ class Lattice:
                     names.append(e.name)
             return ret
         elif isinstance(group, list):
-            #print __file__, "list ..", group
+            if not group and return_list: return []
+            elif not group: return None
+
             # exact one-by-one match
             ret = [None] * len(group)
             for elem in self._elements:
@@ -561,31 +570,72 @@ class Lattice:
         """
         Assuming self._elements is in s order
 
-        the element matched with input 'element' string should be unique.
+        the element matched with input 'element' string should be unique
+        and exact.
+
+        If the input *element* name is also in *group*, no duplicate the
+        result. 
+
+        ::
+
+          >>> getNeighbors('P4', 'BPM', 2)
+          ['P2', 'P3', 'P4', 'P5', 'P6']
+          >>> getNeighbors('Q3', 'BPM', 2)
+          ['P2', 'P3', 'Q3', 'P4', 'P5']
         """
 
-        e0 = self.getElements(element)
-        if len(e0) > 1:
-            raise ValueError("element %s is not unique" % element)
-        elif e0 == None or len(e0) == 0:
-            raise ValueError("element %s does not exist" % element)
+        e0 = self._find_element(element)
+        if not e0: raise ValueError("element %s does not exist" % element)
 
-        e, s = self.getElements(group, point = 'e')
-        #print e, s
+        el = self.getElements(group)
 
-        i1, i2 = 0, 0
-        ret = [[element[:], s0]]
-        for i in range(0, len(s)):
-            if s[i] > s0[0]:
-                #return e[i-1], s[i-1], e[i], s[i]
-                i1, i2 = i - 1, i
-                break 
-            #else: print "s", s0[0], s[i]
+        if not el: raise ValueError("elements/group %s does not exist" % group)
+        if e0 in el: el.remove(e0)
+
+        i0 = len(el)
+        for i,e in enumerate(el):
+            if e.sb < e0.sb: continue
+            i0 = i
+            break
+        ret = [e0]
         for i in range(n):
-            ret.insert(0, [e[i1-i], s[i1-i]])
-            ret.append([e[i2+i], s[i2+i]])
-
+            fac, r = divmod(i0 - i - 1, len(el))
+            ret.insert(0, el[r])
+            fac, r = divmod(i0 + i, len(el))
+            ret.append(el[r])
         return ret
+        
+    def getClosest(self, element, group):
+        """
+        Assuming self._elements is in s order
+
+        the element matched with input 'element' string should be unique
+        and exact.
+
+        If the input *element* name is also in *group*, return itself.
+
+        ::
+
+          >>> getClosest('P4', 'BPM')
+          >>> getClosest('Q3', 'BPM')
+        """
+
+        e0 = self._find_element(element)
+        if not e0: raise ValueError("element %s does not exist" % element)
+
+        el = self.getElements(group, return_list=True)
+
+        if not el: raise ValueError("elements/group %s does not exist" % group)
+
+        # if the element is part of group, return it
+        if e0 in el: return e0
+
+        idx, ds = 0, el[-1].sb
+        for i,e in enumerate(el):
+            if abs(e.sb - e0.sb) < ds:
+                idx = i
+                ds = abs(e.sb - e0.sb)
+        return el[idx]
         
     def __repr__(self):
         s = ''

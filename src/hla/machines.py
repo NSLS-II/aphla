@@ -8,6 +8,7 @@ The initialization of machines
 """
 
 import os, re
+import numpy as np
 
 from catools import caget, caput
 from lattice import Element, Lattice
@@ -26,6 +27,7 @@ HLA_TAG_EGET = 'aphla.eget'
 HLA_TAG_EPUT = 'aphla.eput'
 HLA_TAG_X    = 'aphla.x'
 HLA_TAG_Y    = 'aphla.y'
+HLA_TAG_SYS_PREFIX = 'aphla.sys.'
 
 #
 HLA_VFAMILY = 'HLA:VFAMILY'
@@ -53,6 +55,7 @@ HLA_CFS_KEYMAP = {'name': u'elemName',
                   'phylen': None,
                   'sequence': None}
 
+
 def createLatticeFromCf(cfsurl, **kwargs):
     """
     create a lattice from channel finder
@@ -60,8 +63,7 @@ def createLatticeFromCf(cfsurl, **kwargs):
     - *cfsurl* the URL of channel finder service
     - *tagName*
     """
-    from channelfinder.core.ChannelFinderClient import ChannelFinderClient
-    from channelfinder.core.Channel import Channel, Property, Tag
+    from channelfinder import ChannelFinderClient, Channel, Property, Tag
 
     # reverse map, skip the None values
     CFS_MAP = dict((v,k) for k,v in HLA_CFS_KEYMAP.iteritems() if v)
@@ -77,9 +79,6 @@ def createLatticeFromCf(cfsurl, **kwargs):
                         if CFS_MAP.has_key(k))
         prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
-        # fix BPMX/BPMY for same bpm name
-        if prpt['family'] == u'BPMX' or prpt['family'] == u'BPMY':
-            prpt['family'] = u'BPM'
             
         # skip if this pv has no element name
         if not name: continue
@@ -88,23 +87,46 @@ def createLatticeFromCf(cfsurl, **kwargs):
         elem = lat._find_element(name=name)
         if not elem:
             #print prpt
-            elem = Element(**prpt)
+            elem = Element(eget=caget, eput=caput, **prpt)
             lat.appendElement(elem)
         else:
             #print prpt
             elem.updateCfsProperties(pv, prpt)
         # update element with new
         tags = c.getTags()
+        #if name == 'CX1': print pv, prpt, tags
+
         elem.updateCfsTags(pv, tags)
-        if HLA_TAG_EGET in tags:
-            elem.appendEget((caget, pv, "%s %s" % \
-                                 (prpt['handle'], HLA_TAG_EGET)))
-        if HLA_TAG_EPUT in tags:
-            elem.appendEput((caput, pv, "%s %s" % \
-                                 (prpt['handle'], HLA_TAG_EPUT)))
+        if HLA_TAG_EGET in tags: elem.addEGet(pv)
+        if HLA_TAG_EPUT in tags: elem.addEPut(pv)
+
+        elem.appendStatusPv(pv, prpt['handle'])
+
         #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
-        elem.appendStatusPv((caget, pv, prpt['handle']))
+        #elem.appendStatusPv((caget, pv, prpt['handle']))
         #print name, ""
+        if prpt.has_key('field'):
+            if not prpt.has_key('handle'):
+                pass
+            elif prpt['handle'].upper() == 'READBACK':
+                elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
+                if HLA_TAG_EPUT in tags:
+                    print "'%s': %s and READBACK ? could be a bug" % (
+                        pv, HLA_TAG_EPUT)
+            elif prpt['handle'].upper() == 'SETPOINT':
+                elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
+                if HLA_TAG_EGET in tags:
+                    print "'%s': %s and SETPOINT ? could be a bug" % (
+                        pv, HLA_TAG_EGET)
+            # debug
+        # check
+        if prpt.has_key('handle'):
+            if prpt['handle'].upper() == 'READBACK' and HLA_TAG_EPUT in tags:
+                print "'%s': %s and READBACK ? could be a bug" % (
+                        pv, HLA_TAG_EPUT)
+            elif prpt['handle'].upper() == 'SETPOINT' and HLA_TAG_EGET in tags:
+                print "'%s': %s and SETPOINT ? could be a bug" % (
+                        pv, HLA_TAG_EGET)
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
@@ -123,9 +145,12 @@ def createLatticeFromCf(cfsurl, **kwargs):
 
 
 def initNSLS2VSR():
+    """
+    initialize the virtual accelerator from channel finder
+    """
     # are we using virtual ac
     VIRTAC = True
-
+    #print "= initializing NSLS2 VSR"
     INF = 1e30
     ORBIT_WAIT=8
     NETWORK_DOWN=False
@@ -133,35 +158,45 @@ def initNSLS2VSR():
     TAG_DEFAULT_GET='aphla.eget'
     TAG_DEFAULT_PUT='aphla.eput'
 
-    #HLA_CFS_URL = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
-    #HLA_CFS_URL = 'http://web01.nsls2.bnl.gov:8080/ChannelFinder'
-    cfsurl = HLA_CFS_URL
-    args = {'name': 'SR:*', 'tagName': 'aphla.*'}
+    from channelfinder import ChannelFinderClient, Channel, Property, Tag
+
+    cf = ChannelFinderClient(HLA_CFS_URL)
+    alltags = [t.Name for t in cf.getAllTags()]
+    #print alltags
 
     if HLA_DEBUG > 0:
         print "# channel finder: %s" % HLA_CFS_URL
 
     global _lat, _lattice_dict
 
+    for tag in alltags:
+        if not tag.startswith(HLA_TAG_SYS_PREFIX): continue
+        latsys = tag[len(HLA_TAG_SYS_PREFIX):]
+        if latsys:
+            if HLA_DEBUG > 0: print "Creating '%s'" % latsys
+            _lattice_dict[latsys] = createLatticeFromCf(
+                HLA_CFS_URL, **{'tagName': tag})
+            _lattice_dict[latsys].mode = tag
+    
     #
     # LTB 
-    _lattice_dict['LTB'] = createLatticeFromCf(
-        cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
-    _lattice_dict['LTB'].mode = 'channelfinder-LTB'
+    _lattice_dict['LTB'].loop = False
     #_lat = _lattice_dict['LTB']
 
     # create virtual element BPMX and BPMY
-    bpmx = Element(**{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput,
+                   **{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []
-    bpmy = Element(**{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput,
+                   **{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['LTB'].getElements('BPM'):
-        for pv,t in e.pvtags.items():
+        for pv,t in e._pvtags.items():
             if 'aphla.x' in t:
-                bpmx.appendEget((caget, pv, e.name))
+                bpmx.addEGet(pv)
                 bpmx.sb.append(e.sb)
             if 'aphla.y' in t:
-                bpmy.appendEget((caget, pv, e.name))
+                bpmy.addEGet(pv)
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['LTB'].appendElement(bpmx)
@@ -169,20 +204,21 @@ def initNSLS2VSR():
 
     #
     # SR
-    _lattice_dict['SR'] = createLatticeFromCf(
-        cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
-    _lattice_dict['SR'].mode = 'channelfinder-SR'
-    bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    _lattice_dict['SR'].loop = True
+
+    bpmx = Element(eget=caget, eput=caput,
+                   **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []
-    bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput,
+                   **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['SR'].getElements('BPM'):
-        for pv,t in e.pvtags.items():
+        for pv,t in e._pvtags.items():
             if 'aphla.x' in t and HLA_TAG_EGET in t:
-                bpmx.appendEget((caget, pv, e.name))
+                bpmx.addEGet(pv)
                 bpmx.sb.append(e.sb)
             if 'aphla.y' in t and HLA_TAG_EGET in t:
-                bpmy.appendEget((caget, pv, e.name))
+                bpmy.addEGet(pv)
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['SR'].appendElement(bpmx)
@@ -203,17 +239,13 @@ def initNSLS2VSR():
         raise ValueError("dipole number is not 60 (%d)" % len(bend))
     #print _lat.getElements('BPMX')
 
-def createLatticeFromTxt(f, **kwargs):
-    pvname = kwargs.get('name', '*')
-    tagName = kwargs.get('tagName', '*') 
-    lat = Lattice('channelfinder-txt')
-
+def createLatticesFromTxt(f, **kwargs):
     # reverse map, skip the None values
     CFS_MAP = dict((v,k) for k,v in HLA_CFS_KEYMAP.iteritems() if v)
-
+    lat_dict = {}
     for cl in open(f, 'r').readlines():
         # skip the comment lines
-        if cl.strip().startswith('#'): continue
+        if not cl.strip() or cl.strip().startswith('#'): continue
         # prepare the pv,properties,tags
         try:
             rawpv, rawprpt, rawtag = [r.strip() for r in cl.split(';')]
@@ -228,72 +260,68 @@ def createLatticeFromTxt(f, **kwargs):
                       re.split(r'\s*,\s*', rawprpt) if len(k.split('=')) > 1])
         prpt = dict((CFS_MAP[k], v) for k,v in prpt0.iteritems())
         prpt['sb'] = float(prpt['se']) - float(prpt['length'])
-        tags = set(re.split(r'\s*,\s*', rawtag))
-        
-        # match against pvname and tag
-        if not fnmatch(name=rawpv.strip(), pat=pvname):
-            #print "No pv matches", rawpv, pvname
-            continue
-        mtags = [tag for tag in tags if fnmatch(name=tag, pat=tagName)]
-        if not mtags:
-            #print "No tags, skipping element: %s " % pv
-            continue
-        
+
         #print pv,prpt
         name = prpt.get('name', None)
         if not name: continue
         #print pv, name
-        elem = lat._find_element(name=name)
-        
-        if not elem:
-            #print pv, prpt
-            elem = Element(**prpt)
-            lat.appendElement(elem)
-        else:
-            elem.updateCfsProperties(pv, prpt)
-        # update element with new
-        elem.updateCfsTags(pv, tags)
-        if HLA_TAG_EGET in tags:
-            elem.appendEget((caget, pv, "%s %s" % \
-                                 (prpt['handle'], HLA_TAG_EGET)))
-        if HLA_TAG_EPUT in tags:
-            elem.appendEput((caput, pv, "%s %s" % \
-                                 (prpt['handle'], HLA_TAG_EPUT)))
-        #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
-        elem.appendStatusPv((caget, pv, prpt['handle']))
-        #print name, ""
-        if prpt.has_key('field'):
-            if not prpt.has_key('handle'):
-                pass
-            elif prpt['handle'] == 'READBACK':
-                elem.setFieldGetAction(prpt['field'],
-                                       (caget, pv, prpt['handle']))
-            elif prpt['handle'] == 'SETPOINT':
-                elem.setFieldPutAction(prpt['field'],
-                                       (caput, pv, prpt['handle']))
 
-    # group info is a redundant info, needs rebuild based on each element
-    lat.buildGroups()
-    #lat.mergeGroups(u"BPM", [u'BPMX', u'BPMY'])
-    # !IMPORTANT! since Channel finder has no order, but lat class has
-    lat.sortElements()
-    #print __file__, lat._group['BPMX']
-    lat.circumference = lat[-1].se
+        tags = set(re.split(r'\s*,\s*', rawtag.strip()))
+
+        for tag in tags:
+            if not tag.startswith(HLA_TAG_SYS_PREFIX): continue
+            latname = tag[len(HLA_TAG_SYS_PREFIX):] + '-txt'
+            if not latname: continue
+            if not lat_dict.has_key(latname):
+                print "Creating lattice layout: '%s'" % latname
+                lat_dict[latname] = Lattice('txt')
+
+            lat = lat_dict[latname]
+            elem = lat._find_element(name=name)
+        
+            if not elem:
+                #print pv, prpt
+                elem = Element(eget=caget, eput=caput, **prpt)
+                lat.appendElement(elem)
+            else:
+                elem.updateCfsProperties(pv, prpt)
+            # update element with new
+            elem.updateCfsTags(pv, tags)
+            if HLA_TAG_EGET in tags: elem.addEGet(pv)
+            if HLA_TAG_EPUT in tags: elem.addEPut(pv)
+
+            elem.appendStatusPv(pv, prpt['handle'])
+
+            #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
+            #elem.appendStatusPv((caget, pv, prpt['handle']))
+            #print name, ""
+            if prpt.has_key('field'):
+                if not prpt.has_key('handle'):
+                    pass
+                elif prpt['handle'].upper() == 'READBACK':
+                    elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
+                elif prpt['handle'].upper() == 'SETPOINT':
+                    elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
+
+    for k, lat in lat_dict.items():
+        # group info is a redundant info, needs rebuild based on each element
+        lat.buildGroups()
+        #lat.mergeGroups(u"BPM", [u'BPMX', u'BPMY'])
+        # !IMPORTANT! since Channel finder has no order, but lat class has
+        lat.sortElements()
+        #print __file__, lat._group['BPMX']
+        lat.circumference = lat[-1].se
     
-    return lat
+    return lat_dict
     
 def initNSLS2VSRTxt(data = ''):
     # are we using virtual ac
     VIRTAC = True
+    #print "= initializing NSLS2 VSR Txt"
 
-    global HLA_TAG_EGET, HLA_TAG_EPUT
-    HLA_TAG_EGET='aphla.eget'
-    HLA_TAG_EPUT='aphla.eput'
-    
     INF = 1e30
     ORBIT_WAIT=8
     NETWORK_DOWN=False
-
 
     if data:
         cfsurl = data
@@ -302,38 +330,43 @@ def initNSLS2VSRTxt(data = ''):
                               HLA_MACHINE, 'channel_finder_server.txt')
 
     global _lat, _lattice_dict
-    _lattice_dict['LTB-txt'] = createLatticeFromTxt(
-        cfsurl, **{'name':'LTB:*', 'tagName': 'aphla.*'})
-    bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    _lattice_dict.update(createLatticesFromTxt(cfsurl))
+
+    _lattice_dict['LTB-txt'].mode = 'LTB-txt'
+    _lattice_dict['LTB-txt'].loop = False
+
+    bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
-    bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['LTB-txt'].getElements('BPM'):
-        for pv,t in e.pvtags.items(): 
+        for pv,t in e._pvtags.items(): 
             if 'aphla.x' in t and HLA_TAG_EGET in t:
-                bpmx.appendEget((caget, pv, e.name))
+                bpmx.addEGet(pv)
                 bpmx.sb.append(e.sb)  
             if 'aphla.y' in t and HLA_TAG_EGET in t:
-                bpmy.appendEget((caget, pv, e.name))
+                bpmy.addEGet(pv)
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['LTB-txt'].appendElement(bpmx)
     _lattice_dict['LTB-txt'].appendElement(bpmy)
 
-    _lattice_dict['SR-txt'] = createLatticeFromTxt(
-        cfsurl, **{'name':'SR:*', 'tagName': 'aphla.*'})
+
+    _lattice_dict['SR-txt'].mode = 'SR-text-ver'
+    _lattice_dict['SR-txt'].loop = True
+
     # create virtual bpms
-    bpmx = Element(**{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
-    bpmy = Element(**{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['SR-txt'].getElements('BPM'):
-        for pv,t in e.pvtags.items(): 
+        for pv,t in e._pvtags.items(): 
             if 'aphla.x' in t and HLA_TAG_EGET in t:
-                bpmx.appendEget((caget, pv, e.name))
+                bpmx.addEGet(pv)
                 bpmx.sb.append(e.sb)  
             if 'aphla.y' in t and HLA_TAG_EGET in t:
-                bpmy.appendEget((caget, pv, e.name))
+                bpmy.addEGet(pv)
                 bpmy.sb.append(e.sb)
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['SR-txt'].appendElement(bpmx)
@@ -343,6 +376,7 @@ def initNSLS2VSRTxt(data = ''):
 
 
     _lat = _lattice_dict['SR-txt']
+    #for k,v in _lattice_dict.iteritems(): print k, v.mode
 
     # self diagnostics
     # check dipole numbers
@@ -356,7 +390,9 @@ def initNSLS2VSRTxt(data = ''):
     #print _lat.getElements('BPMX')
 
 def initNSLS2VSRTwiss():
-    """Only works from virtac.nsls2.bnl.gov"""
+    """
+    Only works from virtac.nsls2.bnl.gov
+    """
     # s location
     s      = [float(v) for v in caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=30)]
     # twiss at s_end (from Tracy)
@@ -373,9 +409,11 @@ def initNSLS2VSRTwiss():
     nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
     nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
 
-    #print __file__, len(s), len(betax)
+    N = len(s)
 
-    # fix the Tracy bug by adding a new element at the end
+    print __file__, "Reading twiss items:", len(s), len(betax)
+
+    # fix the Tracy convension by adding a new element at the end
     for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
               phix, phiy]:
         x.append(x[-1])
@@ -385,7 +423,14 @@ def initNSLS2VSRTwiss():
 
     _twiss.tune = (nux, nuy)
     #print __file__, len(s), len(betax)
-    for i in range(len(s)):
+    
+    nps = np.array(s, 'd')
+    for ielem in range(_lat.size()):
+        elem = _lat._elements[ielem]
+        if elem.family == HLA_VFAMILY: continue
+
+        i = np.argmin(np.abs(nps - elem.sb))
+
         gammax = (1 + alphax[i]**2)/betax[i]
         gammay = (1 + alphay[i]**2)/betay[i]
         tw = TwissItem(s = s[i], alpha=(alphax[i], alphay[i]),
@@ -393,23 +438,9 @@ def initNSLS2VSRTwiss():
                        gamma=(gammax, gammay),
                        eta=(etax[i], etay[i]),
                        phi=(phix[i], phiy[i]))
-        elem = _lat.getLine((s[i], s[i]), eps=1e-6)
-        if not elem:
-            #print "not found at: (%d) %f" % (i, s[i])
-            continue
-        elif isinstance(elem, list):
-            #print "Overlap:\n  ",
-            #for e in elem: print e.name, 
-            #print ""
-            for e in elem:
-                if e in elem: continue
-                _twiss._elements.append(e.name)
-                _twiss.append(tw)
-        else:
-            #print "Found ", s[i], elem.name
-            _twiss._elements.append(elem.name)
-            _twiss.append(tw)
-        #print _twiss[-1]
+
+        _twiss._elements.append(elem.name)
+        _twiss.append(tw)
 
 def use(lattice):
     """
@@ -417,6 +448,8 @@ def use(lattice):
 
     use :func:`~hla.machines.lattices` to get a dict of lattices and its mode
     name
+
+    When switching lattice, twiss data is not sychronized.
     """
     global _lat, _lattice_dict
     if _lattice_dict.get(lattice, None):
@@ -430,6 +463,9 @@ def getLattice(lat):
 
     .. seealso:: :func:`~hla.machines.lattices`
     """
+    global _lattice_dict
+    #for k, v in _lattice_dict.items():
+    #    print k, v.mode
     return _lattice_dict.get(lat, None)
 
 def lattices():

@@ -28,12 +28,12 @@ TODO
 - CAVITY: cell ? girder ? symmetry ? --L.Y.
 - Split Sextupoles ? two PV now in Virtual ACC --L.Y.
 - Never ending: Keep working on design doc, reflect the real code.
-- Misalignment of magnets in VIOC/Tracy (Guobao)
+- :done:`Misalignment of magnets in VIOC/Tracy` (Guobao)
 - Local version of VIOC/Tracy (Guobao)
-- Tracy lattice parser (Choi, Lingyun)
+- :done:`Tracy lattice parser` (Choi, Lingyun)
 - Twiss Server (Guobao, Guimei, Lingyun, Don): we all have discussed it a
   lot. Will have it after channel finder.
-- Orbit control/analysis, ORM, local bump, physics routines (Lingyun).
+- :done:`Orbit control/analysis, ORM, local bump`, physics routines (Lingyun).
 - Discuss with diagnostics, BPM, RF, Insertion Device, ...
 - Come up a list of applications with details, including algorithm, GUI,
   and discuss with Sam/Bob for more comments. Then present in AP group
