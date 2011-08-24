@@ -1,9 +1,11 @@
 History
 ========
 
-v0.2.1
+v0.2.2
 ------
 
+  - add simple locking for multiusers
+  - add dispersion measurement :func:`~hla.meastwiss.measDispersion`
   - add beta function measurement :func:`~hla.meastwiss.measBeta`
   - bug fix of :func:`~hla.machines.initNSLS2VSRTwiss`
 

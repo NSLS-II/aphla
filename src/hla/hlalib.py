@@ -578,6 +578,13 @@ def getOrbit(pat = '', spos = False):
     if not spos: return obt[:,:2]
     else: return obt
 
+def _reset_bpm_offset():
+    bpms = getElements('BPM')
+    for b in bpms:
+        #print b.pv(tags=['aphla.offset', 'aphla.eput'])
+        ref = b.pv(tags=['aphla.offset', 'aphla.eput'])
+        caput(ref, [0.0] * len(ref))
+
 
 def _reset_quad():
     qtag = {'H2': (1.47765, 30), 
@@ -633,4 +640,34 @@ def waitStableOrbit(reforbit, **kwargs):
 
     if diffstd_list:
         return timeout, dvstd
+
+
+def _wait_for_lock(tag, maxwait=60):
+    """
+    wait until the virtual accelerator is available to me.
+    """
+    print "# Locking the mathine for userid=%d" % tag
+    if tag == 0:
+        raise ValueError("you tag (=%d)  must be > 0." % tag)
+
+    t0 = time.time()
+    while caget('SVR:LOCKED') > 0:
+        print "# waiting ... for user %d ..." % int(caget('SVR:LOCKED'))
+        time.sleep(1)
+        if time.time() - t0 > maxwait: break
+
+    if caget('SVR:LOCKED') == 0:
+        caput('SVR:LOCKED', tag)
+    else:
+        raise ValueError("can not get the writting permission to virtual accelerator")
+
+def _release_lock(tag):
+    if caget('SVR:LOCKED') == 0:
+        raise ValueError("some one already reset the lock")
+    if caget('SVR:LOCKED') != tag:
+        raise ValueError("it is not locked by me, abort")
+
+    caput('SVR:LOCKED', 0)
+    print "released the lock for userid=%d" % tag
+
 

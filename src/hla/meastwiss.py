@@ -14,6 +14,7 @@ from os.path import join
 from catools import caget, caput
 import numpy as np
 from hlalib import getOrbit, getElements, getClosest, getNeighbors, getTunes, waitStableOrbit
+from rf import getRfFrequency, putRfFrequency
 
 def _measBetaQuad(elem, **kwargs):
     dqk1 = abs(kwargs.get('dqk1', 0.01))
@@ -59,14 +60,58 @@ def measBeta(elem, dqk1 = 0.01, # element or list
         print q.sb, q.name, beta[0,i], beta[1,i]
 
     return k1, nu, beta
-# testing ...
 
+def measDispersion(elem, dfreq = 1e-5, alphac = 3.6261976841792413e-04,
+                   gamma = 5.870841487279844e3, num_points = 5,
+                   verbose = 0):
+    """
+    measure dispersion
 
-if __name__ == "__main__":
-    pt = os.path.dirname(os.path.abspath(__file__))
-    xmlconf = "%s/../../%s/main.xml" % (pt, conf.root['nsls2'])
-    print "Using conf file:", xmlconf, "in meastwiss.py"
-    ca = cadict.CADict(xmlconf)
-    #print ca
-    quad = ca.findGroup("QUAD")
-    measBeta(quad[1:3])
+    - *elem* BPM name, list or pattern
+    - *df* frequency change
+    - *alphac* 
+    - *gamma* 
+
+    ::
+
+      >>> etax, etay = measDispersion('P*C0[1-4]*')
+    """
+
+    eta = alphac - 1.0/gamma/gamma
+
+    bpmobj = [ b for b in getElements(elem, return_list = True) 
+               if b.family == 'BPM']
+    bpmnames = [b.name for b in bpmobj]
+    nbpm = len(bpmnames)
+
+    print "elements:", len(bpmnames), bpmnames
+    # f in MHz
+    f0 = getRfFrequency()
+    dflst = np.linspace(-abs(dfreq),  abs(dfreq), num_points)
+
+    # avoid a bug in virtac
+    obt0 = getOrbit(bpmnames)
+
+    cod = np.zeros((len(dflst), 2*nbpm), 'd')
+    for i,df in enumerate(dflst): 
+        v0 = getOrbit()
+        putRfFrequency(f0 + df)
+        waitStableOrbit(v0)
+
+        # repeat the put/get in case simulator did not response latest results
+        obt = getOrbit(bpmnames)
+        #print i, obt[0,:2], obt0[0,:2], np.shape(obt), np.shape(obt0)
+
+        cod[i,:nbpm] = obt[:,0] - obt0[:,0]
+        cod[i,nbpm:] = obt[:,1] - obt0[:,1]
+
+    
+    # restore
+    putRfFrequency(f0)
+
+    # fitting
+    p = np.polyfit(dflst, cod, deg = 1)
+    disp = -p[0,:] * f0 * eta
+    return disp[:nbpm], disp[nbpm:]
+
+    

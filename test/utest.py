@@ -2,8 +2,11 @@ import sys, os
 import unittest
 
 from conf import *
-
+LOCK_ID = 1
 import hla
+
+hla._wait_for_lock(LOCK_ID, maxwait=3600)
+
 print "= HLA used:", hla.__path__
 
 #import utChanFinder
@@ -42,6 +45,8 @@ else:
 result = runner.run(suite)
 
 print "= Results:", result, len(result.failures), len(result.errors)
+hla.hlalib._release_lock(LOCK_ID)
+
 sys.exit(len(result.failures) + len(result.errors))
 
 

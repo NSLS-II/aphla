@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
     name = "hla",
-    version = "0.2.1",
+    version = "0.2.2",
     #packages = ['hla'],
     package_dir = {'hla': 'src/hla'},
     package_data = {'hla': ['machine/nsls2/channel_finder_server.txt']},
