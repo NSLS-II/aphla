@@ -7,5 +7,7 @@
 <file alias="viewzoomin.png">images/viewzoomin.png</file>
 <file alias="viewzoomout.png">images/viewzoomout.png</file>
 <file alias="viewzoomauto.png">images/viewzoomauto.png</file>
+<file alias="viewchoosebpm.png">images/viewchoosebpm.png</file>
+<file alias="viewresetpvdata.png">images/viewresetpvdata.png</file>
 </qresource>
 </RCC>

@@ -406,3 +406,24 @@ def alignQuadrupole(quad, **kwargs):
             #print "final quad value: ", quad.name, quad.value
     return bb.getQuadCenter()
 
+
+def _random_kick(plane = 'V', amp=1e-9, verbose = 0):
+    """
+    kick the beam with a random kicker
+    """
+    
+    dk = np.random.rand() * amp
+    if plane == 'V':
+        trim = getElements('VCOR')
+    elif plane == 'H':
+        trim = getElements('HCOR')
+    else:
+        raise ValueError("unknow plane '%s'" % plane)
+
+    i = np.random.randint(len(trim))
+    k0 = trim[i].value
+    if verbose:
+        print("setting %s %e shift %e" % (trim[i].name, k0, dk))
+    trim[i].value = k0 + dk
+    
+

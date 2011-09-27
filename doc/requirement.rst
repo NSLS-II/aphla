@@ -24,7 +24,7 @@ General Operation
       and give warnings when any abnormal beam behaviour is detected, for
       example a readback differs from setting point larger than its
       threshhold. 
-    - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)`
+    - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)` (CSS operation panel)
 - Permit system monitor and control
 - Data logger and data display
 - Electronic logbook
@@ -89,7 +89,7 @@ Beam Diagnostics
 ------------------------------
 
 - :hladone:`Measure the orbit response matrix, with flexible number of BPMs and correctors.`  (L.Yang)
-    - :hla:`Import/Export orbit response matrix for orbit correction`
+    - :hladone:`Import/Export orbit response matrix for orbit correction`
     - :hla:`Import/Export ORM for feedback`
 
 - :hla:`Beam orbit display`. (L.Yang)
