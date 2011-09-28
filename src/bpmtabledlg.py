@@ -7,7 +7,7 @@
 
 from PyQt4.QtCore import (Qt, SIGNAL, SLOT)
 from PyQt4.QtGui import (QCheckBox, QDialog, QDialogButtonBox,
-        QTableWidget, QTableWidgetItem,
+        QTableWidget, QTableWidgetItem, QApplication,
         QGridLayout, QLabel, QLineEdit, QMessageBox, QSpinBox)
 
 from fnmatch import fnmatch
@@ -50,6 +50,8 @@ class BpmTableDlg(QDialog):
         self.connect(self.table, SIGNAL("cellClicked(int,int)"), self.savebpm)
 
     def savebpm(self, row, col):
+        return
+
         b = str(self.table.item(row, col).text())
         if not b in self.dead:
             print "Click",b
@@ -77,10 +79,10 @@ class BpmTableDlg(QDialog):
             k = k + 1
         
     def filter(self):
-        s = str(self.bpmInputEdit.text()) + '*'
+        s = str(self.bpmInputEdit.text())
         print "Changed", s, 
         for i,b in enumerate(self.bpm):
-            if b[0].startswith(s) or fnmatch(b[0], s):
+            if b[0].find(s) >= 0:
                 self.mask[i] = 0
             else:
                 self.mask[i] = 1
@@ -88,3 +90,11 @@ class BpmTableDlg(QDialog):
         print ""
         self.refresh()
         
+if __name__ == "__main__":
+    import sys
+
+    app = QApplication(sys.argv)
+    form = BpmTableDlg([('a', 0, 0), ('b', 0, 0)])
+    form.show()
+    app.exec_()
+

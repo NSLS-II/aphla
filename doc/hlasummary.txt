@@ -1,0 +1,42 @@
+
+======================================= ===========================================================================
+symbol                                  description                                                                
+======================================= ===========================================================================
+:class:`~hla.orbit.Orbit`               Orbit class                            
+:class:`~hla.ormdata.OrmData`           Orbit Response Matrix Data             
+:func:`~hla.hlalib.addGroup`            add a new group, *group* should be plain string, characters in
+:func:`~hla.hlalib.addGroupMembers`     add new members to an existing group   
+:func:`~hla.aptools.alignQuadrupole`    align quadrupole with nearby BPM using beam based alignment
+:func:`~hla.catools.caget`              channel access read, a simple wrap of cothread.catools, support UTF8 string
+:func:`~hla.catools.caput`              channel access write, wrap to support UTF8 string
+:func:`~hla.aptools.correctOrbit`       correct the orbit with given BPMs and Trims
+:func:`~hla.aptools.correctOrbitPv`     correct orbit use direct pv and catools
+:func:`~hla.aptools.createLocalBump`    create a local bump at certain BPM, while keep all other orbit untouched
+:func:`~hla.hlalib.getBeamlineProfile`  return the beamline profile from s1 to s2
+:func:`~hla.hlalib.getBeta`             get the beta function from stored data.
+:func:`~hla.hlalib.getBpms`             return a list of bpms object.          
+:func:`~hla.hlalib.getClosest`          Get the closest element in *group*     
+:func:`~hla.hlalib.getCurrent`          Get the current from element with a name 'DCCT'
+:func:`~hla.hlalib.getDispersion`       get the dispersion                     
+:func:`~hla.hlalib.getElements`         return list of elements.               
+:func:`~hla.hlalib.getEta`              get the dispersion from stored data    
+:func:`~hla.hlalib.getGroupMembers`     Get all elements in a group. If group is a list, consider which op:
+:func:`~hla.hlalib.getGroups`           Get all groups own these elements, '*' returns all possible groups,
+:func:`~hla.aptools.getLifetime`        Monitor current change with, calculate lifetime dI/dt
+:func:`~hla.hlalib.getLocations`        Get the location of a group, i.e. a family, an element or a list of
+:func:`~hla.hlalib.getNeighbors`        Get a list of n elements belongs to group. The list is sorted along s
+:func:`~hla.hlalib.getOrbit`            Return orbit                           
+:func:`~hla.hlalib.getPhase`            get the phase from stored data         
+:func:`~hla.rf.getRfFrequency`          Get the RF frequency                   
+:func:`~hla.rf.getRfVoltage`            Return RF voltage                      
+:func:`~hla.hlalib.getTune`             get tune                               
+:func:`~hla.hlalib.getTunes`            get tunes from ['machine']             
+:func:`~hla.machines.initNSLS2VSR`      initialize the virtual accelerator from channel finder
+:func:`~hla.machines.initNSLS2VSRTwiss` Only works from virtac.nsls2.bnl.gov   
+:func:`~hla.aptools.measChromaticity`   Measure the chromaticity               
+:func:`~hla.aptools.measDispersion`     Measure the dispersion                 
+:func:`~hla.rf.putRfFrequency`          set the rf frequency                   
+:func:`~hla.hlalib.removeGroup`         Remove a group if it is empty. It calls
+:func:`~hla.hlalib.removeGroupMembers`  Remove a member from group             
+======================================= ===========================================================================
+
