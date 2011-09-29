@@ -155,6 +155,8 @@ Software routines needed for the injector commissioning and operation are
 listed in this section. Some of these routines will be delivered by linac
 and booster vendors, others have to be developed by ourselves.
 
+see Injector HLA specifications `<http://www.bnl.gov/>`_
+
 - Linac
     - Diagnostics calibration
     - Routines for optimization of linac performance
