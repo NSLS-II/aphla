@@ -69,8 +69,8 @@ class TestElement(unittest.TestCase):
             index = -1, devname = 'BPM')
         elem.addEGet('SR:C29-BI:G06B{BPM:H1}SA:Y-I')
         elem.addEGet('SR:C29-BI:G06B{BPM:H1}SA:X-I')
-        elem.setFieldGetAction('x', 'SR:C29-BI:G06B{BPM:H1}SA:X-I', 'X')
-        elem.setFieldPutAction('x', 'SR:C29-BI:G06B{BPM:H1}GOLDEN:X', 'X')
+        elem.setFieldGetAction('x', 'SR:C29-BI:G06B{BPM:H1}SA:X-I', 'X plane')
+        elem.setFieldPutAction('x', 'SR:C29-BI:G06B{BPM:H1}GOLDEN:X', 'X plane')
         self.assertTrue(len(elem.value) == 2,
                         "element: %s, %s" % (elem.name, elem._field['value']))
         val = elem.x
@@ -79,6 +79,26 @@ class TestElement(unittest.TestCase):
         time.sleep(2)
         #print val, elem.x
         self.assertTrue(abs(elem.x) > 10*abs(val)) 
+
+    def test_pv(self):
+        elem = element.Element(
+            name = 'V:BPM', eget = caget, eput = caput,
+            index = -1, devname = 'BPM')
+        elem.addEGet('SR:C29-BI:G06B{BPM:H1}SA:Y-I')
+        elem.addEGet('SR:C29-BI:G06B{BPM:H1}SA:X-I')
+        elem.setFieldGetAction('x', 'SR:C29-BI:G06B{BPM:H1}SA:X-I', 'X plane')
+        elem.setFieldPutAction('x', 'SR:C29-BI:G06B{BPM:H1}GOLDEN:X', 'X plane')
+
+        elem.updateCfsTags('SR:C29-BI:G06B{BPM:H1}SA:X-I', ['aphla.X', 'aphla.EGET'])
+
+        pv = elem._pv_tags(["aphla.X"])
+        #print pv
+        #print elem._pv_fields(["x"])
+        self.assertTrue(len(pv) == 1)
+        pv = elem.pv(field = "x", handle="readback")
+        self.assertTrue(len(pv) == 1)
+        pv = elem.pv(field = "x", handle="setpoint")
+        self.assertTrue(len(pv) == 1)
 
 if __name__ == "__main__":
     unittest.main()
