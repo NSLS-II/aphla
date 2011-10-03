@@ -92,10 +92,9 @@ def createLatticeFromCf(cfsurl, **kwargs):
         else:
             #print prpt
             elem.updateCfsProperties(pv, prpt)
+
         # update element with new
         tags = c.getTags()
-        #if name == 'CX1': print pv, prpt, tags
-
         elem.updateCfsTags(pv, tags)
         if HLA_TAG_EGET in tags: elem.addEGet(pv)
         if HLA_TAG_EPUT in tags: elem.addEPut(pv)

@@ -13,7 +13,7 @@ app = cothread.iqt(use_timer=True)
 
 from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
         QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
-        QSize, QRectF)
+        QSize, QRectF, QLine)
 from PyQt4.QtGui import (QAction, QActionGroup, QApplication, QWidget,
         QDockWidget, QFileDialog, QFrame, QIcon, QImage, QImageReader,
         QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
@@ -108,6 +108,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
     def updateAllPvData(self):
         dat = hla.caget(self.pvs)
+        print "Updated:", len(dat)
         for i in range(len(dat)):
             k = self._data_icur[i]
             self._data[i, k] = dat[i]
