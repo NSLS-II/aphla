@@ -177,17 +177,33 @@ class Element(AbstractElement):
         """One input"""
         ret = None
         if kwargs.get('tag', None):
-            tag = kwargs['tag']
-            ret = [pv for pv,ts in self._pvtags.iteritems()
-                       if tag in ts]
+            ret = self._pv_tags([kwargs['tag']])
         elif kwargs.get('tags', None):
-            tagset = set(kwargs['tags'])
-            ret = [pv for pv,ts in self._pvtags.iteritems()
-                   if tagset.issubset(ts)] 
+            ret = self._pv_tags(kwargs['tags'])
         elif kwargs.get('field', None):
-            att = kwargs['field']
-            ret = [self._field[att]['eget'][:], self._field[att]['eput'][:]]
+            ret = self._pv_fields([kwargs['field']])
 
+        return ret
+
+    def _pv_tags(self, tags):
+        """
+        return pv based on a list of tags
+        """
+        tagset = set(tags)
+        return [pv for pv,ts in self._pvtags.iteritems()
+                   if tagset.issubset(ts)]
+
+    def _pv_fields(self, fields):
+        """
+        return pvs based on a list of fields
+        """
+        fieldset = set(fields)
+        ret = []
+        for k,v in self._field.iteritems():
+            print k, v
+            if k in fieldset:
+                ret.extend(v['eget'])
+                ret.extend(v['eput'])
         return ret
             
     def pv(self, **kwargs):
@@ -199,6 +215,8 @@ class Element(AbstractElement):
           >>> pv() # returns all pvs.
           >>> pv(tag='aphla.X')
           >>> pv(tags=['aphla.EGET', 'aphla.Y'])
+          >>> pv(field = "x")
+          >>> pv(field="x", handle='readback')
         """
         if len(kwargs) == 0:
             ret = []
@@ -213,8 +231,13 @@ class Element(AbstractElement):
         elif len(kwargs) == 1:
             ret = self._pv_1(**kwargs)
         elif len(kwargs) == 2:
-            ret = []
-            pass
+            try:
+                if kwargs['handle'] == 'readback':
+                    return self._field[kwargs['field']]['eget']
+                elif kwargs['handle'] == 'setpoint':
+                    return self._field[kwargs['field']]['eput']
+            except KeyError:
+                return []
         else: return []
 
         if not ret: return None
@@ -303,9 +326,9 @@ class Element(AbstractElement):
         set the action when reading *field*
         """
         if not self._field.has_key(field):
-            self._field[field] = {'eget': v, 'eput': None, 'desc': desc}
+            self._field[field] = {'eget': [v], 'eput': None, 'desc': desc}
         else:
-            self._field[field]['eget'] = v
+            self._field[field]['eget'] = [v]
             self._field[field]['desc'] = desc
 
     def setFieldPutAction(self, field, v, desc):
@@ -313,9 +336,9 @@ class Element(AbstractElement):
         set the action for writing *field*
         """
         if not self._field.has_key(field):
-            self._field[field] = {'eget': None, 'eput': v, 'desc': desc}
+            self._field[field] = {'eget': None, 'eput': [v], 'desc': desc}
         else:
-            self._field[field]['eput'] = v
+            self._field[field]['eput'] = [v]
             self._field[field]['desc'] = desc
 
     def fields(self):
@@ -328,6 +351,9 @@ class Element(AbstractElement):
         AbstractElement.updateCfsProperties(self, prpt)
         
     def updateCfsTags(self, pv, tags):
+        """
+        update a list of tags
+        """
         AbstractElement.updateCfsTags(self, tags)
         if not pv in self._pvtags.keys():
             self._pvtags[pv] = set([])

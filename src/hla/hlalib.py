@@ -578,6 +578,28 @@ def getOrbit(pat = '', spos = False):
     if not spos: return obt[:,:2]
     else: return obt
 
+def getTbtOrbit(**kwargs):
+    """
+    return turn-by-turn BPM data.
+
+    - *field* ['A', 'B', 'C', 'D', 'X', 'Y', 'S', 'Q'], each has the RMS value: 'rmsA'-'rmsQ'
+    """
+    field = kwargs.get('field', 'X')
+    pref = 'LTB:BI{BPM:1}' + 'TBT-'
+    return caget(pref + field)
+    
+def getFastOrbit(**kwargs):
+    """
+    return fast 10kHz turn-by-turn BPM data.
+
+    - *field* ['A', 'B', 'C', 'D', 'X', 'Y', 'S', 'Q'], each has the RMS value: 'rmsA'-'rmsQ'
+    """
+    field = kwargs.get('field', 'X')
+    pref = 'LTB:BI{BPM:1}' + 'FA-'
+    return caget(pref + field)
+    
+
+
 def _reset_bpm_offset():
     bpms = getElements('BPM')
     for b in bpms:

@@ -24,7 +24,7 @@ General Operation
       and give warnings when any abnormal beam behaviour is detected, for
       example a readback differs from setting point larger than its
       threshhold. 
-    - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)`
+    - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)` (CSS operation panel)
 - Permit system monitor and control
 - Data logger and data display
 - Electronic logbook
@@ -89,7 +89,7 @@ Beam Diagnostics
 ------------------------------
 
 - :hladone:`Measure the orbit response matrix, with flexible number of BPMs and correctors.`  (L.Yang)
-    - :hla:`Import/Export orbit response matrix for orbit correction`
+    - :hladone:`Import/Export orbit response matrix for orbit correction`
     - :hla:`Import/Export ORM for feedback`
 
 - :hla:`Beam orbit display`. (L.Yang)
@@ -154,6 +154,8 @@ Injector
 Software routines needed for the injector commissioning and operation are
 listed in this section. Some of these routines will be delivered by linac
 and booster vendors, others have to be developed by ourselves.
+
+see Injector HLA specifications `<http://www.bnl.gov/>`_
 
 - Linac
     - Diagnostics calibration
