@@ -303,6 +303,11 @@ class Element(AbstractElement):
             return ret
         else:
             x = self._field[att]['eget']
+            if not x:
+                x = self._field[att]['eput']
+            if not x:
+                raise AttributeError("element %s has no read/write for field %s" %
+                                     (self.name, att))
         #print "reading ", att
         ret = self._eget(x)
         if len(x) == 1: return ret[0]

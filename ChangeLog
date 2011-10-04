@@ -1,3 +1,7 @@
+2011-10-04  Lingyun Yang  <lyyang@nsls2yang.nsls2.bnl.gov>
+
+	* add gaussian fitter
+
 2010-06-16  Lingyun Yang  <lyyang@svd>
 
 	* .hgignore (syntax): ignore more tmp files

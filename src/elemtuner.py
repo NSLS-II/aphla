@@ -43,7 +43,7 @@ class PvTunerDlg(QDialog):
         self.table.setHorizontalHeaderLabels(["Element", "Field", "PV",
                  "Stepsize", "Readback", "setpoint"])
         #self.table.horizontalHeader().setStretchLastSection(True)
-        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        #self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
 
@@ -65,6 +65,17 @@ class PvTunerDlg(QDialog):
         #self.connect(self.table, SIGNAL("cellChanged"), self.updatePv)
         self.connect(buttonBox.button(QDialogButtonBox.Ok),
                      SIGNAL("clicked()"), self.close)
+        self.connect(self.table, SIGNAL("cellClicked(int, int)"),
+                     self._cell_clicked)
+
+
+    def _cell_clicked(self, row, column):
+        #print row, column
+        if column in [self.COL_PV, self.COL_STEPSIZE]:
+            item = self.table.item(row, column)
+            if not item: return
+            item.setFlags(item.flags() | Qt.ItemIsEditable)
+
 
     #def __del__(self):
     #    pass
@@ -94,26 +105,34 @@ class PvTunerDlg(QDialog):
             QMessageBox.critical(None, "ERROR", "element %s not found" % elem)
             return
 
-        item = QTableWidgetItem(elem)
+        # expand one row
         m, n = self.table.rowCount(), self.table.columnCount()
         self.table.insertRow(m)
+
+        # add cells
+        item = QTableWidgetItem(elem)
+        item.setFlags(item.flags() & (~Qt.ItemIsEditable))
         self.table.setItem(m, self.COL_ELEMENT, item)
         
         item = QTableWidgetItem(field)
+        item.setFlags(item.flags() & (~Qt.ItemIsEditable))
         self.table.setItem(m, self.COL_FIELD, item)
 
         
         item = QTableWidgetItem(', '.join(pvsrb))
+        #item.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEnabled)
         self.table.setItem(m, self.COL_PV, item)
 
         readval = ['%.4e' % v for v in caget(pvsrb)]
         item = QTableWidgetItem(', '.join(readval))
+        item.setFlags(item.flags() & (~Qt.ItemIsEditable))
         self.table.setItem(m, self.COL_READBACK, item)
 
         # set the stepsize of PV
         stepsize = 0.00001
         if pvssp:
             item = QTableWidgetItem('%f' % stepsize)
+            item.setFlags(item.flags() & (~Qt.ItemIsEditable))
             self.table.setItem(m, self.COL_STEPSIZE, item)
 
             self.spinbox.append(QDoubleSpinBox(self.table))
@@ -131,6 +150,10 @@ class PvTunerDlg(QDialog):
             self.spinbox[-1].setValue(-1e-5)
             #print "connected", self.spinbox[-1].value()
         else:
+            item = self.table.item(m, self.COL_STEPSIZE)
+            if item: item.setFlags(item.flags() & (~Qt.ItemIsEditable))
+            item = self.table.item(m, self.COL_SETPOINT)
+            if item: item.setFlags(item.flags() & (~Qt.ItemIsEditable))
             self.spinbox.append(None)
 
         self.table.resizeColumnsToContents()
