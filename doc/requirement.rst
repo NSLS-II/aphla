@@ -29,7 +29,7 @@ General Operation
 - Data logger and data display
 - Electronic logbook
 - :hla:`Converting between machine unit and physics unit.` (G.Shen)
-- :hla:`Smooth Ramping` (G.Shen)
+- :hla:`Smooth Ramping`
     - :hla:`list channels we are interested.`
     - :hla:`ramp (i.e. linear interpolation) whole group at certain rate.`
     - :hla:`searching for channels with wild-card`
@@ -58,7 +58,7 @@ General Operation
     - Magnet temperature interlock display and control
     - Cryogenics system display and control
     - Pulsed magnet systems monitor and control
-    - :hla:`Fast orbit feedback control above cell level` (L.Yang, Y.Hu)
+    - :hla:`Fast orbit feedback control above cell level` 
 	- :hla:`turn on/off`
 	- :hla:`disable/enable certain trim/BPM`
 	- :hla:`update(import/export) RespMatrix`
@@ -71,7 +71,7 @@ General Operation
     - Beam containment status display and control
     - Top-off status monitor
     - Machine protection system display and control
-- :hla:`Accelerator parameter store/restore (*)` (G.Shen)
+- :hla:`Accelerator parameter store/restore (*)`
     - :hla:`manage, editing capability for stored accelerator status.`
     - :hla:`smoothly ramp from one stage to another.`
     - :hla:`smooth ramping of one set of magnets (PVs)`
@@ -83,7 +83,7 @@ General Operation
 - Injection Control
 - Front-end monitoring and control
 - Scraper and movable mask operations
-  
+- :hladone:`General high level element control (GUI)`  
 
 Beam Diagnostics
 ------------------------------
@@ -94,10 +94,10 @@ Beam Diagnostics
 
 - :hla:`Beam orbit display`. (L.Yang)
     - :hladone:`display closed orbit (static), 1Hz rate`
-    - :hla:`turn by turn bpm reading (including single turn)` (Y.Hu)
+    - :hladone:`turn by turn bpm reading (including single turn)` (Y.Hu)
     - :hla:`single turn` (Y.Hu)
     - :hla:`Plot orbit change from now on.`
-    - :hla:`BPM status information`
+    - :hladone:`BPM status information`
     - :hla:`difference (referecne orbit display)`
     - :hla:`Orbit statistics. stability, especially drift and variation,
       variation`
@@ -109,21 +109,18 @@ Beam Diagnostics
 - :hla:`Static beam orbit control` (L.Yang)
     - :hla:`Edit golden orbit control (also affect feedback system)`
         - Interplay with feedback system when creating local bump: update
-          the reference orbit to feedback ? or share same orbit difference
-          from a dedicated IOC ? the feedback should check golden orbit at
-          10-50Hz rate if real-time orbit difference is not available to
-          it.
+          the reference orbit to feedback.
 
     - :hladone:`Correct static orbit with selected correctors and BPMs`
     - :hladone:`Enable/disable BPMs for orbit correction and feedback.`
     - :hladone:`Enable/disable correctors for orbit correction and feedback`
 
-- :hla:`Turn-by-turn BPM data` (Y.Hu, L.Yang)
+- :hla:`Turn-by-turn BPM data` 
     - :hla:`closed orbit established using corrector and single shot BPM
       data`
-    - :hla:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
+    - :hladone:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
     - :hla:`Realtime tune based on turn-by-turn BPM`
-    - :hla:`BPM buttons readout.`
+    - :hladone:`BPM buttons readout.`
     - :hla:`Correct orbit based on single shot orbit`
 
 - :hla:`Beam current history and lifetime display` (Y.Hu, L.Yang)
@@ -226,8 +223,8 @@ It requires:
 - Designed orbit response matrix (ROM)
 - change specified correctors 
 - get closed orbit change at specified BPM
-- Simulator and interface to Python. This is required for online lattice
-  fitting, e.g. LOCO. Tacy-v3 will be a choice.
+- :hladone:`Simulator and interface to Python`. This is required for online
+  lattice fitting, e.g. LOCO. Tacy-v3 will be a choice.
 
 
 
