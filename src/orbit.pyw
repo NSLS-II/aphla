@@ -7,7 +7,8 @@ if 0:
 
 import sys
 import cothread, hla
-from cothread.catools import camonitor
+from epicsdatamonitor import CaDataMonitor
+
 app = cothread.iqt(use_timer=True)
 
 
@@ -31,22 +32,6 @@ import numpy as np
 
 #import bpmtabledlg
 from elementpickdlg import ElementPickDlg
-
-class Spy(QObject):
-    
-    def __init__(self, parent):
-        QObject.__init__(self, parent)
-        parent.setMouseTracking(True)
-        parent.installEventFilter(self)
-
-    # __init__()
-
-    def eventFilter(self, _, event):
-        if event.type() == QEvent.MouseMove:
-            self.emit(SIGNAL("MouseMove"), event.pos())
-        return False
-
-    # eventFilter()
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
     """Orbit"""
@@ -83,46 +68,28 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.errorCap = errorCap
         self.errorOnTop = errorOnTop
         
-        n = len(pvs)
-        self.pvs = pvs
-        self._data = np.zeros((n, self.SAMPLES), 'd')
-        self._data_icur = np.zeros(n, dtype=np.int)
-        self.updateAllPvData()
+        if len(pvs) != len(x):
+            raise ValueError("pv and x are not same size")
 
+        n = len(x)
         self.x = np.array(x)
-        self.y = np.random.rand(n)*1e-12
-        self._y_std = np.random.rand(n)*1e-13
+        self.y = np.zeros(n, 'd')
+        self.errbar = np.zeros(n, 'd')
+        self.camonitor = CaDataMonitor(pvs)
         self.mask = np.zeros(n, 'i')
         self.__live = False
 
-        self.moni = camonitor(pvs, self.updatePvs)
-
-        self.update_count = 0
         self.update()
-
-    def updatePvs(self, val, idx):
-        self.update_count += 1
-        k = self._data_icur[idx]
-        self._data[idx, k] = val
-        self._data_icur[idx] = divmod(k + 1, self.SAMPLES)[1]
-
-    def updateAllPvData(self):
-        dat = hla.caget(self.pvs)
-        print "Updated:", len(dat)
-        for i in range(len(dat)):
-            k = self._data_icur[i]
-            self._data[i, k] = dat[i]
-            self._data_icur[i] = divmod(k + 1, self.SAMPLES)[1]
 
     def update(self):
         """update the Qwt data"""
-        for i in range(len(self.pvs)):
-            k = self._data_icur[i]
-            self.y[i] = self._data[i, k]
-        self._y_std[:] = np.std(self._data, axis=1)
 
-        x = np.compress(1-self.mask, self.x, axis=0)
-        y = np.compress(1-self.mask, self.y, axis=0)
+        self.y[:] = self.camonitor.recent[:]
+        self.errbar[:] = self.camonitor.std[:]
+
+        kept = 1-self.mask
+        x = np.compress(kept, self.x, axis=0)
+        y = np.compress(kept, self.y, axis=0)
 
         #Qwt.QwtPlotCurve.setData(self, self.x, self.y[:,0])
         Qwt.QwtPlotCurve.setData(self, x, y)
@@ -133,7 +100,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         """
         x  = np.compress(1-self.mask, self.x, axis=0)
         y  = np.compress(1-self.mask, self.y, axis=0)
-        y2 = np.compress(1-self.mask, self._y_std, axis=0)
+        y2 = np.compress(1-self.mask, self.errbar, axis=0)
         xmin = min(x)
         xmax = max(x)
         ymin = min(y - y2)
@@ -170,19 +137,20 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         painter.setPen(self.errorPen)
 
         # draw the error bars with caps in the y direction
-        if self._y_std is not None and self.errorOnTop:
+        if self.errorOnTop:
             # draw the bars
             x  = np.compress(1-self.mask, self.x, axis=0)
             y  = np.compress(1-self.mask, self.y, axis=0)
-            y2 = np.compress(1-self.mask, self._y_std, axis=0)
+            y2 = np.compress(1-self.mask, self.errbar, axis=0)
         
-            if len(self._y_std.shape) in [0, 1]:
+            if len(self.errbar.shape) in [0, 1]:
                 ymin = (y - y2)
                 ymax = (y + y2)
             else:
+                # both x and y direction
                 ymin = (y - y2[0])
                 ymax = (y + y2[1])
-            n, i, = len(x), 0
+            n, i = len(x), 0
             lines = []
             while i < n:
                 xi = xMap.transform(x[i])
@@ -218,6 +186,12 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         #    print "errorbar"
 
 
+    def average(self):
+        return np.average(self.y)
+
+    def std(self):
+        return np.std(self.y)
+
     def liveData(self, on):
         pass
 
@@ -226,7 +200,6 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
     def singleShot(self):
         #print "Curve single shot"
-        self.updateAllPvData()
         self.update()
 
     def setMask(self, i, v):
@@ -251,8 +224,8 @@ class OrbitPlot(Qwt.QwtPlot):
 
         # Initialize data
         # uncomment to draw the curve on top of the error bars
-        errorOnTop = False 
-        # errorOnTop = True 
+        #errorOnTop = False 
+        errorOnTop = True 
         
         #self.setTitle("An Orbit Plot")
         #self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
@@ -368,13 +341,13 @@ class OrbitPlot(Qwt.QwtPlot):
         self.__live = on
         self.curve1.liveData(on)
 
-        bound = self.curve1.boundingRect()
-        w = bound.width()
-        h = bound.height()
-        xmin = bound.left() - w*.05
-        xmax = bound.right() + w*.05
-        ymin = bound.top() - h*.08
-        ymax = bound.bottom() + h*.08
+        #bound = self.curve1.boundingRect()
+        #w = bound.width()
+        #h = bound.height()
+        #xmin = bound.left() - w*.05
+        #xmax = bound.right() + w*.05
+        #ymin = bound.top() - h*.08
+        #ymax = bound.bottom() + h*.08
 
         self.zoomer1.setZoomBase(self.curve1.boundingRect())
 
@@ -413,8 +386,8 @@ class OrbitPlot(Qwt.QwtPlot):
     def getMask(self):
         return self.curve1.getMask()
 
-    def countUpdates(self):
-        return self.curve1.update_count
+    def datainfo(self):
+        return "avg: %.4e std: %.4e" % (self.curve1.average(), self.curve1.std())
 
 class OrbitPlotMainWindow(QMainWindow):
     """
@@ -446,6 +419,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
         self.plot1.setTitle("Horizontal Orbit")
+        self.plot1.singleShot()
+        #print self.plot1.curve1.y
+
         self.plot2.plotLayout().setCanvasMargin(4)
         self.plot2.plotLayout().setAlignCanvasToScales(True)
         self.plot2.setTitle("Vertical Orbit")
@@ -466,7 +442,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         #self.setCentralWidget(OrbitPlot())
 
-        self.statusBar().showMessage('Hello;')
+        self.statusBar().showMessage('%s; %s' % (self.plot1.datainfo(), self.plot2.datainfo()))
 
         #
         # file menu
@@ -608,8 +584,7 @@ class OrbitPlotMainWindow(QMainWindow):
         
     def singleShot(self):
         #print "Main: Singleshot"
-        self.statusBar().showMessage("Updated: (%d,%d)"  % \
-            (self.plot1.countUpdates(), self.plot2.countUpdates()))
+        self.statusBar().showMessage("%s; %s"  % (self.plot1.datainfo(), self.plot2.datainfo()))
         self.plot1.singleShot()
         self.plot2.singleShot()
 
