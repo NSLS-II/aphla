@@ -396,6 +396,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def __init__(self, parent = None):
         QMainWindow.__init__(self, parent)
 
+        self.setIconSize(QSize(48, 48))
         # initialize a QwtPlot central widget
         bpm = hla.getElements('BPM')
         pvx = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_X])
@@ -448,7 +449,7 @@ class OrbitPlotMainWindow(QMainWindow):
         # file menu
         #
         self.fileMenu = self.menuBar().addMenu("&File")
-        fileQuitAction = QAction(QIcon(":/filequit.png"), "&Quit", self)
+        fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
         fileQuitAction.setShortcut("Ctrl+Q")
         fileQuitAction.setToolTip("Quit the application")
         fileQuitAction.setStatusTip("Quit the application")
@@ -462,20 +463,20 @@ class OrbitPlotMainWindow(QMainWindow):
         # view
         self.viewMenu = self.menuBar().addMenu("&View")
         # live data
-        viewLiveAction = QAction(QIcon(":/viewlive.png"),
+        viewLiveAction = QAction(QIcon(":/view_livedata.png"),
                                     "Live", self)
         viewLiveAction.setCheckable(True)
         viewLiveAction.setChecked(False)
         self.connect(viewLiveAction, SIGNAL("toggled(bool)"),
                      self.liveData)
 
-        viewSingleShotAction = QAction(QIcon(":/viewsingleshot.png"),
+        viewSingleShotAction = QAction(QIcon(":/view_singleshot.png"),
                                        "Single Shot", self)
         self.connect(viewSingleShotAction, SIGNAL("triggered()"),
                      self.singleShot)
 
         # errorbar
-        viewErrorBarAction = QAction(QIcon(":/viewerrorbar.png"),
+        viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
                                     "Errorbar", self)
         viewErrorBarAction.setCheckable(True)
         viewErrorBarAction.setChecked(False)
@@ -483,26 +484,27 @@ class OrbitPlotMainWindow(QMainWindow):
                      self.errorBar)
 
         # scale
-        viewZoomOut15Action = QAction(QIcon(":/viewzoomout.png"),
+        viewZoomOut15Action = QAction(QIcon(":/view_zoomout.png"),
                                          "Zoom out x1.5", self)
         self.connect(viewZoomOut15Action, SIGNAL("triggered()"),
                      self.zoomOut15)
-        viewZoomIn15Action = QAction(QIcon(":/viewzoomin.png"),
+        viewZoomIn15Action = QAction(QIcon(":/view_zoomin.png"),
                                         "Zoom in x1.5", self)
         self.connect(viewZoomIn15Action, SIGNAL("triggered()"),
                      self.zoomIn15)
-        viewZoomAutoAction = QAction(QIcon(":/viewzoomauto.png"),
+        viewZoomAutoAction = QAction(QIcon(":/view_zoom.png"),
                                         "Auto Fit", self)
         self.connect(viewZoomAutoAction, SIGNAL("triggered()"),
                      self.zoomAuto)
-        viewChooseBpmAction = QAction(QIcon(":/viewchoosebpm.png"),
+
+        controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
                                          "Choose BPM", self)
-        self.connect(viewChooseBpmAction, SIGNAL("triggered()"),
+        self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
                      self.chooseBpm)
 
-        viewResetPvDataAction = QAction(QIcon(":/viewresetpvdata.png"),
+        controlResetPvDataAction = QAction(QIcon(":/control_reset.png"),
                                            "Reset PV Data", self)
-        self.connect(viewResetPvDataAction, SIGNAL("triggered()"),
+        self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
                      self.resetPvData)
 
         self.viewMenu.addAction(viewZoomOut15Action)
@@ -513,9 +515,11 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewSingleShotAction)
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(viewErrorBarAction)
-        self.viewMenu.addSeparator()
-        self.viewMenu.addAction(viewChooseBpmAction)
-        self.viewMenu.addAction(viewResetPvDataAction)
+
+        self.controlMenu = self.menuBar().addMenu("&Control")
+        #self.viewMenu.addSeparator()
+        self.controlMenu.addAction(controlChooseBpmAction)
+        self.controlMenu.addAction(controlResetPvDataAction)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -534,9 +538,11 @@ class OrbitPlotMainWindow(QMainWindow):
         viewToolBar.addAction(viewZoomAutoAction)
         viewToolBar.addAction(viewLiveAction)
         viewToolBar.addAction(viewSingleShotAction)
-        viewToolBar.addAction(viewErrorBarAction)
-        viewToolBar.addAction(viewChooseBpmAction)
-        viewToolBar.addAction(viewResetPvDataAction)
+        #viewToolBar.addAction(viewErrorBarAction)
+
+        controlToolBar = self.addToolBar("Control")
+        controlToolBar.addAction(controlChooseBpmAction)
+        controlToolBar.addAction(controlResetPvDataAction)
         
     def liveData(self, on):
         """Switch on/off live data taking"""

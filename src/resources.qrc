@@ -1,13 +1,13 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-<file alias="filequit.png">images/filequit.png</file>
-<file alias="viewlive.png">images/viewlive.png</file>
-<file alias="viewerrorbar.png">images/viewerrorbar.png</file>
-<file alias="viewsingleshot.png">images/viewsingleshot.png</file>
-<file alias="viewzoomin.png">images/viewzoomin.png</file>
-<file alias="viewzoomout.png">images/viewzoomout.png</file>
-<file alias="viewzoomauto.png">images/viewzoomauto.png</file>
-<file alias="viewchoosebpm.png">images/viewchoosebpm.png</file>
-<file alias="viewresetpvdata.png">images/viewresetpvdata.png</file>
+<file alias="file_quit.png">images/file_quit.png</file>
+<file alias="view_livedata.png">images/view_livedata.png</file>
+<file alias="view_singleshot.png">images/view_singleshot.png</file>
+<file alias="view_errorbar.png">images/view_errorbar.png</file>
+<file alias="view_zoomin.png">images/view_zoomin.png</file>
+<file alias="view_zoomout.png">images/view_zoomout.png</file>
+<file alias="view_zoom.png">images/view_zoom.png</file>
+<file alias="control_choosebpm.png">images/control_choosebpm.png</file>
+<file alias="control_reset.png">images/control_reset.png</file>
 </qresource>
 </RCC>
