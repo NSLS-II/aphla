@@ -100,6 +100,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def startCurrentMonitor_2(self):
         """"""
 
+
         # You need to make sure that the object returned from the
         # "make()" function will not get erased at the end of this
         # function call. The object is a GUI object. If it is

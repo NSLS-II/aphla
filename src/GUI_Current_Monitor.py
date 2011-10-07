@@ -40,7 +40,7 @@ class CurrentMonitorData(Qt.QObject):
         
         Qt.QObject.__init__(self)
         
-        self.nSamples = 10
+        self.nSamples = 1e3
         self.current_array_index = 0
         self.current_array = np.empty((self.nSamples,1))
         self.current_array[:] = np.NaN
@@ -71,6 +71,13 @@ class CurrentMonitorData(Qt.QObject):
                                                 self.camonitor_callback,
                                                 format = FORMAT_TIME,
                                                 all_updates = False)
+        
+    #----------------------------------------------------------------------
+    def stop_subscription(self):
+        """"""
+        
+        self.camonitor_subscription.close()
+        
         
     #----------------------------------------------------------------------
     def camonitor_callback(self, new_value):
@@ -136,17 +143,18 @@ class CurrentMonitorView(InteractivePlotWindow, Ui_MainWindow):
         self._initDataCursors()
         self._initPlotEditors()
         
-        
+                
     #----------------------------------------------------------------------
     def closeEvent(self, qCloseEvent):
         """"""
-
-        # Need to emulate the pressing of "Stop" button before closing the
-        # GUI window. Otherwise, if the camonitor is running, and this GUI is
-        # opened by another parent GUI, the camonitor will keep running as
-        # long as the parent GUI is alive.
-        app = self.parent()
-        app.slot_stop_monitor()
+        
+        # Need to notify CurrentMonitorApp that the view is close so that
+        # CurrentMonitorApp can delete the camonitor subscription object,
+        # which will ensure that the subscription is stopped, if running.
+        # Without this, if this GUI is opened by another parent GUI, the
+        # camonitor will keep running as long as the parent GUI is alive
+        # even after this GUI window is closed.
+        self.emit(Qt.SIGNAL("sigViewClosed"),())
         
     
     #----------------------------------------------------------------------
@@ -359,6 +367,8 @@ class CurrentMonitorApp(Qt.QObject):
         
         self._initData()
         self._initView()
+        
+        
     
     #----------------------------------------------------------------------
     def _initData(self):
@@ -386,6 +396,9 @@ class CurrentMonitorApp(Qt.QObject):
         
         self.connect(self.view.pushButton_stop, Qt.SIGNAL("clicked()"),
                      self.slot_stop_monitor)
+        
+        self.connect(self.view, Qt.SIGNAL("sigViewClosed"),
+                     self.slotViewClosed)
         
         
     #----------------------------------------------------------------------
@@ -415,7 +428,7 @@ class CurrentMonitorApp(Qt.QObject):
                 message = "Monitoring stopped @ " + time.asctime()
                 self.view.updateStatusBar(message)
                 
-                self.data.camonitor_subscription.close() # Stop camonitor
+                self.data.stop_subscription() # Stop camonitor
             else:
                 message = "Monitoring has been already stopped."
                 self.view.updateStatusBar(message)
@@ -423,6 +436,16 @@ class CurrentMonitorApp(Qt.QObject):
             message = "No camonitor subscription exists."
             self.view.updateStatusBar(message)
             
+    #----------------------------------------------------------------------
+    def slotViewClosed(self):
+        """"""
+        
+        self.slot_stop_monitor()
+        
+        # print 'camonitor subscription closed and deleted.'
+                
+        
+        
 #----------------------------------------------------------------------        
 def make():
     
