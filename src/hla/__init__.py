@@ -95,3 +95,7 @@ import meastwiss
 ## _orbit = Orbit(_cfa)
 
 
+# Added by Y. Hidaka
+import curve_fitting
+
+
