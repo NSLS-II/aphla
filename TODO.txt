@@ -19,3 +19,6 @@ TODO
 - DONE: Separate twiss from lattice
 - lattice.getNeighbors
 
+- need coorelation plot
+- postmortom data analysis
+
