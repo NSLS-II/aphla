@@ -4,44 +4,49 @@ References
 .. toctree::
    :maxdepth: 2
 
-.. automodule:: hla
-   :members:
-   :undoc-members:
 
-Modules
----------
+HLA Summary List
+~~~~~~~~~~~~~~~~~
 
+.. include:: hlasummary.txt
 
-.. automodule:: hla.lattice
+.. automodule:: hla.catools
    :members:
 
-.. automodule:: hla.chanfinder
-   :members:
-
-.. automodule:: hla.latmanage
-   :members:
-
-.. automodule:: hla.orbit
+.. automodule:: hla.hlalib
    :members:
 
 .. automodule:: hla.rf
    :members:
 
-.. automodule:: hla.current
+.. automodule:: hla.lattice
    :members:
 
-.. automodule:: hla.measorm
+.. automodule:: hla.twiss
+   :members:
+
+.. automodule:: hla.machines
+   :members:
+
+.. automodule:: hla.aptools
+   :members:
+
+.. automodule:: hla.orbit
+   :members:
+
+.. automodule:: hla.ormdata
+   :members:
+
+.. automodule:: hla.orm
+   :members:
+
+.. autoclass:: hla.element.Element
    :members:
 
 .. automodule:: hla.meastwiss
    :members:
 
+.. automodule:: hla.bba
+   :members:
 
-.. sourcecode:: ipython
-
-    In [69]: lines = plot([1,2,3])
-
-.. math::
-
-  G(s,s_0)=\dfrac{\sqrt{\beta(s)\beta(s_0)}}{2\sin\pi\nu}\cos(\pi\nu-\left|\psi(s)-\psi(s_0)\right|)
 

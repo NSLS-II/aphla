@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 
 """
-    hla.rf
-    ~~~~~~
+RF Control
+~~~~~~~~~~
 
-    RF related
+RF related
 
-    :author: Lingyun Yang
-    :license: (empty ? GPL ? EPICS ?)
+:author: Lingyun Yang
+:license: (empty ? GPL ? EPICS ?)
+
+.. warning::
+
+  Hard coded, simple but not fixed yet.
 
 """
 
@@ -25,5 +29,8 @@ def getRfVoltage():
     """Return RF voltage"""
     return caget("SR:C00-RF:G00{RF:00}Volt-RB")
 
+
+def _reset_rf():
+    caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
 
 

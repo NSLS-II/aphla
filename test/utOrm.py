@@ -1,61 +1,105 @@
 #!/usr/bin/env python
 
+from conf import *
+
 import hla
 import unittest
 import sys, time
 import numpy as np
 
-from cothread.catools import caget, caput
-import matplotlib.pylab as plt
-
-from conf import *
-
-class TestConf(unittest.TestCase):
+class TestOrm(unittest.TestCase):
     def setUp(self):
         if hla.NETWORK_DOWN: return None
         wait_for_svr()
+        self.full_orm = "orm-full-%04d.pkl" % hg_parent_rev()
         pass
 
     def tearDown(self):
         if hla.NETWORK_DOWN: return None
         reset_svr()
 
-    def test_measure_orm(self):
-        if hla.NETWORK_DOWN: return True
-
+    def test_trim_bpm(self):
         trimx = ['FXL2G1C07A', 'CXH1G6C15B']
-        #print hla.getSpChannels(trimx)
-        for tr in trimx:
-            self.assertTrue(len(hla.getLocations(tr)) == 1)
 
-        self.assertEqual(len(hla.getRbChannels(trimx)), 2)
-        self.assertEqual(len(hla.getSpChannels(trimx)), 2)
+        bpmx = hla.getGroupMembers(['BPM', 'C0[2-4]'], op='intersection')
+        self.assertTrue(len(bpmx) == 18)
+        ormc = hla.orm.Orm([e.name for e in bpmx], trimx)
+        print ormc.bpm
+        print ormc.trim
 
-        bpmx = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
-        self.assertTrue(len(bpmx) > 0)
-        print hla.getSpChannels(trimx, tags=['default.eput', 'X'])
-        print hla.getRbChannels(trimx, tags=['default.eget', 'X'])
-        trimxsp = [v[0] for v in \
-                       hla.getSpChannels(trimx, tags=['default.eput', 'X'])]
-        trimxrb = [v[0] for v in \
-                   hla.getRbChannels(trimx, tags=['default.eget', 'X'])]
-        bpmxrb  = [v[0] for v in \
-                   hla.getRbChannels(bpmx, tags=['default.eget', 'X'])]
-        print bpmxrb, trimxsp, trimxrb
 
-        self.assertEqual(len(trimx), len(trimxsp))
-        self.assertEqual(len(trimx), len(trimxrb))
-        self.assertEqual(len(bpmx), len(bpmxrb))
-
-        orm = hla.measOrbitRm(bpm = bpmx, trim = trimx)
-        orm.checkLinearity()
+    def test_measure_orm(self):
+        return True
+        if hla.NETWORK_DOWN: return True
+        hla.reset_trims()
+        trimx = ['CXH1G6C15B', 'CYHG2C30A', 'CXL2G6C14B']
+        #trimx = ['CXH1G6C15B']
+        bpmx = ['PH1G2C30A', 'PL1G2C01A', 'PH1G6C29B', 'PH2G2C30A', 'PM1G4C30A']
+        #hla.reset_trims()
+        orm = hla.measorm.Orm(bpm = bpmx, trim = trimx)
+        orm.measure("orm-test.pkl", verbose=1)
+        orm.measure_update(bpm=bpmx, trim=trimx[:2], verbose=1, dkick=5e-5)
+        orm.save("orm-test-update.pkl")
+        #orm.checkLinearity()
         pass
 
+    def test_measure_orm_sub1(self):
+        return True
+        if hla.NETWORK_DOWN: return True
+
+        trim = ['CXL1G2C05A', 'CXH2G6C05B', 'CXH1G6C05B', 'FXH2G1C10A',
+                'CXM1G4C12A', 'CXH2G6C15B', 'CXL1G2C25A', 'FXH1G1C28A',
+                'CYL2G6C30B', 'FYH1G1C16A']
+        #trimx = ['CXH1G6C15B']
+        bpmx = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
+        
+        #hla.reset_trims()
+        orm = hla.measorm.Orm(bpm = bpmx, trim = trim)
+        orm.TSLEEP=15
+        orm.measure(output="orm-sub1.pkl", verbose=0)
+        #orm.checkLinearity()
+        pass
+
+    def test_measure_full_orm(self):
+        return True
+        if hla.NETWORK_DOWN: return True
+        hla.reset_trims()
+        bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
+        trimx = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+        trimy = hla.getGroupMembers(['*', 'TRIMY'], op='intersection')
+        trim = trimx[:]
+        trim.extend(trimy)
+        #print bpm, trim
+        print "start:", time.time(), " version:", hg_parent_rev()
+        orm = hla.measorm.Orm(bpm=bpm, trim=trim)
+        orm.TSLEEP = 12
+        orm.measure(output=self.full_orm, verbose=0)
 
     def test_linearity(self):
-        if hla.NETWORK_DOWN: return True
-        #orm = hla.measorm.Orm(bpm = [], trim = [])
-        #orm.load('test.hdf5')
+        return True
+        #if hla.NETWORK_DOWN: return True
+        orm = hla.measorm.Orm(bpm = [], trim = [])
+        #orm.load('orm-test.pkl')
+        #orm.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl')
+        hla.reset_trims()
+        orm.load('./dat/orm-full-0181.pkl')
+        #orm.maskCrossTerms()
+        bpmpv = [b[2] for i,b in enumerate(orm.bpm)]
+        for i,t in enumerate(orm.trim):
+            k0 = hla.caget(t[3])
+            v0 = np.array(hla.caget(bpmpv))
+            caput(t[3], k0 + 1e-6)
+            for j in range(10):
+                time.sleep(2)
+                v1 = np.array(hla.caget(bpmpv))
+                print np.std(v1-v0),
+                sys.stdout.flush()
+            print ""
+            caput(t[3], k0)
+            if i > 20: break
+        #print orm
+        #for i,b in enumerate(orm.bpm):
+        #    print i, b[0], b[2]
         #orm.checkLinearity(plot=True)
         pass
 
@@ -78,29 +122,86 @@ class TestConf(unittest.TestCase):
         #orm.checkLinearity()
 
     def test_orbitreproduce(self):
-        """
-        # all G2 Trim
-        #BPM, caget, sum M*K, relative diff. 
-        PL1G2C03A 2.76106332459e-06 2.76028400607e-06 -0.000282332730237
-        PL2G2C03A 2.74567973141e-06 2.74376513312e-06 -0.000697799627985
-        PM1G4C03A -3.82555373792e-06 -3.82634380577e-06 0.000206481143403
-        PM1G4C03B -2.68739708579e-06 -2.68552390336e-06 -0.000697510989897
-        PH2G6C03B 1.68442774752e-06 1.68525899299e-06 0.000493244940091
-        PH1G6C03B 3.04211635453e-06 3.04305096591e-06 0.000307129717625
-        """
+        return True
 
         if hla.NETWORK_DOWN: return True
-        #orm = hla.measorm.Orm(bpm = [], trim = [])
-        #orm.load('o1.pkl', format = 'shelve')
-        #bpm = hla.getGroupMembers(['*', 'BPMX'], op='intersection')
-        #trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
-        #kick = None
-        #print orm.getSubMatrix(bpm = bpm, trim = trim)
-        #bpm = ['PH1G6C03B']
-        #trim = ['CXHG2C30A', 'CXH2G2C30A', 'CXHG2C02A']
-        #kick = [1e-6] * len(trim)
-        #orm.checkOrbitReproduce(bpm, trim, kick)
-        
+
+        t0 = time.time()
+        hla.reset_trims()
+        #time.sleep(10)
+        t1 = time.time()
+
+        pkl = './dat/orm-full-0181.pkl'
+        orm = hla.measorm.Orm([], [])
+        if not os.path.exists(pkl): return True
+        else: orm.load(pkl)
+        print orm
+        #print "delay: ", orm.TSLEEP, " seconds"
+
+        dk = 2e-4
+        bpm_pvs = [b[2] for i,b in enumerate(orm.bpm)]
+        x0 = np.zeros(len(bpm_pvs), 'd')
+        #print bpm_pvs[:10]
+        trim_k = np.zeros((len(orm.trim), 3), 'd')
+        for j,t in enumerate(orm.trim):
+            k0 = hla.caget(t[3])
+            klst = np.linspace(1000*(k0-dk), 1000*(k0+dk), 20)
+            print "%4d/%d" % (j, len(orm.trim)), t, k0
+            trim_k[j,1] = k0
+            x = np.zeros((len(bpm_pvs), 5), 'd')
+            x0 = hla.caget(bpm_pvs)
+            x[:,0] = x0
+            x[:,2] = x0
+            #print bpm_pvs[0], x[0,0], x[0,2]
+
+            t2 = time.time()
+            hla.caputwait(t[3], k0-dk, bpm_pvs[0])
+            #time.sleep(orm.TSLEEP)
+            trim_k[j,0] = k0 - dk
+            x[:,1] = hla.caget(bpm_pvs)
+            #print time.time() - t2, bpm_pvs[0], x[0,1]
+            #time.sleep(orm.TSLEEP)
+
+            hla.caputwait(t[3], k0+dk, bpm_pvs[0])
+            #time.sleep(orm.TSLEEP)
+            trim_k[j,2] = k0+dk
+            
+            x[:,3] = hla.caget(bpm_pvs)
+            x[:,3] = hla.caget(bpm_pvs)
+            #print bpm_pvs[0], x[0,3]
+
+            hla.caputwait(t[3], k0, bpm_pvs[0])
+            #time.sleep(3)
+            #print x[0,:]
+
+            mask = np.zeros(len(bpm_pvs), 'i')
+            x1 = x0[:] - orm.m[:,j] * dk
+            x2 = x0[:] + orm.m[:,j] * dk
+            for i,b in enumerate(orm.bpm):
+                if abs(x2[i] - x1[i]) < 3e-6: continue
+                if abs(x2[i] - x[i,3]) < 5e-6 and abs(x1[i]-x[i,1]) < 5e-6:
+                    continue
+                plt.clf()
+                plt.subplot(211)
+                plt.plot(trim_k[j,:]*1000.0, np.transpose(1000.*x[i,1:4]), '--o')
+                plt.plot(1000*orm._rawkick[j,:], 1000*orm._rawmatrix[:,i,j], 'x')
+                plt.plot(klst, 1000.0*x0[i] + orm.m[i,j]*klst, '-')
+                plt.grid(True)
+                if orm._mask[i,j]: plt.title("%s.%s (masked)" % (t[0], t[1]))
+                else: plt.title("%s.%s" % (t[0], t[1]))
+                plt.xlabel("angle [mrad]")
+                plt.ylabel('orbit [mm]')
+                plt.subplot(212)
+                plt.plot(1000*orm._rawkick[j,:], 1e6*((orm._rawmatrix[:,i,j] - orm._rawmatrix[0,i,j]) - \
+                             orm.m[i,j]*orm._rawkick[j,:]), 'x')
+                plt.plot(trim_k[j,:]*1000.0, 1e6*((x[i,1:4] - x[i,0])- trim_k[j,:]*orm.m[i,j]), 'o')
+                plt.ylabel("Difference from prediction [um]")
+                plt.xlabel("kick [mrad]")
+                plt.savefig("orm-check-t%03d-%03d.png" % (j,i))
+                if i > 100: break
+            break
+        print "Time:", time.time() - t1
+
 def test_delay():
     rx, rt = [], []
     t0 = time.time()
@@ -192,5 +293,7 @@ if __name__ == "__main__":
     #hla.reset_trims()
     #test_1()
     #test_delay()
+    hla.initNSLS2VSR()
+    hla.initNSLS2VSRTwiss()
     unittest.main()
 

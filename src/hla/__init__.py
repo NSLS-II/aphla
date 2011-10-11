@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 
 """
 HLA Module
@@ -15,88 +17,85 @@ A procedural interface is provided.
 
 Modules include:
 
+    :mod:`hla.machines`
+
+        define machine specific settings, create lattice from channel
+        finder service for different accelerator complex.
+
     :mod:`hla.lattice`
 
         define the :class:`~hla.lattice.Element`, :class:`~hla.lattice.Twiss`,
         :class:`~hla.lattice.Lattice` class
 
-    :mod:`hla.chanfinder`
-
-        defines the :class:`~hla.chanfinder.ChannelFinderAgent` class
-
     :mod:`hla.orbit`
 
         defines orbit retrieve routines
+
+    :mod:`hla.hlalib`
+
+        defines procedural interface
+        
 """
 
-import os, sys, re
+__version__ = "0.2.2"
 
-# are we using virtual ac
-virtac = True
-INF = 1e30
-ORBIT_WAIT=8
-NETWORK_DOWN=False
-#from chanfinder import ChannelFinderAgent
-#from lattice import Lattice
-#
-# root of stored data
-root={
-    "nsls2" : "nsls2"
-}
 
-# local catools
+#import os, sys, re
+import sys
+
 from catools import *
+from machines import initNSLS2VSR, initNSLS2VSRTwiss
 
-import lattice
-_lat = lattice.Lattice()
-
-import chanfinder
-_cfa = chanfinder.ChannelFinderAgent()
-
-# get the HLA root directory
-pt = os.path.dirname(os.path.abspath(__file__))
-hlaroot = os.path.normpath(os.path.join(pt, '..', '..'))
-
-#
-# testing, bypass the IRMIS database.
-#
-
-from latmanage import *
-from current import *
+#from current import *
 from rf import *
 from hlalib import *
+from orbit import Orbit
+from ormdata import OrmData
 
-"""Initialize HLA"""
-cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
-if not os.path.exists(cfg_pkl):
-    raise ValueError("pkl files can not be found: " + cfg_pkl)
+## """Initialize HLA"""
+## cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
+## if not os.path.exists(cfg_pkl):
+##     raise ValueError("pkl files can not be found: " + cfg_pkl)
 
-print "= HLA main configure: ", cfg_pkl
-_lat.load(cfg_pkl, mode='virtac')
-#_lat.mode = 'virtac'
-#_lat.save(cfg_pkl)
+## print >> sys.stderr, "= HLA main configure: ", cfg_pkl
+## _lat.load(cfg_pkl, mode='virtac')
 
 
-cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
-if not os.path.exists(cfa_pkl):
-    raise ValueError("pkl files can not be found: " + cfa_pkl)
+## cfa_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'chanfinder.pkl')
+## if not os.path.exists(cfa_pkl):
+##     raise ValueError("pkl files can not be found: " + cfa_pkl)
 
-print "= HLA channel finder configure: ", cfa_pkl
-_cfa.load(cfa_pkl)
+## print >> sys.stderr, "= HLA channel finder configure: ", cfa_pkl
+## _cfa.load(cfa_pkl)
 
-# set RF frequency
-from cothread import catools, Timedout
+## import orm
+## _orm = orm.Orm(bpm=[], trim=[])
+## orm_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'orm.pkl')
+## print >> sys.stderr, "= HLA orbit resp mat: ", orm_pkl
+## _orm.load(orm_pkl)
+
+
+## # set RF frequency
+## from cothread import catools, Timedout
+NETWORK_DOWN=False
 try:
-    catools.caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
-    print "= Network is fine, using online PVs"
+    caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+    print("# Network is fine, using online PVs", file= sys.stderr)
 except Timedout:
     NETWORK_DOWN = True
     pass
 
 
-#from meastwiss import *
-from measorm import *
-from orbit import *
+## #from meastwiss import *
+## from measorm import *
+## from orbit import *
+from aptools import *
+import bba
+import meastwiss
+## _orbit = Orbit(_cfa)
 
 
+# Added by Y. Hidaka
+import curve_fitting
+import current
 

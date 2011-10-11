@@ -4,6 +4,8 @@ import os, sys, shelve, re
 import hla
 from cothread.catools import caget, caput
 from cothread import Timedout
+import numpy as np
+import matplotlib.pylab as plt
 
 def renameHlaElement():
     lat = hla.lattice.Lattice()
@@ -124,9 +126,199 @@ def updateOrmPv(safe=True):
     f.close()
     print "replaced: ", cnt
 
+def combineOrm(safe=True):
+    pklx = '/home/lyyang/devel/nsls2-hla/machine/nsls2/ormx.pkl'
+    pkly = '/home/lyyang/devel/nsls2-hla/machine/nsls2/ormy.pkl'
+    pkl  = '/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl'
+    fx = shelve.open(pklx, 'r')
+    fy = shelve.open(pkly, 'r')
+    f  = shelve.open(pkl, 'c')
+
+    rawmaskx  = fx['orm._rawdata_.mask']
+    rawkickx  = fx['orm._rawdata_.kicker_sp']
+    rawmatrixx = fx['orm._rawdata_.matrix']
+    bpm_pvrbx = fx['orm.bpm_pvrb']
+    trim_pvspx = fx['orm.trim_pvsp']
+    trim_pvrbx = fx['orm.trim_pvrb']
+    trimx = fx['orm.trim']
+    bpmx  = fx['orm.bpm']
+    mx    = fx['orm.m']
+    
+    rawmasky  = fy['orm._rawdata_.mask']
+    rawkicky  = fy['orm._rawdata_.kicker_sp']
+    rawmatrixy = fy['orm._rawdata_.matrix']
+    bpm_pvrby = fy['orm.bpm_pvrb']
+    trim_pvspy = fy['orm.trim_pvsp']
+    trim_pvrby = fy['orm.trim_pvrb']
+    trimy = fy['orm.trim']
+    bpmy  = fy['orm.bpm']
+    my    = fy['orm.m']
+    print np.shape(rawmatrixx), np.shape(rawmatrixy)
+
+    nx1, nx2 = len(bpm_pvrbx), len(trim_pvspx)
+    ny1, ny2 = len(bpm_pvrby), len(trim_pvspy)
+
+    rawmask = np.ones((nx1+ny1, nx2+ny2))
+    rawmask[:nx1,:nx2] = rawmaskx[:,:]
+    rawmask[nx1:,nx2:] = rawmasky[:,:]
+    f['orm._rawdata_.mask'] = rawmask
+
+    nkx1, npx = np.shape(rawkickx)
+    nky1, npy = np.shape(rawkicky)
+    rawkick = np.zeros((nkx1+nky1, npx), 'd')
+    rawkick[:nkx1,:] = rawkickx[:,:]
+    rawkick[nkx1:,:] = rawkicky[:,:]
+    f['orm._rawdata_.kicker_sp'] = rawkick
+    
+    rawmatrix = np.zeros((npx, nx1+ny1, nx2+ny2), 'd')
+    rawmatrix[:,:nx1,:nx2] = rawmatrixx[:,:,:]
+    rawmatrix[:,nx1:,nx2:] = rawmatrixy[:,:,:]
+    f['orm._rawdata_.matrix'] = rawmatrix
+
+    m = np.zeros((nx1+ny1, nx2+ny2), 'd')
+    m[:nx1, :nx2] = mx[:,:]
+    m[nx1:, nx2:] = my[:,:]
+    f['orm.m'] = m
+
+    residuals = np.zeros((nx1+ny1, nx2+ny2), 'd')
+    for i in range(nx1+ny1):
+        for j in range(nx2+ny2):
+            if rawmask[i,j]: continue
+            p, resi, rank, singular_values, rcond = \
+                np.polyfit(rawkick[j,1:-1], rawmatrix[1:-1,i,j], 1, full=True)
+            residuals[i,j] = resi
+        print i,
+        sys.stdout.flush()
+    f['orm._rawdata_.residuals'] = residuals
+
+    bpm = []
+    for i in range(nx1):
+        bpm.append((bpmx[i], 'X', bpm_pvrbx[i]))
+    for i in range(ny1):
+        bpm.append((bpmy[i], 'Y', bpm_pvrby[i]))
+    f['orm.bpm'] = bpm
+
+    trim = []
+    for i in range(nx2):
+        trim.append((trimx[i], 'X', trim_pvrbx[i], trim_pvspx[i]))
+    for i in range(ny2):
+        trim.append((trimy[i], 'Y', trim_pvrby[i], trim_pvspy[i]))
+    f['orm.trim'] = trim
+
+    #print type(rawmasky)
+    print "#", os.environ['EPICS_CA_ADDR_LIST']
+    print "#", fx.keys()
+    print "#", f.keys()
+    f.close()
+    fx.close()
+    fy.close()
+
+def ormhist():
+    pkl  = '/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl'
+    f  = shelve.open(pkl, 'r')
+    d = f['orm._rawdata_.residuals']
+    msk = f['orm._rawdata_.mask']
+    r = []
+    n1, n2 = np.shape(d)
+    print n1, n2
+    for i in range(n1):
+        for j in range(n2):
+            if msk[i,j]: continue
+            r.append(d[i,j])
+        print len(r),
+        sys.stdout.flush()
+    print len(r)
+
+    plt.hist(r, 50, facecolor='green', alpha=0.75)
+    plt.savefig('orm-residuals.png')
+
+    
+def ormtest():
+    pkl  = '/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl'
+    orm = hla.measorm.Orm(bpm=[], trim=[])
+    orm.load(pkl)
+    orm.save('test.pkl')
+
+def rename_orm_trimpv():
+    pkl = '/home/lyyang/devel/nsls2-hla/machine/nsls2/orm.pkl'
+    orm = hla.measorm.Orm(bpm=[], trim=[])
+    orm.load(pkl)
+    for i,b in enumerate(orm.trim):
+        b2, b3 = b[2], b[3]
+        if b[0].find('CF') == 0: b = (b[0][1:], b[1], b[2], b[3])
+        if b[2].find('CM:F') > 0:
+            b2 = b[2].replace('CM:F', 'FCor:F')
+            b3 = b[3].replace('CM:F', 'FCor:F')
+        elif b[2].find('CM:') > 0:
+            b2 = b[2].replace('CM:', 'Cor:')
+            b3 = b[3].replace('CM:', 'Cor:')
+        #print hla._cfa.channel(b2)
+        prop2 = hla._cfa.getChannelProperties(b2)
+        if prop2[hla._cfa.ELEMNAME] != b[0]: print b[0], prop2[hla._cfa.ELEMNAME]
+        prop3 = hla._cfa.getChannelProperties(b3)
+        if prop3[hla._cfa.ELEMNAME] != b[0]: print b[0], prop3[hla._cfa.ELEMNAME]
+        
+        orm.trim[i] = (b[0], b[1], b2, b3)
+        #print "%4d" % i, hla._cfa.channel(b2)
+        #print "    ", hla._cfa.channel(b3)
+
+        print orm.trim[i]
+
+    orm.save('orm0.pkl')
+
+def renameLattice(safe):
+    #f = shelve.open('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl', 'r')
+    lat = hla.lattice.Lattice('virtac')
+    lat._importChannelFinderData(hla._cfa)
+    lat.init_virtac_twiss()
+    lat.mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
+    lat.mergeGroups('BPM', ['BPMX', 'BPMY'])
+    lat.save('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl')
+    print lat
+
+
+def test():
+    #hla._cfa.exportTextRecord('')
+    #bx = hla._lat._getElementsCgs('BPMX', cell='C02')
+    #by = hla._lat._getElementsCgs('BPMY', cell='C02')
+    #hla._cfa.exportTextRecord('')
+    #print hla._cfa.getElementChannels(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
+    #print len(bx), bx
+    #print len(by), by
+    #print hla.getElements('BPMX', cell='C02')
+    #print hla.getElements('BPM', cell='C02')
+    #print hla._lat._group.keys()
+    #print hla.getElements('BPMX', cell='C02')
+    #print hla.getElements('BPMY', cell='C02')
+    #lat = hla.lattice.Lattice()
+    #lat.load('/home/lyyang/devel/nsls2-hla/machine/nsls2/hla.pkl', mode='virtac')
+    #bpmx = lat.getGroupMembers(['BPMX'], 'union')
+    #print len(bpmx), bpmx
+    #print hla.getBeta('P*G2*C03*A')
+    #bpm = hla.getElements('P*G2*C03*A')
+    #print hla.getBeta(bpm)
+    #print hla.getBeta(bpm, 'b')
+
+    #v, elem, pv = hla.eget('SL1*', full=True)
+    #print np.average(v)
+    #hla.eput(elem, -0.978795832057)
+    #print hla.getOrbit(spos=True)
+
+    hla.reset_trims()
+    bpm = hla.getElements('P*C1[0-9]*')
+    trim = hla.getGroupMembers(['*', 'TRIMX'], op='intersection')
+    hla.correctOrbit(bpm, trim)
+    
 if __name__ == "__main__":
     if len(sys.argv) == 1: safe = True
     elif sys.argv[1] == '--real': safe = False
     #renameElement()
     #renameOrmElement()
-    updateOrmPv(safe=safe)
+    #updateOrmPv(safe=safe)
+    #combineOrm()
+    #ormhist()
+    #ormtest()
+    #rename_orm_trimpv()
+    #renameLattice(safe)
+    test()
+    

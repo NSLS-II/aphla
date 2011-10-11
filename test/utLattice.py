@@ -1,191 +1,288 @@
 #!/usr/bin/env python
 
-import hla
 import unittest
 import sys, os
 import numpy as np
 
+from conf import *
+import machines
+
+import lattice, element
+import cothread
 from cothread.catools import caget
 
-import matplotlib
-import matplotlib.pylab as plt
+machine_initialized = False
 
-from conf import *
+def initialize_the_machine():
+    machines.initNSLS2VSR()
+    machines.initNSLS2VSRTxt()
 
 class TestLattice(unittest.TestCase):
     def setUp(self):
-        self.assertTrue(os.path.exists(CFAPKL))
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            machine_initialized = True
+        self.lat = machines.getLattice('SR')
+        self.assertTrue(self.lat)
 
-        self.cfa = hla.chanfinder.ChannelFinderAgent()
-        self.cfa.load(CFAPKL)
-        self.lat = hla.lattice.Lattice()
-        #self.lat.importChannelFinderData(self.cfa)
-        self.lat.load(HLAPKL, mode='virtac')
-        self.lat.mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
-        self.lat.mergeGroups('BPM', ['BPMX', 'BPMY'])
-        #self.lat.init_virtac_twiss()
-        #self.lat.mode = 'virtac'
-        #self.lat.save('lattice.pkl')
-        #self.lat.load('lattice.pkl', mode='virtac')
+    def test_neighbors(self):
+        bpm = self.lat.getElements('BPM')
+        self.assertTrue(bpm)
+        
+        if len(bpm) >= 5:
+            el = self.lat.getNeighbors(bpm[2].name, 'BPM', 2)
+            self.assertTrue(len(el) == 5)
+            #print [e.name for e in el]
+            #print [e.name for e in bpm[:5]]
+            for i in range(5):
+                self.assertTrue(el[i].name == bpm[i].name,
+                                "%d: %s != %s" % (i, el[i].name, bpm[i].name))
+        elif len(bpm) >= 3:
+            el = self.lat.getNeighbors(bpm[1].name, 'BPM', 1)
+            self.assertTrue(len(el) == 3)
+            for i in range(3): self.assertTrue(el[i].name == bpm[i].name)
+            
+
+    #class TestLattice:
+    def test_virtualelements(self):
+        elem = self.lat.getElements('HLA:*')
+        self.assertTrue(elem)
+
+
+    def test_getelements(self):
+        elems = self.lat.getElements('BPM')
+        self.assertTrue(len(elems) > 0)
         
 
-    def test_elements(self):
-        elem = self.lat.getElements('P*')
-        s    = self.lat.getLocations('P*', point='end')
-        self.assertEqual(len(elem), 180)
-        self.assertEqual(len(s), 180)
+    def test_locations(self):
+        elem1 = self.lat.getElements('*')
+        for i in range(len(elem1)):
+            if elem1[i].name.startswith('HLA'): continue
+            if i == 0: continue
+            self.assertTrue(elem1[i].sb >= elem1[i-1].sb)
+            self.assertTrue(elem1[i].se >= elem1[i-1].sb)
+
+        elem1 = self.lat.getElements('BPM')
+        for i in range(len(elem1)):
+            if i == 0: continue
+            self.assertTrue(elem1[i].sb >= elem1[i-1].sb,
+                            "%f (%s) %f (%s)" % (
+                                elem1[i].sb, elem1[i].name,
+                                elem1[i-1].sb, elem1[i-1].name))
+            
+        elem1 = self.lat.getElements('QUAD')
+        for i in range(len(elem1)):
+            if i == 0: continue
+            self.assertTrue(elem1[i].sb >= elem1[i-1].sb)
+            
+
+    def test_groups(self):
+        grp = 'HLATEST'
+        self.assertFalse(self.lat.hasGroup(grp))
+        self.lat.addGroup(grp)
+        self.assertTrue(self.lat.hasGroup(grp))
+        try:
+            self.lat.addGroupMember(grp, 'A')
+        except ValueError as e:
+            pass
+        self.lat.removeGroup(grp)
+        self.assertFalse(self.lat.hasGroup(grp))
+
         
-        self.assertEqual(len(self.lat.getElements('*')), 
-                         len(set(self.lat.getElements('*'))))
+    def test_values(self):
+        bpm = self.lat.getElements('BPM')
+        try:
+            for e in bpm:
+                self.assertTrue(len(e.value) == 2, 
+                                "element: %s, %s" % (e.name, e._field))
+        except cothread.Timedout:
+            pass
+            
 
-        s = self.lat.getLocations(['PH2G6C29B', 'CFYH2G1C30A', 'C'], point='end')
-        self.assertEqual(len(s), 3)
-        self.assertEqual(s[-1], None)
-
-    def test_group(self):
-        """
-        >>> hla.getGroups('P*C01*')
-        ['A', 'BPM', 'C01', 'G6', 'G4', 'G2', 'B']
-        """
-        self.lat.addGroup('BPM')
-        self.assertRaises(ValueError, self.lat.addGroup, "h*")
-        grp = self.lat.getGroups('P*C01*')
-        #print "group:", grp
-        for g in ['A', 'BPM', 'G6', 'G4', 'G2', 'BPMY', 'C01', 'BPMX', 'B']:
-            #print g,
-            self.assertTrue(g in grp)
-        #print self.lat.getGroups('FYH2G1C30A')
-        g1 = self.lat.getGroupMembers(['BPM', 'C02'], op = 'intersection')
-        g2 = self.lat.getElements('P*C02*')
-        for g in g1:
-            self.assertTrue(g in g2)
-        for g in g2:
-            self.assertTrue(g in g1)
-
-        # popular group name
-        self.assertEqual(len(self.lat.getElements('TRIM')), 540)
-        self.assertEqual(len(self.lat.getElements('TRIMX')), 270)
-        self.assertEqual(len(self.lat.getElements('TRIMY')), 270)
-        # BPMX = BPMY = BPM, all same name
-        self.assertEqual(len(self.lat.getElements('BPM')), 180)
-        self.assertEqual(len(self.lat.getElements('BPMX')), 180)
-        self.assertEqual(len(self.lat.getElements('BPMY')), 180)
-        self.assertEqual(len(self.lat.getElements('QUAD')), 300)
-
-        self.assertEqual(len(self.lat.getElements('C01')), 46)
-        self.assertEqual(len(self.lat.getElements('C30')), 46)
-        self.assertEqual(len(self.lat.getElements('C11')), 46)
-
-        self.assertEqual(len(self.lat.getElements('G2')), 375)
-
-    def test_neighbors1(self):
-        # find BPMs near CFYH2G1C30A
-        vcm = 'FYH2G1C30A'
-        self.assertEqual(self.lat.getElements(vcm), [vcm])
-
-        n = 3
-        nb = self.lat.getNeighbors(vcm, 'BPM', n)
-        s0 = self.lat.getLocations(vcm, 'end')
-        self.assertEqual(len(s0), 1)
-        self.assertEqual(len(nb), 2*n+1)
-        
-        nb2 = self.lat.getNeighbors(vcm, 'P*', n)
-        self.assertEqual(nb, nb2)
-
-        isep = 2*n
-        if nb[-1][1] < nb[0][1]:
-            # its a ring.
-            for i in range(2*n-1, 0, -1):
-                if nb[i][1] > nb[i-1][1]: continue
-                isep = i
-                break
-        
-        for i, v in enumerate(nb[:isep-1]):
-            self.assertTrue(nb[i][1] < nb[i+1][1])
-        for i, v in enumerate(nb[isep:]):
-            self.assertTrue(nb[i][1] > nb[i-1][1])
-
-    def test_twiss(self):
-        self.assertEqual(len(self.lat.getTunes()), 2)
-        self.assertTrue(len(self.lat.twiss) > 1)
-
-        elem = self.lat.getElements('*')
-        #print len(elem), self.lat.getBeta(elem)
-        
-        self.assertEqual(len(self.lat.getPhase(elem)),
-                         len(self.lat.getElements('*')))
-        self.assertEqual(len(self.lat.getPhase(elem)),
-                         len(self.lat.getElements('*')))
-        self.assertEqual(len(self.lat.getBeta(elem)),
-                         len(self.lat.getElements('*')))
-        self.assertEqual(len(self.lat.getBeta(elem)),
-                         len(self.lat.getElements('*')))
-
-        phi = self.lat.getPhase('P*C01*')
-        beta = self.lat.getBeta(elem)
-        s = self.lat.getLocations(elem, 'end')
-        elem2 = self.lat.getElements('P*')
-        eta = self.lat.getEta('P*')
-        s2 = self.lat.getLocations('P*', 'end')
-
-        #print len(s), len(eta), len(phi), len(beta), len(s2)
-        #print s2, eta
-        
-        plt.clf()
-        plt.subplot(211)
-        plt.plot(s, beta)
-        plt.subplot(212)
-        plt.plot(s2, eta)
-        plt.savefig("test-twiss.png")
-        
-    def test_pvget(self):
-        return
-        #print __file__, hla.eget('P*C01*')
-        self.assertEqual(len(hla.eget('P*C0*A')), 27)
-        self.assertEqual(len(hla.eget('C')), 0)
-        #print hla.eget('QH3*')
-
-    def test_pvset(self):
-        return True
-        elem = hla.getElements('C[XY]*C01*A')
-        print __file__, elem
-        print __file__, hla.eget(elem)
-        hla.eset(elem, [1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8])
-        print __file__, hla.eget('C[XY]*C01*A')
-        hla.eset(elem, [0.0] * 6)
-        print __file__, hla.eget(elem)
-
+class TestLatticeSr(TestLattice):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            #machines.initNSLS2VSR()
+            #machines.initNSLS2VSRTxt()
+            machine_initialized = True
+        self.lat = machines.getLattice('SR')
         pass
 
-    def test_orbit(self):
-        return
-        elem = hla.getElements('P*C02*')
-        s1 = hla.getLocations(elem)
-        x1, y1 = hla.getOrbit(elem)
-
-        s = hla.getLocations('BPMX')
-        x,y = hla.getOrbit('*')
+    def test_tunes(self):
+        tx = self.lat.getElements('TUNEX')
+        ty = self.lat.getElements('TUNEY')
+        self.assertTrue(abs(tx.value) > 0)
+        self.assertTrue(abs(ty.value) > 0)
         
-        r = np.array(hla.getFullOrbit())
+    def test_current(self):
+        self.assertTrue(self.lat.hasElement('DCCT'))
+        
+        cur1a = self.lat['DCCT']
+        cur1b = self.lat.getElements('DCCT')
+        self.assertTrue(cur1a.sb <= 0.0)
+        self.assertTrue(cur1a.value > 0.0)
+        self.assertTrue(cur1b.value > 0.0)
 
-        plt.clf()
-        plt.plot(s, x, 'rx-')
-        plt.plot(s, y, 'gx-')
-        plt.plot(s1, x1, 'ro')
-        plt.plot(s1, y1, 'gx')
-        plt.plot(r[:,0], r[:,1], 'k--')
-        plt.xlim([0, r[-1,0]/15.0])
-        plt.savefig('test.png')
+    def test_lines(self):
+        elem1 = self.lat.getElements('DIPOLE')
+        s0, s1 = elem1[0].sb, elem1[0].se
+        i = self.lat._find_element_s((s0+s1)/2.0)
+        self.assertTrue(i >= 0)
+        i = self.lat.getLine(srange=(0, 25))
+        self.assertTrue(len(i) > 1)
 
-    def test_beamlineprofile(self):
-        #
-        prof = self.lat.getBeamlineProfile(0.0, 30)
-        for p in prof:
-            plt.plot(p[0], p[1], p[2])
-        #plt.plot([prof[0][0], prof[-1][0]], [0,0], 'k')
-        plt.ylim([-2.5, 2.5])
-        plt.savefig('test_beamline_profile.png')
+    def test_getelements_sr(self):
+        elems = self.lat.getElements(['PL1G2C01A', 'PL2G2C01A'])
+        self.assertTrue(len(elems) == 2)
+        
+        # only cell 1,3,5,7,9 and PL1, PL2
+        elems = self.lat.getElements('PL*G2C0*')
+        self.assertTrue(len(elems) == 10)
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_groupmembers(self):
+        bpm1 = self.lat.getElements('BPM')
+        g2a = self.lat.getElements('G2')
+        
+        b1 = self.lat.getGroupMembers(['BPM', 'C20'], op='intersection')
+        self.assertTrue(len(b1) == 6)
+        
+        b1 = self.lat.getGroupMembers(['BPM', 'G2'], op='union')
+        self.assertTrue(len(b1) > len(bpm1))
+        self.assertTrue(len(b1) > len(g2a))
+        self.assertTrue(len(b1) < len(bpm1) + len(g2a))
+        
+        cx1 = self.lat.getElements('HCOR')
+        c1 = self.lat.getGroupMembers(['HCOR', 'QUAD'],
+                                            op = 'intersection')
+        self.assertFalse(c1)
+
+        elem1 = self.lat.getGroupMembers(
+            ['BPMX', 'TRIMX', 'QUAD', 'TRIMY'], op='union')
+        self.assertTrue(len(elem1) > 120)
+        for i in range(len(elem1)):
+            if i == 0: continue
+            self.assertTrue(elem1[i].sb >= elem1[i-1].sb)
+
+        el1 = self.lat.getGroupMembers(['BPM', 'C0[2-3]', 'G2'],
+                                            op='intersection')
+        self.assertTrue(len(el1) == 4)
+
+    def test_field(self):
+        bpm = self.lat.getElements('BPM')
+        self.assertTrue(len(bpm) > 0)
+        for e in bpm: 
+            self.assertTrue(abs(e.x) >= 0)
+            self.assertTrue(abs(e.y) >= 0)
+
+        hcor = self.lat.getElements('HCOR')
+        self.assertTrue(len(bpm) > 0)
+        for e in hcor: 
+            k = e.x
+            e.x = 1e-8
+            self.assertTrue(abs(e.x) >= 0)
+            e.x = k
+            try:
+                k = e.y
+            except:
+                pass
+            else:
+                self.assertTrue(False,
+                                "AttributeError exception expected")
+
+class TestLatticeSrCf(TestLatticeSr):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            #machines.initNSLS2VSR()
+            machine_initialized = True
+        self.lat = machines.getLattice('SR')
+        
+class TestLatticeSrTxt(TestLatticeSr):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            #machines.initNSLS2VSRTxt()
+            machine_initialized = True
+        self.lat = machines.getLattice('SR-txt')
+
+
+class TestLatticeLtb(TestLattice):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            initialize_the_machine()
+            #machines.initNSLS2VSR()
+            machine_initialized = True
+        self.lat  = machines.getLattice('LTB')
+        if not self.lat:
+            raise ValueError("lattice LTB is not found")
+
+    def test_field(self):
+        bpm = self.lat.getElements('BPM')
+        self.assertTrue(len(bpm) > 0)
+        for e in bpm: 
+            try:
+                self.assertTrue(abs(e.x) >= 0)
+                self.assertTrue(abs(e.y) >= 0)
+            except cothread.Timedout:
+                print "Timeout: ", e.name
+                pass
+
+        hcor = self.lat.getElements('HCOR')
+        self.assertTrue(len(bpm) > 0)
+        try:
+            for e in hcor: 
+                k = e.x
+                e.x = 1e-8
+                self.assertTrue(abs(e.x) >= 0)
+                e.x = k
+                k = e.y
+                self.assertTrue(False,
+                                "AttributeError exception expected")
+        except cothread.Timedout:
+            print "Timeout:", e.name
+            pass
+        except AttributeError as e:
+            print "No attribute", e
+
+class TestLatticeLtbCf(TestLatticeLtb):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            #initialize_the_machine()
+            machines.initNSLS2VSR()
+            machine_initialized = True
+        self.lat  = machines.getLattice('LTB')
+        if not self.lat:
+            print machines.lattices()
+            raise ValueError("lattice LTB is not found")
+
+class TestLatticeLtbTxt(TestLatticeLtb):
+    def setUp(self):
+        global machine_initialized
+        if not machine_initialized:
+            #initialize_the_machine()
+            machines.initNSLS2VSRTxt()
+        self.lat = machines.getLattice('LTB-txt')
+
+    def test_cor(self):
+        hcor = self.lat.getElements('HCOR')
+        
+        try:
+            for e in hcor:
+                v = e.value
+                self.assertFalse(isinstance(v, list),
+                                 "element: %s, %s" % (e.name, e._field['value']))
+            vcor = self.lat.getElements('VCOR')
+            for e in vcor:
+                v = e.value
+                self.assertFalse(isinstance(v, list),
+                                 "element: %s, %s" % (e.name, e._field['value']))
+        except cothread.Timedout:
+            print "Timeout: ", e.name, e._field['value']
 

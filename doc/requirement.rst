@@ -1,5 +1,5 @@
-HLA Requirement (List of Applications/Scripts)
-===============================================
+NSLS2 HLA Requirement (List of Applications/Scripts)
+=====================================================
 
 .. _Software Requirement:
 
@@ -10,12 +10,9 @@ This chapter describes software requirement for NSLS-II
 commissioning. This list is mainly from [Willeke2009]_ and [Krinsky2010]_,
 plus some personal experiences.
 
-The items marked with (*) will get more focus, since they usually contains
-more physics or algorithm. Parameters tuning or even new algorithms may be
-needed. 
-
 :hla:`Software implemented as part of the HLA is marked`. Finished
-software/scripts are :hladone:`also marked`.
+software/scripts are :hladone:`also marked`. The functions which need only
+simple monitoring in HLA is not marked as a HLA feature.
 
 General Operation
 ------------------
@@ -27,16 +24,18 @@ General Operation
       and give warnings when any abnormal beam behaviour is detected, for
       example a readback differs from setting point larger than its
       threshhold. 
-    - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)`
+    - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)` (CSS operation panel)
 - Permit system monitor and control
 - Data logger and data display
 - Electronic logbook
-- :hla:`Converting between machine unit and physics unit.`
+- :hla:`Converting between machine unit and physics unit.` (G.Shen)
 - :hla:`Smooth Ramping`
     - :hla:`list channels we are interested.`
-    - :hla:`ramp whole group at certain rate.`
+    - :hla:`ramp (i.e. linear interpolation) whole group at certain rate.`
     - :hla:`searching for channels with wild-card`
-    - save state/read stage.
+    - save state of the machine, read back and set the machine. (for small
+      set of PVs, HLA can implement.)
+    - :hla:`linear interpolation to a saved state.`
 
   The control group may provide ramping for whole storage ring, here this
   application can ramp specified channels between two states.
@@ -59,7 +58,7 @@ General Operation
     - Magnet temperature interlock display and control
     - Cryogenics system display and control
     - Pulsed magnet systems monitor and control
-    - Fast orbit feedback control
+    - :hla:`Fast orbit feedback control above cell level` 
 	- :hla:`turn on/off`
 	- :hla:`disable/enable certain trim/BPM`
 	- :hla:`update(import/export) RespMatrix`
@@ -84,22 +83,21 @@ General Operation
 - Injection Control
 - Front-end monitoring and control
 - Scraper and movable mask operations
-  
+- :hladone:`General high level element control (GUI)`  
 
 Beam Diagnostics
 ------------------------------
 
-- :hladone:`Measure the orbit response matrix, with flexible number of
-  BPMs and correctors.`
-    - :hla:`Import/Export orbit response matrix for orbit correction`
+- :hladone:`Measure the orbit response matrix, with flexible number of BPMs and correctors.`  (L.Yang)
+    - :hladone:`Import/Export orbit response matrix for orbit correction`
     - :hla:`Import/Export ORM for feedback`
 
-- :hla:`Beam orbit display`.
+- :hla:`Beam orbit display`. (L.Yang)
     - :hladone:`display closed orbit (static), 1Hz rate`
-    - :hla:`turn by turn bpm reading (including single turn)`
-    - :hla:`single turn`
+    - :hladone:`turn by turn bpm reading (including single turn)` (Y.Hu)
+    - :hla:`single turn` (Y.Hu)
     - :hla:`Plot orbit change from now on.`
-    - :hla:`BPM status information`
+    - :hladone:`BPM status information`
     - :hla:`difference (referecne orbit display)`
     - :hla:`Orbit statistics. stability, especially drift and variation,
       variation`
@@ -108,41 +106,39 @@ Beam Diagnostics
     - :hla:`Absolute orbit offset and orbit offset with respect to golden
       orbit`
 
-- :hla:`Static beam orbit control`
+- :hla:`Static beam orbit control` (L.Yang)
     - :hla:`Edit golden orbit control (also affect feedback system)`
         - Interplay with feedback system when creating local bump: update
-          the reference orbit to feedback ? or share same orbit difference
-          from a dedicated IOC ? the feedback should check golden orbit at
-          10-50Hz rate if real-time orbit difference is not available to
-          it.
+          the reference orbit to feedback.
 
-    - :hla:`Correct static orbit with selected correctors and BPMs`
-    - :hla:`Enable/disable BPMs for orbit correction and feedback.`
-    - :hla:`Enable/disable correctors for orbit correction and feedback`
+    - :hladone:`Correct static orbit with selected correctors and BPMs`
+    - :hladone:`Enable/disable BPMs for orbit correction and feedback.`
+    - :hladone:`Enable/disable correctors for orbit correction and feedback`
 
-- :hla:`Turn-by-turn BPM data`
+- :hla:`Turn-by-turn BPM data` 
     - :hla:`closed orbit established using corrector and single shot BPM
       data`
-    - :hla:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
+    - :hladone:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
     - :hla:`Realtime tune based on turn-by-turn BPM`
-    - :hla:`BPM buttons readout.`
+    - :hladone:`BPM buttons readout.`
     - :hla:`Correct orbit based on single shot orbit`
 
-- :hla:`Beam current history and lifetime display`
-- :hla:`Bunch intensity display and history display/analysis (*)`
-- :hla:`Beam emittance display (*)`
-- :hla:`Injection element display and control page (*)`
-- :hla:`Injection efficiency`
+- :hla:`Beam current history and lifetime display` (Y.Hu, L.Yang)
+- :hla:`Bunch intensity display and history display/analysis (*)` (Y.Hu, L.Yang)
+- :hla:`Beam emittance display (*)` (Y.Hu, L.Yang)
+- :hla:`Injection element display and control page (*)` (G.Wang)
+- :hla:`Injection efficiency` (G.Wang)
+- :hla:`Injection filling pattern` (G.Wang, Y.Hu)
 - Timing system display and control 
 - Synchronization system display and control
-- :hla:`Tune display and control (*)`
+- :hla:`Tune display and control (*)` (Y.Hu)
     - horizontal/vertical tune number, 1Hz update
     - FFT of turn by turn BPM data, choice of any live BPM.
     - 2D tune footprint with resonance lines
 
-- Beam profile: current, size, rms, center, image.
-- Bunch length and profile if it is available (*)
-- :hla:`Measure BPM linearity`
+- :hla:`Beam profile: current, size, rms, center, image.` (Y.Hu, etc.)
+- :hla:`Bunch length and profile if it is available (*)` (Y.Hu, etc.)
+- :hla:`Measure BPM linearity` (Y.Hu, etc.)
 - Bad BPM identification should be done in other application. Data
   synchronization to be done in low level server part.
 
@@ -155,6 +151,8 @@ Injector
 Software routines needed for the injector commissioning and operation are
 listed in this section. Some of these routines will be delivered by linac
 and booster vendors, others have to be developed by ourselves.
+
+see Injector HLA specifications `<http://www.bnl.gov/>`_
 
 - Linac
     - Diagnostics calibration
@@ -192,8 +190,8 @@ and booster vendors, others have to be developed by ourselves.
     - Integration of safety devices/interlocks       
 
 
-:hla:`Beam Based Alignment (BBA)`
----------------------------------
+Beam Based Alignment (BBA) (L.Yang)
+-------------------------------------------
 
 BBA use a list of correctors, BPMs and nearby quadrupoles, to steer the
 beam through center of these quadrupoles. The input is a list of
@@ -214,8 +212,8 @@ and replay them.
 It should work on separate set of quadrupoles, and combine data with
 previous measurement.
 
-:hla:`Linear Lattice Fitting (LOCO)`
--------------------------------------
+Linear Lattice Fitting (LOCO) (J.Choi)
+---------------------------------------------
 
 - analyze quadrupole gradient/tilt error.
 - analyze BPM gain/tilt error.
@@ -225,13 +223,13 @@ It requires:
 - Designed orbit response matrix (ROM)
 - change specified correctors 
 - get closed orbit change at specified BPM
-- Simulator and interface to Python. This is required for online lattice
-  fitting, e.g. LOCO. Tacy-v3 will be a choice.
+- :hladone:`Simulator and interface to Python`. This is required for online
+  lattice fitting, e.g. LOCO. Tacy-v3 will be a choice.
 
 
 
-:hla:`Measure TWISS Parameters`
-----------------------------------
+Measure TWISS Parameters (L.Yang)
+----------------------------------------
 
 - measure beta functions
 - measure dispersion
@@ -245,7 +243,7 @@ It requires:
 
 
 
-:hla:`Insertion Device Related (Matching)`
+Insertion Device Related (Matching)
 -------------------------------------------
 
 - get/correct closed orbit distortion
@@ -259,61 +257,84 @@ Beam Commissioning Activities
 
 As a check, these activities will use HLA implemented above.
 
-- Injection
-    - Closed bump optimization: A and t
-    - Simultaneous measurements of injected/stored beam orbits
-
-- Hardware/Control checking and testing
-    - Check polarity of all magnets.
-    - Orbit corrector polarity and strength test, 
-    - Magnetic field measurement and modeling, determine calibration
-    - Verify named devices in control system, control proper hardware
-    - Complete survey of magnetic elements
-    - Test diagnostic equipment without beam
+- Injection and the first turn steering
+    - Closed bump optimization.
+    - Obtain first turn in storage ring using single kicker. (magnet control, orbit display, bpm data)
+    - Simultaneous measurement of injected/stored beam orbits
     - BTS transport line
 	- Obtain good transmission through septum and good transverse phase
-	  space match, set timing of pulsed magnets.
-
-- Insertion Device
-    - When necessary compensate the linear optics for ID
-    - Observe orbit and tune shift vs gap
-    - Measure lifetime vs gap
-    - Observe beam stability vs current
-    - Measure change in impedance due to ID chamber
-    - Prepare look-up tables for feed forward orbit correction coils.
-    - Measure effect on tune shift with amplitude, chromaticity, and emittance
-      coupling.
-    - Measure impedance vs gap for IVUs
-    - Commission undulator gap control for users
-    - Measure flux and brightness
-
-- Misc
-    - Test fast orbit feedback system.
-    - Look for magnet errors that may have been missed in testing.
-    - Obtain first turn in storage ring using single kicker
+	  space match, set timing of pulsed magnets. (timing subsystem)
     - Use flag to obtain beam size information at injection point and
-      after one turn.
-    - Beam based alignment of sextupoles.
+      after one turn. 
+
+
+- Hardware/Control checking and testing
+    - Verify named devices in control system, control proper hardware. (perturb/observe)
+    - Orbit corrector polarity and strength test. 
+    - Check polarity of quadrupole and sextupole. 
+    - Magnetic field measurement and modeling, determine calibration.
+    - Complete survey of magnetic elements. (no HLA defined yet)
+    - Test diagnostic equipment without beam. (subsystem)
+    - Identify MPS (magnet power sypply) ripples.
+
+- Linear optics measurement and correction
+    - orbit, tune and chromaticity
+    - twiss measurement (beta, dispersion, phase)
+    - beam emittance measurement.(subsystem)
+    - orbit response matrix
+    - beam based alignment
+    - local bump
+    - Characterize the quad/bpm errors with LOCO
+    - Look for magnet errors that may have been missed in testing. 
+    - Beam based alignment of sextupoles. 
     - Develop lattice model using measured fields, linear/nonlinear optics.
-    - Reduce beta beat
+    - Reduce beta beat.
     - Correct coupling using skew quadrupoles, local and global.
-    - Analysis on nonlinear dynamics.
-    - Use pinger to measure tune shift with amplitude, dynamic aperture
-      and characterize sextupole distribution
-    - Wakefield modeling and tracking studies, develop model for
-      impedance and wakefields, caculation and measurement, estimate
-      instability thresholds, simulate bunch-by-bunch feedback with
-      realistic bunches and wakefields.
-    - Characterize ring impedance using beam.
-    - Commission loss control minitoring system
     - Use visible synchrotron light monitor to study transverse beam
       profile and disturbance due to kickers. *getBeamProfile*
     - Study lifetime versus vacuum pressure, vertical beam size, scraper,
-      dynamic aperture.
-    - Commission transverse bunch-by-bunch feedback
-    - Measure variation of coherent tune with current
+      dynamic aperture. 
     - Study increasing chromaticity from +2/+2 to +5/+5
+
+- Insertion Device
+    - When necessary compensate the linear optics for ID. (orbit/tune correction, feedforward table, coupling)
+    - Prepare look-up tables for feed forward orbit correction coils. (orbit/tune)
+    - Observe orbit and tune shift vs gap. (orbit/tune measurement, gap control)
+    - Measure lifetime vs gap. (lifetime fitting, gap control)
+    - Observe beam stability vs current. (archiver/history view and analysis)
+    - Measure change in impedance due to ID chamber (unknown to HLA yet)
+    - Measure effect on tune shift with amplitude, chromaticity, and emittance
+      coupling. (orbit/tune measurement, magnet control)
+    - Measure impedance vs gap for IVUs (unknown to HLA yet)
     - Commission undulator gap control in control room
+    - Commission undulator gap control for users (orbit control)
+    - Measure flux and brightness
+
+- Feedback
+    - Test fast orbit feedback system. (subsystem + manual control from HLA)
+    - Commission transverse bunch-by-bunch feedback. (subsystem + HLA)
+
+- Diagnostics
+    - PBPM matching. Read both BPM and PBPM, and use BPM to benchmark the
+      PBPM values.
+
+- Collective Effects
+    - Measure variation of coherent tune with current
+    - Wakefield modeling and tracking studies, develop model for
+      impedance and wakefields, caculation and measurement, estimate
+      instability thresholds, simulate bunch-by-bunch feedback with
+      realistic bunches and wakefields. (unknown to HLA yet)
+    - Characterize ring impedance using beam. (unknown to HLA yet)
+
+- Analysis on nonlinear dynamics.
+    - Use pinger to measure tune shift with amplitude, dynamic aperture
+      and characterize sextupole distribution
+
+
+- Misc
+    - Commission loss control minitoring system. 
+        - Monitor beam loss. Get loss monitor readings from beam containment
+          system (beam loss monitor).
     - Calibration/Testing of Equipment Protection Interlock System
 	- Center photon beam in exit slot
 	- Verify gap open/close status is properly reported to interlock system
@@ -330,16 +351,9 @@ As a check, these activities will use HLA implemented above.
 	- Test transverse feedback with injection transient
     - Concerns: accuracy of magnet calibration-two types of dipoles, magnetic
       field quality (IRMIS data).
-    - PBPM matching. Read both BPM and PBPM, and use BPM to benchmark the
-      PBPM values.
     - Get groud motion and chamber motion if there are available readings.
-    - Monitor beam loss. Get loss monitor readings from beam containment
-      system (beam loss monitor).
-    - Identify MPS (magnet power sypply) ripples.
     - Mechanical utilities status and controls
     - Electrical utilities status and controls
     - Equipment enclosure monitor
     - Controls network monitor
-
-
 
