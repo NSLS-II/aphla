@@ -279,7 +279,10 @@ class Custom(object) :
     # are the diagonal elements of the covariance matrix returned
     # by the SciPy's curve_fit function.
     uncertainties = np.zeros(len(popt))
-    for ii in range(0,len(popt)) :
+    for ii in range(len(popt)) :
+      if isinstance(pcov, float) : # When fitting fails, pcov is Inf (float), instead of numpy.ndarray
+        uncertainties[ii] = np.Inf
+      else :
         uncertainties[ii] = sqrt(pcov[ii,ii])
     
     self.opt_fit_param_values = popt
