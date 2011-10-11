@@ -7,7 +7,8 @@ if 0:
 
 import sys
 import cothread, hla
-from cothread.catools import camonitor
+from epicsdatamonitor import CaDataMonitor
+
 app = cothread.iqt(use_timer=True)
 
 
@@ -32,21 +33,47 @@ import numpy as np
 #import bpmtabledlg
 from elementpickdlg import ElementPickDlg
 
-class Spy(QObject):
-    
-    def __init__(self, parent):
-        QObject.__init__(self, parent)
-        parent.setMouseTracking(True)
-        parent.installEventFilter(self)
+class MagnetPicker(Qwt.QwtPlotPicker):
+    def __init__(self, canvas):
+        Qwt.QwtPlotPicker.__init__(self, Qwt.QwtPlot.xBottom,
+                          Qwt.QwtPlot.yLeft,
+                          Qwt.QwtPicker.NoSelection,
+                          Qwt.QwtPlotPicker.CrossRubberBand,
+                          Qwt.QwtPicker.AlwaysOn,
+                          canvas)
+        
+        self.profile = []
 
-    # __init__()
+    def addMagnetProfile(self, sb, se, name, minlen = 0.2):
+        if se < sb: 
+            raise ValueError("s range of %s is wrong, must be se > sb" % name)
 
-    def eventFilter(self, _, event):
-        if event.type() == QEvent.MouseMove:
-            self.emit(SIGNAL("MouseMove"), event.pos())
-        return False
+        c = (sb + se)/2.0
+        if se - sb < minlen:
+            w = minlen
+        else:
+            w = se - c
 
-    # eventFilter()
+        if not self.profile:
+            self.profile.append((c-w, c+w, name))
+            return
+        elif self.profile[-1][0] < c - w:
+            self.profile.append((c-w, c+w, name))
+            return
+
+        for i,m in enumerate(self.profile):
+            if m[0] < c - w: continue
+            self.profile.insert(i, (c-w, c+w, name))
+            return
+
+    def trackerTextF(self, pos):
+        s = []
+        x, y = pos.x(), pos.y()
+        for m in self.profile:
+            if x > m[0] and x < m[1]:
+                s.append(m[2])
+        return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y(), '\n'.join(s)))
+
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
     """Orbit"""
@@ -83,46 +110,28 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.errorCap = errorCap
         self.errorOnTop = errorOnTop
         
-        n = len(pvs)
-        self.pvs = pvs
-        self._data = np.zeros((n, self.SAMPLES), 'd')
-        self._data_icur = np.zeros(n, dtype=np.int)
-        self.updateAllPvData()
+        if len(pvs) != len(x):
+            raise ValueError("pv and x are not same size")
 
+        n = len(x)
         self.x = np.array(x)
-        self.y = np.random.rand(n)*1e-12
-        self._y_std = np.random.rand(n)*1e-13
+        self.y = np.zeros(n, 'd')
+        self.errbar = np.zeros(n, 'd')
+        self.camonitor = CaDataMonitor(pvs, samples=self.SAMPLES)
         self.mask = np.zeros(n, 'i')
         self.__live = False
 
-        self.moni = camonitor(pvs, self.updatePvs)
-
-        self.update_count = 0
         self.update()
-
-    def updatePvs(self, val, idx):
-        self.update_count += 1
-        k = self._data_icur[idx]
-        self._data[idx, k] = val
-        self._data_icur[idx] = divmod(k + 1, self.SAMPLES)[1]
-
-    def updateAllPvData(self):
-        dat = hla.caget(self.pvs)
-        print "Updated:", len(dat)
-        for i in range(len(dat)):
-            k = self._data_icur[i]
-            self._data[i, k] = dat[i]
-            self._data_icur[i] = divmod(k + 1, self.SAMPLES)[1]
 
     def update(self):
         """update the Qwt data"""
-        for i in range(len(self.pvs)):
-            k = self._data_icur[i]
-            self.y[i] = self._data[i, k]
-        self._y_std[:] = np.std(self._data, axis=1)
+        # y and errbar sync with plot, not changing data.
+        self.y[:] = self.camonitor.recent[:]
+        self.errbar[:] = self.camonitor.std[:]
 
-        x = np.compress(1-self.mask, self.x, axis=0)
-        y = np.compress(1-self.mask, self.y, axis=0)
+        kept = 1-self.mask
+        x = np.compress(kept, self.x, axis=0)
+        y = np.compress(kept, self.y, axis=0)
 
         #Qwt.QwtPlotCurve.setData(self, self.x, self.y[:,0])
         Qwt.QwtPlotCurve.setData(self, x, y)
@@ -133,7 +142,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         """
         x  = np.compress(1-self.mask, self.x, axis=0)
         y  = np.compress(1-self.mask, self.y, axis=0)
-        y2 = np.compress(1-self.mask, self._y_std, axis=0)
+        y2 = np.compress(1-self.mask, self.errbar, axis=0)
         xmin = min(x)
         xmax = max(x)
         ymin = min(y - y2)
@@ -170,19 +179,20 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         painter.setPen(self.errorPen)
 
         # draw the error bars with caps in the y direction
-        if self._y_std is not None and self.errorOnTop:
+        if self.errorOnTop:
             # draw the bars
             x  = np.compress(1-self.mask, self.x, axis=0)
             y  = np.compress(1-self.mask, self.y, axis=0)
-            y2 = np.compress(1-self.mask, self._y_std, axis=0)
+            y2 = np.compress(1-self.mask, self.errbar, axis=0)
         
-            if len(self._y_std.shape) in [0, 1]:
+            if len(self.errbar.shape) in [0, 1]:
                 ymin = (y - y2)
                 ymax = (y + y2)
             else:
+                # both x and y direction
                 ymin = (y - y2[0])
                 ymax = (y + y2[1])
-            n, i, = len(x), 0
+            n, i = len(x), 0
             lines = []
             while i < n:
                 xi = xMap.transform(x[i])
@@ -210,31 +220,16 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
         painter.restore()
 
-        #if not self.errorOnTop:
-        #if not self.__errorbar:
-        #    print "No errorbar"
         Qwt.QwtPlotCurve.drawFromTo(self, painter, xMap, yMap, first, last)
-        #else:
-        #    print "errorbar"
 
 
-    def liveData(self, on):
-        pass
+    def average(self):
+        """average of the whole curve"""
+        return np.average(self.y)
 
-    def setErrorBar(self, on):
-        self.errorOnTop = on
-
-    def singleShot(self):
-        #print "Curve single shot"
-        self.updateAllPvData()
-        self.update()
-
-    def setMask(self, i, v):
-        if i < len(self.mask):
-            self.mask[i] = v
-        
-    def getMask(self):
-        return self.mask[:]
+    def std(self):
+        """std of the curve"""
+        return np.std(self.y)
 
     def resetPvData(self):
         m, n = np.shape(self._data)
@@ -243,7 +238,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         #self._y_std[:] = np.zeros(m, 'd')
 
 class OrbitPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None, x = None, pvs = None, plane = 'H'):
+    def __init__(self, parent = None, x = None, pvs = None, plane = 'H', live=True, errorbar=True):
         super(OrbitPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
@@ -251,8 +246,9 @@ class OrbitPlot(Qwt.QwtPlot):
 
         # Initialize data
         # uncomment to draw the curve on top of the error bars
-        errorOnTop = False 
-        # errorOnTop = True 
+        #errorOnTop = False 
+        self.errorOnTop = errorbar
+        self.__live = live
         
         #self.setTitle("An Orbit Plot")
         #self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
@@ -273,7 +269,7 @@ class OrbitPlot(Qwt.QwtPlot):
                 QSize(9, 9)),
             errorPen = QPen(Qt.blue, 1),
             errorCap = 10,
-            errorOnTop = errorOnTop,
+            errorOnTop = self.errorOnTop,
             )
 
         self.curve1.attach(self)
@@ -295,13 +291,14 @@ class OrbitPlot(Qwt.QwtPlot):
         grid1.attach(self)
         grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
 
-        picker1 = Qwt.QwtPlotPicker(Qwt.QwtPlot.xBottom,
-                                   Qwt.QwtPlot.yLeft,
-                                   Qwt.QwtPicker.NoSelection,
-                                   Qwt.QwtPlotPicker.CrossRubberBand,
-                                   Qwt.QwtPicker.AlwaysOn,
-                                   self.canvas())
-        picker1.setTrackerPen(QPen(Qt.red))
+        #picker1 = Qwt.QwtPlotPicker(Qwt.QwtPlot.xBottom,
+        #                           Qwt.QwtPlot.yLeft,
+        #                           Qwt.QwtPicker.NoSelection,
+        #                           Qwt.QwtPlotPicker.CrossRubberBand,
+        #                           Qwt.QwtPicker.AlwaysOn,
+        #                           self.canvas())
+        self.picker1 = MagnetPicker(self.canvas())
+        self.picker1.setTrackerPen(QPen(Qt.red, 4))
         
 
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
@@ -313,15 +310,20 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
                      self.zoomed1)
-        
-        self.__live = False
         self.timerId = self.startTimer(500)
 
-        #self.phase = 0.0
 
     def zoomed1(self, rect):
         print "Zoomed"
         
+    def setPlot(self, mode):
+        if mode == self.PLOT_SINGLESHOT:
+            self.update()
+        elif mode == self.PLOT_LIVE:
+            pass
+        else:
+            pass
+
     def alignScales(self):
         self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)
         self.canvas().setLineWidth(1)
@@ -334,7 +336,8 @@ class OrbitPlot(Qwt.QwtPlot):
                 scaleDraw.enableComponent(
                     Qwt.QwtAbstractScaleDraw.Backbone, False)
 
-    # alignScales()
+    def addMagnetProfile(self, sb, se, name, minlen = 0.2):
+        self.picker1.addMagnetProfile(sb, se, name, minlen)
 
     def getMagnetProfile(self):
         prof = hla.getBeamlineProfile()
@@ -345,39 +348,21 @@ class OrbitPlot(Qwt.QwtPlot):
                 y.append(box[1][i])
                 c.append(box[2])
         return x, y, c
-        #self.curvemag.setData(x, y)
-        #print min(x), max(x), min(y), max(y)
         
     def timerEvent(self, e):
-        # y moves from left to right:
-        # shift y array right and assign new value y[0]
-        #self.y = concatenate((self.y[:1], self.y[:-1]), 1)
         if not self.__live: return
-
         self.curve1.update()
         self.replot()
-
 
     def singleShot(self):
         #print "Plot :: singleShot"
         self.zoomer1.setZoomBase(self.curve1.boundingRect())
-        self.curve1.singleShot()
+        self.curve1.update()
         self.replot()
 
     def liveData(self, on):
         self.__live = on
-        self.curve1.liveData(on)
-
-        bound = self.curve1.boundingRect()
-        w = bound.width()
-        h = bound.height()
-        xmin = bound.left() - w*.05
-        xmax = bound.right() + w*.05
-        ymin = bound.top() - h*.08
-        ymax = bound.bottom() + h*.08
-
         self.zoomer1.setZoomBase(self.curve1.boundingRect())
-
         return None
 
     def setErrorBar(self, on):
@@ -391,15 +376,20 @@ class OrbitPlot(Qwt.QwtPlot):
         
         #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
         self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
+        self.replot()
 
     def zoomAuto(self):
         bound = self.curve1.boundingRect()
         w = bound.width()
         h = bound.height()
-        xmin = bound.left() - w*.03
-        xmax = bound.right() + w*.03
-        ymin = bound.top() - h*.23
+        #xmin = bound.left() - w*.03
+        #xmax = bound.right() + w*.03
+        ymin = bound.top() - h*.05
         ymax = bound.bottom() + h*.03
+        xmin = bound.left()
+        xmax = bound.right()
+        #ymin = bound.top()
+        #ymax = bound.bottom()
         if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
         else: self.setAxisAutoScale(Qwt.Qwt.Plot.xBottom)
 
@@ -413,8 +403,8 @@ class OrbitPlot(Qwt.QwtPlot):
     def getMask(self):
         return self.curve1.getMask()
 
-    def countUpdates(self):
-        return self.curve1.update_count
+    def datainfo(self):
+        return "avg: %.4e std: %.4e" % (self.curve1.average(), self.curve1.std())
 
 class OrbitPlotMainWindow(QMainWindow):
     """
@@ -423,6 +413,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def __init__(self, parent = None):
         QMainWindow.__init__(self, parent)
 
+        self.setIconSize(QSize(48, 48))
         # initialize a QwtPlot central widget
         bpm = hla.getElements('BPM')
         pvx = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_X])
@@ -433,19 +424,22 @@ class OrbitPlotMainWindow(QMainWindow):
         pvsx = [e.sb for e in bpm]
         pvsy = [e.sb for e in bpm]
         self.bpm = [e.name for e in bpm]
-        #self.bpmmask = [0] * len(self.bpm)
-        #for i in range(len(pvx)):
-        #    print pvsx[i], self.bpm[i], pvx[i], pvy[i]
         
         self.plot1 = OrbitPlot(self, pvsx, [p.encode('ascii') for p in pvx])
         self.plot2 = OrbitPlot(self, pvsy, [p.encode('ascii') for p in pvy])
 
+        for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'], op='union'):
+            self.plot1.addMagnetProfile(e.sb, e.sb+e.length, e.name)
+            
         #for i in range(10):
         #    self.plot1.maskIndex(i)
         
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
         self.plot1.setTitle("Horizontal Orbit")
+        self.plot1.singleShot()
+        #print self.plot1.curve1.y
+
         self.plot2.plotLayout().setCanvasMargin(4)
         self.plot2.plotLayout().setAlignCanvasToScales(True)
         self.plot2.setTitle("Vertical Orbit")
@@ -466,13 +460,13 @@ class OrbitPlotMainWindow(QMainWindow):
 
         #self.setCentralWidget(OrbitPlot())
 
-        self.statusBar().showMessage('Hello;')
+        self.statusBar().showMessage('%s; %s' % (self.plot1.datainfo(), self.plot2.datainfo()))
 
         #
         # file menu
         #
         self.fileMenu = self.menuBar().addMenu("&File")
-        fileQuitAction = QAction(QIcon(":/filequit.png"), "&Quit", self)
+        fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
         fileQuitAction.setShortcut("Ctrl+Q")
         fileQuitAction.setToolTip("Quit the application")
         fileQuitAction.setStatusTip("Quit the application")
@@ -486,20 +480,20 @@ class OrbitPlotMainWindow(QMainWindow):
         # view
         self.viewMenu = self.menuBar().addMenu("&View")
         # live data
-        viewLiveAction = QAction(QIcon(":/viewlive.png"),
+        viewLiveAction = QAction(QIcon(":/view_livedata.png"),
                                     "Live", self)
         viewLiveAction.setCheckable(True)
-        viewLiveAction.setChecked(False)
+        viewLiveAction.setChecked(True)
         self.connect(viewLiveAction, SIGNAL("toggled(bool)"),
                      self.liveData)
 
-        viewSingleShotAction = QAction(QIcon(":/viewsingleshot.png"),
+        viewSingleShotAction = QAction(QIcon(":/view_singleshot.png"),
                                        "Single Shot", self)
         self.connect(viewSingleShotAction, SIGNAL("triggered()"),
                      self.singleShot)
 
         # errorbar
-        viewErrorBarAction = QAction(QIcon(":/viewerrorbar.png"),
+        viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
                                     "Errorbar", self)
         viewErrorBarAction.setCheckable(True)
         viewErrorBarAction.setChecked(False)
@@ -507,26 +501,27 @@ class OrbitPlotMainWindow(QMainWindow):
                      self.errorBar)
 
         # scale
-        viewZoomOut15Action = QAction(QIcon(":/viewzoomout.png"),
+        viewZoomOut15Action = QAction(QIcon(":/view_zoomout.png"),
                                          "Zoom out x1.5", self)
         self.connect(viewZoomOut15Action, SIGNAL("triggered()"),
                      self.zoomOut15)
-        viewZoomIn15Action = QAction(QIcon(":/viewzoomin.png"),
+        viewZoomIn15Action = QAction(QIcon(":/view_zoomin.png"),
                                         "Zoom in x1.5", self)
         self.connect(viewZoomIn15Action, SIGNAL("triggered()"),
                      self.zoomIn15)
-        viewZoomAutoAction = QAction(QIcon(":/viewzoomauto.png"),
+        viewZoomAutoAction = QAction(QIcon(":/view_zoom.png"),
                                         "Auto Fit", self)
         self.connect(viewZoomAutoAction, SIGNAL("triggered()"),
                      self.zoomAuto)
-        viewChooseBpmAction = QAction(QIcon(":/viewchoosebpm.png"),
+
+        controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
                                          "Choose BPM", self)
-        self.connect(viewChooseBpmAction, SIGNAL("triggered()"),
+        self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
                      self.chooseBpm)
 
-        viewResetPvDataAction = QAction(QIcon(":/viewresetpvdata.png"),
+        controlResetPvDataAction = QAction(QIcon(":/control_reset.png"),
                                            "Reset PV Data", self)
-        self.connect(viewResetPvDataAction, SIGNAL("triggered()"),
+        self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
                      self.resetPvData)
 
         self.viewMenu.addAction(viewZoomOut15Action)
@@ -537,9 +532,11 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewSingleShotAction)
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(viewErrorBarAction)
-        self.viewMenu.addSeparator()
-        self.viewMenu.addAction(viewChooseBpmAction)
-        self.viewMenu.addAction(viewResetPvDataAction)
+
+        self.controlMenu = self.menuBar().addMenu("&Control")
+        #self.viewMenu.addSeparator()
+        self.controlMenu.addAction(controlChooseBpmAction)
+        self.controlMenu.addAction(controlResetPvDataAction)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -558,9 +555,11 @@ class OrbitPlotMainWindow(QMainWindow):
         viewToolBar.addAction(viewZoomAutoAction)
         viewToolBar.addAction(viewLiveAction)
         viewToolBar.addAction(viewSingleShotAction)
-        viewToolBar.addAction(viewErrorBarAction)
-        viewToolBar.addAction(viewChooseBpmAction)
-        viewToolBar.addAction(viewResetPvDataAction)
+        #viewToolBar.addAction(viewErrorBarAction)
+
+        controlToolBar = self.addToolBar("Control")
+        controlToolBar.addAction(controlChooseBpmAction)
+        controlToolBar.addAction(controlResetPvDataAction)
         
     def liveData(self, on):
         """Switch on/off live data taking"""
@@ -587,7 +586,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def chooseBpm(self):
         #print self.bpm
         bpm = []
-        bpmmask = self.plot1.getMask()
+        bpmmask = self.plot1.mask[:]
         for i in range(len(self.bpm)):
             if bpmmask[i]:
                 bpm.append((self.bpm[i], Qt.Unchecked))
@@ -608,8 +607,7 @@ class OrbitPlotMainWindow(QMainWindow):
         
     def singleShot(self):
         #print "Main: Singleshot"
-        self.statusBar().showMessage("Updated: (%d,%d)"  % \
-            (self.plot1.countUpdates(), self.plot2.countUpdates()))
+        self.statusBar().showMessage("%s; %s"  % (self.plot1.datainfo(), self.plot2.datainfo()))
         self.plot1.singleShot()
         self.plot2.singleShot()
 

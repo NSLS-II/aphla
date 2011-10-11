@@ -94,7 +94,7 @@ if __name__ == "__main__":
     import sys
 
     app = QApplication(sys.argv)
-    form = BpmTableDlg([('a', 0, 0), ('b', 0, 0)])
+    form = BpmTableDlg([('aa', 0, 0), ('a', 0, 0), ('b', 0, 0), ('ba', 0, 0)])
     form.show()
     app.exec_()
 
