@@ -257,61 +257,84 @@ Beam Commissioning Activities
 
 As a check, these activities will use HLA implemented above.
 
-- Injection
-    - Closed bump optimization: A and t
-    - Simultaneous measurements of injected/stored beam orbits
-
-- Hardware/Control checking and testing
-    - Check polarity of all magnets.
-    - Orbit corrector polarity and strength test, 
-    - Magnetic field measurement and modeling, determine calibration
-    - Verify named devices in control system, control proper hardware
-    - Complete survey of magnetic elements
-    - Test diagnostic equipment without beam
+- Injection and the first turn steering
+    - Closed bump optimization.
+    - Obtain first turn in storage ring using single kicker. (magnet control, orbit display, bpm data)
+    - Simultaneous measurement of injected/stored beam orbits
     - BTS transport line
 	- Obtain good transmission through septum and good transverse phase
-	  space match, set timing of pulsed magnets.
-
-- Insertion Device
-    - When necessary compensate the linear optics for ID
-    - Observe orbit and tune shift vs gap
-    - Measure lifetime vs gap
-    - Observe beam stability vs current
-    - Measure change in impedance due to ID chamber
-    - Prepare look-up tables for feed forward orbit correction coils.
-    - Measure effect on tune shift with amplitude, chromaticity, and emittance
-      coupling.
-    - Measure impedance vs gap for IVUs
-    - Commission undulator gap control for users
-    - Measure flux and brightness
-
-- Misc
-    - Test fast orbit feedback system.
-    - Look for magnet errors that may have been missed in testing.
-    - Obtain first turn in storage ring using single kicker
+	  space match, set timing of pulsed magnets. (timing subsystem)
     - Use flag to obtain beam size information at injection point and
-      after one turn.
-    - Beam based alignment of sextupoles.
+      after one turn. 
+
+
+- Hardware/Control checking and testing
+    - Verify named devices in control system, control proper hardware. (perturb/observe)
+    - Orbit corrector polarity and strength test. 
+    - Check polarity of quadrupole and sextupole. 
+    - Magnetic field measurement and modeling, determine calibration.
+    - Complete survey of magnetic elements. (no HLA defined yet)
+    - Test diagnostic equipment without beam. (subsystem)
+    - Identify MPS (magnet power sypply) ripples.
+
+- Linear optics measurement and correction
+    - orbit, tune and chromaticity
+    - twiss measurement (beta, dispersion, phase)
+    - beam emittance measurement.(subsystem)
+    - orbit response matrix
+    - beam based alignment
+    - local bump
+    - Characterize the quad/bpm errors with LOCO
+    - Look for magnet errors that may have been missed in testing. 
+    - Beam based alignment of sextupoles. 
     - Develop lattice model using measured fields, linear/nonlinear optics.
-    - Reduce beta beat
+    - Reduce beta beat.
     - Correct coupling using skew quadrupoles, local and global.
-    - Analysis on nonlinear dynamics.
-    - Use pinger to measure tune shift with amplitude, dynamic aperture
-      and characterize sextupole distribution
-    - Wakefield modeling and tracking studies, develop model for
-      impedance and wakefields, caculation and measurement, estimate
-      instability thresholds, simulate bunch-by-bunch feedback with
-      realistic bunches and wakefields.
-    - Characterize ring impedance using beam.
-    - Commission loss control minitoring system
     - Use visible synchrotron light monitor to study transverse beam
       profile and disturbance due to kickers. *getBeamProfile*
     - Study lifetime versus vacuum pressure, vertical beam size, scraper,
-      dynamic aperture.
-    - Commission transverse bunch-by-bunch feedback
-    - Measure variation of coherent tune with current
+      dynamic aperture. 
     - Study increasing chromaticity from +2/+2 to +5/+5
+
+- Insertion Device
+    - When necessary compensate the linear optics for ID. (orbit/tune correction, feedforward table, coupling)
+    - Prepare look-up tables for feed forward orbit correction coils. (orbit/tune)
+    - Observe orbit and tune shift vs gap. (orbit/tune measurement, gap control)
+    - Measure lifetime vs gap. (lifetime fitting, gap control)
+    - Observe beam stability vs current. (archiver/history view and analysis)
+    - Measure change in impedance due to ID chamber (unknown to HLA yet)
+    - Measure effect on tune shift with amplitude, chromaticity, and emittance
+      coupling. (orbit/tune measurement, magnet control)
+    - Measure impedance vs gap for IVUs (unknown to HLA yet)
     - Commission undulator gap control in control room
+    - Commission undulator gap control for users (orbit control)
+    - Measure flux and brightness
+
+- Feedback
+    - Test fast orbit feedback system. (subsystem + manual control from HLA)
+    - Commission transverse bunch-by-bunch feedback. (subsystem + HLA)
+
+- Diagnostics
+    - PBPM matching. Read both BPM and PBPM, and use BPM to benchmark the
+      PBPM values.
+
+- Collective Effects
+    - Measure variation of coherent tune with current
+    - Wakefield modeling and tracking studies, develop model for
+      impedance and wakefields, caculation and measurement, estimate
+      instability thresholds, simulate bunch-by-bunch feedback with
+      realistic bunches and wakefields. (unknown to HLA yet)
+    - Characterize ring impedance using beam. (unknown to HLA yet)
+
+- Analysis on nonlinear dynamics.
+    - Use pinger to measure tune shift with amplitude, dynamic aperture
+      and characterize sextupole distribution
+
+
+- Misc
+    - Commission loss control minitoring system. 
+        - Monitor beam loss. Get loss monitor readings from beam containment
+          system (beam loss monitor).
     - Calibration/Testing of Equipment Protection Interlock System
 	- Center photon beam in exit slot
 	- Verify gap open/close status is properly reported to interlock system
@@ -328,12 +351,7 @@ As a check, these activities will use HLA implemented above.
 	- Test transverse feedback with injection transient
     - Concerns: accuracy of magnet calibration-two types of dipoles, magnetic
       field quality (IRMIS data).
-    - PBPM matching. Read both BPM and PBPM, and use BPM to benchmark the
-      PBPM values.
     - Get groud motion and chamber motion if there are available readings.
-    - Monitor beam loss. Get loss monitor readings from beam containment
-      system (beam loss monitor).
-    - Identify MPS (magnet power sypply) ripples.
     - Mechanical utilities status and controls
     - Electrical utilities status and controls
     - Equipment enclosure monitor
