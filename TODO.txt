@@ -19,3 +19,5 @@ TODO
 - DONE: Separate twiss from lattice
 - lattice.getNeighbors
 
+- correlation plot
+
