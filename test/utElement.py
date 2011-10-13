@@ -113,7 +113,7 @@ class TestElement(unittest.TestCase):
     def tearDown(self):
         #print "reset ", self.hcor.name, self.hcorx
         caput('SR:C01-MG:G02A{HCor:L1}Fld-I', self.hcorx, wait=True)
-        #time.sleep(1)
+        #time.sleep(2)
 
     def test_basicattr(self):
         self.assertTrue(self.dcct.name == 'CURRENT')
@@ -216,16 +216,23 @@ class TestElement(unittest.TestCase):
         """
         write the trim, check orbit change
         """
+        #print "\n\nStart",
+        #time.sleep(2)
         trim_pvrb = ['SR:C01-MG:G02A{HCor:L1}Fld-I',
                      'SR:C01-MG:G02A{VCor:L2}Fld-I']
         trim_pvsp = ['SR:C01-MG:G02A{HCor:L1}Fld-SP',
                      'SR:C01-MG:G02A{VCor:L2}Fld-SP']
+        #print "yes", caget(trim_pvrb),
+        #time.sleep(2)
         try:
             trim_v0 = caget(trim_pvrb)
         except Timedout:
             return
+        print trim_v0
 
         rb1 = self.bpm2.value
+        #print "Initial trim: ", trim_v0, rb1
+
         trim_v1 = [v - 1e-5 for v in trim_v0]
         try:
             caput(trim_pvsp, trim_v1, wait=True)
@@ -247,8 +254,11 @@ class TestElement(unittest.TestCase):
 
         # restore
         caput(trim_pvsp, trim_v0, wait=True)
-        time.sleep(8)
+        time.sleep(2)
+        caput(trim_pvsp, trim_v0, wait=True)
+        time.sleep(6)
         rb3 = self.bpm2.value
+        #print "Final trim:", caget(trim_pvrb), caget(trim_pvsp)
         for i in range(len(rb1)):
             self.assertAlmostEqual(
                 rb1[i], rb3[i], 5,
@@ -296,6 +306,7 @@ class TestElement(unittest.TestCase):
             self.hcor.x = v0
 
         self.hcor.x = v0
+        time.sleep(4)
 
 if __name__ == "__main__":
     unittest.main()
