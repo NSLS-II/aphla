@@ -161,6 +161,12 @@ class CaDecorator:
         self.desc = ''
         self.order = self.ASCENDING
 
+    def __eq__(self, other):
+        return self.pvrb == other.pvrb and \
+            self.pvsp == other.pvsp and \
+            self.field == other.field and \
+            self.desc == other.desc
+            
     def _insert_in_order(self, lst, v):
         if len(lst) == 0:
             lst.append(v)
@@ -188,7 +194,7 @@ class CaDecorator:
 
     def putSetpoint(self, val):
         if self.pvsp:
-            self.sp = caput(self.pvsp, val)
+            self.sp = caput(self.pvsp, val, wait=True)
             return self.sp
         else: return None
 
@@ -301,9 +307,8 @@ class Element(AbstractElement):
                 return []
         else: return []
 
-        if not ret: return None
-        elif len(ret) == 1: return ret[0]
-        else: return sorted(ret)
+        # sorted
+        return sorted(ret)
 
     def hasPv(self, pv):
         return self._pvtags.has_key(pv)
@@ -371,6 +376,8 @@ class Element(AbstractElement):
             decr = self.__dict__['_field'][att]
             if not decr:
                 raise AttributeError("field %s is not defined" % att)
+            if not decr.pvsp:
+                raise ValueError("field %s is not writable" % att)
             decr.putSetpoint(val)
         elif att in self.__dict__.keys():
             self.__dict__[att] = val
@@ -379,18 +386,22 @@ class Element(AbstractElement):
             super(Element, self).__setattr__(att, val)
             #raise AttributeError("Error")
 
-    def setFieldGetAction(self, field, v, desc):
+    def setFieldGetAction(self, field, v, desc = ''):
         """
-        set the action when reading *field*
+        set the action when reading *field*.
+
+        the previous action will be replaced if it was defined.
         """
         if not self._field.has_key(field):
             self._field[field] = CaDecorator()
 
         self._field[field].addReadback(v)
 
-    def setFieldPutAction(self, field, v, desc):
+    def setFieldPutAction(self, field, v, desc = ''):
         """
-        set the action for writing *field*
+        set the action for writing *field*.
+
+        the previous action will be replaced if it was define.
         """
         if not self._field.has_key(field):
             self._field[field] = CaDecorator()

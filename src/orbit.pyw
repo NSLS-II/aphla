@@ -404,7 +404,8 @@ class OrbitPlot(Qwt.QwtPlot):
         return self.curve1.getMask()
 
     def datainfo(self):
-        return "avg: %.4e std: %.4e" % (self.curve1.average(), self.curve1.std())
+        return "avg: %.4e std: %.4e" % \
+            (self.curve1.average(), self.curve1.std())
 
 class OrbitPlotMainWindow(QMainWindow):
     """
@@ -416,10 +417,10 @@ class OrbitPlotMainWindow(QMainWindow):
         self.setIconSize(QSize(48, 48))
         # initialize a QwtPlot central widget
         bpm = hla.getElements('BPM')
-        pvx = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_X])
+        pvx = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_X])[0]
                for e in bpm]
         #print pvx
-        pvy = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_Y])
+        pvy = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_Y])[0]
                for e in bpm]
         pvsx = [e.sb for e in bpm]
         pvsy = [e.sb for e in bpm]
@@ -428,7 +429,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot1 = OrbitPlot(self, pvsx, [p.encode('ascii') for p in pvx])
         self.plot2 = OrbitPlot(self, pvsy, [p.encode('ascii') for p in pvy])
 
-        for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'], op='union'):
+        for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'],
+                                     op='union'):
             self.plot1.addMagnetProfile(e.sb, e.sb+e.length, e.name)
             
         #for i in range(10):

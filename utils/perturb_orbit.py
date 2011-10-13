@@ -12,7 +12,9 @@ if __name__ == "__main__":
     runid = 4692 # lingyun extension
     hla.hlalib._wait_for_lock(runid)
 
-    for k in range(60):
+    hla.hlalib._reset_trims()
+
+    for k in range(6):
         print k,
         i = random.randint(len(cor))
         print cor[i].name, cor[i].value,
