@@ -121,11 +121,14 @@ def _reset_trims():
     """
     trimx = machines._lat.getGroupMembers(['*', 'HCOR'], op='intersection')
     trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
-    pvx = [e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT])
-           for e in trimx]
-    pvy = [e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
-           for e in trimy]
-    pv = list(set(pvx + pvy))
+    pv = []
+    for e in trimx:
+        pv.extend(e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT]))
+    for e in trimy:
+        pv.extend(e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT]))
+    if not pv:
+        raise ValueError("no pv for trims found")
+    
     caput(pv, 0.0)
 
 
@@ -622,7 +625,8 @@ def _reset_quad():
         qlst = getElements('Q%s*' % tag)
         qval, qnum = v
         if len(qlst) != qnum:
-            raise ValueError("ring does not have exactly %d %s (%d)" % (qnum, tag, len(qlst)))
+            raise ValueError("ring does not have exactly %d %s (%d)" % \
+                                 (qnum, tag, len(qlst)))
         for q in qlst:
             q.value = qval
 
