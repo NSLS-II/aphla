@@ -115,7 +115,7 @@ def __eput(element, value):
     else:
         caput(pvls, value)
 
-def _reset_trims():
+def _reset_trims(verbose=False):
     """
     reset all trims in group "HCOR" and "VCOR"
     """
@@ -129,7 +129,13 @@ def _reset_trims():
     if not pv:
         raise ValueError("no pv for trims found")
     
-    caput(pv, 0.0)
+    if verbose:
+        for p in pv: 
+            print p, caget(p),
+            caput(p, 0.0, wait=True)
+            print caget(p)
+    else:
+        caput(pv, 0.0)
 
 
 

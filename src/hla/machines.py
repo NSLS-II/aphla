@@ -143,19 +143,18 @@ def createLatticeFromCf(cfsurl, **kwargs):
     return lat
 
 
-def initNSLS2VSR():
+def initNSLS2VSR(cached = False):
     """
     initialize the virtual accelerator from channel finder
     """
-    # are we using virtual ac
-    VIRTAC = True
     #print "= initializing NSLS2 VSR"
-    INF = 1e30
     ORBIT_WAIT=8
     NETWORK_DOWN=False
 
-    TAG_DEFAULT_GET='aphla.eget'
-    TAG_DEFAULT_PUT='aphla.eput'
+    if cached == True and loadCache():
+        return
+    elif cached == True:
+        raise RuntimeError("Failed at loading cache file")
 
     from channelfinder import ChannelFinderClient, Channel, Property, Tag
 
@@ -334,9 +333,11 @@ def initNSLS2VSRTxt(data = ''):
     _lattice_dict['LTB-txt'].mode = 'LTB-txt'
     _lattice_dict['LTB-txt'].loop = False
 
-    bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput, 
+                   **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
-    bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput,
+                   **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['LTB-txt'].getElements('BPM'):
         for pv,t in e._pvtags.items(): 
@@ -355,9 +356,11 @@ def initNSLS2VSRTxt(data = ''):
     _lattice_dict['SR-txt'].loop = True
 
     # create virtual bpms
-    bpmx = Element(eget=caget, eput=caput, **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
+    bpmx = Element(eget=caget, eput=caput, 
+                   **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
-    bpmy = Element(eget=caget, eput=caput, **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
+    bpmy = Element(eget=caget, eput=caput,
+                   **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['SR-txt'].getElements('BPM'):
         for pv,t in e._pvtags.items(): 
@@ -440,6 +443,32 @@ def initNSLS2VSRTwiss():
 
         _twiss._elements.append(elem.name)
         _twiss.append(tw)
+
+def saveCache():
+    """
+    save current lattice to cache file
+    """
+    output = open(os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl'), 'w')
+    import pickle
+    #import cPickle as pickle
+    pickle.dump(_lattice_dict, output)
+    pickle.dump(_lat, output)
+    pickle.dump(_orm, output)
+    output.close()
+
+def loadCache():
+    inp_file = os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl')
+    if not os.path.exists(inp_file):
+        return False
+    inp = open(inp_file, 'r')
+    global _lat, _lattice_dict, _orm
+    import pickle
+    #import cPickle as pickle
+    _lattice_dict = pickle.load(inp)
+    _lat = pickle.load(inp)
+    _orm = pickle.load(inp)
+    inp.close()
+    return True
 
 def use(lattice):
     """
