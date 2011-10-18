@@ -4,6 +4,7 @@ Tutorial
 .. htmlonly::
    :Date: |today|
 
+
 The HLA and Controls are divided into three layers: HLA applictions and
 scripts, client APIs (CAPI) and server API (SAPI) ([Shenhla]_).  The users
 (accelerator physicists, operators and beamline scientists) will normally
@@ -12,7 +13,7 @@ the APIs in an interactive command line.
 
 
 Some APIs are defined in [Shenhla]_, and are used by HLA applications. But they
-are self-described as other Python modules. These APIs include data
+are self-described as the standard Python modules. These APIs include data
 acquisition, processing and storage, and can be combined for different
 purpose. The APIs are in Python language, and can be used in both interactive
 environment or scripts. Necessary packages including linear algebra, frequency
@@ -100,7 +101,7 @@ initialize HLA by the following command:
    Creating lattice layout: 'LTD1-txt'
    >>> hla.machines.use('SR-txt') # use 'LTB-txt', 'LTD1-txt' or 'LTD2-txt' for injction.
    >>> hla.machines.lattices()    # list available lattices
-   {'LTB-txt': 'LTB-txt', 'LTD1-txt': 'txt', 'LTD2-txt': 'txt', 'SR-txt': 'SR-text-ver'}
+   {'SR': 'aphla.sys.SR', 'LTD2': 'aphla.sys.LTD2', 'LTB': 'aphla.sys.LTB', 'LTD1': 'aphla.sys.LTD1', 'LTB-txt': 'LTB-txt', 'LTD1-txt': 'txt', 'LTD2-txt': 'txt', 'SR-txt': 'SR-text-ver'}
 
 
 

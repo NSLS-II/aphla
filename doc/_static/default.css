@@ -520,3 +520,12 @@ ul.keywordmatches li.goodmatch a {
     color: gray;
     text-decoration:line-through;
 }
+
+.hlawarn {
+    color: #00FF00;
+    font-weight:bold;
+}
+
+.hladetails {
+    color: #ff6633;
+}

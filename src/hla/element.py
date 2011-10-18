@@ -6,6 +6,7 @@ Element
 """
 
 import os
+from catools import caget, caput
 
 class AbstractElement(object):
     """
@@ -32,7 +33,7 @@ class AbstractElement(object):
 
     # format string for __str__
     STR_FORMAT = "%d %s %s %.3f %.3f %s %s %s %s %s"
-    
+    #__slots__ = []
     def __init__(self, **kwargs):
         """
         create an element from Channel Finder Service data or explicit
@@ -142,11 +143,79 @@ class AbstractElement(object):
     def updateCfsTags(self, tags):
         pass
 
+class CaDecorator:
+    """
+    Decorator between channel access and element.
+
+    PVs are in ascending order
+    """
+    ASCENDING  = 1
+    DESCENDING = 2
+    RANDOM     = 0
+    def __init__(self):
+        self.pvrb = []
+        self.pvsp = []
+        self.rb = None
+        self.sp = None
+        self.field = ''
+        self.desc = ''
+        self.order = self.ASCENDING
+
+    def __eq__(self, other):
+        return self.pvrb == other.pvrb and \
+            self.pvsp == other.pvsp and \
+            self.field == other.field and \
+            self.desc == other.desc
+            
+    def _insert_in_order(self, lst, v):
+        if len(lst) == 0:
+            lst.append(v)
+            return 0
+
+        for i,x in enumerate(lst):
+            if x < v: continue
+            lst.insert(i, v)
+            return i
+
+        lst.append(v)
+        return len(lst) - 1
+
+    def getReadback(self):
+        if self.pvrb: 
+            self.rb = caget(self.pvrb)
+            return self.rb
+        else: return None
+
+    def getSetpoint(self):
+        if self.pvsp:
+            self.sp = caget(self.pvsp)
+            return self.sp
+        else: return None
+
+    def putSetpoint(self, val):
+        if self.pvsp:
+            self.sp = caput(self.pvsp, val, wait=True)
+            return self.sp
+        else: return None
+
+    def addReadback(self, pv):
+        self._insert_in_order(self.pvrb, pv)
+
+    def addSetpoint(self, pv):
+        #self.pvsp.append(pv)
+        self._insert_in_order(self.pvsp, pv)
+
+    def removeReadback(self, pv):
+        self.pvrb.remove(pv)
+
+    def removeSetpoint(self, pv):
+        self.pvsp.remove(pv)
+        
 class Element(AbstractElement):
     """
     Element with Channel Access ability
     """
-
+    __slots__ = []
     def __init__(self, **kwargs):
         """
         - *pvs* a list of tuple: (func,pv,description) for related status
@@ -155,24 +224,20 @@ class Element(AbstractElement):
 
         An element is homogeneous means, it use same get/put function on a
         list of variables to speed up.
-
-        HLA_DEBUG is used for enabling debug.
         """
-        AbstractElement.__init__(self, **kwargs)
-        self._eget = kwargs.get('eget', None)
-        self._eput = kwargs.get('eput', None)
-        self._field = {'value': {'eget':[], 'eput':[], 'desc':[]},
-                       'status': {'eget':[], 'desc': []}}
-        self._pvtags = {}
-        self.virtual = 0
-        self.debug = 0
+        #AbstractElement.__init__(self, **kwargs)
+        self.__dict__['_field'] = {'value': None, 'status': None}
+        self.__dict__['_pvtags'] = {}
+        self.__dict__['virtual'] = kwargs.get('virtual', 0)
+        super(Element, self).__init__(**kwargs)
         
-    def eget(self):
-        return self._eget
-
-    def eput(self):
-        return self._eput
-
+    def __setstate__(self, data):
+        for (name, value) in data.iteritems():
+            if name in ['_field', '_pvtags']:
+                self.__dict__[name] = value
+            else:
+                super(Element, self).__setattr__(name, value)
+            
     def _pv_1(self, **kwargs):
         """One input"""
         ret = None
@@ -181,8 +246,12 @@ class Element(AbstractElement):
         elif kwargs.get('tags', None):
             ret = self._pv_tags(kwargs['tags'])
         elif kwargs.get('field', None):
-            ret = self._pv_fields([kwargs['field']])
-
+            att = kwargs['field']
+            if self._field.has_key(att):
+                decr = self._field[att]
+                ret = [v for v in set(decr.pvsp + decr.pvrb)]
+            else:
+                ret = []
         return ret
 
     def _pv_tags(self, tags):
@@ -220,42 +289,26 @@ class Element(AbstractElement):
         """
         if len(kwargs) == 0:
             ret = []
-            for k,v in self._field.iteritems():
+            for k,v in self._pvtags.iteritems():
                 #print k, v
-                for k2 in ['eget', 'eput']:
-                    v2 = v.get(k2, [])
-                    if not v2: continue
-                    if isinstance(v2, (str, unicode)): ret.append(v2)
-                    else: ret.extend(v2)
+                if not v: continue
+                if isinstance(v, (str, unicode)): ret.append(v)
+                else: ret.extend(v)
             ret = [v for v in set(ret)]
         elif len(kwargs) == 1:
             ret = self._pv_1(**kwargs)
         elif len(kwargs) == 2:
             try:
                 if kwargs['handle'] == 'readback':
-                    return self._field[kwargs['field']]['eget']
+                    return self._field[kwargs['field']].pvrb
                 elif kwargs['handle'] == 'setpoint':
-                    return self._field[kwargs['field']]['eput']
+                    return self._field[kwargs['field']].pvsp
             except KeyError:
                 return []
         else: return []
 
-        if not ret: return None
-        elif len(ret) == 1: return ret[0]
-        else: return sorted(ret)
-
-    def _insert_in_order(self, lst, v):
-        if len(lst) == 0:
-            lst.append(v)
-            return 0
-
-        for i,x in enumerate(lst):
-            if x < v: continue
-            lst.insert(i, v)
-            return i
-
-        lst.append(v)
-        return len(lst) - 1
+        # sorted
+        return sorted(ret)
 
     def hasPv(self, pv):
         return self._pvtags.has_key(pv)
@@ -264,87 +317,96 @@ class Element(AbstractElement):
         """
         append (func, pv, description) to status
         """
-        if order:
-            i = self._insert_in_order(self._field['status']['eget'], pv)
-            self._field['status']['desc'].insert(i, desc)
-        else:
-            self._field['status']['eget'].append(pv)
-            self._field['status']['eget'].append(desc)
+        decr = self._field['status']
+        if not decr: self._field['status'] = CaDecorator()
+        
+        self._field['status'].addReadback(pv)
 
     def addEGet(self, pv):
         """
         add *pv* for `eget` action
         """
-        vf = self._field['value']
-        if pv in vf['eget']: return
-        else:
-            self._insert_in_order(vf['eget'], pv)
-        
+        decr = self._field['value']
+        if not decr: self._field['value'] = CaDecorator()
+        self._field['value'].addReadback(pv)
+
     def addEPut(self, pv):
         """
         add *pv* for `eset` action
         """
-        vf = self._field['value']
-        if pv in vf['eput']: return
-        else:
-            self._insert_in_order(vf['eput'], pv)
+        decr = self._field['value']
+        if not decr: self._field['value'] = CaDecorator()
+        self._field['value'].addSetpoint(pv)
         
+    def status(self):
+        maxlen = max([len(att) for att in self._field.keys()])
+        head = '%d%%s ' % maxlen
+        ret = ''
+        for att in self._field.keys():
+            decr = self._field[att]
+            if not decr: continue
+            val = decr.getReadback()
+            ret = ret + head % att + ' '.join([str(v) for v in val]) + '\n'
+        return ret
+
     def __getattr__(self, att):
+        # called after checking __dict__
         if not self._field.has_key(att):
             raise AttributeError("element %s has no attribute(field) %s" % 
                                  (self.name, att))
-        elif att == 'status':
-            pv, desc = self._field[att]['eget'], self._field[att]['desc']
-            ret = self.name
-            if pv and desc:
-               val = self._eget(pv)
-               for i,v in enumerate(pv):
-                   ret = ret + '\n  %s (%s) %f' % (desc[i], pv[i], val[i])
-            return ret
         else:
-            x = self._field[att]['eget']
-            if not x:
-                x = self._field[att]['eput']
-            if not x:
-                raise AttributeError("element %s has no read/write for field %s" %
-                                     (self.name, att))
-        #print "reading ", att
-        ret = self._eget(x)
-        if len(x) == 1: return ret[0]
-        else: return ret
+            decr = self._field[att]
+            if not decr:
+                raise AttributeError("field %s is not defined" % att)
+            elif decr.getReadback():
+                x = decr.rb
+            elif decr.getSetpoint():
+                x = decr.sp
+            else:
+                raise AttributeError("error reading field %s" % att)
+
+        if len(x) == 1: return x[0]
+        else: return x
 
     def __setattr__(self, att, val):
-        if not self.__dict__.has_key('_field'):
-            # too early
+        # this could be called by AbstractElement.__init__ or Element.__init__
+        if hasattr(super(Element, self), att):
+            super(Element, self).__setattr__(att, val)
+        elif self.__dict__['_field'].has_key(att):
+            decr = self.__dict__['_field'][att]
+            if not decr:
+                raise AttributeError("field %s is not defined" % att)
+            if not decr.pvsp:
+                raise ValueError("field %s is not writable" % att)
+            decr.putSetpoint(val)
+        elif att in self.__dict__.keys():
             self.__dict__[att] = val
-        elif att in self.__dict__['_field'].keys():
-            act = self.__dict__['_field'][att]['eput']
-            if act:
-                self._eput(act, val)
-            else: raise AttributeError("no writable channel associated with property '%s'" % att)
         else:
-            # new property
-            self.__dict__[att] = val
+            # new attribute for superclass
+            super(Element, self).__setattr__(att, val)
+            #raise AttributeError("Error")
 
-    def setFieldGetAction(self, field, v, desc):
+    def setFieldGetAction(self, field, v, desc = ''):
         """
-        set the action when reading *field*
+        set the action when reading *field*.
+
+        the previous action will be replaced if it was defined.
         """
         if not self._field.has_key(field):
-            self._field[field] = {'eget': [v], 'eput': None, 'desc': desc}
-        else:
-            self._field[field]['eget'] = [v]
-            self._field[field]['desc'] = desc
+            self._field[field] = CaDecorator()
 
-    def setFieldPutAction(self, field, v, desc):
+        self._field[field].addReadback(v)
+
+    def setFieldPutAction(self, field, v, desc = ''):
         """
-        set the action for writing *field*
+        set the action for writing *field*.
+
+        the previous action will be replaced if it was define.
         """
         if not self._field.has_key(field):
-            self._field[field] = {'eget': None, 'eput': [v], 'desc': desc}
-        else:
-            self._field[field]['eput'] = [v]
-            self._field[field]['desc'] = desc
+            self._field[field] = CaDecorator()
+
+        self._field[field].addSetpoint(v)
 
     def fields(self):
         """

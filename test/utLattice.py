@@ -222,33 +222,46 @@ class TestLatticeLtb(TestLattice):
         if not self.lat:
             raise ValueError("lattice LTB is not found")
 
+    def readInvalidFieldY(self, e):
+        k = e.y
+        
     def test_field(self):
         bpm = self.lat.getElements('BPM')
         self.assertTrue(len(bpm) > 0)
         for e in bpm: 
             try:
                 self.assertTrue(abs(e.x) >= 0)
+            except cothread.Timedout:
+                print "    Timeout:", e.name, e.pv(field='x', handle='readback')
+                break
+
+            try:
                 self.assertTrue(abs(e.y) >= 0)
             except cothread.Timedout:
-                print "Timeout: ", e.name
-                pass
+                print "    Timeout:", e.name, e.pv(field='y', handle='readback')
+                break
 
         hcor = self.lat.getElements('HCOR')
         self.assertTrue(len(bpm) > 0)
-        try:
-            for e in hcor: 
+        for e in hcor: 
+            try:
                 k = e.x
+            except cothread.Timedout:
+                print "    Timeout:", e.name, e.pv(field='x', handle='readback')
+                break
+            except AttributeError as e:
+                print "No attribute", e
+                
+            try:
                 e.x = 1e-8
-                self.assertTrue(abs(e.x) >= 0)
-                e.x = k
-                k = e.y
-                self.assertTrue(False,
-                                "AttributeError exception expected")
-        except cothread.Timedout:
-            print "Timeout:", e.name
-            pass
-        except AttributeError as e:
-            print "No attribute", e
+            except cothread.Timedout:
+                print "    Timeout:", e.name, e.pv(field='x', handle='setpoint')
+                break
+
+            self.assertTrue(abs(e.x) > 0)
+            e.x = k
+            #print e._field
+            self.assertRaises(AttributeError, self.readInvalidFieldY, e)
 
 class TestLatticeLtbCf(TestLatticeLtb):
     def setUp(self):
