@@ -45,8 +45,8 @@ class TestOrbit(unittest.TestCase):
         bpm = hla.getElements('BPM')
         hcor = hla.getElements('HCOR')
         vcor = hla.getElements('VCOR')
-        for e in hcor:
-            print e.name, e.pv(field='x')
+        #for e in hcor:
+        #    print e.name, e.pv(field='x')
 
         self.assertTrue(len(v0) > 0)
         self.assertTrue(len(bpm) == 180)

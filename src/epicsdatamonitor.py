@@ -34,6 +34,16 @@ class CaDataMonitor:
             p.close()
         self.monitors = []
 
+    def resetData(self):
+        """
+        set PV data to zero
+        """
+        self.data.fill(0.0)
+        self.std.fill(0.0)
+        self.avg.fill(0.0)
+        self._icur.fill(0)
+        self.recent.fill(0.0)
+
     def _ca_update(self, val, idx):
         #print "updating", val, idx, self.avg[idx], self.std[idx]
         self.recent[idx] = val

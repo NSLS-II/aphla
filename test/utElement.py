@@ -7,6 +7,9 @@ import numpy as np
 
 from conf import *
 import element
+#from hla.catools import caget, caput, Timedout
+#from cothread.catools import caget, caput
+#from cothread import Timedout
 from catools import caget, caput, Timedout
 import pickle, shelve
 
@@ -228,7 +231,7 @@ class TestElement(unittest.TestCase):
             trim_v0 = caget(trim_pvrb)
         except Timedout:
             return
-        print trim_v0
+        #print trim_v0
 
         rb1 = self.bpm2.value
         #print "Initial trim: ", trim_v0, rb1
@@ -275,12 +278,18 @@ class TestElement(unittest.TestCase):
         
     def test_field(self):
         v0 = self.hcor.x
-        pvrb = self.hcor.pv(field='x', handle='readback')[0]
-        pvsp = self.hcor.pv(field='x', handle='setpoint')[0]
-
+        pvrb = self.hcor.pv(field='x', handle='readback')[0]#.encode('ascii')
+        pvsp = self.hcor.pv(field='x', handle='setpoint')[0]#.encode('ascii')
+        #print pvrb, pvsp
+        # PV from channel finder is UTF8 encoded
         caput(pvsp, v0 - 1e-4, wait=True)
-        self.assertAlmostEqual(self.hcor.x, v0 - 1e-4)
+        v1a = self.hcor.x
+        v1b = caget(pvsp)
+        self.assertAlmostEqual(v1b, v0 - 1e-4, 7,
+            "pv={0} {1} != {2}".format(pvsp, v1b, v0 - 1e-4))
+        self.assertAlmostEqual(v1a, v0 - 1e-4)
 
+        # 
         caput(pvsp, v0, wait=True)
 
         self.hcor.x = v0 - 5e-5

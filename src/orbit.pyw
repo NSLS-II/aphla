@@ -114,13 +114,14 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
             raise ValueError("pv and x are not same size")
 
         n = len(x)
-        self.x = np.array(x)
-        self.y = np.zeros(n, 'd')
+        self.x      = np.array(x)
+        self.y      = np.zeros(n, 'd')
+        self.yref   = np.zeros(n, 'd')
         self.errbar = np.zeros(n, 'd')
         self.camonitor = CaDataMonitor(pvs, samples=self.SAMPLES)
         self.mask = np.zeros(n, 'i')
         self.__live = False
-
+        self.showDifference = False
         self.update()
 
     def update(self):
@@ -131,18 +132,26 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
         kept = 1-self.mask
         x = np.compress(kept, self.x, axis=0)
-        y = np.compress(kept, self.y, axis=0)
 
-        #Qwt.QwtPlotCurve.setData(self, self.x, self.y[:,0])
+        if self.showDifference:
+            y = np.compress(kept, self.y, axis=0)
+        else:
+            y = np.compress(kept, self.y - self.yref, axis = 0)
+        
         Qwt.QwtPlotCurve.setData(self, x, y)
 
     def boundingRect(self):
         """
         Return the bounding rectangle of the data, error bars included.
         """
-        x  = np.compress(1-self.mask, self.x, axis=0)
-        y  = np.compress(1-self.mask, self.y, axis=0)
-        y2 = np.compress(1-self.mask, self.errbar, axis=0)
+        kept = 1 - self.mask
+        x  = np.compress(kept, self.x, axis=0)
+        if self.showDifference:
+            y = np.compress(kept, self.y, axis=0)
+        else:
+            y = np.compress(kept, self.y - self.yref, axis = 0)
+
+        y2 = np.compress(kept, self.errbar, axis=0)
         xmin = min(x)
         xmax = max(x)
         ymin = min(y - y2)
@@ -181,9 +190,13 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         # draw the error bars with caps in the y direction
         if self.errorOnTop:
             # draw the bars
-            x  = np.compress(1-self.mask, self.x, axis=0)
-            y  = np.compress(1-self.mask, self.y, axis=0)
-            y2 = np.compress(1-self.mask, self.errbar, axis=0)
+            kept = 1 - self.mask
+            x  = np.compress(kept, self.x, axis=0)
+            if self.showDifference:
+                y = np.compress(kept, self.y, axis=0)
+            else:
+                y = np.compress(kept, self.y - self.yref, axis = 0)
+            y2 = np.compress(kept, self.errbar, axis=0)
         
             if len(self.errbar.shape) in [0, 1]:
                 ymin = (y - y2)
@@ -232,10 +245,20 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         return np.std(self.y)
 
     def resetPvData(self):
-        m, n = np.shape(self._data)
-        self._data[:,:] = np.zeros((m, n), 'd')
-        self._data_icur[:] = np.zeros(m, dtype=np.int)
-        #self._y_std[:] = np.zeros(m, 'd')
+        """
+        clear the history data, start with clean observation
+        """
+        self.camonitor.resetData()
+
+    def saveAsReference(self):
+        """
+        save the current orbit as reference
+        """
+        self.yref = self.y[:]
+
+    def getReference(self):
+        return self.yref[:]
+    
 
 class OrbitPlot(Qwt.QwtPlot):
     def __init__(self, parent = None, x = None, pvs = None, plane = 'H', live=True, errorbar=True):
@@ -281,7 +304,7 @@ class OrbitPlot(Qwt.QwtPlot):
         self.curvemag.setData(magx, magy)
         self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
         self.setAxisScale(Qwt.QwtPlot.yRight, -2, 20)
-        self.enableAxis(Qwt.QwtPlot.yRight)
+        self.enableAxis(Qwt.QwtPlot.yRight, False)
 
         self.curvemag.attach(self)
         
@@ -406,6 +429,9 @@ class OrbitPlot(Qwt.QwtPlot):
     def datainfo(self):
         return "avg: %.4e std: %.4e" % \
             (self.curve1.average(), self.curve1.std())
+    
+    def resetPvData(self):
+        self.curve1.resetPvData()
 
 class OrbitPlotMainWindow(QMainWindow):
     """
@@ -616,6 +642,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def resetPvData(self):
         self.plot1.resetPvData()
         self.plot2.resetPvData()
+        #hla.hlalib._reset_trims()
 
 
 def main(args):

@@ -1,5 +1,9 @@
 NSLS2 HLA Requirement (List of Applications/Scripts)
 =====================================================
+.. role:: hlawarn
+.. role:: hla
+.. role:: hladone
+.. role:: hladetails
 
 .. _Software Requirement:
 
@@ -13,6 +17,11 @@ simple monitoring in HLA is not marked as a HLA feature.
 
 General Operation
 ------------------
+
+The applications listed here are mainly monitoring, not many physics analysis
+are involved. We are relying on the tools from controls group. These tools
+could already be built and used at the component testing stage. They are good
+starting points for further development.
 
 - Overall status page (warning when read/set are different too much ?)
     - The status includes beam information, and hardware status including
@@ -89,8 +98,13 @@ General Operation
 - Scraper and movable mask operations
 - :hladone:`General high level element control (GUI)`  
 
+
 Beam Diagnostics
 ------------------------------
+
+Some of the diagnostics have their own properiatory or closed-form
+software. They are hard to expand by us. The others are EPICS-based system,
+which are easier for us to integrate and expand.
 
 - :hladone:`Measure the orbit response matrix, with flexible number of BPMs and correctors.`  (L.Yang)
     - :hladone:`Import/Export orbit response matrix for orbit correction`
