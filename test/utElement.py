@@ -13,6 +13,58 @@ import element
 from catools import caget, caput, Timedout
 import pickle, shelve
 
+refpvrb = [
+    "SR:C15-BI:G02A{BPM:L1}SA:X-I",
+    "SR:C15-BI:G02A{BPM:L1}SA:Y-I",
+    "SR:C15-BI:G02A{BPM:L2}SA:X-I",
+    "SR:C15-BI:G02A{BPM:L2}SA:Y-I",
+    "SR:C15-BI:G04A{BPM:M1}SA:X-I",
+    "SR:C15-BI:G04A{BPM:M1}SA:Y-I",
+    "SR:C15-BI:G04B{BPM:M1}SA:X-I",
+    "SR:C15-BI:G04B{BPM:M1}SA:Y-I",
+    "SR:C15-BI:G06B{BPM:H1}SA:X-I",
+    "SR:C15-BI:G06B{BPM:H1}SA:Y-I",
+    "SR:C15-BI:G06B{BPM:H2}SA:X-I",
+    "SR:C15-BI:G06B{BPM:H2}SA:Y-I"]
+
+ref_v0 = np.array(caget(refpvrb), 'd')
+
+def markForStablePv():
+    global ref_v0, refpvrb
+    ref_v0 = np.array(caget(refpvrb), 'd')
+    
+def waitForStablePv(**kwargs):
+    """
+    wait for the orbit to be stable.
+
+    This is in hlalib.py, but here does not need the dependance on getOrbit().
+    """
+    diffstd = kwargs.get('diffstd', 1e-7)
+    minwait = kwargs.get('minwait', 2)
+    maxwait = kwargs.get('maxwait', 30)
+    step    = kwargs.get('step', 2)
+    diffstd_list = kwargs.get('diffstd_list', False)
+    verbose = kwargs.get('verbose', 0)
+
+    t0 = time.time()
+    time.sleep(minwait)
+    global ref_v0
+    dv = np.array(caget(refpvrb)) - ref_v0
+    dvstd = [dv.std()]  # record the history
+    timeout = False
+
+    while dv.std() < diffstd:
+        time.sleep(step)
+        dt = time.time() - t0
+        if dt  > maxwait:
+            timeout = True
+            break
+        dv = np.array(caget(refpvrb)) - ref_v0
+        dvstd.append(dv.std())
+
+    if diffstd_list:
+        return timeout, dvstd
+
 class TestElement(unittest.TestCase):
     def setUp(self):
         # current
@@ -114,9 +166,9 @@ class TestElement(unittest.TestCase):
         sh.close()
 
     def tearDown(self):
-        #print "reset ", self.hcor.name, self.hcorx
+        markForStablePv()
         caput('SR:C01-MG:G02A{HCor:L1}Fld-I', self.hcorx, wait=True)
-        #time.sleep(2)
+        waitForStablePv()
 
     def test_basicattr(self):
         self.assertTrue(self.dcct.name == 'CURRENT')
@@ -220,13 +272,11 @@ class TestElement(unittest.TestCase):
         write the trim, check orbit change
         """
         #print "\n\nStart",
-        #time.sleep(2)
         trim_pvrb = ['SR:C01-MG:G02A{HCor:L1}Fld-I',
                      'SR:C01-MG:G02A{VCor:L2}Fld-I']
         trim_pvsp = ['SR:C01-MG:G02A{HCor:L1}Fld-SP',
                      'SR:C01-MG:G02A{VCor:L2}Fld-SP']
         #print "yes", caget(trim_pvrb),
-        #time.sleep(2)
         try:
             trim_v0 = caget(trim_pvrb)
         except Timedout:
@@ -236,13 +286,14 @@ class TestElement(unittest.TestCase):
         rb1 = self.bpm2.value
         #print "Initial trim: ", trim_v0, rb1
 
-        trim_v1 = [v - 1e-5 for v in trim_v0]
+        markForStablePv()
+        trim_v1 = [v - 2e-5 for v in trim_v0]
         try:
             caput(trim_pvsp, trim_v1, wait=True)
         except Timedout:
             return
 
-        time.sleep(6)
+        waitForStablePv(minwait=5)
         trim_v2 = caget(trim_pvrb)
         trim_v3 = caget(trim_pvsp)
         for i in range(len(trim_v0)):
@@ -252,20 +303,21 @@ class TestElement(unittest.TestCase):
         for i in range(len(rb1)):
             self.assertTrue(
                 abs(rb1[i] - rb2[i]) > 1e-8,
-                'orbit diff  = {0} - {1} = {2}'.format(rb1[i], rb2[i],
-                                                      rb1[i] - rb2[i]))
+                'orbit diff {0} = {1} - {2} = {3}'.format(
+                    i, rb1[i], rb2[i], rb1[i] - rb2[i]))
 
+        markForStablePv()
         # restore
         caput(trim_pvsp, trim_v0, wait=True)
-        time.sleep(2)
-        caput(trim_pvsp, trim_v0, wait=True)
-        time.sleep(6)
+        waitForStablePv(minwait=5)
         rb3 = self.bpm2.value
+        #print rb3, self.bpm2.value
         #print "Final trim:", caget(trim_pvrb), caget(trim_pvsp)
         for i in range(len(rb1)):
             self.assertAlmostEqual(
                 rb1[i], rb3[i], 5,
-                "orbit {0} = {1}, {2}".format(i, rb1[i], rb3[i]))
+                "orbit {0} = {1} -> {2} -> {3}".format(
+                    i, rb1[i], rb2[i], rb3[i]))
         
 
     def test_sort(self):
@@ -285,6 +337,7 @@ class TestElement(unittest.TestCase):
         caput(pvsp, v0 - 1e-4, wait=True)
         v1a = self.hcor.x
         v1b = caget(pvsp)
+        self.assertAlmostEqual(v1a, v1b, 7)
         self.assertAlmostEqual(v1b, v0 - 1e-4, 7,
             "pv={0} {1} != {2}".format(pvsp, v1b, v0 - 1e-4))
         self.assertAlmostEqual(v1a, v0 - 1e-4)
@@ -303,8 +356,9 @@ class TestElement(unittest.TestCase):
         v0 = self.hcor.x
         v1 = v0 - 1e-4
         try:
+            markForStablePv()
             self.hcor.x = v1
-            time.sleep(2)
+            waitForStablePv()
             rb2 = self.bpm2.value
             for i in range(len(rb1)):
                 self.assertTrue(
@@ -314,8 +368,9 @@ class TestElement(unittest.TestCase):
         except:
             self.hcor.x = v0
 
+        markForStablePv()
         self.hcor.x = v0
-        time.sleep(4)
+        waitForStablePv(minwait=4)
 
 if __name__ == "__main__":
     unittest.main()

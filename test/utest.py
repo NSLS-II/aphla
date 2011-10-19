@@ -9,6 +9,10 @@ hla.hlalib._wait_for_lock(LOCK_ID, maxwait=3600)
 
 print "= HLA used:", hla.__path__
 
+print "= reset trims"
+hla.hlalib._reset_trims()
+hla.hlalib._reset_bpm_offset()
+
 #import utChanFinder
 import utElement
 import utLattice

@@ -25,7 +25,11 @@ class TestOrbit(unittest.TestCase):
             machine_initialized = True
         self.lat = hla.machines.getLattice('SR')
         self.assertTrue(self.lat)
-        
+
+    def tearDown(self):
+        hla.hlalib._reset_trims()
+        hla.hlalib._reset_bpm_offset()
+
     def test_orbit_read(self):
         self.assertTrue(len(hla.getElements('BPM')) > 0)
         bpm = hla.getElements('BPM')
@@ -53,11 +57,18 @@ class TestOrbit(unittest.TestCase):
         self.assertTrue(len(hcor) == 180)
         self.assertTrue(len(vcor) == 180)
 
+        # maximum deviation
         mx, my = max(abs(v0[:,0])), max(abs(v0[:,1]))
         ih = np.random.randint(0, len(hcor), 3)
         iv = np.random.randint(0, len(vcor), 4)
 
-        
+        for i in ih: hcor[i].x = np.random.rand()*1e-5
+        for i in iv: vcor[i].y = np.random.rand()*1e-5
+
+        hla.hlalib.waitStableOrbit(v0)
+
+        v1 = hla.getOrbit()
+        self.assertGreater(np.std(v1[:,0]), np.std(v0[:,0]))
 
 if __name__ == "__main__":
     unittest.main()

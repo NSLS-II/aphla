@@ -261,7 +261,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
     
 
 class OrbitPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None, x = None, pvs = None, plane = 'H', live=True, errorbar=True):
+    def __init__(self, parent = None, x = None, pvs = None, plane = 'H',
+                 live=True, errorbar=True):
         super(OrbitPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
@@ -488,8 +489,6 @@ class OrbitPlotMainWindow(QMainWindow):
 
         #self.setCentralWidget(OrbitPlot())
 
-        self.statusBar().showMessage('%s; %s' % (self.plot1.datainfo(), self.plot2.datainfo()))
-
         #
         # file menu
         #
@@ -588,7 +587,9 @@ class OrbitPlotMainWindow(QMainWindow):
         controlToolBar = self.addToolBar("Control")
         controlToolBar.addAction(controlChooseBpmAction)
         controlToolBar.addAction(controlResetPvDataAction)
-        
+
+        self.timerId = self.startTimer(500)
+
     def liveData(self, on):
         """Switch on/off live data taking"""
         #print "MainWindow: liveData", on
@@ -633,11 +634,20 @@ class OrbitPlotMainWindow(QMainWindow):
                     self.plot1.setMask(i, 1)
                     self.plot2.setMask(i, 1)
         
+    def timerEvent(self, e):
+        #self.statusBar().showMessage("%s; %s"  % (
+        #        self.plot1.datainfo(), self.plot2.datainfo()))
+        self.updateStatus()
+
+    def updateStatus(self):
+        self.statusBar().showMessage("%s; %s"  % (
+                self.plot1.datainfo(), self.plot2.datainfo()))        
+
     def singleShot(self):
         #print "Main: Singleshot"
-        self.statusBar().showMessage("%s; %s"  % (self.plot1.datainfo(), self.plot2.datainfo()))
         self.plot1.singleShot()
         self.plot2.singleShot()
+        self.updateStatus()
 
     def resetPvData(self):
         self.plot1.resetPvData()
