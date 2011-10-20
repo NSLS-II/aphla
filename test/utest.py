@@ -7,6 +7,9 @@ import hla
 
 hla.hlalib._wait_for_lock(LOCK_ID, maxwait=3600)
 
+print "= Initializing NSLS2VSR lattice in HLA"
+hla.initNSLS2VSR()
+
 print "= HLA used:", hla.__path__
 
 print "= reset trims"
