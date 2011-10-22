@@ -6,6 +6,7 @@ NSLS2 HLA Requirement (List of Applications/Scripts)
 .. role:: hlawarn
 .. role:: hla
 .. role:: hladone
+.. role:: hladetails
 
 This chapter describes software requirement for NSLS-II
 commissioning. This list is mainly from [Willeke2009]_ and [Krinsky2010]_,
@@ -260,8 +261,8 @@ Beam Commissioning
     - obtain circulating beam using four kicker magnets to make local injection bump
     - achieve 1Hz accumulation of injected bunches into ring
     - commission loss control monitoring system
-        - Monitor beam loss. Get loss monitor readings from beam containment
-          system (beam loss monitor).
+        - Monitor beam loss. :hladetails:`Get loss monitor readings from beam containment
+          system (beam loss monitor)`.
     - use visible synchrotron light monitor to study transverse beam profile and disturbance due to kickers.
     - improve injection efficiency and RF capture
     - reduce beam loss due to kicker excitation
@@ -344,7 +345,7 @@ Beam Commissioning
     - Test transverse feedback with injection transient
 
 
-- Misc
+- Misc :hladetails:`Some more work ...`
     - Closed bump optimization.
     - Simultaneous measurement of injected/stored beam orbits
     - Identify MPS (magnet power sypply) ripples.

@@ -20,6 +20,10 @@ import shelve
 class OrmData:
     """
     Orbit Response Matrix Data
+
+    - *bpm* is a list of tuple (name, plane, pv)
+    - *trim* is a list of tuple (name, plane, pv_readback, pv_setpoint)
+    - *m* 2D matrix, len(bpm) * len(trim)
     """
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, datafile):
@@ -29,6 +33,7 @@ class OrmData:
         # points for trim setting when calc dx/dkick
         npts = 6
 
+        # list of tuple, (name, plane, pv)
         self.bpm = []
         self.trim = []
         
@@ -250,10 +255,17 @@ class OrmData:
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
         
-    def getSubMatrix(self, bpm, trim, flags='XX'):
+    def getSubMatrix(self, bpm, trim, flags='XX', **kwargs):
         """
         if only bpm name given, the return matrix will not equal to
         len(bpm),len(trim), since one bpm can have two lines (x,y) data.
+
+        - *bpm* a list of bpm names
+        - *trim* a list of trim names
+
+        optional:
+
+        - *ignore_unmeasured* The unmeasured bpm/trim pairs will be ignored.
         """
         if not bpm or not trim: return None
         if not flags in ['XX', 'XY', 'YY', 'YX']: return None
@@ -261,15 +273,17 @@ class OrmData:
         bpm_st  = set([v[0] for v in self.bpm])
         trim_st = set([v[0] for v in self.trim])
 
+        ignore_unmeasured = kwargs.get('ignore_unmeasured', True)
+
         # only consider the bpm/trim in this ORM
         bsub = bpm_st.intersection(set(bpm))
         tsub = trim_st.intersection(set(trim))
 
-        if len(bsub) < len(bpm):
-            raise ValueError("Some BPMs are absent in orm measurement")
-        if len(tsub) < len(trim):
-            raise ValueError("Some Trims are absent in orm measurement")
-            pass
+        if not ignore_unmeasured:
+            if len(bsub) < len(bpm):
+                raise ValueError("Some BPMs are absent in orm measurement")
+            if len(tsub) < len(trim):
+                raise ValueError("Some Trims are absent in orm measurement")
         
         mat = np.zeros((len(bpm), len(trim)), 'd')
         for i,b in enumerate(self.bpm):
@@ -281,4 +295,38 @@ class OrmData:
                 mat[ii,jj] = self.m[i,j]
 
         return mat
+
+    def getSubMatrixPv(self, bpm, trim):
+        """
+        return the submatrix according the given PVs for bpm and trim.
+
+        the PV is readback for bpm, setpoint for trim
+        """
+
+        ib = [-1] * len(bpm)
+        it = [-1] * len(trim)
+
+        # index 2 is readback PV for BPM
+        for i in range(len(self.bpm)):
+            if not self.bpm[i][2] in bpm: continue
+            ib[bpm.index(self.bpm[i][2])] = i
+
+        # index 3 is setpoint PV for Trim
+        for i in range(len(self.trim)):
+            if not self.trim[i][3] in trim: continue
+            it[trim.index(self.trim[i][3])] = i
+
+        for i in range(len(ib)):
+            if ib[i] == -1: 
+                raise ValueError("BPM PV %s is not found in ORM data" % bpm[i])
+
+        for i in range(len(it)):
+            if it[i] == -1: 
+                raise ValueError("Trim PV %s is not found in ORM data" % trim[i])
+
+        m = np.zeros((len(bpm), len(trim)), 'd')
+        for i in range(len(bpm)):
+            for j in range(len(trim)):
+                m[i,j] = self.m[ib[i], it[j]]
+        return m
 
