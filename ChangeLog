@@ -1,3 +1,7 @@
+2011-10-26  Lingyun Yang  <lyyang@svd.bnl.gov>
+
+	* remove property handle
+
 2011-10-04  Lingyun Yang  <lyyang@nsls2yang.nsls2.bnl.gov>
 
 	* add gaussian fitter

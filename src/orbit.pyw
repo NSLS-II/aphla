@@ -309,6 +309,7 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.curvemag.attach(self)
         
+        #self.resize(300, 200)
         #print "BD",self.bound
         #.resize(400, 300)
         grid1 = Qwt.QwtPlotGrid()
@@ -393,7 +394,7 @@ class OrbitPlot(Qwt.QwtPlot):
         self.curve1.setErrorBar(on)
         self.replot()
 
-    def scaleVertical(self, factor):
+    def _scaleVertical(self, factor = 1.0/1.5):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
         sr, sl = scalediv.upperBound(), scalediv.lowerBound()
         dy = (sr - sl)*(factor - 1)/2.0
@@ -401,6 +402,12 @@ class OrbitPlot(Qwt.QwtPlot):
         #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
         self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
         self.replot()
+
+    def zoomIn(self):
+        self._scaleVertical(1.0/1.5)
+
+    def zoomOut(self):
+        self._scaleVertical(1.5/1.0)
 
     def zoomAuto(self):
         bound = self.curve1.boundingRect()
@@ -422,7 +429,7 @@ class OrbitPlot(Qwt.QwtPlot):
 
 
     def setMask(self, i, v):
-        self.curve1.setMask(i, v)
+        self.curve1.mask[i] = v
 
     def getMask(self):
         return self.curve1.getMask()
@@ -466,7 +473,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
         self.plot1.setTitle("Horizontal Orbit")
-        self.plot1.singleShot()
+        #self.plot1.singleShot()
         #print self.plot1.curve1.y
 
         self.plot2.plotLayout().setCanvasMargin(4)
@@ -481,13 +488,14 @@ class OrbitPlotMainWindow(QMainWindow):
         wid = QTabWidget()
         wid.addTab(wid1, "Orbit Plot")
 
-        wid2 = QTableWidget()
-        
-        wid.addTab(wid2, "test2")
+        #wid2 = QTableWidget()
+        #wid.addTab(wid2, "test2")
         wid.addTab(QLabel("H3"), "test3")
         self.setCentralWidget(wid)
 
         #self.setCentralWidget(OrbitPlot())
+        print self.plot1.sizeHint()
+        print self.plot1.minimumSizeHint()
 
         #
         # file menu
@@ -551,6 +559,20 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
                      self.resetPvData)
 
+        # zoom in the horizontal orbit
+        controlZoomInPlot1Action = QAction("zoomin H", self)
+        self.connect(controlZoomInPlot1Action, SIGNAL("triggered()"),
+                     self.plot1.zoomIn)
+        controlZoomOutPlot1Action = QAction("zoomout H", self)
+        self.connect(controlZoomOutPlot1Action, SIGNAL("triggered()"),
+                     self.plot1.zoomOut)
+        controlZoomInPlot2Action = QAction("zoomin V", self)
+        self.connect(controlZoomInPlot2Action, SIGNAL("triggered()"),
+                     self.plot2.zoomIn)
+        controlZoomOutPlot2Action = QAction("zoomout V", self)
+        self.connect(controlZoomOutPlot2Action, SIGNAL("triggered()"),
+                     self.plot2.zoomOut)
+
         self.viewMenu.addAction(viewZoomOut15Action)
         self.viewMenu.addAction(viewZoomIn15Action)
         self.viewMenu.addAction(viewZoomAutoAction)
@@ -564,6 +586,11 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.viewMenu.addSeparator()
         self.controlMenu.addAction(controlChooseBpmAction)
         self.controlMenu.addAction(controlResetPvDataAction)
+        self.controlMenu.addSeparator()
+        self.controlMenu.addAction(controlZoomInPlot1Action)
+        self.controlMenu.addAction(controlZoomOutPlot1Action)
+        self.controlMenu.addAction(controlZoomInPlot2Action)
+        self.controlMenu.addAction(controlZoomOutPlot2Action)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -601,12 +628,16 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot2.setErrorBar(on)
 
     def zoomOut15(self):
-        self.plot1.scaleVertical(1.5)
-        self.plot2.scaleVertical(1.5)
+        """
+        """
+        self.plot1._scaleVertical(1.5)
+        self.plot2._scaleVertical(1.5)
 
     def zoomIn15(self):
-        self.plot1.scaleVertical(1.0/1.5)
-        self.plot2.scaleVertical(1.0/1.5)
+        """
+        """
+        self.plot1._scaleVertical(1.0/1.5)
+        self.plot2._scaleVertical(1.0/1.5)
 
     def zoomAuto(self):
         self.plot1.zoomAuto()
@@ -615,7 +646,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def chooseBpm(self):
         #print self.bpm
         bpm = []
-        bpmmask = self.plot1.mask[:]
+        bpmmask = self.plot1.curve1.mask[:]
         for i in range(len(self.bpm)):
             if bpmmask[i]:
                 bpm.append((self.bpm[i], Qt.Unchecked))
@@ -658,7 +689,7 @@ class OrbitPlotMainWindow(QMainWindow):
 def main(args):
     #app = QApplication(args)
     demo = OrbitPlotMainWindow()
-    demo.resize(1000,600)
+    #demo.resize(800,300)
     demo.show()
 
     #sys.exit(app.exec_())

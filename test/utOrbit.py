@@ -7,6 +7,7 @@ import unittest
 import sys, os
 import numpy as np
 import random
+import logging
 
 machine_initialized = False
 
@@ -18,6 +19,7 @@ class TestOrbit(unittest.TestCase):
     """
 
     def setUp(self):
+        self.logger = logging.getLogger("utOrbit")
         global machine_initialized
         if not machine_initialized:
             hla.machines.initNSLS2VSR()
@@ -27,10 +29,13 @@ class TestOrbit(unittest.TestCase):
         self.assertTrue(self.lat)
 
     def tearDown(self):
-        hla.hlalib._reset_trims()
-        hla.hlalib._reset_bpm_offset()
-
+        #hla.hlalib._reset_trims()
+        #hla.hlalib._reset_bpm_offset()
+        self.logger.info("tearDown")
+        pass
+        
     def test_orbit_read(self):
+        self.logger.info("reading orbit")    
         self.assertTrue(len(hla.getElements('BPM')) > 0)
         bpm = hla.getElements('BPM')
         for i,e in enumerate(bpm):
@@ -65,10 +70,13 @@ class TestOrbit(unittest.TestCase):
         for i in ih: hcor[i].x = np.random.rand()*1e-5
         for i in iv: vcor[i].y = np.random.rand()*1e-5
 
-        hla.hlalib.waitStableOrbit(v0)
+        hla.hlalib.waitStableOrbit(v0, minwait=5)
 
         v1 = hla.getOrbit()
         self.assertGreater(np.std(v1[:,0]), np.std(v0[:,0]))
+        self.logger.info("resetting trims")
+        hla.hlalib._reset_trims()
+        time.sleep(10)
 
 if __name__ == "__main__":
     unittest.main()
