@@ -99,6 +99,22 @@ class TestLattice(unittest.TestCase):
         except cothread.Timedout:
             pass
             
+    def test_element_pv(self):
+        hcor = self.lat.getElements('HCOR')
+        vcor = self.lat.getElements('VCOR')
+        for e in hcor:
+            self.assertEqual(len(e.pv()), 2)
+            self.assertEqual(len(e.pv(field='x')), 2)
+            self.assertEqual(len(e.pv(field='y')), 0)
+            for pv in e.pv():
+                self.assertTrue(pv.find('HCor') > 0)
+
+        for e in vcor:
+            self.assertEqual(len(e.pv()), 2)
+            self.assertEqual(len(e.pv(field='y')), 2)
+            self.assertEqual(len(e.pv(field='x')), 0)
+            for pv in e.pv():
+                self.assertTrue(pv.find('VCor') > 0)
 
 class TestLatticeSr(TestLattice):
     def setUp(self):

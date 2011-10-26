@@ -22,6 +22,7 @@ _twiss = None
 
 _orm = {}
 
+
 #
 HLA_TAG_EGET = 'aphla.eget'
 HLA_TAG_EPUT = 'aphla.eput'
@@ -45,7 +46,6 @@ HLA_CFS_KEYMAP = {'name': u'elemName',
                   'devname': u'devName',
                   'family': u'elemType',
                   'girder': u'girder',
-                  'handle': u'handle',
                   'length': u'length',
                   'index': u'ordinal',
                   'symmetry': u'symmetry',
@@ -61,17 +61,24 @@ def createLatticeFromCf(cfsurl, **kwargs):
     create a lattice from channel finder
     
     - *cfsurl* the URL of channel finder service
-    - *tagName*
+
+    optional:
+    
+    - *kwargs* is passed to cf.find()
+
+    reading Channel finder server does not need authentication.
     """
     from channelfinder import ChannelFinderClient, Channel, Property, Tag
 
     # reverse map, skip the None values
     CFS_MAP = dict((v,k) for k,v in HLA_CFS_KEYMAP.iteritems() if v)
 
+    # a new lattice
     lat = Lattice('channelfinder')
     cf = ChannelFinderClient(BaseURL = cfsurl)
     ch = cf.find(**kwargs)
     for c in ch:
+        # skip if there's no properties.
         if not c.getProperties(): continue
         pv = c.Name
         prpt = dict((CFS_MAP[k], v) \
@@ -79,53 +86,54 @@ def createLatticeFromCf(cfsurl, **kwargs):
                         if CFS_MAP.has_key(k))
         prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
-            
+        
         # skip if this pv has no element name
         if not name: continue
         #print pv, name, prpt
 
+        # find if the element exists.
         elem = lat._find_element(name=name)
         if not elem:
-            #print prpt
-            elem = Element(eget=caget, eput=caput, **prpt)
+            elem = Element(**prpt)
             lat.appendElement(elem)
         else:
-            #print prpt
             elem.updateCfsProperties(pv, prpt)
 
         # update element with new
         tags = c.getTags()
         elem.updateCfsTags(pv, tags)
-        if HLA_TAG_EGET in tags: elem.addEGet(pv)
-        if HLA_TAG_EPUT in tags: elem.addEPut(pv)
+        if HLA_TAG_EGET in tags:
+            elem.addEGet(pv, field=prpt.get('field', None))
+        if HLA_TAG_EPUT in tags:
+            elem.addEPut(pv, field=prpt.get('field', None))
 
-        elem.appendStatusPv(pv, prpt['handle'])
+        elem.appendStatusPv(pv, desc = prpt.get('desc', ""))
 
         #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
         #elem.appendStatusPv((caget, pv, prpt['handle']))
         #print name, ""
-        if prpt.has_key('field'):
-            if not prpt.has_key('handle'):
-                pass
-            elif prpt['handle'].upper() == 'READBACK':
-                elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
-                if HLA_TAG_EPUT in tags:
-                    print "'%s': %s and READBACK ? could be a bug" % (
-                        pv, HLA_TAG_EPUT)
-            elif prpt['handle'].upper() == 'SETPOINT':
-                elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
-                if HLA_TAG_EGET in tags:
-                    print "'%s': %s and SETPOINT ? could be a bug" % (
-                        pv, HLA_TAG_EGET)
-            # debug
+        #if prpt.has_key('field'):
+        #    if not prpt.has_key('handle'):
+        #        pass
+        #    elif prpt['handle'].upper() == 'READBACK':
+        #        elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
+        #        if HLA_TAG_EPUT in tags:
+        #            print "'%s': %s and READBACK ? could be a bug" % (
+        #                pv, HLA_TAG_EPUT)
+        #    elif prpt['handle'].upper() == 'SETPOINT':
+        #        elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
+        #        if HLA_TAG_EGET in tags:
+        #            print "'%s': %s and SETPOINT ? could be a bug" % (
+        #                pv, HLA_TAG_EGET)
+        #    # debug
         # check
-        if prpt.has_key('handle'):
-            if prpt['handle'].upper() == 'READBACK' and HLA_TAG_EPUT in tags:
-                print "'%s': %s and READBACK ? could be a bug" % (
-                        pv, HLA_TAG_EPUT)
-            elif prpt['handle'].upper() == 'SETPOINT' and HLA_TAG_EGET in tags:
-                print "'%s': %s and SETPOINT ? could be a bug" % (
-                        pv, HLA_TAG_EGET)
+        #if prpt.has_key('handle'):
+        #    if prpt['handle'].upper() == 'READBACK' and HLA_TAG_EPUT in tags:
+        #        print "'%s': %s and READBACK ? could be a bug" % (
+        #                pv, HLA_TAG_EPUT)
+        #    elif prpt['handle'].upper() == 'SETPOINT' and HLA_TAG_EGET in tags:
+        #        print "'%s': %s and SETPOINT ? could be a bug" % (
+        #                pv, HLA_TAG_EGET)
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
@@ -285,21 +293,23 @@ def createLatticesFromTxt(f, **kwargs):
                 elem.updateCfsProperties(pv, prpt)
             # update element with new
             elem.updateCfsTags(pv, tags)
-            if HLA_TAG_EGET in tags: elem.addEGet(pv)
-            if HLA_TAG_EPUT in tags: elem.addEPut(pv)
+            if HLA_TAG_EGET in tags:
+                elem.addEGet(pv, field=prpt.get('field', None))
+            if HLA_TAG_EPUT in tags:
+                elem.addEPut(pv, field=prpt.get('field', None))
 
-            elem.appendStatusPv(pv, prpt['handle'])
+            elem.appendStatusPv(pv, desc="")
 
             #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
             #elem.appendStatusPv((caget, pv, prpt['handle']))
             #print name, ""
-            if prpt.has_key('field'):
-                if not prpt.has_key('handle'):
-                    pass
-                elif prpt['handle'].upper() == 'READBACK':
-                    elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
-                elif prpt['handle'].upper() == 'SETPOINT':
-                    elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
+            #if prpt.has_key('field'):
+            #    if not prpt.has_key('handle'):
+            #        pass
+            #    elif prpt['handle'].upper() == 'READBACK':
+            #        elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
+            #    elif prpt['handle'].upper() == 'SETPOINT':
+            #        elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
 
     for k, lat in lat_dict.items():
         # group info is a redundant info, needs rebuild based on each element

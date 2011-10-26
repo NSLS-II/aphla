@@ -288,21 +288,24 @@ class Element(AbstractElement):
           >>> pv(field="x", handle='readback')
         """
         if len(kwargs) == 0:
-            ret = []
-            for k,v in self._pvtags.iteritems():
-                #print k, v
-                if not v: continue
-                if isinstance(v, (str, unicode)): ret.append(v)
-                else: ret.extend(v)
-            ret = [v for v in set(ret)]
+            ret = self._pvtags.keys()
+            #for k,v in self._pvtags.iteritems():
+            #    #print k, v
+            #    #if not v: continue
+            #    if isinstance(v, (str, unicode)): ret.append(v)
+            #    else: ret.extend(v)
+            #ret = [v for v in set(ret)]
         elif len(kwargs) == 1:
             ret = self._pv_1(**kwargs)
         elif len(kwargs) == 2:
+            handle = kwargs.get('handle', None)
             try:
-                if kwargs['handle'] == 'readback':
+                if handle == 'readback':
                     return self._field[kwargs['field']].pvrb
-                elif kwargs['handle'] == 'setpoint':
+                elif handle == 'setpoint':
                     return self._field[kwargs['field']].pvsp
+                else:
+                    raise ValueError("invalid handle value: %s" % handle)
             except KeyError:
                 return []
         else: return []
@@ -322,21 +325,35 @@ class Element(AbstractElement):
         
         self._field['status'].addReadback(pv)
 
-    def addEGet(self, pv):
+    def addEGet(self, pv, field=None):
         """
         add *pv* for `eget` action
+        
+        If no field provided, assign only to the default "value" field
         """
-        decr = self._field['value']
-        if not decr: self._field['value'] = CaDecorator()
-        self._field['value'].addReadback(pv)
+        sflists = ['value']
+        if field: sflists.append(field)
 
-    def addEPut(self, pv):
+        for sf in sflists:
+            if not sf in self._field.keys() or not self._field[sf]:
+                self._field[sf] = CaDecorator()
+            # add pv
+            self._field[sf].addReadback(pv)
+
+    def addEPut(self, pv, field=None):
         """
         add *pv* for `eset` action
+
+        If no field provided, assign to the default "value" field
         """
-        decr = self._field['value']
-        if not decr: self._field['value'] = CaDecorator()
-        self._field['value'].addSetpoint(pv)
+        sflists = ['value']
+        if field: sflists.append(field)
+
+        for sf in sflists:
+            if not sf in self._field.keys() or not self._field[sf]:
+                self._field[sf] = CaDecorator()
+            # add pv
+            self._field[sf].addSetpoint(pv)
         
     def status(self):
         maxlen = max([len(att) for att in self._field.keys()])
@@ -357,7 +374,8 @@ class Element(AbstractElement):
         else:
             decr = self._field[att]
             if not decr:
-                raise AttributeError("field %s is not defined" % att)
+                raise AttributeError("field %s of %s is not defined" \
+                                         % (att, self.name))
             elif decr.getReadback():
                 x = decr.rb
             elif decr.getSetpoint():
@@ -415,6 +433,9 @@ class Element(AbstractElement):
         return self._field.keys()
 
     def updateCfsProperties(self, pv, prpt):
+        """
+        update the element with a property dictionary
+        """
         AbstractElement.updateCfsProperties(self, prpt)
         
     def updateCfsTags(self, pv, tags):

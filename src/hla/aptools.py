@@ -225,10 +225,21 @@ def createLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
-    - *bpm* a list of BPM name
-    - *trim* corrector (group/family/list)
-    - *ref* target orbit, (len(bpm),2), if the ref[i][j] == None,
-      use the current hardware result.
+    Keyword arguments:
+
+    bpm: str/list
+      a list of BPM names.
+    trim: str/list
+      corrector (group/family/list)
+    ref: list (2D)
+      target orbit, (len(bpm),2), if the ref[i][j] == None, use the current
+      hardware result.
+
+    Optional keyword arguments:
+
+    **Examples:**
+    
+    createLocalBump('BPM', 'HCOR', [[0,0], [0, 0]])
     """
     plane = kwargs.get('plane', 'HV')
 
@@ -369,10 +380,10 @@ def alignQuadrupole(quad, **kwargs):
       >>> alignQuadrupole('Q1')
       >>> alignQuadrupole(['Q1', 'Q2'])
     """
-    trim = kwargs.get('trim', None)
-    bpm = kwargs.get('bpm', None)
+    trim  = kwargs.get('trim', None)
+    bpm   = kwargs.get('bpm', None)
     plane = kwargs.get('plane', 'H')
-    dqk1 = kwargs.get('dqk1', 0.05)
+    dqk1  = kwargs.get('dqk1', 0.05)
     dkick = kwargs.get('dkick', np.linspace(-1e-6, 1e-6, 5).tolist())
     export_figures = kwargs.get('export_figures', True)
 
