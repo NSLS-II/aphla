@@ -44,6 +44,30 @@
                 <module_name>GUI_Element_Selector</module_name>
             </app>
 
+            <app>
+                <name>GUI_Channel_Selector</name>
+                <dispName>Channel Selector</dispName>
+
+                <abs_dir_path></abs_dir_path>
+                <module_name>GUI_Channel_Selector</module_name>
+            </app>
+
+            <app>
+                <name>GUI_Lattice_Tuner</name>
+                <dispName>Lattice Tuner</dispName>
+
+                <abs_dir_path></abs_dir_path>
+                <module_name>GUI_Lattice_Tuner</module_name>
+            </app>
+
+            <app>
+                <name>GUI_Orbit_Viewer</name>
+                <dispName>Orbit Viewer</dispName>
+
+                <abs_dir_path></abs_dir_path>
+                <module_name>GUI_Orbit_Viewer</module_name>
+            </app>
+
             <page>
                 <name>other_category</name>
                 <dispName>Other Category</dispName>

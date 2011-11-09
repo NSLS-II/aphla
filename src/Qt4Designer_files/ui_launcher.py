@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_GUI_Launcher.ui'
+# Form implementation generated from reading ui file 'ui_launcher.ui'
 #
-# Created: Fri Oct 21 19:48:48 2011
+# Created: Tue Nov  8 11:13:31 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -50,5 +50,5 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "MainWindow", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "HLA App Launcher", None, QtGui.QApplication.UnicodeUTF8))
 

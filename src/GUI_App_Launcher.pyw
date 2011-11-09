@@ -40,6 +40,11 @@ from Qt4Designer_files.ui_launcher import Ui_MainWindow
 
 import hla
 
+# TODO:
+# *) Allow passing arguments to make(). This will allow
+# a user to launch some application with their preferences,
+# not with default preferences.
+
 
 ########################################################################
 class launcherButton(Qt.QPushButton):

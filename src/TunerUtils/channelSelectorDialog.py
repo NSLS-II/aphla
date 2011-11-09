@@ -2,54 +2,166 @@
 
 """
 
-GUI application for selecting HLA element(s) interactively
+GUI application for selecting HLA channel(s) interactively
 
 :author: Yoshiteru Hidaka
 :license:
 
 This GUI application is a dialog that allows users to see all the available
-elements, narrow them down by search filtering, and finally select the elements
-of interest and return the selected elements as an input to another function
+channels, narrow them down by search filtering, and finally select the channels
+of interest and return the selected channels as an input to another function
 or GUI application.
+
+Here, a channel is defined by an element and its field name such as None,
+x, or y.
+
+Furthermore, a channel can be sub-classified as the following depending on the
+read/write properties:
+1) Indicator = A channel with a read PV only (no write PV). Examples include BPM and Hall probes.
+2) Knob = A channel with a write PV. A knob can have a read PV, but is not required
+to have a read PV. A knob simply needs to be able to change setpoints.
 
 """
 
-import config # gives access to qtapp variable that holds a Qt.QApplication instance
-
 import sys
+
+USE_DEV_SRC = True
+if USE_DEV_SRC:
+    # Force Python to use your development modules,
+    # instead of the modules already installed on the system.
+    import os
+    if os.environ.has_key('HLA_DEV_SRC'):
+        dev_src_dir_path = os.environ['HLA_DEV_SRC']
+
+        if dev_src_dir_path in sys.path:
+            sys.path.remove(dev_src_dir_path)
+        
+        sys.path.insert(0, dev_src_dir_path)
+            
+    else:
+        print 'Environment variable named "HLA_DEV_SRC" is not defined.'
+
 import fnmatch
 from operator import and_, not_
 
 import cothread
 
-# If Qt is to be used (for any GUI) then the cothread library needs to be informed,
-# before any work is done with Qt. Without this line below, the GUI window will not
-# show up and freeze the program.
-# Note that for a dialog box to be modal, i.e., blocking the application
-# execution until user input is given, you need to set the input
-# argument "user_timer" to be True.
-if not config.qtapp:
-    config.qtapp.append( cothread.iqt(use_timer = True) )
-    # config.qtapp.append( Qt.QApplication(sys.argv) ) # use this if you are not using "cothread" module at all in your application
-
 import PyQt4.Qt as Qt
 
-import hla
-from Qt4Designer_files.ui_element_selector import Ui_Dialog
+from ui_channelSelectorDialog import Ui_Dialog
 
+import hla
 if not hla.machines._lat :
     hla.initNSLS2VSR()
 
 # Output Type Enums
-TYPE_ELEMENT = 1
+TYPE_CHANNEL = 1
 TYPE_NAME    = 2
+
+# FIXIT:
+#
 
 # TODO:
 # 1) Create a tab for each selection, and allow OR operation
 # to different tabs.
 
 ########################################################################
-class ElementSelectorData(Qt.QObject):
+class Channel:
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, element_obj, field_name):
+        """
+        """
+        
+        if field_name not in ['value', 'x', 'y']:
+            raise ValueError('Field name (' + field_name + ') passed as ' +
+                             '2nd argument must be ' + 
+                             'either "value", "x", or "y".')
+        
+        if field_name not in element_obj.fields():
+            raise ValueError('Field name (' + field_name + ') passed as ' +
+                             '2nd argument does not match any of field ' +
+                             'names for the Element object passed as 1st ' +
+                             'argument.')
+        
+        self.name = element_obj.name + '.' + field_name
+        
+        self.elem_name = element_obj.name
+        self.field_name = field_name
+        
+        self.pvrb = element_obj._field[field_name].pvrb
+        self.pvsp = element_obj._field[field_name].pvsp
+        
+        '''
+        if (len(self.pvrb) >= 2) or (len(self.pvsp) >= 2):
+            raise ValueError('Field name (' + field_name + ') passed as ' +
+                             '2nd argument returned more than one PV. ' +
+                             'Change field name.')
+        '''
+        
+        
+        if not self.pvsp:
+            self.read_only = True
+            
+            if not self.pvrb:
+                raise ValueError('Element object passed as 1st argument ' +
+                                 'is not associated with any PV.')
+        else:
+            self.read_only = False
+        
+        list_of_elem_prop_to_be_copied = [
+            'devname', 'cell', 'family', 'girder', 'group', 'index',
+            'length', 'phylen', 'sb', 'se', 'symmetry', 'virtual',
+            'sequence']
+        
+        for prop in list_of_elem_prop_to_be_copied:                   
+            setattr(self, prop, getattr(element_obj,prop))
+        
+    #----------------------------------------------------------------------
+    @staticmethod
+    def getAllAvailableChannelsFromElement(element_obj):
+        """"""
+        
+        field_list = element_obj.fields()
+        
+        field_list.remove('status')
+        
+        if field_list == ['value']: # When there is no field other than 'value'.
+            # This case usually applies to an element that has no separate 
+            # control in different orientations 'x' and 'y', e.g., a quadrupole.
+            channel_list = [Channel(element_obj, 'value')]
+        else:
+            
+            if 'value' in field_list:
+                field_list.remove('value')
+            else:
+                raise ValueError('Passed element object does not contain "value" field.')
+            
+            channel_list = []
+            
+            for field in field_list:
+                channel_list.append(Channel(element_obj,field))
+            
+        
+        return channel_list
+        
+    #----------------------------------------------------------------------
+    @staticmethod
+    def getAllAvailableChannelsFromElementList(element_obj_list):
+        """"""
+        
+        list_of_channel_list = [Channel.getAllAvailableChannelsFromElement(e)
+                                for e in element_obj_list]
+        
+        import operator
+        channel_list = reduce(operator.add, list_of_channel_list)
+        
+        return channel_list
+    
+    
+########################################################################
+class ChannelSelectorModel(Qt.QObject):
     """"""
 
     #----------------------------------------------------------------------
@@ -90,35 +202,38 @@ class ElementSelectorData(Qt.QObject):
         
         Qt.QObject.__init__(self)
         
-        
-        # key   = property name of Element object
+        # key   = property name of a Channel (indicator [read-only] or knob [writeable])
         # value = displayed column name for tables showing choices and matches
-        self.elem_property_vs_col_name = \
-            {'name':'Name', 'devname':'Dev. Name', 'cell':'Cell', 
-             'family':'Family', 'girder':'Girder', 'group':'Group', 
-             'index':'Lat. Index', 'length':'Eff.Len', 'phylen':'Phys. Len.',
-             'pv':'PV', 'sb':'sb', 'se':'se', 'symmetry':'Symmetry',
-             'virtual':'Virtual', 'sequence':'Sequence'}
+        self.ch_property_vs_col_name = \
+            {'name':'Ch. Name', 'read_only':'Read-Only', 
+             'elem_name':'Elem. Name', 'field_name':'Field',
+             'devname':'Dev. Name', 'cell':'Cell', 'family':'Family', 
+             'girder':'Girder', 'group':'Group', 'index':'Lat. Index', 
+             'length':'Eff.Len', 'phylen':'Phys. Len.',
+             'pvrb':'PV RB', 'pvsp':'PV SP', 'sb':'sb', 'se':'se', 
+             'symmetry':'Symmetry', 'virtual':'Virtual', 'sequence':'Sequence'}
         
-        # key   = property name of Element object & exclusion flag
+        # key   = property name of Channel object & exclusion flag
         # value = displayed column name for table showing filters
         self.filter_property_vs_col_name = \
-            self.elem_property_vs_col_name.copy()
+            self.ch_property_vs_col_name.copy()
         self.filter_property_vs_col_name.update({'exclude':'Excl.'}) # adding extra column
         
         # Specify the default column order you want for tables showing
         # choices and matches.
-        self.elem_property_list = ['family', 'name', 'devname', 'cell',
-                                   'girder', 'symmetry', 'group', 'virtual',
-                                   'sb', 'se', 'pv', 'length', 'phylen',
-                                   'index', 'sequence']
-        self.col_name_list = [self.elem_property_vs_col_name[prop]
-                         for prop in self.elem_property_list]
-        self.choice_dict = dict.fromkeys(self.elem_property_list)
+        self.ch_property_list = ['name', 'read_only', 'elem_name',
+                                 'field_name', 'family',
+                                 'devname', 'cell',
+                                 'girder', 'symmetry', 'group', 'virtual',
+                                 'sb', 'se', 'pvrb', 'pvsp', 'length', 'phylen',
+                                 'index', 'sequence']
+        self.col_name_list = [self.ch_property_vs_col_name[prop]
+                         for prop in self.ch_property_list]
+        self.choice_dict = dict.fromkeys(self.ch_property_list)
         
         # Specify the default column order you want for table showing
         # filters.
-        self.filter_property_list = self.elem_property_list[:]
+        self.filter_property_list = self.ch_property_list[:]
         self.filter_property_list.insert(0, 'exclude')
         self.filter_col_name_list = [self.filter_property_vs_col_name[prop]
                          for prop in self.filter_property_list]
@@ -129,10 +244,15 @@ class ElementSelectorData(Qt.QObject):
         
         self.filter_spec = filter_spec
         
-        self.allElements = hla.getElements('*')
+        allElements = hla.getElements('*')
+        self.allChannels = Channel.getAllAvailableChannelsFromElementList(
+            allElements)
+        full_channel_name_list = [c.name for c in self.allChannels]
+        if len(full_channel_name_list) != len(set(full_channel_name_list)):
+            raise Exception, "Duplicate channel name found."
         
         # Initialization of matching data information
-        self.matched = [ [True]*len(self.allElements) ]
+        self.matched = [ [True]*len(self.allChannels) ]
         self.combine_matched_list()
         self.update_choice_dict()
         
@@ -141,7 +261,9 @@ class ElementSelectorData(Qt.QObject):
             isCaseSensitive = False
             self.filterData(range(len(self.filter_spec)), isCaseSensitive)
         
-        self.selectedElements = []
+        self.selectedChannels = []
+        
+        self.output = []
     
     #----------------------------------------------------------------------
     def combine_matched_list(self):
@@ -150,7 +272,7 @@ class ElementSelectorData(Qt.QObject):
         nFilterGroups = len(self.filter_spec)
         
         if not self.filter_spec:
-            self.combined_matched = [True]*len(self.allElements)
+            self.combined_matched = [True]*len(self.allChannels)
         elif nFilterGroups == 1:
             self.combined_matched = self.matched[0]
         elif nFilterGroups == 2:
@@ -178,7 +300,7 @@ class ElementSelectorData(Qt.QObject):
         pattern_filter_dict = self.filter_spec[index][0]
                 
         # Initialization: Remove all filters
-        self.matched[index] = [True]*len(self.allElements)
+        self.matched[index] = [True]*len(self.allChannels)
             
         for (prop, val) in pattern_filter_dict.iteritems():
             if prop in self.not_implemented_filter_list:
@@ -188,15 +310,15 @@ class ElementSelectorData(Qt.QObject):
             else: # string filter
                     
                 matchedItemsZipped = [ 
-                    (j,elem) for (j,elem) in enumerate(self.allElements)
+                    (j,elem) for (j,elem) in enumerate(self.allChannels)
                     if self.matched[index][j] ]
                     
-                if matchedItemsZipped: # When there are some matched elements
+                if matchedItemsZipped: # When there are some matched channels
                     matchedItemsUnzipped = zip(*matchedItemsZipped)
-                    matchedInd   = list(matchedItemsUnzipped[0])
-                    matchedElems = list(matchedItemsUnzipped[1])
-                else: # When there is no matched element, no need for futher filtering
-                    self.matched[index] = [False]*len(self.allElements)
+                    matchedInd      = list(matchedItemsUnzipped[0])
+                    matchedChannels = list(matchedItemsUnzipped[1])
+                else: # When there is no matched item, no need for futher filtering
+                    self.matched[index] = [False]*len(self.allChannels)
                     return
                     
                 '''
@@ -206,17 +328,17 @@ class ElementSelectorData(Qt.QObject):
                 '''
                 if not isCaseSensitive: # case-insensitive search
                     filter_str = val.upper()
-                    matchedElemStrings = [ 
+                    matchedChStrings = [ 
                         getattr(getattr(e,prop),'__str__')().upper()
-                        for e in matchedElems]
+                        for e in matchedChannels]
                 else: # case-sensitive search
                     filter_str = val
-                    matchedElemStrings = [
+                    matchedChStrings = [
                         getattr(getattr(e,prop),'__str__')()
-                        for e in matchedElems]
+                        for e in matchedChannels]
                 
                 reducedNewMatchedInd = [ 
-                    j for (j,s) in enumerate(matchedElemStrings)
+                    j for (j,s) in enumerate(matchedChStrings)
                     if fnmatch.fnmatchcase(s,filter_str)]
                     
                 newMatchedInd = [matchedInd[j] 
@@ -224,7 +346,7 @@ class ElementSelectorData(Qt.QObject):
                     
                 self.matched[index] = [ 
                     (j in newMatchedInd) 
-                    for j in range(len(self.allElements))]
+                    for j in range(len(self.allChannels))]
                     
                     
     #----------------------------------------------------------------------
@@ -269,7 +391,7 @@ class ElementSelectorData(Qt.QObject):
         
         self.filter_spec.append( [{},False] )
         
-        self.matched.append( [True]*len(self.allElements) )
+        self.matched.append( [True]*len(self.allChannels) )
         
         # self.combined_matched stays the same
         
@@ -281,8 +403,11 @@ class ElementSelectorData(Qt.QObject):
         filter_property = self.filter_property_list[filter_property_index]
         
         if filter_property is not 'exclude':
-            self.filter_spec[filter_group_index][0][filter_property] = \
-                filter_val
+            if filter_val: # If not empty string
+                self.filter_spec[filter_group_index][0][filter_property] = \
+                    filter_val
+            else: # If empty string, then remove the filter to save some data filtering time
+                del self.filter_spec[filter_group_index][0][filter_property]
         else:
             self.filter_spec[filter_group_index][1] = filter_val
         
@@ -294,23 +419,23 @@ class ElementSelectorData(Qt.QObject):
     def update_choice_dict(self):
         """"""
         
-        # Get only matched elements from all the elements
-        matchedElements = [self.allElements[i] 
+        # Get only matched channels from all the channels
+        matchedChannels = [self.allChannels[i] 
                            for (i,matched) in enumerate(self.combined_matched)
                            if matched]
         
         # If there is no match
-        if not matchedElements:
-            for prop in self.elem_property_list:
+        if not matchedChannels:
+            for prop in self.ch_property_list:
                 self.choice_dict[prop] = []
             return
         
-        # If there is some matched element(s)
-        for prop in self.elem_property_list:
-            if callable(getattr(matchedElements[0],prop)): # if property is a function
-                prop_val_list = [getattr(e,prop)() for e in matchedElements]
+        # If there is some matched channel(s)
+        for prop in self.ch_property_list:
+            if callable(getattr(matchedChannels[0],prop)): # if property is a function
+                prop_val_list = [getattr(e,prop)() for e in matchedChannels]
             else: # if property is a value
-                prop_val_list = [getattr(e,prop)   for e in matchedElements]
+                prop_val_list = [getattr(e,prop)   for e in matchedChannels]
             # Since prop_val_list may contain lists inside, we must remove
             # those items from the list before we can apply set()
             # to find unique elements.
@@ -331,15 +456,15 @@ class ElementSelectorData(Qt.QObject):
         
             
     #----------------------------------------------------------------------
-    def update_selected_elements(self, selectedRowIndList):
+    def update_selected_channels(self, selectedRowIndList):
         """"""
         
-        # Update currently selected elements before exiting the dialog
-        matchedElemList = [
-            self.allElements[i] 
+        # Update currently selected channels before exiting the dialog
+        matchedChannelList = [
+            self.allChannels[i] 
             for (i,matched) in enumerate(self.combined_matched)
             if matched] 
-        self.selectedElements = [matchedElemList[i] 
+        self.selectedChannels = [matchedChannelList[i] 
                                  for i in selectedRowIndList]
         
         self.emit(Qt.SIGNAL("sigReadyForClosing"),())
@@ -348,18 +473,20 @@ class ElementSelectorData(Qt.QObject):
         
 
 ########################################################################
-class ElementSelectorView(Qt.QDialog, Ui_Dialog):
+class ChannelSelectorView(Qt.QDialog, Ui_Dialog):
     """"""
     
     #----------------------------------------------------------------------
-    def __init__(self, data, modal, parentWindow = None):
+    def __init__(self, model, modal, output_type, parentWindow = None):
         """Constructor"""
         
         Qt.QDialog.__init__(self, parent = parentWindow)
         
         self.setWindowFlags(Qt.Qt.Window) # To add Maximize & Minimize buttons
         
-        self.data = data
+        self.model = model
+        
+        self.output_type = output_type
         
         # Set up the user interface from Designer
         self.setupUi(self)
@@ -386,14 +513,18 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         t = self.tableWidget_filter # shorthand notation
 
         ### Header population & properties
-        t.setHorizontalHeaderLabels(self.data.filter_col_name_list)
+        nCols = len(self.model.filter_col_name_list)
+        t.setColumnCount(nCols)
+        
+        t.setHorizontalHeaderLabels(self.model.filter_col_name_list)
+
         t.horizontalHeader().setMovable(True)
         
         ### Item population
-        nRows = len(self.data.filter_spec)
+        nRows = len(self.model.filter_spec)
         t.setRowCount(nRows)
-        for (j, spec) in enumerate(self.data.filter_spec):
-            for (i, filter_prop) in enumerate(self.data.filter_property_list):
+        for (j, spec) in enumerate(self.model.filter_spec):
+            for (i, filter_prop) in enumerate(self.model.filter_property_list):
                 if filter_prop is not 'exclude':
                     if spec[0].has_key(filter_prop):
                         item_string = spec[0][filter_prop]
@@ -437,16 +568,20 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         
         t = self.tableWidget_choice_list # shorthand notation
         
+        
         ### Header popluation & properties
+        nCols = len(self.model.col_name_list)
+        t.setColumnCount(nCols)
+        
         '''
-        for (i, col_name) in enumerate(self.data.col_name_list):
+        for (i, col_name) in enumerate(self.model.col_name_list):
             # Order the column labels as in the order of the definition
             # of the dictionary for the element property names and the
             # column names
             t.horizontalHeaderItem(i).setText(col_name)
         '''
         # or
-        t.setHorizontalHeaderLabels(self.data.col_name_list)
+        t.setHorizontalHeaderLabels(self.model.col_name_list)
         
         t.horizontalHeader().setMovable(True)
     
@@ -459,9 +594,11 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         t = self.tableWidget_matched # shorthand notation
         
         ### Header population & properties
+        nCols = len(self.model.col_name_list)
+        t.setColumnCount(nCols)
         
-        t.setHorizontalHeaderLabels(self.data.col_name_list)
-        
+        t.setHorizontalHeaderLabels(self.model.col_name_list)        
+
         t.horizontalHeader().setMovable(True)
         
         
@@ -480,10 +617,10 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         ### Item population
         
         nRows = max([len(choice_list) 
-                     for choice_list in self.data.choice_dict.values()])
+                     for choice_list in self.model.choice_dict.values()])
         t.setRowCount(nRows)
-        for (i, elem_prop) in enumerate(self.data.elem_property_list):
-            choice_list = self.data.choice_dict[elem_prop]
+        for (i, ch_prop) in enumerate(self.model.ch_property_list):
+            choice_list = self.model.choice_dict[ch_prop]
             for (j, value) in enumerate(choice_list):
                 t.setItem(j,i,Qt.QTableWidgetItem(value.__str__()))
                 t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
@@ -509,17 +646,17 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         ### Item population
         
         # Get only matched elements from all the elements
-        m = [self.data.allElements[i] 
-             for (i,matched) in enumerate(self.data.combined_matched)
+        m = [self.model.allChannels[i] 
+             for (i,matched) in enumerate(self.model.combined_matched)
              if matched]
         nRows = len(m)
         t.setRowCount(nRows)
-        for (i, elem_prop) in enumerate(self.data.elem_property_list):
-            for (j, elem) in enumerate(m):
-                value = getattr(elem,elem_prop)
+        for (i, ch_prop) in enumerate(self.model.ch_property_list):
+            for (j, ch) in enumerate(m):
+                value = getattr(ch,ch_prop)
                 if callable(value):
                     value = value.__call__()
-                t.setItem( j, i, Qt.QTableWidgetItem(value.__str__() ) )
+                t.setItem(j, i, Qt.QTableWidgetItem(value.__str__() ) )
                 t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
                                      Qt.Qt.ItemIsDragEnabled|
                                      Qt.Qt.ItemIsEnabled) # Make it non-editable        
@@ -538,11 +675,11 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
     def update_matched_and_selected_numbers(self):
         """"""
         
-        nMatched = sum(self.data.combined_matched)
+        nMatched = sum(self.model.combined_matched)
         nSelected = 0
         
         self.label_nMatched_nSelected.setText(
-            'Matched Elements (' + str(nMatched) + ' matched, ' 
+            'Matched Channels (' + str(nMatched) + ' matched, ' 
             + str(nSelected) + ' selected)')
         
     #----------------------------------------------------------------------
@@ -565,7 +702,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         # Need to initialize the new items in the newly added row
         # with empty filters and the exclulsion flag unchecked
         new_row_index = nRows-1
-        for (i, filter_prop) in enumerate(self.data.filter_property_list):
+        for (i, filter_prop) in enumerate(self.model.filter_property_list):
             if filter_prop is not 'exclude':
                 t.setItem(new_row_index,i,
                           Qt.QTableWidgetItem(Qt.QString()))
@@ -662,26 +799,33 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
                   selectedRowIndList)
         
     #----------------------------------------------------------------------
-    def accept_and_close(self):
+    def _prepareOutput(self):
         """"""
         
-        super(ElementSelectorView, self).accept() # will close the dialog
+        if self.output_type == TYPE_CHANNEL:
+            self.model.output = self.model.selectedChannels
+        elif self.output_type == TYPE_NAME:
+            self.model.output = [c.name for c in self.model.selectedChannels]
+        
+        super(ChannelSelectorView, self).accept() # will hide the dialog
         
         
     #----------------------------------------------------------------------
     def reject(self):
         """"""
         
-        super(ElementSelectorView, self).reject() # will close the dialog
+        self.model.output = []
+        
+        super(ChannelSelectorView, self).reject() # will hide the dialog
     
 
 ########################################################################
-class ElementSelectorApp(Qt.QObject):
+class ChannelSelectorApp(Qt.QObject):
     """"""
 
     #----------------------------------------------------------------------
     def __init__(self, modal = True, parentWindow = None, 
-                 filter_spec = [ [{},False] ]):
+                 filter_spec = [ [{},False] ], output_type = TYPE_CHANNEL):
         """Constructor"""
         
         Qt.QObject.__init__(self)
@@ -689,8 +833,8 @@ class ElementSelectorApp(Qt.QObject):
         self.modal = modal
         self.parentWindow = parentWindow
         
-        self._initData(filter_spec)
-        self._initView()
+        self._initModel(filter_spec)
+        self._initView(output_type)
         
         # When a filter item is changed, signal the data to modify
         # filter_spec, and then signal "ready for filtering" to the data.
@@ -698,7 +842,7 @@ class ElementSelectorApp(Qt.QObject):
                      Qt.SIGNAL('itemChanged(QTableWidgetItem *)'),
                      self.view.on_filter_item_change)
         self.connect(self.view, Qt.SIGNAL("sigFilterSpecNeedsChange"),
-                     self.data.modify_filter_spec)
+                     self.model.modify_filter_spec)
         
         # When the checkbox for "case-sensitive" is toggled, the view
         # does pre-processing, and signals "ready for filtering" to the data.
@@ -710,93 +854,83 @@ class ElementSelectorApp(Qt.QObject):
         # tell the data to perform the filtering based on the modified
         # filter specification.
         self.connect(self.view, Qt.SIGNAL("sigReadyForFiltering"),
-                     self.data.filterData)
-        self.connect(self.data, Qt.SIGNAL("sigReadyForFiltering"),
-                     self.data.filterData)
+                     self.model.filterData)
+        self.connect(self.model, Qt.SIGNAL("sigReadyForFiltering"),
+                     self.model.filterData)
 
         # After new filtering is performed, update the view based on
         # the new filtered data.
-        self.connect(self.data, Qt.SIGNAL("sigDataFiltered"),
+        self.connect(self.model, Qt.SIGNAL("sigDataFiltered"),
                      self.view.update_tables)
-        self.connect(self.data, Qt.SIGNAL("sigDataFiltered"),
+        self.connect(self.model, Qt.SIGNAL("sigDataFiltered"),
                      self.view.update_matched_and_selected_numbers)
         
         
         self.connect(self.view.pushButton_add_row, Qt.SIGNAL("clicked()"),
                      self.view.add_row_to_filter_table)
         self.connect(self.view, Qt.SIGNAL("sigFilterRowAdded"),
-                     self.data.add_row_to_filter_spec)
+                     self.model.add_row_to_filter_spec)
         
         
         self.connect(self.view, Qt.SIGNAL("sigUpdateFinalSelected"),
-                     self.data.update_selected_elements)
-        self.connect(self.data, Qt.SIGNAL("sigReadyForClosing"),
-                     self.view.accept_and_close)
+                     self.model.update_selected_channels)
+        self.connect(self.model, Qt.SIGNAL("sigReadyForClosing"),
+                     self.view._prepareOutput)
         
     #----------------------------------------------------------------------
-    def _initData(self, filter_spec):
+    def _initModel(self, filter_spec):
         """"""
         
-        self.data = ElementSelectorData(filter_spec)
+        self.model = ChannelSelectorModel(filter_spec)
         
     #----------------------------------------------------------------------
-    def _initView(self, out_type = TYPE_ELEMENT):
+    def _initView(self, out_type = TYPE_CHANNEL):
         """"""
         
-        self.view = ElementSelectorView(self.data, self.modal,
+        self.view = ChannelSelectorView(self.model, self.modal, out_type,
                                         parentWindow = self.parentWindow)
 
 
 #----------------------------------------------------------------------
-def make(modal = True, parentWindow = None, filter_spec = [ [{},False] ],
-         output_type = TYPE_ELEMENT):
+def make(**kwargs):
     """"""
     
-    app = ElementSelectorApp(modal, parentWindow, filter_spec)
-    view = app.view
-        
-    if app.modal :
-        view.exec_()
-        
-        if view.result() == Qt.QDialog.Accepted:
-            if output_type == TYPE_ELEMENT:
-                output = app.data.selectedElements
-            elif output_type == TYPE_NAME:
-                output = [e.name for e in app.data.selectedElements]
-            else:
-                output = []
-        else:
-            output = []
-        
-        result = {'app': app,  
-                  'dialog_result': output}
-    else : # non-modal
-        view.show()
-        result = {'app': app}
+    modal = kwargs.get('modal', True)
+    parentWindow = kwargs.get('parentWindow', None)
+    filter_spec = kwargs.get('filter_spec', [ [{},False] ])
+    output_type = kwargs.get('output_type', TYPE_CHANNEL)
     
-    return result
+    app = ChannelSelectorApp(modal, parentWindow, filter_spec, output_type)
+    view = app.view
+    view.exec_()
+    
+    return app.model.output
 
     
 #----------------------------------------------------------------------
 def main(args):
     """"""
     
-    qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
+    '''
+    If Qt is to be used (for any GUI) then the cothread library needs to 
+    be informed, before any work is done with Qt. Without this line below,
+    the GUI window will not show up and freeze the program. 
     
-    result = make(modal = True, output_type = TYPE_ELEMENT)
+    Note that for a dialog box to be modal, i.e., blocking the application
+    execution until user input is given, you need to set the input argument 
+    "user_timer" to be True. However, if you use "use_timer", it will
+    Segmentation Fault at the end of running the main function.
+    '''
+    #qtapp = cothread.iqt(use_timer = True)
+    qtapp = cothread.iqt()
+    #qtapp = Qt.QApplication(sys.argv) # use this if you are not using "cothread" module at all in your application
+
+
+    result = make(output_type = TYPE_NAME)
     
-    if result.has_key('dialog_result'): # When modal
-        app           = result['app']
-        dialog_result = result['dialog_result']
-        
-        print dialog_result
-        print 'Length = ', len(dialog_result)
-        
-        
-    else: # When non-modal
-        app = result['app']
-        exit_status = qapp.exec_()
-        sys.exit(exit_status)
+    print result
+    print 'Length = ', len(result)
+    
         
     
 
