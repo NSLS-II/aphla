@@ -111,24 +111,34 @@ class TunerFileManager(Qt.QObject):
     def saveConfigFile(self, model):
         """"""
         
-        dialog = Qt.QFileDialog()
-        dialog.setFileMode(Qt.QFileDialog.AnyFile)
-        dialog.setNameFilters([('Tuner configuration files (*' + 
-                                self.fileExt_ConfigFile + ')'),
-                               'All files (*)'])
-        dialog.setWindowTitle('Save Tuner Configuration File')
-        dialog.setDirectory(self.starting_directory_path)
-        dialog.setAcceptMode(Qt.QFileDialog.AcceptSave)
+        #dialog = Qt.QFileDialog()
+        #dialog.setFileMode(Qt.QFileDialog.AnyFile)
+        #dialog.setNameFilters([('Tuner configuration files (*' + 
+                                #self.fileExt_ConfigFile + ')'),
+                               #'All files (*)'])
+        #dialog.setWindowTitle('Save Tuner Configuration File')
+        #dialog.setDirectory(self.starting_directory_path)
+        #dialog.setAcceptMode(Qt.QFileDialog.AcceptSave)
+                
+        #not_cancelled = dialog.exec_()
         
-        not_cancelled = dialog.exec_()
-        
-        if not not_cancelled: # If the dialog was cancelled
-            return
+        #if not not_cancelled: # If the dialog was cancelled
+            #return
 
-        fileNames = dialog.selectedFiles()
+        #fileNames = dialog.selectedFiles()
             
-        filename = str(fileNames[0])
-            
+        #filename = str(fileNames[0])
+        
+        caption = 'Save Tuner Configuration File'
+        selected_filter_str = ('Tuner configuration files (*' +
+                               self.fileExt_ConfigFile + ')')
+        filter_str = (selected_filter_str + ';;' +
+                      'All files (*)')
+        qfilename = Qt.QFileDialog.getSaveFileName(
+            None, caption, self.starting_directory_path, filter_str,
+            selected_filter_str)
+        filename = str(qfilename)
+
         if filename[-len(self.fileExt_ConfigFile):] != \
            self.fileExt_ConfigFile:
             filename = filename + self.fileExt_ConfigFile
@@ -144,26 +154,18 @@ class TunerFileManager(Qt.QObject):
     def loadConfigOrSnapshotFileToSetupGUI(self):
         """"""
         
-        dialog = Qt.QFileDialog()
-        dialog.setFileMode(Qt.QFileDialog.ExistingFile)
-        dialog.setNameFilters([
-            ('Tuner configuration/snapshot files (*' + 
-             self.fileExt_ConfigFile + ' *' + 
-             self.fileExt_SnapshotFile + ')'),
-            'All files (*)'])
-        dialog.setWindowTitle('Load Tuner Configuration/Snapshot File')
-        dialog.setDirectory(self.starting_directory_path)
-        dialog.setAcceptMode(Qt.QFileDialog.AcceptOpen)
-        
-        not_cancelled = dialog.exec_()
-        
-        if not not_cancelled: # If the dialog was cancelled
-            return
-        
-        fileNames = dialog.selectedFiles()
-            
-        filename = str(fileNames[0])
-            
+        caption = 'Load Tuner Configuration/Snapshot File'
+        selected_filter_str = ('Tuner configuration/snapshot files (*' + 
+                               self.fileExt_ConfigFile + ' *' + 
+                               self.fileExt_SnapshotFile + ')')
+        filter_str = (selected_filter_str + ';;' +
+                      'All files (*)')
+        qfilename = Qt.QFileDialog.getOpenFileName(
+            None, caption, self.starting_directory_path, filter_str,
+            selected_filter_str)
+        filename = str(qfilename)
+
+    
         self.starting_directory_path = filename
             
         f = open(filename, 'r')
@@ -220,24 +222,17 @@ class TunerFileManager(Qt.QObject):
     def loadConfigFile(self, model_to_be_replaced):
         """"""
         
-        dialog = Qt.QFileDialog()
-        dialog.setFileMode(Qt.QFileDialog.ExistingFile)
-        dialog.setNameFilters([('Tuner configuration files (*' + 
-                                self.fileExt_ConfigFile + ')'),
-                               'All files (*)'])
-        dialog.setWindowTitle('Load Tuner Configuration File')
-        dialog.setDirectory(self.starting_directory_path)
-        dialog.setAcceptMode(Qt.QFileDialog.AcceptOpen)
+        caption = 'Load Tuner Configuration File'
+        selected_filter_str = ('Tuner configuration files (*' + 
+                               self.fileExt_ConfigFile + ')')
+        filter_str = (selected_filter_str + ';;' +
+                      'All files (*)')
+        qfilename = Qt.QFileDialog.getOpenFileName(
+            None, caption, self.starting_directory_path, filter_str,
+            selected_filter_str)
+        filename = str(qfilename)
         
-        not_cancelled = dialog.exec_()
         
-        if not not_cancelled: # If the dialog was cancelled
-            return
-        
-        fileNames = dialog.selectedFiles()
-            
-        filename = str(fileNames[0])
-            
         self.starting_directory_path = filename
             
         f = open(filename, 'r')
@@ -319,24 +314,17 @@ class TunerFileManager(Qt.QObject):
     def saveSnapshotFile(self, model):
         """"""
         
-        dialog = Qt.QFileDialog()
-        dialog.setFileMode(Qt.QFileDialog.AnyFile)
-        dialog.setNameFilters([('Tuner snapshot files (*' + 
-                                self.fileExt_SnapshotFile + ')'),
-                               'All files (*)'])
-        dialog.setWindowTitle('Save Tuner Snapshot File')
-        dialog.setDirectory(self.starting_directory_path)
-        dialog.setAcceptMode(Qt.QFileDialog.AcceptSave)
-
-        not_cancelled = dialog.exec_()
+        caption = 'Save Tuner Snapshot File'
+        selected_filter_str = ('Tuner snapshot files (*' + 
+                               self.fileExt_SnapshotFile + ')')
+        filter_str = (selected_filter_str + ';;' +
+                      'All files (*)')
+        qfilename = Qt.QFileDialog.getSaveFileName(
+            None, caption, self.starting_directory_path, filter_str,
+            selected_filter_str)
+        filename = str(qfilename)
         
-        if not not_cancelled: # If the dialog was cancelled
-            return
         
-        fileNames = dialog.selectedFiles()
-            
-        filename = str(fileNames[0])
-            
         if filename[-len(self.fileExt_SnapshotFile):] != \
            self.fileExt_SnapshotFile:
             filename = filename + self.fileExt_SnapshotFile
@@ -357,23 +345,16 @@ class TunerFileManager(Qt.QObject):
     def loadSnapshotFile(self, model_to_be_replaced):
         """"""
         
-        dialog = Qt.QFileDialog()
-        dialog.setFileMode(Qt.QFileDialog.ExistingFile)
-        dialog.setNameFilters([('Tuner snapshot files (*' + 
-                                self.fileExt_SnapshotFile + ')'),
-                               'All files (*)'])
-        dialog.setWindowTitle('Load Tuner Snapshot File')
-        dialog.setDirectory(self.starting_directory_path)
-        dialog.setAcceptMode(Qt.QFileDialog.AcceptOpen)
-
-        not_cancelled = dialog.exec_()
+        caption = 'Load Tuner Snapshot File'
+        selected_filter_str = ('Tuner snapshot files (*' + 
+                               self.fileExt_SnapshotFile + ')')
+        filter_str = (selected_filter_str + ';;' +
+                      'All files (*)')
+        qfilename = Qt.QFileDialog.getOpenFileName(
+            None, caption, self.starting_directory_path, filter_str,
+            selected_filter_str)
+        filename = str(qfilename)
         
-        if not not_cancelled: # If the dialog was cancelled
-            return
-
-        fileNames = dialog.selectedFiles()
-            
-        filename = str(fileNames[0])
         
         self.starting_directory_path = filename
             
@@ -447,24 +428,17 @@ class TunerFileManager(Qt.QObject):
     def savePreferencesFile(self, visible_col_name_list):
         """"""
         
-        dialog = Qt.QFileDialog()
-        dialog.setFileMode(Qt.QFileDialog.AnyFile)
-        dialog.setNameFilters([('Tuner preferences files (*' + 
-                                self.fileExt_TunerPrefFile + ')'),
-                               'All files (*)'])
-        dialog.setWindowTitle('Save Tuner Preferences File')
-        dialog.setDirectory(self.starting_directory_path)
-        dialog.setAcceptMode(Qt.QFileDialog.AcceptSave)
+        caption = 'Save Tuner Preferences File'
+        selected_filter_str = ('Tuner preferences files (*' + 
+                               self.fileExt_TunerPrefFile + ')')
+        filter_str = (selected_filter_str + ';;' +
+                      'All files (*)')
+        qfilename = Qt.QFileDialog.getSaveFileName(
+            None, caption, self.starting_directory_path, filter_str,
+            selected_filter_str)
+        filename = str(qfilename)
         
-        not_cancelled = dialog.exec_()
         
-        if not not_cancelled: # If the dialog was cancelled
-            return
-
-        fileNames = dialog.selectedFiles()
-            
-        filename = str(fileNames[0])
-            
         if filename[-len(self.fileExt_TunerPrefFile):] != \
            self.fileExt_TunerPrefFile:
             filename = filename + self.fileExt_TunerPrefFile
@@ -481,24 +455,17 @@ class TunerFileManager(Qt.QObject):
     def loadPreferencesFile(self):
         """"""
         
-        dialog = Qt.QFileDialog()
-        dialog.setFileMode(Qt.QFileDialog.ExistingFile)
-        dialog.setNameFilters([('Tuner preferences files (*' + 
-                                self.fileExt_TunerPrefFile + ')'),
-                               'All files (*)'])
-        dialog.setWindowTitle('Load Tuner Preferences File')
-        dialog.setDirectory(self.starting_directory_path)
-        dialog.setAcceptMode(Qt.QFileDialog.AcceptOpen)
+        caption = 'Load Tuner Preferences File'
+        selected_filter_str = ('Tuner preferences files (*' + 
+                               self.fileExt_TunerPrefFile + ')')
+        filter_str = (selected_filter_str + ';;' +
+                      'All files (*)')
+        qfilename = Qt.QFileDialog.getOpenFileName(
+            None, caption, self.starting_directory_path, filter_str,
+            selected_filter_str)
+        filename = str(qfilename)
         
-        not_cancelled = dialog.exec_()
         
-        if not not_cancelled: # If the dialog was cancelled
-            return
-
-        fileNames = dialog.selectedFiles()
-            
-        filename = str(fileNames[0])
-                
         self.starting_directory_path = filename
         
         f = open(filename, 'r')

@@ -44,6 +44,7 @@ import hla
 # *) Allow passing arguments to make(). This will allow
 # a user to launch some application with their preferences,
 # not with default preferences.
+# *) Allow user to change the XML file from inside the launcher
 
 
 ########################################################################

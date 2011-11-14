@@ -15,12 +15,12 @@ certain step size ratios between them.
 """
 
 import sys
+import os
 
-USE_DEV_SRC = False
+USE_DEV_SRC = True
 if USE_DEV_SRC:
     # Force Python to use your development modules,
     # instead of the modules already installed on the system.
-    import os
     if os.environ.has_key('HLA_DEV_SRC'):
         dev_src_dir_path = os.environ['HLA_DEV_SRC']
 
@@ -508,11 +508,6 @@ class TunerModel(Qt.QStandardItemModel):
                 self.nRows += 1
                     
         else: # Use Knob-based View
-            #kg_list = self.knobGroupList.knobGroups
-            #list_of_knob_list = [kg.knobs for kg in kg_list]
-            #knob_group_index_list = []
-            #for (i, k_list) in enumerate(list_of_knob_list):
-                #knob_group_index_list.extend([i]*len(k_list))
 
             kg_list = self.knobGroupList
             knob_group_index_list = []
@@ -863,7 +858,7 @@ class TunerView(Qt.QMainWindow, Ui_MainWindow):
             
             m.isGroupBasedView = isGroupBasedView
             m._updateModel()
-            #self._expandAll_and_resizeColumn(treeView)
+            
         
     #----------------------------------------------------------------------
     def _getCurrentTreeView(self):
