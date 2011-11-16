@@ -20,7 +20,7 @@ if USE_DEV_SRC:
         sys.path.insert(0, dev_src_dir_path)
             
     else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined.'
+        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
 
 import hla
 if not hla.machines._lat:
@@ -31,17 +31,31 @@ import datetime
 import cothread
 
 import PyQt4.Qt as Qt
-from . import gui_icons # Note that you cannot use main() with relative importing
 
-from .ui_tunerConfigSetupDialog import Ui_Dialog
-
-from . import config as const
-from .knob import Knob, KnobGroup, KnobGroupList
-from .tuner_file_manager import TunerFileManager
-from . import preferencesDialogForConfigSetup \
-       as PreferencesDialogForConfigSetup
-from . import channelSelectorDialog \
-       as ChannelSelectorDialog
+if __name__ == "__main__" :
+    import gui_icons
+    
+    from ui_tunerConfigSetupDialog import Ui_Dialog
+    
+    import config as const
+    from knob import Knob, KnobGroup, KnobGroupList
+    from tuner_file_manager import TunerFileManager
+    import preferencesDialogForConfigSetup \
+           as PreferencesDialogForConfigSetup
+    import channelSelectorDialog \
+           as ChannelSelectorDialog
+else:
+    from . import gui_icons
+    
+    from .ui_tunerConfigSetupDialog import Ui_Dialog
+    
+    from . import config as const
+    from .knob import Knob, KnobGroup, KnobGroupList
+    from .tuner_file_manager import TunerFileManager
+    from . import preferencesDialogForConfigSetup \
+           as PreferencesDialogForConfigSetup
+    from . import channelSelectorDialog \
+           as ChannelSelectorDialog
 
 
 # TODO:

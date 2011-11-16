@@ -39,7 +39,7 @@ if USE_DEV_SRC:
         sys.path.insert(0, dev_src_dir_path)
             
     else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined.'
+        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
 
 import fnmatch
 from operator import and_, not_
@@ -48,7 +48,10 @@ import cothread
 
 import PyQt4.Qt as Qt
 
-from ui_channelSelectorDialog import Ui_Dialog
+if __name__ == "__main__" :
+    from ui_channelSelectorDialog import Ui_Dialog
+else:
+    from .ui_channelSelectorDialog import Ui_Dialog
 
 import hla
 if not hla.machines._lat :

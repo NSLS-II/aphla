@@ -27,7 +27,7 @@ if USE_DEV_SRC:
         sys.path.insert(0, dev_src_dir_path)
             
     else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined.'
+        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
 
 import operator
 #import time

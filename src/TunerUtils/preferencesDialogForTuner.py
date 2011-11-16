@@ -14,14 +14,20 @@ if USE_DEV_SRC:
         sys.path.insert(0, dev_src_dir_path)
             
     else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined.'
+        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
         
 import PyQt4.Qt as Qt
 import gui_icons
 
-from ui_preferencesDialogForTuner import Ui_Dialog
-from tuner_file_manager import TunerFileManager
+if __name__ == "__main__" :
+    from ui_preferencesDialogForTuner import Ui_Dialog
+    
+    from tuner_file_manager import TunerFileManager
+else:
+    from .ui_preferencesDialogForTuner import Ui_Dialog
 
+    from .tuner_file_manager import TunerFileManager
+    
 
 OUTPUT_TYPE_INDEX_LIST = 0
 OUTPUT_TYPE_STRING_LIST = 1

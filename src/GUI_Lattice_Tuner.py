@@ -30,7 +30,7 @@ if USE_DEV_SRC:
         sys.path.insert(0, dev_src_dir_path)
             
     else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined.'
+        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
 
 import datetime
 import operator
@@ -193,12 +193,23 @@ class TunerModel(Qt.QStandardItemModel):
 
             if col_name == const.COL_WEIGHT:
                 try:
-                    new_weight = float(str(item.text()))
+                    new_weight = float(new_input)
                 except ValueError:
                     item.setText(const.STR_FORMAT_WEIGHT_FACTOR
                                  % knob_group.weight)
                     Qt.QMessageBox.critical(None, 'ERROR', 
                         'You must enter a numeric value.')
+                    # Re-enable the temporarily disconnected signal       
+                    self._connect_itemChanged_signal(True)
+                    return
+                
+                if (new_weight == 0.0) and (\
+                    knob_group_index == self.knobGroupList.ref_index):
+                    item.setText(const.STR_FORMAT_WEIGHT_FACTOR
+                                 % knob_group.weight)
+                    Qt.QMessageBox.critical(None, 'ERROR', 
+                        ('Weight of reference group cannot be zero. ' +
+                         'Change reference group, or enter non-zero weight.') )
                     # Re-enable the temporarily disconnected signal       
                     self._connect_itemChanged_signal(True)
                     return
@@ -230,6 +241,17 @@ class TunerModel(Qt.QStandardItemModel):
                 ref_weight = kg_list.knobGroups[kg_list.ref_index].weight
                         
                 this_weight = knob_group.weight
+                
+                if this_weight == 0.0:
+                    str_format = self.col_name_dict[col_name][2]
+                    item.setText(str_format % previous_step_size)
+                    Qt.QMessageBox.critical(None, 'ERROR', 
+                        ('Step size must be zero for this item since its weight ' +
+                         'is zero. Change to non-zero weight first before entering ' +
+                         'non-zero step size.') )
+                    # Re-enable the temporarily disconnected signal       
+                    self._connect_itemChanged_signal(True)
+                    return
                 
                 new_refStepSize = ref_weight*(new_step_size/this_weight)
                 kg_list._changeRefStepSize(new_refStepSize)
@@ -698,10 +720,61 @@ class TunerView(Qt.QMainWindow, Ui_MainWindow):
             config_name = ''
             self._addTab(model_to_be_replaced, config_name, m)
         
+        # Add layout
+        self.groupBox_switch_view.setMinimumSize(Qt.QSize(181,41))
+        #
+        layoutWidget = Qt.QWidget(self.groupBox_switch_view)
+        layoutWidget.setGeometry(Qt.QRect(0,20,175,23))
+        layoutWidget.setObjectName('layoutWidget')
+        self.layoutWidget = layoutWidget
+        #
+        self.radioButton_knobs.setParent(self.layoutWidget)
+        self.radioButton_knob_groups.setParent(self.layoutWidget)
+        #
+        horizontalLayout1 = Qt.QHBoxLayout(self.layoutWidget)
+        horizontalLayout1.setMargin(0)
+        horizontalLayout1.setObjectName('horizontalLayout1')
+        self.horizontalLayout1 = horizontalLayout1
+        #
+        self.horizontalLayout1.addWidget(self.radioButton_knob_groups)
+        self.horizontalLayout1.addWidget(self.radioButton_knobs)
+        #        
+        spacerItem1 = Qt.QSpacerItem(40,20,Qt.QSizePolicy.Expanding,
+                                     Qt.QSizePolicy.Minimum)
+        spacerItem2 = Qt.QSpacerItem(40,20,Qt.QSizePolicy.Expanding, 
+                                     Qt.QSizePolicy.Minimum)
+        spacerItem3 = Qt.QSpacerItem(488,20,Qt.QSizePolicy.Expanding, 
+                                     Qt.QSizePolicy.Minimum)
+        #
+        horizontalLayout2 = Qt.QHBoxLayout()
+        horizontalLayout2.setObjectName('horizontalLayout2')
+        self.horizontalLayout2 = horizontalLayout2
+        #
+        self.horizontalLayout2.addWidget(self.groupBox_switch_view)
+        self.horizontalLayout2.addItem(spacerItem1)
+        self.horizontalLayout2.addWidget(self.pushButton_updatePV)
+        self.horizontalLayout2.addItem(spacerItem2)
+        self.horizontalLayout2.addWidget(self.pushButton_step_up)
+        self.horizontalLayout2.addWidget(self.pushButton_step_down)
+        self.horizontalLayout2.addItem(spacerItem3)
+        #
+        verticalLayout = Qt.QVBoxLayout()
+        verticalLayout.setMargin(0)
+        verticalLayout.setObjectName('verticalLayout')
+        self.verticalLayout = verticalLayout
+        #
+        self.verticalLayout.addWidget(self.tabWidget)
+        self.verticalLayout.addLayout(self.horizontalLayout2)
+        #
+        self.gridLayout = Qt.QGridLayout(self.centralwidget)
+        self.gridLayout.setObjectName('gridLayout')
+        self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
+        
+        # Connect signals/slots
         self.connect(self.tabWidget,
                      Qt.SIGNAL('tabCloseRequested(int)'),
                      self._closeTab);
-        
+        #
         self.connect(self.buttonGroup, 
                      Qt.SIGNAL('buttonClicked(QAbstractButton *)'),
                      self._switch_view_base)        
@@ -776,10 +849,13 @@ class TunerView(Qt.QMainWindow, Ui_MainWindow):
         new_treeView.setAlternatingRowColors(True)
         new_treeView.setRootIsDecorated(True)
         new_treeView.setSelectionMode(Qt.QAbstractItemView.ExtendedSelection)
+        verticalLayout = Qt.QVBoxLayout(new_tab)
+        verticalLayout.addWidget(new_treeView) # Allow the TreeView to expand together with the tab
         new_tab_index = self.tabWidget.insertTab(tab_index_to_be_inserted,
                                                  new_tab, new_tab_name)
         self.tabWidget.setCurrentIndex(new_tab_index)
     
+        
         ## FIXIT:
         ## If activated, and tab moved to the right of tab_plus, then
         ## it ends up with infinite recursion error.

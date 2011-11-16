@@ -12,7 +12,11 @@ import cPickle
 
 import PyQt4.Qt as Qt
 
-from knob import KnobGroupList
+if __name__ == "__main__" :
+    from knob import KnobGroupList
+else:
+    from .knob import KnobGroupList
+
 
 SENDER_KEY_TUNER = 'TunerGUI'
 SENDER_KEY_CONFIG_SETUP = 'ConfigSetupGUI'

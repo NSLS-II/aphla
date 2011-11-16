@@ -68,6 +68,14 @@
                 <module_name>GUI_Orbit_Viewer</module_name>
             </app>
 
+            <app>
+                <name>GUI_BetaFunc_Viewer</name>
+                <dispName>Beta Function Viewer</dispName>
+
+                <abs_dir_path></abs_dir_path>
+                <module_name>GUI_BetaFunc_Viewer</module_name>
+            </app>
+
             <page>
                 <name>other_category</name>
                 <dispName>Other Category</dispName>
