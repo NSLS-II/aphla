@@ -1,15 +1,12 @@
 Introduction
 =============
 
-This manual describes HLA (high level applications) for the NSLS-II
-commissioning and accelerator physics study.
+This manual describes Physics HLA (high level applications) for the NSLS-II
+commissioning and beam studies.
 
-The HLA includes a set of applications and the APIs (Application
-Programming Interface) those applications are based-on. The applications
-is either a simple command or an application with GUI (graphical user
-interface). APIs are designed for interactive control or batch
-scripting. Both applications and APIs are in a high level form that are
-friendly to physicists and operators.
+Besides the commonly used applications, like Beam based alignment, the HLA
+includes a set of APIs (Application Programming Interface) which is used for
+writing further scripts and interactive controls.
 
 This manual is compiled based on the requirements from the following
 documents:

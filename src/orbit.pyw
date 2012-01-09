@@ -119,6 +119,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.yref   = np.zeros(n, 'd')
         self.errbar = np.zeros(n, 'd')
         self.camonitor = CaDataMonitor(pvs, samples=self.SAMPLES)
+        #self.camonitor = CaDataMonitor(pvs, simulation=True)
         self.mask = np.zeros(n, 'i')
         self.__live = False
         self.showDifference = False

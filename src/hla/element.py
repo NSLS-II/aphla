@@ -91,6 +91,9 @@ class AbstractElement(object):
             self.index, self.name, self.family, self.sb, self.length,
             self.devname, self.cell, self.girder, self.symmetry, self.sequence)
 
+    def __repr__(self):
+        return "%s:%s @ sb=%f" % (self.name, self.family, self.sb)
+            
     def __lt__(self, other):
         return self.sb < other.sb
 
@@ -454,4 +457,7 @@ class Element(AbstractElement):
         if not pv in self._pvtags.keys(): self._pvtags[pv] = set([])
         self._pvtags[pv].update(tags)
 
+
+    def __dir__(self):
+        return dir(Element) + list(self.__dict__) + self._field.keys()
 

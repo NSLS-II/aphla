@@ -1,9 +1,37 @@
 import numpy as np
 from cothread.catools import camonitor, caget
+import threading, time
+import random
+
+class SimData(threading.Thread):
+    def __init__(self, update, nmax):
+        #super(threading.Thread, self).__init__()
+        self.update = update
+        self.N = nmax
+        self.exitFlag = 0
+        threading.Thread.__init__(self)
+
+    def run(self):
+        print "Running simdata"
+        while not self.exitFlag:
+            time.sleep(1)
+            i = random.randint(0, self.N-1)
+            val = random.random()
+            self.update(val, i)
+            print i, val
 
 class CaDataMonitor:
-    def __init__(self, pvs, samples=20):
+    def __init__(self, pvs, samples=20, **kwargs):
+        """
+        - pvs a list of PV
+        - samples number of data points for std/var/average
+
+        optional:
+        - simulation [True|False] use simulated data or real pv data
+        """
         self.samples = samples
+        
+        self.simulation = kwargs.get('simulation', False)
 
         n = 1
         if isinstance(pvs, (list, tuple)):
@@ -20,20 +48,29 @@ class CaDataMonitor:
         self._count = np.ones(n, 'i')
         self.recent = np.zeros(n, 'd')
 
-        for i in range(self.samples):
-            self.data[:,i] = caget(self.pvs)
 
-        self.recent[:] = self.data[:,-1]
-        self.avg[:]    = self.recent[:] #np.average(self.data, axis=1)
-        #self.std[:]    = #np.std(self.data, axis=1)
-        #print type(self.recent)
+        if not self.simulation:
+            for i in range(self.samples):
+                self.data[:,i] = caget(self.pvs)
 
-        self.monitors = camonitor(self.pvs, self._ca_update)
-        
+            self.recent[:] = self.data[:,-1]
+            self.avg[:]    = self.recent[:] #np.average(self.data, axis=1)
+            #self.std[:]    = #np.std(self.data, axis=1)
+            #print type(self.recent)
+            self.monitors = camonitor(self.pvs, self._ca_update)
+        else:
+            self.monitors = SimData(self._ca_update, len(self.pvs))
+            self.monitors.start()
+            print "Thread is running"
+
     def closeMonitors(self):
-        for p in self.monitors:
-            p.close()
-        self.monitors = []
+        if self.simulation:
+            self.monitors.exitFlag = 1
+            time.sleep(2)
+        else:
+            for p in self.monitors:
+                p.close()
+            self.monitors = []
 
     def resetData(self):
         """
@@ -70,7 +107,7 @@ class CaDataMonitor:
     #    print "Closing"
     #    cothread.WaitForClose()
 
-if __name__ == "__main__":
+def _test1():
     import time
     a = CaDataMonitor(['SR:C01-BI:G02A{BPM:L1}SA:X-I', 'SR:C01-BI:G02A{BPM:L1}SA:Y-I'])
     print a.data
@@ -82,3 +119,20 @@ if __name__ == "__main__":
     print "press Ctrl-C to quit"
     import cothread
     cothread.WaitForQuit()
+
+def _test2():
+    import time
+    a = CaDataMonitor(['a', 'b', 'c'], simulation=True)
+    print "created, sleeping"
+    time.sleep(5)
+    print "Sleep done"
+    a.closeMonitors()
+
+    b = CaDataMonitor(['a', 'b', 'c'], simulation=True)
+    print "created, sleeping"
+    time.sleep(5)
+    print "Sleep done"
+    b.closeMonitors()
+
+if __name__ == "__main__":
+    _test2()

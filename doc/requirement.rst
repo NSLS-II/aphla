@@ -112,6 +112,7 @@ which are easier for us to integrate and expand.
 
 - :hla:`Beam orbit display`. (L.Yang)
     - :hladone:`display closed orbit (static), 1Hz rate`
+    - :hla:`machine clock for turn-by-turn BPM reading`
     - :hladone:`turn by turn bpm reading (including single turn)` (Y.Hu)
     - :hla:`single turn` (Y.Hu)
     - :hla:`Plot orbit change from now on.`
@@ -159,6 +160,10 @@ which are easier for us to integrate and expand.
 - :hla:`Measure BPM linearity` (Y.Hu, etc.)
 - Bad BPM identification should be done in other application. Data
   synchronization to be done in low level server part.
+- :hla:`postmortem data reading/analysis`
+
+- :hla:`Latch the last 10 seconds of data for post mortem analyses` (I. Pinayev)
+- :hla:`5 Hz update rate of 1000 chosen parameters for machine control center` (I.Pinayev)
 
 
 
