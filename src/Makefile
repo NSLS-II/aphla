@@ -1,7 +1,7 @@
-all: qrc_resources.py
+all: orbit_resources.py
 
-qrc_resources.py: resources.qrc
-	pyrcc4 -o qrc_resources.py resources.qrc
+orbit_resources.py: orbit_resources.qrc
+	pyrcc4 -o orbit_resources.py orbit_resources.qrc
 
 clean:
 	rm -f hla/*.pyc

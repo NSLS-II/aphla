@@ -565,8 +565,8 @@ def getOrbit(pat = '', spos = False):
             ret[:,3] = bpmy.sb
         else:
             ret = np.zeros((n,2), 'd')
-        ret[:,0] = bpmx.value
-        ret[:,1] = bpmy.value
+        ret[:,0] = bpmx.x
+        ret[:,1] = bpmy.y
         return ret
 
     # need match the element name

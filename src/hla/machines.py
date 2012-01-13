@@ -192,18 +192,11 @@ def initNSLS2VSR(cached = False):
     # create virtual element BPMX and BPMY
     bpmx = Element(eget=caget, eput=caput,
                    **{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
-    bpmx.sb = []
     bpmy = Element(eget=caget, eput=caput,
                    **{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
-    bpmy.sb = []
-    for e in _lattice_dict['LTB'].getElements('BPM'):
-        for pv,t in e._pvtags.items():
-            if 'aphla.x' in t:
-                bpmx.addEGet(pv)
-                bpmx.sb.append(e.sb)
-            if 'aphla.y' in t:
-                bpmy.addEGet(pv)
-                bpmy.sb.append(e.sb)
+    bpms = _lattice_dict['LTB'].getElements('BPM')
+    bpmx.collect(bpms, fields=["value", "x"], attrs=["sb", "se"])
+    bpmy.collect(bpms, fields=["value", "y"], attrs=["sb", "se"])
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['LTB'].appendElement(bpmx)
     _lattice_dict['LTB'].appendElement(bpmy)
@@ -214,18 +207,12 @@ def initNSLS2VSR(cached = False):
 
     bpmx = Element(eget=caget, eput=caput,
                    **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
-    bpmx.sb = []
     bpmy = Element(eget=caget, eput=caput,
                    **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
-    bpmy.sb = []
-    for e in _lattice_dict['SR'].getElements('BPM'):
-        for pv,t in e._pvtags.items():
-            if 'aphla.x' in t and HLA_TAG_EGET in t:
-                bpmx.addEGet(pv)
-                bpmx.sb.append(e.sb)
-            if 'aphla.y' in t and HLA_TAG_EGET in t:
-                bpmy.addEGet(pv)
-                bpmy.sb.append(e.sb)
+
+    bpms = _lattice_dict['SR'].getElements('BPM')
+    bpmx.collect(bpms, fields=["value", "x"], attrs=["sb", "se"])
+    bpmy.collect(bpms, fields=["value", "y"], attrs=["sb", "se"])
     bpmx.virtual, bpmy.virtual = 1, 1
     _lattice_dict['SR'].appendElement(bpmx)
     _lattice_dict['SR'].appendElement(bpmy)
