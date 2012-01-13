@@ -27,7 +27,7 @@ hla.machines.initNSLS2VSRTxt()
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
 
-import qrc_resources
+import orbit_resources
 import numpy as np
 
 #import bpmtabledlg
@@ -72,7 +72,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         for m in self.profile:
             if x > m[0] and x < m[1]:
                 s.append(m[2])
-        return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y(), '\n'.join(s)))
+        return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y()*1e6, '\n'.join(s)))
 
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
@@ -119,6 +119,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.yref   = np.zeros(n, 'd')
         self.errbar = np.zeros(n, 'd')
         self.camonitor = CaDataMonitor(pvs, samples=self.SAMPLES)
+        #self.camonitor = CaDataMonitor(pvs, simulation=True)
         self.mask = np.zeros(n, 'i')
         self.__live = False
         self.showDifference = False

@@ -8,6 +8,7 @@ Element
 import os
 from catools import caget, caput
 
+
 class AbstractElement(object):
     """
     AbstractElement
@@ -91,6 +92,9 @@ class AbstractElement(object):
             self.index, self.name, self.family, self.sb, self.length,
             self.devname, self.cell, self.girder, self.symmetry, self.sequence)
 
+    def __repr__(self):
+        return "%s:%s @ sb=%f" % (self.name, self.family, self.sb)
+            
     def __lt__(self, other):
         return self.sb < other.sb
 
@@ -149,17 +153,18 @@ class CaDecorator:
 
     PVs are in ascending order
     """
-    ASCENDING  = 1
-    DESCENDING = 2
-    RANDOM     = 0
+    NoOrder    = 0
+    Ascending  = 1
+    Descending = 2
+    Random     = 3
     def __init__(self):
         self.pvrb = []
         self.pvsp = []
-        self.rb = None
-        self.sp = None
+        self.rb = None  # bufferred readback value 
+        self.sp = None  # bufferred setpoint value
         self.field = ''
         self.desc = ''
-        self.order = self.ASCENDING
+        self.order = self.Ascending
 
     def __eq__(self, other):
         return self.pvrb == other.pvrb and \
@@ -168,14 +173,20 @@ class CaDecorator:
             self.desc == other.desc
             
     def _insert_in_order(self, lst, v):
-        if len(lst) == 0:
+        if len(lst) == 0 or self.order == self.NoOrder:
             lst.append(v)
             return 0
 
-        for i,x in enumerate(lst):
-            if x < v: continue
-            lst.insert(i, v)
-            return i
+        if self.order == self.Ascending:
+            for i,x in enumerate(lst):
+                if x < v: continue
+                lst.insert(i, v)
+                return i
+        elif self.order == self.Descending:
+            for i,x in enumerate(lst):
+                if x > v: continue
+                lst.insert(i, v)
+                return i
 
         lst.append(v)
         return len(lst) - 1
@@ -198,10 +209,16 @@ class CaDecorator:
             return self.sp
         else: return None
 
-    def addReadback(self, pv):
+    def appendReadback(self, pv):
+        self.pvrb.append(pv)
+
+    def appendSetpoint(self, pv):
+        self.pvsp.append(pv)
+
+    def insertReadback(self, pv):
         self._insert_in_order(self.pvrb, pv)
 
-    def addSetpoint(self, pv):
+    def insertSetpoint(self, pv):
         #self.pvsp.append(pv)
         self._insert_in_order(self.pvsp, pv)
 
@@ -323,7 +340,7 @@ class Element(AbstractElement):
         decr = self._field['status']
         if not decr: self._field['status'] = CaDecorator()
         
-        self._field['status'].addReadback(pv)
+        self._field['status'].insertReadback(pv)
 
     def addEGet(self, pv, field=None):
         """
@@ -338,7 +355,7 @@ class Element(AbstractElement):
             if not sf in self._field.keys() or not self._field[sf]:
                 self._field[sf] = CaDecorator()
             # add pv
-            self._field[sf].addReadback(pv)
+            self._field[sf].insertReadback(pv)
 
     def addEPut(self, pv, field=None):
         """
@@ -353,7 +370,7 @@ class Element(AbstractElement):
             if not sf in self._field.keys() or not self._field[sf]:
                 self._field[sf] = CaDecorator()
             # add pv
-            self._field[sf].addSetpoint(pv)
+            self._field[sf].insertSetpoint(pv)
         
     def status(self):
         maxlen = max([len(att) for att in self._field.keys()])
@@ -413,7 +430,7 @@ class Element(AbstractElement):
         if not self._field.has_key(field):
             self._field[field] = CaDecorator()
 
-        self._field[field].addReadback(v)
+        self._field[field].insertReadback(v)
 
     def setFieldPutAction(self, field, v, desc = ''):
         """
@@ -424,7 +441,7 @@ class Element(AbstractElement):
         if not self._field.has_key(field):
             self._field[field] = CaDecorator()
 
-        self._field[field].addSetpoint(v)
+        self._field[field].insertSetpoint(v)
 
     def fields(self):
         """
@@ -453,5 +470,32 @@ class Element(AbstractElement):
 
         if not pv in self._pvtags.keys(): self._pvtags[pv] = set([])
         self._pvtags[pv].update(tags)
+
+    def collect(self, elemlist, **kwargs):
+        """
+        collect properties in elemlist as its own.
+        
+        - *fields*, EPICS related
+        - *attrs*, element attribute list
+        """
+
+        fields = kwargs.get("fields", [])
+        attrs  = kwargs.get("attrs", [])
+        for field in fields:
+            pd = CaDecorator()
+            for elem in elemlist:
+                pd.pvrb += elem._field[field].pvrb
+                pd.pvsp += elem._field[field].pvsp
+            self._field[field] = pd
+            #print "Setting %s" % field
+        for att in attrs:
+            vl = []
+            for elem in elemlist:
+                vl.append(getattr(elem, att))
+            setattr(self, att, vl)
+        
+
+    def __dir__(self):
+        return dir(Element) + list(self.__dict__) + self._field.keys()
 
 
