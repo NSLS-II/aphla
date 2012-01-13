@@ -310,6 +310,9 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.curvemag.attach(self)
         
+        #print "size hint:", self.sizeHint()
+        #print "min sizehint:", self.minimumSizeHint(), self.minimumWidth()
+        self.setMinimumSize(400, 200)
         #self.resize(300, 200)
         #print "BD",self.bound
         #.resize(400, 300)
@@ -690,7 +693,7 @@ class OrbitPlotMainWindow(QMainWindow):
 def main(args):
     #app = QApplication(args)
     demo = OrbitPlotMainWindow()
-    #demo.resize(800,300)
+    demo.resize(600,500)
     demo.show()
 
     #sys.exit(app.exec_())
