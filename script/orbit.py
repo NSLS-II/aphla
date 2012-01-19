@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 
+#__all__ = [ 'main' ]
+
 # for debugging, requires: python configure.py --trace ...
 if 0:
     import sip
     sip.settracemask(0x3f)
 
 import sys
-import cothread, hla
-from epicsdatamonitor import CaDataMonitor
+import cothread
+from cothread.catools import caget, caput
+from aphlas.epicsdatamonitor import CaDataMonitor
 
-app = cothread.iqt(use_timer=True)
-
+app = cothread.iqt()
 
 from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
         QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
@@ -22,7 +24,7 @@ from PyQt4.QtGui import (QAction, QActionGroup, QApplication, QWidget,
         QPrinter, QSpinBox, QPen, QBrush, QVBoxLayout, QTabWidget,
         QTableWidget)
 
-hla.machines.initNSLS2VSRTxt()
+#hla.machines.initNSLS2VSRTxt()
 
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
@@ -32,8 +34,14 @@ import numpy as np
 
 #import bpmtabledlg
 from elementpickdlg import ElementPickDlg
+from orbitconfdlg import OrbitPlotConfig
+
+config_dir = "~/.hla"
 
 class MagnetPicker(Qwt.QwtPlotPicker):
+    """
+    show the magnet name when moving cursor in the plot
+    """
     def __init__(self, canvas):
         Qwt.QwtPlotPicker.__init__(self, Qwt.QwtPlot.xBottom,
                           Qwt.QwtPlot.yLeft,
@@ -369,7 +377,8 @@ class OrbitPlot(Qwt.QwtPlot):
         self.picker1.addMagnetProfile(sb, se, name, minlen)
 
     def getMagnetProfile(self):
-        prof = hla.getBeamlineProfile()
+        #prof = hla.getBeamlineProfile()
+        prof = []
         x, y, c = [], [], []
         for box in prof:
             for i in range(len(box[0])):
@@ -453,23 +462,23 @@ class OrbitPlotMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
+        self.config = OrbitPlotConfig(config_dir, "nsls2_sr_orbit.json")
+
         # initialize a QwtPlot central widget
-        bpm = hla.getElements('BPM')
-        pvx = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_X])[0]
-               for e in bpm]
+        #bpm = hla.getElements('BPM')
+        pvx = [b[1]['rb'] for b in self.config.data['bpmx']]
         #print pvx
-        pvy = [e.pv(tags=[hla.machines.HLA_TAG_EGET, hla.machines.HLA_TAG_Y])[0]
-               for e in bpm]
-        pvsx = [e.sb for e in bpm]
-        pvsy = [e.sb for e in bpm]
-        self.bpm = [e.name for e in bpm]
+        pvy = [b[1]['rb'] for b in self.config.data['bpmy']]
+        pvsx = [b[1]['s'] for b in self.config.data['bpmx']]
+        pvsy = [b[1]['s'] for b in self.config.data['bpmy']]
+        self.bpm = [b[0] for b in self.config.data['bpmx']]
         
         self.plot1 = OrbitPlot(self, pvsx, [p.encode('ascii') for p in pvx])
         self.plot2 = OrbitPlot(self, pvsy, [p.encode('ascii') for p in pvy])
 
-        for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'],
-                                     op='union'):
-            self.plot1.addMagnetProfile(e.sb, e.sb+e.length, e.name)
+        #for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'],
+        #                             op='union'):
+        #    self.plot1.addMagnetProfile(e.sb, e.sb+e.length, e.name)
             
         #for i in range(10):
         #    self.plot1.maskIndex(i)
@@ -690,7 +699,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #hla.hlalib._reset_trims()
 
 
-def main(args):
+def main(args = None):
     #app = QApplication(args)
     demo = OrbitPlotMainWindow()
     demo.resize(600,500)
