@@ -1,7 +1,8 @@
-all: orbit_resources.py
+all: gui_resources.py
 
-orbit_resources.py: orbit_resources.qrc
-	pyrcc4 -o orbit_resources.py orbit_resources.qrc
+gui_resources.py: gui_resources.qrc
+	pyrcc4 -o gui_resources.py gui_resources.qrc
 
 clean:
-	rm -f hla/*.pyc
+	rm -f *.pyc
+	rm -f gui_resources.py

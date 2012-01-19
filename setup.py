@@ -31,7 +31,7 @@ import os
 
 setup(
     name = "aphlas",
-    version = "0.3.0",
+    version = "0.3.0a1",
     packages = ['aphlas', 'aphlas.mpfit', 'aphlas.gui'],
     data_files = {},
     package_dir = {'aphlas': 'lib', 'aphlas.mpfit': 'lib/mpfit',
@@ -42,12 +42,16 @@ setup(
                   'aphlas.lattice', 'aphlas.twiss', 'aphlas.hlalib', 
                   'aphlas.rf', 'aphlas.orbit', 
                   'aphlas.ormdata', 'aphlas.orm', 'aphlas.aptools', 'aphlas.bba',
-                  'aphlas.meastwiss', 'aphlas.gui.orbit', 'aphlas.gui.orbit_resources'],
+                  'aphlas.meastwiss', 
+                  # GUI
+                  'aphlas.gui.gui_resources',
+                  'aphlas.gui.orbit', 'aphlas.gui.apbba'],
     install_requires = ['distribute', 'docutils>=0.3', 'Sphinx >= 1.0.8', 
                         'matplotlib', 'numpy', 'scipy'],
     entry_points = {
         'gui_scripts': [
-            'aporbit = aphlas.gui.orbit:main'
+            'aporbit = aphlas.gui.orbit:main',
+            'apbba = aphlas.gui.apbba:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",

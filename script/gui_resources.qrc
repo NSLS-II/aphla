@@ -9,5 +9,6 @@
 <file alias="view_zoom.png">../images/view_zoom.png</file>
 <file alias="control_choosebpm.png">../images/control_choosebpm.png</file>
 <file alias="control_reset.png">../images/control_reset.png</file>
+<file alias="control_play.png">../images/control_play.png</file>
 </qresource>
 </RCC>

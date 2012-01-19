@@ -15,7 +15,6 @@ from PyQt4.QtGui import (QApplication, QWidget,
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
 
-import orbit_resources
 import numpy as np
 
 class MagnetPicker(Qwt.QwtPlotPicker):
@@ -191,7 +190,6 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         painter.setPen(self.errorPen)
 
         #painter.drawText(10, 10, 20, 30, Qt.AlignBottom and Qt.AlignRight, "HHH")
-        #print xMap.invTransform(0), yMap.invTransform(0)
 
         # draw the error bars with caps in the y direction
         if self.errorOnTop and self.icount > self.samples:
@@ -304,7 +302,7 @@ class OrbitPlot(Qwt.QwtPlot):
                 errorOnTop = False
             )
             self.golden.attach(self)
-            print "Golden orbit is attached"
+            #print "Golden orbit is attached"
         self.bound = self.curve1.boundingRect()
         if not self.golden is None:
             self.bound = self.bound.united(self.golden.boundingRect())
@@ -400,8 +398,8 @@ class OrbitPlot(Qwt.QwtPlot):
         self.replot()
         x = self.invTransform(Qwt.QwtPlot.xBottom, 20)
         y = self.invTransform(Qwt.QwtPlot.yLeft, 10)
-        print "(20,10)", x, y
-        print "x=0 is", self.transform(Qwt.QwtPlot.xBottom, 27.0)
+        #print "(20,10)", x, y
+        #print "x=0 is", self.transform(Qwt.QwtPlot.xBottom, 27.0)
         self.marker.setValue(x, y)
 
     def singleShot(self):

@@ -3,9 +3,9 @@
 #__all__ = [ 'main' ]
 
 # for debugging, requires: python configure.py --trace ...
-if 0:
-    import sip
-    sip.settracemask(0x3f)
+#if 0:
+#    import sip
+#    sip.settracemask(0x3f)
 
 import cothread
 from cothread.catools import caget, caput
@@ -14,6 +14,8 @@ from aphlas.epicsdatamonitor import CaDataMonitor
 app = cothread.iqt(use_timer=True)
 
 import sys
+
+import gui_resources
 
 #import bpmtabledlg
 from elementpickdlg import ElementPickDlg
