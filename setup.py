@@ -46,8 +46,8 @@ setup(
                   # GUI
                   'aphlas.gui.gui_resources',
                   'aphlas.gui.orbit', 'aphlas.gui.apbba'],
-    install_requires = ['distribute', 'docutils>=0.3', 'Sphinx >= 1.0.8', 
-                        'matplotlib', 'numpy', 'scipy'],
+    #install_requires = ['distribute', 'docutils>=0.3', 'Sphinx >= 1.0.8', 
+    #                    'matplotlib', 'numpy', 'scipy'],
     entry_points = {
         'gui_scripts': [
             'aporbit = aphlas.gui.orbit:main',
