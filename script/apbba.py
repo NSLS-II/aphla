@@ -16,9 +16,38 @@ from apbbaconfdlg import BbaConfig
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 
-    QWidget, QTabWidget, QLabel, QIcon, QApplication)
+    QWidget, QTabWidget, QLabel, QIcon, QApplication, QImage, QPixmap,
+    QSizePolicy)
+# 
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+import PyQt4.Qwt5 as Qwt
+import numpy as np
+from aphlas.bba import BbaBowtie
 
 config_dir = "~/.hla"
+
+class BbaMplCanvas(FigureCanvas):
+    """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        fig.subplots_adjust(bottom=0.15)
+        self.axes = fig.add_subplot(111)
+        # We want the axes cleared every time plot() is called
+        self.axes.hold(True)
+        #self.axes.set_xlabel("")
+        #self.compute_initial_figure()
+        #
+        FigureCanvas.__init__(self, fig)
+        self.setParent(parent)
+        # to avoid the cut off of xlabel
+        self.setMinimumSize(400, 300)
+        FigureCanvas.setSizePolicy(self,
+                                   QSizePolicy.Expanding,
+                                   QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
+
 
 class BbaMainWindow(QMainWindow):
     """
@@ -30,13 +59,12 @@ class BbaMainWindow(QMainWindow):
         self.setIconSize(QSize(48, 48))
         self.config = BbaConfig(config_dir, "nsls2_sr_bba.json")
 
-        wid = QTabWidget()
-        wid.addTab(QLabel("Tab1"), "Tab 1")
+        self.widtab = QTabWidget()
+        #widtab.addTab(QLabel("Tab1"), "Tab 1")
 
-        #wid2 = QTableWidget()
-        #wid.addTab(wid2, "test2")
-        wid.addTab(QLabel("Tab2"), "Tab 2")
-        self.setCentralWidget(wid)
+        self._canvas_wid = []
+        #
+        self.setCentralWidget(self.widtab)
 
         #
         # file menu
@@ -61,6 +89,7 @@ class BbaMainWindow(QMainWindow):
         #fileQuitAction.setStatusTip("Quit the application")
         #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
         self.controlMenu.addAction(controlGoAction)
+        self.connect(controlGoAction, SIGNAL("triggered()"), self.align)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -95,6 +124,60 @@ class BbaMainWindow(QMainWindow):
                     self.plot1.setMask(i, 1)
                     self.plot2.setMask(i, 1)
         
+    def align(self):
+        """
+        """
+        import json
+        print "WARNING: using hard coded config file: nsls2_sr_bba.json"
+        f = open("/home/lyyang/devel/nsls2-hla/script/data/nsls2_sr_bba.json")
+        conf = json.load(f)
+        bpmx = conf['orbit_pvx']
+        bpmy = conf['orbit_pvy']
+        #vx, vy = np.array(caget(bpmx)), np.array(caget(bpmy))
+        #import matplotlib.pylab as plt
+        #plt.plot(vx)
+        #plt.plot(vy)
+        #
+        #import matplotlib.pylab as plt
+        ac = BbaBowtie()
+        ac._analyze()
+        #fig = plt.figure()
+        #ax1 = fig.add_subplot(211)
+        #ax2 = fig.add_subplot(212)
+        #ac.plot(ax1, ax2)
+        #fig.savefig("align.png")
+
+        # if we need the config data
+        #for bbconf in conf['bowtie_align']:
+        #    print "Quadrupole:", bbconf['Q'], caget(bbconf['Q'][2])
+        #    ac.quad, s, ac.quad_pvsp, ac.dqk1 = bbconf['Q'][:4]
+        #    for i in range(0, len(bbconf['COR_BPM']), 2):
+        #        ac.bpm, s, ac.bpm_pvrb = bbconf['COR_BPM'][i][:3]
+        #        ac.trim, s, ac.trim_pvsp, obtpv = bbconf['COR_BPM'][i+1][:4]
+        #        ac.quad_pvrb = ac.quad_pvsp
+        #        ac.trim_pvrb = ac.trim_pvsp
+        #        ac.kick = np.linspace(-1e-6, 1e-6, 5)
+        #        ac.orbit_pvrb = conf[obtpv]
+        #        #ca.bpm = conf['
+        #        ac.align()
+
+        wid = QWidget(self)
+        l = QVBoxLayout(wid)
+        cv1 = BbaMplCanvas(wid)
+        cv2 = BbaMplCanvas(wid)
+        #x = np.linspace(0, 2*np.pi, 100)
+        #cv1.axes.plot(x, np.sin(x) + np.random.rand(len(x))*.2, 'ro-')
+        #cv2.axes.plot(x, np.tan(x) + np.random.rand(len(x))*.2, 'go-')
+        ac.plot(cv1.axes, cv2.axes)
+        l.addWidget(cv1)
+        l.addWidget(cv2)
+        cv1.draw()
+        cv2.draw()
+        self.widtab.addTab(wid, "Tab %d" % (self.widtab.count()+1))
+        #wid.setFocus()
+        self.widtab.setCurrentIndex(self.widtab.count() - 1)
+        pass
+
 def main(args = None):
     #app = QApplication(args)
     demo = BbaMainWindow()

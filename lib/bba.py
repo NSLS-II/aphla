@@ -24,43 +24,8 @@ each quadrupole alignment:
 from catools import caget, caput
 import time
 import numpy as np
-import matplotlib.pylab as plt
 
-
-
-def _filterSmallSlope(x, y, varcut=1e10):
-    """
-    Filt half of the points with small slope
-    
-    - x is 1D
-    - y is 2D
-    """
-    xb = np.mean(x)
-    xx = np.correlate(x, x)[0]
-    #print xb, xx
-    m, n = np.shape(y)
-    a = np.zeros(n, 'd')      # slope
-    b = np.zeros(n, 'd')      # 
-    for i in range(n):
-        yb = np.mean(y[:,i])
-        yy = np.correlate(y[:,i], y[:,i])[0]
-        xy = np.correlate(x, y[:,i])[0]
-        # fit y = ax + b
-        b[i] = (yb*xx - xb*xy)/(xx - m*xb*xb)
-        a[i] = (xy - m*xb*yb)/(xx - m*xb*xb)
-        #print a[i], b[i]
-        pass
-    k = np.median(abs(a))
-    bh1 = []
-    bh2 = []
-    for i in range(n):
-        vary = np.var(a[i]*x+b[i] - y[:,i])
-        if abs(a[i]) < k: continue
-
-        bh1.append(i)
-        if vary < varcut : bh2.append(i)
-        #print vary
-    return np.array(a), np.array(b), bh1, bh2
+#import matplotlib.pylab as plt
 
 class BbaBowtie:
     """
@@ -81,7 +46,11 @@ class BbaBowtie:
         self.dqk1  = kwargs.get('dqk1', None)
         self.orbit_pvrb = None
         self.orbit  = None
-
+        self.mask   = None # mask lines that are kept. 
+        self.slope  = None
+        self.x_intercept = None
+        # do not extend for the intersection with x-axis.
+        #self.line_segment_only = False  
         self.orbit_diffstd = 1e-7
 
     def _get_orbit(self):
@@ -124,18 +93,50 @@ class BbaBowtie:
         if diffstd_list:
             return timeout, dvstd
 
-    def _calculateKick(self):
+    def _filterLines(self, x, y, p_slope = 0.8, p_xintercept=0.8,
+                     p_residual = 0.8):
+        """
+        filter out the bad data.
+        - slope is too small, keep only p_slpe*100 percent.
+        - x_interception is too far away from the most candidates (peak of histogram).
+        - residual is too large, keep only the smaller p_residual*100 percent.
+        """
+        m, n = np.shape(y)
+        # p[-1] is constant, p[-2] is slope
+        p, res, rank, sigv, rcond = np.polyfit(x, y, 1, full=True)
+        # keep the larger slope center part
+        i1 = int(n*(1.0-p_slope))
+        kept1 = np.argsort(np.abs(p[-2,:]))[i1:]
+        # keep the residual less than certain percentage
+        i1 = int(n*p_residual)
+        kept3 = np.argsort(np.abs(res))[:i1]
+        # keep the lines with x_intercept smaller than x_intercept*sigma
+        xitc = -p[-1,:]/p[-2,:]
+        hist, edge = np.histogram(xitc, 10)
+        while sum(hist) > n*p_xintercept:
+            im = np.argmax(hist)
+            if im < 5: rg = edge[0], edge[-2]
+            else: rg = edge[1], edge[-1]
+            #print im, hist, edge
+            hist, edge = np.histogram(xitc, 10, range=rg)
+        #
+        ikept2 = np.logical_and(xitc > rg[0], xitc < rg[1])
 
-        dobt = self.orbit[1,:,:] - self.orbit[0,:,:]
-        p, res, rank, sigv, rcond = np.polyfit(dkick, dobt, 1, full=True)
-        pavg = np.average(np.abs(p[-1,:]))
-        resavg = np.average(np.abs(res))
-        pick_c = np.logical_and(abs(p[-1,:])>pavg, res < resavg)
-        psub = np.compress(pick_c, p, axis=1)
+        # take the intersection of 3 filters.
+        for i in range(n):
+            if i not in kept1: ikept2[i] = False
+            if i not in kept3: ikept2[i] = False
+            #if self.line_segment_only and (xitc[i] < x[0] or xitc[i] > x[1]):
+            #    ikept2[i] = False
+        # 
+        self.mask = ikept2
+        self.slope, self.x_intercept = p[-2,:], xitc
+        # the final subset of slope and y_intercept
+        psub = np.compress(ikept2, p, axis=1)
+        # the proper kicker strength to make beam through center of quad.
+        #print "Right kicker strength", np.average(-psub[-1,:]/psub[-2,:])
 
-        return np.average(-psub[-1,:]/psub[-2,:]), pick_c
-
-    def align(self, **kwargs):
+    def _measure(self, **kwargs):
         """
         - if dkick is set, kick will be renewed.
         - if dqk1 is set, qk1 will be renewed.
@@ -203,147 +204,123 @@ class BbaBowtie:
             obt = self._get_orbit()
             self.orbit[1, j+1, :] = obt
 
+    def align(self, **kwargs):
+        """
+        """
+        self._measure(**kwargs)
+        self._analyze()
+
         #
         #
+        #import shelve
+        #import matplotlib.pylab as plt
+        #dobt = self.orbit[1,1:,:] = self.orbit[0,1:,:]
+        #x = np.array(self.kick)
+        #print "Shape:",np.shape(x), np.shape(dobt)
+        #plt.clf()
+        #plt.plot(x, dobt, 'ko-')
+        #plt.savefig("test.png")
+        #d = shelve.open('test.shelve')
+        #d['dobt'] = dobt
+        #d['kick'] = x
+        #d.close()
+        
+
+    def _analyze(self):
         import shelve
         import matplotlib.pylab as plt
-        dobt = self.orbit[1,1:,:] = self.orbit[0,1:,:]
+        print "WARNING: using hard coded config file: test.shelve"
+        f = shelve.open('/home/lyyang/devel/nsls2-hla/lib/test.shelve', 'r')
+        dobt = f['dobt'][:,:]*1e6
+        x = f['kick']*1e6
+        f.close()
+        nkick, nbpm = np.shape(dobt)
+        plt.plot(x, dobt, 'k-o')
+        plt.savefig('test2.png')
+        self.kick = x
+        self.orbit = np.zeros((2, nkick+1, nbpm), 'd')
+        #print np.shape(dobt), np.shape(x), np.shape(self.orbit)
+        self.orbit[1,1:,:] = dobt[:, :]
+
+        self._filterLines(x, dobt)
+
+    def plot(self, axbowtie = None, axhist = None):
+        """
+        export the bowtie figure and histogram for chosen data.
+        """
+
+        # plotting
+        import matplotlib.pylab as plt
+        if axbowtie is None: 
+            fig = plt.figure()
+            axbowtie = fig.add_subplot(111)
+        #print np.shape(psub)
         x = np.array(self.kick)
-        print "Shape:",np.shape(x), np.shape(dobt)
-        plt.clf()
-        plt.plot(x, dobt, 'ko-')
-        plt.savefig("test.png")
-        d = shelve.open('test.shelve')
-        d['dobt'] = dobt
-        d['kick'] = x
-        d.close()
+        y = self.orbit[1,1:,:] - self.orbit[0,1:,:]
+        axbowtie.plot(x, y, 'ko--')
+        axbowtie.set_xlabel("kicker [urad]")
+        axbowtie.set_ylabel("orbit change [um]")
+        axbowtie.grid()
+        
+        t = np.linspace(min(x)*1.2, max(x)*1.2, 10)
+        #p = np.compress(self.mask, self.slope)
+        #xitc = np.compress(self.mask, self.x_intercept)
+        for i in range(len(self.mask)):
+            if not self.mask[i]: continue
+            yitc = -self.slope[i] * self.x_intercept[i]
+            axbowtie.plot(t, self.slope[i]*t + yitc, 'r-')
+        # draw the points
+        for i in range(len(self.mask)):
+            if self.mask[i]: 
+                axbowtie.plot(self.x_intercept[i], 0.0, 'go')
+            else:
+                axbowtie.plot(self.x_intercept[i], 0.0, 'bx')
+        axbowtie.set_xlim(min(t), max(t))
+        ##
+        if axhist is None: 
+            fig = plt.figure()
+            axhist = fig.add_subplot(111)
+        d1 = np.compress(self.mask, self.x_intercept)
+        hnbin = 3
+        d = (max(d1) - min(d1))/hnbin
+        hn,hbins,hpatch = axhist.hist(
+            d1, hnbin, normed=False, color='g', 
+            facecolor='green', alpha=0.8, histtype='stepfilled', 
+            label='filtered')
+        hbins2 = hbins.tolist()
+        while hbins2[0] > min(self.x_intercept): hbins2.insert(0, hbins2[0] - d)
+        while hbins2[-1] < max(self.x_intercept): hbins2.append(hbins2[-1] + d)
+        #print hbins2
+        axhist.hist(self.x_intercept, hbins2, normed=False, histtype='step',
+                    linewidth=2, color='b', label='full set')
+        axhist.set_xlim(axbowtie.get_xlim())
+        axhist.legend()
+        axhist.set_xlabel("fitted kicker strength")
+        axhist.set_ylabel("count")
+
+        #plt.savefig('test5.png')
+        #print hn, hbins, hpatch
+        #print n, len(kept1), sum(ikept2), len(kept3)
 
         
-        if verbose > 0: print "# Calculating ..."
-        # calculate the x part
-        dkx, maskx = self._calculateKick()
-
-        # save x part
-        self._rawdata[iquad] = data[:,:,:]
-        self._rawdata_mask[iquad] = maskx
-
-        self._fitdkick[iquad] = dkx
-
-        obt = self._get_orbit()
-        trim.value = xp0 + dkx
-        quad.value = qk0
-        timeout, log = self._wait_stable_orbit(obt, diffstd=self.orbit_diffstd, diffstd_list=True, verbose=verbose)
-
-        if verbose:
-            print "# Set corrector dxp=", dkx
-
-        if self.plane == 'H':
-            self._quadcenter[iquad] = bpm.value[0]
-            if verbose: print "# Quad center:", self.plane, bpm.value[0]
-        elif self.plane == 'V':
-            self._quadcenter[iquad] = bpm.value[1]
-            if verbose: print "# Quad center:", self.plane, bpm.value[1]
-        else: 
-            raise ValueError("BBA does not recognize plane '%s'" % self.plane)
-        
-
-    def exportFigures(self, iquad, format):
-        """
-        export the bowtie figure.
-
-        ::
-
-          >>> exportFigures(0, 'png')
-          >>> exportFigures(1, ['pdf', 'png'])
-        """
-
-        # orbit change due to quad
-        d = self._rawdata[iquad]
-        dsub = np.compress(self._rawdata_mask[iquad], self._rawdata[iquad], axis=2)
-
-        if isinstance(format, (str, unicode)):
-            out = ["bba-%s-%s.%s" % (self._quad[iquad], self.plane, format)]
-        else:
-            out = ["bba-%s-%s.%s" % (self._quad[iquad], self.plane, fmt) for fmt in format]
-
-        plt.clf()
-        plt.subplot(211)
-        plt.title("Orbit change due to quad strength change")
-        plt.plot(self._rawdkick[iquad], 1.0e6*(d[:,1,:]-d[:,0,:]), 'o-')
-        plt.subplot(212)
-        plt.plot(self._rawdkick[iquad], 1.0e6*(dsub[:,1,:] - dsub[:,0,:]), 'o-')
-        for fmt in out: plt.savefig(fmt)
-
-        
-    def alignQuad(self, iquad, **kwargs):
-        """
-        align the quad
-        """
-        verbose = kwargs.get('verbose', 0)
-
-        if iquad >= len(self._quad): return None
-        return self._bowtieAlign(iquad, verbose=verbose)
-    
-    def checkAlignment(self, iquad, **kwargs):
+    def _check(self, **kwargs):
         """
         check the orbit shift due to changing quadruple strength.
 
         - *dqk1*, 0.05, change of quadrupole strength.
-        - *wait*, 10, wait 10 seconds to read orbit after changing the quadrupole.
         """
-        dqk1 = kwargs.get('dqk1', 0.05)
-        wait = kwargs.get('wait', 10)
-
-        v0 = getOrbit(spos = True)
-        quad = getElements(self._quad[iquad])
-        quad.value = quad.value + dqk1
-        time.sleep(wait)
-        v1 = getOrbit(spos=True)
-        quad.value = quad.value - dqk1
-        return v0, v1
+        pass
 
     def getQuadCenter(self):
         """
         get the results of alignment
         """
-        return self._quadcenter[:]
-
-    def __print__(self):
-        for i in range(self.NQUAD):
-            print self.goldenx[i], self.goldeny[i],self.newgoldenx[i],self.newgoldeny[i]
-
+        #return self._quadcenter[:]
+        pass
     
-def align():
-    import json
-    f = open("../script/data/nsls2_sr_bba.json")
-    conf = json.load(f)
-    bpmx = conf['orbit_pvx']
-    bpmy = conf['orbit_pvy']
-    vx, vy = np.array(caget(bpmx)), np.array(caget(bpmy))
-    import matplotlib.pylab as plt
-    plt.plot(vx)
-    plt.plot(vy)
-    #
-
-    ac = BbaBowtie()
-    for bbconf in conf['bowtie_align']:
-        print "Quadrupole:", bbconf['Q'], caget(bbconf['Q'][2])
-        ac.quad, s, ac.quad_pvsp, ac.dqk1 = bbconf['Q'][:4]
-        for i in range(0, len(bbconf['COR_BPM']), 2):
-            ac.bpm, s, ac.bpm_pvrb = bbconf['COR_BPM'][i][:3]
-            ac.trim, s, ac.trim_pvsp, obtpv = bbconf['COR_BPM'][i+1][:4]
-            ac.quad_pvrb = ac.quad_pvsp
-            ac.trim_pvrb = ac.trim_pvsp
-            ac.kick = np.linspace(-1e-6, 1e-6, 5)
-            ac.orbit_pvrb = conf[obtpv]
-            #ca.bpm = conf['
-            ac.align()
-
-
-
-
 if __name__ == "__main__":
     #print "Tune X:", caget('SR:C00-Glb:G00<TUNE:00>RB:X')
     #print "Tune Y:", caget('SR:C00-Glb:G00<TUNE:00>RB:Y')
-    align()
+    #align()
+    pass
 
