@@ -61,7 +61,8 @@ class BbaMainWindow(QMainWindow):
 
         self.widtab = QTabWidget()
         #widtab.addTab(QLabel("Tab1"), "Tab 1")
-
+        self._bba = []
+        self._bba_plot_data = []
         self._canvas_wid = []
         #
         self.setCentralWidget(self.widtab)
@@ -128,7 +129,7 @@ class BbaMainWindow(QMainWindow):
         """
         """
         import json
-        print "WARNING: using hard coded config file: nsls2_sr_bba.json"
+        print "FIXME: using hard coded config file: nsls2_sr_bba.json"
         f = open("/home/lyyang/devel/nsls2-hla/script/data/nsls2_sr_bba.json")
         conf = json.load(f)
         bpmx = conf['orbit_pvx']
@@ -160,6 +161,7 @@ class BbaMainWindow(QMainWindow):
         #        ac.orbit_pvrb = conf[obtpv]
         #        #ca.bpm = conf['
         #        ac.align()
+        self._bba.append(ac)
 
         wid = QWidget(self)
         l = QVBoxLayout(wid)
@@ -173,10 +175,35 @@ class BbaMainWindow(QMainWindow):
         l.addWidget(cv2)
         cv1.draw()
         cv2.draw()
+        data1 = np.fromstring(cv1.tostring_rgb(), dtype=np.uint8, sep='')
+        w, h = cv1.get_width_height()
+        data1 = data1.reshape(h, w, 3)
+        data2 = np.fromstring(cv2.tostring_rgb(), dtype=np.uint8, sep='')
+        w, h = cv2.get_width_height()
+        data2 = data2.reshape(h, w, 3)
+        self._bba_plot_data.append((data1, data2))
         self.widtab.addTab(wid, "Tab %d" % (self.widtab.count()+1))
         #wid.setFocus()
         self.widtab.setCurrentIndex(self.widtab.count() - 1)
+        self.write()
+
         pass
+    
+    def write(self):
+        import h5py
+        print "FIXME: using hard coded file name: myfile.hdf5"
+        f = h5py.File('myfile.hdf5', 'w')
+        for i in range(2):
+            print "FIXME: output fixed dataset"
+            data = self._bba_plot_data[-1][i]
+            h, w, d = np.shape(data)
+            dset = f.create_dataset("MyDataset%02d"%i, (h, w, d), dtype=np.uint8)
+            dset[:,:,:] = data[:,:,:]
+            dset.attrs['CLASS'] = 'IMAGE'
+            dset.attrs['IMAGE_VERSION'] = '1.2'
+            dset.attrs['IMAGE_SUBCLASS'] = 'IMAGE_TRUECOLOR'
+        f.close()
+
 
 def main(args = None):
     #app = QApplication(args)

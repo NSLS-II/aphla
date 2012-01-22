@@ -228,15 +228,15 @@ class BbaBowtie:
 
     def _analyze(self):
         import shelve
-        import matplotlib.pylab as plt
-        print "WARNING: using hard coded config file: test.shelve"
+        #import matplotlib.pylab as plt
+        print "FIXME: using hard coded config file: test.shelve", __file__
         f = shelve.open('/home/lyyang/devel/nsls2-hla/lib/test.shelve', 'r')
         dobt = f['dobt'][:,:]*1e6
         x = f['kick']*1e6
         f.close()
         nkick, nbpm = np.shape(dobt)
-        plt.plot(x, dobt, 'k-o')
-        plt.savefig('test2.png')
+        #plt.plot(x, dobt, 'k-o')
+        #plt.savefig('test2.png')
         self.kick = x
         self.orbit = np.zeros((2, nkick+1, nbpm), 'd')
         #print np.shape(dobt), np.shape(x), np.shape(self.orbit)
@@ -257,7 +257,7 @@ class BbaBowtie:
         #print np.shape(psub)
         x = np.array(self.kick)
         y = self.orbit[1,1:,:] - self.orbit[0,1:,:]
-        axbowtie.plot(x, y, 'ko--')
+        axbowtie.plot(x, y, 'ko--', linewidth=0.5, markersize=3)
         axbowtie.set_xlabel("kicker [urad]")
         axbowtie.set_ylabel("orbit change [um]")
         axbowtie.grid()
