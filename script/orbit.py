@@ -24,7 +24,7 @@ from orbitplot import OrbitPlot
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 
-    QWidget, QTabWidget, QLabel, QIcon)
+    QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon)
 
 config_dir = "~/.hla"
 
@@ -62,17 +62,23 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
         self.plot1.setTitle("Horizontal Orbit")
+        #self.lbplt1info = QLabel("Min\nMax\nAverage\nStd")
+
         #self.plot1.singleShot()
         #print self.plot1.curve1.y
 
         self.plot2.plotLayout().setCanvasMargin(4)
         self.plot2.plotLayout().setAlignCanvasToScales(True)
         self.plot2.setTitle("Vertical Orbit")
+        #self.lbplt2info = QLabel("Min\nMax\nAverage\nStd")
 
         wid1 = QWidget()
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.plot1)
-        vbox.addWidget(self.plot2)
+        vbox = QGridLayout()
+        #vbox.addWidget(self.lbplt1info, 0, 0)
+        vbox.addWidget(self.plot1, 0, 1)
+        #vbox.addWidget(self.lbplt2info, 1, 0)
+        vbox.addWidget(self.plot2, 1, 1)
+        
         wid1.setLayout(vbox)
         wid = QTabWidget()
         wid.addTab(wid1, "Orbit Plot")
@@ -83,8 +89,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.setCentralWidget(wid)
 
         #self.setCentralWidget(OrbitPlot())
-        print self.plot1.sizeHint()
-        print self.plot1.minimumSizeHint()
+        #print self.plot1.sizeHint()
+        #print self.plot1.minimumSizeHint()
 
         #
         # file menu

@@ -95,8 +95,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
         self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
         self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
-        self.setSymbol(kw.get('curveSymbol', Qwt.QwtSymbol())
-        self.errorPen = kw.get('errorPen', QPen(Qt.NoPen)
+        self.setSymbol(kw.get('curveSymbol', Qwt.QwtSymbol()))
+        self.errorPen = kw.get('errorPen', QPen(Qt.NoPen))
         self.errorCap = kw.get('errorCap', 0)
         self.errorOnTop = kw.get('errorOnTop', False)
         self.samples = kw.get('samples', 10)
@@ -109,7 +109,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         # how many samples are kept for statistics
         n = len(x)
         self.x      = np.array(x)
-        self.y      = np.zeros((samples, n), 'd')
+        self.y      = np.zeros((self.samples, n), 'd')
         self.yref   = np.zeros(n, 'd')
         self.errbar = np.zeros(n, 'd')
         #self.camonitor = CaDataMonitor(pvs, samples=self.SAMPLES)
@@ -119,7 +119,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.showDifference = False
         self.update()
 
-    def update(self):
+    def updateData(self):
         """update the Qwt data"""
         # y and errbar sync with plot, not changing data.
         c, i = divmod(self.icount, self.samples)
@@ -130,7 +130,10 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
             self.errbar[:] = np.std(self.y[:self.icount,:])
         else:
             self.errbar[:] = np.std(self.y, axis=0)
-            
+
+    def update(self):
+        self.updateData()
+        c, i = divmod(self.icount-1, self.samples)            
         kept = 1-self.mask
         x1 = np.compress(kept, self.x, axis=0)
         y1 = np.compress(kept, self.y[i,:] - self.yref, axis = 0)
@@ -172,7 +175,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         is transformed to index the last data point
         """
 
-        c, i = divmod(self.icount, self.samples)
+        c, i = divmod(self.icount-1, self.samples)
 
         if last < 0:
             last = self.dataSize() - 1
@@ -194,13 +197,9 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
             y1 = np.compress(kept, self.y[i,:] - self.yref, axis = 0)
             yer1 = np.compress(kept, self.errbar, axis=0)
         
-            if len(self.errbar.shape) in [0, 1]:
-                ymin = (y1 - yer1)
-                ymax = (y1 + yer1)
-            else:
-                # both x and y direction
-                ymin = (y1 - yer1[0])
-                ymax = (y1 + yer1[1])
+            ymin = (y1 - yer1)
+            ymax = (y1 + yer1)
+
             n, i = len(x1), 0
             lines = []
             while i < n:
@@ -231,14 +230,23 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
         Qwt.QwtPlotCurve.drawFromTo(self, painter, xMap, yMap, first, last)
 
+    def min(self):
+        c, i = divmod(self.icount - 1, self.samples)
+        return np.min(self.y[i,:])
 
+    def max(self):
+        c, i = divmod(self.icount - 1, self.samples)
+        return np.max(self.y[i,:])
+        
     def average(self):
         """average of the whole curve"""
-        return np.average(self.y)
+        c, i = divmod(self.icount - 1, self.samples)
+        return np.average(self.y[i,:])
 
     def std(self):
         """std of the curve"""
-        return np.std(self.y)
+        c, i = divmod(self.icount - 1, self.samples)
+        return np.std(self.y[i,:])
 
     def resetPvData(self):
         """
@@ -246,6 +254,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         """
         self.icount = 0
         self.y.fill(0.0)
+        self.updateData()
 
 
 class OrbitPlot(Qwt.QwtPlot):
@@ -341,14 +350,14 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
                      self.zoomed1)
-        self.timerId = self.startTimer(500)
+        self.timerId = self.startTimer(1000)
 
         self.marker = Qwt.QwtPlotMarker()
         self.marker.attach(self)
         #self.marker.setLabelAlignment(Qt.AlignLeft)
         self.marker.setLabelAlignment(Qt.AlignBottom)
         #self.marker.setValue(100, 0)
-        self.marker.setLabel(Qwt.QwtText("Hello"))
+        #self.marker.setLabel(Qwt.QwtText("Hello"))
 
     def zoomed1(self, rect):
         print "Zoomed"

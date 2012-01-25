@@ -45,7 +45,8 @@ setup(
                   'aphlas.meastwiss', 
                   # GUI
                   'aphlas.gui.gui_resources',
-                  'aphlas.gui.orbit', 'aphlas.gui.apbba'],
+                  'aphlas.gui.orbit', 'aphlas.gui.orbitconfdlg', 
+                  'aphlas.gui.apbba'],
     #install_requires = ['distribute', 'docutils>=0.3', 'Sphinx >= 1.0.8', 
     #                    'matplotlib', 'numpy', 'scipy'],
     entry_points = {
