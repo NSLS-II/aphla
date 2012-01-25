@@ -17,7 +17,7 @@ from apbbaconfdlg import BbaConfig
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 
     QWidget, QTabWidget, QLabel, QIcon, QApplication, QImage, QPixmap,
-    QSizePolicy)
+    QSizePolicy, QFileDialog)
 # 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -25,8 +25,47 @@ from matplotlib.figure import Figure
 import PyQt4.Qwt5 as Qwt
 import numpy as np
 from aphlas.bba import BbaBowtie
+from PIL import Image, ImageQt
 
 config_dir = "~/.hla"
+
+#lyyang@virtac:/home/shengb/nsls2$ cat T2_NSLS2/tracy_align_error_one.txt 
+##index name      cell girder  dX    dY    dS    dRoll   dPitch   dYaw
+#444    QH1G2C04A  2   4    1.0e-06 0.0e+00 0.00e+00 0.0e+00 0.00e+00 0.00e+00
+#660    QH1G2C06A  2   6    1.0e-06 0.0e+00 0.00e+00 0.0e+00 0.00e+00 0.00e+00
+#lyyang@virtac:/home/shengb/nsls2$ 
+
+def rgb2qimage(rgb): 
+    """Convert the 3D numpy array `rgb` into a 32-bit QImage.  `rgb` must 
+    have three dimensions with the vertical, horizontal and RGB image axes.
+    """ 
+    if len(rgb.shape) != 3: 
+            raise ValueError("rgb2QImage can expects the first (or last) dimension to contain exactly three (R,G,B) channels") 
+    if rgb.shape[2] != 3: 
+            raise ValueError("rgb2QImage can only convert 3D arrays") 
+
+    h, w, channels = rgb.shape 
+
+    # Qt expects 32bdef rgb2qimage(rgb): 
+    """Convert the 3D numpy array `rgb` into a 32-bit QImage.  `rgb` must 
+    have three dimensions with the vertical, horizontal and RGB image axes.""" 
+    if len(rgb.shape) != 3: 
+            raise ValueError("rgb2QImage can expects the first (or last) dimension to contain exactly three (R,G,B) channels") 
+    if rgb.shape[2] != 3: 
+            raise ValueError("rgb2QImage can only convert 3D arrays") 
+
+    h, w, channels = rgb.shape 
+
+    # Qt expects 32bit BGRA data for color images: 
+    bgra = np.empty((h, w, 4), np.uint8, 'C') 
+    bgra[...,0] = rgb[...,2] 
+    bgra[...,1] = rgb[...,1] 
+    bgra[...,2] = rgb[...,0] 
+    bgra[...,3].fill(255) 
+
+    result = QImage(bgra.data, w, h, QImage.Format_RGB32) 
+    result.ndarray = bgra 
+    return result
 
 class BbaMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
@@ -79,11 +118,16 @@ class BbaMainWindow(QMainWindow):
                      self.close)
         fileConfigAction = QAction("&Config", self)
         #
+        fileOpenAction = QAction(QIcon(":file_quit.png"), "&Open...", self)
+        fileOpenAction.setToolTip("Open an existing data file")
+        self.connect(fileOpenAction, SIGNAL("triggered()"), self.fileOpen)
+
+        self.fileMenu.addAction(fileOpenAction)
         self.fileMenu.addAction(fileQuitAction)
         self.fileMenu.addAction(fileConfigAction)
 
-
         self.controlMenu = self.menuBar().addMenu("&Control")
+
         controlGoAction =  QAction(QIcon(":/control_play.png"), "&Go", self)
         controlGoAction.setShortcut("Ctrl+G")
         #fileQuitAction.setToolTip("Quit the application")
@@ -124,7 +168,37 @@ class BbaMainWindow(QMainWindow):
                 else:
                     self.plot1.setMask(i, 1)
                     self.plot2.setMask(i, 1)
-        
+
+    def fileOpen(self):
+        #if not self.okToContinue():
+        #    return
+        #dir = (os.path.dirname(self.filename)
+        #       if self.filename is not None else ".")
+        #formats = (["*.{0}".format(unicode(format).lower())
+        #        for format in QImageReader.supportedImageFormats()])
+        fname = QFileDialog.getOpenFileName(self,
+                "Open data file", '.', "HDF5 files (*.h5, *.hdf5)")
+        import h5py
+        f = h5py.File(str(fname), 'r')
+        ds1 = f['MyDataset00']
+        # the fourth alpha, needs be 255.
+        d1 = np.ones(ds1.shape[:2] + (4,), dtype=np.uint8) * 255
+        d1[:,:,:3] = np.asarray(ds1)
+
+        wid = QWidget()
+        l = QVBoxLayout(wid)
+        imageLabel = QLabel(self)
+        imageLabel.setText("Text")
+        #imageLabel
+        im1 = Image.fromarray(d1)
+        pxm = QPixmap.fromImage(ImageQt.ImageQt(im1))
+        #pxm.save("j.png")
+        imageLabel.setPixmap(pxm)
+        imageLabel.adjustSize()
+        l.addWidget(imageLabel)
+        self.widtab.addTab(wid, "Tab %d" % (self.widtab.count()+1))
+        f.close()
+
     def align(self):
         """
         """
@@ -141,7 +215,8 @@ class BbaMainWindow(QMainWindow):
         #
         #import matplotlib.pylab as plt
         ac = BbaBowtie()
-        ac._analyze()
+        #ac._analyze()
+
         #fig = plt.figure()
         #ax1 = fig.add_subplot(211)
         #ax2 = fig.add_subplot(212)
@@ -149,20 +224,22 @@ class BbaMainWindow(QMainWindow):
         #fig.savefig("align.png")
 
         # if we need the config data
-        #for bbconf in conf['bowtie_align']:
-        #    print "Quadrupole:", bbconf['Q'], caget(bbconf['Q'][2])
-        #    ac.quad, s, ac.quad_pvsp, ac.dqk1 = bbconf['Q'][:4]
-        #    for i in range(0, len(bbconf['COR_BPM']), 2):
-        #        ac.bpm, s, ac.bpm_pvrb = bbconf['COR_BPM'][i][:3]
-        #        ac.trim, s, ac.trim_pvsp, obtpv = bbconf['COR_BPM'][i+1][:4]
-        #        ac.quad_pvrb = ac.quad_pvsp
-        #        ac.trim_pvrb = ac.trim_pvsp
-        #        ac.kick = np.linspace(-1e-6, 1e-6, 5)
-        #        ac.orbit_pvrb = conf[obtpv]
-        #        #ca.bpm = conf['
-        #        ac.align()
+        for bbconf in conf['bowtie_align']:
+            print "Quadrupole:", bbconf['Q'], caget(bbconf['Q'][2].encode('ascii'))
+            ac.quad, s, ac.quad_pvsp, ac.dqk1 = bbconf['Q'][:4]
+            for i in range(0, len(bbconf['COR_BPM']), 2):
+                ac.bpm, s, ac.bpm_pvrb = bbconf['COR_BPM'][i][:3]
+                ac.trim, s, ac.trim_pvsp, kickrg, obtpv = bbconf['COR_BPM'][i+1][:5]
+                ac.quad_pvrb = ac.quad_pvsp
+                ac.trim_pvrb = ac.trim_pvsp
+                ac.kick = np.linspace(kickrg[0], kickrg[1], 8)
+                ac.orbit_pvrb = conf[obtpv]
+                #ca.bpm = conf['
+                # fix the utf-8
+                ac.align()
         self._bba.append(ac)
 
+        print "Plotting ..."
         wid = QWidget(self)
         l = QVBoxLayout(wid)
         cv1 = BbaMplCanvas(wid)
@@ -170,7 +247,7 @@ class BbaMainWindow(QMainWindow):
         #x = np.linspace(0, 2*np.pi, 100)
         #cv1.axes.plot(x, np.sin(x) + np.random.rand(len(x))*.2, 'ro-')
         #cv2.axes.plot(x, np.tan(x) + np.random.rand(len(x))*.2, 'go-')
-        ac.plot(cv1.axes, cv2.axes)
+        ac.plot(cv1.axes, cv2.axes, factor=(1e6, 1e6))
         l.addWidget(cv1)
         l.addWidget(cv2)
         cv1.draw()

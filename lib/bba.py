@@ -52,6 +52,7 @@ class BbaBowtie:
         # do not extend for the intersection with x-axis.
         #self.line_segment_only = False  
         self.orbit_diffstd = 1e-7
+        self.minwait = 6
 
     def _get_orbit(self):
         return np.array(caget(self.orbit_pvrb))
@@ -157,94 +158,97 @@ class BbaBowtie:
         #if verbose: print "qk1= ", qk0, "dqk1=", dqk1
         ##
         ## initial orbit-quad
+        print "Inc quad:", self.quad_pvsp, self.dqk1
         obt00 = np.array(caget(self.orbit_pvrb))
         caput(self.quad_pvsp, qk0 + self.dqk1)
         timeout, log = self._wait_stable_orbit(
             obt00, diffstd_list=True, verbose=verbose, 
-            diffstd=self.orbit_diffstd)
-
+            diffstd=self.orbit_diffstd, minwait=self.minwait)
+        print "   reading orbit"
         obt01 = self._get_orbit()
         self.orbit[0, 0, :] = obt00
         self.orbit[1, 0, :] = obt01
 
         #print "step down quad"
+        print "reset quad:", self.quad_pvsp
         caput(self.quad_pvsp, qk0)
         timeout, log = self._wait_stable_orbit(
             obt01, diffstd=self.orbit_diffstd, verbose=verbose, 
-            diffstd_list=True)
+            diffstd_list=True, minwait=self.minwait)
 
+        print "   reading orbit"
         obt02 = self._get_orbit()
 
         # initial qk
         for j,dxp in enumerate(self.kick):
             obt = self._get_orbit()     # for checking orbit changed
+            print "setting trim:", self.trim_pvsp, j, dxp
             caput(self.trim_pvsp, dxp)
             timeout, log = self._wait_stable_orbit(
-                obt, diffstd=self.orbit_diffstd, 
+                obt, diffstd=self.orbit_diffstd, minwait = self.minwait,
                 diffstd_list=True, verbose=verbose)
-
+            print "   reading orbit"
             obt1 = self._get_orbit()
             self.orbit[0, j+1,:] = obt1
 
         # adjust qk
         obt = self._get_orbit()
+        print "reset trim, inc quad"
         caput(self.trim_pvsp, xp0)
         caput(self.quad_pvsp, qk0 + self.dqk1)
         timeout, log = self._wait_stable_orbit(
-            obt, diffstd=self.orbit_diffstd,
+            obt, diffstd=self.orbit_diffstd, minwait = self.minwait,
             diffstd_list= True, verbose=verbose)
 
+        print "  get orbit"
         obt = self._get_orbit()
         for j,dxp in enumerate(self.kick):
+            print "setting trim:", self.trim_pvsp, j, dxp
             caput(self.trim_pvsp, dxp)
             timeout, log = self._wait_stable_orbit(
-                obt, diffstd=self.orbit_diffstd, 
+                obt, diffstd=self.orbit_diffstd, minwait = self.minwait,
                 diffstd_list=True, verbose=verbose)
-
+            print "  reading orbit"
             obt = self._get_orbit()
             self.orbit[1, j+1, :] = obt
+        # reset qk
+        print "reset quad and trim"
+        caput(self.quad_pvsp, qk0)
+        caput(self.trim_pvsp, xp0)
 
     def align(self, **kwargs):
         """
         """
+        # [12:43 PM] (sandbox/venv) $ caget "SR:C30-MG:G02A{Quad:H1}Fld-SP"
+        # SR:C30-MG:G02A{Quad:H1}Fld-SP  -0.633004
+        # <lyyang@svd>-{/home/lyyang/devel/nsls2-hla
+        # [12:45 PM] (sandbox/venv) $ caget "SR:C30-MG:G02A{HCor:H2}Fld-SP"
+        # SR:C30-MG:G02A{HCor:H2}Fld-SP  0
+
         self._measure(**kwargs)
         self._analyze()
 
-        #
-        #
-        #import shelve
-        #import matplotlib.pylab as plt
-        #dobt = self.orbit[1,1:,:] = self.orbit[0,1:,:]
-        #x = np.array(self.kick)
-        #print "Shape:",np.shape(x), np.shape(dobt)
-        #plt.clf()
-        #plt.plot(x, dobt, 'ko-')
-        #plt.savefig("test.png")
-        #d = shelve.open('test.shelve')
-        #d['dobt'] = dobt
-        #d['kick'] = x
-        #d.close()
-        
 
     def _analyze(self):
-        import shelve
-        #import matplotlib.pylab as plt
-        print "FIXME: using hard coded config file: test.shelve", __file__
-        f = shelve.open('/home/lyyang/devel/nsls2-hla/lib/test.shelve', 'r')
-        dobt = f['dobt'][:,:]*1e6
-        x = f['kick']*1e6
-        f.close()
-        nkick, nbpm = np.shape(dobt)
+        print "Analyzing BBA"
+        #import shelve
+        ##import matplotlib.pylab as plt
+        #print "FIXME: using hard coded config file: test.shelve", __file__
+        #f = shelve.open('/home/lyyang/devel/nsls2-hla/lib/test.shelve', 'r')
+        #dobt = f['dobt'][:,:]*1e6
+        #x = f['kick']*1e6
+        #f.close()
+        # nkick, nbpm = np.shape(dobt)
         #plt.plot(x, dobt, 'k-o')
         #plt.savefig('test2.png')
-        self.kick = x
-        self.orbit = np.zeros((2, nkick+1, nbpm), 'd')
+        #self.kick = x
+        #self.orbit = np.zeros((2, nkick+1, nbpm), 'd')
         #print np.shape(dobt), np.shape(x), np.shape(self.orbit)
-        self.orbit[1,1:,:] = dobt[:, :]
+        #self.orbit[1,1:,:] = dobt[:, :]
+        dobt = self.orbit[1,1:,:] - self.orbit[0,1:,:]
+        self._filterLines(self.kick, dobt)
 
-        self._filterLines(x, dobt)
-
-    def plot(self, axbowtie = None, axhist = None):
+    def plot(self, axbowtie = None, axhist = None, factor = (1.0, 1.0)):
         """
         export the bowtie figure and histogram for chosen data.
         """
@@ -255,8 +259,8 @@ class BbaBowtie:
             fig = plt.figure()
             axbowtie = fig.add_subplot(111)
         #print np.shape(psub)
-        x = np.array(self.kick)
-        y = self.orbit[1,1:,:] - self.orbit[0,1:,:]
+        x = np.array(self.kick) * factor[0]
+        y = (self.orbit[1,1:,:] - self.orbit[0,1:,:]) * factor[1]
         axbowtie.plot(x, y, 'ko--', linewidth=0.5, markersize=3)
         axbowtie.set_xlabel("kicker [urad]")
         axbowtie.set_ylabel("orbit change [um]")

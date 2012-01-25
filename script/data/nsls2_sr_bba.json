@@ -367,10 +367,10 @@
     "bowtie_align": 
     [
        {
-          "Q": ["QH1G2C30A", 5.2875, "SR:C30-MG:G02A{Quad:H1}Fld-SP", 1e-3],
+          "Q": ["QH1G2C04A", 5.2875, "SR:C04-MG:G02A{Quad:H1}Fld-SP", 5e-2],
           "COR_BPM": [
-              ["PH1G2C30A", 4.935, "SR:C30-BI:G02A{BPM:H1}SA:X-I"],
-              ["CH2G2C30A", 8.2985, "SR:C30-MG:G02A{HCor:H2}Fld-SP", "orbit_pvx"]
+              ["PH1G2C04A", 4.935, "SR:C04-BI:G02A{BPM:H1}SA:X-I"],
+              ["CH2G2C04A", 8.2985, "SR:C04-MG:G02A{HCor:H2}Fld-SP", [-1e-5, 1e-5], "orbit_pvx"]
           ]
        }
     ]
