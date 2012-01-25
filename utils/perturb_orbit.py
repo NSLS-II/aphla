@@ -1,34 +1,32 @@
 #!/usr/bin/env python
 import sys, os, time
 from numpy import random
-import hla
+from cothread.catools import caget, caput
 
 if __name__ == "__main__":
-    hla.initNSLS2VSR()
-    hc = hla.getElements('HCOR')
-    vc = hla.getElements('VCOR')
-    cor = hc + vc
+    f = open('../machine/nsls2/pvlist_2011_04_08.txt', 'r')
+    pv = []
+    for p in f.readlines():
+        p = p.strip()
+        if not p.endswith('-SP'): continue
+        if p.find('Cor:') < 0: continue
+        pv.append(p)
 
+    pvx0 = caget(pv)
     runid = 4692 # lingyun extension
-    hla.hlalib._wait_for_lock(runid)
 
-    hla.hlalib._reset_trims()
+    if len(sys.argv) > 1:
+        n  = int(sys.argv[1])
+    else:
+        n = 10
 
-    for k in range(6):
+    for k in range(n):
         print k,
-        i = random.randint(len(cor))
-        print cor[i].name, cor[i].value,
-        cor[i].value = random.rand() * 1e-7
-        print cor[i].value
+        i = random.randint(len(pv))
+        caput(pv[i], random.rand() * 1e-4)
+        print pv[i], caget(pv[i])
         sys.stdout.flush()
         time.sleep(4)
+    caput(pv, pvx0)
     print "DONE"
-    hla.hlalib._reset_trims()
-    hla.hlalib._reset_bpm_offset()
-
-    for i in range(len(cor)):
-        print cor[i].value,
-    print ""
-
-    hla.hlalib._release_lock(runid)
 

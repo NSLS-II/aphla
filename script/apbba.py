@@ -202,6 +202,11 @@ class BbaMainWindow(QMainWindow):
             dset.attrs['CLASS'] = 'IMAGE'
             dset.attrs['IMAGE_VERSION'] = '1.2'
             dset.attrs['IMAGE_SUBCLASS'] = 'IMAGE_TRUECOLOR'
+        for i in range(len(self._bba)):
+            k, m, n = np.shape(self._bba[i].orbit)
+            dset = f.create_dataset("orbit%02d"%i, (k, m, n), 'd')
+            dset[:, :, :] = self._bba[i].orbit
+
         f.close()
 
 

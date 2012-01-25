@@ -19,7 +19,7 @@ import numpy as np
 
 class MagnetPicker(Qwt.QwtPlotPicker):
     """
-    show the magnet name when moving cursor in the plot
+    show the magnet name when moving cursor in the plot.
     """
     def __init__(self, canvas, profile = None, minlen = 0.2):
         """
@@ -71,17 +71,9 @@ class MagnetPicker(Qwt.QwtPlotPicker):
 
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
-    """Orbit"""
-    def __init__(self, x, pvs,
-                 samples = 10,
-                 factor = 1e6,             # from meter to um
-                 curvePen = QPen(Qt.NoPen),
-                 curveStyle = Qwt.QwtPlotCurve.Lines,
-                 curveSymbol = Qwt.QwtSymbol(),
-                 errorPen = QPen(Qt.NoPen),
-                 errorCap = 0,
-                 errorOnTop = False,
-                 ):
+    """Orbit curve
+    """
+    def __init__(self, x, pvs, **kw):
         """A curve of x versus y data with error bars in dx and dy.
 
         Horizontal error bars are plotted if dx is not None.
@@ -99,19 +91,22 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         """
 
         Qwt.QwtPlotCurve.__init__(self)
-        self.setPen(curvePen)
-        self.setStyle(curveStyle)
-        self.setSymbol(curveSymbol)
-        self.errorPen = errorPen
-        self.errorCap = errorCap
-        self.errorOnTop = errorOnTop
+
+
+        self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
+        self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
+        self.setSymbol(kw.get('curveSymbol', Qwt.QwtSymbol())
+        self.errorPen = kw.get('errorPen', QPen(Qt.NoPen)
+        self.errorCap = kw.get('errorCap', 0)
+        self.errorOnTop = kw.get('errorOnTop', False)
+        self.samples = kw.get('samples', 10)
+        self.yfactor = kw.get('factor', 1e6)
         
         if len(pvs) != len(x):
             raise ValueError("pv and x are not same size")
         self.pvs = pvs
         self.icount = 0
-        self.samples = samples # how many samples are kept for statistics
-        self.yfactor = factor
+        # how many samples are kept for statistics
         n = len(x)
         self.x      = np.array(x)
         self.y      = np.zeros((samples, n), 'd')
@@ -137,10 +132,10 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
             self.errbar[:] = np.std(self.y, axis=0)
             
         kept = 1-self.mask
-        x = np.compress(kept, self.x, axis=0)
-        y = np.compress(kept, self.y[i,:] - self.yref, axis = 0)
+        x1 = np.compress(kept, self.x, axis=0)
+        y1 = np.compress(kept, self.y[i,:] - self.yref, axis = 0)
         
-        Qwt.QwtPlotCurve.setData(self, x, y)
+        Qwt.QwtPlotCurve.setData(self, x1, y1)
 
     def boundingRect(self):
         """
@@ -195,21 +190,21 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         if self.errorOnTop and self.icount > self.samples:
             # draw the bars
             kept = 1 - self.mask
-            x  = np.compress(kept, self.x, axis=0)
-            y = np.compress(kept, self.y[i,:] - self.yref, axis = 0)
-            y2 = np.compress(kept, self.errbar, axis=0)
+            x1  = np.compress(kept, self.x, axis=0)
+            y1 = np.compress(kept, self.y[i,:] - self.yref, axis = 0)
+            yer1 = np.compress(kept, self.errbar, axis=0)
         
             if len(self.errbar.shape) in [0, 1]:
-                ymin = (y - y2)
-                ymax = (y + y2)
+                ymin = (y1 - yer1)
+                ymax = (y1 + yer1)
             else:
                 # both x and y direction
-                ymin = (y - y2[0])
-                ymax = (y + y2[1])
-            n, i = len(x), 0
+                ymin = (y1 - yer1[0])
+                ymax = (y1 + yer1[1])
+            n, i = len(x1), 0
             lines = []
             while i < n:
-                xi = xMap.transform(x[i])
+                xi = xMap.transform(x1[i])
                 lines.append(
                     QLine(xi, yMap.transform(ymin[i]),
                                  xi, yMap.transform(ymax[i])))
@@ -219,10 +214,10 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
             # draw the caps
             if self.errorCap > 0:
                 cap = self.errorCap/2
-                n, i, j = len(x), 0, 0
+                i, j = 0, 0
                 lines = []
                 while i < n:
-                    xi = xMap.transform(x[i])
+                    xi = xMap.transform(x1[i])
                     lines.append(
                         QLine(xi - cap, yMap.transform(ymin[i]),
                                      xi + cap, yMap.transform(ymin[i])))
