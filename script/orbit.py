@@ -26,7 +26,85 @@ from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon)
 
+import numpy as np
+
 config_dir = "~/.hla"
+
+class OrbitData(object):
+    """
+    the orbit data
+    """
+    def __init__(self, pvs, **kw):
+        n = len(pvs)
+        self.samples = kw.get('samples', 10)
+        self.yfactor = kw.get('factor', 1e6)
+        self.x = kw.get('x', np.array(range(n), 'd'))
+        if len(self.x) != n:
+            raise ValueError("pv and x are not same size %d != %d" % (n, len(self.x)))
+        self.pvs = pvs
+        self.icur, self.icount = -1, 0
+        # how many samples are kept for statistics
+        self.y      = np.zeros((self.samples, n), 'd')
+        for i in range(self.samples):
+            self.y[i,:] = caget(self.pvs)
+        self.yref   = np.zeros(n, 'd')
+        self.errbar = np.ones(n, 'd') * 1e-15
+        self.keep   = np.ones(n, 'i')
+        #print self.x, self.y
+
+    def update(self):
+        """update the orbit data"""
+        # y and errbar sync with plot, not changing data.
+        i = self.icur + 1
+        if i >= self.samples: i = 0
+        self.y[i,:] = caget(self.pvs)
+        self.y[i, :] *= self.yfactor
+        self.errbar[:] = np.std(self.y, axis=0)
+        self.icount += 1
+        self.icur = i
+        
+    def reset(self):
+        self.icur, self.icount = -1, 0
+        self.y.fill(0.0)
+        self.errbar.fill(0.0)
+        #self.update()
+
+    def min(self):
+        c, i = divmod(self.icount - 1, self.samples)
+        return np.min(self.y[i,:])
+
+    def max(self):
+        c, i = divmod(self.icount - 1, self.samples)
+        return np.max(self.y[i,:])
+        
+    def average(self):
+        """average of the whole curve"""
+        c, i = divmod(self.icount - 1, self.samples)
+        return np.average(self.y[i,:])
+
+    def std(self):
+        """std of the curve"""
+        y = np.compress(self.keep, self.y, axis=1)
+        return np.std(y, axis = 0)
+
+    def data(self, field="orbit"):
+        """
+        field = [ 'orbit' | 'std' ]
+        """
+        if self.icur < 0:
+            n = len(self.x)
+            return self.x, np.zeros(n, 'd'), np.zeros(n, 'd')
+
+        i = self.icur
+        if field == 'orbit':
+            x1 = np.compress(self.keep, self.x, axis=0)
+            y1 = np.compress(self.keep, self.y[i,:] - self.yref, axis=0)
+            e1 = np.compress(self.keep, self.errbar, axis=0)
+            return x1, y1, e1
+        elif field == 'std':
+            x1 = np.compress(self.keep, self.x, axis=0)
+            y1 = self.std()
+            return x1, y1, np.zeros(len(x1), 'd')
 
 class OrbitPlotMainWindow(QMainWindow):
     """
@@ -40,17 +118,25 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # initialize a QwtPlot central widget
         #bpm = hla.getElements('BPM')
-        pvx = [b[1]['rb'] for b in self.config.data['bpmx']]
+        pvx = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmx']]
         #print pvx
-        pvy = [b[1]['rb'] for b in self.config.data['bpmy']]
+        pvy = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmy']]
         pvsx = [b[1]['s'] for b in self.config.data['bpmx']]
         pvsy = [b[1]['s'] for b in self.config.data['bpmy']]
         self.bpm = [b[0] for b in self.config.data['bpmx']]
         pvsx_golden = [b[1]['golden'].encode("ascii") 
                        for b in self.config.data['bpmx']]
-        self.plot1 = OrbitPlot(self, pvsx, [p.encode('ascii') for p in pvx],
-                               pvs_golden = pvsx_golden)
-        self.plot2 = OrbitPlot(self, pvsy, [p.encode('ascii') for p in pvy])
+        self.orbitx_data = OrbitData(pvs = pvx, x = pvsx)
+        self.orbity_data = OrbitData(pvs = pvy, x = pvsy)
+        self.orbitx_data.update()
+        self.orbity_data.update()
+
+        self.plot1 = OrbitPlot(self, self.orbitx_data)
+        self.plot2 = OrbitPlot(self, self.orbity_data)
+        self.plot3 = OrbitPlot(self, self.orbitx_data, data_field='std',
+            errorbar=False)
+        self.plot4 = OrbitPlot(self, self.orbity_data, data_field='std',
+            errorbar=False)
 
         #for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'],
         #                             op='union'):
@@ -62,6 +148,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot1.plotLayout().setCanvasMargin(4)
         self.plot1.plotLayout().setAlignCanvasToScales(True)
         self.plot1.setTitle("Horizontal Orbit")
+        self.plot3.setTitle("Horizontal")
         #self.lbplt1info = QLabel("Min\nMax\nAverage\nStd")
 
         #self.plot1.singleShot()
@@ -70,6 +157,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot2.plotLayout().setCanvasMargin(4)
         self.plot2.plotLayout().setAlignCanvasToScales(True)
         self.plot2.setTitle("Vertical Orbit")
+        self.plot4.setTitle("Vertical")
         #self.lbplt2info = QLabel("Min\nMax\nAverage\nStd")
 
         wid1 = QWidget()
@@ -80,13 +168,18 @@ class OrbitPlotMainWindow(QMainWindow):
         vbox.addWidget(self.plot2, 1, 1)
         
         wid1.setLayout(vbox)
-        wid = QTabWidget()
-        wid.addTab(wid1, "Orbit Plot")
+        self.wid = QTabWidget()
+        self.wid.addTab(wid1, "Orbit Plot")
 
         #wid2 = QTableWidget()
         #wid.addTab(wid2, "test2")
-        wid.addTab(QLabel("H3"), "test3")
-        self.setCentralWidget(wid)
+        wid1 = QWidget()
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.plot3)
+        vbox.addWidget(self.plot4)
+        wid1.setLayout(vbox)
+        self.wid.addTab(wid1, "Std")
+        self.setCentralWidget(self.wid)
 
         #self.setCentralWidget(OrbitPlot())
         #print self.plot1.sizeHint()
@@ -218,6 +311,8 @@ class OrbitPlotMainWindow(QMainWindow):
         #print "MainWindow: liveData", on
         self.plot1.liveData(on)
         self.plot2.liveData(on)
+        self.plot3.liveData(on)
+        self.plot4.liveData(on)
         
     def errorBar(self, on):
         self.plot1.setErrorBar(on)
@@ -226,28 +321,43 @@ class OrbitPlotMainWindow(QMainWindow):
     def zoomOut15(self):
         """
         """
-        self.plot1._scaleVertical(1.5)
-        self.plot2._scaleVertical(1.5)
-
+        i = self.wid.currentIndex()
+        if i == 0:
+            self.plot1._scaleVertical(1.5)
+            self.plot2._scaleVertical(1.5)
+        elif i == 1:
+            self.plot3._scaleVertical(1.5)
+            self.plot4._scaleVertical(1.5)
+            
     def zoomIn15(self):
         """
         """
-        self.plot1._scaleVertical(1.0/1.5)
-        self.plot2._scaleVertical(1.0/1.5)
+        i = self.wid.currentIndex()
+        if i == 0:
+            self.plot1._scaleVertical(1.0/1.5)
+            self.plot2._scaleVertical(1.0/1.5)
+        elif i == 1:
+            self.plot3._scaleVertical(1.0/1.5)
+            self.plot4._scaleVertical(1.0/1.5)
 
     def zoomAuto(self):
-        self.plot1.zoomAuto()
-        self.plot2.zoomAuto()
-
+        i = self.wid.currentIndex()
+        if i == 0:
+            self.plot1.zoomAuto()
+            self.plot2.zoomAuto()
+        elif i == 1:
+            self.plot3.zoomAuto()
+            self.plot4.zoomAuto()
+            
     def chooseBpm(self):
         #print self.bpm
         bpm = []
-        bpmmask = self.plot1.curve1.mask[:]
+        livebpm = self.orbitx_data.keep
         for i in range(len(self.bpm)):
-            if bpmmask[i]:
-                bpm.append((self.bpm[i], Qt.Unchecked))
-            else:
+            if livebpm[i]:
                 bpm.append((self.bpm[i], Qt.Checked))
+            else:
+                bpm.append((self.bpm[i], Qt.Unchecked))
 
         form = ElementPickDlg(bpm, 'BPM', self)
 
@@ -255,30 +365,43 @@ class OrbitPlotMainWindow(QMainWindow):
             choice = form.result()
             for i in range(len(self.bpm)):
                 if self.bpm[i] in choice:
-                    self.plot1.setMask(i, 0)
-                    self.plot2.setMask(i, 0)
+                    self.orbitx_data.keep[i] = 1
+                    self.orbity_data.keep[i] = 1
                 else:
-                    self.plot1.setMask(i, 1)
-                    self.plot2.setMask(i, 1)
+                    self.orbitx_data.keep[i] = 0
+                    self.orbity_data.keep[i] = 0
         
     def timerEvent(self, e):
         #self.statusBar().showMessage("%s; %s"  % (
         #        self.plot1.datainfo(), self.plot2.datainfo()))
+        #print "updating", __file__
+        self.orbitx_data.update()
+        self.orbity_data.update()
         self.updateStatus()
+        i = self.wid.currentIndex()
+        if i == 0:
+            if self.plot1.live: self.plot1.updatePlot()
+            if self.plot2.live: self.plot2.updatePlot()
+        elif i == 1:
+            if self.plot3.live: self.plot3.updatePlot()
+            if self.plot4.live: self.plot4.updatePlot()
 
     def updateStatus(self):
-        self.statusBar().showMessage("%s; %s"  % (
-                self.plot1.datainfo(), self.plot2.datainfo()))        
+        #self.statusBar().showMessage("%s; %s"  % (
+        #        self.plot1.datainfo(), self.plot2.datainfo()))      
+        pass
 
     def singleShot(self):
         #print "Main: Singleshot"
         self.plot1.singleShot()
         self.plot2.singleShot()
+        self.plot3.singleShot()
+        self.plot4.singleShot()
         self.updateStatus()
 
     def resetPvData(self):
-        self.plot1.resetPvData()
-        self.plot2.resetPvData()
+        self.orbitx_data.reset()
+        self.orbity_data.reset()
         #hla.hlalib._reset_trims()
 
 
