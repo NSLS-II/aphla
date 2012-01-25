@@ -6,6 +6,7 @@ Element
 """
 
 import os
+import copy
 from catools import caget, caput
 
 
@@ -160,8 +161,9 @@ class CaDecorator:
     def __init__(self):
         self.pvrb = []
         self.pvsp = []
-        self.rb = None  # bufferred readback value 
-        self.sp = None  # bufferred setpoint value
+        # buffer the initial value and last setting/reading
+        self.rb = [None, None]  # bufferred readback value 
+        self.sp = [None, None]  # bufferred setpoint value
         self.field = ''
         self.desc = ''
         self.order = self.Ascending
@@ -191,22 +193,33 @@ class CaDecorator:
         lst.append(v)
         return len(lst) - 1
 
+    def revert(self):
+        """revert the setpoint to the last setting"""
+        return caput(self.pvsp, self.sp[-1])
+        
+    def reset(self):
+        """reset the setpoint to the initial setting"""
+        return caput(slef.pvsp, self.sp[0])
+
     def getReadback(self):
         if self.pvrb: 
-            self.rb = caget(self.pvrb)
-            return self.rb
+            self.rb[-1] = caget(self.pvrb)
+            if self.rb[0] is None: self.rb[0] = self.rb[-1]
+            return self.rb[-1]
         else: return None
 
     def getSetpoint(self):
+        """no history record on reading setpoint"""
         if self.pvsp:
-            self.sp = caget(self.pvsp)
-            return self.sp
+            return caget(self.pvsp)
         else: return None
 
     def putSetpoint(self, val):
         if self.pvsp:
-            self.sp = caput(self.pvsp, val, wait=True)
-            return self.sp
+            ret = caput(self.pvsp, val, wait=True)
+            self.sp[-1] = copy.deepcopy(val)
+            if self.sp[0] is None: self.sp[0] = self.sp[-1]
+            return ret
         else: return None
 
     def appendReadback(self, pv):

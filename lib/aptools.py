@@ -21,7 +21,7 @@ import machines
 from orbit import Orbit
 from catools import caput, caget 
 from hlalib import getElements, getNeighbors, getClosest
-from bba import BBA
+from bba import BbaBowtie
 
 __all__ = [
     'getLifetime',  'measChromaticity', 'measDispersion',

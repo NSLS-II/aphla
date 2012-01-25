@@ -1,0 +1,3246 @@
+{
+    "bpmy": [
+        [
+            "PH1G2C30A", 
+            {
+                "golden": "SR:C30-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 4.935, 
+                "rb": "SR:C30-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C30-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C30A", 
+            {
+                "golden": "SR:C30-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 7.46002, 
+                "rb": "SR:C30-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C30-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C30A", 
+            {
+                "golden": "SR:C30-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 13.1446, 
+                "rb": "SR:C30-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C30-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C30B", 
+            {
+                "golden": "SR:C30-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 15.3773, 
+                "rb": "SR:C30-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C30-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C30B", 
+            {
+                "golden": "SR:C30-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 20.2472, 
+                "rb": "SR:C30-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C30-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C30B", 
+            {
+                "golden": "SR:C30-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 22.8109, 
+                "rb": "SR:C30-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C30-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C01A", 
+            {
+                "golden": "SR:C01-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 29.9886, 
+                "rb": "SR:C01-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C01-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C01A", 
+            {
+                "golden": "SR:C01-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 32.5523, 
+                "rb": "SR:C01-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C01-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C01A", 
+            {
+                "golden": "SR:C01-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 38.3018, 
+                "rb": "SR:C01-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C01-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C01B", 
+            {
+                "golden": "SR:C01-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 40.5345, 
+                "rb": "SR:C01-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C01-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C01B", 
+            {
+                "golden": "SR:C01-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 45.3368, 
+                "rb": "SR:C01-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C01-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C01B", 
+            {
+                "golden": "SR:C01-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 47.8618, 
+                "rb": "SR:C01-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C01-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C02A", 
+            {
+                "golden": "SR:C02-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 57.7322, 
+                "rb": "SR:C02-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C02-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C02A", 
+            {
+                "golden": "SR:C02-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 60.2572, 
+                "rb": "SR:C02-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C02-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C02A", 
+            {
+                "golden": "SR:C02-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 65.9418, 
+                "rb": "SR:C02-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C02-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C02B", 
+            {
+                "golden": "SR:C02-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 68.1745, 
+                "rb": "SR:C02-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C02-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C02B", 
+            {
+                "golden": "SR:C02-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 73.0444, 
+                "rb": "SR:C02-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C02-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C02B", 
+            {
+                "golden": "SR:C02-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 75.6081, 
+                "rb": "SR:C02-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C02-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C03A", 
+            {
+                "golden": "SR:C03-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 82.7858, 
+                "rb": "SR:C03-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C03-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C03A", 
+            {
+                "golden": "SR:C03-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 85.3495, 
+                "rb": "SR:C03-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C03-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C03A", 
+            {
+                "golden": "SR:C03-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 91.099, 
+                "rb": "SR:C03-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C03-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C03B", 
+            {
+                "golden": "SR:C03-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 93.3317, 
+                "rb": "SR:C03-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C03-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C03B", 
+            {
+                "golden": "SR:C03-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 98.134, 
+                "rb": "SR:C03-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C03-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C03B", 
+            {
+                "golden": "SR:C03-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 100.659, 
+                "rb": "SR:C03-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C03-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C04A", 
+            {
+                "golden": "SR:C04-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 110.529, 
+                "rb": "SR:C04-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C04-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C04A", 
+            {
+                "golden": "SR:C04-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 113.054, 
+                "rb": "SR:C04-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C04-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C04A", 
+            {
+                "golden": "SR:C04-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 118.739, 
+                "rb": "SR:C04-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C04-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C04B", 
+            {
+                "golden": "SR:C04-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 120.972, 
+                "rb": "SR:C04-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C04-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C04B", 
+            {
+                "golden": "SR:C04-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 125.842, 
+                "rb": "SR:C04-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C04-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C04B", 
+            {
+                "golden": "SR:C04-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 128.405, 
+                "rb": "SR:C04-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C04-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C05A", 
+            {
+                "golden": "SR:C05-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 135.583, 
+                "rb": "SR:C05-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C05-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C05A", 
+            {
+                "golden": "SR:C05-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 138.147, 
+                "rb": "SR:C05-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C05-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C05A", 
+            {
+                "golden": "SR:C05-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 143.896, 
+                "rb": "SR:C05-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C05-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C05B", 
+            {
+                "golden": "SR:C05-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 146.129, 
+                "rb": "SR:C05-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C05-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C05B", 
+            {
+                "golden": "SR:C05-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 150.931, 
+                "rb": "SR:C05-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C05-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C05B", 
+            {
+                "golden": "SR:C05-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 153.456, 
+                "rb": "SR:C05-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C05-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C06A", 
+            {
+                "golden": "SR:C06-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 163.327, 
+                "rb": "SR:C06-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C06-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C06A", 
+            {
+                "golden": "SR:C06-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 165.852, 
+                "rb": "SR:C06-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C06-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C06A", 
+            {
+                "golden": "SR:C06-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 171.536, 
+                "rb": "SR:C06-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C06-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C06B", 
+            {
+                "golden": "SR:C06-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 173.769, 
+                "rb": "SR:C06-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C06-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C06B", 
+            {
+                "golden": "SR:C06-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 178.639, 
+                "rb": "SR:C06-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C06-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C06B", 
+            {
+                "golden": "SR:C06-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 181.202, 
+                "rb": "SR:C06-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C06-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C07A", 
+            {
+                "golden": "SR:C07-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 188.38, 
+                "rb": "SR:C07-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C07-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C07A", 
+            {
+                "golden": "SR:C07-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 190.944, 
+                "rb": "SR:C07-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C07-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C07A", 
+            {
+                "golden": "SR:C07-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 196.693, 
+                "rb": "SR:C07-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C07-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C07B", 
+            {
+                "golden": "SR:C07-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 198.926, 
+                "rb": "SR:C07-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C07-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C07B", 
+            {
+                "golden": "SR:C07-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 203.728, 
+                "rb": "SR:C07-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C07-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C07B", 
+            {
+                "golden": "SR:C07-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 206.253, 
+                "rb": "SR:C07-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C07-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C08A", 
+            {
+                "golden": "SR:C08-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 216.124, 
+                "rb": "SR:C08-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C08-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C08A", 
+            {
+                "golden": "SR:C08-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 218.649, 
+                "rb": "SR:C08-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C08-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C08A", 
+            {
+                "golden": "SR:C08-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 224.333, 
+                "rb": "SR:C08-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C08-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C08B", 
+            {
+                "golden": "SR:C08-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 226.566, 
+                "rb": "SR:C08-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C08-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C08B", 
+            {
+                "golden": "SR:C08-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 231.436, 
+                "rb": "SR:C08-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C08-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C08B", 
+            {
+                "golden": "SR:C08-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 234.0, 
+                "rb": "SR:C08-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C08-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C09A", 
+            {
+                "golden": "SR:C09-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 241.177, 
+                "rb": "SR:C09-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C09-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C09A", 
+            {
+                "golden": "SR:C09-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 243.741, 
+                "rb": "SR:C09-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C09-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C09A", 
+            {
+                "golden": "SR:C09-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 249.491, 
+                "rb": "SR:C09-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C09-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C09B", 
+            {
+                "golden": "SR:C09-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 251.723, 
+                "rb": "SR:C09-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C09-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C09B", 
+            {
+                "golden": "SR:C09-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 256.526, 
+                "rb": "SR:C09-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C09-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C09B", 
+            {
+                "golden": "SR:C09-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 259.051, 
+                "rb": "SR:C09-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C09-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C10A", 
+            {
+                "golden": "SR:C10-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 268.921, 
+                "rb": "SR:C10-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C10-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C10A", 
+            {
+                "golden": "SR:C10-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 271.446, 
+                "rb": "SR:C10-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C10-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C10A", 
+            {
+                "golden": "SR:C10-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 277.131, 
+                "rb": "SR:C10-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C10-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C10B", 
+            {
+                "golden": "SR:C10-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 279.363, 
+                "rb": "SR:C10-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C10-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C10B", 
+            {
+                "golden": "SR:C10-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 284.233, 
+                "rb": "SR:C10-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C10-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C10B", 
+            {
+                "golden": "SR:C10-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 286.797, 
+                "rb": "SR:C10-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C10-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C11A", 
+            {
+                "golden": "SR:C11-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 293.975, 
+                "rb": "SR:C11-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C11-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C11A", 
+            {
+                "golden": "SR:C11-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 296.538, 
+                "rb": "SR:C11-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C11-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C11A", 
+            {
+                "golden": "SR:C11-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 302.288, 
+                "rb": "SR:C11-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C11-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C11B", 
+            {
+                "golden": "SR:C11-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 304.52, 
+                "rb": "SR:C11-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C11-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C11B", 
+            {
+                "golden": "SR:C11-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 309.323, 
+                "rb": "SR:C11-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C11-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C11B", 
+            {
+                "golden": "SR:C11-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 311.848, 
+                "rb": "SR:C11-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C11-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C12A", 
+            {
+                "golden": "SR:C12-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 321.718, 
+                "rb": "SR:C12-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C12-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C12A", 
+            {
+                "golden": "SR:C12-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 324.243, 
+                "rb": "SR:C12-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C12-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C12A", 
+            {
+                "golden": "SR:C12-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 329.928, 
+                "rb": "SR:C12-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C12-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C12B", 
+            {
+                "golden": "SR:C12-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 332.16, 
+                "rb": "SR:C12-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C12-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C12B", 
+            {
+                "golden": "SR:C12-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 337.03, 
+                "rb": "SR:C12-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C12-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C12B", 
+            {
+                "golden": "SR:C12-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 339.594, 
+                "rb": "SR:C12-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C12-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C13A", 
+            {
+                "golden": "SR:C13-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 346.772, 
+                "rb": "SR:C13-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C13-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C13A", 
+            {
+                "golden": "SR:C13-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 349.335, 
+                "rb": "SR:C13-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C13-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C13A", 
+            {
+                "golden": "SR:C13-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 355.085, 
+                "rb": "SR:C13-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C13-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C13B", 
+            {
+                "golden": "SR:C13-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 357.318, 
+                "rb": "SR:C13-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C13-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C13B", 
+            {
+                "golden": "SR:C13-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 362.12, 
+                "rb": "SR:C13-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C13-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C13B", 
+            {
+                "golden": "SR:C13-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 364.645, 
+                "rb": "SR:C13-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C13-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C14A", 
+            {
+                "golden": "SR:C14-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 374.515, 
+                "rb": "SR:C14-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C14-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C14A", 
+            {
+                "golden": "SR:C14-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 377.04, 
+                "rb": "SR:C14-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C14-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C14A", 
+            {
+                "golden": "SR:C14-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 382.725, 
+                "rb": "SR:C14-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C14-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C14B", 
+            {
+                "golden": "SR:C14-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 384.958, 
+                "rb": "SR:C14-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C14-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C14B", 
+            {
+                "golden": "SR:C14-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 389.828, 
+                "rb": "SR:C14-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C14-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C14B", 
+            {
+                "golden": "SR:C14-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 392.391, 
+                "rb": "SR:C14-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C14-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C15A", 
+            {
+                "golden": "SR:C15-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 399.569, 
+                "rb": "SR:C15-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C15-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C15A", 
+            {
+                "golden": "SR:C15-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 402.133, 
+                "rb": "SR:C15-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C15-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C15A", 
+            {
+                "golden": "SR:C15-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 407.882, 
+                "rb": "SR:C15-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C15-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C15B", 
+            {
+                "golden": "SR:C15-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 410.115, 
+                "rb": "SR:C15-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C15-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C15B", 
+            {
+                "golden": "SR:C15-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 414.917, 
+                "rb": "SR:C15-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C15-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C15B", 
+            {
+                "golden": "SR:C15-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 417.442, 
+                "rb": "SR:C15-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C15-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C16A", 
+            {
+                "golden": "SR:C16-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 427.313, 
+                "rb": "SR:C16-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C16-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C16A", 
+            {
+                "golden": "SR:C16-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 429.838, 
+                "rb": "SR:C16-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C16-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C16A", 
+            {
+                "golden": "SR:C16-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 435.522, 
+                "rb": "SR:C16-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C16-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C16B", 
+            {
+                "golden": "SR:C16-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 437.755, 
+                "rb": "SR:C16-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C16-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C16B", 
+            {
+                "golden": "SR:C16-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 442.625, 
+                "rb": "SR:C16-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C16-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C16B", 
+            {
+                "golden": "SR:C16-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 445.188, 
+                "rb": "SR:C16-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C16-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C17A", 
+            {
+                "golden": "SR:C17-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 452.366, 
+                "rb": "SR:C17-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C17-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C17A", 
+            {
+                "golden": "SR:C17-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 454.93, 
+                "rb": "SR:C17-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C17-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C17A", 
+            {
+                "golden": "SR:C17-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 460.679, 
+                "rb": "SR:C17-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C17-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C17B", 
+            {
+                "golden": "SR:C17-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 462.912, 
+                "rb": "SR:C17-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C17-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C17B", 
+            {
+                "golden": "SR:C17-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 467.714, 
+                "rb": "SR:C17-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C17-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C17B", 
+            {
+                "golden": "SR:C17-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 470.239, 
+                "rb": "SR:C17-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C17-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C18A", 
+            {
+                "golden": "SR:C18-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 480.11, 
+                "rb": "SR:C18-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C18-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C18A", 
+            {
+                "golden": "SR:C18-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 482.635, 
+                "rb": "SR:C18-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C18-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C18A", 
+            {
+                "golden": "SR:C18-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 488.319, 
+                "rb": "SR:C18-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C18-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C18B", 
+            {
+                "golden": "SR:C18-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 490.552, 
+                "rb": "SR:C18-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C18-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C18B", 
+            {
+                "golden": "SR:C18-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 495.422, 
+                "rb": "SR:C18-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C18-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C18B", 
+            {
+                "golden": "SR:C18-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 497.986, 
+                "rb": "SR:C18-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C18-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C19A", 
+            {
+                "golden": "SR:C19-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 505.163, 
+                "rb": "SR:C19-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C19-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C19A", 
+            {
+                "golden": "SR:C19-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 507.727, 
+                "rb": "SR:C19-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C19-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C19A", 
+            {
+                "golden": "SR:C19-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 513.477, 
+                "rb": "SR:C19-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C19-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C19B", 
+            {
+                "golden": "SR:C19-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 515.709, 
+                "rb": "SR:C19-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C19-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C19B", 
+            {
+                "golden": "SR:C19-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 520.512, 
+                "rb": "SR:C19-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C19-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C19B", 
+            {
+                "golden": "SR:C19-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 523.037, 
+                "rb": "SR:C19-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C19-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C20A", 
+            {
+                "golden": "SR:C20-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 532.907, 
+                "rb": "SR:C20-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C20-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C20A", 
+            {
+                "golden": "SR:C20-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 535.432, 
+                "rb": "SR:C20-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C20-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C20A", 
+            {
+                "golden": "SR:C20-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 541.117, 
+                "rb": "SR:C20-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C20-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C20B", 
+            {
+                "golden": "SR:C20-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 543.349, 
+                "rb": "SR:C20-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C20-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C20B", 
+            {
+                "golden": "SR:C20-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 548.219, 
+                "rb": "SR:C20-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C20-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C20B", 
+            {
+                "golden": "SR:C20-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 550.783, 
+                "rb": "SR:C20-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C20-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C21A", 
+            {
+                "golden": "SR:C21-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 557.961, 
+                "rb": "SR:C21-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C21-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C21A", 
+            {
+                "golden": "SR:C21-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 560.524, 
+                "rb": "SR:C21-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C21-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C21A", 
+            {
+                "golden": "SR:C21-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 566.274, 
+                "rb": "SR:C21-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C21-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C21B", 
+            {
+                "golden": "SR:C21-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 568.506, 
+                "rb": "SR:C21-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C21-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C21B", 
+            {
+                "golden": "SR:C21-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 573.309, 
+                "rb": "SR:C21-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C21-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C21B", 
+            {
+                "golden": "SR:C21-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 575.834, 
+                "rb": "SR:C21-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C21-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C22A", 
+            {
+                "golden": "SR:C22-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 585.704, 
+                "rb": "SR:C22-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C22-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C22A", 
+            {
+                "golden": "SR:C22-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 588.229, 
+                "rb": "SR:C22-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C22-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C22A", 
+            {
+                "golden": "SR:C22-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 593.914, 
+                "rb": "SR:C22-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C22-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C22B", 
+            {
+                "golden": "SR:C22-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 596.146, 
+                "rb": "SR:C22-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C22-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C22B", 
+            {
+                "golden": "SR:C22-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 601.016, 
+                "rb": "SR:C22-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C22-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C22B", 
+            {
+                "golden": "SR:C22-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 603.58, 
+                "rb": "SR:C22-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C22-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C23A", 
+            {
+                "golden": "SR:C23-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 610.758, 
+                "rb": "SR:C23-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C23-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C23A", 
+            {
+                "golden": "SR:C23-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 613.321, 
+                "rb": "SR:C23-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C23-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C23A", 
+            {
+                "golden": "SR:C23-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 619.071, 
+                "rb": "SR:C23-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C23-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C23B", 
+            {
+                "golden": "SR:C23-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 621.304, 
+                "rb": "SR:C23-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C23-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C23B", 
+            {
+                "golden": "SR:C23-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 626.106, 
+                "rb": "SR:C23-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C23-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C23B", 
+            {
+                "golden": "SR:C23-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 628.631, 
+                "rb": "SR:C23-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C23-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C24A", 
+            {
+                "golden": "SR:C24-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 638.501, 
+                "rb": "SR:C24-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C24-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C24A", 
+            {
+                "golden": "SR:C24-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 641.026, 
+                "rb": "SR:C24-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C24-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C24A", 
+            {
+                "golden": "SR:C24-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 646.711, 
+                "rb": "SR:C24-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C24-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C24B", 
+            {
+                "golden": "SR:C24-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 648.944, 
+                "rb": "SR:C24-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C24-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C24B", 
+            {
+                "golden": "SR:C24-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 653.814, 
+                "rb": "SR:C24-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C24-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C24B", 
+            {
+                "golden": "SR:C24-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 656.377, 
+                "rb": "SR:C24-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C24-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C25A", 
+            {
+                "golden": "SR:C25-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 663.555, 
+                "rb": "SR:C25-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C25-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C25A", 
+            {
+                "golden": "SR:C25-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 666.119, 
+                "rb": "SR:C25-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C25-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C25A", 
+            {
+                "golden": "SR:C25-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 671.868, 
+                "rb": "SR:C25-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C25-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C25B", 
+            {
+                "golden": "SR:C25-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 674.101, 
+                "rb": "SR:C25-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C25-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C25B", 
+            {
+                "golden": "SR:C25-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 678.903, 
+                "rb": "SR:C25-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C25-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C25B", 
+            {
+                "golden": "SR:C25-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 681.428, 
+                "rb": "SR:C25-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C25-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C26A", 
+            {
+                "golden": "SR:C26-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 691.299, 
+                "rb": "SR:C26-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C26-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C26A", 
+            {
+                "golden": "SR:C26-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 693.824, 
+                "rb": "SR:C26-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C26-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C26A", 
+            {
+                "golden": "SR:C26-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 699.508, 
+                "rb": "SR:C26-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C26-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C26B", 
+            {
+                "golden": "SR:C26-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 701.741, 
+                "rb": "SR:C26-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C26-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C26B", 
+            {
+                "golden": "SR:C26-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 706.611, 
+                "rb": "SR:C26-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C26-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C26B", 
+            {
+                "golden": "SR:C26-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 709.174, 
+                "rb": "SR:C26-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C26-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C27A", 
+            {
+                "golden": "SR:C27-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 716.352, 
+                "rb": "SR:C27-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C27-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C27A", 
+            {
+                "golden": "SR:C27-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 718.916, 
+                "rb": "SR:C27-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C27-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C27A", 
+            {
+                "golden": "SR:C27-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 724.665, 
+                "rb": "SR:C27-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C27-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C27B", 
+            {
+                "golden": "SR:C27-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 726.898, 
+                "rb": "SR:C27-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C27-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C27B", 
+            {
+                "golden": "SR:C27-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 731.7, 
+                "rb": "SR:C27-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C27-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C27B", 
+            {
+                "golden": "SR:C27-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 734.225, 
+                "rb": "SR:C27-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C27-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G2C28A", 
+            {
+                "golden": "SR:C28-BI:G02A{BPM:H1}GOLDEN:Y", 
+                "s": 744.096, 
+                "rb": "SR:C28-BI:G02A{BPM:H1}SA:Y-I", 
+                "bba": "SR:C28-BI:G02A{BPM:H1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G2C28A", 
+            {
+                "golden": "SR:C28-BI:G02A{BPM:H2}GOLDEN:Y", 
+                "s": 746.621, 
+                "rb": "SR:C28-BI:G02A{BPM:H2}SA:Y-I", 
+                "bba": "SR:C28-BI:G02A{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C28A", 
+            {
+                "golden": "SR:C28-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 752.305, 
+                "rb": "SR:C28-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C28-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C28B", 
+            {
+                "golden": "SR:C28-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 754.538, 
+                "rb": "SR:C28-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C28-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G6C28B", 
+            {
+                "golden": "SR:C28-BI:G06B{BPM:L2}GOLDEN:Y", 
+                "s": 759.408, 
+                "rb": "SR:C28-BI:G06B{BPM:L2}SA:Y-I", 
+                "bba": "SR:C28-BI:G06B{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G6C28B", 
+            {
+                "golden": "SR:C28-BI:G06B{BPM:L1}GOLDEN:Y", 
+                "s": 761.972, 
+                "rb": "SR:C28-BI:G06B{BPM:L1}SA:Y-I", 
+                "bba": "SR:C28-BI:G06B{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL1G2C29A", 
+            {
+                "golden": "SR:C29-BI:G02A{BPM:L1}GOLDEN:Y", 
+                "s": 769.149, 
+                "rb": "SR:C29-BI:G02A{BPM:L1}SA:Y-I", 
+                "bba": "SR:C29-BI:G02A{BPM:L1}BBA:Y"
+            }
+        ], 
+        [
+            "PL2G2C29A", 
+            {
+                "golden": "SR:C29-BI:G02A{BPM:L2}GOLDEN:Y", 
+                "s": 771.713, 
+                "rb": "SR:C29-BI:G02A{BPM:L2}SA:Y-I", 
+                "bba": "SR:C29-BI:G02A{BPM:L2}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C29A", 
+            {
+                "golden": "SR:C29-BI:G04A{BPM:M1}GOLDEN:Y", 
+                "s": 777.463, 
+                "rb": "SR:C29-BI:G04A{BPM:M1}SA:Y-I", 
+                "bba": "SR:C29-BI:G04A{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PM1G4C29B", 
+            {
+                "golden": "SR:C29-BI:G04B{BPM:M1}GOLDEN:Y", 
+                "s": 779.695, 
+                "rb": "SR:C29-BI:G04B{BPM:M1}SA:Y-I", 
+                "bba": "SR:C29-BI:G04B{BPM:M1}BBA:Y"
+            }
+        ], 
+        [
+            "PH2G6C29B", 
+            {
+                "golden": "SR:C29-BI:G06B{BPM:H2}GOLDEN:Y", 
+                "s": 784.498, 
+                "rb": "SR:C29-BI:G06B{BPM:H2}SA:Y-I", 
+                "bba": "SR:C29-BI:G06B{BPM:H2}BBA:Y"
+            }
+        ], 
+        [
+            "PH1G6C29B", 
+            {
+                "golden": "SR:C29-BI:G06B{BPM:H1}GOLDEN:Y", 
+                "s": 787.023, 
+                "rb": "SR:C29-BI:G06B{BPM:H1}SA:Y-I", 
+                "bba": "SR:C29-BI:G06B{BPM:H1}BBA:Y"
+            }
+        ]
+    ], 
+    "bpmx": [
+        [
+            "PH1G2C30A", 
+            {
+                "golden": "SR:C30-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 4.935, 
+                "rb": "SR:C30-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C30-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C30A", 
+            {
+                "golden": "SR:C30-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 7.46002, 
+                "rb": "SR:C30-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C30-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C30A", 
+            {
+                "golden": "SR:C30-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 13.1446, 
+                "rb": "SR:C30-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C30-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C30B", 
+            {
+                "golden": "SR:C30-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 15.3773, 
+                "rb": "SR:C30-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C30-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C30B", 
+            {
+                "golden": "SR:C30-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 20.2472, 
+                "rb": "SR:C30-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C30-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C30B", 
+            {
+                "golden": "SR:C30-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 22.8109, 
+                "rb": "SR:C30-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C30-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C01A", 
+            {
+                "golden": "SR:C01-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 29.9886, 
+                "rb": "SR:C01-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C01-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C01A", 
+            {
+                "golden": "SR:C01-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 32.5523, 
+                "rb": "SR:C01-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C01-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C01A", 
+            {
+                "golden": "SR:C01-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 38.3018, 
+                "rb": "SR:C01-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C01-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C01B", 
+            {
+                "golden": "SR:C01-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 40.5345, 
+                "rb": "SR:C01-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C01-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C01B", 
+            {
+                "golden": "SR:C01-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 45.3368, 
+                "rb": "SR:C01-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C01-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C01B", 
+            {
+                "golden": "SR:C01-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 47.8618, 
+                "rb": "SR:C01-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C01-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C02A", 
+            {
+                "golden": "SR:C02-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 57.7322, 
+                "rb": "SR:C02-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C02-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C02A", 
+            {
+                "golden": "SR:C02-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 60.2572, 
+                "rb": "SR:C02-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C02-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C02A", 
+            {
+                "golden": "SR:C02-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 65.9418, 
+                "rb": "SR:C02-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C02-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C02B", 
+            {
+                "golden": "SR:C02-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 68.1745, 
+                "rb": "SR:C02-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C02-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C02B", 
+            {
+                "golden": "SR:C02-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 73.0444, 
+                "rb": "SR:C02-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C02-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C02B", 
+            {
+                "golden": "SR:C02-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 75.6081, 
+                "rb": "SR:C02-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C02-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C03A", 
+            {
+                "golden": "SR:C03-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 82.7858, 
+                "rb": "SR:C03-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C03-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C03A", 
+            {
+                "golden": "SR:C03-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 85.3495, 
+                "rb": "SR:C03-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C03-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C03A", 
+            {
+                "golden": "SR:C03-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 91.099, 
+                "rb": "SR:C03-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C03-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C03B", 
+            {
+                "golden": "SR:C03-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 93.3317, 
+                "rb": "SR:C03-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C03-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C03B", 
+            {
+                "golden": "SR:C03-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 98.134, 
+                "rb": "SR:C03-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C03-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C03B", 
+            {
+                "golden": "SR:C03-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 100.659, 
+                "rb": "SR:C03-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C03-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C04A", 
+            {
+                "golden": "SR:C04-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 110.529, 
+                "rb": "SR:C04-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C04-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C04A", 
+            {
+                "golden": "SR:C04-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 113.054, 
+                "rb": "SR:C04-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C04-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C04A", 
+            {
+                "golden": "SR:C04-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 118.739, 
+                "rb": "SR:C04-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C04-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C04B", 
+            {
+                "golden": "SR:C04-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 120.972, 
+                "rb": "SR:C04-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C04-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C04B", 
+            {
+                "golden": "SR:C04-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 125.842, 
+                "rb": "SR:C04-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C04-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C04B", 
+            {
+                "golden": "SR:C04-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 128.405, 
+                "rb": "SR:C04-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C04-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C05A", 
+            {
+                "golden": "SR:C05-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 135.583, 
+                "rb": "SR:C05-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C05-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C05A", 
+            {
+                "golden": "SR:C05-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 138.147, 
+                "rb": "SR:C05-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C05-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C05A", 
+            {
+                "golden": "SR:C05-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 143.896, 
+                "rb": "SR:C05-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C05-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C05B", 
+            {
+                "golden": "SR:C05-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 146.129, 
+                "rb": "SR:C05-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C05-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C05B", 
+            {
+                "golden": "SR:C05-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 150.931, 
+                "rb": "SR:C05-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C05-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C05B", 
+            {
+                "golden": "SR:C05-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 153.456, 
+                "rb": "SR:C05-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C05-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C06A", 
+            {
+                "golden": "SR:C06-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 163.327, 
+                "rb": "SR:C06-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C06-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C06A", 
+            {
+                "golden": "SR:C06-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 165.852, 
+                "rb": "SR:C06-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C06-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C06A", 
+            {
+                "golden": "SR:C06-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 171.536, 
+                "rb": "SR:C06-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C06-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C06B", 
+            {
+                "golden": "SR:C06-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 173.769, 
+                "rb": "SR:C06-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C06-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C06B", 
+            {
+                "golden": "SR:C06-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 178.639, 
+                "rb": "SR:C06-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C06-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C06B", 
+            {
+                "golden": "SR:C06-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 181.202, 
+                "rb": "SR:C06-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C06-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C07A", 
+            {
+                "golden": "SR:C07-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 188.38, 
+                "rb": "SR:C07-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C07-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C07A", 
+            {
+                "golden": "SR:C07-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 190.944, 
+                "rb": "SR:C07-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C07-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C07A", 
+            {
+                "golden": "SR:C07-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 196.693, 
+                "rb": "SR:C07-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C07-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C07B", 
+            {
+                "golden": "SR:C07-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 198.926, 
+                "rb": "SR:C07-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C07-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C07B", 
+            {
+                "golden": "SR:C07-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 203.728, 
+                "rb": "SR:C07-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C07-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C07B", 
+            {
+                "golden": "SR:C07-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 206.253, 
+                "rb": "SR:C07-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C07-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C08A", 
+            {
+                "golden": "SR:C08-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 216.124, 
+                "rb": "SR:C08-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C08-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C08A", 
+            {
+                "golden": "SR:C08-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 218.649, 
+                "rb": "SR:C08-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C08-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C08A", 
+            {
+                "golden": "SR:C08-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 224.333, 
+                "rb": "SR:C08-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C08-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C08B", 
+            {
+                "golden": "SR:C08-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 226.566, 
+                "rb": "SR:C08-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C08-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C08B", 
+            {
+                "golden": "SR:C08-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 231.436, 
+                "rb": "SR:C08-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C08-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C08B", 
+            {
+                "golden": "SR:C08-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 234.0, 
+                "rb": "SR:C08-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C08-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C09A", 
+            {
+                "golden": "SR:C09-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 241.177, 
+                "rb": "SR:C09-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C09-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C09A", 
+            {
+                "golden": "SR:C09-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 243.741, 
+                "rb": "SR:C09-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C09-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C09A", 
+            {
+                "golden": "SR:C09-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 249.491, 
+                "rb": "SR:C09-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C09-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C09B", 
+            {
+                "golden": "SR:C09-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 251.723, 
+                "rb": "SR:C09-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C09-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C09B", 
+            {
+                "golden": "SR:C09-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 256.526, 
+                "rb": "SR:C09-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C09-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C09B", 
+            {
+                "golden": "SR:C09-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 259.051, 
+                "rb": "SR:C09-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C09-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C10A", 
+            {
+                "golden": "SR:C10-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 268.921, 
+                "rb": "SR:C10-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C10-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C10A", 
+            {
+                "golden": "SR:C10-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 271.446, 
+                "rb": "SR:C10-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C10-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C10A", 
+            {
+                "golden": "SR:C10-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 277.131, 
+                "rb": "SR:C10-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C10-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C10B", 
+            {
+                "golden": "SR:C10-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 279.363, 
+                "rb": "SR:C10-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C10-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C10B", 
+            {
+                "golden": "SR:C10-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 284.233, 
+                "rb": "SR:C10-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C10-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C10B", 
+            {
+                "golden": "SR:C10-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 286.797, 
+                "rb": "SR:C10-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C10-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C11A", 
+            {
+                "golden": "SR:C11-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 293.975, 
+                "rb": "SR:C11-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C11-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C11A", 
+            {
+                "golden": "SR:C11-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 296.538, 
+                "rb": "SR:C11-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C11-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C11A", 
+            {
+                "golden": "SR:C11-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 302.288, 
+                "rb": "SR:C11-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C11-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C11B", 
+            {
+                "golden": "SR:C11-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 304.52, 
+                "rb": "SR:C11-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C11-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C11B", 
+            {
+                "golden": "SR:C11-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 309.323, 
+                "rb": "SR:C11-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C11-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C11B", 
+            {
+                "golden": "SR:C11-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 311.848, 
+                "rb": "SR:C11-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C11-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C12A", 
+            {
+                "golden": "SR:C12-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 321.718, 
+                "rb": "SR:C12-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C12-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C12A", 
+            {
+                "golden": "SR:C12-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 324.243, 
+                "rb": "SR:C12-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C12-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C12A", 
+            {
+                "golden": "SR:C12-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 329.928, 
+                "rb": "SR:C12-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C12-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C12B", 
+            {
+                "golden": "SR:C12-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 332.16, 
+                "rb": "SR:C12-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C12-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C12B", 
+            {
+                "golden": "SR:C12-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 337.03, 
+                "rb": "SR:C12-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C12-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C12B", 
+            {
+                "golden": "SR:C12-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 339.594, 
+                "rb": "SR:C12-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C12-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C13A", 
+            {
+                "golden": "SR:C13-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 346.772, 
+                "rb": "SR:C13-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C13-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C13A", 
+            {
+                "golden": "SR:C13-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 349.335, 
+                "rb": "SR:C13-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C13-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C13A", 
+            {
+                "golden": "SR:C13-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 355.085, 
+                "rb": "SR:C13-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C13-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C13B", 
+            {
+                "golden": "SR:C13-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 357.318, 
+                "rb": "SR:C13-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C13-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C13B", 
+            {
+                "golden": "SR:C13-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 362.12, 
+                "rb": "SR:C13-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C13-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C13B", 
+            {
+                "golden": "SR:C13-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 364.645, 
+                "rb": "SR:C13-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C13-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C14A", 
+            {
+                "golden": "SR:C14-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 374.515, 
+                "rb": "SR:C14-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C14-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C14A", 
+            {
+                "golden": "SR:C14-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 377.04, 
+                "rb": "SR:C14-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C14-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C14A", 
+            {
+                "golden": "SR:C14-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 382.725, 
+                "rb": "SR:C14-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C14-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C14B", 
+            {
+                "golden": "SR:C14-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 384.958, 
+                "rb": "SR:C14-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C14-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C14B", 
+            {
+                "golden": "SR:C14-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 389.828, 
+                "rb": "SR:C14-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C14-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C14B", 
+            {
+                "golden": "SR:C14-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 392.391, 
+                "rb": "SR:C14-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C14-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C15A", 
+            {
+                "golden": "SR:C15-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 399.569, 
+                "rb": "SR:C15-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C15-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C15A", 
+            {
+                "golden": "SR:C15-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 402.133, 
+                "rb": "SR:C15-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C15-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C15A", 
+            {
+                "golden": "SR:C15-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 407.882, 
+                "rb": "SR:C15-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C15-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C15B", 
+            {
+                "golden": "SR:C15-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 410.115, 
+                "rb": "SR:C15-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C15-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C15B", 
+            {
+                "golden": "SR:C15-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 414.917, 
+                "rb": "SR:C15-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C15-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C15B", 
+            {
+                "golden": "SR:C15-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 417.442, 
+                "rb": "SR:C15-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C15-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C16A", 
+            {
+                "golden": "SR:C16-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 427.313, 
+                "rb": "SR:C16-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C16-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C16A", 
+            {
+                "golden": "SR:C16-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 429.838, 
+                "rb": "SR:C16-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C16-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C16A", 
+            {
+                "golden": "SR:C16-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 435.522, 
+                "rb": "SR:C16-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C16-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C16B", 
+            {
+                "golden": "SR:C16-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 437.755, 
+                "rb": "SR:C16-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C16-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C16B", 
+            {
+                "golden": "SR:C16-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 442.625, 
+                "rb": "SR:C16-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C16-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C16B", 
+            {
+                "golden": "SR:C16-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 445.188, 
+                "rb": "SR:C16-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C16-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C17A", 
+            {
+                "golden": "SR:C17-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 452.366, 
+                "rb": "SR:C17-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C17-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C17A", 
+            {
+                "golden": "SR:C17-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 454.93, 
+                "rb": "SR:C17-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C17-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C17A", 
+            {
+                "golden": "SR:C17-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 460.679, 
+                "rb": "SR:C17-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C17-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C17B", 
+            {
+                "golden": "SR:C17-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 462.912, 
+                "rb": "SR:C17-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C17-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C17B", 
+            {
+                "golden": "SR:C17-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 467.714, 
+                "rb": "SR:C17-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C17-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C17B", 
+            {
+                "golden": "SR:C17-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 470.239, 
+                "rb": "SR:C17-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C17-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C18A", 
+            {
+                "golden": "SR:C18-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 480.11, 
+                "rb": "SR:C18-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C18-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C18A", 
+            {
+                "golden": "SR:C18-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 482.635, 
+                "rb": "SR:C18-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C18-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C18A", 
+            {
+                "golden": "SR:C18-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 488.319, 
+                "rb": "SR:C18-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C18-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C18B", 
+            {
+                "golden": "SR:C18-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 490.552, 
+                "rb": "SR:C18-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C18-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C18B", 
+            {
+                "golden": "SR:C18-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 495.422, 
+                "rb": "SR:C18-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C18-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C18B", 
+            {
+                "golden": "SR:C18-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 497.986, 
+                "rb": "SR:C18-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C18-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C19A", 
+            {
+                "golden": "SR:C19-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 505.163, 
+                "rb": "SR:C19-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C19-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C19A", 
+            {
+                "golden": "SR:C19-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 507.727, 
+                "rb": "SR:C19-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C19-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C19A", 
+            {
+                "golden": "SR:C19-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 513.477, 
+                "rb": "SR:C19-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C19-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C19B", 
+            {
+                "golden": "SR:C19-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 515.709, 
+                "rb": "SR:C19-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C19-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C19B", 
+            {
+                "golden": "SR:C19-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 520.512, 
+                "rb": "SR:C19-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C19-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C19B", 
+            {
+                "golden": "SR:C19-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 523.037, 
+                "rb": "SR:C19-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C19-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C20A", 
+            {
+                "golden": "SR:C20-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 532.907, 
+                "rb": "SR:C20-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C20-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C20A", 
+            {
+                "golden": "SR:C20-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 535.432, 
+                "rb": "SR:C20-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C20-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C20A", 
+            {
+                "golden": "SR:C20-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 541.117, 
+                "rb": "SR:C20-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C20-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C20B", 
+            {
+                "golden": "SR:C20-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 543.349, 
+                "rb": "SR:C20-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C20-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C20B", 
+            {
+                "golden": "SR:C20-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 548.219, 
+                "rb": "SR:C20-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C20-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C20B", 
+            {
+                "golden": "SR:C20-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 550.783, 
+                "rb": "SR:C20-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C20-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C21A", 
+            {
+                "golden": "SR:C21-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 557.961, 
+                "rb": "SR:C21-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C21-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C21A", 
+            {
+                "golden": "SR:C21-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 560.524, 
+                "rb": "SR:C21-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C21-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C21A", 
+            {
+                "golden": "SR:C21-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 566.274, 
+                "rb": "SR:C21-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C21-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C21B", 
+            {
+                "golden": "SR:C21-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 568.506, 
+                "rb": "SR:C21-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C21-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C21B", 
+            {
+                "golden": "SR:C21-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 573.309, 
+                "rb": "SR:C21-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C21-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C21B", 
+            {
+                "golden": "SR:C21-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 575.834, 
+                "rb": "SR:C21-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C21-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C22A", 
+            {
+                "golden": "SR:C22-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 585.704, 
+                "rb": "SR:C22-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C22-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C22A", 
+            {
+                "golden": "SR:C22-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 588.229, 
+                "rb": "SR:C22-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C22-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C22A", 
+            {
+                "golden": "SR:C22-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 593.914, 
+                "rb": "SR:C22-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C22-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C22B", 
+            {
+                "golden": "SR:C22-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 596.146, 
+                "rb": "SR:C22-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C22-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C22B", 
+            {
+                "golden": "SR:C22-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 601.016, 
+                "rb": "SR:C22-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C22-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C22B", 
+            {
+                "golden": "SR:C22-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 603.58, 
+                "rb": "SR:C22-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C22-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C23A", 
+            {
+                "golden": "SR:C23-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 610.758, 
+                "rb": "SR:C23-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C23-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C23A", 
+            {
+                "golden": "SR:C23-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 613.321, 
+                "rb": "SR:C23-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C23-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C23A", 
+            {
+                "golden": "SR:C23-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 619.071, 
+                "rb": "SR:C23-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C23-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C23B", 
+            {
+                "golden": "SR:C23-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 621.304, 
+                "rb": "SR:C23-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C23-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C23B", 
+            {
+                "golden": "SR:C23-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 626.106, 
+                "rb": "SR:C23-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C23-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C23B", 
+            {
+                "golden": "SR:C23-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 628.631, 
+                "rb": "SR:C23-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C23-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C24A", 
+            {
+                "golden": "SR:C24-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 638.501, 
+                "rb": "SR:C24-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C24-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C24A", 
+            {
+                "golden": "SR:C24-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 641.026, 
+                "rb": "SR:C24-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C24-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C24A", 
+            {
+                "golden": "SR:C24-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 646.711, 
+                "rb": "SR:C24-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C24-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C24B", 
+            {
+                "golden": "SR:C24-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 648.944, 
+                "rb": "SR:C24-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C24-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C24B", 
+            {
+                "golden": "SR:C24-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 653.814, 
+                "rb": "SR:C24-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C24-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C24B", 
+            {
+                "golden": "SR:C24-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 656.377, 
+                "rb": "SR:C24-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C24-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C25A", 
+            {
+                "golden": "SR:C25-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 663.555, 
+                "rb": "SR:C25-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C25-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C25A", 
+            {
+                "golden": "SR:C25-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 666.119, 
+                "rb": "SR:C25-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C25-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C25A", 
+            {
+                "golden": "SR:C25-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 671.868, 
+                "rb": "SR:C25-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C25-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C25B", 
+            {
+                "golden": "SR:C25-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 674.101, 
+                "rb": "SR:C25-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C25-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C25B", 
+            {
+                "golden": "SR:C25-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 678.903, 
+                "rb": "SR:C25-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C25-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C25B", 
+            {
+                "golden": "SR:C25-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 681.428, 
+                "rb": "SR:C25-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C25-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C26A", 
+            {
+                "golden": "SR:C26-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 691.299, 
+                "rb": "SR:C26-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C26-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C26A", 
+            {
+                "golden": "SR:C26-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 693.824, 
+                "rb": "SR:C26-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C26-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C26A", 
+            {
+                "golden": "SR:C26-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 699.508, 
+                "rb": "SR:C26-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C26-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C26B", 
+            {
+                "golden": "SR:C26-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 701.741, 
+                "rb": "SR:C26-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C26-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C26B", 
+            {
+                "golden": "SR:C26-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 706.611, 
+                "rb": "SR:C26-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C26-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C26B", 
+            {
+                "golden": "SR:C26-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 709.174, 
+                "rb": "SR:C26-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C26-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C27A", 
+            {
+                "golden": "SR:C27-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 716.352, 
+                "rb": "SR:C27-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C27-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C27A", 
+            {
+                "golden": "SR:C27-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 718.916, 
+                "rb": "SR:C27-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C27-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C27A", 
+            {
+                "golden": "SR:C27-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 724.665, 
+                "rb": "SR:C27-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C27-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C27B", 
+            {
+                "golden": "SR:C27-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 726.898, 
+                "rb": "SR:C27-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C27-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C27B", 
+            {
+                "golden": "SR:C27-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 731.7, 
+                "rb": "SR:C27-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C27-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C27B", 
+            {
+                "golden": "SR:C27-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 734.225, 
+                "rb": "SR:C27-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C27-BI:G06B{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH1G2C28A", 
+            {
+                "golden": "SR:C28-BI:G02A{BPM:H1}GOLDEN:X", 
+                "s": 744.096, 
+                "rb": "SR:C28-BI:G02A{BPM:H1}SA:X-I", 
+                "bba": "SR:C28-BI:G02A{BPM:H1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G2C28A", 
+            {
+                "golden": "SR:C28-BI:G02A{BPM:H2}GOLDEN:X", 
+                "s": 746.621, 
+                "rb": "SR:C28-BI:G02A{BPM:H2}SA:X-I", 
+                "bba": "SR:C28-BI:G02A{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C28A", 
+            {
+                "golden": "SR:C28-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 752.305, 
+                "rb": "SR:C28-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C28-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C28B", 
+            {
+                "golden": "SR:C28-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 754.538, 
+                "rb": "SR:C28-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C28-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G6C28B", 
+            {
+                "golden": "SR:C28-BI:G06B{BPM:L2}GOLDEN:X", 
+                "s": 759.408, 
+                "rb": "SR:C28-BI:G06B{BPM:L2}SA:X-I", 
+                "bba": "SR:C28-BI:G06B{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PL1G6C28B", 
+            {
+                "golden": "SR:C28-BI:G06B{BPM:L1}GOLDEN:X", 
+                "s": 761.972, 
+                "rb": "SR:C28-BI:G06B{BPM:L1}SA:X-I", 
+                "bba": "SR:C28-BI:G06B{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL1G2C29A", 
+            {
+                "golden": "SR:C29-BI:G02A{BPM:L1}GOLDEN:X", 
+                "s": 769.149, 
+                "rb": "SR:C29-BI:G02A{BPM:L1}SA:X-I", 
+                "bba": "SR:C29-BI:G02A{BPM:L1}BBA:X"
+            }
+        ], 
+        [
+            "PL2G2C29A", 
+            {
+                "golden": "SR:C29-BI:G02A{BPM:L2}GOLDEN:X", 
+                "s": 771.713, 
+                "rb": "SR:C29-BI:G02A{BPM:L2}SA:X-I", 
+                "bba": "SR:C29-BI:G02A{BPM:L2}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C29A", 
+            {
+                "golden": "SR:C29-BI:G04A{BPM:M1}GOLDEN:X", 
+                "s": 777.463, 
+                "rb": "SR:C29-BI:G04A{BPM:M1}SA:X-I", 
+                "bba": "SR:C29-BI:G04A{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PM1G4C29B", 
+            {
+                "golden": "SR:C29-BI:G04B{BPM:M1}GOLDEN:X", 
+                "s": 779.695, 
+                "rb": "SR:C29-BI:G04B{BPM:M1}SA:X-I", 
+                "bba": "SR:C29-BI:G04B{BPM:M1}BBA:X"
+            }
+        ], 
+        [
+            "PH2G6C29B", 
+            {
+                "golden": "SR:C29-BI:G06B{BPM:H2}GOLDEN:X", 
+                "s": 784.498, 
+                "rb": "SR:C29-BI:G06B{BPM:H2}SA:X-I", 
+                "bba": "SR:C29-BI:G06B{BPM:H2}BBA:X"
+            }
+        ], 
+        [
+            "PH1G6C29B", 
+            {
+                "golden": "SR:C29-BI:G06B{BPM:H1}GOLDEN:X", 
+                "s": 787.023, 
+                "rb": "SR:C29-BI:G06B{BPM:H1}SA:X-I", 
+                "bba": "SR:C29-BI:G06B{BPM:H1}BBA:X"
+            }
+        ]
+    ]
+}
