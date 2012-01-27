@@ -329,7 +329,7 @@ class TestElement(unittest.TestCase):
         self.assertTrue(el[1].sb < el[2].sb)
         
     def test_field(self):
-        v0 = self.hcor.x
+        v0, = self.hcor.x
         pvrb = self.hcor.pv(field='x', handle='readback')[0]#.encode('ascii')
         pvsp = self.hcor.pv(field='x', handle='setpoint')[0]#.encode('ascii')
         #print pvrb, pvsp

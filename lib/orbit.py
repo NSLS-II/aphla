@@ -7,8 +7,6 @@ hla.orbit
 Lattice mode management
 
 :author: Lingyun Yang
-:license: (empty ? GPL ? EPICS ?)
-
 
 Lattice mode information are stored in IRMIS, and have a service for
 retrieve it. This module provides routines operating on IRMIS/E4Service or
@@ -17,7 +15,7 @@ local XML file.
 
 import numpy as np
 import machines
-from element import Element
+from element import CaElement
 
 class Orbit:
     """
@@ -33,9 +31,9 @@ class Orbit:
                for e in bpm]
         #print "pvx = ", pvx
         #print "pvy = ", pvy
-        self.bpmx = Element(**{'name':'HLA:ORBIT:X',
+        self.bpmx = CaElement(**{'name':'HLA:ORBIT:X',
                                'eget': [(bpm[0].eget(), pvx, "x")]})
-        self.bpmy = Element(**{'name':'HLA:ORBIT:Y',
+        self.bpmy = CaElement(**{'name':'HLA:ORBIT:Y',
                                'eget': [(bpm[0].eget(), pvx, "y")]})
 
     def initializeBpmPv(self, cfa):

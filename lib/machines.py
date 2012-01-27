@@ -11,7 +11,8 @@ import os, re
 import numpy as np
 
 from catools import caget, caput
-from lattice import Element, Lattice
+from lattice import Lattice
+from element import CaElement
 from twiss import Twiss, TwissItem
 from fnmatch import fnmatch
 from ormdata import OrmData
@@ -40,7 +41,7 @@ HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
 HLA_CFS_URL   = os.environ.get('HLA_CFS_URL', '')
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
-# map Element init parameters to CF properties
+# map CaElement init parameters to CF properties
 HLA_CFS_KEYMAP = {'name': u'elemName',
                   'field': u'elemField',
                   'devname': u'devName',
@@ -94,7 +95,7 @@ def createLatticeFromCf(cfsurl, **kwargs):
         # find if the element exists.
         elem = lat._find_element(name=name)
         if not elem:
-            elem = Element(**prpt)
+            elem = CaElement(**prpt)
             lat.appendElement(elem)
         else:
             elem.updateCfsProperties(pv, prpt)
@@ -190,9 +191,9 @@ def initNSLS2VSR(cached = False):
     #_lat = _lattice_dict['LTB']
 
     # create virtual element BPMX and BPMY
-    bpmx = Element(eget=caget, eput=caput,
+    bpmx = CaElement(eget=caget, eput=caput,
                    **{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
-    bpmy = Element(eget=caget, eput=caput,
+    bpmy = CaElement(eget=caget, eput=caput,
                    **{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
     bpms = _lattice_dict['LTB'].getElements('BPM')
     bpmx.collect(bpms, fields=["value", "x"], attrs=["sb", "se"])
@@ -205,9 +206,9 @@ def initNSLS2VSR(cached = False):
     # SR
     _lattice_dict['SR'].loop = True
 
-    bpmx = Element(eget=caget, eput=caput,
+    bpmx = CaElement(eget=caget, eput=caput,
                    **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
-    bpmy = Element(eget=caget, eput=caput,
+    bpmy = CaElement(eget=caget, eput=caput,
                    **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
 
     bpms = _lattice_dict['SR'].getElements('BPM')
@@ -274,7 +275,7 @@ def createLatticesFromTxt(f, **kwargs):
         
             if not elem:
                 #print pv, prpt
-                elem = Element(eget=caget, eput=caput, **prpt)
+                elem = CaElement(eget=caget, eput=caput, **prpt)
                 lat.appendElement(elem)
             else:
                 elem.updateCfsProperties(pv, prpt)
@@ -330,10 +331,10 @@ def initNSLS2VSRTxt(data = ''):
     _lattice_dict['LTB-txt'].mode = 'LTB-txt'
     _lattice_dict['LTB-txt'].loop = False
 
-    bpmx = Element(eget=caget, eput=caput, 
+    bpmx = CaElement(eget=caget, eput=caput, 
                    **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
-    bpmy = Element(eget=caget, eput=caput,
+    bpmy = CaElement(eget=caget, eput=caput,
                    **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['LTB-txt'].getElements('BPM'):
@@ -353,10 +354,10 @@ def initNSLS2VSRTxt(data = ''):
     _lattice_dict['SR-txt'].loop = True
 
     # create virtual bpms
-    bpmx = Element(eget=caget, eput=caput, 
+    bpmx = CaElement(eget=caget, eput=caput, 
                    **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
     bpmx.sb = []                                 
-    bpmy = Element(eget=caget, eput=caput,
+    bpmy = CaElement(eget=caget, eput=caput,
                    **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
     bpmy.sb = []
     for e in _lattice_dict['SR-txt'].getElements('BPM'):

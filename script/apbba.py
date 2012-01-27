@@ -4,8 +4,6 @@ import cothread
 app = cothread.iqt(use_timer=True)
 
 from cothread.catools import caget, caput
-#from aphlas.epicsdatamonitor import CaDataMonitor
-
 
 import sys
 import gui_resources
@@ -35,37 +33,6 @@ config_dir = "~/.hla"
 #660    QH1G2C06A  2   6    1.0e-06 0.0e+00 0.00e+00 0.0e+00 0.00e+00 0.00e+00
 #lyyang@virtac:/home/shengb/nsls2$ 
 
-def rgb2qimage(rgb): 
-    """Convert the 3D numpy array `rgb` into a 32-bit QImage.  `rgb` must 
-    have three dimensions with the vertical, horizontal and RGB image axes.
-    """ 
-    if len(rgb.shape) != 3: 
-            raise ValueError("rgb2QImage can expects the first (or last) dimension to contain exactly three (R,G,B) channels") 
-    if rgb.shape[2] != 3: 
-            raise ValueError("rgb2QImage can only convert 3D arrays") 
-
-    h, w, channels = rgb.shape 
-
-    # Qt expects 32bdef rgb2qimage(rgb): 
-    """Convert the 3D numpy array `rgb` into a 32-bit QImage.  `rgb` must 
-    have three dimensions with the vertical, horizontal and RGB image axes.""" 
-    if len(rgb.shape) != 3: 
-            raise ValueError("rgb2QImage can expects the first (or last) dimension to contain exactly three (R,G,B) channels") 
-    if rgb.shape[2] != 3: 
-            raise ValueError("rgb2QImage can only convert 3D arrays") 
-
-    h, w, channels = rgb.shape 
-
-    # Qt expects 32bit BGRA data for color images: 
-    bgra = np.empty((h, w, 4), np.uint8, 'C') 
-    bgra[...,0] = rgb[...,2] 
-    bgra[...,1] = rgb[...,1] 
-    bgra[...,2] = rgb[...,0] 
-    bgra[...,3].fill(255) 
-
-    result = QImage(bgra.data, w, h, QImage.Format_RGB32) 
-    result.ndarray = bgra 
-    return result
 
 class BbaMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""

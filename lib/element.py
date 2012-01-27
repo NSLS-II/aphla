@@ -12,9 +12,13 @@ from catools import caget, caput
 
 class AbstractElement(object):
     """
-    AbstractElement
+    The :class:`AbstractElement` contains most of the lattice properties, such
+    as element name, length, location and family. It also keeps a list of
+    groups which belongs to. The default group list contains cell, girder,
+    family and symmetry information if they are valid.
 
-    AbstractElement has no Channel Access abilities.
+    AbstractElement has no Channel Access abilities. The AbstractElement can
+    be created with the following optional parameters
     
     ==========  ===================================================
     Variable    Meaning
@@ -24,13 +28,17 @@ class AbstractElement(object):
     *devname*   device name
     *phylen*    physical(yoke) length
     *family*    family
-    *s*         s position
+    *sb*        s position of the entrance
+    *se*        s position of the exit
     *length*    effective(magnetic) length 
     *cell*      cell name
     *girder*    girder name
     *symmetry*  symmetry type
     *sequence*  sequence tuple
+    *group*     list of groups the element belongs to
     ==========  ===================================================
+
+    
     """
 
     # format string for __str__
@@ -40,6 +48,9 @@ class AbstractElement(object):
         """
         create an element from Channel Finder Service data or explicit
         parameters.
+
+        :param name: element name
+        :type name: ele name
         """
         #print kwargs
         self.name     = kwargs.get('name', None)
@@ -65,11 +76,16 @@ class AbstractElement(object):
         - *y* y coordinate
         - *c* color
         
+        It recognize the following *family*:
+
         - 'QUAD', quadrupole
         - 'DIPOLE', dipole
         - 'SEXT', sextupole
         - ['TRIMX' | 'TRIMY'], corrector
         - ['BPMX' | 'BPMY'], beam position monitor
+
+        For unrecognized element, it returns a straight line, i.e. `([s0, s1],
+        [0, 0], 'k')`
         """
         b, e = self.sb, self.sb + self.length
         h = vscale
@@ -150,7 +166,7 @@ class AbstractElement(object):
 
 class CaDecorator:
     """
-    Decorator between channel access and element.
+    Decorator between channel access and element field.
 
     PVs are in ascending order
     """
@@ -241,19 +257,17 @@ class CaDecorator:
     def removeSetpoint(self, pv):
         self.pvsp.remove(pv)
         
-class Element(AbstractElement):
+class CaElement(AbstractElement):
     """
     Element with Channel Access ability
     """
     __slots__ = []
     def __init__(self, **kwargs):
         """
-        - *pvs* a list of tuple: (func,pv,description) for related status
-        - *eget* the default get action (func, pv)
-        - *eput* the default put action (func, pv)
-
         An element is homogeneous means, it use same get/put function on a
         list of variables to speed up.
+
+        
         """
         #AbstractElement.__init__(self, **kwargs)
         self.__dict__['_field'] = {'value': None, 'status': None}

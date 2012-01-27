@@ -24,7 +24,7 @@ Modules include:
 
     :mod:`hla.lattice`
 
-        define the :class:`~hla.lattice.Element`, :class:`~hla.lattice.Twiss`,
+        define the :class:`~hla.lattice.CaElement`, :class:`~hla.lattice.Twiss`,
         :class:`~hla.lattice.Lattice` class
 
     :mod:`hla.orbit`

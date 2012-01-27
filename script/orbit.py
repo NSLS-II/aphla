@@ -44,9 +44,11 @@ class OrbitData(object):
         self.pvs = pvs
         self.icur, self.icount = -1, 0
         # how many samples are kept for statistics
+        self.mode = kw.get('mode', 'EPICS')
         self.y      = np.zeros((self.samples, n), 'd')
         for i in range(self.samples):
-            self.y[i,:] = caget(self.pvs)
+            if self.mode == 'EPICS': self.y[i,:] = caget(self.pvs)
+            elif self.mode == 'sim': self.y[i,:] = np.random.rand(n)
         self.yref   = np.zeros(n, 'd')
         self.errbar = np.ones(n, 'd') * 1e-15
         self.keep   = np.ones(n, 'i')
@@ -57,8 +59,11 @@ class OrbitData(object):
         # y and errbar sync with plot, not changing data.
         i = self.icur + 1
         if i >= self.samples: i = 0
-        self.y[i,:] = caget(self.pvs)
-        self.y[i, :] *= self.yfactor
+        if self.mode == 'EPICS':
+            self.y[i,:] = caget(self.pvs)
+            self.y[i, :] *= self.yfactor
+        elif self.mode == 'sim': 
+            self.y[i,:] = np.random.rand(len(self.pvs))
         self.errbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
@@ -110,7 +115,7 @@ class OrbitPlotMainWindow(QMainWindow):
     """
     the main window
     """
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, mode = 'EPICS'):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
@@ -126,8 +131,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.bpm = [b[0] for b in self.config.data['bpmx']]
         pvsx_golden = [b[1]['golden'].encode("ascii") 
                        for b in self.config.data['bpmx']]
-        self.orbitx_data = OrbitData(pvs = pvx, x = pvsx)
-        self.orbity_data = OrbitData(pvs = pvy, x = pvsy)
+        self.orbitx_data = OrbitData(pvs = pvx, x = pvsx, mode=mode)
+        self.orbity_data = OrbitData(pvs = pvy, x = pvsy, mode=mode)
         self.orbitx_data.update()
         self.orbity_data.update()
 
@@ -304,7 +309,9 @@ class OrbitPlotMainWindow(QMainWindow):
         controlToolBar.addAction(controlResetPvDataAction)
 
         # update at 2Hz
-        self.timerId = self.startTimer(1000)
+        if mode == 'sim': dt = 100
+        elif mode == 'EPICS': dt = 800
+        self.timerId = self.startTimer(dt)
 
     def liveData(self, on):
         """Switch on/off live data taking"""
@@ -405,9 +412,11 @@ class OrbitPlotMainWindow(QMainWindow):
         #hla.hlalib._reset_trims()
 
 
-def main(args = None):
+def main():
     #app = QApplication(args)
-    demo = OrbitPlotMainWindow()
+    if '--sim' in sys.argv: mode = 'sim'
+    else: mode = 'EPICS'
+    demo = OrbitPlotMainWindow(mode=mode)
     demo.resize(600,500)
     demo.show()
 

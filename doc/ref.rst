@@ -40,7 +40,10 @@ HLA Summary List
 .. automodule:: hla.orm
    :members:
 
-.. autoclass:: hla.element.Element
+.. automodule:: aphlas.element
+   :members:
+
+.. autoclass:: aphlas.element.AbstractElement
    :members:
 
 .. automodule:: hla.meastwiss
