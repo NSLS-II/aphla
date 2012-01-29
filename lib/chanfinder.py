@@ -165,7 +165,7 @@ class ChannelFinderAgent(object):
                 writer.writerow([r[0]] + prpt + list(r[2]))
         del writer
 
-    def importJson(self, fname):
+    def _importJson(self, fname):
         import json
         f = open(fname, 'r')
         d = json.load(f)
@@ -174,11 +174,31 @@ class ChannelFinderAgent(object):
         f.close()
         pass
 
-    def exportJson(self, fname):
+    def _exportJson(self, fname):
         import json
         f = open(fname, 'w')
         json.dump({'__cdate': self.__cdate, 'rows': self.rows}, f)
         f.close()
+
+    def tags(self, pat):
+        alltags = set()
+        for r in self.rows:
+            for t in r[2]: alltags.add(t)
+        return [t for t in alltags if fnmatch(t, pat)]
+
+    def groups(self, key = 'elemName', **kwargs):
+        """
+        """
+        
+        ret = {}
+        for i,r in enumerate(self.rows):
+            if r[1] is None: continue
+            if key not in r[1]: continue
+            name = r[1][key]
+            if name not in ret: ret[name] = []
+            ret[name].append(i)
+        return ret
+
 
 if __name__ == "__main__":
     cfa = ChannelFinderAgent()
@@ -187,9 +207,12 @@ if __name__ == "__main__":
     #                property=[('hostName', 'virtac')], tagName='aphla.sys.*')
     cfa.importCsv('test1.csv')
     #cfa.exportCsv('test1.csv'
-    cfa.exportJson('test1.json')
-    cfa.importJson('test1.json')
-    cfa.sort('elemName')
+    cfa._exportJson('test1.json')
+    cfa._importJson('test1.json')
+    #cfa.sort('elemName')
+    print cfa.tags('aphla.sys.*')
+    sys.exit(0)
+
     #cfa.importCsv('/home/lyyang/devel/nsls2-hla/machine/nsls2/test.csv')
     for i,r in enumerate(cfa.rows):
         if 'elemName' not in r[1]: continue

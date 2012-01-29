@@ -40,6 +40,8 @@ class Lattice:
             return self._elements[key]
         elif isinstance(key, str) or isinstance(key, unicode):
             return self._find_element(name=key)
+        else:
+            return None
 
     def _find_element(self, name):
         """

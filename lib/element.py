@@ -6,6 +6,7 @@ Element
 """
 
 import os
+import re
 import copy
 from catools import caget, caput
 
@@ -123,7 +124,7 @@ class AbstractElement(object):
                self.length == other.length and \
                self.name == other.name
 
-    def updateCfsProperties(self, prpt):
+    def updateProperties(self, prpt):
         """
         - *devname* Device name
         - *cell* Cell
@@ -244,13 +245,20 @@ class CaDecorator:
     def appendSetpoint(self, pv):
         self.pvsp.append(pv)
 
-    def insertReadback(self, pv):
-        self._insert_in_order(self.pvrb, pv)
+    def insertReadback(self, pv, idx = None):
+        if idx is None:
+            self._insert_in_order(self.pvrb, pv)
+        else:
+            while idx >= len(self.pvrb): self.pvrb.append(None)
+            self.pvrb[idx] = pv
 
-    def insertSetpoint(self, pv):
-        #self.pvsp.append(pv)
-        self._insert_in_order(self.pvsp, pv)
-
+    def insertSetpoint(self, pv, idx = None):
+        if idx is None:
+            self._insert_in_order(self.pvsp, pv)
+        else:
+            while idx >= len(self.pvsp): self.pvsp.append(None)
+            self.pvsp[idx] = pv
+            
     def removeReadback(self, pv):
         self.pvrb.remove(pv)
 
@@ -270,17 +278,18 @@ class CaElement(AbstractElement):
         
         """
         #AbstractElement.__init__(self, **kwargs)
-        self.__dict__['_field'] = {'value': None, 'status': None}
+        self.__dict__['_field'] = {}
         self.__dict__['_pvtags'] = {}
         self.__dict__['virtual'] = kwargs.get('virtual', 0)
-        super(Element, self).__init__(**kwargs)
+        # update all element properties
+        super(CaElement, self).__init__(**kwargs)
         
     def __setstate__(self, data):
         for (name, value) in data.iteritems():
             if name in ['_field', '_pvtags']:
                 self.__dict__[name] = value
             else:
-                super(Element, self).__setattr__(name, value)
+                super(CaElement, self).__setattr__(name, value)
             
     def _pv_1(self, **kwargs):
         """One input"""
@@ -432,8 +441,8 @@ class CaElement(AbstractElement):
 
     def __setattr__(self, att, val):
         # this could be called by AbstractElement.__init__ or Element.__init__
-        if hasattr(super(Element, self), att):
-            super(Element, self).__setattr__(att, val)
+        if hasattr(super(CaElement, self), att):
+            super(CaElement, self).__setattr__(att, val)
         elif self.__dict__['_field'].has_key(att):
             decr = self.__dict__['_field'][att]
             if not decr:
@@ -445,10 +454,30 @@ class CaElement(AbstractElement):
             self.__dict__[att] = val
         else:
             # new attribute for superclass
-            super(Element, self).__setattr__(att, val)
+            super(CaElement, self).__setattr__(att, val)
             #raise AttributeError("Error")
 
-    def setFieldGetAction(self, field, v, desc = ''):
+    def updatePvRecord(self, pvname, properties, tags):
+        """
+        """
+        self.updateProperties(properties)
+        for t in tags:
+            g = re.match(r'aphla.field.(\w+)(\[\d+\])?', t)
+            if g is None:
+                #raise ValueError('Tag %s is not "aphla.field.field" format')
+                continue
+
+            fieldname, idx = g.group(1), g.group(2)
+            if properties.get('handle', 'READBACK') == 'READBACK':
+                self.setFieldGetAction(fieldname, idx, pvname)
+            elif properties.get('handle') == 'SETPOINT':
+                self.setFieldPutAction(fieldname, idx, pvname)
+            else:
+                raise ValueError("invalid 'handle' value '%s' for pv %s" % 
+                                 (properties.get('handle'), pvname))
+        pass
+
+    def setFieldGetAction(self, field, idx, v, desc = ''):
         """
         set the action when reading *field*.
 
@@ -457,9 +486,9 @@ class CaElement(AbstractElement):
         if not self._field.has_key(field):
             self._field[field] = CaDecorator()
 
-        self._field[field].insertReadback(v)
+        self._field[field].insertReadback(v, idx)
 
-    def setFieldPutAction(self, field, v, desc = ''):
+    def setFieldPutAction(self, field, idx, v, desc = ''):
         """
         set the action for writing *field*.
 
@@ -468,7 +497,7 @@ class CaElement(AbstractElement):
         if not self._field.has_key(field):
             self._field[field] = CaDecorator()
 
-        self._field[field].insertSetpoint(v)
+        self._field[field].insertSetpoint(v, idx)
 
     def fields(self):
         """
@@ -523,6 +552,6 @@ class CaElement(AbstractElement):
         
 
     def __dir__(self):
-        return dir(Element) + list(self.__dict__) + self._field.keys()
+        return dir(CaElement) + list(self.__dict__) + self._field.keys()
 
 

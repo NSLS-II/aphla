@@ -7,6 +7,8 @@ Machines
 The initialization of machines
 """
 
+from __future__ import print_function
+
 import os, re
 import numpy as np
 
@@ -16,6 +18,9 @@ from element import CaElement
 from twiss import Twiss, TwissItem
 from fnmatch import fnmatch
 from ormdata import OrmData
+from chanfinder import ChannelFinderAgent
+
+from pkg_resources import resource_string
 
 _lat = None
 _lattice_dict = {}
@@ -57,181 +62,97 @@ HLA_CFS_KEYMAP = {'name': u'elemName',
                   'sequence': None}
 
 
-def createLatticeFromCf(cfsurl, **kwargs):
+def createLattice(pvrec, systag):
     """
-    create a lattice from channel finder
-    
-    - *cfsurl* the URL of channel finder service
-
-    optional:
-    
-    - *kwargs* is passed to cf.find()
-
-    reading Channel finder server does not need authentication.
+    create a lattice from channel finder agent data
     """
-    from channelfinder import ChannelFinderClient, Channel, Property, Tag
-
-    # reverse map, skip the None values
-    CFS_MAP = dict((v,k) for k,v in HLA_CFS_KEYMAP.iteritems() if v)
 
     # a new lattice
     lat = Lattice('channelfinder')
-    cf = ChannelFinderClient(BaseURL = cfsurl)
-    ch = cf.find(**kwargs)
-    for c in ch:
+    for rec in pvrec:
         # skip if there's no properties.
-        if not c.getProperties(): continue
-        pv = c.Name
-        prpt = dict((CFS_MAP[k], v) \
-                        for k,v in c.getProperties().iteritems() \
-                        if CFS_MAP.has_key(k))
+        if rec[1] is None: continue
+        if systag not in rec[2]: continue
+        if 'name' not in rec[1]: continue
+        pv = rec[0]
+        prpt = rec[1]
         prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
         
-        # skip if this pv has no element name
-        if not name: continue
-        #print pv, name, prpt
-
         # find if the element exists.
         elem = lat._find_element(name=name)
-        if not elem:
+        if elem is None:
             elem = CaElement(**prpt)
             lat.appendElement(elem)
         else:
-            elem.updateCfsProperties(pv, prpt)
-
-        # update element with new
-        tags = c.getTags()
-        elem.updateCfsTags(pv, tags)
-        if HLA_TAG_EGET in tags:
-            elem.addEGet(pv, field=prpt.get('field', None))
-        if HLA_TAG_EPUT in tags:
-            elem.addEPut(pv, field=prpt.get('field', None))
-
-        elem.appendStatusPv(pv, desc = prpt.get('desc', ""))
-
-        #if not HLA_TAG_EPUT in tags and not HLA_TAG_EGET in tags:
-        #elem.appendStatusPv((caget, pv, prpt['handle']))
-        #print name, ""
-        #if prpt.has_key('field'):
-        #    if not prpt.has_key('handle'):
-        #        pass
-        #    elif prpt['handle'].upper() == 'READBACK':
-        #        elem.setFieldGetAction(prpt['field'], pv, prpt['handle'])
-        #        if HLA_TAG_EPUT in tags:
-        #            print "'%s': %s and READBACK ? could be a bug" % (
-        #                pv, HLA_TAG_EPUT)
-        #    elif prpt['handle'].upper() == 'SETPOINT':
-        #        elem.setFieldPutAction(prpt['field'], pv, prpt['handle'])
-        #        if HLA_TAG_EGET in tags:
-        #            print "'%s': %s and SETPOINT ? could be a bug" % (
-        #                pv, HLA_TAG_EGET)
-        #    # debug
-        # check
-        #if prpt.has_key('handle'):
-        #    if prpt['handle'].upper() == 'READBACK' and HLA_TAG_EPUT in tags:
-        #        print "'%s': %s and READBACK ? could be a bug" % (
-        #                pv, HLA_TAG_EPUT)
-        #    elif prpt['handle'].upper() == 'SETPOINT' and HLA_TAG_EGET in tags:
-        #        print "'%s': %s and SETPOINT ? could be a bug" % (
-        #                pv, HLA_TAG_EGET)
+            elem.updatePvRecord(pv, prpt, rec[2])
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
     # !IMPORTANT! since Channel finder has no order, but lat class has
     lat.sortElements()
-    lat.circumference = lat[-1].se
-
+    lat.circumference = lat[-1].se if lat.size() > 0 else 0.0
+    
     if HLA_DEBUG > 0:
-        print "# mode: %s" % lat.mode 
-        print "# elements: %d" % lat.size()
+        print("# mode: %s" % lat.mode)
+        print("# elements: %d" % lat.size())
     if HLA_DEBUG > 1:
         for g in sorted(lat._group.keys()):
-            print "# %10s: %d" % (g, len(lat._group[g]))
+            print("# %10s: %d" % (g, len(lat._group[g])))
             
     return lat
 
 
-def initNSLS2VSR(cached = False):
+def initNSLS2VSR():
     """
     initialize the virtual accelerator from channel finder
     """
-    #print "= initializing NSLS2 VSR"
     ORBIT_WAIT=8
     NETWORK_DOWN=False
 
-    if cached == True and loadCache():
-        return
-    elif cached == True:
+    cfa = ChannelFinderAgent()
+    src_home_csv = os.path.join(os.environ['HOME'], '.hla', 'nsls2.csv')
+    #src_pkg_csv = resource_string(__name__, os.path.join('data', 'nsls2.csv'))
+
+    if os.path.exists(src_home_csv):
+        print("Using %s" % src_home_csv)
+        cfa.importCsv(src_home_csv)
+    #elif os.path.exists(src_pkg_csv):
+    #    return
+    elif os.environ.get('HLA_CFS_URL', None):
+        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
+    else:
         raise RuntimeError("Failed at loading cache file")
 
-    from channelfinder import ChannelFinderClient, Channel, Property, Tag
+    for k in [('name', u'elemName'), 
+              ('field', u'elemField'), 
+              ('devname', u'devName'),
+              ('family', u'elemType'), 
+              ('index', u'ordinal'), 
+              ('se', u'sEnd'),
+              ('system', u'system')]:
+        cfa.renameProperty(k[1], k[0])
+    lat = createLattice(cfa.rows, 'aphla.sys.SR')
 
-    cf = ChannelFinderClient(HLA_CFS_URL)
-    alltags = [t.Name for t in cf.getAllTags()]
-    #print alltags
-
-    if HLA_DEBUG > 0:
-        print "# channel finder: %s" % HLA_CFS_URL
+    tags = cfa.tags('aphla.sys.*')
+    print(tags)
+    #print(cfa.rows)
 
     global _lat, _lattice_dict
 
-    for tag in alltags:
-        if not tag.startswith(HLA_TAG_SYS_PREFIX): continue
-        latsys = tag[len(HLA_TAG_SYS_PREFIX):]
-        if latsys:
-            if HLA_DEBUG > 0: print "Creating '%s'" % latsys
-            _lattice_dict[latsys] = createLatticeFromCf(
-                HLA_CFS_URL, **{'tagName': tag})
-            _lattice_dict[latsys].mode = tag
-    
+    for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
+        _lattice_dict[latname] = createLattice(cfa.rows, 'aphla.sys.' + latname)
+        
     #
     # LTB 
     _lattice_dict['LTB'].loop = False
     #_lat = _lattice_dict['LTB']
 
-    # create virtual element BPMX and BPMY
-    bpmx = CaElement(eget=caget, eput=caput,
-                   **{'name':HLA_VBPMX, 'family': HLA_VFAMILY})
-    bpmy = CaElement(eget=caget, eput=caput,
-                   **{'name':HLA_VBPMY, 'family': HLA_VFAMILY})
-    bpms = _lattice_dict['LTB'].getElements('BPM')
-    bpmx.collect(bpms, fields=["value", "x"], attrs=["sb", "se"])
-    bpmy.collect(bpms, fields=["value", "y"], attrs=["sb", "se"])
-    bpmx.virtual, bpmy.virtual = 1, 1
-    _lattice_dict['LTB'].appendElement(bpmx)
-    _lattice_dict['LTB'].appendElement(bpmy)
-
     #
     # SR
     _lattice_dict['SR'].loop = True
-
-    bpmx = CaElement(eget=caget, eput=caput,
-                   **{'name': HLA_VBPMX, 'family': HLA_VFAMILY})
-    bpmy = CaElement(eget=caget, eput=caput,
-                   **{'name': HLA_VBPMY, 'family': HLA_VFAMILY})
-
-    bpms = _lattice_dict['SR'].getElements('BPM')
-    bpmx.collect(bpms, fields=["value", "x"], attrs=["sb", "se"])
-    bpmy.collect(bpms, fields=["value", "y"], attrs=["sb", "se"])
-    bpmx.virtual, bpmy.virtual = 1, 1
-    _lattice_dict['SR'].appendElement(bpmx)
-    _lattice_dict['SR'].appendElement(bpmy)
-    _lattice_dict['SR'].orm = OrmData(
-        os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'orm.pkl'))
-
     _lat = _lattice_dict['SR']
 
-    # self diagnostics
-    # check dipole numbers
-    bend = _lat.getElements(u'B1G3C14A')
-    #print bend
-    bend = _lat.getElements(u'DIPOLE')
-    #print __file__, _lat._group[u'DIPOLE']
-    if len(bend) != 60:
-        #print bend
-        raise ValueError("dipole number is not 60 (%d)" % len(bend))
-    #print _lat.getElements('BPMX')
 
 def createLatticesFromTxt(f, **kwargs):
     # reverse map, skip the None values
@@ -244,8 +165,8 @@ def createLatticesFromTxt(f, **kwargs):
         try:
             rawpv, rawprpt, rawtag = [r.strip() for r in cl.split(';')]
         except:
-            print cl
-            print [r.strip() for r in cl.split(';')]
+            print(cl)
+            print([r.strip() for r in cl.split(';')])
             raise
 
         if not rawprpt.strip(): continue
@@ -267,7 +188,7 @@ def createLatticesFromTxt(f, **kwargs):
             latname = tag[len(HLA_TAG_SYS_PREFIX):] + '-txt'
             if not latname: continue
             if not lat_dict.has_key(latname):
-                print "Creating lattice layout: '%s'" % latname
+                print("Creating lattice layout: '%s'" % latname)
                 lat_dict[latname] = Lattice('txt')
 
             lat = lat_dict[latname]
@@ -411,7 +332,7 @@ def initNSLS2VSRTwiss():
 
     N = len(s)
 
-    print __file__, "Reading twiss items:", len(s), len(betax)
+    print(__file__, "Reading twiss items:", len(s), len(betax))
 
     # fix the Tracy convension by adding a new element at the end
     for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,

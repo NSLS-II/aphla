@@ -79,9 +79,12 @@ from ormdata import OrmData
 ## from cothread import catools, Timedout
 NETWORK_DOWN=False
 try:
-    caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
+    rfpv = 'SR:C00-RF:G00{RF:00}Freq-SP'
+    print("# checking RF pv: %s" % rfpv)
+    caput(rfpv, 499.680528631, timeout=1)
     print("# Network is fine, using online PVs", file= sys.stderr)
 except Timedout:
+    print("# virtual accelerator is not available")
     NETWORK_DOWN = True
     pass
 
