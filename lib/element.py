@@ -222,13 +222,16 @@ class CaDecorator:
         if self.pvrb: 
             self.rb[-1] = caget(self.pvrb)
             if self.rb[0] is None: self.rb[0] = self.rb[-1]
-            return self.rb[-1]
+            if len(self.pvrb) == 1: return self.rb[-1][0]
+            else: return self.rb[-1]
         else: return None
 
     def getSetpoint(self):
         """no history record on reading setpoint"""
         if self.pvsp:
-            return caget(self.pvsp)
+            ret = caget(self.pvsp)
+            if len(self.pvsp) == 1: return ret[0]
+            else: return ret
         else: return None
 
     def putSetpoint(self, val):
@@ -249,7 +252,8 @@ class CaDecorator:
         if idx is None:
             self._insert_in_order(self.pvrb, pv)
         else:
-            while idx >= len(self.pvrb): self.pvrb.append(None)
+            while idx >= len(self.pvrb): 
+                self.pvrb.append(None)
             self.pvrb[idx] = pv
 
     def insertSetpoint(self, pv, idx = None):
@@ -422,20 +426,19 @@ class CaElement(AbstractElement):
     def __getattr__(self, att):
         # called after checking __dict__
         if not self._field.has_key(att):
-            raise AttributeError("element %s has no attribute(field) %s" % 
+            raise AttributeError("element '%s' has no field '%s'" % 
                                  (self.name, att))
         else:
-            decr = self._field[att]
-            if not decr:
+            decr = self._field.get(att, None)
+            if decr is None:
                 raise AttributeError("field %s of %s is not defined" \
                                          % (att, self.name))
             elif decr.getReadback():
-                x = decr.rb
+                x = decr.rb[-1]
             elif decr.getSetpoint():
-                x = decr.sp
+                x = decr.sp[-1]
             else:
                 raise AttributeError("error reading field %s" % att)
-
         if len(x) == 1: return x[0]
         else: return x
 
@@ -460,7 +463,7 @@ class CaElement(AbstractElement):
     def updatePvRecord(self, pvname, properties, tags):
         """
         """
-        self.updateProperties(properties)
+        if properties is not None: self.updateProperties(properties)
         for t in tags:
             g = re.match(r'aphla.field.(\w+)(\[\d+\])?', t)
             if g is None:
@@ -468,7 +471,9 @@ class CaElement(AbstractElement):
                 continue
 
             fieldname, idx = g.group(1), g.group(2)
-            if properties.get('handle', 'READBACK') == 'READBACK':
+            if idx is not None: idx = int(idx[1:-1])
+            if properties is None or \
+                    properties.get('handle', 'READBACK') == 'READBACK':
                 self.setFieldGetAction(fieldname, idx, pvname)
             elif properties.get('handle') == 'SETPOINT':
                 self.setFieldPutAction(fieldname, idx, pvname)
@@ -487,6 +492,7 @@ class CaElement(AbstractElement):
             self._field[field] = CaDecorator()
 
         self._field[field].insertReadback(v, idx)
+        #print self.name, self._field[field].pvrb
 
     def setFieldPutAction(self, field, idx, v, desc = ''):
         """

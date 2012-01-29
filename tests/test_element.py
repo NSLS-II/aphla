@@ -68,29 +68,32 @@ def waitForStablePv(**kwargs):
 class TestElement(unittest.TestCase):
     def setUp(self):
         # current
-        self.dcct = element.Element(
+        self.dcct = element.CaElement(
             name = 'CURRENT', index = -1, devname = 'DCCT', family = 'DCCT')
         self.dcct.updatePvRecord(
-            ['SR:C00-BI:G00{DCCT:00}CUR-RB', None, 
-             ['aphla.eget', 'aphla.sys.SR']])
+            'SR:C00-BI:G00{DCCT:00}CUR-RB', None, 
+             ['aphla.eget', 'aphla.sys.SR'])
 
         # bpm1
-        self.bpm1 = element.Element(name = 'PH1G6C29B',
+        self.bpm1 = element.CaElement(name = 'PH1G6C29B',
             index = -1, devname = 'PH1G6C29B', family = 'BPM')
-        self.bpm1.setFieldGetAction('x', None, 'SR:C29-BI:G06B{BPM:H1}SA:X-I',
-                                    'H plane')
-        self.bpm1.setFieldGetAction('y', None, 'SR:C29-BI:G06B{BPM:H1}SA:Y-I',
-                                    'V plane')
-        self.bpm1.setFieldPutAction('x', None, 'SR:C29-BI:G06B{BPM:H1}GOLDEN:X-I',
-                                    'H plane')
-        self.bpm1.setFieldPutAction('y', None, 'SR:C29-BI:G06B{BPM:H1}GOLDEN:Y-I',
-                                    'V plane')
-        self.hcor = element.Element(
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}SA:X-I',
+                                 None, ['aphla.field.x[0]'])
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}SA:Y-I',
+                                 None, ['aphla.field.y[0]'])
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:X-I', None,
+                                 ['aphla.field.x[1]'])
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:Y-I', None,
+                                 ['aphla.field.y[1]'])
+        # hcor
+        self.hcor = element.CaElement(
             name = 'CXL1G2C01A', index = 125, cell = 'C01',
             devname = 'CL1G2C01A', family = 'HCOR', girder = 'G2', length = 0.2,
             se = 30.6673, symmetry = 'A')
-        self.hcor.setFieldGetAction('x', None, 'SR:C01-MG:G02A{HCor:L1}Fld-I')
-        self.hcor.setFieldPutAction('x', None, 'SR:C01-MG:G02A{HCor:L1}Fld-SP')
+        self.hcor.updatePvRecord('SR:C01-MG:G02A{HCor:L1}Fld-I',
+                                 {'handle': 'READBACK'}, ['aphla.field.x'])
+        self.hcor.updatePvRecord('SR:C01-MG:G02A{HCor:L1}Fld-SP',
+                                 {'handle': 'SETPOINT'}, ['aphla.field.x'])
 
     def tearDown(self):
         pass
@@ -100,7 +103,6 @@ class TestElement(unittest.TestCase):
         self.assertTrue(self.dcct.family == 'DCCT')
 
         self.assertTrue(self.bpm1.index == -1)
-        self.assertTrue(self.bpm2.virtual)
 
         # non virtual element
         self.assertFalse(self.bpm1.virtual)
@@ -169,18 +171,23 @@ class TestElement(unittest.TestCase):
         self.assertEqual(len(self.bpm1.pv(field='y', handle='setpoint')), 1)
         self.assertEqual(len(self.bpm2.pv(tag = 'aphla.eget')), 12)
 
-    @unittest.skip
     def test_read(self):
-        self.assertTrue(self.bpm1.name)
-        self.assertTrue(abs(self.quad.value) >= 0)
-        self.assertTrue(abs(self.hcor.value) >= 0)
+        print "hcor.x", self.hcor.x
+        print self.hcor._field['x'].pvrb
+        print self.hcor._field['x'].pvsp
 
+        self.assertTrue(self.bpm1.name)
+
+        #self.assertTrue(abs(self.quad.value) >= 0)
+        self.assertTrue(abs(self.hcor.x) >= 0)
+
+        print "bpm", self.bpm1._field['x'].pvrb
         self.assertTrue(abs(self.bpm1.x) >= 0)
         self.assertTrue(abs(self.bpm1.y) >= 0)
 
         self.assertTrue(abs(self.hcor.value) >= 0)
 
-    @unittest.expectedFailure
+    @unittest.skip
     def test_exception_non(self):
         self.assertRaises(AttributeError, self.readValidField)
         

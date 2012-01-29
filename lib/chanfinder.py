@@ -188,6 +188,7 @@ class ChannelFinderAgent(object):
 
     def groups(self, key = 'elemName', **kwargs):
         """
+        sort the 
         """
         
         ret = {}

@@ -48,7 +48,7 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
         return ct.caget(pvs2, timeout=timeout, datatype=datatype,
                         format=format, count=count, throw=throw)
     except cothread.Timedout:
-        #print "TIMEOUT: ", pvs
+        #print "TIMEOUT: reading", pvs
         raise cothread.Timedout
 
 def caput(pvs, values, timeout=5, wait=True, throw=True):
@@ -76,7 +76,7 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
     try:
         return ct.caput(pvs2, values, timeout=timeout, wait=wait, throw=throw)
     except cothread.Timedout:
-        #print "TIMEOUT: ", pvs
+        #print "TIMEOUT: writting", pvs
         raise cothread.Timedout
 
 def caputwait(pv, value, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
