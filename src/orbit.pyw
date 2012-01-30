@@ -22,7 +22,8 @@ from PyQt4.QtGui import (QAction, QActionGroup, QApplication, QWidget,
         QPrinter, QSpinBox, QPen, QBrush, QVBoxLayout, QTabWidget,
         QTableWidget)
 
-hla.machines.initNSLS2VSRTxt()
+#hla.machines.initNSLS2VSRTxt()
+hla.machines.initNSLS2VSR()
 
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *

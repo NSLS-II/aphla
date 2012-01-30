@@ -22,6 +22,10 @@ SENDER_KEY_TUNER = 'TunerGUI'
 SENDER_KEY_CONFIG_SETUP = 'ConfigSetupGUI'
 SENDER_KEY_CHANNEL_SELECTOR = 'ChannelSelectorGUI'
 
+## TODO
+# *) Add search capbability for configuration files in a folder and
+# its subfolder. Search by any available column names.
+
 ########################################################################
 class TunerFileManager(Qt.QObject):
     """"""

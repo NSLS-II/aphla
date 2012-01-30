@@ -62,7 +62,6 @@ from hla.catools import caget, caput
 # *) allow grouping/ungrouping in setup dialog
 # *) eliminate duplicate knobs in a knob group list(check this in setup dialog)
 # *) Use direct caget & caput for faster
-# *) Make a realistic config file
 # *) Accept expression for weight specification
 # *) Ramping capability
 # *) Cancel tab motion for "plus_tab"
@@ -70,7 +69,15 @@ from hla.catools import caget, caput
 # *) show asterisk if config is not saved
 # *) Light version of config file (description, knob name list, corresponding knob group, weight, step size, and unit list only)
 # *) Light version of snapshot file (light version of config file + snapshot pv values (read&setp) with timestamps + description)
-# *) Fix bugs associated with column motion
+# *) Fix bugs associated with column motion (Freeze them if not fixable)
+# *) Allow read-only devices to be in config (always force weight to 0)
+# *) Don't allow duplicate group names in Tuner & Tuner Config GUI
+# *) Separate visual column order from model item order
+# *) Add sorting ability to "visible column list available"
+# *) When opening column preferences, instead of loading from
+# self.visible_col_name_list, load it from the current visual column order
+# *) Make COL_WEIGHT available to Tuner Config GUI
+
 
 ########################################################################
 class TunerModel(Qt.QStandardItemModel):
@@ -723,21 +730,38 @@ class TunerView(Qt.QMainWindow, Ui_MainWindow):
         # Add layout
         self.groupBox_switch_view.setMinimumSize(Qt.QSize(181,41))
         #
-        layoutWidget = Qt.QWidget(self.groupBox_switch_view)
-        layoutWidget.setGeometry(Qt.QRect(0,20,175,23))
-        layoutWidget.setObjectName('layoutWidget')
-        self.layoutWidget = layoutWidget
+        self.radioButton_knobs.setParent(self.groupBox_switch_view)
+        self.radioButton_knob_groups.setParent(self.groupBox_switch_view)
         #
-        self.radioButton_knobs.setParent(self.layoutWidget)
-        self.radioButton_knob_groups.setParent(self.layoutWidget)
+        button_width = 50
+        button_height = 50
+        icon_width = int(button_width*0.8)
+        icon_height = int(button_height*0.8)
+        icon_size = Qt.QSize(icon_width,icon_height)
+        self.pushButton_step_up.setMinimumSize(Qt.QSize(button_width,button_height))
+        self.pushButton_step_up.setMaximumSize(Qt.QSize(button_width,button_height))
+        self.pushButton_step_up.setIcon(Qt.QIcon(':/up_arrow.png'))
+        self.pushButton_step_up.setIconSize(icon_size)
+        self.pushButton_step_up.setText('')
+        self.pushButton_step_down.setMinimumSize(Qt.QSize(button_width,button_height))
+        self.pushButton_step_down.setMaximumSize(Qt.QSize(button_width,button_height))
+        self.pushButton_step_down.setIcon(Qt.QIcon(':/down_arrow.png'))
+        self.pushButton_step_down.setIconSize(icon_size)
+        self.pushButton_step_down.setText('')
         #
-        horizontalLayout1 = Qt.QHBoxLayout(self.layoutWidget)
+        horizontalLayout1 = Qt.QHBoxLayout()
         horizontalLayout1.setMargin(0)
         horizontalLayout1.setObjectName('horizontalLayout1')
         self.horizontalLayout1 = horizontalLayout1
         #
         self.horizontalLayout1.addWidget(self.radioButton_knob_groups)
         self.horizontalLayout1.addWidget(self.radioButton_knobs)
+        #
+        verticalLayout1 = Qt.QVBoxLayout(self.groupBox_switch_view)
+        verticalLayout1.setObjectName('verticalLayout1')
+        self.verticalLayout1 = verticalLayout1
+        #
+        self.verticalLayout1.addLayout(self.horizontalLayout1)
         #        
         spacerItem1 = Qt.QSpacerItem(40,20,Qt.QSizePolicy.Expanding,
                                      Qt.QSizePolicy.Minimum)
@@ -758,17 +782,17 @@ class TunerView(Qt.QMainWindow, Ui_MainWindow):
         self.horizontalLayout2.addWidget(self.pushButton_step_down)
         self.horizontalLayout2.addItem(spacerItem3)
         #
-        verticalLayout = Qt.QVBoxLayout()
-        verticalLayout.setMargin(0)
-        verticalLayout.setObjectName('verticalLayout')
-        self.verticalLayout = verticalLayout
+        verticalLayout2 = Qt.QVBoxLayout()
+        verticalLayout2.setMargin(0)
+        verticalLayout2.setObjectName('verticalLayout2')
+        self.verticalLayout2 = verticalLayout2
         #
-        self.verticalLayout.addWidget(self.tabWidget)
-        self.verticalLayout.addLayout(self.horizontalLayout2)
+        self.verticalLayout2.addWidget(self.tabWidget)
+        self.verticalLayout2.addLayout(self.horizontalLayout2)
         #
         self.gridLayout = Qt.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName('gridLayout')
-        self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
+        self.gridLayout.addLayout(self.verticalLayout2, 0, 0, 1, 1)
         
         # Connect signals/slots
         self.connect(self.tabWidget,
