@@ -190,8 +190,16 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
 class OrbitPlot(Qwt.QwtPlot):
     def __init__(self, parent = None, data = None, data_field = 'orbit',
-                 pvs_golden = None,
-                 live=True, errorbar=True):
+                 pvs_golden = None, live = True, errorbar = True, 
+                 picker_profile = None, magnet_profile = None):
+        
+        #data = kw.get('data', None)
+        #data_field = kw.get('data_field', 'orbit')
+        #pvs_golden = kw.get('pvs_golden', None)
+        #live = kw.get('live', True)
+        #errorbar= kw.get('errorbar', True)
+        #picker_profile = kw.get('picker_profile', None)
+
         super(OrbitPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
@@ -241,15 +249,21 @@ class OrbitPlot(Qwt.QwtPlot):
         if not self.golden is None:
             self.bound = self.bound.united(self.golden.boundingRect())
         
-        self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
-        # get x, y, color
-        magx, magy, magc = self.getMagnetProfile()
-        self.curvemag.setData(magx, magy)
-        self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
-        self.setAxisScale(Qwt.QwtPlot.yRight, -2, 20)
-        self.enableAxis(Qwt.QwtPlot.yRight, False)
+        if magnet_profile is not None:
+            self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
+            # get x, y, color(optional)
+            magx, magy = [], []
+            if len(magnet_profile) == 2:
+                magx, magy = magnet_profile
+                magc = ['k'] * len(magx)
+            elif len(magnet_profile) == 3:
+                magx, magy, magc = magnet_profile
+            self.curvemag.setData(magx, magy)
+            self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
+            self.setAxisScale(Qwt.QwtPlot.yRight, -2, 20)
+            self.enableAxis(Qwt.QwtPlot.yRight, False)
 
-        self.curvemag.attach(self)
+            self.curvemag.attach(self)
         
         #print "size hint:", self.sizeHint()
         #print "min sizehint:", self.minimumSizeHint(), self.minimumWidth()
@@ -267,7 +281,7 @@ class OrbitPlot(Qwt.QwtPlot):
         #                           Qwt.QwtPlotPicker.CrossRubberBand,
         #                           Qwt.QwtPicker.AlwaysOn,
         #                           self.canvas())
-        self.picker1 = MagnetPicker(self.canvas())
+        self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
         self.picker1.setTrackerPen(QPen(Qt.red, 4))
         
 
@@ -315,17 +329,6 @@ class OrbitPlot(Qwt.QwtPlot):
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         self.picker1.addMagnetProfile(sb, se, name, minlen)
 
-    def getMagnetProfile(self):
-        #prof = hla.getBeamlineProfile()
-        prof = []
-        x, y, c = [], [], []
-        for box in prof:
-            for i in range(len(box[0])):
-                x.append(box[0][i])
-                y.append(box[1][i])
-                c.append(box[2])
-        return x, y, c
-        
     def updatePlot(self):
         self.curve1.update()
         self.replot()

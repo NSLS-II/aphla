@@ -106,7 +106,7 @@ class AbstractElement(object):
             return [b, e], [0, 0], 'k'
 
     def __str__(self):
-        return Element.STR_FORMAT % (
+        return AbstractElement.STR_FORMAT % (
             self.index, self.name, self.family, self.sb, self.length,
             self.devname, self.cell, self.girder, self.symmetry, self.sequence)
 
@@ -430,9 +430,9 @@ class CaElement(AbstractElement):
                 raise AttributeError("field %s of %s is not defined" \
                                          % (att, self.name))
             elif decr.getReadback():
-                x = decr.rb
+                x = decr.rb[-1]
             elif decr.getSetpoint():
-                x = decr.sp
+                x = decr.sp[-1]
             else:
                 raise AttributeError("error reading field %s" % att)
 
@@ -462,7 +462,8 @@ class CaElement(AbstractElement):
         """
         self.updateProperties(properties)
         for t in tags:
-            g = re.match(r'aphla.field.(\w+)(\[\d+\])?', t)
+            #if self.name == 'QH1G2C30A': print pvname, properties, tags
+            g = re.match(r'aphla.elemfield.([\w\d]+)(\[\d+\])?', t)
             if g is None:
                 #raise ValueError('Tag %s is not "aphla.field.field" format')
                 continue

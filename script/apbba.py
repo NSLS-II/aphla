@@ -11,6 +11,7 @@ import gui_resources
 from elementpickdlg import ElementPickDlg
 from apbbaconfdlg import BbaConfig
 #from orbitplot import OrbitPlot
+from aphlas import conf, bba
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 
@@ -22,7 +23,6 @@ from matplotlib.figure import Figure
 
 import PyQt4.Qwt5 as Qwt
 import numpy as np
-from aphlas.bba import BbaBowtie
 from PIL import Image, ImageQt
 
 config_dir = "~/.hla"
@@ -63,7 +63,7 @@ class BbaMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
-        self.config = BbaConfig(config_dir, "nsls2_sr_bba.json")
+        #self.config = BbaConfig(config_dir, conf.filename("nsls2_sr_bba.json"))
 
         self.widtab = QTabWidget()
         #widtab.addTab(QLabel("Tab1"), "Tab 1")
@@ -174,11 +174,11 @@ class BbaMainWindow(QMainWindow):
         """
         """
         import json
-        print "FIXME: using hard coded config file: nsls2_sr_bba.json"
-        f = open("/home/lyyang/devel/nsls2-hla/script/data/nsls2_sr_bba.json")
-        conf = json.load(f)
-        bpmx = conf['orbit_pvx']
-        bpmy = conf['orbit_pvy']
+        f = open(conf.filename("nsls2_sr_bba.json"), 'r')
+        #print "FIXME: using hard coded config file: %s" % f
+        confdat = json.load(f)
+        bpmx = confdat['orbit_pvx']
+        bpmy = confdat['orbit_pvy']
         #vx, vy = np.array(caget(bpmx)), np.array(caget(bpmy))
         #import matplotlib.pylab as plt
         #plt.plot(vx)
@@ -194,18 +194,18 @@ class BbaMainWindow(QMainWindow):
         #fig.savefig("align.png")
 
         # if we need the config data
-        for quadname in conf['bowtie_align']:
-            bbconf = conf['bowtie_align'][quadname]
+        for quadname in confdat['bowtie_align']:
+            bbconf = confdat['bowtie_align'][quadname]
             print "Quadrupole:", bbconf['Q'], caget(bbconf['Q'][2].encode('ascii'))
             for i in range(0, len(bbconf['COR_BPM']), 2):
-                ac = BbaBowtie()
+                ac = bba.BbaBowtie()
                 ac.quad, s, ac.quad_pvsp, ac.dqk1 = bbconf['Q'][:4]
                 ac.bpm, s, ac.bpm_pvrb = bbconf['COR_BPM'][i][:3]
                 ac.trim, s, ac.trim_pvsp, kickrg, obtpv = bbconf['COR_BPM'][i+1][:5]
                 ac.quad_pvrb = ac.quad_pvsp
                 ac.trim_pvrb = ac.trim_pvsp
                 ac.kick = np.linspace(kickrg[0], kickrg[1], 4)
-                ac.orbit_pvrb = conf[obtpv]
+                ac.orbit_pvrb = confdat[obtpv]
                 #ca.bpm = conf['
                 # fix the utf-8
                 ac.align()
@@ -238,8 +238,7 @@ class BbaMainWindow(QMainWindow):
             # moving to the next quadname
         self.write()
 
-        pass
-    
+
     def write(self):
         import h5py
         print "FIXME: using hard coded file name: apbba.hdf5"
@@ -247,10 +246,13 @@ class BbaMainWindow(QMainWindow):
         for quadname, rec in self._bba.iteritems():
             for i in range(0, len(rec), 2):
                 ac = rec[i]
+                # name the group as quad:index
                 grp = f.create_group("%s:%d" %(ac.quad, i/2))
                 k, m, n = np.shape(ac.orbit)
                 dset = grp.create_dataset("orbit", (k, m, n), 'd')
                 dset[:, :, :] = ac.orbit
+                grp['keep'] = ac.mask
+                grp['trim_fitted'] = ac.trim_fitted
 
                 for j in range(len(rec[i+1])):
                     data = rec[i+1][j]

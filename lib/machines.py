@@ -7,7 +7,7 @@ Machines
 The initialization of machines
 """
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import os, re
 import numpy as np
@@ -20,7 +20,9 @@ from fnmatch import fnmatch
 from ormdata import OrmData
 from chanfinder import ChannelFinderAgent
 
-from pkg_resources import resource_string
+from . import conf
+
+from pkg_resources import resource_string, resource_exists, resource_filename
 
 _lat = None
 _lattice_dict = {}
@@ -84,8 +86,8 @@ def createLattice(pvrec, systag):
         if elem is None:
             elem = CaElement(**prpt)
             lat.appendElement(elem)
-        else:
-            elem.updatePvRecord(pv, prpt, rec[2])
+        
+        elem.updatePvRecord(pv, prpt, rec[2])
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
@@ -117,8 +119,9 @@ def initNSLS2VSR():
     if os.path.exists(src_home_csv):
         print("Using %s" % src_home_csv)
         cfa.importCsv(src_home_csv)
-    #elif os.path.exists(src_pkg_csv):
-    #    return
+    elif conf.has('nsls2.csv'):
+        print("Using %s" % conf.filename('nsls2.csv'))
+        cfa.importCsv(conf.filename('nsls2.csv'))
     elif os.environ.get('HLA_CFS_URL', None):
         cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     else:
@@ -132,15 +135,16 @@ def initNSLS2VSR():
               ('se', u'sEnd'),
               ('system', u'system')]:
         cfa.renameProperty(k[1], k[0])
-    lat = createLattice(cfa.rows, 'aphla.sys.SR')
+    #lat = createLattice(cfa.rows, 'aphla.sys.SR')
 
     tags = cfa.tags('aphla.sys.*')
-    print(tags)
+    print("Known Systems:", tags)
     #print(cfa.rows)
 
     global _lat, _lattice_dict
 
     for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
+        #print("\nsys=", latname)
         _lattice_dict[latname] = createLattice(cfa.rows, 'aphla.sys.' + latname)
         
     #

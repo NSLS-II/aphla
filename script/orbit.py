@@ -21,6 +21,7 @@ import gui_resources
 from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
 from orbitplot import OrbitPlot
+from aphlas import conf
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 
@@ -119,7 +120,7 @@ class OrbitPlotMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
-        self.config = OrbitPlotConfig(config_dir, "nsls2_sr_orbit.json")
+        self.config = OrbitPlotConfig(None, conf.filename("nsls2_sr_orbit.json"))
 
         # initialize a QwtPlot central widget
         #bpm = hla.getElements('BPM')
@@ -136,12 +137,17 @@ class OrbitPlotMainWindow(QMainWindow):
         self.orbitx_data.update()
         self.orbity_data.update()
 
-        self.plot1 = OrbitPlot(self, self.orbitx_data)
-        self.plot2 = OrbitPlot(self, self.orbity_data)
+        picker = [(v[1], v[2], v[0]) for v in self.config.data['magnetpicker']]
+        self.plot1 = OrbitPlot(self, self.orbitx_data, picker_profile = picker,
+                               magnet_profile = self.config.data['magnetprofile'])
+        self.plot2 = OrbitPlot(self, self.orbity_data, picker_profile = picker,
+                               magnet_profile = self.config.data['magnetprofile'])
         self.plot3 = OrbitPlot(self, self.orbitx_data, data_field='std',
-            errorbar=False)
+            errorbar=False, picker_profile = picker,
+                               magnet_profile = self.config.data['magnetprofile'])
         self.plot4 = OrbitPlot(self, self.orbity_data, data_field='std',
-            errorbar=False)
+            errorbar=False, picker_profile = picker,
+                               magnet_profile = self.config.data['magnetprofile'])
 
         #for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'],
         #                             op='union'):

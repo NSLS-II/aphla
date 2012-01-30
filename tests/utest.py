@@ -17,27 +17,27 @@ hla.hlalib._reset_trims()
 hla.hlalib._reset_bpm_offset()
 
 #import utChanFinder
-import utElement
-import utLattice
-import utTwiss
+import test_element
+#import utLattice
+#import utTwiss
 #import utAllPVs
 #import utOrm
-import utOrbit
+#import utOrbit
 
 loader = unittest.TestLoader()
 
 
 suite = unittest.TestSuite()
-suite.addTests(loader.loadTestsFromModule(utElement))
+suite.addTests(loader.loadTestsFromModule(test_element))
 
-suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeSrCf))
-suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeSrTxt))
-suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeLtbCf))
-suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeLtbTxt))
+#suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeSrCf))
+#suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeSrTxt))
+#suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeLtbCf))
+#suite.addTests(loader.loadTestsFromTestCase(utLattice.TestLatticeLtbTxt))
 
-suite.addTests(loader.loadTestsFromModule(utTwiss))
+#suite.addTests(loader.loadTestsFromModule(utTwiss))
 
-suite.addTests(loader.loadTestsFromModule(utOrbit))
+#suite.addTests(loader.loadTestsFromModule(utOrbit))
 
 #suite.addTests(loader.loadTestsFromModule(utAllPVs))
 #suite.addTests(loader.loadTestsFromModule(utOrm))

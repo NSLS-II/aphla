@@ -741,11 +741,16 @@ class Lattice:
             if elem.se < s1: continue
             elif elem.sb > s2: continue
             x1, y1, c = elem.profile()
-            prof.append((x1, y1, c))
+            prof.append((x1, y1, c, elem.name))
+        # filter the zero
         ret = [prof[0]]
         for p in prof[1:]:
+            # compare the x with the last element in ret if this is a new
+            # element, draw a line from the end of the last element to the
+            # beginning of this element.
             if abs(p[0][0] - ret[-1][0][-1]) >  1e-10:
-                ret.append(([ret[-1][0][-1], p[0][0]], [0, 0], 'k'))
+                ret.append(([ret[-1][0][-1], p[0][0]], [0, 0], 'k', None))
+            # add the profile
             ret.append(p)
         return ret
 

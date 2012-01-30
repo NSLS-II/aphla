@@ -123,17 +123,19 @@ class ChannelFinderAgent(object):
         rd = csv.reader(open(fname, 'r'))
         #print rd.fieldnames
         header = rd.next()
+        # lower case of header
         hlow = [s.lower() for s in header]
-        print header, hlow
+        #print header, hlow
         nheader = len(header)
         ipv = hlow.index('pv')
         iprpt, itags = [], []
         for i,h in enumerate(header):
             if i == ipv: continue
-            if len(h) == 0: itags.append(i)
+            if len(h.strip()) == 0: itags.append(i)
             else: iprpt.append(i)
-        print ipv, iprpt, itags
+        #print ipv, iprpt, itags
         for s in rd:
+            #print s, len(s)
             prpts = dict([(header[i], s[i]) for i in iprpt])
             tags = [s[i] for i in itags]
             for i in range(nheader, len(s)):
@@ -204,11 +206,12 @@ if __name__ == "__main__":
     cfa = ChannelFinderAgent()
     # about 12 seconds
     #cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
-    #                property=[('hostName', 'virtac')], tagName='aphla.sys.*')
-    cfa.importCsv('test1.csv')
-    #cfa.exportCsv('test1.csv'
-    cfa._exportJson('test1.json')
-    cfa._importJson('test1.json')
+    #                property=[('hostName', 'virtac*')], tagName='aphla.sys.*')
+    cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', tagName='aphla.*')
+    #cfa.importCsv('test1.csv')
+    cfa.exportCsv('test1.csv')
+    #cfa._exportJson('test1.json')
+    #cfa._importJson('test1.json')
     #cfa.sort('elemName')
     print cfa.tags('aphla.sys.*')
     sys.exit(0)
