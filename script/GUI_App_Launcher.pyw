@@ -15,7 +15,7 @@ unnecessary duplicate import actions for some modules.
 
 """
 
-import config # gives access to qtapp variable that holds a Qt.QApplication instance
+#import config # gives access to qtapp variable that holds a Qt.QApplication instance
 
 import sys
 
@@ -29,9 +29,9 @@ import cothread
 # Note that for a dialog box to be modal, i.e., blocking the application
 # execution until user input is given, you need to set the input
 # argument "user_timer" to be True.
-if not config.qtapp:
-    config.qtapp.append( cothread.iqt(use_timer = True) )
-    # config.qtapp.append( Qt.QApplication(sys.argv) ) # use this if you are not using "cothread" module at all in your application
+#if not config.qtapp:
+    #config.qtapp.append( cothread.iqt(use_timer = True) )
+    ## config.qtapp.append( Qt.QApplication(sys.argv) ) # use this if you are not using "cothread" module at all in your application
 
 import PyQt4.Qt as Qt
 from PyQt4.QtXml import QDomDocument
@@ -432,6 +432,8 @@ def make():
 #----------------------------------------------------------------------
 def main(args):
     """"""
+    
+    cothread.iqt(use_timer = True)
     
     app = make()
     
