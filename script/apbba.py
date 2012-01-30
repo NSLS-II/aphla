@@ -67,8 +67,8 @@ class BbaMainWindow(QMainWindow):
 
         self.widtab = QTabWidget()
         #widtab.addTab(QLabel("Tab1"), "Tab 1")
-        self._bba = []
-        self._bba_plot_data = []
+        self._bba = {}
+        #self._bba_plot_data = []
         self._canvas_wid = []
         #
         self.setCentralWidget(self.widtab)
@@ -147,23 +147,27 @@ class BbaMainWindow(QMainWindow):
                 "Open data file", '.', "HDF5 files (*.h5, *.hdf5)")
         import h5py
         f = h5py.File(str(fname), 'r')
-        ds1 = f['MyDataset00']
-        # the fourth alpha, needs be 255.
-        d1 = np.ones(ds1.shape[:2] + (4,), dtype=np.uint8) * 255
-        d1[:,:,:3] = np.asarray(ds1)
+        for grp in f.keys():
+            for img in f[grp].keys():
+                ds1 = f[grp][img]
+                #if ds1.get('attr', None) is None: continue
+                if ds1.attrs.get('CLASS', None) != 'IMAGE': continue
+                # the fourth alpha, needs be 255.
+                d1 = np.ones(ds1.shape[:2] + (4,), dtype=np.uint8) * 255
+                d1[:,:,:3] = np.asarray(ds1)
 
-        wid = QWidget()
-        l = QVBoxLayout(wid)
-        imageLabel = QLabel(self)
-        imageLabel.setText("Text")
-        #imageLabel
-        im1 = Image.fromarray(d1)
-        pxm = QPixmap.fromImage(ImageQt.ImageQt(im1))
-        #pxm.save("j.png")
-        imageLabel.setPixmap(pxm)
-        imageLabel.adjustSize()
-        l.addWidget(imageLabel)
-        self.widtab.addTab(wid, "Tab %d" % (self.widtab.count()+1))
+                wid = QWidget()
+                l = QVBoxLayout(wid)
+                imageLabel = QLabel(self)
+                imageLabel.setText("Text")
+                #imageLabel
+                im1 = Image.fromarray(d1)
+                pxm = QPixmap.fromImage(ImageQt.ImageQt(im1))
+                #pxm.save("j.png")
+                imageLabel.setPixmap(pxm)
+                imageLabel.adjustSize()
+                l.addWidget(imageLabel)
+                self.widtab.addTab(wid, "%s:%s" % (grp, img))
         f.close()
 
     def align(self):
@@ -181,7 +185,6 @@ class BbaMainWindow(QMainWindow):
         #plt.plot(vy)
         #
         #import matplotlib.pylab as plt
-        ac = BbaBowtie()
         #ac._analyze()
 
         #fig = plt.figure()
@@ -191,65 +194,72 @@ class BbaMainWindow(QMainWindow):
         #fig.savefig("align.png")
 
         # if we need the config data
-        for bbconf in conf['bowtie_align']:
+        for quadname in conf['bowtie_align']:
+            bbconf = conf['bowtie_align'][quadname]
             print "Quadrupole:", bbconf['Q'], caget(bbconf['Q'][2].encode('ascii'))
-            ac.quad, s, ac.quad_pvsp, ac.dqk1 = bbconf['Q'][:4]
             for i in range(0, len(bbconf['COR_BPM']), 2):
+                ac = BbaBowtie()
+                ac.quad, s, ac.quad_pvsp, ac.dqk1 = bbconf['Q'][:4]
                 ac.bpm, s, ac.bpm_pvrb = bbconf['COR_BPM'][i][:3]
                 ac.trim, s, ac.trim_pvsp, kickrg, obtpv = bbconf['COR_BPM'][i+1][:5]
                 ac.quad_pvrb = ac.quad_pvsp
                 ac.trim_pvrb = ac.trim_pvsp
-                ac.kick = np.linspace(kickrg[0], kickrg[1], 8)
+                ac.kick = np.linspace(kickrg[0], kickrg[1], 4)
                 ac.orbit_pvrb = conf[obtpv]
                 #ca.bpm = conf['
                 # fix the utf-8
                 ac.align()
-        self._bba.append(ac)
+                aclist = self._bba.setdefault(quadname, [])
+                aclist.append(ac)
 
-        print "Plotting ..."
-        wid = QWidget(self)
-        l = QVBoxLayout(wid)
-        cv1 = BbaMplCanvas(wid)
-        cv2 = BbaMplCanvas(wid)
-        #x = np.linspace(0, 2*np.pi, 100)
-        #cv1.axes.plot(x, np.sin(x) + np.random.rand(len(x))*.2, 'ro-')
-        #cv2.axes.plot(x, np.tan(x) + np.random.rand(len(x))*.2, 'go-')
-        ac.plot(cv1.axes, cv2.axes, factor=(1e6, 1e6))
-        l.addWidget(cv1)
-        l.addWidget(cv2)
-        cv1.draw()
-        cv2.draw()
-        data1 = np.fromstring(cv1.tostring_rgb(), dtype=np.uint8, sep='')
-        w, h = cv1.get_width_height()
-        data1 = data1.reshape(h, w, 3)
-        data2 = np.fromstring(cv2.tostring_rgb(), dtype=np.uint8, sep='')
-        w, h = cv2.get_width_height()
-        data2 = data2.reshape(h, w, 3)
-        self._bba_plot_data.append((data1, data2))
-        self.widtab.addTab(wid, "Tab %d" % (self.widtab.count()+1))
-        #wid.setFocus()
-        self.widtab.setCurrentIndex(self.widtab.count() - 1)
+                print "Plotting ..."
+                wid = QWidget(self)
+                l = QVBoxLayout(wid)
+                cv1 = BbaMplCanvas(wid)
+                cv2 = BbaMplCanvas(wid)
+                #x = np.linspace(0, 2*np.pi, 100)
+                #cv1.axes.plot(x, np.sin(x) + np.random.rand(len(x))*.2, 'ro-')
+                #cv2.axes.plot(x, np.tan(x) + np.random.rand(len(x))*.2, 'go-')
+                ac.plot(cv1.axes, cv2.axes, factor=(1e6, 1e6))
+                l.addWidget(cv1)
+                l.addWidget(cv2)
+                cv1.draw()
+                cv2.draw()
+                data1 = np.fromstring(cv1.tostring_rgb(), dtype=np.uint8, sep='')
+                w, h = cv1.get_width_height()
+                data1 = data1.reshape(h, w, 3)
+                data2 = np.fromstring(cv2.tostring_rgb(), dtype=np.uint8, sep='')
+                w, h = cv2.get_width_height()
+                data2 = data2.reshape(h, w, 3)
+                aclist.append([data1, data2])
+                self.widtab.addTab(wid, "%s:%d" % (quadname, self.widtab.count()+1))
+                #wid.setFocus()
+                self.widtab.setCurrentIndex(self.widtab.count() - 1)
+            # moving to the next quadname
         self.write()
 
         pass
     
     def write(self):
         import h5py
-        print "FIXME: using hard coded file name: myfile.hdf5"
-        f = h5py.File('myfile.hdf5', 'w')
-        for i in range(2):
-            print "FIXME: output fixed dataset"
-            data = self._bba_plot_data[-1][i]
-            h, w, d = np.shape(data)
-            dset = f.create_dataset("MyDataset%02d"%i, (h, w, d), dtype=np.uint8)
-            dset[:,:,:] = data[:,:,:]
-            dset.attrs['CLASS'] = 'IMAGE'
-            dset.attrs['IMAGE_VERSION'] = '1.2'
-            dset.attrs['IMAGE_SUBCLASS'] = 'IMAGE_TRUECOLOR'
-        for i in range(len(self._bba)):
-            k, m, n = np.shape(self._bba[i].orbit)
-            dset = f.create_dataset("orbit%02d"%i, (k, m, n), 'd')
-            dset[:, :, :] = self._bba[i].orbit
+        print "FIXME: using hard coded file name: apbba.hdf5"
+        f = h5py.File('apbba.hdf5', 'w')
+        for quadname, rec in self._bba.iteritems():
+            for i in range(0, len(rec), 2):
+                ac = rec[i]
+                grp = f.create_group("%s:%d" %(ac.quad, i/2))
+                k, m, n = np.shape(ac.orbit)
+                dset = grp.create_dataset("orbit", (k, m, n), 'd')
+                dset[:, :, :] = ac.orbit
+
+                for j in range(len(rec[i+1])):
+                    data = rec[i+1][j]
+                    h, w, d = np.shape(data)
+                    dset = grp.create_dataset("image_%02d"%j, (h, w, d), dtype=np.uint8)
+                    dset[:,:,:] = data[:,:,:]
+                    dset.attrs['CLASS'] = 'IMAGE'
+                    dset.attrs['IMAGE_VERSION'] = '1.2'
+                    dset.attrs['IMAGE_SUBCLASS'] = 'IMAGE_TRUECOLOR'
 
         f.close()
 

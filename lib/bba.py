@@ -39,6 +39,8 @@ class BbaBowtie:
         self.bpm, self.quad, self.trim  = None, None, None
         self.quad_pvsp, self.quad_pvrb = None, None
         self.trim_pvsp, self.trim_pvrb = None, None
+        self.bpm_pvrb = None
+        self.trim_fitted = None
 
         self.kick  = kwargs.get('kick', [])
         self.dkick = kwargs.get('dkick', None)
@@ -51,7 +53,7 @@ class BbaBowtie:
         self.x_intercept = None
         # do not extend for the intersection with x-axis.
         #self.line_segment_only = False  
-        self.orbit_diffstd = 1e-7
+        self.orbit_diffstd = 1e-6
         self.minwait = 6
 
     def _get_orbit(self):
@@ -91,11 +93,12 @@ class BbaBowtie:
             dv = self._get_orbit() - reforbit
             dvstd.append(dv.std())
 
+        print "waited:", time.time() - t0, "max=", maxwait
         if diffstd_list:
             return timeout, dvstd
 
-    def _filterLines(self, x, y, p_slope = 0.8, p_xintercept=0.8,
-                     p_residual = 0.8):
+    def _filterLines(self, x, y, p_slope = 0.8, p_xintercept=0.9,
+                     p_residual = 0.9):
         """
         filter out the bad data.
         - slope is too small, keep only p_slpe*100 percent.
@@ -105,6 +108,9 @@ class BbaBowtie:
         m, n = np.shape(y)
         # p[-1] is constant, p[-2] is slope
         p, res, rank, sigv, rcond = np.polyfit(x, y, 1, full=True)
+        #print "slope:", p[-2]
+        #print "constant:", p[-1]
+        #print "xintercept:", -p[-1]/p[-2]
         # keep the larger slope center part
         i1 = int(n*(1.0-p_slope))
         kept1 = np.argsort(np.abs(p[-2,:]))[i1:]
@@ -121,6 +127,7 @@ class BbaBowtie:
             #print im, hist, edge
             hist, edge = np.histogram(xitc, 10, range=rg)
         #
+        #print "filter range of hist:", rg
         ikept2 = np.logical_and(xitc > rg[0], xitc < rg[1])
 
         # take the intersection of 3 filters.
@@ -135,7 +142,8 @@ class BbaBowtie:
         # the final subset of slope and y_intercept
         psub = np.compress(ikept2, p, axis=1)
         # the proper kicker strength to make beam through center of quad.
-        #print "Right kicker strength", np.average(-psub[-1,:]/psub[-2,:])
+        self.trim_fitted = np.average(-psub[-1,:]/psub[-2,:])
+
 
     def _measure(self, **kwargs):
         """
@@ -164,19 +172,20 @@ class BbaBowtie:
         timeout, log = self._wait_stable_orbit(
             obt00, diffstd_list=True, verbose=verbose, 
             diffstd=self.orbit_diffstd, minwait=self.minwait)
-        print "   reading orbit"
+        print "   reading orbit", caget(self.bpm_pvrb)
         obt01 = self._get_orbit()
+        # orbit before and after quad inc
         self.orbit[0, 0, :] = obt00
         self.orbit[1, 0, :] = obt01
 
         #print "step down quad"
-        print "reset quad:", self.quad_pvsp
+        print "-- reset quad:", self.quad_pvsp
         caput(self.quad_pvsp, qk0)
         timeout, log = self._wait_stable_orbit(
             obt01, diffstd=self.orbit_diffstd, verbose=verbose, 
             diffstd_list=True, minwait=self.minwait)
 
-        print "   reading orbit"
+        print "   reading orbit", caget(self.bpm_pvrb)
         obt02 = self._get_orbit()
 
         # initial qk
@@ -187,7 +196,7 @@ class BbaBowtie:
             timeout, log = self._wait_stable_orbit(
                 obt, diffstd=self.orbit_diffstd, minwait = self.minwait,
                 diffstd_list=True, verbose=verbose)
-            print "   reading orbit"
+            print "   reading orbit", caget(self.bpm_pvrb)
             obt1 = self._get_orbit()
             self.orbit[0, j+1,:] = obt1
 
@@ -200,7 +209,7 @@ class BbaBowtie:
             obt, diffstd=self.orbit_diffstd, minwait = self.minwait,
             diffstd_list= True, verbose=verbose)
 
-        print "  get orbit"
+        print "  get orbit", caget(self.bpm_pvrb)
         obt = self._get_orbit()
         for j,dxp in enumerate(self.kick):
             print "setting trim:", self.trim_pvsp, j, dxp
@@ -208,7 +217,7 @@ class BbaBowtie:
             timeout, log = self._wait_stable_orbit(
                 obt, diffstd=self.orbit_diffstd, minwait = self.minwait,
                 diffstd_list=True, verbose=verbose)
-            print "  reading orbit"
+            print "  reading orbit", caget(self.bpm_pvrb)
             obt = self._get_orbit()
             self.orbit[1, j+1, :] = obt
         # reset qk
@@ -262,8 +271,8 @@ class BbaBowtie:
         x = np.array(self.kick) * factor[0]
         y = (self.orbit[1,1:,:] - self.orbit[0,1:,:]) * factor[1]
         axbowtie.plot(x, y, 'ko--', linewidth=0.5, markersize=3)
-        axbowtie.set_xlabel("kicker [urad]")
-        axbowtie.set_ylabel("orbit change [um]")
+        axbowtie.set_xlabel("kicker")
+        axbowtie.set_ylabel("orbit change")
         axbowtie.grid()
         
         t = np.linspace(min(x)*1.2, max(x)*1.2, 10)
@@ -271,20 +280,22 @@ class BbaBowtie:
         #xitc = np.compress(self.mask, self.x_intercept)
         for i in range(len(self.mask)):
             if not self.mask[i]: continue
-            yitc = -self.slope[i] * self.x_intercept[i]
-            axbowtie.plot(t, self.slope[i]*t + yitc, 'r-')
+            slope2 = self.slope[i]*factor[1]/factor[0]
+            yitc = -slope2 * self.x_intercept[i] * factor[0] 
+            axbowtie.plot(t, slope2*t + yitc, 'r-')
         # draw the points
         for i in range(len(self.mask)):
+            xitc = self.x_intercept[i]*factor[0]
             if self.mask[i]: 
-                axbowtie.plot(self.x_intercept[i], 0.0, 'go')
+                axbowtie.plot(xitc, 0.0, 'go')
             else:
-                axbowtie.plot(self.x_intercept[i], 0.0, 'bx')
+                axbowtie.plot(xitc, 0.0, 'bx')
         axbowtie.set_xlim(min(t), max(t))
         ##
         if axhist is None: 
             fig = plt.figure()
             axhist = fig.add_subplot(111)
-        d1 = np.compress(self.mask, self.x_intercept)
+        d1 = np.compress(self.mask, self.x_intercept*factor[0])
         hnbin = 3
         d = (max(d1) - min(d1))/hnbin
         hn,hbins,hpatch = axhist.hist(
@@ -295,7 +306,8 @@ class BbaBowtie:
         while hbins2[0] > min(self.x_intercept): hbins2.insert(0, hbins2[0] - d)
         while hbins2[-1] < max(self.x_intercept): hbins2.append(hbins2[-1] + d)
         #print hbins2
-        axhist.hist(self.x_intercept, hbins2, normed=False, histtype='step',
+        axhist.hist(self.x_intercept*factor[0], hbins2, normed=False,
+                    histtype='step',
                     linewidth=2, color='b', label='full set')
         axhist.set_xlim(axbowtie.get_xlim())
         axhist.legend()
