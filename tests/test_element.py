@@ -78,22 +78,26 @@ class TestElement(unittest.TestCase):
         self.bpm1 = element.CaElement(name = 'PH1G6C29B',
             index = -1, devname = 'PH1G6C29B', family = 'BPM')
         self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}SA:X-I',
-                                 None, ['aphla.field.x[0]'])
+                                 None, ['aphla.elemfield.x[0]'])
         self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}SA:Y-I',
-                                 None, ['aphla.field.y[0]'])
+                                 None, ['aphla.elemfield.y[0]'])
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}BBA:X-I', None,
+                                 ['aphla.elemfield.xref[0]'])
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}BBA:Y-I', None,
+                                 ['aphla.elemfield.yref[0]'])
         self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:X-I', None,
-                                 ['aphla.field.x[1]'])
+                                 ['aphla.elemfield.xref[1]'])
         self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:Y-I', None,
-                                 ['aphla.field.y[1]'])
+                                 ['aphla.elemfield.yref[1]'])
         # hcor
         self.hcor = element.CaElement(
             name = 'CXL1G2C01A', index = 125, cell = 'C01',
             devname = 'CL1G2C01A', family = 'HCOR', girder = 'G2', length = 0.2,
             se = 30.6673, symmetry = 'A')
         self.hcor.updatePvRecord('SR:C01-MG:G02A{HCor:L1}Fld-I',
-                                 {'handle': 'READBACK'}, ['aphla.field.x'])
+                                 {'handle': 'READBACK'}, ['aphla.elemfield.x'])
         self.hcor.updatePvRecord('SR:C01-MG:G02A{HCor:L1}Fld-SP',
-                                 {'handle': 'SETPOINT'}, ['aphla.field.x'])
+                                 {'handle': 'SETPOINT'}, ['aphla.elemfield.x'])
 
     def tearDown(self):
         pass
@@ -119,7 +123,6 @@ class TestElement(unittest.TestCase):
         self.assertAlmostEqual(self.hcor.length, 0.2)
         self.assertAlmostEqual(self.hcor.se, 30.6673)
 
-    @unittest.skip
     def compareElements(self, e1, e2):
         self.assertEqual(e1.__dict__.keys(), e2.__dict__.keys())
         for k,v in e1.__dict__.iteritems():
@@ -184,8 +187,9 @@ class TestElement(unittest.TestCase):
         print "bpm", self.bpm1._field['x'].pvrb
         self.assertTrue(abs(self.bpm1.x) >= 0)
         self.assertTrue(abs(self.bpm1.y) >= 0)
-
-        self.assertTrue(abs(self.hcor.value) >= 0)
+        print self.bpm1.xref
+        print self.bpm1.yref
+        self.assertTrue(abs(self.hcor.x) >= 0)
 
     @unittest.skip
     def test_exception_non(self):

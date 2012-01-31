@@ -24,14 +24,14 @@ class Lattice:
 
     def __init__(self, mode = 'undefined'):
         # group name and its element
-        self._group = {}
+        self._group = None
         # guaranteed in the order of s.
         self._elements = []
         # data set
         self.mode = mode
-        self.tune = [ 0.0, 0.0]
-        self.chromaticity = [0.0, 0.0]
-        self.circumference = 0.0
+        self.tune = [ None, None]
+        self.chromaticity = [None, None]
+        self.circumference = None
         self.orm = None
         self.loop = True
 
@@ -84,11 +84,22 @@ class Lattice:
         if self._find_element(name): return True
         else: return False
 
-    def insertElement(self, i, elem):
-        self._elements.insert(i, elem)
-        for g in elem.group:
-            if not g: continue
-            self.addGroupMember(g, elem.name, newgroup=True)
+    def insertElement(self, elem, i = None):
+        if i is not None:
+            self._elements.insert(i, elem)
+        else:
+            if len(self._elements) == 0: self._elements.append(elem)
+            else:
+                k = 0
+                for e in self._elements:
+                    if e.sb < elem.sb: 
+                        k += 1
+                        continue
+                if k == len(self._elements): self._elements.append(elem)
+                else: self._elements.insert(k, elem)
+        #for g in elem.group:
+        #    if not g: continue
+        #    self.addGroupMember(g, elem.name, newgroup=True)
             
     def appendElement(self, elem):
         """
@@ -96,10 +107,10 @@ class Lattice:
         duplicate elements (call hasElement before).
         """
         self._elements.append(elem)
-        for g in elem.group:
-            if not g: continue
-            self.addGroupMember(g, elem.name, newgroup=True)
-            
+        #for g in elem.group:
+        #    if not g: continue
+        #    self.addGroupMember(g, elem.name, newgroup=True)
+
     def size(self):
         """
         total number of elements, including magnets and diagnostic instruments
@@ -417,16 +428,18 @@ class Lattice:
         """
         clear the old groups, fill with new data by collecting group name
         that each element belongs to.
+
+        - the elements must be in s order
         """
         # cleanr everything
         self._group = {}
         for e in self._elements:
             for g in e.group:
                 if self._illegalGroupName(g): continue
-                self.addGroupMember(g, e.name, newgroup=True)
-        #print __file__, "test a group", self._group['DIPOLE']
-        #print __file__, self._group.keys()
-        
+                #self.addGroupMember(g, e.name, newgroup=True)
+                lst = self._group.setdefault(g, [])
+                lst.append(e)
+
     def addGroup(self, group):
         """
         create a new group

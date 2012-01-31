@@ -9,7 +9,6 @@
 
 import cothread
 from cothread.catools import caget, caput
-from aphlas.epicsdatamonitor import CaDataMonitor
 
 app = cothread.iqt(use_timer=True)
 
@@ -29,11 +28,15 @@ from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout,
 
 import numpy as np
 
-config_dir = "~/.hla"
-
 class OrbitData(object):
     """
-    the orbit data
+    the orbit related data.
+    - *samples* data points kept to calculate the statistics.
+    - *yfactor* factor for *y*
+    - *x* list of s-coordinate, never updated.
+    - *pvs* list of channel names
+    - *mode* 'EPICS' | 'sim', default is 'EPICS'
+    - *keep* mask for ignore(0) or keep(1) that data point.
     """
     def __init__(self, pvs, **kw):
         n = len(pvs)
@@ -56,7 +59,11 @@ class OrbitData(object):
         #print self.x, self.y
 
     def update(self):
-        """update the orbit data"""
+        """
+        update the orbit data. It retrieve the data with channel access and
+        calculate the updated standard deviation. If the current mode is
+        'sim', instead of channel access it uses random data.
+        """
         # y and errbar sync with plot, not changing data.
         i = self.icur + 1
         if i >= self.samples: i = 0
@@ -70,28 +77,40 @@ class OrbitData(object):
         self.icur = i
         
     def reset(self):
+        """
+        clear the history data points and statistics.
+        """
         self.icur, self.icount = -1, 0
         self.y.fill(0.0)
         self.errbar.fill(0.0)
         #self.update()
 
-    def min(self):
+    def min(self, axis='s'):
         c, i = divmod(self.icount - 1, self.samples)
-        return np.min(self.y[i,:])
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.min(data)
 
-    def max(self):
+    def max(self, axis='s'):
         c, i = divmod(self.icount - 1, self.samples)
-        return np.max(self.y[i,:])
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.max(data)
         
-    def average(self):
+    def average(self, axis='s'):
         """average of the whole curve"""
         c, i = divmod(self.icount - 1, self.samples)
-        return np.average(self.y[i,:])
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.average(data)
 
-    def std(self):
-        """std of the curve"""
+    def std(self, axis='t'):
+        """
+        std of the curve
+        - axis='t' std over time axis for each PV
+        - axis='s' std over all PV for the latest dataset
+        """
+        if axis == 't': ax = 1
+        elif axis == 's': ax = 0
         y = np.compress(self.keep, self.y, axis=1)
-        return np.std(y, axis = 0)
+        return np.std(y, axis = ax)
 
     def data(self, field="orbit"):
         """

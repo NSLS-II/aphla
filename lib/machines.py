@@ -85,8 +85,9 @@ def createLattice(pvrec, systag):
         elem = lat._find_element(name=name)
         if elem is None:
             elem = CaElement(**prpt)
-            lat.appendElement(elem)
-        
+            #lat.appendElement(elem)
+            lat.insertElement(elem)
+
         elem.updatePvRecord(pv, prpt, rec[2])
 
     # group info is a redundant info, needs rebuild based on each element
