@@ -5,17 +5,14 @@ import sys, os
 import numpy as np
 
 from conf import *
-import machines
-
-import lattice, element
-import cothread
-from cothread.catools import caget
+from aphlas import machines, lattice, element
+from aphlas.catools import caget
 
 machine_initialized = False
 
 def initialize_the_machine():
     machines.initNSLS2VSR()
-    machines.initNSLS2VSRTxt()
+    #machines.initNSLS2VSRTxt()
 
 class TestLattice(unittest.TestCase):
     def setUp(self):
@@ -232,7 +229,6 @@ class TestLatticeLtb(TestLattice):
         global machine_initialized
         if not machine_initialized:
             initialize_the_machine()
-            #machines.initNSLS2VSR()
             machine_initialized = True
         self.lat  = machines.getLattice('LTB')
         if not self.lat:

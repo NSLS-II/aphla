@@ -93,6 +93,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         Qwt.QwtPlotCurve.__init__(self)
 
         self.data = data
+        self.x1, self.y1, self.e1 = None, None, None
+        self.yref = None # no mask applied
         self.data_field = kw.get('data_field', 'orbit')
         self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
         self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
@@ -104,15 +106,27 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.showDifference = False
         self.update()
 
+    def setDrift(self, mode):
+        if mode == 'no':
+            self.yref = None
+        elif mode == 'now':
+            x1, y1, e1 = self.data.data(field=self.data_field, nomask=True)
+            self.yref = y1
+        elif mode == 'golden':
+            self.yref = self.data.golden(nomask = True)
+
     def update(self):
-        x1, y1, e1 = self.data.data(field=self.data_field)
-        Qwt.QwtPlotCurve.setData(self, x1, y1)
+        self.x1, self.y1, self.e1 = self.data.data(field=self.data_field)
+        if self.yref is not None:
+            self.y1 = self.y1 - np.compress(self.data.keep, self.yref)
+        Qwt.QwtPlotCurve.setData(self, self.x1, self.y1)
 
     def boundingRect(self):
         """
         Return the bounding rectangle of the data, error bars included.
         """
-        x, y, y2 = self.data.data(field=self.data_field)
+        #x, y, y2 = self.data.data(field=self.data_field)
+        x, y, y2 = self.x1, self.y1, self.e1
         xmin, xmax = min(x), max(x)
         ymin = min(y - y2)
         ymax = max(y + y2)
@@ -152,8 +166,9 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         # draw the error bars with caps in the y direction
         if self.errorOnTop:
             # draw the bars
-            x1, y1, yer1 = self.data.data(field=self.data_field)
-        
+            #x1, y1, yer1 = self.data.data(field=self.data_field)
+            x1, y1, yer1 = self.x1, self.y1, self.e1
+
             ymin = (y1 - yer1)
             ymax = (y1 + yer1)
 
@@ -338,6 +353,9 @@ class OrbitPlot(Qwt.QwtPlot):
         #x = self.invTransform(Qwt.QwtPlot.xBottom, 20)
         #y = self.invTransform(Qwt.QwtPlot.yLeft, 10)
         #self.marker.setValue(x, y)
+
+    def setDrift(self, mode = 'no'):
+        self.curve1.setDrift(mode)
 
     def singleShot(self):
         #print "Plot :: singleShot"

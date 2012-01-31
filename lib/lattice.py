@@ -517,7 +517,7 @@ class Lattice:
         else:
             raise ValueError("%s not in group %s" % (member, group))
 
-    def getGroups(self, element = ''):
+    def getGroups(self, element = None):
         """
         return a list of groups this element belongs to
 
@@ -529,7 +529,7 @@ class Lattice:
           
         The input string is wildcard matched against each element.
         """
-        if not element: return self._group.keys()
+        if element is None: return self._group.keys()
 
         ret = []
         for k, elems in self._group.items():
