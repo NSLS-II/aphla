@@ -14,7 +14,7 @@ import numpy as np
 
 from catools import caget, caput
 from lattice import Lattice
-from element import CaElement
+from element import CaElement, merge
 from twiss import Twiss, TwissItem
 from fnmatch import fnmatch
 from ormdata import OrmData
@@ -23,6 +23,9 @@ from chanfinder import ChannelFinderAgent
 from . import conf
 
 from pkg_resources import resource_string, resource_exists, resource_filename
+
+import logging
+logger = logging.getLogger(__name__)
 
 _lat = None
 _lattice_dict = {}
@@ -45,7 +48,6 @@ HLA_VBPMY  = 'HLA:BPMY'
 
 HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
-HLA_CFS_URL   = os.environ.get('HLA_CFS_URL', '')
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
 # map CaElement init parameters to CF properties
@@ -80,7 +82,9 @@ def createLattice(pvrec, systag):
         prpt = rec[1]
         prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
-        
+
+        #if name == 'CXHG2C30A': print(pv, prpt, rec[2])
+
         # find if the element exists.
         elem = lat._find_element(name=name)
         if elem is None:
@@ -115,15 +119,18 @@ def initNSLS2VSR():
 
     cfa = ChannelFinderAgent()
     src_home_csv = os.path.join(os.environ['HOME'], '.hla', 'nsls2.csv')
-    #src_pkg_csv = resource_string(__name__, os.path.join('data', 'nsls2.csv'))
+    HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
-        print("Using %s" % src_home_csv)
+        logger.info("using home csv %s" % src_home_csv)
         cfa.importCsv(src_home_csv)
     elif conf.has('nsls2.csv'):
-        print("Using %s" % conf.filename('nsls2.csv'))
-        cfa.importCsv(conf.filename('nsls2.csv'))
+        #print("Using %s" % conf.filename('nsls2.csv'))
+        src_pkg_csv = conf.filename('nsls2.csv')
+        logger.info("using system csv %s" % src_pkg_csv)
+        cfa.importCsv(src_pkg_csv)
     elif os.environ.get('HLA_CFS_URL', None):
+        logger.info("using cfs %s" % HLA_CFS_URL)
         cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     else:
         raise RuntimeError("Failed at loading cache file")
@@ -139,7 +146,7 @@ def initNSLS2VSR():
     #lat = createLattice(cfa.rows, 'aphla.sys.SR')
 
     tags = cfa.tags('aphla.sys.*')
-    print("Known Systems:", tags)
+    #print("Known Systems:", tags)
     #print(cfa.rows)
 
     global _lat, _lattice_dict
@@ -147,7 +154,13 @@ def initNSLS2VSR():
     for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
         #print("\nsys=", latname)
         _lattice_dict[latname] = createLattice(cfa.rows, 'aphla.sys.' + latname)
-        
+
+    # a virtual bpm. its field is a "merge" of all bpms.
+    bpms = _lattice_dict['SR'].getElements('BPM')
+    allbpm = merge(bpms, **{'virtual': 1, 'name':'HLA:BPM'})
+    allbpm.sb, allbpm.se = -1, -1
+    _lattice_dict['SR'].insertElement(allbpm)
+
     #
     # LTB 
     _lattice_dict['LTB'].loop = False

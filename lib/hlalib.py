@@ -123,9 +123,9 @@ def _reset_trims(verbose=False):
     trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
     pv = []
     for e in trimx:
-        pv.extend(e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT]))
+        pv.extend(e.pv(field='x', handle='SETPOINT'))
     for e in trimy:
-        pv.extend(e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT]))
+        pv.extend(e.pv(field='y', handle='SETPOINT'))
     if not pv:
         raise ValueError("no pv for trims found")
     
@@ -137,6 +137,7 @@ def _reset_trims(verbose=False):
     else:
         caput(pv, 0.0)
 
+    print "DONE"
 
 
 def _levenshtein_distance(first, second):
@@ -611,11 +612,12 @@ def getFastOrbit(**kwargs):
 
 def _reset_bpm_offset():
     bpms = getElements('BPM')
+    pvs = []
     for b in bpms:
         #print b.pv(tags=['aphla.offset', 'aphla.eput'])
-        ref = b.pv(tags=['aphla.offset', 'aphla.eput'])
-        caput(ref, [0.0] * len(ref))
-
+        pvs.extend(b.pv(tags=['aphla.offset', 'aphla.eput']))
+    caput(pvs, 0.0)
+    print "DONE"
 
 def _reset_quad():
     qtag = {'H2': (1.47765, 30), 

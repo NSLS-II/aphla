@@ -43,6 +43,14 @@ __version__ = "0.3.0"
 #import os, sys, re
 import sys
 
+import logging
+
+logging.basicConfig(filename="aphlas.log",
+    filemode='w',
+    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
+    level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 from catools import *
 from machines import initNSLS2VSR, initNSLS2VSRTwiss
 
@@ -80,11 +88,12 @@ from ormdata import OrmData
 NETWORK_DOWN=False
 try:
     rfpv = 'SR:C00-RF:G00{RF:00}Freq-SP'
-    print("# checking RF pv: %s" % rfpv)
+    #print("# checking RF pv: %s" % rfpv)
     caput(rfpv, 499.680528631, timeout=1)
-    print("# Network is fine, using online PVs", file= sys.stderr)
+    #print("# Network is fine, using online PVs", file= sys.stderr)
+    logger.info("network is connected. use online channel access")
 except Timedout:
-    print("# virtual accelerator is not available")
+    logger.info("virtual accelerator is not available")
     NETWORK_DOWN = True
     pass
 

@@ -5,7 +5,7 @@ from conf import *
 LOCK_ID = 1
 import aphlas as hla
 
-hla.hlalib._wait_for_lock(LOCK_ID, maxwait=3600)
+hla.hlalib._wait_for_lock(LOCK_ID, maxwait=60)
 
 print "= Initializing NSLS2VSR lattice in HLA"
 hla.initNSLS2VSR()
