@@ -37,7 +37,7 @@ Modules include:
         
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.0a1"
 
 
 #import os, sys, re

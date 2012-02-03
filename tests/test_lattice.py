@@ -42,7 +42,6 @@ class TestLattice(unittest.TestCase):
             for i in range(3): self.assertTrue(el[i].name == bpm[i].name)
             
 
-    #class TestLattice:
     def test_virtualelements(self):
         elem = self.lat.getElements('HLA:*')
         self.assertTrue(elem)
@@ -117,14 +116,11 @@ class TestLattice(unittest.TestCase):
                 self.assertTrue(pv.find('VCor') > 0)
 
 
-@unittest.skip("skipping")
 class TestLatticeSr(TestLattice):
     def setUp(self):
         global machine_initialized
         if not machine_initialized:
             initialize_the_machine()
-            #machines.initNSLS2VSR()
-            #machines.initNSLS2VSRTxt()
             machine_initialized = True
         self.lat = machines.getLattice('SR')
         pass
@@ -210,18 +206,6 @@ class TestLatticeSr(TestLattice):
                 self.assertTrue(False,
                                 "AttributeError exception expected")
 
-@unittest.skip("skipping")
-class TestLatticeSrCf(TestLatticeSr):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSR()
-            machine_initialized = True
-        self.lat = machines.getLattice('SR')
-        
-
-@unittest.skip("skipping")
 class TestLatticeLtb(TestLattice):
     def setUp(self):
         global machine_initialized
@@ -241,13 +225,13 @@ class TestLatticeLtb(TestLattice):
         for e in bpm: 
             try:
                 self.assertTrue(abs(e.x) >= 0)
-            except cothread.Timedout:
+            except Timedout:
                 print "    Timeout:", e.name, e.pv(field='x', handle='readback')
                 break
 
             try:
                 self.assertTrue(abs(e.y) >= 0)
-            except cothread.Timedout:
+            except Timedout:
                 print "    Timeout:", e.name, e.pv(field='y', handle='readback')
                 break
 
@@ -256,7 +240,7 @@ class TestLatticeLtb(TestLattice):
         for e in hcor: 
             try:
                 k = e.x
-            except cothread.Timedout:
+            except Timedout:
                 print "    Timeout:", e.name, e.pv(field='x', handle='readback')
                 break
             except AttributeError as e:
@@ -264,7 +248,7 @@ class TestLatticeLtb(TestLattice):
                 
             try:
                 e.x = 1e-8
-            except cothread.Timedout:
+            except Timedout:
                 print "    Timeout:", e.name, e.pv(field='x', handle='setpoint')
                 break
 
@@ -273,16 +257,5 @@ class TestLatticeLtb(TestLattice):
             #print e._field
             self.assertRaises(AttributeError, self.readInvalidFieldY, e)
 
-@unittest.skip("skipping")
-class TestLatticeLtbCf(TestLatticeLtb):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            #initialize_the_machine()
-            machines.initNSLS2VSR()
-            machine_initialized = True
-        self.lat  = machines.getLattice('LTB')
-        if not self.lat:
-            print machines.lattices()
-            raise ValueError("lattice LTB is not found")
-
+    def test_virtualelements(self):
+        pass

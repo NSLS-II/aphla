@@ -43,6 +43,7 @@ HLA_TAG_SYS_PREFIX = 'aphla.sys.'
 
 #
 HLA_VFAMILY = 'HLA:VFAMILY'
+HLA_VBPM   = 'HLA:BPM'
 HLA_VBPMX  = 'HLA:BPMX'
 HLA_VBPMY  = 'HLA:BPMY'
 
@@ -157,8 +158,7 @@ def initNSLS2VSR():
 
     # a virtual bpm. its field is a "merge" of all bpms.
     bpms = _lattice_dict['SR'].getElements('BPM')
-    allbpm = merge(bpms, **{'virtual': 1, 'name':'HLA:BPM'})
-    allbpm.sb, allbpm.se = -1, -1
+    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM})
     _lattice_dict['SR'].insertElement(allbpm)
 
     #

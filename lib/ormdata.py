@@ -26,10 +26,7 @@ class OrmData:
     - *m* 2D matrix, len(bpm) * len(trim)
     """
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
-    def __init__(self, datafile):
-        """
-          orm = Orm(['BPM1', 'BPM2'], ['TRIM1', 'TRIM2'])
-        """
+    def __init__(self, datafile = None):
         # points for trim setting when calc dx/dkick
         npts = 6
 
@@ -37,15 +34,14 @@ class OrmData:
         self.bpm = []
         self.trim = []
         
-        nbpmpv, ntrimpv = 0, 0
-
         # 3d raw data
         self._rawmatrix = None
         self._mask = None
         self._rawkick = None
         self.m = None
 
-        self.load(datafile)
+        if datafile is not None:
+            self.load(datafile)
 
         #print __file__, "Done initialization"
         

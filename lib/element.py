@@ -242,7 +242,7 @@ class CaDecorator:
             if self.trace: 
                 self.rb.append(copy.deepcopy(ret))
                 if len(self.rb) > self.trace_limit: self.rb.pop(0)
-            print self.pvrb, ret
+            #print self.pvrb, ret
             if len(self.pvrb) == 1: 
                 return ret[0]
             else: return ret
@@ -601,5 +601,7 @@ def merge(elems, **kwargs):
         if len(v[1]) > 0: elem.setFieldPutAction(k, 0, v[1], '')
         #print k, "GET", v[0]
         #print k, "PUT", v[1]
+    elem.sb = [e.sb for e in elems]
+    elem.se = [e.se for e in elems]
     return elem
 

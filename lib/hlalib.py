@@ -557,17 +557,15 @@ def getOrbit(pat = '', spos = False):
     When the element is not found or not a BPM, return NaN in its positon.
     """
     if not pat:
-        bpmx = machines._lat.getElements(machines.HLA_VBPMX)
-        bpmy = machines._lat.getElements(machines.HLA_VBPMY)
-        n = max([len(bpmx.sb), len(bpmy.sb)])
+        bpm = machines._lat.getElements(machines.HLA_VBPM)
+        n = len(bpm.sb)
         if spos:
-            ret = np.zeros((n, 4), 'd')
-            ret[:,2] = bpmx.sb
-            ret[:,3] = bpmy.sb
+            ret = np.zeros((n, 3), 'd')
+            ret[:,2] = bpm.sb
         else:
             ret = np.zeros((n,2), 'd')
-        ret[:,0] = bpmx.x
-        ret[:,1] = bpmy.y
+        ret[:,0] = bpm.x
+        ret[:,1] = bpm.y
         return ret
 
     # need match the element name
