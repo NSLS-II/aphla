@@ -20,11 +20,12 @@ import gui_resources
 from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
 from orbitplot import OrbitPlot
+from orbitcorrdlg import OrbitCorrDlg
 from aphlas import conf
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, 
-    QVBoxLayout, 
+    QVBoxLayout, QPen, 
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
 
 import numpy as np
@@ -139,7 +140,9 @@ class OrbitData(object):
     def golden(self, nomask=False):
         if self.pvs_golden is None:
             d = np.zeros(len(self.pvs), 'd')
-        else:
+        elif self.mode == 'sim':
+            d = np.zeros(len(self.pvs), 'd')
+        elif self.mode == 'EPICS':
             d = np.array(caget(self.pvs_golden)) * self.yfactor
 
         if nomask: return d
@@ -169,19 +172,19 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # initialize a QwtPlot central widget
         #bpm = hla.getElements('BPM')
-        pvx = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmx']]
+        self.pvx = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmx']]
         #print pvx
-        pvy = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmy']]
-        pvsx = [b[1]['s'] for b in self.config.data['bpmx']]
-        pvsy = [b[1]['s'] for b in self.config.data['bpmy']]
+        self.pvy = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmy']]
+        self.pvsx = [b[1]['s'] for b in self.config.data['bpmx']]
+        self.pvsy = [b[1]['s'] for b in self.config.data['bpmy']]
         self.bpm = [b[0] for b in self.config.data['bpmx']]
         pvsx_golden = [b[1]['golden'].encode("ascii") 
                        for b in self.config.data['bpmx']]
         pvsy_golden = [b[1]['golden'].encode("ascii") 
                        for b in self.config.data['bpmy']]
-        self.orbitx_data = OrbitData(pvs = pvx, x = pvsx, mode=mode, 
+        self.orbitx_data = OrbitData(pvs = self.pvx, x = self.pvsx, mode=mode, 
                                      pvs_golden = pvsx_golden)
-        self.orbity_data = OrbitData(pvs = pvy, x = pvsy, mode=mode,
+        self.orbity_data = OrbitData(pvs = self.pvy, x = self.pvsy, mode=mode,
                                      pvs_golden = pvsy_golden)
         self.orbitx_data.update()
         self.orbity_data.update()
@@ -189,6 +192,7 @@ class OrbitPlotMainWindow(QMainWindow):
         picker = [(v[1], v[2], v[0]) for v in self.config.data['magnetpicker']]
         self.plot1 = OrbitPlot(self, self.orbitx_data, picker_profile = picker,
                                magnet_profile = self.config.data['magnetprofile'])
+        self.plot1.curve1.setPen(QPen(Qt.blue, 2))
         self.plot2 = OrbitPlot(self, self.orbity_data, picker_profile = picker,
                                magnet_profile = self.config.data['magnetprofile'])
         self.plot3 = OrbitPlot(self, self.orbitx_data, data_field='std',
@@ -198,6 +202,7 @@ class OrbitPlotMainWindow(QMainWindow):
             errorbar=False, picker_profile = picker,
                                magnet_profile = self.config.data['magnetprofile'])
 
+        #print pvsx_golden, pvsy_golden
         #for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'],
         #                             op='union'):
         #    self.plot1.addMagnetProfile(e.sb, e.sb+e.length, e.name)
@@ -231,20 +236,35 @@ class OrbitPlotMainWindow(QMainWindow):
         self.wid = QTabWidget()
         self.wid.addTab(wid1, "Orbit Plot")
 
-        #wid2 = QTableWidget()
-        #wid.addTab(wid2, "test2")
         wid1 = QWidget()
         vbox = QVBoxLayout()
         vbox.addWidget(self.plot3)
         vbox.addWidget(self.plot4)
         wid1.setLayout(vbox)
         self.wid.addTab(wid1, "Std")
+
+        #wid1 = QWidget()
+        #vbox = QGridLayout()
+        #vbox.addWidget(self.plot5, 0, 1)
+        ##vbox.addWidget(self.lbplt2info, 1, 0)
+        ##vbox.addWidget(self.plot2, 1, 1)
+        #wid1.setLayout(vbox)
+        #self.wid = QTabWidget()
+        #self.wid.addTab(wid1, "Orbit Steer")
+
         self.setCentralWidget(self.wid)
 
         #self.setCentralWidget(OrbitPlot())
         #print self.plot1.sizeHint()
         #print self.plot1.minimumSizeHint()
 
+        #self.plot5 = OrbitCorrPlot(self, self.orbitx_data, picker_profile = picker,
+        #    magnet_profile = self.config.data['magnetprofile'])
+        #wid1 = QWidget()
+        #vbox = QVBoxLayout()
+        #vbox.addWidget(self.plot5)
+        #wid1.setLayout(vbox)
+        #self.wid.addTab(wid1, "OrbitSt")
         #
         # file menu
         #
@@ -279,7 +299,7 @@ class OrbitPlotMainWindow(QMainWindow):
         viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
                                     "Errorbar", self)
         viewErrorBarAction.setCheckable(True)
-        viewErrorBarAction.setChecked(False)
+        viewErrorBarAction.setChecked(True)
         self.connect(viewErrorBarAction, SIGNAL("toggled(bool)"),
                      self.errorBar)
 
@@ -329,6 +349,9 @@ class OrbitPlotMainWindow(QMainWindow):
         drift_from_none = QAction("None", self)
         drift_from_none.setCheckable(True)
 
+        steer_orbit = QAction("Steer Orbit ...", self)
+        self.connect(steer_orbit, SIGNAL("triggered()"), self.createLocalBump)
+
         self.viewMenu.addAction(drift_from_now)
         self.viewMenu.addAction(drift_from_golden)
         self.viewMenu.addAction(drift_from_none)
@@ -367,6 +390,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.controlMenu.addAction(controlZoomOutPlot1Action)
         self.controlMenu.addAction(controlZoomInPlot2Action)
         self.controlMenu.addAction(controlZoomOutPlot2Action)
+        self.controlMenu.addSeparator()
+        self.controlMenu.addAction(steer_orbit)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -395,6 +420,7 @@ class OrbitPlotMainWindow(QMainWindow):
         if mode == 'sim': dt = 100
         elif mode == 'EPICS': dt = 800
         self.timerId = self.startTimer(dt)
+        self.corbitdlg = None # orbit correction dlg
 
     def liveData(self, on):
         """Switch on/off live data taking"""
@@ -506,6 +532,25 @@ class OrbitPlotMainWindow(QMainWindow):
         self.orbity_data.reset()
         #hla.hlalib._reset_trims()
 
+    def plotDesiredOrbit(self, x, y):
+        print "plot: ", x, y
+        self.plot1.curve2.setData(self.pvsx, x)
+        self.plot2.curve2.setData(self.pvsy, y)
+
+    def correctOrbit(self, x, y):
+        print "correct to :", x, y
+
+    def createLocalBump(self):
+        if self.corbitdlg is None:
+            self.corbitdlg = OrbitCorrDlg(
+                self.pvx, self.orbitx_data.x, self.orbitx_data.golden(),
+                self.orbity_data.golden(), 
+                self.plotDesiredOrbit, self.correctOrbit, self)
+            self.corbitdlg.resize(600, 300)
+        self.corbitdlg.show()
+        self.corbitdlg.raise_()
+        self.corbitdlg.activateWindow()
+
 
 def main():
     #app = QApplication(args)
@@ -515,7 +560,7 @@ def main():
     demo = OrbitPlotMainWindow(mode=mode)
     demo.resize(600,500)
     demo.show()
-    print app.style()
+    # print app.style() # QCommonStyle
     #sys.exit(app.exec_())
     cothread.WaitForQuit()
 

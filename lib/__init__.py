@@ -76,12 +76,6 @@ from ormdata import OrmData
 ## print >> sys.stderr, "= HLA channel finder configure: ", cfa_pkl
 ## _cfa.load(cfa_pkl)
 
-## import orm
-## _orm = orm.Orm(bpm=[], trim=[])
-## orm_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'orm.pkl')
-## print >> sys.stderr, "= HLA orbit resp mat: ", orm_pkl
-## _orm.load(orm_pkl)
-
 
 ## # set RF frequency
 ## from cothread import catools, Timedout

@@ -25,12 +25,11 @@ from bba import BbaBowtie
 
 __all__ = [
     'getLifetime',  'measChromaticity', 'measDispersion',
-    'correctOrbitPv', 'correctOrbit', 'alignQuadrupole', 'createLocalBump'
+    'correctOrbitPv', 'correctOrbit', 'createLocalBump'
 ]
 
-alphac = 3.6261976841792413e-04
 
-def getLifetime(verbose = 0):
+def getLifetime(tinterval=3, npoints = 8):
     """
     Monitor current change with, calculate lifetime dI/dt
 
@@ -41,13 +40,12 @@ def getLifetime(verbose = 0):
     """
 
     # data points
-    N = 10
-    ret = np.zeros((N, 2), 'd')
+    ret = np.zeros((npoints, 2), 'd')
     d0 = datetime.datetime.now()
     ret[0, 1] = getCurrent()
-    for i in range(1, N):
+    for i in range(1, npoints):
         # sleep for next reading
-        time.sleep(3)
+        time.sleep(tinterval)
         ret[i,1] = getCurrent()
         dt = datetime.datetime.now() - d0
         ret[i,0] = (dt.microseconds/1000000.0 + dt.seconds)/3600.0 + \
@@ -62,11 +60,10 @@ def getLifetime(verbose = 0):
     return lft_hour
 
 
-def measChromaticity():
+def measChromaticity(gamma = 3.0e5/.511, alphac = 3.6261976841792413e-04):
     """
     Measure the chromaticity
     """
-    gamma = 3.0e3/.511
     eta = alphac - 1/gamma/gamma
 
     f0 = getRfFrequency()
@@ -108,14 +105,13 @@ def measChromaticity():
     pass
 
 
-def measDispersion():
+def measDispersion(gamma = 3.0e3/.511, alphac = 3.6261976841792413e-04):
     """
     Measure the dispersion
     """
 
     #print "Measure dispersion"
     
-    gamma = 3.0e3/.511
     eta = alphac - 1/gamma/gamma
 
     #bpm = getElements('P*C0[3-6]*')
@@ -189,37 +185,41 @@ def measDispersion():
     f.close()
     
 
-def correctOrbitPv(bpm, trim, ormdata, ref = None):
+def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, check = True):
     """
     correct orbit use direct pv and catools
 
     - the input bpm and trim should be uniq in pv names.
     """
-    #raw_input("correctOrbitPv ..")
-    #print("Matrix size: ", len(bpm), len(trim))
-    #m = np.zeros((len(bpm), len(trim)), 'd')
-    #for i,b in enumerate(bpm):
-    #    im = ormdata.index(b)
-    #    if im < 0: raise ValueError("PV %s is not found in ormdata" % b)
-    #    for j,t in enumerate(trim):
-    #        jm = ormdata.index(t)
-    #        if jm < 0: raise ValueError("pv %s is not found in ormdata" % t)
-    #        # did not check if the item is masked.
-    #        m[i,j] = ormdata.m[im,jm]
-    m = ormdata.getSubMatrixPv(bpm, trim)
+    if ormdata is None:
+        m = machines._lat.ormdata.getSubMatrixPv(bpm, trim)
+    else:
+        m = ormdata.getSubMatrixPv(bpm, trim)
 
     v0 = np.array(caget(bpm), 'd')
-    if ref != None: v0 = v0 - ref
+    if ref is not None: v0 = v0 - ref
 
-    dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0, rcond = 1e-3)
+    # solve for m*dk + (v0 - ref) = 0
+    dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0, rcond = 1e-4)
 
-    print("Predict norm:", np.linalg.norm(m.dot(dk) + v0))
+    norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
     k0 = np.array(caget(trim), 'd')
-    caput(trim, k0+dk)
-    time.sleep(6)
-    v1 = np.array(caget(bpm), 'd')
-    print("Euclidian norm: before/after",
-          resids, np.linalg.norm(v0), np.linalg.norm(v1))
+    caput(trim, k0+dk*scale)
+
+    # wait and check
+    if check == True:
+        time.sleep(6)
+        v1 = np.array(caget(bpm), 'd')
+        norm2 = np.linalg.norm(v1)
+        print("Euclidian norm: predicted/realized", norm1, norm2)
+        if norm2 > norm1:
+            print("Failed to reduce orbit distortion, restoring...")
+            caput(trim, k0)
+            return False
+        else:
+            return True
+    else:
+        return None
     
 def createLocalBump(bpm, trim, ref, **kwargs):
     """
@@ -330,8 +330,8 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
         bpmlst = machines._lat.getElements(bpm)
     pvx, pvy = [], []
     for e in bpmlst:
-        pvx.extend(e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET]))
-        pvy.extend(e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET]))
+        pvx.extend(e.pv(field='x', handle='READBACK'))
+        pvy.extend(e.pv(field='y', handle='READBACK'))
     #raw_input("correct orbit ...")
 
     if plane == 'H': bpmpv = set(pvx)
@@ -347,13 +347,13 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
 
     trimpv, pvxsp, pvysp = [], [], []
     for e in trimlst:
-        pv = e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT])
+        pv = e.pv(field='x', handle='setpoint')
         #print(e.name, pv)
         if pv: pvxsp.append(pv)
         if isinstance(pv, (str, unicode)): trimpv.append(pv)
         elif pv: trimpv.extend(pv)
         
-        pv = e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
+        pv = e.pv(field='y', handle='setpoint')
         #print(str(e.name), pv)
         if pv: pvysp.append(pv)
         if isinstance(pv, (str, unicode)): trimpv.append(pv)
@@ -371,71 +371,71 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
         correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), machines._lat.orm)
 
 
-def alignQuadrupole(quad, **kwargs):
-    """
-    align quadrupole with nearby BPM using beam based alignment
+# def alignQuadrupole(quad, **kwargs):
+#     """
+#     align quadrupole with nearby BPM using beam based alignment
 
-    Example::
+#     Example::
 
-      >>> alignQuadrupole('Q1')
-      >>> alignQuadrupole(['Q1', 'Q2'])
-    """
-    trim  = kwargs.get('trim', None)
-    bpm   = kwargs.get('bpm', None)
-    plane = kwargs.get('plane', 'H')
-    dqk1  = kwargs.get('dqk1', 0.05)
-    dkick = kwargs.get('dkick', np.linspace(-1e-6, 1e-6, 5).tolist())
-    export_figures = kwargs.get('export_figures', True)
+#       >>> alignQuadrupole('Q1')
+#       >>> alignQuadrupole(['Q1', 'Q2'])
+#     """
+#     trim  = kwargs.get('trim', None)
+#     bpm   = kwargs.get('bpm', None)
+#     plane = kwargs.get('plane', 'H')
+#     dqk1  = kwargs.get('dqk1', 0.05)
+#     dkick = kwargs.get('dkick', np.linspace(-1e-6, 1e-6, 5).tolist())
+#     export_figures = kwargs.get('export_figures', True)
 
-    if isinstance(quad, (str, unicode)):
-        quadlst = [quad]
-    else:
-        quadlst = [q for q in quad]
+#     if isinstance(quad, (str, unicode)):
+#         quadlst = [quad]
+#     else:
+#         quadlst = [q for q in quad]
         
-    if plane == 'H': trim_type = 'HCOR'
-    elif plane == 'V': trim_type = 'VCOR'
-    else:
-        raise ValueError('Unknnow plane type: "%s"' % plane)
+#     if plane == 'H': trim_type = 'HCOR'
+#     elif plane == 'V': trim_type = 'VCOR'
+#     else:
+#         raise ValueError('Unknnow plane type: "%s"' % plane)
 
-    if trim == None:
-        trimlst = []
-        for q in quadlst:
-            ch = getNeighbors(q, trim_type, 1)
-            trimlst.append(ch[0].name)
-    else:
-        trimlst = [t for t in trim]
+#     if trim == None:
+#         trimlst = []
+#         for q in quadlst:
+#             ch = getNeighbors(q, trim_type, 1)
+#             trimlst.append(ch[0].name)
+#     else:
+#         trimlst = [t for t in trim]
 
-    if bpm == None:
-        bpmlst = []
-        for q in quadlst:
-            bpmlst.append(getClosest(q, 'BPM').name)
-    else:
-        bpmlst = [b for b in bpm]
+#     if bpm == None:
+#         bpmlst = []
+#         for q in quadlst:
+#             bpmlst.append(getClosest(q, 'BPM').name)
+#     else:
+#         bpmlst = [b for b in bpm]
 
-    # now we get a list of Quad,BPM,Trim names.
-    bb = BBA(plane=plane)
-    for i in range(len(quadlst)):
-        bb.setQuadBpmTrim(quadlst[i], bpmlst[i], trimlst[i], dqk1=dqk1, dkick=dkick)
+#     # now we get a list of Quad,BPM,Trim names.
+#     bb = BBA(plane=plane)
+#     for i in range(len(quadlst)):
+#         bb.setQuadBpmTrim(quadlst[i], bpmlst[i], trimlst[i], dqk1=dqk1, dkick=dkick)
         
-    for i in range(len(quadlst)):
-        cva0, cva1 = bb.checkAlignment(i)
+#     for i in range(len(quadlst)):
+#         cva0, cva1 = bb.checkAlignment(i)
 
-        #print "Initial quad value: ", quad.name, quad.value
-        bb.alignQuad(i)
-        cvb0, cvb1 = bb.checkAlignment(i)
+#         #print "Initial quad value: ", quad.name, quad.value
+#         bb.alignQuad(i)
+#         cvb0, cvb1 = bb.checkAlignment(i)
 
-        if export_figures:
-            # plot 
-            plt.clf()
-            plt.plot(cva0[:,-1], (cva1-cva0)[:,0], '-o', label="before BBA")
-            plt.plot(cvb0[:,-1], (cvb1-cvb0)[:,0], '-v', label="after BBA")    
-            plt.title("Orbit change due to quad")
-            plt.savefig("bba-%s-check.png" % quadlst[i])
+#         if export_figures:
+#             # plot 
+#             plt.clf()
+#             plt.plot(cva0[:,-1], (cva1-cva0)[:,0], '-o', label="before BBA")
+#             plt.plot(cvb0[:,-1], (cvb1-cvb0)[:,0], '-v', label="after BBA")    
+#             plt.title("Orbit change due to quad")
+#             plt.savefig("bba-%s-check.png" % quadlst[i])
 
-            bb.exportFigures(i, 'png')
-            bb.exportFigures(i, 'pdf')
-            #print "final quad value: ", quad.name, quad.value
-    return bb.getQuadCenter()
+#             bb.exportFigures(i, 'png')
+#             bb.exportFigures(i, 'pdf')
+#             #print "final quad value: ", quad.name, quad.value
+#     return bb.getQuadCenter()
 
 
 def _random_kick(plane = 'V', amp=1e-9, verbose = 0):

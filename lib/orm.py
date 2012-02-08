@@ -15,7 +15,6 @@ Response Matrix
 import os, sys, time
 from os.path import join, splitext
 import numpy as np
-import shelve
 
 import machines
 import matplotlib.pylab as plt

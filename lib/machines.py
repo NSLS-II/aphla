@@ -18,6 +18,7 @@ from element import CaElement, merge
 from twiss import Twiss, TwissItem
 from fnmatch import fnmatch
 from ormdata import OrmData
+from orm import Orm
 from chanfinder import ChannelFinderAgent
 
 from . import conf
@@ -155,6 +156,8 @@ def initNSLS2VSR():
     for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
         #print("\nsys=", latname)
         _lattice_dict[latname] = createLattice(cfa.rows, 'aphla.sys.' + latname)
+
+    _lattice_dict['SR'].orm = OrmData('/home/lyyang/devel/nsls2-hla/conf/orm.hdf5')
 
     # a virtual bpm. its field is a "merge" of all bpms.
     bpms = _lattice_dict['SR'].getElements('BPM')

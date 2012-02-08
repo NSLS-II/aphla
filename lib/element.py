@@ -386,6 +386,8 @@ class CaElement(AbstractElement):
             return self._pv_1(**kwargs)
         elif len(kwargs) == 2:
             handle = kwargs.get('handle', None)
+            fd = kwargs.get('field', None)
+            if fd not in self._field: return None
             if handle.lower() == 'readback':
                 return self._field[kwargs['field']].pvrb
             elif handle.lower() == 'setpoint':

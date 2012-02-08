@@ -218,11 +218,6 @@ class OrbitPlot(Qwt.QwtPlot):
         super(OrbitPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
-        #self.alignScales()
-
-        # Initialize data
-        # uncomment to draw the curve on top of the error bars
-        #errorOnTop = False 
         self.errorOnTop = errorbar
         self.live = live
         
@@ -249,6 +244,12 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.curve1.attach(self)
 
+        self.curve2 = Qwt.QwtPlotCurve()
+        self.curve2.setPen(QPen(Qt.red, 4))
+        self.curve2.attach(self)
+        #self.curve2.setVisible(False)
+
+        print "PV golden:", pvs_golden
         if pvs_golden is None: self.golden = None
         else:
             #for pv in pvs_golden: print pv, caget(pv.encode("ascii"))
@@ -261,7 +262,7 @@ class OrbitPlot(Qwt.QwtPlot):
             self.golden.attach(self)
             #print "Golden orbit is attached"
         self.bound = self.curve1.boundingRect()
-        if not self.golden is None:
+        if self.golden is not None:
             self.bound = self.bound.united(self.golden.boundingRect())
         
         if magnet_profile is not None:
@@ -280,26 +281,14 @@ class OrbitPlot(Qwt.QwtPlot):
 
             self.curvemag.attach(self)
         
-        #print "size hint:", self.sizeHint()
-        #print "min sizehint:", self.minimumSizeHint(), self.minimumWidth()
         self.setMinimumSize(400, 200)
-        #self.resize(300, 200)
-        #print "BD",self.bound
-        #.resize(400, 300)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
         grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
 
-        #picker1 = Qwt.QwtPlotPicker(Qwt.QwtPlot.xBottom,
-        #                           Qwt.QwtPlot.yLeft,
-        #                           Qwt.QwtPicker.NoSelection,
-        #                           Qwt.QwtPlotPicker.CrossRubberBand,
-        #                           Qwt.QwtPicker.AlwaysOn,
-        #                           self.canvas())
         self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
         self.picker1.setTrackerPen(QPen(Qt.red, 4))
         
-
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                         Qwt.QwtPlot.yLeft,
                                         Qwt.QwtPicker.DragSelection,
@@ -346,6 +335,7 @@ class OrbitPlot(Qwt.QwtPlot):
 
     def updatePlot(self):
         self.curve1.update()
+        if self.golden is not None: self.golden.update()
         self.replot()
         if self.live:
             self.zoomer1.setZoomBase(self.curve1.boundingRect())
@@ -361,6 +351,7 @@ class OrbitPlot(Qwt.QwtPlot):
         #print "Plot :: singleShot"
         self.zoomer1.setZoomBase(self.curve1.boundingRect())
         self.curve1.update()
+        if self.golden is not None: self.golden.update()
         self.replot()
 
     def liveData(self, on):

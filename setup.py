@@ -42,7 +42,7 @@ setup(
     py_modules = [
                   'aphlas.catools', 'aphlas.machines', 'aphlas.element',
                   'aphlas.lattice', 'aphlas.twiss', 'aphlas.hlalib', 
-                  'aphlas.rf', 'aphlas.orbit', 
+                  'aphlas.rf', 
                   'aphlas.ormdata', 'aphlas.orm', 'aphlas.aptools', 'aphlas.bba',
                   'aphlas.meastwiss', 
                   # GUI
