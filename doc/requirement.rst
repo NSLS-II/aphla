@@ -241,3 +241,13 @@ and booster vendors, others have to be developed by ourselves.
 
 see `Injector HLA specifications <http://groups.nsls2.bnl.gov/acceleratorsystems/AcceleratorPhysics/Injector/Forms/AllItems.aspx?RootFolder=%2facceleratorsystems%2fAcceleratorPhysics%2fInjector%2fInject%20HLA%20specifications&FolderCTID=&View={EA2745CE-97B9-4F8D-93A8-1E2AB44BE20C}>`_
 
+
+Dimond
+--------
+
+see `R. Bartolini EPAC06 <http://accelconf.web.cern.ch/accelconf/e06/PAPERS/THPCH112.PDF>`_
+
+- *emgtool* GUI. scan first two quad in transfer line, reacord beam size, fit 2D Gaussian. measure Twiss and emittance leaving the LINAC.
+- *dispg* beam energy spread.
+- *LTGQg* minimizing beam size along transferline, with fixed twiss at entrance/exit.
+- *LTBquadgui*

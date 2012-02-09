@@ -9,7 +9,6 @@ Response Matrix Data
 
 :class:`~hla.orm.OrmData` is an Orbit Response Matrix (ORM) 
 
-
 """
 
 import os, sys, time
@@ -26,10 +25,7 @@ class OrmData:
     - *m* 2D matrix, len(bpm) * len(trim)
     """
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
-    def __init__(self, datafile):
-        """
-          orm = Orm(['BPM1', 'BPM2'], ['TRIM1', 'TRIM2'])
-        """
+    def __init__(self, datafile = None):
         # points for trim setting when calc dx/dkick
         npts = 6
 
@@ -37,15 +33,14 @@ class OrmData:
         self.bpm = []
         self.trim = []
         
-        nbpmpv, ntrimpv = 0, 0
-
         # 3d raw data
         self._rawmatrix = None
         self._mask = None
         self._rawkick = None
         self.m = None
 
-        self.load(datafile)
+        if datafile is not None:
+            self.load(datafile)
 
         #print __file__, "Done initialization"
         
@@ -58,6 +53,65 @@ class OrmData:
         else:
             fmt = 'HDF5'
         return fmt
+    
+    def save_hdf5(self, filename):
+        import h5py
+        h5zip = None # 'gzip' works in default install
+        f = h5py.File(filename, 'w')
+        str_type = h5py.new_vlen(str)
+        m, n = np.shape(self.m)
+        dst = f.create_dataset('m', (m,n), data=self.m, compression=h5zip)
+        #
+        grp = f.create_group('bpm')
+        name, plane, pv = zip(*self.bpm)
+        dst = grp.create_dataset('element', (m,), data = name, dtype=str_type, 
+                                 compression=h5zip)
+        dst = grp.create_dataset('plane', (m,), data = plane, dtype=str_type,
+                                 compression=h5zip)
+        dst = grp.create_dataset('pvrb', (m,), data = pv, dtype=str_type,
+                                 compression=h5zip)
+        #
+        name, plane, pvrb, pvsp = zip(*self.trim)
+        grp = f.create_group("trim")
+        dst = grp.create_dataset('element', (n,), data=name, dtype=str_type,
+                                 compression=h5zip)
+        dst = grp.create_dataset('plane', (n,), data=plane, dtype=str_type,
+                                 compression=h5zip)
+        dst = grp.create_dataset('pvrb', (n,), data=pvrb, dtype=str_type,
+                                 compression=h5zip)
+        dst = grp.create_dataset('pvsp', (n,), data=pvsp, dtype=str_type,
+                                 compression=h5zip)
+        #
+        grp = f.create_group("_rawdata_")
+        dst = grp.create_dataset("rawmatrix", data = self._rawmatrix,
+                                 compression=h5zip)
+        dst = grp.create_dataset("rawkick", data = self._rawkick,
+                                 compression=h5zip)
+        dst = grp.create_dataset("mask", data = self._mask, dtype='i',
+                                 compression=h5zip)
+        
+        f.close()
+
+    def load_hdf5(self, filename, grp):
+        import h5py
+        f = h5py.File(filename, 'r')
+        g = f[grp]['bpm']
+        self.bpm = zip(g["element"], g["plane"], g["pvrb"])
+        g = f[grp]['trim']
+        self.trim = zip(g["element"], g["plane"], g["pvrb"], g["pvsp"])
+        nbpm, ntrim = len(self.bpm), len(self.trim)
+        self.m = np.zeros((nbpm, ntrim), 'd')
+        self.m[:,:] = f[grp]['m'][:,:]
+        t, npts = f[grp]["_rawdata_"]["rawkick"].shape
+        self._rawkick = np.zeros((ntrim, npts), 'd')
+        self._rawkick[:,:] = f[grp]["_rawdata_"]["rawkick"][:,:]
+        self._rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
+        self._rawmatrix[:,:,:] = f[grp]["_rawdata_"]["rawmatrix"][:,:,:]
+        self._mask = np.zeros((nbpm, ntrim), dtype='i')
+        self._mask[:,:] = f[grp]["_rawdata_"]["mask"][:,:]
+
+        f.close()
+
 
     def save(self, filename, format = ''):
         """
@@ -78,18 +132,7 @@ class OrmData:
         fmt = self._io_format(filename, format)
 
         if fmt == 'HDF5':
-            import h5py
-            f = h5py.File(filename, 'w')
-            dst = f.create_dataset("m", data = self.m)
-            dst = f.create_dataset("bpm", data = self.bpm)
-            dst = f.create_dataset("trim", data = self.trim)
-
-            grp = f.create_group("_rawdata_")
-            dst = grp.create_dataset("rawmatrix", data = self._rawmatrix)
-            dst = grp.create_dataset("rawkick", data = self._rawkick)
-            dst = grp.create_dataset("mask", data = self._mask)
-
-            f.close()
+            self.save_hdf5(filename)
         elif fmt == 'shelve':
             import shelve
             f = shelve.open(filename, 'c')
@@ -115,20 +158,7 @@ class OrmData:
         fmt = self._io_format(filename, format)
             
         if fmt == 'HDF5':
-            import h5py
-            f = h5py.File(filename, 'r')
-            self.bpm = [ b for b in f["bpm"]]
-            self.trim = [t for t in f["trim"]]
-            nbpm, ntrim = len(self.bpm), len(self.trim)
-            self.m = np.zeros((nbpm, ntrim), 'd')
-            self.m[:,:] = f["orm"][:,:]
-            t, npts = f["_rawdata_"]["rawkick"].shape
-            self._rawkick = np.zeros((ntrim, npts), 'd')
-            self._rawkick[:,:] = f["_rawdata_"]["rawkick"][:,:]
-            self._rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
-            self._rawmatrix[:,:,:] = f["_rawdata_"]["rawmatrix"][:,:,:]
-            self._mask = np.zeros((nbpm, ntrim))
-            self._mask[:,:] = f["_rawdata_"]["mask"][:,:]
+            self.load_hdf5(filename, '/')
         elif fmt == 'shelve':
             f = shelve.open(filename, 'r')
             self.bpm = f["orm.bpm"]
@@ -138,11 +168,11 @@ class OrmData:
             self._rawkick   = f["orm._rawdata_.rawkick"]
             self._mask      = f["orm._rawdata_.mask"]
         else:
-            raise ValueError("format %s is not supported yet" % format)
+            raise ValueError("format %s is not supported" % format)
 
         #print self.trim
 
-    def getBpms(self):
+    def getBpmNames(self):
         return [v[0] for v in self.bpm]
     
     def hasBpm(self, bpm):
@@ -154,7 +184,7 @@ class OrmData:
             if b[0] == bpm: return True
         return False
 
-    def getTrims(self):
+    def getTrimNames(self):
         return [v[0] for v in self.trim]
     
     def hasTrim(self, trim):
@@ -200,8 +230,8 @@ class OrmData:
     def update(self, src, masked=False):
         """
         merge two orm into one
-        masked = True, update with a masked value
-        masked = False, if the new value is masked, skip it.
+        
+        - masked, whether update when the value is masked to ignore
 
         rawkick is still updated regardless of masked or not.
 

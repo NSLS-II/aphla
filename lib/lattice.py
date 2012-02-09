@@ -16,7 +16,7 @@ import numpy as np
 from fnmatch import fnmatch
 
 from catools import caget, caput
-from element import Element
+#from element import CaElement
 
 class Lattice:
     """Lattice"""
@@ -24,15 +24,15 @@ class Lattice:
 
     def __init__(self, mode = 'undefined'):
         # group name and its element
-        self._group = {}
+        self._group = None
         # guaranteed in the order of s.
         self._elements = []
         # data set
         self.mode = mode
-        self.tune = [ 0.0, 0.0]
-        self.chromaticity = [0.0, 0.0]
-        self.circumference = 0.0
-        self.orm = None
+        self.tune = [ None, None]
+        self.chromaticity = [None, None]
+        self.circumference = None
+        self.ormdata = None
         self.loop = True
 
     def __getitem__(self, key):
@@ -40,6 +40,8 @@ class Lattice:
             return self._elements[key]
         elif isinstance(key, str) or isinstance(key, unicode):
             return self._find_element(name=key)
+        else:
+            return None
 
     def _find_element(self, name):
         """
@@ -82,11 +84,22 @@ class Lattice:
         if self._find_element(name): return True
         else: return False
 
-    def insertElement(self, i, elem):
-        self._elements.insert(i, elem)
-        for g in elem.group:
-            if not g: continue
-            self.addGroupMember(g, elem.name, newgroup=True)
+    def insertElement(self, elem, i = None):
+        if i is not None:
+            self._elements.insert(i, elem)
+        else:
+            if len(self._elements) == 0: self._elements.append(elem)
+            else:
+                k = 0
+                for e in self._elements:
+                    if e.sb < elem.sb: 
+                        k += 1
+                        continue
+                if k == len(self._elements): self._elements.append(elem)
+                else: self._elements.insert(k, elem)
+        #for g in elem.group:
+        #    if not g: continue
+        #    self.addGroupMember(g, elem.name, newgroup=True)
             
     def appendElement(self, elem):
         """
@@ -94,10 +107,10 @@ class Lattice:
         duplicate elements (call hasElement before).
         """
         self._elements.append(elem)
-        for g in elem.group:
-            if not g: continue
-            self.addGroupMember(g, elem.name, newgroup=True)
-            
+        #for g in elem.group:
+        #    if not g: continue
+        #    self.addGroupMember(g, elem.name, newgroup=True)
+
     def size(self):
         """
         total number of elements, including magnets and diagnostic instruments
@@ -415,16 +428,18 @@ class Lattice:
         """
         clear the old groups, fill with new data by collecting group name
         that each element belongs to.
+
+        - the elements must be in s order
         """
         # cleanr everything
         self._group = {}
         for e in self._elements:
             for g in e.group:
                 if self._illegalGroupName(g): continue
-                self.addGroupMember(g, e.name, newgroup=True)
-        #print __file__, "test a group", self._group['DIPOLE']
-        #print __file__, self._group.keys()
-        
+                #self.addGroupMember(g, e.name, newgroup=True)
+                lst = self._group.setdefault(g, [])
+                lst.append(e)
+
     def addGroup(self, group):
         """
         create a new group
@@ -502,7 +517,7 @@ class Lattice:
         else:
             raise ValueError("%s not in group %s" % (member, group))
 
-    def getGroups(self, element = ''):
+    def getGroups(self, element = None):
         """
         return a list of groups this element belongs to
 
@@ -514,7 +529,7 @@ class Lattice:
           
         The input string is wildcard matched against each element.
         """
-        if not element: return self._group.keys()
+        if element is None: return self._group.keys()
 
         ret = []
         for k, elems in self._group.items():
@@ -739,11 +754,16 @@ class Lattice:
             if elem.se < s1: continue
             elif elem.sb > s2: continue
             x1, y1, c = elem.profile()
-            prof.append((x1, y1, c))
+            prof.append((x1, y1, c, elem.name))
+        # filter the zero
         ret = [prof[0]]
         for p in prof[1:]:
+            # compare the x with the last element in ret if this is a new
+            # element, draw a line from the end of the last element to the
+            # beginning of this element.
             if abs(p[0][0] - ret[-1][0][-1]) >  1e-10:
-                ret.append(([ret[-1][0][-1], p[0][0]], [0, 0], 'k'))
+                ret.append(([ret[-1][0][-1], p[0][0]], [0, 0], 'k', None))
+            # add the profile
             ret.append(p)
         return ret
 

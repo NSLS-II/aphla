@@ -67,7 +67,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         for m in self.profile:
             if x > m[0] and x < m[1]:
                 s.append(m[2])
-        return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y()*1e6, '\n'.join(s)))
+        return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y(), '\n'.join(s)))
 
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
@@ -93,6 +93,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         Qwt.QwtPlotCurve.__init__(self)
 
         self.data = data
+        self.x1, self.y1, self.e1 = None, None, None
+        self.yref = None # no mask applied
         self.data_field = kw.get('data_field', 'orbit')
         self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
         self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
@@ -104,15 +106,27 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.showDifference = False
         self.update()
 
+    def setDrift(self, mode):
+        if mode == 'no':
+            self.yref = None
+        elif mode == 'now':
+            x1, y1, e1 = self.data.data(field=self.data_field, nomask=True)
+            self.yref = y1
+        elif mode == 'golden':
+            self.yref = self.data.golden(nomask = True)
+
     def update(self):
-        x1, y1, e1 = self.data.data(field=self.data_field)
-        Qwt.QwtPlotCurve.setData(self, x1, y1)
+        self.x1, self.y1, self.e1 = self.data.data(field=self.data_field)
+        if self.yref is not None:
+            self.y1 = self.y1 - np.compress(self.data.keep, self.yref)
+        Qwt.QwtPlotCurve.setData(self, self.x1, self.y1)
 
     def boundingRect(self):
         """
         Return the bounding rectangle of the data, error bars included.
         """
-        x, y, y2 = self.data.data(field=self.data_field)
+        #x, y, y2 = self.data.data(field=self.data_field)
+        x, y, y2 = self.x1, self.y1, self.e1
         xmin, xmax = min(x), max(x)
         ymin = min(y - y2)
         ymax = max(y + y2)
@@ -152,8 +166,9 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         # draw the error bars with caps in the y direction
         if self.errorOnTop:
             # draw the bars
-            x1, y1, yer1 = self.data.data(field=self.data_field)
-        
+            #x1, y1, yer1 = self.data.data(field=self.data_field)
+            x1, y1, yer1 = self.x1, self.y1, self.e1
+
             ymin = (y1 - yer1)
             ymax = (y1 + yer1)
 
@@ -190,16 +205,19 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
 class OrbitPlot(Qwt.QwtPlot):
     def __init__(self, parent = None, data = None, data_field = 'orbit',
-                 pvs_golden = None,
-                 live=True, errorbar=True):
+                 pvs_golden = None, live = True, errorbar = True, 
+                 picker_profile = None, magnet_profile = None):
+        
+        #data = kw.get('data', None)
+        #data_field = kw.get('data_field', 'orbit')
+        #pvs_golden = kw.get('pvs_golden', None)
+        #live = kw.get('live', True)
+        #errorbar= kw.get('errorbar', True)
+        #picker_profile = kw.get('picker_profile', None)
+
         super(OrbitPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
-        #self.alignScales()
-
-        # Initialize data
-        # uncomment to draw the curve on top of the error bars
-        #errorOnTop = False 
         self.errorOnTop = errorbar
         self.live = live
         
@@ -218,7 +236,7 @@ class OrbitPlot(Qwt.QwtPlot):
                 Qwt.QwtSymbol.Ellipse,
                 QBrush(Qt.red),
                 QPen(Qt.black, 2),
-                QSize(9, 9)),
+                QSize(8, 8)),
             errorPen = QPen(Qt.blue, 1),
             errorCap = 10,
             errorOnTop = self.errorOnTop,
@@ -226,6 +244,12 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.curve1.attach(self)
 
+        self.curve2 = Qwt.QwtPlotCurve()
+        self.curve2.setPen(QPen(Qt.red, 4))
+        self.curve2.attach(self)
+        #self.curve2.setVisible(False)
+
+        print "PV golden:", pvs_golden
         if pvs_golden is None: self.golden = None
         else:
             #for pv in pvs_golden: print pv, caget(pv.encode("ascii"))
@@ -238,39 +262,33 @@ class OrbitPlot(Qwt.QwtPlot):
             self.golden.attach(self)
             #print "Golden orbit is attached"
         self.bound = self.curve1.boundingRect()
-        if not self.golden is None:
+        if self.golden is not None:
             self.bound = self.bound.united(self.golden.boundingRect())
         
-        self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
-        # get x, y, color
-        magx, magy, magc = self.getMagnetProfile()
-        self.curvemag.setData(magx, magy)
-        self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
-        self.setAxisScale(Qwt.QwtPlot.yRight, -2, 20)
-        self.enableAxis(Qwt.QwtPlot.yRight, False)
+        if magnet_profile is not None:
+            self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
+            # get x, y, color(optional)
+            magx, magy = [], []
+            if len(magnet_profile) == 2:
+                magx, magy = magnet_profile
+                magc = ['k'] * len(magx)
+            elif len(magnet_profile) == 3:
+                magx, magy, magc = magnet_profile
+            self.curvemag.setData(magx, magy)
+            self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
+            self.setAxisScale(Qwt.QwtPlot.yRight, -2, 20)
+            self.enableAxis(Qwt.QwtPlot.yRight, False)
 
-        self.curvemag.attach(self)
+            self.curvemag.attach(self)
         
-        #print "size hint:", self.sizeHint()
-        #print "min sizehint:", self.minimumSizeHint(), self.minimumWidth()
         self.setMinimumSize(400, 200)
-        #self.resize(300, 200)
-        #print "BD",self.bound
-        #.resize(400, 300)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
         grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
 
-        #picker1 = Qwt.QwtPlotPicker(Qwt.QwtPlot.xBottom,
-        #                           Qwt.QwtPlot.yLeft,
-        #                           Qwt.QwtPicker.NoSelection,
-        #                           Qwt.QwtPlotPicker.CrossRubberBand,
-        #                           Qwt.QwtPicker.AlwaysOn,
-        #                           self.canvas())
-        self.picker1 = MagnetPicker(self.canvas())
+        self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
         self.picker1.setTrackerPen(QPen(Qt.red, 4))
         
-
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                         Qwt.QwtPlot.yLeft,
                                         Qwt.QwtPicker.DragSelection,
@@ -315,19 +333,9 @@ class OrbitPlot(Qwt.QwtPlot):
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         self.picker1.addMagnetProfile(sb, se, name, minlen)
 
-    def getMagnetProfile(self):
-        #prof = hla.getBeamlineProfile()
-        prof = []
-        x, y, c = [], [], []
-        for box in prof:
-            for i in range(len(box[0])):
-                x.append(box[0][i])
-                y.append(box[1][i])
-                c.append(box[2])
-        return x, y, c
-        
     def updatePlot(self):
         self.curve1.update()
+        if self.golden is not None: self.golden.update()
         self.replot()
         if self.live:
             self.zoomer1.setZoomBase(self.curve1.boundingRect())
@@ -336,10 +344,14 @@ class OrbitPlot(Qwt.QwtPlot):
         #y = self.invTransform(Qwt.QwtPlot.yLeft, 10)
         #self.marker.setValue(x, y)
 
+    def setDrift(self, mode = 'no'):
+        self.curve1.setDrift(mode)
+
     def singleShot(self):
         #print "Plot :: singleShot"
         self.zoomer1.setZoomBase(self.curve1.boundingRect())
         self.curve1.update()
+        if self.golden is not None: self.golden.update()
         self.replot()
 
     def liveData(self, on):

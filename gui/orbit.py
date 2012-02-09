@@ -9,7 +9,6 @@
 
 import cothread
 from cothread.catools import caget, caput
-from aphlas.epicsdatamonitor import CaDataMonitor
 
 app = cothread.iqt(use_timer=True)
 
@@ -21,18 +20,26 @@ import gui_resources
 from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
 from orbitplot import OrbitPlot
+from orbitcorrdlg import OrbitCorrDlg
+
+import aphlas
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
-from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 
-    QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon)
+from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, 
+    QVBoxLayout, QPen, 
+    QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
 
 import numpy as np
 
-config_dir = "~/.hla"
-
 class OrbitData(object):
     """
-    the orbit data
+    the orbit related data.
+    - *samples* data points kept to calculate the statistics.
+    - *yfactor* factor for *y*
+    - *x* list of s-coordinate, never updated.
+    - *pvs* list of channel names
+    - *mode* 'EPICS' | 'sim', default is 'EPICS'
+    - *keep* mask for ignore(0) or keep(1) that data point.
     """
     def __init__(self, pvs, **kw):
         n = len(pvs)
@@ -42,102 +49,161 @@ class OrbitData(object):
         if len(self.x) != n:
             raise ValueError("pv and x are not same size %d != %d" % (n, len(self.x)))
         self.pvs = pvs
+        self.pvs_golden = kw.get('pvs_golden', None)
+
         self.icur, self.icount = -1, 0
         # how many samples are kept for statistics
+        self.mode = kw.get('mode', 'EPICS')
         self.y      = np.zeros((self.samples, n), 'd')
         for i in range(self.samples):
-            self.y[i,:] = caget(self.pvs)
-        self.yref   = np.zeros(n, 'd')
+            if self.mode == 'EPICS': self.y[i,:] = caget(self.pvs)
+            elif self.mode == 'sim': self.y[i,:] = np.random.rand(n)
+        #self.yref   = np.zeros(n, 'd')
         self.errbar = np.ones(n, 'd') * 1e-15
         self.keep   = np.ones(n, 'i')
         #print self.x, self.y
 
     def update(self):
-        """update the orbit data"""
+        """
+        update the orbit data. It retrieve the data with channel access and
+        calculate the updated standard deviation. If the current mode is
+        'sim', instead of channel access it uses random data.
+        """
         # y and errbar sync with plot, not changing data.
         i = self.icur + 1
         if i >= self.samples: i = 0
-        self.y[i,:] = caget(self.pvs)
-        self.y[i, :] *= self.yfactor
+        if self.mode == 'EPICS':
+            self.y[i,:] = caget(self.pvs)
+            self.y[i, :] *= self.yfactor
+        elif self.mode == 'sim': 
+            self.y[i,:] = np.random.rand(len(self.pvs))
         self.errbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
         
     def reset(self):
+        """
+        clear the history data points and statistics.
+        """
         self.icur, self.icount = -1, 0
         self.y.fill(0.0)
         self.errbar.fill(0.0)
         #self.update()
 
-    def min(self):
+    def min(self, axis='s'):
         c, i = divmod(self.icount - 1, self.samples)
-        return np.min(self.y[i,:])
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.min(data)
 
-    def max(self):
+    def max(self, axis='s'):
         c, i = divmod(self.icount - 1, self.samples)
-        return np.max(self.y[i,:])
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.max(data)
         
-    def average(self):
+    def average(self, axis='s'):
         """average of the whole curve"""
         c, i = divmod(self.icount - 1, self.samples)
-        return np.average(self.y[i,:])
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.average(data)
 
-    def std(self):
-        """std of the curve"""
+    def std(self, axis='s'):
+        """
+        std of the curve
+        - axis='t' std over time axis for each PV
+        - axis='s' std over all PV for the latest dataset
+        """
+        if axis == 't': ax = 1
+        elif axis == 's': ax = 0
         y = np.compress(self.keep, self.y, axis=1)
-        return np.std(y, axis = 0)
+        return np.std(y, axis = ax)
 
-    def data(self, field="orbit"):
+    def data(self, field="orbit", nomask=False):
         """
         field = [ 'orbit' | 'std' ]
         """
         if self.icur < 0:
             n = len(self.x)
-            return self.x, np.zeros(n, 'd'), np.zeros(n, 'd')
+            x1, y1, e1 = self.x, np.zeros(n, 'd'), np.zeros(n, 'd')
 
         i = self.icur
         if field == 'orbit':
-            x1 = np.compress(self.keep, self.x, axis=0)
-            y1 = np.compress(self.keep, self.y[i,:] - self.yref, axis=0)
-            e1 = np.compress(self.keep, self.errbar, axis=0)
-            return x1, y1, e1
+            x1 = self.x
+            y1 = self.y[i,:]
+            e1 = self.errbar
         elif field == 'std':
-            x1 = np.compress(self.keep, self.x, axis=0)
-            y1 = self.std()
-            return x1, y1, np.zeros(len(x1), 'd')
+            x1 = self.x
+            y1 = np.std(self.y, axis=0)
+            e1 = np.zeros(len(x1), 'd')
+        if nomask: return x1, y1, e1
+        else:
+            return np.compress(self.keep, [x1, y1, e1], axis=1)
+
+    def golden(self, nomask=False):
+        if self.pvs_golden is None:
+            d = np.zeros(len(self.pvs), 'd')
+        elif self.mode == 'sim':
+            d = np.zeros(len(self.pvs), 'd')
+        elif self.mode == 'EPICS':
+            d = np.array(caget(self.pvs_golden)) * self.yfactor
+
+        if nomask: return d
+        else: return np.compress(self.keep, d)
+
+    def unmasked(self, d):
+        """
+        
+        """
+        n = len(self.keep)
+        ret = np.zeros(n, 'd')
+        dc = [x for x in d]
+        for i in range(n):
+            if not self.keep[i]: continue
+            ret[i] = dc.pop(0)
+        return ret
 
 class OrbitPlotMainWindow(QMainWindow):
     """
     the main window
     """
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, mode = 'EPICS'):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
-        self.config = OrbitPlotConfig(config_dir, "nsls2_sr_orbit.json")
+        self.config = OrbitPlotConfig(None, aphlas.conf.filename("nsls2_sr_orbit.json"))
 
         # initialize a QwtPlot central widget
         #bpm = hla.getElements('BPM')
-        pvx = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmx']]
+        self.pvx = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmx']]
         #print pvx
-        pvy = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmy']]
-        pvsx = [b[1]['s'] for b in self.config.data['bpmx']]
-        pvsy = [b[1]['s'] for b in self.config.data['bpmy']]
+        self.pvy = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmy']]
+        self.pvsx = [b[1]['s'] for b in self.config.data['bpmx']]
+        self.pvsy = [b[1]['s'] for b in self.config.data['bpmy']]
         self.bpm = [b[0] for b in self.config.data['bpmx']]
         pvsx_golden = [b[1]['golden'].encode("ascii") 
                        for b in self.config.data['bpmx']]
-        self.orbitx_data = OrbitData(pvs = pvx, x = pvsx)
-        self.orbity_data = OrbitData(pvs = pvy, x = pvsy)
+        pvsy_golden = [b[1]['golden'].encode("ascii") 
+                       for b in self.config.data['bpmy']]
+        self.orbitx_data = OrbitData(pvs = self.pvx, x = self.pvsx, mode=mode, 
+                                     pvs_golden = pvsx_golden)
+        self.orbity_data = OrbitData(pvs = self.pvy, x = self.pvsy, mode=mode,
+                                     pvs_golden = pvsy_golden)
         self.orbitx_data.update()
         self.orbity_data.update()
 
-        self.plot1 = OrbitPlot(self, self.orbitx_data)
-        self.plot2 = OrbitPlot(self, self.orbity_data)
+        picker = [(v[1], v[2], v[0]) for v in self.config.data['magnetpicker']]
+        self.plot1 = OrbitPlot(self, self.orbitx_data, picker_profile = picker,
+                               magnet_profile = self.config.data['magnetprofile'])
+        #self.plot1.curve1.setPen(QPen(Qt.blue, 2))
+        self.plot2 = OrbitPlot(self, self.orbity_data, picker_profile = picker,
+                               magnet_profile = self.config.data['magnetprofile'])
         self.plot3 = OrbitPlot(self, self.orbitx_data, data_field='std',
-            errorbar=False)
+            errorbar=False, picker_profile = picker,
+                               magnet_profile = self.config.data['magnetprofile'])
         self.plot4 = OrbitPlot(self, self.orbity_data, data_field='std',
-            errorbar=False)
+            errorbar=False, picker_profile = picker,
+                               magnet_profile = self.config.data['magnetprofile'])
 
+        #print pvsx_golden, pvsy_golden
         #for e in hla.getGroupMembers(['QUAD', 'BPM', 'HCOR', 'VCOR', 'SEXT'],
         #                             op='union'):
         #    self.plot1.addMagnetProfile(e.sb, e.sb+e.length, e.name)
@@ -171,20 +237,35 @@ class OrbitPlotMainWindow(QMainWindow):
         self.wid = QTabWidget()
         self.wid.addTab(wid1, "Orbit Plot")
 
-        #wid2 = QTableWidget()
-        #wid.addTab(wid2, "test2")
         wid1 = QWidget()
         vbox = QVBoxLayout()
         vbox.addWidget(self.plot3)
         vbox.addWidget(self.plot4)
         wid1.setLayout(vbox)
         self.wid.addTab(wid1, "Std")
+
+        #wid1 = QWidget()
+        #vbox = QGridLayout()
+        #vbox.addWidget(self.plot5, 0, 1)
+        ##vbox.addWidget(self.lbplt2info, 1, 0)
+        ##vbox.addWidget(self.plot2, 1, 1)
+        #wid1.setLayout(vbox)
+        #self.wid = QTabWidget()
+        #self.wid.addTab(wid1, "Orbit Steer")
+
         self.setCentralWidget(self.wid)
 
         #self.setCentralWidget(OrbitPlot())
         #print self.plot1.sizeHint()
         #print self.plot1.minimumSizeHint()
 
+        #self.plot5 = OrbitCorrPlot(self, self.orbitx_data, picker_profile = picker,
+        #    magnet_profile = self.config.data['magnetprofile'])
+        #wid1 = QWidget()
+        #vbox = QVBoxLayout()
+        #vbox.addWidget(self.plot5)
+        #wid1.setLayout(vbox)
+        #self.wid.addTab(wid1, "OrbitSt")
         #
         # file menu
         #
@@ -219,7 +300,7 @@ class OrbitPlotMainWindow(QMainWindow):
         viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
                                     "Errorbar", self)
         viewErrorBarAction.setCheckable(True)
-        viewErrorBarAction.setChecked(False)
+        viewErrorBarAction.setChecked(True)
         self.connect(viewErrorBarAction, SIGNAL("toggled(bool)"),
                      self.errorBar)
 
@@ -261,14 +342,45 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(controlZoomOutPlot2Action, SIGNAL("triggered()"),
                      self.plot2.zoomOut)
 
-        self.viewMenu.addAction(viewZoomOut15Action)
-        self.viewMenu.addAction(viewZoomIn15Action)
-        self.viewMenu.addAction(viewZoomAutoAction)
+        drift_from_now = QAction("Drift from Now", self)
+        drift_from_now.setCheckable(True)
+        drift_from_now.setShortcut("Ctrl+N")
+        drift_from_golden = QAction("Drift from Golden", self)
+        drift_from_golden.setCheckable(True)
+        drift_from_none = QAction("None", self)
+        drift_from_none.setCheckable(True)
+
+        steer_orbit = QAction("Steer Orbit ...", self)
+        self.connect(steer_orbit, SIGNAL("triggered()"), self.createLocalBump)
+
+        self.viewMenu.addAction(drift_from_now)
+        self.viewMenu.addAction(drift_from_golden)
+        self.viewMenu.addAction(drift_from_none)
+
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(viewLiveAction)
         self.viewMenu.addAction(viewSingleShotAction)
+
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(viewErrorBarAction)
+        
+        drift_group = QActionGroup(self)
+        drift_group.addAction(drift_from_none)
+        drift_group.addAction(drift_from_now)
+        drift_group.addAction(drift_from_golden)
+        drift_from_none.setChecked(True)
+
+        sep = self.viewMenu.addSeparator()
+        #sep.setText("Drift")
+        self.connect(drift_from_now, SIGNAL("triggered()"), self.setDriftNow)
+        self.connect(drift_from_none, SIGNAL("triggered()"), self.setDriftNone)
+        self.connect(drift_from_golden, SIGNAL("triggered()"), 
+                     self.setDriftGolden)
+
+        self.viewMenu.addSeparator()
+        self.viewMenu.addAction(viewZoomOut15Action)
+        self.viewMenu.addAction(viewZoomIn15Action)
+        self.viewMenu.addAction(viewZoomAutoAction)
 
         self.controlMenu = self.menuBar().addMenu("&Control")
         #self.viewMenu.addSeparator()
@@ -279,6 +391,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.controlMenu.addAction(controlZoomOutPlot1Action)
         self.controlMenu.addAction(controlZoomInPlot2Action)
         self.controlMenu.addAction(controlZoomOutPlot2Action)
+        self.controlMenu.addSeparator()
+        self.controlMenu.addAction(steer_orbit)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -304,7 +418,10 @@ class OrbitPlotMainWindow(QMainWindow):
         controlToolBar.addAction(controlResetPvDataAction)
 
         # update at 2Hz
-        self.timerId = self.startTimer(1000)
+        if mode == 'sim': dt = 100
+        elif mode == 'EPICS': dt = 800
+        self.timerId = self.startTimer(dt)
+        self.corbitdlg = None # orbit correction dlg
 
     def liveData(self, on):
         """Switch on/off live data taking"""
@@ -317,6 +434,18 @@ class OrbitPlotMainWindow(QMainWindow):
     def errorBar(self, on):
         self.plot1.setErrorBar(on)
         self.plot2.setErrorBar(on)
+
+    def setDriftNone(self):
+        self.plot1.setDrift('no')
+        self.plot2.setDrift('no')
+
+    def setDriftNow(self):
+        self.plot1.setDrift('now')
+        self.plot2.setDrift('now')
+
+    def setDriftGolden(self):
+        self.plot1.setDrift('golden')
+        self.plot2.setDrift('golden')
 
     def zoomOut15(self):
         """
@@ -404,13 +533,49 @@ class OrbitPlotMainWindow(QMainWindow):
         self.orbity_data.reset()
         #hla.hlalib._reset_trims()
 
+    def plotDesiredOrbit(self, x, y):
+        #print "plot: ", x, y
+        self.plot1.curve2.setData(self.pvsx, x)
+        self.plot2.curve2.setData(self.pvsy, y)
 
-def main(args = None):
+    def correctOrbit(self, x, y):
+        #print "correct to :", x, y
+        trimx = aphlas.getElements('HCOR')
+        trimy = aphlas.getElements('VCOR')
+        trimpvx = [t.pv(field='x', handle='setpoint')[0] for t in trimx]
+        trimpvy = [t.pv(field='y', handle='setpoint')[0] for t in trimy]
+        #print trimpvx
+        xref = [v*1e-6 for v in x]
+        aphlas.correctOrbitPv(self.pvx, trimpvx, ormdata = None, scale = 0.5, 
+                              ref = xref)
+        yref = [v*1e-6 for v in y]
+        aphlas.correctOrbitPv(self.pvy, trimpvy, ormdata = None, scale = 0.5, 
+                              ref = yref)
+        pass
+
+    def createLocalBump(self):
+        if self.corbitdlg is None:
+            self.corbitdlg = OrbitCorrDlg(
+                self.pvx, self.orbitx_data.x, self.orbitx_data.golden(),
+                self.orbity_data.golden(), 
+                self.plotDesiredOrbit, self.correctOrbit, self)
+            self.corbitdlg.resize(600, 300)
+            self.corbitdlg.setWindowTitle("Create Local Bump")
+        self.corbitdlg.show()
+        self.corbitdlg.raise_()
+        self.corbitdlg.activateWindow()
+
+
+def main():
+    aphlas.initNSLS2VSR()
     #app = QApplication(args)
-    demo = OrbitPlotMainWindow()
+    #app.setStyle(st)
+    if '--sim' in sys.argv: mode = 'sim'
+    else: mode = 'EPICS'
+    demo = OrbitPlotMainWindow(mode=mode)
     demo.resize(600,500)
     demo.show()
-
+    # print app.style() # QCommonStyle
     #sys.exit(app.exec_())
     cothread.WaitForQuit()
 

@@ -24,7 +24,7 @@ Modules include:
 
     :mod:`hla.lattice`
 
-        define the :class:`~hla.lattice.Element`, :class:`~hla.lattice.Twiss`,
+        define the :class:`~hla.lattice.CaElement`, :class:`~hla.lattice.Twiss`,
         :class:`~hla.lattice.Lattice` class
 
     :mod:`hla.orbit`
@@ -37,11 +37,19 @@ Modules include:
         
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.0a1"
 
 
 #import os, sys, re
 import sys
+
+import logging
+
+logging.basicConfig(filename="aphlas.log",
+    filemode='w',
+    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
+    level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 from catools import *
 from machines import initNSLS2VSR, initNSLS2VSRTwiss
@@ -68,20 +76,18 @@ from ormdata import OrmData
 ## print >> sys.stderr, "= HLA channel finder configure: ", cfa_pkl
 ## _cfa.load(cfa_pkl)
 
-## import orm
-## _orm = orm.Orm(bpm=[], trim=[])
-## orm_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'orm.pkl')
-## print >> sys.stderr, "= HLA orbit resp mat: ", orm_pkl
-## _orm.load(orm_pkl)
-
 
 ## # set RF frequency
 ## from cothread import catools, Timedout
 NETWORK_DOWN=False
 try:
-    caput('SR:C00-RF:G00{RF:00}Freq-SP', 499.680528631)
-    print("# Network is fine, using online PVs", file= sys.stderr)
+    rfpv = 'SR:C00-RF:G00{RF:00}Freq-SP'
+    #print("# checking RF pv: %s" % rfpv)
+    caput(rfpv, 499.680528631, timeout=1)
+    #print("# Network is fine, using online PVs", file= sys.stderr)
+    logger.info("network is connected. use online channel access")
 except Timedout:
+    logger.info("virtual accelerator is not available")
     NETWORK_DOWN = True
     pass
 

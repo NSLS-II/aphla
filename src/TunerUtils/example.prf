@@ -1,0 +1,25 @@
+(dp1
+S'time_stamp'
+p2
+F1320712708.9208789
+sS'version'
+p3
+S'0.1.0'
+p4
+sS'TunerGUI'
+p5
+(dp6
+S'visible_column_name_list'
+p7
+(lp8
+S'Group Name'
+p9
+aS'Knob Name'
+p10
+aS'Weight'
+p11
+aS'N.Weight'
+p12
+aS'Step Size'
+p13
+ass.

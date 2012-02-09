@@ -13,7 +13,7 @@ __all__ = [
     'caget', 'caput', 'Timedout'
 ]
 
-import sys, time
+import sys, time, os
 import cothread
 import cothread.catools as ct
 from cothread import Timedout
@@ -37,9 +37,7 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
         pvs2 = pvs
     elif isinstance(pvs, unicode):
         pvs2 = pvs.encode("ascii")
-    elif isinstance(pvs, list):
-        pvs2 = [pv.encode("ascii") for pv in pvs]
-    elif isinstance(pvs, tuple):
+    elif isinstance(pvs, (tuple, list)):
         pvs2 = [pv.encode("ascii") for pv in pvs]
     else:
         raise ValueError("Unknown type " + str(type(pvs)))
@@ -48,8 +46,12 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
         return ct.caget(pvs2, timeout=timeout, datatype=datatype,
                         format=format, count=count, throw=throw)
     except cothread.Timedout:
-        #print "TIMEOUT: ", pvs
-        raise cothread.Timedout
+        if os.environ.get('APHLAS_DISABLE_CA', 0):
+            print "TIMEOUT: reading", pvs
+            if isinstance(pvs, (unicode, str)): return 0.0
+            else: return [0.0] * len(pvs2)
+        else:
+            raise cothread.Timedout
 
 def caput(pvs, values, timeout=5, wait=True, throw=True):
     """
@@ -76,8 +78,10 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
     try:
         return ct.caput(pvs2, values, timeout=timeout, wait=wait, throw=throw)
     except cothread.Timedout:
-        #print "TIMEOUT: ", pvs
-        raise cothread.Timedout
+        if os.environ.get('APHLAS_DISABLE_CA', 0):
+            print "TIMEOUT: reading", pvs
+        else:
+            raise cothread.Timedout
 
 def caputwait(pv, value, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
     """

@@ -3,19 +3,17 @@
 import unittest
 import sys, os
 import numpy as np
+from aphlas.catools import caget, caput, Timedout
 
 from conf import *
-import machines
-
-import lattice, element
-import cothread
-from cothread.catools import caget
+from aphlas import machines, lattice, element
+from aphlas.catools import caget
 
 machine_initialized = False
 
 def initialize_the_machine():
     machines.initNSLS2VSR()
-    machines.initNSLS2VSRTxt()
+    #machines.initNSLS2VSRTxt()
 
 class TestLattice(unittest.TestCase):
     def setUp(self):
@@ -44,7 +42,6 @@ class TestLattice(unittest.TestCase):
             for i in range(3): self.assertTrue(el[i].name == bpm[i].name)
             
 
-    #class TestLattice:
     def test_virtualelements(self):
         elem = self.lat.getElements('HLA:*')
         self.assertTrue(elem)
@@ -94,9 +91,11 @@ class TestLattice(unittest.TestCase):
         bpm = self.lat.getElements('BPM')
         try:
             for e in bpm:
-                self.assertTrue(len(e.value) == 2, 
+                self.assertTrue(abs(e.x) >= 0, 
                                 "element: %s, %s" % (e.name, e._field))
-        except cothread.Timedout:
+                self.assertTrue(abs(e.y) >= 0, 
+                                "element: %s, %s" % (e.name, e._field))
+        except Timedout:
             pass
             
     def test_element_pv(self):
@@ -105,24 +104,23 @@ class TestLattice(unittest.TestCase):
         for e in hcor:
             self.assertEqual(len(e.pv()), 2)
             self.assertEqual(len(e.pv(field='x')), 2)
-            self.assertEqual(len(e.pv(field='y')), 0)
+            self.assertEqual(e.pv(field='y'), None)
             for pv in e.pv():
                 self.assertTrue(pv.find('HCor') > 0)
 
         for e in vcor:
             self.assertEqual(len(e.pv()), 2)
             self.assertEqual(len(e.pv(field='y')), 2)
-            self.assertEqual(len(e.pv(field='x')), 0)
+            self.assertEqual(e.pv(field='x'), None)
             for pv in e.pv():
                 self.assertTrue(pv.find('VCor') > 0)
+
 
 class TestLatticeSr(TestLattice):
     def setUp(self):
         global machine_initialized
         if not machine_initialized:
             initialize_the_machine()
-            #machines.initNSLS2VSR()
-            #machines.initNSLS2VSRTxt()
             machine_initialized = True
         self.lat = machines.getLattice('SR')
         pass
@@ -208,31 +206,11 @@ class TestLatticeSr(TestLattice):
                 self.assertTrue(False,
                                 "AttributeError exception expected")
 
-class TestLatticeSrCf(TestLatticeSr):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSR()
-            machine_initialized = True
-        self.lat = machines.getLattice('SR')
-        
-class TestLatticeSrTxt(TestLatticeSr):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            initialize_the_machine()
-            #machines.initNSLS2VSRTxt()
-            machine_initialized = True
-        self.lat = machines.getLattice('SR-txt')
-
-
 class TestLatticeLtb(TestLattice):
     def setUp(self):
         global machine_initialized
         if not machine_initialized:
             initialize_the_machine()
-            #machines.initNSLS2VSR()
             machine_initialized = True
         self.lat  = machines.getLattice('LTB')
         if not self.lat:
@@ -247,13 +225,13 @@ class TestLatticeLtb(TestLattice):
         for e in bpm: 
             try:
                 self.assertTrue(abs(e.x) >= 0)
-            except cothread.Timedout:
+            except Timedout:
                 print "    Timeout:", e.name, e.pv(field='x', handle='readback')
                 break
 
             try:
                 self.assertTrue(abs(e.y) >= 0)
-            except cothread.Timedout:
+            except Timedout:
                 print "    Timeout:", e.name, e.pv(field='y', handle='readback')
                 break
 
@@ -262,7 +240,7 @@ class TestLatticeLtb(TestLattice):
         for e in hcor: 
             try:
                 k = e.x
-            except cothread.Timedout:
+            except Timedout:
                 print "    Timeout:", e.name, e.pv(field='x', handle='readback')
                 break
             except AttributeError as e:
@@ -270,7 +248,7 @@ class TestLatticeLtb(TestLattice):
                 
             try:
                 e.x = 1e-8
-            except cothread.Timedout:
+            except Timedout:
                 print "    Timeout:", e.name, e.pv(field='x', handle='setpoint')
                 break
 
@@ -279,39 +257,5 @@ class TestLatticeLtb(TestLattice):
             #print e._field
             self.assertRaises(AttributeError, self.readInvalidFieldY, e)
 
-class TestLatticeLtbCf(TestLatticeLtb):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            #initialize_the_machine()
-            machines.initNSLS2VSR()
-            machine_initialized = True
-        self.lat  = machines.getLattice('LTB')
-        if not self.lat:
-            print machines.lattices()
-            raise ValueError("lattice LTB is not found")
-
-class TestLatticeLtbTxt(TestLatticeLtb):
-    def setUp(self):
-        global machine_initialized
-        if not machine_initialized:
-            #initialize_the_machine()
-            machines.initNSLS2VSRTxt()
-        self.lat = machines.getLattice('LTB-txt')
-
-    def test_cor(self):
-        hcor = self.lat.getElements('HCOR')
-        
-        try:
-            for e in hcor:
-                v = e.value
-                self.assertFalse(isinstance(v, list),
-                                 "element: %s, %s" % (e.name, e._field['value']))
-            vcor = self.lat.getElements('VCOR')
-            for e in vcor:
-                v = e.value
-                self.assertFalse(isinstance(v, list),
-                                 "element: %s, %s" % (e.name, e._field['value']))
-        except cothread.Timedout:
-            print "Timeout: ", e.name, e._field['value']
-
+    def test_virtualelements(self):
+        pass
