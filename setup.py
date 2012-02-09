@@ -32,13 +32,13 @@ import os
 setup(
     name = "aphlas",
     version = "0.3.0a1",
-    packages = ['aphlas', 'aphlas.mpfit', 'aphlas.gui', 'aphlas.conf'],
+    packages = ['aphlas', 'aphlas.mpfit', 'aphlas.gui', 'aphlas.gui.Qt4Designer_files', 'aphlas.conf'],
     data_files = {},
     package_dir = {'aphlas': 'lib', 'aphlas.mpfit': 'lib/mpfit',
                    'aphlas.gui': 'gui', 'aphlas.conf': 'conf'},
     #include_package_data = True,
     package_data = {'aphlas.gui': ['data/*.json'], 
-                    'aphlas.conf': ['*.csv', '*.json', '*.hdf5']},
+                    'aphlas.conf': ['*.csv', '*.json', '*.hdf5', '*.xml']},
     py_modules = [
                   'aphlas.catools', 'aphlas.machines', 'aphlas.element',
                   'aphlas.lattice', 'aphlas.twiss', 'aphlas.hlalib', 
@@ -47,7 +47,8 @@ setup(
                   'aphlas.bba',
                   'aphlas.meastwiss', 
                   # GUI
-                  'aphlas.gui.gui_resources',
+                  'aphlas.gui.gui_resources', 'aphlas.gui.Qt4Designer_files',
+                  'aphlas.gui.aplauncher',
                   'aphlas.gui.orbit', 'aphlas.gui.orbitconfdlg', 
                   'aphlas.gui.apbba'],
     #install_requires = ['distribute', 'docutils>=0.3', 'Sphinx >= 1.0.8', 
@@ -55,7 +56,9 @@ setup(
     entry_points = {
         'gui_scripts': [
             'aporbit = aphlas.gui.orbit:main',
-            'apbba = aphlas.gui.apbba:main'
+            'apbba = aphlas.gui.apbba:main',
+            'aplauncher = aphlas.gui.aplauncher:main',
+            'currentmonitor = aphlas.gui.currentmonitor:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",

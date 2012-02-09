@@ -8,7 +8,7 @@
 #    sip.settracemask(0x3f)
 
 import cothread
-from cothread.catools import caget, caput
+from cothread.catools import caget, caput, camonitor, FORMAT_TIME
 
 app = cothread.iqt(use_timer=True)
 
@@ -19,14 +19,14 @@ import gui_resources
 #import bpmtabledlg
 from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
-from orbitplot import OrbitPlot
+from orbitplot import OrbitPlot, DcctCurrentPlot
 from orbitcorrdlg import OrbitCorrDlg
 
 import aphlas
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, 
-    QVBoxLayout, QPen, 
+    QVBoxLayout, QPen, QSizePolicy,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
 
 import numpy as np
@@ -169,7 +169,17 @@ class OrbitPlotMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
-        self.config = OrbitPlotConfig(None, aphlas.conf.filename("nsls2_sr_orbit.json"))
+        self.config = OrbitPlotConfig(None, 
+            aphlas.conf.filename("nsls2_sr_orbit.json"))
+
+        self.dcct = DcctCurrentPlot()
+        self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
+        self.dcct.setMinimumHeight(100)
+        self.dcct.setMaximumHeight(150)
+        print __name__, ":"
+        print "  WARNING: Using hardcoded PV: 'SR:C00-BI:G00{DCCT:00}CUR-RB'"
+        camonitor('SR:C00-BI:G00{DCCT:00}CUR-RB', self.dcct.updateDcct, 
+                  format=FORMAT_TIME)
 
         # initialize a QwtPlot central widget
         #bpm = hla.getElements('BPM')
@@ -226,23 +236,30 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot4.setTitle("Vertical")
         #self.lbplt2info = QLabel("Min\nMax\nAverage\nStd")
 
-        wid1 = QWidget()
-        vbox = QGridLayout()
-        #vbox.addWidget(self.lbplt1info, 0, 0)
-        vbox.addWidget(self.plot1, 0, 1)
-        #vbox.addWidget(self.lbplt2info, 1, 0)
-        vbox.addWidget(self.plot2, 1, 1)
-        
-        wid1.setLayout(vbox)
-        self.wid = QTabWidget()
-        self.wid.addTab(wid1, "Orbit Plot")
+        cwid = QWidget()
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.dcct)
+        self.tabs = QTabWidget()
+        vbox.addWidget(self.tabs)
+        cwid.setLayout(vbox)
 
         wid1 = QWidget()
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.plot3)
-        vbox.addWidget(self.plot4)
-        wid1.setLayout(vbox)
-        self.wid.addTab(wid1, "Std")
+        gbox = QGridLayout()
+        self.plot1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #self.plot2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        gbox.addWidget(self.plot1, 0, 1)
+        gbox.addWidget(self.plot2, 1, 1)
+        gbox.setRowStretch(0, 0.5)
+        gbox.setRowStretch(1, 0.5)
+        wid1.setLayout(gbox)        
+        self.tabs.addTab(wid1, "Orbit Plot")
+
+        wid1 = QWidget()
+        vbox1 = QVBoxLayout()
+        vbox1.addWidget(self.plot3)
+        vbox1.addWidget(self.plot4)
+        wid1.setLayout(vbox1)
+        self.tabs.addTab(wid1, "Std")
 
         #wid1 = QWidget()
         #vbox = QGridLayout()
@@ -250,10 +267,10 @@ class OrbitPlotMainWindow(QMainWindow):
         ##vbox.addWidget(self.lbplt2info, 1, 0)
         ##vbox.addWidget(self.plot2, 1, 1)
         #wid1.setLayout(vbox)
-        #self.wid = QTabWidget()
-        #self.wid.addTab(wid1, "Orbit Steer")
+        #self.tabs = QTabWidget()
+        #self.tabs.addTab(wid1, "Orbit Steer")
 
-        self.setCentralWidget(self.wid)
+        self.setCentralWidget(cwid)
 
         #self.setCentralWidget(OrbitPlot())
         #print self.plot1.sizeHint()
@@ -265,7 +282,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #vbox = QVBoxLayout()
         #vbox.addWidget(self.plot5)
         #wid1.setLayout(vbox)
-        #self.wid.addTab(wid1, "OrbitSt")
+        #self.tabs.addTab(wid1, "OrbitSt")
         #
         # file menu
         #
@@ -295,6 +312,10 @@ class OrbitPlotMainWindow(QMainWindow):
                                        "Single Shot", self)
         self.connect(viewSingleShotAction, SIGNAL("triggered()"),
                      self.singleShot)
+        viewDcct = QAction("Current", self)
+        viewDcct.setCheckable(True)
+        viewDcct.setChecked(True)
+        self.connect(viewDcct, SIGNAL("toggled(bool)"), self.viewDcctPlot)
 
         # errorbar
         viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
@@ -381,9 +402,10 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewZoomOut15Action)
         self.viewMenu.addAction(viewZoomIn15Action)
         self.viewMenu.addAction(viewZoomAutoAction)
+        self.viewMenu.addSeparator()
+        self.viewMenu.addAction(viewDcct)
 
         self.controlMenu = self.menuBar().addMenu("&Control")
-        #self.viewMenu.addSeparator()
         self.controlMenu.addAction(controlChooseBpmAction)
         self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
@@ -423,6 +445,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.timerId = self.startTimer(dt)
         self.corbitdlg = None # orbit correction dlg
 
+    def viewDcctPlot(self, on):
+        self.dcct.setVisible(on)
+
     def liveData(self, on):
         """Switch on/off live data taking"""
         #print "MainWindow: liveData", on
@@ -450,7 +475,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def zoomOut15(self):
         """
         """
-        i = self.wid.currentIndex()
+        i = self.tabs.currentIndex()
         if i == 0:
             self.plot1._scaleVertical(1.5)
             self.plot2._scaleVertical(1.5)
@@ -461,7 +486,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def zoomIn15(self):
         """
         """
-        i = self.wid.currentIndex()
+        i = self.tabs.currentIndex()
         if i == 0:
             self.plot1._scaleVertical(1.0/1.5)
             self.plot2._scaleVertical(1.0/1.5)
@@ -470,7 +495,7 @@ class OrbitPlotMainWindow(QMainWindow):
             self.plot4._scaleVertical(1.0/1.5)
 
     def zoomAuto(self):
-        i = self.wid.currentIndex()
+        i = self.tabs.currentIndex()
         if i == 0:
             self.plot1.zoomAuto()
             self.plot2.zoomAuto()
@@ -507,13 +532,14 @@ class OrbitPlotMainWindow(QMainWindow):
         self.orbitx_data.update()
         self.orbity_data.update()
         self.updateStatus()
-        i = self.wid.currentIndex()
+        i = self.tabs.currentIndex()
         if i == 0:
             if self.plot1.live: self.plot1.updatePlot()
             if self.plot2.live: self.plot2.updatePlot()
         elif i == 1:
             if self.plot3.live: self.plot3.updatePlot()
             if self.plot4.live: self.plot4.updatePlot()
+        self.dcct.updatePlot()
 
     def updateStatus(self):
         #self.statusBar().showMessage("%s; %s"  % (

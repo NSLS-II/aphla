@@ -48,6 +48,13 @@ COL_START_READ_TSTAMP   = 'Start Read T.Stamp'
 COL_START_SETP_TSTAMP   = 'Start Setp T.Stamp'
 COL_CUM_READ_CHANGE     = 'Cumul. Read Change'
 COL_CUM_SETP_CHANGE     = 'Cumul. Setp Change'
+COL_DIFF_READ_BTW_SETP  = '(Reading)-(Setpoint)'
+COL_DIFF_TARGET_BTW_SETP= '(Target Setp.)-(Curr.Setp.)'
+COL_TOLERANCE           = 'Tolerance'
+COL_HI_LIMIT            = 'Hi Limit'
+COL_LO_LIMIT            = 'Lo Limit'
+COL_LOCKED              = 'Locked'
+COL_ERROR               = 'ERROR'
 
 # Full list of all the available column names for Tuner GUI
 COL_ALL_NAMES = [locals()[s] for s in dir() 
@@ -196,5 +203,12 @@ DICT_COL_NAME = {         #Class Name, Property Name, String Fromat
     COL_START_READ_TSTAMP:[None, '', '%s'],
     COL_START_SETP_TSTAMP:[None, '', '%s'],
     COL_CUM_READ_CHANGE  :[None, '', '%s'],
-    COL_CUM_SETP_CHANGE  :[None, '', '%s']
+    COL_CUM_SETP_CHANGE  :[None, '', '%s'],
+    COL_DIFF_READ_BTW_SETP:[None, '', '%s'],
+    COL_DIFF_TARGET_BTW_SETP:[None, '', '%s'],
+    COL_TOLERANCE        :[None, '', '%s'],
+    COL_HI_LIMIT         :[None, '', '%s'],
+    COL_LO_LIMIT         :[None, '', '%s'],
+    COL_LOCKED           :[None, '', '%s'],
+    COL_ERROR            :[None, '', '%s']
 }

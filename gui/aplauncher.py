@@ -18,9 +18,8 @@ unnecessary duplicate import actions for some modules.
 #import config # gives access to qtapp variable that holds a Qt.QApplication instance
 
 import sys
-
 import math
-
+import subprocess
 import cothread
 
 # If Qt is to be used (for any GUI) then the cothread library needs to be informed,
@@ -29,16 +28,14 @@ import cothread
 # Note that for a dialog box to be modal, i.e., blocking the application
 # execution until user input is given, you need to set the input
 # argument "user_timer" to be True.
-#if not config.qtapp:
-    #config.qtapp.append( cothread.iqt(use_timer = True) )
-    ## config.qtapp.append( Qt.QApplication(sys.argv) ) # use this if you are not using "cothread" module at all in your application
 
 import PyQt4.Qt as Qt
+from PyQt4.QtGui import QPushButton
 from PyQt4.QtXml import QDomDocument
 
 from Qt4Designer_files.ui_launcher import Ui_MainWindow
 
-import hla
+import aphlas
 
 # TODO:
 # *) Allow passing arguments to make(). This will allow
@@ -48,20 +45,22 @@ import hla
 
 
 ########################################################################
-class launcherButton(Qt.QPushButton):
-    """"""
+class LauncherButton(QPushButton):
+    """
+    """
 
     #----------------------------------------------------------------------
     def __init__(self, linked_persistent_model_index, *args):
         """Constructor"""
         
-        Qt.QPushButton.__init__(self, *args)
+        super(LauncherButton, self).__init__(*args)
         
         self.p_model_index = linked_persistent_model_index;
 
 ########################################################################
-class launcherTabPage(Qt.QWidget):
-    """"""
+class LauncherTabPage(Qt.QWidget):
+    """
+    """
 
     #----------------------------------------------------------------------
     def __init__(self, linked_persistent_model_index, *args):
@@ -74,8 +73,9 @@ class launcherTabPage(Qt.QWidget):
     
 
 ########################################################################
-class launcherModel(Qt.QStandardItemModel):
-    """"""
+class LauncherModel(Qt.QStandardItemModel):
+    """
+    """
 
     #----------------------------------------------------------------------
     def __init__(self, *args):
@@ -99,14 +99,15 @@ class launcherModel(Qt.QStandardItemModel):
     #----------------------------------------------------------------------
     def construct_tree_model(self, dom, parent_item = None, 
                              child_index = None):
-        """"""
+        """
+        """
         
         info = self.getItemInfo(dom)
         
         if info:
             dispName = str(info['dispName'])
             
-            item = launcherModelItem(dispName)
+            item = LauncherModelItem(dispName)
             item.name = info['name']
             item.item_type = info['type']
             item.abs_dir_path = info['abs_dir_path']
@@ -120,7 +121,7 @@ class launcherModel(Qt.QStandardItemModel):
                 pass
             
             for sibling_dom in info['sibling_DOMs']:
-                item.appendRow(launcherModelItem())
+                item.appendRow(LauncherModelItem())
 
             if (parent_item is not None) and (child_index is not None):
                 parent_item.setChild(child_index, item)
@@ -139,7 +140,8 @@ class launcherModel(Qt.QStandardItemModel):
 
     #----------------------------------------------------------------------
     def getItemInfo(self, dom):
-        """"""
+        """
+        """
         
         node = dom.firstChild()
         
@@ -166,10 +168,11 @@ class launcherModel(Qt.QStandardItemModel):
     
     #----------------------------------------------------------------------
     def open_XML_hierarchy_file(self):
-        """"""
+        """
+        """
         
         doc = QDomDocument('')
-        f = Qt.QFile("app_launcher_hierarchy.xml")
+        f = Qt.QFile(aphlas.conf.filename("app_launcher_hierarchy.xml"))
         if not f.open(Qt.QIODevice.ReadOnly):
             raise IOError('Failed to open file.')
         if not doc.setContent(f):
@@ -181,8 +184,9 @@ class launcherModel(Qt.QStandardItemModel):
     
     
 ########################################################################
-class launcherModelItem(Qt.QStandardItem):
-    """"""
+class LauncherModelItem(Qt.QStandardItem):
+    """
+    """
 
     #----------------------------------------------------------------------
     def __init__(self, *args):
@@ -190,8 +194,12 @@ class launcherModelItem(Qt.QStandardItem):
         
         Qt.QStandardItem.__init__(self, *args)
         
-        self.name = '' # Initialized to empty, but will not be empty for both 'app' and 'page' type elements
-        self.abs_dir_path = '' # Empty string for 'page'; Can be empty for 'app', too, if the application being invoked is in the path
+        # Initialized to empty, but will not be empty for both 'app' and
+        # 'page' type elements
+        self.name = '' 
+        # Empty string for 'page'; Can be empty for 'app', too, if the
+        # application being invoked is in the path
+        self.abs_dir_path = '' 
         self.module_name = '' # Empty string for 'page'
         self.item_type = '' # Either 'app' or 'page'
                
@@ -199,8 +207,9 @@ class launcherModelItem(Qt.QStandardItem):
         self.setFlags(self.flags() & ~Qt.Qt.ItemIsEditable)
         
 ########################################################################
-class launcherView(Qt.QMainWindow, Ui_MainWindow):
-    """"""
+class LauncherView(Qt.QMainWindow, Ui_MainWindow):
+    """
+    """
 
     #----------------------------------------------------------------------
     def __init__(self, model):
@@ -253,15 +262,14 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
     
     #----------------------------------------------------------------------
     def closeTab(self, tab_index):
-        """"""
+        """ """
         
         self.tabWidget.removeTab(tab_index);
-        
         
     
     #----------------------------------------------------------------------
     def _act_to_click_on_pushbutton(self):
-        """"""
+        """ """
         
         pushbutton = self.sender()
         
@@ -270,7 +278,7 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
         
     #----------------------------------------------------------------------
     def _act_to_click_on_treeView_item(self, model_index):
-        """"""
+        """ """
         
         if model_index.isValid():
             p_model_index = Qt.QPersistentModelIndex(model_index)
@@ -284,7 +292,7 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
         if item.item_type == 'page':
             
             existing_tab_pages = \
-                self.tabWidget.findChildren(launcherTabPage)
+                self.tabWidget.findChildren(LauncherTabPage)
             
             index_list = [p.p_model_index for p in existing_tab_pages]
             if p_model_index in index_list: # Utilize existing tab page
@@ -297,7 +305,7 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
                 self.tabWidget.setCurrentIndex(tab_index)
                 return
             
-            new_tab_page = launcherTabPage(p_model_index)
+            new_tab_page = LauncherTabPage(p_model_index)
             
             nItems = item.rowCount()
             nRow_buttons = int(
@@ -311,7 +319,7 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
                     if iButton >= nItems:
                         break
                     child_item = item.child(iButton)
-                    new_pushbutton = launcherButton(
+                    new_pushbutton = LauncherButton(
                         Qt.QPersistentModelIndex(child_item.index()),
                         new_tab_page)
                     if child_item.item_type == 'app':
@@ -339,7 +347,7 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
     
     #----------------------------------------------------------------------
     def _change_selection_on_tree(self, newly_selected_tab_index):
-        """"""
+        """ """
         
         current_model_index = self.tabWidget.currentWidget().p_model_index
         
@@ -351,7 +359,7 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
         
     #----------------------------------------------------------------------
     def paintEvent(self, event):
-        """"""
+        """ """
         
         if not self.tab_initialized:
             self._initTab()
@@ -361,7 +369,7 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
         
     #----------------------------------------------------------------------
     def _initTab(self):
-        """"""
+        """ """
         
         # Initialization of the tab widget, i.e.,
         # making the tab page for the root item, by emulating
@@ -371,8 +379,8 @@ class launcherView(Qt.QMainWindow, Ui_MainWindow):
         
         
 ########################################################################
-class launcherApp(Qt.QObject):
-    """"""
+class LauncherApp(Qt.QObject):
+    """ """
 
     #----------------------------------------------------------------------
     def __init__(self):
@@ -391,19 +399,19 @@ class launcherApp(Qt.QObject):
             
     #----------------------------------------------------------------------
     def _initModel(self):
-        """"""
+        """ """
         
-        self.model = launcherModel()
+        self.model = LauncherModel()
         
     #----------------------------------------------------------------------
     def _initView(self):
-        """"""
+        """ """
         
-        self.view = launcherView(self.model)
+        self.view = LauncherView(self.model)
 
     #----------------------------------------------------------------------
     def launch_app(self, app_module_name, abs_dir_path = ''):
-        """"""
+        """ """
         
         if abs_dir_path is not '':
             sys.path.insert(0, abs_dir_path)
@@ -418,24 +426,18 @@ class launcherApp(Qt.QObject):
         the returned object as "global". With either way, the opened GUI
         window will not disappear immediately.
         '''
-        self.app_list.append(__import__(app_module_name).make())
-        
+        #self.app_list.append(__import__(app_module_name).make())
+        subprocess.Popen([app_module_name])
+
+
 #----------------------------------------------------------------------
-def make():
-    """"""
-    
-    app = launcherApp()
-    app.view.show()
-    
-    return app
-    
-#----------------------------------------------------------------------
-def main(args):
-    """"""
+def main(args = None):
+    """ """
     
     cothread.iqt(use_timer = True)
     
-    app = make()
+    app = LauncherApp()
+    app.view.show()
     
     ''' # You can use this if you are NOT using cothread, instead of
     # cothread.WaitForQuit() below.

@@ -34,11 +34,11 @@ if not config.qtapp:
 
 import PyQt4.Qt as Qt
 
-import hla
+import aphlas
 from Qt4Designer_files.ui_element_selector import Ui_Dialog
 
-if not hla.machines._lat :
-    hla.initNSLS2VSR()
+if not aphlas.machines._lat :
+    aphlas.initNSLS2VSR()
 
 # Output Type Enums
 TYPE_ELEMENT = 1
@@ -50,7 +50,7 @@ TYPE_NAME    = 2
 
 ########################################################################
 class ElementSelectorData(Qt.QObject):
-    """"""
+    """ """
 
     #----------------------------------------------------------------------
     def __init__(self, filter_spec = [ [{},False] ]):
@@ -145,7 +145,7 @@ class ElementSelectorData(Qt.QObject):
     
     #----------------------------------------------------------------------
     def combine_matched_list(self):
-        """"""
+        """ """
         
         nFilterGroups = len(self.filter_spec)
         
@@ -265,7 +265,7 @@ class ElementSelectorData(Qt.QObject):
     
     #----------------------------------------------------------------------
     def add_row_to_filter_spec(self):
-        """"""
+        """ """
         
         self.filter_spec.append( [{},False] )
         
@@ -276,7 +276,7 @@ class ElementSelectorData(Qt.QObject):
     #----------------------------------------------------------------------
     def modify_filter_spec(self, filter_property_index, filter_val,
                            filter_group_index, isCaseSensitive):
-        """"""
+        """ """
 
         filter_property = self.filter_property_list[filter_property_index]
         
@@ -292,7 +292,7 @@ class ElementSelectorData(Qt.QObject):
     
     #----------------------------------------------------------------------
     def update_choice_dict(self):
-        """"""
+        """ """
         
         # Get only matched elements from all the elements
         matchedElements = [self.allElements[i] 
@@ -332,7 +332,7 @@ class ElementSelectorData(Qt.QObject):
             
     #----------------------------------------------------------------------
     def update_selected_elements(self, selectedRowIndList):
-        """"""
+        """ """
         
         # Update currently selected elements before exiting the dialog
         matchedElemList = [
@@ -349,7 +349,7 @@ class ElementSelectorData(Qt.QObject):
 
 ########################################################################
 class ElementSelectorView(Qt.QDialog, Ui_Dialog):
-    """"""
+    """ """
     
     #----------------------------------------------------------------------
     def __init__(self, data, modal, parentWindow = None):
@@ -467,7 +467,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         
     #----------------------------------------------------------------------
     def update_tables(self):
-        """"""
+        """ """
         
         """###########################
         Update tableWidget_choice_list
@@ -536,7 +536,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
 
     #----------------------------------------------------------------------
     def update_matched_and_selected_numbers(self):
-        """"""
+        """ """
         
         nMatched = sum(self.data.combined_matched)
         nSelected = 0
@@ -547,7 +547,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         
     #----------------------------------------------------------------------
     def add_row_to_filter_table(self):
-        """"""
+        """ """
         
         # Need to disconnect this signal-slot since each change in each item
         # will cause re-filtering, which const a lot of time. It will be
@@ -596,7 +596,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
     
     #----------------------------------------------------------------------
     def on_case_sensitive_state_change(self, checkBoxState):
-        """"""
+        """ """
         
         nRows = self.tableWidget_filter.rowCount()
         
@@ -609,7 +609,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
     
     #----------------------------------------------------------------------
     def isItemUserCheckable(self, qTableWidgetItem):
-        """"""
+        """ """
         
         qtItemFlagsObj = qTableWidgetItem.flags()
         qtItemFlagsInt = int(qtItemFlagsObj)
@@ -652,7 +652,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         
     #----------------------------------------------------------------------
     def accept(self):
-        """"""
+        """ """
         
         # Update currently selected elements before exiting the dialog
         qModelIndexList = self.tableWidget_matched.selectedIndexes()
@@ -663,21 +663,21 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         
     #----------------------------------------------------------------------
     def accept_and_close(self):
-        """"""
+        """ """
         
         super(ElementSelectorView, self).accept() # will close the dialog
         
         
     #----------------------------------------------------------------------
     def reject(self):
-        """"""
+        """ """
         
         super(ElementSelectorView, self).reject() # will close the dialog
     
 
 ########################################################################
 class ElementSelectorApp(Qt.QObject):
-    """"""
+    """ """
 
     #----------------------------------------------------------------------
     def __init__(self, modal = True, parentWindow = None, 
@@ -735,13 +735,13 @@ class ElementSelectorApp(Qt.QObject):
         
     #----------------------------------------------------------------------
     def _initData(self, filter_spec):
-        """"""
+        """ """
         
         self.data = ElementSelectorData(filter_spec)
         
     #----------------------------------------------------------------------
     def _initView(self, out_type = TYPE_ELEMENT):
-        """"""
+        """ """
         
         self.view = ElementSelectorView(self.data, self.modal,
                                         parentWindow = self.parentWindow)
@@ -750,7 +750,7 @@ class ElementSelectorApp(Qt.QObject):
 #----------------------------------------------------------------------
 def make(modal = True, parentWindow = None, filter_spec = [ [{},False] ],
          output_type = TYPE_ELEMENT):
-    """"""
+    """ """
     
     app = ElementSelectorApp(modal, parentWindow, filter_spec)
     view = app.view
@@ -779,7 +779,7 @@ def make(modal = True, parentWindow = None, filter_spec = [ [{},False] ],
     
 #----------------------------------------------------------------------
 def main(args):
-    """"""
+    """ """
     
     qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
     

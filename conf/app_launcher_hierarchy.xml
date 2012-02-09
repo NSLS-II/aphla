@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hierarchy>
+    
     <page>
         <name>root</name>
         <dispName>Root</dispName>
@@ -22,6 +23,33 @@
         <page>
             <name>lyyang</name>
             <dispName>lyyang</dispName>
+            <app>
+              <name>xclock</name>
+              <dispName> Clock </dispName>
+              <abs_dir_path></abs_dir_path>
+              <module_name>xclock</module_name>
+            </app>
+
+            <app>
+              <name>aporbit</name>
+              <dispName> Orbit </dispName>
+              <abs_dir_path></abs_dir_path>
+              <module_name>aporbit</module_name>
+            </app>
+
+            <app>
+              <name>apbba</name>
+              <dispName> Beam Based Alignment </dispName>
+              <abs_dir_path></abs_dir_path>
+              <module_name>apbba</module_name>
+            </app>
+            <app>
+                <name>GUI_Current_Monitor</name>
+                <dispName>Current Monitor</dispName>
+                
+                <abs_dir_path></abs_dir_path>
+                <module_name>currentmonitor</module_name>
+            </app>
         </page>
         
         <page>
@@ -33,7 +61,7 @@
                 <dispName>Current Monitor</dispName>
                 
                 <abs_dir_path></abs_dir_path>
-                <module_name>GUI_Current_Monitor</module_name>
+                <module_name>currentmonitor</module_name>
             </app>
 
             <app>
