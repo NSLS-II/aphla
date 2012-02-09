@@ -35,7 +35,7 @@ setup(
     packages = ['aphlas', 'aphlas.mpfit', 'aphlas.gui', 'aphlas.conf'],
     data_files = {},
     package_dir = {'aphlas': 'lib', 'aphlas.mpfit': 'lib/mpfit',
-                   'aphlas.gui': 'script', 'aphlas.conf': 'conf'},
+                   'aphlas.gui': 'gui', 'aphlas.conf': 'conf'},
     #include_package_data = True,
     package_data = {'aphlas.gui': ['data/*.json'], 
                     'aphlas.conf': ['*.csv', '*.json', '*.hdf5']},
