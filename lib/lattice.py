@@ -32,7 +32,7 @@ class Lattice:
         self.tune = [ None, None]
         self.chromaticity = [None, None]
         self.circumference = None
-        self.orm = None
+        self.ormdata = None
         self.loop = True
 
     def __getitem__(self, key):

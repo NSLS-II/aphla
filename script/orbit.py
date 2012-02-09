@@ -21,7 +21,8 @@ from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
 from orbitplot import OrbitPlot
 from orbitcorrdlg import OrbitCorrDlg
-from aphlas import conf
+
+import aphlas
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, 
@@ -168,7 +169,7 @@ class OrbitPlotMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
-        self.config = OrbitPlotConfig(None, conf.filename("nsls2_sr_orbit.json"))
+        self.config = OrbitPlotConfig(None, aphlas.conf.filename("nsls2_sr_orbit.json"))
 
         # initialize a QwtPlot central widget
         #bpm = hla.getElements('BPM')
@@ -192,7 +193,7 @@ class OrbitPlotMainWindow(QMainWindow):
         picker = [(v[1], v[2], v[0]) for v in self.config.data['magnetpicker']]
         self.plot1 = OrbitPlot(self, self.orbitx_data, picker_profile = picker,
                                magnet_profile = self.config.data['magnetprofile'])
-        self.plot1.curve1.setPen(QPen(Qt.blue, 2))
+        #self.plot1.curve1.setPen(QPen(Qt.blue, 2))
         self.plot2 = OrbitPlot(self, self.orbity_data, picker_profile = picker,
                                magnet_profile = self.config.data['magnetprofile'])
         self.plot3 = OrbitPlot(self, self.orbitx_data, data_field='std',
@@ -533,12 +534,24 @@ class OrbitPlotMainWindow(QMainWindow):
         #hla.hlalib._reset_trims()
 
     def plotDesiredOrbit(self, x, y):
-        print "plot: ", x, y
+        #print "plot: ", x, y
         self.plot1.curve2.setData(self.pvsx, x)
         self.plot2.curve2.setData(self.pvsy, y)
 
     def correctOrbit(self, x, y):
-        print "correct to :", x, y
+        #print "correct to :", x, y
+        trimx = aphlas.getElements('HCOR')
+        trimy = aphlas.getElements('VCOR')
+        trimpvx = [t.pv(field='x', handle='setpoint')[0] for t in trimx]
+        trimpvy = [t.pv(field='y', handle='setpoint')[0] for t in trimy]
+        #print trimpvx
+        xref = [v*1e-6 for v in x]
+        aphlas.correctOrbitPv(self.pvx, trimpvx, ormdata = None, scale = 0.5, 
+                              ref = xref)
+        yref = [v*1e-6 for v in y]
+        aphlas.correctOrbitPv(self.pvy, trimpvy, ormdata = None, scale = 0.5, 
+                              ref = yref)
+        pass
 
     def createLocalBump(self):
         if self.corbitdlg is None:
@@ -547,12 +560,14 @@ class OrbitPlotMainWindow(QMainWindow):
                 self.orbity_data.golden(), 
                 self.plotDesiredOrbit, self.correctOrbit, self)
             self.corbitdlg.resize(600, 300)
+            self.corbitdlg.setWindowTitle("Create Local Bump")
         self.corbitdlg.show()
         self.corbitdlg.raise_()
         self.corbitdlg.activateWindow()
 
 
 def main():
+    aphlas.initNSLS2VSR()
     #app = QApplication(args)
     #app.setStyle(st)
     if '--sim' in sys.argv: mode = 'sim'

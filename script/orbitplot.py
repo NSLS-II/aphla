@@ -67,7 +67,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         for m in self.profile:
             if x > m[0] and x < m[1]:
                 s.append(m[2])
-        return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y()*1e6, '\n'.join(s)))
+        return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y(), '\n'.join(s)))
 
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
@@ -236,7 +236,7 @@ class OrbitPlot(Qwt.QwtPlot):
                 Qwt.QwtSymbol.Ellipse,
                 QBrush(Qt.red),
                 QPen(Qt.black, 2),
-                QSize(9, 9)),
+                QSize(8, 8)),
             errorPen = QPen(Qt.blue, 1),
             errorCap = 10,
             errorOnTop = self.errorOnTop,

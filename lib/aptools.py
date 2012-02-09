@@ -191,13 +191,18 @@ def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, check = T
 
     - the input bpm and trim should be uniq in pv names.
     """
-    if ormdata is None:
+    if ormdata is not None:
+        m = ormdata.getSubMatrixPv(bpm, trim)
+    elif machines._lat.ormdata is not None:
         m = machines._lat.ormdata.getSubMatrixPv(bpm, trim)
     else:
-        m = ormdata.getSubMatrixPv(bpm, trim)
+        raise RuntimeError("no ORM data defined from orbit correction")
 
     v0 = np.array(caget(bpm), 'd')
     if ref is not None: v0 = v0 - ref
+
+    # the initial norm
+    norm0 = np.linalg.norm(v0)
 
     # solve for m*dk + (v0 - ref) = 0
     dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0, rcond = 1e-4)
@@ -208,12 +213,12 @@ def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, check = T
 
     # wait and check
     if check == True:
-        time.sleep(6)
-        v1 = np.array(caget(bpm), 'd')
+        time.sleep(5)
+        v1 = np.array(caget(bpm), 'd') - np.array(ref)
         norm2 = np.linalg.norm(v1)
         print("Euclidian norm: predicted/realized", norm1, norm2)
-        if norm2 > norm1:
-            print("Failed to reduce orbit distortion, restoring...")
+        if norm2 > norm0:
+            print("Failed to reduce orbit distortion, restoring...", norm0, norm2)
             caput(trim, k0)
             return False
         else:

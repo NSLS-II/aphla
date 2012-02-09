@@ -38,12 +38,13 @@ setup(
                    'aphlas.gui': 'script', 'aphlas.conf': 'conf'},
     #include_package_data = True,
     package_data = {'aphlas.gui': ['data/*.json'], 
-                    'aphlas.conf': ['*.csv', '*.json']},
+                    'aphlas.conf': ['*.csv', '*.json', '*.hdf5']},
     py_modules = [
                   'aphlas.catools', 'aphlas.machines', 'aphlas.element',
                   'aphlas.lattice', 'aphlas.twiss', 'aphlas.hlalib', 
                   'aphlas.rf', 
-                  'aphlas.ormdata', 'aphlas.orm', 'aphlas.aptools', 'aphlas.bba',
+                  'aphlas.ormdata', 'aphlas.orm', 'aphlas.aptools', 
+                  'aphlas.bba',
                   'aphlas.meastwiss', 
                   # GUI
                   'aphlas.gui.gui_resources',
