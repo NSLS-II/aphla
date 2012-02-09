@@ -5,17 +5,29 @@ from cothread.catools import caget, caput
 from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
         QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
         QSize, QRectF, QLine)
-from PyQt4.QtGui import (QApplication, QWidget,
+from PyQt4.QtGui import (QApplication, QWidget, QColor,
         QDockWidget, QFileDialog, QFrame, QImage, QImageReader,
         QImageWriter, QInputDialog, QKeySequence, QListWidget,
         QMessageBox, QPainter, QPixmap, QPrintDialog,
-        QPrinter, QSpinBox, QPen, QBrush,
+        QPrinter, QSpinBox, QPen, QBrush, QFontMetrics,
         QTableWidget)
 
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
 
+import time
 import numpy as np
+
+class TimeScaleDraw(Qwt.QwtScaleDraw):
+    def __init__(self):
+        super(TimeScaleDraw, self).__init__()
+
+    def label(self, v = 0):
+        """
+        convert epoch seconds to label
+        """
+        s = time.strftime("%H:%M", time.gmtime(v))
+        return Qwt.QwtText(s)
 
 class MagnetPicker(Qwt.QwtPlotPicker):
     """
@@ -69,6 +81,58 @@ class MagnetPicker(Qwt.QwtPlotPicker):
                 s.append(m[2])
         return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y(), '\n'.join(s)))
 
+
+class DcctCurrentCurve(Qwt.QwtPlotCurve):
+    def __init__(self, **kw):
+        super(DcctCurrentCurve, self).__init__()
+        self.t = []
+        self.v = []
+
+    def setColor(self, color):
+        c = QColor(color)
+        c.setAlpha(150)
+        self.setPen(c)
+        self.setBrush(c)
+
+    def updateCurve(self):
+        self.setData(self.t, self.v)
+
+class DcctCurrentPlot(Qwt.QwtPlot):
+    def __init__(self, parent = None, **kw):
+        super(DcctCurrentPlot, self).__init__(parent)
+
+        #self.setAutoReplot(False)
+        self.plotLayout().setAlignCanvasToScales(True)
+        #self.setAxisTitle(Qwt.QwtPlot.xBottom, "Time")
+        self.setAxisScaleDraw(Qwt.QwtPlot.xBottom, TimeScaleDraw())
+        #self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 200)
+        self.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -20.0)
+        self.setAxisLabelAlignment(Qwt.QwtPlot.xBottom, Qt.AlignLeft)
+        scaleWidget = self.axisWidget(Qwt.QwtPlot.xBottom)
+        fmh = QFontMetrics(scaleWidget.font()).height()
+        scaleWidget.setMinBorderDist(0, fmh/2)
+        
+        #self.setAxisTitle(Qwt.QwtPlot.yLeft, "I")
+        self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
+        
+        self.curve = DcctCurrentCurve()
+        self.curve.setColor(Qt.green)
+
+        grid1 = Qwt.QwtPlotGrid()
+        grid1.attach(self)
+        grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
+
+        self.curve.attach(self)
+
+    def updateDcct(self, curr):
+        self.curve.v.append(curr)
+        self.curve.t.append(curr.timestamp)
+        #print self.curve.t, self.curve.v
+
+    def updatePlot(self):
+        self.curve.updateCurve()
+        self.setAxisScale(Qwt.QwtPlot.xBottom, self.curve.t[0], self.curve.t[-1])
+        self.replot()
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
     """Orbit curve

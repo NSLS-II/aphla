@@ -137,14 +137,13 @@ class BbaMainWindow(QMainWindow):
                     self.plot2.setMask(i, 1)
 
     def fileOpen(self):
-        #if not self.okToContinue():
-        #    return
-        #dir = (os.path.dirname(self.filename)
-        #       if self.filename is not None else ".")
-        #formats = (["*.{0}".format(unicode(format).lower())
-        #        for format in QImageReader.supportedImageFormats()])
+        """
+        open a HDF5 file, show pictures as tabs
+        """
         fname = QFileDialog.getOpenFileName(self,
                 "Open data file", '.', "HDF5 files (*.h5, *.hdf5)")
+        if not fname: return
+
         import h5py
         f = h5py.File(str(fname), 'r')
         for grp in f.keys():
