@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'launcher.ui'
+# Form implementation generated from reading ui file 'ui_launcher.ui'
 #
-# Created: Wed Oct  5 19:57:52 2011
+# Created: Tue Nov  8 11:13:31 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,25 +17,38 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(523, 266)
+        MainWindow.resize(1036, 598)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
-        self.pushButton_01 = QtGui.QPushButton(self.centralwidget)
-        self.pushButton_01.setGeometry(QtCore.QRect(80, 90, 121, 27))
-        self.pushButton_01.setObjectName(_fromUtf8("pushButton_01"))
-        self.pushButton_02 = QtGui.QPushButton(self.centralwidget)
-        self.pushButton_02.setGeometry(QtCore.QRect(280, 90, 121, 27))
-        self.pushButton_02.setObjectName(_fromUtf8("pushButton_02"))
+        self.gridLayout = QtGui.QGridLayout(self.centralwidget)
+        self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
+        self.splitter = QtGui.QSplitter(self.centralwidget)
+        self.splitter.setOrientation(QtCore.Qt.Horizontal)
+        self.splitter.setObjectName(_fromUtf8("splitter"))
+        self.treeView = QtGui.QTreeView(self.splitter)
+        self.treeView.setMidLineWidth(0)
+        self.treeView.setObjectName(_fromUtf8("treeView"))
+        self.tabWidget = QtGui.QTabWidget(self.splitter)
+        self.tabWidget.setTabsClosable(True)
+        self.tabWidget.setMovable(True)
+        self.tabWidget.setObjectName(_fromUtf8("tabWidget"))
+        self.widget = QtGui.QWidget()
+        self.widget.setObjectName(_fromUtf8("widget"))
+        self.tabWidget.addTab(self.widget, _fromUtf8(""))
+        self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtGui.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1036, 23))
+        self.menubar.setObjectName(_fromUtf8("menubar"))
+        MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "MainWindow", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_01.setText(QtGui.QApplication.translate("MainWindow", "Current Monitor 1", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_02.setText(QtGui.QApplication.translate("MainWindow", "Current Monitor 2", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "HLA App Launcher", None, QtGui.QApplication.UnicodeUTF8))
 
