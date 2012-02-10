@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import aphlas
+import aphla
 import unittest
 import sys, os
 import numpy as np
@@ -21,7 +21,7 @@ class TestChanFinderAgent(unittest.TestCase):
 
     def setUp(self):
         self.assertTrue(os.path.exists(CFAPKL))
-        self.cfa = aphlas.chanfinder.ChannelFinderAgent()
+        self.cfa = aphla.chanfinder.ChannelFinderAgent()
         self.cfa.load(CFAPKL)
         pass
 

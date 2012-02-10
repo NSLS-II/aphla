@@ -45,7 +45,7 @@ import sys
 
 import logging
 
-logging.basicConfig(filename="aphlas.log",
+logging.basicConfig(filename="aphla.log",
     filemode='w',
     format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
     level=logging.DEBUG)
@@ -57,7 +57,6 @@ from machines import initNSLS2VSR, initNSLS2VSRTwiss
 #from current import *
 from rf import *
 from hlalib import *
-from orbit import Orbit
 from ormdata import OrmData
 
 ## """Initialize HLA"""

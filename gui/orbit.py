@@ -22,7 +22,7 @@ from orbitconfdlg import OrbitPlotConfig
 from orbitplot import OrbitPlot, DcctCurrentPlot
 from orbitcorrdlg import OrbitCorrDlg
 
-import aphlas
+import aphla
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, 
@@ -170,7 +170,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.setIconSize(QSize(48, 48))
         self.config = OrbitPlotConfig(None, 
-            aphlas.conf.filename("nsls2_sr_orbit.json"))
+            aphla.conf.filename("nsls2_sr_orbit.json"))
 
         self.dcct = DcctCurrentPlot()
         self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
@@ -566,16 +566,16 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def correctOrbit(self, x, y):
         #print "correct to :", x, y
-        trimx = aphlas.getElements('HCOR')
-        trimy = aphlas.getElements('VCOR')
+        trimx = aphla.getElements('HCOR')
+        trimy = aphla.getElements('VCOR')
         trimpvx = [t.pv(field='x', handle='setpoint')[0] for t in trimx]
         trimpvy = [t.pv(field='y', handle='setpoint')[0] for t in trimy]
         #print trimpvx
         xref = [v*1e-6 for v in x]
-        aphlas.correctOrbitPv(self.pvx, trimpvx, ormdata = None, scale = 0.5, 
+        aphla.correctOrbitPv(self.pvx, trimpvx, ormdata = None, scale = 0.5, 
                               ref = xref)
         yref = [v*1e-6 for v in y]
-        aphlas.correctOrbitPv(self.pvy, trimpvy, ormdata = None, scale = 0.5, 
+        aphla.correctOrbitPv(self.pvy, trimpvy, ormdata = None, scale = 0.5, 
                               ref = yref)
         pass
 
@@ -593,7 +593,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
 def main():
-    aphlas.initNSLS2VSR()
+    aphla.initNSLS2VSR()
     #app = QApplication(args)
     #app.setStyle(st)
     if '--sim' in sys.argv: mode = 'sim'

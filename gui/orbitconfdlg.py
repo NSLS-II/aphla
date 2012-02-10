@@ -26,5 +26,4 @@ class OrbitPlotConfig(object):
 
 #if __name__ == "__main__":
     
-#from aphlas.config import Config
 

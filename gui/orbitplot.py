@@ -1,6 +1,5 @@
 import cothread
 from cothread.catools import caget, caput
-#from aphlas.epicsdatamonitor import CaDataMonitor
 
 from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
         QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,

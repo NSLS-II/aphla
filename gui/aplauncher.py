@@ -35,7 +35,7 @@ from PyQt4.QtXml import QDomDocument
 
 from Qt4Designer_files.ui_launcher import Ui_MainWindow
 
-import aphlas
+import aphla
 
 # TODO:
 # *) Allow passing arguments to make(). This will allow
@@ -172,7 +172,7 @@ class LauncherModel(Qt.QStandardItemModel):
         """
         
         doc = QDomDocument('')
-        f = Qt.QFile(aphlas.conf.filename("app_launcher_hierarchy.xml"))
+        f = Qt.QFile(aphla.conf.filename("app_launcher_hierarchy.xml"))
         if not f.open(Qt.QIODevice.ReadOnly):
             raise IOError('Failed to open file.')
         if not doc.setContent(f):
