@@ -40,7 +40,7 @@ from PyQt4 import Qt
 import PyQt4.Qwt5 as qwt
 
 import hla
-from hla.hlaGui import InteractivePlotWindow, PlotZoomer, PlotPanner, PlotDataCursor, PlotEditor
+from hlaGui import InteractivePlotWindow, PlotZoomer, PlotPanner, PlotDataCursor, PlotEditor
 from Qt4Designer_files.ui_orbit_viewer import Ui_MainWindow
 
 if not hla.machines._lat :
