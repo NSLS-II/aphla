@@ -3,7 +3,7 @@ import unittest
 
 from conf import *
 LOCK_ID = 1
-import aphlas as hla
+import aphla as hla
 
 hla.hlalib._wait_for_lock(LOCK_ID, maxwait=60)
 

@@ -11,7 +11,7 @@ import gui_resources
 from elementpickdlg import ElementPickDlg
 from apbbaconfdlg import BbaConfig
 #from orbitplot import OrbitPlot
-from aphlas import conf, bba
+from aphla import conf, bba
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 

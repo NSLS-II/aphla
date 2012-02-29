@@ -30,35 +30,35 @@ import os
 #         return repo.changelog.rev(tip)
 
 setup(
-    name = "aphlas",
+    name = "aphla",
     version = "0.3.0a1",
-    packages = ['aphlas', 'aphlas.mpfit', 'aphlas.gui', 'aphlas.gui.Qt4Designer_files', 'aphlas.conf'],
+    packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 'aphla.conf'],
     data_files = {},
-    package_dir = {'aphlas': 'lib', 'aphlas.mpfit': 'lib/mpfit',
-                   'aphlas.gui': 'gui', 'aphlas.conf': 'conf'},
+    package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
+                   'aphla.gui': 'gui', 'aphla.conf': 'conf'},
     #include_package_data = True,
-    package_data = {'aphlas.gui': ['data/*.json'], 
-                    'aphlas.conf': ['*.csv', '*.json', '*.hdf5', '*.xml']},
+    package_data = {'aphla.gui': ['data/*.json'], 
+                    'aphla.conf': ['*.csv', '*.json', '*.hdf5', '*.xml']},
     py_modules = [
-                  'aphlas.catools', 'aphlas.machines', 'aphlas.element',
-                  'aphlas.lattice', 'aphlas.twiss', 'aphlas.hlalib', 
-                  'aphlas.rf', 
-                  'aphlas.ormdata', 'aphlas.orm', 'aphlas.aptools', 
-                  'aphlas.bba',
-                  'aphlas.meastwiss', 
+                  'aphla.catools', 'aphla.machines', 'aphla.element',
+                  'aphla.lattice', 'aphla.twiss', 'aphla.hlalib', 
+                  'aphla.rf',
+                  'aphla.ormdata', 'aphla.orm', 'aphla.aptools', 
+                  'aphla.bba',
+                  'aphla.meastwiss', 
                   # GUI
-                  'aphlas.gui.gui_resources', 'aphlas.gui.Qt4Designer_files',
-                  'aphlas.gui.aplauncher',
-                  'aphlas.gui.orbit', 'aphlas.gui.orbitconfdlg', 
-                  'aphlas.gui.apbba'],
+                  'aphla.gui.gui_resources', 'aphla.gui.Qt4Designer_files',
+                  'aphla.gui.aplauncher',
+                  'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
+                  'aphla.gui.apbba'],
     #install_requires = ['distribute', 'docutils>=0.3', 'Sphinx >= 1.0.8', 
     #                    'matplotlib', 'numpy', 'scipy'],
     entry_points = {
         'gui_scripts': [
-            'aporbit = aphlas.gui.orbit:main',
-            'apbba = aphlas.gui.apbba:main',
-            'aplauncher = aphlas.gui.aplauncher:main',
-            'currentmonitor = aphlas.gui.currentmonitor:main'
+            'aporbit = aphla.gui.orbit:main',
+            'apbba = aphla.gui.apbba:main',
+            'aplauncher = aphla.gui.aplauncher:main',
+            'currentmonitor = aphla.gui.currentmonitor:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",

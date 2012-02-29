@@ -18,7 +18,6 @@ import time, shelve, sys
 import matplotlib.pylab as plt
 
 import machines
-from orbit import Orbit
 from catools import caput, caget 
 from hlalib import getElements, getNeighbors, getClosest
 from bba import BbaBowtie

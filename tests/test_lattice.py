@@ -3,11 +3,11 @@
 import unittest
 import sys, os
 import numpy as np
-from aphlas.catools import caget, caput, Timedout
+from aphla.catools import caget, caput, Timedout
 
 from conf import *
-from aphlas import machines, lattice, element
-from aphlas.catools import caget
+from aphla import machines, lattice, element
+from aphla.catools import caget
 
 machine_initialized = False
 

@@ -34,11 +34,11 @@ if not config.qtapp:
 
 import PyQt4.Qt as Qt
 
-import aphlas
+import aphla
 from Qt4Designer_files.ui_element_selector import Ui_Dialog
 
-if not aphlas.machines._lat :
-    aphlas.initNSLS2VSR()
+if not aphla.machines._lat :
+    aphla.initNSLS2VSR()
 
 # Output Type Enums
 TYPE_ELEMENT = 1

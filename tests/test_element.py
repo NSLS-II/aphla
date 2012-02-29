@@ -6,11 +6,11 @@ import numpy as np
 #import matplotlib.pylab as plt
 
 from conf import *
-from aphlas import element
+from aphla import element
 #from hla.catools import caget, caput, Timedout
 #from cothread.catools import caget, caput
 #from cothread import Timedout
-from aphlas.catools import caget, caput, Timedout
+from aphla.catools import caget, caput, Timedout
 import pickle, shelve
 
 refpvrb = [

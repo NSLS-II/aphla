@@ -16,8 +16,6 @@ from PyQt4.QtGui import (QAction, QActionGroup, QApplication, QWidget,
         QDialogButtonBox, QGridLayout, QItemDelegate, QStandardItemModel, 
         QPushButton, QLineEdit, QTableView, QAbstractItemView)
 
-import hla
-
 
 class PvTunerDlg(QDialog):
     COL = 6
@@ -75,13 +73,6 @@ class PvTunerDlg(QDialog):
             item = self.table.item(row, column)
             if not item: return
             item.setFlags(item.flags() | Qt.ItemIsEditable)
-
-
-    #def __del__(self):
-    #    pass
-
-    #def updatePv(self, row, column):
-    #    print row, column
 
     def _appendRecord(self, name):
         vec = name.split('.')
