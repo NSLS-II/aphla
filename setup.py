@@ -47,7 +47,7 @@ setup(
                   'aphla.bba',
                   'aphla.meastwiss', 
                   # GUI
-                  'aphla.gui.gui_resources', 'aphla.gui.Qt4Designer_files',
+                  'aphla.gui.gui_resources',
                   'aphla.gui.aplauncher',
                   'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
                   'aphla.gui.apbba'],

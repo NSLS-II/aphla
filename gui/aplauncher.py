@@ -1307,6 +1307,7 @@ def main(args = None):
     else:
         qapp = Qt.QApplication(args)
     
+    
     initRootPath = SEPARATOR + 'root'
     app = LauncherApp(initRootPath)
     app.view.show()
