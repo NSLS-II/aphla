@@ -142,6 +142,7 @@
                 &appOrbitViewer;
                 &appBetaFuncViewer;
                 &appLauncher;
+                &appClock;
             </page>  <!-- yhidaka -->
         
         </page> <!-- Users -->

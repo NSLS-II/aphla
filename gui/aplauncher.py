@@ -18,6 +18,9 @@ unnecessary duplicate import actions for some modules.
 import sys
 import math
 import os
+import errno
+import time
+import shutil
 import posixpath
 import subprocess
 import cothread
@@ -39,6 +42,9 @@ COLUMN_NAMES = ['Path','Linked File','Arguments','Use Import','Singleton','Item 
 ITEM_COLOR_PAGE = Qt.Qt.black
 ITEM_COLOR_APP = Qt.Qt.red
 
+DOT_HLA_PATH = str(Qt.QDir.homePath()) + '/.hla'
+HIERARCHY_XML_FILENAME = 'appLauncherHierarchy.xml'
+
 import gui_icons
 from Qt4Designer_files.ui_launcher import Ui_MainWindow
 
@@ -48,8 +54,30 @@ import aphla
 # *) Highlight the search matching portion of texts in QTreeView and QListView
 # *) Allow in-program XML file modification
 # *) Right-click on column name and allow add/remove visible properties
+# *) Bypass XML tree construction, if XML file not changed. Load
+# directory the tree model data for faster start-up.
+# *) Implement page jumping with the path buttons hidden under
+# the path line editbox.
+# *) Add <description> to XML
+# *) Implement <singleton>
+# *) Implement <args> for popen
+# *) Allow multi-selection for deleting/copying
 
+#----------------------------------------------------------------------
+def almost_equal(x, y, absTol=1e-18, relTol=1e-7):
+    """"""
     
+    if (not absTol) and (not relTol):
+        raise TypeError('Either absolute or relative tolerance must be specified.')
+    tests = []
+    if absTol:
+        tests.append(absTol)
+    if relTol:
+        tests.append(relTol*abs(x))
+    assert tests
+    return abs(x - y) <= max(tests)
+
+
 ########################################################################
 class SearchModel(Qt.QStandardItemModel):
     """
@@ -91,7 +119,7 @@ class LauncherModel(Qt.QStandardItemModel):
         self.setHorizontalHeaderLabels(self.headerLabels)
         self.setColumnCount(len(self.headerLabels))
 
-        doc = self.open_XML_hierarchy_file()
+        doc = self.open_XML_HierarchyFile()
         
         self.pathList = []
         self.pModelIndList = []
@@ -187,17 +215,87 @@ class LauncherModel(Qt.QStandardItemModel):
         return info
     
     #----------------------------------------------------------------------
-    def open_XML_hierarchy_file(self):
+    def open_XML_HierarchyFile(self):
         """
+        First check to see if the user (local) copy of the XML file exists
+        in ".hla" directory.
+        
+        If the user copy does not exist, copy the developer version to the
+        local ".hla" directory, and then load the newly created local copy.
+        
+        If the user copy already exists, compare the user copy with the
+        developer copy.
+        
+        If the modified time of the user copy is more recent than that of
+        the developer copy, then simply load the user copy.
+        
+        If the modified time of the user copy is older than that of the
+        developer copy, then you must merge the files together and create
+        a new user copy in the ".hla" directory. Before merging, you should
+        make a backup copy, in case the merged new copy fails to load properly.
         """
         
         doc = QDomDocument('')
-        f = Qt.QFile(aphla.conf.filename("appLauncherHierarchy.xml"))
+        
+        user_XML_Filepath = DOT_HLA_PATH + '/' + HIERARCHY_XML_FILENAME
+        developer_XML_Filepath = aphla.conf.filename(HIERARCHY_XML_FILENAME)
+
+        f = Qt.QFile(user_XML_Filepath)
+        if not f.exists():
+            # Make sure the developer version of the XML file exists before copying
+            if not os.path.isfile(developer_XML_Filepath):
+                raise OSError(HIERARCHY_XML_FILENAME + ' cannot be found.')
+            
+            # This section of code create ".hla" directory under th user home directory,
+            # if it does not already exist. This method assures no race condtion will happen
+            # in the process of creating the new directory.
+            try:
+                os.makedirs(dot_hla_path)
+            except OSError, e:
+                if e.errno != errno.EEXIST:
+                    raise OSError('Failed to create .hla directory')
+                
+            shutil.copy2(developer_XML_Filepath, user_XML_Filepath)
+            # Make sure that the local copy has been successfully created.
+            if not f.exists():
+                raise IOError('Failed to create a local copy of ' + HIERARCHY_XML_FILENAME)
+        
+        else: # Check the modified times of user and developer copies
+            
+            developerFileStat = os.stat(developer_XML_Filepath)
+            print 'Developer version of XML file:'
+            print '\tMode    :', developerFileStat.st_mode
+            print '\tCreated :', time.ctime(developerFileStat.st_ctime)
+            print '\tAccessed:', time.ctime(developerFileStat.st_atime)
+            print '\tModified:', time.ctime(developerFileStat.st_mtime)
+
+            userFileStat = os.stat(user_XML_Filepath)
+            print 'User version of XML file:'
+            print '\tMode    :', userFileStat.st_mode
+            print '\tCreated :', time.ctime(userFileStat.st_ctime)
+            print '\tAccessed:', time.ctime(userFileStat.st_atime)
+            print '\tModified:', time.ctime(userFileStat.st_mtime)
+            
+            # Cannot use ">=" here. Instead use ">" or "almost_equal".
+            # Due to the timestamp resolution difference between Python and
+            # file system, even if you copy the modified times with shutil.copy2,
+            # the copied file may not be exactly equal to the modified time of
+            # the source file. So, you must use "almost_equal" to check the
+            # modified time equallity.
+            if (userFileStat.st_mtime > developerFileStat.st_mtime) or \
+               almost_equal(userFileStat.st_mtime, developerFileStat.st_mtime, absTol=1e-4, relTol=None):
+                pass
+            else:
+                # TODO: Merge user and developer copies
+                shutil.copy2(developer_XML_Filepath, user_XML_Filepath)
+            
+        
         if not f.open(Qt.QIODevice.ReadOnly):
-            raise IOError('Failed to open file.')
+            raise IOError('Failed to open ' + HIERARCHY_XML_FILENAME)
+
         if not doc.setContent(f):
             f.close()
-            raise IOError('Failed to parse file.')
+            raise IOError('Failed to parse ' + HIERARCHY_XML_FILENAME)
         f.close()
 
         return doc
@@ -391,6 +489,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.treeViewSide.setRootIndex(self.model.indexFromItem(
             self.model.item(0,0) ) )
         self.treeViewSide.setContextMenuPolicy(Qt.Qt.CustomContextMenu)
+        self.treeViewSide.setSelectionMode(Qt.QAbstractItemView.SingleSelection)
 
         rootPModelIndex = self.model.pModelIndexFromPath(initRootPath)
         if not initRootPath:
@@ -407,14 +506,71 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self._initMainPane(len(self.mainPaneList)-1)
 
         
-        ## Definition of Actions
-        self.actionOpenInNewTab = Qt.QAction(Qt.QIcon(),
-                                             'Open in New Tab', self)
-        self.actionOpenInNewWindow = Qt.QAction(Qt.QIcon(),
-                                                'Open in New Window', self)        
-        self.popMenu = Qt.QMenu()
-        self.popMenu.addAction(self.actionOpenInNewTab)
-        self.popMenu.addAction(self.actionOpenInNewWindow)        
+        ## Create context menus
+        self.contextMenuSinglePageSelected = Qt.QMenu()
+        self.contextMenuSinglePageSelected.addAction(self.actionOpen)
+        self.contextMenuSinglePageSelected.addAction(self.actionOpenInNewTab)
+        self.contextMenuSinglePageSelected.addAction(self.actionOpenInNewWindow)
+        self.contextMenuSinglePageSelected.addSeparator()
+        self.contextMenuSinglePageSelected.addAction(self.actionCut)
+        self.contextMenuSinglePageSelected.addAction(self.actionCopy)
+        self.contextMenuSinglePageSelected.addSeparator()
+        self.contextMenuSinglePageSelected.addAction(self.actionRename)
+        self.contextMenuSinglePageSelected.addSeparator()
+        self.contextMenuSinglePageSelected.addAction(self.actionDelete)
+        self.contextMenuSinglePageSelected.addSeparator()
+        self.contextMenuSinglePageSelected.addAction(self.actionProperties)        
+        #
+        self.contextMenuMultiplePagesSelected = Qt.QMenu()
+        self.contextMenuMultiplePagesSelected.addAction(self.actionOpen)
+        self.contextMenuMultiplePagesSelected.addAction(self.actionOpenInNewTab)
+        self.contextMenuMultiplePagesSelected.addAction(self.actionOpenInNewWindow)
+        self.contextMenuMultiplePagesSelected.addSeparator()
+        self.contextMenuMultiplePagesSelected.addAction(self.actionCut)
+        self.contextMenuMultiplePagesSelected.addAction(self.actionCopy)
+        self.contextMenuMultiplePagesSelected.addSeparator()
+        self.contextMenuMultiplePagesSelected.addAction(self.actionDelete)
+        #        
+        self.contextMenuSingleAppSelected = Qt.QMenu()
+        self.contextMenuSingleAppSelected.addAction(self.actionOpen)
+        self.contextMenuSingleAppSelected.addAction(self.actionOpenWithImport)
+        self.contextMenuSingleAppSelected.addAction(self.actionOpenWithPopen)
+        self.contextMenuSingleAppSelected.addSeparator()
+        self.contextMenuSingleAppSelected.addAction(self.actionCut)
+        self.contextMenuSingleAppSelected.addAction(self.actionCopy)
+        self.contextMenuSingleAppSelected.addSeparator()
+        self.contextMenuSingleAppSelected.addAction(self.actionRename)
+        self.contextMenuSingleAppSelected.addSeparator()
+        self.contextMenuSingleAppSelected.addAction(self.actionDelete)
+        self.contextMenuSingleAppSelected.addSeparator()
+        self.contextMenuSingleAppSelected.addAction(self.actionProperties)          
+        #        
+        self.contextMenuMultipleAppsSelected = Qt.QMenu()
+        self.contextMenuMultipleAppsSelected.addAction(self.actionOpen)
+        self.contextMenuMultipleAppsSelected.addAction(self.actionOpenWithImport)
+        self.contextMenuMultipleAppsSelected.addAction(self.actionOpenWithPopen)
+        self.contextMenuMultipleAppsSelected.addSeparator()
+        self.contextMenuMultipleAppsSelected.addAction(self.actionCut)
+        self.contextMenuMultipleAppsSelected.addAction(self.actionCopy)
+        self.contextMenuMultipleAppsSelected.addSeparator()
+        self.contextMenuMultipleAppsSelected.addAction(self.actionDelete)
+        #        
+        self.contextMenuPagesAndAppsSelected = Qt.QMenu()
+        self.contextMenuPagesAndAppsSelected.addAction(self.actionCut)
+        self.contextMenuPagesAndAppsSelected.addAction(self.actionCopy)
+        self.contextMenuPagesAndAppsSelected.addSeparator()
+        self.contextMenuPagesAndAppsSelected.addAction(self.actionDelete)
+        #
+        self.contextMenuNoneSelected = Qt.QMenu()
+        self.contextMenuNoneSelected.addAction(self.actionCreateNewPage)
+        self.contextMenuNoneSelected.addAction(self.actionCreateNewApp)
+        self.contextMenuNoneSelected.addSeparator()
+        self.contextMenuNoneSelected.addAction(self.actionArrangeItems) # TODO
+        self.contextMenuNoneSelected.addSeparator()
+        self.contextMenuNoneSelected.addAction(self.actionPaste)
+        self.contextMenuNoneSelected.addSeparator()
+        self.contextMenuNoneSelected.addAction(self.actionProperties)
+        
 
         ## Update path
         self.updatePath()
@@ -437,10 +593,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                      Qt.SIGNAL('currentIndexChanged(const QString &)'),
                      self.updateMainPaneViewMode)
         
-        self.connect(self.actionOpenInNewTab, Qt.SIGNAL('triggered()'),
-                     self.openInNewTab)
-        self.connect(self.actionOpenInNewWindow, Qt.SIGNAL('triggered()'),
-                     self.openInNewWindow)
                      
         # Use "textChanged" signal to include programmatic changes of search text.
         # However, if this causes crashes (this tends to happen when you add
@@ -553,8 +705,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 rootItem.setChild(i,j+1,Qt.QStandardItem(p))
                 
         self.updateView(m)
-        
-        
+                
     
     #----------------------------------------------------------------------
     def openContextMenu(self, qpoint):
@@ -562,18 +713,50 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         sender = self.sender()
         
+        itemSelectionModel = sender.selectionModel()
+
+        globalClickPos = sender.mapToGlobal(qpoint)        
+        
         m = self.getParentMainPane(sender)
         
         if m: # When right-clicked on main pane
-            pModInd = Qt.QPersistentModelIndex(
-                m.proxyModel.mapToSource(sender.currentIndex()) )
-            if type(m.proxyModel.sourceModel()) == SearchModel:
-                pModInd = self.convertSearchModelPModIndToModelPModInd(
-                    m.searchModel, pModInd)
+            
+            selectedModelIndexes = itemSelectionModel.selectedRows()
+            
+            if not selectedModelIndexes: # When no item is being selected
+                self.contextMenuNoneSelected.exec_(globalClickPos)
+            else:
+                selectedPModelIndexes = [
+                    Qt.QPersistentModelIndex(m.proxyModel.mapToSource(ind))
+                    for ind in selectedModelIndexes]
+                if type(m.proxyModel.sourceModel()) == SearchModel:
+                    selectedPModelIndexes = [
+                        self.convertSearchModelPModIndToModelPModInd(m.searchModel, pModInd)
+                        for pModInd in selectedPModelIndexes]
+                
+                selectedItems = [self.model.itemFromIndex(Qt.QModelIndex(pModInd))
+                                 for pModInd in selectedPModelIndexes]
                     
-            self.selectedItem = self.model.itemFromIndex(Qt.QModelIndex(pModInd))
+                if len(selectedItems) == 1:
+                    self.selectedItem = selectedItems[0]
+                    
+                    if self.selectedItem.itemType == 'page': # When a page item is selected
+                        self.contextMenuSinglePageSelected.exec_(globalClickPos)
+                    else: # When an app item is selected
+                        self.contextMenuSingleAppSelected.exec_(globalClickPos)   
+                    
+                else:
+                    selectedItemTypes = list(set([i.itemType for i in selectedItems]))
+                    if len(selectedItemTypes) == 2: # When page item(s) and app item(s) are selected
+                        self.contextMenuPagesAndAppsSelected.exec_(globalClickPos)
+                    elif selectedItemTypes[0] == 'page': # When multiple page items are selected
+                        self.contextMenuMultiplePagesSelected.exec_(globalClickPos)
+                    else: # When multiple app items are selected
+                        self.contextMenuMultipleAppsSelected.exec_(globalClickPos)
+                    
             self.selectedViewType = type(sender)
-            self.selectedListViewMode = m.listView.viewMode()
+            self.selectedListViewMode = m.listView.viewMode()            
+            
         else: # When right-clicked on side pane
             self.selectedItem = self.model.itemFromIndex(sender.currentIndex())
             
@@ -584,38 +767,78 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 self.selectedViewType = Qt.QTreeView
             self.selectedListViewMode = m.listView.viewMode()
         
-        self.popMenu.exec_(sender.mapToGlobal(qpoint))
+            if self.selectedItem.itemType == 'page': # When a page item is selected
+                self.contextMenuSinglePageSelected.exec_(globalClickPos)
+            else: # When an app item is selected
+                self.contextMenuSingleAppSelected.exec_(globalClickPos)              
+    
+    #----------------------------------------------------------------------
+    def _initMainPaneTreeViewSettings(self, newTreeView):
+        """"""
         
+        newTreeView.setSelectionMode(Qt.QAbstractItemView.ExtendedSelection)
+        newTreeView.setSelectionBehavior(Qt.QAbstractItemView.SelectRows)
+        
+        newTreeView.setDragDropMode(Qt.QAbstractItemView.NoDragDrop)
+        
+        self.connect(newTreeView,
+                     Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     self.openContextMenu)
+        self.connect(newTreeView,
+                     Qt.SIGNAL('doubleClicked(const QModelIndex &)'),
+                     self._callbackDoubleClickOnMainPaneItem)
+        self.connect(newTreeView,
+                     Qt.SIGNAL('clicked(const QModelIndex &)'),
+                     self._callbackClickOnMainPaneItem)  
+        self.connect(newTreeView.selectionModel(),
+                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     self.onSelectionChange)        
+    
+    #----------------------------------------------------------------------
+    def _initMainPaneListViewSettings(self, newListView):
+        """"""
+        
+        newListView.setSelectionMode(Qt.QAbstractItemView.ExtendedSelection)
+        newListView.setSelectionBehavior(Qt.QAbstractItemView.SelectRows)
+        
+        newListView.setResizeMode(Qt.QListView.Adjust)
+        newListView.setWrapping(True)
+        newListView.setDragDropMode(Qt.QAbstractItemView.NoDragDrop)
+        
+        self.connect(newListView,
+                     Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     self.openContextMenu)
+        self.connect(newListView,
+                     Qt.SIGNAL('doubleClicked(const QModelIndex &)'),
+                     self._callbackDoubleClickOnMainPaneItem)
+        self.connect(newListView,
+                     Qt.SIGNAL('clicked(const QModelIndex &)'),
+                     self._callbackClickOnMainPaneItem)
+        self.connect(newListView.selectionModel(),
+                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     self.onSelectionChange)
+    
+    #----------------------------------------------------------------------
+    def onSelectionChange(self, selected, deselected):
+        """"""
+        
+        itemSelectionModel = self.sender()
+        print 'Old Selection Empty? ', deselected.isEmpty()
+        print 'New Selection Empty? ', selected.isEmpty() 
+        print itemSelectionModel.selectedIndexes()
+        print '# of selected indexes = ', len(itemSelectionModel.selectedIndexes())
+        print itemSelectionModel.selectedRows()
+        print '# of selected rows = ', len(itemSelectionModel.selectedRows())
+
     #----------------------------------------------------------------------
     def _initMainPane(self, main_pane_index):
         """"""
         
         main_pane = self.mainPaneList[main_pane_index]
         
-        new_treeView = main_pane.treeView
-        new_listView = main_pane.listView
+        self._initMainPaneTreeViewSettings(main_pane.treeView)
+        self._initMainPaneListViewSettings(main_pane.listView)
         
-        self.connect(new_listView,
-                     Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
-                     self.openContextMenu)
-        self.connect(new_treeView,
-                     Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
-                     self.openContextMenu)
-    
-        self.connect(new_listView,
-                     Qt.SIGNAL('doubleClicked(const QModelIndex &)'),
-                     self._callbackDoubleClickOnMainPaneItem)
-        self.connect(new_treeView,
-                     Qt.SIGNAL('doubleClicked(const QModelIndex &)'),
-                     self._callbackDoubleClickOnMainPaneItem)
-
-        self.connect(new_listView,
-                     Qt.SIGNAL('clicked(const QModelIndex &)'),
-                     self._callbackClickOnMainPaneItem)
-        self.connect(new_treeView,
-                     Qt.SIGNAL('clicked(const QModelIndex &)'),
-                     self._callbackClickOnMainPaneItem)        
-
     #----------------------------------------------------------------------
     def onTabSelectionChange(self, new_current_page_index):
         """"""
@@ -788,6 +1011,35 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(upAction, Qt.SIGNAL("triggered()"),
                      self.goUp)         
         
+        
+        self.actionOpenInNewTab = Qt.QAction(Qt.QIcon(),
+                                             'Open in New Tab', self)
+        self.connect(self.actionOpenInNewTab, Qt.SIGNAL('triggered()'),
+                     self.openInNewTab)
+
+        self.actionOpenInNewWindow = Qt.QAction(Qt.QIcon(),
+                                                'Open in New Window', self)        
+        self.connect(self.actionOpenInNewWindow, Qt.SIGNAL('triggered()'),
+                     self.openInNewWindow)
+        
+        self.actionOpen = Qt.QAction(Qt.QIcon(), 'Open', self)
+        #self.connect(self.actionOpen, Qt.SIGNAL('triggered()'),
+                     #self.openPageOrApp)
+        
+        self.actionCut = Qt.QAction(Qt.QIcon(), 'Cut', self)
+        self.actionCopy = Qt.QAction(Qt.QIcon(), 'Copy', self)
+        self.actionPaste = Qt.QAction(Qt.QIcon(), 'Paste', self)
+        self.actionRename = Qt.QAction(Qt.QIcon(), 'Rename', self)
+        self.actionProperties = Qt.QAction(Qt.QIcon(), 'Properties', self)
+        self.actionOpenWithImport = Qt.QAction(Qt.QIcon(), 'Open w/ import', self)
+        self.actionOpenWithPopen = Qt.QAction(Qt.QIcon(), 'Open w/ Popen', self)
+        self.actionCreateNewPage = Qt.QAction(Qt.QIcon(), 'Create New Page Item', self)
+        self.actionCreateNewApp = Qt.QAction(Qt.QIcon(), 'Create New App Item', self)
+        self.actionArrangeItems = Qt.QAction(Qt.QIcon(), 'Arrange Items', self)
+        self.actionDelete = Qt.QAction(Qt.QIcon(), 'Delete', self)
+        
+        
+        
     #----------------------------------------------------------------------
     def _initMainToolbar(self):
         """"""
@@ -852,6 +1104,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.disableTabView()
         
     
+    
     #----------------------------------------------------------------------
     def _callbackClickOnMainPaneItem(self, modelIndex):
         """ """
@@ -871,9 +1124,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     #----------------------------------------------------------------------
     def _callbackClickOnSidePaneItem(self, modelIndex):
         """ """
-        
-        #self._callbackClickOnMainPaneItem(modelIndex)
-        
+                
         if modelIndex.isValid():
             self.selectedPersistentModelIndex = \
                 Qt.QPersistentModelIndex(modelIndex)
@@ -1016,8 +1267,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             if len(matchedMainPane) == 1:
                 return matchedMainPane[0]
             else:
-                print 'ERROR:'
-                print '# of matched main panes = ' + str(len(matchedMainPane))
                 return None
             
         else:
@@ -1045,8 +1294,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         if len(matchedMainPane) == 1:
             return matchedMainPane[0]
         else:
-            print 'ERROR:'
-            print '# of matched panes = ' + str(len(matchedMainPane))
             return None
     
     #----------------------------------------------------------------------
@@ -1264,19 +1511,68 @@ class LauncherApp(Qt.QObject):
         window will not disappear immediately.
         '''
         if useImport:
+
+            module = None
+            
             try:
                 moduleName = 'aphla.gui.'+appFilename
                 __import__(moduleName)
                 module = sys.modules[moduleName]
-            except ImportError:
-                module = __import__(appFilename)
-                
-            if args:
-                self.appList.append(module.make(args))
+            except ImportError as e:
+                importErrorMessage = e
+            except:
+                msgBox = Qt.QMessageBox()
+                msgBox.setText( (
+                    'Unexpected error while launching an app w/ import: ') )
+                msgBox.setInformativeText( str(sys.exc_info()) )
+                msgBox.setIcon(Qt.QMessageBox.Critical)
+                msgBox.exec_()
+            
+            if not module:
+                try:
+                    module = __import__(appFilename)
+                except ImportError:
+                    pass
+                except:
+                    msgBox = Qt.QMessageBox()
+                    msgBox.setText( (
+                        'Unexpected error while launching an app w/ import: ') )
+                    msgBox.setInformativeText( str(sys.exc_info()) )
+                    msgBox.setIcon(Qt.QMessageBox.Critical)
+                    msgBox.exec_()        
+                    
+            if module:
+                try:
+                    if args:
+                        self.appList.append(module.make(args))
+                    else:
+                        self.appList.append(module.make())
+                except:
+                    msgBox = Qt.QMessageBox()
+                    msgBox.setText( (
+                        'Error while launching an app w/ import: ') )
+                    msgBox.setInformativeText( str(sys.exc_info()) )
+                    msgBox.setIcon(Qt.QMessageBox.Critical)
+                    msgBox.exec_()        
+                    
             else:
-                self.appList.append(module.make())
+                msgBox = Qt.QMessageBox()
+                msgBox.setText( ('Importing ' + appFilename + 
+                                 ' module has failed.') )
+                msgBox.setInformativeText( str(importErrorMessage) )
+                msgBox.setIcon(Qt.QMessageBox.Critical)
+                msgBox.exec_()                
+                    
         else:
-            subprocess.Popen([appFilename])
+            try:
+                subprocess.Popen([appFilename])
+            except:
+                msgBox = Qt.QMessageBox()
+                msgBox.setText( ('Launching ' + appFilename + 
+                                 ' with subprocess.Popen has failed.') )
+                msgBox.setInformativeText( str(sys.exc_info()) )
+                msgBox.setIcon(Qt.QMessageBox.Critical)
+                msgBox.exec_()                        
 
 #----------------------------------------------------------------------
 def make(initRootPath=''):
