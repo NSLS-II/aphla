@@ -20,7 +20,6 @@ import math
 import os
 import errno
 import time
-import shutil
 import posixpath
 import subprocess
 import cothread
@@ -36,14 +35,24 @@ import PyQt4.Qt as Qt
 from PyQt4.QtGui import QPushButton
 from PyQt4.QtXml import QDomDocument
 
-SEPARATOR = os.sep
-ITEM_PROPERTY_NAMES = ['path','linkedFile','args','useImport','singleton','itemType']
+MODEL_ITEM_PROPERTY_NAMES = ['path','linkedFile','args','useImport','singleton','itemType']
 COLUMN_NAMES = ['Path','Linked File','Arguments','Use Import','Singleton','Item Type']
+XML_ITEM_PROPERTY_NAMES = ['dispName','linkedFile','useImport','singleton','args']
 ITEM_COLOR_PAGE = Qt.Qt.black
 ITEM_COLOR_APP = Qt.Qt.red
 
-DOT_HLA_PATH = str(Qt.QDir.homePath()) + '/.hla'
-HIERARCHY_XML_FILENAME = 'appLauncherHierarchy.xml'
+# Forward slash '/' will be used as a file path separator for both
+# in Linux & Windows. Even if '/' is used in Windows, shutil and os functions still properly work.
+# Qt.QDir.homePath() will return the home path string using '/' even on Windows.
+# Therefore, '/' is being used consistently in this code.
+# 
+# By the way, the QFile document says "QFile expects the file separator to be '/' regardless of operating system.
+# The use of other separators (e.g., '\') is not supported."
+# However, on Windows, using '\' still works fine.
+SEPARATOR = '/' # used as system file path separator as well as launcher page path separator
+DOT_HLA_QFILEPATH = str(Qt.QDir.homePath()) + SEPARATOR + '.hla'
+DEVELOPER_XML_FILENAME = 'launcher_hierarchy.xml'
+USER_XML_FILENAME = 'user_launcher_hierarchy.xml'
 
 import gui_icons
 from Qt4Designer_files.ui_launcher import Ui_MainWindow
@@ -58,6 +67,7 @@ import aphla
 # directory the tree model data for faster start-up.
 # *) Implement page jumping with the path buttons hidden under
 # the path line editbox.
+# *) path auto completion & naviation from path line editbox
 # *) Add <description> to XML
 # *) Implement <singleton>
 # *) Implement <args> for popen
@@ -118,15 +128,28 @@ class LauncherModel(Qt.QStandardItemModel):
         self.headerLabels.extend(COLUMN_NAMES)
         self.setHorizontalHeaderLabels(self.headerLabels)
         self.setColumnCount(len(self.headerLabels))
-
-        doc = self.open_XML_HierarchyFile()
         
         self.pathList = []
         self.pModelIndList = []
         
+        ## First, parse developer XML file and construct a tree model
+        developer_XML_Filepath = aphla.conf.filename(DEVELOPER_XML_FILENAME)
+        developer_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/')  
+        #
         self.nRows = 0
+        doc = self.open_XML_HierarchyFile(developer_XML_Filepath)
         self.construct_tree_model(doc.firstChild()) # Recursively search through 
         # the XML file to build the corresponding tree structure.
+
+        ## Then parse user XML file and append the data to the tree model
+        user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
+        user_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/') 
+        #
+        doc = self.open_XML_HierarchyFile(user_XML_Filepath)
+        rootItem = self.item(0,0)
+        self.construct_tree_model(doc.firstChild(),
+                                  parent_item=rootItem,
+                                  child_index=rootItem.rowCount())
         
         # Set up completer for search
         self.completer = Qt.QCompleter()
@@ -152,7 +175,7 @@ class LauncherModel(Qt.QStandardItemModel):
             item.path = item.path + item.dispName
             item.itemType = info['type']
             item.linkedFile = info['linkedFile']
-            if info['import'] == 'True':
+            if info['useImport'] == 'True':
                 item.useImport = True
             else:
                 item.useImport = False
@@ -166,7 +189,7 @@ class LauncherModel(Qt.QStandardItemModel):
                 item.path = parent_item.path + item.path
                 self.pathList.append(item.path)
                 parent_item.setChild(child_index, 0, item)
-                for (ii,prop_name) in enumerate(ITEM_PROPERTY_NAMES):
+                for (ii,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                     p = getattr(item,prop_name)
                     if not isinstance(p,str):
                         p = str(p)
@@ -182,7 +205,11 @@ class LauncherModel(Qt.QStandardItemModel):
                 self.construct_tree_model(sibling_dom, parent_item, 
                                           child_index)
         else:
-            self.construct_tree_model(dom.nextSibling().firstChild())
+            if not child_index:
+                child_index = 0
+                
+            self.construct_tree_model(dom.nextSibling().firstChild(),
+                                      parent_item, child_index)
             
 
     #----------------------------------------------------------------------
@@ -193,14 +220,13 @@ class LauncherModel(Qt.QStandardItemModel):
         node = dom.firstChild()
         
         info = {'dispName':'',
-                'linkedFile':'', 'import':False,
+                'linkedFile':'', 'useImport':False,
                 'singleton':False, 'args':'',
                 'sibling_DOMs':[]}
         
         while not node.isNull():
             nodeName = str(node.nodeName())
-            if nodeName in ('dispName', 'linkedFile', 'import',
-                            'singleton', 'args'):
+            if nodeName in XML_ITEM_PROPERTY_NAMES:
                 info[nodeName] = str(node.firstChild().nodeValue())
             elif nodeName in ('page', 'app'):
                 info['sibling_DOMs'].append(node)
@@ -215,90 +241,133 @@ class LauncherModel(Qt.QStandardItemModel):
         return info
     
     #----------------------------------------------------------------------
-    def open_XML_HierarchyFile(self):
-        """
-        First check to see if the user (local) copy of the XML file exists
-        in ".hla" directory.
+    def constructXMLElementsFromModel(self, doc, parentModelItem, parentDOMElement):
+        """"""
         
-        If the user copy does not exist, copy the developer version to the
-        local ".hla" directory, and then load the newly created local copy.
+        childItemList = [parentModelItem.child(i,0) for i in
+                         range(parentModelItem.rowCount())]
+        for childItem in childItemList:
+            childElement = doc.createElement(childItem.itemType)
+            
+            for (ii,prop_name) in enumerate(XML_ITEM_PROPERTY_NAMES):
+                p = getattr(childItem,prop_name)
+                if prop_name == 'useImport':
+                    print p
+                if not isinstance(p,str):
+                    p = str(p)
+                if p:
+                    elem = doc.createElement(prop_name)
+                    elemNodeText = doc.createTextNode(p)
+                    elem.appendChild(elemNodeText)
+                    childElement.appendChild(elem)
+
+            if childItem.hasChildren():
+                self.constructXMLElementsFromModel(doc, childItem, childElement)
+            
+            parentDOMElement.appendChild(childElement)
         
-        If the user copy already exists, compare the user copy with the
-        developer copy.
         
-        If the modified time of the user copy is more recent than that of
-        the developer copy, then simply load the user copy.
-        
-        If the modified time of the user copy is older than that of the
-        developer copy, then you must merge the files together and create
-        a new user copy in the ".hla" directory. Before merging, you should
-        make a backup copy, in case the merged new copy fails to load properly.
-        """
+    #----------------------------------------------------------------------
+    def writeToXMLFile(self, XML_Filepath, rootModelItem):
+        """"""
+                
+        if rootModelItem.itemType == 'page':
+            tagItemType = 'page'
+        else:
+            raise ValueError('Root model item to be written must be type "page".')
         
         doc = QDomDocument('')
+            
+        # Create XML file declaration header
+        header = doc.createProcessingInstruction('xml', 'version="1.0" encoding="UTF-8"')
+        doc.appendChild(header)
         
-        user_XML_Filepath = DOT_HLA_PATH + '/' + HIERARCHY_XML_FILENAME
-        developer_XML_Filepath = aphla.conf.filename(HIERARCHY_XML_FILENAME)
-
-        f = Qt.QFile(user_XML_Filepath)
+        # Create the XML root element (different from the XML element corresponding
+        # to the root model item)
+        xmlRootDOMElement = doc.createElement('hierarchy')
+        
+        # Create the XML element corresponding to the root model item
+        modelRootDOMElement = doc.createElement(tagItemType)
+        for (ii,prop_name) in enumerate(XML_ITEM_PROPERTY_NAMES):
+            p = getattr(rootModelItem,prop_name)
+            if not isinstance(p,str):
+                p = str(p)
+            if p:
+                elem = doc.createElement(prop_name)
+                elemNodeText = doc.createTextNode(p)
+                elem.appendChild(elemNodeText)
+                modelRootDOMElement.appendChild(elem)
+        
+        # Append the XML element corresponding to the root model item as a child of
+        # the XML root element
+        xmlRootDOMElement.appendChild(modelRootDOMElement)
+        
+        # Construct all the child elements recursively based on all the child model
+        # items of the given root model item
+        self.constructXMLElementsFromModel(doc, rootModelItem, modelRootDOMElement)
+                        
+        # Finally, append the XML root element to the DOM object
+        doc.appendChild(xmlRootDOMElement)
+        
+        
+        f = Qt.QFile(XML_Filepath)
+        
+        if not f.open(Qt.QIODevice.WriteOnly | Qt.QIODevice.Text):
+            raise IOError('Failed to open ' + XML_Filepath + ' for writing.')
+        
+        stream = Qt.QTextStream(f)
+        
+        stream << doc.toString()
+        
+        f.close()
+        
+        
+    
+    #----------------------------------------------------------------------
+    def open_XML_HierarchyFile(self, XML_Filepath):
+        """
+        """
+        
+            
+        f = Qt.QFile(XML_Filepath)
         if not f.exists():
-            # Make sure the developer version of the XML file exists before copying
-            if not os.path.isfile(developer_XML_Filepath):
-                raise OSError(HIERARCHY_XML_FILENAME + ' cannot be found.')
+            # If the developer XML file cannot be located, stop here.
+            XML_Filename = os.path.split(XML_Filepath)
+            if DEVELOPER_XML_FILENAME == XML_Filename:
+                raise OSError(XML_Filepath + ' does not exist.')
+            
+            # If the user XML file cannot be found, then create an empty one in
+            # ".hla" directory under the user home directory.
             
             # This section of code create ".hla" directory under th user home directory,
             # if it does not already exist. This method assures no race condtion will happen
             # in the process of creating the new directory.
             try:
-                os.makedirs(dot_hla_path)
+                os.makedirs(DOT_HLA_QFILEPATH)
             except OSError, e:
                 if e.errno != errno.EEXIST:
                     raise OSError('Failed to create .hla directory')
-                
-            shutil.copy2(developer_XML_Filepath, user_XML_Filepath)
-            # Make sure that the local copy has been successfully created.
+            
+            # Create an empty user XML file
+            rootModelItem = LauncherModelItem('Users')
+            self.writeToXMLFile(XML_Filepath, rootModelItem)
+            # Make sure that the file has been successfully created.
             if not f.exists():
-                raise IOError('Failed to create a local copy of ' + HIERARCHY_XML_FILENAME)
-        
-        else: # Check the modified times of user and developer copies
+                raise IOError('Failed to create an empty User XML file')
             
-            developerFileStat = os.stat(developer_XML_Filepath)
-            print 'Developer version of XML file:'
-            print '\tMode    :', developerFileStat.st_mode
-            print '\tCreated :', time.ctime(developerFileStat.st_ctime)
-            print '\tAccessed:', time.ctime(developerFileStat.st_atime)
-            print '\tModified:', time.ctime(developerFileStat.st_mtime)
-
-            userFileStat = os.stat(user_XML_Filepath)
-            print 'User version of XML file:'
-            print '\tMode    :', userFileStat.st_mode
-            print '\tCreated :', time.ctime(userFileStat.st_ctime)
-            print '\tAccessed:', time.ctime(userFileStat.st_atime)
-            print '\tModified:', time.ctime(userFileStat.st_mtime)
-            
-            # Cannot use ">=" here. Instead use ">" or "almost_equal".
-            # Due to the timestamp resolution difference between Python and
-            # file system, even if you copy the modified times with shutil.copy2,
-            # the copied file may not be exactly equal to the modified time of
-            # the source file. So, you must use "almost_equal" to check the
-            # modified time equallity.
-            if (userFileStat.st_mtime > developerFileStat.st_mtime) or \
-               almost_equal(userFileStat.st_mtime, developerFileStat.st_mtime, absTol=1e-4, relTol=None):
-                pass
-            else:
-                # TODO: Merge user and developer copies
-                shutil.copy2(developer_XML_Filepath, user_XML_Filepath)
-            
-        
         if not f.open(Qt.QIODevice.ReadOnly):
-            raise IOError('Failed to open ' + HIERARCHY_XML_FILENAME)
+            raise IOError('Failed to open ' + XML_Filepath)
 
+        doc = QDomDocument('')
+        
         if not doc.setContent(f):
             f.close()
-            raise IOError('Failed to parse ' + HIERARCHY_XML_FILENAME)
+            raise IOError('Failed to parse ' + XML_Filepath)
         f.close()
 
         return doc
+    
+        
     
     #----------------------------------------------------------------------
     def updateCompleterModel(self, currentRootPath):
@@ -347,7 +416,7 @@ class LauncherModel(Qt.QStandardItemModel):
         
         return self.pModelIndList[index]
         
-        
+    
     
 ########################################################################
 class LauncherModelItem(Qt.QStandardItem):
@@ -382,13 +451,14 @@ class LauncherModelItem(Qt.QStandardItem):
         
         copiedItem = LauncherModelItem(self.icon(),self.dispName)
         
-        for p in ITEM_PROPERTY_NAMES:
+        for p in MODEL_ITEM_PROPERTY_NAMES:
             setattr(copiedItem, p, getattr(self, p))
         
         copiedItem.updateIconAndColor()
         
         return copiedItem
     
+
     #----------------------------------------------------------------------
     def updateIconAndColor(self):
         """"""
@@ -404,7 +474,9 @@ class LauncherModelItem(Qt.QStandardItem):
             self.setIcon(Qt.QIcon(":/folder.png"))
             self.setForeground(Qt.QBrush(ITEM_COLOR_PAGE))
         else:
-            pass        
+            pass
+        
+    
 
 
 ########################################################################
@@ -492,17 +564,17 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.treeViewSide.setSelectionMode(Qt.QAbstractItemView.SingleSelection)
 
         rootPModelIndex = self.model.pModelIndexFromPath(initRootPath)
-        if not initRootPath:
-            raise IOError
+        if not rootPModelIndex:
+            raise IOError('Invalid initial root path provided: ' + initRootPath)
         rootModelIndex = Qt.QModelIndex(rootPModelIndex)
         self.mainPaneList = [MainPane(model,rootModelIndex,self.stackedWidgetMainPane,
                                       self.listViewMain,self.treeViewMain)]
         
-        self.selectedViewType = 'QListView'
+        self.selectedViewType = Qt.QListView
         self.selectedListViewMode = Qt.QListView.IconMode
-        self.selectedItem = self.model.itemFromIndex(rootModelIndex)
-        self.selectedPersistentModelIndex = rootPModelIndex
-
+        self.selectedItemList = []
+        self.selectedPersModelIndexList = []
+        
         self._initMainPane(len(self.mainPaneList)-1)
 
         
@@ -522,7 +594,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.contextMenuSinglePageSelected.addAction(self.actionProperties)        
         #
         self.contextMenuMultiplePagesSelected = Qt.QMenu()
-        self.contextMenuMultiplePagesSelected.addAction(self.actionOpen)
         self.contextMenuMultiplePagesSelected.addAction(self.actionOpenInNewTab)
         self.contextMenuMultiplePagesSelected.addAction(self.actionOpenInNewWindow)
         self.contextMenuMultiplePagesSelected.addSeparator()
@@ -571,6 +642,19 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.contextMenuNoneSelected.addSeparator()
         self.contextMenuNoneSelected.addAction(self.actionProperties)
         
+        ## Create menus
+        self.menuFile.addAction(self.actionOpen)
+        self.menuFile.addAction(self.actionOpenInNewTab)
+        self.menuFile.addAction(self.actionOpenInNewWindow)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionCut)
+        self.menuFile.addAction(self.actionCopy)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionRename)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionDelete)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionProperties)        
 
         ## Update path
         self.updatePath()
@@ -578,6 +662,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.lineEdit_search.setCompleter(self.model.completer)
         
         ## Make connections
+        self.connect(self.treeViewSide.selectionModel(),
+                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     self.onSelectionChange)        
         self.connect(self.treeViewSide,
                      Qt.SIGNAL('doubleClicked(const QModelIndex &)'),
                      self._callbackDoubleClickOnSidePaneItem)
@@ -587,7 +674,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.treeViewSide,
                      Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)        
-    
+                
         
         self.connect(self.comboBox_view_mode,
                      Qt.SIGNAL('currentIndexChanged(const QString &)'),
@@ -604,6 +691,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.splitterPanes, Qt.SIGNAL('splitterMoved(int,int)'),
                      self.onSplitterManualMove)
 
+        self.connect(self, Qt.SIGNAL('sigClearSelection'),
+                     self.clearSelection)
         
     #----------------------------------------------------------------------
     def onSplitterManualMove(self, int_pos, int_index):
@@ -698,7 +787,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 Qt.QPersistentModelIndex(self.model.indexFromItem(item))
             ## TODO: Highlight the search matching portion of the dispaly text
             rootItem.setChild(i,0,newItem)
-            for (j,prop_name) in enumerate(ITEM_PROPERTY_NAMES):
+            for (j,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                 p = getattr(item,prop_name)
                 if not isinstance(p,str):
                     p = str(p)
@@ -706,47 +795,70 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 
         self.updateView(m)
                 
-    
+    #----------------------------------------------------------------------
+    def validateSelectedItemList(self, rightClickedMainPane):
+        """
+        The only purpose of this function is to force non-selection
+        for the following case.
+        
+        If you click on a page item that contains no items on the Side Pane,
+        current selection will be the clicked page item. After this action,
+        even if you click on the empty space on the Main Pane, the current
+        selection will not become empty, because there is no item to change
+        selection on the Mane Pane.
+        
+        In other words, if you click on a page item on the Side Pane, there is
+        no way to unselect the item by clicking on the Main Pane.
+        
+        This situation is very inconvenient if you are trying to create a new
+        item under that page through right-clicking. This situation is avoided
+        if you go into the empty page by staying on the Main Pane.
+        
+        To work around this issue, the current root item of the Main Pane is
+        checked against self.selectedItemList. If the root item is contained
+        in the list, that means invalid.
+        """
+        
+        if not self.selectedItemList:
+            return
+        
+        m = rightClickedMainPane
+        
+        currentRootItem = self.model.itemFromIndex(
+            m.proxyModel.mapToSource(m.listView.rootIndex()))
+        
+        if currentRootItem.path in \
+           [i.path for i in self.selectedItemList]:
+            self.clearSelection()
+        
     #----------------------------------------------------------------------
     def openContextMenu(self, qpoint):
         """"""
         
         sender = self.sender()
         
-        itemSelectionModel = sender.selectionModel()
-
         globalClickPos = sender.mapToGlobal(qpoint)        
         
         m = self.getParentMainPane(sender)
         
         if m: # When right-clicked on main pane
             
-            selectedModelIndexes = itemSelectionModel.selectedRows()
+            self.validateSelectedItemList(m)
             
-            if not selectedModelIndexes: # When no item is being selected
+            if not self.selectedItemList: # When no item is being selected
                 self.contextMenuNoneSelected.exec_(globalClickPos)
             else:
-                selectedPModelIndexes = [
-                    Qt.QPersistentModelIndex(m.proxyModel.mapToSource(ind))
-                    for ind in selectedModelIndexes]
-                if type(m.proxyModel.sourceModel()) == SearchModel:
-                    selectedPModelIndexes = [
-                        self.convertSearchModelPModIndToModelPModInd(m.searchModel, pModInd)
-                        for pModInd in selectedPModelIndexes]
-                
-                selectedItems = [self.model.itemFromIndex(Qt.QModelIndex(pModInd))
-                                 for pModInd in selectedPModelIndexes]
+            
+                if len(self.selectedItemList) == 1:
+                    selectedItem = self.selectedItemList[0]
                     
-                if len(selectedItems) == 1:
-                    self.selectedItem = selectedItems[0]
-                    
-                    if self.selectedItem.itemType == 'page': # When a page item is selected
+                    if selectedItem.itemType == 'page': # When a page item is selected
                         self.contextMenuSinglePageSelected.exec_(globalClickPos)
                     else: # When an app item is selected
                         self.contextMenuSingleAppSelected.exec_(globalClickPos)   
                     
                 else:
-                    selectedItemTypes = list(set([i.itemType for i in selectedItems]))
+                    selectedItemTypes = list(set([i.itemType for i in self.selectedItemList]))
                     if len(selectedItemTypes) == 2: # When page item(s) and app item(s) are selected
                         self.contextMenuPagesAndAppsSelected.exec_(globalClickPos)
                     elif selectedItemTypes[0] == 'page': # When multiple page items are selected
@@ -758,7 +870,11 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.selectedListViewMode = m.listView.viewMode()            
             
         else: # When right-clicked on side pane
-            self.selectedItem = self.model.itemFromIndex(sender.currentIndex())
+
+            if not self.selectedItemList:
+                return
+            
+            selectedItem = self.selectedItemList[0]
             
             m = self.getCurrentMainPane()
             if m.stackedWidget.currentIndex() == self.listView_stack_index:
@@ -767,7 +883,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 self.selectedViewType = Qt.QTreeView
             self.selectedListViewMode = m.listView.viewMode()
         
-            if self.selectedItem.itemType == 'page': # When a page item is selected
+            if selectedItem.itemType == 'page': # When a page item is selected
                 self.contextMenuSinglePageSelected.exec_(globalClickPos)
             else: # When an app item is selected
                 self.contextMenuSingleAppSelected.exec_(globalClickPos)              
@@ -781,6 +897,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         newTreeView.setDragDropMode(Qt.QAbstractItemView.NoDragDrop)
         
+        self.connect(newTreeView.selectionModel(),
+                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     self.onSelectionChange)         
         self.connect(newTreeView,
                      Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
@@ -790,9 +909,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(newTreeView,
                      Qt.SIGNAL('clicked(const QModelIndex &)'),
                      self._callbackClickOnMainPaneItem)  
-        self.connect(newTreeView.selectionModel(),
-                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
-                     self.onSelectionChange)        
+               
     
     #----------------------------------------------------------------------
     def _initMainPaneListViewSettings(self, newListView):
@@ -805,6 +922,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         newListView.setWrapping(True)
         newListView.setDragDropMode(Qt.QAbstractItemView.NoDragDrop)
         
+        self.connect(newListView.selectionModel(),
+                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     self.onSelectionChange)        
         self.connect(newListView,
                      Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
@@ -814,21 +934,53 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(newListView,
                      Qt.SIGNAL('clicked(const QModelIndex &)'),
                      self._callbackClickOnMainPaneItem)
-        self.connect(newListView.selectionModel(),
-                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
-                     self.onSelectionChange)
+        
     
     #----------------------------------------------------------------------
     def onSelectionChange(self, selected, deselected):
         """"""
         
         itemSelectionModel = self.sender()
-        print 'Old Selection Empty? ', deselected.isEmpty()
-        print 'New Selection Empty? ', selected.isEmpty() 
-        print itemSelectionModel.selectedIndexes()
-        print '# of selected indexes = ', len(itemSelectionModel.selectedIndexes())
-        print itemSelectionModel.selectedRows()
-        print '# of selected rows = ', len(itemSelectionModel.selectedRows())
+        #print 'Old Selection Empty? ', deselected.isEmpty()
+        #print 'New Selection Empty? ', selected.isEmpty() 
+        #print itemSelectionModel.selectedIndexes()
+        #print '# of selected indexes = ', len(itemSelectionModel.selectedIndexes())
+        #print itemSelectionModel.selectedRows()
+        #print '# of selected rows = ', len(itemSelectionModel.selectedRows())
+                
+        clickedOnSearchModeMainPane = False
+        
+        model = itemSelectionModel.model()
+        if type(model) == Qt.QSortFilterProxyModel: # When selection change ocurred on a Main Pane
+            m = self.getCurrentMainPane()
+            sourceModelIndexList = [m.proxyModel.mapToSource(proxyModelIndex)
+                                    for proxyModelIndex
+                                    in itemSelectionModel.selectedRows()]
+            sourceModel = model.sourceModel()
+            if type(sourceModel) == SearchModel: # When selection change ocurred on a Main Pane in Search Mode
+                clickedOnSearchModeMainPane = True
+                searchModelItemList = [m.searchModel.itemFromIndex(i)
+                                       for i in sourceModelIndexList]
+                self.selectedPersModelIndexList = [i.sourcePersistentModelIndex
+                                                   for i in searchModelItemList]
+            else: # When selection change ocurred on a Main Pane in Non-Search Mode
+                pass
+
+        else: # When selection change ocurred on a Side Pane
+            sourceModelIndexList = itemSelectionModel.selectedRows()
+            
+        if not clickedOnSearchModeMainPane: # For selection change on a Mane Pane in Non-Search Mode & on a Side Pane
+            if all([i.isValid() for i in sourceModelIndexList]):
+                self.selectedPersModelIndexList = [Qt.QPersistentModelIndex(i)
+                                                   for i in sourceModelIndexList]
+            else:
+                raise ValueError('Invalid model index detected.')
+        
+            self.selectedItemList = [self.model.itemFromIndex(i)
+                                     for i in sourceModelIndexList]
+        else: # For selection change on a Mane Pane in Search Mode
+            self.selectedItemList = [self.model.itemFromIndex(Qt.QModelIndex(pModInd))
+                                     for pModInd in self.selectedPersModelIndexList]
 
     #----------------------------------------------------------------------
     def _initMainPane(self, main_pane_index):
@@ -865,6 +1017,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.updatePath()
     
     #----------------------------------------------------------------------
+    def openPageOrApps(self):
+        """"""
+        
+        
+        
+    #----------------------------------------------------------------------
     def openInNewTab(self):
         """"""
         
@@ -883,8 +1041,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             # Move the current stacked widget to a tab
             new_tab = Qt.QWidget()
             m.stackedWidget.setParent(new_tab)
+            currentHistoryItem = m.pathHistory[m.pathHistoryCurrentIndex]
+            if type(currentHistoryItem) == dict:
+                currentRootPersModInd = currentHistoryItem['searchRootIndex']
+            else:
+                currentRootPersModInd = currentHistoryItem
             currentRootItem = self.model.itemFromIndex(
-                Qt.QModelIndex(m.pathHistory[m.pathHistoryCurrentIndex]) )
+                Qt.QModelIndex(currentRootPersModInd) )
             self.tabWidget.addTab(new_tab, currentRootItem.dispName)
             #
             tab_gridLayout = Qt.QGridLayout(new_tab)
@@ -899,58 +1062,60 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                          self.onTabSelectionChange)
             
             
-                                    
-        new_tab = Qt.QWidget()
-        new_stackedWidget = Qt.QStackedWidget(new_tab)
-        #
-        tab_gridLayout = Qt.QGridLayout(new_tab)
-        tab_gridLayout.addWidget(new_stackedWidget,0,0,1,1)
-        #
-        new_page1 = Qt.QWidget()
-        page1_gridLayout = Qt.QGridLayout(new_page1)
-        page1_gridLayout.setContentsMargins(-1, 0, 0, 0)
-        new_treeView = Qt.QTreeView(new_page1)
-        page1_gridLayout.addWidget(new_treeView, 0, 0, 1, 1)
-        new_stackedWidget.addWidget(new_page1)
-        new_page2 = Qt.QWidget()
-        page2_gridLayout = Qt.QGridLayout(new_page2)
-        page2_gridLayout.setContentsMargins(-1, 0, 0, 0)
-        new_listView = Qt.QListView(new_page2)
-        new_listView.setViewMode(self.selectedListViewMode)
-        page2_gridLayout.addWidget(new_listView, 0, 0, 1, 1)
-        new_stackedWidget.addWidget(new_page2)
-        #
-        # Link the model data to the views
-        initRootModelIndex = self.model.indexFromItem(self.selectedItem)
-        self.mainPaneList.append(
-            MainPane(self.model, initRootModelIndex, new_stackedWidget,
-                     new_listView, new_treeView, self.selectedListViewMode) )
-        self._initMainPane(len(self.mainPaneList)-1)
-        #
-        # Reset the view type of the newly created tab to the view type
-        # of the previously visible tab
-        if self.selectedViewType == Qt.QListView:
-            new_stackedWidget.setCurrentIndex(self.listView_stack_index)
-        elif self.selectedViewType == Qt.QTreeView:
-            new_stackedWidget.setCurrentIndex(self.treeView_stack_index)
-        #
-        self.tabWidget.addTab(new_tab, self.selectedItem.dispName)
-        self.tabWidget.setCurrentWidget(new_tab)
+        for selectedItem in self.selectedItemList:                
+            new_tab = Qt.QWidget()
+            new_stackedWidget = Qt.QStackedWidget(new_tab)
+            #
+            tab_gridLayout = Qt.QGridLayout(new_tab)
+            tab_gridLayout.addWidget(new_stackedWidget,0,0,1,1)
+            #
+            new_page1 = Qt.QWidget()
+            page1_gridLayout = Qt.QGridLayout(new_page1)
+            page1_gridLayout.setContentsMargins(-1, 0, 0, 0)
+            new_treeView = Qt.QTreeView(new_page1)
+            page1_gridLayout.addWidget(new_treeView, 0, 0, 1, 1)
+            new_stackedWidget.addWidget(new_page1)
+            new_page2 = Qt.QWidget()
+            page2_gridLayout = Qt.QGridLayout(new_page2)
+            page2_gridLayout.setContentsMargins(-1, 0, 0, 0)
+            new_listView = Qt.QListView(new_page2)
+            new_listView.setViewMode(self.selectedListViewMode)
+            page2_gridLayout.addWidget(new_listView, 0, 0, 1, 1)
+            new_stackedWidget.addWidget(new_page2)
+            #
+            # Link the model data to the views
+            initRootModelIndex = self.model.indexFromItem(selectedItem)
+            self.mainPaneList.append(
+                MainPane(self.model, initRootModelIndex, new_stackedWidget,
+                         new_listView, new_treeView, self.selectedListViewMode) )
+            self._initMainPane(len(self.mainPaneList)-1)
+            #
+            # Reset the view type of the newly created tab to the view type
+            # of the previously visible tab
+            if self.selectedViewType == Qt.QListView:
+                new_stackedWidget.setCurrentIndex(self.listView_stack_index)
+            elif self.selectedViewType == Qt.QTreeView:
+                new_stackedWidget.setCurrentIndex(self.treeView_stack_index)
+            #
+            self.tabWidget.addTab(new_tab, selectedItem.dispName)
+            self.tabWidget.setCurrentWidget(new_tab)
     
     #----------------------------------------------------------------------
     def openInNewWindow(self):
         """"""
         
-        appFilepath = sys.modules[self.__module__].__file__
-        appFilename = os.path.split(appFilepath)[1]
-        if appFilename.endswith('.pyc'):
-            appFilename = appFilename.replace('.pyc','')
-        elif appFilename.endswith('.py'):
-            appFilename = appFilename.replace('.py','')
+        appLauncherFilepath = sys.modules[self.__module__].__file__
+        appLauncherFilename = os.path.split(appLauncherFilepath)[1]
+        if appLauncherFilename.endswith('.pyc'):
+            appLauncherFilename = appLauncherFilename.replace('.pyc','')
+        elif appLauncherFilename.endswith('.py'):
+            appLauncherFilename = appLauncherFilename.replace('.py','')
         useImport = True
-        args = self.selectedItem.path
-        self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                  appFilename, useImport, args)
+        
+        for selectedItem in self.selectedItemList:
+            args = selectedItem.path
+            self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
+                      appLauncherFilename, useImport, args)
         
     #----------------------------------------------------------------------
     def disableTabView(self):
@@ -1024,7 +1189,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         self.actionOpen = Qt.QAction(Qt.QIcon(), 'Open', self)
         #self.connect(self.actionOpen, Qt.SIGNAL('triggered()'),
-                     #self.openPageOrApp)
+                     #self.openPageOrApps)
         
         self.actionCut = Qt.QAction(Qt.QIcon(), 'Cut', self)
         self.actionCopy = Qt.QAction(Qt.QIcon(), 'Copy', self)
@@ -1036,9 +1201,24 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.actionCreateNewPage = Qt.QAction(Qt.QIcon(), 'Create New Page Item', self)
         self.actionCreateNewApp = Qt.QAction(Qt.QIcon(), 'Create New App Item', self)
         self.actionArrangeItems = Qt.QAction(Qt.QIcon(), 'Arrange Items', self)
+        
         self.actionDelete = Qt.QAction(Qt.QIcon(), 'Delete', self)
+        self.connect(self.actionDelete, Qt.SIGNAL('triggered()'),
+                  self.deleteItems)
         
+    #----------------------------------------------------------------------
+    def deleteItems(self):
+        """"""
         
+        self.model.removeRow(self.selectedItemList[0].row(),
+                             self.selectedItemList[0].parent().index())
+        
+        user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + 'test.xml' #USER_XML_FILENAME
+        user_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/') 
+                        
+        rootModelItem = self.model.itemFromIndex( Qt.QModelIndex(
+            self.model.pModelIndexFromPath('/root/Users') ) )
+        self.model.writeToXMLFile(user_XML_Filepath, rootModelItem)
         
     #----------------------------------------------------------------------
     def _initMainToolbar(self):
@@ -1106,40 +1286,26 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     
     
     #----------------------------------------------------------------------
-    def _callbackClickOnMainPaneItem(self, modelIndex):
+    def _callbackClickOnMainPaneItem(self, modelIndex_NotUsed):
         """ """
-                
-        m = self.getCurrentMainPane()
-        currentModelIndex = self.getSourceModelIndex(modelIndex, m)
-                            
-        if currentModelIndex.isValid():
-            self.selectedPersistentModelIndex = \
-                Qt.QPersistentModelIndex(currentModelIndex)
-        else:
-            print 'Invalid model index detected.'
-            return        
-            
-        self.selectedItem = m.proxyModel.sourceModel().itemFromIndex(currentModelIndex)
+        
+        # Do nothing. "onSelectionChange" now handles updates of selected items.
+        
         
     #----------------------------------------------------------------------
-    def _callbackClickOnSidePaneItem(self, modelIndex):
+    def _callbackClickOnSidePaneItem(self, modelIndex_NotUsed):
         """ """
-                
-        if modelIndex.isValid():
-            self.selectedPersistentModelIndex = \
-                Qt.QPersistentModelIndex(modelIndex)
-        else:
-            print 'Invalid model index detected.'
-            return           
-        self.selectedItem = self.model.itemFromIndex(modelIndex)
-
-        pModelIndex = self.selectedPersistentModelIndex
-        item = self.selectedItem
+        
+        if not self.selectedItemList:
+            return
+        
+        item = self.selectedItemList[0]
+        pModelIndex = self.selectedPersModelIndexList[0]
         
         m = self.getCurrentMainPane()        
                                 
         if item.itemType == 'page':
-            
+                        
             # Check if the new path is the same as the last history path.
             # This check is necessary only for the click on side pane item,
             # not for the click on main pane item.
@@ -1155,29 +1321,36 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         elif item.itemType == 'app':
             pass
                 
-        
+    #----------------------------------------------------------------------
+    def clearSelection(self):
+        """
+              
+        """
+
+        m = self.getCurrentMainPane()
+        m.listView.selectionModel().clearSelection()
+        m.treeView.selectionModel().clearSelection()
+        self.selectedItemList = []
+        self.selectedPersModelIndexList = []
+         
     #----------------------------------------------------------------------
     def _callbackDoubleClickOnMainPaneItem(self, modelIndex_NotUsed): 
         """"""
             
         m = self.getCurrentMainPane()
-        item = self.selectedItem
-        pModelIndex = self.selectedPersistentModelIndex
-        # If pModelIndex is a persistent model index of "searchModel",
-        # then you need to convert pModelIndex into the corresponding
-        # persistent model index of "self.model" first.
-        if type(pModelIndex.model()) == SearchModel:
-            pModelIndex = self.convertSearchModelPModIndToModelPModInd(
-                m.searchModel, pModelIndex)        
-                        
+        item = self.selectedItemList[0]
+        pModelIndex = self.selectedPersModelIndexList[0]
+        
         if item.itemType == 'page':
-                
+            
             m.pathHistory = m.pathHistory[:(m.pathHistoryCurrentIndex+1)]
             m.pathHistory.append(pModelIndex)
             m.pathHistoryCurrentIndex = len(m.pathHistory)-1
             # History update must happen before calling "self.updateView"
             # function for the view update to work properly.            
             self.updateView(m)
+            
+            self.clearSelection()
                                 
         elif item.itemType == 'app':
                 
@@ -1188,8 +1361,11 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     #----------------------------------------------------------------------
     def _callbackDoubleClickOnSidePaneItem(self, modelIndex_NotUsed):
         """ """
-
-        item = self.selectedItem
+        
+        if not self.selectedItemList:
+            return
+        
+        item = self.selectedItemList[0]
                         
         if item.itemType == 'page':
             pass
@@ -1362,6 +1538,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         self.updateStatesOfNavigationButtons()
         
+        self.emit(Qt.SIGNAL('sigClearSelection'))   
+        
         
     #----------------------------------------------------------------------
     def goBack(self):
@@ -1376,6 +1554,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                     
             self.updateStatesOfNavigationButtons()
             
+            self.emit(Qt.SIGNAL('sigClearSelection')) 
+            
 
     #----------------------------------------------------------------------
     def goForward(self):
@@ -1389,6 +1569,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.updateView(m)
             
             self.updateStatesOfNavigationButtons()
+            
+            self.emit(Qt.SIGNAL('sigClearSelection')) 
             
     
     #----------------------------------------------------------------------
@@ -1458,6 +1640,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         else:
             print 'Unknown view mode'
             
+    ##----------------------------------------------------------------------
+    #def focusOutEvent(self, event):
+        #""""""
+    
+        #super(LineEditForTabText,self).focusOutEvent(event)
+        
+        #self.emit(Qt.SIGNAL('editingFinished()'))
         
         
 ########################################################################

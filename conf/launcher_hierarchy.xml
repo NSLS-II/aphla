@@ -4,7 +4,7 @@
         <app>
             <dispName>Clock</dispName>
             <linkedFile>xclock</linkedFile>
-            <import>False</import>
+            <useImport>False</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -14,7 +14,7 @@
         <app>
             <dispName>Orbit</dispName>
             <linkedFile>aporbit</linkedFile>
-            <import>False</import>
+            <useImport>False</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -24,7 +24,7 @@
         <app>
             <dispName>Beam Based Alignment</dispName>
             <linkedFile>apbba</linkedFile>
-            <import>False</import>
+            <useImport>False</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -34,7 +34,7 @@
         <app>
             <dispName>Current Monitor</dispName>                
             <linkedFile>currentmonitor</linkedFile>
-            <import>True</import>
+            <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -44,7 +44,7 @@
         <app>
             <dispName>Element Selector</dispName>
             <linkedFile>GUI_Element_Selector</linkedFile>
-            <import>True</import>
+            <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -54,7 +54,7 @@
         <app>
             <dispName>Channel Selector</dispName>
             <linkedFile>GUI_Channel_Selector</linkedFile>
-            <import>True</import>
+            <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -64,7 +64,7 @@
         <app>
             <dispName>Lattice Tuner</dispName>
             <linkedFile>GUI_Lattice_Tuner</linkedFile>
-            <import>True</import>
+            <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -74,7 +74,7 @@
         <app>
             <dispName>Orbit Viewer</dispName>
             <linkedFile>GUI_Orbit_Viewer</linkedFile>
-            <import>True</import>
+            <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -84,7 +84,7 @@
         <app>
             <dispName>Beta Function Viewer</dispName>
             <linkedFile>GUI_BetaFunc_Viewer</linkedFile>
-            <import>True</import>
+            <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
         </app>
@@ -94,7 +94,7 @@
         <app>
             <dispName>Launcher</dispName>
             <linkedFile>aplauncher</linkedFile>
-            <import>True</import>
+            <useImport>True</useImport>
             <singleton>False</singleton>
             <args>/root</args>
         </app>
@@ -119,32 +119,18 @@
         </page>  <!-- Studies -->
 
         <page>
-            <dispName>Users</dispName>
-            <page>
-                <dispName>jchoi</dispName>
-            </page>  <!-- jchoi -->
+            <dispName>Test</dispName>
+            &appClock;
+            &appOrbit;
+            &appBBA;
+            &appCurrentMonitor; 
+            &appElementSelector;
+            &appChannelSelector;
+            &appLatticeTuner;
+            &appOrbitViewer;
+            &appBetaFuncViewer;
+            &appLauncher;
+        </page> <!-- Test -->
         
-            <page>
-                <dispName>lyyang</dispName>
-                &appClock;
-                &appOrbit;
-                &appBBA;
-                &appCurrentMonitor;            
-            </page>  <!-- lyyang -->
-        
-            <page>
-                <name>yhidaka</name>
-                <dispName>yhidaka</dispName>
-                &appCurrentMonitor;
-                &appElementSelector;
-                &appChannelSelector;
-                &appLatticeTuner;
-                &appOrbitViewer;
-                &appBetaFuncViewer;
-                &appLauncher;
-                &appClock;
-            </page>  <!-- yhidaka -->
-        
-        </page> <!-- Users -->
     </page>  <!-- root -->
 </hierarchy>
