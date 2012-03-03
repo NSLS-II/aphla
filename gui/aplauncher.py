@@ -35,9 +35,19 @@ import PyQt4.Qt as Qt
 from PyQt4.QtGui import QPushButton
 from PyQt4.QtXml import QDomDocument
 
+XML_ITEM_TAG_NAME = 'item'
 MODEL_ITEM_PROPERTY_NAMES = ['path','linkedFile','args','useImport','singleton','itemType']
 COLUMN_NAMES = ['Path','Linked File','Arguments','Use Import','Singleton','Item Type']
-XML_ITEM_PROPERTY_NAMES = ['dispName','linkedFile','useImport','singleton','args']
+XML_ITEM_PROPERTY_NAMES = ['dispName','itemType','linkedFile','useImport','singleton','args']
+DEFAULT_XML_ITEM = {'dispName':'', 'itemType':'page', 'linkedFile':'',
+                    'useImport':False, 'singleton':False, 'args':''}
+ITEM_PROPERTIES_DIALOG_OBJECTS = {'dispName':'lineEdit_dispName',
+                                  'itemType':'comboBox_itemType',
+                                  'linkedFile':'comboBox_linkedFile',
+                                  'useImport':'comboBox_useImport',
+                                  'singleton':'comboBox_singleton',
+                                  'args':'lineEdit_args'}
+
 ITEM_COLOR_PAGE = Qt.Qt.black
 ITEM_COLOR_APP = Qt.Qt.red
 
@@ -56,6 +66,7 @@ USER_XML_FILENAME = 'user_launcher_hierarchy.xml'
 
 import gui_icons
 from Qt4Designer_files.ui_launcher import Ui_MainWindow
+from Qt4Designer_files.ui_launcher_item_properties import Ui_Dialog
 
 import aphla
 
@@ -131,6 +142,8 @@ class LauncherModel(Qt.QStandardItemModel):
         
         self.pathList = []
         self.pModelIndList = []
+        self.linkedFileList = [] # Initial list population will occur when a
+        # LauncherModelItemPropertiesDialog is created for the first time.
         
         ## First, parse developer XML file and construct a tree model
         developer_XML_Filepath = aphla.conf.filename(DEVELOPER_XML_FILENAME)
@@ -173,7 +186,7 @@ class LauncherModel(Qt.QStandardItemModel):
             
             item = LauncherModelItem(dispName)
             item.path = item.path + item.dispName
-            item.itemType = info['type']
+            item.itemType = info['itemType']
             item.linkedFile = info['linkedFile']
             if info['useImport'] == 'True':
                 item.useImport = True
@@ -219,23 +232,20 @@ class LauncherModel(Qt.QStandardItemModel):
         
         node = dom.firstChild()
         
-        info = {'dispName':'',
-                'linkedFile':'', 'useImport':False,
-                'singleton':False, 'args':'',
-                'sibling_DOMs':[]}
+        info = DEFAULT_XML_ITEM.copy()
+        info['sibling_DOMs'] = []
         
         while not node.isNull():
             nodeName = str(node.nodeName())
             if nodeName in XML_ITEM_PROPERTY_NAMES:
-                info[nodeName] = str(node.firstChild().nodeValue())
-            elif nodeName in ('page', 'app'):
+                nodeValue = str(node.firstChild().nodeValue())
+                info[nodeName] = nodeValue
+            elif nodeName == XML_ITEM_TAG_NAME:
                 info['sibling_DOMs'].append(node)
                 
             node = node.nextSibling()
-    
-        if info['dispName']:
-            info['type'] = str(dom.nodeName())
-        else:
+            
+        if not info['dispName']:
             info = {}
                     
         return info
@@ -247,12 +257,10 @@ class LauncherModel(Qt.QStandardItemModel):
         childItemList = [parentModelItem.child(i,0) for i in
                          range(parentModelItem.rowCount())]
         for childItem in childItemList:
-            childElement = doc.createElement(childItem.itemType)
+            childElement = doc.createElement(XML_ITEM_TAG_NAME)
             
             for (ii,prop_name) in enumerate(XML_ITEM_PROPERTY_NAMES):
                 p = getattr(childItem,prop_name)
-                if prop_name == 'useImport':
-                    print p
                 if not isinstance(p,str):
                     p = str(p)
                 if p:
@@ -272,7 +280,7 @@ class LauncherModel(Qt.QStandardItemModel):
         """"""
                 
         if rootModelItem.itemType == 'page':
-            tagItemType = 'page'
+            pass
         else:
             raise ValueError('Root model item to be written must be type "page".')
         
@@ -287,7 +295,7 @@ class LauncherModel(Qt.QStandardItemModel):
         xmlRootDOMElement = doc.createElement('hierarchy')
         
         # Create the XML element corresponding to the root model item
-        modelRootDOMElement = doc.createElement(tagItemType)
+        modelRootDOMElement = doc.createElement(XML_ITEM_TAG_NAME)
         for (ii,prop_name) in enumerate(XML_ITEM_PROPERTY_NAMES):
             p = getattr(rootModelItem,prop_name)
             if not isinstance(p,str):
@@ -405,7 +413,6 @@ class LauncherModel(Qt.QStandardItemModel):
             self.pathList.append(childItem.path)
             self.pModelIndList.append(Qt.QPersistentModelIndex(self.indexFromItem(childItem)))
             
-            #for j in range(childItem.rowCount()):
             self.updatePathLookupLists(childItem)
                 
     #----------------------------------------------------------------------
@@ -417,7 +424,44 @@ class LauncherModel(Qt.QStandardItemModel):
         return self.pModelIndList[index]
         
     
+########################################################################
+class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, model, *args):
+        """Constructor"""
+        
+        Qt.QDialog.__init__(self, *args)
+        
+        self.setupUi(self)
+        
+        self.setWindowFlags(Qt.Qt.Window) # To add Maximize & Minimize buttons
+        
+        self.data = DEFAULT_XML_ITEM.copy()
+        
+        # Update the list of linkedFile strings that already exist in the model
+        itemList = [model.itemFromIndex(Qt.QModelIndex(pInd))
+                    for pInd in model.pModelIndList]
+        model.linkedFileList = list(set([item.linkedFile for item in itemList]))
+        
+        for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
+            obj = getattr(self, objName)
+            if objName.startswith('lineEdit'):
+                obj.setText(self.data[propName])
+            elif objName.startswith('comboBox'):
+
+                if propName == 'linkedFile':
+                    obj.addItems(model.linkedFileList)
+                    
+                matchedInd = obj.findText(str(self.data[propName]),
+                                          Qt.Qt.MatchExactly)
+                if matchedInd != -1:
+                    obj.setCurrentIndex(matchedInd)
+        
     
+    
+
 ########################################################################
 class LauncherModelItem(Qt.QStandardItem):
     """
@@ -591,7 +635,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.contextMenuSinglePageSelected.addSeparator()
         self.contextMenuSinglePageSelected.addAction(self.actionDelete)
         self.contextMenuSinglePageSelected.addSeparator()
-        self.contextMenuSinglePageSelected.addAction(self.actionProperties)        
+        self.contextMenuSinglePageSelected.addAction(self.actionProperties)
+        self.contextMenuSinglePageSelected.setDefaultAction(self.actionOpen)
         #
         self.contextMenuMultiplePagesSelected = Qt.QMenu()
         self.contextMenuMultiplePagesSelected.addAction(self.actionOpenInNewTab)
@@ -1192,10 +1237,27 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                      #self.openPageOrApps)
         
         self.actionCut = Qt.QAction(Qt.QIcon(), 'Cut', self)
+        self.actionCut.setShortcut(
+            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_X))
+        
         self.actionCopy = Qt.QAction(Qt.QIcon(), 'Copy', self)
+        self.actionCopy.setShortcut(
+            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_C))
+        
         self.actionPaste = Qt.QAction(Qt.QIcon(), 'Paste', self)
+        self.actionPaste.setShortcut(
+            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_V))
+
+
         self.actionRename = Qt.QAction(Qt.QIcon(), 'Rename', self)
+        self.actionRename.setShortcut(Qt.Qt.Key_F2)
+        
         self.actionProperties = Qt.QAction(Qt.QIcon(), 'Properties', self)
+        self.actionProperties.setShortcut(
+            Qt.QKeySequence(Qt.Qt.AltModifier + Qt.Qt.Key_Return))
+        self.connect(self.actionProperties, Qt.SIGNAL('triggered()'),
+                     self.openPropertiesDialog)
+        
         self.actionOpenWithImport = Qt.QAction(Qt.QIcon(), 'Open w/ import', self)
         self.actionOpenWithPopen = Qt.QAction(Qt.QIcon(), 'Open w/ Popen', self)
         self.actionCreateNewPage = Qt.QAction(Qt.QIcon(), 'Create New Page Item', self)
@@ -1203,8 +1265,17 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.actionArrangeItems = Qt.QAction(Qt.QIcon(), 'Arrange Items', self)
         
         self.actionDelete = Qt.QAction(Qt.QIcon(), 'Delete', self)
+        self.actionDelete.setShortcut(Qt.Qt.Key_Delete)
         self.connect(self.actionDelete, Qt.SIGNAL('triggered()'),
                   self.deleteItems)
+    
+    #----------------------------------------------------------------------
+    def openPropertiesDialog(self):
+        """"""
+        
+        self.propertiesDialogView = \
+            LauncherModelItemPropertiesDialog(self.model)
+        self.propertiesDialogView.exec_()
         
     #----------------------------------------------------------------------
     def deleteItems(self):
@@ -1675,6 +1746,7 @@ class LauncherApp(Qt.QObject):
         self.model = LauncherModel() # Used for TreeView on side pane for which sorting is disabled
         
         self.model.updatePathLookupLists()
+        
         
     #----------------------------------------------------------------------
     def _initView(self, initRootPath):

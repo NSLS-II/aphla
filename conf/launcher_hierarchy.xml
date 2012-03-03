@@ -1,125 +1,140 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hierarchy [
     <!ENTITY appClock "
-        <app>
+        <item>
             <dispName>Clock</dispName>
+            <itemType>app</itemType>
             <linkedFile>xclock</linkedFile>
             <useImport>False</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
 
     <!ENTITY appOrbit "
-        <app>
+        <item>
             <dispName>Orbit</dispName>
+            <itemType>app</itemType>
             <linkedFile>aporbit</linkedFile>
             <useImport>False</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
 
     <!ENTITY appBBA "
-        <app>
+        <item>
             <dispName>Beam Based Alignment</dispName>
+            <itemType>app</itemType>
             <linkedFile>apbba</linkedFile>
             <useImport>False</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
     
     <!ENTITY appCurrentMonitor "
-        <app>
-            <dispName>Current Monitor</dispName>                
+        <item>
+            <dispName>Current Monitor</dispName>      
+            <itemType>app</itemType>
             <linkedFile>currentmonitor</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
     
     <!ENTITY appElementSelector "
-        <app>
+        <item>
             <dispName>Element Selector</dispName>
+            <itemType>app</itemType>
             <linkedFile>GUI_Element_Selector</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
 
     <!ENTITY appChannelSelector "
-        <app>
+        <item>
             <dispName>Channel Selector</dispName>
+            <itemType>app</itemType>
             <linkedFile>GUI_Channel_Selector</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
 
     <!ENTITY appLatticeTuner "
-        <app>
+        <item>
             <dispName>Lattice Tuner</dispName>
+            <itemType>app</itemType>
             <linkedFile>GUI_Lattice_Tuner</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
 
     <!ENTITY appOrbitViewer "
-        <app>
+        <item>
             <dispName>Orbit Viewer</dispName>
+            <itemType>app</itemType>
             <linkedFile>GUI_Orbit_Viewer</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
 
     <!ENTITY appBetaFuncViewer "
-        <app>
+        <item>
             <dispName>Beta Function Viewer</dispName>
+            <itemType>app</itemType>
             <linkedFile>GUI_BetaFunc_Viewer</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
-        </app>
+        </item>
     ">
 
     <!ENTITY appLauncher "
-        <app>
+        <item>
             <dispName>Launcher</dispName>
+            <itemType>app</itemType>
             <linkedFile>aplauncher</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args>/root</args>
-        </app>
+        </item>
     ">
 
 ]>
 <hierarchy>
     
-    <page>
+    <item>
         <dispName>root</dispName>
+        <itemType>page</itemType>
         
-        <page>
+        <item>
             <dispName>Commissioning</dispName>
-        </page>  <!-- Commissioning -->
+            <itemType>page</itemType>
+        </item>  <!-- Commissioning -->
 
-        <page>
+        <item>
             <dispName>Operation</dispName>
-        </page>  <!-- Operation -->
+            <itemType>page</itemType>
+        </item>  <!-- Operation -->
         
-        <page>
+        <item>
             <dispName>Studies</dispName>
-        </page>  <!-- Studies -->
+            <itemType>page</itemType>
+        </item>  <!-- Studies -->
 
-        <page>
+        <item>
             <dispName>Test</dispName>
+            <itemType>page</itemType>
             &appClock;
             &appOrbit;
             &appBBA;
@@ -130,7 +145,7 @@
             &appOrbitViewer;
             &appBetaFuncViewer;
             &appLauncher;
-        </page> <!-- Test -->
+        </item> <!-- Test -->
         
-    </page>  <!-- root -->
+    </item>  <!-- root -->
 </hierarchy>
