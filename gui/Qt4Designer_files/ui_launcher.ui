@@ -104,8 +104,11 @@
            <height>29</height>
           </size>
          </property>
+         <property name="text">
+          <string/>
+         </property>
          <property name="placeholderText">
-          <string>search</string>
+          <string>Quick search</string>
          </property>
         </widget>
        </widget>
@@ -115,12 +118,11 @@
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
-        <widget class="QTreeView" name="treeViewSide"/>
         <widget class="QStackedWidget" name="stackedWidgetMainPane">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
-         <widget class="QWidget" name="page">
+         <widget class="QWidget" name="pageListView">
           <layout class="QGridLayout" name="gridLayout">
            <property name="topMargin">
             <number>0</number>
@@ -131,12 +133,9 @@
            <property name="bottomMargin">
             <number>0</number>
            </property>
-           <item row="0" column="0">
-            <widget class="QTreeView" name="treeViewMain"/>
-           </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="page_2">
+         <widget class="QWidget" name="pageTreeView">
           <layout class="QGridLayout" name="gridLayout_2">
            <property name="topMargin">
             <number>0</number>
@@ -147,9 +146,6 @@
            <property name="bottomMargin">
             <number>0</number>
            </property>
-           <item row="0" column="0">
-            <widget class="QListView" name="listViewMain"/>
-           </item>
           </layout>
          </widget>
         </widget>
@@ -182,13 +178,8 @@
     <property name="title">
      <string>View</string>
     </property>
-    <addaction name="actionIcons"/>
-    <addaction name="actionList"/>
-    <addaction name="actionDetails"/>
     <addaction name="separator"/>
-    <addaction name="actionVisible_Columns"/>
     <addaction name="separator"/>
-    <addaction name="actionSide_Pane"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -218,31 +209,6 @@
     <bool>false</bool>
    </attribute>
   </widget>
-  <action name="actionIcons">
-   <property name="text">
-    <string>Icons</string>
-   </property>
-  </action>
-  <action name="actionList">
-   <property name="text">
-    <string>List</string>
-   </property>
-  </action>
-  <action name="actionDetails">
-   <property name="text">
-    <string>Details</string>
-   </property>
-  </action>
-  <action name="actionVisible_Columns">
-   <property name="text">
-    <string>Visible Columns...</string>
-   </property>
-  </action>
-  <action name="actionSide_Pane">
-   <property name="text">
-    <string>Side Pane</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>

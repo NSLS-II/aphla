@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_launcher_item_properties.ui'
 #
-# Created: Fri Mar  2 21:08:41 2012
+# Created: Tue Mar  6 14:10:47 2012
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -75,7 +75,7 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
+        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Properties", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("Dialog", "Name", None, QtGui.QApplication.UnicodeUTF8))
         self.label_6.setText(QtGui.QApplication.translate("Dialog", "Item Type", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_itemType.setItemText(0, QtGui.QApplication.translate("Dialog", "Page", None, QtGui.QApplication.UnicodeUTF8))
