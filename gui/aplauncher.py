@@ -90,9 +90,14 @@ import aphla
 # *) Add <description> to XML
 # *) Implement <singleton>
 # *) Implement <args> for popen
-# *) Add confirmation dialog for deleting items
 # *) Use QSettings to save/restore window size/pos, splitter pos, recently opened items
 # *) More thorough separate search window
+# *) Implement "Visible Columns..." & "Arrange Items" actions
+# *) Temporary user XML saving functionality whenever hierarchy is changed
+
+## FIXIT
+# *) Header not visible in main Tree View, if no item exists
+# *) Ctrl+V & Ctrl+W shortcuts not always work
 
 
 #----------------------------------------------------------------------
@@ -211,7 +216,10 @@ class LauncherModel(Qt.QStandardItemModel):
 
             if (parent_item is not None) and (child_index is not None):
                 item.path = parent_item.path + item.path
-                self.pathList.append(item.path)
+                if item.path not in self.pathList:
+                    self.pathList.append(item.path)
+                else:
+                    raise ValueError('Duplicate path found: '+item.path)
                 parent_item.setChild(child_index, 0, item)
                 for (ii,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                     p = getattr(item,prop_name)
@@ -274,11 +282,12 @@ class LauncherModel(Qt.QStandardItemModel):
                 p = getattr(childItem,prop_name)
                 if not isinstance(p,str):
                     p = str(p)
-                if p:
-                    elem = doc.createElement(prop_name)
-                    elemNodeText = doc.createTextNode(p)
-                    elem.appendChild(elemNodeText)
-                    childElement.appendChild(elem)
+                elem = doc.createElement(prop_name)
+                elemNodeText = doc.createTextNode(p)
+                elem.appendChild(elemNodeText)
+                childElement.appendChild(elem)
+                if (prop_name == 'itemType') and (p == 'page'):
+                    break
 
             if childItem.hasChildren():
                 self.constructXMLElementsFromModel(doc, childItem, childElement)
@@ -311,11 +320,13 @@ class LauncherModel(Qt.QStandardItemModel):
             p = getattr(rootModelItem,prop_name)
             if not isinstance(p,str):
                 p = str(p)
-            if p:
-                elem = doc.createElement(prop_name)
-                elemNodeText = doc.createTextNode(p)
-                elem.appendChild(elemNodeText)
-                modelRootDOMElement.appendChild(elem)
+            elem = doc.createElement(prop_name)
+            elemNodeText = doc.createTextNode(p)
+            elem.appendChild(elemNodeText)
+            modelRootDOMElement.appendChild(elem)
+            if (prop_name == 'itemType') and (p == 'page'):
+                break
+            
         
         # Append the XML element corresponding to the root model item as a child of
         # the XML root element
@@ -336,7 +347,8 @@ class LauncherModel(Qt.QStandardItemModel):
         
         stream = Qt.QTextStream(f)
         
-        stream << doc.toString()
+        indent = 4
+        stream << doc.toString(indent)
         
         f.close()
         
@@ -421,7 +433,10 @@ class LauncherModel(Qt.QStandardItemModel):
         
         for i in range(parentItem.rowCount()):
             childItem = parentItem.child(i,0)
-            self.pathList.append(childItem.path)
+            if childItem.path not in self.pathList:
+                self.pathList.append(childItem.path)
+            else:
+                raise ValueError('Duplicate path found: ' + childItem.path)
             self.pModelIndList.append(Qt.QPersistentModelIndex(self.indexFromItem(childItem)))
             
             self.updatePathLookupLists(childItem)
@@ -455,6 +470,17 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
         itemList = [model.itemFromIndex(Qt.QModelIndex(pInd))
                     for pInd in model.pModelIndList]
         model.linkedFileList = list(set([item.linkedFile for item in itemList]))
+        
+        partitionedStrings = selectedItem.path.rpartition(SEPARATOR)
+        self.parentPath = partitionedStrings[0]
+        self.lineEdit_parentPath.setText(self.parentPath)
+        
+        # Create list of existing paths to be compared with a new path.
+        self.existingPathList = model.pathList[:]
+        # If this dialog is created for modifying an existing item, you must
+        # remove the path of this item from the list.
+        if selectedItem.path in self.existingPathList:
+            self.existingPathList.remove(selectedItem.path)
         
         for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
             obj = getattr(self, objName)
@@ -548,14 +574,38 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
     def accept(self):
         """"""
         
+        dispName = str(self.lineEdit_dispName.text())
+        if dispName == '':
+            msgBox = Qt.QMessageBox()
+            msgBox.setText( (
+                'Empty item name not allowed.') )
+            msgBox.setInformativeText( 'Please enter a non-empty string as an item name.')
+            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.exec_()  
+            return
+        
+        path = self.parentPath + SEPARATOR + dispName
+        if path in self.existingPathList:
+            msgBox = Qt.QMessageBox()
+            msgBox.setText( (
+                'Duplicate item name detected.') )
+            msgBox.setInformativeText( 'The name ' + '"' + dispName + '"' +
+                                       ' is already used in this page. Please use a different name.')
+            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.exec_()  
+            return
+        else:
+            self.lineEdit_dispName.setText(dispName)
+            
+        
         for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
             obj = getattr(self, objName)
             if objName.startswith('lineEdit'):
-                if (propName == 'dispName') and (obj.text() == ''):
-                    text = 'New Item'
-                else:
-                    text = str(obj.text())
+                text = str(obj.text())
                 setattr(self.item, propName, text)
+                if propName == 'dispName':
+                    self.item.setText(self.item.dispName)
+                    
             elif objName.startswith('comboBox'):
                 
                 text = str(obj.currentText())
@@ -615,7 +665,6 @@ class LauncherModelItem(Qt.QStandardItem):
     def shallowCopy(self):
         """"""
         
-        #copiedItem = LauncherModelItem(self.icon(),self.dispName)
         copiedItem = LauncherModelItem(self.dispName)
                         
         copiedItem.setFlags(self.flags())
@@ -758,7 +807,8 @@ class MainPane(Qt.QWidget):
         self.stackedWidget = stackedWidget
             
         self.searchModel = SearchModel(model)
-        
+        self.searchItemBeingEdited = None
+                
         self.pathHistory = [Qt.QPersistentModelIndex(initRootModelIndex)]
         self.pathHistoryCurrentIndex = 0        
  
@@ -803,6 +853,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                      self.onSidePaneFocusIn)
         self.connect(self.treeViewSide, Qt.SIGNAL('focusLost()'),
                      self.onSidePaneFocusOut)
+        self.connect(self.treeViewSide, Qt.SIGNAL('closingItemRenameEditor'),
+                     self.onItemRenameEditorClosing)
         
         # Add the main pane list view & tree view
         self.listViewMain = CustomListView(self.pageListView)
@@ -841,10 +893,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.selectedListViewMode = CustomListView.IconMode
         self.selectedItemList = []
         self.selectedPersModelIndexList = []
+        self.selectedSearchItemList = []
         
         self._initMainPane(len(self.mainPaneList)-1)
         
         self.lastFocusedView = None
+        
         
         ## Create context menus
         self.contextMenu = Qt.QMenu()
@@ -968,6 +1022,22 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         self.connect(self, Qt.SIGNAL('sigClearSelection'),
                      self.clearSelection)
+    
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+        
+        # Save the current hierarchy in the user-modifiable section to
+        # the user hierarchy XML file.
+        user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
+        user_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/') 
+        
+        rootModelItem = self.model.itemFromIndex( Qt.QModelIndex(
+            self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
+        self.model.writeToXMLFile(user_XML_Filepath, rootModelItem)
+        
+        
+        event.accept()
     
     #----------------------------------------------------------------------
     def onViewModeActionGroupTriggered(self, action):
@@ -1164,6 +1234,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def openContextMenu(self, qpoint):
         """"""
         
+        print 'Opening context menu'
+        
         self.updateMenuItems()
         
         sender = self.sender()
@@ -1264,22 +1336,64 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def onItemRenameEditorClosing(self, editorText):
         """"""
         
-        # Works for both Search Mode & Non-Search Mode
         sourceItem = self.selectedItemList[0]
-        sourceItem.dispName = editorText
-        sourceItem.setText(editorText)
         parentItem = sourceItem.parent()
-        sourceItem.path = parentItem.path + SEPARATOR + str(sourceItem.dispName)
-        pathItem = parentItem.child(sourceItem.row(),
-                                    MODEL_ITEM_PROPERTY_NAMES.index('path')+1)
+        originalSourceItemPath = sourceItem.path
+                        
+        # Check item name validity (i.e., checking whether dispName is an empty string
+        # and whether there will be no duplicate path if the new dispName is accepted.
+        dispName = str(editorText)
+        if dispName == '':
+            msgBox = Qt.QMessageBox()
+            msgBox.setText( (
+                'Empty item name not allowed.') )
+            msgBox.setInformativeText( 'Please enter a non-empty string as an item name.')
+            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.exec_()
+            self.renameItem() # Re-open the editor
+            return
+        #
+        path = parentItem.path + SEPARATOR + dispName
+        existingPathList = self.model.pathList[:]
+        if originalSourceItemPath in existingPathList:
+            existingPathList.remove(originalSourceItemPath)
+        if path in existingPathList:
+            msgBox = Qt.QMessageBox()
+            msgBox.setText( (
+                'Duplicate item name detected.') )
+            msgBox.setInformativeText( 'The name ' + '"' + dispName + '"' +
+                                       ' is already used in this page. Please use a different name.')
+            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.exec_()
+            self.renameItem() # Re-open the editor
+            return
+            
+
+        sourceItem.dispName = dispName
+        sourceItem.setText(dispName)
+        sourceItem.path = path
+        pathColumnIndex = MODEL_ITEM_PROPERTY_NAMES.index('path')+1
+        pathItem = parentItem.child(sourceItem.row(), pathColumnIndex)
         pathItem.setText(sourceItem.path)
-        sourceItem.model().updatePathLookupLists(parentItem)        
+        self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
+        self.model.updateCompleterModel(self.getCurrentRootPath())
+        self.updatePath()
         
+        if self.inSearchMode():
+            searchItem = self.selectedSearchItemList[0]
+             
+            searchItem.dispName = sourceItem.dispName
+            searchItem.setText(sourceItem.text())
+            searchItem.path = sourceItem.path
+            parentSearchItem = searchItem.parent()
+            pathSearchItem = parentSearchItem.child(searchItem.row(), 
+                                                    pathColumnIndex)
+            pathSearchItem.setText(searchItem.path)            
     
     #----------------------------------------------------------------------
     def onSelectionChange(self, selected, deselected):
         """"""
-        
+                
         itemSelectionModel = self.sender()
         #print 'Old Selection Empty? ', deselected.isEmpty()
         #print 'New Selection Empty? ', selected.isEmpty() 
@@ -1303,6 +1417,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                                        for i in sourceModelIndexList]
                 self.selectedPersModelIndexList = [i.sourcePersistentModelIndex
                                                    for i in searchModelItemList]
+                self.selectedSearchItemList = searchModelItemList
             else: # When selection change ocurred on a Main Pane in Non-Search Mode
                 pass
 
@@ -1322,6 +1437,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.selectedItemList = [self.model.itemFromIndex(Qt.QModelIndex(pModInd))
                                      for pModInd in self.selectedPersModelIndexList]
 
+        if self.selectedItemList:
+            print 'Selection changed to ' + self.selectedItemList[0].path
+        else:
+            print 'Selection changed to None'
+            
+            
     #----------------------------------------------------------------------
     def _initMainPane(self, main_pane_index):
         """"""
@@ -1360,6 +1481,33 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     #----------------------------------------------------------------------
     def openPageOrApps(self):
         """"""
+        
+        selectionType = self.getSelectionType()
+        
+        if selectionType == 'NoSelection':
+            raise ValueError('openPageOrApps function should not be called with selectionType = ' + selectionType)
+        elif selectionType == 'SinglePageSelection':
+            self._callbackDoubleClickOnMainPaneItem(None)
+        elif selectionType == 'MultiplePageSelection':
+            raise ValueError('openPageOrApps function should not be called with selectionType = ' + selectionType)
+        elif (selectionType == 'SingleAppSelection') or \
+             (selectionType == 'MultipleAppSelection'):
+            sender = self.sender()
+            for item in self.selectedItemList:
+                if sender == self.actionOpenWithImport:
+                    useImport = True
+                elif sender == self.actionOpenWithPopen:
+                    useImport = False
+                elif sender == self.actionOpen:
+                    useImport = item.useImport
+                else:
+                    raise ValueError('Unexpected sender')
+                self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
+                          item.linkedFile, useImport, item.args)
+        elif selectionType == 'MultipleAppAndPageSelection':
+            raise ValueError('openPageOrApps function should not be called with selectionType = ' + selectionType)            
+        else:
+            raise ValueError('Unexpected selection type: ' + selectionType)
         
         
         
@@ -1526,8 +1674,15 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                      self.openInNewWindow)
         
         self.actionOpen = Qt.QAction(Qt.QIcon(), 'Open', self)
-        #self.connect(self.actionOpen, Qt.SIGNAL('triggered()'),
-                     #self.openPageOrApps)
+        self.connect(self.actionOpen, Qt.SIGNAL('triggered()'),
+                     self.openPageOrApps)
+        
+        self.actionOpenWithImport = Qt.QAction(Qt.QIcon(), 'Open w/ import', self)
+        self.connect(self.actionOpenWithImport, Qt.SIGNAL('triggered()'),
+                     self.openPageOrApps)
+        self.actionOpenWithPopen = Qt.QAction(Qt.QIcon(), 'Open w/ Popen', self)
+        self.connect(self.actionOpenWithPopen, Qt.SIGNAL('triggered()'),
+                     self.openPageOrApps)
         
         self.actionCut = Qt.QAction(Qt.QIcon(), 'Cut', self)
         self.actionCut.setShortcut(
@@ -1559,8 +1714,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.actionProperties, Qt.SIGNAL('triggered()'),
                      self.openPropertiesDialog)
         
-        self.actionOpenWithImport = Qt.QAction(Qt.QIcon(), 'Open w/ import', self)
-        self.actionOpenWithPopen = Qt.QAction(Qt.QIcon(), 'Open w/ Popen', self)
         
         self.actionCreateNewPage = Qt.QAction(Qt.QIcon(), 'Create New Page Item', self)
         self.connect(self.actionCreateNewPage, Qt.SIGNAL('triggered()'),
@@ -1572,6 +1725,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         # TODO
         self.actionArrangeItems = Qt.QAction(Qt.QIcon(), 'Arrange Items', self)
+        # TODO
+        self.actionVisibleColumns = Qt.QAction(Qt.QIcon(), 'Visible Columns...', self)
+        #self.connect()
         
         self.actionDelete = Qt.QAction(Qt.QIcon(), 'Delete', self)
         self.actionDelete.setShortcut(Qt.Qt.Key_Delete)
@@ -1581,8 +1737,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.actionCloseTabOrWindow = Qt.QAction(Qt.QIcon(), 'Close', self)
         self.actionCloseTabOrWindow.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_W))
-        #self.connect(self.actionCloseTabOrWindow, Qt.SIGNAL('triggered()'),
-                     #self.closeTabOrWindow)
+        self.connect(self.actionCloseTabOrWindow, Qt.SIGNAL('triggered()'),
+                     self.closeTabOrWindow)
                      
         self.actionSelectAll = Qt.QAction(Qt.QIcon(), 'Select All', self)
         #self.actionSelectAll.setShortcut(
@@ -1592,11 +1748,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.actionToggleSidePaneVisibility = \
             Qt.QAction(Qt.QIcon(), 'Side Pane', self)
         self.actionToggleSidePaneVisibility.setShortcut(Qt.Qt.Key_F9)
-        #self.connect(self.actionToggleSidePaneVisibility,
-                     #Qt.SIGNAL('triggered(bool)'), self.toggleSidePaneVisibility)
+        self.actionToggleSidePaneVisibility.setCheckable(True)
+        self.actionToggleSidePaneVisibility.setChecked(True)
+        self.connect(self.actionToggleSidePaneVisibility,
+                     Qt.SIGNAL('triggered(bool)'),
+                     self.toggleSidePaneVisibility)
         
-        self.actionVisibleColumns = Qt.QAction(Qt.QIcon(), 'Visible Columns...', self)
-        #self.connect()
         
         # Action Group for Main Pane View Mode
         self.actionGroupViewMode = Qt.QActionGroup(self)
@@ -1643,38 +1800,48 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                      self.updateMenuItems)        
     
     #----------------------------------------------------------------------
+    def toggleSidePaneVisibility(self, TF):
+        """"""
+        
+        if TF:
+            self.treeViewSide.setVisible(True)
+        else:
+            self.treeViewSide.setVisible(False)
+            
+    
+    #----------------------------------------------------------------------
     def openPropertiesDialog(self):
         """"""
         
         m = self.getCurrentMainPane()
         parentItem = self.itemFromIndex(m.listView.rootIndex())
         
-        if self.selectedItemList:
-            selectedItem = self.selectedItemList[0]
-            createNewItem = False
-        else:
-            if self.sender() == self.actionCreateNewPage:
-                selectedItem = LauncherModelItem()
-                selectedItem.path = parentItem.path + SEPARATOR # Without adding SEPARATOR
-                # at the end of parent item path, users will not be able to add a new item
-                # right below USER_MODIFIABLE_ROOT_PATH.
-                selectedItem.itemType = 'page'
-                createNewItem = True
-                selectedItem.setFlags(selectedItem.flags() | Qt.Qt.ItemIsEditable)
-            elif self.sender() == self.actionCreateNewApp:
-                selectedItem = LauncherModelItem()
-                selectedItem.path = parentItem.path + SEPARATOR # Without adding SEPARATOR
-                # at the end of parent item path, users will not be able to add a new item
-                # right below USER_MODIFIABLE_ROOT_PATH.
-                selectedItem.itemType = 'app'
-                createNewItem = True
-                selectedItem.setFlags(selectedItem.flags() | Qt.Qt.ItemIsEditable)
-            elif self.sender() == self.actionProperties:
+        if self.sender() == self.actionCreateNewPage:
+            selectedItem = LauncherModelItem()
+            selectedItem.path = parentItem.path + SEPARATOR # Without adding SEPARATOR
+            # at the end of parent item path, users will not be able to add a new item
+            # right below USER_MODIFIABLE_ROOT_PATH.
+            selectedItem.itemType = 'page'
+            createNewItem = True
+            selectedItem.setFlags(selectedItem.flags() | Qt.Qt.ItemIsEditable)
+        elif self.sender() == self.actionCreateNewApp:
+            selectedItem = LauncherModelItem()
+            selectedItem.path = parentItem.path + SEPARATOR # Without adding SEPARATOR
+            # at the end of parent item path, users will not be able to add a new item
+            # right below USER_MODIFIABLE_ROOT_PATH.
+            selectedItem.itemType = 'app'
+            createNewItem = True
+            selectedItem.setFlags(selectedItem.flags() | Qt.Qt.ItemIsEditable)
+        elif self.sender() == self.actionProperties:
+            if self.selectedItemList:
+                selectedItem = self.selectedItemList[0]
+            else:
                 selectedItem = parentItem
                 self.selectedItemList = [selectedItem]
-                createNewItem = False
-            else:
-                raise ValueError('Unexpected sender: ' + self.sender().text())
+            createNewItem = False
+        else:
+            raise ValueError('Unexpected sender: ' + self.sender().text())
+            
             
             
         self.propertiesDialogView = \
@@ -1683,7 +1850,27 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         if self.propertiesDialogView.result() == Qt.QDialog.Accepted:
             if not createNewItem:
+                parentItem = selectedItem.parent()
+                selectedItem.path = parentItem.path + SEPARATOR + selectedItem.dispName
                 self.updateRow(selectedItem)
+                if self.inSearchMode():
+                    searchItem = self.selectedSearchItemList[0]
+                    searchItem.dispName = selectedItem.dispName
+                    searchItem.setText(selectedItem.text())
+                    searchItem.path = selectedItem.path
+                    
+                    parentSearchItem = searchItem.parent()
+                    row = searchItem.row()
+                    for (ii,propName) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
+                        p = getattr(searchItem, propName)
+                        
+                        if not isinstance(p,str):
+                            p = str(p)
+                        
+                        parentSearchItem.setChild(row, ii+1, Qt.QStandardItem(p))
+                    
+                    self.model.updateCompleterModel(self.getCurrentRootPath())
+                    
             else:
                 selectedItem.setText(selectedItem.dispName)
                 selectedItem.path = parentItem.path + SEPARATOR + selectedItem.dispName
@@ -1702,7 +1889,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                     parentItem.setChild(row, ii+1, Qt.QStandardItem(p))
                 
                   
-                self.model.updatePathLookupLists()
+                self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
+            
+            self.updatePath()
             
     #----------------------------------------------------------------------
     def updateRow(self, updated1stColumnItem):
@@ -1722,6 +1911,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             
             parentItem.child(row,ii+1).setText(p)   
         
+        self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
         
     #----------------------------------------------------------------------
     def deleteItems(self):
@@ -1739,22 +1929,31 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             msgBox.exec_()            
             return
         
+        msgBox = Qt.QMessageBox()
+        msgBox.addButton(Qt.QMessageBox.Yes)
+        msgBox.addButton(Qt.QMessageBox.Cancel)
+        msgBox.setDefaultButton(Qt.QMessageBox.Cancel)
+        msgBox.setEscapeButton(Qt.QMessageBox.Cancel)
+        msgBox.setText( 'Delete selected items"?' )
+        infoText = ''
+        for item in selectedDeletableItems:
+            infoText += item.path + '\n'
+        msgBox.setInformativeText(infoText)
+        msgBox.setIcon(Qt.QMessageBox.Question)
+        msgBox.setWindowTitle('Delete')
+        choice = msgBox.exec_()
+        if choice == Qt.QMessageBox.Cancel:
+            return
+        
         for item in selectedDeletableItems:
             self.model.removeRow(item.row(),
                                  item.parent().index())
+                    
+        self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
         
         if self.inSearchMode():
             self.onSearchTextChange(self.lineEdit_search.text())
-            
-        self.model.updatePathLookupLists()
-        
-        user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + 'test.xml' #USER_XML_FILENAME
-        user_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/') 
-        
-        
-        rootModelItem = self.model.itemFromIndex( Qt.QModelIndex(
-            self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
-        self.model.writeToXMLFile(user_XML_Filepath, rootModelItem)
+
     
     #----------------------------------------------------------------------
     def copyItems(self):
@@ -1785,10 +1984,71 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         if not currentRootItem.path.startswith(USER_MODIFIABLE_ROOT_PATH):
             raise ValueError('Paste option was available at non-writeable page.')
         
-        for item in self.clipboard:
+        replaceAll = False
+        indexListToBeRemovedFromClipboard = []
+        for (clipIndex, item) in enumerate(self.clipboard):
             rowIndex = currentRootItem.rowCount()
+            parentPath = item.parent().path
             pastedItem = item.shallowCopy()
-            pastedItem.path = currentRootItem.path + SEPARATOR + pastedItem.dispName
+            pastedItem.setEditable(True)
+            newPath = currentRootItem.path + SEPARATOR + pastedItem.dispName
+            if newPath == item.path: # When source item path and target item path are exactly
+                # the same, rename the target item dispName with "(copy)" appended.
+                newName = pastedItem.dispName + ' (copy)'
+                newPath = currentRootItem.path + SEPARATOR + newName
+                copyCounter = 1
+                while newPath in self.model.pathList:
+                    copyCounter += 1
+                    newName = pastedItem.dispName + ' (copy' + str(copyCounter) + ')'
+                    newPath = currentRootItem.path + SEPARATOR + newName
+                pastedItem.dispName = newName
+                pastedItem.setText(pastedItem.dispName)
+                
+            elif newPath in self.model.pathList: # When source item dispName conflicts with
+                # an existing item in the target path, ask the user whether to overwrite or not.
+                if not replaceAll:
+                    msgBox = Qt.QMessageBox()
+                    msgBox.addButton(Qt.QMessageBox.YesToAll)
+                    msgBox.addButton(Qt.QMessageBox.Yes)
+                    msgBox.addButton(Qt.QMessageBox.No)
+                    msgBox.addButton(Qt.QMessageBox.NoToAll)
+                    msgBox.setDefaultButton(Qt.QMessageBox.No)
+                    msgBox.setEscapeButton(Qt.QMessageBox.No)
+                    msgBox.setText( (
+                        'Replace item "' + pastedItem.dispName + '"?') )
+                    msgBox.setInformativeText(
+                        'An item with the same name already exists in "' + parentPath +
+                        '". Replacing it will overwrite the item.')
+                    msgBox.setIcon(Qt.QMessageBox.Question)
+                    msgBox.setWindowTitle('Item Conflict')
+                    choice = msgBox.exec_()
+                else:
+                    choice = Qt.QMessageBox.Yes
+                
+                if (choice == Qt.QMessageBox.Yes) or \
+                   (choice == Qt.QMessageBox.YesToAll):
+                    if choice == Qt.QMessageBox.YesToAll:
+                        replaceAll = True
+                    # Remove the conflicting item
+                    persModIndToBeRemoved = self.model.pModelIndexFromPath(newPath)
+                    itemToBeRemoved = self.itemFromIndex(
+                        Qt.QModelIndex(persModIndToBeRemoved))
+                    self.model.pathList.remove(newPath)
+                    removeSucess = self.model.removeRow(
+                        itemToBeRemoved.row(),
+                        itemToBeRemoved.parent().index())
+                    if removeSucess:
+                        rowIndex -= 1
+                        self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
+                    else:
+                        raise ValueError('Item removal failed.')
+                elif choice == Qt.QMessageBox.No:
+                    continue
+                elif choice == Qt.QMessageBox.NoToAll:
+                    break
+                else:
+                    raise ValueError('Unexpected selection')
+            pastedItem.path = newPath
             self.model.pathList.append(pastedItem.path)
             currentRootItem.setChild(rowIndex, 0, pastedItem)
             for (i,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
@@ -1797,20 +2057,27 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                     p = str(p)
                 currentRootItem.setChild(rowIndex,i+1,Qt.QStandardItem(p))
         
-        # Remove the pasted items from source
-        if self.clipboardType == 'cut':
-            deletableItems = [item for item in self.clipboard
-                              if item.isEditable()]
-            
-            if not deletableItems:
-                raise ValueError('Non-cuttable items somehow managed to be about to be removed.')
-            
-            for item in deletableItems:
-                self.model.removeRow(item.row(),
-                                     item.parent().index())
+            # Remove the pasted item from source, if the item was "cut"
+            if self.clipboardType == 'cut':
+                if not item.isEditable():
+                    raise ValueError('Non-cuttable item somehow managed to be about to be removed.')
+                else:
+                    self.model.pathList.remove(item.path)
+                    self.model.removeRow(item.row(),
+                                         item.parent().index())
+                    self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
+                    
+                    # Flag the index of clipboard item to be removed due to "cut"
+                    indexListToBeRemovedFromClipboard.append(clipIndex)
         
-        self.model.updatePathLookupLists(currentRootItem)
-        self.updateView(m)
+        # Remove cut items in clipboard
+        indexListToBeRemovedFromClipboard.reverse() # Need to reverse so that each item to be removed
+        # can be popped from the end without indexing problem
+        for i in indexListToBeRemovedFromClipboard:
+            self.clipboard.pop(i)
+        
+        self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
+        self.updatePath()
         
     
     #----------------------------------------------------------------------
@@ -1872,7 +2139,16 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         viewModeToolbar.adjustSize()
         self.comboBox_view_mode = viewModeComboBox
 
-        
+    #----------------------------------------------------------------------
+    def closeTabOrWindow(self):
+        """"""
+
+        if self.tabWidget:
+            self.closeTab(self.tabWidget.currentIndex())
+        else:
+            self.close()
+           
+    
     #----------------------------------------------------------------------
     def closeTab(self, tab_index):
         """ """
@@ -1935,6 +2211,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
               
         """
 
+        print 'clearSelection called'
         m = self.getCurrentMainPane()
         m.listView.selectionModel().clearSelection()
         m.treeView.selectionModel().clearSelection()
@@ -2009,6 +2286,30 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             sourceModelIndex = modelIndex
         
         return self.model.itemFromIndex(sourceModelIndex)
+    
+    #----------------------------------------------------------------------
+    def getCurrentRootIndex(self):
+        """"""
+    
+        m = self.getCurrentMainPane()
+    
+        currentHistoryItem = m.pathHistory[m.pathHistoryCurrentIndex]
+        if type(currentHistoryItem) == dict:
+            currentRootPersModInd = currentHistoryItem['searchRootIndex']
+        else:
+            currentRootPersModInd = currentHistoryItem
+        
+        return Qt.QModelIndex(currentRootPersModInd)
+    
+    #----------------------------------------------------------------------
+    def getCurrentRootPath(self):
+        """"""
+        
+        rootIndex = self.getCurrentRootIndex() # QModelIndex
+        
+        rootItem = self.model.itemFromIndex(rootIndex)
+        
+        return rootItem.path
     
     
     #----------------------------------------------------------------------
@@ -2284,12 +2585,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                                       triggeredAction)
 
     #----------------------------------------------------------------------
-    def updateMenuItems(self):
+    def getSelectionType(self):
         """"""
-
-        m = self.getCurrentMainPane()
         
-        # First categorize current selection
         if not self.selectedItemList:
             selectionType = 'NoSelection'
         else:
@@ -2307,7 +2605,17 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                     selectionType = 'MultiplePageSelection'
                 else: # Both app(s) & page(s)
                     selectionType = 'MultipleAppAndPageSelection'
+        
+        return selectionType
+        
+    #----------------------------------------------------------------------
+    def updateMenuItems(self):
+        """"""
 
+        m = self.getCurrentMainPane()
+        
+        # First categorize current selection
+        selectionType = self.getSelectionType()
 
         # Update enable states for actions that can modify the data,
         # depending on the current root path. If the current path is not in the
@@ -2345,6 +2653,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         for a in searchModeDisabledActionList:
             a.setEnabled(False)
             
+        # Override Enable state for "Paste" if self.clipboard is an empty list
+        if not self.clipboard:
+            self.actionPaste.setEnabled(False)
         
         sender = self.sender()
         #print sender.title()
@@ -2467,6 +2778,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             # Clicked on List View or Tree View on Main Pane
             
             self.validateSelectedItemList(m)
+            # Since "validateSelectedItemList()" function may have cleared
+            # selection, selectionType must be updated to reflect the change.
+            selectionType = self.getSelectionType()
 
             self.contextMenu.clear()
             
@@ -2570,13 +2884,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             
         
             
-    ##----------------------------------------------------------------------
-    #def focusOutEvent(self, event):
-        #""""""
-    
-        #super(LineEditForTabText,self).focusOutEvent(event)
-        
-        #self.emit(Qt.SIGNAL('editingFinished()'))
         
         
 ########################################################################
@@ -2604,7 +2911,7 @@ class LauncherApp(Qt.QObject):
         
         self.model = LauncherModel() # Used for TreeView on side pane for which sorting is disabled
         
-        self.model.updatePathLookupLists()
+        self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
         
         
     #----------------------------------------------------------------------
