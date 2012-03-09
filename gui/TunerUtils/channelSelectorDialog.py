@@ -53,9 +53,17 @@ if __name__ == "__main__" :
 else:
     from .ui_channelSelectorDialog import Ui_Dialog
 
+import tictoc
 import hla
 if not hla.machines._lat :
+    tStart = tictoc.tic()    
     hla.initNSLS2VSR()
+    print tictoc.toc(tStart)
+#import aphla
+#if not aphla.machines._lat :
+    #tStart = tictoc.tic()
+    #aphla.initNSLS2VSR()
+    #print tictoc.toc(tStart)
 
 # Output Type Enums
 TYPE_CHANNEL = 1
@@ -128,7 +136,7 @@ class Channel:
         
         field_list = element_obj.fields()
         
-        field_list.remove('status')
+        field_list.remove('status') # 'status' does not exist in aphla, but did exist in hla
         
         if field_list == ['value']: # When there is no field other than 'value'.
             # This case usually applies to an element that has no separate 

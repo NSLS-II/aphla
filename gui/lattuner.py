@@ -17,20 +17,20 @@ certain step size ratios between them.
 import sys
 import os
 
-USE_DEV_SRC = True
-if USE_DEV_SRC:
-    # Force Python to use your development modules,
-    # instead of the modules already installed on the system.
-    if os.environ.has_key('HLA_DEV_SRC'):
-        dev_src_dir_path = os.environ['HLA_DEV_SRC']
+#USE_DEV_SRC = True
+#if USE_DEV_SRC:
+    ## Force Python to use your development modules,
+    ## instead of the modules already installed on the system.
+    #if os.environ.has_key('HLA_DEV_SRC'):
+        #dev_src_dir_path = os.environ['HLA_DEV_SRC']
 
-        if dev_src_dir_path in sys.path:
-            sys.path.remove(dev_src_dir_path)
+        #if dev_src_dir_path in sys.path:
+            #sys.path.remove(dev_src_dir_path)
         
-        sys.path.insert(0, dev_src_dir_path)
+        #sys.path.insert(0, dev_src_dir_path)
             
-    else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
+    #else:
+        #print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
 
 import datetime
 import operator
@@ -52,7 +52,7 @@ import TunerUtils.tunerConfigSetupDialog \
        as TunerConfigSetupDialog
 # from TunerUtils.channelSelectorDialog import Channel
 
-import hla
+import aphla
 #if not hla.machines._lat :
     #hla.initNSLS2VSR()
 from hla.catools import caget, caput

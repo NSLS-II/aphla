@@ -94,6 +94,7 @@ import aphla
 # *) More thorough separate search window
 # *) Implement "Visible Columns..." & "Arrange Items" actions
 # *) Temporary user XML saving functionality whenever hierarchy is changed
+# *) Show status bar while opening application
 
 ## FIXIT
 # *) Header not visible in main Tree View, if no item exists
@@ -831,6 +832,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         self.setupUi(self)
         
+        self.setUpdatesEnabled(True)
+        
         # Add the side pane tree view of class CustomTreeView
         self.treeViewSide = CustomTreeView(self.splitterPanes)
         self.treeViewSide.setObjectName('treeViewSide')
@@ -880,8 +883,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.view_mode_index_icons = 0
         self.view_mode_index_list = 1
         self.view_mode_index_details = 2
-        
-        
+                
         rootPModelIndex = self.model.pModelIndexFromPath(initRootPath)
         if not rootPModelIndex:
             raise IOError('Invalid initial root path provided: ' + initRootPath)
@@ -899,88 +901,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         self.lastFocusedView = None
         
-        
         ## Create context menus
         self.contextMenu = Qt.QMenu()
-        #
-        self.contextMenuSinglePageSelected = Qt.QMenu()
-        self.contextMenuSinglePageSelected.addAction(self.actionOpen)
-        self.contextMenuSinglePageSelected.addAction(self.actionOpenInNewTab)
-        self.contextMenuSinglePageSelected.addAction(self.actionOpenInNewWindow)
-        self.contextMenuSinglePageSelected.addSeparator()
-        self.contextMenuSinglePageSelected.addAction(self.actionCut)
-        self.contextMenuSinglePageSelected.addAction(self.actionCopy)
-        self.contextMenuSinglePageSelected.addSeparator()
-        self.contextMenuSinglePageSelected.addAction(self.actionRename)
-        self.contextMenuSinglePageSelected.addSeparator()
-        self.contextMenuSinglePageSelected.addAction(self.actionDelete)
-        self.contextMenuSinglePageSelected.addSeparator()
-        self.contextMenuSinglePageSelected.addAction(self.actionProperties)
-        self.contextMenuSinglePageSelected.setDefaultAction(self.actionOpen)
-        #
-        self.contextMenuMultiplePagesSelected = Qt.QMenu()
-        self.contextMenuMultiplePagesSelected.addAction(self.actionOpenInNewTab)
-        self.contextMenuMultiplePagesSelected.addAction(self.actionOpenInNewWindow)
-        self.contextMenuMultiplePagesSelected.addSeparator()
-        self.contextMenuMultiplePagesSelected.addAction(self.actionCut)
-        self.contextMenuMultiplePagesSelected.addAction(self.actionCopy)
-        self.contextMenuMultiplePagesSelected.addSeparator()
-        self.contextMenuMultiplePagesSelected.addAction(self.actionDelete)
-        #        
-        self.contextMenuSingleAppSelected = Qt.QMenu()
-        self.contextMenuSingleAppSelected.addAction(self.actionOpen)
-        self.contextMenuSingleAppSelected.addAction(self.actionOpenWithImport)
-        self.contextMenuSingleAppSelected.addAction(self.actionOpenWithPopen)
-        self.contextMenuSingleAppSelected.addSeparator()
-        self.contextMenuSingleAppSelected.addAction(self.actionCut)
-        self.contextMenuSingleAppSelected.addAction(self.actionCopy)
-        self.contextMenuSingleAppSelected.addSeparator()
-        self.contextMenuSingleAppSelected.addAction(self.actionRename)
-        self.contextMenuSingleAppSelected.addSeparator()
-        self.contextMenuSingleAppSelected.addAction(self.actionDelete)
-        self.contextMenuSingleAppSelected.addSeparator()
-        self.contextMenuSingleAppSelected.addAction(self.actionProperties)          
-        #        
-        self.contextMenuMultipleAppsSelected = Qt.QMenu()
-        self.contextMenuMultipleAppsSelected.addAction(self.actionOpen)
-        self.contextMenuMultipleAppsSelected.addAction(self.actionOpenWithImport)
-        self.contextMenuMultipleAppsSelected.addAction(self.actionOpenWithPopen)
-        self.contextMenuMultipleAppsSelected.addSeparator()
-        self.contextMenuMultipleAppsSelected.addAction(self.actionCut)
-        self.contextMenuMultipleAppsSelected.addAction(self.actionCopy)
-        self.contextMenuMultipleAppsSelected.addSeparator()
-        self.contextMenuMultipleAppsSelected.addAction(self.actionDelete)
-        #        
-        self.contextMenuPagesAndAppsSelected = Qt.QMenu()
-        self.contextMenuPagesAndAppsSelected.addAction(self.actionCut)
-        self.contextMenuPagesAndAppsSelected.addAction(self.actionCopy)
-        self.contextMenuPagesAndAppsSelected.addSeparator()
-        self.contextMenuPagesAndAppsSelected.addAction(self.actionDelete)
-        #
-        self.contextMenuNoneSelected = Qt.QMenu()
-        self.contextMenuNoneSelected.addAction(self.actionCreateNewPage)
-        self.contextMenuNoneSelected.addAction(self.actionCreateNewApp)
-        self.contextMenuNoneSelected.addSeparator()
-        self.contextMenuNoneSelected.addAction(self.actionArrangeItems) # TODO
-        self.contextMenuNoneSelected.addSeparator()
-        self.contextMenuNoneSelected.addAction(self.actionPaste)
-        self.contextMenuNoneSelected.addSeparator()
-        self.contextMenuNoneSelected.addAction(self.actionProperties)
         
-        ## Create menus
-        self.menuFile.addAction(self.actionOpen)
-        self.menuFile.addAction(self.actionOpenInNewTab)
-        self.menuFile.addAction(self.actionOpenInNewWindow)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.actionCut)
-        self.menuFile.addAction(self.actionCopy)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.actionRename)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.actionDelete)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.actionProperties)        
-
         ## Initialize clipboard
         self.clipboard = []
         self.clipboardType = 'copy' # Either 'copy' or 'cut'
@@ -1072,27 +995,27 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def onSidePaneFocusIn(self):
         """"""
         
-        print 'Side Pane Focus in'
+        #print 'Side Pane Focus in'
         self.lastFocusedView = self.sender()
     
     #----------------------------------------------------------------------
     def onSidePaneFocusOut(self):
         """"""
         
-        print 'Side Pane Focus out'
+        #print 'Side Pane Focus out'
 
     #----------------------------------------------------------------------
     def onMainPaneFocusIn(self):
         """"""
         
-        print 'Main Pane Focus in'
+        #print 'Main Pane Focus in'
         self.lastFocusedView = self.sender()
     
     #----------------------------------------------------------------------
     def onMainPaneFocusOut(self):
         """"""
         
-        print 'Main Pane Focus out'
+        #print 'Main Pane Focus out'
      
     #----------------------------------------------------------------------
     def onSplitterManualMove(self, int_pos, int_index):
@@ -2943,10 +2866,14 @@ class LauncherApp(Qt.QObject):
             
             try:
                 moduleName = 'aphla.gui.'+appFilename
+                self.view.statusBar().showMessage(
+                    'Trying to import ' + moduleName + '...')
+                self.view.repaint()
                 __import__(moduleName)
                 module = sys.modules[moduleName]
             except ImportError as e:
-                importErrorMessage = e
+                self.view.statusBar().showMessage(
+                    'Importing ' + moduleName + ' failed: ' + e)                
             except:
                 msgBox = Qt.QMessageBox()
                 msgBox.setText( (
@@ -2957,9 +2884,13 @@ class LauncherApp(Qt.QObject):
             
             if not module:
                 try:
+                    self.view.statusBar().showMessage(
+                        'Trying to import ' + appFilename + '...')
+                    self.view.repaint()
                     module = __import__(appFilename)
-                except ImportError:
-                    pass
+                except ImportError as e:
+                    self.view.statusBar().showMessage(
+                        'Importing ' + appFilename + ' failed: ' + e) 
                 except:
                     msgBox = Qt.QMessageBox()
                     msgBox.setText( (
@@ -2970,10 +2901,15 @@ class LauncherApp(Qt.QObject):
                     
             if module:
                 try:
+                    self.view.statusBar().showMessage(
+                        'Trying to launch ' + appFilename + '...')
+                    self.view.repaint()
                     if args:
                         self.appList.append(module.make(args))
                     else:
                         self.appList.append(module.make())
+                    self.view.statusBar().showMessage(
+                        appFilename + ' successfully launched.')                        
                 except:
                     msgBox = Qt.QMessageBox()
                     msgBox.setText( (
@@ -2986,13 +2922,17 @@ class LauncherApp(Qt.QObject):
                 msgBox = Qt.QMessageBox()
                 msgBox.setText( ('Importing ' + appFilename + 
                                  ' module has failed.') )
-                #msgBox.setInformativeText( str(importErrorMessage) )
                 msgBox.setIcon(Qt.QMessageBox.Critical)
                 msgBox.exec_()                
                     
         else:
             try:
-                subprocess.Popen([appFilename])
+                self.view.statusBar().showMessage(
+                    'Trying to launch ' + appFilename + '...')
+                self.view.repaint()
+                p = subprocess.Popen([appFilename])
+                self.view.statusBar().showMessage(
+                    appFilename + ' successfully launched.')                 
             except:
                 msgBox = Qt.QMessageBox()
                 msgBox.setText( ('Launching ' + appFilename + 

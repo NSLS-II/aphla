@@ -32,7 +32,8 @@ import os
 setup(
     name = "aphla",
     version = "0.3.0a1",
-    packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 'aphla.conf'],
+    packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
+                'aphla.conf'],
     data_files = {},
     package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
                    'aphla.gui': 'gui', 'aphla.conf': 'conf'},
