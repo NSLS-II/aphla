@@ -90,11 +90,9 @@ import aphla
 # *) Add <description> to XML
 # *) Implement <singleton>
 # *) Implement <args> for popen
-# *) Use QSettings to save/restore window size/pos, splitter pos, recently opened items
 # *) More thorough separate search window
 # *) Implement "Visible Columns..." & "Arrange Items" actions
 # *) Temporary user XML saving functionality whenever hierarchy is changed
-# *) Show status bar while opening application
 
 ## FIXIT
 # *) Header not visible in main Tree View, if no item exists
@@ -870,10 +868,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         self._initMenus()
         
-        self.splitterPanes.setSizes(
-            [self.width()*(1./5),self.width()*(4./5)])
-        self.manualSplitterSizes = self.splitterPanes.sizes()
-        
         self.tabWidget = None
                 
         
@@ -912,6 +906,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.updatePath()
         
         self.lineEdit_search.setCompleter(self.model.completer)
+                
         
         ## Make connections
         self.connect(self.treeViewSide.selectionModel(),
@@ -946,6 +941,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self, Qt.SIGNAL('sigClearSelection'),
                      self.clearSelection)
     
+        
+        # Load QSettings
+        self.loadSettings()
+    
     #----------------------------------------------------------------------
     def closeEvent(self, event):
         """"""
@@ -959,8 +958,47 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
         self.model.writeToXMLFile(user_XML_Filepath, rootModelItem)
         
+        # Save QSettings
+        self.saveSettings()
         
         event.accept()
+    
+    #----------------------------------------------------------------------
+    def saveSettings(self):
+        """"""
+        
+        settings = Qt.QSettings('HLA','Launcher')
+        
+        settings.beginGroup('MainWindow')
+        settings.setValue('position',self.geometry())
+        settings.setValue('splitterPanes_sizes',self.splitterPanes.sizes())
+        settings.endGroup()
+        
+        print 'Settings saved.'
+        
+    
+    #----------------------------------------------------------------------
+    def loadSettings(self):
+        """"""
+        
+        settings = Qt.QSettings('HLA','Launcher')
+                
+        settings.beginGroup('MainWindow')
+        rect = settings.value('position').toRect()
+        if rect == Qt.QRect():
+            rect = Qt.QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
+        self.setGeometry(rect)
+        splitterPanes_sizes = settings.value('splitterPanes_sizes').toList()
+        if splitterPanes_sizes == []:
+            splitterPanes_sizes = [self.width()*(1./5), self.width()*(4./5)]
+        else:
+            self.splitterPanes.setSizes([splitterPanes_sizes[0].toInt()[0],
+                                         splitterPanes_sizes[1].toInt()[0]])
+        settings.endGroup()
+        
+        print 'Settings loaded.'
+    
+    
     
     #----------------------------------------------------------------------
     def onViewModeActionGroupTriggered(self, action):
@@ -1017,13 +1055,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         #print 'Main Pane Focus out'
      
-    #----------------------------------------------------------------------
-    def onSplitterManualMove(self, int_pos, int_index):
-        """"""
-        
-        self.manualSplitterSizes = self.splitterPanes.sizes()
-        
-        
     #----------------------------------------------------------------------
     def onSearchTextChange(self, newSearchText):
         """"""

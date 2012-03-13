@@ -53,17 +53,17 @@ if __name__ == "__main__" :
 else:
     from .ui_channelSelectorDialog import Ui_Dialog
 
-import tictoc
+#import tictoc
 import hla
 if not hla.machines._lat :
-    tStart = tictoc.tic()    
+    #tStart = tictoc.tic()    
     hla.initNSLS2VSR()
-    print tictoc.toc(tStart)
+    #print tictoc.toc(tStart)
 #import aphla
 #if not aphla.machines._lat :
-    #tStart = tictoc.tic()
+    ##tStart = tictoc.tic()
     #aphla.initNSLS2VSR()
-    #print tictoc.toc(tStart)
+    ##print tictoc.toc(tStart)
 
 # Output Type Enums
 TYPE_CHANNEL = 1
