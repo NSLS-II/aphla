@@ -935,8 +935,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.lineEdit_search, Qt.SIGNAL('textChanged(const QString &)'),
                      self.onSearchTextChange)
         
-        self.connect(self.splitterPanes, Qt.SIGNAL('splitterMoved(int,int)'),
-                     self.onSplitterManualMove)
 
         self.connect(self, Qt.SIGNAL('sigClearSelection'),
                      self.clearSelection)
