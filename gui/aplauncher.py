@@ -439,6 +439,8 @@ class LauncherModel(Qt.QStandardItemModel):
             self.pModelIndList.append(Qt.QPersistentModelIndex(self.indexFromItem(childItem)))
             
             self.updatePathLookupLists(childItem)
+            
+        
                 
     #----------------------------------------------------------------------
     def pModelIndexFromPath(self, path):
@@ -935,7 +937,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.lineEdit_search, Qt.SIGNAL('textChanged(const QString &)'),
                      self.onSearchTextChange)
         
-
         self.connect(self, Qt.SIGNAL('sigClearSelection'),
                      self.clearSelection)
     
@@ -1902,11 +1903,45 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                                  item.parent().index())
                     
         self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
+        self.removeDeletedItemsFromHistory()
+        self.updatePath()
         
         if self.inSearchMode():
             self.onSearchTextChange(self.lineEdit_search.text())
 
-    
+    #----------------------------------------------------------------------
+    def removeDeletedItemsFromHistory(self):
+        """
+        If the model structure is changed in any way, then first the list of all
+        the valid path must be reconstructed. And then also you need to check the
+        history. If an item has been removed, and the past history contains the item,
+        it must be removed so that the code does not crash when going back to
+        the non-existent item. This function performs the 2nd task.
+        """
+        
+        for m in self.mainPaneList:
+            indexesToBeRemovedFrom_History = []
+            for (index,p) in enumerate(m.pathHistory):
+                if type(p) == Qt.QPersistentModelIndex:
+                    pass
+                elif type(p) == dict:
+                    p = p['searchRootIndex']
+                else:
+                    raise TypeError('Unexpected history item type: ' + type(p))
+                
+                if p not in self.model.pModelIndList:
+                    indexesToBeRemovedFrom_History.append(index)
+        
+            indexesToBeRemovedFrom_History.reverse()
+            for index in indexesToBeRemovedFrom_History:
+                m.pathHistory.pop(index)
+                
+            # You also need to re-adjust the current index
+            m.pathHistoryCurrentIndex -= len(indexesToBeRemovedFrom_History)
+            if m.pathHistoryCurrentIndex < 0:
+                raise ValueError('After removing deleted items from path history, current history index has become negative.')
+        
+        
     #----------------------------------------------------------------------
     def copyItems(self):
         """"""
@@ -1939,6 +1974,16 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         replaceAll = False
         indexListToBeRemovedFromClipboard = []
         for (clipIndex, item) in enumerate(self.clipboard):
+
+            if item.path in currentRootItem.path:
+                msgBox = Qt.QMessageBox()
+                msgBox.setText( (
+                    'You cannot paste a parent item into a sub-item.') )
+                msgBox.setIcon(Qt.QMessageBox.Critical)
+                msgBox.exec_()
+                self.renameItem() # Re-open the editor
+                return
+                
             rowIndex = currentRootItem.rowCount()
             parentPath = item.parent().path
             pastedItem = item.shallowCopy()
@@ -2008,6 +2053,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 if not isinstance(p,str):
                     p = str(p)
                 currentRootItem.setChild(rowIndex,i+1,Qt.QStandardItem(p))
+                
+            # Recursively paste sub-items, if exist
+            self.pasteSubItems(item, pastedItem)
         
             # Remove the pasted item from source, if the item was "cut"
             if self.clipboardType == 'cut':
@@ -2031,6 +2079,33 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
         self.updatePath()
         
+    #----------------------------------------------------------------------
+    def pasteSubItems(self, sourceParentItem, targetParentItem):
+        """"""
+    
+        if not sourceParentItem.hasChildren():
+            return
+        else:
+            for r in range(sourceParentItem.rowCount()):
+                childItem = sourceParentItem.child(r)
+            
+                pastedChildItem = childItem.shallowCopy()
+                pastedChildItem.setEditable(True)
+                newPath = targetParentItem.path + SEPARATOR + pastedChildItem.dispName
+                pastedChildItem.path = newPath
+                self.model.pathList.append(pastedChildItem.path)
+                targetParentItem.setChild(r, 0, pastedChildItem)
+                for (i,propName) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
+                    p = getattr(pastedChildItem,propName)
+                    if not isinstance(p,str):
+                        p = str(p)
+                    targetParentItem.setChild(r,i+1,Qt.QStandardItem(p))   
+            
+                self.pasteSubItems(childItem, pastedChildItem)
+            
+            
+        
+    
     
     #----------------------------------------------------------------------
     def renameItem(self):
@@ -2605,9 +2680,18 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         for a in searchModeDisabledActionList:
             a.setEnabled(False)
             
+            
         # Override Enable state for "Paste" if self.clipboard is an empty list
         if not self.clipboard:
             self.actionPaste.setEnabled(False)
+        
+        # Override Enable state for "Delete" to disabled.
+        # If the selected item on Side Tree View is deleted, then
+        # it will cause a problem with the current root item of Main Pane.
+        if self.selectedItemList and \
+           (currentRootItem.path in [item.path for item in self.selectedItemList]):
+            self.actionDelete.setEnabled(False)
+
         
         sender = self.sender()
         #print sender.title()
@@ -2697,6 +2781,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             
         elif sender == self.treeViewSide: # Clicked on Tree View on Side Pane
             
+
             if selectionType == 'NoSelection':
                 return
             
