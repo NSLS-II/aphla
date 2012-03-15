@@ -1381,10 +1381,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.selectedItemList = [self.model.itemFromIndex(Qt.QModelIndex(pModInd))
                                      for pModInd in self.selectedPersModelIndexList]
 
-        if self.selectedItemList:
-            print 'Selection changed to ' + self.selectedItemList[0].path
-        else:
-            print 'Selection changed to None'
+        #if self.selectedItemList:
+            #print 'Selection changed to ' + self.selectedItemList[0].path
+        #else:
+            #print 'Selection changed to None'
             
             
     #----------------------------------------------------------------------
@@ -2229,7 +2229,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
               
         """
 
-        print 'clearSelection called'
+        #print 'clearSelection called'
         m = self.getCurrentMainPane()
         m.listView.selectionModel().clearSelection()
         m.treeView.selectionModel().clearSelection()
@@ -2969,16 +2969,21 @@ class LauncherApp(Qt.QObject):
 
             module = None
             
+            errorMessage = ''
+            
             try:
                 moduleName = 'aphla.gui.'+appFilename
-                self.view.statusBar().showMessage(
-                    'Trying to import ' + moduleName + '...')
+                message = 'Trying to import ' + moduleName + '...'
+                self.view.statusBar().showMessage(message)
+                print message
                 self.view.repaint()
                 __import__(moduleName)
                 module = sys.modules[moduleName]
             except ImportError as e:
                 self.view.statusBar().showMessage(
-                    'Importing ' + moduleName + ' failed: ' + e)                
+                    'Importing ' + moduleName + ' failed: ' + e.message)
+                print e.message
+                errorMessage += e.message
             except:
                 msgBox = Qt.QMessageBox()
                 msgBox.setText( (
@@ -2989,13 +2994,16 @@ class LauncherApp(Qt.QObject):
             
             if not module:
                 try:
-                    self.view.statusBar().showMessage(
-                        'Trying to import ' + appFilename + '...')
+                    message = 'Trying to import ' + appFilename + '...'
+                    self.view.statusBar().showMessage(message)
+                    print message
                     self.view.repaint()
                     module = __import__(appFilename)
                 except ImportError as e:
-                    self.view.statusBar().showMessage(
-                        'Importing ' + appFilename + ' failed: ' + e) 
+                    message = 'Importing ' + appFilename + ' failed: ' + e.message
+                    self.view.statusBar().showMessage(message) 
+                    print message
+                    errorMessage += '\n' + e.message
                 except:
                     msgBox = Qt.QMessageBox()
                     msgBox.setText( (
@@ -3006,15 +3014,17 @@ class LauncherApp(Qt.QObject):
                     
             if module:
                 try:
-                    self.view.statusBar().showMessage(
-                        'Trying to launch ' + appFilename + '...')
+                    message = 'Trying to launch ' + appFilename + '...'
+                    self.view.statusBar().showMessage(message)
+                    print message
                     self.view.repaint()
                     if args:
                         self.appList.append(module.make(args))
                     else:
                         self.appList.append(module.make())
-                    self.view.statusBar().showMessage(
-                        appFilename + ' successfully launched.')                        
+                    message = appFilename + ' successfully launched.'
+                    self.view.statusBar().showMessage(message)
+                    print message
                 except:
                     msgBox = Qt.QMessageBox()
                     msgBox.setText( (
@@ -3025,24 +3035,33 @@ class LauncherApp(Qt.QObject):
                     
             else:
                 msgBox = Qt.QMessageBox()
-                msgBox.setText( ('Importing ' + appFilename + 
-                                 ' module has failed.') )
+                message = ('Importing ' + appFilename + 
+                           ' module has failed.')
+                msgBox.setText(message)
+                msgBox.setInformativeText( str(errorMessage) )
+                print message
+                print errorMessage
                 msgBox.setIcon(Qt.QMessageBox.Critical)
                 msgBox.exec_()                
                     
         else:
             try:
-                self.view.statusBar().showMessage(
-                    'Trying to launch ' + appFilename + '...')
+                message = 'Trying to launch ' + appFilename + '...'
+                self.view.statusBar().showMessage(message)
+                print message
                 self.view.repaint()
                 p = subprocess.Popen([appFilename])
-                self.view.statusBar().showMessage(
-                    appFilename + ' successfully launched.')                 
+                message = appFilename + ' successfully launched.'
+                self.view.statusBar().showMessage(message)
+                print message
             except:
                 msgBox = Qt.QMessageBox()
-                msgBox.setText( ('Launching ' + appFilename + 
-                                 ' with subprocess.Popen has failed.') )
+                message = ('Launching ' + appFilename + 
+                           ' with subprocess.Popen has failed.') 
+                msgBox.setText(message)
                 msgBox.setInformativeText( str(sys.exc_info()) )
+                print message
+                print sys.exc_info()
                 msgBox.setIcon(Qt.QMessageBox.Critical)
                 msgBox.exec_()                        
 
