@@ -54,16 +54,16 @@ else:
     from .ui_channelSelectorDialog import Ui_Dialog
 
 #import tictoc
-import hla
-if not hla.machines._lat :
-    #tStart = tictoc.tic()    
-    hla.initNSLS2VSR()
-    #print tictoc.toc(tStart)
-#import aphla
-#if not aphla.machines._lat :
-    ##tStart = tictoc.tic()
-    #aphla.initNSLS2VSR()
+#import hla
+#if not hla.machines._lat :
+    ##tStart = tictoc.tic()    
+    #hla.initNSLS2VSR()
     ##print tictoc.toc(tStart)
+import aphla
+if not aphla.machines._lat :
+    #tStart = tictoc.tic()
+    aphla.initNSLS2VSR()
+    #print tictoc.toc(tStart)
 
 # Output Type Enums
 TYPE_CHANNEL = 1
@@ -85,10 +85,10 @@ class Channel:
         """
         """
         
-        if field_name not in ['value', 'x', 'y']:
-            raise ValueError('Field name (' + field_name + ') passed as ' +
-                             '2nd argument must be ' + 
-                             'either "value", "x", or "y".')
+        #if field_name not in ['value', 'x', 'y']:
+            #raise ValueError('Field name (' + field_name + ') passed as ' +
+                             #'2nd argument must be ' + 
+                             #'either "value", "x", or "y".')
         
         if field_name not in element_obj.fields():
             raise ValueError('Field name (' + field_name + ') passed as ' +
@@ -136,24 +136,28 @@ class Channel:
         
         field_list = element_obj.fields()
         
-        field_list.remove('status') # 'status' does not exist in aphla, but did exist in hla
+        #field_list.remove('status') # 'status' does not exist in aphla, but did exist in hla
         
-        if field_list == ['value']: # When there is no field other than 'value'.
-            # This case usually applies to an element that has no separate 
-            # control in different orientations 'x' and 'y', e.g., a quadrupole.
-            channel_list = [Channel(element_obj, 'value')]
-        else:
+        #if field_list == ['value']: # When there is no field other than 'value'.
+            ## This case usually applies to an element that has no separate 
+            ## control in different orientations 'x' and 'y', e.g., a quadrupole.
+            #channel_list = [Channel(element_obj, 'value')]
+        #else:
             
-            if 'value' in field_list:
-                field_list.remove('value')
-            else:
-                raise ValueError('Passed element object does not contain "value" field.')
+            #if 'value' in field_list:
+                #field_list.remove('value')
+            #else:
+                #raise ValueError('Passed element object does not contain "value" field.')
             
-            channel_list = []
+            #channel_list = []
             
-            for field in field_list:
-                channel_list.append(Channel(element_obj,field))
+            #for field in field_list:
+                #channel_list.append(Channel(element_obj,field))
             
+        channel_list = []
+            
+        for field in field_list:
+            channel_list.append(Channel(element_obj,field))
         
         return channel_list
         
@@ -255,7 +259,8 @@ class ChannelSelectorModel(Qt.QObject):
         
         self.filter_spec = filter_spec
         
-        allElements = hla.getElements('*')
+        #allElements = hla.getElements('*')
+        allElements = aphla.getElements('*')
         self.allChannels = Channel.getAllAvailableChannelsFromElementList(
             allElements)
         full_channel_name_list = [c.name for c in self.allChannels]

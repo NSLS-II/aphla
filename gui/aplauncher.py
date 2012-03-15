@@ -16,7 +16,6 @@ unnecessary duplicate import actions for some modules.
 """
 
 import sys
-import math
 import os
 import errno
 import time
@@ -24,15 +23,7 @@ import posixpath
 import subprocess
 import cothread
 
-# If Qt is to be used (for any GUI) then the cothread library needs to be informed,
-# before any work is done with Qt. Without this line below, the GUI window will not
-# show up and freeze the program.
-# Note that for a dialog box to be modal, i.e., blocking the application
-# execution until user input is given, you need to set the input
-# argument "user_timer" to be True.
-
 import PyQt4.Qt as Qt
-from PyQt4.QtGui import QPushButton
 from PyQt4.QtXml import QDomDocument
 
 XML_ITEM_TAG_NAME = 'item'
@@ -3080,6 +3071,12 @@ def main(args = None):
         using_cothread = False
         
     if using_cothread:
+        # If Qt is to be used (for any GUI) then the cothread library needs to be informed,
+        # before any work is done with Qt. Without this line below, the GUI window will not
+        # show up and freeze the program.
+        # Note that for a dialog box to be modal, i.e., blocking the application
+        # execution until user input is given, you need to set the input
+        # argument "user_timer" to be True.        
         cothread.iqt(use_timer = True)
     else:
         qapp = Qt.QApplication(args)
