@@ -84,6 +84,7 @@ import aphla
 # *) More thorough separate search window
 # *) Implement "Visible Columns..." & "Arrange Items" actions
 # *) Temporary user XML saving functionality whenever hierarchy is changed
+# *) Add PYTHONPATH editor
 
 ## FIXIT
 # *) Header not visible in main Tree View, if no item exists

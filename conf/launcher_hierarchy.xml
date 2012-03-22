@@ -110,6 +110,17 @@
         </item>
     ">
 
+    <!ENTITY appPlotter "
+        <item>
+            <dispName>Plotter</dispName>
+            <itemType>app</itemType>
+            <linkedFile>applotter</linkedFile>
+            <useImport>True</useImport>
+            <singleton>False</singleton>
+            <args></args>
+        </item>
+    ">
+
 ]>
 <hierarchy>
     
@@ -145,6 +156,7 @@
             &appOrbitViewer;
             &appBetaFuncViewer;
             &appLauncher;
+            &appPlotter;
         </item> <!-- Test -->
         
     </item>  <!-- root -->
