@@ -390,6 +390,11 @@ class CurvesDockModel(Qt.QStandardItemModel):
         d = newCurveData # for short-hand notation
         
         y = self.datasetsModel.ds[d['yVarName']]
+        if type(y) != np.ndarray:
+            errorMsg = 'Y Variable must be of type numpy.ndarray.'
+            print errorMsg
+            self.mainView.statusbar.showMessage(errorMsg)
+            return
         if d['xVarName'] == 'index':
             x = self.getIndexArray(y)
             #if y.ndim == 1:
@@ -400,6 +405,11 @@ class CurvesDockModel(Qt.QStandardItemModel):
             yIndepVar = x
         else:
             x = self.datasetsModel.ds[d['xVarName']]
+            if type(x) != np.ndarray:
+                errorMsg = 'X Variable must be of type numpy.ndarray.'
+                print errorMsg
+                self.mainView.statusbar.showMessage(errorMsg)
+                return            
             #
             xIndepVar = self.getIndepVar(d['xVarName'])
             yIndepVar = self.getIndepVar(d['yVarName'])
@@ -611,9 +621,9 @@ class CurvesDockView(Qt.QWidget):
                            for proxyIndex in selectedProxyRowIndexes]
         selectedRowItems = [model.itemFromIndex(index) for index in selectedRowIndexes]
         selectedRows = [item.row() for item in selectedRowItems]
-        self.selectedVarNames = [self.getVariableName(r) for r in selectedRows]
-        print selectedRows
-        print self.selectedVarNames
+        #self.selectedVarNames = [self.getVariableName(r) for r in selectedRows]
+        #print selectedRows
+        #print self.selectedVarNames
     
     #----------------------------------------------------------------------
     def openContextMenu(self, qpoint):
@@ -699,10 +709,12 @@ class DatasetsDockModel(Qt.QStandardItemModel):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, *args):
+    def __init__(self, mainView):
         """Constructor"""
         
-        Qt.QStandardItemModel.__init__(self, *args)
+        Qt.QStandardItemModel.__init__(self)
+        
+        self.mainView = mainView
         
         self.propNameColNameDict = {'name':'Name', 'origName':'Orig. Name',
                                     'description':'Description', 'indepVar':'Indep. Var.',
@@ -718,6 +730,7 @@ class DatasetsDockModel(Qt.QStandardItemModel):
         self.setColumnCount(len(self.headerLabels))
         
         self.varNameList = []
+        self.derivedVarNameList = []
         self.ds = {} # Will contain all the loaded data
         
         self.connect(self,
@@ -736,11 +749,55 @@ class DatasetsDockModel(Qt.QStandardItemModel):
 
         item = self.itemFromIndex(topLeftModelIndex)
         if item.column() == self.col('derivation'):
+            
+            varNameItem = self.item(item.row(),self.col('name'))
+            varName = str(varNameItem.text())
+            
+            # Do not perform derivation on variables whose source type
+            # are NOT "variables".
+            if varNameItem.srcType != 'variables':
+                # Force reset uncommitted expression string to empty string
+                varNameItem.uncommittedDerivationExpression = ''
+                # Force reset committed expression string to empty string
+                item.setText('')
+                return
+            
+            # Perform derivation on variables whose source type is "variables"
             codeSource = str(item.text()).strip()
             if codeSource:
-                varName = str(self.item(item.row(),self.col('name')).text())
-                self.ds[varName] = self.runDerivation(codeSource,self.ds)
+                derivedArray = self.runDerivation(codeSource,self.ds)                
+                if derivedArray != None: # Derivation evaluation succeeded
+                    self.ds[varName] = derivedArray
+                    varNameItem.uncommittedDerivationExpression = codeSource
+                    self.emit(Qt.SIGNAL('derivationExpChangedOnDatasets'), varName)
+                else: # Derivation evaluation failed
+                    item.setText(varNameItem.uncommittedDerivationExpression)
+            else:
+                varNameItem.uncommittedDerivationExpression = ''
+                self.ds[varName] = None
             
+    #----------------------------------------------------------------------
+    def commitDerivationExpChange(self, varName, newExpression):
+        """"""
+        
+        rowIndex = self.varNameList.index(varName)
+        
+        derivationItem = self.item(rowIndex,self.col('derivation'))
+        
+        derivationItem.setText(newExpression)
+        
+    #----------------------------------------------------------------------
+    def changeUncommittedExpression(self, varName, newUncommittedExpression):
+        """"""
+        
+        rowIndex = self.varNameList.index(varName)
+        
+        varNameItem = self.item(rowIndex,self.col('name'))
+        
+        varNameItem.uncommittedDerivationExpression = newUncommittedExpression
+        
+        
+        
         
     #----------------------------------------------------------------------
     def col(self, propName_or_colName, nameType='propName'):
@@ -763,7 +820,6 @@ class DatasetsDockModel(Qt.QStandardItemModel):
         f = h5py.File(filepath, 'r')
         newDsNameList = self.getAllHDF5DatasetNameList(f)
         
-        
         for n in newDsNameList:
             # If the new name conflicts w/ the variable names already loaded,
             # then automatically change the new name.
@@ -775,7 +831,10 @@ class DatasetsDockModel(Qt.QStandardItemModel):
             self.varNameList.append(newVarName)
             self.ds[newVarName] = f[n].value.squeeze()
             newRow = self.rowCount()
-            self.setItem(newRow,0,Qt.QStandardItem(newVarName))
+            varNameItem = Qt.QStandardItem(newVarName)
+            varNameItem.uncommittedDerivationExpression = ''
+            varNameItem.srcType = 'file'
+            self.setItem(newRow,0,varNameItem)
             
             for propName in self.propNameList[1:]:
                 if propName == 'origName':
@@ -788,7 +847,7 @@ class DatasetsDockModel(Qt.QStandardItemModel):
                     itemText = 'index'
                     editable = True
                 elif propName == 'srcType':
-                    itemText = 'file'
+                    itemText = varNameItem.srcType
                     editable = False
                 elif propName == 'srcAddr':
                     itemText = filepath
@@ -798,16 +857,17 @@ class DatasetsDockModel(Qt.QStandardItemModel):
                     editable = False
                 elif propName == 'derivation':
                     itemText = ''
-                    editable = True
+                    editable = False
                 else:
                     raise ValueError('Unexpected property name: ' + propName)
                 item = Qt.QStandardItem(itemText)
                 if not editable:
                     item.setEditable(editable)
                 self.setItem(newRow, self.col(propName), item)
-
-        
+                        
+             
         f.close()
+        
         
     #----------------------------------------------------------------------
     def getAllHDF5DatasetNameList(self, openedHDF5FileObj):
@@ -830,12 +890,16 @@ class DatasetsDockModel(Qt.QStandardItemModel):
         
         item = self.itemFromIndex(modelIndex)
         
-        if self.propNameList[item.column()] == 'name':
+        if item.column() == self.col('name'):
             changedRow = item.row()
             oldVarName = self.varNameList[changedRow]
             newVarName = str(item.text())
             
             self.varNameList[changedRow] = newVarName
+            
+            if item.srcType == 'variables':
+                dInd = self.derivedVarNameList.index(oldVarName)
+                self.derivedVarNameList[dInd] = newVarName
             
             var = self.ds.pop(oldVarName)
             self.ds[newVarName] = var
@@ -861,9 +925,11 @@ class DatasetsDockModel(Qt.QStandardItemModel):
             try:
                 codeObj = compile(codeSource, '<string>', 'exec')
             except:
-                print sys.exc_info()
+                erroMsg = str(sys.exc_info())
+                print erroMsg
+                self.mainView.statusbar.showMessage(erroMsg)
                 print 'Expression compilation failed.'
-                return
+                return None
     
         #make a list of safe functions
         from math import acos, asin, atan, atan2, ceil, cos, cosh, \
@@ -881,14 +947,18 @@ class DatasetsDockModel(Qt.QStandardItemModel):
         safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
         #add any needed builtins back in.
         safe_dict['abs'] = abs
-        safe_dict['__import__'] = __import__ # You can import any module by "np = __import__('numpy')" for example.
         for (k,v) in args.iteritems():
             safe_dict[k] = v
+        custom_builtins = {'True':True, 'False':False, '__import__':__import__}
         try:
-            output = eval(codeObj, {"__builtins__":None}, safe_dict)
+            #output = eval(codeObj, {"__builtins__":None}, safe_dict)
+            #output = eval(codeObj, {"__builtins__":custom_builtins}, safe_dict)
+            output = eval(codeObj, {}, safe_dict) # Allow __builtins__ in eval
         except:
-            print sys.exc_info()
-            return
+            erroMsg = str(sys.exc_info())
+            print erroMsg
+            self.mainView.statusbar.showMessage(erroMsg)
+            return None
         
         if output != None: # When code string was a single expression (using 'eval')
             return output
@@ -896,7 +966,10 @@ class DatasetsDockModel(Qt.QStandardItemModel):
             if safe_dict.has_key('output'):
                 return safe_dict['output']     
             else:
-                print 'You must assign a value to the variable "output".'
+                errorMsg = 'You must assign a value to the variable "output".'
+                print errorMsg
+                self.mainView.statusbar.showMessage(errorMsg)
+                return None
     
     
         
@@ -1001,7 +1074,7 @@ class DatasetsDockView(Qt.QWidget):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, mainView):
         """Constructor"""
         
         Qt.QWidget.__init__(self)
@@ -1031,7 +1104,7 @@ class DatasetsDockView(Qt.QWidget):
         
         
         
-        self.model = DatasetsDockModel()
+        self.model = DatasetsDockModel(mainView)
         self.proxyModel = Qt.QSortFilterProxyModel()
         self.proxyModel.setSourceModel(self.model)
         
@@ -1117,96 +1190,18 @@ class DatasetsDockView(Qt.QWidget):
         
         sender.contextMenu.clear()        
         if not self.selectedVarNames:
-            menuStr = 'Add variables from a file'
-            action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
-            self.connect(action, Qt.SIGNAL('triggered()'),
-                         self.addVarsFromFile)
-            
-            menuStr = 'Add PV (history)'
-            action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
-            self.connect(action, Qt.SIGNAL('triggered()'),
-                         self.addPVHistory)
 
-            menuStr = 'Add PV (real-time)'
-            action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
-            self.connect(action, Qt.SIGNAL('triggered()'),
-                         self.addPVMonitor)
-            
-            menuStr = 'Add PV (history + real-time)'
-            action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
-            self.connect(action, Qt.SIGNAL('triggered()'),
-                         self.addPVHistAndMon)
-            
-            menuStr = 'Create new variable'
-            action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
-            self.connect(action, Qt.SIGNAL('triggered()'),
-                         self.addVarsFromVars)
+            pass
             
         elif len(self.selectedVarNames) == 1:
             
-            #subMenuNew      = sender.contextMenu.addMenu('Plot in new tab')
-            #subMenuExisting = sender.contextMenu.addMenu('Plot in existing fig')
-            
-            #menuStr = self.selectedVarNames[0] + ' vs. index'
-            
-            #action = subMenuNew.addAction(Qt.QIcon(), menuStr)
-            #self.connect(action, Qt.SIGNAL('triggered()'),
-                         #self.onPlotActionTriggered)
-            
-            #action = subMenuExisting.addAction(Qt.QIcon(), menuStr)
-            #self.connect(action, Qt.SIGNAL('triggered()'),
-                         #self.onPlotActionTriggered)
-                         
             menuStr = self.selectedVarNames[0] + ' vs. index'
             
             action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
             self.connect(action, Qt.SIGNAL('triggered()'),
                          self.onPlotActionTriggered)
             
-            
-            
         else:
-            #firstVarName = self.selectedVarNames[0]
-
-            #subMenuNew      = sender.contextMenu.addMenu('Plot in new tab')
-            #subMenuExisting = sender.contextMenu.addMenu('Plot in existing fig')
-
-            #menuStr = '"All except ' + firstVarName + '" vs. ' + firstVarName
-            ##
-            #action = subMenuNew.addAction(Qt.QIcon(), menuStr)
-            #action.setProperty('plotNew', True)
-            #self.connect(action, Qt.SIGNAL('triggered()'),
-                         #self.onPlotActionTriggered)            
-            ##
-            #action = subMenuExisting.addAction(Qt.QIcon(), menuStr)
-            #action.setProperty('plotNew', False)
-            #self.connect(action, Qt.SIGNAL('triggered()'),
-                         #self.onPlotActionTriggered)            
-
-            #menuStr = '"All" vs. index'
-            ##
-            #action = subMenuNew.addAction(Qt.QIcon(), menuStr)
-            #action.setProperty('plotNew', True)
-            #self.connect(action, Qt.SIGNAL('triggered()'),
-                         #self.onPlotActionTriggered)            
-            ##
-            #action = subMenuExisting.addAction(Qt.QIcon(), menuStr)
-            #action.setProperty('plotNew', False)
-            #self.connect(action, Qt.SIGNAL('triggered()'),
-                         #self.onPlotActionTriggered)            
-
-            #for n in self.selectedVarNames[1:]:
-                #menuStr = n + ' vs. ' + firstVarName
-                ##
-                #action = subMenuNew.addAction(Qt.QIcon(), menuStr)
-                #action.setProperty('plotNew', True)
-                #self.connect(action, Qt.SIGNAL('triggered()'),
-                             #self.onPlotActionTriggered)       
-                ##
-                #action = subMenuExisting.addAction(Qt.QIcon(), menuStr)
-                #action.setProperty('plotNew', False)
-                #self.connect(action, Qt.SIGNAL('triggered()'),
-                             #self.onPlotActionTriggered)    
             
             firstVarName = self.selectedVarNames[0]
             
@@ -1228,6 +1223,36 @@ class DatasetsDockView(Qt.QWidget):
                 self.connect(action, Qt.SIGNAL('triggered()'),
                              self.onPlotActionTriggered)       
                 
+        
+        if sender.contextMenu.actions != []:
+            sender.contextMenu.addSeparator()
+            
+            
+        menuStr = 'Add variables from a file'
+        action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
+        self.connect(action, Qt.SIGNAL('triggered()'),
+                     self.addVarsFromFile)
+        #
+        menuStr = 'Add PV (history)'
+        action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
+        self.connect(action, Qt.SIGNAL('triggered()'),
+                     self.addPVHistory)
+        #
+        menuStr = 'Add PV (real-time)'
+        action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
+        self.connect(action, Qt.SIGNAL('triggered()'),
+                     self.addPVMonitor)
+        #
+        menuStr = 'Add PV (history + real-time)'
+        action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
+        self.connect(action, Qt.SIGNAL('triggered()'),
+                     self.addPVHistAndMon)
+        #
+        menuStr = 'Create new variable'
+        action = sender.contextMenu.addAction(Qt.QIcon(), menuStr)
+        self.connect(action, Qt.SIGNAL('triggered()'),
+                     self.addVarsFromVars)
+
 
         sender.contextMenu.exec_(globalClickPos)
         
@@ -1288,9 +1313,13 @@ class DatasetsDockView(Qt.QWidget):
             newVarName = defaultVarNamePrefix + str(counter)
             counter += 1
         self.model.varNameList.append(newVarName)
+        self.model.derivedVarNameList.append(newVarName)
         self.model.ds[newVarName] = []
         newRow = self.model.rowCount()
-        self.model.setItem(newRow,0,Qt.QStandardItem(newVarName))
+        newVarNameItem = Qt.QStandardItem(newVarName)
+        newVarNameItem.uncommittedDerivationExpression = ''
+        newVarNameItem.srcType = 'variables'
+        self.model.setItem(newRow,0,newVarNameItem)
         
         for propName in self.model.propNameList[1:]:
             if propName == 'origName':
@@ -1303,7 +1332,7 @@ class DatasetsDockView(Qt.QWidget):
                 itemText = 'index'
                 editable = True
             elif propName == 'srcType':
-                itemText = 'variables'
+                itemText = newVarNameItem.srcType
                 editable = False
             elif propName == 'srcAddr':
                 itemText = '[]'
@@ -1321,6 +1350,7 @@ class DatasetsDockView(Qt.QWidget):
                 item.setEditable(editable)
             self.model.setItem(newRow, self.model.col(propName), item)
 
+        
         
         
         
@@ -1389,8 +1419,215 @@ class DatasetsDockView(Qt.QWidget):
             #d['markerEdgeWidth'] = DEF_MARKER_EDGE_WIDTH
             
             self.emit(Qt.SIGNAL('addNewCurve'), newCurveData)
-            
+
+
+########################################################################
+class ExpressionEditorDockModel(Qt.QObject):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, mainView, datasetsModel):
+        """Constructor"""
+        
+        Qt.QObject.__init__(self)
+        
+        self.sortedDerivedVarNameList = []
+
+        self.mainView = mainView
+        self.datasetsModel = datasetsModel
+        
+        
+        
+    #----------------------------------------------------------------------
+    def updateSortedDerivedVarNameList(self, newDerivedVarNameList):
+        """"""
+        
+        self.sortedDerivedVarNameList = newDerivedVarNameList[:]
+        
+        self.sortedDerivedVarNameList.sort() # alphabetically sorted
+        
+        self.emit(Qt.SIGNAL('varNameListChanged'))
     
+    #----------------------------------------------------------------------
+    def getUncommittedExpression(self, varName):
+        """"""
+        
+        rowIndex = self.datasetsModel.varNameList.index(varName)
+        
+        varNameItem = self.datasetsModel.item(
+            rowIndex, self.datasetsModel.col('name'))
+        
+        return varNameItem.uncommittedDerivationExpression
+
+    
+    #----------------------------------------------------------------------
+    def getCommittedExpression(self, varName):
+        """"""
+        
+        rowIndex = self.datasetsModel.varNameList.index(varName)
+        
+        derivationItem = self.datasetsModel.item(
+            rowIndex, self.datasetsModel.col('derivation'))
+                
+        return str(derivationItem.text())
+            
+        
+            
+########################################################################
+class ExpressionEditorDockView(Qt.QWidget):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, mainView, datasetsModel):
+        """Constructor"""
+        
+        Qt.QWidget.__init__(self)
+        
+        self.setObjectName('expressionEditorDockView')
+        
+        gridLayout = Qt.QGridLayout(self)
+        gridLayout.setObjectName('expressionEditorDock_gridLayout')
+        horizLayout = Qt.QHBoxLayout()
+        horizLayout.setObjectName('expressionEditorDock_horizLayout')
+        label1 = Qt.QLabel(self)
+        label1.setText('Variable Name:')
+        horizLayout.addWidget(label1)
+        self.comboBox_varName = Qt.QComboBox(self)
+        self.comboBox_varName.setObjectName('expressionEditorDock_varName')
+        self.comboBox_varName.setSizeAdjustPolicy(Qt.QComboBox.AdjustToContents)
+        horizLayout.addWidget(self.comboBox_varName)
+        spacerItem = Qt.QSpacerItem(25, 22, Qt.QSizePolicy.Expanding,Qt.QSizePolicy.Minimum)
+        horizLayout.addItem(spacerItem)
+        self.pushButton_applyChange = Qt.QPushButton(self)
+        self.pushButton_applyChange.setObjectName('expressionEditorDock_applyChange')
+        self.pushButton_applyChange.setText('Save && Apply Change')
+        horizLayout.addWidget(self.pushButton_applyChange)
+        self.pushButton_cancelChange = Qt.QPushButton(self)
+        self.pushButton_cancelChange.setObjectName('expressionEditorDock_cancelChange')
+        self.pushButton_cancelChange.setText('Cancel Change')
+        horizLayout.addWidget(self.pushButton_cancelChange)
+        gridLayout.addLayout(horizLayout, 0, 0, 1, 1)
+        self.textEdit = Qt.QTextEdit(self)
+        self.textEdit.setObjectName('expressionEditorDock_textEdit')
+        self.textEdit.setEnabled(False)
+        gridLayout.addWidget(self.textEdit, 1, 0, 1, 1)
+        
+        self.model = ExpressionEditorDockModel(mainView, datasetsModel)
+        
+        self.connect(self.model, Qt.SIGNAL('varNameListChanged'),
+                     self.updateVarNameComboBoxItems)
+        
+        self.connect(self.comboBox_varName,
+                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     self.loadUncommittedExpression)
+        self.connect(datasetsModel, Qt.SIGNAL('derivationExpChangedOnDatasets'),
+                     self.loadUncommittedExpression)
+        
+        self.connect(self.textEdit,
+                     Qt.SIGNAL('textChanged()'),
+                     self.updateUncommittedExpressionOnDatasets)
+        
+        self.connect(self.pushButton_applyChange,
+                     Qt.SIGNAL('clicked(bool)'),
+                     self.commitExpressionChange)
+        self.connect(self.pushButton_cancelChange,
+                     Qt.SIGNAL('clicked(bool)'),
+                     self.loadCommittedExpression)
+        
+    #----------------------------------------------------------------------
+    def updateUncommittedExpressionOnDatasets(self):
+        """"""
+        
+        varName = str(self.comboBox_varName.currentText())
+        
+        newUncommittedExpression = str(self.textEdit.toPlainText())
+        
+        self.emit(Qt.SIGNAL('uncommittedDerivationExpChanged'),
+                  varName, newUncommittedExpression)
+        
+        
+        
+    #----------------------------------------------------------------------
+    def updateVarNameComboBoxItems(self):
+        """"""
+        
+        sortedDerivedVarNameList = self.model.sortedDerivedVarNameList
+        
+        selectedIndex = self.comboBox_varName.currentIndex()
+        selectedText = str(self.comboBox_varName.currentText())
+        
+        self.comboBox_varName.clear()
+        
+        for n in sortedDerivedVarNameList:
+            self.comboBox_varName.addItem(Qt.QIcon(), n)        
+        
+        # If a new variable has been added, or a variable that is currently
+        # not selected has been deleted, the selected variable name still exists
+        # in sortedDerivedVarNameList. So, use the text to find the new, if changed, index.
+        if selectedText in sortedDerivedVarNameList:
+            newSelectedIndex = sortedDerivedVarNameList.index(selectedText)
+        else:
+            # If the currently selected variable has been deleted, and if the
+            # selected index happens to go out of index bound of changed varNameList,
+            # then set the index to -1, i.e., not selected. If the index does not
+            # go out of bound, then use the currently selected index.
+            # Also, use the currently selected index, in the case the selected
+            # variable name has been changed.
+            if selectedIndex >= len(sortedDerivedVarNameList):
+                newSelectedIndex = -1
+            else:
+                newSelectedIndex = selectedIndex
+            
+        self.comboBox_varName.setCurrentIndex(newSelectedIndex)
+    
+    #----------------------------------------------------------------------
+    def loadUncommittedExpression(self, varNameQString):
+        """"""
+        
+        if varNameQString != self.comboBox_varName.currentText():
+            return
+        
+        varName = str(varNameQString)
+        
+        if varName:
+            uncomExpression = self.model.getUncommittedExpression(varName)
+            self.textEdit.setText(uncomExpression)
+            if not self.textEdit.isEnabled():
+                self.textEdit.setEnabled(True)
+        else:
+            self.textEdit.setEnabled(False)
+        
+    #----------------------------------------------------------------------
+    def loadCommittedExpression(self):
+        """"""
+        
+        varNameQString = self.comboBox_varName.currentText()
+        
+        varName = str(varNameQString)
+
+        if varName:
+            committedExpression = self.model.getCommittedExpression(varName)
+            self.textEdit.setText(committedExpression)
+        
+    #----------------------------------------------------------------------
+    def commitExpressionChange(self):
+        """"""
+        
+        varNameQString = self.comboBox_varName.currentText()
+        
+        varName = str(varNameQString)
+        
+        if varName:
+            newMultilineExpression = str(self.textEdit.toPlainText())
+            #newSemicolonedExpression = \
+                #newMultilineExpression.replace('\n',';')
+            
+            self.emit(Qt.SIGNAL('derivationExpChangeCommittedOnEditor'),
+                      varName, newMultilineExpression)
+            
+        
+        
+
 
 ########################################################################
 class PlotterModel(Qt.QObject):
@@ -1418,6 +1655,7 @@ class PlotterView(hlaPlot.InteractivePlotWindow, Ui_MainWindow):
         
         self.setupUi(self)
         
+        
         self.figTabTitleList = []
         self.varNameList = []
         
@@ -1426,13 +1664,14 @@ class PlotterView(hlaPlot.InteractivePlotWindow, Ui_MainWindow):
         self.tabWidget.setObjectName('tabWidget')
         self.tabWidget.setTabsClosable(True)
         self.tabWidget.setMovable(True)
+        self.tabWidget.setMinimumSize(Qt.QSize(0,0))
         self.connect(self.tabWidget,
                      Qt.SIGNAL('tabCloseRequested(int)'),
                      self.closeTab)
         self.centralGridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         
         self.dockWidget_datasets.widget().deleteLater()
-        self.dockView_datasets = DatasetsDockView()
+        self.dockView_datasets = DatasetsDockView(self)
         self.dockWidget_datasets.setWidget(self.dockView_datasets)
         #self.connect(self.dockView_datasets, Qt.SIGNAL('plotYvsX'),
                      #self.plotYvsX)
@@ -1441,6 +1680,11 @@ class PlotterView(hlaPlot.InteractivePlotWindow, Ui_MainWindow):
         self.dockWidget_curves.widget().deleteLater()
         self.dockView_curves = CurvesDockView(self)
         self.dockWidget_curves.setWidget(self.dockView_curves)
+        
+        self.dockWidget_expression_editor.widget().deleteLater()
+        self.dockView_expressionEditor = ExpressionEditorDockView(
+            self, self.dockView_datasets.model)
+        self.dockWidget_expression_editor.setWidget(self.dockView_expressionEditor)
         
                 
         self.tabifyDockWidget(self.dockWidget_datasets,
@@ -1526,6 +1770,12 @@ class PlotterView(hlaPlot.InteractivePlotWindow, Ui_MainWindow):
                      Qt.SIGNAL('addNewCurve'),
                      self.dockView_curves.model.addNewCurve)
         
+        self.connect(self.dockView_expressionEditor,
+                     Qt.SIGNAL('derivationExpChangeCommittedOnEditor'),
+                     self.dockView_datasets.model.commitDerivationExpChange)
+        self.connect(self.dockView_expressionEditor,
+                     Qt.SIGNAL('uncommittedDerivationExpChanged'),
+                     self.dockView_datasets.model.changeUncommittedExpression)
         
     #----------------------------------------------------------------------
     def propagateDatasetsChange(self, datasetsModelIndex):
@@ -1536,6 +1786,8 @@ class PlotterView(hlaPlot.InteractivePlotWindow, Ui_MainWindow):
         
         if oldVarName:
             self.dockView_curves.model.updateVarName(oldVarName, newVarName)
+            self.dockView_expressionEditor.model.updateSortedDerivedVarNameList(
+                self.dockView_datasets.model.derivedVarNameList)
         
     #----------------------------------------------------------------------
     def addInteractiveTools(self, qwtPlot, xAxis, yAxis):
@@ -1631,13 +1883,17 @@ class PlotterView(hlaPlot.InteractivePlotWindow, Ui_MainWindow):
         
         figTab = self.tabWidget.widget(currentTabIndex)
         
-        self.zoomers     = figTab.zoomers
-        self.panners     = figTab.panners
-        self.dataCursors = figTab.dataCursors
-        self.plotEditors = figTab.plotEditors        
+        if figTab:
+            self.zoomers     = figTab.zoomers
+            self.panners     = figTab.panners
+            self.dataCursors = figTab.dataCursors
+            self.plotEditors = figTab.plotEditors        
         
-        self.updateToolbarEnableStates()
-        
+            self.updateToolbarEnableStates()
+        else: # All tabs have been closed
+            for a in self.actionGroup.actions:
+                a.setChecked(False)
+                
         
     #----------------------------------------------------------------------
     def updateDockWidgetActionCheckState(self, visibleUnblocked_NotUsed):
@@ -1835,10 +2091,14 @@ class PlotterView(hlaPlot.InteractivePlotWindow, Ui_MainWindow):
                     layoutItem = tab.gridLayout.itemAtPosition(r, c)
                     if not layoutItem:
                         qwtPlot = Qwt.QwtPlot(tab)
+                        qwtPlot.setSizePolicy(Qt.QSizePolicy.Ignored,
+                                              Qt.QSizePolicy.Ignored)
                         qwtPlot.setCanvasBackground(Qt.Qt.white)                        
                         tab.gridLayout.addWidget(qwtPlot, r, c, 1, 1)
             
             qwtPlot = Qwt.QwtPlot(tab)
+            qwtPlot.setSizePolicy(Qt.QSizePolicy.Ignored,
+                                  Qt.QSizePolicy.Ignored)
             qwtPlot.setCanvasBackground(Qt.Qt.white)
             tab.gridLayout.addWidget(qwtPlot,rowPos[0],colPos[0],
                                      len(rowPos),len(colPos))

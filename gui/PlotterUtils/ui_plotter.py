@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_plotter.ui'
 #
-# Created: Thu Mar 22 13:25:09 2012
+# Created: Fri Mar 23 17:34:51 2012
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -39,7 +39,7 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
         self.dockWidget_datasets = QtGui.QDockWidget(MainWindow)
-        self.dockWidget_datasets.setMinimumSize(QtCore.QSize(184, 150))
+        self.dockWidget_datasets.setMinimumSize(QtCore.QSize(0, 0))
         self.dockWidget_datasets.setAllowedAreas(QtCore.Qt.AllDockWidgetAreas)
         self.dockWidget_datasets.setObjectName(_fromUtf8("dockWidget_datasets"))
         self.dockWidgetContents_6 = QtGui.QWidget()
@@ -52,29 +52,6 @@ class Ui_MainWindow(object):
         self.dockWidget_expression_editor.setObjectName(_fromUtf8("dockWidget_expression_editor"))
         self.dockWidgetContents_8 = QtGui.QWidget()
         self.dockWidgetContents_8.setObjectName(_fromUtf8("dockWidgetContents_8"))
-        self.gridLayout_3 = QtGui.QGridLayout(self.dockWidgetContents_8)
-        self.gridLayout_3.setObjectName(_fromUtf8("gridLayout_3"))
-        self.horizontalLayout_4 = QtGui.QHBoxLayout()
-        self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
-        self.label_3 = QtGui.QLabel(self.dockWidgetContents_8)
-        self.label_3.setObjectName(_fromUtf8("label_3"))
-        self.horizontalLayout_4.addWidget(self.label_3)
-        self.comboBox_2 = QtGui.QComboBox(self.dockWidgetContents_8)
-        self.comboBox_2.setObjectName(_fromUtf8("comboBox_2"))
-        self.comboBox_2.addItem(_fromUtf8(""))
-        self.comboBox_2.addItem(_fromUtf8(""))
-        self.comboBox_2.addItem(_fromUtf8(""))
-        self.comboBox_2.addItem(_fromUtf8(""))
-        self.comboBox_2.addItem(_fromUtf8(""))
-        self.comboBox_2.addItem(_fromUtf8(""))
-        self.comboBox_2.addItem(_fromUtf8(""))
-        self.horizontalLayout_4.addWidget(self.comboBox_2)
-        spacerItem = QtGui.QSpacerItem(25, 22, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_4.addItem(spacerItem)
-        self.gridLayout_3.addLayout(self.horizontalLayout_4, 0, 0, 1, 1)
-        self.textEdit = QtGui.QTextEdit(self.dockWidgetContents_8)
-        self.textEdit.setObjectName(_fromUtf8("textEdit"))
-        self.gridLayout_3.addWidget(self.textEdit, 1, 0, 1, 1)
         self.dockWidget_expression_editor.setWidget(self.dockWidgetContents_8)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(8), self.dockWidget_expression_editor)
         self.dockWidget_canvas_settings = QtGui.QDockWidget(MainWindow)
@@ -98,8 +75,8 @@ class Ui_MainWindow(object):
         self.comboBox.addItem(_fromUtf8(""))
         self.comboBox.addItem(_fromUtf8(""))
         self.horizontalLayout.addWidget(self.comboBox)
-        spacerItem1 = QtGui.QSpacerItem(25, 22, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem1)
+        spacerItem = QtGui.QSpacerItem(25, 22, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
         self.gridLayout_2.addLayout(self.horizontalLayout, 0, 0, 1, 1)
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
@@ -232,35 +209,6 @@ class Ui_MainWindow(object):
         self.menuHelp.setTitle(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
         self.dockWidget_datasets.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Datasets", None, QtGui.QApplication.UnicodeUTF8))
         self.dockWidget_expression_editor.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Expression Editor", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_3.setText(QtGui.QApplication.translate("MainWindow", "Var. Name:", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_2.setItemText(0, QtGui.QApplication.translate("MainWindow", "t1", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_2.setItemText(1, QtGui.QApplication.translate("MainWindow", "x1", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_2.setItemText(2, QtGui.QApplication.translate("MainWindow", "t2", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_2.setItemText(3, QtGui.QApplication.translate("MainWindow", "x2", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_2.setItemText(4, QtGui.QApplication.translate("MainWindow", "t3", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_2.setItemText(5, QtGui.QApplication.translate("MainWindow", "x3", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_2.setItemText(6, QtGui.QApplication.translate("MainWindow", "avg_vac", None, QtGui.QApplication.UnicodeUTF8))
-        self.textEdit.setHtml(QtGui.QApplication.translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">## For an expression (i.e., no line containing assignment (&quot;=&quot;)),</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">## just write an expression that returns a value.</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">##</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">## For a statement, you musta ssign a derived quantity to the</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">## variable named &quot;output&quot;.</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">##</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">## The following modules are already imported by default:</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">##    import hla</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">##    import numpy as np</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">##    import scipy as sp</p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">np.mean([pue1,pue2],axis=0)</p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">## or alternatively:</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">## average = (pue1 + pue2)/2</p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">## output = average</p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.dockWidget_canvas_settings.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Canvas Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("MainWindow", "Name:", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox.setItemText(0, QtGui.QApplication.translate("MainWindow", "Fig 1", None, QtGui.QApplication.UnicodeUTF8))
