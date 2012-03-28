@@ -5,116 +5,63 @@ Tutorial
    :Date: |today|
 
 
-The HLA and Controls are divided into three layers: HLA applictions and
-scripts, client APIs (CAPI) and server API (SAPI) ([Shenhla]_).  The users
-(accelerator physicists, operators and beamline scientists) will normally
-access the first two forms: use applications/scripts by mouse clicks, and
-the APIs in an interactive command line.
+The HLA package we are developing has three parts
+
+- HLA Library: the element access model, lattice management and data IO.
+- HLA scripts: some measurement and analysis routines.
+- HLA GUI applications: ``aplauncher``, ``aporbit``, ``apbba``, ...
 
 
-Some APIs are defined in [Shenhla]_, and are used by HLA applications. But they
-are self-described as the standard Python modules. These APIs include data
-acquisition, processing and storage, and can be combined for different
-purpose. The APIs are in Python language, and can be used in both interactive
-environment or scripts. Necessary packages including linear algebra, frequency
-analysis, statistics, data IO, database, network, regular expression and
-visualization will be provided. See `Python <http://www.python.org>`_, `SciPy
+Necessary packages including linear algebra, frequency analysis, statistics,
+data IO, database, network, regular expression and visualization will be
+provided. See `Python <http://www.python.org>`_, `SciPy
 <http://www.scipy.org>`_, `NumPy <http://numpy.scipy.org/>`_, `iPython
 <http://ipython.scipy.org>`_, `matplotlib
 <http://matplotlib.sourceforge.net>`_.
 
 
-The HLA applications are those have a stable algorithm and data
-flow. Each is in a standalone form.
-
-.. warning::
-
-   Some notes:
-
-   - channel finder, ordinal/elemName/elemType should be
-     matched. i.e. once the elemName is known, its ordinal and elemType is
-     know. It is one-to-one.
-
-
-.. _Accelerator Physics Toolkit:
-
-Accelerator Physics Toolkit
------------------------------
-
-By toolkit, we mean a short script based on CAPIs. Not like HLAs, they
-have small set of functions, but easy to understand and modify. For
-example we put a small script *probeBpmStability* into this category,
-since it is mainly a function call of *getBpmVariance* plus checking
-against certain criterial.
-
-One interactive *Python* environment is also provided for
-interactive control of the storage ring. In this interactive
-environment, a set of APIs are provided to help physicists who has no
-knowledge of EPICS or low level channel access be able to do many
-measurements and diagnostics.
-
-This interactive mode can also run as batch mode, which makes the
-prototyping of new HLA and algorithms easier.
-
-The plotting features are only in interactive environment and GUI
-applications. Scripts and save pictures in *png*, *jpeg*,
-*pdf* and *eps* format.
-
-
-
 HLA Initialization
 -------------------
 
-Import some modules, including HLA and plotting routines
-
-.. note::
-
-   The text after '#' are comments for that line
-
-Import modules:
+Before using ``aphla`` we need to import some python modules for data analysis
+and plotting.
 
 .. doctest::
 
-   >>> import hla
-   >>> import numpy as np
-   >>> import matplotlib.pylab as plt
+   >>> import numpy as np    # import NumPy
+   >>> import aphla as ap    # import aphla package
+   >>> import matplotlib.pylab as plt    # matplotlib for plotting
    >>> import time
+
+
+.. note::
+
+   The text after '#' are comments for the rest of that line, '>>>' is a
+   prompt for interactive Python environment.
 
 Initialize the NSLS2 Virtual Storage Ring lattice and twiss (from channel
 finder server):
 
-.. doctest::
+.. code-block:: python
 
-   >>> hla.initNSLS2VSR()
-   >>> hla.initNSLS2VSRTwiss()
-
-if the network is not available and a copy of
-text-version-channel-finder-server data is in local machine, we can
-initialize HLA by the following command:
-
-.. doctest::
-
-   >>> hla.machines.initNSLS2VSRTxt()
-   Creating lattice layout: 'SR-txt'
-   Creating lattice layout: 'LTB-txt'
-   Creating lattice layout: 'LTD2-txt'
-   Creating lattice layout: 'LTD1-txt'
-   >>> hla.machines.use('SR-txt') # use 'LTB-txt', 'LTD1-txt' or 'LTD2-txt' for injction.
-   >>> hla.machines.lattices()    # list available lattices
+   >>> ap.initNSLS2VSR()
+   >>> ap.initNSLS2VSRTwiss()
+   >>> ap.machines.lattices()    # list available lattices
    {'SR': 'aphla.sys.SR', 'LTD2': 'aphla.sys.LTD2', 'LTB': 'aphla.sys.LTB', 'LTD1': 'aphla.sys.LTD1', 'LTB-txt': 'LTB-txt', 'LTD1-txt': 'txt', 'LTD2-txt': 'txt', 'SR-txt': 'SR-text-ver'}
-
+   >>> ap.machines.use("SR")
+   >>>
 
 
 HLA Element Searching
 ---------------------
 
 The lattice is merely a list of elements. In order to control the element,
-we first get the instance from lattice by :func:`~hla.hlalib.getElements`
+we first get the instance from lattice by :func:`~aphla.hlalib.getElements`
 providing with element name, type or pattern.
 
 Here are some examples:
 
-.. doctest::
+.. code-block:: python
 
    >>> bpm = hla.getElements('BPM') # get a list of BPMs
    >>> len(bpm) # 180 in tital, guaranteed in increasing order of s coordinate.
@@ -137,14 +84,15 @@ Each element has a set of properties associated:
 - *cell*. The DBA cell it belongs. e.g. 'C02', 'C30'
 - *girder*, girder name where it sits. e.g. 'G2', 'G1'
 - *symmetry*, 'A' or 'B' symmetry
-- *group*. A BPM in girder 2 cell 2 could be in group 'C02', 'G2', 'BPM'
-  and more. *family*, *cell*, *girder* and *symmetry* are special named
-  groups.
+- *group*. *family*, *cell*, *girder* and *symmetry* are special named groups
+  and form the default group that element belongs to. A BPM in girder 2 cell 2
+  could be in group 'C02', 'G2', 'BPM' and more. e.g. 'PM1' is a resonable
+  group name for bpm 'PM1G4C02B'.
 
 A element can only belongs to one *family*, *cell*, *girder* and
 *symmetry*. But it can be in many groups:
 
-.. doctest::
+.. code-block:: python
 
    >>> hla.getGroups('PM1G4C02B') # the groups one element belongs to
    [u'BPM', u'C02', u'G4', u'B']
@@ -152,16 +100,22 @@ A element can only belongs to one *family*, *cell*, *girder* and
 To find the elements in certain cell or/and girder, use *getGroupMembers* and
 take *union* or *intersection* of them.
 
-.. doctest::
+The following lines search for all BPMs in girder 4 of cell 15.
+
+.. code-block:: python
 
    >>> el = hla.getGroupMembers(['BPM', 'C15', 'G4'], op='intersection')
    >>> for e in el: print e.name, e.sb, e.length
    PM1G4C15A 407.882 0.0
    PM1G4C15B 410.115 0.0
 
-This gets all BPMs in girder 4 of cell 15.
+Whenever the search routine, e.g. `~aphla.getElements`,
+`~aphla.getGroupMembers` and `~aphla.getNeighbors`, returns a list of
+elements, the result is sorted in ascending order of s-coordinate.
 
-.. doctest::
+The following lines find all BPMs in the girder 2 of cell 2 and 3.
+
+.. code-block:: python
 
    >>> el = hla.getGroupMembers(['BPM', 'C0[2-3]', 'G2'])
    >>> for e in el: print e.name, e.sb, e.cell, e.girder, e.symmetry
@@ -170,11 +124,10 @@ This gets all BPMs in girder 4 of cell 15.
    PL1G2C03A 82.7858 C03 G2 A
    PL2G2C03A 85.3495 C03 G2 A
 
-This gets all BPMs in the girder 2 of cell 2 and 3.
 
 A pattern matching is also possible when searching for element or groups
 
-.. doctest::
+.. code-block:: python
 
    >>> hla.getElements('P*C01*A')
    [<hla.element.Element at 0x3fafdd0>,
@@ -187,10 +140,10 @@ A pattern matching is also possible when searching for element or groups
 HLA Element Control
 ---------------------
 
-   >>> print hla.eget('PL1G2C05A') #doctest: +SKIP
+   >>> print hla.eget('PL1G2C05A')
    [[-0.0001042862911482232, 9.4271237903876306e-05]]
    >>> el = hla.getElements(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
-   >>> for e in el: print e.status #doctest: +SKIP
+   >>> for e in el: print e.status
    SQMG4C05A
      READBACK (SR:C05-MG:G04A{SQuad:M1}Fld-I): 0.0
    QM2G4C05B
@@ -211,7 +164,7 @@ HLA Element Control
    
 It is easy to read/write the default value of an element:
 
-.. doctest::
+.. code-block:: python
 
    >>> e = hla.getElements('CXH2G2C30A')
    >>> print e.status #doctest: +SKIP
@@ -232,7 +185,7 @@ More Examples
 --------------
 
 
-.. doctest::
+.. code-block:: python
 
    >>> hla.getCurrent() #doctest: +SKIP
    292.1354803937125
@@ -243,7 +196,7 @@ More Examples
 
 Plotting the orbit
  
-.. doctest::
+.. code-block:: python
  
    >>> sobt = hla.getOrbit(spos = True)
    >>> plt.clf()
@@ -259,7 +212,7 @@ Plotting the orbit
 
 Twiss parameters
 
-.. doctest::
+.. code-block:: python
 
    >>> hla.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
    array([[  8.7...,  11.6...],
@@ -276,7 +229,7 @@ Twiss parameters
 
 Plotting the beta function of cell 'C02' and 'C03'
 
-.. doctest::
+.. code-block:: python
 
    >>> elem = hla.getGroupMembers(['C01', 'C02'], op='union')
    >>> beta = hla.getBeta([e.name for e in elem], spos=True, clean=True)
@@ -294,7 +247,7 @@ Plotting the beta function of cell 'C02' and 'C03'
 
 Correct the orbit and plot the orbits before/after the correction:
 
-.. doctest::
+.. code-block:: python
 
    >>> print hla.__path__ #doctest: +SKIP
    >>> bpm = hla.getElements('P*C1[0-3]*')
@@ -315,7 +268,7 @@ Correct the orbit and plot the orbits before/after the correction:
 
 .. image:: hla_tut_orbit_correct.png
 
-.. doctest::
+.. code-block:: python
 
    >>> hla.getChromaticity() #doctest:+SKIP
 

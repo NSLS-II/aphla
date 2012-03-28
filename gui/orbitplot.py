@@ -50,6 +50,12 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         else:
             self.profile = profile
 
+        self.connect(self, SIGNAL("selected(QPointF&)"),
+                     self.activate_element)
+
+    def activate_element(self, p):
+        print p
+
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         if se < sb: 
             raise ValueError("s range of %s is wrong, must be se > sb" % name)
@@ -143,7 +149,7 @@ class DcctCurrentPlot(Qwt.QwtPlot):
         self.replot()
 
     def _loadFakeData(self, t0, v, lt, maxv, span, minv = 300.0):
-        self.curve.t = np.linspace(t0 - span*3600.0, t0, 200)
+        self.curve.t = np.linspace(t0 - span*3600.0, t0, 200).tolist()
         self.curve.v = [500.0] * 200
         return
 

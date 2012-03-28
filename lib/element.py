@@ -578,7 +578,11 @@ class CaElement(AbstractElement):
 
 def merge(elems, **kwargs):
     """
-    merge the fields for all elements in a list return it as a single element.
+    merge the fields for all elements in a list return it as a single
+    element. The other properties of the new element are initialized by
+    the input *kwargs*.
+
+    .. seealso:: :func:`~aphla.element.CaElement`
     """
     count, pvdict = {}, {}
     for e in elems:

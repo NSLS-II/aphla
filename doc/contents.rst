@@ -26,6 +26,7 @@ Welcome to HLA documentation!
    todo.rst
    appendix.rst
    quickstart.rst
+   examples.rst
    faq.rst
    history.rst
 

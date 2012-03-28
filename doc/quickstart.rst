@@ -12,35 +12,35 @@ Quick Start
 
     $ ipython -pylab
     
-    In [1]: import hla
+    In [1]: import aphla as ap
 
 - Initialize the VSR (virtual accelerator lattice structure)
 
 .. code-block:: python
 
-    In [2]: hla.initNSLS2VSR()
+    In [2]: ap.initNSLS2VSR()
 
-- Initialize the Twiss data
+- Initialize the Twiss data (from the saved data)
 
 .. code-block:: python
 
-    In [3]: hla.initNSLS2VSRTwiss()
+    In [3]: ap.initNSLS2VSRTwiss()
 
 - Get the orbit
 
 .. code-block:: python
 
-    In [4]: hla.getOrbit()
+    In [4]: ap.getOrbit()
 
 - Get a list of correctors, print the name and strength of one corrector.
 
 .. code-block:: python
 
-    In [5]: cx = hla.getElements('CX*C19*')
+    In [5]: cx = ap.getElements('CX*C19*')
     In [6]: print cx[0].name, cx[0].x
     CXL1G2C19A 6.32815600708e-08
 
-- Set the corrector
+- Set the corrector and read the new setting
 
 .. code-block:: python
 

@@ -5,26 +5,32 @@
 {% block body %}
   <h1>Intro</h1>
 
-  <p>HLA is a python library for accelerator physics commissioning and
- experiments. It is developed at NSLS-II, BNL. It is based on EPICS-3/-4
- and other general services, e.g. channel finder service, model service
- and pv service</p>
+  <p><tt class="docutils literal"><span class="pre">aphla</span></tt> is a
+ python library for accelerator physics commissioning and experiments. It is
+ developed at NSLS-II, BNL. It can take advantages of service oriented
+ architectures developed for NSLS-II projects and all of them could be used
+ for other facilities. e.g. channel finder service, model service and unit
+ conversion service</p>
+
+  <p>A simple example which read the current orbit and show the plot</p>
 
   <pre>
-  >>> import hla
-  >>> hla.initNSLS2VSR(cached=False)
-  >>> hla.getOrbit(spos=True)
+  >>> import aphla
+  >>> aphla.initNSLS2VSR(cached=False)
+  >>> aphla.getOrbit(spos=True)
   </pre>
 
   <p>For the power user, you have full control of each PV </p>
 
-  <h1>Quick Start</h1>
-  <a href="quickstart.html">Quick start</a> is for users who have an
-  account on <strong>lsasd2.ls.bnl.gov</strong> or <strong>injdev.nsls2.bnl.gov</strong>
-
-  <h1>Tutorial</h1>
-
-  <a href="tutorial.html">here</a> is a tutorial <br/>
+  <h1>Get Started</h1>
+  <ul>
+    <li><a href="quickstart.html">Quick start</a> is for users who have an
+  account on <strong>lsasd2.ls.bnl.gov</strong> or <strong>injdev.nsls2.bnl.gov</strong>.
+    <li><a href="tutorial.html">Tutorial</a> has more details for the
+    installation and settings <br/>
+    <li><a href="examples.html">Code examples</a> are always helpful for impatient people like me.
+    <li>Get help with the Python built-in functions: <a href="http://docs.python.org/library/functions.html#help">help([object])</a> and <a href="http://docs.python.org/library/functions.html#dir">dir([object])</a>
+  </ul>
 
   <h1>Control Commands Reference</h1>
 

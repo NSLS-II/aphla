@@ -18,7 +18,7 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.append(os.path.abspath('.'))
 sys.path.append(os.path.abspath('sphinxext'))
-sys.path.append(os.path.abspath('../src'))
+sys.path.append(os.path.abspath('../lib'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -47,15 +47,15 @@ source_suffix = '.rst'
 master_doc = 'contents'
 
 # General information about the project.
-project = u'HLA'
-copyright = u'2010, J. Choi, G. Shen, L. Yang'
+project = u'aphla'
+copyright = u'2010, L. Yang, Y. Hidaka, J. Choi'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.3'
+version = '0.3a1'
 # The full version, including alpha/beta/rc tags.
 release = '0.3.0'
 
@@ -182,8 +182,8 @@ latex_font_size = '11pt'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('contents', 'hla.tex', u'HLA Documentation',
-   u'Jinhyuk Choi, Guobao Shen, Lingyun Yang', 'manual'),
+  ('contents', 'aphla.tex', u'HLA Documentation',
+   u'Lingyun Yang, Yoshi Hidaka, Jinhyuk Choi', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
