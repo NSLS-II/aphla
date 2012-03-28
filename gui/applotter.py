@@ -1375,9 +1375,10 @@ class DatasetsDockView(Qt.QWidget):
 
         if yVarName == ('"All except ' + xVarName + '"'):
             newFigName = self.parent().parent().getAutoGenNewFigName('')
-            yVarNameListQVariant = action.property('yVarNameList')
-            yVarNameList = [str(n.toString()) for n 
-                            in yVarNameListQVariant.toList()]
+            #yVarNameListQVariant = action.property('yVarNameList')
+            #yVarNameList = [str(n.toString()) for n 
+                            #in yVarNameListQVariant.toList()]
+            yVarNameList = action.property('yVarNameList')
             for yName in yVarNameList:
                 newCurveData = {}
                 d = newCurveData # for short-hand notation

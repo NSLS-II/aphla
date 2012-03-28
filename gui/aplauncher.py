@@ -726,9 +726,23 @@ class CustomTreeView(Qt.QTreeView):
         
         super(Qt.QTreeView,self).closeEditor(editor,hint)
         
-        self.emit(Qt.SIGNAL('closingItemRenameEditor'), editor.text())
+        self.emit(Qt.SIGNAL('closingItemRenameEditor'), editor)
         
+    #----------------------------------------------------------------------
+    def editSlot(self, modelIndex):
+        """"""
 
+        super(Qt.QTreeView,self).edit(modelIndex)
+
+    #----------------------------------------------------------------------
+    def edit(self, modelIndex, trigger, event):
+        """"""
+
+        if trigger == Qt.QAbstractItemView.AllEditTriggers:
+            self.modelIndexBeingRenamed = modelIndex
+        
+        return super(Qt.QTreeView,self).edit(modelIndex, trigger, event)
+ 
     
 ########################################################################
 class CustomListView(Qt.QListView):
@@ -739,6 +753,8 @@ class CustomListView(Qt.QListView):
         """Constructor"""
         
         Qt.QListView.__init__(self, *args)
+        
+        self.modelIndexBeingRenamed = None
         
     #----------------------------------------------------------------------
     def focusInEvent(self, event):
@@ -764,7 +780,22 @@ class CustomListView(Qt.QListView):
         
         super(Qt.QListView,self).closeEditor(editor,hint)
         
-        self.emit(Qt.SIGNAL('closingItemRenameEditor'), editor.text())
+        self.emit(Qt.SIGNAL('closingItemRenameEditor'), editor)
+        
+    #----------------------------------------------------------------------
+    def editSlot(self, modelIndex):
+        """"""
+
+        super(Qt.QListView,self).edit(modelIndex)
+
+    #----------------------------------------------------------------------
+    def edit(self, modelIndex, trigger, event):
+        """"""
+
+        if trigger == Qt.QAbstractItemView.AllEditTriggers:
+            self.modelIndexBeingRenamed = modelIndex
+        
+        return super(Qt.QListView,self).edit(modelIndex, trigger, event)
         
         
 
@@ -1285,10 +1316,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                      self.onItemRenameEditorClosing)
     
     #----------------------------------------------------------------------
-    def onItemRenameEditorClosing(self, editorText):
+    def onItemRenameEditorClosing(self, editor):
         """"""
         
-        sourceItem = self.selectedItemList[0]
+        editorText = editor.text()
+        selectedModelIndex = editor.parent().parent().modelIndexBeingRenamed
+        
+        sourceItem = self.itemFromIndex(selectedModelIndex)
         parentItem = sourceItem.parent()
         originalSourceItemPath = sourceItem.path
                         
@@ -2120,7 +2154,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             pass # Number of selected items for renaming must be exactly 1.
         else:
             selectedModelIndex = self.lastFocusedView.currentIndex()
-            self.lastFocusedView.edit(selectedModelIndex)
+            selectedItem = self.itemFromIndex(selectedModelIndex)
+            if not selectedItem.isEditable():
+                selectedItem.setEditable(True)
+            self.lastFocusedView.editSlot(selectedModelIndex)
         
         
         
