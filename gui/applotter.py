@@ -14,12 +14,21 @@ import scipy.interpolate as spint
 import h5py
 import cothread
 
+# This API settings are necessary if IPython is to be embedded,
+# and these settings must be performed before importing PyQt4.
+# By using v.2 API, there will be no class Qstring and QVariant
+# available.
+import sip
+sip.setapi('QString', 2)
+sip.setapi('QVariant', 2)
+
 import PyQt4.Qt as Qt
 import PyQt4.Qwt5 as Qwt
 
 from PlotterUtils.ui_plotter import Ui_MainWindow
 import PlotterUtils.ui_addNewCurveForCurvesDockWidget as ui_addNewCurveForCurvesDockWidget
 #import ui_addNewCurveForDatasetsDockWidget
+import PlotterUtils.embedIPython as embedIPython
 
 import aphla
 import hlaPlot
@@ -1265,8 +1274,10 @@ class DatasetsDockView(Qt.QWidget):
         filterStr = (selectedFilterStr + ';;' +
                       'All files (*)')
         qFilename = Qt.QFileDialog.getOpenFileName(
-            None, caption, self.startDirPath, filterStr,
-            selectedFilterStr)
+            None, caption, self.startDirPath, filterStr)
+        # If you include 5th argument selectedFilter with v.2
+        # PyQt API, getOpenFileName will fail. If you use v.1 API,
+        # you can pass selectedFilter w/o a problem.
         filename = str(qFilename)
 
         self.startDirPath = filename
@@ -1484,8 +1495,22 @@ class ExpressionEditorDockView(Qt.QWidget):
         Qt.QWidget.__init__(self)
         
         self.setObjectName('expressionEditorDockView')
-        
-        gridLayout = Qt.QGridLayout(self)
+
+        verticalLayout = Qt.QVBoxLayout(self)
+        #
+        self.splitter = Qt.QSplitter(self)
+        sizePolicy = Qt.QSizePolicy(Qt.QSizePolicy.Expanding, 
+                                    Qt.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.splitter.sizePolicy().hasHeightForWidth())
+        self.splitter.setSizePolicy(sizePolicy)
+        self.splitter.setOrientation(Qt.Qt.Vertical)
+        #
+        verticalLayout.addWidget(self.splitter)
+        #
+        widget = Qt.QWidget(self.splitter)
+        gridLayout = Qt.QGridLayout(widget)
         gridLayout.setObjectName('expressionEditorDock_gridLayout')
         horizLayout = Qt.QHBoxLayout()
         horizLayout.setObjectName('expressionEditorDock_horizLayout')
@@ -1511,6 +1536,16 @@ class ExpressionEditorDockView(Qt.QWidget):
         self.textEdit.setObjectName('expressionEditorDock_textEdit')
         self.textEdit.setEnabled(False)
         gridLayout.addWidget(self.textEdit, 1, 0, 1, 1)
+        #
+        kernelApp = embedIPython.IPythonLocalKernelApp.instance()
+        kernelApp.start()
+        ipythonNamespace = kernelApp.get_user_namespace()
+        ipythonWidget = embedIPython.IPythonConsoleQtWidget()
+        ipythonWidget.set_default_style(colors='linux')
+        ipythonWidget.connect_kernel(connection_file=kernelApp.get_connection_file())
+        ipythonWidget.setParent(self.splitter)
+        #
+        ipythonNamespace['whatever'] = [1,2,3]
         
         self.model = ExpressionEditorDockModel(mainView, datasetsModel)
         

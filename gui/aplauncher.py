@@ -23,6 +23,10 @@ import posixpath
 import subprocess
 import cothread
 
+import sip
+sip.setapi('QString', 2)
+sip.setapi('QVariant', 2)
+
 import PyQt4.Qt as Qt
 from PyQt4.QtXml import QDomDocument
 
@@ -975,16 +979,19 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         settings = Qt.QSettings('HLA','Launcher')
                 
         settings.beginGroup('MainWindow')
-        rect = settings.value('position').toRect()
+        rect = settings.value('position') # .toRect() # need to be appended for v.1 API
         if rect == Qt.QRect():
             rect = Qt.QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
         self.setGeometry(rect)
-        splitterPanes_sizes = settings.value('splitterPanes_sizes').toList()
+        splitterPanes_sizes = settings.value('splitterPanes_sizes') # .toList() # need to be appended for v.1 API
+        #splitterPanes_sizes = [s.toInt()[0] for s in splitterPanes_sizes] # needed for v.1 API
+        splitterPanes_sizes = [int(s) for s in splitterPanes_sizes]
         if splitterPanes_sizes == []:
             splitterPanes_sizes = [self.width()*(1./5), self.width()*(4./5)]
         else:
-            self.splitterPanes.setSizes([splitterPanes_sizes[0].toInt()[0],
-                                         splitterPanes_sizes[1].toInt()[0]])
+            #self.splitterPanes.setSizes([splitterPanes_sizes[0].toInt()[0],
+                                         #splitterPanes_sizes[1].toInt()[0]])
+            self.splitterPanes.setSizes(splitterPanes_sizes)
         settings.endGroup()
         
         print 'Settings loaded.'

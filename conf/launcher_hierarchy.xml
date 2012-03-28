@@ -70,7 +70,7 @@
         <item>
             <dispName>Lattice Tuner</dispName>
             <itemType>app</itemType>
-            <linkedFile>GUI_Lattice_Tuner</linkedFile>
+            <linkedFile>lattuner</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
