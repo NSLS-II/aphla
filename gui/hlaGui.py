@@ -441,10 +441,12 @@ class PlotDataCursor(Qwt.QwtPlotPicker):
                                         closestPoints[1])
         
             text = self.linked_marker.label();
-            text.setText(
-                Qt.QString("x: %1").arg(closestPoints[0],fieldWidth=-3,precision=6) + \
-                '\r\n' + \
-                Qt.QString("y: %1").arg(closestPoints[1],fieldWidth=-3,precision=6) )
+            #text.setText(
+                #Qt.QString("x: %1").arg(closestPoints[0],fieldWidth=-3,precision=6) + \
+                #'\r\n' + \
+                #Qt.QString("y: %1").arg(closestPoints[1],fieldWidth=-3,precision=6) )
+            text.setText( ('x: %-3.6g\r\n' + 'y: %-3.6g')
+                          % (closestPoints[0], closestPoints[1]) )
             self.linked_marker.setLabel(text)
             self.linked_marker.setLabelAlignment(
                 Qt.Qt.AlignRight | Qt.Qt.AlignTop)

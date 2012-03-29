@@ -1173,7 +1173,7 @@ class TunerApp(Qt.QObject):
         if current_model:
             # Update "config_name"
             tabBar = self.view.tabWidget.tabBar()
-            current_model.config_name = tabBar.tabText(tabBar.currentIndex())
+            current_model.config_name = str(tabBar.tabText(tabBar.currentIndex()))
             
             self.emit(Qt.SIGNAL('readyToSendSaveConfigRequest'),
                       current_model)
@@ -1196,7 +1196,7 @@ class TunerApp(Qt.QObject):
         if current_model:
             # Update "config_name"
             tabBar = self.view.tabWidget.tabBar()
-            current_model.config_name = tabBar.tabText(tabBar.currentIndex())
+            current_model.config_name = str(tabBar.tabText(tabBar.currentIndex()))
             
             self.emit(Qt.SIGNAL('readyToSendSaveSnapshotRequest'),
                       current_model)

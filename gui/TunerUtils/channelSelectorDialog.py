@@ -546,15 +546,18 @@ class ChannelSelectorView(Qt.QDialog, Ui_Dialog):
                         item_string = spec[0][filter_prop]
                     else:
                         item_string = ''
+                    #t.setItem(j,i,
+                              #Qt.QTableWidgetItem(Qt.QString(item_string)))
                     t.setItem(j,i,
-                              Qt.QTableWidgetItem(Qt.QString(item_string)))
+                              Qt.QTableWidgetItem(item_string))
                     
                     t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
                                          Qt.Qt.ItemIsEditable|
                                          Qt.Qt.ItemIsDragEnabled|
                                          Qt.Qt.ItemIsEnabled) # Make it editable
                 else:
-                    t.setItem(j,i,Qt.QTableWidgetItem(Qt.QString()))
+                    #t.setItem(j,i,Qt.QTableWidgetItem(Qt.QString()))
+                    t.setItem(j,i,Qt.QTableWidgetItem(''))
                     
                     t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
                                          Qt.Qt.ItemIsEditable|
@@ -720,15 +723,18 @@ class ChannelSelectorView(Qt.QDialog, Ui_Dialog):
         new_row_index = nRows-1
         for (i, filter_prop) in enumerate(self.model.filter_property_list):
             if filter_prop is not 'exclude':
+                #t.setItem(new_row_index,i,
+                          #Qt.QTableWidgetItem(Qt.QString()))
                 t.setItem(new_row_index,i,
-                          Qt.QTableWidgetItem(Qt.QString()))
+                          Qt.QTableWidgetItem(''))
                     
                 t.item(new_row_index,i).setFlags(Qt.Qt.ItemIsSelectable|
                                                  Qt.Qt.ItemIsEditable|
                                                  Qt.Qt.ItemIsDragEnabled|
                                                  Qt.Qt.ItemIsEnabled) # Make it editable
             else:
-                t.setItem(new_row_index,i,Qt.QTableWidgetItem(Qt.QString()))
+                #t.setItem(new_row_index,i,Qt.QTableWidgetItem(Qt.QString()))
+                t.setItem(new_row_index,i,Qt.QTableWidgetItem(''))
                 
                 t.item(new_row_index,i).setFlags(Qt.Qt.ItemIsSelectable|
                                                  Qt.Qt.ItemIsEditable|
@@ -787,8 +793,9 @@ class ChannelSelectorView(Qt.QDialog, Ui_Dialog):
         """
         
         if not self.isItemUserCheckable(qTableWidgetItem):
-            filter_val = str(
-                qTableWidgetItem.data(Qt.Qt.DisplayRole).toString() )
+            #filter_val = str(
+                #qTableWidgetItem.data(Qt.Qt.DisplayRole).toString() )
+            filter_val = qTableWidgetItem.data(Qt.Qt.DisplayRole)
         else:
             filter_val = (qTableWidgetItem.checkState() == Qt.Qt.Checked)
         

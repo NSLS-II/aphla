@@ -37,67 +37,25 @@
         <item>
             <dispName>Current Monitor</dispName>      
             <itemType>app</itemType>
-            <linkedFile>currentmonitor</linkedFile>
+            <linkedFile>apcurrentmonitor</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
         </item>
     ">
     
-    <!ENTITY appElementSelector "
-        <item>
-            <dispName>Element Selector</dispName>
-            <itemType>app</itemType>
-            <linkedFile>GUI_Element_Selector</linkedFile>
-            <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args></args>
-        </item>
-    ">
-
-    <!ENTITY appChannelSelector "
-        <item>
-            <dispName>Channel Selector</dispName>
-            <itemType>app</itemType>
-            <linkedFile>GUI_Channel_Selector</linkedFile>
-            <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args></args>
-        </item>
-    ">
 
     <!ENTITY appLatticeTuner "
         <item>
             <dispName>Lattice Tuner</dispName>
             <itemType>app</itemType>
-            <linkedFile>lattuner</linkedFile>
+            <linkedFile>aplattuner</linkedFile>
             <useImport>True</useImport>
             <singleton>False</singleton>
             <args></args>
         </item>
     ">
 
-    <!ENTITY appOrbitViewer "
-        <item>
-            <dispName>Orbit Viewer</dispName>
-            <itemType>app</itemType>
-            <linkedFile>GUI_Orbit_Viewer</linkedFile>
-            <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args></args>
-        </item>
-    ">
-
-    <!ENTITY appBetaFuncViewer "
-        <item>
-            <dispName>Beta Function Viewer</dispName>
-            <itemType>app</itemType>
-            <linkedFile>GUI_BetaFunc_Viewer</linkedFile>
-            <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args></args>
-        </item>
-    ">
 
     <!ENTITY appLauncher "
         <item>
@@ -150,11 +108,7 @@
             &appOrbit;
             &appBBA;
             &appCurrentMonitor; 
-            &appElementSelector;
-            &appChannelSelector;
             &appLatticeTuner;
-            &appOrbitViewer;
-            &appBetaFuncViewer;
             &appLauncher;
             &appPlotter;
         </item> <!-- Test -->
