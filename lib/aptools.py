@@ -248,8 +248,11 @@ def createLocalBump(bpm, trim, ref, **kwargs):
     plane = kwargs.get('plane', 'HV')
 
     bpmlst = getElements(bpm, return_list=True)
-    if len(bpm) != len(bpmlst):
+    if len(bpmlst) == 0:
+        raise ValueError("no/invalid BPMs provided")
+    elif len(bpm) != len(bpmlst):
         raise ValueError("bpm must be a list of qualified BPM names")
+
     for i,b in enumerate(bpmlst):
         if b.name != bpm[i]:
             raise ValueError("bpm must be a list of qualified BPM names")
