@@ -54,7 +54,7 @@ setup(
                   'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
                   'aphla.gui.apbba'],
     install_requires = ['distribute', 'docutils>=0.3', 'Sphinx >= 1.0.8', 
-                        'matplotlib', 'numpy', 'scipy'],
+                        'matplotlib', 'numpy >= 1.5.1', 'scipy >= 0.8'],
     entry_points = {
         'gui_scripts': [
             'aporbit = aphla.gui.orbit:main',

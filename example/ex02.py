@@ -9,56 +9,58 @@ An example of measuring dispersion
 
 
 import time
-import hla
+import aphla as ap
 import matplotlib.pylab as plt
 import numpy as np
 
 
 if __name__ == '__main__':
     # initialize when no real machine exists
-    hla.initNSLS2VSR()
-    hla.initNSLS2VSRTwiss()
+    ap.initNSLS2VSR()
+    ap.initNSLS2VSRTwiss()
 
     alphac = 3.6261976841792413e-04
     gamma = 3.0e3/.511
     eta = alphac - 1/gamma/gamma
     # orbit at cell 3-6 BPMs
-    bpmobj = hla.getElements('P*C0[3-6]*')
+    bpmobj = ap.getElements('P*C0[3-6]*')
     bpmnames = [b.name for b in bpmobj]
 
     s1 = [b.sb for b in bpmobj]
-    eta0 = hla.getDispersion(bpmnames)
+    eta0 = ap.getDispersion(bpmnames)
     print "dispersion:", eta0
 
     # f in MHz
-    f0 = hla.getRfFrequency()
+    f0 = ap.getRfFrequency()
     f = np.linspace(f0 - 1e-5, f0 + 1e-5, 5)
 
     # avoid a bug in virtac
-    obt0 = hla.getOrbit(bpmnames)
+    obt0 = ap.getOrbit(bpmnames)
     x0, y0 = obt0[:,0], obt0[:,1]
     time.sleep(4)
 
     codx = np.zeros((len(f), len(bpmobj)), 'd')
     cody = np.zeros((len(f), len(bpmobj)), 'd')
     for i,f1 in enumerate(f): 
-        hla.putRfFrequency(f1)
+        ap.putRfFrequency(f1)
         time.sleep(3)
-        obt1 = hla.getOrbit()
+        obt1 = ap.getOrbit()
 
         # repeat the put/get in case simulator did not response latest results
-        hla.putRfFrequency(f1)
+        ap.putRfFrequency(f1)
         time.sleep(6)
-        obt2 = hla.getOrbit(bpmnames)
+        obt2 = ap.getOrbit(bpmnames)
         print i, obt1[0,:2], obt2[0,:2]
         codx[i,:] = obt2[:,0]
         cody[i,:] = obt2[:,1]
 
-    hla.putRfFrequency(f0)
+    ap.putRfFrequency(f0)
 
     plt.clf()
     for i in range(len(bpmobj)):
-        plt.plot(f, codx[:,i], 'o-')
+        plt.plot(f - f0, codx[:,i], 'o-')
+    plt.xlabel("f - f0 [MHz]")
+    plt.ylabel("Closed Orbit")
     plt.savefig('test-cod.png')
 
     codx0 = np.zeros(np.shape(codx), 'd')
@@ -83,5 +85,8 @@ if __name__ == '__main__':
     plt.clf()
     plt.plot(s1, eta0, 'x-', label="Twiss Calc")
     plt.plot(s1, p[0,:], 'o--', label="Fit")
-    plt.legend()
+    plt.xlabel("s [m]")
+    plt.ylabel(r'Dispersion $\eta_{x,y}$ [m]')
+    leg = plt.legend(fancybox=True)
+    leg.get_frame().set_alpha(0.5)
     plt.savefig('test.png')
