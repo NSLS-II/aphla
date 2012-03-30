@@ -31,10 +31,9 @@ import os
 
 setup(
     name = "aphla",
-    version = "0.3.0a1",
-    packages = ['aphla', 'aphla.mpfit', 
-                'aphla.gui', 'aphla.gui.Qt4Designer_files', 
-                'aphla.conf'],
+    version = "0.3.0b1",
+    packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
+                'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.conf'],
     data_files = {},
     package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
                    'aphla.gui': 'gui', 'aphla.conf': 'conf'},
@@ -49,7 +48,7 @@ setup(
                   'aphla.bba',
                   'aphla.meastwiss', 
                   # GUI
-                  'aphla.gui.gui_resources', 'aphla.gui.Qt4Designer_files',
+                  'aphla.gui.gui_resources',
                   'aphla.gui.aplauncher',
                   'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
                   'aphla.gui.apbba'],
@@ -60,7 +59,7 @@ setup(
             'aporbit = aphla.gui.orbit:main',
             'apbba = aphla.gui.apbba:main',
             'aplauncher = aphla.gui.aplauncher:main',
-            'currentmonitor = aphla.gui.currentmonitor:main'
+            'apcurrentmonitor = aphla.gui.apcurrentmonitor:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",

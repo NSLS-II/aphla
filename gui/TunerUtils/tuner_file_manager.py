@@ -142,10 +142,15 @@ class TunerFileManager(Qt.QObject):
                                self.fileExt_ConfigFile + ')')
         filter_str = (selected_filter_str + ';;' +
                       'All files (*)')
+        #qfilename = Qt.QFileDialog.getSaveFileName(
+            #None, caption, self.starting_directory_path, filter_str,
+            #selected_filter_str)
         qfilename = Qt.QFileDialog.getSaveFileName(
-            None, caption, self.starting_directory_path, filter_str,
-            selected_filter_str)
+            None, caption, self.starting_directory_path, filter_str)
         filename = str(qfilename)
+        
+        if not filename:
+            return
 
         if filename[-len(self.fileExt_ConfigFile):] != \
            self.fileExt_ConfigFile:
@@ -168,11 +173,15 @@ class TunerFileManager(Qt.QObject):
                                self.fileExt_SnapshotFile + ')')
         filter_str = (selected_filter_str + ';;' +
                       'All files (*)')
+        #qfilename = Qt.QFileDialog.getOpenFileName(
+            #None, caption, self.starting_directory_path, filter_str,
+            #selected_filter_str)
         qfilename = Qt.QFileDialog.getOpenFileName(
-            None, caption, self.starting_directory_path, filter_str,
-            selected_filter_str)
+            None, caption, self.starting_directory_path, filter_str) # selectedFilter will not work for v.2 API
         filename = str(qfilename)
-
+        
+        if not filename:
+            return
     
         self.starting_directory_path = filename
             
@@ -235,11 +244,15 @@ class TunerFileManager(Qt.QObject):
                                self.fileExt_ConfigFile + ')')
         filter_str = (selected_filter_str + ';;' +
                       'All files (*)')
+        #qfilename = Qt.QFileDialog.getOpenFileName(
+            #None, caption, self.starting_directory_path, filter_str,
+            #selected_filter_str)
         qfilename = Qt.QFileDialog.getOpenFileName(
-            None, caption, self.starting_directory_path, filter_str,
-            selected_filter_str)
+            None, caption, self.starting_directory_path, filter_str) # selectedFilter will not work for v.2 API
         filename = str(qfilename)
         
+        if not filename:
+            return
         
         self.starting_directory_path = filename
             
@@ -327,11 +340,15 @@ class TunerFileManager(Qt.QObject):
                                self.fileExt_SnapshotFile + ')')
         filter_str = (selected_filter_str + ';;' +
                       'All files (*)')
+        #qfilename = Qt.QFileDialog.getSaveFileName(
+            #None, caption, self.starting_directory_path, filter_str,
+            #selected_filter_str)
         qfilename = Qt.QFileDialog.getSaveFileName(
-            None, caption, self.starting_directory_path, filter_str,
-            selected_filter_str)
+            None, caption, self.starting_directory_path, filter_str)
         filename = str(qfilename)
         
+        if not filename:
+            return
         
         if filename[-len(self.fileExt_SnapshotFile):] != \
            self.fileExt_SnapshotFile:
@@ -358,11 +375,15 @@ class TunerFileManager(Qt.QObject):
                                self.fileExt_SnapshotFile + ')')
         filter_str = (selected_filter_str + ';;' +
                       'All files (*)')
+        #qfilename = Qt.QFileDialog.getOpenFileName(
+            #None, caption, self.starting_directory_path, filter_str,
+            #selected_filter_str)
         qfilename = Qt.QFileDialog.getOpenFileName(
-            None, caption, self.starting_directory_path, filter_str,
-            selected_filter_str)
+            None, caption, self.starting_directory_path, filter_str)
         filename = str(qfilename)
         
+        if not filename:
+            return
         
         self.starting_directory_path = filename
             
@@ -468,11 +489,15 @@ class TunerFileManager(Qt.QObject):
                                self.fileExt_TunerPrefFile + ')')
         filter_str = (selected_filter_str + ';;' +
                       'All files (*)')
+        #qfilename = Qt.QFileDialog.getOpenFileName(
+            #None, caption, self.starting_directory_path, filter_str,
+            #selected_filter_str)
         qfilename = Qt.QFileDialog.getOpenFileName(
-            None, caption, self.starting_directory_path, filter_str,
-            selected_filter_str)
+            None, caption, self.starting_directory_path, filter_str)
         filename = str(qfilename)
         
+        if not filename:
+            return
         
         self.starting_directory_path = filename
         

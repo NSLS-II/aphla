@@ -25,21 +25,21 @@ to have a read PV. A knob simply needs to be able to change setpoints.
 
 import sys
 
-USE_DEV_SRC = True
-if USE_DEV_SRC:
-    # Force Python to use your development modules,
-    # instead of the modules already installed on the system.
-    import os
-    if os.environ.has_key('HLA_DEV_SRC'):
-        dev_src_dir_path = os.environ['HLA_DEV_SRC']
+#USE_DEV_SRC = True
+#if USE_DEV_SRC:
+    ## Force Python to use your development modules,
+    ## instead of the modules already installed on the system.
+    #import os
+    #if os.environ.has_key('HLA_DEV_SRC'):
+        #dev_src_dir_path = os.environ['HLA_DEV_SRC']
 
-        if dev_src_dir_path in sys.path:
-            sys.path.remove(dev_src_dir_path)
+        #if dev_src_dir_path in sys.path:
+            #sys.path.remove(dev_src_dir_path)
         
-        sys.path.insert(0, dev_src_dir_path)
+        #sys.path.insert(0, dev_src_dir_path)
             
-    else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
+    #else:
+        #print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
 
 import fnmatch
 from operator import and_, not_
@@ -53,9 +53,17 @@ if __name__ == "__main__" :
 else:
     from .ui_channelSelectorDialog import Ui_Dialog
 
-import hla
-if not hla.machines._lat :
-    hla.initNSLS2VSR()
+#import tictoc
+#import hla
+#if not hla.machines._lat :
+    ##tStart = tictoc.tic()    
+    #hla.initNSLS2VSR()
+    ##print tictoc.toc(tStart)
+import aphla
+if not aphla.machines._lat :
+    #tStart = tictoc.tic()
+    aphla.initNSLS2VSR()
+    #print tictoc.toc(tStart)
 
 # Output Type Enums
 TYPE_CHANNEL = 1
@@ -77,10 +85,10 @@ class Channel:
         """
         """
         
-        if field_name not in ['value', 'x', 'y']:
-            raise ValueError('Field name (' + field_name + ') passed as ' +
-                             '2nd argument must be ' + 
-                             'either "value", "x", or "y".')
+        #if field_name not in ['value', 'x', 'y']:
+            #raise ValueError('Field name (' + field_name + ') passed as ' +
+                             #'2nd argument must be ' + 
+                             #'either "value", "x", or "y".')
         
         if field_name not in element_obj.fields():
             raise ValueError('Field name (' + field_name + ') passed as ' +
@@ -128,24 +136,28 @@ class Channel:
         
         field_list = element_obj.fields()
         
-        field_list.remove('status')
+        #field_list.remove('status') # 'status' does not exist in aphla, but did exist in hla
         
-        if field_list == ['value']: # When there is no field other than 'value'.
-            # This case usually applies to an element that has no separate 
-            # control in different orientations 'x' and 'y', e.g., a quadrupole.
-            channel_list = [Channel(element_obj, 'value')]
-        else:
+        #if field_list == ['value']: # When there is no field other than 'value'.
+            ## This case usually applies to an element that has no separate 
+            ## control in different orientations 'x' and 'y', e.g., a quadrupole.
+            #channel_list = [Channel(element_obj, 'value')]
+        #else:
             
-            if 'value' in field_list:
-                field_list.remove('value')
-            else:
-                raise ValueError('Passed element object does not contain "value" field.')
+            #if 'value' in field_list:
+                #field_list.remove('value')
+            #else:
+                #raise ValueError('Passed element object does not contain "value" field.')
             
-            channel_list = []
+            #channel_list = []
             
-            for field in field_list:
-                channel_list.append(Channel(element_obj,field))
+            #for field in field_list:
+                #channel_list.append(Channel(element_obj,field))
             
+        channel_list = []
+            
+        for field in field_list:
+            channel_list.append(Channel(element_obj,field))
         
         return channel_list
         
@@ -247,7 +259,8 @@ class ChannelSelectorModel(Qt.QObject):
         
         self.filter_spec = filter_spec
         
-        allElements = hla.getElements('*')
+        #allElements = hla.getElements('*')
+        allElements = aphla.getElements('*')
         self.allChannels = Channel.getAllAvailableChannelsFromElementList(
             allElements)
         full_channel_name_list = [c.name for c in self.allChannels]
@@ -533,15 +546,18 @@ class ChannelSelectorView(Qt.QDialog, Ui_Dialog):
                         item_string = spec[0][filter_prop]
                     else:
                         item_string = ''
+                    #t.setItem(j,i,
+                              #Qt.QTableWidgetItem(Qt.QString(item_string)))
                     t.setItem(j,i,
-                              Qt.QTableWidgetItem(Qt.QString(item_string)))
+                              Qt.QTableWidgetItem(item_string))
                     
                     t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
                                          Qt.Qt.ItemIsEditable|
                                          Qt.Qt.ItemIsDragEnabled|
                                          Qt.Qt.ItemIsEnabled) # Make it editable
                 else:
-                    t.setItem(j,i,Qt.QTableWidgetItem(Qt.QString()))
+                    #t.setItem(j,i,Qt.QTableWidgetItem(Qt.QString()))
+                    t.setItem(j,i,Qt.QTableWidgetItem(''))
                     
                     t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
                                          Qt.Qt.ItemIsEditable|
@@ -707,15 +723,18 @@ class ChannelSelectorView(Qt.QDialog, Ui_Dialog):
         new_row_index = nRows-1
         for (i, filter_prop) in enumerate(self.model.filter_property_list):
             if filter_prop is not 'exclude':
+                #t.setItem(new_row_index,i,
+                          #Qt.QTableWidgetItem(Qt.QString()))
                 t.setItem(new_row_index,i,
-                          Qt.QTableWidgetItem(Qt.QString()))
+                          Qt.QTableWidgetItem(''))
                     
                 t.item(new_row_index,i).setFlags(Qt.Qt.ItemIsSelectable|
                                                  Qt.Qt.ItemIsEditable|
                                                  Qt.Qt.ItemIsDragEnabled|
                                                  Qt.Qt.ItemIsEnabled) # Make it editable
             else:
-                t.setItem(new_row_index,i,Qt.QTableWidgetItem(Qt.QString()))
+                #t.setItem(new_row_index,i,Qt.QTableWidgetItem(Qt.QString()))
+                t.setItem(new_row_index,i,Qt.QTableWidgetItem(''))
                 
                 t.item(new_row_index,i).setFlags(Qt.Qt.ItemIsSelectable|
                                                  Qt.Qt.ItemIsEditable|
@@ -774,8 +793,9 @@ class ChannelSelectorView(Qt.QDialog, Ui_Dialog):
         """
         
         if not self.isItemUserCheckable(qTableWidgetItem):
-            filter_val = str(
-                qTableWidgetItem.data(Qt.Qt.DisplayRole).toString() )
+            #filter_val = str(
+                #qTableWidgetItem.data(Qt.Qt.DisplayRole).toString() )
+            filter_val = qTableWidgetItem.data(Qt.Qt.DisplayRole)
         else:
             filter_val = (qTableWidgetItem.checkState() == Qt.Qt.Checked)
         

@@ -346,11 +346,12 @@ class DialogView(Qt.QDialog, Ui_Dialog):
          
         SList = self.data.strings_in_SelectedList
         w = self.listWidget_Selected
-        q_str_list = Qt.QStringList()
-        for string in SList:
-            q_str_list.append(string)
+        #q_str_list = Qt.QStringList()
+        #for string in SList:
+            #q_str_list.append(string)
         w.clear()
-        w.addItems(q_str_list)
+        #w.addItems(q_str_list)
+        w.addItems(SList)
         
         selectionModel = w.selectionModel()
         selectionModel.clearSelection()
@@ -364,11 +365,12 @@ class DialogView(Qt.QDialog, Ui_Dialog):
         
         NList = self.data.strings_in_NotSelectedList
         w = self.listWidget_NotSelected
-        q_str_list = Qt.QStringList()
-        for string in NList:
-            q_str_list.append(string)
+        #q_str_list = Qt.QStringList()
+        #for string in NList:
+            #q_str_list.append(string)
         w.clear()
-        w.addItems(q_str_list)
+        #w.addItems(q_str_list)
+        w.addItems(NList)
 
         selectionModel = w.selectionModel()
         selectionModel.clearSelection()

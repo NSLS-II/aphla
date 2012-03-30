@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_channelSelectorDialog.ui'
 #
-# Created: Mon Nov  7 16:27:31 2011
+# Created: Tue Jan 31 14:11:35 2012
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -101,18 +101,6 @@ class Ui_Dialog(object):
         self.tableWidget_filter.horizontalHeader().setMinimumSectionSize(16)
         self.tableWidget_filter.horizontalHeader().setStretchLastSection(False)
         self.verticalLayout.addWidget(self.tableWidget_filter)
-        self.horizontalLayout_2 = QtGui.QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
-        self.label_4 = QtGui.QLabel(self.layoutWidget)
-        self.label_4.setMaximumSize(QtCore.QSize(16777215, 16))
-        self.label_4.setObjectName(_fromUtf8("label_4"))
-        self.horizontalLayout_2.addWidget(self.label_4)
-        self.plainTextEdit = QtGui.QPlainTextEdit(self.layoutWidget)
-        self.plainTextEdit.setMaximumSize(QtCore.QSize(16777215, 31))
-        self.plainTextEdit.setReadOnly(True)
-        self.plainTextEdit.setObjectName(_fromUtf8("plainTextEdit"))
-        self.horizontalLayout_2.addWidget(self.plainTextEdit)
-        self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.layoutWidget1 = QtGui.QWidget(self.splitter)
         self.layoutWidget1.setObjectName(_fromUtf8("layoutWidget1"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.layoutWidget1)
@@ -244,8 +232,6 @@ class Ui_Dialog(object):
         __sortingEnabled = self.tableWidget_filter.isSortingEnabled()
         self.tableWidget_filter.setSortingEnabled(False)
         self.tableWidget_filter.setSortingEnabled(__sortingEnabled)
-        self.label_4.setText(QtGui.QApplication.translate("Dialog", "HLA Command:", None, QtGui.QApplication.UnicodeUTF8))
-        self.plainTextEdit.setPlainText(QtGui.QApplication.translate("Dialog", "hla.getElements(*)", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("Dialog", "Choice List", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidget_choice_list.horizontalHeaderItem(0).setText(QtGui.QApplication.translate("Dialog", "Ch. Name", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidget_choice_list.horizontalHeaderItem(1).setText(QtGui.QApplication.translate("Dialog", "Read-Only", None, QtGui.QApplication.UnicodeUTF8))

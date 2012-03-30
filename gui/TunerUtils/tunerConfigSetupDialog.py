@@ -7,24 +7,27 @@
 import sys
 import os
 
-USE_DEV_SRC = True
-if USE_DEV_SRC:
-    # Force Python to use your development modules,
-    # instead of the modules already installed on the system.
-    if os.environ.has_key('HLA_DEV_SRC'):
-        dev_src_dir_path = os.environ['HLA_DEV_SRC']
+#USE_DEV_SRC = True
+#if USE_DEV_SRC:
+    ## Force Python to use your development modules,
+    ## instead of the modules already installed on the system.
+    #if os.environ.has_key('HLA_DEV_SRC'):
+        #dev_src_dir_path = os.environ['HLA_DEV_SRC']
 
-        if dev_src_dir_path in sys.path:
-            sys.path.remove(dev_src_dir_path)
+        #if dev_src_dir_path in sys.path:
+            #sys.path.remove(dev_src_dir_path)
         
-        sys.path.insert(0, dev_src_dir_path)
+        #sys.path.insert(0, dev_src_dir_path)
             
-    else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
+    #else:
+        #print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
 
-import hla
-if not hla.machines._lat:
-    hla.initNSLS2VSR()
+#import hla
+#if not hla.machines._lat:
+    #hla.initNSLS2VSR()
+import aphla
+if not aphla.machines._lat:
+    aphla.initNSLS2VSR()
 
 import datetime
 
@@ -139,7 +142,8 @@ class TunerConfigSetupModel(Qt.QStandardItemModel):
                 
         elem_name, field_name = splitted_new_name
                 
-        elem = hla.getElements(elem_name)
+        #elem = hla.getElements(elem_name)
+        elem = aphla.getElements(elem_name)
         if not elem:
             return False
                     
