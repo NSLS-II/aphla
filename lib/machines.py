@@ -124,19 +124,23 @@ def initNSLS2VSR():
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
-        logger.info("using home csv %s" % src_home_csv)
+        msg = "Creating lattice from home csv '%s'" % src_home_csv
+        logger.info(msg)
         cfa.importCsv(src_home_csv)
     elif conf.has('nsls2.csv'):
-        #print("Using %s" % conf.filename('nsls2.csv'))
         src_pkg_csv = conf.filename('nsls2.csv')
-        logger.info("using system csv %s" % src_pkg_csv)
+        msg = "Creating lattice from '%s'" % src_pkg_csv
+        logger.info(msg)
+        #print(msg)
         cfa.importCsv(src_pkg_csv)
     elif os.environ.get('HLA_CFS_URL', None):
-        logger.info("using cfs %s" % HLA_CFS_URL)
+        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
+        logger.info(msg)
         cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     else:
         raise RuntimeError("Failed at loading cache file")
 
+    print(msg)
     for k in [('name', u'elemName'), 
               ('field', u'elemField'), 
               ('devname', u'devName'),
@@ -162,7 +166,7 @@ def initNSLS2VSR():
 
     # a virtual bpm. its field is a "merge" of all bpms.
     bpms = _lattice_dict['SR'].getElements('BPM')
-    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM})
+    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 'family':HLA_VFAMILY})
     _lattice_dict['SR'].insertElement(allbpm)
 
     #
@@ -196,9 +200,8 @@ def initNSLS2VSRTwiss():
     nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
     nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
 
-    N = len(s)
-
-    print(__file__, "Reading twiss items:", len(s), len(betax))
+    #print(__file__, "Reading twiss items:", len(s))
+    print("Elements in lattice:", len(_lat._elements))
 
     # fix the Tracy convension by adding a new element at the end
     for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
@@ -215,6 +218,7 @@ def initNSLS2VSRTwiss():
     for ielem in range(_lat.size()):
         elem = _lat._elements[ielem]
         if elem.family == HLA_VFAMILY: continue
+        ds = nps - elem.sb
 
         i = np.argmin(np.abs(nps - elem.sb))
 

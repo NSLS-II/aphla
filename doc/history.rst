@@ -5,6 +5,7 @@ v0.3.0
 -------
 
   - add pickle/shelve support for :mod:`~hla.element.Element`
+  - fixed testing case for element
 
 v0.2.2
 ------

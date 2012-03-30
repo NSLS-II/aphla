@@ -50,6 +50,12 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         else:
             self.profile = profile
 
+        self.connect(self, SIGNAL("selected(QPointF&)"),
+                     self.activate_element)
+
+    def activate_element(self, p):
+        print p
+
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         if se < sb: 
             raise ValueError("s range of %s is wrong, must be se > sb" % name)
@@ -123,15 +129,61 @@ class DcctCurrentPlot(Qwt.QwtPlot):
 
         self.curve.attach(self)
 
+        self.mark1 = Qwt.QwtPlotMarker()
+        self.mark1.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        #self.mark1.setPen(QPen(QColor(0, 255, 0)))
+        self.mark1.attach(self)
+
     def updateDcct(self, curr):
         self.curve.v.append(curr)
         self.curve.t.append(curr.timestamp)
         #print self.curve.t, self.curve.v
+        lb = Qwt.QwtText("%.2f mA" % curr.real)
+        lb.setColor(Qt.blue)
+        self.mark1.setValue(curr.timestamp, 0)
+        self.mark1.setLabel(lb)
 
     def updatePlot(self):
         self.curve.updateCurve()
         self.setAxisScale(Qwt.QwtPlot.xBottom, self.curve.t[0], self.curve.t[-1])
         self.replot()
+
+    def _loadFakeData(self, t0, v, lt, maxv, span, minv = 300.0):
+        self.curve.t = np.linspace(t0 - span*3600.0, t0, 200).tolist()
+        self.curve.v = [500.0] * 200
+        return
+
+        # dt from max current(last injection)
+        dts0 = np.log(v/maxv)*lt
+        tlst = np.linspace(0, span*3600.0, 1000)
+        vlst = [0] * 1000
+        ts0 = 0.0
+        for i,t in enumerate(tlst):
+            self.curve.t.append(t - span*3600.0 + t0)
+            val = maxv*exp((ts0-t)/lt/3600.0)
+            if val < 300.0:
+                ts0 = t
+                val = maxv
+            vlst[i] = val
+            
+            self.curve.v.append(val)
+        print self.curve.t[-1], t0, self.curve.v[-1]
+
+    def _loadFakeDataFile(self, fname, shift = None):
+        if shift is None: t0 = time.time()
+        else: t0 = shift
+        t, v = [], []
+        for s in open(fname, 'r').readlines():
+            rec = s.strip().split()
+            stmp = ' '.join([rec[1], rec[2][:-7]])
+            tstruct = time.strptime(stmp, "%Y-%m-%d %H:%M:%S")
+            t.append(time.mktime(tstruct))
+            v.append(float(rec[3]))
+            #print time.mktime(t[-1]), rec[3]
+        dt = t[-1] - t0
+        self.curve.t = [ti - dt for ti in t]
+        self.curve.v = v
+
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
     """Orbit curve

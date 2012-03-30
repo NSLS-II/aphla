@@ -167,7 +167,7 @@ class OrbitPlotMainWindow(QMainWindow):
     """
     def __init__(self, parent = None, mode = 'EPICS'):
         QMainWindow.__init__(self, parent)
-
+        self.setWindowTitle("NSLS-II SR")
         self.setIconSize(QSize(48, 48))
         self.config = OrbitPlotConfig(None, 
             aphla.conf.filename("nsls2_sr_orbit.json"))
@@ -178,6 +178,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.dcct.setMaximumHeight(150)
         print __name__, ":"
         print "  WARNING: Using hardcoded PV: 'SR:C00-BI:G00{DCCT:00}CUR-RB'"
+        # load fake current
+        t = caget('SR:C00-BI:G00{DCCT:00}CUR-RB', format=FORMAT_TIME)
+        self.dcct._loadFakeData(t.timestamp, t.real, 4.0, 500.0, 24.0)
         camonitor('SR:C00-BI:G00{DCCT:00}CUR-RB', self.dcct.updateDcct, 
                   format=FORMAT_TIME)
 

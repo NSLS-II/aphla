@@ -14,17 +14,6 @@ from fnmatch import fnmatch
 from time import gmtime, strftime
 
 
-#
-#class ChannelFinderRecord(object):
-#    def __init__(self, pv, properties = None, tags = None):
-#        self.pv = pv
-#        self.properties = properties
-#        self.tags = tags
-#
-#        if 'pv' in properties or 'tags' in properties:
-#            raise ValueError('property name can not be "pv" or "tags"')
-#
-    
 class ChannelFinderAgent(object):
     """
     Channel Finder Agent
@@ -35,14 +24,14 @@ class ChannelFinderAgent(object):
     
     def __init__(self, **kwargs):
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
-        self.rows = []
+        self.rows = []  # nx3 list, n*(pv, prpts, tags)
 
     def downloadCfs(self, cfsurl, **kwargs):
         """
         downloads data from channel finder service.
         
         - *cfsurl* the URL of channel finder service.
-        - *properties* optional list of properties to download
+        - *keep* if present, it only downloads specified properties.
         - *converter* convert properties from string to other format.
 
         Example::
@@ -52,15 +41,19 @@ class ChannelFinderAgent(object):
           >>> downloadCfs(URL, keep = prpt_list, converter = conv_dict)
           >>> downloadCfs(URL, property=[('hostName', 'virtac2')])
           >>> downloadCfs(URL, property=[('hostName', 'virtac')], tagName='aphla.*')
+
+        The channel finder client API provides *property* and *tagName* as
+        keywords parameters. 
         """
         keep_prpts = kwargs.pop('keep', None)
         converter  = kwargs.pop('converter', {})
+
         from channelfinder import ChannelFinderClient, Channel, Property, Tag
         cf = ChannelFinderClient(BaseURL = cfsurl)
         if len(kwargs) == 0:
             chs = cf.find(name='*')
         else:
-            print kwargs
+            #print kwargs
             chs = cf.find(**kwargs)
         if keep_prpts is None:
             # use all possible property names
@@ -85,7 +78,7 @@ class ChannelFinderAgent(object):
         
     def sort(self, key):
         """
-        sort the data.
+        sort the data by 'pv' or other property name.
 
         Example::
 
@@ -183,6 +176,9 @@ class ChannelFinderAgent(object):
         f.close()
 
     def tags(self, pat):
+        """
+        return a list of tags matching the unix filename pattern *pat*.
+        """
         alltags = set()
         for r in self.rows:
             for t in r[2]: alltags.add(t)
@@ -195,11 +191,16 @@ class ChannelFinderAgent(object):
         
         ret = {}
         for i,r in enumerate(self.rows):
+            # skip if no properties
             if r[1] is None: continue
+            # skip if no interesting properties
             if key not in r[1]: continue
-            name = r[1][key]
-            if name not in ret: ret[name] = []
-            ret[name].append(i)
+            # record the property-value and its index. Append if
+            #property-value exists.
+            # name = r[1][key] if name not in ret:
+            #ret[name] = [] ret[name].append(i)
+            v = ret.setdefault(r[1][key], [])
+            v.append(i)
         return ret
 
 

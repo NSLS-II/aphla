@@ -1,8 +1,9 @@
 Introduction
 =============
 
-This manual describes Physics HLA (high level applications) for the NSLS-II
-commissioning and beam studies.
+This manual describes ``aphla`` the Accelerator Physics HLA (high level
+applications) for the NSLS-II commissioning and beam studies. It is a package
+of libraries and Graphical User Interface (GUI) applications.
 
 Besides the commonly used applications, like Beam based alignment, the HLA
 includes a set of APIs (Application Programming Interface) which is used for

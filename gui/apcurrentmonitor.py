@@ -82,7 +82,7 @@ class CurrentMonitorData(Qt.QObject):
     def camonitor_callback(self, new_value):
         """ """
         
-        print new_value
+        #print new_value
         
         if self.current_array_index < len(self.current_array) :
             self.current_array[self.current_array_index] = new_value

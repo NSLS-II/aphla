@@ -3,13 +3,12 @@
 import unittest
 import sys, os, time
 import numpy as np
-#import matplotlib.pylab as plt
+
+#for p in sys.path:
+#    print p
 
 from conf import *
 from aphla import element
-#from hla.catools import caget, caput, Timedout
-#from cothread.catools import caget, caput
-#from cothread import Timedout
 from aphla.catools import caget, caput, Timedout
 import pickle, shelve
 
@@ -81,13 +80,13 @@ class TestElement(unittest.TestCase):
                                  None, ['aphla.elemfield.x[0]'])
         self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}SA:Y-I',
                                  None, ['aphla.elemfield.y[0]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}BBA:X-I', None,
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}BBA:X', None,
                                  ['aphla.elemfield.xref[0]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}BBA:Y-I', None,
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}BBA:Y', None,
                                  ['aphla.elemfield.yref[0]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:X-I', None,
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:X', None,
                                  ['aphla.elemfield.xref[1]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:Y-I', None,
+        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:Y', None,
                                  ['aphla.elemfield.yref[1]'])
         # hcor
         self.hcor = element.CaElement(
@@ -187,8 +186,9 @@ class TestElement(unittest.TestCase):
         print "bpm", self.bpm1._field['x'].pvrb
         self.assertTrue(abs(self.bpm1.x) >= 0)
         self.assertTrue(abs(self.bpm1.y) >= 0)
-        print self.bpm1.xref
-        print self.bpm1.yref
+        print self.bpm1.fields()
+        if 'xref' in self.bpm1.fields(): print self.bpm1.xref
+        if 'yref' in self.bpm1.fields(): print self.bpm1.yref
         self.assertTrue(abs(self.hcor.x) >= 0)
 
     @unittest.skip
