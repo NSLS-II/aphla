@@ -4,6 +4,7 @@ Tutorial
 .. htmlonly::
    :Date: |today|
 
+`The notebook style tutorial <./doc_tutorial.pdf>`_ has code input and output. 
 
 The HLA package we are developing has three parts
 

@@ -24,6 +24,7 @@ class ChannelFinderAgent(object):
     
     def __init__(self, **kwargs):
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
+        self.source = None
         self.rows = []  # nx3 list, n*(pv, prpts, tags)
 
     def downloadCfs(self, cfsurl, **kwargs):
@@ -47,6 +48,7 @@ class ChannelFinderAgent(object):
         """
         keep_prpts = kwargs.pop('keep', None)
         converter  = kwargs.pop('converter', {})
+        self.source = cfsurl
 
         from channelfinder import ChannelFinderClient, Channel, Property, Tag
         cf = ChannelFinderClient(BaseURL = cfsurl)
@@ -112,6 +114,7 @@ class ChannelFinderAgent(object):
 
         As in channel finder service, the property names are case insensitive.
         """
+        self.source = fname
         import csv
         rd = csv.reader(open(fname, 'r'))
         #print rd.fieldnames
@@ -161,6 +164,7 @@ class ChannelFinderAgent(object):
         del writer
 
     def _importJson(self, fname):
+        self.source = fname
         import json
         f = open(fname, 'r')
         d = json.load(f)

@@ -199,7 +199,7 @@ def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, check = T
 
     v0 = np.array(caget(bpm), 'd')
     if ref is not None: v0 = v0 - ref
-
+    
     # the initial norm
     norm0 = np.linalg.norm(v0)
 
@@ -213,7 +213,8 @@ def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, check = T
     # wait and check
     if check == True:
         time.sleep(5)
-        v1 = np.array(caget(bpm), 'd') - np.array(ref)
+        v1 = np.array(caget(bpm), 'd')
+        if ref is not None: v1 = v1 - np.array(ref)
         norm2 = np.linalg.norm(v1)
         print("Euclidian norm: predicted/realized", norm1, norm2)
         if norm2 > norm0:
@@ -371,11 +372,11 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     if 'V' in plane and len(pvy) > 0 and len(pvysp) == 0:
         print("WARNING: no VCOR for vertical orbit correction", file=sys.stderr)
 
-    if not machines._lat.orm:
+    if not machines._lat.ormdata:
         raise ValueError("no ORM data defined for this lattice")
     else:
         #print("PV:", len(bpmpv), len(trimpv))
-        correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), machines._lat.orm)
+        correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), machines._lat.ormdata)
 
 
 # def alignQuadrupole(quad, **kwargs):
