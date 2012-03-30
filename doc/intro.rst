@@ -121,6 +121,12 @@ physics, data acquisition, hardware control, and so on, can work
 together effectively and productively.
 
 
+HLA Summary List
+~~~~~~~~~~~~~~~~~
+
+.. include:: hlasummary.txt
+
+
 .. [Bengtsson2008] `J. Bengtsson`, B. Dalesio, T. Shaftan, T. Tanabe, *NSLS-II: Model Based Control - A Use Case Approach*, Tech-note 51, Oct 2008
 .. [Willeke2009] F. Willeke, *Assumptions on NSLS-II Accelerator Commissioning*,
    November 22, 2009

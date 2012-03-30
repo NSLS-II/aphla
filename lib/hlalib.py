@@ -177,7 +177,8 @@ def getElements(group, return_list=False, include_virtual=False):
       >>> getElements('F*G1C0*')
       >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
 
-    this calls :func:`~hla.lattice.Lattice.getElements` of the current lattice.
+    this calls :func:`~aphla.lattice.Lattice.getElements` of the current
+    lattice.
     """
 
     ret = machines._lat.getElements(group, return_list=return_list)
