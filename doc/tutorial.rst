@@ -4,8 +4,8 @@ Tutorial
 .. htmlonly::
    :Date: |today|
 
-:download:`The notebook style tutorial <./doc_tutorial.pdf>` is a better place
-for reading code and output. But here explains things in more details.
+The notebook style :download:`tutorial <./doc_tutorial.pdf>` is a better place
+for reading code and their output. But here explains things in more details.
 
 The HLA package we are developing has three parts
 
@@ -83,6 +83,7 @@ Here are some examples:
    single: property; girder
    single: property; cell
    single: property; symmetry
+   single: property; group
 
 Each element has a set of properties associated:
 

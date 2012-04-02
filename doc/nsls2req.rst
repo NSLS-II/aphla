@@ -244,7 +244,7 @@ together effectively and productively.
 Planned and Implemented Software
 ---------------------------------
 
-:hla:`Software implemented as part of the HLA is marked`. Finished
+:hla:`Software implemented as part of the aphla is marked`. Finished
 software/scripts are :hladone:`also marked`.
 
 
@@ -477,7 +477,7 @@ Measure TWISS Parameters (L.Yang)
 Insertion Device Related (Matching) (L.Yang, O.Chuba)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- get/correct closed orbit distortion
+- :hladone:`get/correct closed orbit distortion`
 - get/correct phase distortion
 - get/correct coupling distortion
 
@@ -497,7 +497,7 @@ see `Injector HLA specifications <http://groups.nsls2.bnl.gov/acceleratorsystems
 Commissioning Software at Dimond
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-see `R. Bartolini EPAC06 <http://accelconf.web.cern.ch/accelconf/e06/PAPERS/THPCH112.PDF>`_
+see `R. Bartolini EPAC06 <http://accelconf.web.cern.ch/accelconf/e06/PAPERS/THPCH112.PDF>`_, as a reference for NSLS-II commissioning tools.
 
 - *emgtool* GUI. scan first two quad in transfer line, reacord beam size, fit 2D Gaussian. measure Twiss and emittance leaving the LINAC.
 - *dispg* beam energy spread.
