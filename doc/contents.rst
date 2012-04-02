@@ -39,13 +39,11 @@ Welcome to HLA documentation!
    intro.rst
    installation.rst
    tutorial.rst
-   requirement.rst
-   commissioning.rst
+   nsls2req.rst
    ref.rst
    todo.rst
    appendix.rst
    quickstart.rst
-   examples.rst
    faq.rst
    history.rst
 
