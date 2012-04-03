@@ -248,7 +248,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         wid1 = QWidget()
         gbox = QGridLayout()
-        self.plot1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #self.plot1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         #self.plot2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         gbox.addWidget(self.plot1, 0, 1)
         gbox.addWidget(self.plot2, 1, 1)
