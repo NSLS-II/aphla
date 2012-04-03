@@ -38,7 +38,7 @@ setup(
     package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
                    'aphla.gui': 'gui', 'aphla.conf': 'conf'},
     #include_package_data = True,
-    package_data = {'aphla.gui': ['data/*.json'], 
+    package_data = {'aphla.gui': ['data/*.json', 'data/*.cfg', 'data/*.hdf5'], 
                     'aphla.conf': ['*.csv', '*.json', '*.hdf5', '*.xml']},
     py_modules = [
                   'aphla.catools', 'aphla.chanfinder', 'aphla.machines', 'aphla.element',
