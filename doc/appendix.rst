@@ -28,8 +28,10 @@ orbit feedback), bba(beam based alignment), chrom(chromaticity),
 sp(setpoint), rb(readback) are common acronyms.
 
 
+
 Terminology for High Level Applications
 ------------------------------------------------
+
 
 The naming convension and terminology should follow the definitions of
 project nomenclature standard:
@@ -72,6 +74,8 @@ A set of commonly used words are explained in the following:
     - Specific purpose: *bba*, *orbit*, *tune*,
       *chromaticity*
     - User defined: "Sam's test BPM", "Weiming's Toy", ...
+
+.. _element-search-match:
 
 - **wildcard**. When searching for a group, the name matching should
   support a subset of regular expression (need more details on "subset",

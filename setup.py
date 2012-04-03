@@ -31,17 +31,17 @@ import os
 
 setup(
     name = "aphla",
-    version = "0.3.0b1",
+    version = "0.3.0b2",
     packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
                 'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.conf'],
     data_files = {},
     package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
                    'aphla.gui': 'gui', 'aphla.conf': 'conf'},
     #include_package_data = True,
-    package_data = {'aphla.gui': ['data/*.json'], 
+    package_data = {'aphla.gui': ['data/*.json', 'data/*.cfg', 'data/*.hdf5'], 
                     'aphla.conf': ['*.csv', '*.json', '*.hdf5', '*.xml']},
     py_modules = [
-                  'aphla.catools', 'aphla.machines', 'aphla.element',
+                  'aphla.catools', 'aphla.chanfinder', 'aphla.machines', 'aphla.element',
                   'aphla.lattice', 'aphla.twiss', 'aphla.hlalib', 
                   'aphla.rf',
                   'aphla.ormdata', 'aphla.orm', 'aphla.aptools', 
