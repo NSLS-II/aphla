@@ -3,9 +3,9 @@ Installation
 
 .. warning::
 
-   For BNL/NSLS2 users, the most easy way is sending ITD an email
-   requesting an account on **lsasd2.ls.bnl.gov** (please CC to Lingyun
-   Yang also). It is a Linux server with all HLA software installed.
+   For BNL/NSLS2 users, the most easy way is sending ITD an email requesting
+   an account on **lsasd2.ls.bnl.gov** (please CC to Lingyun Yang who is the
+   registered owner). It is a Linux server with all HLA software installed.
 
 
 Depending Packages
@@ -18,15 +18,16 @@ take Debian/Ubuntu Linux as an example to show how to install them.
 
   $ sudo apt-get install mercurial pyqt4-dev-tools
   $ sudo apt-get install python-qt4 python-qt4-dev
-  $ sudo apt-get install python-docutils
+  $ sudo apt-get install python-docutils python-numpy python-scipy
+
 
 By using BNL Debian/Ubuntu repository from Controls group, we can install some
 EPICS tools easily:
 
 ::
 
-  deb http://epics.nsls2.bnl.gov/debian/ lenny main contrib
-  deb-src http://epics.nsls2.bnl.gov/debian/ lenny main contrib
+  deb http://epics.nsls2.bnl.gov/debian/ squeeze main contrib
+  deb-src http://epics.nsls2.bnl.gov/debian/ squeeze main contrib
 
 .. code-block:: bash
 
@@ -50,11 +51,11 @@ You should see the beam current of virtual accelerator. Then see if it changes
 
   $ camonitor 'SR:C00-BI:G00{DCCT:00}CUR-RB'
 
-Download the *hla-v0.1.0a1.egg* file, then install
+Download the *hla-v0.2.0.egg* file or newer version, then install
 
 .. code-block:: bash
 
-  $ sudo easy_install hla-v0.1.0a1.egg
+  $ sudo easy_install hla-v0.2.0.egg
 
 Before using HLA, we need some environment variables, like EPICS, put the
 following in to ~/.bashrc::
@@ -65,9 +66,7 @@ following in to ~/.bashrc::
 
 I am using **HLA_DATA_DIRS** as place to store data, the machine name
 working on is *nsls2* and the channel finder service URL is at
-**HLA_CFS_URL**. As an example, the orbit response matrix (ORM) data for
-nsls2 would be saved in directory **HLA_DATA_DIRS/HLA_MACHINE**,
-i.e. **/home/lyyang/devel/nsls2-hla/nsls2**.
+**HLA_CFS_URL**. 
 
 
 Code Repository for HLA Developers

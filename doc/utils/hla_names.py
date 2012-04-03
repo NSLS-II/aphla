@@ -1,7 +1,7 @@
 """
-autogenerate some tables for hla namespace
+autogenerate some tables for aphla namespace
 """
-from hla import *
+from aphla import *
 d = locals()
 keys = d.keys()
 keys.sort()
@@ -22,7 +22,7 @@ for k in keys:
         mod = 'unknown'
 
     if mod is not None:
-        if mod.startswith('hla'):
+        if mod.startswith('aphla'):
             if k[0].isupper():
                 k = ':class:`~%s.%s`'%(mod, k)
             else:
@@ -41,7 +41,7 @@ for k in keys:
     if mod.startswith('cothread'): continue
 
     #modd.setdefault(mod, []).append((k, doc))
-    modd.setdefault('hla', []).append((k, doc))
+    modd.setdefault('aphla', []).append((k, doc))
 
 #print "References"
 #print "==========="

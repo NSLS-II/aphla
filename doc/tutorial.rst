@@ -4,6 +4,8 @@ Tutorial
 .. htmlonly::
    :Date: |today|
 
+:download:`The notebook style tutorial <./doc_tutorial.pdf>` is a better place
+for reading code and output. But here explains things in more details.
 
 The HLA package we are developing has three parts
 
@@ -11,13 +13,6 @@ The HLA package we are developing has three parts
 - HLA scripts: some measurement and analysis routines.
 - HLA GUI applications: ``aplauncher``, ``aporbit``, ``apbba``, ...
 
-
-Necessary packages including linear algebra, frequency analysis, statistics,
-data IO, database, network, regular expression and visualization will be
-provided. See `Python <http://www.python.org>`_, `SciPy
-<http://www.scipy.org>`_, `NumPy <http://numpy.scipy.org/>`_, `iPython
-<http://ipython.scipy.org>`_, `matplotlib
-<http://matplotlib.sourceforge.net>`_.
 
 
 HLA Initialization
@@ -39,17 +34,28 @@ and plotting.
    The text after '#' are comments for the rest of that line, '>>>' is a
    prompt for interactive Python environment.
 
-Initialize the NSLS2 Virtual Storage Ring lattice and twiss (from channel
-finder server):
+Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
 .. code-block:: python
 
    >>> ap.initNSLS2VSR()
    >>> ap.initNSLS2VSRTwiss()
+
+If you have csv config file, e.g. *nsls2.csv*, in your ``aphla`` package, the
+`~aphla.initNSLS2VSR` will use it, otherwise it will search for channel finder
+server use it to initialize the lattice structure.
+
+``aphla`` can keep several initialized lattices, depending how many
+*aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
+*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB*. Call
+`~aphla.machines.lattices` to find out.
+
    >>> ap.machines.lattices()    # list available lattices
-   {'SR': 'aphla.sys.SR', 'LTD2': 'aphla.sys.LTD2', 'LTB': 'aphla.sys.LTB', 'LTD1': 'aphla.sys.LTD1', 'LTB-txt': 'LTB-txt', 'LTD1-txt': 'txt', 'LTD2-txt': 'txt', 'SR-txt': 'SR-text-ver'}
+   {'SR': 'aphla.sys.SR', 'LTD2': 'aphla.sys.LTD2', 'LTB': 'aphla.sys.LTB', 'LTD1': 'aphla.sys.LTD1'}
    >>> ap.machines.use("SR")
-   >>>
+
+Switching between lattices should be always a safe operation itself, but may
+affect the following operations.
 
 
 HLA Element Searching
@@ -57,7 +63,7 @@ HLA Element Searching
 
 The lattice is merely a list of elements. In order to control the element,
 we first get the instance from lattice by :func:`~aphla.hlalib.getElements`
-providing with element name, type or pattern.
+providing with element name, name list, type or pattern.
 
 Here are some examples:
 
@@ -272,7 +278,17 @@ Correct the orbit and plot the orbits before/after the correction:
 
    >>> hla.getChromaticity() #doctest:+SKIP
 
-.. math::
+.. note::
 
+   Necessary packages including linear algebra, frequency analysis,
+   statistics, data IO, database, network, regular expression and
+   visualization will be provided. See `Python <http://www.python.org>`_,
+   `SciPy <http://www.scipy.org>`_, `NumPy <http://numpy.scipy.org/>`_,
+   `iPython <http://ipython.scipy.org>`_, `matplotlib
+   <http://matplotlib.sourceforge.net>`_.
+
+
+.. 
+  /.. math::
   G(s,s_0)=\dfrac{\sqrt{\beta(s)\beta(s_0)}}{2\sin\pi\nu}\cos(\pi\nu-\left|\psi(s)-\psi(s_0)\right|)
 

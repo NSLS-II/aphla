@@ -39,11 +39,11 @@ class Lattice:
         if isinstance(key, int):
             return self._elements[key]
         elif isinstance(key, str) or isinstance(key, unicode):
-            return self._find_element(name=key)
+            return self._find_exact_element(name=key)
         else:
             return None
 
-    def _find_element(self, name):
+    def _find_exact_element(self, name):
         """
         exact matching of element name
         """
@@ -81,7 +81,7 @@ class Lattice:
         elif loc == 'right': return iright
 
     def hasElement(self, name):
-        if self._find_element(name): return True
+        if self._find_exact_element(name): return True
         else: return False
 
     def insertElement(self, elem, i = None):
@@ -231,7 +231,7 @@ class Lattice:
         """
 
         if isinstance(elemsname, str):
-            e = self._find_element(elemsname)
+            e = self._find_exact_element(elemsname)
             return e.sb
         elif isinstance(elemsname, list):
             ret = [None] * len(elemsname)
@@ -296,7 +296,7 @@ class Lattice:
         if isinstance(group, str) or isinstance(group, unicode):
             # do exact element name match first
             #print __file__, "element ..."
-            elem = self._find_element(group)
+            elem = self._find_exact_element(group)
             if elem and return_list:
                 #print "found exact element", group, elem
                 return [elem]
@@ -599,7 +599,7 @@ class Lattice:
           ['P2', 'P3', 'Q3', 'P4', 'P5']
         """
 
-        e0 = self._find_element(element)
+        e0 = self._find_exact_element(element)
         if not e0: raise ValueError("element %s does not exist" % element)
 
         el = self.getElements(group)
@@ -635,7 +635,7 @@ class Lattice:
           >>> getClosest('Q3', 'BPM')
         """
 
-        e0 = self._find_element(element)
+        e0 = self._find_exact_element(element)
         if not e0: raise ValueError("element %s does not exist" % element)
 
         el = self.getElements(group, return_list=True)

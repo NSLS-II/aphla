@@ -60,8 +60,8 @@ class AbstractElement(object):
         self.index    = int(kwargs.get('index', '-1'))
         self.family   = kwargs.get('family', None)
         self.se       = float(kwargs.get('se', '0.0'))
-        self.sb       = float(kwargs.get('sb', 0.0))
-        self.length   = float(kwargs.get('length', 0.0))
+        self.sb       = float(kwargs.get('sb', '0.0'))
+        self.length   = float(kwargs.get('length', '0.0'))
         self.cell     = kwargs.get('cell', None)
         self.girder   = kwargs.get('girder', None)
         self.symmetry = kwargs.get('symmetry', None)
@@ -169,7 +169,8 @@ class CaDecorator:
     """
     Decorator between channel access and element field.
 
-    PVs are in ascending order
+    The field can be one single PV or a list of PVs. Each PV has its own
+    stepsize and value range.
     """
     NoOrder    = 0
     Ascending  = 1
@@ -178,6 +179,8 @@ class CaDecorator:
     def __init__(self, **kwargs):
         self.pvrb = []
         self.pvsp = []
+        self.pvh  = [] # step size
+        self.pvlim = [] # lower/upper limit 
         # buffer the initial value and last setting/reading
         self.rb = []  # bufferred readback value 
         self.sp = []  # bufferred setpoint value
@@ -306,6 +309,18 @@ class CaDecorator:
     def removeSetpoint(self, pv):
         self.pvsp.remove(pv)
         
+    def stepUp(self, n = 1):
+        """
+        step up the setpoint value.
+        """
+        raise NotImplementedError("waiting for data")
+
+    def stepDown(self, n = 1):
+        """
+        step down the setpoint value.
+        """
+        raise NotImplementedError("waiting for data")
+
 class CaElement(AbstractElement):
     """
     Element with Channel Access ability

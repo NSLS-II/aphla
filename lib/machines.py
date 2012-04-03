@@ -68,13 +68,13 @@ HLA_CFS_KEYMAP = {'name': u'elemName',
                   'sequence': None}
 
 
-def createLattice(pvrec, systag):
+def createLattice(pvrec, systag, desc = 'channelfinder'):
     """
     create a lattice from channel finder agent data
     """
 
     # a new lattice
-    lat = Lattice('channelfinder')
+    lat = Lattice(desc)
     for rec in pvrec:
         # skip if there's no properties.
         if rec[1] is None: continue
@@ -88,7 +88,7 @@ def createLattice(pvrec, systag):
         #if name == 'CXHG2C30A': print(pv, prpt, rec[2])
 
         # find if the element exists.
-        elem = lat._find_element(name=name)
+        elem = lat._find_exact_element(name=name)
         if elem is None:
             elem = CaElement(**prpt)
             #lat.appendElement(elem)
@@ -159,7 +159,8 @@ def initNSLS2VSR():
 
     for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
         #print("\nsys=", latname)
-        _lattice_dict[latname] = createLattice(cfa.rows, 'aphla.sys.' + latname)
+        _lattice_dict[latname] = createLattice(cfa.rows, 'aphla.sys.' + latname,
+                                               desc = cfa.source)
 
     print("Using ORM:", conf.filename('orm.hdf5'))
     _lattice_dict['SR'].ormdata = OrmData(conf.filename('orm.hdf5'))

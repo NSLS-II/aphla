@@ -1,55 +1,47 @@
 References
 ===========
 
+.. htmlonly::
+   :Date: |today|
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
 
-HLA Summary List
-~~~~~~~~~~~~~~~~~
-
-.. include:: hlasummary.txt
-
-.. automodule:: hla.catools
+.. automodule:: aphla.catools
    :members:
 
-.. automodule:: hla.hlalib
+.. automodule:: aphla.machines
    :members:
 
-.. automodule:: hla.rf
+.. automodule:: aphla.element
    :members:
 
-.. automodule:: hla.lattice
+.. automodule:: aphla.lattice
    :members:
 
-.. automodule:: hla.twiss
+.. automodule:: aphla.twiss
    :members:
 
-.. automodule:: hla.machines
+.. automodule:: aphla.hlalib
    :members:
 
-.. automodule:: hla.aptools
+.. automodule:: aphla.rf
    :members:
 
-.. automodule:: hla.orbit
+.. automodule:: aphla.ormdata
    :members:
 
-.. automodule:: hla.ormdata
+.. automodule:: aphla.orm
    :members:
 
-.. automodule:: hla.orm
+.. automodule:: aphla.aptools
    :members:
 
-.. automodule:: aphlas.element
+.. automodule:: aphla.bba
    :members:
 
-.. autoclass:: aphlas.element.AbstractElement
-   :members:
-
-.. automodule:: hla.meastwiss
-   :members:
-
-.. automodule:: hla.bba
+.. automodule:: aphla.meastwiss
    :members:
 
 

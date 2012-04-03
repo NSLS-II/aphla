@@ -4,7 +4,6 @@
    contain the root `toctree` directive.
 
 
-
 Welcome to HLA documentation!
 ===================================
 
@@ -12,7 +11,27 @@ Welcome to HLA documentation!
    :Release: |version|
    :Date: |today|
 
-   Download `PDF <./hla.pdf>`_
+   Download :download:`PDF <./_build/latex/aphla.pdf>`
+
+.. raw:: latex
+
+   \hfill
+   \vspace{0.3\textheight}
+   {\relsize{2}
+   \begin{notice}{warning}{Warning:} This document is developing with the
+   \texttt{aphla} package very actively. What you read here may change in the
+   future. But when the commissioning of NSLS-II comes closer there will be
+   less and less changes.
+
+   \vspace{1ex}
+   Please find recent version at\newline \url{http://lsasd2.ls.bnl.gov/~lyyang/hla/}
+
+   \vspace{1ex} The Tutorial~(Chap.~\ref{tutorial:tutorial}) and
+   Reference~(Chap.~\ref{ref:references}) sections are the top two in our updating list.
+
+   \hfill\today
+   \end{notice}}
+
 
 .. toctree::
    :maxdepth: 2
@@ -20,13 +39,11 @@ Welcome to HLA documentation!
    intro.rst
    installation.rst
    tutorial.rst
-   requirement.rst
-   commissioning.rst
+   nsls2req.rst
    ref.rst
    todo.rst
    appendix.rst
    quickstart.rst
-   examples.rst
    faq.rst
    history.rst
 
