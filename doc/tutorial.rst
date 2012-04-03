@@ -4,8 +4,8 @@ Tutorial
 .. htmlonly::
    :Date: |today|
 
-:download:`The notebook style tutorial <./doc_tutorial.pdf>` is a better place
-for reading code and output. But here explains things in more details.
+The notebook style :download:`tutorial <./doc_tutorial.pdf>` is a better place
+for reading code and their output. But here explains things in more details.
 
 The HLA package we are developing has three parts
 
@@ -63,7 +63,7 @@ HLA Element Searching
 
 The lattice is merely a list of elements. In order to control the element,
 we first get the instance from lattice by :func:`~aphla.hlalib.getElements`
-providing with element name, name list, type or pattern.
+providing with element name, name list, type or pattern. 
 
 Here are some examples:
 
@@ -83,6 +83,7 @@ Here are some examples:
    single: property; girder
    single: property; cell
    single: property; symmetry
+   single: property; group
 
 Each element has a set of properties associated:
 
@@ -131,7 +132,9 @@ The following lines find all BPMs in the girder 2 of cell 2 and 3.
    PL2G2C03A 85.3495 C03 G2 A
 
 
-A pattern matching is also possible when searching for element or groups
+A pattern matching is also possible when searching for element or groups. The
+pattern string follows Unix filename convension, see :ref:`Wildcard Matching
+<element-search-match>`
 
 .. code-block:: python
 

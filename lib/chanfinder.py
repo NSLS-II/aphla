@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 """
+Channel Finder
+---------------
+
 A module providing local Channel Finder Service (CFS).
 
 For each PV, Channel Finder Service (CFS) provide a set of properties and
@@ -190,7 +193,16 @@ class ChannelFinderAgent(object):
 
     def groups(self, key = 'elemName', **kwargs):
         """
-        sort the 
+        group the data according to their property *key*.
+
+        e.g. groups(key='elemName') will return a dictionary with keyes the
+        element names, values a list of indeces which share the same element
+        name.
+
+        Example::
+
+          >>> groups()
+          {'BPM1': [0, 3], 'Q1': [1], 'COR1' : [2]}
         """
         
         ret = {}

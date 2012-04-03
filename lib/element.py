@@ -171,6 +171,10 @@ class CaDecorator:
 
     The field can be one single PV or a list of PVs. Each PV has its own
     stepsize and value range.
+
+    If *trace* is True, every readback/setpoint will be recorded for later
+    reset/revert whenever the get/put functions are called. Extra history
+    point can be recorded by calling *mark*.
     """
     NoOrder    = 0
     Ascending  = 1
@@ -217,18 +221,35 @@ class CaDecorator:
         return len(lst) - 1
 
     def revert(self):
-        """revert the setpoint to the last setting"""
+        """
+        revert the setpoint to the last setting
+
+        TODO: check if the current setpoint is same as the last record,
+        i.e. changed by outsider ?
+        """
         if not self.sp: return
-        caput(self.pvsp, self.sp[-1])
+        # v0 = caget(self.pvsp)
         self.sp.pop()
+        caput(self.pvsp, self.sp[-1])
         
     def reset(self):
-        """reset the setpoint to the initial setting"""
+        """
+        reset the setpoint to the initial setting
+        """
         if not self.sp: return
         caput(slef.pvsp, self.sp[0])
         self.sp = []
 
     def mark(self, data = 'setpoint'):
+        """
+        mark the current value in trace for revert
+        - `setpoint` save setpoint value (default)
+        - `readback` save readback value
+        - `rb2setpoint` save readback value to setpoint
+
+        The default is mark the current setpoint and an imediate revert will
+        restore this setpoint.
+        """
         if data == 'readback':
             self.rb.append(caget(self.pvrb))
             if len(self.rb) > self.trace_limit: self.rb.pop(0)
@@ -263,7 +284,14 @@ class CaDecorator:
         if self.pvsp:
             ret = caput(self.pvsp, val, wait=True)
             if self.trace: 
-                self.sp.append(copy.deepcopy(val))
+                if isinstance(val, (list, tuple)):
+                    self.sp.append(val[:])
+                elif isinstance(val, (float, int)):
+                    self.sp.append(val)
+                else:
+                    raise RuntimeError("unsupported datatype '%s' "
+                                       "for tracing object value." %
+                                       type(val))
                 if len(self.sp) > self.trace_limit: self.sp.pop(0)
             return ret
         else: return None
@@ -590,6 +618,22 @@ class CaElement(AbstractElement):
     def __dir__(self):
         return dir(CaElement) + list(self.__dict__) + self._field.keys()
 
+    def enableTrace(self, fieldname):
+        self._field[fieldname].trace = True
+        self._field[fieldname].mark()
+
+    def disableTrace(self, fieldname):
+        self._field[fieldname].trace = False
+        self._field[fieldname].sp = []
+
+    def revert(self, fieldname):
+        self._field[fieldname].revert()
+
+    def mark(self, fieldname, data = 'setpoint'):
+        self._field[fieldname].mark(data)
+
+    def reset(self, fieldname):
+        self._field[fieldname].reset()
 
 def merge(elems, **kwargs):
     """

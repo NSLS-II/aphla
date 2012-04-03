@@ -4,25 +4,26 @@ History
 v0.3.0
 -------
 
-  - add pickle/shelve support for :mod:`~hla.element.Element`
+  - add pickle/shelve support for :mod:`~aphla.element.Element`
   - fixed testing case for element
   - fix bug in correctOrbitPV
   - fix bug in getLocations to ignore virtual element
+  - add mark/reset/revert for :class:`~aphla.element.CaElement`
 
 v0.2.2
 ------
 
   - add simple locking for multiusers
-  - add dispersion measurement :func:`~hla.meastwiss.measDispersion`
-  - add beta function measurement :func:`~hla.meastwiss.measBeta`
-  - bug fix of :func:`~hla.machines.initNSLS2VSRTwiss`
+  - add dispersion measurement :func:`~aphla.meastwiss.measDispersion`
+  - add beta function measurement :func:`~aphla.meastwiss.measBeta`
+  - bug fix of :func:`~aphla.machines.initNSLS2VSRTwiss`
 
 
 v0.2.0
 -------
 
   - add local bump
-  - add beam based alignment :mod:`~hla.bba`
+  - add beam based alignment :mod:`~aphla.bba`
   - bring back eget
 
 

@@ -40,6 +40,7 @@ Welcome to HLA documentation!
    installation.rst
    tutorial.rst
    nsls2req.rst
+   channelfinder.rst
    ref.rst
    todo.rst
    appendix.rst

@@ -11,6 +11,9 @@ References
 .. automodule:: aphla.catools
    :members:
 
+.. automodule:: aphla.chanfinder
+   :members:
+
 .. automodule:: aphla.machines
    :members:
 
