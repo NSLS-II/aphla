@@ -26,6 +26,7 @@ class TimeScaleDraw(Qwt.QwtScaleDraw):
         convert epoch seconds to label
         """
         s = time.strftime("%H:%M", time.gmtime(v))
+        print "datetime:",v
         return Qwt.QwtText(s)
 
 class MagnetPicker(Qwt.QwtPlotPicker):
@@ -110,7 +111,7 @@ class DcctCurrentPlot(Qwt.QwtPlot):
         self.plotLayout().setAlignCanvasToScales(True)
         #self.setAxisTitle(Qwt.QwtPlot.xBottom, "Time")
         self.setAxisScaleDraw(Qwt.QwtPlot.xBottom, TimeScaleDraw())
-        #self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 200)
+        self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 240)
         self.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -20.0)
         self.setAxisLabelAlignment(Qwt.QwtPlot.xBottom, Qt.AlignLeft)
         scaleWidget = self.axisWidget(Qwt.QwtPlot.xBottom)

@@ -69,7 +69,7 @@ Here are some examples:
 
 .. code-block:: python
 
-   >>> bpm = hla.getElements('BPM') # get a list of BPMs
+   >>> bpm = ap.getElements('BPM') # get a list of BPMs
    >>> len(bpm) # 180 in tital, guaranteed in increasing order of s coordinate.
    180
    >>> bpm[0].name
@@ -101,7 +101,7 @@ A element can only belongs to one *family*, *cell*, *girder* and
 
 .. code-block:: python
 
-   >>> hla.getGroups('PM1G4C02B') # the groups one element belongs to
+   >>> ap.getGroups('PM1G4C02B') # the groups one element belongs to
    [u'BPM', u'C02', u'G4', u'B']
 
 To find the elements in certain cell or/and girder, use *getGroupMembers* and
@@ -111,7 +111,7 @@ The following lines search for all BPMs in girder 4 of cell 15.
 
 .. code-block:: python
 
-   >>> el = hla.getGroupMembers(['BPM', 'C15', 'G4'], op='intersection')
+   >>> el = ap.getGroupMembers(['BPM', 'C15', 'G4'], op='intersection')
    >>> for e in el: print e.name, e.sb, e.length
    PM1G4C15A 407.882 0.0
    PM1G4C15B 410.115 0.0
@@ -124,7 +124,7 @@ The following lines find all BPMs in the girder 2 of cell 2 and 3.
 
 .. code-block:: python
 
-   >>> el = hla.getGroupMembers(['BPM', 'C0[2-3]', 'G2'])
+   >>> el = ap.getGroupMembers(['BPM', 'C0[2-3]', 'G2'])
    >>> for e in el: print e.name, e.sb, e.cell, e.girder, e.symmetry
    PH1G2C02A 57.7322 C02 G2 A
    PH2G2C02A 60.2572 C02 G2 A
@@ -138,20 +138,20 @@ pattern string follows Unix filename convension, see :ref:`Wildcard Matching
 
 .. code-block:: python
 
-   >>> hla.getElements('P*C01*A')
+   >>> ap.getElements('P*C01*A')
    [<hla.element.Element at 0x3fafdd0>,
     <hla.element.Element at 0x40c0190>,
     <hla.element.Element at 0x40c0250>]
-   >>> hla.getGroups('P*C01*A')
+   >>> ap.getGroups('P*C01*A')
    [u'BPM', u'C01', u'G4', u'G2', u'A']
 
 
 HLA Element Control
 ---------------------
 
-   >>> print hla.eget('PL1G2C05A')
+   >>> print ap.eget('PL1G2C05A')
    [[-0.0001042862911482232, 9.4271237903876306e-05]]
-   >>> el = hla.getElements(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
+   >>> el = ap.getElements(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
    >>> for e in el: print e.status
    SQMG4C05A
      READBACK (SR:C05-MG:G04A{SQuad:M1}Fld-I): 0.0
@@ -175,7 +175,7 @@ It is easy to read/write the default value of an element:
 
 .. code-block:: python
 
-   >>> e = hla.getElements('CXH2G2C30A')
+   >>> e = ap.getElements('CXH2G2C30A')
    >>> print e.status #doctest: +SKIP
    CXH2G2C30A
      READBACK (SR:C30-MG:G02A{HCor:H2}Fld-I): 0.0
@@ -196,10 +196,10 @@ More Examples
 
 .. code-block:: python
 
-   >>> hla.getCurrent() #doctest: +SKIP
+   >>> ap.getCurrent() #doctest: +SKIP
    292.1354803937125
 
-   >>> hla.getLifetime() #doctest: +SKIP
+   >>> ap.getLifetime() #doctest: +SKIP
    7.2359460167254399
 
 
@@ -207,7 +207,7 @@ Plotting the orbit
  
 .. code-block:: python
  
-   >>> sobt = hla.getOrbit(spos = True)
+   >>> sobt = ap.getOrbit(spos = True)
    >>> plt.clf()
    >>> plt.plot(sobt[:,2], sobt[:,0], '-x', label='X') #doctest: +ELLIPSIS
    [<matplotlib.lines.Line2D object at 0x...>]
@@ -223,16 +223,16 @@ Twiss parameters
 
 .. code-block:: python
 
-   >>> hla.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
+   >>> ap.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
    array([[  8.7...,  11.6...],
    	  [ 10.2...,  22.1...]])
 
-   >>> bpm = hla.getElements('P*G2*C03*A')
-   >>> hla.getBeta([e.name for e in bpm]) #doctest: +ELLIPSIS
+   >>> bpm = ap.getElements('P*G2*C03*A')
+   >>> ap.getBeta([e.name for e in bpm]) #doctest: +ELLIPSIS
    array([[  8.7...,  11.6...],
    	  [ 10.2...,  22.1...]])
 
-   >>> hla.getBeta('P*G2*C03*A', loc='b') #doctest: +ELLIPSIS
+   >>> ap.getBeta('P*G2*C03*A', loc='b') #doctest: +ELLIPSIS
    array([[  8.7...,  11.6...],
    	  [ 10.2...,  22.1...]])
 
@@ -240,9 +240,9 @@ Plotting the beta function of cell 'C02' and 'C03'
 
 .. code-block:: python
 
-   >>> elem = hla.getGroupMembers(['C01', 'C02'], op='union')
-   >>> beta = hla.getBeta([e.name for e in elem], spos=True, clean=True)
-   >>> eta = hla.getDispersion([e.name for e in elem], spos=True, clean=True)
+   >>> elem = ap.getGroupMembers(['C01', 'C02'], op='union')
+   >>> beta = ap.getBeta([e.name for e in elem], spos=True, clean=True)
+   >>> eta = ap.getDispersion([e.name for e in elem], spos=True, clean=True)
    >>> plt.clf()
    >>> fig1 = plt.subplot(211)
    >>> fig=plt.plot(beta[:,-1], beta[:,:-1], '-o', label=r'$\beta_{x,y}$')
@@ -258,14 +258,14 @@ Correct the orbit and plot the orbits before/after the correction:
 
 .. code-block:: python
 
-   >>> print hla.__path__ #doctest: +SKIP
-   >>> bpm = hla.getElements('P*C1[0-3]*')
-   >>> trim = hla.getGroupMembers(['*', '[HV]COR'], op='intersection')
+   >>> print ap.__path__ #doctest: +SKIP
+   >>> bpm = ap.getElements('P*C1[0-3]*')
+   >>> trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
    >>> print len(bpm), len(trim) #doctest: +SKIP
-   >>> v0 = hla.getOrbit('P*', spos=True)
-   >>> hla.correctOrbit([e.name for e in bpm], [e.name for e in trim])
+   >>> v0 = ap.getOrbit('P*', spos=True)
+   >>> ap.correctOrbit([e.name for e in bpm], [e.name for e in trim])
    >>> time.sleep(4)
-   >>> v1 = hla.getOrbit('P*', spos=True)
+   >>> v1 = ap.getOrbit('P*', spos=True)
    >>> plt.clf()
    >>> ax = plt.subplot(211) 
    >>> fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X') 
@@ -279,7 +279,7 @@ Correct the orbit and plot the orbits before/after the correction:
 
 .. code-block:: python
 
-   >>> hla.getChromaticity() #doctest:+SKIP
+   >>> ap.getChromaticity() #doctest:+SKIP
 
 .. note::
 

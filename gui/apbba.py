@@ -252,6 +252,7 @@ class BbaMainWindow(QMainWindow):
                 dset[:, :, :] = ac.orbit
                 grp['keep'] = ac.mask
                 grp['trim_fitted'] = ac.trim_fitted
+                grp['trim_pvsp'] = ac.trim_pvsp
 
                 for j in range(len(rec[i+1])):
                     data = rec[i+1][j]
