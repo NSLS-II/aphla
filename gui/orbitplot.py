@@ -3,7 +3,8 @@ from cothread.catools import caget, caput
 
 from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
         QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
-        QSize, QRectF, QLine)
+        QSize, QRectF, QLine, pyqtSignal)
+#from PyQt4 import (PyQt_PyObject,)
 from PyQt4.QtGui import (QApplication, QWidget, QColor,
         QDockWidget, QFileDialog, QFrame, QImage, QImageReader,
         QImageWriter, QInputDialog, QKeySequence, QListWidget,
@@ -26,7 +27,7 @@ class TimeScaleDraw(Qwt.QwtScaleDraw):
         convert epoch seconds to label
         """
         s = time.strftime("%H:%M", time.gmtime(v))
-        print "datetime:",v
+        #print "datetime:",v
         return Qwt.QwtText(s)
 
 class MagnetPicker(Qwt.QwtPlotPicker):
@@ -53,6 +54,9 @@ class MagnetPicker(Qwt.QwtPlotPicker):
 
         self.connect(self, SIGNAL("selected(QPointF&)"),
                      self.activate_element)
+        # instead of list, use PyQt_PyObject
+        #self.elementSelected = pyqtSignal(PyQt_PyObject)
+        self.elementSelected = pyqtSignal(list)
 
     def activate_element(self, p):
         print p
@@ -79,13 +83,24 @@ class MagnetPicker(Qwt.QwtPlotPicker):
             self.profile.insert(i, (c-w, c+w, name))
             return
 
-    def trackerTextF(self, pos):
+    def element_names(self, x, y):
         s = []
-        x, y = pos.x(), pos.y()
         for m in self.profile:
             if x > m[0] and x < m[1]:
                 s.append(m[2])
+        return s
+
+    def trackerTextF(self, pos):
+        s = self.element_names(pos.x(), pos.y())
         return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y(), '\n'.join(s)))
+
+    def widgetMouseDoubleClickEvent(self, evt):
+        #print "Double Clicked", evt.x(), evt.y(), evt.pos(), evt.posF()
+        pos = self.invTransform(evt.pos())
+        elements = self.element_names(pos.x(), pos.y())
+        
+        #self.emit(SIGNAL("elementSelected(list)"), elements)
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elements)
 
 
 class DcctCurrentCurve(Qwt.QwtPlotCurve):
@@ -404,6 +419,8 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
         self.picker1.setTrackerPen(QPen(Qt.red, 4))
+        self.connect(self.picker1, SIGNAL("elementSelected(PyQt_PyObject)"),
+                     self.elementSelected)
         
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                         Qwt.QwtPlot.yLeft,
@@ -422,6 +439,10 @@ class OrbitPlot(Qwt.QwtPlot):
         self.marker.setLabelAlignment(Qt.AlignBottom)
         #self.marker.setValue(100, 0)
         #self.marker.setLabel(Qwt.QwtText("Hello"))
+        #self.connect(self, SIGNAL("doubleClicked
+
+    def elementSelected(self, elem):
+        print "element selected:", elem
 
     def zoomed1(self, rect):
         print "Zoomed"

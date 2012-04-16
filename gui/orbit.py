@@ -169,6 +169,8 @@ class OrbitPlotMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
         self.setWindowTitle("NSLS-II SR")
         self.setIconSize(QSize(48, 48))
+        if aphla.conf.inHome("nsls2_sr_orbit.json"):
+            print "# using config file 'nsls2_sr_orbit.json' from $HOME"
         self.config = OrbitPlotConfig(None, 
             aphla.conf.filename("nsls2_sr_orbit.json"))
 
