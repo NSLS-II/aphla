@@ -1,5 +1,6 @@
 """
 Element
+~~~~~~~~
 
 :author: Lingyun Yang
 :date: 2011-05-13 10:28
@@ -126,6 +127,9 @@ class AbstractElement(object):
 
     def updateProperties(self, prpt):
         """
+        Update the properties of this element, the input *prpt* is a
+        dictionary with the following keys:
+
         - *devname* Device name
         - *cell* Cell
         - *girder* Girder
@@ -162,8 +166,6 @@ class AbstractElement(object):
         if prpt.has_key('index'):
             self.index = int(prpt['index'])
 
-    def updateCfsTags(self, tags):
-        pass
 
 class CaDecorator:
     """
@@ -349,6 +351,8 @@ class CaDecorator:
         """
         raise NotImplementedError("waiting for data")
 
+
+
 class CaElement(AbstractElement):
     """
     Element with Channel Access ability
@@ -392,7 +396,7 @@ class CaElement(AbstractElement):
 
     def _pv_tags(self, tags):
         """
-        return pv based on a list of tags
+        return pv list which has all the *tags*.
         """
         tagset = set(tags)
         return [pv for pv,ts in self._pvtags.iteritems()
@@ -400,7 +404,7 @@ class CaElement(AbstractElement):
 
     def _pv_fields(self, fields):
         """
-        return pvs based on a list of fields
+        return pv list which has all fields in the input
         """
         fieldset = set(fields)
         ret = []
@@ -413,7 +417,8 @@ class CaElement(AbstractElement):
             
     def pv(self, **kwargs):
         """
-        search for pv
+        search for pv with specified *tag*, *tags*, *field*, *handle* or a
+        combinatinon of *field* and *handle*.
 
         Example::
 
@@ -470,15 +475,16 @@ class CaElement(AbstractElement):
         """
         add *pv* for `eset` action
 
-        If no field provided, assign to the default "value" field
+        If no field provided, assign to the default "value" field.
         """
         sflists = ['value']
-        if field: sflists.append(field)
+        if field is not None: sflists.append(field)
 
+        # for the given PV, create CaDecorator for each field.
         for sf in sflists:
-            if not sf in self._field.keys() or not self._field[sf]:
+            if sf not in self._field.keys() or not self._field[sf]:
                 self._field[sf] = CaDecorator(trace=self.trace)
-            # add pv
+            # add setpoint pv
             self._field[sf].insertSetpoint(pv)
         
     def status(self):
@@ -634,6 +640,17 @@ class CaElement(AbstractElement):
 
     def reset(self, fieldname):
         self._field[fieldname].reset()
+
+    def get(self, fields):
+        """
+        get the values for given fields
+        """
+        if isinstance(fields, (str, unicode)):
+            return self._field[fields].getReadback()
+        else:
+            # a list of fields
+            return [self._field[v].getReadback() for v in fields]
+
 
 def merge(elems, **kwargs):
     """
