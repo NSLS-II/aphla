@@ -10,7 +10,7 @@
 import cothread
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
 
-app = cothread.iqt(use_timer=True)
+app = cothread.iqt()
 
 import sys
 
@@ -33,7 +33,8 @@ import numpy as np
 
 class OrbitData(object):
     """
-    the orbit related data.
+    the orbit related data. Raw orbit reading and statistics.
+
     - *samples* data points kept to calculate the statistics.
     - *yfactor* factor for *y*
     - *x* list of s-coordinate, never updated.
@@ -161,13 +162,21 @@ class OrbitData(object):
             ret[i] = dc.pop(0)
         return ret
 
+
+class ElementProperties(QTabWidget):
+    def __init__(self, parent = None):
+        QTabWidget.__init__(self, parent)
+
+    def addElement(self, elem):
+        self.setVisible(True)
+        print "new element:", elem
+
 class OrbitPlotMainWindow(QMainWindow):
     """
-    the main window
+    the main window has three major widgets: current, orbit tabs and element editor.
     """
     def __init__(self, parent = None, mode = 'EPICS'):
         QMainWindow.__init__(self, parent)
-        self.setWindowTitle("NSLS-II SR")
         self.setIconSize(QSize(48, 48))
         if aphla.conf.inHome("nsls2_sr_orbit.json"):
             print "# using config file 'nsls2_sr_orbit.json' from $HOME"
@@ -241,12 +250,20 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot4.setTitle("Vertical")
         #self.lbplt2info = QLabel("Min\nMax\nAverage\nStd")
 
+        self.elems = ElementProperties()
+        self.elems.setVisible(False)
+        self.connect(self.plot1, SIGNAL("elementSelected(PyQt_PyObject)"),
+                     self.elems.addElement)
+        self.connect(self.plot2, SIGNAL("elementSelected(PyQt_PyObject)"),
+                     self.elems.addElement)
+
         cwid = QWidget()
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.dcct)
+        majbox = QGridLayout()
+        majbox.addWidget(self.dcct, 0, 0, 1, 2)
         self.tabs = QTabWidget()
-        vbox.addWidget(self.tabs)
-        cwid.setLayout(vbox)
+        majbox.addWidget(self.tabs, 1, 0)
+        majbox.addWidget(self.elems, 1, 1)
+        cwid.setLayout(majbox)
 
         wid1 = QWidget()
         gbox = QGridLayout()
@@ -604,6 +621,7 @@ def main():
     if '--sim' in sys.argv: mode = 'sim'
     else: mode = 'EPICS'
     demo = OrbitPlotMainWindow(mode=mode)
+    demo.setWindowTitle("NSLS-II SR")
     demo.resize(600,500)
     demo.show()
     # print app.style() # QCommonStyle

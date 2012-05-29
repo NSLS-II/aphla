@@ -201,6 +201,8 @@ def initNSLS2VSRTwiss():
     nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
     nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
 
+    global _twiss, _lat
+
     #print(__file__, "Reading twiss items:", len(s))
     print("Elements in lattice:", len(_lat._elements))
 
@@ -209,7 +211,6 @@ def initNSLS2VSRTwiss():
               phix, phiy]:
         x.append(x[-1])
     
-    global _twiss, _lat
     _twiss = Twiss('virtac')
 
     _twiss.tune = (nux, nuy)

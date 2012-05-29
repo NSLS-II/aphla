@@ -100,7 +100,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         elements = self.element_names(pos.x(), pos.y())
         
         #self.emit(SIGNAL("elementSelected(list)"), elements)
-        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elements)
+        self.emit(SIGNAL("elementDoubleClicked(PyQt_PyObject)"), elements)
 
 
 class DcctCurrentCurve(Qwt.QwtPlotCurve):
@@ -202,7 +202,8 @@ class DcctCurrentPlot(Qwt.QwtPlot):
 
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
-    """Orbit curve
+    """
+    Orbit curve
     """
     def __init__(self, data, **kw):
         """A curve of x versus y data with error bars in dx and dy.
@@ -339,22 +340,12 @@ class OrbitPlot(Qwt.QwtPlot):
                  pvs_golden = None, live = True, errorbar = True, 
                  picker_profile = None, magnet_profile = None):
         
-        #data = kw.get('data', None)
-        #data_field = kw.get('data_field', 'orbit')
-        #pvs_golden = kw.get('pvs_golden', None)
-        #live = kw.get('live', True)
-        #errorbar= kw.get('errorbar', True)
-        #picker_profile = kw.get('picker_profile', None)
-
         super(OrbitPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
         self.errorOnTop = errorbar
         self.live = live
         
-        #self.setTitle("An Orbit Plot")
-        #self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
-
         self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
         self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
 
@@ -380,7 +371,7 @@ class OrbitPlot(Qwt.QwtPlot):
         self.curve2.attach(self)
         #self.curve2.setVisible(False)
 
-        print "PV golden:", pvs_golden
+        #print "PV golden:", pvs_golden
         if pvs_golden is None: self.golden = None
         else:
             #for pv in pvs_golden: print pv, caget(pv.encode("ascii"))
@@ -419,8 +410,8 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
         self.picker1.setTrackerPen(QPen(Qt.red, 4))
-        self.connect(self.picker1, SIGNAL("elementSelected(PyQt_PyObject)"),
-                     self.elementSelected)
+        self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
+                     self.elementDoubleClicked)
         
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                         Qwt.QwtPlot.yLeft,
@@ -441,8 +432,9 @@ class OrbitPlot(Qwt.QwtPlot):
         #self.marker.setLabel(Qwt.QwtText("Hello"))
         #self.connect(self, SIGNAL("doubleClicked
 
-    def elementSelected(self, elem):
+    def elementDoubleClicked(self, elem):
         print "element selected:", elem
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
 
     def zoomed1(self, rect):
         print "Zoomed"

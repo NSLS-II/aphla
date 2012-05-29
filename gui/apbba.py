@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import cothread
-app = cothread.iqt(use_timer=True)
+app = cothread.iqt()
 
 from cothread.catools import caget, caput
 
