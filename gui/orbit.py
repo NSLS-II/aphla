@@ -21,11 +21,12 @@ from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
 from orbitplot import OrbitPlot, DcctCurrentPlot
 from orbitcorrdlg import OrbitCorrDlg
+from elemproperty import *
 
 import aphla
 import time
 from PyQt4.QtCore import QSize, SIGNAL, Qt
-from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, 
+from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
 
@@ -178,7 +179,11 @@ class ElementPropertyTabs(QTabWidget):
         else:
             for elem in elems:
                 #print elem.name, elem.sb, elem.fields()
-                self.addTab(QPushButton(elem.name), "Tab %s" % elem.name)
+                tableview = QTableView()
+                tableview.setModel(ElementPropertyTableModel(elem=elem))
+                tableview.setItemDelegate(ElementPropertyDelegate(self))
+
+                self.addTab(tableview, elem.name)
 
     def closeTab(self, index):
         self.removeTab(index)
