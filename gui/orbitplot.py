@@ -17,18 +17,8 @@ from PyQt4.Qwt5.anynumpy import *
 
 import time
 import numpy as np
+from scales import DateTimeScaleEngine
 
-class TimeScaleDraw(Qwt.QwtScaleDraw):
-    def __init__(self):
-        super(TimeScaleDraw, self).__init__()
-
-    def label(self, v = 0):
-        """
-        convert epoch seconds to label
-        """
-        s = time.strftime("%H:%M", time.gmtime(v))
-        #print "datetime:",v
-        return Qwt.QwtText(s)
 
 class MagnetPicker(Qwt.QwtPlotPicker):
     """
@@ -125,17 +115,24 @@ class DcctCurrentPlot(Qwt.QwtPlot):
         #self.setAutoReplot(False)
         self.plotLayout().setAlignCanvasToScales(True)
         #self.setAxisTitle(Qwt.QwtPlot.xBottom, "Time")
-        self.setAxisScaleDraw(Qwt.QwtPlot.xBottom, TimeScaleDraw())
+        #self.setAxisScaleDraw(Qwt.QwtPlot.xBottom, TimeScaleDraw())
         self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 240)
-        self.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -20.0)
+        #self.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -10.0)
         self.setAxisLabelAlignment(Qwt.QwtPlot.xBottom, Qt.AlignLeft)
         scaleWidget = self.axisWidget(Qwt.QwtPlot.xBottom)
         fmh = QFontMetrics(scaleWidget.font()).height()
-        scaleWidget.setMinBorderDist(0, fmh/2)
+        #scaleWidget.setMinBorderDist(0, fmh/2)
         
         #self.setAxisTitle(Qwt.QwtPlot.yLeft, "I")
-        self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
-        
+        #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
+        DateTimeScaleEngine.enableInAxis(self, Qwt.QwtPlot.xBottom)
+        sd = self.axisScaleDraw(Qwt.QwtPlot.xBottom)
+        #fmh = QFontMetrics(scaleWidget.font()).height()
+        #scaleWidget.setMinBorderDist(0, fmh/2)
+        #print "Scale Draw Extent:", sd.minimumExtent()
+        sd.setMinimumExtent(fmh*2)
+        #print "Scale Draw Extent:", sd.minimumExtent()
+
         self.curve = DcctCurrentCurve()
         self.curve.setColor(Qt.green)
 

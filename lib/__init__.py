@@ -89,7 +89,13 @@ except Timedout:
     logger.info("virtual accelerator is not available")
     NETWORK_DOWN = True
     pass
-
+except:
+    logger.info("virtual accelerator is not available, exception is "
+                "not timedout")
+    NETWORK_DOWN = True
+else:
+    logger.info("virtual accelerator is available, no timedout")
+    
 
 ## #from meastwiss import *
 ## from measorm import *

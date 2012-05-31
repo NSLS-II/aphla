@@ -23,10 +23,10 @@ from orbitplot import OrbitPlot, DcctCurrentPlot
 from orbitcorrdlg import OrbitCorrDlg
 
 import aphla
-
+import time
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, 
-    QVBoxLayout, QPen, QSizePolicy,
+    QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
 
 import numpy as np
@@ -163,13 +163,27 @@ class OrbitData(object):
         return ret
 
 
-class ElementProperties(QTabWidget):
+class ElementPropertyTabs(QTabWidget):
     def __init__(self, parent = None):
         QTabWidget.__init__(self, parent)
+        self.connect(self, SIGNAL('tabCloseRequested(int)'), self.closeTab)
 
-    def addElement(self, elem):
+    def addElement(self, elemnames):
         self.setVisible(True)
-        print "new element:", elem
+        print "new element:", elemnames
+        elems = aphla.getElements(elemnames)
+        if elems is None:
+            QMessageBox.warning(self, "Element Not Found",
+                                "element " + str(elemnames) + " not found")
+        else:
+            for elem in elems:
+                #print elem.name, elem.sb, elem.fields()
+                self.addTab(QPushButton(elem.name), "Tab %s" % elem.name)
+
+    def closeTab(self, index):
+        self.removeTab(index)
+        if self.count() <= 0: self.setVisible(False)
+
 
 class OrbitPlotMainWindow(QMainWindow):
     """
@@ -183,17 +197,27 @@ class OrbitPlotMainWindow(QMainWindow):
         self.config = OrbitPlotConfig(None, 
             aphla.conf.filename("nsls2_sr_orbit.json"))
 
-        self.dcct = DcctCurrentPlot()
+        self.dcct = DcctCurrentPlot(mode=mode)
         self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
         self.dcct.setMinimumHeight(100)
         self.dcct.setMaximumHeight(150)
         print __name__, ":"
         print "  WARNING: Using hardcoded PV: 'SR:C00-BI:G00{DCCT:00}CUR-RB'"
-        # load fake current
-        t = caget('SR:C00-BI:G00{DCCT:00}CUR-RB', format=FORMAT_TIME)
-        self.dcct._loadFakeData(t.timestamp, t.real, 4.0, 500.0, 24.0)
-        camonitor('SR:C00-BI:G00{DCCT:00}CUR-RB', self.dcct.updateDcct, 
-                  format=FORMAT_TIME)
+        try:
+            # load fake current
+            t = caget('SR:C00-BI:G00{DCCT:00}CUR-RB', format=FORMAT_TIME)
+            self.dcct._loadFakeData(t.timestamp, t.real, 4.0, 500.0, 24.0)
+            camonitor('SR:C00-BI:G00{DCCT:00}CUR-RB', self.dcct.updateDcct, 
+                      format=FORMAT_TIME)
+        except:
+            print "WARNING: timedout ?"
+            t0 = time.time()
+            t = np.linspace(t0 - 8*3600*24, t0, 100)
+            self.dcct.curve.t = t
+            v = 500*np.exp((t[0] - t[:50])/(4*3600*24))
+            self.dcct.curve.v = v.tolist()+v.tolist()
+            
+            self.dcct.updatePlot()
 
         # initialize a QwtPlot central widget
         #bpm = hla.getElements('BPM')
@@ -250,19 +274,29 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot4.setTitle("Vertical")
         #self.lbplt2info = QLabel("Min\nMax\nAverage\nStd")
 
-        self.elems = ElementProperties()
+        self.elems = ElementPropertyTabs()
         self.elems.setVisible(False)
+        self.elems.setTabsClosable(True)
         self.connect(self.plot1, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elems.addElement)
         self.connect(self.plot2, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elems.addElement)
 
         cwid = QWidget()
-        majbox = QGridLayout()
-        majbox.addWidget(self.dcct, 0, 0, 1, 2)
+        #majbox = QGridLayout()
+        #majbox.addWidget(self.dcct, 0, 0, 1, 2)
+        majbox = QVBoxLayout()
+        #majbox.setSpacing(30)
+        #majbox.setMargin(10)
+        majbox.addWidget(self.dcct)
+        # 
+        self.orbitSplitter = QSplitter(Qt.Horizontal)
         self.tabs = QTabWidget()
-        majbox.addWidget(self.tabs, 1, 0)
-        majbox.addWidget(self.elems, 1, 1)
+        self.orbitSplitter.addWidget(self.tabs)
+        self.orbitSplitter.addWidget(self.elems)
+        #majbox.addWidget(self.tabs, 1, 0)
+        #majbox.addWidget(self.elems, 1, 1)
+        majbox.addWidget(self.orbitSplitter) #, 1, 0, 1, 2)
         cwid.setLayout(majbox)
 
         wid1 = QWidget()
