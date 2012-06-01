@@ -351,7 +351,10 @@ class CaDecorator:
         """
         raise NotImplementedError("waiting for data")
 
-
+    def settable(self):
+        """check if it can be set"""
+        if not self.pvsp: return False
+        else: return True
 
 class CaElement(AbstractElement):
     """
@@ -638,19 +641,39 @@ class CaElement(AbstractElement):
     def mark(self, fieldname, data = 'setpoint'):
         self._field[fieldname].mark(data)
 
-    def reset(self, fieldname):
-        self._field[fieldname].reset()
-
-    def get(self, fields):
+    def reset(self, field):
         """
-        get the values for given fields
+        see CaDecorator::reset()
         """
-        if isinstance(fields, (str, unicode)):
-            return self._field[fields].getReadback()
-        else:
-            # a list of fields
-            return [self._field[v].getReadback() for v in fields]
+        self._field[field].reset()
 
+    def get(self, fields, source='readback'):
+        """
+        get the values for given fields. the source can be 'readback' or
+        'setpoint'.
+        """
+        if source.lower() == 'readback':
+            if isinstance(fields, (str, unicode)):
+                return self._field[fields].getReadback()
+            else:
+                # a list of fields
+                return [self._field[v].getReadback() for v in fields]
+        elif source.lower() == 'setpoint':
+            if isinstance(fields, (str, unicode)):
+                return self._field[fields].getSetpoint()
+            else:
+                return [self._field[v].getSetpoint() for v in fields]
+        return None
+
+    def settable(self, field):
+        if field not in self._field.keys():
+            return False
+        return self._field[field].settable()
+
+    def readable(self, field):
+        if field in self._field.keys():
+            return True
+        return False
 
 def merge(elems, **kwargs):
     """
