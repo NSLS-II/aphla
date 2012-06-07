@@ -17,7 +17,12 @@ from PyQt4.Qwt5.anynumpy import *
 
 import time
 import numpy as np
-from scales import DateTimeScaleEngine
+import sip
+
+# sip has a bug affecting PyQwt
+# http://blog.gmane.org/gmane.comp.graphics.qwt.python/month=20101001
+if sip.SIP_VERSION_STR > '4.10.2':
+    from scales import DateTimeScaleEngine
 
 
 class MagnetPicker(Qwt.QwtPlotPicker):
@@ -125,7 +130,9 @@ class DcctCurrentPlot(Qwt.QwtPlot):
         
         #self.setAxisTitle(Qwt.QwtPlot.yLeft, "I")
         #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
-        DateTimeScaleEngine.enableInAxis(self, Qwt.QwtPlot.xBottom)
+        import sip
+        if sip.SIP_VERSION_STR > '4.10.2':
+            DateTimeScaleEngine.enableInAxis(self, Qwt.QwtPlot.xBottom)
         sd = self.axisScaleDraw(Qwt.QwtPlot.xBottom)
         #fmh = QFontMetrics(scaleWidget.font()).height()
         #scaleWidget.setMinBorderDist(0, fmh/2)

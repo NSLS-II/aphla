@@ -3,9 +3,12 @@
 #__all__ = [ 'main' ]
 
 # for debugging, requires: python configure.py --trace ...
-#if 0:
-#    import sip
-#    sip.settracemask(0x3f)
+if 1:
+    import sip
+    sip.settracemask(0x3f)
+
+from pkg_resources import require
+require('cothread==2.2')
 
 import cothread
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
@@ -206,12 +209,15 @@ class OrbitPlotMainWindow(QMainWindow):
         self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
         self.dcct.setMinimumHeight(100)
         self.dcct.setMaximumHeight(150)
+
         print __name__, ":"
         print "  WARNING: Using hardcoded PV: 'SR:C00-BI:G00{DCCT:00}CUR-RB'"
         try:
             # load fake current
+            print "loading fake current"
             t = caget('SR:C00-BI:G00{DCCT:00}CUR-RB', format=FORMAT_TIME)
-            self.dcct._loadFakeData(t.timestamp, t.real, 4.0, 500.0, 24.0)
+            #self.dcct._loadFakeData(t.timestamp, t.real, 4.0, 500.0, 24.0)
+            print "current: ", t
             camonitor('SR:C00-BI:G00{DCCT:00}CUR-RB', self.dcct.updateDcct, 
                       format=FORMAT_TIME)
         except:
