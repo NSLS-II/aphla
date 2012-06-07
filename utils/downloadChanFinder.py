@@ -16,18 +16,22 @@ import sys
 import shelve
 from time import gmtime, strftime
 
-from channelfinder import ChannelFinderClient, Channel, Tag, Property
-
-cfsurl = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder'
-
 if __name__ == "__main__":
-    
-    cf = ChannelFinderClient(BaseURL = cfsurl)
-    channels = cf.find(tagName='aphla.sys.SR')
+    #sys.path.append('/home/lyyang/Downloads/python.channelfinder.api/src')
+    from channelfinder import ChannelFinderClient
+    cf = ChannelFinderClient(BaseURL = 'http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder')
+    channels = cf.find(name='SR*')
     # a dict k=PV, v = property + tags
-    f = open('output.txt', 'w')
-    for ch in channels:
-        f.write("%s; " % ch.Name)
+    d = {}
+    conv_float = ['length', 's_position']
+    conv_int = ['ordinal']
+    for channel in channels:
+        #print channel.Name, type(channel.Name)
+        d[channel.Name] = {'~tags': []}
+        props = channel.getProperties()
+        tags  = channel.getTags()
+        if props is None:
+            print "Empty prop: ", channel.Name
         else:
             for k, v in props.items():
                 #print "    %s:" % k, v, type(v)
@@ -42,13 +46,11 @@ if __name__ == "__main__":
                 else:
                     d[channel.Name][k] = v
         if tags:
-            print "    TAGS:",
-            for t in tags:
-                print t,
-            print ""
-
+            pass
+        else:
+            print "Empty tags:", channel.Name
 #        client.remove(channelName=(u'%s' % channel.Name))
-    print len(channels)
+    print "Channels: ", len(channels), "in total"
     #f = shelve.open('chanfinder.pkl', 'c')
     #f['cfa.create_date'] = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
     #f['cfa.data'] = d
@@ -56,17 +58,14 @@ if __name__ == "__main__":
 
     cnt = []
     for k,v in d.items():
-        if not k[-6:] in cnt: cnt.append(k[-6:])
-        continue
-
-        print k
+        print k,
         for p,val in v.items():
             if p == '~tags': continue
-            print "  ", p, val, type(v)
+            print ", %s=%s" % ( p, val ),
         if v.has_key('~tags'):
             print "   TAGS:",
             for t in v['~tags']: print t,
             print ""
-        print ""
+        #print ""
     print cnt
     # save 

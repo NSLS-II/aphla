@@ -181,10 +181,16 @@ def getElements(group, return_list=False, include_virtual=False):
     lattice.
     """
 
-    ret = machines._lat.getElements(group, return_list=return_list)
-    if include_virtual == True: return ret
+    ret = machines._lat.getElements(group, return_list=True)
+    if not include_virtual:
+        elems = [elem for elem in ret if elem.virtual == 0]
     else:
-        return [elem for elem in ret if elem.virtual == 0]
+        elems = ret
+    if return_list: return elems
+    else:
+        if len(elems) == 0: return None
+        elif len(elems) == 1: return elems[0]
+        else: return elems
 
 def getLocations(group):
     """
