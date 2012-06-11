@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import cothread
-app = cothread.iqt(use_timer=True)
+app = cothread.iqt()
 
 from cothread.catools import caget, caput
 
@@ -24,8 +24,6 @@ from matplotlib.figure import Figure
 import PyQt4.Qwt5 as Qwt
 import numpy as np
 from PIL import Image, ImageQt
-
-config_dir = "~/.hla"
 
 #lyyang@virtac:/home/shengb/nsls2$ cat T2_NSLS2/tracy_align_error_one.txt 
 ##index name      cell girder  dX    dY    dS    dRoll   dPitch   dYaw
@@ -63,7 +61,6 @@ class BbaMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
-        #self.config = BbaConfig(config_dir, conf.filename("nsls2_sr_bba.json"))
 
         self.widtab = QTabWidget()
         #widtab.addTab(QLabel("Tab1"), "Tab 1")
@@ -252,6 +249,7 @@ class BbaMainWindow(QMainWindow):
                 dset[:, :, :] = ac.orbit
                 grp['keep'] = ac.mask
                 grp['trim_fitted'] = ac.trim_fitted
+                grp['trim_pvsp'] = ac.trim_pvsp
 
                 for j in range(len(rec[i+1])):
                     data = rec[i+1][j]

@@ -3,7 +3,8 @@ from cothread.catools import caget, caput
 
 from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
         QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
-        QSize, QRectF, QLine)
+        QSize, QRectF, QLine, pyqtSignal)
+#from PyQt4 import (PyQt_PyObject,)
 from PyQt4.QtGui import (QApplication, QWidget, QColor,
         QDockWidget, QFileDialog, QFrame, QImage, QImageReader,
         QImageWriter, QInputDialog, QKeySequence, QListWidget,
@@ -16,17 +17,13 @@ from PyQt4.Qwt5.anynumpy import *
 
 import time
 import numpy as np
+import sip
 
-class TimeScaleDraw(Qwt.QwtScaleDraw):
-    def __init__(self):
-        super(TimeScaleDraw, self).__init__()
+# sip has a bug affecting PyQwt
+# http://blog.gmane.org/gmane.comp.graphics.qwt.python/month=20101001
+if sip.SIP_VERSION_STR > '4.10.2':
+    from scales import DateTimeScaleEngine
 
-    def label(self, v = 0):
-        """
-        convert epoch seconds to label
-        """
-        s = time.strftime("%H:%M", time.gmtime(v))
-        return Qwt.QwtText(s)
 
 class MagnetPicker(Qwt.QwtPlotPicker):
     """
@@ -52,6 +49,9 @@ class MagnetPicker(Qwt.QwtPlotPicker):
 
         self.connect(self, SIGNAL("selected(QPointF&)"),
                      self.activate_element)
+        # instead of list, use PyQt_PyObject
+        #self.elementSelected = pyqtSignal(PyQt_PyObject)
+        self.elementSelected = pyqtSignal(list)
 
     def activate_element(self, p):
         print p
@@ -78,13 +78,24 @@ class MagnetPicker(Qwt.QwtPlotPicker):
             self.profile.insert(i, (c-w, c+w, name))
             return
 
-    def trackerTextF(self, pos):
+    def element_names(self, x, y):
         s = []
-        x, y = pos.x(), pos.y()
         for m in self.profile:
             if x > m[0] and x < m[1]:
                 s.append(m[2])
+        return s
+
+    def trackerTextF(self, pos):
+        s = self.element_names(pos.x(), pos.y())
         return Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y(), '\n'.join(s)))
+
+    def widgetMouseDoubleClickEvent(self, evt):
+        #print "Double Clicked", evt.x(), evt.y(), evt.pos(), evt.posF()
+        pos = self.invTransform(evt.pos())
+        elements = self.element_names(pos.x(), pos.y())
+        
+        #self.emit(SIGNAL("elementSelected(list)"), elements)
+        self.emit(SIGNAL("elementDoubleClicked(PyQt_PyObject)"), elements)
 
 
 class DcctCurrentCurve(Qwt.QwtPlotCurve):
@@ -109,17 +120,26 @@ class DcctCurrentPlot(Qwt.QwtPlot):
         #self.setAutoReplot(False)
         self.plotLayout().setAlignCanvasToScales(True)
         #self.setAxisTitle(Qwt.QwtPlot.xBottom, "Time")
-        self.setAxisScaleDraw(Qwt.QwtPlot.xBottom, TimeScaleDraw())
-        #self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 200)
-        self.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -20.0)
+        #self.setAxisScaleDraw(Qwt.QwtPlot.xBottom, TimeScaleDraw())
+        self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 240)
+        #self.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -10.0)
         self.setAxisLabelAlignment(Qwt.QwtPlot.xBottom, Qt.AlignLeft)
         scaleWidget = self.axisWidget(Qwt.QwtPlot.xBottom)
         fmh = QFontMetrics(scaleWidget.font()).height()
-        scaleWidget.setMinBorderDist(0, fmh/2)
+        #scaleWidget.setMinBorderDist(0, fmh/2)
         
         #self.setAxisTitle(Qwt.QwtPlot.yLeft, "I")
-        self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
-        
+        #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
+        import sip
+        if sip.SIP_VERSION_STR > '4.10.2':
+            DateTimeScaleEngine.enableInAxis(self, Qwt.QwtPlot.xBottom)
+        sd = self.axisScaleDraw(Qwt.QwtPlot.xBottom)
+        #fmh = QFontMetrics(scaleWidget.font()).height()
+        #scaleWidget.setMinBorderDist(0, fmh/2)
+        #print "Scale Draw Extent:", sd.minimumExtent()
+        sd.setMinimumExtent(fmh*2)
+        #print "Scale Draw Extent:", sd.minimumExtent()
+
         self.curve = DcctCurrentCurve()
         self.curve.setColor(Qt.green)
 
@@ -186,7 +206,8 @@ class DcctCurrentPlot(Qwt.QwtPlot):
 
 
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
-    """Orbit curve
+    """
+    Orbit curve
     """
     def __init__(self, data, **kw):
         """A curve of x versus y data with error bars in dx and dy.
@@ -323,22 +344,12 @@ class OrbitPlot(Qwt.QwtPlot):
                  pvs_golden = None, live = True, errorbar = True, 
                  picker_profile = None, magnet_profile = None):
         
-        #data = kw.get('data', None)
-        #data_field = kw.get('data_field', 'orbit')
-        #pvs_golden = kw.get('pvs_golden', None)
-        #live = kw.get('live', True)
-        #errorbar= kw.get('errorbar', True)
-        #picker_profile = kw.get('picker_profile', None)
-
         super(OrbitPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
         self.errorOnTop = errorbar
         self.live = live
         
-        #self.setTitle("An Orbit Plot")
-        #self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
-
         self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
         self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
 
@@ -364,7 +375,7 @@ class OrbitPlot(Qwt.QwtPlot):
         self.curve2.attach(self)
         #self.curve2.setVisible(False)
 
-        print "PV golden:", pvs_golden
+        #print "PV golden:", pvs_golden
         if pvs_golden is None: self.golden = None
         else:
             #for pv in pvs_golden: print pv, caget(pv.encode("ascii"))
@@ -403,6 +414,8 @@ class OrbitPlot(Qwt.QwtPlot):
 
         self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
         self.picker1.setTrackerPen(QPen(Qt.red, 4))
+        self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
+                     self.elementDoubleClicked)
         
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                         Qwt.QwtPlot.yLeft,
@@ -421,6 +434,11 @@ class OrbitPlot(Qwt.QwtPlot):
         self.marker.setLabelAlignment(Qt.AlignBottom)
         #self.marker.setValue(100, 0)
         #self.marker.setLabel(Qwt.QwtText("Hello"))
+        #self.connect(self, SIGNAL("doubleClicked
+
+    def elementDoubleClicked(self, elem):
+        print "element selected:", elem
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
 
     def zoomed1(self, rect):
         print "Zoomed"

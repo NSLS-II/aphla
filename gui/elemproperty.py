@@ -10,7 +10,7 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
 
 import numpy as np
 
-FIELD, VALUE = 0, 1
+FIELD, VALUE_RB, VALUE_SP = 0, 1, 2
 
 
 class ElementPropertyTableModel(QAbstractTableModel):
@@ -18,27 +18,10 @@ class ElementPropertyTableModel(QAbstractTableModel):
         super(ElementPropertyTableModel, self).__init__()
         self._elem = elem
         self._field, self._value = [], []
-        for var in dir(elem):
-            try:
-                callable(getattr(elem, var))
-            except:
-                continue
-            if callable(getattr(elem, var)): continue
-            if var.startswith('_'): continue
-            if var in elem.fields() and elem.settable(var):
-                self._field.append((var+".SP", 'setpoint'))
-                #self._value.append(elem.get(var, 'setpoint'))
-                self._value.append(1e6)
-
-                self._field.append((var+".RB", 'setpoint'))
-                #self._value.append(elem.get(var, 'readback'))
-                self._value.append(1e6)
-            else:
-                self._field.append((var, None))
-                self._value.append(getattr(elem, var))
-                #self._value.append(1e6)
-                
-            print "field record:", self._field[-1], self._value[-1]
+        for var in elem.fields():
+            self._field.append(var)
+            self._value.append([elem.get(var, 'readback'),
+                                elem.get(var, 'setpoint')])
         self._NF = len(self._field)
 
     def data(self, index, role=Qt.DisplayRole):
@@ -47,8 +30,10 @@ class ElementPropertyTableModel(QAbstractTableModel):
             return QVariant()
         r, col  = index.row(), index.column()
         if role == Qt.DisplayRole:
-            if col == FIELD: return QVariant(self._field[r][0])
-            elif col == VALUE: return QVariant(self._value[r])
+            if col == FIELD: return QVariant(self._field[r])
+            elif col == VALUE_RB: return QVariant(self._value[r][0])
+            elif col == VALUE_SP: return QVariant(self._value[r][1])
+            
         return QVariant()
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -60,23 +45,19 @@ class ElementPropertyTableModel(QAbstractTableModel):
             return QVariant()
         if orientation == Qt.Horizontal:
             if section == FIELD: return QVariant("Field")
-            elif section == VALUE: return QVariant("Value")
+            elif section == VALUE_RB: return QVariant("Readback")
+            elif section == VALUE_SP: return QVariant("Setpoint")
         return QVariant(int(section+1))
 
     def flags(self, index):
         if not index.isValid():
             return Qt.ItemIsEnabled
         row, col = index.row(), index.column()
-        field = self._field[row][0]
-        if field[:-3] in self._elem.fields():
-            if field[-3:] == '.SP':
-                if index.column() == VALUE:
-                    return Qt.ItemFlags(
-                        QAbstractTableModel.flags(self, index)|
-                        Qt.ItemIsEditable)
-            else:
-                return Qt.ItemIsEnabled
-
+        field = self._field[row]
+        if col == VALUE_SP:
+            return Qt.ItemFlags(
+                QAbstractTableModel.flags(self, index)|
+                Qt.ItemIsEditable)
         else:
             return Qt.ItemIsEnabled
 
@@ -84,7 +65,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         return len(self._field)
     
     def columnCount(self, index=QModelIndex()):
-        return 2
+        return 3
 
     def setData(self, index, value, role=Qt.EditRole):
         print "setting data"
@@ -92,9 +73,9 @@ class ElementPropertyTableModel(QAbstractTableModel):
             row, col = index.row(), index.column()
             if col == FIELD:
                 print "Editting property"
-            elif col == VALUE:
+            elif col == VALUE_SP:
                 print "Editting pv"
-                self._value[row] = value
+                self._value[row][1] = value
             self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                       index, index)
             return True
@@ -114,11 +95,13 @@ class ElementPropertyDelegate(QStyledItemDelegate):
         return QStyledItemDelegate.sizeHint(self, option, index)
 
     def createEditor(self, parent, option, index):
-        if index.column() == VALUE:
+        row, col = index.row(), index.column()
+        if index.column() == VALUE_SP:
             spinbox = QDoubleSpinBox(parent)
             spinbox.setRange(-100, 100)
             spinbox.setSingleStep(2)
             spinbox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+            #spinbox.setValue(self._value[row][1])
             return spinbox
         else:
             return QStyledItemDelegate.createEditor(self, parent, option,
@@ -133,16 +116,14 @@ class ElementPropertyDelegate(QStyledItemDelegate):
     def setEditorData(self, editor, index):
         text = index.model().data(index, Qt.DisplayRole).toString()
         print "Setting editor to", text
-        if text.contains("http://") >= 0:
-            editor.setValue(text)
-        elif index.column() == VALUE:
+        if index.column() == VALUE_SP:
             value = text.toDouble()[0]
             editor.setValue(value)
         else:
             QStyledItemDelegate.setEditorData(self, editor, index)
 
     def setModelData(self, editor, model, index):
-        if index.column() == VALUE:
+        if index.column() == VALUE_SP:
             model.setData(index, QVariant(editor.value()))
         else:
             QStyledItemDelegate.setModelData(self, editor, model, index)
