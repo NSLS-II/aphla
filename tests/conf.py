@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os, time
-from cothread.catools import caget, caput
+import cothread
 
 import logging
 logging.basicConfig(filename="utest.log",

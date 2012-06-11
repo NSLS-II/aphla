@@ -44,7 +44,7 @@ class AbstractElement(object):
     """
 
     # format string for __str__
-    STR_FORMAT = "%d %s %s %.3f %.3f %s %s %s %s %s"
+    _STR_FORMAT = "%d %s %s %.3f %.3f %s %s %s %s %s"
     #__slots__ = []
     def __init__(self, **kwargs):
         """
@@ -107,7 +107,7 @@ class AbstractElement(object):
             return [b, e], [0, 0], 'k'
 
     def __str__(self):
-        return AbstractElement.STR_FORMAT % (
+        return AbstractElement._STR_FORMAT % (
             self.index, self.name, self.family, self.sb, self.length,
             self.devname, self.cell, self.girder, self.symmetry, self.sequence)
 
@@ -136,9 +136,14 @@ class AbstractElement(object):
         - *symmetry* Symmetry
         - *phylen* Physical length
         - *length* Effective/magnetic length
-        - *s*  s-loc (not specified for entrance/midpoint/exit)
+        - *sb* s-loc of the entrance (effective length)
+        - *se* s-loc of the exit (effective length)
         - *index* index in lattice
+
+        This update will not synchronize element properties, e.g. calculate
+        length from sb and se, or se from sb and length.
         """
+
         if prpt.has_key('family'):
             # rename the family name, append to group. The family name is kept
             # unique, but "pushed" old family name to group name
@@ -382,7 +387,13 @@ class CaElement(AbstractElement):
                 super(CaElement, self).__setattr__(name, value)
             
     def _pv_1(self, **kwargs):
-        """One input"""
+        """
+        One input
+        
+        - tag: 
+        - tags: all tags are met
+        - field: return pvrb + pvsp
+        """
         ret = None
         if kwargs.get('tag', None):
             return self._pv_tags([kwargs['tag']])
@@ -392,10 +403,10 @@ class CaElement(AbstractElement):
             att = kwargs['field']
             if self._field.has_key(att):
                 decr = self._field[att]
-                return [v for v in set(decr.pvsp + decr.pvrb)]
+                return decr.pvrb + decr.pvsp
             else:
-                return None
-        return None
+                return []
+        return []
 
     def _pv_tags(self, tags):
         """
@@ -438,14 +449,14 @@ class CaElement(AbstractElement):
         elif len(kwargs) == 2:
             handle = kwargs.get('handle', None)
             fd = kwargs.get('field', None)
-            if fd not in self._field: return None
+            if fd not in self._field: return []
             if handle.lower() == 'readback':
                 return self._field[kwargs['field']].pvrb
             elif handle.lower() == 'setpoint':
                 return self._field[kwargs['field']].pvsp
             else:
-                return None
-        else: return None
+                return []
+        else: return []
 
     def hasPv(self, pv):
         return self._pvtags.has_key(pv)
@@ -491,14 +502,16 @@ class CaElement(AbstractElement):
             self._field[sf].insertSetpoint(pv)
         
     def status(self):
+        ret = self.name
+        if not self._field.keys(): return ret
+
         maxlen = max([len(att) for att in self._field.keys()])
-        head = '%d%%s ' % maxlen
-        ret = ''
+        head = '\n%%%ds: ' % (maxlen+2)
         for att in self._field.keys():
             decr = self._field[att]
             if not decr: continue
             val = decr.getReadback()
-            ret = ret + head % att + ' '.join([str(v) for v in val]) + '\n'
+            ret = ret + head % att + str(val)
         return ret
 
     def __getattr__(self, att):
@@ -535,19 +548,24 @@ class CaElement(AbstractElement):
             super(CaElement, self).__setattr__(att, val)
             #raise AttributeError("Error")
 
-    def updatePvRecord(self, pvname, properties, tags):
+    def updatePvRecord(self, pvname, properties, tags = []):
         """
+        update the pv with property dictionary and tag list.
         """
-        if properties is not None: self.updateProperties(properties)
+
+        # update the properties
+        if properties is not None: 
+            self.updateProperties(properties)
+
+        # check element field
         for t in tags:
-            #if self.name == 'QH1G2C30A': print pvname, properties, tags
             g = re.match(r'aphla.elemfield.([\w\d]+)(\[\d+\])?', t)
-            if g is None:
-                #raise ValueError('Tag %s is not "aphla.field.field" format')
-                continue
+            if g is None: continue
 
             fieldname, idx = g.group(1), g.group(2)
             if idx is not None: idx = int(idx[1:-1])
+
+            # the default handle is 'READBACK'
             if properties is None or \
                     properties.get('handle', 'READBACK') == 'READBACK':
                 self.setFieldGetAction(fieldname, idx, pvname)

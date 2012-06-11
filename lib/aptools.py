@@ -14,12 +14,12 @@ Accelerator Physics Tools
 from __future__ import print_function
 
 import numpy as np
-import time, shelve, sys
+import time, datetime, shelve, sys
 import matplotlib.pylab as plt
 
 import machines
 from catools import caput, caget 
-from hlalib import getElements, getNeighbors, getClosest
+from hlalib import getCurrent, getElements, getNeighbors, getClosest
 from bba import BbaBowtie
 
 __all__ = [
@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-def getLifetime(tinterval=3, npoints = 8):
+def getLifetime(tinterval=3, npoints = 8, verbose=False):
     """
     Monitor current change with, calculate lifetime dI/dt
 
@@ -184,7 +184,8 @@ def measDispersion(gamma = 3.0e3/.511, alphac = 3.6261976841792413e-04):
     f.close()
     
 
-def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, check = True):
+def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, 
+                   check = True):
     """
     correct orbit use direct pv and catools
 
@@ -287,7 +288,7 @@ def createLocalBump(bpm, trim, ref, **kwargs):
 
     # did not check duplicate PV
     # pv for trim
-    trimlst = machines._lat.getElements(trim)
+    trimlst = getElements(trim)
 
     trimpv, pvxsp, pvysp = [], [], []
     for e in trimlst:
@@ -320,6 +321,9 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
+    - `plane` [HV|H|V]
+    - `repeat` numbers of correction 
+
     Example::
 
       >>> correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
@@ -330,12 +334,13 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     """
 
     plane = kwargs.get('plane', 'HV')
+    repeat = kwargs.get('repeat', 1)
 
     # an orbit based these bpm
-    if bpm == None:
-        bpmlst = machines._lat.getElements('BPM')
+    if bpm is None:
+        bpmlst = getElements('BPM')
     else:
-        bpmlst = machines._lat.getElements(bpm)
+        bpmlst = getElements(bpm)
     pvx, pvy = [], []
     for e in bpmlst:
         pvx.extend(e.pv(field='x', handle='READBACK'))
@@ -347,11 +352,10 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     else: bpmpv = set(pvx + pvy)
 
     # pv for trim
-    if trim == None:
-        trimlst = machines._lat.getElements('HCOR') + \
-            machines._lat.getElements('VCOR')
+    if trim is None:
+        trimlst = getElements('HCOR') + getElements('VCOR')
     else:
-        trimlst = machines._lat.getElements(trim)
+        trimlst = getElements(trim)
 
     trimpv, pvxsp, pvysp = [], [], []
     for e in trimlst:
@@ -376,8 +380,10 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
         raise ValueError("no ORM data defined for this lattice")
     else:
         #print("PV:", len(bpmpv), len(trimpv))
-        correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), machines._lat.ormdata)
-
+        for i in range(repeat):
+            correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), 
+                           machines._lat.ormdata)
+            
 
 # def alignQuadrupole(quad, **kwargs):
 #     """

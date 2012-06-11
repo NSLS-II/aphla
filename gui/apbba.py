@@ -25,8 +25,6 @@ import PyQt4.Qwt5 as Qwt
 import numpy as np
 from PIL import Image, ImageQt
 
-config_dir = "~/.hla"
-
 #lyyang@virtac:/home/shengb/nsls2$ cat T2_NSLS2/tracy_align_error_one.txt 
 ##index name      cell girder  dX    dY    dS    dRoll   dPitch   dYaw
 #444    QH1G2C04A  2   4    1.0e-06 0.0e+00 0.00e+00 0.0e+00 0.00e+00 0.00e+00
@@ -63,7 +61,6 @@ class BbaMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self.setIconSize(QSize(48, 48))
-        #self.config = BbaConfig(config_dir, conf.filename("nsls2_sr_bba.json"))
 
         self.widtab = QTabWidget()
         #widtab.addTab(QLabel("Tab1"), "Tab 1")

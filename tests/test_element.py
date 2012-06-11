@@ -4,123 +4,86 @@ import unittest
 import sys, os, time
 import numpy as np
 
-#for p in sys.path:
-#    print p
-
-from conf import *
 from aphla import element
 from aphla.catools import caget, caput, Timedout
 import pickle, shelve
 
-refpvrb = [
-    "SR:C15-BI:G02A{BPM:L1}SA:X-I",
-    "SR:C15-BI:G02A{BPM:L1}SA:Y-I",
-    "SR:C15-BI:G02A{BPM:L2}SA:X-I",
-    "SR:C15-BI:G02A{BPM:L2}SA:Y-I",
-    "SR:C15-BI:G04A{BPM:M1}SA:X-I",
-    "SR:C15-BI:G04A{BPM:M1}SA:Y-I",
-    "SR:C15-BI:G04B{BPM:M1}SA:X-I",
-    "SR:C15-BI:G04B{BPM:M1}SA:Y-I",
-    "SR:C15-BI:G06B{BPM:H1}SA:X-I",
-    "SR:C15-BI:G06B{BPM:H1}SA:Y-I",
-    "SR:C15-BI:G06B{BPM:H2}SA:X-I",
-    "SR:C15-BI:G06B{BPM:H2}SA:Y-I"]
-
-ref_v0 = np.array(caget(refpvrb), 'd')
-
-def markForStablePv():
-    global ref_v0, refpvrb
-    ref_v0 = np.array(caget(refpvrb), 'd')
-    
-def waitForStablePv(**kwargs):
-    """
-    wait for the orbit to be stable.
-
-    This is in hlalib.py, but here does not need the dependance on getOrbit().
-    """
-    diffstd = kwargs.get('diffstd', 1e-7)
-    minwait = kwargs.get('minwait', 2)
-    maxwait = kwargs.get('maxwait', 30)
-    step    = kwargs.get('step', 2)
-    diffstd_list = kwargs.get('diffstd_list', False)
-    verbose = kwargs.get('verbose', 0)
-
-    t0 = time.time()
-    time.sleep(minwait)
-    global ref_v0
-    dv = np.array(caget(refpvrb)) - ref_v0
-    dvstd = [dv.std()]  # record the history
-    timeout = False
-
-    while dv.std() < diffstd:
-        time.sleep(step)
-        dt = time.time() - t0
-        if dt  > maxwait:
-            timeout = True
-            break
-        dv = np.array(caget(refpvrb)) - ref_v0
-        dvstd.append(dv.std())
-
-    if diffstd_list:
-        return timeout, dvstd
 
 class TestElement(unittest.TestCase):
     def setUp(self):
-        # current
-        self.dcct = element.CaElement(
-            name = 'CURRENT', index = -1, devname = 'DCCT', family = 'DCCT')
-        self.dcct.updatePvRecord(
-            'SR:C00-BI:G00{DCCT:00}CUR-RB', None, 
-             ['aphla.eget', 'aphla.sys.SR'])
-
-        # bpm1
-        self.bpm1 = element.CaElement(name = 'PH1G6C29B',
-            index = -1, devname = 'PH1G6C29B', family = 'BPM')
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}SA:X-I',
-                                 None, ['aphla.elemfield.x[0]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}SA:Y-I',
-                                 None, ['aphla.elemfield.y[0]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}BBA:X', None,
-                                 ['aphla.elemfield.xref[0]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}BBA:Y', None,
-                                 ['aphla.elemfield.yref[0]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:X', None,
-                                 ['aphla.elemfield.xref[1]'])
-        self.bpm1.updatePvRecord('SR:C29-BI:G06B{BPM:H1}GOLDEN:Y', None,
-                                 ['aphla.elemfield.yref[1]'])
-        # hcor
-        self.hcor = element.CaElement(
-            name = 'CXL1G2C01A', index = 125, cell = 'C01',
-            devname = 'CL1G2C01A', family = 'HCOR', girder = 'G2', length = 0.2,
-            se = 30.6673, symmetry = 'A')
-        self.hcor.updatePvRecord('SR:C01-MG:G02A{HCor:L1}Fld-I',
-                                 {'handle': 'READBACK'}, ['aphla.elemfield.x'])
-        self.hcor.updatePvRecord('SR:C01-MG:G02A{HCor:L1}Fld-SP',
-                                 {'handle': 'SETPOINT'}, ['aphla.elemfield.x'])
+        pass
 
     def tearDown(self):
         pass
 
-    def test_basicattr(self):
-        self.assertTrue(self.dcct.name == 'CURRENT')
-        self.assertTrue(self.dcct.family == 'DCCT')
+    def test_dcct(self):
+        # current
+        pv = u'SR:C00-BI:G00{DCCT:00}CUR-RB'
+        dcct = element.CaElement(
+            name = 'CURRENT', index = -1, devname = 'DCCT', family = 'DCCT')
+        dcct.updatePvRecord(pv, None, ['aphla.eget', 'aphla.sys.SR'])
 
-        self.assertTrue(self.bpm1.index == -1)
+        self.assertEqual(dcct.name,    'CURRENT')
+        self.assertEqual(dcct.devname, 'DCCT')
+        self.assertEqual(dcct.family,  'DCCT')
+        self.assertEqual(len(dcct.pv()), 1)
+        self.assertEqual(dcct.pv(tag='aphla.eget'), [pv])
+        self.assertEqual(dcct.pv(tag='aphla.sys.SR'), [pv])
+        self.assertEqual(dcct.pv(tags=['aphla.eget', 'aphla.sys.SR']), [pv])
 
-        # non virtual element
-        self.assertFalse(self.bpm1.virtual)
-        self.bpm1.virtual = 1
-        self.assertTrue(self.bpm1.virtual)
-        self.bpm1.virtual = 0
+    def test_bpm(self):
+        pvx0 = 'SR:C29-BI:G06B{BPM:H1}SA:X-I'
+        pvy0 = 'SR:C29-BI:G06B{BPM:H1}SA:Y-I',
+        pvxbba = 'SR:C29-BI:G06B{BPM:H1}BBA:X'
+        pvybba = 'SR:C29-BI:G06B{BPM:H1}BBA:Y'
+        pvxgold = 'SR:C29-BI:G06B{BPM:H1}GOLDEN:X'
+        pvygold = 'SR:C29-BI:G06B{BPM:H1}GOLDEN:Y'
 
-        self.assertTrue(self.hcor.name == 'CXL1G2C01A')
-        self.assertTrue(self.hcor.cell == 'C01')
-        self.assertTrue(self.hcor.girder == 'G2')
-        self.assertTrue(self.hcor.devname == 'CL1G2C01A')
-        self.assertTrue(self.hcor.family == 'HCOR')
-        self.assertTrue(self.hcor.symmetry == 'A')
-        self.assertAlmostEqual(self.hcor.length, 0.2)
-        self.assertAlmostEqual(self.hcor.se, 30.6673)
+        bpm = element.CaElement(name = 'PH1G6C29B',
+            index = -1, devname = 'PH1G6C29B', family = 'BPM')
+        bpm.updatePvRecord(pvx0, None, ['aphla.elemfield.x[0]'])
+        bpm.updatePvRecord(pvy0, None, ['aphla.elemfield.y[0]'])
+        bpm.updatePvRecord(pvxbba, None, ['aphla.elemfield.xref[0]'])
+        bpm.updatePvRecord(pvybba, None, ['aphla.elemfield.yref[0]'])
+        bpm.updatePvRecord(pvxgold, None, ['aphla.elemfield.xref[1]'])
+        bpm.updatePvRecord(pvygold, None, ['aphla.elemfield.yref[1]'])
+
+        self.assertEqual(bpm.pv(field='xref'), [pvxbba, pvxgold])
+        self.assertEqual(bpm.index, -1)
+        self.assertFalse(bpm.virtual)
+        self.assertEqual(bpm.virtual, 0)
+
+    def test_hcor(self):
+        # hcor
+        hcor = element.CaElement(
+            name = 'CXL1G2C01A', index = 125, cell = 'C01',
+            devname = 'CL1G2C01A', family = 'HCOR', girder = 'G2', length = 0.2,
+            se = 30.6673, symmetry = 'A')
+
+        self.assertTrue(hcor.name == 'CXL1G2C01A')
+        self.assertTrue(hcor.cell == 'C01')
+        self.assertTrue(hcor.girder == 'G2')
+        self.assertTrue(hcor.devname == 'CL1G2C01A')
+        self.assertTrue(hcor.family == 'HCOR')
+        self.assertTrue(hcor.symmetry == 'A')
+        self.assertAlmostEqual(hcor.length, 0.2)
+        self.assertAlmostEqual(hcor.se, 30.6673)
+
+        pvrb = 'SR:C01-MG:G02A{HCor:L1}Fld-I'
+        pvsp = 'SR:C01-MG:G02A{HCor:L1}Fld-SP'
+        hcor.updatePvRecord(pvrb, 
+                            {'handle': 'READBACK'}, 
+                            ['aphla.elemfield.x'])
+        hcor.updatePvRecord(pvsp, 
+                            {'handle': 'SETPOINT'}, 
+                            ['aphla.elemfield.x'])
+        self.assertEqual(hcor.pv(field='x', handle='readback'), [pvrb])
+        self.assertEqual(hcor.pv(field='x', handle='setpoint'), [pvsp])
+
+        self.assertEqual(hcor.pv(field='y'), [])
+        self.assertEqual(hcor.pv(field='y', handle='readback'), [])
+        self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
+        
 
     def compareElements(self, e1, e2):
         self.assertEqual(e1.__dict__.keys(), e2.__dict__.keys())
@@ -173,10 +136,10 @@ class TestElement(unittest.TestCase):
         self.assertEqual(len(self.bpm1.pv(field='y', handle='setpoint')), 1)
         self.assertEqual(len(self.bpm2.pv(tag = 'aphla.eget')), 12)
 
+    @unittest.skip
     def test_read(self):
-        print "hcor.x", self.hcor.x
-        print self.hcor._field['x'].pvrb
-        print self.hcor._field['x'].pvsp
+        #print self.hcor._field['x'].pvrb
+        #print self.hcor._field['x'].pvsp
 
         self.assertTrue(self.bpm1.name)
 

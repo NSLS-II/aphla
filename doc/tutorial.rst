@@ -28,6 +28,10 @@ and plotting.
    >>> import matplotlib.pylab as plt    # matplotlib for plotting
    >>> import time
 
+.. warning::
+
+   In order to correct the orbit, the measured Orbit Response Matrix is
+   needed. Put 'us_nsls2_sr_orm.hdf5' in ${HOME}/.hla/
 
 .. note::
 
@@ -36,10 +40,11 @@ and plotting.
 
 Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
-.. code-block:: python
+.. doctest::
 
    >>> ap.initNSLS2VSR()
    >>> ap.initNSLS2VSRTwiss()
+   Elements in lattice 'SR': 1389
 
 If you have csv config file, e.g. *nsls2.csv*, in your ``aphla`` package, the
 `~aphla.initNSLS2VSR` will use it, otherwise it will search for channel finder
@@ -50,8 +55,10 @@ server use it to initialize the lattice structure.
 *aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB*. Call
 `~aphla.machines.lattices` to find out.
 
-   >>> ap.machines.lattices()    # list available lattices
-   {'SR': 'aphla.sys.SR', 'LTD2': 'aphla.sys.LTD2', 'LTB': 'aphla.sys.LTB', 'LTD1': 'aphla.sys.LTD1'}
+.. doctest::
+
+   >>> ap.machines.lattices()    # list available lattices #doctest: -SKIP
+   ['LTD1', 'LTD2', 'LTB', 'SR']
    >>> ap.machines.use("SR")
 
 Switching between lattices should be always a safe operation itself, but may
@@ -67,15 +74,15 @@ providing with element name, name list, type or pattern.
 
 Here are some examples:
 
-.. code-block:: python
+.. doctest::
 
    >>> bpm = ap.getElements('BPM') # get a list of BPMs
    >>> len(bpm) # 180 in tital, guaranteed in increasing order of s coordinate.
    180
    >>> bpm[0].name
-   u'PH1G2C30A'
+   'PH1G2C30A'
    >>> bpm[0].family, bpm[0].cell, bpm[0].girder
-   (u'BPM', u'C30', u'G2')
+   ('BPM', 'C30', 'G2')
 
 .. index:: family, cell, girder, symmetry, group
 .. index::
@@ -99,17 +106,17 @@ Each element has a set of properties associated:
 A element can only belongs to one *family*, *cell*, *girder* and
 *symmetry*. But it can be in many groups:
 
-.. code-block:: python
+.. doctest::
 
    >>> ap.getGroups('PM1G4C02B') # the groups one element belongs to
-   [u'BPM', u'C02', u'G4', u'B']
+   ['BPM', 'C02', 'G4', 'B']
 
 To find the elements in certain cell or/and girder, use *getGroupMembers* and
 take *union* or *intersection* of them.
 
 The following lines search for all BPMs in girder 4 of cell 15.
 
-.. code-block:: python
+.. doctest::
 
    >>> el = ap.getGroupMembers(['BPM', 'C15', 'G4'], op='intersection')
    >>> for e in el: print e.name, e.sb, e.length
@@ -122,7 +129,7 @@ elements, the result is sorted in ascending order of s-coordinate.
 
 The following lines find all BPMs in the girder 2 of cell 2 and 3.
 
-.. code-block:: python
+.. doctest::
 
    >>> el = ap.getGroupMembers(['BPM', 'C0[2-3]', 'G2'])
    >>> for e in el: print e.name, e.sb, e.cell, e.girder, e.symmetry
@@ -136,34 +143,27 @@ A pattern matching is also possible when searching for element or groups. The
 pattern string follows Unix filename convension, see :ref:`Wildcard Matching
 <element-search-match>`
 
-.. code-block:: python
+.. doctest::
 
-   >>> ap.getElements('P*C01*A')
-   [<hla.element.Element at 0x3fafdd0>,
-    <hla.element.Element at 0x40c0190>,
-    <hla.element.Element at 0x40c0250>]
-   >>> ap.getGroups('P*C01*A')
-   [u'BPM', u'C01', u'G4', u'G2', u'A']
+   >>> ap.getElements('P*C01*A') #doctest: +NORMALIZE_WHITESPACE
+   [PL1G2C01A:BPM @ sb=29.988600, PL2G2C01A:BPM @ sb=32.552300, PM1G4C01A:BPM @ sb=38.301800]
+   >>> ap.getGroups('P*C01*A') # a union of the groups of matched elements
+   ['BPM', 'C01', 'G4', 'G2', 'A']
 
 
 HLA Element Control
 ---------------------
 
-   >>> print ap.eget('PL1G2C05A')
-   [[-0.0001042862911482232, 9.4271237903876306e-05]]
    >>> el = ap.getElements(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
-   >>> for e in el: print e.status
+   >>> for e in el: print e.status() #doctest: +ELLIPSIS
    SQMG4C05A
-     READBACK (SR:C05-MG:G04A{SQuad:M1}Fld-I): 0.0
    QM2G4C05B
-     READBACK (SR:C05-MG:G04B{Quad:M2}Fld-I): 1.22232651254
+     k1: 1.222...
    CXH2G6C05B
-     READBACK (SR:C05-MG:G06B{HCor:H2}Fld-I): 0.0
+     x: ...
    PM1G4C05A
-     READBACK (SR:C05-BI:G04A{BPM:M1}SA:X-I): 0.00024594511233
-     READBACK (SR:C05-BI:G04A{BPM:M1}SA:Y-I): 5.06446641306e-05
-     READBACK (SR:C05-BI:G04A{BPM:M1}BBA:X): 0.0
-     READBACK (SR:C05-BI:G04A{BPM:M1}BBA:Y): 0.0
+     y: ...
+     x: ...
 
    >>> for e in el: print e.name, e.pv('eget'), e.value #doctest: +SKIP
    SQMG4C05A [u'SR:C05-MG:G04A{SQuad:M1}Fld-I'] 0.0
@@ -173,7 +173,7 @@ HLA Element Control
    
 It is easy to read/write the default value of an element:
 
-.. code-block:: python
+.. doctest::
 
    >>> e = ap.getElements('CXH2G2C30A')
    >>> print e.status #doctest: +SKIP
@@ -194,51 +194,43 @@ More Examples
 --------------
 
 
-.. code-block:: python
+.. doctest::
 
    >>> ap.getCurrent() #doctest: +SKIP
    292.1354803937125
-
-   >>> ap.getLifetime() #doctest: +SKIP
-   7.2359460167254399
+   >>> lft = ap.getLifetime() 
+   >>> print "Fitted lifetime:", lft, "Hour" #doctest: +SKIP
+   Fitted lifetime: 7.2359460167254399 Hour
 
 
 Plotting the orbit
  
-.. code-block:: python
+.. doctest::
  
    >>> sobt = ap.getOrbit(spos = True)
-   >>> plt.clf()
-   >>> plt.plot(sobt[:,2], sobt[:,0], '-x', label='X') #doctest: +ELLIPSIS
+   >>> plt.clf() #doctest: -SKIP
+   >>> plt.plot(sobt[:,2], sobt[:,0], '-x', label='X') #doctest: +ELLIPSIS -SKIP
    [<matplotlib.lines.Line2D object at 0x...>]
-   >>> plt.plot(sobt[:,3], sobt[:,1], '-o', label='Y') #doctest: +ELLIPSIS
+   >>> plt.plot(sobt[:,2], sobt[:,1], '-o', label='Y') #doctest: +ELLIPSIS -SKIP
    [<matplotlib.lines.Line2D object at 0x...>]
-   >>> plt.xlabel('S [m]') #doctest: +ELLIPSIS
+   >>> plt.xlabel('S [m]') #doctest: +ELLIPSIS -SKIP
    <matplotlib.text.Text object at 0x...>
-   >>> plt.savefig('hla_tut_orbit.png')
+   >>> plt.savefig('hla_tut_orbit.png') #doctest: +SKIP
 
 .. image:: hla_tut_orbit.png
 
 Twiss parameters
 
-.. code-block:: python
+.. doctest::
 
-   >>> ap.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
-   array([[  8.7...,  11.6...],
-   	  [ 10.2...,  22.1...]])
-
+   >>> beta = ap.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
    >>> bpm = ap.getElements('P*G2*C03*A')
-   >>> ap.getBeta([e.name for e in bpm]) #doctest: +ELLIPSIS
-   array([[  8.7...,  11.6...],
-   	  [ 10.2...,  22.1...]])
-
-   >>> ap.getBeta('P*G2*C03*A', loc='b') #doctest: +ELLIPSIS
-   array([[  8.7...,  11.6...],
-   	  [ 10.2...,  22.1...]])
+   >>> beta_sub1 = ap.getBeta([e.name for e in bpm]) #doctest: +ELLIPSIS
+   >>> beta_sub2 = ap.getBeta('P*G2*C03*A', loc='b') #doctest: +ELLIPSIS
 
 Plotting the beta function of cell 'C02' and 'C03'
 
-.. code-block:: python
+.. doctest::
 
    >>> elem = ap.getGroupMembers(['C01', 'C02'], op='union')
    >>> beta = ap.getBeta([e.name for e in elem], spos=True, clean=True)
@@ -248,7 +240,7 @@ Plotting the beta function of cell 'C02' and 'C03'
    >>> fig=plt.plot(beta[:,-1], beta[:,:-1], '-o', label=r'$\beta_{x,y}$')
    >>> fig2 = plt.subplot(212)
    >>> fig=plt.plot(eta[:,-1], eta[:,:-1], '-o', label=r'$\eta_{x,y}$')
-   >>> plt.savefig("hla_tut_twiss_c0203.png")
+   >>> plt.savefig("hla_tut_twiss_c0203.png") #doctest: +SKIP
 
 
 .. image:: hla_tut_twiss_c0203.png
@@ -256,14 +248,16 @@ Plotting the beta function of cell 'C02' and 'C03'
 
 Correct the orbit and plot the orbits before/after the correction:
 
-.. code-block:: python
+.. doctest::
 
    >>> print ap.__path__ #doctest: +SKIP
    >>> bpm = ap.getElements('P*C1[0-3]*')
    >>> trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
-   >>> print len(bpm), len(trim) #doctest: +SKIP
+   >>> print len(bpm), len(trim) #doctest: +NORMALIZE_WHITESPACE
+   24 360
    >>> v0 = ap.getOrbit('P*', spos=True)
-   >>> ap.correctOrbit([e.name for e in bpm], [e.name for e in trim])
+   >>> ap.correctOrbit([e.name for e in bpm], [e.name for e in trim], repeat=3) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+   Euclidian norm: ...
    >>> time.sleep(4)
    >>> v1 = ap.getOrbit('P*', spos=True)
    >>> plt.clf()
@@ -273,11 +267,11 @@ Correct the orbit and plot the orbits before/after the correction:
    >>> ax = plt.subplot(212)
    >>> fig = plt.plot(v1[:,-1], v1[:,0], 'r-x', label='X')
    >>> fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y')
-   >>> plt.savefig("hla_tut_orbit_correct.png")
+   >>> plt.savefig("hla_tut_orbit_correct.png") #doctest: +SKIP
 
 .. image:: hla_tut_orbit_correct.png
 
-.. code-block:: python
+.. doctest::
 
    >>> ap.getChromaticity() #doctest:+SKIP
 
