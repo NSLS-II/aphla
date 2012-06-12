@@ -443,8 +443,9 @@ def getTunes(source='machine'):
     get tunes from ['machine']
     """
     if source == 'machine':
-        nux = machines._lat.getElements('TUNEX')
-        nuy = machines._lat.getElements('TUNEY')
+        # return only the first matched element
+        nux, = getElements('TUNEX')
+        nuy, = getElements('TUNEY')
         return nux.value, nuy.value
     elif source == 'model':
         raise NotImplementedError()
