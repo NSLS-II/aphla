@@ -2,7 +2,7 @@
 
 import cothread
 from cothread.catools import caput, caget, camonitor
-app = cothread.iqt(use_timer=True)
+app = cothread.iqt()
 
 from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
         QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,

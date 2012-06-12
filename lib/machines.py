@@ -40,13 +40,13 @@ HLA_TAG_EGET = 'aphla.eget'
 HLA_TAG_EPUT = 'aphla.eput'
 HLA_TAG_X    = 'aphla.x'
 HLA_TAG_Y    = 'aphla.y'
-HLA_TAG_SYS_PREFIX = 'aphla.sys.'
+HLA_TAG_SYS_PREFIX = 'aphla.sys'
 
 #
 HLA_VFAMILY = 'HLA:VFAMILY'
-HLA_VBPM   = 'HLA:BPM'
-HLA_VBPMX  = 'HLA:BPMX'
-HLA_VBPMY  = 'HLA:BPMY'
+HLA_VBPM   = 'HLA:VBPM'
+#HLA_VBPMX  = 'HLA:BPMX'
+#HLA_VBPMY  = 'HLA:BPMY'
 
 HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
@@ -68,13 +68,13 @@ HLA_CFS_KEYMAP = {'name': u'elemName',
                   'sequence': None}
 
 
-def createLattice(pvrec, systag, desc = 'channelfinder'):
+def createLattice(name, pvrec, systag, desc = 'channelfinder'):
     """
     create a lattice from channel finder agent data
     """
 
     # a new lattice
-    lat = Lattice(desc)
+    lat = Lattice(name, desc)
     for rec in pvrec:
         # skip if there's no properties.
         if rec[1] is None: continue
@@ -116,19 +116,18 @@ def initNSLS2VSR():
     """
     initialize the virtual accelerator from channel finder
     """
-    ORBIT_WAIT=8
-    NETWORK_DOWN=False
 
     cfa = ChannelFinderAgent()
-    src_home_csv = os.path.join(os.environ['HOME'], '.hla', 'nsls2.csv')
+    cfs_filename = 'us_nsls2_cfs.csv'
+    src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
         msg = "Creating lattice from home csv '%s'" % src_home_csv
         logger.info(msg)
         cfa.importCsv(src_home_csv)
-    elif conf.has('nsls2.csv'):
-        src_pkg_csv = conf.filename('nsls2.csv')
+    elif conf.has(cfs_filename):
+        src_pkg_csv = conf.filename(cfs_filename)
         msg = "Creating lattice from '%s'" % src_pkg_csv
         logger.info(msg)
         #print(msg)
@@ -138,9 +137,11 @@ def initNSLS2VSR():
         logger.info(msg)
         cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     else:
+        logger.error("Channel finder data are available, no '%s', no server" % 
+                     cfs_filename)
         raise RuntimeError("Failed at loading cache file")
 
-    print(msg)
+    #print(msg)
     for k in [('name', u'elemName'), 
               ('field', u'elemField'), 
               ('devname', u'devName'),
@@ -149,25 +150,30 @@ def initNSLS2VSR():
               ('se', u'sEnd'),
               ('system', u'system')]:
         cfa.renameProperty(k[1], k[0])
-    #lat = createLattice(cfa.rows, 'aphla.sys.SR')
 
-    tags = cfa.tags('aphla.sys.*')
-    #print("Known Systems:", tags)
-    #print(cfa.rows)
+    #tags = cfa.tags('aphla.sys.*')
 
     global _lat, _lattice_dict
 
-    for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
-        #print("\nsys=", latname)
-        _lattice_dict[latname] = createLattice(cfa.rows, 'aphla.sys.' + latname,
+    # should be 'aphla.sys.' + ['SR', 'LTB', 'LTD1', 'LTD2']
+    logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
+    for lattag in cfa.tags(HLA_TAG_SYS_PREFIX + '.*'):
+        latname = lattag[len(HLA_TAG_SYS_PREFIX) + 1:]
+        logger.info("Initializing lattice %s (%s)" % (latname, lattag))
+        _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
                                                desc = cfa.source)
 
-    print("Using ORM:", conf.filename('orm.hdf5'))
-    _lattice_dict['SR'].ormdata = OrmData(conf.filename('orm.hdf5'))
+    orm_filename = 'us_nsls2_sr_orm.hdf5'
+    if conf.has(orm_filename):
+        #print("Using ORM:", conf.filename(orm_filename))
+        _lattice_dict['SR'].ormdata = OrmData(conf.filename(orm_filename))
+    else:
+        logger.warning("No ORM '%s' found" % orm_filename)
 
     # a virtual bpm. its field is a "merge" of all bpms.
-    bpms = _lattice_dict['SR'].getElements('BPM')
-    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 'family':HLA_VFAMILY})
+    bpms = _lattice_dict['SR'].getElementList('BPM')
+    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
+                            'family': HLA_VFAMILY})
     _lattice_dict['SR'].insertElement(allbpm)
 
     #
@@ -201,15 +207,16 @@ def initNSLS2VSRTwiss():
     nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
     nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
 
+    global _twiss, _lat
+
     #print(__file__, "Reading twiss items:", len(s))
-    print("Elements in lattice:", len(_lat._elements))
+    print("Elements in lattice '%s': %d" % (_lat.name, len(_lat._elements)))
 
     # fix the Tracy convension by adding a new element at the end
     for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
               phix, phiy]:
         x.append(x[-1])
     
-    global _twiss, _lat
     _twiss = Twiss('virtac')
 
     _twiss.tune = (nux, nuy)
@@ -293,8 +300,9 @@ def lattices():
     Example::
 
       >>> lattices()
-      { 'LTB': 'channelfinder-LTB', 'LTB-txt': 'channelfinder-txt',
-      'SR': 'channelfinder-SR', 'SR-txt': 'channelfinder-txt' }
+      [ 'LTB', 'LTB-txt', 'SR', 'SR-txt'}
       >>> use('LTB-txt')
     """
-    return dict((k, v.mode) for k,v in _lattice_dict.iteritems())
+    #return dict((k, v.mode) for k,v in _lattice_dict.iteritems())
+    return _lattice_dict.keys()
+

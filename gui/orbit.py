@@ -3,14 +3,18 @@
 #__all__ = [ 'main' ]
 
 # for debugging, requires: python configure.py --trace ...
-#if 0:
-#    import sip
-#    sip.settracemask(0x3f)
+if 1:
+    import sip
+    sip.settracemask(0x3f)
+
+from pkg_resources import require
+require('cothread>=2.6')
 
 import cothread
-from cothread.catools import caget, caput, camonitor, FORMAT_TIME
+app = cothread.iqt()
 
-app = cothread.iqt(use_timer=True)
+import aphla
+from aphla.catools import caget, caput, camonitor, FORMAT_TIME
 
 import sys
 
@@ -21,19 +25,21 @@ from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
 from orbitplot import OrbitPlot, DcctCurrentPlot
 from orbitcorrdlg import OrbitCorrDlg
+from elemproperty import *
 
-import aphla
 
+import time
 from PyQt4.QtCore import QSize, SIGNAL, Qt
-from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, 
-    QVBoxLayout, QPen, QSizePolicy,
+from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QTableView,
+    QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
 
 import numpy as np
 
 class OrbitData(object):
     """
-    the orbit related data.
+    the orbit related data. Raw orbit reading and statistics.
+
     - *samples* data points kept to calculate the statistics.
     - *yfactor* factor for *y*
     - *x* list of s-coordinate, never updated.
@@ -53,11 +59,9 @@ class OrbitData(object):
 
         self.icur, self.icount = -1, 0
         # how many samples are kept for statistics
-        self.mode = kw.get('mode', 'EPICS')
         self.y      = np.zeros((self.samples, n), 'd')
         for i in range(self.samples):
-            if self.mode == 'EPICS': self.y[i,:] = caget(self.pvs)
-            elif self.mode == 'sim': self.y[i,:] = np.random.rand(n)
+            self.y[i,:] = caget(self.pvs)
         #self.yref   = np.zeros(n, 'd')
         self.errbar = np.ones(n, 'd') * 1e-15
         self.keep   = np.ones(n, 'i')
@@ -72,11 +76,8 @@ class OrbitData(object):
         # y and errbar sync with plot, not changing data.
         i = self.icur + 1
         if i >= self.samples: i = 0
-        if self.mode == 'EPICS':
-            self.y[i,:] = caget(self.pvs)
-            self.y[i, :] *= self.yfactor
-        elif self.mode == 'sim': 
-            self.y[i,:] = np.random.rand(len(self.pvs))
+        self.y[i,:] = caget(self.pvs)
+        self.y[i, :] *= self.yfactor
         self.errbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
@@ -141,9 +142,7 @@ class OrbitData(object):
     def golden(self, nomask=False):
         if self.pvs_golden is None:
             d = np.zeros(len(self.pvs), 'd')
-        elif self.mode == 'sim':
-            d = np.zeros(len(self.pvs), 'd')
-        elif self.mode == 'EPICS':
+        else:
             d = np.array(caget(self.pvs_golden)) * self.yfactor
 
         if nomask: return d
@@ -161,28 +160,93 @@ class OrbitData(object):
             ret[i] = dc.pop(0)
         return ret
 
+
+class ElementPropertyTabs(QTabWidget):
+    def __init__(self, parent = None):
+        QTabWidget.__init__(self, parent)
+        self.connect(self, SIGNAL('tabCloseRequested(int)'), self.closeTab)
+
+    def addElement(self, elemnames):
+        self.setVisible(True)
+        print "new element:", elemnames
+        elems = aphla.getElements(elemnames)
+        if elems is None:
+            QMessageBox.warning(self, "Element Not Found",
+                                "element " + str(elemnames) + " not found")
+        else:
+            for elem in elems:
+                #print elem.name, elem.sb, elem.fields()
+                tableview = QTableView()
+                tableview.setModel(ElementPropertyTableModel(elem=elem))
+                tableview.setItemDelegate(ElementPropertyDelegate(self))
+                tableview.resizeColumnsToContents()
+                #rz = tableview.geometry()
+                ncol = tableview.model().columnCount()
+                fullwidth = sum([tableview.columnWidth(i) for i in range(ncol)])
+                tableview.setMinimumWidth(fullwidth+20)
+                #tableview.setMaximumWidth(fullwidth+60)
+                print "Full width", fullwidth
+                tableview.adjustSize()
+
+                wid = QWidget()
+                vbox = QVBoxLayout()
+                vbox.addWidget(QLabel("Name:   %s" % elem.name))
+                vbox.addWidget(QLabel("Device: %s" % elem.devname))
+                vbox.addWidget(QLabel("Cell:   %s" % elem.cell))
+                vbox.addWidget(QLabel("Girder: %s" % elem.girder))
+                vbox.addWidget(QLabel("sBegin: %.3f" % elem.sb))
+                vbox.addWidget(QLabel("Length: %.3f" % elem.length))
+
+                #vbox.addWidget(lb_name)
+                vbox.addWidget(tableview)
+                wid.setLayout(vbox)
+                self.addTab(wid, elem.name)
+        self.adjustSize()
+
+    def closeTab(self, index):
+        self.removeTab(index)
+        if self.count() <= 0: self.setVisible(False)
+
+
 class OrbitPlotMainWindow(QMainWindow):
     """
-    the main window
+    the main window has three major widgets: current, orbit tabs and element
+    editor.
     """
-    def __init__(self, parent = None, mode = 'EPICS'):
+    def __init__(self, parent = None, accname='us_nsls2_sr'):
         QMainWindow.__init__(self, parent)
-        self.setWindowTitle("NSLS-II SR")
         self.setIconSize(QSize(48, 48))
+        orbit_conf_file = accname + "_orbit.json"
+        if aphla.conf.inHome(orbit_conf_file):
+            aphla.logger.info("Using config file '%s' from $HOME" % 
+                              orbit_conf_file)
         self.config = OrbitPlotConfig(None, 
-            aphla.conf.filename("nsls2_sr_orbit.json"))
+                                      aphla.conf.filename(orbit_conf_file))
 
         self.dcct = DcctCurrentPlot()
         self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
         self.dcct.setMinimumHeight(100)
         self.dcct.setMaximumHeight(150)
+
         print __name__, ":"
         print "  WARNING: Using hardcoded PV: 'SR:C00-BI:G00{DCCT:00}CUR-RB'"
-        # load fake current
-        t = caget('SR:C00-BI:G00{DCCT:00}CUR-RB', format=FORMAT_TIME)
-        self.dcct._loadFakeData(t.timestamp, t.real, 4.0, 500.0, 24.0)
-        camonitor('SR:C00-BI:G00{DCCT:00}CUR-RB', self.dcct.updateDcct, 
-                  format=FORMAT_TIME)
+        try:
+            # load fake current
+            print "loading fake current"
+            t = caget('SR:C00-BI:G00{DCCT:00}CUR-RB', format=FORMAT_TIME)
+            #self.dcct._loadFakeData(t.timestamp, t.real, 4.0, 500.0, 24.0)
+            print "current: ", t
+            camonitor('SR:C00-BI:G00{DCCT:00}CUR-RB', self.dcct.updateDcct, 
+                      format=FORMAT_TIME)
+        except:
+            print "WARNING: timedout ?"
+            t0 = time.time()
+            t = np.linspace(t0 - 8*3600*24, t0, 100)
+            self.dcct.curve.t = t
+            v = 500*np.exp((t[0] - t[:50])/(4*3600*24))
+            self.dcct.curve.v = v.tolist()+v.tolist()
+            
+            self.dcct.updatePlot()
 
         # initialize a QwtPlot central widget
         #bpm = hla.getElements('BPM')
@@ -196,9 +260,9 @@ class OrbitPlotMainWindow(QMainWindow):
                        for b in self.config.data['bpmx']]
         pvsy_golden = [b[1]['golden'].encode("ascii") 
                        for b in self.config.data['bpmy']]
-        self.orbitx_data = OrbitData(pvs = self.pvx, x = self.pvsx, mode=mode, 
+        self.orbitx_data = OrbitData(pvs = self.pvx, x = self.pvsx, 
                                      pvs_golden = pvsx_golden)
-        self.orbity_data = OrbitData(pvs = self.pvy, x = self.pvsy, mode=mode,
+        self.orbity_data = OrbitData(pvs = self.pvy, x = self.pvsy,
                                      pvs_golden = pvsy_golden)
         self.orbitx_data.update()
         self.orbity_data.update()
@@ -239,16 +303,34 @@ class OrbitPlotMainWindow(QMainWindow):
         self.plot4.setTitle("Vertical")
         #self.lbplt2info = QLabel("Min\nMax\nAverage\nStd")
 
+        self.elems = ElementPropertyTabs()
+        self.elems.setVisible(False)
+        self.elems.setTabsClosable(True)
+        self.connect(self.plot1, SIGNAL("elementSelected(PyQt_PyObject)"),
+                     self.elems.addElement)
+        self.connect(self.plot2, SIGNAL("elementSelected(PyQt_PyObject)"),
+                     self.elems.addElement)
+
         cwid = QWidget()
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.dcct)
+        #majbox = QGridLayout()
+        #majbox.addWidget(self.dcct, 0, 0, 1, 2)
+        majbox = QVBoxLayout()
+        #majbox.setSpacing(30)
+        #majbox.setMargin(10)
+        majbox.addWidget(self.dcct)
+        # 
+        self.orbitSplitter = QSplitter(Qt.Horizontal)
         self.tabs = QTabWidget()
-        vbox.addWidget(self.tabs)
-        cwid.setLayout(vbox)
+        self.orbitSplitter.addWidget(self.tabs)
+        self.orbitSplitter.addWidget(self.elems)
+        #majbox.addWidget(self.tabs, 1, 0)
+        #majbox.addWidget(self.elems, 1, 1)
+        majbox.addWidget(self.orbitSplitter) #, 1, 0, 1, 2)
+        cwid.setLayout(majbox)
 
         wid1 = QWidget()
         gbox = QGridLayout()
-        self.plot1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #self.plot1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         #self.plot2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         gbox.addWidget(self.plot1, 0, 1)
         gbox.addWidget(self.plot2, 1, 1)
@@ -443,8 +525,7 @@ class OrbitPlotMainWindow(QMainWindow):
         controlToolBar.addAction(controlResetPvDataAction)
 
         # update at 2Hz
-        if mode == 'sim': dt = 100
-        elif mode == 'EPICS': dt = 800
+        dt = 800
         self.timerId = self.startTimer(dt)
         self.corbitdlg = None # orbit correction dlg
 
@@ -599,10 +680,12 @@ def main():
     aphla.initNSLS2VSR()
     #app = QApplication(args)
     #app.setStyle(st)
-    if '--sim' in sys.argv: mode = 'sim'
-    else: mode = 'EPICS'
-    demo = OrbitPlotMainWindow(mode=mode)
-    demo.resize(600,500)
+    if '--sim' in sys.argv:
+        print "CA offline:", aphla.catools.CA_OFFLINE
+        aphla.catools.CA_OFFLINE = True
+    demo = OrbitPlotMainWindow(accname = 'us_nsls2_vsr')
+    demo.setWindowTitle("NSLS-II SR")
+    demo.resize(800,500)
     demo.show()
     # print app.style() # QCommonStyle
     #sys.exit(app.exec_())

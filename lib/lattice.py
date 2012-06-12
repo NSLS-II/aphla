@@ -22,7 +22,8 @@ class Lattice:
     """Lattice"""
     # ginore those "element" when construct the lattice object
 
-    def __init__(self, mode = 'undefined'):
+    def __init__(self, name, mode = 'undefined'):
+        self.name = name
         # group name and its element
         self._group = None
         # guaranteed in the order of s.
@@ -269,6 +270,9 @@ class Lattice:
         return ret
 
     def getElements(self, group, **kwargs):
+        raise RuntimeError("deprecated, use getElementList")
+
+    def getElementList(self, group, **kwargs):
         """
         get elements.
 
@@ -291,28 +295,17 @@ class Lattice:
         *return_list* whether return list even when returning a single element.
         """
 
-        return_list=kwargs.get('return_list', False)
+        # do exact element name match first
+        elem = self._find_exact_element(group)
+        if elem is not None: return [elem]
+
+        # do exact group name match
+        if group in self._group.keys():
+            return self._group[group][:]
 
         if isinstance(group, str) or isinstance(group, unicode):
-            # do exact element name match first
-            #print __file__, "element ..."
-            elem = self._find_exact_element(group)
-            if elem and return_list:
-                #print "found exact element", group, elem
-                return [elem]
-            elif elem:
-                return elem
-
-            # do exact group name match
-            #print __file__, "group ...", group, self._group.keys()
-            if group in self._group.keys():
-                #print "found exact group", group
-                #print self._group.keys()
-                return self._group[group][:]
-
             # do pattern match on element name
             ret, names = [], []
-            #print __file__, "matching ..."
             for e in self._elements:
                 if e.name in names: continue
                 if fnmatch(e.name, group):
@@ -320,15 +313,9 @@ class Lattice:
                     names.append(e.name)
             return ret
         elif isinstance(group, list):
-            if not group and return_list: return []
-            elif not group: return None
-
             # exact one-by-one match
-            ret = [None] * len(group)
-            for elem in self._elements:
-                if elem.name in group: ret[group.index(elem.name)] = elem
-            return ret
-
+            return [self._find_exact_element(e) for e in group]
+            
     def _matchElementCgs(self, elem, **kwargs):
         """
         check properties of an element
@@ -579,7 +566,7 @@ class Lattice:
         else:
             raise ValueError("%s not defined" % op)
         
-        return self.getElements(self.sortElements(r))
+        return self.getElementList(self.sortElements(r))
 
     def getNeighbors(self, element, group, n):
         """

@@ -8,6 +8,14 @@ import random
 
 from conf import *
 
+class TestChanFinderData(unittest.TestCase):
+    def setUp(self):
+        self.HLA_CFS_URL=os.environ.get('HLA_CFS_URL', None)
+        pass
+    
+    def test_sys(self):
+        pass
+
 class TestChanFinderAgent(unittest.TestCase):
     """
     """
@@ -20,7 +28,11 @@ class TestChanFinderAgent(unittest.TestCase):
         pass
 
     def test_match_properties1(self):
-        #print TEST_CONF_VERSION
-        #print self.cfa.tags('aphla.?')
-        self.assertTrue(len(self.cfa.tags('aphla.?')) == 2)
+        tags = self.cfa.tags('aphla.sys.*')
+        self.assertGreater(len(tags), 0)
+        self.assertTrue('aphla.sys.SR' in tags)
+        self.assertTrue('aphla.sys.LTD1' in tags)
+        self.assertTrue('aphla.sys.LTD2' in tags)
+        self.assertTrue('aphla.sys.LTB' in tags)
+
         

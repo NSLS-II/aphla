@@ -31,4 +31,12 @@ def filename(resname):
         # use the config within distribution
         return resource_filename(__name__, resname)
 
-
+def inHome(resname):
+    """
+    check if resource is in user's HOME directory
+    """
+    prv_filename = os.path.join(os.getenv("HOME"), ".hla", resname)
+    if os.path.exists(prv_filename): 
+        return True
+    else: 
+        return False

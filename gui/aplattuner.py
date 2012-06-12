@@ -55,7 +55,7 @@ import TunerUtils.tunerConfigSetupDialog \
 import aphla
 #if not hla.machines._lat :
     #hla.initNSLS2VSR()
-from hla.catools import caget, caput
+from aphla.catools import caget, caput
 
 # TODO:
 # *) Add Preferences info for Channel Selector GUI

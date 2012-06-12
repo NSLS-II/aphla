@@ -29,9 +29,13 @@ def getCurrent():
     """
     Get the current from element with a name 'DCCT'
     """
-    _current = machines._lat.getElements('DCCT')
-    return _current.value
-
+    _current = getElements('DCCT')
+    if len(_current) == 1:
+        return _current[0].value
+    elif len(_current) > 1:
+        return [c.value for c in _current]
+    else:
+        return None
 #
 #
 def eget(element, full = False, tags = []):
@@ -59,16 +63,18 @@ def eget(element, full = False, tags = []):
     #print __file__, tags, chtags
     if isinstance(element, (unicode, str)):
         ret = []
-        elem = machines._lat.getElements(element)
+        # if given string, assume it is exact name of element
+        elem = machines._lat._find_exact_element(element)
         pvl = elem.pv(tags=chtags)
         #print element, chtags, pvl
-        ret = caget(pvl)
+        if len(pvl) == 1: ret = caget(pvl[0])
+        else: ret = caget(pvl)
         if full:
             return pvl, ret
         else: return ret
     elif isinstance(element, (tuple, set, list)):
         ret = []
-        elemlst = machines._lat.getElements(element)
+        elemlst = machines._lat.getElementList(element)
         for elem in elemlst:
             if not elem:
                 ret.append(None)
@@ -164,7 +170,7 @@ def _levenshtein_distance(first, second):
     return distance_matrix[first_length-1][second_length-1]
 
 
-def getElements(group, return_list=False, include_virtual=False):
+def getElements(group, return_list=True, include_virtual=False):
     """
     return list of elements.
 
@@ -177,14 +183,21 @@ def getElements(group, return_list=False, include_virtual=False):
       >>> getElements('F*G1C0*')
       >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
 
-    this calls :func:`~aphla.lattice.Lattice.getElements` of the current
+    this calls :func:`~aphla.lattice.Lattice.getElementList` of the current
     lattice.
+
+    The default does not include virtual element.
     """
 
-    ret = machines._lat.getElements(group, return_list=return_list)
-    if include_virtual == True: return ret
-    else:
-        return [elem for elem in ret if elem.virtual == 0]
+    elems = machines._lat.getElementList(group)
+    if not include_virtual:
+        elems = [e for e in elems if e.virtual == 0]
+
+    if not return_list: 
+        if len(elems) == 0: return None
+        elif len(elems) == 1: return elems[0]
+
+    return elems
 
 def getLocations(group):
     """
@@ -430,8 +443,9 @@ def getTunes(source='machine'):
     get tunes from ['machine']
     """
     if source == 'machine':
-        nux = machines._lat.getElements('TUNEX')
-        nuy = machines._lat.getElements('TUNEY')
+        # return only the first matched element
+        nux, = getElements('TUNEX')
+        nuy, = getElements('TUNEY')
         return nux.value, nuy.value
     elif source == 'model':
         raise NotImplementedError()
@@ -442,7 +456,9 @@ def getTune(source='machine', plane = 'h'):
     """
     get tune
 
-    >>> getTune(plane='v')
+    Example::
+
+      getTune(plane='v')
     """
     nux, nuy = getTunes(source)
     if plane == 'h': return nux
@@ -561,7 +577,7 @@ def getOrbit(pat = '', spos = False):
     When the element is not found or not a BPM, return NaN in its positon.
     """
     if not pat:
-        bpm = machines._lat.getElements(machines.HLA_VBPM)
+        bpm = machines._lat._find_exact_element(machines.HLA_VBPM)
         n = len(bpm.sb)
         if spos:
             ret = np.zeros((n, 3), 'd')
@@ -578,7 +594,7 @@ def getOrbit(pat = '', spos = False):
         if not elem: return None
         ret = [[e.x, e.y, e.sb] for e in elem]
     elif isinstance(pat, (list,)):
-        elem = machines._lat.getElements(pat)
+        elem = machines._lat.getElementList(pat)
         if not elem: return None
         bpm = [e.name for e in getBpms()]
         ret = []
@@ -618,7 +634,7 @@ def _reset_bpm_offset():
     for b in bpms:
         #print b.pv(tags=['aphla.offset', 'aphla.eput'])
         pvs.extend(b.pv(tags=['aphla.offset', 'aphla.eput']))
-    caput(pvs, 0.0)
+    if pvs: caput(pvs, 0.0)
     print "DONE"
 
 def _reset_quad():

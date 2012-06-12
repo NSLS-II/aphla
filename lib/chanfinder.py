@@ -11,6 +11,7 @@ tags. This can help us to identify the associated element name, type, location
 for every PV. The PVs are also tagged for 'default' read/write for a element
 it is linked.
 """
+from __future__ import print_function, unicode_literals
 
 import re, shelve, sys, os
 from fnmatch import fnmatch
@@ -124,8 +125,9 @@ class ChannelFinderAgent(object):
         header = rd.next()
         # lower case of header
         hlow = [s.lower() for s in header]
-        #print header, hlow
+        #print(header, hlow)
         nheader = len(header)
+        # the index of PV, properties and tags
         ipv = hlow.index('pv')
         iprpt, itags = [], []
         for i,h in enumerate(header):
@@ -144,10 +146,13 @@ class ChannelFinderAgent(object):
         pass
 
     def exportCsv(self, fname):
+        """
+        export the CFS in CSV format.
+        """
+        # find out all the property names
         prpts_set = set()
         for r in self.rows:
             if r[1] is None: continue
-            #print r
             for k in r[1]: prpts_set.add(k)
         header = sorted(list(prpts_set))
         #print header
@@ -211,10 +216,9 @@ class ChannelFinderAgent(object):
             if r[1] is None: continue
             # skip if no interesting properties
             if key not in r[1]: continue
+
             # record the property-value and its index. Append if
-            #property-value exists.
-            # name = r[1][key] if name not in ret:
-            #ret[name] = [] ret[name].append(i)
+            # property-value exists.
             v = ret.setdefault(r[1][key], [])
             v.append(i)
         return ret
@@ -225,28 +229,11 @@ if __name__ == "__main__":
     # about 12 seconds
     #cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
     #                property=[('hostName', 'virtac*')], tagName='aphla.sys.*')
-    cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', tagName='aphla.*')
+    cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
+                    tagName='aphla.*')
     #cfa.importCsv('test1.csv')
     cfa.exportCsv('test1.csv')
     #cfa._exportJson('test1.json')
     #cfa._importJson('test1.json')
     #cfa.sort('elemName')
-    print cfa.tags('aphla.sys.*')
-    sys.exit(0)
-
-    #cfa.importCsv('/home/lyyang/devel/nsls2-hla/machine/nsls2/test.csv')
-    for i,r in enumerate(cfa.rows):
-        if 'elemName' not in r[1]: continue
-        print r[1]['elemName'], r[0]
-    #cfa.renameProperty('elemName', 'elem_name')
-    #print cfa.rows
-    sys.exit(0)
-
-    cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder',
-                    keep_prpts = ['elemName', 'cell', 'girder', 'symmetry', 
-                                  'system', 'sEnd'],
-                    converter = {'sEnd': float},
-                    tagName='aphla.sys.LTB')
-    cfa.sort('elemName')
-    for r in cfa.rows:
-        print r[1]['elemName'], r[0]
+    print(cfa.tags('aphla.sys.*'))
