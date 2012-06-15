@@ -9,6 +9,7 @@ Element
 import os
 import re
 import copy
+import logging
 from catools import caget, caput
 
 
@@ -303,41 +304,47 @@ class CaDecorator:
             return ret
         else: return None
 
-    def setReadbackPv(self, pv):
-        if isinstance(pv, (str, unicode)):
-            self.pvrb = [pv]
-        elif isinstance(pv, (tuple, list)):
-            self.pvrb = [p for p in pv]
+    def setReadbackPv(self, pv, idx = None):
+        """
+        set the PV for readback at position idx. if idx is None, replace the
+        original one. if idx is an index integer and pv is not a list, then
+        replace the one with this index.
+        """
+        if idx is None:
+            if isinstance(pv, (str, unicode)):
+                self.pvrb = [pv]
+            elif isinstance(pv, (tuple, list)):
+                self.pvrb = [p for p in pv]
+        elif not isinstance(pv, (tuple, list)):
+            while idx >= len(self.pvrb): self.pvrb.append(None)
+            self.pvrb[idx] = pv
+        else:
+            raise RuntimeError("invalid readback pv '%s' for position '%s'" % 
+                               (str(pv), str(idx)))
 
-    def setSetpointPv(self, pv):
-        if isinstance(pv, (str, unicode)):
-            self.pvsp = [pv]
-        elif isinstance(pv, (tuple, list)):
-            self.pvsp = [p for p in pv]
-
+    def setSetpointPv(self, pv, idx = None):
+        """
+        set the PV for setpoint at position idx. if idx is None, replace the
+        original one. if idx is an index integer and pv is not a list, then
+        replace the one with this index.
+        """
+        if idx is None:
+            if isinstance(pv, (str, unicode)):
+                self.pvsp = [pv]
+            elif isinstance(pv, (tuple, list)):
+                self.pvsp = [p for p in pv]
+        elif not isinstance(pv, (tuple, list)):
+            while idx >= len(self.pvsp): self.pvsp.append(None)
+            self.pvsp[idx] = pv
+        else:
+            raise RuntimeError("invalid setpoint pv '%s' for position '%s'" % 
+                               (str(pv), str(idx)))
     def appendReadback(self, pv):
         self.pvrb.append(pv)
 
     def appendSetpoint(self, pv):
         self.pvsp.append(pv)
 
-    def insertReadback(self, pv, idx = None):
-        """insert a PV to readback list"""
-        if idx is None:
-            self._insert_in_order(self.pvrb, pv)
-        else:
-            while idx >= len(self.pvrb): 
-                self.pvrb.append(None)
-            self.pvrb[idx] = pv
-
-    def insertSetpoint(self, pv, idx = None):
-        """insert a PV to setpoint list"""
-        if idx is None:
-            self._insert_in_order(self.pvsp, pv)
-        else:
-            while idx >= len(self.pvsp): self.pvsp.append(None)
-            self.pvsp[idx] = pv
-            
     def removeReadback(self, pv):
         self.pvrb.remove(pv)
 
@@ -468,7 +475,7 @@ class CaElement(AbstractElement):
         decr = self._field['status']
         if not decr: self._field['status'] = CaDecorator(trace=self.trace)
         
-        self._field['status'].insertReadback(pv)
+        self._field['status'].appendReadback(pv)
 
     def addEGet(self, pv, field=None):
         """
@@ -476,6 +483,8 @@ class CaElement(AbstractElement):
         
         If no field provided, assign only to the default "value" field
         """
+        raise DeprecationWarning("This is deprecated, use updatePvRecord")
+
         sflists = ['value']
         if field: sflists.append(field)
 
@@ -483,7 +492,7 @@ class CaElement(AbstractElement):
             if not sf in self._field.keys() or not self._field[sf]:
                 self._field[sf] = CaDecorator(trace=self.trace)
             # add pv
-            self._field[sf].insertReadback(pv)
+            self._field[sf].appendReadback(pv)
 
     def addEPut(self, pv, field=None):
         """
@@ -491,6 +500,8 @@ class CaElement(AbstractElement):
 
         If no field provided, assign to the default "value" field.
         """
+        raise DeprecationWarning("This is deprecated, use updatePvRecord")
+
         sflists = ['value']
         if field is not None: sflists.append(field)
 
@@ -552,6 +563,8 @@ class CaElement(AbstractElement):
         """
         update the pv with property dictionary and tag list.
         """
+        if not isinstance(pvname, (str, unicode)):
+            raise TypeError("%s is not a valid type" % (type(pvname)))
 
         # update the properties
         if properties is not None: 
@@ -563,14 +576,16 @@ class CaElement(AbstractElement):
             if g is None: continue
 
             fieldname, idx = g.group(1), g.group(2)
-            if idx is not None: idx = int(idx[1:-1])
+            if idx is not None: 
+                idx = int(idx[1:-1])
+                logging.info("%s %s[%d]" % (pvname, fieldname, idx))
 
             # the default handle is 'READBACK'
             if properties is None or \
                     properties.get('handle', 'READBACK') == 'READBACK':
-                self.setFieldGetAction(fieldname, idx, pvname)
+                self.setFieldGetAction(pvname, fieldname, idx)
             elif properties.get('handle') == 'SETPOINT':
-                self.setFieldPutAction(fieldname, idx, pvname)
+                self.setFieldPutAction(pvname, fieldname, idx)
             else:
                 raise ValueError("invalid 'handle' value '%s' for pv %s" % 
                                  (properties.get('handle'), pvname))
@@ -578,7 +593,7 @@ class CaElement(AbstractElement):
         if pvname in self._pvtags.keys(): self._pvtags[pvname].update(tags)
         else: self._pvtags[pvname] = set(tags)
 
-    def setFieldGetAction(self, field, idx, v, desc = ''):
+    def setFieldGetAction(self, v, field, idx = None, desc = ''):
         """
         set the action when reading *field*.
 
@@ -588,14 +603,9 @@ class CaElement(AbstractElement):
         if not self._field.has_key(field):
             self._field[field] = CaDecorator(trace=self.trace)
 
-        if isinstance(v, (tuple, list)):
-            for i,pv in enumerate(v):
-                self._field[field].insertReadback(pv, idx+i)
-        else:
-            self._field[field].insertReadback(v, idx)
-        #print self.name, self._field[field].pvrb
+        self._field[field].setReadbackPv(v, idx)
 
-    def setFieldPutAction(self, field, idx, v, desc = ''):
+    def setFieldPutAction(self, v, field, idx=None, desc = ''):
         """
         set the action for writing *field*.
 
@@ -605,11 +615,7 @@ class CaElement(AbstractElement):
         if not self._field.has_key(field):
             self._field[field] = CaDecorator(trace=self.trace)
 
-        if isinstance(v, (tuple, list)):
-            for i,pv in enumerate(v):
-                self._field[field].insertSetpoint(pv, idx+i)
-        else:
-            self._field[field].insertSetpoint(v, idx)
+        self._field[field].setSetpointPv(v, idx)
         
     def fields(self):
         """
@@ -644,6 +650,12 @@ class CaElement(AbstractElement):
 
     def __dir__(self):
         return dir(CaElement) + list(self.__dict__) + self._field.keys()
+
+    def __repr__(self):
+        if self.virtual:
+            return "%s [%s] (virtual)" % (self.name, self.family)
+        else:
+            AbstractElement.__repr__(self)
 
     def enableTrace(self, fieldname):
         self._field[fieldname].trace = True
@@ -720,8 +732,8 @@ def merge(elems, **kwargs):
     #print pvdict.keys()
     elem = CaElement(**kwargs)
     for k,v in pvdict.iteritems():
-        if len(v[0]) > 0: elem.setFieldGetAction(k, 0, v[0], '')
-        if len(v[1]) > 0: elem.setFieldPutAction(k, 0, v[1], '')
+        if len(v[0]) > 0: elem.setFieldGetAction(v[0], k, None, '')
+        if len(v[1]) > 0: elem.setFieldPutAction(v[1], k, None, '')
         #print k, "GET", v[0]
         #print k, "PUT", v[1]
     elem.sb = [e.sb for e in elems]

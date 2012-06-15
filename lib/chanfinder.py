@@ -121,26 +121,27 @@ class ChannelFinderAgent(object):
         self.source = fname
         import csv
         rd = csv.reader(open(fname, 'r'))
-        #print rd.fieldnames
+        # header line
         header = rd.next()
         # lower case of header
         hlow = [s.lower() for s in header]
-        #print(header, hlow)
+        # number of headers, pv + properties
         nheader = len(header)
         # the index of PV, properties and tags
         ipv = hlow.index('pv')
         iprpt, itags = [], []
         for i,h in enumerate(header):
             if i == ipv: continue
+            # if the header is empty, it is a tag
             if len(h.strip()) == 0: itags.append(i)
             else: iprpt.append(i)
         #print ipv, iprpt, itags
         for s in rd:
-            #print s, len(s)
             prpts = dict([(header[i], s[i]) for i in iprpt])
-            tags = [s[i] for i in itags]
+            # itags could be empty if we put all tags in the end columns
+            tags = [s[i].strip() for i in itags]
             for i in range(nheader, len(s)):
-                tags.append(s[i])
+                tags.append(s[i].strip())
             #print s[ipv], prpts, tags
             self.rows.append([s[ipv], prpts, tags])
         pass

@@ -33,7 +33,7 @@ class TestElement(unittest.TestCase):
 
     def test_bpm(self):
         pvx0 = 'SR:C29-BI:G06B{BPM:H1}SA:X-I'
-        pvy0 = 'SR:C29-BI:G06B{BPM:H1}SA:Y-I',
+        pvy0 = 'SR:C29-BI:G06B{BPM:H1}SA:Y-I'
         pvxbba = 'SR:C29-BI:G06B{BPM:H1}BBA:X'
         pvybba = 'SR:C29-BI:G06B{BPM:H1}BBA:Y'
         pvxgold = 'SR:C29-BI:G06B{BPM:H1}GOLDEN:X'
