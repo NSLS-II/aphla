@@ -85,7 +85,7 @@ class Lattice:
         if self._find_exact_element(name): return True
         else: return False
 
-    def insertElement(self, elem, i = None):
+    def insertElement(self, elem, i = None, groups = None):
         if i is not None:
             self._elements.insert(i, elem)
         else:
@@ -98,10 +98,12 @@ class Lattice:
                         continue
                 if k == len(self._elements): self._elements.append(elem)
                 else: self._elements.insert(k, elem)
-        #for g in elem.group:
-        #    if not g: continue
-        #    self.addGroupMember(g, elem.name, newgroup=True)
-            
+        if groups is not None:
+            for g in groups:
+                if self._group.has_key(g): self._group[g].append(elem)
+                else: self._group[g] = [elem]
+
+
     def appendElement(self, elem):
         """
         append a new element to lattice. callers are responsible for avoiding
@@ -589,7 +591,7 @@ class Lattice:
         e0 = self._find_exact_element(element)
         if not e0: raise ValueError("element %s does not exist" % element)
 
-        el = self.getElements(group)
+        el = self.getElementList(group)
 
         if not el: raise ValueError("elements/group %s does not exist" % group)
         if e0 in el: el.remove(e0)
@@ -625,7 +627,7 @@ class Lattice:
         e0 = self._find_exact_element(element)
         if not e0: raise ValueError("element %s does not exist" % element)
 
-        el = self.getElements(group, return_list=True)
+        el = self.getElementList(group, return_list=True)
 
         if not el: raise ValueError("elements/group %s does not exist" % group)
 
@@ -661,7 +663,7 @@ class Lattice:
         """
 
         if isinstance(elem, str):
-           elemlst = self.getElements(elem)
+           elemlst = self.getElementList(elem)
         elif isinstance(elem, list):
            elemlst = elem[:]
         else:
@@ -687,7 +689,7 @@ class Lattice:
         return beta function
         """
         if isinstance(elem, str) or isinstance(elem, unicode):
-           elemlst = self.getElements(elem)
+           elemlst = self.getElementList(elem)
         elif isinstance(elem, list):
            elemlst = elem[:]
         else:
@@ -707,7 +709,7 @@ class Lattice:
         return dispersion
         """
         if isinstance(elem, str):
-           elemlst = self.getElements(elem)
+           elemlst = self.getElementList(elem)
         elif isinstance(elem, list):
            elemlst = elem[:]
         else:

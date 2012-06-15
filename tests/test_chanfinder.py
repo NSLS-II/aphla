@@ -8,31 +8,37 @@ import random
 
 from conf import *
 
-class TestChanFinderData(unittest.TestCase):
+class TestChanFinderCsvData(unittest.TestCase):
+    """
+    """
     def setUp(self):
-        self.HLA_CFS_URL=os.environ.get('HLA_CFS_URL', None)
-        pass
-    
-    def test_sys(self):
-        pass
+        self.cfa = ap.chanfinder.ChannelFinderAgent()
+        self.cfa.importCsv(ap.conf.filename('us_nsls2_vsr_cfs.csv'))
+        self.VSUB = 'V1'
 
-class TestChanFinderAgent(unittest.TestCase):
-    """
-    """
+    def test_tags(self):
+        # e.g: aphla.sys + . + V1
+        vstag = ap.machines.HLA_TAG_SYS_PREFIX + '.' + self.VSUB
+        tags = self.cfa.tags(vstag + '*')
+        for t in ['SR', 'LTB', 'LTD1', 'LTD2']:
+            self.assertIn(vstag + t, tags)
 
+    def test_match_properties1(self):
+        pass
+        
+class TestChanFinderData(unittest.TestCase):
     def setUp(self):
         #http://web01.nsls2.bnl.gov/ChannelFinder
         self.HLA_CFS_URL=os.environ.get('HLA_CFS_URL', None)
         self.cfa = ap.chanfinder.ChannelFinderAgent()
         self.cfa.downloadCfs(self.HLA_CFS_URL, tagName='aphla.*')
+        self.VSUB=''
+        pass
+    
+    def test_sys_tags(self):
+        vstag = ap.machines.HLA_TAG_SYS_PREFIX + '.' + self.VSUB
+        tags = self.cfa.tags(vstag + '*')
+        for t in ['SR', 'LTB', 'LTD1', 'LTD2']:
+            self.assertIn(vstag + t, tags)
         pass
 
-    def test_match_properties1(self):
-        tags = self.cfa.tags('aphla.sys.*')
-        self.assertGreater(len(tags), 0)
-        self.assertTrue('aphla.sys.SR' in tags)
-        self.assertTrue('aphla.sys.LTD1' in tags)
-        self.assertTrue('aphla.sys.LTD2' in tags)
-        self.assertTrue('aphla.sys.LTB' in tags)
-
-        

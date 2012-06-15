@@ -9,6 +9,7 @@ v0.3.0
   - fix bug in correctOrbitPV
   - fix bug in getLocations to ignore virtual element
   - add mark/reset/revert for :class:`~aphla.element.CaElement`
+  - fix bug in doc
 
 v0.2.2
 ------

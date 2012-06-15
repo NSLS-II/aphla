@@ -68,13 +68,13 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
     try:
         return ct.caget(pvs2, timeout=timeout, datatype=datatype,
                         format=format, count=count, throw=throw)
-    except cothread.Timedout:
+    except:
         if os.environ.get('APHLAS_DISABLE_CA', 0):
             print "TIMEOUT: reading", pvs
             if isinstance(pvs, (unicode, str)): return 0.0
             else: return [0.0] * len(pvs2)
         else:
-            raise cothread.Timedout
+            raise
 
 def caput(pvs, values, timeout=5, wait=True, throw=True):
     """

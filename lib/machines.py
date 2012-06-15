@@ -113,12 +113,13 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
 
 
 def initNSLS2VSR():
-    """
-    initialize the virtual accelerator from channel finder
+    """ 
+    initialize the virtual accelerator 'V1SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
+    channel finder or csv file.
     """
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2_cfs.csv'
+    cfs_filename = 'us_nsls2_vsr_cfs.csv'
     src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
@@ -155,10 +156,10 @@ def initNSLS2VSR():
 
     global _lat, _lattice_dict
 
-    # should be 'aphla.sys.' + ['SR', 'LTB', 'LTD1', 'LTD2']
+    # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
-    for lattag in cfa.tags(HLA_TAG_SYS_PREFIX + '.*'):
-        latname = lattag[len(HLA_TAG_SYS_PREFIX) + 1:]
+    for latname in ['V1SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+        lattag = HLA_TAG_SYS_PREFIX + '.' + latname
         logger.info("Initializing lattice %s (%s)" % (latname, lattag))
         _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
                                                desc = cfa.source)
@@ -166,25 +167,25 @@ def initNSLS2VSR():
     orm_filename = 'us_nsls2_sr_orm.hdf5'
     if conf.has(orm_filename):
         #print("Using ORM:", conf.filename(orm_filename))
-        _lattice_dict['SR'].ormdata = OrmData(conf.filename(orm_filename))
+        _lattice_dict['V1SR'].ormdata = OrmData(conf.filename(orm_filename))
     else:
         logger.warning("No ORM '%s' found" % orm_filename)
 
     # a virtual bpm. its field is a "merge" of all bpms.
-    bpms = _lattice_dict['SR'].getElementList('BPM')
+    bpms = _lattice_dict['V1SR'].getElementList('BPM')
     allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
                             'family': HLA_VFAMILY})
-    _lattice_dict['SR'].insertElement(allbpm)
+    _lattice_dict['V1SR'].insertElement(allbpm, groups=[HLA_VFAMILY])
 
     #
     # LTB 
-    _lattice_dict['LTB'].loop = False
+    _lattice_dict['V1LTB'].loop = False
     #_lat = _lattice_dict['LTB']
 
     #
     # SR
-    _lattice_dict['SR'].loop = True
-    _lat = _lattice_dict['SR']
+    _lattice_dict['V1SR'].loop = True
+    _lat = _lattice_dict['V1SR']
 
 
 def initNSLS2VSRTwiss():
