@@ -444,9 +444,8 @@ def getTunes(source='machine'):
     """
     if source == 'machine':
         # return only the first matched element
-        nux, = getElements('TUNEX')
-        nuy, = getElements('TUNEY')
-        return nux.value, nuy.value
+        nu, = getElements('TUNE')
+        return nu.value
     elif source == 'model':
         raise NotImplementedError()
     elif source == 'database':
