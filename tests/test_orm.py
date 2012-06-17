@@ -1,32 +1,34 @@
 #!/usr/bin/env python
 
-from conf import *
-
-import hla
+import aphla as ap
 import unittest
-import sys, time
-import numpy as np
+import random
+#import sys, time
+#import numpy as np
 
-class TestOrm(unittest.TestCase):
+ap.initNSLS2VSR()
+
+class TestOrmData(unittest.TestCase):
     def setUp(self):
-        if hla.NETWORK_DOWN: return None
-        wait_for_svr()
-        self.full_orm = "orm-full-%04d.pkl" % hg_parent_rev()
+        self.h5filename = "us_nsls2_vsr_orm.hdf5"
         pass
 
     def tearDown(self):
-        if hla.NETWORK_DOWN: return None
-        reset_svr()
+        pass
 
     def test_trim_bpm(self):
+        self.assertTrue(ap.conf.has(self.h5filename))
+        ormdata = ap.OrmData(ap.conf.filename(self.h5filename))
+
         trimx = ['FXL2G1C07A', 'CXH1G6C15B']
+        for trim in trimx:
+            self.assertTrue(ormdata.hasTrim(trim))
 
-        bpmx = hla.getGroupMembers(['BPM', 'C0[2-4]'], op='intersection')
-        self.assertTrue(len(bpmx) == 18)
-        ormc = hla.orm.Orm([e.name for e in bpmx], trimx)
-        print ormc.bpm
-        print ormc.trim
-
+        bpmx = ap.getGroupMembers(['BPM', 'C0[2-4]'], op='intersection')
+        self.assertEqual(len(bpmx), 18)
+        for bpm in bpmx:
+            self.assertTrue(ormdata.hasBpm(bpm.name))
+        
 
     def test_measure_orm(self):
         return True
@@ -103,8 +105,91 @@ class TestOrm(unittest.TestCase):
         #orm.checkLinearity(plot=True)
         pass
 
-    def test_merge(self):
-        if hla.NETWORK_DOWN: return True
+    def test_update(self):
+        """
+        same data different mask
+        """
+        self.assertTrue(ap.conf.has(self.h5filename))
+        ormdata_dst = ap.OrmData(ap.conf.filename(self.h5filename))
+        ormdata_src = ap.OrmData(ap.conf.filename(self.h5filename))
+        
+        nrow, ncol = len(ormdata_src.bpm), len(ormdata_src.trim)
+        # reset data
+        for i in range(nrow):
+            for j in range(ncol):
+                ormdata_src.m[i,j] = 0.0
+
+        for itrial in range(3):
+            idx = []
+            for i in range(nrow*ncol//4):
+                k = random.randint(0, nrow*ncol-1)
+                idx.append(divmod(k, ncol))
+                ormdata_src._mask[idx[-1][0]][idx[-1][1]] = 0
+
+        ormdata_dst.update(ormdata_src)
+        for i,j in idx:
+            self.assertEqual(ormdata_dst.m[i,j], 0.0)
+
+    def test_update_swapped(self):
+        """
+        same dimension, swapped rows
+        """
+        self.assertTrue(ap.conf.has(self.h5filename))
+        ormdata_dst = ap.OrmData(ap.conf.filename(self.h5filename))
+        ormdata_src = ap.OrmData(ap.conf.filename(self.h5filename))
+        
+        nrow, ncol = len(ormdata_src.bpm), len(ormdata_src.trim)
+        # reset data
+        for i in range(nrow):
+            for j in range(ncol):
+                ormdata_src.m[i,j] = 0.0
+
+        # rotate the rows down by 2
+        import collections
+        rbpm = collections.deque(ormdata_src.bpm)
+        rbpm.rotate(2)
+        ormdata_src.bpm = [b for b in rbpm]
+
+        for itrial in range(10):
+            idx = []
+            for i in range(nrow*ncol//4):
+                k = random.randint(0, nrow*ncol-1)
+                idx.append(divmod(k, ncol))
+                ormdata_src._mask[idx[-1][0]][idx[-1][1]] = 0
+
+        ormdata_dst.update(ormdata_src)
+        for i,j in idx:
+            i0, j0 = (i-2+nrow) % nrow, (j + ncol) % ncol
+            self.assertEqual(ormdata_dst.m[i0,j0], 0.0)
+
+
+    def test_update_submatrix(self):
+        """
+        same dimension, swapped rows
+        """
+        self.assertTrue(ap.conf.has(self.h5filename))
+        ormdata = ap.OrmData(ap.conf.filename(self.h5filename))
+        nrow, ncol = len(ormdata.bpm), len(ormdata.trim)
+
+        # prepare for subset
+        for itrial1 in range(10):
+            idx = []
+            bpms, trims = set([]), set([])
+            planes = [set([]), set([])]
+            for itrial2 in range(nrow*ncol//4):
+                k = random.randint(0, nrow*ncol-1)
+                i,j = divmod(k, ncol)
+                idx.append([i, j])
+                bpms.add(ormdata.bpm[i][0])
+                planes[0].add(ormdata.bpm[i][1])
+                trims.add(ormdata.trim[j][0])
+                planes[1].add(ormdata.trim[j][1])
+
+            m = ormdata.getSubMatrix(bpm, trim, planes)
+
+            for i,j in idx:
+                self.assertEqual(ormdata_dst.m[i0,j0], 0.0)
+
         #orm1 = hla.measorm.Orm(bpm = [], trim = [])
         #orm1.load('a.hdf5')
         #orm2 = hla.measorm.Orm(bpm = [], trim = [])
@@ -114,7 +199,7 @@ class TestOrm(unittest.TestCase):
         #orm.save('c.hdf5')
         
     def test_shelve(self):
-        if hla.NETWORK_DOWN: return True
+        return True
         #orm = hla.measorm.Orm(bpm = [], trim = [])
         #orm.load('c.hdf5')
         #orm.save('o1.pkl', format='shelve')
@@ -123,8 +208,6 @@ class TestOrm(unittest.TestCase):
 
     def test_orbitreproduce(self):
         return True
-
-        if hla.NETWORK_DOWN: return True
 
         t0 = time.time()
         hla.reset_trims()
@@ -201,99 +284,4 @@ class TestOrm(unittest.TestCase):
                 if i > 100: break
             break
         print "Time:", time.time() - t1
-
-def test_delay():
-    rx, rt = [], []
-    t0 = time.time()
-    k0 = caget('SR:C01-MG:G04A{VCM:M}Fld-SP')
-    caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k0-3e-6)
-    time.sleep(10)
-    for k in [k0, k0-2e-6, k0-1e-6, k0-.5e-6, k0+.5e-6, k0+1e-6, k0]:
-        x0 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k)
-        while True:
-            time.sleep(0.5)
-            x3 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-            t1 = time.time()
-            if abs((x3 - x0)/x0) > 0.05:
-                rx.append(x3)
-                rt.append(t1)
-                break
-        print "%10.3e %11.4e %11.4e" % (k, rt[-1]-t0, rx[-1]-x0), 
-        print caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-
-def test_1():
-    x = []
-    t0 = 1299032723.0
-    k0 = caget('SR:C01-MG:G04A{VCM:M}Fld-SP')
-    for k in [k0, k0-1e-6, k0-.5e-6, k0+.5e-6, k0+1e-6, k0]:
-        t1 = time.time()
-        #caput('SR:C30-MG:G01A<VCM:H2>Fld-SP', k)
-        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k, wait=True)
-        time.sleep(hla.ORBIT_WAIT)
-        x3 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-
-        caput('SR:C01-MG:G04A{VCM:M}Fld-SP', k, wait=True)
-        time.sleep(hla.ORBIT_WAIT)
-        x2 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-        print k, x3, x2
-    print x
-
-def test_2(dt = 20, dup=True):
-    # stabilize the system
-    print "\n# waiting for stable beam ..."
-    for i in range(7):
-        caput('SR:C01-MG:G04A{VCor:M}Fld-SP', 0.0)
-        time.sleep(3)
-        print "# %d" % i, caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-    print "# beam is stable now, if output is not changing much"
-    
-    t0 = time.time()
-    k0 = caget('SR:C01-MG:G04A{VCor:M}Fld-SP')
-    dk = [1e-6, 2e-6, 1e-6, 0.0, -1e-6, -2e-6, -1e-6, 0.0]
-    print "\n# if waiting=%d sec is long enough for Tracy," % dt
-    print "# two dx should be same"
-    print "# also, for same kick, dx should be the same"
-    print "# lets see ...."
-    for i in range(6):
-        k = k0 + dk[i%len(dk)]
-        
-        caput('SR:C01-MG:G04A{VCor:M}Fld-SP', k, wait=True)
-        time.sleep(dt)
-        t1 = time.time()
-        x2 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-        
-        if dup:
-            caput('SR:C01-MG:G04A{VCor:M}Fld-SP', k)
-            time.sleep(4)
-            t2 = time.time()
-            x3 = caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-
-        if dup:
-            print "%3d kick=% .2e dx=% .4e dx=% .4e" % (i, k, x2, x3), t2-t0
-        else:
-            print "%3d kick=% .2e dx=% .4e" % (i, k, x2), t1 - t0
-
-    # stabilize the beam, I believe 3sec*7 is good enough
-    print "\n# waiting for stable beam"
-    for i in range(7):
-        caput('SR:C01-MG:G04A{VCor:M}Fld-SP', 0.0)
-        time.sleep(3)
-        print "# %d" % i, caget('SR:C30-BI:G02A{BPM:H2}SA:Y-I')
-    print "# beam is stable now, if output is not changing much"
-
-if __name__ == "__main__":
-    #test_2(dt=6, dup=True)
-    #print "# in the above output, second column of dx is more correct"
-    #print ""
-    #print "--- Now next experiment ..."
-    #print ""
-    #test_2(dt=10, dup=False)
-    #hla.clean_init()
-    #hla.reset_trims()
-    #test_1()
-    #test_delay()
-    hla.initNSLS2VSR()
-    hla.initNSLS2VSRTwiss()
-    unittest.main()
 

@@ -20,6 +20,9 @@ from cothread import Timedout
 from cothread.catools import camonitor, FORMAT_TIME
 import random
 
+import logging
+logger = logging.getLogger(__name__)
+
 CA_OFFLINE = False
 
 def _ca_get_sim(pvs):
@@ -93,6 +96,9 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
 
       :func:`aphla.catools.caget`
     """
+
+    logger.info("setting '%s' '%s'" % (str(pvs), str(values)))
+
     if CA_OFFLINE: return _ca_put_sim(pvs)
 
     if isinstance(pvs, str):

@@ -10,11 +10,14 @@ Core HLA Libraries
 Defines the procedural interface of HLA to the users.
 """
 
+import logging
 import numpy as np
 import time
 from fnmatch import fnmatch
 from catools import caget, caput
 import machines
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     'getCurrent', 'getElements', 'getLocations', 'addGroup', 'removeGroup',
@@ -143,7 +146,8 @@ def _reset_trims(verbose=False):
     else:
         caput(pv, 0.0)
 
-    print "DONE"
+    logger.info("reset all trims")
+    #print "DONE"
 
 
 def _levenshtein_distance(first, second):

@@ -12,6 +12,7 @@ import copy
 import logging
 from catools import caget, caput
 
+logger = logging.getLogger(__name__)
 
 class AbstractElement(object):
     """
@@ -578,7 +579,7 @@ class CaElement(AbstractElement):
             fieldname, idx = g.group(1), g.group(2)
             if idx is not None: 
                 idx = int(idx[1:-1])
-                logging.info("%s %s[%d]" % (pvname, fieldname, idx))
+                logger.info("%s %s[%d]" % (pvname, fieldname, idx))
 
             # the default handle is 'READBACK'
             if properties is None or \

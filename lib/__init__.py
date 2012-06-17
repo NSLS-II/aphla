@@ -4,7 +4,7 @@ from __future__ import print_function
 
 
 """
-HLA Module
+APHLA Module
 -----------
 
 This is an object-orient high level accelerator control library.
@@ -17,21 +17,21 @@ A procedural interface is provided.
 
 Modules include:
 
-    :mod:`hla.machines`
+    :mod:`aphla.machines`
 
         define machine specific settings, create lattice from channel
         finder service for different accelerator complex.
 
-    :mod:`hla.lattice`
+    :mod:`aphla.lattice`
 
-        define the :class:`~hla.lattice.CaElement`, :class:`~hla.lattice.Twiss`,
-        :class:`~hla.lattice.Lattice` class
+        define the :class:`~aphla.lattice.CaElement`, :class:`~aphla.lattice.Twiss`,
+        :class:`~aphla.lattice.Lattice` class
 
-    :mod:`hla.orbit`
+    :mod:`aphla.orbit`
 
         defines orbit retrieve routines
 
-    :mod:`hla.hlalib`
+    :mod:`aphla.hlalib`
 
         defines procedural interface
         
@@ -40,14 +40,23 @@ Modules include:
 __version__ = "0.3.0b3"
 
 
+import os
+import tempfile
 import logging
 
-logging.basicConfig(filename="aphla.log",
-    filemode='w',
+# for compatibilities with Python < 2.7
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+logging.basicConfig(filename=os.path.join(tempfile.gettempdir(), "aphla.log"),
     format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
     level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# set null handler when logging for a library.
+_h = NullHandler()
+logging.getLogger('aphla').addHandler(_h)
 
+#
 from catools import *
 from machines import initNSLS2VSR, initNSLS2VSRTwiss
 
