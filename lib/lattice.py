@@ -692,10 +692,12 @@ class Lattice:
         return self._get_twiss(elem, ['etax', 'etay'], spos)
     
     def getTunes(self):
-        """
-        return tunes
-        """
+        """return tunes -> (nux, nuy)"""
         return self._twiss.tune
+
+    def getChromaticities(self):
+        """return chromaticities -> (chx, chy)"""
+        return self._twiss.chrom
 
     def getBeamlineProfile(self, s1=0.0, s2=1e10):
         """

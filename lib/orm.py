@@ -12,12 +12,12 @@ Response Matrix
 
 """
 
-import os, sys, time
-from os.path import join, splitext
+import sys, time
 import numpy as np
 
 import machines
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
+from catools import caget, caput, caputwait, Timedout
 
 class Orm:
     """
@@ -35,11 +35,13 @@ class Orm:
         
         """
         # points for trim setting when calc dx/dkick
+        self.ormdata = None
+
         npts = 6
 
         self.bpm = []
         self.trim = []
-        
+
         if trim and bpm:
             # one trim may have two (x/y) pv or one only
             el = machines._lat.getElements(trim)
@@ -84,26 +86,6 @@ class Orm:
     def load(self, filename, format = ''):
         self.ormdata.load(filename, format)
 
-    def _set_wait_stable(
-        self, pvs, values, monipv, diffstd = 1e-6, timeout=120):
-        """
-        set pv to a value, waiting for timeout or the std of monipv is
-        greater than diffstd
-        """
-        if isinstance(monipv, str) or isinstance(monipv, unicode):
-            pvlst = [monipv]
-        else:
-            pvlst = monipv[:]
-
-        v0 = np.array(caget(monipv))
-        caput(pvs, values)
-        dt = 0
-        while dt < timeout:
-            time.sleep(2)
-            v1 = np.array(caget(monipv))
-            dt = dt + 2.0
-            if np.std(v1 - v0) > diffstd: break
-        return dt
 
     def _meas_orbit_rm4(self, kickerpv, bpmpvlist, mask,
                          kref = 0.0, dkick = 1e-4, verbose = 0, points=6):
@@ -124,7 +106,7 @@ class Orm:
         kstrength = np.ones(points+2, 'd') * kx0
         kstrength[1:-1] = np.linspace(kx0-2*dkick, kx0+2*dkick, points)
         for i,kx in enumerate(kstrength[1:]):
-            dt = self._set_wait_stable(kickerpv, kx, bpmpvlist)
+            dt = caputwait(kickerpv, kx, bpmpvlist)
             ret[i+1,:] = caget(bpmpvlist)
             for j,bpm in enumerate(bpmpvlist):
                 if mask[j]: ret[i+1,j] = 0
@@ -167,20 +149,23 @@ class Orm:
                 if residuals[j] < 1e-11: continue
                 print "WARNING", trim_pv_sp, self.trim[i][0], \
                     self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
-                plt.clf()
-                plt.subplot(211)
-                plt.plot(1e3*kstrength[1:-1], 1e3*ret[1:-1,j], '--o')
-                tx = np.linspace(min(kstrength), max(kstrength), 20)
-                plt.plot(1e3*tx, 1e3*(tx*p[0,j] + p[1,j]), '-')
-                plt.xlabel("kick [mrad]")
-                plt.ylabel("orbit [mm]")
-                plt.subplot(212)
-                # predicted(fitted) y offset
-                y1 = kstrength[1:-1]*p[0,j] + p[1,j]
-                plt.plot(1e3*kstrength[1:-1], 1e6*(ret[1:-1,j] - y1), '--x')
-                plt.xlabel("kick [mrad]")
-                plt.ylabel("orbit diff [um]")
-                plt.savefig("orm-t%03d-b%03d.png" % (i,j))
+                
+                if False:
+                    import matplotlib.pylab as plt
+                    plt.clf()
+                    plt.subplot(211)
+                    plt.plot(1e3*kstrength[1:-1], 1e3*ret[1:-1,j], '--o')
+                    tx = np.linspace(min(kstrength), max(kstrength), 20)
+                    plt.plot(1e3*tx, 1e3*(tx*p[0,j] + p[1,j]), '-')
+                    plt.xlabel("kick [mrad]")
+                    plt.ylabel("orbit [mm]")
+                    plt.subplot(212)
+                    # predicted(fitted) y offset
+                    y1 = kstrength[1:-1]*p[0,j] + p[1,j]
+                    plt.plot(1e3*kstrength[1:-1], 1e6*(ret[1:-1,j] - y1), '--x')
+                    plt.xlabel("kick [mrad]")
+                    plt.ylabel("orbit diff [um]")
+                    plt.savefig("orm-t%03d-b%03d.png" % (i,j))
 
             self._rawkick[i, :] = kstrength[:]
             for j,b in enumerate(self.bpm):
@@ -229,20 +214,22 @@ class Orm:
                 if residuals[j] < 1e-11: continue
                 print "WARNING", trim_pv_sp, self.trim[i][0], \
                     self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
-                plt.clf()
-                plt.subplot(211)
-                plt.plot(1e3*kstrength[1:-1], 1e3*ret[1:-1,j], '--o')
-                tx = np.linspace(min(kstrength), max(kstrength), 20)
-                plt.plot(1e3*tx, 1e3*(tx*p[0,j] + p[1,j]), '-')
-                plt.xlabel("kick [mrad]")
-                plt.ylabel("Orbit [mm]")
-                plt.subplot(212)
-                # predicted(fitted) y offset
-                y1 = kstrength[1:-1]*p[0,j] + p[1,j]
-                plt.plot(1e3*kstrength[1:-1], 1e6*(ret[1:-1,j] - y1), '--x')
-                plt.xlabel("kick [mrad]")
-                plt.ylabel("Orbit diff [um]")
-                plt.savefig("orm-t%03d-b%03d.png" % (i,j))
+                if False:
+                    import matplotlib.pylab as plt
+                    plt.clf()
+                    plt.subplot(211)
+                    plt.plot(1e3*kstrength[1:-1], 1e3*ret[1:-1,j], '--o')
+                    tx = np.linspace(min(kstrength), max(kstrength), 20)
+                    plt.plot(1e3*tx, 1e3*(tx*p[0,j] + p[1,j]), '-')
+                    plt.xlabel("kick [mrad]")
+                    plt.ylabel("Orbit [mm]")
+                    plt.subplot(212)
+                    # predicted(fitted) y offset
+                    y1 = kstrength[1:-1]*p[0,j] + p[1,j]
+                    plt.plot(1e3*kstrength[1:-1], 1e6*(ret[1:-1,j] - y1), '--x')
+                    plt.xlabel("kick [mrad]")
+                    plt.ylabel("Orbit diff [um]")
+                    plt.savefig("orm-t%03d-b%03d.png" % (i,j))
                     
             self._rawkick[i, :] = kstrength[:]
             self._rawmatrix[:,:,i] = ret[:,:]
@@ -401,9 +388,6 @@ class Orm:
                 if not t[0] in trim or t[1] != flags[1]: continue
                 jj = trim.index(t[0])
                 mat[ii,jj] = self.m[i,j]
-                #if self._mask[i,j]:
-                #    
-                #    raise ValueError("One ORM element (%d,%d)=(%s,%s)=%s%s is not valid(masked)" % (i,j,self.bpm[i][0], self.trim[j][0], self.bpm[i][1], self.trim[j][1]))
 
         return mat
 

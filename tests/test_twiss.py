@@ -78,20 +78,27 @@ class TestTunes(unittest.TestCase):
         tunes0a = lat.getTunes()
         self.assertAlmostEqual(tunes0a[0], 33.41, places=2)
         self.assertAlmostEqual(tunes0a[1], 16.31, places=2)
+
+        # adjust quad, live tune should change
         qs = lat.getElementList('QUAD')
         k1 = qs[0].k1
         qs[0].k1 = k1 * 1.02
         time.sleep(3)
-        tunes0b = lat.getTunes()
-        tunes1 = ap.getTunes()
-        qs[0].k1 = k1
+        try:
+            tunes0b = lat.getTunes()
+            tunes1 = ap.getTunes()
+        finally:
+            qs[0].k1 = k1
         
         self.assertEqual(tunes0a[0], tunes0b[0])
         self.assertEqual(tunes0a[1], tunes0b[1])
         self.assertNotEqual(tunes0b[0], tunes1[0])
         self.assertNotEqual(tunes0b[1], tunes1[1])
         
-        pass
 
-    def test_chromaticity(self):
+    def test_chromaticities(self):
+        lat = ap.machines.getLattice()
+        ch = lat.getChromaticities()
+        self.assertEqual(abs(ch[0]), 0)
+        self.assertEqual(abs(ch[1]), 0)
         pass

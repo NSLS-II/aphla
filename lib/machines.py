@@ -207,11 +207,14 @@ def initNSLS2VSRTwiss():
     phiy   = [v for v in caget('SR:C00-Glb:G00{PHI:00}RB-Y')]
     nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
     nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
+    chx = caget('SR:C00-Glb:G00{CHROM:00}RB-X')
+    chy = caget('SR:C00-Glb:G00{CHROM:00}RB-Y')
 
     global _twiss, _lat
 
     #print(__file__, "Reading twiss items:", len(s))
-    print("Elements in lattice '%s': %d" % (_lat.name, len(_lat._elements)))
+    logger.info("Elements in lattice '%s': %d" % 
+                (_lat.name, len(_lat._elements)))
 
     # fix the Tracy convension by adding a new element at the end
     for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
@@ -221,6 +224,7 @@ def initNSLS2VSRTwiss():
     _twiss = Twiss('virtac')
 
     _twiss.tune = (nux, nuy)
+    _twiss.chrom = (chx, chy)
     #print __file__, len(s), len(betax)
     
     nps = np.array(s, 'd')

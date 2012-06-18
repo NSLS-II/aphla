@@ -459,15 +459,15 @@ def getChromaticity(source='machine'):
 
 def getTunes(source='machine'):
     """
-    get tunes from ['machine']
+    get tunes from ['machine', 'database']
     """
     if source == 'machine':
         # return only the first matched element
         nu, = getElements('TUNE')
         return nu.value
-    elif source == 'model':
-        raise NotImplementedError()
     elif source == 'database':
+        return machines._lat.getTunes()
+    elif source == 'model':
         raise NotImplementedError()
 
 def getTune(source='machine', plane = 'h'):

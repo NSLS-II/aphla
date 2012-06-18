@@ -8,14 +8,10 @@ Twiss
 """
 
 import numpy as np
-from catools import caget, caput
 
 class TwissItem:
     """
-    twiss item
-
-    Stores twiss parameter for one element at begin(b), center(c), exit(e) or
-    all three locations.
+    The twiss parameter at one location
 
     ===============  =======================================================
     Twiss(Variable)  Description
@@ -30,21 +26,50 @@ class TwissItem:
     """
 
     def __init__(self, **kwargs):
-        self._s     = kwargs.get('s', 0.0)
-        self._alpha = kwargs.get('alpha', (0.0, 0.0))
-        self._beta  = kwargs.get('beta', (0.0, 0.0))
-        self._gamma = kwargs.get('gamma', (0.0, 0.0))
-        self._eta   = kwargs.get('eta', (0.0, 0.0))
-        self._phi   = kwargs.get('phi', (0.0, 0.0))
+        self.s     = kwargs.get('s', 0.0)
+        self.alpha = kwargs.get('alpha', (0.0, 0.0))
+        self.beta  = kwargs.get('beta', (0.0, 0.0))
+        self.gamma = kwargs.get('gamma', (0.0, 0.0))
+        self.eta   = kwargs.get('eta', (0.0, 0.0))
+        self.phi   = kwargs.get('phi', (0.0, 0.0))
 
-    def _str_head(self):
+    @classmethod
+    def header(cls):
         return "# s  alpha  beta  eta  phi"
 
     def __repr__(self):
         return "%.3f % .2f % .2f  % .2f % .2f  % .2f % .2f  % .2f % .2f" % \
-            (self._s, self._alpha[0], self._alpha[1],
-             self._beta[0], self._beta[1], self._eta[0], self._eta[1],
-             self._phi[0], self._phi[1])
+            (self.s, self.alpha[0], self.alpha[1],
+             self.beta[0], self.beta[1], self.eta[0], self.eta[1],
+             self.phi[0], self.phi[1])
+
+    def get(self, name):
+        """
+        get twiss value
+
+        :param name: twiss item name
+        :type name: str
+        :return: twiss value
+        :rtype: tuple, float
+        :Example:
+
+            >>> get('alpha')
+            (0.0, 0.0)
+            >>> get('betax')
+            0.1
+        """
+        d = {'alphax': self.alpha[0], 'alphay': self.alpha[1],
+             'betax': self.beta[0], 'betay': self.beta[1],
+             'gammax': self.gamma[0], 'gammay': self.gamma[1],
+             'etax': self.eta[0], 'etay': self.eta[1],
+             'phix': self.phi[0], 'phiy': self.phi[1]}
+
+        if hasattr(self, name):
+            return getattr(self, name)
+        elif name in d.keys():
+            return d[name]
+        else:
+            return None
 
     
 class Twiss:
@@ -53,20 +78,27 @@ class Twiss:
 
     A list of twiss items and related element names. It has tunes and
     chromaticities.
+
+    :Example:
+
+        >>> tw = Twiss()
+        >>> print tw[0]
     """
     def __init__(self, name):
         self._elements = []
         self._twlist = []
         self._name = name
-        self.tune = (0, 0)
-        self.chrom = (0, 0)
+        self.tune = (None, None)
+        self.chrom = (None, None)
         
     def _find_element(self, elemname):
         try:
             i = self._elements.index(elemname)
             return i
-        except:
+        except IndexError:
             return None
+
+        return None
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -81,12 +113,17 @@ class Twiss:
     def __repr__(self):
         if not self._elements or not self._twlist: return ''
 
-        s = "# %d " % len(self._elements) + self._twlist[0]._str_head() + '\n'
-        for i,e in enumerate(self._elements):
+        s = "# %d " % len(self._elements) + TwissItem.header() + '\n'
+        for i, e in enumerate(self._elements):
             s = s + "%16s " % e + self._twlist[i].__repr__() + '\n'
         return s
 
     def append(self, twi):
+        """
+        :param twi: twiss value at one point
+        :type twi: :class:`~aphla.twiss.TwissItem`
+        """
+
         self._twlist.append(twi)
 
     def getTwiss(self, elem, col, **kwargs):
@@ -130,31 +167,14 @@ class Twiss:
             row = []
             tw = self._twlist[i]
             for c in col:
-                if c == 's': row.append(tw._s)
-                elif c == 'phix': row.append(tw._phi[0])
-                elif c == 'phiy': row.append(tw._phi[1])
-                elif c == 'phi': row.extend([tw._phi[0], tw._phi[1]])
-                elif c == 'etax': row.append(tw._eta[0])
-                elif c == 'etay': row.append(tw._eta[1])
-                elif c == 'eta': row.extend([tw._eta[0], tw._eta[1]])
-                elif c == 'betax': row.append(tw._beta[0])
-                elif c == 'betay': row.append(tw._beta[1])
-                elif c == 'beta': row.extend([tw._beta[0], tw._beta[1]])
-                elif c == 'alphax': row.append(tw._alpha[0])
-                elif c == 'alphay': row.append(tw._alpha[1])
-                elif c == 'alpha': row.extend([tw._alpha[0], tw._alpha[1]])
+                v = tw.get(c)
+                if isinstance(v, (list, tuple)):
+                    row.extend(v)
+                elif v is not None:
+                    row.append(v)
                 else:
                     row.append(None)
                     raise ValueError("column '%s' not supported in twiss" % c)
             ret.append(row)
         return np.array(ret, 'd')
 
-if __name__ == "__main__":
-    tw = Twiss()
-    print 's', tw.s()
-    print 'beta', tw.beta()
-    print 'beta bce', tw.beta('bce')
-    print 'beta x', tw.betax(), 'beta y', tw.betay()
-    print 'betax e', tw.betax('e')
-    print 'betax bec', tw.betax('bec')
-    
