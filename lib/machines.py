@@ -242,6 +242,8 @@ def initNSLS2VSRTwiss():
         _twiss._elements.append(elem.name)
         _twiss.append(tw)
 
+    _lat._twiss = _twiss
+
 def saveCache():
     """
     save current lattice to cache file
@@ -283,12 +285,16 @@ def use(lattice):
     else:
         raise ValueError("no lattice %s was defined" % lattice)
 
-def getLattice(lat):
+def getLattice(lat = None):
     """
-    return a :class:`~hla.lattice.Lattice` object with given name.
+    return a :class:`~aphla.lattice.Lattice` object with given name. return the
+    current lattice by default.
 
-    .. seealso:: :func:`~hla.machines.lattices`
+    .. seealso:: :func:`~aphla.machines.lattices`
     """
+    if lat is None:
+        return _lat
+
     global _lattice_dict
     #for k, v in _lattice_dict.items():
     #    print k, v.mode
@@ -306,4 +312,5 @@ def lattices():
     """
     #return dict((k, v.mode) for k,v in _lattice_dict.iteritems())
     return _lattice_dict.keys()
+
 

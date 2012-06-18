@@ -49,7 +49,9 @@ class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
-logging.basicConfig(filename=os.path.join(tempfile.gettempdir(), "aphla.log"),
+#APHLA_LOG = os.path.join(tempfile.gettempdir(), "aphla.log")
+APHLA_LOG = 'aphla.log'
+logging.basicConfig(filename=APHLA_LOG,
     format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
     level=logging.DEBUG)
 # set null handler when logging for a library.
@@ -60,14 +62,14 @@ logging.getLogger('aphla').addHandler(_h)
 from catools import *
 from machines import initNSLS2VSR, initNSLS2VSRTwiss
 
-from rf import *
+#from rf import *
 from hlalib import *
 from ormdata import OrmData
 
+from meastwiss import *
 from aptools import *
 
 import bba
-import meastwiss
 
 
 # Added by Y. Hidaka

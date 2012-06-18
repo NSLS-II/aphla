@@ -66,7 +66,7 @@ class Twiss:
             i = self._elements.index(elemname)
             return i
         except:
-            return -1
+            return None
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -107,6 +107,7 @@ class Twiss:
         if not col: return None
         clean = kwargs.get('clean', False)
 
+        # check if element is valid
         iret = []
         for e in elem:
             i = self._find_element(e)
