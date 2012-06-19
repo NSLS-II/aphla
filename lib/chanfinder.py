@@ -13,7 +13,6 @@ it is linked.
 """
 from __future__ import print_function, unicode_literals
 
-import re, shelve, sys, os
 from fnmatch import fnmatch
 from time import gmtime, strftime
 
@@ -54,7 +53,7 @@ class ChannelFinderAgent(object):
         converter  = kwargs.pop('converter', {})
         self.source = cfsurl
 
-        from channelfinder import ChannelFinderClient, Channel, Property, Tag
+        from channelfinder import ChannelFinderClient
         cf = ChannelFinderClient(BaseURL = cfsurl)
         if len(kwargs) == 0:
             chs = cf.find(name='*')
@@ -91,15 +90,15 @@ class ChannelFinderAgent(object):
           >>> sort('pv')
           >>> sort('elemName')
         """
-        from operator import itemgetter, attrgetter
+        from operator import itemgetter
         if key == 'pv':
             self.rows.sort(key = itemgetter(0))
         else:
             self.rows.sort(key=lambda k: k[1][key])            
-        pass
 
     def renameProperty(self, oldkey, newkey):
         """
+        rename the property name
         """
         for r in self.rows:
             if oldkey not in r[1]: continue
@@ -130,11 +129,13 @@ class ChannelFinderAgent(object):
         # the index of PV, properties and tags
         ipv = hlow.index('pv')
         iprpt, itags = [], []
-        for i,h in enumerate(header):
+        for i, h in enumerate(header):
             if i == ipv: continue
             # if the header is empty, it is a tag
-            if len(h.strip()) == 0: itags.append(i)
-            else: iprpt.append(i)
+            if len(h.strip()) == 0: 
+                itags.append(i)
+            else:
+                iprpt.append(i)
         #print ipv, iprpt, itags
         for s in rd:
             prpts = dict([(header[i], s[i]) for i in iprpt])
@@ -144,7 +145,7 @@ class ChannelFinderAgent(object):
                 tags.append(s[i].strip())
             #print s[ipv], prpts, tags
             self.rows.append([s[ipv], prpts, tags])
-        pass
+
 
     def exportCsv(self, fname):
         """
@@ -154,7 +155,8 @@ class ChannelFinderAgent(object):
         prpts_set = set()
         for r in self.rows:
             if r[1] is None: continue
-            for k in r[1]: prpts_set.add(k)
+            for k in r[1]: 
+                prpts_set.add(k)
         header = sorted(list(prpts_set))
         #print header
         import csv
@@ -163,9 +165,12 @@ class ChannelFinderAgent(object):
         for r in self.rows:
             prpt = []
             for k in header:
-                if r[1] is None: prpt.append('')
-                elif k not in r[1]: prpt.append('')
-                else: prpt.append(r[1][k])
+                if r[1] is None: 
+                    prpt.append('')
+                elif k not in r[1]: 
+                    prpt.append('')
+                else: 
+                    prpt.append(r[1][k])
             if r[2] is None:
                 writer.writerow([r[0]] + prpt)
             else:
@@ -180,7 +185,6 @@ class ChannelFinderAgent(object):
         self.__cdate = d['__cdate']
         self.rows = d['rows']
         f.close()
-        pass
 
     def _exportJson(self, fname):
         import json
@@ -212,7 +216,7 @@ class ChannelFinderAgent(object):
         """
         
         ret = {}
-        for i,r in enumerate(self.rows):
+        for i, r in enumerate(self.rows):
             # skip if no properties
             if r[1] is None: continue
             # skip if no interesting properties

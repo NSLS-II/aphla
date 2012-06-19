@@ -14,8 +14,8 @@ Accelerator Physics Tools
 from __future__ import print_function
 
 import numpy as np
-import time, datetime, shelve, sys
-import matplotlib.pylab as plt
+import time, datetime, sys
+#import matplotlib.pylab as plt
 
 import machines
 from catools import caput, caget 
@@ -49,17 +49,15 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
     for i in range(1, npoints):
         # sleep for next reading
         time.sleep(tinterval)
-        ret[i,1] = getCurrent()
+        ret[i, 1] = getCurrent()
         dt = datetime.datetime.now() - d0
-        ret[i,0] = (dt.microseconds/1000000.0 + dt.seconds)/3600.0 + \
+        ret[i, 0] = (dt.microseconds/1000000.0 + dt.seconds)/3600.0 + \
             dt.days*24.0
         if verbose:
-            print(i, dt, ret[i,1])
-    dI = max(ret[:,1]) - min(ret[:,1]) 
-    dt = max(ret[:,0]) - min(ret[:,0])
-    #print np.average(ret[:,1]), dI, dt
-    #print np.average(ret[:,1]) / (dI / dt), "H"
-    lft_hour = np.average(ret[:,1]) / (dI / dt)
+            print(i, dt, ret[i, 1])
+    dI = max(ret[:, 1]) - min(ret[:, 1]) 
+    dt = max(ret[:, 0]) - min(ret[:, 0])
+    lft_hour = np.average(ret[:, 1]) / (dI / dt)
     return lft_hour
 
 
@@ -255,14 +253,20 @@ def createLocalBump(bpm, trim, ref, **kwargs):
     trimpv, pvxsp, pvysp = [], [], []
     for e in trimlst:
         pv = e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT])
-        if pv: pvxsp.append(pv)
-        if isinstance(pv, (str, unicode)): trimpv.append(pv)
-        elif pv: trimpv.extend(pv)
+        if pv: 
+            pvxsp.append(pv)
+        if isinstance(pv, (str, unicode)): 
+            trimpv.append(pv)
+        elif pv: 
+            trimpv.extend(pv)
         
         pv = e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
-        if pv: pvysp.append(pv)
-        if isinstance(pv, (str, unicode)): trimpv.append(pv)
-        elif pv: trimpv.extend(pv)
+        if pv: 
+            pvysp.append(pv)
+        if isinstance(pv, (str, unicode)): 
+            trimpv.append(pv)
+        elif pv: 
+            trimpv.extend(pv)
 
     if 'H' in plane and len(pvx) > 0 and len(pvxsp) == 0:
         print("WARNING: no HCOR for horizontal orbit correction", 
@@ -440,7 +444,7 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
     
     """
     
-    if isinstance(t, (float,int)) :
+    if isinstance(t, (float, int)) :
         t = np.array([t])
     elif isinstance(t, list) :
         t = np.array(t)
@@ -451,7 +455,7 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
                          'float, int, or list of (int,float), or NumPy array.')
     
         
-    if isinstance(I, (float,int)) :
+    if isinstance(I, (float, int)) :
         I = np.array([I])
     elif isinstance(I, list) :
         I = np.array(I)

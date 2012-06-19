@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 
 """
 APHLA Module
@@ -37,6 +35,8 @@ Modules include:
         
 """
 
+from __future__ import print_function
+
 __version__ = "0.3.0b3"
 
 
@@ -46,6 +46,7 @@ import logging
 
 # for compatibilities with Python < 2.7
 class NullHandler(logging.Handler):
+    """a fix for Python2.6 where no NullHandler"""
     def emit(self, record):
         pass
 
@@ -55,8 +56,8 @@ logging.basicConfig(filename=APHLA_LOG,
     format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
     level=logging.DEBUG)
 # set null handler when logging for a library.
-_h = NullHandler()
-logging.getLogger('aphla').addHandler(_h)
+_hdl = NullHandler()
+logging.getLogger('aphla').addHandler(_hdl)
 
 #
 from catools import *
@@ -67,6 +68,7 @@ from hlalib import *
 from ormdata import OrmData
 
 from meastwiss import *
+from measorm import *
 from aptools import *
 
 import bba
@@ -74,5 +76,4 @@ import bba
 
 # Added by Y. Hidaka
 import curve_fitting
-import current
 

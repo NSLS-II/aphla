@@ -14,22 +14,19 @@ References
 .. automodule:: aphla.chanfinder
    :members:
 
-.. automodule:: aphla.machines
-   :members:
-
 .. automodule:: aphla.element
    :members:
 
 .. automodule:: aphla.lattice
    :members:
 
+.. automodule:: aphla.machines
+   :members:
+
 .. automodule:: aphla.twiss
    :members:
 
 .. automodule:: aphla.hlalib
-   :members:
-
-.. automodule:: aphla.rf
    :members:
 
 .. automodule:: aphla.ormdata

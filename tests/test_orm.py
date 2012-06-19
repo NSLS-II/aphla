@@ -162,7 +162,7 @@ class TestOrmData(unittest.TestCase):
             i0, j0 = (i-2+nrow) % nrow, (j + ncol) % ncol
             self.assertEqual(ormdata_dst.m[i0,j0], 0.0)
 
-
+    @unittest.skip
     def test_update_submatrix(self):
         """
         same dimension, swapped rows
@@ -284,4 +284,19 @@ class TestOrmData(unittest.TestCase):
                 if i > 100: break
             break
         print "Time:", time.time() - t1
+
+
+
+class TestOrm(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_measure_orm(self):
+        bpms = ap.getElements('BPM')
+        trims = ap.getElements('HCOR')
+        
+        bpmlst = [b.name for b in bpms[:5]]
+        trimlst = [t.name for t in trims[:3]]
+        ap.measOrbitRm(bpmlst, trimlst, "orm_test.hdf5")
+
 

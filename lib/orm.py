@@ -15,9 +15,13 @@ Response Matrix
 import sys, time
 import numpy as np
 
-import machines
 #import matplotlib.pylab as plt
+from hlalib import getElements, getPvList
 from catools import caget, caput, caputwait, Timedout
+from ormdata import OrmData
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Orm:
     """
@@ -39,34 +43,19 @@ class Orm:
 
         npts = 6
 
-        self.bpm = []
-        self.trim = []
+        self.trimsp, self.bpmrb = None, None
 
         if trim and bpm:
-            # one trim may have two (x/y) pv or one only
-            el = machines._lat.getElements(trim)
-            ex = [(e.name, 'X',
-                   e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET]),
-                   e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT]))
-                  for e in el]
-            ey = [(e.name, 'Y',
-                   e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET]),
-                   e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT]))
-                  for e in el]
-            self.trim = [ e for e in ex + ey if e[2] and e[3] ]
-
-            el = machines._lat.getElements(bpm)
-            ex = [(e.name, 'X',
-                   e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET]))
-                  for e in el]
-            ey = [(e.name, 'Y',
-                   e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET]))
-                  for e in el]
-            self.bpm = [ e for e in ex + ey if e[2] ]
+            # get the list of (name, 'X', pvread, pvset)
+            self.trim = self._get_trim_pv_record(trim)
+            self.bpm  = self._get_bpm_pv_record(bpm)
+        else:
+            self.bpm = []
+            self.trim = []
 
 
         # count the dimension of matrix
-        nbpm, ntrim  = len(set(bpm)), len(set(trim))
+        #nbpm, ntrim  = len(set(bpm)), len(set(trim))
         nbpmpv, ntrimpv = len(self.bpm), len(self.trim)
 
         # 3d raw data
@@ -75,16 +64,55 @@ class Orm:
         self._rawkick = np.zeros((ntrimpv, npts+2), 'd')
         self.m = np.zeros((nbpmpv, ntrimpv), 'd')
 
-        #print __file__, "Done initialization"
         
-    def save(self, filename, format = ''):
+    def _get_bpm_pv_record(self, bpm):
+        """
+        given patter of bpm, return (name, 'X', pvrb) 
+        """
+        ret = []
+        for bpm in getElements(bpm):
+            for pv in bpm.pv(field='x', handle='READBACK'):
+                ret.append((bpm.name, 'X', pv))
+            for pv in bpm.pv(field='Y', handle='READBACK'):
+                ret.append((bpm.name, 'Y', pv))
+        return ret
+
+    def _get_trim_pv_record(self, trim):
+        """
+        given patter of bpm, return (name, 'X', pvrb) 
+        """
+        ret = []
+        for trim in getElements(trim):
+            pvrb = trim.pv(field='x', handle='READBACK')
+            pvsp = trim.pv(field='x', handle='SETPOINT')
+            for i in range(len(pvsp)):
+                ret.append((trim.name, 'X', pvrb[i], pvsp[i]))
+
+            pvrb = trim.pv(field='y', handle='READBACK')
+            pvsp = trim.pv(field='y', handle='SETPOINT')
+            for i in range(len(pvsp)):
+                ret.append((trim.name, 'Y', pvrb[i], pvsp[i]))
+        return ret
+
+    
+            
+    def save(self, filename, fmt = ''):
         """
         save the orm data into one file:
         """
-        self.ormdata.save(filename, format)
+        ormdata = OrmData()
+        ormdata.trim = self.trim
+        ormdata.bpm = self.bpm
+        ormdata.m = self.m
+        # protected data of OrmData
+        ormdata._rawmatrix = self._rawmatrix
+        ormdata._mask      = self._mask
+        ormdata._rawkick   = self._rawkick
+        ormdata.save(filename, fmt)
+        del ormdata
 
-    def load(self, filename, format = ''):
-        self.ormdata.load(filename, format)
+    def load(self, filename, fmt = ''):
+        self.ormdata.load(filename, fmt)
 
 
     def _meas_orbit_rm4(self, kickerpv, bpmpvlist, mask,
@@ -126,7 +154,7 @@ class Orm:
         bpmrb = [b[2] for b in self.bpm]
         for i,t in enumerate(self.trim):
             if not t[0] in trim: continue
-            trim_pv_rb = t[2]
+            #trim_pv_rb = t[2]
             trim_pv_sp = t[3]
             kickref = caget(trim_pv_sp)
             if verbose:
@@ -136,7 +164,6 @@ class Orm:
                     trim_pv_sp, bpmrb, mask = self._mask[:,i], kref=kickref,
                     dkick = dkick, verbose=verbose)
             except Timedout:
-                save(output)
                 raise Timedout
 
             # polyfit
@@ -149,7 +176,11 @@ class Orm:
                 if residuals[j] < 1e-11: continue
                 print "WARNING", trim_pv_sp, self.trim[i][0], \
                     self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
-                
+                logger.warn("%s %s %s %s %s %s" % (
+                        str(trim_pv_sp), str(self.trim[i][0]), 
+                        str(self.bpm[j][0]), str(self.bpm[j][1]), str(p[0,j]),
+                        str(residuals[j])))
+                                                   
                 if False:
                     import matplotlib.pylab as plt
                     plt.clf()
@@ -189,7 +220,7 @@ class Orm:
             kickref = caget(trim_pv_sp)
 
             if verbose:
-                print "%3d/%d %s" % (i,len(self.trim),trim_pv_sp),
+                print "%3d/%d %s" % (i, len(self.trim), trim_pv_sp),
             try:
                 kstrength, ret = self._meas_orbit_rm4(
                     trim_pv_sp, bpmrb, mask = self._mask[:,i], kref=kickref,
@@ -198,7 +229,6 @@ class Orm:
                 #    print "%3d/%d %.2f" % (i,len(self.trim), time.time()-t0), 
                 #    t0 = time.time()
             except Timedout:
-                save(output)
                 raise Timedout
             if verbose:
                 print ""
@@ -235,7 +265,7 @@ class Orm:
             self._rawmatrix[:,:,i] = ret[:,:]
             #self.m[:,i] = v[:]
             self.m[:,i] = p[0,:]
-            if verbose:
+            if False:
                 plt.clf()
                 for j in range(len(self.bpm)):
                     # skip the coupling
@@ -406,14 +436,16 @@ class Orm:
             for j in range(ntrim):
                 if self._mask[i,j]: continue
                 um.append(self.m[i,j])
-        plt.clf()
-        plt.hist(um, 50, normed=0)
-        plt.savefig("orm-hist-m.png")
+
+        if False:
+            plt.clf()
+            plt.hist(um, 50, normed=0)
+            plt.savefig("orm-hist-m.png")
 
         res = []
         deadbpm, deadtrim = [], []
         for j in range(ntrim):
-            n = 0
+            #n = 0
             for i in range(nbpm):
                 if self._mask[i, j]: continue
 
@@ -425,8 +457,9 @@ class Orm:
                 if p[0] < 1e-10: continue
                 relerr = abs((p[0] - self.m[i,j])/p[0])
                 if verbose:
-                    print "%3d,%3d" %(i,j), self.bpm[i][0], self.trim[j][0], \
-                        p[0], self.m[i,j], relerr, residuals
+                    print "%3d,%3d" % (i,j), self.bpm[i][0], self.trim[j][0], \
+                        p[0], self.m[i,j], relerr, residuals, rank, \
+                        singular_values, rcond
 
                 # check if the reading is repeating.
                 distavg = (max(m) - min(m))/(len(m)-1)

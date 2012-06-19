@@ -16,6 +16,7 @@ import time
 from fnmatch import fnmatch
 from catools import caget, caput
 import machines
+import element
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ __all__ = [
     'getPhase', 'getBeta', 'getDispersion', 'getEta',
     'getOrbit', 'getTune', 'getTunes', 'getBpms',
     'eget', 'waitStableOrbit', 'getRfFrequency', 'putRfFrequency',
-    'stepRfFrequency'
+    'stepRfFrequency', 'getPvList'
 ]
 
 # current
@@ -217,6 +218,43 @@ def getElements(group, return_list=True, include_virtual=False):
         elif len(elems) == 1: return elems[0]
 
     return elems
+
+def getPvList(elem, field, handle, **kwargs):
+    """
+    return a pv list for given element list
+
+    :param elem: element pattern, name list
+    :param field: e.g. 'x', 'y', 'k1'
+    :param handle: 'READBACK' or 'SETPOINT'
+
+    Keyword arguments:
+
+      - *first_only* (False) use only the first PV for each element. 
+      - *compress_empty* (False) remove element with no PV.
+
+    *elem* accepts same input as :func:`getElements`
+    """
+    first_only = kwargs.get('first_only', False)
+    compress_empty = kwargs.get('compress_empty', False)
+
+    # did not check if it is a BPM 
+    elemlst = getElements(elem)
+    pvlst = []
+    for elem in elemlst:
+        if not isinstance(elem, element.CaElement):
+            raise ValueError("element '%s' is not CaElement" % elem.name)
+        #
+        pvs = elem.pv(field=field, handle=handle)
+        if len(pvs) == 0 and not compress_empty:
+            raise ValueError("element '%s' has no readback pv" % elem.name)
+        elif len(pvs) > 1 and not first_only:
+            raise ValueError("element '%s' has more %d (>1) pv" % 
+                             (elem.name, len(pvs)))
+
+        pvlst.append(pvs[0])
+
+    return pvlst
+
 
 def getLocations(group):
     """

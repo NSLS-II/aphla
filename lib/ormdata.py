@@ -11,8 +11,8 @@ Response Matrix Data
 
 """
 
-import os, sys, time
-from os.path import join, splitext
+import os
+from os.path import splitext
 import numpy as np
 import shelve
 
@@ -27,7 +27,7 @@ class OrmData:
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, datafile = None):
         # points for trim setting when calc dx/dkick
-        npts = 6
+        #npts = 6
 
         # list of tuple, (name, plane, pv)
         self.bpm = []
@@ -54,6 +54,9 @@ class OrmData:
         return fmt
     
     def save_hdf5(self, filename):
+        """
+        save data to hdf5 format
+        """
         import h5py
         h5zip = None # 'gzip' works in default install
         f = h5py.File(filename, 'w')
@@ -136,7 +139,6 @@ class OrmData:
         if fmt == 'HDF5':
             self.save_hdf5(filename)
         elif fmt == 'shelve':
-            import shelve
             f = shelve.open(filename, 'c')
             f['orm.m'] = self.m
             f['orm.bpm'] = self.bpm
@@ -186,7 +188,7 @@ class OrmData:
         check if the bpm is used in this ORM measurement
         """
 
-        for i,b in enumerate(self.bpm):
+        for b in self.bpm:
             if b[0] == bpm: return True
         return False
 
@@ -201,7 +203,7 @@ class OrmData:
         """
         check if the trim is used in this ORM measurement
         """
-        for i,tr in enumerate(self.trim):
+        for tr in self.trim:
             if tr[0] == trim: return True
         return False
 

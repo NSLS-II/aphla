@@ -7,10 +7,13 @@ CA Tools
 Channel access tools.
 
 :author: Lingyun Yang
+
+When *CA_OFFLINE* is *True*, only simulation values are used. In this case the
+caget will have noises and caput will do nothing.
 """
 
 __all__ = [
-    'caget', 'caput', 'Timedout', 'CA_OFFLINE', 'FORMAT_TIME'
+    'caget', 'caput', 'caputwait', 'Timedout', 'CA_OFFLINE', 'FORMAT_TIME'
 ]
 
 import sys, time, os
@@ -19,6 +22,8 @@ import cothread.catools as ct
 from cothread import Timedout
 from cothread.catools import camonitor, FORMAT_TIME
 import random
+
+import numpy as np
 
 import logging
 logger = logging.getLogger(__name__)
@@ -37,17 +42,29 @@ def _ca_get_sim(pvs):
         return None
 
 def _ca_put_sim(pvs, vals):
+    """
+    do nothing
+    """
     return ct.ca_nothing
 
 def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
            count=0, throw=True):
     """
-    channel access read, a simple wrap of cothread.catools, support UTF8 string
+    channel access read
+    
+    :param pvs: process variables
+    :type pvs: list, string
+    :param timeout: timeout in seconds
+    :param throw: throw exception or not
+    :return: channel value
+    :rtype: list or value
+    
+    This is a simple wrap of cothread.catools, support UTF8 string
 
-    Example::
+    :Example::
 
-      caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
-      caget(['SR:C01-MG:G04B{HCor:M1}Fld-I', 'SR:C01-MG:G04B{VCor:M1}Fld-I'])
+        >>> caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
+        >>> caget(['SR:PV1', 'SR:PV2', 'SR:PV3'])
 
     Throw cothread.Timedout exception when timeout. This is a wrap of original
     `cothread.catools.caget`.
@@ -81,12 +98,21 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
 
 def caput(pvs, values, timeout=5, wait=True, throw=True):
     """
-    channel access write, wrap to support UTF8 string
+    channel access write.
 
-    ::
+    :param pvs: process variables
+    :type pvs: list, string
+    :param values: setting values
+    :type pvs: list, float/int
+    :return: see :func:`cothread.catools.caput`
+    :rtype: see :func:`cothread.catools.caput`
 
-      caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
-      caput(['SR:C01-MG:G04B{HCor:M1}Fld-I', 'SR:C01-MG:G04B{VCor:M1}Fld-I'], [0.1, 0.2])
+    :Example:
+
+        >>> caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
+        >>> caput(['SR:PV1', 'SR:PV2'], [0.1, 0.2])
+
+    This is simple wrap of `cothread.catools.caput` to support UTF8 string
 
     Throw cothread.Timedout exception when timeout.
     
@@ -94,12 +120,12 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
 
     .. seealso::
 
-      :func:`aphla.catools.caget`
+      :func:`~aphla.catools.caget`
     """
 
     logger.info("setting '%s' '%s'" % (str(pvs), str(values)))
 
-    if CA_OFFLINE: return _ca_put_sim(pvs)
+    if CA_OFFLINE: return _ca_put_sim(pvs, values)
 
     if isinstance(pvs, str):
         pvs2 = pvs
@@ -118,17 +144,30 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
         else:
             raise cothread.Timedout
 
-def caputwait(pv, value, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
+def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
     """
-    set a pv(or list of pvs), monitoring  PVs until certain degree of changes.
+    set pvs and waiting until the setting takes effect
 
-    - *wait* [seconds] minimum wait between each check.
-    - *maxtrial* maximum number of checks.
-    - *diffstd* return if the std of pvmonitors chenges:  std(after-before),
-      exceed this number.
+    :param pvs: PVs for setting
+    :type pvs: list, string
+    :param values: setting values for *pvs*
+    :type values: list, string
+    :param pvmonitors: PVs for testing the effects of new PV setting.
+    :type pvmonitors: list
+    :param diffstd: threshold value of effective change of *pvmonitors*.
+    :param wait: waiting time before each test (seconds)
+    :param maxtrial: maximum trial before return.
+    :return: whether pvmonitors change significant enough.
+    :rtype: bool
 
-    It is good for ORM measurement where setting a trim and observing a
-    list of BPM.
+    It sets the pvs with new values and tests the monitor values see if the
+    changes are significant enough. This significance is measured by comparing
+    the std of monitor value changes due to the *pvs* changes. If it exceeds
+    *diffstd* then return, otherwise wait for *wait* seconds and test
+    again. The maximum trial is *maxtrial*.
+
+    It is good for ORM measurement where setting a trim and observing a list
+    of BPM.
     """
     if CA_OFFLINE:
         time.sleep(wait)
@@ -137,7 +176,7 @@ def caputwait(pv, value, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
     v0 = np.array(caget(pvmonitors))
     ntrial = 0
     while True:
-        caput(pv, value)
+        caput(pvs, values)
         time.sleep(wait)
         ntrial = ntrial + 1
         v1 = np.array(caget(pvmonitors))
