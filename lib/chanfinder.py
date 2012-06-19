@@ -192,6 +192,27 @@ class ChannelFinderAgent(object):
         json.dump({'__cdate': self.__cdate, 'rows': self.rows}, f)
         f.close()
 
+    def update(self, pv, prpts, tags):
+        """
+        update the properties and tags for pv
+
+        :param pv: pv
+        :param prpts: property dictionary
+        :param tags: list of tags
+        """
+        idx = -1
+        for i, rec in enumerate(self.rows):
+            if rec[0] != pv: continue
+            idx = i
+            rec[1].update(prpts)
+            for tag in tags:
+                if tag in rec[2]: continue
+                rec[3].append(tag)
+        if idx < 0:
+            self.rows.append([pv, prpts, tags])
+            idx = len(self.rows) - 1
+        return idx
+
     def tags(self, pat):
         """
         return a list of tags matching the unix filename pattern *pat*.
