@@ -650,17 +650,20 @@ class Lattice:
         return el[idx]
         
     def __repr__(self):
-        s = ''
+        s = '# %s' % self.name
         ml_name, ml_family = 0, 0
         for e in self._elements:
             if len(e.name) > ml_name: ml_name = len(e.name)
             if e.family and len(e.family) > ml_family:
                 ml_family = len(e.family)
 
-        idx = int(1.0+log10(len(self._elements)))
+        idx = 1
+        if len(self._elements) >= 10:
+            idx = int(1.0+log10(len(self._elements)))
         fmt = "%%%dd %%%ds  %%%ds  %%9.4f %%9.4f\n" % (idx, ml_name, ml_family)
         #print fmt
         for i, e in enumerate(self._elements):
+            if e.virtual: continue
             s = s + fmt % (i, e.name, e.family, e.sb, e.length)
         return s
 

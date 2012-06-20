@@ -656,7 +656,7 @@ class CaElement(AbstractElement):
         if self.virtual:
             return "%s [%s] (virtual)" % (self.name, self.family)
         else:
-            AbstractElement.__repr__(self)
+            return AbstractElement.__repr__(self)
 
     def enableTrace(self, fieldname):
         self._field[fieldname].trace = True

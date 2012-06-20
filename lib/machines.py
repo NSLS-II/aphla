@@ -165,7 +165,7 @@ def initNSLS2VSR():
                                                desc = cfa.source)
 
     orm_filename = 'us_nsls2_sr_orm.hdf5'
-    if conf.has(orm_filename):
+    if orm_filename and conf.has(orm_filename):
         #print("Using ORM:", conf.filename(orm_filename))
         _lattice_dict['V1SR'].ormdata = OrmData(conf.filename(orm_filename))
     else:
@@ -247,6 +247,82 @@ def initNSLS2VSRTwiss():
         _twiss.append(tw)
 
     _lat._twiss = _twiss
+
+def initNSLS2():
+    """ 
+    initialize the virtual accelerator 'SR', 'LTD1', 'LTD2', 'LTB' from
+    channel finder or csv file.
+    """
+
+    cfa = ChannelFinderAgent()
+    cfs_filename = 'us_nsls2_cfs.csv'
+    src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
+    HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
+
+    if os.path.exists(src_home_csv):
+        msg = "Creating lattice from home csv '%s'" % src_home_csv
+        logger.info(msg)
+        cfa.importCsv(src_home_csv)
+    elif conf.has(cfs_filename):
+        src_pkg_csv = conf.filename(cfs_filename)
+        msg = "Creating lattice from '%s'" % src_pkg_csv
+        logger.info(msg)
+        #print(msg)
+        cfa.importCsv(src_pkg_csv)
+    elif os.environ.get('HLA_CFS_URL', None):
+        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
+        logger.info(msg)
+        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
+    else:
+        logger.error("Channel finder data are available, no '%s', no server" % 
+                     cfs_filename)
+        raise RuntimeError("Failed at loading cache file")
+
+    #print(msg)
+    for k in [('name', u'elemName'), 
+              ('field', u'elemField'), 
+              ('devname', u'devName'),
+              ('family', u'elemType'), 
+              ('index', u'ordinal'), 
+              ('se', u'sEnd'),
+              ('system', u'system')]:
+        cfa.renameProperty(k[1], k[0])
+
+    #tags = cfa.tags('aphla.sys.*')
+
+    global _lat, _lattice_dict
+
+    # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
+    logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
+    for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
+        lattag = HLA_TAG_SYS_PREFIX + '.' + latname
+        logger.info("Initializing lattice %s (%s)" % (latname, lattag))
+        _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
+                                               desc = cfa.source)
+
+    orm_filename = ''
+    if orm_filename and conf.has(orm_filename):
+        #print("Using ORM:", conf.filename(orm_filename))
+        _lattice_dict['V1SR'].ormdata = OrmData(conf.filename(orm_filename))
+    else:
+        logger.warning("No ORM '%s' found" % orm_filename)
+
+    # a virtual bpm. its field is a "merge" of all bpms.
+    bpms = _lattice_dict['SR'].getElementList('BPM')
+    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
+                            'family': HLA_VFAMILY})
+    _lattice_dict['SR'].insertElement(allbpm, groups=[HLA_VFAMILY])
+
+    #
+    # LTB 
+    _lattice_dict['LTB'].loop = False
+    #_lat = _lattice_dict['LTB']
+
+    #
+    # SR
+    _lattice_dict['SR'].loop = True
+    _lat = _lattice_dict['SR']
+
 
 def saveCache():
     """

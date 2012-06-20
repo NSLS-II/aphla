@@ -8,7 +8,7 @@ import os
 
 setup(
     name = "aphla",
-    version = "0.3.0b3",
+    version = "0.3.0b4",
     packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
                 'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.conf'],
     data_files = {},
@@ -29,8 +29,7 @@ setup(
                   'aphla.gui.aplauncher',
                   'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
                   'aphla.gui.apbba'],
-    install_requires = ['distribute', 'docutils>=0.3', 'Sphinx >= 1.0.8', 
-                        'matplotlib', 'numpy >= 1.4.1', 'scipy >= 0.7'],
+    install_requires = ['distribute', 'matplotlib', 'numpy >= 1.4.1', 'scipy >= 0.7'],
     entry_points = {
         'gui_scripts': [
             'aporbit = aphla.gui.orbit:main',

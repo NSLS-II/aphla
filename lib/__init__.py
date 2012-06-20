@@ -37,7 +37,7 @@ Modules include:
 
 from __future__ import print_function
 
-__version__ = "0.3.0b3"
+__version__ = "0.3.0b4"
 
 
 import os
@@ -61,7 +61,8 @@ logging.getLogger('aphla').addHandler(_hdl)
 
 #
 from catools import *
-from machines import initNSLS2VSR, initNSLS2VSRTwiss
+from chanfinder import ChannelFinderAgent
+from machines import initNSLS2VSR, initNSLS2VSRTwiss, initNSLS2
 
 #from rf import *
 from hlalib import *
@@ -75,5 +76,6 @@ import bba
 
 
 # Added by Y. Hidaka
-import curve_fitting
+# require newer version of scipy, not available in controls terminal yet.
+#import curve_fitting
 
