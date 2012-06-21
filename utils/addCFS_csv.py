@@ -28,12 +28,12 @@ def import_explicit_csv(cfa, filename):
         tags = [t.strip() for t in stags.split(',')]
         cfa.update(pv, prpts, tags)
     
-            
+
         
 if __name__ == "__main__":
     cfa = ap.ChannelFinderAgent()
     if len(sys.argv) > 2:
-        cfa.importCfs(sys.argv[1])
+        cfa.importCsv(sys.argv[1])
         import_explicit_csv(cfa, sys.argv[2])
     else:
         import_explicit_csv(cfa, sys.argv[1])

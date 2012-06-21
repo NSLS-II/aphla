@@ -444,11 +444,11 @@ class CaElement(AbstractElement):
 
         Example::
 
-          >>> pv() # returns all pvs.
-          >>> pv(tag='aphla.X')
-          >>> pv(tags=['aphla.EGET', 'aphla.Y'])
-          >>> pv(field = "x")
-          >>> pv(field="x", handle='readback')
+          pv() # returns all pvs.
+          pv(tag='aphla.X')
+          pv(tags=['aphla.EGET', 'aphla.Y'])
+          pv(field = "x")
+          pv(field="x", handle='readback')
         """
         if len(kwargs) == 0:
             return self._pvtags.keys()

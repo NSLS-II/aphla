@@ -52,27 +52,18 @@ HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
-# map CaElement init parameters to CF properties
-HLA_CFS_KEYMAP = {'name': u'elemName',
-                  'field': u'elemField',
-                  'devname': u'devName',
-                  'family': u'elemType',
-                  'girder': u'girder',
-                  'length': u'length',
-                  'index': u'ordinal',
-                  'symmetry': u'symmetry',
-                  'se': u'sEnd',
-                  'system': u'system',
-                  'cell': u'cell',
-                  'phylen': None,
-                  'sequence': None}
-
-
 def createLattice(name, pvrec, systag, desc = 'channelfinder'):
     """
-    create a lattice from channel finder agent data
+    create a lattice from channel finder data
+
+    :param name: lattice name, e.g. 'SR', 'LTD'
+    :param pvrec: list of pv records `(pv, property dict, list of tags)`
+    :param systag: process records which has this systag.
+    :param desc: description is this lattice
+    :return: :class:`~aphla.lattice.Lattice`
     """
 
+    logger.debug("creating '%s':%s" % (name, desc))
     # a new lattice
     lat = Lattice(name, desc)
     for rec in pvrec:
@@ -102,24 +93,26 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
     lat.sortElements()
     lat.circumference = lat[-1].se if lat.size() > 0 else 0.0
     
-    if HLA_DEBUG > 0:
-        print("# mode: %s" % lat.mode)
-        print("# elements: %d" % lat.size())
-    if HLA_DEBUG > 1:
-        for g in sorted(lat._group.keys()):
-            print("# %10s: %d" % (g, len(lat._group[g])))
-            
+    logger.debug("mode " + lat.mode)
+    logger.debug("'%s' has %d elements" % (lat.name, lat.size()))
+    for g in sorted(lat._group.keys()):
+        logger.debug("lattice '%s' group %s(%d)" % (
+                lat.name, g, len(lat._group[g])))
+        
     return lat
 
 
-def initNSLS2VSR():
+def initNSLS2V1():
     """ 
     initialize the virtual accelerator 'V1SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
-    channel finder or csv file.
+
+    - `${HOME}/.hla/us_nsls2v1_cfs.csv`
+    - channel finder in ${HLA_CFS_URL}
+    - `us_nsls2v1_cfs.csv` with aphla package.
     """
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2_vsr_cfs.csv'
+    cfs_filename = 'us_nsls2v1_cfs.csv'
     src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
@@ -127,16 +120,16 @@ def initNSLS2VSR():
         msg = "Creating lattice from home csv '%s'" % src_home_csv
         logger.info(msg)
         cfa.importCsv(src_home_csv)
+    elif os.environ.get('HLA_CFS_URL', None):
+        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
+        logger.info(msg)
+        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     elif conf.has(cfs_filename):
         src_pkg_csv = conf.filename(cfs_filename)
         msg = "Creating lattice from '%s'" % src_pkg_csv
         logger.info(msg)
         #print(msg)
         cfa.importCsv(src_pkg_csv)
-    elif os.environ.get('HLA_CFS_URL', None):
-        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
-        logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     else:
         logger.error("Channel finder data are available, no '%s', no server" % 
                      cfs_filename)
@@ -163,8 +156,10 @@ def initNSLS2VSR():
         logger.info("Initializing lattice %s (%s)" % (latname, lattag))
         _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
                                                desc = cfa.source)
+        if _lattice_dict[latname].size() == 0:
+            logger.warn("lattice '%s' has no elements" % latname)
 
-    orm_filename = 'us_nsls2_sr_orm.hdf5'
+    orm_filename = 'us_nsls2_v1sr_orm.hdf5'
     if orm_filename and conf.has(orm_filename):
         #print("Using ORM:", conf.filename(orm_filename))
         _lattice_dict['V1SR'].ormdata = OrmData(conf.filename(orm_filename))
@@ -188,7 +183,7 @@ def initNSLS2VSR():
     _lat = _lattice_dict['V1SR']
 
 
-def initNSLS2VSRTwiss():
+def initNSLS2V1SRTwiss():
     """
     Only works from virtac.nsls2.bnl.gov
     """
@@ -250,8 +245,14 @@ def initNSLS2VSRTwiss():
 
 def initNSLS2():
     """ 
-    initialize the virtual accelerator 'SR', 'LTD1', 'LTD2', 'LTB' from
-    channel finder or csv file.
+    initialize the NSLS2 accelerator lattice 'SR', 'LTD1', 'LTD2', 'LTB'.
+
+    The initialization is done in the following order:
+
+        - user's `${HOME}/.hla/us_nsls2_cfs.csv`; if not then
+        - channel finder service in `env ${HLA_CFS_URL}`; if not then
+        - the `us_nsls2_cfs.csv` installed with aphla package; if not then
+        - RuntimeError
     """
 
     cfa = ChannelFinderAgent()
@@ -263,16 +264,16 @@ def initNSLS2():
         msg = "Creating lattice from home csv '%s'" % src_home_csv
         logger.info(msg)
         cfa.importCsv(src_home_csv)
+    elif os.environ.get('HLA_CFS_URL', None):
+        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
+        logger.info(msg)
+        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     elif conf.has(cfs_filename):
         src_pkg_csv = conf.filename(cfs_filename)
         msg = "Creating lattice from '%s'" % src_pkg_csv
         logger.info(msg)
         #print(msg)
         cfa.importCsv(src_pkg_csv)
-    elif os.environ.get('HLA_CFS_URL', None):
-        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
-        logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     else:
         logger.error("Channel finder data are available, no '%s', no server" % 
                      cfs_filename)
@@ -326,8 +327,10 @@ def initNSLS2():
 
 def saveCache():
     """
-    save current lattice to cache file
+    .. deprecated:: 0.3
     """
+    raise DeprecationWarning()
+
     output = open(os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl'), 'w')
     import pickle
     #import cPickle as pickle
@@ -337,6 +340,11 @@ def saveCache():
     output.close()
 
 def loadCache():
+    """
+    .. deprecated:: 0.3
+    """
+    raise DeprecationWarning()
+
     inp_file = os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl')
     if not os.path.exists(inp_file):
         return False
@@ -382,13 +390,15 @@ def getLattice(lat = None):
 
 def lattices():
     """
-    get a dictionary of lattice name and mode
+    get a list of available lattices
 
     Example::
 
       >>> lattices()
       [ 'LTB', 'LTB-txt', 'SR', 'SR-txt'}
       >>> use('LTB-txt')
+
+    A lattice can be used with :func:`~aphla.machines.use`
     """
     #return dict((k, v.mode) for k,v in _lattice_dict.iteritems())
     return _lattice_dict.keys()

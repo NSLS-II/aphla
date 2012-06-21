@@ -291,9 +291,9 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     - `plane` [HV|H|V]
     - `repeat` numbers of correction 
 
-    Example::
+    :Example:
 
-      >>> correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
+      correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
 
     The orbit not in BPM list may change.
 

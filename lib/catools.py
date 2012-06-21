@@ -63,8 +63,8 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
 
     :Example::
 
-        >>> caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
-        >>> caget(['SR:PV1', 'SR:PV2', 'SR:PV3'])
+        caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
+        caget(['SR:PV1', 'SR:PV2', 'SR:PV3'])
 
     Throw cothread.Timedout exception when timeout. This is a wrap of original
     `cothread.catools.caget`.
@@ -109,8 +109,8 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
 
     :Example:
 
-        >>> caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
-        >>> caput(['SR:PV1', 'SR:PV2'], [0.1, 0.2])
+        caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
+        caput(['SR:PV1', 'SR:PV2'], [0.1, 0.2])
 
     This is simple wrap of `cothread.catools.caput` to support UTF8 string
 

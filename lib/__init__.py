@@ -60,9 +60,12 @@ _hdl = NullHandler()
 logging.getLogger('aphla').addHandler(_hdl)
 
 #
-from catools import *
+from catools import (caget, caput, caputwait)
 from chanfinder import ChannelFinderAgent
-from machines import initNSLS2VSR, initNSLS2VSRTwiss, initNSLS2
+from machines import (
+    initNSLS2V1, initNSLS2V1SRTwiss,
+    initNSLS2
+    )
 
 #from rf import *
 from hlalib import *

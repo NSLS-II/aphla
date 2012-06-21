@@ -53,9 +53,9 @@ class TwissItem:
         :rtype: tuple, float
         :Example:
 
-            >>> get('alpha')
+            get('alpha')
             (0.0, 0.0)
-            >>> get('betax')
+            get('betax')
             0.1
         """
         d = {'alphax': self.alpha[0], 'alphay': self.alpha[1],
@@ -81,8 +81,8 @@ class Twiss:
 
     :Example:
 
-        >>> tw = Twiss()
-        >>> print tw[0]
+        tw = Twiss()
+        print tw[0]
     """
     def __init__(self, name):
         self._elements = []
@@ -134,9 +134,9 @@ class Twiss:
           'alpha', 'alphax', 'alphay', 'phi', 'phix', 'phiy'.
         - *clean*, skip the unknown elements 
         
-        ::
+        :Example:
 
-          >>> getTwiss(['E1', 'E2'], col=('s', 'beta'))
+          getTwiss(['E1', 'E2'], col=('s', 'beta'))
 
         'beta', 'alpha' and 'phi' will be expanded to two columns.
         """
