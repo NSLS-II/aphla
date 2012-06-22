@@ -134,6 +134,8 @@ SR:C00-Glb:G00{ALPHAC:00}RB-I,C00,MCF,,MCF,MCF,G0,READBACK,virtac,srvioc,0.0,0,0
 SR:C00-Glb:G00{CHROM:00}RB-X,C00,CHROMX,,CHROMX,CHROM,G0,READBACK,virtac,srvioc,0.0,0,0.0,,,aphla.sys.V1SR,aphla.eget,aphla.elemfield.value
 SR:C00-Glb:G00{CHROM:00}RB-Y,C00,CHROMY,,CHROMY,CHROM,G0,READBACK,virtac,srvioc,0.0,0,0.0,,,aphla.sys.V1SR,aphla.eget,aphla.elemfield.value
 SR:C00-Glb:G00{OMEGA:00}RB-I,C00,OMEGA,,OMEGA,OMEGA,G0,READBACK,virtac,srvioc,0.0,0,0.0,,,aphla.sys.V1SR,aphla.eget,aphla.elemfield.value
+SR:C00-Glb:G00{PHI:00}RB-X,C00,PHIX,,PHI,PHI,G0,READBACK,virtac,srvioc,0.0,0,0.0,,,aphla.sys.V1SR,aphla.eget,aphla.elemfield.x, aphla.elemfield.value[0]
+SR:C00-Glb:G00{PHI:00}RB-Y,C00,PHIY,,PHI,PHI,G0,READBACK,virtac,srvioc,0.0,0,0.0,,,aphla.sys.V1SR,aphla.eget,aphla.elemfield.y, aphla.elemfield.value[1]
 SR:C00-Glb:G00{TUNE:00}RB-X,C00,TUNEX,,TUNE,TUNE,G0,READBACK,virtac,srvioc,0.0,0,0.0,,,aphla.sys.V1SR,aphla.eget,aphla.elemfield.x, aphla.elemfield.value[0]
 SR:C00-Glb:G00{TUNE:00}RB-Y,C00,TUNEY,,TUNE,TUNE,G0,READBACK,virtac,srvioc,0.0,0,0.0,,,aphla.sys.V1SR,aphla.eget,aphla.elemfield.y, aphla.elemfield.value[1]
 SR:C00-RF:G00{RF:00}Freq-RB,C00,RFCAVITY,,RFCAVITY,CAVITY,G0,READBACK,virtac,srvioc,0.0,3245,791.958,,,aphla.sys.V1SR,aphla.eget,aphla.elemfield.f

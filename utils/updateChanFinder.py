@@ -16,6 +16,10 @@ To use this script, create a file 'conf.py' similar to the following::
 
 import os, sys
 import re, time
+import logging
+logging.basicConfig(filename='log_channelfinder_update.txt',
+    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
+    level=logging.DEBUG)
 
 import channelfinder
 
@@ -28,7 +32,10 @@ cfsurl = 'https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder'
 cfinput = {
     'BaseURL': cfsurl,
     'username': conf.username,
-    'password': conf.password}
+    'password': conf.password
+    }
+
+OWNER = 'cf-aphla'
 
 def simple_test():
     cf = ChannelFinderClient(**cfinput)
@@ -44,114 +51,91 @@ def simple_test():
               channelName=pvname)
     cf.delete(propertyName='test-prop2', channelName=pvname)
 
-def update_cfs_from_txt(txt, subline = 'LTB'):
+def hasTag(cf, tag):
+    """check if tag exists"""
+    r = cf.find(tagName=tag)
+    if r is None: return False
+    return True
+
+def pvHasTag(cf, pv, tag):
     """
-    skip the line if not found the 'subline'
-
-    This is not for importing huge amount of channels. It updates channels
-    one by one.
-
-    The properties are updated as 'cf-asd' account, and tags in 'cf-aphla'
     """
-    print "Updating CFS from text file:", txt
+    r = cf.find(name=pv, tagName=tag)
+    if r is None or len(r) == 0:
+        return False
+    return True
+
+def pvHasProperty(cf, pv, prpt, val='*'):
+    """
+    """
+    r = cf.find(name=pv, property=[(prpt, val)])
+    if r is None or len(r) == 0:
+        return False
+    return True
+
+def addPvTag(cf, pv, tag, owner):
+    """add a tag to pv"""
+    if not hasTag(cf, tag):
+        cf.set(tag=Tag(tag, owner))
+        logging.info("created a new tag (%s,%s)" % (tag, owner))
+    cf.update(channelName=pv, tag=Tag(tag, owner))
+    logging.info("'%s' add tag '%s'" % (pv, tag))
+
+def removePvTag(cf, pv, tag, owner):
+    """remove the tag from pv"""
+    if not pvHasTag(cf, pv, tag):
+        logging.warn("'%s' has no tag '%s'" % (pv, tag))
+        return False
+
+    cf.delete(tag=Tag(tag, owner), channelName=pv)
+    logging.info("'%s' deleted tag (%s,%s) deleted" %  (pv, tag, owner))
+
+def renamePvTag(cf, pv, src, dst):
+    if src == dst: return False
+    cftag = cf.find(tagName=src, name=pv)
+    if cftag is None:
+        logging.warn("'%s' has no tag '%s'" % 
+                     (pv, src))
+        return False
+    addPvTag(cf, pv, dst)
+    removePvTag(cf, pv, src)
+
+def addTagPvs(cf, tag, pvs, owner):
+    if not hasTag(cf, tag):
+        cf.set(tag=Tag(tag, owner))
+        logging.info("created a new tag (%s,%s)" % (tag, owner))
+    cf.update(tag=Tag(tag, owner), channelNames=pvs)
+    logging.info("--batch add tag '%s' to %d pvs" % (tag, len(pvs)))
+    for i, pv in enumerate(pvs):
+        logging.info("add tag '%s' to '%s' (%d/%d)" % 
+                     (tag, pv, i, len(pvs)))
+    logging.info("--end batch tag add")
+
+def removeTagPvs(cf, tag, pvs, owner):
+    cf.delete(tag=Tag(tag, owner), channelNames=pvs)
+    logging.info("--batch remove tag '%s' to %d pvs" % (tag, len(pvs)))
+    for i, pv in enumerate(pvs):
+        logging.info("remove tag '%s' from '%s' (%d/%d)" % 
+                     (tag, pv, i, len(pvs)))
+    logging.info("--end batch tag remove")
+
+
+def removePvProperty(cf, pvname, prpt, prptval):
+    cfprpt = cf.find(name=pvname, property = [(prpt, prptval)])
+    if cfprpt is None:
+        logging.warn("'%s' has no property {'%s': %s}"  % 
+                     (pvname, prpt, str(prptval)))
+        return False
+    cf.delete(channelName = pvname, property = cfprpt)
     
-    cf = ChannelFinderClient(**cfinput)
 
-    #for p in props: print p.Name, p.Owner, p.Value
-
-    pvs = []
-    
-    for i,line in enumerate(open(txt, 'r').readlines()):
-        if not line.strip(): continue
-        if line.strip().find('#') == 0: continue
-        # skip this line if I did not find 'subline'
-        if line.find(subline) < 0: continue
-
-        # skip non TRIM lines
-        #if line.find('COR') < 0: continue
-        
-        # call every time, updated from server. Slow but reliable.
-        allprops = [p.Name for p in cf.getAllProperties()]
-        alltags  = [t.Name for t in cf.getAllTags()]
-
-
-        pv, prptlst, taglst = [s.strip() for s in line.split(';')]
-        prpt = {}
-        for pair in prptlst.split(','):
-            if not pair.strip(): continue
-            if pair.find('=') < 0:
-                print "skipping", pair
-                continue
-            k, v = pair.split('=')
-            prpt[k.strip()] = v.strip()
-        prpts = [Property(k, 'cf-asd', v) for k,v in prpt.iteritems()]
-        tags = [Tag(t.strip(), 'cf-aphla') for t in taglst.split(',') \
-                    if t.strip()]
-        print i, pv, 
-        print [p.Name for p in prpts], [p.Value for p in prpts], [t.Name for t in tags]
-
-        # updating
-        for t in tags:
-            if not t.Name in alltags:
-                print "Adding new tag:", t.Name
-                cf.set(tag=t)
-            try:
-                cf.update(channelName=pv, tag = t)
-            except:
-                print "ERROR: ", pv, t.Name
-
-        for p in prpts:
-            if not p.Name in allprops:
-                print "Adding new property:", p.Name
-                cf.set(property=p)
-            try:
-                cf.update(channelName=pv, property=p)
-            except:
-                print "ERROR: ", pv, p.Name, p.Value
-
-        print '/'.join([p.Name for p in prpts]), \
-            '+'.join([t.Name for t in tags])
-
-
-def renamePvTags():
-    pass
-
-def renameTags():
-    cf = ChannelFinderClient(**cfinput)
-    #cf.update(tag=Tag('aphla.sys.LTB', 'cf-aphla'),
-    #          originalTagName='aphla.sys.ltb')
-    #cf.update(tag=Tag('aphla.sys.LTD1', 'cf-aphla'),
-    #          originalTagName='aphla.sys.ltd1')
-    #cf.update(tag=Tag('aphla.sys.LTD2', 'cf-aphla'),
-    #          originalTagName='aphla.sys.ltd2')
-
-def updateTags():
-    pvs = []
-    for i,s in enumerate(open(sys.argv[1], 'r').readlines()):
-        if s.find('aphla.sys.SR') < 0: continue
-        pv = s.split(';')[0].strip()
-        pvs.append(pv)
-    cf = ChannelFinderClient(**cfinput)
-    cf.update(tag=Tag('aphla.sys.SR', 'cf-aphla'), channelNames=pvs)
-
-    
-def addNewTags():
-    tagname = 'aphla.sys.SR'
-    cf = ChannelFinderClient(**cfinput)
-    cf.set(tag=Tag(tagname, 'cf-aphla'))
-
-def addPvTags(pv, tag):
-    cf = ChannelFinderClient(**cfinput)
-    cf.update(channelName=pv, tag=Tag(tag, 'cf-aphla'))
-
-
-def removeTagsFromPv():
-    cf = ChannelFinderClient(**cfinput)
-    pv = 'LTB:MG{Quad:6}Fld-SP'
-    cf.delete(tag=Tag('aphla.eget', 'cf-aphla'), channelName=pv)
-
-    pv = 'LTB:MG{Bend:1}Fld-SP'
-    cf.delete(tag=Tag('aphla.eget', 'cf-aphla'), channelName=pv)
+def removePvTags(cf, pvname, tags):
+    for tag in tags:
+        cftag = cf.find(name=pvname, tagName=tag)
+        if cftag is None:
+            logging.warn("'%s' has no tag '%s'" % 
+                         (pvname, tag))
+        cf.delete(tag=cftag, channelName=pvname)
 
 def updatePvProperties(pv, p, v):
     cf = ChannelFinderClient(**cfinput)
@@ -171,6 +155,55 @@ def removeTags():
     cf.delete(tagName="aphla.eput aphla.y")
     cf.delete(tagName="testtag2")
 
+def update_cfs_from_txt(txt):
+    """
+    update the cfs from command file:
+
+        PV command property=value,p2=v2,tag
+
+    The properties are updated as 'cf-asd' account, and tags in 'cf-aphla'
+    """
+    print "Updating CFS from text file:", txt
+    
+    cf = ChannelFinderClient(**cfinput)
+
+    pvs = []
+    
+    # read each line of the txt command file
+    for i, line in enumerate(open(txt, 'r').readlines()):
+        if not line.strip(): continue
+        if line.strip().find('#') == 0: continue
+
+        rec = line.strip().split()
+        if len(rec) <= 2: 
+            logging.warning("skiping line %d: %s" % (i, line))
+            continue
+
+        if rec[0] == 'addtag':
+            pvs = [pv.strip() for pv in rec[2].split(',')]
+            addTagPvs(cf, rec[1].strip(), pvs, OWNER)
+            continue
+        elif rec[0] == 'removetag':
+            pvs = [pv.strip() for pv in rec[2].split(',')]
+            removeTagPvs(cf, rec[1].strip(), pvs, OWNER)
+            continue
+
+        pv = rec[0]
+        cmd = rec[1]
+        newval = ''.join(rec[2:])
+        for v in [v.strip() for v in newval.split(',')]:
+            if v.find('=') >= 0:
+                # it is a property
+                prpt, val = v.split('=')
+                if cmd == 'add':
+                    print "add", prpt, val
+            else:
+                # tag:
+                if cmd == 'add': addPvTag(cf, pv, v, OWNER)
+                elif cmd == 'remove': removePvTag(cf, pv, v, OWNER)
+
+
+
 if __name__ == "__main__":
     print channelfinder.__file__,
     print time.ctime(os.path.getmtime(channelfinder.__file__))
@@ -181,19 +214,8 @@ if __name__ == "__main__":
     #updatePvProperties('LTB-BI:BD1{VF1}Size:Y-I', 'elemField', 'y')
     #updatePvProperties('LTB-BI:BD1{VF1}Img1:ArrayData', 'elemField', 'image')
 
-    #removeTagsFromPv()
-    #updateTags()
-    #addNewTags()
-    #renameTags()
-    #removeTags()
-    removeProperties('test-prop2')
-    sys.exit(0)
-
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
-        update_cfs_from_txt(sys.argv[1], subline='LTB')
-        pass
-    elif len(sys.argv) > 1 and sys.argv[1] == '--test':
-        simple_test()
+        update_cfs_from_txt(sys.argv[1])
     else:
         print "Usage: %s txtfile" % (sys.argv[0],)
         
