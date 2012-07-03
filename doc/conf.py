@@ -170,6 +170,8 @@ html_additional_pages = {'index': 'index.html'}
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'hladoc'
 
+#doctest_path = []
+doctest_test_doctest_blocks=''
 
 # -- Options for LaTeX output --------------------------------------------------
 

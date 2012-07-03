@@ -695,6 +695,18 @@ class CaElement(AbstractElement):
             else:
                 return [self._field[v].getSetpoint() for v in fields]
         return None
+    
+    def set(self, field, val, unit = None):
+        att = field
+        if self.__dict__['_field'].has_key(att):
+            decr = self.__dict__['_field'][att]
+            if not decr:
+                raise AttributeError("field '%s' is not defined" % att)
+            if not decr.pvsp:
+                raise ValueError("field '%s' is not writable" % att)
+            decr.putSetpoint(val)
+        else:
+            raise RuntimeError("element '%s' has no field '%s'" % (self.name, att))
 
     def settable(self, field):
         if field not in self._field.keys():

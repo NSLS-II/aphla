@@ -61,10 +61,10 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
     
     This is a simple wrap of cothread.catools, support UTF8 string
 
-    :Example::
+    :Example:
 
-        caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
-        caget(['SR:PV1', 'SR:PV2', 'SR:PV3'])
+        >>> caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
+        >>> caget(['SR:PV1', 'SR:PV2', 'SR:PV3'])
 
     Throw cothread.Timedout exception when timeout. This is a wrap of original
     `cothread.catools.caget`.

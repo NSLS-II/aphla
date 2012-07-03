@@ -10,12 +10,19 @@ To use this script, create a file 'conf.py' similar to the following::
   password = 'your password'
 
 
+The input command file::
+
+  addproperty prpt=val pv1,pv2,pv3
+
+
 :author: Lingyun Yang
 :date: 2011-05-11 16:22
 """
 
 import os, sys
 import re, time
+import argparse
+
 import logging
 logging.basicConfig(filename='log_channelfinder_update.txt',
     format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
@@ -36,6 +43,7 @@ cfinput = {
     }
 
 OWNER = 'cf-aphla'
+PRPTOWNER = 'cf-asd'
 
 def simple_test():
     cf = ChannelFinderClient(**cfinput)
@@ -53,9 +61,17 @@ def simple_test():
 
 def hasTag(cf, tag):
     """check if tag exists"""
-    r = cf.find(tagName=tag)
-    if r is None: return False
-    return True
+    for t in cf.getAllTags():
+        if t.Name == tag: return True
+
+    return False
+
+def hasProperty(cf, prpt):
+    """check if property name exists"""
+    for p in cf.getAllProperties(): 
+        if p.Name == prpt: return True
+
+    return False
 
 def pvHasTag(cf, pv, tag):
     """
@@ -65,13 +81,6 @@ def pvHasTag(cf, pv, tag):
         return False
     return True
 
-def pvHasProperty(cf, pv, prpt, val='*'):
-    """
-    """
-    r = cf.find(name=pv, property=[(prpt, val)])
-    if r is None or len(r) == 0:
-        return False
-    return True
 
 def addPvTag(cf, pv, tag, owner):
     """add a tag to pv"""
@@ -121,6 +130,7 @@ def removeTagPvs(cf, tag, pvs, owner):
 
 
 def removePvProperty(cf, pvname, prpt, prptval):
+    """remove pv property"""
     cfprpt = cf.find(name=pvname, property = [(prpt, prptval)])
     if cfprpt is None:
         logging.warn("'%s' has no property {'%s': %s}"  % 
@@ -129,33 +139,20 @@ def removePvProperty(cf, pvname, prpt, prptval):
     cf.delete(channelName = pvname, property = cfprpt)
     
 
-def removePvTags(cf, pvname, tags):
-    for tag in tags:
-        cftag = cf.find(name=pvname, tagName=tag)
-        if cftag is None:
-            logging.warn("'%s' has no tag '%s'" % 
-                         (pvname, tag))
-        cf.delete(tag=cftag, channelName=pvname)
+def addPvProperty(cf, pv, p, v, owner):
+    if not hasProperty(cf, p):
+        cf.update(property=Property(p, owner, v))
+    cf.update(channelName=pv, property=Property(p, owner, v))
 
-def updatePvProperties(pv, p, v):
-    cf = ChannelFinderClient(**cfinput)
-    cf.update(channelName=pv, property=Property(p, 'cf-asd', v))
+def addPropertyPvs(cf, p, owner, v, pvs):
+    if not hasProperty(cf, p):
+        cf.set(property=Property(p, owner, v))
+        logging.info("create new property (%s,%s,%s)" % (p, owner, v))
+    cf.update(property=Property(p, owner, v), channelNames=pvs)
+    logging.info("batch add property (%s,%s,%s) for %d pvs" % (p, owner, v, len(pvs)))
 
-def removeProperties(p):
-    cf = ChannelFinderClient(**cfinput)
-    cf.delete(propertyName=p)
 
-def removeTags():
-    cf = ChannelFinderClient(**cfinput)
-    #cf.delete(tagName='aphla.offset aphla.eput aphla.x')
-    #cf.delete(tagName="aphla.offset aphla.eput aphla.y")
-    cf.delete(tagName="aphla.eget aphla.x")
-    cf.delete(tagName="aphla.eget aphla.y")
-    cf.delete(tagName="aphla.eput aphla.x")
-    cf.delete(tagName="aphla.eput aphla.y")
-    cf.delete(tagName="testtag2")
-
-def update_cfs_from_txt(txt):
+def update_cfs_from_cmd(cmd_list):
     """
     update the cfs from command file:
 
@@ -163,14 +160,14 @@ def update_cfs_from_txt(txt):
 
     The properties are updated as 'cf-asd' account, and tags in 'cf-aphla'
     """
-    print "Updating CFS from text file:", txt
+    print "# Updating CFS from text file"
     
     cf = ChannelFinderClient(**cfinput)
 
     pvs = []
     
     # read each line of the txt command file
-    for i, line in enumerate(open(txt, 'r').readlines()):
+    for i, line in enumerate(cmd_list.readlines()):
         if not line.strip(): continue
         if line.strip().find('#') == 0: continue
 
@@ -187,7 +184,12 @@ def update_cfs_from_txt(txt):
             pvs = [pv.strip() for pv in rec[2].split(',')]
             removeTagPvs(cf, rec[1].strip(), pvs, OWNER)
             continue
-
+        elif rec[0] == 'addproperty':
+            pvs = [pv.strip() for pv in rec[2].split(',')]
+            prpt, val = rec[1].split('=')
+            if val == "''": val = ''
+            addPropertyPvs(cf, prpt, PRPTOWNER, val, pvs)
+            continue
         pv = rec[0]
         cmd = rec[1]
         newval = ''.join(rec[2:])
@@ -205,8 +207,16 @@ def update_cfs_from_txt(txt):
 
 
 if __name__ == "__main__":
-    print channelfinder.__file__,
-    print time.ctime(os.path.getmtime(channelfinder.__file__))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cmd', type=file, help="run command list")
+    arg = parser.parse_args()
+    #print arg.cmd
+    #sys.exit()
+
+    print "#", channelfinder.__file__,
+    print "#", time.ctime(os.path.getmtime(channelfinder.__file__))
+
+    update_cfs_from_cmd(arg.cmd)
 
     #addPvTags('LTB:MG{HCor:2BD1}Fld-SP', 'aphla.sys.LTD1')
     #addPvTags('LTB:MG{VCor:2BD1}Fld-SP', 'aphla.sys.LTD1')
@@ -214,8 +224,8 @@ if __name__ == "__main__":
     #updatePvProperties('LTB-BI:BD1{VF1}Size:Y-I', 'elemField', 'y')
     #updatePvProperties('LTB-BI:BD1{VF1}Img1:ArrayData', 'elemField', 'image')
 
-    if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
-        update_cfs_from_txt(sys.argv[1])
-    else:
-        print "Usage: %s txtfile" % (sys.argv[0],)
+    #if len(sys.argv) > 2 and os.path.exists(sys.argv[1]):
+    #    update_cfs_from_txt(sys.argv[1])
+    #else:
+    #    print "Usage: %s txtfile" % (sys.argv[0],)
         

@@ -42,9 +42,9 @@ Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
 .. doctest::
 
-   >>> ap.initNSLS2VSR()
-   >>> ap.initNSLS2VSRTwiss()
-   Elements in lattice 'SR': 1389
+   >>> ap.initNSLS2V1()
+   >>> ap.initNSLS2V1SRTwiss() #doctest: +ELLIPSIS
+   ...
 
 If you have csv config file, e.g. *nsls2.csv*, in your ``aphla`` package, the
 `~aphla.initNSLS2VSR` will use it, otherwise it will search for channel finder
@@ -57,9 +57,9 @@ server use it to initialize the lattice structure.
 
 .. doctest::
 
-   >>> ap.machines.lattices()    # list available lattices #doctest: -SKIP
-   ['LTD1', 'LTD2', 'LTB', 'SR']
-   >>> ap.machines.use("SR")
+   >>> ap.machines.lattices()    # list available lattices #doctest: +SKIP
+   [u'V1LTD1', u'V1LTD2', u'V1LTB', u'V1SR']
+   >>> ap.machines.use("V1SR")
 
 Switching between lattices should be always a safe operation itself, but may
 affect the following operations.
@@ -80,9 +80,9 @@ Here are some examples:
    >>> len(bpm) # 180 in tital, guaranteed in increasing order of s coordinate.
    180
    >>> bpm[0].name
-   'PH1G2C30A'
+   u'PH1G2C30A'
    >>> bpm[0].family, bpm[0].cell, bpm[0].girder
-   ('BPM', 'C30', 'G2')
+   (u'BPM', u'C30', u'G2')
 
 .. index:: family, cell, girder, symmetry, group
 .. index::
@@ -109,7 +109,7 @@ A element can only belongs to one *family*, *cell*, *girder* and
 .. doctest::
 
    >>> ap.getGroups('PM1G4C02B') # the groups one element belongs to
-   ['BPM', 'C02', 'G4', 'B']
+   [u'BPM', u'C02', u'G4', u'B']
 
 To find the elements in certain cell or/and girder, use *getGroupMembers* and
 take *union* or *intersection* of them.
@@ -148,7 +148,7 @@ pattern string follows Unix filename convension, see :ref:`Wildcard Matching
    >>> ap.getElements('P*C01*A') #doctest: +NORMALIZE_WHITESPACE
    [PL1G2C01A:BPM @ sb=29.988600, PL2G2C01A:BPM @ sb=32.552300, PM1G4C01A:BPM @ sb=38.301800]
    >>> ap.getGroups('P*C01*A') # a union of the groups of matched elements
-   ['BPM', 'C01', 'G4', 'G2', 'A']
+   [u'BPM', u'C01', u'G4', u'G2', u'A']
 
 
 HLA Element Control

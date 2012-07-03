@@ -28,7 +28,7 @@ class ChannelFinderAgent(object):
     def __init__(self, **kwargs):
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
         self.source = None
-        self.rows = []  # nx3 list, n*(pv, prpts, tags)
+        self.rows = []  # nx3 list, n*(pv, prpts, tags), (str, dict, list)
 
     def downloadCfs(self, cfsurl, **kwargs):
         """
@@ -213,6 +213,38 @@ class ChannelFinderAgent(object):
             idx = len(self.rows) - 1
         return idx
 
+    def updateCfs(self, cfsurl, username, password, **kwargs):
+        """
+        """
+        #raise RuntimeError("not implemented")
+
+        properties    = kwargs.get('properties', '*')
+        tags          = kwargs.get('tags', '*')
+
+        from channelfinder import ChannelFinderClient
+        cf = ChannelFinderClient(BaseURL = cfsurl, username=username, 
+                                 password=password)
+        all_prpts = [p.Name for p in cf.getAllProperties()]
+        all_tags  = [t.Name for t in cf.getAllTags()]
+
+        for i,r in enumerate(self.rows):
+            pv, prpt, stags = r
+            ch = cf.find(name=pv)
+            if not ch or len(ch) > 1:
+                print("channel matching error '%s'" % pv)
+                continue
+            prpts = []
+            for p,v in prpt.iteritems():
+                if p not in all_prpts: continue
+                prpts.append(Property(p, v, 'cf-asd'))
+            tags = []
+            for t in stags:
+                tags.append(Tag(t, 'cf-aphla'))
+            if len(prpts) == 0 and len(tags) == 0:
+                continue
+            cf.update(channel=ch, properties=prpts, tags = tags)
+
+
     def tags(self, pat):
         """
         return a list of tags matching the unix filename pattern *pat*.
@@ -250,6 +282,9 @@ class ChannelFinderAgent(object):
         return ret
 
     def __sub__(self, rhs):
+        """
+        the result has no info left if it was same as rhs, ignore empty properties in self
+        """
         samp = {rec[0]:i for i,rec in enumerate(rhs.rows)}
         ret = {}
         for pv, prpt, tags in self.rows:
