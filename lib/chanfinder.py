@@ -222,6 +222,7 @@ class ChannelFinderAgent(object):
         tags          = kwargs.get('tags', '*')
 
         from channelfinder import ChannelFinderClient
+        from channelfinder import Channel, Property, Tag
         cf = ChannelFinderClient(BaseURL = cfsurl, username=username, 
                                  password=password)
         all_prpts = [p.Name for p in cf.getAllProperties()]
@@ -236,13 +237,14 @@ class ChannelFinderAgent(object):
             prpts = []
             for p,v in prpt.iteritems():
                 if p not in all_prpts: continue
-                prpts.append(Property(p, v, 'cf-asd'))
+                if not fnmatch(p, properties): continue
+                cf.update(property=Property(p, 'cf-asd', v), channelName=pv)
             tags = []
             for t in stags:
                 tags.append(Tag(t, 'cf-aphla'))
-            if len(prpts) == 0 and len(tags) == 0:
-                continue
-            cf.update(channel=ch, properties=prpts, tags = tags)
+            #if len(prpts) == 0 and len(tags) == 0:
+            #    continue
+            #cf.update(channel=Channel(pv, ch[0].Owner, properties=prpts, tags = tags))
 
 
     def tags(self, pat):
@@ -285,7 +287,7 @@ class ChannelFinderAgent(object):
         """
         the result has no info left if it was same as rhs, ignore empty properties in self
         """
-        samp = {rec[0]:i for i,rec in enumerate(rhs.rows)}
+        samp = dict([(rec[0],i) for i,rec in enumerate(rhs.rows)])
         ret = {}
         for pv, prpt, tags in self.rows:
             if not samp.has_key(pv):

@@ -141,7 +141,7 @@ def removePvProperty(cf, pvname, prpt, prptval):
 
 def addPvProperty(cf, pv, p, v, owner):
     if not hasProperty(cf, p):
-        cf.update(property=Property(p, owner, v))
+        cf.set(property=Property(p, owner, v))
     cf.update(channelName=pv, property=Property(p, owner, v))
 
 def addPropertyPvs(cf, p, owner, v, pvs):
@@ -199,6 +199,7 @@ def update_cfs_from_cmd(cmd_list):
                 prpt, val = v.split('=')
                 if cmd == 'add':
                     print "add", prpt, val
+                    addPvProperty(cf, pv, prpt, val, PRPTOWNER)
             else:
                 # tag:
                 if cmd == 'add': addPvTag(cf, pv, v, OWNER)
