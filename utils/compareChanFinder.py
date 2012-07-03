@@ -5,6 +5,8 @@ import sys
 from channelfinder import ChannelFinderClient, Channel, Property, Tag
 import aphla as ap
 
+#GET http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder/resources/resources/channels?~name=SR*
+
 cfsurl = 'http://web01.nsls2.bnl.gov:8080/ChannelFinder'
 #cfinput = {
 #    'BaseURL': cfsurl,
@@ -25,12 +27,14 @@ def download_cfs(cfsurl, **cfinput):
     
 
 def print_kv(k, v):
+    s = ''
     if len(v[0]) == 0 and len(v[1]) == 0: return
     elif len(v[1]) == 0:
-        print k, 
         for p,vv in v[0].iteritems():
-            print "%s=%s" % (str(p), str(vv)),
-        print ""
+            if vv is None: continue
+            s = s + "{0}={1}, ".format(p, vv)
+        if s:
+            print k, s[:-2]
     elif len(v[0]) == 0:
         print k, 
         for p in v[1]:

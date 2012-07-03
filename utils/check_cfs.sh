@@ -8,3 +8,4 @@ do
     curl -s ${HLA_CFS_URL}/resources/${cfs_res} | python -c "import sys;from lxml import etree;print etree.tostring(etree.fromstring(sys.stdin.read()),pretty_print=True)"
 done
 
+curl -s "${HLA_CFS_URL}/resources/channels?~name=SR:*&system=V1SR" |  python -c "import sys;from lxml import etree;print etree.tostring(etree.fromstring(sys.stdin.read()),pretty_print=True)"

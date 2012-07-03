@@ -13,7 +13,7 @@ To use this script, create a file 'conf.py' similar to the following::
 The input command file::
 
   addproperty prpt=val pv1,pv2,pv3
-
+  add 
 
 :author: Lingyun Yang
 :date: 2011-05-11 16:22
@@ -138,6 +138,10 @@ def removePvProperty(cf, pvname, prpt, prptval):
         return False
     cf.delete(channelName = pvname, property = cfprpt)
     
+def removePropertyPvs(cf, p, owner, pvs):
+    logging.info("remove property '%s' from %d pvs '%s'" % 
+                 (p, len(pvs), str(pvs)))
+    cf.delete(property = Property(p, owner), channelNames = pvs)
 
 def addPvProperty(cf, pv, p, v, owner):
     if not hasProperty(cf, p):
@@ -190,6 +194,10 @@ def update_cfs_from_cmd(cmd_list):
             if val == "''": val = ''
             addPropertyPvs(cf, prpt, PRPTOWNER, val, pvs)
             continue
+        elif rec[0] == 'removeproperty':
+            pvs = [pv.strip() for pv in rec[2].split(',')]
+            prpt = rec[1].strip()
+            removePropertyPvs(cf, prpt, PRPTOWNER, pvs)
         pv = rec[0]
         cmd = rec[1]
         newval = ''.join(rec[2:])
