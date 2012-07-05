@@ -5,8 +5,8 @@ import time
 
 class TestTunes(unittest.TestCase):
     def setUp(self):
-        ap.initNSLS2VSR()
-        ap.initNSLS2VSRTwiss()
+        ap.initNSLS2V1()
+        ap.initNSLS2V1SRTwiss()
         pass
 
     def test_tunes(self):

@@ -138,7 +138,7 @@ class ChannelFinderAgent(object):
                 iprpt.append(i)
         #print ipv, iprpt, itags
         for s in rd:
-            prpts = dict([(header[i], s[i]) for i in iprpt])
+            prpts = dict([(header[i], s[i]) for i in iprpt if s[i].strip()])
             # itags could be empty if we put all tags in the end columns
             tags = [s[i].strip() for i in itags]
             for i in range(nheader, len(s)):

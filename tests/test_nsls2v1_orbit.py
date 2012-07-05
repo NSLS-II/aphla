@@ -9,9 +9,6 @@ import numpy as np
 import random
 import logging
 
-# which 
-VSUB = 'V1'
-
 class TestOrbit(unittest.TestCase):
     """
     Tested:
@@ -21,7 +18,7 @@ class TestOrbit(unittest.TestCase):
 
     def setUp(self):
         self.logger = logging.getLogger("tests.TestOrbit")
-        ap.initNSLS2VSR()
+        ap.initNSLS2V1()
         self.lat = ap.machines.getLattice('V1SR')
         self.assertTrue(self.lat)
 
@@ -75,7 +72,7 @@ class TestOrbit(unittest.TestCase):
 
 class TestOrbitControl(unittest.TestCase): 
     def test_correct_orbit(self):
-        ap.initNSLS2VSR()
+        ap.initNSLS2V1()
         ap.hlalib._reset_trims()
 
         # a list of horizontal corrector

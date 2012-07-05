@@ -32,7 +32,7 @@ class TestChanFinderData(unittest.TestCase):
         self.HLA_CFS_URL=os.environ.get('HLA_CFS_URL', None)
         self.cfa = ap.chanfinder.ChannelFinderAgent()
         self.cfa.downloadCfs(self.HLA_CFS_URL, tagName='aphla.*')
-        self.VSUB=''
+        self.VSUB='V1'
         pass
     
     def test_sys_tags(self):

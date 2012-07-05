@@ -19,16 +19,14 @@ logging.basicConfig(filename="utest.log",
 from aphla import machines
 #from aphla.catools import caget
 
-VSUB = 'V1'
-
 class TestLattice(unittest.TestCase):
     """
     Lattice testing
     """
     def setUp(self):
-        machines.initNSLS2VSR()
+        machines.initNSLS2V1()
         # this is the internal default lattice
-        self.lat = machines.getLattice(VSUB + 'SR')
+        self.lat = machines.getLattice('V1SR')
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLattice')
 
@@ -97,8 +95,8 @@ class TestLattice(unittest.TestCase):
         
 class TestLatticeSr(unittest.TestCase):
     def setUp(self):
-        machines.initNSLS2VSR()
-        self.lat = machines.getLattice(VSUB + 'SR')
+        machines.initNSLS2V1()
+        self.lat = machines.getLattice('V1SR')
         self.logger = logging.getLogger('tests.TestLatticeSr')
         pass
 
@@ -184,8 +182,8 @@ class TestLatticeSr(unittest.TestCase):
 
 class TestLatticeLtb(unittest.TestCase):
     def setUp(self):
-        machines.initNSLS2VSR()
-        self.lat  = machines.getLattice(VSUB + 'LTB')
+        machines.initNSLS2V1()
+        self.lat  = machines.getLattice('V1LTB')
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLatticeLtb')
 

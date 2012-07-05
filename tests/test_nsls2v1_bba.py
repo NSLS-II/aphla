@@ -6,7 +6,7 @@ import sys, time
 
 class TestBba(unittest.TestCase):
     def setUp(self):
-        ap.initNSLS2VSR()
+        ap.initNSLS2V1()
         ap.hlalib._reset_trims()
         pass
 
