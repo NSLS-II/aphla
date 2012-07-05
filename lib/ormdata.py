@@ -66,6 +66,9 @@ class OrmData:
         #
         grp = f.create_group('bpm')
         name, plane, pv = zip(*self.bpm)
+        # dtype('<U9') is not recognized in earlier h5py
+        if h5py.version.version_tuple < (2,1,1):
+            name = [v.encode('ascii') for v in name]
         dst = grp.create_dataset('element', (m,), data = name, dtype=str_type, 
                                  compression=h5zip)
         dst = grp.create_dataset('plane', (m,), data = plane, dtype=str_type,
@@ -74,6 +77,9 @@ class OrmData:
                                  compression=h5zip)
         #
         name, plane, pvrb, pvsp = zip(*self.trim)
+        # dtype('<U9') is not recognized in earlier h5py
+        if h5py.version.version_tuple < (2,1,1):
+            name = [v.encode('ascii') for v in name]
         grp = f.create_group("trim")
         dst = grp.create_dataset('element', (n,), data=name, dtype=str_type,
                                  compression=h5zip)

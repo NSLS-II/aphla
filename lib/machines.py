@@ -188,7 +188,7 @@ def initNSLS2V1SRTwiss():
     Only works from virtac.nsls2.bnl.gov
     """
     # s location
-    s      = [float(v) for v in caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=30)]
+    s      = [v for v in caget('SR:C00-Glb:G00{POS:00}RB-S')]
     # twiss at s_end (from Tracy)
     alphax = [v for v in caget('SR:C00-Glb:G00{ALPHA:00}RB-X')]
     alphay = [v for v in caget('SR:C00-Glb:G00{ALPHA:00}RB-Y')]

@@ -230,7 +230,7 @@ def createLocalBump(bpm, trim, ref, **kwargs):
         if ypv: pvy.append(ypv)
         bpmpv.append(xpv)
         bpmpv.append(ypv)
-        x0, y0 = b.value
+        x0, y0 = b.x, b.y
         if b.name in bpm:
             idx = bpm.index(b.name)
             if ref[idx][0] == None:
