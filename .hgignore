@@ -37,3 +37,5 @@ syntax:regexp
 ^src/num_rec/autom4te.cache
 ^dist/
 ^deb_dist/
+^utils/debian/
+^utils/conf.py

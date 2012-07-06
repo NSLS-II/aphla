@@ -1,6 +1,14 @@
 History
 ========
 
+v0.3.1
+------
+
+  - add set/get for field string
+  - use cothread-2.8 to avoid core dump on lsasd2
+  - combined test cases for nsls2v1
+  - updated cfs server data, merged bug fix from python client
+
 v0.3.0
 -------
 

@@ -9,12 +9,11 @@ NSLS2 V1 Unit Test
 #from cothread.catools import caget
 #print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
 
-import unittest
+import unittest2 as unittest
 import sys, os, time
 import numpy as np
 import random
 
-import logging
 import logging
 logging.basicConfig(filename="utest.log",
     format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
@@ -400,6 +399,7 @@ class TestLattice(unittest.TestCase):
     Lattice testing
     """
     def setUp(self):
+        logging.info("TestLattice")
         # this is the internal default lattice
         self.lat = ap.machines.getLattice('V1SR')
         self.assertTrue(self.lat)
@@ -470,6 +470,7 @@ class TestLattice(unittest.TestCase):
         
 class TestLatticeSr(unittest.TestCase):
     def setUp(self):
+        logging.info("TestLatticeSr")
         self.lat = ap.machines.getLattice('V1SR')
         self.logger = logging.getLogger('tests.TestLatticeSr')
         pass
@@ -556,6 +557,7 @@ class TestLatticeSr(unittest.TestCase):
 
 class TestLatticeLtb(unittest.TestCase):
     def setUp(self):
+        logging.info("TestLatticeLtb")
         self.lat  = ap.machines.getLattice('V1LTB')
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLatticeLtb')
@@ -592,6 +594,7 @@ Twiss
 
 class TestTunes(unittest.TestCase):
     def setUp(self):
+        logging.info("TestTunes")
         ap.initNSLS2V1SRTwiss()
 
     def test_tunes(self):
@@ -668,7 +671,7 @@ class TestTunes(unittest.TestCase):
         qs = lat.getElementList('QUAD')
         k1 = qs[0].k1
         qs[0].k1 = k1 * 1.02
-        time.sleep(3)
+        time.sleep(6)
         try:
             tunes0b = lat.getTunes()
             tunes1 = ap.getTunes()
@@ -889,7 +892,7 @@ ORM
 
 class TestOrmData(unittest.TestCase):
     def setUp(self):
-        self.h5filename = "us_nsls2_vsr_orm.hdf5"
+        self.h5filename = "us_nsls2_v1sr_orm.hdf5"
         pass
 
     def tearDown(self):
@@ -1181,6 +1184,7 @@ class TestOrm(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    logging.info("Main")
     unittest.main()
     pass
 

@@ -37,7 +37,7 @@ Modules include:
 
 from __future__ import print_function
 
-__version__ = "0.3.0b4"
+__version__ = "0.3.1"
 
 
 import os
