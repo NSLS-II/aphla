@@ -677,7 +677,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
 def main():
-    aphla.initNSLS2VSR()
+    aphla.initNSLS2V1()
     #app = QApplication(args)
     #app.setStyle(st)
     if '--sim' in sys.argv:

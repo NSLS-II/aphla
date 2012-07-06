@@ -13,7 +13,6 @@ it is linked.
 """
 from __future__ import print_function, unicode_literals
 
-import re, shelve, sys, os
 from fnmatch import fnmatch
 from time import gmtime, strftime
 
@@ -29,7 +28,7 @@ class ChannelFinderAgent(object):
     def __init__(self, **kwargs):
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
         self.source = None
-        self.rows = []  # nx3 list, n*(pv, prpts, tags)
+        self.rows = []  # nx3 list, n*(pv, prpts, tags), (str, dict, list)
 
     def downloadCfs(self, cfsurl, **kwargs):
         """
@@ -39,13 +38,13 @@ class ChannelFinderAgent(object):
         - *keep* if present, it only downloads specified properties.
         - *converter* convert properties from string to other format.
 
-        Example::
+        :Example:
 
-          >>> prpt_list = ['elemName', 'sEnd']
-          >>> conv_dict = {'sEnd', float}
-          >>> downloadCfs(URL, keep = prpt_list, converter = conv_dict)
-          >>> downloadCfs(URL, property=[('hostName', 'virtac2')])
-          >>> downloadCfs(URL, property=[('hostName', 'virtac')], tagName='aphla.*')
+          prpt_list = ['elemName', 'sEnd']
+          conv_dict = {'sEnd', float}
+          downloadCfs(URL, keep = prpt_list, converter = conv_dict)
+          downloadCfs(URL, property=[('hostName', 'virtac2')])
+          downloadCfs(URL, property=[('hostName', 'virtac')], tagName='aphla.*')
 
         The channel finder client API provides *property* and *tagName* as
         keywords parameters. 
@@ -54,7 +53,7 @@ class ChannelFinderAgent(object):
         converter  = kwargs.pop('converter', {})
         self.source = cfsurl
 
-        from channelfinder import ChannelFinderClient, Channel, Property, Tag
+        from channelfinder import ChannelFinderClient
         cf = ChannelFinderClient(BaseURL = cfsurl)
         if len(kwargs) == 0:
             chs = cf.find(name='*')
@@ -88,18 +87,18 @@ class ChannelFinderAgent(object):
 
         Example::
 
-          >>> sort('pv')
-          >>> sort('elemName')
+          sort('pv')
+          sort('elemName')
         """
-        from operator import itemgetter, attrgetter
+        from operator import itemgetter
         if key == 'pv':
             self.rows.sort(key = itemgetter(0))
         else:
             self.rows.sort(key=lambda k: k[1][key])            
-        pass
 
     def renameProperty(self, oldkey, newkey):
         """
+        rename the property name
         """
         for r in self.rows:
             if oldkey not in r[1]: continue
@@ -130,21 +129,23 @@ class ChannelFinderAgent(object):
         # the index of PV, properties and tags
         ipv = hlow.index('pv')
         iprpt, itags = [], []
-        for i,h in enumerate(header):
+        for i, h in enumerate(header):
             if i == ipv: continue
             # if the header is empty, it is a tag
-            if len(h.strip()) == 0: itags.append(i)
-            else: iprpt.append(i)
+            if len(h.strip()) == 0: 
+                itags.append(i)
+            else:
+                iprpt.append(i)
         #print ipv, iprpt, itags
         for s in rd:
-            prpts = dict([(header[i], s[i]) for i in iprpt])
+            prpts = dict([(header[i], s[i]) for i in iprpt if s[i].strip()])
             # itags could be empty if we put all tags in the end columns
             tags = [s[i].strip() for i in itags]
             for i in range(nheader, len(s)):
                 tags.append(s[i].strip())
             #print s[ipv], prpts, tags
             self.rows.append([s[ipv], prpts, tags])
-        pass
+
 
     def exportCsv(self, fname):
         """
@@ -154,7 +155,8 @@ class ChannelFinderAgent(object):
         prpts_set = set()
         for r in self.rows:
             if r[1] is None: continue
-            for k in r[1]: prpts_set.add(k)
+            for k in r[1]: 
+                prpts_set.add(k)
         header = sorted(list(prpts_set))
         #print header
         import csv
@@ -163,9 +165,12 @@ class ChannelFinderAgent(object):
         for r in self.rows:
             prpt = []
             for k in header:
-                if r[1] is None: prpt.append('')
-                elif k not in r[1]: prpt.append('')
-                else: prpt.append(r[1][k])
+                if r[1] is None: 
+                    prpt.append('')
+                elif k not in r[1]: 
+                    prpt.append('')
+                else: 
+                    prpt.append(r[1][k])
             if r[2] is None:
                 writer.writerow([r[0]] + prpt)
             else:
@@ -180,13 +185,67 @@ class ChannelFinderAgent(object):
         self.__cdate = d['__cdate']
         self.rows = d['rows']
         f.close()
-        pass
 
     def _exportJson(self, fname):
         import json
         f = open(fname, 'w')
         json.dump({'__cdate': self.__cdate, 'rows': self.rows}, f)
         f.close()
+
+    def update(self, pv, prpts, tags):
+        """
+        update the properties and tags for pv
+
+        :param pv: pv
+        :param prpts: property dictionary
+        :param tags: list of tags
+        """
+        idx = -1
+        for i, rec in enumerate(self.rows):
+            if rec[0] != pv: continue
+            idx = i
+            rec[1].update(prpts)
+            for tag in tags:
+                if tag in rec[2]: continue
+                rec[3].append(tag)
+        if idx < 0:
+            self.rows.append([pv, prpts, tags])
+            idx = len(self.rows) - 1
+        return idx
+
+    def updateCfs(self, cfsurl, username, password, **kwargs):
+        """
+        """
+        #raise RuntimeError("not implemented")
+
+        properties    = kwargs.get('properties', '*')
+        tags          = kwargs.get('tags', '*')
+
+        from channelfinder import ChannelFinderClient
+        from channelfinder import Channel, Property, Tag
+        cf = ChannelFinderClient(BaseURL = cfsurl, username=username, 
+                                 password=password)
+        all_prpts = [p.Name for p in cf.getAllProperties()]
+        all_tags  = [t.Name for t in cf.getAllTags()]
+
+        for i,r in enumerate(self.rows):
+            pv, prpt, stags = r
+            ch = cf.find(name=pv)
+            if not ch or len(ch) > 1:
+                print("channel matching error '%s'" % pv)
+                continue
+            prpts = []
+            for p,v in prpt.iteritems():
+                if p not in all_prpts: continue
+                if not fnmatch(p, properties): continue
+                cf.update(property=Property(p, 'cf-asd', v), channelName=pv)
+            tags = []
+            for t in stags:
+                tags.append(Tag(t, 'cf-aphla'))
+            #if len(prpts) == 0 and len(tags) == 0:
+            #    continue
+            #cf.update(channel=Channel(pv, ch[0].Owner, properties=prpts, tags = tags))
+
 
     def tags(self, pat):
         """
@@ -207,12 +266,12 @@ class ChannelFinderAgent(object):
 
         Example::
 
-          >>> groups()
+          groups()
           {'BPM1': [0, 3], 'Q1': [1], 'COR1' : [2]}
         """
         
         ret = {}
-        for i,r in enumerate(self.rows):
+        for i, r in enumerate(self.rows):
             # skip if no properties
             if r[1] is None: continue
             # skip if no interesting properties
@@ -224,6 +283,31 @@ class ChannelFinderAgent(object):
             v.append(i)
         return ret
 
+    def __sub__(self, rhs):
+        """
+        the result has no info left if it was same as rhs, ignore empty properties in self
+        """
+        samp = dict([(rec[0],i) for i,rec in enumerate(rhs.rows)])
+        ret = {}
+        for pv, prpt, tags in self.rows:
+            if not samp.has_key(pv):
+                ret[pv] = (prpt, tags)
+                continue
+            rec2 = rhs.rows[samp[pv]]
+            p2, t2 = rec2[1], rec2[2]
+            ret[pv] = [{}, []]
+            for k,v in prpt.iteritems():
+                if not p2.has_key(k):
+                    ret[pv][0][k] = v
+                    continue
+                elif p2[k] != v:
+                    ret[pv][0][k] = v
+            for t in tags:
+                if t in t2: continue
+                ret[pv][1].append(t)
+        return ret
+
+        #print(pv, prpt, tags)
 
 if __name__ == "__main__":
     cfa = ChannelFinderAgent()

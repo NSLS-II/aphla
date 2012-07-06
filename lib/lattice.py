@@ -7,6 +7,10 @@ Lattice
 defines lattice related classes and functions.
 
 :author: Lingyun Yang
+
+.. seealso::
+
+  :mod:`~aphla.twiss`, :mod:`~aphla.machines`
 """
 
 import re
@@ -24,6 +28,7 @@ class Lattice:
 
     def __init__(self, name, mode = 'undefined'):
         self.name = name
+        self._twiss = None
         # group name and its element
         self._group = None
         # guaranteed in the order of s.
@@ -276,9 +281,13 @@ class Lattice:
 
     def getElementList(self, group, **kwargs):
         """
-        get elements.
+        get a list of element objects.
 
-        ::
+        :param group: element list or pattern
+        :type group: list, string
+        :rtype: a list of element objects
+
+        :Example:
 
           >>> getElements('BPM')
           >>> getElements('PL*')
@@ -294,7 +303,6 @@ class Lattice:
         When the input *group* is a list, each string in this list will be
         treated as exact string instead of pattern.
 
-        *return_list* whether return list even when returning a single element.
         """
 
         # do exact element name match first
@@ -642,105 +650,71 @@ class Lattice:
         return el[idx]
         
     def __repr__(self):
-        s = ''
+        s = '# %s' % self.name
         ml_name, ml_family = 0, 0
         for e in self._elements:
             if len(e.name) > ml_name: ml_name = len(e.name)
             if e.family and len(e.family) > ml_family:
                 ml_family = len(e.family)
 
-        idx = int(1.0+log10(len(self._elements)))
+        idx = 1
+        if len(self._elements) >= 10:
+            idx = int(1.0+log10(len(self._elements)))
         fmt = "%%%dd %%%ds  %%%ds  %%9.4f %%9.4f\n" % (idx, ml_name, ml_family)
         #print fmt
         for i, e in enumerate(self._elements):
+            if e.virtual: continue
             s = s + fmt % (i, e.name, e.family, e.sb, e.length)
         return s
 
 
-    def getPhase(self, elem, loc = 'e'):
+    def _get_twiss(self, elem, col, spos):
+        """
+        """
+        elemlst = [e.name for e in self.getElementList(elem)]
+        if spos: col.append('s')
+
+        return self._twiss.getTwiss(elemlst, col = col)
+
+    def getPhase(self, elem, spos = True):
         """
         return phase
         """
+        return self._get_twiss(elem, ['phix', 'phiy'], spos)
 
-        if isinstance(elem, str):
-           elemlst = self.getElementList(elem)
-        elif isinstance(elem, list):
-           elemlst = elem[:]
-        else:
-           raise ValueError("elem can only be string or list")
-
-        idx = [-1] * len(elemlst)
-        phi = np.zeros((len(elemlst), 2), 'd')
-        for i,e in enumerate(self._elements):
-            if e.name in elemlst: idx[elemlst.index(e.name)] = i
-        if loc == 'b': 
-            for i, k in enumerate(idx):
-                phi[i, :] = self._twiss[k].phi[0, :]
-        elif loc == 'c': 
-            raise NotImplementedError()
-        else:
-            # loc == 'end': 
-            for i, k in enumerate(idx):
-                phi[i, :] = self._twiss[k].phi[-1, :]
-        return phi
-
-    def getBeta(self, elem, loc = 'e'):
+    def getBeta(self, elem, spos = True):
         """
         return beta function
         """
-        if isinstance(elem, str) or isinstance(elem, unicode):
-           elemlst = self.getElementList(elem)
-        elif isinstance(elem, list):
-           elemlst = elem[:]
-        else:
-           raise ValueError("elem can only be string or list")
+        return self._get_twiss(elem, ['betax', 'betay'], spos)
 
-        idx = [-1] * len(elemlst)
-        beta = np.zeros((len(elemlst), 2), 'd')
-        for i,e in enumerate(self._elements):
-            if not e.name in elemlst: continue
-            j = elemlst.index(e.name)
-            idx[j] = i
-            beta[j, :] = self._twiss[i].beta(loc)
-        return beta
-
-    def getEta(self, elem, loc = 'e'):
+    def getEta(self, elem, spos = True):
         """
         return dispersion
         """
-        if isinstance(elem, str):
-           elemlst = self.getElementList(elem)
-        elif isinstance(elem, list):
-           elemlst = elem[:]
-        else:
-           raise ValueError("elem can only be string or list")
-
-
-        idx = [-1] * len(elemlst)
-        eta = np.zeros((len(elemlst), 2), 'd')
-        for i,e in enumerate(self._elements):
-            if e.name in elemlst: idx[elemlst.index(e.name)] = i
-        if loc == 'b': 
-            for i, k in enumerate(idx):
-                eta[i, :] = self._twiss[k].eta[0, :]
-        elif loc == 'c': 
-            raise NotImplementedError()
-        else:
-            # loc == 'end': 
-            for i, k in enumerate(idx):
-                eta[i, :] = self._twiss[k].eta[-1, :]
-        return eta
+        return self._get_twiss(elem, ['etax', 'etay'], spos)
     
     def getTunes(self):
-        """
-        return tunes
-        """
-        return self.tune[0], self.tune[1]
+        """return tunes -> (nux, nuy)"""
+        return self._twiss.tune
+
+    def getChromaticities(self):
+        """return chromaticities -> (chx, chy)"""
+        return self._twiss.chrom
 
     def getBeamlineProfile(self, s1=0.0, s2=1e10):
+        """
+        :param s1: s-begin
+        :param s2: s-end
+        :return: the profile line of elements for plotting
+        :rtype: a list of ('sloc', 'point', 'color', 'name')
+
+        Virtual element is not included.
+        """
         prof = []
         for elem in self._elements:
-            if elem.se < s1: continue
+            if elem.virtual: continue
+            elif elem.se < s1: continue
             elif elem.sb > s2: continue
             x1, y1, c = elem.profile()
             prof.append((x1, y1, c, elem.name))

@@ -12,6 +12,7 @@ import copy
 import logging
 from catools import caget, caput
 
+logger = logging.getLogger(__name__)
 
 class AbstractElement(object):
     """
@@ -443,11 +444,11 @@ class CaElement(AbstractElement):
 
         Example::
 
-          >>> pv() # returns all pvs.
-          >>> pv(tag='aphla.X')
-          >>> pv(tags=['aphla.EGET', 'aphla.Y'])
-          >>> pv(field = "x")
-          >>> pv(field="x", handle='readback')
+          pv() # returns all pvs.
+          pv(tag='aphla.X')
+          pv(tags=['aphla.EGET', 'aphla.Y'])
+          pv(field = "x")
+          pv(field="x", handle='readback')
         """
         if len(kwargs) == 0:
             return self._pvtags.keys()
@@ -578,7 +579,7 @@ class CaElement(AbstractElement):
             fieldname, idx = g.group(1), g.group(2)
             if idx is not None: 
                 idx = int(idx[1:-1])
-                logging.info("%s %s[%d]" % (pvname, fieldname, idx))
+                logger.info("%s %s[%d]" % (pvname, fieldname, idx))
 
             # the default handle is 'READBACK'
             if properties is None or \
@@ -655,7 +656,7 @@ class CaElement(AbstractElement):
         if self.virtual:
             return "%s [%s] (virtual)" % (self.name, self.family)
         else:
-            AbstractElement.__repr__(self)
+            return AbstractElement.__repr__(self)
 
     def enableTrace(self, fieldname):
         self._field[fieldname].trace = True
@@ -694,6 +695,18 @@ class CaElement(AbstractElement):
             else:
                 return [self._field[v].getSetpoint() for v in fields]
         return None
+    
+    def set(self, field, val, unit = None):
+        att = field
+        if self.__dict__['_field'].has_key(att):
+            decr = self.__dict__['_field'][att]
+            if not decr:
+                raise AttributeError("field '%s' is not defined" % att)
+            if not decr.pvsp:
+                raise ValueError("field '%s' is not writable" % att)
+            decr.putSetpoint(val)
+        else:
+            raise RuntimeError("element '%s' has no field '%s'" % (self.name, att))
 
     def settable(self, field):
         if field not in self._field.keys():

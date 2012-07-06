@@ -13,8 +13,13 @@ import os
 from os.path import join
 from catools import caget, caput
 import numpy as np
-from hlalib import getOrbit, getElements, getClosest, getNeighbors, getTunes, waitStableOrbit
-from rf import getRfFrequency, putRfFrequency
+from hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes, 
+                    waitStableOrbit, getRfFrequency, putRfFrequency)
+
+__all__ = [ 'measBeta', 'measDispersion', 'measChromaticity' ]
+
+import logging
+logger = logging.getLogger(__name__)
 
 def _measBetaQuad(elem, **kwargs):
     dqk1 = abs(kwargs.get('dqk1', 0.01))
@@ -42,11 +47,11 @@ def measBeta(elem, dqk1 = 0.01, # element or list
     - num_points points to fit the line
     - verbose
 
-    returns k1, nu, beta
+    returns beta
     """
 
     elems = getElements(elem, return_list=True)
-    if not elems:
+    if elems is None:
         raise ValueError("can not find element '%s'" % elem)
     if verbose:
         print "# fitting %d quadrupoles:" % len(elems)
@@ -95,7 +100,9 @@ def measDispersion(elem, dfreq = 1e-5, alphac = 3.6261976841792413e-04,
     bpmnames = [b.name for b in bpmobj]
     nbpm = len(bpmnames)
 
-    print "elements:", len(bpmnames), bpmnames
+    logger.info("measure dispersions at %d elements '%s'" % 
+                (len(bpmnames), str(elem)))
+
     # f in MHz
     f0 = getRfFrequency()
     dflst = np.linspace(-abs(dfreq),  abs(dfreq), num_points)
@@ -123,6 +130,55 @@ def measDispersion(elem, dfreq = 1e-5, alphac = 3.6261976841792413e-04,
     # fitting
     p = np.polyfit(dflst, cod, deg = 1)
     disp = -p[0,:] * f0 * eta
-    return disp[:nbpm], disp[nbpm:]
+    s = np.array([e.sb for e in bpmobj], 'd')
+    ret = np.zeros((len(bpmobj), 3), 'd')
+    ret[:,0] = disp[:nbpm]
+    ret[:,1] = disp[nbpm:]
+    ret[:,2] = s
+    return ret
 
     
+
+def measChromaticity(gamma = 3.0e5/.511, alphac = 3.6261976841792413e-04):
+    """
+    Measure the chromaticity
+    """
+    eta = alphac - 1/gamma/gamma
+
+    f0 = getRfFrequency()
+    nu0 = getTunes()
+    logger.info("RF freq=%s, tune=%s" % (str(f0), str(nu0)))
+
+    f = np.linspace(f0 - 1e-3, f0 + 1e-3, 6)
+    nu = np.zeros((len(f), 2), 'd')
+    for i,f1 in enumerate(f): 
+        putRfFrequency(f1)
+        time.sleep(6)
+        nu[i,:] = getTunes()
+
+    df = f - f0
+    dnu = nu - np.array(nu0)
+    p, resi, rank, sing, rcond = np.polyfit(df, dnu, deg=2, full=True)
+    print("Coef:", p)
+    print("Resi:", resi)
+    chrom = p[-2,:] * (-f0*eta)
+    print("Chromx:", chrom)
+    
+    t = np.linspace(1.1*df[0], 1.1*df[-1], 100)
+    plt.clf()
+    plt.plot(f - f0, nu[:,0] - nu0[0], '-rx')
+    plt.plot(f - f0, nu[:,1] - nu0[1], '-go')
+    plt.plot(t, t*t*p[-3,0]+t*p[-2,0] + p[-1,0], '--r',
+             label="H: %.1fx^2%+.2fx%+.1f" % (p[-3,0], p[-2,0], p[-1,0]))
+    plt.plot(t, t*t*p[-3,1]+t*p[-2,1] + p[-1,1], '--g',
+             label="V: %.1fx^2%+.2fx%+.1f" % (p[-3,1], p[-2,1], p[-1,1]))
+    plt.text(min(df), min(dnu[:,0]),
+             r"$\eta=%.3e,\quad C_x=%.2f,\quad C_y=%.2f$" %\
+             (eta, chrom[0], chrom[1]))
+    
+    plt.legend(loc='upper right')
+    plt.xlabel("$f-f_0$ [MHz]")
+    plt.ylabel(r"$\nu-\nu_0$")
+    plt.savefig('measchrom.png')
+    putRfFrequency(f0)
+    pass

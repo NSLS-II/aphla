@@ -1,3 +1,7 @@
+2012-07-06  Lingyun Yang  <lyyang@lsasd2>
+
+	* add set/get field for CaElement
+
 2012-04-02  Lingyun Yang  <lyyang@nsls2yang.nsls2.bnl.gov>
 
 	* add mark/reset/revert functions for CaElement

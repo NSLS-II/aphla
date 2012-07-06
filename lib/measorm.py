@@ -12,23 +12,18 @@ from os.path import join, splitext
 import numpy as np
 import shelve
 
-from . import _lat
-from . import _cfa
-from . import _orm
-from catools import caget, caput, caputwait, Timedout
+from orm import Orm
 
-import matplotlib.pylab as plt
+import logging
+logger = logging.getLogger(__name__)
 
-
-def measOrbitRm(bpm, trim):
+def measOrbitRm(bpm, trim, output):
     """Measure the beta function by varying quadrupole strength"""
-    print "EPICS_CA_MAX_ARRAY_BYTES:", os.environ['EPICS_CA_MAX_ARRAY_BYTES']
-    print "EPICS_CA_ADDR_LIST      :", os.environ['EPICS_CA_ADDR_LIST']
-    print "BPM: ", len(bpm)
-    print "TRIM:", len(trim)
-
+    #print "BPM: ", len(bpm)
+    #print "TRIM:", len(trim)
+    logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
     orm = Orm(bpm, trim)
-    orm.measure(verbose=1)
+    orm.measure(output = output, verbose=1)
     return orm
 
 # testing ...
@@ -40,6 +35,10 @@ def measChromRm():
     pass
 
 def getSubOrm(bpm, trim, flags = 'XX'):
-    return _orm.getSubMatrix(bpm, trim, flags)
+    """
+    get submatrix of Orm
+    """
+    #return _orm.getSubMatrix(bpm, trim, flags)
+    pass
 
 

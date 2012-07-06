@@ -11,8 +11,8 @@ Response Matrix Data
 
 """
 
-import os, sys, time
-from os.path import join, splitext
+import os
+from os.path import splitext
 import numpy as np
 import shelve
 
@@ -27,7 +27,7 @@ class OrmData:
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, datafile = None):
         # points for trim setting when calc dx/dkick
-        npts = 6
+        #npts = 6
 
         # list of tuple, (name, plane, pv)
         self.bpm = []
@@ -42,7 +42,6 @@ class OrmData:
         if datafile is not None:
             self.load(datafile)
 
-        #print __file__, "Done initialization"
         
     def _io_format(self, filename, format):
         rt, ext = splitext(filename)
@@ -55,6 +54,9 @@ class OrmData:
         return fmt
     
     def save_hdf5(self, filename):
+        """
+        save data to hdf5 format
+        """
         import h5py
         h5zip = None # 'gzip' works in default install
         f = h5py.File(filename, 'w')
@@ -64,6 +66,9 @@ class OrmData:
         #
         grp = f.create_group('bpm')
         name, plane, pv = zip(*self.bpm)
+        # dtype('<U9') is not recognized in earlier h5py
+        if h5py.version.version_tuple < (2,1,1):
+            name = [v.encode('ascii') for v in name]
         dst = grp.create_dataset('element', (m,), data = name, dtype=str_type, 
                                  compression=h5zip)
         dst = grp.create_dataset('plane', (m,), data = plane, dtype=str_type,
@@ -72,6 +77,9 @@ class OrmData:
                                  compression=h5zip)
         #
         name, plane, pvrb, pvsp = zip(*self.trim)
+        # dtype('<U9') is not recognized in earlier h5py
+        if h5py.version.version_tuple < (2,1,1):
+            name = [v.encode('ascii') for v in name]
         grp = f.create_group("trim")
         dst = grp.create_dataset('element', (n,), data=name, dtype=str_type,
                                  compression=h5zip)
@@ -93,6 +101,9 @@ class OrmData:
         f.close()
 
     def load_hdf5(self, filename, grp):
+        """
+        load data group *grp* from hdf5 file *filename*
+        """
         import h5py
         f = h5py.File(filename, 'r')
         g = f[grp]['bpm']
@@ -134,7 +145,6 @@ class OrmData:
         if fmt == 'HDF5':
             self.save_hdf5(filename)
         elif fmt == 'shelve':
-            import shelve
             f = shelve.open(filename, 'c')
             f['orm.m'] = self.m
             f['orm.bpm'] = self.bpm
@@ -173,6 +183,10 @@ class OrmData:
         #print self.trim
 
     def getBpmNames(self):
+        """
+        The same order as appeared in orm rows. It may have duplicate bpm
+        names in the return list.
+        """
         return [v[0] for v in self.bpm]
     
     def hasBpm(self, bpm):
@@ -180,18 +194,22 @@ class OrmData:
         check if the bpm is used in this ORM measurement
         """
 
-        for i,b in enumerate(self.bpm):
+        for b in self.bpm:
             if b[0] == bpm: return True
         return False
 
     def getTrimNames(self):
+        """
+        The same order as appeared in orm columns. It may have duplicate trim
+        names in the return list.
+        """
         return [v[0] for v in self.trim]
     
     def hasTrim(self, trim):
         """
         check if the trim is used in this ORM measurement
         """
-        for i,tr in enumerate(self.trim):
+        for tr in self.trim:
             if tr[0] == trim: return True
         return False
 
@@ -227,9 +245,9 @@ class OrmData:
         i = self._pv_index(v)
         if i >= 0: return i
         
-    def update(self, src, masked=False):
+    def update(self, src):
         """
-        merge two orm into one
+        update the data using a new OrmData object *src*
         
         - masked, whether update when the value is masked to ignore
 
@@ -249,7 +267,7 @@ class OrmData:
         npts, nbpm0, ntrim0 = np.shape(self._rawmatrix)
         
         nbpm, ntrim = len(bpm), len(trim)
-        print "(%d,%d) -> (%d,%d)" % (nbpm0, ntrim0, nbpm, ntrim)
+        #print "(%d,%d) -> (%d,%d)" % (nbpm0, ntrim0, nbpm, ntrim)
         # the merged is larger
         rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
         mask      = np.zeros((nbpm, ntrim), 'i')
@@ -272,9 +290,11 @@ class OrmData:
             jj = itrim[j]
             rawkick[jj,:] = src._rawkick[j,:]
             for i, b in enumerate(src.bpm):
-                # next, if not updating with a masked value
-                if not masked and src._mask[i,j]: continue
+                # skip if any masked
+                if src._mask[i,j]: continue
                 ii = ibpm[i]
+                if self._mask[ii,jj]: continue
+
                 rawmatrix[:,ii,jj] = src._rawmatrix[:,i,j]
                 mask[ii,jj] = src._mask[i,j]
                 m[ii,jj] = src.m[i,j]
@@ -285,20 +305,22 @@ class OrmData:
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
         
-    def getSubMatrix(self, bpm, trim, flags='XX', **kwargs):
+    def getSubMatrix(self, bpm, trim, flags=('XY', 'XY'), **kwargs):
         """
         if only bpm name given, the return matrix will not equal to
         len(bpm),len(trim), since one bpm can have two lines (x,y) data.
 
         - *bpm* a list of bpm names
         - *trim* a list of trim names
+        - *flags* is a tuple of (bpm plans, trim plans: ('X','X'), ('XY', 'Y') 
 
         optional:
 
-        - *ignore_unmeasured* The unmeasured bpm/trim pairs will be ignored.
+        - *ignore_unmeasured* The unmeasured bpm/trim pairs will be
+          ignored. Otherwise raise ValueError.
         """
         if not bpm or not trim: return None
-        if not flags in ['XX', 'XY', 'YY', 'YX']: return None
+        #if flags not in ['XX', 'XY', 'YY', 'YX', '**']: return None
         
         bpm_st  = set([v[0] for v in self.bpm])
         trim_st = set([v[0] for v in self.trim])
@@ -317,10 +339,11 @@ class OrmData:
         
         mat = np.zeros((len(bpm), len(trim)), 'd')
         for i,b in enumerate(self.bpm):
-            if b[1] != flags[0] or not b[0] in bpm: continue
+            if b[0] not in bpm: continue
+            if b[1] not in flags[0]: continue
             ii = bpm.index(b[0])
             for j,t in enumerate(self.trim):
-                if not t[0] in trim or t[1] != flags[1]: continue
+                if t[0] not in trim or t[1] not in flags[1]: continue
                 jj = trim.index(t[0])
                 mat[ii,jj] = self.m[i,j]
 
