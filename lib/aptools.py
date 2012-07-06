@@ -278,10 +278,8 @@ def createLocalBump(bpm, trim, ref, **kwargs):
     for i in range(len(bpmpv)):
         print(i, bpmpv[i], caget(bpmpv[i]), bpmref[i])
 
-    if not machines._lat.orm:
-        print("ERROR: this lattice setting has no ORM data", file=sys.stderr)
-    else:
-        correctOrbitPv(bpmpv, trimpv, machines._lat.orm, np.array(bpmref))
+    # correct orbit using default ORM (from current lattice)
+    correctOrbitPv(bpmpv, trimpv, ref=np.array(bpmref))
 
         
 def correctOrbit(bpm = None, trim = None, **kwargs):

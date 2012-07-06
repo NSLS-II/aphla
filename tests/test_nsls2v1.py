@@ -750,6 +750,9 @@ class TestOrbit(unittest.TestCase):
         time.sleep(10)
 
 class TestOrbitControl(unittest.TestCase): 
+    def setUp(self):
+        ap.machines.use("V1SR")
+
     def test_correct_orbit(self):
         ap.hlalib._reset_trims()
 
