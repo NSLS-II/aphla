@@ -47,17 +47,47 @@ PRPTOWNER = 'cf-asd'
 
 def simple_test():
     cf = ChannelFinderClient(**cfinput)
-    cf.set(property=Property('test-prop1', 'cf-asd', 'v1'))
-    cf.set(property=Property('test-prop2', 'cf-asd', 'v2'))
-    cf.set(property=Property('test-prop3', 'lyyang'))
-    cf.set(property=Property('test-prop4', 'lyyang'))
-    cf.delete(propertyName='test-prop1')
-    cf.delete(propertyName='test-prop3')
+    #cf.set(property=Property('test-prop1', 'lyyang', 'v1'))
+    #cf.set(property=Property('test-prop2', 'cf-asd', 'v2'))
+    #cf.set(property=Property('test-prop3', 'lyyang'))
+    #cf.set(property=Property('test-prop4', 'lyyang'))
+    #cf.delete(propertyName='test-prop1')
+    #cf.delete(propertyName='test-prop3')
 
-    pvname='SR:C00-BI:G00{DCCT:00}CUR-RB'
+    pvname1='SR:C00-BI:G00{DCCT:00}CUR-RB'
+    pvname2='SR:C00-Glb:G00{CHROM:00}RB-X'
+    pvname3='SR:C00-Glb:G00{CHROM:00}RB-Y'
     cf.update(property=Property('test-prop2', 'cf-asd', 'v1'),
-              channelName=pvname)
-    cf.delete(propertyName='test-prop2', channelName=pvname)
+              channelNames=[pvname1, pvname2, pvname3])
+    #chs = cf.find(property=[('test-prop2', '*')])
+    #if chs is not None:
+    #    for ch in chs:
+    #        print ch.Name
+    #        for p in ch.Properties: 
+    #            print "  ", p.Name,"=",p.Value, p.Owner, ", "
+    #        print "/"
+
+    cf.delete(property=Property('test-prop2', 'cf-asd', 'v1'), 
+              channelNames=[pvname2, pvname3])
+    chs = cf.find(property=[('test-prop2', '*')])
+    if chs is not None:
+        for ch in chs:
+            print ch.Name,
+            for p in ch.Properties: 
+                print p.Name,"=",p.Value,", ", 
+            print " /"
+
+    #cf.update(property=Property('test-prop4', 'cf-asd', 'vt1'),
+    #          channelNames=[pvname1, pvname2, pvname3])
+    #cf.delete(property=Property('test-prop4', 'cf-asd'), 
+    #          channelNames=[pvname2, pvname3])
+    #chs = cf.find(property=[('test-prop4', '*')])
+    #if chs is not None:
+    #    for ch in chs:
+    #        print ch.Name,
+    #        for p in ch.Properties: 
+    #            print p.Name,"=",p.Value,", ", 
+    #        print " /"
 
 def hasTag(cf, tag):
     """check if tag exists"""
@@ -68,6 +98,9 @@ def hasTag(cf, tag):
 
 def hasProperty(cf, prpt):
     """check if property name exists"""
+    # a property exists if its name exists. Not its whole (p,v) pair.  if want
+    # to check existance before creating a new one, we should check the name
+    # first (no value). If no, set then update value with PV.
     for p in cf.getAllProperties(): 
         if p.Name == prpt: return True
 
@@ -149,14 +182,77 @@ def addPvProperty(cf, pv, p, v, owner):
     cf.update(channelName=pv, property=Property(p, owner, v))
 
 def addPropertyPvs(cf, p, owner, v, pvs):
+    """
+    """
     if not hasProperty(cf, p):
+        # in this set, value of property is not needed (confusing).  since set
+        # is creating a new (p,v) pair. Before attach it to a PV, its value is
+        # meaningless.
         cf.set(property=Property(p, owner, v))
         logging.info("create new property (%s,%s,%s)" % (p, owner, v))
     cf.update(property=Property(p, owner, v), channelNames=pvs)
     logging.info("batch add property (%s,%s,%s) for %d pvs" % (p, owner, v, len(pvs)))
 
+def cfs_append_from_csv1(rec_list, update_only):
+    cf = ChannelFinderClient(**cfinput)
+    all_prpts = [p.Name for p in cf.getAllProperties()]
+    all_tags  = [t.Name for t in cf.getAllTags()]
+    ignore_prpts = ['hostName', 'iocName']
+    import csv
+    rd = csv.reader(rec_list)
+    # header line
+    header = rd.next()
+    # lower case of header
+    hlow = [s.lower() for s in header]
+    # number of headers, pv + properties
+    nheader = len(header)
+    # the index of PV, properties and tags
+    ipv = hlow.index('pv')
+    # the code did not rely on it, but it is a good practice
+    if ipv != 0:
+        raise RuntimeError("the first column should be pv")
 
-def update_cfs_from_cmd(cmd_list):
+    iprpt, itags = [], []
+    for i, h in enumerate(header):
+        if i == ipv: continue
+        # if the header is empty, it is a tag
+        if len(h.strip()) == 0: 
+            itags.append(i)
+        else:
+            iprpt.append(i)
+
+    tag_owner = OWNER
+    prpt_owner = PRPTOWNER
+    tags = {}
+    # the data body
+    for s in rd:
+        prpts = [Property(header[i], prpt_owner, s[i]) for i in iprpt if s[i]]
+        # itags could be empty if we put all tags in the end columns
+        for i in itags + range(nheader, len(s)):
+            rec = tags.setdefault(s[i].strip(), [])
+            rec.append(s[ipv].strip())
+
+        #print s[ipv], prpts, tags
+        ch = cf.find(name=s[ipv])
+        if ch is None:
+            logging.warning("pv {0} does not exist".format(s[ipv]))
+        elif len(ch) > 1:
+            logging.warning("pv {0} is not unique ({1})".format(s[ipv], len(ch)))
+        else:
+            for p in prpts:
+                if p.Name in ignore_prpts: continue
+                #if p.Name != 'symmetry': continue
+                logging.info("updating '{0}' with property, {1}={2}".format(
+                        s[ipv], p.Name, p.Value))
+                cf.update(channelName=s[ipv], property=p)
+
+    logging.info("finished updating properties")
+    for t,pvs in tags.iteritems():
+        cf.update(tag=Tag(t, tag_owner), channelNames=pvs)
+        logging.info("update '{0}' for {1} pvs".format(t, len(pvs)))
+    logging.info("finished updating tags")
+
+def cfs_append_from_cmd(cmd_list, update_only = False):
     """
     update the cfs from command file:
 
@@ -216,16 +312,28 @@ def update_cfs_from_cmd(cmd_list):
 
 
 if __name__ == "__main__":
+    #simple_test()
+    #sys.exit(0)
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cmd', type=file, help="run command list")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--cmd', type=file, help="run command list")
+    group.add_argument('--csv1', type=file, help="update with this csv file")
+    parser.add_argument('-u', '--update-only', action="store_true", 
+                        help="do not create new")
+    
     arg = parser.parse_args()
-    #print arg.cmd
-    #sys.exit()
 
     print "#", channelfinder.__file__,
     print "#", time.ctime(os.path.getmtime(channelfinder.__file__))
 
-    update_cfs_from_cmd(arg.cmd)
+    if arg.cmd:
+        print "CMD"
+        cfs_append_from_cmd(arg.cmd, update_only = arg.update_only)
+    elif arg.csv1:
+        cfs_append_from_csv1(arg.csv1, update_only = arg.update_only)
+
+
 
     #addPvTags('LTB:MG{HCor:2BD1}Fld-SP', 'aphla.sys.LTD1')
     #addPvTags('LTB:MG{VCor:2BD1}Fld-SP', 'aphla.sys.LTD1')

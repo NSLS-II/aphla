@@ -21,10 +21,13 @@ logging.basicConfig(filename="utest.log",
     level=logging.DEBUG)
 
 
+logging.info("initializing NSLS2V1")
 import aphla as ap
 ap.initNSLS2V1()
 # cause timeout when run by nosetest
 #ap.initNSLS2V1SRTwiss()
+
+logging.info("NSLS2V1 initialized")
 
 refpvrb = [
     "SR:C15-BI:G02A{BPM:L1}SA:X-I",
@@ -92,6 +95,7 @@ class TestElement(unittest.TestCase):
         pass
 
     def test_tune(self):
+        logging.info("test_tune")
         tune, = ap.getElements('TUNE')
         nux, nuy = tune.x, tune.y
         val = tune.value
