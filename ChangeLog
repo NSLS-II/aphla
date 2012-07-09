@@ -1,3 +1,10 @@
+2012-07-09  Lingyun Yang  <lyyang@nsls2yang>
+
+	* add import_csv_2 for channel finder agent class
+	* add initTLS and simple tests
+	* add tls config file, first stage
+	* add script to convert madx output(twiss) for chan finder.
+
 2012-07-06  Lingyun Yang  <lyyang@lsasd2>
 
 	* add set/get field for CaElement

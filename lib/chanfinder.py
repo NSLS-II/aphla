@@ -105,6 +105,14 @@ class ChannelFinderAgent(object):
             r[1][newkey] = r[1].pop(oldkey)
 
     def importCsv(self, fname):
+        head = open(fname, 'r').readline()
+        if head.split(',')[0].strip() in ['pv', 'PV']:
+            self._import_csv_1(fname)
+        else:
+            self._import_csv_2(fname)
+
+
+    def _import_csv_1(self, fname):
         """
         import data from CSV (comma separated values). The first line of csv
         file must be the "header" which describes the meaning of each column.
@@ -146,6 +154,30 @@ class ChannelFinderAgent(object):
             #print s[ipv], prpts, tags
             self.rows.append([s[ipv], prpts, tags])
 
+    def _import_csv_2(self, fname):
+        """
+        import data from CSV (comma separated values). 
+
+        each line of csv starts with pv name, then property list and tags. An
+        example is in the following::
+
+          PV1, elemName=Name,sEnd=0.2, aphla.sys.SR,aphla.elemfield.f1
+        """
+        self.source = fname
+        import csv
+        rd = csv.reader(open(fname, 'r'))
+        for s in rd:
+            pv = s[0]
+            prpts, tags = {}, []
+            for cell in s[1:]:
+                if cell.find('=') > 0:
+                    k, v = cell.split('=')
+                    prpts[k.strip()] = v.strip()
+                else:
+                    tags.append(cell.strip())
+
+            if pv.startswith('#') and len(prpts) == 0: continue
+            self.rows.append([pv, prpts, tags])
 
     def exportCsv(self, fname):
         """
