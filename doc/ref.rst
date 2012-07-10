@@ -1,11 +1,13 @@
 References
 ===========
 
+.. toctree::
+   :maxdepth: 2
+
+   commands.rst
+
 .. htmlonly::
    :Date: |today|
-
-.. toctree::
-   :maxdepth: 3
 
 
 .. automodule:: aphla.catools
@@ -41,7 +43,9 @@ References
 .. automodule:: aphla.bba
    :members:
 
-.. automodule:: aphla.meastwiss
+.. automodule:: aphla.measorm
    :members:
 
+.. automodule:: aphla.meastwiss
+   :members:
 

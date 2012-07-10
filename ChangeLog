@@ -1,9 +1,16 @@
-2012-07-09  Lingyun Yang  <lyyang@nsls2yang>
+2012-07-10  Lingyun Yang  <lyyang@nsls2yang>
 
+	* remove return_list from getElements. Now always returns a list
+	* update document index, faq
+	* add commands doc
 	* add import_csv_2 for channel finder agent class
 	* add initTLS and simple tests
 	* add tls config file, first stage
 	* add script to convert madx output(twiss) for chan finder.
+	* add source for initTLS
+	* add stepSize for CaElement and CaDecorator
+	* add boundary for CaElement and CaDecorator
+	* remove addEGet and addEPut from CaElement
 
 2012-07-06  Lingyun Yang  <lyyang@lsasd2>
 

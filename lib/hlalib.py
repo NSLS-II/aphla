@@ -5,7 +5,6 @@ Core APHLA Libraries
 ~~~~~~~~~~~~~~~~~~~~~
 
 :author: Lingyun Yang
-:license:
 
 Defines the fundamental routines.
 """
@@ -21,13 +20,17 @@ import element
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'getCurrent', 'getElements', 'getLocations', 'addGroup', 'removeGroup',
-    'addGroupMembers', 'removeGroupMembers', 'getGroups', 'getGroupMembers',
-    'getNeighbors', 'getClosest', 'getBeamlineProfile', 
-    'getPhase', 'getBeta', 'getDispersion', 'getEta',
-    'getOrbit', 'getTune', 'getTunes', 'getBpms',
-    'eget', 'waitStableOrbit', 'getRfFrequency', 'putRfFrequency',
-    'stepRfFrequency', 'getPvList'
+    'addGroup', 'addGroupMembers', 'eget', 'getBeamlineProfile', 'getBeta', 
+    'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest', 
+    'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance', 
+    'getElements', 'getEta', 'getFastOrbit', 'getFftTune', 
+    'getGroupMembers', 'getGroups', 'getLocations', 'getModes', 
+    'getNeighbors', 'getOrbit', 'getPhase', 'getPvList', 'getRfFrequency', 
+    'getRfVoltage', 'getStepSize', 'getTbtOrbit', 'getTuneRm', 
+    'getTune', 'getTunes', 
+    'removeGroup', 'removeGroupMembers', 'setRfFrequency',
+    'stepRfFrequency', 
+    'waitStableOrbit', 
 ]
 
 # current
@@ -50,6 +53,9 @@ def getRfFrequency():
     return _rf.f
 
 def putRfFrequency(f):
+    raise DeprecationWarning("use `setRfFrequency` instead")
+
+def setRfFrequency(f):
     """set the rf frequency for the first 'RFCAVITY' element"""
     _rf, = getElements('RFCAVITY')
     _rf.f = f
@@ -180,26 +186,28 @@ def _levenshtein_distance(first, second):
     return distance_matrix[first_length-1, second_length-1]
 
 
-def getElements(group, return_list=True, include_virtual=False):
+def getElements(group, include_virtual=False):
     """searching for elements.
 
     :param group: a list of element name or a name pattern.
     :type group: list or string
-    :param return_list: return a list even it has one element
-    :type return_list: bool
-    :param include_virtual: include virtual element also.
+    :param include_virtual: include virtual element or not.
     :type include_virtual: bool
     
-    :return: returns matched element object
-    :rtype: normally a list. It reduces to a single element object or None if \
-    not forced to return list.
+    :return: returns a list of matched element objects.
     
     :Example:
 
-      >>> getElements('FH2G1C30A')
+      >>> getElements('NO_SUCH_ELEMENT')
+      []
+      >>> getElements('PH1G2C30A')
+      [PH1G2C30A:BPM @ sb=4.935000]
       >>> getElements('BPM')
+      ...
       >>> getElements('F*G1C0*')
+      ...
       >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
+      ...
 
     this calls :func:`~aphla.lattice.Lattice.getElementList` of the current
     lattice.
@@ -212,10 +220,6 @@ def getElements(group, return_list=True, include_virtual=False):
     elems = machines._lat.getElementList(group)
     if not include_virtual:
         elems = [e for e in elems if e.virtual == 0]
-
-    if not return_list: 
-        if len(elems) == 0: return None
-        elif len(elems) == 1: return elems[0]
 
     return elems
 
@@ -408,10 +412,22 @@ def getStepSize(element):
     return None
 
 def getDistance(elem1, elem2, absolute=True):
+    """
+    return distance between two element name
+
+    :param str elem1: name of one element
+    :param str elem2: name of the other element
+    :param bool absolute: return s2 - s1 or the absolute value.
+
+    raise RuntimeError if None or more than one elements are found
+    """
     e1 = getElements(elem1)
     e2 = getElements(elem2)
 
-    ds = e2.sb - e1.sb
+    if len(e1) != 1 or len(e2) != 1:
+        raise RuntimeError("elements are not uniq: %d and %d" % (len(e1), len(e2)))
+
+    ds = e2[0].sb - e1[0].sb
     C = machines._lat.circumference
     if machines._lat.loop and C > 0:
         while ds < -C: ds = ds + C
@@ -512,15 +528,15 @@ def getTune(source='machine', plane = 'h'):
     """
     get tune
 
-    Example::
+    :Example:
 
-      getTune(plane='v')
+        >>> getTune(plane='v')
     """
     nux, nuy = getTunes(source)
     if plane == 'h': return nux
     elif plane == 'v': return nuy
     else:
-        raise ValueError("plane must be h or v")
+        raise ValueError("plane must be either h or v")
 
 def getFftTune(plane = 'hv', mode = ''):
     """
@@ -534,50 +550,86 @@ def getFftTune(plane = 'hv', mode = ''):
     return None
 
 def savePhase(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveBeta(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveDispersion(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveTune(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveTuneRm(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveChromaticity(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveChromaticityRm(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def getChromaticityRm(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None, None
 
 def getTuneRm(mode):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
 
 def getCurrentMode(self):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def getModes(self):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveMode(self, mode, dest):
-    """Save current states to a new mode"""
+    """
+    Save current states to a new mode
+    Not implemented yet
+    """
     raise NotImplementedError()
 
 
@@ -612,7 +664,7 @@ def getOrbit(pat = '', spos = False):
     """
     Return orbit
 
-    ::
+    :Example:
 
       >>> getOrbit()
       >>> getOrbit('*')

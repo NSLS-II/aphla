@@ -16,12 +16,11 @@ for k in keys:
         #doc = ' - '.join([line for line in doc.split('\n') if line.strip()][:2])
         doclst = [line for line in doc.split('\n') if line.strip()]
         doc = doclst[0]
-        
+    
     mod = getattr(o, '__module__', None)
     if mod is None:
         mod = 'unknown'
-
-    if mod is not None:
+    else:
         if mod.startswith('aphla'):
             if k[0].isupper():
                 k = ':class:`~%s.%s`'%(mod, k)
@@ -43,13 +42,20 @@ for k in keys:
     #modd.setdefault(mod, []).append((k, doc))
     modd.setdefault('aphla', []).append((k, doc))
 
-#print "References"
-#print "==========="
-#print ""
+print "Commands"
+print "==========="
+print ""
 #print ".. toctree::"
 #print "   :maxdepth: 2"
 #print ""
+#print ".. htmlonly::"
+#print "   :Date: |today|"
+#print ""
+#print "Function List"
+#print "-------------"
+#print ""
 
+ignore_commands = ['ChannelFinderAgent', 'NullHandler']
 mods = modd.keys()
 mods.sort()
 for mod in mods:
@@ -67,6 +73,7 @@ for mod in mods:
     print ' '.join(['symbol'.ljust(maxfunc), 'description'.ljust(maxdoc)])
     print border
     for func, doc in modd[mod]:
+        if any([func.endswith(f+'`') for f in ignore_commands]): continue
         row = ' '.join([func.ljust(maxfunc), doc.ljust(maxfunc)])
         print row
 
@@ -77,6 +84,13 @@ for mod in mods:
 #print "Complete Reference"
 #print "------------------"
 #print ""
+
+#for m in ['catools', 'chanfinder', 'element', 'lattice', 'machines', 'twiss', 
+#          'hlalib', 'ormdata', 'orm', 'aptools', 'bba', 'meastwiss']:
+#    print ".. automodule:: aphla.%s" % m
+#    print "   :members:"
+#    print ""
+
 
 #for mod in mods:
 #    if not mod.startswith(':mod'): continue

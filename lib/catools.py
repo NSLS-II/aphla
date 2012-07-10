@@ -69,9 +69,7 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
     Throw cothread.Timedout exception when timeout. This is a wrap of original
     `cothread.catools.caget`.
 
-    .. seealso:: 
-
-      :func:`~aphla.catools.caput`
+    seealso :func:`~aphla.catools.caput`
     """
     # in case of testing ...
     if CA_OFFLINE: return _ca_get_sim(pvs)
@@ -118,9 +116,7 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
     
     see original :func:`cothread.catools.caput` for details
 
-    .. seealso::
-
-      :func:`~aphla.catools.caget`
+    seealso :func:`~aphla.catools.caget`
     """
 
     logger.info("setting '%s' '%s'" % (str(pvs), str(values)))

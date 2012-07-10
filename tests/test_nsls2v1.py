@@ -9,7 +9,11 @@ NSLS2 V1 Unit Test
 #from cothread.catools import caget
 #print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
 
-import unittest2 as unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 import sys, os, time
 import numpy as np
 import random
@@ -95,7 +99,7 @@ class TestElement(unittest.TestCase):
 
     def test_tune(self):
         logging.info("test_tune")
-        tune, = ap.getElements('TUNE')
+        tune = ap.getElements('TUNE')[0]
         nux, nuy = tune.x, tune.y
         val = tune.value
         self.assertTrue(len(val), 2)
@@ -134,9 +138,12 @@ class TestElement(unittest.TestCase):
         self.assertEqual(bpm.virtual, 0)
         self.assertEqual(len(ap.eget(bpm.name)), 2)
 
+        self.assertGreater(ap.getDistance(bpms[0].name, bpms[1].name), 0.0)
+
     def test_vbpm(self):
-        vbpm = ap.getElements('HLA:VBPM', return_list=False, include_virtual=True)
-        self.assertIsNotNone(vbpm)
+        vbpms = ap.getElements('HLA:VBPM', include_virtual=True)
+        self.assertIsNotNone(vbpms)
+        vbpm = vbpms[0]
         self.assertIn('x', vbpm.fields())
         self.assertIn('y', vbpm.fields())
 

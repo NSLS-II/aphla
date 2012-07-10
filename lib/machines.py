@@ -4,7 +4,12 @@
 Machines
 ~~~~~~~~
 
-The initialization of machines
+:author: Lingyun Yang
+:date: 2012-07-09 17:37
+
+The initialization of machines.
+
+Each facility can have its own initialization function.
 """
 
 from __future__ import print_function, unicode_literals
@@ -45,8 +50,6 @@ HLA_TAG_SYS_PREFIX = 'aphla.sys'
 #
 HLA_VFAMILY = 'HLA:VFAMILY'
 HLA_VBPM   = 'HLA:VBPM'
-#HLA_VBPMX  = 'HLA:BPMX'
-#HLA_VBPMY  = 'HLA:BPMY'
 
 HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
@@ -185,7 +188,7 @@ def initNSLS2V1():
 
 def initNSLS2V1SRTwiss():
     """
-    Only works from virtac.nsls2.bnl.gov
+    initialize the twiss data from virtual accelerator
     """
     # s location
     s      = [v for v in caget('SR:C00-Glb:G00{POS:00}RB-S')]
@@ -325,41 +328,56 @@ def initNSLS2():
     _lat = _lattice_dict['SR']
 
 
-def initTLS():
+def initTLS(config=None):
     """ 
     initialize the Taiwan Light Source accelerator lattice 'SR'.
 
-    The initialization is done in the following order:
+    unless a config is provided, the initialization is done in the following
+    order:
 
         - user's `${HOME}/.hla/tw_tls_cfs.csv`; if not then
         - channel finder service in `env ${HLA_CFS_URL}`; if not then
         - the `tw_tls_cfs.csv` installed with aphla package; if not then
         - RuntimeError
+
+    the provided config can be a csv file or http url to channel finder
+    resources.
     """
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'tw_tls_cfs.csv'
-    src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
-    HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
-
-    if os.path.exists(src_home_csv):
-        msg = "Creating lattice from home csv '%s'" % src_home_csv
-        logger.info(msg)
-        cfa.importCsv(src_home_csv)
-    elif os.environ.get('HLA_CFS_URL', None):
-        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
-        logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
-    elif conf.has(cfs_filename):
-        src_pkg_csv = conf.filename(cfs_filename)
-        msg = "Creating lattice from '%s'" % src_pkg_csv
-        logger.info(msg)
-        #print(msg)
-        cfa.importCsv(src_pkg_csv)
+    if config is not None:
+        if config.startswith("http"): 
+            logger.info("Creating lattice from web '%s'" % config)
+            cfa.downloadCfs(config, tagName='aphla.sys.*')
+        elif os.path.exists(config):
+            logger.info("Creating lattice from file '%s'" % config)
+            cfa.importCsv(config)
+        else:
+            logger.error("'%s' is not recognized data source" % config)
+            raise RuntimeError("can not initialze from '%s'" % config)
     else:
-        logger.error("Channel finder data are available, no '%s', no server" % 
-                     cfs_filename)
-        raise RuntimeError("Failed at loading cache file")
+        cfs_filename = 'tw_tls_cfs.csv'
+        src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
+        HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
+
+        if os.path.exists(src_home_csv):
+            msg = "Creating lattice from home csv '%s'" % src_home_csv
+            logger.info(msg)
+            cfa.importCsv(src_home_csv)
+        elif os.environ.get('HLA_CFS_URL', None):
+            msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
+            logger.info(msg)
+            cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
+        elif conf.has(cfs_filename):
+            src_pkg_csv = conf.filename(cfs_filename)
+            msg = "Creating lattice from '%s'" % src_pkg_csv
+            logger.info(msg)
+            #print(msg)
+            cfa.importCsv(src_pkg_csv)
+        else:
+            logger.error("Channel finder data are available, no '%s', no server" % 
+                         cfs_filename)
+            raise RuntimeError("Failed at loading cache file")
 
     #print(msg)
     for k in [('name', u'elemName'), 

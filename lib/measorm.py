@@ -32,13 +32,13 @@ def measChromRm():
     """
     measure chromaticity response matrix
     """
-    pass
+    raise NotImplementedError()
 
 def getSubOrm(bpm, trim, flags = 'XX'):
     """
     get submatrix of Orm
     """
     #return _orm.getSubMatrix(bpm, trim, flags)
-    pass
+    raise NotImplementedError()
 
 

@@ -4,13 +4,17 @@
 Lattice
 ~~~~~~~~
 
-defines lattice related classes and functions.
-
 :author: Lingyun Yang
+:date: 2012-07-09 16:50
 
-.. seealso::
+A lattice is equivalent to a machine: a storage ring, a LINAC or a transport
+line. 
 
-  :mod:`~aphla.twiss`, :mod:`~aphla.machines`
+the lattice object manages a set of elements
+(e.g. :class:`~aphla.element.CaElement`) and their group information, a twiss
+data, an orbit response matrix data and more.
+
+seealso :mod:`~aphla.element`, :mod:`~aphla.twiss`, :mod:`~aphla.machines`
 """
 
 import re
@@ -23,7 +27,17 @@ from catools import caget, caput
 #from element import CaElement
 
 class Lattice:
-    """Lattice"""
+    """
+    Lattice
+
+    - *name*
+    - *mode*
+    - *tune* [nux, nuy]
+    - *chromaticity* [cx, cy]
+    - *circumference* 
+    - *ormdata* orbit response matrix data
+    - *loop* as a ring or line
+    """
     # ginore those "element" when construct the lattice object
 
     def __init__(self, name, mode = 'undefined'):
@@ -87,10 +101,22 @@ class Lattice:
         elif loc == 'right': return iright
 
     def hasElement(self, name):
+        """has the named element"""
         if self._find_exact_element(name): return True
         else: return False
 
     def insertElement(self, elem, i = None, groups = None):
+        """
+        insert an element at index *i* or append it.
+
+        :param elem: element object
+        :type elem: :class:`~aphla.element.CaElement`, 
+                    :class:`~aphla.element.AbstractElement`
+        :param int i: the index to insert. append if *None*
+        :param list groups: group names the element belongs to.
+
+        seealso :func:`appendElement`
+        """
         if i is not None:
             self._elements.insert(i, elem)
         else:
@@ -113,6 +139,8 @@ class Lattice:
         """
         append a new element to lattice. callers are responsible for avoiding
         duplicate elements (call hasElement before).
+
+        seealso :func:`insertElement`
         """
         self._elements.append(elem)
         #for g in elem.group:
@@ -127,12 +155,10 @@ class Lattice:
     
     def save(self, fname, dbmode = 'c'):
         """
-        call signature::
-        
-          save(self, fname, dbmode='c')
-
         save the lattice into binary data, using writing *dbmode*. The exact
         dataset name is defined by *mode*, default is 'undefined'.
+
+        seealso :module:`shelve`
         """
         f = shelve.open(fname, dbmode)
         pref = "lat.%s." % self.mode
@@ -145,14 +171,12 @@ class Lattice:
 
     def load(self, fname, mode = ''):
         """
-        call signature::
-        
-          load(fname, mode='')
-
         load the lattice from binary data
 
         In the db file, all lattice has a key with prefix 'lat.mode.'. If the
         given mode is empty string, then use 'lat.'
+        
+        seealso :module:`shelve`
         """
         f = shelve.open(fname, 'r')
         if not mode:
@@ -174,10 +198,10 @@ class Lattice:
 
         the new parent group is replaced by this new merge of children groups
         
-        Example::
+        :Example:
 
-            mergeGroups('BPM', ['BPMX', 'BPMY'])
-            mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
+            >>> mergeGroups('BPM', ['BPMX', 'BPMY'])
+            >>> mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
         """
         if isinstance(children, str):
             chlist = [children]
@@ -232,6 +256,8 @@ class Lattice:
         
           If there are duplicate elements in *elems*, only first
           appearance has location returned.
+
+        :Example:
 
           >>> getLocations(['BPM1', 'BPM1', 'BPM1']) #doctest: +SKIP
           [0.1, None, None]
@@ -289,11 +315,11 @@ class Lattice:
 
         :Example:
 
-          >>> getElements('BPM')
-          >>> getElements('PL*')
-          >>> getElements('C02')
-          >>> getElements(['BPM'])
-          [None]
+            >>> getElements('BPM')
+            >>> getElements('PL*')
+            >>> getElements('C02')
+            >>> getElements(['BPM'])
+            [None]
 
         The input *group* is an element name, a pattern or group name. It
         is treated as an exact name first, and compared with element
@@ -372,9 +398,9 @@ class Lattice:
         - *girder*
         - *symmetry*
 
-        Example::
+        :Example:
 
-          getElementsCgs('BPMX', cell=['C20'], girder=['G2'])
+            >>> getElementsCgs('BPMX', cell=['C20'], girder=['G2'])
 
         When given a general group name, check the following:
 
@@ -441,9 +467,9 @@ class Lattice:
         """
         create a new group
 
-        ::
+        :Example:
         
-          >>> addGroup(group)
+            >>> addGroup(group)
           
         Input *group* is a combination of alphabetic and numeric
         characters and underscores. i.e. "[a-zA-Z0-9\_]"
@@ -459,10 +485,6 @@ class Lattice:
 
     def removeGroup(self, group):
         """
-        call signature::
-
-          removeGroup(self, group)
-
         remove a group only when it is empty
         """
         if self._illegalGroupName(group): return
@@ -518,11 +540,11 @@ class Lattice:
         """
         return a list of groups this element belongs to
 
-        ::
+        :Example:
 
-          >>> getGroups() # list all groups, including the empty groups
-          >>> getGroups('*') # all groups, not including empty ones
-          >>> getGroups('Q?')
+            >>> getGroups() # list all groups, including the empty groups
+            >>> getGroups('*') # all groups, not including empty ones
+            >>> getGroups('Q?')
           
         The input string is wildcard matched against each element.
         """
@@ -545,9 +567,9 @@ class Lattice:
         - group in *groups* can be exact name or pattern.
         - op = ['union' | 'intersection']
 
-        ::
+        :Example:
         
-          >>> getGroupMembers(['C02'], op = 'union')
+            >>> getGroupMembers(['C02'], op = 'union')
         """
         if groups == None: return None
         ret = {}
@@ -588,12 +610,12 @@ class Lattice:
         If the input *element* name is also in *group*, no duplicate the
         result. 
 
-        ::
+        :Example:
 
-          >>> getNeighbors('P4', 'BPM', 2)
-          ['P2', 'P3', 'P4', 'P5', 'P6']
-          >>> getNeighbors('Q3', 'BPM', 2)
-          ['P2', 'P3', 'Q3', 'P4', 'P5']
+            >>> getNeighbors('P4', 'BPM', 2)
+            ['P2', 'P3', 'P4', 'P5', 'P6']
+            >>> getNeighbors('Q3', 'BPM', 2)
+            ['P2', 'P3', 'Q3', 'P4', 'P5']
         """
 
         e0 = self._find_exact_element(element)
@@ -626,16 +648,16 @@ class Lattice:
 
         If the input *element* name is also in *group*, return itself.
 
-        ::
+        :Example:
 
-          >>> getClosest('P4', 'BPM')
-          >>> getClosest('Q3', 'BPM')
+            >>> getClosest('P4', 'BPM')
+            >>> getClosest('Q3', 'BPM')
         """
 
         e0 = self._find_exact_element(element)
         if not e0: raise ValueError("element %s does not exist" % element)
 
-        el = self.getElementList(group, return_list=True)
+        el = self.getElementList(group)
 
         if not el: raise ValueError("elements/group %s does not exist" % group)
 
@@ -678,28 +700,28 @@ class Lattice:
 
     def getPhase(self, elem, spos = True):
         """
-        return phase
+        return phase from the twiss data
         """
         return self._get_twiss(elem, ['phix', 'phiy'], spos)
 
     def getBeta(self, elem, spos = True):
         """
-        return beta function
+        return beta function from the twiss data
         """
         return self._get_twiss(elem, ['betax', 'betay'], spos)
 
     def getEta(self, elem, spos = True):
         """
-        return dispersion
+        return dispersion from the twiss data
         """
         return self._get_twiss(elem, ['etax', 'etay'], spos)
     
     def getTunes(self):
-        """return tunes -> (nux, nuy)"""
+        """return tunes -> (nux, nuy) from twiss data"""
         return self._twiss.tune
 
     def getChromaticities(self):
-        """return chromaticities -> (chx, chy)"""
+        """return chromaticities -> (chx, chy) from twiss data"""
         return self._twiss.chrom
 
     def getBeamlineProfile(self, s1=0.0, s2=1e10):
@@ -736,7 +758,7 @@ def parseElementName(name):
     searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
     girder='G1', cell='C30', symmetry='A'
 
-    Example::
+    :Example:
     
       >>> parseElementName('CFXH1G1C30A')
       'C30', 'G1', 'A'

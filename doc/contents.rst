@@ -11,7 +11,7 @@ Welcome to HLA documentation!
    :Release: |version|
    :Date: |today|
 
-   Download :download:`PDF <./_build/latex/aphla.pdf>`
+   Download :download:`PDF <aphla.pdf>`
 
 .. raw:: latex
 
@@ -47,7 +47,6 @@ Welcome to HLA documentation!
    quickstart.rst
    faq.rst
    history.rst
-
 
 .. _EPICS: http://www.aps.anl.gov/epics
 .. _Python: http://www.python.org/

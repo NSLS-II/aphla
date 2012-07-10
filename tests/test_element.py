@@ -52,6 +52,7 @@ class TestElement(unittest.TestCase):
         self.assertEqual(bpm.index, -1)
         self.assertFalse(bpm.virtual)
         self.assertEqual(bpm.virtual, 0)
+        
 
     def test_hcor(self):
         # hcor
@@ -79,32 +80,37 @@ class TestElement(unittest.TestCase):
                             ['aphla.elemfield.x'])
         self.assertEqual(hcor.pv(field='x', handle='readback'), [pvrb])
         self.assertEqual(hcor.pv(field='x', handle='setpoint'), [pvsp])
-
+        self.assertIsNone(hcor.stepSize('x'))
+        self.assertIsNone(hcor.boundary('x'), None)
+        
         self.assertEqual(hcor.pv(field='y'), [])
         self.assertEqual(hcor.pv(field='y', handle='readback'), [])
         self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
         
 
     def compareElements(self, e1, e2):
-        self.assertEqual(e1.__dict__.keys(), e2.__dict__.keys())
+        self.assertEqual(sorted(e1.__dict__.keys()), sorted(e2.__dict__.keys()))
         for k,v in e1.__dict__.iteritems():
             v2 = getattr(e2, k)
             self.assertEqual(
                 v, v2, "{0} field {1}: {2} != {3}".format(e1.name, k, v,v2))
 
         
-    @unittest.skip
     def test_pickle(self):
-        pkl = open(self.pkl, 'rb')
+        dcct = element.CaElement(
+            name = 'CURRENT', index = -1, devname = 'DCCT', family = 'DCCT')
+        dcct.updatePvRecord('PV_1', None, ['aphla.eget', 'aphla.sys.SR'])
+
+        pklf = open('test_element.pkl', 'wb')
+        pickle.dump(dcct, pklf)
+        pklf.close()
+
+        pkl = open('test_element.pkl', 'rb')
         pkl_dcct = pickle.load(pkl)
-        pkl_bpm1 = pickle.load(pkl)
-        pkl_quad = pickle.load(pkl)
         pkl.close()
 
         # dcct
-        self.compareElements(self.dcct, pkl_dcct)
-        self.compareElements(self.bpm1, pkl_bpm1)
-        self.compareElements(self.quad, pkl_quad)
+        self.compareElements(dcct, pkl_dcct)
 
     @unittest.skip
     def test_shelve(self):
