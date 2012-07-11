@@ -1,14 +1,13 @@
 References
 ===========
 
+.. htmlonly::
+   :Date: |today|
+
 .. toctree::
    :maxdepth: 2
 
    commands.rst
-
-.. htmlonly::
-   :Date: |today|
-
 
 .. automodule:: aphla.catools
    :members:

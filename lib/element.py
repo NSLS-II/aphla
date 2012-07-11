@@ -808,24 +808,48 @@ class CaElement(AbstractElement):
         """
         self._field[field].reset()
 
-    def get(self, fields, source='readback'):
+    def _get_field(self, field, **kwargs):
         """
-        get the values for given fields. the source can be 'readback' or
-        'setpoint'.
+        read value of a single field, returns None if no such field.
         """
-        if source.lower() == 'readback':
-            if isinstance(fields, (str, unicode)):
-                return self._field[fields].getReadback()
-            else:
-                # a list of fields
-                return [self._field[v].getReadback() for v in fields]
-        elif source.lower() == 'setpoint':
-            if isinstance(fields, (str, unicode)):
-                return self._field[fields].getSetpoint()
-            else:
-                return [self._field[v].getSetpoint() for v in fields]
-        return None
+        source = kwargs.get('source', 'readback').lower()
+        unit = kwargs.get('unit', None)
     
+        if not self._field.has_key(field):
+            v = None
+        elif source == 'readback':
+            v = self._field[field].getReadback()
+        elif source.lower() == 'setpoint':
+            v = self._field[field].getSetpoint()
+        else:
+            raise ValueError("unknow source {0}" % field)
+        
+        # convert unit when required
+        return v
+        
+    def get(self, fields, source='readback', unit=None):
+        """
+        get the values for given fields. 
+
+        :param fields: field
+        :type fields: str, list
+        :param source: 'readback' or 'setpoint'.
+        :param unit: NotImplemented yet
+        :rtype: None if the field does not exist.
+
+        :Example:
+
+            >>> get('x')
+            >>> get(['x', 'y'])
+        """
+
+        kw = {'source': source, 'unit': unit}
+        if isinstance(fields, (str, unicode)):
+            return self._get_field(fields, **kw)
+        else:
+            # a list of fields
+            return [ self._get_field(v, **kw) for v in fields]
+
     def set(self, field, val, unit = None):
         """
         set *val* to *field*.

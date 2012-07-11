@@ -5,35 +5,43 @@ Commands
 ============================================= ===========================================================================
 symbol                                        description                                                                
 ============================================= ===========================================================================
-:class:`~aphla.ormdata.OrmData`               Orbit Response Matrix Data                   
 :func:`~aphla.hlalib.addGroup`                add a new group, *group* should be plain string, characters in
 :func:`~aphla.hlalib.addGroupMembers`         add new members to an existing group         
-:func:`~aphla.catools.caget`                  channel access read                          
-:func:`~aphla.catools.caput`                  channel access write.                        
 :func:`~aphla.catools.caputwait`              set pvs and waiting until the setting takes effect
 :func:`~aphla.aptools.correctOrbit`           correct the orbit with given BPMs and Trims  
 :func:`~aphla.aptools.correctOrbitPv`         correct orbit use direct pv and catools      
 :func:`~aphla.aptools.createLocalBump`        create a local bump at certain BPM, while keep all other orbit untouched
-:func:`~aphla.hlalib.eget`                    easier get with element name(s)              
+:func:`~aphla.hlalib.eget`                    get elements field values                    
 :func:`~aphla.hlalib.getBeamlineProfile`      return the beamline profile from s1 to s2    
 :func:`~aphla.hlalib.getBeta`                 get the beta function from stored data.      
 :func:`~aphla.hlalib.getBpms`                 return a list of bpms object.                
+:func:`~aphla.hlalib.getChromaticity`         get chromaticity **Not Implemented Yet**     
+:func:`~aphla.hlalib.getChromaticityRm`       Not implemented yet                          
 :func:`~aphla.hlalib.getClosest`              Get the closest element in *group*           
 :func:`~aphla.hlalib.getCurrent`              Get the current from the first 'DCCT' element
+:func:`~aphla.hlalib.getCurrentMode`          Not implemented yet                          
 :func:`~aphla.hlalib.getDispersion`           get the dispersion                           
+:func:`~aphla.hlalib.getDistance`             return distance between two element name     
 :func:`~aphla.hlalib.getElements`             searching for elements.                      
 :func:`~aphla.hlalib.getEta`                  get the dispersion from stored data          
+:func:`~aphla.hlalib.getFastOrbit`            return fast 10kHz turn-by-turn BPM data.     
+:func:`~aphla.hlalib.getFftTune`              get tune from FFT                            
 :func:`~aphla.hlalib.getGroupMembers`         Get all elements in a group. If group is a list, consider which op:
 :func:`~aphla.hlalib.getGroups`               Get all groups own these elements, '*' returns all possible groups,
 :func:`~aphla.aptools.getLifetime`            Monitor current change with, calculate lifetime dI/dt
 :func:`~aphla.hlalib.getLocations`            Get the location of a group, i.e. a family, an element or a list of
+:func:`~aphla.hlalib.getModes`                Not implemented yet                          
 :func:`~aphla.hlalib.getNeighbors`            Get a list of n elements belongs to group. The list is sorted along s
 :func:`~aphla.hlalib.getOrbit`                Return orbit                                 
 :func:`~aphla.hlalib.getPhase`                get the phase from stored data               
 :func:`~aphla.hlalib.getPvList`               return a pv list for given element list      
 :func:`~aphla.hlalib.getRfFrequency`          Get the frequency from the first 'RFCAVITY' element
+:func:`~aphla.hlalib.getRfVoltage`            Get the voltage of the first 'RFCAVITY' element
+:func:`~aphla.hlalib.getStepSize`             Return default stepsize of a given element   
 :func:`~aphla.measorm.getSubOrm`              get submatrix of Orm                         
+:func:`~aphla.hlalib.getTbtOrbit`             return turn-by-turn BPM data.                
 :func:`~aphla.hlalib.getTune`                 get tune                                     
+:func:`~aphla.hlalib.getTuneRm`               Not implemented yet                          
 :func:`~aphla.hlalib.getTunes`                get tunes from ['machine', 'database']       
 :func:`~aphla.machines.initNSLS2`             initialize the NSLS2 accelerator lattice 'SR', 'LTD1', 'LTD2', 'LTB'.
 :func:`~aphla.machines.initNSLS2V1`           initialize the virtual accelerator 'V1SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from

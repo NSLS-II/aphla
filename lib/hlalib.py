@@ -20,7 +20,8 @@ import element
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'addGroup', 'addGroupMembers', 'eget', 'getBeamlineProfile', 'getBeta', 
+    'addGroup', 'addGroupMembers', 'eget',  
+    'getBeamlineProfile', 'getBeta', 
     'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest', 
     'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance', 
     'getElements', 'getEta', 'getFastOrbit', 'getFftTune', 
@@ -37,6 +38,8 @@ __all__ = [
 def getCurrent():
     """
     Get the current from the first 'DCCT' element
+
+    seealso :func:`getElements`
     """
     _current = getElements('DCCT')
     if len(_current) == 1:
@@ -69,10 +72,12 @@ def stepRfFrequency(df = 0.010):
     """
     change one step of the 'RFCAVITY' element
 
-    .. seealso:: 
+    seealso :func:`~aphla.hlalib.getRfFrequency`, 
+    :func:`~aphla.hlalib.putRfFrequency`
 
-       :func:`~aphla.hlalib.getRfFrequency`, 
-       :func:`~aphla.hlalib.putRfFrequency`
+    .. warning:: 
+
+      Need modify the unit for real machine
     """
     f0 = getRfFrequency()
     putRfFrequency(f0 + df)
@@ -87,54 +92,6 @@ def _reset_rf():
 
 #
 #
-def eget(element, full = False, tags = None):
-    """
-    easier get with element name(s)
-
-    This relies on channel finder service, and searching for :attr:`~aphla.machines.HLA_TAG_EGET`
-    tag of the element.
-
-    Example::
-
-      >>> eget('QM1G4C01B')
-      >>> eget(['CXM1G4C01B', 'CYM1G4C01B'])
-      >>> eget('PL1G2C05A', tags='aphla.x')
-
-    - single element name, it returns one value or a list of values depending on matched PVs.
-    - list of element name, it returns a list, each could also be a list, a value or None.
-
-    The value is None if element is not found or no PV is found.
-    """
-
-    # some tags + the "default"
-    chtags = [machines.HLA_TAG_EGET]
-    if tags is not None: chtags.extend(tags)
-    #print __file__, tags, chtags
-    if isinstance(element, (unicode, str)):
-        ret = []
-        # if given string, assume it is exact name of element
-        elem = machines._lat._find_exact_element(element)
-        pvl = elem.pv(tags=chtags)
-        #print element, chtags, pvl
-        if len(pvl) == 1: ret = caget(pvl[0])
-        else: ret = caget(pvl)
-        if full:
-            return pvl, ret
-        else: return ret
-    elif isinstance(element, (tuple, set, list)):
-        ret = []
-        elemlst = machines._lat.getElementList(element)
-        for elem in elemlst:
-            if not elem:
-                ret.append(None)
-                continue
-            pvl = elem.pv(tags=chtags)
-            if pvl: ret.append(caget(pvl))
-            else: ret.append(None)
-        return ret
-    else:
-        raise ValueError("element can only be a list or group name")
-
 
 def _reset_trims(verbose=False):
     """
@@ -223,6 +180,37 @@ def getElements(group, include_virtual=False):
 
     return elems
 
+def eget(elem = None, fields = None, **kwargs):
+    """
+    get elements field values
+    
+    :param elem: element name, name list or pattern
+    :type elem: str, list
+    :param fields: field name or name list
+    :type fields: str, list
+    
+    :Example:
+
+        >>> eget('DCCT', 'value')
+        >>> eget('BPM', 'x')
+        >>> eget('PH*', ['x', 'y'])
+
+    seealso :func:`getElements`, :func:`~aphla.element.CaElement.get`
+    """
+    if elem is not None:
+        elst = getElements(elem)
+        if not elst: return None
+        elif len(elst) == 1:
+            return elst[0].get(fields, **kwargs)
+        else:
+            return [e.get(fields, **kwargs) for e in elst]
+    else:
+        return None
+
+#def eset(elem = None, field = None, **kwargs):
+#    if elem is not None:
+#        elst = getElements(elem)
+        
 def getPvList(elem, field, handle, **kwargs):
     """
     return a pv list for given element list
@@ -456,14 +444,14 @@ def getBeta(group, **kwargs):
     """
     get the beta function from stored data.
 
-    ::
+    :Example:
 
       >>> getBeta('Q*', spos = True)
 
     this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
     """
     if not machines._twiss:
-        print "ERROR: No twiss data loaeded"
+        logger.error("ERROR: No twiss data loaeded")
         return None
     elem = getElements(group)
 
@@ -486,6 +474,14 @@ def getEta(group, **kwargs):
 
     similar to :func:`getBeta`, it calls :func:`~aphla.twiss.Twiss.getTwiss`
     of the current twiss data.
+
+    :Example:
+
+        >>> getEta('P*', spos = True)
+        >>> getEta('BPM')
+        >>> getEta(['BPM1', 'BPM2'])
+
+    seealso :func:`getElements`
     """
 
     if not machines._twiss: return None
@@ -497,11 +493,7 @@ def getEta(group, **kwargs):
 
 def getChromaticity(source='machine'):
     """
-    get chromaticity
-
-    .. warning::
-
-      Not implemented yet.
+    get chromaticity **Not Implemented Yet**
     """
     if source == 'machine':
         raise NotImplementedError()
@@ -740,7 +732,7 @@ def _reset_bpm_offset():
         #print b.pv(tags=['aphla.offset', 'aphla.eput'])
         pvs.extend(b.pv(tags=['aphla.offset', 'aphla.eput']))
     if pvs: caput(pvs, 0.0)
-    print "DONE"
+    logger.info("Reset the bpm offset")
 
 def _reset_quad():
     qtag = {'H2': (1.47765, 30), 

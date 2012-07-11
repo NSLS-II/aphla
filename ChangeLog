@@ -11,6 +11,10 @@
 	* add stepSize for CaElement and CaDecorator
 	* add boundary for CaElement and CaDecorator
 	* remove addEGet and addEPut from CaElement
+	* remove eget from hlalib.py
+	* cleaned up unit test
+	* add new eget function
+	* add commands doc as top level set of tools.
 
 2012-07-06  Lingyun Yang  <lyyang@lsasd2>
 

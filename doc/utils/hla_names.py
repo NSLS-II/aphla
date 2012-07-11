@@ -55,7 +55,7 @@ print ""
 #print "-------------"
 #print ""
 
-ignore_commands = ['ChannelFinderAgent', 'NullHandler']
+ignore_commands = ['ChannelFinderAgent', 'NullHandler', 'OrmData', 'caget', 'caput']
 mods = modd.keys()
 mods.sort()
 for mod in mods:

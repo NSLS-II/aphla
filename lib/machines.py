@@ -41,11 +41,12 @@ _orm = {}
 
 
 #
-HLA_TAG_EGET = 'aphla.eget'
-HLA_TAG_EPUT = 'aphla.eput'
-HLA_TAG_X    = 'aphla.x'
-HLA_TAG_Y    = 'aphla.y'
-HLA_TAG_SYS_PREFIX = 'aphla.sys'
+HLA_TAG_PREFIX = 'aphla'
+HLA_TAG_EGET = HLA_TAG_PREFIX + '.eget'
+HLA_TAG_EPUT = HLA_TAG_PREFIX + '.eput'
+HLA_TAG_X    = HLA_TAG_PREFIX + '.x'
+HLA_TAG_Y    = HLA_TAG_PREFIX + '.y'
+HLA_TAG_SYS_PREFIX = HLA_TAG_PREFIX + '.sys'
 
 #
 HLA_VFAMILY = 'HLA:VFAMILY'

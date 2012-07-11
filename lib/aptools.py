@@ -276,7 +276,8 @@ def createLocalBump(bpm, trim, ref, **kwargs):
 
     # test
     for i in range(len(bpmpv)):
-        print(i, bpmpv[i], caget(bpmpv[i]), bpmref[i])
+        logging.debug("{0} {1} val= {2} target={3}".format(
+                i, bpmpv[i], caget(bpmpv[i]), bpmref[i]))
 
     # correct orbit using default ORM (from current lattice)
     correctOrbitPv(bpmpv, trimpv, ref=np.array(bpmref))
