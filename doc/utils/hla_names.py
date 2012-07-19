@@ -43,7 +43,7 @@ for k in keys:
     modd.setdefault('aphla', []).append((k, doc))
 
 print "Commands"
-print "==========="
+print "========"
 print ""
 #print ".. toctree::"
 #print "   :maxdepth: 2"

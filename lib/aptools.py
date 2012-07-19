@@ -191,21 +191,24 @@ def createLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
-    Keyword arguments:
+    :param bpm: BPMs for new bumpped orbit. 
+    :type bpm: str, list 
+    :param trim: correctors used for orbit correction. 
+    :type trim: str, list
+    :param ref: target orbit, (len(bpm),2)
+    :type ref: matrix shape (n,2).
 
-    bpm: str/list
-      a list of BPM names.
-    trim: str/list
-      corrector (group/family/list)
-    ref: list (2D)
-      target orbit, (len(bpm),2), if the ref[i][j] == None, use the current
-      hardware result.
+    `bpm` and `trim` can be a pattern, a group name or a list of exact element
+    names. if `ref[i][j]` is `None`, use the current hardware result, i.e. try
+    not to change the orbit at that location.
 
-    Optional keyword arguments:
+    :Examples:
 
-    **Examples:**
-    
-    createLocalBump('BPM', 'HCOR', [[0,0], [0, 0]])
+        >>> bpms = [b.name for b in getGroupMembers(['BPM', 'C02'])]
+        >>> newobt = [[1.0, 1.5]] * len(bpms)
+        >>> createLocalBump(bpms, 'HCOR', newobt)
+
+    seealso :func:`correctOrbitPv`
     """
     plane = kwargs.get('plane', 'HV')
 
@@ -233,12 +236,12 @@ def createLocalBump(bpm, trim, ref, **kwargs):
         x0, y0 = b.x, b.y
         if b.name in bpm:
             idx = bpm.index(b.name)
-            if ref[idx][0] == None:
+            if ref[idx][0] is None:
                 bpmref.append(x0)
             else:
                 bpmref.append(ref[idx][0])
 
-            if ref[idx][1] == None:
+            if ref[idx][1] is None:
                 bpmref.append(y0)
             else:
                 bpmref.append(ref[idx][1])
@@ -292,7 +295,7 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
 
     :Example:
 
-      correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
+        >>> correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
 
     The orbit not in BPM list may change.
 

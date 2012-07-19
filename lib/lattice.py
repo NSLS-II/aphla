@@ -158,7 +158,7 @@ class Lattice:
         save the lattice into binary data, using writing *dbmode*. The exact
         dataset name is defined by *mode*, default is 'undefined'.
 
-        seealso :module:`shelve`
+        seealso Python Standard Lib `shelve`
         """
         f = shelve.open(fname, dbmode)
         pref = "lat.%s." % self.mode
@@ -176,7 +176,7 @@ class Lattice:
         In the db file, all lattice has a key with prefix 'lat.mode.'. If the
         given mode is empty string, then use 'lat.'
         
-        seealso :module:`shelve`
+        seealso Python Standard Lib `shelve`
         """
         f = shelve.open(fname, 'r')
         if not mode:

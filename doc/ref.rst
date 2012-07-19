@@ -7,7 +7,11 @@ References
 .. toctree::
    :maxdepth: 2
 
-   commands.rst
+.. htmlonly::
+
+   Some commands are exported from modules to the top level of `aphla` package. They are commonly used:
+
+.. include:: commands.txt
 
 .. automodule:: aphla.catools
    :members:

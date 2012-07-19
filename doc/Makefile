@@ -31,7 +31,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 html:
-	python utils/hla_names.py > commands.rst
+	python utils/hla_names.py > commands.txt
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	python utils/inject_commands_table.py
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
