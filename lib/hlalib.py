@@ -175,10 +175,16 @@ def getElements(group, include_virtual=False):
     """
 
     elems = machines._lat.getElementList(group)
-    if not include_virtual:
-        elems = [e for e in elems if e.virtual == 0]
+    ret = []
+    for e in elems:
+        if e is None: 
+            ret.append(e)
+            continue
 
-    return elems
+        if not include_virtual and e.virtual: continue
+        ret.append(e)
+
+    return ret
 
 def eget(elem = None, fields = None, **kwargs):
     """

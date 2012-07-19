@@ -457,6 +457,16 @@ class TestLatticeLtb(unittest.TestCase):
         pass
 
 
+class TestNSLS2V1(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_elements(self):
+        el = ap.getElements(['AA'])
+        self.assertEqual(len(el), 1)
+        self.assertIsNone(el[0])
+
+
 """
 Twiss
 ~~~~~

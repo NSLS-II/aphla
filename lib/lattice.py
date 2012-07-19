@@ -65,7 +65,7 @@ class Lattice:
 
     def _find_exact_element(self, name):
         """
-        exact matching of element name
+        exact matching of element name, None if not.
         """
         for e in self._elements:
             if e.name == name: return e
@@ -315,10 +315,10 @@ class Lattice:
 
         :Example:
 
-            >>> getElements('BPM')
-            >>> getElements('PL*')
-            >>> getElements('C02')
-            >>> getElements(['BPM'])
+            >>> getElementList('BPM')
+            >>> getElementList('PL*')
+            >>> getElementList('C02')
+            >>> getElementList(['BPM'])
             [None]
 
         The input *group* is an element name, a pattern or group name. It
@@ -349,7 +349,7 @@ class Lattice:
                     names.append(e.name)
             return ret
         elif isinstance(group, list):
-            # exact one-by-one match
+            # exact one-by-one match, None if not found
             return [self._find_exact_element(e) for e in group]
             
     def _matchElementCgs(self, elem, **kwargs):
