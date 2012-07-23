@@ -412,10 +412,11 @@ class OrbitPlot(Qwt.QwtPlot):
         grid1.attach(self)
         grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
 
-        self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
-        self.picker1.setTrackerPen(QPen(Qt.red, 4))
-        self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
-                     self.elementDoubleClicked)
+        self.picker1 = None
+        #self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
+        #self.picker1.setTrackerPen(QPen(Qt.red, 4))
+        #self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
+        #             self.elementDoubleClicked)
         
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                         Qwt.QwtPlot.yLeft,

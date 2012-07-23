@@ -317,7 +317,8 @@ class OrbitPlotMainWindow(QMainWindow):
         majbox = QVBoxLayout()
         #majbox.setSpacing(30)
         #majbox.setMargin(10)
-        majbox.addWidget(self.dcct)
+	if False:
+            majbox.addWidget(self.dcct)
         # 
         self.orbitSplitter = QSplitter(Qt.Horizontal)
         self.tabs = QTabWidget()
@@ -368,6 +369,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #vbox.addWidget(self.plot5)
         #wid1.setLayout(vbox)
         #self.tabs.addTab(wid1, "OrbitSt")
+
         #
         # file menu
         #
@@ -488,7 +490,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewZoomIn15Action)
         self.viewMenu.addAction(viewZoomAutoAction)
         self.viewMenu.addSeparator()
-        self.viewMenu.addAction(viewDcct)
+        # a bug in PyQwt5 for datetime x-axis, waiting for Debian 7
+        #self.viewMenu.addAction(viewDcct)
 
         self.controlMenu = self.menuBar().addMenu("&Control")
         self.controlMenu.addAction(controlChooseBpmAction)
@@ -500,6 +503,16 @@ class OrbitPlotMainWindow(QMainWindow):
         self.controlMenu.addAction(controlZoomOutPlot2Action)
         self.controlMenu.addSeparator()
         self.controlMenu.addAction(steer_orbit)
+
+        # debug
+        self.debugMenu = self.menuBar().addMenu("&Debug")
+        reset_cor = QAction("_Reset Correctors_", self)
+        self.connect(reset_cor, SIGNAL("triggered()"), self._reset_correctors)
+        reset_quad = QAction("_Reset Quadrupoles_", self)
+        self.connect(reset_quad, SIGNAL("triggered()"), self._reset_quadrupoles)
+        #
+        self.debugMenu.addAction(reset_cor)
+        self.debugMenu.addAction(reset_quad)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -528,6 +541,12 @@ class OrbitPlotMainWindow(QMainWindow):
         dt = 800
         self.timerId = self.startTimer(dt)
         self.corbitdlg = None # orbit correction dlg
+
+    def _reset_correctors(self):
+        aphla.hlalib._reset_trims()
+
+    def _reset_quadrupoles(self):
+        aphla.hlalib._reset_quad()
 
     def viewDcctPlot(self, on):
         self.dcct.setVisible(on)
@@ -683,7 +702,7 @@ def main():
     if '--sim' in sys.argv:
         print "CA offline:", aphla.catools.CA_OFFLINE
         aphla.catools.CA_OFFLINE = True
-    demo = OrbitPlotMainWindow(accname = 'us_nsls2_vsr')
+    demo = OrbitPlotMainWindow(accname = 'us_nsls2_v1sr')
     demo.setWindowTitle("NSLS-II SR")
     demo.resize(800,500)
     demo.show()
