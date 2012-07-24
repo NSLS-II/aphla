@@ -460,7 +460,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         steer_orbit = QAction("Steer Orbit ...", self)
         self.connect(steer_orbit, SIGNAL("triggered()"), self.createLocalBump)
-
+        
         self.viewMenu.addAction(drift_from_now)
         self.viewMenu.addAction(drift_from_golden)
         self.viewMenu.addAction(drift_from_none)
@@ -662,10 +662,10 @@ class OrbitPlotMainWindow(QMainWindow):
         self.orbity_data.reset()
         #hla.hlalib._reset_trims()
 
-    def plotDesiredOrbit(self, x, y):
-        #print "plot: ", x, y
-        self.plot1.curve2.setData(self.pvsx, x)
-        self.plot2.curve2.setData(self.pvsy, y)
+    #def plotDesiredOrbit(self, x, y):
+    #    #print "plot: ", x, y
+    #    self.plot1.curve2.setData(self.pvsx, x)
+    #    self.plot2.curve2.setData(self.pvsy, y)
 
     def correctOrbit(self, x, y):
         #print "correct to :", x, y
@@ -686,10 +686,17 @@ class OrbitPlotMainWindow(QMainWindow):
         if self.corbitdlg is None:
             self.corbitdlg = OrbitCorrDlg(
                 self.pvx, self.orbitx_data.x, self.orbitx_data.golden(),
-                self.orbity_data.golden(), 
-                self.plotDesiredOrbit, self.correctOrbit, self)
+                self.orbity_data.golden(), (self.plot1, self.plot2),
+                self.correctOrbit, self)
             self.corbitdlg.resize(600, 300)
             self.corbitdlg.setWindowTitle("Create Local Bump")
+            #self.connect(self.corbitdlg, SIGNAL("finished(int)"),
+            #             self.plot1.curve2.setVisible)
+            self.plot1.plotDesiredOrbit(self.orbitx_data.golden(), 
+                                        self.orbitx_data.x)
+            self.plot1.plotDesiredOrbit(self.orbity_data.golden(), 
+                                        self.orbity_data.x)
+
         self.corbitdlg.show()
         self.corbitdlg.raise_()
         self.corbitdlg.activateWindow()

@@ -174,6 +174,11 @@ def getElements(group, include_virtual=False):
     return None if no element is found and return_list=False
     """
 
+    # return the input if it is a list of element object
+    if isinstance(group, (list, tuple)):
+        if all([isinstance(e, AbstractElement) for e in group]):
+            return group
+
     elems = machines._lat.getElementList(group)
     ret = []
     for e in elems:

@@ -24,7 +24,6 @@ import numpy as np
 from fnmatch import fnmatch
 
 from catools import caget, caput
-#from element import CaElement
 
 class Lattice:
     """

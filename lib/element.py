@@ -266,16 +266,18 @@ class CaDecorator:
 
         The default is mark the current setpoint and an imediate revert will
         restore this setpoint.
+
+        When the queue is full, pop the 2nd data keep the first for `reset`
         """
         if data == 'readback':
             self.rb.append(caget(self.pvrb))
-            if len(self.rb) > self.trace_limit: self.rb.pop(0)
+            if len(self.rb) > self.trace_limit: self.rb.pop(1)
         elif data == 'setpoint':
             self.sp.append(caget(self.pvsp))
-            if len(self.sp) > self.trace_limit: self.sp.pop(0)
+            if len(self.sp) > self.trace_limit: self.sp.pop(1)
         elif data == 'rb2setpoint':
             self.sp.append(caget(self.pvrb))
-            if len(self.sp) > self.trace_limit: self.sp.pop(0)
+            if len(self.sp) > self.trace_limit: self.sp.pop(1)
 
     def getReadback(self):
         """
@@ -285,7 +287,9 @@ class CaDecorator:
             ret = caget(self.pvrb)
             if self.trace: 
                 self.rb.append(copy.deepcopy(ret))
-                if len(self.rb) > self.trace_limit: self.rb.pop(0)
+                if len(self.rb) > self.trace_limit: 
+                    # keep the first one for `reset`
+                    self.rb.pop(1)
             #print self.pvrb, ret
             if len(self.pvrb) == 1: 
                 return ret[0]
@@ -323,7 +327,9 @@ class CaDecorator:
                     raise RuntimeError("unsupported datatype '%s' "
                                        "for tracing object value." %
                                        type(val))
-                if len(self.sp) > self.trace_limit: self.sp.pop(0)
+                if len(self.sp) > self.trace_limit: 
+                    # keep the first for reset
+                    self.sp.pop(1)
             return ret
         else: return None
 
@@ -789,12 +795,14 @@ class CaElement(AbstractElement):
             return AbstractElement.__repr__(self)
 
     def enableTrace(self, fieldname):
-        self._field[fieldname].trace = True
-        self._field[fieldname].mark()
+        if not self._field[fieldname].trace:
+            self._field[fieldname].trace = True
+            self._field[fieldname].sp = []
 
     def disableTrace(self, fieldname):
-        self._field[fieldname].trace = False
-        self._field[fieldname].sp = []
+        if self._field[fieldname].trace:        
+            self._field[fieldname].trace = False
+            self._field[fieldname].sp = []
 
     def revert(self, fieldname):
         self._field[fieldname].revert()
@@ -882,6 +890,7 @@ class CaElement(AbstractElement):
         if field in self._field.keys():
             return True
         return False
+
 
 def merge(elems, **kwargs):
     """

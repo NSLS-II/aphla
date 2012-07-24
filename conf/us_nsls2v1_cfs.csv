@@ -1,7 +1,7 @@
 PV,cell,devName,elemField,elemName,elemType,girder,handle,hostName,iocName,length,ordinal,sEnd,symmetry,system
-LTB-BI:BD1{VF1}Img1:ArrayData,,VF1BD1,image,VF1BD1,FLAG,,READBACK,virtac2,ltbd1,0,41,5.67,,V1LTB,aphla.image,aphla.eget,aphla.sys.V1LTD1
-LTB-BI:BD1{VF1}Size:X-I,,VF1BD1,,VF1BD1,FLAG,,READBACK,virtac2,ltbd1,0,41,5.67,,V1LTB,aphla.x,aphla.eget,aphla.sys.V1LTD1
-LTB-BI:BD1{VF1}Size:Y-I,,VF1BD1,,VF1BD1,FLAG,,READBACK,virtac2,ltbd1,0,41,5.67,,V1LTB,aphla.y,aphla.eget,aphla.sys.V1LTD1
+LTB-BI:BD1{VF1}Img1:ArrayData,,VF1BD1,image,VF1BD1,FLAG,,READBACK,virtac2,ltbd1,0,41,5.67,,V1LTB,aphla.image,aphla.eget,aphla.sys.V1LTD1,aphla.elemfield.image
+LTB-BI:BD1{VF1}Size:X-I,,VF1BD1,,VF1BD1,FLAG,,READBACK,virtac2,ltbd1,0,41,5.67,,V1LTB,aphla.x,aphla.eget,aphla.sys.V1LTD1,aphla.elemfield.image_nx
+LTB-BI:BD1{VF1}Size:Y-I,,VF1BD1,,VF1BD1,FLAG,,READBACK,virtac2,ltbd1,0,41,5.67,,V1LTB,aphla.y,aphla.eget,aphla.sys.V1LTD1,aphla.elemfield.image_ny
 LTB-BI:BD1{VF2}Img1:ArrayData,,VF2BD1,image,VF2BD1,FLAG,,READBACK,virtac2,ltbd1,0,44,6.75,,V1LTB,aphla.image,aphla.eget,aphla.sys.V1LTD1
 LTB-BI:BD1{VF2}Size:X-I,,VF2BD1,,VF2BD1,FLAG,,READBACK,virtac2,ltbd1,0,44,6.75,,V1LTB,aphla.x,aphla.eget,aphla.sys.V1LTD1
 LTB-BI:BD1{VF2}Size:Y-I,,VF2BD1,,VF2BD1,FLAG,,READBACK,virtac2,ltbd1,0,44,6.75,,V1LTB,aphla.y,aphla.eget,aphla.sys.V1LTD1

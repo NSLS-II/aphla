@@ -425,6 +425,26 @@ class TestLatticeSr(unittest.TestCase):
                 self.assertTrue(False,
                                 "AttributeError exception expected")
 
+
+class TestLatticeLtd1(unittest.TestCase):
+    def setUp(self):
+        logging.info("TestLatticeLtd1")
+        self.lat  = ap.machines.getLattice('V1LTD1')
+        self.assertTrue(self.lat)
+        self.logger = logging.getLogger('tests.TestLatticeLtd1')
+
+    def test_image(self):
+        vf = ap.getElements('VF1BD1')[0]
+        d = np.reshape(vf.image, (vf.image_ny, vf.image_nx))
+        import matplotlib.pylab as plt
+        plt.imshow(d)
+        plt.savefig("test.png")
+
+        
+    def test_virtualelements(self):
+        pass
+
+
 class TestLatticeLtb(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtb")
@@ -456,7 +476,6 @@ class TestLatticeLtb(unittest.TestCase):
     def test_virtualelements(self):
         pass
 
-
 class TestNSLS2V1(unittest.TestCase):
     def setUp(self):
         pass
@@ -465,7 +484,6 @@ class TestNSLS2V1(unittest.TestCase):
         el = ap.getElements(['AA'])
         self.assertEqual(len(el), 1)
         self.assertIsNone(el[0])
-
 
 """
 Twiss
@@ -678,6 +696,7 @@ class TestOrbitControl(unittest.TestCase):
         self.assertGreater(norm1[0], norm0[0])
 
         ap.correctOrbit([e.name for e in bpm], cor)
+        ap.correctOrbit(bpm, cor)
 
         #raw_input("Press Enter to recover orbit...")
         bpm_v2 = np.array([(e.x, e.y) for e in bpm], 'd')

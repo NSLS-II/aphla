@@ -27,7 +27,8 @@ import logging
 
 __all__ = [
     'getLifetime',  
-    'correctOrbitPv', 'correctOrbit', 'createLocalBump'
+    'correctOrbitPv', 'correctOrbit', 'createLocalBump', 'setLocalBump',
+    'fitGaussian1', 'fitGaussianImage'
 ]
 
 logger = logging.getLogger(__name__)
@@ -186,8 +187,19 @@ def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None,
             return True
     else:
         return None
+
     
 def createLocalBump(bpm, trim, ref, **kwargs):
+    """
+    this is not a good name, use :func:`setLocalBump` instead.
+    """
+    import warning
+    warning.warn("will be deprecated, use setLocalBump instead", 
+                 PendingDeprecationWarning)
+
+    setLocalBump(bpm, trim, ref, **kwargs)
+
+def setLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
@@ -299,7 +311,7 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
 
     The orbit not in BPM list may change.
 
-    .. seealso:: :func:`hla.getSubOrm`
+    seealso :func:`~aphla.hlalib.getElements`, :func:`~aphla.getSubOrm`
     """
 
     plane = kwargs.get('plane', 'HV')
@@ -663,4 +675,105 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
     
     return result
 
+
+#---
+def _gaussian(height, center_x, center_y, width_x, width_y):
+    """Returns a gaussian function with the given parameters"""
+    width_x = float(width_x)
+    width_y = float(width_y)
+    return lambda x,y: height*np.exp(
+                -(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
+
+def _moments(data):
+    """
+    Returns (height, x1, x2, width1, width2)
+    the gaussian parameters of a 2D distribution by calculating its
+    moments
+    """
+    total = data.sum()
+    X, Y = np.indices(data.shape)
+    x = (X*data).sum()/total
+    y = (Y*data).sum()/total
+    col = data[:, int(y)]
+    width_x = np.sqrt(abs((np.arange(col.size)-y)**2*col).sum()/col.sum())
+    row = data[int(x), :]
+    width_y = np.sqrt(abs((np.arange(row.size)-x)**2*row).sum()/row.sum())
+    height = data.max()
+    return height, x, y, width_x, width_y
+
+def _fitgaussian(data):
+    """
+    Returns (height, x, y, width_x, width_y)
+    the gaussian parameters of a 2D distribution found by a fit
+    """
+    from scipy import optimize
+    params = _moments(data)
+    errorfunction = lambda p: \
+        np.ravel(_gaussian(*p)(*np.indices(data.shape)) - data)
+    p, success = optimize.leastsq(errorfunction, params)
+    return p
+
+def fitGaussian1(x, y):
+    """
+    fit y=A*exp(-(x-u)**2/2*sig**2) from moments, returns A, u, sig
+    """
+    u = np.sum(x*y)/np.sum(y)
+    w = np.sqrt(np.abs(np.sum((x-u)**2*y)/np.sum(y)))
+    A = np.max(y)
+    return A, u, w
+
+def fitGaussianImage(data):
+    """
+    2D gaussian fitting.
+
+    :param data: 2D matrix
+    :rtype: (height, x1, x2, width1, width2)
+
+    The "1" and "2" are first and second indeces of input data matrix.
+    """
+    return _fitgaussian(data)
+
+
+def saveImage(self, elemname, filename, **kwargs):
+    """
+    save field as image file
+    :param field: element field to save, default 'image'
+    :param filename: output file name
+    :param width: image width (pixel), default 'image_nx'
+    :param height: image height (pixel), default 'image_ny'
+
+    The tag of CFS should give "field_nx" and "field_ny" for field.
+
+    if width or height is None, use "field_nx" and "field_ny".
+    """
+    import matplotlib.pylab as plt
+    import numpy as np
+    field = kwargs.get('field', 'image')
+    fitgaussian = kwargs.get('fitgaussian', False)
+    elem = getElements(elemname)[0]
+    d = elem.get(field)
+    width = kwargs.get('width', elem.get(field + "_nx"))
+    height = kwargs.get('height', elem.get(field + "_ny"))
+    #xlim = kwargs.get('xlim', (0, width))
+    #ylim = kwargs.get('ylim', (0, height))
+    d2 = np.reshape(d, (height, width))
+    im = Image.fromarray(d2)
+    if fitgaussian:
+        param = fitGaussianImage(d2)
+        (height, y, x, width_y, width_x) = params
+        draw = ImageDraw.Draw(im)
+        i, j = int(0.05*width), int(0.05*height)
+        im.text((i,j), "x : %.1f\ny : %.1f\nwidth_x : %.1f\nwidth_y : %.1f" % \
+                    (x, y, width_x, width_y))
+
+        #plt.text(0.95, 0.05, """
+        #x : %.1f
+        #y : %.1f
+        #width_x : %.1f
+        #width_y : %.1f""" %(x, y, width_x, width_y),
+        #         fontsize=16, horizontalalignment='right',
+        #         verticalalignment='bottom', transform=ax.transAxes)
+
+    im.save(filename)
+    #plt.savefig(filename)
 

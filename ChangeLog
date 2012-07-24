@@ -1,3 +1,7 @@
+2012-07-20  Lingyun Yang  <lyyang@nsls2yang>
+
+	* add list of elements support in getElements
+
 2012-07-10  Lingyun Yang  <lyyang@nsls2yang>
 
 	* remove return_list from getElements. Now always returns a list
