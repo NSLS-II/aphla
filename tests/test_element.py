@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-try:
-    import unittest
-except:
-    import unittest2 as unittest
-
 import sys, os, time
+
+if sys.version_info[:2] == (2, 6):
+    import unittest2 as unittest
+elif sys.version_info[:2] == (2,7):
+    import unittest
+
 import numpy as np
 
 from aphla import element

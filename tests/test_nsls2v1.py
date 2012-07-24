@@ -9,12 +9,13 @@ NSLS2 V1 Unit Test
 #from cothread.catools import caget
 #print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
 
-try:
+import sys, os, time
+
+if sys.version_info[:2] == (2, 6):
     import unittest2 as unittest
-except ImportError:
+elif sys.version_info[:2] == (2,7):
     import unittest
 
-import sys, os, time
 import numpy as np
 import random
 

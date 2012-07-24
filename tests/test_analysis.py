@@ -1,4 +1,10 @@
-import unittest
+import sys
+
+if sys.version_info[:2] == (2, 6):
+    import unittest2 as unittest
+elif sys.version_info[:2] == (2,7):
+    import unittest
+
 import numpy as np
 import aphla as ap
 
