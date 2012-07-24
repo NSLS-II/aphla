@@ -176,7 +176,7 @@ def getElements(group, include_virtual=False):
 
     # return the input if it is a list of element object
     if isinstance(group, (list, tuple)):
-        if all([isinstance(e, AbstractElement) for e in group]):
+        if all([isinstance(e, element.AbstractElement) for e in group]):
             return group
 
     elems = machines._lat.getElementList(group)

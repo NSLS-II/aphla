@@ -27,8 +27,8 @@ import logging
 
 __all__ = [
     'getLifetime',  
-    'correctOrbitPv', 'correctOrbit', 'createLocalBump', 'setLocalBump',
-    'fitGaussian1', 'fitGaussianImage'
+    'correctOrbit', 'createLocalBump', 'setLocalBump',
+    'saveImage', 'fitGaussian1', 'fitGaussianImage'
 ]
 
 logger = logging.getLogger(__name__)
@@ -144,7 +144,7 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
 #     return s1, p[0,:]
 
 
-def correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, 
+def _correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, 
                    check = True):
     """
     correct orbit use direct pv and catools
@@ -204,15 +204,15 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     create a local bump at certain BPM, while keep all other orbit untouched
     
     :param bpm: BPMs for new bumpped orbit. 
-    :type bpm: str, list 
+    :type bpm: str, list
     :param trim: correctors used for orbit correction. 
     :type trim: str, list
     :param ref: target orbit, (len(bpm),2)
     :type ref: matrix shape (n,2).
 
-    `bpm` and `trim` can be a pattern, a group name or a list of exact element
-    names. if `ref[i][j]` is `None`, use the current hardware result, i.e. try
-    not to change the orbit at that location.
+    `bpm` and `trim` can be a pattern, a group name, a list of exact element
+    names or a list of objects. if `ref[i][j]` is `None`, use the current
+    hardware result, i.e. try not to change the orbit at that location.
 
     :Examples:
 
@@ -220,7 +220,6 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         >>> newobt = [[1.0, 1.5]] * len(bpms)
         >>> createLocalBump(bpms, 'HCOR', newobt)
 
-    seealso :func:`correctOrbitPv`
     """
     plane = kwargs.get('plane', 'HV')
 
@@ -230,9 +229,9 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     elif len(bpm) != len(bpmlst):
         raise ValueError("bpm must be a list of qualified BPM names")
 
-    for i, b in enumerate(bpmlst):
-        if b.name != bpm[i]:
-            raise ValueError("bpm must be a list of qualified BPM names")
+    #for i, b in enumerate(bpmlst):
+    #    if b.name != bpm[i]:
+    #        raise ValueError("bpm must be a list of qualified BPM names")
 
     bpmfulllst = getElements('BPM')
     bpmpv, bpmref = [], []
@@ -295,7 +294,7 @@ def setLocalBump(bpm, trim, ref, **kwargs):
                 i, bpmpv[i], caget(bpmpv[i]), bpmref[i]))
 
     # correct orbit using default ORM (from current lattice)
-    correctOrbitPv(bpmpv, trimpv, ref=np.array(bpmref))
+    _correctOrbitPv(bpmpv, trimpv, ref=np.array(bpmref))
 
         
 def correctOrbit(bpm = None, trim = None, **kwargs):
@@ -734,18 +733,26 @@ def fitGaussianImage(data):
     return _fitgaussian(data)
 
 
-def saveImage(self, elemname, filename, **kwargs):
+def saveImage(elemname, filename, **kwargs):
     """
     save field as image file
     :param field: element field to save, default 'image'
     :param filename: output file name
     :param width: image width (pixel), default 'image_nx'
     :param height: image height (pixel), default 'image_ny'
+    :param xlim: range of pixels, e.g. (700, 900)
+    :param ylim: range of pixels, e.g. (700, 900)
+
+    :Example:
+
+        >>> saveImage('VF1BD1', 'test.png', fitgaussian=True, xlim=(750,850), ylim=(550,650))
 
     The tag of CFS should give "field_nx" and "field_ny" for field.
 
     if width or height is None, use "field_nx" and "field_ny".
     """
+    #import Image
+    #import ImageDraw
     import matplotlib.pylab as plt
     import numpy as np
     field = kwargs.get('field', 'image')
@@ -754,26 +761,29 @@ def saveImage(self, elemname, filename, **kwargs):
     d = elem.get(field)
     width = kwargs.get('width', elem.get(field + "_nx"))
     height = kwargs.get('height', elem.get(field + "_ny"))
-    #xlim = kwargs.get('xlim', (0, width))
-    #ylim = kwargs.get('ylim', (0, height))
+    xlim = kwargs.get('xlim', (0, width))
+    ylim = kwargs.get('ylim', (0, height))
     d2 = np.reshape(d, (height, width))
-    im = Image.fromarray(d2)
-    if fitgaussian:
-        param = fitGaussianImage(d2)
-        (height, y, x, width_y, width_x) = params
-        draw = ImageDraw.Draw(im)
-        i, j = int(0.05*width), int(0.05*height)
-        im.text((i,j), "x : %.1f\ny : %.1f\nwidth_x : %.1f\nwidth_y : %.1f" % \
-                    (x, y, width_x, width_y))
+    use_pil = False
+    if use_pil:
+        im = Image.fromarray(d2)
+        im.save(filename)
+    else:
+        plt.clf()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.imshow(d2, interpolation="nearest", cmap=plt.cm.bwr)
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        if fitgaussian:
+            params = fitGaussianImage(d2)
+            (height, y, x, width_y, width_x) = params
 
-        #plt.text(0.95, 0.05, """
-        #x : %.1f
-        #y : %.1f
-        #width_x : %.1f
-        #width_y : %.1f""" %(x, y, width_x, width_y),
-        #         fontsize=16, horizontalalignment='right',
-        #         verticalalignment='bottom', transform=ax.transAxes)
-
-    im.save(filename)
-    #plt.savefig(filename)
+            ax.text(0.95, 0.05, "x : %.1f\ny : %.1f\n" \
+                        "width_x : %.1f\nwidth_y : %.1f" % \
+                        (x, y, width_x, width_y),
+                    fontsize=16, horizontalalignment='right',
+                    verticalalignment='bottom', transform=ax.transAxes)
+            
+        plt.savefig(filename)
 

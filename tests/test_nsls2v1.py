@@ -743,8 +743,7 @@ class TestOrbitControl(unittest.TestCase):
         for i in range(6, len(bpm)):
             bpm_v1[i] = [0, 0]
 
-        ap.createLocalBump([e.name for e in bpm], 
-                            [e.name for e in hcor+vcor], bpm_v1)
+        ap.setLocalBump(bpm, hcor+vcor, bpm_v1)
 
 
 """
