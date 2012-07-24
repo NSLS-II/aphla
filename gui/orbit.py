@@ -432,7 +432,7 @@ class OrbitPlotMainWindow(QMainWindow):
                      self.chooseBpm)
 
         controlResetPvDataAction = QAction(QIcon(":/control_reset.png"),
-                                           "Reset PV Data", self)
+                                           "Reset BPM statistics", self)
         self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
                      self.resetPvData)
 
@@ -694,7 +694,7 @@ class OrbitPlotMainWindow(QMainWindow):
             #             self.plot1.curve2.setVisible)
             self.plot1.plotDesiredOrbit(self.orbitx_data.golden(), 
                                         self.orbitx_data.x)
-            self.plot1.plotDesiredOrbit(self.orbity_data.golden(), 
+            self.plot2.plotDesiredOrbit(self.orbity_data.golden(), 
                                         self.orbity_data.x)
 
         self.corbitdlg.show()
