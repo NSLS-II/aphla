@@ -1,4 +1,10 @@
-import unittest
+import sys
+
+if sys.version_info[:2] == (2, 6):
+    import unittest2 as unittest
+elif sys.version_info[:2] == (2,7):
+    import unittest
+
 import numpy as np
 import aphla as ap
 
@@ -61,35 +67,3 @@ class TestFitting(unittest.TestCase):
         
         #plt.savefig("test.png")
 
-    def test_fit_gaussian_image(self):
-        import matplotlib.pylab as plt
-        from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
-        from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-        d1 = ap.catools.caget('LTB-BI:BD1{VF1}Img1:ArrayData')
-        d2 = np.reshape(d1, (1220, 1620))
-        params = ap.fitGaussianImage(d2)
-        fit = self._gaussian(*params)
-
-        plt.clf()
-        extent=(500, 1620, 400, 1220)
-        #plt.contour(fit(*np.indices(d2.shape)), cmap=plt.cm.copper)
-        plt.imshow(d2, interpolation="nearest", cmap=plt.cm.bwr)
-        ax = plt.gca()
-        ax.set_xlim(750, 850)
-        ax.set_ylim(550, 650)
-        (height, y, x, width_y, width_x) = params
-        #axins = zoomed_inset_axes(ax, 6, loc=1)
-        #axins.contour(fit(*np.indices(d2.shape)), cmap=plt.cm.cool)
-        #axins.set_xlim(759, 859)
-        #axins.set_ylim(559, 660)
-        #mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.5')
-
-        plt.text(0.95, 0.05, """
-        x : %.1f
-        y : %.1f
-        width_x : %.1f
-        width_y : %.1f""" %(x, y, width_x, width_y),
-             fontsize=16, horizontalalignment='right',
-             verticalalignment='bottom', transform=ax.transAxes)
-
-        plt.savefig("test2.png")
