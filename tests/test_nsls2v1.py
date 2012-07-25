@@ -429,12 +429,19 @@ class TestLatticeSr(unittest.TestCase):
 class TestLatticeLtd1(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtd1")
-        self.lat  = ap.machines.getLattice('V1LTD1')
+        self.lat  = ap.machines._lat
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLatticeLtd1')
+        
+    def tearDown(self):
+        ap.machines._lat = self.lat
 
     def test_image(self):
+        #lat = ap.machines._lat
+        ap.machines.use('V1LTD1')
         vf = ap.getElements('VF1BD1')[0]
+        self.assertIn('image', vf.fields())
+
         d = np.reshape(vf.image, (vf.image_ny, vf.image_nx))
         import matplotlib.pylab as plt
         plt.imshow(d)
@@ -657,6 +664,9 @@ class TestOrbit(unittest.TestCase):
 class TestOrbitControl(unittest.TestCase): 
     def setUp(self):
         ap.machines.use("V1SR")
+
+    def tearDown(self):
+        ap.hlalib._reset_trims()
 
     def test_correct_orbit(self):
         ap.hlalib._reset_trims()

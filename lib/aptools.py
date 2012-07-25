@@ -245,8 +245,8 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         bpmpv.append(xpv)
         bpmpv.append(ypv)
         x0, y0 = b.x, b.y
-        if b.name in bpm:
-            idx = bpm.index(b.name)
+        if b in bpmlst:
+            idx = bpmlst.index(b)
             if ref[idx][0] is None:
                 bpmref.append(x0)
             else:
@@ -363,7 +363,7 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     else:
         #print("PV:", len(bpmpv), len(trimpv))
         for i in range(repeat):
-            correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), 
+            _correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), 
                            machines._lat.ormdata)
             
 

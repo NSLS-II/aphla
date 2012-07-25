@@ -353,6 +353,10 @@ def initTLS(config=None):
         elif os.path.exists(config):
             logger.info("Creating lattice from file '%s'" % config)
             cfa.importCsv(config)
+        elif conf.has(config):
+            fname = conf.filename(config)
+            logger.info("Creating lattice from system file '%s'" % fname)
+            cfa.importCsv(fname)
         else:
             logger.error("'%s' is not recognized data source" % config)
             raise RuntimeError("can not initialze from '%s'" % config)
