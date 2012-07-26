@@ -693,8 +693,8 @@ class TestOrbit(unittest.TestCase):
         ih = np.random.randint(0, len(hcor), 3)
         iv = np.random.randint(0, len(vcor), 4)
 
-        for i in ih: hcor[i].x = np.random.rand()*1e-5
-        for i in iv: vcor[i].y = np.random.rand()*1e-5
+        for i in ih: hcor[i].x = hcor[i].x*(1+np.random.rand()*0.05)
+        for i in iv: vcor[i].y = vcor[i].y*(1+np.random.rand()*0.05)
 
         ap.hlalib.waitStableOrbit(v0, minwait=5)
 
