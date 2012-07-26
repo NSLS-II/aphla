@@ -15,38 +15,33 @@
   <p>A simple example which read the current orbit and show the plot</p>
 
   <pre>
-  >>> import aphla
-  >>> aphla.initNSLS2VSR(cached=False)
-  >>> aphla.getOrbit(spos=True)
-  </pre>
+>>> import aphla as ap
+>>> ap.initNSLS2V1()
+>>> ap.getOrbit(spos=True)</pre>
 
   <p>For the power user, you have full control of each PV </p>
 
   <h1>Get Started</h1>
   <ul>
     <li><a href="quickstart.html">Quick start</a> is for users who have an
-  account on <strong>lsasd2.ls.bnl.gov</strong> or <strong>injdev.nsls2.bnl.gov</strong>.
+  account on <strong>lsasd2.ls.bnl.gov</strong> or <strong>injdev.nsls2.bnl.gov</strong>.</li>
     <li><a href="tutorial.html">Tutorial</a> has more details for the
-    installation and settings <br/>
-    <li><a href="examples.html">Code examples</a> are always helpful for impatient people like me.
-    <li>Get help with the Python built-in functions: <a href="http://docs.python.org/library/functions.html#help">help([object])</a> and <a href="http://docs.python.org/library/functions.html#dir">dir([object])</a>
+    installation and settings <br/></li>
+    <li><a href="examples.html">Code examples</a> are always helpful for impatient people like me.</li>
+    <li>Get help with the Python built-in functions: <a href="http://docs.python.org/library/functions.html#help">help([object])</a> and <a href="http://docs.python.org/library/functions.html#dir">dir([object])</a></li>
   </ul>
 
-  <h1>Control Commands Reference</h1>
 
-  <a href="ref.html">here</a> <br/>
+  <h1>Common Commands</h1>
 
-  <h1>Download</h1>
-  Beta version
-  <ul>
-    <li><a href="hla-0.3.0b3-py2.7.egg">hla-0.3.0b3-py2.7.egg</a>
-  </ul>
+  <!-- table -->
 
-  <ul>
-    <li><a href="hla-0.2.2-py2.7.egg">hla-0.2.2-py2.7.egg</a>
-    <li><a href="hla-0.2.1-py2.7.egg">hla-0.2.1-py2.7.egg</a>
-    <li><a href="hla-0.2.0-py2.7.egg">hla-0.2.0-py2.7.egg</a>
-    <li><a href="hla-0.1.0-py2.7.egg">hla-0.1.0-py2.7.egg</a>
-  </ul>
+  {% include "commands_table.html" %}
+
+  <!-- end of table -->
+
+
+  <p>The <a href="ref.html">Reference</a> has more details to hack if you found
+  the above list can not provide what you need.</p>
 
 {% endblock %}

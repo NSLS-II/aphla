@@ -31,6 +31,9 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 html:
+	python utils/hla_names.py > commands.txt
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	python utils/inject_commands_table.py
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."

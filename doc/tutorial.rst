@@ -4,8 +4,10 @@ Tutorial
 .. htmlonly::
    :Date: |today|
 
-The notebook style :download:`tutorial <./doc_tutorial.pdf>` is a better place
-for reading code and their output. But here explains things in more details.
+..
+   The notebook style :download:`tutorial <./doc_tutorial.pdf>` is a better
+   place for reading code and their output. But here explains things in more
+   details.
 
 The HLA package we are developing has three parts
 
@@ -18,7 +20,7 @@ The HLA package we are developing has three parts
 HLA Initialization
 -------------------
 
-Before using ``aphla`` we need to import some python modules for data analysis
+Before using ``aphla`` we can import some python modules for data analysis
 and plotting.
 
 .. doctest::
@@ -27,11 +29,6 @@ and plotting.
    >>> import aphla as ap    # import aphla package
    >>> import matplotlib.pylab as plt    # matplotlib for plotting
    >>> import time
-
-.. warning::
-
-   In order to correct the orbit, the measured Orbit Response Matrix is
-   needed. Put 'us_nsls2_sr_orm.hdf5' in ${HOME}/.hla/
 
 .. note::
 
@@ -46,14 +43,26 @@ Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
    >>> ap.initNSLS2V1SRTwiss() #doctest: +ELLIPSIS
    ...
 
-If you have csv config file, e.g. *nsls2.csv*, in your ``aphla`` package, the
-`~aphla.initNSLS2VSR` will use it, otherwise it will search for channel finder
-server use it to initialize the lattice structure.
+:func:`~aphla.machines.initNSLS2V1` will initialize the lattice structure of
+`NSLS2 Virtual Accelerastor #1`. It is not the hardware initialization and did
+not do any hardware operation inside. The second initialization
+:func:`~aphla.machines.initNSLS2V1SRTwiss` will load the twiss data from disk
+or database.
+
+.. note::
+
+    By default, this initialization will search search for channel finder
+    server and use the data there. It can be overwritten with your own csv
+    config file.
 
 ``aphla`` can keep several initialized lattices, depending how many
 *aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
-*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB*. Call
-`~aphla.machines.lattices` to find out.
+*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB* for the real machine. The
+`V1` prefix before `SR`, `LTD1` means it is the `virtual accelerator #1`
+counter part. :func:`~aphla.machines.lattices` lists the initialized lattices
+and :func:`~aphla.machines.use` will switch to the named lattice as the
+current lattice. This current lattice is the domain for functions like
+:func:`~aphla.hlalib.getElements`.
 
 .. doctest::
 

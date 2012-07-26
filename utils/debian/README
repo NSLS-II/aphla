@@ -13,3 +13,11 @@
 
   cd ..
   sudo dpkg -i python-aphla_0.3.0b4-1_all.deb
+
+
+Note
+-----
+
+- more option (e.g. Debian version): py2dsc --extra-cfg-file stdeb.cfg
+- python setup.py --command-packages=stdeb.command sdist_dsc
+- python setup.py --command-packages=stdeb.command bdist_deb

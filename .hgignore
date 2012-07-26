@@ -19,6 +19,8 @@ syntax: glob
 doc/hlaversion.texi
 *.pyc
 doc/_build
+doc/hla-*.egg
+doc/aphla-*.egg
 seasail.egg-info
 *~
 *.o

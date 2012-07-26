@@ -50,7 +50,7 @@ def measBeta(elem, dqk1 = 0.01, # element or list
     returns beta
     """
 
-    elems = getElements(elem, return_list=True)
+    elems = getElements(elem)
     if elems is None:
         raise ValueError("can not find element '%s'" % elem)
     if verbose:
@@ -95,7 +95,7 @@ def measDispersion(elem, dfreq = 1e-5, alphac = 3.6261976841792413e-04,
 
     eta = alphac - 1.0/gamma/gamma
 
-    bpmobj = [ b for b in getElements(elem, return_list = True) 
+    bpmobj = [ b for b in getElements(elem) 
                if b.family == 'BPM']
     bpmnames = [b.name for b in bpmobj]
     nbpm = len(bpmnames)

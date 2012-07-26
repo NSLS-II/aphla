@@ -9,8 +9,13 @@ NSLS2 V1 Unit Test
 #from cothread.catools import caget
 #print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
 
-import unittest2 as unittest
 import sys, os, time
+
+if sys.version_info[:2] == (2, 6):
+    import unittest2 as unittest
+elif sys.version_info[:2] == (2,7):
+    import unittest
+
 import numpy as np
 import random
 
@@ -95,7 +100,7 @@ class TestElement(unittest.TestCase):
 
     def test_tune(self):
         logging.info("test_tune")
-        tune, = ap.getElements('TUNE')
+        tune = ap.getElements('TUNE')[0]
         nux, nuy = tune.x, tune.y
         val = tune.value
         self.assertTrue(len(val), 2)
@@ -121,7 +126,10 @@ class TestElement(unittest.TestCase):
         self.assertGreater(dcct.value, 1.0)
         self.assertLess(dcct.value, 600.0)
 
-        self.assertGreater(ap.eget('DCCT'), 1.0)
+        self.assertGreater(dcct.value, 1.0)
+        self.assertGreater(ap.eget('DCCT', 'value'), 1.0)
+        self.assertEqual(len(ap.eget('DCCT', ['value'])), 1)
+        self.assertGreater(ap.eget('DCCT', ['value'])[0], 1.0)
 
     def test_bpm(self):
         bpms = ap.getElements('BPM')
@@ -132,11 +140,20 @@ class TestElement(unittest.TestCase):
         self.assertGreater(bpm.index, 1)
         self.assertFalse(bpm.virtual)
         self.assertEqual(bpm.virtual, 0)
-        self.assertEqual(len(ap.eget(bpm.name)), 2)
+        #self.assertEqual(len(bpm.value), 2)
+
+        self.assertIn('x', bpm.fields())
+        self.assertIn('y', bpm.fields())
+        self.assertEqual(len(bpm.get(['x', 'y'])), 2)
+        self.assertEqual(len(ap.eget('BPM', 'x')), len(bpms))
+        self.assertEqual(len(ap.eget('BPM', ['x', 'y'])), len(bpms))
+
+        self.assertGreater(ap.getDistance(bpms[0].name, bpms[1].name), 0.0)
 
     def test_vbpm(self):
-        vbpm = ap.getElements('HLA:VBPM', return_list=False, include_virtual=True)
-        self.assertIsNotNone(vbpm)
+        vbpms = ap.getElements('HLA:VBPM', include_virtual=True)
+        self.assertIsNotNone(vbpms)
+        vbpm = vbpms[0]
         self.assertIn('x', vbpm.fields())
         self.assertIn('y', vbpm.fields())
 
@@ -166,13 +183,12 @@ class TestElement(unittest.TestCase):
         plt.savefig("test_nsls2_orbit_correct.png")
 
 
-    @unittest.skip
     def test_hcor(self):
         # hcor
-        hcor = element.CaElement(
+        hcor = ap.element.CaElement(
             name = 'CXL1G2C01A', index = 125, cell = 'C01',
             devname = 'CL1G2C01A', family = 'HCOR', girder = 'G2', length = 0.2,
-            se = 30.6673, symmetry = 'A')
+            sb = 30.4673, se = 30.6673, symmetry = 'A')
 
         self.assertTrue(hcor.name == 'CXL1G2C01A')
         self.assertTrue(hcor.cell == 'C01')
@@ -180,7 +196,10 @@ class TestElement(unittest.TestCase):
         self.assertTrue(hcor.devname == 'CL1G2C01A')
         self.assertTrue(hcor.family == 'HCOR')
         self.assertTrue(hcor.symmetry == 'A')
+
+
         self.assertAlmostEqual(hcor.length, 0.2)
+        self.assertAlmostEqual(hcor.sb, 30.4673)
         self.assertAlmostEqual(hcor.se, 30.6673)
 
         pvrb = 'SR:C01-MG:G02A{HCor:L1}Fld-I'
@@ -191,6 +210,8 @@ class TestElement(unittest.TestCase):
         hcor.updatePvRecord(pvsp, 
                             {'handle': 'SETPOINT'}, 
                             ['aphla.elemfield.x'])
+
+        self.assertIn('x', hcor.fields())
         self.assertEqual(hcor.pv(field='x', handle='readback'), [pvrb])
         self.assertEqual(hcor.pv(field='x', handle='setpoint'), [pvsp])
 
@@ -198,196 +219,46 @@ class TestElement(unittest.TestCase):
         self.assertEqual(hcor.pv(field='y', handle='readback'), [])
         self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
         
-    @unittest.skip
-    def test_pickle(self):
-        pkl = open(self.pkl, 'rb')
-        pkl_dcct = pickle.load(pkl)
-        pkl_bpm1 = pickle.load(pkl)
-        pkl_quad = pickle.load(pkl)
-        pkl.close()
+        v = ap.eget(hcor.name, ['x', 'y'])
+        self.assertGreaterEqual(abs(v[0]), 0.0)
+        self.assertIsNone(v[1])
 
-        # dcct
-        self.compareElements(self.dcct, pkl_dcct)
-        self.compareElements(self.bpm1, pkl_bpm1)
-        self.compareElements(self.quad, pkl_quad)
 
-    @unittest.skip
-    def test_shelve(self):
-        sh = shelve.open(self.shv, 'r')
-        shv_dcct = sh['dcct']
-        shv_bpm1 = sh['bpm1']
-        shv_bpm2 = sh['bpm2']
-        shv_hcor = sh['hcor']
-        shv_quad = sh['quad']
-        sh.close()
+"""
+Channel Finder
+"""
 
-        # dcct
-        self.compareElements(self.dcct, shv_dcct)
-        self.compareElements(self.bpm1, shv_bpm1)
-        self.compareElements(self.bpm2, shv_bpm2)
-        self.compareElements(self.hcor, shv_hcor)
-        self.compareElements(self.quad, shv_quad)
+class TestChanFinderCsvData(unittest.TestCase):
+    """
+    """
+    def setUp(self):
+        self.cfs_csv = 'us_nsls2v1_cfs.csv'
+        self.cfs_url = os.environ.get('HLA_CFS_URL', None)
+        pass
 
-    @unittest.skip
-    def test_pv(self):
-        #print self.bpm1._field['value'].pvsp
-        self.assertEqual(len(self.bpm1.pv(tags = ["aphla.x"])), 2)
-        self.assertEqual(len(self.bpm1._pvtags.keys()), 4)
-        self.assertEqual(len(self.bpm1.pv(field='x')), 2)
-        self.assertEqual(len(self.bpm1.pv(field='x', handle='readback')), 1)
-        self.assertEqual(len(self.bpm1.pv(field='x', handle='setpoint')), 1)
-        self.assertEqual(len(self.bpm1.pv(field='y')), 2)
-        self.assertEqual(len(self.bpm1.pv(field='y', handle='readback')), 1)
-        self.assertEqual(len(self.bpm1.pv(field='y', handle='setpoint')), 1)
-        self.assertEqual(len(self.bpm2.pv(tag = 'aphla.eget')), 12)
+    def test_conf(self):
+        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_csv)))
 
-    @unittest.skip
-    def test_read(self):
-        print self.hcor._field['x'].pvrb
-        print self.hcor._field['x'].pvsp
+    def test_csv_tags(self):
+        cfa = ap.chanfinder.ChannelFinderAgent()
+        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_csv)))
+        cfa.importCsv(ap.conf.filename(self.cfs_csv))
 
-        self.assertTrue(self.bpm1.name)
+        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V1*')
+        for t in ['V1SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
 
-        #self.assertTrue(abs(self.quad.value) >= 0)
-        self.assertTrue(abs(self.hcor.x) >= 0)
+    def test_url_tags(self):
+        #http://web01.nsls2.bnl.gov/ChannelFinder
+        self.assertIsNotNone(self.cfs_url)
+        cfa = ap.chanfinder.ChannelFinderAgent()
+        cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
 
-        print "bpm", self.bpm1._field['x'].pvrb
-        self.assertTrue(abs(self.bpm1.x) >= 0)
-        self.assertTrue(abs(self.bpm1.y) >= 0)
-        print self.bpm1.fields()
-        if 'xref' in self.bpm1.fields(): print self.bpm1.xref
-        if 'yref' in self.bpm1.fields(): print self.bpm1.yref
-        self.assertTrue(abs(self.hcor.x) >= 0)
+        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V1*')
+        for t in ['V1SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
 
-    @unittest.skip
-    def test_exception_non(self):
-        self.assertRaises(AttributeError, self.readValidField)
-        
-    @unittest.skip
-    def test_exception(self):
-        self.assertRaises(AttributeError, self.readInvalidField)
-        self.assertRaises(ValueError, self.writeInvalidField)
 
-    @unittest.skip
-    def readValidField(self):
-        x = self.bpm1.x
-
-    @unittest.skip
-    def readInvalidField(self):
-        x = self.bpm2.x
-
-    @unittest.skip
-    def writeInvalidField(self):
-        self.dcct.value = 0
-
-    @unittest.skip
-    def test_readwrite(self):
-        """
-        write the trim, check orbit change
-        """
-        #print "\n\nStart",
-        trim_pvrb = ['SR:C01-MG:G02A{HCor:L1}Fld-I',
-                     'SR:C01-MG:G02A{VCor:L2}Fld-I']
-        trim_pvsp = ['SR:C01-MG:G02A{HCor:L1}Fld-SP',
-                     'SR:C01-MG:G02A{VCor:L2}Fld-SP']
-        #print "yes", caget(trim_pvrb),
-        try:
-            trim_v0 = caget(trim_pvrb)
-        except Timedout:
-            return
-        #print trim_v0
-
-        rb1 = self.bpm2.value
-        #print "Initial trim: ", trim_v0, rb1
-
-        markForStablePv()
-        trim_v1 = [v - 2e-5 for v in trim_v0]
-        try:
-            caput(trim_pvsp, trim_v1, wait=True)
-        except Timedout:
-            return
-
-        waitForStablePv(minwait=5)
-        trim_v2 = caget(trim_pvrb)
-        trim_v3 = caget(trim_pvsp)
-        for i in range(len(trim_v0)):
-            self.assertAlmostEqual(trim_v2[i], trim_v3[i])
-
-        rb2 = self.bpm2.value
-        for i in range(len(rb1)):
-            self.assertTrue(
-                abs(rb1[i] - rb2[i]) > 1e-8,
-                'orbit diff {0} = {1} - {2} = {3}'.format(
-                    i, rb1[i], rb2[i], rb1[i] - rb2[i]))
-
-        markForStablePv()
-        # restore
-        caput(trim_pvsp, trim_v0, wait=True)
-        waitForStablePv(minwait=5)
-        rb3 = self.bpm2.value
-        #print rb3, self.bpm2.value
-        #print "Final trim:", caget(trim_pvrb), caget(trim_pvsp)
-        for i in range(len(rb1)):
-            self.assertAlmostEqual(
-                rb1[i], rb3[i], 5,
-                "orbit {0} = {1} -> {2} -> {3}".format(
-                    i, rb1[i], rb2[i], rb3[i]))
-        
-
-    @unittest.skip
-    def test_sort(self):
-        elem1 = element.Element(name= 'E1', sb= 0.0)
-        elem2 = element.Element(name= 'E1', sb= 2.0)
-        elem3 = element.Element(name= 'E1', sb= 1.0)
-        el = sorted([elem1, elem2, elem3])
-        self.assertTrue(el[0].sb < el[1].sb)
-        self.assertTrue(el[1].sb < el[2].sb)
-        
-    @unittest.skip
-    def test_field(self):
-        v0, = self.hcor.x
-        pvrb = self.hcor.pv(field='x', handle='readback')[0]#.encode('ascii')
-        pvsp = self.hcor.pv(field='x', handle='setpoint')[0]#.encode('ascii')
-        #print pvrb, pvsp
-        # PV from channel finder is UTF8 encoded
-        caput(pvsp, v0 - 1e-4, wait=True)
-        v1a = self.hcor.x
-        v1b = caget(pvsp)
-        self.assertAlmostEqual(v1a, v1b, 7)
-        self.assertAlmostEqual(v1b, v0 - 1e-4, 7,
-            "pv={0} {1} != {2}".format(pvsp, v1b, v0 - 1e-4))
-        self.assertAlmostEqual(v1a, v0 - 1e-4)
-
-        # 
-        caput(pvsp, v0, wait=True)
-
-        self.hcor.x = v0 - 5e-5
-
-        self.assertAlmostEqual(self.hcor.x, v0 - 5e-5)
-
-        self.hcor.x = v0
-    
-    @unittest.skip
-    def test_hcor_bpm(self):
-        rb1 = self.bpm2.value
-        v0 = self.hcor.x
-        v1 = v0 - 1e-4
-        try:
-            markForStablePv()
-            self.hcor.x = v1
-            waitForStablePv()
-            rb2 = self.bpm2.value
-            for i in range(len(rb1)):
-                self.assertTrue(
-                    abs(rb1[i] - rb2[i]) > 1e-6,
-                    'orbit diff {3}  = {0} - {1} = {2}'.format(
-                        rb1[i], rb2[i], rb1[i] - rb2[i], i))
-        except:
-            self.hcor.x = v0
-
-        markForStablePv()
-        self.hcor.x = v0
-        waitForStablePv(minwait=4)
 
 """
 Lattice
@@ -555,6 +426,75 @@ class TestLatticeSr(unittest.TestCase):
                 self.assertTrue(False,
                                 "AttributeError exception expected")
 
+
+class TestLatticeLtd1(unittest.TestCase):
+    def setUp(self):
+        logging.info("TestLatticeLtd1")
+        self.lat  = ap.machines._lat
+        self.assertTrue(self.lat)
+        self.logger = logging.getLogger('tests.TestLatticeLtd1')
+        
+    def tearDown(self):
+        ap.machines._lat = self.lat
+
+    def test_image(self):
+        #lat = ap.machines._lat
+        ap.machines.use('V1LTD1')
+        vf = ap.getElements('VF1BD1')[0]
+        self.assertIn('image', vf.fields())
+
+        d = np.reshape(vf.image, (vf.image_ny, vf.image_nx))
+        import matplotlib.pylab as plt
+        plt.imshow(d)
+        plt.savefig("test.png")
+
+    def _gaussian(self, height, center_x, center_y, width_x, width_y):
+        """Returns a gaussian function with the given parameters"""
+        width_x = float(width_x)
+        width_y = float(width_y)
+        return lambda x,y: height*np.exp(
+            -(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
+        
+    def test_fit_gaussian_image(self):
+        import matplotlib.pylab as plt
+        from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+        from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+        d1 = ap.catools.caget('LTB-BI:BD1{VF1}Img1:ArrayData')
+
+        self.assertEqual(len(d1), 1220*1620)
+
+        d2 = np.reshape(d1, (1220, 1620))
+        params = ap.fitGaussianImage(d2)
+        fit = self._gaussian(*params)
+
+        plt.clf()
+        extent=(500, 1620, 400, 1220)
+        #plt.contour(fit(*np.indices(d2.shape)), cmap=plt.cm.copper)
+        plt.imshow(d2, interpolation="nearest", cmap=plt.cm.bwr)
+        ax = plt.gca()
+        ax.set_xlim(750, 850)
+        ax.set_ylim(550, 650)
+        (height, y, x, width_y, width_x) = params
+        #axins = zoomed_inset_axes(ax, 6, loc=1)
+        #axins.contour(fit(*np.indices(d2.shape)), cmap=plt.cm.cool)
+        #axins.set_xlim(759, 859)
+        #axins.set_ylim(559, 660)
+        #mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.5')
+
+        plt.text(0.95, 0.05, """
+        x : %.1f
+        y : %.1f
+        width_x : %.1f
+        width_y : %.1f""" %(x, y, width_x, width_y),
+             fontsize=16, horizontalalignment='right',
+             verticalalignment='bottom', transform=ax.transAxes)
+
+        plt.savefig("test2.png")
+
+    def test_virtualelements(self):
+        pass
+
+
 class TestLatticeLtb(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtb")
@@ -586,6 +526,14 @@ class TestLatticeLtb(unittest.TestCase):
     def test_virtualelements(self):
         pass
 
+class TestNSLS2V1(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_elements(self):
+        el = ap.getElements(['AA'])
+        self.assertEqual(len(el), 1)
+        self.assertIsNone(el[0])
 
 """
 Twiss
@@ -760,6 +708,9 @@ class TestOrbitControl(unittest.TestCase):
     def setUp(self):
         ap.machines.use("V1SR")
 
+    def tearDown(self):
+        ap.hlalib._reset_trims()
+
     def test_correct_orbit(self):
         ap.hlalib._reset_trims()
 
@@ -798,6 +749,7 @@ class TestOrbitControl(unittest.TestCase):
         self.assertGreater(norm1[0], norm0[0])
 
         ap.correctOrbit([e.name for e in bpm], cor)
+        ap.correctOrbit(bpm, cor)
 
         #raw_input("Press Enter to recover orbit...")
         bpm_v2 = np.array([(e.x, e.y) for e in bpm], 'd')
@@ -844,8 +796,7 @@ class TestOrbitControl(unittest.TestCase):
         for i in range(6, len(bpm)):
             bpm_v1[i] = [0, 0]
 
-        ap.createLocalBump([e.name for e in bpm], 
-                            [e.name for e in hcor+vcor], bpm_v1)
+        ap.setLocalBump(bpm, hcor+vcor, bpm_v1)
 
 
 """

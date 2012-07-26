@@ -1,6 +1,14 @@
 History
 ========
 
+- :download:`aphla-0.3.2b1-py2.7.egg<aphla-0.3.2b1-py2.7.egg>` (development snapshot)
+- :download:`aphla-0.3.1-py2.7.egg<aphla-0.3.1-py2.7.egg>`
+- :download:`hla-0.2.2-py2.7.egg<hla-0.2.2-py2.7.egg>`
+- :download:`hla-0.2.1-py2.7.egg<hla-0.2.1-py2.7.egg>`
+- :download:`hla-0.2.0-py2.7.egg<hla-0.2.0-py2.7.egg>`
+- :download:`hla-0.1.0-py2.7.egg<hla-0.1.0-py2.7.egg>`
+
+
 v0.3.1
 ------
 

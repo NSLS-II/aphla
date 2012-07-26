@@ -412,10 +412,11 @@ class OrbitPlot(Qwt.QwtPlot):
         grid1.attach(self)
         grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
 
-        self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
-        self.picker1.setTrackerPen(QPen(Qt.red, 4))
-        self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
-                     self.elementDoubleClicked)
+        self.picker1 = None
+        #self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
+        #self.picker1.setTrackerPen(QPen(Qt.red, 4))
+        #self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
+        #             self.elementDoubleClicked)
         
         self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                         Qwt.QwtPlot.yLeft,
@@ -528,5 +529,21 @@ class OrbitPlot(Qwt.QwtPlot):
 
         if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
         else: self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+
+    def plotDesiredOrbit(self, y, x = None):
+        """
+        hide curve if x,y are both None
+        """
+        if y is None and x is None:
+            self.curve2.setVisible(False)
+            print "disabling desired orbit and quit"
+            return
+
+        if x is not None:
+            self.curve2.setData(x, y)
+            return
+        data = self.curve2.data()
+        vx = [data.x(i) for i in range(data.size())]
+        self.curve2.setData(vx, y)
 
 

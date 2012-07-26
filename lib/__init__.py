@@ -37,7 +37,7 @@ Modules include:
 
 from __future__ import print_function
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 
 import os
@@ -64,7 +64,7 @@ from catools import (caget, caput, caputwait)
 from chanfinder import ChannelFinderAgent
 from machines import (
     initNSLS2V1, initNSLS2V1SRTwiss,
-    initNSLS2
+    initNSLS2, initTLS
     )
 
 #from rf import *
@@ -72,7 +72,7 @@ from hlalib import *
 from ormdata import OrmData
 
 from meastwiss import *
-from measorm import *
+from measorm import (measOrbitRm, measChromRm, getSubOrm)
 from aptools import *
 
 import bba

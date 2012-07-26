@@ -64,7 +64,7 @@ ITEM_COLOR_APP = Qt.Qt.red
 # However, on Windows, using '\' still works fine.
 SEPARATOR = '/' # used as system file path separator as well as launcher page path separator
 DOT_HLA_QFILEPATH = str(Qt.QDir.homePath()) + SEPARATOR + '.hla'
-DEVELOPER_XML_FILENAME = 'launcher_hierarchy.xml'
+DEVELOPER_XML_FILENAME = 'us_nsls2_launcher_hierarchy.xml'
 USER_XML_FILENAME = 'user_launcher_hierarchy.xml'
 USER_MODIFIABLE_ROOT_PATH = '/root/Users'
 
@@ -3148,7 +3148,8 @@ def main(args = None):
         # Note that for a dialog box to be modal, i.e., blocking the application
         # execution until user input is given, you need to set the input
         # argument "user_timer" to be True.        
-        cothread.iqt(use_timer = True)
+        #cothread.iqt(use_timer = True)
+        cothread.iqt()
     else:
         qapp = Qt.QApplication(args)
     

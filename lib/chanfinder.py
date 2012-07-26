@@ -4,7 +4,9 @@
 Channel Finder
 ---------------
 
-A module providing local Channel Finder Service (CFS).
+A module providing local Channel Finder Service (CFS). It interfaces to CFS or
+local comma separated file (csv) and provides configuration data for the aphla
+package.
 
 For each PV, Channel Finder Service (CFS) provide a set of properties and
 tags. This can help us to identify the associated element name, type, location
@@ -28,23 +30,29 @@ class ChannelFinderAgent(object):
     def __init__(self, **kwargs):
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
         self.source = None
-        self.rows = []  # nx3 list, n*(pv, prpts, tags), (str, dict, list)
+
+        # the data is in `rows`. It has (n,3) shape, n*(pv, prpts, tags) with
+        # type (str, dict, list)
+        self.rows = []  
 
     def downloadCfs(self, cfsurl, **kwargs):
         """
         downloads data from channel finder service.
         
-        - *cfsurl* the URL of channel finder service.
-        - *keep* if present, it only downloads specified properties.
-        - *converter* convert properties from string to other format.
+        :param cfsurl: the URL of channel finder service.
+        :type cfsurl: str
+        :param keep: if present, it only downloads specified properties.
+        :type keep: list
+        :param converter: convert properties from string to other format.
+        :type converter: dict
 
         :Example:
 
-          prpt_list = ['elemName', 'sEnd']
-          conv_dict = {'sEnd', float}
-          downloadCfs(URL, keep = prpt_list, converter = conv_dict)
-          downloadCfs(URL, property=[('hostName', 'virtac2')])
-          downloadCfs(URL, property=[('hostName', 'virtac')], tagName='aphla.*')
+            >>> prpt_list = ['elemName', 'sEnd']
+            >>> conv_dict = {'sEnd', float}
+            >>> downloadCfs(URL, keep = prpt_list, converter = conv_dict)
+            >>> downloadCfs(URL, property=[('hostName', 'virtac2')])
+            >>> downloadCfs(URL, property=[('hostName', 'virtac')], tagName='aphla.*')
 
         The channel finder client API provides *property* and *tagName* as
         keywords parameters. 
@@ -85,10 +93,10 @@ class ChannelFinderAgent(object):
         """
         sort the data by 'pv' or other property name.
 
-        Example::
+        :Example:
 
-          sort('pv')
-          sort('elemName')
+            >>> sort('pv')
+            >>> sort('elemName')
         """
         from operator import itemgetter
         if key == 'pv':
@@ -106,11 +114,27 @@ class ChannelFinderAgent(object):
 
     def importCsv(self, fname):
         """
-        import data from CSV (comma separated values). The first line of csv
-        file must be the "header" which describes the meaning of each column.
-        The column of PVs has a fixed header "pv" and the tags columns have an
-        empty header. The order of columns does matter.
+        import data from CSV (comma separated values).
 
+        two versions of `.csv` files are supported:
+
+            - with header. The first line of csv file must be the "header"
+              which describes the meaning of each column.  The column of PVs
+              has a fixed header "pv" and the tags columns have an empty
+              header. The order of columns does matter.  
+            - explicit properties. No header as the first line. The first
+              column is the pv name, then is the "property= value" cells. The
+              last set of cells are tags where no "=" in the string.
+        """
+        head = open(fname, 'r').readline()
+        if head.split(',')[0].strip() in ['pv', 'PV']:
+            self._import_csv_1(fname)
+        else:
+            self._import_csv_2(fname)
+
+
+    def _import_csv_1(self, fname):
+        """
         It is recommended to put PV name as the first column and then all the
         property columns. The tags which have no header are in the last
         columns.
@@ -146,6 +170,30 @@ class ChannelFinderAgent(object):
             #print s[ipv], prpts, tags
             self.rows.append([s[ipv], prpts, tags])
 
+    def _import_csv_2(self, fname):
+        """
+        import data from CSV (comma separated values). 
+
+        each line of csv starts with pv name, then property list and tags. An
+        example is in the following::
+
+          PV1, elemName=Name,sEnd=0.2, aphla.sys.SR,aphla.elemfield.f1
+        """
+        self.source = fname
+        import csv
+        rd = csv.reader(open(fname, 'r'))
+        for s in rd:
+            pv = s[0]
+            prpts, tags = {}, []
+            for cell in s[1:]:
+                if cell.find('=') > 0:
+                    k, v = cell.split('=')
+                    prpts[k.strip()] = v.strip()
+                else:
+                    tags.append(cell.strip())
+
+            if pv.startswith('#') and len(prpts) == 0: continue
+            self.rows.append([pv, prpts, tags])
 
     def exportCsv(self, fname):
         """
@@ -213,10 +261,16 @@ class ChannelFinderAgent(object):
             idx = len(self.rows) - 1
         return idx
 
-    def updateCfs(self, cfsurl, username, password, **kwargs):
+    def __updateCfs(self, cfsurl, username, password, **kwargs):
         """
+        update the data to CFS.
+
+        :param str cfsurl: the url to CFS resources.
+        :param str username: username of CFS
+        :param str password: password of CFS
+        :param str properties: pattern of properties, e.g. '*'
         """
-        #raise RuntimeError("not implemented")
+        raise NotImplementedError()
 
         properties    = kwargs.get('properties', '*')
         tags          = kwargs.get('tags', '*')

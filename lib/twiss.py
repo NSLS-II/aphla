@@ -2,9 +2,10 @@
 Twiss
 ~~~~~~
 
-
 :author: Lingyun Yang
 :date: 2011-05-13 12:40
+
+stores twiss data.
 """
 
 import numpy as np
@@ -53,9 +54,9 @@ class TwissItem:
         :rtype: tuple, float
         :Example:
 
-            get('alpha')
+            >>> get('alpha')
             (0.0, 0.0)
-            get('betax')
+            >>> get('betax')
             0.1
         """
         d = {'alphax': self.alpha[0], 'alphay': self.alpha[1],

@@ -5,8 +5,13 @@ References
    :Date: |today|
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
+.. htmlonly::
+
+   Some commands are exported from modules to the top level of `aphla` package. They are commonly used:
+
+.. include:: commands.txt
 
 .. automodule:: aphla.catools
    :members:
@@ -41,7 +46,9 @@ References
 .. automodule:: aphla.bba
    :members:
 
-.. automodule:: aphla.meastwiss
+.. automodule:: aphla.measorm
    :members:
 
+.. automodule:: aphla.meastwiss
+   :members:
 
