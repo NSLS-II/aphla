@@ -62,15 +62,17 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
 
     :param name: lattice name, e.g. 'SR', 'LTD'
     :param pvrec: list of pv records `(pv, property dict, list of tags)`
-    :param systag: process records which has this systag.
+    :param systag: process records which has this systag. e.g. `aphla.sys.SR`
     :param desc: description is this lattice
     :return: :class:`~aphla.lattice.Lattice`
     """
 
     logger.debug("creating '%s':%s" % (name, desc))
+    logger.debug("%d pvs found in '%s'" % (len(pvrec), name))
     # a new lattice
     lat = Lattice(name, desc)
     for rec in pvrec:
+        #logger.debug("{0}".format(rec))
         # skip if there's no properties.
         if rec[1] is None: continue
         if systag not in rec[2]: continue
@@ -80,6 +82,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
 
+        logger.debug("{0} {1} {2}".format(rec[0], rec[1], rec[2]))
         #if name == 'CXHG2C30A': print(pv, prpt, rec[2])
 
         # find if the element exists.

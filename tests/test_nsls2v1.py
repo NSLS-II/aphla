@@ -34,19 +34,19 @@ ap.initNSLS2V1()
 logging.info("NSLS2V1 initialized")
 
 refpvrb = [
-    "SR:C15-BI:G02A{BPM:L1}SA:X-I",
-    "SR:C15-BI:G02A{BPM:L1}SA:Y-I",
-    "SR:C15-BI:G02A{BPM:L2}SA:X-I",
-    "SR:C15-BI:G02A{BPM:L2}SA:Y-I",
-    "SR:C15-BI:G04A{BPM:M1}SA:X-I",
-    "SR:C15-BI:G04A{BPM:M1}SA:Y-I",
-    "SR:C15-BI:G04B{BPM:M1}SA:X-I",
-    "SR:C15-BI:G04B{BPM:M1}SA:Y-I",
-    "SR:C15-BI:G06B{BPM:H1}SA:X-I",
-    "SR:C15-BI:G06B{BPM:H1}SA:Y-I",
-    "SR:C15-BI:G06B{BPM:H2}SA:X-I",
-    "SR:C15-BI:G06B{BPM:H2}SA:Y-I"]
-
+    'V:1-SR:C15-BI:G2{BPM:1691}SA:X',
+    'V:1-SR:C15-BI:G2{BPM:1691}SA:Y',
+    'V:1-SR:C15-BI:G2{BPM:1711}SA:X',
+    'V:1-SR:C15-BI:G2{BPM:1711}SA:Y',
+    'V:1-SR:C15-BI:G4{BPM:1734}SA:X',
+    'V:1-SR:C15-BI:G4{BPM:1734}SA:Y',
+    'V:1-SR:C15-BI:G4{BPM:1745}SA:X',
+    'V:1-SR:C15-BI:G4{BPM:1745}SA:Y',
+    'V:1-SR:C15-BI:G6{BPM:1769}SA:X',
+    'V:1-SR:C15-BI:G6{BPM:1769}SA:Y',
+    'V:1-SR:C15-BI:G6{BPM:1784}SA:X',
+    'V:1-SR:C15-BI:G6{BPM:1784}SA:Y',
+    ]
 ref_v0 = np.array(ap.caget(refpvrb), 'd')
 
 
@@ -114,8 +114,8 @@ class TestElement(unittest.TestCase):
         # current
         pv = u'SR:C00-BI:G00{DCCT:00}CUR-RB'
         vsrtag = 'aphla.sys.V1SR'
-        self.assertEqual(dcct.name,    'DCCT')
-        self.assertEqual(dcct.devname, 'DCCT')
+        self.assertEqual(dcct.name,    'dcct')
+        #self.assertEqual(dcct.devname, 'DCCT')
         self.assertEqual(dcct.family,  'DCCT')
         self.assertEqual(len(dcct.pv()), 1)
         self.assertEqual(dcct.pv(tag='aphla.eget'), [pv])
@@ -186,14 +186,14 @@ class TestElement(unittest.TestCase):
     def test_hcor(self):
         # hcor
         hcor = ap.element.CaElement(
-            name = 'CXL1G2C01A', index = 125, cell = 'C01',
-            devname = 'CL1G2C01A', family = 'HCOR', girder = 'G2', length = 0.2,
+            name = 'cxl1g2c01a', index = 125, cell = 'C01',
+            devname = 'cl1g2c01a', family = 'HCOR', girder = 'G2', length = 0.2,
             sb = 30.4673, se = 30.6673, symmetry = 'A')
 
-        self.assertTrue(hcor.name == 'CXL1G2C01A')
+        self.assertTrue(hcor.name == 'cxl1g2c01a')
         self.assertTrue(hcor.cell == 'C01')
         self.assertTrue(hcor.girder == 'G2')
-        self.assertTrue(hcor.devname == 'CL1G2C01A')
+        self.assertTrue(hcor.devname == 'cl1g2c01a')
         self.assertTrue(hcor.family == 'HCOR')
         self.assertTrue(hcor.symmetry == 'A')
 
@@ -219,9 +219,9 @@ class TestElement(unittest.TestCase):
         self.assertEqual(hcor.pv(field='y', handle='readback'), [])
         self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
         
-        v = ap.eget(hcor.name, ['x', 'y'])
-        self.assertGreaterEqual(abs(v[0]), 0.0)
-        self.assertIsNone(v[1])
+        #v = ap.eget(hcor.name, ['x', 'y'])
+        #self.assertGreaterEqual(abs(v[0]), 0.0)
+        #self.assertIsNone(v[1])
 
 
 """

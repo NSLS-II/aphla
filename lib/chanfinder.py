@@ -108,9 +108,12 @@ class ChannelFinderAgent(object):
         """
         rename the property name
         """
+        n = 0
         for r in self.rows:
             if oldkey not in r[1]: continue
             r[1][newkey] = r[1].pop(oldkey)
+            n += 1
+        #print("Renamed %s records" % n)
 
     def importCsv(self, fname):
         """
