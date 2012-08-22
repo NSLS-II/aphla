@@ -10,48 +10,93 @@ used by HLA.
 
 import os, sys
 import re, time, csv
+from fnmatch import fnmatch
 
 from channelfinder.ChannelFinderClient import ChannelFinderClient
 from channelfinder.CFDataTypes import Channel, Property, Tag
 
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
-from sqlalchemy import Column, Integer, String, Float
-class ChannelRecord(Base):
-    __tablename__ = 'channelfinder'
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy.orm import relationship, backref
 
-    pv       = Column(String, primary_key=True)
-    elemname = Column(String)
+class Element(Base):
+    __tablename__ = "elements"
+    id = Column(Integer, primary_key=True)
+    name     = Column(String)
     elemtype = Column(String)
-    devname  = Column(String)
+    machine  = Column(String)
     cell     = Column(String)
     girder   = Column(String)
     symmetry = Column(String)
-    handle   = Column(String)
+    s_end    = Column(Float)
     length   = Column(Float)
-    hostname = Column(String)
-    iocname  = Column(String)
-    ordinal  = Column(Integer)
-    send     = Column(Float)
-    system   = Column(String)
-    tags     = Column(String) # deliminator: ','
 
     tracy_el_idx_va = Column(Integer)
     tracy_machine   = Column(String)
     tracy_el_name_va = Column(String)
-    tracy_el_field_va = Column(String)
     tracy_el_type_va = Column(String)
 
-    def __init__(self, pv, elemName):
+    def __init__(self, name, elemtype, machine):
+        self.name = name
+        self.elemtype = elemtype
+        self.machine = machine
+
+    def __repr__(self):
+        return "<Element '%s':'%s' ...>" % (self.name, self.elemtype)
+
+
+class ChannelRecord(Base):
+    #__tablename__ = 'cfdata_v0'
+    __tablename__ = 'cfdata'
+
+    pv       = Column(String, primary_key=True)
+    elem_id  = Column(Integer, ForeignKey('elements.id'))
+    devname  = Column(String)
+    handle   = Column(String, nullable=False)
+    hostname = Column(String)
+    iocname  = Column(String)
+    tags     = Column(String) # deliminator: ','
+
+    element = relationship("Element", backref=backref("pvs", order_by=pv))
+
+    def __init__(self, pv, elemName, handle = 'readback'):
         self.pv = pv
         self.elemname = elemName
+        self.handle = handle
 
     def __repr__(self):
         return "<Channel('%s', '%s', ...)>" % (self.pv, self.elemname)
 
 
+def read_element_list(fname, dbfname = 'us_nsls2.sqlite', machine='V1SR'):
+    from sqlalchemy import create_engine
+    engine = create_engine('sqlite:///' + dbfname, echo = False)
+
+    from sqlalchemy.orm import sessionmaker
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    with open(fname, 'r') as f:
+        rec = [f.readline().split()]
+        for s in f.readlines():
+            r = [v.strip() for v in s.split()]
+            if rec[-1][1] == r[1]: continue
+            #print r
+            elem = Element(r[1], r[2], machine)
+            elem.cell = r[3]
+            elem.girder = r[4]
+            elem.length = float(r[5])
+            elem.ordinal = int(r[6])
+            elem.s_end = float(r[7])
+
+            session.add(elem)
+            rec.append(r)
+        #print rec
+        session.commit()
 
 
+    
 def _process_tracy_va_pvrecord(data, apsys = 'aphla.sys.V1SR'):
     """
     convert pv record "dict" and return 
@@ -137,6 +182,7 @@ def _process_tracy_va_pvrecord(data, apsys = 'aphla.sys.V1SR'):
 def convert_tracy_va_table(dbfname = 'us_nsls2.sqlite'):
     pass
 
+
 def update_pvr(pvr, col, r1):
     if col == "elemname":
         if pvr.pv.find('{TUNE}X') > 0 or pvr.pv.find('{TUNE}Y') > 0: 
@@ -167,7 +213,8 @@ def update_pvr(pvr, col, r1):
         if pvr.tracy_el_type_va == 'Sextupole':
             pvr.elemtype = "SEXT"
         elif pvr.tracy_el_type_va == 'Quadrupole':
-            pvr.elemtype = "QUAD"
+            if pvr.elemname.startswith("SQ"): pvr.elemtype = "SQUAD"
+            else: pvr.elemtype = "QUAD"
         elif pvr.tracy_el_type_va == "Beam Position Monitor":
             pvr.elemtype = "BPM"
         elif pvr.tracy_el_type_va == "Horizontal Corrector":
@@ -215,10 +262,11 @@ def import_tracy_va_table(fname, dbfname = 'us_nsls2.sqlite'):
     engine = create_engine('sqlite:///' + dbfname, echo = False)
     Base.metadata.create_all(engine) 
 
+    #read_element_list('element.txt')
+
     from sqlalchemy.orm import sessionmaker
     Session = sessionmaker(bind=engine)
     session = Session()
-
 
     with open(fname, 'r') as f:
         dialect = csv.excel
@@ -232,30 +280,37 @@ def import_tracy_va_table(fname, dbfname = 'us_nsls2.sqlite'):
             if not pvr:
                 pvr = ChannelRecord(r1['#pv_name'], r1.get("el_name_va", ""))
 
-            pvr.ordinal = r1.get('el_idx_va', -1)
-            pvr.cell   = r1.get('cell', '')
-            pvr.girder = r1.get('girder', '')
             pvr.handle = r1['handle']
-            pvr.system = r1.get('machine', '')
-            pvr.symmetry = r1.get('symmetry', '')
             #
-            pvr.tracy_el_idx_va = r1.get('el_idx_va', -1)
-            pvr.tracy_machine   = r1.get('machine', "")
-            pvr.tracy_el_name_va  = r1.get('el_name_va', "")
-            pvr.tracy_el_type_va  = r1.get('el_type_va', "")
             pvr.tracy_el_field_va = r1.get('el_field_va', '')
             # cell
             # girder
             # handle
+            elem = session.query(Element).\
+                filter(Element.name.like('%' + ChannelRecord.pv == r1['#pv_name']).first()
             update_pvr(pvr, "elemname", r1)
             update_pvr(pvr, "elemtype", r1)
             update_pvr(pvr, "handle", r1)
             update_pvr(pvr, "tags", r1)
 
-            session.add(pvr)
+            if fnmatch(pvr.elemname, "S[MLH]*"):
+                fullname = slst[iel/2][0]
+                if pvr.elemname[:2] != fullname[:2] or \
+                        fullname.find(pvr.cell) <= 0 or \
+                        fullname.find(pvr.girder) <= 0:
+                        raise RuntimeError("element does not match: '%s' '%s'" % (
+                                pvr.elemname, fullname))
+
+                print pvr.elemname, slst[iel/2]
+                pvr.elemname = fullname
+                pvr.send = slst[iel/2][1]
+                pvr.length = slst[iel/2][2]
+                iel += 1
+
+            #session.add(pvr)
             #session.flush()
 
-        session.commit()
+        #session.commit()
             
 
 def import_cfa_table(fname, dbfname = 'us_nsls2.sqlite'):
@@ -461,7 +516,7 @@ if __name__ == "__main__":
     #out = 'cfa.txt'
     #dump_hla_cfa(out)
     import_tracy_va_table("nsls2srid_prop.csv")
-    import_cfa_table(sys.argv[1])
+    #import_cfa_table(sys.argv[1])
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
         #initialize_cfs(sys.argv[1])
