@@ -88,7 +88,12 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         # find if the element exists.
         elem = lat._find_exact_element(name=name)
         if elem is None:
-            elem = CaElement(**prpt)
+            try:
+                elem = CaElement(**prpt)
+            except:
+                print("Error: creating element '{0}' with '{1}'".format(name, prpt))
+                raise
+
             #lat.appendElement(elem)
             lat.insertElement(elem)
 
@@ -100,7 +105,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
     lat.sortElements()
     lat.circumference = lat[-1].se if lat.size() > 0 else 0.0
     
-    logger.debug("mode " + lat.mode)
+    logger.debug("mode {0}".format(lat.mode))
     logger.debug("'%s' has %d elements" % (lat.name, lat.size()))
     for g in sorted(lat._group.keys()):
         logger.debug("lattice '%s' group %s(%d)" % (
@@ -119,14 +124,15 @@ def initNSLS2V1():
     """
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2v1_cfs.csv'
+    cfs_filename = 'us_nsls2v1.db'
     src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
-        msg = "Creating lattice from home csv '%s'" % src_home_csv
+        msg = "Creating lattice from home file '%s'" % src_home_csv
         logger.info(msg)
-        cfa.importCsv(src_home_csv)
+        if src_home_csv.endswith('.csv'): cfa.importCsv(src_home_csv)
+        elif src_home_csv.endswith('.db'): cfa.importSqliteDb(src_home_csv)
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         logger.info(msg)
@@ -136,7 +142,8 @@ def initNSLS2V1():
         msg = "Creating lattice from '%s'" % src_pkg_csv
         logger.info(msg)
         #print(msg)
-        cfa.importCsv(src_pkg_csv)
+        if src_pkg_csv.endswith('.csv'): cfa.importCsv(src_pkg_csv)
+        elif src_pkg_csv.endswith('.db'): cfa.importSqliteDb(src_pkg_csv)
     else:
         logger.error("Channel finder data are available, no '%s', no server" % 
                      cfs_filename)
@@ -179,6 +186,14 @@ def initNSLS2V1():
                             'family': HLA_VFAMILY})
     _lattice_dict['V1SR'].insertElement(allbpm, groups=[HLA_VFAMILY])
 
+    # tune element from twiss
+    twiss = _lattice_dict['V1SR'].getElementList('twiss')[0]
+    tune = CaElement(name='tune', virtual=1)
+    tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
+                        [HLA_TAG_PREFIX+'.elemfield.x'])
+    tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
+                        [HLA_TAG_PREFIX+'.elemfield.y'])
+    _lattice_dict['V1SR'].insertElement(tune)
     #
     # LTB 
     _lattice_dict['V1LTB'].loop = False

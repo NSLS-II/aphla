@@ -100,7 +100,7 @@ class TestElement(unittest.TestCase):
 
     def test_tune(self):
         logging.info("test_tune")
-        tune = ap.getElements('TUNE')[0]
+        tune = ap.getElements('tune')[0]
         nux, nuy = tune.x, tune.y
         val = tune.value
         self.assertTrue(len(val), 2)
@@ -108,7 +108,7 @@ class TestElement(unittest.TestCase):
         self.assertAlmostEqual(nuy, val[1])
         
     def test_dcct(self):
-        dccts = ap.getElements('DCCT')
+        dccts = ap.getElements('dcct')
         self.assertEqual(len(dccts), 1)
         dcct = dccts[0]
         # current
@@ -165,6 +165,7 @@ class TestElement(unittest.TestCase):
         self.assertGreater(np.std(vbpm.x), 0.0)
         self.assertGreater(np.std(vbpm.y), 0.0)
 
+    @unittest.skip("ORM data PV changed")
     def test_corr_orbit(self):
         bpm = ap.getElements('P*C1[0-3]*')
         trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
@@ -232,17 +233,18 @@ class TestChanFinderCsvData(unittest.TestCase):
     """
     """
     def setUp(self):
-        self.cfs_csv = 'us_nsls2v1_cfs.csv'
+        #self.cfs_csv = 'us_nsls2v1_cfs.csv'
+        self.cfs_db = 'us_nsls2v1.db'
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
     def test_conf(self):
-        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_csv)))
+        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_db)))
 
-    def test_csv_tags(self):
+    def test_db_tags(self):
         cfa = ap.chanfinder.ChannelFinderAgent()
-        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_csv)))
-        cfa.importCsv(ap.conf.filename(self.cfs_csv))
+        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_db)))
+        cfa.importSqliteDb(ap.conf.filename(self.cfs_db))
 
         tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V1*')
         for t in ['V1SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
@@ -811,7 +813,7 @@ class TestBba(unittest.TestCase):
         pass
 
     def test_quad(self):
-        qnamelist = ['QH1G2C02A', 'QH1G2C04A', 'QH1G2C06A', 'QH1G2C08A']
+        qnamelist = ['qh1g2c02a', 'qh1g2c04a', 'qh1g2c06a', 'qh1g2c08a']
 
         qlst = ap.getElements(qnamelist)
         for i,q in enumerate(qnamelist):
