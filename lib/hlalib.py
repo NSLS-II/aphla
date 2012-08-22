@@ -37,11 +37,11 @@ __all__ = [
 # current
 def getCurrent():
     """
-    Get the current from the first 'DCCT' element
+    Get the current from the first 'dcct' element
 
     seealso :func:`getElements`
     """
-    _current = getElements('DCCT')
+    _current = getElements('dcct')
     if len(_current) == 1:
         return _current[0].value
     elif len(_current) > 1:
@@ -101,9 +101,9 @@ def _reset_trims(verbose=False):
     trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
     pv = []
     for e in trimx:
-        pv.extend(e.pv(field='x', handle='SETPOINT'))
+        pv.extend(e.pv(field='x', handle='SET'))
     for e in trimy:
-        pv.extend(e.pv(field='y', handle='SETPOINT'))
+        pv.extend(e.pv(field='y', handle='SET'))
     if not pv:
         raise ValueError("no pv for trims found")
     
@@ -520,8 +520,8 @@ def getTunes(source='machine'):
     """
     if source == 'machine':
         # return only the first matched element
-        nu, = getElements('TUNE')
-        return nu.value
+        nu, = getElements('tune')
+        return nu.x, nu.y
     elif source == 'database':
         return machines._lat.getTunes()
     elif source == 'model':

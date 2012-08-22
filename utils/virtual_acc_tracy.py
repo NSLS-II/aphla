@@ -52,15 +52,15 @@ def patch_va_table_1(inpt, oupt):
     patch the va table from Guobao. see "nsls2srid_prop.csv"
 
     #pv_name, el_idx_va, machine, cell, girder, handle, el_name_va, el_field_va, el_type_va
-    V:1-SR:C30-MG:G2{SH1:7}Fld:SP,7,V:1-SR,C30,G2,setpoint,SH1G2C30A,K,Sextupole
-    V:1-SR:C30-MG:G2{SH1:7}Fld:I,7,V:1-SR,C30,G2,readback,SH1G2C30A,K,Sextupole
+    V:1-SR:C30-MG:G2{SH1:7}Fld:SP,7,V:1-SR,C30,G2,set,SH1G2C30A,K,Sextupole
+    V:1-SR:C30-MG:G2{SH1:7}Fld:I,7,V:1-SR,C30,G2,read,SH1G2C30A,K,Sextupole
     V:1-SR:C30-BI:G2{BPM:9}SA:X,9,V:1-SR,C30,G2,X,BPM,,Beam Position Monitor
     V:1-SR:C30-BI:G2{BPM:9}SA:Y,9,V:1-SR,C30,G2,Y,BPM,,Beam Position Monitor
-    V:1-SR:C30-MG:G2{QH1:11}Fld:SP,11,V:1-SR,C30,G2,setpoint,QH1G2C30A,K,Quadrupole
-    V:1-SR:C30-MG:G2{QH1:11}Fld:I,11,V:1-SR,C30,G2,readback,QH1G2C30A,K,Quadrupole
-    V:1-SR:C30-MG:G2{SQHH:13}Fld:SP,13,V:1-SR,C30,G2,setpoint,SQHHG2C30A,K,Quadrupole
-    V:1-SR:C30-MG:G2{SQHH:13}Fld:I,13,V:1-SR,C30,G2,readback,SQHHG2C30A,K,Quadrupole
-    V:1-SR:C30-MG:G2{CH:14}Fld:SP,14,V:1-SR,C30,G2,setpoint,CH,,Horizontal Corrector
+    V:1-SR:C30-MG:G2{QH1:11}Fld:SP,11,V:1-SR,C30,G2,set,QH1G2C30A,K,Quadrupole
+    V:1-SR:C30-MG:G2{QH1:11}Fld:I,11,V:1-SR,C30,G2,read,QH1G2C30A,K,Quadrupole
+    V:1-SR:C30-MG:G2{SQHH:13}Fld:SP,13,V:1-SR,C30,G2,set,SQHHG2C30A,K,Quadrupole
+    V:1-SR:C30-MG:G2{SQHH:13}Fld:I,13,V:1-SR,C30,G2,read,SQHHG2C30A,K,Quadrupole
+    V:1-SR:C30-MG:G2{CH:14}Fld:SP,14,V:1-SR,C30,G2,set,CH,,Horizontal Corrector
 
     """
     finpt = open(inpt, 'r')
@@ -87,7 +87,7 @@ def patch_va_table_1(inpt, oupt):
             loc, sym = elem_pattern(jbpm[grp[idx]])
             grp[iname] = 'P%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
             grp[ifield] = grp[ihandle].lower() # it was a bug in Guobao's data
-            grp[ihandle] = 'readback'
+            grp[ihandle] = 'read'
         elif grp[itype] == 'Quadrupole': 
             grp[itype] = 'QUAD'
             if grp[ifield] == 'K': grp[ifield] = 'k1'
@@ -106,9 +106,9 @@ def patch_va_table_1(inpt, oupt):
             elif grp[iname] == 'CH':
                 loc, sym = elem_pattern(jhcor[grp[idx]])
                 grp[iname] = 'CX%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
-                grp[ifield] = 'x'
             else: raise RuntimeError('%s' % grp[iname])
-            if grp[ifield] == 'X': grp[ifield] = 'x'
+            grp[ifield] = 'x'
+            #if grp[ifield] == 'X': grp[ifield] = 'x'
         elif grp[itype] == 'Vertical Corrector': 
             grp[itype] = 'VCOR'
             jvcor.setdefault(grp[idx], len(jvcor))
@@ -117,9 +117,9 @@ def patch_va_table_1(inpt, oupt):
             elif grp[iname] == 'CV':
                 loc, sym = elem_pattern(jvcor[grp[idx]])
                 grp[iname] = 'CY%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
-                grp[ifield] = 'Y'
             else: raise RuntimeError('%s' % grp[iname])
-            if grp[ifield] == 'Y': grp[ifield] = 'y'
+            grp[ifield] = 'y'
+            #if grp[ifield] == 'Y': grp[ifield] = 'y'
         elif grp[itype] == 'Bending': 
             grp[itype] = 'DIPOLE'
             if grp[ifield] == 'T': grp[ifield] = ''
@@ -142,9 +142,10 @@ def patch_va_table_1(inpt, oupt):
                         grp[iname] = 'twiss'
                         grp[ifield] = r[1]
                         break
-            elif grp[ipv].find('{DCCT}CUR-') > 0: 
+            elif grp[ipv].find('{DCCT}') > 0: 
                 grp[iname] = 'dcct'
                 grp[itype] = 'DCCT'
+                grp[ifield] = 'value'
             else:
                 raise RuntimeError("'%s' in element '%s'" % (grp[ipv], grp[iname]))
         else:
@@ -183,11 +184,11 @@ def patch_va_table_2(inpt, sinpt, oupt):
         for line in f.readlines():
             grp = [v.strip() for v in line.split(',')]
             foupt.write(line.strip())
-            if grp[idx]:
+            if not grp[idx] or int(grp[idx]) <= 0:
+                foupt.write(",0.0,0.0\n")
+            else:
                 i = int(grp[idx])
                 foupt.write(",{0},{1}\n".format(s[i], s[i] - s[i-1]))
-            else:
-                foupt.write(",0.0,0.0\n")
 
 
 Base = declarative_base()
@@ -235,7 +236,7 @@ class ChannelRecord(Base):
 
     element = relationship("Element", backref=backref("pvs", order_by=pv))
 
-    def __init__(self, pv, elemName, handle = 'readback'):
+    def __init__(self, pv, elemName, handle = 'read'):
         self.pv = pv
         self.elemname = elemName
         self.handle = handle
@@ -280,7 +281,9 @@ def create_sqlite_db(inpt, dbfname = "us_nsls2.sqlite3"):
                 pvr = ChannelRecord(grp[ipv], elem.name, grp[ihandle])
             pvr.element = elem
             pvr.tracy_el_field_va = grp[ifield]
-            pvr.tags = APTAG+"sys.V1SR"
+            pvr.tags = "{0}sys.V1SR".format(APTAG)
+            if grp[ifield]:
+                pvr.tags += ",{0}elemfield.{1}".format(APTAG, grp[ifield])
             session.add(pvr)
             #session.add(elem)
 
@@ -302,6 +305,7 @@ def update_db_pvs_tags(dbfname):
         if a.tracy_el_field_va and a.tags.find(APTAG+'elemfield.' + a.tracy_el_field_va) < 0:
             a.tags += ',' + APTAG+'elemfield.' + a.tracy_el_field_va
             session.add(a)
+            
     session.commit()
 
 def check_db(dbfname):

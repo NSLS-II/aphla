@@ -188,12 +188,12 @@ def initNSLS2V1():
 
     # tune element from twiss
     twiss = _lattice_dict['V1SR'].getElementList('twiss')[0]
-    tune = CaElement(name='tune', virtual=1)
+    tune = CaElement(name='tune', virtual=0)
     tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
                         [HLA_TAG_PREFIX+'.elemfield.x'])
     tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
                         [HLA_TAG_PREFIX+'.elemfield.y'])
-    _lattice_dict['V1SR'].insertElement(tune)
+    _lattice_dict['V1SR'].insertElement(tune, 0)
     #
     # LTB 
     _lattice_dict['V1LTB'].loop = False

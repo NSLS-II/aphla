@@ -616,9 +616,9 @@ class CaElement(AbstractElement):
             handle = kwargs.get('handle', None)
             fd = kwargs.get('field', None)
             if fd not in self._field: return []
-            if handle.lower() == 'readback':
+            if handle.lower() == 'read':
                 return self._field[kwargs['field']].pvrb
-            elif handle.lower() == 'setpoint':
+            elif handle.lower() == 'set':
                 return self._field[kwargs['field']].pvsp
             else:
                 return []
@@ -706,9 +706,9 @@ class CaElement(AbstractElement):
 
             # the default handle is 'READBACK'
             if properties is None or \
-                    properties.get('handle', 'READBACK').lower() == 'readback':
+                    properties.get('handle', 'READ').lower() == 'read':
                 self.setFieldGetAction(pvname, fieldname, idx)
-            elif properties.get('handle').lower() == 'setpoint':
+            elif properties.get('handle').lower() == 'set':
                 self.setFieldPutAction(pvname, fieldname, idx)
             else:
                 raise ValueError("invalid 'handle' value '%s' for pv %s" % 
@@ -910,8 +910,8 @@ def merge(elems, **kwargs):
         for f in fds: 
             if f in count: count[f] += 1
             else: count[f] = 1
-            pvrb = e.pv(field=f, handle='readback')
-            pvsp = e.pv(field=f, handle='setpoint')
+            pvrb = e.pv(field=f, handle='read')
+            pvsp = e.pv(field=f, handle='set')
             if f not in pvdict: pvdict[f] = [[], []]
             #print f, pvrb, pvsp
             pvdict[f][0].extend(pvrb)
