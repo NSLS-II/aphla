@@ -203,12 +203,44 @@ def initNSLS2V1():
     # SR
     _lattice_dict['V1SR'].loop = True
     _lat = _lattice_dict['V1SR']
+    # SR Twiss
+    twel = _lat.getElementList('twiss')
+    if len(twel) == 1:
+        tw = twel[0]
+        global _twiss
+        _twiss = Twiss('virtac')
 
+        _twiss.tune = (tw.tunex, tw.tuney)
+        _twiss.chrom = (None, None)
+
+        nps = np.array(tw.s)
+        for ielem in range(_lat.size()):
+            elem = _lat._elements[ielem]
+            if elem.family == HLA_VFAMILY: continue
+            ds = nps - elem.sb
+
+            i = np.argmin(np.abs(nps - elem.sb))
+
+            gammax = (1 + tw.alphax[i]**2)/tw.betax[i]
+            gammay = (1 + tw.alphay[i]**2)/tw.betay[i]
+            twi = TwissItem(s = tw.s[i], alpha=(tw.alphax[i], tw.alphay[i]),
+                           beta=(tw.betax[i], tw.betay[i]),
+                           gamma=(gammax, gammay),
+                           eta=(tw.etax[i], tw.etay[i]),
+                           phi=(tw.phix[i], tw.phiy[i]))
+
+            _twiss._elements.append(elem.name)
+            _twiss.append(twi)
+
+        _lat._twiss = _twiss
+        
 
 def initNSLS2V1SRTwiss():
     """
     initialize the twiss data from virtual accelerator
     """
+    return
+
     # s location
     s      = [v for v in caget('SR:C00-Glb:G00{POS:00}RB-S')]
     # twiss at s_end (from Tracy)

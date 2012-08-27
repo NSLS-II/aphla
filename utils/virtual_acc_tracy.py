@@ -136,6 +136,13 @@ def patch_va_table_1(inpt, oupt):
         elif not grp[itype]:
             if grp[iname] in ['CHIDSim', 'CVIDSim', 'CHIDCor', 'CVIDCor']:
                 grp[iname] = grp[iname] + grp[igirder] + grp[icell]
+            elif grp[iname] == 'EPUG1C16':
+                grp[itype] = 'EPU'
+                if grp[ifield] in [ 'Gap', 'Phase']:
+                    grp[ifield] = grp[ifield].lower()
+                else:
+                    raise RuntimeError("Unknown field '%s' for '%s'" % (
+                            grp[ifield], grp[iname]))
             elif twiss_element(grp[ipv]): 
                 for r in twiss:
                     if grp[ipv].find(r[0]) > 0:
