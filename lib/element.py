@@ -709,7 +709,7 @@ class CaElement(AbstractElement):
                 else:
                     raise ValueError("invalid 'handle' value '%s' for pv %s" % 
                                      (properties.get('handle'), pvname))
-                logger.info("%s %s = %s" % (elemhandle, fieldname, pvname))
+                logger.info("'%s' field '%s' = '%s'" % (elemhandle, fieldname, pvname))
 
         # check element field
         #for t in tags:

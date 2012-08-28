@@ -14,7 +14,7 @@ from sqlalchemy.orm import relationship, backref
 C = 787.793/30
 
 ipv, idx, isys, icell, igirder, ihandle, iname0, ifield0, itype0 = range(9)
-iname1, itype1, ifield1, isend, ilength = 9, 10, 11, 12, 13
+iname1, itype1, ifield1, isend, ilength,itag = 9, 10, 11, 12, 13, 14
 
 APTAG = "aphla."
 
@@ -65,7 +65,7 @@ def patch_va_table_1(inpt, oupt):
     """
     finpt = open(inpt, 'r')
     foupt = open(oupt, 'w')
-    foupt.write(finpt.readline().strip() + ",elemName\n")
+    foupt.write(finpt.readline().strip() + ",elemName,elemType,elemField\n")
     elemlst = {}
     jbpm, jhcor, jvcor = {}, {}, {}
     for s in finpt.readlines():
@@ -148,16 +148,22 @@ def patch_va_table_1(inpt, oupt):
                 else:
                     raise RuntimeError("Unknown field '%s' for '%s'" % (
                             grp[ifield0], grp[iname0]))
+            elif grp[ipv].find('{DCCT}') > 0: 
+                grp[iname1] = 'dcct'
+                grp[itype1] = 'DCCT'
+                grp[ifield1] = 'value'
+            elif grp[ipv].find('{TUNE}X') > 0:
+                grp[iname1] = 'tune'
+                grp[ifield1] = 'x'
+            elif grp[ipv].find('{TUNE}Y') > 0:
+                grp[iname1] = 'tune'
+                grp[ifield1] = 'y'
             elif twiss_element(grp[ipv]): 
                 for r in twiss:
                     if grp[ipv].find(r[0]) > 0:
                         grp[iname1] = 'twiss'
                         grp[ifield1] = r[1]
                         break
-            elif grp[ipv].find('{DCCT}') > 0: 
-                grp[iname0] = 'dcct'
-                grp[itype1] = 'DCCT'
-                grp[ifield1] = 'value'
             else:
                 raise RuntimeError("'%s' in element '%s'" % (grp[ipv], grp[iname0]))
         else:
@@ -197,11 +203,13 @@ def patch_va_table_2(inpt, sinpt, oupt):
             grp = [v.strip() for v in line.split(',')]
             foupt.write(line.strip())
             if not grp[idx] or int(grp[idx]) <= 0:
-                foupt.write(",0.0,0.0\n")
+                foupt.write(",0.0,0.0")
             else:
                 i = int(grp[idx])
-                foupt.write(",{0},{1}\n".format(s[i], s[i] - s[i-1]))
-
+                foupt.write(",{0},{1}".format(s[i], s[i] - s[i-1]))
+            if grp[ipv].find("SR") > 0: foupt.write(",aphla.sys.V1SR")
+            else: foupt.write(",")
+            foupt.write("\n")
 
 Base = declarative_base()
 class Element(Base):
@@ -296,7 +304,7 @@ def create_sqlite_db(inpt, dbfname = "us_nsls2.sqlite3"):
                 pvr = ChannelRecord(grp[ipv], elem.name, grp[ihandle])
             pvr.element = elem
             pvr.tracy_el_field_va = grp[ifield0]
-            pvr.tags = "{0}sys.V1SR".format(APTAG)
+            if grp[itag]: pvr.tags = grp[itag].replace(';', ',')
             if grp[ifield1]:
                 pvr.elemField = grp[ifield1]
                 #pvr.tags += ",{0}elemfield.{1}".format(APTAG, grp[ifield])
@@ -334,10 +342,64 @@ def check_db(dbfname):
         print r
     c.close()
 
+def append_ltb_csv(src, out):
+    f1 = open(src, 'r')
+    f2 = open(out, 'a')
+    head = f1.readline().strip().split(',')
+    print len(head)
+    
+    neworder = ['PV', 'ordinal', 'system', 'cell', 'girder', 'handle', 
+                None, None, None, 'elemName', 'elemType', None, 'sEnd',
+                'length', None]
+    for line in f1.readlines():
+        grp = []
+        src = line.strip().split(',')
+        tags = src[len(head):]
+        #print tags
+        field = None
+        for t in tags:
+            if not t.startswith('aphla'):
+                raise RuntimeError("not a tag '%s'" % t)
+            if t.startswith('aphla.elemfield.'): field = t[len('aphla.elemfield/'):]
+        #if field is not None: print field
+
+        for i,v in enumerate(neworder):
+            if v is not None: v2 = src[head.index(v)]
+            elif i in [iname0, ifield0, itype0]: v2 = ''
+            elif i == ifield1:
+                if field is not None: v2 = field
+                else: v2 = ''
+            elif i == itag:
+                print tags,
+                newtags = []
+                for t in tags:
+                    if t.startswith('aphla.elemfield.'): continue
+                    if t in ['aphla.x', 'aphla.y', 'aphla.eget', 'aphla.eput']: continue
+                    newtags.append(t)
+
+                v2 = ';'.join(newtags)
+                print v2
+            else:
+                raise RuntimeError("unknown v '%s'" % v)
+
+            if i == iname1: grp.append(v2.lower())
+            elif i == ihandle:
+                if v2 == 'READBACK': grp.append('read')
+                elif v2 == 'SETPOINT': grp.append('set')
+                else:
+                    raise RuntimeError("unknonw handle: '%s'" % v2)
+            else: grp.append(v2)
+        f2.write(','.join(grp) + '\n')
+    f1.close()
+    f2.close()
+
 if __name__ == "__main__":
     dbfname = "us_nsls2v1.db"
     patch_va_table_1(sys.argv[1], "output.txt")
     patch_va_table_2("output.txt", "s.txt", "cfd.txt")
+    if len(sys.argv) == 3:
+        append_ltb_csv(sys.argv[2], "cfd.txt")
+
     create_sqlite_db("cfd.txt", dbfname)
     #update_db_pvs_tags(dbfname)
     check_db(dbfname)

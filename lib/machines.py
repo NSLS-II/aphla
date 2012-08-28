@@ -83,7 +83,6 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         name = prpt.get('name', None)
 
         logger.debug("{0} {1} {2}".format(rec[0], rec[1], rec[2]))
-        #if name == 'CXHG2C30A': print(pv, prpt, rec[2])
 
         # find if the element exists.
         elem = lat._find_exact_element(name=name)
@@ -150,12 +149,14 @@ def initNSLS2V1(with_twiss = False):
         raise RuntimeError("Failed at loading cache file")
 
     #print(msg)
+    # the property in Element mirrored from ChannelFinder property
     for k in [('name', u'elemName'), 
               ('field', u'elemField'), 
               ('devname', u'devName'),
               ('family', u'elemType'), 
-              ('index', u'ordinal'), 
-              ('se', u'sEnd'),
+              ('handle', u'elemHandle'),
+              ('index', u'elemIndex'), 
+              ('se', u'elemPosition'),
               ('system', u'system')]:
         cfa.renameProperty(k[1], k[0])
 
@@ -187,13 +188,13 @@ def initNSLS2V1(with_twiss = False):
     _lattice_dict['V1SR'].insertElement(allbpm, groups=[HLA_VFAMILY])
 
     # tune element from twiss
-    twiss = _lattice_dict['V1SR'].getElementList('twiss')[0]
-    tune = CaElement(name='tune', virtual=0)
-    tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
-                        [HLA_TAG_PREFIX+'.elemfield.x'])
-    tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
-                        [HLA_TAG_PREFIX+'.elemfield.y'])
-    _lattice_dict['V1SR'].insertElement(tune, 0)
+    #twiss = _lattice_dict['V1SR'].getElementList('twiss')[0]
+    #tune = CaElement(name='tune', virtual=0)
+    #tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
+    #                    [HLA_TAG_PREFIX+'.elemfield.x'])
+    #tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
+    #                    [HLA_TAG_PREFIX+'.elemfield.y'])
+    #_lattice_dict['V1SR'].insertElement(tune, 0)
     #
     # LTB 
     _lattice_dict['V1LTB'].loop = False
@@ -261,7 +262,7 @@ def initNSLS2V1SRTwiss():
     chx = caget('SR:C00-Glb:G00{CHROM:00}RB-X')
     chy = caget('SR:C00-Glb:G00{CHROM:00}RB-Y')
 
-    global _twiss, _lat
+    #global _twiss, _lat
 
     #print(__file__, "Reading twiss items:", len(s))
     logger.info("Elements in lattice '%s': %d" % 
