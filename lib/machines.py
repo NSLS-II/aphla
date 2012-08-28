@@ -114,7 +114,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
     return lat
 
 
-def initNSLS2V1():
+def initNSLS2V1(with_twiss = False):
     """ 
     initialize the virtual accelerator 'V1SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
@@ -203,11 +203,18 @@ def initNSLS2V1():
     # SR
     _lattice_dict['V1SR'].loop = True
     _lat = _lattice_dict['V1SR']
+        
+
+def initNSLS2V1SRTwiss():
+    """
+    initialize the twiss data from virtual accelerator
+    """
+
     # SR Twiss
+    global _lat, _twiss
     twel = _lat.getElementList('twiss')
     if len(twel) == 1:
         tw = twel[0]
-        global _twiss
         _twiss = Twiss('virtac')
 
         _twiss.tune = (tw.tunex, tw.tuney)
@@ -233,12 +240,7 @@ def initNSLS2V1():
             _twiss.append(twi)
 
         _lat._twiss = _twiss
-        
 
-def initNSLS2V1SRTwiss():
-    """
-    initialize the twiss data from virtual accelerator
-    """
     return
 
     # s location

@@ -528,6 +528,8 @@ class CaDecorator:
 class CaElement(AbstractElement):
     """
     Element with Channel Access ability
+
+    'field' -> Object Attr.
     """
     __slots__ = []
     def __init__(self, **kwargs):
@@ -694,25 +696,31 @@ class CaElement(AbstractElement):
         if properties is not None: 
             self.updateProperties(properties)
 
+        
+        # the default handle is 'READBACK'
+        if properties is not None:
+            elemhandle = properties.get('handle', 'read').lower()
+            fieldname = properties.get('field', None)
+            if fieldname:
+                if elemhandle == 'read': 
+                    self.setFieldGetAction(pvname, fieldname)
+                elif elemhandle == 'set':
+                    self.setFieldPutAction(pvname, fieldname)
+                else:
+                    raise ValueError("invalid 'handle' value '%s' for pv %s" % 
+                                     (properties.get('handle'), pvname))
+                logger.info("%s %s = %s" % (elemhandle, fieldname, pvname))
+
         # check element field
-        for t in tags:
-            g = re.match(r'aphla.elemfield.([\w\d]+)(\[\d+\])?', t)
-            if g is None: continue
-
-            fieldname, idx = g.group(1), g.group(2)
-            if idx is not None: 
-                idx = int(idx[1:-1])
-                logger.info("%s %s[%d]" % (pvname, fieldname, idx))
-
-            # the default handle is 'READBACK'
-            if properties is None or \
-                    properties.get('handle', 'READ').lower() == 'read':
-                self.setFieldGetAction(pvname, fieldname, idx)
-            elif properties.get('handle').lower() == 'set':
-                self.setFieldPutAction(pvname, fieldname, idx)
-            else:
-                raise ValueError("invalid 'handle' value '%s' for pv %s" % 
-                                 (properties.get('handle'), pvname))
+        #for t in tags:
+        #    g = re.match(r'aphla.elemfield.([\w\d]+)(\[\d+\])?', t)
+        #    if g is None: continue
+        #
+        #    fieldname, idx = g.group(1), g.group(2)
+        #    if idx is not None: 
+        #        idx = int(idx[1:-1])
+        #        logger.info("%s %s[%d]" % (pvname, fieldname, idx))
+                        
         # update the (pv, tags) dictionary
         if pvname in self._pvtags.keys(): self._pvtags[pvname].update(tags)
         else: self._pvtags[pvname] = set(tags)
