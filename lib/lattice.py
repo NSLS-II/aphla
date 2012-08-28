@@ -17,6 +17,8 @@ data, an orbit response matrix data and more.
 seealso :mod:`~aphla.element`, :mod:`~aphla.twiss`, :mod:`~aphla.machines`
 """
 
+from __future__ import print_function, unicode_literals
+
 import re
 from math import log10
 import shelve
@@ -24,6 +26,7 @@ import numpy as np
 from fnmatch import fnmatch
 
 from catools import caget, caput
+
 
 class Lattice:
     """
@@ -214,7 +217,7 @@ class Lattice:
 
         for child in chlist:
             if not self._group.has_key(child):
-                print __file__, "WARNING: no %s group found" % child
+                print(__file__, "WARNING: no %s group found" % child)
                 continue
             for elem in self._group[child]:
                 if elem in self._group[parent]: continue

@@ -17,7 +17,7 @@ from __future__ import print_function, unicode_literals
 
 from fnmatch import fnmatch
 from time import gmtime, strftime
-
+import sqlite3
 
 class ChannelFinderAgent(object):
     """
@@ -27,6 +27,14 @@ class ChannelFinderAgent(object):
     data from CSV format file.
     """
     
+    # known properties
+    __properties = ('pv', 'cell', 'devName', 'elemField', 'elemName', 
+                    'elemType', 'girder', 'elemHandle', 'hostName', 'iocName', 
+                    'elemLength', 'elemIndex', 'elemPosition', 'symmetry', 
+                    'system')
+    # known tags
+    __tagprefix = 'aphla.'
+
     def __init__(self, **kwargs):
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
         self.source = None
@@ -108,10 +116,14 @@ class ChannelFinderAgent(object):
         """
         rename the property name
         """
+        n = 0
         for r in self.rows:
             if oldkey not in r[1]: continue
             r[1][newkey] = r[1].pop(oldkey)
+            n += 1
+        #print("Renamed %s records" % n)
 
+    
     def importCsv(self, fname):
         """
         import data from CSV (comma separated values).
@@ -194,6 +206,30 @@ class ChannelFinderAgent(object):
 
             if pv.startswith('#') and len(prpts) == 0: continue
             self.rows.append([pv, prpts, tags])
+
+    def importSqliteDb(self, fname):
+        conn = sqlite3.connect(fname)
+        c = conn.cursor()
+        c.execute('''select * from pvs,elements where pvs.elem_id=elements.elem_id''')
+        # head of columns
+        allcols = [v[0] for v in c.description]
+        icols = [i for i in range(len(c.description)) \
+                     if c.description[i][0] in self.__properties]
+        ipv = allcols.index('pv')
+        itags = allcols.index('tags')
+        for row in c:
+            pv = row[ipv]
+            prpts = {}
+            for i in icols:
+                prpts[allcols[i]] = row[i]
+            if not row[itags]:
+                tags = []
+            else:
+                tags = [v.strip() for v in row[itags].split(',')]
+            self.rows.append([pv, prpts, tags])
+
+        c.close()
+        conn.close()
 
     def exportCsv(self, fname):
         """
