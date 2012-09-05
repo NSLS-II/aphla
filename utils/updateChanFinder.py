@@ -240,7 +240,7 @@ def cfs_append_from_csv1(rec_list, update_only):
             logging.warning("pv {0} is not unique ({1})".format(s[ipv], len(ch)))
         else:
             for p in prpts:
-                continue
+                #continue
                 if p.Name in ignore_prpts: continue
                 #if p.Name != 'symmetry': continue
                 logging.info("updating '{0}' with property, {1}={2}".format(
