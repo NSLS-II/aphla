@@ -53,6 +53,7 @@ class Orm:
             self.bpm = []
             self.trim = []
 
+        logger.info("(nbpm, ntrim)=(%d, %d)" % (len(self.bpm), len(self.trim)))
 
         # count the dimension of matrix
         #nbpm, ntrim  = len(set(bpm)), len(set(trim))
