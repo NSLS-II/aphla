@@ -606,7 +606,7 @@ class CaElement(AbstractElement):
             >>> pv(tag='aphla.X')
             >>> pv(tags=['aphla.EGET', 'aphla.Y'])
             >>> pv(field = "x")
-            >>> pv(field="x", handle='readback')
+            >>> pv(field="x", handle='READBACK')
 
         seealso :class:`CaDecorator`
         """
@@ -618,9 +618,9 @@ class CaElement(AbstractElement):
             handle = kwargs.get('handle', None)
             fd = kwargs.get('field', None)
             if fd not in self._field: return []
-            if handle.lower() == 'read':
+            if handle.upper() == 'READBACK':
                 return self._field[kwargs['field']].pvrb
-            elif handle.lower() == 'set':
+            elif handle.upper() == 'SETPOINT':
                 return self._field[kwargs['field']].pvsp
             else:
                 return []
