@@ -13,8 +13,8 @@ from sqlalchemy.orm import relationship, backref
 
 C = 787.793/30
 
-ipv, idx, isys, icell, igirder, ihandle, iname, ifield, itype = range(9)
-isend, ilength = 9, 10
+ipv, idx, isys, icell, igirder, ihandle, iname0, ifield0, itype0 = range(9)
+iname1, itype1, ifield1, isend, ilength,itag = 9, 10, 11, 12, 13, 14
 
 APTAG = "aphla."
 
@@ -65,96 +65,114 @@ def patch_va_table_1(inpt, oupt):
     """
     finpt = open(inpt, 'r')
     foupt = open(oupt, 'w')
-    foupt.write(finpt.readline())
+    foupt.write(finpt.readline().strip() + ",elemName,elemType,elemField\n")
     elemlst = {}
     jbpm, jhcor, jvcor = {}, {}, {}
     for s in finpt.readlines():
         #v = re.match(r"[A-Z0-9:-]+(C[0-9][0-9]).*[A-Z0-9:,-]+(C[0-9][0-9]).*", s)
         grp = [v.strip() for v in s.split(',')]
+        # append one for real unique name
+        if len(grp) <= iname1: grp.append(grp[iname0][:].lower())
+        if len(grp) <= itype1: grp.append(grp[itype0][:])
+        if len(grp) <= ifield1: grp.append(grp[ifield0][:])
+
         if grp[idx]: i = int(grp[idx])
-        if grp[itype] == 'Sextupole': 
-            grp[itype] = 'SEXT'
-            if grp[ifield] == 'K': grp[ifield] = 'k2'
-            if re.match(r"S[HLM][0-9]G[0-9]C[0-9][0-9][AB]", grp[iname]):
-                grp[iname] = grp[iname][:3] + grp[igirder] + grp[icell] + grp[iname][-1]
-            elif re.match(r"S[HLM][0-9]HG[0-9]C[0-9][0-9][AB]", grp[iname]):
-                grp[iname] = grp[iname][:4] + grp[igirder] + grp[icell] + grp[iname][-1]
+        if grp[itype0] == 'Sextupole': 
+            grp[itype1] = 'SEXT'
+            if grp[ifield0] == 'K': grp[ifield1] = 'k2'
+            if re.match(r"S[HLM][0-9]G[0-9]C[0-9][0-9][AB]", grp[iname0]):
+                grp[iname1] = grp[iname0][:3] + grp[igirder] + grp[icell] + grp[iname0][-1]
+            elif re.match(r"S[HLM][0-9]HG[0-9]C[0-9][0-9][AB]", grp[iname0]):
+                grp[iname1] = grp[iname0][:4] + grp[igirder] + grp[icell] + grp[iname0][-1]
             else:
-                raise RuntimeError("%s" % grp[iname])
-        elif grp[itype] == 'Beam Position Monitor': 
-            grp[itype] = 'BPM'
+                raise RuntimeError("%s" % grp[iname0])
+        elif grp[itype0] == 'Beam Position Monitor': 
+            grp[itype1] = 'BPM'
             jbpm.setdefault(grp[idx], len(jbpm))
             loc, sym = elem_pattern(jbpm[grp[idx]])
-            grp[iname] = 'P%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
-            grp[ifield] = grp[ihandle].lower() # it was a bug in Guobao's data
+            grp[iname1] = 'P%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
+            grp[ifield1] = grp[ihandle].lower() # it was a bug in Guobao's data
             grp[ihandle] = 'read'
-        elif grp[itype] == 'Quadrupole': 
-            grp[itype] = 'QUAD'
-            if grp[ifield] == 'K': grp[ifield] = 'k1'
-            if re.match(r"Q[HLM][0-9]G[0-9]C[0-9][0-9][AB]", grp[iname]):
-                grp[iname] = grp[iname][:3] + grp[igirder] + grp[icell] + grp[iname][-1]
-            elif re.match(r"SQ[HLM][H0-9]*G[0-9]C[0-9][0-9][AB]", grp[iname]):
-                grp[iname] = grp[iname][:4] + grp[igirder] + grp[icell] + grp[iname][-1]
-                grp[itype] = 'SQUAD'
+        elif grp[itype0] == 'Quadrupole': 
+            grp[itype1] = 'QUAD'
+            if grp[ifield0] == 'K': grp[ifield1] = 'k1'
+            if re.match(r"Q[HLM][0-9]G[0-9]C[0-9][0-9][AB]", grp[iname0]):
+                grp[iname1] = grp[iname0][:3] + grp[igirder] + grp[icell] + grp[iname0][-1]
+            elif re.match(r"SQ[HLM][H0-9]*G[0-9]C[0-9][0-9][AB]", grp[iname0]):
+                grp[iname1] = grp[iname0][:4] + grp[igirder] + grp[icell] + grp[iname0][-1]
+                grp[itype1] = 'SQUAD'
             else:
-                raise RuntimeError("%s" % grp[iname])
-        elif grp[itype] == 'Horizontal Corrector': 
-            grp[itype] = 'HCOR'
+                raise RuntimeError("%s" % grp[iname0])
+        elif grp[itype0] == 'Horizontal Corrector': 
+            grp[itype1] = 'HCOR'
             jhcor.setdefault(grp[idx], len(jhcor))
-            if grp[iname] == 'CHIDSim': pass
-            elif grp[iname] == 'CHIDCor': pass
-            elif grp[iname] == 'CH':
+            if grp[iname0].startswith('CHIDSim'): pass
+            elif grp[iname0].startswith('CHIDCor'): pass
+            elif grp[iname0] == 'CH':
                 loc, sym = elem_pattern(jhcor[grp[idx]])
-                grp[iname] = 'CX%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
-            else: raise RuntimeError('%s' % grp[iname])
-            grp[ifield] = 'x'
-            #if grp[ifield] == 'X': grp[ifield] = 'x'
-        elif grp[itype] == 'Vertical Corrector': 
-            grp[itype] = 'VCOR'
+                grp[iname1] = 'CX%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
+            else: raise RuntimeError('%s' % grp[iname0])
+            grp[ifield1] = 'x'
+            #if grp[ifield0] == 'X': grp[ifield1] = 'x'
+        elif grp[itype0] == 'Vertical Corrector': 
+            grp[itype1] = 'VCOR'
             jvcor.setdefault(grp[idx], len(jvcor))
-            if grp[iname] == 'CVIDSim': pass
-            elif grp[iname] == 'CVIDCor': pass
-            elif grp[iname] == 'CV':
+            if grp[iname0].startswith('CVIDSim'): pass
+            elif grp[iname0].startswith('CVIDCor'): pass
+            elif grp[iname0] == 'CV':
                 loc, sym = elem_pattern(jvcor[grp[idx]])
-                grp[iname] = 'CY%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
-            else: raise RuntimeError('%s' % grp[iname])
-            grp[ifield] = 'y'
-            #if grp[ifield] == 'Y': grp[ifield] = 'y'
-        elif grp[itype] == 'Bending': 
-            grp[itype] = 'DIPOLE'
-            if grp[ifield] == 'T': grp[ifield] = ''
-            if re.match(r"B[0-9]G[0-9]C[0-9][0-9][AB]", grp[iname]):
-                grp[iname] = grp[iname][:2] + grp[igirder] + grp[icell] + grp[iname][-1]
+                grp[iname1] = 'CY%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
+            else: raise RuntimeError('%s' % grp[iname0])
+            grp[ifield1] = 'y'
+            #if grp[ifield0] == 'Y': grp[ifield1] = 'y'
+        elif grp[itype0] == 'Bending': 
+            grp[itype1] = 'DIPOLE'
+            if grp[ifield0] == 'T': grp[ifield1] = ''
+            if re.match(r"B[0-9]G[0-9]C[0-9][0-9][AB]", grp[iname0]):
+                grp[iname1] = grp[iname0][:2] + grp[igirder] + grp[icell] + grp[iname0][-1]
             else:
-                raise RuntimeError("%s" % grp[iname])
-        elif grp[itype] == 'Cavity Frequency': 
-            grp[itype] = 'CAVITY'
-            grp[ifield] = 'f'
-        elif grp[itype] == 'Cavity Voltage': 
-            grp[itype] = 'CAVITY'
-            grp[ifield] = 'v'
-        elif not grp[itype]:
-            if grp[iname] in ['CHIDSim', 'CVIDSim', 'CHIDCor', 'CVIDCor']:
-                grp[iname] = grp[iname] + grp[igirder] + grp[icell]
+                raise RuntimeError("%s" % grp[iname0])
+        elif grp[itype0] == 'Cavity Frequency': 
+            grp[itype1] = 'CAVITY'
+            grp[ifield1] = 'f'
+        elif grp[itype0] == 'Cavity Voltage': 
+            grp[itype1] = 'CAVITY'
+            grp[ifield1] = 'v'
+        elif not grp[itype0]:
+            if grp[iname0] in ['CHIDSim', 'CVIDSim', 'CHIDCor', 'CVIDCor']:
+                grp[iname1] = grp[iname0] + grp[igirder] + grp[icell]
+            elif grp[iname0] == 'EPUG1C16':
+                grp[itype1] = 'EPU'
+                if grp[ifield0] in [ 'Gap', 'Phase']:
+                    grp[ifield1] = grp[ifield0].lower()
+                else:
+                    raise RuntimeError("Unknown field '%s' for '%s'" % (
+                            grp[ifield0], grp[iname0]))
+            elif grp[ipv].find('{DCCT}') > 0: 
+                grp[iname1] = 'dcct'
+                grp[itype1] = 'DCCT'
+                grp[ifield1] = 'value'
+            elif grp[ipv].find('{TUNE}X') > 0:
+                grp[iname1] = 'tune'
+                grp[ifield1] = 'x'
+            elif grp[ipv].find('{TUNE}Y') > 0:
+                grp[iname1] = 'tune'
+                grp[ifield1] = 'y'
             elif twiss_element(grp[ipv]): 
                 for r in twiss:
                     if grp[ipv].find(r[0]) > 0:
-                        grp[iname] = 'twiss'
-                        grp[ifield] = r[1]
+                        grp[iname1] = 'twiss'
+                        grp[ifield1] = r[1]
                         break
-            elif grp[ipv].find('{DCCT}') > 0: 
-                grp[iname] = 'dcct'
-                grp[itype] = 'DCCT'
-                grp[ifield] = 'value'
             else:
-                raise RuntimeError("'%s' in element '%s'" % (grp[ipv], grp[iname]))
+                raise RuntimeError("'%s' in element '%s'" % (grp[ipv], grp[iname0]))
         else:
-            raise RuntimeError("Unknown element type '%s' for '%s'" % (grp[itype], grp[iname]))
+            raise RuntimeError("Unknown element type '%s' for '%s'" % (grp[itype0], grp[iname0]))
 
         # use lower case for element name
-        grp[iname] = grp[iname].lower()
+        grp[iname1] = grp[iname1].lower()
 
-        elemlst.setdefault(grp[iname], grp[idx])
+        elemlst.setdefault(grp[iname1], grp[idx])
         
         # the SQUAD and CH, CV might be combined and SQUAD is splitted into two elements
         #if elemlst[grp[iname]] != grp[idx]:
@@ -185,27 +203,29 @@ def patch_va_table_2(inpt, sinpt, oupt):
             grp = [v.strip() for v in line.split(',')]
             foupt.write(line.strip())
             if not grp[idx] or int(grp[idx]) <= 0:
-                foupt.write(",0.0,0.0\n")
+                foupt.write(",0.0,0.0")
             else:
                 i = int(grp[idx])
-                foupt.write(",{0},{1}\n".format(s[i], s[i] - s[i-1]))
-
+                foupt.write(",{0},{1}".format(s[i], s[i] - s[i-1]))
+            if grp[ipv].find("SR") > 0: foupt.write(",aphla.sys.V1SR")
+            else: foupt.write(",")
+            foupt.write("\n")
 
 Base = declarative_base()
 class Element(Base):
     __tablename__ = "elements"
-    id = Column(Integer, primary_key=True)
+    elem_id  = Column(Integer, primary_key=True)
     name     = Column('elemName', String)
     elemtype = Column('elemType', String)
     machine  = Column('system', String)
     cell     = Column(String)
     girder   = Column(String)
     symmetry = Column(String)
-    s_end    = Column('sEnd', Float)
-    length   = Column(Float)
+    s_end    = Column('elemPosition', Float)
+    length   = Column('elemLength', Float)
     virtual  = Column(Integer)
 
-    tracy_el_idx_va = Column('ordinal', Integer)
+    tracy_el_idx_va = Column('elemIndex', Integer)
     tracy_machine   = Column(String)
     tracy_el_name_va = Column(String)
     tracy_el_type_va = Column(String)
@@ -225,12 +245,13 @@ class ChannelRecord(Base):
     __tablename__ = 'pvs'
 
     pv       = Column(String, primary_key=True)
-    elem_id  = Column(Integer, ForeignKey('elements.id'))
+    elem_id  = Column(Integer, ForeignKey('elements.elem_id'))
     devname  = Column('devName', String)
-    handle   = Column(String, nullable=False)
+    handle   = Column('elemHandle', String, nullable=False)
     hostname = Column('hostName', String)
     iocname  = Column('iocName', String)
     tags     = Column(String) # deliminator: ','
+    elemField = Column(String)
 
     tracy_el_field_va = Column(String)
 
@@ -258,9 +279,9 @@ def create_sqlite_db(inpt, dbfname = "us_nsls2.sqlite3"):
         for rec in f.readlines():
             grp = rec.split(',')
             elem = session.query(Element).\
-                filter(Element.name == grp[iname]).first()
+                filter(Element.name == grp[iname1]).first()
             if not elem:
-                elem = Element(grp[iname], grp[itype], grp[isys])
+                elem = Element(grp[iname1], grp[itype1], grp[isys])
             elem.s_end = grp[isend]
             elem.length = grp[ilength]
             elem.cell = grp[icell]
@@ -268,6 +289,8 @@ def create_sqlite_db(inpt, dbfname = "us_nsls2.sqlite3"):
             if grp[idx]: elem.tracy_el_idx_va = grp[idx]
             else: elem.tracy_el_idx_va = -1
             elem.tracy_machine = grp[isys]
+            elem.tracy_el_name_va = grp[iname0]
+            elem.tracy_el_type_va = grp[itype0]
 
             if elem.cell and elem.girder:
                 if elem.name.endswith('a'): elem.symmetry = 'A'
@@ -280,10 +303,11 @@ def create_sqlite_db(inpt, dbfname = "us_nsls2.sqlite3"):
             if not pvr:
                 pvr = ChannelRecord(grp[ipv], elem.name, grp[ihandle])
             pvr.element = elem
-            pvr.tracy_el_field_va = grp[ifield]
-            pvr.tags = "{0}sys.V1SR".format(APTAG)
-            if grp[ifield]:
-                pvr.tags += ",{0}elemfield.{1}".format(APTAG, grp[ifield])
+            pvr.tracy_el_field_va = grp[ifield0]
+            if grp[itag]: pvr.tags = grp[itag].replace(';', ',')
+            if grp[ifield1]:
+                pvr.elemField = grp[ifield1]
+                #pvr.tags += ",{0}elemfield.{1}".format(APTAG, grp[ifield])
             session.add(pvr)
             #session.add(elem)
 
@@ -300,28 +324,82 @@ def update_db_pvs_tags(dbfname):
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    for a in session.query(ChannelRecord).all():
-        #if a.tracy_el_field_va in ['x', 'y', 'k1', 'f', 'v', 'k2']:
-        if a.tracy_el_field_va and a.tags.find(APTAG+'elemfield.' + a.tracy_el_field_va) < 0:
-            a.tags += ',' + APTAG+'elemfield.' + a.tracy_el_field_va
-            session.add(a)
-            
-    session.commit()
+    #for a in session.query(ChannelRecord).all():
+    #    #if a.tracy_el_field_va in ['x', 'y', 'k1', 'f', 'v', 'k2']:
+    #    #if a.tracy_el_field_va and a.tags.find(APTAG+'elemfield.' + a.tracy_el_field_va) < 0:
+    #    #a.tags += ',' + APTAG+'elemfield.' + a.tracy_el_field_va
+    #    session.add(a)
+    #        
+    #session.commit()
 
 def check_db(dbfname):
     import sqlite3
     conn = sqlite3.connect(dbfname)
     c = conn.cursor()
-    c.execute('''select * from pvs,elements where pvs.elem_id=elements.id''')
+    c.execute('''select * from pvs,elements where pvs.elem_id=elements.elem_id''')
     print c.description
     for r in c.fetchall()[:5]:
         print r
     c.close()
 
+def append_ltb_csv(src, out):
+    f1 = open(src, 'r')
+    f2 = open(out, 'a')
+    head = f1.readline().strip().split(',')
+    print len(head)
+    
+    neworder = ['PV', 'ordinal', 'system', 'cell', 'girder', 'handle', 
+                None, None, None, 'elemName', 'elemType', None, 'sEnd',
+                'length', None]
+    for line in f1.readlines():
+        grp = []
+        src = line.strip().split(',')
+        tags = src[len(head):]
+        #print tags
+        field = None
+        for t in tags:
+            if not t.startswith('aphla'):
+                raise RuntimeError("not a tag '%s'" % t)
+            if t.startswith('aphla.elemfield.'): field = t[len('aphla.elemfield/'):]
+        #if field is not None: print field
+
+        for i,v in enumerate(neworder):
+            if v is not None: v2 = src[head.index(v)]
+            elif i in [iname0, ifield0, itype0]: v2 = ''
+            elif i == ifield1:
+                if field is not None: v2 = field
+                else: v2 = ''
+            elif i == itag:
+                #print tags,
+                newtags = []
+                for t in tags:
+                    if t.startswith('aphla.elemfield.'): continue
+                    if t in ['aphla.x', 'aphla.y', 'aphla.eget', 'aphla.eput']: continue
+                    newtags.append(t)
+
+                v2 = ';'.join(newtags)
+                #print v2
+            else:
+                raise RuntimeError("unknown v '%s'" % v)
+
+            if i == iname1: grp.append(v2.lower())
+            elif i == ihandle:
+                if v2 == 'READBACK': grp.append('read')
+                elif v2 == 'SETPOINT': grp.append('set')
+                else:
+                    raise RuntimeError("unknonw handle: '%s'" % v2)
+            else: grp.append(v2)
+        f2.write(','.join(grp) + '\n')
+    f1.close()
+    f2.close()
+
 if __name__ == "__main__":
     dbfname = "us_nsls2v1.db"
     patch_va_table_1(sys.argv[1], "output.txt")
     patch_va_table_2("output.txt", "s.txt", "cfd.txt")
+    if len(sys.argv) == 3:
+        append_ltb_csv(sys.argv[2], "cfd.txt")
+
     create_sqlite_db("cfd.txt", dbfname)
-    update_db_pvs_tags(dbfname)
+    #update_db_pvs_tags(dbfname)
     check_db(dbfname)

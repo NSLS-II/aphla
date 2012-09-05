@@ -287,7 +287,7 @@ def import_tracy_va_table(fname, dbfname = 'us_nsls2.sqlite'):
             # girder
             # handle
             elem = session.query(Element).\
-                filter(Element.name.like('%' + ChannelRecord.pv == r1['#pv_name']).first()
+                filter(Element.name.like('%' + ChannelRecord.pv == r1['#pv_name'])).first()
             update_pvr(pvr, "elemname", r1)
             update_pvr(pvr, "elemtype", r1)
             update_pvr(pvr, "handle", r1)
@@ -515,12 +515,12 @@ def test():
 if __name__ == "__main__":
     #out = 'cfa.txt'
     #dump_hla_cfa(out)
-    import_tracy_va_table("nsls2srid_prop.csv")
+    #import_tracy_va_table("nsls2srid_prop.csv")
     #import_cfa_table(sys.argv[1])
 
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
-        #initialize_cfs(sys.argv[1])
-        #update_cfs(sys.argv[1])
+        initialize_cfs(sys.argv[1])
+        update_cfs(sys.argv[1])
         pass
     #test()
     

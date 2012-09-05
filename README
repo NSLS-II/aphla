@@ -1,25 +1,18 @@
-
-doc
-=======
-
-  - export PYTHONPATH if can not import hla for building the doc
-
-
-src
-=======
-
-  - orbit.pyw, orbit display, entrance to orbit correction, orm measurement ...
-
-
-machine
-========
-
-Save the config/data for different machine.
-
-
 build/install
 ==============
 
 - python2.6 setup.py bdist_egg
 - python2.7 setup.py bdist_egg
+
+Replease
+=========
+
+- setup.py: check version, module/package
+- lib/__init__.py: check __version__
+- doc/conf.py: version
+- doc/history.rst
+- ChangeLog
+- doc/_template/index.html
+- './update-lsasd2.sh' to upload doc
+- upload egg file
 

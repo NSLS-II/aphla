@@ -1,3 +1,8 @@
+2012-08-28  Lingyun Yang  <lyyang@debian.localdomain>
+
+	* update channel finder property names and tags
+	* update machines/element
+
 2012-07-20  Lingyun Yang  <lyyang@nsls2yang>
 
 	* add list of elements support in getElements

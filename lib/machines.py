@@ -83,7 +83,6 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         name = prpt.get('name', None)
 
         logger.debug("{0} {1} {2}".format(rec[0], rec[1], rec[2]))
-        #if name == 'CXHG2C30A': print(pv, prpt, rec[2])
 
         # find if the element exists.
         elem = lat._find_exact_element(name=name)
@@ -97,6 +96,9 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
             #lat.appendElement(elem)
             lat.insertElement(elem)
 
+        handle = prpt.get('handle', None).lower()
+        if handle == 'read': prpt['handle'] = 'READBACK'
+        elif handle == 'set': prpt['handle'] = 'SETPOINT'
         elem.updatePvRecord(pv, prpt, rec[2])
 
     # group info is a redundant info, needs rebuild based on each element
@@ -114,7 +116,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
     return lat
 
 
-def initNSLS2V1():
+def initNSLS2V1(with_twiss = False):
     """ 
     initialize the virtual accelerator 'V1SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
@@ -150,12 +152,14 @@ def initNSLS2V1():
         raise RuntimeError("Failed at loading cache file")
 
     #print(msg)
+    # the property in Element mirrored from ChannelFinder property
     for k in [('name', u'elemName'), 
               ('field', u'elemField'), 
               ('devname', u'devName'),
               ('family', u'elemType'), 
-              ('index', u'ordinal'), 
-              ('se', u'sEnd'),
+              ('handle', u'elemHandle'),
+              ('index', u'elemIndex'), 
+              ('se', u'elemPosition'),
               ('system', u'system')]:
         cfa.renameProperty(k[1], k[0])
 
@@ -187,13 +191,13 @@ def initNSLS2V1():
     _lattice_dict['V1SR'].insertElement(allbpm, groups=[HLA_VFAMILY])
 
     # tune element from twiss
-    twiss = _lattice_dict['V1SR'].getElementList('twiss')[0]
-    tune = CaElement(name='tune', virtual=0)
-    tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
-                        [HLA_TAG_PREFIX+'.elemfield.x'])
-    tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
-                        [HLA_TAG_PREFIX+'.elemfield.y'])
-    _lattice_dict['V1SR'].insertElement(tune, 0)
+    #twiss = _lattice_dict['V1SR'].getElementList('twiss')[0]
+    #tune = CaElement(name='tune', virtual=0)
+    #tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
+    #                    [HLA_TAG_PREFIX+'.elemfield.x'])
+    #tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
+    #                    [HLA_TAG_PREFIX+'.elemfield.y'])
+    #_lattice_dict['V1SR'].insertElement(tune, 0)
     #
     # LTB 
     _lattice_dict['V1LTB'].loop = False
@@ -203,12 +207,47 @@ def initNSLS2V1():
     # SR
     _lattice_dict['V1SR'].loop = True
     _lat = _lattice_dict['V1SR']
-
+        
 
 def initNSLS2V1SRTwiss():
     """
     initialize the twiss data from virtual accelerator
     """
+
+    # SR Twiss
+    global _lat, _twiss
+    twel = _lat.getElementList('twiss')
+    if len(twel) == 1:
+        tune = _lat.getElementList('tune')[-1]
+        tw = twel[0]
+        _twiss = Twiss('virtac')
+
+        _twiss.tune = (tune.x, tune.y)
+        _twiss.chrom = (None, None)
+
+        nps = np.array(tw.s)
+        for ielem in range(_lat.size()):
+            elem = _lat._elements[ielem]
+            if elem.family == HLA_VFAMILY: continue
+            ds = nps - elem.sb
+
+            i = np.argmin(np.abs(nps - elem.sb))
+
+            gammax = (1 + tw.alphax[i]**2)/tw.betax[i]
+            gammay = (1 + tw.alphay[i]**2)/tw.betay[i]
+            twi = TwissItem(s = tw.s[i], alpha=(tw.alphax[i], tw.alphay[i]),
+                           beta=(tw.betax[i], tw.betay[i]),
+                           gamma=(gammax, gammay),
+                           eta=(tw.etax[i], tw.etay[i]),
+                           phi=(tw.phix[i], tw.phiy[i]))
+
+            _twiss._elements.append(elem.name)
+            _twiss.append(twi)
+
+        _lat._twiss = _twiss
+
+    return
+
     # s location
     s      = [v for v in caget('SR:C00-Glb:G00{POS:00}RB-S')]
     # twiss at s_end (from Tracy)
@@ -227,7 +266,7 @@ def initNSLS2V1SRTwiss():
     chx = caget('SR:C00-Glb:G00{CHROM:00}RB-X')
     chy = caget('SR:C00-Glb:G00{CHROM:00}RB-Y')
 
-    global _twiss, _lat
+    #global _twiss, _lat
 
     #print(__file__, "Reading twiss items:", len(s))
     logger.info("Elements in lattice '%s': %d" % 

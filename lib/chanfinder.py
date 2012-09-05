@@ -28,9 +28,10 @@ class ChannelFinderAgent(object):
     """
     
     # known properties
-    __properties = ('PV', 'cell', 'devName', 'elemField', 'elemName', 
-                    'elemType', 'girder', 'handle', 'hostName', 'iocName', 
-                    'length', 'ordinal', 'sEnd', 'symmetry', 'system')
+    __properties = ('pv', 'cell', 'devName', 'elemField', 'elemName', 
+                    'elemType', 'girder', 'elemHandle', 'hostName', 'iocName', 
+                    'elemLength', 'elemIndex', 'elemPosition', 'symmetry', 
+                    'system')
     # known tags
     __tagprefix = 'aphla.'
 
@@ -209,7 +210,8 @@ class ChannelFinderAgent(object):
     def importSqliteDb(self, fname):
         conn = sqlite3.connect(fname)
         c = conn.cursor()
-        c.execute('''select * from pvs,elements where pvs.elem_id=elements.id''')
+        c.execute('''select * from pvs,elements where pvs.elem_id=elements.elem_id''')
+        # head of columns
         allcols = [v[0] for v in c.description]
         icols = [i for i in range(len(c.description)) \
                      if c.description[i][0] in self.__properties]
