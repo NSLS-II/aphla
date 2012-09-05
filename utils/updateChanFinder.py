@@ -240,6 +240,7 @@ def cfs_append_from_csv1(rec_list, update_only):
             logging.warning("pv {0} is not unique ({1})".format(s[ipv], len(ch)))
         else:
             for p in prpts:
+                #continue
                 if p.Name in ignore_prpts: continue
                 #if p.Name != 'symmetry': continue
                 logging.info("updating '{0}' with property, {1}={2}".format(
@@ -248,7 +249,15 @@ def cfs_append_from_csv1(rec_list, update_only):
 
     logging.info("finished updating properties")
     for t,pvs in tags.iteritems():
-        cf.update(tag=Tag(t, tag_owner), channelNames=pvs)
+        if not hasTag(cf, t): cf.set(tag=Tag(t, tag_owner))
+        if 'V:1-SR-BI{BETA}X-I' in pvs: continue
+        if 'V:1-SR-BI{BETA}Y-I' in pvs: continue
+        try:
+            cf.update(tag=Tag(t, tag_owner), channelNames=pvs)
+        except:
+            print t, pvs
+            raise
+
         logging.info("update '{0}' for {1} pvs".format(t, len(pvs)))
     logging.info("finished updating tags")
 
@@ -256,7 +265,10 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
     """
     update the cfs from command file:
 
-        PV command property=value,p2=v2,tag
+        addtag tag pv1,pv2,pv3
+        removetag tag pv1,pv2,...
+        addproperty prpt=val pv1,pv2
+        removeproperty prpt pv1,pv2
 
     The properties are updated as 'cf-asd' account, and tags in 'cf-aphla'
     """

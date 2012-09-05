@@ -1160,7 +1160,6 @@ class TestOrm(unittest.TestCase):
     def setUp(self):
         pass
 
-    @unittest.skip("need to ignore ID corr")
     def test_measure_orm(self):
         bpms = ap.getElements('BPM')
         trims = ap.getElements('HCOR')
