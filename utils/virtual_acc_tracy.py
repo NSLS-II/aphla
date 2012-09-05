@@ -106,8 +106,8 @@ def patch_va_table_1(inpt, oupt):
         elif grp[itype0] == 'Horizontal Corrector': 
             grp[itype1] = 'HCOR'
             jhcor.setdefault(grp[idx], len(jhcor))
-            if grp[iname0] == 'CHIDSim': pass
-            elif grp[iname0] == 'CHIDCor': pass
+            if grp[iname0].startswith('CHIDSim'): pass
+            elif grp[iname0].startswith('CHIDCor'): pass
             elif grp[iname0] == 'CH':
                 loc, sym = elem_pattern(jhcor[grp[idx]])
                 grp[iname1] = 'CX%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
@@ -117,8 +117,8 @@ def patch_va_table_1(inpt, oupt):
         elif grp[itype0] == 'Vertical Corrector': 
             grp[itype1] = 'VCOR'
             jvcor.setdefault(grp[idx], len(jvcor))
-            if grp[iname0] == 'CVIDSim': pass
-            elif grp[iname0] == 'CVIDCor': pass
+            if grp[iname0].startswith('CVIDSim'): pass
+            elif grp[iname0].startswith('CVIDCor'): pass
             elif grp[iname0] == 'CV':
                 loc, sym = elem_pattern(jvcor[grp[idx]])
                 grp[iname1] = 'CY%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
@@ -370,7 +370,7 @@ def append_ltb_csv(src, out):
                 if field is not None: v2 = field
                 else: v2 = ''
             elif i == itag:
-                print tags,
+                #print tags,
                 newtags = []
                 for t in tags:
                     if t.startswith('aphla.elemfield.'): continue
@@ -378,7 +378,7 @@ def append_ltb_csv(src, out):
                     newtags.append(t)
 
                 v2 = ';'.join(newtags)
-                print v2
+                #print v2
             else:
                 raise RuntimeError("unknown v '%s'" % v)
 

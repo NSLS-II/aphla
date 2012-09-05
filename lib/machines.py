@@ -218,10 +218,11 @@ def initNSLS2V1SRTwiss():
     global _lat, _twiss
     twel = _lat.getElementList('twiss')
     if len(twel) == 1:
+        tune = _lat.getElementList('tune')[-1]
         tw = twel[0]
         _twiss = Twiss('virtac')
 
-        _twiss.tune = (tw.tunex, tw.tuney)
+        _twiss.tune = (tune.x, tune.y)
         _twiss.chrom = (None, None)
 
         nps = np.array(tw.s)
