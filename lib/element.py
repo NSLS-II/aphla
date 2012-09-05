@@ -699,12 +699,12 @@ class CaElement(AbstractElement):
         
         # the default handle is 'READBACK'
         if properties is not None:
-            elemhandle = properties.get('handle', 'read').lower()
+            elemhandle = properties.get('handle', 'READBACK').upper()
             fieldname = properties.get('field', None)
             if fieldname:
-                if elemhandle == 'read': 
+                if elemhandle == 'READBACK': 
                     self.setFieldGetAction(pvname, fieldname)
-                elif elemhandle == 'set':
+                elif elemhandle == 'SETPOINT':
                     self.setFieldPutAction(pvname, fieldname)
                 else:
                     raise ValueError("invalid 'handle' value '%s' for pv %s" % 

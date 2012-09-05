@@ -96,6 +96,9 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
             #lat.appendElement(elem)
             lat.insertElement(elem)
 
+        handle = prpt.get('handle', None).lower()
+        if handle == 'read': prpt['handle'] = 'READBACK'
+        elif handle == 'set': prpt['handle'] = 'SETPOINT'
         elem.updatePvRecord(pv, prpt, rec[2])
 
     # group info is a redundant info, needs rebuild based on each element
