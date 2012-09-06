@@ -21,6 +21,9 @@ timestamp=`date +%Y%m%d_%H%M%S`
 echo "# downloading name=*"
 download_cfs "~name=*" "cfs_nsls2_${timestamp}_all.xml"
 
+echo "# downloading name=*1-SR*"
+download_cfs "~name=*1-SR*" "cfs_nsls2_${timestamp}_1sr.xml"
+
 echo "# downloading system=V1*"
 download_cfs "system=V1*" "cfs_nsls2_${timestamp}_v1.xml"
 
