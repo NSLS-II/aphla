@@ -618,9 +618,9 @@ class CaElement(AbstractElement):
             handle = kwargs.get('handle', None)
             fd = kwargs.get('field', None)
             if fd not in self._field: return []
-            if handle.upper() == 'READBACK':
+            if handle == 'readback':
                 return self._field[kwargs['field']].pvrb
-            elif handle.upper() == 'SETPOINT':
+            elif handle == 'setpoint':
                 return self._field[kwargs['field']].pvsp
             else:
                 return []
@@ -699,16 +699,16 @@ class CaElement(AbstractElement):
         
         # the default handle is 'READBACK'
         if properties is not None:
-            elemhandle = properties.get('handle', 'READBACK').upper()
+            elemhandle = properties.get('handle', 'readback')
             fieldname = properties.get('field', None)
             if fieldname:
-                if elemhandle == 'READBACK': 
+                if elemhandle == 'readback': 
                     self.setFieldGetAction(pvname, fieldname)
-                elif elemhandle == 'SETPOINT':
+                elif elemhandle == 'setpoint':
                     self.setFieldPutAction(pvname, fieldname)
                 else:
-                    raise ValueError("invalid 'handle' value '%s' for pv %s" % 
-                                     (properties.get('handle'), pvname))
+                    raise ValueError("invalid handle value '%s' for pv '%s'" % 
+                                     (elemhandle, pvname))
                 logger.info("'%s' field '%s' = '%s'" % (elemhandle, fieldname, pvname))
 
         # check element field

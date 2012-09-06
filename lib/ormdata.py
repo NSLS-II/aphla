@@ -91,7 +91,7 @@ class OrmData:
         pvascii = [p.encode('ascii') for p in pvrb]
         dst = grp.create_dataset('pvrb', (n,), data=pvascii, dtype=str_type,
                                  compression=h5zip)
-        pvascii = [p.encode('ascii') for p in pvrb]
+        pvascii = [p.encode('ascii') for p in pvsp]
         dst = grp.create_dataset('pvsp', (n,), data=pvascii, dtype=str_type,
                                  compression=h5zip)
         #

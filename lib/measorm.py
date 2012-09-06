@@ -17,7 +17,13 @@ logger = logging.getLogger(__name__)
 
 def measOrbitRm(bpm, trim, output):
     """
-    Measure the beta function by varying quadrupole strength
+    Measure the orbit response matrix
+
+    :param list bpm: list of bpm names
+    :param list trim: list of trim names
+    :param str output: output filename
+
+    seealso :func:`Orm.measure`
     """
     #print "BPM: ", len(bpm)
     #print "TRIM:", len(trim)

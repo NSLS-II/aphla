@@ -53,8 +53,9 @@ class Orm:
             self.bpm = []
             self.trim = []
 
-        logger.info("(bpm, trim)=(%d,%d)" % (len(self.bpm), len(self.trim)))
-
+        logger.info("bpm: %s" % str(self.bpm))
+        logger.info("trim: %s" % str(self.trim))
+        
         # count the dimension of matrix
         #nbpm, ntrim  = len(set(bpm)), len(set(trim))
         nbpmpv, ntrimpv = len(self.bpm), len(self.trim)
@@ -72,10 +73,10 @@ class Orm:
         """
         ret = []
         for bpm in getElements(bpm):
-            for pv in bpm.pv(field='x', handle='read'):
-                ret.append((bpm.name, 'X', pv))
-            for pv in bpm.pv(field='Y', handle='read'):
-                ret.append((bpm.name, 'Y', pv))
+            for pv in bpm.pv(field='x', handle='readback'):
+                ret.append((bpm.name, 'x', pv))
+            for pv in bpm.pv(field='y', handle='readback'):
+                ret.append((bpm.name, 'y', pv))
         return ret
 
     def _get_trim_pv_record(self, trim):
@@ -84,15 +85,15 @@ class Orm:
         """
         ret = []
         for trim in getElements(trim):
-            pvrb = trim.pv(field='x', handle='read')
-            pvsp = trim.pv(field='x', handle='set')
+            pvrb = trim.pv(field='x', handle='readback')
+            pvsp = trim.pv(field='x', handle='setpoint')
             for i in range(len(pvsp)):
-                ret.append((trim.name, 'X', pvrb[i], pvsp[i]))
+                ret.append((trim.name, 'x', pvrb[i], pvsp[i]))
 
-            pvrb = trim.pv(field='y', handle='read')
-            pvsp = trim.pv(field='y', handle='set')
+            pvrb = trim.pv(field='y', handle='readback')
+            pvsp = trim.pv(field='y', handle='setpoint')
             for i in range(len(pvsp)):
-                ret.append((trim.name, 'Y', pvrb[i], pvsp[i]))
+                ret.append((trim.name, 'y', pvrb[i], pvsp[i]))
         return ret
 
     

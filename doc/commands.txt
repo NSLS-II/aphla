@@ -19,7 +19,7 @@ symbol                                        description
 :func:`~aphla.hlalib.getChromaticity`         get chromaticity **Not Implemented Yet**     
 :func:`~aphla.hlalib.getChromaticityRm`       Not implemented yet                          
 :func:`~aphla.hlalib.getClosest`              Get the closest element in *group*           
-:func:`~aphla.hlalib.getCurrent`              Get the current from the first 'DCCT' element
+:func:`~aphla.hlalib.getCurrent`              Get the current from the first 'dcct' element
 :func:`~aphla.hlalib.getCurrentMode`          Not implemented yet                          
 :func:`~aphla.hlalib.getDispersion`           get the dispersion                           
 :func:`~aphla.hlalib.getDistance`             return distance between two element name     
@@ -52,7 +52,7 @@ symbol                                        description
 :func:`~aphla.measorm.measChromRm`            measure chromaticity response matrix         
 :func:`~aphla.meastwiss.measChromaticity`     Measure the chromaticity                     
 :func:`~aphla.meastwiss.measDispersion`       measure dispersion                           
-:func:`~aphla.measorm.measOrbitRm`            Measure the beta function by varying quadrupole strength
+:func:`~aphla.measorm.measOrbitRm`            Measure the orbit response matrix            
 :func:`~aphla.hlalib.removeGroup`             Remove a group if it is empty. It calls      
 :func:`~aphla.hlalib.removeGroupMembers`      Remove a member from group                   
 :func:`~aphla.aptools.saveImage`              save field as image file                     
