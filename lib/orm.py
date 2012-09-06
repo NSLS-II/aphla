@@ -53,6 +53,8 @@ class Orm:
             self.bpm = []
             self.trim = []
 
+        logger.info("bpm: %s" % str(self.bpm))
+        logger.info("trim: %s" % str(self.trim))
 
         # count the dimension of matrix
         #nbpm, ntrim  = len(set(bpm)), len(set(trim))
@@ -83,13 +85,13 @@ class Orm:
         """
         ret = []
         for trim in getElements(trim):
-            pvrb = trim.pv(field='x', handle='READBACK')
-            pvsp = trim.pv(field='x', handle='SETPOINT')
+            pvrb = trim.pv(field='x', handle='readback')
+            pvsp = trim.pv(field='x', handle='setpoint')
             for i in range(len(pvsp)):
                 ret.append((trim.name, 'X', pvrb[i], pvsp[i]))
 
-            pvrb = trim.pv(field='y', handle='READBACK')
-            pvsp = trim.pv(field='y', handle='SETPOINT')
+            pvrb = trim.pv(field='y', handle='readback')
+            pvsp = trim.pv(field='y', handle='setpoint')
             for i in range(len(pvsp)):
                 ret.append((trim.name, 'Y', pvrb[i], pvsp[i]))
         return ret
