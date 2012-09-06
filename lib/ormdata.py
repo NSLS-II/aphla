@@ -56,6 +56,8 @@ class OrmData:
     def save_hdf5(self, filename):
         """
         save data to hdf5 format
+
+        h5py before v2.0 does not accept unicode directly.
         """
         import h5py
         h5zip = None # 'gzip' works in default install
@@ -73,7 +75,8 @@ class OrmData:
                                  compression=h5zip)
         dst = grp.create_dataset('plane', (m,), data = plane, dtype=str_type,
                                  compression=h5zip)
-        dst = grp.create_dataset('pvrb', (m,), data = pv, dtype=str_type,
+        pvascii = [p.encode('ascii') for p in pv]
+        dst = grp.create_dataset('pvrb', (m,), data = pvascii, dtype=str_type,
                                  compression=h5zip)
         #
         name, plane, pvrb, pvsp = zip(*self.trim)
@@ -85,9 +88,11 @@ class OrmData:
                                  compression=h5zip)
         dst = grp.create_dataset('plane', (n,), data=plane, dtype=str_type,
                                  compression=h5zip)
-        dst = grp.create_dataset('pvrb', (n,), data=pvrb, dtype=str_type,
+        pvascii = [p.encode('ascii') for p in pvrb]
+        dst = grp.create_dataset('pvrb', (n,), data=pvascii, dtype=str_type,
                                  compression=h5zip)
-        dst = grp.create_dataset('pvsp', (n,), data=pvsp, dtype=str_type,
+        pvascii = [p.encode('ascii') for p in pvsp]
+        dst = grp.create_dataset('pvsp', (n,), data=pvascii, dtype=str_type,
                                  compression=h5zip)
         #
         grp = f.create_group("_rawdata_")
