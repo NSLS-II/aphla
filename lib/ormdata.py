@@ -20,8 +20,8 @@ class OrmData:
     """
     Orbit Response Matrix Data
 
-    - *bpm* is a list of tuple (name, plane, pv)
-    - *trim* is a list of tuple (name, plane, pv_readback, pv_setpoint)
+    - *bpm* is a list of tuple (name, location, plane, pv)
+    - *trim* is a list of tuple (name, location, plane, pv_readback, pv_setpoint)
     - *m* 2D matrix, len(bpm) * len(trim)
     """
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
@@ -67,32 +67,34 @@ class OrmData:
         dst = f.create_dataset('m', (m,n), data=self.m, compression=h5zip)
         #
         grp = f.create_group('bpm')
-        name, plane, pv = zip(*self.bpm)
+        name, spos, plane, pv = zip(*self.bpm)
         # dtype('<U9') is not recognized in earlier h5py
-        if h5py.version.version_tuple < (2,1,1):
+        if h5py.version.version_tuple[:3] < (2,1,1):
             name = [v.encode('ascii') for v in name]
+            pv = [p.encode('ascii') for p in pv]
         dst = grp.create_dataset('element', (m,), data = name, dtype=str_type, 
                                  compression=h5zip)
+        dst = grp.create_dataset('location', (m,), data = spos, compression=h5zip)
         dst = grp.create_dataset('plane', (m,), data = plane, dtype=str_type,
                                  compression=h5zip)
-        pvascii = [p.encode('ascii') for p in pv]
-        dst = grp.create_dataset('pvrb', (m,), data = pvascii, dtype=str_type,
+        dst = grp.create_dataset('pvrb', (m,), data = pv, dtype=str_type,
                                  compression=h5zip)
         #
-        name, plane, pvrb, pvsp = zip(*self.trim)
+        name, spos, plane, pvrb, pvsp = zip(*self.trim)
         # dtype('<U9') is not recognized in earlier h5py
-        if h5py.version.version_tuple < (2,1,1):
+        if h5py.version.version_tuple[:3] < (2,1,1):
             name = [v.encode('ascii') for v in name]
+            pvrb = [p.encode('ascii') for p in pvrb]
+            pvsp = [p.encode('ascii') for p in pvsp]
         grp = f.create_group("trim")
         dst = grp.create_dataset('element', (n,), data=name, dtype=str_type,
                                  compression=h5zip)
+        dst = grp.create_dataset('location', (n,), data = spos, compression=h5zip)
         dst = grp.create_dataset('plane', (n,), data=plane, dtype=str_type,
                                  compression=h5zip)
-        pvascii = [p.encode('ascii') for p in pvrb]
-        dst = grp.create_dataset('pvrb', (n,), data=pvascii, dtype=str_type,
+        dst = grp.create_dataset('pvrb', (n,), data=pvrb, dtype=str_type,
                                  compression=h5zip)
-        pvascii = [p.encode('ascii') for p in pvsp]
-        dst = grp.create_dataset('pvsp', (n,), data=pvascii, dtype=str_type,
+        dst = grp.create_dataset('pvsp', (n,), data=pvsp, dtype=str_type,
                                  compression=h5zip)
         #
         grp = f.create_group("_rawdata_")
@@ -112,9 +114,9 @@ class OrmData:
         import h5py
         f = h5py.File(filename, 'r')
         g = f[grp]['bpm']
-        self.bpm = zip(g["element"], g["plane"], g["pvrb"])
+        self.bpm = zip(g["element"], g["location"], g["plane"], g["pvrb"])
         g = f[grp]['trim']
-        self.trim = zip(g["element"], g["plane"], g["pvrb"], g["pvsp"])
+        self.trim = zip(g["element"], g["location"], g["plane"], g["pvrb"], g["pvsp"])
         nbpm, ntrim = len(self.bpm), len(self.trim)
         self.m = np.zeros((nbpm, ntrim), 'd')
         self.m[:,:] = f[grp]['m'][:,:]
@@ -237,9 +239,9 @@ class OrmData:
         return pv index of BPM, TRIM
         """
         for i,b in enumerate(self.bpm):
-            if b[2] == pv: return i
+            if b[-1] == pv: return i
         for j,t in enumerate(self.trim):
-            if t[2] == pv or t[3] == pv:
+            if t[-2] == pv or t[-1] == pv:
                 return j
         return -1
     
@@ -264,10 +266,10 @@ class OrmData:
         bpm, trim = self.bpm[:], self.trim[:]
 
         for i,b in enumerate(src.bpm):
-            if self._pv_index(b[2]) < 0:
+            if self._pv_index(b[-1]) < 0:
                 bpm.append(b)
         for j,t in enumerate(src.trim):
-            if self._pv_index(t[2]) < 0:
+            if self._pv_index(t[-2]) < 0:
                 trim.append(t)
         npts, nbpm0, ntrim0 = np.shape(self._rawmatrix)
         
@@ -286,10 +288,10 @@ class OrmData:
         rawkick[:ntrim0, : ]          = self._rawkick[:,:]
 
         # find the index
-        bpmrb = [b[2] for b in bpm]
-        trimsp = [t[3] for t in trim]
-        ibpm  = [ bpmrb.index(b[2]) for b in src.bpm ]
-        itrim = [ trimsp.index(t[3]) for t in src.trim ]
+        bpmrb = [b[-1] for b in bpm]
+        trimsp = [t[-1] for t in trim]
+        ibpm  = [ bpmrb.index(b[-1]) for b in src.bpm ]
+        itrim = [ trimsp.index(t[-1]) for t in src.trim ]
         
         for j, t in enumerate(src.trim):
             jj = itrim[j]
@@ -310,7 +312,7 @@ class OrmData:
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
         
-    def getSubMatrix(self, bpm, trim, flags=('XY', 'XY'), **kwargs):
+    def getSubMatrix(self, bpm, trim, flags=('xy', 'xy'), **kwargs):
         """
         if only bpm name given, the return matrix will not equal to
         len(bpm),len(trim), since one bpm can have two lines (x,y) data.
@@ -345,10 +347,10 @@ class OrmData:
         mat = np.zeros((len(bpm), len(trim)), 'd')
         for i,b in enumerate(self.bpm):
             if b[0] not in bpm: continue
-            if b[1] not in flags[0]: continue
+            if b[2] not in flags[0]: continue
             ii = bpm.index(b[0])
             for j,t in enumerate(self.trim):
-                if t[0] not in trim or t[1] not in flags[1]: continue
+                if t[0] not in trim or t[2] not in flags[1]: continue
                 jj = trim.index(t[0])
                 mat[ii,jj] = self.m[i,j]
 
@@ -364,15 +366,15 @@ class OrmData:
         ib = [-1] * len(bpm)
         it = [-1] * len(trim)
 
-        # index 2 is readback PV for BPM
+        # index -1 is readback PV for BPM
         for i in range(len(self.bpm)):
-            if not self.bpm[i][2] in bpm: continue
+            if not self.bpm[i][-1] in bpm: continue
             ib[bpm.index(self.bpm[i][2])] = i
 
-        # index 3 is setpoint PV for Trim
+        # index -1 is setpoint PV for Trim
         for i in range(len(self.trim)):
-            if not self.trim[i][3] in trim: continue
-            it[trim.index(self.trim[i][3])] = i
+            if not self.trim[i][-1] in trim: continue
+            it[trim.index(self.trim[i][-1])] = i
 
         for i in range(len(ib)):
             if ib[i] == -1: 
