@@ -46,6 +46,8 @@ class Orm:
         self.trimsp, self.bpmrb = None, None
 
         if trim and bpm:
+            logger.info("bpm: %s" % str(bpm))
+            logger.info("trim: %s" % str(trim))
             # get the list of (name, 'X', pvread, pvset)
             self.trim = self._get_trim_pv_record(trim)
             self.bpm  = self._get_bpm_pv_record(bpm)
@@ -53,8 +55,8 @@ class Orm:
             self.bpm = []
             self.trim = []
 
-        logger.info("bpm: %s" % str(self.bpm))
-        logger.info("trim: %s" % str(self.trim))
+        logger.info("bpm rec: %s" % str(self.bpm))
+        logger.info("trim rec: %s" % str(self.trim))
         
         # count the dimension of matrix
         #nbpm, ntrim  = len(set(bpm)), len(set(trim))
@@ -74,9 +76,9 @@ class Orm:
         ret = []
         for bpm in getElements(bpm):
             for pv in bpm.pv(field='x', handle='readback'):
-                ret.append((bpm.name, 'x', pv))
+                ret.append((bpm.name, bpm.sb, 'x', pv))
             for pv in bpm.pv(field='y', handle='readback'):
-                ret.append((bpm.name, 'y', pv))
+                ret.append((bpm.name, bpm.sb, 'y', pv))
         return ret
 
     def _get_trim_pv_record(self, trim):
@@ -88,12 +90,12 @@ class Orm:
             pvrb = trim.pv(field='x', handle='readback')
             pvsp = trim.pv(field='x', handle='setpoint')
             for i in range(len(pvsp)):
-                ret.append((trim.name, 'x', pvrb[i], pvsp[i]))
+                ret.append((trim.name, trim.sb, 'x', pvrb[i], pvsp[i]))
 
             pvrb = trim.pv(field='y', handle='readback')
             pvsp = trim.pv(field='y', handle='setpoint')
             for i in range(len(pvsp)):
-                ret.append((trim.name, 'y', pvrb[i], pvsp[i]))
+                ret.append((trim.name, trim.sb, 'y', pvrb[i], pvsp[i]))
         return ret
 
     
@@ -213,12 +215,12 @@ class Orm:
         """
         t_start = time.time()
         
-        bpmrb = [b[2] for b in self.bpm]
+        bpmrb = [b[-1] for b in self.bpm]
         for i, rec in enumerate(self.trim):
             t0 = time.time()
             # get the readback of one trim
-            trim_pv_rb = rec[2]
-            trim_pv_sp = rec[3]
+            trim_pv_rb = rec[-2]
+            trim_pv_sp = rec[-1]
             kickref = caget(trim_pv_sp)
 
             if verbose:
