@@ -221,7 +221,7 @@ def initNSLS2V1SRTwiss():
     # SR Twiss
     global _lat, _twiss
     _twiss = Twiss("V1SR")
-    _twiss.load('us_nsls2v1.db')
+    _twiss.load(conf.filename('us_nsls2v1.db'))
     _lat._twiss = _twiss
 
 

@@ -202,7 +202,9 @@ class Twiss:
 
         conn = sqlite3.connect(fname)
         c = conn.cursor()
-        c.execute('''select * from ?_tbl''', (prefix,))
+        # by-pass the front-end which do not allow parameterize table name
+        qline = "select * from %s_tbl" % prefix
+        c.execute(qline)
         # head of columns
         allcols = [v[0] for v in c.description]
         twissitems = ['element', 's', 'alphax', 'alphay', 'betax',
@@ -222,8 +224,9 @@ class Twiss:
             self._elements.append(lst[0])
             twi.update(lst[1:])
             self._twlist.append(twi)
-
-        c.execute('''select par,idx,val from ?_par''', (prefix,))
+        # by-pass the front-end which do not allow parameterize table name
+        qline = "select par,idx,val from %s_par" % prefix
+        c.execute(qline)
         self.tune  = [None, None]
         self.chrom = [None, None]
         
