@@ -10,6 +10,7 @@ NSLS2 V1 Unit Test
 #print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
 
 import sys, os, time
+from fnmatch import fnmatch
 
 if sys.version_info[:2] == (2, 6):
     import unittest2 as unittest
@@ -416,7 +417,7 @@ class Test1LatticeSr(unittest.TestCase):
 
         el1 = self.lat.getGroupMembers(['BPM', 'C0[2-3]', 'G2'],
                                             op='intersection')
-        self.assertTrue(len(el1) == 4)
+        self.assertEqual(len(el1), 4)
 
     def test_field(self):
         bpm = self.lat.getElementList('BPM')
@@ -443,7 +444,15 @@ class Test1LatticeSr(unittest.TestCase):
 
     def test_idcorrs(self):
         #
-        hcor = ap.getGroupMembers
+        hcor = [e for e in ap.getGroupMembers(['HCOR']) if fnmatch(e.name, '*idcor*')]        
+        self.assertEqual(len(hcor), 2)
+        hcor_sim = [e for e in ap.getGroupMembers(['HCOR']) if fnmatch(e.name, '*idsim*')]
+        self.assertEqual(len(hcor_sim), 2)
+
+        vcor = [e for e in ap.getGroupMembers(['VCOR']) if fnmatch(e.name, '*idcor*')]
+        self.assertEqual(len(vcor), 2)
+        vcor_sim = [e for e in ap.getGroupMembers(['VCOR']) if fnmatch(e.name, '*idsim*')]
+        self.assertEqual(len(vcor_sim), 2)
 
 class TestLatticeLtd1(unittest.TestCase):
     def setUp(self):

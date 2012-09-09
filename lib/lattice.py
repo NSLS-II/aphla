@@ -566,12 +566,12 @@ class Lattice:
 
         can take a union or intersections of members in each group
 
-        - group in *groups* can be exact name or pattern.
+        - *groups* can be a list of exact group name, pattern or both.
         - op = ['union' | 'intersection']
 
         :Example:
         
-            >>> getGroupMembers(['C02'], op = 'union')
+            >>> getGroupMembers(['C0[2-3]', 'BPM'], op = 'intersection')
         """
         if not groups: return None
         ret = {}
@@ -585,12 +585,11 @@ class Lattice:
         #print __file__, groups
         for g in groups:
             ret[g] = []
+            imatched = 0
             for k, elems in self._group.items():
                 if fnmatch(k, g): 
+                    imatched += 1
                     ret[g].extend([e.name for e in elems])
-                    break
-            else:
-                ret[g].extend([e.name for e in self.getElementList(g)])
 
             #print g, ret[g]
 

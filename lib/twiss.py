@@ -9,6 +9,7 @@ stores twiss data.
 """
 
 import numpy as np
+import sqlite3
 
 class TwissItem:
     """
@@ -71,6 +72,18 @@ class TwissItem:
             return d[name]
         else:
             return None
+
+    def update(self, lst):
+        """
+        update with a list in the order of s, alpha, beta, gamma, eta and phi. 'x' and 'y'.
+        """
+        n = len(lst)
+        self.s = lst[0]
+        self.alpha = (lst[1], lst[2])
+        self.beta  = (lst[3], lst[4])
+        self.gamma = (lst[5], lst[6])
+        self.eta   = (lst[7], lst[8])
+        self.phi   = (lst[9], lst[10])
 
     
 class Twiss:
@@ -178,4 +191,48 @@ class Twiss:
                     raise ValueError("column '%s' not supported in twiss" % c)
             ret.append(row)
         return np.array(ret, 'd')
+
+
+    def load(self, fname, prefix="twiss"):
+        """
+        read twiss from sqlite db file *fname*.
+
+        It looks for table "prefix_tbl' and 'prefix_par'
+        """
+
+        conn = sqlite3.connect(fname)
+        c = conn.cursor()
+        c.execute('''select * from ?_tbl''', (prefix,))
+        # head of columns
+        allcols = [v[0] for v in c.description]
+        twissitems = ['element', 's', 'alphax', 'alphay', 'betax',
+                      'betay', 'gammax', 'gammay',
+                      'etax', 'etay', 'phix', 'phiy']
+        ihead = []
+        for i,head in enumerate(twissitems):
+            if head in allcols: ihead.append([head, i, allcols.index(head)])
+            else: ihead.append([head, i, None])
+
+        for row in c:
+            twi = TwissItem()
+            lst = [None] * len(ihead)
+            for i,v in enumerate(ihead):
+                if v[-1] is not None: lst[i] = row[v[-1]]
+
+            self._elements.append(lst[0])
+            twi.update(lst[1:])
+            self._twlist.append(twi)
+
+        c.execute('''select par,idx,val from ?_par''', (prefix,))
+        self.tune  = [None, None]
+        self.chrom = [None, None]
+        
+        for row in c:
+            if row[0] == 'tunex': self.tune[0] = row[2]
+            elif row[0] == 'tuney': self.tune[1] = row[2]
+            elif row[0] == 'chromx': self.chrom[0] = row[2]
+            elif row[0] == 'chromy': self.chrom[1] = row[2]
+        
+        c.close()
+        conn.close()
 
