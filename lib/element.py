@@ -918,8 +918,8 @@ def merge(elems, **kwargs):
         for f in fds: 
             if f in count: count[f] += 1
             else: count[f] = 1
-            pvrb = e.pv(field=f, handle='read')
-            pvsp = e.pv(field=f, handle='set')
+            pvrb = e.pv(field=f, handle='readback')
+            pvsp = e.pv(field=f, handle='setpoint')
             if f not in pvdict: pvdict[f] = [[], []]
             #print f, pvrb, pvsp
             pvdict[f][0].extend(pvrb)
