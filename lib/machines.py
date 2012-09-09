@@ -181,7 +181,7 @@ def initNSLS2V1(with_twiss = False):
         if _lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
-    orm_filename = 'us_nsls2_v1sr_orm.hdf5'
+    orm_filename = 'us_nsls2v1_sr_orm.hdf5'
     if orm_filename and conf.has(orm_filename):
         #print("Using ORM:", conf.filename(orm_filename))
         _lattice_dict['V1SR'].ormdata = OrmData(conf.filename(orm_filename))
@@ -220,93 +220,10 @@ def initNSLS2V1SRTwiss():
 
     # SR Twiss
     global _lat, _twiss
-    twel = _lat.getElementList('twiss')
-    if len(twel) == 1:
-        tune = _lat.getElementList('tune')[-1]
-        tw = twel[0]
-        _twiss = Twiss('virtac')
-
-        _twiss.tune = (tune.x, tune.y)
-        _twiss.chrom = (None, None)
-
-        nps = np.array(tw.s)
-        for ielem in range(_lat.size()):
-            elem = _lat._elements[ielem]
-            if elem.family == HLA_VFAMILY: continue
-            ds = nps - elem.sb
-
-            i = np.argmin(np.abs(nps - elem.sb))
-
-            gammax = (1 + tw.alphax[i]**2)/tw.betax[i]
-            gammay = (1 + tw.alphay[i]**2)/tw.betay[i]
-            twi = TwissItem(s = tw.s[i], alpha=(tw.alphax[i], tw.alphay[i]),
-                           beta=(tw.betax[i], tw.betay[i]),
-                           gamma=(gammax, gammay),
-                           eta=(tw.etax[i], tw.etay[i]),
-                           phi=(tw.phix[i], tw.phiy[i]))
-
-            _twiss._elements.append(elem.name)
-            _twiss.append(twi)
-
-        _lat._twiss = _twiss
-
-    return
-
-    # s location
-    s      = [v for v in caget('SR:C00-Glb:G00{POS:00}RB-S')]
-    # twiss at s_end (from Tracy)
-    alphax = [v for v in caget('SR:C00-Glb:G00{ALPHA:00}RB-X')]
-    alphay = [v for v in caget('SR:C00-Glb:G00{ALPHA:00}RB-Y')]
-    betax  = [v for v in caget('SR:C00-Glb:G00{BETA:00}RB-X')]
-    betay  = [v for v in caget('SR:C00-Glb:G00{BETA:00}RB-Y')]
-    etax   = [v for v in caget('SR:C00-Glb:G00{ETA:00}RB-X')]
-    etay   = [v for v in caget('SR:C00-Glb:G00{ETA:00}RB-Y')]
-    orbx   = [v for v in caget('SR:C00-Glb:G00{ORBIT:00}RB-X')]
-    orby   = [v for v in caget('SR:C00-Glb:G00{ORBIT:00}RB-Y')]
-    phix   = [v for v in caget('SR:C00-Glb:G00{PHI:00}RB-X')]
-    phiy   = [v for v in caget('SR:C00-Glb:G00{PHI:00}RB-Y')]
-    nux = caget('SR:C00-Glb:G00{TUNE:00}RB-X')
-    nuy = caget('SR:C00-Glb:G00{TUNE:00}RB-Y')
-    chx = caget('SR:C00-Glb:G00{CHROM:00}RB-X')
-    chy = caget('SR:C00-Glb:G00{CHROM:00}RB-Y')
-
-    #global _twiss, _lat
-
-    #print(__file__, "Reading twiss items:", len(s))
-    logger.info("Elements in lattice '%s': %d" % 
-                (_lat.name, len(_lat._elements)))
-
-    # fix the Tracy convension by adding a new element at the end
-    for x in [s, alphax, alphay, betax, betay, etax, etay, orbx, orby,
-              phix, phiy]:
-        x.append(x[-1])
-    
-    _twiss = Twiss('virtac')
-
-    _twiss.tune = (nux, nuy)
-    _twiss.chrom = (chx, chy)
-    #print __file__, len(s), len(betax)
-    
-    nps = np.array(s, 'd')
-    for ielem in range(_lat.size()):
-        elem = _lat._elements[ielem]
-        if elem.family == HLA_VFAMILY: continue
-        ds = nps - elem.sb
-
-        i = np.argmin(np.abs(nps - elem.sb))
-
-        gammax = (1 + alphax[i]**2)/betax[i]
-        gammay = (1 + alphay[i]**2)/betay[i]
-        tw = TwissItem(s = s[i], alpha=(alphax[i], alphay[i]),
-                       beta=(betax[i], betay[i]),
-                       gamma=(gammax, gammay),
-                       eta=(etax[i], etay[i]),
-                       phi=(phix[i], phiy[i]))
-
-        _twiss._elements.append(elem.name)
-        _twiss.append(tw)
-
+    _twiss = Twiss("V1SR")
+    _twiss.load(conf.filename('us_nsls2v1.db'))
     _lat._twiss = _twiss
+
 
 def initNSLS2():
     """ 
