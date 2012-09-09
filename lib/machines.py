@@ -181,7 +181,7 @@ def initNSLS2V1(with_twiss = False):
         if _lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
-    orm_filename = 'us_nsls2_v1sr_orm.hdf5'
+    orm_filename = 'us_nsls2v1_sr_orm.hdf5'
     if orm_filename and conf.has(orm_filename):
         #print("Using ORM:", conf.filename(orm_filename))
         _lattice_dict['V1SR'].ormdata = OrmData(conf.filename(orm_filename))

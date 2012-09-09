@@ -338,7 +338,6 @@ class Test0Lattice(unittest.TestCase):
                     elem1[i].sb, elem1[i].name,
                     elem1[i-1].sb, elem1[i-1].name))
         
-            
 
     def test_groups(self):
         grp = 'HLATEST'
@@ -441,6 +440,10 @@ class Test1LatticeSr(unittest.TestCase):
                 self.assertTrue(False,
                                 "AttributeError exception expected")
 
+
+    def test_idcorrs(self):
+        #
+        hcor = ap.getGroupMembers
 
 class TestLatticeLtd1(unittest.TestCase):
     def setUp(self):

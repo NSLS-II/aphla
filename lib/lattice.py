@@ -573,7 +573,7 @@ class Lattice:
         
             >>> getGroupMembers(['C02'], op = 'union')
         """
-        if groups == None: return None
+        if not groups: return None
         ret = {}
         cell = kwargs.get('cell', '*')
         girder = kwargs.get('girder', '*')
@@ -586,7 +586,12 @@ class Lattice:
         for g in groups:
             ret[g] = []
             for k, elems in self._group.items():
-                if fnmatch(k, g): ret[g].extend([e.name for e in elems])
+                if fnmatch(k, g): 
+                    ret[g].extend([e.name for e in elems])
+                    break
+            else:
+                ret[g].extend([e.name for e in self.getElementList(g)])
+
             #print g, ret[g]
 
         r = set(ret[groups[0]])
