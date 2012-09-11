@@ -700,16 +700,22 @@ class CaElement(AbstractElement):
         # the default handle is 'READBACK'
         if properties is not None:
             elemhandle = properties.get('handle', 'readback')
-            fieldname = properties.get('field', None)
-            if fieldname:
+            fieldfname = properties.get('field', None)
+            if fieldfname is not None:
+                g = re.match(r'([\w\d]+)(\[\d+\])?', fieldfname)
+                if g is None:
+                    raise ValueError("invalid field '%s'" % fieldfname)
+                fieldname, idx = g.group(1), g.group(2)
+                if idx is not None: idx = int(idx[1:-1])
                 if elemhandle == 'readback': 
-                    self.setFieldGetAction(pvname, fieldname)
+                    self.setFieldGetAction(pvname, fieldname, idx)
                 elif elemhandle == 'setpoint':
-                    self.setFieldPutAction(pvname, fieldname)
+                    self.setFieldPutAction(pvname, fieldname, idx)
                 else:
                     raise ValueError("invalid handle value '%s' for pv '%s'" % 
                                      (elemhandle, pvname))
-                logger.info("'%s' field '%s' = '%s'" % (elemhandle, fieldname, pvname))
+                logger.info("'%s' field '%s'[%s] = '%s'" % (
+                        elemhandle, fieldname, idx, pvname))
 
         # check element field
         #for t in tags:
