@@ -113,6 +113,7 @@ class DcctCurrentCurve(Qwt.QwtPlotCurve):
     def updateCurve(self):
         self.setData(self.t, self.v)
 
+
 class DcctCurrentPlot(Qwt.QwtPlot):
     def __init__(self, parent = None, **kw):
         super(DcctCurrentPlot, self).__init__(parent)
@@ -205,11 +206,151 @@ class DcctCurrentPlot(Qwt.QwtPlot):
         self.curve.v = v
 
 
+class OrbitData(object):
+    """
+    the orbit related data. Raw orbit reading and statistics.
+
+    - *samples* data points kept to calculate the statistics.
+    - *scale* factor for *y*
+    - *x* list of s-coordinate, never updated.
+    - *pvs* list of channel names
+    - *mode* 'EPICS' | 'sim', default is 'EPICS'
+    - *keep* mask for ignore(0) or keep(1) that data point.
+    """
+    def __init__(self, **kw):
+        self.samples = kw.get('samples', 10)
+        self.scale = kw.get('scale', 1e6)
+        self.pvs = kw.get('pvs', None)
+        self.elems = kw.get('elements', None)
+        self.field = kw.get('field', None)
+        self.picker_profile = kw.get('picker_profile', None)
+        self.magnet_profile = kw.get('magnet_profile', None)
+
+        if self.pvs is not None:
+            n = len(pvs)
+            self.x = kw.get('x', np.arange(n))
+            self.y = np.zeros((self.samples, n), 'd')
+            self.y[0,:] = caget(self.pvs)
+        elif self.elems is not None:
+            n = len(self.elems)
+            self.x = kw.get('x', np.arange(n))
+            self.y = np.zeros((self.samples, n), 'd')
+            # only take the first sample
+            for j in range(n):
+                self.y[0,j] = self.elems[j].get(self.field)
+        else:
+            n = 0
+            self.x = None
+
+        #if self.x is not None and len(self.x) != n:
+        #    raise ValueError("pv and x are not same size %d != %d" % (n, len(self.x)))
+
+        self.icur, self.icount = 0, 1
+        # how many samples are kept for statistics
+        self.errbar = np.ones(n, 'd') * 1e-15
+        self.keep   = np.ones(n, 'i')
+        #print self.x, self.y
+
+    def _update_pvs_data(self):
+        """
+        update the orbit data. It retrieve the data with channel access and
+        calculate the updated standard deviation. If the current mode is
+        'sim', instead of channel access it uses random data.
+        """
+        # y and errbar sync with plot, not changing data.
+        i = self.icur + 1
+        if i >= self.samples: i = 0
+        self.y[i,:] = caget(self.pvs)
+        self.y[i, :] *= self.yfactor
+        self.errbar[:] = np.std(self.y, axis=0)
+        self.icount += 1
+        self.icur = i
+        
+    def _update_elems_data(self):
+        """
+        update the orbit data. It retrieve the data with channel access and
+        calculate the updated standard deviation. If the current mode is
+        'sim', instead of channel access it uses random data.
+        """
+        # y and errbar sync with plot, not changing data.
+        i = self.icur + 1
+        if i >= self.samples: i = 0
+        self.y[i,:] = [e.get(self.field) for j,e in enumerate(self.elems)]
+        self.y[i,:] *= self.scale
+        self.errbar[:] = np.std(self.y, axis=0)
+        self.icount += 1
+        self.icur = i
+        
+    def update(self):
+        if self.pvs is not None:
+            self._update_pvs_data()
+        elif self.elems is not None:
+            self._update_elems_data()
+
+    def reset(self):
+        """
+        clear the history data points and statistics.
+        """
+        self.icur, self.icount = -1, 0
+        self.y.fill(0.0)
+        self.errbar.fill(0.0)
+        #self.update()
+
+    def min(self, axis='s'):
+        c, i = divmod(self.icount - 1, self.samples)
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.min(data)
+
+    def max(self, axis='s'):
+        c, i = divmod(self.icount - 1, self.samples)
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.max(data)
+        
+    def average(self, axis='s'):
+        """average of the whole curve"""
+        c, i = divmod(self.icount - 1, self.samples)
+        data = np.compress(self.keep, self.y, axis=1)
+        return np.average(data)
+
+    def std(self, axis='s'):
+        """
+        std of the curve
+        - axis='t' std over time axis for each PV
+        - axis='s' std over all PV for the latest dataset
+        """
+        if axis == 't': ax = 1
+        elif axis == 's': ax = 0
+        y = np.compress(self.keep, self.y, axis=1)
+        return np.std(y, axis = ax)
+
+    def data(self, field="orbit", nomask=False):
+        """
+        field = [ 'orbit' | 'std' ]
+        """
+        if self.icur < 0:
+            n = len(self.x)
+            x1, y1, e1 = self.x, np.zeros(n, 'd'), np.zeros(n, 'd')
+
+        i = self.icur
+        if field == 'orbit':
+            x1 = self.x
+            y1 = self.y[i,:]
+            e1 = self.errbar
+        elif field == 'std':
+            x1 = self.x
+            y1 = np.std(self.y, axis=0)
+            e1 = np.zeros(len(x1), 'd')
+        if nomask: return x1, y1, e1
+        else:
+            return np.compress(self.keep, [x1, y1, e1], axis=1)
+
+
+
 class OrbitPlotCurve(Qwt.QwtPlotCurve):
     """
     Orbit curve
     """
-    def __init__(self, data, **kw):
+    def __init__(self, **kw):
         """A curve of x versus y data with error bars in dx and dy.
 
         Horizontal error bars are plotted if dx is not None.
@@ -228,10 +369,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
         Qwt.QwtPlotCurve.__init__(self)
 
-        self.data = data
         self.x1, self.y1, self.e1 = None, None, None
         self.yref = None # no mask applied
-        self.data_field = kw.get('data_field', 'orbit')
         self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
         self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
         self.setSymbol(kw.get('curveSymbol', Qwt.QwtSymbol()))
@@ -240,28 +379,18 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         self.errorOnTop = kw.get('errorOnTop', True)
         self.__live = False
         self.showDifference = False
-        self.update()
 
-    def setDrift(self, mode):
-        if mode == 'no':
-            self.yref = None
-        elif mode == 'now':
-            x1, y1, e1 = self.data.data(field=self.data_field, nomask=True)
-            self.yref = y1
-        elif mode == 'golden':
-            self.yref = self.data.golden(nomask = True)
-
-    def update(self):
-        self.x1, self.y1, self.e1 = self.data.data(field=self.data_field)
-        if self.yref is not None:
-            self.y1 = self.y1 - np.compress(self.data.keep, self.yref)
+    def update(self, x, y, e):
+        self.x1, self.y1, self.e1 = x, y, e
         Qwt.QwtPlotCurve.setData(self, self.x1, self.y1)
 
     def boundingRect(self):
         """
         Return the bounding rectangle of the data, error bars included.
         """
-        #x, y, y2 = self.data.data(field=self.data_field)
+        if not all([self.x1, self.y1, self.e1]):
+            return Qwt.QwtPlotCurve.boundingRect(self)
+
         x, y, y2 = self.x1, self.y1, self.e1
         xmin, xmax = min(x), max(x)
         ymin = min(y - y2)
@@ -286,6 +415,7 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         last is the index of the last data point to draw. If last < 0, last
         is transformed to index the last data point
         """
+        if not all([self.x1, self.y1, self.e1]): return
 
         if last < 0:
             last = self.dataSize() - 1
@@ -302,8 +432,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         # draw the error bars with caps in the y direction
         if self.errorOnTop:
             # draw the bars
-            #x1, y1, yer1 = self.data.data(field=self.data_field)
             x1, y1, yer1 = self.x1, self.y1, self.e1
+            #print x1, y1, yer1 
 
             ymin = (y1 - yer1)
             ymax = (y1 + yer1)
@@ -340,9 +470,8 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
 
 
 class OrbitPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None, data = None, data_field = 'orbit',
-                 pvs_golden = None, live = True, errorbar = True, 
-                 picker_profile = None, magnet_profile = None):
+    def __init__(self, parent = None, lat = None,
+                 live = True, errorbar = True, title=None): 
         
         super(OrbitPlot, self).__init__(parent)
         
@@ -354,9 +483,9 @@ class OrbitPlot(Qwt.QwtPlot):
         self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
 
         self.plotLayout().setAlignCanvasToScales(True)
+        if title is not None: self.setTitle(title)
 
         self.curve1 = OrbitPlotCurve(
-            data = data, data_field = data_field,
             curvePen = QPen(Qt.black, 2),
             curveSymbol = Qwt.QwtSymbol(
                 Qwt.QwtSymbol.Ellipse,
@@ -376,6 +505,7 @@ class OrbitPlot(Qwt.QwtPlot):
         #self.curve2.setVisible(False)
 
         #print "PV golden:", pvs_golden
+        pvs_golden = None
         if pvs_golden is None: self.golden = None
         else:
             #for pv in pvs_golden: print pv, caget(pv.encode("ascii"))
@@ -387,10 +517,36 @@ class OrbitPlot(Qwt.QwtPlot):
             )
             self.golden.attach(self)
             #print "Golden orbit is attached"
-        self.bound = self.curve1.boundingRect()
+        #self.bound = self.curve1.boundingRect()
         if self.golden is not None:
             self.bound = self.bound.united(self.golden.boundingRect())
+
+        self.curvemag = None
+
+        self.setMinimumSize(400, 200)
+        grid1 = Qwt.QwtPlotGrid()
+        grid1.attach(self)
+        grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
+
+        self.picker1 = None
+        self.zoomer1 = None
+
+        self.marker = Qwt.QwtPlotMarker()
+        self.marker.attach(self)
+        #self.marker.setLabelAlignment(Qt.AlignLeft)
+        self.marker.setLabelAlignment(Qt.AlignBottom)
+        #self.marker.setValue(100, 0)
+        #self.marker.setLabel(Qwt.QwtText("Hello"))
+        #self.connect(self, SIGNAL("doubleClicked
+
+    def elementDoubleClicked(self, elem):
+        print "element selected:", elem
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
+
+    def zoomed1(self, rect):
+        print "Zoomed"
         
+    def setPlot(self, picker_profile = None, magnet_profile = None):
         if magnet_profile is not None:
             self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
             # get x, y, color(optional)
@@ -407,11 +563,6 @@ class OrbitPlot(Qwt.QwtPlot):
 
             self.curvemag.attach(self)
         
-        self.setMinimumSize(400, 200)
-        grid1 = Qwt.QwtPlotGrid()
-        grid1.attach(self)
-        grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
-
         self.picker1 = None
         #self.picker1 = MagnetPicker(self.canvas(), profile = picker_profile)
         #self.picker1.setTrackerPen(QPen(Qt.red, 4))
@@ -429,29 +580,6 @@ class OrbitPlot(Qwt.QwtPlot):
                      self.zoomed1)
         #self.timerId = self.startTimer(1000)
 
-        self.marker = Qwt.QwtPlotMarker()
-        self.marker.attach(self)
-        #self.marker.setLabelAlignment(Qt.AlignLeft)
-        self.marker.setLabelAlignment(Qt.AlignBottom)
-        #self.marker.setValue(100, 0)
-        #self.marker.setLabel(Qwt.QwtText("Hello"))
-        #self.connect(self, SIGNAL("doubleClicked
-
-    def elementDoubleClicked(self, elem):
-        print "element selected:", elem
-        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
-
-    def zoomed1(self, rect):
-        print "Zoomed"
-        
-    def setPlot(self, mode):
-        if mode == self.PLOT_SINGLESHOT:
-            self.update()
-        elif mode == self.PLOT_LIVE:
-            pass
-        else:
-            pass
-
     def alignScales(self):
         self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)
         self.canvas().setLineWidth(1)
@@ -466,6 +594,14 @@ class OrbitPlot(Qwt.QwtPlot):
 
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         self.picker1.addMagnetProfile(sb, se, name, minlen)
+
+    def updateOrbit(self, data):
+        x, y, e = data.data()
+        self.curve1.update(x, y, e)
+        print "orbit updated"
+        self.replot()
+        if self.live and self.zoomer1:
+            self.zoomer1.setZoomBase(self.curve1.boundingRect())
 
     def updatePlot(self):
         self.curve1.update()

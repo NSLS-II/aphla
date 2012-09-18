@@ -290,7 +290,6 @@ class CaDecorator:
                 if len(self.rb) > self.trace_limit: 
                     # keep the first one for `reset`
                     self.rb.pop(1)
-            #print self.pvrb, ret
             if len(self.pvrb) == 1: 
                 return ret[0]
             else: return ret
