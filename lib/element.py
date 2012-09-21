@@ -84,8 +84,8 @@ class AbstractElement(object):
         - 'QUAD', quadrupole
         - 'DIPOLE', dipole
         - 'SEXT', sextupole
-        - ['TRIMX' | 'TRIMY'], corrector
-        - ['BPMX' | 'BPMY'], beam position monitor
+        - ['HCOR' | 'VCOR' | 'TRIMX' | 'TRIMY'], corrector
+        - ['BPM' | 'BPMX' | 'BPMY'], beam position monitor
 
         For unrecognized element, it returns a straight line, i.e. `([s0, s1],
         [0, 0], 'k')`
@@ -98,12 +98,12 @@ class AbstractElement(object):
             return [b, b, e, e, b, b, e, e], [0, h, h, -h, -h, h, h, 0], 'k'
         elif self.family == 'SEXT':
             return [b, b, e, e], [0, 1.25*h, 1.25*h, 0], 'k'
-        elif self.family in ['TRIMX', 'TRIMY']:
+        elif self.family in ['HCOR', 'VCOR', 'TRIMX', 'TRIMY']:
             return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
                 [0, 0, h, 0, 0], 'r'
-        elif self.family in ['BPMX', 'BPMY']:
+        elif self.family in ['BPM', 'BPMX', 'BPMY']:
             return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
-                [0, 0, h, 0, 0], 'b'        
+                [0, 0, h, 0, 0], 'b'
         else:
             return [b, e], [0, 0], 'k'
 

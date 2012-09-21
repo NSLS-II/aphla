@@ -15,6 +15,8 @@ from PyQt4.QtGui import (QApplication, QWidget, QColor,
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
 
+import aphla as ap
+
 import time
 import numpy as np
 import sip
@@ -42,16 +44,21 @@ class MagnetPicker(Qwt.QwtPlotPicker):
                           Qwt.QwtPlotPicker.CrossRubberBand,
                           Qwt.QwtPicker.AlwaysOn,
                           canvas)
-        if profile is None:
-            self.profile = []
-        else:
-            self.profile = profile
+        self.profile = []
+        self.minlen = minlen
+        if profile is not None:
+            #sb, se, name = zip(*profile)
+            #print "Sb", sb
+            #print "se", se
+            #print name
+            for rec in profile:
+                self.addMagnetProfile(rec[0], rec[1], rec[2], self.minlen)
 
-        #self.connect(self, SIGNAL("selected(QPointF&)"),
-        #             self.activate_element)
+        self.connect(self, SIGNAL("selected(QPointF&)"),
+                     self.activate_element)
         # instead of list, use PyQt_PyObject
         #self.elementSelected = pyqtSignal(PyQt_PyObject)
-        self.elementSelected = pyqtSignal(list)
+        #self.elementSelected = pyqtSignal(list)
 
     def activate_element(self, p):
         print p
@@ -97,8 +104,18 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         #print "Double Clicked", evt.x(), evt.y(), evt.pos(), evt.posF()
         pos = self.invTransform(evt.pos())
         elements = self.element_names(pos.x(), pos.y())
+
+        #print "emitting:", elements
+        elemlst = ap.getElements(elements)
+        msgbox, msg = QMessageBox(), ""
+        for elem in elemlst:
+            msg += "%s:\n" % elem.name
+            for v in elem.fields():
+                msg += "  %s: %s\n" % (v, str(elem.get(v)))
+
+        msgbox.setText(msg)
+        msgbox.exec_()
         
-        #self.emit(SIGNAL("elementSelected(list)"), elements)
         self.emit(SIGNAL("elementDoubleClicked(PyQt_PyObject)"), elements)
 
 
@@ -435,7 +452,11 @@ class OrbitPlot(Qwt.QwtPlot):
             self.curvemag.attach(self)
 
             if magp and sip.SIP_VERSION_STR > '4.10.2':
-                self.picker1 = MagnetPicker(self.canvas(), profile = magp)
+                self.picker1 = MagnetPicker(self.canvas(), profile=magp)
+                #sb = [v[0] for v in magp]
+                #se = [v[1] for v in magp]
+                #names = [v[2] for v in magp]
+                #self.picker1.addMagnetProfile(sb, se, names)
                 self.picker1.setTrackerPen(QPen(Qt.red, 4))
                 #self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
         #             self.elementDoubleClicked)
