@@ -90,7 +90,7 @@ class AbstractElement(object):
         For unrecognized element, it returns a straight line, i.e. `([s0, s1],
         [0, 0], 'k')`
         """
-        b, e = self.sb, self.sb + self.length
+        b, e = self.sb, max(self.sb + self.length, self.se)
         h = vscale
         if self.family == 'QUAD':
             return [b, b, e, e], [0, h, h, 0], 'k'

@@ -22,7 +22,8 @@ import gui_resources
 
 from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
-from orbitplot import OrbitData, OrbitPlot, DcctCurrentPlot
+from orbitplot import OrbitPlot, DcctCurrentPlot
+from orbitdata import OrbitData, OrbitDataVirtualBpm
 from orbitcorrdlg import OrbitCorrDlg
 from elemproperty import *
 
@@ -131,18 +132,17 @@ class OrbitPlotMainWindow(QMainWindow):
         picker = None #[(v[1], v[2], v[0]) for v in self.config.data['magnetpicker']]
 
         # all orbit plots: [plot, data, index]
-        self.oplots = []
-        p = OrbitPlot(self, live=self.live_orbit, title="Horizontal Orbit")
-        self.oplots.append([p, None, 0])
-        p = OrbitPlot(self, live=self.live_orbit, title="Vertical Orbit")
-        self.oplots.append([p, None, 0])
+        self.obtdata = None
+        self.obtplots = [
+            OrbitPlot(self, live=self.live_orbit, title="Horizontal Orbit"),
+            OrbitPlot(self, live=self.live_orbit, title="Vertical Orbit"),
+            OrbitPlot(self, live=self.live_orbit, title="Horizontal"),
+            OrbitPlot(self, live=self.live_orbit, title="Vertical")
+            ]
+        self.obtxplot, self.obtyplot       = self.obtplots[0], self.obtplots[1]
+        self.obtxerrplot, self.obtyerrplot = self.obtplots[2], self.obtplots[3]
 
-        p = OrbitPlot(self, live=self.live_orbit, title="Horizontal")
-        self.oplots.append([p, None, 1])
-        p = OrbitPlot(self, live=self.live_orbit, title="Vertical")
-        self.oplots.append([p, None, 1])
-
-        for p,d,i in self.oplots:
+        for p in self.obtplots:
             p.plotLayout().setCanvasMargin(4)
             p.plotLayout().setAlignCanvasToScales(True)
         #self.lbplt1info = QLabel("Min\nMax\nAverage\nStd")
@@ -152,8 +152,8 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.plot1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         #self.plot2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        gbox.addWidget(self.oplots[0][0], 0, 1)
-        gbox.addWidget(self.oplots[1][0], 1, 1)
+        gbox.addWidget(self.obtplots[0], 0, 1)
+        gbox.addWidget(self.obtplots[1], 1, 1)
         gbox.setRowStretch(0, 0.5)
         gbox.setRowStretch(1, 0.5)
         wid1.setLayout(gbox)        
@@ -161,8 +161,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
         wid1 = QWidget()
         vbox1 = QVBoxLayout()
-        vbox1.addWidget(self.oplots[2][0])
-        vbox1.addWidget(self.oplots[3][0])
+        vbox1.addWidget(self.obtplots[2])
+        vbox1.addWidget(self.obtplots[3])
         wid1.setLayout(vbox1)
         self.tabs.addTab(wid1, "Std")
 
@@ -245,16 +245,16 @@ class OrbitPlotMainWindow(QMainWindow):
         # zoom in the horizontal orbit
         controlZoomInPlot1Action = QAction("zoomin H", self)
         self.connect(controlZoomInPlot1Action, SIGNAL("triggered()"),
-                     self.oplots[0][0].zoomIn)
+                     self.obtplots[0].zoomIn)
         controlZoomOutPlot1Action = QAction("zoomout H", self)
         self.connect(controlZoomOutPlot1Action, SIGNAL("triggered()"),
-                     self.oplots[1][0].zoomOut)
+                     self.obtplots[1].zoomOut)
         controlZoomInPlot2Action = QAction("zoomin V", self)
         self.connect(controlZoomInPlot2Action, SIGNAL("triggered()"),
-                     self.oplots[2][0].zoomIn)
+                     self.obtplots[2].zoomIn)
         controlZoomOutPlot2Action = QAction("zoomout V", self)
         self.connect(controlZoomOutPlot2Action, SIGNAL("triggered()"),
-                     self.oplots[3][0].zoomOut)
+                     self.obtplots[3].zoomOut)
 
         drift_from_now = QAction("Drift from Now", self)
         drift_from_now.setCheckable(True)
@@ -356,17 +356,24 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
     def setLattice(self, lat):
-        elems = lat.getElementList('BPM')
-        picker = [(e.sb, e.se, e.name) for e in elems]
-        # data for plot1,2
-        self.oplots[0][1] = OrbitData(elements=elems, field='x')
-        self.oplots[1][1] = OrbitData(elements=elems, field='y')
-        self.oplots[2][1] = OrbitData(elements=elems, field='x')
-        self.oplots[3][1] = OrbitData(elements=elems, field='y')
-        for p,d,i in self.oplots:
-            for j,e in enumerate(elems):
-                d.x[j] = e.se
-            p.setPlot(picker_profile=picker, magnet_profile=None)
+        vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
+        if vbpm is not None:
+            self.obtdata = OrbitDataVirtualBpm(velement=vbpm)
+            self.obtdata.update()
+            print self.obtdata.xorbit()
+            print self.obtdata.yorbit()
+        else:
+            elems = lat.getElementList('BPM')
+            x = [(e.se+e.sb)/2.0 for e in elems]
+            se = [e.se for e in elems]
+            sb = [e.sb for e in elems]
+            picker = [(e.sb, e.se, e.name) for e in elems]
+            # data for plot1,2
+            self.obtdata = OrbitData(elements=elems, x=x, sb=sb, se=se)
+
+        magprof = lat.getBeamlineProfile()
+        for p in self.obtplots:
+            p.setPlot(magnet_profile=magprof)
 
         return
 
@@ -430,7 +437,7 @@ class OrbitPlotMainWindow(QMainWindow):
         """Switch on/off live data taking"""
         #print "MainWindow: liveData", on
         self.live_orbit = on
-        for p,d,i in self.oplots: p.liveData(on)
+        for p in self.obtplots: p.liveData(on)
         
     def errorBar(self, on):
         self.plot1.setErrorBar(on)
@@ -505,12 +512,15 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.statusBar().showMessage("%s; %s"  % (
         #        self.plot1.datainfo(), self.plot2.datainfo()))
         #print "updating", self.data1 
-        icur = self.tabs.currentIndex()
-        for p,d,i in self.oplots:
-            if d is None: continue
-            d.update()
-            print "data:", i, d, d.min(), d.max(), d.average()
-            if i == icur and self.live_orbit: p.updateOrbit(d)
+        if self.obtdata is not None:
+            self.obtdata.update()
+            sx, x, xerr = self.obtdata.xorbit()
+            sy, y, yerr = self.obtdata.yorbit()
+            #icur = self.tabs.currentIndex()
+            self.obtxplot.updateOrbit(sx, x, xerr)
+            self.obtxerrplot.updateOrbit(sx, xerr)
+            self.obtyplot.updateOrbit(sy, y, yerr)
+            self.obtyerrplot.updateOrbit(sy, yerr)
             
 
     def updateStatus(self):
@@ -520,7 +530,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def singleShot(self):
         #print "Main: Singleshot"
-        for p,d,i in self.oplots: p.singleShot()
+        for p in self.obtplots: p.singleShot()
         self.updateStatus()
 
     def resetPvData(self):

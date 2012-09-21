@@ -164,6 +164,7 @@ def initNSLS2V1(with_twiss = False):
               ('handle', u'elemHandle'),
               ('index', u'elemIndex'), 
               ('se', u'elemPosition'),
+              ('length', u'elemLength'),
               ('system', u'system')]:
         cfa.renameProperty(k[1], k[0])
 
