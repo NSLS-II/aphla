@@ -86,11 +86,12 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         return s
 
     def trackerTextF(self, pos):
+        """
+        """
+        # There is a bug in sip-4.10.2 and pyqwt5 in Debian-6.0
         s = self.element_names(pos.x(), pos.y())
-        print "Tracking", pos.x(), pos.y(), s
         lab = Qwt.QwtText("%.3f, %.3f\n%s" % (pos.x(), pos.y(), '\n'.join(s)))
-        print lab
-        return Qwt.QwtText("Y")
+        return lab
 
     def widgetMouseDoubleClickEvent(self, evt):
         #print "Double Clicked", evt.x(), evt.y(), evt.pos(), evt.posF()
@@ -253,7 +254,6 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         Return the bounding rectangle of the data, error bars included.
         """
         if self.x1 is None or self.y1 is None:
-            print "Not All", self.x1, self.y1, self.e1
             return Qwt.QwtPlotCurve.boundingRect(self)
         
         x, y, y2 = self.x1, self.y1, self.e1
@@ -421,16 +421,11 @@ class OrbitPlot(Qwt.QwtPlot):
             # x, y and profile(left, right, name)
             mags, magv, magp = [], [], []
             for rec in magnet_profile:
-                print rec,
                 mags.extend(rec[0])
                 magv.extend(rec[1])
                 if rec[3]:
-                    magp.append((min(rec[0]), max(rec[0]), rec[3].encode('ascii')))
-                    #print magp[-1]
-                print ""
-            #print magnet_profile
-            #print "X:", mags
-            #print "Y:", magv
+                    magp.append((min(rec[0]), max(rec[0]), 
+                                 rec[3].encode('ascii')))
             self.curvemag.setData(mags, magv)
             self.curve2.setPen(QPen(Qt.red, 4))
             self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
@@ -439,8 +434,7 @@ class OrbitPlot(Qwt.QwtPlot):
 
             self.curvemag.attach(self)
 
-            if magp:
-                print magp
+            if magp and sip.SIP_VERSION_STR > '4.10.2':
                 self.picker1 = MagnetPicker(self.canvas(), profile = magp)
                 self.picker1.setTrackerPen(QPen(Qt.red, 4))
                 #self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
@@ -456,7 +450,6 @@ class OrbitPlot(Qwt.QwtPlot):
         self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
                      self.zoomed1)
         #self.timerId = self.startTimer(1000)
-        print "DONE"
 
     def alignScales(self):
         self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)

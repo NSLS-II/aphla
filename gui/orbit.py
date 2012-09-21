@@ -360,8 +360,8 @@ class OrbitPlotMainWindow(QMainWindow):
         if vbpm is not None:
             self.obtdata = OrbitDataVirtualBpm(velement=vbpm)
             self.obtdata.update()
-            print self.obtdata.xorbit()
-            print self.obtdata.yorbit()
+            #print self.obtdata.xorbit()
+            #print self.obtdata.yorbit()
         else:
             elems = lat.getElementList('BPM')
             x = [(e.se+e.sb)/2.0 for e in elems]
@@ -377,37 +377,6 @@ class OrbitPlotMainWindow(QMainWindow):
 
         return
 
-        orbit_conf_file = accname + "_orbit.json"
-        if aphla.conf.inHome(orbit_conf_file):
-            aphla.logger.info("Using config file '%s' from $HOME" % 
-                              orbit_conf_file)
-        self.config = OrbitPlotConfig(None, 
-                                      aphla.conf.filename(orbit_conf_file))
-
-
-        # initialize a QwtPlot central widget
-        #bpm = hla.getElements('BPM')
-        self.pvx = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmx']]
-        #print pvx
-        self.pvy = [b[1]['rb'].encode('ascii') for b in self.config.data['bpmy']]
-        self.pvsx = [b[1]['s'] for b in self.config.data['bpmx']]
-        self.pvsy = [b[1]['s'] for b in self.config.data['bpmy']]
-        self.bpm = [b[0] for b in self.config.data['bpmx']]
-        pvsx_golden = [b[1]['golden'].encode("ascii") 
-                       for b in self.config.data['bpmx']]
-        pvsy_golden = [b[1]['golden'].encode("ascii") 
-                       for b in self.config.data['bpmy']]
-        self.orbitx_data = OrbitData(pvs = self.pvx, x = self.pvsx, 
-                                     pvs_golden = pvsx_golden)
-        self.orbity_data = OrbitData(pvs = self.pvy, x = self.pvsy,
-                                     pvs_golden = pvsy_golden)
-        self.orbitx_data.update()
-        self.orbity_data.update()
-
-
-        self.elems = ElementPropertyTabs()
-        self.elems.setVisible(False)
-        self.elems.setTabsClosable(True)
         self.connect(self.plot1, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elems.addElement)
         self.connect(self.plot2, SIGNAL("elementSelected(PyQt_PyObject)"),

@@ -15,7 +15,6 @@ class OrbitData(object):
     - *keep* mask for ignore(0) or keep(1) that data point.
     """
     def __init__(self, **kw):
-        print "kw:",kw
         self.samples = kw.get('samples', 10)
         self.xscale = kw.get('xscale', 1.0)
         self.yscale = kw.get('yscale', 1.0)
@@ -26,7 +25,6 @@ class OrbitData(object):
         self.s = kw.get('s', None)
         if self.s is None: n = 0
         else: n = len(self.s)
-        print "s loc:", self.s
 
         self.pvs = kw.get('pvs', None)
         self.elems = kw.get('elements', None)
@@ -38,7 +36,6 @@ class OrbitData(object):
             # how many samples are kept for statistics
             self.xerrbar, self.yerrbar = None, None
             self.keep   = None
-            #print self.x, self.y
         else:
             dim = (self.samples, n)
             self.x, self.y = np.zeros(dim, 'd'), np.zeros(dim, 'd')
@@ -47,28 +44,6 @@ class OrbitData(object):
             self.xerrbar = np.ones(n, 'd') * 1e-15
             self.yerrbar = np.ones(n, 'd') * 1e-15
             self.keep = [True] * n
-
-        return
-
-        if self.pvs is not None:
-            n = len(pvs)
-            self.x = kw.get('x', np.arange(n))
-            self.y = np.zeros((self.samples, n), 'd')
-            self.y[0,:] = caget(self.pvs)
-        elif self.elems is not None:
-            n = len(self.elems)
-            self.x = kw.get('x', np.arange(n))
-            self.y = np.zeros((self.samples, n), 'd')
-            # only take the first sample
-            for j in range(n):
-                self.y[0,j] = self.elems[j].get(self.field)
-        else:
-            n = 0
-            self.x = None
-
-        #if self.x is not None and len(self.x) != n:
-        #    raise ValueError("pv and x are not same size %d != %d" % (n, len(self.x)))
-            
 
     def _update_pvs_data(self):
         """
@@ -177,12 +152,11 @@ class OrbitDataVirtualBpm(OrbitData):
         self.velem = kw.get('velement', None)
         sb, se = np.array(self.velem.sb), np.array(self.velem.se)
         s = kw.get('s', None)
-        print "s", s
         if s is None: kw.update({'s': 0.5*(sb+se)})
-        print "kw vbpm:", kw
 
         OrbitData.__init__(self, **kw)
-        #self.update()
+
+        if kw.get('update', False) == True: self.update()
 
     def update(self):
         """
@@ -191,8 +165,6 @@ class OrbitDataVirtualBpm(OrbitData):
         # y and errbar sync with plot, not changing data.
         i = (self.icur + 1) % self.samples
 
-        print "x shape", np.shape(self.velem.get('x')), np.shape(self.x)
-        print "y shape", np.shape(self.velem.get('y')), np.shape(self.y)
         self.x[i,:] = self.xscale * np.array(self.velem.get('x'))
         self.y[i,:] = self.yscale * np.array(self.velem.get('y'))
         self.xerrbar[:] = np.std(self.x, axis=0)
