@@ -168,6 +168,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.setCentralWidget(cwid)
 
+
         #self.plot5 = OrbitCorrPlot(self, self.orbitx_data, picker_profile = picker,
         #    magnet_profile = self.config.data['magnetprofile'])
         #wid1 = QWidget()
@@ -377,11 +378,10 @@ class OrbitPlotMainWindow(QMainWindow):
 
         return
 
-        self.connect(self.plot1, SIGNAL("elementSelected(PyQt_PyObject)"),
-                     self.elems.addElement)
-        self.connect(self.plot2, SIGNAL("elementSelected(PyQt_PyObject)"),
-                     self.elems.addElement)
-
+        #self.connect(self.plot1, SIGNAL("elementSelected(PyQt_PyObject)"),
+        #             self.elems.addElement)
+        #self.connect(self.plot2, SIGNAL("elementSelected(PyQt_PyObject)"),
+        #             self.elems.addElement)
 
     def _reset_correctors(self):
         aphla.hlalib._reset_trims()
@@ -397,10 +397,18 @@ class OrbitPlotMainWindow(QMainWindow):
     def _random_vkick(self):
         cors = aphla.getElements('VCOR')
         i = np.random.randint(len(cors))
+        print "kick {0} by 1e-7".format(cors[i].name),
         cors[i].y += 1e-7
+        print " kick=",cors[i].y
 
     def viewDcctPlot(self, on):
         self.dcct.setVisible(on)
+
+    def _active_plots(self):
+        i = self.tabs.currentIndex()
+        itab = self.tabs.currentWidget()
+        return itab.findChildren((OrbitPlot,))
+        #return self.tabs.findChildren()
 
     def liveData(self, on):
         """Switch on/off live data taking"""
@@ -427,33 +435,18 @@ class OrbitPlotMainWindow(QMainWindow):
     def zoomOut15(self):
         """
         """
-        i = self.tabs.currentIndex()
-        if i == 0:
-            self.plot1._scaleVertical(1.5)
-            self.plot2._scaleVertical(1.5)
-        elif i == 1:
-            self.plot3._scaleVertical(1.5)
-            self.plot4._scaleVertical(1.5)
+        for p in self._active_plots():
+            p._scaleVertical(1.5)
             
     def zoomIn15(self):
         """
         """
-        i = self.tabs.currentIndex()
-        if i == 0:
-            self.plot1._scaleVertical(1.0/1.5)
-            self.plot2._scaleVertical(1.0/1.5)
-        elif i == 1:
-            self.plot3._scaleVertical(1.0/1.5)
-            self.plot4._scaleVertical(1.0/1.5)
+        for p in self._active_plots():
+            p._scaleVertical(1.0/1.5)
 
     def zoomAuto(self):
-        i = self.tabs.currentIndex()
-        if i == 0:
-            self.plot1.zoomAuto()
-            #self.plot2.zoomAuto()
-        elif i == 1:
-            self.plot3.zoomAuto()
-            self.plot4.zoomAuto()
+        for p in self._active_plots():
+            p.zoomAuto()
             
     def chooseBpm(self):
         #print self.bpm
@@ -476,12 +469,13 @@ class OrbitPlotMainWindow(QMainWindow):
                 else:
                     self.orbitx_data.keep[i] = 0
                     self.orbity_data.keep[i] = 0
-        
+
+
     def timerEvent(self, e):
         #self.statusBar().showMessage("%s; %s"  % (
         #        self.plot1.datainfo(), self.plot2.datainfo()))
         #print "updating", self.data1 
-        if self.obtdata is not None:
+        if self.obtdata is not None and self.live_orbit:
             self.obtdata.update()
             sx, x, xerr = self.obtdata.xorbit()
             sy, y, yerr = self.obtdata.yorbit()
@@ -490,16 +484,27 @@ class OrbitPlotMainWindow(QMainWindow):
             self.obtxerrplot.updateOrbit(sx, xerr)
             self.obtyplot.updateOrbit(sy, y, yerr)
             self.obtyerrplot.updateOrbit(sy, yerr)
-            
+        self.updateStatus()
 
     def updateStatus(self):
-        #self.statusBar().showMessage("%s; %s"  % (
-        #        self.plot1.datainfo(), self.plot2.datainfo()))      
-        pass
+        self.statusBar().showMessage("read {0}".format(self.obtdata.icount))
 
     def singleShot(self):
-        #print "Main: Singleshot"
-        for p in self.obtplots: p.singleShot()
+        if self.obtdata is not None:
+            self.obtdata.update()
+            plots = self._active_plots()
+            sx, x, xerr = self.obtdata.xorbit()
+            sy, y, yerr = self.obtdata.yorbit()
+            #icur = self.tabs.currentIndex()
+            if self.obtxplot in plots:
+                self.obtxplot.updateOrbit(sx, x, xerr)
+            if self.obtxerrplot in plots:
+                self.obtxerrplot.updateOrbit(sx, xerr)
+            if self.obtyplot in plots:
+                self.obtyplot.updateOrbit(sy, y, yerr)
+            if self.obtyerrplot in plots:
+                self.obtyerrplot.updateOrbit(sy, yerr)
+            
         self.updateStatus()
 
     def resetPvData(self):

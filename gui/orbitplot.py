@@ -109,9 +109,9 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         elemlst = ap.getElements(elements)
         msgbox, msg = QMessageBox(), ""
         for elem in elemlst:
-            msg += "%s:\n" % elem.name
+            msg += "<strong>%s:</strong><br>" % elem.name
             for v in elem.fields():
-                msg += "  %s: %s\n" % (v, str(elem.get(v)))
+                msg += "  %s: %s<br>" % (v, str(elem.get(v)))
 
         msgbox.setText(msg)
         msgbox.exec_()
@@ -508,12 +508,12 @@ class OrbitPlot(Qwt.QwtPlot):
     def setDrift(self, mode = 'no'):
         self.curve1.setDrift(mode)
 
-    def singleShot(self):
-        #print "Plot :: singleShot"
-        self.zoomer1.setZoomBase(self.curve1.boundingRect())
-        self.curve1.update()
-        if self.golden is not None: self.golden.update()
-        self.replot()
+    #def singleShot(self):
+    #    #print "Plot :: singleShot"
+    #    self.zoomer1.setZoomBase(self.curve1.boundingRect())
+    #    self.curve1.update()
+    #    if self.golden is not None: self.golden.update()
+    #    self.replot()
 
     def liveData(self, on):
         self.live = on

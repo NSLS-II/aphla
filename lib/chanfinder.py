@@ -189,7 +189,7 @@ class ChannelFinderAgent(object):
         each line of csv starts with pv name, then property list and tags. An
         example is in the following::
 
-          PV1, elemName=Name,sEnd=0.2, aphla.sys.SR,aphla.elemfield.f1
+          PV1, elemName=Name, elemPosition=0.2, aphla.sys.SR,aphla.elemfield.f1
         """
         self.source = fname
         import csv

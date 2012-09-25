@@ -261,6 +261,44 @@ def cfs_append_from_csv1(rec_list, update_only):
         logging.info("update '{0}' for {1} pvs".format(t, len(pvs)))
     logging.info("finished updating tags")
 
+
+def cfs_append_from_csv2(rec_list, update_only):
+    cf = ChannelFinderClient(**cfinput)
+    all_prpts = [p.Name for p in cf.getAllProperties()]
+    all_tags  = [t.Name for t in cf.getAllTags()]
+    ignore_prpts = ['hostName', 'iocName']
+    import csv
+    rd = csv.reader(rec_list)
+
+    tag_owner = OWNER
+    prpt_owner = PRPTOWNER
+    prpt_data, tag_data = {}, {}
+    # the data body
+    for s in rd:
+        if not s: continue
+        if not s[0].strip(): continue
+        if s[0].strip().startswith('#'): continue
+        
+        pv = s[0]
+        for r in s[1:]:
+            if r.find('=') > 0:
+                prpt, val = [v.strip() for v in r.split('=')]
+                prpt_data.set_default((prpt, val), [])
+                prpt_data[(prpt, val)].append(pv)
+            else:
+                # it is a tag
+                tag_data.set_default(r.strip(), [])
+                tag_data.append(pv)
+
+    for k,v in prpt_data.iteritems():
+        addPropertyPvs(cf, k[0], prpt_owner, k[1], v)
+        logging.info("add property {0} for pvs {1}".format(k, v))
+    for k,v in tag_data.iteritems():
+        addTagPvs(cf, k, v, tag_owner)
+        logging.info("add tag {0} for pvs {1}".format(k, v))
+
+
+
 def cfs_append_from_cmd(cmd_list, update_only = False):
     """
     update the cfs from command file:
@@ -330,7 +368,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--cmd', type=file, help="run command list")
-    group.add_argument('--csv1', type=file, help="update with this csv file")
+    group.add_argument('--csv1', type=file, help="update with this csv1 file")
+    group.add_argument('--csv2', type=file, help="update with this csv2 file")
     parser.add_argument('-u', '--update-only', action="store_true", 
                         help="do not create new")
     
@@ -344,6 +383,8 @@ if __name__ == "__main__":
         cfs_append_from_cmd(arg.cmd, update_only = arg.update_only)
     elif arg.csv1:
         cfs_append_from_csv1(arg.csv1, update_only = arg.update_only)
+    elif arg.csv2:
+        cfs_append_from_csv2(arg.csv2, update_only = arg.update_only)
 
 
 

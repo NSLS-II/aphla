@@ -124,9 +124,9 @@ def initNSLS2V1(with_twiss = False):
     """ 
     initialize the virtual accelerator 'V1SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
-    - `${HOME}/.hla/us_nsls2v1_cfs.csv`
+    - `${HOME}/.hla/us_nsls2v1.db`
     - channel finder in ${HLA_CFS_URL}
-    - `us_nsls2v1_cfs.csv` with aphla package.
+    - `us_nsls2v1.db` with aphla package.
     """
 
     cfa = ChannelFinderAgent()
@@ -232,21 +232,21 @@ def initNSLS2():
 
     The initialization is done in the following order:
 
-        - user's `${HOME}/.hla/us_nsls2_cfs.csv`; if not then
+        - user's `${HOME}/.hla/us_nsls2.db`; if not then
         - channel finder service in `env ${HLA_CFS_URL}`; if not then
-        - the `us_nsls2_cfs.csv` installed with aphla package; if not then
+        - the `us_nsls2.db` installed with aphla package; if not then
         - RuntimeError
     """
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2_cfs.csv'
+    cfs_filename = 'us_nsls2.db'
     src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
-        msg = "Creating lattice from home csv '%s'" % src_home_csv
+        msg = "Creating lattice from home '%s'" % src_home_csv
         logger.info(msg)
-        cfa.importCsv(src_home_csv)
+        cfa.importSqliteDb(src_home_csv)
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         logger.info(msg)
@@ -255,8 +255,8 @@ def initNSLS2():
         src_pkg_csv = conf.filename(cfs_filename)
         msg = "Creating lattice from '%s'" % src_pkg_csv
         logger.info(msg)
-        #print(msg)
-        cfa.importCsv(src_pkg_csv)
+        #cfa.importCsv(src_pkg_csv)
+        cfa.importSqliteDb(src_pkg_csv)
     else:
         logger.error("Channel finder data are available, no '%s', no server" % 
                      cfs_filename)
@@ -267,8 +267,10 @@ def initNSLS2():
               ('field', u'elemField'), 
               ('devname', u'devName'),
               ('family', u'elemType'), 
-              ('index', u'ordinal'), 
-              ('se', u'sEnd'),
+              ('handle', u'elemHandle'),
+              ('index', u'elemIndex'), 
+              ('se', u'elemPosition'),
+              ('length', u'elemLength'),
               ('system', u'system')]:
         cfa.renameProperty(k[1], k[0])
 
@@ -278,6 +280,7 @@ def initNSLS2():
 
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
+
     for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
         lattag = HLA_TAG_SYS_PREFIX + '.' + latname
         logger.info("Initializing lattice %s (%s)" % (latname, lattag))
@@ -300,6 +303,7 @@ def initNSLS2():
     #
     # LTB 
     _lattice_dict['LTB'].loop = False
+    _lattice_dict['LTD1'].loop = False
     #_lat = _lattice_dict['LTB']
 
     #
