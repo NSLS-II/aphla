@@ -1,0 +1,23 @@
+
+- build the source::
+
+  python setup.py sdist
+
+- using python-stdeb to build debian package::
+
+  py2dsc ../../dist/aphla-0.3.0b4.tar.gz
+  cd deb_dist/aphla-0.3.0b4
+  dpkg-buildpackage -rfakeroot -uc -us
+
+- install
+
+  cd ..
+  sudo dpkg -i python-aphla_0.3.0b4-1_all.deb
+
+
+Note
+-----
+
+- more option (e.g. Debian version): py2dsc --extra-cfg-file stdeb.cfg
+- python setup.py --command-packages=stdeb.command sdist_dsc
+- python setup.py --command-packages=stdeb.command bdist_deb

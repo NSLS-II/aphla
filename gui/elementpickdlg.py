@@ -20,7 +20,8 @@ class ElementPickDlg(QDialog):
             w = QListWidgetItem(e)
             w.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsSelectable |
                        Qt.ItemIsEnabled)
-            w.setCheckState(chk)
+            if chk: w.setCheckState(Qt.Checked)
+            else: w.setCheckState(Qt.Unchecked)
             self.elemlst.addItem(w)
 
         #self.elemlst.setSortingEnabled(True)

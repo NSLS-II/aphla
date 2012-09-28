@@ -12,7 +12,7 @@ class DoubleSpinBoxCell(QDoubleSpinBox):
         self.col = col
 
 class OrbitCorrDlg(QDialog):
-    def __init__(self, bpm, s, x, y, update_orbit = None,
+    def __init__(self, bpm, s, x, y, orbit_plots = None,
                  correct_orbit = None, parent = None):
 
         super(OrbitCorrDlg, self).__init__(parent)
@@ -29,15 +29,15 @@ class OrbitCorrDlg(QDialog):
             #it.setMinimumWidth(80)
             self.table.setItem(i, 1, it)
             it = DoubleSpinBoxCell(i, 2)
-            it.setRange(-40000, 40000)
-            it.setSingleStep(0.5)
+            it.setRange(-100000, 100000)
+            it.setSingleStep(10)
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
             #self.connect(it, SIGNAL("
             self.table.setCellWidget(it.row, it.col, it)
             it = DoubleSpinBoxCell(i, 3)
-            it.setRange(-10000, 10000)
-            it.setSingleStep(0.5)
+            it.setRange(-100000, 100000)
+            it.setSingleStep(10)
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
             self.table.setCellWidget(it.row, it.col, it)
@@ -60,7 +60,8 @@ class OrbitCorrDlg(QDialog):
         layout.addWidget(self.table)
         layout.addLayout(hbox) 
         self.setLayout(layout)
-        self.update_orbit = update_orbit
+        #self.update_orbit = update_orbit
+        self.orbit_plots = orbit_plots
         self.correct_orbit = correct_orbit
         self.val = [x, y]
 
@@ -72,9 +73,18 @@ class OrbitCorrDlg(QDialog):
         #print "row/col", sender.row, sender.col, sender.value()
         self.table.setCurrentCell(sender.row, sender.col)
         self.val[sender.col-2][sender.row] = sender.value()
-        self.update_orbit(self.val[0], self.val[1])
+        #for p in self.orbit_plots:
+        #    #self.update_orbit(self.val[0], self.val[1])
+        for i,p in enumerate(self.orbit_plots):
+            p.plotDesiredOrbit(self.val[i])
+
 
     def call_apply(self):
         #print "apply the orbit"
         self.correct_orbit(self.val[0], self.val[1])
 
+    def done(self, r):
+        for p in self.orbit_plots:
+            p.plotDesiredOrbit(None, None)
+
+        QDialog.done(self, r)

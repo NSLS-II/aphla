@@ -1,125 +1,97 @@
 #!/usr/bin/env python
 
 """
-Core HLA Libraries
-~~~~~~~~~~~~~~~~~~
+Core APHLA Libraries
+~~~~~~~~~~~~~~~~~~~~~
 
 :author: Lingyun Yang
-:license:
 
-Defines the procedural interface of HLA to the users.
+Defines the fundamental routines.
 """
 
+import logging
 import numpy as np
 import time
 from fnmatch import fnmatch
 from catools import caget, caput
 import machines
+import element
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
-    'getCurrent', 'getElements', 'getLocations', 'addGroup', 'removeGroup',
-    'addGroupMembers', 'removeGroupMembers', 'getGroups', 'getGroupMembers',
-    'getNeighbors', 'getClosest', 'getBeamlineProfile', 
-    'getPhase', 'getBeta', 'getDispersion', 'getEta',
-    'getOrbit', 'getTune', 'getTunes', 'getBpms',
-    'eget', 'waitStableOrbit'
+    'addGroup', 'addGroupMembers', 'eget',  
+    'getBeamlineProfile', 'getBeta', 
+    'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest', 
+    'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance', 
+    'getElements', 'getEta', 'getFastOrbit', 'getFftTune', 
+    'getGroupMembers', 'getGroups', 'getLocations', 'getModes', 
+    'getNeighbors', 'getOrbit', 'getPhase', 'getPvList', 'getRfFrequency', 
+    'getRfVoltage', 'getStepSize', 'getTbtOrbit', 'getTuneRm', 
+    'getTune', 'getTunes', 
+    'removeGroup', 'removeGroupMembers', 'setRfFrequency',
+    'stepRfFrequency', 
+    'waitStableOrbit', 
 ]
 
+# current
 def getCurrent():
     """
-    Get the current from element with a name 'DCCT'
+    Get the current from the first 'dcct' element
+
+    seealso :func:`getElements`
     """
-    _current = getElements('DCCT')
+    _current = getElements('dcct')
     if len(_current) == 1:
         return _current[0].value
     elif len(_current) > 1:
         return [c.value for c in _current]
     else:
         return None
+
+# rf
+def getRfFrequency():
+    """Get the frequency from the first 'RFCAVITY' element"""
+    _rf, = getElements('RFCAVITY')
+    return _rf.f
+
+def putRfFrequency(f):
+    raise DeprecationWarning("use `setRfFrequency` instead")
+
+def setRfFrequency(f):
+    """set the rf frequency for the first 'RFCAVITY' element"""
+    _rf, = getElements('RFCAVITY')
+    _rf.f = f
+
+def getRfVoltage():
+    """Get the voltage of the first 'RFCAVITY' element"""
+    _rf, = getElements('RFCAVITY')
+    return _rf.v
+
+def stepRfFrequency(df = 0.010):
+    """
+    change one step of the 'RFCAVITY' element
+
+    seealso :func:`~aphla.hlalib.getRfFrequency`, 
+    :func:`~aphla.hlalib.putRfFrequency`
+
+    .. warning:: 
+
+      Need modify the unit for real machine
+    """
+    f0 = getRfFrequency()
+    putRfFrequency(f0 + df)
+
+def _reset_rf():
+    """
+    reset the RF requency, used only in Tracy-II simulator to zero the orbit
+    """
+    _rf, = getElements('RFCAVITY')
+    _rf.f = 499.680528631
+
+
 #
 #
-def eget(element, full = False, tags = []):
-    """
-    easier get with element name(s)
-
-    This relies on channel finder service, and searching for :attr:`~hla.machines.HLA_TAG_EGET`
-    tag of the element.
-
-    Example::
-
-      >>> eget('QM1G4C01B')
-      >>> eget(['CXM1G4C01B', 'CYM1G4C01B'])
-      >>> eget('PL1G2C05A', tags='aphla.x')
-
-    - single element name, it returns one value or a list of values depending on matched PVs.
-    - list of element name, it returns a list, each could also be a list, a value or None.
-
-    The value is None if element is not found or no PV is found.
-    """
-
-    # some tags + the "default"
-    chtags = [machines.HLA_TAG_EGET]
-    if tags: chtags.extend(tags)
-    #print __file__, tags, chtags
-    if isinstance(element, (unicode, str)):
-        ret = []
-        # if given string, assume it is exact name of element
-        elem = machines._lat._find_exact_element(element)
-        pvl = elem.pv(tags=chtags)
-        #print element, chtags, pvl
-        if len(pvl) == 1: ret = caget(pvl[0])
-        else: ret = caget(pvl)
-        if full:
-            return pvl, ret
-        else: return ret
-    elif isinstance(element, (tuple, set, list)):
-        ret = []
-        elemlst = machines._lat.getElementList(element)
-        for elem in elemlst:
-            if not elem:
-                ret.append(None)
-                continue
-            pvl = elem.pv(tags=chtags)
-            if pvl: ret.append(caget(pvl))
-            else: ret.append(None)
-        return ret
-    else:
-        raise ValueError("element can only be a list or group name")
-
-
-def __eput(element, value):
-    """
-    easier put
-
-    .. warning::
-
-      deprecated
-
-    This relies on channel finder service, and searching for "default.eput"
-    tag of the element.
-
-    Example::
-
-      >>> eput('QM1G4C01B', 1.0)
-      >>> eput(['CXM1G4C01B', 'CYM1G4C01B'], [0.001, .001])
-
-    It does not do any wildcard matching. call getElements before hand to get
-    a list of element.
-
-    - *element* a single explicit element name or a list of element names
-    - *value*, match the size of *element*
-    """
-
-    raise DeprecationWarning
-
-    pvls = _cfa.getElementChannels(element, None, [TAG_DEFAULT_PUT])
-
-    print pvls
-    # use the first one of default put, ignore the rest
-    if isinstance(pvls, str):
-        caput(pvls, value)
-    else:
-        caput(pvls, value)
 
 def _reset_trims(verbose=False):
     """
@@ -129,9 +101,9 @@ def _reset_trims(verbose=False):
     trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
     pv = []
     for e in trimx:
-        pv.extend(e.pv(field='x', handle='SETPOINT'))
+        pv.extend(e.pv(field='x', handle='setpoint'))
     for e in trimy:
-        pv.extend(e.pv(field='y', handle='SETPOINT'))
+        pv.extend(e.pv(field='y', handle='setpoint'))
     if not pv:
         raise ValueError("no pv for trims found")
     
@@ -143,7 +115,8 @@ def _reset_trims(verbose=False):
     else:
         caput(pv, 0.0)
 
-    print "DONE"
+    logger.info("reset all trims")
+    #print "DONE"
 
 
 def _levenshtein_distance(first, second):
@@ -154,50 +127,137 @@ def _levenshtein_distance(first, second):
         return len(first)
     first_length = len(first) + 1
     second_length = len(second) + 1
-    distance_matrix = [[0] * second_length for x in range(first_length)]
+    distance_matrix = np.zeros((first_length, second_length), 'd')
     for i in range(first_length):
-       distance_matrix[i][0] = i
+        distance_matrix[i, 0] = i
     for j in range(second_length):
-       distance_matrix[0][j]=j
+        distance_matrix[0, j]=j
     for i in xrange(1, first_length):
         for j in range(1, second_length):
-            deletion = distance_matrix[i-1][j] + 1
-            insertion = distance_matrix[i][j-1] + 1
-            substitution = distance_matrix[i-1][j-1]
+            deletion = distance_matrix[i-1, j] + 1
+            insertion = distance_matrix[i, j-1] + 1
+            substitution = distance_matrix[i-1, j-1]
             if first[i-1] != second[j-1]:
                 substitution += 1
-            distance_matrix[i][j] = min(insertion, deletion, substitution)
-    return distance_matrix[first_length-1][second_length-1]
+            distance_matrix[i, j] = min(insertion, deletion, substitution)
+    return distance_matrix[first_length-1, second_length-1]
 
 
-def getElements(group, return_list=True, include_virtual=False):
-    """
-    return list of elements.
+def getElements(group, include_virtual=False):
+    """searching for elements.
 
-    *group* is an exact name of element or group, or a pattern.
+    :param group: a list of element name or a name pattern.
+    :type group: list or string
+    :param include_virtual: include virtual element or not.
+    :type include_virtual: bool
+    
+    :return: returns a list of matched element objects.
+    
+    :Example:
 
-    ::
-
-      >>> getElements('FH2G1C30A')
+      >>> getElements('NO_SUCH_ELEMENT')
+      []
+      >>> getElements('PH1G2C30A')
+      [PH1G2C30A:BPM @ sb=4.935000]
       >>> getElements('BPM')
+      ...
       >>> getElements('F*G1C0*')
+      ...
       >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
+      ...
 
     this calls :func:`~aphla.lattice.Lattice.getElementList` of the current
     lattice.
 
     The default does not include virtual element.
+
+    return None if no element is found and return_list=False
     """
 
+    # return the input if it is a list of element object
+    if isinstance(group, (list, tuple)):
+        if all([isinstance(e, element.AbstractElement) for e in group]):
+            return group
+
     elems = machines._lat.getElementList(group)
-    if not include_virtual:
-        elems = [e for e in elems if e.virtual == 0]
+    ret = []
+    for e in elems:
+        if e is None: 
+            ret.append(e)
+            continue
 
-    if not return_list: 
-        if len(elems) == 0: return None
-        elif len(elems) == 1: return elems[0]
+        if not include_virtual and e.virtual: continue
+        ret.append(e)
 
-    return elems
+    return ret
+
+def eget(elem = None, fields = None, **kwargs):
+    """
+    get elements field values
+    
+    :param elem: element name, name list or pattern
+    :type elem: str, list
+    :param fields: field name or name list
+    :type fields: str, list
+    
+    :Example:
+
+        >>> eget('DCCT', 'value')
+        >>> eget('BPM', 'x')
+        >>> eget('PH*', ['x', 'y'])
+
+    seealso :func:`getElements`, :func:`~aphla.element.CaElement.get`
+    """
+    if elem is not None:
+        elst = getElements(elem)
+        if not elst: return None
+        elif len(elst) == 1:
+            return elst[0].get(fields, **kwargs)
+        else:
+            return [e.get(fields, **kwargs) for e in elst]
+    else:
+        return None
+
+#def eset(elem = None, field = None, **kwargs):
+#    if elem is not None:
+#        elst = getElements(elem)
+        
+def getPvList(elem, field, handle, **kwargs):
+    """
+    return a pv list for given element list
+
+    :param elem: element pattern, name list
+    :param field: e.g. 'x', 'y', 'k1'
+    :param handle: 'READBACK' or 'SETPOINT'
+
+    Keyword arguments:
+
+      - *first_only* (False) use only the first PV for each element. 
+      - *compress_empty* (False) remove element with no PV.
+
+    *elem* accepts same input as :func:`getElements`
+    """
+    first_only = kwargs.get('first_only', False)
+    compress_empty = kwargs.get('compress_empty', False)
+
+    # did not check if it is a BPM 
+    elemlst = getElements(elem)
+    pvlst = []
+    for elem in elemlst:
+        if not isinstance(elem, element.CaElement):
+            raise ValueError("element '%s' is not CaElement" % elem.name)
+        #
+        pvs = elem.pv(field=field, handle=handle)
+        if len(pvs) == 0 and not compress_empty:
+            raise ValueError("element '%s' has no readback pv" % elem.name)
+        elif len(pvs) > 1 and not first_only:
+            raise ValueError("element '%s' has more %d (>1) pv" % 
+                             (elem.name, len(pvs)))
+
+        pvlst.append(pvs[0])
+
+    return pvlst
+
 
 def getLocations(group):
     """
@@ -225,16 +285,16 @@ def addGroup(group):
 
     raise *ValueError* if *group* is an illegal name.
 
-    it calls :func:`~hla.lattice.Lattice.addGroup` of the current lattice.
+    it calls :func:`~aphla.lattice.Lattice.addGroup` of the current lattice.
     """
-    return _lat.addGroup(group)
+    return machines._lat.addGroup(group)
 
 def removeGroup(group):
     """
     Remove a group if it is empty. It calls
-    :func:`~hla.lattice.Lattice.removeGroup` of the current lattice.
+    :func:`~aphla.lattice.Lattice.removeGroup` of the current lattice.
     """
-    _lat.removeGroup(group)
+    machines._lat.removeGroup(group)
 
 def addGroupMembers(group, member):
     """
@@ -245,14 +305,14 @@ def addGroupMembers(group, member):
       >>> addGroupMembers('HCOR', 'CX1')
       >>> addGroupMembers('HCOR', ['CX1', 'CX2']) 
 
-    it calls :meth:`~hla.lattice.Lattice.addGroupMember` of the current
+    it calls :meth:`~aphla.lattice.Lattice.addGroupMember` of the current
     lattice.
     """
     if isinstance(member, str):
-        _lat.addGroupMember(group, member)
+        machines._lat.addGroupMember(group, member)
     elif isinstance(member, list):
         for m in member:
-            _lat.addGroupMember(group, m)
+            machines._lat.addGroupMember(group, m)
     else:
         raise ValueError("member can only be string or list")
 
@@ -265,13 +325,13 @@ def removeGroupMembers(group, member):
       >>> removeGroupMembers('HCOR', 'CX1')
       >>> removeGroupMembers('HCOR', ['CX1', 'CX2'])
 
-    it calls :meth:`~hla.lattice.Lattice.removeGroupMember` of the current
+    it calls :meth:`~aphla.lattice.Lattice.removeGroupMember` of the current
     lattice.
     """
     if isinstance(member, str):
-        _lat.removeGroupMember(group, member)
+        machines._lat.removeGroupMember(group, member)
     elif isinstance(member, list):
-        for m in member: _lat.removeGroupMember(group, m)
+        for m in member: machines._lat.removeGroupMember(group, m)
     else:
         raise ValueError("member can only be string or list")
 
@@ -280,7 +340,7 @@ def getGroups(element = '*'):
     Get all groups own these elements, '*' returns all possible groups,
     since it matches every element
     
-    it calls :func:`~hla.lattice.Lattice.getGroups` of the current lattice.
+    it calls :func:`~aphla.lattice.Lattice.getGroups` of the current lattice.
     """
     return machines._lat.getGroups(element)
 
@@ -291,7 +351,7 @@ def getGroupMembers(groups, op = 'intersection', **kwargs):
     - op = "union", consider elements in the union of the groups
     - op = "intersection", consider elements in the intersect of the groups
 
-    it calls :func:`~hla.lattice.Lattice.getGroupMembers` of the current
+    it calls :func:`~aphla.lattice.Lattice.getGroupMembers` of the current
     lattice.
     """
     return machines._lat.getGroupMembers(groups, op, **kwargs)
@@ -301,7 +361,7 @@ def getNeighbors(element, group, n = 3):
     Get a list of n elements belongs to group. The list is sorted along s
     (the beam direction).
 
-    it calls :meth:`~hla.lattice.Lattice.getNeighbors` of the current
+    it calls :meth:`~aphla.lattice.Lattice.getNeighbors` of the current
     lattice to get neighbors.
 
     ::
@@ -325,7 +385,7 @@ def getClosest(element, group):
 
       >>> getClosest('PM1G4C27B', 'BPM')
 
-    It calls :meth:`~hla.lattice.Lattice.getClosest`
+    It calls :meth:`~aphla.lattice.Lattice.getClosest`
     """
 
     return machines._lat.getClosest(element, group)
@@ -334,7 +394,7 @@ def getBeamlineProfile(s1 = 0, s2 = 1e10):
     """
     return the beamline profile from s1 to s2
 
-    it calls :meth:`~hla.lattice.Lattice.getBeamlineProfile` of the
+    it calls :meth:`~aphla.lattice.Lattice.getBeamlineProfile` of the
     current lattice.
     """
     return machines._lat.getBeamlineProfile(s1, s2)
@@ -351,10 +411,22 @@ def getStepSize(element):
     return None
 
 def getDistance(elem1, elem2, absolute=True):
+    """
+    return distance between two element name
+
+    :param str elem1: name of one element
+    :param str elem2: name of the other element
+    :param bool absolute: return s2 - s1 or the absolute value.
+
+    raise RuntimeError if None or more than one elements are found
+    """
     e1 = getElements(elem1)
     e2 = getElements(elem2)
 
-    ds = e2.sb - e1.sb
+    if len(e1) != 1 or len(e2) != 1:
+        raise RuntimeError("elements are not uniq: %d and %d" % (len(e1), len(e2)))
+
+    ds = e2[0].sb - e1[0].sb
     C = machines._lat.circumference
     if machines._lat.loop and C > 0:
         while ds < -C: ds = ds + C
@@ -369,7 +441,7 @@ def getPhase(group, **kwargs):
     """
     get the phase from stored data
 
-    this calls :func:`~hla.twiss.Twiss.getTwiss` of the current twiss data.
+    this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
     """
     if not machines._twiss: return None
     elem = getElements(group)
@@ -383,14 +455,14 @@ def getBeta(group, **kwargs):
     """
     get the beta function from stored data.
 
-    ::
+    :Example:
 
       >>> getBeta('Q*', spos = True)
 
-    this calls :func:`~hla.twiss.Twiss.getTwiss` of the current twiss data.
+    this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
     """
     if not machines._twiss:
-        print "ERROR: No twiss data loaeded"
+        logger.error("ERROR: No twiss data loaeded")
         return None
     elem = getElements(group)
 
@@ -403,7 +475,7 @@ def getDispersion(group, **kwargs):
     """
     get the dispersion
 
-    this calls :func:`~hla.hlalib.getEta`.
+    this calls :func:`~aphla.hlalib.getEta`.
     """
     return getEta(group, **kwargs)
 
@@ -411,8 +483,16 @@ def getEta(group, **kwargs):
     """
     get the dispersion from stored data
 
-    similar to :func:`getBeta`, it calls :func:`~hla.twiss.Twiss.getTwiss`
+    similar to :func:`getBeta`, it calls :func:`~aphla.twiss.Twiss.getTwiss`
     of the current twiss data.
+
+    :Example:
+
+        >>> getEta('P*', spos = True)
+        >>> getEta('BPM')
+        >>> getEta(['BPM1', 'BPM2'])
+
+    seealso :func:`getElements`
     """
 
     if not machines._twiss: return None
@@ -424,11 +504,7 @@ def getEta(group, **kwargs):
 
 def getChromaticity(source='machine'):
     """
-    get chromaticity
-
-    .. warning::
-
-      Not implemented yet.
+    get chromaticity **Not Implemented Yet**
     """
     if source == 'machine':
         raise NotImplementedError()
@@ -440,31 +516,30 @@ def getChromaticity(source='machine'):
 
 def getTunes(source='machine'):
     """
-    get tunes from ['machine']
+    get tunes from ['machine', 'database']
     """
     if source == 'machine':
         # return only the first matched element
-        nux, = getElements('TUNEX')
-        nuy, = getElements('TUNEY')
-        return nux.value, nuy.value
-    elif source == 'model':
-        raise NotImplementedError()
+        nu, = getElements('tune')
+        return nu.x, nu.y
     elif source == 'database':
+        return machines._lat.getTunes()
+    elif source == 'model':
         raise NotImplementedError()
 
 def getTune(source='machine', plane = 'h'):
     """
     get tune
 
-    Example::
+    :Example:
 
-      getTune(plane='v')
+        >>> getTune(plane='v')
     """
     nux, nuy = getTunes(source)
     if plane == 'h': return nux
     elif plane == 'v': return nuy
     else:
-        raise ValueError("plane must be h or v")
+        raise ValueError("plane must be either h or v")
 
 def getFftTune(plane = 'hv', mode = ''):
     """
@@ -478,78 +553,111 @@ def getFftTune(plane = 'hv', mode = ''):
     return None
 
 def savePhase(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveBeta(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveDispersion(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveTune(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveTuneRm(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveChromaticity(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveChromaticityRm(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def getChromaticityRm(mode, phase, info):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None, None
 
 def getTuneRm(mode):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
 
 def getCurrentMode(self):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
-    return current_mode
+    return None
 
 def getModes(self):
+    """
+    Not implemented yet
+    """
     raise NotImplementedError()
     return None
 
 def saveMode(self, mode, dest):
-    """Save current states to a new mode"""
+    """
+    Save current states to a new mode
+    Not implemented yet
+    """
     raise NotImplementedError()
 
 
 def _removeLatticeMode(mode):
-    cfg = cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
-    f = shelve.open(cfg, 'c')
-    modes = []
-    #del f['lat.twiss']
-    #for k in f.keys(): print k
-    for k in f.keys():
-        if re.match(r'lat\.\w+\.mode', k): print "mode:", k[4:-5]
-    if not mode:
-        pref = "lat."
-    else:
-        pref = 'lat.%s.' % mode
-    f.close()
+    raise NotImplementedError()
+    #import os
+    #cfg = cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
+    #f = shelve.open(cfg, 'c')
+    #modes = []
+    ##del f['lat.twiss']
+    ##for k in f.keys(): print k
+    #for k in f.keys():
+    #    if re.match(r'lat\.\w+\.mode', k): print "mode:", k[4:-5]
+    #if not mode:
+    #    pref = "lat."
+    #else:
+    #    pref = 'lat.%s.' % mode
+    #f.close()
 
-def saveMode(self, mode, dest):
-    """Save current states to a new mode"""
-    #current_mode
-    raise NotImplementedError("Not implemented yet")
-    pass
 
 def getBpms():
     """
     return a list of bpms object.
 
-    this calls :func:`~hla.lattice.Lattice.getGroupMembers` of current
+    this calls :func:`~aphla.lattice.Lattice.getGroupMembers` of current
     lattice and take a "union".
     """
     return machines._lat.getGroupMembers('BPM', op='union')
@@ -559,7 +667,7 @@ def getOrbit(pat = '', spos = False):
     """
     Return orbit
 
-    ::
+    :Example:
 
       >>> getOrbit()
       >>> getOrbit('*')
@@ -635,7 +743,7 @@ def _reset_bpm_offset():
         #print b.pv(tags=['aphla.offset', 'aphla.eput'])
         pvs.extend(b.pv(tags=['aphla.offset', 'aphla.eput']))
     if pvs: caput(pvs, 0.0)
-    print "DONE"
+    logger.info("Reset the bpm offset")
 
 def _reset_quad():
     qtag = {'H2': (1.47765, 30), 

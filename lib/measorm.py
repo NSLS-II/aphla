@@ -7,39 +7,47 @@ Response Matrix Measurement
 """
 
 import os, sys, time
-from os.path import join, splitext
-#from cothread.catools import caget, caput
-import numpy as np
-import shelve
+#import numpy as np
+#import shelve
 
-from . import _lat
-from . import _cfa
-from . import _orm
-from catools import caget, caput, caputwait, Timedout
+from orm import Orm
 
-import matplotlib.pylab as plt
+import logging
+logger = logging.getLogger(__name__)
 
+def measOrbitRm(bpm, trim, output):
+    """
+    Measure the orbit response matrix
 
-def measOrbitRm(bpm, trim):
-    """Measure the beta function by varying quadrupole strength"""
-    print "EPICS_CA_MAX_ARRAY_BYTES:", os.environ['EPICS_CA_MAX_ARRAY_BYTES']
-    print "EPICS_CA_ADDR_LIST      :", os.environ['EPICS_CA_ADDR_LIST']
-    print "BPM: ", len(bpm)
-    print "TRIM:", len(trim)
+    :param list bpm: list of bpm names
+    :param list trim: list of trim names
+    :param str output: output filename
 
+    seealso :func:`Orm.measure`
+    """
+    #print "BPM: ", len(bpm)
+    #print "TRIM:", len(trim)
+    logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
     orm = Orm(bpm, trim)
-    orm.measure(verbose=1)
+    orm.measure(output = output, verbose=1)
     return orm
 
-# testing ...
 
 def measChromRm():
     """
     measure chromaticity response matrix
+    
+    NotImplemented
     """
-    pass
+    raise NotImplementedError()
 
 def getSubOrm(bpm, trim, flags = 'XX'):
-    return _orm.getSubMatrix(bpm, trim, flags)
+    """
+    get submatrix of Orm
+
+    NotImplemented
+    """
+    #return _orm.getSubMatrix(bpm, trim, flags)
+    raise NotImplementedError()
 
 

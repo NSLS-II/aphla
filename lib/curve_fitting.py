@@ -68,31 +68,18 @@ class Polynomial(object):
   self.opt_fit_dof            : Degrees of Freedom
   self.opt_fit_reduced_chi_sq : Reduced Chi square value for the optimal fit
     
-  -------
-  Example
-  -------
+  :Example:
      
-     >>> x = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
-                        
-     >>> y = np.array([-1.78, 4.09, 8.85, 17.9, 26.1, 35.2])
-     
-     >>> y_stdev = np.array([0.460, 0.658, 0.528, 1.34, 1.09, 0.786])
-     
-     >>> init_param_guess = [1.0, 3.0, -2.0]
-     
-     >>> deg = 2
-                        
-     >>> fitObject = curve_fitting.Polynomial(x, y, deg)
-     
-     >>> print fitObject
-     
-     >>> yfit = np.polyval(fitObject.opt_fit_param_values, x)
-          
-     >>> import pylab as plt
-     
-     >>> plt.plot(x, y, 'b', x, yfit, 'r:')
-     
-  
+     x = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
+     y = np.array([-1.78, 4.09, 8.85, 17.9, 26.1, 35.2])
+     y_stdev = np.array([0.460, 0.658, 0.528, 1.34, 1.09, 0.786])
+     init_param_guess = [1.0, 3.0, -2.0]
+     deg = 2
+     fitObject = curve_fitting.Polynomial(x, y, deg)
+     print fitObject
+     yfit = np.polyval(fitObject.opt_fit_param_values, x)
+     import pylab as plt
+     plt.plot(x, y, 'b', x, yfit, 'r:')
   """
     
   #----------------------------------------------------------------------
@@ -225,26 +212,17 @@ class Custom(object) :
   Example
   -------
      
-     >>> x = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
-                        
-     >>> y = np.array([-1.78, 4.09, 8.85, 17.9, 26.1, 35.2])
-     
-     >>> y_stdev = np.array([0.460, 0.658, 0.528, 1.34, 1.09, 0.786])
-     
-     >>> init_param_guess = [1.0, 3.0, -2.0]
-                        
-     >>> def myFunction (x, a, b, c) :
+     x = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
+     y = np.array([-1.78, 4.09, 8.85, 17.9, 26.1, 35.2])
+     y_stdev = np.array([0.460, 0.658, 0.528, 1.34, 1.09, 0.786])
+     init_param_guess = [1.0, 3.0, -2.0]
+     def myFunction (x, a, b, c) :
            return ( a*(x**2) + b*x + c )
-           
-     >>> fitObject = curve_fitting.Custom(myFunction, x, y)
-     
-     >>> print fitObject
-     
-     >>> yfit = myFunction(x, *fitObject.opt_fit_param_values)
-     
-     >>> import pylab as plt
-     
-     >>> plt.plot(x, y, 'b', x, yfit, 'r:')
+     fitObject = curve_fitting.Custom(myFunction, x, y)
+     print fitObject
+     yfit = myFunction(x, *fitObject.opt_fit_param_values)
+     import pylab as plt
+     plt.plot(x, y, 'b', x, yfit, 'r:')
      
   """
 

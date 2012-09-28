@@ -19,6 +19,8 @@ syntax: glob
 doc/hlaversion.texi
 *.pyc
 doc/_build
+doc/hla-*.egg
+doc/aphla-*.egg
 seasail.egg-info
 *~
 *.o
@@ -29,7 +31,7 @@ src/tracy/tracy-3.5/TPSA/Makefile
 src/tracy/tracy-3.5/autom4te.cache
 *.deps
 src/qrc_resources.py
-hla.egg-info
+*.egg-info
 
 syntax:regexp
 ^build/
@@ -37,3 +39,5 @@ syntax:regexp
 ^src/num_rec/autom4te.cache
 ^dist/
 ^deb_dist/
+^utils/debian/
+^utils/conf.py

@@ -1,3 +1,34 @@
+2012-08-28  Lingyun Yang  <lyyang@debian.localdomain>
+
+	* update channel finder property names and tags
+	* update machines/element
+
+2012-07-20  Lingyun Yang  <lyyang@nsls2yang>
+
+	* add list of elements support in getElements
+
+2012-07-10  Lingyun Yang  <lyyang@nsls2yang>
+
+	* remove return_list from getElements. Now always returns a list
+	* update document index, faq
+	* add commands doc
+	* add import_csv_2 for channel finder agent class
+	* add initTLS and simple tests
+	* add tls config file, first stage
+	* add script to convert madx output(twiss) for chan finder.
+	* add source for initTLS
+	* add stepSize for CaElement and CaDecorator
+	* add boundary for CaElement and CaDecorator
+	* remove addEGet and addEPut from CaElement
+	* remove eget from hlalib.py
+	* cleaned up unit test
+	* add new eget function
+	* add commands doc as top level set of tools.
+
+2012-07-06  Lingyun Yang  <lyyang@lsasd2>
+
+	* add set/get field for CaElement
+
 2012-04-02  Lingyun Yang  <lyyang@nsls2yang.nsls2.bnl.gov>
 
 	* add mark/reset/revert functions for CaElement

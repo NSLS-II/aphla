@@ -1,0 +1,5 @@
+include conf/*.hdf5
+include conf/*.csv
+include conf/*.json
+include conf/*.xml
+

@@ -4,8 +4,10 @@ Tutorial
 .. htmlonly::
    :Date: |today|
 
-The notebook style :download:`tutorial <./doc_tutorial.pdf>` is a better place
-for reading code and their output. But here explains things in more details.
+..
+   The notebook style :download:`tutorial <./doc_tutorial.pdf>` is a better
+   place for reading code and their output. But here explains things in more
+   details.
 
 The HLA package we are developing has three parts
 
@@ -18,7 +20,7 @@ The HLA package we are developing has three parts
 HLA Initialization
 -------------------
 
-Before using ``aphla`` we need to import some python modules for data analysis
+Before using ``aphla`` we can import some python modules for data analysis
 and plotting.
 
 .. doctest::
@@ -27,11 +29,6 @@ and plotting.
    >>> import aphla as ap    # import aphla package
    >>> import matplotlib.pylab as plt    # matplotlib for plotting
    >>> import time
-
-.. warning::
-
-   In order to correct the orbit, the measured Orbit Response Matrix is
-   needed. Put 'us_nsls2_sr_orm.hdf5' in ${HOME}/.hla/
 
 .. note::
 
@@ -42,24 +39,36 @@ Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
 .. doctest::
 
-   >>> ap.initNSLS2VSR()
-   >>> ap.initNSLS2VSRTwiss()
-   Elements in lattice 'SR': 1389
+   >>> ap.initNSLS2V1()
+   >>> ap.initNSLS2V1SRTwiss() #doctest: +ELLIPSIS
+   ...
 
-If you have csv config file, e.g. *nsls2.csv*, in your ``aphla`` package, the
-`~aphla.initNSLS2VSR` will use it, otherwise it will search for channel finder
-server use it to initialize the lattice structure.
+:func:`~aphla.machines.initNSLS2V1` will initialize the lattice structure of
+`NSLS2 Virtual Accelerastor #1`. It is not the hardware initialization and did
+not do any hardware operation inside. The second initialization
+:func:`~aphla.machines.initNSLS2V1SRTwiss` will load the twiss data from disk
+or database.
+
+.. note::
+
+    By default, this initialization will search search for channel finder
+    server and use the data there. It can be overwritten with your own csv
+    config file.
 
 ``aphla`` can keep several initialized lattices, depending how many
 *aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
-*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB*. Call
-`~aphla.machines.lattices` to find out.
+*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB* for the real machine. The
+`V1` prefix before `SR`, `LTD1` means it is the `virtual accelerator #1`
+counter part. :func:`~aphla.machines.lattices` lists the initialized lattices
+and :func:`~aphla.machines.use` will switch to the named lattice as the
+current lattice. This current lattice is the domain for functions like
+:func:`~aphla.hlalib.getElements`.
 
 .. doctest::
 
-   >>> ap.machines.lattices()    # list available lattices #doctest: -SKIP
-   ['LTD1', 'LTD2', 'LTB', 'SR']
-   >>> ap.machines.use("SR")
+   >>> ap.machines.lattices()    # list available lattices #doctest: +SKIP
+   [u'V1LTD1', u'V1LTD2', u'V1LTB', u'V1SR']
+   >>> ap.machines.use("V1SR")
 
 Switching between lattices should be always a safe operation itself, but may
 affect the following operations.
@@ -80,9 +89,9 @@ Here are some examples:
    >>> len(bpm) # 180 in tital, guaranteed in increasing order of s coordinate.
    180
    >>> bpm[0].name
-   'PH1G2C30A'
+   u'PH1G2C30A'
    >>> bpm[0].family, bpm[0].cell, bpm[0].girder
-   ('BPM', 'C30', 'G2')
+   (u'BPM', u'C30', u'G2')
 
 .. index:: family, cell, girder, symmetry, group
 .. index::
@@ -103,13 +112,13 @@ Each element has a set of properties associated:
   could be in group 'C02', 'G2', 'BPM' and more. e.g. 'PM1' is a resonable
   group name for bpm 'PM1G4C02B'.
 
-A element can only belongs to one *family*, *cell*, *girder* and
+An element can only belong to one *family*, *cell*, *girder* and
 *symmetry*. But it can be in many groups:
 
 .. doctest::
 
    >>> ap.getGroups('PM1G4C02B') # the groups one element belongs to
-   ['BPM', 'C02', 'G4', 'B']
+   [u'BPM', u'C02', u'G4', u'B']
 
 To find the elements in certain cell or/and girder, use *getGroupMembers* and
 take *union* or *intersection* of them.
@@ -148,7 +157,7 @@ pattern string follows Unix filename convension, see :ref:`Wildcard Matching
    >>> ap.getElements('P*C01*A') #doctest: +NORMALIZE_WHITESPACE
    [PL1G2C01A:BPM @ sb=29.988600, PL2G2C01A:BPM @ sb=32.552300, PM1G4C01A:BPM @ sb=38.301800]
    >>> ap.getGroups('P*C01*A') # a union of the groups of matched elements
-   ['BPM', 'C01', 'G4', 'G2', 'A']
+   [u'BPM', u'C01', u'G4', u'G2', u'A']
 
 
 HLA Element Control

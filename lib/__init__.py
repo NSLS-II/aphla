@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 
 """
-HLA Module
+APHLA Module
 -----------
 
 This is an object-orient high level accelerator control library.
@@ -17,51 +15,70 @@ A procedural interface is provided.
 
 Modules include:
 
-    :mod:`hla.machines`
+    :mod:`aphla.machines`
 
         define machine specific settings, create lattice from channel
         finder service for different accelerator complex.
 
-    :mod:`hla.lattice`
+    :mod:`aphla.lattice`
 
-        define the :class:`~hla.lattice.CaElement`, :class:`~hla.lattice.Twiss`,
-        :class:`~hla.lattice.Lattice` class
+        define the :class:`~aphla.lattice.CaElement`, :class:`~aphla.lattice.Twiss`,
+        :class:`~aphla.lattice.Lattice` class
 
-    :mod:`hla.orbit`
+    :mod:`aphla.orbit`
 
         defines orbit retrieve routines
 
-    :mod:`hla.hlalib`
+    :mod:`aphla.hlalib`
 
         defines procedural interface
         
 """
 
-__version__ = "0.3.0b3"
+from __future__ import print_function
+
+__version__ = "0.4.0"
 
 
+import os
+import tempfile
 import logging
 
-logging.basicConfig(filename="aphla.log",
-    filemode='w',
+# for compatibilities with Python < 2.7
+class NullHandler(logging.Handler):
+    """a fix for Python2.6 where no NullHandler"""
+    def emit(self, record):
+        pass
+
+#APHLA_LOG = os.path.join(tempfile.gettempdir(), "aphla.log")
+APHLA_LOG = 'aphla.log'
+logging.basicConfig(filename=APHLA_LOG,
     format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
     level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# set null handler when logging for a library.
+_hdl = NullHandler()
+logging.getLogger('aphla').addHandler(_hdl)
 
-from catools import *
-from machines import initNSLS2VSR, initNSLS2VSRTwiss
+#
+from catools import (caget, caput, caputwait)
+from chanfinder import ChannelFinderAgent
+from machines import (
+    initNSLS2V1, initNSLS2V1SRTwiss,
+    initNSLS2, initTLS
+    )
 
-from rf import *
+#from rf import *
 from hlalib import *
 from ormdata import OrmData
 
+from meastwiss import *
+from measorm import (measOrbitRm, measChromRm, getSubOrm)
 from aptools import *
 
 import bba
-import meastwiss
 
 
 # Added by Y. Hidaka
-import curve_fitting
-import current
+# require newer version of scipy, not available in controls terminal yet.
+#import curve_fitting
 
