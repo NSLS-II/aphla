@@ -2,6 +2,7 @@
 Orbit Data
 """
 import numpy as np
+from PyQt4.QtCore import QTimer, SIGNAL, QObject
 
 class OrbitData(object):
     """
@@ -44,6 +45,7 @@ class OrbitData(object):
             self.xerrbar = np.ones(n, 'd') * 1e-15
             self.yerrbar = np.ones(n, 'd') * 1e-15
             self.keep = [True] * n
+
 
     def _update_pvs_data(self):
         """
@@ -88,9 +90,19 @@ class OrbitData(object):
         self.icur, self.icount = -1, 0
         self.x.fill(0.0)
         self.y.fill(0.0)
-        self.errbar.fill(0.0)
+        self.xerrbar.fill(0.0)
+        self.yerrbar.fill(0.0)
         #self.update()
         
+    def reset_ref(self):
+        self.xref = np.zeros(np.shape(self.xref), 'd')
+        self.yref = np.zeros(np.shape(self.xref), 'd')
+
+    def save_as_ref(self):
+        i = self.icur
+        self.xref = self.xref + self.x[i,:]
+        self.yref = self.yref + self.y[i,:]
+
     def xmin(self, axis='s'):
         c, i = divmod(self.icount - 1, self.samples)
         data = np.compress(self.keep, self.x, axis=1)
@@ -158,12 +170,17 @@ class OrbitDataVirtualBpm(OrbitData):
 
         if kw.get('update', False) == True: self.update()
 
+        #self.timer = QTimer()
+        #self.connect(self.timer, SIGNAL('timeout()'), self.update)
+        #self.timer.start(800)
+
     def update(self):
         """
         update the orbit data from virtual element.
         """
         # y and errbar sync with plot, not changing data.
         i = (self.icur + 1) % self.samples
+        #print "Updating orbit data"
 
         self.x[i,:] = self.xscale * np.array(self.velem.get('x'))
         self.y[i,:] = self.yscale * np.array(self.velem.get('y'))

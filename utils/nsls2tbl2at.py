@@ -22,20 +22,21 @@ def read_partable(fname):
         rec = tuple(line.split())
         name, fam, L, S1, k1, k2, ang = rec
         if fam == 'BPM': 
-            out.append("%s = monitor('%s', 'IdentityPass')" %
-                       (name, name))
+            # it was finite length
+            out.append("%s = drift('%s', %s, 'DriftPass')" %
+                       (name, name, L))
         elif fam == 'DRIF':
             out.append("%s = drift('%s', %s, 'DriftPass');" %
                        (name, name, L))
         elif fam == 'TRIMD':
-            out.append("%s = corrector('%s', 0, [0 0], 'CorrectorPass');" %
-                       (name, name))
+            out.append("%s = corrector('%s', %s, [0 0], 'CorrectorPass');" %
+                       (name, name, L))
         elif fam == 'FTRIM':
-            out.append("%s = corrector('%s', 0, [0 0], 'CorrectorPass');" %
-                       (name, name))
+            out.append("%s = corrector('%s', %s, [0 0], 'CorrectorPass');" %
+                       (name, name, L))
         elif fam == 'SQ_TRIM':
-            out.append("%% Trim in SQUAD\n%s = corrector('%s', 0, [0 0], 'CorrectorPass');" %
-                       (name, name))
+            out.append("%% Trim in SQUAD\n%s = corrector('%s', %s, [0 0], 'CorrectorPass');" %
+                       (name, name, L))
         elif fam == 'MARK': 
             pass
         elif fam == 'DIPOLE':

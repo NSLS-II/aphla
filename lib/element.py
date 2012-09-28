@@ -941,5 +941,6 @@ def merge(elems, **kwargs):
 
     elem.sb = [e.sb for e in elems]
     elem.se = [e.se for e in elems]
+    elem._name = [e.name for e in elems]
     return elem
 

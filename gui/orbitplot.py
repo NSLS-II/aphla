@@ -378,7 +378,7 @@ class OrbitPlot(Qwt.QwtPlot):
                 QPen(Qt.black, 2),
                 QSize(8, 8)),
             errorPen = QPen(Qt.blue, 1),
-            errorCap = 10,
+            errorCap = 6,
             errorOnTop = self.errorOnTop,
             )
 
@@ -551,11 +551,14 @@ class OrbitPlot(Qwt.QwtPlot):
         xmax = bound.right()
         #ymin = bound.top()
         #ymax = bound.bottom()
+        #print "bound:", bound, w, h
+        #print "x, y= ", xmin, xmax, ymin, ymax
         if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
         else: self.setAxisAutoScale(Qwt.Qwt.Plot.xBottom)
 
         if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
         else: self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+        self.replot()
 
     def plotDesiredOrbit(self, y, x = None):
         """

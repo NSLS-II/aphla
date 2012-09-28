@@ -169,14 +169,6 @@ class OrbitPlotMainWindow(QMainWindow):
         self.setCentralWidget(cwid)
 
 
-        #self.plot5 = OrbitCorrPlot(self, self.orbitx_data, picker_profile = picker,
-        #    magnet_profile = self.config.data['magnetprofile'])
-        #wid1 = QWidget()
-        #vbox = QVBoxLayout()
-        #vbox.addWidget(self.plot5)
-        #wid1.setLayout(vbox)
-        #self.tabs.addTab(wid1, "OrbitSt")
-
         #
         # file menu
         #
@@ -266,6 +258,7 @@ class OrbitPlotMainWindow(QMainWindow):
         drift_from_none.setCheckable(True)
 
         steer_orbit = QAction("Steer Orbit ...", self)
+        steer_orbit.setDisabled(True)
         self.connect(steer_orbit, SIGNAL("triggered()"), self.createLocalBump)
         
         self.viewMenu.addAction(drift_from_now)
@@ -351,15 +344,16 @@ class OrbitPlotMainWindow(QMainWindow):
         controlToolBar.addAction(controlResetPvDataAction)
 
         # update at 1/2Hz
-        dt = 3000
-        self.timerId = self.startTimer(dt)
+        self.dt, self.itimer = 600, 0
+        self.timerId = self.startTimer(self.dt)
         self.corbitdlg = None # orbit correction dlg
 
+        self.vbpm = None
 
     def setLattice(self, lat):
-        vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
-        if vbpm is not None:
-            self.obtdata = OrbitDataVirtualBpm(velement=vbpm)
+        self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
+        if self.vbpm is not None:
+            self.obtdata = OrbitDataVirtualBpm(velement=self.vbpm)
             self.obtdata.update()
             #print self.obtdata.xorbit()
             #print self.obtdata.yorbit()
@@ -376,23 +370,20 @@ class OrbitPlotMainWindow(QMainWindow):
         for p in self.obtplots:
             p.setPlot(magnet_profile=magprof)
 
-        return
-
-        #self.connect(self.plot1, SIGNAL("elementSelected(PyQt_PyObject)"),
-        #             self.elems.addElement)
-        #self.connect(self.plot2, SIGNAL("elementSelected(PyQt_PyObject)"),
-        #             self.elems.addElement)
 
     def _reset_correctors(self):
         aphla.hlalib._reset_trims()
 
+
     def _reset_quadrupoles(self):
         aphla.hlalib._reset_quad()
+
 
     def _random_hkick(self):
         hcors = aphla.getElements('HCOR')
         i = np.random.randint(len(hcors))
         hcors[i].x += 1e-7
+
 
     def _random_vkick(self):
         cors = aphla.getElements('VCOR')
@@ -412,25 +403,26 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def liveData(self, on):
         """Switch on/off live data taking"""
-        #print "MainWindow: liveData", on
         self.live_orbit = on
         for p in self.obtplots: p.liveData(on)
         
     def errorBar(self, on):
-        self.plot1.setErrorBar(on)
-        self.plot2.setErrorBar(on)
+        for p in self._active_plots(): p.setErrorBar(on)
 
     def setDriftNone(self):
-        self.plot1.setDrift('no')
-        self.plot2.setDrift('no')
+        #self.plot1.setDrift('no')
+        #self.plot2.setDrift('no')
+        self.obtdata.reset_ref()
 
     def setDriftNow(self):
-        self.plot1.setDrift('now')
-        self.plot2.setDrift('now')
+        #self.plot1.setDrift('now')
+        #self.plot2.setDrift('now')
+        self.obtdata.save_as_ref()
 
     def setDriftGolden(self):
-        self.plot1.setDrift('golden')
-        self.plot2.setDrift('golden')
+        #self.plot1.setDrift('golden')
+        #self.plot2.setDrift('golden')
+        raise RuntimeError("No golden orbit defined yet")
 
     def zoomOut15(self):
         """
@@ -449,41 +441,36 @@ class OrbitPlotMainWindow(QMainWindow):
             p.zoomAuto()
             
     def chooseBpm(self):
-        #print self.bpm
-        bpm = []
-        livebpm = self.orbitx_data.keep
-        for i in range(len(self.bpm)):
-            if livebpm[i]:
-                bpm.append((self.bpm[i], Qt.Checked))
-            else:
-                bpm.append((self.bpm[i], Qt.Unchecked))
-
-        form = ElementPickDlg(bpm, 'BPM', self)
+        bpms = [(self.vbpm._name[i], self.obtdata.keep[i])
+                for i in range(len(self.obtdata.keep))]
+        #print bpms
+        form = ElementPickDlg(bpms, 'BPM', self)
 
         if form.exec_(): 
             choice = form.result()
-            for i in range(len(self.bpm)):
-                if self.bpm[i] in choice:
-                    self.orbitx_data.keep[i] = 1
-                    self.orbity_data.keep[i] = 1
+            for i in range(len(bpms)):
+                if bpms[i][0] in choice:
+                    self.obtdata.keep[i] = True
                 else:
-                    self.orbitx_data.keep[i] = 0
-                    self.orbity_data.keep[i] = 0
+                    self.obtdata.keep[i] = False
 
 
     def timerEvent(self, e):
         #self.statusBar().showMessage("%s; %s"  % (
         #        self.plot1.datainfo(), self.plot2.datainfo()))
-        #print "updating", self.data1 
-        if self.obtdata is not None and self.live_orbit:
+        #print "updating in mainwindow"
+        self.itimer += 1
+        if self.obtdata is not None:
             self.obtdata.update()
-            sx, x, xerr = self.obtdata.xorbit()
-            sy, y, yerr = self.obtdata.yorbit()
-            #icur = self.tabs.currentIndex()
-            self.obtxplot.updateOrbit(sx, x, xerr)
-            self.obtxerrplot.updateOrbit(sx, xerr)
-            self.obtyplot.updateOrbit(sy, y, yerr)
-            self.obtyerrplot.updateOrbit(sy, yerr)
+
+            if self.live_orbit:
+                sx, x, xerr = self.obtdata.xorbit()
+                sy, y, yerr = self.obtdata.yorbit()
+                #icur = self.tabs.currentIndex()
+                self.obtxplot.updateOrbit(sx, x, xerr)
+                self.obtxerrplot.updateOrbit(sx, xerr)
+                self.obtyplot.updateOrbit(sy, y, yerr)
+                self.obtyerrplot.updateOrbit(sy, yerr)
         self.updateStatus()
 
     def updateStatus(self):
@@ -508,8 +495,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.updateStatus()
 
     def resetPvData(self):
-        self.orbitx_data.reset()
-        self.orbity_data.reset()
+        self.obtdata.reset()
         #hla.hlalib._reset_trims()
 
     #def plotDesiredOrbit(self, x, y):
