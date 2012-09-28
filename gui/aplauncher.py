@@ -23,6 +23,8 @@ import posixpath
 from copy import copy
 import types
 from subprocess import Popen
+import traceback
+from cStringIO import StringIO
 import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
@@ -3083,7 +3085,12 @@ class LauncherApp(Qt.QObject):
                     msgBox = Qt.QMessageBox()
                     msgBox.setText( (
                         'Error while launching an app w/ import: ') )
-                    msgBox.setInformativeText( str(sys.exc_info()) )
+                    #msgBox.setInformativeText( str(sys.exc_info()) )
+                    stderr_backup = sys.stderr
+                    sys.stderr = mystderr = StringIO()
+                    traceback.print_exc(None,mystderr)
+                    msgBox.setInformativeText( mystderr.getvalue() )
+                    sys.stderr = stderr_backup
                     msgBox.setIcon(Qt.QMessageBox.Critical)
                     msgBox.exec_()        
                     
