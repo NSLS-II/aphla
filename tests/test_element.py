@@ -45,12 +45,12 @@ class TestElement(unittest.TestCase):
 
         bpm = element.CaElement(name = 'PH1G6C29B',
             index = -1, devname = 'PH1G6C29B', family = 'BPM')
-        bpm.updatePvRecord(pvx0, None, ['aphla.elemfield.x[0]'])
-        bpm.updatePvRecord(pvy0, None, ['aphla.elemfield.y[0]'])
-        bpm.updatePvRecord(pvxbba, None, ['aphla.elemfield.xref[0]'])
-        bpm.updatePvRecord(pvybba, None, ['aphla.elemfield.yref[0]'])
-        bpm.updatePvRecord(pvxgold, None, ['aphla.elemfield.xref[1]'])
-        bpm.updatePvRecord(pvygold, None, ['aphla.elemfield.yref[1]'])
+        bpm.updatePvRecord(pvx0, {'field':'x[0]'})
+        bpm.updatePvRecord(pvy0, {'field':'y[0]'})
+        bpm.updatePvRecord(pvxbba, {'field':'xref[0]'})
+        bpm.updatePvRecord(pvybba, {'field':'yref[0]'})
+        bpm.updatePvRecord(pvxgold, {'field':'xref[1]'})
+        bpm.updatePvRecord(pvygold, {'field':'yref[1]'})
 
         self.assertEqual(bpm.pv(field='xref'), [pvxbba, pvxgold])
         self.assertEqual(bpm.index, -1)
@@ -76,12 +76,8 @@ class TestElement(unittest.TestCase):
 
         pvrb = 'SR:C01-MG:G02A{HCor:L1}Fld-I'
         pvsp = 'SR:C01-MG:G02A{HCor:L1}Fld-SP'
-        hcor.updatePvRecord(pvrb, 
-                            {'handle': 'READBACK'}, 
-                            ['aphla.elemfield.x'])
-        hcor.updatePvRecord(pvsp, 
-                            {'handle': 'SETPOINT'}, 
-                            ['aphla.elemfield.x'])
+        hcor.updatePvRecord(pvrb, {'handle': 'readback', 'field': 'x'})
+        hcor.updatePvRecord(pvsp, {'handle': 'setpoint', 'field': 'x'})
         self.assertEqual(hcor.pv(field='x', handle='readback'), [pvrb])
         self.assertEqual(hcor.pv(field='x', handle='setpoint'), [pvsp])
         self.assertIsNone(hcor.stepSize('x'))

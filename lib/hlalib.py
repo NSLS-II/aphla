@@ -101,9 +101,9 @@ def _reset_trims(verbose=False):
     trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
     pv = []
     for e in trimx:
-        pv.extend(e.pv(field='x', handle='SET'))
+        pv.extend(e.pv(field='x', handle='setpoint'))
     for e in trimy:
-        pv.extend(e.pv(field='y', handle='SET'))
+        pv.extend(e.pv(field='y', handle='setpoint'))
     if not pv:
         raise ValueError("no pv for trims found")
     

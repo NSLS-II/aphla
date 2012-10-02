@@ -21,10 +21,14 @@ class TestFitting(unittest.TestCase):
         self.y1 = self.amp*C*np.exp(-.5*(self.x1 - self.avg)**2/self.sig**2)
 
     def test_fit_gaussian(self):
-        import matplotlib.pylab as plt
-        plt.plot(self.x, self.y, 'o')
-        plt.plot(self.x1, self.y1, '-')
-        plt.savefig("test.png")
+        try:
+            import matplotlib.pylab as plt
+            plt.plot(self.x, self.y, 'o')
+            plt.plot(self.x1, self.y1, '-')
+            plt.savefig("test.png")
+        except:
+            pass
+
         C = ap.fitGaussian1(self.x, self.y)
         #print C
         self.assertAlmostEqual(C[0], self.amp, places=3)

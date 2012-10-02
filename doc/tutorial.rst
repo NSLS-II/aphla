@@ -112,7 +112,7 @@ Each element has a set of properties associated:
   could be in group 'C02', 'G2', 'BPM' and more. e.g. 'PM1' is a resonable
   group name for bpm 'PM1G4C02B'.
 
-A element can only belongs to one *family*, *cell*, *girder* and
+An element can only belong to one *family*, *cell*, *girder* and
 *symmetry*. But it can be in many groups:
 
 .. doctest::

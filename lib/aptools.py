@@ -787,3 +787,38 @@ def saveImage(elemname, filename, **kwargs):
             
         plt.savefig(filename)
 
+
+def _checkOrbitRmData(od):
+    vbpm, vtrim = [], []
+    for rec in od.bpm:
+        if rec[0] is None:
+            vbpm.append([None, None, None])
+            continue
+        elem = getElements(rec[0].lower())
+        if not elem:
+            vbpm.append([rec[0], None, None])
+            continue
+        pv = elem[0].pv(field=rec[1].lower(), handle='readback')
+        if pv != rec[2]:
+            vbpm.append([elem[0].name, rec[2], pv])
+    #for v in vbpm: print (v)
+
+    for rec in od.trim:
+        if rec[0] is None:
+            vtrim.append([None, None, None, None])
+            continue
+        elem = getElements(rec[0].lower())
+        if not elem:
+            vtrim.append([rec[0], None, None, None])
+            continue
+        pv = elem[0].pv(field=rec[1].lower(), handle='readback')
+        if pv != rec[2]:
+            vtrim.append([elem[0].name, rec[2], pv])
+
+        pv = elem[0].pv(field=rec[1].lower(), handle='setpoint')
+        if pv != rec[3]:
+            vtrim.append([elem[0].name, rec[3], pv])
+    #for v in vtrim: print (v)
+        
+    return vbpm, vtrim
+
