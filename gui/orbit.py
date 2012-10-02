@@ -187,8 +187,9 @@ class OrbitPlotMainWindow(QMainWindow):
             self.connect(latAct, SIGNAL("triggered()"), self.click_lattice)
             self.latMenu.addAction(latAct)
         #
-        self.fileMenu.addAction(fileQuitAction)
         self.fileMenu.addMenu(self.latMenu)
+        self.fileMenu.addSeparator()
+        self.fileMenu.addAction(fileQuitAction)
 
         # view
         self.viewMenu = self.menuBar().addMenu("&View")
@@ -424,7 +425,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def _active_plots(self):
         i = self.tabs.currentIndex()
         itab = self.tabs.currentWidget()
-        return itab.findChildren((OrbitPlot,))
+        return [v for v in itab.findChildren(OrbitPlot)]
         #return self.tabs.findChildren()
 
     def liveData(self, on):
