@@ -188,3 +188,4 @@ class OrbitDataVirtualBpm(OrbitData):
         self.yerrbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
+

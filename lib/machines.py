@@ -97,11 +97,11 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
             lat.insertElement(elem)
         
         handle = prpt.get('handle', None).lower()
-        if handle == 'read': prpt['handle'] = 'readback'
+        if handle == 'get': prpt['handle'] = 'readback'
         elif handle == 'set': prpt['handle'] = 'setpoint'
 
         handle = prpt.get('handle', None).lower()
-        if handle == 'read': prpt['handle'] = 'READBACK'
+        if handle == 'get': prpt['handle'] = 'READBACK'
         elif handle == 'set': prpt['handle'] = 'SETPOINT'
         elem.updatePvRecord(pv, prpt, rec[2])
 
@@ -117,6 +117,12 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
         
+    # a virtual bpm. its field is a "merge" of all bpms.
+    bpms = lat.getElementList('BPM')
+    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
+                            'family': HLA_VFAMILY})
+    lat.insertElement(allbpm, groups=[HLA_VFAMILY])
+
     return lat
 
 
@@ -189,11 +195,6 @@ def initNSLS2V1(with_twiss = False):
     else:
         logger.warning("No ORM '%s' found" % orm_filename)
 
-    # a virtual bpm. its field is a "merge" of all bpms.
-    bpms = _lattice_dict['V1SR'].getElementList('BPM')
-    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
-                            'family': HLA_VFAMILY})
-    _lattice_dict['V1SR'].insertElement(allbpm, groups=[HLA_VFAMILY])
 
     # tune element from twiss
     #twiss = _lattice_dict['V1SR'].getElementList('twiss')[0]

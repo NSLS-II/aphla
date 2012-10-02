@@ -678,7 +678,7 @@ class Lattice:
         return el[idx]
         
     def __repr__(self):
-        s = '# %s' % self.name
+        s = '# %s\n' % self.name
         ml_name, ml_family = 0, 0
         for e in self._elements:
             if len(e.name) > ml_name: ml_name = len(e.name)
