@@ -390,3 +390,4 @@ class OrmData:
                 m[i,j] = self.m[ib[i], it[j]]
         return m
 
+            

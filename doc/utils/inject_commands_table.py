@@ -6,7 +6,11 @@ if __name__ == "__main__":
     htmlroot = os.path.join(srcroot, "..", "_build", "html") 
     idxhtml = os.path.join(htmlroot, "index.html")
     commandshtml = os.path.join(htmlroot, "commands.html")
-    
+
+    if not os.path.exists(commandshtml):
+        print "Can not find '%s'" % commandshtml
+        sys.exit(0)
+
     i0, i1 = None, None
     for i, s in enumerate(open(commandshtml, 'r').readlines()):
         if s.find("<table border") >= 0: i0 = i

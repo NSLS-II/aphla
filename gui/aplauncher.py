@@ -20,12 +20,16 @@ import os
 import errno
 import time
 import posixpath
-import subprocess
-import cothread
-
+from copy import copy
+import types
+from subprocess import Popen
+import traceback
+from cStringIO import StringIO
 import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
+
+import cothread
 
 import PyQt4.Qt as Qt
 from PyQt4.QtXml import QDomDocument
@@ -3033,9 +3037,9 @@ class LauncherApp(Qt.QObject):
                 module = sys.modules[moduleName]
             except ImportError as e:
                 self.view.statusBar().showMessage(
-                    'Importing ' + moduleName + ' failed: ' + e.message)
-                print e.message
-                errorMessage += e.message
+                    'Importing ' + moduleName + ' failed: ' + str(e))
+                print str(e)
+                errorMessage += str(e)
             except:
                 msgBox = Qt.QMessageBox()
                 msgBox.setText( (
@@ -3052,10 +3056,10 @@ class LauncherApp(Qt.QObject):
                     self.view.repaint()
                     module = __import__(appFilename)
                 except ImportError as e:
-                    message = 'Importing ' + appFilename + ' failed: ' + e.message
+                    message = 'Importing ' + appFilename + ' failed: ' + str(e)
                     self.view.statusBar().showMessage(message) 
                     print message
-                    errorMessage += '\n' + e.message
+                    errorMessage += '\n' + str(e)
                 except:
                     msgBox = Qt.QMessageBox()
                     msgBox.setText( (
@@ -3081,7 +3085,12 @@ class LauncherApp(Qt.QObject):
                     msgBox = Qt.QMessageBox()
                     msgBox.setText( (
                         'Error while launching an app w/ import: ') )
-                    msgBox.setInformativeText( str(sys.exc_info()) )
+                    #msgBox.setInformativeText( str(sys.exc_info()) )
+                    stderr_backup = sys.stderr
+                    sys.stderr = mystderr = StringIO()
+                    traceback.print_exc(None,mystderr)
+                    msgBox.setInformativeText( mystderr.getvalue() )
+                    sys.stderr = stderr_backup
                     msgBox.setIcon(Qt.QMessageBox.Critical)
                     msgBox.exec_()        
                     
@@ -3098,18 +3107,19 @@ class LauncherApp(Qt.QObject):
                     
         else:
             try:
-                message = 'Trying to launch ' + appFilename + '...'
+                command_expression = appFilename
+                message = 'Trying to launch ' + command_expression + '...'
                 self.view.statusBar().showMessage(message)
                 print message
                 self.view.repaint()
-                p = subprocess.Popen([appFilename])
-                message = appFilename + ' successfully launched.'
+                p = Popen(command_expression, shell=True)
+                message = '"'+command_expression+'"' + ' successfully launched.'
                 self.view.statusBar().showMessage(message)
                 print message
             except:
                 msgBox = Qt.QMessageBox()
-                message = ('Launching ' + appFilename + 
-                           ' with subprocess.Popen has failed.') 
+                message = ('Launching ' + '"'+command_expression+'"' + 
+                           ' with Popen has failed.') 
                 msgBox.setText(message)
                 msgBox.setInformativeText( str(sys.exc_info()) )
                 print message
@@ -3131,16 +3141,27 @@ def make(initRootPath=''):
         
     return app
 
+#----------------------------------------------------------------------
+def isCothreadUsed():
+    """"""
 
+    g = copy(globals())
+    
+    using_cothread = False
+    for (k,v) in g.iteritems():
+        if isinstance(v, types.ModuleType):
+            if v.__name__ == 'cothread':
+                using_cothread = True
+                break
+            
+    return using_cothread
+    
 #----------------------------------------------------------------------
 def main(args = None):
     """ """
     
-    if 'cothread' in globals().keys():
-        using_cothread = True
-    else:
-        using_cothread = False
-        
+    using_cothread = isCothreadUsed()
+    
     if using_cothread:
         # If Qt is to be used (for any GUI) then the cothread library needs to be informed,
         # before any work is done with Qt. Without this line below, the GUI window will not

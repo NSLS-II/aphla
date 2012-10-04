@@ -14,7 +14,7 @@ or GUI application.
 
 """
 
-import config # gives access to qtapp variable that holds a Qt.QApplication instance
+#import config # gives access to qtapp variable that holds a Qt.QApplication instance
 
 import sys
 import fnmatch
@@ -22,23 +22,13 @@ from operator import and_, not_
 
 import cothread
 
-# If Qt is to be used (for any GUI) then the cothread library needs to be informed,
-# before any work is done with Qt. Without this line below, the GUI window will not
-# show up and freeze the program.
-# Note that for a dialog box to be modal, i.e., blocking the application
-# execution until user input is given, you need to set the input
-# argument "user_timer" to be True.
-if not config.qtapp:
-    config.qtapp.append( cothread.iqt(use_timer = True) )
-    # config.qtapp.append( Qt.QApplication(sys.argv) ) # use this if you are not using "cothread" module at all in your application
-
 import PyQt4.Qt as Qt
 
-import aphla
+import aphla as ap
 from Qt4Designer_files.ui_element_selector import Ui_Dialog
 
-if not aphla.machines._lat :
-    aphla.initNSLS2VSR()
+if not ap.machines._lat :
+    ap.initNSLS2V1()
 
 # Output Type Enums
 TYPE_ELEMENT = 1
@@ -129,7 +119,7 @@ class ElementSelectorData(Qt.QObject):
         
         self.filter_spec = filter_spec
         
-        self.allElements = hla.getElements('*')
+        self.allElements = ap.getElements('*')
         
         # Initialization of matching data information
         self.matched = [ [True]*len(self.allElements) ]
@@ -400,14 +390,14 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
                     else:
                         item_string = ''
                     t.setItem(j,i,
-                              Qt.QTableWidgetItem(Qt.QString(item_string)))
+                              Qt.QTableWidgetItem(item_string))
                     
                     t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
                                          Qt.Qt.ItemIsEditable|
                                          Qt.Qt.ItemIsDragEnabled|
                                          Qt.Qt.ItemIsEnabled) # Make it editable
                 else:
-                    t.setItem(j,i,Qt.QTableWidgetItem(Qt.QString()))
+                    t.setItem(j,i,Qt.QTableWidgetItem(''))
                     
                     t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
                                          Qt.Qt.ItemIsEditable|
@@ -568,14 +558,14 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         for (i, filter_prop) in enumerate(self.data.filter_property_list):
             if filter_prop is not 'exclude':
                 t.setItem(new_row_index,i,
-                          Qt.QTableWidgetItem(Qt.QString()))
+                          Qt.QTableWidgetItem(''))
                     
                 t.item(new_row_index,i).setFlags(Qt.Qt.ItemIsSelectable|
                                                  Qt.Qt.ItemIsEditable|
                                                  Qt.Qt.ItemIsDragEnabled|
                                                  Qt.Qt.ItemIsEnabled) # Make it editable
             else:
-                t.setItem(new_row_index,i,Qt.QTableWidgetItem(Qt.QString()))
+                t.setItem(new_row_index,i,Qt.QTableWidgetItem(''))
                 
                 t.item(new_row_index,i).setFlags(Qt.Qt.ItemIsSelectable|
                                                  Qt.Qt.ItemIsEditable|
@@ -635,7 +625,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         
         if not self.isItemUserCheckable(qTableWidgetItem):
             filter_val = str(
-                qTableWidgetItem.data(Qt.Qt.DisplayRole).toString() )
+                qTableWidgetItem.data(Qt.Qt.DisplayRole) )
         else:
             filter_val = (qTableWidgetItem.checkState() == Qt.Qt.Checked)
         
@@ -780,10 +770,27 @@ def make(modal = True, parentWindow = None, filter_spec = [ [{},False] ],
 #----------------------------------------------------------------------
 def main(args):
     """ """
+        
+    #qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
     
-    qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
+    #result = make(modal = True, output_type = TYPE_ELEMENT)
     
-    result = make(modal = True, output_type = TYPE_ELEMENT)
+    #if result.has_key('dialog_result'): # When modal
+        #app           = result['app']
+        #dialog_result = result['dialog_result']
+        
+        #print dialog_result
+        #print 'Length = ', len(dialog_result)
+        
+        
+    #else: # When non-modal
+        #app = result['app']
+        #exit_status = qapp.exec_()
+        #sys.exit(exit_status)
+        
+    cothread.iqt()
+
+    result = make(modal=True, output_type=TYPE_ELEMENT)
     
     if result.has_key('dialog_result'): # When modal
         app           = result['app']
@@ -795,9 +802,10 @@ def main(args):
         
     else: # When non-modal
         app = result['app']
-        exit_status = qapp.exec_()
-        sys.exit(exit_status)
-        
+        #exit_status = qapp.exec_()
+        #sys.exit(exit_status)
+    
+    cothread.WaitForQuit()
     
 
 #----------------------------------------------------------------------    

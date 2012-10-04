@@ -216,16 +216,16 @@ class Test0Element(unittest.TestCase):
 
         pvrb = 'SR:C01-MG:G02A{HCor:L1}Fld-I'
         pvsp = 'SR:C01-MG:G02A{HCor:L1}Fld-SP'
-        hcor.updatePvRecord(pvrb, {'handle': 'READ', 'field': 'x'})
-        hcor.updatePvRecord(pvsp, {'handle': 'SET', 'field': 'x'}) 
+        hcor.updatePvRecord(pvrb, {'handle': 'readback', 'field': 'x'})
+        hcor.updatePvRecord(pvsp, {'handle': 'setpoint', 'field': 'x'}) 
 
         self.assertIn('x', hcor.fields())
-        self.assertEqual(hcor.pv(field='x', handle='read'), [pvrb])
-        self.assertEqual(hcor.pv(field='x', handle='set'), [pvsp])
+        self.assertEqual(hcor.pv(field='x', handle='readback'), [pvrb])
+        self.assertEqual(hcor.pv(field='x', handle='setpoint'), [pvsp])
 
         self.assertEqual(hcor.pv(field='y'), [])
-        self.assertEqual(hcor.pv(field='y', handle='read'), [])
-        self.assertEqual(hcor.pv(field='y', handle='set'), [])
+        self.assertEqual(hcor.pv(field='y', handle='readback'), [])
+        self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
         
         #v = ap.eget(hcor.name, ['x', 'y'])
         #self.assertGreaterEqual(abs(v[0]), 0.0)
@@ -360,6 +360,9 @@ class Test1LatticeSr(unittest.TestCase):
         self.lat = ap.machines.getLattice('V1SR')
         self.logger = logging.getLogger('tests.TestLatticeSr')
         pass
+
+    def test_orbit(self):
+        v = ap.getOrbit()
 
     def test_tunes(self):
         tune, = self.lat.getElementList('tune')

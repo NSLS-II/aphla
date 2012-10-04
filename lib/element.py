@@ -84,13 +84,13 @@ class AbstractElement(object):
         - 'QUAD', quadrupole
         - 'DIPOLE', dipole
         - 'SEXT', sextupole
-        - ['TRIMX' | 'TRIMY'], corrector
-        - ['BPMX' | 'BPMY'], beam position monitor
+        - ['HCOR' | 'VCOR' | 'TRIMX' | 'TRIMY'], corrector
+        - ['BPM' | 'BPMX' | 'BPMY'], beam position monitor
 
         For unrecognized element, it returns a straight line, i.e. `([s0, s1],
         [0, 0], 'k')`
         """
-        b, e = self.sb, self.sb + self.length
+        b, e = self.sb, max(self.sb + self.length, self.se)
         h = vscale
         if self.family == 'QUAD':
             return [b, b, e, e], [0, h, h, 0], 'k'
@@ -98,12 +98,12 @@ class AbstractElement(object):
             return [b, b, e, e, b, b, e, e], [0, h, h, -h, -h, h, h, 0], 'k'
         elif self.family == 'SEXT':
             return [b, b, e, e], [0, 1.25*h, 1.25*h, 0], 'k'
-        elif self.family in ['TRIMX', 'TRIMY']:
+        elif self.family in ['HCOR', 'VCOR', 'TRIMX', 'TRIMY']:
             return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
                 [0, 0, h, 0, 0], 'r'
-        elif self.family in ['BPMX', 'BPMY']:
+        elif self.family in ['BPM', 'BPMX', 'BPMY']:
             return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
-                [0, 0, h, 0, 0], 'b'        
+                [0, 0, h, 0, 0], 'b'
         else:
             return [b, e], [0, 0], 'k'
 
@@ -290,7 +290,6 @@ class CaDecorator:
                 if len(self.rb) > self.trace_limit: 
                     # keep the first one for `reset`
                     self.rb.pop(1)
-            #print self.pvrb, ret
             if len(self.pvrb) == 1: 
                 return ret[0]
             else: return ret
@@ -700,16 +699,22 @@ class CaElement(AbstractElement):
         # the default handle is 'READBACK'
         if properties is not None:
             elemhandle = properties.get('handle', 'readback')
-            fieldname = properties.get('field', None)
-            if fieldname:
+            fieldfname = properties.get('field', None)
+            if fieldfname is not None:
+                g = re.match(r'([\w\d]+)(\[\d+\])?', fieldfname)
+                if g is None:
+                    raise ValueError("invalid field '%s'" % fieldfname)
+                fieldname, idx = g.group(1), g.group(2)
+                if idx is not None: idx = int(idx[1:-1])
                 if elemhandle == 'readback': 
-                    self.setFieldGetAction(pvname, fieldname)
+                    self.setFieldGetAction(pvname, fieldname, idx)
                 elif elemhandle == 'setpoint':
-                    self.setFieldPutAction(pvname, fieldname)
+                    self.setFieldPutAction(pvname, fieldname, idx)
                 else:
                     raise ValueError("invalid handle value '%s' for pv '%s'" % 
                                      (elemhandle, pvname))
-                logger.info("'%s' field '%s' = '%s'" % (elemhandle, fieldname, pvname))
+                logger.info("'%s' field '%s'[%s] = '%s'" % (
+                        elemhandle, fieldname, idx, pvname))
 
         # check element field
         #for t in tags:
@@ -918,8 +923,8 @@ def merge(elems, **kwargs):
         for f in fds: 
             if f in count: count[f] += 1
             else: count[f] = 1
-            pvrb = e.pv(field=f, handle='read')
-            pvsp = e.pv(field=f, handle='set')
+            pvrb = e.pv(field=f, handle='readback')
+            pvsp = e.pv(field=f, handle='setpoint')
             if f not in pvdict: pvdict[f] = [[], []]
             #print f, pvrb, pvsp
             pvdict[f][0].extend(pvrb)
@@ -936,5 +941,6 @@ def merge(elems, **kwargs):
 
     elem.sb = [e.sb for e in elems]
     elem.se = [e.se for e in elems]
+    elem._name = [e.name for e in elems]
     return elem
 
