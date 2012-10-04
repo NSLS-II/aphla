@@ -424,6 +424,14 @@ class OrbitPlot(Qwt.QwtPlot):
         self.marker.setLabel(Qwt.QwtText("Hello"))
         #self.connect(self, SIGNAL("doubleClicked
 
+    def detachOrbitCurve(self):
+        self.curve1.detach()
+
+    def attachCurves(self, parent = None):
+        self.curve1.attach(parent)
+        self.curve2.attach(parent)
+        #self.replot()
+
     def elementDoubleClicked(self, elem):
         print "element selected:", elem
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)

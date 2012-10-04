@@ -30,7 +30,7 @@ from elemproperty import *
 
 import time
 from PyQt4.QtCore import QSize, SIGNAL, Qt
-from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QTableView,
+from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
 
@@ -181,7 +181,14 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(fileQuitAction, SIGNAL("triggered()"),
                      self.close)
         
+        self.latMenu = QMenu("&Lattices")
+        for lat in aphla.machines.lattices():
+            latAct = QAction(lat, self)
+            self.connect(latAct, SIGNAL("triggered()"), self.click_lattice)
+            self.latMenu.addAction(latAct)
         #
+        self.fileMenu.addMenu(self.latMenu)
+        self.fileMenu.addSeparator()
         self.fileMenu.addAction(fileQuitAction)
 
         # view
@@ -349,15 +356,35 @@ class OrbitPlotMainWindow(QMainWindow):
         self.corbitdlg = None # orbit correction dlg
 
         self.vbpm = None
+        
+        
+    def click_lattice(self):
+        #print self.sender()
+        print aphla.machines.lattices()
+        latname = self.sender().text()
+        lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
+        print lat, self.sender().text()
+        self.setLattice(lat)
 
     def setLattice(self, lat):
+        """
+        """
+        print "using lattice:", lat.name
         self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
+
+        for p in self.obtplots:
+            p.attachCurves(None)
+            
+        self.obtdata = None
+        
         if self.vbpm is not None:
+            print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
             self.obtdata = OrbitDataVirtualBpm(velement=self.vbpm)
             self.obtdata.update()
             #print self.obtdata.xorbit()
             #print self.obtdata.yorbit()
         else:
+            raise RuntimeError("No VBPM found")
             elems = lat.getElementList('BPM')
             x = [(e.se+e.sb)/2.0 for e in elems]
             se = [e.se for e in elems]
@@ -369,7 +396,7 @@ class OrbitPlotMainWindow(QMainWindow):
         magprof = lat.getBeamlineProfile()
         for p in self.obtplots:
             p.setPlot(magnet_profile=magprof)
-
+            p.attachCurves(p)
 
     def _reset_correctors(self):
         aphla.hlalib._reset_trims()
@@ -398,7 +425,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def _active_plots(self):
         i = self.tabs.currentIndex()
         itab = self.tabs.currentWidget()
-        return itab.findChildren((OrbitPlot,))
+        return [v for v in itab.findChildren(OrbitPlot)]
         #return self.tabs.findChildren()
 
     def liveData(self, on):
@@ -474,7 +501,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.updateStatus()
 
     def updateStatus(self):
-        self.statusBar().showMessage("read {0}".format(self.obtdata.icount))
+        if self.obtdata:
+            self.statusBar().showMessage("read {0}".format(self.obtdata.icount))
 
     def singleShot(self):
         if self.obtdata is not None:
@@ -540,15 +568,18 @@ class OrbitPlotMainWindow(QMainWindow):
 
 def main(par=None):
     aphla.initNSLS2V1()
+    aphla.initNSLS2()
+    print aphla.machines.lattices()
     #app = QApplication(args)
     #app.setStyle(st)
     if '--sim' in sys.argv:
         print "CA offline:", aphla.catools.CA_OFFLINE
         aphla.catools.CA_OFFLINE = True
     demo = OrbitPlotMainWindow()
-    demo.setLattice(aphla.machines.getLattice('V1SR'))
+    #demo.setLattice(aphla.machines.getLattice('V1SR'))
     #demo.setWindowTitle("NSLS-II")
     demo.resize(800,500)
+    print aphla.machines.lattices()
     demo.show()
     # print app.style() # QCommonStyle
     #sys.exit(app.exec_())
