@@ -192,6 +192,7 @@ def initNSLS2V1(with_twiss = False):
     if orm_filename and conf.has(orm_filename):
         #print("Using ORM:", conf.filename(orm_filename))
         _lattice_dict['V1SR'].ormdata = OrmData(conf.filename(orm_filename))
+        logger.info("using ORM data '%s'" % orm_filename)
     else:
         logger.warning("No ORM '%s' found" % orm_filename)
 

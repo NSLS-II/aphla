@@ -1177,9 +1177,9 @@ class TestOrm(unittest.TestCase):
 
     def test_measure_orm(self):
         bpms = ap.getElements('BPM')
-        trims = ap.getElements('HCOR')
+        trims = ap.getElements('HCOR') + ap.getElements('VCOR')
         
-        nbpm, ntrim = 5, 3
+        #nbpm, ntrim = 5, 3
         nbpm, ntrim = len(bpms), len(trims)
         bpmlst = [b.name for b in bpms[:nbpm]]
         trimlst = [t.name for t in trims[:ntrim]]

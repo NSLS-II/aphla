@@ -152,6 +152,8 @@ def _correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None,
     - the input bpm and trim should be uniq in pv names.
     """
     if ormdata is not None:
+        print("BPM PV:", bpm)
+        print("Trim PV:", trim)
         m = ormdata.getSubMatrixPv(bpm, trim)
     elif machines._lat.ormdata is not None:
         m = machines._lat.ormdata.getSubMatrixPv(bpm, trim)
@@ -323,8 +325,8 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
         bpmlst = getElements(bpm)
     pvx, pvy = [], []
     for e in bpmlst:
-        pvx.extend(e.pv(field='x', handle='READBACK'))
-        pvy.extend(e.pv(field='y', handle='READBACK'))
+        pvx.extend(e.pv(field='x', handle='readback'))
+        pvy.extend(e.pv(field='y', handle='readback'))
     #raw_input("correct orbit ...")
 
     if plane == 'H': bpmpv = set(pvx)

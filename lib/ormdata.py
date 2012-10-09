@@ -356,7 +356,7 @@ class OrmData:
 
         return mat
 
-    def getSubMatrixPv(self, bpm, trim):
+    def getSubMatrixPv(self, bpm, trim, **kw):
         """
         return the submatrix according the given PVs for bpm and trim.
 
@@ -365,24 +365,28 @@ class OrmData:
 
         ib = [-1] * len(bpm)
         it = [-1] * len(trim)
+        ignore_unknown = kw.get('ignore_unknown', True)
 
         # index -1 is readback PV for BPM
         for i in range(len(self.bpm)):
             if not self.bpm[i][-1] in bpm: continue
-            ib[bpm.index(self.bpm[i][2])] = i
+            ib[bpm.index(self.bpm[i][-1])] = i
 
         # index -1 is setpoint PV for Trim
         for i in range(len(self.trim)):
             if not self.trim[i][-1] in trim: continue
             it[trim.index(self.trim[i][-1])] = i
 
+        # ignore the unknown PVs ?
         for i in range(len(ib)):
             if ib[i] == -1: 
-                raise ValueError("BPM PV %s is not found in ORM data" % bpm[i])
+                raise ValueError("BPM PV '{0}' is not found" \
+                                     "in ORM data: {1}".format(bpm[i], [v[-1] for v in self.bpm]))
 
         for i in range(len(it)):
             if it[i] == -1: 
-                raise ValueError("Trim PV %s is not found in ORM data" % trim[i])
+                raise ValueError("Trim PV '{0}' is not found" \
+                                     "in ORM data: {1}".format(trim[i], [v[-1] for v in self.trim]))
 
         m = np.zeros((len(bpm), len(trim)), 'd')
         for i in range(len(bpm)):
