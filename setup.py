@@ -24,6 +24,7 @@ setup(
         # GUI
         'aphla.gui.gui_resources',
         'aphla.gui.aplauncher',
+        'aphla.gui.channelexplorer',
         'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
         'aphla.gui.apbba'],
     #install_requires = ['distribute', 'matplotlib', 'cothread',
