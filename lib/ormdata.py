@@ -196,13 +196,13 @@ class OrmData:
         """
         return [v[0] for v in self.bpm]
     
-    def hasBpm(self, bpm):
+    def hasBpm(self, bpm, fields=['x', 'y']):
         """
         check if the bpm is used in this ORM measurement
         """
 
         for b in self.bpm:
-            if b[0] == bpm: return True
+            if b[0] == bpm and b[2] in fields: return True
         return False
 
     def getTrimNames(self):
@@ -212,12 +212,12 @@ class OrmData:
         """
         return [v[0] for v in self.trim]
     
-    def hasTrim(self, trim):
+    def hasTrim(self, trim, fields=['x', 'y']):
         """
         check if the trim is used in this ORM measurement
         """
         for tr in self.trim:
-            if tr[0] == trim: return True
+            if tr[0] == trim and tr[2] in fields: return True
         return False
 
     def maskCrossTerms(self):
@@ -234,7 +234,7 @@ class OrmData:
                 # b[1] = ['X'|'Y'], similar for t[1]
                 if b[1] != t[1]: self._mask[i,j] = 1
 
-    def _pv_index(self, pv):
+    def _index_pv(self, pv):
         """
         return pv index of BPM, TRIM
         """
@@ -243,15 +243,35 @@ class OrmData:
         for j,t in enumerate(self.trim):
             if t[-2] == pv or t[-1] == pv:
                 return j
-        return -1
+        return None
     
-    def index(self, v):
+    def _index_2(self, elem, fields):
+        """
+        return pv index of BPM, TRIM
+        """
+        ret = [None] * len(fields)
+        for i,b in enumerate(self.bpm):
+            if b[0] != elem or b[2] not in fields: continue
+            ret[fields.index(b[2])] = i
+        for j,t in enumerate(self.trim):
+            if t[0] != elem or t[2] not in fields: continue
+            ret[fields.index(t[2])] = j
+        return ret
+
+    def index(self, *argv):
         """
         return the index of a pv
+
+        index('PV1')
+        index('BPM', ['x', 'y'])
         """
-        i = self._pv_index(v)
-        if i >= 0: return i
-        
+        if len(argv) == 1:
+            return self._index_pv(argv[0])
+        elif len(argv) == 2:
+            return self._index_2(argv[0], argv[1])
+        else:
+            raise RuntimeError("Invalid number of parameters")
+
     def update(self, src):
         """
         update the data using a new OrmData object *src*
@@ -312,7 +332,22 @@ class OrmData:
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
         
-    def getSubMatrix(self, bpm, trim, flags=('xy', 'xy'), **kwargs):
+    def getMatrixIndex(self, bpm, trim):
+        """
+        find the index for given list of bpm and tirm names
+
+        The BPM index is 2D list, Trim is 1D
+        """
+        bpmidx, trimidx = [], []
+
+        for i,b in enumerate(bpm):
+            bpmidx.append(self._index_2(b, ['x', 'y']))
+        for i,t in enumerate(trim):
+            trimidx.append(self._index_2(t, ['x', 'y']))
+
+        return bpmidx, trimidx
+
+    def getSubMatrix(self, bpm, trim, **kwargs):
         """
         if only bpm name given, the return matrix will not equal to
         len(bpm),len(trim), since one bpm can have two lines (x,y) data.
@@ -329,8 +364,8 @@ class OrmData:
         if not bpm or not trim: return None
         #if flags not in ['XX', 'XY', 'YY', 'YX', '**']: return None
         
-        bpm_st  = set([v[0] for v in self.bpm])
-        trim_st = set([v[0] for v in self.trim])
+        ibpm  = set([v[0] for v in self.bpm])
+        itrim = set([v[0] for v in self.trim])
 
         ignore_unmeasured = kwargs.get('ignore_unmeasured', True)
 

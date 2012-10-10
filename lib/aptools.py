@@ -144,21 +144,30 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
 #     return s1, p[0,:]
 
 
-def _correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None, 
-                   check = True):
+def _correctOrbitPv(bpm, trim, m, **kwarg):
     """
     correct orbit use direct pv and catools
 
     - the input bpm and trim should be uniq in pv names.
+    - ormdata a valid OrmData object
+    - scale factor for calculated dx
+    - ref reference orbit
+    - check stop if the orbit gets worse.
     """
-    if ormdata is not None:
-        print("BPM PV:", bpm)
-        print("Trim PV:", trim)
-        m = ormdata.getSubMatrixPv(bpm, trim)
-    elif machines._lat.ormdata is not None:
-        m = machines._lat.ormdata.getSubMatrixPv(bpm, trim)
-    else:
-        raise RuntimeError("no ORM data defined from orbit correction")
+    scale = kwarg.get('scale', 0.5)
+    ref = kwarg.get('ref', None)
+    check = kwarg.get('check', True)
+
+    verbose = kwarg.get('verbose', 1)
+
+    #if ormdata is not None:
+    #    print("BPM PV:", bpm)
+    #    print("Trim PV:", trim)
+    #    m = ormdata.getSubMatrixPv(bpm, trim)
+    #elif machines._lat.ormdata is not None:
+    #    m = machines._lat.ormdata.getSubMatrixPv(bpm, trim)
+    #else:
+    #    raise RuntimeError("no ORM data defined from orbit correction")
 
     v0 = np.array(caget(bpm), 'd')
     if ref is not None: v0 = v0 - ref
@@ -179,7 +188,7 @@ def _correctOrbitPv(bpm, trim, ormdata = None, scale = 0.5, ref = None,
         v1 = np.array(caget(bpm), 'd')
         if ref is not None: v1 = v1 - np.array(ref)
         norm2 = np.linalg.norm(v1)
-        print("Euclidian norm: predicted/realized", norm1, norm2)
+        print("Euclidian norm: predicted/realized", norm1/norm0, norm2/norm0)
         if norm2 > norm0:
             print("Failed to reduce orbit distortion, restoring...", 
                   norm0, norm2)
@@ -201,6 +210,7 @@ def createLocalBump(bpm, trim, ref, **kwargs):
 
     setLocalBump(bpm, trim, ref, **kwargs)
 
+    
 def setLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
@@ -211,6 +221,8 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     :type trim: str, list
     :param ref: target orbit, (len(bpm),2)
     :type ref: matrix shape (n,2).
+    :param scale: factor for calculated kick strength change, between 0 and 1.0
+    :param check: ignore if the orbit gets worse
 
     `bpm` and `trim` can be a pattern, a group name, a list of exact element
     names or a list of objects. if `ref[i][j]` is `None`, use the current
@@ -223,80 +235,66 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         >>> createLocalBump(bpms, 'HCOR', newobt)
 
     """
-    plane = kwargs.get('plane', 'HV')
+    ormdata = kwargs.get('ormdata', None)
+    repeat = kwargs.get('repeat', 1)
 
-    bpmlst = getElements(bpm)
-    if len(bpmlst) == 0:
-        raise ValueError("no/invalid BPMs provided")
-    elif len(bpm) != len(bpmlst):
-        raise ValueError("bpm must be a list of qualified BPM names")
+    if ormdata is None: ormdata = machines._lat.ormdata
+    
+    if ormdata is None:
+        raise RuntimeError("No Orbit Response Matrix available")
 
-    #for i, b in enumerate(bpmlst):
-    #    if b.name != bpm[i]:
-    #        raise ValueError("bpm must be a list of qualified BPM names")
+    bpmfulllst = getElements(ormdata.getBpmNames())
+    bpmlst, trimlst = getElements(bpm), getElements(trim)
+    bpmnames = [b.name for b in bpmlst]
 
-    bpmfulllst = getElements('BPM')
-    bpmpv, bpmref = [], []
-    pvx, pvy = [], []
-    for b in bpmfulllst:
-        # pick pv
-        xpv, = b.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EGET])
-        ypv, = b.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EGET])
-        if xpv: pvx.append(xpv)
-        if ypv: pvy.append(ypv)
-        bpmpv.append(xpv)
-        bpmpv.append(ypv)
-        x0, y0 = b.x, b.y
-        if b in bpmlst:
-            idx = bpmlst.index(b)
-            if ref[idx][0] is None:
-                bpmref.append(x0)
-            else:
-                bpmref.append(ref[idx][0])
-
-            if ref[idx][1] is None:
-                bpmref.append(y0)
-            else:
-                bpmref.append(ref[idx][1])
+    for i,b in enumerate(bpmlst):
+        if not ormdata.hasBpm(b.name):
+            raise RuntimeError("No BPM '%s' found in the ORM data" % (b.name))
+    
+    bpmrec, trimrec = [], []
+    for i,b in enumerate(bpmfulllst):
+        # if the bpm is in the list, set the target orbit, otherwise use None
+        if b.name in bpmnames:
+            obtx, obty = ref[bpmnames.index(b.name)]
         else:
-            bpmref.append(caget(xpv))
-            bpmref.append(caget(ypv))
+            obtx, obty = None, None
+        ix, iy = ormdata.index(b.name, ['x', 'y'])
+        if ix is not None: bpmrec.append((ix, obtx))
+        if iy is not None: bpmrec.append((iy, obty))
 
-    # did not check duplicate PV
-    # pv for trim
-    trimlst = getElements(trim)
+    for i,t in enumerate(trimlst):
+        if not ormdata.hasTrim(t.name):
+            raise RuntimeError("No Trim '%s' found in the ORM data" % (t.name))
+        ix, iy = ormdata.index(t.name, ['x', 'y'])
+        if ix is not None: trimrec.append((ix,))
+        if iy is not None: trimrec.append((iy,))
 
-    trimpv, pvxsp, pvysp = [], [], []
-    for e in trimlst:
-        pv = e.pv(tags=[machines.HLA_TAG_X, machines.HLA_TAG_EPUT])
-        if pv: 
-            pvxsp.append(pv)
-        if isinstance(pv, (str, unicode)): 
-            trimpv.append(pv)
-        elif pv: 
-            trimpv.extend(pv)
-        
-        pv = e.pv(tags=[machines.HLA_TAG_Y, machines.HLA_TAG_EPUT])
-        if pv: 
-            pvysp.append(pv)
-        if isinstance(pv, (str, unicode)): 
-            trimpv.append(pv)
-        elif pv: 
-            trimpv.extend(pv)
 
-    if 'H' in plane and len(pvx) > 0 and len(pvxsp) == 0:
-        print("WARNING: no HCOR for horizontal orbit correction", 
-              file=sys.stderr)
-    if 'V' in plane and len(pvy) > 0 and len(pvysp) == 0:
-        print("WARNING: no VCOR for vertical orbit correction", file=sys.stderr)
+    # now mv to PV Group read/write
+    # expand the PV and ref in 1D array: [x y]
+    bpmpvs  = [ormdata.bpm[r[0]][-1] for r in bpmrec]
+    trimpvs = [ormdata.trim[r[0]][-1] for r in trimrec]
+    bpmref  = []
+    for i,r in enumerate(bpmrec):
+        if r[1] is None: bpmref.append(caget(bpmpvs[i]))
+        else: bpmref.append(r[1])
+
+    # bpm
+    #print("ORM dimension", np.shape(ormdata.m), type(ormdata.m))
+    #print("  {0}".format([r[0] for r in bpmrec]))
+    #print("  {0}".format(np.take(ormdata.m, [r[0] for r in bpmrec])))
+
+    m = np.take(np.take(ormdata.m, [r[0] for r in bpmrec], axis=0), 
+                [r[0] for r in trimrec], axis=1)
 
     # test
-    for i in range(len(bpmpv)):
+    for i in range(len(bpmpvs)):
         logging.debug("{0} {1} val= {2} target={3}".format(
-                i, bpmpv[i], caget(bpmpv[i]), bpmref[i]))
+                i, bpmpvs[i], caget(bpmpvs[i]), bpmref[i]))
 
     # correct orbit using default ORM (from current lattice)
-    _correctOrbitPv(bpmpv, trimpv, ref=np.array(bpmref))
+    for i in range(repeat):
+        _correctOrbitPv(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
 
         
 def correctOrbit(bpm = None, trim = None, **kwargs):
@@ -316,22 +314,16 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     """
 
     plane = kwargs.get('plane', 'HV')
-    repeat = kwargs.get('repeat', 1)
 
     # an orbit based these bpm
     if bpm is None:
         bpmlst = getElements('BPM')
     else:
         bpmlst = getElements(bpm)
-    pvx, pvy = [], []
-    for e in bpmlst:
-        pvx.extend(e.pv(field='x', handle='readback'))
-        pvy.extend(e.pv(field='y', handle='readback'))
-    #raw_input("correct orbit ...")
 
-    if plane == 'H': bpmpv = set(pvx)
-    elif plane == 'V': bpmpv = set(pvy)
-    else: bpmpv = set(pvx + pvy)
+    if plane == 'H': ref = zip([0.0] * len(bpmlst), [None] * len(bpmlst))
+    elif plane == 'V': ref = zip([None] * len(bpmlst), [0.0] * len(bpmlst))
+    else: ref = np.zeros((len(bpmlst), 2), 'd')
 
     # pv for trim
     if trim is None:
@@ -339,35 +331,7 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     else:
         trimlst = getElements(trim)
 
-    trimpv, pvxsp, pvysp = [], [], []
-    for e in trimlst:
-        pv = e.pv(field='x', handle='setpoint')
-        #print(e.name, pv)
-        if pv: pvxsp.append(pv)
-        if isinstance(pv, (str, unicode)): trimpv.append(pv)
-        elif pv: trimpv.extend(pv)
-        
-        pv = e.pv(field='y', handle='setpoint')
-        #print(str(e.name), pv)
-        if pv: pvysp.append(pv)
-        if isinstance(pv, (str, unicode)): trimpv.append(pv)
-        elif pv: trimpv.extend(pv)
-
-    if 'H' in plane and len(pvx) > 0 and len(pvxsp) == 0:
-        print("WARNING: no HCOR for horizontal orbit correction", 
-              file=sys.stderr)
-    if 'V' in plane and len(pvy) > 0 and len(pvysp) == 0:
-        print("WARNING: no VCOR for vertical orbit correction", 
-              file=sys.stderr)
-
-    if not machines._lat.ormdata:
-        raise ValueError("no ORM data defined for this lattice")
-    else:
-        #print("PV:", len(bpmpv), len(trimpv))
-        for i in range(repeat):
-            _correctOrbitPv(list(set(bpmpv)), list(set(trimpv)), 
-                           machines._lat.ormdata)
-            
+    setLocalBump([b.name for b in bpmlst], trimlst, ref, **kwargs)
 
 def _random_kick(plane = 'V', amp=1e-9, verbose = 0):
     """

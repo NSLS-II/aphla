@@ -12,7 +12,7 @@ class DoubleSpinBoxCell(QDoubleSpinBox):
         self.col = col
 
 class OrbitCorrDlg(QDialog):
-    def __init__(self, bpm, s, x, y, orbit_plots = None,
+    def __init__(self, bpm, s, x, y, stepsize = (None, None), orbit_plots = None,
                  correct_orbit = None, parent = None):
 
         super(OrbitCorrDlg, self).__init__(parent)
@@ -24,20 +24,23 @@ class OrbitCorrDlg(QDialog):
             it = QTableWidgetItem(bpm[i])
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             self.table.setItem(i, 0, it)
+
             it = QTableWidgetItem(str(s[i]))
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             #it.setMinimumWidth(80)
             self.table.setItem(i, 1, it)
+
             it = DoubleSpinBoxCell(i, 2)
             it.setRange(-100000, 100000)
-            it.setSingleStep(10)
+            if stepsize[0] is not None: it.setSingleStep(stepsize[0])
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
             #self.connect(it, SIGNAL("
             self.table.setCellWidget(it.row, it.col, it)
+
             it = DoubleSpinBoxCell(i, 3)
             it.setRange(-100000, 100000)
-            it.setSingleStep(10)
+            if stepsize[1] is not None: it.setSingleStep(stepsize[1])
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
             self.table.setCellWidget(it.row, it.col, it)
@@ -63,20 +66,21 @@ class OrbitCorrDlg(QDialog):
         #self.update_orbit = update_orbit
         self.orbit_plots = orbit_plots
         self.correct_orbit = correct_orbit
-        self.val = [x, y]
+        self.val = [s, x, y]
 
     #def _cell_clicked(self, row, col):
     #    print row, col
 
     def call_update(self, val):
         sender = self.sender()
-        #print "row/col", sender.row, sender.col, sender.value()
+        print "row/col", sender.row, sender.col, sender.value()
+        print "  value was", self.val[sender.col-2][sender.row]
         self.table.setCurrentCell(sender.row, sender.col)
-        self.val[sender.col-2][sender.row] = sender.value()
+        self.val[sender.col-1][sender.row] = sender.value()
         #for p in self.orbit_plots:
         #    #self.update_orbit(self.val[0], self.val[1])
-        for i,p in enumerate(self.orbit_plots):
-            p.plotDesiredOrbit(self.val[i])
+        self.orbit_plots[0].plotDesiredOrbit(self.val[1], self.val[0])
+        self.orbit_plots[1].plotDesiredOrbit(self.val[2], self.val[0])
 
 
     def call_apply(self):
