@@ -575,7 +575,7 @@ class OrbitPlot(Qwt.QwtPlot):
         if y is None and x is None:
             self.curve2.detach()
             self.curve2.setVisible(False)
-            print "disabling desired orbit and quit"
+            #print "disabling desired orbit and quit"
             return
 
         if x is not None:

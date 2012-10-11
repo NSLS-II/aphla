@@ -206,7 +206,7 @@ class OrbitPlotMainWindow(QMainWindow):
                                        "Single Shot", self)
         self.connect(viewSingleShotAction, SIGNAL("triggered()"),
                      self.singleShot)
-        viewDcct = QAction("Current", self)
+        viewDcct = QAction("Beam Current", self)
         viewDcct.setCheckable(True)
         viewDcct.setChecked(True)
         self.connect(viewDcct, SIGNAL("toggled(bool)"), self.viewDcctPlot)
@@ -299,7 +299,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewZoomAutoAction)
         self.viewMenu.addSeparator()
         # a bug in PyQwt5 for datetime x-axis, waiting for Debian 7
-        #self.viewMenu.addAction(viewDcct)
+        self.viewMenu.addAction(viewDcct)
         for ac in self.viewMenu.actions(): ac.setDisabled(True)
 
         #
@@ -544,33 +544,30 @@ class OrbitPlotMainWindow(QMainWindow):
     #    self.plot1.curve2.setData(self.pvsx, x)
     #    self.plot2.curve2.setData(self.pvsy, y)
 
-    def correctOrbit(self, x, y):
-        #print "correct to :", x, y
-        trimx = aphla.getElements('HCOR')
-        trimy = aphla.getElements('VCOR')
-        trimpvx = [t.pv(field='x', handle='setpoint')[0] for t in trimx]
-        trimpvy = [t.pv(field='y', handle='setpoint')[0] for t in trimy]
-        #print trimpvx
-        xref = [v*1e-6 for v in x]
-        aphla.correctOrbitPv(self.pvx, trimpvx, ormdata = None, scale = 0.5, 
-                              ref = xref)
-        yref = [v*1e-6 for v in y]
-        aphla.correctOrbitPv(self.pvy, trimpvy, ormdata = None, scale = 0.5, 
-                              ref = yref)
-        pass
+    def _correctOrbit(self, bpms, obt):
+        trims = [e.name for e in 
+                 aphla.getElements('HCOR')+ aphla.getElements('VCOR')]
+        #print len(bpms), bpms
+        #print len(trims), trims
+        #print len(obt), obt
+        aphla.setLocalBump(bpms, trims, obt)
+
 
     def createLocalBump(self):
         if self.corbitdlg is None:
             #print self.obtdata.elem_names
+            # assuming BPM has both x and y, the following s are same
             s, x, xe = self.obtdata.xorbit(nomask=True)
             s, y, ye = self.obtdata.yorbit(nomask=True)
+            x, y = [0.0]*len(s), [0.0] * len(s)
             print np.shape(x), np.shape(y)
             self.corbitdlg = OrbitCorrDlg(
                 self.obtdata.elem_names, 
                 self.obtdata.s, x, y, 
-                stepsize = (10e-6, 10e-6),
-                orbit_plots=(self.obtxplot, self.obtyplot))
-            self.corbitdlg.resize(600, 300)
+                stepsize = (10e-7, 10e-7), 
+                orbit_plots=(self.obtxplot, self.obtyplot),
+                correct_orbit = self._correctOrbit)
+            self.corbitdlg.resize(600, 500)
             self.corbitdlg.setWindowTitle("Create Local Bump")
             #self.connect(self.corbitdlg, SIGNAL("finished(int)"),
             #             self.plot1.curve2.setVisible)

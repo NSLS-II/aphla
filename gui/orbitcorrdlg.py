@@ -6,15 +6,17 @@ from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
                          QDialogButtonBox, QPushButton, QApplication)
 
 class DoubleSpinBoxCell(QDoubleSpinBox):
-    def __init__(self, row = -1, col = -1, parent = None):
+    def __init__(self, row = -1, col = -1, val = 0.0, parent = None):
         super(QDoubleSpinBox, self).__init__(parent)
         self.row = row
         self.col = col
+        self.setValue(val)
+        self.setDecimals(10)
 
 class OrbitCorrDlg(QDialog):
     def __init__(self, bpm, s, x, y, stepsize = (None, None), orbit_plots = None,
                  correct_orbit = None, parent = None):
-
+        self.bpm = bpm
         super(OrbitCorrDlg, self).__init__(parent)
         self.table = QTableWidget(len(bpm), 4)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -30,17 +32,19 @@ class OrbitCorrDlg(QDialog):
             #it.setMinimumWidth(80)
             self.table.setItem(i, 1, it)
 
-            it = DoubleSpinBoxCell(i, 2)
+            it = DoubleSpinBoxCell(i, 2, x[i])
             it.setRange(-100000, 100000)
             if stepsize[0] is not None: it.setSingleStep(stepsize[0])
+            #if xref is not None: it.setValue(xref[i])
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
             #self.connect(it, SIGNAL("
             self.table.setCellWidget(it.row, it.col, it)
 
-            it = DoubleSpinBoxCell(i, 3)
+            it = DoubleSpinBoxCell(i, 3, y[i])
             it.setRange(-100000, 100000)
             if stepsize[1] is not None: it.setSingleStep(stepsize[1])
+            #if yref is not None: it.setValue(yref[i])
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
             self.table.setCellWidget(it.row, it.col, it)
@@ -49,16 +53,17 @@ class OrbitCorrDlg(QDialog):
         #             self._cell_clicked)
         self.table.resizeColumnsToContents()
         #self.table.horizontalHeader().setStretchLastSection(True)
-        for i in range(4):
-            print "width", i, self.table.columnWidth(i)
+        #for i in range(4):
+        #    print "width", i, self.table.columnWidth(i)
         #self.table.setColumnWidth(0, 300)
         self.table.setColumnWidth(1, 80)
 
-        btn = QPushButton("Apply")
-        self.connect(btn, SIGNAL("clicked()"), self.call_apply)
+        self.correctOrbitBtn = QPushButton("Apply")
+        self.correctOrbitBtn.setStyleSheet("QPushButton:disabled { color: gray }");
+        self.connect(self.correctOrbitBtn, SIGNAL("clicked()"), self.call_apply)
         hbox = QHBoxLayout()
         hbox.addStretch(1)
-        hbox.addWidget(btn)
+        hbox.addWidget(self.correctOrbitBtn)
         layout = QVBoxLayout()
         layout.addWidget(self.table)
         layout.addLayout(hbox) 
@@ -68,13 +73,17 @@ class OrbitCorrDlg(QDialog):
         self.correct_orbit = correct_orbit
         self.val = [s, x, y]
 
+        # draw the target orbit
+        self.orbit_plots[0].plotDesiredOrbit(self.val[1], self.val[0])
+        self.orbit_plots[1].plotDesiredOrbit(self.val[2], self.val[0])
+
     #def _cell_clicked(self, row, col):
     #    print row, col
 
     def call_update(self, val):
         sender = self.sender()
-        print "row/col", sender.row, sender.col, sender.value()
-        print "  value was", self.val[sender.col-2][sender.row]
+        #print "row/col", sender.row, sender.col, sender.value()
+        #print "  value was", self.val[sender.col-2][sender.row]
         self.table.setCurrentCell(sender.row, sender.col)
         self.val[sender.col-1][sender.row] = sender.value()
         #for p in self.orbit_plots:
@@ -85,7 +94,9 @@ class OrbitCorrDlg(QDialog):
 
     def call_apply(self):
         #print "apply the orbit"
-        self.correct_orbit(self.val[0], self.val[1])
+        self.correctOrbitBtn.setEnabled(False)
+        self.correct_orbit(self.bpm, zip(self.val[1], self.val[2]))
+        self.correctOrbitBtn.setEnabled(True)
 
     def done(self, r):
         for p in self.orbit_plots:

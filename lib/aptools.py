@@ -154,7 +154,7 @@ def _correctOrbitPv(bpm, trim, m, **kwarg):
     - ref reference orbit
     - check stop if the orbit gets worse.
     """
-    scale = kwarg.get('scale', 0.5)
+    scale = kwarg.get('scale', 0.68)
     ref = kwarg.get('ref', None)
     check = kwarg.get('check', True)
 
