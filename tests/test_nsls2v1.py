@@ -1177,11 +1177,14 @@ class TestOrm(unittest.TestCase):
 
     def test_measure_orm(self):
         bpms = ap.getElements('BPM')
-        trims = ap.getElements('HCOR')
+        trims = ap.getElements('HCOR') + ap.getElements('VCOR')
         
-        bpmlst = [b.name for b in bpms[:5]]
-        trimlst = [t.name for t in trims[:3]]
-        ap.measOrbitRm(bpmlst, trimlst, "orm_test.hdf5")
+        #nbpm, ntrim = 5, 3
+        nbpm, ntrim = len(bpms), len(trims)
+        bpmlst = [b.name for b in bpms[:nbpm]]
+        trimlst = [t.name for t in trims[:ntrim]]
+        fname = time.strftime("orm_%Y%m%d_%H%M.hdf5")
+        ap.measOrbitRm(bpmlst, trimlst, fname)
 
 
 

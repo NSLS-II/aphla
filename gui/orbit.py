@@ -92,6 +92,7 @@ class OrbitPlotMainWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
         self.setIconSize(QSize(48, 48))
 
+        self._lat = None
         if lat is not None:
             self.set_lattice(lat)
 
@@ -205,11 +206,11 @@ class OrbitPlotMainWindow(QMainWindow):
                                        "Single Shot", self)
         self.connect(viewSingleShotAction, SIGNAL("triggered()"),
                      self.singleShot)
-        viewDcct = QAction("Current", self)
+        viewDcct = QAction("Beam Current", self)
         viewDcct.setCheckable(True)
         viewDcct.setChecked(True)
         self.connect(viewDcct, SIGNAL("toggled(bool)"), self.viewDcctPlot)
-
+        
         # errorbar
         viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
                                     "Errorbar", self)
@@ -298,8 +299,10 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewZoomAutoAction)
         self.viewMenu.addSeparator()
         # a bug in PyQwt5 for datetime x-axis, waiting for Debian 7
-        #self.viewMenu.addAction(viewDcct)
+        self.viewMenu.addAction(viewDcct)
+        for ac in self.viewMenu.actions(): ac.setDisabled(True)
 
+        #
         self.controlMenu = self.menuBar().addMenu("&Control")
         self.controlMenu.addAction(controlChooseBpmAction)
         self.controlMenu.addAction(controlResetPvDataAction)
@@ -310,6 +313,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.controlMenu.addAction(controlZoomOutPlot2Action)
         self.controlMenu.addSeparator()
         self.controlMenu.addAction(steer_orbit)
+        for ac in self.controlMenu.actions(): ac.setDisabled(True)
 
         # debug
         self.debugMenu = self.menuBar().addMenu("&Debug")
@@ -326,6 +330,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.debugMenu.addAction(reset_quad)
         self.debugMenu.addAction(random_hkick)
         self.debugMenu.addAction(random_vkick)
+        for ac in self.debugMenu.actions(): ac.setDisabled(True)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -369,6 +374,10 @@ class OrbitPlotMainWindow(QMainWindow):
     def setLattice(self, lat):
         """
         """
+        # setting lat for the whole aphla
+        aphla.machines.use(lat.name)
+
+        self._lat = lat
         print "using lattice:", lat.name
         self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
 
@@ -378,7 +387,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.obtdata = None
         
         if self.vbpm is not None:
-            print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
+            #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
             self.obtdata = OrbitDataVirtualBpm(velement=self.vbpm)
             self.obtdata.update()
             #print self.obtdata.xorbit()
@@ -398,22 +407,26 @@ class OrbitPlotMainWindow(QMainWindow):
             p.setPlot(magnet_profile=magprof)
             p.attachCurves(p)
 
+        for ac in self.viewMenu.actions(): ac.setDisabled(False)
+        for ac in self.controlMenu.actions(): ac.setDisabled(False)
+        for ac in self.debugMenu.actions(): ac.setDisabled(False)
+
     def _reset_correctors(self):
         aphla.hlalib._reset_trims()
-
 
     def _reset_quadrupoles(self):
         aphla.hlalib._reset_quad()
 
 
     def _random_hkick(self):
-        hcors = aphla.getElements('HCOR')
+        hcors = self._lat.getElementList('HCOR')
         i = np.random.randint(len(hcors))
+        print "Setting {0}/{1} HCOR".format(i, len(hcors))
         hcors[i].x += 1e-7
 
 
     def _random_vkick(self):
-        cors = aphla.getElements('VCOR')
+        cors = self._lat.getElementList('VCOR')
         i = np.random.randint(len(cors))
         print "kick {0} by 1e-7".format(cors[i].name),
         cors[i].y += 1e-7
@@ -531,35 +544,37 @@ class OrbitPlotMainWindow(QMainWindow):
     #    self.plot1.curve2.setData(self.pvsx, x)
     #    self.plot2.curve2.setData(self.pvsy, y)
 
-    def correctOrbit(self, x, y):
-        #print "correct to :", x, y
-        trimx = aphla.getElements('HCOR')
-        trimy = aphla.getElements('VCOR')
-        trimpvx = [t.pv(field='x', handle='setpoint')[0] for t in trimx]
-        trimpvy = [t.pv(field='y', handle='setpoint')[0] for t in trimy]
-        #print trimpvx
-        xref = [v*1e-6 for v in x]
-        aphla.correctOrbitPv(self.pvx, trimpvx, ormdata = None, scale = 0.5, 
-                              ref = xref)
-        yref = [v*1e-6 for v in y]
-        aphla.correctOrbitPv(self.pvy, trimpvy, ormdata = None, scale = 0.5, 
-                              ref = yref)
-        pass
+    def _correctOrbit(self, bpms, obt):
+        trims = [e.name for e in 
+                 aphla.getElements('HCOR')+ aphla.getElements('VCOR')]
+        #print len(bpms), bpms
+        #print len(trims), trims
+        #print len(obt), obt
+        aphla.setLocalBump(bpms, trims, obt)
+
 
     def createLocalBump(self):
         if self.corbitdlg is None:
+            #print self.obtdata.elem_names
+            # assuming BPM has both x and y, the following s are same
+            s, x, xe = self.obtdata.xorbit(nomask=True)
+            s, y, ye = self.obtdata.yorbit(nomask=True)
+            x, y = [0.0]*len(s), [0.0] * len(s)
+            print np.shape(x), np.shape(y)
             self.corbitdlg = OrbitCorrDlg(
-                self.pvx, self.orbitx_data.x, self.orbitx_data.golden(),
-                self.orbity_data.golden(), (self.plot1, self.plot2),
-                self.correctOrbit, self)
-            self.corbitdlg.resize(600, 300)
+                self.obtdata.elem_names, 
+                self.obtdata.s, x, y, 
+                stepsize = (10e-7, 10e-7), 
+                orbit_plots=(self.obtxplot, self.obtyplot),
+                correct_orbit = self._correctOrbit)
+            self.corbitdlg.resize(600, 500)
             self.corbitdlg.setWindowTitle("Create Local Bump")
             #self.connect(self.corbitdlg, SIGNAL("finished(int)"),
             #             self.plot1.curve2.setVisible)
-            self.plot1.plotDesiredOrbit(self.orbitx_data.golden(), 
-                                        self.orbitx_data.x)
-            self.plot2.plotDesiredOrbit(self.orbity_data.golden(), 
-                                        self.orbity_data.x)
+            #self.obtxplot.plotDesiredOrbit(self.orbitx_data.golden(), 
+            #                            self.orbitx_data.x)
+            #self.obtyplot.plotDesiredOrbit(self.orbity_data.golden(), 
+            #                            self.orbity_data.x)
 
         self.corbitdlg.show()
         self.corbitdlg.raise_()
@@ -576,7 +591,7 @@ def main(par=None):
         print "CA offline:", aphla.catools.CA_OFFLINE
         aphla.catools.CA_OFFLINE = True
     demo = OrbitPlotMainWindow()
-    #demo.setLattice(aphla.machines.getLattice('V1SR'))
+    demo.setLattice(aphla.machines.getLattice('V1SR'))
     #demo.setWindowTitle("NSLS-II")
     demo.resize(800,500)
     print aphla.machines.lattices()
