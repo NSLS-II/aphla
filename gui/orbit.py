@@ -389,7 +389,6 @@ class OrbitPlotMainWindow(QMainWindow):
         if self.vbpm is not None:
             #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
             self.obtdata = OrbitDataVirtualBpm(velement=self.vbpm)
-            self.obtdata.update()
             #print self.obtdata.xorbit()
             #print self.obtdata.yorbit()
         else:
@@ -401,6 +400,13 @@ class OrbitPlotMainWindow(QMainWindow):
             picker = [(e.sb, e.se, e.name) for e in elems]
             # data for plot1,2
             self.obtdata = OrbitData(elements=elems, x=x, sb=sb, se=se)
+
+        try:
+            self.obtdata.update()
+        except:
+            self._lat = None
+            self.obtdata = None
+            raise RuntimeError("can not update orbit")
 
         magprof = lat.getBeamlineProfile()
         for p in self.obtplots:
