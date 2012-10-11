@@ -178,7 +178,8 @@ def _correctOrbitPv(bpm, trim, m, **kwarg):
     # solve for m*dk + (v0 - ref) = 0
     dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0, rcond = 1e-4)
 
-    norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
+    #norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
+    norm1 = np.linalg.norm(np.dot(m, dk*scale) + v0)
     k0 = np.array(caget(trim), 'd')
     caput(trim, k0+dk*scale)
 
