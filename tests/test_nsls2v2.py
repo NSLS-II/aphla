@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-NSLS2 V1 Unit Test
+NSLS2 V2 Unit Test
 -------------------
 """
 
@@ -26,27 +26,25 @@ logging.basicConfig(filename="utest.log",
     level=logging.DEBUG)
 
 
-logging.info("initializing NSLS2V1")
+logging.info("initializing NSLS2V2")
 import aphla as ap
-ap.initNSLS2V1()
-# cause timeout when run by nosetest
-#ap.initNSLS2V1SRTwiss()
+ap.initNSLS2V2()
 
-logging.info("NSLS2V1 initialized")
+logging.info("NSLS2V2 initialized")
 
 refpvrb = [
-    'V:1-SR:C15-BI:G2{BPM:1691}SA:X',
-    'V:1-SR:C15-BI:G2{BPM:1691}SA:Y',
-    'V:1-SR:C15-BI:G2{BPM:1711}SA:X',
-    'V:1-SR:C15-BI:G2{BPM:1711}SA:Y',
-    'V:1-SR:C15-BI:G4{BPM:1734}SA:X',
-    'V:1-SR:C15-BI:G4{BPM:1734}SA:Y',
-    'V:1-SR:C15-BI:G4{BPM:1745}SA:X',
-    'V:1-SR:C15-BI:G4{BPM:1745}SA:Y',
-    'V:1-SR:C15-BI:G6{BPM:1769}SA:X',
-    'V:1-SR:C15-BI:G6{BPM:1769}SA:Y',
-    'V:1-SR:C15-BI:G6{BPM:1784}SA:X',
-    'V:1-SR:C15-BI:G6{BPM:1784}SA:Y',
+    "V:2-SR:C15-BI:G2{PL1:1845}SA:X",
+    "V:2-SR:C15-BI:G2{PL1:1845}SA:Y",
+    "V:2-SR:C15-BI:G2{PL2:1865}SA:X",
+    "V:2-SR:C15-BI:G2{PL2:1865}SA:Y",
+    "V:2-SR:C15-BI:G4{PM1:1890}SA:X",
+    "V:2-SR:C15-BI:G4{PM1:1890}SA:Y",
+    "V:2-SR:C15-BI:G4{PM1:1900}SA:X",
+    "V:2-SR:C15-BI:G4{PM1:1900}SA:Y",
+    "V:2-SR:C15-BI:G6{PH2:1924}SA:X",
+    "V:2-SR:C15-BI:G6{PH2:1924}SA:Y",
+    "V:2-SR:C15-BI:G6{PH1:1939}SA:X",
+    "V:2-SR:C15-BI:G6{PH1:1939}SA:Y"
     ]
 ref_v0 = np.array(ap.caget(refpvrb), 'd')
 
@@ -121,8 +119,8 @@ class Test0Element(unittest.TestCase):
         dcct = dccts[0]
         # current
         #pv = u'SR:C00-BI:G00{DCCT:00}CUR-RB'
-        pv = 'V:1-SR-BI{DCCT}CUR-I'
-        vsrtag = 'aphla.sys.V1SR'
+        pv = 'V:2-SR-BI{DCCT}CUR-I'
+        vsrtag = 'aphla.sys.V2SR'
         self.assertEqual(dcct.name,    'dcct')
         #self.assertEqual(dcct.devname, 'DCCT')
         self.assertEqual(dcct.family,  'DCCT')
@@ -142,7 +140,7 @@ class Test0Element(unittest.TestCase):
 
     def test_bpm(self):
         bpms = ap.getElements('BPM')
-        self.assertEqual(len(bpms), 180)
+        self.assertGreaterEqual(len(bpms), 180)
 
         bpm = bpms[0]
         #self.assertEqual(bpm.pv(field='xref'), [pvxbba, pvxgold])
@@ -241,7 +239,7 @@ class TestChanFinderCsvData(unittest.TestCase):
     """
     def setUp(self):
         #self.cfs_csv = 'us_nsls2v1_cfs.csv'
-        self.cfs_db = 'us_nsls2v1.db'
+        self.cfs_db = 'us_nsls2v2.db'
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
@@ -253,8 +251,8 @@ class TestChanFinderCsvData(unittest.TestCase):
         self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_db)))
         cfa.importSqliteDb(ap.conf.filename(self.cfs_db))
 
-        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V1*')
-        for t in ['V1SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
+        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
             self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
 
     def test_url_tags(self):
@@ -264,8 +262,8 @@ class TestChanFinderCsvData(unittest.TestCase):
         cfa = ap.chanfinder.ChannelFinderAgent()
         cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
 
-        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V1*')
-        for t in ['V1SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
+        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
             self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
 
 
@@ -282,7 +280,7 @@ class Test0Lattice(unittest.TestCase):
     def setUp(self):
         logging.info("TestLattice")
         # this is the internal default lattice
-        self.lat = ap.machines.getLattice('V1SR')
+        self.lat = ap.machines.getLattice('V2SR')
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLattice')
 
@@ -357,7 +355,7 @@ class Test0Lattice(unittest.TestCase):
 class Test1LatticeSr(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeSr")
-        self.lat = ap.machines.getLattice('V1SR')
+        self.lat = ap.machines.getLattice('V2SR')
         self.logger = logging.getLogger('tests.TestLatticeSr')
         pass
 
@@ -374,9 +372,9 @@ class Test1LatticeSr(unittest.TestCase):
         
         cur1a = self.lat['dcct']
         cur1b, = self.lat.getElementList('dcct')
-        self.assertTrue(cur1a.sb <= 0.0)
-        self.assertTrue(cur1a.value > 0.0)
-        self.assertTrue(cur1b.value > 0.0)
+        self.assertLessEqual(cur1a.sb, 0.0)
+        self.assertGreater(cur1a.value, 0.0)
+        self.assertGreater(cur1b.value, 0.0)
 
     def test_lines(self):
         elem1 = self.lat.getElementList('DIPOLE')
@@ -384,7 +382,7 @@ class Test1LatticeSr(unittest.TestCase):
         i = self.lat._find_element_s((s0+s1)/2.0)
         self.assertTrue(i >= 0)
         i = self.lat.getLine(srange=(0, 25))
-        self.assertTrue(len(i) > 1)
+        self.assertGreater(len(i), 1)
 
     def test_getelements_sr(self):
         elems = self.lat.getElementList(['pl1g2c01a', 'pl2g2c01a'])
@@ -392,17 +390,17 @@ class Test1LatticeSr(unittest.TestCase):
         
         # only cell 1,3,5,7,9 and PL1, PL2
         elems = self.lat.getElementList('pl*g2c0*')
-        self.assertTrue(len(elems) == 10)
+        self.assertEqual(len(elems), 10, msg="{0}".format(elems))
 
     def test_groupmembers(self):
         bpm1 = self.lat.getElementList('BPM')
         g2a = self.lat.getElementList('G2')
         
         b1 = self.lat.getGroupMembers(['BPM', 'C20'], op='intersection')
-        self.assertTrue(len(b1) == 6)
+        self.assertEqual(len(b1), 6)
         
         b1 = self.lat.getGroupMembers(['BPM', 'G2'], op='union')
-        self.assertTrue(len(b1) > len(bpm1))
+        self.assertGreater(len(b1), len(bpm1))
         self.assertTrue(len(b1) > len(g2a))
         self.assertTrue(len(b1) < len(bpm1) + len(g2a))
         
@@ -444,7 +442,7 @@ class Test1LatticeSr(unittest.TestCase):
                 self.assertTrue(False,
                                 "AttributeError exception expected")
 
-
+    @unittest.skip("changed")
     def test_idcorrs(self):
         #
         hcor = [e for e in ap.getGroupMembers(['HCOR']) if fnmatch(e.name, '*idcor*')]        
@@ -473,10 +471,10 @@ class TestLatticeLtd1(unittest.TestCase):
         vf = ap.getElements('vf1bd1')[0]
         self.assertIn('image', vf.fields())
 
-        d = np.reshape(vf.image, (vf.image_ny, vf.image_nx))
-        import matplotlib.pylab as plt
-        plt.imshow(d)
-        plt.savefig("test.png")
+        #d = np.reshape(vf.image, (vf.image_ny, vf.image_nx))
+        #import matplotlib.pylab as plt
+        #plt.imshow(d)
+        #plt.savefig("test.png")
 
     def _gaussian(self, height, center_x, center_y, width_x, width_y):
         """Returns a gaussian function with the given parameters"""
@@ -557,7 +555,7 @@ class TestLatticeLtb(unittest.TestCase):
     def test_virtualelements(self):
         pass
 
-class TestNSLS2V1(unittest.TestCase):
+class TestNSLS2V2(unittest.TestCase):
     def setUp(self):
         pass
 
@@ -574,7 +572,6 @@ Twiss
 class Test0Tunes(unittest.TestCase):
     def setUp(self):
         logging.info("TestTunes")
-        #ap.initNSLS2V1SRTwiss()
 
     @unittest.skip("no tune element")
     def test_tunes(self):
@@ -689,7 +686,7 @@ class TestOrbit(unittest.TestCase):
 
     def setUp(self):
         self.logger = logging.getLogger("tests.TestOrbit")
-        self.lat = ap.machines.getLattice('V1SR')
+        self.lat = ap.machines.getLattice('V2SR')
         self.assertTrue(self.lat)
 
     def tearDown(self):
@@ -722,7 +719,7 @@ class TestOrbit(unittest.TestCase):
         #    print e.name, e.pv(field='x')
 
         self.assertGreater(len(v0), 0)
-        self.assertEqual(len(bpm), 180)
+        self.assertGreaterEqual(len(bpm), 180)
         self.assertEqual(len(hcor1), 180)
         self.assertGreaterEqual(len(hcor), 180)
         self.assertEqual(len(vcor1), 180)
@@ -739,14 +736,14 @@ class TestOrbit(unittest.TestCase):
         ap.hlalib.waitStableOrbit(v0, minwait=5)
 
         v1 = ap.getOrbit()
-        self.assertGreater(np.std(v1[:,0]), np.std(v0[:,0]))
+        self.assertNotEqual(np.std(v1[:,0]), np.std(v0[:,0]))
         self.logger.info("resetting trims")
         ap.hlalib._reset_trims()
         time.sleep(10)
 
 class TestOrbitControl(unittest.TestCase): 
     def setUp(self):
-        ap.machines.use("V1SR")
+        ap.machines.use("V2SR")
 
     def tearDown(self):
         ap.hlalib._reset_trims()
@@ -848,7 +845,7 @@ BBA
 
 class TestBba(unittest.TestCase):
     def setUp(self):
-        ap.initNSLS2V1()
+        ap.initNSLS2V2()
         ap.hlalib._reset_trims()
         pass
 
@@ -885,7 +882,7 @@ ORM
 
 class TestOrmData(unittest.TestCase):
     def setUp(self):
-        self.h5filename = "us_nsls2_v1sr_orm.hdf5"
+        self.h5filename = "us_nsls2_v2sr_orm.hdf5"
         pass
 
     def tearDown(self):
@@ -1175,6 +1172,7 @@ class TestOrm(unittest.TestCase):
     def setUp(self):
         pass
 
+    @unittest.skip("speed up")
     def test_measure_orm(self):
         bpms = ap.getElements('BPM')
         trims = ap.getElements('HCOR') + ap.getElements('VCOR')
