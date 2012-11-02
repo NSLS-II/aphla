@@ -14,7 +14,7 @@ from sqlalchemy.orm import relationship, backref
 C = 787.793/30
 
 ipv, idx, isys, icell, igirder, ihandle, iname0, ifield0, itype0 = range(9)
-iname1, itype1, ifield1, isend, ilength,itag = 9, 10, 11, 12, 13, 14
+iname1, itype1, ifield1, isend, ilength, itag, iEND = 9, 10, 11, 12, 13, 14, 15
 
 APTAG = "aphla."
 
@@ -38,16 +38,44 @@ def twiss_element(pv):
         if pv.find(r[0]) > 0: return r
     return None
 
-def elem_pattern(ibpm):
-    locs = [('H1', 'A'), ('H2', 'A'), ('M1', 'A'),
-            ('M1', 'B'), ('L1', 'B'), ('L2', 'B'), 
-            ('L1', 'A'), ('L2', 'A'), ('M1', 'A'), 
-            ('M1', 'B'), ('H1', 'B'), ('H2', 'B')]
-    i,k = divmod(ibpm, 12)
-    return locs[k]
+#def elem_pattern(ibpm):
+#    locs = [('H1', 'A'), ('H2', 'A'), ('M1', 'A'),
+#            ('M1', 'B'), ('L1', 'B'), ('L2', 'B'), 
+#            ('L1', 'A'), ('L2', 'A'), ('M1', 'A'), 
+#            ('M1', 'B'), ('H1', 'B'), ('H2', 'B')]
+#    i,k = divmod(ibpm, 12)
+#    return locs[k]
+
+
+def read_lat_table(fname):
+    """
+    corrector from Weiming's table combined H/V corrector, with finite
+    length. However Tracy support only zero length H or V corrector.
+
+    The position of an element is at the exit.
+    """
+    f = open(fname, 'r')
+    head = f.readline().split()
+    unit = f.readline()
+    bar = f.readline()
+    beg = f.readline()
+
+    iL, ipos = head.index('L'), head.index('s')
+    ret = {}
+    for line in f.readlines():
+        rec = tuple(line.split())
+        name, fam, L, S1, k1, k2, ang = rec[:7]
+
+        if re.match(r'[FC]([HML]\dG\dC\d\d[AB])', name):
+            ret[name[0] + 'X' + name[1:]] = {'L': L, 's': S1}
+            ret[name[0] + 'Y' + name[1:]] = {'L': L, 's': S1}
+        else:
+            ret[name] = {'L': L, 's': S1}
+
+    return ret
 
     
-def patch_va_table_1(inpt, oupt):
+def patch_va_table_1(inpt, oupt, lattable):
     """
     patch the va table from Guobao. see "nsls2srid_prop.csv"
 
@@ -63,20 +91,29 @@ def patch_va_table_1(inpt, oupt):
     V:1-SR:C30-MG:G2{CH:14}Fld:SP,14,V:1-SR,C30,G2,set,CH,,Horizontal Corrector
 
     """
+    posinfo = read_lat_table(lattable)
+
     finpt = open(inpt, 'r')
     foupt = open(oupt, 'w')
     foupt.write(finpt.readline().strip() + ",elemName,elemType,elemField\n")
     elemlst = {}
     jbpm, jhcor, jvcor = {}, {}, {}
+    eid = 1
     for s in finpt.readlines():
         #v = re.match(r"[A-Z0-9:-]+(C[0-9][0-9]).*[A-Z0-9:,-]+(C[0-9][0-9]).*", s)
         grp = [v.strip() for v in s.split(',')]
+        if grp[idx]: eid = max([int(grp[idx]), eid])
         # append one for real unique name
         if len(grp) <= iname1: grp.append(grp[iname0][:].lower())
         if len(grp) <= itype1: grp.append(grp[itype0][:])
         if len(grp) <= ifield1: grp.append(grp[ifield0][:])
+        if len(grp) <= isend: 
+            if grp[idx]: grp.append(posinfo[grp[iname0]]['s'])
+            else: grp.append('0.0')
+        if len(grp) <= ilength: 
+            if grp[idx]: grp.append(posinfo[grp[iname0]]['L'])
+            else: grp.append('0.0')
 
-        if grp[idx]: i = int(grp[idx])
         if grp[itype0] == 'Sextupole': 
             grp[itype1] = 'SEXT'
             if grp[ifield0] == 'K': grp[ifield1] = 'k2'
@@ -89,9 +126,10 @@ def patch_va_table_1(inpt, oupt):
         elif grp[itype0] == 'Beam Position Monitor': 
             grp[itype1] = 'BPM'
             jbpm.setdefault(grp[idx], len(jbpm))
-            loc, sym = elem_pattern(jbpm[grp[idx]])
-            grp[iname1] = 'P%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
-            grp[ifield1] = grp[ihandle].lower() # it was a bug in Guobao's data
+            #loc, sym = elem_pattern(jbpm[grp[idx]])
+            #grp[iname1] = 'P%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
+            grp[iname1] = grp[iname0]
+            #grp[ifield1] = grp[ihandle].lower() # it was a bug in Guobao's data
             grp[ihandle] = 'read'
         elif grp[itype0] == 'Quadrupole': 
             grp[itype1] = 'QUAD'
@@ -108,7 +146,15 @@ def patch_va_table_1(inpt, oupt):
             jhcor.setdefault(grp[idx], len(jhcor))
             if grp[iname0].startswith('CHIDSim'): pass
             elif grp[iname0].startswith('CHIDCor'): pass
+            elif grp[iname0].startswith('FX'):
+                grp[itype1] = 'HFCOR'
+            elif re.match(r"CX[HLM][0-9]G[0-9]C[0-9][0-9][AB]", grp[iname0]):
+                grp[iname1] = grp[iname0]
+            elif re.match(r"C[SU][0-9]XG[0-9]C[0-9][0-9]ID[0-9]", grp[iname0]):
+                grp[iname1] = grp[iname0]
+                grp[itype1] = 'HCOR_ID' + grp[iname0][:2]
             elif grp[iname0] == 'CH':
+                # the old version of lattice has only CH instead of CXH1G2C30A, 
                 loc, sym = elem_pattern(jhcor[grp[idx]])
                 grp[iname1] = 'CX%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
             else: raise RuntimeError('%s' % grp[iname0])
@@ -119,6 +165,13 @@ def patch_va_table_1(inpt, oupt):
             jvcor.setdefault(grp[idx], len(jvcor))
             if grp[iname0].startswith('CVIDSim'): pass
             elif grp[iname0].startswith('CVIDCor'): pass
+            elif grp[iname0].startswith('FY'):
+                grp[itype1] = 'VFCOR'
+            elif re.match(r"CY[HLM][0-9]G[0-9]C[0-9][0-9][AB]", grp[iname0]):
+                grp[iname1] = grp[iname0]
+            elif re.match(r"C[SU][0-9]YG[0-9]C[0-9][0-9]ID[0-9]", grp[iname0]):
+                grp[iname1] = grp[iname0]
+                grp[itype1] = 'VCOR_ID' + grp[iname0][:2]
             elif grp[iname0] == 'CV':
                 loc, sym = elem_pattern(jvcor[grp[idx]])
                 grp[iname1] = 'CY%s%s%s%s' % (loc, grp[igirder], grp[icell], sym)
@@ -138,6 +191,15 @@ def patch_va_table_1(inpt, oupt):
         elif grp[itype0] == 'Cavity Voltage': 
             grp[itype1] = 'CAVITY'
             grp[ifield1] = 'v'
+        elif grp[itype0] == 'insertion':
+            if re.match(r"IVU[0-9][0-9]G[0-9]C[0-9][0-9][CD]", grp[iname0]):
+                grp[iname1] = grp[iname0]
+            elif re.match(r"DW[0-9]+G[0-9]C[0-9][0-9][DU]", grp[iname0]):
+                grp[iname1] = grp[iname0]
+            elif re.match(r"EPU[0-9]+G[0-9]C[0-9][0-9][DU]", grp[iname0]):
+                grp[iname1] = grp[iname0]                
+            else:
+                raise RuntimeError("Unknown insertion device '%s'" % grp[iname0])
         elif not grp[itype0]:
             if grp[iname0] in ['CHIDSim', 'CVIDSim', 'CHIDCor', 'CVIDCor']:
                 grp[iname1] = grp[iname0] + grp[igirder] + grp[icell]
@@ -158,6 +220,8 @@ def patch_va_table_1(inpt, oupt):
             elif grp[ipv].find('{TUNE}Y') > 0:
                 grp[iname1] = 'tune'
                 grp[ifield1] = 'y'
+            elif grp[ipv].find('{NAME}') > 0:
+                grp[iname1] = 'name'
             elif twiss_element(grp[ipv]): 
                 for r in twiss:
                     if grp[ipv].find(r[0]) > 0:
@@ -165,13 +229,23 @@ def patch_va_table_1(inpt, oupt):
                         grp[ifield1] = r[1]
                         break
             else:
-                raise RuntimeError("'%s' in element '%s'" % (grp[ipv], grp[iname0]))
+                raise RuntimeError("'%s' in index %s element '%s'" % (
+                        grp[ipv], grp[idx], grp[iname0]))
         else:
             raise RuntimeError("Unknown element type '%s' for '%s'" % (grp[itype0], grp[iname0]))
 
         # use lower case for element name
         grp[iname1] = grp[iname1].lower()
 
+        if grp[ihandle].lower() in ['readback', 'read']: grp[ihandle] = 'get'
+        elif grp[ihandle].lower() == 'setpoint': grp[ihandle] = 'set'
+        elif grp[ihandle]:
+            raise RuntimeError("Unknow handle '%s' for pv '%s'" % (grp[ihandle], grp[ipv]))
+
+        tag = APTAG + 'sys.' + ''.join(re.split('[:-]', grp[isys]))
+        if itag >= len(grp): grp.append(tag)
+        else: grp[itag] = tag
+                                       
         elemlst.setdefault(grp[iname1], grp[idx])
         
         # the SQUAD and CH, CV might be combined and SQUAD is splitted into two elements
@@ -179,37 +253,9 @@ def patch_va_table_1(inpt, oupt):
         #    raise RuntimeError("element {0}:'{1}' is placed at different locations: '{2}'".format(grp[idx], grp[iname], elemlst[grp[iname]]))
         #if grp[itype] not in ['QUAD']:
         foupt.write(','.join(grp) + '\n')
+
     foupt.close()
 
-def patch_va_table_2(inpt, sinpt, oupt):
-    """
-    update the s location and length from channel of VA.
-    """
-    s = []
-    if os.path.exists(sinpt):
-        for v in open(sinpt, 'r').readlines():
-            for d in v.split():
-                try:
-                    s.append(float(d))
-                except:
-                    pass
-        if len(s) == int(s[0]) + 1: s = s[1:]
-        #print "read:", len(s)
-    with open(inpt, 'r') as f:
-        head = f.readline()
-        foupt = open(oupt, 'w')
-        foupt.write(head.strip() + ',s_end,length\n')
-        for line in f.readlines():
-            grp = [v.strip() for v in line.split(',')]
-            foupt.write(line.strip())
-            if not grp[idx] or int(grp[idx]) <= 0:
-                foupt.write(",0.0,0.0")
-            else:
-                i = int(grp[idx])
-                foupt.write(",{0},{1}".format(s[i], s[i] - s[i-1]))
-            if grp[ipv].find("SR") > 0: foupt.write(",aphla.sys.V1SR")
-            else: foupt.write(",")
-            foupt.write("\n")
 
 Base = declarative_base()
 class Element(Base):
@@ -267,6 +313,7 @@ class ChannelRecord(Base):
 
 
 def create_sqlite_db(inpt, dbfname = "us_nsls2.sqlite3"):
+
     engine = create_engine('sqlite:///' + dbfname, echo = False)
     Base.metadata.create_all(engine)
 
@@ -304,10 +351,11 @@ def create_sqlite_db(inpt, dbfname = "us_nsls2.sqlite3"):
                 pvr = ChannelRecord(grp[ipv], elem.name, grp[ihandle])
             pvr.element = elem
             pvr.tracy_el_field_va = grp[ifield0]
-            if grp[itag]: pvr.tags = grp[itag].replace(';', ',')
             if grp[ifield1]:
-                pvr.elemField = grp[ifield1]
+                pvr.elemField = grp[ifield1].lower()
                 #pvr.tags += ",{0}elemfield.{1}".format(APTAG, grp[ifield])
+            if itag < len(grp) and grp[itag]: 
+                pvr.tags = grp[itag].replace(';', ',')
             session.add(pvr)
             #session.add(elem)
 
@@ -346,60 +394,50 @@ def append_ltb_csv(src, out):
     f1 = open(src, 'r')
     f2 = open(out, 'a')
     head = f1.readline().strip().split(',')
-    print len(head)
+    print len(head), head
     
-    neworder = ['PV', 'ordinal', 'system', 'cell', 'girder', 'handle', 
-                None, None, None, 'elemName', 'elemType', None, 'sEnd',
-                'length', None]
     for line in f1.readlines():
-        grp = []
+        if line.strip().startswith('#'): continue
         src = line.strip().split(',')
-        tags = src[len(head):]
-        #print tags
-        field = None
-        for t in tags:
-            if not t.startswith('aphla'):
-                raise RuntimeError("not a tag '%s'" % t)
-            if t.startswith('aphla.elemfield.'): field = t[len('aphla.elemfield/'):]
-        #if field is not None: print field
-
-        for i,v in enumerate(neworder):
-            if v is not None: v2 = src[head.index(v)]
-            elif i in [iname0, ifield0, itype0]: v2 = ''
-            elif i == ifield1:
-                if field is not None: v2 = field
-                else: v2 = ''
-            elif i == itag:
-                #print tags,
-                newtags = []
-                for t in tags:
-                    if t.startswith('aphla.elemfield.'): continue
-                    if t in ['aphla.x', 'aphla.y', 'aphla.eget', 'aphla.eput']: continue
-                    newtags.append(t)
-
-                v2 = ';'.join(newtags)
-                #print v2
-            else:
-                raise RuntimeError("unknown v '%s'" % v)
-
-            if i == iname1: grp.append(v2.lower())
-            elif i == ihandle:
-                if v2 == 'READBACK': grp.append('read')
-                elif v2 == 'SETPOINT': grp.append('set')
+        if len(src) < 2: continue
+        grp = [src[0]]
+        tags = []
+        while len(grp) < iEND: grp.append('')
+        for t in src[1:]:
+            if t.find('=') > 0:
+                # it is a property
+                prpt, val = [v.strip() for v in t.split('=')]
+                if prpt == 'elemHandle': grp[ihandle] = val
+                elif prpt == 'elemIndex': grp[idx] = val
+                elif prpt == 'elemName': 
+                    grp[iname0], grp[iname1] = val, val.lower()
+                elif prpt == 'devName': pass
+                elif prpt == 'elemLength': grp[ilength] = val
+                elif prpt == 'elemPosition': grp[isend] = val
+                elif prpt == 'elemType': 
+                    grp[itype0], grp[itype1] = val, val
+                elif prpt == 'system': grp[isys] = val
+                elif prpt == 'elemField': 
+                    grp[ifield0], grp[ifield1] = val, val
+                elif prpt in ['hostName', 'iocName']:
+                    pass
                 else:
-                    raise RuntimeError("unknonw handle: '%s'" % v2)
-            else: grp.append(v2)
+                    raise RuntimeError("unknown property: {0}".format(prpt))
+            else:
+                # it is a tag
+                tags.append(t.strip())
+        if tags:
+            grp[itag] = ';'.join(tags)
         f2.write(','.join(grp) + '\n')
     f1.close()
     f2.close()
 
 if __name__ == "__main__":
-    dbfname = "us_nsls2v1.db"
-    patch_va_table_1(sys.argv[1], "output.txt")
-    patch_va_table_2("output.txt", "s.txt", "cfd.txt")
-    if len(sys.argv) == 3:
-        append_ltb_csv(sys.argv[2], "cfd.txt")
-
+    dbfname = "us_nsls2v2.db"
+    lattable = sys.argv[2]
+    patch_va_table_1(sys.argv[1], "cfd.txt", lattable)
+    #patch_va_table_2("output.txt", "s.txt", "cfd.txt")
+    append_ltb_csv('LTB.txt', "cfd.txt")
     create_sqlite_db("cfd.txt", dbfname)
     #update_db_pvs_tags(dbfname)
     check_db(dbfname)

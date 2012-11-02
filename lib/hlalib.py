@@ -222,7 +222,7 @@ def eget(elem = None, fields = None, **kwargs):
 #    if elem is not None:
 #        elst = getElements(elem)
         
-def getPvList(elem, field, handle, **kwargs):
+def getPvList(elem, field, handle = 'readback', **kwargs):
     """
     return a pv list for given element list
 

@@ -126,17 +126,17 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
     return lat
 
 
-def initNSLS2V1(with_twiss = False):
+def initNSLS2V2(with_twiss = False):
     """ 
-    initialize the virtual accelerator 'V1SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
+    initialize the virtual accelerator 'V2SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
-    - `${HOME}/.hla/us_nsls2v1.db`
+    - `${HOME}/.hla/us_nsls2v2.db`
     - channel finder in ${HLA_CFS_URL}
-    - `us_nsls2v1.db` with aphla package.
+    - `us_nsls2v2.db` with aphla package.
     """
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2v1.db'
+    cfs_filename = 'us_nsls2v2.db'
     src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
@@ -180,7 +180,7 @@ def initNSLS2V1(with_twiss = False):
 
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
-    for latname in ['V1SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+    for latname in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
         lattag = HLA_TAG_SYS_PREFIX + '.' + latname
         logger.info("Initializing lattice %s (%s)" % (latname, lattag))
         _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
@@ -188,22 +188,23 @@ def initNSLS2V1(with_twiss = False):
         if _lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
-    orm_filename = 'us_nsls2v1_sr_orm.hdf5'
+    orm_filename = 'us_nsls2v2_sr_orm.hdf5'
     if orm_filename and conf.has(orm_filename):
         #print("Using ORM:", conf.filename(orm_filename))
-        _lattice_dict['V1SR'].ormdata = OrmData(conf.filename(orm_filename))
+        _lattice_dict['V2SR'].ormdata = OrmData(conf.filename(orm_filename))
+        logger.info("using ORM data '%s'" % orm_filename)
     else:
         logger.warning("No ORM '%s' found" % orm_filename)
 
 
     # tune element from twiss
-    #twiss = _lattice_dict['V1SR'].getElementList('twiss')[0]
+    #twiss = _lattice_dict['V2SR'].getElementList('twiss')[0]
     #tune = CaElement(name='tune', virtual=0)
     #tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
     #                    [HLA_TAG_PREFIX+'.elemfield.x'])
     #tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
     #                    [HLA_TAG_PREFIX+'.elemfield.y'])
-    #_lattice_dict['V1SR'].insertElement(tune, 0)
+    #_lattice_dict['V2SR'].insertElement(tune, 0)
     #
     # LTB 
     _lattice_dict['V1LTB'].loop = False
@@ -211,19 +212,19 @@ def initNSLS2V1(with_twiss = False):
 
     #
     # SR
-    _lattice_dict['V1SR'].loop = True
-    _lat = _lattice_dict['V1SR']
+    _lattice_dict['V2SR'].loop = True
+    _lat = _lattice_dict['V2SR']
         
 
-def initNSLS2V1SRTwiss():
+def initNSLS2V2SRTwiss():
     """
     initialize the twiss data from virtual accelerator
     """
 
     # SR Twiss
     global _lat, _twiss
-    _twiss = Twiss("V1SR")
-    _twiss.load(conf.filename('us_nsls2v1.db'))
+    _twiss = Twiss("V2SR")
+    _twiss.load(conf.filename('us_nsls2v2.db'))
     _lat._twiss = _twiss
 
 

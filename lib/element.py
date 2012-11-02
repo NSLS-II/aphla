@@ -605,7 +605,7 @@ class CaElement(AbstractElement):
             >>> pv(tag='aphla.X')
             >>> pv(tags=['aphla.EGET', 'aphla.Y'])
             >>> pv(field = "x")
-            >>> pv(field="x", handle='READBACK')
+            >>> pv(field="x", handle='readback')
 
         seealso :class:`CaDecorator`
         """
