@@ -36,7 +36,7 @@ import aphla as ap
 
 if not ap.machines._lat:
     print 'Initializing lattice...'
-    ap.initNSLS2V1()
+    ap.initNSLS2V2()
     print 'Done.'
 
 # Output Type Enums

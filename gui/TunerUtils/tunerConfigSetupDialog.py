@@ -18,7 +18,7 @@ from PyQt4.QtGui import QApplication, QDialog, QStandardItem, \
 
 import aphla as ap
 if ap.machines._lat is None:
-    ap.initNSLS2V1()
+    ap.initNSLS2V2()
 
 from tunerModels import AbstractTunerConfigModel
 from ui_tunerConfigSetupDialog import Ui_Dialog

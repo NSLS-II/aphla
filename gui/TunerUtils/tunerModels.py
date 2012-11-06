@@ -14,7 +14,7 @@ from PyQt4.QtGui import QStandardItem, QStandardItemModel
 
 import aphla as ap
 if ap.machines._lat is None:
-    ap.initNSLS2V1()
+    ap.initNSLS2V2()
 
 import config as const
 

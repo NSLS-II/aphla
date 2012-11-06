@@ -45,7 +45,7 @@ from TunerUtils.tunerModels import AbstractTunerConfigModel
 
 import aphla as ap
 if ap.machines._lat is None:
-    ap.initNSLS2V1()
+    ap.initNSLS2V2()
 
 #----------------------------------------------------------------------
 def datestr(time_in_seconds_from_Epoch):
