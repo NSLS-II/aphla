@@ -20,90 +20,139 @@ import aphla as ap
 if ap.machines._lat is None:
     ap.initNSLS2V1()
 
-if __name__ == '__main__':
-    from ui_tunerConfigSetupDialog import Ui_Dialog
+from tunerModels import AbstractTunerConfigModel
+from ui_tunerConfigSetupDialog import Ui_Dialog
+import config as const
+from aphla.gui import channelexplorer
+#if __name__ == '__main__':
+    #from ui_tunerConfigSetupDialog import Ui_Dialog
     
-    import config as const
+    #import config as const
     
-    from aphla.gui import channelexplorer 
+    #from aphla.gui import channelexplorer 
     
-else:
-    pass
+#else:
+    #from ui_tunerConfigSetupDialog import Ui_Dialog
+    #import config as const
+    #from aphla.gui import channelexplorer
 
 ########################################################################
-class TunerConfigSetupModel(QStandardItemModel):
+class TunerConfigSetupModel(AbstractTunerConfigModel):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, config_dict=None):
         """Constructor"""
         
-        QStandardItemModel.__init__(self)
+        AbstractTunerConfigModel.__init__(
+            self, config_dict=config_dict,
+            col_name_list=const.ALL_COL_NAMES_CONFIG_SETUP)
         
-        # Metadata
-        self.name = ''
-        self.description = ''
+        #self.SortRole = QtCore.Qt.UserRole
         
-        self.channel_group_list = []
+        #if init_tuner_config_dict is None:
+            #self.name = ''
+            #self.description = ''
         
-        self.col_name_list = const.ALL_COL_NAMES_CONFIG_SETUP
-        self.group_level_col_list = const.GROUP_LEVEL_COL_LIST[:]
-        self.group_level_col_list.remove(const.COL_GROUP_NAME)
-        self.group_level_col_list = list(np.intersect1d(
-            np.array(self.group_level_col_list),
-            np.array(const.ALL_COL_NAMES_CONFIG_SETUP) ) )
-        self.channel_level_col_list = const.CHANNEL_LEVEL_COL_LIST[:]
-        #self.channel_level_col_list.remove(const.COL_CHANNEL_NAME)
-        self.channel_level_col_list = list(np.intersect1d(
-            np.array(self.channel_level_col_list),
-            np.array(const.ALL_COL_NAMES_CONFIG_SETUP) ) )
+            #self.channel_group_list = []
+        #else:
+            #key_list = ['name','description','channel_group_list']
+            #for k in key_list:
+                #setattr(self, k, init_tuner_config_dict[k])
+            
         
-        self.setHorizontalHeaderLabels(self.col_name_list)
-        self.setColumnCount(len(self.col_name_list))
-        self.removeRows(0,self.rowCount()) # clear contents
-    
+        #self.col_name_list = const.ALL_COL_NAMES_CONFIG_SETUP[:]
+        #self.group_level_col_list = const.GROUP_LEVEL_COL_LIST[:]
+        #self.group_level_col_list.remove(const.COL_GROUP_NAME)
+        #self.group_level_col_list = list(np.intersect1d(
+            #np.array(self.group_level_col_list),
+            #np.array(const.ALL_COL_NAMES_CONFIG_SETUP) ) )
+        #self.channel_level_col_list = const.CHANNEL_LEVEL_COL_LIST[:]
+        ##self.channel_level_col_list.remove(const.COL_CHANNEL_NAME)
+        #self.channel_level_col_list = list(np.intersect1d(
+            #np.array(self.channel_level_col_list),
+            #np.array(const.ALL_COL_NAMES_CONFIG_SETUP) ) )
+        
+        #self.setHorizontalHeaderLabels(self.col_name_list)
+        #self.setColumnCount(len(self.col_name_list))
+        #self.removeRows(0,self.rowCount()) # clear contents
+
+        self.output = {}
+        
     #----------------------------------------------------------------------
-    def _getpvs(self, channel_name):
+    def _prepareOutput(self, accepted):
         """"""
         
-        elemName, fieldName = channel_name.split('.')
-        elem = ap.getElements(elemName)[0]
-        pv = elem.pv(field=fieldName,handle='readback')
-        if len(pv) == 1:
-            pvrb = pv[0]
-        elif len(pv) == 0:
-            pvrb = None
+        if accepted:
+            self.output = {'name':self.name,
+                           'description':self.description,
+                           'channel_group_list':self.channel_group_list}
         else:
-            raise ValueError('Unexpected pv list returned: '+str(pv))
-        pv = elem.pv(field=fieldName,handle='setpoint')
-        if len(pv) == 1:
-            pvsp = pv[0]
-        elif len(pv) == 0:
-            pvsp = None
-        else:
-            raise ValueError('Unexpected pv list returned: '+str(pv))
+            self.output = {}
             
-        return pvrb, pvsp
+
+    ##----------------------------------------------------------------------
+    #def data(self, modelIndex, role):
+        #"""
+        #Reimplementation of QStandardItemModel's data()
+        #The purpose is to allow sorting by numbers, not just by
+        #default string sorting.
+        #"""
+        
+        #if role == self.SortRole:
+            #try:
+                #value = QStandardItemModel.data(self, modelIndex, QtCore.Qt.DisplayRole)
+                #value = float(value)
+            #except:
+                #pass
+        #else:
+            #value = QStandardItemModel.data(self, modelIndex, role)
+            
+        #return value
+    
+    ##----------------------------------------------------------------------
+    #def _getpvs(self, channel_name):
+        #""""""
+        
+        #elemName, fieldName = channel_name.split('.')
+        #elem = ap.getElements(elemName)[0]
+        #pv = elem.pv(field=fieldName,handle='readback')
+        #if len(pv) == 1:
+            #pvrb = pv[0]
+        #elif len(pv) == 0:
+            #pvrb = None
+        #else:
+            #raise ValueError('Unexpected pv list returned: '+str(pv))
+        #pv = elem.pv(field=fieldName,handle='setpoint')
+        #if len(pv) == 1:
+            #pvsp = pv[0]
+        #elif len(pv) == 0:
+            #pvsp = None
+        #else:
+            #raise ValueError('Unexpected pv list returned: '+str(pv))
+            
+        #return pvrb, pvsp
         
     
     #----------------------------------------------------------------------
     def importNewChannels(self, selected_channels, channelGroupInfo):
         """"""
         
-        str_format_index = const.ENUM_STR_FORMAT
-        prop_name_index = const.ENUM_PROP_NAME
+        #str_format_index = const.ENUM_STR_FORMAT
+        #prop_name_index = const.ENUM_PROP_NAME
         
-        group_col_ind = self._getColumnIndex(const.COL_GROUP_NAME)
+        #group_col_ind = self.getColumnIndex(const.COL_GROUP_NAME)
         
-        nRows = self.rowCount()
+        #nRows = self.rowCount()
         
         elemName_list = [elem.name for (elem,fieldName) in selected_channels]
         channelName_list = [elem.name+'.'+fieldName
                             for (elem,fieldName) in selected_channels]
         
-        # Temporarily block signals emitted from the model
-        self.blockSignals(True)
+        ## Temporarily block signals emitted from the model
+        #self.blockSignals(True)
         
+        channelGroupList = []
         if channelGroupInfo == {}:
             for (elemName,chName) in zip(elemName_list,channelName_list):
                 default_channel_group_name = elemName
@@ -111,6 +160,7 @@ class TunerConfigSetupModel(QStandardItemModel):
                 channelGroup = {'name':default_channel_group_name,
                                 'weight':default_channel_group_weight,
                                 'channel_name_list': [chName]}
+                channelGroupList.append(channelGroup)
                 self.channel_group_list.append(channelGroup)
                 
             
@@ -119,100 +169,96 @@ class TunerConfigSetupModel(QStandardItemModel):
             channelGroup = {'name': channelGroupInfo['name'],
                             'weight': channelGroupInfo['weight'],
                             'channel_name_list': channelName_list,
-                            }            
+                            }
+            channelGroupList.append(channelGroup)
             self.channel_group_list.append(channelGroup)
             
-            self.setRowCount(nRows + 1) # Add 1 row
-            nRows = self.rowCount()
-            row_index = nRows - 1 # last row index
             
-            groupItem = QStandardItem(channelGroup['name'])
-            groupItem.setFlags(groupItem.flags() |
-                               QtCore.Qt.ItemIsEditable) # Make the item editable
+            #self.setRowCount(nRows + 1) # Add 1 row
+            #nRows = self.rowCount()
+            #row_index = nRows - 1 # last row index
+            
+            #groupItem = QStandardItem(channelGroup['name'])
+            #groupItem.setFlags(groupItem.flags() |
+                               #QtCore.Qt.ItemIsEditable) # Make the item editable
                         
-            for c in self.group_level_col_list:
-                col_index = self._getColumnIndex(c)
-                cc = const.DICT_COL[c]
-                str_format = cc[str_format_index]
-                prop_val = channelGroup[ cc[prop_name_index] ]
-                item = QStandardItem(('{0'+str_format+'}').format(prop_val))
-                if c in const.EDITABLE_COL_NAME_LIST:
-                    item.setFlags(item.flags() |
-                                  QtCore.Qt.ItemIsEditable) # Make the item editable
-                else:
-                    item.setFlags(item.flags() &
-                                  ~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
+            #for c in self.group_level_col_list:
+                #col_index = self.getColumnIndex(c)
+                #cc = const.DICT_COL[c]
+                #str_format = cc[str_format_index]
+                #prop_val = channelGroup[ cc[prop_name_index] ]
+                #item = QStandardItem(('{0'+str_format+'}').format(prop_val))
+                #if c in const.EDITABLE_COL_NAME_LIST:
+                    #item.setFlags(item.flags() |
+                                  #QtCore.Qt.ItemIsEditable) # Make the item editable
+                #else:
+                    #item.setFlags(item.flags() &
+                                  #~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
                     
-                self.setItem(row_index, col_index, item)
-                for child_index in range(len(channelGroup['channel_name_list'])):
-                    groupItem.setChild(child_index, col_index, item.clone())
+                #self.setItem(row_index, col_index, item)
+                #for child_index in range(len(channelGroup['channel_name_list'])):
+                    #groupItem.setChild(child_index, col_index, item.clone())
             
-            for (child_index, chName) in enumerate(channelGroup['channel_name_list']):
-                elemName, fieldName = chName.split('.')
-                elem = ap.getElements(elemName)[0]
-                channelNameItem = QStandardItem(chName)
-                channelNameItem.setFlags(channelNameItem.flags() & 
-                                         ~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
-                groupItem.setChild(child_index, group_col_ind, channelNameItem)
+            #for (child_index, chName) in enumerate(channelGroup['channel_name_list']):
+                #elemName, fieldName = chName.split('.')
+                #elem = ap.getElements(elemName)[0]
+                #channelNameItem = QStandardItem(chName)
+                #channelNameItem.setFlags(channelNameItem.flags() & 
+                                         #~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
+                #groupItem.setChild(child_index, group_col_ind, channelNameItem)
                 
-                for c in self.channel_level_col_list:
-                    col_index = self._getColumnIndex(c)
-                    cc = const.DICT_COL[c]
-                    str_format = cc[str_format_index]
-                    prop_name =  cc[prop_name_index]
-                    if prop_name not in ('pvrb','pvsp','channel_name','field'):
-                        value = getattr(elem,prop_name)
-                    else:
-                        if prop_name == 'pvrb':
-                            pvrb, pvsp = self._getpvs(chName)
-                            value = pvrb
-                        elif prop_name == 'pvsp':
-                            pvrb, pvsp = self._getpvs(chName)
-                            value = pvsp
-                        elif prop_name == 'channel_name':
-                            value = chName
-                        elif prop_name == 'field':
-                            value = fieldName
-                        else:
-                            raise NotImplementedError(prop_name)
+                #for c in self.channel_level_col_list:
+                    #col_index = self.getColumnIndex(c)
+                    #cc = const.DICT_COL[c]
+                    #str_format = cc[str_format_index]
+                    #prop_name =  cc[prop_name_index]
+                    #if prop_name not in ('pvrb','pvsp','channel_name','field'):
+                        #value = getattr(elem,prop_name)
+                    #else:
+                        #if prop_name == 'pvrb':
+                            #pvrb, pvsp = self._getpvs(chName)
+                            #value = pvrb
+                        #elif prop_name == 'pvsp':
+                            #pvrb, pvsp = self._getpvs(chName)
+                            #value = pvsp
+                        #elif prop_name == 'channel_name':
+                            #value = chName
+                        #elif prop_name == 'field':
+                            #value = fieldName
+                        #else:
+                            #raise NotImplementedError(prop_name)
                     
-                    if str_format != 'timestamp':
-                        if (value == None) or isinstance(value,list) \
-                           or isinstance(value,tuple):
-                            str_format = ':s'
-                        else:
-                            pass
-                        item = QStandardItem(('{0'+str_format+'}').format(value))
-                    else:
-                        if value is None:
-                            time_str = 'None'
-                        else:
-                            time_str = datetime.fromtimestamp(value).isoformat()
-                        item = QStandardItem(time_str)
+                    #if str_format != 'timestamp':
+                        #if (value == None) or isinstance(value,list) \
+                           #or isinstance(value,tuple):
+                            #str_format = ':s'
+                        #else:
+                            #pass
+                        #item = QStandardItem(('{0'+str_format+'}').format(value))
+                    #else:
+                        #if value is None:
+                            #time_str = 'None'
+                        #else:
+                            #time_str = datetime.fromtimestamp(value).isoformat()
+                        #item = QStandardItem(time_str)
                     
-                    item.setFlags(item.flags() &
-                                  ~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
+                    #item.setFlags(item.flags() &
+                                  #~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
                     
-                    groupItem.setChild(child_index, col_index, item)
+                    #groupItem.setChild(child_index, col_index, item)
             
-            self.setItem(row_index, group_col_ind, groupItem)
+            #self.setItem(row_index, group_col_ind, groupItem)
             
             
             
-        # Re-enable the blocked signals emitted from the model
-        self.blockSignals(False)
+        ## Re-enable the blocked signals emitted from the model
+        #self.blockSignals(False)
         
         
-        self.emit(SIGNAL('modelUpdated'))           
+        #self.emit(SIGNAL('modelUpdated'))           
         
-    #----------------------------------------------------------------------
-    def _getColumnIndex(self, column_name):
-        """"""
-        
-        if column_name in self.col_name_list:
-            return self.col_name_list.index(column_name)
-        else:
-            return None
+        self.updateGroupBasedModel(change_type='append',
+                                   channelGroupList=channelGroupList)
         
         
         
@@ -239,6 +285,7 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         self.proxyModel = QSortFilterProxyModel()
         self.proxyModel.setSourceModel(self.model)
         self.proxyModel.setDynamicSortFilter(True)
+        self.proxyModel.setSortRole(self.model.SortRole)
         
         self.treeView.setModel(self.proxyModel)
         self.treeView.setItemsExpandable(True)
@@ -263,7 +310,35 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
                      self._groupChannels)
         self.connect(self.actionUngroupChannels, SIGNAL('triggered()'),
                      self._ungroupChannels)
+    
+    
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
         
+        self.model.name = self.lineEdit_config_name.text()
+        
+        self.model.description = self.textEdit.toPlainText()
+    
+        saveFileFlag = self.checkBox_save_config_to_file.isChecked()
+        if saveFileFlag:
+            self.emit(SIGNAL('saveConfigToFile'), self.model)
+        
+        accepted = True
+        self.emit(SIGNAL('prepareOutput'),accepted)
+        
+        QDialog.accept(self)
+        
+    
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+        
+        accepted = False
+        self.emit(SIGNAL('prepareOutput'),accepted)
+        
+        QDialog.reject(self) # will hide the dialog
+            
     #----------------------------------------------------------------------
     def _groupChannels(self):
         """"""
@@ -306,19 +381,18 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         self.proxyModel.setSourceModel(self.model)
         
         
-        
             
 ########################################################################
 class TunerConfigSetupApp(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, isModal, parentWindow):
+    def __init__(self, init_tuner_config_dict, isModal, parentWindow):
         """Constructor"""
         
         QObject.__init__(self)
         
-        self._initModel()
+        self._initModel(init_tuner_config_dict)
         self._initView(isModal, parentWindow)
         
         self.connect(self.view.pushButton_add_from_GUI_selector,
@@ -332,11 +406,14 @@ class TunerConfigSetupApp(QObject):
         self.connect(self.model, SIGNAL('modelUpdated'),
                      self.view._expandAll_and_resizeColumn)
         
+        self.connect(self.view, SIGNAL('prepareOutput'),
+                     self.model._prepareOutput)
+        
     #----------------------------------------------------------------------
-    def _initModel(self):
+    def _initModel(self, init_tuner_config_dict=None):
         """"""
         
-        self.model = TunerConfigSetupModel()
+        self.model = TunerConfigSetupModel(init_tuner_config_dict)
         
     #----------------------------------------------------------------------
     def _initView(self, isModal, parentWindow):
@@ -392,11 +469,15 @@ class TunerConfigSetupApp(QObject):
         
 
 #----------------------------------------------------------------------
-def make(isModal=True, parentWindow=None):
+def make(init_tuner_config_dict=None, isModal=True, parentWindow=None):
     """"""
     
-    app = TunerConfigSetupApp(isModal, parentWindow)
-    app.view.show()
+    app = TunerConfigSetupApp(init_tuner_config_dict, isModal, parentWindow)
+    
+    if isModal:
+        app.view.exec_()
+    else:
+        app.view.show()
     
     return app
 

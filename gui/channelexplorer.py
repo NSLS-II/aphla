@@ -34,8 +34,10 @@ from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 
 import aphla as ap
 
-if not ap.machines._lat :
+if not ap.machines._lat:
+    print 'Initializing lattice...'
     ap.initNSLS2V1()
+    print 'Done.'
 
 # Output Type Enums
 TYPE_OBJECT = 1
@@ -873,10 +875,10 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         self._initMatchTable()
         
         self.model.updateFilters(None)                
-        self.update_tables()
-        self.update_matched_and_selected_numbers()
-        self.updateChoiceListComboBox()
-        self.updateChoiceListView()
+        #self.update_tables()
+        #self.update_matched_and_selected_numbers()
+        #self.updateChoiceListComboBox()
+        #self.updateChoiceListView()
     
     #----------------------------------------------------------------------
     def updateChoiceListComboBox(self):
