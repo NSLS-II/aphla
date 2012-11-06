@@ -14,6 +14,7 @@ class OrbitData(object):
     - *pvs* list of channel names
     - *mode* 'EPICS' | 'sim', default is 'EPICS'
     - *keep* mask for ignore(0) or keep(1) that data point.
+    - *elements* 
     """
     def __init__(self, **kw):
         self.samples = kw.get('samples', 10)
@@ -28,6 +29,7 @@ class OrbitData(object):
         else: n = len(self.s)
 
         self.pvs = kw.get('pvs', None)
+        self.elem_names = kw.get('elem_names', None)
         self.elems = kw.get('elements', None)
 
         if n == 0:
@@ -169,10 +171,12 @@ class OrbitDataVirtualBpm(OrbitData):
         OrbitData.__init__(self, **kw)
 
         if kw.get('update', False) == True: self.update()
+        if self.velem is not None: self.elem_names = self.velem._name
 
         #self.timer = QTimer()
         #self.connect(self.timer, SIGNAL('timeout()'), self.update)
         #self.timer.start(800)
+
 
     def update(self):
         """
@@ -188,3 +192,4 @@ class OrbitDataVirtualBpm(OrbitData):
         self.yerrbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
+

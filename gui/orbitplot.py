@@ -417,12 +417,20 @@ class OrbitPlot(Qwt.QwtPlot):
         self.zoomer1 = None
 
         self.marker = Qwt.QwtPlotMarker()
-        self.marker.attach(self)
+        #self.marker.attach(self)
         #self.marker.setLabelAlignment(Qt.AlignLeft)
-        self.marker.setLabelAlignment(Qt.AlignBottom)
-        self.marker.setValue(100, 0)
-        self.marker.setLabel(Qwt.QwtText("Hello"))
+        #self.marker.setLabelAlignment(Qt.AlignBottom)
+        #self.marker.setValue(100, 0)
+        #self.marker.setLabel(Qwt.QwtText("Hello"))
         #self.connect(self, SIGNAL("doubleClicked
+
+    def detachOrbitCurve(self):
+        self.curve1.detach()
+
+    def attachCurves(self, parent = None):
+        self.curve1.attach(parent)
+        self.curve2.attach(parent)
+        #self.replot()
 
     def elementDoubleClicked(self, elem):
         print "element selected:", elem
@@ -565,8 +573,9 @@ class OrbitPlot(Qwt.QwtPlot):
         hide curve if x,y are both None
         """
         if y is None and x is None:
+            self.curve2.detach()
             self.curve2.setVisible(False)
-            print "disabling desired orbit and quit"
+            #print "disabling desired orbit and quit"
             return
 
         if x is not None:

@@ -63,8 +63,7 @@ logging.getLogger('aphla').addHandler(_hdl)
 from catools import (caget, caput, caputwait)
 from chanfinder import ChannelFinderAgent
 from machines import (
-    initNSLS2V1, initNSLS2V1SRTwiss,
-    initNSLS2, initTLS
+    initNSLS2V2, initNSLS2, initTLS
     )
 
 #from rf import *
