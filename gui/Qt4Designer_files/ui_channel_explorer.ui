@@ -19,9 +19,9 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2">
+  <layout class="QGridLayout" name="gridLayout_3">
    <item row="0" column="0">
-    <widget class="QSplitter" name="splitter_2">
+    <widget class="QSplitter" name="splitter_top_bottom">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
@@ -30,7 +30,7 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="label_filter">
            <property name="maximumSize">
             <size>
              <width>16777215</width>
@@ -144,6 +144,22 @@ padding: 3px;</string>
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="label_lattice">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>27</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Lattice</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox_lattice"/>
+         </item>
+         <item>
           <spacer name="horizontalSpacer">
            <property name="maximumSize">
             <size>
@@ -180,7 +196,7 @@ padding: 3px;</string>
        <item>
         <widget class="QStackedWidget" name="stackedWidget">
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="page_advanced">
           <layout class="QVBoxLayout" name="verticalLayout">
@@ -240,6 +256,12 @@ padding: 3px;</string>
              </attribute>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>false</bool>
+             </attribute>
+             <attribute name="horizontalHeaderStretchLastSection">
+              <bool>false</bool>
+             </attribute>
+             <attribute name="horizontalHeaderMinimumSectionSize">
+              <number>16</number>
              </attribute>
              <row>
               <property name="text">
@@ -322,161 +344,184 @@ padding: 3px;</string>
           </layout>
          </widget>
          <widget class="QWidget" name="page_simple">
-          <layout class="QVBoxLayout" name="verticalLayout_11">
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_10">
              <item>
-              <layout class="QVBoxLayout" name="verticalLayout_8">
-               <property name="sizeConstraint">
-                <enum>QLayout::SetMaximumSize</enum>
+              <layout class="QHBoxLayout" name="horizontalLayout_4">
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_8">
+                 <property name="sizeConstraint">
+                  <enum>QLayout::SetMaximumSize</enum>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="label_7">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>27</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>NOT</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_simple_NOT">
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_4">
+                 <item>
+                  <widget class="QLabel" name="label_3">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>27</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Property</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_simple_property">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                     <horstretch>1</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_5">
+                 <item>
+                  <widget class="QLabel" name="label_4">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>27</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Operator</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_simple_operator">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                     <horstretch>1</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_6">
+                 <item>
+                  <widget class="QLabel" name="label_5">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>27</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Index</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_simple_index">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                     <horstretch>1</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_7">
+                 <item>
+                  <widget class="QLabel" name="label_6">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>27</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Value</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_simple_value">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                     <horstretch>1</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="editable">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_3">
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>38</width>
+                   <height>17</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <spacer name="verticalSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
                </property>
-               <item>
-                <widget class="QLabel" name="label_7">
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>27</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>NOT</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QCheckBox" name="checkBox_simple_NOT">
-                 <property name="text">
-                  <string/>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_4">
-               <item>
-                <widget class="QLabel" name="label_3">
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>27</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Property</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="comboBox_simple_property">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                   <horstretch>1</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_5">
-               <item>
-                <widget class="QLabel" name="label_4">
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>27</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Operator</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="comboBox_simple_operator">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                   <horstretch>1</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_6">
-               <item>
-                <widget class="QLabel" name="label_5">
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>27</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Index</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="comboBox_simple_index">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                   <horstretch>1</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_7">
-               <item>
-                <widget class="QLabel" name="label_6">
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>27</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Value</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="comboBox_simple_value">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                   <horstretch>1</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="editable">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
-           </item>
-           <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>300</height>
-              </size>
-             </property>
-            </spacer>
            </item>
           </layout>
          </widget>
@@ -484,7 +529,7 @@ padding: 3px;</string>
        </item>
       </layout>
      </widget>
-     <widget class="QSplitter" name="splitter">
+     <widget class="QSplitter" name="splitter_left_right">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
@@ -505,6 +550,12 @@ padding: 3px;</string>
         </item>
         <item>
          <widget class="QTableWidget" name="tableWidget_matched">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <column>
            <property name="text">
             <string>Name</string>
@@ -584,12 +635,12 @@ padding: 3px;</string>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
-           <widget class="QLabel" name="label_2">
+           <widget class="QLabel" name="label__choice_list">
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -607,7 +658,14 @@ padding: 3px;</string>
          </layout>
         </item>
         <item>
-         <widget class="QListView" name="listView_choice_list"/>
+         <widget class="QListView" name="listView_choice_list">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -625,6 +683,11 @@ padding: 3px;</string>
     </widget>
    </item>
   </layout>
+  <zorder>splitter_2</zorder>
+  <zorder>buttonBox</zorder>
+  <zorder>label_lattice</zorder>
+  <zorder>comboBox_lattice</zorder>
+  <zorder></zorder>
  </widget>
  <resources/>
  <connections>

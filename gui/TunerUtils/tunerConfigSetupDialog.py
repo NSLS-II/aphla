@@ -425,12 +425,14 @@ class TunerConfigSetupApp(QObject):
     def _launchChannelExplorer(self):
         """"""
                 
-        result = channelexplorer.make(
-            modal=True, object_type='channel', output_type=channelexplorer.TYPE_OBJECT)
+        result = channelexplorer.make(modal=True, 
+                    init_object_type='channel', can_modify_object_type=False,
+                    output_type=channelexplorer.TYPE_OBJECT)
         
         selected_channels = result['dialog_result']
         
-        self.emit(SIGNAL('channelsSelected'), selected_channels)
+        if selected_channels != []:
+            self.emit(SIGNAL('channelsSelected'), selected_channels)
         
     #----------------------------------------------------------------------
     def _askChannelGroupNameAndWeight(self, selected_channels):

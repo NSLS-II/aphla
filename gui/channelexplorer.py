@@ -1,5 +1,12 @@
 #! /usr/bin/env python
 
+''' TODO
+*) Add QSettings for window size, etc.
+*) Implement advanced filters
+*) Allow filtering from choice_list selection (like multiple cell selections)
+*) Change tablewidget to tableview to speed up filter update
+'''
+
 """
 
 GUI application for selecting HLA element(s) interactively
@@ -26,18 +33,15 @@ import cothread
 
 #import PyQt4.Qt as Qt
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import SIGNAL, QObject
-from PyQt4.QtGui import QDialog, QStandardItemModel, QStandardItem, \
-     QComboBox, QTableWidgetItem, QRadioButton, QCheckBox
+from PyQt4.QtCore import (SIGNAL, QObject, QSize)
+from PyQt4.QtGui import (QDialog, QStandardItemModel, QStandardItem,
+                         QComboBox, QTableWidgetItem, QRadioButton, 
+                         QCheckBox, QSizePolicy)
 
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 
 import aphla as ap
 
-if not ap.machines._lat:
-    print 'Initializing lattice...'
-    ap.initNSLS2V2()
-    print 'Done.'
 
 # Output Type Enums
 TYPE_OBJECT = 1
@@ -235,22 +239,7 @@ class ElementSelectorModel(QObject):
         
         #self.filter_spec = filter_spec
         
-        self.allElements = ap.getElements('*')
-        self.allFields = []
-        for e in self.allElements:
-            fields = e.fields()
-            self.allFields.extend(fields)
-        self.allFields = sorted(list(set(self.allFields)))
-        self.allChannels = self.convertElemListToChannelList(self.allElements)
-
-        if object_type == 'element':
-            self.currentParentSet = self.allElements[:]
-            
-        elif object_type == 'channel':
-            self.currentParentSet = self.allChannels[:]
-        else:
-            raise ValueError('Unexpected object_type: '+object_type)
-        
+        self.reconstructModel(object_type)
         
         ## Initialization of matching data information
         #self.matched = [ [True]*len(self.allElements) ]
@@ -261,6 +250,28 @@ class ElementSelectorModel(QObject):
         #if self.filter_spec:
             #isCaseSensitive = False
             #self.filterData(range(len(self.filter_spec)), isCaseSensitive)
+        
+        
+    #----------------------------------------------------------------------
+    def reconstructModel(self, object_type):
+        """"""
+        
+        self.allElements = ap.getElements('*')
+        self.allFields = []
+        for e in self.allElements:
+            fields = e.fields()
+            self.allFields.extend(fields)
+        self.allFields = sorted(list(set(self.allFields)))
+        self.allChannels = self.convertElemListToChannelList(self.allElements)
+        
+        if object_type == 'element':
+            self.currentParentSet = self.allElements[:]
+            
+        elif object_type == 'channel':
+            self.currentParentSet = self.allChannels[:]
+        else:
+            raise ValueError('Unexpected object_type: '+object_type)
+
         
         self.selectedObjects = []
         
@@ -274,6 +285,21 @@ class ElementSelectorModel(QObject):
         
         self.selected_filter_index = 0
         
+        
+    #----------------------------------------------------------------------
+    def on_lattice_change(self, lattice_name):
+        """"""
+        
+        ap.machines.use(lattice_name)
+        
+        if isinstance(self.currentParentSet[0],tuple):
+            selected_object_type = 'channel'
+        else:
+            selected_object_type = 'element'
+        
+        self.reconstructModel(selected_object_type)
+        
+        self.emit(SIGNAL('modelReconstructedOnLatticeChange'))
         
     #----------------------------------------------------------------------
     def updateCaseSensitiveState(self, checkBoxState):
@@ -846,7 +872,8 @@ class ElementSelectorView(QDialog, Ui_Dialog):
     """ """
     
     #----------------------------------------------------------------------
-    def __init__(self, model, isModal, parentWindow = None):
+    def __init__(self, model, isModal, can_modify_object_type, 
+                 lattice_name, parentWindow = None):
         """Constructor"""
         
         QDialog.__init__(self, parent = parentWindow)
@@ -870,11 +897,23 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         else:
             raise ValueError('')
         
-        self._initFilterView()
-        self._initChoiceList()
-        self._initMatchTable()
+        if not can_modify_object_type:
+            self.radioButton_channels.setEnabled(False)
+            self.radioButton_elements.setEnabled(False)
         
-        self.model.updateFilters(None)                
+        lattice_name_list = ap.machines.lattices()
+        comboBox_lattice_model = QStandardItemModel()
+        for lat in lattice_name_list:
+            comboBox_lattice_model.appendRow(QStandardItem(lat))
+        self.comboBox_lattice.setModel(comboBox_lattice_model)
+        self.comboBox_lattice.setEditable(False)
+        self.comboBox_lattice.setSizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
+        try:
+            self.comboBox_lattice.setCurrentIndex(lattice_name_list.index(lattice_name))
+        except:
+            self.comboBox_lattice.setCurrentIndex(0)
+        
+        self.on_lattice_change()
         #self.update_tables()
         #self.update_matched_and_selected_numbers()
         #self.updateChoiceListComboBox()
@@ -929,11 +968,14 @@ class ElementSelectorView(QDialog, Ui_Dialog):
                      if v[ENUM_ELEM_FULL_DESCRIP_NAME]==full_prop_name][0]
         
         choice_list = self.choice_dict[prop_name]
-        choice_list_model.setRowCount(len(choice_list))
-        choice_list_model.setColumnCount(1)
-        for (i,v) in enumerate(choice_list):
-            choice_list_model.setData(choice_list_model.index(i,0), v)
-        
+        if choice_list is not None:
+            choice_list_model.setRowCount(len(choice_list))
+            choice_list_model.setColumnCount(1)
+            for (i,v) in enumerate(choice_list):
+                #choice_list_model.setData(choice_list_model.index(i,0), v)
+                # or
+                choice_list_model.setItem(i,0,QStandardItem(v))
+                choice_list_model.item(i,0).setEditable(False)
                     
     
     #----------------------------------------------------------------------
@@ -1076,6 +1118,9 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         filterModeStr = self.getFilterModeStr()
         if filterModeStr == 'simple':
             
+            self.tableWidget_filter.setHidden(True) # By hiding this table, screen real estate is maximized for splitter.
+            
+            
             self.radioButton_simple.setChecked(True)
             self.stackedWidget.setCurrentWidget(self.page_simple)
                         
@@ -1137,7 +1182,8 @@ class ElementSelectorView(QDialog, Ui_Dialog):
             
             
         elif filterModeStr == 'advanced':
-            pass
+            self.tableWidget_filter.setHidden(False)
+
         else:
             raise ValueError('Unexpected filterModeStr')
         
@@ -1287,6 +1333,7 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         t.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         
         
+        
     #----------------------------------------------------------------------
     def update_tables(self):
         """ """
@@ -1329,6 +1376,8 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         
         t = self.tableWidget_matched # shorthand notation
         
+        #t.blockSignals(True)
+        
         t.clearContents()
         
         ### Item population
@@ -1356,6 +1405,9 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         
         ### Reset selection to all available
         t.selectAll()
+        
+        #t.blockSignals(False)
+
         
         self.emit(SIGNAL('readyForChoiceListUpdate'))
 
@@ -1551,6 +1603,39 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         else:
             return False
         
+    #----------------------------------------------------------------------
+    def _initViewSizes(self):
+        """"""
+                
+        # Adjust left-right splitter so that left widget takes max width
+        # and right widget takes min width
+        # QSplitter::setStretchFactor(int index, int stretch)
+        self.splitter_left_right.setStretchFactor(0,1)
+        self.splitter_left_right.setStretchFactor(1,0)
+
+        # setStretchFactor does not work for the top-bottom splitter, since
+        # I can't figure out how to minimize QStackedWidget. The following method
+        # works. As long as the height fraction of the top portion is small
+        # enough, the stacked widget will be minimized.
+        splitter_sizes = [self.height()*(1./8.), self.height()*(7./8.)]
+        self.splitter_top_bottom.setSizes(splitter_sizes)
+
+        
+    #----------------------------------------------------------------------
+    def on_lattice_change(self):
+        """"""
+        
+        self.emit(SIGNAL('disableViewUpdateOnLatticeChange'),True)
+
+        self._initFilterView()
+        self._initChoiceList()
+        self._initMatchTable()
+        
+        self._initViewSizes()
+        
+        self.model.updateFilters(None)
+        
+        self.emit(SIGNAL('disableViewUpdateOnLatticeChange'),False)
     
     #----------------------------------------------------------------------
     def on_NOT_change(self, checked):
@@ -1681,7 +1766,8 @@ class ElementSelectorApp(QObject):
 
     #----------------------------------------------------------------------
     def __init__(self, modal = True, parentWindow = None, 
-                 object_type = 'element'):
+                 init_object_type = 'element', can_modify_object_type = True,
+                 lattice_name = ''):
         """Constructor"""
         
         QObject.__init__(self)
@@ -1689,8 +1775,8 @@ class ElementSelectorApp(QObject):
         self.modal = modal
         self.parentWindow = parentWindow
         
-        self._initModel(object_type)
-        self._initView()
+        self._initModel(init_object_type)
+        self._initView(can_modify_object_type, lattice_name)
         
         self.connect(self.view.radioButton_simple,SIGNAL('toggled(bool)'),
                      self.view._changeFilterMode)
@@ -1753,6 +1839,7 @@ class ElementSelectorApp(QObject):
         #self.connect(self.model, SIGNAL("sigReadyForFiltering"),
                      #self.model.filterData)
 
+
         # After new filtering is performed, update the view based on
         # the new filtered data.
         self.connect(self.model, SIGNAL("filtersUpdated"),
@@ -1760,9 +1847,13 @@ class ElementSelectorApp(QObject):
         self.connect(self.model, SIGNAL("filtersUpdated"),
                      self.view.update_matched_and_selected_numbers)
         
+        
         self.connect(self.view.tableWidget_matched,
                      SIGNAL('itemSelectionChanged()'),
                      self.view.update_matched_and_selected_numbers)
+        self.connect(self.view.tableWidget_matched,
+                     SIGNAL('itemSelectionChanged()'),
+                     self.debug)
         
         #self.connect(self.view.pushButton_add_row, SIGNAL("clicked()"),
                      #self.view.add_row_to_filter_table)
@@ -1773,10 +1864,42 @@ class ElementSelectorApp(QObject):
                      self.view.add_row_to_filter_table)
         
         
+        self.connect(self.view.comboBox_lattice,
+                     SIGNAL('currentIndexChanged(const QString &)'),
+                     self.model.on_lattice_change)
+        self.connect(self.model,
+                     SIGNAL('modelReconstructedOnLatticeChange'),
+                     self.view.on_lattice_change)
+        self.connect(self.view, SIGNAL('disableViewUpdateOnLatticeChange'),
+                     self.disableViewUpdateOnLatticeChange)
+
+        
         self.connect(self.view, SIGNAL("updateFinalSelection"),
                      self.model.update_selected_elements)
         self.connect(self.model, SIGNAL("readyForClosing"),
                      self.view.accept_and_close)
+        
+    #----------------------------------------------------------------------
+    def debug(self):
+        """"""
+        
+        print ''
+        
+    #----------------------------------------------------------------------
+    def disableViewUpdateOnLatticeChange(self, TF):
+        """"""
+        
+        if TF:
+            func = self.disconnect
+        else:
+            func = self.connect
+                    
+        func(self.model, SIGNAL("filtersUpdated"),
+             self.view.update_tables)
+        func(self.model, SIGNAL("filtersUpdated"),
+             self.view.update_matched_and_selected_numbers)
+        
+        self.view.comboBox_choice_list.blockSignals(TF)
         
         
     #----------------------------------------------------------------------
@@ -1786,19 +1909,33 @@ class ElementSelectorApp(QObject):
         self.model = ElementSelectorModel(object_type=object_type)
         
     #----------------------------------------------------------------------
-    def _initView(self, out_type = TYPE_OBJECT):
+    def _initView(self, can_modify_object_type, lattice_name):
         """ """
         
         self.view = ElementSelectorView(self.model, self.modal,
+                                        can_modify_object_type,
+                                        lattice_name,
                                         parentWindow = self.parentWindow)
         
 
 #----------------------------------------------------------------------
-def make(modal = True, parentWindow = None, object_type = 'element',
-         output_type = TYPE_OBJECT):
+def make(modal = True, parentWindow = None, 
+         init_object_type = 'element', can_modify_object_type = True,
+         output_type = TYPE_OBJECT,
+         aphla_init_func = ap.initNSLS2V2, lattice_name = 'V2SR'):
     """ """
     
-    app = ElementSelectorApp(modal, parentWindow, object_type)
+    if not ap.machines._lat:
+        print 'Initializing lattices...'
+        aphla_init_func()
+        print 'Done.'    
+
+    print 'Using Lattice:', lattice_name
+    ap.machines.use(lattice_name)
+    
+    app = ElementSelectorApp(modal, parentWindow, 
+                             init_object_type, can_modify_object_type,
+                             lattice_name)
     view = app.view
         
     if app.modal :
@@ -1848,9 +1985,13 @@ def main(args):
         #sys.exit(exit_status)
         
     cothread.iqt()
-
+    
+    aphla_init_func = ap.initNSLS2V2
+    lattice_name = 'V2SR'
+        
     result = make(modal=True, output_type=TYPE_OBJECT,
-                  object_type='channel')
+                  init_object_type='channel',
+                  aphla_init_func=aphla_init_func, lattice_name=lattice_name)
     
     if result.has_key('dialog_result'): # When modal
         app           = result['app']
