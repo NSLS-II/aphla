@@ -47,7 +47,7 @@ def measBeta(elem, dqk1 = 0.01, # element or list
     - num_points points to fit the line
     - verbose
 
-    returns beta
+    returns (k1, nu, beta)
     """
 
     elems = getElements(elem)
@@ -70,7 +70,7 @@ def measBeta(elem, dqk1 = 0.01, # element or list
         if verbose:
             print i, q.name, q.k1, 
         p, res, rank, sv, rcond = np.polyfit(k1[:,i], nu[:,2*i:2*i+2], deg=1, full=True)
-        beta[:,i] = p[0,:]*4*np.pi/q.length
+        beta[:,i] = p[0,:]*4*np.pi/q.length/dqk1
         # reverse the k1 for vertical direction
         beta[1,i] = -beta[1,i]
         print q.sb, q.name, beta[0,i], beta[1,i]

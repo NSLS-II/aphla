@@ -200,6 +200,7 @@ def patch_va_table_1(inpt, oupt, lattable):
                 grp[iname1] = grp[iname0]                
             else:
                 raise RuntimeError("Unknown insertion device '%s'" % grp[iname0])
+            grp[itype0] = grp[itype0].upper()
         elif not grp[itype0]:
             if grp[iname0] in ['CHIDSim', 'CVIDSim', 'CHIDCor', 'CVIDCor']:
                 grp[iname1] = grp[iname0] + grp[igirder] + grp[icell]
@@ -236,6 +237,7 @@ def patch_va_table_1(inpt, oupt, lattable):
 
         # use lower case for element name
         grp[iname1] = grp[iname1].lower()
+        grp[itype1] = grp[itype1].upper()
 
         if grp[ihandle].lower() in ['readback', 'read']: grp[ihandle] = 'get'
         elif grp[ihandle].lower() == 'setpoint': grp[ihandle] = 'set'
