@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 ''' TODO
+*) implement 'IN' operator for string_list
 *) Add QSettings for window size, etc.
 *) Implement advanced filters
 *) Allow filtering from choice_list selection (like multiple cell selections)
@@ -74,8 +75,8 @@ PROP_NAME_LIST = sorted(ELEM_PROPERTIES.keys())
 FILTER_OPERATOR_DICT = {'int': ['==(num)','<=','>='],
                         'bool': ['==(num)'],
                         'float': ['<=','>='],
-                        'string': ['==(char)'],
-                        'string_list': ['==(char)'],
+                        'string': ['==(char)','IN'],
+                        'string_list': ['==(char)','IN'],
                         'int_list': ['==(num)','<=','>='],
                         }
 ALL_FILTER_OPERATORS = FILTER_OPERATOR_DICT.values()
@@ -428,7 +429,20 @@ class ElementSelectorModel(QObject):
                     self._updateFilter(f)
                     
         self.emit(SIGNAL('filtersUpdated'))
+           
+    #----------------------------------------------------------------------
+    def any_fnmatchcase_for_pattern_str_list(self, string, pattern_str_list):
+        """"""
+        
+        at_least_one_pattern_str_matched = False
+        for pattern_str in pattern_str_list:
+            if fnmatchcase(string, pattern_str):
+                at_least_one_pattern_str_matched = True
+                break
             
+        return at_least_one_pattern_str_matched
+        
+        
     #----------------------------------------------------------------------
     def _updateFilter(self, modified_filter):
         """"""
@@ -453,23 +467,39 @@ class ElementSelectorModel(QObject):
             strings is that this method can handle None values as
             well.
             '''
+
             if not self.is_case_sensitive: # case-insensitive search
-                filter_str = f.filter_value.upper()
                 parent_set_str_list = [ 
                     getattr(self.get(obj,f.property_name),'__str__')().upper()
                     for obj in f.parentSet]
             else: # case-sensitive search
-                filter_str = f.filter_value
                 parent_set_str_list = [
                     getattr(self.get(obj,f.property_name),'__str__')()
                     for obj in f.parentSet]
+
+            if f.filter_operator == '==(char)':
+                if not self.is_case_sensitive: # case-insensitive search
+                    filter_str = f.filter_value.upper()
+                else: # case-sensitive search
+                    filter_str = f.filter_value
+                
+                filter_str_list = [filter_str]
+                
+            elif f.filter_operator == 'IN':
+                if not self.is_case_sensitive: # case-insensitive search
+                    filter_str_list = [v.strip().upper() for v in f.filter_value.split(',')]
+                else: # case-sensitive search
+                    filter_str_list = [v.strip()         for v in f.filter_value.split(',')]
             
+            else:
+                raise ValueError('Unexpected filter_operator: '+f.filter_operator)
+
             if f.NOT:
                 f.matched_index_list = [i for (i,s) in enumerate(parent_set_str_list)
-                                        if not fnmatchcase(s,filter_str)]
+                                        if not self.any_fnmatchcase_for_pattern_str_list(s,filter_str_list)]                
             else:
                 f.matched_index_list = [i for (i,s) in enumerate(parent_set_str_list)
-                                        if fnmatchcase(s,filter_str)]
+                                        if self.any_fnmatchcase_for_pattern_str_list(s,filter_str_list)]
             
         elif data_type == 'string_list':
             
@@ -948,7 +978,8 @@ class ElementSelectorView(QDialog, Ui_Dialog):
                 # First need to convert the string representation of the list into a real list
                 self.choice_dict[prop_name] = [eval(s) for s in self.choice_dict[prop_name]]
                 # Then flatten the list of lists
-                self.choice_dict[prop_name] = reduce(add, self.choice_dict[prop_name])
+                if self.choice_dict[prop_name] != []:
+                    self.choice_dict[prop_name] = reduce(add, self.choice_dict[prop_name])
             self.choice_dict[prop_name] = sorted(list(set(self.choice_dict[prop_name])))
             
             choice_combobox_model.setData(
@@ -1015,8 +1046,9 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         for (i,v) in enumerate(value_list):
             model_value.setData(model_value.index(i+1,0),v)
         comboBox_value.setModel(model_value)
+        comboBox_value.setInsertPolicy(QComboBox.InsertAlphabetically)
         comboBox_value.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        
+        comboBox_value.adjustSize()
             
     #----------------------------------------------------------------------
     def _initChoiceList(self):
@@ -1093,16 +1125,11 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         """"""
         
         model_property = QStandardItemModel(len(PROP_NAME_LIST),1, parent)
-        for (i,name) in enumerate(PROP_NAME_LIST):
-            model_property.setData(model_property.index(i,0),
-                                   ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME])
-        
-        #model_property = QStandardItemModel(
-            #len(PROP_NAME_LIST)+len(self.model.allFields),1,
-            #self.comboBox_simple_property)
-        #for (i,fname) in enumerate(self.model.allFields):
-            #model_property.setData(model_property.index(i+len(PROP_NAME_LIST),0),
-                                   #'Field:'+fname)            
+        property_display_name_list = sorted([
+            ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+            for name in PROP_NAME_LIST])
+        for (i,name) in enumerate(property_display_name_list):
+            model_property.setData(model_property.index(i,0), name)
         
         return model_property
         
@@ -1141,7 +1168,7 @@ class ElementSelectorView(QDialog, Ui_Dialog):
                 )
             
             data_type = ELEM_PROPERTIES[init_property_name][ENUM_ELEM_DATA_TYPE]
-            filter_operators = FILTER_OPERATOR_DICT[data_type]
+            filter_operators = sorted(FILTER_OPERATOR_DICT[data_type])
             model_operator = QStandardItemModel(len(filter_operators),1,
                 self.comboBox_simple_operator)
             for (i,op) in enumerate(filter_operators):
@@ -1157,8 +1184,8 @@ class ElementSelectorView(QDialog, Ui_Dialog):
                 init_value = '*'
             else:
                 init_value = 'ALL'
-            value_list = list(set([self.model.get(e,init_property_name)
-                                   for e in self.model.currentParentSet]))
+            value_list = sorted(list(set([self.model.get(e,init_property_name)
+                                          for e in self.model.currentParentSet])))
             model_value = QStandardItemModel(len(value_list)+1,1,
                                              self.comboBox_simple_value)
             model_value.setData(model_value.index(0,0),init_value)
