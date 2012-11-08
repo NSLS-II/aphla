@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+'''
+TODO
+*) Open dialog at start-up to allow user either create a new config
+or open existing configs
+*) Use UNION like the following to combine server & client database:
+SELECT uid, name FROM DB1.Users UNION SELECT uid, name FROM DB2.Users ;
+'''
 
 """
 

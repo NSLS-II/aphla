@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_channel_explorer.ui'
 #
-# Created: Tue Nov  6 21:05:45 2012
+# Created: Wed Nov  7 11:10:58 2012
 #      by: PyQt4 UI code generator 4.7.3
 #
 # WARNING! All changes made in this file will be lost!
