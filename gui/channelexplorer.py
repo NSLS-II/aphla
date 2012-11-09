@@ -23,13 +23,9 @@ def toc(tStart):
 application calls this GUI, this GUI will know which preferences to load)
 *) Implement advanced filters
 *) Allow filtering from choice_list selection w/ right click (like multiple cell selections)
-*) Change tablewidget to tableview to speed up filter update
-*) If possible, implement real-time searching
-*) Hitting "Enter" hit "Search" button
 *) Insert custom filter value to combo box
 *) Allow text selection in matched table, instead of just row selection, but don't allow edit
 *) Bug fix: # of PV's, etc. differ between 'element' & 'channel'
-*) When lattice is changed, do not perform search; rather return empty search result
 '''
 
 """
@@ -418,7 +414,8 @@ class ChannelExplorerModel(QObject):
         
         if modified_filter_name is None:
             for f in self.filters:
-                self._updateFilter(f)
+                f.matched_index_list = []
+                #self._updateFilter(f)
         else:
         
             # First change the modified filter itself
@@ -815,6 +812,17 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         self.on_lattice_change()
         
+    #----------------------------------------------------------------------
+    def keyPressEvent(self, keyEvent):
+        """"""
+        
+        if (self.focusWidget() is self.comboBox_simple_value) and \
+           ( (keyEvent.key() == QtCore.Qt.Key_Enter) or \
+             (keyEvent.key() == QtCore.Qt.Key_Return) ):
+            self.pushButton_search.click()
+        else:
+            QDialog.keyPressEvent(self, keyEvent)
+            
     
     #----------------------------------------------------------------------
     def updateChoiceListComboBox(self):
@@ -840,8 +848,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             prop_name, full_name, data_type = \
                 prop_name_and_full_name_and_data_type
             self.choice_dict[prop_name] = list(matched_model.underlying2DTable[:,i])
-            if prop_name == 'fields':
-                print 'here'
             if data_type.endswith('_list'): # and (not ( (prop_name == 'fields') and (self.model.object_type) ) ):
                 # Flatten the list of lists
                 if (self.choice_dict[prop_name] != []) and ( isinstance(self.choice_dict[prop_name][0], list) ):
@@ -1629,11 +1635,12 @@ class ChannelExplorerApp(QObject):
         self.connect(self.model, SIGNAL("readyForClosing"),
                      self.view.accept_and_close)
         
+        
     #----------------------------------------------------------------------
     def debug(self):
         """"""
         
-        print ''
+        print 'debug'
         
     #----------------------------------------------------------------------
     def _initModel(self, object_type):
