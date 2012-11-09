@@ -26,8 +26,8 @@ application calls this GUI, this GUI will know which preferences to load)
 *) Change tablewidget to tableview to speed up filter update
 *) If possible, implement real-time searching
 *) Hitting "Enter" hit "Search" button
-*) Enable sort column in match table
 *) Insert custom filter value to combo box
+*) Allow text selection in matched table, instead of just row selection, but don't allow edit
 '''
 
 """
@@ -200,25 +200,12 @@ class NumericallySortableItemModel(QStandardItemModel):
         default string sorting.
         """
         
-        #value = QStandardItemModel.data(self, modelIndex, role)
-        
         if role == self.SortRole:
-            #value = QStandardItemModel.data(self, modelIndex, QtCore.Qt.DisplayRole)
-            #try:
-                #value = float(value)
-            #except:
-                #pass
-            #t = self.underlying2DTable
             value = self.underlying2DTable[modelIndex.row(), modelIndex.column()]
         else:
             value = QStandardItemModel.data(self, modelIndex, role)
 
-            
-
         return value
-        
-    
-    
 
 ########################################################################
 class ChannelExplorerModel(QObject):
@@ -327,13 +314,6 @@ class ChannelExplorerModel(QObject):
         
         self.emit(SIGNAL('modelReconstructedOnLatticeChange'))
         
-    ##----------------------------------------------------------------------
-    #def updateCaseSensitiveState(self, checkBoxState):
-        #""""""
-        
-        #self.is_case_sensitive = checkBoxState
-        
-        #self.emit(SIGNAL('filtersChanged'),None)
         
     #----------------------------------------------------------------------
     def _changeObjectType(self, object_type):
@@ -768,200 +748,6 @@ class ChannelExplorerModel(QObject):
         else:
             raise NotImplementedError('data_type: '+data_type)
         
-        
-        
-        
-        
-        
-        
-        
-        
-    ##----------------------------------------------------------------------
-    #def combine_matched_list(self):
-        #""" """
-        
-        #nFilterGroups = len(self.filter_spec)
-        
-        #if not self.filter_spec:
-            #self.combined_matched = [True]*len(self.allElements)
-        #elif nFilterGroups == 1:
-            #self.combined_matched = self.matched[0]
-        #elif nFilterGroups == 2:
-            #self.combined_matched = map(and_, self.matched[0], self.matched[1])
-        #elif nFilterGroups >= 3:
-            #self.combined_matched = map(and_, self.matched[0], self.matched[1])
-            #for i in range(2,nFilterGroups):
-                #self.combined_matched = map(and_, self.combined_matched,
-                                            #self.matched[i])
-    
-    ##----------------------------------------------------------------------
-    #def patternFilterData(self, filter_group_index, isCaseSensitive = False):
-        #"""
-
-        #Perform only pattern match filtering here. This function does not
-        #perform inversion filtering.
-        
-        #filter_group_index = Row index of the filter table. It represents 
-                             #the index of self.filter_spec list.
-        
-        #"""
-
-        #index = filter_group_index # short-hand notation
-        
-        #pattern_filter_dict = self.filter_spec[index][0]
-                
-        ## Initialization: Remove all filters
-        #self.matched[index] = [True]*len(self.allElements)
-            
-        #for (prop, val) in pattern_filter_dict.iteritems():
-            #if prop in self.not_implemented_filter_list:
-                #pass
-            #elif prop in self.numeric_filter_list: # numerical filter
-                #pass
-            #else: # string filter
-                    
-                #matchedItemsZipped = [ 
-                    #(j,elem) for (j,elem) in enumerate(self.allElements)
-                    #if self.matched[index][j] ]
-                    
-                #if matchedItemsZipped: # When there are some matched elements
-                    #matchedItemsUnzipped = zip(*matchedItemsZipped)
-                    #matchedInd   = list(matchedItemsUnzipped[0])
-                    #matchedElems = list(matchedItemsUnzipped[1])
-                #else: # When there is no matched element, no need for futher filtering
-                    #self.matched[index] = [False]*len(self.allElements)
-                    #return
-                    
-                #'''
-                #The reason why __str__() is being used here to retrieve
-                #strings is that this method can handle None values as
-                #well.
-                #'''
-                #if not isCaseSensitive: # case-insensitive search
-                    #filter_str = val.upper()
-                    #matchedElemStrings = [ 
-                        #getattr(getattr(e,prop),'__str__')().upper()
-                        #for e in matchedElems]
-                #else: # case-sensitive search
-                    #filter_str = val
-                    #matchedElemStrings = [
-                        #getattr(getattr(e,prop),'__str__')()
-                        #for e in matchedElems]
-                
-                #reducedNewMatchedInd = [ 
-                    #j for (j,s) in enumerate(matchedElemStrings)
-                    #if fnmatch.fnmatchcase(s,filter_str)]
-                    
-                #newMatchedInd = [matchedInd[j] 
-                                 #for j in reducedNewMatchedInd]
-                    
-                #self.matched[index] = [ 
-                    #(j in newMatchedInd) 
-                    #for j in range(len(self.allElements))]
-                    
-                    
-    ##----------------------------------------------------------------------
-    #def filterData(self, filter_group_indices, isCaseSensitive = False):
-        #"""
-        
-        #Data filtering is done by 2 steps for each filter group.
-        
-        #First, all the filters using pattern matching, i.e, string and
-        #numerical matching, are performed. Then, the inversion filtering
-        #is applied to the filtered result, if exclude flag is True.
-        
-        #Repeat this for each filter group. Then combine each filter
-        #group result with logical AND operation to get the final filtered
-        #result.
-        
-        #filter_group_indices = Row indices of the filter table. It is a list
-                               #of indices of the self.filter_spec list.
-                               
-        #"""
-        
-        #for index in filter_group_indices:
-            
-            #self.patternFilterData(index, isCaseSensitive)
-        
-            #exclude_flag = self.filter_spec[index][1]
-            #if exclude_flag:
-                #self.matched[index] = map(not_, self.matched[index])
-        
-        
-        #self.combine_matched_list()
-        
-        #self.update_choice_dict()
-        
-        #self.emit(SIGNAL("sigDataFiltered"),())
-        
-    
-    
-    ##----------------------------------------------------------------------
-    #def add_row_to_filter_spec(self):
-        #""" """
-        
-        #self.filter_spec.append( [{},False] )
-        
-        #self.matched.append( [True]*len(self.allElements) )
-        
-        ## self.combined_matched stays the same
-        
-    ##----------------------------------------------------------------------
-    #def modify_filter_spec(self, filter_property_index, filter_val,
-                           #filter_group_index, isCaseSensitive):
-        #""" """
-
-        #filter_property = self.filter_property_list[filter_property_index]
-        
-        #if filter_property is not 'exclude':
-            #self.filter_spec[filter_group_index][0][filter_property] = \
-                #filter_val
-        #else:
-            #self.filter_spec[filter_group_index][1] = filter_val
-        
-        ## Request re-doing all the filtering with the modified filter spec.
-        #self.emit(Qt.SIGNAL("sigReadyForFiltering"), 
-                  #[filter_group_index], isCaseSensitive)
-    
-    ##----------------------------------------------------------------------
-    #def update_choice_dict(self):
-        #""" """
-        
-        ## Get only matched elements from current parent set
-        #matchedElements = [self.currentParentSet[i] 
-                           #for (i,matched) in enumerate(self.combined_matched)
-                           #if matched]
-        
-        ## If there is no match
-        #if not matchedElements:
-            #for prop in self.elem_property_list:
-                #self.choice_dict[prop] = []
-            #return
-        
-        ## If there is some matched element(s)
-        #for prop in self.elem_property_list:
-            #if callable(getattr(matchedElements[0],prop)): # if property is a function
-                #prop_val_list = [getattr(e,prop)() for e in matchedElements]
-            #else: # if property is a value
-                #prop_val_list = [getattr(e,prop)   for e in matchedElements]
-            ## Since prop_val_list may contain lists inside, we must remove
-            ## those items from the list before we can apply set()
-            ## to find unique elements.
-            #nested_list_indices = [i for (i,val) in enumerate(prop_val_list) 
-                                   #if isinstance(val,list)]
-            #hashable_list = [item for (i,item) in enumerate(prop_val_list)
-                             #if i not in nested_list_indices]
-            #nonhashable_list = [item for (i,item) in enumerate(prop_val_list)
-                                #if i in nested_list_indices]
-            #unique_prop_val_set = set(hashable_list)
-            #unique_prop_val_list = list(unique_prop_val_set)
-            ## TODO: also check if nonhashable_list contains duplicate items
-            #unique_prop_val_list.extend(nonhashable_list)
-            #unique_prop_val_list.sort()
-            #self.choice_dict[prop] = unique_prop_val_list
-                        
-            ## print prop, len(self.choice_dict[prop])
-        
             
     #----------------------------------------------------------------------
     def update_selected_elements(self, selectedRowIndList):
@@ -1356,80 +1142,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         indexComboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
             
         
-            
-    ##----------------------------------------------------------------------
-    #def _initFilterTable(self):
-        #"""
-        #Perform initial population and formating for tableWidget_filter
-        #"""
-
-        #t = self.tableWidget_filter # shorthand notation
-
-        #### Header population & properties
-        #t.setHorizontalHeaderLabels(self.model.filter_col_name_list)
-        #t.horizontalHeader().setMovable(True)
-        
-        #### Item population
-        #nRows = len(self.model.filter_spec)
-        #t.setRowCount(nRows)
-        #for (j, spec) in enumerate(self.model.filter_spec):
-            #for (i, filter_prop) in enumerate(self.model.filter_property_list):
-                #if filter_prop is not 'exclude':
-                    #if spec[0].has_key(filter_prop):
-                        #item_string = spec[0][filter_prop]
-                    #else:
-                        #item_string = ''
-                    #t.setItem(j,i,
-                              #Qt.QTableWidgetItem(item_string))
-                    
-                    #t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
-                                         #Qt.Qt.ItemIsEditable|
-                                         #Qt.Qt.ItemIsDragEnabled|
-                                         #Qt.Qt.ItemIsEnabled) # Make it editable
-                #else:
-                    #t.setItem(j,i,Qt.QTableWidgetItem(''))
-                    
-                    #t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
-                                         #Qt.Qt.ItemIsEditable|
-                                         #Qt.Qt.ItemIsDragEnabled|
-                                         #Qt.Qt.ItemIsUserCheckable|
-                                         #Qt.Qt.ItemIsEnabled) # Make it checkable
-                    #if spec[1]: # exclusion flag
-                        #t.item(j,i).setCheckState(Qt.Qt.Checked)
-                    #else:
-                        #t.item(j,i).setCheckState(Qt.Qt.Unchecked)
-                   
-                    
-        
-        #### Presentation formatting
-        #t.resizeColumnsToContents()
-        #for i in range(t.columnCount()):
-            #if t.columnWidth(i) > self.max_auto_adjust_column_width:
-                #t.setColumnWidth(i,self.max_auto_adjust_column_width)
-        
-    
-        
-    ##----------------------------------------------------------------------
-    #def _initChoiceTable(self):
-        #"""
-        #Perform initial formating for tableWidget_choice_list
-        #"""
-        
-        #t = self.tableWidget_choice_list # shorthand notation
-        
-        #### Header popluation & properties
-        #'''
-        #for (i, col_name) in enumerate(self.model.col_name_list):
-            ## Order the column labels as in the order of the definition
-            ## of the dictionary for the element property names and the
-            ## column names
-            #t.horizontalHeaderItem(i).setText(col_name)
-        #'''
-        ## or
-        #t.setHorizontalHeaderLabels(self.model.col_name_list)
-        
-        #t.horizontalHeader().setMovable(True)
-    
     #----------------------------------------------------------------------
     def _initMatchTable(self):
         """
@@ -1453,16 +1165,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         self.tableView_matched.resizeColumnsToContents()
         self.tableView_matched.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tableView_matched.setSortingEnabled(True)
-        
-        ### Header population & properties
-        
-        #t.setColumnCount(len(self.model.col_name_list))
-        #t.setHorizontalHeaderLabels(self.model.col_name_list)
-        
-        #t.horizontalHeader().setMovable(True)
-                
-        #t.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        
         
         
     #----------------------------------------------------------------------
@@ -1643,18 +1345,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         self.emit(SIGNAL("filterRowAdded"),())
     
-    #----------------------------------------------------------------------
-    def on_case_sensitive_state_change(self, checkBoxState):
-        """ """
-        
-        #nRows = self.tableWidget_filter.rowCount()
-        
-        isCaseSensitive = checkBoxState
-        
-        ## Request re-doing all the filtering with the new case-sensitivity
-        ## choice.
-        #self.emit(SIGNAL("sigReadyForFiltering"), 
-                  #range(nRows), isCaseSensitive)
     
     #----------------------------------------------------------------------
     def isItemUserCheckable(self, qTableWidgetItem):
@@ -1696,8 +1386,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def on_lattice_change(self):
         """"""
         
-        #self.emit(SIGNAL('disableViewUpdateOnLatticeChange'),True)
-
         try:
             self._initFilterView()
             self._initChoiceList()
@@ -1709,8 +1397,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         except:
             pass
         
-        #self.emit(SIGNAL('disableViewUpdateOnLatticeChange'),False)
-    
     #----------------------------------------------------------------------
     def on_NOT_change(self, checked):
         """"""
@@ -1946,23 +1632,6 @@ class ChannelExplorerApp(QObject):
         """"""
         
         print ''
-        
-    ##----------------------------------------------------------------------
-    #def disableViewUpdateOnLatticeChange(self, TF):
-        #""""""
-        
-        #if TF:
-            #func = self.disconnect
-        #else:
-            #func = self.connect
-                    
-        #func(self.model, SIGNAL("filtersUpdated"),
-             #self.view.update_tables)
-        #func(self.model, SIGNAL("filtersUpdated"),
-             #self.view.update_matched_and_selected_numbers)
-        
-        #self.view.comboBox_choice_list.blockSignals(TF)
-        
         
     #----------------------------------------------------------------------
     def _initModel(self, object_type):
