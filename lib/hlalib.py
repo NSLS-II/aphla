@@ -459,17 +459,33 @@ def getBeta(group, **kwargs):
 
       >>> getBeta('Q*', spos = True)
 
+    - *src*: 'DB' from database, 'VA' virtual accelerator
+
     this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
     """
-    if not machines._twiss:
-        logger.error("ERROR: No twiss data loaeded")
-        return None
-    elem = getElements(group)
+    src = kwargs.pop("src", 'DB')
 
+    elem = getElements(group)
     col = ('beta',)
     if kwargs.get('spos', False): col = ('beta', 's')
-    
-    return machines._twiss.getTwiss([e.name for e in elem], col=col, **kwargs)
+
+    if src == 'DB':
+        if not machines._twiss:
+            logger.error("ERROR: No twiss data loaeded")
+            return None
+        return machines._twiss.getTwiss([e.name for e in elem], 
+                                        col=col, **kwargs)
+    elif src == 'VA':
+        twiss = getElements('twiss')[0]
+        idx = [e.index for e in elem]
+        if 's' in col:
+            ret = np.zeros((len(elem), 3), 'd')
+            ret[:,-1] = np.take(twiss.s, idx)
+        else:
+            ret = np.zeros((len(elem), 2), 'd')
+        ret[:,0] = np.take(twiss.betax, idx)
+        ret[:,1] = np.take(twiss.betay, idx)
+        return ret
 
 def getDispersion(group, **kwargs):
     """
@@ -488,19 +504,37 @@ def getEta(group, **kwargs):
 
     :Example:
 
-        >>> getEta('P*', spos = True)
+        >>> getEta('P*', spos = True, src = 'DB')
         >>> getEta('BPM')
         >>> getEta(['BPM1', 'BPM2'])
 
+    - *src*: 'DB' from database, 'VA' from virtual accelerator
     seealso :func:`getElements`
     """
 
-    if not machines._twiss: return None
+    src = kwargs.pop("src", 'DB')
+
     elem = getElements(group)
     col = ('eta',)
     if kwargs.get('spos', False): col = ('eta', 's')
-    
-    return machines._twiss.getTwiss([e.name for e in elem], col=col, **kwargs)
+
+    if src == 'DB':
+        if not machines._twiss:
+            logger.error("ERROR: No twiss data loaeded")
+            return None
+        return machines._twiss.getTwiss([e.name for e in elem], 
+                                        col=col, **kwargs)
+    elif src == 'VA':
+        twiss = getElements('twiss')[0]
+        idx = [e.index for e in elem]
+        if 's' in col:
+            ret = np.zeros((len(elem), 3), 'd')
+            ret[:,-1] = np.take(twiss.s, idx)
+        else:
+            ret = np.zeros((len(elem), 2), 'd')
+        ret[:,0] = np.take(twiss.etax, idx)
+        ret[:,1] = np.take(twiss.etay, idx)
+        return ret
 
 def getChromaticity(source='machine'):
     """
@@ -746,6 +780,8 @@ def _reset_bpm_offset():
     logger.info("Reset the bpm offset")
 
 def _reset_quad():
+    raise RuntimeError("does not work for SR above V1SR")
+
     qtag = {'H2': (1.47765, 30), 
             'H3': (-1.70755, 30),
             'H1': (-0.633004, 30),

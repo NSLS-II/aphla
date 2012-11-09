@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 def _measBetaQuad(elem, **kwargs):
     dqk1 = abs(kwargs.get('dqk1', 0.01))
     num_points = kwargs.get('num_points', 5)
+    minwait = kwargs.get('minwait', 3)
 
     qk10 = elem.k1
     qk1 = qk10 + np.linspace(-dqk1, dqk1, num_points)
@@ -31,7 +32,7 @@ def _measBetaQuad(elem, **kwargs):
     for i,k1 in enumerate(qk1):
         v0 = getOrbit()
         elem.k1 = k1
-        waitStableOrbit(v0, maxwait=15)
+        waitStableOrbit(v0, minwait=minwait, maxwait=15)
         nu[i,:] = getTunes()
 
     elem.k1 = qk10
@@ -43,11 +44,11 @@ def measBeta(elem, dqk1 = 0.01, # element or list
     Measure the beta function by varying quadrupole strength
     
     - elem, element name
-    - dqk1
-    - num_points points to fit the line
+    - dqk1, the quadrupole change range [-dqk1, dqk1]
+    - num_points points in [-dqk1, dqk1] to fit the line
     - verbose
 
-    returns beta
+    returns (k1, nu, beta)
     """
 
     elems = getElements(elem)
