@@ -28,6 +28,8 @@ application calls this GUI, this GUI will know which preferences to load)
 *) Hitting "Enter" hit "Search" button
 *) Insert custom filter value to combo box
 *) Allow text selection in matched table, instead of just row selection, but don't allow edit
+*) Bug fix: # of PV's, etc. differ between 'element' & 'channel'
+*) When lattice is changed, do not perform search; rather return empty search result
 '''
 
 """
@@ -1667,7 +1669,9 @@ def make(modal = True, parentWindow = None,
     
     if not ap.machines._lat:
         print 'Initializing lattices...'
+        tStart = tic()
         aphla_init_func()
+        print str(toc(tStart))
         print 'Done.'    
 
     print 'Using Lattice:', lattice_name
@@ -1726,8 +1730,8 @@ def main(args):
         
     cothread.iqt()
     
-    aphla_init_func = ap.initNSLS2V2Cached
-    #aphla_init_func = ap.initNSLS2V2
+    #aphla_init_func = ap.initNSLS2V2Cached
+    aphla_init_func = ap.initNSLS2V2
     lattice_name = 'V2SR'
         
     result = make(modal=True, output_type=TYPE_OBJECT,
