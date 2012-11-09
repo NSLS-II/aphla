@@ -20,12 +20,22 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
+   <item row="1" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QSplitter" name="splitter_top_bottom">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -549,88 +559,13 @@ padding: 3px;</string>
          </widget>
         </item>
         <item>
-         <widget class="QTableWidget" name="tableWidget_matched">
+         <widget class="QTableView" name="tableView_matched">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <column>
-           <property name="text">
-            <string>Name</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Dev. Name</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Cell</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Family</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Girder</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Group</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Lat. Index</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Eff. Len.</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Phys. Len.</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>PV</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>sb</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>se</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Symmetry</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Virtual</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Sequence</string>
-           </property>
-          </column>
          </widget>
         </item>
        </layout>
@@ -672,22 +607,9 @@ padding: 3px;</string>
      </widget>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
   </layout>
-  <zorder>splitter_2</zorder>
   <zorder>buttonBox</zorder>
-  <zorder>label_lattice</zorder>
-  <zorder>comboBox_lattice</zorder>
-  <zorder></zorder>
+  <zorder>splitter_top_bottom</zorder>
  </widget>
  <resources/>
  <connections>

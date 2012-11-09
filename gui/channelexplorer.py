@@ -1,7 +1,24 @@
 #! /usr/bin/env python
 
+import time
+
+#----------------------------------------------------------------------
+def tic():
+    """"""
+    
+    return time.time()
+    
+#----------------------------------------------------------------------
+def toc(tStart):
+    """"""
+    
+    tEnd = time.time()
+    
+    elapsed_time = tEnd - tStart
+    
+    return elapsed_time
+
 ''' TODO
-*) implement 'IN' operator for string_list
 *) Add QSettings for window size, etc. (add "caller" so that depending on which
 application calls this GUI, this GUI will know which preferences to load)
 *) Implement advanced filters
@@ -34,14 +51,16 @@ sip.setapi('QVariant', 2)
 import sys
 from fnmatch import fnmatchcase
 from operator import and_, not_, add
+import numpy as np
 
 import cothread
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (SIGNAL, QObject, QSize)
 from PyQt4.QtGui import (QDialog, QStandardItemModel, QStandardItem,
-                         QComboBox, QTableWidgetItem, QRadioButton, 
-                         QCheckBox, QSizePolicy)
+                         QComboBox, QTableView, QSortFilterProxyModel,
+                         QAbstractItemView,
+                         QRadioButton, QCheckBox, QSizePolicy)
 
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 
@@ -159,9 +178,50 @@ class Filter():
         else:
             raise ValueError('set_operator must be AND or OR')
         
+########################################################################
+class NumericallySortableItemModel(QStandardItemModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        
+        QStandardItemModel.__init__(self)
+        
+        self.SortRole = QtCore.Qt.UserRole
+        
+        self.underlying2DTable = np.array([])
+        
+    #----------------------------------------------------------------------
+    def data(self, modelIndex, role):
+        """
+        Reimplementation of QStandardItemModel's data()
+        The purpose is to allow sorting by numbers, not just by
+        default string sorting.
+        """
+        
+        #value = QStandardItemModel.data(self, modelIndex, role)
+        
+        if role == self.SortRole:
+            #value = QStandardItemModel.data(self, modelIndex, QtCore.Qt.DisplayRole)
+            #try:
+                #value = float(value)
+            #except:
+                #pass
+            #t = self.underlying2DTable
+            value = self.underlying2DTable[modelIndex.row(), modelIndex.column()]
+        else:
+            value = QStandardItemModel.data(self, modelIndex, role)
+
+            
+
+        return value
+        
+    
+    
 
 ########################################################################
-class ElementSelectorModel(QObject):
+class ChannelExplorerModel(QObject):
     """ """
 
     #----------------------------------------------------------------------
@@ -210,6 +270,13 @@ class ElementSelectorModel(QObject):
                               for name in PROP_NAME_LIST]
         
         self.reconstructModel(object_type)
+        
+        self.table_model_matched = NumericallySortableItemModel()
+        self.table_model_matched.setColumnCount(len(self.col_name_list))
+        self.table_model_matched.setHorizontalHeaderLabels(self.col_name_list)
+        
+        self.table_model_filter = NumericallySortableItemModel()
+        
         
     #----------------------------------------------------------------------
     def reconstructModel(self, object_type):
@@ -356,7 +423,9 @@ class ElementSelectorModel(QObject):
         
         current_filter.commit_displayed_properties()
         
+        tStart = tic()
         self.emit(SIGNAL('filtersChanged'), current_filter.name)
+        print 'Search update took', toc(tStart), ' seconds'
         
     #----------------------------------------------------------------------
     def updateFilters(self, modified_filter_name):
@@ -385,9 +454,60 @@ class ElementSelectorModel(QObject):
             for f in self.filters[modified_filter_index+1:]:
                 if modified_filter_name in (f.set1_name,f.set2_name):
                     self._updateFilter(f)
-                    
+                
         self.emit(SIGNAL('filtersUpdated'))
            
+    #----------------------------------------------------------------------
+    def update_table_models(self):
+        """"""
+        
+        f = self.filters[self.selected_filter_index]
+        isinstance(f,Filter) # WingHelper TODELETE
+        
+        model_m = self.table_model_matched
+        
+        model_m.blockSignals(True)
+        
+        model_m.removeRows(0,model_m.rowCount()) # clear contents
+        
+        # Get only matched objects from all the objects
+        matched_obj_list = [f.parentSet[i] for i in f.matched_index_list]
+        nRows = len(matched_obj_list)
+        model_m.setRowCount(nRows)
+        nCols = len(PROP_NAME_LIST)
+        model_m.setColumnCount(nCols)
+        model_m.underlying2DTable = np.empty((nRows,nCols),dtype=np.object)
+        template_item = QStandardItem()
+        template_item.setFlags(QtCore.Qt.ItemIsSelectable |
+                               QtCore.Qt.ItemIsDragEnabled |
+                               QtCore.Qt.ItemIsEnabled) # Make it non-editable
+        for (j,prop_name) in enumerate(PROP_NAME_LIST):
+            
+            
+            t1 = tic()
+            item_list = [template_item.clone() for i in range(nRows)]
+            if not( (prop_name == 'fields') and (self.object_type == 'channel') ):
+                value_list = [self.get(obj,prop_name) for obj in matched_obj_list]
+            else:
+                '''
+                For 'fields' with 'channel' object type selected, value will be 
+                a single-element list. So, pull out the element out of the list.
+                '''
+                value_list = [self.get(obj,prop_name)[0] for obj in matched_obj_list]
+            model_m.underlying2DTable[:,j] = value_list
+            item_value_list = zip(item_list, value_list)
+            for (i,(item,value)) in enumerate(item_value_list):
+                item.setText(value.__str__())
+                model_m.setItem(i, j, item)
+
+        
+        model_m.blockSignals(False)
+        
+        model_m.emit(SIGNAL('modelReset()'))
+        
+        model_f = self.table_model_filter
+        
+                
     #----------------------------------------------------------------------
     def any_fnmatchcase_for_pattern_str_list(self, string, pattern_str_list):
         """"""
@@ -858,7 +978,7 @@ class ElementSelectorModel(QObject):
         
 
 ########################################################################
-class ElementSelectorView(QDialog, Ui_Dialog):
+class ChannelExplorerView(QDialog, Ui_Dialog):
     """ """
     
     #----------------------------------------------------------------------
@@ -871,6 +991,8 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons
         
         self.model = model
+        self.table_model_matched = model.table_model_matched
+        self.table_model_filter = model.table_model_filter
         self.choice_dict = dict.fromkeys(PROP_NAME_LIST)
         
         # Set up the user interface from Designer
@@ -904,6 +1026,7 @@ class ElementSelectorView(QDialog, Ui_Dialog):
             self.comboBox_lattice.setCurrentIndex(0)
         
         self.on_lattice_change()
+        
     
     #----------------------------------------------------------------------
     def updateChoiceListComboBox(self):
@@ -911,15 +1034,16 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         
         choice_combobox_model = self.comboBox_choice_list.model()
         
-        matched_model = self.tableWidget_matched.model()
-        
-        t = self.tableWidget_matched
+        matched_model = self.table_model_matched
         
         nCols = matched_model.columnCount()
         nRows = matched_model.rowCount()
-        column_name_list = [t.horizontalHeaderItem(i).text()
+        column_name_list = [matched_model.horizontalHeaderItem(i).text()
                             for i in range(nCols)]
+        
         for i in range(nCols):
+            t1 = tic()
+            
             col_name = column_name_list[i]
             prop_name_and_full_name_and_data_type = \
                 [(k,v[ENUM_ELEM_FULL_DESCRIP_NAME],v[ENUM_ELEM_DATA_TYPE])
@@ -927,23 +1051,29 @@ class ElementSelectorView(QDialog, Ui_Dialog):
                  if v[ENUM_ELEM_SHORT_DESCRIP_NAME] == col_name][0]
             prop_name, full_name, data_type = \
                 prop_name_and_full_name_and_data_type
-            self.choice_dict[prop_name] = \
-                [matched_model.data(matched_model.index(j,i))
-                 for j in range(nRows)]
-            if data_type.endswith('_list'):
-                # First need to convert the string representation of the list into a real list
-                self.choice_dict[prop_name] = [eval(s) for s in self.choice_dict[prop_name]]
-                # Then flatten the list of lists
-                if self.choice_dict[prop_name] != []:
-                    self.choice_dict[prop_name] = reduce(add, self.choice_dict[prop_name])
-            self.choice_dict[prop_name] = sorted(
-                list(set(self.choice_dict[prop_name])),key=lower)
+            self.choice_dict[prop_name] = list(matched_model.underlying2DTable[:,i])
+            if prop_name == 'fields':
+                print 'here'
+            if data_type.endswith('_list'): # and (not ( (prop_name == 'fields') and (self.model.object_type) ) ):
+                # Flatten the list of lists
+                if (self.choice_dict[prop_name] != []) and ( isinstance(self.choice_dict[prop_name][0], list) ):
+                    #self.choice_dict[prop_name] = reduce(add, self.choice_dict[prop_name])
+                    # Above works, but below is ~x3 faster
+                    self.choice_dict[prop_name] = [x for L in self.choice_dict[prop_name] for x in L]
+            if data_type.startswith('string'):
+                key_func = lower
+            else:
+                key_func = None
+            self.choice_dict[prop_name] = sorted(set(self.choice_dict[prop_name]),key=key_func)
             
             choice_combobox_model.setData(
                 choice_combobox_model.index(i,0),
                 (full_name + ' [' + str(len(self.choice_dict[prop_name])) 
                  + ']')
             )
+        
+        self.comboBox_choice_list.update()
+        
     
     #----------------------------------------------------------------------
     def updateChoiceListView(self):
@@ -960,9 +1090,9 @@ class ElementSelectorView(QDialog, Ui_Dialog):
             choice_list_model.setRowCount(len(choice_list))
             choice_list_model.setColumnCount(1)
             for (i,v) in enumerate(choice_list):
-                #choice_list_model.setData(choice_list_model.index(i,0), v)
+                #choice_list_model.setData(choice_list_model.index(i,0), str(v))
                 # or
-                choice_list_model.setItem(i,0,QStandardItem(v))
+                choice_list_model.setItem(i,0,QStandardItem(str(v)))
                 choice_list_model.item(i,0).setEditable(False)
                     
     
@@ -1306,16 +1436,32 @@ class ElementSelectorView(QDialog, Ui_Dialog):
         Perform initial formating for tableWidget_choice_list
         """
         
-        t = self.tableWidget_matched # shorthand notation
+        t = self.tableView_matched # shorthand notation
+        
+        self.table_proxyModel_matched = QSortFilterProxyModel()
+        self.table_proxyModel_matched.setSourceModel(self.table_model_matched)
+        self.table_proxyModel_matched.setDynamicSortFilter(False)
+        self.table_proxyModel_matched.setSortRole(self.table_model_matched.SortRole)
+        
+        self.tableView_matched.setModel(self.table_proxyModel_matched)
+        self.tableView_matched.setCornerButtonEnabled(True)
+        self.tableView_matched.setShowGrid(True)
+        horizHeader = self.tableView_matched.horizontalHeader()
+        horizHeader.setSortIndicatorShown(True)
+        horizHeader.setStretchLastSection(True)
+        horizHeader.setMovable(True)
+        self.tableView_matched.resizeColumnsToContents()
+        self.tableView_matched.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tableView_matched.setSortingEnabled(True)
         
         ### Header population & properties
         
-        t.setColumnCount(len(self.model.col_name_list))
-        t.setHorizontalHeaderLabels(self.model.col_name_list)
+        #t.setColumnCount(len(self.model.col_name_list))
+        #t.setHorizontalHeaderLabels(self.model.col_name_list)
         
-        t.horizontalHeader().setMovable(True)
+        #t.horizontalHeader().setMovable(True)
                 
-        t.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        #t.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         
         
         
@@ -1323,76 +1469,16 @@ class ElementSelectorView(QDialog, Ui_Dialog):
     def update_tables(self):
         """ """
         
-        #"""###########################
-        #Update tableWidget_choice_list
-        #"""###########################
-        
-        #t = self.tableWidget_choice_list # shorthand notation
-        
-        #t.clearContents()
-        
-        #### Item population
-        
-        #nRows = max([len(choice_list) 
-                     #for choice_list in self.model.choice_dict.values()])
-        #t.setRowCount(nRows)
-        #for (i, elem_prop) in enumerate(self.model.elem_property_list):
-            #choice_list = self.model.choice_dict[elem_prop]
-            #for (j, value) in enumerate(choice_list):
-                #t.setItem(j,i,Qt.QTableWidgetItem(value.__str__()))
-                #t.item(j,i).setFlags(Qt.Qt.ItemIsSelectable|
-                                     #Qt.Qt.ItemIsDragEnabled|
-                                     #Qt.Qt.ItemIsEnabled) # Make it non-editable
-        
-        #### Presentation formatting
-        #t.resizeColumnsToContents()
-        #for i in range(t.columnCount()):
-            #if t.columnWidth(i) > self.max_auto_adjust_column_width:
-                #t.setColumnWidth(i,self.max_auto_adjust_column_width)
-                
-        
-        
-        """####################################
-        Populate and format tableWidget_matched
-        """####################################
-        
-        f = self.model.filters[self.model.selected_filter_index]
-        isinstance(f,Filter)
-        
-        t = self.tableWidget_matched # shorthand notation
-        
-        #t.blockSignals(True)
-        
-        t.clearContents()
-        
-        ### Item population
-        
-        # Get only matched objects from all the objects
-        matched_obj_list = [f.parentSet[i] for i in f.matched_index_list]
-        nRows = len(matched_obj_list)
-        t.setRowCount(nRows)
-        nCols = len(PROP_NAME_LIST)
-        t.setColumnCount(nCols)
-        for (i,obj) in enumerate(matched_obj_list):
-            for (j,prop_name) in enumerate(PROP_NAME_LIST):
-                value = self.model.get(obj,prop_name)
-                t.setItem( i, j, QTableWidgetItem(value.__str__()) )
-                t.item(i,j).setFlags(QtCore.Qt.ItemIsSelectable |
-                                     QtCore.Qt.ItemIsDragEnabled |
-                                     QtCore.Qt.ItemIsEnabled) # Make it non-editable        
-                
-        
-        ### Presentation formatting
+        t = self.tableView_matched # shorthand notation
         t.resizeColumnsToContents()
-        for i in range(t.columnCount()):
+        proxyModel = t.model()
+        m = proxyModel.sourceModel()
+        for i in range(m.columnCount()):
             if t.columnWidth(i) > self.max_auto_adjust_column_width:
                 t.setColumnWidth(i,self.max_auto_adjust_column_width)
         
         ### Reset selection to all available
         t.selectAll()
-        
-        #t.blockSignals(False)
-
         
         self.emit(SIGNAL('readyForChoiceListUpdate'))
 
@@ -1610,17 +1696,20 @@ class ElementSelectorView(QDialog, Ui_Dialog):
     def on_lattice_change(self):
         """"""
         
-        self.emit(SIGNAL('disableViewUpdateOnLatticeChange'),True)
+        #self.emit(SIGNAL('disableViewUpdateOnLatticeChange'),True)
 
-        self._initFilterView()
-        self._initChoiceList()
-        self._initMatchTable()
+        try:
+            self._initFilterView()
+            self._initChoiceList()
+            self._initMatchTable()
         
-        self._initViewSizes()
+            self._initViewSizes()
         
-        self.model.updateFilters(None)
+            self.model.updateFilters(None)
+        except:
+            pass
         
-        self.emit(SIGNAL('disableViewUpdateOnLatticeChange'),False)
+        #self.emit(SIGNAL('disableViewUpdateOnLatticeChange'),False)
     
     #----------------------------------------------------------------------
     def on_NOT_change(self, checked):
@@ -1716,7 +1805,7 @@ class ElementSelectorView(QDialog, Ui_Dialog):
     def selectedRowIndList(self):
         """"""
     
-        qModelIndexList = self.tableWidget_matched.selectedIndexes()
+        qModelIndexList = self.tableView_matched.selectedIndexes()
         selectedRowIndList = list(set([q.row() for q in qModelIndexList]))
         
         return selectedRowIndList
@@ -1735,18 +1824,18 @@ class ElementSelectorView(QDialog, Ui_Dialog):
     def accept_and_close(self):
         """ """
         
-        super(ElementSelectorView, self).accept() # will close the dialog
+        super(ChannelExplorerView, self).accept() # will close the dialog
         
         
     #----------------------------------------------------------------------
     def reject(self):
         """ """
         
-        super(ElementSelectorView, self).reject() # will close the dialog
+        super(ChannelExplorerView, self).reject() # will close the dialog
     
 
 ########################################################################
-class ElementSelectorApp(QObject):
+class ChannelExplorerApp(QObject):
     """ """
 
     #----------------------------------------------------------------------
@@ -1817,18 +1906,16 @@ class ElementSelectorApp(QObject):
 
         # After new filtering is performed, update the view based on
         # the new filtered data.
-        self.connect(self.model, SIGNAL("filtersUpdated"),
+        self.connect(self.model, SIGNAL('filtersUpdated'),
+                     self.model.update_table_models)
+        self.connect(self.model, SIGNAL('filtersUpdated'),
                      self.view.update_tables)
-        self.connect(self.model, SIGNAL("filtersUpdated"),
+        self.connect(self.model, SIGNAL('filtersUpdated'),
                      self.view.update_matched_and_selected_numbers)
         
-        
-        self.connect(self.view.tableWidget_matched,
-                     SIGNAL('itemSelectionChanged()'),
+        self.connect(self.view.tableView_matched,
+                     SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
                      self.view.update_matched_and_selected_numbers)
-        self.connect(self.view.tableWidget_matched,
-                     SIGNAL('itemSelectionChanged()'),
-                     self.debug)
         
         #self.connect(self.view.pushButton_add_row, SIGNAL("clicked()"),
                      #self.view.add_row_to_filter_table)
@@ -1845,8 +1932,8 @@ class ElementSelectorApp(QObject):
         self.connect(self.model,
                      SIGNAL('modelReconstructedOnLatticeChange'),
                      self.view.on_lattice_change)
-        self.connect(self.view, SIGNAL('disableViewUpdateOnLatticeChange'),
-                     self.disableViewUpdateOnLatticeChange)
+        #self.connect(self.view, SIGNAL('disableViewUpdateOnLatticeChange'),
+                     #self.disableViewUpdateOnLatticeChange)
 
         
         self.connect(self.view, SIGNAL("updateFinalSelection"),
@@ -1860,34 +1947,34 @@ class ElementSelectorApp(QObject):
         
         print ''
         
-    #----------------------------------------------------------------------
-    def disableViewUpdateOnLatticeChange(self, TF):
-        """"""
+    ##----------------------------------------------------------------------
+    #def disableViewUpdateOnLatticeChange(self, TF):
+        #""""""
         
-        if TF:
-            func = self.disconnect
-        else:
-            func = self.connect
+        #if TF:
+            #func = self.disconnect
+        #else:
+            #func = self.connect
                     
-        func(self.model, SIGNAL("filtersUpdated"),
-             self.view.update_tables)
-        func(self.model, SIGNAL("filtersUpdated"),
-             self.view.update_matched_and_selected_numbers)
+        #func(self.model, SIGNAL("filtersUpdated"),
+             #self.view.update_tables)
+        #func(self.model, SIGNAL("filtersUpdated"),
+             #self.view.update_matched_and_selected_numbers)
         
-        self.view.comboBox_choice_list.blockSignals(TF)
+        #self.view.comboBox_choice_list.blockSignals(TF)
         
         
     #----------------------------------------------------------------------
     def _initModel(self, object_type):
         """ """
         
-        self.model = ElementSelectorModel(object_type=object_type)
+        self.model = ChannelExplorerModel(object_type=object_type)
         
     #----------------------------------------------------------------------
     def _initView(self, can_modify_object_type, lattice_name):
         """ """
         
-        self.view = ElementSelectorView(self.model, self.modal,
+        self.view = ChannelExplorerView(self.model, self.modal,
                                         can_modify_object_type,
                                         lattice_name,
                                         parentWindow = self.parentWindow)
@@ -1917,7 +2004,7 @@ def make(modal = True, parentWindow = None,
     print 'Using Lattice:', lattice_name
     ap.machines.use(lattice_name)
     
-    app = ElementSelectorApp(modal, parentWindow, 
+    app = ChannelExplorerApp(modal, parentWindow, 
                              init_object_type, can_modify_object_type,
                              lattice_name)
     view = app.view
@@ -1970,7 +2057,8 @@ def main(args):
         
     cothread.iqt()
     
-    aphla_init_func = ap.initNSLS2V2
+    aphla_init_func = ap.initNSLS2V2Cached
+    #aphla_init_func = ap.initNSLS2V2
     lattice_name = 'V2SR'
         
     result = make(modal=True, output_type=TYPE_OBJECT,
