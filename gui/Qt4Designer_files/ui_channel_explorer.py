@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_channel_explorer.ui'
 #
-# Created: Wed Nov  7 19:19:00 2012
+# Created: Fri Nov  9 22:23:56 2012
 #      by: PyQt4 UI code generator 4.7.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,11 +17,6 @@ class Ui_Dialog(object):
         Dialog.setModal(True)
         self.gridLayout_3 = QtGui.QGridLayout(Dialog)
         self.gridLayout_3.setObjectName("gridLayout_3")
-        self.buttonBox = QtGui.QDialogButtonBox(Dialog)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName("buttonBox")
-        self.gridLayout_3.addWidget(self.buttonBox, 1, 0, 1, 1)
         self.splitter_top_bottom = QtGui.QSplitter(Dialog)
         self.splitter_top_bottom.setOrientation(QtCore.Qt.Vertical)
         self.splitter_top_bottom.setObjectName("splitter_top_bottom")
@@ -244,10 +239,18 @@ class Ui_Dialog(object):
         self.layoutWidget1.setObjectName("layoutWidget1")
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.layoutWidget1)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.horizontalLayout_6 = QtGui.QHBoxLayout()
+        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
         self.label_nMatched_nSelected = QtGui.QLabel(self.layoutWidget1)
         self.label_nMatched_nSelected.setMaximumSize(QtCore.QSize(16777215, 16))
         self.label_nMatched_nSelected.setObjectName("label_nMatched_nSelected")
-        self.verticalLayout_3.addWidget(self.label_nMatched_nSelected)
+        self.horizontalLayout_6.addWidget(self.label_nMatched_nSelected)
+        spacerItem4 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_6.addItem(spacerItem4)
+        self.checkBox_matched_table_column_sorting = QtGui.QCheckBox(self.layoutWidget1)
+        self.checkBox_matched_table_column_sorting.setObjectName("checkBox_matched_table_column_sorting")
+        self.horizontalLayout_6.addWidget(self.checkBox_matched_table_column_sorting)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_6)
         self.tableView_matched = QtGui.QTableView(self.layoutWidget1)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -279,9 +282,14 @@ class Ui_Dialog(object):
         self.listView_choice_list.setObjectName("listView_choice_list")
         self.verticalLayout_2.addWidget(self.listView_choice_list)
         self.gridLayout_3.addWidget(self.splitter_top_bottom, 0, 0, 1, 1)
+        self.buttonBox = QtGui.QDialogButtonBox(Dialog)
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
+        self.gridLayout_3.addWidget(self.buttonBox, 1, 0, 1, 1)
 
         self.retranslateUi(Dialog)
-        self.stackedWidget.setCurrentIndex(1)
+        self.stackedWidget.setCurrentIndex(0)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -320,5 +328,6 @@ class Ui_Dialog(object):
         self.label_5.setText(QtGui.QApplication.translate("Dialog", "Index", None, QtGui.QApplication.UnicodeUTF8))
         self.label_6.setText(QtGui.QApplication.translate("Dialog", "Value", None, QtGui.QApplication.UnicodeUTF8))
         self.label_nMatched_nSelected.setText(QtGui.QApplication.translate("Dialog", "Matched Objects (0 matched, 0 selected)", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBox_matched_table_column_sorting.setText(QtGui.QApplication.translate("Dialog", "column sorting", None, QtGui.QApplication.UnicodeUTF8))
         self.label__choice_list.setText(QtGui.QApplication.translate("Dialog", "Choice List", None, QtGui.QApplication.UnicodeUTF8))
 

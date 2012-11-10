@@ -20,16 +20,6 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <item row="1" column="0">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="0">
     <widget class="QSplitter" name="splitter_top_bottom">
      <property name="orientation">
@@ -206,7 +196,7 @@ padding: 3px;</string>
        <item>
         <widget class="QStackedWidget" name="stackedWidget">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="page_advanced">
           <layout class="QVBoxLayout" name="verticalLayout">
@@ -546,17 +536,41 @@ padding: 3px;</string>
       <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QLabel" name="label_nMatched_nSelected">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Matched Objects (0 matched, 0 selected)</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QLabel" name="label_nMatched_nSelected">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Matched Objects (0 matched, 0 selected)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_matched_table_column_sorting">
+            <property name="text">
+             <string>column sorting</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QTableView" name="tableView_matched">
@@ -607,9 +621,17 @@ padding: 3px;</string>
      </widget>
     </widget>
    </item>
+   <item row="1" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
   </layout>
-  <zorder>buttonBox</zorder>
-  <zorder>splitter_top_bottom</zorder>
  </widget>
  <resources/>
  <connections>

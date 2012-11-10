@@ -23,8 +23,10 @@ def toc(tStart):
 application calls this GUI, this GUI will know which preferences to load)
 *) Implement advanced filters
 *) Allow filtering from choice_list selection w/ right click (like multiple cell selections)
-*) Insert custom filter value to combo box
-*) Allow text selection in matched table, instead of just row selection, but don't allow edit
+context menu for "simple":
+Apply this filter
+context menu for "advanced"
+Apply this filter -> list of existing filter set(s)
 *) Bug fix: # of PV's, etc. differ between 'element' & 'channel'
 '''
 
@@ -55,10 +57,12 @@ import cothread
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (SIGNAL, QObject, QSize)
-from PyQt4.QtGui import (QDialog, QStandardItemModel, QStandardItem,
+from PyQt4.QtGui import (qApp, QDialog, QStandardItemModel, QStandardItem,
                          QComboBox, QTableView, QSortFilterProxyModel,
-                         QAbstractItemView,
-                         QRadioButton, QCheckBox, QSizePolicy)
+                         QAbstractItemView, QMenu, QAction, QIcon,
+                         QCursor, QItemSelection, QItemSelectionModel,
+                         QRadioButton, QCheckBox, QSizePolicy,
+                         QKeySequence)
 
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 
@@ -457,9 +461,10 @@ class ChannelExplorerModel(QObject):
         model_m.setColumnCount(nCols)
         model_m.underlying2DTable = np.empty((nRows,nCols),dtype=np.object)
         template_item = QStandardItem()
-        template_item.setFlags(QtCore.Qt.ItemIsSelectable |
-                               QtCore.Qt.ItemIsDragEnabled |
-                               QtCore.Qt.ItemIsEnabled) # Make it non-editable
+        template_item.setFlags((QtCore.Qt.ItemIsSelectable |
+                                QtCore.Qt.ItemIsDragEnabled |
+                                QtCore.Qt.ItemIsEnabled)
+                               & (~QtCore.Qt.ItemIsEditable) ) # Make it non-editable
         for (j,prop_name) in enumerate(PROP_NAME_LIST):
             
             
@@ -768,7 +773,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     
     #----------------------------------------------------------------------
     def __init__(self, model, isModal, can_modify_object_type, 
-                 lattice_name, parentWindow = None):
+                 lattice_name, caller, parentWindow = None):
         """Constructor"""
         
         QDialog.__init__(self, parent = parentWindow)
@@ -812,6 +817,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         self.on_lattice_change()
         
+        self._initContextMenuItems(caller)
+        
+        self.clipboard = np.array([])
+        
     #----------------------------------------------------------------------
     def keyPressEvent(self, keyEvent):
         """"""
@@ -823,6 +832,133 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         else:
             QDialog.keyPressEvent(self, keyEvent)
             
+    #----------------------------------------------------------------------
+    def _initContextMenuItems(self, caller):
+        """"""
+        
+        t = self.tableView_matched
+
+        t.actionCopySelectedItemsTexts = QAction(
+            QIcon(), 'Copy texts of selected item(s)', t)
+
+        t.actionCopySelectedItemsTexts.setShortcut(
+            QKeySequence(QtCore.Qt.ControlModifier + QtCore.Qt.Key_C))
+        self.addAction(t.actionCopySelectedItemsTexts)
+        ''' This addAction is critical for the shortcut to always work.
+        If you only do addAction for the context menu below, the
+        shortcut will not work, because the widget to which this
+        action is added will be listening for key events.
+        '''
+        
+        t.actionOpenTunerForSelectedChannels = QAction(
+            QIcon(), 'Open tuner for selected channel(s)', t)
+        
+        t.actionOpenPlotterForSelectedChannels = QAction(
+            QIcon(), 'Open plotter for selected channel(s)', t)
+        
+        self.connect(t.actionCopySelectedItemsTexts,
+                     SIGNAL('triggered()'),
+                     self.copySelectedItemsTexts)
+        self.connect(t.actionOpenTunerForSelectedChannels,
+                     SIGNAL('triggered()'),
+                     self.openTunerForSelectedChannels)
+        self.connect(t.actionOpenPlotterForSelectedChannels,
+                     SIGNAL('triggered()'),
+                     self.openPlotterForSelectedChannels)
+        
+        t.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        t.contextMenuForChannels = QMenu()
+        t.contextMenuForElems = QMenu()
+        
+        if caller == 'aplattuner':
+            t.contextMenuForChannels.addAction(t.actionCopySelectedItemsTexts)            
+
+            t.contextMenuForElems.addAction(t.actionCopySelectedItemsTexts)            
+
+        elif caller in ('__main__', None):
+            t.contextMenuForChannels.addAction(t.actionCopySelectedItemsTexts)    
+            t.contextMenuForChannels.addSeparator()
+            t.contextMenuForChannels.addAction(t.actionOpenTunerForSelectedChannels)
+            t.contextMenuForChannels.addSeparator()
+            t.contextMenuForChannels.addAction(t.actionOpenPlotterForSelectedChannels)
+            
+            t.contextMenuForElems.addAction(t.actionCopySelectedItemsTexts)
+        
+        else:
+            raise NotImplementedError('caller name: '+str(caller))
+        
+        t.contextMenuForChannels.setDefaultAction(t.actionCopySelectedItemsTexts)
+        t.contextMenuForElems.setDefaultAction(t.actionCopySelectedItemsTexts)
+            
+        
+    #----------------------------------------------------------------------
+    def openContextMenu(self, qpoint):
+        """"""
+        
+        if self.selectedRowIndList() == []:
+            return
+        
+        sender = self.sender()
+        
+        cursor_pos = QCursor.pos()
+        
+        object_type = self.model.object_type 
+        if object_type == 'channel':
+            sender.contextMenuForChannels.exec_(cursor_pos)
+        elif object_type == 'element':
+            sender.contextMenuForElems.exec_(cursor_pos)
+        else:
+            raise ValueError('Unexpected object_type: '+object_type)
+
+    #----------------------------------------------------------------------
+    def copySelectedItemsTexts(self):
+        """"""
+        
+        t = self.tableView_matched
+        
+        proxyItemSelectionModel = t.selectionModel()
+        proxyItemSelection = proxyItemSelectionModel.selection()
+        
+        #proxyModelIndexList = t.selectedIndexes()
+        
+        proxyMod = t.model()
+
+        proxyItemSelectionCount = proxyItemSelection.count()
+        if proxyItemSelectionCount == 0:
+            return
+        else:
+            #proxyItemSelectionRange = proxyItemSelection.first()
+            #proxyModelIndexList = proxyItemSelectionRange.indexes()
+            #nRows = proxyItemSelectionRange.height()
+            #nCols = proxyItemSelectionRange.width()
+            #self.clipboard = np.empty((nRows,nCols),dtype=np.object)
+            #flat = self.clipboard.transpose().flatten()
+            proxyModelIndexList = proxyItemSelection.indexes()
+            self.clipboard = np.empty(len(proxyModelIndexList),dtype=np.object)
+            for (i,proxyInd) in enumerate(proxyModelIndexList):
+                text = proxyMod.data(proxyInd)
+                #flat[i] = text
+                self.clipboard[i] = text
+            #self.clipboard = flat.reshape((nCols,nRows)).transpose()
+            
+            #print self.clipboard
+            system_clipboard = qApp.clipboard()
+            system_clipboard.setText('\n'.join(self.clipboard))
+
+        
+        
+    #----------------------------------------------------------------------
+    def openTunerForSelectedChannels(self):
+        """"""
+        
+        print 'Not implemented yet'
+        
+    #----------------------------------------------------------------------
+    def openPlotterForSelectedChannels(self):
+        """"""
+
+        print 'Not implemented yet'
+        
     
     #----------------------------------------------------------------------
     def updateChoiceListComboBox(self):
@@ -1155,24 +1291,30 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         """
         Perform initial formating for tableWidget_choice_list
         """
-        
-        t = self.tableView_matched # shorthand notation
-        
+                
         self.table_proxyModel_matched = QSortFilterProxyModel()
         self.table_proxyModel_matched.setSourceModel(self.table_model_matched)
         self.table_proxyModel_matched.setDynamicSortFilter(False)
         self.table_proxyModel_matched.setSortRole(self.table_model_matched.SortRole)
         
-        self.tableView_matched.setModel(self.table_proxyModel_matched)
-        self.tableView_matched.setCornerButtonEnabled(True)
-        self.tableView_matched.setShowGrid(True)
-        horizHeader = self.tableView_matched.horizontalHeader()
+        t = self.tableView_matched # shorthand notation
+        t.setModel(self.table_proxyModel_matched)
+        t.setCornerButtonEnabled(True)
+        t.setShowGrid(True)
+        t.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        t.setSelectionBehavior(QAbstractItemView.SelectItems)
+        t.setAlternatingRowColors(True)
+        horizHeader = t.horizontalHeader()
         horizHeader.setSortIndicatorShown(True)
         horizHeader.setStretchLastSection(True)
         horizHeader.setMovable(True)
-        self.tableView_matched.resizeColumnsToContents()
-        self.tableView_matched.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.tableView_matched.setSortingEnabled(True)
+        t.resizeColumnsToContents()
+        t.setSortingEnabled(self.checkBox_matched_table_column_sorting.isChecked())
+        
+        self.proxyItemSelModel_matched = QItemSelectionModel(self.table_proxyModel_matched)
+        t.setSelectionModel(self.proxyItemSelModel_matched)
+        
+        
         
         
     #----------------------------------------------------------------------
@@ -1194,7 +1336,18 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
 
 
     #----------------------------------------------------------------------
-    def update_matched_and_selected_numbers(self):
+    def setMatchedTableColumnSortingEnabled(self, check_state_int):
+        """"""
+        
+        if check_state_int == QtCore.Qt.Unchecked:
+            self.tableView_matched.setSortingEnabled(False)
+        elif check_state_int == QtCore.Qt.Checked:
+            self.tableView_matched.setSortingEnabled(True)
+        else:
+            raise ValueError('Partially checked state is NOT expected for column sorting checkbox.')
+        
+    #----------------------------------------------------------------------
+    def update_matched_and_selected_numbers(self, selected=None, deselected=None):
         """ """
         
         f = self.model.filters[self.model.selected_filter_index]
@@ -1388,7 +1541,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         # enough, the stacked widget will be minimized.
         splitter_sizes = [self.height()*(1./8.), self.height()*(7./8.)]
         self.splitter_top_bottom.setSizes(splitter_sizes)
-
         
     #----------------------------------------------------------------------
     def on_lattice_change(self):
@@ -1403,7 +1555,8 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
             self.model.updateFilters(None)
         except:
-            pass
+            print 'Exception on view.on_lattice_change'
+            #pass
         
     #----------------------------------------------------------------------
     def on_NOT_change(self, checked):
@@ -1499,8 +1652,8 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def selectedRowIndList(self):
         """"""
     
-        qModelIndexList = self.tableView_matched.selectedIndexes()
-        selectedRowIndList = list(set([q.row() for q in qModelIndexList]))
+        qProxyModelIndexList = self.tableView_matched.selectedIndexes()
+        selectedRowIndList = sorted(set([q.row() for q in qProxyModelIndexList]))
         
         return selectedRowIndList
         
@@ -1535,7 +1688,7 @@ class ChannelExplorerApp(QObject):
     #----------------------------------------------------------------------
     def __init__(self, modal = True, parentWindow = None, 
                  init_object_type = 'element', can_modify_object_type = True,
-                 lattice_name = ''):
+                 lattice_name = '', caller = None):
         """Constructor"""
         
         QObject.__init__(self)
@@ -1544,7 +1697,7 @@ class ChannelExplorerApp(QObject):
         self.parentWindow = parentWindow
         
         self._initModel(init_object_type)
-        self._initView(can_modify_object_type, lattice_name)
+        self._initView(can_modify_object_type, lattice_name, caller)
         
         self.connect(self.view.radioButton_simple,SIGNAL('toggled(bool)'),
                      self.view._changeFilterMode)
@@ -1607,7 +1760,7 @@ class ChannelExplorerApp(QObject):
         self.connect(self.model, SIGNAL('filtersUpdated'),
                      self.view.update_matched_and_selected_numbers)
         
-        self.connect(self.view.tableView_matched,
+        self.connect(self.view.tableView_matched.selectionModel(),
                      SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
                      self.view.update_matched_and_selected_numbers)
         
@@ -1619,6 +1772,10 @@ class ChannelExplorerApp(QObject):
         self.connect(self.view.pushButton_add_row, SIGNAL('clicked()'),
                      self.view.add_row_to_filter_table)
         
+        
+        self.connect(self.view.checkBox_matched_table_column_sorting,
+                     SIGNAL('stateChanged(int)'),
+                     self.view.setMatchedTableColumnSortingEnabled)
         
         self.connect(self.view.comboBox_lattice,
                      SIGNAL('currentIndexChanged(const QString &)'),
@@ -1635,6 +1792,10 @@ class ChannelExplorerApp(QObject):
         self.connect(self.model, SIGNAL("readyForClosing"),
                      self.view.accept_and_close)
         
+        self.connect(self.view.tableView_matched,
+                     SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     self.view.openContextMenu)
+        
         
     #----------------------------------------------------------------------
     def debug(self):
@@ -1649,12 +1810,12 @@ class ChannelExplorerApp(QObject):
         self.model = ChannelExplorerModel(object_type=object_type)
         
     #----------------------------------------------------------------------
-    def _initView(self, can_modify_object_type, lattice_name):
+    def _initView(self, can_modify_object_type, lattice_name, caller):
         """ """
         
         self.view = ChannelExplorerView(self.model, self.modal,
                                         can_modify_object_type,
-                                        lattice_name,
+                                        lattice_name, caller,
                                         parentWindow = self.parentWindow)
         
 
@@ -1671,7 +1832,8 @@ def lower(none_or_str_or_unicode_string):
 def make(modal = True, parentWindow = None, 
          init_object_type = 'element', can_modify_object_type = True,
          output_type = TYPE_OBJECT,
-         aphla_init_func = ap.initNSLS2V2, lattice_name = 'V2SR'):
+         aphla_init_func = ap.initNSLS2V2, lattice_name = 'V2SR',
+         caller = None):
     """ """
     
     if not ap.machines._lat:
@@ -1686,7 +1848,7 @@ def make(modal = True, parentWindow = None,
     
     app = ChannelExplorerApp(modal, parentWindow, 
                              init_object_type, can_modify_object_type,
-                             lattice_name)
+                             lattice_name, caller)
     view = app.view
         
     if app.modal :
@@ -1737,13 +1899,13 @@ def main(args):
         
     cothread.iqt()
     
-    #aphla_init_func = ap.initNSLS2V2Cached
     aphla_init_func = ap.initNSLS2V2
     lattice_name = 'V2SR'
         
     result = make(modal=True, output_type=TYPE_OBJECT,
                   init_object_type='channel',
-                  aphla_init_func=aphla_init_func, lattice_name=lattice_name)
+                  aphla_init_func=aphla_init_func, lattice_name=lattice_name,
+                  caller='__main__')
     
     if result.has_key('dialog_result'): # When modal
         app           = result['app']
