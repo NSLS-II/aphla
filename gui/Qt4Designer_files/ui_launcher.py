@@ -129,7 +129,10 @@ class Ui_MainWindow(object):
         self.pushButton_path_button_list_back.setText(QtGui.QApplication.translate("MainWindow", "Back", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_path_button_list_1.setText(QtGui.QApplication.translate("MainWindow", "Folder", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_path_button_list_forward.setText(QtGui.QApplication.translate("MainWindow", "Forward", None, QtGui.QApplication.UnicodeUTF8))
-        self.lineEdit_search.setPlaceholderText(QtGui.QApplication.translate("MainWindow", "Quick search", None, QtGui.QApplication.UnicodeUTF8))
+        try: # TOREMOVE_ON_DEB7 For older PyQt backward compatibility
+            self.lineEdit_search.setPlaceholderText(QtGui.QApplication.translate("MainWindow", "Quick search", None, QtGui.QApplication.UnicodeUTF8))
+        except:
+            pass
         self.menuFile.setTitle(QtGui.QApplication.translate("MainWindow", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.menuEdit.setTitle(QtGui.QApplication.translate("MainWindow", "Edit", None, QtGui.QApplication.UnicodeUTF8))
         self.menuView.setTitle(QtGui.QApplication.translate("MainWindow", "View", None, QtGui.QApplication.UnicodeUTF8))
