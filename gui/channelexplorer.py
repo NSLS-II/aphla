@@ -21,13 +21,21 @@ def toc(tStart):
 ''' TODO
 *) Add QSettings for window size, etc. (add "caller" so that depending on which
 application calls this GUI, this GUI will know which preferences to load)
+   - default visible columns & their order (Column View)
+   - OOO column sorting init state (General)
+   - OOO case-sensitive (General)
+   - OOO simple or advanced (General)
+   - XXXX elements or channels (General)
+   - OOO lattice initialization func name (General)
+   - OOO default lattice name (General)
+Use VisibleOrderPreferencesDialog class
+   
 *) Implement advanced filters
 *) Allow filtering from choice_list selection w/ right click (like multiple cell selections)
 context menu for "simple":
 Apply this filter
 context menu for "advanced"
 Apply this filter -> list of existing filter set(s)
-*) Bug fix: # of PV's, etc. differ between 'element' & 'channel'
 '''
 
 """
@@ -56,7 +64,7 @@ import numpy as np
 import cothread
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import (SIGNAL, QObject, QSize)
+from PyQt4.QtCore import (SIGNAL, QObject, QSize, QSettings, QRect)
 from PyQt4.QtGui import (qApp, QDialog, QStandardItemModel, QStandardItem,
                          QComboBox, QTableView, QSortFilterProxyModel,
                          QAbstractItemView, QMenu, QAction, QIcon,
@@ -65,6 +73,8 @@ from PyQt4.QtGui import (qApp, QDialog, QStandardItemModel, QStandardItem,
                          QKeySequence)
 
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
+from Qt4Designer_files.ui_channel_explorer_pref_dialog import Ui_Dialog as Ui_Dialog_preferences
+from orderprefdlg import OrderSelector
 
 import aphla as ap
 
@@ -73,6 +83,10 @@ import aphla as ap
 TYPE_OBJECT = 1
 TYPE_NAME   = 2
 
+MACHINE_DICT = { # (Machine Display Name): (Initialization Function Name)
+    'NSLS2': 'initNSLS2',
+    'NSLS2V2': 'initNSLS2V2',
+    }
 
 ENUM_ELEM_FULL_DESCRIP_NAME = 0
 ENUM_ELEM_SHORT_DESCRIP_NAME = 1
@@ -214,7 +228,7 @@ class ChannelExplorerModel(QObject):
     """ """
 
     #----------------------------------------------------------------------
-    def __init__(self, object_type='element'):
+    def __init__(self, machine_name, object_type='element', settings=None):
         """
         The optional input argument "filter_spec" must be either an empty
         list, or a list of lists, each of which contains a dictionary and a bool. 
@@ -251,9 +265,20 @@ class ChannelExplorerModel(QObject):
         
         QObject.__init__(self)
         
+        self.settings = settings # QSettings object
+        
+        self.machine_name = machine_name
+        
         self.object_type = object_type
         
-        self.is_case_sensitive = False
+        self.settings.beginGroup('General')
+        self.is_case_sensitive = self.settings.value('is_case_sensitive')
+        if self.is_case_sensitive is None:
+            self.is_case_sensitive = False
+        self.is_column_sorting = self.settings.value('is_column_sorting')
+        if self.is_column_sorting is None:
+            self.is_column_sorting = False
+        self.settings.endGroup()
         
         self.col_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_SHORT_DESCRIP_NAME]
                               for name in PROP_NAME_LIST]
@@ -302,17 +327,22 @@ class ChannelExplorerModel(QObject):
         
         
     #----------------------------------------------------------------------
+    def on_machine_change(self, machine_name):
+        """"""
+        
+        initMachine(machine_name)
+        
+        self.emit(SIGNAL('machineChanged'))
+        
+        
+    #----------------------------------------------------------------------
     def on_lattice_change(self, lattice_name):
         """"""
         
+        print 'Using Lattice:', lattice_name
         ap.machines.use(lattice_name)
-        
-        if isinstance(self.currentParentSet[0],tuple):
-            selected_object_type = 'channel'
-        else:
-            selected_object_type = 'element'
-        
-        self.reconstructModel(selected_object_type)
+                
+        self.reconstructModel(self.object_type)
         
         self.emit(SIGNAL('modelReconstructedOnLatticeChange'))
         
@@ -467,8 +497,6 @@ class ChannelExplorerModel(QObject):
                                & (~QtCore.Qt.ItemIsEditable) ) # Make it non-editable
         for (j,prop_name) in enumerate(PROP_NAME_LIST):
             
-            
-            t1 = tic()
             item_list = [template_item.clone() for i in range(nRows)]
             if not( (prop_name == 'fields') and (self.object_type == 'channel') ):
                 value_list = [self.get(obj,prop_name) for obj in matched_obj_list]
@@ -484,7 +512,6 @@ class ChannelExplorerModel(QObject):
                 item.setText(value.__str__())
                 model_m.setItem(i, j, item)
 
-        
         model_m.blockSignals(False)
         
         model_m.emit(SIGNAL('modelReset()'))
@@ -754,13 +781,13 @@ class ChannelExplorerModel(QObject):
         
             
     #----------------------------------------------------------------------
-    def update_selected_elements(self, selectedRowIndList):
+    def update_selected_elements(self, selected_row_ind_list):
         """ """
         
         # Update currently selected elements before exiting the dialog
         f = self.filters[self.selected_filter_index]
         matched_obj_list = [f.parentSet[i] for i in f.matched_index_list]
-        self.selectedObjects = [matched_obj_list[i] for i in selectedRowIndList]
+        self.selectedObjects = [matched_obj_list[i] for i in selected_row_ind_list]
                         
         self.emit(SIGNAL("readyForClosing"),())
 
@@ -773,10 +800,12 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     
     #----------------------------------------------------------------------
     def __init__(self, model, isModal, can_modify_object_type, 
-                 lattice_name, caller, parentWindow = None):
+                 lattice_name, caller, parentWindow = None, settings = None):
         """Constructor"""
         
         QDialog.__init__(self, parent = parentWindow)
+        
+        self.settings = settings # QSettings object
         
         self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons
         
@@ -803,23 +832,40 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.radioButton_channels.setEnabled(False)
             self.radioButton_elements.setEnabled(False)
         
-        lattice_name_list = ap.machines.lattices()
-        comboBox_lattice_model = QStandardItemModel()
-        for lat in lattice_name_list:
-            comboBox_lattice_model.appendRow(QStandardItem(lat))
-        self.comboBox_lattice.setModel(comboBox_lattice_model)
-        self.comboBox_lattice.setEditable(False)
-        self.comboBox_lattice.setSizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
+        machine_name_list = MACHINE_DICT.keys()
+        comboBox_machine_model = QStandardItemModel()
+        for machine in machine_name_list:
+            comboBox_machine_model.appendRow(QStandardItem(machine))
+        self.comboBox_machine.setModel(comboBox_machine_model)
+        self.comboBox_machine.setEditable(False)
+        self.comboBox_machine.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.comboBox_machine.setMinimumWidth(self.comboBox_machine.sizeHint().width())
         try:
-            self.comboBox_lattice.setCurrentIndex(lattice_name_list.index(lattice_name))
+            self.comboBox_machine.setCurrentIndex(machine_name_list.index(self.model.machine_name))
         except:
-            self.comboBox_lattice.setCurrentIndex(0)
+            self.comboBox_machine.setCurrentIndex(0)
+        
+        self._initLatticeList(lattice_name)
+        #lattice_name_list = ap.machines.lattices()
+        #comboBox_lattice_model = QStandardItemModel()
+        #for lat in lattice_name_list:
+            #comboBox_lattice_model.appendRow(QStandardItem(lat))
+        #self.comboBox_lattice.setModel(comboBox_lattice_model)
+        #self.comboBox_lattice.setEditable(False)
+        #self.comboBox_lattice.setSizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
+        #try:
+            #self.comboBox_lattice.setCurrentIndex(lattice_name_list.index(lattice_name))
+        #except:
+            #self.comboBox_lattice.setCurrentIndex(0)
         
         self.on_lattice_change()
         
         self._initContextMenuItems(caller)
         
         self.clipboard = np.array([])
+        
+        # Load QSettings
+        self.loadViewSizeSettings()
         
     #----------------------------------------------------------------------
     def keyPressEvent(self, keyEvent):
@@ -831,6 +877,79 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.pushButton_search.click()
         else:
             QDialog.keyPressEvent(self, keyEvent)
+
+    #----------------------------------------------------------------------
+    def _initLatticeList(self, lattice_name):
+        """"""
+                
+        lattice_name_list = ap.machines.lattices()
+        comboBox_lattice_model = QStandardItemModel()
+        for lat in lattice_name_list:
+            comboBox_lattice_model.appendRow(QStandardItem(lat))
+        self.comboBox_lattice.setModel(comboBox_lattice_model)
+        self.comboBox_lattice.setEditable(False)
+        self.comboBox_lattice.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.comboBox_lattice.setMinimumWidth(self.comboBox_lattice.sizeHint().width())
+        try:
+            self.comboBox_lattice.setCurrentIndex(lattice_name_list.index(lattice_name))
+        except:
+            self.comboBox_lattice.setCurrentIndex(0)
+                
+
+    #----------------------------------------------------------------------
+    def saveViewSizeSettings(self):
+        """"""
+        
+        settings = self.settings
+        
+        settings.beginGroup('DialogWindow')
+        settings.setValue('position',self.geometry())
+        settings.setValue('splitter_left_right_sizes',self.splitter_left_right.sizes())
+        settings.setValue('splitter_top_bottom_sizes',self.splitter_top_bottom.sizes())
+        settings.endGroup()
+        
+        print 'Settings saved.'
+        
+    #----------------------------------------------------------------------
+    def loadViewSizeSettings(self):
+        """"""
+        
+        settings = self.settings
+        
+        settings.beginGroup('DialogWindow')
+        rect = settings.value('position')
+        if rect is None:
+            rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
+        self.setGeometry(rect)
+        
+        splitter_left_right_sizes = settings.value('splitter_left_right_sizes')
+        if splitter_left_right_sizes is None:
+            # Adjust left-right splitter so that left widget takes max width
+            # and right widget takes min width
+            # QSplitter::setStretchFactor(int index, int stretch)
+            self.splitter_left_right.setStretchFactor(0,1)
+            self.splitter_left_right.setStretchFactor(1,0)
+        else:
+            splitter_sizes = [int(s) for s in splitter_left_right_sizes] # convert from string to int
+            self.splitter_left_right.setSizes(splitter_sizes)
+
+        splitter_top_bottom_sizes = settings.value('splitter_top_bottom_sizes')
+        if splitter_top_bottom_sizes is None:
+            # setStretchFactor does not work for the top-bottom splitter, since
+            # I can't figure out how to minimize QStackedWidget. The following method
+            # works. As long as the height fraction of the top portion is small
+            # enough, the stacked widget will be minimized.
+            splitter_sizes = [self.height()*(1./10.), self.height()*(9./10.)]
+        else:
+            splitter_sizes = [int(s) for s in splitter_top_bottom_sizes] # convert from string to int
+        self.splitter_top_bottom.setSizes(splitter_sizes)
+        
+        
+        settings.endGroup()
+        
+        print 'Settings loaded.'
+        
+        
             
     #----------------------------------------------------------------------
     def _initContextMenuItems(self, caller):
@@ -974,8 +1093,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
                             for i in range(nCols)]
         
         for i in range(nCols):
-            t1 = tic()
-            
+                
             col_name = column_name_list[i]
             prop_name_and_full_name_and_data_type = \
                 [(k,v[ENUM_ELEM_FULL_DESCRIP_NAME],v[ENUM_ELEM_DATA_TYPE])
@@ -987,9 +1105,23 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             if data_type.endswith('_list'): # and (not ( (prop_name == 'fields') and (self.model.object_type) ) ):
                 # Flatten the list of lists
                 if (self.choice_dict[prop_name] != []) and ( isinstance(self.choice_dict[prop_name][0], list) ):
-                    #self.choice_dict[prop_name] = reduce(add, self.choice_dict[prop_name])
-                    # Above works, but below is ~x3 faster
-                    self.choice_dict[prop_name] = [x for L in self.choice_dict[prop_name] for x in L]
+                    if data_type.startswith('string'):
+                        empty_list_filler = ''
+                    else:
+                        empty_list_filler = None
+                    filled_list = [L if L != [] else [empty_list_filler] for L in self.choice_dict[prop_name]]
+                    self.choice_dict[prop_name] = [x for L in filled_list for x in L]
+                    #new_choice_list = []
+                    #for L in self.choice_dict[prop_name]:
+                        #if L != []:
+                            #for x in L:
+                                #new_choice_list.append(x)
+                        #else: # If self.choice_dict[prop_name] was [[],[],...,[]]
+                            #if data_type.startswith('string'):
+                                #new_choice_list.append('')
+                            #else:
+                                #new_choice_list.append(None)
+                    #self.choice_dict[prop_name] = new_choice_list
             if data_type.startswith('string'):
                 key_func = lower
             else:
@@ -1003,6 +1135,8 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             )
         
         self.comboBox_choice_list.update()
+        
+        self.updateChoiceListView()
         
     
     #----------------------------------------------------------------------
@@ -1076,6 +1210,8 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         self.comboBox_choice_list.setModel(model_property)
         self.comboBox_choice_list.setSizeAdjustPolicy(
             QComboBox.AdjustToContents)
+        self.comboBox_choice_list.setMinimumWidth(
+            self.comboBox_choice_list.sizeHint().width())
         
         model_choice_list = QStandardItemModel()
         self.listView_choice_list.setModel(model_choice_list)
@@ -1156,8 +1292,19 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         self.tableWidget_filter.setRowCount(0)
         
+        self.settings.beginGroup('General')
+        filter_mode_str = self.settings.value('filter_mode_string')
+        if filter_mode_str is None:
+            filter_mode_str = 'simple'
+        if filter_mode_str == 'simple':
+            page_obj = self.page_simple
+        elif filter_mode_str == 'advanced':
+            page_obj = self.page_advanced
+        else:
+            raise ValueError('Unexpected filter mode: '+filter_mode_str)
+        self.stackedWidget.setCurrentWidget(page_obj)
+        self.settings.endGroup()
         
-        self.stackedWidget.setCurrentWidget(self.page_simple)
         
         filterModeStr = self.getFilterModeStr()
         if filterModeStr == 'simple':
@@ -1309,13 +1456,23 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         horizHeader.setStretchLastSection(True)
         horizHeader.setMovable(True)
         t.resizeColumnsToContents()
-        t.setSortingEnabled(self.checkBox_matched_table_column_sorting.isChecked())
+        self.checkBox_matched_table_column_sorting.setChecked(self.model.is_column_sorting)
+        t.setSortingEnabled(self.model.is_column_sorting)
         
         self.proxyItemSelModel_matched = QItemSelectionModel(self.table_proxyModel_matched)
         t.setSelectionModel(self.proxyItemSelModel_matched)
-        
-        
-        
+
+        '''
+        It is important that this connection is made here, not in ChannelExplorerApp.__init__().
+        The reason is that the sender (the selection model) will be created as new, 
+        whenever this function is called. Hence, the previously made connections will be
+        invalidated, and you have to reconnect the signal to the newly created selection
+        model here. 
+        '''
+        self.connect(self.proxyItemSelModel_matched,
+                     SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     self.update_matched_and_selected_numbers)
+
         
     #----------------------------------------------------------------------
     def update_tables(self):
@@ -1526,22 +1683,15 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             return False
         
     #----------------------------------------------------------------------
-    def _initViewSizes(self):
+    def on_machine_change(self, lattice_name=''):
         """"""
-                
-        # Adjust left-right splitter so that left widget takes max width
-        # and right widget takes min width
-        # QSplitter::setStretchFactor(int index, int stretch)
-        self.splitter_left_right.setStretchFactor(0,1)
-        self.splitter_left_right.setStretchFactor(1,0)
-
-        # setStretchFactor does not work for the top-bottom splitter, since
-        # I can't figure out how to minimize QStackedWidget. The following method
-        # works. As long as the height fraction of the top portion is small
-        # enough, the stacked widget will be minimized.
-        splitter_sizes = [self.height()*(1./8.), self.height()*(7./8.)]
-        self.splitter_top_bottom.setSizes(splitter_sizes)
         
+        self._initLatticeList(lattice_name)
+        
+        lattice_name_list = ap.machines.lattices()
+        selected_lattice_name = lattice_name_list[
+            self.comboBox_lattice.currentIndex()]
+                
     #----------------------------------------------------------------------
     def on_lattice_change(self):
         """"""
@@ -1550,8 +1700,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self._initFilterView()
             self._initChoiceList()
             self._initMatchTable()
-        
-            self._initViewSizes()
         
             self.model.updateFilters(None)
         except:
@@ -1653,19 +1801,29 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         """"""
     
         qProxyModelIndexList = self.tableView_matched.selectedIndexes()
-        selectedRowIndList = sorted(set([q.row() for q in qProxyModelIndexList]))
+        row_ind_list = sorted(set([q.row() for q in qProxyModelIndexList]))
         
-        return selectedRowIndList
+        return row_ind_list
+        
+        
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+        
+        # Save QSettings
+        self.saveViewSizeSettings()
+        
+        event.accept()
         
     #----------------------------------------------------------------------
     def accept(self):
         """ """
         
         # Update currently selected elements before exiting the dialog
-        selectedRowIndList = self.selectedRowIndList()
-        
+        selected_row_ind_list = self.selectedRowIndList()
+                
         self.emit(SIGNAL("updateFinalSelection"),
-                  selectedRowIndList)
+                  selected_row_ind_list)
         
     #----------------------------------------------------------------------
     def accept_and_close(self):
@@ -1688,15 +1846,38 @@ class ChannelExplorerApp(QObject):
     #----------------------------------------------------------------------
     def __init__(self, modal = True, parentWindow = None, 
                  init_object_type = 'element', can_modify_object_type = True,
-                 lattice_name = '', caller = None):
+                 machine_name = None, lattice_name = None, caller = None):
         """Constructor"""
         
         QObject.__init__(self)
         
+        self.settings = QSettings('HLA','ChannelExplorer')
+        
+        ###
+        self.settings.beginGroup('General')
+        
+        if machine_name is None:
+            machine_name = self.settings.value('machine_name')
+            if machine_name is None:
+                machine_name = 'NSLS2V2'
+                
+        initMachine(machine_name)
+            
+        if lattice_name is None:
+            lattice_name = self.settings.value('lattice_name')
+            if lattice_name is None:
+                lattice_name = 'V2SR'
+                
+        print 'Using Lattice:', lattice_name
+        ap.machines.use(lattice_name)
+        
+        self.settings.endGroup()
+        ###
+        
         self.modal = modal
         self.parentWindow = parentWindow
         
-        self._initModel(init_object_type)
+        self._initModel(machine_name, init_object_type)
         self._initView(can_modify_object_type, lattice_name, caller)
         
         self.connect(self.view.radioButton_simple,SIGNAL('toggled(bool)'),
@@ -1760,9 +1941,6 @@ class ChannelExplorerApp(QObject):
         self.connect(self.model, SIGNAL('filtersUpdated'),
                      self.view.update_matched_and_selected_numbers)
         
-        self.connect(self.view.tableView_matched.selectionModel(),
-                     SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
-                     self.view.update_matched_and_selected_numbers)
         
         #self.connect(self.view.pushButton_add_row, SIGNAL("clicked()"),
                      #self.view.add_row_to_filter_table)
@@ -1777,14 +1955,19 @@ class ChannelExplorerApp(QObject):
                      SIGNAL('stateChanged(int)'),
                      self.view.setMatchedTableColumnSortingEnabled)
         
+        self.connect(self.view.comboBox_machine,
+                     SIGNAL('currentIndexChanged(const QString &)'),
+                     self.model.on_machine_change)
+        self.connect(self.model, SIGNAL('machineChanged'),
+                     self.view.on_machine_change)
+        #
         self.connect(self.view.comboBox_lattice,
                      SIGNAL('currentIndexChanged(const QString &)'),
                      self.model.on_lattice_change)
+        #
         self.connect(self.model,
                      SIGNAL('modelReconstructedOnLatticeChange'),
                      self.view.on_lattice_change)
-        #self.connect(self.view, SIGNAL('disableViewUpdateOnLatticeChange'),
-                     #self.disableViewUpdateOnLatticeChange)
 
         
         self.connect(self.view, SIGNAL("updateFinalSelection"),
@@ -1796,18 +1979,31 @@ class ChannelExplorerApp(QObject):
                      SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.view.openContextMenu)
         
+        self.connect(self.view.pushButton_preferences,
+                     SIGNAL('clicked()'),
+                     self.launchPrefDialog)
+        
         
     #----------------------------------------------------------------------
     def debug(self):
         """"""
         
         print 'debug'
+                
+    #----------------------------------------------------------------------
+    def launchPrefDialog(self):
+        """"""
+        
+        prefDialog = Preferences(parentWindow=self.view)
+        prefDialog.show()
         
     #----------------------------------------------------------------------
-    def _initModel(self, object_type):
+    def _initModel(self, machine_name, object_type):
         """ """
         
-        self.model = ChannelExplorerModel(object_type=object_type)
+        self.model = ChannelExplorerModel(machine_name,
+                                          object_type=object_type,
+                                          settings=self.settings)
         
     #----------------------------------------------------------------------
     def _initView(self, can_modify_object_type, lattice_name, caller):
@@ -1816,8 +2012,52 @@ class ChannelExplorerApp(QObject):
         self.view = ChannelExplorerView(self.model, self.modal,
                                         can_modify_object_type,
                                         lattice_name, caller,
-                                        parentWindow = self.parentWindow)
+                                        parentWindow = self.parentWindow,
+                                        settings = self.settings)
         
+########################################################################
+class Preferences(QDialog, Ui_Dialog_preferences):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, parentWindow = None):
+        """Constructor"""
+        
+        QDialog.__init__(self, parent=parentWindow)
+        
+        self.setupUi(self)
+        
+        selector = OrderSelector(parentWidget=self.page_column_visibility_order,
+                                 label_text_NotSelected='NOT Visible Column Names:',
+                                 label_text_Selected='Visible Column Names:')
+        
+        
+        self.listWidget_NotSelected = selector.listWidget_NotSelected
+        
+        self.stackedWidget.setCurrentWidget(self.page_column_visibility_order)
+        self.listWidget_group.setCurrentItem(
+            self.listWidget_group.findItems('Columns',QtCore.Qt.MatchExactly)[0]
+            )
+        
+        self.connect(self.listWidget_group,
+                     SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'),
+                     self.changePage)
+        
+    #----------------------------------------------------------------------
+    def changePage(self, currentItem, previousItem):
+        """"""
+        
+        selected_text = currentItem.text()
+        if selected_text == 'Columns':
+            self.stackedWidget.setCurrentWidget(self.page_column_visibility_order)
+        elif selected_text == 'Miscellaneous':
+            self.stackedWidget.setCurrentWidget(self.page_misc)
+        else:
+            raise ValueError('Unexpected selected text: '+selected_text)
+        
+        
+    
+
 
 #----------------------------------------------------------------------
 def lower(none_or_str_or_unicode_string):
@@ -1827,28 +2067,47 @@ def lower(none_or_str_or_unicode_string):
         return none_or_str_or_unicode_string.lower()
     except:
         return str(none_or_str_or_unicode_string).lower()
+    
+#----------------------------------------------------------------------
+def initMachine(machine_name):
+    """"""
+    
+    aphla_init_func_name = MACHINE_DICT[machine_name]
+            
+    if ap.machines._lat:
+        ap.machines._lat = None
+        ap.machines._lattice_dict = {}
+
+    aphla_init_func = getattr(ap, aphla_init_func_name)
+    print 'Initializing lattices...'
+    tStart = tic()
+    aphla_init_func()
+    print 'Initialization took', toc(tStart), 'seconds.'
+    #print 'Done.'
+    
+    
 
 #----------------------------------------------------------------------
 def make(modal = True, parentWindow = None, 
          init_object_type = 'element', can_modify_object_type = True,
          output_type = TYPE_OBJECT,
-         aphla_init_func = ap.initNSLS2V2, lattice_name = 'V2SR',
+         machine_name = None, lattice_name = None,
          caller = None):
     """ """
     
-    if not ap.machines._lat:
-        print 'Initializing lattices...'
-        tStart = tic()
-        aphla_init_func()
-        print str(toc(tStart))
-        print 'Done.'    
+    #if not ap.machines._lat:
+        #print 'Initializing lattices...'
+        #tStart = tic()
+        #aphla_init_func()
+        #print str(toc(tStart))
+        #print 'Done.'    
 
-    print 'Using Lattice:', lattice_name
-    ap.machines.use(lattice_name)
+    #print 'Using Lattice:', lattice_name
+    #ap.machines.use(lattice_name)
     
     app = ChannelExplorerApp(modal, parentWindow, 
                              init_object_type, can_modify_object_type,
-                             lattice_name, caller)
+                             machine_name, lattice_name, caller)
     view = app.view
         
     if app.modal :
@@ -1899,12 +2158,8 @@ def main(args):
         
     cothread.iqt()
     
-    aphla_init_func = ap.initNSLS2V2
-    lattice_name = 'V2SR'
-        
     result = make(modal=True, output_type=TYPE_OBJECT,
                   init_object_type='channel',
-                  aphla_init_func=aphla_init_func, lattice_name=lattice_name,
                   caller='__main__')
     
     if result.has_key('dialog_result'): # When modal

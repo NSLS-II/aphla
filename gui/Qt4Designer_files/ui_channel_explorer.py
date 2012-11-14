@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_channel_explorer.ui'
 #
-# Created: Fri Nov  9 22:23:56 2012
+# Created: Tue Nov 13 21:55:08 2012
 #      by: PyQt4 UI code generator 4.7.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -13,10 +13,10 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.setWindowModality(QtCore.Qt.ApplicationModal)
-        Dialog.resize(926, 737)
+        Dialog.resize(960, 737)
         Dialog.setModal(True)
-        self.gridLayout_3 = QtGui.QGridLayout(Dialog)
-        self.gridLayout_3.setObjectName("gridLayout_3")
+        self.verticalLayout_11 = QtGui.QVBoxLayout(Dialog)
+        self.verticalLayout_11.setObjectName("verticalLayout_11")
         self.splitter_top_bottom = QtGui.QSplitter(Dialog)
         self.splitter_top_bottom.setOrientation(QtCore.Qt.Vertical)
         self.splitter_top_bottom.setObjectName("splitter_top_bottom")
@@ -72,13 +72,23 @@ class Ui_Dialog(object):
         self.radioButton_channels.setObjectName("radioButton_channels")
         self.gridLayout.addWidget(self.radioButton_channels, 0, 1, 1, 1)
         self.horizontalLayout_5.addWidget(self.groupBox_elements_or_channels)
+        self.gridLayout_3 = QtGui.QGridLayout()
+        self.gridLayout_3.setObjectName("gridLayout_3")
+        self.label_machine = QtGui.QLabel(self.layoutWidget)
+        self.label_machine.setMaximumSize(QtCore.QSize(16777215, 27))
+        self.label_machine.setObjectName("label_machine")
+        self.gridLayout_3.addWidget(self.label_machine, 0, 0, 1, 1)
+        self.comboBox_machine = QtGui.QComboBox(self.layoutWidget)
+        self.comboBox_machine.setObjectName("comboBox_machine")
+        self.gridLayout_3.addWidget(self.comboBox_machine, 0, 1, 1, 1)
         self.label_lattice = QtGui.QLabel(self.layoutWidget)
         self.label_lattice.setMaximumSize(QtCore.QSize(16777215, 27))
         self.label_lattice.setObjectName("label_lattice")
-        self.horizontalLayout_5.addWidget(self.label_lattice)
+        self.gridLayout_3.addWidget(self.label_lattice, 1, 0, 1, 1)
         self.comboBox_lattice = QtGui.QComboBox(self.layoutWidget)
         self.comboBox_lattice.setObjectName("comboBox_lattice")
-        self.horizontalLayout_5.addWidget(self.comboBox_lattice)
+        self.gridLayout_3.addWidget(self.comboBox_lattice, 1, 1, 1, 1)
+        self.horizontalLayout_5.addLayout(self.gridLayout_3)
         spacerItem = QtGui.QSpacerItem(16777215, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_5.addItem(spacerItem)
         self.pushButton_search = QtGui.QPushButton(self.layoutWidget)
@@ -281,12 +291,20 @@ class Ui_Dialog(object):
         self.listView_choice_list.setSizePolicy(sizePolicy)
         self.listView_choice_list.setObjectName("listView_choice_list")
         self.verticalLayout_2.addWidget(self.listView_choice_list)
-        self.gridLayout_3.addWidget(self.splitter_top_bottom, 0, 0, 1, 1)
+        self.verticalLayout_11.addWidget(self.splitter_top_bottom)
+        self.horizontalLayout_7 = QtGui.QHBoxLayout()
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.pushButton_preferences = QtGui.QPushButton(Dialog)
+        self.pushButton_preferences.setObjectName("pushButton_preferences")
+        self.horizontalLayout_7.addWidget(self.pushButton_preferences)
+        spacerItem5 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_7.addItem(spacerItem5)
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
-        self.gridLayout_3.addWidget(self.buttonBox, 1, 0, 1, 1)
+        self.horizontalLayout_7.addWidget(self.buttonBox)
+        self.verticalLayout_11.addLayout(self.horizontalLayout_7)
 
         self.retranslateUi(Dialog)
         self.stackedWidget.setCurrentIndex(0)
@@ -304,6 +322,7 @@ class Ui_Dialog(object):
         self.groupBox_elements_or_channels.setTitle(QtGui.QApplication.translate("Dialog", "Object Type", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButton_elements.setText(QtGui.QApplication.translate("Dialog", "Elements", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButton_channels.setText(QtGui.QApplication.translate("Dialog", "Channels", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_machine.setText(QtGui.QApplication.translate("Dialog", "Machine", None, QtGui.QApplication.UnicodeUTF8))
         self.label_lattice.setText(QtGui.QApplication.translate("Dialog", "Lattice", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_search.setText(QtGui.QApplication.translate("Dialog", "Search", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_add_row.setText(QtGui.QApplication.translate("Dialog", "Add Row", None, QtGui.QApplication.UnicodeUTF8))
@@ -330,4 +349,5 @@ class Ui_Dialog(object):
         self.label_nMatched_nSelected.setText(QtGui.QApplication.translate("Dialog", "Matched Objects (0 matched, 0 selected)", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_matched_table_column_sorting.setText(QtGui.QApplication.translate("Dialog", "column sorting", None, QtGui.QApplication.UnicodeUTF8))
         self.label__choice_list.setText(QtGui.QApplication.translate("Dialog", "Choice List", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_preferences.setText(QtGui.QApplication.translate("Dialog", "Preferences", None, QtGui.QApplication.UnicodeUTF8))
 

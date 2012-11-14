@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>926</width>
+    <width>960</width>
     <height>737</height>
    </rect>
   </property>
@@ -19,8 +19,8 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QGridLayout" name="gridLayout_3">
-   <item row="0" column="0">
+  <layout class="QVBoxLayout" name="verticalLayout_11">
+   <item>
     <widget class="QSplitter" name="splitter_top_bottom">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -144,20 +144,40 @@ padding: 3px;</string>
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_lattice">
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>27</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Lattice</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="comboBox_lattice"/>
+          <layout class="QGridLayout" name="gridLayout_3">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_machine">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>27</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Machine</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="comboBox_machine"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_lattice">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>27</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Lattice</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QComboBox" name="comboBox_lattice"/>
+           </item>
+          </layout>
          </item>
          <item>
           <spacer name="horizontalSpacer">
@@ -621,15 +641,39 @@ padding: 3px;</string>
      </widget>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <item>
+      <widget class="QPushButton" name="pushButton_preferences">
+       <property name="text">
+        <string>Preferences</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_5">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
