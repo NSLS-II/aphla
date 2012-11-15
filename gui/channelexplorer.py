@@ -1,34 +1,9 @@
 #! /usr/bin/env python
 
-import time
-
-#----------------------------------------------------------------------
-def tic():
-    """"""
-    
-    return time.time()
-    
-#----------------------------------------------------------------------
-def toc(tStart):
-    """"""
-    
-    tEnd = time.time()
-    
-    elapsed_time = tEnd - tStart
-    
-    return elapsed_time
-
 ''' TODO
 *) Add QSettings for window size, etc. (add "caller" so that depending on which
 application calls this GUI, this GUI will know which preferences to load)
-   - default visible columns & their order (Column View)
-   - OOO column sorting init state (General)
-   - OOO case-sensitive (General)
-   - OOO simple or advanced (General)
-   - XXXX elements or channels (General)
-   - OOO lattice initialization func name (General)
-   - OOO default lattice name (General)
-Use VisibleOrderPreferencesDialog class
+   Settings Group for different callers (nested groups)
    
 *) Implement advanced filters
 *) Allow filtering from choice_list selection w/ right click (like multiple cell selections)
@@ -70,11 +45,15 @@ from PyQt4.QtGui import (qApp, QDialog, QStandardItemModel, QStandardItem,
                          QAbstractItemView, QMenu, QAction, QIcon,
                          QCursor, QItemSelection, QItemSelectionModel,
                          QRadioButton, QCheckBox, QSizePolicy,
-                         QKeySequence)
+                         QKeySequence, QDialogButtonBox, QVBoxLayout, QWidget,
+                         QHeaderView)
 
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
-from Qt4Designer_files.ui_channel_explorer_pref_dialog import Ui_Dialog as Ui_Dialog_preferences
-from orderprefdlg import OrderSelector
+from Qt4Designer_files.ui_channel_explorer_startup_set_dialog \
+     import Ui_Dialog as Ui_Dialog_startup_settings
+from utils.orderselector import OrderSelector
+
+from utils.tictoc import tic, toc
 
 import aphla as ap
 
@@ -110,6 +89,8 @@ ELEM_PROPERTIES ={
     'fields':['Fields','Fields','string_list'], # callable
     }
 PROP_NAME_LIST = sorted(ELEM_PROPERTIES.keys(),key=str.lower)
+FULL_DESCRIP_NAME_LIST = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+                          for name in PROP_NAME_LIST]
 
 FILTER_OPERATOR_DICT = {'int': ['==(num)','<=','>='],
                         'bool': ['==(num)'],
@@ -230,55 +211,18 @@ class ChannelExplorerModel(QObject):
     #----------------------------------------------------------------------
     def __init__(self, machine_name, object_type='element', settings=None):
         """
-        The optional input argument "filter_spec" must be either an empty
-        list, or a list of lists, each of which contains a dictionary and a bool. 
-        The keys of each dictionary must be property names of the Element
-        object. The bool is the exclusion flag. If true, then the matching is
-        reversed. The values of each dictionary are user-supplied filter
-        strings. When the argument is empty, there will be no initial
-        filtering. If not empty, filtering specified by each dictionary and
-        exclusion flag will be applied in the order the dictionary appears
-        in the list.
-        
-        For example, "filter_spec" may look like
-        
-        filter_spec = [ [{'family':'*COR', 'cell':'C01'}, False],
-                        [{'family':'H*'}                , True ] ]
-                        
-        Then, the initial filtering proceeds as follows. First, filtering
-        of '*COR' on 'family' and 'C01' on 'cell' will be applied. The
-        application ordering depends on the order the dictionary iterates
-        the items, i.e., unpredictable, but the result does not change.
-        Since the exclusion flag is False for this tuple, selection will
-        not be reversed. The resulting list is saved to self.matched[0].
-        
-        As a second step, filtering of 'H*' on 'family' will be applied on
-        ALL THE ELEMENTS, NOT on the elements based on self.matched[0].
-        This filtered result will be now reversed, because the exclusion
-        flag for this tuple is True. The resulting list is saved to
-        self.matched[1].
-        
-        Finally, we will take intersection of self.matched[0] & self.matched[1]
-        to come up with the final filtered list self.combined_matched.
-                        
         """
         
         QObject.__init__(self)
         
-        self.settings = settings # QSettings object
+        self.settings = settings
         
         self.machine_name = machine_name
         
         self.object_type = object_type
         
-        self.settings.beginGroup('General')
-        self.is_case_sensitive = self.settings.value('is_case_sensitive')
-        if self.is_case_sensitive is None:
-            self.is_case_sensitive = False
-        self.is_column_sorting = self.settings.value('is_column_sorting')
-        if self.is_column_sorting is None:
-            self.is_column_sorting = False
-        self.settings.endGroup()
+        self.is_case_sensitive = self.settings.is_case_sensitive
+        self.is_column_sorting = self.settings.is_column_sorting
         
         self.col_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_SHORT_DESCRIP_NAME]
                               for name in PROP_NAME_LIST]
@@ -286,6 +230,7 @@ class ChannelExplorerModel(QObject):
         self.reconstructModel(object_type)
         
         self.table_model_matched = NumericallySortableItemModel()
+        
         self.table_model_matched.setColumnCount(len(self.col_name_list))
         self.table_model_matched.setHorizontalHeaderLabels(self.col_name_list)
         
@@ -324,6 +269,7 @@ class ChannelExplorerModel(QObject):
         self.hidden_filters = []
         
         self.selected_filter_index = 0
+        
         
         
     #----------------------------------------------------------------------
@@ -445,6 +391,8 @@ class ChannelExplorerModel(QObject):
         Assuming that filter sets available to a filter are only
         those filters defined above the filter of interest.
         """
+
+        tStart = tic()
         
         if modified_filter_name is None:
             for f in self.filters:
@@ -468,14 +416,17 @@ class ChannelExplorerModel(QObject):
                 if modified_filter_name in (f.set1_name,f.set2_name):
                     self._updateFilter(f)
                 
+        print 'model.updateFilters:', toc(tStart)
+        
         self.emit(SIGNAL('filtersUpdated'))
            
     #----------------------------------------------------------------------
     def update_table_models(self):
         """"""
         
+        tStart = tic()
+        
         f = self.filters[self.selected_filter_index]
-        isinstance(f,Filter) # WingHelper TODELETE
         
         model_m = self.table_model_matched
         
@@ -514,7 +465,11 @@ class ChannelExplorerModel(QObject):
 
         model_m.blockSignals(False)
         
+        print 'model.update_table_models (before modelReset):', toc(tStart)
+        
         model_m.emit(SIGNAL('modelReset()'))
+        
+        print 'model.update_table_models (after modelReset):', toc(tStart)
         
         model_f = self.table_model_filter
         
@@ -800,19 +755,29 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     
     #----------------------------------------------------------------------
     def __init__(self, model, isModal, can_modify_object_type, 
-                 lattice_name, caller, parentWindow = None, settings = None):
+                 lattice_name, caller, all_prop_name_list,
+                 default_visible_prop_name_list,
+                 permanently_visible_prop_name_list,
+                 parentWindow = None, settings = None):
         """Constructor"""
         
         QDialog.__init__(self, parent = parentWindow)
         
-        self.settings = settings # QSettings object
-        
         self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons
+
+        self.settings = settings
         
         self.model = model
         self.table_model_matched = model.table_model_matched
         self.table_model_filter = model.table_model_filter
         self.choice_dict = dict.fromkeys(PROP_NAME_LIST)
+        
+        self.all_prop_name_list = all_prop_name_list
+        self.permanently_visible_prop_name_list = permanently_visible_prop_name_list
+        self.visible_prop_name_list = default_visible_prop_name_list
+        self.visible_column_full_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+                                              for name in self.visible_prop_name_list]
+        
         
         # Set up the user interface from Designer
         self.setupUi(self)
@@ -832,7 +797,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.radioButton_channels.setEnabled(False)
             self.radioButton_elements.setEnabled(False)
         
-        machine_name_list = MACHINE_DICT.keys()
+        machine_name_list = sorted(MACHINE_DICT.keys())
         comboBox_machine_model = QStandardItemModel()
         for machine in machine_name_list:
             comboBox_machine_model.appendRow(QStandardItem(machine))
@@ -846,17 +811,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.comboBox_machine.setCurrentIndex(0)
         
         self._initLatticeList(lattice_name)
-        #lattice_name_list = ap.machines.lattices()
-        #comboBox_lattice_model = QStandardItemModel()
-        #for lat in lattice_name_list:
-            #comboBox_lattice_model.appendRow(QStandardItem(lat))
-        #self.comboBox_lattice.setModel(comboBox_lattice_model)
-        #self.comboBox_lattice.setEditable(False)
-        #self.comboBox_lattice.setSizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
-        #try:
-            #self.comboBox_lattice.setCurrentIndex(lattice_name_list.index(lattice_name))
-        #except:
-            #self.comboBox_lattice.setCurrentIndex(0)
         
         self.on_lattice_change()
         
@@ -864,8 +818,55 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         self.clipboard = np.array([])
         
-        # Load QSettings
+        # Apply miscellaneous settings related to view
+        if self.settings.filter_mode == 'simple':
+            self.radioButton_simple.setChecked(True)
+        elif self.settings.filter_mode == 'advanced':
+            self.radioButton_advanced.setChecked(True)
+        else:
+            raise ValueError('Unexpected filter mode: '+self.settings.filter_mode)
+        #
+        self.checkBox_filter_case_sensitive.setChecked(
+            self.settings.is_case_sensitive)
+        #
+        self.checkBox_matched_table_column_sorting.setChecked(
+            self.settings.is_column_sorting)
+        
+        # Apply view size settings
         self.loadViewSizeSettings()
+
+
+    #----------------------------------------------------------------------
+    def on_column_selection_change(self, new_visible_column_full_name_list,
+                                   force_visibility_update=False):
+        """"""
+        
+        current_visible_column_full_name_list= [
+            ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME] 
+            for name in self.visible_prop_name_list]
+        
+        if (not force_visibility_update) and \
+           (new_visible_column_full_name_list == current_visible_column_full_name_list):
+            return
+
+        self.visible_prop_name_list = [
+            PROP_NAME_LIST[FULL_DESCRIP_NAME_LIST.index(name)]
+            for name in new_visible_column_full_name_list]
+
+        visible_column_order = self.get_visible_column_order()
+        
+        t = self.tableView_matched # shorthand notation
+        
+        horizHeader = t.horizontalHeader()
+
+        for (i,col_logical_ind) in enumerate(visible_column_order):
+            new_visual_index = i
+            current_visual_index = horizHeader.visualIndex(col_logical_ind)
+            horizHeader.moveSection(current_visual_index,
+                                    new_visual_index)
+        for i in range(len(PROP_NAME_LIST)):
+            if i not in visible_column_order:
+                horizHeader.hideSection(i)
         
     #----------------------------------------------------------------------
     def keyPressEvent(self, keyEvent):
@@ -902,13 +903,13 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         settings = self.settings
         
-        settings.beginGroup('DialogWindow')
-        settings.setValue('position',self.geometry())
-        settings.setValue('splitter_left_right_sizes',self.splitter_left_right.sizes())
-        settings.setValue('splitter_top_bottom_sizes',self.splitter_top_bottom.sizes())
-        settings.endGroup()
+        settings._position = self.geometry()
+        settings._splitter_left_right_sizes = self.splitter_left_right.sizes()
+        settings._splitter_top_bottom_sizes = self.splitter_top_bottom.sizes()
         
-        print 'Settings saved.'
+        settings.saveViewSizeSettings()
+        
+        #print 'View size settings saved.'
         
     #----------------------------------------------------------------------
     def loadViewSizeSettings(self):
@@ -916,13 +917,12 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         settings = self.settings
         
-        settings.beginGroup('DialogWindow')
-        rect = settings.value('position')
+        rect = self.settings._position
         if rect is None:
             rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
         self.setGeometry(rect)
         
-        splitter_left_right_sizes = settings.value('splitter_left_right_sizes')
+        splitter_left_right_sizes = self.settings._splitter_left_right_sizes
         if splitter_left_right_sizes is None:
             # Adjust left-right splitter so that left widget takes max width
             # and right widget takes min width
@@ -930,25 +930,18 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.splitter_left_right.setStretchFactor(0,1)
             self.splitter_left_right.setStretchFactor(1,0)
         else:
-            splitter_sizes = [int(s) for s in splitter_left_right_sizes] # convert from string to int
-            self.splitter_left_right.setSizes(splitter_sizes)
+            self.splitter_left_right.setSizes(splitter_left_right_sizes)
 
-        splitter_top_bottom_sizes = settings.value('splitter_top_bottom_sizes')
+        splitter_top_bottom_sizes = self.settings._splitter_top_bottom_sizes
         if splitter_top_bottom_sizes is None:
             # setStretchFactor does not work for the top-bottom splitter, since
             # I can't figure out how to minimize QStackedWidget. The following method
             # works. As long as the height fraction of the top portion is small
             # enough, the stacked widget will be minimized.
-            splitter_sizes = [self.height()*(1./10.), self.height()*(9./10.)]
-        else:
-            splitter_sizes = [int(s) for s in splitter_top_bottom_sizes] # convert from string to int
-        self.splitter_top_bottom.setSizes(splitter_sizes)
+            splitter_top_bottom_sizes = [self.height()*(1./10.), self.height()*(9./10.)]
+        self.splitter_top_bottom.setSizes(splitter_top_bottom_sizes)
         
-        
-        settings.endGroup()
-        
-        print 'Settings loaded.'
-        
+        #print 'View size settings loaded.'
         
             
     #----------------------------------------------------------------------
@@ -1037,8 +1030,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         proxyItemSelectionModel = t.selectionModel()
         proxyItemSelection = proxyItemSelectionModel.selection()
-        
-        #proxyModelIndexList = t.selectedIndexes()
         
         proxyMod = t.model()
 
@@ -1292,22 +1283,17 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         self.tableWidget_filter.setRowCount(0)
         
-        self.settings.beginGroup('General')
-        filter_mode_str = self.settings.value('filter_mode_string')
-        if filter_mode_str is None:
-            filter_mode_str = 'simple'
-        if filter_mode_str == 'simple':
+        filter_mode = self.settings.filter_mode
+        if filter_mode == 'simple':
             page_obj = self.page_simple
-        elif filter_mode_str == 'advanced':
+        elif filter_mode == 'advanced':
             page_obj = self.page_advanced
         else:
-            raise ValueError('Unexpected filter mode: '+filter_mode_str)
+            raise ValueError('Unexpected filter mode: '+filter_mode)
         self.stackedWidget.setCurrentWidget(page_obj)
-        self.settings.endGroup()
         
         
-        filterModeStr = self.getFilterModeStr()
-        if filterModeStr == 'simple':
+        if filter_mode == 'simple':
             
             self.tableWidget_filter.setHidden(True) # By hiding this table, screen real estate is maximized for splitter.
             
@@ -1373,11 +1359,11 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.emit(SIGNAL('filtersChanged'), modified_filter_name)
             
             
-        elif filterModeStr == 'advanced':
+        elif filter_mode == 'advanced':
             self.tableWidget_filter.setHidden(False)
 
         else:
-            raise ValueError('Unexpected filterModeStr')
+            raise ValueError('Unexpected filter_mode: '+filter_mode)
         
         
     #----------------------------------------------------------------------
@@ -1455,7 +1441,9 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         horizHeader.setSortIndicatorShown(True)
         horizHeader.setStretchLastSection(True)
         horizHeader.setMovable(True)
-        t.resizeColumnsToContents()
+        self.on_column_selection_change(self.visible_column_full_name_list,
+                                        force_visibility_update=True)
+        t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True)
         self.checkBox_matched_table_column_sorting.setChecked(self.model.is_column_sorting)
         t.setSortingEnabled(self.model.is_column_sorting)
         
@@ -1475,22 +1463,36 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
 
         
     #----------------------------------------------------------------------
+    def get_visible_column_order(self):
+        """"""
+        
+        visible_col_order = [PROP_NAME_LIST.index(prop_name)
+                             for prop_name in self.visible_prop_name_list]
+        
+        return visible_col_order
+    
+    #----------------------------------------------------------------------
     def update_tables(self):
         """ """
         
+        tStart = tic()
+        
         t = self.tableView_matched # shorthand notation
-        t.resizeColumnsToContents()
-        proxyModel = t.model()
-        m = proxyModel.sourceModel()
-        for i in range(m.columnCount()):
-            if t.columnWidth(i) > self.max_auto_adjust_column_width:
-                t.setColumnWidth(i,self.max_auto_adjust_column_width)
+        #t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True) # This line will significantly slow down for large data.
+        #proxyModel = t.model()
+        #m = proxyModel.sourceModel()
+        #for i in range(m.columnCount()):
+            #if t.columnWidth(i) > self.max_auto_adjust_column_width:
+                #t.setColumnWidth(i,self.max_auto_adjust_column_width)
         
         ### Reset selection to all available
         t.selectAll()
         
+        print 'view.update_tables:', toc(tStart)
+        
         self.emit(SIGNAL('readyForChoiceListUpdate'))
 
+        print 'view.update_tables (after readyForChoiceListUpdate):', toc(tStart)
 
     #----------------------------------------------------------------------
     def setMatchedTableColumnSortingEnabled(self, check_state_int):
@@ -1570,13 +1572,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         self.model.filters.append(newf)
         
-        ## Need to disconnect this signal-slot since each change in each item
-        ## will cause re-filtering, which const a lot of time. It will be
-        ## reconnected at the end of this function.
-        #self.disconnect(self.tableWidget_filter, 
-                        #Qt.SIGNAL('itemChanged(QTableWidgetItem *)'),
-                        #self.on_filter_item_change)
-        
         t = self.tableWidget_filter # shorthand notation
         
         nRows = t.rowCount()+1
@@ -1655,12 +1650,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
                 #t.item(new_row_index,i).setCheckState(Qt.Qt.Unchecked)
                         
         
-        ## Reconnecting the temporarily disconnected signal-slot
-        #self.connect(self.tableWidget_filter, 
-                     #Qt.SIGNAL('itemChanged(QTableWidgetItem *)'),
-                     #self.on_filter_item_change)
-        
-        
         self.emit(SIGNAL("filterRowAdded"),())
     
     
@@ -1703,8 +1692,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
             self.model.updateFilters(None)
         except:
-            print 'Exception on view.on_lattice_change'
-            #pass
+            import traceback
+            traceback.print_exc()
+            raise Exception('Exception on view.on_lattice_change')
+
         
     #----------------------------------------------------------------------
     def on_NOT_change(self, checked):
@@ -1775,26 +1766,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         f.filter_value_displayed = displayed_text
         
     
-    #----------------------------------------------------------------------
-    def on_filter_item_change(self, qTableWidgetItem):
-        """
-        
-        """
-        
-        if not self.isItemUserCheckable(qTableWidgetItem):
-            filter_val = str(
-                qTableWidgetItem.data(Qt.Qt.DisplayRole) )
-        else:
-            filter_val = (qTableWidgetItem.checkState() == Qt.Qt.Checked)
-        
-        filter_group_index    = qTableWidgetItem.row()
-        filter_property_index = qTableWidgetItem.column()
-        
-        isCaseSensitive = self.checkBox_filter_case_sensitive.isChecked()
-
-        self.emit(Qt.SIGNAL("sigFilterSpecNeedsChange"),
-                  filter_property_index, filter_val, 
-                  filter_group_index, isCaseSensitive)
         
     #----------------------------------------------------------------------
     def selectedRowIndList(self):
@@ -1810,7 +1781,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def closeEvent(self, event):
         """"""
         
-        # Save QSettings
         self.saveViewSizeSettings()
         
         event.accept()
@@ -1840,6 +1810,132 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     
 
 ########################################################################
+class ChannelExplorerAppSettings():
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        
+        self._settings = QSettings('HLA','ChannelExplorer')
+        
+        self.loadViewSizeSettings()
+        self.loadMiscellaneousSettings()
+        
+    #----------------------------------------------------------------------
+    def loadViewSizeSettings(self):
+        """"""
+        
+        self._settings.beginGroup('viewSize')
+        
+        self._position = self._settings.value('position')
+
+        self._splitter_left_right_sizes = self._settings.value('splitter_left_right_sizes')
+        if self._splitter_left_right_sizes is not None:
+            self._splitter_left_right_sizes = [int(s) for s in self._splitter_left_right_sizes] # convert from string to int
+          
+        self._splitter_top_bottom_sizes = self._settings.value('splitter_top_bottom_sizes')  
+        if self._splitter_top_bottom_sizes is not None:
+            self._splitter_top_bottom_sizes = [int(s) for s in self._splitter_top_bottom_sizes] # convert from string to int
+        
+        self._settings.endGroup()
+        
+
+    #----------------------------------------------------------------------
+    def loadMiscellaneousSettings(self):
+        """"""
+        
+        self._settings.beginGroup('miscellaneous')
+        
+        machine_name = self._settings.value('machine_name')
+        if machine_name is None:
+            machine_name = 'NSLS2V2'
+        self.machine_name = machine_name
+            
+        lattice_name = self._settings.value('lattice_name')
+        if lattice_name is None:
+            lattice_name = 'V2SR'
+        self.lattice_name = lattice_name
+        
+        filter_mode = self._settings.value('filter_mode')
+        if filter_mode is None:
+            filter_mode = 'simple'
+        self.filter_mode = filter_mode # 'simple' or 'advanced'
+        
+        is_case_sensitive = self._settings.value('is_case_sensitive')
+        if is_case_sensitive is None:
+            self.is_case_sensitive = False
+        else:
+            if is_case_sensitive == 'true':
+                self.is_case_sensitive = True
+            elif is_case_sensitive == 'false':
+                self.is_case_sensitive = False
+            else:
+                raise ValueError('Unexpected is_case_sensitive: '+is_case_sensitive)
+            
+        is_column_sorting = self._settings.value('is_column_sorting')
+        if is_column_sorting is None:
+            self.is_column_sorting = False
+        else:
+            if is_column_sorting == 'true':
+                self.is_column_sorting= True
+            elif is_column_sorting == 'false':
+                self.is_column_sorting = False
+            else:
+                raise ValueError('Unexpected is_column_sorting: '+is_column_sorting)
+
+        default_visible_prop_name_list = \
+            self._settings.value('default_visible_prop_name_list')
+        if default_visible_prop_name_list is None:
+            default_visible_prop_name_list = [
+                'name','family','fields','cell','girder',
+                'symmetry','sb','pv','length','virtual']
+        self.default_visible_prop_name_list = default_visible_prop_name_list
+        
+        self._settings.endGroup()
+        
+    
+    #----------------------------------------------------------------------
+    def saveViewSizeSettings(self):
+        """"""
+        
+        self._settings.beginGroup('viewSize')
+        
+        self._settings.setValue('position',self._position)
+        self._settings.setValue('splitter_left_right_sizes',self._splitter_left_right_sizes)
+        self._settings.setValue('splitter_top_bottom_sizes',self._splitter_top_bottom_sizes)
+        
+        self._settings.endGroup()
+        
+    #----------------------------------------------------------------------
+    def saveMiscellaneousSettings(self):
+        """"""
+        
+        self._settings.beginGroup('miscellaneous')
+        
+        attr_list = ['machine_name','lattice_name','filter_mode',
+                     'is_case_sensitive','is_column_sorting',
+                     'default_visible_prop_name_list']
+        for attr in attr_list:
+            self._settings.setValue(attr,getattr(self,attr))
+        
+        self._settings.endGroup()
+    
+    #----------------------------------------------------------------------
+    def clearMiscellaneousSettings(self):
+        """"""
+        
+        self._settings.remove('miscellaneous')
+    
+    #----------------------------------------------------------------------
+    def restoreDefaultManualSettings(self):
+        """"""
+        
+        self.clearMiscellaneousSettings()
+        self.loadMiscellaneousSettings()
+    
+    
+########################################################################
 class ChannelExplorerApp(QObject):
     """ """
 
@@ -1851,34 +1947,38 @@ class ChannelExplorerApp(QObject):
         
         QObject.__init__(self)
         
-        self.settings = QSettings('HLA','ChannelExplorer')
-        
-        ###
-        self.settings.beginGroup('General')
+        self.settings = ChannelExplorerAppSettings()
         
         if machine_name is None:
-            machine_name = self.settings.value('machine_name')
-            if machine_name is None:
-                machine_name = 'NSLS2V2'
-                
+            machine_name = self.settings.machine_name
+
         initMachine(machine_name)
-            
-        if lattice_name is None:
-            lattice_name = self.settings.value('lattice_name')
-            if lattice_name is None:
-                lattice_name = 'V2SR'
                 
-        print 'Using Lattice:', lattice_name
-        ap.machines.use(lattice_name)
+        if lattice_name is None:
+            lattice_name = self.settings.lattice_name
+            
+        try:
+            print 'Using Lattice:', lattice_name
+            ap.machines.use(lattice_name)
+        except:
+            print 'Lattice loading failed.'
+            lattice_name_list = ap.machines.lattices()
+            fallback_lattice_name = lattice_name_list[0]
+            print 'Will try using Lattice:', fallback_lattice_name
+            ap.machines.use(fallback_lattice_name)
         
-        self.settings.endGroup()
-        ###
+        all_prop_name_list = PROP_NAME_LIST[:]
+        default_visible_prop_name_list = self.settings.default_visible_prop_name_list
+        permanently_visible_prop_name_list = [] # All columns can be made invisible
+        
         
         self.modal = modal
         self.parentWindow = parentWindow
         
         self._initModel(machine_name, init_object_type)
-        self._initView(can_modify_object_type, lattice_name, caller)
+        self._initView(can_modify_object_type, lattice_name, caller,
+                       all_prop_name_list, default_visible_prop_name_list,
+                       permanently_visible_prop_name_list)
         
         self.connect(self.view.radioButton_simple,SIGNAL('toggled(bool)'),
                      self.view._changeFilterMode)
@@ -1979,9 +2079,15 @@ class ChannelExplorerApp(QObject):
                      SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.view.openContextMenu)
         
-        self.connect(self.view.pushButton_preferences,
+        self.connect(self.view.pushButton_startup_settings,
                      SIGNAL('clicked()'),
-                     self.launchPrefDialog)
+                     self.launchStartupSettingsDialog)
+        self.connect(self.view.pushButton_columns,
+                     SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+        
+        self.connect(self, SIGNAL('columnSelectionReturned'),
+                     self.view.on_column_selection_change)
         
         
     #----------------------------------------------------------------------
@@ -1991,11 +2097,43 @@ class ChannelExplorerApp(QObject):
         print 'debug'
                 
     #----------------------------------------------------------------------
-    def launchPrefDialog(self):
+    def launchStartupSettingsDialog(self):
         """"""
         
-        prefDialog = Preferences(parentWindow=self.view)
-        prefDialog.show()
+        all_column_full_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+                                     for name in PROP_NAME_LIST]
+        default_visible_column_full_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+                                                 for name in self.settings.default_visible_prop_name_list]
+        permanently_visible_column_name_list = []
+        
+        dialog = StartupSettingsDialog(all_column_full_name_list,
+                                       default_visible_column_full_name_list,
+                                       permanently_visible_column_name_list,
+                                       self.settings, parentWindow=self.view)
+        dialog.exec_()
+                
+        
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+        
+        all_column_full_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+                                     for name in self.view.all_prop_name_list]
+        visible_column_full_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+                                         for name in self.view.visible_prop_name_list]
+        permanently_visible_column_full_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+                                                     for name in self.view.permanently_visible_prop_name_list]
+        
+        dialog = ColumnsDialog(all_column_full_name_list,
+                               visible_column_full_name_list,
+                               permanently_visible_column_full_name_list,
+                               parentWindow=self.view)
+        dialog.exec_()
+        
+        if dialog.output is not None:
+            self.emit(SIGNAL('columnSelectionReturned'), dialog.output)
+
+        
         
     #----------------------------------------------------------------------
     def _initModel(self, machine_name, object_type):
@@ -2006,42 +2144,187 @@ class ChannelExplorerApp(QObject):
                                           settings=self.settings)
         
     #----------------------------------------------------------------------
-    def _initView(self, can_modify_object_type, lattice_name, caller):
+    def _initView(self, can_modify_object_type, lattice_name, caller,
+                  full_column_name_list, default_visible_column_name_list,
+                  permanently_visible_column_name_list):
         """ """
         
         self.view = ChannelExplorerView(self.model, self.modal,
                                         can_modify_object_type,
                                         lattice_name, caller,
+                                        full_column_name_list,
+                                        default_visible_column_name_list,
+                                        permanently_visible_column_name_list,                                        
                                         parentWindow = self.parentWindow,
                                         settings = self.settings)
         
 ########################################################################
-class Preferences(QDialog, Ui_Dialog_preferences):
+class ColumnsDialog(QDialog):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, parentWindow = None):
+    def __init__(self, full_column_name_list, init_selected_colum_name_list,
+                 permanently_selected_column_name_list, parentWindow = None):
         """Constructor"""
         
         QDialog.__init__(self, parent=parentWindow)
         
+        self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons        
+        
+        self.setWindowTitle('Column Visibility/Order')
+    
+        self.verticalLayout = QVBoxLayout(self)
+
+        widget = QWidget(self)
+        self.visible_column_order_selector = OrderSelector(
+            parentWidget=widget,
+            full_string_list=full_column_name_list,
+            init_selected_string_list=init_selected_colum_name_list,
+            permanently_selected_string_list=permanently_selected_column_name_list,
+            label_text_NotSelected='NOT Visible Column Names:',
+            label_text_Selected='Visible Column Names:')
+        self.verticalLayout.addWidget(widget)
+
+        self.buttonBox = QDialogButtonBox(self)
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.verticalLayout.addWidget(self.buttonBox)
+        
+        self.output = None
+        
+        self.connect(self.buttonBox, SIGNAL('accepted()'), self.accept)
+        self.connect(self.buttonBox, SIGNAL('rejected()'), self.reject)
+        
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+        
+        self.output = None
+        
+        event.accept()
+        
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+        
+        selected_listView = self.visible_column_order_selector.view.listView_Selected
+        SMod = selected_listView.model()
+        self.output = [SMod.item(row_ind,0).text() for row_ind in range(SMod.rowCount())]
+        
+        super(ColumnsDialog, self).accept()
+        
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+        
+        self.output = None
+        
+        super(ColumnsDialog, self).reject()
+        
+    
+########################################################################
+class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, full_column_name_list, init_selected_colum_full_name_list,
+                 permanently_selected_column_name_list, 
+                 settings, parentWindow = None):
+        """Constructor"""
+        
+        QDialog.__init__(self, parent=parentWindow)
+        
+        self.settings = settings
+        
         self.setupUi(self)
         
-        selector = OrderSelector(parentWidget=self.page_column_visibility_order,
-                                 label_text_NotSelected='NOT Visible Column Names:',
-                                 label_text_Selected='Visible Column Names:')
+        self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons        
         
+        self.full_column_name_list = full_column_name_list
+        self.init_selected_colum_full_name_list = init_selected_colum_full_name_list
+        self.permanently_selected_column_name_list = permanently_selected_column_name_list
+        #        
+        self.filter_mode_dict = {'value': ['simple','advanced'],
+                                 'display': ['Simple','Advanced']}
+        self.case_sensitivity_dict = {'value': [True,False],
+                                      'display': ['sensitive','insensitive']}
+        self.column_sorting_dict = {'value': [True,False],
+                                    'display': ['Enabled','Disabled']}
+        self.machine_list = sorted(MACHINE_DICT.keys())
         
-        self.listWidget_NotSelected = selector.listWidget_NotSelected
+        self.showStartupSettings()
         
         self.stackedWidget.setCurrentWidget(self.page_column_visibility_order)
         self.listWidget_group.setCurrentItem(
             self.listWidget_group.findItems('Columns',QtCore.Qt.MatchExactly)[0]
             )
         
+        self.listWidget_group.setMinimumWidth(self.listWidget_group.sizeHintForColumn(0))
+        self.listWidget_group.resize(self.listWidget_group.minimumSize())
+        
+        splitter_sizes = [self.height()*(1./100.), self.height()*(99./100.)]
+        self.splitter.setSizes(splitter_sizes)
+        
         self.connect(self.listWidget_group,
                      SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'),
                      self.changePage)
+        
+        self.connect(self.pushButton_restore_default,
+                     SIGNAL('clicked()'),
+                     self.restoreDefault)
+        
+    #----------------------------------------------------------------------
+    def showStartupSettings(self):
+        """"""
+        
+        if hasattr(self,'visible_column_order_selector'):
+            # Re-initialize model for list views
+            self.visible_column_order_selector.model.__init__(
+                full_string_list=self.full_column_name_list,
+                init_selected_string_list=self.init_selected_colum_full_name_list,
+                permanently_selected_string_list=self.permanently_selected_column_name_list,
+            )
+            
+            # Need to re-assign newly updated models to the list views
+            self.visible_column_order_selector.view.listView_NotSelected.setModel(
+                self.visible_column_order_selector.model.model_NotSelected)
+            self.visible_column_order_selector.view.listView_Selected.setModel(
+                self.visible_column_order_selector.model.model_Selected)
+        else:
+            self.visible_column_order_selector = OrderSelector(
+                parentWidget=self.page_column_visibility_order,
+                full_string_list=self.full_column_name_list,
+                init_selected_string_list=self.init_selected_colum_full_name_list,
+                permanently_selected_string_list=self.permanently_selected_column_name_list,
+                label_text_NotSelected='NOT Visible Column Names:',
+                label_text_Selected='Visible Column Names:')
+
+        matched_ind = self.filter_mode_dict['value'].index(self.settings.filter_mode)
+        self.comboBox_filter_mode.setCurrentIndex(matched_ind)
+        #
+        matched_ind = self.case_sensitivity_dict['value'].index(self.settings.is_case_sensitive)
+        self.comboBox_case_sensitivity.setCurrentIndex(matched_ind)
+        #
+        matched_ind = self.column_sorting_dict['value'].index(self.settings.is_column_sorting)
+        self.comboBox_column_sorting.setCurrentIndex(matched_ind)
+        #
+        matched_ind = self.machine_list.index(self.settings.machine_name)
+        self.comboBox_machine.setCurrentIndex(matched_ind)
+        #
+        self.lineEdit_lattice_name.setText(self.settings.lattice_name)
+        
+    #----------------------------------------------------------------------
+    def restoreDefault(self):
+        """"""
+        
+        self.settings.restoreDefaultManualSettings()
+        
+        self.init_selected_colum_full_name_list = [
+            ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
+            for name in self.settings.default_visible_prop_name_list]
+        
+        self.showStartupSettings()
+        
         
     #----------------------------------------------------------------------
     def changePage(self, currentItem, previousItem):
@@ -2056,6 +2339,48 @@ class Preferences(QDialog, Ui_Dialog_preferences):
             raise ValueError('Unexpected selected text: '+selected_text)
         
         
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+        
+        event.accept()
+        
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+        
+        default_visible_column_full_name_list = \
+            self.visible_column_order_selector.model.getSelectedList()
+        self.settings.default_visible_prop_name_list = [
+            PROP_NAME_LIST[FULL_DESCRIP_NAME_LIST.index(full_name)]
+            for full_name in default_visible_column_full_name_list]
+            
+        
+        display_text = self.comboBox_filter_mode.currentText()
+        self.settings.filter_mode = self.filter_mode_dict['value'][
+            self.filter_mode_dict['display'].index(display_text)]
+        #
+        display_text = self.comboBox_case_sensitivity.currentText()
+        self.settings.is_case_sensitive = self.case_sensitivity_dict['value'][
+            self.case_sensitivity_dict['display'].index(display_text)]
+        #
+        display_text = self.comboBox_column_sorting.currentText()
+        self.settings.is_column_sorting = self.column_sorting_dict['value'][
+            self.column_sorting_dict['display'].index(display_text)]
+        #
+        self.settings.machine_name = self.comboBox_machine.currentText()
+        #
+        self.settings.lattice_name = self.lineEdit_lattice_name.text()
+        
+        self.settings.saveMiscellaneousSettings()
+        
+        super(StartupSettingsDialog, self).accept()
+    
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+        
+        super(StartupSettingsDialog, self).reject()
     
 
 
@@ -2136,7 +2461,7 @@ def make(modal = True, parentWindow = None,
 
     
 #----------------------------------------------------------------------
-def main(args):
+def main(args=None):
     """ """
         
     #qapp = Qt.QApplication(args) # Necessary whether modal or non-modal

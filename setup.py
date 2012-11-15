@@ -6,7 +6,8 @@ setup(
     name = "aphla",
     version = "0.5.1",
     packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
-                'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.conf'],
+                'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.conf',
+                'aphla.gui.utils'],
     package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
                    'aphla.gui': 'gui', 'aphla.conf': 'conf'},
     include_package_data = True,
@@ -34,7 +35,8 @@ setup(
             'aporbit = aphla.gui.orbit:main',
             'apbba = aphla.gui.apbba:main',
             'aplauncher = aphla.gui.aplauncher:main',
-            'apcurrentmonitor = aphla.gui.apcurrentmonitor:main'
+            'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',
+            'apchx = aphla.gui.channelexplorer:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",

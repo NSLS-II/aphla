@@ -20,7 +20,7 @@ from PyQt4 import Qt, QtCore
 import PyQt4.Qwt5 as Qwt
 
 #import toolbar_icons
-import gui_icons
+import utils.gui_icons
 
 ########################################################################
 class InteractivePlotWindow(QMainWindow):

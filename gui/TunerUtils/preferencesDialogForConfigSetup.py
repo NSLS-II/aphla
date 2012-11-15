@@ -37,9 +37,8 @@ class DialogData(Qt.QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, full_string_list, 
-                 permanently_selected_string_list,
-                 selected_string_list):
+    def __init__(self, full_string_list, init_selected_string_list,
+                 permanently_selected_string_list):
         """Constructor"""
         
         Qt.QObject.__init__(self)

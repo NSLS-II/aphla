@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_channel_explorer.ui'
 #
-# Created: Tue Nov 13 21:55:08 2012
+# Created: Wed Nov 14 16:17:37 2012
 #      by: PyQt4 UI code generator 4.7.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -257,6 +257,9 @@ class Ui_Dialog(object):
         self.horizontalLayout_6.addWidget(self.label_nMatched_nSelected)
         spacerItem4 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_6.addItem(spacerItem4)
+        self.pushButton_columns = QtGui.QPushButton(self.layoutWidget1)
+        self.pushButton_columns.setObjectName("pushButton_columns")
+        self.horizontalLayout_6.addWidget(self.pushButton_columns)
         self.checkBox_matched_table_column_sorting = QtGui.QCheckBox(self.layoutWidget1)
         self.checkBox_matched_table_column_sorting.setObjectName("checkBox_matched_table_column_sorting")
         self.horizontalLayout_6.addWidget(self.checkBox_matched_table_column_sorting)
@@ -294,9 +297,9 @@ class Ui_Dialog(object):
         self.verticalLayout_11.addWidget(self.splitter_top_bottom)
         self.horizontalLayout_7 = QtGui.QHBoxLayout()
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-        self.pushButton_preferences = QtGui.QPushButton(Dialog)
-        self.pushButton_preferences.setObjectName("pushButton_preferences")
-        self.horizontalLayout_7.addWidget(self.pushButton_preferences)
+        self.pushButton_startup_settings = QtGui.QPushButton(Dialog)
+        self.pushButton_startup_settings.setObjectName("pushButton_startup_settings")
+        self.horizontalLayout_7.addWidget(self.pushButton_startup_settings)
         spacerItem5 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_7.addItem(spacerItem5)
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
@@ -347,7 +350,8 @@ class Ui_Dialog(object):
         self.label_5.setText(QtGui.QApplication.translate("Dialog", "Index", None, QtGui.QApplication.UnicodeUTF8))
         self.label_6.setText(QtGui.QApplication.translate("Dialog", "Value", None, QtGui.QApplication.UnicodeUTF8))
         self.label_nMatched_nSelected.setText(QtGui.QApplication.translate("Dialog", "Matched Objects (0 matched, 0 selected)", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_columns.setText(QtGui.QApplication.translate("Dialog", "Columns", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_matched_table_column_sorting.setText(QtGui.QApplication.translate("Dialog", "column sorting", None, QtGui.QApplication.UnicodeUTF8))
         self.label__choice_list.setText(QtGui.QApplication.translate("Dialog", "Choice List", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_preferences.setText(QtGui.QApplication.translate("Dialog", "Preferences", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_startup_settings.setText(QtGui.QApplication.translate("Dialog", "Startup Settings", None, QtGui.QApplication.UnicodeUTF8))
 

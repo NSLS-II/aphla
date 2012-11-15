@@ -584,6 +584,13 @@ padding: 3px;</string>
            </spacer>
           </item>
           <item>
+           <widget class="QPushButton" name="pushButton_columns">
+            <property name="text">
+             <string>Columns</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QCheckBox" name="checkBox_matched_table_column_sorting">
             <property name="text">
              <string>column sorting</string>
@@ -644,9 +651,9 @@ padding: 3px;</string>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_7">
      <item>
-      <widget class="QPushButton" name="pushButton_preferences">
+      <widget class="QPushButton" name="pushButton_startup_settings">
        <property name="text">
-        <string>Preferences</string>
+        <string>Startup Settings</string>
        </property>
       </widget>
      </item>
