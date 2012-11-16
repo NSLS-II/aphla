@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
+'''
+*) Implemented nested QSettings groups (separation by caller)
+
+'''
 ''' TODO
-*) Add QSettings for window size, etc. (add "caller" so that depending on which
-application calls this GUI, this GUI will know which preferences to load)
-   Settings Group for different callers (nested groups)
    
 *) Implement advanced filters
 *) Allow filtering from choice_list selection w/ right click (like multiple cell selections)
@@ -15,7 +16,8 @@ Apply this filter -> list of existing filter set(s)
 
 """
 
-GUI application for selecting HLA element(s) interactively
+GUI application for selecting and browsing HLA element(s) & channel(s) interactively.
+
 
 :author: Yoshiteru Hidaka
 :license:
@@ -23,7 +25,8 @@ GUI application for selecting HLA element(s) interactively
 This GUI application is a dialog that allows users to see all the available
 elements, narrow them down by search filtering, and finally select the elements
 of interest and return the selected elements as an input to another function
-or GUI application.
+or GUI application. In addition to HLA elements, you can search by channels.
+A channel is simply a tuple of an element name and one of its field names.
 
 """
 
@@ -35,18 +38,24 @@ import sys
 from fnmatch import fnmatchcase
 from operator import and_, not_, add
 import numpy as np
+try:
+    from collections import OrderedDict
+except:
+    from utils.backported_OrderedDict import OrderedDict
 
 import cothread
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import (SIGNAL, QObject, QSize, QSettings, QRect)
+from PyQt4.QtCore import (SIGNAL, QObject, QSize, QSettings, QRect,
+                          QAbstractTableModel, QModelIndex, QEvent)
 from PyQt4.QtGui import (qApp, QDialog, QStandardItemModel, QStandardItem,
                          QComboBox, QTableView, QSortFilterProxyModel,
                          QAbstractItemView, QMenu, QAction, QIcon,
                          QCursor, QItemSelection, QItemSelectionModel,
                          QRadioButton, QCheckBox, QSizePolicy,
                          QKeySequence, QDialogButtonBox, QVBoxLayout, QWidget,
-                         QHeaderView)
+                         QHeaderView, QStyledItemDelegate, QStyle, QStylePainter,
+                         QStyleOption, QStyleOptionButton, QStyleOptionComboBox)
 
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 from Qt4Designer_files.ui_channel_explorer_startup_set_dialog \
@@ -103,6 +112,22 @@ ALL_FILTER_OPERATORS = FILTER_OPERATOR_DICT.values()
 ALL_FILTER_OPERATORS = reduce(add, ALL_FILTER_OPERATORS) # flattening list of lists
 ALL_FILTER_OPERATORS = list(set(ALL_FILTER_OPERATORS))
 
+FILTER_TABLE_COLUMN_ODICT = OrderedDict()
+FILTER_TABLE_COLUMN_ODICT['selected'] = ''
+FILTER_TABLE_COLUMN_ODICT['name'] = 'Filter Name'
+FILTER_TABLE_COLUMN_ODICT['set1_name'] = 'Filter Set 1'
+FILTER_TABLE_COLUMN_ODICT['set_operator'] = 'AND/OR'
+FILTER_TABLE_COLUMN_ODICT['set2_name'] = 'Filter Set 2'
+FILTER_TABLE_COLUMN_ODICT['NOT'] = 'NOT'
+FILTER_TABLE_COLUMN_ODICT['property_name'] = 'Property'
+FILTER_TABLE_COLUMN_ODICT['filter_operator'] = 'Operator'
+FILTER_TABLE_COLUMN_ODICT['index'] = 'Index'
+FILTER_TABLE_COLUMN_ODICT['filter_value'] = 'Value'
+FILTER_TABLE_COLUMN_ODICT['expression'] = 'Expression'
+
+FILTER_TABLE_COLUMN_HANDLE_LIST    = FILTER_TABLE_COLUMN_ODICT.keys()
+FILTER_TABLE_COLUMN_DISP_NAME_LIST = FILTER_TABLE_COLUMN_ODICT.values()
+
 ########################################################################
 class Filter():
     """"""
@@ -110,9 +135,6 @@ class Filter():
     #----------------------------------------------------------------------
     def __init__(self, name, model):
         """Constructor"""
-        
-        self.name = name
-        self.name_displayed = self.name
         
         self.model = model
 
@@ -123,6 +145,12 @@ class Filter():
         elif self.object_type == 'channel':
             self.allObjects = self.model.allChannels
         
+        self.selected = True
+        self.selected_displayed = self.selected
+        
+        self.name = name
+        self.name_displayed = self.name
+
         self.set1_name = 'ALL'
         self.set1_name_displayed = self.set1_name
         self.set1 = self.allObjects
@@ -144,11 +172,14 @@ class Filter():
         self.filter_operator = '==(char)'
         self.filter_operator_displayed = self.filter_operator
 
-        self.index = ''
+        self.index = 'N/A'
         self.index_displayed = self.index
 
         self.filter_value = '*'
         self.filter_value_displayed = self.filter_value
+        
+        self.expression = 'blank' # ''
+        self.expression_displayed = self.expression
         
         self.matched_index_list = []
         
@@ -156,11 +187,11 @@ class Filter():
     def commit_displayed_properties(self):
         """"""
         
-        prop_names = ['name', 'set1_name','set_operator','set2_name',
-                      'NOT','property_name','filter_operator',
-                      'index','filter_value']
+        #prop_names = ['name', 'set1_name','set_operator','set2_name',
+                      #'NOT','property_name','filter_operator',
+                      #'index','filter_value']
         
-        for name in prop_names:
+        for name in FILTER_TABLE_COLUMN_HANDLE_LIST:
             setattr(self, name, getattr(self, name+'_displayed'))
         
         
@@ -175,6 +206,283 @@ class Filter():
         else:
             raise ValueError('set_operator must be AND or OR')
         
+########################################################################
+class FilterTableModel(QAbstractTableModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, tableView, filter_list):
+        """Constructor"""
+        
+        QAbstractTableModel.__init__(self)
+        
+        self._view = tableView
+        self._filter_list = filter_list
+        
+        self._selected_index = 0
+    
+    #----------------------------------------------------------------------
+    def rowCount(self, parent=QModelIndex()):
+        """"""
+        
+        return len(self._filter_list)
+    
+    #----------------------------------------------------------------------
+    def columnCount(self, parent=QModelIndex()):
+        """"""
+        
+        return len(FILTER_TABLE_COLUMN_HANDLE_LIST)
+        
+    ##----------------------------------------------------------------------
+    #def convert_child_widget_signal_to_view_edit_signal(self, *args):
+        #""""""
+        
+        #sender = self.sender()
+        
+        #print 'here'
+        
+        #index = sender.property('QModelIndex')
+        
+        #print index.model().data(index)
+        #print int(index.model().flags(index))
+        
+        ##self._view.edit(index)
+        
+        #self._view.edit(index, QAbstractItemView.AllEditTriggers, 
+                        #QEvent(QEvent.None))
+        
+        
+    #----------------------------------------------------------------------
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        """"""
+        
+        row = index.row()
+        col_handle = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
+        
+        if ( not index.isValid() ) or \
+           ( not (0 <= row < self.rowCount()) ):
+            return None
+        
+        if role == QtCore.Qt.DisplayRole:
+            value = getattr(self._filter_list[row], col_handle)
+            return value
+        else:
+            return None
+        
+        
+    #----------------------------------------------------------------------
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        """"""
+        
+        if role == QtCore.Qt.TextAlignmentRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return int(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+            else:
+                return int(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
+            
+        elif role != QtCore.Qt.DisplayRole:
+            return None
+        
+        elif orientation == QtCore.Qt.Horizontal: # Horizontal Header display name requested
+            return FILTER_TABLE_COLUMN_DISP_NAME_LIST[section]
+        
+        else: # Vertical Header display name requested
+            return int(section+1) # row number
+        
+    #----------------------------------------------------------------------
+    def flags(self, index):
+        """"""
+
+        default_flags = QAbstractTableModel.flags(self, index)
+
+        if not index.isValid(): return default_flags
+        
+        col_handle = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
+        if col_handle != 'expression': # For editable items
+            return QtCore.Qt.ItemFlags(default_flags | QtCore.Qt.ItemIsEditable)
+        else: # For non-editable items
+            return default_flags
+        
+    #----------------------------------------------------------------------
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+        """"""
+
+        row = index.row()
+        col_handle = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
+        
+        if ( not index.isValid() ) or \
+           ( not (0 <= row < self.rowCount()) ):
+            
+            return False        
+
+        else:
+            setattr(self._filter_list[row], col_handle, value)
+        
+            self.emit(SIGNAL('dataChanged(QModelIndex,QModelIndex)'), 
+                      index, index)
+            return True
+        
+        
+########################################################################
+class FilterTableItemDelegate(QStyledItemDelegate):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, view, parent=None):
+        """Constructor"""
+        
+        QStyledItemDelegate.__init__(self,parent)
+        
+        self.view = view
+
+        self.and_or_combo_list = ['AND','OR']
+        self.set1_system_combo_list = ['ALL']
+        self.set1_user_combo_list = []
+        self.set2_system_combo_list = ['NEW','ALL']
+        self.set2_user_combo_list = []
+        
+        
+    #----------------------------------------------------------------------
+    def paint(self, painter, option, index):
+        """"""
+
+        stylePainter = QStylePainter(painter.device(), self.view)
+
+        row = index.row()
+        col_handle = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
+        
+        value = index.model().data(index)
+        
+        if col_handle == 'selected':
+            checked = value
+            
+            opt = QStyleOptionButton()
+            opt.text = ''
+            opt.rect = option.rect
+            if checked:
+                opt.state = (QStyle.State_Enabled | QStyle.State_On)
+            else:
+                opt.state = (QStyle.State_Enabled | QStyle.State_Off)
+            
+            # Centering of Radiobutton
+            style = self.view.style() # isinstance(style,QStyle)
+            radiobutton_rect = style.subElementRect(QStyle.SE_RadioButtonIndicator, opt)
+            opt.rect.setLeft(option.rect.x() +
+                             option.rect.width()/2 - radiobutton_rect.width()/2)
+                
+            stylePainter.drawControl(QStyle.CE_RadioButton, opt)
+            #self.view.style().drawControl(QStyle.CE_RadioButton, option, painter, self.view)
+
+        elif col_handle == 'NOT':
+            checked = value
+            
+            opt = QStyleOptionButton()
+            opt.text = ''
+            opt.rect = option.rect
+            if checked:
+                opt.state = (QStyle.State_Enabled | QStyle.State_On)
+            else:
+                opt.state = (QStyle.State_Enabled | QStyle.State_Off)
+                
+            # Centering of Checkbox
+            style = self.view.style() # isinstance(style,QStyle)
+            checkbox_rect = style.subElementRect(QStyle.SE_CheckBoxIndicator, opt)
+            opt.rect.setLeft(option.rect.x() +
+                             option.rect.width()/2 - checkbox_rect.width()/2)
+            
+            stylePainter.drawControl(QStyle.CE_CheckBox, opt)
+
+        elif col_handle in ('set1_name','set2_name','set_operator',
+                            'property_name','filter_operator',
+                            'index','filter_value'):
+            text = value
+            
+            opt = QStyleOptionComboBox()
+            opt.currentText = text
+            opt.rect = option.rect
+            opt.state = QStyle.State_Enabled
+            
+            stylePainter.drawComplexControl(QStyle.CC_ComboBox, opt)            
+            stylePainter.drawControl(QStyle.CE_ComboBoxLabel, opt)
+            
+        else:
+            QStyledItemDelegate.paint(self, painter, option, index)
+    
+    #----------------------------------------------------------------------
+    def sizeHint(self, option, index):
+        """"""
+
+        row = index.row()
+        col_handle = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
+        if col_handle == 'selected':
+            return QStyledItemDelegate.sizeHint(self, option, index)
+        else:
+            return QStyledItemDelegate.sizeHint(self, option, index)
+    
+    #----------------------------------------------------------------------
+    def createEditor(self, parent, option, index):
+        """"""
+        
+        print 'in createEditor'
+        
+        row = index.row()
+        col_handle = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
+        
+        default_editor = QStyledItemDelegate.createEditor(self, parent,
+                                                          option, index)
+
+        print col_handle
+        
+        if col_handle == 'selected':
+            radiobutton = self.view.indexWidget(index)
+            return radiobutton
+            #radiobutton = QRadioButton(parent)
+            #return radiobutton
+        elif col_handle in ('name',):
+            pass
+        elif col_handle == 'set1_name':
+            pass
+        elif col_handle == 'set_operator':
+            pass
+        elif col_handle == 'set2_name':
+            pass
+        elif col_handle == 'NOT':
+            pass
+        elif col_handle == 'property_name':
+            pass
+        elif col_handle == 'filter_operator':
+            pass
+        elif col_handle == 'index':
+            pass
+        elif col_handle == 'filter_value':
+            pass
+        else:
+            return QStyledItemDelegate.createEditor(self, parent,
+                                                    option, index)
+        
+
+        return default_editor
+        
+    #----------------------------------------------------------------------
+    def setEditorData(self, editor, index):
+        """"""
+        
+        if True:
+            text = index.model().data(index,QtCore.Qt.DisplayRole)
+            editor.setText(text)
+            #value = text
+            #editor.setValue(value)
+        else:
+            QStyledItemDelegate.setEditorData(self, editor, index)
+        
+        
+    #----------------------------------------------------------------------
+    def setModelData(self, editor, model, index):
+        """"""
+        
+        QStyledItemDelegate.setEditorData(self, editor, model, index)
+    
+    
 ########################################################################
 class NumericallySortableItemModel(QStandardItemModel):
     """"""
@@ -229,7 +537,8 @@ class ChannelExplorerModel(QObject):
         
         self.reconstructModel(object_type)
         
-        self.table_model_matched = NumericallySortableItemModel()
+        #self.table_model_matched = NumericallySortableItemModel()
+        self.table_model_matched = self.filter_results[self.selected_filter_index]
         
         self.table_model_matched.setColumnCount(len(self.col_name_list))
         self.table_model_matched.setHorizontalHeaderLabels(self.col_name_list)
@@ -262,14 +571,23 @@ class ChannelExplorerModel(QObject):
         
         # For "simple" mode
         filter_name = 'simple_filter'
-        self.filters = [Filter(filter_name,self)]
+        self.filters_simple = [Filter(filter_name,self)]
+        self.filters_simple_result = [NumericallySortableItemModel()]
+        self.filters_simple_selected_index = 0
         
         # For "advanced" mode
-        #filter_name = 'filter1'
-        self.hidden_filters = []
+        filter_name = 'filter1'
+        self.filters_advanced = [Filter(filter_name,self)]
+        self.filters_advanced_results = [NumericallySortableItemModel()]
+        self.filters_advanced_selected_index = 0
         
-        self.selected_filter_index = 0
         
+        # Define current filter list, filter result list, and selected filter index.
+        # By default, use 'simple' mode.
+        self.filters = self.filters_simple
+        self.filter_results = self.filters_simple_result
+        self.selected_filter_index = self.filters_simple_selected_index
+                
         
         
     #----------------------------------------------------------------------
@@ -1209,28 +1527,43 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         
     #----------------------------------------------------------------------
-    def _changeFilterMode(self, checked):
+    def _changeFilterMode(self, filter_mode_str=None):
         """"""
         
-        if not checked:
-            return
-        
-        sender = self.sender()
-        
-        if sender == self.radioButton_simple:
+        if filter_mode_str is None:
+            sender = self.sender()
+            if sender == self.radioButton_simple:
+                filter_mode_str = 'simple'
+            elif sender == self.radioButton_advanced:
+                filter_mode_str = 'advanced'
+            else:
+                raise ValueError('Unexpected sender')
+            
+
+        if filter_mode_str == 'simple':
+            self.radioButton_simple.setChecked(True)
+            self._hidePageChildren(self.page_advanced)
+            self._showPageChildren(self.page_simple)            
             self.stackedWidget.setCurrentWidget(self.page_simple)
-            advanced_filters = self.model.filters
-            self.model.filters = self.model.hidden_filters
-            self.model.hidden_filters = advanced_filters
-        elif sender == self.radioButton_advanced:
+            self.model.filters = self.model.filters_simple
+            self.model.filter_results = self.model.filters_simple_result
+            self.model.selected_filter_index = self.model.filters_simple_selected_index # Always = 0
+        elif filter_mode_str == 'advanced':
+            self.radioButton_advanced.setChecked(True)
+            self._hidePageChildren(self.page_simple)
+            self._showPageChildren(self.page_advanced)            
             self.stackedWidget.setCurrentWidget(self.page_advanced)
-            simple_filters = self.model.filters
-            self.model.filters = self.model.hidden_filters
-            self.model.hidden_filters = simple_filters
+            self.model.filters = self.model.filters_advanced
+            self.model.filter_results = self.model.filters_advanced_results
+            try:
+                isinstance(self.model.filters[self.model.filters_advanced_selected_index],
+                           Filter)
+                self.model.selected_filter_index = self.model.filters_advanced_selected_index
+            except:
+                self.model.selected_filter_index = 0
         else:
-            raise ValueError('Unexpected sender')
+            raise ValueError('Unexpected filter_mode_str: '+filter_mode_str)
         
-        self.model.selected_filter_index = 0
         
     #----------------------------------------------------------------------
     def _changeObjectType(self, checked):
@@ -1278,11 +1611,33 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         return model_property
         
     #----------------------------------------------------------------------
-    def _initFilterView(self):
+    def _hidePageChildren(self, page):
         """"""
         
-        self.tableWidget_filter.setRowCount(0)
+        # By hiding objects in the other page, screen real estate can
+        # be maximized for splitter.
+        for child in page.children():
+            try:
+                child.setHidden(True)
+            except:
+                #print 'hiding failed for', child
+                pass    
+
+    #----------------------------------------------------------------------
+    def _showPageChildren(self, page):
+        """"""
         
+        for child in page.children():
+            try:
+                child.setHidden(False)
+            except:
+                #print 'showing failed for', child
+                pass    
+        
+    #----------------------------------------------------------------------
+    def _initFilterView(self):
+        """"""
+                
         filter_mode = self.settings.filter_mode
         if filter_mode == 'simple':
             page_obj = self.page_simple
@@ -1292,14 +1647,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             raise ValueError('Unexpected filter mode: '+filter_mode)
         self.stackedWidget.setCurrentWidget(page_obj)
         
-        
-        if filter_mode == 'simple':
+        if True:
+        #if filter_mode == 'simple':
             
-            self.tableWidget_filter.setHidden(True) # By hiding this table, screen real estate is maximized for splitter.
-            
-            
-            self.radioButton_simple.setChecked(True)
-            self.stackedWidget.setCurrentWidget(self.page_simple)
+            self._changeFilterMode(filter_mode)
                         
             NOT_checked = False
             self.checkBox_simple_NOT.setChecked(NOT_checked)
@@ -1346,24 +1697,42 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.comboBox_simple_value.setSizeAdjustPolicy(
                 QComboBox.AdjustToContents)
             
-            self.model.filters[0].NOT_displayed = NOT_checked
-            self.model.filters[0].property_name_displayed = init_property_name
-            self.model.filters[0].filter_operator_displayed = self.comboBox_simple_operator.currentText()
-            self.model.filters[0].index_displayed = self.comboBox_simple_index.currentText()
-            self.model.filters[0].filter_value_displayed = self.comboBox_simple_value.currentText()
+            f = self.model.filters_simple[0]
             
-            self.model.filters[0].commit_displayed_properties()
+            f.NOT_displayed = NOT_checked
+            f.property_name_displayed = init_property_name
+            f.filter_operator_displayed = self.comboBox_simple_operator.currentText()
+            f.index_displayed = self.comboBox_simple_index.currentText()
+            f.filter_value_displayed = self.comboBox_simple_value.currentText()
             
-            modified_filter_name = self.model.filters[0].name
+            f.commit_displayed_properties()
+            
+            modified_filter_name = f.name
             
             self.emit(SIGNAL('filtersChanged'), modified_filter_name)
             
+        
+        if True:    
+        #elif filter_mode == 'advanced':
+                        
+            self._changeFilterMode(filter_mode)
             
-        elif filter_mode == 'advanced':
-            self.tableWidget_filter.setHidden(False)
+            t = self.tableView_filter
+            
+            #isinstance(self.model,ChannelExplorerModel)
+            filterTableModel = FilterTableModel(t, self.model.filters_advanced)
+            t.setModel(filterTableModel)
+            #t.setItemDelegate(FilterTableItemDelegate(t, filterTableModel))
+            t.setItemDelegate(FilterTableItemDelegate(t))
+            
+            horizHeader = t.horizontalHeader()
+            #isinstance(horizHeader,QHeaderView)
+            horizHeader.setMovable(False)
+            
+            t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True)
 
-        else:
-            raise ValueError('Unexpected filter_mode: '+filter_mode)
+        #else:
+            #raise ValueError('Unexpected filter_mode: '+filter_mode)
         
         
     #----------------------------------------------------------------------
@@ -1422,7 +1791,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     #----------------------------------------------------------------------
     def _initMatchTable(self):
         """
-        Perform initial formating for tableWidget_choice_list
+        
         """
                 
         self.table_proxyModel_matched = QSortFilterProxyModel()
@@ -1440,7 +1809,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         horizHeader = t.horizontalHeader()
         horizHeader.setSortIndicatorShown(True)
         horizHeader.setStretchLastSection(True)
-        horizHeader.setMovable(True)
+        horizHeader.setMovable(False)
         self.on_column_selection_change(self.visible_column_full_name_list,
                                         force_visibility_update=True)
         t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True)
@@ -1814,10 +2183,20 @@ class ChannelExplorerAppSettings():
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
+    def __init__(self, caller):
+        """Constructor
         
-        self._settings = QSettings('HLA','ChannelExplorer')
+        Attribute naming convetion:
+         1) Double underscore prefix means attributes that should not be
+            directly accessed outside of this class.
+         2) Single underscore prefix means settings properties related to view size.
+         3) No-underscored prefix means settings properties related to miscellaneous.
+         
+        """
+        
+        self.__caller = caller
+        
+        self.__settings = QSettings('HLA','ChannelExplorer')
         
         self.loadViewSizeSettings()
         self.loadMiscellaneousSettings()
@@ -1826,43 +2205,46 @@ class ChannelExplorerAppSettings():
     def loadViewSizeSettings(self):
         """"""
         
-        self._settings.beginGroup('viewSize')
+        self.__settings.beginGroup(self.__caller)
+        self.__settings.beginGroup('viewSize')
         
-        self._position = self._settings.value('position')
+        self._position = self.__settings.value('position')
 
-        self._splitter_left_right_sizes = self._settings.value('splitter_left_right_sizes')
+        self._splitter_left_right_sizes = self.__settings.value('splitter_left_right_sizes')
         if self._splitter_left_right_sizes is not None:
             self._splitter_left_right_sizes = [int(s) for s in self._splitter_left_right_sizes] # convert from string to int
           
-        self._splitter_top_bottom_sizes = self._settings.value('splitter_top_bottom_sizes')  
+        self._splitter_top_bottom_sizes = self.__settings.value('splitter_top_bottom_sizes')  
         if self._splitter_top_bottom_sizes is not None:
             self._splitter_top_bottom_sizes = [int(s) for s in self._splitter_top_bottom_sizes] # convert from string to int
         
-        self._settings.endGroup()
+        self.__settings.endGroup()
+        self.__settings.endGroup()
         
 
     #----------------------------------------------------------------------
     def loadMiscellaneousSettings(self):
         """"""
         
-        self._settings.beginGroup('miscellaneous')
+        self.__settings.beginGroup(self.__caller)
+        self.__settings.beginGroup('miscellaneous')
         
-        machine_name = self._settings.value('machine_name')
+        machine_name = self.__settings.value('machine_name')
         if machine_name is None:
             machine_name = 'NSLS2V2'
         self.machine_name = machine_name
             
-        lattice_name = self._settings.value('lattice_name')
+        lattice_name = self.__settings.value('lattice_name')
         if lattice_name is None:
             lattice_name = 'V2SR'
         self.lattice_name = lattice_name
         
-        filter_mode = self._settings.value('filter_mode')
+        filter_mode = self.__settings.value('filter_mode')
         if filter_mode is None:
             filter_mode = 'simple'
         self.filter_mode = filter_mode # 'simple' or 'advanced'
         
-        is_case_sensitive = self._settings.value('is_case_sensitive')
+        is_case_sensitive = self.__settings.value('is_case_sensitive')
         if is_case_sensitive is None:
             self.is_case_sensitive = False
         else:
@@ -1873,7 +2255,7 @@ class ChannelExplorerAppSettings():
             else:
                 raise ValueError('Unexpected is_case_sensitive: '+is_case_sensitive)
             
-        is_column_sorting = self._settings.value('is_column_sorting')
+        is_column_sorting = self.__settings.value('is_column_sorting')
         if is_column_sorting is None:
             self.is_column_sorting = False
         else:
@@ -1885,48 +2267,58 @@ class ChannelExplorerAppSettings():
                 raise ValueError('Unexpected is_column_sorting: '+is_column_sorting)
 
         default_visible_prop_name_list = \
-            self._settings.value('default_visible_prop_name_list')
+            self.__settings.value('default_visible_prop_name_list')
         if default_visible_prop_name_list is None:
             default_visible_prop_name_list = [
                 'name','family','fields','cell','girder',
                 'symmetry','sb','pv','length','virtual']
         self.default_visible_prop_name_list = default_visible_prop_name_list
         
-        self._settings.endGroup()
-        
+        self.__settings.endGroup()
+        self.__settings.endGroup()
     
     #----------------------------------------------------------------------
     def saveViewSizeSettings(self):
         """"""
         
-        self._settings.beginGroup('viewSize')
+        self.__settings.beginGroup(self.__caller)
+        self.__settings.beginGroup('viewSize')
         
-        self._settings.setValue('position',self._position)
-        self._settings.setValue('splitter_left_right_sizes',self._splitter_left_right_sizes)
-        self._settings.setValue('splitter_top_bottom_sizes',self._splitter_top_bottom_sizes)
+        self.__settings.setValue('position',self._position)
+        self.__settings.setValue('splitter_left_right_sizes',self._splitter_left_right_sizes)
+        self.__settings.setValue('splitter_top_bottom_sizes',self._splitter_top_bottom_sizes)
         
-        self._settings.endGroup()
+        self.__settings.endGroup()
+        self.__settings.endGroup()
         
     #----------------------------------------------------------------------
     def saveMiscellaneousSettings(self):
         """"""
         
-        self._settings.beginGroup('miscellaneous')
+        self.__settings.beginGroup(self.__caller)
+        self.__settings.beginGroup('miscellaneous')
         
         attr_list = ['machine_name','lattice_name','filter_mode',
                      'is_case_sensitive','is_column_sorting',
                      'default_visible_prop_name_list']
         for attr in attr_list:
-            self._settings.setValue(attr,getattr(self,attr))
+            self.__settings.setValue(attr,getattr(self,attr))
         
-        self._settings.endGroup()
-    
+        self.__settings.endGroup()
+        self.__settings.endGroup()
+        
     #----------------------------------------------------------------------
     def clearMiscellaneousSettings(self):
         """"""
         
-        self._settings.remove('miscellaneous')
-    
+        self.__settings.beginGroup(self.__caller)
+        self.__settings.beginGroup('miscellaneous')
+        
+        self.__settings.remove('') # Remove all keys in this group
+
+        self.__settings.endGroup()
+        self.__settings.endGroup()
+        
     #----------------------------------------------------------------------
     def restoreDefaultManualSettings(self):
         """"""
@@ -1947,7 +2339,7 @@ class ChannelExplorerApp(QObject):
         
         QObject.__init__(self)
         
-        self.settings = ChannelExplorerAppSettings()
+        self.settings = ChannelExplorerAppSettings(caller)
         
         if machine_name is None:
             machine_name = self.settings.machine_name
@@ -1980,9 +2372,9 @@ class ChannelExplorerApp(QObject):
                        all_prop_name_list, default_visible_prop_name_list,
                        permanently_visible_prop_name_list)
         
-        self.connect(self.view.radioButton_simple,SIGNAL('toggled(bool)'),
+        self.connect(self.view.radioButton_simple,SIGNAL('clicked()'),
                      self.view._changeFilterMode)
-        self.connect(self.view.radioButton_advanced,SIGNAL('toggled(bool)'),
+        self.connect(self.view.radioButton_advanced,SIGNAL('clicked()'),
                      self.view._changeFilterMode)
         
         self.connect(self.view.radioButton_elements,SIGNAL('toggled(bool)'),

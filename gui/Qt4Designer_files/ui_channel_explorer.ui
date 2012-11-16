@@ -270,95 +270,19 @@ padding: 3px;</string>
             </layout>
            </item>
            <item>
-            <widget class="QTableWidget" name="tableWidget_filter">
-             <attribute name="horizontalHeaderMinimumSectionSize">
-              <number>16</number>
-             </attribute>
+            <widget class="QTableView" name="tableView_filter">
              <attribute name="horizontalHeaderStretchLastSection">
+              <bool>true</bool>
+             </attribute>
+             <attribute name="verticalHeaderCascadingSectionResizes">
               <bool>false</bool>
              </attribute>
              <attribute name="horizontalHeaderStretchLastSection">
+              <bool>true</bool>
+             </attribute>
+             <attribute name="verticalHeaderCascadingSectionResizes">
               <bool>false</bool>
              </attribute>
-             <attribute name="horizontalHeaderMinimumSectionSize">
-              <number>16</number>
-             </attribute>
-             <row>
-              <property name="text">
-               <string>1</string>
-              </property>
-             </row>
-             <column>
-              <property name="text">
-               <string extracomment="When checked, matching elements are excluded from the list"/>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Filter Name</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Filter Set 1</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>AND/OR</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Filter Set 2</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>NOT</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Property</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string extracomment="Lattice Index">Operator</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string extracomment="Effective magnetic length [m]">Index</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string extracomment="Physical length [m]">Value</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Expression</string>
-              </property>
-             </column>
-             <item row="0" column="0">
-              <property name="text">
-               <string/>
-              </property>
-              <property name="flags">
-               <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsEnabled</set>
-              </property>
-             </item>
-             <item row="0" column="1">
-              <property name="text">
-               <string/>
-              </property>
-              <property name="flags">
-               <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsEnabled</set>
-              </property>
-             </item>
             </widget>
            </item>
           </layout>
