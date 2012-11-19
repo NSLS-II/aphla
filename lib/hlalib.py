@@ -478,14 +478,20 @@ def getBeta(group, **kwargs):
     elif src == 'VA':
         twiss = getElements('twiss')[0]
         idx = [e.index for e in elem]
+        s, bx, by = twiss.s, twiss.betax, twiss.betay
         if 's' in col:
             ret = np.zeros((len(elem), 3), 'd')
-            ret[:,-1] = np.take(twiss.s, idx)
+            for i,e in enumerate(elem):
+                j = np.argmin(np.abs(s - e.se))
+                ret[i,:] = (bx[j], by[j], s[j])
         else:
             ret = np.zeros((len(elem), 2), 'd')
-        ret[:,0] = np.take(twiss.betax, idx)
-        ret[:,1] = np.take(twiss.betay, idx)
-        return ret
+            for i,e in enumerate(elem):
+                j = np.argmin(np.abs(s - e.se))
+                ret[i,:] = (bx[j], by[j])
+        if kwargs.get('names', False):
+            return ret, [e.name for e in elem]
+        else: return ret
 
 def getDispersion(group, **kwargs):
     """
