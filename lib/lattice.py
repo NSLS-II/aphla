@@ -25,8 +25,6 @@ import shelve
 import numpy as np
 from fnmatch import fnmatch
 
-from catools import caget, caput
-
 
 class Lattice:
     """
@@ -136,6 +134,24 @@ class Lattice:
                 if self._group.has_key(g): self._group[g].append(elem)
                 else: self._group[g] = [elem]
 
+
+    def getOverlapped(self):
+        ret = []
+        i = 0
+        while i < len(self._elements):
+            # for each element, searching the elements behind it
+            j = i + 1
+            ov = []
+            while j < len(self._elements):
+                if self._elements[j].sb < self._elements[i].se:
+                    ov.append(self._elements[j].name)
+                elif self._elements[j].sb >= self._elements[i].se:
+                    break
+                j = j + 1
+            if ov: ret.append([self._elements[i].name] + ov)
+            i = i + 1
+        if ret: return ret
+        else: return None
 
     def appendElement(self, elem):
         """

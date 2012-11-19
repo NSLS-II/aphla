@@ -458,7 +458,9 @@ def use(lattice):
     When switching lattice, twiss data is not sychronized.
     """
     global _lat, _lattice_dict
-    if _lattice_dict.get(lattice, None):
+    if isinstance(lattice, Lattice):
+        _lat = lattice
+    elif _lattice_dict.get(lattice, None):
         _lat = _lattice_dict[lattice]
     else:
         raise ValueError("no lattice %s was defined" % lattice)
