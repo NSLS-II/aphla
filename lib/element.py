@@ -116,14 +116,17 @@ class AbstractElement(object):
         return "%s:%s @ sb=%f" % (self.name, self.family, self.sb)
             
     def __lt__(self, other):
-        return self.sb < other.sb
+	if self.sb == other.sb: return self.index < other.index
+	else: return self.sb < other.sb
 
     def __gt__(self, other):
-        return self.sb > other.sb
+        if self.sb == other.sb: return self.index > other.index
+        else: return self.sb > other.sb
 
     def __eq__(self, other):
         return self.sb == other.sb and \
                self.length == other.length and \
+               self.index == other.index and \
                self.name == other.name
 
     def updateProperties(self, prpt):
