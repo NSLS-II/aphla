@@ -1,19 +1,5 @@
 #! /usr/bin/env python
 
-'''
-*) Implemented nested QSettings groups (separation by caller)
-
-'''
-''' TODO
-   
-*) Implement advanced filters
-*) Allow filtering from choice_list selection w/ right click (like multiple cell selections)
-context menu for "simple":
-Apply this filter
-context menu for "advanced"
-Apply this filter -> list of existing filter set(s)
-'''
-
 """
 
 GUI application for selecting and browsing HLA element(s) & channel(s) interactively.
@@ -29,6 +15,15 @@ or GUI application. In addition to HLA elements, you can search by channels.
 A channel is simply a tuple of an element name and one of its field names.
 
 """
+
+''' TODO
+   
+*) Allow filtering from choice_list selection w/ right click (like multiple cell selections)
+context menu for "simple":
+Apply this filter
+context menu for "advanced"
+Apply this filter -> list of existing filter set(s)
+'''
 
 import sip
 sip.setapi('QString', 2)
@@ -124,7 +119,6 @@ FILTER_TABLE_COLUMN_ODICT['displayed_property_name'] = 'Property'
 FILTER_TABLE_COLUMN_ODICT['filter_operator'] = 'Operator'
 FILTER_TABLE_COLUMN_ODICT['index'] = 'Index'
 FILTER_TABLE_COLUMN_ODICT['filter_value'] = 'Value'
-#FILTER_TABLE_COLUMN_ODICT['expression'] = 'Expression'
 
 FILTER_TABLE_COLUMN_HANDLE_LIST    = FILTER_TABLE_COLUMN_ODICT.keys()
 FILTER_TABLE_COLUMN_DISP_NAME_LIST = FILTER_TABLE_COLUMN_ODICT.values()
@@ -138,21 +132,12 @@ class Filter():
         """Constructor"""
         
         self.mainModel = mainModel
-
-        #self.object_type = self.model.object_type
-
-        #if self.object_type == 'element':
-            #self.allObjects = self.model.allElements
-        #elif self.object_type == 'channel':
-            #self.allObjects = self.model.allChannels
         
-        self.allObjects = self.mainModel.allDict['objects']
+        self.allDict = self.mainModel.allDict
         
         self.selected = initiallySelected
-        #self.selected_displayed = self.selected
         
         self.name = name
-        #self.name_displayed = self.name
 
         self._combobox_system_list_set1_name = ['ALL']
         self._combobox_user_list_set1_name = []
@@ -160,24 +145,20 @@ class Filter():
             self._combobox_system_list_set1_name + \
             self._combobox_user_list_set1_name
         self.set1_name = 'ALL'
-        #self.set1_name_displayed = self.set1_name
-        self.set1 = self.allObjects
+        self.set1 = self.allDict['objects']
             
         self.combobox_list_set_operator = ['AND','OR']
         self.set_operator = 'AND'
-        #self.set_operator_displayed = self.set_operator
         
-        self._combobox_system_list_set2_name = ['NEW','ALL']
+        self._combobox_system_list_set2_name = ['NEW']
         self._combobox_user_list_set2_name = []
         self.combobox_list_set2_name = \
             self._combobox_system_list_set2_name + \
             self._combobox_user_list_set2_name
         self.set2_name = 'NEW'
-        #self.set2_name_displayed = self.set2_name
         self.set2 = []
         
         self.NOT = False
-        #self.NOT_displayed = self.NOT
         
         self.combobox_list_displayed_property_name = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
                                             for name in PROP_KEY_LIST]
@@ -186,18 +167,12 @@ class Filter():
 
         self.combobox_list_filter_operator = ['==(char)']
         self.filter_operator = '==(char)'
-        #self.filter_operator_displayed = self.filter_operator
 
         self.combobox_list_index = ['N/A']
         self.index = 'N/A'
-        #self.index_displayed = self.index
 
         self.combobox_list_filter_value = ['*']
         self.filter_value = '*'
-        #self.filter_value_displayed = self.filter_value
-        
-        #self.expression = 'blank' # ''
-        #self.expression_displayed = self.expression
         
         self.matched_index_list = []
         self.matched_table = MatchedTableModel(self.mainModel.col_name_list)
@@ -207,33 +182,6 @@ class Filter():
         
         FilterTableModel.onDisplayedPropertyNameChange(self)
         
-    ##----------------------------------------------------------------------
-    #def _updateSet1NameList(self):
-        #""""""
-        
-        #self.combobox_list_set1_name = self._combobox_system_list_set1_name + \
-            #self._combobox_user_list_set1_name
-
-    ##----------------------------------------------------------------------
-    #def _updateSet2NameList(self):
-        #""""""
-        
-        #self.combobox_list_set2_name = self._combobox_system_list_set2_name + \
-            #self._combobox_user_list_set2_name
-                
-        
-    ##----------------------------------------------------------------------
-    #def commit_displayed_properties(self):
-        #""""""
-        
-        ##prop_names = ['name', 'set1_name','set_operator','set2_name',
-                      ##'NOT','displayed_property_name','filter_operator',
-                      ##'index','filter_value']
-        
-        #for name in FILTER_TABLE_COLUMN_HANDLE_LIST:
-            #setattr(self, name, getattr(self, name+'_displayed'))
-        
-        
     #----------------------------------------------------------------------
     def updateParentSet(self):
         """"""
@@ -241,13 +189,9 @@ class Filter():
         if self.set_operator == 'AND':
             self.parentSet = self.set1
         elif self.set_operator == 'OR':
-            self.parentSet = self.allObjects
+            self.parentSet = self.allDict['objects']
         else:
             raise ValueError('set_operator must be AND or OR')
-        
-        # Whenever this function is called, always update smart combo box
-        # data. Keep these data as Filter object's properties for easy
-        # access by FilterTableItemDelegate
         
     #----------------------------------------------------------------------
     def get(self, obj, propertyName):
@@ -341,9 +285,7 @@ class FilterTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self)
         
         self._filter_list = filter_list # contain only filters for "advanced" mode
-        
-        self._selected_index = 0
-        
+                
     #----------------------------------------------------------------------
     def updateSet1Set2NameLists(self):
         """"""
@@ -369,10 +311,15 @@ class FilterTableModel(QAbstractTableModel):
         
         selected_bool_list = [f.selected for f in self._filter_list]
         
-        if sum(selected_bool_list) != 1:
-            raise ValueError('Number of selected row (filter) must be always 1.')
+        if selected_bool_list == []:
+            return -1
         
-        return selected_bool_list.index(True)
+        if sum(selected_bool_list) >= 2:
+            raise ValueError('Number of selected row (filter) must be always 1.')
+        elif sum(selected_bool_list) == 0:
+            return 0
+        else:
+            return selected_bool_list.index(True)
         
     #----------------------------------------------------------------------
     def auto_increment_filter_name(self):
@@ -513,9 +460,14 @@ class FilterTableModel(QAbstractTableModel):
     def propagateFilterNameChange(self, old_filter_name, new_filter_name):
         """"""
         
-        col_set1_name = FILTER_TABLE_COLUMN_HANDLE_LIST.index('set1_name')
-        col_set2_name = FILTER_TABLE_COLUMN_HANDLE_LIST.index('set2_name')
+        # First, need to update the name lists for Set1 & Set2 comboboxes.
+        self.updateSet1Set2NameLists()
         
+        # Furthermore, if the filter name being changed is currently being
+        # displayed in other filter definitions, you must update the text
+        # to reflect the change.
+        col_set1_name = FILTER_TABLE_COLUMN_HANDLE_LIST.index('set1_name')
+        col_set2_name = FILTER_TABLE_COLUMN_HANDLE_LIST.index('set2_name')        
         for (row, f) in enumerate(self._filter_list):
             if f.set1_name == old_filter_name:
                 self.setData(self.index(row,col_set1_name), new_filter_name)
@@ -586,10 +538,20 @@ class FilterTableModel(QAbstractTableModel):
 
 
     #----------------------------------------------------------------------
-    def onSet2NameChange(self):
+    def onSet2NameChange(self, filterObject):
         """
         Relevant only for "advanced"
         """
+
+        f = filterObject
+        isinstance(f,Filter)
+        
+        if f.set2_name != 'NEW':
+            target_filter = [fObj for fObj in self._filter_list if fObj.name == f.set2_name][0]
+            isinstance(target_filter,Filter)
+            f.set2 = [target_filter.parentSet[i] for i in target_filter.matched_index_list]
+        else:
+            f.set2 = []
         
         self.emit(SIGNAL('modelReset()')) # Need to repaint by looking at new flags for each item
         
@@ -603,11 +565,11 @@ class FilterTableModel(QAbstractTableModel):
         isinstance(f,Filter)
         
         if f.set1_name == 'ALL':
-            f.set1 = f.allObjects
+            f.set1 = f.allDict['objects']
         else:
             target_filter = [fObj for fObj in self._filter_list if fObj.name == f.set1_name][0]
             isinstance(target_filter,Filter)
-            f.set1 = target_filter.parentSet[target_filter.matched_index_list]
+            f.set1 = [target_filter.parentSet[i] for i in target_filter.matched_index_list]
         f.matched_index_list = []
         
         f.updateParentSet()
@@ -631,16 +593,42 @@ class FilterTableModel(QAbstractTableModel):
         
         
     #----------------------------------------------------------------------
-    def removeRow(self):
-        """"""
+    def removeFilter(self, row_ind):
+        """
+        Remove a Filter object at row_ind
+        """
         
-        # f._updateSet1NameList()
-        # f._updateSet2NameList()
-        pass
-    
+        f = self._filter_list[row_ind]
+        
+        being_used_for_other_filters = [True for fObj in self._filter_list
+                                        if ( (fObj.set1_name == f.name)
+                                             or (fObj.set2_name == f.name) )]
+        if being_used_for_other_filters != []:
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Critical)
+            info_str = 'You cannot remove Filter (' + f.name + \
+                ') because it is being used for other filter definitions.'
+            msgBox.setText(info_str)
+            msgBox.exec_()
+            return
+        else:
+            
+            parent = QModelIndex()
+            first_row_ind_removed = last_row_ind_removed = row_ind
+            self.beginRemoveRows(parent, first_row_ind_removed, last_row_ind_removed)
+
+            self._filter_list.pop(row_ind)
+            
+            if len(self._filter_list) >= 1:
+                col_ind_selected = FILTER_TABLE_COLUMN_HANDLE_LIST.index('selected')
+                self.setData(self.index(0,col_ind_selected),True)
+            
+            self.endRemoveRows()
+        
     #----------------------------------------------------------------------
     def insertFilter(self, row_ind, new_filter_obj):
         """
+        Insert a Filter object after row_ind
         """
         
         parent = QModelIndex()
@@ -678,19 +666,18 @@ class FilterTableModel(QAbstractTableModel):
         elif col_handle == 'index': # Both 'simple' & 'advanced'
             self.onIndexChange(f)
         elif col_handle == 'set2_name': # Only for 'advanced'
-            self.onSet2NameChange()
+            self.onSet2NameChange(f)
         elif col_handle == 'set_operator': # Only for 'advanced'
             self.onSetOperatorChange(f)
         elif col_handle == 'set1_name': # Only for 'advanced'
             self.onSet1NameChange(f)
         elif col_handle == 'name': # Only for 'advanced'
             pass # This is handled inside FilterTableItemDelegate.setModelData().
+        elif col_handle == 'selected': # Only for 'advanced'
+            selected_filter = self._filter_list[self.getSelectedRowInd()]
+            self.emit(SIGNAL('filterSelectionChanged'), selected_filter)
         else:
             pass
-        
-            
-            
-        
         
         
         
@@ -707,15 +694,6 @@ class FilterTableItemDelegate(QStyledItemDelegate):
         self._view = view
         self._model = self._view.model()
         self._fontMetrics = self._view.fontMetrics()
-        
-        
-        ## These smart combo data are associated with each filter's parentSet.
-        ## Whenever the parentSet is changed, these data must be updated.
-        #self.and_or_combo_list = ['AND','OR']
-        self.set1_system_combo_list = ['ALL']
-        self.set1_user_combo_list = []
-        self.set2_system_combo_list = ['NEW','ALL']
-        self.set2_user_combo_list = []
         
     #----------------------------------------------------------------------
     def getCheckBoxRect(self, option):
@@ -850,10 +828,6 @@ class FilterTableItemDelegate(QStyledItemDelegate):
     #----------------------------------------------------------------------
     def editorEvent(self, event, model, option, index):
         """
-        Change the data in the model and the state of the checkbox
-        if the user presees the left mouse button or presses Key_Space
-        or Key_Select and this cell is editable.
-        Otherwise, do nothing.
         """
         
         col_handle = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
@@ -863,7 +837,7 @@ class FilterTableItemDelegate(QStyledItemDelegate):
             if not ( int(index.flags() & QtCore.Qt.ItemIsEditable) > 0 ):
                 return False
         
-            # Do not change the checkbox state
+            # Do not change the radiobutton state
             if event.type() == QEvent.MouseButtonRelease or \
                event.type() == QEvent.MouseButtonDblClick:
                 if event.button() != QtCore.Qt.LeftButton or \
@@ -998,9 +972,7 @@ class FilterTableItemDelegate(QStyledItemDelegate):
                             'index','filter_value'):
             text = value
             editor.setCurrentIndex(editor.findText(text))
-            #value = text
-            #editor.setValue(value)
-        
+
         else:
             QStyledItemDelegate.setEditorData(self, editor, index)
         
@@ -1110,9 +1082,6 @@ class MatchedTableModel(QAbstractTableModel):
     #----------------------------------------------------------------------
     def data(self, index, role=QtCore.Qt.DisplayRole):
         """
-        Reimplementation of QStandardItemModel's data()
-        The purpose is to allow sorting by numbers, not just by
-        default string sorting.
         """
         
         row = index.row()
@@ -1183,11 +1152,14 @@ class ChannelExplorerModel(QObject):
     """ """
 
     #----------------------------------------------------------------------
-    def __init__(self, machine_name, object_type='element', settings=None):
+    def __init__(self, machine_name, object_type='element', settings=None,
+                 debug = False):
         """
         """
         
         QObject.__init__(self)
+        
+        self.debug = debug
         
         self.settings = settings
         
@@ -1205,12 +1177,17 @@ class ChannelExplorerModel(QObject):
                         'objects':[]} 
         self.update_allDict_on_machine_or_lattice_change(object_type)
         
-        #current_selected_filter = self.current_filters[self.selected_filter_index]
-        #self.current_matched_table_model = current_selected_filter.matched_table
+    #----------------------------------------------------------------------
+    def onFilterSelectionChange(self, selected_filter):
+        """"""
         
-        #self.current_matched_table_model.setColumnCount(len(self.col_name_list))
-        #self.current_matched_table_model.setHorizontalHeaderLabels(self.col_name_list)
-        
+        if selected_filter in self.filters_simple:
+            self.current_filters = self.filters_simple
+            self.selected_filter_index = self.filters_simple_selected_index # Always = 0
+        else:
+            self.current_filters = self.filters_advanced
+            self.filters_advanced_selected_index = self.filters_advanced.index(selected_filter)
+            self.selected_filter_index = self.filters_advanced_selected_index
         
     #----------------------------------------------------------------------
     def update_allDict_on_machine_or_lattice_change(self, object_type):
@@ -1231,7 +1208,6 @@ class ChannelExplorerModel(QObject):
             self.allDict['objects'] = self.allDict['_elements']
         elif object_type == 'channel':
             self.allDict['objects'] = self.allDict['_channels']
-            #self.currentParentSet = self.allChannels[:]
         else:
             raise ValueError('Unexpected object_type: '+object_type)
 
@@ -1248,10 +1224,8 @@ class ChannelExplorerModel(QObject):
         self.filters_advanced = [Filter(filter_name,self)]
         self.filters_advanced_selected_index = 0
         
-        # Define current filter list, and selected filter index.
-        ##By default, use 'simple' mode.
-        #self.current_filters = self.filters_simple
-        #self.selected_filter_index = self.filters_simple_selected_index
+        # self.current_filters will hold either self.filters_simple or
+        # self.filters_advanced, depending on the current filter mode
         self.current_filters = []
         self.selected_filter_index = 0
         
@@ -1304,19 +1278,13 @@ class ChannelExplorerModel(QObject):
                 f.set2 = self.convertElemListToChannelList(f.set2)
                 f.updateParentSet()
                 
-        #for f in self.current_filters:
-            #f.object_type = self.object_type
-            #if f.object_type == 'element':
-                #f.allObjects = self.allElements
-                #f.set1 = self.convertChannelListToElemList(f.set1)
-                #f.set2 = self.convertChannelListToElemList(f.set2)
-            #elif f.object_type == 'channel':
-                #f.allObjects = self.allChannels
-                #f.set1 = self.convertElemListToChannelList(f.set1)
-                #f.set2 = self.convertElemListToChannelList(f.set2)
+        for f in all_filters:
+            self._updateFilter(f)
+            self.update_matched_table_model(f)
         
-            #f.updateParentSet()
+        self.emit(SIGNAL('filtersUpdated'))
         
+                
     #----------------------------------------------------------------------
     def convertElemListToChannelList(self, elemList):
         """"""
@@ -1340,51 +1308,21 @@ class ChannelExplorerModel(QObject):
         elemList = list(set([c[0] for c in channelList]))
         
         return elemList
-        
-        
-    ##----------------------------------------------------------------------
-    #def get(self, obj, propertyName):
-        #"""
-        #propertyName can be a property of element or a function of element
-        #"""
-        
-        #if not isinstance(obj,tuple): # for 'element' object
-            
-            #element = obj
-            
-            #x = getattr(element,propertyName)
-
-            #if callable(x):
-                #x = x()
-
-        #else: # for 'channel' object (= tuple of 'element' object & field name)
-            
-            #element = obj[0]
-            #field = obj[1]
-            
-            #x = getattr(element,propertyName)
-            
-            #if propertyName == 'fields':
-                #x = [field]
-            #elif propertyName == 'pv':
-                #try:
-                    #x = element.pv(field=field,handle='readback')[:]
-                    #x.extend(element.pv(field=field,handle='setpoint')[:])
-                    ##x = element._field[field].pvrb
-                    ##x.extend(element._field[field].pvsp)
-                #except: # For DIPOLE, there is no field specified
-                    #x = element.pv()[:]
-        
-        #return x
-    
-        
+                
     #----------------------------------------------------------------------
     def search(self):
         """"""
         
+        if self.current_filters == []:
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Critical)
+            info_str = 'You must first create a Filter definition. Press "Add Row" button.'
+            msgBox.setText(info_str)
+            msgBox.exec_()
+            return
+            
         current_filter = self.current_filters[self.selected_filter_index]
-        
-        #current_filter.commit_displayed_properties()
+        print 'Search initiated for', current_filter.name
         
         tStart = tic()
         self.emit(SIGNAL('filtersChanged'), current_filter.name)
@@ -1396,13 +1334,14 @@ class ChannelExplorerModel(QObject):
         Assuming that filter sets available to a filter are only
         those filters defined above the filter of interest.
         """
-
-        tStart = tic()
+        
+        if self.debug:
+            tStart = tic()
         
         if modified_filter_name is None:
             for f in self.current_filters:
                 f.matched_index_list = []
-                #self._updateFilter(f)
+
         else:
         
             # First change the modified filter itself
@@ -1414,25 +1353,38 @@ class ChannelExplorerModel(QObject):
             else:
                 raise ValueError('There is no matched filter name or more than one match found.')
             self._updateFilter(modified_filter)
+            self.update_matched_table_model(modified_filter)
         
             # Then, change all the other filters that are
             # affected by the filter change above
+            modified_filter_result_set = [modified_filter.parentSet[i] 
+                                          for i in modified_filter.matched_index_list]
             for f in self.current_filters[modified_filter_index+1:]:
-                if modified_filter_name in (f.set1_name,f.set2_name):
-                    self._updateFilter(f)
+                need_update = False
+                if modified_filter_name == f.set1_name:
+                    need_update = True
+                    f.set1 = modified_filter_result_set
+                if modified_filter_name == f.set2_name:
+                    need_update = True
+                    f.set2 = modified_filter_result_set
                 
-        print 'model.updateFilters:', toc(tStart)
+                if need_update:
+                    self._updateFilter(f)
+                    self.update_matched_table_model(f)
+               
+        if self.debug: 
+            print 'model.updateFilters:', toc(tStart)
         
         self.emit(SIGNAL('filtersUpdated'))
            
     #----------------------------------------------------------------------
-    def update_matched_table_model(self):
+    def update_matched_table_model(self, modified_filter):
         """"""
         
-        tStart = tic()
+        if self.debug:
+            tStart = tic()
         
-        f = self.getCurrentFilter()
-        #f = self.current_filters[self.selected_filter_index]
+        f = modified_filter
         
         tableModel = f.matched_table
         
@@ -1443,18 +1395,10 @@ class ChannelExplorerModel(QObject):
         # Get only matched objects from all the objects
         matched_obj_list = [f.parentSet[i] for i in f.matched_index_list]
         nRows = len(matched_obj_list)
-        #tableModel.setRowCount(nRows)
         nCols = len(PROP_KEY_LIST)
-        #tableModel.setColumnCount(nCols)
         tableModel.table = np.empty((nRows,nCols),dtype=np.object)
-        #template_item = QStandardItem()
-        #template_item.setFlags((QtCore.Qt.ItemIsSelectable |
-                                #QtCore.Qt.ItemIsDragEnabled |
-                                #QtCore.Qt.ItemIsEnabled)
-                               #& (~QtCore.Qt.ItemIsEditable) ) # Make it non-editable
         for (j,prop_name) in enumerate(PROP_KEY_LIST):
             
-            #item_list = [template_item.clone() for i in range(nRows)]
             if not( (prop_name == 'fields') and (self.object_type == 'channel') ):
                 value_list = [f.get(obj,prop_name) for obj in matched_obj_list]
             else:
@@ -1464,21 +1408,17 @@ class ChannelExplorerModel(QObject):
                 '''
                 value_list = [f.get(obj,prop_name)[0] for obj in matched_obj_list]
             tableModel.table[:,j] = value_list
-            #item_value_list = zip(item_list, value_list)
-            #for (i,(item,value)) in enumerate(item_value_list):
-                #item.setText(value.__str__())
-                #tableModel.setItem(i, j, item)
 
         tableModel.blockSignals(False)
         
-        print 'model.update_matched_table_model (before modelReset):', toc(tStart)
+        if self.debug:
+            print 'model.update_matched_table_model (before modelReset):', toc(tStart)
         
         tableModel.emit(SIGNAL('modelReset()'))
         
-        print 'model.update_matched_table_model (after modelReset):', toc(tStart)
-        
-        
-                
+        if self.debug:
+            print 'model.update_matched_table_model (after modelReset):', toc(tStart)
+                        
     #----------------------------------------------------------------------
     def any_fnmatchcase_for_pattern_str_list(self, string, pattern_str_list):
         """"""
@@ -1514,6 +1454,15 @@ class ChannelExplorerModel(QObject):
         
         return filter_str_list
 
+    #----------------------------------------------------------------------
+    def getFilterFromName(self, filter_name):
+        """"""
+        
+        if filter_name == 'ALL':
+            return None
+        else:
+            return [f for f in self.current_filters if f.name == filter_name][0]
+        
         
     #----------------------------------------------------------------------
     def _updateFilter(self, modified_filter):
@@ -1527,9 +1476,52 @@ class ChannelExplorerModel(QObject):
         if f.set_operator == 'AND':
             f.parentSet = f.set1
         elif f.set_operator == 'OR':
-            f.parentSet = f.allObjects
+            f.parentSet = f.allDict['objects']
         else:
             raise ValueError('set_operator must be AND or OR')
+
+        
+        if f.set2_name != 'NEW':
+
+            if f.set_operator == 'AND':
+
+                if self.object_type == 'channel':
+                    set2_elem_name_field_tuple_list = [(elem.name,field) 
+                                                  for (elem,field) in f.set2]
+                    f.matched_index_list = [i for (i,o) in enumerate(f.parentSet)
+                                            if (o[0].name,o[1]) 
+                                            in set2_elem_name_field_tuple_list]
+                elif self.object_type == 'element':
+                    set2_elem_name_list = [elem.name for elem in f.set2]
+                    f.matched_index_list = [i for (i,elem) in enumerate(f.parentSet)
+                                            if elem.name in set2_elem_name_list]
+                else:
+                    raise ValueError('Unexpected object type: '+self.object_type)
+                
+            else: # 'OR'
+
+                if f.set1_name == 'ALL':
+                    f.matched_index_list = range(len(f.parentSet))
+                    return
+                
+                set1_and_set2 = f.set1 + f.set2
+                
+                if self.object_type == 'channel':
+                    set1and2_elem_name_field_tuple_list = list(set(
+                        [(elem.name,field) for (elem,field) in set1_and_set2] ))
+                    f.matched_index_list = [i for (i,o) in enumerate(f.parentSet)
+                                            if (o[0].name,o[1]) 
+                                            in set1and2_elem_name_field_tuple_list]                    
+                elif self.object_type == 'element':
+                    set1and2_elem_name_list = [elem.name for elem in set1_and_set2]
+                    f.matched_index_list = [i for (i,elem) in enumerate(f.parentSet)
+                                            if elem.name in set1and2_elem_name_list]
+                else:
+                    raise ValueError('Unexpected object type: '+self.object_type)
+            
+            return
+
+
         
         data_type = ELEM_PROPERTIES[f.property_key][ENUM_ELEM_DATA_TYPE]
         
@@ -1751,9 +1743,6 @@ class ChannelExplorerModel(QObject):
                         
         self.emit(SIGNAL("readyForClosing"),())
 
-                
-        
-
 ########################################################################
 class ChannelExplorerView(QDialog, Ui_Dialog):
     """ """
@@ -1763,17 +1752,19 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
                  lattice_name, caller, all_prop_name_list,
                  default_visible_prop_key_list,
                  permanently_visible_prop_key_list,
-                 parentWindow = None, settings = None):
+                 parentWindow = None, settings = None,
+                 debug = False):
         """Constructor"""
         
         QDialog.__init__(self, parent = parentWindow)
+        
+        self.debug = debug
         
         self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons
 
         self.settings = settings
         
         self.model = model
-        #self.current_matched_table_model = model.current_matched_table_model
         self.choice_dict = dict.fromkeys(PROP_KEY_LIST)
         
         self.all_prop_name_list = all_prop_name_list
@@ -1915,8 +1906,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         settings.saveViewSizeSettings()
         
-        #print 'View size settings saved.'
-        
     #----------------------------------------------------------------------
     def loadViewSizeSettings(self):
         """"""
@@ -1946,10 +1935,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             # enough, the stacked widget will be minimized.
             splitter_top_bottom_sizes = [self.height()*(1./10.), self.height()*(9./10.)]
         self.splitter_top_bottom.setSizes(splitter_top_bottom_sizes)
-        
-        #print 'View size settings loaded.'
-        
-            
+                    
     #----------------------------------------------------------------------
     def _initContextMenuItems(self, caller):
         """"""
@@ -2084,14 +2070,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         current_filter = self.model.getCurrentFilter()
         matched_table_model = current_filter.matched_table
-        #matched_table_model = self.current_matched_table_model
         
         nCols = matched_table_model.columnCount()
         nRows = matched_table_model.rowCount()
-        #column_name_list = [matched_table_model.horizontalHeaderItem(i).text()
-                            #for i in range(nCols)]
-        column_name_list = self.model.col_name_list
-        
+        column_name_list = self.model.col_name_list        
         
         for i in range(nCols):
                 
@@ -2171,59 +2153,40 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         Only relevant for "simple" mode
         """
 
-        isinstance(filterObject,Filter)
         f = filterObject # for short-hand notation        
 
-        if self.radioButton_simple.isChecked():
-            
-            if 'filter_operator' in combobox_views_to_be_updated:
-                comboBox_operator = self.comboBox_simple_operator
-                filter_operators = f.combobox_list_filter_operator
-                model_operator = QStandardItemModel(
-                    len(filter_operators),1,comboBox_operator)
-                for (i,op) in enumerate(filter_operators):
-                    model_operator.setData(model_operator.index(i,0),op)
-                comboBox_operator.setModel(model_operator)
-                comboBox_operator.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-                comboBox_operator.setCurrentIndex(0)
-            
-            if 'index' in combobox_views_to_be_updated:
-                comboBox_index = self.comboBox_simple_index
-                index_list = f.combobox_list_index
-                model_index = QStandardItemModel(len(index_list),1,comboBox_index)
-                for (i, ind) in enumerate(index_list):
-                    model_index.setData(model_index.index(i,0), ind)
-                comboBox_index.setModel(model_index)
-                comboBox_index.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-                comboBox_index.setCurrentIndex(0)
-                    
-            if 'filter_value' in combobox_views_to_be_updated:
-                comboBox_value = self.comboBox_simple_value
-                value_list = f.combobox_list_filter_value
-                model_value = QStandardItemModel(len(value_list),1,comboBox_value)
-                for (i,v) in enumerate(value_list):
-                    model_value.setData(model_value.index(i,0),v)
-                comboBox_value.setModel(model_value)
-                comboBox_value.setInsertPolicy(QComboBox.InsertAlphabetically)
-                comboBox_value.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-                comboBox_value.adjustSize()
-                comboBox_value.setCurrentIndex(0)
-
-        else:
-            
-            current_filter_index = self.model.current_filters.index(f)
-            
-            # Available filters are those filters that are above the current filter
-            available_filter_names = [fObj.name for fObj in 
-                                      self.model.current_filters[:current_filter_index]]
-            
-            f.combobox_list_set1_name = ['ALL'] + available_filter_names
-            f.combobox_list_set2_name = ['NEW','ALL'] + available_filter_names
-            
-            self.tableView_filter.setVisible(False)
-            self.tableView_filter.resizeColumnsToContents()
-            self.tableView_filter.setVisible(True)
-            
+        if 'filter_operator' in combobox_views_to_be_updated:
+            comboBox_operator = self.comboBox_simple_operator
+            filter_operators = f.combobox_list_filter_operator
+            model_operator = QStandardItemModel(
+                len(filter_operators),1,comboBox_operator)
+            for (i,op) in enumerate(filter_operators):
+                model_operator.setData(model_operator.index(i,0),op)
+            comboBox_operator.setModel(model_operator)
+            comboBox_operator.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+            comboBox_operator.setCurrentIndex(0)
+        
+        if 'index' in combobox_views_to_be_updated:
+            comboBox_index = self.comboBox_simple_index
+            index_list = f.combobox_list_index
+            model_index = QStandardItemModel(len(index_list),1,comboBox_index)
+            for (i, ind) in enumerate(index_list):
+                model_index.setData(model_index.index(i,0), ind)
+            comboBox_index.setModel(model_index)
+            comboBox_index.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+            comboBox_index.setCurrentIndex(0)
+                
+        if 'filter_value' in combobox_views_to_be_updated:
+            comboBox_value = self.comboBox_simple_value
+            value_list = f.combobox_list_filter_value
+            model_value = QStandardItemModel(len(value_list),1,comboBox_value)
+            for (i,v) in enumerate(value_list):
+                model_value.setData(model_value.index(i,0),v)
+            comboBox_value.setModel(model_value)
+            comboBox_value.setInsertPolicy(QComboBox.InsertAlphabetically)
+            comboBox_value.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+            comboBox_value.adjustSize()
+            comboBox_value.setCurrentIndex(0)
             
     #----------------------------------------------------------------------
     def _initChoiceList(self):
@@ -2260,29 +2223,32 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self._hidePageChildren(self.page_advanced)
             self._showPageChildren(self.page_simple)            
             self.stackedWidget.setCurrentWidget(self.page_simple)
-            self.model.current_filters = self.model.filters_simple
-            self.model.selected_filter_index = self.model.filters_simple_selected_index # Always = 0
+            selected_filter = self.model.filters_simple[0]
         elif filter_mode_str == 'advanced':
             self.radioButton_advanced.setChecked(True)
             self._hidePageChildren(self.page_simple)
             self._showPageChildren(self.page_advanced)            
             self.stackedWidget.setCurrentWidget(self.page_advanced)
-            self.model.current_filters = self.model.filters_advanced
-            try:
-                self.model.selected_filter_index = self.model.filters_advanced_selected_index
-            except:
-                self.model.selected_filter_index = 0
+            selected_filter = self.model.filters_advanced[self.model.filters_advanced_selected_index]
         else:
             raise ValueError('Unexpected filter_mode_str: '+filter_mode_str)
+        self.model.onFilterSelectionChange(selected_filter)
         
         current_filter = self.model.current_filters[self.model.selected_filter_index]
         try: # The following line is in "try" because it will fail at initialization
             # due to the fact that self.table_proxyModel_matched does not exist yet.
-            self.table_proxyModel_matched.setSourceModel(current_filter.matched_table)
+            self.switchSearchResultViews(current_filter)
         except:
             pass
+                
+    #----------------------------------------------------------------------
+    def switchSearchResultViews(self, selected_filter):
+        """"""
+        
+        self.table_proxyModel_matched.setSourceModel(selected_filter.matched_table)
         
         self.updateChoiceListComboBox()
+        
         self.update_matched_and_selected_numbers()
         
     #----------------------------------------------------------------------
@@ -2300,8 +2266,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             else:
                 raise ValueError('Unexpected sender')
             
-            self.emit(SIGNAL('objectTypeChanged'),object_type)
-        
+            self.emit(SIGNAL('objectTypeChanged'),object_type)      
         
     #----------------------------------------------------------------------
     def getFilterModeStr(self):
@@ -2314,8 +2279,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         elif currentWidget == self.page_advanced:
             return 'advanced'
         else:
-            raise ValueError('Unexpected current widget for QStackedWidget')
-        
+            raise ValueError('Unexpected current widget for QStackedWidget')    
     
     #----------------------------------------------------------------------
     def createPropertyListModel(self, parent):
@@ -2394,104 +2358,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         combobox_views_to_be_updated = ['filter_operator','index','filter_value']            
         self.updateSmartComboBoxes(f, combobox_views_to_be_updated)
             
-    
-        
-    ##----------------------------------------------------------------------
-    #def updateIndexComboBox(self, property_key, current_filter):
-        #""""""
-
-        ##for (k,v) in ELEM_PROPERTIES.iteritems():
-            ##if v[ENUM_ELEM_FULL_DESCRIP_NAME] == property_text:
-                ##data_type = v[ENUM_ELEM_DATA_TYPE]
-                ##property_key = k                    
-                ##break
-        ##property_key, data_type = \
-            ##propertyKeyAndDataTypeFromDisplayedPropertyName(
-                ##displayed_property_name)
-        #data_type = ELEM_PROPERTIES[property_key][ENUM_ELEM_DATA_TYPE]
-        #if data_type.endswith('_list'):
-            #isList = True
-        #else:
-            #isList = False
-
-        ##if property_text.startswith('Field:'):
-            ##isList = False
-        ##else:
-            ##for (k,v) in ELEM_PROPERTIES.iteritems():
-                ##if v[ENUM_ELEM_FULL_DESCRIP_NAME] == property_text:
-                    ##data_type = v[ENUM_ELEM_DATA_TYPE]
-                    ##property_key = k                    
-                    ##break
-            ##if data_type.endswith('_list'):
-                ##isList = True
-            ##else:
-                ##isList = False
-        
-        #if not isList:
-            #current_filter.combobox_list_index = ['N/A']
-        #else:
-            #currentParentSet = current_filter.parentSet
-            #first_list_len = len(
-                #current_filter.get(currentParentSet[0],property_key)
-            #)
-            #isEqualLen = all(
-                #[len(current_filter.get(o,property_key)) == first_list_len 
-                 #for o in currentParentSet] )
-            
-            #if isEqualLen:
-                #current_filter.combobox_list_index = ['ALL'] + \
-                    #[str(i+1) for i in range(first_list_len)]
-            #else:
-                #current_filter.combobox_list_index = ['N/A']
-            
-
-        #index_list = current_filter.combobox_list_index
-        
-        #filterModeStr = self.getFilterModeStr()
-        #if filterModeStr == 'simple':
-            #indexComboBox = self.comboBox_simple_index
-            #indexComboBoxModel = QStandardItemModel(len(index_list),1,indexComboBox)
-            #for (i, ind) in enumerate(index_list):
-                #indexComboBoxModel.setData(indexComboBoxModel.index(i,0),
-                                           #current_filter.combobox_list_index[i])
-            #indexComboBox.setModel(indexComboBoxModel)
-            #indexComboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-            
-        #elif filterModeStr == 'advanced':
-            #pass
-        #else:
-            #raise ValueError('Unexpected filterModeStr')
-        
-        
-            
-        ##if not isList:
-            ##indexComboBoxModel = QStandardItemModel(1,1,indexComboBox)
-            ##indexComboBoxModel.setData(indexComboBoxModel.index(0,0),'N/A')
-        ##else:
-            ###current_filter = self.model.getCurrentFilter()
-            ##currentParentSet = current_filter.parentSet
-            ##first_list_len = len(
-                ##self.model.get(currentParentSet[0],property_key)
-            ##)
-            ##isEqualLen = all(
-                ##[len(self.model.get(o,property_key)) == first_list_len 
-                 ##for o in currentParentSet] )
-            
-            ##if isEqualLen:
-                ##indexComboBoxModel = QStandardItemModel(first_list_len+1,1,
-                                                        ##indexComboBox)
-                ##indexComboBoxModel.setData(indexComboBoxModel.index(0,0),'ALL')
-                ##for i in range(first_list_len):
-                    ##indexComboBoxModel.setData(indexComboBoxModel.index(i+1,0), str(i))
-            ##else:
-                ##indexComboBoxModel = QStandardItemModel(1,1,indexComboBox)
-                ##indexComboBoxModel.setData(indexComboBoxModel.index(0,0),'N/A')
-                
-
-        ##indexComboBox.setModel(indexComboBoxModel)
-        ##indexComboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-            
-        
     #----------------------------------------------------------------------
     def _initMatchTable(self):
         """
@@ -2499,12 +2365,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         """
                 
         self.table_proxyModel_matched = QSortFilterProxyModel()
-        #self.table_proxyModel_matched.setSourceModel(self.current_matched_table_model)
         current_filter = self.model.getCurrentFilter()
         current_matched_table = current_filter.matched_table
         self.table_proxyModel_matched.setSourceModel(current_matched_table)
         self.table_proxyModel_matched.setDynamicSortFilter(False)
-        #self.table_proxyModel_matched.setSortRole(self.current_matched_table_model.SortRole)
         self.table_proxyModel_matched.setSortRole(current_matched_table.SortRole)
         
         t = self.tableView_matched # shorthand notation
@@ -2552,7 +2416,8 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def update_tables(self):
         """ """
         
-        tStart = tic()
+        if self.debug:
+            tStart = tic()
         
         #t = self.tableView_matched # shorthand notation
         #t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True) # This line will significantly slow down for large data.
@@ -2565,11 +2430,13 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         ### Reset selection to all available
         #t.selectAll()
         
-        print 'view.update_tables:', toc(tStart)
+        if self.debug:
+            print 'view.update_tables:', toc(tStart)
         
         self.emit(SIGNAL('readyForChoiceListUpdate'))
 
-        print 'view.update_tables (after readyForChoiceListUpdate):', toc(tStart)
+        if self.debug:
+            print 'view.update_tables (after readyForChoiceListUpdate):', toc(tStart)
 
     #----------------------------------------------------------------------
     def setMatchedTableColumnSortingEnabled(self, check_state_int):
@@ -2595,59 +2462,12 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         self.label_nMatched_nSelected.setText(
             'Matched Elements (' + str(nMatched) + ' matched, ' 
             + str(nSelected) + ' selected)')
-        
-    ##----------------------------------------------------------------------
-    #def auto_increment_filter_name(self):
-        #""""""
-
-        #new_filter_name = 'filter1'
-        
-        #filters_advanced = self.model.filters_advanced
-        
-        #if filters_advanced == []:
-            #return new_filter_name
-        
-        #existing_names = [f.name for f in filters_advanced
-                          #if f.name.startswith('filter')]
-        
-        #if existing_names == []:
-            #return new_filter_name
-        
-        #filter_name_numbers = []
-        #for n in existing_names:
-            #try:
-                #filter_name_numbers.append( int(n.replace('filter','')) )
-            #except:
-                #filter_name_numbers.append( 0 )
-        
-        #new_filter_name = 'filter' + str(max(filter_name_numbers)+1)
-        
-        #return new_filter_name
-        
-    #----------------------------------------------------------------------
-    def enforce_exclusiveness(self, clickedRadiobutton=None):
-        """"""
-        
-        if clickedRadiobutton is None:
-            clickedRadiobutton = self.sender()
-            
-        t = self.tableWidget_filter
-        
-        nRows = t.rowCount()
-        
-        for i in range(nRows):
-            if t.cellWidget(i,0) != clickedRadiobutton:
-                t.cellWidget(i,0).setChecked(False)
-            else:
-                t.cellWidget(i,0).setChecked(True)
-            
     
     #----------------------------------------------------------------------
     def addFilterRow(self):
         """"""
                     
         tableModel = self.tableView_filter.model()
-        isinstance(tableModel,FilterTableModel)
 
         new_filter = Filter(tableModel.auto_increment_filter_name(), self.model,
                             initiallySelected=False)
@@ -2658,115 +2478,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def removeFilterRow(self):
         """"""
                     
-        pass
+        tableModel = self.tableView_filter.model()
+        isinstance(tableModel,FilterTableModel)
         
-        
-    #----------------------------------------------------------------------
-    def add_row_to_filter_table(self):
-        """ """
-        
-        newf = Filter(self.auto_increment_filter_name(), self.model)
-        
-        self.model.filters.append(newf)
-        
-        t = self.tableWidget_filter # shorthand notation
-        
-        nRows = t.rowCount()+1
- 
-        t.setRowCount(nRows) # Add a new row to the table
-        
-        new_row_index = nRows-1
-        
-        obj = QRadioButton()
-        obj.setChecked(True)
-        t.setCellWidget(new_row_index,0,obj)
-        self.enforce_exclusiveness(obj)
-        self.connect(obj, SIGNAL('clicked()'),
-                     self.enforce_exclusiveness)
-        
-        t.setItem(new_row_index,1,
-                  QtGui.QTableWidgetItem(newf.name))
-        
-        obj = QComboBox()
-        available_filters = self.model.filters[:new_row_index]
-        m = QStandardItemModel(len(available_filters)+1, 1)
-        m.setData(m.index(0,0),'ALL')
-        for (i,f) in enumerate(available_filters):
-            m.setData(m.index(i+1,0), f.name)
-        obj.setModel(m)
-        t.setCellWidget(new_row_index,2,obj)
-        
-        obj = QComboBox()
-        m = QStandardItemModel(2,1)
-        m.setData(m.index(0,0),'AND')
-        m.setData(m.index(1,0),'OR')
-        obj.setModel(m)
-        t.setCellWidget(new_row_index,3,obj)
-        
-        obj = QComboBox()
-        m = QStandardItemModel(len(available_filters)+2, 1)
-        m.setData(m.index(0,0),'NEW')
-        m.setData(m.index(1,0),'ALL')
-        for (i,f) in enumerate(available_filters):
-            m.setData(m.index(i+2,0), f.name)
-        obj.setModel(m)
-        t.setCellWidget(new_row_index,4,obj)
-
-        t.setCellWidget(new_row_index,5,QCheckBox())
-        
-        obj = QComboBox()
-        m = QStandardItemModel(len(PROP_KEY_LIST), 1)
-        for (i,n) in enumerate(PROP_KEY_LIST):
-            m.setData(m.index(i,0), 
-                      ELEM_PROPERTIES[n][ENUM_ELEM_FULL_DESCRIP_NAME])
-        obj.setModel(m)
-        t.setCellWidget(new_row_index,6,obj)
-
-        t.setCellWidget(new_row_index,7,QComboBox())
-        t.setCellWidget(new_row_index,8,QComboBox())
-        t.setCellWidget(new_row_index,9,QComboBox())
-
-        #for (i, filter_prop) in enumerate(self.model.filter_property_list):
-            #if filter_prop is not 'exclude':
-                #t.setItem(new_row_index,i,
-                          #Qt.QTableWidgetItem(''))
-                    
-                #t.item(new_row_index,i).setFlags(Qt.Qt.ItemIsSelectable|
-                                                 #Qt.Qt.ItemIsEditable|
-                                                 #Qt.Qt.ItemIsDragEnabled|
-                                                 #Qt.Qt.ItemIsEnabled) # Make it editable
-            #else:
-                #t.setItem(new_row_index,i,Qt.QTableWidgetItem(''))
-                
-                #t.item(new_row_index,i).setFlags(Qt.Qt.ItemIsSelectable|
-                                                 #Qt.Qt.ItemIsEditable|
-                                                 #Qt.Qt.ItemIsDragEnabled|
-                                                 #Qt.Qt.ItemIsUserCheckable|
-                                                 #Qt.Qt.ItemIsEnabled) # Make it checkable
-                
-                #t.item(new_row_index,i).setCheckState(Qt.Qt.Unchecked)
-                        
-        
-        self.emit(SIGNAL("filterRowAdded"),())
-    
-    
-    #----------------------------------------------------------------------
-    def isItemUserCheckable(self, qTableWidgetItem):
-        """ """
-        
-        qtItemFlagsObj = qTableWidgetItem.flags()
-        qtItemFlagsInt = int(qtItemFlagsObj)
-        
-        if qtItemFlagsInt >= Qt.Qt.ItemIsTristate:
-            qtItemFlagsInt -= Qt.Qt.ItemIsTristate
-            
-        if qtItemFlagsInt >= Qt.Qt.ItemIsEnabled:
-            qtItemFlagsInt -= Qt.Qt.ItemIsEnabled
-            
-        if qtItemFlagsInt >= Qt.Qt.ItemIsUserCheckable:
-            return True
-        else:
-            return False
+        tableModel.removeFilter(tableModel.getSelectedRowInd())                
         
     #----------------------------------------------------------------------
     def on_machine_change(self, lattice_name=''):
@@ -2799,7 +2514,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         """"""
         
         f = self.model.getCurrentFilter()
-        #f = self.model.filters[self.model.selected_filter_index]
         f.NOT = checked
 
     #----------------------------------------------------------------------
@@ -2815,16 +2529,13 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         combobox_views_to_be_updated = ['filter_operator','index','filter_value']        
         self.updateSmartComboBoxes(f, combobox_views_to_be_updated)
-        #self.emit(SIGNAL('displayedFilterPropertyChanged'), f,
-                  #combobox_views_to_be_updated)
 
     #----------------------------------------------------------------------
     def on_filter_operator_change(self, displayed_text):
         """
         Relevant only for "simple" mode
         """
-        
-        #f = self.model.current_filters[self.model.selected_filter_index]
+
         f = self.model.getCurrentFilter()
         f.filter_operator = displayed_text
 
@@ -2835,49 +2546,19 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         """
         
         f = self.model.getCurrentFilter()
-        #f = self.model.filters[self.model.selected_filter_index]
         f.index = displayed_text
 
         FilterTableModel.onDisplayedPropertyNameChange(f)
         
         combobox_views_to_be_updated = ['filter_value']
         self.updateSmartComboBoxes(f, combobox_views_to_be_updated)        
-        #self.emit(SIGNAL('displayedFilterPropertyChanged'), f,
-                  #combobox_views_to_be_updated)
-        
-        #if f.index != 'N/A':
-            #value_list = [f.get(o,f.property_key)
-                          #for o in f.parentSet]
-            #if f.index == 'ALL':
-                #value_list = sorted( list(set( reduce(add, value_list) )), key=lower )
-            #else:
-                #index = int(f.index)
-                #value_list = sorted( list(set( [v[index] for v in value_list]) ), key=lower )
-            
-            #if self.radioButton_simple.isChecked():
-                #comboBox_value = self.comboBox_simple_value
-            #else:
-                #comboBox_value = []
-                #raise NotImplementedError('')
-            
-            #model_value = QStandardItemModel(len(value_list)+1,1,comboBox_value)
-            #current_value = comboBox_value.currentText()
-            #model_value.setData(model_value.index(0,0),current_value)
-            #for (i,v) in enumerate(value_list):
-                #model_value.setData(model_value.index(i+1,0),v)
-            #comboBox_value.setModel(model_value)
-            #comboBox_value.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        
         
     #----------------------------------------------------------------------
     def on_filter_value_change(self, displayed_text):
         """"""
         
         f = self.model.getCurrentFilter()
-        #f = self.model.filters[self.model.selected_filter_index]
         f.filter_value = displayed_text
-        
-    
         
     #----------------------------------------------------------------------
     def selectedRowIndList(self):
@@ -2887,7 +2568,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         row_ind_list = sorted(set([q.row() for q in qProxyModelIndexList]))
         
         return row_ind_list
-        
         
     #----------------------------------------------------------------------
     def closeEvent(self, event):
@@ -3077,7 +2757,8 @@ class ChannelExplorerApp(QObject):
     #----------------------------------------------------------------------
     def __init__(self, modal = True, parentWindow = None, 
                  init_object_type = 'element', can_modify_object_type = True,
-                 machine_name = None, lattice_name = None, caller = None):
+                 machine_name = None, lattice_name = None, caller = None,
+                 debug = False):
         """Constructor"""
         
         QObject.__init__(self)
@@ -3110,10 +2791,10 @@ class ChannelExplorerApp(QObject):
         self.modal = modal
         self.parentWindow = parentWindow
         
-        self._initModel(machine_name, init_object_type)
+        self._initModel(machine_name, init_object_type, debug=debug)
         self._initView(can_modify_object_type, lattice_name, caller,
                        all_prop_name_list, default_visible_prop_key_list,
-                       permanently_visible_prop_key_list)
+                       permanently_visible_prop_key_list, debug=debug)
         
         self.connect(self.view.radioButton_simple,SIGNAL('clicked()'),
                      self.view._changeFilterMode)
@@ -3149,6 +2830,12 @@ class ChannelExplorerApp(QObject):
         self.connect(self.view.tableView_filter.model(),
                      SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                      self.view.tableView_filter.model().onDataChange)
+        self.connect(self.view.tableView_filter.model(),
+                     SIGNAL('filterSelectionChanged'),
+                     self.model.onFilterSelectionChange)        
+        self.connect(self.view.tableView_filter.model(),
+                     SIGNAL('filterSelectionChanged'),
+                     self.view.switchSearchResultViews)
 
         self.connect(self.view.pushButton_search, SIGNAL('clicked()'),
                      self.model.search)
@@ -3166,8 +2853,6 @@ class ChannelExplorerApp(QObject):
         # After new filtering is performed, update the view based on
         # the new filtered data.
         self.connect(self.model, SIGNAL('filtersUpdated'),
-                     self.model.update_matched_table_model)
-        self.connect(self.model, SIGNAL('filtersUpdated'),
                      self.view.update_tables)
         self.connect(self.model, SIGNAL('filtersUpdated'),
                      self.view.update_matched_and_selected_numbers)
@@ -3175,12 +2860,8 @@ class ChannelExplorerApp(QObject):
         
         self.connect(self.view.pushButton_add_row, SIGNAL('clicked()'),
                      self.view.addFilterRow)
-        #self.connect(self.view.pushButton_add_row, SIGNAL('clicked()'),
-                     #self.view.add_row_to_filter_table)
-        #self.connect(self.view.pushButton_add_row, SIGNAL("clicked()"),
-                     #self.view.add_row_to_filter_table)
-        #self.connect(self.view, SIGNAL("sigFilterRowAdded"),
-                     #self.model.add_row_to_filter_spec)
+        self.connect(self.view.pushButton_remove_row, SIGNAL('clicked()'),
+                     self.view.removeFilterRow)
         
         
         self.connect(self.view.checkBox_matched_table_column_sorting,
@@ -3220,13 +2901,6 @@ class ChannelExplorerApp(QObject):
         
         self.connect(self, SIGNAL('columnSelectionReturned'),
                      self.view.on_column_selection_change)
-        
-        
-    #----------------------------------------------------------------------
-    def debug(self, test, t2=False):
-        """"""
-        
-        print 'debug'
                 
     #----------------------------------------------------------------------
     def launchStartupSettingsDialog(self):
@@ -3268,17 +2942,18 @@ class ChannelExplorerApp(QObject):
         
         
     #----------------------------------------------------------------------
-    def _initModel(self, machine_name, object_type):
+    def _initModel(self, machine_name, object_type, debug = False):
         """ """
         
         self.model = ChannelExplorerModel(machine_name,
                                           object_type=object_type,
-                                          settings=self.settings)
+                                          settings=self.settings,
+                                          debug=debug)
         
     #----------------------------------------------------------------------
     def _initView(self, can_modify_object_type, lattice_name, caller,
                   full_column_name_list, default_visible_column_name_list,
-                  permanently_visible_column_name_list):
+                  permanently_visible_column_name_list, debug = False):
         """ """
         
         self.view = ChannelExplorerView(self.model, self.modal,
@@ -3288,7 +2963,8 @@ class ChannelExplorerApp(QObject):
                                         default_visible_column_name_list,
                                         permanently_visible_column_name_list,                                        
                                         parentWindow = self.parentWindow,
-                                        settings = self.settings)
+                                        settings = self.settings,
+                                        debug = debug)
         
 ########################################################################
 class ColumnsDialog(QDialog):
@@ -3562,7 +3238,7 @@ def make(modal = True, parentWindow = None,
          init_object_type = 'element', can_modify_object_type = True,
          output_type = TYPE_OBJECT,
          machine_name = None, lattice_name = None,
-         caller = None):
+         caller = None, debug = False):
     """ """
     
     #if not ap.machines._lat:
@@ -3577,7 +3253,7 @@ def make(modal = True, parentWindow = None,
     
     app = ChannelExplorerApp(modal, parentWindow, 
                              init_object_type, can_modify_object_type,
-                             machine_name, lattice_name, caller)
+                             machine_name, lattice_name, caller, debug=debug)
     view = app.view
         
     if app.modal :
@@ -3630,7 +3306,7 @@ def main(args=None):
     
     result = make(modal=True, output_type=TYPE_OBJECT,
                   init_object_type='channel',
-                  caller='__main__')
+                  caller='__main__',debug=False)
     
     if result.has_key('dialog_result'): # When modal
         app           = result['app']
