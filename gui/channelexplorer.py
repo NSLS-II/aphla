@@ -2591,12 +2591,15 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def accept_and_close(self):
         """ """
         
+        self.saveViewSizeSettings()
+        
         super(ChannelExplorerView, self).accept() # will close the dialog
-        
-        
+                
     #----------------------------------------------------------------------
     def reject(self):
         """ """
+        
+        self.saveViewSizeSettings()
         
         super(ChannelExplorerView, self).reject() # will close the dialog
     

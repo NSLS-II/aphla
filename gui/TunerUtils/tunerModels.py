@@ -7,10 +7,12 @@ sip.setapi('QVariant', 2)
 import sys, os
 import numpy as np
 from datetime import datetime
+from time import time, strftime, localtime
+from subprocess import Popen, PIPE
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import SIGNAL, QObject
-from PyQt4.QtGui import QStandardItem, QStandardItemModel
+from PyQt4.QtCore import (SIGNAL, QObject, QAbstractItemModel)
+from PyQt4.QtGui import (QStandardItem, QStandardItemModel)
 
 import aphla as ap
 if ap.machines._lat is None:
@@ -18,6 +20,124 @@ if ap.machines._lat is None:
 
 import config as const
 
+#----------------------------------------------------------------------
+def getusername():
+    """"""
+    
+    p = Popen('whoami',stdout=PIPE,stderr=PIPE)
+    username, error = p.communicate()    
+
+    if error:
+        raise OSError('Error for whoami: '+error)
+    else:
+        return username
+    
+    
+########################################################################
+class TunerConfigModel(QAbstractItemModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, config_name='', description='',
+                 channel_group_list=None, col_name_list=None, parent=None):
+        """Constructor"""
+        
+        QAbstractItemModel.__init__(self, parent)
+        
+        self.username = getusername()
+        self.time_created = time() # current time in seconds from Epoch
+        
+        if channel_group_list is None:
+            self.channel_group_list = []
+        else:
+            self.channel_group_list = channel_group_list[:]
+            
+        if self.channel_group_list == []:
+            self.ref_channel_group = {'name':'', 'weight':0., 'channel_name_list':[]}
+        else:
+            self.ref_channel_group = self.channel_group_list[0]
+            
+        self.ref_step_size = 0.
+        
+        self.update_normalized_weight_list()
+        self.update_step_size_list()
+
+        self._get_channel_name_flat_list()
+        
+        self._get_pv_flat_list()
+        
+        self._update_pv_values()
+        
+        self._init_RB = self._current_RB[:]
+        self._init_SP = self._current_SP[:]
+        self._init_RB_time = self._current_RB_time[:]
+        self._init_SP_time = self._current_SP_time[:]
+        
+        self._target_SP = self._init_SP[:]
+        
+        self._update_derived_pv_values()
+        
+        self._update_model()
+        
+        
+        if col_name_list is None:
+            self.col_name_list = const.ALL_COL_NAMES[:]
+        else:
+            self.col_name_list = col_name_list[:]
+            
+        if const.COL_GROUP_NAME not in self.col_name_list:
+            raise ValueError('Column name list must contain COL_GROUP_NAME')
+        else:
+            self.col_name_list.remove(const.COL_GROUP_NAME)
+            self.col_name_list.insert(0,const.COL_GROUP_NAME)
+            
+        self.get_group_level_col_list()
+        self.get_channel_level_col_list()
+        
+        #self.setHorizontalHeaderLabels(self.col_name_list)
+        #self.setColumnCount(len(self.col_name_list))
+        #self.removeRows(0,self.rowCount()) # clear contents
+        
+    #----------------------------------------------------------------------
+    def get_group_level_col_list(self):
+        """"""
+        
+        self.group_level_col_list = const.GROUP_LEVEL_COL_LIST[:]
+        self.group_level_col_list.remove(const.COL_GROUP_NAME)
+        self.group_level_col_list = list(np.intersect1d(
+            np.array(self.group_level_col_list),
+            np.array(self.col_name_list) ) )
+        
+    #----------------------------------------------------------------------
+    def get_channel_level_col_list(self):
+        """"""
+        
+        self.channel_level_col_list = const.CHANNEL_LEVEL_COL_LIST[:]
+        self.channel_level_col_list = list(np.intersect1d(
+            np.array(self.channel_level_col_list),
+            np.array(self.col_name_list) ) )
+        
+    #----------------------------------------------------------------------
+    def update_normalized_weight_list(self):
+        """"""
+        
+        weight_list = [cg['weight'] for cg in self.channel_group_list]
+        
+        ref_weight = self.ref_channel_group['weight']
+        
+        if (ref_weight == 0.) or (ref_weight == float('NaN')):
+            self.normalized_weight_list = [float('NaN') for w in weight_list]
+        else:
+            self.normalized_weight_list = [w/ref_weight for w in weight_list]        
+
+    #----------------------------------------------------------------------
+    def update_step_size_list(self):
+        """"""
+        
+        self.step_size_list = [self.ref_step_size*nw for nw in self.normalized_weight_list]
+        
+    
+    
 ########################################################################
 class AbstractTunerConfigModel(QStandardItemModel):
     """"""

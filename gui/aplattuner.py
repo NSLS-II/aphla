@@ -63,17 +63,17 @@ def datestr(time_in_seconds_from_Epoch):
     
     return strftime(time_format, localtime(time_in_seconds_from_Epoch))
     
-#----------------------------------------------------------------------
-def getusername():
-    """"""
+##----------------------------------------------------------------------
+#def getusername():
+    #""""""
     
-    p = Popen('whoami',stdout=PIPE,stderr=PIPE)
-    username, error = p.communicate()    
+    #p = Popen('whoami',stdout=PIPE,stderr=PIPE)
+    #username, error = p.communicate()    
 
-    if error:
-        raise OSError('Error for whoami: '+error)
-    else:
-        return username
+    #if error:
+        #raise OSError('Error for whoami: '+error)
+    #else:
+        #return username
     
         
         

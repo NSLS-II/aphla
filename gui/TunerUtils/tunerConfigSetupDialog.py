@@ -11,10 +11,10 @@ import numpy as np
 from datetime import datetime
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import SIGNAL, QObject
-from PyQt4.QtGui import QApplication, QDialog, QStandardItem, \
-     QStandardItemModel, QSortFilterProxyModel, QAbstractItemView, \
-     QAction, QIcon, QMenu, QInputDialog
+from PyQt4.QtCore import (SIGNAL, QObject, QSettings)
+from PyQt4.QtGui import (QApplication, QDialog, QStandardItem,
+     QStandardItemModel, QSortFilterProxyModel, QAbstractItemView,
+     QAction, QIcon, QMenu, QInputDialog)
 
 import aphla as ap
 if ap.machines._lat is None:
@@ -41,12 +41,14 @@ class TunerConfigSetupModel(AbstractTunerConfigModel):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, config_dict=None):
+    def __init__(self, config_dict=None, settings=None):
         """Constructor"""
         
         AbstractTunerConfigModel.__init__(
             self, config_dict=config_dict,
             col_name_list=const.ALL_COL_NAMES_CONFIG_SETUP)
+        
+        self.settings = settings
         
         #self.SortRole = QtCore.Qt.UserRole
         
@@ -269,7 +271,7 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
     """"""
     
     #----------------------------------------------------------------------
-    def __init__(self, model, isModal, parentWindow):
+    def __init__(self, model, isModal, parentWindow, settings = None):
         """Constructor"""
         
         QDialog.__init__(self, parent=parentWindow)
@@ -278,6 +280,8 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         
         self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons
         self.setModal(isModal)
+
+        self.settings = settings
         
         self.visible_col_list = const.DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP        
                 
@@ -311,7 +315,60 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         self.connect(self.actionUngroupChannels, SIGNAL('triggered()'),
                      self._ungroupChannels)
     
+        self.loadViewSizeSettings()
+        
+    #----------------------------------------------------------------------
+    def saveViewSizeSettings(self):
+        """"""
+        
+        settings = self.settings
+        
+        settings._position = self.geometry()
+        settings._splitter_left_right_sizes = self.splitter_left_right.sizes()
+        settings._splitter_top_bottom_sizes = self.splitter_top_bottom.sizes()
+        
+        settings.saveViewSizeSettings()
+        
+    #----------------------------------------------------------------------
+    def loadViewSizeSettings(self):
+        """"""
+        
+        settings = self.settings
+        
+        rect = self.settings._position
+        if rect is None:
+            rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
+        self.setGeometry(rect)
+        
+        splitter_left_right_sizes = self.settings._splitter_left_right_sizes
+        if splitter_left_right_sizes is None:
+            # Adjust left-right splitter so that left widget takes max width
+            # and right widget takes min width
+            # QSplitter::setStretchFactor(int index, int stretch)
+            self.splitter_left_right.setStretchFactor(0,1)
+            self.splitter_left_right.setStretchFactor(1,0)
+        else:
+            self.splitter_left_right.setSizes(splitter_left_right_sizes)
+        
+        splitter_top_bottom_sizes = self.settings._splitter_top_bottom_sizes
+        if splitter_top_bottom_sizes is None:
+            # Adjust top-bottom splitter so that top widget takes max heigth
+            # and bottom widget takes min height
+            # QSplitter::setStretchFactor(int index, int stretch)
+            self.splitter_top_bottom.setStretchFactor(0,1)
+            self.splitter_top_bottom.setStretchFactor(1,0)
+        else:
+            self.splitter_top_bottom.setSizes(splitter_top_bottom_sizes)
+            
     
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+        
+        self.saveViewSizeSettings()
+        
+        event.accept()
+        
     #----------------------------------------------------------------------
     def accept(self):
         """"""
@@ -327,6 +384,8 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         accepted = True
         self.emit(SIGNAL('prepareOutput'),accepted)
         
+        self.saveViewSizeSettings()
+        
         QDialog.accept(self)
         
     
@@ -337,6 +396,8 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         accepted = False
         self.emit(SIGNAL('prepareOutput'),accepted)
         
+        self.saveViewSizeSettings()
+
         QDialog.reject(self) # will hide the dialog
             
     #----------------------------------------------------------------------
@@ -381,6 +442,72 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         self.proxyModel.setSourceModel(self.model)
         
         
+########################################################################
+class TunerConfigSetupAppSettings():
+    """"""
+    
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """
+        Attribute naming convetion:
+         1) Double underscore prefix means attributes that should not be
+            directly accessed outside of this class.
+         2) Single underscore prefix means settings properties related to view size.
+         3) No-underscored prefix means settings properties related to miscellaneous.
+        """
+        
+        self.__settings = QSettings('HLA','TunerConfigSetupDialog')
+        
+        self.loadViewSizeSettings()
+        self.loadMiscellaneousSettings()
+        
+    #----------------------------------------------------------------------
+    def loadViewSizeSettings(self):
+        """"""
+        
+        self.__settings.beginGroup('viewSize')
+        
+        self._position = self.__settings.value('position')
+
+        self._splitter_left_right_sizes = self.__settings.value('splitter_left_right_sizes')
+        if self._splitter_left_right_sizes is not None:
+            self._splitter_left_right_sizes = [int(s) for s in self._splitter_left_right_sizes] # convert from string to int
+          
+        self._splitter_top_bottom_sizes = self.__settings.value('splitter_top_bottom_sizes')  
+        if self._splitter_top_bottom_sizes is not None:
+            self._splitter_top_bottom_sizes = [int(s) for s in self._splitter_top_bottom_sizes] # convert from string to int
+        
+        self.__settings.endGroup()
+        
+    #----------------------------------------------------------------------
+    def loadMiscellaneousSettings(self):
+        """"""
+        
+        self.__settings.beginGroup('miscellaneous')
+        
+        self.__settings.endGroup()
+        
+    #----------------------------------------------------------------------
+    def saveViewSizeSettings(self):
+        """"""
+        
+        self.__settings.beginGroup('viewSize')
+        
+        self.__settings.setValue('position',self._position)
+        self.__settings.setValue('splitter_left_right_sizes',self._splitter_left_right_sizes)
+        self.__settings.setValue('splitter_top_bottom_sizes',self._splitter_top_bottom_sizes)
+        
+        self.__settings.endGroup()
+        
+    #----------------------------------------------------------------------
+    def saveMiscellaneousSettings(self):
+        """"""
+        
+        self.__settings.beginGroup('miscellaneous')
+        
+        self.__settings.endGroup()        
+        
+
             
 ########################################################################
 class TunerConfigSetupApp(QObject):
@@ -391,6 +518,8 @@ class TunerConfigSetupApp(QObject):
         """Constructor"""
         
         QObject.__init__(self)
+        
+        self.settings = TunerConfigSetupAppSettings()
         
         self._initModel(init_tuner_config_dict)
         self._initView(isModal, parentWindow)
@@ -413,21 +542,24 @@ class TunerConfigSetupApp(QObject):
     def _initModel(self, init_tuner_config_dict=None):
         """"""
         
-        self.model = TunerConfigSetupModel(init_tuner_config_dict)
+        self.model = TunerConfigSetupModel(init_tuner_config_dict,
+                                           settings=self.settings)
         
     #----------------------------------------------------------------------
     def _initView(self, isModal, parentWindow):
         """"""
         
-        self.view = TunerConfigSetupView(self.model, isModal, parentWindow)
+        self.view = TunerConfigSetupView(self.model, isModal, parentWindow,
+                                         settings=self.settings)
         
     #----------------------------------------------------------------------
     def _launchChannelExplorer(self):
         """"""
                 
-        result = channelexplorer.make(modal=True, 
-                    init_object_type='channel', can_modify_object_type=False,
-                    output_type=channelexplorer.TYPE_OBJECT)
+        result = channelexplorer.make(modal=True, init_object_type='channel',
+                                      can_modify_object_type=False,
+                                      output_type=channelexplorer.TYPE_OBJECT,
+                                      caller='aplattuner', debug=False)
         
         selected_channels = result['dialog_result']
         
