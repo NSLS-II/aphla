@@ -73,7 +73,7 @@ MACHINE_DICT = { # (Machine Display Name): (Initialization Function Name)
     }
 
 ENUM_ELEM_FULL_DESCRIP_NAME = 0
-ENUM_ELEM_SHORT_DESCRIP_NAME = 1
+ENUM_ELEM_SHORT_DESCRIP_NAME = 1 # used for column headers
 ENUM_ELEM_DATA_TYPE = 2
 ELEM_PROPERTIES ={
     'name': ['Name','Name','string'],
@@ -100,8 +100,8 @@ FULL_DESCRIP_NAME_LIST = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
 FILTER_OPERATOR_DICT = {'int': ['==(num)','<=','>='],
                         'bool': ['==(num)'],
                         'float': ['<=','>='],
-                        'string': ['==(char)','IN'],
-                        'string_list': ['==(char)','IN'],
+                        'string': ['==(char)','any of'],
+                        'string_list': ['==(char)','any of'],
                         'int_list': ['==(num)','<=','>='],
                         }
 ALL_FILTER_OPERATORS = FILTER_OPERATOR_DICT.values()
@@ -1443,7 +1443,7 @@ class ChannelExplorerModel(QObject):
             
             filter_str_list = [filter_str]
             
-        elif filter_operator == 'IN':
+        elif filter_operator == 'any of':
             if not is_case_sensitive: # case-insensitive search
                 filter_str_list = [v.strip().upper() for v in filter_value.split(',')]
             else: # case-sensitive search

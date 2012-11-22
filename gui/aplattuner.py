@@ -78,7 +78,7 @@ def datestr(time_in_seconds_from_Epoch):
         
         
 ########################################################################
-class TunerConfigModel(AbstractTunerConfigModel):
+class TunerConfigModelOld(AbstractTunerConfigModel):
     """"""
 
     #----------------------------------------------------------------------
@@ -464,7 +464,9 @@ class TunerModel(QObject):
     def createNewConfig(self, config_dict):
         """"""
         
-        newConfigModel = TunerConfigModel(config_dict)
+        newConfigModel = TunerConfigModel(config_name=config_dict['config_name'],
+            description=config_dict['description'],channel_group_list=[],
+            col_name_list=[])
         
         self.model_list.append(newConfigModel)
         

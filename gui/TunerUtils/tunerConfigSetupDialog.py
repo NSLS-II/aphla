@@ -20,10 +20,14 @@ import aphla as ap
 if ap.machines._lat is None:
     ap.initNSLS2V2()
 
-from tunerModels import AbstractTunerConfigModel
+from tunerModels import (ConfigChannel, TunerConfigSetupBaseModel, 
+                         TunerConfigSetupTableModel)#,
+                         #TunerConfigSetupTreeModel)
 from ui_tunerConfigSetupDialog import Ui_Dialog
 import config as const
 from aphla.gui import channelexplorer
+from aphla.gui.utils.tictoc import tic, toc
+
 #if __name__ == '__main__':
     #from ui_tunerConfigSetupDialog import Ui_Dialog
     
@@ -36,32 +40,23 @@ from aphla.gui import channelexplorer
     #import config as const
     #from aphla.gui import channelexplorer
 
+
 ########################################################################
-class TunerConfigSetupModel(AbstractTunerConfigModel):
+class TunerConfigSetupModel(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, config_dict=None, settings=None):
+    def __init__(self, settings=None):
         """Constructor"""
         
-        AbstractTunerConfigModel.__init__(
-            self, config_dict=config_dict,
-            col_name_list=const.ALL_COL_NAMES_CONFIG_SETUP)
-        
+        QObject.__init__(self)
+
         self.settings = settings
         
-        #self.SortRole = QtCore.Qt.UserRole
+        self.base_model = TunerConfigSetupBaseModel()
+        self.table_model = TunerConfigSetupTableModel(base_model=self.base_model)
+        #self.tree_model = TunerConfigSetupTreeModel()
         
-        #if init_tuner_config_dict is None:
-            #self.name = ''
-            #self.description = ''
-        
-            #self.channel_group_list = []
-        #else:
-            #key_list = ['name','description','channel_group_list']
-            #for k in key_list:
-                #setattr(self, k, init_tuner_config_dict[k])
-            
         
         #self.col_name_list = const.ALL_COL_NAMES_CONFIG_SETUP[:]
         #self.group_level_col_list = const.GROUP_LEVEL_COL_LIST[:]
@@ -79,38 +74,23 @@ class TunerConfigSetupModel(AbstractTunerConfigModel):
         #self.setColumnCount(len(self.col_name_list))
         #self.removeRows(0,self.rowCount()) # clear contents
 
-        self.output = {}
+        #self.output = {}
+        self.output = None
         
     #----------------------------------------------------------------------
     def _prepareOutput(self, accepted):
         """"""
         
         if accepted:
-            self.output = {'name':self.name,
-                           'description':self.description,
-                           'channel_group_list':self.channel_group_list}
+            #self.output = {'name':self.name,
+                           #'description':self.description,
+                           #'channel_group_list':self.channel_group_list}
+            self.output = self.base_model
         else:
-            self.output = {}
+            #self.output = {}
+            self.output = None
             
 
-    ##----------------------------------------------------------------------
-    #def data(self, modelIndex, role):
-        #"""
-        #Reimplementation of QStandardItemModel's data()
-        #The purpose is to allow sorting by numbers, not just by
-        #default string sorting.
-        #"""
-        
-        #if role == self.SortRole:
-            #try:
-                #value = QStandardItemModel.data(self, modelIndex, QtCore.Qt.DisplayRole)
-                #value = float(value)
-            #except:
-                #pass
-        #else:
-            #value = QStandardItemModel.data(self, modelIndex, role)
-            
-        #return value
     
     ##----------------------------------------------------------------------
     #def _getpvs(self, channel_name):
@@ -150,30 +130,50 @@ class TunerConfigSetupModel(AbstractTunerConfigModel):
         elemName_list = [elem.name for (elem,fieldName) in selected_channels]
         channelName_list = [elem.name+'.'+fieldName
                             for (elem,fieldName) in selected_channels]
+        field_list = [fieldName for fieldName in selected_channels]
+        
+        if channelGroupInfo == {}:
+            channelGroupName_list = channelName_list[:]
+            weight_list = [float('nan') for c in channelName_list]
+        else:
+            channelGroupName_list = [channelGroupInfo['name'] for c in channelName_list]
+            weight_list = [channelGroupInfo['weight'] for c in channelName_list]
+        step_size_list = weight_list[:]
+        
+        new_lists_dict = {'group_name': channelGroupName_list,
+                          'channel_name': channelName_list,
+                          'field': field_list,
+                          'weight': weight_list,
+                          'step_size': step_size_list}
+        tStart = tic()
+        self.base_model.appendChannels(new_lists_dict)
+        print 'before reset', toc(tStart)
+        self.table_model.resetModel()
+        print 'after reset', toc(tStart)
         
         ## Temporarily block signals emitted from the model
         #self.blockSignals(True)
         
-        channelGroupList = []
-        if channelGroupInfo == {}:
-            for (elemName,chName) in zip(elemName_list,channelName_list):
-                default_channel_group_name = elemName
-                default_channel_group_weight = 0.
-                channelGroup = {'name':default_channel_group_name,
-                                'weight':default_channel_group_weight,
-                                'channel_name_list': [chName]}
-                channelGroupList.append(channelGroup)
-                self.channel_group_list.append(channelGroup)
+        #channelGroupList = []
+        #if channelGroupInfo == {}:
+            #for (elemName,chName) in zip(elemName_list,channelName_list):
+                #default_channel_group_name = elemName
+                #default_channel_group_weight = 0.
+                #channelGroup = {'name':default_channel_group_name,
+                                #'weight':default_channel_group_weight,
+                                #'channel_name_list': [chName]}
+                #channelGroupList.append(channelGroup)
+                #self.channel_group_list.append(channelGroup)
                 
             
                 
-        else:
-            channelGroup = {'name': channelGroupInfo['name'],
-                            'weight': channelGroupInfo['weight'],
-                            'channel_name_list': channelName_list,
-                            }
-            channelGroupList.append(channelGroup)
-            self.channel_group_list.append(channelGroup)
+        #else:
+            #channelGroup = {'name': channelGroupInfo['name'],
+                            #'weight': channelGroupInfo['weight'],
+                            #'channel_name_list': channelName_list,
+                            #}
+            #channelGroupList.append(channelGroup)
+            #self.channel_group_list.append(channelGroup)
             
             
             #self.setRowCount(nRows + 1) # Add 1 row
@@ -259,8 +259,8 @@ class TunerConfigSetupModel(AbstractTunerConfigModel):
         
         #self.emit(SIGNAL('modelUpdated'))           
         
-        self.updateGroupBasedModel(change_type='append',
-                                   channelGroupList=channelGroupList)
+        #self.updateGroupBasedModel(change_type='append',
+                                   #channelGroupList=channelGroupList)
         
         
         
@@ -283,20 +283,18 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
 
         self.settings = settings
         
-        self.visible_col_list = const.DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP        
-                
         self.model = model
         self.proxyModel = QSortFilterProxyModel()
-        self.proxyModel.setSourceModel(self.model)
-        self.proxyModel.setDynamicSortFilter(True)
-        self.proxyModel.setSortRole(self.model.SortRole)
+        self.proxyModel.setSourceModel(self.model.table_model)
+        self.proxyModel.setDynamicSortFilter(False)
+        #self.proxyModel.setSortRole(self.model.SortRole)
         
         self.treeView.setModel(self.proxyModel)
-        self.treeView.setItemsExpandable(True)
+        self.treeView.setItemsExpandable(False)
         self.treeView.setRootIsDecorated(True)
-        self.treeView.setAllColumnsShowFocus(True)
+        self.treeView.setAllColumnsShowFocus(False)
         self.treeView.setHeaderHidden(False)
-        self.treeView.setSortingEnabled(True)
+        self.treeView.setSortingEnabled(False)
         
         self._expandAll_and_resizeColumn()
         
@@ -316,6 +314,22 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
                      self._ungroupChannels)
     
         self.loadViewSizeSettings()
+
+        self.visible_col_key_list = self.settings._visible_col_key_list
+        desired_visible_col_full_name_list = [
+                    const.PROP_DICT[k][const.ENUM_FULL_DESCRIP_NAME]
+                    for k in self.visible_col_key_list]        
+        self.on_column_selection_change(desired_visible_col_full_name_list,
+                                        force_visibility_update=True)
+        
+    #----------------------------------------------------------------------
+    def debug(self):
+        """"""
+        
+        #self.treeView.setVisible(False)
+        ##self.model.table_model.reset()
+        #self.proxyModel.setSourceModel(self.model.table_model)
+        #self.treeView.setVisible(True)
         
     #----------------------------------------------------------------------
     def saveViewSizeSettings(self):
@@ -401,6 +415,47 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         QDialog.reject(self) # will hide the dialog
             
     #----------------------------------------------------------------------
+    def get_visible_column_order(self):
+        """"""
+        
+        return [self.model.base_model.all_col_key_list.index(key)
+                for key in self.visible_col_key_list]
+    
+    #----------------------------------------------------------------------
+    def on_column_selection_change(self, new_visible_col_full_name_list,
+                                   force_visibility_update=False):
+        """"""
+        
+        current_visible_col_full_name_list = [const.PROP_DICT[col_key][const.ENUM_FULL_DESCRIP_NAME]
+                                              for col_key in self.visible_col_key_list]
+        
+        if (not force_visibility_update) and \
+           (new_visible_col_full_name_list == current_visible_col_full_name_list):
+            return
+
+        self.visible_col_key_list = [const.ALL_PROP_KEYS[const.FULL_DESCRIP_NAME_LIST.index(name)]
+                                     for name in new_visible_col_full_name_list]
+        
+        visible_column_order = self.get_visible_column_order()
+        
+        t = self.treeView # shorthand notation
+        
+        #horizHeader = t.horizontalHeader() # only for QTableView
+        horizHeader = t.header() # only for QTreeView
+
+        for (i,col_logical_ind) in enumerate(visible_column_order):
+            new_visual_index = i
+            current_visual_index = horizHeader.visualIndex(col_logical_ind)
+            horizHeader.moveSection(current_visual_index,
+                                    new_visual_index)
+        for i in range(len(const.ALL_PROP_KEYS)):
+            if i not in visible_column_order:
+                horizHeader.hideSection(i)
+            else:
+                horizHeader.showSection(i)
+        
+        
+    #----------------------------------------------------------------------
     def _groupChannels(self):
         """"""
         
@@ -485,6 +540,10 @@ class TunerConfigSetupAppSettings():
         
         self.__settings.beginGroup('miscellaneous')
         
+        self._visible_col_key_list = self.__settings.value('visible_col_key_list')
+        if self._visible_col_key_list is None:
+            self._visible_col_key_list = const.DEFAULT_VISIBLE_COL_KEYS_FOR_CONFIG_SETUP
+        
         self.__settings.endGroup()
         
     #----------------------------------------------------------------------
@@ -504,6 +563,8 @@ class TunerConfigSetupAppSettings():
         """"""
         
         self.__settings.beginGroup('miscellaneous')
+
+        self.__settings.setValue('visible_col_key_list', self._visible_col_key_list)
         
         self.__settings.endGroup()        
         
@@ -514,14 +575,14 @@ class TunerConfigSetupApp(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, init_tuner_config_dict, isModal, parentWindow):
+    def __init__(self, isModal, parentWindow):
         """Constructor"""
         
         QObject.__init__(self)
         
         self.settings = TunerConfigSetupAppSettings()
         
-        self._initModel(init_tuner_config_dict)
+        self._initModel()
         self._initView(isModal, parentWindow)
         
         self.connect(self.view.pushButton_add_from_GUI_selector,
@@ -530,20 +591,21 @@ class TunerConfigSetupApp(QObject):
                      self._askChannelGroupNameAndWeight)
         self.connect(self, SIGNAL('channelGroupInfoObtained'),
                      self.model.importNewChannels)
-        self.connect(self.model, SIGNAL('modelUpdated'),
-                     self.view._updateProxyModel)
-        self.connect(self.model, SIGNAL('modelUpdated'),
-                     self.view._expandAll_and_resizeColumn)
+        #self.connect(self.model, SIGNAL('modelUpdated'),
+                     #self.view._updateProxyModel)
+        #self.connect(self.model, SIGNAL('modelUpdated'),
+                     #self.view._expandAll_and_resizeColumn)
         
         self.connect(self.view, SIGNAL('prepareOutput'),
                      self.model._prepareOutput)
         
+
+        
     #----------------------------------------------------------------------
-    def _initModel(self, init_tuner_config_dict=None):
+    def _initModel(self):
         """"""
         
-        self.model = TunerConfigSetupModel(init_tuner_config_dict,
-                                           settings=self.settings)
+        self.model = TunerConfigSetupModel(settings=self.settings)
         
     #----------------------------------------------------------------------
     def _initView(self, isModal, parentWindow):
@@ -563,8 +625,12 @@ class TunerConfigSetupApp(QObject):
         
         selected_channels = result['dialog_result']
         
+        tStart = tic()
+        
         if selected_channels != []:
             self.emit(SIGNAL('channelsSelected'), selected_channels)
+        
+        print toc(tStart)
         
     #----------------------------------------------------------------------
     def _askChannelGroupNameAndWeight(self, selected_channels):
@@ -599,14 +665,12 @@ class TunerConfigSetupApp(QObject):
         
         self.emit(SIGNAL("channelGroupInfoObtained"), selected_channels,
                   channelGroupInfo)
-        
-        
 
 #----------------------------------------------------------------------
-def make(init_tuner_config_dict=None, isModal=True, parentWindow=None):
+def make(isModal=True, parentWindow=None):
     """"""
     
-    app = TunerConfigSetupApp(init_tuner_config_dict, isModal, parentWindow)
+    app = TunerConfigSetupApp(isModal, parentWindow)
     
     if isModal:
         app.view.exec_()
@@ -649,17 +713,19 @@ def main(args):
     else:
         qapp = QApplication(args)
 
-    app = make(isModal=True)
-        
+    isModal = True
+    app = make(isModal=isModal)
+    
     if using_cothread:
         cothread.WaitForQuit()
         print app.model.output        
     else:
-        exit_status = qapp.exec_()
-        print app.model.output        
+        if not isModal:
+            exit_status = qapp.exec_()
+        else:
+            exit_status = 0
+        print app.model.output
         sys.exit(exit_status)
-
-    
     
 #----------------------------------------------------------------------    
 if __name__ == "__main__" :

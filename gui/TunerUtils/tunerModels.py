@@ -11,8 +11,9 @@ from time import time, strftime, localtime
 from subprocess import Popen, PIPE
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import (SIGNAL, QObject, QAbstractItemModel)
-from PyQt4.QtGui import (QStandardItem, QStandardItemModel)
+from PyQt4.QtCore import (SIGNAL, QObject, QAbstractItemModel, 
+                          QAbstractTableModel, QModelIndex)
+from PyQt4.QtGui import (QStandardItem, QStandardItemModel, QMessageBox)
 
 import aphla as ap
 if ap.machines._lat is None:
@@ -32,111 +33,805 @@ def getusername():
     else:
         return username
     
+#----------------------------------------------------------------------
+def getChannelProperty(obj, propertyName):
+    """
+    propertyName can be a property of element or a function of element
+    """
+    
+    element, field = obj
+    
+    if propertyName == 'fields':
+        return field
+    
+    if propertyName not in ('pvrb','pvsp'):
+
+        x = getattr(element, propertyName)
+    
+    elif propertyName == 'pvrb':
+        try:
+            x = element.pv(field=field,handle='readback')[:]
+            if len(x) >= 2:
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Critical)
+                info_str = 'More than one PV is assigned for '+element.name+': '+str(x)
+                msgBox.setText(info_str)
+                msgBox.exec_()
+                return
+            else:
+                x = x[0]
+        except: # For DIPOLE, there is no field specified
+            x = ''
+    elif propertyName == 'pvsp':
+        try:
+            x = element.pv(field=field,handle='setpoint')[:]
+            if len(x) >= 2:
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Critical)
+                info_str = 'More than one PV is assigned for '+element.name+': '+str(x)
+                msgBox.setText(info_str)
+                msgBox.exec_()
+                return
+            else:
+                x = x[0]
+        except: # For DIPOLE, there is no field specified
+            x = ''
+            
+    return x
+    
+#----------------------------------------------------------------------
+def getChannelObjectList(channel_name_list):
+    """"""
+    
+    elem_field_tuple_list = [ch_name.split('.') for ch_name in channel_name_list]
+    
+    return [(ap.getElements(elem_name)[0], field_name)
+            for (elem_name,field_name) in elem_field_tuple_list]
+    
     
 ########################################################################
-class TunerConfigModel(QAbstractItemModel):
+class ConfigChannel(object):
+    """"""
+    
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+            
+        self._config_id = None
+        self._channel_name_id = None
+        self._channel_group_name_id = None
+
+        for k in const.ALL_PROP_KEYS_CONFIG_SETUP:
+            data_type = const.PROP_DICT[k][const.ENUM_DATA_TYPE]
+            if data_type == 'string':
+                default_val = ''
+            elif data_type in ('float','int'):
+                default_val = float('NaN')
+            elif data_type == ('N/A','BLOB'):
+                default_val = None
+            else:
+                raise ValueError('Unexpected data type: ' + data_type)
+            setattr(self, k, default_val)
+
+########################################################################
+class TreeItem(object):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, parent, row):
+        """Constructor"""
+        
+        self.parent = parent
+        self.row = row
+        self.subnodes = self._getChildren()
+        
+    #----------------------------------------------------------------------
+    def _getChildren(self):
+        """"""
+        raise NotImplementedError()
+            
+########################################################################
+class TreeModel(QAbstractItemModel):
+    """
+    See http://www.hardcoded.net/articles/using_qtreeview_with_qabstractitemmodel
+    """
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        
+        QAbstractItemModel.__init__(self)
+        self.rootItems = self._getRootItems()
+        
+    #----------------------------------------------------------------------
+    def _getRootItems(self):
+        """"""
+        
+        raise NotImplementedError()
+    
+    #----------------------------------------------------------------------
+    def index(self, row, column, parent):
+        """"""
+        if not parent.isValid():
+            return self.createIndex(row, column, self.rootNodes[row])
+        
+        parentItem = parent.internalPointer()
+        return self.createIndex(row, column, parentItem.subnodes[row])
+        
+    #----------------------------------------------------------------------
+    def parent(self, index):
+        """"""
+        if not index.isValid():
+            return QModelIndex()
+        
+        item = index.internalPointer()
+        if item.parent is None:
+            return QModelIndex()
+        else:
+            return self.createIndex(item.parent.row, 0, item.parent)
+    
+    #----------------------------------------------------------------------
+    def reset(self):
+        """"""
+        self.rootItems = self._getRootItems()
+        QAbstractItemModel.reset(self)
+        
+    #----------------------------------------------------------------------
+    def rowCount(self, parent):
+        """"""
+        if not parent.isValid():
+            return len(self.rootItems)
+        
+        item = parent.internalPointer()
+        return len(item.subnodes)
+    
+    
+            
+########################################################################
+class TunerConfigSetupBaseModel(QObject):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, all_col_key_list=None): #, visible_col_key_list=None):
+        """Constructor"""
+        
+        self.config_name = ''
+        self.description = ''
+        
+        if all_col_key_list is None:
+            self.all_col_key_list = const.ALL_PROP_KEYS_CONFIG_SETUP
+        else:
+            self.all_col_key_list = all_col_key_list
+        self.all_col_name_list = [const.PROP_DICT[k][const.ENUM_SHORT_DESCRIP_NAME]
+                                  for k in self.all_col_key_list]
+        
+        for k in const.ALL_PROP_KEYS_CONFIG_SETUP:
+            setattr(self, 'k_'+k, [])
+        
+        self.group_name_list = []
+        self.grouped_ind_list = []
+        
+        #self.config_channel_list = []
+        
+    #----------------------------------------------------------------------
+    def appendChannels(self, new_lists_dict):
+        """"""
+        
+        for (k,v) in new_lists_dict.iteritems():
+            getattr(self, 'k_'+k).extend(v)
+            if k == 'channel_name':
+                channelPropertyListsDict = self.getChannelPropertyListsDict(v)
+                for (k2, v2) in channelPropertyListsDict.iteritems():
+                    getattr(self, 'k_'+k2).extend(v2)
+                    
+        self.update_grouped_ind_list()
+                    
+    #----------------------------------------------------------------------
+    def update_grouped_ind_list(self):
+        """"""
+        
+        self.update_group_name_list()
+        
+        grouped_ind_list = []
+        for gn in self.group_name_list:
+            grouped_ind_list.append([i for (i,n) in enumerate(self.k_group_name)
+                                     if n == gn])
+        
+        self.grouped_ind_list = grouped_ind_list
+        
+    #----------------------------------------------------------------------
+    def update_group_name_list(self):
+        """
+        Group name order should be in the order of first appearnce in self.k_group_name list.
+        """
+        
+        unique_group_name_list = list(set(self.k_group_name))
+        
+        first_appearance_ind_list = [self.k_group_name.index(g)
+                                     for g in unique_group_name_list]
+        
+        sort_ind = list(np.argsort(first_appearance_ind_list))
+        
+        self.group_name_list = [unique_group_name_list[i] for i in sort_ind]
+                                
+    #----------------------------------------------------------------------
+    def getChannelPropertyListsDict(self, channel_name_list):
+        """"""
+        
+        channel_object_list = getChannelObjectList(channel_name_list)
+        
+        D = {}
+        for (k,v) in const.CHANNEL_PROP_DICT.iteritems():
+            D[k] = [getChannelProperty(c,v) for c in channel_object_list]
+        
+        return D
+
+        
+########################################################################
+class TunerConfigSetupTableModel(QAbstractTableModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, base_model=None):
+        """Constructor"""
+        
+        QAbstractTableModel.__init__(self)
+        
+        if base_model is None:
+            self.base_model = TunerConfigSetupBaseModel()
+        else:
+            self.base_model = base_model
+                
+    #----------------------------------------------------------------------
+    def resetModel(self):
+        """"""
+        
+        self.reset() # Initiate repaint
+
+    #----------------------------------------------------------------------
+    def rowCount(self, parent=QModelIndex()):
+        """"""
+        
+        return len(self.base_model.k_channel_name)
+
+    #----------------------------------------------------------------------
+    def columnCount(self, parent=QModelIndex()):
+        """"""
+        
+        return len(self.base_model.all_col_name_list)
+
+    #----------------------------------------------------------------------
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        """"""
+        
+        b = self.base_model
+        
+        row = index.row()
+        col_key = b.all_col_key_list[index.column()]
+        
+        if ( not index.isValid() ) or \
+           ( not (0 <= row < self.rowCount()) ):
+            return None
+        
+        if role == QtCore.Qt.DisplayRole:
+            #value = getattr(b.config_channel_list[row], col_key)
+            value = getattr(b,'k_'+col_key)[row]
+            return value
+        else:
+            return None
+        
+    #----------------------------------------------------------------------
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        """"""
+        
+        if role == QtCore.Qt.TextAlignmentRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return int(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+            else:
+                return int(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
+            
+        elif role != QtCore.Qt.DisplayRole:
+            return None
+        
+        elif orientation == QtCore.Qt.Horizontal: # Horizontal Header display name requested
+            return self.base_model.all_col_name_list[section]
+        
+        else: # Vertical Header display name requested
+            return int(section+1) # row number
+        
+    #----------------------------------------------------------------------
+    def flags(self, index):
+        """"""
+
+        default_flags = QAbstractTableModel.flags(self, index) # non-editable
+
+        if not index.isValid(): return default_flags
+        
+        col_key = self.base_model.all_col_key_list[index.column()]
+        if const.PROP_DICT[col_key][const.ENUM_EDITABLE]:
+            return QtCore.Qt.ItemFlags(default_flags | QtCore.Qt.ItemIsEditable) # editable
+        else:
+            return default_flags # non-editable
+        
+    #----------------------------------------------------------------------
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+        """"""
+
+        row = index.row()
+        col = index.column()
+        col_key = self.base_model.all_col_key_list[col]
+        
+        if ( not index.isValid() ) or \
+           ( not (0 <= row < self.rowCount()) ):
+            
+            return False        
+
+        else:
+            L = getattr(self.base_model, 'k_'+col_key)
+            L[row] = value
+            #setattr(self.base_model.config_channel_list[row], col_key, value)
+        
+            self.emit(SIGNAL('dataChanged(QModelIndex,QModelIndex)'), 
+                      index, index)
+            return True
+        
+        
+        
+            
+########################################################################
+class TunerConfigSetupTreeModel(QAbstractItemModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, base_model=None):
+        """Constructor"""
+
+        QAbstractItemModel.__init__()
+        
+        if base_model is None:
+            self.base_model = TunerConfigSetupBaseModel()
+        else:
+            self.base_model = base_model
+
+    #----------------------------------------------------------------------
+    def rowCount(self, parent=QModelIndex()):
+        """"""
+        
+        if not parent.isValid():
+            return len(self.rootNodes)
+        
+        node = parent.internalPointer()        
+        return len(node.subnodes)
+    
+        
+    
+########################################################################
+class TunerConfigAbstractModel(object):
     """"""
 
     #----------------------------------------------------------------------
     def __init__(self, config_name='', description='',
-                 channel_group_list=None, col_name_list=None, parent=None):
+                 config_channel_list=None, col_name_list=None):
+        """Constructor
+        """        
+
+        self.time_created = time() # current time in seconds from Epoch
+        self.username = getusername()
+        
+        if config_channel_list is None:
+            self.config_channel_list = []
+        else:
+            self.config_channel_list = config_channel_list[:]
+            
+        self.update_channel_name_flat_list()
+        
+        self.update_pv_flat_list()
+        
+    #----------------------------------------------------------------------
+    def update_channel_name_flat_list(self):
+        """"""
+    
+        self.channel_name_flat_list = [cc.channel_name for cc in self.config_channel_list]
+            
+        if len(self.channel_name_flat_list) != len(set(self.channel_name_flat_list)):
+            raise ValueError('Duplicate found in channel names.')
+            
+    #----------------------------------------------------------------------
+    def update_pv_flat_list(self):
+        """"""
+            
+        self.pvrb_flat_list = []
+        self.pvrb_dict = {}
+        self.pvsp_flat_list = []
+        self.pvsp_dict = {}
+            
+        for (i,ch) in enumerate(self.channel_name_flat_list):
+            elemName, fieldName = ch.split('.')
+            elem = ap.getElements(elemName)[0]
+            pv = elem.pv(field=fieldName,handle='readback')
+            if len(pv) == 1:
+                self.pvrb_flat_list.append(pv[0])
+                self.pvrb_dict[ch] = len(self.pvrb_flat_list)-1
+            elif len(pv) == 0:
+                pass
+            else:
+                raise ValueError("Multiple pv's found for readback: "+str(pv))
+            pv = elem.pv(field=fieldName,handle='setpoint')
+            if len(pv) == 1:
+                self.pvsp_flat_list.append(pv[0])
+                self.pvsp_dict[ch] = len(self.pvsp_flat_list)-1
+            elif len(pv) == 0:
+                pass
+            else:
+                raise ValueError("Multiple pv's found for setpoint: "+str(pv))
+                    
+        self.pv_flat_list = self.pvrb_flat_list + self.pvsp_flat_list        
+        
+########################################################################
+class TunerSnapshotAbstractModel(object):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, config_model):
         """Constructor"""
         
-        QAbstractItemModel.__init__(self, parent)
+        self._config_model = config_model
         
-        self.username = getusername()
-        self.time_created = time() # current time in seconds from Epoch
+        self._snapshot_id
+        self._snapshot_name
+        self.username
+        self.time_snapshot_taken
+        self.description
+        self.appended_descriptions
+        self.masar_event_id
+    
         
-        if channel_group_list is None:
-            self.channel_group_list = []
-        else:
-            self.channel_group_list = channel_group_list[:]
-            
-        if self.channel_group_list == []:
-            self.ref_channel_group = {'name':'', 'weight':0., 'channel_name_list':[]}
-        else:
-            self.ref_channel_group = self.channel_group_list[0]
-            
-        self.ref_step_size = 0.
         
-        self.update_normalized_weight_list()
-        self.update_step_size_list()
+        
+    
+    
+########################################################################
+class TunerSnapshotTreeModel(QAbstractItemModel):
+    """"""
 
-        self._get_channel_name_flat_list()
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
         
-        self._get_pv_flat_list()
+########################################################################
+class TunerSnapshotTableModel(QAbstractTableModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+    
+    
+    
+    
+########################################################################
+class TunerConfigSetupAbstractModel(QAbstractItemModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, config_name='', description='',
+                 config_channel_list=None, col_name_list=None, 
+                 grouped=True, parent=None):
+        """Constructor
         
-        self._update_pv_values()
+        The following explains how the model behaves when a user changes
+        a weight or a step size for a given channel:
         
-        self._init_RB = self._current_RB[:]
-        self._init_SP = self._current_SP[:]
-        self._init_RB_time = self._current_RB_time[:]
-        self._init_SP_time = self._current_SP_time[:]
+        If a user changes the weight for a channel, then only this weight
+        will change, and the weights of all the other channels will NOT be changed.
+        However, the step size of the channel whose weight has been just
+        changed will be updated as follows.
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: NaN -> 0  NaN        => 0          0
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+        Ch.1: NaN -> 2  NaN        => 2          200 (=2*100/1)
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: 0 -> NaN  0          => NaN        NaN
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+        Ch.1: 0 -> 2    0          => 2          200 (=2*100/1)
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: 3 -> NaN  300        => NaN        NaN
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+        Ch.1: 3 -> 0    300        => 0          0
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+        Ch.1: 3 -> 2    300        => 2          200 (=2*100/1)
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
         
-        self._target_SP = self._init_SP[:]
+        If there is no other channel with non-zero numeric weight:
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: NaN -> 0  NaN        => 0          0
+        Ch.2: 0         0             0          0
+        Ch.3: NaN       NaN           NaN        NaN
+
+        Ch.1: NaN -> 2  NaN        => 2          2
+        Ch.2: 0         0             0          0
+        Ch.3: NaN       NaN           NaN        NaN
+
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: 0 -> NaN  0          => NaN        NaN
+        Ch.2: 0         0             0          0
+        Ch.3: NaN       NaN           NaN        NaN
+
+        Ch.1: 0 -> 2    0          => 2          2
+        Ch.2: 0         0             0          0
+        Ch.3: NaN       NaN           NaN        NaN
+
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: 3 -> NaN  300        => NaN        NaN
+        Ch.2: 0         0             0          0
+        Ch.3: NaN       NaN           NaN        NaN
+
+        Ch.1: 3 -> 0    300        => 0          0
+        Ch.2: 0         0             0          0
+        Ch.3: NaN       NaN           NaN        NaN
+
+        Ch.1: 3 -> 2    300        => 2          200 (=2*300/3)
+        Ch.2: 0         0             0          0
+        Ch.3: NaN       NaN           NaN        NaN
+
+        If a user changes the step size for a channel, then none
+        of the weights will be changed, but the step sizes of all
+        the other channels will be updated (unless the weight of 
+        the changed channel is either 0 or NaN) according to these 
+        unchagned weights as follows.
+        Note that if the weight of a channel is NaN, then the step
+        size of the channel will always be NaN, no matter how a
+        user tries to change the step size to other than NaN. If the
+        weight of a channel is zero, then the step size of the
+        channel will always be 0 if a user tries to change the step
+        size to non-zero number, or NaN if a user tries to change
+        the step size to NaN.
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: NaN       NaN -> 0   => NaN        NaN
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+        Ch.1: NaN       NaN -> 200 => NaN        NaN
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: 0         0 -> NaN   => 0          NaN (=0*NaN)
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+        Ch.1: 0         0 -> 2     => 0          0 (=0*2)
+        Ch.2: 1         100           1          100
+        Ch.3: 0         0             0          0
+        Ch.4: NaN       NaN           NaN        NaN
+
+              (Weight) (Step Size)    (Weight)  (Step Size)
+        Ch.1: 3         300 -> NaN => 3          NaN
+        Ch.2: 1         100           1          NaN (=1*NaN/3)
+        Ch.3: 0         0             0          NaN (=0*NaN/3)
+        Ch.4: NaN       NaN           NaN        NaN
+
+        Ch.1: 3         300 -> 0   => 3          0
+        Ch.2: 1         100           1          0 (=1*0/3)
+        Ch.3: 0         0             0          0 (=0*0/3)
+        Ch.4: NaN       NaN           NaN        NaN
+
+        Ch.1: 3         300 -> 150 => 3          150
+        Ch.2: 1         100           1          50 (=1*150/3)
+        Ch.3: 0         0             0          0 (=0*150/3)
+        Ch.4: NaN       NaN           NaN        NaN
         
-        self._update_derived_pv_values()
         
-        self._update_model()
+        """
         
+        QAbstractItemModel.__init__(self, parent)
+                
+        #self.time_created = time() # current time in seconds from Epoch
+        #self.username = getusername()
+        
+        #self.grouped = grouped
+        
+        #if config_channel_list is None:
+            #self.config_channel_list = []
+        #else:
+            #self.config_channel_list = config_channel_list[:]
+            
+        #self.update_channel_name_flat_list()
+        
+        #self.update_pv_flat_list()
+        
+        # Up to here needed for ConfigSetup
+        
+        self.update_pv_values()
+        
+        self.init_RB = self.current_RB[:]
+        self.init_SP = self.current_SP[:]
+        self.init_RB_ioc_time = self.current_RB_ioc_time[:]
+        self.init_SP_ioc_time = self.current_SP_ioc_time[:]
+        self.init_RB_pc_time = [self.current_PC_time for rb in self.current_RB]
+        self.init_SP_pc_time = [self.current_PC_time for rb in self.current_RB]
+        
+        self.target_SP = self.init_SP[:]
+        
+        self.update_derived_pv_values()
         
         if col_name_list is None:
-            self.col_name_list = const.ALL_COL_NAMES[:]
+            #self.col_name_list = const.ALL_COL_NAMES[:]
+            self.col_name_list = [const.PROP_DICT[k][const.ENUM_SHORT_DESCRIP_NAME]
+                                  for k in const.ALL_PROP_KEYS]
         else:
             self.col_name_list = col_name_list[:]
-            
-        if const.COL_GROUP_NAME not in self.col_name_list:
-            raise ValueError('Column name list must contain COL_GROUP_NAME')
-        else:
-            self.col_name_list.remove(const.COL_GROUP_NAME)
-            self.col_name_list.insert(0,const.COL_GROUP_NAME)
-            
-        self.get_group_level_col_list()
-        self.get_channel_level_col_list()
         
+        if self.col_name_list[0] != 'group_name':
+            raise ValueError('First column key must be "group_name".')
+            
+
+            
         #self.setHorizontalHeaderLabels(self.col_name_list)
         #self.setColumnCount(len(self.col_name_list))
         #self.removeRows(0,self.rowCount()) # clear contents
-        
-    #----------------------------------------------------------------------
-    def get_group_level_col_list(self):
-        """"""
-        
-        self.group_level_col_list = const.GROUP_LEVEL_COL_LIST[:]
-        self.group_level_col_list.remove(const.COL_GROUP_NAME)
-        self.group_level_col_list = list(np.intersect1d(
-            np.array(self.group_level_col_list),
-            np.array(self.col_name_list) ) )
-        
-    #----------------------------------------------------------------------
-    def get_channel_level_col_list(self):
-        """"""
-        
-        self.channel_level_col_list = const.CHANNEL_LEVEL_COL_LIST[:]
-        self.channel_level_col_list = list(np.intersect1d(
-            np.array(self.channel_level_col_list),
-            np.array(self.col_name_list) ) )
-        
-    #----------------------------------------------------------------------
-    def update_normalized_weight_list(self):
-        """"""
-        
-        weight_list = [cg['weight'] for cg in self.channel_group_list]
-        
-        ref_weight = self.ref_channel_group['weight']
-        
-        if (ref_weight == 0.) or (ref_weight == float('NaN')):
-            self.normalized_weight_list = [float('NaN') for w in weight_list]
-        else:
-            self.normalized_weight_list = [w/ref_weight for w in weight_list]        
+       
 
     #----------------------------------------------------------------------
-    def update_step_size_list(self):
+    def update_channel_name_flat_list(self):
+        """"""
+
+        self.channel_name_flat_list = [cc.channel_name for cc in self.config_channel_list]
+        
+        if len(self.channel_name_flat_list) != len(set(self.channel_name_flat_list)):
+            raise ValueError('Duplicate found in channel names.')
+        
+    #----------------------------------------------------------------------
+    def update_pv_flat_list(self):
         """"""
         
-        self.step_size_list = [self.ref_step_size*nw for nw in self.normalized_weight_list]
+        self.pvrb_flat_list = []
+        self.pvrb_dict = {}
+        self.pvsp_flat_list = []
+        self.pvsp_dict = {}
         
+        for (i,ch) in enumerate(self.channel_name_flat_list):
+            elemName, fieldName = ch.split('.')
+            elem = ap.getElements(elemName)[0]
+            pv = elem.pv(field=fieldName,handle='readback')
+            if len(pv) == 1:
+                self.pvrb_flat_list.append(pv[0])
+                self.pvrb_dict[ch] = len(self.pvrb_flat_list)-1
+            elif len(pv) == 0:
+                pass
+            else:
+                raise ValueError("Multiple pv's found for readback: "+str(pv))
+            pv = elem.pv(field=fieldName,handle='setpoint')
+            if len(pv) == 1:
+                self.pvsp_flat_list.append(pv[0])
+                self.pvsp_dict[ch] = len(self.pvsp_flat_list)-1
+            elif len(pv) == 0:
+                pass
+            else:
+                raise ValueError("Multiple pv's found for setpoint: "+str(pv))
+                
+        self.pv_flat_list = self.pvrb_flat_list + self.pvsp_flat_list
+
+    #----------------------------------------------------------------------
+    def update_pv_values(self):
+        """"""
+        
+        self.current_PC_time = time() # current time in seconds from Epoch
+        
+        pv_results = caget(self.pv_flat_list,format=FORMAT_TIME)
+        pvrb_results = pv_results[:len(self.pvrb_flat_list)]
+        pvsp_results = pv_results[len(self.pvrb_flat_list):]
+        
+        pvrb_dict_keys = self.pvrb_dict.keys()
+        self.current_RB = np.array([pvrb_results[self.pvrb_dict[c]].real
+                                    if c in pvrb_dict_keys 
+                                    else float('NaN') 
+                                    for c in self.channel_name_flat_list])
+        self.current_RB_ioc_time = np.array([pvrb_results[self.pvrb_dict[c]].timestamp
+                                             if c in pvrb_dict_keys 
+                                             else float('NaN') 
+                                             for c in self.channel_name_flat_list])
+
+        pvsp_dict_keys = self.pvsp_dict.keys()
+        self.current_SP = np.array([pvsp_results[self.pvsp_dict[c]].real
+                                    if c in pvsp_dict_keys 
+                                    else float('NaN') 
+                                    for c in self.channel_name_flat_list])
+        self.current_SP_ioc_time = np.array([pvsp_results[self.pvsp_dict[c]].timestamp
+                                             if c in pvsp_dict_keys 
+                                             else float('NaN') 
+                                             for c in self.channel_name_flat_list])
+        
+    #----------------------------------------------------------------------
+    def update_derived_pv_values(self):
+        """"""
+        
+        self.D_target_SP_current_SP = self.target_SP - self.current_SP
+        self.D_current_RB_init_RB = self.current_RB - self.init_RB
+        self.D_current_SP_init_SP = self.current_SP - self.init_SP
+        self.D_current_RB_current_SP = self.current_RB - self.current_SP
+
+    #----------------------------------------------------------------------
+    def index(self, row, column, parent=QModelIndex()):
+        """"""
+        
+        if not parent.isValid():
+            return self.createIndex(row, column, self.rootNodes[row])
+        else:
+            parentNode = parent.internalPointer()
+            return self.createIndex(row, column, parentNode.subnodes[row])
+        
+        
+    #----------------------------------------------------------------------
+    def parent(self, index):
+        """"""
+        
+        if not index.isValid():
+            return QModelIndex()
+        
+        node = index.internalPointer()
+        if node.parent is None:
+            return QModelIndex()
+        else:
+            # Assuming only the first column can have children
+            return self.createIndex(node.parent.row, 0, node.parent)
+        
+        
+    #----------------------------------------------------------------------
+    def rowCount(self, parent=QModelIndex()):
+        """"""
+        
+        return len(self.channel_name_flat_list)
     
+    #----------------------------------------------------------------------
+    def columnCount(self, parent=QModelIndex()):
+        """"""
+        
+        return len(self.col_name_list)
+       
+    #----------------------------------------------------------------------
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        """"""
+        
+        row = index.row()
+        col_key = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
+        
+        if ( not index.isValid() ) or \
+           ( not (0 <= row < self.rowCount()) ):
+            return None
+        
+        if role == QtCore.Qt.DisplayRole:
+            value = getattr(self._filter_list[row], col_handle)
+            return value
+        else:
+            return None
+        
+        
     
 ########################################################################
 class AbstractTunerConfigModel(QStandardItemModel):
