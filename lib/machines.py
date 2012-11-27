@@ -56,6 +56,25 @@ HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
+_cf_map = {'elemName': 'name', 
+           'elemField': 'field', 
+           'devName': 'devname',
+           'elemType': 'family', 
+           'elemHandle': 'handle',
+           'elemIndex': 'index', 
+           'elemPosition': 'se',
+           'elemLength': 'length',
+           'system': 'system'
+}
+
+_db_map = {'elem_type': 'family',
+           'lat_index': 'index',
+           'position': 'se',
+           'elem_group': 'group',
+           'dev_name': 'devname',
+           'elem_field': 'field'
+}
+
 def createLattice(name, pvrec, systag, desc = 'channelfinder'):
     """
     create a lattice from channel finder data
@@ -79,7 +98,8 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         if 'name' not in rec[1]: continue
         pv = rec[0]
         prpt = rec[1]
-        prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
+        if 'se' in prpt:
+            prpt['sb'] = float(prpt['se']) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
 
         logger.debug("{0} {1} {2}".format(rec[0], rec[1], rec[2]))
@@ -130,49 +150,46 @@ def initNSLS2V2(with_twiss = False):
     """ 
     initialize the virtual accelerator 'V2SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
-    - `${HOME}/.hla/us_nsls2v2.db`
+    - `${HOME}/.hla/us_nsls2v2.sqlite`
     - channel finder in ${HLA_CFS_URL}
-    - `us_nsls2v2.db` with aphla package.
+    - `us_nsls2v2.sqlite` with aphla package.
     """
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2v2.db'
+    cfs_filename = 'us_nsls2v2.sqlite'
     src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
         msg = "Creating lattice from home file '%s'" % src_home_csv
         logger.info(msg)
-        if src_home_csv.endswith('.csv'): cfa.importCsv(src_home_csv)
-        elif src_home_csv.endswith('.db'): cfa.importSqliteDb(src_home_csv)
+        if src_home_csv.endswith('.csv'):
+            cfa.importCsv(src_home_csv)
+            for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)            
+        elif src_home_csv.endswith('.sqlite'):
+            cfa.importSqliteDb(src_home_csv)
+            for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         logger.info(msg)
         cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
+        # map the cf property name to alpha property name
+        for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif conf.has(cfs_filename):
         src_pkg_csv = conf.filename(cfs_filename)
         msg = "Creating lattice from '%s'" % src_pkg_csv
         logger.info(msg)
         #print(msg)
-        if src_pkg_csv.endswith('.csv'): cfa.importCsv(src_pkg_csv)
-        elif src_pkg_csv.endswith('.db'): cfa.importSqliteDb(src_pkg_csv)
+        if src_pkg_csv.endswith('.csv'):
+            cfa.importCsv(src_pkg_csv)
+            for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+        elif src_pkg_csv.endswith('.sqlite'): 
+            cfa.importSqliteDb(src_pkg_csv)
+            for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     else:
         logger.error("Channel finder data are available, no '%s', no server" % 
                      cfs_filename)
         raise RuntimeError("Failed at loading cache file")
-
-    #print(msg)
-    # the property in Element mirrored from ChannelFinder property
-    for k in [('name', u'elemName'), 
-              ('field', u'elemField'), 
-              ('devname', u'devName'),
-              ('family', u'elemType'), 
-              ('handle', u'elemHandle'),
-              ('index', u'elemIndex'), 
-              ('se', u'elemPosition'),
-              ('length', u'elemLength'),
-              ('system', u'system')]:
-        cfa.renameProperty(k[1], k[0])
 
     #tags = cfa.tags('aphla.sys.*')
 
@@ -216,6 +233,47 @@ def initNSLS2V2(with_twiss = False):
     _lat = _lattice_dict['V2SR']
         
 
+def initNSLS2V3BSRLine(with_twiss = False):
+    """ 
+    initialize the virtual accelerator 'V3BSRLINE'
+
+    This is a temp ring, always use database in the package
+    """
+
+    cfa = ChannelFinderAgent()
+    cfs_filename = 'us_nsls2v3bsrline.sqlite'
+    src_pkg_csv = conf.filename(cfs_filename)
+    msg = "Creating lattice from '%s'" % src_pkg_csv
+    logger.info(msg)
+    #print(msg)
+    cfa.importSqliteDb(src_pkg_csv)
+    for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
+
+    global _lat, _lattice_dict
+
+    # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
+    logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
+    for latname in ['V3BSRLINE']:
+        lattag = HLA_TAG_SYS_PREFIX + '.' + latname
+        logger.info("Initializing lattice %s (%s)" % (latname, lattag))
+        _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
+                                               desc = cfa.source)
+        if _lattice_dict[latname].size() == 0:
+            logger.warn("lattice '%s' has no elements" % latname)
+
+    orm_filename = None
+    if orm_filename and conf.has(orm_filename):
+        #print("Using ORM:", conf.filename(orm_filename))
+        _lattice_dict['V2SR'].ormdata = OrmData(conf.filename(orm_filename))
+        logger.info("using ORM data '%s'" % orm_filename)
+    else:
+        logger.warning("No ORM '%s' found" % orm_filename)
+
+
+    _lattice_dict['V3BSRLINE'].loop = False
+        
+
+
 def initNSLS2V2SRTwiss():
     """
     initialize the twiss data from virtual accelerator
@@ -224,7 +282,7 @@ def initNSLS2V2SRTwiss():
     # SR Twiss
     global _lat, _twiss
     _twiss = Twiss("V2SR")
-    _twiss.load(conf.filename('us_nsls2v2.db'))
+    _twiss.load(conf.filename('us_nsls2v2.sqlite'))
     _lat._twiss = _twiss
 
 
@@ -234,14 +292,14 @@ def initNSLS2():
 
     The initialization is done in the following order:
 
-        - user's `${HOME}/.hla/us_nsls2.db`; if not then
+        - user's `${HOME}/.hla/us_nsls2.sqlite`; if not then
         - channel finder service in `env ${HLA_CFS_URL}`; if not then
-        - the `us_nsls2.db` installed with aphla package; if not then
+        - the `us_nsls2.sqlite` installed with aphla package; if not then
         - RuntimeError
     """
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2.db'
+    cfs_filename = 'us_nsls2.sqlite'
     src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 

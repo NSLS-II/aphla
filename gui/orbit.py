@@ -582,8 +582,11 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
 def main(par=None):
-    aphla.initNSLS2V2()
-    aphla.initNSLS2()
+    try:
+        aphla.initNSLS2V2()
+        aphla.initNSLS2()
+    except:
+        pass
     print aphla.machines.lattices()
     #app = QApplication(args)
     #app.setStyle(st)

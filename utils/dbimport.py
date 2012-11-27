@@ -28,6 +28,7 @@ def conv(k, *args, **kwargs):
           'readback': 'get',
           'setpoint': 'set',
           'V:2-SR': 'V2SR',
+          'V:3-BSR': 'V3BSRLINE',
           ('Horizontal Corrector', ''): 'x',
           ('Vertical Corrector', ''): 'y',
           ('Beam Position Monitor', 'X'): 'x',
@@ -57,22 +58,23 @@ class Element(Base):
     cell       = Column(String)
     girder     = Column(String)
     symmetry   = Column(String)
-    length     = Column(Float)
-    position   = Column(Float)
-    lat_index  = Column(Integer)
+    length     = Column(Float, default=0)
+    position   = Column(Float, default=0)
+    lat_index  = Column(Integer, default=0)
     elem_group = Column(String)
     virtual    = Column(Integer)
     k1         = Column(Float)
     k2         = Column(Float)
     angle      = Column(Float)
+    polar      = Column(Integer, default=2)  # unipolar or bipolar
 
     tracy_el_idx_va  = Column(Integer)
     tracy_machine    = Column(String)
     tracy_el_name_va = Column(String)
     tracy_el_type_va = Column(String)
 
-
-    __table_args__ = (UniqueConstraint('name', 'system', 'cell', 'girder', name='_uniq_name'),)
+    __table_args__ = (UniqueConstraint('name', name='_uniq_name'),)
+    #__table_args__ = (UniqueConstraint('name', 'system', 'cell', 'girder', name='_uniq_name'),)
 
     def __init__(self, name, elemtype, system = 'SR'):
         self.name = name
@@ -80,12 +82,12 @@ class Element(Base):
         self.system = system
         self.virtual = 0
         self.tracy_el_idx_va = -1
+        self.polar = 2
 
     def __repr__(self):
         return "<Element '%s':'%s' ...>" % (self.name, self.elem_type)
 
 class ChannelRecord(Base):
-    #__tablename__ = 'cfdata_v0'
     __tablename__ = 'pvs'
 
     pv = Column(String, primary_key=True)
@@ -94,10 +96,11 @@ class ChannelRecord(Base):
     handle     = Column(String, default='get')
     high_lim   = Column(Float)
     low_lim    = Column(Float)
+    val0       = Column(Float)          # the initial/reference value
     dev_name   = Column(String)
     host_name  = Column(String)
     ioc_name   = Column(String)
-    tags       = Column(String) # deliminator: ','
+    tags       = Column(String) # deliminator: ';'
 
     element = relationship("Element", backref=backref("pvs", order_by=elem_id))
 
@@ -149,7 +152,41 @@ def import_lattice_table(inpt, dbfname, system = None):
 
         session.commit()
 
-def import_va_table(inpt, dbfname = "us_nsls2.sqlite3"):
+def match_hvcors(reclst):
+    import difflib
+    paired = {}
+    for i,r1 in enumerate(reclst[:-1]):
+        if r1[0] in paired: continue
+        names = []
+        for j,r2 in enumerate(reclst[i+1:]):
+            if r2[0] in paired: continue
+            if r2[0] == r1[0]: continue
+            if r2[0] in names: continue
+            # the name can diff only one character
+            if len(set(r1[0]) - set(r2[0])) > 1: continue
+            # should be nearby in their index
+            if abs(r2[1] - r1[1]) > 1: continue
+            names.append(r2[0])
+        if not names:
+            print "'{0}' is not matched".format(r1[0])
+            continue
+        if len(names) > 1:
+            raise RuntimeError("'{0}' matches more than one '{1}'".format(
+                r1[0], names))
+
+        name1, name2 = r1[0], names[0]
+        name = ''
+        for j in range(len(name1)):
+            if name1[j] != name2[j]: continue
+            name += name1[j]
+ 
+        paired[name1] = name
+        paired[name2] = name
+        print "'{0}' and '{1}' are merged to '{2}'".format(name1, name2, name)
+    print paired
+    return paired
+
+def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False):
     """
     Note:
     
@@ -163,7 +200,6 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3"):
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    # the 
     k_pv       = 'pv_name'
     k_elemName = 'el_name_va'
 
@@ -173,7 +209,19 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3"):
         for i,v in enumerate(re.findall('([^ ,#\n\r]+)', f.readline())):
             col[v] = i
 
-        for line in f.readlines():
+        reclist = [v.strip() for v in f.readlines()]
+        
+        corlist, hvcor = [], {}
+        for i,v in enumerate(reclist):
+            if re.match(r'.* Corrector\s*$', v):
+                r = v.split(',')
+                name, idx = r[col['el_name_va']].lower(), r[col['el_idx_va']]
+                corlist.append([name.strip(), int(idx)])
+        # print corlist
+        # check
+        hvcor = match_hvcors(corlist)
+
+        for line in reclist:
             r = [v.strip() for v in line.split(',')]
             # the original data and converted
             d0 = dict([(v, r[col[v]]) for v in col.keys()])
@@ -182,32 +230,45 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3"):
             elemname = d[k_elemName].lower()
             if not elemname: continue
 
-            # a fix for H/V correctors
-            if re.match(r'[cf][xy][hlm]\dg\dc[0-9][0-9].', elemname):
-                elemname = elemname[0] + elemname[2:]
-                elemtype = 'COR'
-
             pvr = session.query(ChannelRecord).\
                 filter(ChannelRecord.pv == d[k_pv]).first()
             if not pvr:
                 pvr = ChannelRecord(d[k_pv])
             
-            elem = session.query(Element).\
-                filter(Element.name == elemname).\
-                filter(Element.system == d['machine']).first()
-            if not elem:
-                raise RuntimeError("Element '%s' is not found in table" % elemname)
+            # a fix for H/V correctors
+            if mergehvcor and elemname in hvcor:
+                elemname = hvcor[elemname]
 
-                elem = Element(elemname, elemtype, d['machine'])
+            elems = session.query(Element).\
+                filter(Element.name == elemname).\
+                filter(Element.system == d['machine']).all()
+            if len(elems) > 1:
+                raise RuntimeError("Element '%s' in system '%s' are not unique" \
+                                   % (elemname, d['machine']))
+            if not elems:
+                #raise RuntimeError("Element '%s' is not found in table" % elemname)
+                warnings.warn("Element '{0}' is not found, creating a new one".format(elemname))
+                elem = Element(elemname, None, d['machine'])
                 session.add(elem)
+            else:
+                elem = elems[0]
                 
-            elem = session.query(Element).\
-                filter(Element.name == elemname).\
-                filter(Element.system == d['machine']).first()
+            if d[k_elemName].lower() in hvcor: 
+                #print "changing '{0}' type from '{1}' to '{2}'".format(elem.name, elem.elem_type, 'COR')
+                elem.elem_type = 'COR'
+                name0 = d[k_elemName].lower()
+                hc = session.query(Element).filter(Element.name == name0).\
+                     filter(Element.system == d['machine']).first()
+                if hc:
+                    elem.position = hc.position
+                    elem.length = hc.length
+                    elem.lat_index = hc.lat_index
+                    elem.cell = hc.cell
+                    elem.girder = hc.girder
+                    elem.symmetry = hc.symmetry
 
-            elem.elem_type = elemtype
-            elem.girder    = d['girder']
-            elem.cell      = d['cell']
+            if d['girder']: elem.girder    = d['girder']
+            if d['cell']: elem.cell      = d['cell']
             elem.handle    = d['handle']
             if d0['el_idx_va']: elem.tracy_el_idx_va  = int(d0['el_idx_va'])
             elem.tracy_machine    = d0['machine']
@@ -215,13 +276,15 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3"):
             if d0['el_type_va']: elem.tracy_el_type_va = d0['el_type_va']
 
             #print elemname, d['machine'], elem.elem_id
-            #elem = session.merge(elem)
+            # merge to get new elem_id. Otherwise, no elem_id for pvr for new Element
+            elem = session.merge(elem)
 
             pvr.elem_id = elem.elem_id
             if d0['el_field_va']: pvr.tracy_el_field_va = d0['el_field_va']
             pvr.handle = d['handle']
             pvr.elem_field = conv((d0['el_type_va'], d0['el_field_va']))
 
+            session.add(elem)
             session.add(pvr)
             session.flush()
         session.commit()
@@ -289,6 +352,8 @@ def import_cf2(inpt, dbfname):
         if not elem:
             elem = Element(prpts['elemName'], prpts['elemType'], 
                            prpts['system'])
+            session.add(elem)
+
         elem.elem_type = prpts['elemType']
         elem.position  = prpts['elemPosition']
         elem.length    = prpts['elemLength']
@@ -302,7 +367,8 @@ def import_cf2(inpt, dbfname):
         pvr.elem_id = elem.elem_id
         pvr.handle = prpts['elemHandle']
         pvr.dev_name = prpts['devName']
-        if 'elemField' in prpts: pvr.elemField = prpts['elemField']
+        pvr.tags = ';'.join(tags)
+        pvr.elem_field = prpts.get('elemField', None)
         session.add(pvr)
         session.flush()
 
@@ -325,8 +391,8 @@ if __name__ == "__main__":
                         help="channel finder v2 csv data")
     parser.add_argument('--twiss', metavar='twiss.txt', type=str, 
                         help="twiss data")
-    #parser.add_argument('--fixcorrectors', action="store_true", 
-    #                    help="twiss data")    
+    parser.add_argument('--mergehvcor', action="store_true", 
+                        help="merge H/V corr in va table")    
     args = parser.parse_args()
 
     #print args
@@ -335,7 +401,7 @@ if __name__ == "__main__":
     #dbfname = "us_nsls2v1.sqlite"
     dbfname = args.dbfile
     if args.par: import_lattice_table(args.par, dbfname, args.system)
-    if args.va: import_va_table(args.va, dbfname)
+    if args.va: import_va_table(args.va, dbfname, args.mergehvcor)
     if args.cf2: import_cf2(args.cf2, dbfname)
     #if args.fixcorrectors:
     #    fix_correctors(dbfname, args.system)

@@ -1,18 +1,19 @@
 #!/bin/bash
 
-PAR="CD3-Oct3-12-30Cell-addID-par.txt"
-VA="CD3-Oct3-12-30Cell-addID-par.csv"
+PAR="CD3-Oct3-12-30Cell-addID-par-singlepass.txt"
+VA="CD3-Oct3-12-30Cell-addID-par-singlepass.csv"
 #CF2_LTB="LTB-20120724.txt"
-CF2_LTB="LTB.txt"
-DBF="us_nsls2v2.sqlite"
+DBF="us_nsls2v3bsrline.sqlite"
+SYS="V3BSRLINE"
 if [ $(uname) == "Linux" ]; then
     PYTHON=`which python`
 else
     PYTHON=python2.7
 fi
 
+
 echo "== import lattice table: ${PAR}"
-${PYTHON} dbimport.py --par ${PAR} --system V2SR ${DBF}
+${PYTHON} dbimport.py --par ${PAR} --system ${SYS} ${DBF}
 #echo "  QUAD: `sqlite3 ${DBF} 'select count(*) from elements where elem_type=\"QUAD\"'`"
 
 echo " update group info"
@@ -37,18 +38,28 @@ sqlite3 ${DBF} 'update elements set elem_group="SM2" where name like "sm2g%c%"'
 
 
 
-echo " insert virtual element: tune, twiss, dcct, orbit"
-sqlite3 ${DBF} 'insert into elements (name, system, lat_index, virtual, position) values ("tune", "V2SR", 0, 0, 0)'
-sqlite3 ${DBF} 'insert into elements (name, system, lat_index, virtual, elem_type, position) values ("dcct", "V2SR", 0, 0, "DCCT", 0)'
-sqlite3 ${DBF} 'insert into elements (name, system, virtual) values ("twiss", "V2SR", 1)'
-sqlite3 ${DBF} 'insert into elements (name, system, virtual) values ("orbit", "V2SR", 1)'
+echo " update virtual element: tune, twiss, dcct, orbit"
+
+if [ -z $(sqlite3 ${DBF} "select * from elements where name='tune'") ]; then
+    echo "   insert element 'tune'"
+    sqlite3 ${DBF} "insert into elements (name, system, virtual) values ('tune', \"${SYS}\", 1)"
+fi
+
+if [ -z `sqlite3 ${DBF} "select * from elements where name='twiss'"` ]; then
+    sqlite3 ${DBF} "insert into elements (name, system, virtual) values ('twiss', \"${SYS}\", 1)"
+fi
+if [ -z `sqlite3 ${DBF} "select * from elements where name='dcct'"` ]; then
+    sqlite3 ${DBF} "insert into elements (name, system, virtual, position, length) values ('dcct', \"${SYS}\", 0,0,0)"
+fi
+
+if [ -z `sqlite3 ${DBF} "select * from elements where name='orbit'"` ]; then
+    sqlite3 ${DBF} "insert into elements (name, system, virtual) values ('orbit', \"${SYS}\", 1)"
+fi
 
 
 echo "== import channel access data: ${VA}"
-${PYTHON} dbimport.py --va ${VA} --mergehvcor --system V2SR ${DBF}
+${PYTHON} dbimport.py --va ${VA} --system ${SYS} --mergehvcor ${DBF}
 
-echo "== setting group for COR"
-sqlite3 ${DBF} 'update elements set elem_group="HCOR;VCOR" where elem_type="COR"'
 
 echo " setting tuning range for quadrupole PVs"
 # set tuning range
@@ -74,18 +85,12 @@ sqlite3 ${DBF} 'update pvs set low_lim=1.2,high_lim=1.3 where pvs.elem_id in (se
 
 echo "== set polar for SR magnets"
 sqlite3 ${DBF} 'update elements set polar=1 where elem_type in ("QUAD", "SEXT", "SQUAD", "DIPOLE")'
-
-echo "== update cs* to virtual element"
-sqlite3 ${DBF} 'update elements set virtual=1 where elem_type="COR" and name like "cs%id%"'
-
-echo "== importing LTB cf2 data: ${CF2_LTB}"
-${PYTHON} dbimport.py --cf2 ${CF2_LTB} --system LTB ${DBF}
+###echo "== importing LTB cf2 data: ${CF2_LTB}"
+###${PYTHON} dbimport.py --cf2 ${CF2_LTB} --system LTB ${DBF}
 
 echo "== set aphla.sys.\* tags"
 
-# -cf format has tags inside. va and lat table does not
-#sqlite3 ${DBF} 'update pvs set tags="aphla.sys.V1LTB" where pv like "LTB%"'
-sqlite3 ${DBF} 'update pvs set tags="aphla.sys.V2SR" where pv like "V:2-SR%"'
+sqlite3 ${DBF} "update pvs set tags=\"aphla.sys.${SYS}\" where pv like 'V:3-BSR%'"
 
-sqlite3 ${DBF} 'select * from pvs where elem_id is NULL'
-
+echo "== element families:"
+sqlite3 ${DBF} 'select distinct elem_type from elements'

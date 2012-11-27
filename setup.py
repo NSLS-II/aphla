@@ -14,7 +14,7 @@ setup(
         # any these files
         '': ['*.json', '*.hdf5', '*.csv'],
         'aphla.gui': ['data/*.cfg'], 
-        'aphla.conf': ['us_nsls2/*', '*.xml', '*.db']},
+        'aphla.conf': ['us_nsls2/*', '*.xml', '*.db', '*.sqlite']},
     py_modules = [
         'aphla.catools', 'aphla.chanfinder', 'aphla.machines', 'aphla.element',
         'aphla.lattice', 'aphla.twiss', 'aphla.hlalib', 
