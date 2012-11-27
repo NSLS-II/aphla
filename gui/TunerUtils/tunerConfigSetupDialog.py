@@ -1,5 +1,12 @@
 #! /usr/bin/env python
 
+# TODO
+# *) add default visible column list separate for group-based & channel-based
+# *) add ability to remove groups/channels in config setup
+# *) add ability to move rows
+# *) allow group/ungroup in config setup
+# *) allow rename of group in channel-based view, leading to different grouping
+
 import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
@@ -9,6 +16,8 @@ from copy import copy
 import types
 import numpy as np
 from datetime import datetime
+from time import time, strftime, localtime
+import h5py
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (SIGNAL, QObject, QSettings)
@@ -21,25 +30,12 @@ if ap.machines._lat is None:
     ap.initNSLS2V2()
 
 from tunerModels import (ConfigChannel, TunerConfigSetupBaseModel, 
-                         TunerConfigSetupTableModel)#,
-                         #TunerConfigSetupTreeModel)
+                         TreeItem, TreeModel,
+                         TunerConfigSetupTableModel, TunerConfigSetupTreeModel)
 from ui_tunerConfigSetupDialog import Ui_Dialog
 import config as const
 from aphla.gui import channelexplorer
 from aphla.gui.utils.tictoc import tic, toc
-
-#if __name__ == '__main__':
-    #from ui_tunerConfigSetupDialog import Ui_Dialog
-    
-    #import config as const
-    
-    #from aphla.gui import channelexplorer 
-    
-#else:
-    #from ui_tunerConfigSetupDialog import Ui_Dialog
-    #import config as const
-    #from aphla.gui import channelexplorer
-
 
 ########################################################################
 class TunerConfigSetupModel(QObject):
@@ -55,7 +51,8 @@ class TunerConfigSetupModel(QObject):
         
         self.base_model = TunerConfigSetupBaseModel()
         self.table_model = TunerConfigSetupTableModel(base_model=self.base_model)
-        #self.tree_model = TunerConfigSetupTreeModel()
+        self.tree_model = TunerConfigSetupTreeModel(
+            self.base_model.all_col_name_list, base_model=self.base_model)
         
         
         #self.col_name_list = const.ALL_COL_NAMES_CONFIG_SETUP[:]
@@ -89,33 +86,74 @@ class TunerConfigSetupModel(QObject):
         else:
             #self.output = {}
             self.output = None
-            
-
-    
-    ##----------------------------------------------------------------------
-    #def _getpvs(self, channel_name):
-        #""""""
         
-        #elemName, fieldName = channel_name.split('.')
-        #elem = ap.getElements(elemName)[0]
-        #pv = elem.pv(field=fieldName,handle='readback')
-        #if len(pv) == 1:
-            #pvrb = pv[0]
-        #elif len(pv) == 0:
-            #pvrb = None
-        #else:
-            #raise ValueError('Unexpected pv list returned: '+str(pv))
-        #pv = elem.pv(field=fieldName,handle='setpoint')
-        #if len(pv) == 1:
-            #pvsp = pv[0]
-        #elif len(pv) == 0:
-            #pvsp = None
-        #else:
-            #raise ValueError('Unexpected pv list returned: '+str(pv))
-            
-        #return pvrb, pvsp
+    #----------------------------------------------------------------------
+    def save_hdf5(self):
+        """"""
         
-    
+        b = self.base_model
+        
+        flat_channel_name_list = [name.encode('ascii') for name in b.k_channel_name]
+        
+        f = h5py.File('temp.h5','w')
+        h5zip = 'gzip'
+        str_type = h5py.new_vlen(str)
+        
+        if h5py.version.version_tuple[:3] < (2,1,1):
+            b.config_name = b.config_name.encode('ascii')
+            b.description = b.description.encode('ascii')
+            b.appended_descriptions = b.appended_descriptions.encode('ascii')
+            
+        dataset = f.create_dataset('config_name', (1,), data=b.config_name, 
+                                   dtype=str_type, compression=h5zip)
+        dataset = f.create_dataset('username', (1,), data=b.username, 
+                                   dtype=str_type, compression=h5zip)
+        dataset = f.create_dataset('time_created', (1,), data=b.time_created, 
+                                   compression=h5zip)
+        dataset = f.create_dataset('description', (1,), data=b.description,
+                                   dtype=str_type, compression=h5zip)
+        dataset = f.create_dataset('appended_descriptions', (1,), 
+                                   data=b.appended_descriptions, dtype=str_type,
+                                   compression=h5zip)
+        
+        nChannels = len(flat_channel_name_list)
+        dataset = f.create_dataset('flat_channel_name_list', (nChannels,),
+                                   data=flat_channel_name_list, dtype=str_type,
+                                   compression=h5zip)
+        
+        nGroups = len(b.group_name_list)
+        g = f.create_group('grouped_ind_list')
+        for (group_ind,group_name) in enumerate(b.group_name_list):
+            subg = g.create_group(group_name)
+            #dataset = g.create_dataset('name', (1,), data=group_name,
+                                       #dtype=str_type, compression=h5zip)
+            index_list = b.grouped_ind_list[group_ind]
+            dataset = subg.create_dataset('ind_list',(len(index_list),),
+                                       data=index_list, compression=h5zip)
+            
+        #nGroups = len(b.group_name_list)
+        #dataset = f.create_dataset('group_name_list', (nGroups,),
+                                   #data=b.group_name_list, dtype=str_type,
+                                   #compression=h5zip)
+        #dataset = f.create_dataset('grouped_ind_list', data=np.array(b.grouped_ind_list), 
+                                   #dtype=np.array, compression=h5zip)
+        ##dataset = f.create_dataset('grouped_ind_list', data=np.array(b.grouped_ind_list), 
+                                   ##dtype=np.array, compression=h5zip)
+        
+        f.close()
+        
+    #----------------------------------------------------------------------
+    def load_hdf5(self):
+        """"""
+        
+        f = h5py.File('temp.h5','r')
+        
+        #f['grouped_ind_list']['bpm']['ind_list'][:]
+        #f['grouped_ind_list']['hcor']['ind_list'][:]
+        
+        f.close()
+        
+        
     #----------------------------------------------------------------------
     def importNewChannels(self, selected_channels, channelGroupInfo):
         """"""
@@ -130,7 +168,6 @@ class TunerConfigSetupModel(QObject):
         elemName_list = [elem.name for (elem,fieldName) in selected_channels]
         channelName_list = [elem.name+'.'+fieldName
                             for (elem,fieldName) in selected_channels]
-        field_list = [fieldName for fieldName in selected_channels]
         
         if channelGroupInfo == {}:
             channelGroupName_list = channelName_list[:]
@@ -142,13 +179,13 @@ class TunerConfigSetupModel(QObject):
         
         new_lists_dict = {'group_name': channelGroupName_list,
                           'channel_name': channelName_list,
-                          'field': field_list,
                           'weight': weight_list,
                           'step_size': step_size_list}
         tStart = tic()
         self.base_model.appendChannels(new_lists_dict)
         print 'before reset', toc(tStart)
         self.table_model.resetModel()
+        self.tree_model.resetModel()
         print 'after reset', toc(tStart)
         
         ## Temporarily block signals emitted from the model
@@ -283,28 +320,53 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
 
         self.settings = settings
         
+        self.radioButton_channel_based.setChecked(True)
+        if self.radioButton_group_based.isChecked():
+            self.stackedWidget.setCurrentWidget(self.page_tree)
+        else:
+            self.stackedWidget.setCurrentWidget(self.page_table)
+        
         self.model = model
-        self.proxyModel = QSortFilterProxyModel()
-        self.proxyModel.setSourceModel(self.model.table_model)
-        self.proxyModel.setDynamicSortFilter(False)
-        #self.proxyModel.setSortRole(self.model.SortRole)
         
-        self.treeView.setModel(self.proxyModel)
-        self.treeView.setItemsExpandable(False)
-        self.treeView.setRootIsDecorated(True)
-        self.treeView.setAllColumnsShowFocus(False)
-        self.treeView.setHeaderHidden(False)
-        self.treeView.setSortingEnabled(False)
+        self.table_proxyModel = QSortFilterProxyModel()
+        self.table_proxyModel.setSourceModel(self.model.table_model)
+        self.table_proxyModel.setDynamicSortFilter(False)
+        #
+        self.tree_proxyModel = QSortFilterProxyModel()
+        self.tree_proxyModel.setSourceModel(self.model.tree_model)
+        self.tree_proxyModel.setDynamicSortFilter(False)
         
+        t = self.tableView
+        t.setModel(self.table_proxyModel)
+        t.setCornerButtonEnabled(True)
+        t.setShowGrid(True)
+        t.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        t.setSelectionBehavior(QAbstractItemView.SelectItems)
+        t.setAlternatingRowColors(True)
+        t.setSortingEnabled(False)
+        horizHeader = t.horizontalHeader()
+        horizHeader.setSortIndicatorShown(False)
+        horizHeader.setStretchLastSection(False)
+        horizHeader.setMovable(False)
+        #
+        t = self.treeView
+        t.setModel(self.tree_proxyModel)
+        t.setItemsExpandable(True)
+        t.setRootIsDecorated(True)
+        t.setAllColumnsShowFocus(False)
+        t.setHeaderHidden(False)
+        t.setSortingEnabled(False)
+        horizHeader = t.header()
+        horizHeader.setSortIndicatorShown(False)
+        horizHeader.setStretchLastSection(False)
+        horizHeader.setMovable(False)
         self._expandAll_and_resizeColumn()
-        
-        self.treeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        t.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.actionGroupChannels = QAction(QIcon(), 'Group channels', self.treeView)
         self.actionUngroupChannels = QAction(QIcon(), 'Ungroup channels', self.treeView)
         self.popMenu = QMenu(self.treeView)
         self.popMenu.addAction(self.actionUngroupChannels)
         self.popMenu.addAction(self.actionGroupChannels)
-        
         self.connect(self.treeView,
                      SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self._openContextMenu)
@@ -342,6 +404,7 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         settings._splitter_top_bottom_sizes = self.splitter_top_bottom.sizes()
         
         settings.saveViewSizeSettings()
+        
         
     #----------------------------------------------------------------------
     def loadViewSizeSettings(self):
@@ -387,13 +450,16 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
     def accept(self):
         """"""
         
-        self.model.name = self.lineEdit_config_name.text()
-        
-        self.model.description = self.textEdit.toPlainText()
+        base_model = self.model.base_model
+        base_model.time_created = time() # current time in seconds from Epoch
+        base_model.config_name = self.lineEdit_config_name.text()
+        #base_model.username
+        base_model.description = self.textEdit.toPlainText()
+        #base_model.appended_descriptions
     
         saveFileFlag = self.checkBox_save_config_to_file.isChecked()
         if saveFileFlag:
-            self.emit(SIGNAL('saveConfigToFile'), self.model)
+            self.model.save_hdf5()
         
         accepted = True
         self.emit(SIGNAL('prepareOutput'),accepted)
@@ -438,21 +504,30 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         
         visible_column_order = self.get_visible_column_order()
         
-        t = self.treeView # shorthand notation
+        for horizHeader in [self.treeView.header(), self.tableView.horizontalHeader()]:
+            for (i,col_logical_ind) in enumerate(visible_column_order):
+                new_visual_index = i
+                current_visual_index = horizHeader.visualIndex(col_logical_ind)
+                horizHeader.moveSection(current_visual_index,
+                                        new_visual_index)
+            for i in range(len(const.ALL_PROP_KEYS)):
+                if i not in visible_column_order:
+                    horizHeader.hideSection(i)
+                else:
+                    horizHeader.showSection(i)
+    
+    #----------------------------------------------------------------------
+    def on_view_base_change(self):
+        """"""
         
-        #horizHeader = t.horizontalHeader() # only for QTableView
-        horizHeader = t.header() # only for QTreeView
-
-        for (i,col_logical_ind) in enumerate(visible_column_order):
-            new_visual_index = i
-            current_visual_index = horizHeader.visualIndex(col_logical_ind)
-            horizHeader.moveSection(current_visual_index,
-                                    new_visual_index)
-        for i in range(len(const.ALL_PROP_KEYS)):
-            if i not in visible_column_order:
-                horizHeader.hideSection(i)
-            else:
-                horizHeader.showSection(i)
+        sender = self.sender()
+        
+        if sender == self.radioButton_group_based:
+            self.stackedWidget.setCurrentWidget(self.page_tree)
+        elif sender == self.radioButton_channel_based:
+            self.stackedWidget.setCurrentWidget(self.page_table)
+        else:
+            raise ValueError('Unexpected sender: '+str(sender))
         
         
     #----------------------------------------------------------------------
@@ -480,6 +555,12 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         
         self.treeView.expandAll()
         self.treeView.resizeColumnToContents(0)
+        
+    #----------------------------------------------------------------------
+    def updateProxyModels(self):
+        """"""
+        
+        self.tree_proxyModel.setSourceModel(self.model.tree_model)        
         
     #----------------------------------------------------------------------
     def _updateProxyModel(self):
@@ -599,6 +680,10 @@ class TunerConfigSetupApp(QObject):
         self.connect(self.view, SIGNAL('prepareOutput'),
                      self.model._prepareOutput)
         
+        self.connect(self.view.radioButton_channel_based, SIGNAL('clicked()'),
+                     self.view.on_view_base_change)
+        self.connect(self.view.radioButton_group_based, SIGNAL('clicked()'),
+                     self.view.on_view_base_change)
 
         
     #----------------------------------------------------------------------
@@ -630,7 +715,6 @@ class TunerConfigSetupApp(QObject):
         if selected_channels != []:
             self.emit(SIGNAL('channelsSelected'), selected_channels)
         
-        print toc(tStart)
         
     #----------------------------------------------------------------------
     def _askChannelGroupNameAndWeight(self, selected_channels):

@@ -31,7 +31,7 @@ def getusername():
     if error:
         raise OSError('Error for whoami: '+error)
     else:
-        return username
+        return username.strip()
     
 #----------------------------------------------------------------------
 def getChannelProperty(obj, propertyName):
@@ -88,6 +88,18 @@ def getChannelObjectList(channel_name_list):
     return [(ap.getElements(elem_name)[0], field_name)
             for (elem_name,field_name) in elem_field_tuple_list]
     
+#----------------------------------------------------------------------
+def getChannelPropertyListsDict(channel_name_list):
+    """"""
+    
+    channel_object_list = getChannelObjectList(channel_name_list)
+    
+    D = {}
+    for (k,v) in const.CHANNEL_PROP_DICT.iteritems():
+        D[k] = [getChannelProperty(c,v) for c in channel_object_list]
+    
+    return D
+
     
 ########################################################################
 class ConfigChannel(object):
@@ -115,48 +127,115 @@ class ConfigChannel(object):
 
 ########################################################################
 class TreeItem(object):
-    """"""
+    """
+    """
 
     #----------------------------------------------------------------------
-    def __init__(self, parent, row):
+    def __init__(self, data_list, parent=None):
         """Constructor"""
         
-        self.parent = parent
-        self.row = row
-        self.subnodes = self._getChildren()
+        self.parentItem = parent
+        self.itemData = data_list
+        self.childItems = []
         
     #----------------------------------------------------------------------
-    def _getChildren(self):
+    def appendChild(self, item):
         """"""
-        raise NotImplementedError()
+        
+        item.parentItem = self
+        self.childItems.append(item)
+        
+    #----------------------------------------------------------------------
+    def appendChildren(self, item_list):
+        """"""
+        
+        for item in item_list: item.parentItem = self
+        self.childItems.extend(item_list)
+        
+    #----------------------------------------------------------------------
+    def deleteChildren(self):
+        """"""
+        
+        self.childItems = []
+        
+    #----------------------------------------------------------------------
+    def child(self, row):
+        """"""
+        
+        return self.childItems[row]
+        
+    #----------------------------------------------------------------------
+    def childCount(self):
+        """"""
+        
+        return len(self.childItems)
+    
+    #----------------------------------------------------------------------
+    def row(self):
+        """"""
+        
+        if self.parentItem is not None:
+            return self.parentItem.childItems.index(self)
+        else:
+            return 0
+        
+    #----------------------------------------------------------------------
+    def columnCount(self):
+        """"""
+                
+        return len(const.ALL_PROP_KEYS_CONFIG_SETUP)
+    
+    #----------------------------------------------------------------------
+    def data(self, column):
+        """"""
+        
+        try:
+            return self.itemData[column]
+        except:
+            return None
+        
+    #----------------------------------------------------------------------
+    def parent(self):
+        """"""
+        
+        return self.parentItem
             
 ########################################################################
 class TreeModel(QAbstractItemModel):
     """
-    See http://www.hardcoded.net/articles/using_qtreeview_with_qabstractitemmodel
     """
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, rootDataList=None):
         """Constructor"""
         
         QAbstractItemModel.__init__(self)
-        self.rootItems = self._getRootItems()
         
-    #----------------------------------------------------------------------
-    def _getRootItems(self):
-        """"""
+        if rootDataList is None:
+            rootDataList = []
+            
+        self.rootItem = TreeItem(rootDataList)
+
         
-        raise NotImplementedError()
-    
     #----------------------------------------------------------------------
     def index(self, row, column, parent):
         """"""
-        if not parent.isValid():
-            return self.createIndex(row, column, self.rootNodes[row])
         
-        parentItem = parent.internalPointer()
-        return self.createIndex(row, column, parentItem.subnodes[row])
+        if not self.hasIndex(row, column, parent):
+            return QModelIndex()
+        
+        if not parent.isValid():
+            parentItem = self.rootItem
+        else:
+            parentItem = parent.internalPointer()
+            
+        childItem = parentItem.child(row)
+        
+        if childItem:
+            return self.createIndex(row, column, childItem)
+        else:
+            return QModelIndex()
+            
         
     #----------------------------------------------------------------------
     def parent(self, index):
@@ -164,26 +243,78 @@ class TreeModel(QAbstractItemModel):
         if not index.isValid():
             return QModelIndex()
         
-        item = index.internalPointer()
-        if item.parent is None:
+        childItem = index.internalPointer()
+        parentItem = childItem.parent()
+        
+        if (parentItem == None) or (parentItem == self.rootItem):
             return QModelIndex()
         else:
-            return self.createIndex(item.parent.row, 0, item.parent)
+            # Assuming that only Column 0 has children
+            return self.createIndex(parentItem.row(), 0, parentItem)
     
-    #----------------------------------------------------------------------
-    def reset(self):
-        """"""
-        self.rootItems = self._getRootItems()
-        QAbstractItemModel.reset(self)
-        
     #----------------------------------------------------------------------
     def rowCount(self, parent):
         """"""
-        if not parent.isValid():
-            return len(self.rootItems)
         
-        item = parent.internalPointer()
-        return len(item.subnodes)
+        # Assuming only Column 0 has children
+        if parent.column() > 0:
+            return 0
+        
+        if not parent.isValid():
+            parentItem = self.rootItem
+        else:
+            parentItem = parent.internalPointer()
+        
+        return parentItem.childCount()
+    
+
+    #----------------------------------------------------------------------
+    def columnCount(self, parent):
+        """"""
+        
+        if parent.isValid():
+            return parent.internalPointer().columnCount()
+        else:
+            return self.rootItem.columnCount()
+        
+    #----------------------------------------------------------------------
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        """"""
+        
+        if not index.isValid():
+            return None
+        
+        if role != QtCore.Qt.DisplayRole:
+            return None
+        
+        item = index.internalPointer()
+        
+        return item.data(index.column())
+    
+    #----------------------------------------------------------------------
+    def flags(self, index):
+        """"""
+        
+        if not index.isValid():
+            return 0
+        
+        return (QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+
+    #----------------------------------------------------------------------
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        """"""
+        
+        if (orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole):
+            return self.rootItem.data(section)
+        else:
+            return None
+        
+    #----------------------------------------------------------------------
+    def reset(self):
+        """"""
+
+        QAbstractItemModel.reset(self)
+        
     
     
             
@@ -192,11 +323,15 @@ class TunerConfigSetupBaseModel(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, all_col_key_list=None): #, visible_col_key_list=None):
+    def __init__(self, all_col_key_list=None):
         """Constructor"""
         
+        self._config_id = None
         self.config_name = ''
+        self.username = getusername()
+        self.time_created = None
         self.description = ''
+        self.appended_descriptions = '' # include modified times as part of the appended text
         
         if all_col_key_list is None:
             self.all_col_key_list = const.ALL_PROP_KEYS_CONFIG_SETUP
@@ -211,8 +346,6 @@ class TunerConfigSetupBaseModel(QObject):
         self.group_name_list = []
         self.grouped_ind_list = []
         
-        #self.config_channel_list = []
-        
     #----------------------------------------------------------------------
     def appendChannels(self, new_lists_dict):
         """"""
@@ -220,7 +353,7 @@ class TunerConfigSetupBaseModel(QObject):
         for (k,v) in new_lists_dict.iteritems():
             getattr(self, 'k_'+k).extend(v)
             if k == 'channel_name':
-                channelPropertyListsDict = self.getChannelPropertyListsDict(v)
+                channelPropertyListsDict = getChannelPropertyListsDict(v)
                 for (k2, v2) in channelPropertyListsDict.iteritems():
                     getattr(self, 'k_'+k2).extend(v2)
                     
@@ -254,18 +387,6 @@ class TunerConfigSetupBaseModel(QObject):
         
         self.group_name_list = [unique_group_name_list[i] for i in sort_ind]
                                 
-    #----------------------------------------------------------------------
-    def getChannelPropertyListsDict(self, channel_name_list):
-        """"""
-        
-        channel_object_list = getChannelObjectList(channel_name_list)
-        
-        D = {}
-        for (k,v) in const.CHANNEL_PROP_DICT.iteritems():
-            D[k] = [getChannelProperty(c,v) for c in channel_object_list]
-        
-        return D
-
         
 ########################################################################
 class TunerConfigSetupTableModel(QAbstractTableModel):
@@ -377,34 +498,132 @@ class TunerConfigSetupTableModel(QAbstractTableModel):
         
         
         
-            
+
+
+    
+    
 ########################################################################
-class TunerConfigSetupTreeModel(QAbstractItemModel):
+class TunerConfigSetupTreeModel(TreeModel):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, base_model=None):
+    def __init__(self, all_column_name_list, base_model=None):
         """Constructor"""
-
-        QAbstractItemModel.__init__()
         
         if base_model is None:
             self.base_model = TunerConfigSetupBaseModel()
         else:
             self.base_model = base_model
 
+        TreeModel.__init__(self, all_column_name_list)
+    
     #----------------------------------------------------------------------
-    def rowCount(self, parent=QModelIndex()):
+    def resetModel(self):
         """"""
         
-        if not parent.isValid():
-            return len(self.rootNodes)
+        b = self.base_model
         
-        node = parent.internalPointer()        
-        return len(node.subnodes)
+        self.beginResetModel()
+        
+        tree_key_list = const.ALL_PROP_KEYS_CONFIG_SETUP[:]
+        index = tree_key_list.index('group_name')
+        tree_key_list.remove('group_name')
+        tree_key_list.insert(index,'channel_name')
+        '''
+        By replacing 'group_name' with 'channel_name', it will
+        display channel names under a group name.
+        '''
+        
+        matrix = np.array([getattr(b, 'k_'+key) for key in tree_key_list]).transpose()
+        group_items = [TreeItem([group_name]) for group_name in b.group_name_list]
+        for (group_ind, group_item) in enumerate(group_items):
+            child_items = [TreeItem(list(matrix[channel_ind,:])) 
+                           for channel_ind in b.grouped_ind_list[group_ind]]
+            group_item.appendChildren(child_items)
+
+        self.rootItem.deleteChildren()
+        self.rootItem.appendChildren(group_items)
+        
+        self.endResetModel()
     
+
+########################################################################
+class TunerSnapshotBaseModel(QObject):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, config_base_model, all_col_key_list=None):
+        """Constructor"""
+        
+        self._config_base_model = config_base_model
+
+        self._snapshot_id = None
+        self.snapshot_name = ''
+        self.username = getusername()
+        self.time_snapshot_taken = None
+        self.description = ''
+        self.appended_descriptions = '' # include modified times as part of the appended text
+        self.masar_event_id = None
+        
+        if all_col_key_list is None:
+            self.all_col_key_list = const.ALL_PROP_KEYS
+        else:
+            self.all_col_key_list = all_col_key_list
+        self.all_col_name_list = [const.PROP_DICT[k][const.ENUM_SHORT_DESCRIP_NAME]
+                                  for k in self.all_col_key_list]
+        
+        for k in const.ALL_PROP_KEYS:
+            attr_name = 'k_'+k
+            if k in const.ALL_PROP_KEYS_CONFIG_SETUP:
+                setattr(self, attr_name, 
+                        getattr(self._config_base_model, attr_name))
+            else:
+                setattr(self, attr_name, [])
+        
+        self.group_name_list = self._config_base_model.group_name_list
+        self.grouped_ind_list = self._config_base_model.grouped_ind_list
+        
+    #----------------------------------------------------------------------
+    def update_grouped_ind_list(self):
+        """"""
+        
+        self._config_base_model.update_grouped_ind_list()
+        
+    #----------------------------------------------------------------------
+    def update_group_name_list(self):
+        """"""
+        
+        self._config_base_model.update_group_name_list()
+    
+
+########################################################################
+class TunerSnapshotTableModel(TunerConfigSetupTableModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, base_model):
+        """Constructor"""
+        
+        TunerConfigSetupTableModel.__init__(self, base_model=base_model)
+        
+        
         
     
+########################################################################
+class TunerSnapshotTreeModel(TunerConfigSetupTreeModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, all_column_name_list, base_model):
+        """Constructor"""
+        
+        TunerConfigSetupTreeModel.__init__(self,
+                                           all_column_name_list=all_column_name_list,
+                                           base_model=base_model)
+    
+
+    
+
 ########################################################################
 class TunerConfigAbstractModel(object):
     """"""
@@ -467,46 +686,7 @@ class TunerConfigAbstractModel(object):
                     
         self.pv_flat_list = self.pvrb_flat_list + self.pvsp_flat_list        
         
-########################################################################
-class TunerSnapshotAbstractModel(object):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, config_model):
-        """Constructor"""
         
-        self._config_model = config_model
-        
-        self._snapshot_id
-        self._snapshot_name
-        self.username
-        self.time_snapshot_taken
-        self.description
-        self.appended_descriptions
-        self.masar_event_id
-    
-        
-        
-        
-    
-    
-########################################################################
-class TunerSnapshotTreeModel(QAbstractItemModel):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-        
-########################################################################
-class TunerSnapshotTableModel(QAbstractTableModel):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-    
-    
     
     
 ########################################################################

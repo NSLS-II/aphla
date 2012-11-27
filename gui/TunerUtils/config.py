@@ -13,7 +13,7 @@ ENUM_STR_FORMAT = 4
 ENUM_EDITABLE = 5
 PROP_DICT = {
     'group_name': ['Group Name', 'GroupName', 'string', False, STR_FMT_DEFAULT, True],
-    'channel_name': ['Channel Name', 'Channel Name', 'string', False, STR_FMT_DEFAULT, False], # can be either a channel name (elem_name.field_name) or PV tuple (PV_readback, PV_setpoint)
+    'channel_name': ['Channel Name', 'ChannelName', 'string', False, STR_FMT_DEFAULT, False], # can be either a channel name (elem_name.field_name) or PV tuple (PV_readback, PV_setpoint)
     'elem_name': ['Element Name', 'Elem.Name', 'string', False, STR_FMT_DEFAULT, False],
     'field': ['Field', 'Field', 'string', False, STR_FMT_DEFAULT, False],
     'pvrb': ['PV-RB Name', 'PVRB', 'string', False, STR_FMT_DEFAULT, False],
@@ -110,6 +110,11 @@ CHANNEL_PROP_DICT = {
 # Tuner Configuration Setup Dialog
 ALL_PROP_KEYS_CONFIG_SETUP = sorted(
     [k for (k,v) in PROP_DICT.iteritems() if not v[ENUM_ONLY_FOR_SNAPSHOT]], key=str.lower)
+ALL_PROP_KEYS_CONFIG_SETUP.remove('group_name')
+ALL_PROP_KEYS_CONFIG_SETUP.insert(0,'group_name')
+# 'group_name' must be 1st in column so that it can have a tree structure
+
+
 #ALL_COL_NAMES_CONFIG_SETUP = [locals()[s] for s in dir()
                               #if s.startswith('COL_')]
 #ALL_COL_NAMES_CONFIG_SETUP.remove(COL_GROUP_NAME)
@@ -146,6 +151,7 @@ ALL_PROP_KEYS_CONFIG_SETUP = sorted(
 ALL_PROP_KEYS = sorted(PROP_DICT.keys(),key=str.lower)
 ALL_PROP_KEYS.remove('group_name')
 ALL_PROP_KEYS.insert(0,'group_name')
+# 'group_name' must be 1st in column so that it can have a tree structure
 
 FULL_DESCRIP_NAME_LIST = [PROP_DICT[name][ENUM_FULL_DESCRIP_NAME]
                           for name in ALL_PROP_KEYS]

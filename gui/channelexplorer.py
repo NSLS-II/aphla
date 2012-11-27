@@ -2335,6 +2335,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         #    
         horizHeader = t.horizontalHeader()
         horizHeader.setMovable(False)
+        horizHeader.setStretchLastSection(False)
         #    
         t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True)
         
@@ -2380,7 +2381,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         t.setAlternatingRowColors(True)
         horizHeader = t.horizontalHeader()
         horizHeader.setSortIndicatorShown(True)
-        horizHeader.setStretchLastSection(True)
+        horizHeader.setStretchLastSection(False)
         horizHeader.setMovable(False)
         self.on_column_selection_change(self.visible_column_full_name_list,
                                         force_visibility_update=True)

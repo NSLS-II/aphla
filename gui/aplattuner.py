@@ -3,6 +3,7 @@
 TODO
 *) Open dialog at start-up to allow user either create a new config
 or open existing configs
+*) Use Qt Undo Framework for non-EPICS commands
 *) Use UNION like the following to combine server & client database:
 SELECT uid, name FROM DB1.Users UNION SELECT uid, name FROM DB2.Users ;
 '''
@@ -48,7 +49,11 @@ from Qt4Designer_files.ui_lattice_tuner_for_reference import Ui_MainWindow
 
 import TunerUtils.config as const
 from TunerUtils import tunerConfigSetupDialog as TunerConfigSetupDialog
-from TunerUtils.tunerModels import AbstractTunerConfigModel
+from TunerUtils.tunerModels import (TreeItem, TreeModel,
+                                    TunerConfigSetupBaseModel, TunerConfigSetupTableModel,
+                                    TunerConfigSetupTreeModel,
+                                    TunerSnapshotBaseModel, TunerSnapshotTableModel,
+                                    TunerSnapshotTreeModel)
 
 import aphla as ap
 if ap.machines._lat is None:
@@ -63,198 +68,191 @@ def datestr(time_in_seconds_from_Epoch):
     
     return strftime(time_format, localtime(time_in_seconds_from_Epoch))
     
-##----------------------------------------------------------------------
-#def getusername():
+        
+        
+#########################################################################
+#class TunerConfigModelOld(AbstractTunerConfigModel):
     #""""""
-    
-    #p = Popen('whoami',stdout=PIPE,stderr=PIPE)
-    #username, error = p.communicate()    
 
-    #if error:
-        #raise OSError('Error for whoami: '+error)
-    #else:
-        #return username
-    
+    ##----------------------------------------------------------------------
+    #def __init__(self, config_dict=None):
+        #"""Constructor"""
         
-        
-########################################################################
-class TunerConfigModelOld(AbstractTunerConfigModel):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, config_dict=None):
-        """Constructor"""
-        
-        AbstractTunerConfigModel.__init__(self,config_dict=config_dict,
-                                          col_name_list=const.ALL_COL_NAMES)
         #AbstractTunerConfigModel.__init__(self,config_dict=config_dict,
-                                          #col_name_list=const.DEFAULT_VISIBLE_COL_LIST_FOR_CONFIG_VIEW)
+                                          #col_name_list=const.ALL_COL_NAMES)
+        ##AbstractTunerConfigModel.__init__(self,config_dict=config_dict,
+                                          ##col_name_list=const.DEFAULT_VISIBLE_COL_LIST_FOR_CONFIG_VIEW)
                 
-        self.username = getusername()
-        self.time_created = time() # current time in seconds from Epoch
+        #self.username = getusername()
+        #self.time_created = time() # current time in seconds from Epoch
 
-        if len(self.channel_group_list) == 0:
-            self.ref_channel_group = {'name:':'', 'weight':0., 'channel_name_list':[]}
-        else:
-            self.ref_channel_group = self.channel_group_list[0]
+        #if len(self.channel_group_list) == 0:
+            #self.ref_channel_group = {'name:':'', 'weight':0., 'channel_name_list':[]}
+        #else:
+            #self.ref_channel_group = self.channel_group_list[0]
         
-        self.ref_step_size = 0.
+        #self.ref_step_size = 0.
         
-        self.update_normalized_weight_list()
+        #self.update_normalized_weight_list()
         
-        self.update_step_size_list()
+        #self.update_step_size_list()
 
-        self._get_channel_name_flat_list()
+        #self._get_channel_name_flat_list()
         
-        self._get_pv_flat_list()
+        #self._get_pv_flat_list()
         
-        self._update_pv_values()
+        #self._update_pv_values()
         
-        self._init_RB = self._current_RB[:]
-        self._init_SP = self._current_SP[:]
-        self._init_RB_time = self._current_RB_time[:]
-        self._init_SP_time = self._current_SP_time[:]
+        #self._init_RB = self._current_RB[:]
+        #self._init_SP = self._current_SP[:]
+        #self._init_RB_time = self._current_RB_time[:]
+        #self._init_SP_time = self._current_SP_time[:]
         
-        self._target_SP = self._init_SP[:]
+        #self._target_SP = self._init_SP[:]
         
-        self._update_derived_pv_values()
+        #self._update_derived_pv_values()
         
-        self._update_model()
+        #self._update_model()
         
-    #----------------------------------------------------------------------
-    def _update_model(self):
-        """"""
+    ##----------------------------------------------------------------------
+    #def _update_model(self):
+        #""""""
         
-        self.updateGroupBasedModel()
+        #self.updateGroupBasedModel()
         
         
         
-    #----------------------------------------------------------------------
-    def _update_pv_values(self):
-        """"""
+    ##----------------------------------------------------------------------
+    #def _update_pv_values(self):
+        #""""""
         
-        pv_results = caget(self._pv_flat_list,format=FORMAT_TIME)
-        pvrb_results = pv_results[:len(self._pvrb_flat_list)]
-        pvsp_results = pv_results[len(self._pvrb_flat_list):]
+        #pv_results = caget(self._pv_flat_list,format=FORMAT_TIME)
+        #pvrb_results = pv_results[:len(self._pvrb_flat_list)]
+        #pvsp_results = pv_results[len(self._pvrb_flat_list):]
         
-        #compact_current_RB = np.array([(p.real,p.timestamp) for p in pvrb_results])
-        #compact_current_SP = np.array([(p.real,p.timestamp) for p in pvsp_results])
+        ##compact_current_RB = np.array([(p.real,p.timestamp) for p in pvrb_results])
+        ##compact_current_SP = np.array([(p.real,p.timestamp) for p in pvsp_results])
         
-        #self._current_RB = np.array([float('NaN') for c in self._all_channel_name_flat_list])
-        #for (ind,val_and_timestamp) in zip(self._pvrb_nonempty_ind_list, compact_current_RB):
-            #self._current_RB[ind] = val_and_timestamp
+        ##self._current_RB = np.array([float('NaN') for c in self._all_channel_name_flat_list])
+        ##for (ind,val_and_timestamp) in zip(self._pvrb_nonempty_ind_list, compact_current_RB):
+            ##self._current_RB[ind] = val_and_timestamp
             
-        pvrb_dict_keys = self._pvrb_dict.keys()
-        self._current_RB = np.array([pvrb_results[self._pvrb_dict[c]].real
-                                     if c in pvrb_dict_keys 
-                                     else float('NaN') 
-                                     for c in self._all_channel_name_flat_list])
-        self._current_RB_time = np.array([pvrb_results[self._pvrb_dict[c]].timestamp
-                                          if c in pvrb_dict_keys 
-                                          else float('NaN') 
-                                          for c in self._all_channel_name_flat_list])
+        #pvrb_dict_keys = self._pvrb_dict.keys()
+        #self._current_RB = np.array([pvrb_results[self._pvrb_dict[c]].real
+                                     #if c in pvrb_dict_keys 
+                                     #else float('NaN') 
+                                     #for c in self._all_channel_name_flat_list])
+        #self._current_RB_time = np.array([pvrb_results[self._pvrb_dict[c]].timestamp
+                                          #if c in pvrb_dict_keys 
+                                          #else float('NaN') 
+                                          #for c in self._all_channel_name_flat_list])
 
-        pvsp_dict_keys = self._pvsp_dict.keys()
-        self._current_SP = np.array([pvsp_results[self._pvsp_dict[c]].real
-                                     if c in pvsp_dict_keys 
-                                     else float('NaN') 
-                                     for c in self._all_channel_name_flat_list])
-        self._current_SP_time = np.array([pvsp_results[self._pvsp_dict[c]].timestamp
-                                          if c in pvsp_dict_keys 
-                                          else float('NaN') 
-                                          for c in self._all_channel_name_flat_list])
+        #pvsp_dict_keys = self._pvsp_dict.keys()
+        #self._current_SP = np.array([pvsp_results[self._pvsp_dict[c]].real
+                                     #if c in pvsp_dict_keys 
+                                     #else float('NaN') 
+                                     #for c in self._all_channel_name_flat_list])
+        #self._current_SP_time = np.array([pvsp_results[self._pvsp_dict[c]].timestamp
+                                          #if c in pvsp_dict_keys 
+                                          #else float('NaN') 
+                                          #for c in self._all_channel_name_flat_list])
         
-    #----------------------------------------------------------------------
-    def _update_derived_pv_values(self):
-        """"""
+    ##----------------------------------------------------------------------
+    #def _update_derived_pv_values(self):
+        #""""""
         
-        self._D_target_SP_current_SP = self._target_SP - self._current_SP
-        self._D_current_RB_init_RB = self._current_RB - self._init_RB
-        self._D_current_SP_init_SP = self._current_SP - self._init_SP
-        self._D_current_RB_current_SP = self._current_RB - self._current_SP
+        #self._D_target_SP_current_SP = self._target_SP - self._current_SP
+        #self._D_current_RB_init_RB = self._current_RB - self._init_RB
+        #self._D_current_SP_init_SP = self._current_SP - self._init_SP
+        #self._D_current_RB_current_SP = self._current_RB - self._current_SP
         
         
-    #----------------------------------------------------------------------
-    def update_normalized_weight_list(self):
-        """"""
+    ##----------------------------------------------------------------------
+    #def update_normalized_weight_list(self):
+        #""""""
         
-        weight_list = [cg['weight'] for cg in self.channel_group_list]
+        #weight_list = [cg['weight'] for cg in self.channel_group_list]
         
-        ref_weight = self.ref_channel_group['weight']
+        #ref_weight = self.ref_channel_group['weight']
         
-        if (ref_weight == 0.) or (ref_weight == float('NaN')):
-            self.normalized_weight_list = [float('NaN') for w in weight_list]
-        else:
-            self.normalized_weight_list = [w/ref_weight for w in weight_list]
+        #if (ref_weight == 0.) or (ref_weight == float('NaN')):
+            #self.normalized_weight_list = [float('NaN') for w in weight_list]
+        #else:
+            #self.normalized_weight_list = [w/ref_weight for w in weight_list]
             
             
         
-    #----------------------------------------------------------------------
-    def update_step_size_list(self):
-        """"""
+    ##----------------------------------------------------------------------
+    #def update_step_size_list(self):
+        #""""""
         
-        self.step_size_list = [self.ref_step_size*nw for nw in self.normalized_weight_list]
+        #self.step_size_list = [self.ref_step_size*nw for nw in self.normalized_weight_list]
         
         
-    #----------------------------------------------------------------------
-    def _get_channel_name_flat_list(self):
-        """"""
+    ##----------------------------------------------------------------------
+    #def _get_channel_name_flat_list(self):
+        #""""""
         
-        self._all_channel_name_flat_list = []
-        for g in self.channel_group_list:
-            self._all_channel_name_flat_list.extend(g['channel_name_list'])
+        #self._all_channel_name_flat_list = []
+        #for g in self.channel_group_list:
+            #self._all_channel_name_flat_list.extend(g['channel_name_list'])
         
-    #----------------------------------------------------------------------
-    def _get_pv_flat_list(self):
-        """"""
+    ##----------------------------------------------------------------------
+    #def _get_pv_flat_list(self):
+        #""""""
         
-        self._pvrb_flat_list = []
-        #self._pvrb_nonempty_ind_list = []
-        self._pvrb_dict = {}
-        self._pvsp_flat_list = []
-        #self._pvsp_nonempty_ind_list = []
-        self._pvsp_dict = {}
-        for (i,ch) in enumerate(self._all_channel_name_flat_list):
-            elemName, fieldName = ch.split('.')
-            elem = ap.getElements(elemName)[0]
-            pv = elem.pv(field=fieldName,handle='readback')
-            if len(pv) == 1:
-                self._pvrb_flat_list.append(pv[0])
-                #self._pvrb_nonempty_ind_list.append(i)
-                self._pvrb_dict[ch] = len(self._pvrb_flat_list)-1
-            elif len(pv) == 0:
-                pass
-            else:
-                raise ValueError("Multiple pv's found for readback: "+str(pv))
-            pv = elem.pv(field=fieldName,handle='setpoint')
-            if len(pv) == 1:
-                self._pvsp_flat_list.append(pv[0])
-                #self._pvsp_nonempty_ind_list.append(i)
-                self._pvsp_dict[ch] = len(self._pvsp_flat_list)-1
-            elif len(pv) == 0:
-                pass
-            else:
-                raise ValueError("Multiple pv's found for setpoint: "+str(pv))
+        #self._pvrb_flat_list = []
+        ##self._pvrb_nonempty_ind_list = []
+        #self._pvrb_dict = {}
+        #self._pvsp_flat_list = []
+        ##self._pvsp_nonempty_ind_list = []
+        #self._pvsp_dict = {}
+        #for (i,ch) in enumerate(self._all_channel_name_flat_list):
+            #elemName, fieldName = ch.split('.')
+            #elem = ap.getElements(elemName)[0]
+            #pv = elem.pv(field=fieldName,handle='readback')
+            #if len(pv) == 1:
+                #self._pvrb_flat_list.append(pv[0])
+                ##self._pvrb_nonempty_ind_list.append(i)
+                #self._pvrb_dict[ch] = len(self._pvrb_flat_list)-1
+            #elif len(pv) == 0:
+                #pass
+            #else:
+                #raise ValueError("Multiple pv's found for readback: "+str(pv))
+            #pv = elem.pv(field=fieldName,handle='setpoint')
+            #if len(pv) == 1:
+                #self._pvsp_flat_list.append(pv[0])
+                ##self._pvsp_nonempty_ind_list.append(i)
+                #self._pvsp_dict[ch] = len(self._pvsp_flat_list)-1
+            #elif len(pv) == 0:
+                #pass
+            #else:
+                #raise ValueError("Multiple pv's found for setpoint: "+str(pv))
                 
-        self._pv_flat_list = self._pvrb_flat_list + self._pvsp_flat_list
+        #self._pv_flat_list = self._pvrb_flat_list + self._pvsp_flat_list
         
         
 
 ########################################################################
-class TurnerSnapshotModel(TunerConfigModel):
+class TunerSnapshotModel(QObject):
     """"""
         
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, config_base_model, settings=None):
         """Constructor"""
                 
-        TunerConfigModel.__init__(self)
+        QObject.__init__(self)
         
+        self.settings = settings
+        
+        self.base_model = TunerSnapshotBaseModel(config_base_model)
+        self.table_model = TunerSnapshotTableModel(base_model=self.base_model)
+        self.tree_model = TunerSnapshotTreeModel(
+                    self.base_model.all_col_name_list, base_model=self.base_model)        
+
         # Metadata
-        self.snapshot_name = ''
-        self.snapshot_username = getusername()
-        self.snapshot_time_created = time() # current time in seconds from Epoch
-        self.snapshot_description = ''
+        self.time_snapshot_taken = time() # current time in seconds from Epoch
+        
         
         
         self.all_channel_name_flat_list = []
@@ -458,7 +456,7 @@ class TunerModel(QObject):
         
         QObject.__init__(self)
         
-        self.model_list = [] # A list of TunerConfigModel and/or TunerSnapshotModel objects
+        self.model_list = [] # A list of TunerSnapshotModel objects
         
     #----------------------------------------------------------------------
     def createNewConfig(self, config_dict):
@@ -471,6 +469,17 @@ class TunerModel(QObject):
         self.model_list.append(newConfigModel)
         
         self.emit(SIGNAL('newConfigModelCreated'),newConfigModel)
+        
+    #----------------------------------------------------------------------
+    def addNewSnapshotModel(self, config_base_model):
+        """"""
+        
+        new_snapshot_model = TunerSnapshotModel(config_base_model)
+        
+        self.model_list.append(new_snapshot_model)
+        
+        index = len(self.model_list)-1
+        self.emit(SIGNAL('newSnapshotModelAdded'), index)
         
     
 ########################################################################
@@ -504,6 +513,27 @@ class TunerView(QMainWindow, Ui_MainWindow):
                             QTabWidget.South)
         
         self.configDockWidgetList = []
+        
+    #----------------------------------------------------------------------
+    def createTunerDockWidget(self, index):
+        """"""
+        
+        snapshot_model = self.model.model_list[index]
+        
+        dockWidget = TunerConfigDockWidget(snapshot_model, self)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea(1), dockWidget)
+        
+        self.configDockWidgetList.append(dockWidget)
+        dockWidget.setObjectName('configDock'+str(len(self.configDockWidgetList)))
+        dockWidget.setWindowTitle(dockWidget.objectName())
+        
+        dockWidget.setFloating(False) # Dock the new dockwidget by default
+        if len(self.configDockWidgetList) >= 2:
+            #self.splitDockWidget(self.configDockWidgetList[-2], dockWidget,
+                                 #QtCore.Qt.Horizontal)
+            self.tabifyDockWidget(self.configDockWidgetList[-2], dockWidget)
+        #dockWidget.raise_()
+        
         
     #----------------------------------------------------------------------
     def createTunerConfigDockWidget(self, configModel):
@@ -542,10 +572,12 @@ class TunerApp(QObject):
         
         self.connect(self.view.actionNewConfig,SIGNAL('triggered(bool)'),
                      self.openNewConfigSetupDialog)
-        self.connect(self, SIGNAL('tunerConfigDictLoaded'),
-                     self.model.createNewConfig)
-        self.connect(self.model, SIGNAL('newConfigModelCreated'),
-                     self.view.createTunerConfigDockWidget)
+        #self.connect(self, SIGNAL('tunerConfigDictLoaded'),
+                     #self.model.createNewConfig)
+        #self.connect(self.model, SIGNAL('newConfigModelCreated'),
+                     #self.view.createTunerConfigDockWidget)
+        self.connect(self.model, SIGNAL('newSnapshotModelAdded'),
+                     self.view.createTunerDockWidget)
     
     #----------------------------------------------------------------------
     def _initModel(self):
@@ -564,9 +596,22 @@ class TunerApp(QObject):
     def openNewConfigSetupDialog(self, garbage):
         """"""
         
-        result = TunerConfigSetupDialog.make(init_tuner_config_dict=None,isModal=True)
+        result = TunerConfigSetupDialog.make(isModal=True,parentWindow=self.view)
         
-        self.emit(SIGNAL('tunerConfigDictLoaded'), result.model.output)
+        config_base_model = result.model.output
+        
+        #config_base_model.config_name
+        #config_base_model.username
+        #config_base_model.time_created
+        #config_base_model.description
+        #config_base_model.appended_descriptions
+
+        #config_base_model.group_name_list
+        #config_base_model.grouped_ind_list
+
+        self.model.addNewSnapshotModel(config_base_model)
+        
+        #self.emit(SIGNAL('tunerConfigDictLoaded'), result.model.output)
         
 
     
