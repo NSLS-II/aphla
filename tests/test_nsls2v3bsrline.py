@@ -114,6 +114,22 @@ class Test0Element(unittest.TestCase):
         self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
         
 
+    def test_chained_quad(self):
+        pvs = ['V:3-BSR-MG{QL3G2C29A_T1:3694}Fld:I', 
+               'V:3-BSR-MG{QL3G2C29A_T2:7304}Fld:I', 
+               'V:3-BSR-MG{QL3G2C29A_T3:10914}Fld:I']
+        qs = ap.getElements('ql3g2c29a')
+        self.assertEqual(len(qs), 1)
+        k1 = ap.caget(pvs)
+        self.assertLess(k1[1]/k1[0] - 1.0, 0.005)
+        self.assertLess(k1[2]/k1[0] - 1.0, 0.005)
+
+        qs[0].k1 = k1[0] * (1+0.01)
+        k1b = ap.caget(pvs)
+        self.assertGreater(qs[0].k1 / k1[0] - 1, 0.005)
+        self.assertLess(k1b[1]/k1b[0] - 1.0, 0.005)
+        self.assertLess(k1b[2]/k1b[0] - 1.0, 0.005)
+   
 
 """
 Lattice
