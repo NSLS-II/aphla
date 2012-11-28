@@ -237,7 +237,7 @@ class TestChanFinderCsvData(unittest.TestCase):
     """
     def setUp(self):
         #self.cfs_csv = 'us_nsls2v1_cfs.csv'
-        self.cfs_db = 'us_nsls2v2.db'
+        self.cfs_db = 'us_nsls2v2.sqlite'
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
