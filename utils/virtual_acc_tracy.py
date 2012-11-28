@@ -14,7 +14,7 @@ from sqlalchemy.orm import relationship, backref
 C = 787.793/30
 
 ipv, idx, isys, icell, igirder, ihandle, iname0, ifield0, itype0 = range(9)
-iname1, itype1, ifield1, isend, ilength, itag, iEND = 9, 10, 11, 12, 13, 14, 15
+iname1, itype1, ifield1, isend, ilength, iv0, itag, iEND = 9, 10, 11, 12, 13, 14, 15, 16
 
 APTAG = "aphla."
 
@@ -70,7 +70,7 @@ def read_lat_table(fname):
             ret[name[0] + 'X' + name[1:]] = {'L': L, 's': S1}
             ret[name[0] + 'Y' + name[1:]] = {'L': L, 's': S1}
         else:
-            ret[name] = {'L': L, 's': S1}
+            ret[name] = {'L': L, 's': S1, 'k1': k1, 'k2': k2}
 
     return ret
 
@@ -113,9 +113,11 @@ def patch_va_table_1(inpt, oupt, lattable):
         if len(grp) <= ilength: 
             if grp[idx]: grp.append(posinfo[grp[iname0]]['L'])
             else: grp.append('0.0')
+        if len(grp) <= iv0: grp.append('')
 
         if grp[itype0] == 'Sextupole': 
             grp[itype1] = 'SEXT'
+            grp[iv0] = posinfo[grp[iname0]].get('k2', None)
             if grp[ifield0] == 'K': grp[ifield1] = 'k2'
             if re.match(r"S[HLM][0-9]G[0-9]C[0-9][0-9][AB]", grp[iname0]):
                 grp[iname1] = grp[iname0][:3] + grp[igirder] + grp[icell] + grp[iname0][-1]
@@ -133,6 +135,7 @@ def patch_va_table_1(inpt, oupt, lattable):
             grp[ihandle] = 'read'
         elif grp[itype0] == 'Quadrupole': 
             grp[itype1] = 'QUAD'
+            grp[iv0] = posinfo[grp[iname0]].get('k1', None)
             if grp[ifield0] == 'K': grp[ifield1] = 'k1'
             if re.match(r"Q[HLM][0-9]G[0-9]C[0-9][0-9][AB]", grp[iname0]):
                 grp[iname1] = grp[iname0][:3] + grp[igirder] + grp[icell] + grp[iname0][-1]
@@ -265,6 +268,7 @@ class Element(Base):
     elem_id  = Column(Integer, primary_key=True)
     name     = Column('elemName', String)
     elemtype = Column('elemType', String)
+    group    = Column('elemGroup', String)
     machine  = Column('system', String)
     cell     = Column(String)
     girder   = Column(String)
@@ -298,6 +302,7 @@ class ChannelRecord(Base):
     handle   = Column('elemHandle', String, nullable=False)
     hostname = Column('hostName', String)
     iocname  = Column('iocName', String)
+    val0     = Column('aphlaV0', Float, nullable=True)   # initial value
     tags     = Column(String) # deliminator: ','
     elemField = Column(String)
 
@@ -352,6 +357,8 @@ def create_sqlite_db(inpt, dbfname = "us_nsls2.sqlite3"):
             if not pvr:
                 pvr = ChannelRecord(grp[ipv], elem.name, grp[ihandle])
             pvr.element = elem
+            if elem.elemtype in ['QUAD', 'SEXT']:
+                if grp[iv0]: pvr.val0 = float(grp[iv0])
             pvr.tracy_el_field_va = grp[ifield0]
             if grp[ifield1]:
                 pvr.elemField = grp[ifield1].lower()
@@ -421,6 +428,8 @@ def append_ltb_csv(src, out):
                 elif prpt == 'system': grp[isys] = val
                 elif prpt == 'elemField': 
                     grp[ifield0], grp[ifield1] = val, val
+                elif prpt == 'aphlaV0':
+                    grp[iv0] = val
                 elif prpt in ['hostName', 'iocName']:
                     pass
                 else:

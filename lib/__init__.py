@@ -37,7 +37,7 @@ Modules include:
 
 from __future__ import print_function
 
-__version__ = "0.4.0"
+__version__ = "0.6.0"
 
 
 import os
@@ -63,7 +63,7 @@ logging.getLogger('aphla').addHandler(_hdl)
 from catools import (caget, caput, caputwait)
 from chanfinder import ChannelFinderAgent
 from machines import (
-    initNSLS2V2, initNSLS2, initTLS
+    initNSLS2V2, initNSLS2, initTLS, initNSLS2V3BSRLine
     )
 
 #from rf import *

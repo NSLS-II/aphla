@@ -25,8 +25,6 @@ import shelve
 import numpy as np
 from fnmatch import fnmatch
 
-from catools import caget, caput
-
 
 class Lattice:
     """
@@ -137,6 +135,24 @@ class Lattice:
                 else: self._group[g] = [elem]
 
 
+    def getOverlapped(self):
+        ret = []
+        i = 0
+        while i < len(self._elements):
+            # for each element, searching the elements behind it
+            j = i + 1
+            ov = []
+            while j < len(self._elements):
+                if self._elements[j].sb < self._elements[i].se:
+                    ov.append(self._elements[j].name)
+                elif self._elements[j].sb >= self._elements[i].se:
+                    break
+                j = j + 1
+            if ov: ret.append([self._elements[i].name] + ov)
+            i = i + 1
+        if ret: return ret
+        else: return None
+
     def appendElement(self, elem):
         """
         append a new element to lattice. callers are responsible for avoiding
@@ -154,7 +170,16 @@ class Lattice:
         total number of elements, including magnets and diagnostic instruments
         """
         return len(self._elements)
-    
+
+    def remove(self, elemname):
+        """
+        remove the element, return None if not find the element.
+        """
+        for i,e in enumerate(self._elements):
+            if e.name != elemname: continue
+            return self._elements.pop(i)
+        return None
+
     def save(self, fname, dbmode = 'c'):
         """
         save the lattice into binary data, using writing *dbmode*. The exact
@@ -444,7 +469,7 @@ class Lattice:
     def _illegalGroupName(self, group):
         # found character not in [a-zA-Z0-9_]
         if not group: return True
-        elif re.search(r'[^\w]+', group):
+        elif re.search(r'[^\w:]+', group):
             #raise ValueError("Group name must be in [a-zA-Z0-9_]+")
             return True
         else: return False
