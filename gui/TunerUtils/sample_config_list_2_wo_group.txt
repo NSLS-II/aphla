@@ -1,0 +1,9 @@
+ph1g2c30a.y  0.0  
+ph1g2c30a.x  0.0  
+cyh1g2c30a.y 2.135
+cyh2g2c30a.y 2.135
+cym1g4c30a.y 2.135
+cym1g4c30b.y 2.135
+cyl2g6c30b.y 2.135
+cyl1g6c30b.y 2.135
+cyl1g2c01a.y 2.135

@@ -70,9 +70,9 @@ SEPARATOR = '/' # used as system file path separator as well as launcher page pa
 DOT_HLA_QFILEPATH = str(Qt.QDir.homePath()) + SEPARATOR + '.hla'
 DEVELOPER_XML_FILENAME = 'us_nsls2_launcher_hierarchy.xml'
 USER_XML_FILENAME = 'user_launcher_hierarchy.xml'
-USER_MODIFIABLE_ROOT_PATH = '/root/Users'
+USER_MODIFIABLE_ROOT_PATH = '/root/Favorites'
 
-import gui_icons
+import utils.gui_icons
 from Qt4Designer_files.ui_launcher import Ui_MainWindow
 from Qt4Designer_files.ui_launcher_item_properties import Ui_Dialog
 

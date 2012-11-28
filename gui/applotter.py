@@ -2195,7 +2195,7 @@ def main(args = None):
         # Note that for a dialog box to be modal, i.e., blocking the application
         # execution until user input is given, you need to set the input
         # argument "user_timer" to be True.        
-        cothread.iqt(use_timer = True)
+        cothread.iqt()
     else:
         qapp = Qt.QApplication(args)
     

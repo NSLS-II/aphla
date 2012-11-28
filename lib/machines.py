@@ -16,6 +16,8 @@ from __future__ import print_function, unicode_literals
 
 import os, re
 import numpy as np
+import cPickle as pickle
+import inspect
 
 from catools import caget, caput
 from lattice import Lattice
@@ -56,6 +58,11 @@ HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
+# HOME path
+HOME = os.path.expanduser('~')
+# HOME = os.environ['HOME'] will NOT work on Windows,
+# unless %HOME% is set on Windows.
+
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
            'devName': 'devname',
@@ -74,6 +81,25 @@ _db_map = {'elem_type': 'family',
            'dev_name': 'devname',
            'elem_field': 'field'
 }
+
+def funcname():
+    """
+    A utility function to return the string of the
+    function name within which this function is invoked.
+    
+    For example, if you have a function like:
+    
+    def somefunc(x,y):
+       print 'This function name is: %s' % funcname()
+       
+    Then
+    
+    >>> somefunc(1,2)
+    >>> This function name is: somefunc
+    
+    """
+    return inspect.stack()[1][3]
+    
 
 def createLattice(name, pvrec, systag, desc = 'channelfinder', create_vbpm = True):
     """
@@ -147,7 +173,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder', create_vbpm = Tru
     return lat
 
 
-def initNSLS2V2(with_twiss = False):
+def initNSLS2V2(use_cache = True, save_cache = True):
     """ 
     initialize the virtual accelerator 'V2SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
@@ -155,10 +181,21 @@ def initNSLS2V2(with_twiss = False):
     - channel finder in ${HLA_CFS_URL}
     - `us_nsls2v2.sqlite` with aphla package.
     """
+    
+    if use_cache:
+        try:
+            loadCache(funcname())
+        except:
+            print('Lattice initialization using cache failed. ' +
+                  'Will attempt initialization with other method(s).')
+        else:
+            # Loading from cache was successful.
+            return
+    
 
     cfa = ChannelFinderAgent()
     cfs_filename = 'us_nsls2v2.sqlite'
-    src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
+    src_home_csv = os.path.join(HOME, '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
@@ -232,6 +269,9 @@ def initNSLS2V2(with_twiss = False):
     # SR
     _lattice_dict['V2SR'].loop = True
     _lat = _lattice_dict['V2SR']
+    
+    if save_cache:
+        saveCache(funcname(), 'V2SR')
         
 
 def initNSLS2V3BSRLine(with_twiss = False):
@@ -341,7 +381,7 @@ def initNSLS2V2SRTwiss():
     _lat._twiss = _twiss
 
 
-def initNSLS2():
+def initNSLS2(use_cache = True, save_cache = True):
     """ 
     initialize the NSLS2 accelerator lattice 'SR', 'LTD1', 'LTD2', 'LTB'.
 
@@ -353,9 +393,19 @@ def initNSLS2():
         - RuntimeError
     """
 
+    if use_cache:
+        try:
+            loadCache(funcname())
+        except:
+            print('Lattice initialization using cache failed. ' +
+                  'Will attempt initialization with other method(s).')
+        else:
+            # Loading from cache was successful.
+            return
+
     cfa = ChannelFinderAgent()
     cfs_filename = 'us_nsls2.sqlite'
-    src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
+    src_home_csv = os.path.join(HOME, '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
@@ -426,6 +476,9 @@ def initNSLS2():
     _lattice_dict['SR'].loop = True
     _lat = _lattice_dict['SR']
 
+    if save_cache:
+        saveCache(funcname(), 'SR')
+
 
 def initTLS(config=None):
     """ 
@@ -460,7 +513,7 @@ def initTLS(config=None):
             raise RuntimeError("can not initialze from '%s'" % config)
     else:
         cfs_filename = 'tw_tls_cfs.csv'
-        src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
+        src_home_csv = os.path.join(HOME, '.hla', cfs_filename)
         HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
         if os.path.exists(src_home_csv):
@@ -528,38 +581,34 @@ def initTLS(config=None):
     _lat = _lattice_dict['SR']
 
 
-def saveCache():
+def saveCache(calling_func_name, selected_lattice_name):
     """
-    .. deprecated:: 0.3
     """
-    raise DeprecationWarning()
+    
+    global _lattice_dict
+    
+    cache_folderpath = os.path.join(HOME,'.hla',HLA_MACHINE)
+    if not os.path.isdir(cache_folderpath):
+        os.mkdir(cache_folderpath)
+    cache_filepath = os.path.join(cache_folderpath, calling_func_name+'.cpkl')
+    with open(cache_filepath,'wb') as fp:
+        pickle.dump(selected_lattice_name,fp,2)
+        pickle.dump(_lattice_dict,fp,2)
+    
 
-    output = open(os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl'), 'w')
-    import pickle
-    #import cPickle as pickle
-    pickle.dump(_lattice_dict, output)
-    pickle.dump(_lat, output)
-    pickle.dump(_orm, output)
-    output.close()
-
-def loadCache():
+def loadCache(calling_func_name):
     """
-    .. deprecated:: 0.3
     """
-    raise DeprecationWarning()
-
-    inp_file = os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl')
-    if not os.path.exists(inp_file):
-        return False
-    inp = open(inp_file, 'r')
-    global _lat, _lattice_dict, _orm
-    import pickle
-    #import cPickle as pickle
-    _lattice_dict = pickle.load(inp)
-    _lat = pickle.load(inp)
-    _orm = pickle.load(inp)
-    inp.close()
-    return True
+    
+    global _lat, _lattice_dict
+    
+    cache_folderpath = os.path.join(HOME,'.hla',HLA_MACHINE)
+    cache_filepath = os.path.join(cache_folderpath, calling_func_name+'.cpkl')
+    with open(cache_filepath,'rb') as fp:
+        selected_lattice_name = pickle.load(fp)
+        _lattice_dict = pickle.load(fp)
+    _lat = _lattice_dict[selected_lattice_name]
+    
 
 def use(lattice):
     """
