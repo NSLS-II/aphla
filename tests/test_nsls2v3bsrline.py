@@ -35,6 +35,7 @@ Element
 
 class Test0Element(unittest.TestCase):
     def setUp(self):
+        ap.machines.use("V3BSRLINE")
         pass 
         
     def tearDown(self):
@@ -125,6 +126,7 @@ class Test0Lattice(unittest.TestCase):
     """
     def setUp(self):
         logging.info("TestLattice")
+        ap.machines.use("V3BSRLINE")
         # this is the internal default lattice
         self.lat = ap.machines.getLattice('V3BSRLINE')
         self.assertTrue(self.lat)
@@ -306,68 +308,11 @@ class Test1LatticeSr(unittest.TestCase):
             #"AttributeError exception expected")
 
 
-class TestLatticeLtd1(unittest.TestCase):
-    def setUp(self):
-        logging.info("TestLatticeLtd1")
-        self.lat  = ap.machines._lat
-        self.assertTrue(self.lat)
-        self.logger = logging.getLogger('tests.TestLatticeLtd1')
-        
-    def tearDown(self):
-        ap.machines._lat = self.lat
-
-
-    def _gaussian(self, height, center_x, center_y, width_x, width_y):
-        """Returns a gaussian function with the given parameters"""
-        width_x = float(width_x)
-        width_y = float(width_y)
-        return lambda x,y: height*np.exp(
-            -(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
-
-    @unittest.skip("for lower version of Python/modules")
-    def test_fit_gaussian_image(self):
-        import matplotlib.pylab as plt
-        from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
-        from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-        d1 = ap.catools.caget('LTB-BI:BD1{VF1}Img1:ArrayData')
-
-        self.assertEqual(len(d1), 1220*1620)
-
-        d2 = np.reshape(d1, (1220, 1620))
-        params = ap.fitGaussianImage(d2)
-        fit = self._gaussian(*params)
-
-        plt.clf()
-        extent=(500, 1620, 400, 1220)
-        #plt.contour(fit(*np.indices(d2.shape)), cmap=plt.cm.copper)
-        plt.imshow(d2, interpolation="nearest", cmap=plt.cm.bwr)
-        ax = plt.gca()
-        ax.set_xlim(750, 850)
-        ax.set_ylim(550, 650)
-        (height, y, x, width_y, width_x) = params
-        #axins = zoomed_inset_axes(ax, 6, loc=1)
-        #axins.contour(fit(*np.indices(d2.shape)), cmap=plt.cm.cool)
-        #axins.set_xlim(759, 859)
-        #axins.set_ylim(559, 660)
-        #mark_inset(ax, axins, loc1=2, loc2=4, fc='none', ec='0.5')
-
-        plt.text(0.95, 0.05, """
-        x : %.1f
-        y : %.1f
-        width_x : %.1f
-        width_y : %.1f""" %(x, y, width_x, width_y),
-             fontsize=16, horizontalalignment='right',
-             verticalalignment='bottom', transform=ax.transAxes)
-
-        plt.savefig("test2.png")
-
-    def test_virtualelements(self):
-        pass
-
 
 class TestLatticeLtb(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtb")
+        ap.machines.use("V3BSRLINE")
         self.lat  = ap.machines.getLattice('V3BSRLINE')
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLatticeLtb')
@@ -398,6 +343,7 @@ class TestLatticeLtb(unittest.TestCase):
 
 class TestNSLS2V2(unittest.TestCase):
     def setUp(self):
+        ap.machines.use("V3BSRLINE")
         pass
 
     def test_elements(self):
@@ -405,113 +351,6 @@ class TestNSLS2V2(unittest.TestCase):
         self.assertEqual(len(el), 1)
         self.assertIsNone(el[0])
 
-"""
-Twiss
-~~~~~
-"""
-
-class Test0Tunes(unittest.TestCase):
-    def setUp(self):
-        logging.info("TestTunes")
-
-    @unittest.skip("Line has no tune")
-    def test_tunes(self):
-        nu = ap.getTunes()
-        self.assertEqual(len(nu), 2)
-        self.assertGreater(nu[0], 0.0)
-        self.assertGreater(nu[1], 0.0)
-
-    @unittest.skip
-    def test_dispersion_meas(self):
-        #s, etax, etay = ap.measDispersion('*')
-        eta = ap.measDispersion('P*C0[2-4]*')
-        s, etax, etay = eta[:,-1], eta[:,0], eta[:,1]
-
-        if False:
-            import matplotlib.pylab as plt
-            plt.clf()
-            plt.plot(s, etax, '-x', label=r'$\eta_x$')
-            plt.plot(s, etay, '-o', label=r'$\eta_y$')
-            plt.legend(loc='upper right')
-            plt.savefig('test_twiss_dispersion_meas.png')
-
-        self.assertGreater(max(abs(etax)), 0.15)
-        self.assertGreater(max(abs(etay)), 0.0)
-        self.assertGreater(min(abs(s)), 0.0)
-
-    @unittest.skip
-    def test_phase_get(self):
-        phi = ap.machines.getLattice().getPhase('P*C1[0-1]*')
-        s, phix, phiy = phi[:,-1], phi[:,0], phi[:,1]
-        if False:
-            import matplotlib.pylab as plt
-            plt.clf()
-            plt.plot(s, phix, '-x', label=r'$\phi_x$')
-            plt.plot(s, phiy, '-o', label=r'$\phi_y$')
-            plt.legend(loc='upper left')
-            plt.savefig('test_twiss_phase_get.png')            
-        pass
-
-
-    @unittest.skip
-    def test_beta_get(self):
-        beta = ap.machines.getLattice().getBeta('P*C1[5-6]*')
-        s, twx, twy = beta[:,-1], beta[:,0], beta[:,1]
-        if False:
-            import matplotlib.pylab as plt
-            twl = ap.machines.getLattice().getBeamlineProfile(s[0], s[-1])
-            sprof, vprof = [], []
-            for tw in twl:
-                sprof.extend(tw[0])
-                vprof.extend(tw[1])
-
-            plt.clf()
-            plt.plot(sprof, vprof, 'k-')
-            plt.plot(s, twx, '-x', label=r'$\beta_x$')
-            plt.plot(s, twy, '-o', label=r'$\beta_y$')
-            plt.legend(loc='upper right')
-            plt.savefig('test_twiss_beta_get.png')            
-        self.assertGreater(max(abs(twx)), 20.0)
-        self.assertGreater(max(abs(twy)), 20.0)
-
-        pass
-
-    @unittest.skip
-    def test_tune_get(self):
-        """
-        The tunes stored in lattice._twiss is not live, while ap.getTunes is
-        live.
-        """
-
-        lat = ap.machines.getLattice()
-        tunes0a = lat.getTunes()
-        self.assertAlmostEqual(tunes0a[0], 33.41, places=2)
-        self.assertAlmostEqual(tunes0a[1], 16.31, places=2)
-
-        # adjust quad, live tune should change
-        qs = lat.getElementList('QUAD')
-        k1 = qs[0].k1
-        qs[0].k1 = k1 * 1.02
-        time.sleep(6)
-        try:
-            tunes0b = lat.getTunes()
-            tunes1 = ap.getTunes()
-        finally:
-            qs[0].k1 = k1
-        
-        self.assertEqual(tunes0a[0], tunes0b[0])
-        self.assertEqual(tunes0a[1], tunes0b[1])
-        self.assertNotEqual(tunes0b[0], tunes1[0])
-        self.assertNotEqual(tunes0b[1], tunes1[1])
-        
-
-    @unittest.skip
-    def test_chromaticities(self):
-        lat = ap.machines.getLattice()
-        ch = lat.getChromaticities()
-        self.assertEqual(abs(ch[0]), 0)
-        self.assertEqual(abs(ch[1]), 0)
-        pass
 
 """
 Orbit
@@ -526,6 +365,7 @@ class TestOrbit(unittest.TestCase):
     """
 
     def setUp(self):
+        ap.machines.use("V3BSRLINE")
         self.logger = logging.getLogger("tests.TestOrbit")
         self.lat = ap.machines.getLattice('V3BSRLINE')
         self.assertTrue(self.lat)
@@ -972,23 +812,6 @@ class TestOrmData(unittest.TestCase):
             break
         print "Time:", time.time() - t1
 
-
-
-class TestOrm(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    @unittest.skip("speed up")
-    def test_measure_orm(self):
-        bpms = ap.getElements('BPM')
-        trims = ap.getElements('HCOR') + ap.getElements('VCOR')
-        
-        #nbpm, ntrim = 5, 3
-        nbpm, ntrim = len(bpms), len(trims)
-        bpmlst = [b.name for b in bpms[:nbpm]]
-        trimlst = [t.name for t in trims[:ntrim]]
-        fname = time.strftime("orm_%Y%m%d_%H%M.hdf5")
-        ap.measOrbitRm(bpmlst, trimlst, fname)
 
 
 
