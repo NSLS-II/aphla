@@ -30,6 +30,8 @@ logging.info("initializing NSLS2V2")
 import aphla as ap
 ap.initNSLS2V2()
 
+LAT_SR = "V2SR"
+
 logging.info("NSLS2V2 initialized")
 
 refpvrb = [
@@ -92,6 +94,7 @@ Element
 
 class Test0Element(unittest.TestCase):
     def setUp(self):
+        ap.machines.use("V2SR")
         pass 
         
     def tearDown(self):
@@ -275,7 +278,7 @@ class Test0Lattice(unittest.TestCase):
     def setUp(self):
         logging.info("TestLattice")
         # this is the internal default lattice
-        self.lat = ap.machines.getLattice('V2SR')
+        self.lat = ap.machines.getLattice("V2SR")
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLattice')
 
@@ -449,6 +452,7 @@ class Test1LatticeSr(unittest.TestCase):
 class TestLatticeLtd1(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtd1")
+        ap.machines.use("V1LTD1")
         self.lat  = ap.machines._lat
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLatticeLtd1')
@@ -562,6 +566,7 @@ Twiss
 
 class Test0Tunes(unittest.TestCase):
     def setUp(self):
+        ap.machines.use("V2SR")
         logging.info("TestTunes")
 
     def test_tunes(self):
@@ -675,6 +680,7 @@ class TestOrbit(unittest.TestCase):
     """
 
     def setUp(self):
+        ap.machines.use("V2SR")
         self.logger = logging.getLogger("tests.TestOrbit")
         self.lat = ap.machines.getLattice('V2SR')
         self.assertTrue(self.lat)
