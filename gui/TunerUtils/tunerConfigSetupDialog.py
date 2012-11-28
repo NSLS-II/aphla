@@ -18,12 +18,15 @@ import numpy as np
 from datetime import datetime
 from time import time, strftime, localtime
 import h5py
+import traceback
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (SIGNAL, QObject, QSettings)
-from PyQt4.QtGui import (QApplication, QDialog, QStandardItem,
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import (qApp, QApplication, QDialog, QStandardItem,
      QStandardItemModel, QSortFilterProxyModel, QAbstractItemView,
-     QAction, QIcon, QMenu, QInputDialog)
+     QAction, QIcon, QMenu, QInputDialog, QKeySequence, QItemSelection,
+     QItemSelectionModel, QItemSelectionRange, QTableView, QFileDialog)
 
 import aphla as ap
 if ap.machines._lat is None:
@@ -38,13 +41,6 @@ from config import (TUNER_CLIENT_HDF5_FILEPATH, TUNER_CLIENT_SQLITE_FILEPATH)
 from aphla.gui import channelexplorer
 from aphla.gui.utils.tictoc import tic, toc
 
-#HOME = os.path.expanduser('~')
-#HLA_MACHINE = os.environ.get('HLA_MACHINE', None)
-
-#TUNER_CLIENT_HDF5_FILEPATH = os.path.join(HOME,'.hla', HLA_MACHINE, 
-                                          #'tuner_client.h5')
-#TUNER_CLIENT_SQLITE_FILEPATH = os.path.join(HOME,'.hla', HLA_MACHINE, 
-                                            #'tuner_client.db')
 
 ########################################################################
 class TunerConfigSetupModel(QObject):
@@ -226,15 +222,8 @@ class TunerConfigSetupModel(QObject):
         
         
     #----------------------------------------------------------------------
-    def importNewChannels(self, selected_channels, channelGroupInfo):
+    def importNewChannelsFromSelector(self, selected_channels, channelGroupInfo):
         """"""
-        
-        #str_format_index = const.ENUM_STR_FORMAT
-        #prop_name_index = const.ENUM_PROP_NAME
-        
-        #group_col_ind = self.getColumnIndex(const.COL_GROUP_NAME)
-        
-        #nRows = self.rowCount()
         
         elemName_list = [elem.name for (elem,fieldName) in selected_channels]
         channelName_list = [elem.name+'.'+fieldName
@@ -252,125 +241,33 @@ class TunerConfigSetupModel(QObject):
                           'channel_name': channelName_list,
                           'weight': weight_list,
                           'step_size': step_size_list}
+
+        self.updateModels(new_lists_dict)
+        
+    #----------------------------------------------------------------------
+    def importNewChannelsFromTextFile(self, list_of_lists):
+        """"""
+        
+        channelGroupName_list, channelName_list, weight_list = zip(*list_of_lists)
+        step_size_list = weight_list[:]
+        
+        new_lists_dict = {'group_name': channelGroupName_list,
+                          'channel_name': channelName_list,
+                          'weight': weight_list,
+                          'step_size': step_size_list}
+        
+        self.updateModels(new_lists_dict)
+        
+    #----------------------------------------------------------------------
+    def updateModels(self, new_lists_dict):
+        """"""
+
         tStart = tic()
         self.base_model.appendChannels(new_lists_dict)
         print 'before reset', toc(tStart)
         self.table_model.resetModel()
         self.tree_model.resetModel()
         print 'after reset', toc(tStart)
-        
-        ## Temporarily block signals emitted from the model
-        #self.blockSignals(True)
-        
-        #channelGroupList = []
-        #if channelGroupInfo == {}:
-            #for (elemName,chName) in zip(elemName_list,channelName_list):
-                #default_channel_group_name = elemName
-                #default_channel_group_weight = 0.
-                #channelGroup = {'name':default_channel_group_name,
-                                #'weight':default_channel_group_weight,
-                                #'channel_name_list': [chName]}
-                #channelGroupList.append(channelGroup)
-                #self.channel_group_list.append(channelGroup)
-                
-            
-                
-        #else:
-            #channelGroup = {'name': channelGroupInfo['name'],
-                            #'weight': channelGroupInfo['weight'],
-                            #'channel_name_list': channelName_list,
-                            #}
-            #channelGroupList.append(channelGroup)
-            #self.channel_group_list.append(channelGroup)
-            
-            
-            #self.setRowCount(nRows + 1) # Add 1 row
-            #nRows = self.rowCount()
-            #row_index = nRows - 1 # last row index
-            
-            #groupItem = QStandardItem(channelGroup['name'])
-            #groupItem.setFlags(groupItem.flags() |
-                               #QtCore.Qt.ItemIsEditable) # Make the item editable
-                        
-            #for c in self.group_level_col_list:
-                #col_index = self.getColumnIndex(c)
-                #cc = const.DICT_COL[c]
-                #str_format = cc[str_format_index]
-                #prop_val = channelGroup[ cc[prop_name_index] ]
-                #item = QStandardItem(('{0'+str_format+'}').format(prop_val))
-                #if c in const.EDITABLE_COL_NAME_LIST:
-                    #item.setFlags(item.flags() |
-                                  #QtCore.Qt.ItemIsEditable) # Make the item editable
-                #else:
-                    #item.setFlags(item.flags() &
-                                  #~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
-                    
-                #self.setItem(row_index, col_index, item)
-                #for child_index in range(len(channelGroup['channel_name_list'])):
-                    #groupItem.setChild(child_index, col_index, item.clone())
-            
-            #for (child_index, chName) in enumerate(channelGroup['channel_name_list']):
-                #elemName, fieldName = chName.split('.')
-                #elem = ap.getElements(elemName)[0]
-                #channelNameItem = QStandardItem(chName)
-                #channelNameItem.setFlags(channelNameItem.flags() & 
-                                         #~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
-                #groupItem.setChild(child_index, group_col_ind, channelNameItem)
-                
-                #for c in self.channel_level_col_list:
-                    #col_index = self.getColumnIndex(c)
-                    #cc = const.DICT_COL[c]
-                    #str_format = cc[str_format_index]
-                    #prop_name =  cc[prop_name_index]
-                    #if prop_name not in ('pvrb','pvsp','channel_name','field'):
-                        #value = getattr(elem,prop_name)
-                    #else:
-                        #if prop_name == 'pvrb':
-                            #pvrb, pvsp = self._getpvs(chName)
-                            #value = pvrb
-                        #elif prop_name == 'pvsp':
-                            #pvrb, pvsp = self._getpvs(chName)
-                            #value = pvsp
-                        #elif prop_name == 'channel_name':
-                            #value = chName
-                        #elif prop_name == 'field':
-                            #value = fieldName
-                        #else:
-                            #raise NotImplementedError(prop_name)
-                    
-                    #if str_format != 'timestamp':
-                        #if (value == None) or isinstance(value,list) \
-                           #or isinstance(value,tuple):
-                            #str_format = ':s'
-                        #else:
-                            #pass
-                        #item = QStandardItem(('{0'+str_format+'}').format(value))
-                    #else:
-                        #if value is None:
-                            #time_str = 'None'
-                        #else:
-                            #time_str = datetime.fromtimestamp(value).isoformat()
-                        #item = QStandardItem(time_str)
-                    
-                    #item.setFlags(item.flags() &
-                                  #~QtCore.Qt.ItemIsEditable) # Make the item NOT editable
-                    
-                    #groupItem.setChild(child_index, col_index, item)
-            
-            #self.setItem(row_index, group_col_ind, groupItem)
-            
-            
-            
-        ## Re-enable the blocked signals emitted from the model
-        #self.blockSignals(False)
-        
-        
-        #self.emit(SIGNAL('modelUpdated'))           
-        
-        #self.updateGroupBasedModel(change_type='append',
-                                   #channelGroupList=channelGroupList)
-        
-        
         
         
         
@@ -455,6 +352,10 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         self.on_column_selection_change(desired_visible_col_full_name_list,
                                         force_visibility_update=True)
         
+        self._initContextMenuItems()
+        self.clipboard = np.array([])
+        
+        
     #----------------------------------------------------------------------
     def debug(self):
         """"""
@@ -463,6 +364,91 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         ##self.model.table_model.reset()
         #self.proxyModel.setSourceModel(self.model.table_model)
         #self.treeView.setVisible(True)
+        
+    #----------------------------------------------------------------------
+    def _initContextMenuItems(self):
+        """"""
+        
+        t = self.tableView
+        
+        t.actionCopySelectedItemsTexts = QAction(QIcon(), 'copy', t)
+        
+        t.actionCopySelectedItemsTexts.setShortcut(
+            QKeySequence(Qt.ControlModifier + Qt.Key_C) )
+        self.addAction(t.actionCopySelectedItemsTexts)
+        ''' This addAction is critical for the shortcut to always work.
+        If you only do addAction for the context menu below, the
+        shortcut will not work, because the widget to which this
+        action is added will be listening for key events.
+        '''
+        
+        self.connect(t.actionCopySelectedItemsTexts, SIGNAL('triggered()'),
+                     self.copySelectedItemsTexts)
+        
+        t.setContextMenuPolicy(Qt.CustomContextMenu)
+        t.contextMenu = QMenu()
+        t.contextMenu.addAction(t.actionCopySelectedItemsTexts)
+        t.contextMenu.setDefaultAction(t.actionCopySelectedItemsTexts)
+        
+        ###
+        
+        #t = self.treeView
+        
+    #----------------------------------------------------------------------
+    def copySelectedItemsTexts(self):
+        """"""
+        
+        action = self.sender()
+        view = action.parent()
+        
+        if not isinstance(view, QTableView):
+            raise TypeError('Only implemented for TableView')
+        
+        proxyItemSelectionModel = view.selectionModel()
+        proxyItemSelection = proxyItemSelectionModel.selection()
+        
+        proxyMod = view.model()
+        
+        proxyItemSelectionCount = proxyItemSelection.count()
+        if proxyItemSelectionCount == 0:
+            return
+        else:
+            h = view.horizontalHeader()
+            v = view.verticalHeader()
+            all_inds = []
+            all_rows = []
+            all_cols = []
+            for sel in proxyItemSelection:
+                z = [( ind, v.visualIndex(ind.row()), h.visualIndex(ind.column()) )
+                     for ind in sel.indexes() if not h.isSectionHidden(ind.column())]
+                inds, rows, cols = zip(*z)
+                all_inds.extend(inds)
+                all_rows.extend(rows)
+                all_cols.extend(cols)
+            nRows = max(all_rows) - min(all_rows) + 1
+            nCols = max(all_cols) - min(all_cols) + 1
+            min_row = min(all_rows)
+            min_col = min(all_cols)
+            all_rows = [row - min_row for row in all_rows]
+            all_cols = [col - min_col for col in all_cols]
+            self.clipboard = np.empty((nRows,nCols),dtype=np.object)
+            self.clipboard.fill('')
+            for (ind,row,col) in zip(all_inds,all_rows,all_cols):
+                self.clipboard[row,col] = str( proxyMod.data(ind) )
+            #print self.clipboard
+            
+            # Find maximum string length for each column
+            str_width_list = [len( max(a,key=len) )
+                              for a in self.clipboard.transpose()]
+            
+            formatted_line_list = [[] for i in range(nRows)]
+            for (i,row) in enumerate(self.clipboard):
+                formatted_line_list[i] = ' '.join(
+                    [s.ljust(w) for (s,w) in zip(row,str_width_list)] )
+
+            system_clipboard = qApp.clipboard()
+            system_clipboard.setText('\n'.join(formatted_line_list))
+            
         
     #----------------------------------------------------------------------
     def saveViewSizeSettings(self):
@@ -734,6 +720,8 @@ class TunerConfigSetupApp(QObject):
         
         self.settings = TunerConfigSetupAppSettings()
         
+        self.starting_directory_path = os.getcwd()
+        
         self._initModel()
         self._initView(isModal, parentWindow)
         
@@ -742,11 +730,10 @@ class TunerConfigSetupApp(QObject):
         self.connect(self, SIGNAL('channelsSelected'),
                      self._askChannelGroupNameAndWeight)
         self.connect(self, SIGNAL('channelGroupInfoObtained'),
-                     self.model.importNewChannels)
-        #self.connect(self.model, SIGNAL('modelUpdated'),
-                     #self.view._updateProxyModel)
-        #self.connect(self.model, SIGNAL('modelUpdated'),
-                     #self.view._expandAll_and_resizeColumn)
+                     self.model.importNewChannelsFromSelector)
+                     
+        self.connect(self.view.pushButton_add_from_text_file,
+                     SIGNAL('clicked()'), self._launchFileDialogTextFile)
         
         self.connect(self.view, SIGNAL('prepareOutput'),
                      self.model._prepareOutput)
@@ -769,6 +756,45 @@ class TunerConfigSetupApp(QObject):
         
         self.view = TunerConfigSetupView(self.model, isModal, parentWindow,
                                          settings=self.settings)
+        
+    #----------------------------------------------------------------------
+    def _launchFileDialogTextFile(self):
+        """"""
+        
+        caption = 'Load Tuner Configuration Data from Text File'
+        text_files_filter_str = 'Text files (*.txt)'
+        all_files_filter_str = 'All files (*)'
+        filter_str = ';;'.join([text_files_filter_str, all_files_filter_str])
+        #selected_filter_str = text_files_filter_str
+        filename = QFileDialog.getOpenFileName(caption=caption,
+                                               directory=self.starting_directory_path,
+                                               filter=filter_str)
+        
+        if not filename:
+            return
+        
+        self.starting_directory_path = filename
+        
+        f = open(filename, 'r')
+        try:
+            all_texts = f.read()
+        finally:
+            f.close()
+        
+        lines = all_texts.split('\n')
+        data = [line.split() for line in lines]
+        if len(data[0]) == 3:
+            pass
+        elif len(data[0]) == 2:
+            for row in data: row.insert(0,row[0]) # Create group name from channel name
+        else:
+            raise ValueError('Only text files with 2 or 3 columns of data can be loaded.')
+            
+        # Change the data type of weight from string to float
+        for row in data: row[2] = float(row[2])
+        
+        self.model.importNewChannelsFromTextFile(data)
+
         
     #----------------------------------------------------------------------
     def _launchChannelExplorer(self):

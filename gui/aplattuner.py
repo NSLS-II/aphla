@@ -6,6 +6,10 @@ or open existing configs
 *) Use Qt Undo Framework for non-EPICS commands
 *) Use UNION like the following to combine server & client database:
 SELECT uid, name FROM DB1.Users UNION SELECT uid, name FROM DB2.Users ;
+*) Allow simultaneous weight change within a group if the weight cell on
+group level is in edit mode. Only when all the weights in a group are
+the same, show group-level weight value.
+*) Do not allow (show) group-level step size cell at any time.
 '''
 
 """

@@ -16,7 +16,7 @@ from config import (TUNER_CLIENT_HDF5_FILEPATH, TUNER_CLIENT_SQLITE_FILEPATH)
 
 MEMORY = ':memory:'
 
-DEBUG = True
+DEBUG = False
 
 ########################################################################
 class Column():
@@ -29,7 +29,7 @@ class Column():
         
         self.name = name
         
-        if data_type not in ('TEXT', 'REAL', 'INT', 'INTEGER',
+        if data_type not in ('TEXT', 'REAL', 'INT', 'INTEGER', 'BLOB',
                              'INTEGER PRIMARY KEY'):
             raise ValueError('Unexpected data type: '+data_type)
         else:
@@ -43,7 +43,6 @@ class Column():
         
         self.default_value = default_value
         
-
         
 ########################################################################
 class ForeignKeyConstraint():
@@ -63,10 +62,8 @@ class ForeignKeyConstraint():
         self.foreign_column_name = foreign_column_name
         
     
-   
-    
 ########################################################################
-class TunerDatabase():
+class SQLiteDatabase():
     """"""
 
     #----------------------------------------------------------------------
@@ -78,9 +75,6 @@ class TunerDatabase():
         
         isinstance(self.con, sqlite3.Connection)
         isinstance(self.cur, sqlite3.Cursor)
-        
-        self.con.execute('PRAGMA foreign_keys = ON')
-        self.con.commit()
     
     #----------------------------------------------------------------------
     def close(self):
@@ -204,18 +198,6 @@ class TunerDatabase():
         else:
             self.cur.execute(sql_cmd, placeholder_replacement_tuple)
         
-    ##----------------------------------------------------------------------
-    #@staticmethod
-    #def getSQLCmd_CreateTable(table_name, definition_tuple_list):
-        #""""""
-        
-        #sql_cmd = 'CREATE TABLE ' + table_name + ' ('
-        #for tup in definition_tuple_list:
-            #sql_cmd += ' '.join(tup) + ', '
-        #sql_cmd = sql_cmd[:-2] + ')'
-        
-        #return sql_cmd
-        
     #----------------------------------------------------------------------
     def createTable(self, table_name, column_definition_list):
         """"""
@@ -263,6 +245,7 @@ class TunerDatabase():
                 self.cur.execute(sql_cmd)
         except:
             traceback.print_exc()
+            print 'SQL cmd:', sql_cmd
                 
     #----------------------------------------------------------------------
     def deleteTable(self, table_name):
@@ -288,6 +271,168 @@ class TunerDatabase():
                 self.cur.executemany(sql_cmd, list_of_tuples)
         except:
             traceback.print_exc()
+            
+    #----------------------------------------------------------------------
+    def setForeignKeysEnabled(self, TF):
+        """"""
+        
+        if TF:
+            state = 'ON'
+        else:
+            state = 'OFF'
+        
+        self.cur.execute('PRAGMA foreign_keys = '+state)
+        self.con.commit()        
+        
+    
+########################################################################
+class TunerDatabase(SQLiteDatabase):
+    """"""
+    
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        
+        SQLiteDatabase.__init__(self)
+        
+    #----------------------------------------------------------------------
+    def _initTables(self):
+        """
+        Assumption: Channel name will NEVER be changed, but PV name(s) associated
+        with channel name MIGHT be changed.
+        
+        When associated PV name(s) are changed for a channel name, create a new
+        channel ID for the new association. For config and new snapshots, use the
+        latest channel ID. For old snapshots, the snapshot contains a channel ID,
+        NOT channe name, so that there will be no ambiguity as to which PV's the
+        old snapshot used when the snapshot was taken.
+        """
+        
+        global DEBUG
+        DEBUG = False
+        
+        db = SQLiteDatabase()
+    
+        #try:
+            #os.remove(TUNER_CLIENT_SQLITE_FILEPATH)
+        #except:
+            #print 'Deleting database file failed.'
+        
+        db.setForeignKeysEnabled(True)
+        
+        table_name = 'record_index_table'
+        column_def = [
+            Column('last_record_id','INT',allow_default=True,default_value=0),
+        ]
+        db.createTable(table_name, column_def)    
+        
+        table_name = 'user_table'
+        column_def = [
+            Column('user_id','INTEGER PRIMARY KEY'),
+            Column('ip_str','TEXT',allow_null=False),
+            Column('mac_str','TEXT',allow_null=False),
+            Column('username','TEXT',allow_null=False),        
+        ]
+        db.createTable(table_name, column_def)
+    
+        table_name = 'channel_name_table'
+        column_def = [
+            Column('channel_name_id','INTEGER PRIMARY KEY'),
+            Column('channel_name','TEXT',unique=True,allow_null=False),
+        ]
+        db.createTable(table_name, column_def)    
+        
+        table_name = 'channel_table'
+        column_def = [
+            Column('channel_id','INTEGER PRIMARY KEY'),
+            Column('channel_name_id','INTEGER',allow_null=False),
+            Column('pvrb_name','TEXT',allow_default=True,default_value=None),
+            Column('pvsp_name','TEXT',allow_default=True,default_value=None),
+            Column('time_created','REAL',allow_null=False),
+            ForeignKeyConstraint('fk_channel_name_id', 'channel_name_id',
+                                 'channel_name_table', 'channel_name_id'),        
+        ]
+        db.createTable(table_name, column_def)
+        
+        table_name = 'channel_group_name_table'
+        column_def = [
+            Column('channel_group_name_id','INTEGER PRIMARY KEY'),
+            Column('channel_group_name','TEXT',allow_null=False),
+        ]
+        db.createTable(table_name, column_def)
+        
+        table_name = 'config_meta_table'
+        column_def = [
+            Column('config_id','INTEGER PRIMARY KEY'),
+            Column('config_name','TEXT',allow_default=True,default_value='""'),
+            Column('user_id','INTEGER',allow_null=False),
+            Column('user_record_id','INTEGER',allow_null=False),
+            Column('time_created','REAL',allow_null=False),
+            Column('description','TEXT',allow_default=True,default_value='""'),
+            Column('appended_descriptions','TEXT',allow_default=True,default_value='""'), # include modified time as part of the text in this
+            ForeignKeyConstraint('fk_user_id', 'user_id',
+                                 'user_table', 'user_id'),        
+        ]
+        db.createTable(table_name, column_def)    
+        
+        table_name = 'config_table'
+        column_def = [
+            Column('config_id','INTEGER',allow_null=False),
+            Column('channel_name_id','INTEGER',allow_null=False),
+            Column('channel_group_name_id','INTEGER',allow_null=False),
+            Column('weight','REAL',allow_default=True,default_value=None),
+            Column('step_size','REAL',allow_default=True,default_value=None),
+            Column('indiv_ramp_table','BLOB',allow_default=True,default_value=None),
+            ForeignKeyConstraint('fk_config_id', 'config_id',
+                                 'config_meta_table', 'config_id'),        
+            ForeignKeyConstraint('fk_channel_name_id', 'channel_name_id',
+                                 'channel_name_table', 'channel_name_id'),        
+            ForeignKeyConstraint('fk_channel_group_name_id', 'channel_group_name_id',
+                                 'channel_group_name_table', 'channel_group_name_id'),                
+        ]
+        db.createTable(table_name, column_def)    
+        
+        table_name = 'snapshot_meta_table'
+        column_def = [
+            Column('snapshot_id','INTEGER PRIMARY KEY'),
+            Column('config_id','INTEGER',allow_null=False),
+            Column('snapshot_name','TEXT',allow_default=True,default_value='""'),
+            Column('user_id','INTEGER',allow_null=False),
+            Column('user_record_id','INTEGER',allow_null=False),
+            Column('time_snapshot_taken','REAL',allow_null=False),        
+            Column('description','TEXT',allow_default=True,default_value='""'),
+            Column('appended_descriptions','TEXT',allow_default=True,default_value='""'), # include modified time as part of the text in this
+            Column('masar_event_id','INTEGER',allow_default=True,default_value=None),
+            ForeignKeyConstraint('fk_config_id', 'config_id',
+                                 'config_meta_table', 'config_id'),        
+            ForeignKeyConstraint('fk_user_id', 'user_id',
+                                 'user_table', 'user_id'),        
+        ]
+        db.createTable(table_name, column_def)    
+        
+        table_name = 'snapshot_table'
+        column_def = [
+            Column('snapshot_id','INTEGER',allow_null=False),
+            Column('channel_id','INTEGER',allow_null=False),
+            Column('pvrb_value','REAL',allow_default=True,default_value=None),
+            Column('pvrb_ioc_timestamp','INTEGER',allow_default=True,default_value=None),
+            Column('pvrb_pc_timestamp','REAL',allow_default=True,default_value=None),
+            Column('pvsp_value','REAL',allow_default=True,default_value=None),
+            Column('pvsp_ioc_timestamp','INTEGER',allow_default=True,default_value=None),
+            Column('pvsp_pc_timestamp','REAL',allow_default=True,default_value=None),
+            ForeignKeyConstraint('fk_snapshot_id', 'snapshot_id',
+                                 'snapshot_meta_table', 'snapshot_id'),        
+            ForeignKeyConstraint('fk_channel_id', 'channel_id',
+                                 'channel_table', 'channel_id'),        
+        ]
+        '''Note that the 2nd column is 'channel_id', NOT 'channel_name_id' as in config_table.
+        This is because channel_name_id may point to different PV's at some later time,
+        but channel_id will always point to the same PV's, which may or may not
+        exist later.
+        '''
+        db.createTable(table_name, column_def)    
+        
+        print 'Successfully initialized database tables for aplattuner.'        
         
     #----------------------------------------------------------------------
     def updateClientDB(self):
@@ -296,67 +441,7 @@ class TunerDatabase():
     #----------------------------------------------------------------------
     def loadClientHDF5(self):
         """"""
-        
-#----------------------------------------------------------------------
-def test2(args):
-    """"""
 
-    global DEBUG
-    DEBUG = False
-    
-    db = TunerDatabase()
-
-    #try:
-        #os.remove(TUNER_CLIENT_SQLITE_FILEPATH)
-    #except:
-        #print 'Deleting database file failed.'
-    
-    table_name = 'record_index_table'
-    column_def = [
-        Column('last_record_id','INT',allow_default=True,default_value=0),
-    ]
-    db.createTable(table_name, column_def)    
-    
-    table_name = 'user_table'
-    column_def = [
-        Column('user_id','INTEGER PRIMARY KEY'),
-        Column('ip_str','TEXT',allow_null=False),
-        Column('mac_str','TEXT',allow_null=False),
-        Column('username','TEXT',allow_null=False),        
-    ]
-    db.createTable(table_name, column_def)
-
-    table_name = 'channel_name_table'
-    column_def = [
-        Column('channel_name_id','INTEGER PRIMARY KEY'),
-        Column('channel_name','TEXT',unique=True,allow_null=False),
-    ]
-    db.createTable(table_name, column_def)    
-    
-    table_name = 'channel_table'
-    column_def = [
-        Column('channel_id','INTEGER PRIMARY KEY'),
-        Column('channel_name_id','INTEGER',allow_null=False),
-        Column('pvrb_name','TEXT',allow_default=True,default_value=None),
-        Column('pvsp_name','TEXT',allow_default=True,default_value=None),
-        Column('time_created','REAL',allow_null=False),
-        ForeignKeyConstraint('fk_channel_name_id', 'channel_name_id',
-                             'channel_name_table', 'channel_name_id'),        
-    ]
-    db.createTable(table_name, column_def)
-    
-    table_name = 'channel_group_name_table'
-    
-    table_name = 'config_meta_table'
-    
-    table_name = 'config_table'
-    
-    table_name = 'snapshot_meta_table'
-    
-    table_name = 'snapshot_table'
-    
-    print 'finished successfully'
-    
 #----------------------------------------------------------------------
 def test1(args):
     """"""
@@ -633,7 +718,16 @@ def test1(args):
     
     db.close()
         
+
+#----------------------------------------------------------------------
+def main(args):
+    """
+    """
+
+    db = TunerDatabase()
+    db._initTables()
+
 #----------------------------------------------------------------------    
 if __name__ == "__main__" :
     #test1(sys.argv)
-    test2(sys.argv)
+    main(sys.argv)

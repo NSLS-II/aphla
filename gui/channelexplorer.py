@@ -2029,25 +2029,42 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         if proxyItemSelectionCount == 0:
             return
         else:
-            #proxyItemSelectionRange = proxyItemSelection.first()
-            #proxyModelIndexList = proxyItemSelectionRange.indexes()
-            #nRows = proxyItemSelectionRange.height()
-            #nCols = proxyItemSelectionRange.width()
-            #self.clipboard = np.empty((nRows,nCols),dtype=np.object)
-            #flat = self.clipboard.transpose().flatten()
-            proxyModelIndexList = proxyItemSelection.indexes()
-            self.clipboard = np.empty(len(proxyModelIndexList),dtype=np.object)
-            for (i,proxyInd) in enumerate(proxyModelIndexList):
-                text = proxyMod.data(proxyInd)
-                #flat[i] = text
-                self.clipboard[i] = text
-            #self.clipboard = flat.reshape((nCols,nRows)).transpose()
-            
+            h = t.horizontalHeader()
+            v = t.verticalHeader()
+            all_inds = []
+            all_rows = []
+            all_cols = []
+            for sel in proxyItemSelection:
+                z = [( ind, v.visualIndex(ind.row()), h.visualIndex(ind.column()) )
+                     for ind in sel.indexes() if not h.isSectionHidden(ind.column())]
+                inds, rows, cols = zip(*z)
+                all_inds.extend(inds)
+                all_rows.extend(rows)
+                all_cols.extend(cols)
+            nRows = max(all_rows) - min(all_rows) + 1
+            nCols = max(all_cols) - min(all_cols) + 1
+            min_row = min(all_rows)
+            min_col = min(all_cols)
+            all_rows = [row - min_row for row in all_rows]
+            all_cols = [col - min_col for col in all_cols]
+            self.clipboard = np.empty((nRows,nCols),dtype=np.object)
+            self.clipboard.fill('')
+            for (ind,row,col) in zip(all_inds,all_rows,all_cols):
+                self.clipboard[row,col] = str( proxyMod.data(ind) )
             #print self.clipboard
-            system_clipboard = qApp.clipboard()
-            system_clipboard.setText('\n'.join(self.clipboard))
+            
+            # Find maximum string length for each column
+            str_width_list = [len( max(a,key=len) )
+                              for a in self.clipboard.transpose()]
+            
+            formatted_line_list = [[] for i in range(nRows)]
+            for (i,row) in enumerate(self.clipboard):
+                formatted_line_list[i] = ' '.join(
+                    [s.ljust(w) for (s,w) in zip(row,str_width_list)] )
 
-        
+            system_clipboard = qApp.clipboard()
+            system_clipboard.setText('\n'.join(formatted_line_list))
+            
         
     #----------------------------------------------------------------------
     def openTunerForSelectedChannels(self):

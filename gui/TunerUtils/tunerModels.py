@@ -363,8 +363,39 @@ class TunerConfigSetupBaseModel(QObject):
         self.grouped_ind_list = []
         
     #----------------------------------------------------------------------
+    def findDuplicateChannels(self, new_channel_name_list):
+        """"""
+        
+        existing_channel_name_list = self.k_channel_name[:]
+        
+        return list(np.intersect1d(existing_channel_name_list, new_channel_name_list))
+        
+    #----------------------------------------------------------------------
     def appendChannels(self, new_lists_dict):
         """"""
+        
+        dupChannels = self.findDuplicateChannels(new_lists_dict['channel_name'])
+        if dupChannels != []:
+            info_text_list = ['The following channel names already exist:'] + \
+                [''] + dupChannels + [''] + \
+                ['Do you want to proceed by adding only new non-duplicate channels?']
+            info_text = '\n'.join(info_text_list)
+            msg = QMessageBox()
+            msg.setText('Duplicate Channel Names Found')
+            msg.setInformativeText(info_text)
+            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg.setDefaultButton(QMessageBox.No)
+            result = msg.exec_()
+            
+            if result == QMessageBox.No:
+                return
+            else:
+                new_channel_list = new_lists_dict['channel_name'][:]
+                dup_ind_list = [i for (i,ch) in enumerate(new_channel_list)
+                                if ch in dupChannels]
+                for (k,v_list) in new_lists_dict.iteritems():
+                    new_lists_dict[k] = [v for (i,v) in enumerate(v_list) 
+                                         if i not in dup_ind_list]
         
         for (k,v) in new_lists_dict.iteritems():
             getattr(self, 'k_'+k).extend(v)
