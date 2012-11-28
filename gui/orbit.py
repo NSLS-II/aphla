@@ -582,8 +582,11 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
 def main(par=None):
-    aphla.initNSLS2V1()
-    aphla.initNSLS2()
+    try:
+        aphla.initNSLS2V2()
+        aphla.initNSLS2()
+    except:
+        pass
     print aphla.machines.lattices()
     #app = QApplication(args)
     #app.setStyle(st)
@@ -591,7 +594,7 @@ def main(par=None):
         print "CA offline:", aphla.catools.CA_OFFLINE
         aphla.catools.CA_OFFLINE = True
     demo = OrbitPlotMainWindow()
-    demo.setLattice(aphla.machines.getLattice('V1SR'))
+    demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")
     demo.resize(800,500)
     print aphla.machines.lattices()

@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
 """
-NSLS2 V2 Unit Test
--------------------
+NSLS2 V3 BSR+3SR Unit Test
+---------------------------
 """
-
-# cause timeout by nosetest
-#from cothread.catools import caget
-#print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
 
 import sys, os, time
 from fnmatch import fnmatch
@@ -26,64 +22,11 @@ logging.basicConfig(filename="utest.log",
     level=logging.DEBUG)
 
 
-logging.info("initializing NSLS2V2")
+logging.info("initializing NSLS2V3")
 import aphla as ap
-ap.initNSLS2V2()
+ap.initNSLS2V3BSRLine()
 
 logging.info("NSLS2V2 initialized")
-
-refpvrb = [
-    "V:2-SR:C15-BI:G2{PL1:1845}SA:X",
-    "V:2-SR:C15-BI:G2{PL1:1845}SA:Y",
-    "V:2-SR:C15-BI:G2{PL2:1865}SA:X",
-    "V:2-SR:C15-BI:G2{PL2:1865}SA:Y",
-    "V:2-SR:C15-BI:G4{PM1:1890}SA:X",
-    "V:2-SR:C15-BI:G4{PM1:1890}SA:Y",
-    "V:2-SR:C15-BI:G4{PM1:1900}SA:X",
-    "V:2-SR:C15-BI:G4{PM1:1900}SA:Y",
-    "V:2-SR:C15-BI:G6{PH2:1924}SA:X",
-    "V:2-SR:C15-BI:G6{PH2:1924}SA:Y",
-    "V:2-SR:C15-BI:G6{PH1:1939}SA:X",
-    "V:2-SR:C15-BI:G6{PH1:1939}SA:Y"
-    ]
-ref_v0 = np.array(ap.caget(refpvrb), 'd')
-
-
-def markForStablePv():
-    global ref_v0, refpvrb
-    ref_v0 = np.array(ap.caget(refpvrb), 'd')
-    
-def waitForStablePv(**kwargs):
-    """
-    wait for the orbit to be stable.
-
-    This is in hlalib.py, but here does not need the dependance on getOrbit().
-    """
-    diffstd = kwargs.get('diffstd', 1e-7)
-    minwait = kwargs.get('minwait', 2)
-    maxwait = kwargs.get('maxwait', 30)
-    step    = kwargs.get('step', 2)
-    diffstd_list = kwargs.get('diffstd_list', False)
-    verbose = kwargs.get('verbose', 0)
-
-    t0 = time.time()
-    time.sleep(minwait)
-    global ref_v0
-    dv = np.array(caget(refpvrb)) - ref_v0
-    dvstd = [dv.std()]  # record the history
-    timeout = False
-
-    while dv.std() < diffstd:
-        time.sleep(step)
-        dt = time.time() - t0
-        if dt  > maxwait:
-            timeout = True
-            break
-        dv = np.array(caget(refpvrb)) - ref_v0
-        dvstd.append(dv.std())
-
-    if diffstd_list:
-        return timeout, dvstd
 
 """
 Element
@@ -97,45 +40,13 @@ class Test0Element(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_tune(self):
-        logging.info("test_tune")
-        self.assertEqual(len(ap.getElements('tune')), 1)
-        tune = ap.getElements('tune')[0]
-        pvx = tune.pv(field='x')[0]
-        pvy = tune.pv(field='y')[0]
-
-        nux, nuy = tune.x, tune.y
-        self.assertTrue(nux > 30.0)
-        self.assertTrue(nuy > 15.0)
-
-    def test_dcct(self):
-        dccts = ap.getElements('dcct')
-        self.assertEqual(len(dccts), 1)
-        dcct = dccts[0]
-        # current
-        #pv = u'SR:C00-BI:G00{DCCT:00}CUR-RB'
-        pv = 'V:2-SR-BI{DCCT}CUR-I'
-        vsrtag = 'aphla.sys.V2SR'
-        self.assertEqual(dcct.name,    'dcct')
-        #self.assertEqual(dcct.devname, 'DCCT')
-        self.assertEqual(dcct.family,  'DCCT')
-        self.assertEqual(len(dcct.pv()), 1)
-        #self.assertEqual(dcct.pv(tag='aphla.eget'), [pv])
-        self.assertEqual(dcct.pv(tag=vsrtag), [pv])
-        #self.assertEqual(dcct.pv(tags=['aphla.eget', vsrtag]), [pv])
-
-        self.assertIn('value', dcct.fields())
-        self.assertGreater(dcct.value, 1.0)
-        self.assertLess(dcct.value, 600.0)
-
-        self.assertGreater(dcct.value, 1.0)
-        self.assertGreater(ap.eget('DCCT', 'value'), 1.0)
-        self.assertEqual(len(ap.eget('DCCT', ['value'])), 1)
-        self.assertGreater(ap.eget('DCCT', ['value'])[0], 1.0)
-
     def test_bpm(self):
         bpms = ap.getElements('BPM')
-        self.assertGreaterEqual(len(bpms), 180)
+        self.assertGreaterEqual(len(bpms), 180*3)
+
+        for i in range(1, len(bpms)):
+            self.assertGreater(bpms[i].sb, bpms[i-1].sb)
+            self.assertGreater(bpms[i].se, bpms[i-1].se)
 
         bpm = bpms[0]
         #self.assertEqual(bpm.pv(field='xref'), [pvxbba, pvxgold])
@@ -169,25 +80,6 @@ class Test0Element(unittest.TestCase):
         self.assertGreaterEqual(np.std(vbpm.x), 0.0)
         self.assertGreaterEqual(np.std(vbpm.y), 0.0)
 
-    @unittest.skip("ORM data PV changed")
-    def test_corr_orbit(self):
-        bpm = ap.getElements('P*C1[0-3]*')
-        trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
-        v0 = ap.getOrbit('P*', spos=True)
-        ap.correctOrbit([e.name for e in bpm], [e.name for e in trim])
-        time.sleep(4)
-        v1 = ap.getOrbit('P*', spos=True)
-        import matplotlib.pylab as plt
-        plt.clf()
-        ax = plt.subplot(211) 
-        fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X') 
-        fig = plt.plot(v0[:,-1], v0[:,1], 'g-o', label='Y')
-        ax = plt.subplot(212)
-        fig = plt.plot(v1[:,-1], v1[:,0], 'r-x', label='X')
-        fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y')
-        plt.savefig("test_nsls2_orbit_correct.png")
-
-
     def test_hcor(self):
         # hcor
         hcor = ap.element.CaElement(
@@ -220,47 +112,6 @@ class Test0Element(unittest.TestCase):
         self.assertEqual(hcor.pv(field='y', handle='readback'), [])
         self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
         
-        #v = ap.eget(hcor.name, ['x', 'y'])
-        #self.assertGreaterEqual(abs(v[0]), 0.0)
-        #self.assertIsNone(v[1])
-
-
-"""
-Channel Finder
-"""
-
-class TestChanFinderCsvData(unittest.TestCase):
-    """
-    """
-    def setUp(self):
-        #self.cfs_csv = 'us_nsls2v1_cfs.csv'
-        self.cfs_db = 'us_nsls2v2.db'
-        self.cfs_url = os.environ.get('HLA_CFS_URL', None)
-        pass
-
-    def test_conf(self):
-        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_db)))
-
-    def test_db_tags(self):
-        cfa = ap.chanfinder.ChannelFinderAgent()
-        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_db)))
-        cfa.importSqliteDb(ap.conf.filename(self.cfs_db))
-
-        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
-        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
-            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
-
-    def test_url_tags(self):
-        #http://web01.nsls2.bnl.gov/ChannelFinder
-        if self.cfs_url is None: return
-        self.assertIsNotNone(self.cfs_url)
-        cfa = ap.chanfinder.ChannelFinderAgent()
-        cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
-
-        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
-        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
-            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
-
 
 
 """
@@ -275,7 +126,7 @@ class Test0Lattice(unittest.TestCase):
     def setUp(self):
         logging.info("TestLattice")
         # this is the internal default lattice
-        self.lat = ap.machines.getLattice('V2SR')
+        self.lat = ap.machines.getLattice('V3BSRLINE')
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLattice')
 
@@ -296,6 +147,13 @@ class Test0Lattice(unittest.TestCase):
         self.assertTrue(elem)
         #elem = self.lat.getElementList(velem, 
         self.assertTrue(self.lat.hasGroup(ap.machines.HLA_VFAMILY))
+        vbpm = elem[0]
+        for i in range(1, len(vbpm.sb)):
+            self.assertGreaterEqual(vbpm.sb[i], vbpm.sb[i-1], 
+                "'{0}':{2} is not after '{1}':{3} with sb".format(vbpm._name[i], vbpm._name[i-1],
+                     vbpm.sb[i], vbpm.sb[i-1]))
+            self.assertGreaterEqual(vbpm.se[i], vbpm.se[i-1],
+                "'{0}' is not after '{1}' with se".format(vbpm._name[i], vbpm._name[i-1]))
 
     def test_getelements(self):
         elems = self.lat.getElementList('BPM')
@@ -357,18 +215,20 @@ class Test0Lattice(unittest.TestCase):
 class Test1LatticeSr(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeSr")
-        self.lat = ap.machines.getLattice('V2SR')
+        self.lat = ap.machines.getLattice('V3BSRLINE')
         self.logger = logging.getLogger('tests.TestLatticeSr')
         pass
 
     def test_orbit(self):
         v = ap.getOrbit()
 
+    @unittest.skip("no dcct for line")
     def test_tunes(self):
         tune, = self.lat.getElementList('tune')
         self.assertTrue(abs(tune.x) > 0)
         self.assertTrue(abs(tune.y) > 0)
         
+    @unittest.skip("no DCCT for LINE")
     def test_current(self):
         self.assertTrue(self.lat.hasElement('dcct'))
         
@@ -391,7 +251,7 @@ class Test1LatticeSr(unittest.TestCase):
         self.assertTrue(len(elems) == 2)
         
         # only cell 1,3,5,7,9 and PL1, PL2
-        elems = self.lat.getElementList('pl*g2c0*')
+        elems = self.lat.getElementList('pl*g2c0*_t1')
         self.assertEqual(len(elems), 10, msg="{0}".format(elems))
 
     def test_groupmembers(self):
@@ -399,7 +259,7 @@ class Test1LatticeSr(unittest.TestCase):
         g2a = self.lat.getElementList('G2')
         
         b1 = self.lat.getGroupMembers(['BPM', 'C20'], op='intersection')
-        self.assertEqual(len(b1), 6)
+        self.assertEqual(len(b1), 6*3)
         
         b1 = self.lat.getGroupMembers(['BPM', 'G2'], op='union')
         self.assertGreater(len(b1), len(bpm1))
@@ -420,7 +280,7 @@ class Test1LatticeSr(unittest.TestCase):
 
         el1 = self.lat.getGroupMembers(['BPM', 'C0[2-3]', 'G2'],
                                             op='intersection')
-        self.assertEqual(len(el1), 4)
+        self.assertEqual(len(el1), 4*3)
 
     def test_field(self):
         bpm = self.lat.getElementList('BPM')
@@ -456,16 +316,6 @@ class TestLatticeLtd1(unittest.TestCase):
     def tearDown(self):
         ap.machines._lat = self.lat
 
-    def test_image(self):
-        #lat = ap.machines._lat
-        ap.machines.use('V1LTD1')
-        vf = ap.getElements('vf1bd1')[0]
-        self.assertIn('image', vf.fields(), "'image' is not defined in '{0}': {1}".format(vf.name, vf.fields()))
-
-        #d = np.reshape(vf.image, (vf.image_ny, vf.image_nx))
-        #import matplotlib.pylab as plt
-        #plt.imshow(d)
-        #plt.savefig("test.png")
 
     def _gaussian(self, height, center_x, center_y, width_x, width_y):
         """Returns a gaussian function with the given parameters"""
@@ -518,7 +368,7 @@ class TestLatticeLtd1(unittest.TestCase):
 class TestLatticeLtb(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtb")
-        self.lat  = ap.machines.getLattice('V1LTB')
+        self.lat  = ap.machines.getLattice('V3BSRLINE')
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLatticeLtb')
 
@@ -533,7 +383,7 @@ class TestLatticeLtb(unittest.TestCase):
         self.assertGreaterEqual(abs(elem.x), 0)
         self.assertGreaterEqual(abs(elem.y), 0)
 
-        hcorlst = self.lat.getElementList('HCOR')
+        hcorlst = self.lat.getElementList('COR')
         self.assertGreater(len(hcorlst), 0)
         for e in hcorlst: 
             self.logger.warn("Skipping 'x' of %s" % e.name)
@@ -564,6 +414,7 @@ class Test0Tunes(unittest.TestCase):
     def setUp(self):
         logging.info("TestTunes")
 
+    @unittest.skip("Line has no tune")
     def test_tunes(self):
         nu = ap.getTunes()
         self.assertEqual(len(nu), 2)
@@ -676,7 +527,7 @@ class TestOrbit(unittest.TestCase):
 
     def setUp(self):
         self.logger = logging.getLogger("tests.TestOrbit")
-        self.lat = ap.machines.getLattice('V2SR')
+        self.lat = ap.machines.getLattice('V3BSRLINE')
         self.assertTrue(self.lat)
 
     def tearDown(self):
@@ -829,42 +680,6 @@ class TestOrbitControl(unittest.TestCase):
         ap.setLocalBump(bpm, hcor+vcor, bpm_v1)
 
 
-"""
-BBA
-~~~
-"""
-
-class TestBba(unittest.TestCase):
-    def setUp(self):
-        ap.initNSLS2V2()
-        #ap.hlalib._reset_trims(verbose=True)
-        pass
-
-    def test_quad(self):
-        qnamelist = ['qh1g2c02a', 'qh1g2c04a', 'qh1g2c06a', 'qh1g2c08a']
-
-        qlst = ap.getElements(qnamelist)
-        for i,q in enumerate(qnamelist):
-            self.assertGreater(abs(qlst[i].k1), 0.0)
-
-        #qlst[0].value = -0.633004
-
-        for i,qd in enumerate(qlst):
-            self.assertGreater(qd.sb, 0.0)
-            self.assertEqual(qd.name, qnamelist[i])
-
-            bpm = ap.getClosest(qd.name, 'BPM')
-            self.assertTrue(bpm.name)
-            self.assertGreater(bpm.sb, 0.0)
-            self.assertGreaterEqual(abs(bpm.x), 0.0)
-            self.assertGreaterEqual(abs(bpm.y), 0.0)
-
-            hc = ap.getNeighbors(bpm.name, 'HCOR', 1)
-            self.assertEqual(len(hc), 3)
-            self.assertEqual(hc[1].name, bpm.name)
-            self.assertGreaterEqual(abs(hc[0].x), 0.0)
-            
-        #ap.createLocalBump([], [], [])
 
 """
 ORM

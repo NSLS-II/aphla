@@ -15,8 +15,7 @@ from catools import caget, caput
 logger = logging.getLogger(__name__)
 
 class AbstractElement(object):
-    """
-    The :class:`AbstractElement` contains most of the lattice properties, such
+    """The :class:`AbstractElement` contains most of the lattice properties, such
     as element name, length, location and family. It also keeps a list of
     groups which belongs to. The default group list contains cell, girder,
     family and symmetry information if they are valid.
@@ -43,6 +42,8 @@ class AbstractElement(object):
     ==========  ===================================================
 
     
+    *index* is used for sorting elements in a list if it is not
+    None. Otherwise sorted according to *sb*.
     """
 
     # format string for __str__
@@ -61,8 +62,8 @@ class AbstractElement(object):
         self.phylen   = float(kwargs.get('phylen', '0.0'))
         self.index    = int(kwargs.get('index', '-1'))
         self.family   = kwargs.get('family', None)
-        self.se       = float(kwargs.get('se', '0.0'))
-        self.sb       = float(kwargs.get('sb', '0.0'))
+        self.se       = float(kwargs.get('se', 'inf'))
+        self.sb       = float(kwargs.get('sb', 'inf'))
         self.length   = float(kwargs.get('length', '0.0'))
         self.cell     = kwargs.get('cell', None)
         self.girder   = kwargs.get('girder', None)
@@ -70,6 +71,10 @@ class AbstractElement(object):
         self.sequence = kwargs.get('sequence', (0, 0))
 
         self.group = [self.family, self.cell, self.girder, self.symmetry]
+        if 'group' in kwargs:
+            if isinstance(kwargs['group'], (list,)): grp = [v for v in kwargs['group']]
+            else: grp = kwargs['group'].split(';')
+            self.group.extend(grp)
         
     def profile(self, vscale=1.0):
         """
@@ -116,14 +121,24 @@ class AbstractElement(object):
         return "%s:%s @ sb=%f" % (self.name, self.family, self.sb)
             
     def __lt__(self, other):
-        return self.sb < other.sb
+        """use *index* if not None, otherwise use *sb*"""
+        if self.index is None or other.index is None:
+            return self.sb < other.sb
+        else:
+            return self.index < other.index
 
     def __gt__(self, other):
-        return self.sb > other.sb
+        """use *index* if not None, otherwise use *sb*"""
+        if self.index is None or other.index is None:
+            return self.sb > other.sb
+        else:
+            return self.index > other.index
 
     def __eq__(self, other):
+        """compares location, length and name"""
         return self.sb == other.sb and \
                self.length == other.length and \
+               self.index == other.index and \
                self.name == other.name
 
     def updateProperties(self, prpt):
@@ -541,6 +556,8 @@ class CaElement(AbstractElement):
         self.__dict__['_pvtags'] = {}
         self.__dict__['virtual'] = kwargs.get('virtual', 0)
         self.__dict__['trace'] = kwargs.get('trace', False)
+        # the linked element, alias
+        self.__dict__['alias'] = []
         # update all element properties
         super(CaElement, self).__init__(**kwargs)
         
@@ -625,8 +642,20 @@ class CaElement(AbstractElement):
                 return []
         else: return []
 
-    def hasPv(self, pv):
-        return self._pvtags.has_key(pv)
+    def hasPv(self, pv, inalias = False):
+        """
+        check if this element has pv, inalias=True will also check its alias
+        elements. 
+
+        If the alias (child) has its aliases (grand children), they are not
+        checked. (no infinite loop)
+        """
+        if self._pvtags.has_key(pv): return True
+        if inalias == True:
+            for e in self.alias: 
+                #if e.hasPv(pv): return True
+                if e._pvtags.has_key(pv): return True
+        return False
         
     def appendStatusPv(self, pv, desc, order=True):
         """
@@ -675,7 +704,7 @@ class CaElement(AbstractElement):
             if not decr:
                 raise AttributeError("field %s is not defined" % att)
             if not decr.pvsp:
-                raise ValueError("field %s is not writable" % att)
+                raise ValueError("field '%s' in '%s' is not writable" % (att, self.name))
             decr.putSetpoint(val)
         elif att in self.__dict__.keys():
             self.__dict__[att] = val
@@ -683,6 +712,7 @@ class CaElement(AbstractElement):
             # new attribute for superclass
             super(CaElement, self).__setattr__(att, val)
             #raise AttributeError("Error")
+        for e in self.alias: e.__setattr__(att, val)
 
     def updatePvRecord(self, pvname, properties, tags = []):
         """
@@ -818,16 +848,20 @@ class CaElement(AbstractElement):
             self._field[fieldname].sp = []
 
     def revert(self, fieldname):
+        """undo the field value to its previous one"""
         self._field[fieldname].revert()
+        for e in self.alias: e._field[fieldname].revert()
 
     def mark(self, fieldname, data = 'setpoint'):
         self._field[fieldname].mark(data)
+        for e in self.alias: e._field[fieldname].mark(data)
 
-    def reset(self, field):
+    def reset(self, fieldname):
         """
         see CaDecorator::reset()
         """
-        self._field[field].reset()
+        self._field[fieldname].reset()
+        for e in self.alias: e._field[fieldname].reset()
 
     def _get_field(self, field, **kwargs):
         """
@@ -887,6 +921,8 @@ class CaElement(AbstractElement):
             decr.putSetpoint(val)
         else:
             raise RuntimeError("element '%s' has no field '%s'" % (self.name, att))
+        
+        for e in self.alias: e._field[field].set(field, val, unit)
 
     def settable(self, field):
         """

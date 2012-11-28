@@ -63,6 +63,25 @@ HOME = os.path.expanduser('~')
 # HOME = os.environ['HOME'] will NOT work on Windows,
 # unless %HOME% is set on Windows.
 
+_cf_map = {'elemName': 'name', 
+           'elemField': 'field', 
+           'devName': 'devname',
+           'elemType': 'family', 
+           'elemHandle': 'handle',
+           'elemIndex': 'index', 
+           'elemPosition': 'se',
+           'elemLength': 'length',
+           'system': 'system'
+}
+
+_db_map = {'elem_type': 'family',
+           'lat_index': 'index',
+           'position': 'se',
+           'elem_group': 'group',
+           'dev_name': 'devname',
+           'elem_field': 'field'
+}
+
 def funcname():
     """
     A utility function to return the string of the
@@ -81,7 +100,8 @@ def funcname():
     """
     return inspect.stack()[1][3]
     
-def createLattice(name, pvrec, systag, desc = 'channelfinder'):
+
+def createLattice(name, pvrec, systag, desc = 'channelfinder', create_vbpm = True):
     """
     create a lattice from channel finder data
 
@@ -104,7 +124,8 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         if 'name' not in rec[1]: continue
         pv = rec[0]
         prpt = rec[1]
-        prpt['sb'] = float(prpt.get('se', 0)) - float(prpt.get('length', 0))
+        if 'se' in prpt:
+            prpt['sb'] = float(prpt['se']) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
 
         logger.debug("{0} {1} {2}".format(rec[0], rec[1], rec[2]))
@@ -142,11 +163,12 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
         
-    # a virtual bpm. its field is a "merge" of all bpms.
-    bpms = lat.getElementList('BPM')
-    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
-                            'family': HLA_VFAMILY})
-    lat.insertElement(allbpm, groups=[HLA_VFAMILY])
+    if create_vbpm:
+        # a virtual bpm. its field is a "merge" of all bpms.
+        bpms = lat.getElementList('BPM')
+        allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
+                                'family': HLA_VFAMILY, 'index': 100000})
+        lat.insertElement(allbpm, groups=[HLA_VFAMILY])
 
     return lat
 
@@ -155,9 +177,9 @@ def initNSLS2V2(use_cache = True, save_cache = True):
     """ 
     initialize the virtual accelerator 'V2SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
-    - `${HOME}/.hla/us_nsls2v2.db`
+    - `${HOME}/.hla/us_nsls2v2.sqlite`
     - channel finder in ${HLA_CFS_URL}
-    - `us_nsls2v2.db` with aphla package.
+    - `us_nsls2v2.sqlite` with aphla package.
     """
     
     if use_cache:
@@ -172,43 +194,40 @@ def initNSLS2V2(use_cache = True, save_cache = True):
     
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2v2.db'
+    cfs_filename = 'us_nsls2v2.sqlite'
     src_home_csv = os.path.join(HOME, '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(src_home_csv):
         msg = "Creating lattice from home file '%s'" % src_home_csv
         logger.info(msg)
-        if src_home_csv.endswith('.csv'): cfa.importCsv(src_home_csv)
-        elif src_home_csv.endswith('.db'): cfa.importSqliteDb(src_home_csv)
+        if src_home_csv.endswith('.csv'):
+            cfa.importCsv(src_home_csv)
+            for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)            
+        elif src_home_csv.endswith('.sqlite'):
+            cfa.importSqliteDb(src_home_csv)
+            for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         logger.info(msg)
         cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
+        # map the cf property name to alpha property name
+        for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif conf.has(cfs_filename):
         src_pkg_csv = conf.filename(cfs_filename)
         msg = "Creating lattice from '%s'" % src_pkg_csv
         logger.info(msg)
         #print(msg)
-        if src_pkg_csv.endswith('.csv'): cfa.importCsv(src_pkg_csv)
-        elif src_pkg_csv.endswith('.db'): cfa.importSqliteDb(src_pkg_csv)
+        if src_pkg_csv.endswith('.csv'):
+            cfa.importCsv(src_pkg_csv)
+            for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+        elif src_pkg_csv.endswith('.sqlite'): 
+            cfa.importSqliteDb(src_pkg_csv)
+            for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     else:
         logger.error("Channel finder data are available, no '%s', no server" % 
                      cfs_filename)
         raise RuntimeError("Failed at loading cache file")
-
-    #print(msg)
-    # the property in Element mirrored from ChannelFinder property
-    for k in [('name', u'elemName'), 
-              ('field', u'elemField'), 
-              ('devname', u'devName'),
-              ('family', u'elemType'), 
-              ('handle', u'elemHandle'),
-              ('index', u'elemIndex'), 
-              ('se', u'elemPosition'),
-              ('length', u'elemLength'),
-              ('system', u'system')]:
-        cfa.renameProperty(k[1], k[0])
 
     #tags = cfa.tags('aphla.sys.*')
 
@@ -255,6 +274,101 @@ def initNSLS2V2(use_cache = True, save_cache = True):
         saveCache(funcname(), 'V2SR')
         
 
+def initNSLS2V3BSRLine(with_twiss = False):
+    """ 
+    initialize the virtual accelerator 'V3BSRLINE'
+
+    This is a temp ring, always use database in the package
+    """
+
+    cfa = ChannelFinderAgent()
+    cfs_filename = 'us_nsls2v3bsrline.sqlite'
+    src_pkg_csv = conf.filename(cfs_filename)
+    msg = "Creating lattice from '%s'" % src_pkg_csv
+    logger.info(msg)
+    #print(msg)
+    cfa.importSqliteDb(src_pkg_csv)
+    for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
+
+    global _lat, _lattice_dict
+
+    # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
+    logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
+    for latname in ['V3BSRLINE']:
+        lattag = HLA_TAG_SYS_PREFIX + '.' + latname
+        logger.info("Initializing lattice %s (%s)" % (latname, lattag))
+        _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
+                                               desc = cfa.source, create_vbpm = False)
+        if _lattice_dict[latname].size() == 0:
+            logger.warn("lattice '%s' has no elements" % latname)
+
+    orm_filename = None
+    if orm_filename and conf.has(orm_filename):
+        #print("Using ORM:", conf.filename(orm_filename))
+        _lattice_dict['V2SR'].ormdata = OrmData(conf.filename(orm_filename))
+        logger.info("using ORM data '%s'" % orm_filename)
+    else:
+        logger.warning("No ORM '%s' found" % orm_filename)
+
+
+    _lattice_dict['V3BSRLINE'].loop = False
+    _lat = _lattice_dict['V3BSRLINE']        
+
+    L1 = 48.21334
+    for e in _lat.getElementList('*_t1'):
+        if e.sb: e.sb += L1
+        if e.se: e.se += L1
+    L2 = 791.958
+    for e in _lat.getElementList('*_t2'):
+        if e.sb: e.sb += L1 + L2
+        if e.se: e.se += L1 + L2
+    for e in _lat.getElementList('*_t3'):
+        if e.sb: e.sb += L1 + 2*L2
+        if e.se: e.se += L1 + 2*L2
+
+
+    for e in _lat.getElementList('*_t1'):
+        logger.info("searching alias for '{0}'".format(e.name))
+        for t in ['_t2', '_t3']:
+            ealias = _lat.getElementList(e.name[:-3] + t)
+            if not ealias: 
+                logger.info("no alias for '{0}'".format(e.name))
+                continue
+            if len(ealias) > 1: 
+                raise RuntimeError(
+                    "element '{0}' alias are not unique: {1}".format(
+                        e.name, ealias))
+            e2 = ealias[0]
+            if e2.family == 'BPM': continue
+            if e2.virtual: continue
+            e.alias.append(e2)
+            r = _lat.remove(e2.name)
+            logger.info("removed alias '{0}' for '{1}'".format(e2, e))
+
+        if e.family != 'BPM': e.name = e.name[:-3]
+
+    #for i,e in enumerate(_lat._elements):
+    #    logger.debug("{0}: {1}".format(i, e))
+
+    _lat.sortElements()
+
+    #for i,e in enumerate(_lat._elements):
+    #    logger.debug("{0}: {1}".format(i, e))
+
+    # a virtual bpm. its field is a "merge" of all bpms.
+    bpms = _lat.getElementList('BPM')
+    #logger.debug("bpms:{0}".format(bpms))
+    #for i,e in enumerate(bpms):
+    #    logger.debug("{0}: {1}".format(i, e))
+        
+    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM,
+                            'family': HLA_VFAMILY})
+    _lat.insertElement(allbpm, groups=[HLA_VFAMILY])
+
+    # the last thing (when virtual elem is ready)
+    _lat.buildGroups()
+
+
 def initNSLS2V2SRTwiss():
     """
     initialize the twiss data from virtual accelerator
@@ -263,7 +377,7 @@ def initNSLS2V2SRTwiss():
     # SR Twiss
     global _lat, _twiss
     _twiss = Twiss("V2SR")
-    _twiss.load(conf.filename('us_nsls2v2.db'))
+    _twiss.load(conf.filename('us_nsls2v2.sqlite'))
     _lat._twiss = _twiss
 
 
@@ -273,9 +387,9 @@ def initNSLS2(use_cache = True, save_cache = True):
 
     The initialization is done in the following order:
 
-        - user's `${HOME}/.hla/us_nsls2.db`; if not then
+        - user's `${HOME}/.hla/us_nsls2.sqlite`; if not then
         - channel finder service in `env ${HLA_CFS_URL}`; if not then
-        - the `us_nsls2.db` installed with aphla package; if not then
+        - the `us_nsls2.sqlite` installed with aphla package; if not then
         - RuntimeError
     """
 
@@ -290,7 +404,7 @@ def initNSLS2(use_cache = True, save_cache = True):
             return
 
     cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2.db'
+    cfs_filename = 'us_nsls2.sqlite'
     src_home_csv = os.path.join(HOME, '.hla', cfs_filename)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
@@ -506,7 +620,9 @@ def use(lattice):
     When switching lattice, twiss data is not sychronized.
     """
     global _lat, _lattice_dict
-    if _lattice_dict.get(lattice, None):
+    if isinstance(lattice, Lattice):
+        _lat = lattice
+    elif _lattice_dict.get(lattice, None):
         _lat = _lattice_dict[lattice]
     else:
         raise ValueError("no lattice %s was defined" % lattice)

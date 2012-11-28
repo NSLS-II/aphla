@@ -1,0 +1,2 @@
+# alphax    alphay    betax    betay     etax      etay       etapx     etapy
+0.663442   0.936493  9.35591  8.63852  0.148315  0.000000   0.000000  0.000000

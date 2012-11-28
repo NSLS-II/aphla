@@ -4,7 +4,7 @@ import os
 
 setup(
     name = "aphla",
-    version = "0.5.1",
+    version = "0.6.0",
     packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
                 'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.conf',
                 'aphla.gui.utils'],
@@ -15,7 +15,7 @@ setup(
         # any these files
         '': ['*.json', '*.hdf5', '*.csv'],
         'aphla.gui': ['data/*.cfg'], 
-        'aphla.conf': ['us_nsls2/*', '*.xml', '*.db']},
+        'aphla.conf': ['us_nsls2/*', '*.xml', '*.db', '*.sqlite']},
     py_modules = [
         'aphla.catools', 'aphla.chanfinder', 'aphla.machines', 'aphla.element',
         'aphla.lattice', 'aphla.twiss', 'aphla.hlalib', 
