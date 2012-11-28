@@ -48,6 +48,13 @@ def conv(k, *args, **kwargs):
     return k
 
 
+def cgs_from_name(name):
+    """parse Cell, Girder, Symmetry from elmeent name"""
+    r = re.match(r'.+(G[0-9])(C[0-9][0-9])([ABC]).*', name.upper())
+    if r:
+        return r.groups()
+    return None, None, None
+
 Base = declarative_base()
 class Element(Base):
     __tablename__ = "elements"
@@ -115,7 +122,7 @@ class ChannelRecord(Base):
         return "<Channel('%s', '%s', ...)>" % (self.pv, self.element.name)
 
 
-def import_lattice_table(inpt, dbfname, system = None):
+def import_lattice_table(inpt, dbfname, system = None, parsecgs = False):
     """
     The drift is always treated as different element.
     """
@@ -146,6 +153,8 @@ def import_lattice_table(inpt, dbfname, system = None):
             if system is not None: elem.system = system
             # drift used in multiple places
             #if elemtype in ['DRIF']: elem.position = None
+            if parsecgs:
+                elem.cell, elem.girder, elem.symmetry = cgs_from_name(name)
 
             session.add(elem)
             session.flush()
@@ -186,7 +195,8 @@ def match_hvcors(reclst):
     print paired
     return paired
 
-def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False):
+def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False,
+                    parsecgs = False):
     """
     Note:
     
@@ -253,6 +263,9 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False):
             else:
                 elem = elems[0]
                 
+            if parsecgs:
+                elem.cell, elem.girder, elem.symmetry = cgs_from_name(elemname)
+
             if d[k_elemName].lower() in hvcor: 
                 #print "changing '{0}' type from '{1}' to '{2}'".format(elem.name, elem.elem_type, 'COR')
                 elem.elem_type = 'COR'
@@ -392,6 +405,8 @@ if __name__ == "__main__":
     parser.add_argument('--twiss', metavar='twiss.txt', type=str, 
                         help="twiss data")
     parser.add_argument('--mergehvcor', action="store_true", 
+                        help="merge H/V corr in va table")  
+    parser.add_argument('--parsecgs', action="store_true", 
                         help="merge H/V corr in va table")    
     args = parser.parse_args()
 
@@ -400,8 +415,9 @@ if __name__ == "__main__":
 
     #dbfname = "us_nsls2v1.sqlite"
     dbfname = args.dbfile
-    if args.par: import_lattice_table(args.par, dbfname, args.system)
-    if args.va: import_va_table(args.va, dbfname, args.mergehvcor)
+    if args.par: 
+        import_lattice_table(args.par, dbfname, args.system, args.parsecgs)
+    if args.va: import_va_table(args.va, dbfname, args.mergehvcor, args.parsecgs)
     if args.cf2: import_cf2(args.cf2, dbfname)
     #if args.fixcorrectors:
     #    fix_correctors(dbfname, args.system)

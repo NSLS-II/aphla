@@ -556,6 +556,8 @@ class CaElement(AbstractElement):
         self.__dict__['_pvtags'] = {}
         self.__dict__['virtual'] = kwargs.get('virtual', 0)
         self.__dict__['trace'] = kwargs.get('trace', False)
+        # the linked element, alias
+        self.__dict__['alias'] = []
         # update all element properties
         super(CaElement, self).__init__(**kwargs)
         
@@ -640,8 +642,20 @@ class CaElement(AbstractElement):
                 return []
         else: return []
 
-    def hasPv(self, pv):
-        return self._pvtags.has_key(pv)
+    def hasPv(self, pv, inalias = False):
+        """
+        check if this element has pv, inalias=True will also check its alias
+        elements. 
+
+        If the alias (child) has its aliases (grand children), they are not
+        checked. (no infinite loop)
+        """
+        if self._pvtags.has_key(pv): return True
+        if inalias == True:
+            for e in self.alias: 
+                #if e.hasPv(pv): return True
+                if e._pvtags.has_key(pv): return True
+        return False
         
     def appendStatusPv(self, pv, desc, order=True):
         """
@@ -698,6 +712,7 @@ class CaElement(AbstractElement):
             # new attribute for superclass
             super(CaElement, self).__setattr__(att, val)
             #raise AttributeError("Error")
+        for e in self.alias: e.__setattr__(att, val)
 
     def updatePvRecord(self, pvname, properties, tags = []):
         """
@@ -833,16 +848,20 @@ class CaElement(AbstractElement):
             self._field[fieldname].sp = []
 
     def revert(self, fieldname):
+        """undo the field value to its previous one"""
         self._field[fieldname].revert()
+        for e in self.alias: e._field[fieldname].revert()
 
     def mark(self, fieldname, data = 'setpoint'):
         self._field[fieldname].mark(data)
+        for e in self.alias: e._field[fieldname].mark(data)
 
-    def reset(self, field):
+    def reset(self, fieldname):
         """
         see CaDecorator::reset()
         """
-        self._field[field].reset()
+        self._field[fieldname].reset()
+        for e in self.alias: e._field[fieldname].reset()
 
     def _get_field(self, field, **kwargs):
         """
@@ -902,6 +921,8 @@ class CaElement(AbstractElement):
             decr.putSetpoint(val)
         else:
             raise RuntimeError("element '%s' has no field '%s'" % (self.name, att))
+        
+        for e in self.alias: e._field[field].set(field, val, unit)
 
     def settable(self, field):
         """

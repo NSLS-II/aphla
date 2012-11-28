@@ -271,7 +271,54 @@ def initNSLS2V3BSRLine(with_twiss = False):
 
 
     _lattice_dict['V3BSRLINE'].loop = False
-        
+    _lat = _lattice_dict['V3BSRLINE']        
+    L1 = 48.21334
+    for e in _lat.getElementList('*_t1'):
+        if e.sb: e.sb += L1
+        if e.se: e.se += L1
+    L2 = 791.958
+    for e in _lat.getElementList('*_t2'):
+        if e.sb: e.sb += L1 + L2
+        if e.se: e.se += L1 + L2
+    for e in _lat.getElementList('*_t3'):
+        if e.sb: e.sb += L1 + 2*L2
+        if e.se: e.se += L1 + 2*L2
+
+
+    for e in _lat.getElementList('*_t1'):
+        logger.info("searching alias for '{0}'".format(e.name))
+        for t in ['_t2', '_t3']:
+            ealias = _lat.getElementList(e.name[:-3] + t)
+            if not ealias: 
+                logger.info("no alias for '{0}'".format(e.name))
+                continue
+            if len(ealias) > 1: 
+                raise RuntimeError(
+                    "element '{0}' alias are not unique: {1}".format(
+                        e.name, ealias))
+            e2 = ealias[0]
+            if e2.family == 'BPM': continue
+            if e2.virtual: continue
+            e.alias.append(e2)
+            r = _lat.remove(e2.name)
+            logger.info("removed alias '{0}' for '{1}'".format(e2, e))
+
+        if e.family != 'BPM': e.name = e.name[:-3]
+
+    _lat.sortElements()
+
+    # update se,sb for vbpm
+    vbpm = _lat.getElementList(HLA_VBPM)
+    if len(vbpm) > 1:
+        raise RuntimeError("more than one virtual BPM")
+    if vbpm:
+        bpms = _lat.getElementList('BPM')
+        for i,b in enumerate(bpms):
+            vbpm[0].sb[i] = b.sb
+            vbpm[0].se[i] = b.se
+
+    # the last thing (when virtual elem is ready)
+    _lat.buildGroups()
 
 
 def initNSLS2V2SRTwiss():

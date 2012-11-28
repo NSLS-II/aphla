@@ -13,7 +13,7 @@ fi
 
 
 echo "== import lattice table: ${PAR}"
-${PYTHON} dbimport.py --par ${PAR} --system ${SYS} ${DBF}
+${PYTHON} dbimport.py --par ${PAR} --system ${SYS} --parsecgs ${DBF}
 #echo "  QUAD: `sqlite3 ${DBF} 'select count(*) from elements where elem_type=\"QUAD\"'`"
 
 echo " update group info"
@@ -58,7 +58,7 @@ fi
 
 
 echo "== import channel access data: ${VA}"
-${PYTHON} dbimport.py --va ${VA} --system ${SYS} --mergehvcor ${DBF}
+${PYTHON} dbimport.py --va ${VA} --system ${SYS} --mergehvcor --parsecgs ${DBF}
 
 
 echo " setting tuning range for quadrupole PVs"
