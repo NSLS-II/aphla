@@ -130,9 +130,9 @@ class TestElement(unittest.TestCase):
 
 
     def test_sort(self):
-        elem1 = element.AbstractElement(name= 'E1', sb= 0.0)
-        elem2 = element.AbstractElement(name= 'E1', sb= 2.0)
-        elem3 = element.AbstractElement(name= 'E1', sb= 1.0)
+        elem1 = element.AbstractElement(name= 'E1', index = 0, sb= 0.0)
+        elem2 = element.AbstractElement(name= 'E1', index = 2, sb= 2.0)
+        elem3 = element.AbstractElement(name= 'E1', index = 1, sb= 1.0)
         el = sorted([elem1, elem2, elem3])
         self.assertTrue(el[0].sb < el[1].sb)
         self.assertTrue(el[1].sb < el[2].sb)
