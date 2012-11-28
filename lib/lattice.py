@@ -254,9 +254,13 @@ class Lattice:
         sort the element list to the order of *s*
 
         use sorted() for a list of element object.
+
+        The group needs to be rebuild, since *getElementList* relies on a 
+        sorted group dict.
         """
         if not namelist:
             self._elements = sorted(self._elements)
+            self.buildGroups()
             return
         
         ret = []

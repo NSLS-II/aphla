@@ -42,7 +42,11 @@ class Test0Element(unittest.TestCase):
 
     def test_bpm(self):
         bpms = ap.getElements('BPM')
-        self.assertGreaterEqual(len(bpms), 180)
+        self.assertGreaterEqual(len(bpms), 180*3)
+
+        for i in range(1, len(bpms)):
+            self.assertGreater(bpms[i].sb, bpms[i-1].sb)
+            self.assertGreater(bpms[i].se, bpms[i-1].se)
 
         bpm = bpms[0]
         #self.assertEqual(bpm.pv(field='xref'), [pvxbba, pvxgold])
@@ -143,6 +147,13 @@ class Test0Lattice(unittest.TestCase):
         self.assertTrue(elem)
         #elem = self.lat.getElementList(velem, 
         self.assertTrue(self.lat.hasGroup(ap.machines.HLA_VFAMILY))
+        vbpm = elem[0]
+        for i in range(1, len(vbpm.sb)):
+            self.assertGreaterEqual(vbpm.sb[i], vbpm.sb[i-1], 
+                "'{0}':{2} is not after '{1}':{3} with sb".format(vbpm._name[i], vbpm._name[i-1],
+                     vbpm.sb[i], vbpm.sb[i-1]))
+            self.assertGreaterEqual(vbpm.se[i], vbpm.se[i-1],
+                "'{0}' is not after '{1}' with se".format(vbpm._name[i], vbpm._name[i-1]))
 
     def test_getelements(self):
         elems = self.lat.getElementList('BPM')

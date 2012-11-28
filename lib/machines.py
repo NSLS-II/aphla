@@ -75,7 +75,7 @@ _db_map = {'elem_type': 'family',
            'elem_field': 'field'
 }
 
-def createLattice(name, pvrec, systag, desc = 'channelfinder'):
+def createLattice(name, pvrec, systag, desc = 'channelfinder', create_vbpm = True):
     """
     create a lattice from channel finder data
 
@@ -137,11 +137,12 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder'):
         logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
         
-    # a virtual bpm. its field is a "merge" of all bpms.
-    bpms = lat.getElementList('BPM')
-    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
-                            'family': HLA_VFAMILY})
-    lat.insertElement(allbpm, groups=[HLA_VFAMILY])
+    if create_vbpm:
+        # a virtual bpm. its field is a "merge" of all bpms.
+        bpms = lat.getElementList('BPM')
+        allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
+                                'family': HLA_VFAMILY, 'index': 100000})
+        lat.insertElement(allbpm, groups=[HLA_VFAMILY])
 
     return lat
 
@@ -257,7 +258,7 @@ def initNSLS2V3BSRLine(with_twiss = False):
         lattag = HLA_TAG_SYS_PREFIX + '.' + latname
         logger.info("Initializing lattice %s (%s)" % (latname, lattag))
         _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
-                                               desc = cfa.source)
+                                               desc = cfa.source, create_vbpm = False)
         if _lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
@@ -272,6 +273,7 @@ def initNSLS2V3BSRLine(with_twiss = False):
 
     _lattice_dict['V3BSRLINE'].loop = False
     _lat = _lattice_dict['V3BSRLINE']        
+
     L1 = 48.21334
     for e in _lat.getElementList('*_t1'):
         if e.sb: e.sb += L1
@@ -305,17 +307,23 @@ def initNSLS2V3BSRLine(with_twiss = False):
 
         if e.family != 'BPM': e.name = e.name[:-3]
 
+    #for i,e in enumerate(_lat._elements):
+    #    logger.debug("{0}: {1}".format(i, e))
+
     _lat.sortElements()
 
-    # update se,sb for vbpm
-    vbpm = _lat.getElementList(HLA_VBPM)
-    if len(vbpm) > 1:
-        raise RuntimeError("more than one virtual BPM")
-    if vbpm:
-        bpms = _lat.getElementList('BPM')
-        for i,b in enumerate(bpms):
-            vbpm[0].sb[i] = b.sb
-            vbpm[0].se[i] = b.se
+    #for i,e in enumerate(_lat._elements):
+    #    logger.debug("{0}: {1}".format(i, e))
+
+    # a virtual bpm. its field is a "merge" of all bpms.
+    bpms = _lat.getElementList('BPM')
+    #logger.debug("bpms:{0}".format(bpms))
+    #for i,e in enumerate(bpms):
+    #    logger.debug("{0}: {1}".format(i, e))
+        
+    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM,
+                            'family': HLA_VFAMILY})
+    _lat.insertElement(allbpm, groups=[HLA_VFAMILY])
 
     # the last thing (when virtual elem is ready)
     _lat.buildGroups()
