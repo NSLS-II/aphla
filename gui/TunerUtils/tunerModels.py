@@ -20,6 +20,7 @@ if ap.machines._lat is None:
     ap.initNSLS2V2()
 
 import config as const
+from aphla.gui.utils.addr import (getIPs, getMACs)
 
 #----------------------------------------------------------------------
 def getusername():
@@ -32,6 +33,21 @@ def getusername():
         raise OSError('Error for whoami: '+error)
     else:
         return username.strip()
+    
+#----------------------------------------------------------------------
+def getuserinfo():
+    """"""
+    
+    ips = getIPs()
+    ip_str_list = [ip.str for ip in ips]
+    ip_str = ', '.join(ip_str_list)
+    
+    macs = getMACs()
+    mac_str_list = [mac.str for mac in macs]
+    mac_str = ', '.join(mac_str_list)
+    
+    return ip_str, mac_str, getusername()
+
     
 #----------------------------------------------------------------------
 def getChannelProperty(obj, propertyName):
@@ -328,7 +344,7 @@ class TunerConfigSetupBaseModel(QObject):
         
         self._config_id = None
         self.config_name = ''
-        self.username = getusername()
+        self.userinfo = getuserinfo()
         self.time_created = None
         self.description = ''
         self.appended_descriptions = '' # include modified times as part of the appended text
@@ -559,7 +575,7 @@ class TunerSnapshotBaseModel(QObject):
 
         self._snapshot_id = None
         self.snapshot_name = ''
-        self.username = getusername()
+        self.userinfo = getuserinfo()
         self.time_snapshot_taken = None
         self.description = ''
         self.appended_descriptions = '' # include modified times as part of the appended text

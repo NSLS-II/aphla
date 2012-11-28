@@ -1,3 +1,13 @@
+import os
+
+HOME = os.path.expanduser('~')
+HLA_MACHINE = os.environ.get('HLA_MACHINE', None)
+
+TUNER_CLIENT_HDF5_FILEPATH = os.path.join(HOME,'.hla', HLA_MACHINE, 
+                                          'tuner_client.h5')
+TUNER_CLIENT_SQLITE_FILEPATH = os.path.join(HOME,'.hla', HLA_MACHINE, 
+                                            'tuner_client.db')
+
 STR_FMT_DEFAULT = ''
 STR_FMT_WEIGHT_FACTOR = ':.8g'
 STR_FMT_LENGTH_METER = ':.6g'
