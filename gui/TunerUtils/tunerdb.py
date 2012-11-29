@@ -49,10 +49,14 @@ class ForeignKeyConstraint():
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, constraint_name, column_name, 
-                 foreign_table_name, foreign_column_name):
+    def __init__(self, database_object, constraint_name, column_name, 
+                 foreign_table_name, foreign_column_name,
+                 on_delete_action='RESTRICT', on_update_action='CASCADE'):
         """Constructor"""
         
+        if not database_object.foreignKeysEnabled():
+            database_object.setForeignKeysEnabled(True)
+            
         self.name = constraint_name
         
         self.column_name = column_name
@@ -60,6 +64,8 @@ class ForeignKeyConstraint():
         # Foreign Key Clause
         self.foreign_table_name = foreign_table_name
         self.foreign_column_name = foreign_column_name
+        self.on_delete_action = on_delete_action
+        self.on_update_action = on_update_action
         
     
 ########################################################################
@@ -67,10 +73,10 @@ class SQLiteDatabase():
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, filepath=''):
         """Constructor"""
         
-        self.con = sqlite3.connect(TUNER_CLIENT_SQLITE_FILEPATH)
+        self.con = sqlite3.connect(filepath)
         self.cur = self.con.cursor()
         
         isinstance(self.con, sqlite3.Connection)
@@ -230,7 +236,9 @@ class SQLiteDatabase():
                 sql_cmd += ('CONSTRAINT ' + col.name +
                             ' FOREIGN KEY(' + col.column_name + ') ' +
                             'REFERENCES ' + col.foreign_table_name +
-                            '(' + col.foreign_column_name + ')' + ', '
+                            '(' + col.foreign_column_name + ') ' +
+                            'ON DELETE ' + col.on_delete_action + ' ' +
+                            'ON UPDATE ' + col.on_update_action + ', '
                             )
             
             else:
@@ -255,6 +263,16 @@ class SQLiteDatabase():
             self.cur.execute('DROP TABLE IF EXISTS '+table_name)
         
     #----------------------------------------------------------------------
+    def insertTable(self, table_name, foreign_database_name, foreign_table_name):
+        """"""
+        
+        sql_cmd = 'INSERT INTO ' + table_name + ' SELECT * FROM ' + \
+            foreign_database_name + '.' + foreign_table_name
+        
+        self.cur.execute(sql_cmd)
+        self.con.commit()
+        
+    #----------------------------------------------------------------------
     def insertRows(self, table_name, list_of_tuples):
         """"""
         
@@ -273,6 +291,69 @@ class SQLiteDatabase():
             traceback.print_exc()
             
     #----------------------------------------------------------------------
+    def deleteRows(self, table_name, condition_str='', 
+                   placeholder_replacement_tuple=None):
+        """"""
+        
+        sql_cmd = 'DELETE FROM ' + table_name
+
+        if condition_str != '':
+            sql_cmd += ' WHERE ' + condition_str
+
+        if placeholder_replacement_tuple is None:
+            self.cur.execute(sql_cmd)
+        else:
+            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
+            
+        self.con.commit()
+        
+    #----------------------------------------------------------------------
+    def attachDatabase(self, filepath, database_name):
+        """"""
+        
+        sql_cmd = 'ATTACH DATABASE ' + '"' + filepath + '"' + ' AS ' + database_name
+        self.cur.execute(sql_cmd)
+        self.con.commit()
+        
+    #----------------------------------------------------------------------
+    def detachDatabase(self, database_name):
+        """"""
+        
+        sql_cmd = 'DETACH DATABASE ' + database_name
+        self.cur.execute(sql_cmd)
+        self.con.commit()
+        
+    #----------------------------------------------------------------------
+    def changeValues(self, table_name, column_name, expression,
+                     condition_str='', placeholder_replacement_tuple=None):
+        """"""
+        
+        sql_cmd = 'UPDATE ' + table_name + ' SET ' +  column_name + \
+            ' = ' + str(expression)
+
+        if condition_str != '':
+            sql_cmd += ' WHERE ' + condition_str
+
+        if placeholder_replacement_tuple is None:
+            self.cur.execute(sql_cmd)
+        else:
+            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
+            
+        self.con.commit()
+        
+    #----------------------------------------------------------------------
+    def foreignKeysEnabled(self):
+        """"""
+        
+        self.cur.execute('PRAGMA foreign_keys')
+        result = self.cur.fetchall()
+        
+        if result[0][0] == 0:
+            return False
+        else:
+            return True
+        
+    #----------------------------------------------------------------------
     def setForeignKeysEnabled(self, TF):
         """"""
         
@@ -290,10 +371,10 @@ class TunerDatabase(SQLiteDatabase):
     """"""
     
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, filepath=TUNER_CLIENT_SQLITE_FILEPATH):
         """Constructor"""
         
-        SQLiteDatabase.__init__(self)
+        SQLiteDatabase.__init__(self, filepath=filepath)
         
     #----------------------------------------------------------------------
     def _initTables(self):
@@ -311,20 +392,20 @@ class TunerDatabase(SQLiteDatabase):
         global DEBUG
         DEBUG = False
         
-        db = SQLiteDatabase()
+        #db = SQLiteDatabase()
     
         #try:
             #os.remove(TUNER_CLIENT_SQLITE_FILEPATH)
         #except:
             #print 'Deleting database file failed.'
         
-        db.setForeignKeysEnabled(True)
+        self.setForeignKeysEnabled(True)
         
         table_name = 'record_index_table'
         column_def = [
-            Column('last_record_id','INT',allow_default=True,default_value=0),
+            Column('max_record_id','INT',allow_default=True,default_value=0),
         ]
-        db.createTable(table_name, column_def)    
+        self.createTable(table_name, column_def)    
         
         table_name = 'user_table'
         column_def = [
@@ -333,14 +414,14 @@ class TunerDatabase(SQLiteDatabase):
             Column('mac_str','TEXT',allow_null=False),
             Column('username','TEXT',allow_null=False),        
         ]
-        db.createTable(table_name, column_def)
+        self.createTable(table_name, column_def)
     
         table_name = 'channel_name_table'
         column_def = [
             Column('channel_name_id','INTEGER PRIMARY KEY'),
             Column('channel_name','TEXT',unique=True,allow_null=False),
         ]
-        db.createTable(table_name, column_def)    
+        self.createTable(table_name, column_def)    
         
         table_name = 'channel_table'
         column_def = [
@@ -349,17 +430,18 @@ class TunerDatabase(SQLiteDatabase):
             Column('pvrb_name','TEXT',allow_default=True,default_value=None),
             Column('pvsp_name','TEXT',allow_default=True,default_value=None),
             Column('time_created','REAL',allow_null=False),
-            ForeignKeyConstraint('fk_channel_name_id', 'channel_name_id',
+            ForeignKeyConstraint(self,
+                                 'fk_channel_name_id', 'channel_name_id',
                                  'channel_name_table', 'channel_name_id'),        
         ]
-        db.createTable(table_name, column_def)
+        self.createTable(table_name, column_def)
         
         table_name = 'channel_group_name_table'
         column_def = [
             Column('channel_group_name_id','INTEGER PRIMARY KEY'),
             Column('channel_group_name','TEXT',allow_null=False),
         ]
-        db.createTable(table_name, column_def)
+        self.createTable(table_name, column_def)
         
         table_name = 'config_meta_table'
         column_def = [
@@ -370,10 +452,11 @@ class TunerDatabase(SQLiteDatabase):
             Column('time_created','REAL',allow_null=False),
             Column('description','TEXT',allow_default=True,default_value='""'),
             Column('appended_descriptions','TEXT',allow_default=True,default_value='""'), # include modified time as part of the text in this
-            ForeignKeyConstraint('fk_user_id', 'user_id',
+            ForeignKeyConstraint(self,
+                                 'fk_user_id', 'user_id',
                                  'user_table', 'user_id'),        
         ]
-        db.createTable(table_name, column_def)    
+        self.createTable(table_name, column_def)    
         
         table_name = 'config_table'
         column_def = [
@@ -383,14 +466,17 @@ class TunerDatabase(SQLiteDatabase):
             Column('weight','REAL',allow_default=True,default_value=None),
             Column('step_size','REAL',allow_default=True,default_value=None),
             Column('indiv_ramp_table','BLOB',allow_default=True,default_value=None),
-            ForeignKeyConstraint('fk_config_id', 'config_id',
+            ForeignKeyConstraint(self,
+                                 'fk_config_id', 'config_id',
                                  'config_meta_table', 'config_id'),        
-            ForeignKeyConstraint('fk_channel_name_id', 'channel_name_id',
+            ForeignKeyConstraint(self,
+                                 'fk_channel_name_id', 'channel_name_id',
                                  'channel_name_table', 'channel_name_id'),        
-            ForeignKeyConstraint('fk_channel_group_name_id', 'channel_group_name_id',
+            ForeignKeyConstraint(self,
+                                 'fk_channel_group_name_id', 'channel_group_name_id',
                                  'channel_group_name_table', 'channel_group_name_id'),                
         ]
-        db.createTable(table_name, column_def)    
+        self.createTable(table_name, column_def)    
         
         table_name = 'snapshot_meta_table'
         column_def = [
@@ -403,12 +489,14 @@ class TunerDatabase(SQLiteDatabase):
             Column('description','TEXT',allow_default=True,default_value='""'),
             Column('appended_descriptions','TEXT',allow_default=True,default_value='""'), # include modified time as part of the text in this
             Column('masar_event_id','INTEGER',allow_default=True,default_value=None),
-            ForeignKeyConstraint('fk_config_id', 'config_id',
+            ForeignKeyConstraint(self,
+                                 'fk_config_id', 'config_id',
                                  'config_meta_table', 'config_id'),        
-            ForeignKeyConstraint('fk_user_id', 'user_id',
+            ForeignKeyConstraint(self,
+                                 'fk_user_id', 'user_id',
                                  'user_table', 'user_id'),        
         ]
-        db.createTable(table_name, column_def)    
+        self.createTable(table_name, column_def)    
         
         table_name = 'snapshot_table'
         column_def = [
@@ -420,9 +508,11 @@ class TunerDatabase(SQLiteDatabase):
             Column('pvsp_value','REAL',allow_default=True,default_value=None),
             Column('pvsp_ioc_timestamp','INTEGER',allow_default=True,default_value=None),
             Column('pvsp_pc_timestamp','REAL',allow_default=True,default_value=None),
-            ForeignKeyConstraint('fk_snapshot_id', 'snapshot_id',
+            ForeignKeyConstraint(self,
+                                 'fk_snapshot_id', 'snapshot_id',
                                  'snapshot_meta_table', 'snapshot_id'),        
-            ForeignKeyConstraint('fk_channel_id', 'channel_id',
+            ForeignKeyConstraint(self,
+                                 'fk_channel_id', 'channel_id',
                                  'channel_table', 'channel_id'),        
         ]
         '''Note that the 2nd column is 'channel_id', NOT 'channel_name_id' as in config_table.
@@ -430,9 +520,23 @@ class TunerDatabase(SQLiteDatabase):
         but channel_id will always point to the same PV's, which may or may not
         exist later.
         '''
-        db.createTable(table_name, column_def)    
+        self.createTable(table_name, column_def)    
         
         print 'Successfully initialized database tables for aplattuner.'        
+        
+    #----------------------------------------------------------------------
+    def createHDF5Subset(self):
+        """"""
+        
+        #f = h5py.File('/home/yhidaka/.hla/nsls2/tuner_client.h5','r')
+        #fn = h5py.File('temp.h5','w')
+        #f['1']
+        #<HDF5 group "/1" (4 members)>
+        #f['1'].name
+        #'/1'
+        #f.copy(f['1'], fn)
+        #f.close()
+        #fn.close()        
         
     #----------------------------------------------------------------------
     def updateClientDB(self):
@@ -484,7 +588,8 @@ def test1(args):
             Column('pvrb_name','TEXT',allow_default=True,default_value=None),
             Column('pvsp_name','TEXT',allow_default=True,default_value=None),
             Column('time_created','REAL',allow_null=False),
-            ForeignKeyConstraint('fk_channel_name_id', 'channel_name_id',
+            ForeignKeyConstraint(db,
+                                 'fk_channel_name_id', 'channel_name_id',
                                  'channelNames', 'channel_name_id'),
         ]
         db.createTable(table_name, column_def)
@@ -533,9 +638,11 @@ def test1(args):
             Column('channel_order_in_group','INTEGER PRIMARY KEY'),
             Column('channel_group_id','INT',allow_null=False),
             Column('channel_name_id','INT',allow_null=False),
-            ForeignKeyConstraint('fk_channel_group_id', 'channel_group_id',
+            ForeignKeyConstraint(db,
+                                 'fk_channel_group_id', 'channel_group_id',
                                  'channelGroupsMeta', 'channel_group_id'),            
-            ForeignKeyConstraint('fk_channel_name_id', 'channel_name_id',
+            ForeignKeyConstraint(db,
+                                 'fk_channel_name_id', 'channel_name_id',
                                  'channelNames', 'channel_name_id'),            
         ]
         db.createTable(table_name, column_def)
@@ -588,9 +695,11 @@ def test1(args):
             Column('config_id','INT',allow_null=False),
             Column('channel_group_id','INT',allow_null=False),
             Column('weight','REAL',allow_null=False),
-            ForeignKeyConstraint('fk_config_id', 'config_id',
+            ForeignKeyConstraint(db,
+                                 'fk_config_id', 'config_id',
                                  'configsMeta', 'config_id'),            
-            ForeignKeyConstraint('fk_channel_group_id', 'channel_group_id',
+            ForeignKeyConstraint(db,
+                                 'fk_channel_group_id', 'channel_group_id',
                                  'channelGroupsMeta', 'channel_group_id'),            
         ]
         db.createTable(table_name, column_def)
@@ -724,8 +833,9 @@ def main(args):
     """
     """
 
-    db = TunerDatabase()
+    db = TunerDatabase(filepath=TUNER_CLIENT_SQLITE_FILEPATH)
     db._initTables()
+    db.close()
 
 #----------------------------------------------------------------------    
 if __name__ == "__main__" :
