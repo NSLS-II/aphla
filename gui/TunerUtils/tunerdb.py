@@ -1,377 +1,46 @@
 #! /usr/bin/env python
 
-import sip
-sip.setapi('QString', 2)
-sip.setapi('QVariant', 2)
-
 import sys, os
 import numpy as np
-from time import time, strftime, localtime
+from time import time, strftime, localtime, sleep
 import h5py
 import sqlite3
 import traceback
 from pprint import pprint
 
-from config import (TUNER_CLIENT_HDF5_FILEPATH, TUNER_CLIENT_SQLITE_FILEPATH)
-
-MEMORY = ':memory:'
+from aphla.gui.utils.hlsqlite import (MEMORY, SQLiteDatabase, Column, 
+                                      ForeignKeyConstraint, PrimaryKeyTableConstraint)
+from config import (TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT, TUNER_CLIENT_SQLITE_FILEPATH,
+                    TUNER_SERVER_SQLITE_FILEPATH_ON_CLIENT,
+                    TUNER_CLIENT_HDF5_FILEPATH_ON_SERVER, TUNER_SERVER_HDF5_FILEPATH,
+                    TUNER_SERVER_SQLITE_FILEPATH_ON_SERVER,
+                    TUNER_SERVER_UPDATE_HDF5_FILEPATH,
+                    TUNER_CLIENT_UPDATE_HDF5_FILEPATH_ON_CLIENT,
+                    TUNER_CLIENT_UPDATE_HDF5_FILEPATH_ON_SERVER)
+from tunerModels import getuserinfo
 
 DEBUG = False
+H5_COMPRESSION = 'gzip'
+H5_VARLENSTR = h5py.new_vlen(str)
 
-########################################################################
-class Column():
+#----------------------------------------------------------------------
+def quote_string(string, quote='single'):
     """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, name, data_type, allow_null=True, unique=False,
-                 allow_default=False, default_value=None):
-        """Constructor"""
-        
-        self.name = name
-        
-        if data_type not in ('TEXT', 'REAL', 'INT', 'INTEGER', 'BLOB',
-                             'INTEGER PRIMARY KEY'):
-            raise ValueError('Unexpected data type: '+data_type)
-        else:
-            self.data_type = data_type
-            
-        self.allow_null = allow_null
-
-        self.unique = unique
-
-        self.allow_default = allow_default
-        
-        self.default_value = default_value
-        
-        
-########################################################################
-class ForeignKeyConstraint():
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, database_object, constraint_name, column_name, 
-                 foreign_table_name, foreign_column_name,
-                 on_delete_action='RESTRICT', on_update_action='CASCADE'):
-        """Constructor"""
-        
-        if not database_object.foreignKeysEnabled():
-            database_object.setForeignKeysEnabled(True)
-            
-        self.name = constraint_name
-        
-        self.column_name = column_name
-        
-        # Foreign Key Clause
-        self.foreign_table_name = foreign_table_name
-        self.foreign_column_name = foreign_column_name
-        self.on_delete_action = on_delete_action
-        self.on_update_action = on_update_action
-        
+    
+    if quote == 'single':
+        return "'" + string + "'"
+    elif quote == 'double':
+        return '"' + string + '"'
+    else:
+        raise ValueError('Unexpected quote type: '+str(quote))
+    
     
 ########################################################################
-class SQLiteDatabase():
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, filepath=''):
-        """Constructor"""
-        
-        self.con = sqlite3.connect(filepath)
-        self.cur = self.con.cursor()
-        
-        isinstance(self.con, sqlite3.Connection)
-        isinstance(self.cur, sqlite3.Cursor)
-    
-    #----------------------------------------------------------------------
-    def close(self):
-        """"""
-        
-        with self.con:
-            self.cur.execute('VACUUM')
-        
-        self.con.close()
-    
-    #----------------------------------------------------------------------
-    def getTableNames(self):
-        """"""
-
-        self.cur.execute('SELECT name from sqlite_master WHERE type="table" ORDER BY name')
-        table_name_list = self.cur.fetchall()
-        
-        if DEBUG:
-            print 'Existing tables:', table_name_list
-        
-        return table_name_list
-    
-    #----------------------------------------------------------------------
-    def getTableInfo(self, table_name):
-        """"""
-        
-        self.cur.execute('PRAGMA table_info('+table_name+')')
-        
-        table_info_tuple = self.cur.fetchall()
-        # List of tuples "t":
-        #   t[0] = column order number
-        #   t[1] = column name (Unicode)
-        #   t[2] = data type (Unicode)
-        #   t[3] = 1 if NOT NULL is specified
-        #   t[4] = default value (Unicode)
-        #   t[5] = 1 if integer primary key, 0 otherwise
-        
-        #if DEBUG:
-            #pprint(table_info_tuple)
-        
-        table_info_dict_list = []
-        for tup in table_info_tuple:
-            table_info_dict = {}
-            table_info_dict['column_number'] = tup[0]
-            table_info_dict['column_name'] = tup[1]
-            table_info_dict['data_type'] = tup[2]
-            table_info_dict['allow_null'] = (tup[3]==0)
-            table_info_dict['default_value'] = tup[4]
-            table_info_dict['primary_key'] = (tup[5]==1)
-            table_info_dict_list.append(table_info_dict)
-            
-        return table_info_dict_list
-        
-    #----------------------------------------------------------------------
-    def getAllColumnDataFromTable(self, table_name):
-        """"""
-        
-        self.cur.execute('SELECT * FROM ' + table_name)
-        
-        all_rows = self.cur.fetchall()
-        
-        return all_rows
-    
-    #----------------------------------------------------------------------
-    @staticmethod
-    def createSelectSQLStatement(table_name, column_name_list=None,
-                                 condition_str='', order_by_str=''):
-        """"""
-
-        if column_name_list is None:
-            column_name_list = ['*']
-        
-        column_str = ', '.join(column_name_list)
-        
-        sql_cmd = 'SELECT ' + column_str + ' FROM ' + table_name
-        if condition_str != '':
-            sql_cmd += ' WHERE ' + condition_str
-        if order_by_str != '':
-            sql_cmd += ' ORDER BY ' + order_by_str
-
-        return sql_cmd
-    
-    #----------------------------------------------------------------------
-    def getColumnDataFromTable(self, table_name, column_name_list=None,
-                               condition_str='', order_by_str='',
-                               placeholder_replacement_tuple=None):
-        """
-        Return a tuple of column data.
-        
-        placeholder_replacement_tuple will be inserted into '?' appearing in the SQL command
-        """
-        
-        sql_cmd = self.createSelectSQLStatement(table_name, column_name_list, 
-                                                condition_str, order_by_str)
-        
-        if placeholder_replacement_tuple is None:
-            self.cur.execute(sql_cmd)
-        else:
-            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
-        
-        z = self.cur.fetchall()
-        #z = []
-        #for row in self.cur:
-            #z.append(row)
-        
-        return zip(*z)
-        
-    #----------------------------------------------------------------------
-    def createTempView(self, view_name, table_name, column_name_list=None,
-                       condition_str='', order_by_str='',
-                       placeholder_replacement_tuple=None):
-        """"""
-        
-        select_sql = self.createSelectSQLStatement(table_name, column_name_list,
-                                                   condition_str, order_by_str)
-        
-        sql_cmd = 'CREATE TEMP VIEW ' + view_name + ' AS ' + select_sql
-        
-        if placeholder_replacement_tuple is None:
-            self.cur.execute(sql_cmd)
-        else:
-            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
-        
-    #----------------------------------------------------------------------
-    def createTable(self, table_name, column_definition_list):
-        """"""
-        
-        self.deleteTable(table_name)
-        
-        sql_cmd = 'CREATE TABLE ' + table_name + ' ('
-        
-        for col in column_definition_list:
-            
-            if isinstance(col, Column):
-                L = [col.name, col.data_type]
-
-                if col.data_type != 'INTEGER PRIMARY KEY':
-                    if not col.allow_null:
-                        L.append('NOT NULL')
-                    if col.unique:
-                        L.append('UNIQUE')
-                    if col.allow_default:
-                        default_str = 'DEFAULT '
-                        if col.default_value is None:
-                            default_str += 'NULL'
-                        else:
-                            default_str += str(col.default_value)
-                        L.append(default_str)
-
-                sql_cmd += ' '.join(L) + ', '
-            
-            elif isinstance(col, ForeignKeyConstraint):
-                sql_cmd += ('CONSTRAINT ' + col.name +
-                            ' FOREIGN KEY(' + col.column_name + ') ' +
-                            'REFERENCES ' + col.foreign_table_name +
-                            '(' + col.foreign_column_name + ') ' +
-                            'ON DELETE ' + col.on_delete_action + ' ' +
-                            'ON UPDATE ' + col.on_update_action + ', '
-                            )
-            
-            else:
-                raise ValueError('Unexpected column class')
-        
-        sql_cmd = sql_cmd[:-2] + ')'
-        
-        try:
-            #print sql_cmd
-            
-            with self.con:
-                self.cur.execute(sql_cmd)
-        except:
-            traceback.print_exc()
-            print 'SQL cmd:', sql_cmd
-                
-    #----------------------------------------------------------------------
-    def deleteTable(self, table_name):
-        """"""
-        
-        with self.con:
-            self.cur.execute('DROP TABLE IF EXISTS '+table_name)
-        
-    #----------------------------------------------------------------------
-    def insertTable(self, table_name, foreign_database_name, foreign_table_name):
-        """"""
-        
-        sql_cmd = 'INSERT INTO ' + table_name + ' SELECT * FROM ' + \
-            foreign_database_name + '.' + foreign_table_name
-        
-        self.cur.execute(sql_cmd)
-        self.con.commit()
-        
-    #----------------------------------------------------------------------
-    def insertRows(self, table_name, list_of_tuples):
-        """"""
-        
-        sql_cmd = 'INSERT INTO ' + table_name + ' VALUES '
-        
-        placeholder_list = ['?' if not info_dict['primary_key'] else 'null'
-                            for info_dict in self.getTableInfo(table_name)]
-        placeholder_str = '(' + ', '.join(placeholder_list) + ')'
-        
-        sql_cmd += placeholder_str
-        
-        try:
-            with self.con:
-                self.cur.executemany(sql_cmd, list_of_tuples)
-        except:
-            traceback.print_exc()
-            
-    #----------------------------------------------------------------------
-    def deleteRows(self, table_name, condition_str='', 
-                   placeholder_replacement_tuple=None):
-        """"""
-        
-        sql_cmd = 'DELETE FROM ' + table_name
-
-        if condition_str != '':
-            sql_cmd += ' WHERE ' + condition_str
-
-        if placeholder_replacement_tuple is None:
-            self.cur.execute(sql_cmd)
-        else:
-            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
-            
-        self.con.commit()
-        
-    #----------------------------------------------------------------------
-    def attachDatabase(self, filepath, database_name):
-        """"""
-        
-        sql_cmd = 'ATTACH DATABASE ' + '"' + filepath + '"' + ' AS ' + database_name
-        self.cur.execute(sql_cmd)
-        self.con.commit()
-        
-    #----------------------------------------------------------------------
-    def detachDatabase(self, database_name):
-        """"""
-        
-        sql_cmd = 'DETACH DATABASE ' + database_name
-        self.cur.execute(sql_cmd)
-        self.con.commit()
-        
-    #----------------------------------------------------------------------
-    def changeValues(self, table_name, column_name, expression,
-                     condition_str='', placeholder_replacement_tuple=None):
-        """"""
-        
-        sql_cmd = 'UPDATE ' + table_name + ' SET ' +  column_name + \
-            ' = ' + str(expression)
-
-        if condition_str != '':
-            sql_cmd += ' WHERE ' + condition_str
-
-        if placeholder_replacement_tuple is None:
-            self.cur.execute(sql_cmd)
-        else:
-            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
-            
-        self.con.commit()
-        
-    #----------------------------------------------------------------------
-    def foreignKeysEnabled(self):
-        """"""
-        
-        self.cur.execute('PRAGMA foreign_keys')
-        result = self.cur.fetchall()
-        
-        if result[0][0] == 0:
-            return False
-        else:
-            return True
-        
-    #----------------------------------------------------------------------
-    def setForeignKeysEnabled(self, TF):
-        """"""
-        
-        if TF:
-            state = 'ON'
-        else:
-            state = 'OFF'
-        
-        self.cur.execute('PRAGMA foreign_keys = '+state)
-        self.con.commit()        
-        
-    
-########################################################################
-class TunerDatabase(SQLiteDatabase):
+class TunerAbstractDatabase(SQLiteDatabase):
     """"""
     
     #----------------------------------------------------------------------
-    def __init__(self, filepath=TUNER_CLIENT_SQLITE_FILEPATH):
+    def __init__(self, filepath=MEMORY):
         """Constructor"""
         
         SQLiteDatabase.__init__(self, filepath=filepath)
@@ -392,40 +61,35 @@ class TunerDatabase(SQLiteDatabase):
         global DEBUG
         DEBUG = False
         
-        #db = SQLiteDatabase()
-    
-        #try:
-            #os.remove(TUNER_CLIENT_SQLITE_FILEPATH)
-        #except:
-            #print 'Deleting database file failed.'
-        
         self.setForeignKeysEnabled(True)
         
         table_name = 'record_index_table'
         column_def = [
-            Column('max_record_id','INT',allow_default=True,default_value=0),
+            Column('max_record_id','INT'),
         ]
-        self.createTable(table_name, column_def)    
+        self.createTable(table_name, column_def)
+        self.insertRows(table_name,[(0,),])
         
         table_name = 'user_table'
         column_def = [
-            Column('user_id','INTEGER PRIMARY KEY'),
+            Column('user_id','INTEGER',primary_key=True),
             Column('ip_str','TEXT',allow_null=False),
             Column('mac_str','TEXT',allow_null=False),
-            Column('username','TEXT',allow_null=False),        
+            Column('username','TEXT',allow_null=False),
+            Column('time_added_to_database','REAL',allow_null=False),
         ]
         self.createTable(table_name, column_def)
     
         table_name = 'channel_name_table'
         column_def = [
-            Column('channel_name_id','INTEGER PRIMARY KEY'),
+            Column('channel_name_id','INTEGER',primary_key=True),
             Column('channel_name','TEXT',unique=True,allow_null=False),
         ]
         self.createTable(table_name, column_def)    
         
         table_name = 'channel_table'
         column_def = [
-            Column('channel_id','INTEGER PRIMARY KEY'),
+            Column('channel_id','INTEGER',primary_key=True),
             Column('channel_name_id','INTEGER',allow_null=False),
             Column('pvrb_name','TEXT',allow_default=True,default_value=None),
             Column('pvsp_name','TEXT',allow_default=True,default_value=None),
@@ -438,20 +102,21 @@ class TunerDatabase(SQLiteDatabase):
         
         table_name = 'channel_group_name_table'
         column_def = [
-            Column('channel_group_name_id','INTEGER PRIMARY KEY'),
+            Column('channel_group_name_id','INTEGER',primary_key=True),
             Column('channel_group_name','TEXT',allow_null=False),
         ]
         self.createTable(table_name, column_def)
         
         table_name = 'config_meta_table'
         column_def = [
-            Column('config_id','INTEGER PRIMARY KEY'),
+            Column('config_id','INTEGER',primary_key=True),
             Column('config_name','TEXT',allow_default=True,default_value='""'),
             Column('user_id','INTEGER',allow_null=False),
             Column('user_record_id','INTEGER',allow_null=False),
             Column('time_created','REAL',allow_null=False),
             Column('description','TEXT',allow_default=True,default_value='""'),
             Column('appended_descriptions','TEXT',allow_default=True,default_value='""'), # include modified time as part of the text in this
+            Column('time_added_to_database','REAL',allow_null=False),
             ForeignKeyConstraint(self,
                                  'fk_user_id', 'user_id',
                                  'user_table', 'user_id'),        
@@ -480,7 +145,7 @@ class TunerDatabase(SQLiteDatabase):
         
         table_name = 'snapshot_meta_table'
         column_def = [
-            Column('snapshot_id','INTEGER PRIMARY KEY'),
+            Column('snapshot_id','INTEGER',primary_key=True),
             Column('config_id','INTEGER',allow_null=False),
             Column('snapshot_name','TEXT',allow_default=True,default_value='""'),
             Column('user_id','INTEGER',allow_null=False),
@@ -489,6 +154,7 @@ class TunerDatabase(SQLiteDatabase):
             Column('description','TEXT',allow_default=True,default_value='""'),
             Column('appended_descriptions','TEXT',allow_default=True,default_value='""'), # include modified time as part of the text in this
             Column('masar_event_id','INTEGER',allow_default=True,default_value=None),
+            Column('time_added_to_database','REAL',allow_null=False),
             ForeignKeyConstraint(self,
                                  'fk_config_id', 'config_id',
                                  'config_meta_table', 'config_id'),        
@@ -502,10 +168,13 @@ class TunerDatabase(SQLiteDatabase):
         column_def = [
             Column('snapshot_id','INTEGER',allow_null=False),
             Column('channel_id','INTEGER',allow_null=False),
-            Column('pvrb_value','REAL',allow_default=True,default_value=None),
+            Column('pvrb_raw_value','REAL',allow_default=True,default_value=None),
+            Column('pvrb_unit_value','REAL',allow_default=True,default_value=None),
+            Column('pvrb_unit_id','REAL',allow_default=True,default_value=None),
             Column('pvrb_ioc_timestamp','INTEGER',allow_default=True,default_value=None),
             Column('pvrb_pc_timestamp','REAL',allow_default=True,default_value=None),
-            Column('pvsp_value','REAL',allow_default=True,default_value=None),
+            Column('pvsp_raw_value','REAL',allow_default=True,default_value=None),
+            Column('pvsp_unit_value','REAL',allow_default=True,default_value=None),
             Column('pvsp_ioc_timestamp','INTEGER',allow_default=True,default_value=None),
             Column('pvsp_pc_timestamp','REAL',allow_default=True,default_value=None),
             ForeignKeyConstraint(self,
@@ -525,7 +194,36 @@ class TunerDatabase(SQLiteDatabase):
         print 'Successfully initialized database tables for aplattuner.'        
         
     #----------------------------------------------------------------------
-    def createHDF5Subset(self):
+    def getFreshHDF5FileObj(self, filepath):
+        """
+        After removing the existing HDF5 file, if you try to create a fresh
+        HDF5 file with the same name, you may encounter an IO error.
+        To avoid this race condition issue, wait a little before opening,
+        and also do multiple trials until successful opening.
+        """
+        
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            sleep(1.)
+        
+        nMaxTrials = 5
+        for i in range(nMaxTrials):
+            try:
+                f = h5py.File(filepath,'w')
+            except:
+                print 'Trial #' + int(i) + ': Opening ' + \
+                      filepath + ' failed.'
+                if i == nMaxTrials:
+                    raise IOError('Failed opening '+filepath)
+                sleep(1.)
+            else:
+                break        
+        
+        return f
+        
+        
+    #----------------------------------------------------------------------
+    def createH5Subset(self):
         """"""
         
         #f = h5py.File('/home/yhidaka/.hla/nsls2/tuner_client.h5','r')
@@ -543,8 +241,440 @@ class TunerDatabase(SQLiteDatabase):
         """"""
         
     #----------------------------------------------------------------------
-    def loadClientHDF5(self):
+    def loadClientH5(self):
         """"""
+
+
+        return
+    
+
+    
+    
+
+
+########################################################################
+class TunerServerDatabase(TunerAbstractDatabase):
+    """"""
+    
+    #----------------------------------------------------------------------
+    def __init__(self, filepath=TUNER_SERVER_SQLITE_FILEPATH_ON_SERVER):
+        """Constructor"""
+        
+        folder_path = os.path.dirname(filepath)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        
+        TunerAbstractDatabase.__init__(self, filepath=filepath)
+
+    #----------------------------------------------------------------------
+    def _initH5(self):
+        """"""
+        
+        server_data_folder_path = os.path.dirname(TUNER_SERVER_HDF5_FILEPATH)
+        if not os.path.exists(server_data_folder_path):
+            os.mkdir(server_data_folder_path)
+        
+        f = self.getFreshHDF5FileObj(TUNER_SERVER_HDF5_FILEPATH)
+        #if os.path.exists(TUNER_SERVER_HDF5_FILEPATH):
+            #os.remove(TUNER_SERVER_HDF5_FILEPATH)
+            #sleep(1.)
+        
+        #nMaxTrials = 5
+        #for i in range(nMaxTrials):
+            #try:
+                #f = h5py.File(TUNER_SERVER_HDF5_FILEPATH,'w')
+            #except:
+                #print 'Trial #' + int(i) + ': Opening ' + \
+                      #TUNER_SERVER_HDF5_FILEPATH + ' failed.'
+                #if i == nMaxTrials:
+                    #raise IOError('Failed opening '+TUNER_SERVER_HDF5_FILEPATH)
+                #sleep(1.)
+            #else:
+                #break
+
+        f.create_dataset('max_user_id', (1,), data=0,
+                         compression=H5_COMPRESSION)
+        f.create_group('user_ids')
+        f.create_dataset('max_record_id', (1,), data=0,
+                         compression=H5_COMPRESSION)
+        
+        f.close()
+        
+    #----------------------------------------------------------------------
+    def _initDB(self):
+        """"""
+
+        server_data_folder_path = os.path.dirname(TUNER_SERVER_HDF5_FILEPATH)
+        if not os.path.exists(server_data_folder_path):
+            os.mkdir(server_data_folder_path)
+        
+        self._initTables()
+
+    #----------------------------------------------------------------------
+    def getUserIDFromServerDB(self, ip_str, mac_str, username):
+        """"""
+        
+        ip_str = quote_string(ip_str)
+        mac_str = quote_string(mac_str)
+        username = quote_string(username)
+        
+        matched_user_id_list = self.getColumnDataFromTable(
+            'user_table', column_name_list=['user_id'],
+            condition_str='ip_str=? AND mac_str=? AND username=?',
+            placeholder_replacement_tuple=(ip_str,mac_str,username))
+        
+        if matched_user_id_list == []:
+            return None
+        elif len(matched_user_id_list) > 1:
+            raise ValueError('More than 1 match for user_id detected.')
+        else:
+            return matched_user_id_list[0]
+        
+        
+    #----------------------------------------------------------------------
+    def createServerUpdateH5(self):
+        """
+        Create server_update.h5 from client.h5.
+
+        After creation of server_update.h5, do NOT delete client.h5 yet,
+        since it will be needed at a later step.
+        """
+        
+        if not os.path.exists(TUNER_CLIENT_HDF5_FILEPATH_ON_SERVER):
+            print 'No tuner_client.h5 found.'
+            return
+
+        f_client = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_SERVER,'r')
+        
+        f_server_update = self.getFreshHDF5FileObj(TUNER_SERVER_UPDATE_HDF5_FILEPATH)
+        
+        user_id = f_client['user_id']
+        
+        ip_str = user_id['ip_str'][0]
+        mac_str = user_id['mac_str'][0]
+        username = user_id['username'][0]
+        
+        g = f_server_update.create_group('user_id')
+        g.create_dataset('ip_str', (1,), data=ip_str,
+                         dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        g.create_dataset('mac_str', (1,), data=mac_str,
+                         dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        g.create_dataset('username', (1,), data=username,
+                         dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+            
+        user_record_id_list = [int(k) for k in f_client.keys() if k not in
+                               ('user_id','max_user_record_id','max_record_id')]
+        for (i, user_record_id) in enumerate(user_record_id_list):
+            client_record = f_client[str(user_record_id)]
+            record_group_name = str(i+1)
+            f_client.copy(client_record, f_server_update, name=record_group_name)
+            g = f_server_update[record_group_name]
+            g.create_dataset('user_record_id', (1,), data=user_record_id,
+                             compression=H5_COMPRESSION)
+            
+        
+        f_server_update.close()
+        f_client.close()
+
+    #----------------------------------------------------------------------
+    def updateServerDB(self):
+        """
+        Use server_update.h5 to update server.sqlite.
+        
+        After update, delete server_update.h5.
+        """
+        
+        f = h5py.File(TUNER_SERVER_UPDATE_HDF5_FILEPATH,'r')
+        
+        u = f['user_id']
+        
+        ip_str   = u['ip_str'][0]
+        mac_str  = u['mac_str'][0]
+        username = u['username'][0]
+
+        matched_user_id = self.getUserIDFromServerDB(ip_str, mac_str, username)
+        if matched_user_id is None:
+            time_added = time()
+            list_of_tuples = [(ip_str, mac_str, username, time_added),]
+            self.insertRows('user_table',list_of_tuples)
+            matched_user_id = self.getUserIDFromServerDB(ip_str, mac_str, username)
+        
+
+        record_id_list = [int(k) for k in f.keys() 
+                          if k not in ('new_user_id')]
+        
+        for i in record_id_list:
+            rec = f[str(i)]
+            user_record_id = rec['user_record_id'][0]
+            time_added     = time()
+            command        = rec['command'][0]
+            args           = rec['args']
+            
+            if command == 'insert config':
+                list_of_tuples = [(args['config_name'], matched_user_id, 
+                                   user_record_id, args['time_created'],
+                                   args['description'], args['appended_descriptions'],
+                                   time_added)]
+                self.insertRows('config_meta_table',list_of_tuples)
+                
+                list_of_tuples = [(group_name,) for group_name 
+                                  in args['group_name_list']]
+                self.insertRows('channel_group_name_table',list_of_tuples)
+                
+                list_of_tuples = [(channel_name,) for channel_name in
+                                  args['flat_channel_name_list']]
+                self.insertRows('channel_name_table',list_of_tuples,
+                                on_conflict='IGNORE')
+                ''' Since channel_name column in channel_name_table is UNIQUE,
+                trying to add existing channels will result in conflict,
+                which will be ignored by setting on_conflict='IGNORE'. '''
+                
+                self.insertRows('channel_table',list_of_tuples)
+                
+                self.insertRows('config_table',list_of_tuples)
+                
+            elif command == 'insert snapshot':
+                raise NotImplementedError('insert snapshot is not yet implemented.')
+            else:
+                raise ValueError('Unexpected command type: '+command)
+        
+        
+        f.close()
+
+        try:
+            os.remove(TUNER_SERVER_UPDATE_HDF5_FILEPATH)
+        except:
+            print 'Failed deleting', TUNER_SERVER_UPDATE_HDF5_FILEPATH
+        
+        
+    #----------------------------------------------------------------------
+    def createClientUpdateH5(self):
+        """
+        Create client_update.h5 from server.h5, only including the
+        records in server.h5 with record_id larger than max_record_id
+        in client.h5.
+        
+        After creation of client_update.h5, delete client.h5.
+        """
+        
+    #----------------------------------------------------------------------
+    def sendClientUpdateH5toClient(self):
+        """
+        Send client_update.h5 to the client.
+        
+        Then delete client_update.h5 on the server.
+        """
+
+        
+########################################################################
+class TunerClientDatabase(TunerAbstractDatabase):
+    """"""
+    
+    #----------------------------------------------------------------------
+    def __init__(self, filepath=TUNER_CLIENT_SQLITE_FILEPATH):
+        """Constructor"""
+        
+        folder_path = os.path.dirname(filepath)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+         
+        TunerAbstractDatabase.__init__(self, filepath=filepath)
+        
+    #----------------------------------------------------------------------
+    def _initH5(self):
+        """"""
+        
+        client_data_folder_path = os.path.dirname(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
+        if not os.path.exists(client_data_folder_path):
+            os.mkdir(client_data_folder_path)
+        
+        f = self.getFreshHDF5FileObj(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
+        #if os.path.exists(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT):
+            #os.remove(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
+            #sleep(1.)
+        
+        #nMaxTrials = 5
+        #for i in range(nMaxTrials):
+            #try:
+                #f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'w')
+            #except:
+                #print 'Trial #' + int(i) + ': Opening ' + \
+                      #TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT + ' failed.'
+                #if i == nMaxTrials:
+                    #raise IOError('Failed opening '+TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
+                #sleep(1.)
+            #else:
+                #break
+
+        user_id = f.create_group('user_id')
+        ip_str, mac_str, username = getuserinfo()
+        user_id.create_dataset('ip_str', (1,), data=ip_str,
+                               dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        user_id.create_dataset('mac_str', (1,), data=mac_str,
+                               dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        user_id.create_dataset('username', (1,), data=username,
+                               dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        
+        f.create_dataset('max_user_record_id', (1,), data=0,
+                         compression=H5_COMPRESSION)
+
+        f.create_dataset('max_record_id', (1,), data=0,
+                         compression=H5_COMPRESSION)
+        
+        f.close()
+
+        
+    #----------------------------------------------------------------------
+    def _initDB(self):
+        """"""
+        
+        client_data_folder_path = os.path.dirname(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
+        if not os.path.exists(client_data_folder_path):
+            os.mkdir(client_data_folder_path)
+
+        self._initTables()
+    
+    #----------------------------------------------------------------------
+    def updateUserIDinClientH5(self, h5FileObject=None):
+        """"""
+        
+        if h5FileObject is None:
+            f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
+        else:
+            f = h5FileObject
+        
+        user_id = f['user_id']
+        
+        ip_str, mac_str, username = getuserinfo()
+        
+        for k in ['ip_str','mac_str','username']:
+            del user_id[k]
+
+        user_id.create_dataset('ip_str', (1,), data=ip_str,
+                               dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        user_id.create_dataset('mac_str', (1,), data=mac_str,
+                               dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        user_id.create_dataset('username', (1,), data=username,
+                               dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        
+        if h5FileObject is None:
+            f.close()
+
+    #----------------------------------------------------------------------
+    def getMaxUserRecordIDinClientH5(self, h5FileObject=None):
+        """"""
+        
+        if h5FileObject is None:
+            f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
+        else:
+            f = h5FileObject
+            
+        max_user_record_id = f['max_user_record_id'][0]
+                
+        if h5FileObject is None:
+            f.close()
+            
+        return max_user_record_id
+
+    #----------------------------------------------------------------------
+    def updateMaxUserRecordIDinClientH5(self, h5FileObject=None):
+        """"""
+
+        if h5FileObject is None:
+            f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
+        else:
+            f = h5FileObject
+        
+        user_record_id_list = [int(k) for k in f.keys() if k not in
+                               ('user_id','max_user_record_id','max_record_id')]
+        
+        if user_record_id_list != []:
+            del f['max_user_record_id']
+            f['max_user_record_id'] = [max(user_record_id_list)]
+                
+        if h5FileObject is None:
+            f.close()
+    
+    #----------------------------------------------------------------------
+    def getMaxRecordIDinServerDB(self):
+        """"""
+
+        server_db = TunerClientDatabase(
+            filepath=TUNER_SERVER_SQLITE_FILEPATH_ON_CLIENT)
+        
+        return server_db.getColumnDataFromTable('record_index_table')[0][0]
+        
+    #----------------------------------------------------------------------
+    def updateMaxRecordIDinClientH5(self, h5FileObject=None):
+        """"""
+        
+        if h5FileObject is None:
+            f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
+        else:
+            f = h5FileObject
+
+        max_record_id_in_server_DB = self.getMaxRecordIDinServerDB()
+        
+        del f['max_record_id']
+        f['max_record_id'] = [max_record_id_in_server_DB]
+                
+        if h5FileObject is None:
+            f.close()
+
+    #----------------------------------------------------------------------
+    def addRecordIntoClientH5(self, record_dict, h5FileObject=None):
+        """"""
+
+        if h5FileObject is None:
+            f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
+        else:
+            f = h5FileObject
+            
+        self.updateUserIDinClientH5(f)
+        
+        max_user_record_id = self.getMaxUserRecordIDinClientH5(f)
+        
+        new_user_record_id = max_user_record_id + 1
+        record = f.create_group(str(new_user_record_id))
+
+        record.create_dataset('command', (1,), data='insert config',
+                              dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        
+        args = record.create_group('args')
+        args.create_dataset('config_name', (1,), data=record_dict['config_name'], 
+                            dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        args.create_dataset('time_created', (1,), data=record_dict['time_created'], 
+                            compression=H5_COMPRESSION)
+        args.create_dataset('description', (1,), data=record_dict['description'],
+                            dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        args.create_dataset('appended_descriptions', (1,), 
+                            data=record_dict['appended_descriptions'], 
+                            dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
+        flat_channel_name_list = record_dict['flat_channel_name_list']
+        nChannels = len(flat_channel_name_list)
+        args.create_dataset('flat_channel_name_list', (nChannels,),
+                            data=flat_channel_name_list, dtype=H5_VARLENSTR,
+                            compression=H5_COMPRESSION)
+        group_name_list = record_dict['group_name_list']
+        nGroups = len(group_name_list)
+        args.create_dataset('group_name_list',(nGroups,),
+                            data=group_name_list, dtype=H5_VARLENSTR,
+                            compression=H5_COMPRESSION)
+        grouped_ind_list = record_dict['grouped_ind_list']
+        g = args.create_group('grouped_ind_list')
+        for (group_ind,group_name) in enumerate(group_name_list):
+            index_list = grouped_ind_list[group_ind]
+            g.create_dataset(group_name,(len(index_list),),
+                             data=index_list, compression=H5_COMPRESSION)
+        
+        self.updateMaxUserRecordIDinClientH5(f)
+        
+        self.updateMaxRecordIDinClientH5(f)
+
+        if h5FileObject is None:
+            f.close()
+        
+        
 
 #----------------------------------------------------------------------
 def test1(args):
@@ -553,14 +683,14 @@ def test1(args):
     global DEBUG
     DEBUG = False
     
-    db = TunerDatabase()
+    db = TunerAbstractDatabase('test1.sqlite')
     
     db.getTableNames()
     
     try:
         table_name = 'channelNames'
         column_def = [
-            Column('channel_name_id','INTEGER PRIMARY KEY'),
+            Column('channel_name_id','INTEGER',primary_key=True),
             Column('channel_name','TEXT',allow_null=False,unique=True),
         ]
         db.createTable(table_name, column_def)
@@ -583,7 +713,7 @@ def test1(args):
     try:    
         table_name = 'channels'
         column_def = [
-            Column('channel_id','INTEGER PRIMARY KEY'),
+            Column('channel_id','INTEGER',primary_key=True),
             Column('channel_name_id','INT',allow_null=False),
             Column('pvrb_name','TEXT',allow_default=True,default_value=None),
             Column('pvsp_name','TEXT',allow_default=True,default_value=None),
@@ -613,7 +743,7 @@ def test1(args):
     try:
         table_name = 'channelGroupsMeta'
         column_def = [
-            Column('channel_group_id','INTEGER PRIMARY KEY'),
+            Column('channel_group_id','INTEGER',primary_key=True),
             Column('channel_group_name','TEXT',allow_null=False),
         ]
         db.createTable(table_name, column_def)
@@ -635,7 +765,7 @@ def test1(args):
     try:
         table_name = 'channelGroups'
         column_def = [
-            Column('channel_order_in_group','INTEGER PRIMARY KEY'),
+            Column('channel_order_in_group','INTEGER',primary_key=True),
             Column('channel_group_id','INT',allow_null=False),
             Column('channel_name_id','INT',allow_null=False),
             ForeignKeyConstraint(db,
@@ -666,7 +796,7 @@ def test1(args):
     try:
         table_name = 'configsMeta'
         column_def = [
-            Column('config_id','INTEGER PRIMARY KEY'),
+            Column('config_id','INTEGER',primary_key=True),
             Column('config_name','TEXT',allow_default=True,default_value=None),
             Column('username','TEXT',allow_null=False),
             Column('time_created','REAL',allow_null=False),
@@ -691,7 +821,7 @@ def test1(args):
     try:
         table_name = 'configs'
         column_def = [
-            Column('group_order_in_config','INTEGER PRIMARY KEY'),
+            Column('group_order_in_config','INTEGER',primary_key=True),
             Column('config_id','INT',allow_null=False),
             Column('channel_group_id','INT',allow_null=False),
             Column('weight','REAL',allow_null=False),
@@ -827,17 +957,60 @@ def test1(args):
     
     db.close()
         
+#----------------------------------------------------------------------
+def initializeClientDB():
+    """"""
+    
+    db = TunerClientDatabase()
+    db._initH5()
+    db._initDB()
+    db.close()
 
+#----------------------------------------------------------------------
+def initializeServerDB():
+    """"""
+    
+    db = TunerServerDatabase()
+    db._initH5()
+    db._initDB()
+    db.close()
+    
+#----------------------------------------------------------------------
+def test_createServerUpdateH5():
+    """"""
+    
+    db = TunerServerDatabase()
+    db.createServerUpdateH5()
+    db.close()
+    
+    
 #----------------------------------------------------------------------
 def main(args):
     """
     """
+    
+    pass
 
-    db = TunerDatabase(filepath=TUNER_CLIENT_SQLITE_FILEPATH)
-    db._initTables()
+    #db = TunerClientDatabase(filepath=TUNER_CLIENT_SQLITE_FILEPATH)
+    #db._initDB()
+    #db.close()
+
+#----------------------------------------------------------------------
+def debug():
+    """"""
+
+    db = TunerClientDatabase()
+    print db.getMaxRecordIDinServerDB()
     db.close()
-
+    
 #----------------------------------------------------------------------    
 if __name__ == "__main__" :
     #test1(sys.argv)
-    main(sys.argv)
+    #main(sys.argv)
+    
+    #initializeClientDB()
+    #initializeServerDB()
+    
+    test_createServerUpdateH5()
+    
+    #debug()

@@ -37,8 +37,9 @@ from tunerModels import (ConfigChannel, getuserinfo,
                          TunerConfigSetupTableModel, TunerConfigSetupTreeModel)
 from ui_tunerConfigSetupDialog import Ui_Dialog
 import config as const
-from config import (TUNER_CLIENT_HDF5_FILEPATH, TUNER_CLIENT_SQLITE_FILEPATH)
+from config import (TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT, TUNER_CLIENT_SQLITE_FILEPATH)
 from aphla.gui import channelexplorer
+from tunerdb import TunerClientDatabase
 from aphla.gui.utils.tictoc import tic, toc
 
 
@@ -121,90 +122,105 @@ class TunerConfigSetupModel(QObject):
         b = self.base_model
         
         flat_channel_name_list = [name.encode('ascii') for name in b.k_channel_name]
-        ip_str, mac_str, username = b.userinfo
+        #ip_str, mac_str, username = b.userinfo
 
         if h5py.version.version_tuple[:3] < (2,1,1):
             b.config_name = b.config_name.encode('ascii')
             b.description = b.description.encode('ascii')
             b.appended_descriptions = b.appended_descriptions.encode('ascii')
-        
-        f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH,'a')
-        h5zip = 'gzip'
-        str_type = h5py.new_vlen(str)
-        
-        if not 'user_ids' in f.keys():
-            user_ids = f.create_group('user_ids')
-            this_user_id = -1
-            this_user_id_str = str(this_user_id)
-            user_id, last_user_record_id = \
-                self.create_new_user_id_in_HDF5(user_ids, this_user_id_str,
-                                                ip_str, mac_str, username,
-                                                compression_type=h5zip)
-            
-            last_record_id = 0
-            f.create_dataset('last_record_id', (1,), data=last_record_id,
-                             compression=h5zip)
-        else:
-            user_ids = f['user_ids']
-            this_user_id_str = [k for (k,v) in user_ids.iteritems()
-                                if v['ip_str'][0]==ip_str 
-                                and v['mac_str'][0]==mac_str
-                                and v['username'][0]==username]
-            if this_user_id_str == []: # No match found in existing user ids
-                min_user_id = min( 0, min([int(k) for k in user_ids.iterkeys()]) )
-                this_user_id = min_user_id - 1
-                this_user_id_str = str(this_user_id)
-                user_id, last_user_record_id = \
-                    self.create_new_user_id_in_HDF5(user_ids, this_user_id_str,
-                                                    ip_str, mac_str, username,
-                                                    compression_type=h5zip)
-            else:
-                this_user_id_str = this_user_id_str[0]
-                this_user_id = int(this_user_id_str)
-                user_id = user_ids[this_user_id_str]
-                last_user_record_id = user_id['last_user_record_id'][()]
 
-            last_record_id = f['last_record_id'][()]
+        record = {}
+        record['config_name'] = b.config_name
+        record['time_created'] = b.time_created
+        record['description'] = b.description
+        record['appended_descriptions'] = b.appended_descriptions
+        record['flat_channel_name_list'] = flat_channel_name_list
+        record['group_name_list'] = b.group_name_list
+        record['grouped_ind_list'] = b.grouped_ind_list
+        
+        
+        f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
+        db = TunerClientDatabase()
+        db.addRecordIntoClientH5(record, h5FileObject=f)
+        f.close()
+        
+        #f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
+        #h5zip = 'gzip'
+        #str_type = h5py.new_vlen(str)
+        
+        #if not 'user_ids' in f.keys():
+            #user_ids = f.create_group('user_ids')
+            #this_user_id = -1
+            #this_user_id_str = str(this_user_id)
+            #user_id, last_user_record_id = \
+                #self.create_new_user_id_in_HDF5(user_ids, this_user_id_str,
+                                                #ip_str, mac_str, username,
+                                                #compression_type=h5zip)
             
-        last_record_id += 1
-        this_record = f.create_group(str(last_record_id))
-        del f['last_record_id']
-        f['last_record_id'] = last_record_id
-        
-        this_record.create_dataset('user_id', (1,), data=this_user_id, 
-                                   compression=h5zip)
-        last_user_record_id += 1
-        this_record.create_dataset('user_record_id', (1,), data=last_user_record_id,
-                                   compression=h5zip)
-        del user_id['last_user_record_id']
-        user_id['last_user_record_id'] = last_user_record_id
-        
-        this_record.create_dataset('command', (1,), data='insert config',
-                                   dtype=str_type, compression=h5zip)
-        
-        args = this_record.create_group('args')
+            #last_record_id = 0
+            #f.create_dataset('last_record_id', (1,), data=last_record_id,
+                             #compression=h5zip)
+        #else:
+            #user_ids = f['user_ids']
+            #this_user_id_str = [k for (k,v) in user_ids.iteritems()
+                                #if v['ip_str'][0]==ip_str 
+                                #and v['mac_str'][0]==mac_str
+                                #and v['username'][0]==username]
+            #if this_user_id_str == []: # No match found in existing user ids
+                #min_user_id = min( 0, min([int(k) for k in user_ids.iterkeys()]) )
+                #this_user_id = min_user_id - 1
+                #this_user_id_str = str(this_user_id)
+                #user_id, last_user_record_id = \
+                    #self.create_new_user_id_in_HDF5(user_ids, this_user_id_str,
+                                                    #ip_str, mac_str, username,
+                                                    #compression_type=h5zip)
+            #else:
+                #this_user_id_str = this_user_id_str[0]
+                #this_user_id = int(this_user_id_str)
+                #user_id = user_ids[this_user_id_str]
+                #last_user_record_id = user_id['last_user_record_id'][()]
+
+            #last_record_id = f['last_record_id'][()]
             
-        args.create_dataset('config_name', (1,), data=b.config_name, 
-                            dtype=str_type, compression=h5zip)
-        args.create_dataset('time_created', (1,), data=b.time_created, 
-                            compression=h5zip)
-        args.create_dataset('description', (1,), data=b.description,
-                            dtype=str_type, compression=h5zip)
-        args.create_dataset('appended_descriptions', (1,), 
-                            data=b.appended_descriptions, dtype=str_type,
-                            compression=h5zip)
+        #last_record_id += 1
+        #this_record = f.create_group(str(last_record_id))
+        #del f['last_record_id']
+        #f['last_record_id'] = last_record_id
         
-        nChannels = len(flat_channel_name_list)
-        args.create_dataset('flat_channel_name_list', (nChannels,),
-                            data=flat_channel_name_list, dtype=str_type,
-                            compression=h5zip)
+        #this_record.create_dataset('user_id', (1,), data=this_user_id, 
+                                   #compression=h5zip)
+        #last_user_record_id += 1
+        #this_record.create_dataset('user_record_id', (1,), data=last_user_record_id,
+                                   #compression=h5zip)
+        #del user_id['last_user_record_id']
+        #user_id['last_user_record_id'] = last_user_record_id
         
-        nGroups = len(b.group_name_list)
-        g = args.create_group('grouped_ind_list')
-        for (group_ind,group_name) in enumerate(b.group_name_list):
-            index_list = b.grouped_ind_list[group_ind]
-            dataset = g.create_dataset(group_name,(len(index_list),),
-                                       data=index_list, compression=h5zip)
+        #this_record.create_dataset('command', (1,), data='insert config',
+                                   #dtype=str_type, compression=h5zip)
+        
+        #args = this_record.create_group('args')
+            
+        #args.create_dataset('config_name', (1,), data=b.config_name, 
+                            #dtype=str_type, compression=h5zip)
+        #args.create_dataset('time_created', (1,), data=b.time_created, 
+                            #compression=h5zip)
+        #args.create_dataset('description', (1,), data=b.description,
+                            #dtype=str_type, compression=h5zip)
+        #args.create_dataset('appended_descriptions', (1,), 
+                            #data=b.appended_descriptions, dtype=str_type,
+                            #compression=h5zip)
+        
+        #nChannels = len(flat_channel_name_list)
+        #args.create_dataset('flat_channel_name_list', (nChannels,),
+                            #data=flat_channel_name_list, dtype=str_type,
+                            #compression=h5zip)
+        
+        #nGroups = len(b.group_name_list)
+        #g = args.create_group('grouped_ind_list')
+        #for (group_ind,group_name) in enumerate(b.group_name_list):
+            #index_list = b.grouped_ind_list[group_ind]
+            #dataset = g.create_dataset(group_name,(len(index_list),),
+                                       #data=index_list, compression=h5zip)
             
         f.close()
         
@@ -212,7 +228,7 @@ class TunerConfigSetupModel(QObject):
     def load_hdf5(self, user_id, user_record_id):
         """"""
         
-        f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH,'r')
+        f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'r')
         
         
         #f['grouped_ind_list']['bpm']['ind_list'][:]

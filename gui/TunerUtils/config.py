@@ -3,10 +3,30 @@ import os
 HOME = os.path.expanduser('~')
 HLA_MACHINE = os.environ.get('HLA_MACHINE', None)
 
-TUNER_CLIENT_HDF5_FILEPATH = os.path.join(HOME,'.hla', HLA_MACHINE, 
-                                          'tuner_client.h5')
-TUNER_CLIENT_SQLITE_FILEPATH = os.path.join(HOME,'.hla', HLA_MACHINE, 
-                                            'tuner_client.db')
+client_data_folder_path = os.path.join(HOME,'.hla', HLA_MACHINE)
+server_data_folder_path = os.path.join(client_data_folder_path,'tuner_server')
+client_HDF5_filename = 'tuner_client.h5'
+client_SQLite_filename = 'tuner_client.sqlite'
+server_HDF5_filename = 'tuner_server.h5'
+server_SQLite_filename = 'tuner_server.sqlite'
+
+TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT   = os.path.join(client_data_folder_path, client_HDF5_filename)
+TUNER_CLIENT_SQLITE_FILEPATH           = os.path.join(client_data_folder_path, client_SQLite_filename)
+TUNER_SERVER_SQLITE_FILEPATH_ON_CLIENT = os.path.join(client_data_folder_path, server_SQLite_filename)
+
+TUNER_CLIENT_HDF5_FILEPATH_ON_SERVER   = os.path.join(server_data_folder_path, client_HDF5_filename)
+TUNER_SERVER_HDF5_FILEPATH             = os.path.join(server_data_folder_path, server_HDF5_filename)
+TUNER_SERVER_SQLITE_FILEPATH_ON_SERVER = os.path.join(server_data_folder_path, server_SQLite_filename)
+
+server_update_HDF5_filename = 'tuner_server_update.h5'
+client_update_HDF5_filename = 'tuner_client_update.h5'
+TUNER_SERVER_UPDATE_HDF5_FILEPATH = os.path.join(server_data_folder_path,
+                                                 server_update_HDF5_filename)
+TUNER_CLIENT_UPDATE_HDF5_FILEPATH_ON_CLIENT = os.path.join(client_data_folder_path,
+                                                           client_update_HDF5_filename)
+TUNER_CLIENT_UPDATE_HDF5_FILEPATH_ON_SERVER = os.path.join(server_data_folder_path,
+                                                           client_update_HDF5_filename)
+
 
 STR_FMT_DEFAULT = ''
 STR_FMT_WEIGHT_FACTOR = ':.8g'
