@@ -2,7 +2,9 @@
 High-Level Interface to SQLite
 '''
 
+import os
 import sqlite3
+from time import time, sleep
 import traceback
 from pprint import pprint
 
@@ -83,12 +85,25 @@ class SQLiteDatabase():
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, filepath=''):
+    def __init__(self, filepath='', create_folder=False):
         """Constructor"""
         
-        self.filepath = filepath
+        self.filepath = os.path.abspath(filepath)
         
-        self.con = sqlite3.connect(filepath)
+        try:
+            self.con = sqlite3.connect(self.filepath)
+        except:
+            parent_folderpath = os.path.dirname(self.filepath)
+            if create_folder:
+                os.mkdir(parent_folderpath)
+                sleep(1.)
+                self.con = sqlite3.connect(self.filepath)
+            else:
+                print 'Folder', parent_folderpath, 'must exist.'
+                print 'Or, set "create_folder=True" when instantiating ' + \
+                      'SQLiteDatabase class to have the folder created automatically.'
+                return
+        
         self.cur = self.con.cursor()
         
         # for WingIDE real-time assistance
@@ -103,13 +118,67 @@ class SQLiteDatabase():
             self.cur.execute('VACUUM')
         
         self.con.close()
+        
+    #----------------------------------------------------------------------
+    def getCurrentEpochTimestampSQLiteFuncStr(self, data_type='float'):
+        """
+        See getCurrentEpochTimestamp() function below
+        """
+        
+        if data_type == 'int':
+            func_str = "strftime('%s','now')"
+        elif data_type == 'float':
+            func_str = "(julianday('now') - 2440587.5)*86400.0"
+        else:
+            raise ValueError('return_type must be "int" or "float".')
+
+        return func_str
+        
+    #----------------------------------------------------------------------
+    def getCurrentEpochTimestamp(self, program='sqlite', return_type='float'):
+        """
+        Returns either int or float representing time elapsed since
+        01/01/1970 UTC in seconds.
+        
+        "program" argument specifies whether to use SQLite built-in timestamp
+        methods or Python built-in epoch timestamp method. Depending on platforms,
+        these different methods may differ by up to ~1ms, from limited
+        personal observations (Y. Hidaka).
+        """
+        
+        if return_type == 'int':
+            isFloat = False
+        elif return_type == 'float':
+            isFloat = True
+        else:
+            raise ValueError('return_type must be "int" or "float".')
+        
+        if program == 'sqlite':
+            if isFloat:
+                self.cur.execute("SELECT (julianday('now') - 2440587.5)*86400.0")
+                return self.cur.fetchall()[0][0]
+            else:
+                self.cur.execute("SELECT strftime('%s','now')")
+                unicode_int_string = self.cur.fetchall()[0][0]
+                return int(unicode_int_string)
+        elif program == 'python':
+            t = time()
+            if isFloat:
+                return t 
+            else:
+                return int(t)
+        else:
+            raise ValueError(
+                '"program" argument must be either "sqlite" or "python". ' +
+                'Unexpected program: ',str(program))
+        
     
     #----------------------------------------------------------------------
     def getTableNames(self):
         """"""
 
         self.cur.execute('SELECT name FROM sqlite_master WHERE type="table" ORDER BY name')
-        table_name_list = self.cur.fetchall()
+        table_name_list = [tup[0] for tup in self.cur.fetchall()]
         
         if DEBUG:
             print 'Existing tables:', table_name_list
@@ -170,11 +239,16 @@ class SQLiteDatabase():
     def getAllColumnDataFromTable(self, table_name):
         """"""
         
-        self.cur.execute('SELECT * FROM ' + table_name)
+        #self.cur.execute('SELECT * FROM ' + table_name)
         
-        all_rows = self.cur.fetchall()
+        #all_rows = self.cur.fetchall()
         
-        return all_rows
+        #return zip(*all_rows)
+        
+        return self.getColumnDataFromTable(table_name, column_name_list=None,
+                                           condition_str='', order_by_str='',
+                                           placeholder_replacement_tuple=None,
+                                           print_cmd=False)
 
     #----------------------------------------------------------------------
     def getColumnDataFromTable(self, table_name, column_name_list=None,
@@ -182,7 +256,7 @@ class SQLiteDatabase():
                                placeholder_replacement_tuple=None,
                                print_cmd=False):
         """
-        Return a tuple of column data.
+        Return a list of column data (tuples).
         
         placeholder_replacement_tuple will be inserted into '?' appearing in the SQL command
         """
@@ -281,6 +355,14 @@ class SQLiteDatabase():
             traceback.print_exc()
             print 'SQL cmd:', sql_cmd
                 
+    #----------------------------------------------------------------------
+    def deleteAllTables(self):
+        """"""
+        
+        table_name_list = self.getTableNames()
+        for table_name in table_name_list:
+            self.deleteTable(table_name)
+        
     #----------------------------------------------------------------------
     def deleteTable(self, table_name):
         """"""

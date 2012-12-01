@@ -3,30 +3,14 @@ import os
 HOME = os.path.expanduser('~')
 HLA_MACHINE = os.environ.get('HLA_MACHINE', None)
 
-client_data_folder_path = os.path.join(HOME,'.hla', HLA_MACHINE)
-server_data_folder_path = os.path.join(client_data_folder_path,'tuner_server')
-client_HDF5_filename = 'tuner_client.h5'
-client_SQLite_filename = 'tuner_client.sqlite'
-server_HDF5_filename = 'tuner_server.h5'
-server_SQLite_filename = 'tuner_server.sqlite'
-
-TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT   = os.path.join(client_data_folder_path, client_HDF5_filename)
-TUNER_CLIENT_SQLITE_FILEPATH           = os.path.join(client_data_folder_path, client_SQLite_filename)
-TUNER_SERVER_SQLITE_FILEPATH_ON_CLIENT = os.path.join(client_data_folder_path, server_SQLite_filename)
-
-TUNER_CLIENT_HDF5_FILEPATH_ON_SERVER   = os.path.join(server_data_folder_path, client_HDF5_filename)
-TUNER_SERVER_HDF5_FILEPATH             = os.path.join(server_data_folder_path, server_HDF5_filename)
-TUNER_SERVER_SQLITE_FILEPATH_ON_SERVER = os.path.join(server_data_folder_path, server_SQLite_filename)
-
-server_update_HDF5_filename = 'tuner_server_update.h5'
-client_update_HDF5_filename = 'tuner_client_update.h5'
-TUNER_SERVER_UPDATE_HDF5_FILEPATH = os.path.join(server_data_folder_path,
-                                                 server_update_HDF5_filename)
-TUNER_CLIENT_UPDATE_HDF5_FILEPATH_ON_CLIENT = os.path.join(client_data_folder_path,
-                                                           client_update_HDF5_filename)
-TUNER_CLIENT_UPDATE_HDF5_FILEPATH_ON_SERVER = os.path.join(server_data_folder_path,
-                                                           client_update_HDF5_filename)
-
+CLIENT_DATA_FOLDERPATH = os.path.join(HOME,'.hla',HLA_MACHINE,'tuner_client')
+SERVER_DATA_FOLDERPATH = os.path.join(HOME,'.hla',HLA_MACHINE,'tuner_server')
+MAIN_DB_FILENAME = 'tuner.sqlite'
+NEW_MAIN_DB_FILENAME = 'new_tuner.sqlite'
+LAST_SYNCED_MAIN_DB_FILENAME = 'last_synced_tuner.sqlite'
+CLIENT_DELTA_DB_FILENAME = 'client_delta.sqlite'
+SERVER_DELTA_DB_FILENAME = 'server_delta.sqlite'
+CLIENT_SERVER_DELTA_DB_FILENAME = 'client_server_delta.sqlite'
 
 STR_FMT_DEFAULT = ''
 STR_FMT_WEIGHT_FACTOR = ':.8g'
