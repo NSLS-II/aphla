@@ -77,6 +77,16 @@ class PrimaryKeyTableConstraint():
         """Constructor"""
         
         self.column_name_list = column_name_list
+
+########################################################################
+class UniqueTableConstraint():
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, column_name_list):
+        """Constructor"""
+        
+        self.column_name_list = column_name_list
     
     
     
@@ -186,6 +196,21 @@ class SQLiteDatabase():
         return table_name_list
     
     #----------------------------------------------------------------------
+    def getColumnNames(self, table_name):
+        """"""
+        
+        try:
+            table_info_dict_list = self.getTableInfo(table_name)
+        except:
+            self.createTempView('temp_view', table_name, column_name_list=['*'])
+            table_info_dict_list = self.getTableInfo('temp_view')
+            self.dropView('temp_view')
+
+        column_name_list = [d['column_name'] for d in table_info_dict_list]
+        return column_name_list
+            
+        
+    #----------------------------------------------------------------------
     def getTableInfo(self, table_name):
         """"""
         
@@ -236,6 +261,21 @@ class SQLiteDatabase():
         return sql_cmd
     
     #----------------------------------------------------------------------
+    def getMaxInColumn(self, table_name, column_name,
+                       condition_str='', order_by_str=''):
+        """"""
+        
+        sql_cmd = self.createSelectSQLStatement(table_name, 
+            column_name_list=['max('+column_name+')'],
+            condition_str=condition_str, order_by_str=order_by_str)
+        
+        self.cur.execute(sql_cmd)
+        
+        z = self.cur.fetchall()
+        
+        return z[0][0]
+    
+    #----------------------------------------------------------------------
     def getAllColumnDataFromTable(self, table_name):
         """"""
         
@@ -247,18 +287,20 @@ class SQLiteDatabase():
         
         return self.getColumnDataFromTable(table_name, column_name_list=None,
                                            condition_str='', order_by_str='',
-                                           placeholder_replacement_tuple=None,
+                                           binding_tuple=None,
                                            print_cmd=False)
 
     #----------------------------------------------------------------------
     def getColumnDataFromTable(self, table_name, column_name_list=None,
                                condition_str='', order_by_str='',
-                               placeholder_replacement_tuple=None,
+                               binding_tuple=None,
+                               binding_list_of_tuples=None,
                                print_cmd=False):
         """
         Return a list of column data (tuples).
         
-        placeholder_replacement_tuple will be inserted into '?' appearing in the SQL command
+        binding_tuple will be inserted into '?' appearing in the SQL command
+        
         """
         
         sql_cmd = self.createSelectSQLStatement(table_name, column_name_list, 
@@ -266,22 +308,32 @@ class SQLiteDatabase():
         if print_cmd:
             print sql_cmd
             
-        if placeholder_replacement_tuple is None:
-            self.cur.execute(sql_cmd)
+        if binding_tuple is not None:
+            self.cur.execute(sql_cmd, binding_tuple)
+            z = self.cur.fetchall()
+            #z = []
+            #for row in self.cur:
+                #z.append(row)
+            
+        elif binding_list_of_tuples is not None:
+            zall = []
+            for binding_tuple in binding_list_of_tuples:
+                self.cur.execute(sql_cmd, binding_tuple)
+                z = self.cur.fetchall()
+                zall.extend(z)
+                
+            z = zall
+
         else:
-            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
-        
-        z = self.cur.fetchall()
-        #z = []
-        #for row in self.cur:
-            #z.append(row)
-        
-        return zip(*z)
+            self.cur.execute(sql_cmd)
+            z = self.cur.fetchall()
+            
+        return zip(*z)        
         
     #----------------------------------------------------------------------
     def createTempView(self, view_name, table_name, column_name_list=None,
                        condition_str='', order_by_str='',
-                       placeholder_replacement_tuple=None):
+                       binding_tuple=None):
         """"""
         
         select_sql = self.createSelectSQLStatement(table_name, column_name_list,
@@ -289,16 +341,16 @@ class SQLiteDatabase():
         
         sql_cmd = 'CREATE TEMP VIEW ' + view_name + ' AS ' + select_sql
         
-        if placeholder_replacement_tuple is None:
+        if binding_tuple is None:
             self.cur.execute(sql_cmd)
         else:
-            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
+            self.cur.execute(sql_cmd, binding_tuple)
         
     #----------------------------------------------------------------------
     def createTable(self, table_name, column_definition_list):
         """"""
         
-        self.deleteTable(table_name)
+        self.dropTable(table_name)
         
         sql_cmd = 'CREATE TABLE ' + table_name + ' ('
         
@@ -338,8 +390,12 @@ class SQLiteDatabase():
                 sql_cmd += 'PRIMARY KEY ' + \
                     '(' + ','.join(col.column_name_list) + ')'
                 
+            elif isinstance(col, UniqueTableConstraint):
+                sql_cmd += 'UNIQUE ' + \
+                    '(' + ','.join(col.column_name_list) + ')'
+                
             else:
-                raise ValueError('Unexpected column class')
+                raise ValueError('Unexpected column class: '+type(col))
             
             sql_cmd += ', '
         
@@ -356,24 +412,33 @@ class SQLiteDatabase():
             print 'SQL cmd:', sql_cmd
                 
     #----------------------------------------------------------------------
-    def deleteAllTables(self):
+    def dropAllTables(self):
         """"""
         
         table_name_list = self.getTableNames()
         for table_name in table_name_list:
-            self.deleteTable(table_name)
+            self.dropTable(table_name)
         
     #----------------------------------------------------------------------
-    def deleteTable(self, table_name):
+    def dropTable(self, table_name):
         """"""
         
         with self.con:
             self.cur.execute('DROP TABLE IF EXISTS '+table_name)
+            
+    #----------------------------------------------------------------------
+    def dropView(self, view_name):
+        """"""
+
+        with self.con:
+            self.cur.execute('DROP VIEW IF EXISTS '+view_name)
+        
         
     #----------------------------------------------------------------------
     def insertTable(self, table_name, foreign_database_name, foreign_table_name,
-                    local_column_name_list=None,
-                    foreign_column_name_list=None):
+                    local_column_name_list=None, foreign_column_name_list=None, 
+                    condition_str='', order_by_str='',
+                    binding_tuple=None):
         """"""
         
         if local_column_name_list is None:
@@ -381,19 +446,30 @@ class SQLiteDatabase():
         else:
             local_column_name_str = '(' + ','.join(local_column_name_list) + ')'
 
-        if foreign_column_name_list is None:
-            foreign_column_name_list = ['*']
-        foreign_column_name_str = ','.join(foreign_column_name_list)        
+        #if foreign_column_name_list is None:
+            #foreign_column_name_list = ['*']
+        #foreign_column_name_str = ','.join(foreign_column_name_list)        
             
-        sql_cmd = 'INSERT INTO ' + table_name + local_column_name_str + \
-            ' SELECT ' + foreign_column_name_str + ' FROM ' + \
-            foreign_database_name + '.' + foreign_table_name
+        select_sql_cmd = self.createSelectSQLStatement(
+            foreign_database_name + '.' + foreign_table_name,
+            column_name_list=foreign_column_name_list,
+            condition_str=condition_str, order_by_str=order_by_str
+        )
+
+        sql_cmd = 'INSERT INTO ' + table_name + local_column_name_str + ' ' + select_sql_cmd
+        #sql_cmd = 'INSERT INTO ' + table_name + local_column_name_str + \
+            #' SELECT ' + foreign_column_name_str + ' FROM ' + \
+            #foreign_database_name + '.' + foreign_table_name
         
-        self.cur.execute(sql_cmd)
+        if binding_tuple is None:
+            self.cur.execute(sql_cmd)
+        else:
+            self.cur.execute(sql_cmd, binding_tuple)
         self.con.commit()
         
     #----------------------------------------------------------------------
-    def insertRows(self, table_name, list_of_tuples, on_conflict=None):
+    def insertRows(self, table_name, list_of_tuples, on_conflict=None,
+                   bind_replacement_list_of_tuples=None):
         """"""
         
         if on_conflict is None:
@@ -403,6 +479,12 @@ class SQLiteDatabase():
         
         placeholder_list = ['?' if not info_dict['primary_key'] else 'null'
                             for info_dict in self.getTableInfo(table_name)]
+        
+        if isinstance(bind_replacement_list_of_tuples,list) or \
+           isinstance(bind_replacement_list_of_tuples,tuple):
+            for tup in bind_replacement_list_of_tuples:
+                placeholder_list[tup[0]] = tup[1]
+        
         placeholder_str = '(' + ', '.join(placeholder_list) + ')'
         
         sql_cmd += placeholder_str
@@ -415,7 +497,7 @@ class SQLiteDatabase():
             
     #----------------------------------------------------------------------
     def deleteRows(self, table_name, condition_str='', 
-                   placeholder_replacement_tuple=None):
+                   binding_tuple=None):
         """"""
         
         sql_cmd = 'DELETE FROM ' + table_name
@@ -423,10 +505,10 @@ class SQLiteDatabase():
         if condition_str != '':
             sql_cmd += ' WHERE ' + condition_str
 
-        if placeholder_replacement_tuple is None:
+        if binding_tuple is None:
             self.cur.execute(sql_cmd)
         else:
-            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
+            self.cur.execute(sql_cmd, binding_tuple)
             
         self.con.commit()
         
@@ -448,7 +530,7 @@ class SQLiteDatabase():
         
     #----------------------------------------------------------------------
     def changeValues(self, table_name, column_name, expression,
-                     condition_str='', placeholder_replacement_tuple=None):
+                     condition_str='', binding_tuple=None):
         """"""
         
         sql_cmd = 'UPDATE ' + table_name + ' SET ' +  column_name + \
@@ -457,10 +539,10 @@ class SQLiteDatabase():
         if condition_str != '':
             sql_cmd += ' WHERE ' + condition_str
 
-        if placeholder_replacement_tuple is None:
+        if binding_tuple is None:
             self.cur.execute(sql_cmd)
         else:
-            self.cur.execute(sql_cmd, placeholder_replacement_tuple)
+            self.cur.execute(sql_cmd, binding_tuple)
             
         self.con.commit()
         

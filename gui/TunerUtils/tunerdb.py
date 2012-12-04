@@ -5,15 +5,19 @@ import numpy as np
 from time import time, strftime, localtime, sleep
 import h5py
 import sqlite3
+import cPickle as pickle
 import traceback
 from pprint import pprint
 import shutil
 
+import aphla as ap
 from aphla.gui.utils.hlsqlite import (MEMORY, SQLiteDatabase, Column, 
-                                      ForeignKeyConstraint, PrimaryKeyTableConstraint)
+                                      ForeignKeyConstraint, PrimaryKeyTableConstraint,
+                                      UniqueTableConstraint)
 from config import (CLIENT_DATA_FOLDERPATH, SERVER_DATA_FOLDERPATH,
                     MAIN_DB_FILENAME, LAST_SYNCED_MAIN_DB_FILENAME,
-                    CLIENT_DELTA_DB_FILENAME, SERVER_DELTA_DB_FILENAME)
+                    CLIENT_DELTA_DB_FILENAME, SERVER_DELTA_DB_FILENAME,
+                    CLIENT_SERVER_DELTA_DB_FILENAME, NEW_MAIN_DB_FILENAME)
 from tunerModels import getuserinfo
 import aphla.gui.utils.y_serial as y_serial
 
@@ -32,6 +36,62 @@ def quote_string(string, quote='single'):
     else:
         raise ValueError('Unexpected quote type: '+str(quote))
     
+#----------------------------------------------------------------------
+def getpvnames(channel_name_list, return_zipped=True):
+    """"""
+    
+    if return_zipped:
+        pvrb_pvsp_pair_name_list = []
+        for ch_name in channel_name_list:
+            elemName, field = ch_name.split('.')
+            elem = ap.getElements(elemName)
+            if field != '':
+                try:
+                    pvrb_name = elem.pv(field=field,handle='readback')[0]
+                except:
+                    pvrb_name = ''
+                try:
+                    pvsp_name = elem.pv(field=field,handle='setpoint')[0]
+                except:
+                    pvsp_name = ''
+                pvrb_pvsp_pair_name_list.append([pvrb_name, pvsp_name])
+            else: # For DIPOLE, there is no field specified
+                pvrb_pvsp_pair_name_list.append(elem.pv()[:])
+            
+        return pvrb_pvsp_pair_name_list
+    
+    else:
+        pvrb_name_list = []
+        pvsp_name_list = []
+
+        for ch_name in channel_name_list:
+            elemName, field = ch_name.split('.')
+            elem = ap.getElements(elemName)[0]
+            if field != '':
+                try:
+                    pvrb_name = elem.pv(field=field,handle='readback')[0]
+                except:
+                    pvrb_name = ''
+                try:
+                    pvsp_name = elem.pv(field=field,handle='setpoint')[0]
+                except:
+                    pvsp_name = ''
+                pvrb_name_list.append(pvrb_name)
+                pvsp_name_list.append(pvsp_name)
+            else: # For DIPOLE, there is no field specified
+                pv_list = elem.pv()[:]
+                try:
+                    pvrb_name_list.append(pv_list[0])
+                except:
+                    pvrb_name_list.append('')
+                try:
+                    pvsp_name_list.append(pv_list[1])
+                except:
+                    pvsp_name_list.append('')
+
+        return pvrb_name_list, pvsp_name_list
+        
+        
 ########################################################################
 class TunerHDF5Manager():
     """"""
@@ -121,6 +181,15 @@ class TunerHDF5Manager():
         args.create_dataset('flat_channel_name_list', (nChannels,),
                             data=flat_channel_name_list, dtype=H5_VARLENSTR,
                             compression=H5_COMPRESSION)
+        weight_list = record_dict['weight_list']
+        args.create_dataset('weight_list', (nChannels,),
+                            data=weight_list, compression=H5_COMPRESSION)
+        step_size_list = record_dict['step_size_list']
+        args.create_dataset('step_size_list', (nChannels,),
+                            data=weight_list, compression=H5_COMPRESSION)
+        indiv_ramp_table = record_dict['indiv_ramp_table']
+        args.create_dataset('indiv_ramp_table', (nChannels,),
+                            data=indiv_ramp_table, compression=H5_COMPRESSION)        
         group_name_list = record_dict['group_name_list']
         nGroups = len(group_name_list)
         args.create_dataset('group_name_list',(nGroups,),
@@ -165,7 +234,7 @@ class TunerMainDatabase(SQLiteDatabase):
         old snapshot used when the snapshot was taken.
         """
         
-        self.deleteAllTables()
+        self.dropAllTables()
         
         global DEBUG
         DEBUG = False
@@ -174,11 +243,13 @@ class TunerMainDatabase(SQLiteDatabase):
         
         table_name = 'transaction_table'
         column_def = [
-            Column('last_delta_id','INTEGER',allow_null=False),
+            Column('last_transaction_id','INTEGER',allow_null=False),
             Column('last_timestamp','REAL',allow_null=False),
         ]
         self.createTable(table_name, column_def)
-
+        self.insertRows(table_name,list_of_tuples=[(0,),],
+            bind_replacement_list_of_tuples=
+            [(1,self.getCurrentEpochTimestampSQLiteFuncStr(data_type='float')),])
 
         table_name = 'unit_table'
         column_def = [
@@ -214,14 +285,15 @@ class TunerMainDatabase(SQLiteDatabase):
             Column('time_created','REAL',allow_null=False),
             ForeignKeyConstraint(self,
                                  'fk_channel_name_id', 'channel_name_id',
-                                 'channel_name_table', 'channel_name_id'),        
+                                 'channel_name_table', 'channel_name_id'),  
+            UniqueTableConstraint(['channel_name_id','pvrb_name','pvsp_name']),
         ]
         self.createTable(table_name, column_def)
         
         table_name = 'channel_group_name_table'
         column_def = [
             Column('channel_group_name_id','INTEGER',primary_key=True),
-            Column('channel_group_name','TEXT',allow_null=False),
+            Column('channel_group_name','TEXT',unique=True,allow_null=False),
         ]
         self.createTable(table_name, column_def)
         
@@ -230,7 +302,7 @@ class TunerMainDatabase(SQLiteDatabase):
             Column('config_id','INTEGER',primary_key=True),
             Column('config_name','TEXT',allow_default=True,default_value='""'),
             Column('user_id','INTEGER',allow_null=False),
-            Column('user_record_id','INTEGER',allow_null=False),
+            Column('transaction_id','INTEGER',allow_null=False),
             Column('time_created','REAL',allow_null=False),
             Column('description','TEXT',allow_default=True,default_value='""'),
             Column('appended_descriptions','TEXT',allow_default=True,default_value='""'), # include modified time as part of the text in this
@@ -266,7 +338,7 @@ class TunerMainDatabase(SQLiteDatabase):
             Column('config_id','INTEGER',allow_null=False),
             Column('snapshot_name','TEXT',allow_default=True,default_value='""'),
             Column('user_id','INTEGER',allow_null=False),
-            Column('user_record_id','INTEGER',allow_null=False),
+            Column('transaction_id','INTEGER',allow_null=False),
             Column('time_snapshot_taken','REAL',allow_null=False),        
             Column('description','TEXT',allow_default=True,default_value='""'),
             Column('appended_descriptions','TEXT',allow_default=True,default_value='""'), # include modified time as part of the text in this
@@ -316,6 +388,29 @@ class TunerMainDatabase(SQLiteDatabase):
         
         print 'Successfully initialized main database tables for aplattuner.'        
         
+    #----------------------------------------------------------------------
+    def checkUserID(self, ip_str, mac_str, username):
+        """
+        Check if a new user signature already exists in "user_table".
+        
+        If it does exist, then return the user_id.
+        If not, add the new user signature, and return the newly created
+        user_id.
+        """
+        
+        user_id_list = self.getColumnDataFromTable(
+            'user_table',column_name_list=['user_id'],
+            condition_str='ip_str = ? AND mac_str = ? AND username = ?',
+            binding_tuple=(ip_str,mac_str,username))
+        if user_id_list == []:
+            self.insertRows('user_table',list_of_tuples=[(ip_str,mac_str,username),])
+            user_id = self.getMaxInColumn('user_table','user_id')
+        else:
+            user_id = user_id_list[0][0]
+            
+        
+        return user_id
+        
     
 ########################################################################
 class TunerDeltaDatabase(SQLiteDatabase):
@@ -335,7 +430,7 @@ class TunerDeltaDatabase(SQLiteDatabase):
         """
         """
         
-        self.deleteAllTables()
+        self.dropAllTables()
         
         self.ys.createtable(table='delta_table')
         
@@ -390,13 +485,15 @@ class TunerDeltaDatabase(SQLiteDatabase):
     #----------------------------------------------------------------------
     def getColumnDataFromTable(self, table_name, column_name_list=None,
                                condition_str='', order_by_str='',
-                               placeholder_replacement_tuple=None,
+                               binding_tuple=None, binding_list_of_tuples=None,
                                print_cmd=False):
         """"""
         
         result_list_of_tuples = SQLiteDatabase.getColumnDataFromTable(
-            self,table_name, column_name_list, condition_str, order_by_str,
-            placeholder_replacement_tuple, print_cmd)
+            self,table_name, column_name_list=column_name_list, 
+            condition_str=condition_str, order_by_str=order_by_str,
+            binding_tuple=binding_tuple, binding_list_of_tuples=binding_list_of_tuples,
+            print_cmd=print_cmd)
         
         if result_list_of_tuples == []:
             return result_list_of_tuples
@@ -486,7 +583,7 @@ class TunerDeltaDatabase(SQLiteDatabase):
         #matched_user_id_list = self.getColumnDataFromTable(
             #'user_table', column_name_list=['user_id'],
             #condition_str='ip_str=? AND mac_str=? AND username=?',
-            #placeholder_replacement_tuple=(ip_str,mac_str,username))
+            #binding_tuple=(ip_str,mac_str,username))
         
         #if matched_user_id_list == []:
             #return None
@@ -527,14 +624,14 @@ class TunerDeltaDatabase(SQLiteDatabase):
         #g.create_dataset('username', (1,), data=username,
                          #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
             
-        #user_record_id_list = [int(k) for k in f_client.keys() if k not in
-                               #('user_id','max_user_record_id','max_record_id')]
-        #for (i, user_record_id) in enumerate(user_record_id_list):
-            #client_record = f_client[str(user_record_id)]
+        #transaction_id_list = [int(k) for k in f_client.keys() if k not in
+                               #('user_id','max_transaction_id','max_record_id')]
+        #for (i, transaction_id) in enumerate(transaction_id_list):
+            #client_record = f_client[str(transaction_id)]
             #record_group_name = str(i+1)
             #f_client.copy(client_record, f_server_update, name=record_group_name)
             #g = f_server_update[record_group_name]
-            #g.create_dataset('user_record_id', (1,), data=user_record_id,
+            #g.create_dataset('transaction_id', (1,), data=transaction_id,
                              #compression=H5_COMPRESSION)
             
         
@@ -570,14 +667,14 @@ class TunerDeltaDatabase(SQLiteDatabase):
         
         #for i in record_id_list:
             #rec = f[str(i)]
-            #user_record_id = rec['user_record_id'][0]
+            #transaction_id = rec['transaction_id'][0]
             #time_added     = time()
             #command        = rec['command'][0]
             #args           = rec['args']
             
             #if command == 'insert config':
                 #list_of_tuples = [(args['config_name'], matched_user_id, 
-                                   #user_record_id, args['time_created'],
+                                   #transaction_id, args['time_created'],
                                    #args['description'], args['appended_descriptions'],
                                    #time_added)]
                 #self.insertRows('config_meta_table',list_of_tuples)
@@ -680,7 +777,7 @@ class TunerDeltaDatabase(SQLiteDatabase):
         #user_id.create_dataset('username', (1,), data=username,
                                #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
         
-        #f.create_dataset('max_user_record_id', (1,), data=0,
+        #f.create_dataset('max_transaction_id', (1,), data=0,
                          #compression=H5_COMPRESSION)
 
         #f.create_dataset('max_record_id', (1,), data=0,
@@ -734,12 +831,12 @@ class TunerDeltaDatabase(SQLiteDatabase):
         #else:
             #f = h5FileObject
             
-        #max_user_record_id = f['max_user_record_id'][0]
+        #max_transaction_id = f['max_transaction_id'][0]
                 
         #if h5FileObject is None:
             #f.close()
             
-        #return max_user_record_id
+        #return max_transaction_id
 
     ##----------------------------------------------------------------------
     #def updateMaxUserRecordIDinClientH5(self, h5FileObject=None):
@@ -750,12 +847,12 @@ class TunerDeltaDatabase(SQLiteDatabase):
         #else:
             #f = h5FileObject
         
-        #user_record_id_list = [int(k) for k in f.keys() if k not in
-                               #('user_id','max_user_record_id','max_record_id')]
+        #transaction_id_list = [int(k) for k in f.keys() if k not in
+                               #('user_id','max_transaction_id','max_record_id')]
         
-        #if user_record_id_list != []:
-            #del f['max_user_record_id']
-            #f['max_user_record_id'] = [max(user_record_id_list)]
+        #if transaction_id_list != []:
+            #del f['max_transaction_id']
+            #f['max_transaction_id'] = [max(transaction_id_list)]
                 
         #if h5FileObject is None:
             #f.close()
@@ -797,10 +894,10 @@ class TunerDeltaDatabase(SQLiteDatabase):
             
         #self.updateUserIDinClientH5(f)
         
-        #max_user_record_id = self.getMaxUserRecordIDinClientH5(f)
+        #max_transaction_id = self.getMaxUserRecordIDinClientH5(f)
         
-        #new_user_record_id = max_user_record_id + 1
-        #record = f.create_group(str(new_user_record_id))
+        #new_transaction_id = max_transaction_id + 1
+        #record = f.create_group(str(new_transaction_id))
 
         #record.create_dataset('command', (1,), data='insert config',
                               #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
@@ -1031,12 +1128,12 @@ def test1(args):
     for channel_group_id in channel_group_ids:
         channel_group_name, = db.getColumnDataFromTable(
             'channelGroupsMeta',column_name_list=['channel_group_name'],
-            condition_str='channel_group_id=?', placeholder_replacement_tuple=(channel_group_id,)) 
+            condition_str='channel_group_id=?', binding_tuple=(channel_group_id,)) 
         channel_group_name = channel_group_name[0]
         
         channel_name_ids, = db.getColumnDataFromTable(
             'channelGroups',column_name_list=['channel_name_id'],
-            condition_str='channel_group_id=?', placeholder_replacement_tuple=(channel_group_id,))         
+            condition_str='channel_group_id=?', binding_tuple=(channel_group_id,))         
         #print 'channel_name_ids', channel_name_ids
         
         latest_channel_ids = []
@@ -1047,12 +1144,12 @@ def test1(args):
         for channel_name_id in channel_name_ids:
             channel_name, = db.getColumnDataFromTable(
                 'channelNames',column_name_list=['channel_name'],
-                condition_str='channel_name_id=?', placeholder_replacement_tuple=(channel_name_id,))
+                condition_str='channel_name_id=?', binding_tuple=(channel_name_id,))
             channel_names.append(channel_name[0])
 
             channel_ids, pvrb_names, pvsp_names, times_created = db.getColumnDataFromTable(
                 'channels',column_name_list=['channel_id', 'pvrb_name', 'pvsp_name', 'time_created'],
-                condition_str='channel_name_id=?', placeholder_replacement_tuple=(channel_name_id,))
+                condition_str='channel_name_id=?', binding_tuple=(channel_name_id,))
             if len(channel_ids) == 1:
                 latest_channel_ids.append( channel_ids[0] )
                 latest_pvrb_names.append( pvrb_names[0] )
@@ -1215,12 +1312,247 @@ def test_readServerDeltaDB():
     print server_delta_db.getColumnDataFromTable('delta_table')
     print server_delta_db.getColumnDataFromTable('sync_table')
     
+#----------------------------------------------------------------------
+def test_createClientServerDeltaDB():
+    """"""
+    
+    client_delta_filepath_on_server = os.path.join(SERVER_DATA_FOLDERPATH,
+                                                   CLIENT_DELTA_DB_FILENAME)
+    client_delta_db_on_server = TunerDeltaDatabase(
+        filepath=client_delta_filepath_on_server)
+    client_last_sync_timestamp =  client_delta_db_on_server.getColumnDataFromTable(
+        'sync_table', column_name_list=['last_timestamp'])[0][0]
+    client_delta_db_on_server.close()
+    
+    server_delta_filepath = os.path.join(SERVER_DATA_FOLDERPATH,
+                                         SERVER_DELTA_DB_FILENAME)
+    server_delta_db = TunerDeltaDatabase(filepath=server_delta_filepath)
+    
+    client_server_delta_filepath_on_server = os.path.join(SERVER_DATA_FOLDERPATH,
+                                                          CLIENT_SERVER_DELTA_DB_FILENAME)
+    client_server_delta_db = TunerDeltaDatabase(
+        filepath=client_server_delta_filepath_on_server)
+    client_server_delta_db._initTables()
+    client_server_delta_db.attachDatabase(server_delta_filepath, 'server_delta_db')
+    client_server_delta_db.insertTable('delta_table',
+                                       foreign_database_name='server_delta_db',
+                                       foreign_table_name='delta_table')
+    
+    print client_server_delta_db.getColumnDataFromTable('delta_table')
+    print client_server_delta_db.getColumnDataFromTable('sync_table')    
+
+    os.remove(client_delta_filepath_on_server)
+    
+#----------------------------------------------------------------------
+def test_sendClientServerDeltaToClientAndDeleteItOnServer():
+    """"""
+    
+    client_server_delta_filepath_on_client = os.path.join(
+        CLIENT_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
+    client_server_delta_filepath_on_server = os.path.join(
+        SERVER_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
+    shutil.copy(client_server_delta_filepath_on_server,
+                client_server_delta_filepath_on_client)
+    
+    os.remove(client_server_delta_filepath_on_server)
+    
+    
+#----------------------------------------------------------------------
+def test_createNewTunerDBOnClient_applyClientServerDeltaToNewMainDB():
+    """"""
+
+    last_synced_tuner_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                                 LAST_SYNCED_MAIN_DB_FILENAME)
+    new_tuner_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                         NEW_MAIN_DB_FILENAME)
+    shutil.copy(last_synced_tuner_db_filepath,
+                new_tuner_db_filepath)
+
+    
+    client_server_delta_filepath = os.path.join(
+        CLIENT_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
+    
+    client_server_delta_db = TunerDeltaDatabase(
+        filepath=client_server_delta_filepath)
+    new_tuner_db = TunerMainDatabase(filepath=new_tuner_db_filepath)
+    
+    last_transaction_id = new_tuner_db.getColumnDataFromTable(
+        'transaction_table', column_name_list=['last_transaction_id'])
+    if last_transaction_id == []:
+        last_transaction_id = 0
+    else:
+        last_transaction_id = last_transaction_id[0][0]
+    
+    new_transaction_id_list, new_timestamp_list, new_transaction_type_list, \
+        new_transaction_data_list = client_server_delta_db.getColumnDataFromTable(
+            'delta_table', column_name_list=['*'],condition_str=' kid > ?',
+            order_by_str='kid', binding_tuple=(last_transaction_id,))
+    
+    for (transaction_id, timestamp, trans_type, trans_data) in \
+        zip(new_transaction_id_list, new_timestamp_list, new_transaction_type_list,
+            new_transaction_data_list):
+
+        user_id = new_tuner_db.checkUserID(trans_data['ip_str'],trans_data['mac_str'],
+                                           trans_data['username'])
+
+        if trans_type == 'insert_config':
+            list_of_tuples=[(trans_data['config_name'],
+                             user_id, transaction_id,
+                             trans_data['time_created'],
+                             trans_data['description'],
+                             trans_data['appended_descriptions']),]
+            new_tuner_db.insertRows('config_meta_table',
+                                    list_of_tuples=list_of_tuples)
+            print 'config_meta_table'
+            pprint( new_tuner_db.getAllColumnDataFromTable('config_meta_table') )
+
+            config_id = new_tuner_db.getMaxInColumn('config_meta_table','config_id')
+            
+            channel_name_list_of_tuples = [tuple((ch_name,)) for ch_name in
+                                           trans_data['flat_channel_name_list']]
+            new_tuner_db.insertRows('channel_name_table',
+                                    list_of_tuples=channel_name_list_of_tuples,
+                                    on_conflict='IGNORE')
+            print 'channel_name_table'
+            pprint( new_tuner_db.getAllColumnDataFromTable('channel_name_table') )            
+
+            channel_name_id_list = new_tuner_db.getColumnDataFromTable(
+                'channel_name_table',column_name_list=['channel_name_id'],
+                condition_str='channel_name = ?',
+                binding_list_of_tuples=channel_name_list_of_tuples
+            )[0]
+            pvrb_name_list, pvsp_name_list = getpvnames(
+                trans_data['flat_channel_name_list'], return_zipped=False)
+            list_of_tuples = zip(channel_name_id_list,pvrb_name_list,pvsp_name_list)
+            bind_replacement_list_of_tuples = [
+                (-1, new_tuner_db.getCurrentEpochTimestampSQLiteFuncStr(data_type='float'))
+                ]
+            new_tuner_db.insertRows('channel_table',list_of_tuples=list_of_tuples,
+                                    on_conflict='IGNORE',
+                                    bind_replacement_list_of_tuples=bind_replacement_list_of_tuples)
+            print 'channel_table'
+            pprint(new_tuner_db.getAllColumnDataFromTable('channel_table'))
+            
+            group_name_list = trans_data['group_name_list']
+            list_of_tuples = [tuple((g_name,)) for g_name in group_name_list]
+            new_tuner_db.insertRows('channel_group_name_table',
+                                    list_of_tuples=list_of_tuples,
+                                    on_conflict='IGNORE')
+            print 'channel_group_name_table'
+            pprint( new_tuner_db.getAllColumnDataFromTable('channel_group_name_table') )
+
+            config_id_list = [config_id]*len(channel_name_id_list)
+            channel_group_name_id_list = [0]*len(channel_name_id_list)
+            channel_group_name_id_unique_list = new_tuner_db.getColumnDataFromTable(
+                'channel_group_name_table', column_name_list=['channel_group_name_id'],
+                condition_str='channel_group_name = ?', 
+                binding_list_of_tuples=[tuple((g,)) for g in group_name_list])[0]
+            for (gid, ind_list) in zip(channel_group_name_id_unique_list,
+                                         trans_data['grouped_ind_list']):
+                for i in ind_list: channel_group_name_id_list[i] = gid
+            weight_list = trans_data['weight_list']
+            step_size_list = trans_data['step_size_list']
+            indiv_ramp_table_list = [sqlite3.Binary(pickle.dumps(obj,protocol=2)) 
+                                     for obj in trans_data['indiv_ramp_table']]
+            list_of_tuples = zip(config_id_list, channel_name_id_list, channel_group_name_id_list,
+                                 weight_list, step_size_list, indiv_ramp_table_list)
+            new_tuner_db.insertRows('config_table',list_of_tuples=list_of_tuples)
+            print 'config_table'
+            pprint( new_tuner_db.getAllColumnDataFromTable('config_table') )
+            
+        else:
+            raise NotImplementedError('transaction type: ' + trans_type)
+    
+#----------------------------------------------------------------------
+def test_finalizeClientMainDBUpdate():
+    """"""
+    client_server_delta_filepath = os.path.join(
+            CLIENT_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
+    new_tuner_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                         NEW_MAIN_DB_FILENAME)
+    
+    client_server_delta_db = TunerDeltaDatabase(
+        filepath=client_server_delta_filepath)
+    new_tuner_db = TunerMainDatabase(filepath=new_tuner_db_filepath)
+
+    last_transaction_id = client_server_delta_db.getMaxInColumn('delta_table','kid')
+    last_timestamp = client_server_delta_db.getColumnDataFromTable('delta_table',
+        column_name_list=['tunix'], condition_str='kid = ?', 
+        binding_tuple=(last_transaction_id,))[0][0]
+    new_tuner_db.changeValues('transaction_table','last_transaction_id','?',
+                              binding_tuple=(last_transaction_id,))
+    new_tuner_db.changeValues('transaction_table','last_timestamp','?',
+                              binding_tuple=(last_timestamp,))
+
+
+    tuner_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                     MAIN_DB_FILENAME)
+    shutil.move(new_tuner_db_filepath, tuner_db_filepath)
+
+    last_synced_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                           LAST_SYNCED_MAIN_DB_FILENAME)
+    shutil.copy(tuner_db_filepath, last_synced_db_filepath)
+    
+    os.remove(client_server_delta_filepath)
+    
+    client_delta_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                         CLIENT_DELTA_DB_FILENAME)
+    client_delta_db = TunerDeltaDatabase(filepath=client_delta_filepath)
+    client_delta_db.deleteRows('delta_table') # delete all rows in "delta_table"
+    client_delta_db.changeValues('sync_table','last_timestamp',
+        client_delta_db.getCurrentEpochTimestampSQLiteFuncStr(data_type='float'))
+
+#----------------------------------------------------------------------
+def test_loadConfigFromDB(config_id):
+    """"""
+    
+    client_main_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                           MAIN_DB_FILENAME)
+    client_main_db = TunerMainDatabase(filepath=client_main_db_filepath)
+    
+    column_name_list = client_main_db.getColumnNames(
+        'config_meta_table cm JOIN user_table u ON (cm.user_id=u.user_id)')
+    column_name_list = [col for col in column_name_list if not col.startswith('user_id')]
+    #
+    meta_data_list_of_tuples = client_main_db.getColumnDataFromTable(
+        'config_meta_table cm JOIN user_table u ON (cm.user_id=u.user_id)',
+        column_name_list=['*'], condition_str='cm.config_id = ?', binding_tuple=(config_id,))
+    meta_data = {}
+    for (col,tup) in zip(column_name_list, meta_data_list_of_tuples):
+        meta_data[col] = tup[0]
+
+    pprint( meta_data )
+        
+    client_main_db.createTempView('cf_cgn',
+        'config_table cf JOIN channel_group_name_table cgn ON (cf.channel_group_name_id=cgn.channel_group_name_id)')
+    client_main_db.createTempView('cf_cgn_cn',
+            'cf_cgn JOIN channel_name_table cn ON (cf_cgn.channel_name_id=cn.channel_name_id)')
+    client_main_db.createTempView('config_view',
+            'cf_cgn_cn JOIN channel_table c ON (cf_cgn_cn.channel_name_id=c.channel_name_id)')
+    
+    column_name_list = client_main_db.getColumnNames('config_view')
+    column_name_list = [col for col in column_name_list if not (
+        col.startswith('channel_group_name_id')
+        or col.startswith('channel_name_id') )] 
+    pprint( column_name_list )
+    
+    config_view = client_main_db.getColumnDataFromTable('config_view',column_name_list=['*'],
+                                                        condition_str='config_id = ?',
+                                                        binding_tuple=(config_id,))
+    pprint( np.array(zip(*config_view)) )
+    
 #----------------------------------------------------------------------    
 if __name__ == "__main__" :
     
     #test_initializationAtFirstEverTunerStartup()
     ## using Tuner Config Setup, save some sample config to client_delta
-    test_readClientDeltaDB()
-    test_sendClientDeltaToServerAndAddToServerDelta()
-    test_readServerDeltaDB()
-    pass
+    #test_readClientDeltaDB()
+    #test_sendClientDeltaToServerAndAddToServerDelta()
+    #test_readServerDeltaDB()
+    #test_createClientServerDeltaDB()
+    #test_sendClientServerDeltaToClientAndDeleteItOnServer()
+    #test_createNewTunerDBOnClient_applyClientServerDeltaToNewMainDB()
+    #test_finalizeClientMainDBUpdate()
+    test_loadConfigFromDB(config_id=1)
+    
+    

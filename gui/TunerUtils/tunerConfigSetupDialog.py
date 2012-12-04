@@ -131,6 +131,7 @@ class TunerConfigSetupModel(QObject):
             b.appended_descriptions = b.appended_descriptions.encode('ascii')
 
         record = {}
+        record['ip_str'], record['mac_str'], record['username'] = b.userinfo
         record['config_name'] = b.config_name
         record['time_created'] = b.time_created
         record['description'] = b.description
@@ -138,6 +139,9 @@ class TunerConfigSetupModel(QObject):
         record['flat_channel_name_list'] = flat_channel_name_list
         record['group_name_list'] = b.group_name_list
         record['grouped_ind_list'] = b.grouped_ind_list
+        record['weight_list'] = b.k_weight
+        record['step_size_list'] = b.k_step_size
+        record['indiv_ramp_table'] = [np.nan for name in b.k_channel_name]
         
         filepath = os.path.join(CLIENT_DATA_FOLDERPATH, 'config_test.h5')
         f = TunerHDF5Manager(filepath,mode='w',create_fresh=True)
@@ -150,6 +154,7 @@ class TunerConfigSetupModel(QObject):
         b = self.base_model
         
         record = {}
+        record['ip_str'], record['mac_str'], record['username'] = b.userinfo
         record['config_name'] = b.config_name
         record['time_created'] = b.time_created
         record['description'] = b.description
@@ -157,6 +162,9 @@ class TunerConfigSetupModel(QObject):
         record['flat_channel_name_list'] = [name for name in b.k_channel_name]
         record['group_name_list'] = b.group_name_list
         record['grouped_ind_list'] = b.grouped_ind_list
+        record['weight_list'] = b.k_weight
+        record['step_size_list'] = b.k_step_size
+        record['indiv_ramp_table'] = [None for name in b.k_channel_name]
         
         client_delta_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
                                              CLIENT_DELTA_DB_FILENAME)        
