@@ -20,6 +20,8 @@ from config import (CLIENT_DATA_FOLDERPATH, SERVER_DATA_FOLDERPATH,
                     CLIENT_SERVER_DELTA_DB_FILENAME, NEW_MAIN_DB_FILENAME)
 from tunerModels import getuserinfo
 import aphla.gui.utils.y_serial as y_serial
+import aphla.gui.utils.tcpip as tcpip
+from aphla.gui.utils.tcpip import BLOCK_SIZE
 
 DEBUG = False
 H5_COMPRESSION = 'gzip'
@@ -91,7 +93,241 @@ def getpvnames(channel_name_list, return_zipped=True):
 
         return pvrb_name_list, pvsp_name_list
         
+      
+########################################################################
+class TunerServer(tcpip.Server):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
         
+        tcpip.Server.__init__(self)
+        
+        # Persistent files
+        self.server_main_db_filepath = os.path.join(
+            SERVER_DATA_FOLDERPATH, MAIN_DB_FILENAME)
+        self.server_delta_db_filepath = os.path.join(
+            SERVER_DATA_FOLDERPATH, SERVER_DELTA_DB_FILENAME)
+        # Temporary files
+        self.client_delta_db_filepath = os.path.join(
+            SERVER_DATA_FOLDERPATH, CLIENT_DELTA_DB_FILENAME)
+        self.client_server_delta_db_filepath = os.path.join(
+            SERVER_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
+        
+        if os.path.exists(self.server_delta_db_filepath):
+            self.server_delta_db = TunerDeltaDatabase(
+                filepath=self.server_delta_db_filepath)
+        else:
+            self.server_delta_db = None
+
+        if os.path.exists(self.server_main_db_filepath):
+            self.server_main_db = TunerMainDatabase(
+                filepath=self.server_main_db_filepath)
+        else:
+            self.server_main_db = None
+            
+            
+    #----------------------------------------------------------------------
+    def _initDBFiles(self):
+        """"""
+        
+        # Initialize main DB
+        server_main_db = TunerMainDatabase(filepath=self.server_main_db_filepath,
+                                           create_folder=True)
+        server_main_db._initTables()
+        
+
+        # Initialize delta DB that contains all the transactions
+        # from all the clients
+        server_delta_db = TunerDeltaDatabase(filepath=self.server_delta_db_filepath,
+                                             create_folder=True)
+        server_delta_db._initTables()
+        
+    #----------------------------------------------------------------------
+    def insertConfigRecordsOnServer(self, debug=False):
+        """"""
+        
+        if debug:
+            self.server_delta_db._initTables() # Making sure server_delta is clean for this
+            # testing purpose
+        
+        self.server_delta_db.insertConfigRecordsOnServer()
+        
+    #----------------------------------------------------------------------
+    def createClientServerDeltaDB(self):
+        """"""
+        
+        print 'Creating client_server_delta DB file...'
+        
+        client_delta_db = TunerDeltaDatabase(filepath=self.client_delta_db_filepath)
+        client_server_delta_db = TunerDeltaDatabase(
+            filepath=self.client_server_delta_db_filepath)
+        
+        client_last_sync_timestamp = client_delta_db.getColumnDataFromTable(
+            'sync_table',column_name_list=['last_timestamp'])[0][0]
+        client_delta_db.close()
+        
+        client_server_delta_db._initTables()
+        client_server_delta_db.attachDatabase(self.server_delta_db_filepath,
+                                              'server_delta_db')
+        client_server_delta_db.insertTable('delta_table',
+                                           foreign_database_name='server_delta_db',
+                                           foreign_table_name='delta_table')
+        client_server_delta_db.close()
+
+        print 'Done.'
+        
+        print 'Removing client_delta DB file sent from Client...'
+        os.remove(self.client_delta_db_filepath)
+        print 'Done.'
+        
+    #----------------------------------------------------------------------
+    def sendClientServerDelta(self):
+        """"""
+        
+        self.insertConfigRecordsOnServer()
+        
+        self.createClientServerDeltaDB()
+        
+        connection, client_address = self.sock.accept()
+        try:
+            f = open(self.client_server_delta_db_filepath,'rb')
+            print 'Sending client_server_delta DB file to Client...'
+            
+            while True:
+                data = f.read(BLOCK_SIZE)
+                if not data: f.close(); break
+                connection.sendall(data)
+            print 'Done.'
+        except:
+            traceback.print_exc()
+            raise RuntimeError()
+        
+        print 'Closing client connection'
+        connection.close()
+        
+        print 'Removing client_server_delta DB file...'
+        os.remove(self.client_server_delta_db_filepath)
+        print 'Done.'
+        
+        
+        
+########################################################################
+class TunerClient(tcpip.Client):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        
+        tcpip.Client.__init__(self)
+        
+        # Persistent files
+        self.client_delta_db_filepath = os.path.join(
+            CLIENT_DATA_FOLDERPATH, CLIENT_DELTA_DB_FILENAME)
+        self.client_main_db_filepath = os.path.join(
+            CLIENT_DATA_FOLDERPATH, MAIN_DB_FILENAME)
+        self.last_synced_main_db_filepath = os.path.join(
+            CLIENT_DATA_FOLDERPATH, LAST_SYNCED_MAIN_DB_FILENAME)
+        # Temporary files
+        self.new_client_main_db_filepath = os.path.join(
+            CLIENT_DATA_FOLDERPATH, NEW_MAIN_DB_FILENAME)
+        self.client_server_delta_db_filepath = os.path.join(
+            CLIENT_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
+        
+        if os.path.exists(self.client_delta_db_filepath):
+            self.client_delta_db = TunerDeltaDatabase(
+                self.client_delta_db_filepath)
+        else:
+            self.client_delta_db = None
+
+        if os.path.exists(self.client_main_db_filepath):
+            self.client_main_db = TunerMainDatabase(
+                self.client_main_db_filepath)
+        else:
+            self.client_main_db = None
+        
+    #----------------------------------------------------------------------
+    def _initDBFiles(self):
+        """"""
+        
+        # Initialize delta DB that contains all the transactions
+        # performed by this client only
+        client_delta_db = TunerDeltaDatabase(self.client_delta_db_filepath,
+                                             create_folder=True)
+        client_delta_db._initTables()
+
+        # Copy the main DB file from the server
+        self.copyMainDBFileFromServer()
+        
+        # Make a backup copy of the main DB file for easy syncing later on
+        self.backupMainDBFile()
+        
+    #----------------------------------------------------------------------
+    def copyMainDBFileFromServer(self):
+        """"""
+        
+        # Make sure that the main DB file on the server is fully updated with
+        # the server's delta DB file, before copying the file over.
+
+        #shutil.copy(self.server_main_db_filepath, self.client_main_db_filepath)
+        self.receiveFile(MAIN_DB_FILENAME, src_folderpath=SERVER_DATA_FOLDERPATH)
+        shutil.move(MAIN_DB_FILENAME, self.client_main_db_filepath)
+        
+    #----------------------------------------------------------------------
+    def backupMainDBFile(self):
+        """"""
+        
+        shutil.copy(self.client_main_db_filepath,
+                    self.last_synced_main_db_filepath)
+        
+    #----------------------------------------------------------------------
+    def getClientServerDelta(self):
+        """"""
+
+        try:
+            self.sendRequestHeader('sendClientServerDelta')
+        except:
+            print 'ERROR: There appears to be a network problem.'
+            print 'Make sure that the server is running.'
+            return
+        
+        self.connectToServer(timeout=600.)
+        #
+        try:
+            f = open(self.client_server_delta_db_filepath,'wb')
+            print 'Downloading client_server_delta DB file from server...'
+            
+            while True:
+                data = self.sock.recv(BLOCK_SIZE)
+                if not data: f.close(); break
+                f.write(data)
+            print 'Finished downloading successfully.'
+        except:
+            traceback.print_exc()
+            print 'Error while receiving client_server_delta DB file from Server.'
+        #
+        self.closeSocket()
+    
+    #----------------------------------------------------------------------
+    def updateDBOnClient(self):
+        """"""
+        
+        pass
+    
+    #----------------------------------------------------------------------
+    def syncWithServer(self):
+        """"""
+        
+        self.sendFile(self.client_delta_db_filepath,
+                      destination_folderpath=SERVER_DATA_FOLDERPATH,
+                      debug=False)
+        
+        self.getClientServerDelta()
+        
+        self.updateDBOnClient()
+    
 ########################################################################
 class TunerHDF5Manager():
     """"""
@@ -514,429 +750,7 @@ class TunerDeltaDatabase(SQLiteDatabase):
         
         return result_list_of_tuples
 
-#########################################################################
-#class TunerServerDatabase(TunerAbstractDatabase):
-    #""""""
-    
-    ##----------------------------------------------------------------------
-    #def __init__(self, filepath=TUNER_SERVER_SQLITE_FILEPATH_ON_SERVER):
-        #"""Constructor"""
-        
-        #folder_path = os.path.dirname(filepath)
-        #if not os.path.exists(folder_path):
-            #os.mkdir(folder_path)
-        
-        #TunerAbstractDatabase.__init__(self, filepath=filepath)
 
-    ##----------------------------------------------------------------------
-    #def _initH5(self):
-        #""""""
-        
-        #server_data_folder_path = os.path.dirname(TUNER_SERVER_HDF5_FILEPATH)
-        #if not os.path.exists(server_data_folder_path):
-            #os.mkdir(server_data_folder_path)
-        
-        #f = self.getFreshHDF5FileObj(TUNER_SERVER_HDF5_FILEPATH)
-        ##if os.path.exists(TUNER_SERVER_HDF5_FILEPATH):
-            ##os.remove(TUNER_SERVER_HDF5_FILEPATH)
-            ##sleep(1.)
-        
-        ##nMaxTrials = 5
-        ##for i in range(nMaxTrials):
-            ##try:
-                ##f = h5py.File(TUNER_SERVER_HDF5_FILEPATH,'w')
-            ##except:
-                ##print 'Trial #' + int(i) + ': Opening ' + \
-                      ##TUNER_SERVER_HDF5_FILEPATH + ' failed.'
-                ##if i == nMaxTrials:
-                    ##raise IOError('Failed opening '+TUNER_SERVER_HDF5_FILEPATH)
-                ##sleep(1.)
-            ##else:
-                ##break
-
-        #f.create_dataset('max_user_id', (1,), data=0,
-                         #compression=H5_COMPRESSION)
-        #f.create_group('user_ids')
-        #f.create_dataset('max_record_id', (1,), data=0,
-                         #compression=H5_COMPRESSION)
-        
-        #f.close()
-        
-    ##----------------------------------------------------------------------
-    #def _initDB(self):
-        #""""""
-
-        #server_data_folder_path = os.path.dirname(TUNER_SERVER_HDF5_FILEPATH)
-        #if not os.path.exists(server_data_folder_path):
-            #os.mkdir(server_data_folder_path)
-        
-        #self._initTables()
-
-    ##----------------------------------------------------------------------
-    #def getUserIDFromServerDB(self, ip_str, mac_str, username):
-        #""""""
-        
-        #ip_str = quote_string(ip_str)
-        #mac_str = quote_string(mac_str)
-        #username = quote_string(username)
-        
-        #matched_user_id_list = self.getColumnDataFromTable(
-            #'user_table', column_name_list=['user_id'],
-            #condition_str='ip_str=? AND mac_str=? AND username=?',
-            #binding_tuple=(ip_str,mac_str,username))
-        
-        #if matched_user_id_list == []:
-            #return None
-        #elif len(matched_user_id_list) > 1:
-            #raise ValueError('More than 1 match for user_id detected.')
-        #else:
-            #return matched_user_id_list[0]
-        
-        
-    ##----------------------------------------------------------------------
-    #def createServerUpdateH5(self):
-        #"""
-        #Create server_update.h5 from client.h5.
-
-        #After creation of server_update.h5, do NOT delete client.h5 yet,
-        #since it will be needed at a later step.
-        #"""
-        
-        #if not os.path.exists(TUNER_CLIENT_HDF5_FILEPATH_ON_SERVER):
-            #print 'No tuner_client.h5 found.'
-            #return
-
-        #f_client = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_SERVER,'r')
-        
-        #f_server_update = self.getFreshHDF5FileObj(TUNER_SERVER_UPDATE_HDF5_FILEPATH)
-        
-        #user_id = f_client['user_id']
-        
-        #ip_str = user_id['ip_str'][0]
-        #mac_str = user_id['mac_str'][0]
-        #username = user_id['username'][0]
-        
-        #g = f_server_update.create_group('user_id')
-        #g.create_dataset('ip_str', (1,), data=ip_str,
-                         #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #g.create_dataset('mac_str', (1,), data=mac_str,
-                         #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #g.create_dataset('username', (1,), data=username,
-                         #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-            
-        #transaction_id_list = [int(k) for k in f_client.keys() if k not in
-                               #('user_id','max_transaction_id','max_record_id')]
-        #for (i, transaction_id) in enumerate(transaction_id_list):
-            #client_record = f_client[str(transaction_id)]
-            #record_group_name = str(i+1)
-            #f_client.copy(client_record, f_server_update, name=record_group_name)
-            #g = f_server_update[record_group_name]
-            #g.create_dataset('transaction_id', (1,), data=transaction_id,
-                             #compression=H5_COMPRESSION)
-            
-        
-        #f_server_update.close()
-        #f_client.close()
-
-    ##----------------------------------------------------------------------
-    #def updateServerDB(self):
-        #"""
-        #Use server_update.h5 to update server.sqlite.
-        
-        #After update, delete server_update.h5.
-        #"""
-        
-        #f = h5py.File(TUNER_SERVER_UPDATE_HDF5_FILEPATH,'r')
-        
-        #u = f['user_id']
-        
-        #ip_str   = u['ip_str'][0]
-        #mac_str  = u['mac_str'][0]
-        #username = u['username'][0]
-
-        #matched_user_id = self.getUserIDFromServerDB(ip_str, mac_str, username)
-        #if matched_user_id is None:
-            #time_added = time()
-            #list_of_tuples = [(ip_str, mac_str, username, time_added),]
-            #self.insertRows('user_table',list_of_tuples)
-            #matched_user_id = self.getUserIDFromServerDB(ip_str, mac_str, username)
-        
-
-        #record_id_list = [int(k) for k in f.keys() 
-                          #if k not in ('new_user_id')]
-        
-        #for i in record_id_list:
-            #rec = f[str(i)]
-            #transaction_id = rec['transaction_id'][0]
-            #time_added     = time()
-            #command        = rec['command'][0]
-            #args           = rec['args']
-            
-            #if command == 'insert config':
-                #list_of_tuples = [(args['config_name'], matched_user_id, 
-                                   #transaction_id, args['time_created'],
-                                   #args['description'], args['appended_descriptions'],
-                                   #time_added)]
-                #self.insertRows('config_meta_table',list_of_tuples)
-                
-                #list_of_tuples = [(group_name,) for group_name 
-                                  #in args['group_name_list']]
-                #self.insertRows('channel_group_name_table',list_of_tuples)
-                
-                #list_of_tuples = [(channel_name,) for channel_name in
-                                  #args['flat_channel_name_list']]
-                #self.insertRows('channel_name_table',list_of_tuples,
-                                #on_conflict='IGNORE')
-                #''' Since channel_name column in channel_name_table is UNIQUE,
-                #trying to add existing channels will result in conflict,
-                #which will be ignored by setting on_conflict='IGNORE'. '''
-                
-                #self.insertRows('channel_table',list_of_tuples)
-                
-                #self.insertRows('config_table',list_of_tuples)
-                
-            #elif command == 'insert snapshot':
-                #raise NotImplementedError('insert snapshot is not yet implemented.')
-            #else:
-                #raise ValueError('Unexpected command type: '+command)
-        
-        
-        #f.close()
-
-        #try:
-            #os.remove(TUNER_SERVER_UPDATE_HDF5_FILEPATH)
-        #except:
-            #print 'Failed deleting', TUNER_SERVER_UPDATE_HDF5_FILEPATH
-        
-        
-    ##----------------------------------------------------------------------
-    #def createClientUpdateH5(self):
-        #"""
-        #Create client_update.h5 from server.h5, only including the
-        #records in server.h5 with record_id larger than max_record_id
-        #in client.h5.
-        
-        #After creation of client_update.h5, delete client.h5.
-        #"""
-        
-    ##----------------------------------------------------------------------
-    #def sendClientUpdateH5toClient(self):
-        #"""
-        #Send client_update.h5 to the client.
-        
-        #Then delete client_update.h5 on the server.
-        #"""
-
-        
-#########################################################################
-#class TunerClientDatabase(TunerAbstractDatabase):
-    #""""""
-    
-    ##----------------------------------------------------------------------
-    #def __init__(self, filepath=TUNER_CLIENT_SQLITE_FILEPATH):
-        #"""Constructor"""
-        
-        #folder_path = os.path.dirname(filepath)
-        #if not os.path.exists(folder_path):
-            #os.mkdir(folder_path)
-         
-        #TunerAbstractDatabase.__init__(self, filepath=filepath)
-        
-    ##----------------------------------------------------------------------
-    #def _initH5(self):
-        #""""""
-        
-        #client_data_folder_path = os.path.dirname(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
-        #if not os.path.exists(client_data_folder_path):
-            #os.mkdir(client_data_folder_path)
-        
-        #f = self.getFreshHDF5FileObj(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
-        ##if os.path.exists(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT):
-            ##os.remove(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
-            ##sleep(1.)
-        
-        ##nMaxTrials = 5
-        ##for i in range(nMaxTrials):
-            ##try:
-                ##f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'w')
-            ##except:
-                ##print 'Trial #' + int(i) + ': Opening ' + \
-                      ##TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT + ' failed.'
-                ##if i == nMaxTrials:
-                    ##raise IOError('Failed opening '+TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
-                ##sleep(1.)
-            ##else:
-                ##break
-
-        #user_id = f.create_group('user_id')
-        #ip_str, mac_str, username = getuserinfo()
-        #user_id.create_dataset('ip_str', (1,), data=ip_str,
-                               #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #user_id.create_dataset('mac_str', (1,), data=mac_str,
-                               #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #user_id.create_dataset('username', (1,), data=username,
-                               #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        
-        #f.create_dataset('max_transaction_id', (1,), data=0,
-                         #compression=H5_COMPRESSION)
-
-        #f.create_dataset('max_record_id', (1,), data=0,
-                         #compression=H5_COMPRESSION)
-        
-        #f.close()
-
-        
-    ##----------------------------------------------------------------------
-    #def _initDB(self):
-        #""""""
-        
-        #client_data_folder_path = os.path.dirname(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT)
-        #if not os.path.exists(client_data_folder_path):
-            #os.mkdir(client_data_folder_path)
-
-        #self._initTables()
-    
-    ##----------------------------------------------------------------------
-    #def updateUserIDinClientH5(self, h5FileObject=None):
-        #""""""
-        
-        #if h5FileObject is None:
-            #f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
-        #else:
-            #f = h5FileObject
-        
-        #user_id = f['user_id']
-        
-        #ip_str, mac_str, username = getuserinfo()
-        
-        #for k in ['ip_str','mac_str','username']:
-            #del user_id[k]
-
-        #user_id.create_dataset('ip_str', (1,), data=ip_str,
-                               #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #user_id.create_dataset('mac_str', (1,), data=mac_str,
-                               #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #user_id.create_dataset('username', (1,), data=username,
-                               #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        
-        #if h5FileObject is None:
-            #f.close()
-
-    ##----------------------------------------------------------------------
-    #def getMaxUserRecordIDinClientH5(self, h5FileObject=None):
-        #""""""
-        
-        #if h5FileObject is None:
-            #f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
-        #else:
-            #f = h5FileObject
-            
-        #max_transaction_id = f['max_transaction_id'][0]
-                
-        #if h5FileObject is None:
-            #f.close()
-            
-        #return max_transaction_id
-
-    ##----------------------------------------------------------------------
-    #def updateMaxUserRecordIDinClientH5(self, h5FileObject=None):
-        #""""""
-
-        #if h5FileObject is None:
-            #f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
-        #else:
-            #f = h5FileObject
-        
-        #transaction_id_list = [int(k) for k in f.keys() if k not in
-                               #('user_id','max_transaction_id','max_record_id')]
-        
-        #if transaction_id_list != []:
-            #del f['max_transaction_id']
-            #f['max_transaction_id'] = [max(transaction_id_list)]
-                
-        #if h5FileObject is None:
-            #f.close()
-    
-    ##----------------------------------------------------------------------
-    #def getMaxRecordIDinServerDB(self):
-        #""""""
-
-        #server_db = TunerClientDatabase(
-            #filepath=TUNER_SERVER_SQLITE_FILEPATH_ON_CLIENT)
-        
-        #return server_db.getColumnDataFromTable('record_index_table')[0][0]
-        
-    ##----------------------------------------------------------------------
-    #def updateMaxRecordIDinClientH5(self, h5FileObject=None):
-        #""""""
-        
-        #if h5FileObject is None:
-            #f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
-        #else:
-            #f = h5FileObject
-
-        #max_record_id_in_server_DB = self.getMaxRecordIDinServerDB()
-        
-        #del f['max_record_id']
-        #f['max_record_id'] = [max_record_id_in_server_DB]
-                
-        #if h5FileObject is None:
-            #f.close()
-
-    ##----------------------------------------------------------------------
-    #def addRecordIntoClientH5(self, record_dict, h5FileObject=None):
-        #""""""
-
-        #if h5FileObject is None:
-            #f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH_ON_CLIENT,'a')
-        #else:
-            #f = h5FileObject
-            
-        #self.updateUserIDinClientH5(f)
-        
-        #max_transaction_id = self.getMaxUserRecordIDinClientH5(f)
-        
-        #new_transaction_id = max_transaction_id + 1
-        #record = f.create_group(str(new_transaction_id))
-
-        #record.create_dataset('command', (1,), data='insert config',
-                              #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        
-        #args = record.create_group('args')
-        #args.create_dataset('config_name', (1,), data=record_dict['config_name'], 
-                            #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #args.create_dataset('time_created', (1,), data=record_dict['time_created'], 
-                            #compression=H5_COMPRESSION)
-        #args.create_dataset('description', (1,), data=record_dict['description'],
-                            #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #args.create_dataset('appended_descriptions', (1,), 
-                            #data=record_dict['appended_descriptions'], 
-                            #dtype=H5_VARLENSTR, compression=H5_COMPRESSION)
-        #flat_channel_name_list = record_dict['flat_channel_name_list']
-        #nChannels = len(flat_channel_name_list)
-        #args.create_dataset('flat_channel_name_list', (nChannels,),
-                            #data=flat_channel_name_list, dtype=H5_VARLENSTR,
-                            #compression=H5_COMPRESSION)
-        #group_name_list = record_dict['group_name_list']
-        #nGroups = len(group_name_list)
-        #args.create_dataset('group_name_list',(nGroups,),
-                            #data=group_name_list, dtype=H5_VARLENSTR,
-                            #compression=H5_COMPRESSION)
-        #grouped_ind_list = record_dict['grouped_ind_list']
-        #g = args.create_group('grouped_ind_list')
-        #for (group_ind,group_name) in enumerate(group_name_list):
-            #index_list = grouped_ind_list[group_ind]
-            #g.create_dataset(group_name,(len(index_list),),
-                             #data=index_list, compression=H5_COMPRESSION)
-        
-        #self.updateMaxUserRecordIDinClientH5(f)
-        
-        #self.updateMaxRecordIDinClientH5(f)
-
-        #if h5FileObject is None:
-            #f.close()
-        
-        
 
 
 #----------------------------------------------------------------------
@@ -1239,110 +1053,45 @@ def test_initializationAtFirstEverTunerStartup():
     """"""
     
     ## Server Initialization
-    server_main_filepath = os.path.join(SERVER_DATA_FOLDERPATH, 
-                                        MAIN_DB_FILENAME)
-    server_main_db = TunerMainDatabase(filepath=server_main_filepath,
-                                       create_folder=True)
-    server_main_db._initTables()
-    #
-    server_delta_filepath = os.path.join(SERVER_DATA_FOLDERPATH, 
-                                         SERVER_DELTA_DB_FILENAME)
-    server_delta_db = TunerDeltaDatabase(filepath=server_delta_filepath,
-                                         create_folder=True)
-    server_delta_db._initTables()
+    server = TunerServer()
+    server._initDBFiles()
     
     ## Client Initialization
-    client_delta_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                         CLIENT_DELTA_DB_FILENAME)
-    client_delta_db = TunerDeltaDatabase(filepath=client_delta_filepath,
-                                         create_folder=True)
-    client_delta_db._initTables()
-    #
-    client_main_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                        MAIN_DB_FILENAME)
-    shutil.copy(server_main_filepath, client_main_filepath)
-    #
-    client_last_synced_main_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                                    LAST_SYNCED_MAIN_DB_FILENAME)
-    shutil.copy(client_main_filepath, client_last_synced_main_filepath)
-    
+    client = TunerClient()
+    client._initDBFiles()
+
 #----------------------------------------------------------------------
-def test_readClientDeltaDB():
+def test_syncWithServer():
+    """"""
+
+    client = TunerClient()
+    client.syncWithServer()
+    
+##----------------------------------------------------------------------
+#def test_sendClientDeltaToServer():
+    #""""""
+
+    #client_delta_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                         #CLIENT_DELTA_DB_FILENAME)
+    #client = TunerClient()
+    #client.sendFile(client_delta_filepath,
+                    #destination_folderpath=SERVER_DATA_FOLDERPATH,
+                    #debug=False)
+
+#----------------------------------------------------------------------
+def test_addClientDeltaToServerDelta():
     """"""
     
-    client_delta_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                         CLIENT_DELTA_DB_FILENAME)
-    client_delta_db = TunerDeltaDatabase(filepath=client_delta_filepath)
-    
-    #client_delta_db.ys.view(1,'delta_table')
-    ##
-    #print client_delta_db.ys.select(0,'delta_table') # get most recent n-th entry ->
-    ## 0 means the most recent record
-    ##
-    print client_delta_db.getColumnDataFromTable('delta_table')
-    print client_delta_db.getColumnDataFromTable('sync_table')
-    
-#----------------------------------------------------------------------
-def test_sendClientDeltaToServerAndAddToServerDelta():
-    """"""
-    
-    client_delta_filepath_on_client = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                                   CLIENT_DELTA_DB_FILENAME)
-    client_delta_filepath_on_server = os.path.join(SERVER_DATA_FOLDERPATH,
-                                                   CLIENT_DELTA_DB_FILENAME)
-    shutil.copy(client_delta_filepath_on_client, client_delta_filepath_on_server)
-    
-    server_delta_filepath = os.path.join(SERVER_DATA_FOLDERPATH,
-                                         SERVER_DELTA_DB_FILENAME)
-    server_delta_db = TunerDeltaDatabase(filepath=server_delta_filepath)
-    
-    server_delta_db._initTables() # Making sure server_delta is clean for this
-    # testing purpose
-    
-    server_delta_db.insertConfigRecordsOnServer()
-    
-#----------------------------------------------------------------------
-def test_readServerDeltaDB():
-    """"""
-    
-    server_delta_filepath = os.path.join(SERVER_DATA_FOLDERPATH,
-                                         SERVER_DELTA_DB_FILENAME)
-    server_delta_db = TunerDeltaDatabase(filepath=server_delta_filepath)
-    
-    print server_delta_db.getColumnDataFromTable('delta_table')
-    print server_delta_db.getColumnDataFromTable('sync_table')
+    server = TunerServer()
+    server.insertConfigRecordsOnServer(debug=True)
     
 #----------------------------------------------------------------------
 def test_createClientServerDeltaDB():
     """"""
     
-    client_delta_filepath_on_server = os.path.join(SERVER_DATA_FOLDERPATH,
-                                                   CLIENT_DELTA_DB_FILENAME)
-    client_delta_db_on_server = TunerDeltaDatabase(
-        filepath=client_delta_filepath_on_server)
-    client_last_sync_timestamp =  client_delta_db_on_server.getColumnDataFromTable(
-        'sync_table', column_name_list=['last_timestamp'])[0][0]
-    client_delta_db_on_server.close()
-    
-    server_delta_filepath = os.path.join(SERVER_DATA_FOLDERPATH,
-                                         SERVER_DELTA_DB_FILENAME)
-    server_delta_db = TunerDeltaDatabase(filepath=server_delta_filepath)
-    
-    client_server_delta_filepath_on_server = os.path.join(SERVER_DATA_FOLDERPATH,
-                                                          CLIENT_SERVER_DELTA_DB_FILENAME)
-    client_server_delta_db = TunerDeltaDatabase(
-        filepath=client_server_delta_filepath_on_server)
-    client_server_delta_db._initTables()
-    client_server_delta_db.attachDatabase(server_delta_filepath, 'server_delta_db')
-    client_server_delta_db.insertTable('delta_table',
-                                       foreign_database_name='server_delta_db',
-                                       foreign_table_name='delta_table')
-    
-    print client_server_delta_db.getColumnDataFromTable('delta_table')
-    print client_server_delta_db.getColumnDataFromTable('sync_table')    
-
-    os.remove(client_delta_filepath_on_server)
-    
+    server = TunerServer()
+    server.createClientServerDeltaDB()
+        
 #----------------------------------------------------------------------
 def test_sendClientServerDeltaToClientAndDeleteItOnServer():
     """"""
@@ -1512,7 +1261,8 @@ def test_loadConfigFromDB(config_id):
     
     column_name_list = client_main_db.getColumnNames(
         'config_meta_table cm JOIN user_table u ON (cm.user_id=u.user_id)')
-    column_name_list = [col for col in column_name_list if not col.startswith('user_id')]
+    column_name_list = [col for col in column_name_list if not (
+        (col == 'user_id') or col.startswith('user_id:') )]
     #
     meta_data_list_of_tuples = client_main_db.getColumnDataFromTable(
         'config_meta_table cm JOIN user_table u ON (cm.user_id=u.user_id)',
@@ -1532,8 +1282,8 @@ def test_loadConfigFromDB(config_id):
     
     column_name_list = client_main_db.getColumnNames('config_view')
     column_name_list = [col for col in column_name_list if not (
-        col.startswith('channel_group_name_id')
-        or col.startswith('channel_name_id') )] 
+        (col == 'channel_group_name_id') or col.startswith('channel_group_name_id:') or
+        (cold == 'channel_name_id') or col.startswith('channel_name_id:') )] 
     pprint( column_name_list )
     
     config_view = client_main_db.getColumnDataFromTable('config_view',column_name_list=['*'],
@@ -1545,14 +1295,15 @@ def test_loadConfigFromDB(config_id):
 if __name__ == "__main__" :
     
     #test_initializationAtFirstEverTunerStartup()
-    ## using Tuner Config Setup, save some sample config to client_delta
-    #test_readClientDeltaDB()
-    #test_sendClientDeltaToServerAndAddToServerDelta()
-    #test_readServerDeltaDB()
+    ### using Tuner Config Setup, save some sample config to client_delta
+    test_syncWithServer()
+    
+    #test_sendClientDeltaToServer()
+    #test_addClientDeltaToServerDelta()
     #test_createClientServerDeltaDB()
     #test_sendClientServerDeltaToClientAndDeleteItOnServer()
     #test_createNewTunerDBOnClient_applyClientServerDeltaToNewMainDB()
     #test_finalizeClientMainDBUpdate()
-    test_loadConfigFromDB(config_id=1)
+    #test_loadConfigFromDB(config_id=1)
     
     
