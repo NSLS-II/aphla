@@ -4,28 +4,23 @@ import os
 
 setup(
     name = "aphla",
-    version = "0.5.2",
-    packages = ['aphla', 'aphla.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
-                'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.conf'],
-    package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
-                   'aphla.gui': 'gui', 'aphla.conf': 'conf'},
+    version = "0.7.0",
+    #packages = ['aphla', 'aphla.lib.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
+    #            'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.machines'],
+    #package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
+    #%               'aphla.gui': 'gui', 'aphla.machines': 'machines'},
+    packages = find_packages(exclude=['tests']),
     include_package_data = True,
-    package_data = {
-        # any these files
-        '': ['*.json', '*.hdf5', '*.csv'],
-        'aphla.gui': ['data/*.cfg'], 
-        'aphla.conf': ['us_nsls2/*', '*.xml', '*.db', '*.sqlite']},
-    py_modules = [
-        'aphla.catools', 'aphla.chanfinder', 'aphla.machines', 'aphla.element',
-        'aphla.lattice', 'aphla.twiss', 'aphla.hlalib', 
-        'aphla.ormdata', 'aphla.orm', 'aphla.aptools', 
-        'aphla.bba',
-        'aphla.meastwiss', 
-        # GUI
-        'aphla.gui.gui_resources',
-        'aphla.gui.aplauncher',
-        'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
-        'aphla.gui.apbba'],
+    #package_data = {
+    #    # any these files
+    #    'aphla.gui': ['data/*'], 
+    #    'aphla.machines': ['*']},
+    #py_modules = [
+    #    # GUI
+    #    'aphla.gui.gui_resources',
+    #    'aphla.gui.aplauncher',
+    #    'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
+    #    'aphla.gui.apbba'],
     #install_requires = ['distribute', 'matplotlib', 'cothread',
     #                    'numpy', 'scipy'],
     entry_points = {
