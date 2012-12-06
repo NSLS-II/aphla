@@ -433,7 +433,8 @@ class TunerConfigSetupBaseModel(QObject):
         sort_ind = list(np.argsort(first_appearance_ind_list))
         
         self.group_name_list = [unique_group_name_list[i] for i in sort_ind]
-                                
+                        
+                
         
 ########################################################################
 class TunerConfigSetupTableModel(QAbstractTableModel):

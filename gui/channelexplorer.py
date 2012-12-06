@@ -57,6 +57,7 @@ from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 from Qt4Designer_files.ui_channel_explorer_startup_set_dialog \
      import Ui_Dialog as Ui_Dialog_startup_settings
 from utils.orderselector import OrderSelector
+from utils.formattext import whitespace_delimited_lines, tab_delimited_unformatted_lines
 
 from utils.tictoc import tic, toc
 
@@ -2053,15 +2054,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
                 self.clipboard[row,col] = str( proxyMod.data(ind) )
             #print self.clipboard
             
-            # Find maximum string length for each column
-            str_width_list = [len( max(a,key=len) )
-                              for a in self.clipboard.transpose()]
+            #formatted_line_list = whitespace_delimited_lines(
+                #self.clipboard, ljust=True, equal_len=False)
+            formatted_line_list = tab_delimited_unformatted_lines(self.clipboard)
             
-            formatted_line_list = [[] for i in range(nRows)]
-            for (i,row) in enumerate(self.clipboard):
-                formatted_line_list[i] = ' '.join(
-                    [s.ljust(w) for (s,w) in zip(row,str_width_list)] )
-
             system_clipboard = qApp.clipboard()
             system_clipboard.setText('\n'.join(formatted_line_list))
             

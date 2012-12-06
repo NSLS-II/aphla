@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+import sip
+sip.setapi('QString', 2)
+sip.setapi('QVariant', 2)
 
 import sys, os
 import numpy as np
@@ -12,6 +15,11 @@ import shutil
 import logging
 from difflib import ndiff, context_diff
 
+from PyQt4.QtCore import (SIGNAL, Qt)
+from PyQt4.QtGui import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+                         QCheckBox, QDialogButtonBox, QApplication,
+                         QMessageBox)
+
 import aphla as ap
 from aphla.gui.utils.hlsqlite import (MEMORY, SQLiteDatabase, Column, 
                                       ForeignKeyConstraint, PrimaryKeyTableConstraint,
@@ -24,6 +32,7 @@ from tunerModels import getuserinfo
 import aphla.gui.utils.y_serial as y_serial
 import aphla.gui.utils.tcpip as tcpip
 from aphla.gui.utils.tcpip import BLOCK_SIZE
+from aphla.gui.utils.formattext import tab_delimited_formatted_lines
 
 DEBUG = False
 H5_COMPRESSION = 'gzip'
@@ -444,7 +453,153 @@ class TunerClient(tcpip.Client):
         else:
             print 'Syncing with Server successfully finished.'
         
+########################################################################
+class TunerTextFileManager(QDialog):
+    """"""
     
+    #----------------------------------------------------------------------
+    def __init__(self, load, filepath):
+        """Constructor"""
+        
+        self.load = load
+        self.filepath = filepath
+        
+        QDialog.__init__(self)
+        
+        self.setWindowTitle('Text Column Specification')
+        self.verticalLayout = QVBoxLayout(self)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.label = QLabel(self)
+        self.label.setObjectName("label")
+        self.verticalLayout.addWidget(self.label)
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.checkBox_group_names = QCheckBox(self)
+        self.checkBox_group_names.setText('Group Names')
+        self.checkBox_group_names.setChecked(True)
+        self.checkBox_group_names.setObjectName("checkBox_group_names")
+        self.horizontalLayout.addWidget(self.checkBox_group_names)
+        self.checkBox_channel_names = QCheckBox(self)
+        self.checkBox_channel_names.setText('Channel Names')
+        self.checkBox_channel_names.setEnabled(False)
+        self.checkBox_channel_names.setChecked(True)
+        self.checkBox_channel_names.setObjectName("checkBox_channel_names")
+        self.horizontalLayout.addWidget(self.checkBox_channel_names)
+        self.checkBox_weights = QCheckBox(self)
+        self.checkBox_weights.setText('Weights')
+        self.checkBox_weights.setEnabled(False)
+        self.checkBox_weights.setChecked(True)
+        self.checkBox_weights.setObjectName("checkBox_weights")
+        self.horizontalLayout.addWidget(self.checkBox_weights)
+        self.checkBox_step_sizes = QCheckBox(self)
+        self.checkBox_step_sizes.setText('Step Sizes')
+        self.checkBox_step_sizes.setObjectName("checkBox_step_sizes")
+        self.horizontalLayout.addWidget(self.checkBox_step_sizes)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.buttonBox = QDialogButtonBox(self)
+        self.buttonBox.setOrientation(Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName("buttonBox")
+        self.verticalLayout.addWidget(self.buttonBox)
+
+        self.connect(self.buttonBox, SIGNAL("accepted()"), self.accept)
+        self.connect(self.buttonBox, SIGNAL("rejected()"), self.reject)
+        
+        if self.load:
+            prompt = 'Check all the columns your text file contains:\n' + \
+                '(The order of the columns must be as shown below.)'
+        else:
+            prompt = 'Check all the columns you want the text file to contain:\n' + \
+                '(The order of the columns will be as shown below.)'
+        self.label.setText(prompt)
+        
+        self.updateColumnSelection()
+        
+    #----------------------------------------------------------------------
+    def updateColumnSelection(self):
+        """"""
+        
+        self.selection = {
+            'group_names': self.checkBox_group_names.isChecked(),
+            'channel_names': self.checkBox_channel_names.isChecked(),
+            'weights': self.checkBox_weights.isChecked(),
+            'step_sizes': self.checkBox_step_sizes.isChecked(),
+        }
+        
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+        
+        self.updateColumnSelection()        
+        QDialog.accept(self)
+        
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+        
+        self.selection = None        
+        QDialog.reject(self)
+        
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+        
+        self.selection = None
+        event.accept()
+        
+    #----------------------------------------------------------------------
+    def saveConfigTextFile(self, data):
+        """"""
+        
+        formatted_lines = tab_delimited_formatted_lines(data,
+            always_tab_end=True, newline_end=True)
+        
+        f = open(self.filepath, 'w')
+        try:
+            f.writelines(formatted_lines)
+        finally:
+            f.close()
+        
+        
+    #----------------------------------------------------------------------
+    def loadConfigTextFile(self):
+        """"""
+        
+        f = open(self.filepath, 'r')
+        try:
+            all_texts = f.read()
+        finally:
+            f.close()
+        
+        lines = all_texts.split('\n')
+        data = [line.split() for line in lines]
+        
+        if sum(self.selection.values()) != len(data[0]):
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.setText('Number of columns ('+str(len(data[0]))+
+                           ') in your text file does not match '+
+                           'the number of columns ('+
+                           str(sum(self.selection.values()))+
+                           ') you told in the previous dialog box.')
+            msgBox.exec_()
+            return None
+        
+        # Create group name from channel name, if group name is not provided
+        if not self.selection['group_names']:
+            for row in data: row.insert(0,row[0])
+
+        # Change the data type of weight from string to float
+        for row in data: row[2] = float(row[2])
+        
+        # Create step size from weight, if step size is not provided
+        if not self.selection['step_sizes']:
+            for row in data: row.append(row[-1])
+        
+        return data
+            
+        
+        
 ########################################################################
 class TunerHDF5Manager():
     """"""
@@ -1435,5 +1590,4 @@ if __name__ == "__main__" :
     #test_syncWithServer()
     
     test_loadConfigFromDB(config_id=1)
-    
-    
+        
