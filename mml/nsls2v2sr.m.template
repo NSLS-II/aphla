@@ -1,0 +1,27 @@
+function varargout = v2srlattice(varargin)
+
+global THERING 
+
+if nargin >=1
+   Energy = varargin{1};
+else
+  Energy = 200e6;
+end
+
+%% BEG_ = marker('BEG', 'IdentityPass');
+
+%(body)s
+
+%% END of BODY
+
+buildlat(L%(latname)s);
+THERING = setcellstruct(THERING, 'Energy', 1:length(THERING), Energy);
+
+%%for i=1:length(THERING),
+%%    s = findspos(THERING, i+1);
+%%  fprintf('%%s L=%%f, s=%%f\n', THERING{i}.FamName, THERING{i}.Length, s);
+%%end
+
+L0 = findspos(THERING, length(THERING)+1);
+fprintf('   Total Length = %%.6f meters  \n', L0)
+

@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>926</width>
+    <height>737</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Element Selector</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QWidget" name="layoutWidget">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>27</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Filter</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_filter_case_sensitive">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>21</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Case-sensitive</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>348</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_add_row">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>27</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Add Row</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_remove_row">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>27</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Remove Row</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_filter">
+         <attribute name="horizontalHeaderMinimumSectionSize">
+          <number>16</number>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>false</bool>
+         </attribute>
+         <row>
+          <property name="text">
+           <string>1</string>
+          </property>
+         </row>
+         <column>
+          <property name="text">
+           <string extracomment="When checked, matching elements are excluded from the list">Excl.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Dev. Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Cell</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Family</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Girder</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Group</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string extracomment="Lattice Index">Lat. Index</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string extracomment="Effective magnetic length [m]">Eff. Len.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string extracomment="Physical length [m]">Phys. Len.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>PV</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string extracomment="Beginning S-coordinate [m]">sb</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string extracomment="Ending S-coordinate [m]">se</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Symmetry</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string extracomment="1 if virtual element. 0 if real element.">Virtual</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string extracomment="?">Sequence</string>
+          </property>
+         </column>
+         <item row="0" column="0">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="checkState">
+           <enum>Unchecked</enum>
+          </property>
+          <property name="flags">
+           <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+          </property>
+         </item>
+         <item row="0" column="1">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="flags">
+           <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsEnabled</set>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>HLA Command:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPlainTextEdit" name="plainTextEdit">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>31</height>
+            </size>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="plainText">
+            <string>hla.getElements(*)</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="layoutWidget">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Choice List</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_choice_list">
+         <column>
+          <property name="text">
+           <string>Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Dev. Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Cell</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Family</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Girder</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Group</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Lat. Index</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Eff. Len.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Phys. Len.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>PV</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>sb</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>se</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Symmetry</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Virtual</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Sequence</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="layoutWidget">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QLabel" name="label_nMatched_nSelected">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Matched Elements (0 matched, 0 selected)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_matched">
+         <column>
+          <property name="text">
+           <string>Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Dev. Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Cell</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Family</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Girder</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Group</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Lat. Index</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Eff. Len.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Phys. Len.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>PV</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>sb</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>se</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Symmetry</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Virtual</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Sequence</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

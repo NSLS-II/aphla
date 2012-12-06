@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hierarchy [
+    <!ENTITY appClock "
+        <item>
+            <dispName>Clock</dispName>
+            <itemType>app</itemType>
+            <linkedFile>xclock</linkedFile>
+            <useImport>False</useImport>
+            <singleton>False</singleton>
+            <args></args>
+        </item>
+    ">
+
+    <!ENTITY appOrbit "
+        <item>
+            <dispName>Orbit</dispName>
+            <itemType>app</itemType>
+            <linkedFile>aporbit</linkedFile>
+            <useImport>False</useImport>
+            <singleton>False</singleton>
+            <args></args>
+        </item>
+    ">
+
+    <!ENTITY appBBA "
+        <item>
+            <dispName>Beam Based Alignment</dispName>
+            <itemType>app</itemType>
+            <linkedFile>apbba</linkedFile>
+            <useImport>False</useImport>
+            <singleton>False</singleton>
+            <args></args>
+        </item>
+    ">
+    
+    <!ENTITY appCurrentMonitor "
+        <item>
+            <dispName>Current Monitor</dispName>      
+            <itemType>app</itemType>
+            <linkedFile>apcurrentmonitor</linkedFile>
+            <useImport>True</useImport>
+            <singleton>False</singleton>
+            <args></args>
+        </item>
+    ">
+    
+
+    <!ENTITY appLatticeTuner "
+        <item>
+            <dispName>Lattice Tuner</dispName>
+            <itemType>app</itemType>
+            <linkedFile>aplattuner</linkedFile>
+            <useImport>True</useImport>
+            <singleton>False</singleton>
+            <args></args>
+        </item>
+    ">
+
+
+    <!ENTITY appLauncher "
+        <item>
+            <dispName>Launcher</dispName>
+            <itemType>app</itemType>
+            <linkedFile>aplauncher</linkedFile>
+            <useImport>True</useImport>
+            <singleton>False</singleton>
+            <args>/root</args>
+        </item>
+    ">
+
+    <!ENTITY appPlotter "
+        <item>
+            <dispName>Plotter</dispName>
+            <itemType>app</itemType>
+            <linkedFile>applotter</linkedFile>
+            <useImport>True</useImport>
+            <singleton>False</singleton>
+            <args></args>
+        </item>
+    ">
+
+]>
+<hierarchy>
+    
+    <item>
+        <dispName>root</dispName>
+        <itemType>page</itemType>
+        
+        <item>
+            <dispName>Commissioning</dispName>
+            <itemType>page</itemType>
+        </item>  <!-- Commissioning -->
+
+        <item>
+            <dispName>Operation</dispName>
+            <itemType>page</itemType>
+        </item>  <!-- Operation -->
+        
+        <item>
+            <dispName>Studies</dispName>
+            <itemType>page</itemType>
+        </item>  <!-- Studies -->
+
+        <item>
+            <dispName>Test</dispName>
+            <itemType>page</itemType>
+            &appClock;
+            &appOrbit;
+            &appBBA;
+            &appCurrentMonitor; 
+            &appLatticeTuner;
+            &appLauncher;
+            &appPlotter;
+        </item> <!-- Test -->
+        
+    </item>  <!-- root -->
+</hierarchy>
