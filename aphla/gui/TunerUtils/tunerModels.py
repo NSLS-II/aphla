@@ -433,7 +433,8 @@ class TunerConfigSetupBaseModel(QObject):
         sort_ind = list(np.argsort(first_appearance_ind_list))
         
         self.group_name_list = [unique_group_name_list[i] for i in sort_ind]
-                                
+                        
+                
         
 ########################################################################
 class TunerConfigSetupTableModel(QAbstractTableModel):
@@ -631,6 +632,15 @@ class TunerSnapshotBaseModel(QObject):
         self.grouped_ind_list = self._config_base_model.grouped_ind_list
         
     #----------------------------------------------------------------------
+    def isSnapshot(self):
+        """"""
+        
+        if self._snapshot_id is None:
+            return False
+        else:
+            return True
+        
+    #----------------------------------------------------------------------
     def update_grouped_ind_list(self):
         """"""
         
@@ -642,6 +652,56 @@ class TunerSnapshotBaseModel(QObject):
         
         self._config_base_model.update_group_name_list()
     
+    #----------------------------------------------------------------------
+    def getName(self, source='config'):
+        """"""
+        
+        if source == 'config':
+            return self._config_base_model.config_name
+        elif source == 'snapshot':
+            return self.snapshot_name
+        else:
+            raise ValueError('First argument must be either "config" or "snapshot".')
+    
+    #----------------------------------------------------------------------
+    def getUserInfo(self, source='config'):
+        """"""
+        
+        if source == 'config':
+            return self._config_base_model.userinfo
+        elif source == 'snapshot':
+            return self.userinfo
+        else:
+            raise ValueError('First argument must be either "config" or "snapshot".')
+        
+    #----------------------------------------------------------------------
+    def getTimeCreated(self, source='config'):
+        """"""
+        
+        if source == 'config':
+            return self._config_base_model.time_created
+        elif source == 'snapshot':
+            return self.time_snapshot_taken
+        else:
+            raise ValueError('First argument must be either "config" or "snapshot".')
+                
+    #----------------------------------------------------------------------
+    def getDescription(self, source='config', include_appended=True):
+        """"""
+        
+        if source == 'config':
+            desc = self._config_base_model.description
+            if include_appended:
+                desc += '\n' + self._config_base_model.appended_descriptions
+        elif source == 'snapshot':
+            desc = self.description
+            if include_appended:
+                desc += '\n' + self.appended_descriptions
+        else:
+            raise ValueError('First argument must be either "config" or "snapshot".')
+        
+        return desc
+        
 
 ########################################################################
 class TunerSnapshotTableModel(TunerConfigSetupTableModel):

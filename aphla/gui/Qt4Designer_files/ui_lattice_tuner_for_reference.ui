@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>1015</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -81,7 +81,7 @@
        </property>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="page_tree">
          <layout class="QGridLayout" name="gridLayout">
@@ -100,15 +100,15 @@
        </widget>
        <widget class="QTabWidget" name="tabWidget_mode">
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
-        <widget class="QWidget" name="tab">
+        <widget class="QWidget" name="tab_step_mode">
          <attribute name="title">
           <string>Step Mode</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout">
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_step_2">
             <item>
              <widget class="QPushButton" name="pushButton_step_up">
               <property name="text">
@@ -124,7 +124,7 @@
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer">
+             <spacer name="horizontalSpacer_tab_step_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -139,7 +139,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_step_1">
             <item>
              <widget class="QPushButton" name="pushButton_update">
               <property name="text">
@@ -164,7 +164,7 @@
              <widget class="QLineEdit" name="lineEdit_auto_update_interval"/>
             </item>
             <item>
-             <spacer name="horizontalSpacer_6">
+             <spacer name="horizontalSpacer_tab_step_1">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -180,130 +180,139 @@
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="tab_2">
+        <widget class="QWidget" name="tab_ramp_mode">
          <attribute name="title">
           <string>Ramp Mode</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_6">
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_7">
+           <layout class="QVBoxLayout" name="verticalLayout_tab_ramp_1">
             <item>
-             <widget class="QLabel" name="label_7">
-              <property name="text">
-               <string>Copy into target set points:</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_tab_ramp_2">
+              <item>
+               <widget class="QPushButton" name="pushButton_copy">
+                <property name="text">
+                 <string>Copy</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_setpoint_copy_source">
+                <item>
+                 <property name="text">
+                  <string>Current</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Initial</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Snapshot</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_tab_ramp_3">
+                <property name="text">
+                 <string>setpoints into target setpoints</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_tab_ramp_1">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_copy_current_setp">
-              <property name="text">
-               <string>Current Setpoints</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_copy_init_setp">
-              <property name="text">
-               <string>Init. Setpoints</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_copy_snapshot_setp">
-              <property name="text">
-               <string>Snapshot Setpoints</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_4">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
+             <layout class="QHBoxLayout" name="horizontalLayout_tab_ramp_1">
+              <item>
+               <widget class="QLabel" name="label_tab_ramp_1">
+                <property name="text">
+                 <string>Number of Steps:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_nSteps"/>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_tab_ramp_2">
+                <property name="text">
+                 <string>Wait after Each Step [s]:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_wait_after_each_step"/>
+              </item>
+             </layout>
             </item>
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
-            <item>
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>Number of Steps:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="lineEdit_nSteps"/>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_9">
-              <property name="text">
-               <string>Wait after Each Step [s]:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="lineEdit_wait_after_each_step"/>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_start">
-              <property name="text">
-               <string>Start</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_stop">
-              <property name="text">
-               <string>Stop</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_revert">
-              <property name="text">
-               <string>Revert</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_5">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
+           <widget class="QPushButton" name="pushButton_start">
+            <property name="text">
+             <string>Start</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_stop">
+            <property name="text">
+             <string>Stop</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_revert">
+            <property name="text">
+             <string>Revert</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_tab_ramp_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>137</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>
        </widget>
        <widget class="QTabWidget" name="tabWidget_metadata">
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
-        <widget class="QWidget" name="tab_3">
+        <widget class="QWidget" name="tab_config_metadata">
          <attribute name="title">
           <string>Config Metadata</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_conf_2">
             <item>
-             <widget class="QLabel" name="label">
+             <widget class="QLabel" name="label_tab_conf_2">
               <property name="text">
                <string>Created by</string>
               </property>
@@ -313,7 +322,7 @@
              <widget class="QLineEdit" name="lineEdit_config_username"/>
             </item>
             <item>
-             <widget class="QLabel" name="label_2">
+             <widget class="QLabel" name="label_tab_conf_3">
               <property name="text">
                <string>Created on</string>
               </property>
@@ -323,7 +332,7 @@
              <widget class="QLineEdit" name="lineEdit_config_timestamp"/>
             </item>
             <item>
-             <spacer name="horizontalSpacer_2">
+             <spacer name="horizontalSpacer_tab_conf_1">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -338,18 +347,18 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_conf_1">
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_2">
+             <layout class="QVBoxLayout" name="verticalLayout_tab_conf_1">
               <item>
-               <widget class="QLabel" name="label_5">
+               <widget class="QLabel" name="label_tab_conf_1">
                 <property name="text">
                  <string>Description</string>
                 </property>
                </widget>
               </item>
               <item>
-               <spacer name="verticalSpacer">
+               <spacer name="verticalSpacer_tab_conf_1">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
                 </property>
@@ -370,15 +379,15 @@
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="tab_4">
+        <widget class="QWidget" name="tab_snapshot_metadata">
          <attribute name="title">
           <string>Snapshot Metadata</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_snap_2">
             <item>
-             <widget class="QLabel" name="label_3">
+             <widget class="QLabel" name="label_tab_snap_2">
               <property name="text">
                <string>Created by</string>
               </property>
@@ -388,7 +397,7 @@
              <widget class="QLineEdit" name="lineEdit_snapshot_username"/>
             </item>
             <item>
-             <widget class="QLabel" name="label_4">
+             <widget class="QLabel" name="label_tab_snap_3">
               <property name="text">
                <string>Created on</string>
               </property>
@@ -398,7 +407,7 @@
              <widget class="QLineEdit" name="lineEdit_snapshot_timestamp"/>
             </item>
             <item>
-             <spacer name="horizontalSpacer_3">
+             <spacer name="horizontalSpacer_tab_snap_1">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -413,18 +422,18 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_snap_1">
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_4">
+             <layout class="QVBoxLayout" name="verticalLayout_tab_snap_1">
               <item>
-               <widget class="QLabel" name="label_6">
+               <widget class="QLabel" name="label_tab_snap_1">
                 <property name="text">
                  <string>Description</string>
                 </property>
                </widget>
               </item>
               <item>
-               <spacer name="verticalSpacer_2">
+               <spacer name="verticalSpacer_tab_snap_1">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
                 </property>

@@ -26,19 +26,23 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import (qApp, QApplication, QDialog, QStandardItem,
      QStandardItemModel, QSortFilterProxyModel, QAbstractItemView,
      QAction, QIcon, QMenu, QInputDialog, QKeySequence, QItemSelection,
-     QItemSelectionModel, QItemSelectionRange, QTableView, QFileDialog)
+     QItemSelectionModel, QItemSelectionRange, QTableView, QFileDialog,
+     QMessageBox)
 
 import aphla as ap
 if ap.machines._lat is None:
     ap.initNSLS2V2()
 
-from tunerModels import (ConfigChannel, getuserinfo, 
-                         TreeItem, TreeModel, TunerConfigSetupBaseModel,
+from tunerModels import (TreeItem, TreeModel, TunerConfigSetupBaseModel,
                          TunerConfigSetupTableModel, TunerConfigSetupTreeModel)
 from ui_tunerConfigSetupDialog import Ui_Dialog
 import config as const
-from config import (TUNER_CLIENT_HDF5_FILEPATH, TUNER_CLIENT_SQLITE_FILEPATH)
+from config import (CLIENT_DATA_FOLDERPATH, SERVER_DATA_FOLDERPATH,
+                    MAIN_DB_FILENAME, LAST_SYNCED_MAIN_DB_FILENAME,
+                    CLIENT_DELTA_DB_FILENAME, SERVER_DELTA_DB_FILENAME)
 from aphla.gui import channelexplorer
+from tunerdb import (TunerHDF5Manager, TunerTextFileManager,
+                     TunerDeltaDatabase, TunerMainDatabase)
 from aphla.gui.utils.tictoc import tic, toc
 
 
@@ -59,38 +63,7 @@ class TunerConfigSetupModel(QObject):
         self.tree_model = TunerConfigSetupTreeModel(
             self.base_model.all_col_name_list, base_model=self.base_model)
         
-        
-        #self.col_name_list = const.ALL_COL_NAMES_CONFIG_SETUP[:]
-        #self.group_level_col_list = const.GROUP_LEVEL_COL_LIST[:]
-        #self.group_level_col_list.remove(const.COL_GROUP_NAME)
-        #self.group_level_col_list = list(np.intersect1d(
-            #np.array(self.group_level_col_list),
-            #np.array(const.ALL_COL_NAMES_CONFIG_SETUP) ) )
-        #self.channel_level_col_list = const.CHANNEL_LEVEL_COL_LIST[:]
-        ##self.channel_level_col_list.remove(const.COL_CHANNEL_NAME)
-        #self.channel_level_col_list = list(np.intersect1d(
-            #np.array(self.channel_level_col_list),
-            #np.array(const.ALL_COL_NAMES_CONFIG_SETUP) ) )
-        
-        #self.setHorizontalHeaderLabels(self.col_name_list)
-        #self.setColumnCount(len(self.col_name_list))
-        #self.removeRows(0,self.rowCount()) # clear contents
-
-        #self.output = {}
-        self.output = None
-        
-    #----------------------------------------------------------------------
-    def _prepareOutput(self, accepted):
-        """"""
-        
-        if accepted:
-            #self.output = {'name':self.name,
-                           #'description':self.description,
-                           #'channel_group_list':self.channel_group_list}
-            self.output = self.base_model
-        else:
-            #self.output = {}
-            self.output = None
+        self.output = None        
         
     #----------------------------------------------------------------------
     def create_new_user_id_in_HDF5(self, user_ids, new_user_id_str,
@@ -115,111 +88,92 @@ class TunerConfigSetupModel(QObject):
         return user_id, last_user_record_id
         
     #----------------------------------------------------------------------
-    def save_hdf5(self):
+    def getConfigDataForTextFile(self, column_selection_dict):
+        """"""
+
+        b = self.base_model
+        
+        
+        nCols = sum(column_selection_dict.values())
+        
+        flat_channel_name_list = [name for name in b.k_channel_name]
+        nRows = len(flat_channel_name_list)
+        
+        data = np.empty((nRows,nCols),dtype=np.object)
+        
+        col_ind = 0
+        
+        if column_selection_dict['group_names']:
+            flat_group_name_list = b.k_group_name
+            data[:,col_ind] = flat_group_name_list
+            col_ind += 1
+
+        data[:,col_ind] = flat_channel_name_list
+        col_ind += 1
+        
+        weight_list = b.k_weight
+        data[:,col_ind] = ['{0:.16g}'.format(w) for w in weight_list]
+        col_ind += 1
+        
+        if column_selection_dict['step_sizes']:
+            step_size_list = b.k_step_size
+            data[:,col_ind] = ['{0:.16g}'.format(s) for s in step_size_list]
+        
+        return data
+        
+    #----------------------------------------------------------------------
+    def saveConfigToHDF5(self, save_filepath):
         """"""
         
         b = self.base_model
         
         flat_channel_name_list = [name.encode('ascii') for name in b.k_channel_name]
-        ip_str, mac_str, username = b.userinfo
 
         if h5py.version.version_tuple[:3] < (2,1,1):
             b.config_name = b.config_name.encode('ascii')
             b.description = b.description.encode('ascii')
             b.appended_descriptions = b.appended_descriptions.encode('ascii')
-        
-        f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH,'a')
-        h5zip = 'gzip'
-        str_type = h5py.new_vlen(str)
-        
-        if not 'user_ids' in f.keys():
-            user_ids = f.create_group('user_ids')
-            this_user_id = -1
-            this_user_id_str = str(this_user_id)
-            user_id, last_user_record_id = \
-                self.create_new_user_id_in_HDF5(user_ids, this_user_id_str,
-                                                ip_str, mac_str, username,
-                                                compression_type=h5zip)
-            
-            last_record_id = 0
-            f.create_dataset('last_record_id', (1,), data=last_record_id,
-                             compression=h5zip)
-        else:
-            user_ids = f['user_ids']
-            this_user_id_str = [k for (k,v) in user_ids.iteritems()
-                                if v['ip_str'][0]==ip_str 
-                                and v['mac_str'][0]==mac_str
-                                and v['username'][0]==username]
-            if this_user_id_str == []: # No match found in existing user ids
-                min_user_id = min( 0, min([int(k) for k in user_ids.iterkeys()]) )
-                this_user_id = min_user_id - 1
-                this_user_id_str = str(this_user_id)
-                user_id, last_user_record_id = \
-                    self.create_new_user_id_in_HDF5(user_ids, this_user_id_str,
-                                                    ip_str, mac_str, username,
-                                                    compression_type=h5zip)
-            else:
-                this_user_id_str = this_user_id_str[0]
-                this_user_id = int(this_user_id_str)
-                user_id = user_ids[this_user_id_str]
-                last_user_record_id = user_id['last_user_record_id'][()]
 
-            last_record_id = f['last_record_id'][()]
+        record = {}
+        record['ip_str'], record['mac_str'], record['username'] = b.userinfo
+        record['config_name'] = b.config_name
+        record['time_created'] = b.time_created
+        record['description'] = b.description
+        record['appended_descriptions'] = b.appended_descriptions
+        record['flat_channel_name_list'] = flat_channel_name_list
+        record['group_name_list'] = b.group_name_list
+        record['grouped_ind_list'] = b.grouped_ind_list
+        record['weight_list'] = b.k_weight
+        record['step_size_list'] = b.k_step_size
+        record['indiv_ramp_table'] = [np.nan for name in b.k_channel_name]
             
-        last_record_id += 1
-        this_record = f.create_group(str(last_record_id))
-        del f['last_record_id']
-        f['last_record_id'] = last_record_id
-        
-        this_record.create_dataset('user_id', (1,), data=this_user_id, 
-                                   compression=h5zip)
-        last_user_record_id += 1
-        this_record.create_dataset('user_record_id', (1,), data=last_user_record_id,
-                                   compression=h5zip)
-        del user_id['last_user_record_id']
-        user_id['last_user_record_id'] = last_user_record_id
-        
-        this_record.create_dataset('command', (1,), data='insert config',
-                                   dtype=str_type, compression=h5zip)
-        
-        args = this_record.create_group('args')
-            
-        args.create_dataset('config_name', (1,), data=b.config_name, 
-                            dtype=str_type, compression=h5zip)
-        args.create_dataset('time_created', (1,), data=b.time_created, 
-                            compression=h5zip)
-        args.create_dataset('description', (1,), data=b.description,
-                            dtype=str_type, compression=h5zip)
-        args.create_dataset('appended_descriptions', (1,), 
-                            data=b.appended_descriptions, dtype=str_type,
-                            compression=h5zip)
-        
-        nChannels = len(flat_channel_name_list)
-        args.create_dataset('flat_channel_name_list', (nChannels,),
-                            data=flat_channel_name_list, dtype=str_type,
-                            compression=h5zip)
-        
-        nGroups = len(b.group_name_list)
-        g = args.create_group('grouped_ind_list')
-        for (group_ind,group_name) in enumerate(b.group_name_list):
-            index_list = b.grouped_ind_list[group_ind]
-            dataset = g.create_dataset(group_name,(len(index_list),),
-                                       data=index_list, compression=h5zip)
-            
-        f.close()
+        f = TunerHDF5Manager(save_filepath, mode='w',create_fresh=True)
+        f.createConfigRecordHDF5(record, close_on_exit=True)
         
     #----------------------------------------------------------------------
-    def load_hdf5(self, user_id, user_record_id):
+    def saveConfigToDB(self):
         """"""
+
+        b = self.base_model
         
-        f = h5py.File(TUNER_CLIENT_HDF5_FILEPATH,'r')
+        record = {}
+        record['ip_str'], record['mac_str'], record['username'] = b.userinfo
+        record['config_name'] = b.config_name
+        record['time_created'] = b.time_created
+        record['description'] = b.description
+        record['appended_descriptions'] = b.appended_descriptions
+        record['flat_channel_name_list'] = [name for name in b.k_channel_name]
+        record['group_name_list'] = b.group_name_list
+        record['grouped_ind_list'] = b.grouped_ind_list
+        record['weight_list'] = b.k_weight
+        record['step_size_list'] = b.k_step_size
+        record['indiv_ramp_table'] = [None for name in b.k_channel_name]
         
-        
-        #f['grouped_ind_list']['bpm']['ind_list'][:]
-        #f['grouped_ind_list']['hcor']['ind_list'][:]
-        
-        f.close()
-        
+        client_delta_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
+                                             CLIENT_DELTA_DB_FILENAME)        
+        client_delta_db = TunerDeltaDatabase(filepath=client_delta_filepath)
+        client_delta_db.insertConfigRecordOnClient(record)
+            
         
     #----------------------------------------------------------------------
     def importNewChannelsFromSelector(self, selected_channels, channelGroupInfo):
@@ -248,8 +202,8 @@ class TunerConfigSetupModel(QObject):
     def importNewChannelsFromTextFile(self, list_of_lists):
         """"""
         
-        channelGroupName_list, channelName_list, weight_list = zip(*list_of_lists)
-        step_size_list = weight_list[:]
+        channelGroupName_list, channelName_list, weight_list, step_size_list = \
+            zip(*list_of_lists)
         
         new_lists_dict = {'group_name': channelGroupName_list,
                           'channel_name': channelName_list,
@@ -288,8 +242,11 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
 
         self.settings = settings
         
-        self.radioButton_channel_based.setChecked(True)
-        if self.radioButton_group_based.isChecked():
+        self.comboBox_view.setEditable(False)
+        self.GROUP_BASED_VIEW = self.comboBox_view.findText('Group-based View')
+        self.CHANNEL_BASED_VIEW = self.comboBox_view.findText('Channel-based View')
+        self.comboBox_view.setCurrentIndex(self.CHANNEL_BASED_VIEW)
+        if self.comboBox_view.currentIndex() == self.GROUP_BASED_VIEW:
             self.stackedWidget.setCurrentWidget(self.page_tree)
         else:
             self.stackedWidget.setCurrentWidget(self.page_table)
@@ -476,11 +433,11 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         
         splitter_left_right_sizes = self.settings._splitter_left_right_sizes
         if splitter_left_right_sizes is None:
-            # Adjust left-right splitter so that left widget takes max width
-            # and right widget takes min width
+            # Adjust left-right splitter so that right widget takes max width
+            # and left widget takes min width
             # QSplitter::setStretchFactor(int index, int stretch)
-            self.splitter_left_right.setStretchFactor(0,1)
-            self.splitter_left_right.setStretchFactor(1,0)
+            self.splitter_left_right.setStretchFactor(0,0)
+            self.splitter_left_right.setStretchFactor(1,1)
         else:
             self.splitter_left_right.setSizes(splitter_left_right_sizes)
         
@@ -499,6 +456,8 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
     def closeEvent(self, event):
         """"""
         
+        self.model.output = None
+        
         self.saveViewSizeSettings()
         
         event.accept()
@@ -510,17 +469,10 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         base_model = self.model.base_model
         base_model.time_created = time() # current time in seconds from Epoch
         base_model.config_name = self.lineEdit_config_name.text()
-        #base_model.username
         base_model.description = self.textEdit.toPlainText()
-        #base_model.appended_descriptions
-    
-        saveFileFlag = self.checkBox_save_config_to_file.isChecked()
-        if saveFileFlag:
-            self.model.save_hdf5()
         
-        accepted = True
-        self.emit(SIGNAL('prepareOutput'),accepted)
-        
+        self.model.output = base_model
+
         self.saveViewSizeSettings()
         
         QDialog.accept(self)
@@ -530,8 +482,7 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
     def reject(self):
         """"""
         
-        accepted = False
-        self.emit(SIGNAL('prepareOutput'),accepted)
+        self.model.output = None
         
         self.saveViewSizeSettings()
 
@@ -574,18 +525,16 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
                     horizHeader.showSection(i)
     
     #----------------------------------------------------------------------
-    def on_view_base_change(self):
+    def on_view_base_change(self, current_comboBox_index):
         """"""
         
-        sender = self.sender()
-        
-        if sender == self.radioButton_group_based:
+        if current_comboBox_index == self.GROUP_BASED_VIEW:
             self.stackedWidget.setCurrentWidget(self.page_tree)
-        elif sender == self.radioButton_channel_based:
+        elif current_comboBox_index == self.CHANNEL_BASED_VIEW:
             self.stackedWidget.setCurrentWidget(self.page_table)
         else:
-            raise ValueError('Unexpected sender: '+str(sender))
-        
+            raise ValueError('Unexpected current ComboBox index: '+
+                             str(current_comboBox_index))
         
     #----------------------------------------------------------------------
     def _groupChannels(self):
@@ -725,22 +674,13 @@ class TunerConfigSetupApp(QObject):
         self._initModel()
         self._initView(isModal, parentWindow)
         
-        self.connect(self.view.pushButton_add_from_GUI_selector,
-                     SIGNAL('clicked()'), self._launchChannelExplorer)
-        self.connect(self, SIGNAL('channelsSelected'),
-                     self._askChannelGroupNameAndWeight)
-        self.connect(self, SIGNAL('channelGroupInfoObtained'),
-                     self.model.importNewChannelsFromSelector)
-                     
-        self.connect(self.view.pushButton_add_from_text_file,
-                     SIGNAL('clicked()'), self._launchFileDialogTextFile)
+        self.connect(self.view.pushButton_import,
+                     SIGNAL('clicked()'), self._importConfigData)
+        self.connect(self.view.pushButton_export,
+                     SIGNAL('clicked()'), self._exportConfigData)
         
-        self.connect(self.view, SIGNAL('prepareOutput'),
-                     self.model._prepareOutput)
-        
-        self.connect(self.view.radioButton_channel_based, SIGNAL('clicked()'),
-                     self.view.on_view_base_change)
-        self.connect(self.view.radioButton_group_based, SIGNAL('clicked()'),
+        self.connect(self.view.comboBox_view, 
+                     SIGNAL('currentIndexChanged(int)'),
                      self.view.on_view_base_change)
 
         
@@ -758,43 +698,108 @@ class TunerConfigSetupApp(QObject):
                                          settings=self.settings)
         
     #----------------------------------------------------------------------
-    def _launchFileDialogTextFile(self):
+    def _importConfigData(self):
         """"""
         
-        caption = 'Load Tuner Configuration Data from Text File'
-        text_files_filter_str = 'Text files (*.txt)'
-        all_files_filter_str = 'All files (*)'
-        filter_str = ';;'.join([text_files_filter_str, all_files_filter_str])
-        #selected_filter_str = text_files_filter_str
-        filename = QFileDialog.getOpenFileName(caption=caption,
-                                               directory=self.starting_directory_path,
-                                               filter=filter_str)
+        import_type = self.view.comboBox_import.currentText()
         
-        if not filename:
-            return
-        
-        self.starting_directory_path = filename
-        
-        f = open(filename, 'r')
-        try:
-            all_texts = f.read()
-        finally:
-            f.close()
-        
-        lines = all_texts.split('\n')
-        data = [line.split() for line in lines]
-        if len(data[0]) == 3:
-            pass
-        elif len(data[0]) == 2:
-            for row in data: row.insert(0,row[0]) # Create group name from channel name
-        else:
-            raise ValueError('Only text files with 2 or 3 columns of data can be loaded.')
-            
-        # Change the data type of weight from string to float
-        for row in data: row[2] = float(row[2])
-        
-        self.model.importNewChannelsFromTextFile(data)
+        if import_type == 'Channel Explorer':
+            self._launchChannelExplorer()
+        elif import_type == 'Database':
+            raise NotImplementedError(import_type)
+        elif import_type == 'Text File':
 
+            caption = 'Load Tuner Configuration Data from Text File'
+            text_files_filter_str = 'Text files (*.txt)'
+            all_files_filter_str = 'All files (*)'
+            filter_str = ';;'.join([text_files_filter_str, all_files_filter_str])
+            #selected_filter_str = text_files_filter_str
+            filepath = QFileDialog.getOpenFileName(
+                caption=caption, directory=self.starting_directory_path,
+                filter=filter_str)
+            
+            if not filepath:
+                return
+            
+            self.starting_directory_path = os.path.dirname(filepath)
+            
+            m = TunerTextFileManager(load=True, filepath=filepath)
+            m.exec_()
+            if m.selection is not None:
+                data = m.loadConfigTextFile()
+            else:
+                return
+            
+            if data is not None:
+                self.model.importNewChannelsFromTextFile(data)
+            else:
+                return
+
+        elif import_type == 'HDF5 File':
+            raise NotImplementedError(import_type)
+        else:
+            raise ValueError('Unexpected import_type selected: '+str(import_type))
+
+    #----------------------------------------------------------------------
+    def _exportConfigData(self):
+        """"""
+        
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        
+        import_type = self.view.comboBox_export.currentText()
+        
+        if import_type == 'Database':
+            
+            self.model.saveConfigToDB()
+            msgBox.setText('Config successfully saved to database.')
+            
+        elif import_type == 'Text File':
+            
+            caption = 'Save Tuner Configuration Data to Text File'
+            text_files_filter_str = 'Text files (*.txt)'
+            all_files_filter_str = 'All files (*)'
+            filter_str = ';;'.join([text_files_filter_str, all_files_filter_str])
+            #selected_filter_str = text_files_filter_str
+            save_filepath = QFileDialog.getSaveFileName(
+                caption=caption, directory=self.starting_directory_path,
+                filter=filter_str)        
+            if not save_filepath:
+                return
+        
+            self.starting_directory_path = os.path.dirname(save_filepath)
+
+            m = TunerTextFileManager(load=False, filepath=save_filepath)
+            m.exec_()
+            
+            data = self.model.getConfigDataForTextFile(m.selection)
+            
+            m.saveConfigTextFile(data)
+
+            msgBox.setText('Config successfully saved to Text file.')
+            
+        elif import_type == 'HDF5 File':
+            
+            caption = 'Save Tuner Configuration Data to HDF5 File'
+            text_files_filter_str = 'HDF5 files (*.h5 *.hdf5)'
+            all_files_filter_str = 'All files (*)'
+            filter_str = ';;'.join([text_files_filter_str, all_files_filter_str])
+            #selected_filter_str = text_files_filter_str
+            save_filepath = QFileDialog.getSaveFileName(
+                caption=caption, directory=self.starting_directory_path,
+                filter=filter_str)        
+            if not save_filepath:
+                return
+        
+            self.starting_directory_path = os.path.dirname(save_filepath)
+            
+            self.model.saveConfigToHDF5(save_filepath)
+            msgBox.setText('Config successfully saved to HDF5 file.')
+        else:
+            raise ValueError('Unexpected import_type selected: '+str(import_type))
+
+        msgBox.exec_()
+        
         
     #----------------------------------------------------------------------
     def _launchChannelExplorer(self):
@@ -810,7 +815,10 @@ class TunerConfigSetupApp(QObject):
         tStart = tic()
         
         if selected_channels != []:
-            self.emit(SIGNAL('channelsSelected'), selected_channels)
+            selected_channels, channelGroupInfo = \
+                self._askChannelGroupNameAndWeight(selected_channels)
+            self.model.importNewChannelsFromSelector(selected_channels,
+                                                     channelGroupInfo)
         
         
     #----------------------------------------------------------------------
@@ -844,8 +852,7 @@ class TunerConfigSetupApp(QObject):
         else:
             channelGroupInfo = {}
         
-        self.emit(SIGNAL("channelGroupInfoObtained"), selected_channels,
-                  channelGroupInfo)
+        return selected_channels, channelGroupInfo
 
 #----------------------------------------------------------------------
 def make(isModal=True, parentWindow=None):
