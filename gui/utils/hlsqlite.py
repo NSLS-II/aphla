@@ -182,7 +182,14 @@ class SQLiteDatabase():
                 '"program" argument must be either "sqlite" or "python". ' +
                 'Unexpected program: ',str(program))
         
-    
+    #----------------------------------------------------------------------
+    def dump(self, dump_filepath):
+        """"""
+        
+        with open(dump_filepath, 'w') as f:
+            for line in self.con.iterdump():
+                f.write('{0:s}\n'.format(line))
+        
     #----------------------------------------------------------------------
     def getTableNames(self):
         """"""
@@ -470,22 +477,38 @@ class SQLiteDatabase():
     #----------------------------------------------------------------------
     def insertRows(self, table_name, list_of_tuples, on_conflict=None,
                    bind_replacement_list_of_tuples=None):
-        """"""
+        """
+        The argument "bind_replacement_list_of_tuples" is used to replace
+        "?" in "bind_list" with a SQLite function.
+        
+        This is useful if a column contains timestamps for row insertion.
+        In this case, instead of providing a timestamp value to database,
+        you can have the database automatically timestamp row insertion,
+        by replacing "?" with a SQLite function string such as
+        "strftime('%s','now')".
+        
+        To specify this replacement, you must specify a tuple whose first
+        element is the index of "?" in "bind_list" and whose second element
+        is a valid SQLite expression string. For example, if you have a
+        bind list ['?', '?', '?'], and want to have the 2nd '?' replaced with
+        "strtime('%s','now')", then
+           bind_replacement_list_of_tuples = [(1,"strtime('%s','now')"),]
+        """
         
         if on_conflict is None:
             sql_cmd = 'INSERT INTO ' + table_name + ' VALUES '
         else:
             sql_cmd = 'INSERT OR ' + on_conflict + ' INTO ' + table_name + ' VALUES '
         
-        placeholder_list = ['?' if not info_dict['primary_key'] else 'null'
-                            for info_dict in self.getTableInfo(table_name)]
+        bind_list = ['?' if not info_dict['primary_key'] else 'null'
+                     for info_dict in self.getTableInfo(table_name)]
         
         if isinstance(bind_replacement_list_of_tuples,list) or \
            isinstance(bind_replacement_list_of_tuples,tuple):
             for tup in bind_replacement_list_of_tuples:
-                placeholder_list[tup[0]] = tup[1]
+                bind_list[tup[0]] = tup[1]
         
-        placeholder_str = '(' + ', '.join(placeholder_list) + ')'
+        placeholder_str = '(' + ', '.join(bind_list) + ')'
         
         sql_cmd += placeholder_str
         

@@ -9,6 +9,8 @@ import cPickle as pickle
 import traceback
 from pprint import pprint
 import shutil
+import logging
+from difflib import ndiff, context_diff
 
 import aphla as ap
 from aphla.gui.utils.hlsqlite import (MEMORY, SQLiteDatabase, Column, 
@@ -102,6 +104,10 @@ class TunerServer(tcpip.Server):
     def __init__(self):
         """Constructor"""
         
+        logfilepath = os.path.join(CLIENT_DATA_FOLDERPATH,'server.log')
+        logging.basicConfig(filename=logfilepath,level=logging.DEBUG,
+                            format='%(asctime)s:%(levelname)s:%(message)s')        
+        
         tcpip.Server.__init__(self)
         
         # Persistent files
@@ -114,6 +120,9 @@ class TunerServer(tcpip.Server):
             SERVER_DATA_FOLDERPATH, CLIENT_DELTA_DB_FILENAME)
         self.client_server_delta_db_filepath = os.path.join(
             SERVER_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
+        self.new_server_main_db_filepath = os.path.join(
+            SERVER_DATA_FOLDERPATH, NEW_MAIN_DB_FILENAME)
+
         
         if os.path.exists(self.server_delta_db_filepath):
             self.server_delta_db = TunerDeltaDatabase(
@@ -145,6 +154,30 @@ class TunerServer(tcpip.Server):
         server_delta_db._initTables()
         
     #----------------------------------------------------------------------
+    def updateServerMainDB(self):
+        """"""
+        
+        print 'Periodic update of main database file (tuner.sqlite) begins...'
+        try:
+            shutil.copy(self.server_main_db_filepath, self.new_server_main_db_filepath)
+            
+            new_main_db = TunerMainDatabase(filepath=self.new_server_main_db_filepath)
+            
+            new_main_db.update(self.server_delta_db)
+            
+            self.server_delta_db.updateDeltaDBOnSyncSuccess()
+            
+            shutil.move(self.new_server_main_db_filepath,
+                        self.server_main_db_filepath)
+            
+        except:
+            traceback.print_exc()
+            print 'Failed to apply transaction(s) to Server main database.'
+            raise RuntimeError()
+        else:
+            print 'Periodic update of main database file was successful.'
+        
+    #----------------------------------------------------------------------
     def insertConfigRecordsOnServer(self, debug=False):
         """"""
         
@@ -173,7 +206,9 @@ class TunerServer(tcpip.Server):
                                               'server_delta_db')
         client_server_delta_db.insertTable('delta_table',
                                            foreign_database_name='server_delta_db',
-                                           foreign_table_name='delta_table')
+                                           foreign_table_name='delta_table',
+                                           condition_str='server_delta_db.delta_table.tunix > ?',
+                                           binding_tuple=(client_last_sync_timestamp,))
         client_server_delta_db.close()
 
         print 'Done.'
@@ -190,7 +225,7 @@ class TunerServer(tcpip.Server):
         
         self.createClientServerDeltaDB()
         
-        connection, client_address = self.sock.accept()
+        connection, client_address = self.sock.accept()        
         try:
             f = open(self.client_server_delta_db_filepath,'rb')
             print 'Sending client_server_delta DB file to Client...'
@@ -220,6 +255,10 @@ class TunerClient(tcpip.Client):
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
+        
+        logfilepath = os.path.join(CLIENT_DATA_FOLDERPATH,'client.log')
+        logging.basicConfig(filename=logfilepath,level=logging.DEBUG,
+                            format='%(asctime)s:%(levelname)s:%(message)s')
         
         tcpip.Client.__init__(self)
         
@@ -259,13 +298,13 @@ class TunerClient(tcpip.Client):
         client_delta_db._initTables()
 
         # Copy the main DB file from the server
-        self.copyMainDBFileFromServer()
+        self._copyMainDBFileFromServer()
         
         # Make a backup copy of the main DB file for easy syncing later on
-        self.backupMainDBFile()
+        self._backupMainDBFile()
         
     #----------------------------------------------------------------------
-    def copyMainDBFileFromServer(self):
+    def _copyMainDBFileFromServer(self):
         """"""
         
         # Make sure that the main DB file on the server is fully updated with
@@ -276,14 +315,14 @@ class TunerClient(tcpip.Client):
         shutil.move(MAIN_DB_FILENAME, self.client_main_db_filepath)
         
     #----------------------------------------------------------------------
-    def backupMainDBFile(self):
+    def _backupMainDBFile(self):
         """"""
         
         shutil.copy(self.client_main_db_filepath,
                     self.last_synced_main_db_filepath)
         
     #----------------------------------------------------------------------
-    def getClientServerDelta(self):
+    def _getClientServerDelta(self):
         """"""
 
         try:
@@ -309,24 +348,102 @@ class TunerClient(tcpip.Client):
             print 'Error while receiving client_server_delta DB file from Server.'
         #
         self.closeSocket()
-    
+        
     #----------------------------------------------------------------------
-    def updateDBOnClient(self):
+    def _updateDBOnClient(self):
         """"""
         
-        pass
-    
+        shutil.copy(self.last_synced_main_db_filepath,
+                    self.new_client_main_db_filepath)
+        
+        try:
+            new_main_db = TunerMainDatabase(filepath=self.new_client_main_db_filepath)
+        
+            client_server_delta_db = TunerDeltaDatabase(
+                filepath=self.client_server_delta_db_filepath)
+        
+            new_main_db.update(client_server_delta_db)
+
+        except:
+            traceback.print_exc()
+            print 'Failed to appply transaction(s) to Client main database.'
+            raise RuntimeError()
+        
+    #----------------------------------------------------------------------
+    def _finalizeSync(self):
+        """"""
+        
+        self.client_delta_db.updateDeltaDBOnSyncSuccess()
+        self.client_delta_db.deleteRows('delta_table') # delete all rows in "delta_table"
+        
+        os.remove(self.client_server_delta_db_filepath)
+        
+        shutil.move(self.new_client_main_db_filepath,
+                    self.client_main_db_filepath)
+        
+        shutil.copy(self.client_main_db_filepath,
+                    self.last_synced_main_db_filepath)
+        
     #----------------------------------------------------------------------
     def syncWithServer(self):
         """"""
         
-        self.sendFile(self.client_delta_db_filepath,
-                      destination_folderpath=SERVER_DATA_FOLDERPATH,
-                      debug=False)
+        try:
+            print 'Sending client_delta DB file from Client to Server...'
+            self.sendFile(self.client_delta_db_filepath,
+                          destination_folderpath=SERVER_DATA_FOLDERPATH,
+                          debug=False)
+        except:
+            traceback.print_exc()
+            print 'ServerSyncFailure: Failed to send client_delta DB file to Server.'
+            return
+        else:
+            print 'Finished sending client_delta DB file successfully.'
         
-        self.getClientServerDelta()
+        try:
+            print 'Waiting for Server to send update DB file...'            
+            self._getClientServerDelta()
+        except:
+            traceback.print_exc()
+            print 'ServerSyncFailure: Failed to receive client_server_delta DB file from Server.'
+
+            try: os.remove(self.client_server_delta_db_filepath)
+            except: pass
+            
+            return
+        else:
+            print 'Successfully received update DB file from Server.'
         
-        self.updateDBOnClient()
+        try:
+            print 'Applying the update from Server to Client DB...'
+            self._updateDBOnClient()
+        except:
+            traceback.print_exc()
+            print 'ServerSyncFailure: Failed to apply update from Server.'
+            
+            try: os.remove(self.client_server_delta_db_filepath)
+            except: pass
+            try: os.remove(self.new_client_main_db_filepath)
+            except: pass
+            
+            return
+        else:
+            print 'Successfully applied update to Client DB.'
+        
+        try:
+            print 'Finalizing sync with Server...'
+            self._finalizeSync()
+        except:
+            traceback.print_exc()
+            msg = 'ServerSyncFailure: Failed to finalize sync w/ Server.'
+            print msg
+            
+            logging.critical(msg+':'+str(sys.exc_info()))
+            
+            return
+        else:
+            print 'Syncing with Server successfully finished.'
+        
     
 ########################################################################
 class TunerHDF5Manager():
@@ -646,6 +763,137 @@ class TunerMainDatabase(SQLiteDatabase):
             
         
         return user_id
+    
+    #----------------------------------------------------------------------
+    def getLastTransactionID(self):
+        """"""
+        
+        last_transaction_id = self.getColumnDataFromTable(
+            'transaction_table', column_name_list=['last_transaction_id'])
+        if last_transaction_id == []:
+            last_transaction_id = 0
+        else:
+            last_transaction_id = last_transaction_id[0][0]
+            
+        return last_transaction_id
+        
+    #----------------------------------------------------------------------
+    def update(self, delta_db):
+        """"""
+        
+        last_transaction_id = self.getLastTransactionID()
+        
+        tuple_of_lists = delta_db.getColumnDataFromTable(
+            'delta_table', column_name_list=['*'],condition_str=' kid > ?',
+            order_by_str='kid', binding_tuple=(last_transaction_id,))
+        if tuple_of_lists == []:
+            print 'Main DB file already up-to-date.'
+            return
+        else:
+            new_transaction_id_list, new_timestamp_list, new_transaction_type_list, \
+                new_transaction_data_list = tuple_of_lists
+        
+        for (trans_id, timestamp, trans_type, trans_data) in \
+            zip(new_transaction_id_list, new_timestamp_list, 
+                new_transaction_type_list, new_transaction_data_list):
+    
+            user_id = self.checkUserID(trans_data['ip_str'],trans_data['mac_str'],
+                                       trans_data['username'])
+        
+            if trans_type == 'insert_config':
+                self.insertConfig(user_id, trans_id, trans_data)
+            elif trans_type == 'insert_snapshot':
+                raise NotImplementedError('transaction type: ' + trans_type)
+            elif trans_type == 'append_description':
+                raise NotImplementedError('transaction type: ' + trans_type)
+            else:
+                raise NotImplementedError('transaction type: ' + trans_type)
+        
+        self.updateTransactionTable(delta_db)
+        
+    #----------------------------------------------------------------------
+    def updateTransactionTable(self, delta_db):
+        """"""
+        
+        last_transaction_id = delta_db.getMaxInColumn(
+            'delta_table','kid')
+        last_timestamp = delta_db.getColumnDataFromTable(
+            'delta_table', column_name_list=['tunix'], 
+            condition_str='kid = ?', binding_tuple=(last_transaction_id,))[0][0]
+        
+        self.changeValues('transaction_table','last_transaction_id','?',
+                          binding_tuple=(last_transaction_id,))
+        self.changeValues('transaction_table','last_timestamp','?',
+                          binding_tuple=(last_timestamp,))
+        
+        
+        
+    #----------------------------------------------------------------------
+    def insertConfig(self, user_id, trans_id, trans_data):
+        """"""
+        
+        # Update "config_meta_table"
+        list_of_tuples=[(trans_data['config_name'],
+                         user_id, trans_id,
+                         trans_data['time_created'],
+                         trans_data['description'],
+                         trans_data['appended_descriptions']),]
+        self.insertRows('config_meta_table',
+                        list_of_tuples=list_of_tuples)
+
+        # Update "channel_name_table"
+        config_id = self.getMaxInColumn('config_meta_table','config_id')
+        
+        channel_name_list_of_tuples = [tuple((ch_name,)) for ch_name in
+                                       trans_data['flat_channel_name_list']]
+        self.insertRows('channel_name_table',
+                        list_of_tuples=channel_name_list_of_tuples,
+                        on_conflict='IGNORE')
+
+        # Update "channel_table"
+        channel_name_id_list = self.getColumnDataFromTable(
+            'channel_name_table',column_name_list=['channel_name_id'],
+            condition_str='channel_name = ?',
+            binding_list_of_tuples=channel_name_list_of_tuples
+            )[0]
+        pvrb_name_list, pvsp_name_list = getpvnames(
+            trans_data['flat_channel_name_list'], return_zipped=False)
+        time_created_list = [trans_data['time_created']]*len(channel_name_id_list)
+        list_of_tuples = zip(channel_name_id_list,pvrb_name_list,pvsp_name_list,
+                             time_created_list)
+        #list_of_tuples = zip(channel_name_id_list,pvrb_name_list,pvsp_name_list)
+        #bind_replacement_list_of_tuples = [
+            #(-1, self.getCurrentEpochTimestampSQLiteFuncStr(data_type='float'))
+        #]
+        #self.insertRows('channel_table',list_of_tuples=list_of_tuples,
+                        #on_conflict='IGNORE',
+                        #bind_replacement_list_of_tuples=bind_replacement_list_of_tuples)
+        self.insertRows('channel_table',list_of_tuples=list_of_tuples,
+                        on_conflict='IGNORE')
+        
+        # Update "channel_group_name_table"
+        group_name_list = trans_data['group_name_list']
+        list_of_tuples = [tuple((g_name,)) for g_name in group_name_list]
+        self.insertRows('channel_group_name_table',
+                        list_of_tuples=list_of_tuples, on_conflict='IGNORE')
+
+        # Update "config_table"
+        config_id_list = [config_id]*len(channel_name_id_list)
+        channel_group_name_id_list = [0]*len(channel_name_id_list)
+        channel_group_name_id_unique_list = self.getColumnDataFromTable(
+            'channel_group_name_table', column_name_list=['channel_group_name_id'],
+            condition_str='channel_group_name = ?', 
+            binding_list_of_tuples=[tuple((g,)) for g in group_name_list])[0]
+        for (gid, ind_list) in zip(channel_group_name_id_unique_list,
+                                   trans_data['grouped_ind_list']):
+            for i in ind_list: channel_group_name_id_list[i] = gid
+        weight_list = trans_data['weight_list']
+        step_size_list = trans_data['step_size_list']
+        indiv_ramp_table_list = [sqlite3.Binary(pickle.dumps(obj,protocol=2)) 
+                                 for obj in trans_data['indiv_ramp_table']]
+        list_of_tuples = zip(config_id_list, channel_name_id_list, channel_group_name_id_list,
+                             weight_list, step_size_list, indiv_ramp_table_list)
+        self.insertRows('config_table',list_of_tuples=list_of_tuples)
         
     
 ########################################################################
@@ -750,7 +998,12 @@ class TunerDeltaDatabase(SQLiteDatabase):
         
         return result_list_of_tuples
 
-
+    #----------------------------------------------------------------------
+    def updateDeltaDBOnSyncSuccess(self):
+        """"""
+        
+        self.changeValues('sync_table','last_timestamp',
+            self.getCurrentEpochTimestampSQLiteFuncStr(data_type='float'))
 
 
 #----------------------------------------------------------------------
@@ -1034,223 +1287,108 @@ def test1(args):
     
     db.close()
 
-    
-#----------------------------------------------------------------------
-def main(args):
-    """
-    """
-    
-    pass
 
 #----------------------------------------------------------------------
-def debug():
-    """"""
-
-    pass
-
-#----------------------------------------------------------------------
-def test_initializationAtFirstEverTunerStartup():
+def startServer():
     """"""
     
-    ## Server Initialization
+    s = TunerServer()
+    
+    # Specify server DB updating function, which is to be performed
+    # regularly when the server is idling.
+    task = tcpip.ServerTask(min_interval=3.,
+                            client_connection_timeout=1.)
+    #task = tcpip.ServerTask(min_interval=24.*60.*60.,
+                            #client_connection_timeout=30.*60.)
+    #task.initialFunc = s.updateServerMainDB
+    task.periodicFunc = s.updateServerMainDB
+    s.task_list.append(task)
+
+    s.startListening()
+    
+#----------------------------------------------------------------------
+def initServerDBFiles():
+    """
+    Initialization of database files on Server.
+    
+    WARNING: All data in server datbase files will be wiped clean! 
+    """
+
     server = TunerServer()
     server._initDBFiles()
+
+#----------------------------------------------------------------------
+def initClientDBFiles():
+    """
+    Initialization of database files on Client.
     
-    ## Client Initialization
+    WARNING: All data in client datbase files will be wiped clean! 
+    """
+
     client = TunerClient()
     client._initDBFiles()
-
+        
 #----------------------------------------------------------------------
 def test_syncWithServer():
     """"""
 
+    ## Server Initialization
+    initServerDBFiles()
+    
+    ## Client Initialization
+    initClientDBFiles()
+    
+    ### using Tuner Config Setup, save some sample config to client_delta
+    ## or use an already created client_delta, copy it and rename it
+    shutil.copy('/home/yhidaka/.hla/nsls2/tuner_client/client_delta.sqlite.backup',
+                '/home/yhidaka/.hla/nsls2/tuner_client/client_delta.sqlite')
+    
+    ## Try syncing
     client = TunerClient()
     client.syncWithServer()
     
-##----------------------------------------------------------------------
-#def test_sendClientDeltaToServer():
-    #""""""
-
-    #client_delta_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                         #CLIENT_DELTA_DB_FILENAME)
-    #client = TunerClient()
-    #client.sendFile(client_delta_filepath,
-                    #destination_folderpath=SERVER_DATA_FOLDERPATH,
-                    #debug=False)
-
-#----------------------------------------------------------------------
-def test_addClientDeltaToServerDelta():
-    """"""
+    ## Check if tuner_client/tuner.sqlite == tuner_client/last_synced_tuner.sqlite
+    dump1_filepath = os.path.join(CLIENT_DATA_FOLDERPATH, 'd1.dump')
+    dump2_filepath = os.path.join(CLIENT_DATA_FOLDERPATH, 'd2.dump')
+    client_main_db = TunerMainDatabase(filepath=client.client_main_db_filepath)
+    client_main_db.dump(dump1_filepath)
+    last_sync_db = TunerMainDatabase(filepath=client.last_synced_main_db_filepath)
+    last_sync_db.dump(dump2_filepath)
+    with open(dump1_filepath,'r') as f:
+        t1 = f.read()
+    with open(dump2_filepath,'r') as f:
+        t2 = f.read()
+    if t1 != t2:
+        d = context_diff(t1.splitlines(1), t2.splitlines(1))
+        pprint(list(d))
     
+    ## Check if tuner_client/tuner.sqlite == tuner_server/tuner.sqlite
+    try:
+        client.sendRequestHeader('updateServerMainDB')
+    except:
+        print 'ERROR: There appears to be a network problem.'
+        print 'Make sure that the server is running.'
+        return
+    print 'wating for server to finish update its database...'
+    sleep(5.)
+    print 'Done waiting.'
     server = TunerServer()
-    server.insertConfigRecordsOnServer(debug=True)
-    
-#----------------------------------------------------------------------
-def test_createClientServerDeltaDB():
-    """"""
-    
-    server = TunerServer()
-    server.createClientServerDeltaDB()
+    dump3_filepath = os.path.join(CLIENT_DATA_FOLDERPATH, 'd3.dump')
+    server_main_db = TunerMainDatabase(filepath=server.server_main_db_filepath)
+    server_main_db.dump(dump3_filepath)
+    with open(dump3_filepath,'r') as f:
+        t3 = f.read()
+    if t1 != t3:
+        d = context_diff(t1.splitlines(1), t3.splitlines(1))
+        pprint(list(d))
         
-#----------------------------------------------------------------------
-def test_sendClientServerDeltaToClientAndDeleteItOnServer():
-    """"""
-    
-    client_server_delta_filepath_on_client = os.path.join(
-        CLIENT_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
-    client_server_delta_filepath_on_server = os.path.join(
-        SERVER_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
-    shutil.copy(client_server_delta_filepath_on_server,
-                client_server_delta_filepath_on_client)
-    
-    os.remove(client_server_delta_filepath_on_server)
-    
-    
-#----------------------------------------------------------------------
-def test_createNewTunerDBOnClient_applyClientServerDeltaToNewMainDB():
-    """"""
-
-    last_synced_tuner_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                                 LAST_SYNCED_MAIN_DB_FILENAME)
-    new_tuner_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                         NEW_MAIN_DB_FILENAME)
-    shutil.copy(last_synced_tuner_db_filepath,
-                new_tuner_db_filepath)
+    os.remove(dump1_filepath)
+    os.remove(dump2_filepath)
+    os.remove(dump3_filepath)
+        
+    print 'File equality checks finished.'
 
     
-    client_server_delta_filepath = os.path.join(
-        CLIENT_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
-    
-    client_server_delta_db = TunerDeltaDatabase(
-        filepath=client_server_delta_filepath)
-    new_tuner_db = TunerMainDatabase(filepath=new_tuner_db_filepath)
-    
-    last_transaction_id = new_tuner_db.getColumnDataFromTable(
-        'transaction_table', column_name_list=['last_transaction_id'])
-    if last_transaction_id == []:
-        last_transaction_id = 0
-    else:
-        last_transaction_id = last_transaction_id[0][0]
-    
-    new_transaction_id_list, new_timestamp_list, new_transaction_type_list, \
-        new_transaction_data_list = client_server_delta_db.getColumnDataFromTable(
-            'delta_table', column_name_list=['*'],condition_str=' kid > ?',
-            order_by_str='kid', binding_tuple=(last_transaction_id,))
-    
-    for (transaction_id, timestamp, trans_type, trans_data) in \
-        zip(new_transaction_id_list, new_timestamp_list, new_transaction_type_list,
-            new_transaction_data_list):
-
-        user_id = new_tuner_db.checkUserID(trans_data['ip_str'],trans_data['mac_str'],
-                                           trans_data['username'])
-
-        if trans_type == 'insert_config':
-            list_of_tuples=[(trans_data['config_name'],
-                             user_id, transaction_id,
-                             trans_data['time_created'],
-                             trans_data['description'],
-                             trans_data['appended_descriptions']),]
-            new_tuner_db.insertRows('config_meta_table',
-                                    list_of_tuples=list_of_tuples)
-            print 'config_meta_table'
-            pprint( new_tuner_db.getAllColumnDataFromTable('config_meta_table') )
-
-            config_id = new_tuner_db.getMaxInColumn('config_meta_table','config_id')
-            
-            channel_name_list_of_tuples = [tuple((ch_name,)) for ch_name in
-                                           trans_data['flat_channel_name_list']]
-            new_tuner_db.insertRows('channel_name_table',
-                                    list_of_tuples=channel_name_list_of_tuples,
-                                    on_conflict='IGNORE')
-            print 'channel_name_table'
-            pprint( new_tuner_db.getAllColumnDataFromTable('channel_name_table') )            
-
-            channel_name_id_list = new_tuner_db.getColumnDataFromTable(
-                'channel_name_table',column_name_list=['channel_name_id'],
-                condition_str='channel_name = ?',
-                binding_list_of_tuples=channel_name_list_of_tuples
-            )[0]
-            pvrb_name_list, pvsp_name_list = getpvnames(
-                trans_data['flat_channel_name_list'], return_zipped=False)
-            list_of_tuples = zip(channel_name_id_list,pvrb_name_list,pvsp_name_list)
-            bind_replacement_list_of_tuples = [
-                (-1, new_tuner_db.getCurrentEpochTimestampSQLiteFuncStr(data_type='float'))
-                ]
-            new_tuner_db.insertRows('channel_table',list_of_tuples=list_of_tuples,
-                                    on_conflict='IGNORE',
-                                    bind_replacement_list_of_tuples=bind_replacement_list_of_tuples)
-            print 'channel_table'
-            pprint(new_tuner_db.getAllColumnDataFromTable('channel_table'))
-            
-            group_name_list = trans_data['group_name_list']
-            list_of_tuples = [tuple((g_name,)) for g_name in group_name_list]
-            new_tuner_db.insertRows('channel_group_name_table',
-                                    list_of_tuples=list_of_tuples,
-                                    on_conflict='IGNORE')
-            print 'channel_group_name_table'
-            pprint( new_tuner_db.getAllColumnDataFromTable('channel_group_name_table') )
-
-            config_id_list = [config_id]*len(channel_name_id_list)
-            channel_group_name_id_list = [0]*len(channel_name_id_list)
-            channel_group_name_id_unique_list = new_tuner_db.getColumnDataFromTable(
-                'channel_group_name_table', column_name_list=['channel_group_name_id'],
-                condition_str='channel_group_name = ?', 
-                binding_list_of_tuples=[tuple((g,)) for g in group_name_list])[0]
-            for (gid, ind_list) in zip(channel_group_name_id_unique_list,
-                                         trans_data['grouped_ind_list']):
-                for i in ind_list: channel_group_name_id_list[i] = gid
-            weight_list = trans_data['weight_list']
-            step_size_list = trans_data['step_size_list']
-            indiv_ramp_table_list = [sqlite3.Binary(pickle.dumps(obj,protocol=2)) 
-                                     for obj in trans_data['indiv_ramp_table']]
-            list_of_tuples = zip(config_id_list, channel_name_id_list, channel_group_name_id_list,
-                                 weight_list, step_size_list, indiv_ramp_table_list)
-            new_tuner_db.insertRows('config_table',list_of_tuples=list_of_tuples)
-            print 'config_table'
-            pprint( new_tuner_db.getAllColumnDataFromTable('config_table') )
-            
-        else:
-            raise NotImplementedError('transaction type: ' + trans_type)
-    
-#----------------------------------------------------------------------
-def test_finalizeClientMainDBUpdate():
-    """"""
-    client_server_delta_filepath = os.path.join(
-            CLIENT_DATA_FOLDERPATH, CLIENT_SERVER_DELTA_DB_FILENAME)
-    new_tuner_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                         NEW_MAIN_DB_FILENAME)
-    
-    client_server_delta_db = TunerDeltaDatabase(
-        filepath=client_server_delta_filepath)
-    new_tuner_db = TunerMainDatabase(filepath=new_tuner_db_filepath)
-
-    last_transaction_id = client_server_delta_db.getMaxInColumn('delta_table','kid')
-    last_timestamp = client_server_delta_db.getColumnDataFromTable('delta_table',
-        column_name_list=['tunix'], condition_str='kid = ?', 
-        binding_tuple=(last_transaction_id,))[0][0]
-    new_tuner_db.changeValues('transaction_table','last_transaction_id','?',
-                              binding_tuple=(last_transaction_id,))
-    new_tuner_db.changeValues('transaction_table','last_timestamp','?',
-                              binding_tuple=(last_timestamp,))
-
-
-    tuner_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                     MAIN_DB_FILENAME)
-    shutil.move(new_tuner_db_filepath, tuner_db_filepath)
-
-    last_synced_db_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                           LAST_SYNCED_MAIN_DB_FILENAME)
-    shutil.copy(tuner_db_filepath, last_synced_db_filepath)
-    
-    os.remove(client_server_delta_filepath)
-    
-    client_delta_filepath = os.path.join(CLIENT_DATA_FOLDERPATH,
-                                         CLIENT_DELTA_DB_FILENAME)
-    client_delta_db = TunerDeltaDatabase(filepath=client_delta_filepath)
-    client_delta_db.deleteRows('delta_table') # delete all rows in "delta_table"
-    client_delta_db.changeValues('sync_table','last_timestamp',
-        client_delta_db.getCurrentEpochTimestampSQLiteFuncStr(data_type='float'))
-
 #----------------------------------------------------------------------
 def test_loadConfigFromDB(config_id):
     """"""
@@ -1283,7 +1421,7 @@ def test_loadConfigFromDB(config_id):
     column_name_list = client_main_db.getColumnNames('config_view')
     column_name_list = [col for col in column_name_list if not (
         (col == 'channel_group_name_id') or col.startswith('channel_group_name_id:') or
-        (cold == 'channel_name_id') or col.startswith('channel_name_id:') )] 
+        (col == 'channel_name_id') or col.startswith('channel_name_id:') )] 
     pprint( column_name_list )
     
     config_view = client_main_db.getColumnDataFromTable('config_view',column_name_list=['*'],
@@ -1294,16 +1432,8 @@ def test_loadConfigFromDB(config_id):
 #----------------------------------------------------------------------    
 if __name__ == "__main__" :
     
-    #test_initializationAtFirstEverTunerStartup()
-    ### using Tuner Config Setup, save some sample config to client_delta
-    test_syncWithServer()
+    #test_syncWithServer()
     
-    #test_sendClientDeltaToServer()
-    #test_addClientDeltaToServerDelta()
-    #test_createClientServerDeltaDB()
-    #test_sendClientServerDeltaToClientAndDeleteItOnServer()
-    #test_createNewTunerDBOnClient_applyClientServerDeltaToNewMainDB()
-    #test_finalizeClientMainDBUpdate()
-    #test_loadConfigFromDB(config_id=1)
+    test_loadConfigFromDB(config_id=1)
     
     

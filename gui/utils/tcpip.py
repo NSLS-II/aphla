@@ -1,13 +1,15 @@
 import sys, os
 import ntpath, posixpath
 from socket import (socket, AF_INET, SOCK_STREAM, gethostname,
-                    SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR)
+                    SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout)
+TimeoutError = timeout
 import traceback
 from random import randint
 from subprocess import Popen, PIPE
 from urllib2 import urlopen, ProxyHandler
 from shutil import copy, move
 import logging
+from time import time
 
 BLOCK_SIZE = 2048 # [bytes]
 
@@ -314,6 +316,7 @@ class Server(object):
         self.port_number = None
         self.address = None
         
+        self.task_list = []
     
     #----------------------------------------------------------------------
     def closeSocket(self):
@@ -358,9 +361,10 @@ class Server(object):
     def receiveString(self, debug=False):
         """"""
         
+        connection, client_address = self.sock.accept()
+        
         string = ''
         
-        connection, client_address = self.sock.accept()
         try:
             while True:
                 data = connection.recv(BLOCK_SIZE)
@@ -378,17 +382,19 @@ class Server(object):
         return string
         
     #----------------------------------------------------------------------
-    def echo(self, debug=False):
+    def echo(self, connection=None, client_address='', debug=False):
         """
         The only difference from receiveString() is that this will return
         the received string back to Client. This is useful to know if the
         connection Client thought it made successfully is actually active
         or not, by confirming what has been received by Server.
         """
+        
+        if connection is None:
+            connection, client_address = self.sock.accept()
 
         string = ''
         
-        connection, client_address = self.sock.accept()
         try:
             while True:
                 data = connection.recv(BLOCK_SIZE)
@@ -479,39 +485,120 @@ class Server(object):
         
         self.sock.listen(nMaxQueuedConnections)
         
-        while True:
-            print 'waiting for a connection'
+        timeout_list = [task.client_connection_timeout
+                        for task in self.task_list]
+        if timeout_list == []:
+            self.sock.settimeout(None)
+        else:
+            self.sock.settimeout(min(timeout_list))
+        
+        for task in self.task_list:
+            if callable(task.initialFunc):
+                task.initialFunc()
+        
+        stop_requested = False
+        show_wait_print = True
+        while not stop_requested:
             
-            header = self.echo()
+            if show_wait_print:
+                print 'waiting for a connection'
             
-            print 'client header:', header
+            try:
+                connection, client_address = self.sock.accept()
+            except TimeoutError:
+                #print 'timed out waiting for a connection'
+                for task in self.task_list:
+                    if task.pastScheduledTime() and \
+                       callable(task.periodicFunc):
+                        task.periodicFunc()
+                show_wait_print = False
+                continue
+            except KeyboardInterrupt:
+                print 'Stop requested by user'
+                stop_requested = True
+                continue
+            else:
+                show_wait_print = True
             
-            not_implemented_message = (
-                'You must implement a function called "'+
-                header+'" in Server class.')
-            if hasattr(self, header):
-                request_func_obj = getattr(self, header)
-                if callable(request_func_obj):
-                    # Run the specified function
-                    request_func_obj()
+            try:
+                header = self.echo(connection, client_address)
+                print 'client header:', header
+            
+                not_implemented_message = (
+                    'You must implement a function called "'+
+                    header+'" in Server class.')
+
+                if hasattr(self, header):
+                    request_func_obj = getattr(self, header)
+                    if callable(request_func_obj):
+                        # Run the specified function
+                        request_func_obj()
+                    else:
+                        raise NotImplementedError(not_implemented_message)
                 else:
                     raise NotImplementedError(not_implemented_message)
-            else:
-                raise NotImplementedError(not_implemented_message)
+            except KeyboardInterrupt:
+                print 'Stop requested by user'
+                stop_requested = True
+                continue
+            except:
+                continue
+        
+        else: 
+            for task in self.task_list:
+                if callable(task.finalFunc):
+                    task.finalFunc()
+        
+########################################################################
+class ServerTask():
+    """"""
 
-            #if header == 'echo':
-                #self.echo()
-            #elif header == 'receiveFile':
-                #filename = self.receiveString()
-                #destination_folderpath = self.receiveString()
-                #self.receiveFile(filename,destination_folderpath=destination_folderpath,
-                                 #debug=False)
-            #elif header == 'sendFile':
-                #filename = self.receiveString()
-                #src_folderpath = self.receiveString()
-                #self.sendFile(filename,src_folderpath=src_folderpath,
-                              #debug=False)
-            #else:
-                #raise NotImplementedError('"'+header+'"')
-
-                
+    #----------------------------------------------------------------------
+    def __init__(self, min_interval, client_connection_timeout):
+        """Constructor"""
+        
+        self.min_interval = min_interval
+        '''
+        A minimum periodic interval in seconds at which the task defined
+        by this class must be performed on the server.
+        '''
+        
+        self.client_connection_timeout = client_connection_timeout
+        '''
+        If the server does not receive any connection request from
+        clients for this amount of time duration, then the server will
+        check if the specified minimum interval time has elapsed. If yes,
+        then the server will perform the specified task function
+        "periodicFunc". If not, the server will start waiting for
+        a connection request again.
+        
+        Therefore, this timeout must be carefully chosen. You want to set
+        this timeout much smaller than min_interval if you want the tasks
+        to be performed as accurate to the schedule as possible.
+        
+        If you set the timeout too long, and the server receives frequent 
+        connection requests, then this task may never be performed.
+        
+        On the other hand, if you set this timeout too small, the server
+        will frequently check if the task should be performed.
+        '''
+        
+        self.last_timestamp = time()
+    
+        self.initialFunc = None
+        self.periodicFunc = None
+        self.finalFunc = None
+        
+    #----------------------------------------------------------------------
+    def pastScheduledTime(self):
+        """"""
+        
+        current_timestamp = time()
+        elapsed_time = current_timestamp - self.last_timestamp
+        
+        if elapsed_time >= self.min_interval:
+            self.last_timestamp = current_timestamp
+            return True
+        else:
+            return False
+        
