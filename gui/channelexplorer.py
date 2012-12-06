@@ -36,7 +36,7 @@ import numpy as np
 try:
     from collections import OrderedDict
 except:
-    from utils.backported_OrderedDict import OrderedDict
+    from aphla.gui.utils.backported_OrderedDict import OrderedDict
 
 import cothread
 
@@ -56,10 +56,10 @@ from PyQt4.QtGui import (qApp, QDialog, QStandardItemModel, QStandardItem,
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 from Qt4Designer_files.ui_channel_explorer_startup_set_dialog \
      import Ui_Dialog as Ui_Dialog_startup_settings
-from utils.orderselector import OrderSelector
-from utils.formattext import whitespace_delimited_lines, tab_delimited_unformatted_lines
+from aphla.gui.utils.orderselector import OrderSelector
+from aphla.gui.utils.formattext import whitespace_delimited_lines, tab_delimited_unformatted_lines
 
-from utils.tictoc import tic, toc
+from aphla.gui.utils.tictoc import tic, toc
 
 import aphla as ap
 

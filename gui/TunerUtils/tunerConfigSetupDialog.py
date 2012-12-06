@@ -63,38 +63,7 @@ class TunerConfigSetupModel(QObject):
         self.tree_model = TunerConfigSetupTreeModel(
             self.base_model.all_col_name_list, base_model=self.base_model)
         
-        
-        #self.col_name_list = const.ALL_COL_NAMES_CONFIG_SETUP[:]
-        #self.group_level_col_list = const.GROUP_LEVEL_COL_LIST[:]
-        #self.group_level_col_list.remove(const.COL_GROUP_NAME)
-        #self.group_level_col_list = list(np.intersect1d(
-            #np.array(self.group_level_col_list),
-            #np.array(const.ALL_COL_NAMES_CONFIG_SETUP) ) )
-        #self.channel_level_col_list = const.CHANNEL_LEVEL_COL_LIST[:]
-        ##self.channel_level_col_list.remove(const.COL_CHANNEL_NAME)
-        #self.channel_level_col_list = list(np.intersect1d(
-            #np.array(self.channel_level_col_list),
-            #np.array(const.ALL_COL_NAMES_CONFIG_SETUP) ) )
-        
-        #self.setHorizontalHeaderLabels(self.col_name_list)
-        #self.setColumnCount(len(self.col_name_list))
-        #self.removeRows(0,self.rowCount()) # clear contents
-
-        #self.output = {}
-        self.output = None
-        
-    #----------------------------------------------------------------------
-    def _prepareOutput(self, accepted):
-        """"""
-        
-        if accepted:
-            #self.output = {'name':self.name,
-                           #'description':self.description,
-                           #'channel_group_list':self.channel_group_list}
-            self.output = self.base_model
-        else:
-            #self.output = {}
-            self.output = None
+        self.output = None        
         
     #----------------------------------------------------------------------
     def create_new_user_id_in_HDF5(self, user_ids, new_user_id_str,
@@ -487,6 +456,8 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
     def closeEvent(self, event):
         """"""
         
+        self.model.output = None
+        
         self.saveViewSizeSettings()
         
         event.accept()
@@ -500,9 +471,8 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
         base_model.config_name = self.lineEdit_config_name.text()
         base_model.description = self.textEdit.toPlainText()
         
-        accepted = True
-        self.emit(SIGNAL('prepareOutput'),accepted)
-        
+        self.model.output = base_model
+
         self.saveViewSizeSettings()
         
         QDialog.accept(self)
@@ -512,8 +482,7 @@ class TunerConfigSetupView(QDialog, Ui_Dialog):
     def reject(self):
         """"""
         
-        accepted = False
-        self.emit(SIGNAL('prepareOutput'),accepted)
+        self.model.output = None
         
         self.saveViewSizeSettings()
 
@@ -710,9 +679,6 @@ class TunerConfigSetupApp(QObject):
         self.connect(self.view.pushButton_export,
                      SIGNAL('clicked()'), self._exportConfigData)
         
-        self.connect(self.view, SIGNAL('prepareOutput'),
-                     self.model._prepareOutput)
-        
         self.connect(self.view.comboBox_view, 
                      SIGNAL('currentIndexChanged(int)'),
                      self.view.on_view_base_change)
@@ -759,10 +725,15 @@ class TunerConfigSetupApp(QObject):
             
             m = TunerTextFileManager(load=True, filepath=filepath)
             m.exec_()
-            data = m.loadConfigTextFile()
+            if m.selection is not None:
+                data = m.loadConfigTextFile()
+            else:
+                return
             
             if data is not None:
                 self.model.importNewChannelsFromTextFile(data)
+            else:
+                return
 
         elif import_type == 'HDF5 File':
             raise NotImplementedError(import_type)

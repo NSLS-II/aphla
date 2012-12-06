@@ -41,11 +41,12 @@ import numpy as np
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import QObject, QSize, SIGNAL
-from PyQt4.QtGui import QApplication, QMainWindow, QStandardItemModel, \
-     QStandardItem, QDockWidget, QWidget, QGridLayout, QSplitter, \
-     QTreeView, QTabWidget,QVBoxLayout, QHBoxLayout, QPushButton, \
-     QSpacerItem, QSizePolicy, QCheckBox, QLineEdit, QLabel, QTextEdit, \
-     QAction, QSortFilterProxyModel, QAbstractItemView, QMenu
+from PyQt4.QtGui import (QApplication, QMainWindow, QStandardItemModel,
+     QStandardItem, QDockWidget, QWidget, QGridLayout, QSplitter,
+     QTreeView, QTableView, QTabWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+     QSpacerItem, QSizePolicy, QCheckBox, QLineEdit, QLabel, QTextEdit,
+     QAction, QSortFilterProxyModel, QAbstractItemView, QMenu,
+     QComboBox, QStackedWidget)
 
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
 
@@ -271,14 +272,61 @@ class TunerConfigDockWidget(QDockWidget):
     def __init__(self, model, parent):
         """Constructor"""
         
+        self._initUI(parent)
+
+        self.model = model        
+        isinstance(model,TunerSnapshotModel)
+        
+        #self.proxyModel = QSortFilterProxyModel()
+        #self.proxyModel.setSourceModel(self.model)
+        #self.proxyModel.setDynamicSortFilter(True)
+        #self.proxyModel.setSortRole(self.model.SortRole)
+        proxyModel = QSortFilterProxyModel()
+        proxyModel.setSourceModel(self.model.tree_model)
+        proxyModel.setDynamicSortFilter(False)
+        
+        #self.treeView.setModel(self.proxyModel)
+        self.treeView.setModel(proxyModel)
+        self.treeView.setItemsExpandable(True)
+        self.treeView.setRootIsDecorated(True)
+        self.treeView.setAllColumnsShowFocus(True)
+        self.treeView.setHeaderHidden(False)
+        self.treeView.setSortingEnabled(True)
+        
+        self._expandAll_and_resizeColumn()
+        
+        self.treeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        
+        self.connect(self.pushButton_step_up,SIGNAL('toggled(bool)'),
+                     self.onStepUpPushed)
+    
+    #----------------------------------------------------------------------
+    def _initUI(self, parent):
+        """"""
+        
         QDockWidget.__init__(self, parent)
         
         dockWidgetContents = QWidget()
-        gridLayout = QGridLayout(dockWidgetContents)
+        top_gridLayout = QGridLayout(dockWidgetContents)
+        #
         self.splitter = QSplitter(dockWidgetContents)
         self.splitter.setOrientation(QtCore.Qt.Vertical)
-        self.treeView = QTreeView(self.splitter)
+        #
+        self.stackedWidget = QStackedWidget(self.splitter)
+        #
+        self.page_tree = QWidget()
+        gridLayout = QGridLayout(self.page_tree)
+        self.treeView = QTreeView(self.page_tree)
+        gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
+        self.stackedWidget.addWidget(self.page_tree)
+        #
+        self.page_table = QWidget()
+        gridLayout = QGridLayout(self.page_table)
+        self.tableView = QTableView(self.page_table)
+        gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
+        self.stackedWidget.addWidget(self.page_table)
         
+        ##
         self.tabWidget_mode = QTabWidget(self.splitter)
         #
         self.tab_step_mode = QWidget()
@@ -309,48 +357,50 @@ class TunerConfigDockWidget(QDockWidget):
         self.tabWidget_mode.addTab(self.tab_step_mode,'Step Mode')
         #
         self.tab_ramp_mode = QWidget()
-        verticalLayout_11 = QVBoxLayout(self.tab_ramp_mode)
-        horizontalLayout_11 = QHBoxLayout()
-        label = QLabel(self.tab_ramp_mode)
-        label.setText('Copy into target set points:')
-        horizontalLayout_11.addWidget(label)
-        self.pushButton_copy_current_setp = QPushButton(self.tab_ramp_mode)
-        self.pushButton_copy_current_setp.setText('Current Setpoints')
-        horizontalLayout_11.addWidget(self.pushButton_copy_current_setp)
-        self.pushButton_copy_init_setp = QPushButton(self.tab_ramp_mode)
-        self.pushButton_copy_init_setp.setText('Init. Setpoints')
-        horizontalLayout_11.addWidget(self.pushButton_copy_init_setp)
-        self.pushButton_copy_snapshot_setp = QPushButton(self.tab_ramp_mode)
-        self.pushButton_copy_snapshot_setp.setText('Snapshot Setpoints')
-        horizontalLayout_11.addWidget(self.pushButton_copy_snapshot_setp)
-        spacerItem_3 = QSpacerItem(40, 20, QSizePolicy.Expanding,QSizePolicy.Minimum)
-        horizontalLayout_11.addItem(spacerItem_3)
-        verticalLayout_11.addLayout(horizontalLayout_11)
-        horizontalLayout_12 = QHBoxLayout()
-        label = QLabel(self.tab_ramp_mode)
-        label.setText('Number of Steps:')
-        horizontalLayout_12.addWidget(label)
+        horizontalLayout_10 = QHBoxLayout(self.tab_ramp_mode)
+        verticalLayout_tab_ramp_1 = QVBoxLayout()
+        horizontalLayout_tab_ramp_2 = QHBoxLayout()
+        self.pushButton_copy = QPushButton(self.tab_ramp_mode)
+        self.pushButton_copy.setText('Copy')
+        horizontalLayout_tab_ramp_2.addWidget(self.pushButton_copy)
+        self.comboBox_setpoint_copy_source = QComboBox(self.tab_ramp_mode)
+        self.comboBox_setpoint_copy_source.addItem('Current')
+        self.comboBox_setpoint_copy_source.addItem('Initial')
+        self.comboBox_setpoint_copy_source.addItem('Snapshot')
+        horizontalLayout_tab_ramp_2.addWidget(self.comboBox_setpoint_copy_source)
+        label_tab_ramp_3 = QLabel(self.tab_ramp_mode)
+        label_tab_ramp_3.setText('setpoints into target setpoints')
+        horizontalLayout_tab_ramp_2.addWidget(label_tab_ramp_3)
+        spacerItem = QSpacerItem(40,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
+        horizontalLayout_tab_ramp_2.addItem(spacerItem)
+        verticalLayout_tab_ramp_1.addLayout(horizontalLayout_tab_ramp_2)
+        horizontalLayout_tab_ramp_1 = QHBoxLayout()
+        label_tab_ramp_1 = QLabel(self.tab_ramp_mode)
+        label_tab_ramp_1.setText('Number of Steps:')
+        horizontalLayout_tab_ramp_1.addWidget(label_tab_ramp_1)
         self.lineEdit_nSteps = QLineEdit(self.tab_ramp_mode)
-        horizontalLayout_12.addWidget(self.lineEdit_nSteps)
-        label = QLabel(self.tab_ramp_mode)
-        label.setText('Wait after Each Step [s]:')
-        horizontalLayout_12.addWidget(label)
+        horizontalLayout_tab_ramp_1.addWidget(self.lineEdit_nSteps)
+        label_tab_ramp_2 = QLabel(self.tab_ramp_mode)
+        label_tab_ramp_2.setText('Wait after Each Step [s]:')
+        horizontalLayout_tab_ramp_1.addWidget(label_tab_ramp_2)
         self.lineEdit_wait_after_each_step = QLineEdit(self.tab_ramp_mode)
-        horizontalLayout_12.addWidget(self.lineEdit_wait_after_each_step)
+        horizontalLayout_tab_ramp_1.addWidget(self.lineEdit_wait_after_each_step)
+        verticalLayout_tab_ramp_1.addLayout(horizontalLayout_tab_ramp_1)
+        horizontalLayout_10.addLayout(verticalLayout_tab_ramp_1)
         self.pushButton_start = QPushButton(self.tab_ramp_mode)
         self.pushButton_start.setText('Start')
-        horizontalLayout_12.addWidget(self.pushButton_start)
+        horizontalLayout_10.addWidget(self.pushButton_start)
         self.pushButton_stop = QPushButton(self.tab_ramp_mode)
         self.pushButton_stop.setText('Stop')
-        horizontalLayout_12.addWidget(self.pushButton_stop)
+        horizontalLayout_10.addWidget(self.pushButton_stop)
         self.pushButton_revert = QPushButton(self.tab_ramp_mode)
         self.pushButton_revert.setText('Revert')
-        horizontalLayout_12.addWidget(self.pushButton_revert)
-        spacerItem_4 = QSpacerItem(40,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
-        horizontalLayout_12.addItem(spacerItem_4)
-        verticalLayout_11.addLayout(horizontalLayout_12)
-        self.tabWidget_mode.addTab(self.tab_ramp_mode, 'Ramp Mode')
+        horizontalLayout_10.addWidget(self.pushButton_revert)
+        spacerItem = QSpacerItem(137,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
+        horizontalLayout_10.addItem(spacerItem)
+        self.tabWidget_mode.addTab(self.tab_ramp_mode,'Ramp Mode')
         
+        ##
         self.tabWidget_metadata = QTabWidget(self.splitter)
         #
         self.tab_config_metadata = QWidget()
@@ -411,29 +461,9 @@ class TunerConfigDockWidget(QDockWidget):
         verticalLayout_31.addLayout(horizontalLayout_32)
         self.tabWidget_metadata.addTab(self.tab_snapshot_metadata,'Snapshot Metadata')
         
-        gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
+        top_gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
         self.setWidget(dockWidgetContents)
-                                
         
-        self.model = model
-        self.proxyModel = QSortFilterProxyModel()
-        self.proxyModel.setSourceModel(self.model)
-        self.proxyModel.setDynamicSortFilter(True)
-        self.proxyModel.setSortRole(self.model.SortRole)
-        
-        self.treeView.setModel(self.proxyModel)
-        self.treeView.setItemsExpandable(True)
-        self.treeView.setRootIsDecorated(True)
-        self.treeView.setAllColumnsShowFocus(True)
-        self.treeView.setHeaderHidden(False)
-        self.treeView.setSortingEnabled(True)
-        
-        self._expandAll_and_resizeColumn()
-        
-        self.treeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        
-        self.connect(self.pushButton_step_up,SIGNAL('toggled(bool)'),
-                     self.onStepUpPushed)
         
     #----------------------------------------------------------------------
     def onStepUpPushed(self, garbage):
@@ -478,6 +508,9 @@ class TunerModel(QObject):
     def addNewSnapshotModel(self, config_base_model):
         """"""
         
+        if config_base_model is None:
+            return
+        
         new_snapshot_model = TunerSnapshotModel(config_base_model)
         
         self.model_list.append(new_snapshot_model)
@@ -507,14 +540,11 @@ class TunerView(QMainWindow, Ui_MainWindow):
         
         self.setDockNestingEnabled(True)
 
-        self.setTabPosition(QtCore.Qt.TopDockWidgetArea,
-                            QTabWidget.South)
-        self.setTabPosition(QtCore.Qt.BottomDockWidgetArea,
-                            QTabWidget.South)
-        self.setTabPosition(QtCore.Qt.RightDockWidgetArea,
-                            QTabWidget.South)
-        self.setTabPosition(QtCore.Qt.LeftDockWidgetArea,
-                            QTabWidget.South)
+        tab_position = QTabWidget.North
+        self.setTabPosition(QtCore.Qt.TopDockWidgetArea, tab_position)
+        self.setTabPosition(QtCore.Qt.BottomDockWidgetArea, tab_position)
+        self.setTabPosition(QtCore.Qt.RightDockWidgetArea, tab_position)
+        self.setTabPosition(QtCore.Qt.LeftDockWidgetArea, tab_position)
         
         self.configDockWidgetList = []
         
@@ -523,13 +553,30 @@ class TunerView(QMainWindow, Ui_MainWindow):
         """"""
         
         snapshot_model = self.model.model_list[index]
+        base_model = snapshot_model.base_model
+        
+        isinstance(snapshot_model,TunerSnapshotModel)
+        isinstance(base_model,TunerConfigSetupBaseModel)
         
         dockWidget = TunerConfigDockWidget(snapshot_model, self)
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), dockWidget)
         
+        dockWidget.lineEdit_config_username.setReadOnly(True)
+        dockWidget.lineEdit_config_timestamp.setReadOnly(True)
+        dockWidget.textEdit_config_description.setReadOnly(True)
+        dockWidget.lineEdit_snapshot_username.setReadOnly(True)
+        dockWidget.lineEdit_snapshot_timestamp.setReadOnly(True)
+        dockWidget.textEdit_snapshot_description.setReadOnly(True)
+        
         self.configDockWidgetList.append(dockWidget)
         dockWidget.setObjectName('configDock'+str(len(self.configDockWidgetList)))
-        dockWidget.setWindowTitle(dockWidget.objectName())
+        
+        if base_model.isSnapshot():
+            dock_title = base_model.getName('snapshot')
+        else:
+            dock_title = base_model.getName('config')
+        if dock_title == '': dock_title = 'untitled'
+        dockWidget.setWindowTitle(dock_title)
         
         dockWidget.setFloating(False) # Dock the new dockwidget by default
         if len(self.configDockWidgetList) >= 2:
@@ -538,6 +585,26 @@ class TunerView(QMainWindow, Ui_MainWindow):
             self.tabifyDockWidget(self.configDockWidgetList[-2], dockWidget)
         #dockWidget.raise_()
         
+        dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_table)
+        
+        self.updateMetadataTab(dockWidget, base_model, page='config')
+        if base_model.isSnapshot():
+            self.updateMetadataTab(dockWidget, base_model, page='snapshot')
+    
+    #----------------------------------------------------------------------
+    def updateMetadataTab(self, dockWidget, base_model, page='config'):
+        """"""
+
+        if page not in ('config','snapshot'):
+            raise ValueError('"page" argument must be either "config" or "snapshot".')
+
+        dockWidget.lineEdit_config_username.setText(
+            base_model.getUserInfo(page)[-1])
+        dockWidget.lineEdit_config_timestamp.setText(
+            datestr( base_model.getTimeCreated(page) ))
+        dockWidget.textEdit_config_description.setText(
+            base_model.getDescription(page,include_appended=True)
+        )
         
     #----------------------------------------------------------------------
     def createTunerConfigDockWidget(self, configModel):
@@ -603,21 +670,9 @@ class TunerApp(QObject):
         result = TunerConfigSetupDialog.make(isModal=True,parentWindow=self.view)
         
         config_base_model = result.model.output
-        
-        #config_base_model.config_name
-        #config_base_model.username
-        #config_base_model.time_created
-        #config_base_model.description
-        #config_base_model.appended_descriptions
-
-        #config_base_model.group_name_list
-        #config_base_model.grouped_ind_list
 
         self.model.addNewSnapshotModel(config_base_model)
         
-        #self.emit(SIGNAL('tunerConfigDictLoaded'), result.model.output)
-        
-
     
 #----------------------------------------------------------------------
 def make():
