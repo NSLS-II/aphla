@@ -24,9 +24,9 @@ logging.basicConfig(filename="utest.log",
 
 logging.info("initializing NSLS2V3")
 import aphla as ap
-ap.initNSLS2V3BSRLine()
+ap.machines.init("nsls2v3bsrline")
 
-logging.info("NSLS2V2 initialized")
+logging.info("'nsls2v3bsrline' initialized")
 
 """
 Element

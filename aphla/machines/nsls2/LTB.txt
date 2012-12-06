@@ -1,8 +1,8 @@
 #   set point           ,     Properties          ,       Tag   
 # missing pulse magnet : pulsed septum (22.9988, SP1SI, 124),kick3 (24.3886, BU3SI, 127), kick4 (26.5139, BU4SI, 133), BPM (25.7139, P2SI, 130)
-LTB-MG{Bend:2}I:Sp1-SP        , elemHandle=set,   elemIndex= 52, elemName= B2  ,  devName= B2    ,  elemLength= 0.35, elemPosition= 8.45413, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
-LTB-MG{Bend:3}I:Sp1-SP        , elemHandle=set,   elemIndex= 76, elemName= B3  ,  devName= B3    ,  elemLength= 0.35, elemPosition= 13.6886, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
-LTB-MG{Bend:4}I:Sp1-SP        , elemHandle=set,   elemIndex= 86, elemName= B4  ,  devName= B4    ,  elemLength= 0.35, elemPosition= 15.8376, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
+#LTB-MG{Bend:2}I:Sp1-SP        , elemHandle=set,   elemIndex= 52, elemName= B2  ,  devName= B2    ,  elemLength= 0.35, elemPosition= 8.45413, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
+#LTB-MG{Bend:3}I:Sp1-SP        , elemHandle=set,   elemIndex= 76, elemName= B3  ,  devName= B3    ,  elemLength= 0.35, elemPosition= 13.6886, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
+#LTB-MG{Bend:4}I:Sp1-SP        , elemHandle=set,   elemIndex= 86, elemName= B4  ,  devName= B4    ,  elemLength= 0.35, elemPosition= 15.8376, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
 
 LTB-MG{Quad:7}I:Sp1-SP        , elemHandle=set,    elemIndex= 55 , elemName= Q7   ,  devName= Q7     ,  elemLength= 0.15, elemPosition= 9.4818, elemType=QUAD,  system=LTB, elemField=k1,  aphla.sys.LTB 
 LTB-MG{Quad:8}I:Sp1-SP        , elemHandle=set,    elemIndex= 57 , elemName= Q8   ,  devName= Q8    ,  elemLength= 0.15, elemPosition= 10.0358, elemType=QUAD,  system=LTB, elemField=k1,  aphla.sys.LTB 
@@ -52,13 +52,13 @@ LTB-BI{VF:5}TIFF1:NumCapture            , elemHandle=set,   elemIndex= 112, elem
 
 #  READBACK         ,     Properties          ,       Tag   
 
-LTB-MG{Bend:2}I:Ps1DCCT1-I         , elemHandle=read,   elemIndex= 52, elemName= B2    ,  devName= B2   ,  elemLength= 0.35,  elemPosition= 8.45413, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
-LTB-MG{Bend:3}I:Ps1DCCT1-I         , elemHandle=read,   elemIndex= 76, elemName= B3    ,  devName= B3   ,  elemLength= 0.35,  elemPosition= 13.6886, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
-LTB-MG{Bend:4}I:Ps1DCCT1-I         , elemHandle=read,   elemIndex= 86, elemName= B4    ,  devName= B4   ,  elemLength= 0.35,  elemPosition= 15.8376, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
+#LTB-MG{Bend:2}I:Ps1DCCT1-I         , elemHandle=read,   elemIndex= 52, elemName= B2    ,  devName= B2   ,  elemLength= 0.35,  elemPosition= 8.45413, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
+#LTB-MG{Bend:3}I:Ps1DCCT1-I         , elemHandle=read,   elemIndex= 76, elemName= B3    ,  devName= B3   ,  elemLength= 0.35,  elemPosition= 13.6886, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
+#LTB-MG{Bend:4}I:Ps1DCCT1-I         , elemHandle=read,   elemIndex= 86, elemName= B4    ,  devName= B4   ,  elemLength= 0.35,  elemPosition= 15.8376, elemType=BEND,  system=LTB, elemField=bend,  aphla.sys.LTB 
 
-LTB-MG{Bend:2}RpStart1-Cmd    , elemHandle=read,   elemIndex= 52, elemName= B2    ,  devName= B2   ,  elemLength= 0.35,  elemPosition= 8.45413, elemType=BEND,  system=LTB, elemField=ramping,  aphla.sys.LTB 
-LTB-MG{Bend:3}RpStart1-Cmd    , elemHandle=read,   elemIndex= 76, elemName= B3    ,  devName= B3   ,  elemLength= 0.35,  elemPosition= 13.6886, elemType=BEND,  system=LTB, elemField=ramping,  aphla.sys.LTB 
-LTB-MG{Bend:4}RpStart1-Cmd    , elemHandle=read,   elemIndex= 86, elemName= B4    ,  devName= B4   ,  elemLength= 0.35,  elemPosition= 15.8376, elemType=BEND,  system=LTB, elemField=ramping,  aphla.sys.LTB 
+#LTB-MG{Bend:2}RpStart1-Cmd    , elemHandle=read,   elemIndex= 52, elemName= B2    ,  devName= B2   ,  elemLength= 0.35,  elemPosition= 8.45413, elemType=BEND,  system=LTB, elemField=ramping,  aphla.sys.LTB 
+#LTB-MG{Bend:3}RpStart1-Cmd    , elemHandle=read,   elemIndex= 76, elemName= B3    ,  devName= B3   ,  elemLength= 0.35,  elemPosition= 13.6886, elemType=BEND,  system=LTB, elemField=ramping,  aphla.sys.LTB 
+#LTB-MG{Bend:4}RpStart1-Cmd    , elemHandle=read,   elemIndex= 86, elemName= B4    ,  devName= B4   ,  elemLength= 0.35,  elemPosition= 15.8376, elemType=BEND,  system=LTB, elemField=ramping,  aphla.sys.LTB 
 
 LTB-MG{Quad:7}I:Ps1DCCT1-I          , elemHandle=read,   elemIndex= 55  , elemName= Q7     ,  devName= Q7    ,  elemLength= 0.15,  elemPosition=  9.4818, elemType=QUAD,  system=LTB, elemField=k1,  aphla.sys.LTB 
 LTB-MG{Quad:8}I:Ps1DCCT1-I          , elemHandle=read,   elemIndex= 57  , elemName= Q8    ,  devName= Q8    ,  elemLength= 0.15,  elemPosition=  10.0358,  elemType=QUAD,  system=LTB, elemField=k1,  aphla.sys.LTB 

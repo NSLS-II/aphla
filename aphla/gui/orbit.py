@@ -583,8 +583,9 @@ class OrbitPlotMainWindow(QMainWindow):
 
 def main(par=None):
     try:
-        aphla.initNSLS2V2()
-        aphla.initNSLS2()
+        aphla.machines.init("nsls2v2")
+        aphla.machines.init("nsls2")
+        aphla.machines.init("nsls2v3bsrline")
     except:
         pass
     print aphla.machines.lattices()

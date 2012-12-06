@@ -11,6 +11,7 @@ NSLS2 V2 Unit Test
 
 import sys, os, time
 from fnmatch import fnmatch
+from pkg_resources import resource_string, resource_exists, resource_filename
 
 if sys.version_info[:2] == (2, 6):
     import unittest2 as unittest
@@ -27,8 +28,10 @@ logging.basicConfig(filename="utest.log",
 
 
 logging.info("initializing NSLS2V2")
+
+MACHINE = ("..", "machines", "nsls2v2")
 import aphla as ap
-ap.initNSLS2V2()
+ap.machines.init(MACHINE[-1])
 
 LAT_SR = "V2SR"
 
@@ -232,22 +235,20 @@ class Test0Element(unittest.TestCase):
 Channel Finder
 """
 
-class TestChanFinderCsvData(unittest.TestCase):
+class Test0ChanFinderCsvData(unittest.TestCase):
     """
     """
     def setUp(self):
         #self.cfs_csv = 'us_nsls2v1_cfs.csv'
-        self.cfs_db = 'us_nsls2v2.sqlite'
+        srcdir = resource_filename(__name__, os.path.join(*MACHINE))
+        self.cfs_db = os.path.join(srcdir, 'us_nsls2v2.sqlite')
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
-    def test_conf(self):
-        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_db)))
-
     def test_db_tags(self):
         cfa = ap.chanfinder.ChannelFinderAgent()
-        self.assertTrue(os.path.exists(ap.conf.filename(self.cfs_db)))
-        cfa.importSqliteDb(ap.conf.filename(self.cfs_db))
+        self.assertTrue(os.path.exists(self.cfs_db), "file '%s' does not exist" % self.cfs_db)
+        cfa.importSqliteDb(self.cfs_db)
 
         tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
         for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
@@ -842,7 +843,7 @@ BBA
 
 class TestBba(unittest.TestCase):
     def setUp(self):
-        ap.initNSLS2V2()
+        ap.machines.init("nsls2v2")
         #ap.hlalib._reset_trims(verbose=True)
         pass
 

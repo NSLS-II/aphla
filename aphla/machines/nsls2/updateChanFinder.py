@@ -89,6 +89,13 @@ def simple_test():
     #            print p.Name,"=",p.Value,", ", 
     #        print " /"
 
+def hasPvs(cf, pvs):
+    """check if the pvs exist"""
+    for pv in pvs:
+        if not cf.find(name=pv): return False
+    return True
+
+    
 def hasTag(cf, tag):
     """check if tag exists"""
     for t in cf.getAllTags():
@@ -270,6 +277,7 @@ def cfs_append_from_csv2(rec_list, update_only):
     import csv
     rd = csv.reader(rec_list)
 
+    allpvs = []
     tag_owner = OWNER
     prpt_owner = PRPTOWNER
     prpt_data, tag_data = {}, {}
@@ -279,16 +287,26 @@ def cfs_append_from_csv2(rec_list, update_only):
         if not s[0].strip(): continue
         if s[0].strip().startswith('#'): continue
         
-        pv = s[0]
+        pv = s[0].strip()
+        allpvs.append(pv)
         for r in s[1:]:
             if r.find('=') > 0:
                 prpt, val = [v.strip() for v in r.split('=')]
-                prpt_data.set_default((prpt, val), [])
+                prpt_data.setdefault((prpt, val), [])
                 prpt_data[(prpt, val)].append(pv)
             else:
                 # it is a tag
-                tag_data.set_default(r.strip(), [])
-                tag_data.append(pv)
+                tag_data.setdefault(r.strip(), [])
+                tag_data[r.strip()].append(pv)
+
+    errpvs = []
+    for pv in allpvs:
+        if not cf.find(name=pv):
+            errpvs.append(pv)
+            print "PV '%s' does not exist" % pv
+    if errpvs: 
+        raise RuntimeError("PVs '{0}' are missing".format(errpvs))
+
 
     for k,v in prpt_data.iteritems():
         addPropertyPvs(cf, k[0], prpt_owner, k[1], v)
