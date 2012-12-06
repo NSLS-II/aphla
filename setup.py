@@ -21,7 +21,7 @@ setup(
     #    'aphla.gui.aplauncher',
     #    'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
     #    'aphla.gui.apbba'],
-        'aphla.gui.channelexplorer',
+    #    'aphla.gui.channelexplorer',
     #install_requires = ['distribute', 'matplotlib', 'cothread',
     #                    'numpy', 'scipy'],
     entry_points = {

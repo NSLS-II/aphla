@@ -68,9 +68,9 @@ import aphla as ap
 TYPE_OBJECT = 1
 TYPE_NAME   = 2
 
-MACHINE_DICT = { # (Machine Display Name): (Initialization Function Name)
-    'NSLS2': 'initNSLS2',
-    'NSLS2V2': 'initNSLS2V2',
+MACHINE_DICT = { # (Machine Display Name): (Folder Name for Init/Config Data)
+    'NSLS2': 'nsls2',
+    'NSLS2V2': 'nsls2v2',
     }
 
 ENUM_ELEM_FULL_DESCRIP_NAME = 0
@@ -494,7 +494,7 @@ class FilterTableModel(QAbstractTableModel):
         f.combobox_list_filter_operator = filter_operators
         f.filter_operator = filter_operators[0]
 
-        value_list = [f.get(o,property_key) for o in f.parentSet]
+        value_list = [str(f.get(o,property_key)) for o in f.parentSet] # Use str() to convert None
         if not data_type.endswith('_list'):
             value_list = sorted( list(set(value_list)), key=lower )
         else:
@@ -3235,18 +3235,29 @@ def lower(none_or_str_or_unicode_string):
 def initMachine(machine_name):
     """"""
     
-    aphla_init_func_name = MACHINE_DICT[machine_name]
+    #aphla_init_func_name = MACHINE_DICT[machine_name]
             
+    #if ap.machines._lat:
+        #ap.machines._lat = None
+        #ap.machines._lattice_dict = {}
+
+    #aphla_init_func = getattr(ap, aphla_init_func_name)
+    #print 'Initializing lattices...'
+    #tStart = tic()
+    #aphla_init_func()
+    #print 'Initialization took', toc(tStart), 'seconds.'
+
     if ap.machines._lat:
         ap.machines._lat = None
         ap.machines._lattice_dict = {}
-
-    aphla_init_func = getattr(ap, aphla_init_func_name)
+    
+    machine_init_folder_name = MACHINE_DICT[machine_name]
+    
     print 'Initializing lattices...'
     tStart = tic()
-    aphla_init_func()
+    ap.machines.init(machine_init_folder_name,
+                     use_cache=True, save_cache=True)
     print 'Initialization took', toc(tStart), 'seconds.'
-    #print 'Done.'
     
     
 
