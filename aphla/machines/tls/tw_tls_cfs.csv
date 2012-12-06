@@ -1,0 +1,366 @@
+## PVs for accessing the X-positions of BPMs (EPICS),,,,,,,
+TLS-SR-DI-BPM-10:SA:SA_X_MONITOR, elemName=R1BPM0, handle=READBACK, ordinal= 12, elemType= BPM, system= SR, sEnd= 1.495, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-11:SA:SA_X_MONITOR, elemName=R1BPM1, handle=READBACK, ordinal= 33, elemType= BPM, system= SR, sEnd= 2.19, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-12:SA:SA_X_MONITOR, elemName=R1BPM2, handle=READBACK, ordinal= 54, elemType= BPM, system= SR, sEnd= 4.94, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-13:SA:SA_X_MONITOR, elemName=R1BPM3, handle=READBACK, ordinal= 60, elemType= BPM, system= SR, sEnd= 7.15, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-14:SA:SA_X_MONITOR, elemName=R1BPM4, handle=READBACK, ordinal= 66, elemType= BPM, system= SR, sEnd= 8.88, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-15:SA:SA_X_MONITOR, elemName=R1BPM5, handle=READBACK, ordinal= 72, elemType= BPM, system= SR, sEnd= 11.255, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-16:SA:SA_X_MONITOR, elemName=R1BPM6, handle=READBACK, ordinal= 78, elemType= BPM, system= SR, sEnd= 12.93, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-17:SA:SA_X_MONITOR, elemName=R1BPM7, handle=READBACK, ordinal= 89, elemType= BPM, system= SR, sEnd= 15.64, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-18:SA:SA_X_MONITOR, elemName=R1BPM8, handle=READBACK, ordinal= 97, elemType= BPM, system= SR, sEnd= 17.09, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-19:SA:SA_X_MONITOR, elemName=R1BPM9, handle=READBACK, ordinal= 104, elemType= BPM, system= SR, sEnd= 17.515, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-20:SA:SA_X_MONITOR, elemName=R2BPM0, handle=READBACK, ordinal= 913, elemType= BPM, system= SR, sEnd= 22.19, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-21:SA:SA_X_MONITOR, elemName=R2BPM1, handle=READBACK, ordinal= 920, elemType= BPM, system= SR, sEnd= 22.91, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-22:SA:SA_X_MONITOR, elemName=R2BPM2, handle=READBACK, ordinal= 933, elemType= BPM, system= SR, sEnd= 24.94, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-23:SA:SA_X_MONITOR, elemName=R2BPM3, handle=READBACK, ordinal= 939, elemType= BPM, system= SR, sEnd= 27.15, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-24:SA:SA_X_MONITOR, elemName=R2BPM4, handle=READBACK, ordinal= 943, elemType= BPM, system= SR, sEnd= 27.9295, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-25:SA:SA_X_MONITOR, elemName=R2BPM5, handle=READBACK, ordinal= 1050, elemType= BPM, system= SR, sEnd= 31.255, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-26:SA:SA_X_MONITOR, elemName=R2BPM6, handle=READBACK, ordinal= 1058, elemType= BPM, system= SR, sEnd= 32.93, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-27:SA:SA_X_MONITOR, elemName=R2BPM7, handle=READBACK, ordinal= 1069, elemType= BPM, system= SR, sEnd= 35.64, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-28:SA:SA_X_MONITOR, elemName=R2BPM8, handle=READBACK, ordinal= 1079, elemType= BPM, system= SR, sEnd= 37.09, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-29:SA:SA_X_MONITOR, elemName=R2BPM9, handle=READBACK, ordinal= 1086, elemType= BPM, system= SR, sEnd= 37.515, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-30:SA:SA_X_MONITOR, elemName=R3BPM0, handle=READBACK, ordinal= 2028, elemType= BPM, system= SR, sEnd= 42.2, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-31:SA:SA_X_MONITOR, elemName=R3BPM1, handle=READBACK, ordinal= 2033, elemType= BPM, system= SR, sEnd= 42.91, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-32:SA:SA_X_MONITOR, elemName=R3BPM2, handle=READBACK, ordinal= 2046, elemType= BPM, system= SR, sEnd= 44.94, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-33:SA:SA_X_MONITOR, elemName=R3BPM3, handle=READBACK, ordinal= 2052, elemType= BPM, system= SR, sEnd= 47.15, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-34:SA:SA_X_MONITOR, elemName=R3BPM4, handle=READBACK, ordinal= 2058, elemType= BPM, system= SR, sEnd= 48.475, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-35:SA:SA_X_MONITOR, elemName=R3BPM5, handle=READBACK, ordinal= 2074, elemType= BPM, system= SR, sEnd= 51.73, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-36:SA:SA_X_MONITOR, elemName=R3BPM6, handle=READBACK, ordinal= 2080, elemType= BPM, system= SR, sEnd= 52.93, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-37:SA:SA_X_MONITOR, elemName=R3BPM7, handle=READBACK, ordinal= 2088, elemType= BPM, system= SR, sEnd= 55.64, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-38:SA:SA_X_MONITOR, elemName=R3BPM8, handle=READBACK, ordinal= 2096, elemType= BPM, system= SR, sEnd= 57.208, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-40:SA:SA_X_MONITOR, elemName=R4BPM0, handle=READBACK, ordinal= 2105, elemType= BPM, system= SR, sEnd= 60.719, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-41:SA:SA_X_MONITOR, elemName=R4BPM1, handle=READBACK, ordinal= 2312, elemType= BPM, system= SR, sEnd= 62.922, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-42:SA:SA_X_MONITOR, elemName=R4BPM2, handle=READBACK, ordinal= 2324, elemType= BPM, system= SR, sEnd= 64.94, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-43:SA:SA_X_MONITOR, elemName=R4BPM3, handle=READBACK, ordinal= 2330, elemType= BPM, system= SR, sEnd= 67.15, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-44:SA:SA_X_MONITOR, elemName=R4BPM4, handle=READBACK, ordinal= 2336, elemType= BPM, system= SR, sEnd= 68.88, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-45:SA:SA_X_MONITOR, elemName=R4BPM5, handle=READBACK, ordinal= 2342, elemType= BPM, system= SR, sEnd= 71.255, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-46:SA:SA_X_MONITOR, elemName=R4BPM6, handle=READBACK, ordinal= 2348, elemType= BPM, system= SR, sEnd= 72.93, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-47:SA:SA_X_MONITOR, elemName=R4BPM7, handle=READBACK, ordinal= 2359, elemType= BPM, system= SR, sEnd= 75.64, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-48:SA:SA_X_MONITOR, elemName=R4BPM8, handle=READBACK, ordinal= 2367, elemType= BPM, system= SR, sEnd= 77.22, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-49:SA:SA_X_MONITOR, elemName=R4BPM9, handle=READBACK, ordinal= 2376, elemType= BPM, system= SR, sEnd= 78.295, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-50:SA:SA_X_MONITOR, elemName=R5BPM0, handle=READBACK, ordinal= 2547, elemType= BPM, system= SR, sEnd= 81.705, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-51:SA:SA_X_MONITOR, elemName=R5BPM1, handle=READBACK, ordinal= 2554, elemType= BPM, system= SR, sEnd= 82.91, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-52:SA:SA_X_MONITOR, elemName=R5BPM2, handle=READBACK, ordinal= 2567, elemType= BPM, system= SR, sEnd= 84.94, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-53:SA:SA_X_MONITOR, elemName=R5BPM3, handle=READBACK, ordinal= 2573, elemType= BPM, system= SR, sEnd= 87.15, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-54:SA:SA_X_MONITOR, elemName=R5BPM4, handle=READBACK, ordinal= 2587, elemType= BPM, system= SR, sEnd= 89.06, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-55:SA:SA_X_MONITOR, elemName=R5BPM5, handle=READBACK, ordinal= 2591, elemType= BPM, system= SR, sEnd= 91.255, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-56:SA:SA_X_MONITOR, elemName=R5BPM6, handle=READBACK, ordinal= 2599, elemType= BPM, system= SR, sEnd= 92.93, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-57:SA:SA_X_MONITOR, elemName=R5BPM7, handle=READBACK, ordinal= 2610, elemType= BPM, system= SR, sEnd= 95.64, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-58:SA:SA_X_MONITOR, elemName=R5BPM8, handle=READBACK, ordinal= 2618, elemType= BPM, system= SR, sEnd= 97.09, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-59:SA:SA_X_MONITOR, elemName=R5BPM9, handle=READBACK, ordinal= 2625, elemType= BPM, system= SR, sEnd= 97.515, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-60:SA:SA_X_MONITOR, elemName=R6BPM0, handle=READBACK, ordinal= 3232, elemType= BPM, system= SR, sEnd= 102.52, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-61:SA:SA_X_MONITOR, elemName=R6BPM1, handle=READBACK, ordinal= 3237, elemType= BPM, system= SR, sEnd= 102.91, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-62:SA:SA_X_MONITOR, elemName=R6BPM2, handle=READBACK, ordinal= 3250, elemType= BPM, system= SR, sEnd= 104.94, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-63:SA:SA_X_MONITOR, elemName=R6BPM3, handle=READBACK, ordinal= 3256, elemType= BPM, system= SR, sEnd= 107.15, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-64:SA:SA_X_MONITOR, elemName=R6BPM4, handle=READBACK, ordinal= 3260, elemType= BPM, system= SR, sEnd= 107.9295, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-65:SA:SA_X_MONITOR, elemName=R6BPM5, handle=READBACK, ordinal= 3367, elemType= BPM, system= SR, sEnd= 111.255, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-66:SA:SA_X_MONITOR, elemName=R6BPM6, handle=READBACK, ordinal= 3375, elemType= BPM, system= SR, sEnd= 112.93, aphla.sys.SR, aphla.elemfield.x
+TLS-SR-DI-BPM-67:SA:SA_X_MONITOR, elemName=R6BPM7, handle=READBACK, ordinal= 3383, elemType= BPM, system= SR, sEnd= 115.64, aphla.sys.SR, aphla.elemfield.x
+## PVs for accessing the Y-positions of BPMs (EPICS),,,,,,, 
+TLS-SR-DI-BPM-10:SA:SA_Y_MONITOR, elemName=R1BPM0, handle=READBACK, ordinal= 12, elemType= BPM, system= SR, sEnd= 1.495, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-11:SA:SA_Y_MONITOR, elemName=R1BPM1, handle=READBACK, ordinal= 33, elemType= BPM, system= SR, sEnd= 2.19, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-12:SA:SA_Y_MONITOR, elemName=R1BPM2, handle=READBACK, ordinal= 54, elemType= BPM, system= SR, sEnd= 4.94, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-13:SA:SA_Y_MONITOR, elemName=R1BPM3, handle=READBACK, ordinal= 60, elemType= BPM, system= SR, sEnd= 7.15, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-14:SA:SA_Y_MONITOR, elemName=R1BPM4, handle=READBACK, ordinal= 66, elemType= BPM, system= SR, sEnd= 8.88, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-15:SA:SA_Y_MONITOR, elemName=R1BPM5, handle=READBACK, ordinal= 72, elemType= BPM, system= SR, sEnd= 11.255, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-16:SA:SA_Y_MONITOR, elemName=R1BPM6, handle=READBACK, ordinal= 78, elemType= BPM, system= SR, sEnd= 12.93, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-17:SA:SA_Y_MONITOR, elemName=R1BPM7, handle=READBACK, ordinal= 89, elemType= BPM, system= SR, sEnd= 15.64, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-18:SA:SA_Y_MONITOR, elemName=R1BPM8, handle=READBACK, ordinal= 97, elemType= BPM, system= SR, sEnd= 17.09, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-19:SA:SA_Y_MONITOR, elemName=R1BPM9, handle=READBACK, ordinal= 104, elemType= BPM, system= SR, sEnd= 17.515, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-20:SA:SA_Y_MONITOR, elemName=R2BPM0, handle=READBACK, ordinal= 913, elemType= BPM, system= SR, sEnd= 22.19, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-21:SA:SA_Y_MONITOR, elemName=R2BPM1, handle=READBACK, ordinal= 920, elemType= BPM, system= SR, sEnd= 22.91, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-22:SA:SA_Y_MONITOR, elemName=R2BPM2, handle=READBACK, ordinal= 933, elemType= BPM, system= SR, sEnd= 24.94, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-23:SA:SA_Y_MONITOR, elemName=R2BPM3, handle=READBACK, ordinal= 939, elemType= BPM, system= SR, sEnd= 27.15, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-24:SA:SA_Y_MONITOR, elemName=R2BPM4, handle=READBACK, ordinal= 943, elemType= BPM, system= SR, sEnd= 27.9295, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-25:SA:SA_Y_MONITOR, elemName=R2BPM5, handle=READBACK, ordinal= 1050, elemType= BPM, system= SR, sEnd= 31.255, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-26:SA:SA_Y_MONITOR, elemName=R2BPM6, handle=READBACK, ordinal= 1058, elemType= BPM, system= SR, sEnd= 32.93, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-27:SA:SA_Y_MONITOR, elemName=R2BPM7, handle=READBACK, ordinal= 1069, elemType= BPM, system= SR, sEnd= 35.64, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-28:SA:SA_Y_MONITOR, elemName=R2BPM8, handle=READBACK, ordinal= 1079, elemType= BPM, system= SR, sEnd= 37.09, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-29:SA:SA_Y_MONITOR, elemName=R2BPM9, handle=READBACK, ordinal= 1086, elemType= BPM, system= SR, sEnd= 37.515, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-30:SA:SA_Y_MONITOR, elemName=R3BPM0, handle=READBACK, ordinal= 2028, elemType= BPM, system= SR, sEnd= 42.2, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-31:SA:SA_Y_MONITOR, elemName=R3BPM1, handle=READBACK, ordinal= 2033, elemType= BPM, system= SR, sEnd= 42.91, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-32:SA:SA_Y_MONITOR, elemName=R3BPM2, handle=READBACK, ordinal= 2046, elemType= BPM, system= SR, sEnd= 44.94, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-33:SA:SA_Y_MONITOR, elemName=R3BPM3, handle=READBACK, ordinal= 2052, elemType= BPM, system= SR, sEnd= 47.15, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-34:SA:SA_Y_MONITOR, elemName=R3BPM4, handle=READBACK, ordinal= 2058, elemType= BPM, system= SR, sEnd= 48.475, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-35:SA:SA_Y_MONITOR, elemName=R3BPM5, handle=READBACK, ordinal= 2074, elemType= BPM, system= SR, sEnd= 51.73, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-36:SA:SA_Y_MONITOR, elemName=R3BPM6, handle=READBACK, ordinal= 2080, elemType= BPM, system= SR, sEnd= 52.93, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-37:SA:SA_Y_MONITOR, elemName=R3BPM7, handle=READBACK, ordinal= 2088, elemType= BPM, system= SR, sEnd= 55.64, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-38:SA:SA_Y_MONITOR, elemName=R3BPM8, handle=READBACK, ordinal= 2096, elemType= BPM, system= SR, sEnd= 57.208, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-40:SA:SA_Y_MONITOR, elemName=R4BPM0, handle=READBACK, ordinal= 2105, elemType= BPM, system= SR, sEnd= 60.719, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-41:SA:SA_Y_MONITOR, elemName=R4BPM1, handle=READBACK, ordinal= 2312, elemType= BPM, system= SR, sEnd= 62.922, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-42:SA:SA_Y_MONITOR, elemName=R4BPM2, handle=READBACK, ordinal= 2324, elemType= BPM, system= SR, sEnd= 64.94, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-43:SA:SA_Y_MONITOR, elemName=R4BPM3, handle=READBACK, ordinal= 2330, elemType= BPM, system= SR, sEnd= 67.15, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-44:SA:SA_Y_MONITOR, elemName=R4BPM4, handle=READBACK, ordinal= 2336, elemType= BPM, system= SR, sEnd= 68.88, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-45:SA:SA_Y_MONITOR, elemName=R4BPM5, handle=READBACK, ordinal= 2342, elemType= BPM, system= SR, sEnd= 71.255, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-46:SA:SA_Y_MONITOR, elemName=R4BPM6, handle=READBACK, ordinal= 2348, elemType= BPM, system= SR, sEnd= 72.93, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-47:SA:SA_Y_MONITOR, elemName=R4BPM7, handle=READBACK, ordinal= 2359, elemType= BPM, system= SR, sEnd= 75.64, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-48:SA:SA_Y_MONITOR, elemName=R4BPM8, handle=READBACK, ordinal= 2367, elemType= BPM, system= SR, sEnd= 77.22, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-49:SA:SA_Y_MONITOR, elemName=R4BPM9, handle=READBACK, ordinal= 2376, elemType= BPM, system= SR, sEnd= 78.295, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-50:SA:SA_Y_MONITOR, elemName=R5BPM0, handle=READBACK, ordinal= 2547, elemType= BPM, system= SR, sEnd= 81.705, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-51:SA:SA_Y_MONITOR, elemName=R5BPM1, handle=READBACK, ordinal= 2554, elemType= BPM, system= SR, sEnd= 82.91, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-52:SA:SA_Y_MONITOR, elemName=R5BPM2, handle=READBACK, ordinal= 2567, elemType= BPM, system= SR, sEnd= 84.94, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-53:SA:SA_Y_MONITOR, elemName=R5BPM3, handle=READBACK, ordinal= 2573, elemType= BPM, system= SR, sEnd= 87.15, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-54:SA:SA_Y_MONITOR, elemName=R5BPM4, handle=READBACK, ordinal= 2587, elemType= BPM, system= SR, sEnd= 89.06, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-55:SA:SA_Y_MONITOR, elemName=R5BPM5, handle=READBACK, ordinal= 2591, elemType= BPM, system= SR, sEnd= 91.255, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-56:SA:SA_Y_MONITOR, elemName=R5BPM6, handle=READBACK, ordinal= 2599, elemType= BPM, system= SR, sEnd= 92.93, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-57:SA:SA_Y_MONITOR, elemName=R5BPM7, handle=READBACK, ordinal= 2610, elemType= BPM, system= SR, sEnd= 95.64, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-58:SA:SA_Y_MONITOR, elemName=R5BPM8, handle=READBACK, ordinal= 2618, elemType= BPM, system= SR, sEnd= 97.09, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-59:SA:SA_Y_MONITOR, elemName=R5BPM9, handle=READBACK, ordinal= 2625, elemType= BPM, system= SR, sEnd= 97.515, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-60:SA:SA_Y_MONITOR, elemName=R6BPM0, handle=READBACK, ordinal= 3232, elemType= BPM, system= SR, sEnd= 102.52, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-61:SA:SA_Y_MONITOR, elemName=R6BPM1, handle=READBACK, ordinal= 3237, elemType= BPM, system= SR, sEnd= 102.91, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-62:SA:SA_Y_MONITOR, elemName=R6BPM2, handle=READBACK, ordinal= 3250, elemType= BPM, system= SR, sEnd= 104.94, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-63:SA:SA_Y_MONITOR, elemName=R6BPM3, handle=READBACK, ordinal= 3256, elemType= BPM, system= SR, sEnd= 107.15, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-64:SA:SA_Y_MONITOR, elemName=R6BPM4, handle=READBACK, ordinal= 3260, elemType= BPM, system= SR, sEnd= 107.9295, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-65:SA:SA_Y_MONITOR, elemName=R6BPM5, handle=READBACK, ordinal= 3367, elemType= BPM, system= SR, sEnd= 111.255, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-66:SA:SA_Y_MONITOR, elemName=R6BPM6, handle=READBACK, ordinal= 3375, elemType= BPM, system= SR, sEnd= 112.93, aphla.sys.SR, aphla.elemfield.y
+TLS-SR-DI-BPM-67:SA:SA_Y_MONITOR, elemName=R6BPM7, handle=READBACK, ordinal= 3383, elemType= BPM, system= SR, sEnd= 115.64, aphla.sys.SR, aphla.elemfield.y
+## PVs for accessing the driving currents of horizontal correctors,,,,,,,
+RCHCPS10, elemName=R1HC0, handle=SETPOINT, ordinal= 6, elemType= HCOR, system= SR, sEnd= 0.818, aphla.sys.SR, aphla.elemfield.x
+RCHCPS10A, elemName=R1HC0A, handle=SETPOINT, ordinal= 39, elemType= HCOR, system= SR, sEnd= 2.857, aphla.sys.SR, aphla.elemfield.x
+RCHCPS11, elemName=R1HC1, handle=SETPOINT, ordinal= 43, elemType= HCOR, system= SR, sEnd= 3.5, aphla.sys.SR, aphla.elemfield.x
+RCHCPS11A, elemName=R1HC1A, handle=SETPOINT, ordinal= 50, elemType= HCOR, system= SR, sEnd= 4.322, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS11, elemName=R1SF1HC, handle=SETPOINT, ordinal= 64, elemType= HCOR, system= SR, sEnd= 8.06, devName=R1SF1, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS12, elemName=R1SF2HC, handle=SETPOINT, ordinal= 74, elemType= HCOR, system= SR, sEnd= 11.94, devName=R1SF2, aphla.sys.SR, aphla.elemfield.x
+RCHCPS12A, elemName=R1HC2A, handle=SETPOINT, ordinal= 86, elemType= HCOR, system= SR, sEnd= 15.55, aphla.sys.SR, aphla.elemfield.x
+RCHCPS12, elemName=R1HC2, handle=SETPOINT, ordinal= 93, elemType= HCOR, system= SR, sEnd= 16.49, aphla.sys.SR, aphla.elemfield.x
+RCHCPS13, elemName=R1HC3, handle=SETPOINT, ordinal= 99, elemType= HCOR, system= SR, sEnd= 17.225, aphla.sys.SR, aphla.elemfield.x
+RCHCPS20, elemName=R2HC0, handle=SETPOINT, ordinal= 917, elemType= HCOR, system= SR, sEnd= 22.775, aphla.sys.SR, aphla.elemfield.x
+RCHCPS21, elemName=R2HC1, handle=SETPOINT, ordinal= 924, elemType= HCOR, system= SR, sEnd= 23.5, aphla.sys.SR, aphla.elemfield.x
+RCHCPS21A, elemName=R2HC1A, handle=SETPOINT, ordinal= 929, elemType= HCOR, system= SR, sEnd= 24.325, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS21, elemName=R2SF1HC, handle=SETPOINT, ordinal= 945, elemType= HCOR, system= SR, sEnd= 28.06, devName=R2SF1, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS22, elemName=R2SF2HC, handle=SETPOINT, ordinal= 1054, elemType= HCOR, system= SR, sEnd= 31.94, devName=R2SF1, aphla.sys.SR, aphla.elemfield.x
+RCHCPS22A, elemName=R2HC2A, handle=SETPOINT, ordinal= 947, elemType= HCOR, system= SR, sEnd= 28.363, aphla.sys.SR, aphla.elemfield.x
+RCHCPS22, elemName=R2HC2, handle=SETPOINT, ordinal= 1075, elemType= HCOR, system= SR, sEnd= 36.49, aphla.sys.SR, aphla.elemfield.x
+RCHCPS23, elemName=R2HC3, handle=SETPOINT, ordinal= 1081, elemType= HCOR, system= SR, sEnd= 37.225, aphla.sys.SR, aphla.elemfield.x
+RCHCPS30, elemName=R3HC0, handle=SETPOINT, ordinal= 2030, elemType= HCOR, system= SR, sEnd= 42.775, aphla.sys.SR, aphla.elemfield.x
+RCHCPS31, elemName=R3HC1, handle=SETPOINT, ordinal= 2037, elemType= HCOR, system= SR, sEnd= 43.5, aphla.sys.SR, aphla.elemfield.x
+RCHCPS31A, elemName=R3HC1A, handle=SETPOINT, ordinal= 2042, elemType= HCOR, system= SR, sEnd= 44.325, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS31, elemName=R3SF1HC, handle=SETPOINT, ordinal= 2056, elemType= HCOR, system= SR, sEnd= 48.06,devName=R3SF1, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS32, elemName=R3SF2HC, handle=SETPOINT, ordinal= 2076, elemType= HCOR, system= SR, sEnd= 51.94,devName=R3SF2, aphla.sys.SR, aphla.elemfield.x
+RCHCPS32, elemName=R3HC2, handle=SETPOINT, ordinal= 2092, elemType= HCOR, system= SR, sEnd= 56.49, aphla.sys.SR, aphla.elemfield.x
+RCHCPS33, elemName=R3HC3, handle=SETPOINT, ordinal= 2099, elemType= HCOR, system= SR, sEnd= 57.499, aphla.sys.SR, aphla.elemfield.x
+RCHCPS40, elemName=R4HC0, handle=SETPOINT, ordinal= 2108, elemType= HCOR, system= SR, sEnd= 60.8315, aphla.sys.SR, aphla.elemfield.x
+RCHCPS40A, elemName=R4HC0A, handle=SETPOINT, ordinal= 2309, elemType= HCOR, system= SR, sEnd= 62.807, aphla.sys.SR, aphla.elemfield.x
+RCHCPS41, elemName=R4HC1, handle=SETPOINT, ordinal= 2316, elemType= HCOR, system= SR, sEnd= 63.5, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS41, elemName=R4SF1HC, handle=SETPOINT, ordinal= 2334, elemType= HCOR, system= SR, sEnd= 68.06,devName=R4SF1, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS42, elemName=R4SF2HC, handle=SETPOINT, ordinal= 2344, elemType= HCOR, system= SR, sEnd= 71.94,devName=R4SF2, aphla.sys.SR, aphla.elemfield.x
+RCHCPS42A, elemName=R4HC2A, handle=SETPOINT, ordinal= 2357, elemType= HCOR, system= SR, sEnd= 75.52, aphla.sys.SR, aphla.elemfield.x
+RCHCPS42, elemName=R4HC2, handle=SETPOINT, ordinal= 2363, elemType= HCOR, system= SR, sEnd= 76.49, aphla.sys.SR, aphla.elemfield.x
+RCHCPS43, elemName=R4HC3, handle=SETPOINT, ordinal= 2373, elemType= HCOR, system= SR, sEnd= 78.145, aphla.sys.SR, aphla.elemfield.x
+RCHCPS50, elemName=R5HC0, handle=SETPOINT, ordinal= 2549, elemType= HCOR, system= SR, sEnd= 81.855, aphla.sys.SR, aphla.elemfield.x
+RCHCPS51, elemName=R5HC1, handle=SETPOINT, ordinal= 2558, elemType= HCOR, system= SR, sEnd= 83.5, aphla.sys.SR, aphla.elemfield.x
+RCHCPS51A, elemName=R5HC1A, handle=SETPOINT, ordinal= 2563, elemType= HCOR, system= SR, sEnd= 84.322, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS51, elemName=R5SF1HC, handle=SETPOINT, ordinal= 2577, elemType= HCOR, system= SR, sEnd= 88.06,devName=R5SF2, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS52, elemName=R5SF2HC, handle=SETPOINT, ordinal= 2595, elemType= HCOR, system= SR, sEnd= 91.94,devName=R5SF2, aphla.sys.SR, aphla.elemfield.x
+RCHCPS52A, elemName=R5HC2A, handle=SETPOINT, ordinal= 2607, elemType= HCOR, system= SR, sEnd= 95.55, aphla.sys.SR, aphla.elemfield.x
+RCHCPS52, elemName=R5HC2, handle=SETPOINT, ordinal= 2614, elemType= HCOR, system= SR, sEnd= 96.49, aphla.sys.SR, aphla.elemfield.x
+RCHCPS53, elemName=R5HC3, handle=SETPOINT, ordinal= 2621, elemType= HCOR, system= SR, sEnd= 97.225, aphla.sys.SR, aphla.elemfield.x
+RCHCPS60, elemName=R6HC0, handle=SETPOINT, ordinal= 3235, elemType= HCOR, system= SR, sEnd= 102.775, aphla.sys.SR, aphla.elemfield.x
+RCHCPS61, elemName=R6HC1, handle=SETPOINT, ordinal= 3241, elemType= HCOR, system= SR, sEnd= 103.5, aphla.sys.SR, aphla.elemfield.x
+RCHCPS61A, elemName=R6HC1A, handle=SETPOINT, ordinal= 3246, elemType= HCOR, system= SR, sEnd= 104.325, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS61, elemName=R6SF1HC, handle=SETPOINT, ordinal= 3262, elemType= HCOR, system= SR, sEnd= 108.06,devName=R6SF1, aphla.sys.SR, aphla.elemfield.x
+RCHCSPS62, elemName=R6SF2HC, handle=SETPOINT, ordinal= 3371, elemType= HCOR, system= SR, sEnd= 111.94,devName=R6SF2, aphla.sys.SR, aphla.elemfield.x
+RCHCPS62, elemName=R6HC2, handle=SETPOINT, ordinal= 3387, elemType= HCOR, system= SR, sEnd= 116.49, aphla.sys.SR, aphla.elemfield.x
+RCHCPS64, elemName=R6HC4, handle=SETPOINT, ordinal= 3400, elemType= HCOR, system= SR, sEnd= 119.585, aphla.sys.SR, aphla.elemfield.x
+## PVs for accessing the driving currents of vertical correctors,,,,,,,
+RCVCPS10, elemName=R1VC0, handle=SETPOINT, ordinal= 10, elemType= VCOR, system= SR, sEnd= 1.4, aphla.sys.SR, aphla.elemfield.y
+RCVCPS10A, elemName=R1VC0A, handle=SETPOINT, ordinal= 35, elemType= VCOR, system= SR, sEnd= 2.287, aphla.sys.SR, aphla.elemfield.y
+RCVCPS11, elemName=R1VC1, handle=SETPOINT, ordinal= 49, elemType= VCOR, system= SR, sEnd= 4.322, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS11, elemName=R1SD1VC, handle=SETPOINT, ordinal= 58, elemType= VCOR, system= SR, sEnd= 6.91,devName=R1SD1, aphla.sys.SR, aphla.elemfield.y
+RCVCPS12, elemName=R1VC2, handle=SETPOINT, ordinal= 68, elemType= VCOR, system= SR, sEnd= 9.015, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS12, elemName=R1SD2VC, handle=SETPOINT, ordinal= 80, elemType= VCOR, system= SR, sEnd= 13.09,devName=R1SD2, aphla.sys.SR, aphla.elemfield.y
+RCVCPS13A, elemName=R1VC3A, handle=SETPOINT, ordinal= 87, elemType= VCOR, system= SR, sEnd= 15.55, aphla.sys.SR, aphla.elemfield.y
+RCVCPS13, elemName=R1VC3, handle=SETPOINT, ordinal= 100, elemType= VCOR, system= SR, sEnd= 17.225, aphla.sys.SR, aphla.elemfield.y
+RCVCPS21, elemName=R2VC1, handle=SETPOINT, ordinal= 918, elemType= VCOR, system= SR, sEnd= 22.775, aphla.sys.SR, aphla.elemfield.y
+RCVCPS21A, elemName=R2VC1A, handle=SETPOINT, ordinal= 928, elemType= VCOR, system= SR, sEnd= 24.325, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS21, elemName=R2SD1VC, handle=SETPOINT, ordinal= 937, elemType= VCOR, system= SR, sEnd= 26.91,devName=R2SD1, aphla.sys.SR, aphla.elemfield.y
+RCVCPS22, elemName=R2VC2, handle=SETPOINT, ordinal= 1046, elemType= VCOR, system= SR, sEnd= 29.159, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS22, elemName=R2SD2VC, handle=SETPOINT, ordinal= 1060, elemType= VCOR, system= SR, sEnd= 33.09,devName=R2SD2, aphla.sys.SR, aphla.elemfield.y
+RCVCPS23A, elemName=R2VC3A, handle=SETPOINT, ordinal= 1066, elemType= VCOR, system= SR, sEnd= 35.52, aphla.sys.SR, aphla.elemfield.y
+RCVCPS23, elemName=R2VC3, handle=SETPOINT, ordinal= 1082, elemType= VCOR, system= SR, sEnd= 37.225, aphla.sys.SR, aphla.elemfield.y
+RCVCPS30, elemName=R3VC0, handle=SETPOINT, ordinal= 2026, elemType= VCOR, system= SR, sEnd= 42.12, aphla.sys.SR, aphla.elemfield.y
+RCVCPS31, elemName=R3VC1, handle=SETPOINT, ordinal= 2031, elemType= VCOR, system= SR, sEnd= 42.775, aphla.sys.SR, aphla.elemfield.y
+RCVCPS31A, elemName=R3VC1A, handle=SETPOINT, ordinal= 2041, elemType= VCOR, system= SR, sEnd= 44.325, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS31, elemName=R3SD1VC, handle=SETPOINT, ordinal= 2050, elemType= VCOR, system= SR, sEnd= 46.91,devName=R3SD1, aphla.sys.SR, aphla.elemfield.y
+RCVCPS32, elemName=R3VC2, handle=SETPOINT, ordinal= 2062, elemType= VCOR, system= SR, sEnd= 48.928, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS32, elemName=R3SD2VC, handle=SETPOINT, ordinal= 2082, elemType= VCOR, system= SR, sEnd= 53.09,devName=R3SD2, aphla.sys.SR, aphla.elemfield.y
+RCVCPS33, elemName=R3VC3, handle=SETPOINT, ordinal= 2098, elemType= VCOR, system= SR, sEnd= 57.499, aphla.sys.SR, aphla.elemfield.y
+RCVCPS40, elemName=R4VC0, handle=SETPOINT, ordinal= 2107, elemType= VCOR, system= SR, sEnd= 60.8315, aphla.sys.SR, aphla.elemfield.y
+RCVCPS41, elemName=R4VC1, handle=SETPOINT, ordinal= 2310, elemType= VCOR, system= SR, sEnd= 62.807, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS41, elemName=R4SD1VC, handle=SETPOINT, ordinal= 2328, elemType= VCOR, system= SR, sEnd= 66.91,devName=R4SD1, aphla.sys.SR, aphla.elemfield.y
+RCVCPS42, elemName=R4VC2, handle=SETPOINT, ordinal= 2338, elemType= VCOR, system= SR, sEnd= 69.015, aphla.sys.SR, aphla.elemfield.y
+RCVCPS43A, elemName=R4VC3A, handle=SETPOINT, ordinal= 2356, elemType= VCOR, system= SR, sEnd= 75.52, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS42, elemName=R4SD2VC, handle=SETPOINT, ordinal= 2350, elemType= VCOR, system= SR, sEnd= 73.09,devName=R4SD2, aphla.sys.SR, aphla.elemfield.y
+RCVCPS43, elemName=R4VC3, handle=SETPOINT, ordinal= 2371, elemType= VCOR, system= SR, sEnd= 77.515, aphla.sys.SR, aphla.elemfield.y
+RCVCPS44, elemName=R4VC4, handle=SETPOINT, ordinal= 2374, elemType= VCOR, system= SR, sEnd= 78.145, aphla.sys.SR, aphla.elemfield.y
+RCVCPS50, elemName=R5VC0, handle=SETPOINT, ordinal= 2550, elemType= VCOR, system= SR, sEnd= 81.855, aphla.sys.SR, aphla.elemfield.y
+RCVCPS51, elemName=R5VC1, handle=SETPOINT, ordinal= 2552, elemType= VCOR, system= SR, sEnd= 82.775, aphla.sys.SR, aphla.elemfield.y
+RCVCPS51A, elemName=R5VC1A, handle=SETPOINT, ordinal= 2562, elemType= VCOR, system= SR, sEnd= 84.322, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS51, elemName=R5SD1VC, handle=SETPOINT, ordinal= 2571, elemType= VCOR, system= SR, sEnd= 86.91,devName=R5SD1, aphla.sys.SR, aphla.elemfield.y
+RCVCPS52, elemName=R5VC2, handle=SETPOINT, ordinal= 2585, elemType= VCOR, system= SR, sEnd= 88.985, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS52, elemName=R5SD2VC, handle=SETPOINT, ordinal= 2601, elemType= VCOR, system= SR, sEnd= 93.09,devName=R5SD2, aphla.sys.SR, aphla.elemfield.y
+RCVCPS53A, elemName=R5VC3A, handle=SETPOINT, ordinal= 2608, elemType= VCOR, system= SR, sEnd= 95.55, aphla.sys.SR, aphla.elemfield.y
+RCVCPS53, elemName=R5VC3, handle=SETPOINT, ordinal= 2620, elemType= VCOR, system= SR, sEnd= 97.225, aphla.sys.SR, aphla.elemfield.y
+RCVCPS54, elemName=R5VC4, handle=SETPOINT, ordinal= 2627, elemType= VCOR, system= SR, sEnd= 97.568, aphla.sys.SR, aphla.elemfield.y
+RCVCPS60, elemName=R6VC0, handle=SETPOINT, ordinal= 3230, elemType= VCOR, system= SR, sEnd= 102.445, aphla.sys.SR, aphla.elemfield.y
+RCVCPS61, elemName=R6VC1, handle=SETPOINT, ordinal= 3234, elemType= VCOR, system= SR, sEnd= 102.775, aphla.sys.SR, aphla.elemfield.y
+RCVCPS61A, elemName=R6VC1A, handle=SETPOINT, ordinal= 3245, elemType= VCOR, system= SR, sEnd= 104.325, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS61, elemName=R6SD1VC, handle=SETPOINT, ordinal= 3254, elemType= VCOR, system= SR, sEnd= 106.91,devName=R6SD1, aphla.sys.SR, aphla.elemfield.y
+RCVCPS62, elemName=R6VC2, handle=SETPOINT, ordinal= 3363, elemType= VCOR, system= SR, sEnd= 109.159, aphla.sys.SR, aphla.elemfield.y
+RCVCSPS62, elemName=R6SD2VC, handle=SETPOINT, ordinal= 3377, elemType= VCOR, system= SR, sEnd= 113.09,devName=R6SD2, aphla.sys.SR, aphla.elemfield.y
+RCVCPS63, elemName=R6VC3, handle=SETPOINT, ordinal= 3393, elemType= VCOR, system= SR, sEnd= 117.86, aphla.sys.SR, aphla.elemfield.y
+RCVCPS65, elemName=R6VC5, handle=SETPOINT, ordinal= 3399, elemType= VCOR, system= SR, sEnd= 119.585, aphla.sys.SR, aphla.elemfield.y
+## PVs for accessing the driving currents of quadrupoles (QD1 family),,,,,,,
+R61QPS1, elemName=R1QD1, handle=SETPOINT, ordinal= 41, elemType= QUAD, system= SR, sEnd= 3.175, aphla.sys.SR, aphla.elemfield.k1
+R12QPS1, elemName=R1QD8, handle=SETPOINT, ordinal= 95, elemType= QUAD, system= SR, sEnd= 16.825, aphla.sys.SR, aphla.elemfield.k1
+R12QPS1, elemName=R2QD1, handle=SETPOINT, ordinal= 922, elemType= QUAD, system= SR, sEnd= 23.175, aphla.sys.SR, aphla.elemfield.k1
+R23QPS1, elemName=R2QD8, handle=SETPOINT, ordinal= 1077, elemType= QUAD, system= SR, sEnd= 36.825, aphla.sys.SR, aphla.elemfield.k1
+R23QPS1, elemName=R3QD1, handle=SETPOINT, ordinal= 2035, elemType= QUAD, system= SR, sEnd= 43.175, aphla.sys.SR, aphla.elemfield.k1
+R34QPS1, elemName=R3QD8, handle=SETPOINT, ordinal= 2094, elemType= QUAD, system= SR, sEnd= 56.825, aphla.sys.SR, aphla.elemfield.k1
+R34QPS1, elemName=R4QD1, handle=SETPOINT, ordinal= 2314, elemType= QUAD, system= SR, sEnd= 63.175, aphla.sys.SR, aphla.elemfield.k1
+R45QPS1, elemName=R4QD8, handle=SETPOINT, ordinal= 2365, elemType= QUAD, system= SR, sEnd= 76.825, aphla.sys.SR, aphla.elemfield.k1
+R45QPS1, elemName=R5QD1, handle=SETPOINT, ordinal= 2556, elemType= QUAD, system= SR, sEnd= 83.175, aphla.sys.SR, aphla.elemfield.k1
+R56QPS1, elemName=R5QD8, handle=SETPOINT, ordinal= 2616, elemType= QUAD, system= SR, sEnd= 96.825, aphla.sys.SR, aphla.elemfield.k1
+R56QPS1, elemName=R6QD1, handle=SETPOINT, ordinal= 3239, elemType= QUAD, system= SR, sEnd= 103.175, aphla.sys.SR, aphla.elemfield.k1
+R61QPS1, elemName=R6QD8, handle=SETPOINT, ordinal= 3389, elemType= QUAD, system= SR, sEnd= 116.825, aphla.sys.SR, aphla.elemfield.k1
+## PVs for accessing the driving currents of quadrupoles (QD3 family),,,,,,,
+R61QPS3, elemName=R1QD1, handle=SETPOINT, ordinal= 41, elemType= QUAD, system= SR, sEnd= 3.175, aphla.sys.SR, aphla.elemfield.k1
+R12QPS3, elemName=R1QD6, handle=SETPOINT, ordinal= 84, elemType= QUAD, system= SR, sEnd= 15.285, aphla.sys.SR, aphla.elemfield.k1
+R12QPS3, elemName=R2QD1, handle=SETPOINT, ordinal= 922, elemType= QUAD, system= SR, sEnd= 23.175, aphla.sys.SR, aphla.elemfield.k1
+R23QPS3, elemName=R2QD6, handle=SETPOINT, ordinal= 1064, elemType= QUAD, system= SR, sEnd= 35.285, aphla.sys.SR, aphla.elemfield.k1
+R23QPS3, elemName=R3QD1, handle=SETPOINT, ordinal= 2035, elemType= QUAD, system= SR, sEnd= 43.175, aphla.sys.SR, aphla.elemfield.k1
+R34QPS3, elemName=R3QD6, handle=SETPOINT, ordinal= 2086, elemType= QUAD, system= SR, sEnd= 55.285, aphla.sys.SR, aphla.elemfield.k1
+R34QPS3, elemName=R4QD1, handle=SETPOINT, ordinal= 2314, elemType= QUAD, system= SR, sEnd= 63.175, aphla.sys.SR, aphla.elemfield.k1
+R45QPS3, elemName=R4QD6, handle=SETPOINT, ordinal= 2354, elemType= QUAD, system= SR, sEnd= 75.285, aphla.sys.SR, aphla.elemfield.k1
+R45QPS3, elemName=R5QD1, handle=SETPOINT, ordinal= 2556, elemType= QUAD, system= SR, sEnd= 83.175, aphla.sys.SR, aphla.elemfield.k1
+R56QPS3, elemName=R5QD6, handle=SETPOINT, ordinal= 2605, elemType= QUAD, system= SR, sEnd= 95.285, aphla.sys.SR, aphla.elemfield.k1
+R56QPS3, elemName=R6QD1, handle=SETPOINT, ordinal= 3239, elemType= QUAD, system= SR, sEnd= 103.175, aphla.sys.SR, aphla.elemfield.k1
+R61QPS3, elemName=R6QD6, handle=SETPOINT, ordinal= 3381, elemType= QUAD, system= SR, sEnd= 115.285, aphla.sys.SR, aphla.elemfield.k1
+## PVs for accessing the driving currents of quadrupoles (QF2 family),,,,,,,
+R61QPS2, elemName=R1QF2, handle=SETPOINT, ordinal= 45, elemType= QUAD, system= SR, sEnd= 3.825, aphla.sys.SR, aphla.elemfield.k1
+R12QPS2, elemName=R1QF7, handle=SETPOINT, ordinal= 91, elemType= QUAD, system= SR, sEnd= 16.175, aphla.sys.SR, aphla.elemfield.k1
+R12QPS2, elemName=R2QF2, handle=SETPOINT, ordinal= 926, elemType= QUAD, system= SR, sEnd= 23.825, aphla.sys.SR, aphla.elemfield.k1
+R23QPS2, elemName=R2QF7, handle=SETPOINT, ordinal= 1073, elemType= QUAD, system= SR, sEnd= 36.175, aphla.sys.SR, aphla.elemfield.k1
+R23QPS2, elemName=R3QF2, handle=SETPOINT, ordinal= 2039, elemType= QUAD, system= SR, sEnd= 43.825, aphla.sys.SR, aphla.elemfield.k1
+R34QPS2, elemName=R3QF7, handle=SETPOINT, ordinal= 2090, elemType= QUAD, system= SR, sEnd= 56.175, aphla.sys.SR, aphla.elemfield.k1
+R34QPS2, elemName=R4QF2, handle=SETPOINT, ordinal= 2318, elemType= QUAD, system= SR, sEnd= 63.825, aphla.sys.SR, aphla.elemfield.k1
+R45QPS2, elemName=R4QF7, handle=SETPOINT, ordinal= 2361, elemType= QUAD, system= SR, sEnd= 76.175, aphla.sys.SR, aphla.elemfield.k1
+R45QPS2, elemName=R5QF2, handle=SETPOINT, ordinal= 2560, elemType= QUAD, system= SR, sEnd= 83.825, aphla.sys.SR, aphla.elemfield.k1
+R56QPS2, elemName=R5QF7, handle=SETPOINT, ordinal= 2612, elemType= QUAD, system= SR, sEnd= 96.175, aphla.sys.SR, aphla.elemfield.k1
+R56QPS2, elemName=R6QF2, handle=SETPOINT, ordinal= 3243, elemType= QUAD, system= SR, sEnd= 103.825, aphla.sys.SR, aphla.elemfield.k1
+R61QPS2, elemName=R6QF7, handle=SETPOINT, ordinal= 3385, elemType= QUAD, system= SR, sEnd= 116.175, aphla.sys.SR, aphla.elemfield.k1
+## PV for accessing the driving cu2rents of quadrupoles (QF4 family),,,,,,,
+RCQPS4, elemName=R1QF4, handle=SETPOINT, ordinal= 62, elemType= QUAD, system= SR, sEnd= 7.685, aphla.sys.SR
+RCQPS4, elemName=R1QF4, handle=SETPOINT, ordinal= 62, elemType= QUAD, system= SR, sEnd= 7.685, aphla.sys.SR
+RCQPS4, elemName=R2QF4, handle=SETPOINT, ordinal= 941, elemType= QUAD, system= SR, sEnd= 27.685, aphla.sys.SR
+RCQPS4, elemName=R2QF4, handle=SETPOINT, ordinal= 941, elemType= QUAD, system= SR, sEnd= 27.685, aphla.sys.SR
+RCQPS4, elemName=R3QF4, handle=SETPOINT, ordinal= 2054, elemType= QUAD, system= SR, sEnd= 47.685, aphla.sys.SR
+RCQPS4, elemName=R3QF5, handle=SETPOINT, ordinal= 2078, elemType= QUAD, system= SR, sEnd= 52.315, aphla.sys.SR
+RCQPS4, elemName=R4QF4, handle=SETPOINT, ordinal= 2332, elemType= QUAD, system= SR, sEnd= 67.685, aphla.sys.SR
+RCQPS4, elemName=R4QF5, handle=SETPOINT, ordinal= 2346, elemType= QUAD, system= SR, sEnd= 72.315, aphla.sys.SR
+RCQPS4, elemName=R5QF4, handle=SETPOINT, ordinal= 2575, elemType= QUAD, system= SR, sEnd= 87.685, aphla.sys.SR
+RCQPS4, elemName=R5QF5, handle=SETPOINT, ordinal= 2597, elemType= QUAD, system= SR, sEnd= 92.315, aphla.sys.SR
+RCQPS4, elemName=R6QF4, handle=SETPOINT, ordinal= 3258, elemType= QUAD, system= SR, sEnd= 107.685, aphla.sys.SR
+RCQPS4, elemName=R6QF5, handle=SETPOINT, ordinal= 3373, elemType= QUAD, system= SR, sEnd= 112.315, aphla.sys.SR
+## PVs for accessing the driving currents of quadrupole trims,,,,,,,
+R1Q1TRIMSW, elemName=R1QD1, handle=SETPOINT, ordinal= 41, elemType= QUAD, system= SR, sEnd= 3.175, aphla.sys.SR
+R1Q2TRIMSW, elemName=R1QF1, handle=SETPOINT ,,,,, aphla.sys.SR
+R1Q3TRIMSW, elemName=R1QD3, handle=SETPOINT, ordinal= 52, elemType= QUAD, system= SR, sEnd= 4.715, aphla.sys.SR
+R1Q4TRIMSW, elemName=R1QF4, handle=SETPOINT, ordinal= 62, elemType= QUAD, system= SR, sEnd= 7.685, aphla.sys.SR
+R1Q5TRIMSW, elemName=R1QF5, handle=SETPOINT, ordinal= 76, elemType= QUAD, system= SR, sEnd= 12.315, aphla.sys.SR
+RCQDTPS16, elemName=R1QD6, handle=SETPOINT, ordinal= 84, elemType= QUAD, system= SR, sEnd= 15.285, aphla.sys.SR
+RCQFTPS17, elemName=R1QF7, handle=SETPOINT, ordinal= 91, elemType= QUAD, system= SR, sEnd= 16.175, aphla.sys.SR
+RCQDTPS18, elemName=R1QD8, handle=SETPOINT, ordinal= 95, elemType= QUAD, system= SR, sEnd= 16.825, aphla.sys.SR
+RCQDTPS21, elemName=R2QD1, handle=SETPOINT, ordinal= 922, elemType= QUAD, system= SR, sEnd= 23.175, aphla.sys.SR
+RCQFTPS22, elemName=R2QF2, handle=SETPOINT, ordinal= 926, elemType= QUAD, system= SR, sEnd= 23.825, aphla.sys.SR
+RCQDTPS23, elemName=R2QD3, handle=SETPOINT, ordinal= 931, elemType= QUAD, system= SR, sEnd= 24.715, aphla.sys.SR
+R2Q4TRIMSW, elemName=R2QF4, handle=SETPOINT, ordinal= 941, elemType= QUAD, system= SR, sEnd= 27.685, aphla.sys.SR
+R2Q5TRIMSW, elemName=R2QF5, handle=SETPOINT, ordinal= 1056, elemType= QUAD, system= SR, sEnd= 32.315, aphla.sys.SR
+R2Q6TRIMSW, elemName=R2QD6, handle=SETPOINT, ordinal= 1064, elemType= QUAD, system= SR, sEnd= 35.285, aphla.sys.SR
+R2Q7TRIMSW, elemName=R2QF7, handle=SETPOINT, ordinal= 1073, elemType= QUAD, system= SR, sEnd= 36.175, aphla.sys.SR
+R2Q8TRIMSW, elemName=R2QD8, handle=SETPOINT, ordinal= 1077, elemType= QUAD, system= SR, sEnd= 36.825, aphla.sys.SR
+R3Q1TRIMSW, elemName=R3QD1, handle=SETPOINT, ordinal= 2035, elemType= QUAD, system= SR, sEnd= 43.175, aphla.sys.SR
+R3Q2TRIMSW, elemName=R3QF2, handle=SETPOINT, ordinal= 2039, elemType= QUAD, system= SR, sEnd= 43.825, aphla.sys.SR
+R3Q3TRIMSW, elemName=R3QD3, handle=SETPOINT, ordinal= 2044, elemType= QUAD, system= SR, sEnd= 44.715, aphla.sys.SR
+R3Q4TRIMSW, elemName=R3QF4, handle=SETPOINT, ordinal= 2054, elemType= QUAD, system= SR, sEnd= 47.685, aphla.sys.SR
+R3Q5TRIMSW, elemName=R3QF5, handle=SETPOINT, ordinal= 2078, elemType= QUAD, system= SR, sEnd= 52.315, aphla.sys.SR
+R3Q6TRIMSW, elemName=R3QD6, handle=SETPOINT, ordinal= 2086, elemType= QUAD, system= SR, sEnd= 55.285, aphla.sys.SR
+R3Q7TRIMSW, elemName=R3QF7, handle=SETPOINT, ordinal= 2090, elemType= QUAD, system= SR, sEnd= 56.175, aphla.sys.SR
+R3Q8TRIMSW, elemName=R3QD8, handle=SETPOINT, ordinal= 2094, elemType= QUAD, system= SR, sEnd= 56.825, aphla.sys.SR
+R4Q1TRIMSW, elemName=R4QD1, handle=SETPOINT, ordinal= 2314, elemType= QUAD, system= SR, sEnd= 63.175, aphla.sys.SR
+R4Q2TRIMSW, elemName=R4QF2, handle=SETPOINT, ordinal= 2318, elemType= QUAD, system= SR, sEnd= 63.825, aphla.sys.SR
+R4Q3TRIMSW, elemName=R4QD3, handle=SETPOINT, ordinal= 2322, elemType= QUAD, system= SR, sEnd= 64.715, aphla.sys.SR
+R4Q4TRIMSW, elemName=R4QF4, handle=SETPOINT, ordinal= 2332, elemType= QUAD, system= SR, sEnd= 67.685, aphla.sys.SR
+R4Q5TRIMSW, elemName=R4QF5, handle=SETPOINT, ordinal= 2346, elemType= QUAD, system= SR, sEnd= 72.315, aphla.sys.SR
+R4Q6TRIMSW, elemName=R4QD6, handle=SETPOINT, ordinal= 2354, elemType= QUAD, system= SR, sEnd= 75.285, aphla.sys.SR
+R4Q7TRIMSW, elemName=R4QF7, handle=SETPOINT, ordinal= 2361, elemType= QUAD, system= SR, sEnd= 76.175, aphla.sys.SR
+R4Q8TRIMSW, elemName=R4QD8, handle=SETPOINT, ordinal= 2365, elemType= QUAD, system= SR, sEnd= 76.825, aphla.sys.SR
+R5Q1TRIMSW, elemName=R5QD1, handle=SETPOINT, ordinal= 2556, elemType= QUAD, system= SR, sEnd= 83.175, aphla.sys.SR
+R5Q2TRIMSW, elemName=R5QF2, handle=SETPOINT, ordinal= 2560, elemType= QUAD, system= SR, sEnd= 83.825, aphla.sys.SR
+R5Q3TRIMSW, elemName=R5QD3, handle=SETPOINT, ordinal= 2565, elemType= QUAD, system= SR, sEnd= 84.715, aphla.sys.SR
+R5Q4TRIMSW, elemName=R5QF4, handle=SETPOINT, ordinal= 2575, elemType= QUAD, system= SR, sEnd= 87.685, aphla.sys.SR
+R5Q5TRIMSW, elemName=R5QF5, handle=SETPOINT, ordinal= 2597, elemType= QUAD, system= SR, sEnd= 92.315, aphla.sys.SR
+R5Q6TRIMSW, elemName=R5QD6, handle=SETPOINT, ordinal= 2605, elemType= QUAD, system= SR, sEnd= 95.285, aphla.sys.SR
+R5Q7TRIMSW, elemName=R5QF7, handle=SETPOINT, ordinal= 2612, elemType= QUAD, system= SR, sEnd= 96.175, aphla.sys.SR
+R5Q8TRIMSW, elemName=R5QD8, handle=SETPOINT, ordinal= 2616, elemType= QUAD, system= SR, sEnd= 96.825, aphla.sys.SR
+R6Q1TRIMSW, elemName=R6QD1, handle=SETPOINT, ordinal= 3239, elemType= QUAD, system= SR, sEnd= 103.175, aphla.sys.SR
+R6Q2TRIMSW, elemName=R6QF2, handle=SETPOINT, ordinal= 3243, elemType= QUAD, system= SR, sEnd= 103.825, aphla.sys.SR
+R6Q3TRIMSW, elemName=R6QD3, handle=SETPOINT, ordinal= 3248, elemType= QUAD, system= SR, sEnd= 104.715, aphla.sys.SR
+R6Q4TRIMSW, elemName=R6QF4, handle=SETPOINT, ordinal= 3258, elemType= QUAD, system= SR, sEnd= 107.685, aphla.sys.SR
+R6Q5TRIMSW, elemName=R6QF5, handle=SETPOINT, ordinal= 3373, elemType= QUAD, system= SR, sEnd= 112.315, aphla.sys.SR
+R6Q6TRIMSW, elemName=R6QD6, handle=SETPOINT, ordinal= 3381, elemType= QUAD, system= SR, sEnd= 115.285, aphla.sys.SR
+R6Q7TRIMSW, elemName=R6QF7, handle=SETPOINT, ordinal= 3385, elemType= QUAD, system= SR, sEnd= 116.175, aphla.sys.SR
+R6Q8TRIMSW, elemName=R6QD8, handle=SETPOINT, ordinal= 3389, elemType= QUAD, system= SR, sEnd= 116.825, aphla.sys.SR
+## PVs for accessing the driving currents of sextupoles SF family,,,,,,,
+RCSFPS, elemName=R1SF1, handle=SETPOINT, ordinal= 64, elemType= SEXT, system= SR, sEnd= 8.06, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R1SF2, handle=SETPOINT, ordinal= 74, elemType= SEXT, system= SR, sEnd= 11.94, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R2SF1, handle=SETPOINT, ordinal= 945, elemType= SEXT, system= SR, sEnd= 28.06, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R2SF2, handle=SETPOINT, ordinal= 1054, elemType= SEXT, system= SR, sEnd= 31.94, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R3SF1, handle=SETPOINT, ordinal= 2056, elemType= SEXT, system= SR, sEnd= 48.06, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R3SF2, handle=SETPOINT, ordinal= 2076, elemType= SEXT, system= SR, sEnd= 51.94, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R4SF1, handle=SETPOINT, ordinal= 2334, elemType= SEXT, system= SR, sEnd= 68.06, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R4SF2, handle=SETPOINT, ordinal= 2344, elemType= SEXT, system= SR, sEnd= 71.94, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R5SF1, handle=SETPOINT, ordinal= 2577, elemType= SEXT, system= SR, sEnd= 88.06, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R5SF2, handle=SETPOINT, ordinal= 2595, elemType= SEXT, system= SR, sEnd= 91.94, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R6SF1, handle=SETPOINT, ordinal= 3262, elemType= SEXT, system= SR, sEnd= 108.06, aphla.sys.SR, aphla.elemfield.k2
+RCSFPS, elemName=R6SF2, handle=SETPOINT, ordinal= 3371, elemType= SEXT, system= SR, sEnd= 111.94, aphla.sys.SR, aphla.elemfield.k2
+## PVs for accessing the driving currents of sextupoles SD family,,,,,,,
+RCSDPS, elemName=R1SD1, handle=SETPOINT, ordinal= 58, elemType= SEXT, system= SR, sEnd= 6.91, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R1SD2, handle=SETPOINT, ordinal= 80, elemType= SEXT, system= SR, sEnd= 13.09, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R2SD1, handle=SETPOINT, ordinal= 937, elemType= SEXT, system= SR, sEnd= 26.91, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R2SD2, handle=SETPOINT, ordinal= 1060, elemType= SEXT, system= SR, sEnd= 33.09, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R3SD1, handle=SETPOINT, ordinal= 2050, elemType= SEXT, system= SR, sEnd= 46.91, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R3SD2, handle=SETPOINT, ordinal= 2082, elemType= SEXT, system= SR, sEnd= 53.09, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R4SD1, handle=SETPOINT, ordinal= 2328, elemType= SEXT, system= SR, sEnd= 66.91, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R4SD2, handle=SETPOINT, ordinal= 2350, elemType= SEXT, system= SR, sEnd= 73.09, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R5SD1, handle=SETPOINT, ordinal= 2571, elemType= SEXT, system= SR, sEnd= 86.91, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R5SD2, handle=SETPOINT, ordinal= 2601, elemType= SEXT, system= SR, sEnd= 93.09, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R6SD1, handle=SETPOINT, ordinal= 3254, elemType= SEXT, system= SR, sEnd= 106.91, aphla.sys.SR, aphla.elemfield.k2
+RCSDPS, elemName=R6SD2, handle=SETPOINT, ordinal= 3377, elemType= SEXT, system= SR, sEnd= 113.09, aphla.sys.SR, aphla.elemfield.k2
+## PVs for accessing the driving currents of combined function bendings,,,,,,,
+RCDPS, elemName=RXDMX, handle=SETPOINT ,,elemType=BEND,,, aphla.sys.SR
+RCDPS, elemName=RXDMI, handle=SETPOINT ,,elemType=BEND,,, aphla.sys.SR
+RCDPS, elemName=RXDMO, handle=SETPOINT ,,elemType=BEND,,, aphla.sys.SR
+RCDPS, elemName=RXDMP, handle=SETPOINT ,,elemType=BEND,,, aphla.sys.SR
+RCDPS, elemName=RXDMHU, handle=SETPOINT ,,elemType=BEND,,, aphla.sys.SR
+RCDPS, elemName=RXDMHD, handle=SETPOINT ,,elemType=BEND,,, aphla.sys.SR
+RCDPS, elemName=RXDMSU, handle=SETPOINT ,,elemType=BEND,,, aphla.sys.SR
+RCDPS, elemName=RXDMLD, handle=SETPOINT ,,elemType=BEND,,, aphla.sys.SR
+## PV for accessing the driving currents of ID SWLS,,,,,,,
+SWLSMPS, elemName=SWLSMPS, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR
+## PV for accessing the driving currents of ID R6-IASW6 (IASWA),,,,,,, 
+IASWAMPS, elemName=IASW6MPS, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR
+## PV for accessing the driving gap of ID W200,,,,,,, 
+W20GAP, elemName=W20GAP, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR
+## PV for accessing the driving currents of ID SW6,,,,,,, 
+SMPW6MPS, elemName=SMPW6MPS, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR
+## PV for accessing the driving gap of ID U9,,,,,,, 
+U9GAP, elemName=U9GAP, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR
+## PV for accessing the driving gap of ID U5,,,,,,, 
+U5GAP, elemName=U5GAP, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR
+## PV for accessing the driving gap of ID EPU56,,,,,,,
+EPU4GAP, elemName=EPU56GAP, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR
+## PV for accessing the driving currents of ID R2-IASW6 (IASWB),,,,,,,
+IASWBMPS, elemName=IASWBMPS, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR
+## PV for accessing the driving currents of ID R4-IASW6 (IASWC),,,,,,,
+IASWCMPS, elemName=IASWCMPS, handle=SETPOINT ,,elemType=ID,,, aphla.sys.SR

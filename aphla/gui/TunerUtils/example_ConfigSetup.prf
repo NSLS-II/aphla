@@ -1,0 +1,25 @@
+(dp1
+S'time_stamp'
+p2
+F1320714094.2049091
+sS'version'
+p3
+S'0.1.0'
+p4
+sS'ConfigSetupGUI'
+p5
+(dp6
+S'visible_column_name_list'
+p7
+(lp8
+S'Knob Name'
+p9
+aS'Group Name'
+p10
+aS'Weight'
+p11
+aS'N.Weight'
+p12
+aS'Step Size'
+p13
+ass.
