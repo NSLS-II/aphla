@@ -371,8 +371,50 @@ class TunerConfigSetupBaseModel(QObject):
         return list(np.intersect1d(existing_channel_name_list, new_channel_name_list))
         
     #----------------------------------------------------------------------
+    def findNonExistentChannels(self, new_channel_name_list):
+        """"""
+        
+        elem_name_tuple, field_tuple = zip(*[ch.split('.') 
+                                             for ch in new_channel_name_list])
+        
+        # First find if the corresponding elements exist
+        non_existent_elem_name_list = [elem_name for elem_name in elem_name_tuple
+                                       if ap.getElements(elem_name)==[]]
+        if non_existent_elem_name_list:
+            msgBox = QMessageBox()
+            msgBox.setText('Non-existent Element Name(s) Found')
+            info_text_list = ['The following element names do not exist in the lattice:'] + \
+                [''] + non_existent_elem_name_list + ['']
+            info_text = '\n'.join(info_text_list)
+            msgBox.setInformativeText(info_text)
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+            return non_existent_elem_name_list
+        
+        # Then check if the field exists for the corresponding elements
+        elem_list = [ap.getElements(elem_name)[0] for elem_name in elem_name_tuple]
+        non_existent_channel_name_list = [elem.name+field for (field, elem) 
+                                          in zip(field_tuple, elem_list) 
+                                          if field not in elem.fields()]
+        if non_existent_channel_name_list:
+            msgBox = QMessageBox()
+            msgBox.setText('Non-existent Channel Name(s) Found')
+            info_text_list = ['The following channel field names do not exist in the lattice:'] + \
+                [''] + non_existent_channel_name_list+ ['']
+            info_text = '\n'.join(info_text_list)
+            msgBox.setInformativeText(info_text)
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+            return non_existent_channel_name_list
+        
+        return []
+            
+    #----------------------------------------------------------------------
     def appendChannels(self, new_lists_dict):
         """"""
+        
+        if self.findNonExistentChannels(new_lists_dict['channel_name']) != []:
+            return
         
         dupChannels = self.findDuplicateChannels(new_lists_dict['channel_name'])
         if dupChannels != []:
@@ -381,7 +423,7 @@ class TunerConfigSetupBaseModel(QObject):
                 ['Do you want to proceed by adding only new non-duplicate channels?']
             info_text = '\n'.join(info_text_list)
             msg = QMessageBox()
-            msg.setText('Duplicate Channel Names Found')
+            msg.setText('Duplicate Channel Name(s) Found')
             msg.setInformativeText(info_text)
             msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             msg.setDefaultButton(QMessageBox.No)

@@ -68,7 +68,7 @@ ITEM_COLOR_APP = Qt.Qt.red
 # However, on Windows, using '\' still works fine.
 SEPARATOR = '/' # used as system file path separator as well as launcher page path separator
 DOT_HLA_QFILEPATH = str(Qt.QDir.homePath()) + SEPARATOR + '.hla'
-DEVELOPER_XML_FILENAME = 'us_nsls2_launcher_hierarchy.xml'
+SYSTEM_XML_FILENAME = 'us_nsls2_launcher_hierarchy.xml'
 USER_XML_FILENAME = 'user_launcher_hierarchy.xml'
 USER_MODIFIABLE_ROOT_PATH = '/root/Favorites'
 
@@ -76,7 +76,9 @@ import utils.gui_icons
 from Qt4Designer_files.ui_launcher import Ui_MainWindow
 from Qt4Designer_files.ui_launcher_item_properties import Ui_Dialog
 
-import aphla
+import aphla as ap
+
+MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
 
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
@@ -160,12 +162,13 @@ class LauncherModel(Qt.QStandardItemModel):
         self.linkedFileList = [] # Initial list population will occur when a
         # LauncherModelItemPropertiesDialog is created for the first time.
         
-        ## First, parse developer XML file and construct a tree model
-        developer_XML_Filepath = aphla.conf.filename(DEVELOPER_XML_FILENAME)
-        developer_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/')  
+        ## First, parse system XML file and construct a tree model
+        #system_XML_Filepath = ap.conf.filename(SYSTEM_XML_FILENAME)
+        system_XML_Filepath = os.path.join(MACHINES_FOLDERPATH,SYSTEM_XML_FILENAME)
+        system_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/')  
         #
         self.nRows = 0
-        doc = self.open_XML_HierarchyFile(developer_XML_Filepath)
+        doc = self.open_XML_HierarchyFile(system_XML_Filepath)
         self.construct_tree_model(doc.firstChild()) # Recursively search through 
         # the XML file to build the corresponding tree structure.
 
@@ -361,15 +364,15 @@ class LauncherModel(Qt.QStandardItemModel):
             
         f = Qt.QFile(XML_Filepath)
         if not f.exists():
-            # If the developer XML file cannot be located, stop here.
+            # If the system XML file cannot be located, stop here.
             XML_Filename = os.path.split(XML_Filepath)
-            if DEVELOPER_XML_FILENAME == XML_Filename:
+            if SYSTEM_XML_FILENAME == XML_Filename:
                 raise OSError(XML_Filepath + ' does not exist.')
             
             # If the user XML file cannot be found, then create an empty one in
             # ".hla" directory under the user home directory.
             
-            # This section of code create ".hla" directory under th user home directory,
+            # This section of code creates ".hla" directory under th user home directory,
             # if it does not already exist. This method assures no race condtion will happen
             # in the process of creating the new directory.
             try:
@@ -379,7 +382,7 @@ class LauncherModel(Qt.QStandardItemModel):
                     raise OSError('Failed to create .hla directory')
             
             # Create an empty user XML file
-            rootModelItem = LauncherModelItem('Users')
+            rootModelItem = LauncherModelItem('Favorites')
             self.writeToXMLFile(XML_Filepath, rootModelItem)
             # Make sure that the file has been successfully created.
             if not f.exists():
@@ -1246,7 +1249,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.selectedListViewMode = m.listView.viewMode()            
             
         else: # When right-clicked on side pane
-
+            
+            print self.getCurrentRootPath()
+            
             if not self.selectedItemList:
                 return
             
@@ -1684,30 +1689,35 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.actionCut = Qt.QAction(Qt.QIcon(), 'Cut', self)
         self.actionCut.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_X))
+        self.addAction(self.actionCut)
         self.connect(self.actionCut, Qt.SIGNAL('triggered()'),
                      self.cutItems)
         
         self.actionCopy = Qt.QAction(Qt.QIcon(), 'Copy', self)
         self.actionCopy.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_C))
+        self.addAction(self.actionCopy)
         self.connect(self.actionCopy, Qt.SIGNAL('triggered()'),
                      self.copyItems)
         
         self.actionPaste = Qt.QAction(Qt.QIcon(), 'Paste', self)
         self.actionPaste.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_V))
+        self.addAction(self.actionPaste)
         self.connect(self.actionPaste, Qt.SIGNAL('triggered()'),
                      self.pasteItems)
 
 
         self.actionRename = Qt.QAction(Qt.QIcon(), 'Rename', self)
         self.actionRename.setShortcut(Qt.Qt.Key_F2)
+        self.addAction(self.actionRename)
         self.connect(self.actionRename, Qt.SIGNAL('triggered()'),
                      self.renameItem)
         
         self.actionProperties = Qt.QAction(Qt.QIcon(), 'Properties', self)
         self.actionProperties.setShortcut(
             Qt.QKeySequence(Qt.Qt.AltModifier + Qt.Qt.Key_Return))
+        self.addAction(self.actionProperties)
         self.connect(self.actionProperties, Qt.SIGNAL('triggered()'),
                      self.openPropertiesDialog)
         
@@ -1728,23 +1738,27 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         self.actionDelete = Qt.QAction(Qt.QIcon(), 'Delete', self)
         self.actionDelete.setShortcut(Qt.Qt.Key_Delete)
+        self.addAction(self.actionDelete)
         self.connect(self.actionDelete, Qt.SIGNAL('triggered()'),
                      self.deleteItems)
         
         self.actionCloseTabOrWindow = Qt.QAction(Qt.QIcon(), 'Close', self)
         self.actionCloseTabOrWindow.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_W))
+        self.addAction(self.actionCloseTabOrWindow)
         self.connect(self.actionCloseTabOrWindow, Qt.SIGNAL('triggered()'),
                      self.closeTabOrWindow)
                      
         self.actionSelectAll = Qt.QAction(Qt.QIcon(), 'Select All', self)
         #self.actionSelectAll.setShortcut(
             #Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_A))
+        self.addAction(self.actionSelectAll)        
         #self.connect()
         
         self.actionToggleSidePaneVisibility = \
             Qt.QAction(Qt.QIcon(), 'Side Pane', self)
         self.actionToggleSidePaneVisibility.setShortcut(Qt.Qt.Key_F9)
+        self.addAction(self.actionToggleSidePaneVisibility)        
         self.actionToggleSidePaneVisibility.setCheckable(True)
         self.actionToggleSidePaneVisibility.setChecked(True)
         self.connect(self.actionToggleSidePaneVisibility,
@@ -1760,16 +1774,19 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.actionIconsView.setCheckable(True)
         self.actionIconsView.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_1))
+        self.addAction(self.actionIconsView)        
         self.actionListView = Qt.QAction(Qt.QIcon(), 'List View', 
                                          self.actionGroupViewMode)
         self.actionListView.setCheckable(True)
         self.actionListView.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_2))
+        self.addAction(self.actionListView)        
         self.actionDetailsView = Qt.QAction(Qt.QIcon(), 'Details View',
                                             self.actionGroupViewMode)
         self.actionDetailsView.setCheckable(True)
         self.actionDetailsView.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_3))
+        self.addAction(self.actionDetailsView)
         self.actionIconsView.setChecked(True) # Default selection for the view mode
         self.connect(self.actionGroupViewMode, Qt.SIGNAL('triggered(QAction *)'),
                      self.onViewModeActionGroupTriggered)
@@ -1910,14 +1927,14 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         
         self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
         
+        
     #----------------------------------------------------------------------
     def deleteItems(self):
         """"""
         
-        selectedDeletableItems = [item for item in self.selectedItemList
-                                  if item.isEditable()]
-        
-        if not selectedDeletableItems:
+        if self.getCurrentMainPanePath().startswith(USER_MODIFIABLE_ROOT_PATH):
+            selectedDeletableItems = self.selectedItemList
+        else:
             msgBox = Qt.QMessageBox()
             msgBox.setText( (
                 'All selected items cannot be deleted. You do not have write permission.') )
@@ -2507,13 +2524,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         return searchModelItem.sourcePersistentModelIndex
     
     #----------------------------------------------------------------------
-    def updatePath(self):
+    def getCurrentMainPanePath(self):
         """
         It is necessary for pathHistory and pathHistoryCurrentIndex to be
         updated already before this function is called. Otherwise, update
         will not work properly.
         """
-                
+        
         m = self.getCurrentMainPane()
         pModInd = m.pathHistory[m.pathHistoryCurrentIndex]
         if type(pModInd) == Qt.QPersistentModelIndex:
@@ -2533,7 +2550,33 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 Qt.QModelIndex(searchRootIndex)) 
             pathStr = ('Search Results in ' + searchRootItem.path)
             
-        self.lineEdit_path.setText(pathStr)
+        return pathStr
+        
+    #----------------------------------------------------------------------
+    def updatePath(self):
+        """
+        """
+                
+        #m = self.getCurrentMainPane()
+        #pModInd = m.pathHistory[m.pathHistoryCurrentIndex]
+        #if type(pModInd) == Qt.QPersistentModelIndex:
+            ## If pModInd is a persistent model index of "searchModel",
+            ## then you need to convert pModInd into the corresponding
+            ## persistent model index of "self.model" first.
+            #if type(pModInd.model()) == SearchModel:
+                #pModInd = self.convertSearchModelPModIndToModelPModInd(
+                    #m.searchModel, pModInd)
+                
+            #currentRootItem = self.model.itemFromIndex(Qt.QModelIndex(pModInd))
+            #pathStr = currentRootItem.path
+        #else: # When main pane is showing search info
+            #searchInfo = pModInd
+            #searchRootIndex = searchInfo['searchRootIndex']
+            #searchRootItem = self.model.itemFromIndex(
+                #Qt.QModelIndex(searchRootIndex)) 
+            #pathStr = ('Search Results in ' + searchRootItem.path)
+        
+        self.lineEdit_path.setText(self.getCurrentMainPanePath())
             
         self.updateStatesOfNavigationButtons()
         
@@ -2693,7 +2736,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         # Update enable states for actions that can modify the data,
         # depending on the current root path. If the current path is not in the
-        # user modifiable section (i.e., not under /root/Users page), then
+        # user modifiable section (i.e., not under /root/Favorites page), then
         # all the actions that can modify the data structure are disabled here.
         inSearchMode = self.inSearchMode()
         if not inSearchMode:

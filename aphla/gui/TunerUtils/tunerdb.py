@@ -572,7 +572,7 @@ class TunerTextFileManager(QDialog):
             f.close()
         
         lines = all_texts.split('\n')
-        data = [line.split() for line in lines]
+        data = [line.split() for line in lines if line != '']
         
         if sum(self.selection.values()) != len(data[0]):
             msgBox = QMessageBox()

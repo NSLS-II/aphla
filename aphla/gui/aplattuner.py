@@ -62,7 +62,7 @@ from TunerUtils.tunerModels import (TreeItem, TreeModel,
 
 import aphla as ap
 if ap.machines._lat is None:
-    ap.initNSLS2V2()
+    ap.machines.init('nsls2v2',use_cache=True)
 
 #----------------------------------------------------------------------
 def datestr(time_in_seconds_from_Epoch):

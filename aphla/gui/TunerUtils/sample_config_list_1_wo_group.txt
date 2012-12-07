@@ -1,6 +1,6 @@
-ph1g2c30a.y  0.0
-ph1g2c30a.x  0.0
-ph2g2c30a.y  0.0
-ph2g2c30a.x  0.0
-cxh1g2c30a.x 1.1
-cxh2g2c30a.x 1.1
+ph1g2c30a.y 0.0
+ph1g2c30a.x 0.0
+ph2g2c30a.y 0.0
+ph2g2c30a.x 0.0
+fh2g1c30a.x 1.1
+ch1g2c30a.y 1.1
