@@ -40,18 +40,20 @@ import types
 import numpy as np
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import QObject, QSize, SIGNAL
+from PyQt4.QtCore import (QObject, QSize, SIGNAL, Qt, QEvent, QRect)
 from PyQt4.QtGui import (QApplication, QMainWindow, QStandardItemModel,
      QStandardItem, QDockWidget, QWidget, QGridLayout, QSplitter,
      QTreeView, QTableView, QTabWidget, QVBoxLayout, QHBoxLayout, QPushButton,
      QSpacerItem, QSizePolicy, QCheckBox, QLineEdit, QLabel, QTextEdit,
      QAction, QSortFilterProxyModel, QAbstractItemView, QMenu,
-     QComboBox, QStackedWidget)
+     QComboBox, QStackedWidget, QActionGroup, QIcon, QKeySequence, QCursor,
+     QToolButton, QStyle)
 
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
 
 from Qt4Designer_files.ui_lattice_tuner_for_reference import Ui_MainWindow
 
+import aphla.gui.utils.gui_icons
 import TunerUtils.config as const
 from TunerUtils import tunerConfigSetupDialog as TunerConfigSetupDialog
 from TunerUtils.tunerModels import (TreeItem, TreeModel,
@@ -264,8 +266,281 @@ class TunerSnapshotModel(QObject):
         self.pvrb_values = [] #[(val1,timestamp1),(val2,timestamp2)] # in the order of flat channel list
         self.pvsp_values = [] #[(val1,timestamp1),(val2,timestamp2)]
         
+    
 ########################################################################
-class TunerConfigDockWidget(QDockWidget):
+class TitleRenameLineEdit(QLineEdit):
+    """"""
+    
+    #----------------------------------------------------------------------
+    def __init__(self, parent):
+        """Constructor"""
+            
+        QLineEdit.__init__(self, parent)
+        
+        self.connect(self, SIGNAL('editingFinished()'),
+                     self.finalizeText)
+        
+        self.setWindowFlags(Qt.CustomizeWindowHint)
+        
+        self.hide()
+                
+    #----------------------------------------------------------------------
+    def setText(self, text):
+        """"""
+        
+        QLineEdit.setText(self, text)
+        title_label = self.parent().title
+        label_rect = title_label.geometry()
+        w = self.fontMetrics().width(text+'extra')
+        h = self.fontMetrics().height()*2
+        self.setGeometry(QRect(0,label_rect.y(),w,h))
+        self.setFocus()
+        self.selectAll()
+        self.show()
+        
+    #----------------------------------------------------------------------
+    def keyPressEvent(self, event):
+        """"""
+        
+        if (event.key() == Qt.Key_Escape):
+            QLineEdit.setText(self, '')
+            self.hide()
+        else:
+            QLineEdit.keyPressEvent(self, event)
+            
+    #----------------------------------------------------------------------
+    def focusOutEvent(self, event):
+        """"""
+        
+        QLineEdit.focusOutEvent(self, event)
+        
+        self.emit(SIGNAL('editingFinished()'))
+        
+    #----------------------------------------------------------------------
+    def finalizeText(self):
+        """"""
+        
+        if self.text() != '':
+            self.parent().title.setText(self.text())
+        
+        self.hide()
+    
+########################################################################
+class TitleLabel(QLabel):
+    """"""
+        
+    #----------------------------------------------------------------------
+    def __init__(self, *args):
+        """Constructor"""
+                
+        QLabel.__init__(self, *args)
+        
+        self._editor = TitleRenameLineEdit(self.parent())
+        
+    #----------------------------------------------------------------------
+    def mouseDoubleClickEvent(self, event):
+        """"""
+        
+        self.edit()
+        
+        event.accept()
+        
+    #----------------------------------------------------------------------
+    def edit(self):
+        """"""
+        
+        self._editor.setText(self.text())
+        
+            
+        
+########################################################################
+class CustomDockWidgetTitleBar(QWidget):
+    """"""
+        
+    #----------------------------------------------------------------------
+    def __init__(self, parentDockWidget):
+        """Constructor"""
+        
+        QWidget.__init__(self, parentDockWidget)
+        
+        self.dockWidget = parentDockWidget
+        
+        self.title = TitleLabel(self)
+        self.title.setText('testing')
+        
+        min_button_height = 10
+        
+        self.minimizeButton = QToolButton(self)
+        #self.minimizeButton.setIcon(QIcon(':/up_arrow.png'))
+        self.minimizeButton.setIcon( QApplication.style().standardIcon(
+            QStyle.SP_TitleBarMinButton) )
+        self.minimizeButton.setToolTip('Minimize')
+        self.minimizeButton.setMinimumHeight(min_button_height)
+        #
+        self.maximizeButton = QToolButton(self)
+        self.maximizeButton.setToolTip('Maximize')
+        self.maximizeButton.setIcon( QApplication.style().standardIcon(
+            QStyle.SP_TitleBarMaxButton) )
+        self.maximizeButton.setMinimumHeight(min_button_height)
+        #
+        self.restoreButton = QToolButton(self)
+        self.restoreButton.setToolTip('Restore')
+        self.restoreButton.setIcon( QApplication.style().standardIcon(
+            QStyle.SP_TitleBarNormalButton) )
+        self.restoreButton.setMinimumHeight(min_button_height)
+        #
+        self.undockButton = QToolButton(self)
+        self.undockButton.setToolTip('Undock')
+        self.undockButton.setIcon( QApplication.style().standardIcon(
+            QStyle.SP_TitleBarNormalButton) )
+        self.undockButton.setMinimumHeight(min_button_height)
+        #
+        self.dockButton = QToolButton(self)
+        self.dockButton.setToolTip('Dock')
+        self.dockButton.setIcon( QApplication.style().standardIcon(
+            QStyle.SP_TitleBarNormalButton) )
+        self.dockButton.setMinimumHeight(min_button_height)
+        #
+        self.closeButton = QToolButton(self)
+        self.closeButton.setToolTip('Close')
+        self.closeButton.setIcon( QApplication.style().standardIcon(
+            QStyle.SP_TitleBarCloseButton) )
+        self.closeButton.setMinimumHeight(min_button_height)
+        
+        self.connect(self.minimizeButton,SIGNAL('clicked()'),
+                     self.minimizeDockWidget)
+        self.connect(self.maximizeButton,SIGNAL('clicked()'),
+                     self.maximizeDockWidget)
+        self.connect(self.restoreButton,SIGNAL('clicked()'),
+                     self.restoreDockWidget)
+        self.connect(self.undockButton,SIGNAL('clicked()'),
+                     self.undockDockWidget)
+        self.connect(self.dockButton,SIGNAL('clicked()'),
+                     self.dockDockWidget)
+        self.connect(self.closeButton,SIGNAL('clicked()'),
+                     self.closeDockWidget)
+        
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        
+
+        hbox = QHBoxLayout(self)
+        #
+        hbox.addWidget(self.title)
+        hbox.addWidget(self.minimizeButton)
+        hbox.addWidget(self.restoreButton)
+        hbox.addWidget(self.maximizeButton)
+        hbox.addWidget(self.undockButton)
+        hbox.addWidget(self.dockButton)
+        hbox.addWidget(self.closeButton)
+        #
+        hbox.insertStretch(1,500)
+        hbox.setSpacing(0)
+        
+        self.window_state = Qt.WindowNoState
+        self.float_state = False
+        self.updateButtons()
+        
+        self.connect(self.dockWidget, 
+                     SIGNAL('topLevelChanged(bool)'),
+                     self.updateButtons)
+        
+    #----------------------------------------------------------------------
+    def renameTitle(self):
+        """"""
+        
+        self.title.edit()
+        
+    #----------------------------------------------------------------------
+    def updateButtons(self, floating=None):
+        """"""
+        
+        if floating is None:
+            floating = self.dockWidget.isFloating()
+            
+        if floating:
+            self.dockButton.show()
+            self.undockButton.hide()
+            self.minimizeButton.show()
+            if self.window_state == Qt.WindowMaximized:
+                self.restoreButton.show()
+                self.maximizeButton.hide()
+            else:
+                self.restoreButton.hide()
+                self.maximizeButton.show()
+        else:
+            self.dockButton.hide()
+            self.undockButton.show()
+            self.minimizeButton.hide()
+            self.restoreButton.hide()
+            self.maximizeButton.hide()
+        
+    #----------------------------------------------------------------------
+    def minimizeDockWidget(self):
+        """"""
+        
+        if self.dockWidget.windowState() not in (Qt.WindowNoState,
+                                                 Qt.WindowMaximized,
+                                                 Qt.WindowFullScreen,
+                                                 Qt.WindowActive):
+            self.dockWidget.setWindowState(Qt.WindowActive)
+        '''This section is needed because when the dockWidget is undocked by
+        dragging, the window state is somehow set to WindowMinimized,
+        even though the window is floating WITHOUT being minimized.
+        Therefore, nothing happens when minimize button is pressed.
+        So, the window state must be changed to something other than
+        WindowMinimized for the minimization process to happen. Here,
+        WindowActive state is being used for that purpose.
+        '''        
+        
+        self.dockWidget.showMinimized()
+        ## or
+        #self.dockWidget.setWindowState(Qt.WindowMinimized)
+        
+        self.window_state = Qt.WindowMinimized
+        self.updateButtons()
+
+    #----------------------------------------------------------------------
+    def maximizeDockWidget(self):
+        """"""
+        
+        self.dockWidget.showMaximized()
+
+        self.window_state = Qt.WindowMaximized
+        self.updateButtons()
+        
+    #----------------------------------------------------------------------
+    def restoreDockWidget(self):
+        """"""
+        
+        self.dockWidget.showNormal()
+        
+        self.window_state = Qt.WindowNoState
+        self.updateButtons()
+        
+    #----------------------------------------------------------------------
+    def undockDockWidget(self):
+        """"""
+        
+        self.dockWidget.setFloating(True)
+        
+        self.updateButtons()
+        
+    #----------------------------------------------------------------------
+    def dockDockWidget(self):
+        """"""
+        
+        self.dockWidget.setFloating(False)
+        
+        self.updateButtons()
+        
+    #----------------------------------------------------------------------
+    def closeDockWidget(self):
+        """"""
+        self.dockWidget.close()
+        
+    
+########################################################################
+class TunerDockWidget(QDockWidget):
     """"""
     
     #----------------------------------------------------------------------
@@ -273,7 +548,7 @@ class TunerConfigDockWidget(QDockWidget):
         """Constructor"""
         
         self._initUI(parent)
-
+        
         self.model = model        
         isinstance(model,TunerSnapshotModel)
         
@@ -299,7 +574,133 @@ class TunerConfigDockWidget(QDockWidget):
         
         self.connect(self.pushButton_step_up,SIGNAL('toggled(bool)'),
                      self.onStepUpPushed)
-    
+        
+        self.actionRename = QAction(QIcon(), 'Rename', self)
+        self.addRobustShortcut(self.actionRename, Qt.Key_F2)
+        self.connect(self.actionRename, SIGNAL('triggered()'),
+                     self.renameTitle)
+        #
+        self.actionViewGroupBased = QAction(QIcon(), 'Group-based', self)
+        self.addRobustShortcut(self.actionViewGroupBased,
+                               QKeySequence(Qt.ControlModifier + Qt.Key_1))
+        self.actionViewGroupBased.setCheckable(True)
+        self.actionViewChannelBased = QAction(QIcon(), 'Channel-based', self)
+        self.addRobustShortcut(self.actionViewChannelBased,
+                               QKeySequence(Qt.ControlModifier + Qt.Key_2))
+        self.actionViewChannelBased.setCheckable(True)
+        self.actionGroupViewMode = QActionGroup(self) # Action Group for View Mode (Group-based vs. Channel-based)
+        self.actionGroupViewMode.setExclusive(True)        
+        self.actionViewGroupBased.setActionGroup(self.actionGroupViewMode)
+        self.actionViewChannelBased.setActionGroup(self.actionGroupViewMode)
+        default_action = self.actionViewChannelBased
+        default_action.setChecked(True)
+        self.onViewModeActionGroupTriggered(default_action)
+        self.connect(self.actionGroupViewMode, SIGNAL('triggered(QAction *)'),
+                     self.onViewModeActionGroupTriggered)      
+        self.menuViewMode = QMenu('View Mode')
+        self.menuViewMode.addAction(self.actionViewGroupBased)
+        self.menuViewMode.addAction(self.actionViewChannelBased)
+        #
+        self.actionColumns = QAction(QIcon(), 'Columns...', self)
+        self.connect(self.actionColumns, SIGNAL('triggered()'),
+                     self.launchColumnSelector)
+        #
+        self.actionStepMode = QAction(QIcon(), 'Step Mode', self)
+        self.actionStepMode.setCheckable(True)
+        self.actionStepMode.setChecked(True)
+        self.connect(self.actionStepMode, SIGNAL('triggered()'),
+                     self.showStepModeTab)
+        self.actionRampMode = QAction(QIcon(), 'Ramp Mode', self)
+        self.actionRampMode.setCheckable(True)
+        self.actionRampMode.setChecked(True)
+        self.connect(self.actionRampMode, SIGNAL('triggered()'),
+                     self.showRampModeTab)
+        #
+        self.actionConfigMetadata = QAction(QIcon(), 'Config Metadata', self)
+        self.actionConfigMetadata.setCheckable(True)
+        self.actionConfigMetadata.setChecked(True)
+        self.connect(self.actionConfigMetadata, SIGNAL('triggered()'),
+                     self.showConfigMetaTab)
+        self.actionSnapshotMetadata = QAction(QIcon(), 'Snapshot Metadata', self)
+        self.actionSnapshotMetadata.setCheckable(True)
+        self.actionSnapshotMetadata.setChecked(True)
+        self.connect(self.actionSnapshotMetadata, SIGNAL('triggered()'),
+                     self.showSnapshotMetaTab)
+        #
+        self.actionTakeSnapshot = QAction(QIcon(), '&Take snapshot...', self)
+        self.addRobustShortcut(self.actionTakeSnapshot,
+                               QKeySequence(Qt.ControlModifier + Qt.Key_T))
+        self.connect(self.actionTakeSnapshot, SIGNAL('triggered()'), self.takeSnapshot)
+        #
+        self.actionSaveAs = QAction(QIcon(), '&Save as...', self)
+        self.addRobustShortcut(self.actionSaveAs,
+                               QKeySequence(Qt.ControlModifier + Qt.Key_S))
+        self.connect(self.actionSaveAs, SIGNAL('triggered()'), self.saveAs)
+        #
+        self.contextMenu = QMenu()
+        self.contextMenu.addAction(self.actionRename)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addMenu(self.menuViewMode)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addAction(self.actionColumns)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addAction(self.actionStepMode)
+        self.contextMenu.addAction(self.actionRampMode)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addAction(self.actionConfigMetadata)
+        self.contextMenu.addAction(self.actionSnapshotMetadata)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addAction(self.actionTakeSnapshot)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addAction(self.actionSaveAs)
+        #
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'), 
+                     self.openContextMenu)
+        
+        self.customTitleBar = CustomDockWidgetTitleBar(self)
+        self.setTitleBarWidget(self.customTitleBar)
+        
+        
+    #----------------------------------------------------------------------
+    def onViewModeActionGroupTriggered(self, action):
+        """"""
+        
+        self.showMinimized()
+        
+        if action == self.actionViewChannelBased:
+            self.stackedWidget.setCurrentWidget(self.page_table)
+        elif action == self.actionViewGroupBased:
+            self.stackedWidget.setCurrentWidget(self.page_tree)
+        else:
+            raise ValueError('Unexpected action:'+str(action))
+        
+    #----------------------------------------------------------------------
+    def addRobustShortcut(self, action, shortcut_key):
+        """"""
+        
+        action.setShortcut(shortcut_key)
+
+        if action not in self.actions():
+            self.addAction(action)
+        ''' This addAction is critical for the shortcut to always work for
+        context menus. For the shortcut to work, the widget to which
+        the desired action is added must be listening for key events.
+        
+        '''
+        
+    #----------------------------------------------------------------------
+    def openContextMenu(self, qpoint):
+        """"""
+        
+        self.contextMenu.exec_(QCursor.pos())
+            
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+        
+        event.accept()
+        
     #----------------------------------------------------------------------
     def _initUI(self, parent):
         """"""
@@ -479,6 +880,48 @@ class TunerConfigDockWidget(QDockWidget):
         self.treeView.expandAll()
         self.treeView.resizeColumnToContents(0)
         
+    #----------------------------------------------------------------------
+    def renameTitle(self):
+        """"""
+        
+        self.titleBarWidget().renameTitle()
+    
+    #----------------------------------------------------------------------
+    def launchColumnSelector(self):
+        """"""
+        
+        pass
+    
+    #----------------------------------------------------------------------
+    def showStepModeTab(self):
+        """"""
+        pass
+    #----------------------------------------------------------------------
+    def showRampModeTab(self):
+        """"""
+        pass
+    
+    #----------------------------------------------------------------------
+    def showConfigMetaTab(self):
+        """"""
+        pass
+    
+    #----------------------------------------------------------------------
+    def showSnapshotMetaTab(self):
+        """"""
+        pass
+    
+    #----------------------------------------------------------------------
+    def takeSnapshot(self):
+        """"""
+        pass
+    
+    #----------------------------------------------------------------------
+    def saveAs(self):
+        """"""
+        pass
+    
+        
 
 ########################################################################
 class TunerModel(QObject):
@@ -540,13 +983,29 @@ class TunerView(QMainWindow, Ui_MainWindow):
         
         self.setDockNestingEnabled(True)
 
-        tab_position = QTabWidget.North
+        tab_position = QTabWidget.South
         self.setTabPosition(QtCore.Qt.TopDockWidgetArea, tab_position)
         self.setTabPosition(QtCore.Qt.BottomDockWidgetArea, tab_position)
         self.setTabPosition(QtCore.Qt.RightDockWidgetArea, tab_position)
         self.setTabPosition(QtCore.Qt.LeftDockWidgetArea, tab_position)
         
         self.configDockWidgetList = []
+        
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'), 
+                     self.openContextMenu)
+        
+    #----------------------------------------------------------------------
+    def openContextMenu(self):
+        """
+        Default context menu would show nothing if no dockwidget has been
+        created yet. However, once a dockwidget is created, it will show
+        the list of dockwidgets to allow users to show/hide dockwidgets.
+        
+        Instead of this default context menu, a custom context menu will be shown.
+        """
+        
+        pass
         
     #----------------------------------------------------------------------
     def createTunerDockWidget(self, index):
@@ -558,7 +1017,7 @@ class TunerView(QMainWindow, Ui_MainWindow):
         isinstance(snapshot_model,TunerSnapshotModel)
         isinstance(base_model,TunerConfigSetupBaseModel)
         
-        dockWidget = TunerConfigDockWidget(snapshot_model, self)
+        dockWidget = TunerDockWidget(snapshot_model, self)
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), dockWidget)
         
         dockWidget.lineEdit_config_username.setReadOnly(True)
@@ -590,7 +1049,8 @@ class TunerView(QMainWindow, Ui_MainWindow):
         self.updateMetadataTab(dockWidget, base_model, page='config')
         if base_model.isSnapshot():
             self.updateMetadataTab(dockWidget, base_model, page='snapshot')
-    
+            
+        
     #----------------------------------------------------------------------
     def updateMetadataTab(self, dockWidget, base_model, page='config'):
         """"""
@@ -610,7 +1070,7 @@ class TunerView(QMainWindow, Ui_MainWindow):
     def createTunerConfigDockWidget(self, configModel):
         """"""
         
-        dockWidget = TunerConfigDockWidget(configModel, self)
+        dockWidget = TunerDockWidget(configModel, self)
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), dockWidget)
         
         self.configDockWidgetList.append(dockWidget)

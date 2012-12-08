@@ -98,7 +98,6 @@ MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
 
 ## FIXIT
 # *) Header not visible in main Tree View, if no item exists
-# *) Ctrl+V & Ctrl+W shortcuts not always work
 
 
 #----------------------------------------------------------------------
