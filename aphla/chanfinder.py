@@ -200,11 +200,16 @@ class ChannelFinderAgent(object):
 
     def importSqliteDb(self, fname, **kwargs):
         """
+        import to sqlite database
+        
+        :param fname: sqlite db file name
+        
         - NULL/None or '' will be ignored
         - *properties*, a list of column names for properties
         - *pvcol* default 'pv', the column name for pv
         - *tagscol* default 'tags', the column name for tags
         - *tagsep* default ';'
+
         The default properties will have all in 'elements' and 'pvs' tables, 
         except the pv and tags columns.
 

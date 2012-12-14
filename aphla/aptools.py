@@ -301,8 +301,8 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
-    - `plane` [HV|H|V]
-    - `repeat` numbers of correction 
+    :param plane: [HV|H|V]
+    :param repeat: numbers of correction 
 
     :Example:
 

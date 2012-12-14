@@ -1,0 +1,63 @@
+%% BPM
+AO.BPMx.FamilyName  = 'BPMx';
+AO.BPMx.MemberOf    = {'BPM'; 'BPMx';};
+AO.BPMx.DeviceList  = [ %(bpmx_devlist)s ];
+AO.BPMx.ElementList = (1:size(AO.BPMx.DeviceList,1))';
+AO.BPMx.Status      = ones(size(AO.BPMx.DeviceList,1),1);
+AO.BPMx.Position    = [];
+AO.BPMx.CommonNames = [%(bpmx_commonnames)s];
+
+AO.BPMx.Monitor.MemberOf = {'PlotFamily'; 'BPM'; 'BPMx'; 'Monitor'; 'Save';};
+AO.BPMx.Monitor.Mode = 'Simulator';
+AO.BPMx.Monitor.DataType = 'Scalar';
+AO.BPMx.Monitor.ChannelNames = { %(bpmx_monitor_pv)s; ''};
+
+AO.BPMx.Monitor.HW2PhysicsParams = 1e-3;  %% HW [mm], Simulator [Meters]
+AO.BPMx.Monitor.Physics2HWParams = 1000;
+AO.BPMx.Monitor.Units            = 'Hardware';
+AO.BPMx.Monitor.HWUnits          = 'mm';
+AO.BPMx.Monitor.PhysicsUnits     = 'Meter';
+%%AO.BPMx.Monitor.SpecialFunctionGet = @getx_ltb;
+
+AO.BPMx.Sum.MemberOf = {'PlotFamily'; 'BPM'; 'BPMx'; 'Monitor'; 'Sum';};
+AO.BPMx.Sum.Mode = 'Simulator';
+AO.BPMx.Sum.DataType = 'Scalar';
+AO.BPMx.Sum.ChannelNames = { %(bpmx_sum_pv)s };
+
+AO.BPMx.Sum.HW2PhysicsParams = 1;  %% HW [Volts], Simulator [Volts]
+AO.BPMx.Sum.Physics2HWParams = 1;
+AO.BPMx.Sum.Units            = 'Hardware';
+AO.BPMx.Sum.HWUnits          = '';
+AO.BPMx.Sum.PhysicsUnits     = '';
+
+AO.BPMy.FamilyName  = 'BPMy';
+AO.BPMy.MemberOf    = {'BPM'; 'BPMy';};
+AO.BPMy.DeviceList  = AO.BPMx.DeviceList;
+AO.BPMy.ElementList = AO.BPMx.ElementList;
+AO.BPMy.Status      = AO.BPMx.Status;
+AO.BPMy.Position    = [];
+AO.BPMy.CommonNames = [ %(bpmy_commonnames)s ];
+
+AO.BPMy.Monitor.MemberOf = {'PlotFamily'; 'BPM'; 'BPMy'; 'Monitor'; 'Save';};
+AO.BPMy.Monitor.Mode = 'Simulator';
+AO.BPMy.Monitor.DataType = 'Scalar';
+AO.BPMy.Monitor.ChannelNames = { %(bpmy_monitor_pv)s };
+
+AO.BPMy.Monitor.HW2PhysicsParams = 1e-3;  %% HW [mm], Simulator [Meters]
+AO.BPMy.Monitor.Physics2HWParams = 1000;
+AO.BPMy.Monitor.Units            = 'Hardware';
+AO.BPMy.Monitor.HWUnits          = 'mm';
+AO.BPMy.Monitor.PhysicsUnits     = 'Meter';
+
+AO.BPMy.Sum.MemberOf = {'PlotFamily'; 'BPM'; 'BPMy'; 'Monitor'; 'Sum';};
+AO.BPMy.Sum.Mode = 'Simulator';
+AO.BPMy.Sum.DataType = 'Scalar';
+AO.BPMy.Sum.ChannelNames = { %(bpmy_sum_pv)s };
+
+AO.BPMy.Sum.HW2PhysicsParams = 1;  %% HW [Volts], Simulator [Volts]
+AO.BPMy.Sum.Physics2HWParams = 1;
+AO.BPMy.Sum.Units            = 'Hardware';
+AO.BPMy.Sum.HWUnits          = '';
+AO.BPMy.Sum.PhysicsUnits     = '';
+
+

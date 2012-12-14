@@ -7,47 +7,46 @@ Quick Start
 This is for the very impatient ones at NSLS-II. See :doc:`tutorial`
 
 - Remote login the server: *ssh -Y youraccount@lsasd2.ls.bnl.gov*
-- Enter IPython and using HLA
+- Enter IPython::
+     $ ipython -pylab
 
-.. code-block:: python
+- Import `aphla`
 
-    $ ipython -pylab
+.. doctest::
     
-    In [1]: import aphla as ap
+     >>> import aphla as ap
 
-- Initialize the V1 (virtual accelerator lattice structure)
+- Initialize the "NSLS2V2" (virtual accelerator lattice structure)
 
-.. code-block:: python
+.. doctest::
 
-    In [2]: ap.initNSLS2V1()
-
-- Initialize the Twiss data (from the saved data)
-
-.. code-block:: python
-
-    In [3]: ap.initNSLS2V1SRTwiss()
+     >>> ap.machines.init("nsls2v2")
 
 - Get the orbit
 
-.. code-block:: python
+.. doctest::
 
-    In [4]: ap.getOrbit()
+     >>> d = ap.getOrbit()
+     >>> x, y, s = ap.getOrbit(spos=True).T
 
 - Get a list of correctors, print the name and strength of one corrector.
 
-.. code-block:: python
+.. doctest::
 
-    In [5]: cx = ap.getElements('CX*C19*')
-    In [6]: print cx[0].name, cx[0].x
-    CXL1G2C19A 6.32815600708e-08
+     >>> cx = ap.getElements('ch*c19*')
+     >>> print cx[0].name, cx[0].x
+     ch2g6c19b 0.0
 
 - Set the corrector and read the new setting
 
-.. code-block:: python
+.. doctest::
 
-     In [7]: cx[0].x = 5e-8
-     In [8]: print cx[0].name, cx[0].x
-     CXL1G2C19A 4.99974399176e-08
+     >>> cx[0].x = 5e-8
+     >>> print "%s %.3e" % (cx[0].name, cx[0].x)
+     cxl1g2c19a 5.000e-08
 
 
+.. testcleanup::
+
+     cx[0].x = 0.0
 
