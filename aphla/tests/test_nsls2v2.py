@@ -97,7 +97,7 @@ Element
 
 class Test0Element(unittest.TestCase):
     def setUp(self):
-        ap.machines.use("V2SR")
+        ap.machines.use(LAT_SR)
         pass 
         
     def tearDown(self):
@@ -175,25 +175,6 @@ class Test0Element(unittest.TestCase):
         self.assertGreaterEqual(np.std(vbpm.x), 0.0)
         self.assertGreaterEqual(np.std(vbpm.y), 0.0)
 
-    @unittest.skip("ORM data PV changed")
-    def test_corr_orbit(self):
-        bpm = ap.getElements('P*C1[0-3]*')
-        trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
-        v0 = ap.getOrbit('P*', spos=True)
-        ap.correctOrbit([e.name for e in bpm], [e.name for e in trim])
-        time.sleep(4)
-        v1 = ap.getOrbit('P*', spos=True)
-        import matplotlib.pylab as plt
-        plt.clf()
-        ax = plt.subplot(211) 
-        fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X') 
-        fig = plt.plot(v0[:,-1], v0[:,1], 'g-o', label='Y')
-        ax = plt.subplot(212)
-        fig = plt.plot(v1[:,-1], v1[:,0], 'r-x', label='X')
-        fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y')
-        plt.savefig("test_nsls2_orbit_correct.png")
-
-
     def test_hcor(self):
         # hcor
         hcor = ap.element.CaElement(
@@ -230,9 +211,43 @@ class Test0Element(unittest.TestCase):
         #self.assertGreaterEqual(abs(v[0]), 0.0)
         #self.assertIsNone(v[1])
 
+    def test_cor(self):
+        hcor = ap.getElements('HCOR')
+        self.assertEqual(len(hcor), 180)
+
+        vcor = ap.getElements('VCOR')
+        self.assertEqual(len(vcor), 180)
+
+        cor = ap.getElements('COR')
+        self.assertEqual(len(cor), 180)
+
+        idcor = ap.getElements('IDCOR')
+        self.assertGreater(len(idcor), 0)
+
+
+    @unittest.skip("ORM data PV changed")
+    def test_corr_orbit(self):
+        bpm = ap.getElements('P*C1[0-3]*')
+        trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
+        v0 = ap.getOrbit('P*', spos=True)
+        ap.correctOrbit([e.name for e in bpm], [e.name for e in trim])
+        time.sleep(4)
+        v1 = ap.getOrbit('P*', spos=True)
+        import matplotlib.pylab as plt
+        plt.clf()
+        ax = plt.subplot(211) 
+        fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X') 
+        fig = plt.plot(v0[:,-1], v0[:,1], 'g-o', label='Y')
+        ax = plt.subplot(212)
+        fig = plt.plot(v1[:,-1], v1[:,0], 'r-x', label='X')
+        fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y')
+        plt.savefig("test_nsls2_orbit_correct.png")
+
+
 
 """
 Channel Finder
+~~~~~~~~~~~~~~
 """
 
 class Test0ChanFinderCsvData(unittest.TestCase):
