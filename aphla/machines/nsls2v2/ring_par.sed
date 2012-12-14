@@ -1,0 +1,7 @@
+s/SQ_TRIM/COR/
+s/TRIM[DXY]/COR/
+s/FTRIM/FCOR/
+s/ EPU /INSERTION/
+s/ IVU /INSERTION/
+s/ DW /INSERTION/
+s/C\([SU][0-9]*\)[XY]\([A-Z0-9]*\) /C\1\2/

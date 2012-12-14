@@ -16,37 +16,6 @@ from sqlalchemy.orm import relationship, backref
 
 C = 787.793/30
 
-# mapping old tracy type of aphla type.
-def conv(k, *args, **kwargs):
-    d = { 'Horizontal Corrector': 'HCOR',
-          'Vertical Corrector': 'VCOR',
-          'Sextupole': 'SEXT',
-          'Beam Position Monitor': 'BPM',
-          'Quadrupole': 'QUAD',
-          'Bending': 'DIPOLE',
-          'insertion': 'INSERTION',
-          'readback': 'get',
-          'setpoint': 'set',
-          'V:2-SR': 'V2SR',
-          'V:3-BSR': 'V3BSRLINE',
-          ('Horizontal Corrector', ''): 'x',
-          ('Vertical Corrector', ''): 'y',
-          ('Beam Position Monitor', 'X'): 'x',
-          ('Beam Position Monitor', 'Y'): 'y',
-          ('Quadrupole', 'K'): 'k1',
-          ('Sextupole', 'K'): 'k2',
-          ('Bending', 'T'): 'bend',
-          ('insertion', 'GAP'): 'gap',
-          ('insertion', 'PHASE'): 'phase',
-          }
-    if k in d.keys(): return d[k]
-    elif isinstance(k, tuple):
-        if not k[0]: return k[1] # special case for 'tune', 'twiss'
-    elif 'quiet' not in args:
-        #raise RuntimeError("unknow key '%s'" % k)
-        warnings.warn("unknow key '{0}'".format(k))
-    return k
-
 
 def cgs_from_name(name):
     """parse Cell, Girder, Symmetry from elmeent name"""
@@ -231,13 +200,13 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False,
                 corlist.append([name.strip(), int(idx)])
         # print corlist
         # check
-        hvcor = match_hvcors(corlist)
+        # hvcor = match_hvcors(corlist)
 
         for line in reclist:
             r = [v.strip() for v in line.split(',')]
             # the original data and converted
             d0 = dict([(v, r[col[v]]) for v in col.keys()])
-            d = dict([(k, conv(v, 'quiet')) for k,v in d0.iteritems()])
+            d = d0
 
             elemname = d[k_elemName].lower()
             if not elemname: continue
@@ -248,22 +217,14 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False,
                 pvr = ChannelRecord(d[k_pv])
             
             # a fix for H/V correctors
-            if mergehvcor and elemname in hvcor:
-                elemname = hvcor[elemname]
 
             elems = session.query(Element).\
                 filter(Element.name == elemname).\
                 filter(Element.system == d['machine']).all()
-            if len(elems) > 1:
-                raise RuntimeError("Element '%s' in system '%s' are not unique" \
-                                   % (elemname, d['machine']))
-            if not elems:
-                #raise RuntimeError("Element '%s' is not found in table" % elemname)
-                warnings.warn("Element '{0}' is not found, creating a new one".format(elemname))
-                elem = Element(elemname, None, d['machine'])
-                session.add(elem)
-            else:
-                elem = elems[0]
+            if len(elems) != 1:
+                raise RuntimeError("Found %d element '%s:%s' in system '%s'" \
+                                   % (len(elems), elemname, d['el_type_va'], d['machine']))
+            elem = elems[0]
                 
             if parsecgs:
                 elem.cell, elem.girder, elem.symmetry = cgs_from_name(elemname)
@@ -297,7 +258,7 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False,
             pvr.elem_id = elem.elem_id
             if d0['el_field_va']: pvr.tracy_el_field_va = d0['el_field_va']
             pvr.handle = d['handle']
-            pvr.elem_field = conv((d0['el_type_va'], d0['el_field_va']))
+            pvr.elem_field = d0['el_field_va']
 
             session.add(elem)
             session.add(pvr)

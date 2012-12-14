@@ -1,19 +1,32 @@
 #!/bin/bash
 
-PAR="CD3-Oct3-12-30Cell-addID-par.txt"
-VA="CD3-Oct3-12-30Cell-addID-par.csv"
+#PAR="CD3-Oct3-12-30Cell-addID-par.txt"
+PAR0="ring_par.txt"
+PAR="/tmp/par.txt"
+#VA="CD3-Oct3-12-30Cell-addID-par.csv"
+VA0="ring_pvs.csv"
+VA="/tmp/pvs.csv"
+# 
+sed -f ring_par.sed ${PAR0} > ${PAR}
+sed -f ring_pvs.sed ${VA0} > ${VA}
+
 #CF2_LTB="LTB-20120724.txt"
-CF2_LTB="LTB.txt"
+CF2_LTB="ltb.txt"
 DBF="us_nsls2v2.sqlite"
+DBIMPORT="../dbimport.py"
 if [ $(uname) == "Linux" ]; then
     PYTHON=`which python`
 else
     PYTHON=python2.7
 fi
 
+[ -f $DBF ] && mv $DBF ${DBF}.bak
+
 echo "== import lattice table: ${PAR}"
-${PYTHON} dbimport.py --par ${PAR} --system V2SR ${DBF}
+${PYTHON} ${DBIMPORT} --par ${PAR} --system V2SR ${DBF}
 #echo "  QUAD: `sqlite3 ${DBF} 'select count(*) from elements where elem_type=\"QUAD\"'`"
+
+#sqlite3 ${DBF} 'insert into elements (name,system) values ("tune", "V2SR")'
 
 echo " update group info"
 sqlite3 ${DBF} 'update elements set elem_group="QH1" where name like "qh1g%c%"'
@@ -35,22 +48,23 @@ sqlite3 ${DBF} 'update elements set elem_group="SM1A" where name like "sm1g%c%a"
 sqlite3 ${DBF} 'update elements set elem_group="SM1B" where name like "sm1g%c%b"'
 sqlite3 ${DBF} 'update elements set elem_group="SM2" where name like "sm2g%c%"'
 
-echo " update ID with 'INSERTION'"
-sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="IVU"'
-sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="EPU"'
-sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="DW"'
+#echo " update ID with 'INSERTION'"
+#sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="IVU"'
+#sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="EPU"'
+#sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="DW"'
 
 
 
 echo " insert virtual element: tune, twiss, dcct, orbit"
-sqlite3 ${DBF} 'insert into elements (name, system, lat_index, virtual, position) values ("tune", "V2SR", 0, 0, 0)'
-sqlite3 ${DBF} 'insert into elements (name, system, lat_index, virtual, elem_type, position) values ("dcct", "V2SR", 0, 0, "DCCT", 0)'
-sqlite3 ${DBF} 'insert into elements (name, system, virtual) values ("twiss", "V2SR", 1)'
-sqlite3 ${DBF} 'insert into elements (name, system, virtual) values ("orbit", "V2SR", 1)'
+sqlite3 ${DBF} 'insert into elements (name, elem_type, system, lat_index, virtual, position) values ("tune", NULL, "V2SR", 0, 0, 0)'
+sqlite3 ${DBF} 'insert into elements (name, elem_type, system, lat_index, virtual, position) values ("dcct", "DCCT", "V2SR", 0, 0, 0)'
+sqlite3 ${DBF} 'insert into elements (name, elem_type, system, virtual) values ("twiss", NULL, "V2SR", 1)'
+sqlite3 ${DBF} 'insert into elements (name, elem_type, system, virtual) values ("orbit", NULL, "V2SR", 1)'
 
 
 echo "== import channel access data: ${VA}"
-${PYTHON} dbimport.py --va ${VA} --mergehvcor --system V2SR ${DBF}
+${PYTHON} ${DBIMPORT} --va ${VA} --mergehvcor --system V2SR ${DBF}
+
 
 echo "== setting group for COR"
 sqlite3 ${DBF} 'update elements set elem_group="HCOR;VCOR" where elem_type="COR"'
@@ -84,7 +98,7 @@ echo "== update cs* to virtual element"
 sqlite3 ${DBF} 'update elements set virtual=1 where elem_type="COR" and name like "cs%id%"'
 
 echo "== importing LTB cf2 data: ${CF2_LTB}"
-${PYTHON} dbimport.py --cf2 ${CF2_LTB} --system LTB ${DBF}
+${PYTHON} ${DBIMPORT} --cf2 ${CF2_LTB} --system LTB ${DBF}
 
 echo "== set aphla.sys.\* tags"
 
