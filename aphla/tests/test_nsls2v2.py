@@ -449,6 +449,8 @@ class Test1LatticeSr(unittest.TestCase):
             #    self.assertTrue(False,
             #"AttributeError exception expected")
 
+    def test_ids(self):
+        self.assertIn('INSERTION', self.lat.getGroups())
 
 class TestLatticeLtd1(unittest.TestCase):
     def setUp(self):

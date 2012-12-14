@@ -15,6 +15,9 @@ The HLA package we are developing has three parts
 - HLA scripts: some measurement and analysis routines.
 - HLA GUI applications: ``aplauncher``, ``aporbit``, ``apbba``, ...
 
+.. testsetup::
+
+   from __future__ import print_function, unicode_literals
 
 
 HLA Initialization
@@ -25,8 +28,8 @@ and plotting.
 
 .. doctest::
 
-   >>> import numpy as np    # import NumPy
    >>> import aphla as ap    # import aphla package
+   >>> import numpy as np    # import NumPy
    >>> import matplotlib.pylab as plt    # matplotlib for plotting
    >>> import time
 
@@ -39,21 +42,17 @@ Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
 .. doctest::
 
-   >>> ap.initNSLS2V1()
-   >>> ap.initNSLS2V1SRTwiss() #doctest: +ELLIPSIS
-   ...
+   >>> ap.machines.init("nsls2v2")
 
-:func:`~aphla.machines.initNSLS2V1` will initialize the lattice structure of
-`NSLS2 Virtual Accelerastor #1`. It is not the hardware initialization and did
-not do any hardware operation inside. The second initialization
-:func:`~aphla.machines.initNSLS2V1SRTwiss` will load the twiss data from disk
-or database.
+:func:`~aphla.machines.init("nsls2v2")` will initialize the lattice structure of
+`NSLS2 Virtual Accelerastor #2`. It is not the hardware initialization and did
+not do any hardware operation inside. 
 
 .. note::
 
     By default, this initialization will search search for channel finder
-    server and use the data there. It can be overwritten with your own csv
-    config file.
+    server and use the data there. It can be overwritten with your own config
+    file.
 
 ``aphla`` can keep several initialized lattices, depending how many
 *aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
@@ -64,7 +63,7 @@ and :func:`~aphla.machines.use` will switch to the named lattice as the
 current lattice. This current lattice is the domain for functions like
 :func:`~aphla.hlalib.getElements`.
 
-.. doctest::
+.. code-block:: python
 
    >>> ap.machines.lattices()    # list available lattices #doctest: +SKIP
    [u'V1LTD1', u'V1LTD2', u'V1LTB', u'V1SR']

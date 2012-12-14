@@ -41,3 +41,5 @@ syntax:regexp
 ^deb_dist/
 ^utils/debian/
 ^utils/conf.py
+^aphla/machines/nsls2/conf.py
+

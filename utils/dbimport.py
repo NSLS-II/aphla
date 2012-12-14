@@ -126,7 +126,8 @@ def import_lattice_table(inpt, dbfname, system = None, parsecgs = False):
     """
     The drift is always treated as different element.
     """
-    engine = create_engine('sqlite:///' + dbfname, echo = False)
+    engine = create_engine('sqlite:///' + dbfname, echo = False, 
+                           convert_unicode=True)
     # create table if not exists
     Base.metadata.create_all(engine)
 
@@ -202,7 +203,8 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False,
     
     - The current VA has split correctors into H/V.
     """
-    engine = create_engine('sqlite:///' + dbfname, echo = False)
+    engine = create_engine('sqlite:///' + dbfname, echo = False, 
+                           convert_unicode=True)
     # create table if not exists
     Base.metadata.create_all(engine)
 
@@ -303,7 +305,8 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False,
         session.commit()
 
 def fix_correctors(dbfname, system):
-    engine = create_engine('sqlite:///' + dbfname, echo = False)
+    engine = create_engine('sqlite:///' + dbfname, echo = False,
+                           convert_unicode=True)
     # create table if not exists
     Base.metadata.create_all(engine)
 
@@ -324,7 +327,8 @@ def fix_correctors(dbfname, system):
     session.commit()
 
 def import_cf2(inpt, dbfname):
-    engine = create_engine('sqlite:///' + dbfname, echo = False)
+    engine = create_engine('sqlite:///' + dbfname, echo = False,
+                           convert_unicode=True)
     # create table if not exists
     Base.metadata.create_all(engine)
 

@@ -31,9 +31,12 @@ HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 _lattice_dict = {}
 _lat = None
 
+def load(machine, submachines = "*", **kwargs):
+    init(machine, submachines = submachines, **kwargs)
+
 def init(machine, submachines = "*", **kwargs):
     """
-    initialize submachines in machine
+    load submachine lattices in machine
 
     - *machine* is an exact name
     - *submachine* is a pattern

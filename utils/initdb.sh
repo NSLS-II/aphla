@@ -35,6 +35,11 @@ sqlite3 ${DBF} 'update elements set elem_group="SM1A" where name like "sm1g%c%a"
 sqlite3 ${DBF} 'update elements set elem_group="SM1B" where name like "sm1g%c%b"'
 sqlite3 ${DBF} 'update elements set elem_group="SM2" where name like "sm2g%c%"'
 
+echo " update ID with 'INSERTION'"
+sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="IVU"'
+sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="EPU"'
+sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="DW"'
+
 
 
 echo " insert virtual element: tune, twiss, dcct, orbit"

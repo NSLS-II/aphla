@@ -515,6 +515,7 @@ def getEta(group, **kwargs):
         >>> getEta(['BPM1', 'BPM2'])
 
     - *src*: 'DB' from database, 'VA' from virtual accelerator
+
     seealso :func:`getElements`
     """
 
