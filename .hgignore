@@ -32,6 +32,7 @@ src/tracy/tracy-3.5/autom4te.cache
 *.deps
 src/qrc_resources.py
 *.egg-info
+*.sqlite.bak
 
 syntax:regexp
 ^build/
