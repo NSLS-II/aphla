@@ -7,6 +7,7 @@ import os
 import glob
 from pkg_resources import resource_string, resource_exists, resource_filename
 #from pvlist import vsr_pvlist
+import cPickle as pickle
 
 import logging
 logger = logging.getLogger(__name__)
@@ -27,6 +28,10 @@ HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
+# HOME path
+HOME = os.path.expanduser('~')
+# HOME = os.environ['HOME'] will NOT work on Windows,
+# unless %HOME% is set on Windows, which is not the case by default.
 
 _lattice_dict = {}
 _lat = None
@@ -42,6 +47,21 @@ def init(machine, submachines = "*", **kwargs):
     - *submachine* is a pattern
     - *src*
     """
+    
+    use_cache = kwargs.get('use_cache',False)
+    save_cache = kwargs.get('save_cache',False)
+    
+    if use_cache:
+        try:
+            loadCache(machine)
+        except:
+            print('Lattice initialization using cache failed. ' +
+                  'Will attempt initialization with other method(s).')
+            save_cache = True
+        else:
+            # Loading from cache was successful.
+            return
+        
     #importlib.import_module(machine, 'machines')
     m = __import__(machine, globals(), locals(), [], -1)
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
@@ -51,7 +71,33 @@ def init(machine, submachines = "*", **kwargs):
     _lat = lat
 
     #print initNSLS2V2()
+
+    if save_cache:
+        selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
+                                 if _lat == v][0]
+        saveCache(machine, _lattice_dict, selected_lattice_name)
+        
+def loadCache(machine_name):
     
+    global _lat, _lattice_dict
+    
+    cache_folderpath = os.path.join(HOME,'.hla')
+    cache_filepath = os.path.join(cache_folderpath,machine_name+'_lattices.cpkl')
+    with open(cache_filepath,'rb') as f:
+        selected_lattice_name = pickle.load(f)
+        _lattice_dict = pickle.load(f)
+    _lat = _lattice_dict[selected_lattice_name]
+        
+
+def saveCache(machine_name, lattice_dict, selected_lattice_name):
+    
+    cache_folderpath = os.path.join(HOME,'.hla')
+    if not os.path.exists(cache_folderpath):
+        os.mkdir(cache_folderpath)
+    cache_filepath = os.path.join(cache_folderpath,machine_name+'_lattices.cpkl')
+    with open(cache_filepath,'wb') as f:
+        pickle.dump(selected_lattice_name,f,2)
+        pickle.dump(lattice_dict,f,2)
 
 def findCfaConfig(srcname, machine, submachines):
     """
@@ -197,38 +243,38 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
 
 
 
-def saveCache():
-    """
-    .. deprecated:: 0.3
-    """
-    raise DeprecationWarning()
+#def saveCache():
+    #"""
+    #.. deprecated:: 0.3
+    #"""
+    #raise DeprecationWarning()
 
-    output = open(os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl'), 'w')
-    import pickle
-    #import cPickle as pickle
-    pickle.dump(_lattice_dict, output)
-    pickle.dump(_lat, output)
-    pickle.dump(_orm, output)
-    output.close()
+    #output = open(os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl'), 'w')
+    #import pickle
+    ##import cPickle as pickle
+    #pickle.dump(_lattice_dict, output)
+    #pickle.dump(_lat, output)
+    #pickle.dump(_orm, output)
+    #output.close()
 
-def loadCache():
-    """
-    .. deprecated:: 0.3
-    """
-    raise DeprecationWarning()
+#def loadCache():
+    #"""
+    #.. deprecated:: 0.3
+    #"""
+    #raise DeprecationWarning()
 
-    inp_file = os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl')
-    if not os.path.exists(inp_file):
-        return False
-    inp = open(inp_file, 'r')
-    global _lat, _lattice_dict, _orm
-    import pickle
-    #import cPickle as pickle
-    _lattice_dict = pickle.load(inp)
-    _lat = pickle.load(inp)
-    _orm = pickle.load(inp)
-    inp.close()
-    return True
+    #inp_file = os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl')
+    #if not os.path.exists(inp_file):
+        #return False
+    #inp = open(inp_file, 'r')
+    #global _lat, _lattice_dict, _orm
+    #import pickle
+    ##import cPickle as pickle
+    #_lattice_dict = pickle.load(inp)
+    #_lat = pickle.load(inp)
+    #_orm = pickle.load(inp)
+    #inp.close()
+    #return True
 
 def use(lattice):
     """

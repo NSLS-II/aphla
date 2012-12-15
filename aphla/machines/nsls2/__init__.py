@@ -16,6 +16,8 @@ from __future__ import print_function, unicode_literals
 
 import os, re
 import numpy as np
+import cPickle as pickle
+import inspect
 
 #from catools import caget, caput
 #from lattice import Lattice
@@ -56,6 +58,11 @@ HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
+# HOME path
+HOME = os.path.expanduser('~')
+# HOME = os.environ['HOME'] will NOT work on Windows,
+# unless %HOME% is set on Windows.
+
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
            'devName': 'devname',
@@ -75,6 +82,40 @@ _db_map = {'elem_type': 'family',
            'elem_field': 'field'
 }
 
+def funcname():
+    """
+    A utility function to return the string of the
+    function name within which this function is invoked.
+    
+    For example, if you have a function like:
+    
+    def somefunc(x,y):
+       print 'This function name is: %s' % funcname()
+       
+    Then
+    
+    >>> somefunc(1,2)
+    >>> This function name is: somefunc
+    
+    """
+    return inspect.stack()[1][3]
+    
+
+def initNSLS2V2(use_cache = True, save_cache = True):
+    if use_cache:
+        try:
+            loadCache(funcname())
+        except:
+            print('Lattice initialization using cache failed. ' +
+                  'Will attempt initialization with other method(s).')
+        else:
+            # Loading from cache was successful.
+            return
+    
+
+    if save_cache:
+        saveCache(funcname(), 'V2SR')
+        
 
 
 
@@ -90,6 +131,19 @@ def initNSLS2V2SRTwiss():
     _lat._twiss = _twiss
 
 
+    if use_cache:
+        try:
+            loadCache(funcname())
+        except:
+            print('Lattice initialization using cache failed. ' +
+                  'Will attempt initialization with other method(s).')
+        else:
+            # Loading from cache was successful.
+            return
+
+
+    if save_cache:
+        saveCache(funcname(), 'SR')
 
 
 def initTLS(config=None):
@@ -125,7 +179,7 @@ def initTLS(config=None):
             raise RuntimeError("can not initialze from '%s'" % config)
     else:
         cfs_filename = 'tw_tls_cfs.csv'
-        src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
+        src_home_csv = os.path.join(HOME, '.hla', cfs_filename)
         HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
         if os.path.exists(src_home_csv):
@@ -193,3 +247,27 @@ def initTLS(config=None):
     _lat = _lattice_dict['SR']
 
 
+def saveCache():
+
+    output = open(os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl'), 'w')
+
+def loadCache():
+    if not os.path.isdir(cache_folderpath):
+        os.mkdir(cache_folderpath)
+    cache_filepath = os.path.join(cache_folderpath, calling_func_name+'.cpkl')
+    with open(cache_filepath,'wb') as fp:
+        pickle.dump(selected_lattice_name,fp,2)
+        pickle.dump(_lattice_dict,fp,2)
+    
+
+def loadCache(calling_func_name):
+
+    inp_file = os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl')
+    if not os.path.exists(inp_file):
+        return False
+    inp = open(inp_file, 'r')
+    global _lat, _lattice_dict, _orm
+    import pickle
+    #import cPickle as pickle
+    _lattice_dict = pickle.load(inp)
+    _lat = pickle.load(inp)

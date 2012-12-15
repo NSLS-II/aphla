@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export HLA_CFS_URL="http://web01.nsls2.bnl.gov:8080/ChannelFinder"
 
 for cfs_res in "tags" "properties"
 do

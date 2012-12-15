@@ -18,7 +18,7 @@ import numpy as np
 import PyQt4.Qt as Qt
 import PyQt4.Qwt5 as Qwt
 
-import gui_icons
+import utils.gui_icons
 
 #----------------------------------------------------------------------
 def getQtColor(colorString):

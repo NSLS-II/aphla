@@ -4,7 +4,7 @@ import os
 
 setup(
     name = "aphla",
-    version = "0.7.0",
+    version = "0.7.1",
     #packages = ['aphla', 'aphla.lib.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
     #            'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.machines'],
     #package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
@@ -21,6 +21,7 @@ setup(
     #    'aphla.gui.aplauncher',
     #    'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
     #    'aphla.gui.apbba'],
+    #    'aphla.gui.channelexplorer',
     #install_requires = ['distribute', 'matplotlib', 'cothread',
     #                    'numpy', 'scipy'],
     entry_points = {
@@ -28,7 +29,8 @@ setup(
             'aporbit = aphla.gui.orbit:main',
             'apbba = aphla.gui.apbba:main',
             'aplauncher = aphla.gui.aplauncher:main',
-            'apcurrentmonitor = aphla.gui.apcurrentmonitor:main'
+            'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',
+            'apchx = aphla.gui.channelexplorer:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",

@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1015</width>
+    <height>766</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Lattice Tuner</string>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1015</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <widget class="QMenu" name="menuSave">
+     <property name="title">
+      <string>&amp;Save</string>
+     </property>
+     <addaction name="actionSaveConfigFile"/>
+     <addaction name="actionSaveSnapshotFile"/>
+    </widget>
+    <widget class="QMenu" name="menuLoad">
+     <property name="title">
+      <string>Load</string>
+     </property>
+     <addaction name="actionConfig_from_file"/>
+     <addaction name="actionSnapshot_from_file"/>
+    </widget>
+    <addaction name="actionNewConfig"/>
+    <addaction name="separator"/>
+    <addaction name="menuLoad"/>
+    <addaction name="separator"/>
+    <addaction name="menuSave"/>
+    <addaction name="separator"/>
+    <addaction name="actionPreferences"/>
+   </widget>
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <addaction name="actionGrouped"/>
+    <addaction name="actionUngrouped"/>
+    <addaction name="separator"/>
+    <addaction name="actionConfig_Metadata"/>
+    <addaction name="actionSnapshot_Metadata"/>
+    <addaction name="separator"/>
+    <addaction name="actionDefault_config_columns"/>
+    <addaction name="actionDefault_snapshot_columns"/>
+    <addaction name="actionUser_defined_config_columns"/>
+    <addaction name="actionUser_defined_snapshot_columns"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menu_View"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="dockWidget_example">
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QGridLayout" name="gridLayout_3">
+     <item row="0" column="0">
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QStackedWidget" name="stackedWidget">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="page_tree">
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="0" column="0">
+           <widget class="QTreeView" name="treeView"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="page_table">
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="0">
+           <widget class="QTableView" name="tableView"/>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QTabWidget" name="tabWidget_mode">
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="tab_step_mode">
+         <attribute name="title">
+          <string>Step Mode</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_step_2">
+            <item>
+             <widget class="QPushButton" name="pushButton_step_up">
+              <property name="text">
+               <string>Up</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_step_down">
+              <property name="text">
+               <string>Down</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_tab_step_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_step_1">
+            <item>
+             <widget class="QPushButton" name="pushButton_update">
+              <property name="text">
+               <string>Update</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="checkBox_auto">
+              <property name="minimumSize">
+               <size>
+                <width>141</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Auto: Interval [s]</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_auto_update_interval"/>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_tab_step_1">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_ramp_mode">
+         <attribute name="title">
+          <string>Ramp Mode</string>
+         </attribute>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_tab_ramp_1">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_tab_ramp_2">
+              <item>
+               <widget class="QPushButton" name="pushButton_copy">
+                <property name="text">
+                 <string>Copy</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_setpoint_copy_source">
+                <item>
+                 <property name="text">
+                  <string>Current</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Initial</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Snapshot</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_tab_ramp_3">
+                <property name="text">
+                 <string>setpoints into target setpoints</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_tab_ramp_1">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_tab_ramp_1">
+              <item>
+               <widget class="QLabel" name="label_tab_ramp_1">
+                <property name="text">
+                 <string>Number of Steps:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_nSteps"/>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_tab_ramp_2">
+                <property name="text">
+                 <string>Wait after Each Step [s]:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_wait_after_each_step"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_start">
+            <property name="text">
+             <string>Start</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_stop">
+            <property name="text">
+             <string>Stop</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_revert">
+            <property name="text">
+             <string>Revert</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_tab_ramp_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>137</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QTabWidget" name="tabWidget_metadata">
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="tab_config_metadata">
+         <attribute name="title">
+          <string>Config Metadata</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_conf_2">
+            <item>
+             <widget class="QLabel" name="label_tab_conf_2">
+              <property name="text">
+               <string>Created by</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_config_username"/>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_tab_conf_3">
+              <property name="text">
+               <string>Created on</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_config_timestamp"/>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_tab_conf_1">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_conf_1">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_tab_conf_1">
+              <item>
+               <widget class="QLabel" name="label_tab_conf_1">
+                <property name="text">
+                 <string>Description</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_tab_conf_1">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTextEdit" name="textEdit_config_description"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_snapshot_metadata">
+         <attribute name="title">
+          <string>Snapshot Metadata</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_snap_2">
+            <item>
+             <widget class="QLabel" name="label_tab_snap_2">
+              <property name="text">
+               <string>Created by</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_snapshot_username"/>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_tab_snap_3">
+              <property name="text">
+               <string>Created on</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_snapshot_timestamp"/>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_tab_snap_1">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_tab_snap_1">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_tab_snap_1">
+              <item>
+               <widget class="QLabel" name="label_tab_snap_1">
+                <property name="text">
+                 <string>Description</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_tab_snap_1">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTextEdit" name="textEdit_snapshot_description"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionNewConfig">
+   <property name="text">
+    <string>&amp;New Config...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionLoadConfigFileInNewTab">
+   <property name="text">
+    <string>Config file...</string>
+   </property>
+  </action>
+  <action name="actionLoadSnapshotFileInNewTab">
+   <property name="text">
+    <string>Snapshot file...</string>
+   </property>
+  </action>
+  <action name="actionLoadConfigFileInCurrentTab">
+   <property name="text">
+    <string>Config file...</string>
+   </property>
+  </action>
+  <action name="actionLoadSnapshotFileInCurrentTab">
+   <property name="text">
+    <string>Snapshot file...</string>
+   </property>
+  </action>
+  <action name="actionSaveConfigFile">
+   <property name="text">
+    <string>Config to file...</string>
+   </property>
+  </action>
+  <action name="actionSaveSnapshotFile">
+   <property name="text">
+    <string>Snapshot to file...</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences...</string>
+   </property>
+  </action>
+  <action name="actionTest">
+   <property name="text">
+    <string>Load Snapshot File...</string>
+   </property>
+  </action>
+  <action name="actionConfig_from_file">
+   <property name="text">
+    <string>Config from file...</string>
+   </property>
+  </action>
+  <action name="actionSnapshot_from_file">
+   <property name="text">
+    <string>Snapshot from file...</string>
+   </property>
+  </action>
+  <action name="actionGrouped">
+   <property name="text">
+    <string>&amp;Grouped</string>
+   </property>
+  </action>
+  <action name="actionUngrouped">
+   <property name="text">
+    <string>&amp;Ungrouped</string>
+   </property>
+  </action>
+  <action name="actionConfig_Metadata">
+   <property name="text">
+    <string>Config Metadata</string>
+   </property>
+  </action>
+  <action name="actionSnapshot_Metadata">
+   <property name="text">
+    <string>Snapshot Metadata</string>
+   </property>
+  </action>
+  <action name="actionDefault_config_columns">
+   <property name="text">
+    <string>Default config columns</string>
+   </property>
+  </action>
+  <action name="actionDefault_snapshot_columns">
+   <property name="text">
+    <string>Default snapshot columns</string>
+   </property>
+  </action>
+  <action name="actionUser_defined_config_columns">
+   <property name="text">
+    <string>User-defined config columns</string>
+   </property>
+  </action>
+  <action name="actionUser_defined_snapshot_columns">
+   <property name="text">
+    <string>User-defined snapshot columns</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -217,15 +217,19 @@ def import_va_table(inpt, dbfname = "us_nsls2.sqlite3", mergehvcor = False,
                 pvr = ChannelRecord(d[k_pv])
             
             # a fix for H/V correctors
-
             elems = session.query(Element).\
                 filter(Element.name == elemname).\
                 filter(Element.system == d['machine']).all()
+
             if len(elems) != 1:
                 raise RuntimeError("Found %d element '%s:%s' in system '%s'" \
                                    % (len(elems), elemname, d['el_type_va'], d['machine']))
             elem = elems[0]
-                
+            if elem.elem_type and elem.elem_type != d['el_type_va']:
+                raise RuntimeError("'{0}' has incompatible elem_type: "
+                                   "db:'{1}' and va:'{2}'".format(elem.name,
+                                                            elem.elem_type,
+                                                            d['el_type_va']))
             if parsecgs:
                 elem.cell, elem.girder, elem.symmetry = cgs_from_name(elemname)
 

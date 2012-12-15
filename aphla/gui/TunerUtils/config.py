@@ -1,214 +1,159 @@
-# Column Header Labels (read-only unless noted as writeable)
-COL_GROUP_NAME          = 'Group Name' # writeable
-COL_KNOB_NAME           = 'Knob Name' # writeable only for Config Setup Dialog
-COL_ELEMENT_NAME        = 'Elem.Name'
-COL_FIELD_NAME          = 'Field'
-COL_PV_READ_NAME        = 'PV-Read'
-COL_PV_SETP_NAME        = 'PV-Set'
-COL_DEV_NAME            = 'Dev.Name'
-COL_CELL                = 'Cell'
-COL_FAMILY              = 'Family'
-COL_GIRDER              = 'Girder'
-COL_ELEMENT_GROUP       = 'Elem.Group'
-COL_LATTICE_INDEX       = 'Lat.Index'
-COL_EFFECTIVE_LENGTH    = 'Eff.Len.'
-COL_PHYSICAL_LENGTH     = 'Phys.Len.'
-COL_S_BEGINNING         = 'sb'
-COL_S_END               = 'se'
-COL_SYMMETRY            = 'Symmetry'
-COL_VIRTUAL             = 'Virtual'
-COL_SEQUENCE            = 'Sequence'
-COL_PV_UNIT             = 'PV Unit'
+import os
+
+HOME = os.path.expanduser('~')
+HLA_MACHINE = os.environ.get('HLA_MACHINE', None)
+
+CLIENT_DATA_FOLDERPATH = os.path.join(HOME,'.hla',HLA_MACHINE,'tuner_client')
+SERVER_DATA_FOLDERPATH = os.path.join(HOME,'.hla',HLA_MACHINE,'tuner_server')
+MAIN_DB_FILENAME = 'tuner.sqlite'
+NEW_MAIN_DB_FILENAME = 'new_tuner.sqlite'
+LAST_SYNCED_MAIN_DB_FILENAME = 'last_synced_tuner.sqlite'
+CLIENT_DELTA_DB_FILENAME = 'client_delta.sqlite'
+SERVER_DELTA_DB_FILENAME = 'server_delta.sqlite'
+CLIENT_SERVER_DELTA_DB_FILENAME = 'client_server_delta.sqlite'
+
+STR_FMT_DEFAULT = ''
+STR_FMT_WEIGHT_FACTOR = ':.8g'
+STR_FMT_LENGTH_METER = ':.6g'
+STR_FMT_PV_VAL = ':.4g'
+STR_FMT_TIMESTAMP = 'timestamp'
+STR_FMT_GUI = 'gui'
+
+ENUM_FULL_DESCRIP_NAME = 0
+ENUM_SHORT_DESCRIP_NAME = 1 # used for column headers
+ENUM_DATA_TYPE = 2
+ENUM_ONLY_FOR_SNAPSHOT = 3
+ENUM_STR_FORMAT = 4
+ENUM_EDITABLE = 5
+PROP_DICT = {
+    'group_name': ['Group Name', 'GroupName', 'string', False, STR_FMT_DEFAULT, True],
+    'channel_name': ['Channel Name', 'ChannelName', 'string', False, STR_FMT_DEFAULT, False], # can be either a channel name (elem_name.field_name) or PV tuple (PV_readback, PV_setpoint)
+    'elem_name': ['Element Name', 'Elem.Name', 'string', False, STR_FMT_DEFAULT, False],
+    'field': ['Field', 'Field', 'string', False, STR_FMT_DEFAULT, False],
+    'pvrb': ['PV-RB Name', 'PVRB', 'string', False, STR_FMT_DEFAULT, False],
+    'pvsp': ['PV-SP Name', 'PVSP', 'string', False, STR_FMT_DEFAULT, False],
+    'devname': ['Device Name', 'Dev.Name', 'string', False, STR_FMT_DEFAULT, False],
+    'cell': ['Cell', 'Cell', 'string', False, STR_FMT_DEFAULT, False],
+    'family': ['Family', 'Family', 'string', False, STR_FMT_DEFAULT, False],
+    'girder': ['Girder', 'Girder', 'string', False, STR_FMT_DEFAULT, False],
+    'elem_group': ['Element Group', 'Elem.Group', 'string', False, STR_FMT_DEFAULT, False],
+    'lat_index': ['Lattice Index', 'Lat.Index', 'int', False, STR_FMT_DEFAULT, False],
+    'eff_len': ['Effective Length', 'Eff.Len.', 'float', False, STR_FMT_LENGTH_METER, False],
+    'phys_len': ['Physical Length', 'Phys.Len.', 'float', False, STR_FMT_LENGTH_METER, False],
+    'sb': ['s(beginning)', 'sb', 'float', False, STR_FMT_LENGTH_METER, False],
+    'se': ['s(end)', 'se', 'float', False, STR_FMT_LENGTH_METER, False],
+    'symmetry': ['Symmetry', 'Symmetry', 'string', False, STR_FMT_DEFAULT, False],
+    #'unit': ['Unit', 'Unit', 'string', False, STR_FMT_DEFAULT, False],
+    'weight': ['Weight', 'Weight', 'float', False, STR_FMT_WEIGHT_FACTOR, True],
+    'step_size': ['Step Size', 'StepSize', 'float', False, STR_FMT_PV_VAL, True],
+    #'indiv_step_up': ['Individual Step-Up Control', '', 'N/A', False, STR_FMT_GUI, False],
+    #'indiv_step_down': ['Individual Step-Down Control', '', 'N/A', False, STR_FMT_GUI, False],
+    #'indiv_rollback': ['Individual Rollback Control', '', 'N/A', False, STR_FMT_GUI, False],
+    #'indiv_ramp': ['Individual Ramp Control', 'Indiv.Ramp', 'BLOB', False, STR_FMT_GUI, True],
+    ## Only apllicable for Snapshot below this point
+    'curr_RB': ['Current Readback', 'Curr.RB', 'float', True, STR_FMT_PV_VAL, False],
+    #'curr_RB_pc_time': ['Current Readback PC Time', 'Curr.RB.PCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'curr_RB_ioc_time': ['Current Readback IOC Time', 'Curr.RB.IOCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'curr_SP': ['Current Setpoint', 'Curr.SP', 'float', True, STR_FMT_PV_VAL, False],
+    #'curr_SP_pc_time': ['Current Setpoint PC Time', 'Curr.SP.PCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'curr_SP_ioc_time': ['Current Setpoint IOC Time', 'Curr.SP.IOCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'sshot_RB': ['Snapshot Readback', 'S.Shot.RB', 'float', True, STR_FMT_PV_VAL, False],
+    #'sshot_RB_pc_time': ['Snapshot Readback PC Time', 'S.Shot.RB.PCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'sshot_RB_ioc_time': ['Snapshot Readback IOC Time', 'S.Shot.RB.IOCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'sshot_SP': ['Snapshot Setpoint', 'S.Shot.SP', 'float', True, STR_FMT_PV_VAL, False],
+    #'sshot_SP_pc_time': ['Snapshot Setpoint PC Time', 'S.Shot.SP.PCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'sshot_SP_ioc_time': ['Snapshot Setpoint IOC Time', 'S.Shot.SP.IOCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'target_SP': ['Target Setpoint', 'Target.SP', 'float', True, STR_FMT_PV_VAL, True],
+    'D_target_SP_curr_SP': ['(Target Setpoint)-(Current Setpoint)', '(Target.SP)-(Curr.SP)', 'float', True, STR_FMT_PV_VAL, False],
+    'init_RB': ['Initial Readback', 'Init.RB', 'float', True, STR_FMT_PV_VAL, False],
+    #'init_RB_pc_time': ['Initial Readback PC Time', 'Init.RB.PCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'init_RB_ioc_time': ['Initial Readback IOC Time', 'Init.RB.IOCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'init_SP': ['Initial Setpoint', 'Init.SP', 'float', True, STR_FMT_PV_VAL, False],
+    #'init_SP_pc_time': ['Initial Setpoint PC Time', 'Init.SP.PCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'init_SP_ioc_time': ['Initial Setpoint IOC Time', 'Init.SP.IOCTime', 'float', True, STR_FMT_TIMESTAMP, False],
+    'D_curr_RB_init_RB': ['(Current Readback)-(Initial Readback)','(Curr.RB)-(Init.RB)', 'float', True, STR_FMT_PV_VAL, False],
+    'D_curr_SP_init_SP': ['(Current Setpoint)-(Initial Setpoint)','(Curr.SP)-(Init.SP)', 'float', True, STR_FMT_PV_VAL, False],
+    'D_curr_RB_curr_SP': ['(Current Readback)-(Current Setpoint)','(Curr.RB)-(Curr.SP)', 'float', True, STR_FMT_PV_VAL, False],
+    #'tolerance': ['Tolerance', 'Tolerance', 'float', True, STR_FMT_PV_VAL, False],
+    #'hi_limit': ['High Limit', 'Hi.Lim', 'float', True, STR_FMT_PV_VAL, False],
+    #'lo_limit': ['Low Limit', 'Lo.Lim', 'float', True, STR_FMT_PV_VAL, False],
+    #'locked': ['Locked', 'Locked', 'bool', True, STR_FMT_DEFAULT, False],
+    #'error': ['Error', 'Error', 'string', True, STR_FMT_DEFAULT, False],
+    }
+
+CHANNEL_PROP_DICT = {
+    # (PROP_DICT's key) (Corresponding HLA Channel Attribute Name)
+    'elem_name': 'name',
+    'field': 'fields',
+    'pvrb': 'pvrb',
+    'pvsp': 'pvsp',
+    'devname': 'devname',
+    'cell': 'cell',
+    'family': 'family',
+    'girder': 'girder',
+    'elem_group': 'group',
+    'lat_index': 'index',
+    'eff_len': 'length',
+    'phys_len': 'phylen',
+    'sb': 'sb',
+    'se': 'se',
+    'symmetry': 'symmetry',
+    }
 
 # Full list of all the available column names for
 # Tuner Configuration Setup Dialog
-COL_ALL_NAMES_CONFIG_SETUP = [locals()[s] for s in dir() 
-                              if s.startswith('COL_')]
-if len(COL_ALL_NAMES_CONFIG_SETUP) != \
-   len(set(COL_ALL_NAMES_CONFIG_SETUP)):
-    raise Exception, \
-          'Duplicate column name constant variables found.'
+ALL_PROP_KEYS_CONFIG_SETUP = sorted(
+    [k for (k,v) in PROP_DICT.iteritems() if not v[ENUM_ONLY_FOR_SNAPSHOT]], key=str.lower)
+ALL_PROP_KEYS_CONFIG_SETUP.remove('group_name')
+ALL_PROP_KEYS_CONFIG_SETUP.insert(0,'group_name')
+# 'group_name' must be 1st in column so that it can have a tree structure
 
-COL_WEIGHT              = 'Weight' # writeable
-COL_NORMALIZED_WEIGHT   = 'N.Weight'
-COL_STEP_SIZE           = 'Step Size' # writeable
-COL_READING             = 'Reading'
-COL_SETPOINT            = 'Setpoint'
-COL_READ_TSTAMP         = 'Read T.Stamp'
-COL_SETP_TSTAMP         = 'Setp T.Stamp'
-COL_SNAPSHOT_READ       = 'S.Shot Read'
-COL_SNAPSHOT_SETP       = 'S.Shot Setp'
-COL_SNAPSHOT_DESCRIP    = 'S.Shot Descrip.'
-COL_SNAPSHOT_READ_TSTAMP= 'S.Shot Read T.Stamp'
-COL_SNAPSHOT_SETP_TSTAMP= 'S.Shot Setp T.Stamp'
-COL_TARGET_SETP         = 'Target Setp' # writeable (manually typed, or snapshot setp automatically transfered)
-COL_START_READ          = 'Start Read'
-COL_START_SETP          = 'Start Setp'
-COL_START_READ_TSTAMP   = 'Start Read T.Stamp'
-COL_START_SETP_TSTAMP   = 'Start Setp T.Stamp'
-COL_CUM_READ_CHANGE     = 'Cumul. Read Change'
-COL_CUM_SETP_CHANGE     = 'Cumul. Setp Change'
-COL_DIFF_READ_BTW_SETP  = '(Reading)-(Setpoint)'
-COL_DIFF_TARGET_BTW_SETP= '(Target Setp.)-(Curr.Setp.)'
-COL_TOLERANCE           = 'Tolerance'
-COL_HI_LIMIT            = 'Hi Limit'
-COL_LO_LIMIT            = 'Lo Limit'
-COL_LOCKED              = 'Locked'
-COL_ERROR               = 'ERROR'
 
-# Full list of all the available column names for Tuner GUI
-COL_ALL_NAMES = [locals()[s] for s in dir() 
-                 if s.startswith('COL_') and 
-                 (s != 'COL_ALL_NAMES_CONFIG_SETUP')]
+# Full list of all the available column names for
+# Main Tuner GUI
+ALL_PROP_KEYS = sorted(PROP_DICT.keys(),key=str.lower)
+ALL_PROP_KEYS.remove('group_name')
+ALL_PROP_KEYS.insert(0,'group_name')
+# 'group_name' must be 1st in column so that it can have a tree structure
 
-if len(COL_ALL_NAMES) != len(set(COL_ALL_NAMES)):
-    raise Exception, \
-          'Duplicate column name constant variables found.'
+FULL_DESCRIP_NAME_LIST = [PROP_DICT[name][ENUM_FULL_DESCRIP_NAME]
+                          for name in ALL_PROP_KEYS]
 
-# Following columns cannot be hidden
-ALWAYS_VISIBLE_COL_LIST = [
-    COL_KNOB_NAME,
-    COL_GROUP_NAME
+EDITABLE_COL_KEYS = [k for (k,v) in PROP_DICT.iteritems() if v[ENUM_EDITABLE]]
+
+DEFAULT_VISIBLE_COL_KEYS_FOR_CONFIG_SETUP = [
+    'group_name',
+    'channel_name',
+    #'unit',
+    'weight',
 ]
 
-if len(ALWAYS_VISIBLE_COL_LIST) != \
-   len(set(ALWAYS_VISIBLE_COL_LIST)):
-    raise Exception, \
-          'Duplicate column names found in ALWAYS_VISIBLE_COL_LIST.'
+DEFAULT_VISIBLE_COL_KEYS_FOR_SNAPSHOT_VIEW = [
+    'group_name',
+    'channel_name',
+    #'unit',
+    'weight',
+    'step_size',
+    #'indiv_step_up',
+    #'indiv_step_down',
+    #'indiv_rollback',
+    #'indiv_ramp',
+    'curr_RB',
+    'curr_SP',
+    'sshot_RB',
+    'sshot_SP',
+    'target_SP',
+    'D_target_SP_curr_SP',
+    'init_RB',
+    'init_SP',
+    'D_curr_RB_init_RB',
+    'D_curr_SP_init_SP',
+    'D_curr_RB_curr_SP',
+    #'locked',
+    #'error',
+    ]
 
-if [s for s in ALWAYS_VISIBLE_COL_LIST \
-    if s not in COL_ALL_NAMES]:
-    raise Exception, \
-          'ALWAYS_VISIBLE_COL_LIST contains column names not in COL_ALL_NAMES.'
-
-# Default visible column name list for Tuner Configuration
-# Setup Dialog in the order of appearance
-DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP = [
-    COL_KNOB_NAME,
-    COL_GROUP_NAME,
-    COL_PV_READ_NAME,
-    COL_PV_SETP_NAME,
-    COL_PV_UNIT
-]
-
-if len(DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP) != \
-   len(set(DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP)):
-    raise Exception, \
-          'Duplicate column names found in DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP.'
-
-if [s for s in DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP \
-    if s not in COL_ALL_NAMES_CONFIG_SETUP]:
-    raise Exception, \
-          'COL_ALL_NAMES_CONFIG_SETUP must contain all names DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP.'
-
-if [s for s in ALWAYS_VISIBLE_COL_LIST \
-    if s not in DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP]:
-    raise Exception, \
-          'DEFAULT_VISIBLE_COL_LIST_CONFIG_SETUP must contain all names in ALWAYS_VISIBLE_COL_LIST.'
-
-
-# Default visible column name list for Tuner GUI
-# in the order of appearance
-DEFAULT_VISIBLE_COL_LIST = [
-    COL_KNOB_NAME,
-    COL_GROUP_NAME,
-    COL_WEIGHT,
-    COL_NORMALIZED_WEIGHT,
-    COL_STEP_SIZE,
-    COL_PV_UNIT,
-    COL_READING,
-    COL_SETPOINT,
-    COL_START_READ,
-    COL_START_SETP,
-    COL_CUM_READ_CHANGE,
-    COL_CUM_SETP_CHANGE,
-    COL_SNAPSHOT_READ,
-    COL_SNAPSHOT_SETP,
-    COL_SNAPSHOT_DESCRIP,
-    COL_TARGET_SETP
-]
-
-if len(DEFAULT_VISIBLE_COL_LIST) != \
-   len(set(DEFAULT_VISIBLE_COL_LIST)):
-    raise Exception, \
-          'Duplicate column names found in DEFAULT_VISIBLE_COL_LIST.'
-
-if [s for s in DEFAULT_VISIBLE_COL_LIST \
-    if s not in COL_ALL_NAMES]:
-    raise Exception, \
-          'COL_ALL_NAMES must contain all names DEFAULT_VISIBLE_COL_LIST.'
-
-if [s for s in ALWAYS_VISIBLE_COL_LIST \
-    if s not in DEFAULT_VISIBLE_COL_LIST]:
-    raise Exception, \
-          'DEFAULT_VISIBLE_COL_LIST must contain all names in ALWAYS_VISIBLE_COL_LIST.'
-
-
-max_decimals_for_weight_factor = 8
-max_decimals_for_length_meter = 6
-max_decimals_for_pv_val = 4
-
-STR_FORMAT_WEIGHT_FACTOR = \
-    '%.' + str(max_decimals_for_weight_factor) + 'g'
-STR_FORMAT_LENGTH_METER = \
-    '%.' + str(max_decimals_for_length_meter) + 'g'
-STR_FORMAT_PV_VAL = \
-    '%.' + str(max_decimals_for_pv_val) + 'g'
-
-DICT_COL_NAME = {         #Class Name, Property Name, String Fromat
-    COL_GROUP_NAME       :['KnobGroup','name','%s'],
-    COL_KNOB_NAME        :['Knob','name','%s'],
-    COL_ELEMENT_NAME     :['Knob','elem_name','%s'],
-    COL_FIELD_NAME       :['Knob','field_name','%s'],
-    COL_PV_READ_NAME     :['Knob','pvrb','%s'],
-    COL_PV_SETP_NAME     :['Knob','pvsp','%s'],
-    COL_DEV_NAME         :['Knob','devname','%s'],
-    COL_CELL             :['Knob','cell','%s'],
-    COL_FAMILY           :['Knob','family','%s'],
-    COL_GIRDER           :['Knob','girder','%s'],
-    COL_ELEMENT_GROUP    :['Knob','group','%s'],
-    COL_LATTICE_INDEX    :['Knob','index','%d'],
-    COL_EFFECTIVE_LENGTH :['Knob','length',
-                           STR_FORMAT_LENGTH_METER],
-    COL_PHYSICAL_LENGTH  :['Knob','phylen',
-                           STR_FORMAT_LENGTH_METER],
-    COL_S_BEGINNING      :['Knob','sb',
-                           STR_FORMAT_LENGTH_METER],
-    COL_S_END            :['Knob','se',
-                           STR_FORMAT_LENGTH_METER],
-    COL_SYMMETRY         :['Knob','symmetry','%s'],
-    COL_VIRTUAL          :['Knob','virtual','%s'],
-    COL_SEQUENCE         :['Knob','sequence','%s'],
-    COL_WEIGHT           :['KnobGroup','weight',
-                           STR_FORMAT_WEIGHT_FACTOR],
-    COL_NORMALIZED_WEIGHT:['KnobGroupList','normalized_weight_list',
-                           STR_FORMAT_WEIGHT_FACTOR],
-    COL_STEP_SIZE        :['KnobGroupList','step_size_list',
-                           STR_FORMAT_PV_VAL],
-    COL_PV_UNIT          :[None, '', '%s'],
-    COL_READING          :['Knob','pvrb_val',
-                           STR_FORMAT_PV_VAL],
-    COL_SETPOINT         :['Knob','pvsp_val',
-                           STR_FORMAT_PV_VAL],
-    COL_READ_TSTAMP      :['Knob','pvrb_val_time_stamp','timestamp'],
-    COL_SETP_TSTAMP      :['Knob','pvsp_val_time_stamp','timestamp'],
-    COL_SNAPSHOT_READ    :[None, '', '%s'],
-    COL_SNAPSHOT_SETP    :[None, '', '%s'],
-    COL_SNAPSHOT_DESCRIP :[None, '', '%s'],
-    COL_SNAPSHOT_READ_TSTAMP:[None, '', '%s'],
-    COL_SNAPSHOT_SETP_TSTAMP:[None, '', '%s'],
-    COL_TARGET_SETP      :[None, '', '%s'],
-    COL_START_READ       :['TunerModel', 'start_PV_read', STR_FORMAT_PV_VAL],
-    COL_START_SETP       :['TunerModel', 'start_PV_setp', STR_FORMAT_PV_VAL],
-    COL_START_READ_TSTAMP:[None, '', '%s'],
-    COL_START_SETP_TSTAMP:[None, '', '%s'],
-    COL_CUM_READ_CHANGE  :[None, '', '%s'],
-    COL_CUM_SETP_CHANGE  :[None, '', '%s'],
-    COL_DIFF_READ_BTW_SETP:[None, '', '%s'],
-    COL_DIFF_TARGET_BTW_SETP:[None, '', '%s'],
-    COL_TOLERANCE        :[None, '', '%s'],
-    COL_HI_LIMIT         :[None, '', '%s'],
-    COL_LO_LIMIT         :[None, '', '%s'],
-    COL_LOCKED           :[None, '', '%s'],
-    COL_ERROR            :[None, '', '%s']
-}
+DEFAULT_VISIBLE_COL_KEYS_FOR_CONFIG_VIEW = \
+    DEFAULT_VISIBLE_COL_KEYS_FOR_SNAPSHOT_VIEW[:]
+DEFAULT_VISIBLE_COL_KEYS_FOR_CONFIG_VIEW.remove('sshot_RB')
+DEFAULT_VISIBLE_COL_KEYS_FOR_CONFIG_VIEW.remove('sshot_SP')

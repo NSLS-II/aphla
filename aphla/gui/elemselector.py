@@ -28,7 +28,7 @@ import aphla as ap
 from Qt4Designer_files.ui_element_selector import Ui_Dialog
 
 if not ap.machines._lat :
-    ap.initNSLS2V1()
+    ap.initNSLS2V2()
 
 # Output Type Enums
 TYPE_ELEMENT = 1
