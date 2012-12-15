@@ -3,6 +3,10 @@
 """
 NSLS2 V2 Unit Test
 -------------------
+
+- test_*_l0 for readonly test
+- test_*_l1 for small perturbation
+- test_*_l2 for beam steering test
 """
 
 # cause timeout by nosetest
@@ -103,7 +107,12 @@ class Test0Element(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_tune(self):
+    def test_nullelement_l0(self):
+        el = ap.getElements(['AABBCC'])
+        self.assertEqual(len(el), 1)
+        self.assertIsNone(el[0])
+
+    def test_tune_l0(self):
         logging.info("test_tune")
         self.assertEqual(len(ap.getElements('tune')), 1)
         tune = ap.getElements('tune')[0]
@@ -114,7 +123,7 @@ class Test0Element(unittest.TestCase):
         self.assertTrue(nux > 30.0)
         self.assertTrue(nuy > 15.0)
 
-    def test_dcct(self):
+    def test_dcct_l0(self):
         dccts = ap.getElements('dcct')
         self.assertEqual(len(dccts), 1)
         dcct = dccts[0]
@@ -139,7 +148,7 @@ class Test0Element(unittest.TestCase):
         self.assertEqual(len(ap.eget('DCCT', ['value'])), 1)
         self.assertGreater(ap.eget('DCCT', ['value'])[0], 1.0)
 
-    def test_bpm(self):
+    def test_bpm_l0(self):
         bpms = ap.getElements('BPM')
         self.assertGreaterEqual(len(bpms), 180)
 
@@ -158,7 +167,7 @@ class Test0Element(unittest.TestCase):
 
         self.assertGreater(ap.getDistance(bpms[0].name, bpms[1].name), 0.0)
 
-    def test_vbpm(self):
+    def test_vbpm_l0(self):
         vbpms = ap.getElements('HLA:VBPM', include_virtual=True)
         self.assertIsNotNone(vbpms)
         vbpm = vbpms[0]
@@ -175,7 +184,7 @@ class Test0Element(unittest.TestCase):
         self.assertGreaterEqual(np.std(vbpm.x), 0.0)
         self.assertGreaterEqual(np.std(vbpm.y), 0.0)
 
-    def test_hcor(self):
+    def test_hcor_l0(self):
         # hcor
         hcor = ap.element.CaElement(
             name = 'cxl1g2c01a', index = 125, cell = 'C01',
@@ -211,7 +220,7 @@ class Test0Element(unittest.TestCase):
         #self.assertGreaterEqual(abs(v[0]), 0.0)
         #self.assertIsNone(v[1])
 
-    def test_cor(self):
+    def test_cor_l0(self):
         hcor = ap.getElements('HCOR')
         self.assertEqual(len(hcor), 180)
 
@@ -224,9 +233,23 @@ class Test0Element(unittest.TestCase):
         idcor = ap.getElements('IDCOR')
         self.assertGreater(len(idcor), 0)
 
+        idsimcor = ap.getElements('IDSIMCOR')
+        self.assertGreater(len(idsimcor), 0)
+
+        self.assertEqual(len(idcor), len(idsimcor))
+
+    def test_insertion_l0(self):
+        ids = ap.getElements("INSERTION")
+        self.assertEqual(len(ids), 12)
+
+
+    def test_rf_l0(self):
+        f0 = ap.getRfFrequency()
+        v0 = ap.getRfVoltage()
+
 
     @unittest.skip("ORM data PV changed")
-    def test_corr_orbit(self):
+    def test_corr_orbit_l2(self):
         bpm = ap.getElements('P*C1[0-3]*')
         trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
         v0 = ap.getOrbit('P*', spos=True)
@@ -260,7 +283,7 @@ class Test0ChanFinderCsvData(unittest.TestCase):
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
-    def test_db_tags(self):
+    def test_db_tags_l0(self):
         cfa = ap.chanfinder.ChannelFinderAgent()
         self.assertTrue(os.path.exists(self.cfs_db), "file '%s' does not exist" % self.cfs_db)
         cfa.importSqliteDb(self.cfs_db)
@@ -269,7 +292,7 @@ class Test0ChanFinderCsvData(unittest.TestCase):
         for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
             self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
 
-    def test_url_tags(self):
+    def test_url_tags_l0(self):
         #http://web01.nsls2.bnl.gov/ChannelFinder
         if self.cfs_url is None: return
         self.assertIsNotNone(self.cfs_url)
@@ -298,7 +321,7 @@ class Test0Lattice(unittest.TestCase):
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLattice')
 
-    def test_neighbors(self):
+    def test_neighbors_l0(self):
         bpm = self.lat.getElementList('BPM')
         self.assertTrue(bpm)
         self.assertGreaterEqual(len(bpm), 180)
@@ -309,19 +332,19 @@ class Test0Lattice(unittest.TestCase):
             self.assertEqual(el[i].name, bpm[i].name,
                              "%d: %s != %s" % (i, el[i].name, bpm[i].name))
 
-    def test_virtualelements(self):
+    def test_virtualelements_l0(self):
         velem = ap.machines.HLA_VFAMILY
         elem = self.lat.getElementList(velem)
         self.assertTrue(elem)
         #elem = self.lat.getElementList(velem, 
         self.assertTrue(self.lat.hasGroup(ap.machines.HLA_VFAMILY))
 
-    def test_getelements(self):
+    def test_getelements_l0(self):
         elems = self.lat.getElementList('BPM')
-        self.assertGreater(len(elems), 0)
+        self.assertEqual(len(elems), 180)
         
 
-    def test_locations(self):
+    def test_locations_l0(self):
         elem1 = self.lat.getElementList('*')
         for i in range(1, len(elem1)):
             if elem1[i-1].virtual: continue
@@ -359,7 +382,7 @@ class Test0Lattice(unittest.TestCase):
                     elem1[i-1].sb, elem1[i-1].name))
         
 
-    def test_groups(self):
+    def test_groups_l0(self):
         grp = 'HLATEST'
         self.assertFalse(self.lat.hasGroup(grp))
         self.lat.addGroup(grp)
@@ -380,15 +403,15 @@ class Test1LatticeSr(unittest.TestCase):
         self.logger = logging.getLogger('tests.TestLatticeSr')
         pass
 
-    def test_orbit(self):
+    def test_orbit_l0(self):
         v = ap.getOrbit()
 
-    def test_tunes(self):
+    def test_tunes_l0(self):
         tune, = self.lat.getElementList('tune')
         self.assertTrue(abs(tune.x) > 0)
         self.assertTrue(abs(tune.y) > 0)
         
-    def test_current(self):
+    def test_current_l0(self):
         self.assertTrue(self.lat.hasElement('dcct'))
         
         cur1a = self.lat['dcct']
@@ -397,7 +420,7 @@ class Test1LatticeSr(unittest.TestCase):
         self.assertGreater(cur1a.value, 0.0)
         self.assertGreater(cur1b.value, 0.0)
 
-    def test_lines(self):
+    def test_lines_l0(self):
         elem1 = self.lat.getElementList('DIPOLE')
         s0, s1 = elem1[0].sb, elem1[0].se
         i = self.lat._find_element_s((s0+s1)/2.0)
@@ -405,7 +428,7 @@ class Test1LatticeSr(unittest.TestCase):
         i = self.lat.getLine(srange=(0, 25))
         self.assertGreater(len(i), 1)
 
-    def test_getelements_sr(self):
+    def test_getelements_sr_l0(self):
         elems = self.lat.getElementList(['pl1g2c01a', 'pl2g2c01a'])
         self.assertTrue(len(elems) == 2)
         
@@ -413,7 +436,7 @@ class Test1LatticeSr(unittest.TestCase):
         elems = self.lat.getElementList('pl*g2c0*')
         self.assertEqual(len(elems), 10, msg="{0}".format(elems))
 
-    def test_groupmembers(self):
+    def test_groupmembers_l0(self):
         bpm1 = self.lat.getElementList('BPM')
         g2a = self.lat.getElementList('G2')
         
@@ -441,7 +464,7 @@ class Test1LatticeSr(unittest.TestCase):
                                             op='intersection')
         self.assertEqual(len(el1), 4)
 
-    def test_field(self):
+    def test_field_l1(self):
         bpm = self.lat.getElementList('BPM')
         self.assertTrue(len(bpm) > 0)
         for e in bpm: 
@@ -464,8 +487,12 @@ class Test1LatticeSr(unittest.TestCase):
             #    self.assertTrue(False,
             #"AttributeError exception expected")
 
-    def test_ids(self):
+    def test_ids_l0(self):
         self.assertIn('INSERTION', self.lat.getGroups())
+        self.assertIn('IVU', self.lat.getGroups())
+        self.assertIn('EPU', self.lat.getGroups())
+        self.assertIn('DW', self.lat.getGroups())
+
 
 class TestLatticeLtd1(unittest.TestCase):
     def setUp(self):
@@ -478,7 +505,7 @@ class TestLatticeLtd1(unittest.TestCase):
     def tearDown(self):
         ap.machines._lat = self.lat
 
-    def test_image(self):
+    def test_image_l0(self):
         #lat = ap.machines._lat
         ap.machines.use('V1LTD1')
         vf = ap.getElements('vf1bd1')[0]
@@ -497,7 +524,7 @@ class TestLatticeLtd1(unittest.TestCase):
             -(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
 
     @unittest.skip("for lower version of Python/modules")
-    def test_fit_gaussian_image(self):
+    def test_fit_gaussian_image_l0(self):
         import matplotlib.pylab as plt
         from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
         from mpl_toolkits.axes_grid1.inset_locator import mark_inset
@@ -533,7 +560,7 @@ class TestLatticeLtd1(unittest.TestCase):
 
         plt.savefig("test2.png")
 
-    def test_virtualelements(self):
+    def test_virtualelements_l0(self):
         pass
 
 
@@ -547,7 +574,7 @@ class TestLatticeLtb(unittest.TestCase):
     def readInvalidFieldY(self, e):
         k = e.y
         
-    def test_field(self):
+    def test_field_l0(self):
         bpmlst = self.lat.getElementList('BPM')
         self.assertGreater(len(bpmlst), 0)
         
@@ -565,17 +592,9 @@ class TestLatticeLtb(unittest.TestCase):
             #self.assertGreaterEqual(abs(e.x), 0.0)
             pass
 
-    def test_virtualelements(self):
+    def test_virtualelements_l0(self):
         pass
 
-class TestNSLS2V2(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def test_elements(self):
-        el = ap.getElements(['AA'])
-        self.assertEqual(len(el), 1)
-        self.assertIsNone(el[0])
 
 """
 Twiss
@@ -587,14 +606,14 @@ class Test0Tunes(unittest.TestCase):
         ap.machines.use("V2SR")
         logging.info("TestTunes")
 
-    def test_tunes(self):
+    def test_tunes_l0(self):
         nu = ap.getTunes()
         self.assertEqual(len(nu), 2)
         self.assertGreater(nu[0], 0.0)
         self.assertGreater(nu[1], 0.0)
 
     @unittest.skip
-    def test_dispersion_meas(self):
+    def test_dispersion_meas_l2(self):
         #s, etax, etay = ap.measDispersion('*')
         eta = ap.measDispersion('P*C0[2-4]*')
         s, etax, etay = eta[:,-1], eta[:,0], eta[:,1]
@@ -707,7 +726,7 @@ class TestOrbit(unittest.TestCase):
         self.logger.info("tearDown")
         pass
         
-    def test_orbit_read(self):
+    def test_orbit_read_l0(self):
         self.logger.info("reading orbit")    
         self.assertGreater(len(ap.getElements('BPM')), 0)
         bpm = ap.getElements('BPM')
@@ -864,7 +883,7 @@ class TestBba(unittest.TestCase):
         #ap.hlalib._reset_trims(verbose=True)
         pass
 
-    def test_quad(self):
+    def test_quad_l0(self):
         qnamelist = ['qh1g2c02a', 'qh1g2c04a', 'qh1g2c06a', 'qh1g2c08a']
 
         qlst = ap.getElements(qnamelist)
@@ -1187,10 +1206,9 @@ class TestOrm(unittest.TestCase):
     def setUp(self):
         pass
 
-    @unittest.skip("speed up")
-    def test_measure_orm(self):
+    def test_measure_orm_l2(self):
         bpms = ap.getElements('BPM')
-        trims = ap.getElements('HCOR') + ap.getElements('VCOR')
+        trims = ap.getElements('COR')
         
         #nbpm, ntrim = 5, 3
         nbpm, ntrim = len(bpms), len(trims)
@@ -1198,7 +1216,6 @@ class TestOrm(unittest.TestCase):
         trimlst = [t.name for t in trims[:ntrim]]
         fname = time.strftime("orm_%Y%m%d_%H%M.hdf5")
         ap.measOrbitRm(bpmlst, trimlst, fname)
-
 
 
 if __name__ == "__main__":

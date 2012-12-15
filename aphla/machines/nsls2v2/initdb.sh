@@ -49,9 +49,9 @@ sqlite3 ${DBF} 'update elements set elem_group="SM1B" where name like "sm1g%c%b"
 sqlite3 ${DBF} 'update elements set elem_group="SM2" where name like "sm2g%c%"'
 
 #echo " update ID with 'INSERTION'"
-#sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="IVU"'
-#sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="EPU"'
-#sqlite3 ${DBF} 'update elements set elem_type="INSERTION" where elem_type="DW"'
+sqlite3 ${DBF} 'update elements set elem_group="IVU" where elem_type="INSERTION" and name like "ivu%"'
+sqlite3 ${DBF} 'update elements set elem_group="DW" where elem_type="INSERTION" and name like "dw%"'
+sqlite3 ${DBF} 'update elements set elem_group="EPU" where elem_type="INSERTION" and name like "epu%"'
 
 
 
@@ -60,6 +60,7 @@ sqlite3 ${DBF} 'insert into elements (name, elem_type, system, lat_index, virtua
 sqlite3 ${DBF} 'insert into elements (name, elem_type, system, lat_index, virtual, position) values ("dcct", "DCCT", "V2SR", 0, 0, 0)'
 sqlite3 ${DBF} 'insert into elements (name, elem_type, system, virtual) values ("twiss", NULL, "V2SR", 1)'
 sqlite3 ${DBF} 'insert into elements (name, elem_type, system, virtual) values ("orbit", NULL, "V2SR", 1)'
+sqlite3 ${DBF} 'insert into elements (name, elem_type, system, virtual) values ("rfcavity", "RFCAVITY", "V2SR", 0)'
 
 
 echo "== import channel access data: ${VA}"

@@ -3083,4 +3083,8 @@ V:2-SR-BI{ORBIT}X-I,,V:2-SR,,,readback,orbit,x,
 V:2-SR-BI{ORBIT}Y-I,,V:2-SR,,,readback,orbit,y,
 V:2-SR-BI{POS}-I,,V:2-SR,,,readback,twiss,s,
 V:2-SR-BI{NAME}-I,,V:2-SR,,,readback,twiss,names,
-V:2-SR-BI{DCCT}CUR-I,,V:2-SR,,,readback,dcct,value,
+V:2-SR-BI{DCCT}CUR-I,,V:2-SR,,,readback,dcct,value,DCCT
+V:2-SR:C30-RF:G1{CAV:3656}Freq:I,,V:2-SR,,,readback,rfcavity,f,RFCAVITY
+V:2-SR:C30-RF:G1{CAV:3656}Freq:SP,,V:2-SR,,,setpoint,rfcavity,f,RFCAVITY
+V:2-SR:C30-RF:G1{CAV:3656}Volt:I,,V:2-SR,,,readback,rfcavity,v,RFCAVITY 
+V:2-SR:C30-RF:G1{CAV:3656}Volt:SP,,V:2-SR,,,setpoint,rfcavity,v,RFCAVITY 

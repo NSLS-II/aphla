@@ -2,6 +2,7 @@ test
 ====
 
 - nosetests -s -x aphla/tests/test_nsls2v2.py:Test0Element
+- nosetests -v -e 'test_.*[a-z1-9]$' -s -x aphla/tests/test_nsls2v2.py
 
 build/install
 ==============
