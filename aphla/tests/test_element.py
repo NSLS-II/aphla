@@ -20,7 +20,7 @@ class TestElement(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_dcct(self):
+    def test_dcct_l0(self):
         # current
         pv = u'SR:C00-BI:G00{DCCT:00}CUR-RB'
         dcct = element.CaElement(
@@ -35,7 +35,7 @@ class TestElement(unittest.TestCase):
         self.assertEqual(dcct.pv(tag='aphla.sys.SR'), [pv])
         self.assertEqual(dcct.pv(tags=['aphla.eget', 'aphla.sys.SR']), [pv])
 
-    def test_bpm(self):
+    def test_bpm_l0(self):
         pvx0 = 'SR:C29-BI:G06B{BPM:H1}SA:X-I'
         pvy0 = 'SR:C29-BI:G06B{BPM:H1}SA:Y-I'
         pvxbba = 'SR:C29-BI:G06B{BPM:H1}BBA:X'
@@ -58,7 +58,7 @@ class TestElement(unittest.TestCase):
         self.assertEqual(bpm.virtual, 0)
         
 
-    def test_hcor(self):
+    def test_hcor_l0(self):
         # hcor
         hcor = element.CaElement(
             name = 'CXL1G2C01A', index = 125, cell = 'C01',
@@ -96,7 +96,7 @@ class TestElement(unittest.TestCase):
                 v, v2, "{0} field {1}: {2} != {3}".format(e1.name, k, v,v2))
 
         
-    def test_pickle(self):
+    def test_pickle_l0(self):
         dcct = element.CaElement(
             name = 'CURRENT', index = -1, devname = 'DCCT', family = 'DCCT')
         dcct.updatePvRecord('PV_1', None, ['aphla.eget', 'aphla.sys.SR'])
@@ -112,7 +112,7 @@ class TestElement(unittest.TestCase):
         # dcct
         self.__compareElements(dcct, pkl_dcct)
 
-    def test_shelve(self):
+    def test_shelve_l0(self):
         dcct = element.CaElement(
             name = 'CURRENT', index = -1, devname = 'DCCT', family = 'DCCT')
         dcct.updatePvRecord('PV_1', None, ['aphla.eget', 'aphla.sys.SR'])
@@ -129,7 +129,7 @@ class TestElement(unittest.TestCase):
         self.__compareElements(dcct, shv_dcct)
 
 
-    def test_sort(self):
+    def test_sort_l0(self):
         elem1 = element.AbstractElement(name= 'E1', index = 0, sb= 0.0)
         elem2 = element.AbstractElement(name= 'E1', index = 2, sb= 2.0)
         elem3 = element.AbstractElement(name= 'E1', index = 1, sb= 1.0)

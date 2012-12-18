@@ -1,0 +1,176 @@
+%% HCM
+AO.HCM.FamilyName  = 'HCM';
+AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR';};
+AO.HCM.DeviceList  = [ %(hcm_devlist)s ];
+AO.HCM.ElementList = (1:size(AO.HCM.DeviceList,1))';
+AO.HCM.Status      = ones(size(AO.HCM.DeviceList,1),1);
+AO.HCM.Position    = [];
+AO.HCM.CommonNames = [ %(hcm_commonnames)s ];
+
+AO.HCM.Monitor.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Monitor'; 'PlotFamily'; 'Save';};
+AO.HCM.Monitor.Mode = 'Simulator';
+AO.HCM.Monitor.DataType = 'Scalar';
+AO.HCM.Monitor.ChannelNames = { %(hcm_monitor_pv)s };
+AO.HCM.Monitor.HW2PhysicsFcn = @hw2at;
+AO.HCM.Monitor.Physics2HWFcn = @at2hw;
+AO.HCM.Monitor.Units        = 'Hardware';
+AO.HCM.Monitor.HWUnits      = 'Ampere';
+AO.HCM.Monitor.PhysicsUnits = 'Radian';
+%%AO.HCM.Monitor.Real2RawFcn = @real2raw_ltb;
+%%AO.HCM.Monitor.Raw2RealFcn = @raw2real_ltb;
+
+AO.HCM.Setpoint.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'};
+AO.HCM.Setpoint.Mode = 'Simulator';
+AO.HCM.Setpoint.DataType = 'Scalar';
+AO.HCM.Setpoint.ChannelNames = { %(hcm_setpoint_pv)s };
+AO.HCM.Setpoint.HW2PhysicsFcn = @hw2at;
+AO.HCM.Setpoint.Physics2HWFcn = @at2hw;
+AO.HCM.Setpoint.Units        = 'Hardware';
+AO.HCM.Setpoint.HWUnits      = 'Ampere';
+AO.HCM.Setpoint.PhysicsUnits = 'Radian';
+AO.HCM.Setpoint.Range = [-3 3];
+AO.HCM.Setpoint.Tolerance  = .1 * ones(length(AO.HCM.ElementList), 1);  %% Hardware units
+AO.HCM.Setpoint.DeltaRespMat = 1;
+%% AO.HCM.Setpoint.RampRate = 1;
+%% AO.HCM.Setpoint.RunFlagFcn = @getrunflag_ltb;
+%% AO.HCM.RampRate.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Save/Restore';};
+%% AO.HCM.RampRate.Mode = 'Simulator';
+%% AO.HCM.RampRate.DataType = 'Scalar';
+%% AO.HCM.RampRate.ChannelNames = getname_ltb(AO.HCM.FamilyName, 'RampRate');
+%% AO.HCM.RampRate.HW2PhysicsParams = 1;
+%% AO.HCM.RampRate.Physics2HWParams = 1;
+%% AO.HCM.RampRate.Units        = 'Hardware';
+%% AO.HCM.RampRate.HWUnits      = 'Ampere/Second';
+%% AO.HCM.RampRate.PhysicsUnits = 'Ampere/Second';
+
+AO.HCM.OnControl.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Boolean Control';};
+AO.HCM.OnControl.Mode = 'Simulator';
+AO.HCM.OnControl.DataType = 'Scalar';
+AO.HCM.OnControl.ChannelNames = { %(hcm_oncontrol_pv)s };
+
+AO.HCM.OnControl.HW2PhysicsParams = 1;
+AO.HCM.OnControl.Physics2HWParams = 1;
+
+AO.HCM.OnControl.Units        = 'Hardware';
+AO.HCM.OnControl.HWUnits      = '';
+AO.HCM.OnControl.PhysicsUnits = '';
+AO.HCM.OnControl.Range = [0 1];
+%%AO.HCM.OnControl.SpecialFunctionSet = @setsp_OnControlMagnet;
+
+%% AO.HCM.On.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Boolean Monitor';};
+%% AO.HCM.On.Mode = 'Simulator';
+%% AO.HCM.On.DataType = 'Scalar';
+%% AO.HCM.On.ChannelNames = getname_ltb(AO.HCM.FamilyName, 'On');
+%% AO.HCM.On.HW2PhysicsParams = 1;
+%% AO.HCM.On.Physics2HWParams = 1;
+%% AO.HCM.On.Units        = 'Hardware';
+%% AO.HCM.On.HWUnits      = '';
+%% AO.HCM.On.PhysicsUnits = '';
+
+AO.HCM.Fault.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Boolean Monitor';};
+AO.HCM.Fault.Mode = 'Simulator';
+AO.HCM.Fault.DataType = 'Scalar';
+AO.HCM.Fault.ChannelNames = { %(hcm_fault_pv)s };
+
+AO.HCM.Fault.HW2PhysicsParams = 1;
+AO.HCM.Fault.Physics2HWParams = 1;
+AO.HCM.Fault.Units        = 'Hardware';
+AO.HCM.Fault.HWUnits      = '';
+AO.HCM.Fault.PhysicsUnits = '';
+
+
+%% VCM
+AO.VCM.FamilyName  = 'VCM';
+AO.VCM.MemberOf    = {'VCM'; 'Magnet'; 'COR';};
+AO.VCM.DeviceList  = AO.HCM.DeviceList;
+AO.VCM.ElementList = (1:size(AO.VCM.DeviceList,1))';
+AO.VCM.Status      = ones(size(AO.VCM.DeviceList,1),1);
+AO.VCM.Position    = [];
+AO.VCM.CommonNames = [ %(vcm_commonnames)s ];
+
+AO.VCM.Monitor.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Monitor'; 'PlotFamily'; 'Save';};
+AO.VCM.Monitor.Mode = 'Simulator';
+AO.VCM.Monitor.DataType = 'Scalar';
+AO.VCM.Monitor.ChannelNames = { %(vcm_monitor_pv)s };
+
+AO.VCM.Monitor.HW2PhysicsFcn = @hw2at;
+AO.VCM.Monitor.Physics2HWFcn = @at2hw;
+AO.VCM.Monitor.Units        = 'Hardware';
+AO.VCM.Monitor.HWUnits      = 'Ampere';
+AO.VCM.Monitor.PhysicsUnits = 'Radian';
+%%AO.VCM.Monitor.Real2RawFcn = @real2raw_ltb;
+%%AO.VCM.Monitor.Raw2RealFcn = @raw2real_ltb;
+
+AO.VCM.Setpoint.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'};
+AO.VCM.Setpoint.Mode = 'Simulator';
+AO.VCM.Setpoint.DataType = 'Scalar';
+AO.VCM.Setpoint.ChannelNames = { %(vcm_setpoint_pv)s };
+
+AO.VCM.Setpoint.HW2PhysicsFcn = @hw2at;
+AO.VCM.Setpoint.Physics2HWFcn = @at2hw;
+AO.VCM.Setpoint.Units        = 'Hardware';
+AO.VCM.Setpoint.HWUnits      = 'Ampere';
+AO.VCM.Setpoint.PhysicsUnits = 'Radian';
+AO.VCM.Setpoint.Range = [-3 3];
+AO.VCM.Setpoint.Tolerance  = .1;
+AO.VCM.Setpoint.DeltaRespMat = 1;
+%%AO.VCM.Setpoint.RampRate = 1;
+%%AO.VCM.Setpoint.RunFlagFcn = @getrunflag_ltb;
+
+%% AO.VCM.RampRate.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Save/Restore';};
+%% AO.VCM.RampRate.Mode = 'Simulator';
+%% AO.VCM.RampRate.DataType = 'Scalar';
+%% AO.VCM.RampRate.ChannelNames = getname_ltb(AO.VCM.FamilyName, 'RampRate');
+%% AO.VCM.RampRate.HW2PhysicsParams = 1;
+%% AO.VCM.RampRate.Physics2HWParams = 1;
+%% AO.VCM.RampRate.Units        = 'Hardware';
+%% AO.VCM.RampRate.HWUnits      = 'Ampere/Second';
+%% AO.VCM.RampRate.PhysicsUnits = 'Ampere/Second';
+
+AO.VCM.OnControl.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Boolean Control';};
+AO.VCM.OnControl.Mode = 'Simulator';
+AO.VCM.OnControl.DataType = 'Scalar';
+AO.VCM.OnControl.ChannelNames = { %(vcm_oncontrol_pv)s };
+
+AO.VCM.OnControl.HW2PhysicsParams = 1;
+AO.VCM.OnControl.Physics2HWParams = 1;
+AO.VCM.OnControl.Units        = 'Hardware';
+AO.VCM.OnControl.HWUnits      = '';
+AO.VCM.OnControl.PhysicsUnits = '';
+AO.VCM.OnControl.Range = [0 1];
+%%AO.VCM.OnControl.SpecialFunctionSet = @setsp_OnControlMagnet;
+
+%% AO.VCM.On.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Boolean Monitor';};
+%% AO.VCM.On.Mode = 'Simulator';
+%% AO.VCM.On.DataType = 'Scalar';
+%% AO.VCM.On.ChannelNames = {''}
+%% AO.VCM.On.HW2PhysicsParams = 1;
+%% AO.VCM.On.Physics2HWParams = 1;
+%% AO.VCM.On.Units        = 'Hardware';
+%% AO.VCM.On.HWUnits      = '';
+%% AO.VCM.On.PhysicsUnits = '';
+
+%% AO.VCM.Reset.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Boolean Control';};
+%% AO.VCM.Reset.Mode = 'Simulator';
+%% AO.VCM.Reset.DataType = 'Scalar';
+%% AO.VCM.Reset.ChannelNames = {''}
+%% AO.VCM.Reset.HW2PhysicsParams = 1;
+%% AO.VCM.Reset.Physics2HWParams = 1;
+%% AO.VCM.Reset.Units        = 'Hardware';
+%% AO.VCM.Reset.HWUnits      = '';
+%% AO.VCM.Reset.PhysicsUnits = '';
+%% AO.VCM.Reset.Range = [0 1];
+
+AO.VCM.Fault.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'PlotFamily'; 'Boolean Monitor';};
+AO.VCM.Fault.Mode = 'Simulator';
+AO.VCM.Fault.DataType = 'Scalar';
+AO.VCM.Fault.ChannelNames = { %(vcm_fault_pv)s };
+
+AO.VCM.Fault.HW2PhysicsParams = 1;
+AO.VCM.Fault.Physics2HWParams = 1;
+AO.VCM.Fault.Units        = 'Hardware';
+AO.VCM.Fault.HWUnits      = 'Second';
+AO.VCM.Fault.PhysicsUnits = 'Second';
+
+
+

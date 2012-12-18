@@ -46,7 +46,7 @@ def convert_at_lattice(latname):
     oupt = []
     elems = ap.getElements('*')
     # remove the VCOR
-    elems = [e for e in elems if e.family not in ['VCOR', 'VFCOR']]
+    # elems = [e for e in elems if e.family not in ['VCOR', 'VFCOR']]
     
     dft = {'name': None, 'sb': None, 'length': None,
            'atclass': 'drift', 'atfamily': 'HALFD'}
@@ -56,7 +56,7 @@ def convert_at_lattice(latname):
                'sb': e.sb, 'length': e.length,
                'atclass': 'marker', 'atfamily': e.family}
         
-        if e.family in ['BPM', 'FLAG', 'ICT']:
+        if e.family in ['FLAG', 'ICT']:
             # name, family, new: (name, type, family)
             # 
             rec['sb'] = e.sb + e.length/2.0
@@ -75,6 +75,24 @@ def convert_at_lattice(latname):
             else:
                 oupt.append(rec)
 
+        if e.family in ['BPM']:
+            # name, family, new: (name, type, family)
+            # 
+            rec['sb'] = e.sb + e.length/2.0
+            rec['length'] = 0.0
+            rec['atfamily'] = e.family
+            if rec['family'] == 'FLAG': rec['atfamily'] = 'SCREEN'
+            if e.length > 0.0:
+                dft['name'] = 'DHF_'+rec['name']
+                dft['length'] = e.length/2.0
+                dft['sb'] = e.sb
+                print dft
+                oupt.append(dft.copy())
+                oupt.append(rec.copy())
+                dft['sb'] = e.length/2.0 + e.sb
+                oupt.append(dft.copy())
+            else:
+                oupt.append(rec)
         elif e.family in ['DIPOLE']:
             rec['atfamily'] = 'rbend'
         elif e.family in ['HCOR', 'HFCOR']:
@@ -105,6 +123,9 @@ def convert_at_lattice(latname):
     return oupt
 
 def at_definition(latname, rec):
+    """
+    given a record, return an AT definition
+    """
     name, cla = rec['name'], rec['atclass']
     L = rec['length']
     h = "%s = %s('%s'," % (name, cla, rec['atfamily'])
@@ -164,7 +185,7 @@ def export_at_lattice(template, latname):
 
 
 def export_mml_init(template, latname):
-    fname = template[:-len('.template')]
+    fname = template['main'][:-len('.template')]
 
     bpms = ap.getElements('BPM')
 
@@ -176,6 +197,16 @@ def export_mml_init(template, latname):
     # fake
     bpmx_sum_pv = ";".join(["'pv1'" for i in range(len(bpms))])
     bpmy_sum_pv = ";".join(["'pv1'" for i in range(len(bpms))])
+    ao_bpm = open(template['bpm'], 'r').read().format(
+        {'bpmx_devlist': bpmx_devlist,
+         'bpmx_commonnames': bpmx_commonnames,
+         'bpmy_commonnames': bpmy_commonnames,
+         'bpmx_monitor_pv': bpmx_monitor_pv,
+         'bpmy_monitor_pv': bpmy_monitor_pv,
+         'bpmx_sum_pv': bpmx_sum_pv,
+         'bpmy_sum_pv': bpmy_sum_pv})
+
+    print ao_bpm
 
     hcms = ap.getElements('HCOR')
     for i,e in enumerate(hcms):
@@ -246,7 +277,7 @@ def export_mml_init(template, latname):
 
 
 if __name__ == "__main__":
-    ap.initNSLS2V2()
+    ap.machines.init("nsls2v2")
 
     # save the current lattice
     lat = ap.machines.getLattice()    
@@ -260,7 +291,12 @@ if __name__ == "__main__":
     latname = 'V2SR'
     ap.machines.use(latname)
     export_at_lattice("nsls2v2sr.m.template", latname)
-    export_mml_init("v2srinit.m.template", latname)
+    templates = {'main': "v2srinit.m.template", 
+                 'bpm': "v2srinit_ao_bpm.m.template", 
+                 'hvcm': "v2srinit_ao_hvcm.m.template", 
+                 'quad': "v2srinit_ao_q.m.template"}
+
+    export_mml_init(templates, latname)
 
     # restore
     ap.machines.use(lat)

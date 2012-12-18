@@ -32,6 +32,7 @@ src/tracy/tracy-3.5/autom4te.cache
 *.deps
 src/qrc_resources.py
 *.egg-info
+*.sqlite.bak
 
 syntax:regexp
 ^build/
@@ -41,3 +42,5 @@ syntax:regexp
 ^deb_dist/
 ^utils/debian/
 ^utils/conf.py
+^aphla/machines/nsls2/conf.py
+
