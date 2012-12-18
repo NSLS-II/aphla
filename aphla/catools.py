@@ -140,7 +140,7 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
         else:
             raise cothread.Timedout
 
-def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
+def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1),  maxtrial=20):
     """
     set pvs and waiting until the setting takes effect
 
@@ -151,7 +151,7 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
     :param pvmonitors: PVs for testing the effects of new PV setting.
     :type pvmonitors: list
     :param diffstd: threshold value of effective change of *pvmonitors*.
-    :param wait: waiting time before each test (seconds)
+    :param wait: waiting time for initial and each step (seconds)
     :param maxtrial: maximum trial before return.
     :return: whether pvmonitors change significant enough.
     :rtype: bool
@@ -165,15 +165,17 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=2,  maxtrial=20):
     It is good for ORM measurement where setting a trim and observing a list
     of BPM.
     """
+
+    time.sleep(wait[0])
+
     if CA_OFFLINE:
-        time.sleep(wait)
         return True
 
     v0 = np.array(caget(pvmonitors))
     ntrial = 0
     while True:
         caput(pvs, values)
-        time.sleep(wait)
+        time.sleep(wait[1])
         ntrial = ntrial + 1
         v1 = np.array(caget(pvmonitors))
         if np.std(v1 - v0) > diffstd:

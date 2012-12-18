@@ -1,4 +1,4 @@
-from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig)
+from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, OrmData, getResource)
 
 from fnmatch import fnmatch
 import logging
@@ -54,8 +54,8 @@ def init_submachines(machine, submachines, **kwargs):
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
-    orm_filename = 'us_nsls2v2_sr_orm.hdf5'
-    if orm_filename and conf.has(orm_filename):
+    orm_filename = getResource('us_nsls2v2_sr_orm.hdf5', __name__)
+    if orm_filename:
         lattice_dict['V2SR'].ormdata = OrmData(orm_filename)
         logger.info("using ORM data '%s'" % orm_filename)
     else:

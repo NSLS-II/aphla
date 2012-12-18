@@ -241,7 +241,8 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     if ormdata is None: ormdata = machines._lat.ormdata
     
     if ormdata is None:
-        raise RuntimeError("No Orbit Response Matrix available")
+        raise RuntimeError("No Orbit Response Matrix available for '%s'" %
+            machines._lat.name)
 
     bpmfulllst = getElements(ormdata.getBpmNames())
     bpmlst, trimlst = getElements(bpm), getElements(trim)

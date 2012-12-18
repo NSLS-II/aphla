@@ -42,6 +42,9 @@ class Orm:
         self.ormdata = None
 
         npts = 6
+        self.minwait = 3 # minimum wait 3 seconds
+        self.stepwait = 1.5
+        self.bpmdiffstd = 1e-5
 
         self.trimsp, self.bpmrb = None, None
 
@@ -126,6 +129,7 @@ class Orm:
         """
 
         kx0 = caget(kickerpv)
+        wait = (self.minwait, self.stepwait)
         if verbose:
             print "kicker: read %f rb(write) %f" % (kref, kx0) 
         # bpm read out
@@ -138,12 +142,12 @@ class Orm:
         kstrength = np.ones(points+2, 'd') * kx0
         kstrength[1:-1] = np.linspace(kx0-2*dkick, kx0+2*dkick, points)
         for i,kx in enumerate(kstrength[1:]):
-            dt = caputwait(kickerpv, kx, bpmpvlist)
+            st = caputwait(kickerpv, kx, bpmpvlist, wait=wait, diffstd=self.bpmdiffstd)
             ret[i+1,:] = caget(bpmpvlist)
             for j,bpm in enumerate(bpmpvlist):
                 if mask[j]: ret[i+1,j] = 0
             if verbose:
-                print "% .2e %s % .4e dt= %f" % (kx, bpmpvlist[0], ret[i+1,0], dt)
+                print "% .2e %s % .4e stable= %s" % (kx, bpmpvlist[0], ret[i+1,0], str(st))
             sys.stdout.flush()
 
         return np.array(kstrength), ret
@@ -177,10 +181,11 @@ class Orm:
             ###
             ### it is better to skip coupling, at low slop, error is large ...
             for j in range(len(self.bpm)):
-                if residuals[j] < 1e-11: continue
-                print "WARNING", trim_pv_sp, self.trim[i][0], \
-                    self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
-                logger.warn("%s %s %s %s %s %s" % (
+                if residuals[j] < 1e-10: continue
+                if verbose:
+                    print "WARNING", trim_pv_sp, self.trim[i][0], \
+                        self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
+                logger.warn("%s %s %s %s %s resi= %s" % (
                         str(trim_pv_sp), str(self.trim[i][0]), 
                         str(self.bpm[j][0]), str(self.bpm[j][1]), str(p[0,j]),
                         str(residuals[j])))
@@ -208,11 +213,18 @@ class Orm:
                 self._rawmatrix[:,j,i] = ret[:,j]
                 self.m[j,i] = p[0,j]
                 
-    def measure(self, output="orm.pkl", verbose = 0, dkick = 2e-5):
+    def measure(self, **kwargs):
         """
         Measure the ORM, ignore the Horizontal(kicker)-Vertical(bpm)
         coupled terms or not.
+
+        :param output:
+        :param verbose:
+        :param dkick:
         """
+        output  = kwargs.get("output", "orm.hdf5")
+        verbose = kwargs.get("verbose", 1)
+        dkick   = kwargs.get("dkick", 2e-5)
         t_start = time.time()
         
         bpmrb = [b[-1] for b in self.bpm]
