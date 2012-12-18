@@ -1,8 +1,11 @@
 """
 """
 from ..element import *
+from ..ormdata import OrmData
 from ..lattice import Lattice
 from ..chanfinder import ChannelFinderAgent
+from ..resource import getResource
+
 import os
 import glob
 from pkg_resources import resource_string, resource_exists, resource_filename

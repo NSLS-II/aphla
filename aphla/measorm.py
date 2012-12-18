@@ -15,7 +15,7 @@ from orm import Orm
 import logging
 logger = logging.getLogger(__name__)
 
-def measOrbitRm(bpm, trim, output):
+def measOrbitRm(bpm, trim, output, **kwargs):
     """
     Measure the orbit response matrix
 
@@ -29,7 +29,7 @@ def measOrbitRm(bpm, trim, output):
     #print "TRIM:", len(trim)
     logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
     orm = Orm(bpm, trim)
-    orm.measure(output = output, verbose=1)
+    orm.measure(output = output, **kwargs)
     return orm
 
 
