@@ -14,59 +14,6 @@
    <string>Lattice Tuner</string>
   </property>
   <widget class="QWidget" name="centralwidget"/>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1015</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>&amp;File</string>
-    </property>
-    <widget class="QMenu" name="menuSave">
-     <property name="title">
-      <string>&amp;Save</string>
-     </property>
-     <addaction name="actionSaveConfigFile"/>
-     <addaction name="actionSaveSnapshotFile"/>
-    </widget>
-    <widget class="QMenu" name="menuLoad">
-     <property name="title">
-      <string>Load</string>
-     </property>
-     <addaction name="actionConfig_from_file"/>
-     <addaction name="actionSnapshot_from_file"/>
-    </widget>
-    <addaction name="actionNewConfig"/>
-    <addaction name="separator"/>
-    <addaction name="menuLoad"/>
-    <addaction name="separator"/>
-    <addaction name="menuSave"/>
-    <addaction name="separator"/>
-    <addaction name="actionPreferences"/>
-   </widget>
-   <widget class="QMenu" name="menu_View">
-    <property name="title">
-     <string>&amp;View</string>
-    </property>
-    <addaction name="actionGrouped"/>
-    <addaction name="actionUngrouped"/>
-    <addaction name="separator"/>
-    <addaction name="actionConfig_Metadata"/>
-    <addaction name="actionSnapshot_Metadata"/>
-    <addaction name="separator"/>
-    <addaction name="actionDefault_config_columns"/>
-    <addaction name="actionDefault_snapshot_columns"/>
-    <addaction name="actionUser_defined_config_columns"/>
-    <addaction name="actionUser_defined_snapshot_columns"/>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menu_View"/>
-  </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget_example">
    <attribute name="dockWidgetArea">
@@ -460,6 +407,40 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1015</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <widget class="QMenu" name="menuLoad">
+     <property name="title">
+      <string>Load</string>
+     </property>
+     <addaction name="actionLoadConfig"/>
+     <addaction name="actionLoadSnapshot"/>
+    </widget>
+    <addaction name="actionNewConfig"/>
+    <addaction name="separator"/>
+    <addaction name="menuLoad"/>
+    <addaction name="separator"/>
+    <addaction name="actionPreferences"/>
+   </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuWindow"/>
+  </widget>
   <action name="actionNewConfig">
    <property name="text">
     <string>&amp;New Config...</string>
@@ -508,24 +489,24 @@
     <string>Load Snapshot File...</string>
    </property>
   </action>
-  <action name="actionConfig_from_file">
+  <action name="actionLoadConfig">
    <property name="text">
-    <string>Config from file...</string>
+    <string>config...</string>
    </property>
   </action>
-  <action name="actionSnapshot_from_file">
+  <action name="actionLoadSnapshot">
    <property name="text">
-    <string>Snapshot from file...</string>
+    <string>snapshot...</string>
    </property>
   </action>
-  <action name="actionGrouped">
+  <action name="actionViewGroupeBased">
    <property name="text">
-    <string>&amp;Grouped</string>
+    <string>&amp;Groupe-based</string>
    </property>
   </action>
-  <action name="actionUngrouped">
+  <action name="actionViewChannelBased">
    <property name="text">
-    <string>&amp;Ungrouped</string>
+    <string>&amp;Channel-based</string>
    </property>
   </action>
   <action name="actionConfig_Metadata">
