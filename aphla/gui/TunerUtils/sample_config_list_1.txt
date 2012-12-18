@@ -1,6 +1,6 @@
-bpm  ph1g2c30a.y  0.0
-bpm  ph1g2c30a.x  0.0
-bpm  ph2g2c30a.y  0.0
-bpm  ph2g2c30a.x  0.0
-hcor cxh1g2c30a.x 1.1
-hcor cxh2g2c30a.x 1.1
+bpm ph1g2c30a.y 0.0
+bpm ph1g2c30a.x 0.0
+bpm ph2g2c30a.y 0.0
+bpm ph2g2c30a.x 0.0
+cor fh2g1c30a.x 1.1
+cor ch1g2c30a.y 1.1

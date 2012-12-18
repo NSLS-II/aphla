@@ -3235,18 +3235,6 @@ def lower(none_or_str_or_unicode_string):
 def initMachine(machine_name):
     """"""
     
-    #aphla_init_func_name = MACHINE_DICT[machine_name]
-            
-    #if ap.machines._lat:
-        #ap.machines._lat = None
-        #ap.machines._lattice_dict = {}
-
-    #aphla_init_func = getattr(ap, aphla_init_func_name)
-    #print 'Initializing lattices...'
-    #tStart = tic()
-    #aphla_init_func()
-    #print 'Initialization took', toc(tStart), 'seconds.'
-
     if ap.machines._lat:
         ap.machines._lat = None
         ap.machines._lattice_dict = {}
@@ -3255,8 +3243,7 @@ def initMachine(machine_name):
     
     print 'Initializing lattices...'
     tStart = tic()
-    ap.machines.init(machine_init_folder_name,
-                     use_cache=True, save_cache=True)
+    ap.machines.init(machine_init_folder_name, use_cache=True)
     print 'Initialization took', toc(tStart), 'seconds.'
     
     

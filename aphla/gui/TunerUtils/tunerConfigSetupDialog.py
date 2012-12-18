@@ -31,7 +31,7 @@ from PyQt4.QtGui import (qApp, QApplication, QDialog, QStandardItem,
 
 import aphla as ap
 if ap.machines._lat is None:
-    ap.initNSLS2V2()
+    ap.machines.init('nsls2v2',use_cache=True)
 
 from tunerModels import (TreeItem, TreeModel, TunerConfigSetupBaseModel,
                          TunerConfigSetupTableModel, TunerConfigSetupTreeModel)
