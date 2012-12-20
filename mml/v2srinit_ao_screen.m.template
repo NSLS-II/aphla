@@ -1,0 +1,88 @@
+%% Screen
+AO.Screen.FamilyName = 'Screen';
+AO.Screen.MemberOf = {'PlotFamily'; 'Screen';};
+AO.Screen.DeviceList = [ %(screen_devlist)s ];
+AO.Screen.ElementList = (1:size(AO.Screen.DeviceList,1))';
+AO.Screen.Status = ones(size(AO.Screen.DeviceList,1),1);
+AO.Screen.Position = (1:size(AO.Screen.DeviceList,1))';
+AO.Screen.CommonNames = [ %(screen_commonnames)s ];
+
+AO.Screen.Monitor.MemberOf = {'PlotFamily';  'Boolean Monitor';};
+AO.Screen.Monitor.Mode = 'Simulator';
+AO.Screen.Monitor.DataType = 'Scalar';
+AO.Screen.Monitor.ChannelNames = {''};
+AO.Screen.Monitor.HW2PhysicsParams = 1;
+AO.Screen.Monitor.Physics2HWParams = 1;
+AO.Screen.Monitor.Units        = 'Hardware';
+AO.Screen.Monitor.HWUnits      = '';
+AO.Screen.Monitor.PhysicsUnits = '';
+
+AO.Screen.Setpoint.MemberOf = {'Screen'; 'Boolean Control';};
+AO.Screen.Setpoint.Mode = 'Simulator';
+AO.Screen.Setpoint.DataType = 'Scalar';
+AO.Screen.Setpoint.ChannelNames = {''};
+AO.Screen.Setpoint.HW2PhysicsParams = 1;
+AO.Screen.Setpoint.Physics2HWParams = 1;
+AO.Screen.Setpoint.Units        = 'Hardware';
+AO.Screen.Setpoint.HWUnits      = '';
+AO.Screen.Setpoint.PhysicsUnits = '';
+AO.Screen.Setpoint.Range = [0 1];
+AO.Screen.Setpoint.Tolerance = .5 * ones(length(AO.Screen.ElementList), 1);  %% Hardware units
+%%AO.Screen.Setpoint.SpecialFunctionGet = @getScreen;
+%%AO.Screen.Setpoint.SpecialFunctionSet = @setScreen;
+
+%% AO.Screen.InControl.MemberOf = {'PlotFamily'; 'Boolean Control';};
+%% AO.Screen.InControl.Mode = 'Simulator';
+%% AO.Screen.InControl.DataType = 'Scalar';
+%% AO.Screen.InControl.ChannelNames = {''};
+%% AO.Screen.InControl.HW2PhysicsParams = 1;
+%% AO.Screen.InControl.Physics2HWParams = 1;
+%% AO.Screen.InControl.Units        = 'Hardware';
+%% AO.Screen.InControl.HWUnits      = '';
+%% AO.Screen.InControl.PhysicsUnits = '';
+%% AO.Screen.InControl.Range = [0 1];
+%%
+%% AO.Screen.In.MemberOf = {'PlotFamily'; 'Boolean Monitor';};
+%% AO.Screen.In.Mode = 'Simulator';
+%% AO.Screen.In.DataType = 'Scalar';
+%% AO.Screen.In.ChannelNames = {''};
+%% AO.Screen.In.HW2PhysicsParams = 1;
+%% AO.Screen.In.Physics2HWParams = 1;
+%% AO.Screen.In.Units        = 'Hardware';
+%% AO.Screen.In.HWUnits      = '';
+%% AO.Screen.In.PhysicsUnits = '';
+%%
+%% AO.Screen.Out.MemberOf = {'PlotFamily'; 'Boolean Monitor';};
+%% AO.Screen.Out.Mode = 'Simulator';
+%% AO.Screen.Out.DataType = 'Scalar';
+%% AO.Screen.Out.ChannelNames = {''};
+%% AO.Screen.Out.HW2PhysicsParams = 1;
+%% AO.Screen.Out.Physics2HWParams = 1;
+%% AO.Screen.Out.Units        = 'Hardware';
+%% AO.Screen.Out.HWUnits      = '';
+
+%% AO.Screen.Out.PhysicsUnits = '';
+
+
+
+%% AO.Screen.LampControl.MemberOf = {'PlotFamily'; 'Boolean Control';};
+%% AO.Screen.LampControl.Mode = 'Simulator';
+%% AO.Screen.LampControl.DataType = 'Scalar';
+%% AO.Screen.LampControl.ChannelNames = {''};
+%% AO.Screen.LampControl.HW2PhysicsParams = 1;
+%% AO.Screen.LampControl.Physics2HWParams = 1;
+%% AO.Screen.LampControl.Units        = 'Hardware';
+%% AO.Screen.LampControl.HWUnits      = '';
+%% AO.Screen.LampControl.PhysicsUnits = '';
+%% AO.Screen.LampControl.Range = [0 1];
+%%
+%% AO.Screen.Lamp.MemberOf = {'PlotFamily'; 'Boolean Monitor';};
+%% AO.Screen.Lamp.Mode = 'Simulator';
+%% AO.Screen.Lamp.DataType = 'Scalar';
+%% AO.Screen.Lamp.ChannelNames = getname_ltb(AO.Screen.FamilyName, 'Lamp');
+%% AO.Screen.Lamp.HW2PhysicsParams = 1;
+%% AO.Screen.Lamp.Physics2HWParams = 1;
+%% AO.Screen.Lamp.Units        = 'Hardware';
+%% AO.Screen.Lamp.HWUnits      = '';
+%% AO.Screen.Lamp.PhysicsUnits = '';
+
