@@ -16,6 +16,7 @@ NSLS2 V2 Unit Test
 import sys, os, time
 from fnmatch import fnmatch
 from pkg_resources import resource_string, resource_exists, resource_filename
+import matplotlib.pylab as plt
 
 if sys.version_info[:2] == (2, 6):
     import unittest2 as unittest
@@ -57,6 +58,8 @@ refpvrb = [
     ]
 ref_v0 = np.array(ap.caget(refpvrb), 'd')
 
+# plotting ?
+PLOTTING = True
 
 def markForStablePv():
     global ref_v0, refpvrb
@@ -938,22 +941,6 @@ class TestOrmData(unittest.TestCase):
         
 
     @unittest.skip("orm data is not ready")
-    def test_measure_orm(self):
-        return True
-        if hla.NETWORK_DOWN: return True
-        hla.reset_trims()
-        trimx = ['cxh1g6c15b', 'cyhg2c30a', 'cxl2g6c14b']
-        #trimx = ['CXH1G6C15B']
-        bpmx = ['ph1g2c30a', 'pl1g2c01a', 'ph1g6c29b', 'ph2g2c30a', 'pm1g4c30a']
-        #hla.reset_trims()
-        orm = hla.measorm.Orm(bpm = bpmx, trim = trimx)
-        orm.measure("orm-test.pkl", verbose=1)
-        orm.measure_update(bpm=bpmx, trim=trimx[:2], verbose=1, dkick=5e-5)
-        orm.save("orm-test-update.pkl")
-        #orm.checkLinearity()
-        pass
-
-    @unittest.skip("orm data is not ready")
     def test_measure_orm_sub1(self):
         return True
         if hla.NETWORK_DOWN: return True
@@ -1206,6 +1193,23 @@ class TestOrm(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_measure_orm_sub1_l2(self):
+        trimlst = ['ch1g6c15b', 'cl2g6c14b', 'cm1g4c26a']
+        #trimx = ['CXH1G6C15B']
+        bpmlst = [e.name for e in ap.getElements('BPM')]
+
+        fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
+        orm1 = ap.measOrbitRm(bpmlst, trimlst, fname, verbose=2)
+
+        # plotting
+        if PLOTTING:
+            npts, nbpmrow, ntrimcol = np.shape(orm1._rawmatrix)
+            for i in range(ntrimcol):
+                plt.figure()
+                for j in range(nbpmrow):
+                    plt.plot(orm1._rawkick[i,:], orm1._rawmatrix[:,j,i], '-o')
+                plt.savefig("orm_sub1_%05d.png" % i)
+
     def test_measure_orm_l2(self):
         bpms = ap.getElements('BPM')
         trims = ap.getElements('COR')
@@ -1215,7 +1219,7 @@ class TestOrm(unittest.TestCase):
         bpmlst = [b.name for b in bpms[:nbpm]]
         trimlst = [t.name for t in trims[:ntrim]]
         fname = time.strftime("orm_%Y%m%d_%H%M.hdf5")
-        ap.measOrbitRm(bpmlst, trimlst, fname)
+        ap.measOrbitRm(bpmlst, trimlst, fname, minwait=5)
 
 
 if __name__ == "__main__":

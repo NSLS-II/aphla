@@ -190,7 +190,7 @@ class Orm:
                         str(self.bpm[j][0]), str(self.bpm[j][1]), str(p[0,j]),
                         str(residuals[j])))
                                                    
-                if False:
+                if verbose > 1:
                     import matplotlib.pylab as plt
                     plt.clf()
                     plt.subplot(211)
@@ -257,10 +257,14 @@ class Orm:
             ###
             ### it is better to skip coupling, at low slop, error is large ...
             for j in range(len(self.bpm)):
-                if residuals[j] < 1e-11: continue
-                print "WARNING", trim_pv_sp, self.trim[i][0], \
-                    self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
-                if False:
+                x1, x2 = min(ret[1:-1,j]), max(ret[1:-1,j])
+                if x2 - x1 < 1e-6: continue
+                if np.sqrt(residuals[j])/(len(kstrength)-3) < (x2-x1)/10:
+                    continue
+                if verbose:
+                    print "WARNING", trim_pv_sp, self.trim[i][0], \
+                        self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
+                if verbose > 1:
                     import matplotlib.pylab as plt
                     plt.clf()
                     plt.subplot(211)
@@ -568,4 +572,5 @@ class Orm:
             (len(self.trim), len(self.bpm), nbpm, ntrim,
              np.sum(self._mask), len(self.trim)*len(self.bpm))
         return s
+
 

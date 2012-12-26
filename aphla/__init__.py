@@ -73,7 +73,6 @@ from hlalib import *
 from ormdata import OrmData
 
 from meastwiss import *
-from measorm import (measOrbitRm, measChromRm, getSubOrm)
 from aptools import *
 
 import bba

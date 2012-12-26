@@ -22,11 +22,12 @@ from catools import caput, caget
 from hlalib import (getCurrent, getElements, getNeighbors, getClosest,
                     getRfFrequency, putRfFrequency, getTunes, getOrbit,
                     getLocations)
+from orm import Orm
 #from bba import BbaBowtie
 import logging
 
 __all__ = [
-    'getLifetime',  
+    'getLifetime',  'measOrbitRm',
     'correctOrbit', 'createLocalBump', 'setLocalBump',
     'saveImage', 'fitGaussian1', 'fitGaussianImage'
 ]
@@ -788,4 +789,44 @@ def _checkOrbitRmData(od):
     #for v in vtrim: print (v)
         
     return vbpm, vtrim
+
+def measChromRm():
+    """
+    measure chromaticity response matrix
+    
+    NotImplemented
+    """
+    raise NotImplementedError()
+
+#
+def measOrbitRm(bpm, trim, output, **kwargs):
+    """
+    Measure the orbit response matrix
+
+    :param list bpm: list of bpm names
+    :param list trim: list of trim names
+    :param str output: output filename
+    :param float minwait: waiting seconds before each orbit measurement.
+    seealso :func:`Orm.measure`
+    """
+
+    #print "BPM: ", len(bpm)
+    #print "TRIM:", len(trim)
+    logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
+    orm = Orm(bpm, trim)
+    orm.minwait = kwargs.get('minwait', 3)
+
+    orm.measure(output = output, **kwargs)
+    return orm
+
+
+def getSubOrm(bpm, trim, flags = 'XX'):
+    """
+    get submatrix of Orm
+
+    NotImplemented
+    """
+    #return _orm.getSubMatrix(bpm, trim, flags)
+    raise NotImplementedError()
+
 
