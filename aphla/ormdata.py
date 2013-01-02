@@ -34,7 +34,7 @@ class OrmData:
         self.trim = []
         
         # 3d raw data
-        self._rawmatrix = None
+        self._raworbit = None
         self._mask = None
         self._rawkick = None
         self.m = None
@@ -67,43 +67,46 @@ class OrmData:
         dst = f.create_dataset('m', (m,n), data=self.m, compression=h5zip)
         #
         grp = f.create_group('bpm')
-        name, spos, plane, pv = zip(*self.bpm)
+        name, spos, plane = zip(*self.bpm)
         # dtype('<U9') is not recognized in earlier h5py
         if h5py.version.version_tuple[:3] < (2,1,1):
             name = [v.encode('ascii') for v in name]
-            pv = [p.encode('ascii') for p in pv]
+            #pv = [p.encode('ascii') for p in pv]
         dst = grp.create_dataset('element', (m,), data = name, dtype=str_type, 
                                  compression=h5zip)
         dst = grp.create_dataset('location', (m,), data = spos, compression=h5zip)
         dst = grp.create_dataset('plane', (m,), data = plane, dtype=str_type,
                                  compression=h5zip)
-        dst = grp.create_dataset('pvrb', (m,), data = pv, dtype=str_type,
-                                 compression=h5zip)
+        #dst = grp.create_dataset('pvrb', (m,), data = pv, dtype=str_type,
+        #                         compression=h5zip)
         #
-        name, spos, plane, pvrb, pvsp = zip(*self.trim)
+        name, spos, plane = zip(*self.trim)
         # dtype('<U9') is not recognized in earlier h5py
         if h5py.version.version_tuple[:3] < (2,1,1):
             name = [v.encode('ascii') for v in name]
-            pvrb = [p.encode('ascii') for p in pvrb]
-            pvsp = [p.encode('ascii') for p in pvsp]
+            #pvrb = [p.encode('ascii') for p in pvrb]
+            #pvsp = [p.encode('ascii') for p in pvsp]
         grp = f.create_group("trim")
         dst = grp.create_dataset('element', (n,), data=name, dtype=str_type,
                                  compression=h5zip)
         dst = grp.create_dataset('location', (n,), data = spos, compression=h5zip)
         dst = grp.create_dataset('plane', (n,), data=plane, dtype=str_type,
                                  compression=h5zip)
-        dst = grp.create_dataset('pvrb', (n,), data=pvrb, dtype=str_type,
-                                 compression=h5zip)
-        dst = grp.create_dataset('pvsp', (n,), data=pvsp, dtype=str_type,
-                                 compression=h5zip)
+        #dst = grp.create_dataset('pvrb', (n,), data=pvrb, dtype=str_type,
+        #                         compression=h5zip)
+        #dst = grp.create_dataset('pvsp', (n,), data=pvsp, dtype=str_type,
+        #                         compression=h5zip)
         #
         grp = f.create_group("_rawdata_")
-        dst = grp.create_dataset("rawmatrix", data = self._rawmatrix,
-                                 compression=h5zip)
-        dst = grp.create_dataset("rawkick", data = self._rawkick,
-                                 compression=h5zip)
-        dst = grp.create_dataset("mask", data = self._mask, dtype='i',
-                                 compression=h5zip)
+        if self._raworbit is not None:
+            dst = grp.create_dataset("raworbit", data = self._raworbit,
+                                     compression=h5zip)
+        if self._rawkick is not None:
+            dst = grp.create_dataset("rawkick", data = self._rawkick,
+                                     compression=h5zip)
+        if self._mask is not None:
+            dst = grp.create_dataset("mask", data = self._mask, dtype='i',
+                                     compression=h5zip)
         
         f.close()
 
@@ -120,13 +123,14 @@ class OrmData:
         nbpm, ntrim = len(self.bpm), len(self.trim)
         self.m = np.zeros((nbpm, ntrim), 'd')
         self.m[:,:] = f[grp]['m'][:,:]
-        t, npts = f[grp]["_rawdata_"]["rawkick"].shape
-        self._rawkick = np.zeros((ntrim, npts), 'd')
-        self._rawkick[:,:] = f[grp]["_rawdata_"]["rawkick"][:,:]
-        self._rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
-        self._rawmatrix[:,:,:] = f[grp]["_rawdata_"]["rawmatrix"][:,:,:]
-        self._mask = np.zeros((nbpm, ntrim), dtype='i')
-        self._mask[:,:] = f[grp]["_rawdata_"]["mask"][:,:]
+        if "_rawdata_" in f[grp]:
+            t, npts = f[grp]["_rawdata_"]["rawkick"].shape
+            self._rawkick = np.zeros((ntrim, npts), 'd')
+            self._rawkick[:,:] = f[grp]["_rawdata_"]["rawkick"][:,:]
+            self._raworbit = np.zeros((npts, nbpm, ntrim), 'd')
+            self._raworbit[:,:,:] = f[grp]["_rawdata_"]["raworbit"][:,:,:]
+            self._mask = np.zeros((nbpm, ntrim), dtype='i')
+            self._mask[:,:] = f[grp]["_rawdata_"]["mask"][:,:]
 
         f.close()
 
@@ -156,7 +160,7 @@ class OrmData:
             f['orm.m'] = self.m
             f['orm.bpm'] = self.bpm
             f['orm.trim'] = self.trim
-            f['orm._rawdata_.rawmatrix'] = self._rawmatrix
+            f['orm._rawdata_.raworbit'] = self._raworbit
             f['orm._rawdata_.rawkick']   = self._rawkick
             f['orm._rawdata_.mask']      = self._mask
         else:
@@ -181,7 +185,7 @@ class OrmData:
             self.bpm = f["orm.bpm"]
             self.trim = f["orm.trim"]
             self.m = f["orm.m"]
-            self._rawmatrix = f["orm._rawdata_.rawmatrix"]
+            self._raworbit = f["orm._rawdata_.raworbit"]
             self._rawkick   = f["orm._rawdata_.rawkick"]
             self._mask      = f["orm._rawdata_.mask"]
         else:
@@ -291,17 +295,17 @@ class OrmData:
         for j,t in enumerate(src.trim):
             if self._pv_index(t[-2]) < 0:
                 trim.append(t)
-        npts, nbpm0, ntrim0 = np.shape(self._rawmatrix)
+        npts, nbpm0, ntrim0 = np.shape(self._raworbit)
         
         nbpm, ntrim = len(bpm), len(trim)
         #print "(%d,%d) -> (%d,%d)" % (nbpm0, ntrim0, nbpm, ntrim)
         # the merged is larger
-        rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
+        raworbit = np.zeros((npts, nbpm, ntrim), 'd')
         mask      = np.zeros((nbpm, ntrim), 'i')
         rawkick   = np.zeros((ntrim, npts), 'd')
         m         = np.zeros((nbpm, ntrim), 'd')
 
-        rawmatrix[:, :nbpm0, :ntrim0] = self._rawmatrix[:,:,:]
+        raworbit[:, :nbpm0, :ntrim0] = self._raworbit[:,:,:]
         mask[:nbpm0, :ntrim0]         = self._mask[:,:]
         m[:nbpm0, :ntrim0]            = self.m[:,:]
         # still updating rawkick, even it is masked
@@ -322,10 +326,10 @@ class OrmData:
                 ii = ibpm[i]
                 if self._mask[ii,jj]: continue
 
-                rawmatrix[:,ii,jj] = src._rawmatrix[:,i,j]
+                raworbit[:,ii,jj] = src._raworbit[:,i,j]
                 mask[ii,jj] = src._mask[i,j]
                 m[ii,jj] = src.m[i,j]
-        self._rawmatrix = rawmatrix
+        self._raworbit = raworbit
         self._mask = mask
         self._rawkick = rawkick
         self.m = m

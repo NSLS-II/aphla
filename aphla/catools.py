@@ -71,6 +71,10 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
 
     seealso :func:`~aphla.catools.caput`
     """
+    #print "AA"
+    #logger.info("caget %s" % str(pvs))
+    #logging.getLogger("aphla").info("testing")
+
     # in case of testing ...
     if CA_OFFLINE: return _ca_get_sim(pvs)
 

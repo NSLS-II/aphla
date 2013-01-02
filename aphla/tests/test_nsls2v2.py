@@ -1189,26 +1189,63 @@ class TestOrmData(unittest.TestCase):
 
 
 
+class TestRmCol(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_measure_orm_sub1_l2(self):
+        #trim = ap.getElements('ch1g6c15b')[0]
+        trim = ap.getElements('cl2g6c30b')[0]
+        bpmlst = [e.name for e in ap.getElements('BPM')]
+        trim.put('x', 0.0, unit='raw')
+
+        fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
+        ormline = ap.orm.RmCol(bpmlst, trim)
+        ormline.measure('x', 'x', verbose = 2)
+
+        # plotting
+        if PLOTTING:
+            npts, nbpmrow = np.shape(ormline.rawresp)
+            plt.figure()
+            for j in range(nbpmrow):
+                plt.plot(ormline.rawkick[:], ormline.rawresp[:,j], '-o')
+            plt.savefig("rm_orm_sub1_%s.png" % trim.name)
+
+    def test_measure_orm_sub2_l2(self):
+        #trim = ap.getElements('ch1g6c15b')[0]
+        trim = ap.getElements('cl2g6c30b')[0]
+        bpmlst = [e.name for e in ap.getElements('BPM')]
+        trim.put('x', 0.0, unit='raw')
+
+        fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
+        ormline = ap.orm.RmCol(bpmlst, trim)
+        ormline.measure(['x', 'y'], 'x', verbose = 2)
+
+        # plotting
+        if PLOTTING:
+            npts, nbpmrow = np.shape(ormline.rawresp)
+            plt.figure()
+            for j in range(nbpmrow):
+                plt.plot(ormline.rawkick[:], ormline.rawresp[:,j], '-o')
+            plt.savefig("rm_orm_sub1_%s.png" % trim.name)
+
+
 class TestOrm(unittest.TestCase):
     def setUp(self):
         pass
 
     def test_measure_orm_sub1_l2(self):
-        trimlst = ['ch1g6c15b', 'cl2g6c14b', 'cm1g4c26a']
+        #trimlst = ['ch1g6c15b', 'cl2g6c14b', 'cm1g4c26a']
+        trimlst = ['cl2g6c14b']
         #trimx = ['CXH1G6C15B']
         bpmlst = [e.name for e in ap.getElements('BPM')]
+        trims = ap.getElements(trimlst)
+        for t in trims: 
+            t.x = 0
+            t.y = 0
 
         fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
         orm1 = ap.measOrbitRm(bpmlst, trimlst, fname, verbose=2)
-
-        # plotting
-        if PLOTTING:
-            npts, nbpmrow, ntrimcol = np.shape(orm1._rawmatrix)
-            for i in range(ntrimcol):
-                plt.figure()
-                for j in range(nbpmrow):
-                    plt.plot(orm1._rawkick[i,:], orm1._rawmatrix[:,j,i], '-o')
-                plt.savefig("orm_sub1_%05d.png" % i)
 
     def test_measure_orm_l2(self):
         bpms = ap.getElements('BPM')
@@ -1219,7 +1256,7 @@ class TestOrm(unittest.TestCase):
         bpmlst = [b.name for b in bpms[:nbpm]]
         trimlst = [t.name for t in trims[:ntrim]]
         fname = time.strftime("orm_%Y%m%d_%H%M.hdf5")
-        ap.measOrbitRm(bpmlst, trimlst, fname, minwait=5)
+        ap.measOrbitRm(bpmlst, trimlst, fname, verbose=2, minwait=5)
 
 
 if __name__ == "__main__":

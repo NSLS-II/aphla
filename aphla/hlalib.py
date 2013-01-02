@@ -13,7 +13,7 @@ import logging
 import numpy as np
 import time
 from fnmatch import fnmatch
-from catools import caget, caput
+from catools import caget, caput, CA_OFFLINE
 import machines
 import element
 
@@ -175,7 +175,9 @@ def getElements(group, include_virtual=False):
     """
 
     # return the input if it is a list of element object
-    if isinstance(group, (list, tuple)):
+    if isinstance(group, element.AbstractElement):
+        return [group]
+    elif isinstance(group, (list, tuple)):
         if all([isinstance(e, element.AbstractElement) for e in group]):
             return group
 
@@ -208,13 +210,21 @@ def eget(elem = None, fields = None, **kwargs):
 
     seealso :func:`getElements`, :func:`~aphla.element.CaElement.get`
     """
+    header = kwargs.pop('header', False)
+
     if elem is not None:
         elst = getElements(elem)
         if not elst: return None
-        elif len(elst) == 1:
-            return elst[0].get(fields, **kwargs)
         else:
-            return [e.get(fields, **kwargs) for e in elst]
+            v = [e.get(fields, **kwargs) for e in elst]
+            if not header: return v
+            h = []
+            for e in elst:
+                for f in fields:
+                    if f in e.fields(): h.append([e.name, f])
+                    else: h.append([e.name, None])
+            # len(v) == len(h)
+            return v, h
     else:
         return None
 
@@ -873,4 +883,105 @@ def _release_lock(tag):
     caput('SVR:LOCKED', 0)
     print "released the lock for userid=%d" % tag
 
+
+
+def waitChanged(elemlst, fields, v0, **kwargs):
+    """
+    set pvs and waiting until the setting takes effect
+
+    :param elemlst: element list
+    :type elemlist: list of Elements
+    :param v0: old values
+    :type v0: list
+    :param diffstd: threshold value of effective change of *pvmonitors*.
+    :param wait: waiting time for initial, each step and final (seconds)
+    :param maxtrial: maximum trial before return.
+    :param unit: unit of field
+    :param full: return total trials
+
+    :return: whether pvmonitors change significant enough.
+    :rtype: bool
+
+    It sets the pvs with new values and tests the monitor values see if the
+    changes are significant enough. This significance is measured by comparing
+    the std of monitor value changes due to the *pvs* changes. If it exceeds
+    *diffstd* then return, otherwise wait for *wait* seconds and test
+    again. The maximum trial is *maxtrial*.
+
+    It is good for ORM measurement where setting a trim and observing a list
+    of BPM.
+    """
+
+    diffstd= kwargs.get('diffstd', 1e-6)
+    wait = kwargs.get('wait', (2, 1, 0))
+    maxtrial= kwargs.get('maxtrial', 20)
+    full = kwargs.get('full', False)
+    unit = kwargs.get('unit', None)
+
+    if CA_OFFLINE: 
+        if full: return (True, 0)
+        else: return True
+
+    time.sleep(wait[0])
+
+    ntrial = 0
+    while True:
+        v1 = np.ravel(eget(elemlst, fields, unit=unit))
+        time.sleep(wait[1])
+        ntrial = ntrial + 1
+        if np.std(v1 - np.array(v0)) > diffstd: break
+        if ntrial >= maxtrial: break
+
+    time.sleep(wait[2])
+
+    if full:
+        if ntrial >= maxtrial: return (False, ntrial)
+        else: return (True, ntrial)
+    else: 
+        if ntrial >= maxtrial: return False
+        else: return True
+
+def waitStable(elemlst, fields, maxstd, **kwargs):
+    """
+    set pvs and waiting until the setting takes effect
+
+    :param elemlst: element list
+    :type elemlist: list of Elements
+    :param v0: old values
+    :type v0: list
+    :param diffstd: threshold value of effective change of *pvmonitors*.
+    :param wait: waiting time for initial, each step and final (seconds)
+    :param maxtrial: maximum trial before return.
+    :param unit: unit of field
+
+    :return: whether pvmonitors change significant enough.
+    :rtype: bool
+
+    It sets the pvs with new values and tests the monitor values see if the
+    changes are significant enough. This significance is measured by comparing
+    the std of monitor value changes due to the *pvs* changes. If it exceeds
+    *diffstd* then return, otherwise wait for *wait* seconds and test
+    again. The maximum trial is *maxtrial*.
+
+    It is good for ORM measurement where setting a trim and observing a list
+    of BPM.
+    """
+
+    wait = kwargs.get('wait', (2, 1, 0))
+    maxtrial= kwargs.get('maxtrial', 3)
+    unit = kwargs.get('unit', None)
+
+    if CA_OFFLINE: return True
+
+    time.sleep(wait[0])
+
+    v = np.zeros((len(elemlst), maxtrial), 'd')
+    for i in range(maxtrial):
+        v[:,i] = np.ravel(eget(elemlst, fields, unit=unit))
+        time.sleep(wait[1])
+
+    time.sleep(wait[2])
+    if np.average(np.std(v, axis=0)) < maxstd: return True
+    else: return False
+    
 

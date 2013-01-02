@@ -56,7 +56,7 @@ def init_submachines(machine, submachines, **kwargs):
 
     orm_filename = getResource('us_nsls2v2_sr_orm.hdf5', __name__)
     if orm_filename:
-        lattice_dict['V2SR'].ormdata = OrmData(orm_filename)
+        #lattice_dict['V2SR'].ormdata = OrmData(orm_filename)
         logger.info("using ORM data '%s'" % orm_filename)
     else:
         logger.warning("No ORM '%s' found" % orm_filename)

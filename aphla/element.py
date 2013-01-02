@@ -299,6 +299,8 @@ class CaDecorator:
         return the value of readback PV or None if such pv is not defined.
         """
         if self.pvrb: 
+            #print __name__
+            #logger.info("testing")
             ret = caget(self.pvrb)
             if self.trace: 
                 self.rb.append(copy.deepcopy(ret))
@@ -870,6 +872,9 @@ class CaElement(AbstractElement):
         source = kwargs.get('source', 'readback').lower()
         unit = kwargs.get('unit', None)
     
+        if unit not in ['raw', None]:
+            raise NotImplemented("unit conversion is not implemented yet")
+
         if not self._field.has_key(field):
             v = None
         elif source == 'readback':
@@ -896,6 +901,8 @@ class CaElement(AbstractElement):
 
             >>> get('x')
             >>> get(['x', 'y'])
+            >>> get(['x', 'unknown'])
+            [ 0, None]
         """
 
         kw = {'source': source, 'unit': unit}
@@ -905,12 +912,20 @@ class CaElement(AbstractElement):
             # a list of fields
             return [ self._get_field(v, **kw) for v in fields]
 
-    def set(self, field, val, unit = None):
+    def _put_field(self, field, val, **kwargs):
         """
         set *val* to *field*.
 
         seealso :func:`pv(field=field)`
         """
+        unit = kwargs.get("unit", None)
+
+        rawval = val
+        if unit not in ['raw', None]:
+            raise NotImplemented("unit conversion is not implemented yet")
+            #rawval = 
+            # convert unit to 'raw'
+
         att = field
         if self.__dict__['_field'].has_key(att):
             decr = self.__dict__['_field'][att]
@@ -922,7 +937,15 @@ class CaElement(AbstractElement):
         else:
             raise RuntimeError("element '%s' has no field '%s'" % (self.name, att))
         
-        for e in self.alias: e._field[field].set(field, val, unit)
+
+    def put(self, field, val, unit = None):
+        """
+        set *val* to *field*.
+
+        seealso :func:`pv(field=field)`
+        """
+        self._put_field(field, val, unit=unit)
+        for e in self.alias: e._field[field].put(field, val, unit=unit)
 
     def settable(self, field):
         """
