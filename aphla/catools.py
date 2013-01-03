@@ -234,7 +234,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
         if norm2 > norm0:
             print("Failed to reduce orbit distortion, restoring...", 
                   norm0, norm2)
-            caput(trim, k0)
+            caput(kker, k0)
             return False
         else:
             return True
