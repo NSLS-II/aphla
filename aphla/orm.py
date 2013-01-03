@@ -16,12 +16,99 @@ import sys, time
 import numpy as np
 
 #import matplotlib.pylab as plt
-from hlalib import getElements, getPvList
+from hlalib import getElements, getPvList, waitChanged, eget
 from catools import caget, caput, caputwait, Timedout
 from ormdata import OrmData
-
+import itertools
 import logging
 logger = logging.getLogger(__name__)
+
+class RmCol:
+    """
+    One column of RM (Orbit/Tune Response Matrix)
+    """
+
+    def __init__(self, resplst, kicker):
+        """
+        Initialization
+
+        .. highlight:: python
+
+          ormline = RmCol(['BPM1', 'BPM2'], 'trim')
+        """
+
+        self.minwait = 4
+        self.stepwait = 2
+        self.bpmdiffstd = 1e-5
+        self.points = 6
+        self.resplst = getElements(resplst)
+        self.kicker = getElements(kicker)[0]
+        self.rawresp = None
+        self.mask = None
+        self.rawkick = None
+        self.m = None
+        self.header = None
+        self._c = None
+        self.unit = 'raw'
+        self.maxdk = 1e-4
+        self.residuals = None
+
+    def measure(self, respfields, kfield, **kwargs):
+        """
+        Measure the RM by change one kicker. 
+
+        :param respfields: response fields, a list
+        
+        """
+        verbose = kwargs.get('verbose', 0)
+        dklst = kwargs.get('dklst', None)
+
+        kx0 = self.kicker.get(kfield, unit=self.unit) # get EPICS value
+        wait = (self.minwait, self.stepwait, 0)
+        if verbose:
+            print "kicker: '%s.%s'= %e" % (self.kicker.name, kfield, kx0) 
+
+        points = self.points
+        if dklst is not None:
+            points = len(dklst)
+        else:
+            dklst = np.linspace(-self.maxdk, self.maxdk, points)
+
+        # bpm read out
+        ret = np.zeros((points+2, len(self.resplst)*len(respfields)), 'd')
+        # initial bpm data
+        v0, h = eget(self.resplst, respfields, unit=self.unit, header=True)
+        ret[0,:] = np.ravel(v0)
+        self.header = np.reshape(np.ravel(h), (-1, 2))
+
+        kstrength = np.ones(points+2, 'd') * kx0
+        kstrength[1:-1] = [dklst[i] + kx0 for i in range(points)]
+        for i,kx in enumerate(kstrength[1:]):
+            v0 = np.ravel(eget(self.resplst, respfields, unit=self.unit))
+            self.kicker.put(kfield, kx, unit=self.unit)
+            st = waitChanged(self.resplst, respfields, v0, 
+                             wait=wait, diffstd=self.bpmdiffstd)
+
+            v1 = np.ravel(eget(self.resplst, respfields, unit=self.unit))
+            ret[i+1,:] = v1
+            
+            if verbose:
+                print "kx= % .2e  resp= [% .4e, % .4e], stable= %s" % (
+                    kx, min(ret[i+1,:] - ret[0,:]), max(ret[i+1,:]-ret[0,:]),
+                    str(st))
+
+            sys.stdout.flush()
+
+        # fit the lines
+        p, self.residuals, rank, singular_values, rcond = np.polyfit(
+            kstrength[1:-1], ret[1:-1,:], 1, full=True)
+
+        # reset the kicker
+        self.kicker.put(kfield, kx0, unit=self.unit)
+        self.rawkick = kstrength
+        self.rawresp = ret
+        self.m = p[0,:] # the slope
+        self._c = p[1,:] # the constant 
 
 class Orm:
     """
@@ -29,6 +116,7 @@ class Orm:
     """
     TSLEEP = 8
     fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
+
     def __init__(self, bpm, trim):
         """
         Initialize an Orm object with a list of BPMs and Trims
@@ -46,17 +134,11 @@ class Orm:
         self.stepwait = 1.5
         self.bpmdiffstd = 1e-5
 
-        self.trimsp, self.bpmrb = None, None
+        self.bpm = getElements(bpm)
+        self.trim = getElements(trim)
 
-        if trim and bpm:
-            logger.info("bpm: %s" % str(bpm))
-            logger.info("trim: %s" % str(trim))
-            # get the list of (name, 'X', pvread, pvset)
-            self.trim = self._get_trim_pv_record(trim)
-            self.bpm  = self._get_bpm_pv_record(bpm)
-        else:
-            self.bpm = []
-            self.trim = []
+        self.bpmhdr = None # the header [(name, sb, field, pv=None), ...] 
+        self.trimhdr = None # the header [(name, sb, field, pvrb, pvsp), ...] 
 
         logger.info("bpm rec: %s" % str(self.bpm))
         logger.info("trim rec: %s" % str(self.trim))
@@ -66,53 +148,22 @@ class Orm:
         nbpmpv, ntrimpv = len(self.bpm), len(self.trim)
 
         # 3d raw data
-        self._rawmatrix = np.zeros((npts+2, nbpmpv, ntrimpv), 'd')
-        self._mask = np.zeros((nbpmpv, ntrimpv), 'i')
-        self._rawkick = np.zeros((ntrimpv, npts+2), 'd')
-        self.m = np.zeros((nbpmpv, ntrimpv), 'd')
-
+        self._raworbit = None #np.zeros((npts+2, nbpmpv, ntrimpv), 'd')
+        self._mask = None #np.zeros((nbpmpv, ntrimpv), 'i')
+        self._rawkick = None #np.zeros((ntrimpv, npts+2), 'd')
+        self.m = None # np.zeros((nbpmpv, ntrimpv), 'd')
+        self.unit = 'raw'
         
-    def _get_bpm_pv_record(self, bpm):
-        """
-        given patter of bpm, return (name, 'X', pvrb) 
-        """
-        ret = []
-        for bpm in getElements(bpm):
-            for pv in bpm.pv(field='x', handle='readback'):
-                ret.append((bpm.name, bpm.sb, 'x', pv))
-            for pv in bpm.pv(field='y', handle='readback'):
-                ret.append((bpm.name, bpm.sb, 'y', pv))
-        return ret
-
-    def _get_trim_pv_record(self, trim):
-        """
-        given patter of bpm, return (name, 'X', pvrb) 
-        """
-        ret = []
-        for trim in getElements(trim):
-            pvrb = trim.pv(field='x', handle='readback')
-            pvsp = trim.pv(field='x', handle='setpoint')
-            for i in range(len(pvsp)):
-                ret.append((trim.name, trim.sb, 'x', pvrb[i], pvsp[i]))
-
-            pvrb = trim.pv(field='y', handle='readback')
-            pvsp = trim.pv(field='y', handle='setpoint')
-            for i in range(len(pvsp)):
-                ret.append((trim.name, trim.sb, 'y', pvrb[i], pvsp[i]))
-        return ret
-
-    
-            
     def save(self, filename, fmt = ''):
         """
         save the orm data into one file:
         """
         ormdata = OrmData()
-        ormdata.trim = self.trim
-        ormdata.bpm = self.bpm
+        ormdata.trim = self.trimhdr
+        ormdata.bpm = self.bpmhdr
         ormdata.m = self.m
         # protected data of OrmData
-        ormdata._rawmatrix = self._rawmatrix
+        ormdata._raworbit = self._raworbit
         ormdata._mask      = self._mask
         ormdata._rawkick   = self._rawkick
         ormdata.save(filename, fmt)
@@ -122,97 +173,6 @@ class Orm:
         self.ormdata.load(filename, fmt)
 
 
-    def _meas_orbit_rm4(self, kickerpv, bpmpvlist, mask,
-                         kref = 0.0, dkick = 1e-4, verbose = 0, points=6):
-        """
-        Measure the RM by change one kicker. 
-        """
-
-        kx0 = caget(kickerpv)
-        wait = (self.minwait, self.stepwait)
-        if verbose:
-            print "kicker: read %f rb(write) %f" % (kref, kx0) 
-        # bpm read out
-        ret = np.zeros((points+2, len(bpmpvlist)), 'd')
-        # initial bpm data
-        ret[0,:] = caget(bpmpvlist)
-        if verbose:
-            print "% .2e %s % .4e" % (kx0, bpmpvlist[0], ret[0,0])
-        
-        kstrength = np.ones(points+2, 'd') * kx0
-        kstrength[1:-1] = np.linspace(kx0-2*dkick, kx0+2*dkick, points)
-        for i,kx in enumerate(kstrength[1:]):
-            st = caputwait(kickerpv, kx, bpmpvlist, wait=wait, diffstd=self.bpmdiffstd)
-            ret[i+1,:] = caget(bpmpvlist)
-            for j,bpm in enumerate(bpmpvlist):
-                if mask[j]: ret[i+1,j] = 0
-            if verbose:
-                print "% .2e %s % .4e stable= %s" % (kx, bpmpvlist[0], ret[i+1,0], str(st))
-            sys.stdout.flush()
-
-        return np.array(kstrength), ret
-
-
-    def measure_update(self, bpm, trim, verbose=0, dkick=2e-5):
-        """
-        remeasure the ORM data with given bpm and trim, ignore the
-        bpm/trim not defined before.
-        """
-
-        bpmrb = [b[2] for b in self.bpm]
-        for i,t in enumerate(self.trim):
-            if not t[0] in trim: continue
-            #trim_pv_rb = t[2]
-            trim_pv_sp = t[3]
-            kickref = caget(trim_pv_sp)
-            if verbose:
-                print "%3d/%d %s" % (i,len(self.trim),trim_pv_sp),
-            try:
-                kstrength, ret = self._meas_orbit_rm4(
-                    trim_pv_sp, bpmrb, mask = self._mask[:,i], kref=kickref,
-                    dkick = dkick, verbose=verbose)
-            except Timedout:
-                raise Timedout
-
-            # polyfit
-            p, residuals, rank, singular_values, rcond = \
-                np.polyfit(kstrength[1:-1], ret[1:-1,:], 1, full=True)
-
-            ###
-            ### it is better to skip coupling, at low slop, error is large ...
-            for j in range(len(self.bpm)):
-                if residuals[j] < 1e-10: continue
-                if verbose:
-                    print "WARNING", trim_pv_sp, self.trim[i][0], \
-                        self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
-                logger.warn("%s %s %s %s %s resi= %s" % (
-                        str(trim_pv_sp), str(self.trim[i][0]), 
-                        str(self.bpm[j][0]), str(self.bpm[j][1]), str(p[0,j]),
-                        str(residuals[j])))
-                                                   
-                if False:
-                    import matplotlib.pylab as plt
-                    plt.clf()
-                    plt.subplot(211)
-                    plt.plot(1e3*kstrength[1:-1], 1e3*ret[1:-1,j], '--o')
-                    tx = np.linspace(min(kstrength), max(kstrength), 20)
-                    plt.plot(1e3*tx, 1e3*(tx*p[0,j] + p[1,j]), '-')
-                    plt.xlabel("kick [mrad]")
-                    plt.ylabel("orbit [mm]")
-                    plt.subplot(212)
-                    # predicted(fitted) y offset
-                    y1 = kstrength[1:-1]*p[0,j] + p[1,j]
-                    plt.plot(1e3*kstrength[1:-1], 1e6*(ret[1:-1,j] - y1), '--x')
-                    plt.xlabel("kick [mrad]")
-                    plt.ylabel("orbit diff [um]")
-                    plt.savefig("orm-t%03d-b%03d.png" % (i,j))
-
-            self._rawkick[i, :] = kstrength[:]
-            for j,b in enumerate(self.bpm):
-                if not b[0] in bpm: continue
-                self._rawmatrix[:,j,i] = ret[:,j]
-                self.m[j,i] = p[0,j]
-                
     def measure(self, **kwargs):
         """
         Measure the ORM, ignore the Horizontal(kicker)-Vertical(bpm)
@@ -221,81 +181,86 @@ class Orm:
         :param output:
         :param verbose:
         :param dkick:
+
+        BPM must have both 'x', 'y'
         """
         output  = kwargs.get("output", "orm.hdf5")
         verbose = kwargs.get("verbose", 1)
-        dkick   = kwargs.get("dkick", 2e-5)
+        maxdk   = kwargs.get("maxdk", 1e-4)
+        rflds = kwargs.get("bpmfields", ['x', 'y'])
+        trimflds = kwargs.get("trimfields", ['x', 'y'])
+
+        # the header of matrix, this must be same order as 
+        # eget(self.bpm, ['x', 'y'])
+        self.bpmhdr = [(b.name, b.sb, f) for b in self.bpm for f in rflds]
+        self.trimhdr = [(b.name, b.sb, f) for b in self.trim for f in trimflds]
+
         t_start = time.time()
-        
-        bpmrb = [b[-1] for b in self.bpm]
-        for i, rec in enumerate(self.trim):
+        self._rawkick = []
+        rawobt, rawm, rawkick = [], [], []
+        for i,krec in enumerate(itertools.product(self.trim, trimflds)):
+            kicker, kfld = krec
+            if kfld not in kicker.fields(): continue
+
             t0 = time.time()
-            # get the readback of one trim
-            trim_pv_rb = rec[-2]
-            trim_pv_sp = rec[-1]
-            kickref = caget(trim_pv_sp)
+            ormline = RmCol(self.bpm, kicker)
 
-            if verbose:
-                print "%3d/%d %s" % (i, len(self.trim), trim_pv_sp),
-            try:
-                kstrength, ret = self._meas_orbit_rm4(
-                    trim_pv_sp, bpmrb, mask = self._mask[:,i], kref=kickref,
-                    dkick = dkick, verbose=verbose)
-                #if True:
-                #    print "%3d/%d %.2f" % (i,len(self.trim), time.time()-t0), 
-                #    t0 = time.time()
-            except Timedout:
-                raise Timedout
-            if verbose:
-                print ""
-                sys.stdout.flush()
-        
-            # polyfit
-            p, residuals, rank, singular_values, rcond = \
-                np.polyfit(kstrength[1:-1], ret[1:-1,:], 1, full=True)
-
-            ###
-            ### it is better to skip coupling, at low slop, error is large ...
-            for j in range(len(self.bpm)):
-                if residuals[j] < 1e-11: continue
-                print "WARNING", trim_pv_sp, self.trim[i][0], \
-                    self.bpm[j][0], self.bpm[j][1], p[0,j], residuals[j]
-                if False:
-                    import matplotlib.pylab as plt
-                    plt.clf()
-                    plt.subplot(211)
-                    plt.plot(1e3*kstrength[1:-1], 1e3*ret[1:-1,j], '--o')
-                    tx = np.linspace(min(kstrength), max(kstrength), 20)
-                    plt.plot(1e3*tx, 1e3*(tx*p[0,j] + p[1,j]), '-')
-                    plt.xlabel("kick [mrad]")
-                    plt.ylabel("Orbit [mm]")
-                    plt.subplot(212)
-                    # predicted(fitted) y offset
-                    y1 = kstrength[1:-1]*p[0,j] + p[1,j]
-                    plt.plot(1e3*kstrength[1:-1], 1e6*(ret[1:-1,j] - y1), '--x')
-                    plt.xlabel("kick [mrad]")
-                    plt.ylabel("Orbit diff [um]")
-                    plt.savefig("orm-t%03d-b%03d.png" % (i,j))
-                    
-            self._rawkick[i, :] = kstrength[:]
-            self._rawmatrix[:,:,i] = ret[:,:]
-            #self.m[:,i] = v[:]
-            self.m[:,i] = p[0,:]
-            if False:
+            if verbose > 1:
+                import matplotlib.pylab as plt
                 plt.clf()
-                for j in range(len(self.bpm)):
-                    # skip the coupling
-                    if rec[1] != self.bpm[j][1]: continue
-                    plt.plot(self._rawkick[i,:]*1e6, ret[:,j]*1e3, '-o')
-                plt.savefig("orm-kick-%s.png" % rec[0])
+                nlines = 0
 
-            time.sleep(self.TSLEEP)
+            if verbose:
+                print "%d/%d '%s/%s.%s'" % (
+                    i, len(self.trim), rflds, kicker.name, kfld)
 
-            # save for every trim settings
-            self.save(output)
-            if not verbose:
-                print "%3d/%d %s %.1f sec" % \
-                    (i,len(self.trim),trim_pv_sp, time.time() - t0)
+            ormline.measure(rflds, kfld, unit=self.unit, verbose=verbose)
+            rawobt.append(ormline.rawresp)
+            rawm.append(ormline.m)
+            rawkick.append(ormline.rawkick)
+            #
+            # it is better to skip coupling, at low slop, error is large ...
+            nk, nrow = np.shape(ormline.rawresp)
+            for j in range(len(self.bpmhdr)):
+                x1 = min(ormline.rawresp[1:-1,j])
+                x2 = max(ormline.rawresp[1:-1,j])
+
+                #if x2 - x1 < 1e-6: continue
+                if np.sqrt(ormline.residuals[j])/(nk-3) < (x2-x1)/10:
+                    continue
+                # ignore if the coupling is < 0.03
+                # if abs(ormline.m[j]) < 0.03 and kfld not in rflds: continue
+
+                bpmname, bpmfield = ormline.header[j]
+                if (bpmname, bpmfield) != (self.bpmhdr[j][0], self.bpmhdr[j][2]):
+                    raise RuntimeError("inconsistent bpm header %s,%s != %s,%s" \
+                                       % (bpmname, bpmfield, self.bpmhdr[j][0], self.bpmhdr[j][2] ))
+
+                # skip checking the coupling matrix elements
+                if bpmfield != kfld: continue
+
+                if verbose:
+                    print "WARNING: %s.%s/%s.%s orbit=[% .3e, % .3e] slop=%f, r=%e" % (
+                        bpmname, bpmfield, kicker.name, kfld, x1, x2,
+                        ormline.m[j], ormline.residuals[j])
+
+                if verbose > 1:
+                    nlines += 1
+                    x, y = ormline.rawkick[1:-1], ormline.rawresp[1:-1,j]
+                    plt.plot(x, y, '--o')
+                    tx = np.linspace(min(x), max(x), 20)
+                    plt.plot(tx, tx*ormline.m[j] + ormline._c[j], '-')
+                    plt.xlabel("%s.%s" % (kicker.name, kfld))
+                    plt.ylabel("%s.%s" % (bpmname, rflds))
+
+            if nlines > 0:
+                plt.savefig("orm-t%03d.png" % (i,))
+
+        self.m = np.array(rawm, 'd').T
+        self._rawkick = np.array(rawkick, 'd')
+        self._raworbit = np.rollaxis(np.array(rawobt, 'd'), 2, 0)
+        # save for every trim settings
+        self.save(output)
         t_end = time.time()
         print "-- Time cost: %.2f min" % ((t_end - t_start)/60.0)
 
@@ -568,4 +533,5 @@ class Orm:
             (len(self.trim), len(self.bpm), nbpm, ntrim,
              np.sum(self._mask), len(self.trim)*len(self.bpm))
         return s
+
 

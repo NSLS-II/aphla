@@ -17,7 +17,7 @@ def has(resname):
     else:
         return resource_exists(__name__, resname)
 
-def getResource(resname, loc = __name__):
+def getResource(resname, loc = None):
     """
     returns the true filename for resource
 
@@ -27,7 +27,7 @@ def getResource(resname, loc = __name__):
     prv_filename = os.path.join(os.getenv("HOME"), ".hla", resname)
     if os.path.exists(prv_filename):
         return prv_filename
-    elif resource_exists(loc, resname):
+    elif loc and resource_exists(loc, resname):
         # use the config within distribution
         return resource_filename(loc, resname)
     else:

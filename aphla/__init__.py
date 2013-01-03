@@ -52,12 +52,15 @@ class NullHandler(logging.Handler):
 
 #APHLA_LOG = os.path.join(tempfile.gettempdir(), "aphla.log")
 APHLA_LOG = 'aphla.log'
-logging.basicConfig(filename=APHLA_LOG,
-    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
-    level=logging.DEBUG)
+#logging.basicConfig(filename=APHLA_LOG,
+#    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
+#    level=logging.DEBUG)
+_lgfmt = logging.Formatter("%(asctime)s - %(name)s [%(levelname)s]: %(message)s")
 # set null handler when logging for a library.
-_hdl = NullHandler()
-logging.getLogger('aphla').addHandler(_hdl)
+_lghdl = NullHandler()
+_lghdl.setLevel(logging.DEBUG)
+_lghdl.setFormatter(_lgfmt)
+logging.getLogger('aphla').addHandler(_lghdl)
 
 #
 
@@ -73,7 +76,6 @@ from hlalib import *
 from ormdata import OrmData
 
 from meastwiss import *
-from measorm import (measOrbitRm, measChromRm, getSubOrm)
 from aptools import *
 
 import bba

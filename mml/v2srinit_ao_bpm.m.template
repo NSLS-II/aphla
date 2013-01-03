@@ -5,12 +5,12 @@ AO.BPMx.DeviceList  = [ %(bpmx_devlist)s ];
 AO.BPMx.ElementList = (1:size(AO.BPMx.DeviceList,1))';
 AO.BPMx.Status      = ones(size(AO.BPMx.DeviceList,1),1);
 AO.BPMx.Position    = [];
-AO.BPMx.CommonNames = [%(bpmx_commonnames)s];
+AO.BPMx.CommonNames = [ %(bpmx_commonnames)s ];
 
 AO.BPMx.Monitor.MemberOf = {'PlotFamily'; 'BPM'; 'BPMx'; 'Monitor'; 'Save';};
 AO.BPMx.Monitor.Mode = 'Simulator';
 AO.BPMx.Monitor.DataType = 'Scalar';
-AO.BPMx.Monitor.ChannelNames = { %(bpmx_monitor_pv)s; ''};
+AO.BPMx.Monitor.ChannelNames = { %(bpmx_monitor_pv)s };
 
 AO.BPMx.Monitor.HW2PhysicsParams = 1e-3;  %% HW [mm], Simulator [Meters]
 AO.BPMx.Monitor.Physics2HWParams = 1000;

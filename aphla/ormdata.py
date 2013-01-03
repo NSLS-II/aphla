@@ -16,6 +16,9 @@ from os.path import splitext
 import numpy as np
 import shelve
 
+import logging
+logger = logging.getLogger(__name__)
+
 class OrmData:
     """
     Orbit Response Matrix Data
@@ -34,7 +37,7 @@ class OrmData:
         self.trim = []
         
         # 3d raw data
-        self._rawmatrix = None
+        self._raworbit = None
         self._mask = None
         self._rawkick = None
         self.m = None
@@ -67,43 +70,46 @@ class OrmData:
         dst = f.create_dataset('m', (m,n), data=self.m, compression=h5zip)
         #
         grp = f.create_group('bpm')
-        name, spos, plane, pv = zip(*self.bpm)
+        name, spos, plane = zip(*self.bpm)
         # dtype('<U9') is not recognized in earlier h5py
         if h5py.version.version_tuple[:3] < (2,1,1):
             name = [v.encode('ascii') for v in name]
-            pv = [p.encode('ascii') for p in pv]
+            #pv = [p.encode('ascii') for p in pv]
         dst = grp.create_dataset('element', (m,), data = name, dtype=str_type, 
                                  compression=h5zip)
         dst = grp.create_dataset('location', (m,), data = spos, compression=h5zip)
         dst = grp.create_dataset('plane', (m,), data = plane, dtype=str_type,
                                  compression=h5zip)
-        dst = grp.create_dataset('pvrb', (m,), data = pv, dtype=str_type,
-                                 compression=h5zip)
+        #dst = grp.create_dataset('pvrb', (m,), data = pv, dtype=str_type,
+        #                         compression=h5zip)
         #
-        name, spos, plane, pvrb, pvsp = zip(*self.trim)
+        name, spos, plane = zip(*self.trim)
         # dtype('<U9') is not recognized in earlier h5py
         if h5py.version.version_tuple[:3] < (2,1,1):
             name = [v.encode('ascii') for v in name]
-            pvrb = [p.encode('ascii') for p in pvrb]
-            pvsp = [p.encode('ascii') for p in pvsp]
+            #pvrb = [p.encode('ascii') for p in pvrb]
+            #pvsp = [p.encode('ascii') for p in pvsp]
         grp = f.create_group("trim")
         dst = grp.create_dataset('element', (n,), data=name, dtype=str_type,
                                  compression=h5zip)
         dst = grp.create_dataset('location', (n,), data = spos, compression=h5zip)
         dst = grp.create_dataset('plane', (n,), data=plane, dtype=str_type,
                                  compression=h5zip)
-        dst = grp.create_dataset('pvrb', (n,), data=pvrb, dtype=str_type,
-                                 compression=h5zip)
-        dst = grp.create_dataset('pvsp', (n,), data=pvsp, dtype=str_type,
-                                 compression=h5zip)
+        #dst = grp.create_dataset('pvrb', (n,), data=pvrb, dtype=str_type,
+        #                         compression=h5zip)
+        #dst = grp.create_dataset('pvsp', (n,), data=pvsp, dtype=str_type,
+        #                         compression=h5zip)
         #
         grp = f.create_group("_rawdata_")
-        dst = grp.create_dataset("rawmatrix", data = self._rawmatrix,
-                                 compression=h5zip)
-        dst = grp.create_dataset("rawkick", data = self._rawkick,
-                                 compression=h5zip)
-        dst = grp.create_dataset("mask", data = self._mask, dtype='i',
-                                 compression=h5zip)
+        if self._raworbit is not None:
+            dst = grp.create_dataset("raworbit", data = self._raworbit,
+                                     compression=h5zip)
+        if self._rawkick is not None:
+            dst = grp.create_dataset("rawkick", data = self._rawkick,
+                                     compression=h5zip)
+        if self._mask is not None:
+            dst = grp.create_dataset("mask", data = self._mask, dtype='i',
+                                     compression=h5zip)
         
         f.close()
 
@@ -114,19 +120,20 @@ class OrmData:
         import h5py
         f = h5py.File(filename, 'r')
         g = f[grp]['bpm']
-        self.bpm = zip(g["element"], g["location"], g["plane"], g["pvrb"])
+        self.bpm = zip(g["element"], g["location"], g["plane"])
         g = f[grp]['trim']
-        self.trim = zip(g["element"], g["location"], g["plane"], g["pvrb"], g["pvsp"])
+        self.trim = zip(g["element"], g["location"], g["plane"])
         nbpm, ntrim = len(self.bpm), len(self.trim)
         self.m = np.zeros((nbpm, ntrim), 'd')
         self.m[:,:] = f[grp]['m'][:,:]
-        t, npts = f[grp]["_rawdata_"]["rawkick"].shape
-        self._rawkick = np.zeros((ntrim, npts), 'd')
-        self._rawkick[:,:] = f[grp]["_rawdata_"]["rawkick"][:,:]
-        self._rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
-        self._rawmatrix[:,:,:] = f[grp]["_rawdata_"]["rawmatrix"][:,:,:]
-        self._mask = np.zeros((nbpm, ntrim), dtype='i')
-        self._mask[:,:] = f[grp]["_rawdata_"]["mask"][:,:]
+        if "_rawdata_" in f[grp]:
+            t, npts = f[grp]["_rawdata_"]["rawkick"].shape
+            self._rawkick = np.zeros((ntrim, npts), 'd')
+            self._rawkick[:,:] = f[grp]["_rawdata_"]["rawkick"][:,:]
+            self._raworbit = np.zeros((npts, nbpm, ntrim), 'd')
+            #self._raworbit[:,:,:] = f[grp]["_rawdata_"]["raworbit"][:,:,:]
+            self._mask = np.zeros((nbpm, ntrim), dtype='i')
+            #self._mask[:,:] = f[grp]["_rawdata_"]["mask"][:,:]
 
         f.close()
 
@@ -156,7 +163,7 @@ class OrmData:
             f['orm.m'] = self.m
             f['orm.bpm'] = self.bpm
             f['orm.trim'] = self.trim
-            f['orm._rawdata_.rawmatrix'] = self._rawmatrix
+            f['orm._rawdata_.raworbit'] = self._raworbit
             f['orm._rawdata_.rawkick']   = self._rawkick
             f['orm._rawdata_.mask']      = self._mask
         else:
@@ -181,7 +188,7 @@ class OrmData:
             self.bpm = f["orm.bpm"]
             self.trim = f["orm.trim"]
             self.m = f["orm.m"]
-            self._rawmatrix = f["orm._rawdata_.rawmatrix"]
+            self._raworbit = f["orm._rawdata_.raworbit"]
             self._rawkick   = f["orm._rawdata_.rawkick"]
             self._mask      = f["orm._rawdata_.mask"]
         else:
@@ -291,17 +298,17 @@ class OrmData:
         for j,t in enumerate(src.trim):
             if self._pv_index(t[-2]) < 0:
                 trim.append(t)
-        npts, nbpm0, ntrim0 = np.shape(self._rawmatrix)
+        npts, nbpm0, ntrim0 = np.shape(self._raworbit)
         
         nbpm, ntrim = len(bpm), len(trim)
         #print "(%d,%d) -> (%d,%d)" % (nbpm0, ntrim0, nbpm, ntrim)
         # the merged is larger
-        rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
+        raworbit = np.zeros((npts, nbpm, ntrim), 'd')
         mask      = np.zeros((nbpm, ntrim), 'i')
         rawkick   = np.zeros((ntrim, npts), 'd')
         m         = np.zeros((nbpm, ntrim), 'd')
 
-        rawmatrix[:, :nbpm0, :ntrim0] = self._rawmatrix[:,:,:]
+        raworbit[:, :nbpm0, :ntrim0] = self._raworbit[:,:,:]
         mask[:nbpm0, :ntrim0]         = self._mask[:,:]
         m[:nbpm0, :ntrim0]            = self.m[:,:]
         # still updating rawkick, even it is masked
@@ -322,10 +329,10 @@ class OrmData:
                 ii = ibpm[i]
                 if self._mask[ii,jj]: continue
 
-                rawmatrix[:,ii,jj] = src._rawmatrix[:,i,j]
+                raworbit[:,ii,jj] = src._raworbit[:,i,j]
                 mask[ii,jj] = src._mask[i,j]
                 m[ii,jj] = src.m[i,j]
-        self._rawmatrix = rawmatrix
+        self._raworbit = raworbit
         self._mask = mask
         self._rawkick = rawkick
         self.m = m
@@ -352,9 +359,8 @@ class OrmData:
         if only bpm name given, the return matrix will not equal to
         len(bpm),len(trim), since one bpm can have two lines (x,y) data.
 
-        - *bpm* a list of bpm names
-        - *trim* a list of trim names
-        - *flags* is a tuple of (bpm plans, trim plans: ('X','X'), ('XY', 'Y') 
+        - *bpm* a list of bpm (name, field) tuple
+        - *trim* a list of trim (name, field) tuple
 
         optional:
 
@@ -364,32 +370,34 @@ class OrmData:
         if not bpm or not trim: return None
         #if flags not in ['XX', 'XY', 'YY', 'YX', '**']: return None
         
-        ibpm  = set([v[0] for v in self.bpm])
-        itrim = set([v[0] for v in self.trim])
+        #ibpm  = set([v[0] for v in self.bpm])
+        #itrim = set([v[0] for v in self.trim])
 
         ignore_unmeasured = kwargs.get('ignore_unmeasured', True)
 
-        # only consider the bpm/trim in this ORM
-        bsub = bpm_st.intersection(set(bpm))
-        tsub = trim_st.intersection(set(trim))
-
-        if not ignore_unmeasured:
-            if len(bsub) < len(bpm):
-                raise ValueError("Some BPMs are absent in orm measurement")
-            if len(tsub) < len(trim):
-                raise ValueError("Some Trims are absent in orm measurement")
+        ibpm  = [i for i,v in enumerate(self.bpm) if (v[0], v[2]) in bpm]
+        itrim = [i for i,v in enumerate(self.trim) if (v[0], v[2]) in trim]
         
-        mat = np.zeros((len(bpm), len(trim)), 'd')
-        for i,b in enumerate(self.bpm):
-            if b[0] not in bpm: continue
-            if b[2] not in flags[0]: continue
-            ii = bpm.index(b[0])
-            for j,t in enumerate(self.trim):
-                if t[0] not in trim or t[2] not in flags[1]: continue
-                jj = trim.index(t[0])
-                mat[ii,jj] = self.m[i,j]
+        if len(ibpm) != len(set(ibpm)): 
+            logger.warn("BPM list has duplicates")
+        if len(itrim) != len(set(itrim)): 
+            logger.warn("Trim list has duplicates")
 
-        return mat
+            
+        if len(ibpm) < len(bpm):
+            if not ignore_unmeasured:
+                raise ValueError("Some BPMs are absent in orm measurement")
+            else:
+                logger.warn("Some BPMs not in the measured ORM are ignored")
+        if len(itrim) < len(trim):
+            if not ignore_unmeasured:
+                raise ValueError("Some Trims are absent in orm measurement")
+            else:
+                logger.warn("Some Trims not in the measured ORM are ignored")
+        
+        mat = np.take(np.take(self.m, ibpm, axis=0), itrim, axis=1)
+
+        return mat, [bpm[i] for i in ibpm], [trim[i] for i in itrim]
 
     def getSubMatrixPv(self, bpm, trim, **kw):
         """

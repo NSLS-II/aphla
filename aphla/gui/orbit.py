@@ -16,6 +16,7 @@ app = cothread.iqt()
 import aphla
 from aphla.catools import caget, caput, camonitor, FORMAT_TIME
 
+import logging
 import sys
 
 import gui_resources
@@ -32,9 +33,20 @@ import time
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
-    QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
+    QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
+    QPlainTextEdit
+)
 
 import numpy as np
+
+class QTextEditLoggingHandler(logging.Handler):
+    def __init__(self, textedit):
+        logging.Handler.__init__(self)
+        self.textedit = textedit
+
+    def emit(self, record):
+        self.textedit.appendPlainText(self.format(record))
+
 
 class ElementPropertyTabs(QTabWidget):
     def __init__(self, parent = None):
@@ -125,7 +137,17 @@ class OrbitPlotMainWindow(QMainWindow):
         ##majbox.addWidget(self.tabs, 1, 0)
         ##majbox.addWidget(self.elems, 1, 1)
         majbox.addWidget(self.orbitSplitter) #, 1, 0, 1, 2)
+
+        # logging
+        textedit = QPlainTextEdit(self)
+        logger = logging.getLogger("aphla")
+        handler = QTextEditLoggingHandler(textedit)
+        logger.addHandler(handler)
+        #logger.setLevel(logging.DEBUG)
+        majbox.addWidget(textedit)
+
         cwid.setLayout(majbox)
+        logger.info("INFO")
 
         self.data1 = None
         self.live_orbit = True
