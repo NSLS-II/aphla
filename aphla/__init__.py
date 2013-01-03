@@ -37,8 +37,11 @@ Modules include:
 
 from __future__ import print_function
 
-__version__ = "0.7.0"
-
+__version__ = "Unknow"
+try:
+    from version import version as __version__
+except:
+    pass
 
 import os
 import tempfile
