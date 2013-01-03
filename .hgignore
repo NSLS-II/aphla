@@ -33,6 +33,7 @@ src/tracy/tracy-3.5/autom4te.cache
 src/qrc_resources.py
 *.egg-info
 *.sqlite.bak
+aphla/version.py
 
 syntax:regexp
 ^build/
@@ -43,4 +44,4 @@ syntax:regexp
 ^utils/debian/
 ^utils/conf.py
 ^aphla/machines/nsls2/conf.py
-
+^.coverage

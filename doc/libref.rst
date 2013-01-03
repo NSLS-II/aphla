@@ -1,20 +1,25 @@
-References
-===========
+.. _reference:
 
-.. htmlonly::
-   :Date: |today|
+################
+aphla Reference
+################
+
+:Release: |version|
+:Date: |today|
+
+.. module:: aphla
+
+This reference manual details functions, modules and objects in ``aphla``. For learning how to use aphla, see also :ref:`tutorial`
 
 .. toctree::
    :maxdepth: 2
 
-.. htmlonly::
+   catools
 
-   Some commands are exported from modules to the top level of `aphla` package. They are commonly used:
-
-.. include:: commands.txt
-
-.. automodule:: aphla.catools
-   :members:
+.. currentmodule:: aphla.chanfinder
+   
+Channel finder
+--------------
 
 .. automodule:: aphla.chanfinder
    :members:
