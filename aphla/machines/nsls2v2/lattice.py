@@ -42,10 +42,6 @@ def init_submachines(machine, submachines, **kwargs):
 
     lattice_dict = {}
 
-    print __name__
-    print "DEBUG", logger.isEnabledFor(logging.DEBUG)
-    print "INFO", logger.isEnabledFor(logging.INFO)
-    print "LEVEL", logger.getEffectiveLevel()
     #logger.error("HELP")
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)

@@ -253,7 +253,7 @@ class Orm:
                     plt.xlabel("%s.%s" % (kicker.name, kfld))
                     plt.ylabel("%s.%s" % (bpmname, rflds))
 
-            if nlines > 0:
+            if verbose > 1 and nlines > 0:
                 plt.savefig("orm-t%03d.png" % (i,))
 
         self.m = np.array(rawm, 'd').T
