@@ -13,7 +13,8 @@ caget will have noises and caput will do nothing.
 """
 
 __all__ = [
-    'caget', 'caput', 'caputwait', 'Timedout', 'CA_OFFLINE', 'FORMAT_TIME'
+    'caget', 'caput', 'caputwait', 'caRmCorrect', 
+    'Timedout', 'CA_OFFLINE', 'FORMAT_TIME'
 ]
 
 import sys, time, os
@@ -186,4 +187,57 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1),  maxtrial=20):
             return True
         elif ntrial > maxtrial:
             return False
+
+
+def caRmCorrect(resp, kker, m, **kwarg):
+    """
+    correct the resp using kker
+
+    :param resp: PV list of the target, e.g. orbit, tune
+    :param kker: PV list of the controllers, e.g. corrector
+    :param m: response matrix where m_{ij}=dresp_i/dkker_j
+    :param scale: scaling factor applied to the calculated kker
+    :param ref: the targeting value of resp PVs
+    :param rcond: the rcond for cutting singular values. 
+    :param check: stop if the orbit gets worse.
+    :param wait: waiting (seconds) before check.
+    :rtype bool: return converged or not. None if it did not check.
+    """
+    scale = kwarg.get('scale', 0.68)
+    ref = kwarg.get('ref', None)
+    check = kwarg.get('check', True)
+    wait = kwarg.get('wait', 6)
+    rcond = kwarg.get('rcond', 1e-4)
+    verbose = kwarg.get('verbose', 1)
+
+    v0 = np.array(caget(resp), 'd')
+    if ref is not None: v0 = v0 - ref
+    
+    # the initial norm
+    norm0 = np.linalg.norm(v0)
+
+    # solve for m*dk + (v0 - ref) = 0
+    dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0, rcond = rcond)
+
+    norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
+    k0 = np.array(caget(kker), 'd')
+    caput(kker, k0+dk*scale)
+
+    # wait and check
+    if check == True:
+        time.sleep(wait)
+        v1 = np.array(caget(resp), 'd')
+        if ref is not None: v1 = v1 - np.array(ref)
+        norm2 = np.linalg.norm(v1)
+        if verbose:
+            print("Euclidian norm: pred./realized", norm1/norm0, norm2/norm0)
+        if norm2 > norm0:
+            print("Failed to reduce orbit distortion, restoring...", 
+                  norm0, norm2)
+            caput(trim, k0)
+            return False
+        else:
+            return True
+    else:
+        return None
 

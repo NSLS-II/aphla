@@ -3,6 +3,7 @@ from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, OrmData, getRe
 from fnmatch import fnmatch
 import logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
@@ -41,6 +42,11 @@ def init_submachines(machine, submachines, **kwargs):
 
     lattice_dict = {}
 
+    print __name__
+    print "DEBUG", logger.isEnabledFor(logging.DEBUG)
+    print "INFO", logger.isEnabledFor(logging.INFO)
+    print "LEVEL", logger.getEffectiveLevel()
+    #logger.error("HELP")
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
 
@@ -56,7 +62,7 @@ def init_submachines(machine, submachines, **kwargs):
 
     orm_filename = getResource('us_nsls2v2_sr_orm.hdf5', __name__)
     if orm_filename:
-        #lattice_dict['V2SR'].ormdata = OrmData(orm_filename)
+        lattice_dict['V2SR'].ormdata = OrmData(orm_filename)
         logger.info("using ORM data '%s'" % orm_filename)
     else:
         logger.warning("No ORM '%s' found" % orm_filename)

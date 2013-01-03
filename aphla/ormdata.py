@@ -16,6 +16,9 @@ from os.path import splitext
 import numpy as np
 import shelve
 
+import logging
+logger = logging.getLogger(__name__)
+
 class OrmData:
     """
     Orbit Response Matrix Data
@@ -117,9 +120,9 @@ class OrmData:
         import h5py
         f = h5py.File(filename, 'r')
         g = f[grp]['bpm']
-        self.bpm = zip(g["element"], g["location"], g["plane"], g["pvrb"])
+        self.bpm = zip(g["element"], g["location"], g["plane"])
         g = f[grp]['trim']
-        self.trim = zip(g["element"], g["location"], g["plane"], g["pvrb"], g["pvsp"])
+        self.trim = zip(g["element"], g["location"], g["plane"])
         nbpm, ntrim = len(self.bpm), len(self.trim)
         self.m = np.zeros((nbpm, ntrim), 'd')
         self.m[:,:] = f[grp]['m'][:,:]
@@ -128,9 +131,9 @@ class OrmData:
             self._rawkick = np.zeros((ntrim, npts), 'd')
             self._rawkick[:,:] = f[grp]["_rawdata_"]["rawkick"][:,:]
             self._raworbit = np.zeros((npts, nbpm, ntrim), 'd')
-            self._raworbit[:,:,:] = f[grp]["_rawdata_"]["raworbit"][:,:,:]
+            #self._raworbit[:,:,:] = f[grp]["_rawdata_"]["raworbit"][:,:,:]
             self._mask = np.zeros((nbpm, ntrim), dtype='i')
-            self._mask[:,:] = f[grp]["_rawdata_"]["mask"][:,:]
+            #self._mask[:,:] = f[grp]["_rawdata_"]["mask"][:,:]
 
         f.close()
 
@@ -356,9 +359,8 @@ class OrmData:
         if only bpm name given, the return matrix will not equal to
         len(bpm),len(trim), since one bpm can have two lines (x,y) data.
 
-        - *bpm* a list of bpm names
-        - *trim* a list of trim names
-        - *flags* is a tuple of (bpm plans, trim plans: ('X','X'), ('XY', 'Y') 
+        - *bpm* a list of bpm (name, field) tuple
+        - *trim* a list of trim (name, field) tuple
 
         optional:
 
@@ -368,32 +370,34 @@ class OrmData:
         if not bpm or not trim: return None
         #if flags not in ['XX', 'XY', 'YY', 'YX', '**']: return None
         
-        ibpm  = set([v[0] for v in self.bpm])
-        itrim = set([v[0] for v in self.trim])
+        #ibpm  = set([v[0] for v in self.bpm])
+        #itrim = set([v[0] for v in self.trim])
 
         ignore_unmeasured = kwargs.get('ignore_unmeasured', True)
 
-        # only consider the bpm/trim in this ORM
-        bsub = bpm_st.intersection(set(bpm))
-        tsub = trim_st.intersection(set(trim))
-
-        if not ignore_unmeasured:
-            if len(bsub) < len(bpm):
-                raise ValueError("Some BPMs are absent in orm measurement")
-            if len(tsub) < len(trim):
-                raise ValueError("Some Trims are absent in orm measurement")
+        ibpm  = [i for i,v in enumerate(self.bpm) if (v[0], v[2]) in bpm]
+        itrim = [i for i,v in enumerate(self.trim) if (v[0], v[2]) in trim]
         
-        mat = np.zeros((len(bpm), len(trim)), 'd')
-        for i,b in enumerate(self.bpm):
-            if b[0] not in bpm: continue
-            if b[2] not in flags[0]: continue
-            ii = bpm.index(b[0])
-            for j,t in enumerate(self.trim):
-                if t[0] not in trim or t[2] not in flags[1]: continue
-                jj = trim.index(t[0])
-                mat[ii,jj] = self.m[i,j]
+        if len(ibpm) != len(set(ibpm)): 
+            logger.warn("BPM list has duplicates")
+        if len(itrim) != len(set(itrim)): 
+            logger.warn("Trim list has duplicates")
 
-        return mat
+            
+        if len(ibpm) < len(bpm):
+            if not ignore_unmeasured:
+                raise ValueError("Some BPMs are absent in orm measurement")
+            else:
+                logger.warn("Some BPMs not in the measured ORM are ignored")
+        if len(itrim) < len(trim):
+            if not ignore_unmeasured:
+                raise ValueError("Some Trims are absent in orm measurement")
+            else:
+                logger.warn("Some Trims not in the measured ORM are ignored")
+        
+        mat = np.take(np.take(self.m, ibpm, axis=0), itrim, axis=1)
+
+        return mat, [bpm[i] for i in ibpm], [trim[i] for i in itrim]
 
     def getSubMatrixPv(self, bpm, trim, **kw):
         """

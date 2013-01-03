@@ -3,7 +3,7 @@
 import cothread
 app = cothread.iqt()
 
-from cothread.catools import caget, caput
+#from cothread.catools import caget, caput
 
 import sys
 import gui_resources
