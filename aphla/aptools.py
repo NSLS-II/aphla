@@ -27,7 +27,7 @@ from orm import Orm
 #from bba import BbaBowtie
 import logging
 
-__all__ = [
+__all__ = [ 'calcLifetime', 
     'getLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump',
     'saveImage', 'fitGaussian1', 'fitGaussianImage'
@@ -49,12 +49,16 @@ def _element_fields(elems, fields, **kwargs):
             ret.append((b.name, f))
         elif not compress:
             ret.append((b.name, None))
-
     return ret
 
 def getLifetime(tinterval=3, npoints = 8, verbose=False):
     """
-    Monitor current change with, calculate lifetime dI/dt
+    Monitor current change in a time interval, calculate lifetime I/(dI/dt)
+
+    :param tinterval: time interval between each measurement, in seconds.
+    :param npoints: number of points for fitting the lifetime
+    :param verbose: verbosity
+    :return: life time in hours
 
     It takes about 30 seconds, 10 points will be recorded, about 3 seconds
     delay between each.
@@ -81,105 +85,19 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
     return lft_hour
 
 
-
-# def measDispersion(gamma = 3.0e3/.511, alphac = 3.6261976841792413e-04,
-#                    df = 1e-4, numpoints=5):
-#     """
-#     Measure the dispersion
-#     """
-
-#     eta = alphac - 1/gamma/gamma
-
-#     #bpm = getElements('P*C0[3-6]*')
-#     bpm = getElements('P*')
-#     #print gamma, bpm
-#     s1 = getLocations(bpm)
-#     #eta0 = getDispersion(bpm)
-    
-#     # f in MHz
-#     f0 = getRfFrequency()
-#     f = np.linspace(f0 - abs(df), f0 + abs(df), numpoints)
-
-#     # avoid a bug in virtac
-#     obt = getOrbit(bpm)
-#     x0 = np.array([v[0] for v in obt])
-#     y0 = np.array([v[1] for v in obt])
-#     time.sleep(4)
-
-#     codx = np.zeros((len(f), len(bpm)), 'd')
-#     cody = np.zeros((len(f), len(bpm)), 'd')
-
-#     for i,f1 in enumerate(f): 
-#         putRfFrequency(f1)
-#         time.sleep(6)
-#         obt = np.array(getOrbit(bpm))
-#         x1, y1 = obt[:,0], obt[:,1] 
-
-#         putRfFrequency(f1)
-#         time.sleep(6)
-#         obt = np.array(getOrbit(bpm))
-#         x2, y2  = obt[:,0], obt[:,1]
-#         #print(i, getRfFrequency(), x1[0], x2[0], x1[2], x2[2])
-#         codx[i,:] = x2[:]
-#         cody[i,:] = y2[:]
-
-#     putRfFrequency(f0)
-
-#     #plt.clf()
-#     #for i in range(len(bpm)):
-#     #    plt.plot(f, codx[:,i], 'o-')
-#     #plt.savefig('test-cod.png')
-
-#     codx0 = np.zeros(np.shape(codx), 'd')
-#     for i in range(len(f)):
-#         codx0[i,:] = x0[:]
-#     dxc = codx - codx0
-#     df = -(f - f0)/f0/eta
-#     #print(df)
-#     #print(dxc)
-#     # p[0,len(bpm)]
-#     p = np.polyfit(df, dxc, 1)
-#     #print("first order:", p[0,:])
-#     t = np.linspace(df[0], df[-1], 20)
-#     #plt.clf()
-#     #for i in range(len(bpm)):
-#     #    plt.plot(df, dxc[:,i], 'o')
-#     #    plt.plot(t, p[0,i]*t + p[1,i], '--')
-#     #plt.savefig('test-disp.png')
-
-
-#     #print(eta, f0)
-#     #plt.clf()
-#     #plt.plot(s1, eta0[:,0], 'x-', label="Twiss Calc")
-#     #plt.plot(s1, p[0,:], 'o--', label="Fit")
-#     #plt.legend()
-#     #plt.savefig('test.png')
-
-#     #dat = [(bpm[i], s1[i], p[0,i], eta0[i,0]) for i in range(len(bpm))]
-#     #f = shelve.open("dispersion.pkl", 'c')
-#     #f["dispersion"] = dat
-#     #f.close()
-    
-#     return s1, p[0,:]
-
-
-    
 def setLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
-    :param bpm: BPMs for new bumpped orbit. 
-    :type bpm: str, list
-    :param trim: correctors used for orbit correction. 
-    :type trim: str, list
-    :param ref: target orbit, (len(bpm),2)
-    :type ref: matrix shape (n,2).
-    :param scale: factor for calculated kick strength change, between 0 and 1.0
-    :param check: ignore if the orbit gets worse
+    :param bpm: list of BPMs objects for new bumpped orbit. 
+    :param trim: list of corrector objects used for orbit correction. 
+    :param ref: target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
+    :param scale: optional, factor for calculated kick strength change, between 0 and 1.0
+    :param check: optional, ignore if the orbit gets worse.
+    :param ormdata: optional, use provided OrmData instead of the system default.
 
-    `bpm` and `trim` can be a pattern, a group name, a list of exact element
-    names or a list of objects. if `ref[i][j]` is `None`, use the current
-    hardware result, i.e. try not to change the orbit at that location.
+    if `ref[i][j]` is `None`, use the current hardware result, i.e. try not to change
+    the orbit at that location.
 
     :Examples:
 
@@ -187,10 +105,11 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         >>> newobt = [[1.0, 1.5]] * len(bpms)
         >>> createLocalBump(bpms, getElements('HCOR'), newobt)
     
-    see also `catools.caRmCorrect`
+    see also :func:`catools.caRmCorrect`
     """
-    ormdata = kwargs.get('ormdata', None)
-    repeat = kwargs.get('repeat', 1)
+
+    ormdata = kwargs.pop('ormdata', None)
+    repeat = kwargs.pop('repeat', 1)
 
     if ormdata is None: ormdata = machines._lat.ormdata
     
@@ -222,7 +141,7 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     correct the orbit with given BPMs and Trims
 
     :param plane: [HV|H|V]
-    :param repeat: numbers of correction 
+    :param repeat: optional, numbers of correction 
 
     :Example:
 
@@ -230,7 +149,8 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
         >>> trims = getElements(['T1', 'T2', 'T3'])
         >>> correctOrbit(bpms, trims) 
 
-    The orbit not in BPM list may change.
+    This is a least square fitting method. It is possible that the orbit at the other BPMs may
+    change slightly although they are told to be fixed.
 
     seealso :func:`~aphla.hlalib.getElements`, :func:`~aphla.getSubOrm`
     """
@@ -622,6 +542,7 @@ def fitGaussianImage(data):
 def saveImage(elemname, filename, **kwargs):
     """
     save field as image file
+
     :param field: element field to save, default 'image'
     :param filename: output file name
     :param width: image width (pixel), default 'image_nx'

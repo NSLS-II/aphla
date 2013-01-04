@@ -1,4 +1,5 @@
-from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, OrmData, getResource)
+from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, OrmData, 
+                getResource, Twiss)
 
 from fnmatch import fnmatch
 import logging
@@ -56,12 +57,14 @@ def init_submachines(machine, submachines, **kwargs):
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
-    orm_filename = getResource('us_nsls2v2_sr_orm.hdf5', __name__)
-    if orm_filename:
-        lattice_dict['V2SR'].ormdata = OrmData(orm_filename)
-        logger.info("using ORM data '%s'" % orm_filename)
+    data_filename = getResource('us_nsls2v2_sr.hdf5', __name__)
+    if data_filename:
+        lattice_dict['V2SR'].ormdata = OrmData(data_filename)
+        lattice_dict['V2SR']._twiss = Twiss(data_filename)
+        lattice_dict['V2SR']._twiss.load_hdf5(data_filename)
+        logger.info("using ORM data '%s'" % data_filename)
     else:
-        logger.warning("No ORM '%s' found" % orm_filename)
+        logger.warning("No ORM '%s' found" % data_filename)
 
     # tune element from twiss
     #twiss = _lattice_dict['V2SR'].getElementList('twiss')[0]

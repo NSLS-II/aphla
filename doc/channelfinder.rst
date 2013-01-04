@@ -61,4 +61,6 @@ then output all possible tags:
 The *aphla.sys.* tags tell how many systems(lattices). *aphla.elemfield.*
 tells this PV can be accessed using ``element.field`` pattern.
 
-
+.. currentmodule:: aphla
+.. autosummary:: 
+   :toctree: generated/

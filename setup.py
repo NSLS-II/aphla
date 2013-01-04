@@ -71,10 +71,6 @@ write_version_py()
 setup(
     name = "aphla",
     version = VERSION,
-    #packages = ['aphla', 'aphla.lib.mpfit', 'aphla.gui', 'aphla.gui.Qt4Designer_files', 
-    #            'aphla.gui.TunerUtils', 'aphla.gui.PlotterUtils', 'aphla.machines'],
-    #package_dir = {'aphla': 'lib', 'aphla.mpfit': 'lib/mpfit',
-    #%               'aphla.gui': 'gui', 'aphla.machines': 'machines'},
     packages = find_packages(exclude=['tests']),
     include_package_data = True,
     #package_data = {

@@ -18,7 +18,7 @@ import numpy as np
 #import matplotlib.pylab as plt
 from hlalib import getElements, getPvList, waitChanged, eget
 from catools import caget, caput, caputwait, Timedout
-from ormdata import OrmData
+from apdata import OrmData
 import itertools
 import logging
 logger = logging.getLogger(__name__)

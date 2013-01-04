@@ -19,20 +19,20 @@ import element
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    'addGroup', 'addGroupMembers', 'eget',  
-    'getBeamlineProfile', 'getBeta', 
-    'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest', 
-    'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance', 
-    'getElements', 'getEta', 'getFastOrbit', 'getFftTune', 
-    'getGroupMembers', 'getGroups', 'getLocations', 'getModes', 
-    'getNeighbors', 'getOrbit', 'getPhase', 'getPvList', 'getRfFrequency', 
-    'getRfVoltage', 'getStepSize', 'getTbtOrbit', 'getTuneRm', 
-    'getTune', 'getTunes', 
-    'removeGroup', 'removeGroupMembers', 'setRfFrequency',
-    'stepRfFrequency', 
-    'waitStableOrbit', 
-]
+#__all__ = [
+#    'addGroup', 'addGroupMembers', 'eget',  
+#    'getBeamlineProfile', 'getBeta', 
+#    'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest', 
+#    'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance', 
+#    'getElements', 'getEta', 'getFastOrbit', 'getFftTune', 
+#    'getGroupMembers', 'getGroups', 'getLocations', 'getModes', 
+#    'getNeighbors', 'getOrbit', 'getPhase', 'getPvList', 'getRfFrequency', 
+#    'getRfVoltage', 'getStepSize', 'getTbtOrbit', 'getTuneRm', 
+#    'getTune', 'getTunes', 
+#    'removeGroup', 'removeGroupMembers', 'putRfFrequency',
+#    'stepRfFrequency', 
+#    'waitStableOrbit', 
+#]
 
 # current
 def getCurrent():
@@ -50,15 +50,16 @@ def getCurrent():
         return None
 
 # rf
-def getRfFrequency():
-    """Get the frequency from the first 'RFCAVITY' element"""
+def getRfFrequency(unit='MHz'):
+    """
+    Get the frequency from the first 'RFCAVITY' element.
+
+    The unit is MHz.
+    """
     _rf, = getElements('RFCAVITY')
     return _rf.f
 
 def putRfFrequency(f):
-    raise DeprecationWarning("use `setRfFrequency` instead")
-
-def setRfFrequency(f):
     """set the rf frequency for the first 'RFCAVITY' element"""
     _rf, = getElements('RFCAVITY')
     _rf.f = f
@@ -77,7 +78,7 @@ def stepRfFrequency(df = 0.010):
 
     .. warning:: 
 
-      Need modify the unit for real machine
+      Need check the unit for real machine
     """
     f0 = getRfFrequency()
     putRfFrequency(f0 + df)
@@ -170,8 +171,6 @@ def getElements(group, include_virtual=False):
     lattice.
 
     The default does not include virtual element.
-
-    return None if no element is found and return_list=False
     """
 
     # return the input if it is a list of element object
@@ -193,40 +192,41 @@ def getElements(group, include_virtual=False):
 
     return ret
 
-def eget(elem = None, fields = None, **kwargs):
+def eget(elem, fields = None, **kwargs):
     """
     get elements field values
     
-    :param elem: element name, name list or pattern
+    :param elem: element name, name list, pattern or object list
     :type elem: str, list
     :param fields: field name or name list
     :type fields: str, list
-    
+    :param header: optional (True, False), whether returns the (name, field) list. 
+ 
     :Example:
 
         >>> eget('DCCT', 'value')
         >>> eget('BPM', 'x')
-        >>> eget('PH*', ['x', 'y'])
+        >>> eget('p*c30*', ['x', 'y'], header=True)
+
+        >>> bpm = getElements('p*c30*')
+        >>> eget(bpm, ['x', 'y'], header=True)
 
     seealso :func:`getElements`, :func:`~aphla.element.CaElement.get`
     """
     header = kwargs.pop('header', False)
 
-    if elem is not None:
-        elst = getElements(elem)
-        if not elst: return None
-        else:
-            v = [e.get(fields, **kwargs) for e in elst]
-            if not header: return v
-            h = []
-            for e in elst:
-                for f in fields:
-                    if f in e.fields(): h.append([e.name, f])
-                    else: h.append([e.name, None])
-            # len(v) == len(h)
-            return v, h
-    else:
-        return None
+    elst = getElements(elem)
+    if not elst: return None
+
+    v = [e.get(fields, **kwargs) for e in elst]
+    if not header: return v
+
+    h = []
+    for e in elst:
+        fld = [f if f in e.fields() else None for f in fields]
+        h.append((e.name, fld))
+    # len(v) == len(h)
+    return v, h
 
 #def eset(elem = None, field = None, **kwargs):
 #    if elem is not None:
@@ -236,7 +236,7 @@ def getPvList(elem, field, handle = 'readback', **kwargs):
     """
     return a pv list for given element list
 
-    :param elem: element pattern, name list
+    :param elem: element pattern, name list or CaElement object list
     :param field: e.g. 'x', 'y', 'k1'
     :param handle: 'READBACK' or 'SETPOINT'
 
@@ -244,6 +244,20 @@ def getPvList(elem, field, handle = 'readback', **kwargs):
 
       - *first_only* (False) use only the first PV for each element. 
       - *compress_empty* (False) remove element with no PV.
+
+    :Example:
+
+      >>> getPvList('p*c30*', 'x')
+
+    This can be simplified as::
+
+      [e.pv(field) for e in getElements(elem) if field in e.fields()]
+
+    extract the pv only if the element has that field (compress_empty=True).
+
+      [e.pv(field) if field in e.fields() else None for e in getElements(elem)]
+
+    put a None in the list if the field is not in that element
 
     *elem* accepts same input as :func:`getElements`
     """
@@ -345,6 +359,7 @@ def removeGroupMembers(group, member):
     else:
         raise ValueError("member can only be string or list")
 
+
 def getGroups(element = '*'):
     """
     Get all groups own these elements, '*' returns all possible groups,
@@ -353,6 +368,7 @@ def getGroups(element = '*'):
     it calls :func:`~aphla.lattice.Lattice.getGroups` of the current lattice.
     """
     return machines._lat.getGroups(element)
+
 
 def getGroupMembers(groups, op = 'intersection', **kwargs):
     """
@@ -366,15 +382,22 @@ def getGroupMembers(groups, op = 'intersection', **kwargs):
     """
     return machines._lat.getGroupMembers(groups, op, **kwargs)
 
+
 def getNeighbors(element, group, n = 3):
     """
-    Get a list of n elements belongs to group. The list is sorted along s
-    (the beam direction).
+    Get a list of n elements belongs to group. 
+
+    :param element: the central element
+    :type element: str, :class:`~aphla.element.AbstractElement`
+    :param group: the neighbors belong to
+    :return: a list of element in given group
+
+    The list is sorted along s (the beam direction).
 
     it calls :meth:`~aphla.lattice.Lattice.getNeighbors` of the current
     lattice to get neighbors.
 
-    ::
+    :Example:
 
       >>> getNeighbors('PM1G4C27B', 'BPM', 2)
       >>> getNeighbors('PM1G4C27B', 'QUAD', 1)
@@ -391,7 +414,10 @@ def getClosest(element, group):
     """
     Get the closest element in *group*
 
-    ::
+    :param element: the element name or object
+    :param group: the closest neighbor belongs to
+
+    :Example:
 
       >>> getClosest('PM1G4C27B', 'BPM')
 
@@ -409,23 +435,13 @@ def getBeamlineProfile(s1 = 0, s2 = 1e10):
     """
     return machines._lat.getBeamlineProfile(s1, s2)
 
-def getStepSize(element):
-    """
-    Return default stepsize of a given element
-
-    .. warning::
-
-      Not implemented
-    """
-    raise NotImplementedError()
-    return None
 
 def getDistance(elem1, elem2, absolute=True):
     """
     return distance between two element name
 
-    :param str elem1: name of one element
-    :param str elem2: name of the other element
+    :param str elem1: name or object of one element
+    :param str elem2: name or object of the other element
     :param bool absolute: return s2 - s1 or the absolute value.
 
     raise RuntimeError if None or more than one elements are found
@@ -434,7 +450,8 @@ def getDistance(elem1, elem2, absolute=True):
     e2 = getElements(elem2)
 
     if len(e1) != 1 or len(e2) != 1:
-        raise RuntimeError("elements are not uniq: %d and %d" % (len(e1), len(e2)))
+        raise RuntimeError("elements are not uniq: %d and %d" % \
+                           (len(e1), len(e2)))
 
     ds = e2[0].sb - e1[0].sb
     C = machines._lat.circumference
@@ -444,7 +461,7 @@ def getDistance(elem1, elem2, absolute=True):
     if absolute: return abs(ds)
     else: return ds
 
-#
+
 #
 #
 def getPhase(group, **kwargs):
@@ -580,7 +597,7 @@ def getTunes(source='machine'):
 
 def getTune(source='machine', plane = 'h'):
     """
-    get tune
+    get one of the tune, 'h' or 'v'
 
     :Example:
 
@@ -603,54 +620,54 @@ def getFftTune(plane = 'hv', mode = ''):
     raise NotImplementedError()
     return None
 
-def savePhase(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveBeta(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveDispersion(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveTune(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveTuneRm(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveChromaticity(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveChromaticityRm(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
+#def savePhase(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveBeta(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveDispersion(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveTune(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveTuneRm(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveChromaticity(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveChromaticityRm(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
 
 def getChromaticityRm(mode, phase, info):
     """

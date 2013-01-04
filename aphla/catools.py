@@ -110,10 +110,10 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
     :return: see :func:`cothread.catools.caput`
     :rtype: see :func:`cothread.catools.caput`
 
-    :Example:
+    :Examples:
 
-        caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
-        caput(['SR:PV1', 'SR:PV2'], [0.1, 0.2])
+    >>> caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
+    >>> caput(['SR:PV1', 'SR:PV2'], [0.1, 0.2])
 
     This is simple wrap of `cothread.catools.caput` to support UTF8 string
 
@@ -158,8 +158,7 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1),  maxtrial=20):
     :param diffstd: threshold value of effective change of *pvmonitors*.
     :param wait: waiting time for initial and each step (seconds)
     :param maxtrial: maximum trial before return.
-    :return: whether pvmonitors change significant enough.
-    :rtype: bool
+    :return: True if pvmonitors change significant enough, False otherwise.
 
     It sets the pvs with new values and tests the monitor values see if the
     changes are significant enough. This significance is measured by comparing
@@ -191,17 +190,17 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1),  maxtrial=20):
 
 def caRmCorrect(resp, kker, m, **kwarg):
     """
-    correct the resp using kker
+    correct the resp using kker and response matrix.
 
     :param resp: PV list of the target, e.g. orbit, tune
     :param kker: PV list of the controllers, e.g. corrector
-    :param m: response matrix where m_{ij}=dresp_i/dkker_j
+    :param m: response matrix where :math:`m_{ij}=\Delta resp_i/\Delta kker_j`
     :param scale: scaling factor applied to the calculated kker
     :param ref: the targeting value of resp PVs
     :param rcond: the rcond for cutting singular values. 
     :param check: stop if the orbit gets worse.
     :param wait: waiting (seconds) before check.
-    :rtype bool: return converged or not. None if it did not check.
+    :return: converged (True) or not (False). None if it did not check.
     """
     scale = kwarg.get('scale', 0.68)
     ref = kwarg.get('ref', None)
