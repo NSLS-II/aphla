@@ -1,5 +1,6 @@
 """
 """
+from ..unitconv import *
 from ..element import *
 from ..apdata import *
 from ..lattice import Lattice
@@ -37,6 +38,8 @@ HOME = os.path.expanduser('~')
 # unless %HOME% is set on Windows, which is not the case by default.
 
 _lattice_dict = {}
+
+# the current lattice
 _lat = None
 
 def load(machine, submachines = "*", **kwargs):
@@ -73,13 +76,12 @@ def init(machine, submachines = "*", **kwargs):
     _lattice_dict.update(lats)
     _lat = lat
 
-    #print initNSLS2V2()
-
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
                                  if _lat == v][0]
         saveCache(machine, _lattice_dict, selected_lattice_name)
         
+
 def loadCache(machine_name):
     
     global _lat, _lattice_dict

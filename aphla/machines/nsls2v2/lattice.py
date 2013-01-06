@@ -1,5 +1,5 @@
-from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, OrmData, 
-                getResource, Twiss)
+from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource)
+from .. import (OrmData, Twiss, UcPoly1d)
 
 from fnmatch import fnmatch
 import logging
@@ -81,7 +81,12 @@ def init_submachines(machine, submachines, **kwargs):
 
     #
     # SR
-    if 'V2SR' in lattice_dict: lattice_dict['V2SR'].loop = True
-    else: lattice_dict['V2SR'] = None
+    lattice_dict['V2SR'].loop = True
+    uc_m2mm = UcPoly1d('hardware', 'physics', [1e-3, 0])
+    uc_mm2m = UcPoly1d('physics', 'hardware', [1e3, 0])
+
+    for e in lattice_dict['V2SR'].getElementList('BPM'):
+        e.addUnitConversion('x', uc_m2mm)
+        e.addUnitConversion('x', uc_mm2m)
 
     return lattice_dict, lattice_dict['V2SR']
