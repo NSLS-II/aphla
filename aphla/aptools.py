@@ -163,6 +163,8 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
 #     return s1, p[0,:]
 
 
+    #norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
+    norm1 = np.linalg.norm(np.dot(m, dk*scale) + v0)
     
 def setLocalBump(bpm, trim, ref, **kwargs):
     """
