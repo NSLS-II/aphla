@@ -496,7 +496,26 @@ class Test1LatticeSr(unittest.TestCase):
         self.assertIn('EPU', self.lat.getGroups())
         self.assertIn('DW', self.lat.getGroups())
 
+    def test_eget(self):
+        v, h = ap.eget('BPM', 'x', header=True)
+        self.assertEqual(len(v), len(ap.getElements('BPM')))
+        self.assertEqual(len(v), len(h))
+        # a tuple of (name, 'x')
+        self.assertEqual(len(h[0]), 2)
 
+        v, h = ap.eget('BPM', ['x'], header=True)
+        self.assertEqual(len(v), len(ap.getElements('BPM')))
+        self.assertEqual(len(v), len(h))
+        # a list [(name, 'x')]
+        self.assertEqual(len(h[0]), 1)
+
+        v, h = ap.eget('BPM', ['x', 'y', 'x'], header=True)
+        self.assertEqual(len(v), len(ap.getElements('BPM')))
+        self.assertEqual(len(v), len(h))
+        # a list [(name, 'x')]
+        self.assertEqual(len(h[0]), 3)
+
+        
 class TestLatticeLtd1(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtd1")
@@ -1197,7 +1216,7 @@ class TestRmCol(unittest.TestCase):
         #trim = ap.getElements('ch1g6c15b')[0]
         trim = ap.getElements('cl2g6c30b')[0]
         bpmlst = [e.name for e in ap.getElements('BPM')]
-        trim.put('x', 0.0, unit='raw')
+        trim.put('x', 0.0, unit = None)
 
         fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
         ormline = ap.orm.RmCol(bpmlst, trim)
@@ -1215,7 +1234,7 @@ class TestRmCol(unittest.TestCase):
         #trim = ap.getElements('ch1g6c15b')[0]
         trim = ap.getElements('cl2g6c30b')[0]
         bpmlst = [e.name for e in ap.getElements('BPM')]
-        trim.put('x', 0.0, unit='raw')
+        trim.put('x', 0.0, unit=None)
 
         fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
         ormline = ap.orm.RmCol(bpmlst, trim)

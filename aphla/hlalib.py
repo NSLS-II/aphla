@@ -16,6 +16,7 @@ from fnmatch import fnmatch
 from catools import caget, caput, CA_OFFLINE
 import machines
 import element
+import itertools
 
 logger = logging.getLogger(__name__)
 
@@ -222,10 +223,14 @@ def eget(elem, fields = None, **kwargs):
     if not header: return v
 
     h = []
-    for e in elst:
-        fld = [f if f in e.fields() else None for f in fields]
-        h.append((e.name, fld))
-    # len(v) == len(h)
+    if isinstance(fields, (str, unicode)):
+        h = [(e.name, fields) for e in elst]
+    elif isinstance(fields, (list, tuple)):
+        h = [None] * len(v)
+        for i,e in enumerate(elst):
+            fld = [f if f in e.fields() else None for f in fields]
+            h[i] = [(e.name, f) for f in fld] 
+        # h,v should have same dimension
     return v, h
 
 #def eset(elem = None, field = None, **kwargs):

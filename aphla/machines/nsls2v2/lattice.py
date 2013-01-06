@@ -82,11 +82,11 @@ def init_submachines(machine, submachines, **kwargs):
     #
     # SR
     lattice_dict['V2SR'].loop = True
-    uc_m2mm = UcPoly1d('hardware', 'physics', [1e-3, 0])
-    uc_mm2m = UcPoly1d('physics', 'hardware', [1e3, 0])
+    uc_m2mm = UcPoly1d('m', 'mm', [1e3, 0])
+    uc_mm2m = UcPoly1d('mm', 'm', [1e-3, 0])
 
     for e in lattice_dict['V2SR'].getElementList('BPM'):
-        e.addUnitConversion('x', uc_m2mm)
-        e.addUnitConversion('x', uc_mm2m)
+        e.addUnitConversion('x', uc_m2mm, None, "phy")
+        e.addUnitConversion('x', uc_mm2m, "phy", None)
 
     return lattice_dict, lattice_dict['V2SR']

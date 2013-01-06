@@ -18,7 +18,7 @@ class UnitConversion(object):
 
 class UcPoly1d(UnitConversion):
     def __init__(self, src, dst, coef):
-        super(UcPolynomial, self).__init__(src, dst)
+        super(UcPoly1d, self).__init__(src, dst)
         self.p = np.poly1d(coef)
 
     def __str__(self):
@@ -31,7 +31,7 @@ class UcPoly1d(UnitConversion):
 class UcInterp1d(UnitConversion):
     """linear interpolation"""
     def __init__(self, src, dst, x, y):
-        super(UcPolynomial, self).__init__(src, dst)
+        super(UcInterp1d, self).__init__(src, dst)
         #self.f = np.interpolate.interp1d(x, y)
         self.xp, self.fp = x, y
 

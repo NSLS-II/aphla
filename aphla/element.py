@@ -252,7 +252,7 @@ class CaDecorator:
         return len(lst) - 1
 
     def _unit_conv(self, x, src, dst):
-        if (src, dst) == ('hardware', 'hardware'): return x
+        if (src, dst) == (None, None): return x
 
         uc = self.unitconv.get((src, dst), None)
         if uc is None:
@@ -738,11 +738,11 @@ class CaElement(AbstractElement):
             #raise AttributeError("Error")
         for e in self.alias: e.__setattr__(att, val)
 
-    def addUnitConversion(self, field, uc):
+    def addUnitConversion(self, field, uc, src, dst):
         """
         add unit conversion for field
         """
-        self._field[field].unitconv[(uc.src, uc.dst)] = uc
+        self._field[field].unitconv[(src, dst)] = uc
 
     def updatePvRecord(self, pvname, properties, tags = []):
         """
@@ -900,8 +900,8 @@ class CaElement(AbstractElement):
         source = kwargs.get('source', 'readback').lower()
         unit = kwargs.get('unit', None)
     
-        if unit not in ['raw', None]:
-            raise NotImplemented("unit conversion is not implemented yet")
+        #if unit not in ['raw', None]:
+        #    raise RuntimeError("unit conversion (%s,%s) for field '%s' is not implemented yet" % ('raw', unit, field))
 
         if not self._field.has_key(field):
             v = None
