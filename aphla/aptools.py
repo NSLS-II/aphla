@@ -219,7 +219,7 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         caRmCorrect(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
 
         
-def correctOrbit(bpm = None, trim = None, **kwargs):
+def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
@@ -240,7 +240,7 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     plane = kwargs.get('plane', 'HV')
 
     # an orbit based these bpm
-    if bpm is None:
+    if bpmlst is None:
         bpmlst = getElements('BPM')
 
     if plane == 'H': ref = zip([0.0] * len(bpmlst), [None] * len(bpmlst))
@@ -248,10 +248,8 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     else: ref = np.zeros((len(bpmlst), 2), 'd')
 
     # pv for trim
-    if trim is None:
-        trimlst = getElements('HCOR') + getElements('VCOR')
-    else:
-        trimlst = getElements(trim)
+    if trimlst is None:
+        trimlst = getElements('COR')
 
     setLocalBump(bpmlst, trimlst, ref, **kwargs)
 
