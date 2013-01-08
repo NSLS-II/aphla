@@ -67,8 +67,8 @@ logging.getLogger('aphla').addHandler(_lghdl)
 
 #
 
-from catools import (caget, caput, caputwait)
-from chanfinder import ChannelFinderAgent
+from catools import *
+from chanfinder import *
 #from machines import (
 #    initNSLS2V2, initNSLS2, initTLS, initNSLS2V3BSRLine
 #    )
@@ -76,7 +76,7 @@ from chanfinder import ChannelFinderAgent
 #from rf import *
 import machines
 from hlalib import *
-from ormdata import OrmData
+from apdata import OrmData
 
 from meastwiss import *
 from aptools import *

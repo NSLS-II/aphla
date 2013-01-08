@@ -362,6 +362,7 @@ class Lattice:
 
         """
 
+        virtual = kwargs.get('virtual', 1)
         # do exact element name match first
         elem = self._find_exact_element(group)
         if elem is not None: return [elem]
@@ -375,6 +376,7 @@ class Lattice:
             ret, names = [], []
             for e in self._elements:
                 if e.name in names: continue
+                if not virtual and e.virtual: continue
                 if fnmatch(e.name, group):
                     ret.append(e)
                     names.append(e.name)
@@ -656,7 +658,7 @@ class Lattice:
         e0 = self._find_exact_element(element)
         if not e0: raise ValueError("element %s does not exist" % element)
 
-        el = self.getElementList(group)
+        el = self.getElementList(group, virtual=0)
 
         if not el: raise ValueError("elements/group %s does not exist" % group)
         if e0 in el: el.remove(e0)
@@ -681,29 +683,32 @@ class Lattice:
         the element matched with input 'element' string should be unique
         and exact.
 
-        If the input *element* name is also in *group*, return itself.
-
         :Example:
 
             >>> getClosest('P4', 'BPM')
             >>> getClosest('Q3', 'BPM')
+
+        The result can not be virtual element.
         """
 
         e0 = self._find_exact_element(element)
         if not e0: raise ValueError("element %s does not exist" % element)
 
-        el = self.getElementList(group)
+        el = self.getElementList(group, virtual=0)
 
         if not el: raise ValueError("elements/group %s does not exist" % group)
 
-        # if the element is part of group, return it
-        if e0 in el: return e0
-
         idx, ds = 0, el[-1].sb
         for i,e in enumerate(el):
-            if abs(e.sb - e0.sb) < ds:
-                idx = i
-                ds = abs(e.sb - e0.sb)
+            if e == e0: continue
+            if isinstance(e.sb, (list, tuple)):
+                ds0 = abs(e.sb[0] - e0.sb)
+            else:
+                ds0 = abs(e.sb - e0.sb)
+            if ds0 > ds: continue
+            idx = i
+            ds = ds0
+
         return el[idx]
         
     def __repr__(self):

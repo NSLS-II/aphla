@@ -17,7 +17,7 @@ import aphla
 from aphla.catools import caget, caput, camonitor, FORMAT_TIME
 
 import logging
-import sys
+import os, sys
 
 import gui_resources
 
@@ -140,19 +140,19 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # logging
         textedit = QPlainTextEdit(self)
-        logger = logging.getLogger("aphla")
+        self.logger = logging.getLogger(__name__)
         handler = QTextEditLoggingHandler(textedit)
-        logger.addHandler(handler)
-        #logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
         majbox.addWidget(textedit)
 
         cwid.setLayout(majbox)
-        logger.info("INFO")
+        self.logger.info("INFO")
 
         self.data1 = None
         self.live_orbit = True
 
-        picker = None #[(v[1], v[2], v[0]) for v in self.config.data['magnetpicker']]
+        picker = None 
 
         # all orbit plots: [plot, data, index]
         self.obtdata = None
@@ -387,7 +387,7 @@ class OrbitPlotMainWindow(QMainWindow):
         
     def click_lattice(self):
         #print self.sender()
-        print aphla.machines.lattices()
+        #print aphla.machines.lattices()
         latname = self.sender().text()
         lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
         print lat, self.sender().text()
@@ -400,12 +400,14 @@ class OrbitPlotMainWindow(QMainWindow):
         aphla.machines.use(lat.name)
 
         self._lat = lat
-        print "using lattice:", lat.name
+        self.logger.info("using lattice: %s" % lat.name)
         self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
 
         for p in self.obtplots:
             p.attachCurves(None)
-            
+            #p.curve1.setData([], [])
+            p.replot()
+
         self.obtdata = None
         
         if self.vbpm is not None:
@@ -431,6 +433,7 @@ class OrbitPlotMainWindow(QMainWindow):
             raise RuntimeError("can not update orbit")
 
         magprof = lat.getBeamlineProfile()
+        print magprof
         for p in self.obtplots:
             p.setPlot(magnet_profile=magprof)
             p.attachCurves(p)
@@ -610,23 +613,29 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
 def main(par=None):
-    try:
-        aphla.machines.init("nsls2v2")
-        aphla.machines.init("nsls2")
-        aphla.machines.init("nsls2v3bsrline")
-    except:
-        pass
-    print aphla.machines.lattices()
+    #try:
+    #    aphla.machines.init("nsls2v2")
+    #    aphla.machines.init("nsls2")
+    #    aphla.machines.init("nsls2v3bsrline")
+    #except:
+    #    pass
+    #print aphla.machines.lattices()
     #app = QApplication(args)
     #app.setStyle(st)
+    hla_cfs = os.environ.get('HLA_CFS_URL', None)
+    for lat in os.environ.get('HLA_MACHINE', '').split():
+        if not lat: continue
+        if hla_cfs is None: aphla.machines.init(lat)
+        else: aphla.machines.init(lat, src=hla_cfs)
+
     if '--sim' in sys.argv:
         print "CA offline:", aphla.catools.CA_OFFLINE
         aphla.catools.CA_OFFLINE = True
     demo = OrbitPlotMainWindow()
-    demo.setLattice(aphla.machines.getLattice('V2SR'))
+    #demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")
     demo.resize(800,500)
-    print aphla.machines.lattices()
+    #print aphla.machines.lattices()
     demo.show()
     # print app.style() # QCommonStyle
     #sys.exit(app.exec_())

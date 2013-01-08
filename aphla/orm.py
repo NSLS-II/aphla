@@ -18,7 +18,7 @@ import numpy as np
 #import matplotlib.pylab as plt
 from hlalib import getElements, getPvList, waitChanged, eget
 from catools import caget, caput, caputwait, Timedout
-from ormdata import OrmData
+from apdata import OrmData
 import itertools
 import logging
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class RmCol:
         self.m = None
         self.header = None
         self._c = None
-        self.unit = 'raw'
+        self.unit = None # use lowerlevel unit
         self.maxdk = 1e-4
         self.residuals = None
 
@@ -78,6 +78,8 @@ class RmCol:
         ret = np.zeros((points+2, len(self.resplst)*len(respfields)), 'd')
         # initial bpm data
         v0, h = eget(self.resplst, respfields, unit=self.unit, header=True)
+        #print "v=", v0
+        #print "fields=", respfields, h
         ret[0,:] = np.ravel(v0)
         self.header = np.reshape(np.ravel(h), (-1, 2))
 
@@ -198,7 +200,8 @@ class Orm:
         t_start = time.time()
         self._rawkick = []
         rawobt, rawm, rawkick = [], [], []
-        for i,krec in enumerate(itertools.product(self.trim, trimflds)):
+        trimsets = itertools.product(self.trim, trimflds)
+        for i,krec in enumerate(trimsets):
             kicker, kfld = krec
             if kfld not in kicker.fields(): continue
 
@@ -212,7 +215,7 @@ class Orm:
 
             if verbose:
                 print "%d/%d '%s/%s.%s'" % (
-                    i, len(self.trim), rflds, kicker.name, kfld)
+                    i, len(trimsets), rflds, kicker.name, kfld)
 
             ormline.measure(rflds, kfld, unit=self.unit, verbose=verbose)
             rawobt.append(ormline.rawresp)

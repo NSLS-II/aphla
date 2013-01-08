@@ -1,85 +1,93 @@
+from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource)
+from .. import (OrmData, Twiss, UcPoly1d)
 
-def _initNSLS2(cfa):
+from fnmatch import fnmatch
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+_cf_map = {'elemName': 'name', 
+           'elemField': 'field', 
+           'devName': 'devname',
+           'elemType': 'family', 
+           'elemHandle': 'handle',
+           'elemIndex': 'index', 
+           'elemPosition': 'se',
+           'elemLength': 'length',
+           'system': 'system'
+}
+
+_db_map = {'elem_type': 'family',
+           'lat_index': 'index',
+           'position': 'se',
+           'elem_group': 'group',
+           'dev_name': 'devname',
+           'elem_field': 'field'
+}
+
+
+
+def init_submachines(machine, submachines, **kwargs):
     """ 
-    initialize the NSLS2 accelerator lattice 'SR', 'LTD1', 'LTD2', 'LTB'.
-
-    The initialization is done in the following order:
-
-        - user's `${HOME}/.hla/us_nsls2.sqlite`; if not then
-        - channel finder service in `env ${HLA_CFS_URL}`; if not then
-        - the `us_nsls2.sqlite` installed with aphla package; if not then
-        - RuntimeError
     """
+    # if src provides an explicit filename/url to initialize
+    srcname = kwargs.get('src', 'nsls2')
+    cfa = findCfaConfig(srcname, machine, submachines)
 
-    cfa = ChannelFinderAgent()
-    cfs_filename = 'us_nsls2.sqlite'
-    src_home_csv = os.path.join(os.environ['HOME'], '.hla', cfs_filename)
-    HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
+    # the column name in CSV or the property name in channel finder is
+    # different from the Lattice class property, need to rename.
+    if cfa.source.endswith(".sqlite") or cfa.source.endswith(".csv"):
+        for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
+    elif cfa.source.startswith("http"):
+        for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
 
-    if os.path.exists(src_home_csv):
-        msg = "Creating lattice from home '%s'" % src_home_csv
-        logger.info(msg)
-        cfa.importSqliteDb(src_home_csv)
-    elif os.environ.get('HLA_CFS_URL', None):
-        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
-        logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
-    elif conf.has(cfs_filename):
-        src_pkg_csv = conf.filename(cfs_filename)
-        msg = "Creating lattice from '%s'" % src_pkg_csv
-        logger.info(msg)
-        #cfa.importCsv(src_pkg_csv)
-        cfa.importSqliteDb(src_pkg_csv)
-    else:
-        logger.error("Channel finder data are available, no '%s', no server" % 
-                     cfs_filename)
-        raise RuntimeError("Failed at loading cache file")
+    lattice_dict = {}
 
-    #print(msg)
-    for k in [('name', u'elemName'), 
-              ('field', u'elemField'), 
-              ('devname', u'devName'),
-              ('family', u'elemType'), 
-              ('handle', u'elemHandle'),
-              ('index', u'elemIndex'), 
-              ('se', u'elemPosition'),
-              ('length', u'elemLength'),
-              ('system', u'system')]:
-        cfa.renameProperty(k[1], k[0])
-
-    #tags = cfa.tags('aphla.sys.*')
-
-    global _lat, _lattice_dict
-
+    #logger.error("HELP")
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
 
     for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
+        if not fnmatch(latname, submachines): continue
+
         lattag = HLA_TAG_SYS_PREFIX + '.' + latname
         logger.info("Initializing lattice %s (%s)" % (latname, lattag))
-        _lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
+        lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
                                                desc = cfa.source)
+        if lattice_dict[latname].size() == 0:
+            logger.warn("lattice '%s' has no elements" % latname)
 
-    orm_filename = ''
-    if orm_filename and conf.has(orm_filename):
-        #print("Using ORM:", conf.filename(orm_filename))
-        _lattice_dict['SR'].ormdata = OrmData(conf.filename(orm_filename))
+    # get the file, search current dir first
+    data_filename = getResource('sr.hdf5', __name__)
+    if data_filename:
+        lattice_dict['SR'].ormdata = OrmData(data_filename)
+        lattice_dict['SR']._twiss = Twiss(data_filename)
+        lattice_dict['SR']._twiss.load_hdf5(data_filename)
+        logger.info("using ORM data '%s'" % data_filename)
     else:
-        logger.warning("No ORM '%s' found" % orm_filename)
+        logger.warning("No ORM '%s' found" % data_filename)
 
-    # a virtual bpm. its field is a "merge" of all bpms.
-    bpms = _lattice_dict['SR'].getElementList('BPM')
-    allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
-                            'family': HLA_VFAMILY})
-    _lattice_dict['SR'].insertElement(allbpm, groups=[HLA_VFAMILY])
-
+    # tune element from twiss
+    #twiss = _lattice_dict['V2SR'].getElementList('twiss')[0]
+    #tune = CaElement(name='tune', virtual=0)
+    #tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
+    #                    [HLA_TAG_PREFIX+'.elemfield.x'])
+    #tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
+    #                    [HLA_TAG_PREFIX+'.elemfield.y'])
+    #_lattice_dict['V2SR'].insertElement(tune, 0)
     #
     # LTB 
-    _lattice_dict['LTB'].loop = False
-    _lattice_dict['LTD1'].loop = False
+    if 'LTB' in lattice_dict: lattice_dict['LTB'].loop = False
     #_lat = _lattice_dict['LTB']
 
     #
     # SR
-    _lattice_dict['SR'].loop = True
-    _lat = _lattice_dict['SR']
+    lattice_dict['SR'].loop = True
+    #uc_m2mm = UcPoly1d('m', 'mm', [1e3, 0])
+    #uc_mm2m = UcPoly1d('mm', 'm', [1e-3, 0])
+    #
+    #for e in lattice_dict['V2SR'].getElementList('BPM'):
+    #    e.addUnitConversion('x', uc_m2mm, None, "phy")
+    #    e.addUnitConversion('x', uc_mm2m, "phy", None)
+
+    return lattice_dict, lattice_dict['SR']
