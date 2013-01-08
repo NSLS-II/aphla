@@ -1,5 +1,9 @@
 """
+In ``aphla`` one machine includes several accelerator structure, e.g. "nsls2v2" is a machine with several submachine or lattice V1LTD, V1LTB, V2SR.
+
+Submachines are also called lattice in ``aphla``. Each lattice has a list of elements, magnet or instrument. The submachines/lattices can share elements. 
 """
+
 from ..unitconv import *
 from ..element import *
 from ..apdata import *
@@ -15,7 +19,7 @@ import cPickle as pickle
 
 import logging
 logger = logging.getLogger(__name__)
-
+logger.setLevel(logging.DEBUG)
 #
 HLA_TAG_PREFIX = 'aphla'
 HLA_TAG_EGET = HLA_TAG_PREFIX + '.eget'
@@ -42,16 +46,17 @@ _lattice_dict = {}
 # the current lattice
 _lat = None
 
-def load(machine, submachines = "*", **kwargs):
-    init(machine, submachines = submachines, **kwargs)
-
 def init(machine, submachines = "*", **kwargs):
+    load(machine, submachines = submachines, **kwargs)
+
+def load(machine, submachines = "*", **kwargs):
     """
     load submachine lattices in machine
 
-    - *machine* is an exact name
-    - *submachine* is a pattern
-    - *src*
+    :param machine: the exact name of machine
+    :param submachine: pattern of sub machines
+    :param use_cache: optional bool, default False, use cache
+    :param save_cache: optional bool, default False, save cache
     """
     
     use_cache = kwargs.get('use_cache',False)
@@ -87,7 +92,8 @@ def loadCache(machine_name):
     global _lat, _lattice_dict
     
     cache_folderpath = os.path.join(HOME,'.hla')
-    cache_filepath = os.path.join(cache_folderpath,machine_name+'_lattices.cpkl')
+    cache_filepath = os.path.join(cache_folderpath,
+                                  machine_name+'_lattices.cpkl')
     with open(cache_filepath,'rb') as f:
         selected_lattice_name = pickle.load(f)
         _lattice_dict = pickle.load(f)
@@ -99,7 +105,8 @@ def saveCache(machine_name, lattice_dict, selected_lattice_name):
     cache_folderpath = os.path.join(HOME,'.hla')
     if not os.path.exists(cache_folderpath):
         os.mkdir(cache_folderpath)
-    cache_filepath = os.path.join(cache_folderpath,machine_name+'_lattices.cpkl')
+    cache_filepath = os.path.join(cache_folderpath,
+                                  machine_name+'_lattices.cpkl')
     with open(cache_filepath,'wb') as f:
         pickle.dump(selected_lattice_name,f,2)
         pickle.dump(lattice_dict,f,2)
@@ -247,40 +254,6 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
     return lat
 
 
-
-#def saveCache():
-    #"""
-    #.. deprecated:: 0.3
-    #"""
-    #raise DeprecationWarning()
-
-    #output = open(os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl'), 'w')
-    #import pickle
-    ##import cPickle as pickle
-    #pickle.dump(_lattice_dict, output)
-    #pickle.dump(_lat, output)
-    #pickle.dump(_orm, output)
-    #output.close()
-
-#def loadCache():
-    #"""
-    #.. deprecated:: 0.3
-    #"""
-    #raise DeprecationWarning()
-
-    #inp_file = os.path.join(HLA_DATA_DIRS, HLA_MACHINE,'hla_cache.pkl')
-    #if not os.path.exists(inp_file):
-        #return False
-    #inp = open(inp_file, 'r')
-    #global _lat, _lattice_dict, _orm
-    #import pickle
-    ##import cPickle as pickle
-    #_lattice_dict = pickle.load(inp)
-    #_lat = pickle.load(inp)
-    #_orm = pickle.load(inp)
-    #inp.close()
-    #return True
-
 def use(lattice):
     """
     switch to a lattice
@@ -328,4 +301,9 @@ def lattices():
     #return dict((k, v.mode) for k,v in _lattice_dict.iteritems())
     return _lattice_dict.keys()
 
+
+def machines():
+    """all available machines"""
+    from pkg_resources import resource_filename, resource_listdir, resource_isdir
+    return [d for d in resource_listdir(__name__, ".") if resource_isdir(__name__, d)]
 

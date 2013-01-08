@@ -430,7 +430,10 @@ class OrbitPlot(Qwt.QwtPlot):
     def attachCurves(self, parent = None):
         self.curve1.attach(parent)
         self.curve2.attach(parent)
+        if self.curvemag: self.curvemag.attach(parent)
         #self.replot()
+        #print "Detached 1,2"
+        #self.curve2.detach()
 
     def elementDoubleClicked(self, elem):
         print "element selected:", elem

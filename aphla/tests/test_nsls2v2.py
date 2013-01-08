@@ -5,7 +5,7 @@ NSLS2 V2 Unit Test
 -------------------
 
 - test_*_l0 for readonly test
-- test_*_l1 for small perturbation
+- test_*_l1 for small perturbation, nonvisible to users
 - test_*_l2 for beam steering test
 """
 
@@ -41,8 +41,8 @@ ap.machines.init(MACHINE[-1])
 LAT_SR = "V2SR"
 
 logging.info("NSLS2V2 initialized")
-
-refpvrb = [
+PV_SR_DCCT='V:2-SR-BI{DCCT}CUR-I'
+PV_REF_RB = [
     "V:2-SR:C15-BI:G2{PL1:1845}SA:X",
     "V:2-SR:C15-BI:G2{PL1:1845}SA:Y",
     "V:2-SR:C15-BI:G2{PL2:1865}SA:X",
@@ -56,14 +56,18 @@ refpvrb = [
     "V:2-SR:C15-BI:G6{PH1:1939}SA:X",
     "V:2-SR:C15-BI:G6{PH1:1939}SA:Y"
     ]
-ref_v0 = np.array(ap.caget(refpvrb), 'd')
+ref_v0 = np.array(ap.caget(PV_REF_RB), 'd')
+
+# name of BPMs
+BPM1='ph2g2c30a'
+BPM2='pm1g4c30a'
 
 # plotting ?
 PLOTTING = True
 
 def markForStablePv():
-    global ref_v0, refpvrb
-    ref_v0 = np.array(ap.caget(refpvrb), 'd')
+    global ref_v0, PV_REF_RB
+    ref_v0 = np.array(ap.caget(PV_REF_RB), 'd')
     
 def waitForStablePv(**kwargs):
     """
@@ -81,7 +85,7 @@ def waitForStablePv(**kwargs):
     t0 = time.time()
     time.sleep(minwait)
     global ref_v0
-    dv = np.array(caget(refpvrb)) - ref_v0
+    dv = np.array(caget(PV_REF_RB)) - ref_v0
     dvstd = [dv.std()]  # record the history
     timeout = False
 
@@ -91,7 +95,7 @@ def waitForStablePv(**kwargs):
         if dt  > maxwait:
             timeout = True
             break
-        dv = np.array(caget(refpvrb)) - ref_v0
+        dv = np.array(caget(PV_REF_RB)) - ref_v0
         dvstd.append(dv.std())
 
     if diffstd_list:
@@ -111,9 +115,7 @@ class Test0Element(unittest.TestCase):
         pass
 
     def test_nullelement_l0(self):
-        el = ap.getElements(['AABBCC'])
-        self.assertEqual(len(el), 1)
-        self.assertIsNone(el[0])
+        pass
 
     def test_tune_l0(self):
         logging.info("test_tune")
@@ -132,7 +134,7 @@ class Test0Element(unittest.TestCase):
         dcct = dccts[0]
         # current
         #pv = u'SR:C00-BI:G00{DCCT:00}CUR-RB'
-        pv = 'V:2-SR-BI{DCCT}CUR-I'
+        pv = PV_SR_DCCT
         vsrtag = 'aphla.sys.V2SR'
         self.assertEqual(dcct.name,    'dcct')
         #self.assertEqual(dcct.devname, 'DCCT')
@@ -343,6 +345,18 @@ class Test0Lattice(unittest.TestCase):
         self.assertTrue(self.lat.hasGroup(ap.machines.HLA_VFAMILY))
 
     def test_getelements_l0(self):
+        # get an empty list []
+        el = ap.getElements('AABBCC')
+        self.assertEqual(len(el), 0)
+        # get a [None]
+        el = ap.getElements(['AABBCC'])
+        self.assertEqual(len(el), 1)
+        self.assertIsNone(el[0])
+
+        el = ap.getElements(BPM1)
+        self.assertEqual(len(el), 1)
+        self.assertTrue(isinstance(el[0], ap.element.CaElement))
+
         elems = self.lat.getElementList('BPM')
         self.assertEqual(len(elems), 180)
         
@@ -358,29 +372,33 @@ class Test0Lattice(unittest.TestCase):
             #                            elem1[i-1].name, elem1[i-1].sb,
             #                            elem1[i].index, elem1[i-1].index,
             #                            elem1[i].sb - elem1[i-1].sb))
-            self.assertGreaterEqual(elem1[i].sb - elem1[i-1].sb, -1e-9,
-                                    msg="{0}({4},sb={1})<{2}({5}, sb={3}), d={6}".format(
-                                        elem1[i].name, elem1[i].sb, 
-                                        elem1[i-1].name, elem1[i-1].sb,
-                                        elem1[i].index, elem1[i-1].index,
-                                        elem1[i].sb - elem1[i-1].sb))
+            self.assertGreaterEqual(
+                elem1[i].sb - elem1[i-1].sb, -1e-9,
+                msg="{0}({4},sb={1})<{2}({5}, sb={3}), d={6}".format(
+                    elem1[i].name, elem1[i].sb, 
+                    elem1[i-1].name, elem1[i-1].sb,
+                    elem1[i].index, elem1[i-1].index,
+                    elem1[i].sb - elem1[i-1].sb))
             
-            self.assertGreaterEqual(elem1[i].se, elem1[i-1].sb,
-                                    "{0}({4},se={1})<{2}(sb={3})".format(
+            self.assertGreaterEqual(
+                elem1[i].se, elem1[i-1].sb,
+                msg="{0}({4},se={1})<{2}(sb={3})".format(
                     elem1[i].name, elem1[i].se, elem1[i-1].name, elem1[i-1].sb, 
                     i))
 
         elem1 = self.lat.getElementList('BPM')
         for i in range(1, len(elem1)):
-            self.assertGreaterEqual(elem1[i].sb, elem1[i-1].sb,
-                                    "%f (%s) %f (%s)" % (
+            self.assertGreaterEqual(
+                elem1[i].sb, elem1[i-1].sb,
+                msg = "%f (%s) %f (%s)" % (
                     elem1[i].sb, elem1[i].name,
                     elem1[i-1].sb, elem1[i-1].name))
             
         elem1 = self.lat.getElementList('QUAD')
         for i in range(1, len(elem1)):
-            self.assertGreaterEqual(elem1[i].sb, elem1[i-1].sb,
-                                    "%f (%s) %f (%s)" % (
+            self.assertGreaterEqual(
+                elem1[i].sb, elem1[i-1].sb,
+                msg = "%f (%s) %f (%s)" % (
                     elem1[i].sb, elem1[i].name,
                     elem1[i-1].sb, elem1[i-1].name))
         
@@ -398,6 +416,11 @@ class Test0Lattice(unittest.TestCase):
         self.lat.removeGroup(grp)
         self.assertFalse(self.lat.hasGroup(grp))
 
+
+"""
+Test1Lattice
+~~~~~~~~~~~~~
+"""
         
 class Test1LatticeSr(unittest.TestCase):
     def setUp(self):

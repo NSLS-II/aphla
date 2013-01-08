@@ -57,7 +57,8 @@ def init_submachines(machine, submachines, **kwargs):
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
-    data_filename = getResource('us_nsls2v2_sr.hdf5', __name__)
+    # get the file, search current dir first
+    data_filename = getResource('v2sr.hdf5', __name__)
     if data_filename:
         lattice_dict['V2SR'].ormdata = OrmData(data_filename)
         lattice_dict['V2SR']._twiss = Twiss(data_filename)
