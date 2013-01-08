@@ -140,7 +140,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # logging
         textedit = QPlainTextEdit(self)
-        self.logger = logging.getLogger("aphla")
+        self.logger = logging.getLogger(__name__)
         handler = QTextEditLoggingHandler(textedit)
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
@@ -616,9 +616,11 @@ def main(par=None):
     #print aphla.machines.lattices()
     #app = QApplication(args)
     #app.setStyle(st)
+    hla_cfs = os.environ.get('HLA_CFS_URL', None)
     for lat in os.environ.get('HLA_MACHINE', '').split():
         if not lat: continue
-        aphla.machines.init(lat)
+        if hla_cfs is None: aphla.machines.init(lat)
+        else: aphla.machines.init(lat, src=hla_cfs)
 
     if '--sim' in sys.argv:
         print "CA offline:", aphla.catools.CA_OFFLINE

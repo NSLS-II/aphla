@@ -74,6 +74,7 @@ def load(machine, submachines = "*", **kwargs):
             return
         
     #importlib.import_module(machine, 'machines')
+    logger.debug("importing '%s'" % machine)
     m = __import__(machine, globals(), locals(), [], -1)
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
 
@@ -225,11 +226,11 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
         
         handle = prpt.get('handle', None).lower()
         if handle == 'get': prpt['handle'] = 'readback'
-        elif handle == 'set': prpt['handle'] = 'setpoint'
+        elif handle == 'put': prpt['handle'] = 'setpoint'
 
         handle = prpt.get('handle', None).lower()
         if handle == 'get': prpt['handle'] = 'READBACK'
-        elif handle == 'set': prpt['handle'] = 'SETPOINT'
+        elif handle == 'put': prpt['handle'] = 'SETPOINT'
         elem.updatePvRecord(pv, prpt, rec[2])
 
     # group info is a redundant info, needs rebuild based on each element
