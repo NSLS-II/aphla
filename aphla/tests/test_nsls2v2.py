@@ -282,9 +282,9 @@ class Test0ChanFinderCsvData(unittest.TestCase):
     """
     """
     def setUp(self):
-        #self.cfs_csv = 'us_nsls2v1_cfs.csv'
+        #self.cfs_csv = 'nsls2v1_cfs.csv'
         srcdir = resource_filename(__name__, os.path.join(*MACHINE))
-        self.cfs_db = os.path.join(srcdir, 'us_nsls2v2.sqlite')
+        self.cfs_db = os.path.join(srcdir, 'nsls2v2.sqlite')
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
@@ -961,7 +961,7 @@ ORM
 
 class TestOrmData(unittest.TestCase):
     def setUp(self):
-        self.h5filename = "us_nsls2_v2sr_orm.hdf5"
+        self.h5filename = "v2sr.hdf5"
         pass
 
     def tearDown(self):
@@ -970,7 +970,7 @@ class TestOrmData(unittest.TestCase):
     @unittest.skip("orm data is not ready")
     def test_trim_bpm(self):
         self.assertTrue(ap.conf.has(self.h5filename))
-        ormdata = ap.OrmData(ap.conf.filename(self.h5filename))
+        ormdata = ap.OrmData(ap.conf.filename(self.h5filename), "orm")
 
         trimx = ['fxl2g1c07a', 'cxh1g6c15b']
         for trim in trimx:

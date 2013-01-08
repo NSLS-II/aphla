@@ -31,7 +31,7 @@ def init_submachines(machine, submachines, **kwargs):
     """ 
     """
     # if src provides an explicit filename/url to initialize
-    srcname = kwargs.get('src', 'us_nsls2v2')
+    srcname = kwargs.get('src', 'nsls2v2')
     cfa = findCfaConfig(srcname, machine, submachines)
 
     # the column name in CSV or the property name in channel finder is

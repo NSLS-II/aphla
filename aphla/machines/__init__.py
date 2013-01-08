@@ -118,9 +118,9 @@ def findCfaConfig(srcname, machine, submachines):
 
     initialize the virtual accelerator 'V2SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
-    - `${HOME}/.hla/us_nsls2v2.sqlite`
+    - `${HOME}/.hla/nsls2v2.sqlite`
     - channel finder in ${HLA_CFS_URL}
-    - `us_nsls2v2.sqlite` with aphla package.
+    - `nsls2v2.sqlite` with aphla package.
 
     """
     cfa = ChannelFinderAgent()
