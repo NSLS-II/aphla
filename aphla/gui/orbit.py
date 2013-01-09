@@ -441,6 +441,8 @@ class OrbitPlotMainWindow(QMainWindow):
             #self.logger.debug("using virtual bpm")
             #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
             self.obtdata = OrbitDataVirtualBpm(velement=self.vbpm)
+            if 'phy' in self.vbpm.getUnitSystems('x'): self.obtdata.xunitsys = 'phy'
+            if 'phy' in self.vbpm.getUnitSystems('y'): self.obtdata.yunitsys = 'phy'
             self.obtdata.update()
             
             # set unit

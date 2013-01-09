@@ -745,6 +745,16 @@ class CaElement(AbstractElement):
         # src, dst is unit system name
         self._field[field].unitconv[(src, dst)] = uc
 
+    def getUnitSystems(self, field):
+        """
+        list all unit systems. None is the lower level unit, e.g. in EPICS channel
+        """
+        if not self._field[field].unitconv: return [None]
+        #if not self._field[field].unitconv.keys(): return []
+
+        src, dst = zip(*(self._field[field].unitconv.keys()))
+        return list(set(src) + set(dst))
+
     def getUnit(self, field, unitsys='phy'):
         """
         get the unit name of a unit system, e.g. unitsys='phy'

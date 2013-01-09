@@ -22,6 +22,8 @@ class OrbitData(object):
         self.samples = kw.get('samples', 10)
         self.xscale = kw.get('xscale', 1.0)
         self.yscale = kw.get('yscale', 1.0)
+        self.xunitsys = None
+        self.yunitsys = None
         #self.xunit = ''
         #self.yunit = ''
         #self.sunit = 'm'
@@ -194,8 +196,8 @@ class OrbitDataVirtualBpm(OrbitData):
         i = (self.icur + 1) % self.samples
         #print "Updating orbit data"
         try:
-            self.x[i,:] = self.xscale * np.array(self.velem.get('x'))
-            self.y[i,:] = self.yscale * np.array(self.velem.get('y'))
+            self.x[i,:] = self.xscale * np.array(self.velem.get('x', unit=self.xunitsys))
+            self.y[i,:] = self.yscale * np.array(self.velem.get('y', unit=self.yunitsys))
         except:
             logger.error("can not get orbit data")
             #return
