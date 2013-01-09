@@ -36,6 +36,7 @@ from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
     QPlainTextEdit
 )
+import PyQt4.Qwt5 as Qwt
 
 import numpy as np
 
@@ -55,7 +56,7 @@ class ElementPropertyTabs(QTabWidget):
 
     def addElement(self, elemnames):
         self.setVisible(True)
-        print "new element:", elemnames
+        #print "new element:", elemnames
         elems = aphla.getElements(elemnames)
         if elems is None:
             QMessageBox.warning(self, "Element Not Found",
@@ -165,6 +166,11 @@ class OrbitPlotMainWindow(QMainWindow):
         self.obtxplot, self.obtyplot       = self.obtplots[0], self.obtplots[1]
         self.obtxerrplot, self.obtyerrplot = self.obtplots[2], self.obtplots[3]
 
+        self.obtxplot.setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        self.obtyplot.setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+        self.obtxerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        self.obtyerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+
         for p in self.obtplots:
             p.plotLayout().setCanvasMargin(4)
             p.plotLayout().setAlignCanvasToScales(True)
@@ -216,6 +222,15 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # view
         self.viewMenu = self.menuBar().addMenu("&View")
+
+        mkmenu = QMenu("&Mark", self.viewMenu)
+        for fam in ["BPM", "COR", "QUAD", "SEXT", "INSERTION"]:
+            famAct = QAction(fam, self)
+            famAct.setCheckable(True)
+            self.connect(famAct, SIGNAL("toggled(bool)"), self.click_markfam)
+            mkmenu.addAction(famAct)
+        self.viewMenu.addMenu(mkmenu)
+
         # live data
         viewLiveAction = QAction(QIcon(":/view_livedata.png"),
                                     "Live", self)
@@ -390,8 +405,20 @@ class OrbitPlotMainWindow(QMainWindow):
         #print aphla.machines.lattices()
         latname = self.sender().text()
         lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
-        print lat, self.sender().text()
+        #print lat, self.sender().text()
         self.setLattice(lat)
+
+    def click_markfam(self, on):
+        famname = self.sender().text()
+        mks = []
+        # need to convert to python str
+        for elem in self._lat.getElementList(str(famname)):
+            if elem.family != famname: continue
+            if elem.virtual: continue
+            mks.append([elem.name, 0.5*(elem.sb+elem.se)])
+
+        for p in self.obtplots:
+            p.setMarkers(mks, on)
 
     def setLattice(self, lat):
         """
@@ -400,7 +427,7 @@ class OrbitPlotMainWindow(QMainWindow):
         aphla.machines.use(lat.name)
 
         self._lat = lat
-        self.logger.info("using lattice: %s" % lat.name)
+        #self.logger.info("using lattice: %s" % lat.name)
         self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
 
         for p in self.obtplots:
@@ -411,9 +438,18 @@ class OrbitPlotMainWindow(QMainWindow):
         self.obtdata = None
         
         if self.vbpm is not None:
+            #self.logger.debug("using virtual bpm")
             #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
             self.obtdata = OrbitDataVirtualBpm(velement=self.vbpm)
             self.obtdata.update()
+            
+            # set unit
+            xu = "x [%s]" % (self.vbpm.getUnit('x'),)
+            yu = "y [%s]" % (self.vbpm.getUnit('y'),)
+            self.obtxplot.setAxisTitle(Qwt.QwtPlot.yLeft, xu)
+            self.obtyplot.setAxisTitle(Qwt.QwtPlot.yLeft, yu)
+            self.obtxerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, xu)
+            self.obtyerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, yu)
             #print self.obtdata.xorbit()
             #print self.obtdata.yorbit()
         else:
@@ -427,7 +463,7 @@ class OrbitPlotMainWindow(QMainWindow):
             self.obtdata = OrbitData(elements=elems, x=x, sb=sb, se=se)
 
         magprof = lat.getBeamlineProfile()
-        print magprof
+        #print magprof
         for p in self.obtplots:
             p.setPlot(magnet_profile=magprof)
             p.attachCurves(p)

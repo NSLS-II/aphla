@@ -742,7 +742,20 @@ class CaElement(AbstractElement):
         """
         add unit conversion for field
         """
+        # src, dst is unit system name
         self._field[field].unitconv[(src, dst)] = uc
+
+    def getUnit(self, field, unitsys='phy'):
+        """
+        get the unit name of a unit system, e.g. unitsys='phy'
+
+        return '' if no such unit system.
+        """
+        for k,v in self._field[field].unitconv.iteritems():
+            if k[0] == unitsys: return v.direction[0]
+            elif k[1] == unitsys: return v.direction[1]
+            
+        return ''
 
     def updatePvRecord(self, pvname, properties, tags = []):
         """
@@ -906,9 +919,9 @@ class CaElement(AbstractElement):
         if not self._field.has_key(field):
             v = None
         elif source == 'readback':
-            v = self._field[field].getReadback()
+            v = self._field[field].getReadback(unit)
         elif source.lower() == 'setpoint':
-            v = self._field[field].getSetpoint()
+            v = self._field[field].getSetpoint(unit)
         else:
             raise ValueError("unknow source {0}" % field)
         
@@ -1010,6 +1023,7 @@ def merge(elems, **kwargs):
             pvdict[f][0].extend(pvrb)
             pvdict[f][1].extend(pvsp)
 
+    # consider only the common fields
     for k,v in count.iteritems(): 
         if v < len(elems): 
             pvdict.pop(k)

@@ -3,6 +3,8 @@ Orbit Data
 """
 import numpy as np
 from PyQt4.QtCore import QTimer, SIGNAL, QObject
+import logging
+logger = logging.getLogger(__name__)
 
 class OrbitData(object):
     """
@@ -20,6 +22,9 @@ class OrbitData(object):
         self.samples = kw.get('samples', 10)
         self.xscale = kw.get('xscale', 1.0)
         self.yscale = kw.get('yscale', 1.0)
+        #self.xunit = ''
+        #self.yunit = ''
+        #self.sunit = 'm'
 
         self.picker_profile = kw.get('picker_profile', None)
         self.magnet_profile = kw.get('magnet_profile', None)
@@ -182,12 +187,20 @@ class OrbitDataVirtualBpm(OrbitData):
         """
         update the orbit data from virtual element.
         """
+        #self.xunit = self.velem.getUnit('x')
+        #self.yunit = self.velem.getUnit('y')
+
         # y and errbar sync with plot, not changing data.
         i = (self.icur + 1) % self.samples
         #print "Updating orbit data"
+        try:
+            self.x[i,:] = self.xscale * np.array(self.velem.get('x'))
+            self.y[i,:] = self.yscale * np.array(self.velem.get('y'))
+        except:
+            logger.error("can not get orbit data")
+            #return
+            raise
 
-        self.x[i,:] = self.xscale * np.array(self.velem.get('x'))
-        self.y[i,:] = self.yscale * np.array(self.velem.get('y'))
         self.xerrbar[:] = np.std(self.x, axis=0)
         self.yerrbar[:] = np.std(self.y, axis=0)
         self.icount += 1

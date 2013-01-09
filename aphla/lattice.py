@@ -25,6 +25,8 @@ import shelve
 import numpy as np
 from fnmatch import fnmatch
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Lattice:
     """
@@ -242,7 +244,7 @@ class Lattice:
 
         for child in chlist:
             if not self._group.has_key(child):
-                print(__file__, "WARNING: no %s group found" % child)
+                logger.warn("WARNING: no %s group found" % child)
                 continue
             for elem in self._group[child]:
                 if elem in self._group[parent]: continue
@@ -452,7 +454,6 @@ class Lattice:
         elem = []
         for e in self._elements:
             # skip for duplicate
-            #print e.name,
             if e.name in elem: continue
 
             if not self._matchElementCgs(e, **kwargs):
@@ -463,7 +464,6 @@ class Lattice:
             elif fnmatch(e.name, group):
                 elem.append(e.name)
             else:
-                #print "skiped"
                 pass
                 
             #if cell and not e.cell in cell: continue
@@ -613,7 +613,6 @@ class Lattice:
         if groups in self._group.keys():
             return self._group[groups]
 
-        #print __file__, groups
         for g in groups:
             ret[g] = []
             imatched = 0
@@ -622,7 +621,6 @@ class Lattice:
                     imatched += 1
                     ret[g].extend([e.name for e in elems])
 
-            #print g, ret[g]
 
         r = set(ret[groups[0]])
         if op.lower() == 'union':
@@ -630,7 +628,6 @@ class Lattice:
                 r = r.union(set(v))
         elif op.lower() == 'intersection':
             for g, v in ret.items():
-                #print __file__, g, len(v), len(r)
                 r = r.intersection(set(v))
         else:
             raise ValueError("%s not defined" % op)
@@ -723,7 +720,6 @@ class Lattice:
         if len(self._elements) >= 10:
             idx = int(1.0+log10(len(self._elements)))
         fmt = "%%%dd %%%ds  %%%ds  %%9.4f %%9.4f\n" % (idx, ml_name, ml_family)
-        #print fmt
         for i, e in enumerate(self._elements):
             if e.virtual: continue
             s = s + fmt % (i, e.name, e.family, e.sb, e.length)
@@ -764,7 +760,7 @@ class Lattice:
         """return chromaticities -> (chx, chy) from twiss data"""
         return self._twiss.chrom
 
-    def getBeamlineProfile(self, s1=0.0, s2=1e10):
+    def getBeamlineProfile(self, **kwargs):
         """
         :param s1: s-begin
         :param s2: s-end
@@ -773,12 +769,17 @@ class Lattice:
 
         Virtual element is not included.
         """
+        s1 = kwargs.get("s1", 0.0)
+        s2 = kwargs.get("s2", 1e10)
+        highlight = kwargs.get("highlight", None)
+
         prof = []
         for elem in self._elements:
             if elem.virtual: continue
             elif elem.se < s1: continue
             elif elem.sb > s2: continue
             x1, y1, c = elem.profile()
+            #if elem.family == highlight: c = 'b'
             prof.append((x1, y1, c, elem.name))
         # filter the zero
         ret = [prof[0]]

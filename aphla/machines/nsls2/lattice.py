@@ -1,5 +1,5 @@
 from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource)
-from .. import (OrmData, Twiss, UcPoly1d)
+from .. import (OrmData, Twiss, UcPoly)
 
 from fnmatch import fnmatch
 import logging

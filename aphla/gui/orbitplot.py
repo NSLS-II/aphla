@@ -416,13 +416,40 @@ class OrbitPlot(Qwt.QwtPlot):
         self.picker1 = None
         self.zoomer1 = None
 
-        self.marker = Qwt.QwtPlotMarker()
+        self.markers = []
+
+        #self.addMarkers(None)
+        #self.marker = Qwt.QwtPlotMarker()
         #self.marker.attach(self)
         #self.marker.setLabelAlignment(Qt.AlignLeft)
         #self.marker.setLabelAlignment(Qt.AlignBottom)
         #self.marker.setValue(100, 0)
         #self.marker.setLabel(Qwt.QwtText("Hello"))
         #self.connect(self, SIGNAL("doubleClicked
+
+    def setMarkers(self, mks, on = True):
+        names, locs = zip(*mks)
+        if not on:
+            for r in self.markers:
+                if r[0] in names: r[1].detach()
+        else:
+            known_names, mklst = [], []
+            if self.markers: known_names, mklst = zip(*self.markers)
+            for r in mks:
+                if r[0] in known_names:
+                    i = known_names.index(r[0])
+                    mklst[i].attach(self)
+                    continue
+                mk1 = Qwt.QwtPlotMarker()
+                mk1.setSymbol(Qwt.QwtSymbol(
+                Qwt.QwtSymbol.Diamond,
+                QBrush(Qt.blue),
+                QPen(Qt.red, 1),
+                QSize(12, 12)))
+                mk1.setValue(r[1], 0)
+                mk1.setAxis(Qwt.QwtPlot.xBottom, Qwt.QwtPlot.yRight)
+                mk1.attach(self)
+                self.markers.append([r[0], mk1])
 
     def detachOrbitCurve(self):
         self.curve1.detach()

@@ -149,9 +149,9 @@ class Test0Element(unittest.TestCase):
         self.assertLess(dcct.value, 600.0)
 
         self.assertGreater(dcct.value, 1.0)
-        self.assertGreater(ap.eget('DCCT', 'value'), 1.0)
-        self.assertEqual(len(ap.eget('DCCT', ['value'])), 1)
-        self.assertGreater(ap.eget('DCCT', ['value'])[0], 1.0)
+        self.assertGreater(ap.eget('DCCT', 'value', unit=None), 1.0)
+        self.assertEqual(len(ap.eget('DCCT', ['value'], unit=None)), 1)
+        self.assertGreater(ap.eget('DCCT', ['value'], unit=None)[0], 1.0)
 
     def test_bpm_l0(self):
         bpms = ap.getElements('BPM')
