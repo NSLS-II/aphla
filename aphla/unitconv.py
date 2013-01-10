@@ -102,7 +102,8 @@ def setUnitConversion(lat, h5file, group):
             if not eobj: continue
             eobjs.append(eobj)
 
-        eobjs += lat.getElementList(v.attrs.get('families', ''))
+        fams = v.attrs.get('families', [])
+        for fam in fams: eobjs += lat.getElementList(fam)
 
         for eobj in eobjs:
             if fld not in eobj.fields():
