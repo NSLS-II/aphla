@@ -1,5 +1,6 @@
-from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource)
-from .. import (OrmData, Twiss, UcPoly)
+from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource,
+                setUnitConversion)
+from .. import (OrmData, Twiss)
 
 from fnmatch import fnmatch
 import logging
@@ -78,6 +79,8 @@ def init_submachines(machine, submachines, **kwargs):
     #
     # LTB 
     if 'LTB' in lattice_dict: lattice_dict['LTB'].loop = False
+    data_filename = getResource('ltb_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['LTB'], data_filename, "unitconv")
     #_lat = _lattice_dict['LTB']
 
     #

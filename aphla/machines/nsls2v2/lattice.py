@@ -59,12 +59,21 @@ def init_submachines(machine, submachines, **kwargs):
             logger.warn("lattice '%s' has no elements" % latname)
 
     # get the file, search current dir first
-    data_filename = getResource('v2sr.hdf5', __name__)
+    data_filename = getResource('nsls2v2.hdf5', __name__)
     if data_filename:
-        lattice_dict['V2SR'].ormdata = OrmData(data_filename)
+        lattice_dict['V2SR'].ormdata = OrmData()
+        #lattice_dict['V2SR'].ormdata.load_hdf5(data_filename, "V2SR/orm")
+        # hack for h5py < 2.1.1
+        ormfile = getResource('v2sr_orm.hdf5', __name__)
+        lattice_dict['V2SR'].ormdata.load_hdf5(ormfile, "orm")        
+        logger.info("using ORM data '%s'" % ormfile)
+
         lattice_dict['V2SR']._twiss = Twiss(data_filename)
-        lattice_dict['V2SR']._twiss.load_hdf5(data_filename)
-        logger.info("using ORM data '%s'" % data_filename)
+        #lattice_dict['V2SR']._twiss.load_hdf5(data_filename, "V2SR/twiss")
+        # hack for h5py < 2.1.1
+        twissfile = getResource('v2sr_twiss.hdf5', __name__)
+        lattice_dict['V2SR']._twiss.load_hdf5(twissfile, "twiss")
+        logger.info("using Twiss data '%s'" % twissfile)
     else:
         logger.warning("No ORM '%s' found" % data_filename)
 
@@ -95,9 +104,9 @@ def init_submachines(machine, submachines, **kwargs):
 
     vbpm = lattice_dict['V2SR'].getElementList(HLA_VBPM, virtual=1)
     for v in vbpm:
-        v.addUnitConversion('x', uc_m2mm, None, "phy")
-        v.addUnitConversion('x', uc_mm2m, "phy", None)
-        v.addUnitConversion('y', uc_m2mm, None, "phy")
-        v.addUnitConversion('y', uc_mm2m, "phy", None)
+        if 'x' in v.fields(): v.addUnitConversion('x', uc_m2mm, None, "phy")
+        if 'x' in v.fields(): v.addUnitConversion('x', uc_mm2m, "phy", None)
+        if 'y' in v.fields(): v.addUnitConversion('y', uc_m2mm, None, "phy")
+        if 'y' in v.fields(): v.addUnitConversion('y', uc_mm2m, "phy", None)
 
     return lattice_dict, lattice_dict['V2SR']
