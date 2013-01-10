@@ -1,4 +1,4 @@
-from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, 
+from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, setUnitConversion,
                 createLattice, findCfaConfig, getResource)
 from .. import (OrmData, Twiss, UcPoly)
 
@@ -93,20 +93,8 @@ def init_submachines(machine, submachines, **kwargs):
     #
     # SR
     lattice_dict['V2SR'].loop = True
-    uc_m2mm = UcPoly('m', 'mm', [1e3, 0])
-    uc_mm2m = UcPoly('mm', 'm', [1e-3, 0])
+    data_filename = getResource('v2sr_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['V2SR'], data_filename, "unitconv")
 
-    for e in lattice_dict['V2SR'].getElementList('BPM'):
-        e.addUnitConversion('x', uc_m2mm, None, "phy")
-        e.addUnitConversion('x', uc_mm2m, "phy", None)
-        e.addUnitConversion('y', uc_m2mm, None, "phy")
-        e.addUnitConversion('y', uc_mm2m, "phy", None)
-
-    vbpm = lattice_dict['V2SR'].getElementList(HLA_VBPM, virtual=1)
-    for v in vbpm:
-        if 'x' in v.fields(): v.addUnitConversion('x', uc_m2mm, None, "phy")
-        if 'x' in v.fields(): v.addUnitConversion('x', uc_mm2m, "phy", None)
-        if 'y' in v.fields(): v.addUnitConversion('y', uc_m2mm, None, "phy")
-        if 'y' in v.fields(): v.addUnitConversion('y', uc_mm2m, "phy", None)
 
     return lattice_dict, lattice_dict['V2SR']
