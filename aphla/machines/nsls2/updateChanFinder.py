@@ -35,7 +35,8 @@ from channelfinder import Channel, Property, Tag
 
 import conf
 
-cfsurl = 'https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder'
+cfsurl = os.environ.get('HLA_CFS_URL', 'https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder')
+
 cfinput = {
     'BaseURL': cfsurl,
     'username': conf.username,
@@ -352,7 +353,7 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
             pvs = [pv.strip() for pv in rec[2].split(',')]
             removeTagPvs(cf, rec[1].strip(), pvs, OWNER)
             continue
-        elif rec[0] == 'addproperty':
+        elif rec[0] in ('addproperty', 'updateproperty'):
             pvs = [pv.strip() for pv in rec[2].split(',')]
             prpt, val = rec[1].split('=')
             if val == "''": val = ''
@@ -362,6 +363,7 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
             pvs = [pv.strip() for pv in rec[2].split(',')]
             prpt = rec[1].strip()
             removePropertyPvs(cf, prpt, PRPTOWNER, pvs)
+            
         pv = rec[0]
         cmd = rec[1]
         newval = ''.join(rec[2:])
@@ -386,8 +388,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--cmd', type=file, help="run command list")
-    group.add_argument('--csv1', type=file, help="update with this csv1 file")
-    group.add_argument('--csv2', type=file, help="update with this csv2 file")
+    group.add_argument('--csv1', type=file, help="update with this csv1 file (table)")
+    group.add_argument('--csv2', type=file, help="update with this csv2 file (explicit dict)")
     parser.add_argument('-u', '--update-only', action="store_true", 
                         help="do not create new")
     
