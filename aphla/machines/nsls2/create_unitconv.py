@@ -4,39 +4,45 @@ import numpy as np
 import h5py
 
 def init_ltb(grp):
-    d = [("Magnet Type", "MG name", "Serial Number", 
+    d = [("Magnet Type", "MG name", "Family", "Serial Number", 
           "Linear Fit Slope (A)", "Units of A", "Linear Fit Offset (B)", 
           "Units of B"),
-         ("Dipole", "B1, B2, B3, B4", "3", 
+         ("Dipole", "B1, B2, B3, B4", "", "3",
           "0.001765982", "T-m/A", "0.002043966", "T-m", "bl"), 
-         ("Normal Aperture Quad SOLID IRON POLE TIP", "Q1, Q2, Q3, Q4, Q7, Q1BD1, Q2BD1", "1", 
-          "0.080434155", "T/m/A", "0.173508465", "T/m", "k1"), 
-         ("Normal Aperture Quad (Correct Pole Tip)", "Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15", "", 
-          "0.08310826", "T/m/A", "0.078274321", "T/m", "k1"),
-         ("Wide Aperture Quad", "Q5, Q6", "2",
-          "0.027125245", "T/m/A", "0.008008731", "T/m", "k1")]
-
+         ("Normal Aperture Quad SOLID IRON POLE TIP", "Q1, Q2, Q3, Q4, Q7, Q1BD1, Q2BD1", "", "1", 
+          "0.080434155", "T/m/A", "0.173508465", "T/m", "g"), 
+         ("Normal Aperture Quad (Correct Pole Tip)", "Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15", "", "", 
+          "0.08310826", "T/m/A", "0.078274321", "T/m", "g"),
+         ("Wide Aperture Quad", "Q5, Q6", "", "2",
+          "0.027125245", "T/m/A", "0.008008731", "T/m", "g"),
+         ("Corrector", "", "HCOR", "", "7.02e-4", "T-m/A", "0", "T-m", "x"),
+         ("Corrector", "", "VCOR", "", "7.02e-4", "T-m/A", "0", "T-m", "y"),
+         ]
+       
     iuc = 0
     for i,rec in enumerate(d[1:]):
-        a, b = [float(rec[3]), float(rec[5])]
+        a, b = [float(rec[4]), float(rec[6])]
         names = [v.strip() for v in rec[1].split(',')]
+        fams  = [v.strip() for v in rec[2].split(",")]
 
         dsname = "uc_%d" % iuc
         grp[dsname] = [a, b] # y = ax + b
-        grp[dsname].attrs["unitsys"] = ",".join([rec[7], '', "phy"])
-        grp[dsname].attrs["direction"] = ("A", rec[6])
+        grp[dsname].attrs["unitsys"] = ",".join([rec[8], '', "phy"])
+        grp[dsname].attrs["direction"] = ("A", rec[7])
         grp[dsname].attrs["_class_"] = "polynomial"
         grp[dsname].attrs["_magtype_"] = rec[0]
-        grp[dsname].attrs["elements"] = names
+        if names: grp[dsname].attrs["elements"] = names
+        if fams: grp[dsname].attrs["families"] = fams
         iuc += 1
 
         dsname = "uc_%d" % iuc
         grp[dsname] = [1.0/a, -b/a]
-        grp[dsname].attrs["unitsys"] = ",".join([rec[7], "phy", ""])
-        grp[dsname].attrs["direction"] = (rec[6], "A")
+        grp[dsname].attrs["unitsys"] = ",".join([rec[8], "phy", ""])
+        grp[dsname].attrs["direction"] = (rec[7], "A")
         grp[dsname].attrs["_class_"] = "polynomial"
         grp[dsname].attrs["_magtype_"] = rec[0]
-        grp[dsname].attrs["elements"] = names
+        if names: grp[dsname].attrs["elements"] = names
+        if fams: grp[dsname].attrs["families"] = fams
         iuc += 1
 
 
