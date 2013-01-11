@@ -382,14 +382,14 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
 
 
 if __name__ == "__main__":
-    #simple_test()
-    #sys.exit(0)
 
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--cmd', type=file, help="run command list")
-    group.add_argument('--csv1', type=file, help="update with this csv1 file (table)")
-    group.add_argument('--csv2', type=file, help="update with this csv2 file (explicit dict)")
+    group.add_argument('--csv1', type=file, 
+                       help="update with csv1 file (table)")
+    group.add_argument('--csv2', type=file, 
+                       help="update with csv2 file (explicit dict)")
     parser.add_argument('-u', '--update-only', action="store_true", 
                         help="do not create new")
     

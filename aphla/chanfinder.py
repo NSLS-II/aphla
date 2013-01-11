@@ -203,9 +203,9 @@ class ChannelFinderAgent(object):
             self.rows.append([pv, prpts, tags])
 
 
-    def importSqliteDb(self, fname, **kwargs):
+    def _importSqliteDb1(self, fname, **kwargs):
         """
-        import to sqlite database
+        import from sqlite database (v1 with two tables)
         
         :param fname: sqlite db file name
         
@@ -254,7 +254,32 @@ class ChannelFinderAgent(object):
         conn.close()
         self.source = fname
 
-    def exportCsv(self, fname):
+    def exportSqlite(self, fname, tbl = "channels"):
+        """
+        export to sqlite table, drop if exists.
+        """
+        prpts, tags = set(), set()
+        for r in self.rows:
+            prpts.update(r[1].keys())
+            tags.update(r[2])
+        conn = sqlite3.connect(fname)
+        prpts = sorted(prpts)
+        prpts.insert(0, "pv")
+        prpts.append("tags")
+        c = conn.cursor()
+        c.execute("drop table if exists " + tbl)
+        c.execute("create table " + tbl + "(" + ','.join(prpts) + ")")
+        for r in self.rows:
+            pv = r[0]
+            k,v0 = zip(*(r[1].items()))
+            v = [r[0]] + list(v0) + [",".join(r[2])]
+            query = "insert into " + tbl + "(pv," + ",".join(k) +  \
+                    ", tags) values (" + ",".join(["?"] * (len(k)+2)) + ")"
+            c.execute(query, v)
+            
+        conn.commit()
+
+    def _export_csv_1(self, fname):
         """
         export the CFS in CSV format.
         """
@@ -283,6 +308,16 @@ class ChannelFinderAgent(object):
             else:
                 writer.writerow([r[0]] + prpt + list(r[2]))
         del writer
+
+    def _export_csv_2(self, fname):
+        """
+        export the CFS in CSV2 format (explicit).
+        """
+        # find out all the property names
+        with open(fname, 'w') as f:
+            for r in self.rows:
+                p = ",".join(["%s=%s" % (k,v) for k,v in r[1].items()])
+                f.write(",".join([r[0], p, ",".join(r[2])]) + "\n")
 
     def _importJson(self, fname):
         self.source = fname
@@ -320,53 +355,12 @@ class ChannelFinderAgent(object):
             idx = len(self.rows) - 1
         return idx
 
-    def __updateCfs(self, cfsurl, username, password, **kwargs):
-        """
-        update the data to CFS.
-
-        :param str cfsurl: the url to CFS resources.
-        :param str username: username of CFS
-        :param str password: password of CFS
-        :param str properties: pattern of properties, e.g. '*'
-        """
-        raise NotImplementedError()
-
-        properties    = kwargs.get('properties', '*')
-        tags          = kwargs.get('tags', '*')
-
-        from channelfinder import ChannelFinderClient
-        from channelfinder import Channel, Property, Tag
-        cf = ChannelFinderClient(BaseURL = cfsurl, username=username, 
-                                 password=password)
-        all_prpts = [p.Name for p in cf.getAllProperties()]
-        all_tags  = [t.Name for t in cf.getAllTags()]
-
-        for i,r in enumerate(self.rows):
-            pv, prpt, stags = r
-            ch = cf.find(name=pv)
-            if not ch or len(ch) > 1:
-                print("channel matching error '%s'" % pv)
-                continue
-            prpts = []
-            for p,v in prpt.iteritems():
-                if p not in all_prpts: continue
-                if not fnmatch(p, properties): continue
-                cf.update(property=Property(p, 'cf-asd', v), channelName=pv)
-            tags = []
-            for t in stags:
-                tags.append(Tag(t, 'cf-aphla'))
-            #if len(prpts) == 0 and len(tags) == 0:
-            #    continue
-            #cf.update(channel=Channel(pv, ch[0].Owner, properties=prpts, tags = tags))
-
-
     def tags(self, pat):
         """
         return a list of tags matching the unix filename pattern *pat*.
         """
         alltags = set()
-        for r in self.rows:
-            for t in r[2]: alltags.add(t)
+        for r in self.rows: alltags.update(r[2])
         return [t for t in alltags if fnmatch(t, pat)]
 
     def groups(self, key = 'elemName', **kwargs):
@@ -422,16 +416,4 @@ class ChannelFinderAgent(object):
 
         #print(pv, prpt, tags)
 
-#if __name__ == "__main__":
-#    cfa = ChannelFinderAgent()
-#    # about 12 seconds
-#    #cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
-#    #                property=[('hostName', 'virtac*')], tagName='aphla.sys.*')
-#    cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
-#                    tagName='aphla.*')
-#    #cfa.importCsv('test1.csv')
-#    cfa.exportCsv('test1.csv')
-#    #cfa._exportJson('test1.json')
-#    #cfa._importJson('test1.json')
-#    #cfa.sort('elemName')
-#    print(cfa.tags('aphla.sys.*'))
+     
