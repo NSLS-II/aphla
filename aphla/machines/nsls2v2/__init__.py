@@ -21,5 +21,5 @@ logging.getLogger('aphla').addHandler(_lghdl)
 logger = logging.getLogger(__name__)
 logger.info("Testing")
 
-from lattice import *
+from machinit import *
 

@@ -535,11 +535,13 @@ class Lattice:
         if newgroup == False, the group must exist before.
         """
 
-        if not self.hasElement(member): 
+        elem = self._find_exact_element(member)
+        if not elem:
             raise ValueError("element %s is not defined" % member)
-        elem = self.getElements(member)
+
         if self.hasGroup(group):
             if elem in self._group[group]: return
+            elem.group.add(group)
             for i,e in enumerate(self._group[group]):
                 if e.sb < elem.sb: continue
                 self._group[group].insert(i, elem)
@@ -548,6 +550,7 @@ class Lattice:
                 self._group[group].append(elem)
         elif newgroup:
             self._group[group] = [elem]
+            elem.group.add(group)
         else:
             raise ValueError("Group %s does not exist."
                              "use newgroup=True to add it" % group)

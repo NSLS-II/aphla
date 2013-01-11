@@ -291,7 +291,7 @@ class Test0ChanFinderCsvData(unittest.TestCase):
     def test_db_tags_l0(self):
         cfa = ap.chanfinder.ChannelFinderAgent()
         self.assertTrue(os.path.exists(self.cfs_db), "file '%s' does not exist" % self.cfs_db)
-        cfa.importSqliteDb(self.cfs_db)
+        cfa._importSqliteDb1(self.cfs_db)
 
         tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
         for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:

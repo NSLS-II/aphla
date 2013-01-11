@@ -71,11 +71,7 @@ class AbstractElement(object):
         self.symmetry = kwargs.get('symmetry', None)
         self.sequence = kwargs.get('sequence', (0, 0))
 
-        self.group = [self.family, self.cell, self.girder, self.symmetry]
-        if 'group' in kwargs:
-            if isinstance(kwargs['group'], (list,)): grp = [v for v in kwargs['group']]
-            else: grp = kwargs['group'].split(';')
-            self.group.extend(grp)
+        self.group = set([self.family, self.cell, self.girder, self.symmetry])
         
     def profile(self, vscale=1.0):
         """

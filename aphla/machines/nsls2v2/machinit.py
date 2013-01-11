@@ -62,6 +62,14 @@ def init_submachines(machine, submachines, **kwargs):
     data_filename = getResource('nsls2v2.hdf5', __name__)
     if data_filename:
         lattice_dict['V2SR'].ormdata = OrmData()
+        import h5py
+        f = h5py.File(data_filename, 'r')['V2SR']
+        for g,v in f.get('groups', {}).items():
+            for elem in v:
+                lattice_dict['V2SR'].addGroupMember(g, elem, newgroup=True)
+
+        # group info is a redundant info, needs rebuild based on each element
+        lattice_dict["V2SR"].buildGroups()
         #lattice_dict['V2SR'].ormdata.load_hdf5(data_filename, "V2SR/orm")
         # hack for h5py < 2.1.1
         ormfile = getResource('v2sr_orm.hdf5', __name__)
@@ -74,6 +82,9 @@ def init_submachines(machine, submachines, **kwargs):
         twissfile = getResource('v2sr_twiss.hdf5', __name__)
         lattice_dict['V2SR']._twiss.load_hdf5(twissfile, "twiss")
         logger.info("using Twiss data '%s'" % twissfile)
+
+        data_filename = getResource('v2sr_unitconv.hdf5', __name__)
+        setUnitConversion(lattice_dict['V2SR'], data_filename, "unitconv")
     else:
         logger.warning("No ORM '%s' found" % data_filename)
 
@@ -93,8 +104,6 @@ def init_submachines(machine, submachines, **kwargs):
     #
     # SR
     lattice_dict['V2SR'].loop = True
-    data_filename = getResource('v2sr_unitconv.hdf5', __name__)
-    setUnitConversion(lattice_dict['V2SR'], data_filename, "unitconv")
 
 
     return lattice_dict, lattice_dict['V2SR']

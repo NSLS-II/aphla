@@ -31,7 +31,7 @@ HLA_TAG_Y    = HLA_TAG_PREFIX + '.y'
 HLA_TAG_SYS_PREFIX = HLA_TAG_PREFIX + '.sys'
 
 #
-HLA_VFAMILY = 'HLA:VFAMILY'
+HLA_VFAMILY = 'HLA:VIRTUAL'
 HLA_VBPM   = 'HLA:VBPM'
 
 HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
@@ -83,6 +83,11 @@ def load(machine, submachines = "*", **kwargs):
     global _lat, _lattice_dict
     _lattice_dict.update(lats)
     _lat = lat
+
+    for k,v in _lattice_dict.items():
+        if not v._group: continue
+        for e in v._group.get(HLA_VFAMILY, []):
+            e.virtual = 1
 
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()

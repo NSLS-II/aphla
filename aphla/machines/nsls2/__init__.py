@@ -22,5 +22,5 @@ logger = logging.getLogger(__name__)
 #logger.info("Testing")
 
 # there must be a "init_submachines" imported.
-from lattice import *
+from nsls2init import *
 
