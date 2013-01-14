@@ -118,9 +118,9 @@ def convert_at_lattice(latname):
             rec['atclass'] = 'sextupole'
             rec['k2'] = None
             oupt.append(rec.copy())
-        elif e.family in ['', None, 'DCCT']:
+        elif e.family in ['', None, 'DCCT', 'RFCAVITY']:
             pass
-        elif e.family in ['HCOR_IDCU', 'VCOR_IDCU', 'HCOR_IDCS', 'VCOR_IDCS', 'INSERTION']:
+        elif e.family in ['HCOR_IDCU', 'VCOR_IDCU', 'HCOR_IDCS', 'VCOR_IDCS', 'INSERTION', 'FCOR', 'UBPM', 'IDCOR', 'IDSIMCOR']:
             pass
         else:
             print i,e
@@ -264,8 +264,14 @@ def export_mml_init(template, latname):
         'vcm_oncontrol_pv': vcm_oncontrol_pv,
         'vcm_fault_pv': vcm_fault_pv}
 
+    #[('SH1', 'SH1'), ('SH4', 'SH4'), ('SH3', 'SH3'), ('SL1', 'SL1'),
+    #('SL2', 'SL2'), ('SL3', 'SL3'), ('SM1A', 'SM1A'), ('SM1B', 'SM1B'), 
+    # ('SM2', 'SM2'),
+    #             ]:
     ao_quad = ''
-    for qfam in [('QUAD', 'Q'), ('QH1', 'QH1')]:
+    for qfam in [('QH1', 'QH1'), ('QH2', 'QH2'), ('QH3', 'QH3'), ('QL1', 'QL1'),
+                 ('QL2', 'QL2'), ('QL3', 'QL3'), ('QM1', 'QM1'), ('QM2', 'QM2'),
+                 ]:
         quads = ap.getElements(qfam[0])
         q_devlist = "; ".join(['1 %d' % i for i in range(1, len(quads)+1)])
         q_commonnames = ";".join(mml_namelist([e.name for e in quads]))
