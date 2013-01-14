@@ -200,7 +200,7 @@ class Orm:
         t_start = time.time()
         self._rawkick = []
         rawobt, rawm, rawkick = [], [], []
-        trimsets = itertools.product(self.trim, trimflds)
+        trimsets = list(itertools.product(self.trim, trimflds))
         for i,krec in enumerate(trimsets):
             kicker, kfld = krec
             if kfld not in kicker.fields(): continue

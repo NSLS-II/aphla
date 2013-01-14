@@ -58,9 +58,9 @@ class Test0Element(unittest.TestCase):
 
         self.assertIn('x', bpm.fields())
         self.assertIn('y', bpm.fields())
-        self.assertEqual(len(bpm.get(['x', 'y'])), 2)
-        self.assertEqual(len(ap.eget('BPM', 'x')), len(bpms))
-        self.assertEqual(len(ap.eget('BPM', ['x', 'y'])), len(bpms))
+        self.assertEqual(len(bpm.get(['x', 'y'], unit=None)), 2)
+        self.assertEqual(len(ap.eget('BPM', 'x', unit=None)), len(bpms))
+        self.assertEqual(len(ap.eget('BPM', ['x', 'y'], unit=None)), len(bpms))
 
         self.assertGreater(ap.getDistance(bpms[0].name, bpms[1].name), 0.0)
 

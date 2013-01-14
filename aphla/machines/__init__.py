@@ -138,7 +138,7 @@ def findCfaConfig(srcname, machine, submachines):
         if srcname.endswith('.csv'):
             cfa.importCsv(srcname)
         elif srcname.endswith(".sqlite"):
-            cfa.importSqliteDb(srcname)
+            cfa._importSqliteDb1(srcname)
         else:
             raise RuntimeError("Unknown explicit source '%s'" % srcname)
         return cfa
