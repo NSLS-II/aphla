@@ -29,6 +29,7 @@ def patch(latname, elem, k, **kwargs):
                 "sqhhg*c*a": { "k1": 0},
                 "qh2g*c*a": { "k1": 1.47765},
                 "qh3g*c*a": { "k1": -1.70755},
+                "cav": {'f': 499.681, 'v': 5e6, 'h':1320},
             }
     }
     try:
@@ -118,7 +119,12 @@ def convert_at_lattice(latname):
             rec['atclass'] = 'sextupole'
             rec['k2'] = None
             oupt.append(rec.copy())
-        elif e.family in ['', None, 'DCCT', 'RFCAVITY']:
+        elif e.family in ['RFCAVITY']:
+            rec['name'] = 'cav'
+            rec['atclass'] = 'rfcavity'
+            oupt.append(rec.copy()) 
+            print rec
+        elif e.family in ['', None, 'DCCT']:
             pass
         elif e.family in ['HCOR_IDCU', 'VCOR_IDCU', 'HCOR_IDCS', 'VCOR_IDCS', 'INSERTION', 'FCOR', 'UBPM', 'IDCOR', 'IDSIMCOR']:
             pass
@@ -150,6 +156,12 @@ def at_definition(latname, rec):
         if k2 is None: k2 = patch(latname, name, 'k2')
         return h+" {0}, {1}, 'StrMPoleSymplectic4Pass');".format(
             L, k2/2.0)
+    elif cla in ['rfcavity']:
+        freq = patch(latname, name, 'f')
+        volt = patch(latname, name, 'v')
+        hm = patch(latname, name, 'h')
+        return h + " {0}, {1}, {2}, {3}, {4});".format(
+            L, volt, freq, hm, 'CavityPass')
     else:
         raise RuntimeError("unknown AT type '%s'" % cla)
     
