@@ -138,7 +138,7 @@ def findCfaConfig(srcname, machine, submachines):
         if srcname.endswith('.csv'):
             cfa.importCsv(srcname)
         elif srcname.endswith(".sqlite"):
-            cfa._importSqliteDb1(srcname)
+            cfa.importSqlite(srcname)
         else:
             raise RuntimeError("Unknown explicit source '%s'" % srcname)
         return cfa
@@ -155,7 +155,7 @@ def findCfaConfig(srcname, machine, submachines):
     elif os.path.exists(homesrc + '.sqlite'):
         msg = "Creating lattice from '%s.sqlite'" % homesrc
         logger.info(msg)
-        cfa.importSqliteDb(homesrc + '.sqlite')
+        cfa.importSqlite(homesrc + '.sqlite')
         #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
@@ -180,7 +180,7 @@ def findCfaConfig(srcname, machine, submachines):
         #src_pkg_csv.endswith('.sqlite')
         msg = "Creating lattice from '%s'" % name
         logger.info(msg)
-        cfa.importSqliteDb(name)
+        cfa.importSqlite(name)
         #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     else:
         logger.error("Lattice data are available for machine '%s'" % machine)
