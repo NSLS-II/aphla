@@ -32,20 +32,22 @@ control more friendly to physicists and operators.
 This work is a result of controls group, diagnostics group and accelerator
 physics group.
 
+.. 
 
-Schedule for Beam Commissioning
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+..
+   Schedule for Beam Commissioning
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- 12/01/2011--02/29/2012, LINAC front end commissioning
-- 03/30/2012--07/28/2012, LINAC commissioning
-- 05/29/2012--06/28/2012, LBTL in LINAC commissioning
-- 07/28/2012--08/27/2012, LBTL commissioning
-- 08/27/2012--12/25/2012, Booster commissioning
-- 12/15/2012--01/14/2013, BSTL in booster tunnel
-- 01/14/2013--01/24/2013, BSTL
-- 01/24/2013--09/21/2013, Storage Ring Commissioning Part 1
-- 09/21/2013--11/20/2013, ID installation
-- 11/20/2013--02/18/2014, Storage Ring Commissioning Part 2
+   - 12/01/2011--02/29/2012, LINAC front end commissioning
+   - 03/30/2012--07/28/2012, LINAC commissioning
+   - 05/29/2012--06/28/2012, LBTL in LINAC commissioning
+   - 07/28/2012--08/27/2012, LBTL commissioning
+   - 08/27/2012--12/25/2012, Booster commissioning
+   - 12/15/2012--01/14/2013, BSTL in booster tunnel
+   - 01/14/2013--01/24/2013, BSTL
+   - 01/24/2013--09/21/2013, Storage Ring Commissioning Part 1
+   - 09/21/2013--11/20/2013, ID installation
+   - 11/20/2013--02/18/2014, Storage Ring Commissioning Part 2
 
 NSLS2 Beam Commissioning Plan and Tools
 ----------------------------------------
@@ -244,8 +246,8 @@ together effectively and productively.
 Planned and Implemented Software
 ---------------------------------
 
-:hla:`Software implemented as part of the aphla is marked`. Finished
-software/scripts are :hladone:`also marked`.
+:hla:`Software implemented as part of the aphla, both service and python-aphla
+is marked`. Finished software/scripts are :hladone:`also marked`.
 
 
 General Operation
@@ -256,7 +258,7 @@ are involved. We are relying on the tools from controls group. These tools
 could already be built and used at the component testing stage. They are good
 starting points for further development.
 
-- Overall status page (warning when read/set are different too much ?)
+- Overall status page (warning when read/set are different too much ?) (CSS-ChannelOrchestrator)
     - The status includes beam information, and hardware status including
       magnet and its power supply, vacuum, RF, and so on.
     - The applications will provide overall status of the whole machine,
@@ -266,8 +268,9 @@ starting points for further development.
     - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)` (CSS operation panel)
 - Permit system monitor and control (CSS panel)
 - Data logger and data display (CSS panel)
-- Electronic logbook 
-- :hla:`Converting between machine unit and physics unit.` (G.Shen)
+- Electronic logbook (OLog)
+- :hla:`Unit conversion service` (G.Shen)
+- :hladone:`Unit conversion in python-aphla` (L.Yang)
 - :hladone:`Smooth Ramping` (G.Shen)
     - :hladone:`list channels we are interested.`
     - :hladone:`ramp (i.e. linear interpolation) whole group at certain rate.`

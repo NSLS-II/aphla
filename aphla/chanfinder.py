@@ -254,6 +254,57 @@ class ChannelFinderAgent(object):
         conn.close()
         self.source = fname
 
+    def importSqlite(self, fname, **kwargs):
+        """
+        import from sqlite database table 'channels'
+        
+        :param fname: sqlite db file name
+        
+        - NULL/None or '' will be ignored
+        - *properties*, a list of column names for properties
+        - *pvcol* default 'pv', the column name for pv
+        - *tagscol* default 'tags', the column name for tags
+        - *tagsep* default ';'
+
+        The default properties will have all in 'elements' and 'pvs' tables, 
+        except the pv and tags columns.
+
+        tags are separated by ';'
+        """
+        conn = sqlite3.connect(fname)
+        c = conn.cursor()
+        c.execute('''select * from channels''')
+        # head of columns
+        allcols = [v[0] for v in c.description]
+        # default using all columns
+        proplist= kwargs.get('properties', allcols)
+        pvcol = kwargs.get('pvcol', 'pv')
+        tagscol = kwargs.get('tagscol', 'tags')
+        tagsep = kwargs.get('tagsep', ';')
+
+        icols = [i for i in range(len(c.description)) \
+                 if c.description[i][0] in proplist]
+
+        ipv = allcols.index(pvcol)
+        itags = allcols.index(tagscol)
+        for row in c:
+            pv = row[ipv]
+            prpts = {}
+            for i in icols:
+                if i in [ipv, itags]: continue
+                # NULL or '' will be ignored
+                if row[i] is None or row[i] == '': continue
+                prpts[allcols[i]] = row[i]
+            if not row[itags]:
+                tags = []
+            else:
+                tags = [v.strip() for v in row[itags].split(tagsep)]
+            self.rows.append([pv, prpts, tags])
+
+        c.close()
+        conn.close()
+        self.source = fname
+
     def exportSqlite(self, fname, tbl = "channels"):
         """
         export to sqlite table, drop if exists.

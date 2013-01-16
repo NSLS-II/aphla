@@ -1,5 +1,5 @@
 from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, HLA_VFAMILY,
-                ChannelFinderAgent, Lattice)
+                ChannelFinderAgent, Lattice, getResource)
 from ... import element
 
 from pkg_resources import resource_string, resource_exists, resource_filename
@@ -19,83 +19,8 @@ _cf_map = {'elemName': 'name',
            'system': 'system'
 }
 
-_db_map = {'elem_type': 'family',
-           'lat_index': 'index',
-           'position': 'se',
-           'elem_group': 'group',
-           'dev_name': 'devname',
-           'elem_field': 'field'
-}
+_db_map = {}
 
-def findCfaConfig(srcname, machine, submachines):
-    """
-    find the appropriate config for ChannelFinderAgent
-
-    initialize the virtual accelerator 'V2SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
-
-    - `${HOME}/.hla/nsls2v2.sqlite`
-    - channel finder in ${HLA_CFS_URL}
-    - `nsls2v2.sqlite` with aphla package.
-
-    """
-    cfa = ChannelFinderAgent()
-
-    # if source is an explicit file name
-    if os.path.exists(srcname):
-        msg = "Creating lattice from explicit source '%s'" % srcname
-        if srcname.endswith('.csv'):
-            cfa.importCsv(srcname)
-        elif srcname.endswith(".sqlite"):
-            cfa._importSqliteDb1(srcname)
-        else:
-            raise RuntimeError("Unknown explicit source '%s'" % srcname)
-        return cfa
-
-    # matching HOME -> CF -> Package
-    homesrc = os.path.join(os.environ['HOME'], '.hla', srcname)
-    HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
-
-    if os.path.exists(homesrc + '.csv'):
-        msg = "Creating lattice from '%s.csv'" % homesrc
-        logger.info(msg)
-        cfa.importCsv(homesrc + '.csv')
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
-    elif os.path.exists(homesrc + '.sqlite'):
-        msg = "Creating lattice from '%s.sqlite'" % homesrc
-        logger.info(msg)
-        cfa.importSqliteDb(homesrc + '.sqlite')
-        #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
-    elif os.environ.get('HLA_CFS_URL', None):
-        msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
-        logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, property=[('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
-        # map the cf property name to alpha property name
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
-    elif resource_exists(__name__, os.path.join(machine, srcname + '.csv')):
-        name = resource_filename(__name__, os.path.join(machine, 
-                                                        srcname + '.csv'))
-        #src_pkg_csv = conf.filename(cfs_filename)
-        msg = "Creating lattice from '%s'" % name
-        logger.info(msg)
-        cfa.importCsv(name)
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
-    elif resource_exists(__name__, os.path.join(machine, srcname + '.sqlite')):
-        name = resource_filename(__name__, os.path.join(machine, 
-                                                        srcname + '.sqlite'))
-        msg = "Creating lattice from '%s'" % name
-        logger.info(msg)
-        #print(msg)
-        #src_pkg_csv.endswith('.sqlite')
-        msg = "Creating lattice from '%s'" % name
-        logger.info(msg)
-        cfa.importSqliteDb(name)
-        #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
-    else:
-        logger.error("Lattice data are available for machine '%s'" % machine)
-        raise RuntimeError("Failed at loading data file '%s' from '%s'" % (
-            machine, srcname))
-
-    return cfa
 
 def createLattice(name, pvrec, systag, desc = 'channelfinder', 
                   create_vbpm = True):
@@ -178,10 +103,18 @@ def init_submachines(machine, submachines, **kwargs):
     """
 
     # if src provides an explicit filename/url to initialize
-    srcname = resource_filename(__name__, 'us_nsls2v3bsrline.sqlite')
-    cfa = findCfaConfig(srcname, machine, submachines)
+    srcname = resource_filename(__name__, 'nsls2v3bsrline.sqlite')
+    cfa = ChannelFinderAgent()
 
-    for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
+    #name = resource_filename(__name__, os.path.join(machine, 
+    #                                                srcname + '.sqlite'))
+    msg = "Creating lattice from '%s'" % srcname
+    logger.info(msg)
+    msg = "Creating lattice from '%s'" % srcname
+    logger.info(msg)
+    cfa.importSqlite(srcname)
+
+    for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
 
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
@@ -194,14 +127,6 @@ def init_submachines(machine, submachines, **kwargs):
                                                desc = cfa.source, create_vbpm = False)
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
-
-    #orm_filename = None
-    #if orm_filename and conf.has(orm_filename):
-    #    #print("Using ORM:", conf.filename(orm_filename))
-    #    _lattice_dict['V2SR'].ormdata = OrmData(conf.filename(orm_filename))
-    #    logger.info("using ORM data '%s'" % orm_filename)
-    #else:
-    #    logger.warning("No ORM '%s' found" % orm_filename)
 
 
     lattice_dict['V3BSRLINE'].loop = False
@@ -239,6 +164,20 @@ def init_submachines(machine, submachines, **kwargs):
             logger.info("removed alias '{0}' for '{1}'".format(e2, e))
 
         if e.family != 'BPM': e.name = e.name[:-3]
+
+    #
+    data_filename = getResource('nsls2v3bsrline.hdf5', __name__)
+    if data_filename:
+        #lattice_dict['V3BSRLINE'].ormdata = OrmData()
+        import h5py
+        f = h5py.File(data_filename, 'r')['V3BSRLINE']
+        for g,v in f.get('groups', {}).items():
+            for elem in v:
+                lattice_dict['V3BSRLINE'].addGroupMember(g, elem, newgroup=True)
+
+        # group info is a redundant info, needs rebuild based on each element
+        lattice_dict["V3BSRLINE"].buildGroups()
+        # hack for h5py < 2.1.1
 
     #for i,e in enumerate(_lat._elements):
     #    logger.debug("{0}: {1}".format(i, e))
