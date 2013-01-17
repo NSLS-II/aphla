@@ -942,9 +942,6 @@ class CaElement(AbstractElement):
         source = kwargs.get('source', 'readback').lower()
         unit = kwargs.get('unit', None)
     
-        #if unit not in ['raw', None]:
-        #    raise RuntimeError("unit conversion (%s,%s) for field '%s' is not implemented yet" % ('raw', unit, field))
-
         if not self._field.has_key(field):
             v = None
         elif source == 'readback':
@@ -1008,7 +1005,7 @@ class CaElement(AbstractElement):
         seealso :func:`pv(field=field)`
         """
         self._put_field(field, val, unit)
-        for e in self.alias: e._field[field].put(field, val, unit=unit)
+        for e in self.alias: e._put_field(field, val, unit=unit)
 
     def settable(self, field):
         """
