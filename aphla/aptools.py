@@ -40,7 +40,7 @@ def _element_fields(elems, fields, **kwargs):
     * compress=True
     >>> _element_fields(getElements(['BPM1']), ['x', 'y'])
     
-    returns a list of (name, field)
+    returns a flat list of (name, field)
     """
     compress = kwargs.get('compress', True)
     ret = []
@@ -160,6 +160,8 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     # an orbit based these bpm
     if bpm is None:
         bpmlst = getElements('BPM')
+    else:
+        bpmlst = getElements(bpm)
 
     if plane == 'H': ref = zip([0.0] * len(bpmlst), [None] * len(bpmlst))
     elif plane == 'V': ref = zip([None] * len(bpmlst), [0.0] * len(bpmlst))

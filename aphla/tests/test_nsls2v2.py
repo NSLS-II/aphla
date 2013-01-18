@@ -288,6 +288,7 @@ class Test0ChanFinderCsvData(unittest.TestCase):
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
+    @unittest.skip("skip csv/sqlite data")
     def test_db_tags_l0(self):
         cfa = ap.chanfinder.ChannelFinderAgent()
         self.assertTrue(os.path.exists(self.cfs_db), "file '%s' does not exist" % self.cfs_db)
@@ -822,12 +823,13 @@ class TestOrbit(unittest.TestCase):
 
 class TestOrbitControl(unittest.TestCase): 
     def setUp(self):
-        ap.machines.use("V2SR")
+        #ap.machines.use("V2SR")
+        pass
 
     def tearDown(self):
         ap.hlalib._reset_trims()
 
-    @unittest.skip("orm data is not ready")
+    @unittest.skip
     def test_correct_orbit(self):
         ap.hlalib._reset_trims()
 
@@ -852,7 +854,7 @@ class TestOrbitControl(unittest.TestCase):
             vcor[i].y = np.random.rand() * 1e-5
 
         #raw_input("Press Enter to correct orbit...")
-        time.sleep(4)
+        time.sleep(6)
 
         cor = []
         #cor.extend([e.name for e in hcor])
@@ -893,7 +895,6 @@ class TestOrbitControl(unittest.TestCase):
         #    x, y = hcor[ih[i]].x, vcor[iv[i]].y
         #    print i, (x - hcor_v0[ih[i]]), (y - vcor_v0[iv[i]])
 
-    @unittest.skip("orm data is not ready")
     def test_local_bump(self):
         hcor = ap.getElements('HCOR')
         hcor_v0 = [e.x for e in hcor]
@@ -914,7 +915,7 @@ class TestOrbitControl(unittest.TestCase):
         for i in range(6, len(bpm)):
             bpm_v1[i] = [0, 0]
 
-        ap.setLocalBump(bpm, hcor+vcor, bpm_v1)
+        ap.setLocalBump(bpm, hcor+vcor, bpm_v1, repeat=10)
 
 
 """
@@ -924,8 +925,8 @@ BBA
 
 class TestBba(unittest.TestCase):
     def setUp(self):
-        ap.machines.init("nsls2v2")
-        #ap.hlalib._reset_trims(verbose=True)
+        # ap.machines.init("nsls2v2")
+        # ap.hlalib._reset_trims(verbose=True)
         pass
 
     def test_quad_l0(self):
@@ -935,24 +936,23 @@ class TestBba(unittest.TestCase):
         for i,q in enumerate(qnamelist):
             self.assertGreater(abs(qlst[i].k1), 0.0)
 
-        #qlst[0].value = -0.633004
+    def test_bba_l2(self):
 
-        for i,qd in enumerate(qlst):
-            self.assertGreater(qd.sb, 0.0)
-            self.assertEqual(qd.name, qnamelist[i])
+        q, cor, bpm = ap.getElements(['ql3g2c29a', 'cl2g2c29a', 'pl2g2c29a'])
+        q.put("k1", -1.4894162702, unit=None)
+        cor.put("x", 0.0, unit=None)
+        cor.put("y", 0.0, unit=None)
 
-            bpm = ap.getClosest(qd.name, 'BPM')
-            self.assertTrue(bpm.name)
-            self.assertGreater(bpm.sb, 0.0)
-            self.assertGreaterEqual(abs(bpm.x), 0.0)
-            self.assertGreaterEqual(abs(bpm.y), 0.0)
+        print q.fields(), q.get('k1', unit=None)
 
-            hc = ap.getNeighbors(bpm.name, 'HCOR', 1)
-            self.assertEqual(len(hc), 3)
-            self.assertEqual(hc[1].name, bpm.name)
-            self.assertGreaterEqual(abs(hc[0].x), 0.0)
-            
-        #ap.createLocalBump([], [], [])
+        inp = { 'quad': (q, 'k1'), 'cor': (cor, 'x'),
+                'bpm': (bpm, 'x'),
+                'quad_dkick': -6e-2, 
+                'cor_kick': np.linspace(-6e-6, 1e-4, 5) }
+
+        bba = ap.bba.BbaBowtie(**inp)
+        bba.align()
+        bba.plot()
 
 """
 ORM

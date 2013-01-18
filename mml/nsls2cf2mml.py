@@ -96,7 +96,7 @@ def convert_at_lattice(latname):
                 oupt.append(rec)
         elif e.family in ['COR']:
             rec['name'] = e.name
-            rec['atfamil'] = 'HVCOR'
+            rec['atfamil'] = 'HVCM'
             rec['atclass'] = 'corrector'
             oupt.append(rec.copy())            
         elif e.family in ['DIPOLE']:

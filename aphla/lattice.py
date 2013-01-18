@@ -157,8 +157,10 @@ class Lattice:
 
     def appendElement(self, elem):
         """
-        append a new element to lattice. callers are responsible for avoiding
-        duplicate elements (call hasElement before).
+        append a new element to lattice. 
+
+        callers are responsible for avoiding duplicate elements (call
+        hasElement before).
 
         seealso :func:`insertElement`
         """
@@ -637,7 +639,7 @@ class Lattice:
         
         return self.getElementList(self.sortElements(r))
 
-    def getNeighbors(self, element, group, n):
+    def getNeighbors(self, elemname, group, n):
         """
         Assuming self._elements is in s order
 
@@ -655,8 +657,8 @@ class Lattice:
             ['P2', 'P3', 'Q3', 'P4', 'P5']
         """
 
-        e0 = self._find_exact_element(element)
-        if not e0: raise ValueError("element %s does not exist" % element)
+        e0 = self._find_exact_element(elemname)
+        if not e0: raise ValueError("element %s does not exist" % elemname)
 
         el = self.getElementList(group, virtual=0)
 
@@ -676,7 +678,7 @@ class Lattice:
             ret.append(el[r])
         return ret
         
-    def getClosest(self, element, group):
+    def getClosest(self, elemname, group):
         """
         Assuming self._elements is in s order
 
@@ -691,8 +693,8 @@ class Lattice:
         The result can not be virtual element.
         """
 
-        e0 = self._find_exact_element(element)
-        if not e0: raise ValueError("element %s does not exist" % element)
+        e0 = self._find_exact_element(elemname)
+        if not e0: raise ValueError("element %s does not exist" % elemname)
 
         el = self.getElementList(group, virtual=0)
 
