@@ -608,13 +608,14 @@ class OrbitPlotMainWindow(QMainWindow):
     #    self.plot2.curve2.setData(self.pvsy, y)
 
     def _correctOrbit(self, bpms, obt):
-        trims = [e.name for e in 
-                 aphla.getElements('HCOR')+ aphla.getElements('VCOR')]
+        trims = aphla.getElements('HCOR')+ aphla.getElements('VCOR')
         #print len(bpms), bpms
         #print len(trims), trims
         #print len(obt), obt
-        aphla.setLocalBump(bpms, trims, obt)
-
+        try:
+            aphla.setLocalBump(bpms, trims, obt)
+        except:
+            pass
 
     def createLocalBump(self):
         if self.corbitdlg is None:
@@ -625,7 +626,7 @@ class OrbitPlotMainWindow(QMainWindow):
             x, y = [0.0]*len(s), [0.0] * len(s)
             print np.shape(x), np.shape(y)
             self.corbitdlg = OrbitCorrDlg(
-                self.obtdata.elem_names, 
+                getElements(self.obtdata.elem_names), 
                 self.obtdata.s, x, y, 
                 stepsize = (10e-7, 10e-7), 
                 orbit_plots=(self.obtxplot, self.obtyplot),

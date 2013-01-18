@@ -440,7 +440,7 @@ class OrmData:
         
         mat = np.take(np.take(self.m, ibpm, axis=0), itrim, axis=1)
 
-        return mat, [bpm[i] for i in ibpm], [trim[i] for i in itrim]
+        return mat, [self.bpm[i] for i in ibpm], [self.trim[i] for i in itrim]
 
     def getSubMatrixPv(self, bpmpvs, trimpvs):
         """
