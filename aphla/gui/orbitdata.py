@@ -5,6 +5,7 @@ import numpy as np
 from PyQt4.QtCore import QTimer, SIGNAL, QObject
 import logging
 logger = logging.getLogger(__name__)
+from aphla import eget
 
 class OrbitData(object):
     """
@@ -12,7 +13,7 @@ class OrbitData(object):
 
     - *samples* data points kept to calculate the statistics.
     - *scale* factor for *y*
-    - *x* list of s-coordinate, never updated.
+    - *s* list of s-coordinate, never updated.
     - *pvs* list of channel names
     - *mode* 'EPICS' | 'sim', default is 'EPICS'
     - *keep* mask for ignore(0) or keep(1) that data point.
@@ -24,6 +25,8 @@ class OrbitData(object):
         self.yscale = kw.get('yscale', 1.0)
         self.xunitsys = None
         self.yunitsys = None
+        self.xfield = kw.get('xfield', 'x')
+        self.yfield = kw.get('yfield', 'y')
         #self.xunit = ''
         #self.yunit = ''
         #self.sunit = 'm'
@@ -67,7 +70,7 @@ class OrbitData(object):
         if i >= self.samples: i = 0
         self.y[i,:] = caget(self.pvs)
         self.y[i, :] *= self.yfactor
-        self.errbar[:] = np.std(self.y, axis=0)
+        self.yerrbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
         
@@ -80,9 +83,11 @@ class OrbitData(object):
         # y and errbar sync with plot, not changing data.
         i = self.icur + 1
         if i >= self.samples: i = 0
-        self.y[i,:] = [e.get(self.field) for j,e in enumerate(self.elems)]
-        self.y[i,:] *= self.scale
-        self.errbar[:] = np.std(self.y, axis=0)
+        self.x[i,:] = eget(self.elems, self.xfield, unit=self.xunitsys) 
+        self.x[i,:] *= self.xscale
+        self.y[i,:] = eget(self.elems, self.yfield, unit=self.yunitsys) 
+        self.y[i,:] *= self.yscale
+        self.yerrbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
         

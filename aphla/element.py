@@ -742,6 +742,9 @@ class CaElement(AbstractElement):
         # src, dst is unit system name
         self._field[field].unitconv[(src, dst)] = uc
 
+    def convertUnit(self, field, x, src, dst):
+        return self._field[field]._unit_conv(x, src, dst)
+
     def get_unit_systems(self, field):
         """
         get a list all unit systems for field. 
@@ -783,6 +786,14 @@ class CaElement(AbstractElement):
             elif k[1] == unitsys: return v.direction[1]
             
         return ''
+
+    def setUnit(self, field, u):
+        if field not in self._field.keys(): 
+            raise RuntimeError("element '%s' has no '%s' field" % \
+                               self.name, field)
+
+        self._field[field].pvunit = u
+
 
     def updatePvRecord(self, pvname, properties, tags = []):
         """

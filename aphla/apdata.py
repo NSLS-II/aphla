@@ -34,7 +34,7 @@ class OrmData:
         # points for trim setting when calc dx/dkick
         #npts = 6
 
-        # list of tuple, (name, plane, pv)
+        # list of tuple, (name, location, plane)
         self.bpm = []
         self.trim = []
 
@@ -440,7 +440,9 @@ class OrmData:
         
         mat = np.take(np.take(self.m, ibpm, axis=0), itrim, axis=1)
 
-        return mat, [self.bpm[i] for i in ibpm], [self.trim[i] for i in itrim]
+        bpmlst  = [(self.bpm[i][0], self.bpm[i][2]) for i in ibpm]
+        trimlst = [(self.trim[i][0], self.trim[i][2]) for i in itrim]
+        return mat, bpmlst, trimlst
 
     def getSubMatrixPv(self, bpmpvs, trimpvs):
         """

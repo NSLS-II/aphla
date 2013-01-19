@@ -741,6 +741,15 @@ def getBpms():
     """
     return machines._lat.getGroupMembers('BPM', op='union')
 
+def getQuads():
+    """
+    return a list of bpms object.
+
+    this calls :func:`~aphla.lattice.Lattice.getGroupMembers` of current
+    lattice and take a "union".
+    """
+    return machines._lat.getGroupMembers('QUAD', op='union')
+
 
 def getOrbit(pat = '', spos = False):
     """

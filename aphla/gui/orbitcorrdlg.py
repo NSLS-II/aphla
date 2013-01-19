@@ -22,8 +22,8 @@ class OrbitCorrDlg(QDialog):
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         hdview = QHeaderView(Qt.Horizontal)
         self.table.setHorizontalHeaderLabels(['BPM', 's', 'x', 'y'])
-        for i in range(len(bpm)):
-            it = QTableWidgetItem(bpm[i])
+        for i in range(len(self.bpm)):
+            it = QTableWidgetItem(self.bpm[i].name)
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             self.table.setItem(i, 0, it)
 

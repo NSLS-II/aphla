@@ -157,14 +157,18 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # all orbit plots: [plot, data, index]
         self.obtdata = None
+        self.cordata = None
         self.obtplots = [
             OrbitPlot(self, live=self.live_orbit, title="Horizontal Orbit"),
             OrbitPlot(self, live=self.live_orbit, title="Vertical Orbit"),
             OrbitPlot(self, live=self.live_orbit, title="Horizontal"),
-            OrbitPlot(self, live=self.live_orbit, title="Vertical")
+            OrbitPlot(self, live=self.live_orbit, title="Vertical"),
+            OrbitPlot(self, live=self.live_orbit, title="Horizontal Corrector"),
+            OrbitPlot(self, live=self.live_orbit, title="Vertical Corrector")
             ]
         self.obtxplot, self.obtyplot       = self.obtplots[0], self.obtplots[1]
         self.obtxerrplot, self.obtyerrplot = self.obtplots[2], self.obtplots[3]
+        self.corxplot, self.coryplot       = self.obtplots[4], self.obtplots[5]
 
         self.obtxplot.setAxisTitle(Qwt.QwtPlot.yLeft, "x")
         self.obtyplot.setAxisTitle(Qwt.QwtPlot.yLeft, "y")
@@ -194,6 +198,14 @@ class OrbitPlotMainWindow(QMainWindow):
         vbox1.addWidget(self.obtplots[3])
         wid1.setLayout(vbox1)
         self.tabs.addTab(wid1, "Std")
+
+        wid1 = QWidget()
+        vbox1 = QVBoxLayout()
+        vbox1.addWidget(self.obtplots[4])
+        vbox1.addWidget(self.obtplots[5])
+        wid1.setLayout(vbox1)
+        self.tabs.addTab(wid1, "Correctors")
+
 
         self.setCentralWidget(cwid)
 
@@ -269,6 +281,10 @@ class OrbitPlotMainWindow(QMainWindow):
                                         "Auto Fit", self)
         self.connect(viewZoomAutoAction, SIGNAL("triggered()"),
                      self.zoomAuto)
+        viewAutoScale = QAction("Auto Scale", self)
+        viewAutoScale.setCheckable(True)
+        viewAutoScale.setChecked(True)
+        self.connect(viewAutoScale, SIGNAL("triggered()"), self.zoomAutoScale)
 
         controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
                                          "Choose BPM", self)
@@ -315,6 +331,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewSingleShotAction)
 
         self.viewMenu.addSeparator()
+        self.viewMenu.addAction(viewAutoScale)
         self.viewMenu.addAction(viewErrorBarAction)
         
         drift_group = QActionGroup(self)
@@ -436,7 +453,7 @@ class OrbitPlotMainWindow(QMainWindow):
             p.replot()
 
         self.obtdata = None
-        
+
         if self.vbpm is not None:
             #self.logger.debug("using virtual bpm")
             #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
@@ -462,7 +479,16 @@ class OrbitPlotMainWindow(QMainWindow):
             sb = [e.sb for e in elems]
             picker = [(e.sb, e.se, e.name) for e in elems]
             # data for plot1,2
-            self.obtdata = OrbitData(elements=elems, x=x, sb=sb, se=se)
+            self.obtdata = OrbitData(elements=elems, s=x, sb=sb, se=se)
+
+
+        # elems = lat.getElementList('COR')
+        # x = [(e.se+e.sb)/2.0 for e in elems]
+        # se = [e.se for e in elems]
+        # sb = [e.sb for e in elems]
+        # picker = [(e.sb, e.se, e.name) for e in elems]
+        # # data for plot1,2
+        # self.cordata = OrbitData(elements=elems, s=x, sb=sb, se=se)
 
         magprof = lat.getBeamlineProfile()
         #print magprof
@@ -543,6 +569,10 @@ class OrbitPlotMainWindow(QMainWindow):
         for p in self._active_plots():
             p.zoomAuto()
             
+    def zoomAutoScale(self, v):
+        for p in self._active_plots():
+            p.setAxisAutoScale(Qwt.QwtPlot.yLeft, v)
+                    
     def chooseBpm(self):
         bpms = [(self.vbpm._name[i], self.obtdata.keep[i])
                 for i in range(len(self.obtdata.keep))]
@@ -574,6 +604,15 @@ class OrbitPlotMainWindow(QMainWindow):
                 self.obtxerrplot.updateOrbit(sx, xerr)
                 self.obtyplot.updateOrbit(sy, y, yerr)
                 self.obtyerrplot.updateOrbit(sy, yerr)
+        if self.cordata is not None:
+            self.cordata.update()
+            if self.live_orbit:
+                sx, x, xerr = self.cordata.xorbit()
+                sy, y, yerr = self.cordata.yorbit()
+                #icur = self.tabs.currentIndex()
+                self.corxplot.updateOrbit(sx, x, xerr)
+                self.coryplot.updateOrbit(sy, y, yerr)
+            
         self.updateStatus()
 
     def updateStatus(self):
@@ -608,13 +647,16 @@ class OrbitPlotMainWindow(QMainWindow):
     #    self.plot2.curve2.setData(self.pvsy, y)
 
     def _correctOrbit(self, bpms, obt):
-        trims = [e.name for e in 
-                 aphla.getElements('HCOR')+ aphla.getElements('VCOR')]
+        trims = self._lat.getElementList('HCOR')+ self._lat.getElementList('VCOR')
         #print len(bpms), bpms
         #print len(trims), trims
         #print len(obt), obt
-        aphla.setLocalBump(bpms, trims, obt)
 
+        aphla.setLocalBump(bpms, trims, obt)
+        #try:
+        #    aphla.setLocalBump(bpms, trims, obt)
+        #except Exception as e:
+        #    QMessageBox.warning(self, "Error:", " {0}".format(e))
 
     def createLocalBump(self):
         if self.corbitdlg is None:
@@ -625,7 +667,7 @@ class OrbitPlotMainWindow(QMainWindow):
             x, y = [0.0]*len(s), [0.0] * len(s)
             print np.shape(x), np.shape(y)
             self.corbitdlg = OrbitCorrDlg(
-                self.obtdata.elem_names, 
+                self._lat.getElementList(self.obtdata.elem_names), 
                 self.obtdata.s, x, y, 
                 stepsize = (10e-7, 10e-7), 
                 orbit_plots=(self.obtxplot, self.obtyplot),

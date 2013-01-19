@@ -823,11 +823,12 @@ class TestOrbit(unittest.TestCase):
 
 class TestOrbitControl(unittest.TestCase): 
     def setUp(self):
-        #ap.machines.use("V2SR")
+        ap.machines.use("V2SR")
         pass
 
     def tearDown(self):
         ap.hlalib._reset_trims()
+        pass
 
     @unittest.skip
     def test_correct_orbit(self):
@@ -895,6 +896,32 @@ class TestOrbitControl(unittest.TestCase):
         #    x, y = hcor[ih[i]].x, vcor[iv[i]].y
         #    print i, (x - hcor_v0[ih[i]]), (y - vcor_v0[iv[i]])
 
+    def test_orm_x1(self):
+        hcor = ap.getElements('HCOR')[2]
+        bpm1 = ap.getElements('BPM')[5]
+        bpm2 = ap.getElements('BPM')[51]
+        x0 = hcor.x
+        b1, b2 = bpm1.x, bpm2.x
+        d = np.zeros((7, 3), 'd')
+        for i,dx in enumerate(np.linspace(-1e-4, 1e-4, len(d))):
+            hcor.x = x0 + dx
+            d[i,0] = hcor.x
+            time.sleep(4)
+            d[i,1] = bpm1.x
+            d[i,2] = bpm2.x
+        #
+        ormd = ap.machines._lat.ormdata
+        bpmr, trimr = [(bpm1.name, 'x'), (bpm2.name, 'x')], [(hcor.name, 'x')]
+        m, b, t = ormd.getSubMatrix(bpmr, trimr)
+        import matplotlib.pylab as plt
+        plt.clf()
+        plt.plot(d[:,0], d[:,1], 'bo--')
+        plt.plot(d[:,0], m[0,0]*d[:,0] + b1, 'b-')
+        plt.plot(d[:,0], d[:,2], 'rv--')
+        plt.plot(d[:,0], m[1,0]*d[:,0] + b2, 'r-')
+        plt.savefig("test_orm.png")
+        hcor.x = x0
+
     def test_local_bump(self):
         hcor = ap.getElements('HCOR')
         hcor_v0 = [e.x for e in hcor]
@@ -906,16 +933,32 @@ class TestOrbitControl(unittest.TestCase):
 
         bpm_v1 = [[e.x, e.y] for e in bpm]
 
-        bpm_v1[0] = [0, 0]
-        bpm_v1[1] = [0, 1e-4]
-        bpm_v1[2] = [2e-4, 1e-4]
-        bpm_v1[3] = [5e-7, 1e-4]
-        bpm_v1[4] = [0, 1e-4]
-        bpm_v1[5] = [0, 1e-4]
-        for i in range(6, len(bpm)):
+        for i in range(0, len(bpm)):
             bpm_v1[i] = [0, 0]
+        x1, x2 = 1e-4, 2e-4
+        bpm_v1[20][0] = x1
+        bpm_v1[21][0] = x1
+        bpm_v1[22][0] = x1
+        bpm_v1[23][0] = x2
+        bpm_v1[24][0] = x2
+        bpm_v1[25][0] = x1
+        bpm_v1[26][0] = x1
 
-        ap.setLocalBump(bpm, hcor+vcor, bpm_v1, repeat=10)
+        bpm_v1[100][1] = x2
+        bpm_v1[101][1] = x2
+        bpm_v1[102][1] = x1
+        bpm_v1[103][1] = x1
+        bpm_v1[104][1] = x2
+        bpm_v1[105][1] = x2
+
+        ap.setLocalBump(bpm, hcor+vcor, bpm_v1, repeat=10, verbose=3)
+
+        import matplotlib.pylab as plt
+        plt.clf()
+        v = ap.getOrbit(spos=True)
+        plt.plot(v[:,-1], v[:,0], '-.')
+        plt.plot(v[:,-1], v[:,1], '--')
+        plt.savefig("test_localbump.png")
 
 
 """
