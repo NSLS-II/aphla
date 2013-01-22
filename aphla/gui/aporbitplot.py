@@ -1,16 +1,16 @@
 import cothread
-from cothread.catools import caget, caput
 
 from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
         QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
         QSize, QRectF, QLine, pyqtSignal)
-#from PyQt4 import (PyQt_PyObject,)
-from PyQt4.QtGui import (QApplication, QWidget, QColor,
-        QDockWidget, QFileDialog, QFrame, QImage, QImageReader,
-        QImageWriter, QInputDialog, QKeySequence, QListWidget,
-        QMessageBox, QPainter, QPixmap, QPrintDialog,
-        QPrinter, QSpinBox, QPen, QBrush, QFontMetrics,
-        QTableWidget)
+
+from PyQt4.QtGui import (QAction, QApplication, QWidget, QColor,
+        QDockWidget, QFileDialog, QFrame, QGridLayout, QIcon,
+        QImage, QImageReader, QMenu,
+        QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
+        QMessageBox, QPainter, QPixmap, QPrintDialog, QPushButton,
+        QPrinter, QSpinBox, QPen, QBrush, QFontMetrics, QSizePolicy,
+                         QTableWidget)
 
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
@@ -20,6 +20,8 @@ import aphla as ap
 import time
 import numpy as np
 import sip
+
+import applotresources
 
 # sip has a bug affecting PyQwt
 # http://blog.gmane.org/gmane.comp.graphics.qwt.python/month=20101001
@@ -35,7 +37,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         """
         initialize with cavas and magnet profile::
 
-        - profile = [(s_begin, s_end, name), ...]
+        - profile = [(s_begin, s_end, name, color = None), ...]
         - minlen the minimum length of "active magnet region"
         """
         Qwt.QwtPlotPicker.__init__(self, Qwt.QwtPlot.xBottom,
@@ -228,7 +230,7 @@ class DcctCurrentPlot(Qwt.QwtPlot):
 
 
 
-class OrbitPlotCurve(Qwt.QwtPlotCurve):
+class ApPlotCurve(Qwt.QwtPlotCurve):
     """
     Orbit curve
     """
@@ -354,23 +356,23 @@ class OrbitPlotCurve(Qwt.QwtPlotCurve):
         Qwt.QwtPlotCurve.drawFromTo(self, painter, xMap, yMap, first, last)
 
 
-class OrbitPlot(Qwt.QwtPlot):
+class ApPlot(Qwt.QwtPlot):
     def __init__(self, parent = None, lat = None,
                  live = True, errorbar = True, title=None): 
         
-        super(OrbitPlot, self).__init__(parent)
+        super(ApPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
         self.errorOnTop = errorbar
         self.live = live
-        
-        self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
-        self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+        self.setAutoReplot(False)
+        #self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
+        #self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
 
         self.plotLayout().setAlignCanvasToScales(True)
-        if title is not None: self.setTitle(title)
+        #if title is not None: self.setTitle(title)
 
-        self.curve1 = OrbitPlotCurve(
+        self.curve1 = ApPlotCurve(
             curvePen = QPen(Qt.black, 2),
             curveSymbol = Qwt.QwtSymbol(
                 Qwt.QwtSymbol.Ellipse,
@@ -394,7 +396,7 @@ class OrbitPlot(Qwt.QwtPlot):
         if pvs_golden is None: self.golden = None
         else:
             #for pv in pvs_golden: print pv, caget(pv.encode("ascii"))
-            self.golden = OrbitPlotCurve(
+            self.golden = ApPlotCurve(
                 x,
                 pvs_golden,
                 curvePen = QPen(Qt.black, 2),
@@ -454,20 +456,10 @@ class OrbitPlot(Qwt.QwtPlot):
     def detachOrbitCurve(self):
         self.curve1.detach()
 
-    def attachCurves(self, parent = None):
-        self.curve1.attach(parent)
-        self.curve2.attach(parent)
-        if self.curvemag: self.curvemag.attach(parent)
-        #self.replot()
-        #print "Detached 1,2"
-        #self.curve2.detach()
-
     def elementDoubleClicked(self, elem):
         print "element selected:", elem
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
 
-    def zoomed1(self, rect):
-        print "Zoomed"
         
     def setPlot(self, magnet_profile = None):
         if magnet_profile is not None:
@@ -506,8 +498,8 @@ class OrbitPlot(Qwt.QwtPlot):
                                         self.canvas())
         self.zoomer1.setRubberBandPen(QPen(Qt.black))
 
-        self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
-                     self.zoomed1)
+        #self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
+        #             self.zoomed1)
         #self.timerId = self.startTimer(1000)
 
     def alignScales(self):
@@ -525,19 +517,12 @@ class OrbitPlot(Qwt.QwtPlot):
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         self.picker1.addMagnetProfile(sb, se, name, minlen)
 
-    def updateOrbit(self, x, y, err = None):
-        self.curve1.update(x, y, err)
-        #print "orbit updated"
-        self.replot()
-        if self.live and self.zoomer1:
-            self.zoomer1.setZoomBase(self.curve1.boundingRect())
-
     def updatePlot(self):
         self.curve1.update()
         if self.golden is not None: self.golden.update()
         self.replot()
-        if self.live:
-            self.zoomer1.setZoomBase(self.curve1.boundingRect())
+        #if self.live:
+        #    self.zoomer1.setZoomBase(self.curve1.boundingRect())
             
         #x = self.invTransform(Qwt.QwtPlot.xBottom, 20)
         #y = self.invTransform(Qwt.QwtPlot.yLeft, 10)
@@ -571,12 +556,6 @@ class OrbitPlot(Qwt.QwtPlot):
         self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
         self.replot()
 
-    def zoomIn(self):
-        self._scaleVertical(1.0/1.5)
-
-    def zoomOut(self):
-        self._scaleVertical(1.5/1.0)
-
     def zoomAuto(self):
         bound = self.curve1.boundingRect()
         w = bound.width()
@@ -592,10 +571,10 @@ class OrbitPlot(Qwt.QwtPlot):
         #print "bound:", bound, w, h
         #print "x, y= ", xmin, xmax, ymin, ymax
         if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
-        else: self.setAxisAutoScale(Qwt.Qwt.Plot.xBottom)
+        #else: self.setAxisAutoScale(Qwt.Qwt.Plot.xBottom)
 
         if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
-        else: self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+        #else: self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
         self.replot()
 
     def plotDesiredOrbit(self, y, x = None):
@@ -614,5 +593,114 @@ class OrbitPlot(Qwt.QwtPlot):
         data = self.curve2.data()
         vx = [data.x(i) for i in range(data.size())]
         self.curve2.setData(vx, y)
+
+
+class ApPlotControlButton(QPushButton):
+    def __init__(self, parent = None, iconres = None, iconsize = 24,
+                 action = None):
+        super(ApPlotControlButton, self).__init__("")
+        self.maxiconsize = 64
+        #bt1 = QPushButton("")
+        if iconres: self.setIcon(QIcon(iconres))
+        self.setIconSize(QSize(iconsize, iconsize))
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.setMinimumSize(16, 16)
+        self.setMaximumSize(self.maxiconsize, self.maxiconsize)
+        if action: self.connect(self, SIGNAL("clicked()"), action)
+        self.setFixedSize(iconsize,iconsize)
+        self.adjustSize()
+
+class ApPlotWidget(QWidget):
+    def __init__(self, parent = None, iconsize = 24, title=None):
+        super(ApPlotWidget, self).__init__(parent)
+
+        majbox = QGridLayout()
+
+        icol = 0
+        for icon,act in [(":/view_zoom_xy.png", self.zoom),
+                         (":/view_zoomin_y.png", self.zoom),
+                         (":/view_zoomout_y.png", self.zoom),
+                         (":/view_zoomin_x.png", self.zoom),
+                         (":/view_zoomout_x.png", self.zoom),
+                         (":/view_zoomin_y.png", self.zoom)]:
+            bt = ApPlotControlButton(iconres=icon, iconsize=24, action = act)
+            majbox.addWidget(bt, 0, icol)
+            majbox.setColumnStretch(icol, 0)
+            icol = icol + 1
+
+        self.moreopt = QMenu("")
+        a1 = QAction(QIcon(":/file_quit.png"), "&Quit", self)
+        a1.setToolTip("Quit the application")
+        a1.setStatusTip("Quit the application")
+        a1.setCheckable(True)
+        #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
+        self.connect(a1, SIGNAL("toggled(bool)"), self.a1toggle)
+        self.moreopt.addAction(a1)
+
+        bt = QPushButton("More")
+        bt.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        bt.setMenu(self.moreopt)
+        majbox.addWidget(bt, 0, icol)
+        majbox.setColumnStretch(icol, 0)
+        icol += 1
+
+        self.live = True
+        self.aplot = ApPlot(self, live= self.live)
+        self.aplot.plotLayout().setCanvasMargin(4)
+        self.aplot.plotLayout().setAlignCanvasToScales(True)
+
+        majbox.addWidget(self.aplot, 1, 0, 1, 10)
+
+        self.title = QLabel()
+        ncol = majbox.columnCount()
+        majbox.addWidget(self.title, 0, ncol-1)
+        if title: self.title.setText(title)
+        #majbox.setColumnStretch(3, 1)
+        self.setLayout(majbox)
+
+    def setPlot(self, magnet_profile):
+        self.aplot.setPlot(magnet_profile=magnet_profile)
+
+    def setAxisTitle(self, axis, title):
+        self.aplot.setAxisTitle(axis, title)
+
+    def setAxisScale(self, axis, minv, maxv):
+        self.aplot.setAxisScale(axis, minv, maxv)
+
+    def detachCurves(self):
+        self.aplot.curve1.attach(None)
+        self.aplot.curve2.attach(None)
+        if self.aplot.curvemag: self.aplot.curvemag.attach(None)
+        
+    def attachCurves(self):
+        self.aplot.curve1.attach(self.aplot)
+        self.aplot.curve2.attach(self.aplot)
+        if self.aplot.curvemag: self.aplot.curvemag.attach(self.aplot)
+
+    def zoomIn(self):
+        self.aplot._scaleVertical(1.0/1.5)
+
+    def zoomOut(self):
+        self.aplot._scaleVertical(1.5/1.0)
+
+    def a1toggle(self, v):
+        print v
+
+    def zoom(self):
+        print "zoom"
+
+
+class ApOrbitPlot(ApPlotWidget):
+    def __init__(self, parent = None, title = None):
+        super(ApOrbitPlot, self).__init__(parent, iconsize=24, title=title)
+        
+
+    def updateOrbit(self, x, y, err = None):
+        self.aplot.curve1.update(x, y, err)
+        #print "orbit updated"
+        self.aplot.replot()
+        #if self.aplot.live and self.zoomer1:
+        #    self.zoomer1.setZoomBase(self.curve1.boundingRect())
+
 
 

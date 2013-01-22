@@ -19,12 +19,12 @@ from aphla.catools import caget, caput, camonitor, FORMAT_TIME
 import logging
 import os, sys
 
-import gui_resources
+import applotresources
 
 from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
-from orbitplot import OrbitPlot, DcctCurrentPlot
-from orbitdata import OrbitData, OrbitDataVirtualBpm
+from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget
+from aporbitdata import OrbitData, OrbitDataVirtualBpm
 from orbitcorrdlg import OrbitCorrDlg
 from elemproperty import *
 
@@ -159,25 +159,31 @@ class OrbitPlotMainWindow(QMainWindow):
         self.obtdata = None
         self.cordata = None
         self.obtplots = [
-            OrbitPlot(self, live=self.live_orbit, title="Horizontal Orbit"),
-            OrbitPlot(self, live=self.live_orbit, title="Vertical Orbit"),
-            OrbitPlot(self, live=self.live_orbit, title="Horizontal"),
-            OrbitPlot(self, live=self.live_orbit, title="Vertical"),
-            OrbitPlot(self, live=self.live_orbit, title="Horizontal Corrector"),
-            OrbitPlot(self, live=self.live_orbit, title="Vertical Corrector")
+            ApOrbitPlot(self, title="Horizontal Orbit"),
+            ApOrbitPlot(self, title="Vertical Orbit"),
+            ApOrbitPlot(self, title="Horizontal Orbit"),
+            ApOrbitPlot(self, title="Vertical Orbit"),
+            ApOrbitPlot(self, title="Horizontal Orbit"),
+            ApOrbitPlot(self, title="Vertical Orbit"),
+            #ApPlot(self, live=self.live_orbit, title="Horizontal"),
+            #ApPlot(self, live=self.live_orbit, title="Vertical"),
+            #ApPlot(self, live=self.live_orbit, title="Horizontal Corrector"),
+            #ApPlot(self, live=self.live_orbit, title="Vertical Corrector")
             ]
         self.obtxplot, self.obtyplot       = self.obtplots[0], self.obtplots[1]
-        self.obtxerrplot, self.obtyerrplot = self.obtplots[2], self.obtplots[3]
-        self.corxplot, self.coryplot       = self.obtplots[4], self.obtplots[5]
-
+        #self.obtxerrplot, self.obtyerrplot = self.obtplots[2], self.obtplots[3]
+        #self.corxplot, self.coryplot       = self.obtplots[4], self.obtplots[5]
+        self.obtxerrplot, self.obtyerrplot = self.obtplots[0], self.obtplots[1]
+        self.corxplot, self.coryplot       = self.obtplots[0], self.obtplots[1]
+        
         self.obtxplot.setAxisTitle(Qwt.QwtPlot.yLeft, "x")
         self.obtyplot.setAxisTitle(Qwt.QwtPlot.yLeft, "y")
         self.obtxerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, "x")
         self.obtyerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, "y")
 
-        for p in self.obtplots:
-            p.plotLayout().setCanvasMargin(4)
-            p.plotLayout().setAlignCanvasToScales(True)
+        #for p in self.obtplots:
+        #    p.plotLayout().setCanvasMargin(4)
+        #    p.plotLayout().setAlignCanvasToScales(True)
         #self.lbplt1info = QLabel("Min\nMax\nAverage\nStd")
 
         wid1 = QWidget()
@@ -206,6 +212,14 @@ class OrbitPlotMainWindow(QMainWindow):
         wid1.setLayout(vbox1)
         self.tabs.addTab(wid1, "Correctors")
 
+        wid1 = QWidget()
+        vbox1 = QVBoxLayout()
+        self.aplotw1 = ApPlotWidget()
+        vbox1.addWidget(self.aplotw1)
+        wid1.setLayout(vbox1)
+        self.tabs.addTab(wid1, "Test")
+
+        
 
         self.setCentralWidget(cwid)
 
@@ -284,7 +298,7 @@ class OrbitPlotMainWindow(QMainWindow):
         viewAutoScale = QAction("Auto Scale", self)
         viewAutoScale.setCheckable(True)
         viewAutoScale.setChecked(True)
-        self.connect(viewAutoScale, SIGNAL("triggered()"), self.zoomAutoScale)
+        self.connect(viewAutoScale, SIGNAL("toggled(bool)"), self.zoomAutoScale)
 
         controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
                                          "Choose BPM", self)
@@ -410,7 +424,7 @@ class OrbitPlotMainWindow(QMainWindow):
         controlToolBar.addAction(controlResetPvDataAction)
 
         # update at 1/2Hz
-        self.dt, self.itimer = 600, 0
+        self.dt, self.itimer = 1500, 0
         self.timerId = self.startTimer(self.dt)
         self.corbitdlg = None # orbit correction dlg
 
@@ -448,9 +462,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
 
         for p in self.obtplots:
-            p.attachCurves(None)
-            #p.curve1.setData([], [])
-            p.replot()
+            p.detachCurves()
+        #    #p.curve1.setData([], [])
+        #p.replot()
 
         self.obtdata = None
 
@@ -494,7 +508,12 @@ class OrbitPlotMainWindow(QMainWindow):
         #print magprof
         for p in self.obtplots:
             p.setPlot(magnet_profile=magprof)
-            p.attachCurves(p)
+            p.attachCurves()
+
+        self.obtdata.update()
+        sx, x, xerr = self.obtdata.xorbit()
+        sy, y, yerr = self.obtdata.yorbit()
+        self.obtxplot.setAxisScale(Qwt.QwtPlot.yLeft, np.min(x), np.max(x))
 
         for ac in self.viewMenu.actions(): ac.setDisabled(False)
         for ac in self.controlMenu.actions(): ac.setDisabled(False)
@@ -527,7 +546,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def _active_plots(self):
         i = self.tabs.currentIndex()
         itab = self.tabs.currentWidget()
-        return [v for v in itab.findChildren(OrbitPlot)]
+        return [v for v in itab.findChildren(ApPlot)]
         #return self.tabs.findChildren()
 
     def liveData(self, on):
