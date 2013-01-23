@@ -33,6 +33,9 @@ HLA_TAG_SYS_PREFIX = HLA_TAG_PREFIX + '.sys'
 #
 HLA_VFAMILY = 'HLA:VIRTUAL'
 HLA_VBPM   = 'HLA:VBPM'
+HLA_VCOR   = 'HLA:VCOR'
+HLA_VQUAD  = 'HLA:VQUAD'
+HLA_VSEXT  = 'HLA:VSEXT'
 
 HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
@@ -190,7 +193,7 @@ def findCfaConfig(srcname, machine, submachines):
     return cfa
 
 def createLattice(name, pvrec, systag, desc = 'channelfinder', 
-                  create_vbpm = True):
+                  vbpm = True, vcor = True):
     """
     create a lattice from channel finder data
 
@@ -252,10 +255,17 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
         logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
         
-    if create_vbpm:
+    if vbpm:
         # a virtual bpm. its field is a "merge" of all bpms.
         bpms = lat.getElementList('BPM')
         allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
+                                'family': HLA_VFAMILY, 'index': 100000})
+        lat.insertElement(allbpm, groups=[HLA_VFAMILY])
+
+    if vcor:
+        # a virtual bpm. its field is a "merge" of all bpms.
+        bpms = lat.getElementList('COR')
+        allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VCOR, 
                                 'family': HLA_VFAMILY, 'index': 100000})
         lat.insertElement(allbpm, groups=[HLA_VFAMILY])
 
@@ -301,7 +311,7 @@ def lattices():
     Example::
 
       >>> lattices()
-      [ 'LTB', 'LTB-txt', 'SR', 'SR-txt'}
+      [ 'LTB', 'LTB-txt', 'SR', 'SR-txt']
       >>> use('LTB-txt')
 
     A lattice can be used with :func:`~aphla.machines.use`

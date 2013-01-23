@@ -24,7 +24,7 @@ import applotresources
 from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
 from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget
-from aporbitdata import OrbitData, OrbitDataVirtualBpm
+from aporbitdata import ApVirtualElemData
 from orbitcorrdlg import OrbitCorrDlg
 from elemproperty import *
 
@@ -34,7 +34,7 @@ from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
-    QPlainTextEdit
+    QPlainTextEdit, QMdiArea, QMdiSubWindow
 )
 import PyQt4.Qwt5 as Qwt
 
@@ -101,10 +101,10 @@ class OrbitPlotMainWindow(QMainWindow):
     the main window has three major widgets: current, orbit tabs and element
     editor.
     """
-    def __init__(self, parent = None, lat = None):
+    def __init__(self, parent = None, lat = None, machines=None):
         QMainWindow.__init__(self, parent)
-        self.setIconSize(QSize(48, 48))
-
+        self.setIconSize(QSize(32, 32))
+        self._machines = machines
         self._lat = None
         if lat is not None:
             self.set_lattice(lat)
@@ -121,6 +121,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.dcct.curve.v = v.tolist()+v.tolist()
         
         self.dcct.updatePlot()
+
+        mdiarea = QMdiArea()
 
         cwid = QWidget()
         #majbox = QGridLayout()
@@ -156,30 +158,28 @@ class OrbitPlotMainWindow(QMainWindow):
         picker = None 
 
         # all orbit plots: [plot, data, index]
-        self.obtdata = None
-        self.cordata = None
+        self.obtdata = []
+        self.cordata = []
         self.obtplots = [
             ApOrbitPlot(self, title="Horizontal Orbit"),
             ApOrbitPlot(self, title="Vertical Orbit"),
+            ApOrbitPlot(self, title="Horizontal Orbit Std"),
+            ApOrbitPlot(self, title="Vertical Orbit Std")]
+        self.corplots = [
             ApOrbitPlot(self, title="Horizontal Orbit"),
             ApOrbitPlot(self, title="Vertical Orbit"),
             ApOrbitPlot(self, title="Horizontal Orbit"),
-            ApOrbitPlot(self, title="Vertical Orbit"),
-            #ApPlot(self, live=self.live_orbit, title="Horizontal"),
-            #ApPlot(self, live=self.live_orbit, title="Vertical"),
-            #ApPlot(self, live=self.live_orbit, title="Horizontal Corrector"),
-            #ApPlot(self, live=self.live_orbit, title="Vertical Corrector")
-            ]
-        self.obtxplot, self.obtyplot       = self.obtplots[0], self.obtplots[1]
-        #self.obtxerrplot, self.obtyerrplot = self.obtplots[2], self.obtplots[3]
-        #self.corxplot, self.coryplot       = self.obtplots[4], self.obtplots[5]
-        self.obtxerrplot, self.obtyerrplot = self.obtplots[0], self.obtplots[1]
-        self.corxplot, self.coryplot       = self.obtplots[0], self.obtplots[1]
+            ApOrbitPlot(self, title="Vertical Orbit")]
         
-        self.obtxplot.setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        self.obtyplot.setAxisTitle(Qwt.QwtPlot.yLeft, "y")
-        self.obtxerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        self.obtyerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+        self.obtplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        self.obtplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+        self.obtplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        self.obtplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+
+        self.corplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        self.corplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+        self.corplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        self.corplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
 
         #for p in self.obtplots:
         #    p.plotLayout().setCanvasMargin(4)
@@ -196,19 +196,19 @@ class OrbitPlotMainWindow(QMainWindow):
         gbox.setRowStretch(0, 0.5)
         gbox.setRowStretch(1, 0.5)
         wid1.setLayout(gbox)        
-        self.tabs.addTab(wid1, "Orbit Plot")
+        self.tabs.addTab(wid1, "Orbit")
 
         wid1 = QWidget()
         vbox1 = QVBoxLayout()
         vbox1.addWidget(self.obtplots[2])
         vbox1.addWidget(self.obtplots[3])
         wid1.setLayout(vbox1)
-        self.tabs.addTab(wid1, "Std")
+        self.tabs.addTab(wid1, "Orbit Std")
 
         wid1 = QWidget()
         vbox1 = QVBoxLayout()
-        vbox1.addWidget(self.obtplots[4])
-        vbox1.addWidget(self.obtplots[5])
+        vbox1.addWidget(self.corplots[0])
+        vbox1.addWidget(self.corplots[1])
         wid1.setLayout(vbox1)
         self.tabs.addTab(wid1, "Correctors")
 
@@ -219,15 +219,31 @@ class OrbitPlotMainWindow(QMainWindow):
         wid1.setLayout(vbox1)
         self.tabs.addTab(wid1, "Test")
 
-        
+        #self.setCentralWidget(cwid)
+        self.setCentralWidget(mdiarea)
+        for p in self.obtplots + self.corplots:
+            s1 = QMdiSubWindow()
+            s1.setAttribute(Qt.WA_DeleteOnClose)
+            s1.setWidget(p)
+            s1.setWindowTitle(p.title.text())
+            mdiarea.addSubWindow(s1)
+        mdiarea.setViewMode(QMdiArea.TabbedView)
 
-        self.setCentralWidget(cwid)
+        self.setMenuToolBar()
 
+        # update at 1/2Hz
+        self.dt, self.itimer = 1500, 0
+        self.timerId = None
+        self.corbitdlg = None # orbit correction dlg
 
+        self.vbpm = None
+        self.statusBar().showMessage("Welcome")
+
+    def setMenuToolBar(self):
         #
         # file menu
         #
-        self.fileMenu = self.menuBar().addMenu("&File")
+        self.fileMenu = self.menuBar().addMenu("&Machines")
         fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
         fileQuitAction.setShortcut("Ctrl+Q")
         fileQuitAction.setToolTip("Quit the application")
@@ -235,14 +251,19 @@ class OrbitPlotMainWindow(QMainWindow):
         #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
         self.connect(fileQuitAction, SIGNAL("triggered()"),
                      self.close)
-        
-        self.latMenu = QMenu("&Lattices")
-        for lat in aphla.machines.lattices():
-            latAct = QAction(lat, self)
-            self.connect(latAct, SIGNAL("triggered()"), self.click_lattice)
-            self.latMenu.addAction(latAct)
+
+        mach_group = QActionGroup(self)
+        for mach in self._machines:
+            ac = QAction(mach, self)
+            ac.setCheckable(True)
+            #ac.setShortcut("Ctrl+N")
+            mach_group.addAction(ac)
+            self.fileMenu.addAction(ac)
+        self.connect(mach_group, SIGNAL("triggered(QAction*)"), self.click_machine)
+        self.fileMenu.addSeparator()
+        #self.latMenu = QMenu("&Lattices")
         #
-        self.fileMenu.addMenu(self.latMenu)
+        #self.fileMenu.addMenu(self.latMenu)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(fileQuitAction)
 
@@ -423,14 +444,38 @@ class OrbitPlotMainWindow(QMainWindow):
         controlToolBar.addAction(controlChooseBpmAction)
         controlToolBar.addAction(controlResetPvDataAction)
 
-        # update at 1/2Hz
-        self.dt, self.itimer = 1500, 0
-        self.timerId = self.startTimer(self.dt)
-        self.corbitdlg = None # orbit correction dlg
+        machToolBar = self.addToolBar("Machines")
+        self.machBox = QComboBox()
+        if self._machines: self.machBox.addItems(self._machines)
+        self.connect(self.machBox, SIGNAL("activated(QString)"), self.initMachine)
+        self.latBox = QComboBox()
+        self.connect(self.latBox, SIGNAL("activated(QString)"), self.__setLattice)
+        machToolBar.addWidget(self.machBox)
+        machToolBar.addWidget(self.latBox)
 
-        self.vbpm = None
+
+    def initMachine(self, v):
+        try:
+            aphla.machines.init(str(v))
+        except:
+            QMessageBox.critical(self, "aphla", 
+                                 "machine '%s' can not be initialized" % v,
+                                 QMessageBox.Ok)
+            return
+        self.latBox.clear()
+        latlist = aphla.machines.lattices()
+        self.latBox.addItems(latlist)
+        for lat in latlist:
+            latAct = QAction(lat, self)
+            self.connect(latAct, SIGNAL("triggered()"), self.click_lattice)
+            self.latMenu.addAction(latAct)
+
+        self.statusBar().showMessage("machine {0} initialized".format(v))
         
-        
+    def click_machine(self, act):
+        print act.text()
+        self.initMachine(act.text())
+
     def click_lattice(self):
         #print self.sender()
         #print aphla.machines.lattices()
@@ -451,73 +496,77 @@ class OrbitPlotMainWindow(QMainWindow):
         for p in self.obtplots:
             p.setMarkers(mks, on)
 
+    def __setLattice(self, latname):
+        lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
+        self.setLattice(lat)
+
     def setLattice(self, lat):
         """
         """
+        if self.timerId: self.killTimer(self.timerId)
         # setting lat for the whole aphla
         aphla.machines.use(lat.name)
 
         self._lat = lat
         #self.logger.info("using lattice: %s" % lat.name)
         self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
+        self.vcor = lat._find_exact_element(aphla.machines.HLA_VCOR)
 
-        for p in self.obtplots:
-            p.detachCurves()
-        #    #p.curve1.setData([], [])
-        #p.replot()
+        #for p in self.obtplots:
+        #    p.detachCurves()
 
-        self.obtdata = None
-
+        self.obtdata = []
+        self.cordata = []
         if self.vbpm is not None:
             #self.logger.debug("using virtual bpm")
             #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
-            self.obtdata = OrbitDataVirtualBpm(velement=self.vbpm)
-            if 'phy' in self.vbpm.getUnitSystems('x'): self.obtdata.xunitsys = 'phy'
-            if 'phy' in self.vbpm.getUnitSystems('y'): self.obtdata.yunitsys = 'phy'
-            self.obtdata.update()
+            self.obtdata = [ ApVirtualElemData(self.vbpm, 'x'),
+                             ApVirtualElemData(self.vbpm, 'y')]
             
             # set unit
             xu = "x [%s]" % (self.vbpm.getUnit('x'),)
             yu = "y [%s]" % (self.vbpm.getUnit('y'),)
-            self.obtxplot.setAxisTitle(Qwt.QwtPlot.yLeft, xu)
-            self.obtyplot.setAxisTitle(Qwt.QwtPlot.yLeft, yu)
-            self.obtxerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, xu)
-            self.obtyerrplot.setAxisTitle(Qwt.QwtPlot.yLeft, yu)
-            #print self.obtdata.xorbit()
-            #print self.obtdata.yorbit()
+            self.obtplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, xu)
+            self.obtplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, yu)
+            self.obtplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, xu)
+            self.obtplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, yu)
         else:
+            # calling caget one-by-one is not practical
             raise RuntimeError("No VBPM found")
-            elems = lat.getElementList('BPM')
-            x = [(e.se+e.sb)/2.0 for e in elems]
-            se = [e.se for e in elems]
-            sb = [e.sb for e in elems]
-            picker = [(e.sb, e.se, e.name) for e in elems]
-            # data for plot1,2
-            self.obtdata = OrbitData(elements=elems, s=x, sb=sb, se=se)
 
-
-        # elems = lat.getElementList('COR')
-        # x = [(e.se+e.sb)/2.0 for e in elems]
-        # se = [e.se for e in elems]
-        # sb = [e.sb for e in elems]
-        # picker = [(e.sb, e.se, e.name) for e in elems]
-        # # data for plot1,2
-        # self.cordata = OrbitData(elements=elems, s=x, sb=sb, se=se)
+        if self.vcor is not None:
+            #self.logger.debug("using virtual bpm")
+            #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
+            self.cordata = [ ApVirtualElemData(self.vcor, 'x'),
+                             ApVirtualElemData(self.vcor, 'y')]
+            
+            # set unit
+            xu = "x [%s]" % (self.vbpm.getUnit('x'),)
+            yu = "y [%s]" % (self.vbpm.getUnit('y'),)
+            self.corplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, xu)
+            self.corplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, yu)
+            self.corplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, xu)
+            self.corplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, yu)
+        else:
+            # calling caget one-by-one is not practical
+            raise RuntimeError("No VBPM found")
 
         magprof = lat.getBeamlineProfile()
         #print magprof
-        for p in self.obtplots:
-            p.setPlot(magnet_profile=magprof)
-            p.attachCurves()
+        for p in self.obtplots + self.corplots:
+            #p.attachCurves()
+            p.setMagnetProfile(magprof)
 
-        self.obtdata.update()
-        sx, x, xerr = self.obtdata.xorbit()
-        sy, y, yerr = self.obtdata.yorbit()
-        self.obtxplot.setAxisScale(Qwt.QwtPlot.yLeft, np.min(x), np.max(x))
+        # fixed scale
+        self.updatePlots(autoScale=False)
 
         for ac in self.viewMenu.actions(): ac.setDisabled(False)
         for ac in self.controlMenu.actions(): ac.setDisabled(False)
         for ac in self.debugMenu.actions(): ac.setDisabled(False)
+
+        for p in self.obtplots + self.corplots: p.zoomAuto()
+
+        self.timerId = self.startTimer(self.dt)
 
     def _reset_correctors(self):
         aphla.hlalib._reset_trims()
@@ -607,53 +656,49 @@ class OrbitPlotMainWindow(QMainWindow):
                     self.obtdata.keep[i] = False
 
 
-    def timerEvent(self, e):
-        #self.statusBar().showMessage("%s; %s"  % (
-        #        self.plot1.datainfo(), self.plot2.datainfo()))
-        #print "updating in mainwindow"
-        self.itimer += 1
-        if self.obtdata is not None:
-            self.obtdata.update()
+    def updatePlots(self, autoScale = None):
+        for d in self.obtdata: d.update()
+        sx, x, xerr = self.obtdata[0].orbit()
+        sy, y, yerr = self.obtdata[1].orbit()
 
-            if self.live_orbit:
-                sx, x, xerr = self.obtdata.xorbit()
-                sy, y, yerr = self.obtdata.yorbit()
-                #icur = self.tabs.currentIndex()
-                self.obtxplot.updateOrbit(sx, x, xerr)
-                self.obtxerrplot.updateOrbit(sx, xerr)
-                self.obtyplot.updateOrbit(sy, y, yerr)
-                self.obtyerrplot.updateOrbit(sy, yerr)
-        if self.cordata is not None:
-            self.cordata.update()
-            if self.live_orbit:
-                sx, x, xerr = self.cordata.xorbit()
-                sy, y, yerr = self.cordata.yorbit()
-                #icur = self.tabs.currentIndex()
-                self.corxplot.updateOrbit(sx, x, xerr)
-                self.coryplot.updateOrbit(sy, y, yerr)
-            
+        #icur = self.tabs.currentIndex()
+        px, py, pxe, pye = self.obtplots
+        px.updatePlot(sx, x, xerr)
+        pxe.updatePlot(sx, xerr)
+        py.updatePlot(sy, y, yerr)
+        pye.updatePlot(sy, yerr)
+
+        if autoScale == False:
+            px.zoomAuto()
+            py.zoomAuto()
+
+        for d in self.cordata: d.update()
+        sx, x, xerr = self.cordata[0].orbit()
+        sy, y, yerr = self.cordata[1].orbit()
+
+        #icur = self.tabs.currentIndex()
+        px, py, pxe, pye = self.corplots
+        px.updatePlot(sx, x, xerr)
+        pxe.updatePlot(sx, xerr)
+        py.updatePlot(sy, y, yerr)
+        pye.updatePlot(sy, yerr)
+
+        if autoScale == False:
+            px.zoomAuto()
+            py.zoomAuto()
+
+
+    def timerEvent(self, e):
+        self.itimer += 1
+        self.updatePlots()
         self.updateStatus()
 
     def updateStatus(self):
         if self.obtdata:
-            self.statusBar().showMessage("read {0}".format(self.obtdata.icount))
+            self.statusBar().showMessage("read {0}".format(self.itimer))
 
     def singleShot(self):
-        if self.obtdata is not None:
-            self.obtdata.update()
-            plots = self._active_plots()
-            sx, x, xerr = self.obtdata.xorbit()
-            sy, y, yerr = self.obtdata.yorbit()
-            #icur = self.tabs.currentIndex()
-            if self.obtxplot in plots:
-                self.obtxplot.updateOrbit(sx, x, xerr)
-            if self.obtxerrplot in plots:
-                self.obtxerrplot.updateOrbit(sx, xerr)
-            if self.obtyplot in plots:
-                self.obtyplot.updateOrbit(sy, y, yerr)
-            if self.obtyerrplot in plots:
-                self.obtyerrplot.updateOrbit(sy, yerr)
-            
+        self.updatePlots()
         self.updateStatus()
 
     def resetPvData(self):
@@ -715,16 +760,9 @@ def main(par=None):
     #print aphla.machines.lattices()
     #app = QApplication(args)
     #app.setStyle(st)
-    hla_cfs = os.environ.get('HLA_CFS_URL', None)
-    for lat in os.environ.get('HLA_MACHINE', '').split():
-        if not lat: continue
-        if hla_cfs is None: aphla.machines.init(lat)
-        else: aphla.machines.init(lat, src=hla_cfs)
-
-    if '--sim' in sys.argv:
-        print "CA offline:", aphla.catools.CA_OFFLINE
-        aphla.catools.CA_OFFLINE = True
-    demo = OrbitPlotMainWindow()
+    mlist = os.environ.get('HLA_MACHINE_LIST', '').split()
+    if not mlist: mlist = aphla.machines.machines()
+    demo = OrbitPlotMainWindow(machines=mlist)
     #demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")
     demo.resize(800,500)
