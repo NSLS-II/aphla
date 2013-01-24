@@ -19,6 +19,8 @@ from fnmatch import fnmatch
 from time import gmtime, strftime
 import sqlite3
 
+__all__ = ['ChannelFinderAgent']
+
 class ChannelFinderAgent(object):
     """
     Channel Finder Agent
@@ -28,6 +30,9 @@ class ChannelFinderAgent(object):
     """
     
     def __init__(self, **kwargs):
+        """
+        initialzation.
+        """
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
         self.source = None
 
@@ -417,16 +422,16 @@ class ChannelFinderAgent(object):
 
         #print(pv, prpt, tags)
 
-if __name__ == "__main__":
-    cfa = ChannelFinderAgent()
-    # about 12 seconds
-    #cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
-    #                property=[('hostName', 'virtac*')], tagName='aphla.sys.*')
-    cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
-                    tagName='aphla.*')
-    #cfa.importCsv('test1.csv')
-    cfa.exportCsv('test1.csv')
-    #cfa._exportJson('test1.json')
-    #cfa._importJson('test1.json')
-    #cfa.sort('elemName')
-    print(cfa.tags('aphla.sys.*'))
+#if __name__ == "__main__":
+#    cfa = ChannelFinderAgent()
+#    # about 12 seconds
+#    #cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
+#    #                property=[('hostName', 'virtac*')], tagName='aphla.sys.*')
+#    cfa.downloadCfs('http://channelfinder.nsls2.bnl.gov:8080/ChannelFinder', 
+#                    tagName='aphla.*')
+#    #cfa.importCsv('test1.csv')
+#    cfa.exportCsv('test1.csv')
+#    #cfa._exportJson('test1.json')
+#    #cfa._importJson('test1.json')
+#    #cfa.sort('elemName')
+#    print(cfa.tags('aphla.sys.*'))

@@ -12,7 +12,6 @@ class ElementPickDlg(QDialog):
 
     def __init__(self, elem, title='Elements:', parent=None):
         super(ElementPickDlg, self).__init__(parent)
-
         self.elemlst = QListWidget()
         # enable multi-selection
         self.elemlst.setSelectionMode(QAbstractItemView.MultiSelection)

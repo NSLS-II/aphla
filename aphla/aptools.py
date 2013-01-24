@@ -15,27 +15,50 @@ from __future__ import print_function
 
 import numpy as np
 import time, datetime, sys
+import itertools
 #import matplotlib.pylab as plt
 
 from . import machines
-from catools import caput, caget 
+from catools import caput, caget, caRmCorrect 
 from hlalib import (getCurrent, getElements, getNeighbors, getClosest,
                     getRfFrequency, putRfFrequency, getTunes, getOrbit,
                     getLocations)
+from orm import Orm
 #from bba import BbaBowtie
 import logging
 
-__all__ = [
-    'getLifetime',  
-    'correctOrbit', 'createLocalBump', 'setLocalBump',
+__all__ = [ 'calcLifetime', 
+    'getLifetime',  'measOrbitRm',
+    'correctOrbit', 'setLocalBump',
     'saveImage', 'fitGaussian1', 'fitGaussianImage'
 ]
 
 logger = logging.getLogger(__name__)
 
+def _element_fields(elems, fields, **kwargs):
+    """
+    * compress=True
+    >>> _element_fields(getElements(['BPM1']), ['x', 'y'])
+    
+    returns a list of (name, field)
+    """
+    compress = kwargs.get('compress', True)
+    ret = []
+    for b,f in itertools.product(elems, fields):
+        if f in b.fields():
+            ret.append((b.name, f))
+        elif not compress:
+            ret.append((b.name, None))
+    return ret
+
 def getLifetime(tinterval=3, npoints = 8, verbose=False):
     """
-    Monitor current change with, calculate lifetime dI/dt
+    Monitor current change in a time interval, calculate lifetime I/(dI/dt)
+
+    :param tinterval: time interval between each measurement, in seconds.
+    :param npoints: number of points for fitting the lifetime
+    :param verbose: verbosity
+    :return: life time in hours
 
     It takes about 30 seconds, 10 points will be recorded, about 3 seconds
     delay between each.
@@ -62,253 +85,74 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
     return lft_hour
 
 
-
-# def measDispersion(gamma = 3.0e3/.511, alphac = 3.6261976841792413e-04,
-#                    df = 1e-4, numpoints=5):
-#     """
-#     Measure the dispersion
-#     """
-
-#     eta = alphac - 1/gamma/gamma
-
-#     #bpm = getElements('P*C0[3-6]*')
-#     bpm = getElements('P*')
-#     #print gamma, bpm
-#     s1 = getLocations(bpm)
-#     #eta0 = getDispersion(bpm)
-    
-#     # f in MHz
-#     f0 = getRfFrequency()
-#     f = np.linspace(f0 - abs(df), f0 + abs(df), numpoints)
-
-#     # avoid a bug in virtac
-#     obt = getOrbit(bpm)
-#     x0 = np.array([v[0] for v in obt])
-#     y0 = np.array([v[1] for v in obt])
-#     time.sleep(4)
-
-#     codx = np.zeros((len(f), len(bpm)), 'd')
-#     cody = np.zeros((len(f), len(bpm)), 'd')
-
-#     for i,f1 in enumerate(f): 
-#         putRfFrequency(f1)
-#         time.sleep(6)
-#         obt = np.array(getOrbit(bpm))
-#         x1, y1 = obt[:,0], obt[:,1] 
-
-#         putRfFrequency(f1)
-#         time.sleep(6)
-#         obt = np.array(getOrbit(bpm))
-#         x2, y2  = obt[:,0], obt[:,1]
-#         #print(i, getRfFrequency(), x1[0], x2[0], x1[2], x2[2])
-#         codx[i,:] = x2[:]
-#         cody[i,:] = y2[:]
-
-#     putRfFrequency(f0)
-
-#     #plt.clf()
-#     #for i in range(len(bpm)):
-#     #    plt.plot(f, codx[:,i], 'o-')
-#     #plt.savefig('test-cod.png')
-
-#     codx0 = np.zeros(np.shape(codx), 'd')
-#     for i in range(len(f)):
-#         codx0[i,:] = x0[:]
-#     dxc = codx - codx0
-#     df = -(f - f0)/f0/eta
-#     #print(df)
-#     #print(dxc)
-#     # p[0,len(bpm)]
-#     p = np.polyfit(df, dxc, 1)
-#     #print("first order:", p[0,:])
-#     t = np.linspace(df[0], df[-1], 20)
-#     #plt.clf()
-#     #for i in range(len(bpm)):
-#     #    plt.plot(df, dxc[:,i], 'o')
-#     #    plt.plot(t, p[0,i]*t + p[1,i], '--')
-#     #plt.savefig('test-disp.png')
-
-
-#     #print(eta, f0)
-#     #plt.clf()
-#     #plt.plot(s1, eta0[:,0], 'x-', label="Twiss Calc")
-#     #plt.plot(s1, p[0,:], 'o--', label="Fit")
-#     #plt.legend()
-#     #plt.savefig('test.png')
-
-#     #dat = [(bpm[i], s1[i], p[0,i], eta0[i,0]) for i in range(len(bpm))]
-#     #f = shelve.open("dispersion.pkl", 'c')
-#     #f["dispersion"] = dat
-#     #f.close()
-    
-#     return s1, p[0,:]
-
-
-def _correctOrbitPv(bpm, trim, m, **kwarg):
-    """
-    correct orbit use direct pv and catools
-
-    - the input bpm and trim should be uniq in pv names.
-    - ormdata a valid OrmData object
-    - scale factor for calculated dx
-    - ref reference orbit
-    - check stop if the orbit gets worse.
-    """
-    scale = kwarg.get('scale', 0.68)
-    ref = kwarg.get('ref', None)
-    check = kwarg.get('check', True)
-
-    verbose = kwarg.get('verbose', 1)
-
-    #if ormdata is not None:
-    #    print("BPM PV:", bpm)
-    #    print("Trim PV:", trim)
-    #    m = ormdata.getSubMatrixPv(bpm, trim)
-    #elif machines._lat.ormdata is not None:
-    #    m = machines._lat.ormdata.getSubMatrixPv(bpm, trim)
-    #else:
-    #    raise RuntimeError("no ORM data defined from orbit correction")
-
-    v0 = np.array(caget(bpm), 'd')
-    if ref is not None: v0 = v0 - ref
-    
-    # the initial norm
-    norm0 = np.linalg.norm(v0)
-
-    # solve for m*dk + (v0 - ref) = 0
-    dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0, rcond = 1e-4)
-
-    norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
-    k0 = np.array(caget(trim), 'd')
-    caput(trim, k0+dk*scale)
-
-    # wait and check
-    if check == True:
-        time.sleep(5)
-        v1 = np.array(caget(bpm), 'd')
-        if ref is not None: v1 = v1 - np.array(ref)
-        norm2 = np.linalg.norm(v1)
-        print("Euclidian norm: predicted/realized", norm1/norm0, norm2/norm0)
-        if norm2 > norm0:
-            print("Failed to reduce orbit distortion, restoring...", 
-                  norm0, norm2)
-            caput(trim, k0)
-            return False
-        else:
-            return True
-    else:
-        return None
-
-    
-def createLocalBump(bpm, trim, ref, **kwargs):
-    """
-    this is not a good name, use :func:`setLocalBump` instead.
-    """
-    import warning
-    warning.warn("will be deprecated, use setLocalBump instead", 
-                 PendingDeprecationWarning)
-
-    setLocalBump(bpm, trim, ref, **kwargs)
-
-    
+    #norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
+    norm1 = np.linalg.norm(np.dot(m, dk*scale) + v0)
 def setLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
-    :param bpm: BPMs for new bumpped orbit. 
-    :type bpm: str, list
-    :param trim: correctors used for orbit correction. 
-    :type trim: str, list
-    :param ref: target orbit, (len(bpm),2)
-    :type ref: matrix shape (n,2).
-    :param scale: factor for calculated kick strength change, between 0 and 1.0
-    :param check: ignore if the orbit gets worse
+    :param bpm: list of BPMs objects for new bumpped orbit. 
+    :param trim: list of corrector objects used for orbit correction. 
+    :param ref: target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
+    :param scale: optional, factor for calculated kick strength change, between 0 and 1.0
+    :param check: optional, ignore if the orbit gets worse.
+    :param ormdata: optional, use provided OrmData instead of the system default.
 
-    `bpm` and `trim` can be a pattern, a group name, a list of exact element
-    names or a list of objects. if `ref[i][j]` is `None`, use the current
-    hardware result, i.e. try not to change the orbit at that location.
+    if `ref[i][j]` is `None`, use the current hardware result, i.e. try not to change
+    the orbit at that location.
 
     :Examples:
 
-        >>> bpms = [b.name for b in getGroupMembers(['BPM', 'C02'])]
+        >>> bpms = getGroupMembers(['BPM', 'C02'])
         >>> newobt = [[1.0, 1.5]] * len(bpms)
-        >>> createLocalBump(bpms, 'HCOR', newobt)
-
+        >>> createLocalBump(bpms, getElements('HCOR'), newobt)
+    
+    see also :func:`catools.caRmCorrect`
     """
-    ormdata = kwargs.get('ormdata', None)
-    repeat = kwargs.get('repeat', 1)
+
+    ormdata = kwargs.pop('ormdata', None)
+    repeat = kwargs.pop('repeat', 1)
 
     if ormdata is None: ormdata = machines._lat.ormdata
     
     if ormdata is None:
-        raise RuntimeError("No Orbit Response Matrix available")
+        raise RuntimeError("No Orbit Response Matrix available for '%s'" %
+            machines._lat.name)
 
-    bpmfulllst = getElements(ormdata.getBpmNames())
-    bpmlst, trimlst = getElements(bpm), getElements(trim)
-    bpmnames = [b.name for b in bpmlst]
+    # get the matrix and (bpm, field), (trim, field) list
+    m, bpmlst, trimlst = ormdata.getSubMatrix(
+        _element_fields(bpm, ['x', 'y']),
+        _element_fields(trim, ['x', 'y']), compress=True)
 
-    for i,b in enumerate(bpmlst):
-        if not ormdata.hasBpm(b.name):
-            raise RuntimeError("No BPM '%s' found in the ORM data" % (b.name))
-    
-    bpmrec, trimrec = [], []
-    for i,b in enumerate(bpmfulllst):
-        # if the bpm is in the list, set the target orbit, otherwise use None
-        if b.name in bpmnames:
-            obtx, obty = ref[bpmnames.index(b.name)]
-        else:
-            obtx, obty = None, None
-        ix, iy = ormdata.index(b.name, ['x', 'y'])
-        if ix is not None: bpmrec.append((ix, obtx))
-        if iy is not None: bpmrec.append((iy, obty))
+    bpmref = []
+    for name,field in bpmlst:
+        i = (i for i,b in enumerate(bpm) if b.name == name).next()
+        if field == 'x': bpmref.append(ref[i][0])
+        elif field == 'y': bpmref.append(ref[i][1])
 
-    for i,t in enumerate(trimlst):
-        if not ormdata.hasTrim(t.name):
-            raise RuntimeError("No Trim '%s' found in the ORM data" % (t.name))
-        ix, iy = ormdata.index(t.name, ['x', 'y'])
-        if ix is not None: trimrec.append((ix,))
-        if iy is not None: trimrec.append((iy,))
-
-
-    # now mv to PV Group read/write
-    # expand the PV and ref in 1D array: [x y]
-    bpmpvs  = [ormdata.bpm[r[0]][-1] for r in bpmrec]
-    trimpvs = [ormdata.trim[r[0]][-1] for r in trimrec]
-    bpmref  = []
-    for i,r in enumerate(bpmrec):
-        if r[1] is None: bpmref.append(caget(bpmpvs[i]))
-        else: bpmref.append(r[1])
-
-    # bpm
-    #print("ORM dimension", np.shape(ormdata.m), type(ormdata.m))
-    #print("  {0}".format([r[0] for r in bpmrec]))
-    #print("  {0}".format(np.take(ormdata.m, [r[0] for r in bpmrec])))
-
-    m = np.take(np.take(ormdata.m, [r[0] for r in bpmrec], axis=0), 
-                [r[0] for r in trimrec], axis=1)
-
-    # test
-    for i in range(len(bpmpvs)):
-        logging.debug("{0} {1} val= {2} target={3}".format(
-                i, bpmpvs[i], caget(bpmpvs[i]), bpmref[i]))
+    bpmpvs = [getElements(b[0])[0].pv(field=b[1])[0] for b in bpmlst]
+    trimpvs = [getElements(b[0])[0].pv(field=b[1], handle='setpoint')[0] for b in trimlst]
 
     # correct orbit using default ORM (from current lattice)
     for i in range(repeat):
-        _correctOrbitPv(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
+        caRmCorrect(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
 
         
-def correctOrbit(bpm = None, trim = None, **kwargs):
+def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
     :param plane: [HV|H|V]
-    :param repeat: numbers of correction 
+    :param repeat: optional, numbers of correction 
 
     :Example:
 
-        >>> correctOrbit(['BPM1', 'BPM2'], ['T1', 'T2', 'T3'])
+        >>> bpms = getElements(['BPM1', 'BPM2'])
+        >>> trims = getElements(['T1', 'T2', 'T3'])
+        >>> correctOrbit(bpms, trims) 
 
-    The orbit not in BPM list may change.
+    This is a least square fitting method. It is possible that the orbit at the other BPMs may
+    change slightly although they are told to be fixed.
 
     seealso :func:`~aphla.hlalib.getElements`, :func:`~aphla.getSubOrm`
     """
@@ -316,22 +160,18 @@ def correctOrbit(bpm = None, trim = None, **kwargs):
     plane = kwargs.get('plane', 'HV')
 
     # an orbit based these bpm
-    if bpm is None:
+    if bpmlst is None:
         bpmlst = getElements('BPM')
-    else:
-        bpmlst = getElements(bpm)
 
     if plane == 'H': ref = zip([0.0] * len(bpmlst), [None] * len(bpmlst))
     elif plane == 'V': ref = zip([None] * len(bpmlst), [0.0] * len(bpmlst))
     else: ref = np.zeros((len(bpmlst), 2), 'd')
 
     # pv for trim
-    if trim is None:
-        trimlst = getElements('HCOR') + getElements('VCOR')
-    else:
-        trimlst = getElements(trim)
+    if trimlst is None:
+        trimlst = getElements('COR')
 
-    setLocalBump([b.name for b in bpmlst], trimlst, ref, **kwargs)
+    setLocalBump(bpmlst, trimlst, ref, **kwargs)
 
 def _random_kick(plane = 'V', amp=1e-9, verbose = 0):
     """
@@ -702,6 +542,7 @@ def fitGaussianImage(data):
 def saveImage(elemname, filename, **kwargs):
     """
     save field as image file
+
     :param field: element field to save, default 'image'
     :param filename: output file name
     :param width: image width (pixel), default 'image_nx'
@@ -787,4 +628,44 @@ def _checkOrbitRmData(od):
     #for v in vtrim: print (v)
         
     return vbpm, vtrim
+
+def measChromRm():
+    """
+    measure chromaticity response matrix
+    
+    NotImplemented
+    """
+    raise NotImplementedError()
+
+#
+def measOrbitRm(bpm, trim, output, **kwargs):
+    """
+    Measure the orbit response matrix
+
+    :param list bpm: list of bpm names
+    :param list trim: list of trim names
+    :param str output: output filename
+    :param float minwait: waiting seconds before each orbit measurement.
+    seealso :func:`Orm.measure`
+    """
+
+    #print "BPM: ", len(bpm)
+    #print "TRIM:", len(trim)
+    logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
+    orm = Orm(bpm, trim)
+    orm.minwait = kwargs.get('minwait', 3)
+
+    orm.measure(output = output, **kwargs)
+    return orm
+
+
+def getSubOrm(bpm, trim, flags = 'XX'):
+    """
+    get submatrix of Orm
+
+    NotImplemented
+    """
+    #return _orm.getSubMatrix(bpm, trim, flags)
+    raise NotImplementedError()
+
 

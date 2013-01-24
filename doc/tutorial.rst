@@ -1,3 +1,5 @@
+.. _tutorial:
+
 Tutorial
 =========
 
@@ -116,7 +118,7 @@ An element can only belong to one *family*, *cell*, *girder* and
 
 .. doctest::
 
-   >>> ap.getGroups('PM1G4C02B') # the groups one element belongs to
+   >>> ap.getGroups('pm1g4c02b') # the groups one element belongs to #doctest: +SKIP
    [u'BPM', u'C02', u'G4', u'B']
 
 To find the elements in certain cell or/and girder, use *getGroupMembers* and
@@ -128,8 +130,8 @@ The following lines search for all BPMs in girder 4 of cell 15.
 
    >>> el = ap.getGroupMembers(['BPM', 'C15', 'G4'], op='intersection')
    >>> for e in el: print e.name, e.sb, e.length
-   PM1G4C15A 407.882 0.0
-   PM1G4C15B 410.115 0.0
+   pm1g4c15a 407.882 0.0
+   pm1g4c15b 410.115 0.0
 
 Whenever the search routine, e.g. `~aphla.getElements`,
 `~aphla.getGroupMembers` and `~aphla.getNeighbors`, returns a list of
@@ -141,10 +143,10 @@ The following lines find all BPMs in the girder 2 of cell 2 and 3.
 
    >>> el = ap.getGroupMembers(['BPM', 'C0[2-3]', 'G2'])
    >>> for e in el: print e.name, e.sb, e.cell, e.girder, e.symmetry
-   PH1G2C02A 57.7322 C02 G2 A
-   PH2G2C02A 60.2572 C02 G2 A
-   PL1G2C03A 82.7858 C03 G2 A
-   PL2G2C03A 85.3495 C03 G2 A
+   ph1g2c02a 57.7322 C02 G2 A
+   ph2g2c02a 60.2572 C02 G2 A
+   pl1g2c03a 82.7858 C03 G2 A
+   pl2g2c03a 85.3495 C03 G2 A
 
 
 A pattern matching is also possible when searching for element or groups. The
@@ -233,16 +235,16 @@ Twiss parameters
 
    >>> beta = ap.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
    >>> bpm = ap.getElements('P*G2*C03*A')
-   >>> beta_sub1 = ap.getBeta([e.name for e in bpm]) #doctest: +ELLIPSIS
-   >>> beta_sub2 = ap.getBeta('P*G2*C03*A', loc='b') #doctest: +ELLIPSIS
+   >>> beta_sub1 = ap.getBeta(bpm) #doctest: +ELLIPSIS
+   >>> beta_sub2 = ap.getBeta(bpm, loc='b') #doctest: +ELLIPSIS
 
 Plotting the beta function of cell 'C02' and 'C03'
 
 .. doctest::
 
    >>> elem = ap.getGroupMembers(['C01', 'C02'], op='union')
-   >>> beta = ap.getBeta([e.name for e in elem], spos=True, clean=True)
-   >>> eta = ap.getDispersion([e.name for e in elem], spos=True, clean=True)
+   >>> beta = ap.getBeta(elem, spos=True, clean=True)
+   >>> eta = ap.getDispersion(elem, spos=True, clean=True)
    >>> plt.clf()
    >>> fig1 = plt.subplot(211)
    >>> fig=plt.plot(beta[:,-1], beta[:,:-1], '-o', label=r'$\beta_{x,y}$')
@@ -264,7 +266,7 @@ Correct the orbit and plot the orbits before/after the correction:
    >>> print len(bpm), len(trim) #doctest: +NORMALIZE_WHITESPACE
    24 360
    >>> v0 = ap.getOrbit('P*', spos=True)
-   >>> ap.correctOrbit([e.name for e in bpm], [e.name for e in trim], repeat=3) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+   >>> ap.correctOrbit(bpm, trim, repeat=3) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
    Euclidian norm: ...
    >>> time.sleep(4)
    >>> v1 = ap.getOrbit('P*', spos=True)

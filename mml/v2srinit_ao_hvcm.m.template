@@ -5,7 +5,7 @@ AO.HCM.DeviceList  = [ %(hcm_devlist)s ];
 AO.HCM.ElementList = (1:size(AO.HCM.DeviceList,1))';
 AO.HCM.Status      = ones(size(AO.HCM.DeviceList,1),1);
 AO.HCM.Position    = [];
-AO.HCM.CommonNames = [ %(hcm_commonnames)s ];
+AO.HCM.CommonNames = { %(hcm_commonnames)s };
 
 AO.HCM.Monitor.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Monitor'; 'PlotFamily'; 'Save';};
 AO.HCM.Monitor.Mode = 'Simulator';
@@ -86,7 +86,7 @@ AO.VCM.DeviceList  = AO.HCM.DeviceList;
 AO.VCM.ElementList = (1:size(AO.VCM.DeviceList,1))';
 AO.VCM.Status      = ones(size(AO.VCM.DeviceList,1),1);
 AO.VCM.Position    = [];
-AO.VCM.CommonNames = [ %(vcm_commonnames)s ];
+AO.VCM.CommonNames = { %(vcm_commonnames)s };
 
 AO.VCM.Monitor.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Monitor'; 'PlotFamily'; 'Save';};
 AO.VCM.Monitor.Mode = 'Simulator';

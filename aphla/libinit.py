@@ -43,7 +43,7 @@ from chanfinder import ChannelFinderAgent
 
 #from rf import *
 from hlalib import *
-from ormdata import OrmData
+from apdata import OrmData
 
 from meastwiss import *
 from measorm import (measOrbitRm, measChromRm, getSubOrm)

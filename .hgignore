@@ -33,14 +33,18 @@ src/tracy/tracy-3.5/autom4te.cache
 src/qrc_resources.py
 *.egg-info
 *.sqlite.bak
+aphla/version.py
 
 syntax:regexp
 ^build/
+^doc/generated/.*\.rst
 ^src/num_rec/src/.deps
 ^src/num_rec/autom4te.cache
 ^dist/
 ^deb_dist/
 ^utils/debian/
 ^utils/conf.py
+^utils/cfs_nsls2_.*\.xml
+^utils/BSR_Model\..*
 ^aphla/machines/nsls2/conf.py
-
+^.coverage

@@ -8,23 +8,24 @@ setao([]);
 
 %% BPM
 
-%(ao_bpm)
+%(ao_bpm)s
 
 %% HCM and VCM
 
-%(ao_hvcm)
+%(ao_hvcm)s
 
 %% Quad
 
-%(ao_q)
+%(ao_q)s
 
 
 %% Save the AO so that family2dev will work
-setao(AO);
+%% setao(AO);
 
 %% The operational mode sets the path, filenames, and other important parameters
 %% Run setoperationalmode after most of the AO is built so that the Units and Mode fields
 %% can be set in setoperationalmode
+
 setao(AO);
 setoperationalmode(OperationalMode);
 

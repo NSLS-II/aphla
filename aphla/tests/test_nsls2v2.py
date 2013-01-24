@@ -5,7 +5,7 @@ NSLS2 V2 Unit Test
 -------------------
 
 - test_*_l0 for readonly test
-- test_*_l1 for small perturbation
+- test_*_l1 for small perturbation, nonvisible to users
 - test_*_l2 for beam steering test
 """
 
@@ -16,6 +16,7 @@ NSLS2 V2 Unit Test
 import sys, os, time
 from fnmatch import fnmatch
 from pkg_resources import resource_string, resource_exists, resource_filename
+import matplotlib.pylab as plt
 
 if sys.version_info[:2] == (2, 6):
     import unittest2 as unittest
@@ -40,8 +41,8 @@ ap.machines.init(MACHINE[-1])
 LAT_SR = "V2SR"
 
 logging.info("NSLS2V2 initialized")
-
-refpvrb = [
+PV_SR_DCCT='V:2-SR-BI{DCCT}CUR-I'
+PV_REF_RB = [
     "V:2-SR:C15-BI:G2{PL1:1845}SA:X",
     "V:2-SR:C15-BI:G2{PL1:1845}SA:Y",
     "V:2-SR:C15-BI:G2{PL2:1865}SA:X",
@@ -55,12 +56,18 @@ refpvrb = [
     "V:2-SR:C15-BI:G6{PH1:1939}SA:X",
     "V:2-SR:C15-BI:G6{PH1:1939}SA:Y"
     ]
-ref_v0 = np.array(ap.caget(refpvrb), 'd')
+ref_v0 = np.array(ap.caget(PV_REF_RB), 'd')
 
+# name of BPMs
+BPM1='ph2g2c30a'
+BPM2='pm1g4c30a'
+
+# plotting ?
+PLOTTING = True
 
 def markForStablePv():
-    global ref_v0, refpvrb
-    ref_v0 = np.array(ap.caget(refpvrb), 'd')
+    global ref_v0, PV_REF_RB
+    ref_v0 = np.array(ap.caget(PV_REF_RB), 'd')
     
 def waitForStablePv(**kwargs):
     """
@@ -78,7 +85,7 @@ def waitForStablePv(**kwargs):
     t0 = time.time()
     time.sleep(minwait)
     global ref_v0
-    dv = np.array(caget(refpvrb)) - ref_v0
+    dv = np.array(caget(PV_REF_RB)) - ref_v0
     dvstd = [dv.std()]  # record the history
     timeout = False
 
@@ -88,7 +95,7 @@ def waitForStablePv(**kwargs):
         if dt  > maxwait:
             timeout = True
             break
-        dv = np.array(caget(refpvrb)) - ref_v0
+        dv = np.array(caget(PV_REF_RB)) - ref_v0
         dvstd.append(dv.std())
 
     if diffstd_list:
@@ -108,9 +115,7 @@ class Test0Element(unittest.TestCase):
         pass
 
     def test_nullelement_l0(self):
-        el = ap.getElements(['AABBCC'])
-        self.assertEqual(len(el), 1)
-        self.assertIsNone(el[0])
+        pass
 
     def test_tune_l0(self):
         logging.info("test_tune")
@@ -129,7 +134,7 @@ class Test0Element(unittest.TestCase):
         dcct = dccts[0]
         # current
         #pv = u'SR:C00-BI:G00{DCCT:00}CUR-RB'
-        pv = 'V:2-SR-BI{DCCT}CUR-I'
+        pv = PV_SR_DCCT
         vsrtag = 'aphla.sys.V2SR'
         self.assertEqual(dcct.name,    'dcct')
         #self.assertEqual(dcct.devname, 'DCCT')
@@ -277,9 +282,9 @@ class Test0ChanFinderCsvData(unittest.TestCase):
     """
     """
     def setUp(self):
-        #self.cfs_csv = 'us_nsls2v1_cfs.csv'
+        #self.cfs_csv = 'nsls2v1_cfs.csv'
         srcdir = resource_filename(__name__, os.path.join(*MACHINE))
-        self.cfs_db = os.path.join(srcdir, 'us_nsls2v2.sqlite')
+        self.cfs_db = os.path.join(srcdir, 'nsls2v2.sqlite')
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
@@ -340,6 +345,18 @@ class Test0Lattice(unittest.TestCase):
         self.assertTrue(self.lat.hasGroup(ap.machines.HLA_VFAMILY))
 
     def test_getelements_l0(self):
+        # get an empty list []
+        el = ap.getElements('AABBCC')
+        self.assertEqual(len(el), 0)
+        # get a [None]
+        el = ap.getElements(['AABBCC'])
+        self.assertEqual(len(el), 1)
+        self.assertIsNone(el[0])
+
+        el = ap.getElements(BPM1)
+        self.assertEqual(len(el), 1)
+        self.assertTrue(isinstance(el[0], ap.element.CaElement))
+
         elems = self.lat.getElementList('BPM')
         self.assertEqual(len(elems), 180)
         
@@ -355,29 +372,33 @@ class Test0Lattice(unittest.TestCase):
             #                            elem1[i-1].name, elem1[i-1].sb,
             #                            elem1[i].index, elem1[i-1].index,
             #                            elem1[i].sb - elem1[i-1].sb))
-            self.assertGreaterEqual(elem1[i].sb - elem1[i-1].sb, -1e-9,
-                                    msg="{0}({4},sb={1})<{2}({5}, sb={3}), d={6}".format(
-                                        elem1[i].name, elem1[i].sb, 
-                                        elem1[i-1].name, elem1[i-1].sb,
-                                        elem1[i].index, elem1[i-1].index,
-                                        elem1[i].sb - elem1[i-1].sb))
+            self.assertGreaterEqual(
+                elem1[i].sb - elem1[i-1].sb, -1e-9,
+                msg="{0}({4},sb={1})<{2}({5}, sb={3}), d={6}".format(
+                    elem1[i].name, elem1[i].sb, 
+                    elem1[i-1].name, elem1[i-1].sb,
+                    elem1[i].index, elem1[i-1].index,
+                    elem1[i].sb - elem1[i-1].sb))
             
-            self.assertGreaterEqual(elem1[i].se, elem1[i-1].sb,
-                                    "{0}({4},se={1})<{2}(sb={3})".format(
+            self.assertGreaterEqual(
+                elem1[i].se, elem1[i-1].sb,
+                msg="{0}({4},se={1})<{2}(sb={3})".format(
                     elem1[i].name, elem1[i].se, elem1[i-1].name, elem1[i-1].sb, 
                     i))
 
         elem1 = self.lat.getElementList('BPM')
         for i in range(1, len(elem1)):
-            self.assertGreaterEqual(elem1[i].sb, elem1[i-1].sb,
-                                    "%f (%s) %f (%s)" % (
+            self.assertGreaterEqual(
+                elem1[i].sb, elem1[i-1].sb,
+                msg = "%f (%s) %f (%s)" % (
                     elem1[i].sb, elem1[i].name,
                     elem1[i-1].sb, elem1[i-1].name))
             
         elem1 = self.lat.getElementList('QUAD')
         for i in range(1, len(elem1)):
-            self.assertGreaterEqual(elem1[i].sb, elem1[i-1].sb,
-                                    "%f (%s) %f (%s)" % (
+            self.assertGreaterEqual(
+                elem1[i].sb, elem1[i-1].sb,
+                msg = "%f (%s) %f (%s)" % (
                     elem1[i].sb, elem1[i].name,
                     elem1[i-1].sb, elem1[i-1].name))
         
@@ -395,6 +416,11 @@ class Test0Lattice(unittest.TestCase):
         self.lat.removeGroup(grp)
         self.assertFalse(self.lat.hasGroup(grp))
 
+
+"""
+Test1Lattice
+~~~~~~~~~~~~~
+"""
         
 class Test1LatticeSr(unittest.TestCase):
     def setUp(self):
@@ -493,7 +519,26 @@ class Test1LatticeSr(unittest.TestCase):
         self.assertIn('EPU', self.lat.getGroups())
         self.assertIn('DW', self.lat.getGroups())
 
+    def test_eget(self):
+        v, h = ap.eget('BPM', 'x', header=True)
+        self.assertEqual(len(v), len(ap.getElements('BPM')))
+        self.assertEqual(len(v), len(h))
+        # a tuple of (name, 'x')
+        self.assertEqual(len(h[0]), 2)
 
+        v, h = ap.eget('BPM', ['x'], header=True)
+        self.assertEqual(len(v), len(ap.getElements('BPM')))
+        self.assertEqual(len(v), len(h))
+        # a list [(name, 'x')]
+        self.assertEqual(len(h[0]), 1)
+
+        v, h = ap.eget('BPM', ['x', 'y', 'x'], header=True)
+        self.assertEqual(len(v), len(ap.getElements('BPM')))
+        self.assertEqual(len(v), len(h))
+        # a list [(name, 'x')]
+        self.assertEqual(len(h[0]), 3)
+
+        
 class TestLatticeLtd1(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtd1")
@@ -916,7 +961,7 @@ ORM
 
 class TestOrmData(unittest.TestCase):
     def setUp(self):
-        self.h5filename = "us_nsls2_v2sr_orm.hdf5"
+        self.h5filename = "v2sr.hdf5"
         pass
 
     def tearDown(self):
@@ -925,7 +970,7 @@ class TestOrmData(unittest.TestCase):
     @unittest.skip("orm data is not ready")
     def test_trim_bpm(self):
         self.assertTrue(ap.conf.has(self.h5filename))
-        ormdata = ap.OrmData(ap.conf.filename(self.h5filename))
+        ormdata = ap.OrmData(ap.conf.filename(self.h5filename), "orm")
 
         trimx = ['fxl2g1c07a', 'cxh1g6c15b']
         for trim in trimx:
@@ -936,22 +981,6 @@ class TestOrmData(unittest.TestCase):
         for bpm in bpmx:
             self.assertTrue(ormdata.hasBpm(bpm.name))
         
-
-    @unittest.skip("orm data is not ready")
-    def test_measure_orm(self):
-        return True
-        if hla.NETWORK_DOWN: return True
-        hla.reset_trims()
-        trimx = ['cxh1g6c15b', 'cyhg2c30a', 'cxl2g6c14b']
-        #trimx = ['CXH1G6C15B']
-        bpmx = ['ph1g2c30a', 'pl1g2c01a', 'ph1g6c29b', 'ph2g2c30a', 'pm1g4c30a']
-        #hla.reset_trims()
-        orm = hla.measorm.Orm(bpm = bpmx, trim = trimx)
-        orm.measure("orm-test.pkl", verbose=1)
-        orm.measure_update(bpm=bpmx, trim=trimx[:2], verbose=1, dkick=5e-5)
-        orm.save("orm-test-update.pkl")
-        #orm.checkLinearity()
-        pass
 
     @unittest.skip("orm data is not ready")
     def test_measure_orm_sub1(self):
@@ -1202,9 +1231,63 @@ class TestOrmData(unittest.TestCase):
 
 
 
+class TestRmCol(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_measure_orm_sub1_l2(self):
+        #trim = ap.getElements('ch1g6c15b')[0]
+        trim = ap.getElements('cl2g6c30b')[0]
+        bpmlst = [e.name for e in ap.getElements('BPM')]
+        trim.put('x', 0.0, unit = None)
+
+        fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
+        ormline = ap.orm.RmCol(bpmlst, trim)
+        ormline.measure('x', 'x', verbose = 2)
+
+        # plotting
+        if PLOTTING:
+            npts, nbpmrow = np.shape(ormline.rawresp)
+            plt.figure()
+            for j in range(nbpmrow):
+                plt.plot(ormline.rawkick[:], ormline.rawresp[:,j], '-o')
+            plt.savefig("rm_orm_sub1_%s.png" % trim.name)
+
+    def test_measure_orm_sub2_l2(self):
+        #trim = ap.getElements('ch1g6c15b')[0]
+        trim = ap.getElements('cl2g6c30b')[0]
+        bpmlst = [e.name for e in ap.getElements('BPM')]
+        trim.put('x', 0.0, unit=None)
+
+        fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
+        ormline = ap.orm.RmCol(bpmlst, trim)
+        ormline.measure(['x', 'y'], 'x', verbose = 2)
+
+        # plotting
+        if PLOTTING:
+            npts, nbpmrow = np.shape(ormline.rawresp)
+            plt.figure()
+            for j in range(nbpmrow):
+                plt.plot(ormline.rawkick[:], ormline.rawresp[:,j], '-o')
+            plt.savefig("rm_orm_sub1_%s.png" % trim.name)
+
+
 class TestOrm(unittest.TestCase):
     def setUp(self):
         pass
+
+    def test_measure_orm_sub1_l2(self):
+        #trimlst = ['ch1g6c15b', 'cl2g6c14b', 'cm1g4c26a']
+        trimlst = ['cl2g6c14b']
+        #trimx = ['CXH1G6C15B']
+        bpmlst = [e.name for e in ap.getElements('BPM')]
+        trims = ap.getElements(trimlst)
+        for t in trims: 
+            t.x = 0
+            t.y = 0
+
+        fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
+        orm1 = ap.measOrbitRm(bpmlst, trimlst, fname, verbose=2)
 
     def test_measure_orm_l2(self):
         bpms = ap.getElements('BPM')
@@ -1215,7 +1298,7 @@ class TestOrm(unittest.TestCase):
         bpmlst = [b.name for b in bpms[:nbpm]]
         trimlst = [t.name for t in trims[:ntrim]]
         fname = time.strftime("orm_%Y%m%d_%H%M.hdf5")
-        ap.measOrbitRm(bpmlst, trimlst, fname)
+        ap.measOrbitRm(bpmlst, trimlst, fname, verbose=2, minwait=5)
 
 
 if __name__ == "__main__":

@@ -37,8 +37,11 @@ Modules include:
 
 from __future__ import print_function
 
-__version__ = "0.7.0"
-
+__version__ = "Unknow"
+try:
+    from version import version as __version__
+except:
+    pass
 
 import os
 import tempfile
@@ -52,17 +55,20 @@ class NullHandler(logging.Handler):
 
 #APHLA_LOG = os.path.join(tempfile.gettempdir(), "aphla.log")
 APHLA_LOG = 'aphla.log'
-logging.basicConfig(filename=APHLA_LOG,
-    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
-    level=logging.DEBUG)
+#logging.basicConfig(filename=APHLA_LOG,
+#    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
+#    level=logging.DEBUG)
+_lgfmt = logging.Formatter("%(asctime)s - %(name)s [%(levelname)s]: %(message)s")
 # set null handler when logging for a library.
-_hdl = NullHandler()
-logging.getLogger('aphla').addHandler(_hdl)
+_lghdl = NullHandler()
+_lghdl.setLevel(logging.DEBUG)
+_lghdl.setFormatter(_lgfmt)
+logging.getLogger('aphla').addHandler(_lghdl)
 
 #
 
-from catools import (caget, caput, caputwait)
-from chanfinder import ChannelFinderAgent
+from catools import *
+from chanfinder import *
 #from machines import (
 #    initNSLS2V2, initNSLS2, initTLS, initNSLS2V3BSRLine
 #    )
@@ -70,10 +76,9 @@ from chanfinder import ChannelFinderAgent
 #from rf import *
 import machines
 from hlalib import *
-from ormdata import OrmData
+from apdata import OrmData
 
 from meastwiss import *
-from measorm import (measOrbitRm, measChromRm, getSubOrm)
 from aptools import *
 
 import bba

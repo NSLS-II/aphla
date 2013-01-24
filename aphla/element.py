@@ -11,6 +11,7 @@ import re
 import copy
 import logging
 from catools import caget, caput
+from unitconv import *
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +200,8 @@ class CaDecorator:
     If *trace* is True, every readback/setpoint will be recorded for later
     reset/revert whenever the get/put functions are called. Extra history
     point can be recorded by calling *mark*.
+
+    None in unit conversion means the lower level unit, like the PV in EPICS.
     """
     NoOrder    = 0
     Ascending  = 1
@@ -217,6 +220,7 @@ class CaDecorator:
         self.order = self.Ascending
         self.trace = kwargs.get('trace', False)
         self.trace_limit = 200
+        self.unitconv = {}
 
     def __eq__(self, other):
         return self.pvrb == other.pvrb and \
@@ -246,6 +250,16 @@ class CaDecorator:
 
         lst.append(v)
         return len(lst) - 1
+
+    def _unit_conv(self, x, src, dst):
+        if (src, dst) == (None, None): return x
+
+        uc = self.unitconv.get((src, dst), None)
+        if uc is None:
+            raise RuntimeError("no method for unit conversion from "
+                               "'%s' to '%s'" % (src, dst))
+        else:
+            return uc.eval(x)
 
     def revert(self):
         """
@@ -294,14 +308,17 @@ class CaDecorator:
             self.sp.append(caget(self.pvrb))
             if len(self.sp) > self.trace_limit: self.sp.pop(1)
 
-    def getReadback(self):
+    def getReadback(self, unit = None):
         """
         return the value of readback PV or None if such pv is not defined.
         """
         if self.pvrb: 
-            ret = caget(self.pvrb)
+            #print __name__
+            #logger.info("testing")
+            rawret = caget(self.pvrb)
+            ret = self._unit_conv(rawret, None, unit)
             if self.trace: 
-                self.rb.append(copy.deepcopy(ret))
+                self.rb.append(copy.deepcopy(rawret))
                 if len(self.rb) > self.trace_limit: 
                     # keep the first one for `reset`
                     self.rb.pop(1)
@@ -310,17 +327,18 @@ class CaDecorator:
             else: return ret
         else: return None
 
-    def getSetpoint(self):
+    def getSetpoint(self, unit = None):
         """
         return the value of setpoint PV or None if such PV is not defined.
         """
         if self.pvsp:
-            ret = caget(self.pvsp)
+            rawret = caget(self.pvsp)
+            ret = self._unit_conv(rawret, None, unit)
             if len(self.pvsp) == 1: return ret[0]
             else: return ret
         else: return None
 
-    def putSetpoint(self, val):
+    def putSetpoint(self, val, unit = None):
         """
         set a new setpoint.
 
@@ -331,12 +349,13 @@ class CaDecorator:
         number of history data are kept.
         """
         if self.pvsp:
-            ret = caput(self.pvsp, val, wait=True)
+            rawval = self._unit_conv(val, unit, None)
+            ret = caput(self.pvsp, rawval, wait=True)
             if self.trace: 
                 if isinstance(val, (list, tuple)):
-                    self.sp.append(val[:])
+                    self.sp.append(rawval[:])
                 elif isinstance(val, (float, int)):
-                    self.sp.append(val)
+                    self.sp.append(rawval)
                 else:
                     raise RuntimeError("unsupported datatype '%s' "
                                        "for tracing object value." %
@@ -485,6 +504,8 @@ class CaDecorator:
         :param index: PV with an index in the list
         :param pv: one particular PV
         :rtype: single value or a list of values.
+
+        hardware unit
         """
 
         index = kwargs.get('index', None)
@@ -507,6 +528,8 @@ class CaDecorator:
         :param index: PV with an index in the list
         :param pv: one particular PV
         :rtype: single value or a list of values.
+
+        hardware unit
         """
 
         index = kwargs.get('index', None)
@@ -538,6 +561,7 @@ class CaDecorator:
         """check if it can be set"""
         if not self.pvsp: return False
         else: return True
+
 
 class CaElement(AbstractElement):
     """
@@ -714,6 +738,12 @@ class CaElement(AbstractElement):
             #raise AttributeError("Error")
         for e in self.alias: e.__setattr__(att, val)
 
+    def addUnitConversion(self, field, uc, src, dst):
+        """
+        add unit conversion for field
+        """
+        self._field[field].unitconv[(src, dst)] = uc
+
     def updatePvRecord(self, pvname, properties, tags = []):
         """
         update the pv with property dictionary and tag list.
@@ -870,6 +900,9 @@ class CaElement(AbstractElement):
         source = kwargs.get('source', 'readback').lower()
         unit = kwargs.get('unit', None)
     
+        #if unit not in ['raw', None]:
+        #    raise RuntimeError("unit conversion (%s,%s) for field '%s' is not implemented yet" % ('raw', unit, field))
+
         if not self._field.has_key(field):
             v = None
         elif source == 'readback':
@@ -882,7 +915,7 @@ class CaElement(AbstractElement):
         # convert unit when required
         return v
         
-    def get(self, fields, source='readback', unit=None):
+    def get(self, fields, source='readback', unit='phy'):
         """
         get the values for given fields. 
 
@@ -896,6 +929,8 @@ class CaElement(AbstractElement):
 
             >>> get('x')
             >>> get(['x', 'y'])
+            >>> get(['x', 'unknown'])
+            [ 0, None]
         """
 
         kw = {'source': source, 'unit': unit}
@@ -905,12 +940,13 @@ class CaElement(AbstractElement):
             # a list of fields
             return [ self._get_field(v, **kw) for v in fields]
 
-    def set(self, field, val, unit = None):
+    def _put_field(self, field, val, unit, **kwargs):
         """
         set *val* to *field*.
 
         seealso :func:`pv(field=field)`
         """
+
         att = field
         if self.__dict__['_field'].has_key(att):
             decr = self.__dict__['_field'][att]
@@ -918,11 +954,19 @@ class CaElement(AbstractElement):
                 raise AttributeError("field '%s' is not defined" % att)
             if not decr.pvsp:
                 raise ValueError("field '%s' is not writable" % att)
-            decr.putSetpoint(val)
+            decr.putSetpoint(val, unit)
         else:
             raise RuntimeError("element '%s' has no field '%s'" % (self.name, att))
         
-        for e in self.alias: e._field[field].set(field, val, unit)
+
+    def put(self, field, val, unit = 'phy'):
+        """
+        set *val* to *field*.
+
+        seealso :func:`pv(field=field)`
+        """
+        self._put_field(field, val, unit)
+        for e in self.alias: e._field[field].put(field, val, unit=unit)
 
     def settable(self, field):
         """

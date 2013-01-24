@@ -16,7 +16,8 @@ app = cothread.iqt()
 import aphla
 from aphla.catools import caget, caput, camonitor, FORMAT_TIME
 
-import sys
+import logging
+import os, sys
 
 import gui_resources
 
@@ -32,9 +33,20 @@ import time
 from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
-    QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup)
+    QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
+    QPlainTextEdit
+)
 
 import numpy as np
+
+class QTextEditLoggingHandler(logging.Handler):
+    def __init__(self, textedit):
+        logging.Handler.__init__(self)
+        self.textedit = textedit
+
+    def emit(self, record):
+        self.textedit.appendPlainText(self.format(record))
+
 
 class ElementPropertyTabs(QTabWidget):
     def __init__(self, parent = None):
@@ -125,12 +137,22 @@ class OrbitPlotMainWindow(QMainWindow):
         ##majbox.addWidget(self.tabs, 1, 0)
         ##majbox.addWidget(self.elems, 1, 1)
         majbox.addWidget(self.orbitSplitter) #, 1, 0, 1, 2)
+
+        # logging
+        textedit = QPlainTextEdit(self)
+        self.logger = logging.getLogger(__name__)
+        handler = QTextEditLoggingHandler(textedit)
+        self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
+        majbox.addWidget(textedit)
+
         cwid.setLayout(majbox)
+        self.logger.info("INFO")
 
         self.data1 = None
         self.live_orbit = True
 
-        picker = None #[(v[1], v[2], v[0]) for v in self.config.data['magnetpicker']]
+        picker = None 
 
         # all orbit plots: [plot, data, index]
         self.obtdata = None
@@ -365,7 +387,7 @@ class OrbitPlotMainWindow(QMainWindow):
         
     def click_lattice(self):
         #print self.sender()
-        print aphla.machines.lattices()
+        #print aphla.machines.lattices()
         latname = self.sender().text()
         lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
         print lat, self.sender().text()
@@ -378,18 +400,19 @@ class OrbitPlotMainWindow(QMainWindow):
         aphla.machines.use(lat.name)
 
         self._lat = lat
-        print "using lattice:", lat.name
+        self.logger.info("using lattice: %s" % lat.name)
         self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
 
         for p in self.obtplots:
             p.attachCurves(None)
-            
+            #p.curve1.setData([], [])
+            p.replot()
+
         self.obtdata = None
         
         if self.vbpm is not None:
             #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
             self.obtdata = OrbitDataVirtualBpm(velement=self.vbpm)
-            self.obtdata.update()
             #print self.obtdata.xorbit()
             #print self.obtdata.yorbit()
         else:
@@ -402,7 +425,15 @@ class OrbitPlotMainWindow(QMainWindow):
             # data for plot1,2
             self.obtdata = OrbitData(elements=elems, x=x, sb=sb, se=se)
 
+        try:
+            self.obtdata.update()
+        except:
+            self._lat = None
+            self.obtdata = None
+            raise RuntimeError("can not update orbit")
+
         magprof = lat.getBeamlineProfile()
+        print magprof
         for p in self.obtplots:
             p.setPlot(magnet_profile=magprof)
             p.attachCurves(p)
@@ -582,23 +613,29 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
 def main(par=None):
-    try:
-        aphla.machines.init("nsls2v2")
-        aphla.machines.init("nsls2")
-        aphla.machines.init("nsls2v3bsrline")
-    except:
-        pass
-    print aphla.machines.lattices()
+    #try:
+    #    aphla.machines.init("nsls2v2")
+    #    aphla.machines.init("nsls2")
+    #    aphla.machines.init("nsls2v3bsrline")
+    #except:
+    #    pass
+    #print aphla.machines.lattices()
     #app = QApplication(args)
     #app.setStyle(st)
+    hla_cfs = os.environ.get('HLA_CFS_URL', None)
+    for lat in os.environ.get('HLA_MACHINE', '').split():
+        if not lat: continue
+        if hla_cfs is None: aphla.machines.init(lat)
+        else: aphla.machines.init(lat, src=hla_cfs)
+
     if '--sim' in sys.argv:
         print "CA offline:", aphla.catools.CA_OFFLINE
         aphla.catools.CA_OFFLINE = True
     demo = OrbitPlotMainWindow()
-    demo.setLattice(aphla.machines.getLattice('V2SR'))
+    #demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")
     demo.resize(800,500)
-    print aphla.machines.lattices()
+    #print aphla.machines.lattices()
     demo.show()
     # print app.style() # QCommonStyle
     #sys.exit(app.exec_())

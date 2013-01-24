@@ -1,8 +1,10 @@
-from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig)
+from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource)
+from .. import (OrmData, Twiss, UcPoly1d)
 
 from fnmatch import fnmatch
 import logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
@@ -29,7 +31,7 @@ def init_submachines(machine, submachines, **kwargs):
     """ 
     """
     # if src provides an explicit filename/url to initialize
-    srcname = kwargs.get('src', 'us_nsls2v2')
+    srcname = kwargs.get('src', 'nsls2v2')
     cfa = findCfaConfig(srcname, machine, submachines)
 
     # the column name in CSV or the property name in channel finder is
@@ -41,6 +43,7 @@ def init_submachines(machine, submachines, **kwargs):
 
     lattice_dict = {}
 
+    #logger.error("HELP")
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
 
@@ -54,12 +57,15 @@ def init_submachines(machine, submachines, **kwargs):
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
-    orm_filename = 'us_nsls2v2_sr_orm.hdf5'
-    if orm_filename and conf.has(orm_filename):
-        lattice_dict['V2SR'].ormdata = OrmData(orm_filename)
-        logger.info("using ORM data '%s'" % orm_filename)
+    # get the file, search current dir first
+    data_filename = getResource('v2sr.hdf5', __name__)
+    if data_filename:
+        lattice_dict['V2SR'].ormdata = OrmData(data_filename)
+        lattice_dict['V2SR']._twiss = Twiss(data_filename)
+        lattice_dict['V2SR']._twiss.load_hdf5(data_filename)
+        logger.info("using ORM data '%s'" % data_filename)
     else:
-        logger.warning("No ORM '%s' found" % orm_filename)
+        logger.warning("No ORM '%s' found" % data_filename)
 
     # tune element from twiss
     #twiss = _lattice_dict['V2SR'].getElementList('twiss')[0]
@@ -76,7 +82,12 @@ def init_submachines(machine, submachines, **kwargs):
 
     #
     # SR
-    if 'V2SR' in lattice_dict: lattice_dict['V2SR'].loop = True
-    else: lattice_dict['V2SR'] = None
+    lattice_dict['V2SR'].loop = True
+    uc_m2mm = UcPoly1d('m', 'mm', [1e3, 0])
+    uc_mm2m = UcPoly1d('mm', 'm', [1e-3, 0])
+
+    for e in lattice_dict['V2SR'].getElementList('BPM'):
+        e.addUnitConversion('x', uc_m2mm, None, "phy")
+        e.addUnitConversion('x', uc_mm2m, "phy", None)
 
     return lattice_dict, lattice_dict['V2SR']

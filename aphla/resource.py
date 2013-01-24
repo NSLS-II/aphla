@@ -3,7 +3,7 @@
 import os
 
 from pkg_resources import resource_string, resource_exists, resource_filename
-from pvlist import vsr_pvlist
+#from pvlist import vsr_pvlist
 
 def has(resname):
     """
@@ -16,6 +16,22 @@ def has(resname):
         return True
     else:
         return resource_exists(__name__, resname)
+
+def getResource(resname, loc = None):
+    """
+    returns the true filename for resource
+
+    check ${HOME}/.hla first, then the installed global settings.
+    """
+    # check the HOME for personal config file
+    prv_filename = os.path.join(os.getenv("HOME"), ".hla", resname)
+    if os.path.exists(prv_filename):
+        return prv_filename
+    elif loc and resource_exists(loc, resname):
+        # use the config within distribution
+        return resource_filename(loc, resname)
+    else:
+        return None
 
 def filename(resname):
     """

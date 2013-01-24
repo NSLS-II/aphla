@@ -93,6 +93,11 @@ def convert_at_lattice(latname):
                 oupt.append(dft.copy())
             else:
                 oupt.append(rec)
+        elif e.family in ['COR']:
+            rec['name'] = e.name
+            rec['atfamil'] = 'HVCOR'
+            rec['atclass'] = 'corrector'
+            oupt.append(rec.copy())            
         elif e.family in ['DIPOLE']:
             rec['atfamily'] = 'rbend'
         elif e.family in ['HCOR', 'HFCOR']:
@@ -184,55 +189,107 @@ def export_at_lattice(template, latname):
     oupt.close()
 
 
+def calc_devlist(elemlist):
+    ret = []
+    #
+    for e in elemlist:
+        # use C[0-9][0-9]
+        ret.append([int(e.cell[1:])])
+
+    ret[0].append(1)
+    k = 1
+    for i in range(1, len(ret)):
+        k = k + 1
+        if ret[i][0] != ret[i-1][0]: k = 1
+        ret[i].append(k)
+    return ret
+
+def mml_namelist(namelist):
+    """padding to be same length"""
+    N = max([len(s) for s in namelist])
+    return ["'%s'" % s.ljust(N, ' ')  for s in namelist]
+
 def export_mml_init(template, latname):
-    fname = template['main'][:-len('.template')]
+    fmain = open(template['main'][:-len('.template')], 'w')
+    ao_main = open(template['main'], 'r').read()
 
     bpms = ap.getElements('BPM')
 
-    bpmx_devlist = "; ".join(['1 %d' % i for i in range(1, len(bpms)+1)])
-    bpmx_commonnames = ";".join(["'%s'" % e.name for e in bpms])
-    bpmy_commonnames = ";".join(["'%s'" % e.name for e in bpms])
+    bpmx_devlist = "; ".join(['%d %d' % (v[0], v[1]) for v in calc_devlist(bpms)])
+    bpmx_commonnames = "; ".join(mml_namelist([e.name for e in bpms]))
+    bpmy_commonnames = "; ".join(mml_namelist([e.name for e in bpms]))
     bpmx_monitor_pv = ";".join(["'%s'" % e.pv(field='x')[0] for e in bpms])
     bpmy_monitor_pv = ";".join(["'%s'" % e.pv(field='x')[0] for e in bpms])
     # fake
     bpmx_sum_pv = ";".join(["'pv1'" for i in range(len(bpms))])
     bpmy_sum_pv = ";".join(["'pv1'" for i in range(len(bpms))])
-    ao_bpm = open(template['bpm'], 'r').read().format(
-        {'bpmx_devlist': bpmx_devlist,
-         'bpmx_commonnames': bpmx_commonnames,
-         'bpmy_commonnames': bpmy_commonnames,
-         'bpmx_monitor_pv': bpmx_monitor_pv,
-         'bpmy_monitor_pv': bpmy_monitor_pv,
-         'bpmx_sum_pv': bpmx_sum_pv,
-         'bpmy_sum_pv': bpmy_sum_pv})
 
-    print ao_bpm
+    ao_bpm = open(template['bpm'], 'r').read() % {
+        'bpmx_devlist': bpmx_devlist,
+        'bpmx_commonnames': bpmx_commonnames,
+        'bpmy_commonnames': bpmy_commonnames,
+        'bpmx_monitor_pv': bpmx_monitor_pv,
+        'bpmy_monitor_pv': bpmy_monitor_pv,
+        'bpmx_sum_pv': bpmx_sum_pv,
+        'bpmy_sum_pv': bpmy_sum_pv}
+    
+    hvcms = ap.getElements('COR')
+    #for i,e in enumerate(hcms):
+    #    print i, e, e.pv(field='x', handle='readback')
+    hcm_devlist = "; ".join(['%d %d' % (v[0], v[1]) for v in calc_devlist(hvcms)])
+    hcm_commonnames = ";".join(mml_namelist([e.name for e in hvcms]))
+    hcm_monitor_pv =  ";".join(["'%s'" % e.pv(field='x', handle='readback')[0] for e in hvcms])
+    hcm_setpoint_pv =  ";".join(["'%s'" % e.pv(field='x', handle='setpoint')[0] for e in hvcms])
+    hcm_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(hvcms))])
+    hcm_fault_pv = ";".join(["'fakepv'" for i in range(len(hvcms))])
 
-    hcms = ap.getElements('HCOR')
-    for i,e in enumerate(hcms):
-        print i, e, e.pv(field='x', handle='readback')
-    hcm_devlist = "; ".join(['1 %d' % i for i in range(1, len(hcms)+1)])
-    hcm_commonnames = ";".join(["'% 6s'" % e.name for e in hcms])
-    hcm_monitor_pv =  ";".join(["'%s'" % e.pv(field='x', handle='readback')[0] for e in hcms])
-    hcm_setpoint_pv =  ";".join(["'%s'" % e.pv(field='x', handle='setpoint')[0] for e in hcms])
-    hcm_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(hcms))])
-    hcm_fault_pv = ";".join(["'fakepv'" for i in range(len(hcms))])
+    vcm_devlist = "; ".join(['%s %d' % (e.cell[1:], i+1) for i,e in enumerate(hvcms)])
+    vcm_commonnames = ";".join(mml_namelist([e.name for e in hvcms]))
+    vcm_monitor_pv =  ";".join(mml_namelist([e.pv(field='y', handle='readback')[0] for e in hvcms]))
+    vcm_setpoint_pv =  ";".join(mml_namelist([e.pv(field='y', handle='setpoint')[0] for e in hvcms]))
+    vcm_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(hvcms))])
+    vcm_fault_pv = ";".join(["'fakepv'" for i in range(len(hvcms))])
 
-    vcms = ap.getElements('VCOR')
-    vcm_devlist = "; ".join(['1 %d' % i for i in range(1, len(vcms)+1)])
-    vcm_commonnames = ";".join(["'% 6s'" % e.name for e in vcms])
-    vcm_monitor_pv =  ";".join(["'%s'" % e.pv(field='y', handle='readback')[0] for e in vcms])
-    vcm_setpoint_pv =  ";".join(["'%s'" % e.pv(field='y', handle='setpoint')[0] for e in vcms])
-    vcm_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(vcms))])
-    vcm_fault_pv = ";".join(["'fakepv'" for i in range(len(vcms))])
+    ao_hvcm = open(template['hvcm'], 'r').read() % {
+        'hcm_devlist': hcm_devlist,
+        'hcm_commonnames': hcm_commonnames,
+        'hcm_monitor_pv': hcm_monitor_pv,
+        'hcm_setpoint_pv': hcm_setpoint_pv,
+        'hcm_oncontrol_pv': hcm_oncontrol_pv,
+        'hcm_fault_pv': hcm_fault_pv,
+        'vcm_devlist': vcm_devlist,
+        'vcm_commonnames': vcm_commonnames,
+        'vcm_monitor_pv': vcm_monitor_pv,
+        'vcm_setpoint_pv': vcm_setpoint_pv,
+        'vcm_oncontrol_pv': vcm_oncontrol_pv,
+        'vcm_fault_pv': vcm_fault_pv}
 
-    quads = ap.getElements('QUAD')
-    q_devlist = "; ".join(['1 %d' % i for i in range(1, len(quads)+1)])
-    q_commonnames = ";".join(["'% 5s'" % e.name for e in quads])
-    q_monitor_pv =  ";".join(["'%s'" % e.pv(field='k1', handle='readback')[0] for e in quads])
-    q_setpoint_pv =  ";".join(["'%s'" % e.pv(field='k1', handle='setpoint')[0] for e in quads])
-    q_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(quads))])
-    q_fault_pv = ";".join(["'fakepv'" for i in range(len(quads))])
+    ao_quad = ''
+    for qfam in [('QUAD', 'Q'), ('QH1', 'QH1')]:
+        quads = ap.getElements(qfam[0])
+        q_devlist = "; ".join(['1 %d' % i for i in range(1, len(quads)+1)])
+        q_commonnames = ";".join(mml_namelist([e.name for e in quads]))
+        q_monitor_pv =  ";".join(["'%s'" % e.pv(field='k1', handle='readback')[0] for e in quads])
+        q_setpoint_pv =  ";".join(["'%s'" % e.pv(field='k1', handle='setpoint')[0] for e in quads])
+        q_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(quads))])
+        q_fault_pv = ";".join(["'fakepv'" for i in range(len(quads))])
+
+        ao_quad = ao_quad + open(template['quad'], 'r').read() % {
+            'q_family': qfam[1],
+            'q_devlist': q_devlist,
+            'q_commonnames': q_commonnames,
+            'q_monitor_pv': q_monitor_pv,
+            'q_setpoint_pv': q_setpoint_pv,
+            'q_oncontrol_pv': q_oncontrol_pv,
+            'q_fault_pv': q_fault_pv}
+    #
+    fmain.write(ao_main % {
+        'ao_bpm': ao_bpm,
+        'ao_hvcm': ao_hvcm,
+        'ao_q': ao_quad})
+
+    fmain.close()
+    return
 
     screens = ap.getElements('FLAG')
     screen_devlist = "; ".join(['1 %d' % i for i in range(1, len(screens)+1)])

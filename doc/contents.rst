@@ -41,7 +41,7 @@ Welcome to HLA documentation!
    tutorial.rst
    nsls2req.rst
    channelfinder.rst
-   ref.rst
+   libref.rst
    todo.rst
    appendix.rst
    quickstart.rst

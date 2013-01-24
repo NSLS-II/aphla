@@ -13,26 +13,27 @@ import logging
 import numpy as np
 import time
 from fnmatch import fnmatch
-from catools import caget, caput
+from catools import caget, caput, CA_OFFLINE
 import machines
 import element
+import itertools
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    'addGroup', 'addGroupMembers', 'eget',  
-    'getBeamlineProfile', 'getBeta', 
-    'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest', 
-    'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance', 
-    'getElements', 'getEta', 'getFastOrbit', 'getFftTune', 
-    'getGroupMembers', 'getGroups', 'getLocations', 'getModes', 
-    'getNeighbors', 'getOrbit', 'getPhase', 'getPvList', 'getRfFrequency', 
-    'getRfVoltage', 'getStepSize', 'getTbtOrbit', 'getTuneRm', 
-    'getTune', 'getTunes', 
-    'removeGroup', 'removeGroupMembers', 'setRfFrequency',
-    'stepRfFrequency', 
-    'waitStableOrbit', 
-]
+#__all__ = [
+#    'addGroup', 'addGroupMembers', 'eget',  
+#    'getBeamlineProfile', 'getBeta', 
+#    'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest', 
+#    'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance', 
+#    'getElements', 'getEta', 'getFastOrbit', 'getFftTune', 
+#    'getGroupMembers', 'getGroups', 'getLocations', 'getModes', 
+#    'getNeighbors', 'getOrbit', 'getPhase', 'getPvList', 'getRfFrequency', 
+#    'getRfVoltage', 'getStepSize', 'getTbtOrbit', 'getTuneRm', 
+#    'getTune', 'getTunes', 
+#    'removeGroup', 'removeGroupMembers', 'putRfFrequency',
+#    'stepRfFrequency', 
+#    'waitStableOrbit', 
+#]
 
 # current
 def getCurrent():
@@ -50,15 +51,16 @@ def getCurrent():
         return None
 
 # rf
-def getRfFrequency():
-    """Get the frequency from the first 'RFCAVITY' element"""
+def getRfFrequency(unit='MHz'):
+    """
+    Get the frequency from the first 'RFCAVITY' element.
+
+    The unit is MHz.
+    """
     _rf, = getElements('RFCAVITY')
     return _rf.f
 
 def putRfFrequency(f):
-    raise DeprecationWarning("use `setRfFrequency` instead")
-
-def setRfFrequency(f):
     """set the rf frequency for the first 'RFCAVITY' element"""
     _rf, = getElements('RFCAVITY')
     _rf.f = f
@@ -77,7 +79,7 @@ def stepRfFrequency(df = 0.010):
 
     .. warning:: 
 
-      Need modify the unit for real machine
+      Need check the unit for real machine
     """
     f0 = getRfFrequency()
     putRfFrequency(f0 + df)
@@ -170,12 +172,12 @@ def getElements(group, include_virtual=False):
     lattice.
 
     The default does not include virtual element.
-
-    return None if no element is found and return_list=False
     """
 
     # return the input if it is a list of element object
-    if isinstance(group, (list, tuple)):
+    if isinstance(group, element.AbstractElement):
+        return [group]
+    elif isinstance(group, (list, tuple)):
         if all([isinstance(e, element.AbstractElement) for e in group]):
             return group
 
@@ -191,32 +193,45 @@ def getElements(group, include_virtual=False):
 
     return ret
 
-def eget(elem = None, fields = None, **kwargs):
+def eget(elem, fields = None, **kwargs):
     """
     get elements field values
     
-    :param elem: element name, name list or pattern
+    :param elem: element name, name list, pattern or object list
     :type elem: str, list
     :param fields: field name or name list
     :type fields: str, list
-    
+    :param header: optional (True, False), whether returns the (name, field) list. 
+ 
     :Example:
 
         >>> eget('DCCT', 'value')
         >>> eget('BPM', 'x')
-        >>> eget('PH*', ['x', 'y'])
+        >>> eget('p*c30*', ['x', 'y'], header=True)
+
+        >>> bpm = getElements('p*c30*')
+        >>> eget(bpm, ['x', 'y'], header=True)
 
     seealso :func:`getElements`, :func:`~aphla.element.CaElement.get`
     """
-    if elem is not None:
-        elst = getElements(elem)
-        if not elst: return None
-        elif len(elst) == 1:
-            return elst[0].get(fields, **kwargs)
-        else:
-            return [e.get(fields, **kwargs) for e in elst]
-    else:
-        return None
+    header = kwargs.pop('header', False)
+
+    elst = getElements(elem)
+    if not elst: return None
+
+    v = [e.get(fields, **kwargs) for e in elst]
+    if not header: return v
+
+    h = []
+    if isinstance(fields, (str, unicode)):
+        h = [(e.name, fields) for e in elst]
+    elif isinstance(fields, (list, tuple)):
+        h = [None] * len(v)
+        for i,e in enumerate(elst):
+            fld = [f if f in e.fields() else None for f in fields]
+            h[i] = [(e.name, f) for f in fld] 
+        # h,v should have same dimension
+    return v, h
 
 #def eset(elem = None, field = None, **kwargs):
 #    if elem is not None:
@@ -226,7 +241,7 @@ def getPvList(elem, field, handle = 'readback', **kwargs):
     """
     return a pv list for given element list
 
-    :param elem: element pattern, name list
+    :param elem: element pattern, name list or CaElement object list
     :param field: e.g. 'x', 'y', 'k1'
     :param handle: 'READBACK' or 'SETPOINT'
 
@@ -234,6 +249,20 @@ def getPvList(elem, field, handle = 'readback', **kwargs):
 
       - *first_only* (False) use only the first PV for each element. 
       - *compress_empty* (False) remove element with no PV.
+
+    :Example:
+
+      >>> getPvList('p*c30*', 'x')
+
+    This can be simplified as::
+
+      [e.pv(field) for e in getElements(elem) if field in e.fields()]
+
+    extract the pv only if the element has that field (compress_empty=True).
+
+      [e.pv(field) if field in e.fields() else None for e in getElements(elem)]
+
+    put a None in the list if the field is not in that element
 
     *elem* accepts same input as :func:`getElements`
     """
@@ -335,6 +364,7 @@ def removeGroupMembers(group, member):
     else:
         raise ValueError("member can only be string or list")
 
+
 def getGroups(element = '*'):
     """
     Get all groups own these elements, '*' returns all possible groups,
@@ -343,6 +373,7 @@ def getGroups(element = '*'):
     it calls :func:`~aphla.lattice.Lattice.getGroups` of the current lattice.
     """
     return machines._lat.getGroups(element)
+
 
 def getGroupMembers(groups, op = 'intersection', **kwargs):
     """
@@ -356,15 +387,22 @@ def getGroupMembers(groups, op = 'intersection', **kwargs):
     """
     return machines._lat.getGroupMembers(groups, op, **kwargs)
 
+
 def getNeighbors(element, group, n = 3):
     """
-    Get a list of n elements belongs to group. The list is sorted along s
-    (the beam direction).
+    Get a list of n elements belongs to group. 
+
+    :param element: the central element
+    :type element: str, :class:`~aphla.element.AbstractElement`
+    :param group: the neighbors belong to
+    :return: a list of element in given group
+
+    The list is sorted along s (the beam direction).
 
     it calls :meth:`~aphla.lattice.Lattice.getNeighbors` of the current
     lattice to get neighbors.
 
-    ::
+    :Example:
 
       >>> getNeighbors('PM1G4C27B', 'BPM', 2)
       >>> getNeighbors('PM1G4C27B', 'QUAD', 1)
@@ -381,7 +419,10 @@ def getClosest(element, group):
     """
     Get the closest element in *group*
 
-    ::
+    :param element: the element name or object
+    :param group: the closest neighbor belongs to
+
+    :Example:
 
       >>> getClosest('PM1G4C27B', 'BPM')
 
@@ -399,23 +440,13 @@ def getBeamlineProfile(s1 = 0, s2 = 1e10):
     """
     return machines._lat.getBeamlineProfile(s1, s2)
 
-def getStepSize(element):
-    """
-    Return default stepsize of a given element
-
-    .. warning::
-
-      Not implemented
-    """
-    raise NotImplementedError()
-    return None
 
 def getDistance(elem1, elem2, absolute=True):
     """
     return distance between two element name
 
-    :param str elem1: name of one element
-    :param str elem2: name of the other element
+    :param str elem1: name or object of one element
+    :param str elem2: name or object of the other element
     :param bool absolute: return s2 - s1 or the absolute value.
 
     raise RuntimeError if None or more than one elements are found
@@ -424,7 +455,8 @@ def getDistance(elem1, elem2, absolute=True):
     e2 = getElements(elem2)
 
     if len(e1) != 1 or len(e2) != 1:
-        raise RuntimeError("elements are not uniq: %d and %d" % (len(e1), len(e2)))
+        raise RuntimeError("elements are not uniq: %d and %d" % \
+                           (len(e1), len(e2)))
 
     ds = e2[0].sb - e1[0].sb
     C = machines._lat.circumference
@@ -434,7 +466,7 @@ def getDistance(elem1, elem2, absolute=True):
     if absolute: return abs(ds)
     else: return ds
 
-#
+
 #
 #
 def getPhase(group, **kwargs):
@@ -570,7 +602,7 @@ def getTunes(source='machine'):
 
 def getTune(source='machine', plane = 'h'):
     """
-    get tune
+    get one of the tune, 'h' or 'v'
 
     :Example:
 
@@ -593,54 +625,54 @@ def getFftTune(plane = 'hv', mode = ''):
     raise NotImplementedError()
     return None
 
-def savePhase(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveBeta(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveDispersion(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveTune(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveTuneRm(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveChromaticity(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveChromaticityRm(mode, phase, info):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
+#def savePhase(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveBeta(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveDispersion(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveTune(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveTuneRm(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveChromaticity(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
+#
+#def saveChromaticityRm(mode, phase, info):
+#    """
+#    Not implemented yet
+#    """
+#    raise NotImplementedError()
+#    return None
 
 def getChromaticityRm(mode, phase, info):
     """
@@ -873,4 +905,105 @@ def _release_lock(tag):
     caput('SVR:LOCKED', 0)
     print "released the lock for userid=%d" % tag
 
+
+
+def waitChanged(elemlst, fields, v0, **kwargs):
+    """
+    set pvs and waiting until the setting takes effect
+
+    :param elemlst: element list
+    :type elemlist: list of Elements
+    :param v0: old values
+    :type v0: list
+    :param diffstd: threshold value of effective change of *pvmonitors*.
+    :param wait: waiting time for initial, each step and final (seconds)
+    :param maxtrial: maximum trial before return.
+    :param unit: unit of field
+    :param full: return total trials
+
+    :return: whether pvmonitors change significant enough.
+    :rtype: bool
+
+    It sets the pvs with new values and tests the monitor values see if the
+    changes are significant enough. This significance is measured by comparing
+    the std of monitor value changes due to the *pvs* changes. If it exceeds
+    *diffstd* then return, otherwise wait for *wait* seconds and test
+    again. The maximum trial is *maxtrial*.
+
+    It is good for ORM measurement where setting a trim and observing a list
+    of BPM.
+    """
+
+    diffstd= kwargs.get('diffstd', 1e-6)
+    wait = kwargs.get('wait', (2, 1, 0))
+    maxtrial= kwargs.get('maxtrial', 20)
+    full = kwargs.get('full', False)
+    unit = kwargs.get('unit', None)
+
+    if CA_OFFLINE: 
+        if full: return (True, 0)
+        else: return True
+
+    time.sleep(wait[0])
+
+    ntrial = 0
+    while True:
+        v1 = np.ravel(eget(elemlst, fields, unit=unit))
+        time.sleep(wait[1])
+        ntrial = ntrial + 1
+        if np.std(v1 - np.array(v0)) > diffstd: break
+        if ntrial >= maxtrial: break
+
+    time.sleep(wait[2])
+
+    if full:
+        if ntrial >= maxtrial: return (False, ntrial)
+        else: return (True, ntrial)
+    else: 
+        if ntrial >= maxtrial: return False
+        else: return True
+
+def waitStable(elemlst, fields, maxstd, **kwargs):
+    """
+    set pvs and waiting until the setting takes effect
+
+    :param elemlst: element list
+    :type elemlist: list of Elements
+    :param v0: old values
+    :type v0: list
+    :param diffstd: threshold value of effective change of *pvmonitors*.
+    :param wait: waiting time for initial, each step and final (seconds)
+    :param maxtrial: maximum trial before return.
+    :param unit: unit of field
+
+    :return: whether pvmonitors change significant enough.
+    :rtype: bool
+
+    It sets the pvs with new values and tests the monitor values see if the
+    changes are significant enough. This significance is measured by comparing
+    the std of monitor value changes due to the *pvs* changes. If it exceeds
+    *diffstd* then return, otherwise wait for *wait* seconds and test
+    again. The maximum trial is *maxtrial*.
+
+    It is good for ORM measurement where setting a trim and observing a list
+    of BPM.
+    """
+
+    wait = kwargs.get('wait', (2, 1, 0))
+    maxtrial= kwargs.get('maxtrial', 3)
+    unit = kwargs.get('unit', None)
+
+    if CA_OFFLINE: return True
+
+    time.sleep(wait[0])
+
+    v = np.zeros((len(elemlst), maxtrial), 'd')
+    for i in range(maxtrial):
+        v[:,i] = np.ravel(eget(elemlst, fields, unit=unit))
+        time.sleep(wait[1])
+
+    time.sleep(wait[2])
+    if np.average(np.std(v, axis=0)) < maxstd: return True
+    else: return False
+    
 
