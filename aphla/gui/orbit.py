@@ -23,7 +23,7 @@ import applotresources
 
 from elementpickdlg import ElementPickDlg
 from orbitconfdlg import OrbitPlotConfig
-from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget
+from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
 from aporbitdata import ApVirtualElemData
 from orbitcorrdlg import OrbitCorrDlg
 from elemproperty import *
@@ -34,7 +34,7 @@ from PyQt4.QtCore import QSize, SIGNAL, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
-    QPlainTextEdit, QMdiArea, QMdiSubWindow
+    QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget
 )
 import PyQt4.Qwt5 as Qwt
 
@@ -44,6 +44,9 @@ class QTextEditLoggingHandler(logging.Handler):
     def __init__(self, textedit):
         logging.Handler.__init__(self)
         self.textedit = textedit
+        _lgfmt = logging.Formatter("%(asctime)s - %(name)s [%(levelname)s]: "
+                                   "%(message)s")
+        self.setFormatter(_lgfmt)
 
     def emit(self, record):
         self.textedit.appendPlainText(self.format(record))
@@ -101,13 +104,15 @@ class OrbitPlotMainWindow(QMainWindow):
     the main window has three major widgets: current, orbit tabs and element
     editor.
     """
-    def __init__(self, parent = None, lat = None, machines=None):
+    def __init__(self, parent = None, machines=None):
         QMainWindow.__init__(self, parent)
         self.setIconSize(QSize(32, 32))
-        self._machines = machines
-        self._lat = None
-        if lat is not None:
-            self.set_lattice(lat)
+
+        # aphla only stores lattice name, overwrite happens.
+        # here stores machine as first level, lattice name as second
+        self._machlat = {} # dict of dict
+        if machines: 
+            for m in machines: self._machlat[m] = {}
 
         self.dcct = DcctCurrentPlot()
         #self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
@@ -122,150 +127,105 @@ class OrbitPlotMainWindow(QMainWindow):
         
         self.dcct.updatePlot()
 
-        mdiarea = QMdiArea()
+        self.mdiarea = QMdiArea()
 
-        cwid = QWidget()
-        #majbox = QGridLayout()
-        #majbox.addWidget(self.dcct, 0, 0, 1, 2)
-        majbox = QVBoxLayout()
-        #majbox.setSpacing(30)
-        #majbox.setMargin(10)
-        majbox.addWidget(self.dcct)
-        # 
-        self.orbitSplitter = QSplitter(Qt.Horizontal)
-        self.tabs = QTabWidget()
-        self.orbitSplitter.addWidget(self.tabs)
-        #self.orbitSplitter.addWidget(self.elems)
-
-        ##majbox.addWidget(self.tabs, 1, 0)
-        ##majbox.addWidget(self.elems, 1, 1)
-        majbox.addWidget(self.orbitSplitter) #, 1, 0, 1, 2)
-
-        # logging
-        textedit = QPlainTextEdit(self)
-        self.logger = logging.getLogger(__name__)
-        handler = QTextEditLoggingHandler(textedit)
-        self.logger.addHandler(handler)
-        self.logger.setLevel(logging.INFO)
-        majbox.addWidget(textedit)
-
-        cwid.setLayout(majbox)
-        self.logger.info("INFO")
 
         self.data1 = None
         self.live_orbit = True
 
         picker = None 
 
+        #self._vplots = []
         # all orbit plots: [plot, data, index]
-        self.obtdata = []
-        self.cordata = []
-        self.obtplots = [
-            ApOrbitPlot(self, title="Horizontal Orbit"),
-            ApOrbitPlot(self, title="Vertical Orbit"),
-            ApOrbitPlot(self, title="Horizontal Orbit Std"),
-            ApOrbitPlot(self, title="Vertical Orbit Std")]
-        self.corplots = [
-            ApOrbitPlot(self, title="Horizontal Orbit"),
-            ApOrbitPlot(self, title="Vertical Orbit"),
-            ApOrbitPlot(self, title="Horizontal Orbit"),
-            ApOrbitPlot(self, title="Vertical Orbit")]
+        #self.obtdata = []
+        #self.cordata = []
+        #self.obtplots = [
+        #    ApOrbitPlot(self, title="Horizontal Orbit"),
+        #    ApOrbitPlot(self, title="Vertical Orbit"),
+        #    ApOrbitPlot(self, title="Horizontal Orbit Std"),
+        #    ApOrbitPlot(self, title="Vertical Orbit Std")]
+        #self.corplots = [
+        #    ApOrbitPlot(self, title="Horizontal Orbit"),
+        #    ApOrbitPlot(self, title="Vertical Orbit"),
+        #    ApOrbitPlot(self, title="Horizontal Orbit"),
+        #    ApOrbitPlot(self, title="Vertical Orbit")]
         
-        self.obtplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        self.obtplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
-        self.obtplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        self.obtplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+        #self.obtplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        #self.obtplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+        #self.obtplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        #self.obtplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
 
-        self.corplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        self.corplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
-        self.corplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        self.corplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+        #self.corplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        #self.corplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
+        #self.corplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
+        #self.corplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
 
         #for p in self.obtplots:
         #    p.plotLayout().setCanvasMargin(4)
         #    p.plotLayout().setAlignCanvasToScales(True)
         #self.lbplt1info = QLabel("Min\nMax\nAverage\nStd")
 
-        wid1 = QWidget()
-        gbox = QGridLayout()
-        #self.plot1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        #self.plot2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-
-        gbox.addWidget(self.obtplots[0], 0, 1)
-        gbox.addWidget(self.obtplots[1], 1, 1)
-        gbox.setRowStretch(0, 0.5)
-        gbox.setRowStretch(1, 0.5)
-        wid1.setLayout(gbox)        
-        self.tabs.addTab(wid1, "Orbit")
-
-        wid1 = QWidget()
-        vbox1 = QVBoxLayout()
-        vbox1.addWidget(self.obtplots[2])
-        vbox1.addWidget(self.obtplots[3])
-        wid1.setLayout(vbox1)
-        self.tabs.addTab(wid1, "Orbit Std")
-
-        wid1 = QWidget()
-        vbox1 = QVBoxLayout()
-        vbox1.addWidget(self.corplots[0])
-        vbox1.addWidget(self.corplots[1])
-        wid1.setLayout(vbox1)
-        self.tabs.addTab(wid1, "Correctors")
-
-        wid1 = QWidget()
-        vbox1 = QVBoxLayout()
-        self.aplotw1 = ApPlotWidget()
-        vbox1.addWidget(self.aplotw1)
-        wid1.setLayout(vbox1)
-        self.tabs.addTab(wid1, "Test")
-
         #self.setCentralWidget(cwid)
-        self.setCentralWidget(mdiarea)
-        for p in self.obtplots + self.corplots:
-            s1 = QMdiSubWindow()
-            s1.setAttribute(Qt.WA_DeleteOnClose)
-            s1.setWidget(p)
-            s1.setWindowTitle(p.title.text())
-            mdiarea.addSubWindow(s1)
-        mdiarea.setViewMode(QMdiArea.TabbedView)
+        self.setCentralWidget(self.mdiarea)
+        #for p in self.obtplots + self.corplots:
+        #    s1 = QMdiSubWindow()
+        #    s1.setAttribute(Qt.WA_DeleteOnClose)
+        #    s1.setWidget(p)
+        #    s1.setWindowTitle(p.title.text())
+        #    self.mdiarea.addSubWindow(s1)
+        #mdiarea.setViewMode(QMdiArea.TabbedView)
 
-        self.setMenuToolBar()
+        self._elemed = ElementPropertyTabs()
+        self.elemeditor = QDockWidget("Element Editor")
+        self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)
+        self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
+                                    QDockWidget.DockWidgetClosable)
+        self.elemeditor.setFloating(False)
+        self.elemeditor.setWidget(self._elemed)
+        #self.elemeditor.show()
+        self.elemeditor.hide()
+        self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
+
+
+        # logging
+        self.logdock = QDockWidget("Log")
+        textedit = QPlainTextEdit()
+        self.logger = logging.getLogger(__name__)
+        handler = QTextEditLoggingHandler(textedit)
+        self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
+        self.logdock.setWidget(textedit)
+        self.logdock.setAllowedAreas(Qt.BottomDockWidgetArea)
+        self.logdock.setFeatures(QDockWidget.DockWidgetMovable|
+                                 QDockWidget.DockWidgetClosable)
+        self.logdock.setFloating(False)
+        self.logdock.setMinimumHeight(50)
+        self.logdock.setMaximumHeight(200)
+        self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.logdock.resize(200, 80)
+        print self.logdock.sizeHint()
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.logdock)
+
+        #self.logger.info("INFO")
+
+        self.createMenuToolBar()
 
         # update at 1/2Hz
         self.dt, self.itimer = 1500, 0
-        self.timerId = None
+        #self.timerId = None
+        self.timerId = self.startTimer(self.dt)
         self.corbitdlg = None # orbit correction dlg
 
         self.vbpm = None
         self.statusBar().showMessage("Welcome")
 
-    def setMenuToolBar(self):
+    def createMenuToolBar(self):
         #
         # file menu
         #
-        self.fileMenu = self.menuBar().addMenu("&Machines")
-        fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
-        fileQuitAction.setShortcut("Ctrl+Q")
-        fileQuitAction.setToolTip("Quit the application")
-        fileQuitAction.setStatusTip("Quit the application")
-        #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
-        self.connect(fileQuitAction, SIGNAL("triggered()"),
-                     self.close)
-
-        mach_group = QActionGroup(self)
-        for mach in self._machines:
-            ac = QAction(mach, self)
-            ac.setCheckable(True)
-            #ac.setShortcut("Ctrl+N")
-            mach_group.addAction(ac)
-            self.fileMenu.addAction(ac)
-        self.connect(mach_group, SIGNAL("triggered(QAction*)"), self.click_machine)
-        self.fileMenu.addSeparator()
-        #self.latMenu = QMenu("&Lattices")
-        #
-        #self.fileMenu.addMenu(self.latMenu)
-        self.fileMenu.addSeparator()
-        self.fileMenu.addAction(fileQuitAction)
+        self.machMenu = self.menuBar().addMenu("&Machines")
+        self.connect(self.machMenu, SIGNAL("aboutToShow()"),
+                     self.updateMachMenu)
 
         # view
         self.viewMenu = self.menuBar().addMenu("&View")
@@ -290,10 +250,6 @@ class OrbitPlotMainWindow(QMainWindow):
                                        "Single Shot", self)
         self.connect(viewSingleShotAction, SIGNAL("triggered()"),
                      self.singleShot)
-        viewDcct = QAction("Beam Current", self)
-        viewDcct.setCheckable(True)
-        viewDcct.setChecked(True)
-        self.connect(viewDcct, SIGNAL("toggled(bool)"), self.viewDcctPlot)
         
         # errorbar
         viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
@@ -332,18 +288,18 @@ class OrbitPlotMainWindow(QMainWindow):
                      self.resetPvData)
 
         # zoom in the horizontal orbit
-        controlZoomInPlot1Action = QAction("zoomin H", self)
-        self.connect(controlZoomInPlot1Action, SIGNAL("triggered()"),
-                     self.obtplots[0].zoomIn)
-        controlZoomOutPlot1Action = QAction("zoomout H", self)
-        self.connect(controlZoomOutPlot1Action, SIGNAL("triggered()"),
-                     self.obtplots[1].zoomOut)
-        controlZoomInPlot2Action = QAction("zoomin V", self)
-        self.connect(controlZoomInPlot2Action, SIGNAL("triggered()"),
-                     self.obtplots[2].zoomIn)
-        controlZoomOutPlot2Action = QAction("zoomout V", self)
-        self.connect(controlZoomOutPlot2Action, SIGNAL("triggered()"),
-                     self.obtplots[3].zoomOut)
+        #controlZoomInPlot1Action = QAction("zoomin H", self)
+        #self.connect(controlZoomInPlot1Action, SIGNAL("triggered()"),
+        #             self.obtplots[0].zoomIn)
+        #controlZoomOutPlot1Action = QAction("zoomout H", self)
+        #self.connect(controlZoomOutPlot1Action, SIGNAL("triggered()"),
+        #             self.obtplots[1].zoomOut)
+        #controlZoomInPlot2Action = QAction("zoomin V", self)
+        #self.connect(controlZoomInPlot2Action, SIGNAL("triggered()"),
+        #             self.obtplots[2].zoomIn)
+        #controlZoomOutPlot2Action = QAction("zoomout V", self)
+        #self.connect(controlZoomOutPlot2Action, SIGNAL("triggered()"),
+        #             self.obtplots[3].zoomOut)
 
         drift_from_now = QAction("Drift from Now", self)
         drift_from_now.setCheckable(True)
@@ -354,7 +310,7 @@ class OrbitPlotMainWindow(QMainWindow):
         drift_from_none.setCheckable(True)
 
         steer_orbit = QAction("Steer Orbit ...", self)
-        steer_orbit.setDisabled(True)
+        #steer_orbit.setDisabled(True)
         self.connect(steer_orbit, SIGNAL("triggered()"), self.createLocalBump)
         
         self.viewMenu.addAction(drift_from_now)
@@ -388,38 +344,42 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewZoomAutoAction)
         self.viewMenu.addSeparator()
         # a bug in PyQwt5 for datetime x-axis, waiting for Debian 7
-        self.viewMenu.addAction(viewDcct)
-        for ac in self.viewMenu.actions(): ac.setDisabled(True)
+        #self.viewMenu.addAction(viewDcct)
+        #for ac in self.viewMenu.actions(): ac.setDisabled(True)
 
         #
         self.controlMenu = self.menuBar().addMenu("&Control")
         self.controlMenu.addAction(controlChooseBpmAction)
         self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
-        self.controlMenu.addAction(controlZoomInPlot1Action)
-        self.controlMenu.addAction(controlZoomOutPlot1Action)
-        self.controlMenu.addAction(controlZoomInPlot2Action)
-        self.controlMenu.addAction(controlZoomOutPlot2Action)
+        #self.controlMenu.addAction(controlZoomInPlot1Action)
+        #self.controlMenu.addAction(controlZoomOutPlot1Action)
+        #self.controlMenu.addAction(controlZoomInPlot2Action)
+        #self.controlMenu.addAction(controlZoomOutPlot2Action)
         self.controlMenu.addSeparator()
         self.controlMenu.addAction(steer_orbit)
-        for ac in self.controlMenu.actions(): ac.setDisabled(True)
+        #for ac in self.controlMenu.actions(): ac.setDisabled(True)
+
+        # Window
+        self.windowMenu = self.menuBar().addMenu("&Windows")
+        self.windowMenu.addAction("Cascade", self.mdiarea.cascadeSubWindows)
+        self.windowMenu.addAction("Tile", self.mdiarea.tileSubWindows)
+        self.windowMenu.addSeparator()
+        viewDcct = QAction("Beam Current", self)
+        viewDcct.setCheckable(True)
+        viewDcct.setChecked(True)
+        self.connect(viewDcct, SIGNAL("toggled(bool)"), self.dcct.setVisible)
+        self.windowMenu.addAction(viewDcct)
+        self.windowMenu.addAction(self.elemeditor.toggleViewAction())
+        self.windowMenu.addAction(self.logdock.toggleViewAction())
 
         # debug
         self.debugMenu = self.menuBar().addMenu("&Debug")
-        reset_cor = QAction("_Reset Correctors_", self)
-        self.connect(reset_cor, SIGNAL("triggered()"), self._reset_correctors)
-        reset_quad = QAction("_Reset Quadrupoles_", self)
-        self.connect(reset_quad, SIGNAL("triggered()"), self._reset_quadrupoles)
-        random_vkick = QAction("_Random V Kick_", self)
-        self.connect(random_vkick, SIGNAL("triggered()"), self._random_vkick)
-        random_hkick = QAction("_Random H Kick_", self)
-        self.connect(random_hkick, SIGNAL("triggered()"), self._random_hkick)
-        #
-        self.debugMenu.addAction(reset_cor)
-        self.debugMenu.addAction(reset_quad)
-        self.debugMenu.addAction(random_hkick)
-        self.debugMenu.addAction(random_vkick)
-        for ac in self.debugMenu.actions(): ac.setDisabled(True)
+        self.debugMenu.addAction("_Reset Correctors_", self._reset_correctors)
+        self.debugMenu.addAction("_Reset Quadrupoles_", self._reset_quadrupoles)
+        self.debugMenu.addAction("_Random V Kick_", self._random_vkick)
+        self.debugMenu.addAction("_Random H Kick_", self._random_hkick)
+        #for ac in self.debugMenu.actions(): ac.setDisabled(True)
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -427,9 +387,9 @@ class OrbitPlotMainWindow(QMainWindow):
         #toolbar
         #toolbar = QToolBar(self)
         #self.addToolBar(toolbar)
-        fileToolBar = self.addToolBar("File")
-        fileToolBar.setObjectName("FileToolBar")
-        fileToolBar.addAction(fileQuitAction)
+        #fileToolBar = self.addToolBar("File")
+        #fileToolBar.setObjectName("FileToolBar")
+        #fileToolBar.addAction(fileQuitAction)
         #
         viewToolBar = self.addToolBar("View")
         viewToolBar.setObjectName("ViewToolBar")
@@ -446,43 +406,108 @@ class OrbitPlotMainWindow(QMainWindow):
 
         machToolBar = self.addToolBar("Machines")
         self.machBox = QComboBox()
-        if self._machines: self.machBox.addItems(self._machines)
-        self.connect(self.machBox, SIGNAL("activated(QString)"), self.initMachine)
+        self.machBox.addItem("(None)")
+        self.machBox.addItems(self._machlat.keys())
+        self.connect(self.machBox, SIGNAL("currentIndexChanged(QString)"),
+                     self.initMachine)
         self.latBox = QComboBox()
-        self.connect(self.latBox, SIGNAL("activated(QString)"), self.__setLattice)
+        self.connect(self.latBox, SIGNAL("currentIndexChanged(QString)"), 
+                     self.__setLattice)
         machToolBar.addWidget(self.machBox)
         machToolBar.addWidget(self.latBox)
 
 
     def initMachine(self, v):
+        vm = str(v)
+        if vm == "(None)": 
+            self.latBox.clear()
+            return
         try:
-            aphla.machines.init(str(v))
+            if vm not in self._machlat or not self._machlat[vm]:
+                self.logger.info("initializing machine '%s'" % vm)
+                aphla.machines.init(vm)
+                # did not make sure user lattice has the same name
+                mrec = {'_HLA_DEFAULT_': aphla.machines.getLattice()}
+                for latname in aphla.machines.lattices():
+                    lat = aphla.machines.getLattice(latname)
+                    if lat.machine != vm: continue
+                    mrec[latname] = lat
+                    print lat.name, latname
+                print "default is:", mrec['_HLA_DEFAULT_'].name
+                self._machlat[vm] = mrec
+            else:
+                self.logger.warn("using previous initialized machine '%s'" % vm)
         except:
             QMessageBox.critical(self, "aphla", 
-                                 "machine '%s' can not be initialized" % v,
+                                 "machine '%s' can not be initialized" % vm,
                                  QMessageBox.Ok)
+            self.machBox.setCurrentIndex(self.machBox.findText("(None)"))
             return
-        self.latBox.clear()
-        latlist = aphla.machines.lattices()
-        self.latBox.addItems(latlist)
-        for lat in latlist:
-            latAct = QAction(lat, self)
-            self.connect(latAct, SIGNAL("triggered()"), self.click_lattice)
-            self.latMenu.addAction(latAct)
 
-        self.statusBar().showMessage("machine {0} initialized".format(v))
-        
+        self.latBox.clear()
+        if '_HLA_DEFAULT_' in self._machlat[vm]:
+            self.latBox.addItem(self._machlat[vm]['_HLA_DEFAULT_'].name)
+        for k in self._machlat[vm].keys():
+            if k == '_HLA_DEFAULT_': continue
+            if k == str(self.latBox.currentText()): continue
+            self.latBox.addItem(k)
+
     def click_machine(self, act):
-        print act.text()
-        self.initMachine(act.text())
+        self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
 
     def click_lattice(self):
         #print self.sender()
         #print aphla.machines.lattices()
-        latname = self.sender().text()
-        lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
-        #print lat, self.sender().text()
-        self.setLattice(lat)
+        latname = str(self.sender().text())
+        if latname: self.__setLattice(latname)
+
+    def _newVelemPlot(self, latname, elem, field, title, c = None):
+        lat = aphla.machines.getLattice(latname)
+        if not lat:
+            self.logger.error("no default lattice available")
+            return
+        machname = str(self.machBox.currentText())
+        #print "New a plot"
+        magprof = lat.getBeamlineProfile()
+        velem = lat._find_exact_element(elem)
+        fields = [field]
+        if field is None:
+            fields = velem.fields()
+        for fld in fields:
+            p = ApMdiSubPlot()
+            p.data = ApVirtualElemData(velem, fld)
+            if c is not None: p.aplot.setColor(c)
+            p.setAttribute(Qt.WA_DeleteOnClose)
+            p.setWindowTitle("[%s.%s] %s %s" % (machname, latname, title, fld))
+            p.wid.setMagnetProfile(magprof)
+            self.mdiarea.addSubWindow(p)
+            p.updatePlot()
+            # set the zoom stack
+            p.wid.zoomAuto()
+            p.show()
+        
+    def newPlot(self):
+        lat = str(self.latBox.currentText())
+        famname = self.sender().text()
+        if famname == "H Orbit":
+            self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x', "Hori. Orbit")
+        elif famname == "V Orbit":
+            self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'y', "Vert. Orbit",
+                               Qt.blue)
+        elif famname == "H Corrector":
+            self._newVelemPlot(lat, aphla.machines.HLA_VHCOR, 'x', "Hori. Corr")
+        elif famname == "V Corrector":
+            self._newVelemPlot(lat, aphla.machines.HLA_VVCOR, 'y', "Vert. Corr",
+                               Qt.blue)
+        elif famname == "Quad":
+            self._newVelemPlot(lat, aphla.machines.HLA_VQUAD, None,
+                               "Quadrupole", Qt.black)
+        elif famname == "Sext":
+            self._newVelemPlot(lat, aphla.machines.HLA_VSEXT, None,
+                               "Sextupole", Qt.black)
+            
+        #self.mdiarea.cascadeSubWindows()
+        #print self.mdiarea.subWindowList()
 
     def click_markfam(self, on):
         famname = self.sender().text()
@@ -497,20 +522,53 @@ class OrbitPlotMainWindow(QMainWindow):
             p.setMarkers(mks, on)
 
     def __setLattice(self, latname):
-        lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
-        self.setLattice(lat)
+        if not latname: return
+        self._lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
+        aphla.machines.use(str(latname))
+        self.logger.info("using lattice '%s'" % latname)
+        #self.setLattice(lat)
+
+    def updateMachMenu(self):
+        self.machMenu.clear()
+        newPlotMenu = QMenu("New", self.machMenu)
+        newPlotMenu.addAction("H Orbit", self.newPlot)
+        newPlotMenu.addAction("V Orbit", self.newPlot)
+        newPlotMenu.addAction("H Corrector", self.newPlot)
+        newPlotMenu.addAction("V Corrector", self.newPlot)
+        newPlotMenu.addAction("Quad", self.newPlot)
+        newPlotMenu.addAction("Sext", self.newPlot)
+        self.machMenu.addMenu(newPlotMenu)
+        self.machMenu.addSeparator()
+
+        mach_group = QActionGroup(self)
+        for mach in self._machlat.keys():
+            ac = QAction(mach, self)
+            ac.setCheckable(True)
+            mach_group.addAction(ac)
+            if mach == self.machBox.currentText(): ac.setChecked(True)
+            self.machMenu.addAction(ac)
+        self.connect(mach_group, SIGNAL("triggered(QAction*)"), self.click_machine)
+        self.machMenu.addSeparator()
+
+        fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
+        fileQuitAction.setShortcut("Ctrl+Q")
+        fileQuitAction.setToolTip("Quit the application")
+        fileQuitAction.setStatusTip("Quit the application")
+        #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
+        self.connect(fileQuitAction, SIGNAL("triggered()"),
+                     self.close)
+        self.machMenu.addAction(fileQuitAction)
+        #print self._machlat.keys()
 
     def setLattice(self, lat):
         """
         """
         if self.timerId: self.killTimer(self.timerId)
         # setting lat for the whole aphla
-        aphla.machines.use(lat.name)
 
-        self._lat = lat
         #self.logger.info("using lattice: %s" % lat.name)
-        self.vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
-        self.vcor = lat._find_exact_element(aphla.machines.HLA_VCOR)
+        self.vbpm = self._lat._find_exact_element(aphla.machines.HLA_VBPM)
+        self.vcor = self._lat._find_exact_element(aphla.machines.HLA_VCOR)
 
         #for p in self.obtplots:
         #    p.detachCurves()
@@ -560,11 +618,9 @@ class OrbitPlotMainWindow(QMainWindow):
         # fixed scale
         self.updatePlots(autoScale=False)
 
-        for ac in self.viewMenu.actions(): ac.setDisabled(False)
-        for ac in self.controlMenu.actions(): ac.setDisabled(False)
-        for ac in self.debugMenu.actions(): ac.setDisabled(False)
-
-        for p in self.obtplots + self.corplots: p.zoomAuto()
+        #for ac in self.viewMenu.actions(): ac.setDisabled(False)
+        #for ac in self.controlMenu.actions(): ac.setDisabled(False)
+        #for ac in self.debugMenu.actions(): ac.setDisabled(False)
 
         self.timerId = self.startTimer(self.dt)
 
@@ -690,8 +746,10 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def timerEvent(self, e):
         self.itimer += 1
-        self.updatePlots()
-        self.updateStatus()
+        #self.updatePlots()
+        #self.updateStatus()
+        for w in self.mdiarea.subWindowList():
+            if isinstance(w, ApMdiSubPlot): w.updatePlot()
 
     def updateStatus(self):
         if self.obtdata:
@@ -751,14 +809,6 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
 def main(par=None):
-    #try:
-    #    aphla.machines.init("nsls2v2")
-    #    aphla.machines.init("nsls2")
-    #    aphla.machines.init("nsls2v3bsrline")
-    #except:
-    #    pass
-    #print aphla.machines.lattices()
-    #app = QApplication(args)
     #app.setStyle(st)
     mlist = os.environ.get('HLA_MACHINE_LIST', '').split()
     if not mlist: mlist = aphla.machines.machines()

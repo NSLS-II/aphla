@@ -1063,6 +1063,7 @@ def merge(elems, **kwargs):
     # consider only the common fields
     for k,v in count.iteritems(): 
         if v < len(elems): 
+            print("field '%s' has %d < %d" % (k, v, len(elems)))
             pvdict.pop(k)
     #print pvdict.keys()
     elem = CaElement(**kwargs)

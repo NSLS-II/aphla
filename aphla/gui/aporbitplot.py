@@ -256,7 +256,8 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
         self.x1, self.y1, self.e1 = None, None, None
         self.yref = None # no mask applied
         self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
-        self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
+        #self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
+        self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Sticks))
         self.setSymbol(kw.get('curveSymbol', Qwt.QwtSymbol()))
         self.errorPen = kw.get('errorPen', QPen(Qt.NoPen))
         self.errorCap = kw.get('errorCap', 0)
@@ -370,13 +371,13 @@ class ApPlot(Qwt.QwtPlot):
         self.plotLayout().setAlignCanvasToScales(True)
 
         self.curve1 = ApPlotCurve(
-            curvePen = QPen(Qt.black, 2),
+            curvePen = QPen(Qt.red, 3),
             curveSymbol = Qwt.QwtSymbol(
                 Qwt.QwtSymbol.Ellipse,
                 QBrush(Qt.red),
-                QPen(Qt.black, 2),
+                QPen(Qt.black, 1),
                 QSize(8, 8)),
-            errorPen = QPen(Qt.blue, 1),
+            errorPen = QPen(Qt.black, 1),
             errorCap = 6,
             errorOnTop = self.errorOnTop,
             )
@@ -386,7 +387,6 @@ class ApPlot(Qwt.QwtPlot):
         self.curve2 = Qwt.QwtPlotCurve()
         self.curve2.setPen(QPen(Qt.red, 4))
         self.curve2.attach(self)
-        self.curve2.setPen(QPen(Qt.red, 4))
         #self.curve2.setVisible(False)
 
         #print "PV golden:", pvs_golden
@@ -408,7 +408,7 @@ class ApPlot(Qwt.QwtPlot):
 
         self.curvemag = None
 
-        self.setMinimumSize(400, 200)
+        self.setMinimumSize(500, 200)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
         grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
@@ -548,6 +548,20 @@ class ApPlot(Qwt.QwtPlot):
         data = self.curve2.data()
         vx = [data.x(i) for i in range(data.size())]
         self.curve2.setData(vx, y)
+
+    def setColor(self, c):
+        symb = self.curve1.symbol()
+        pen = symb.pen()
+        pen.setColor(c)
+        symb.setPen(pen)
+        br = symb.brush()
+        br.setColor(c)
+        symb.setBrush(br)
+        self.curve1.setSymbol(symb)
+
+        pen = self.curve1.pen()
+        pen.setColor(c)
+        self.curve1.setPen(pen)
 
 
 class ApPlotControlButton(QPushButton):
@@ -696,10 +710,11 @@ class ApOrbitPlot(ApPlotWidget):
 
 class ApMdiSubPlot(QMdiSubWindow):
     def __init__(self, parent = None, data = None):
-        self.wig = ApPlotWidget(parent)
-        self.aplot = self.wig.aplot
+        super(ApMdiSubPlot, self).__init__(parent)
+        self.wid = ApPlotWidget(parent)
+        self.aplot = self.wid.aplot
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.setWidget(self.wig)
+        self.setWidget(self.wid)
         self.data = data
         self.err_only  = False
 
@@ -708,3 +723,7 @@ class ApMdiSubPlot(QMdiSubWindow):
         s, y, yerr = self.data.orbit()
         if self.err_only: self.aplot.curve1.setData(s, yerr)
         else: self.aplot.curve1.setData(s, y, yerr)
+        # set unit
+        self.aplot.setAxisTitle(Qwt.QwtPlot.yLeft, self.data.label())
+
+        self.aplot.replot()

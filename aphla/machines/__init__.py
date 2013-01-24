@@ -33,7 +33,8 @@ HLA_TAG_SYS_PREFIX = HLA_TAG_PREFIX + '.sys'
 #
 HLA_VFAMILY = 'HLA:VIRTUAL'
 HLA_VBPM   = 'HLA:VBPM'
-HLA_VCOR   = 'HLA:VCOR'
+HLA_VHCOR   = 'HLA:VHCOR'
+HLA_VVCOR   = 'HLA:VVCOR'
 HLA_VQUAD  = 'HLA:VQUAD'
 HLA_VSEXT  = 'HLA:VSEXT'
 
@@ -82,16 +83,39 @@ def load(machine, submachines = "*", **kwargs):
     logger.debug("importing '%s'" % machine)
     m = __import__(machine, globals(), locals(), [], -1)
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
+    # update machine name for each lattice
+
+    # some extra group info is not ready unitl returned from machines init.
+    # This vELEM creation can not be done in createLattice
+    for k,vlat in lats.items():
+        vlat.machine = machine
+        # a virtual bpm. its field is a "merge" of all bpms.
+        iv = 100000
+        vpar = { 'virtual': 1, 'name': None, 'family': HLA_VFAMILY,
+                 'index': None }
+        for fam,vfam in [('BPM', HLA_VBPM), ('HCOR', HLA_VHCOR),
+                     ('VCOR', HLA_VVCOR), ('QUAD', HLA_VQUAD),
+                     ('SEXT', HLA_VSEXT)]:
+            # a virtual element. its field is a "merge" of all bpms.
+            velem = vlat.getElementList(fam)
+            vpar.update({'name': vfam, 'index': iv + 1})
+            if velem:
+                allvelem = merge(velem, **vpar)
+                vlat.insertElement(allvelem, groups=[HLA_VFAMILY])
+
+            iv = iv + 1
 
     global _lat, _lattice_dict
     _lattice_dict.update(lats)
     _lat = lat
+    logger.info("setting default lattice '%s'" % _lat.name)
+
 
     for k,v in _lattice_dict.items():
         if not v._group: continue
         for e in v._group.get(HLA_VFAMILY, []):
             e.virtual = 1
-
+        
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
                                  if _lat == v][0]
@@ -255,20 +279,6 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
         logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
         
-    if vbpm:
-        # a virtual bpm. its field is a "merge" of all bpms.
-        bpms = lat.getElementList('BPM')
-        allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
-                                'family': HLA_VFAMILY, 'index': 100000})
-        lat.insertElement(allbpm, groups=[HLA_VFAMILY])
-
-    if vcor:
-        # a virtual bpm. its field is a "merge" of all bpms.
-        bpms = lat.getElementList('COR')
-        allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VCOR, 
-                                'family': HLA_VFAMILY, 'index': 100000})
-        lat.insertElement(allbpm, groups=[HLA_VFAMILY])
-
     return lat
 
 

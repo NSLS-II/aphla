@@ -36,13 +36,14 @@ class Lattice:
     - *mode*
     - *tune* [nux, nuy]
     - *chromaticity* [cx, cy]
-    - *circumference* 
+    - *sb*, *se* s-position of begin and end. 
     - *ormdata* orbit response matrix data
     - *loop* as a ring or line
     """
     # ginore those "element" when construct the lattice object
 
     def __init__(self, name, mode = 'undefined'):
+        self.machine = ''
         self.name = name
         self._twiss = None
         # group name and its element
@@ -53,7 +54,7 @@ class Lattice:
         self.mode = mode
         self.tune = [ None, None]
         self.chromaticity = [None, None]
-        self.circumference = None
+        self.sb, self.se = 0.0, 0.0
         self.ormdata = None
         self.loop = True
 

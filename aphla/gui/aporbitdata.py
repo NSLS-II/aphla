@@ -49,7 +49,10 @@ class ApPlotData(object):
         self.y.fill(0.0)
         self.yerrbar.fill(0.0)
         #self.update()
-        
+
+    def label(self):
+        return ''
+
     def ymin(self, axis='s'):
         c, i = divmod(self.icount - 1, self.samples)
         data = np.compress(self.keep, self.y, axis=1)
@@ -106,6 +109,9 @@ class ApVirtualElemData(ApPlotData):
         # prefer 'phy' unit
         if 'phy' in self.velem.getUnitSystems(field):  self.yunitsys = 'phy'
         if kw.get('update', True): self.update()
+
+    def label(self):
+        return "%s [%s]" % (self.yfield, self.velem.getUnit(self.yfield))
 
     def update(self):
         """
