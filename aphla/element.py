@@ -869,7 +869,7 @@ class CaElement(AbstractElement):
         
     def fields(self):
         """
-        return element's fields
+        return element's fields, not sorted.
         """
         return self._field.keys()
 

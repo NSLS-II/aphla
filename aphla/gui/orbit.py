@@ -1,5 +1,12 @@
 #!/usr/bin/env python
+"""
+aporbit
+========
 
+:author: Lingyun Yang lyyang@bnl.gov
+
+This is the main file for GUI app `aporbit`. A high level viewer and editor.
+pp"""
 #__all__ = [ 'main' ]
 
 # for debugging, requires: python configure.py --trace ...
@@ -26,7 +33,7 @@ from orbitconfdlg import OrbitPlotConfig
 from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
 from aporbitdata import ApVirtualElemData
 from orbitcorrdlg import OrbitCorrDlg
-from elemproperty import *
+from elemeditor import *
 
 
 import time
@@ -51,52 +58,6 @@ class QTextEditLoggingHandler(logging.Handler):
     def emit(self, record):
         self.textedit.appendPlainText(self.format(record))
 
-
-class ElementPropertyTabs(QTabWidget):
-    def __init__(self, parent = None):
-        QTabWidget.__init__(self, parent)
-        self.connect(self, SIGNAL('tabCloseRequested(int)'), self.closeTab)
-
-    def addElement(self, elemnames):
-        self.setVisible(True)
-        #print "new element:", elemnames
-        elems = aphla.getElements(elemnames)
-        if elems is None:
-            QMessageBox.warning(self, "Element Not Found",
-                                "element " + str(elemnames) + " not found")
-        else:
-            for elem in elems:
-                #print elem.name, elem.sb, elem.fields()
-                tableview = QTableView()
-                tableview.setModel(ElementPropertyTableModel(elem=elem))
-                tableview.setItemDelegate(ElementPropertyDelegate(self))
-                tableview.resizeColumnsToContents()
-                #rz = tableview.geometry()
-                ncol = tableview.model().columnCount()
-                fullwidth = sum([tableview.columnWidth(i) for i in range(ncol)])
-                tableview.setMinimumWidth(fullwidth+20)
-                #tableview.setMaximumWidth(fullwidth+60)
-                print "Full width", fullwidth
-                tableview.adjustSize()
-
-                wid = QWidget()
-                vbox = QVBoxLayout()
-                vbox.addWidget(QLabel("Name:   %s" % elem.name))
-                vbox.addWidget(QLabel("Device: %s" % elem.devname))
-                vbox.addWidget(QLabel("Cell:   %s" % elem.cell))
-                vbox.addWidget(QLabel("Girder: %s" % elem.girder))
-                vbox.addWidget(QLabel("sBegin: %.3f" % elem.sb))
-                vbox.addWidget(QLabel("Length: %.3f" % elem.length))
-
-                #vbox.addWidget(lb_name)
-                vbox.addWidget(tableview)
-                wid.setLayout(vbox)
-                self.addTab(wid, elem.name)
-        self.adjustSize()
-
-    def closeTab(self, index):
-        self.removeTab(index)
-        if self.count() <= 0: self.setVisible(False)
 
 
 class OrbitPlotMainWindow(QMainWindow):
@@ -129,61 +90,21 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.mdiarea = QMdiArea()
 
-
-        self.data1 = None
         self.live_orbit = True
 
-        picker = None 
-
-        #self._vplots = []
-        # all orbit plots: [plot, data, index]
-        #self.obtdata = []
-        #self.cordata = []
-        #self.obtplots = [
-        #    ApOrbitPlot(self, title="Horizontal Orbit"),
-        #    ApOrbitPlot(self, title="Vertical Orbit"),
-        #    ApOrbitPlot(self, title="Horizontal Orbit Std"),
-        #    ApOrbitPlot(self, title="Vertical Orbit Std")]
-        #self.corplots = [
-        #    ApOrbitPlot(self, title="Horizontal Orbit"),
-        #    ApOrbitPlot(self, title="Vertical Orbit"),
-        #    ApOrbitPlot(self, title="Horizontal Orbit"),
-        #    ApOrbitPlot(self, title="Vertical Orbit")]
-        
-        #self.obtplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        #self.obtplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
-        #self.obtplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        #self.obtplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
-
-        #self.corplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        #self.corplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
-        #self.corplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, "x")
-        #self.corplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, "y")
-
-        #for p in self.obtplots:
-        #    p.plotLayout().setCanvasMargin(4)
-        #    p.plotLayout().setAlignCanvasToScales(True)
-        #self.lbplt1info = QLabel("Min\nMax\nAverage\nStd")
-
-        #self.setCentralWidget(cwid)
         self.setCentralWidget(self.mdiarea)
-        #for p in self.obtplots + self.corplots:
-        #    s1 = QMdiSubWindow()
-        #    s1.setAttribute(Qt.WA_DeleteOnClose)
-        #    s1.setWidget(p)
-        #    s1.setWindowTitle(p.title.text())
-        #    self.mdiarea.addSubWindow(s1)
-        #mdiarea.setViewMode(QMdiArea.TabbedView)
 
-        self._elemed = ElementPropertyTabs()
-        self.elemeditor = QDockWidget("Element Editor")
+        #self._elemed = ElementPropertyTabs()
+        self.elemeditor = ElementEditorDock(
+            parent=self,
+            elems=["BPM", "HCOR", "VCOR", "QUAD", "SEXT"])
         self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)
         self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
                                     QDockWidget.DockWidgetClosable)
         self.elemeditor.setFloating(False)
-        self.elemeditor.setWidget(self._elemed)
+        #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
-        self.elemeditor.hide()
+        #self.elemeditor.hide()
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
 
@@ -475,16 +396,26 @@ class OrbitPlotMainWindow(QMainWindow):
             fields = velem.fields()
         for fld in fields:
             p = ApMdiSubPlot()
-            p.data = ApVirtualElemData(velem, fld)
+            p.data = ApVirtualElemData(velem, fld, machine=lat.machine,
+                                       lattice=latname)
             if c is not None: p.aplot.setColor(c)
             p.setAttribute(Qt.WA_DeleteOnClose)
             p.setWindowTitle("[%s.%s] %s %s" % (machname, latname, title, fld))
             p.wid.setMagnetProfile(magprof)
+            self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
+                         self.elementSelected)
+            self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
             self.mdiarea.addSubWindow(p)
             p.updatePlot()
             # set the zoom stack
             p.wid.zoomAuto()
             p.show()
+        if len(self.mdiarea.subWindowList()) > 0:
+            self.elemeditor.setEnabled(True)
+
+    def subPlotDestroyed(self):
+        if len(self.mdiarea.subWindowList()) == 0:
+            self.elemeditor.setEnabled(False)
         
     def newPlot(self):
         lat = str(self.latBox.currentText())
@@ -711,6 +642,18 @@ class OrbitPlotMainWindow(QMainWindow):
                 else:
                     self.obtdata.keep[i] = False
 
+    def getVisibleElements(self, elemname):
+        mach = str(self.machBox.currentText())
+        if not mach or mach not in self._machlat: return []
+        lat  = str(self.latBox.currentText())
+        if not lat or lat not in self._machlat[mach]: return []
+        _lat = self._machlat[mach][lat]
+        if not _lat: return []
+        w = self.mdiarea.currentSubWindow()
+        if not w: return []
+        elems = _lat.getElementList(elemname)
+        xl, xr = w.currentXlim()
+        return [e for e in elems if e.se > xl and e.sb < xr]
 
     def updatePlots(self, autoScale = None):
         for d in self.obtdata: d.update()
@@ -762,6 +705,12 @@ class OrbitPlotMainWindow(QMainWindow):
     def resetPvData(self):
         self.obtdata.reset()
         #hla.hlalib._reset_trims()
+
+    def elementSelected(self, elems):
+        mach, lat, elemnames = elems
+        _lat = self._machlat[mach][lat]
+        elemobjs = _lat.getElementList(elemnames)
+        self._elemed.addElements(elemobjs)
 
     #def plotDesiredOrbit(self, x, y):
     #    #print "plot: ", x, y

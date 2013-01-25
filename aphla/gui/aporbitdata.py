@@ -1,6 +1,12 @@
 """
 Orbit Data
+==========
+
+:author: Lingyun Yang <lyyang@bnl.gov>
+
+The data module for aporbit.
 """
+
 import numpy as np
 from PyQt4.QtCore import QTimer, SIGNAL, QObject
 import logging
@@ -99,6 +105,9 @@ class ApVirtualElemData(ApPlotData):
         """
         updating immediately by default, unless update=False
         """
+        self.machine = kw.get("machine", None)
+        self.lattice = kw.get("lattice", None)
+
         self.velem = velem
         sb, se = np.array(self.velem.sb), np.array(self.velem.se)
         if not kw.has_key('s'): kw.update({'s': 0.5*(sb+se)})

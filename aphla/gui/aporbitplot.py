@@ -1,16 +1,25 @@
-import cothread
+"""
+aporbit Plot
+============
 
-from PyQt4.QtCore import (PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
-        QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
-        QSize, QRectF, QLine, pyqtSignal)
+:author: Lingyun Yang <lyyang@bnl.gov>
 
-from PyQt4.QtGui import (QAction, QApplication, QWidget, QColor,
-        QDockWidget, QFileDialog, QFrame, QGridLayout, QIcon,
-        QImage, QImageReader, QMenu,
-        QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
-        QMessageBox, QPainter, QPixmap, QPrintDialog, QPushButton,
-        QPrinter, QSpinBox, QPen, QBrush, QFontMetrics, QSizePolicy,
-        QMdiSubWindow, QTableWidget)
+The viewer module for `aporbit` GUI. This defines a plot and container widget.
+"""
+
+from PyQt4.QtCore import (
+    PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
+    QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
+    QSize, QRectF, QLine, pyqtSignal)
+
+from PyQt4.QtGui import (
+    QAction, QApplication, QWidget, QColor,
+    QDockWidget, QFileDialog, QFrame, QGridLayout, QIcon,
+    QImage, QImageReader, QMenu,
+    QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
+    QMessageBox, QPainter, QPixmap, QPrintDialog, QPushButton,
+    QPrinter, QSpinBox, QPen, QBrush, QFontMetrics, QSizePolicy,
+    QMdiSubWindow, QTableWidget)
 
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
@@ -33,7 +42,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
     """
     show the magnet name when moving cursor in the plot.
     """
-    def __init__(self, canvas, profile = None, minlen = 0.2):
+    def __init__(self, canvas, profile = [], minlen = 0.2):
         """
         initialize with cavas and magnet profile::
 
@@ -48,13 +57,8 @@ class MagnetPicker(Qwt.QwtPlotPicker):
                           canvas)
         self.profile = []
         self.minlen = minlen
-        if profile is not None:
-            #sb, se, name = zip(*profile)
-            #print "Sb", sb
-            #print "se", se
-            #print name
-            for rec in profile:
-                self.addMagnetProfile(rec[0], rec[1], rec[2], self.minlen)
+        for rec in profile:
+            self.addMagnetProfile(rec[0], rec[1], rec[2], self.minlen)
 
         self.connect(self, SIGNAL("selected(QPointF&)"),
                      self.activate_element)
@@ -117,7 +121,8 @@ class MagnetPicker(Qwt.QwtPlotPicker):
 
         msgbox.setText(msg)
         msgbox.exec_()
-        
+
+        # emit with a list of element names
         self.emit(SIGNAL("elementDoubleClicked(PyQt_PyObject)"), elements)
 
 
@@ -154,7 +159,6 @@ class DcctCurrentPlot(Qwt.QwtPlot):
         
         #self.setAxisTitle(Qwt.QwtPlot.yLeft, "I")
         #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
-        import sip
         if sip.SIP_VERSION_STR > '4.10.2':
             DateTimeScaleEngine.enableInAxis(self, Qwt.QwtPlot.xBottom)
         sd = self.axisScaleDraw(Qwt.QwtPlot.xBottom)
@@ -488,8 +492,9 @@ class ApPlot(Qwt.QwtPlot):
             #names = [v[2] for v in magp]
             #self.picker1.addMagnetProfile(sb, se, names)
             self.picker1.setTrackerPen(QPen(Qt.red, 4))
-            #self.connect(self.picker1, SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
-    #             self.elementDoubleClicked)
+            self.connect(self.picker1, 
+                         SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
+                         self.elementDoubleClicked)
         
         #self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
         #             self.zoomed1)
@@ -718,6 +723,9 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.data = data
         self.err_only  = False
 
+        self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
+                     self.elementSelected)
+
     def updatePlot(self):
         self.data.update()
         s, y, yerr = self.data.orbit()
@@ -727,3 +735,14 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.aplot.setAxisTitle(Qwt.QwtPlot.yLeft, self.data.label())
 
         self.aplot.replot()
+
+    def elementSelected(self, elem):
+        eleminfo = [self.data.machine, self.data.lattice, elem]
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), eleminfo)
+
+
+    def currentXlim(self):
+        """a tuple of (xmin, xmax)"""
+        ax = self.aplot.axisScaleDiv(Qwt.QwtPlot.xBottom)
+        return (ax.lowerBound(), ax.upperBound())
+

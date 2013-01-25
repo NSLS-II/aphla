@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+:author: Lingyun Yang <lyyang@bnl.gov>
+
+A dialog for picking elements.
+"""
 # Copyright (c) 2011 Lingyun Yang @ BNL.
 
 from PyQt4.QtCore import (Qt, SIGNAL)
