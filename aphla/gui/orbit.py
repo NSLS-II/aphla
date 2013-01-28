@@ -97,7 +97,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #self._elemed = ElementPropertyTabs()
         self.elemeditor = ElementEditorDock(
             parent=self,
-            elems=["BPM", "HCOR", "VCOR", "QUAD", "SEXT"])
+            elems=["BPM", "HCOR", "VCOR", "QUAD", "SEXT", "*"])
         self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)
         self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
                                     QDockWidget.DockWidgetClosable)
@@ -707,10 +707,12 @@ class OrbitPlotMainWindow(QMainWindow):
         #hla.hlalib._reset_trims()
 
     def elementSelected(self, elems):
+        """this action is ignored"""
         mach, lat, elemnames = elems
         _lat = self._machlat[mach][lat]
-        elemobjs = _lat.getElementList(elemnames)
-        self._elemed.addElements(elemobjs)
+        
+        #elemobjs = _lat.getElementList(elemnames)
+        #self._elemed.addElements(elemobjs)
 
     #def plotDesiredOrbit(self, x, y):
     #    #print "plot: ", x, y
