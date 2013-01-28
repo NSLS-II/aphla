@@ -540,6 +540,13 @@ class OrbitPlotMainWindow(QMainWindow):
             # calling caget one-by-one is not practical
             raise RuntimeError("No VBPM found")
 
+        try:
+            self.obtdata.update()
+        except:
+            self._lat = None
+            self.obtdata = None
+            raise RuntimeError("can not update orbit")
+
         magprof = lat.getBeamlineProfile()
         #print magprof
         for p in self.obtplots + self.corplots:

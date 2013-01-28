@@ -1,0 +1,409 @@
+#   set point ,     Properties,       Tag   
+#BPM
+BR:IS-BI{BPM:2}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A1-BI{BPM:1}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A1-BI{BPM:2}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A1-BI{BPM:3}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A1-BI{BPM:4}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A1-BI{BPM:5}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A1-BI{BPM:6}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A1-BI{BPM:7}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:DS-BI{BPM:1}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:DS-BI{BPM:2}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A2-BI{BPM:1}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A2-BI{BPM:2}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A2-BI{BPM:3}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A2-BI{BPM:4}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A2-BI{BPM:5}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A2-BI{BPM:6}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A2-BI{BPM:7}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:XS-BI{BPM:1}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:XS-BI{BPM:2}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A3-BI{BPM:1}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A3-BI{BPM:2}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A3-BI{BPM:3}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A3-BI{BPM:4}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A3-BI{BPM:5}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A3-BI{BPM:6}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A3-BI{BPM:7}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:CS-BI{BPM:1}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:CS-BI{BPM:2}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A4-BI{BPM:1}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A4-BI{BPM:2}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A4-BI{BPM:3}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A4-BI{BPM:4}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A4-BI{BPM:5}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A4-BI{BPM:6}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:A4-BI{BPM:7}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+BR:IS-BI{BPM:1}DDR:WfmSel-SP , elemHandle=put,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=mode,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}ddrAdcWfEnable , elemHandle=put,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A1-BI{BPM:1}ddrAdcWfEnable , elemHandle=put,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A1-BI{BPM:2}ddrAdcWfEnable , elemHandle=put,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A1-BI{BPM:3}ddrAdcWfEnable , elemHandle=put,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A1-BI{BPM:4}ddrAdcWfEnable , elemHandle=put,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A1-BI{BPM:5}ddrAdcWfEnable , elemHandle=put,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A1-BI{BPM:6}ddrAdcWfEnable , elemHandle=put,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A1-BI{BPM:7}ddrAdcWfEnable , elemHandle=put,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:DS-BI{BPM:1}ddrAdcWfEnable , elemHandle=put,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:DS-BI{BPM:2}ddrAdcWfEnable , elemHandle=put,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A2-BI{BPM:1}ddrAdcWfEnable , elemHandle=put,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A2-BI{BPM:2}ddrAdcWfEnable , elemHandle=put,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A2-BI{BPM:3}ddrAdcWfEnable , elemHandle=put,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A2-BI{BPM:4}ddrAdcWfEnable , elemHandle=put,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A2-BI{BPM:5}ddrAdcWfEnable , elemHandle=put,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A2-BI{BPM:6}ddrAdcWfEnable , elemHandle=put,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A2-BI{BPM:7}ddrAdcWfEnable , elemHandle=put,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:XS-BI{BPM:1}ddrAdcWfEnable , elemHandle=put,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:XS-BI{BPM:2}ddrAdcWfEnable , elemHandle=put,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A3-BI{BPM:1}ddrAdcWfEnable , elemHandle=put,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A3-BI{BPM:2}ddrAdcWfEnable , elemHandle=put,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A3-BI{BPM:3}ddrAdcWfEnable , elemHandle=put,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A3-BI{BPM:4}ddrAdcWfEnable , elemHandle=put,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A3-BI{BPM:5}ddrAdcWfEnable , elemHandle=put,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A3-BI{BPM:6}ddrAdcWfEnable , elemHandle=put,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A3-BI{BPM:7}ddrAdcWfEnable , elemHandle=put,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:CS-BI{BPM:1}ddrAdcWfEnable , elemHandle=put,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:CS-BI{BPM:2}ddrAdcWfEnable , elemHandle=put,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A4-BI{BPM:1}ddrAdcWfEnable , elemHandle=put,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A4-BI{BPM:2}ddrAdcWfEnable , elemHandle=put,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A4-BI{BPM:3}ddrAdcWfEnable , elemHandle=put,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A4-BI{BPM:4}ddrAdcWfEnable , elemHandle=put,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A4-BI{BPM:5}ddrAdcWfEnable , elemHandle=put,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A4-BI{BPM:6}ddrAdcWfEnable , elemHandle=put,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:A4-BI{BPM:7}ddrAdcWfEnable , elemHandle=put,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+BR:IS-BI{BPM:1}ddrAdcWfEnable , elemHandle=put,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=enableADC,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}ddrTbtWfEnable , elemHandle=put,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:1}ddrTbtWfEnable , elemHandle=put,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:2}ddrTbtWfEnable , elemHandle=put,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:3}ddrTbtWfEnable , elemHandle=put,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:4}ddrTbtWfEnable , elemHandle=put,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:5}ddrTbtWfEnable , elemHandle=put,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:6}ddrTbtWfEnable , elemHandle=put,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:7}ddrTbtWfEnable , elemHandle=put,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:DS-BI{BPM:1}ddrTbtWfEnable , elemHandle=put,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:DS-BI{BPM:2}ddrTbtWfEnable , elemHandle=put,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:1}ddrTbtWfEnable , elemHandle=put,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:2}ddrTbtWfEnable , elemHandle=put,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:3}ddrTbtWfEnable , elemHandle=put,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:4}ddrTbtWfEnable , elemHandle=put,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:5}ddrTbtWfEnable , elemHandle=put,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:6}ddrTbtWfEnable , elemHandle=put,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:7}ddrTbtWfEnable , elemHandle=put,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:XS-BI{BPM:1}ddrTbtWfEnable , elemHandle=put,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:XS-BI{BPM:2}ddrTbtWfEnable , elemHandle=put,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:1}ddrTbtWfEnable , elemHandle=put,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:2}ddrTbtWfEnable , elemHandle=put,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:3}ddrTbtWfEnable , elemHandle=put,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:4}ddrTbtWfEnable , elemHandle=put,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:5}ddrTbtWfEnable , elemHandle=put,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:6}ddrTbtWfEnable , elemHandle=put,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:7}ddrTbtWfEnable , elemHandle=put,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:CS-BI{BPM:1}ddrTbtWfEnable , elemHandle=put,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:CS-BI{BPM:2}ddrTbtWfEnable , elemHandle=put,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:1}ddrTbtWfEnable , elemHandle=put,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:2}ddrTbtWfEnable , elemHandle=put,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:3}ddrTbtWfEnable , elemHandle=put,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:4}ddrTbtWfEnable , elemHandle=put,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:5}ddrTbtWfEnable , elemHandle=put,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:6}ddrTbtWfEnable , elemHandle=put,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:7}ddrTbtWfEnable , elemHandle=put,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+BR:IS-BI{BPM:1}ddrTbtWfEnable , elemHandle=put,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=enableTBT,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}ddrFaWfEnable , elemHandle=put,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A1-BI{BPM:1}ddrFaWfEnable , elemHandle=put,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A1-BI{BPM:2}ddrFaWfEnable , elemHandle=put,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A1-BI{BPM:3}ddrFaWfEnable , elemHandle=put,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A1-BI{BPM:4}ddrFaWfEnable , elemHandle=put,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A1-BI{BPM:5}ddrFaWfEnable , elemHandle=put,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A1-BI{BPM:6}ddrFaWfEnable , elemHandle=put,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A1-BI{BPM:7}ddrFaWfEnable , elemHandle=put,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:DS-BI{BPM:1}ddrFaWfEnable , elemHandle=put,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:DS-BI{BPM:2}ddrFaWfEnable , elemHandle=put,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A2-BI{BPM:1}ddrFaWfEnable , elemHandle=put,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A2-BI{BPM:2}ddrFaWfEnable , elemHandle=put,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A2-BI{BPM:3}ddrFaWfEnable , elemHandle=put,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A2-BI{BPM:4}ddrFaWfEnable , elemHandle=put,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A2-BI{BPM:5}ddrFaWfEnable , elemHandle=put,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A2-BI{BPM:6}ddrFaWfEnable , elemHandle=put,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A2-BI{BPM:7}ddrFaWfEnable , elemHandle=put,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:XS-BI{BPM:1}ddrFaWfEnable , elemHandle=put,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:XS-BI{BPM:2}ddrFaWfEnable , elemHandle=put,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A3-BI{BPM:1}ddrFaWfEnable , elemHandle=put,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A3-BI{BPM:2}ddrFaWfEnable , elemHandle=put,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A3-BI{BPM:3}ddrFaWfEnable , elemHandle=put,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A3-BI{BPM:4}ddrFaWfEnable , elemHandle=put,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A3-BI{BPM:5}ddrFaWfEnable , elemHandle=put,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A3-BI{BPM:6}ddrFaWfEnable , elemHandle=put,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A3-BI{BPM:7}ddrFaWfEnable , elemHandle=put,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:CS-BI{BPM:1}ddrFaWfEnable , elemHandle=put,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:CS-BI{BPM:2}ddrFaWfEnable , elemHandle=put,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A4-BI{BPM:1}ddrFaWfEnable , elemHandle=put,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A4-BI{BPM:2}ddrFaWfEnable , elemHandle=put,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A4-BI{BPM:3}ddrFaWfEnable , elemHandle=put,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A4-BI{BPM:4}ddrFaWfEnable , elemHandle=put,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A4-BI{BPM:5}ddrFaWfEnable , elemHandle=put,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A4-BI{BPM:6}ddrFaWfEnable , elemHandle=put,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:A4-BI{BPM:7}ddrFaWfEnable , elemHandle=put,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+BR:IS-BI{BPM:1}ddrFaWfEnable , elemHandle=put,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=enableFA,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}ddrTbtOffset , elemHandle=put,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:1}ddrTbtOffset , elemHandle=put,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:2}ddrTbtOffset , elemHandle=put,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:3}ddrTbtOffset , elemHandle=put,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:4}ddrTbtOffset , elemHandle=put,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:5}ddrTbtOffset , elemHandle=put,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:6}ddrTbtOffset , elemHandle=put,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A1-BI{BPM:7}ddrTbtOffset , elemHandle=put,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:DS-BI{BPM:1}ddrTbtOffset , elemHandle=put,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:DS-BI{BPM:2}ddrTbtOffset , elemHandle=put,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:1}ddrTbtOffset , elemHandle=put,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:2}ddrTbtOffset , elemHandle=put,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:3}ddrTbtOffset , elemHandle=put,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:4}ddrTbtOffset , elemHandle=put,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:5}ddrTbtOffset , elemHandle=put,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:6}ddrTbtOffset , elemHandle=put,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A2-BI{BPM:7}ddrTbtOffset , elemHandle=put,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:XS-BI{BPM:1}ddrTbtOffset , elemHandle=put,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:XS-BI{BPM:2}ddrTbtOffset , elemHandle=put,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:1}ddrTbtOffset , elemHandle=put,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:2}ddrTbtOffset , elemHandle=put,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:3}ddrTbtOffset , elemHandle=put,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:4}ddrTbtOffset , elemHandle=put,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:5}ddrTbtOffset , elemHandle=put,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:6}ddrTbtOffset , elemHandle=put,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A3-BI{BPM:7}ddrTbtOffset , elemHandle=put,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:CS-BI{BPM:1}ddrTbtOffset , elemHandle=put,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:CS-BI{BPM:2}ddrTbtOffset , elemHandle=put,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:1}ddrTbtOffset , elemHandle=put,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:2}ddrTbtOffset , elemHandle=put,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:3}ddrTbtOffset , elemHandle=put,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:4}ddrTbtOffset , elemHandle=put,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:5}ddrTbtOffset , elemHandle=put,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:6}ddrTbtOffset , elemHandle=put,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:A4-BI{BPM:7}ddrTbtOffset , elemHandle=put,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+BR:IS-BI{BPM:1}ddrTbtOffset , elemHandle=put,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=delayTBT,         aphla.sys.BR 
+
+#  READBACK ,     Properties,       Tag   
+BR:IS-BI{BPM:2}TBT-X , elemHandle=get,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A1-BI{BPM:1}TBT-X , elemHandle=get,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A1-BI{BPM:2}TBT-X , elemHandle=get,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A1-BI{BPM:3}TBT-X , elemHandle=get,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A1-BI{BPM:4}TBT-X , elemHandle=get,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A1-BI{BPM:5}TBT-X , elemHandle=get,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A1-BI{BPM:6}TBT-X , elemHandle=get,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A1-BI{BPM:7}TBT-X , elemHandle=get,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:DS-BI{BPM:1}TBT-X , elemHandle=get,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:DS-BI{BPM:2}TBT-X , elemHandle=get,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A2-BI{BPM:1}TBT-X , elemHandle=get,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A2-BI{BPM:2}TBT-X , elemHandle=get,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A2-BI{BPM:3}TBT-X , elemHandle=get,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A2-BI{BPM:4}TBT-X , elemHandle=get,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A2-BI{BPM:5}TBT-X , elemHandle=get,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A2-BI{BPM:6}TBT-X , elemHandle=get,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A2-BI{BPM:7}TBT-X , elemHandle=get,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:XS-BI{BPM:1}TBT-X , elemHandle=get,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:XS-BI{BPM:2}TBT-X , elemHandle=get,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A3-BI{BPM:1}TBT-X , elemHandle=get,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A3-BI{BPM:2}TBT-X , elemHandle=get,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A3-BI{BPM:3}TBT-X , elemHandle=get,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A3-BI{BPM:4}TBT-X , elemHandle=get,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A3-BI{BPM:5}TBT-X , elemHandle=get,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A3-BI{BPM:6}TBT-X , elemHandle=get,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A3-BI{BPM:7}TBT-X , elemHandle=get,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:CS-BI{BPM:1}TBT-X , elemHandle=get,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:CS-BI{BPM:2}TBT-X , elemHandle=get,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A4-BI{BPM:1}TBT-X , elemHandle=get,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A4-BI{BPM:2}TBT-X , elemHandle=get,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A4-BI{BPM:3}TBT-X , elemHandle=get,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A4-BI{BPM:4}TBT-X , elemHandle=get,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A4-BI{BPM:5}TBT-X , elemHandle=get,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A4-BI{BPM:6}TBT-X , elemHandle=get,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:A4-BI{BPM:7}TBT-X , elemHandle=get,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+BR:IS-BI{BPM:1}TBT-X , elemHandle=get,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=xtbt,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}TBT-Y , elemHandle=get,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A1-BI{BPM:1}TBT-Y , elemHandle=get,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A1-BI{BPM:2}TBT-Y , elemHandle=get,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A1-BI{BPM:3}TBT-Y , elemHandle=get,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A1-BI{BPM:4}TBT-Y , elemHandle=get,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A1-BI{BPM:5}TBT-Y , elemHandle=get,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A1-BI{BPM:6}TBT-Y , elemHandle=get,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A1-BI{BPM:7}TBT-Y , elemHandle=get,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:DS-BI{BPM:1}TBT-Y , elemHandle=get,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:DS-BI{BPM:2}TBT-Y , elemHandle=get,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A2-BI{BPM:1}TBT-Y , elemHandle=get,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A2-BI{BPM:2}TBT-Y , elemHandle=get,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A2-BI{BPM:3}TBT-Y , elemHandle=get,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A2-BI{BPM:4}TBT-Y , elemHandle=get,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A2-BI{BPM:5}TBT-Y , elemHandle=get,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A2-BI{BPM:6}TBT-Y , elemHandle=get,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A2-BI{BPM:7}TBT-Y , elemHandle=get,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:XS-BI{BPM:1}TBT-Y , elemHandle=get,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:XS-BI{BPM:2}TBT-Y , elemHandle=get,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A3-BI{BPM:1}TBT-Y , elemHandle=get,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A3-BI{BPM:2}TBT-Y , elemHandle=get,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A3-BI{BPM:3}TBT-Y , elemHandle=get,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A3-BI{BPM:4}TBT-Y , elemHandle=get,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A3-BI{BPM:5}TBT-Y , elemHandle=get,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A3-BI{BPM:6}TBT-Y , elemHandle=get,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A3-BI{BPM:7}TBT-Y , elemHandle=get,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:CS-BI{BPM:1}TBT-Y , elemHandle=get,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:CS-BI{BPM:2}TBT-Y , elemHandle=get,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A4-BI{BPM:1}TBT-Y , elemHandle=get,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A4-BI{BPM:2}TBT-Y , elemHandle=get,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A4-BI{BPM:3}TBT-Y , elemHandle=get,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A4-BI{BPM:4}TBT-Y , elemHandle=get,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A4-BI{BPM:5}TBT-Y , elemHandle=get,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A4-BI{BPM:6}TBT-Y , elemHandle=get,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:A4-BI{BPM:7}TBT-Y , elemHandle=get,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+BR:IS-BI{BPM:1}TBT-Y , elemHandle=get,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=ytbt,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}FA-X , elemHandle=get,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A1-BI{BPM:1}FA-X , elemHandle=get,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A1-BI{BPM:2}FA-X , elemHandle=get,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A1-BI{BPM:3}FA-X , elemHandle=get,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A1-BI{BPM:4}FA-X , elemHandle=get,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A1-BI{BPM:5}FA-X , elemHandle=get,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A1-BI{BPM:6}FA-X , elemHandle=get,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A1-BI{BPM:7}FA-X , elemHandle=get,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:DS-BI{BPM:1}FA-X , elemHandle=get,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:DS-BI{BPM:2}FA-X , elemHandle=get,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A2-BI{BPM:1}FA-X , elemHandle=get,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A2-BI{BPM:2}FA-X , elemHandle=get,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A2-BI{BPM:3}FA-X , elemHandle=get,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A2-BI{BPM:4}FA-X , elemHandle=get,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A2-BI{BPM:5}FA-X , elemHandle=get,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A2-BI{BPM:6}FA-X , elemHandle=get,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A2-BI{BPM:7}FA-X , elemHandle=get,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:XS-BI{BPM:1}FA-X , elemHandle=get,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:XS-BI{BPM:2}FA-X , elemHandle=get,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A3-BI{BPM:1}FA-X , elemHandle=get,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A3-BI{BPM:2}FA-X , elemHandle=get,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A3-BI{BPM:3}FA-X , elemHandle=get,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A3-BI{BPM:4}FA-X , elemHandle=get,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A3-BI{BPM:5}FA-X , elemHandle=get,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A3-BI{BPM:6}FA-X , elemHandle=get,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A3-BI{BPM:7}FA-X , elemHandle=get,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:CS-BI{BPM:1}FA-X , elemHandle=get,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:CS-BI{BPM:2}FA-X , elemHandle=get,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A4-BI{BPM:1}FA-X , elemHandle=get,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A4-BI{BPM:2}FA-X , elemHandle=get,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A4-BI{BPM:3}FA-X , elemHandle=get,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A4-BI{BPM:4}FA-X , elemHandle=get,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A4-BI{BPM:5}FA-X , elemHandle=get,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A4-BI{BPM:6}FA-X , elemHandle=get,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:A4-BI{BPM:7}FA-X , elemHandle=get,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+BR:IS-BI{BPM:1}FA-X , elemHandle=get,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=xfa,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}FA-Y , elemHandle=get,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A1-BI{BPM:1}FA-Y , elemHandle=get,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A1-BI{BPM:2}FA-Y , elemHandle=get,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A1-BI{BPM:3}FA-Y , elemHandle=get,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A1-BI{BPM:4}FA-Y , elemHandle=get,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A1-BI{BPM:5}FA-Y , elemHandle=get,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A1-BI{BPM:6}FA-Y , elemHandle=get,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A1-BI{BPM:7}FA-Y , elemHandle=get,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:DS-BI{BPM:1}FA-Y , elemHandle=get,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:DS-BI{BPM:2}FA-Y , elemHandle=get,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A2-BI{BPM:1}FA-Y , elemHandle=get,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A2-BI{BPM:2}FA-Y , elemHandle=get,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A2-BI{BPM:3}FA-Y , elemHandle=get,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A2-BI{BPM:4}FA-Y , elemHandle=get,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A2-BI{BPM:5}FA-Y , elemHandle=get,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A2-BI{BPM:6}FA-Y , elemHandle=get,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A2-BI{BPM:7}FA-Y , elemHandle=get,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:XS-BI{BPM:1}FA-Y , elemHandle=get,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:XS-BI{BPM:2}FA-Y , elemHandle=get,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A3-BI{BPM:1}FA-Y , elemHandle=get,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A3-BI{BPM:2}FA-Y , elemHandle=get,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A3-BI{BPM:3}FA-Y , elemHandle=get,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A3-BI{BPM:4}FA-Y , elemHandle=get,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A3-BI{BPM:5}FA-Y , elemHandle=get,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A3-BI{BPM:6}FA-Y , elemHandle=get,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A3-BI{BPM:7}FA-Y , elemHandle=get,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:CS-BI{BPM:1}FA-Y , elemHandle=get,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:CS-BI{BPM:2}FA-Y , elemHandle=get,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A4-BI{BPM:1}FA-Y , elemHandle=get,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A4-BI{BPM:2}FA-Y , elemHandle=get,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A4-BI{BPM:3}FA-Y , elemHandle=get,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A4-BI{BPM:4}FA-Y , elemHandle=get,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A4-BI{BPM:5}FA-Y , elemHandle=get,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A4-BI{BPM:6}FA-Y , elemHandle=get,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:A4-BI{BPM:7}FA-Y , elemHandle=get,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+BR:IS-BI{BPM:1}FA-Y , elemHandle=get,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=yfa,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}Pos:X-I , elemHandle=get,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A1-BI{BPM:1}Pos:X-I , elemHandle=get,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A1-BI{BPM:2}Pos:X-I , elemHandle=get,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A1-BI{BPM:3}Pos:X-I , elemHandle=get,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A1-BI{BPM:4}Pos:X-I , elemHandle=get,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A1-BI{BPM:5}Pos:X-I , elemHandle=get,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A1-BI{BPM:6}Pos:X-I , elemHandle=get,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A1-BI{BPM:7}Pos:X-I , elemHandle=get,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:DS-BI{BPM:1}Pos:X-I , elemHandle=get,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:DS-BI{BPM:2}Pos:X-I , elemHandle=get,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A2-BI{BPM:1}Pos:X-I , elemHandle=get,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A2-BI{BPM:2}Pos:X-I , elemHandle=get,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A2-BI{BPM:3}Pos:X-I , elemHandle=get,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A2-BI{BPM:4}Pos:X-I , elemHandle=get,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A2-BI{BPM:5}Pos:X-I , elemHandle=get,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A2-BI{BPM:6}Pos:X-I , elemHandle=get,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A2-BI{BPM:7}Pos:X-I , elemHandle=get,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:XS-BI{BPM:1}Pos:X-I , elemHandle=get,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:XS-BI{BPM:2}Pos:X-I , elemHandle=get,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A3-BI{BPM:1}Pos:X-I , elemHandle=get,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A3-BI{BPM:2}Pos:X-I , elemHandle=get,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A3-BI{BPM:3}Pos:X-I , elemHandle=get,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A3-BI{BPM:4}Pos:X-I , elemHandle=get,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A3-BI{BPM:5}Pos:X-I , elemHandle=get,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A3-BI{BPM:6}Pos:X-I , elemHandle=get,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A3-BI{BPM:7}Pos:X-I , elemHandle=get,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:CS-BI{BPM:1}Pos:X-I , elemHandle=get,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:CS-BI{BPM:2}Pos:X-I , elemHandle=get,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A4-BI{BPM:1}Pos:X-I , elemHandle=get,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A4-BI{BPM:2}Pos:X-I , elemHandle=get,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A4-BI{BPM:3}Pos:X-I , elemHandle=get,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A4-BI{BPM:4}Pos:X-I , elemHandle=get,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A4-BI{BPM:5}Pos:X-I , elemHandle=get,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A4-BI{BPM:6}Pos:X-I , elemHandle=get,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:A4-BI{BPM:7}Pos:X-I , elemHandle=get,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+BR:IS-BI{BPM:1}Pos:X-I , elemHandle=get,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=x,         aphla.sys.BR 
+
+BR:IS-BI{BPM:2}Pos:Y-I , elemHandle=get,   elemIndex= 6, elemName= ISP2,  devName= ISP2 ,  elemLength= 0.04,  elemPosition=  3.11 , elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A1-BI{BPM:1}Pos:Y-I , elemHandle=get,   elemIndex= 16 , elemName= A1P1,  devName= A1P1 ,  elemLength= 0.04,  elemPosition=  6.6459 , elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A1-BI{BPM:2}Pos:Y-I , elemHandle=get,   elemIndex= 30 , elemName= A1P2,  devName= A1P2 ,  elemLength= 0.04,  elemPosition=  10.1419, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A1-BI{BPM:3}Pos:Y-I , elemHandle=get,   elemIndex= 38 , elemName= A1P3,  devName= A1P3 ,  elemLength= 0.04,  elemPosition=  13.5474, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A1-BI{BPM:4}Pos:Y-I , elemHandle=get,   elemIndex= 48 , elemName= A1P4,  devName= A1P4 ,  elemLength= 0.04,  elemPosition=  17.3129, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A1-BI{BPM:5}Pos:Y-I , elemHandle=get,   elemIndex= 58 , elemName= A1P5,  devName= A1P5 ,  elemLength= 0.04,  elemPosition=  22.6829, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A1-BI{BPM:6}Pos:Y-I , elemHandle=get,   elemIndex= 66 , elemName= A1P6,  devName= A1P6 ,  elemLength= 0.04,  elemPosition=  26.0884, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A1-BI{BPM:7}Pos:Y-I , elemHandle=get,   elemIndex= 76 , elemName= A1P7,  devName= A1P7 ,  elemLength= 0.04,  elemPosition=  29.8539, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:DS-BI{BPM:1}Pos:Y-I , elemHandle=get,   elemIndex= 92 , elemName= DSP1,  devName= DSP1 ,  elemLength= 0.04,  elemPosition=  37.4479, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:DS-BI{BPM:2}Pos:Y-I , elemHandle=get,   elemIndex= 97 , elemName= DSP2,  devName= DSP2 ,  elemLength= 0.04,  elemPosition=  41.7879, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A2-BI{BPM:1}Pos:Y-I , elemHandle=get,   elemIndex= 115, elemName= A2P1,  devName= A2P1 ,  elemLength= 0.04,  elemPosition=  49.7419, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A2-BI{BPM:2}Pos:Y-I , elemHandle=get,   elemIndex= 123, elemName= A2P2,  devName= A2P2 ,  elemLength= 0.04,  elemPosition=  53.1474, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A2-BI{BPM:3}Pos:Y-I , elemHandle=get,   elemIndex= 133, elemName= A2P3,  devName= A2P3 ,  elemLength= 0.04,  elemPosition=  56.9129, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A2-BI{BPM:4}Pos:Y-I , elemHandle=get,   elemIndex= 143, elemName= A2P4,  devName= A2P4 ,  elemLength= 0.04,  elemPosition=  62.2829, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A2-BI{BPM:5}Pos:Y-I , elemHandle=get,   elemIndex= 151, elemName= A2P5,  devName= A2P5 ,  elemLength= 0.04,  elemPosition=  65.6884, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A2-BI{BPM:6}Pos:Y-I , elemHandle=get,   elemIndex= 161, elemName= A2P6,  devName= A2P6 ,  elemLength= 0.04,  elemPosition=  69.4539, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A2-BI{BPM:7}Pos:Y-I , elemHandle=get,   elemIndex= 173, elemName= A2P7,  devName= A2P7 ,  elemLength= 0.04,  elemPosition=  72.5899, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:XS-BI{BPM:1}Pos:Y-I , elemHandle=get,   elemIndex= 185, elemName= XSP1,  devName= XSP1 ,  elemLength= 0.04,  elemPosition=  77.5008, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:XS-BI{BPM:2}Pos:Y-I , elemHandle=get,   elemIndex= 197, elemName= XSP2,  devName= XSP2 ,  elemLength= 0.04,  elemPosition=  80.9308, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A3-BI{BPM:1}Pos:Y-I , elemHandle=get,   elemIndex= 209, elemName= A3P1,  devName= A3P1 ,  elemLength= 0.04,  elemPosition=  85.8417, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A3-BI{BPM:2}Pos:Y-I , elemHandle=get,   elemIndex= 223, elemName= A3P2,  devName= A3P2 ,  elemLength= 0.04,  elemPosition=  89.3377, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A3-BI{BPM:3}Pos:Y-I , elemHandle=get,   elemIndex= 231, elemName= A3P3,  devName= A3P3 ,  elemLength= 0.04,  elemPosition=  92.7432, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A3-BI{BPM:4}Pos:Y-I , elemHandle=get,   elemIndex= 241, elemName= A3P4,  devName= A3P4 ,  elemLength= 0.04,  elemPosition=  96.5087, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A3-BI{BPM:5}Pos:Y-I , elemHandle=get,   elemIndex= 251, elemName= A3P5,  devName= A3P5 ,  elemLength= 0.04,  elemPosition=  101.879, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A3-BI{BPM:6}Pos:Y-I , elemHandle=get,   elemIndex= 259, elemName= A3P6,  devName= A3P6 ,  elemLength= 0.04,  elemPosition=  105.284, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A3-BI{BPM:7}Pos:Y-I , elemHandle=get,   elemIndex= 269, elemName= A3P7,  devName= A3P7 ,  elemLength= 0.04,  elemPosition=  109.05 , elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:CS-BI{BPM:1}Pos:Y-I , elemHandle=get,   elemIndex= 285, elemName= CSP1,  devName= CSP1 ,  elemLength= 0.04,  elemPosition=  116.644, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:CS-BI{BPM:2}Pos:Y-I , elemHandle=get,   elemIndex= 291, elemName= CSP2,  devName= CSP2 ,  elemLength= 0.04,  elemPosition=  120.984, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A4-BI{BPM:1}Pos:Y-I , elemHandle=get,   elemIndex= 309, elemName= A4P1,  devName= A4P1 ,  elemLength= 0.04,  elemPosition=  128.938, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A4-BI{BPM:2}Pos:Y-I , elemHandle=get,   elemIndex= 317, elemName= A4P2,  devName= A4P2 ,  elemLength= 0.04,  elemPosition=  132.343, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A4-BI{BPM:3}Pos:Y-I , elemHandle=get,   elemIndex= 327, elemName= A4P3,  devName= A4P3 ,  elemLength= 0.04,  elemPosition=  136.109, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A4-BI{BPM:4}Pos:Y-I , elemHandle=get,   elemIndex= 337, elemName= A4P4,  devName= A4P4 ,  elemLength= 0.04,  elemPosition=  141.479, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A4-BI{BPM:5}Pos:Y-I , elemHandle=get,   elemIndex= 345, elemName= A4P5,  devName= A4P5 ,  elemLength= 0.04,  elemPosition=  144.884, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A4-BI{BPM:6}Pos:Y-I , elemHandle=get,   elemIndex= 355, elemName= A4P6,  devName= A4P6 ,  elemLength= 0.04,  elemPosition=  148.65 , elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:A4-BI{BPM:7}Pos:Y-I , elemHandle=get,   elemIndex= 367, elemName= A4P7,  devName= A4P7 ,  elemLength= 0.04,  elemPosition=  151.786, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
+BR:IS-BI{BPM:1}Pos:Y-I , elemHandle=get,   elemIndex= 377, elemName= ISP1,  devName= ISP1 ,  elemLength= 0.04,  elemPosition=  155.322, elemType=BPM,  system=BR , elemField=y,         aphla.sys.BR 
