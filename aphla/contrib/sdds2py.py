@@ -45,14 +45,12 @@ def sdds2py(FileName,para_col,para_col_name):
 			value=col
 			print col
 		else:
-			value=array([float(i) for i in col[1:-1].split('\n')])
+			value=array([float(i) for i in col.split('\n')])
 	else:
 #		para_col[0:3]
 		value='incorrect input'
-
 
 	print value
 
 	return value
 
-#sdds2py('Tester0.twi','col','s')
