@@ -28,6 +28,13 @@ ap.machines.init("nsls2v3bsrline")
 
 logging.info("'nsls2v3bsrline' initialized")
 
+#class Test0(unittest.TestCase):
+#    def setUp(self):
+#        pass
+#
+#    def test_l0(self):
+#        self.assertEqual(0, 1)
+
 """
 Element
 ~~~~~~~
@@ -41,7 +48,7 @@ class Test0Element(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_bpm(self):
+    def test_bpm_l0(self):
         bpms = ap.getElements('BPM')
         self.assertGreaterEqual(len(bpms), 180*3)
 
@@ -58,9 +65,9 @@ class Test0Element(unittest.TestCase):
 
         self.assertIn('x', bpm.fields())
         self.assertIn('y', bpm.fields())
-        self.assertEqual(len(bpm.get(['x', 'y'])), 2)
-        self.assertEqual(len(ap.eget('BPM', 'x')), len(bpms))
-        self.assertEqual(len(ap.eget('BPM', ['x', 'y'])), len(bpms))
+        self.assertEqual(len(bpm.get(['x', 'y'], unit=None)), 2)
+        self.assertEqual(len(ap.eget('BPM', 'x', unit=None)), len(bpms))
+        self.assertEqual(len(ap.eget('BPM', ['x', 'y'], unit=None)), len(bpms))
 
         self.assertGreater(ap.getDistance(bpms[0].name, bpms[1].name), 0.0)
 
@@ -237,16 +244,32 @@ class Test1LatticeSr(unittest.TestCase):
         self.logger = logging.getLogger('tests.TestLatticeSr')
         pass
 
+    def test_hvcors_l0(self):
+        hc = self.lat.getElementList("HCOR")
+        self.assertEqual(len(hc), 188)
+
+    def test_groups_l0(self):
+        #self.assertEqual(0, 1)
+        g = self.lat.getGroups()
+        self.assertGreater(len(g), 0)
+        #self.assertEqual(len(g), 0)
+        self.assertIn('HCOR', g)
+        self.assertIn('VCOR', g)
+        self.assertNotIn('TRIM', g)
+        self.assertNotIn('TRIMX', g)
+        self.assertNotIn('TRIMY', g)
+
+
     def test_orbit(self):
         v = ap.getOrbit()
 
-    @unittest.skip("no dcct for line")
+    @unittest.skip("no tunes for line")
     def test_tunes(self):
         tune, = self.lat.getElementList('tune')
         self.assertTrue(abs(tune.x) > 0)
         self.assertTrue(abs(tune.y) > 0)
         
-    @unittest.skip("no DCCT for LINE")
+    @unittest.skip("no DCCT for line")
     def test_current(self):
         self.assertTrue(self.lat.hasElement('dcct'))
         

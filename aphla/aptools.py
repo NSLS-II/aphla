@@ -40,7 +40,7 @@ def _element_fields(elems, fields, **kwargs):
     * compress=True
     >>> _element_fields(getElements(['BPM1']), ['x', 'y'])
     
-    returns a list of (name, field)
+    returns a flat list of (name, field)
     """
     compress = kwargs.get('compress', True)
     ret = []
@@ -127,17 +127,27 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     bpmref = []
     for name,field in bpmlst:
         i = (i for i,b in enumerate(bpm) if b.name == name).next()
-        if field == 'x': bpmref.append(ref[i][0])
-        elif field == 'y': bpmref.append(ref[i][1])
+        if field == 'x': 
+            # v0 [m], u1 is lower level unit (EPICS)
+            v0, u1 = ref[i][0], bpm[i].getUnit('x', unitsys=None)
+        elif field == 'y': 
+            v0, u1 = ref[i][1], bpm[i].getUnit('y', unitsys=None)
+        if u1 == 'm': v = v0
+        elif u1 == 'mm': v = 1000.0*v0
+        elif u1 == 'um': v = 1.0e6*v0
+        bpmref.append(v)
 
-    bpmpvs = [getElements(b[0])[0].pv(field=b[1])[0] for b in bpmlst]
-    trimpvs = [getElements(b[0])[0].pv(field=b[1], handle='setpoint')[0] for b in trimlst]
+    bpmpvs = [getElements(b)[0].pv(field=f)[0] for b,f in bpmlst]
+    trimpvs = [getElements(t)[0].pv(field=f, handle='setpoint')[0] 
+               for t,f in trimlst]
 
     # correct orbit using default ORM (from current lattice)
     for i in range(repeat):
+        #for k,b in enumerate(bpmpvs):
+        #    if bpmref[k] != 0.0: print(k, bpmlst[k], b, bpmref[k])
         caRmCorrect(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
 
-        
+
 def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     """
     correct the orbit with given BPMs and Trims
@@ -162,6 +172,8 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     # an orbit based these bpm
     if bpmlst is None:
         bpmlst = getElements('BPM')
+    else:
+        bpmlst = getElements(bpm)
 
     if plane == 'H': ref = zip([0.0] * len(bpmlst), [None] * len(bpmlst))
     elif plane == 'V': ref = zip([None] * len(bpmlst), [0.0] * len(bpmlst))

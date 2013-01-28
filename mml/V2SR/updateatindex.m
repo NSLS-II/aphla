@@ -35,12 +35,12 @@ end
 % CORRECTORS
 try
     % Horizontal correctors are at every AT corrector
-    AO.HCM.AT.ATType = 'HCM';
+    AO.HCM.AT.ATType = 'COR';
     AO.HCM.AT.ATIndex = buildatindex(AO.HCM.FamilyName, Indices.HVCM);
     AO.HCM.Position = findspos(THERING, AO.HCM.AT.ATIndex(:,1))';
 
     % Not all correctors are vertical correctors
-    AO.VCM.AT.ATType = 'VCM';
+    AO.VCM.AT.ATType = 'COR';
     AO.VCM.AT.ATIndex = buildatindex(AO.VCM.FamilyName, Indices.HVCM);
     AO.VCM.Position = findspos(THERING, AO.VCM.AT.ATIndex(:,1))';
 catch

@@ -1,0 +1,24 @@
+
+- 2013-01-11 11:36, import sqlite data into channel finder:
+
+    cfa = ChannelFinderAgent()
+    cfa._importSqliteDb1("machines/nsls2v2/nsls2v2.sqlite")
+    for v1,v2 in [('name', 'elemName'), ('elem_type', 'elemType'), 
+                  ('handle', 'elemHandle'), ('polar', 'elemPolar'),
+                  ('position', 'elemPosition'), ('length', 'elemLength'),
+                  ('elem_field', 'elemField'), ('tracy_el_idx_va', 'elemIndex'),
+    ]:
+        cfa.renameProperty(v1, v2)
+    for r in cfa.rows:
+        for k in ['tracy_el_type_va', 'angle', 'elem_id', 'lat_index', 
+                  'tracy_machine', 'k1', 'k2', 'tracy_el_field_va',
+                  'tracy_el_name_va', 'elem_group', 'virtual',
+                  'high_lim', 'low_lim', 'system']:
+            r[1].pop(k, None)
+
+    cfa._export_csv_2("test.csv")
+
+    then call updateChannelFinder with --csv2 test.csv
+
+
+
