@@ -437,14 +437,14 @@ def getClosest(element, group):
     else:
         return machines._lat.getClosest(element.name, group)
 
-def getBeamlineProfile(s1 = 0, s2 = 1e10):
+def getBeamlineProfile(s1 = 0, s2 = None):
     """
     return the beamline profile from s1 to s2
 
     it calls :meth:`~aphla.lattice.Lattice.getBeamlineProfile` of the
     current lattice.
     """
-    return machines._lat.getBeamlineProfile(s1, s2)
+    return machines._lat.getBeamlineProfile(s1=s1, s2=s2)
 
 
 def getDistance(elem1, elem2, absolute=True):

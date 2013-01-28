@@ -776,14 +776,14 @@ class Lattice:
         Virtual element is not included.
         """
         s1 = kwargs.get("s1", 0.0)
-        s2 = kwargs.get("s2", 1e10)
+        s2 = kwargs.get("s2", None)
         highlight = kwargs.get("highlight", None)
-
+        
         prof = []
         for elem in self._elements:
             if elem.virtual: continue
             elif elem.se < s1: continue
-            elif elem.sb > s2: continue
+            elif s2 is not None and elem.sb > s2: break
             x1, y1, c = elem.profile()
             #if elem.family == highlight: c = 'b'
             prof.append((x1, y1, c, elem.name))

@@ -48,7 +48,7 @@ def init_submachines(machine, submachines, **kwargs):
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
 
-    for latname in ['SR', 'LTB', 'LTD1', 'LTD2']:
+    for latname in ['SR', 'LTB', 'LTD1', 'LTD2', 'BR']:
         if not fnmatch(latname, submachines): continue
 
         lattag = HLA_TAG_SYS_PREFIX + '.' + latname
