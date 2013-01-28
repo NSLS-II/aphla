@@ -167,6 +167,7 @@ class BbaMainWindow(QMainWindow):
         f.close()
 
     def _load_conf_h5(self, h5file, grp = "bba"):
+        pass
         
     def align_quad(self, **kwargs):
         """
