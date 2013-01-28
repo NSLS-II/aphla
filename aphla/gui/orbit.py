@@ -102,11 +102,12 @@ class OrbitPlotMainWindow(QMainWindow):
         self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
                                     QDockWidget.DockWidgetClosable)
         self.elemeditor.setFloating(False)
+        self.elemeditor.setEnabled(False)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
-
+        
 
         # logging
         self.logdock = QDockWidget("Log")
@@ -383,6 +384,7 @@ class OrbitPlotMainWindow(QMainWindow):
         if latname: self.__setLattice(latname)
 
     def _newVelemPlot(self, latname, elem, field, title, c = None):
+        """plot the field(s) for element"""
         lat = aphla.machines.getLattice(latname)
         if not lat:
             self.logger.error("no default lattice available")
@@ -394,6 +396,7 @@ class OrbitPlotMainWindow(QMainWindow):
         fields = [field]
         if field is None:
             fields = velem.fields()
+
         for fld in fields:
             p = ApMdiSubPlot()
             p.data = ApVirtualElemData(velem, fld, machine=lat.machine,
@@ -441,6 +444,9 @@ class OrbitPlotMainWindow(QMainWindow):
         #print self.mdiarea.subWindowList()
 
     def click_markfam(self, on):
+        w = self.mdiarea.currentSubWindow()
+        if not w: return
+
         famname = self.sender().text()
         mks = []
         # need to convert to python str
@@ -449,8 +455,7 @@ class OrbitPlotMainWindow(QMainWindow):
             if elem.virtual: continue
             mks.append([elem.name, 0.5*(elem.sb+elem.se)])
 
-        for p in self.obtplots:
-            p.setMarkers(mks, on)
+        w.setMarkers(mks, on)
 
     def __setLattice(self, latname):
         if not latname: return
@@ -490,77 +495,6 @@ class OrbitPlotMainWindow(QMainWindow):
                      self.close)
         self.machMenu.addAction(fileQuitAction)
         #print self._machlat.keys()
-
-    def setLattice(self, lat):
-        """
-        """
-        if self.timerId: self.killTimer(self.timerId)
-        # setting lat for the whole aphla
-
-        #self.logger.info("using lattice: %s" % lat.name)
-        self.vbpm = self._lat._find_exact_element(aphla.machines.HLA_VBPM)
-        self.vcor = self._lat._find_exact_element(aphla.machines.HLA_VCOR)
-
-        #for p in self.obtplots:
-        #    p.detachCurves()
-
-        self.obtdata = []
-        self.cordata = []
-        if self.vbpm is not None:
-            #self.logger.debug("using virtual bpm")
-            #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
-            self.obtdata = [ ApVirtualElemData(self.vbpm, 'x'),
-                             ApVirtualElemData(self.vbpm, 'y')]
-            
-            # set unit
-            xu = "x [%s]" % (self.vbpm.getUnit('x'),)
-            yu = "y [%s]" % (self.vbpm.getUnit('y'),)
-            self.obtplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, xu)
-            self.obtplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, yu)
-            self.obtplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, xu)
-            self.obtplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, yu)
-        else:
-            # calling caget one-by-one is not practical
-            raise RuntimeError("No VBPM found")
-
-        if self.vcor is not None:
-            #self.logger.debug("using virtual bpm")
-            #print "VBPM:", self.vbpm.sb, self.vbpm.se, self.vbpm.get('x')
-            self.cordata = [ ApVirtualElemData(self.vcor, 'x'),
-                             ApVirtualElemData(self.vcor, 'y')]
-            
-            # set unit
-            xu = "x [%s]" % (self.vbpm.getUnit('x'),)
-            yu = "y [%s]" % (self.vbpm.getUnit('y'),)
-            self.corplots[0].setAxisTitle(Qwt.QwtPlot.yLeft, xu)
-            self.corplots[1].setAxisTitle(Qwt.QwtPlot.yLeft, yu)
-            self.corplots[2].setAxisTitle(Qwt.QwtPlot.yLeft, xu)
-            self.corplots[3].setAxisTitle(Qwt.QwtPlot.yLeft, yu)
-        else:
-            # calling caget one-by-one is not practical
-            raise RuntimeError("No VBPM found")
-
-        try:
-            self.obtdata.update()
-        except:
-            self._lat = None
-            self.obtdata = None
-            raise RuntimeError("can not update orbit")
-
-        magprof = lat.getBeamlineProfile()
-        #print magprof
-        for p in self.obtplots + self.corplots:
-            #p.attachCurves()
-            p.setMagnetProfile(magprof)
-
-        # fixed scale
-        self.updatePlots(autoScale=False)
-
-        #for ac in self.viewMenu.actions(): ac.setDisabled(False)
-        #for ac in self.controlMenu.actions(): ac.setDisabled(False)
-        #for ac in self.debugMenu.actions(): ac.setDisabled(False)
-
-        self.timerId = self.startTimer(self.dt)
 
     def _reset_correctors(self):
         aphla.hlalib._reset_trims()

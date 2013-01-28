@@ -746,3 +746,6 @@ class ApMdiSubPlot(QMdiSubWindow):
         ax = self.aplot.axisScaleDiv(Qwt.QwtPlot.xBottom)
         return (ax.lowerBound(), ax.upperBound())
 
+    def setMarkers(self, mks, on):
+        self.aplot.setMarkers(mks, on)
+
