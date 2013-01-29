@@ -98,9 +98,12 @@ class ElementPropertyTableModel(QAbstractTableModel):
                     for u in self._unitsys:
                         try:
                             v = float(elem.get(var, source=src, unit=u))
-                            usymb = elem.getUnit(var, unitsys=u)
                         except:
                             v = None
+                        # check the unit
+                        try:
+                            usymb = elem.getUnit(var, unitsys=u)
+                        except:
                             usymb = ""
 
                         vlst.append(v)
@@ -232,7 +235,12 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 self._value[row][col-1] = val
             else:
                 #print "Editting pv col=", col, value, value.toDouble()
-                self._value[row][col-1] = value.toDouble()[0]
+                # put the value to machine
+                fld = self._field[row][:-3]
+                vd = value.toDouble()[0]
+                unit = self._unitsys[col-1]
+                elem = self._elems[row].put(fld, vd, unit=unit)
+                self._value[row][col-1] = vd
             self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                       index, index)
             return True

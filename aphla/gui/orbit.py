@@ -66,15 +66,15 @@ class OrbitPlotMainWindow(QMainWindow):
     the main window has three major widgets: current, orbit tabs and element
     editor.
     """
-    def __init__(self, parent = None, machines=None):
+    def __init__(self, parent = None, machines=[]):
         QMainWindow.__init__(self, parent)
         self.setIconSize(QSize(32, 32))
-
+        self.error_bar = True
         # aphla only stores lattice name, overwrite happens.
         # here stores machine as first level, lattice name as second
         self._machlat = {} # dict of dict
-        if machines: 
-            for m in machines: self._machlat[m] = {}
+        for m in machines: 
+            self._machlat[m] = {}
 
         self.dcct = DcctCurrentPlot()
         #self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
@@ -103,7 +103,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
                                     QDockWidget.DockWidgetClosable)
         self.elemeditor.setFloating(False)
-        #self.elemeditor.setEnabled(False)
+        self.elemeditor.setEnabled(False)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
@@ -142,7 +142,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.vbpm = None
         self.statusBar().showMessage("Welcome")
 
-        self.initMachine("nsls2v2")
+        #self.initMachine("nsls2v2")
+        #self._newVelemPlot("V2SR", aphla.machines.HLA_VBPM, 'x', 
+        #                   "H Orbit", c = None)
 
     def createMenuToolBar(self):
         #
@@ -202,29 +204,15 @@ class OrbitPlotMainWindow(QMainWindow):
         viewAutoScale.setChecked(True)
         self.connect(viewAutoScale, SIGNAL("toggled(bool)"), self.zoomAutoScale)
 
-        controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
-                                         "Choose BPM", self)
-        self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
-                     self.chooseBpm)
+        #controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
+        #                                 "Choose BPM", self)
+        #self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
+        #             self.chooseBpm)
 
         controlResetPvDataAction = QAction(QIcon(":/control_reset.png"),
                                            "Reset BPM statistics", self)
         self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
                      self.resetPvData)
-
-        # zoom in the horizontal orbit
-        #controlZoomInPlot1Action = QAction("zoomin H", self)
-        #self.connect(controlZoomInPlot1Action, SIGNAL("triggered()"),
-        #             self.obtplots[0].zoomIn)
-        #controlZoomOutPlot1Action = QAction("zoomout H", self)
-        #self.connect(controlZoomOutPlot1Action, SIGNAL("triggered()"),
-        #             self.obtplots[1].zoomOut)
-        #controlZoomInPlot2Action = QAction("zoomin V", self)
-        #self.connect(controlZoomInPlot2Action, SIGNAL("triggered()"),
-        #             self.obtplots[2].zoomIn)
-        #controlZoomOutPlot2Action = QAction("zoomout V", self)
-        #self.connect(controlZoomOutPlot2Action, SIGNAL("triggered()"),
-        #             self.obtplots[3].zoomOut)
 
         drift_from_now = QAction("Drift from Now", self)
         drift_from_now.setCheckable(True)
@@ -274,7 +262,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         #
         self.controlMenu = self.menuBar().addMenu("&Control")
-        self.controlMenu.addAction(controlChooseBpmAction)
+        #self.controlMenu.addAction(controlChooseBpmAction)
         self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
         #self.controlMenu.addAction(controlZoomInPlot1Action)
@@ -326,7 +314,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #viewToolBar.addAction(viewErrorBarAction)
 
         controlToolBar = self.addToolBar("Control")
-        controlToolBar.addAction(controlChooseBpmAction)
+        #controlToolBar.addAction(controlChooseBpmAction)
         controlToolBar.addAction(controlResetPvDataAction)
 
         machToolBar = self.addToolBar("Machines")
@@ -413,12 +401,14 @@ class OrbitPlotMainWindow(QMainWindow):
             self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
                          self.elementSelected)
             self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
-            self.mdiarea.addSubWindow(p)
             print "update the plot"
             p.updatePlot()
             # set the zoom stack
             print "autozoom"
             p.wid.zoomAuto()
+            p.aplot.setErrorBar(self.error_bar)
+            p.aplot.replot()
+            self.mdiarea.addSubWindow(p)
             print "Show"
             p.show()
 
@@ -546,20 +536,23 @@ class OrbitPlotMainWindow(QMainWindow):
     def liveData(self, on):
         """Switch on/off live data taking"""
         self.live_orbit = on
-        for p in self.obtplots: p.liveData(on)
         
     def errorBar(self, on):
-        for p in self._active_plots(): p.setErrorBar(on)
+        self.error_bar = on
+        for w in self.mdiarea.subWindowList():
+            w.aplot.setErrorBar(on)
+            w.aplot.replot()
 
     def setDriftNone(self):
-        #self.plot1.setDrift('no')
-        #self.plot2.setDrift('no')
-        self.obtdata.reset_ref()
+        w = self.mdiarea.currentSubWindow()
+        if not w: return
+        w.setReferenceData(0.0)
 
     def setDriftNow(self):
-        #self.plot1.setDrift('now')
-        #self.plot2.setDrift('now')
-        self.obtdata.save_as_ref()
+        w = self.mdiarea.currentSubWindow()
+        if not w: return
+        # use the current data as reference
+        w.setReferenceData()
 
     def setDriftGolden(self):
         #self.plot1.setDrift('golden')
@@ -613,52 +606,29 @@ class OrbitPlotMainWindow(QMainWindow):
         xl, xr = w.currentXlim()
         return [e for e in elems if e.se > xl and e.sb < xr]
 
-    def updatePlots(self, autoScale = None):
-        for d in self.obtdata: d.update()
-        sx, x, xerr = self.obtdata[0].orbit()
-        sy, y, yerr = self.obtdata[1].orbit()
-
-        #icur = self.tabs.currentIndex()
-        px, py, pxe, pye = self.obtplots
-        px.updatePlot(sx, x, xerr)
-        pxe.updatePlot(sx, xerr)
-        py.updatePlot(sy, y, yerr)
-        pye.updatePlot(sy, yerr)
-
-        if autoScale == False:
-            px.zoomAuto()
-            py.zoomAuto()
-
-        for d in self.cordata: d.update()
-        sx, x, xerr = self.cordata[0].orbit()
-        sy, y, yerr = self.cordata[1].orbit()
-
-        #icur = self.tabs.currentIndex()
-        px, py, pxe, pye = self.corplots
-        px.updatePlot(sx, x, xerr)
-        pxe.updatePlot(sx, xerr)
-        py.updatePlot(sy, y, yerr)
-        pye.updatePlot(sy, yerr)
-
-        if autoScale == False:
-            px.zoomAuto()
-            py.zoomAuto()
-
 
     def timerEvent(self, e):
-        self.itimer += 1
-        #self.updatePlots()
-        #self.updateStatus()
-        for w in self.mdiarea.subWindowList():
-            if isinstance(w, ApMdiSubPlot): w.updatePlot()
+        if self.live_orbit:
+            self.itimer += 1
+            #self.updatePlots()
+            #self.updateStatus()
+            for w in self.mdiarea.subWindowList():
+                if not isinstance(w, ApMdiSubPlot): continue
+                w.updatePlot()
+                w.aplot.replot()
 
-    def updateStatus(self):
-        if self.obtdata:
-            self.statusBar().showMessage("read {0}".format(self.itimer))
+            self.statusBar().showMessage("plot updated: {0}".format(
+                time.strftime("%F %T")))
 
+            
     def singleShot(self):
-        self.updatePlots()
-        self.updateStatus()
+        for w in self.mdiarea.subWindowList():
+            if not isinstance(w, ApMdiSubPlot):  continue
+            w.updatePlot()
+            w.aplot.replot()
+
+        self.statusBar().showMessage("plot updated: {0}".format(
+            time.strftime("%F %T")))
 
     def resetPvData(self):
         self.obtdata.reset()
@@ -677,6 +647,19 @@ class OrbitPlotMainWindow(QMainWindow):
     #    self.plot1.curve2.setData(self.pvsx, x)
     #    self.plot2.curve2.setData(self.pvsy, y)
 
+    def activeOrbitPlot(self, field):
+        mach = str(self.machBox.currentText())
+        lat = str(self.latBox.currentText())
+        for w in self.mdiarea.subWindowList():
+            if not isinstance(w, ApMdiSubPlot):  continue
+            if w.machine() != mach: continue
+            if w.lattice() != lat: continue
+            if w.data.yfield != field: continue
+            return w
+
+        return None
+
+
     def _correctOrbit(self, bpms, obt):
         trims = self._lat.getElementList('HCOR')+ self._lat.getElementList('VCOR')
         #print len(bpms), bpms
@@ -690,18 +673,21 @@ class OrbitPlotMainWindow(QMainWindow):
         #    QMessageBox.warning(self, "Error:", " {0}".format(e))
 
     def createLocalBump(self):
+        wx = self.activeOrbitPlot('x')
+        wy = self.activeOrbitPlot('y')
+
         if self.corbitdlg is None:
             #print self.obtdata.elem_names
             # assuming BPM has both x and y, the following s are same
-            s, x, xe = self.obtdata.xorbit(nomask=True)
-            s, y, ye = self.obtdata.yorbit(nomask=True)
+            s, x, xe = wx.data.data(nomask=True)
+            s, y, ye = wy.data.data(nomask=True)
             x, y = [0.0]*len(s), [0.0] * len(s)
             print np.shape(x), np.shape(y)
             self.corbitdlg = OrbitCorrDlg(
-                self._lat.getElementList(self.obtdata.elem_names), 
-                self.obtdata.s, x, y, 
+                self._lat.getElementList(wx.data.names()), 
+                s, x, y, 
                 stepsize = (10e-7, 10e-7), 
-                orbit_plots=(self.obtxplot, self.obtyplot),
+                orbit_plots=(wx, wy),
                 correct_orbit = self._correctOrbit)
             self.corbitdlg.resize(600, 500)
             self.corbitdlg.setWindowTitle("Create Local Bump")

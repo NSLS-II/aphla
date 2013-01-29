@@ -99,7 +99,7 @@ class AbstractElement(object):
         elif self.family == 'DIPOLE':
             return [b, b, e, e, b, b, e, e], [0, h, h, -h, -h, h, h, 0], 'k'
         elif self.family == 'SEXT':
-            return [b, b, e, e], [0, 1.25*h, 1.25*h, 0], 'k'
+            return [b, b, e, e], [0, 1.4*h, 1.4*h, 0], 'k'
         elif self.family in ['HCOR', 'VCOR', 'TRIMX', 'TRIMY']:
             return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
                 [0, 0, h, 0, 0], 'r'
@@ -107,7 +107,7 @@ class AbstractElement(object):
             return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
                 [0, 0, h, 0, 0], 'b'
         else:
-            return [b, e], [0, 0], 'k'
+            return [b, b, e, e], [0, 0.2*h, 0.2*h, 0], 'k'
 
     def __str__(self):
         return AbstractElement._STR_FORMAT % (

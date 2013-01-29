@@ -86,9 +86,7 @@ class ApPlotData(object):
         y = np.compress(self.keep, self.y, axis=1)
         return np.std(y, axis = ax)
 
-
-
-    def orbit(self, nomask=False):
+    def data(self, nomask=False):
         """
         return horizontal orbit: (s, y, errorbar)
         """
@@ -107,6 +105,7 @@ class ApVirtualElemData(ApPlotData):
         """
         self.machine = kw.get("machine", None)
         self.lattice = kw.get("lattice", None)
+        self.plane   = kw.get("plane", None)
 
         self.velem = velem
         sb, se = np.array(self.velem.sb), np.array(self.velem.se)
@@ -143,4 +142,7 @@ class ApVirtualElemData(ApPlotData):
         self.yerrbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
+
+    def names(self):
+        return self.velem._name
 

@@ -271,8 +271,8 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
 
     def setData(self, x, y, e):
         self.x1, self.y1, self.e1 = x, y, e
-        Qwt.QwtPlotCurve.setData(self, self.x1, self.y1)
-
+        Qwt.QwtPlotCurve.setData(self, list(self.x1), list(self.y1))
+            
     def boundingRect(self):
         """
         Return the bounding rectangle of the data, error bars included.
@@ -389,7 +389,7 @@ class ApPlot(Qwt.QwtPlot):
         self.curve1.attach(self)
 
         self.curve2 = Qwt.QwtPlotCurve()
-        self.curve2.setPen(QPen(Qt.red, 4))
+        self.curve2.setPen(QPen(Qt.green, 5))
         self.curve2.attach(self)
         #self.curve2.setVisible(False)
 
@@ -437,9 +437,6 @@ class ApPlot(Qwt.QwtPlot):
         #self.marker.setLabel(Qwt.QwtText("Hello"))
         #self.connect(self, SIGNAL("doubleClicked
 
-    def eventFilter(self, obj, event):
-        traceback.print_exc()
-        return QObject.eventFilter(self, obj, event)
 
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
@@ -505,7 +502,8 @@ class ApPlot(Qwt.QwtPlot):
         #self.timerId = self.startTimer(1000)
 
     def alignScales(self):
-        raise RuntimeError("what is this")
+        #raise RuntimeError("what is this")
+        return
         self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)
         self.canvas().setLineWidth(1)
         for i in range(Qwt.QwtPlot.axisCnt):
@@ -523,14 +521,11 @@ class ApPlot(Qwt.QwtPlot):
     def updatePlot(self):
         self.curve1.setData()
         if self.golden is not None: self.golden.update()
-        self.replot()
-
-    def setDrift(self, mode = 'no'):
-        self.curve1.setDrift(mode)
+        #self.replot()
 
     def setErrorBar(self, on):
         self.curve1.errorOnTop = on
-        self.replot()
+        #self.replot()
 
     def _scaleVertical(self, factor = 1.0/1.5):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
@@ -726,32 +721,31 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.setWidget(self.wid)
         self.data = data
         self.err_only  = False
-
         self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elementSelected)
 
     def updatePlot(self):
-        print "updating the data"
+        #print "updating the data"
         self.data.update()
-        s, y, yerr = self.data.orbit()
+        s, y, yerr = self.data.data()
         #return
-        print "set data"
+        #print "set data", type(s), type(y), type(yerr)
         if self.err_only: self.aplot.curve1.setData(s, yerr)
         else: self.aplot.curve1.setData(s, y, yerr)
         # set unit
         self.aplot.setAxisTitle(Qwt.QwtPlot.yLeft, self.data.label())
-        print "replot"
-        print s, y, yerr
+        #print "replot"
+        #print s, y, yerr
         try:
-            self.aplot.replot()
+            #self.aplot.replot()
+            pass
         except:
             print "ERROR"
-        print "done replot"
+        #print "done replot"
 
     def elementSelected(self, elem):
         eleminfo = [self.data.machine, self.data.lattice, elem]
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), eleminfo)
-
 
     def currentXlim(self):
         """a tuple of (xmin, xmax)"""
@@ -761,3 +755,20 @@ class ApMdiSubPlot(QMdiSubWindow):
     def setMarkers(self, mks, on):
         self.aplot.setMarkers(mks, on)
 
+    def setReferenceData(self, dat = None):
+        if isinstance(dat, float):
+            self.data.yref = np.ones(len(self.data.yref), 'd') * dat
+        elif dat:
+            self.data.yref = np.array(dat, 'd')
+        else:
+            s, y, yerr = self.data.data()
+            self.data.yref = y
+
+    def lattice(self):
+        return self.data.lattice
+
+    def machine(self):
+        return self.data.machine
+
+    def plotCurve2(self, y, x = None):
+        self.aplot.plotCurve2(y, x)

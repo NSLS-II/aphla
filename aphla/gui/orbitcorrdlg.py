@@ -74,8 +74,8 @@ class OrbitCorrDlg(QDialog):
         self.val = [s, x, y]
 
         # draw the target orbit
-        self.orbit_plots[0].plotDesiredOrbit(self.val[1], self.val[0])
-        self.orbit_plots[1].plotDesiredOrbit(self.val[2], self.val[0])
+        self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
+        self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
 
     #def _cell_clicked(self, row, col):
     #    print row, col
@@ -88,8 +88,8 @@ class OrbitCorrDlg(QDialog):
         self.val[sender.col-1][sender.row] = sender.value()
         #for p in self.orbit_plots:
         #    #self.update_orbit(self.val[0], self.val[1])
-        self.orbit_plots[0].plotDesiredOrbit(self.val[1], self.val[0])
-        self.orbit_plots[1].plotDesiredOrbit(self.val[2], self.val[0])
+        self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
+        self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
 
 
     def call_apply(self):
@@ -100,6 +100,6 @@ class OrbitCorrDlg(QDialog):
 
     def done(self, r):
         for p in self.orbit_plots:
-            p.plotDesiredOrbit(None, None)
+            p.plotCurve2(None, None)
 
         QDialog.done(self, r)
