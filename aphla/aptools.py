@@ -85,8 +85,6 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
     return lft_hour
 
 
-    #norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
-    norm1 = np.linalg.norm(np.dot(m, dk*scale) + v0)
 def setLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
@@ -148,7 +146,7 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         caRmCorrect(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
 
 
-def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
+def correctOrbit(bpm = None, trimlst = None, **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
@@ -172,8 +170,6 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     # an orbit based these bpm
     if bpmlst is None:
         bpmlst = getElements('BPM')
-    else:
-        bpmlst = getElements(bpm)
 
     if plane == 'H': ref = zip([0.0] * len(bpmlst), [None] * len(bpmlst))
     elif plane == 'V': ref = zip([None] * len(bpmlst), [0.0] * len(bpmlst))

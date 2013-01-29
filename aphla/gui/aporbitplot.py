@@ -437,6 +437,10 @@ class ApPlot(Qwt.QwtPlot):
         #self.marker.setLabel(Qwt.QwtText("Hello"))
         #self.connect(self, SIGNAL("doubleClicked
 
+    def eventFilter(self, obj, event):
+        traceback.print_exc()
+        return QObject.eventFilter(self, obj, event)
+
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
         if not on:
@@ -727,14 +731,22 @@ class ApMdiSubPlot(QMdiSubWindow):
                      self.elementSelected)
 
     def updatePlot(self):
+        print "updating the data"
         self.data.update()
         s, y, yerr = self.data.orbit()
+        #return
+        print "set data"
         if self.err_only: self.aplot.curve1.setData(s, yerr)
         else: self.aplot.curve1.setData(s, y, yerr)
         # set unit
         self.aplot.setAxisTitle(Qwt.QwtPlot.yLeft, self.data.label())
-
-        self.aplot.replot()
+        print "replot"
+        print s, y, yerr
+        try:
+            self.aplot.replot()
+        except:
+            print "ERROR"
+        print "done replot"
 
     def elementSelected(self, elem):
         eleminfo = [self.data.machine, self.data.lattice, elem]

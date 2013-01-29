@@ -778,7 +778,7 @@ class Lattice:
         s1 = kwargs.get("s1", 0.0)
         s2 = kwargs.get("s2", None)
         highlight = kwargs.get("highlight", None)
-        
+
         prof = []
         for elem in self._elements:
             if elem.virtual: continue

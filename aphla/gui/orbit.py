@@ -20,6 +20,7 @@ require('cothread>=2.2')
 import cothread
 app = cothread.iqt()
 
+import traceback
 import aphla
 from aphla.catools import caget, caput, camonitor, FORMAT_TIME
 
@@ -37,7 +38,7 @@ from elemeditor import *
 
 
 import time
-from PyQt4.QtCore import QSize, SIGNAL, Qt
+from PyQt4.QtCore import QSize, SIGNAL, Qt, QObject
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
@@ -102,12 +103,12 @@ class OrbitPlotMainWindow(QMainWindow):
         self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
                                     QDockWidget.DockWidgetClosable)
         self.elemeditor.setFloating(False)
-        self.elemeditor.setEnabled(False)
+        #self.elemeditor.setEnabled(False)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
-        
+
 
         # logging
         self.logdock = QDockWidget("Log")
@@ -134,12 +135,14 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # update at 1/2Hz
         self.dt, self.itimer = 1500, 0
-        #self.timerId = None
-        self.timerId = self.startTimer(self.dt)
+        self.timerId = None
+        #self.timerId = self.startTimer(self.dt)
         self.corbitdlg = None # orbit correction dlg
 
         self.vbpm = None
         self.statusBar().showMessage("Welcome")
+
+        self.initMachine("nsls2v2")
 
     def createMenuToolBar(self):
         #
@@ -398,7 +401,9 @@ class OrbitPlotMainWindow(QMainWindow):
             fields = velem.fields()
 
         for fld in fields:
+            print "Processing", fld
             p = ApMdiSubPlot()
+            #QObject.installEventFilter(p.aplot)
             p.data = ApVirtualElemData(velem, fld, machine=lat.machine,
                                        lattice=latname)
             if c is not None: p.aplot.setColor(c)
@@ -409,10 +414,15 @@ class OrbitPlotMainWindow(QMainWindow):
                          self.elementSelected)
             self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
             self.mdiarea.addSubWindow(p)
+            print "update the plot"
             p.updatePlot()
             # set the zoom stack
+            print "autozoom"
             p.wid.zoomAuto()
+            print "Show"
             p.show()
+
+        print "Enable the buttons"
         if len(self.mdiarea.subWindowList()) > 0:
             self.elemeditor.setEnabled(True)
 
@@ -420,11 +430,17 @@ class OrbitPlotMainWindow(QMainWindow):
         if len(self.mdiarea.subWindowList()) == 0:
             self.elemeditor.setEnabled(False)
         
+        
     def newPlot(self):
         lat = str(self.latBox.currentText())
         famname = self.sender().text()
+        print "New plot:", famname
         if famname == "H Orbit":
-            self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x', "Hori. Orbit")
+            try:
+                self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x', "Hori. Orbit")
+            except:
+                print traceback.print_exc()
+                print "Failed"
         elif famname == "V Orbit":
             self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'y', "Vert. Orbit",
                                Qt.blue)
@@ -442,6 +458,7 @@ class OrbitPlotMainWindow(QMainWindow):
             
         #self.mdiarea.cascadeSubWindows()
         #print self.mdiarea.subWindowList()
+        if self.timerId is None: self.timerId = self.startTimer(self.dt)
 
     def click_markfam(self, on):
         w = self.mdiarea.currentSubWindow()
