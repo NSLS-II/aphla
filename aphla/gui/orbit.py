@@ -630,9 +630,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.statusBar().showMessage("plot updated: {0}".format(
             time.strftime("%F %T")))
 
-    def resetPvData(self):
-        self.obtdata.reset()
-        #hla.hlalib._reset_trims()
+    #def resetPvData(self):
+    #    self.obtdata.reset()
+    #    #hla.hlalib._reset_trims()
 
     def elementSelected(self, elems):
         """this action is ignored"""
@@ -641,11 +641,6 @@ class OrbitPlotMainWindow(QMainWindow):
         
         #elemobjs = _lat.getElementList(elemnames)
         #self._elemed.addElements(elemobjs)
-
-    #def plotDesiredOrbit(self, x, y):
-    #    #print "plot: ", x, y
-    #    self.plot1.curve2.setData(self.pvsx, x)
-    #    self.plot2.curve2.setData(self.pvsy, y)
 
     def activeOrbitPlot(self, field):
         mach = str(self.machBox.currentText())
