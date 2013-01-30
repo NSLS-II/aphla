@@ -71,11 +71,7 @@ class AbstractElement(object):
         self.symmetry = kwargs.get('symmetry', None)
         self.sequence = kwargs.get('sequence', (0, 0))
 
-        self.group = [self.family, self.cell, self.girder, self.symmetry]
-        if 'group' in kwargs:
-            if isinstance(kwargs['group'], (list,)): grp = [v for v in kwargs['group']]
-            else: grp = kwargs['group'].split(';')
-            self.group.extend(grp)
+        self.group = set([self.family, self.cell, self.girder, self.symmetry])
         
     def profile(self, vscale=1.0):
         """
@@ -213,6 +209,7 @@ class CaDecorator:
         self.pvh  = [] # step size
         self.pvlim = [] # lower/upper limit 
         # buffer the initial value and last setting/reading
+        self.pvunit = '' # most of the cases, the unit is "Ampere", the current
         self.rb = []  # bufferred readback value 
         self.sp = []  # bufferred setpoint value
         self.field = ''
@@ -742,7 +739,61 @@ class CaElement(AbstractElement):
         """
         add unit conversion for field
         """
+        # src, dst is unit system name
         self._field[field].unitconv[(src, dst)] = uc
+
+    def convertUnit(self, field, x, src, dst):
+        return self._field[field]._unit_conv(x, src, dst)
+
+    def get_unit_systems(self, field):
+        """
+        get a list all unit systems for field. 
+
+        None is the lower level unit, e.g. in EPICS channel
+        """
+        if not self._field[field].unitconv: return [None]
+        #if not self._field[field].unitconv.keys(): return []
+
+        src, dst = zip(*(self._field[field].unitconv.keys()))
+        return list(set(src).intersection(dst))
+
+    def getUnitSystems(self, field = None):
+        """
+        return a list of available unit systems for field. 
+
+        If no field specified, return a dictionary for all fields and their
+        unit systems.
+
+        None means the unit used in the lower level control system, e.g. EPICS.
+        """
+        if field is None:
+            return dict([(f, self.get_unit_systems(f)) for f \
+                             in self._field.keys()])
+        else:
+            return self.get_unit_systems(field)
+
+    def getUnit(self, field, unitsys='phy'):
+        """
+        get the unit name of a unit system, e.g. unitsys='phy'
+
+        return '' if no such unit system.
+        """
+        if field in self._field.keys() and unitsys == None: 
+            return self._field[field].pvunit
+
+        for k,v in self._field[field].unitconv.iteritems():
+            if k[0] == unitsys: return v.direction[0]
+            elif k[1] == unitsys: return v.direction[1]
+            
+        return ''
+
+    def setUnit(self, field, u):
+        if field not in self._field.keys(): 
+            raise RuntimeError("element '%s' has no '%s' field" % \
+                               self.name, field)
+
+        self._field[field].pvunit = u
+
 
     def updatePvRecord(self, pvname, properties, tags = []):
         """
@@ -760,6 +811,7 @@ class CaElement(AbstractElement):
         if properties is not None:
             elemhandle = properties.get('handle', 'readback')
             fieldfname = properties.get('field', None)
+            pvunit = properties.get('unit', '')
             if fieldfname is not None:
                 g = re.match(r'([\w\d]+)(\[\d+\])?', fieldfname)
                 if g is None:
@@ -773,6 +825,7 @@ class CaElement(AbstractElement):
                 else:
                     raise ValueError("invalid handle value '%s' for pv '%s'" % 
                                      (elemhandle, pvname))
+                if pvunit: self._field[fieldname].pvunit = pvunit
                 logger.info("'%s' field '%s'[%s] = '%s'" % (
                         elemhandle, fieldname, idx, pvname))
 
@@ -816,7 +869,7 @@ class CaElement(AbstractElement):
         
     def fields(self):
         """
-        return element's fields
+        return element's fields, not sorted.
         """
         return self._field.keys()
 
@@ -900,15 +953,12 @@ class CaElement(AbstractElement):
         source = kwargs.get('source', 'readback').lower()
         unit = kwargs.get('unit', None)
     
-        #if unit not in ['raw', None]:
-        #    raise RuntimeError("unit conversion (%s,%s) for field '%s' is not implemented yet" % ('raw', unit, field))
-
         if not self._field.has_key(field):
             v = None
         elif source == 'readback':
-            v = self._field[field].getReadback()
+            v = self._field[field].getReadback(unit)
         elif source.lower() == 'setpoint':
-            v = self._field[field].getSetpoint()
+            v = self._field[field].getSetpoint(unit)
         else:
             raise ValueError("unknow source {0}" % field)
         
@@ -966,7 +1016,7 @@ class CaElement(AbstractElement):
         seealso :func:`pv(field=field)`
         """
         self._put_field(field, val, unit)
-        for e in self.alias: e._field[field].put(field, val, unit=unit)
+        for e in self.alias: e._put_field(field, val, unit=unit)
 
     def settable(self, field):
         """
@@ -1010,8 +1060,10 @@ def merge(elems, **kwargs):
             pvdict[f][0].extend(pvrb)
             pvdict[f][1].extend(pvsp)
 
+    # consider only the common fields
     for k,v in count.iteritems(): 
         if v < len(elems): 
+            print("field '%s' has %d < %d" % (k, v, len(elems)))
             pvdict.pop(k)
     #print pvdict.keys()
     elem = CaElement(**kwargs)

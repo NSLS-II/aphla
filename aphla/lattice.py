@@ -25,6 +25,8 @@ import shelve
 import numpy as np
 from fnmatch import fnmatch
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Lattice:
     """
@@ -34,13 +36,14 @@ class Lattice:
     - *mode*
     - *tune* [nux, nuy]
     - *chromaticity* [cx, cy]
-    - *circumference* 
+    - *sb*, *se* s-position of begin and end. 
     - *ormdata* orbit response matrix data
     - *loop* as a ring or line
     """
     # ginore those "element" when construct the lattice object
 
     def __init__(self, name, mode = 'undefined'):
+        self.machine = ''
         self.name = name
         self._twiss = None
         # group name and its element
@@ -51,7 +54,7 @@ class Lattice:
         self.mode = mode
         self.tune = [ None, None]
         self.chromaticity = [None, None]
-        self.circumference = None
+        self.sb, self.se = 0.0, 0.0
         self.ormdata = None
         self.loop = True
 
@@ -155,8 +158,10 @@ class Lattice:
 
     def appendElement(self, elem):
         """
-        append a new element to lattice. callers are responsible for avoiding
-        duplicate elements (call hasElement before).
+        append a new element to lattice. 
+
+        callers are responsible for avoiding duplicate elements (call
+        hasElement before).
 
         seealso :func:`insertElement`
         """
@@ -242,7 +247,7 @@ class Lattice:
 
         for child in chlist:
             if not self._group.has_key(child):
-                print(__file__, "WARNING: no %s group found" % child)
+                logger.warn("WARNING: no %s group found" % child)
                 continue
             for elem in self._group[child]:
                 if elem in self._group[parent]: continue
@@ -452,7 +457,6 @@ class Lattice:
         elem = []
         for e in self._elements:
             # skip for duplicate
-            #print e.name,
             if e.name in elem: continue
 
             if not self._matchElementCgs(e, **kwargs):
@@ -463,7 +467,6 @@ class Lattice:
             elif fnmatch(e.name, group):
                 elem.append(e.name)
             else:
-                #print "skiped"
                 pass
                 
             #if cell and not e.cell in cell: continue
@@ -535,11 +538,13 @@ class Lattice:
         if newgroup == False, the group must exist before.
         """
 
-        if not self.hasElement(member): 
+        elem = self._find_exact_element(member)
+        if not elem:
             raise ValueError("element %s is not defined" % member)
-        elem = self.getElements(member)
+
         if self.hasGroup(group):
             if elem in self._group[group]: return
+            elem.group.add(group)
             for i,e in enumerate(self._group[group]):
                 if e.sb < elem.sb: continue
                 self._group[group].insert(i, elem)
@@ -548,6 +553,7 @@ class Lattice:
                 self._group[group].append(elem)
         elif newgroup:
             self._group[group] = [elem]
+            elem.group.add(group)
         else:
             raise ValueError("Group %s does not exist."
                              "use newgroup=True to add it" % group)
@@ -613,7 +619,6 @@ class Lattice:
         if groups in self._group.keys():
             return self._group[groups]
 
-        #print __file__, groups
         for g in groups:
             ret[g] = []
             imatched = 0
@@ -622,7 +627,6 @@ class Lattice:
                     imatched += 1
                     ret[g].extend([e.name for e in elems])
 
-            #print g, ret[g]
 
         r = set(ret[groups[0]])
         if op.lower() == 'union':
@@ -630,14 +634,13 @@ class Lattice:
                 r = r.union(set(v))
         elif op.lower() == 'intersection':
             for g, v in ret.items():
-                #print __file__, g, len(v), len(r)
                 r = r.intersection(set(v))
         else:
             raise ValueError("%s not defined" % op)
         
         return self.getElementList(self.sortElements(r))
 
-    def getNeighbors(self, element, group, n):
+    def getNeighbors(self, elemname, group, n):
         """
         Assuming self._elements is in s order
 
@@ -655,8 +658,8 @@ class Lattice:
             ['P2', 'P3', 'Q3', 'P4', 'P5']
         """
 
-        e0 = self._find_exact_element(element)
-        if not e0: raise ValueError("element %s does not exist" % element)
+        e0 = self._find_exact_element(elemname)
+        if not e0: raise ValueError("element %s does not exist" % elemname)
 
         el = self.getElementList(group, virtual=0)
 
@@ -676,7 +679,7 @@ class Lattice:
             ret.append(el[r])
         return ret
         
-    def getClosest(self, element, group):
+    def getClosest(self, elemname, group):
         """
         Assuming self._elements is in s order
 
@@ -691,8 +694,8 @@ class Lattice:
         The result can not be virtual element.
         """
 
-        e0 = self._find_exact_element(element)
-        if not e0: raise ValueError("element %s does not exist" % element)
+        e0 = self._find_exact_element(elemname)
+        if not e0: raise ValueError("element %s does not exist" % elemname)
 
         el = self.getElementList(group, virtual=0)
 
@@ -723,7 +726,6 @@ class Lattice:
         if len(self._elements) >= 10:
             idx = int(1.0+log10(len(self._elements)))
         fmt = "%%%dd %%%ds  %%%ds  %%9.4f %%9.4f\n" % (idx, ml_name, ml_family)
-        #print fmt
         for i, e in enumerate(self._elements):
             if e.virtual: continue
             s = s + fmt % (i, e.name, e.family, e.sb, e.length)
@@ -764,7 +766,7 @@ class Lattice:
         """return chromaticities -> (chx, chy) from twiss data"""
         return self._twiss.chrom
 
-    def getBeamlineProfile(self, s1=0.0, s2=1e10):
+    def getBeamlineProfile(self, **kwargs):
         """
         :param s1: s-begin
         :param s2: s-end
@@ -773,12 +775,17 @@ class Lattice:
 
         Virtual element is not included.
         """
+        s1 = kwargs.get("s1", 0.0)
+        s2 = kwargs.get("s2", None)
+        highlight = kwargs.get("highlight", None)
+        
         prof = []
         for elem in self._elements:
             if elem.virtual: continue
             elif elem.se < s1: continue
-            elif elem.sb > s2: continue
+            elif s2 is not None and elem.sb > s2: break
             x1, y1, c = elem.profile()
+            #if elem.family == highlight: c = 'b'
             prof.append((x1, y1, c, elem.name))
         # filter the zero
         ret = [prof[0]]

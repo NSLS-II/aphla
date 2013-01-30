@@ -203,11 +203,11 @@ def caRmCorrect(resp, kker, m, **kwarg):
     :return: converged (True) or not (False). None if it did not check.
     """
     scale = kwarg.get('scale', 0.68)
-    ref = kwarg.get('ref', None)
+    ref   = kwarg.get('ref', None)
     check = kwarg.get('check', True)
-    wait = kwarg.get('wait', 6)
+    wait  = kwarg.get('wait', 6)
     rcond = kwarg.get('rcond', 1e-4)
-    verbose = kwarg.get('verbose', 1)
+    verb  = kwarg.get('verbose', 1)
 
     v0 = np.array(caget(resp), 'd')
     if ref is not None: v0 = v0 - ref
@@ -226,9 +226,10 @@ def caRmCorrect(resp, kker, m, **kwarg):
     if check == True:
         time.sleep(wait)
         v1 = np.array(caget(resp), 'd')
+
         if ref is not None: v1 = v1 - np.array(ref)
         norm2 = np.linalg.norm(v1)
-        if verbose:
+        if verb:
             print("Euclidian norm: pred./realized", norm1/norm0, norm2/norm0)
         if norm2 > norm0:
             print("Failed to reduce orbit distortion, restoring...", 

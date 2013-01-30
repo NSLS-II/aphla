@@ -149,9 +149,9 @@ class Test0Element(unittest.TestCase):
         self.assertLess(dcct.value, 600.0)
 
         self.assertGreater(dcct.value, 1.0)
-        self.assertGreater(ap.eget('DCCT', 'value'), 1.0)
-        self.assertEqual(len(ap.eget('DCCT', ['value'])), 1)
-        self.assertGreater(ap.eget('DCCT', ['value'])[0], 1.0)
+        self.assertGreater(ap.eget('DCCT', 'value', unit=None), 1.0)
+        self.assertEqual(len(ap.eget('DCCT', ['value'], unit=None)), 1)
+        self.assertGreater(ap.eget('DCCT', ['value'], unit=None)[0], 1.0)
 
     def test_bpm_l0(self):
         bpms = ap.getElements('BPM')
@@ -288,10 +288,11 @@ class Test0ChanFinderCsvData(unittest.TestCase):
         self.cfs_url = os.environ.get('HLA_CFS_URL', None)
         pass
 
+    @unittest.skip("skip csv/sqlite data")
     def test_db_tags_l0(self):
         cfa = ap.chanfinder.ChannelFinderAgent()
         self.assertTrue(os.path.exists(self.cfs_db), "file '%s' does not exist" % self.cfs_db)
-        cfa.importSqliteDb(self.cfs_db)
+        cfa._importSqliteDb1(self.cfs_db)
 
         tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
         for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
@@ -823,11 +824,13 @@ class TestOrbit(unittest.TestCase):
 class TestOrbitControl(unittest.TestCase): 
     def setUp(self):
         ap.machines.use("V2SR")
+        pass
 
     def tearDown(self):
         ap.hlalib._reset_trims()
+        pass
 
-    @unittest.skip("orm data is not ready")
+    @unittest.skip
     def test_correct_orbit(self):
         ap.hlalib._reset_trims()
 
@@ -852,7 +855,7 @@ class TestOrbitControl(unittest.TestCase):
             vcor[i].y = np.random.rand() * 1e-5
 
         #raw_input("Press Enter to correct orbit...")
-        time.sleep(4)
+        time.sleep(6)
 
         cor = []
         #cor.extend([e.name for e in hcor])
@@ -893,7 +896,32 @@ class TestOrbitControl(unittest.TestCase):
         #    x, y = hcor[ih[i]].x, vcor[iv[i]].y
         #    print i, (x - hcor_v0[ih[i]]), (y - vcor_v0[iv[i]])
 
-    @unittest.skip("orm data is not ready")
+    def test_orm_x1(self):
+        hcor = ap.getElements('HCOR')[2]
+        bpm1 = ap.getElements('BPM')[5]
+        bpm2 = ap.getElements('BPM')[51]
+        x0 = hcor.x
+        b1, b2 = bpm1.x, bpm2.x
+        d = np.zeros((7, 3), 'd')
+        for i,dx in enumerate(np.linspace(-1e-4, 1e-4, len(d))):
+            hcor.x = x0 + dx
+            d[i,0] = hcor.x
+            time.sleep(4)
+            d[i,1] = bpm1.x
+            d[i,2] = bpm2.x
+        #
+        ormd = ap.machines._lat.ormdata
+        bpmr, trimr = [(bpm1.name, 'x'), (bpm2.name, 'x')], [(hcor.name, 'x')]
+        m, b, t = ormd.getSubMatrix(bpmr, trimr)
+        import matplotlib.pylab as plt
+        plt.clf()
+        plt.plot(d[:,0], d[:,1], 'bo--')
+        plt.plot(d[:,0], m[0,0]*d[:,0] + b1, 'b-')
+        plt.plot(d[:,0], d[:,2], 'rv--')
+        plt.plot(d[:,0], m[1,0]*d[:,0] + b2, 'r-')
+        plt.savefig("test_orm.png")
+        hcor.x = x0
+
     def test_local_bump(self):
         hcor = ap.getElements('HCOR')
         hcor_v0 = [e.x for e in hcor]
@@ -905,16 +933,32 @@ class TestOrbitControl(unittest.TestCase):
 
         bpm_v1 = [[e.x, e.y] for e in bpm]
 
-        bpm_v1[0] = [0, 0]
-        bpm_v1[1] = [0, 1e-4]
-        bpm_v1[2] = [2e-4, 1e-4]
-        bpm_v1[3] = [5e-7, 1e-4]
-        bpm_v1[4] = [0, 1e-4]
-        bpm_v1[5] = [0, 1e-4]
-        for i in range(6, len(bpm)):
+        for i in range(0, len(bpm)):
             bpm_v1[i] = [0, 0]
+        x1, x2 = 1e-4, 2e-4
+        bpm_v1[20][0] = x1
+        bpm_v1[21][0] = x1
+        bpm_v1[22][0] = x1
+        bpm_v1[23][0] = x2
+        bpm_v1[24][0] = x2
+        bpm_v1[25][0] = x1
+        bpm_v1[26][0] = x1
 
-        ap.setLocalBump(bpm, hcor+vcor, bpm_v1)
+        bpm_v1[100][1] = x2
+        bpm_v1[101][1] = x2
+        bpm_v1[102][1] = x1
+        bpm_v1[103][1] = x1
+        bpm_v1[104][1] = x2
+        bpm_v1[105][1] = x2
+
+        ap.setLocalBump(bpm, hcor+vcor, bpm_v1, repeat=10, verbose=3)
+
+        import matplotlib.pylab as plt
+        plt.clf()
+        v = ap.getOrbit(spos=True)
+        plt.plot(v[:,-1], v[:,0], '-.')
+        plt.plot(v[:,-1], v[:,1], '--')
+        plt.savefig("test_localbump.png")
 
 
 """
@@ -924,8 +968,8 @@ BBA
 
 class TestBba(unittest.TestCase):
     def setUp(self):
-        ap.machines.init("nsls2v2")
-        #ap.hlalib._reset_trims(verbose=True)
+        # ap.machines.init("nsls2v2")
+        # ap.hlalib._reset_trims(verbose=True)
         pass
 
     def test_quad_l0(self):
@@ -935,24 +979,23 @@ class TestBba(unittest.TestCase):
         for i,q in enumerate(qnamelist):
             self.assertGreater(abs(qlst[i].k1), 0.0)
 
-        #qlst[0].value = -0.633004
+    def test_bba_l2(self):
 
-        for i,qd in enumerate(qlst):
-            self.assertGreater(qd.sb, 0.0)
-            self.assertEqual(qd.name, qnamelist[i])
+        q, cor, bpm = ap.getElements(['ql3g2c29a', 'cl2g2c29a', 'pl2g2c29a'])
+        q.put("k1", -1.4894162702, unit=None)
+        cor.put("x", 0.0, unit=None)
+        cor.put("y", 0.0, unit=None)
 
-            bpm = ap.getClosest(qd.name, 'BPM')
-            self.assertTrue(bpm.name)
-            self.assertGreater(bpm.sb, 0.0)
-            self.assertGreaterEqual(abs(bpm.x), 0.0)
-            self.assertGreaterEqual(abs(bpm.y), 0.0)
+        print q.fields(), q.get('k1', unit=None)
 
-            hc = ap.getNeighbors(bpm.name, 'HCOR', 1)
-            self.assertEqual(len(hc), 3)
-            self.assertEqual(hc[1].name, bpm.name)
-            self.assertGreaterEqual(abs(hc[0].x), 0.0)
-            
-        #ap.createLocalBump([], [], [])
+        inp = { 'quad': (q, 'k1'), 'cor': (cor, 'x'),
+                'bpm': (bpm, 'x'),
+                'quad_dkick': -6e-2, 
+                'cor_kick': np.linspace(-6e-6, 1e-4, 5) }
+
+        bba = ap.bba.BbaBowtie(**inp)
+        bba.align()
+        bba.plot()
 
 """
 ORM

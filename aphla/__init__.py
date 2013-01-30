@@ -61,7 +61,7 @@ APHLA_LOG = 'aphla.log'
 _lgfmt = logging.Formatter("%(asctime)s - %(name)s [%(levelname)s]: %(message)s")
 # set null handler when logging for a library.
 _lghdl = NullHandler()
-_lghdl.setLevel(logging.DEBUG)
+_lghdl.setLevel(logging.INFO)
 _lghdl.setFormatter(_lgfmt)
 logging.getLogger('aphla').addHandler(_lghdl)
 
@@ -89,4 +89,6 @@ import bba
 # require newer version of scipy, not available in controls terminal yet.
 #import curve_fitting
 
+
+import contrib
 

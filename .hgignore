@@ -22,6 +22,7 @@ doc/_build
 doc/hla-*.egg
 doc/aphla-*.egg
 seasail.egg-info
+aphla/machines/nsls2/log_channelfinder_update.txt
 *~
 *.o
 *.a

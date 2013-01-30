@@ -166,30 +166,12 @@ class BbaMainWindow(QMainWindow):
                 self.widtab.addTab(wid, "%s:%s" % (grp, img))
         f.close()
 
-    def align(self):
+    def _load_conf_h5(self, h5file, grp = "bba"):
+        pass
+        
+    def align_quad(self, **kwargs):
         """
         """
-        import json
-        f = open(conf.filename("nsls2_sr_bba.json"), 'r')
-        #print "FIXME: using hard coded config file: %s" % f
-        confdat = json.load(f)
-        bpmx = confdat['orbit_pvx']
-        bpmy = confdat['orbit_pvy']
-        #vx, vy = np.array(caget(bpmx)), np.array(caget(bpmy))
-        #import matplotlib.pylab as plt
-        #plt.plot(vx)
-        #plt.plot(vy)
-        #
-        #import matplotlib.pylab as plt
-        #ac._analyze()
-
-        #fig = plt.figure()
-        #ax1 = fig.add_subplot(211)
-        #ax2 = fig.add_subplot(212)
-        #ac.plot(ax1, ax2)
-        #fig.savefig("align.png")
-
-        # if we need the config data
         for quadname in confdat['bowtie_align']:
             bbconf = confdat['bowtie_align'][quadname]
             print "Quadrupole:", bbconf['Q'], caget(bbconf['Q'][2].encode('ascii'))

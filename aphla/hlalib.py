@@ -404,8 +404,8 @@ def getNeighbors(element, group, n = 3):
 
     :Example:
 
-      >>> getNeighbors('PM1G4C27B', 'BPM', 2)
-      >>> getNeighbors('PM1G4C27B', 'QUAD', 1)
+      >>> getNeighbors('X', 'BPM', 2) # their names are ['1','2','X', '3', '4']
+      >>> getNeighbors('QC', 'QUAD', 1) # their names are ['Q1', 'QC', 'Q2']
       >>> el = hla.getNeighbors('PH2G6C25B', 'P*C10*', 2)
       >>> [e.name for e in el]
       ['PL2G6C10B', 'PL1G6C10B', 'PH2G6C25B', 'PH1G2C10A', 'PH2G2C10A']
@@ -413,7 +413,11 @@ def getNeighbors(element, group, n = 3):
       [284.233, 286.797, 678.903, 268.921, 271.446]
     """
 
-    return machines._lat.getNeighbors(element, group, n)
+    if isinstance(element, (str, unicode)):
+        return machines._lat.getNeighbors(element, group, n)
+    else:
+        return machines._lat.getNeighbors(element.name, group, n)
+        
 
 def getClosest(element, group):
     """
@@ -428,17 +432,19 @@ def getClosest(element, group):
 
     It calls :meth:`~aphla.lattice.Lattice.getClosest`
     """
+    if isinstance(element, (str, unicode)):
+        return machines._lat.getClosest(element, group)
+    else:
+        return machines._lat.getClosest(element.name, group)
 
-    return machines._lat.getClosest(element, group)
-
-def getBeamlineProfile(s1 = 0, s2 = 1e10):
+def getBeamlineProfile(s1 = 0, s2 = None):
     """
     return the beamline profile from s1 to s2
 
     it calls :meth:`~aphla.lattice.Lattice.getBeamlineProfile` of the
     current lattice.
     """
-    return machines._lat.getBeamlineProfile(s1, s2)
+    return machines._lat.getBeamlineProfile(s1=s1, s2=s2)
 
 
 def getDistance(elem1, elem2, absolute=True):
@@ -734,6 +740,15 @@ def getBpms():
     lattice and take a "union".
     """
     return machines._lat.getGroupMembers('BPM', op='union')
+
+def getQuads():
+    """
+    return a list of bpms object.
+
+    this calls :func:`~aphla.lattice.Lattice.getGroupMembers` of current
+    lattice and take a "union".
+    """
+    return machines._lat.getGroupMembers('QUAD', op='union')
 
 
 def getOrbit(pat = '', spos = False):

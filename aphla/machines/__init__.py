@@ -1,7 +1,10 @@
 """
-In ``aphla`` one machine includes several accelerator structure, e.g. "nsls2v2" is a machine with several submachine or lattice V1LTD, V1LTB, V2SR.
+In ``aphla`` one machine includes several accelerator structure,
+e.g. "nsls2v2" is a machine with several submachine or lattice V1LTD, V1LTB,
+V2SR.
 
-Submachines are also called lattice in ``aphla``. Each lattice has a list of elements, magnet or instrument. The submachines/lattices can share elements. 
+Submachines are also called lattice in ``aphla``. Each lattice has a list of
+elements, magnet or instrument. The submachines/lattices can share elements.
 """
 
 from ..unitconv import *
@@ -14,7 +17,6 @@ from ..resource import getResource
 import os
 import glob
 from pkg_resources import resource_string, resource_exists, resource_filename
-#from pvlist import vsr_pvlist
 import cPickle as pickle
 
 import logging
@@ -29,8 +31,12 @@ HLA_TAG_Y    = HLA_TAG_PREFIX + '.y'
 HLA_TAG_SYS_PREFIX = HLA_TAG_PREFIX + '.sys'
 
 #
-HLA_VFAMILY = 'HLA:VFAMILY'
+HLA_VFAMILY = 'HLA:VIRTUAL'
 HLA_VBPM   = 'HLA:VBPM'
+HLA_VHCOR   = 'HLA:VHCOR'
+HLA_VVCOR   = 'HLA:VVCOR'
+HLA_VQUAD  = 'HLA:VQUAD'
+HLA_VSEXT  = 'HLA:VSEXT'
 
 HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
@@ -77,11 +83,39 @@ def load(machine, submachines = "*", **kwargs):
     logger.debug("importing '%s'" % machine)
     m = __import__(machine, globals(), locals(), [], -1)
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
+    # update machine name for each lattice
+
+    # some extra group info is not ready unitl returned from machines init.
+    # This vELEM creation can not be done in createLattice
+    for k,vlat in lats.items():
+        vlat.machine = machine
+        # a virtual bpm. its field is a "merge" of all bpms.
+        iv = 100000
+        vpar = { 'virtual': 1, 'name': None, 'family': HLA_VFAMILY,
+                 'index': None }
+        for fam,vfam in [('BPM', HLA_VBPM), ('HCOR', HLA_VHCOR),
+                     ('VCOR', HLA_VVCOR), ('QUAD', HLA_VQUAD),
+                     ('SEXT', HLA_VSEXT)]:
+            # a virtual element. its field is a "merge" of all bpms.
+            velem = vlat.getElementList(fam)
+            vpar.update({'name': vfam, 'index': iv + 1})
+            if velem:
+                allvelem = merge(velem, **vpar)
+                vlat.insertElement(allvelem, groups=[HLA_VFAMILY])
+
+            iv = iv + 1
 
     global _lat, _lattice_dict
     _lattice_dict.update(lats)
     _lat = lat
+    logger.info("setting default lattice '%s'" % _lat.name)
 
+
+    for k,v in _lattice_dict.items():
+        if not v._group: continue
+        for e in v._group.get(HLA_VFAMILY, []):
+            e.virtual = 1
+        
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
                                  if _lat == v][0]
@@ -131,7 +165,7 @@ def findCfaConfig(srcname, machine, submachines):
         if srcname.endswith('.csv'):
             cfa.importCsv(srcname)
         elif srcname.endswith(".sqlite"):
-            cfa.importSqliteDb(srcname)
+            cfa.importSqlite(srcname)
         else:
             raise RuntimeError("Unknown explicit source '%s'" % srcname)
         return cfa
@@ -148,12 +182,12 @@ def findCfaConfig(srcname, machine, submachines):
     elif os.path.exists(homesrc + '.sqlite'):
         msg = "Creating lattice from '%s.sqlite'" % homesrc
         logger.info(msg)
-        cfa.importSqliteDb(homesrc + '.sqlite')
+        cfa.importSqlite(homesrc + '.sqlite')
         #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
+        cfa.downloadCfs(HLA_CFS_URL, property=[('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
         # map the cf property name to alpha property name
         #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif resource_exists(__name__, os.path.join(machine, srcname + '.csv')):
@@ -173,7 +207,7 @@ def findCfaConfig(srcname, machine, submachines):
         #src_pkg_csv.endswith('.sqlite')
         msg = "Creating lattice from '%s'" % name
         logger.info(msg)
-        cfa.importSqliteDb(name)
+        cfa.importSqlite(name)
         #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     else:
         logger.error("Lattice data are available for machine '%s'" % machine)
@@ -183,7 +217,7 @@ def findCfaConfig(srcname, machine, submachines):
     return cfa
 
 def createLattice(name, pvrec, systag, desc = 'channelfinder', 
-                  create_vbpm = True):
+                  vbpm = True, vcor = True):
     """
     create a lattice from channel finder data
 
@@ -245,13 +279,6 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
         logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
         
-    if create_vbpm:
-        # a virtual bpm. its field is a "merge" of all bpms.
-        bpms = lat.getElementList('BPM')
-        allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
-                                'family': HLA_VFAMILY, 'index': 100000})
-        lat.insertElement(allbpm, groups=[HLA_VFAMILY])
-
     return lat
 
 
@@ -294,7 +321,7 @@ def lattices():
     Example::
 
       >>> lattices()
-      [ 'LTB', 'LTB-txt', 'SR', 'SR-txt'}
+      [ 'LTB', 'LTB-txt', 'SR', 'SR-txt']
       >>> use('LTB-txt')
 
     A lattice can be used with :func:`~aphla.machines.use`

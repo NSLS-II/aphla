@@ -1,15 +1,15 @@
 """
-NSLS2 V2
----------
+NSLS2 Lattice Initialization
+--------------------
 """
 
 import logging
 
-#APHLA_LOG = os.path.join(tempfile.gettempdir(), "aphla.log")
 APHLA_LOG = 'aphla.nsls2.log'
 #logging.basicConfig(filename=APHLA_LOG,
 #    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
 #    level=logging.DEBUG)
+
 _lgfmt = logging.Formatter("%(asctime)s - %(name)s [%(levelname)s]: %(message)s")
 # set null handler when logging for a library.
 _lghdl = logging.FileHandler(filename=APHLA_LOG)
@@ -19,7 +19,8 @@ _lghdl.setFormatter(_lgfmt)
 logging.getLogger('aphla').addHandler(_lghdl)
 
 logger = logging.getLogger(__name__)
-logger.info("Testing")
+#logger.info("Testing")
 
-from lattice import *
+# there must be a "init_submachines" imported.
+from nsls2init import *
 
