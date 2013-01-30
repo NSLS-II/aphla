@@ -81,7 +81,7 @@ class OrmData:
         tgrp = grp.create_group('bpm')
         name, spos, plane = zip(*self.bpm)
         # dtype('<U9') is not recognized in earlier h5py
-        if h5py.version.version_tuple[:3] < (2,1,1):
+        if h5py.version.version_tuple[:3] <= (2,1,1):
             name = [v.encode('ascii') for v in name]
             #pv = [p.encode('ascii') for p in pv]
         dst = tgrp.create_dataset('element', (m,), data = name, dtype=str_type, 
@@ -97,7 +97,7 @@ class OrmData:
         #
         name, spos, plane = zip(*self.trim)
         # dtype('<U9') is not recognized in earlier h5py
-        if h5py.version.version_tuple[:3] < (2,1,1):
+        if h5py.version.version_tuple[:3] <= (2,1,1):
             name = [v.encode('ascii') for v in name]
             #pvrb = [p.encode('ascii') for p in pvrb]
             #pvsp = [p.encode('ascii') for p in pvsp]

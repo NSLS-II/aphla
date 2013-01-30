@@ -1,7 +1,9 @@
 """
 Unit Conversion
-~~~~~~~~~~~~~~~~
+----------------
 """
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 import numpy as np
 from collections import Iterable

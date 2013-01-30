@@ -9,9 +9,11 @@ NSLS2 V2 Unit Test
 - test_*_l2 for beam steering test
 """
 
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 # cause timeout by nosetest
-#from cothread.catools import caget
-#print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
+# from cothread.catools import caget
+# print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
 
 import sys, os, time
 from fnmatch import fnmatch

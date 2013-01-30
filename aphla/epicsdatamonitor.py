@@ -1,3 +1,11 @@
+"""
+EPICS Data Monitor
+-------------------
+
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 import numpy as np
 from cothread.catools import camonitor, caget
 import threading, time

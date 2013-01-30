@@ -47,7 +47,9 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'contents'
+master_doc = 'userguide'
+
+unused_docs = []
 
 # General information about the project.
 project = u'aphla'
@@ -77,7 +79,7 @@ release = aphla.__version__
 
 # List of directories, relative to source directory, that shouldn't be searched
 # for source files.
-exclude_trees = ['_build']
+exclude_trees = ['_build', '_templates']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -197,7 +199,7 @@ latex_documents = [
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
-#latex_use_parts = False
+# latex_use_parts = True
 
 # Additional stuff for the LaTeX preamble.
 latex_preamble = '\\usepackage{relsize}'

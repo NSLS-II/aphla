@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Channel Finder
 ---------------
@@ -13,6 +11,9 @@ tags. This can help us to identify the associated element name, type, location
 for every PV. The PVs are also tagged for 'default' read/write for a element
 it is linked.
 """
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from __future__ import print_function, unicode_literals
 
 from fnmatch import fnmatch

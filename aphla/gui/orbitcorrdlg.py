@@ -1,3 +1,10 @@
+"""
+Dialog for Orbit Correction and Local Bump
+------------------------------------------
+
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 from PyQt4.Qt import Qt, SIGNAL
 from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,

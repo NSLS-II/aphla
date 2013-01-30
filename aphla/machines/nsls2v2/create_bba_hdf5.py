@@ -1,4 +1,9 @@
-#
+"""
+Create HDF5 Conf for BBA
+--------------------------
+"""
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 import numpy as np
 import aphla as ap
 import h5py

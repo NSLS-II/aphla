@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 """
-NSLS2 V3 BSR+3SR Unit Test
+Unit Test: NSLS2 V3 BSR+3SR 
 ---------------------------
 """
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 import sys, os, time
 from fnmatch import fnmatch

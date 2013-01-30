@@ -4,6 +4,10 @@
    contain the root `toctree` directive.
 
 
+************************
+``aphla`` User Guide
+************************
+
 .. htmlonly::
    :Release: |version|
    :Date: |today|
@@ -34,14 +38,14 @@
    :maxdepth: 2
 
    intro.rst
-   installation.rst
+   quickstart.rst
    tutorial.rst
+   unitconv.rst
+   aplibgui.rst
    channelfinder.rst
+   faq.rst
    todo.rst
    appendix.rst
-   quickstart.rst
-   faq.rst
-   history.rst
 
 .. _EPICS: http://www.aps.anl.gov/epics
 .. _Python: http://www.python.org/
@@ -57,5 +61,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
 

@@ -1,3 +1,8 @@
+"""
+create unit conversion data for NSLS-II
+"""
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 import os
 import sys
 import numpy as np
