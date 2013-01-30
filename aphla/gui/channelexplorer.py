@@ -123,6 +123,7 @@ FILTER_TABLE_COLUMN_ODICT['filter_value'] = 'Value'
 
 FILTER_TABLE_COLUMN_HANDLE_LIST    = FILTER_TABLE_COLUMN_ODICT.keys()
 FILTER_TABLE_COLUMN_DISP_NAME_LIST = FILTER_TABLE_COLUMN_ODICT.values()
+    
 
 ########################################################################
 class Filter():
@@ -272,9 +273,8 @@ class FilterNameValidator(QValidator):
         it will end up with an error saying "TypeError: invalid result type from FilterNameValidator.validate()"
         '''
         return (QValidator.Acceptable, input_string, pos)
+
     
-    
-        
 ########################################################################
 class FilterTableModel(QAbstractTableModel):
     """"""
@@ -680,8 +680,7 @@ class FilterTableModel(QAbstractTableModel):
         else:
             pass
         
-        
-        
+            
 ########################################################################
 class FilterTableItemDelegate(QStyledItemDelegate):
     """"""
@@ -710,6 +709,7 @@ class FilterTableItemDelegate(QStyledItemDelegate):
                                  option.rect.height() / 2 -
                                  checkbox_rect.height() / 2 )
         
+        
         return QRect(checkbox_point, checkbox_rect.size())
 
     #----------------------------------------------------------------------
@@ -726,7 +726,6 @@ class FilterTableItemDelegate(QStyledItemDelegate):
                                  option.rect.height() / 2 -
                                  radiobutton_rect.height() / 2 )
         
-        
         return QRect(radiobutton_point, radiobutton_rect.size())
         
     #----------------------------------------------------------------------
@@ -735,14 +734,37 @@ class FilterTableItemDelegate(QStyledItemDelegate):
 
         row = index.row()
         col_handle = FILTER_TABLE_COLUMN_HANDLE_LIST[index.column()]
-
-        stylePainter = QStylePainter(painter.device(), self._view)
         
-        stylePainter.save()
+        '''
+        Somehow after upgrading to Debian 7 or on Ubuntu 12.04, the creation
+        of QStylePainter object with
         
+        > stylePainter = QStylePainter(painter.device(), self._view)
+        
+        results in Segmentation Fault, right before paintEvent by
+        QTableView associated with this delegate is finished.
+        
+        Creation of QStylePainter object with
+        
+        > stylePainter = QStylePainter(self._view)
+        
+        does not result in Seg. Fault., but it does not render the view
+        correctly.
+        
+        The solution to the problem is to use QStyle.drawControl &
+        QStyle.drawComplexControl, instead of the corresponding functions
+        of QStylePainter.
+        
+        As a result QStylePainter.save() & QStylePainter.restore() have been
+        commented out.
+        '''
+        style = self._view.style()
+                
         value = index.model().data(index)
         
         if col_handle == 'selected':
+            #stylePainter.save()
+
             checked = value
             
             opt = QStyleOptionButton()
@@ -760,10 +782,13 @@ class FilterTableItemDelegate(QStyledItemDelegate):
             # Centering of Radiobutton
             opt.rect = self.getRadioButtonRect(option)
             
-            stylePainter.drawControl(QStyle.CE_RadioButton, opt)
-            #self._view.style().drawControl(QStyle.CE_RadioButton, option, painter, self._view)
+            #stylePainter.drawControl(QStyle.CE_RadioButton, opt)
+            style.drawControl(QStyle.CE_RadioButton, opt, painter, self._view)
 
+            #stylePainter.restore()
         elif col_handle == 'NOT':
+            #stylePainter.save()
+
             checked = value
             
             opt = QStyleOptionButton()
@@ -781,11 +806,15 @@ class FilterTableItemDelegate(QStyledItemDelegate):
             # Centering of Checkbox
             opt.rect = self.getCheckBoxRect(option)
             
-            stylePainter.drawControl(QStyle.CE_CheckBox, opt)
-
+            #stylePainter.drawControl(QStyle.CE_CheckBox, opt)
+            style.drawControl(QStyle.CE_CheckBox, opt, painter, self._view)
+            
+            #stylePainter.restore()
         elif col_handle in ('set1_name','set2_name','set_operator',
                             'displayed_property_name','filter_operator',
                             'index','filter_value'):
+            #stylePainter.save()
+
             text = value
             
             opt = QStyleOptionComboBox()
@@ -796,13 +825,18 @@ class FilterTableItemDelegate(QStyledItemDelegate):
             else:
                 opt.state |= QStyle.State_ReadOnly
             
-            stylePainter.drawComplexControl(QStyle.CC_ComboBox, opt) # draw only the combobox frame
-            stylePainter.drawControl(QStyle.CE_ComboBoxLabel, opt) # draw the text inside the combobox
+            #stylePainter.drawComplexControl(QStyle.CC_ComboBox, opt) # draw only the combobox frame
+            style.drawComplexControl(QStyle.CC_ComboBox, opt, painter, self._view) # draw only the combobox frame
+            #stylePainter.drawControl(QStyle.CE_ComboBoxLabel, opt) # draw the text inside the combobox
+            style.drawControl(QStyle.CE_ComboBoxLabel, opt, painter, self._view) # draw the text inside the combobox
             
+            #stylePainter.restore()
         else:
+            #stylePainter.restore()            
             QStyledItemDelegate.paint(self, painter, option, index)
+            return
             
-        stylePainter.restore()
+        
     
     #----------------------------------------------------------------------
     def sizeHint(self, option, index):
@@ -1777,7 +1811,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         
         # Set up the user interface from Designer
         self.setupUi(self)
-    
+        
         self.setModal(isModal)
         
         self.max_auto_adjust_column_width = 100
@@ -3318,6 +3352,9 @@ def main(args=None):
         #sys.exit(exit_status)
         
     cothread.iqt()
+    
+    #qApp.setStyle('plastique')
+    #qApp.setStyle('GTK+')
     
     result = make(modal=True, output_type=TYPE_OBJECT,
                   init_object_type='channel',
