@@ -788,6 +788,7 @@ class CaElement(AbstractElement):
         return ''
 
     def setUnit(self, field, u):
+        """set the unit symbol for raw unit system"""
         if field not in self._field.keys(): 
             raise RuntimeError("element '%s' has no '%s' field" % \
                                self.name, field)

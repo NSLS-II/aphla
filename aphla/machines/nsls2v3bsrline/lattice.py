@@ -1,3 +1,10 @@
+"""
+NSLS2V3BsrLine Machine Structure Initialization
+-------------------------------------------------
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, HLA_VFAMILY,
                 ChannelFinderAgent, Lattice, getResource)
 from ... import element

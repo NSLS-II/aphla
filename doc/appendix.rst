@@ -1,7 +1,14 @@
 .. _appendix:
 
+Appendix
+=============
+
+.. include:: history.rst
+.. include:: installation.rst
+
+
 Acronym and API Prefix
-=========================
+------------------------
 
 We recommend to use full word instead of acronym, but for the most
 common ones, acronym makes life easier. The following list serves as a
@@ -30,7 +37,7 @@ sp(setpoint), rb(readback) are common acronyms.
 
 
 Terminology for High Level Applications
-------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 The naming convension and terminology should follow the definitions of
@@ -122,7 +129,7 @@ A set of commonly used words are explained in the following:
 
 
 Specifications for Servers and Databases
-=========================================
+-----------------------------------------
 
 **DISCLAIMER:**
 
@@ -135,7 +142,7 @@ HLA are interfering or relying on this specific implementation**
 
 
 Services and DB
------------------
+~~~~~~~~~~~~~~~~
 
 - Model service: read/save models (magnets settings, linear lattice)
   from/to IRMIS for HLA.

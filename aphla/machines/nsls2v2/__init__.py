@@ -3,6 +3,8 @@ NSLS2 V2
 ---------
 """
 
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 import logging
 
 #APHLA_LOG = os.path.join(tempfile.gettempdir(), "aphla.log")

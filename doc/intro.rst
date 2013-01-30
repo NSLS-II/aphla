@@ -14,7 +14,7 @@ which is used for writing further scripts and interactive controls.
 HLA Lib Summary
 ---------------------
 
-The following are some common functions. Please see :doc:`ref` for a list of
+The following are some common functions. Please see :doc:`libref` for a list of
 documented modules, methods and functions.
 
 .. include:: hlasummary.txt

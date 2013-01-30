@@ -1,3 +1,9 @@
+"""
+Unit Test: Analysis
+--------------------
+"""
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 import sys
 
 if sys.version_info[:2] == (2, 6):

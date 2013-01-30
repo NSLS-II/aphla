@@ -1,13 +1,11 @@
-#!/usr/bin/env python
-
 """
 Core APHLA Libraries
-~~~~~~~~~~~~~~~~~~~~~
-
-:author: Lingyun Yang
+---------------------
 
 Defines the fundamental routines.
 """
+
+# :author: Lingyun Yang
 
 import logging
 import numpy as np

@@ -1,3 +1,9 @@
+"""
+Patch the DB
+--------------
+"""
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from aphla import chanfinder
 from fnmatch import fnmatch
 

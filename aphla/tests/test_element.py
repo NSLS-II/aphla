@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+"""
+Unit Test: element
+-------------------
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 import sys, os, time
 

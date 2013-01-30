@@ -3,6 +3,7 @@ process "nsls2srid_prop.csv" from "CD3-Aug15-11-oneCell-norm-Aug19-tracy.lat".
 
 -- 2012/08/21
 """
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 import sys, os
 import re

@@ -1,3 +1,10 @@
+"""
+NSLS2 Machine Structure Initialization
+--------------------------------------
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource,
                 setUnitConversion)
 from .. import (OrmData, Twiss)

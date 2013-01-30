@@ -3,6 +3,8 @@ NSLS2 Lattice Initialization
 --------------------
 """
 
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 import logging
 
 APHLA_LOG = 'aphla.nsls2.log'

@@ -15,7 +15,8 @@ learning how to use aphla, see also :ref:`tutorial`
 .. toctree::
    :maxdepth: 2
 
-   catools
-   lattice
-   hlroutines
+   librefcatools
+   libreflattice
+   librefhlacore
+
 

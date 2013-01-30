@@ -1,15 +1,18 @@
-#!/usr/bin/env python
+"""
+AP Beam Based Alignment
+------------------------
+
+"""
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 import cothread
 app = cothread.iqt()
-
-#from cothread.catools import caget, caput
 
 import sys
 import gui_resources
 #import bpmtabledlg
 from elementpickdlg import ElementPickDlg
-from apbbaconfdlg import BbaConfig
+#from apbbaconfdlg import BbaConfig
 #from orbitplot import OrbitPlot
 from aphla import conf, bba
 

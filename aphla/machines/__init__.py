@@ -1,4 +1,8 @@
 """
+Machine Structure Initialization
+--------------------------------
+
+
 In ``aphla`` one machine includes several accelerator structure,
 e.g. "nsls2v2" is a machine with several submachine or lattice V1LTD, V1LTB,
 V2SR.
@@ -6,6 +10,8 @@ V2SR.
 Submachines are also called lattice in ``aphla``. Each lattice has a list of
 elements, magnet or instrument. The submachines/lattices can share elements.
 """
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 from ..unitconv import *
 from ..element import *
@@ -187,7 +193,8 @@ def findCfaConfig(srcname, machine, submachines):
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, property=[('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
+        cfa.downloadCfs(HLA_CFS_URL, property=[
+                ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
         # map the cf property name to alpha property name
         #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif resource_exists(__name__, os.path.join(machine, srcname + '.csv')):
