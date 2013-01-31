@@ -125,7 +125,7 @@ class BbaBowtie:
         self.cor_kick = [xp0 + dk for dk in self.cor_dkick]
 
         obt00 = self._get_orbit()
-        print "obtshape:", np.shape(obt00)
+        #print "obtshape:", np.shape(obt00)
         self.orbit = np.zeros((2, 1+len(self.cor_dkick), len(obt00)), 'd')
         # one more for original orbit
 
@@ -140,13 +140,13 @@ class BbaBowtie:
             obtref, diffstd_list=True, verbose=verbose, 
             diffstd=self.orbit_diffstd, minwait=self.minwait)
         obt01 = self._get_orbit()
-        print "   reading orbit", obt01
+        #print "   reading orbit", obt01
         # orbit before and after quad inc
         self.orbit[0, 0, :] = obt00[:]
         self.orbit[1, 0, :] = obt01[:]
 
         #print "step down quad"
-        print "-- reset quad:", self._q.name
+        #print "-- reset quad:", self._q.name
         obtref = getOrbit()
         self._q.put(self._qf, qk0, unit=None)
         timeout, log = waitStableOrbit(
@@ -154,26 +154,26 @@ class BbaBowtie:
             diffstd=self.orbit_diffstd, verbose=verbose, 
             diffstd_list=True, minwait=self.minwait)
 
-        print "   reading orbit", getOrbit()
+        #print "   reading orbit", getOrbit()
         obt02 = self._get_orbit()
 
         # initial qk
         for j,dxp in enumerate(self.cor_kick):
             obt = self._get_orbit()     # for checking orbit changed
-            print "setting trim:", self._c.name, j, dxp
+            #print "setting trim:", self._c.name, j, dxp
             obtref = getOrbit()
             self._c.put(self._cf, dxp, unit=None)
             timeout, log = waitStableOrbit(
                 obtref,
                 diffstd=self.orbit_diffstd, minwait = self.minwait,
                 diffstd_list=True, verbose=verbose)
-            print "   reading orbit", getOrbit()
+            #print "   reading orbit", getOrbit()
             obt1 = self._get_orbit()
             self.orbit[0, j+1,:] = obt1
 
         # adjust qk
         obt = self._get_orbit()
-        print "reset trim, inc quad"
+        #print "reset trim, inc quad"
         #caput(self.trim_pvsp, xp0)
         #caput(self.quad_pvsp, qk0 + self.dqk1)
         obtref = getOrbit()
@@ -183,21 +183,21 @@ class BbaBowtie:
             obtref, diffstd=self.orbit_diffstd, minwait = self.minwait,
             diffstd_list= True, verbose=verbose)
 
-        print "  get orbit", getOrbit()
+        #print "  get orbit", getOrbit()
         obt = self._get_orbit()
         for j,dxp in enumerate(self.cor_kick):
-            print "setting trim:", self._c.name, j, dxp
+            #print "setting trim:", self._c.name, j, dxp
             #caput(self.trim_pvsp, dxp)
             obtref = getOrbit()
             self._c.put(self._cf, dxp, unit=None)
             timeout, log = waitStableOrbit(
                 obtref, diffstd=self.orbit_diffstd, minwait = self.minwait,
                 diffstd_list=True, verbose=verbose)
-            print "  reading orbit", getOrbit()
+            #print "  reading orbit", getOrbit()
             obt = self._get_orbit()
             self.orbit[1, j+1, :] = obt
         # reset qk
-        print "reset quad and trim"
+        #print "reset quad and trim"
         #caput(self.quad_pvsp, qk0)
         #caput(self.trim_pvsp, xp0)
         self._q.put(self._qf, qk0, unit=None)
