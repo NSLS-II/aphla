@@ -12,8 +12,8 @@ To use this script, create a file 'conf.py' similar to the following::
 
 The input command file::
 
-  addproperty prpt=val pv1,pv2,pv3
-  add 
+  update prpt=val pv1,pv2,pv3
+  add prpt=val pv1,pv2,pv3
 
 :author: Lingyun Yang
 :date: 2011-05-11 16:22
@@ -189,7 +189,7 @@ def addPvProperty(cf, pv, p, v, owner):
         cf.set(property=Property(p, owner, v))
     cf.update(channelName=pv, property=Property(p, owner, v))
 
-def addPropertyPvs(cf, p, owner, v, pvs):
+def updatePropertyPvs(cf, p, owner, v, pvs):
     """
     """
     if not hasProperty(cf, p):
@@ -200,6 +200,27 @@ def addPropertyPvs(cf, p, owner, v, pvs):
         logging.info("create new property (%s,%s,%s)" % (p, owner, v))
     cf.update(property=Property(p, owner, v), channelNames=pvs)
     logging.info("batch add property (%s,%s,%s) for %d pvs" % (p, owner, v, len(pvs)))
+
+def appendPropertyPvs(cf, p, owner, v, pvs, sep=";"):
+    """
+    """
+    if not hasProperty(cf, p):
+        # in this set, value of property is not needed (confusing).  since set
+        # is creating a new (p,v) pair. Before attach it to a PV, its value is
+        # meaningless.
+        cf.set(property=Property(p, owner, v))
+        logging.info("create new property (%s,%s,%s)" % (p, owner, v))
+
+    for pv in pvs:
+        ch = cf.find(name=pv, property=[(p, '*')])
+        if not ch:
+            cf.update(property=Property(p, owner, v), channelName=pv)
+        else:
+            val0 = ch.getProperties().get(p, [])
+            val = sep.join(sorted(v.split(sep) + val0))
+            cf.update(property=Property(p, owner, val), channelName=pv)
+
+    logging.info("batch append property (%s,%s,%s) for %d pvs" % (p, owner, v, len(pvs)))
 
 def cfs_append_from_csv1(rec_list, update_only):
     cf = ChannelFinderClient(**cfinput)
@@ -310,7 +331,7 @@ def cfs_append_from_csv2(rec_list, update_only):
 
 
     for k,v in prpt_data.iteritems():
-        addPropertyPvs(cf, k[0], prpt_owner, k[1], v)
+        updatePropertyPvs(cf, k[0], prpt_owner, k[1], v)
         logging.info("add property {0} for pvs {1}".format(k, v))
     for k,v in tag_data.iteritems():
         addTagPvs(cf, k, v, tag_owner)
@@ -324,7 +345,8 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
 
         addtag tag pv1,pv2,pv3
         removetag tag pv1,pv2,...
-        addproperty prpt=val pv1,pv2
+        updateproperty prpt=val pv1,pv2
+        appendproperty prpt=val pv1,pv2
         removeproperty prpt pv1,pv2
 
     The properties are updated as 'cf-asd' account, and tags in 'cf-aphla'
@@ -353,11 +375,17 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
             pvs = [pv.strip() for pv in rec[2].split(',')]
             removeTagPvs(cf, rec[1].strip(), pvs, OWNER)
             continue
-        elif rec[0] in ('addproperty', 'updateproperty'):
+        elif rec[0] in ('updateproperty',):
             pvs = [pv.strip() for pv in rec[2].split(',')]
             prpt, val = rec[1].split('=')
             if val == "''": val = ''
-            addPropertyPvs(cf, prpt, PRPTOWNER, val, pvs)
+            updatePropertyPvs(cf, prpt, PRPTOWNER, val, pvs)
+            continue
+        elif rec[0] in ('appendproperty',):
+            pvs = [pv.strip() for pv in rec[2].split(',')]
+            prpt, val = rec[1].split('=')
+            if val == "''": val = ''
+            appendPropertyPvs(cf, prpt, PRPTOWNER, val, pvs)
             continue
         elif rec[0] == 'removeproperty':
             pvs = [pv.strip() for pv in rec[2].split(',')]

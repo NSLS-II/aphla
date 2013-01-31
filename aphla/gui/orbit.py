@@ -209,10 +209,10 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
         #             self.chooseBpm)
 
-        controlResetPvDataAction = QAction(QIcon(":/control_reset.png"),
-                                           "Reset BPM statistics", self)
-        self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
-                     self.resetPvData)
+        #controlResetPvDataAction = QAction(QIcon(":/control_reset.png"),
+        #                                   "Reset BPM statistics", self)
+        #self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
+        #             self.resetPvData)
 
         drift_from_now = QAction("Drift from Now", self)
         drift_from_now.setCheckable(True)
@@ -263,7 +263,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #
         self.controlMenu = self.menuBar().addMenu("&Control")
         #self.controlMenu.addAction(controlChooseBpmAction)
-        self.controlMenu.addAction(controlResetPvDataAction)
+        #self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
         #self.controlMenu.addAction(controlZoomInPlot1Action)
         #self.controlMenu.addAction(controlZoomOutPlot1Action)
@@ -315,7 +315,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         controlToolBar = self.addToolBar("Control")
         #controlToolBar.addAction(controlChooseBpmAction)
-        controlToolBar.addAction(controlResetPvDataAction)
+        #controlToolBar.addAction(controlResetPvDataAction)
 
         machToolBar = self.addToolBar("Machines")
         self.machBox = QComboBox()

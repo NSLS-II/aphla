@@ -6,7 +6,8 @@ NSLS2V2 Machine Structure Initialization
 # :author: Lingyun Yang <lyyang@bnl.gov>
 
 from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, setUnitConversion,
-                createLattice, findCfaConfig, getResource)
+                createLattice, createVirtualElements, findCfaConfig, 
+                getResource)
 from .. import (OrmData, Twiss, UcPoly)
 
 from fnmatch import fnmatch
@@ -17,7 +18,8 @@ logger.setLevel(logging.DEBUG)
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
            'devName': 'devname',
-           'elemType': 'family', 
+           'elemType': 'family',
+           'elemGroup': 'group', 
            'elemHandle': 'handle',
            'elemIndex': 'index', 
            'elemPosition': 'se',
@@ -49,6 +51,8 @@ def init_submachines(machine, submachines, **kwargs):
     elif cfa.source.startswith("http"):
         for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
 
+    cfa.splitPropertyValue('group')
+
     lattice_dict = {}
 
     #logger.error("HELP")
@@ -69,12 +73,6 @@ def init_submachines(machine, submachines, **kwargs):
     data_filename = getResource('nsls2v2.hdf5', __name__)
     if data_filename:
         lattice_dict['V2SR'].ormdata = OrmData()
-        import h5py
-        f = h5py.File(data_filename, 'r')['V2SR']
-        for g,v in f.get('groups', {}).items():
-            for elem in v:
-                lattice_dict['V2SR'].addGroupMember(g, elem, newgroup=True)
-
         # group info is a redundant info, needs rebuild based on each element
         lattice_dict["V2SR"].buildGroups()
         #lattice_dict['V2SR'].ormdata.load_hdf5(data_filename, "V2SR/orm")
@@ -117,5 +115,8 @@ def init_submachines(machine, submachines, **kwargs):
     for bpm in lattice_dict['V2SR'].getElementList('BPM'):
         bpm.setUnit('x', 'm')
         bpm.setUnit('y', 'm')
+
+    for k,vlat in lattice_dict.items():
+        createVirtualElements(vlat)
 
     return lattice_dict, lattice_dict['V2SR']

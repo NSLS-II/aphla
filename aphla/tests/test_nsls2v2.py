@@ -104,11 +104,49 @@ def waitForStablePv(**kwargs):
         return timeout, dvstd
 
 """
+Channel Finder
+~~~~~~~~~~~~~~
+"""
+
+class T000_ChanFinder(unittest.TestCase):
+    """
+    """
+    def setUp(self):
+        self.cfs_url = os.environ.get('HLA_CFS_URL', None)
+        self.cfdb ="test_nsls2v2.sqlite"
+        pass
+
+    def test_db_tags_l0(self):
+        """read CFS_URL export to sqlite"""
+        cfa = ap.chanfinder.ChannelFinderAgent()
+        cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
+        cfa.exportSqlite(self.cfdb)
+        cfa2 = ap.chanfinder.ChannelFinderAgent()
+        cfa2.importSqlite(self.cfdb)
+
+        tags = cfa2.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
+        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
+
+    def test_url_tags_l0(self):
+        #http://web01.nsls2.bnl.gov/ChannelFinder
+        cfa = ap.chanfinder.ChannelFinderAgent()
+        cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
+        if self.cfs_url is None: return
+        self.assertIsNotNone(self.cfs_url)
+
+        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
+        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
+
+
+
+"""
 Element
 ~~~~~~~
 """
 
-class Test0Element(unittest.TestCase):
+class T010_Element(unittest.TestCase):
     def setUp(self):
         ap.machines.use(LAT_SR)
         pass 
@@ -130,7 +168,9 @@ class Test0Element(unittest.TestCase):
         self.assertTrue(nux > 30.0)
         self.assertTrue(nuy > 15.0)
 
-    def test_dcct_l0(self):
+    def test_dcct_current_l0(self):
+        self.assertGreater(ap.getCurrent(), 100.0)
+
         dccts = ap.getElements('dcct')
         self.assertEqual(len(dccts), 1)
         dcct = dccts[0]
@@ -275,50 +315,13 @@ class Test0Element(unittest.TestCase):
 
 
 
-"""
-Channel Finder
-~~~~~~~~~~~~~~
-"""
-
-class Test0ChanFinderCsvData(unittest.TestCase):
-    """
-    """
-    def setUp(self):
-        #self.cfs_csv = 'nsls2v1_cfs.csv'
-        srcdir = resource_filename(__name__, os.path.join(*MACHINE))
-        self.cfs_db = os.path.join(srcdir, 'nsls2v2.sqlite')
-        self.cfs_url = os.environ.get('HLA_CFS_URL', None)
-        pass
-
-    @unittest.skip("skip csv/sqlite data")
-    def test_db_tags_l0(self):
-        cfa = ap.chanfinder.ChannelFinderAgent()
-        self.assertTrue(os.path.exists(self.cfs_db), "file '%s' does not exist" % self.cfs_db)
-        cfa._importSqliteDb1(self.cfs_db)
-
-        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
-        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
-            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
-
-    def test_url_tags_l0(self):
-        #http://web01.nsls2.bnl.gov/ChannelFinder
-        if self.cfs_url is None: return
-        self.assertIsNotNone(self.cfs_url)
-        cfa = ap.chanfinder.ChannelFinderAgent()
-        cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
-
-        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
-        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
-            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
-
-
 
 """
 Lattice
 -------------
 """
 
-class Test0Lattice(unittest.TestCase):
+class T020_Lattice(unittest.TestCase):
     """
     Lattice testing
     """
@@ -378,7 +381,7 @@ class Test0Lattice(unittest.TestCase):
             self.assertGreaterEqual(
                 elem1[i].sb - elem1[i-1].sb, -1e-9,
                 msg="{0}({4},sb={1})<{2}({5}, sb={3}), d={6}".format(
-                    elem1[i].name, elem1[i].sb, 
+                    elem1[i].name, elem1[i].sb,
                     elem1[i-1].name, elem1[i-1].sb,
                     elem1[i].index, elem1[i-1].index,
                     elem1[i].sb - elem1[i-1].sb))
@@ -425,7 +428,7 @@ Test1Lattice
 ~~~~~~~~~~~~~
 """
         
-class Test1LatticeSr(unittest.TestCase):
+class T030_LatticeSr(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeSr")
         self.lat = ap.machines.getLattice('V2SR')
@@ -542,7 +545,7 @@ class Test1LatticeSr(unittest.TestCase):
         self.assertEqual(len(h[0]), 3)
 
         
-class TestLatticeLtd1(unittest.TestCase):
+class T040_LatticeLtd1(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtd1")
         ap.machines.use("V1LTD1")
@@ -612,7 +615,7 @@ class TestLatticeLtd1(unittest.TestCase):
         pass
 
 
-class TestLatticeLtb(unittest.TestCase):
+class T050_LatticeLtb(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtb")
         self.lat  = ap.machines.getLattice('V1LTB')
@@ -649,7 +652,7 @@ Twiss
 ~~~~~
 """
 
-class Test0Tunes(unittest.TestCase):
+class T060_Tunes(unittest.TestCase):
     def setUp(self):
         ap.machines.use("V2SR")
         logging.info("TestTunes")

@@ -391,6 +391,7 @@ class ApPlot(Qwt.QwtPlot):
         self.curve2 = Qwt.QwtPlotCurve()
         self.curve2.setPen(QPen(Qt.green, 5))
         self.curve2.attach(self)
+        self.curve1.setZ(self.curve2.z() + 1.0)
         #self.curve2.setVisible(False)
 
         #print "PV golden:", pvs_golden

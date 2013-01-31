@@ -34,46 +34,58 @@ logger = logging.getLogger(__name__)
 #]
 
 # current
-def getCurrent():
-    """
-    Get the current from the first 'dcct' element
+def getCurrent(name='dcct', field='value', unit=None):
+    """Get the current from the first DCCT element
 
-    seealso :func:`getElements`
+    :param str name: the name of DCCT, default 'dcct'
+    :param str field: the field of DCCT, default 'value'
+    :param unit: the desired unit sytem, default None, no conversion.
+
+    returns None if no 'dcct' element found
+
+    seealso :func:`eget`
     """
-    _current = getElements('dcct')
-    if len(_current) == 1:
-        return _current[0].value
-    elif len(_current) > 1:
-        return [c.value for c in _current]
-    else:
-        return None
+    _current = getElements(name)
+    if _current: return _current[0].get(field, unit=unit)
+    else: return None
 
 # rf
-def getRfFrequency(unit='MHz'):
+def getRfFrequency(name = 'rfcavity', field = 'f', unit=None):
     """
     Get the frequency from the first 'RFCAVITY' element.
 
-    The unit is MHz.
+    seealso :func:`eget`, :func:`getRfVoltage`, :func:`putRfFrequency`
     """
-    _rf, = getElements('RFCAVITY')
-    return _rf.f
+    _rf = getElements(name)
+    if _rf: return _rf[0].get(field, unit=unit)
+    else: return None
 
-def putRfFrequency(f):
+
+def putRfFrequency(f, name = 'rfcavity', field = 'f', unit=None):
     """set the rf frequency for the first 'RFCAVITY' element"""
-    _rf, = getElements('RFCAVITY')
-    _rf.f = f
+    _rf = getElements(name)
+    if _rf: return _rf[0].put(field, f, unit=unit)
+    else: raise RuntimeError("element '%s' not found" % name)
 
-def getRfVoltage():
-    """Get the voltage of the first 'RFCAVITY' element"""
-    _rf, = getElements('RFCAVITY')
-    return _rf.v
+def getRfVoltage(name = 'rfcavity', field='v', unit=None):
+    """
+    Get the voltage of the first 'RFCAVITY' element
+
+    :param str name: cavity name
+    :param str field: field name for voltage, default 'v'
+    :param str unit: unit system
+
+    return None if no element found
+    """
+    _rf = getElements(name)
+    if _rf: return _rf[0].get(field, unit=unit)
+    else: return None
 
 def stepRfFrequency(df = 0.010):
     """
-    change one step of the 'RFCAVITY' element
+    change one step of the first 'RFCAVITY' element
 
-    seealso :func:`~aphla.hlalib.getRfFrequency`, 
-    :func:`~aphla.hlalib.putRfFrequency`
+    seealso :func:`getRfFrequency`, :func:`putRfFrequency`
 
     .. warning:: 
 
@@ -192,8 +204,7 @@ def getElements(group, include_virtual=False):
     return ret
 
 def eget(elem, fields = None, **kwargs):
-    """
-    get elements field values
+    """get elements field values
     
     :param elem: element name, name list, pattern or object list
     :type elem: str, list
@@ -205,13 +216,25 @@ def eget(elem, fields = None, **kwargs):
 
         >>> eget('DCCT', 'value')
         >>> eget('BPM', 'x')
-        >>> eget('p*c30*', ['x', 'y'], header=True)
+        >>> val, head = eget('p*c30*', ['x', 'y'], header=True)
 
         >>> bpm = getElements('p*c30*')
         >>> eget(bpm, ['x', 'y'], header=True)
 
-    seealso :func:`getElements`, :func:`~aphla.element.CaElement.get`
+    The optional parameters are unit. see :func:`~aphla.element.CaElement.get`
+
+    It calls :func:`getElements` to obtain a list of elements, then call
+    :func:`~aphla.element.CaElement.get` for each field. This could be a
+    slow process when the element list is large.
+
+    The return value is a list with same size as element list. When more than
+    one field is provided, the return value is a 2D list. 
+
+    When header is True, a list of (element name, field) which has same shape
+    as return value is also returned.
+
     """
+
     header = kwargs.pop('header', False)
 
     elst = getElements(elem)
@@ -231,13 +254,10 @@ def eget(elem, fields = None, **kwargs):
         # h,v should have same dimension
     return v, h
 
-#def eset(elem = None, field = None, **kwargs):
-#    if elem is not None:
-#        elst = getElements(elem)
         
 def getPvList(elem, field, handle = 'readback', **kwargs):
     """
-    return a pv list for given element list
+    return a pv list for given element or element list
 
     :param elem: element pattern, name list or CaElement object list
     :param field: e.g. 'x', 'y', 'k1'
@@ -435,14 +455,17 @@ def getClosest(element, group):
     else:
         return machines._lat.getClosest(element.name, group)
 
-def getBeamlineProfile(s1 = 0, s2 = None):
+def getBeamlineProfile(sb = 0, se = None):
     """
-    return the beamline profile from s1 to s2
+    return the beamline profile from sposition sb to se
+
+    :param float sb: s-begin
+    :param float se: s-end, None means the end of beamline.
 
     it calls :meth:`~aphla.lattice.Lattice.getBeamlineProfile` of the
     current lattice.
     """
-    return machines._lat.getBeamlineProfile(s1=s1, s2=s2)
+    return machines._lat.getBeamlineProfile(s1=sb, s2=se)
 
 
 def getDistance(elem1, elem2, absolute=True):

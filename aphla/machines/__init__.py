@@ -39,8 +39,8 @@ HLA_TAG_SYS_PREFIX = HLA_TAG_PREFIX + '.sys'
 #
 HLA_VFAMILY = 'HLA:VIRTUAL'
 HLA_VBPM   = 'HLA:VBPM'
-HLA_VHCOR   = 'HLA:VHCOR'
-HLA_VVCOR   = 'HLA:VVCOR'
+HLA_VHCOR  = 'HLA:VHCOR'
+HLA_VVCOR  = 'HLA:VVCOR'
 HLA_VQUAD  = 'HLA:VQUAD'
 HLA_VSEXT  = 'HLA:VSEXT'
 
@@ -91,37 +91,11 @@ def load(machine, submachines = "*", **kwargs):
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
     # update machine name for each lattice
 
-    # some extra group info is not ready unitl returned from machines init.
-    # This vELEM creation can not be done in createLattice
-    for k,vlat in lats.items():
-        vlat.machine = machine
-        # a virtual bpm. its field is a "merge" of all bpms.
-        iv = 100000
-        vpar = { 'virtual': 1, 'name': None, 'family': HLA_VFAMILY,
-                 'index': None }
-        for fam,vfam in [('BPM', HLA_VBPM), ('HCOR', HLA_VHCOR),
-                     ('VCOR', HLA_VVCOR), ('QUAD', HLA_VQUAD),
-                     ('SEXT', HLA_VSEXT)]:
-            # a virtual element. its field is a "merge" of all bpms.
-            velem = vlat.getElementList(fam)
-            vpar.update({'name': vfam, 'index': iv + 1})
-            if velem:
-                allvelem = merge(velem, **vpar)
-                vlat.insertElement(allvelem, groups=[HLA_VFAMILY])
-
-            iv = iv + 1
-
     global _lat, _lattice_dict
     _lattice_dict.update(lats)
     _lat = lat
     logger.info("setting default lattice '%s'" % _lat.name)
 
-
-    for k,v in _lattice_dict.items():
-        if not v._group: continue
-        for e in v._group.get(HLA_VFAMILY, []):
-            e.virtual = 1
-        
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
                                  if _lat == v][0]
@@ -152,6 +126,26 @@ def saveCache(machine_name, lattice_dict, selected_lattice_name):
         pickle.dump(selected_lattice_name,f,2)
         pickle.dump(lattice_dict,f,2)
 
+def createVirtualElements(vlat):
+    # virutal elements
+    vfams = [('BPM', HLA_VBPM), ('HCOR', HLA_VHCOR),
+             ('VCOR', HLA_VVCOR), ('QUAD', HLA_VQUAD),
+             ('SEXT', HLA_VSEXT)]
+    # a virtual bpm. its field is a "merge" of all bpms.
+    iv = 100000
+    vpar = { 'virtual': 1, 'name': None, 'family': HLA_VFAMILY,
+             'index': None }
+    for fam,vfam in vfams:
+        # a virtual element. its field is a "merge" of all bpms.
+        velem = vlat.getElementList(fam)
+        vpar.update({'name': vfam, 'index': iv + 1})
+        if velem:
+            allvelem = merge(velem, **vpar)
+            vlat.insertElement(allvelem, groups=[HLA_VFAMILY])
+            allvelem.virtual = 1
+
+        iv = iv + 1
+    
 def findCfaConfig(srcname, machine, submachines):
     """
     find the appropriate config for ChannelFinderAgent
@@ -264,7 +258,9 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
 
             #lat.appendElement(elem)
             lat.insertElement(elem)
-        
+        # 
+        if HLA_VFAMILY in prpt.get('group', []): elem.virtual = 1
+
         handle = prpt.get('handle', None).lower()
         if handle == 'get': prpt['handle'] = 'readback'
         elif handle == 'put': prpt['handle'] = 'setpoint'
