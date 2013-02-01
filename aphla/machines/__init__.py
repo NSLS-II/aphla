@@ -59,16 +59,19 @@ _lattice_dict = {}
 _lat = None
 
 def init(machine, submachines = "*", **kwargs):
+    """use load instead"""
     load(machine, submachines = submachines, **kwargs)
 
 def load(machine, submachines = "*", **kwargs):
     """
-    load submachine lattices in machine
+    load submachine lattices in machine.
 
-    :param machine: the exact name of machine
-    :param submachine: pattern of sub machines
-    :param use_cache: optional bool, default False, use cache
-    :param save_cache: optional bool, default False, save cache
+    Parameters
+    -----------
+    machine: str. the exact name of machine
+    submachine: str. default '*'. pattern of sub machines
+    use_cache: bool. default False. use cache
+    save_cache: bool. default False, save cache
     """
     
     use_cache = kwargs.get('use_cache',False)
@@ -90,7 +93,7 @@ def load(machine, submachines = "*", **kwargs):
     m = __import__(machine, globals(), locals(), [], -1)
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
     # update machine name for each lattice
-
+    
     global _lat, _lattice_dict
     _lattice_dict.update(lats)
     _lat = lat
@@ -103,7 +106,7 @@ def load(machine, submachines = "*", **kwargs):
         
 
 def loadCache(machine_name):
-    
+    """load the cached machine"""
     global _lat, _lattice_dict
     
     cache_folderpath = os.path.join(HOME,'.hla')
@@ -116,7 +119,7 @@ def loadCache(machine_name):
         
 
 def saveCache(machine_name, lattice_dict, selected_lattice_name):
-    
+    """save machine as cache"""
     cache_folderpath = os.path.join(HOME,'.hla')
     if not os.path.exists(cache_folderpath):
         os.mkdir(cache_folderpath)
@@ -127,6 +130,7 @@ def saveCache(machine_name, lattice_dict, selected_lattice_name):
         pickle.dump(lattice_dict,f,2)
 
 def createVirtualElements(vlat):
+    """create common merged virtual element"""
     # virutal elements
     vfams = [('BPM', HLA_VBPM), ('HCOR', HLA_VHCOR),
              ('VCOR', HLA_VVCOR), ('QUAD', HLA_VQUAD),
@@ -156,7 +160,12 @@ def findCfaConfig(srcname, machine, submachines):
     - channel finder in ${HLA_CFS_URL}
     - `nsls2v2.sqlite` with aphla package.
 
+    Examples
+    ---------
+    >>> findCfaConfig("/data/nsls2v2.sqlite", "nsls2", "*")
+
     """
+
     cfa = ChannelFinderAgent()
 
     # if source is an explicit file name
@@ -222,11 +231,16 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
     """
     create a lattice from channel finder data
 
-    :param name: lattice name, e.g. 'SR', 'LTD'
-    :param pvrec: list of pv records `(pv, property dict, list of tags)`
-    :param systag: process records which has this systag. e.g. `aphla.sys.SR`
-    :param desc: description is this lattice
-    :return: :class:`~aphla.lattice.Lattice`
+    Parameters
+    -----------
+    name: lattice name, e.g. 'SR', 'LTD'
+    pvrec: list of pv records `(pv, property dict, list of tags)`
+    systag: process records which has this systag. e.g. `aphla.sys.SR`
+    desc: description is this lattice
+    
+    Returns
+    ---------
+    lat : the :class:`~aphla.lattice.Lattice` type.
     """
 
     logger.debug("creating '%s':%s" % (name, desc))
@@ -291,8 +305,6 @@ def use(lattice):
 
     use :func:`~hla.machines.lattices` to get a dict of lattices and its mode
     name
-
-    When switching lattice, twiss data is not sychronized.
     """
     global _lat, _lattice_dict
     if isinstance(lattice, Lattice):
@@ -304,37 +316,35 @@ def use(lattice):
 
 def getLattice(lat = None):
     """
-    return a :class:`~aphla.lattice.Lattice` object with given name. return the
+    return the lattice with given name, if None returns the current lattice.
+
+    a :class:`~aphla.lattice.Lattice` object with given name. return the
     current lattice by default.
 
     .. seealso:: :func:`~aphla.machines.lattices`
     """
-    if lat is None:
-        return _lat
+    if lat is None:  return _lat
 
     global _lattice_dict
-    #for k, v in _lattice_dict.items():
-    #    print k, v.mode
     return _lattice_dict.get(lat, None)
 
 def lattices():
     """
     get a list of available lattices
 
-    Example::
-
-      >>> lattices()
+    Examples
+    --------
+    >>> lattices()
       [ 'LTB', 'LTB-txt', 'SR', 'SR-txt']
-      >>> use('LTB-txt')
+    >>> use('LTB-txt')
 
-    A lattice can be used with :func:`~aphla.machines.use`
     """
-    #return dict((k, v.mode) for k,v in _lattice_dict.iteritems())
     return _lattice_dict.keys()
 
 
 def machines():
     """all available machines"""
-    from pkg_resources import resource_filename, resource_listdir, resource_isdir
-    return [d for d in resource_listdir(__name__, ".") if resource_isdir(__name__, d)]
+    from pkg_resources import resource_listdir, resource_isdir
+    return [d for d in resource_listdir(__name__, ".") 
+            if resource_isdir(__name__, d)]
 

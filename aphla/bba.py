@@ -26,7 +26,14 @@ import numpy as np
 
 class BbaBowtie:
     """
-    beam based alignment
+    beam based alignment with bowtie plot method (ALS)
+
+    Examples
+    ---------
+    >>> quadname = 'qh1g2c02a'
+    >>> quad = getExactElement(quadname)
+    >>> bpm = getClosest(quadname, 'BPM')
+    >>> 'par = {'bpm': 
     """
     def __init__(self, **kwargs):
         """
@@ -201,8 +208,7 @@ class BbaBowtie:
 
 
     def align(self, **kwargs):
-        """
-        """
+        """align"""
         # [12:43 PM] (sandbox/venv) $ caget "SR:C30-MG:G02A{Quad:H1}Fld-SP"
         # SR:C30-MG:G02A{Quad:H1}Fld-SP  -0.633004
         # <lyyang@svd>-{/home/lyyang/devel/nsls2-hla

@@ -79,14 +79,14 @@ def init_submachines(machine, submachines, **kwargs):
         #lattice_dict['V2SR'].ormdata.load_hdf5(data_filename, "V2SR/orm")
         # hack for h5py < 2.1.1
         ormfile = getResource('v2sr_orm.hdf5', __name__)
-        lattice_dict['V2SR'].ormdata.load_hdf5(ormfile, "orm")        
+        lattice_dict['V2SR'].ormdata.load(ormfile)        
         logger.info("using ORM data '%s'" % ormfile)
 
         lattice_dict['V2SR']._twiss = Twiss(data_filename)
         #lattice_dict['V2SR']._twiss.load_hdf5(data_filename, "V2SR/twiss")
         # hack for h5py < 2.1.1
         twissfile = getResource('v2sr_twiss.hdf5', __name__)
-        lattice_dict['V2SR']._twiss.load_hdf5(twissfile, "twiss")
+        lattice_dict['V2SR']._twiss.load(twissfile)
         logger.info("using Twiss data '%s'" % twissfile)
 
         data_filename = getResource('v2sr_unitconv.hdf5', __name__)

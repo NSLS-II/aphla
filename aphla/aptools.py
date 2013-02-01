@@ -94,18 +94,25 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     ormdata: optional, :class:`~aphla.apdata.OrmData`
         use provided OrmData instead of the system default.
 
+    Notes
+    ------
     if `ref[i][j]` is `None`, use the current hardware result, i.e. try not to
     change the orbit at that location.
 
     The bpm and corrector must have 'x' and 'y' field.
 
-    :Examples:
+    This is a least square fitting method. It is possible that the orbit at
+    the other BPMs may change slightly although they are told to be fixed.
 
-        >>> bpms = getGroupMembers(['BPM', 'C02'])
-        >>> newobt = [[1.0, 1.5]] * len(bpms)
-        >>> createLocalBump(bpms, getElements('HCOR'), newobt)
+    see also :func:`~aphla.catools.caRmCorrect` for EPICS based
+    system. :func:`~aphla.apdata.OrmData.getMatrix`
+
+    Examples
+    ---------
+    >>> bpms = getGroupMembers(['BPM', 'C02'])
+    >>> newobt = [[1.0, 1.5]] * len(bpms)
+    >>> createLocalBump(bpms, getElements('HCOR'), newobt)
     
-    see also :func:`catools.caRmCorrect` for EPICS based system.
     """
 
     ormdata = kwargs.pop('ormdata', None)
@@ -169,21 +176,18 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     repeat: optional, integer, default 1
         numbers of correction 
 
-    :Example:
-
-        >>> bpms = getElements(['BPM1', 'BPM2'])
-        >>> trims = getElements(['T1', 'T2', 'T3'])
-        >>> correctOrbit(bpms, trims) 
-
-    This is a least square fitting method. It is possible that the orbit at
-    the other BPMs may change slightly although they are told to be fixed.
-
-    :warn: If the provided bpms are only part of the lattice, the routine will
-    try to keep other bpm readings unchanged. This however can not be
-    guaranteed due to the current algorithm.
+    Notes
+    -----
+    This routine prepares the target orbit and then calls :func:`setLocalBump`.
 
     seealso :func:`~aphla.hlalib.getElements`, :func:`~aphla.getSubOrm`,
     :func:`setLocalBump`.
+
+    Examples
+    --------
+    >>> bpms = getElements(['BPM1', 'BPM2'])
+    >>> trims = getElements(['T1', 'T2', 'T3'])
+    >>> correctOrbit(bpms, trims) 
     """
 
     plane = kwargs.pop('plane', 'HV')

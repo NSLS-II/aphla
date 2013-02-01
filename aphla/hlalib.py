@@ -413,27 +413,32 @@ def getGroupMembers(groups, op = 'intersection', **kwargs):
 
 def getNeighbors(element, group, n = 3):
     """
-    Get a list of n elements belongs to group. 
-
-    :param element: the central element
-    :type element: str, :class:`~aphla.element.AbstractElement`
-    :param group: the neighbors belong to
-    :return: a list of element in given group
-
-    The list is sorted along s (the beam direction).
+    Get a list of n objects in *group* before and after *element* 
 
     it calls :meth:`~aphla.lattice.Lattice.getNeighbors` of the current
     lattice to get neighbors.
 
-    :Example:
+    Parameters
+    -----------
+    element: str, object. the central element name
+    group: str, the neighbors belong to
 
-      >>> getNeighbors('X', 'BPM', 2) # their names are ['1','2','X', '3', '4']
-      >>> getNeighbors('QC', 'QUAD', 1) # their names are ['Q1', 'QC', 'Q2']
-      >>> el = hla.getNeighbors('PH2G6C25B', 'P*C10*', 2)
-      >>> [e.name for e in el]
+    Returns
+    --------
+    elems : a list of element in given group with size 2*n+1. The list is
+        sorted along s (the beam direction).
+
+
+    Examples
+    ----------
+    >>> getNeighbors('X', 'BPM', 2) # their names are ['1','2','X', '3', '4']
+    >>> getNeighbors('QC', 'QUAD', 1) # their names are ['Q1', 'QC', 'Q2']
+    >>> el = hla.getNeighbors('PH2G6C25B', 'P*C10*', 2)
+    >>> [e.name for e in el]
       ['PL2G6C10B', 'PL1G6C10B', 'PH2G6C25B', 'PH1G2C10A', 'PH2G2C10A']
-      >>> [e.sb for e in el]
+    >>> [e.sb for e in el]
       [284.233, 286.797, 678.903, 268.921, 271.446]
+
     """
 
     if isinstance(element, (str, unicode)):
@@ -444,16 +449,19 @@ def getNeighbors(element, group, n = 3):
 
 def getClosest(element, group):
     """
-    Get the closest element in *group*
-
-    :param element: the element name or object
-    :param group: the closest neighbor belongs to
-
-    :Example:
-
-      >>> getClosest('PM1G4C27B', 'BPM')
+    Get the closest neighbor in *group* for an element
 
     It calls :meth:`~aphla.lattice.Lattice.getClosest`
+
+    Parameters
+    -----------
+    element: str, object. the element name or object
+    group: str, the closest neighbor belongs to this group
+
+    Examples
+    ----------
+    >>> getClosest('pm1g4c27b', 'BPM') # find the closest BPM to 'pm1g4c27b'
+
     """
     if isinstance(element, (str, unicode)):
         return machines._lat.getClosest(element, group)
@@ -477,11 +485,15 @@ def getDistance(elem1, elem2, absolute=True):
     """
     return distance between two element name
 
-    :param str elem1: name or object of one element
-    :param str elem2: name or object of the other element
-    :param bool absolute: return s2 - s1 or the absolute value.
+    Parameters
+    -----------
+    elem1: str, object. name or object of one element
+    elem2: str, object. name or object of the other element
+    absolute: bool. return s2 - s1 or the absolute value.
 
-    raise RuntimeError if None or more than one elements are found
+    Raises
+    -------
+    it raises RuntimeError if None or more than one elements are found
     """
     e1 = getElements(elem1)
     e2 = getElements(elem2)
@@ -633,12 +645,12 @@ def getTunes(source='machine'):
         raise NotImplementedError()
 
 def getTune(source='machine', plane = 'h'):
-    """
-    get one of the tune, 'h' or 'v'
+    """get one of the tune, 'h' or 'v'
 
-    :Example:
+    Examples
+    ---------
+    >>> getTune(plane='v')
 
-        >>> getTune(plane='v')
     """
     nux, nuy = getTunes(source)
     if plane == 'h': return nux
@@ -647,8 +659,7 @@ def getTune(source='machine', plane = 'h'):
         raise ValueError("plane must be either h or v")
 
 def getFftTune(plane = 'hv', mode = ''):
-    """
-    get tune from FFT
+    """get tune from FFT
 
     .. warning::
 
@@ -860,7 +871,7 @@ def _reset_bpm_offset():
     logger.info("Reset the bpm offset")
 
 def _reset_quad():
-    raise RuntimeError("does not work for SR above V1SR")
+    #raise RuntimeError("does not work for SR above V1SR")
 
     qtag = {'H2': (1.47765, 30), 
             'H3': (-1.70755, 30),
@@ -872,7 +883,7 @@ def _reset_quad():
             'L1': (-1.56216, 30)}
     
     for tag, v in qtag.items():
-        qlst = getElements('Q%s*' % tag)
+        qlst = getElements('Q%s' % tag)
         qval, qnum = v
         if len(qlst) != qnum:
             raise ValueError("ring does not have exactly %d %s (%d)" % \

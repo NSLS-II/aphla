@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 """
-aporbit
-========
-
 :author: Lingyun Yang lyyang@bnl.gov
 
 This is the main file for GUI app `aporbit`. A high level viewer and editor.
 pp"""
-#__all__ = [ 'main' ]
 
 # for debugging, requires: python configure.py --trace ...
 if 1:
@@ -22,7 +18,7 @@ app = cothread.iqt()
 
 import traceback
 import aphla
-from aphla.catools import caget, caput, camonitor, FORMAT_TIME
+from aphla.catools import camonitor, FORMAT_TIME
 
 import logging
 import os, sys
@@ -188,21 +184,21 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # scale
         viewZoomOut15Action = QAction(QIcon(":/view_zoomout.png"),
-                                         "Zoom out x1.5", self)
+                                         "Zoom out x1.5 (All)", self)
         self.connect(viewZoomOut15Action, SIGNAL("triggered()"),
                      self.zoomOut15)
         viewZoomIn15Action = QAction(QIcon(":/view_zoomin.png"),
-                                        "Zoom in x1.5", self)
+                                        "Zoom in x1.5 (All)", self)
         self.connect(viewZoomIn15Action, SIGNAL("triggered()"),
                      self.zoomIn15)
         viewZoomAutoAction = QAction(QIcon(":/view_zoom.png"),
-                                        "Auto Fit", self)
+                                        "Auto Fit (All)", self)
         self.connect(viewZoomAutoAction, SIGNAL("triggered()"),
                      self.zoomAuto)
-        viewAutoScale = QAction("Auto Scale", self)
-        viewAutoScale.setCheckable(True)
-        viewAutoScale.setChecked(True)
-        self.connect(viewAutoScale, SIGNAL("toggled(bool)"), self.zoomAutoScale)
+        #viewAutoScale = QAction("Auto Scale", self)
+        #viewAutoScale.setCheckable(True)
+        #viewAutoScale.setChecked(False)
+        #self.connect(viewAutoScale, SIGNAL("toggled(bool)"), self.zoomAutoScale)
 
         #controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
         #                                 "Choose BPM", self)
@@ -235,7 +231,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewSingleShotAction)
 
         self.viewMenu.addSeparator()
-        self.viewMenu.addAction(viewAutoScale)
+        #self.viewMenu.addAction(viewAutoScale)
         self.viewMenu.addAction(viewErrorBarAction)
         
         drift_group = QActionGroup(self)
@@ -405,8 +401,8 @@ class OrbitPlotMainWindow(QMainWindow):
             p.updatePlot()
             # set the zoom stack
             print "autozoom"
-            p.wid.zoomAuto()
             p.aplot.setErrorBar(self.error_bar)
+            p.wid.autoScaleXY()
             p.aplot.replot()
             self.mdiarea.addSubWindow(p)
             print "Show"
@@ -563,24 +559,23 @@ class OrbitPlotMainWindow(QMainWindow):
         raise RuntimeError("No golden orbit defined yet")
 
     def zoomOut15(self):
-        """
-        """
-        for p in self._active_plots():
-            p._scaleVertical(1.5)
+        """zoom out Y"""
+        for w in self.mdiarea.subWindowList():
+            w.wid.zoomOutY()
             
     def zoomIn15(self):
-        """
-        """
-        for p in self._active_plots():
-            p._scaleVertical(1.0/1.5)
+        """ zoom in Y"""
+        for w in self.mdiarea.subWindowList():
+            w.wid.zoomInY()
 
     def zoomAuto(self):
-        for p in self._active_plots():
-            p.zoomAuto()
+        """auto scale X and Y"""
+        for w in self.mdiarea.subWindowList():
+            w.wid.autoScaleXY()
             
-    def zoomAutoScale(self, v):
-        for p in self._active_plots():
-            p.setAxisAutoScale(Qwt.QwtPlot.yLeft, v)
+    #def zoomAutoScale(self, v):
+    #    for p in self._active_plots():
+    #        p.setAxisAutoScale(Qwt.QwtPlot.yLeft, v)
                     
     def chooseBpm(self):
         bpms = [(self.vbpm._name[i], self.obtdata.keep[i])

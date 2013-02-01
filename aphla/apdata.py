@@ -48,17 +48,17 @@ class OrmData:
             self.load(datafile)
 
         
-    def _io_format(self, filename, format):
+    def _io_format(self, filename, formt):
         rt, ext = splitext(filename)
-        if format == '' and ext in self._fmtdict.keys():
+        if formt:
+            fmt = formt
+        elif ext in self._fmtdict.keys():
             fmt = self._fmtdict[ext]
-        elif format:
-            fmt = format
         else:
             fmt = 'HDF5'
         return fmt
     
-    def save_hdf5(self, filename, group = "ormdata"):
+    def _save_hdf5(self, filename, group = "ormdata"):
         """
         save data in hdf5 format in */group*
 
@@ -122,10 +122,11 @@ class OrmData:
         
         f.close()
 
-    def load_hdf5(self, filename, grp = "orm"):
+    def _load_hdf5(self, filename, group = "orm"):
         """
         load data group *grp* from hdf5 file *filename*
         """
+        grp = group
         import h5py
         f = h5py.File(filename, 'r')
         g = f[grp]['bpm']
@@ -147,7 +148,7 @@ class OrmData:
         f.close()
 
 
-    def save(self, filename, format = ''):
+    def save(self, filename, **kwargs):
         """
         save the orm data into one file, the public data set are:
 
@@ -162,10 +163,10 @@ class OrmData:
         some more private dataset with a prefix "_" in its name.
         """
 
-        fmt = self._io_format(filename, format)
+        fmt = self._io_format(filename, kwargs.pop("format", None))
 
         if fmt == 'HDF5':
-            self.save_hdf5(filename)
+            self._save_hdf5(filename, **kwargs)
         elif fmt == 'shelve':
             f = shelve.open(filename, 'c')
             f['orm.m'] = self.m
@@ -177,21 +178,21 @@ class OrmData:
         else:
             raise ValueError("not supported file format: %s" % format)
 
-    def load(self, filename, format = ''):
+    def load(self, filename, **kwargs):
         """load data from file and guess its filetype based on extension"""
-        self._load_v2(filename, format)
+        self._load_v2(filename, **kwargs)
 
-    def _load_v2(self, filename, format = ''):
+    def _load_v2(self, filename, **kwargs):
         """
         load orm data from binary file
         """
         if not os.path.exists(filename):
             raise ValueError("ORM data %s does not exist" % filename)
 
-        fmt = self._io_format(filename, format)
+        fmt = self._io_format(filename, kwargs.pop("format", None))
             
         if fmt == 'HDF5':
-            self.load_hdf5(filename)
+            self._load_hdf5(filename, **kwargs)
         elif fmt == 'shelve':
             f = shelve.open(filename, 'r')
             self.bpm = f["orm.bpm"]
@@ -250,10 +251,11 @@ class OrmData:
         return the index for given (element, fields). Raise ValueError if does
         not exist.
 
-        :Example:
+        Examples
+        ---------
+        >>> index('BPM1', 'x')
+        >>> index('TRIM1', 'y')
 
-          >>> index('BPM1', 'x')
-          >>> index('TRIM1', 'y')
         """
         for i,b in enumerate(self.bpm):
             if b[0] == elem and b[2] == field: return i
@@ -332,16 +334,13 @@ class OrmData:
         bpm : a list of bpm (name, field) tuple
         trim: a list of trim (name, field) tuple
         ignore_unmeasured : optional, bool.
+            if True, the input bpm/trim pairs which are not in the OrmData
+            will be ignored. Otherwise raise ValueError.
 
-        if *ignore_unmeasured* is True, the input bpm/trim pairs which are not
-        in the OrmData will be ignored. Otherwise raise ValueError.
+        Examples
+        ---------
+        >>> getSubMatrix([('bpm1', 'x'), ('bpm2', 'x')], None)
 
-        if only bpm name given, the return matrix will not equal to
-        len(bpm),len(trim), since one bpm can have two lines (x,y) data.
-
-        :Example:
-
-          >>> getSubMatrix([('bpm1', 'x'), ('bpm2', 'x')], None)
         """
         if not bpm or not trim: return None
         #if flags not in ['XX', 'XY', 'YY', 'YX', '**']: return None
@@ -388,9 +387,11 @@ class OrmData:
         """
         return the matrix for given bpms and trims.
 
-        :param bpmlst: list of (bpmname, field)
-        :param trimlst: list of (trimname, field)
-        :param full: bool
+        Parameters
+        -----------
+        bpmlst: list of (bpmname, field)
+        trimlst: list of (trimname, field)
+        full : bool
             return full matrix besides the columns and rows for given trims
             and bpms.
 
@@ -399,10 +400,18 @@ class OrmData:
         m : the matrix (MxN)
         bpmrec : a list of (bpm, field), length M
         trimrec : a list of (trim, field), length N
-        
+
+        Notes
+        -------
         if *full* is True, the returned (M,N) will be same size as stored data
         and the upper left corner is for given bpms and trims. Otherwise only
         the upper left corner is provided.        
+
+        Examples
+        ---------
+        >>> getMatrix([('bpm1', 'x'), ('bpm1', 'y')],
+                      [('trim1', 'x'), ('trim1', 'y')], True)
+
         """
 
         rowidx = [self.index(bpm, f) for bpm, f in bpmrec]
@@ -434,6 +443,7 @@ class TwissItem:
     *eta*            dispersion
     *phi*            phase
     ===============  =======================================================
+
     """
 
     def __init__(self, **kwargs):
@@ -456,18 +466,19 @@ class TwissItem:
 
     def get(self, name):
         """
-        get twiss value
+        get twiss value in tuple or float
 
-        :param name: twiss item name
-        :type name: str
-        :return: twiss value
-        :rtype: tuple, float
-        :Example:
+        Parameters
+        -----------
+        name: str, twiss item name
 
-            >>> get('alpha')
-            (0.0, 0.0)
-            >>> get('betax')
-            0.1
+        Examples
+        ---------
+        >>> get('alpha')
+        (0.0, 0.0)
+        >>> get('betax')
+        0.1
+
         """
         d = {'alphax': self.alpha[0], 'alphay': self.alpha[1],
              'betax': self.beta[0], 'betay': self.beta[1],
@@ -506,10 +517,11 @@ class Twiss:
     A list of twiss items and related element names. It has tunes and
     chromaticities.
 
-    :Example:
+    Examples
+    ---------
+    >>> tw = Twiss()
+    >>> print tw[0]
 
-        >>> tw = Twiss()
-        >>> print tw[0]
     """
     def __init__(self, name):
         self._elements = []
@@ -547,8 +559,7 @@ class Twiss:
 
     def append(self, twi):
         """
-        :param twi: twiss value at one point
-        :type twi: :class:`~aphla.twiss.TwissItem`
+        add a twiss item :class:`TwissItem`
         """
 
         self._twlist.append(twi)
@@ -560,14 +571,14 @@ class Twiss:
         Parameters
         -----------
         col : list
-            columns : 's', 'beta', 'betax', 'betay', 'alpha', 'alphax', 
-            'alphay', 'phi', 'phix', 'phiy'.
+            columns : 's', 'beta', 'betax', 'betay', 'alpha', 'alphax',
+            'alphay', 'phi', 'phix', 'phiy'.  If without 'x' or 'y' postfix,
+            'beta', 'alpha' and 'phi' will be expanded to two columns.
         
-        :Example:
+        Examples
+        ---------
+        >>> getTwiss(['E1', 'E2'], col=('s', 'beta'))
 
-          >>> getTwiss(['E1', 'E2'], col=('s', 'beta'))
-
-        'beta', 'alpha' and 'phi' will be expanded to two columns.
         """
         elem = kwargs.get('elements', None)
         spos = kwargs.get('spos', None)
@@ -610,7 +621,11 @@ class Twiss:
         return np.array(ret, 'd')
 
 
-    def load_hdf5(self, filename, group = "twiss"):
+    def load(self, filename, **kwargs):
+        """loading hdf5 file in a group default 'twiss'"""
+        self._load_hdf5(filename, **kwargs)
+
+    def _load_hdf5(self, filename, group = "twiss"):
         """read data from HDF5 file in *group*"""
         import h5py
         f = h5py.File(filename, 'r')
