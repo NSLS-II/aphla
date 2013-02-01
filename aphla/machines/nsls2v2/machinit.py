@@ -66,6 +66,7 @@ def init_submachines(machine, submachines, **kwargs):
         logger.info("Initializing lattice %s (%s)" % (latname, lattag))
         lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
                                                desc = cfa.source)
+        lattice_dict[latname].machine = machine
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 

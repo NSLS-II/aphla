@@ -203,6 +203,10 @@ def getElements(group, include_virtual=False):
 
     return ret
 
+def getExactElement(elemname):
+    """find the element with exact name"""
+    return machines._lat._find_exact_element(name=elemname)
+
 def eget(elem, fields = None, **kwargs):
     """get elements field values
     
@@ -327,8 +331,9 @@ def getLocations(group):
 
 def addGroup(group):
     """
-    add a new group, *group* should be plain string, characters in
-    \[a-zA-Z0-9\_\]
+    add a new group to current submachine.
+
+    *group* should be plain string, characters in \[a-zA-Z0-9\_\]
 
     raise *ValueError* if *group* is an illegal name.
 
@@ -620,8 +625,8 @@ def getTunes(source='machine'):
     """
     if source == 'machine':
         # return only the first matched element
-        nu, = getElements('tune')
-        return nu.x, nu.y
+        nu = getElements('tune')
+        return nu[0].x, nu[0].y
     elif source == 'database':
         return machines._lat.getTunes()
     elif source == 'model':

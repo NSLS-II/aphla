@@ -3,9 +3,6 @@
 Appendix
 =============
 
-.. include:: history.rst
-.. include:: installation.rst
-
 
 Acronym and API Prefix
 ------------------------
@@ -174,3 +171,8 @@ different models. These model provide the access to the following data:
 - Linear lattice parameter, i.e. the twiss parameters from simulators
 - Potential values: orbit response matrix, tune and chromaticity
   correction matrix. (or a link/tag to the binary file which stores them)
+
+
+.. include:: installation.rst
+.. include:: history.rst
+.. include:: todo.rst

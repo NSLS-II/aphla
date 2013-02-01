@@ -676,7 +676,7 @@ class ApPlotWidget(QWidget):
         xmax = bound.right()
         #ymin = bound.top()
         #ymax = bound.bottom()
-        print "bound:", bound, w, h
+        #print "bound:", bound, w, h
         #print "x, y= ", xmin, xmax, ymin, ymax
         if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
         #else: self.setAxisAutoScale(Qwt.Qwt.Plot.xBottom)

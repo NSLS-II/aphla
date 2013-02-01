@@ -17,6 +17,7 @@ from numpy.ma import median
 from numpy import pi
 #from scipy import optimize,stats,pi
 from mpfit import mpfit
+
 """ 
 Note about mpfit/leastsq: 
 I switched everything over to the Markwardt mpfit routine for a few reasons,
@@ -68,35 +69,40 @@ def moments(data,circle,rotate,vheight,estimator=median,**kwargs):
     return mylist
 
 def twodgaussian(inpars, circle=False, rotate=True, vheight=True, shape=None):
-    """Returns a 2d gaussian function of the form:
+    """Returns a 2d gaussian function of the form::
+
         x' = numpy.cos(rota) * x - numpy.sin(rota) * y
         y' = numpy.sin(rota) * x + numpy.cos(rota) * y
-        (rota should be in degrees)
+
+    (rota should be in degrees)::
+
         g = b + a * numpy.exp ( - ( ((x-center_x)/width_x)**2 +
         ((y-center_y)/width_y)**2 ) / 2 )
 
-        inpars = [b,a,center_x,center_y,width_x,width_y,rota]
-                 (b is background height, a is peak amplitude)
+    Parameter
+    ----------
+    inpars : [b,a,center_x,center_y,width_x,width_y,rota]
+        (b is background height, a is peak amplitude)
 
         where x and y are the input parameters of the returned function,
         and all other parameters are specified by this function
 
         However, the above values are passed by list.  The list should be:
-        inpars = (height,amplitude,center_x,center_y,width_x,width_y,rota)
+    inpars : (height,amplitude,center_x,center_y,width_x,width_y,rota)
 
         You can choose to ignore / neglect some of the above input parameters 
-            unumpy.sing the following options:
-            circle=0 - default is an elliptical gaussian (different x, y
-                widths), but can reduce the input by one parameter if it's a
-                circular gaussian
-            rotate=1 - default allows rotation of the gaussian ellipse.  Can
-                remove last parameter by setting rotate=0
-            vheight=1 - default allows a variable height-above-zero, i.e. an
-                additive constant for the Gaussian function.  Can remove first
-                parameter by setting this to 0
-            shape=None - if shape is set (to a 2-parameter list) then returns
-                an image with the gaussian defined by inpars
-        """
+        unumpy.sing the following options:
+    circle : 0 default is an elliptical gaussian (different x, y
+        widths), but can reduce the input by one parameter if it's a
+        circular gaussian
+    rotate : 1 - default allows rotation of the gaussian ellipse.  Can
+        remove last parameter by setting rotate=0
+    vheight : 1 - default allows a variable height-above-zero, i.e. an
+        additive constant for the Gaussian function.  Can remove first
+        parameter by setting this to 0
+    shape : None - if shape is set (to a 2-parameter list) then returns
+        an image with the gaussian defined by inpars
+    """
     inpars_old = inpars
     inpars = list(inpars)
     if vheight == 1:
@@ -157,38 +163,40 @@ def gaussfit(data,err=None,params=(),autoderiv=True,return_all=False,circle=Fals
     Gaussian fitter with the ability to fit a variety of different forms of
     2-dimensional gaussian.
     
-    Input Parameters:
-        data - 2-dimensional data array
-        err=None - error array with same size as data array
-        params=[] - initial input parameters for Gaussian function.
-            (height, amplitude, x, y, width_x, width_y, rota)
-            if not input, these will be determined from the moments of the system, 
-            assuming no rotation
-        autoderiv=1 - use the autoderiv provided in the lmder.f function (the
-            alternative is to us an analytic derivative with lmdif.f: this method
-            is less robust)
-        return_all=0 - Default is to return only the Gaussian parameters.  
-                   1 - fit params, fit error
-        returnfitimage - returns (best fit params,best fit image)
-        returnmp - returns the full mpfit struct
-        circle=0 - default is an elliptical gaussian (different x, y widths),
-            but can reduce the input by one parameter if it's a circular gaussian
-        rotate=1 - default allows rotation of the gaussian ellipse.  Can remove
-            last parameter by setting rotate=0.  numpy.expects angle in DEGREES
-        vheight=1 - default allows a variable height-above-zero, i.e. an
-            additive constant for the Gaussian function.  Can remove first
-            parameter by setting this to 0
-        usemoment - can choose which parameters to use a moment estimation for.
-            Other parameters will be taken from params.  Needs to be a boolean
-            array.
+    Parameters
+    -----------
+    data : 2-dimensional data array
+    err : None - error array with same size as data array
+    params : [] - initial input parameters for Gaussian function.
+        (height, amplitude, x, y, width_x, width_y, rota)
+        if not input, these will be determined from the moments of the system, 
+        assuming no rotation.
+    autoderiv : 1 - use the autoderiv provided in the lmder.f function (the
+        alternative is to us an analytic derivative with lmdif.f: this method
+        is less robust)
+    return_all : 0 - Default is to return only the Gaussian parameters.  
+        1 - fit params, fit error
+    returnfitimage : returns (best fit params,best fit image)
+    returnmp : returns the full mpfit struct
+    circle : 0 - default is an elliptical gaussian (different x, y widths),
+        but can reduce the input by one parameter if it's a circular gaussian
+    rotate : 1 - default allows rotation of the gaussian ellipse.  Can remove
+        last parameter by setting rotate=0.  numpy.expects angle in DEGREES
+    vheight : 1 - default allows a variable height-above-zero, i.e. an
+        additive constant for the Gaussian function.  Can remove first
+        parameter by setting this to 0
+    usemoment : can choose which parameters to use a moment estimation for.
+        Other parameters will be taken from params.  Needs to be a boolean
+        array.
 
-    Output:
-        Default output is a set of Gaussian parameters with the same shape as
-            the input parameters
+    Returns
+    --------
+    output : default is a set of Gaussian parameters with the same shape as
+        the input parameters
 
-        Can also output the covariance matrix, 'infodict' that contains a lot
-            more detail about the fit (see scipy.optimize.leastsq), and a message
-            from leastsq telling what the exit status of the fitting routine was
+    covariance_matrix : 'infodict' that contains a lot
+        more detail about the fit (see scipy.optimize.leastsq), and a message
+        from leastsq telling what the exit status of the fitting routine was
 
         Warning: Does NOT necessarily output a rotation angle between 0 and 360 degrees.
     """
@@ -419,31 +427,35 @@ def multigaussfit(xax, data, ngauss=1, err=None, params=[1,0,1],
         fixed=[False,False,False], limitedmin=[False,False,True],
         limitedmax=[False,False,False], minpars=[0,0,0], maxpars=[0,0,0],
         quiet=True, shh=True, veryverbose=False):
-    """
-    An improvement on onedgaussfit.  Lets you fit multiple gaussians.
+    """An improvement on onedgaussfit.  Lets you fit multiple gaussians.
 
-    Inputs:
-       xax - x axis
-       data - y axis
-       ngauss - How many gaussians to fit?  Default 1 (this could supersede onedgaussfit)
-       err - error corresponding to data
+    Parameters
+    -----------
+    xax : x axis
+    data : y axis
+    ngauss : How many gaussians to fit?  Default 1 (this could supersede onedgaussfit)
+    err : error corresponding to data
 
-     These parameters need to have length = 3*ngauss.  If ngauss > 1 and length = 3, they will
-     be replicated ngauss times, otherwise they will be reset to defaults:
-       params - Fit parameters: [amplitude, offset, width] * ngauss
-              If len(params) % 3 == 0, ngauss will be set to len(params) / 3
-       fixed - Is parameter fixed?
-       limitedmin/minpars - set lower limits on each parameter (default: width>0)
-       limitedmax/maxpars - set upper limits on each parameter
+        These parameters need to have length = 3*ngauss.  If ngauss > 1 and
+        length = 3, they will be replicated ngauss times, otherwise they will
+        be reset to defaults:
 
-       quiet - should MPFIT output each iteration?
-       shh - output final parameters?
+    params : Fit parameters: [amplitude, offset, width] * ngauss
+        If len(params) % 3 == 0, ngauss will be set to len(params) / 3
+    fixed : Is parameter fixed?
+    limitedmin/minpars : set lower limits on each parameter (default: width>0)
+    limitedmax/maxpars : set upper limits on each parameter
 
-    Returns:
-       Fit parameters
-       Model
-       Fit errors
-       chi2
+    quiet - should MPFIT output each iteration?
+    shh - output final parameters?
+
+    Returns
+    --------
+    Fit parameters
+    Model
+    Fit errors
+    chi2
+
     """
 
     if len(params) != ngauss and (len(params) / 3) > ngauss:

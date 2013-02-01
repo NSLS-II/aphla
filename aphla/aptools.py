@@ -1,13 +1,8 @@
-#!/usr/bin/env python
-
-
 """
-Accelerator Physics Tools
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+:author: Lingyun Yang <lyyang@bnl.gov>
+:license:
 
-:author: Lingyun Yang
-
-Accelerator Physics Tools
+Accelerator Physics Tools module defines some small AP routines.
 
 """
 
@@ -16,15 +11,13 @@ from __future__ import print_function
 import numpy as np
 import time, datetime, sys
 import itertools
-#import matplotlib.pylab as plt
 
 from . import machines
-from catools import caput, caget, caRmCorrect 
-from hlalib import (getCurrent, getElements, getNeighbors, getClosest,
-                    getRfFrequency, putRfFrequency, getTunes, getOrbit,
-                    getLocations)
+from catools import caRmCorrect 
+from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
+    getClosest, getRfFrequency, putRfFrequency, getTunes, getOrbit,
+    getLocations)
 from orm import Orm
-#from bba import BbaBowtie
 import logging
 
 __all__ = [ 'calcLifetime', 
@@ -35,7 +28,7 @@ __all__ = [ 'calcLifetime',
 
 logger = logging.getLogger(__name__)
 
-def _element_fields(elems, fields, **kwargs):
+def _zip_element_field(elems, fields, **kwargs):
     """
     * compress=True
     >>> _element_fields(getElements(['BPM1']), ['x', 'y'])
@@ -89,15 +82,22 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
-    :param bpm: list of BPMs objects for new bumpped orbit. 
-    :param trim: list of corrector objects used for orbit correction. 
-    :param ref: target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
-    :param scale: optional, factor for calculated kick strength change, between 0 and 1.0
-    :param check: optional, ignore if the orbit gets worse.
-    :param ormdata: optional, use provided OrmData instead of the system default.
+    Parameters
+    -----------
+    bpm: list of BPMs objects for new bumpped orbit. 
+    trim: list of corrector objects used for orbit correction. 
+    ref: target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
+    scale: optional, float
+        factor to scale calculated kick strength change, between 0 and 1.0
+    check: optional, bool
+        roll back the corrector settings if the orbit gets worse.
+    ormdata: optional, :class:`~aphla.apdata.OrmData`
+        use provided OrmData instead of the system default.
 
-    if `ref[i][j]` is `None`, use the current hardware result, i.e. try not to change
-    the orbit at that location.
+    if `ref[i][j]` is `None`, use the current hardware result, i.e. try not to
+    change the orbit at that location.
+
+    The bpm and corrector must have 'x' and 'y' field.
 
     :Examples:
 
@@ -105,7 +105,7 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         >>> newobt = [[1.0, 1.5]] * len(bpms)
         >>> createLocalBump(bpms, getElements('HCOR'), newobt)
     
-    see also :func:`catools.caRmCorrect`
+    see also :func:`catools.caRmCorrect` for EPICS based system.
     """
 
     ormdata = kwargs.pop('ormdata', None)
@@ -117,27 +117,38 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         raise RuntimeError("No Orbit Response Matrix available for '%s'" %
             machines._lat.name)
 
-    # get the matrix and (bpm, field), (trim, field) list
-    m, bpmlst, trimlst = ormdata.getSubMatrix(
-        _element_fields(bpm, ['x', 'y']),
-        _element_fields(trim, ['x', 'y']), compress=True)
+    # get the matrix and (bpm, field), (trim, field) list as OrmData required
+    bpmrec = _zip_element_field(bpm, ['x', 'y'])
+    trimrec = _zip_element_field(bpm, ['x', 'y'])
+    m, bpmrec, trimrec = ormdata.getMatrix(bpmrec, trimrec, full=True)
 
     bpmref = []
-    for name,field in bpmlst:
-        i = (i for i,b in enumerate(bpm) if b.name == name).next()
-        if field == 'x': 
-            # v0 [m], u1 is lower level unit (EPICS)
-            v0, u1 = ref[i][0], bpm[i].getUnit('x', unitsys=None)
-        elif field == 'y': 
-            v0, u1 = ref[i][1], bpm[i].getUnit('y', unitsys=None)
+    for name,field in bpmrec:
+        try:
+            # find the index of first matching BPM
+            i = (i for i,b in enumerate(bpm) if b.name == name).next()
+        except:
+            v0 = getExactElement(name).get(field, unit=None)
+            u1 = getExactElement(name).getUnit(field, unitsys=None)
+        else:
+            if field == 'x': 
+                # v0 [m], u1 is lower level unit (EPICS)
+                v0, u1 = ref[i][0], bpm[i].getUnit('x', unitsys=None)
+            elif field == 'y': 
+                v0, u1 = ref[i][1], bpm[i].getUnit('y', unitsys=None)
+            else:
+                raise RuntimeError("unknow field %s" % field)
+
         if u1 == 'm': v = v0
         elif u1 == 'mm': v = 1000.0*v0
         elif u1 == 'um': v = 1.0e6*v0
+        else: raise RuntimeError("unknow unit '%s'" % u1)
+
         bpmref.append(v)
 
-    bpmpvs = [getElements(b)[0].pv(field=f)[0] for b,f in bpmlst]
-    trimpvs = [getElements(t)[0].pv(field=f, handle='setpoint')[0] 
-               for t,f in trimlst]
+    bpmpvs = [getExactElement(b).pv(field=f)[0] for b,f in bpmrec]
+    trimpvs = [getExactElement(t).pv(field=f, handle='setpoint')[0] 
+               for t,f in trimrec]
 
     # correct orbit using default ORM (from current lattice)
     for i in range(repeat):
@@ -146,12 +157,17 @@ def setLocalBump(bpm, trim, ref, **kwargs):
         caRmCorrect(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
 
 
-def correctOrbit(bpm = None, trimlst = None, **kwargs):
+def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
-    :param plane: [HV|H|V]
-    :param repeat: optional, numbers of correction 
+    Parameters
+    -----------
+    bpm: list of BPM objects, default all 'BPM'
+    trimlst: list of Trim objects, default all 'COR'
+    plane: optional, [ 'HV' | 'H' | 'V' ], default 'HV'
+    repeat: optional, integer, default 1
+        numbers of correction 
 
     :Example:
 
@@ -159,22 +175,28 @@ def correctOrbit(bpm = None, trimlst = None, **kwargs):
         >>> trims = getElements(['T1', 'T2', 'T3'])
         >>> correctOrbit(bpms, trims) 
 
-    This is a least square fitting method. It is possible that the orbit at the other BPMs may
-    change slightly although they are told to be fixed.
+    This is a least square fitting method. It is possible that the orbit at
+    the other BPMs may change slightly although they are told to be fixed.
 
-    seealso :func:`~aphla.hlalib.getElements`, :func:`~aphla.getSubOrm`
+    :warn: If the provided bpms are only part of the lattice, the routine will
+    try to keep other bpm readings unchanged. This however can not be
+    guaranteed due to the current algorithm.
+
+    seealso :func:`~aphla.hlalib.getElements`, :func:`~aphla.getSubOrm`,
+    :func:`setLocalBump`.
     """
 
-    plane = kwargs.get('plane', 'HV')
+    plane = kwargs.pop('plane', 'HV')
 
     # an orbit based these bpm
     if bpmlst is None:
         bpmlst = getElements('BPM')
 
-    if plane == 'H': ref = zip([0.0] * len(bpmlst), [None] * len(bpmlst))
-    elif plane == 'V': ref = zip([None] * len(bpmlst), [0.0] * len(bpmlst))
-    else: ref = np.zeros((len(bpmlst), 2), 'd')
-
+    N = len(bpmlst)
+    if plane == 'H': ref = zip([0.0] * N, [None] * N)
+    elif plane == 'V': ref = zip([None] * N, [0.0] * N)
+    else: ref = zip([0.0]*N, [0.0]*N)
+    
     # pv for trim
     if trimlst is None:
         trimlst = getElements('COR')
@@ -204,71 +226,62 @@ def _random_kick(plane = 'V', amp=1e-9, verbose = 0):
 def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
                  calc_method = 'expDecayFit', subNPoints = 10,
                  subDurationSeconds = 10.0, **kwargs):
-    """
+    """calculate beam lifetime.
+
     :author: Yoshiteru Hidaka
     
-    This function returns beam lifetime array or scalar value with
-    different data subdivision and calculation methods, given arrays
-    of time (t) in hours and beam current (I) in whatever unit.
-    
-    subNPoints is only used if data_subdiv_method = 'SubdivEqualNPoints'
-    
-    subDurationSeconds is only used if data_subdiv_method = 'SubdivEqualSeconds'
-    
-    **kwargs can contain optional parameters "p0" (initial guess for
+    *kwargs* can contain optional parameters "p0" (initial guess for
     the fit parameters) and "sigma" (weight factors) for
     scipy.optimize.curve_fit.
     
-    data_subdiv_method = {
-        'NoSubdiv' :
-             The function will apply the specified lifetime calculation
-             method on the entire time and beam current data. Hence, only
-             a single value of lifetime will be returned. The time corresponding
-             for the single lifetime value is calculated as (t_start + t_end)/2,
-             and will be returned along with the lifetime value.
+    Parameters
+    -----------
+    data_subdiv_method : 'NoSubdiv', 'SubdivEqualNPoints', 'SubdivEqualSeconds'
+        'NoSubdiv', The function will apply the specified lifetime calculation
+        method on the entire time and beam current data. Hence, only a single
+        value of lifetime will be returned. The time corresponding for the
+        single lifetime value is calculated as (t_start + t_end)/2, and will
+        be returned along with the lifetime value.
 
-        'SubdivEqualNPoints' :
-             The function will first subdivide the given time and beam current
-             data into a data subset with an equal number of data points specified
-             by the optional input arument "subNPoints".
-             For each data subset, the specified lifetime calculation method will
-             be applied. Hence, a vector of lifetime values will be returned.
-             The corresponding time vector is calculated using the same method
-             as in 'NoSubdiv', applied for each data subset. This time vector
-             will be returned along with the lifetime vector.
+        'SubdivEqualNPoints', The function will first subdivide the given time
+        and beam current data into a data subset with an equal number of data
+        points specified by the optional input arument "subNPoints".  For each
+        data subset, the specified lifetime calculation method will be
+        applied. Hence, a vector of lifetime values will be returned.  The
+        corresponding time vector is calculated using the same method as in
+        'NoSubdiv', applied for each data subset. This time vector will be
+        returned along with the lifetime vector.
              
-        'SubdivEqualSeconds' :
-             This is similar to 'SubdivEqualNPoints', but the subdivision
-             occurs based on an equal time period in seconds specified by
-             the optional input argument "subDurationSeconds".
-             
-        }
-        
-    calc_method = {
-        'expDecayFit' :
-             The function will estimate the lifetime "tau" [hr] by fitting a
-             data set of time (t) and current (I) to the exponential decay
-             equation:
-             
-                        I(t) = I_0 * exp( - t / tau )
+        'SubdivEqualSeconds', This is similar to 'SubdivEqualNPoints', but the
+        subdivision occurs based on an equal time period in seconds specified
+        by the optional input argument "subDurationSeconds".
+    calc_method : 'expDecayFit', 'avg_I_over_MaxDropRate', 'avg_I_over_LinearFitDropRate'
+        'expDecayFit': The function will estimate the lifetime "tau" [hr] by fitting a
+        data set of time (t) and current (I) to the exponential decay
+        equation: I(t) = I_0 * exp( - t / tau )
                         
-        'avg_I_over_MaxDropRate' :
-             The function will estimate the lifetime value by dividing the
-             average beam current over the given data set by the maximum
-             current drop rate ( = Delta_I / Delta_t). The average current
-             is given by calculating the mean of the beam current vector in
-             the data set. The maximum current drop rate is defined as
-             (I_max - I_min) divided by (t_end - t_start).
+        'avg_I_over_MaxDropRate', The function will estimate the lifetime
+        value by dividing the average beam current over the given data set by
+        the maximum current drop rate ( = Delta_I / Delta_t). The average
+        current is given by calculating the mean of the beam current vector in
+        the data set. The maximum current drop rate is defined as (I_max -
+        I_min) divided by (t_end - t_start).
              
-        'avg_I_over_LinearFitDropRate' :
-             The function will estimate the lifetime value by dividing the
-             average beam current over the given data set by the linearly
-             fit current drop rate ( = dI/dt). The average current is given
-             by calculating the mean of the beam current vector in the data
-             set. The current drop rate is given by the slope of the best
-             line fit to the data set.
-        }
-    
+        'avg_I_over_LinearFitDropRate', The function will estimate the
+        lifetime value by dividing the average beam current over the given
+        data set by the linearly fit current drop rate ( = dI/dt). The average
+        current is given by calculating the mean of the beam current vector in
+        the data set. The current drop rate is given by the slope of the best
+        line fit to the data set.
+    subNPoints: is only used if data_subdiv_method = 'SubdivEqualNPoints'
+    subDurationSeconds : is only used if data_subdiv_method = 'SubdivEqualSeconds'
+
+    Returns
+    -------
+    returns: This function returns beam lifetime array or scalar value with
+        different data subdivision and calculation methods, given arrays
+        of time (t) in hours and beam current (I) in whatever unit.
+
     """
     
     if isinstance(t, (float, int)) :
@@ -637,11 +650,13 @@ def _checkOrbitRmData(od):
         
     return vbpm, vtrim
 
-def measChromRm():
+def measChromRm(sextlst):
     """
-    measure chromaticity response matrix
+    measure chromaticity response matrix for sextupoles
     
-    NotImplemented
+    seealso :func:`~aphla.hlalib.getTunes`
+
+    :warn: NotImplemented
     """
     raise NotImplementedError()
 
@@ -654,16 +669,16 @@ def measOrbitRm(bpm, trim, output, **kwargs):
     :param list trim: list of trim names
     :param str output: output filename
     :param float minwait: waiting seconds before each orbit measurement.
-    seealso :func:`Orm.measure`
+
+    seealso :class:`~aphla.orm.Orm`, :func:`~aphla.orm.Orm.measure`
     """
 
-    #print "BPM: ", len(bpm)
-    #print "TRIM:", len(trim)
     logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
     orm = Orm(bpm, trim)
     orm.minwait = kwargs.get('minwait', 3)
 
     orm.measure(output = output, **kwargs)
+
     return orm
 
 
@@ -671,7 +686,7 @@ def getSubOrm(bpm, trim, flags = 'XX'):
     """
     get submatrix of Orm
 
-    NotImplemented
+    :warn: NotImplemented
     """
     #return _orm.getSubMatrix(bpm, trim, flags)
     raise NotImplementedError()

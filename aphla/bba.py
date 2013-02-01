@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
 """
-Beam-Based Alignment
-~~~~~~~~~~~~~~~~~~~~~
-
-:author: Lingyun Yang
+:author: Lingyun Yang <lyyang@bnl.gov>
 :license: 
 
 Remember:
@@ -20,13 +17,12 @@ each quadrupole alignment:
 3. quadrupole pvsp, dk1
 """
 
-from hlalib import getElements, getNeighbors, getDistance, getOrbit, waitStableOrbit
+from hlalib import (getElements, getNeighbors, getDistance, getOrbit, 
+    waitStableOrbit)
 
-#from catools import caget, caput
 import time
 import numpy as np
 
-#import matplotlib.pylab as plt
 
 class BbaBowtie:
     """

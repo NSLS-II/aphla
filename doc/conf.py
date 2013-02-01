@@ -77,6 +77,8 @@ release = aphla.__version__
 # List of documents that shouldn't be included in the build.
 #unused_docs = []
 
+#exclude_patterns = ['libref*.rst']
+
 # List of directories, relative to source directory, that shouldn't be searched
 # for source files.
 exclude_trees = ['_build', '_templates']
@@ -189,7 +191,9 @@ latex_font_size = '11pt'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('contents', 'aphla.tex', u'HLA Documentation',
+  ('userguide', 'aphla_userguide.tex', u'HLA User Guide',
+   u'Lingyun Yang', 'manual'),
+  ('libref', 'aphla_libref.tex', u'HLA Library Reference',
    u'Lingyun Yang, Yoshi Hidaka, Jinhyuk Choi', 'manual'),
 ]
 

@@ -126,7 +126,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.logdock.setMaximumHeight(200)
         self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         self.logdock.resize(200, 80)
-        print self.logdock.sizeHint()
+        #print self.logdock.sizeHint()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.logdock)
 
         #self.logger.info("INFO")
@@ -424,7 +424,10 @@ class OrbitPlotMainWindow(QMainWindow):
     def newPlot(self):
         lat = str(self.latBox.currentText())
         famname = self.sender().text()
-        print "New plot:", famname
+        if not lat or lat not in aphla.machines.lattices():
+            print "New plot:", famname, "are not available"
+            return
+
         if famname == "H Orbit":
             try:
                 self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x', "Hori. Orbit")
@@ -646,6 +649,7 @@ class OrbitPlotMainWindow(QMainWindow):
         mach = str(self.machBox.currentText())
         lat = str(self.latBox.currentText())
         for w in self.mdiarea.subWindowList():
+            #print w.machine(), w.lattice(), w.data.yfield
             if not isinstance(w, ApMdiSubPlot):  continue
             if w.machine() != mach: continue
             if w.lattice() != lat: continue
@@ -677,7 +681,7 @@ class OrbitPlotMainWindow(QMainWindow):
             s, x, xe = wx.data.data(nomask=True)
             s, y, ye = wy.data.data(nomask=True)
             x, y = [0.0]*len(s), [0.0] * len(s)
-            print np.shape(x), np.shape(y)
+            #print np.shape(x), np.shape(y)
             self.corbitdlg = OrbitCorrDlg(
                 self._lat.getElementList(wx.data.names()), 
                 s, x, y, 

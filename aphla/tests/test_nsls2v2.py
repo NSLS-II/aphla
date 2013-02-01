@@ -295,24 +295,6 @@ class T010_Element(unittest.TestCase):
         v0 = ap.getRfVoltage()
 
 
-    @unittest.skip("ORM data PV changed")
-    def test_corr_orbit_l2(self):
-        bpm = ap.getElements('P*C1[0-3]*')
-        trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
-        v0 = ap.getOrbit('P*', spos=True)
-        ap.correctOrbit([e.name for e in bpm], [e.name for e in trim])
-        time.sleep(4)
-        v1 = ap.getOrbit('P*', spos=True)
-        import matplotlib.pylab as plt
-        plt.clf()
-        ax = plt.subplot(211) 
-        fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X') 
-        fig = plt.plot(v0[:,-1], v0[:,1], 'g-o', label='Y')
-        ax = plt.subplot(212)
-        fig = plt.plot(v1[:,-1], v1[:,0], 'r-x', label='X')
-        fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y')
-        plt.savefig("test_nsls2_orbit_correct.png")
-
 
 
 
@@ -766,17 +748,36 @@ class TestOrbit(unittest.TestCase):
 
     - orbit dimension
     """
-
     def setUp(self):
         ap.machines.use("V2SR")
         self.logger = logging.getLogger("tests.TestOrbit")
         self.lat = ap.machines.getLattice('V2SR')
         self.assertTrue(self.lat)
+        self.kickers = []
+        cors = self.lat.getElementList('COR')
+        for c in cors:
+            cx, cy = None, None
+            if 'x' in c.fields(): cx = c.x
+            if 'y' in c.fields(): cy = c.y
+            self.kickers.append([c, cx, cy])
 
     def tearDown(self):
         self.logger.info("tearDown")
-        pass
-        
+        for kicker,vx,vy in self.kickers:
+            if vx is not None: kicker.x = vx
+            if vy is not None: kicker.y = vy
+       
+    def _random_kick(self, n, vx = 1e-4, vy = 1e-4):
+        v0 = ap.getOrbit()
+        hcors = self.lat.getElementList('COR')
+        for i in range(n):
+            k = np.random.randint(len(hcors))
+            v0x, v0y = hcors[k].x, hcors[k].y
+            self.kickers.append([hcors[k], v0x, v0y])
+            hcors[k].x = vx
+            hcors[k].y = vy
+        ap.hlalib.waitStableOrbit(v0, minwait=3)
+
     def test_orbit_read_l0(self):
         self.logger.info("reading orbit")    
         self.assertGreater(len(ap.getElements('BPM')), 0)
@@ -791,6 +792,28 @@ class TestOrbit(unittest.TestCase):
         self.assertGreater(len(v), 0)
         v = ap.getOrbit('p[lhm]*')
         self.assertGreater(len(v), 0)
+
+    def test_corr_orbit_l2(self):
+        self._random_kick(3)
+        obt = ap.getOrbit()
+        bpm = ap.getElements('BPM')[60:101]
+        trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
+        v0 = ap.getOrbit('p*', spos=True)
+        ap.correctOrbit(bpm, trim, repeat=5, scale=0.9)
+        time.sleep(4)
+        v1 = ap.getOrbit('p*', spos=True)
+
+        import matplotlib.pylab as plt
+        plt.clf()
+        ax = plt.subplot(211) 
+        fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X(before)') 
+        fig = plt.plot(v1[:,-1], v1[:,0], 'g-o', label='X(after)')
+        plt.legend()
+        ax = plt.subplot(212)
+        fig = plt.plot(v0[:,-1], v0[:,1], 'r-x', label='Y(before)')
+        fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y(after)')
+        plt.legend()
+        plt.savefig("test_nsls2_orbit_correct.png")
 
     @unittest.skip
     def test_orbit_bump(self):
@@ -985,7 +1008,7 @@ class TestBba(unittest.TestCase):
             self.assertGreater(abs(qlst[i].k1), 0.0)
 
     def test_bba_l2(self):
-
+        """test bba"""
         q, cor, bpm = ap.getElements(['ql3g2c29a', 'cl2g2c29a', 'pl2g2c29a'])
         q.put("k1", -1.4894162702, unit=None)
         cor.put("x", 0.0, unit=None)
