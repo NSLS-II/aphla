@@ -168,7 +168,7 @@ class Orm:
         ormdata._raworbit = self._raworbit
         ormdata._mask      = self._mask
         ormdata._rawkick   = self._rawkick
-        ormdata.save(filename, fmt)
+        ormdata.save(filename, format=fmt)
         del ormdata
 
     def load(self, filename, fmt = ''):

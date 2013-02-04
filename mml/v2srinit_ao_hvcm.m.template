@@ -1,6 +1,6 @@
 %% HCM
 AO.HCM.FamilyName  = 'HCM';
-AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR';};
+AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR'; 'Corrector'};
 AO.HCM.DeviceList  = [ %(hcm_devlist)s ];
 AO.HCM.ElementList = (1:size(AO.HCM.DeviceList,1))';
 AO.HCM.Status      = ones(size(AO.HCM.DeviceList,1),1);

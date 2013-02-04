@@ -1,5 +1,9 @@
 import aphla as ap
+import numpy as np
 from fnmatch import fnmatch
+
+# count how many AT definition generated
+atdefdict = {}
 
 def patch(latname, elem, k, **kwargs):
     d={'V1LTD1': {'q1': {'k1': -12.38103029065561},
@@ -29,7 +33,7 @@ def patch(latname, elem, k, **kwargs):
                 "sqhhg*c*a": { "k1": 0},
                 "qh2g*c*a": { "k1": 1.47765},
                 "qh3g*c*a": { "k1": -1.70755},
-                "cav": {'f': 499.681, 'v': 5e6, 'h':1320},
+                "cav": {'f': 499.681e6, 'v': 5e6, 'h':1320},
             }
     }
     try:
@@ -52,10 +56,10 @@ def convert_at_lattice(latname):
     dft = {'name': None, 'sb': None, 'length': None,
            'atclass': 'drift', 'atfamily': 'HALFD'}
     for i,e in enumerate(elems):
-        print i, "sb={0}".format(e.sb), "se={0}".format(e.se), e
+        #print i, "sb={0}".format(e.sb), "se={0}".format(e.se), e
         rec = {'name': e.name, 'family': e.family,
                'sb': e.sb, 'length': e.length,
-               'atclass': 'marker', 'atfamily': e.family}
+               'atclass': 'drift', 'atfamily': e.family}
         
         if e.family in ['FLAG', 'ICT']:
             # name, family, new: (name, type, family)
@@ -68,7 +72,7 @@ def convert_at_lattice(latname):
                 dft['name'] = 'DHF_'+rec['name']
                 dft['length'] = e.length/2.0
                 dft['sb'] = e.sb
-                print dft
+                #print dft
                 oupt.append(dft.copy())
                 oupt.append(rec.copy())
                 dft['sb'] = e.length/2.0 + e.sb
@@ -87,7 +91,7 @@ def convert_at_lattice(latname):
                 dft['name'] = 'DHF_'+rec['name']
                 dft['length'] = e.length/2.0
                 dft['sb'] = e.sb
-                print dft
+                #print dft
                 oupt.append(dft.copy())
                 oupt.append(rec.copy())
                 dft['sb'] = e.length/2.0 + e.sb
@@ -100,7 +104,9 @@ def convert_at_lattice(latname):
             rec['atclass'] = 'corrector'
             oupt.append(rec.copy())            
         elif e.family in ['DIPOLE']:
-            rec['atfamily'] = 'rbend'
+            rec['atfamily'] = 'BEND'
+            rec['atclass'] = 'rbend'
+            oupt.append(rec.copy())
         elif e.family in ['HCOR', 'HFCOR']:
             # assuming H/V in pair. named as 'c[xy]*'
             hvname = e.name[0] + e.name[2:]
@@ -113,6 +119,7 @@ def convert_at_lattice(latname):
             raise RuntimeError("'VCOR' should be removed")
         elif e.family in ['QUAD', 'SQUAD']:
             rec['atclass'] = 'quadrupole'
+            if fnmatch(rec['name'], 'q[hlm][123]*'): rec['atfamily'] = rec['name'][:3].upper()
             rec['k1'] = None
             oupt.append(rec.copy())
         elif e.family in ['SEXT']:
@@ -123,10 +130,13 @@ def convert_at_lattice(latname):
             rec['name'] = 'cav'
             rec['atclass'] = 'rfcavity'
             oupt.append(rec.copy()) 
-            print rec
+            #print rec
         elif e.family in ['', None, 'DCCT']:
             pass
         elif e.family in ['HCOR_IDCU', 'VCOR_IDCU', 'HCOR_IDCS', 'VCOR_IDCS', 'INSERTION', 'FCOR', 'UBPM', 'IDCOR', 'IDSIMCOR']:
+            #rec['name'] = 'DFT_%s' % e.name
+            # a default drift
+            oupt.append(rec.copy())
             pass
         else:
             print i,e
@@ -140,12 +150,18 @@ def at_definition(latname, rec):
     name, cla = rec['name'], rec['atclass']
     L = rec['length']
     h = "%s = %s('%s'," % (name, cla, rec['atfamily'])
+    marker = "%s = marker('%s', 'IdentityPass');" % (name, rec['atfamily'])
+    atdefdict.setdefault(cla, 0)
+    atdefdict[cla] += 1
     if cla in ['marker']:
         return h + " 'IdentityPass');"
     elif cla in ['drift']:
         return h+" {0}, 'DriftPass');".format(rec['length'])
     elif cla in ['corrector']:
+        #h = "%s = %s('Corrector'," % (name, cla)
         return h+" {0}, [0 0], 'CorrectorPass');".format(L)
+    elif cla in ['rbend']:
+        return h+" {0}, {1}, {2}, {3}, 0, 'BndMPoleSymplectic4RadPass');".format(L, np.pi/30, np.pi/60, np.pi/60)
     elif cla in ['quadrupole']:
         k1 = rec['k1']
         if k1 is None: k1 = patch(latname, name, 'k1')
@@ -160,15 +176,16 @@ def at_definition(latname, rec):
         freq = patch(latname, name, 'f')
         volt = patch(latname, name, 'v')
         hm = patch(latname, name, 'h')
-        return h + " {0}, {1}, {2}, {3}, {4});".format(
-            L, volt, freq, hm, 'CavityPass')
+        #
+        return h + " {0}, {1}, {2}, {3}, 'CavityPass');".format(
+            L, volt, freq, hm)
     else:
         raise RuntimeError("unknown AT type '%s'" % cla)
     
-def export_at_lattice(template, latname):
+def export_at_lattice(template, latname, C = 791.958):
     lat = convert_at_lattice(latname)
-    for i,e in enumerate(lat):
-        print i, e
+    #for i,e in enumerate(lat):
+    #    print i, e
     fname = template[:-len('.template')]
     strtmpl = open(template, 'r').read()
 
@@ -177,21 +194,31 @@ def export_at_lattice(template, latname):
     elems, s, body = [], 0.0, ''
     for i,r in enumerate(lat):
         if r is None: continue
-        # append drift if there is space
+        # insert drift before current element if there is space
         if r['sb'] > s:
             rdft['length'] = r['sb'] - s
             rdft['name'] = 'D_%d_%s' % (i, r['name'])
-            body += at_definition(latname, rdft) + "\n"
+            body += at_definition(latname, rdft) + " % +{0}= sb({1})\n".format(
+                rdft['length'], r['sb'])
             elems.append(rdft['name'])
             s += rdft['length']
+        #
         try:
-            body += at_definition(latname, r) + " %s= {0}\n".format(s)
+            body += at_definition(latname, r) + " %s= {0} + {1}\n".format(
+                s, r['length'])
             s += r['length']
         except:
             print i, s, r['length'], r['name']
             raise
-
         elems.append(r['name'])
+        if len(elems) % 5 == 0:
+            elems.append("...\n    ")
+
+    if s < C:
+        rdft['length'] = C - s
+        rdft['name'] = "D_%d_TAIL" % (len(lat),)
+        body += at_definition(latname, rdft) + " % C={0}\n".format(s + rdft['length'])
+        elems.append(rdft['name'])
 
     body += "L%s= [ %s ];\n" % (latname, ' '.join(elems))
 
@@ -281,6 +308,7 @@ def export_mml_init(template, latname):
     # ('SM2', 'SM2'),
     #             ]:
     ao_quad = ''
+    # see also updateatindex.m
     for qfam in [('QH1', 'QH1'), ('QH2', 'QH2'), ('QH3', 'QH3'), ('QL1', 'QL1'),
                  ('QL2', 'QL2'), ('QL3', 'QL3'), ('QM1', 'QM1'), ('QM2', 'QM2'),
                  ]:

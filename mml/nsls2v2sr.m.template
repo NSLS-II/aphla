@@ -18,10 +18,15 @@ buildlat(L%(latname)s);
 THERING = setcellstruct(THERING, 'Energy', 1:length(THERING), Energy);
 
 %%for i=1:length(THERING),
-%%    s = findspos(THERING, i+1);
-%%  fprintf('%%s L=%%f, s=%%f\n', THERING{i}.FamName, THERING{i}.Length, s);
+%%  %%T = findelemm44(THERING{i},THERING{i}.PassMethod, [1.0e-6 0 0 0 0 0]');
+%%  s = findspos(THERING, i+1);
+%%  fprintf('%%s L=%%f, s=%%f, sum(M)=%%f\n', THERING{i}.FamName, THERING{i}.Length, s, sum(sum(T)));
 %%end
 
 L0 = findspos(THERING, length(THERING)+1);
-fprintf('   Total Length = %%.6f meters  \n', L0)
-
+fprintf('   Total Length = %%.6f meters  \n', L0);
+%%Rout = linepass(THERING, [1e-6, 0, 0, 0, 0, 0]');
+%%fprintf(' %%.6f  %%.6f  %%.6f  %%.6f  %%.6f  %%.6f\n', Rout(1),Rout(2),Rout(3),Rout(4),Rout(5),Rout(6));
+%%for k=1:length(THERING)
+%%    fprintf(' %%d: %%s, %%.6f\n', k, THERING{k}.FamName, sum(sum(T)));
+%%end
