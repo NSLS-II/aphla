@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 """
-NSLS2 V3 BSR+3SR Unit Test
+Unit Test: NSLS2 V3 BSR+3SR 
 ---------------------------
 """
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 import sys, os, time
 from fnmatch import fnmatch
@@ -65,9 +67,9 @@ class Test0Element(unittest.TestCase):
 
         self.assertIn('x', bpm.fields())
         self.assertIn('y', bpm.fields())
-        self.assertEqual(len(bpm.get(['x', 'y'], unit=None)), 2)
-        self.assertEqual(len(ap.eget('BPM', 'x', unit=None)), len(bpms))
-        self.assertEqual(len(ap.eget('BPM', ['x', 'y'], unit=None)), len(bpms))
+        self.assertEqual(len(bpm.get(['x', 'y'], unitsys=None)), 2)
+        self.assertEqual(len(ap.eget('BPM', 'x', unitsys=None)), len(bpms))
+        self.assertEqual(len(ap.eget('BPM', ['x', 'y'], unitsys=None)), len(bpms))
 
         self.assertGreater(ap.getDistance(bpms[0].name, bpms[1].name), 0.0)
 

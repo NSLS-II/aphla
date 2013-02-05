@@ -10,6 +10,7 @@ import os
 import re
 import copy
 import logging
+import warnings
 from catools import caget, caput
 from unitconv import *
 
@@ -72,6 +73,7 @@ class AbstractElement(object):
         self.sequence = kwargs.get('sequence', (0, 0))
 
         self.group = set([self.family, self.cell, self.girder, self.symmetry])
+        for g in kwargs.get('group', []): self.group.add(g)
         
     def profile(self, vscale=1.0):
         """
@@ -99,7 +101,7 @@ class AbstractElement(object):
         elif self.family == 'DIPOLE':
             return [b, b, e, e, b, b, e, e], [0, h, h, -h, -h, h, h, 0], 'k'
         elif self.family == 'SEXT':
-            return [b, b, e, e], [0, 1.25*h, 1.25*h, 0], 'k'
+            return [b, b, e, e], [0, 1.4*h, 1.4*h, 0], 'k'
         elif self.family in ['HCOR', 'VCOR', 'TRIMX', 'TRIMY']:
             return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
                 [0, 0, h, 0, 0], 'r'
@@ -107,7 +109,7 @@ class AbstractElement(object):
             return [b, (b+e)/2.0, (b+e)/2.0, (b+e)/2.0, e], \
                 [0, 0, h, 0, 0], 'b'
         else:
-            return [b, e], [0, 0], 'k'
+            return [b, b, e, e], [0, 0.2*h, 0.2*h, 0], 'k'
 
     def __str__(self):
         return AbstractElement._STR_FORMAT % (
@@ -305,7 +307,7 @@ class CaDecorator:
             self.sp.append(caget(self.pvrb))
             if len(self.sp) > self.trace_limit: self.sp.pop(1)
 
-    def getReadback(self, unit = None):
+    def getReadback(self, unitsys = None):
         """
         return the value of readback PV or None if such pv is not defined.
         """
@@ -313,7 +315,7 @@ class CaDecorator:
             #print __name__
             #logger.info("testing")
             rawret = caget(self.pvrb)
-            ret = self._unit_conv(rawret, None, unit)
+            ret = self._unit_conv(rawret, None, unitsys)
             if self.trace: 
                 self.rb.append(copy.deepcopy(rawret))
                 if len(self.rb) > self.trace_limit: 
@@ -324,18 +326,18 @@ class CaDecorator:
             else: return ret
         else: return None
 
-    def getSetpoint(self, unit = None):
+    def getSetpoint(self, unitsys = None):
         """
         return the value of setpoint PV or None if such PV is not defined.
         """
         if self.pvsp:
             rawret = caget(self.pvsp)
-            ret = self._unit_conv(rawret, None, unit)
+            ret = self._unit_conv(rawret, None, unitsys)
             if len(self.pvsp) == 1: return ret[0]
             else: return ret
         else: return None
 
-    def putSetpoint(self, val, unit = None):
+    def putSetpoint(self, val, unitsys = None):
         """
         set a new setpoint.
 
@@ -346,7 +348,7 @@ class CaDecorator:
         number of history data are kept.
         """
         if self.pvsp:
-            rawval = self._unit_conv(val, unit, None)
+            rawval = self._unit_conv(val, unitsys, None)
             ret = caput(self.pvsp, rawval, wait=True)
             if self.trace: 
                 if isinstance(val, (list, tuple)):
@@ -723,9 +725,11 @@ class CaElement(AbstractElement):
         elif self.__dict__['_field'].has_key(att):
             decr = self.__dict__['_field'][att]
             if not decr:
-                raise AttributeError("field %s is not defined" % att)
+                raise AttributeError("field '%s' is not defined for '%s'" % (
+                        att, self.name))
             if not decr.pvsp:
-                raise ValueError("field '%s' in '%s' is not writable" % (att, self.name))
+                raise ValueError("field '%s' in '%s' is not writable" % (
+                        att, self.name))
             decr.putSetpoint(val)
         elif att in self.__dict__.keys():
             self.__dict__[att] = val
@@ -787,7 +791,8 @@ class CaElement(AbstractElement):
             
         return ''
 
-    def setUnit(self, field, u):
+    def setRawUnit(self, field, u):
+        """set the unit symbol for raw unit system"""
         if field not in self._field.keys(): 
             raise RuntimeError("element '%s' has no '%s' field" % \
                                self.name, field)
@@ -951,28 +956,28 @@ class CaElement(AbstractElement):
         read value of a single field, returns None if no such field.
         """
         source = kwargs.get('source', 'readback').lower()
-        unit = kwargs.get('unit', None)
+        unitsys = kwargs.get('unitsys', None)
     
         if not self._field.has_key(field):
             v = None
         elif source == 'readback':
-            v = self._field[field].getReadback(unit)
+            v = self._field[field].getReadback(unitsys)
         elif source.lower() == 'setpoint':
-            v = self._field[field].getSetpoint(unit)
+            v = self._field[field].getSetpoint(unitsys)
         else:
             raise ValueError("unknow source {0}" % field)
         
         # convert unit when required
         return v
         
-    def get(self, fields, source='readback', unit='phy'):
+    def get(self, fields, source='readback', unitsys='phy'):
         """
         get the values for given fields. 
 
         :param fields: field
         :type fields: str, list
         :param source: 'readback' or 'setpoint'.
-        :param unit: NotImplemented yet
+        :param unitsys: the unit system
         :rtype: None if the field does not exist.
 
         :Example:
@@ -983,14 +988,14 @@ class CaElement(AbstractElement):
             [ 0, None]
         """
 
-        kw = {'source': source, 'unit': unit}
+        kw = {'source': source, 'unitsys': unitsys}
         if isinstance(fields, (str, unicode)):
             return self._get_field(fields, **kw)
         else:
             # a list of fields
             return [ self._get_field(v, **kw) for v in fields]
 
-    def _put_field(self, field, val, unit, **kwargs):
+    def _put_field(self, field, val, unitsys, **kwargs):
         """
         set *val* to *field*.
 
@@ -1001,22 +1006,25 @@ class CaElement(AbstractElement):
         if self.__dict__['_field'].has_key(att):
             decr = self.__dict__['_field'][att]
             if not decr:
-                raise AttributeError("field '%s' is not defined" % att)
+                raise AttributeError("field '%s' is not defined for '%s'" % (
+                        att, self.name))
             if not decr.pvsp:
-                raise ValueError("field '%s' is not writable" % att)
-            decr.putSetpoint(val, unit)
+                raise ValueError("field '%s' in '%s' is not writable" % (
+                        att, self.name))
+            decr.putSetpoint(val, unitsys)
         else:
-            raise RuntimeError("element '%s' has no field '%s'" % (self.name, att))
+            raise RuntimeError("field '%s' is not defined for '%s'" % (
+                    att, self.name))
         
 
-    def put(self, field, val, unit = 'phy'):
+    def put(self, field, val, unitsys = 'phy'):
         """
         set *val* to *field*.
 
         seealso :func:`pv(field=field)`
         """
-        self._put_field(field, val, unit)
-        for e in self.alias: e._put_field(field, val, unit=unit)
+        self._put_field(field, val, unitsys)
+        for e in self.alias: e._put_field(field, val, unitsys=unitsys)
 
     def settable(self, field):
         """

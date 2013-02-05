@@ -11,6 +11,7 @@ Tutorial
    place for reading code and their output. But here explains things in more
    details.
 
+
 The HLA package we are developing has three parts
 
 - HLA Library: the element access model, lattice management and data IO.
@@ -293,6 +294,15 @@ Correct the orbit and plot the orbits before/after the correction:
    `SciPy <http://www.scipy.org>`_, `NumPy <http://numpy.scipy.org/>`_,
    `iPython <http://ipython.scipy.org>`_, `matplotlib
    <http://matplotlib.sourceforge.net>`_.
+
+
+HLA Lib Summary
+---------------------
+
+The following are some common functions. Please see :doc:`libref` for a list of
+documented modules, methods and functions.
+
+.. include:: hlasummary.txt
 
 
 .. 

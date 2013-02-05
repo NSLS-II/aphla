@@ -63,7 +63,7 @@ class RmCol:
         verbose = kwargs.get('verbose', 0)
         dklst = kwargs.get('dklst', None)
 
-        kx0 = self.kicker.get(kfield, unit=self.unit) # get EPICS value
+        kx0 = self.kicker.get(kfield, unitsys=self.unit) # get EPICS value
         wait = (self.minwait, self.stepwait, 0)
         if verbose:
             print "kicker: '%s.%s'= %e" % (self.kicker.name, kfield, kx0) 
@@ -77,7 +77,7 @@ class RmCol:
         # bpm read out
         ret = np.zeros((points+2, len(self.resplst)*len(respfields)), 'd')
         # initial bpm data
-        v0, h = eget(self.resplst, respfields, unit=self.unit, header=True)
+        v0, h = eget(self.resplst, respfields, unitsys=self.unit, header=True)
         #print "v=", v0
         #print "fields=", respfields, h
         ret[0,:] = np.ravel(v0)
@@ -86,12 +86,12 @@ class RmCol:
         kstrength = np.ones(points+2, 'd') * kx0
         kstrength[1:-1] = [dklst[i] + kx0 for i in range(points)]
         for i,kx in enumerate(kstrength[1:]):
-            v0 = np.ravel(eget(self.resplst, respfields, unit=self.unit))
-            self.kicker.put(kfield, kx, unit=self.unit)
+            v0 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
+            self.kicker.put(kfield, kx, unitsys=self.unit)
             st = waitChanged(self.resplst, respfields, v0, 
                              wait=wait, diffstd=self.bpmdiffstd)
 
-            v1 = np.ravel(eget(self.resplst, respfields, unit=self.unit))
+            v1 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
             ret[i+1,:] = v1
             
             if verbose:
@@ -106,7 +106,7 @@ class RmCol:
             kstrength[1:-1], ret[1:-1,:], 1, full=True)
 
         # reset the kicker
-        self.kicker.put(kfield, kx0, unit=self.unit)
+        self.kicker.put(kfield, kx0, unitsys=self.unit)
         self.rawkick = kstrength
         self.rawresp = ret
         self.m = p[0,:] # the slope
@@ -168,7 +168,7 @@ class Orm:
         ormdata._raworbit = self._raworbit
         ormdata._mask      = self._mask
         ormdata._rawkick   = self._rawkick
-        ormdata.save(filename, fmt)
+        ormdata.save(filename, format=fmt)
         del ormdata
 
     def load(self, filename, fmt = ''):
@@ -217,7 +217,7 @@ class Orm:
                 print "%d/%d '%s/%s.%s'" % (
                     i, len(trimsets), rflds, kicker.name, kfld)
 
-            ormline.measure(rflds, kfld, unit=self.unit, verbose=verbose)
+            ormline.measure(rflds, kfld, unitsys=self.unit, verbose=verbose)
             rawobt.append(ormline.rawresp)
             rawm.append(ormline.m)
             rawkick.append(ormline.rawkick)

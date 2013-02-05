@@ -778,7 +778,7 @@ class Lattice:
         s1 = kwargs.get("s1", 0.0)
         s2 = kwargs.get("s2", None)
         highlight = kwargs.get("highlight", None)
-        
+
         prof = []
         for elem in self._elements:
             if elem.virtual: continue
@@ -787,6 +787,9 @@ class Lattice:
             x1, y1, c = elem.profile()
             #if elem.family == highlight: c = 'b'
             prof.append((x1, y1, c, elem.name))
+
+        if not prof: return []
+
         # filter the zero
         ret = [prof[0]]
         for p in prof[1:]:

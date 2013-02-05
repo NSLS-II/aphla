@@ -1,5 +1,7 @@
+:orphan:
+
 Installation
-=============
+--------------
 
 .. warning::
 
@@ -9,7 +11,7 @@ Installation
 
 
 Depending Packages
--------------------
+~~~~~~~~~~~~~~~~~~
 
 There are some packages required before using HLA. In the following, we will
 take Debian/Ubuntu Linux as an example to show how to install them.
@@ -70,7 +72,7 @@ working on is *nsls2* and the channel finder service URL is at
 
 
 Code Repository for HLA Developers
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **SKIP THIS PART IF YOU DO NOT NEED TO DEVELOP HLA APPLICATIONS**
 

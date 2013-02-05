@@ -1,6 +1,6 @@
 %% HCM
 AO.HCM.FamilyName  = 'HCM';
-AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR';};
+AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR'; 'Corrector'};
 AO.HCM.DeviceList  = [ %(hcm_devlist)s ];
 AO.HCM.ElementList = (1:size(AO.HCM.DeviceList,1))';
 AO.HCM.Status      = ones(size(AO.HCM.DeviceList,1),1);
@@ -14,19 +14,19 @@ AO.HCM.Monitor.ChannelNames = { %(hcm_monitor_pv)s };
 AO.HCM.Monitor.HW2PhysicsFcn = @hw2at;
 AO.HCM.Monitor.Physics2HWFcn = @at2hw;
 AO.HCM.Monitor.Units        = 'Hardware';
-AO.HCM.Monitor.HWUnits      = 'Ampere';
+AO.HCM.Monitor.HWUnits      = 'Radian';
 AO.HCM.Monitor.PhysicsUnits = 'Radian';
 %%AO.HCM.Monitor.Real2RawFcn = @real2raw_ltb;
 %%AO.HCM.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.HCM.Setpoint.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'};
+AO.HCM.Setpoint.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
 AO.HCM.Setpoint.Mode = 'Simulator';
 AO.HCM.Setpoint.DataType = 'Scalar';
 AO.HCM.Setpoint.ChannelNames = { %(hcm_setpoint_pv)s };
 AO.HCM.Setpoint.HW2PhysicsFcn = @hw2at;
 AO.HCM.Setpoint.Physics2HWFcn = @at2hw;
 AO.HCM.Setpoint.Units        = 'Hardware';
-AO.HCM.Setpoint.HWUnits      = 'Ampere';
+AO.HCM.Setpoint.HWUnits      = 'Radian';
 AO.HCM.Setpoint.PhysicsUnits = 'Radian';
 AO.HCM.Setpoint.Range = [-3 3];
 AO.HCM.Setpoint.Tolerance  = .1 * ones(length(AO.HCM.ElementList), 1);  %% Hardware units
@@ -96,12 +96,12 @@ AO.VCM.Monitor.ChannelNames = { %(vcm_monitor_pv)s };
 AO.VCM.Monitor.HW2PhysicsFcn = @hw2at;
 AO.VCM.Monitor.Physics2HWFcn = @at2hw;
 AO.VCM.Monitor.Units        = 'Hardware';
-AO.VCM.Monitor.HWUnits      = 'Ampere';
+AO.VCM.Monitor.HWUnits      = 'Radian';
 AO.VCM.Monitor.PhysicsUnits = 'Radian';
 %%AO.VCM.Monitor.Real2RawFcn = @real2raw_ltb;
 %%AO.VCM.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.VCM.Setpoint.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'};
+AO.VCM.Setpoint.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
 AO.VCM.Setpoint.Mode = 'Simulator';
 AO.VCM.Setpoint.DataType = 'Scalar';
 AO.VCM.Setpoint.ChannelNames = { %(vcm_setpoint_pv)s };

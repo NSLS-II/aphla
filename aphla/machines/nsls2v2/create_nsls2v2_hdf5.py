@@ -1,3 +1,9 @@
+"""
+Create HDF5 conf for NSLS2V2
+-----------------------------
+"""
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 import h5py
 
 import os

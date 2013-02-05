@@ -49,7 +49,7 @@ def _ca_put_sim(pvs, vals):
     return ct.ca_nothing
 
 def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
-           count=0, throw=True):
+           count=0, throw=False):
     """
     channel access read
     

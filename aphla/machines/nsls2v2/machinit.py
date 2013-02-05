@@ -1,5 +1,13 @@
+"""
+NSLS2V2 Machine Structure Initialization
+-----------------------------------------
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, setUnitConversion,
-                createLattice, findCfaConfig, getResource)
+                createLattice, createVirtualElements, findCfaConfig, 
+                getResource)
 from .. import (OrmData, Twiss, UcPoly)
 
 from fnmatch import fnmatch
@@ -10,22 +18,14 @@ logger.setLevel(logging.DEBUG)
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
            'devName': 'devname',
-           'elemType': 'family', 
+           'elemType': 'family',
+           'elemGroup': 'group', 
            'elemHandle': 'handle',
            'elemIndex': 'index', 
            'elemPosition': 'se',
            'elemLength': 'length',
            'system': 'system'
 }
-
-_db_map = {'elem_type': 'family',
-           'lat_index': 'index',
-           'position': 'se',
-           'elem_group': 'group',
-           'dev_name': 'devname',
-           'elem_field': 'field'
-}
-
 
 
 def init_submachines(machine, submachines, **kwargs):
@@ -35,12 +35,15 @@ def init_submachines(machine, submachines, **kwargs):
     srcname = kwargs.get('src', 'nsls2v2')
     cfa = findCfaConfig(srcname, machine, submachines)
 
-    # the column name in CSV or the property name in channel finder is
-    # different from the Lattice class property, need to rename.
-    if cfa.source.endswith(".sqlite") or cfa.source.endswith(".csv"):
-        for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
-    elif cfa.source.startswith("http"):
-        for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+    # the column name in CSV or the property name in channel finder will be
+    # the same (NOT different) from the Lattice class property, need to rename.
+    #
+    #if cfa.source.endswith(".sqlite") or cfa.source.endswith(".csv"):
+    #    for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
+    #elif cfa.source.startswith("http"):
+    for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+
+    cfa.splitPropertyValue('group')
 
     lattice_dict = {}
 
@@ -55,6 +58,7 @@ def init_submachines(machine, submachines, **kwargs):
         logger.info("Initializing lattice %s (%s)" % (latname, lattag))
         lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
                                                desc = cfa.source)
+        lattice_dict[latname].machine = machine
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
@@ -62,25 +66,19 @@ def init_submachines(machine, submachines, **kwargs):
     data_filename = getResource('nsls2v2.hdf5', __name__)
     if data_filename:
         lattice_dict['V2SR'].ormdata = OrmData()
-        import h5py
-        f = h5py.File(data_filename, 'r')['V2SR']
-        for g,v in f.get('groups', {}).items():
-            for elem in v:
-                lattice_dict['V2SR'].addGroupMember(g, elem, newgroup=True)
-
         # group info is a redundant info, needs rebuild based on each element
         lattice_dict["V2SR"].buildGroups()
         #lattice_dict['V2SR'].ormdata.load_hdf5(data_filename, "V2SR/orm")
         # hack for h5py < 2.1.1
         ormfile = getResource('v2sr_orm.hdf5', __name__)
-        lattice_dict['V2SR'].ormdata.load_hdf5(ormfile, "orm")        
+        lattice_dict['V2SR'].ormdata.load(ormfile)        
         logger.info("using ORM data '%s'" % ormfile)
 
         lattice_dict['V2SR']._twiss = Twiss(data_filename)
         #lattice_dict['V2SR']._twiss.load_hdf5(data_filename, "V2SR/twiss")
         # hack for h5py < 2.1.1
         twissfile = getResource('v2sr_twiss.hdf5', __name__)
-        lattice_dict['V2SR']._twiss.load_hdf5(twissfile, "twiss")
+        lattice_dict['V2SR']._twiss.load(twissfile)
         logger.info("using Twiss data '%s'" % twissfile)
 
         data_filename = getResource('v2sr_unitconv.hdf5', __name__)
@@ -108,7 +106,10 @@ def init_submachines(machine, submachines, **kwargs):
     lattice_dict['V2SR'].loop = True
 
     for bpm in lattice_dict['V2SR'].getElementList('BPM'):
-        bpm.setUnit('x', 'm')
-        bpm.setUnit('y', 'm')
+        bpm.setRawUnit('x', 'm')
+        bpm.setRawUnit('y', 'm')
+
+    for k,vlat in lattice_dict.items():
+        createVirtualElements(vlat)
 
     return lattice_dict, lattice_dict['V2SR']

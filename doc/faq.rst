@@ -31,3 +31,12 @@ HLA FAQ (Frequently Asked Questions)
   Try `hla.machines.lattices()`. Depending on your initialization,
   e.g. `initNSLS2`, `initNSLS2V1`, the elements are put in the lattice if its
   PV has a tag like 'aphla.sys.*' in Channel Finder Service data.
+
+- lower level EPICS control
+
+  .. autosummary::
+
+     aphla.caget
+     aphla.caput
+     aphla.caputwait
+     aphla.caRmCorrect

@@ -1,13 +1,8 @@
 #!/usr/bin/env python
 
 """
-Response Matrix Data
-----------------------------------
-
-:author: Lingyun Yang
+:author: Lingyun Yang <lyyang@bnl.gov>
 :license:
-
-:class:`~aphla.apdata.OrmData` is an Orbit Response Matrix (ORM) 
 
 """
 
@@ -29,7 +24,7 @@ class OrmData:
     - *trim* is a list of tuple (name, location, field)
     - *m* 2D matrix, len(bpm) * len(trim)
     """
-    fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
+    _fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, datafile = None):
         # points for trim setting when calc dx/dkick
         #npts = 6
@@ -38,7 +33,7 @@ class OrmData:
         self.bpm = []
         self.trim = []
 
-        # optional PV info
+        # optional PV info, EPICS only
         self._bpmpv = None
         self._trimpvrb = None
         self._trimpvsp = None
@@ -53,21 +48,21 @@ class OrmData:
             self.load(datafile)
 
         
-    def _io_format(self, filename, format):
+    def _io_format(self, filename, formt):
         rt, ext = splitext(filename)
-        if format == '' and ext in self.fmtdict.keys():
-            fmt = self.fmtdict[ext]
-        elif format:
-            fmt = format
+        if formt:
+            fmt = formt
+        elif ext in self._fmtdict.keys():
+            fmt = self._fmtdict[ext]
         else:
             fmt = 'HDF5'
         return fmt
     
-    def save_hdf5(self, filename, group = "ormdata"):
+    def _save_hdf5(self, filename, group = "ormdata"):
         """
-        save data to hdf5 format
+        save data in hdf5 format in */group*
 
-        h5py before v2.0 does not accept unicode directly.
+        Note: h5py before v2.0 does not accept unicode directly.
         """
         import h5py
         h5zip = None # 'gzip' works in default install
@@ -81,9 +76,8 @@ class OrmData:
         tgrp = grp.create_group('bpm')
         name, spos, plane = zip(*self.bpm)
         # dtype('<U9') is not recognized in earlier h5py
-        if h5py.version.version_tuple[:3] < (2,1,1):
+        if h5py.version.version_tuple[:3] <= (2,1,1):
             name = [v.encode('ascii') for v in name]
-            #pv = [p.encode('ascii') for p in pv]
         dst = tgrp.create_dataset('element', (m,), data = name, dtype=str_type, 
                                  compression=h5zip)
         dst = tgrp.create_dataset('location', (m,), data = spos, 
@@ -97,10 +91,8 @@ class OrmData:
         #
         name, spos, plane = zip(*self.trim)
         # dtype('<U9') is not recognized in earlier h5py
-        if h5py.version.version_tuple[:3] < (2,1,1):
+        if h5py.version.version_tuple[:3] <= (2,1,1):
             name = [v.encode('ascii') for v in name]
-            #pvrb = [p.encode('ascii') for p in pvrb]
-            #pvsp = [p.encode('ascii') for p in pvsp]
         tgrp = grp.create_group("trim")
         dst = tgrp.create_dataset('element', (n,), data=name, dtype=str_type,
                                  compression=h5zip)
@@ -130,10 +122,11 @@ class OrmData:
         
         f.close()
 
-    def load_hdf5(self, filename, grp = "orm"):
+    def _load_hdf5(self, filename, group = "orm"):
         """
         load data group *grp* from hdf5 file *filename*
         """
+        grp = group
         import h5py
         f = h5py.File(filename, 'r')
         g = f[grp]['bpm']
@@ -155,9 +148,9 @@ class OrmData:
         f.close()
 
 
-    def save(self, filename, format = ''):
+    def save(self, filename, **kwargs):
         """
-        save the orm data into one file:
+        save the orm data into one file, the public data set are:
 
         =================   =====================================
         Data                Description
@@ -165,16 +158,15 @@ class OrmData:
         m                   matrix
         bpm                 list
         trim                list
-        _rawdata_.matrix    raw orbit change
-        _rawdata_.rawkick   raw trim strength change
-        _rawdata_.mask      matrix for ignoring certain ORM terms
         =================   =====================================
+
+        some more private dataset with a prefix "_" in its name.
         """
 
-        fmt = self._io_format(filename, format)
+        fmt = self._io_format(filename, kwargs.pop("format", None))
 
         if fmt == 'HDF5':
-            self.save_hdf5(filename)
+            self._save_hdf5(filename, **kwargs)
         elif fmt == 'shelve':
             f = shelve.open(filename, 'c')
             f['orm.m'] = self.m
@@ -186,20 +178,21 @@ class OrmData:
         else:
             raise ValueError("not supported file format: %s" % format)
 
-    def load(self, filename, format = ''):
-        self._load_v2(filename, format)
+    def load(self, filename, **kwargs):
+        """load data from file and guess its filetype based on extension"""
+        self._load_v2(filename, **kwargs)
 
-    def _load_v2(self, filename, format = ''):
+    def _load_v2(self, filename, **kwargs):
         """
         load orm data from binary file
         """
         if not os.path.exists(filename):
             raise ValueError("ORM data %s does not exist" % filename)
 
-        fmt = self._io_format(filename, format)
+        fmt = self._io_format(filename, kwargs.pop("format", None))
             
         if fmt == 'HDF5':
-            self.load_hdf5(filename)
+            self._load_hdf5(filename, **kwargs)
         elif fmt == 'shelve':
             f = shelve.open(filename, 'r')
             self.bpm = f["orm.bpm"]
@@ -214,16 +207,13 @@ class OrmData:
         #print self.trim
 
     def getBpmNames(self):
-        """
-        The same order as appeared in orm rows. It may have duplicate bpm
-        names in the return list.
+        """The BPM names of ORM. It has same order as appeared in orm rows. 
+        The result may have duplicate bpm names in the return list.
         """
         return [v[0] for v in self.bpm]
     
     def hasBpm(self, bpm, fields=['x', 'y']):
-        """
-        check if the bpm is used in this ORM measurement
-        """
+        """check if the bpm is used in this ORM measurement"""
 
         for b in self.bpm:
             if b[0] == bpm and b[2] in fields: return True
@@ -237,9 +227,7 @@ class OrmData:
         return [v[0] for v in self.trim]
     
     def hasTrim(self, trim, fields=['x', 'y']):
-        """
-        check if the trim is used in this ORM measurement
-        """
+        """check if the trim is used in this ORM measurement"""
         for tr in self.trim:
             if tr[0] == trim and tr[2] in fields: return True
         return False
@@ -258,54 +246,24 @@ class OrmData:
                 # b[1] = ['X'|'Y'], similar for t[1]
                 if b[1] != t[1]: self._mask[i,j] = 1
 
-    def _index_pv(self, pv):
+    def index(self, elem, field):
         """
-        return pv index of BPM, TRIM
-        """
-        if self._bpmpv:
-            for i,b in enumerate(self._bpmpv):
-                if b[-1] == pv: return i
-        if self._trimpvrb:
-            for j,t in enumerate(self._trimpvrb):
-                if t[-2] == pv or t[-1] == pv:
-                    return j
-        if self._trimpvsp:
-            for j,t in enumerate(self._trimpvsp):
-                if t[-2] == pv or t[-1] == pv:
-                    return j
-            
-        return None
-    
-    def _index_2(self, elem, fields):
-        """
-        return row index of BPM, or colum index for TRIM
+        return the index for given (element, fields). Raise ValueError if does
+        not exist.
 
-        :param elem: element name
+        Examples
+        ---------
+        >>> index('BPM1', 'x')
+        >>> index('TRIM1', 'y')
+
         """
-        ret = [None] * len(fields)
         for i,b in enumerate(self.bpm):
-            if b[0] != elem or b[2] not in fields: continue
-            ret[fields.index(b[2])] = i
-        for j,t in enumerate(self.trim):
-            if t[0] != elem or t[2] not in fields: continue
-            ret[fields.index(t[2])] = j
-        return ret
+            if b[0] == elem and b[2] == field: return i
+        for i,t in enumerate(self.trim):
+            if b[0] == elem and b[2] == field: return i
+            
+        raise ValueError("(%s,%s) are not in this ORM data" % (elem, field))
 
-    def index(self, *argv):
-        """
-        return the index of a pv or (element, fields)
-
-        :Example:
-
-          >>> index('PV1')
-          >>> index('BPM1', ['x', 'y'])
-        """
-        if len(argv) == 1:
-            return self._index_pv(argv[0])
-        elif len(argv) == 2:
-            return self._index_2(argv[0], argv[1])
-        else:
-            raise RuntimeError("Invalid number of parameters")
 
     def update(self, src):
         """
@@ -367,41 +325,22 @@ class OrmData:
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
         
-    def getMatrixIndex(self, bpm, trim):
-        """
-        find the index for given list of bpm and tirm.
-
-        :param bpm: bpm names
-        :param trim: trim names
-
-        seealso :func:`OrmData.getSubMatrix`
-        """
-        bpmidx, trimidx = [], []
-
-        for i,b in enumerate(bpm):
-            bpmidx.append(self._index_2(b, ['x', 'y']))
-        for i,t in enumerate(trim):
-            trimidx.append(self._index_2(t, ['x', 'y']))
-
-        return bpmidx, trimidx
-
     def getSubMatrix(self, bpm, trim, **kwargs):
         """
         get submatrix for certain bpm and trim.
 
-        :param bpm: a list of bpm (name, field) tuple
-        :param trim: a list of trim (name, field) tuple
-        :param ignore_unmeasured: optional (True, False).
+        Parameters
+        -----------
+        bpm : a list of bpm (name, field) tuple
+        trim: a list of trim (name, field) tuple
+        ignore_unmeasured : optional, bool.
+            if True, the input bpm/trim pairs which are not in the OrmData
+            will be ignored. Otherwise raise ValueError.
 
-        if *ignore_unmeasured* is True, the input bpm/trim pairs which are not
-        in the OrmData will be ignored. Otherwise raise ValueError.
+        Examples
+        ---------
+        >>> getSubMatrix([('bpm1', 'x'), ('bpm2', 'x')], None)
 
-        if only bpm name given, the return matrix will not equal to
-        len(bpm),len(trim), since one bpm can have two lines (x,y) data.
-
-        :Example:
-
-          >>> getSubMatrix([('bpm1', 'x'), ('bpm2', 'x')], None)
         """
         if not bpm or not trim: return None
         #if flags not in ['XX', 'XY', 'YY', 'YX', '**']: return None
@@ -444,35 +383,51 @@ class OrmData:
         trimlst = [(self.trim[i][0], self.trim[i][2]) for i in itrim]
         return mat, bpmlst, trimlst
 
-    def getSubMatrixPv(self, bpmpvs, trimpvs):
+    def getMatrix(self, bpmrec, trimrec, full=True):
         """
-        return the submatrix according the given PVs for bpm and trim.
+        return the matrix for given bpms and trims.
 
-        :param bpmpvs: pv list for BPMs
-        :param trimpvs: pv list for Trims
+        Parameters
+        -----------
+        bpmlst: list of (bpmname, field)
+        trimlst: list of (trimname, field)
+        full : bool
+            return full matrix besides the columns and rows for given trims
+            and bpms.
 
-        the PV is readback for bpm, setpoint for trim
+        Returns
+        --------
+        m : the matrix (MxN)
+        bpmrec : a list of (bpm, field), length M
+        trimrec : a list of (trim, field), length N
+
+        Notes
+        -------
+        if *full* is True, the returned (M,N) will be same size as stored data
+        and the upper left corner is for given bpms and trims. Otherwise only
+        the upper left corner is provided.        
+
+        Examples
+        ---------
+        >>> getMatrix([('bpm1', 'x'), ('bpm1', 'y')],
+                      [('trim1', 'x'), ('trim1', 'y')], True)
+
         """
-        if not self._bpmpv or not self._trimpvsp: return None
 
-        ib = [self._bpmpv.index(p) for p in bpmpvs if p in self._bpmpv]
-        it = [self._bpmpv.index(p) for p in trimpvs if p in self._trimpvsp]
+        rowidx = [self.index(bpm, f) for bpm, f in bpmrec]
+        colidx = [self.index(cor, f) for cor, f in trimrec]
 
-        m = np.take(np.take(self.m, ib, axis=0), it, axis=1)
+        extrarow = [i for i in range(len(self.bpm)) if i not in rowidx]
+        extracol = [i for i in range(len(self.trim)) if i not in colidx]
 
-        return m
+        m = np.take(np.take(self.m, rowidx+extrarow, axis=0),
+                    colidx+extracol, axis=1)
+        brec = [(self.bpm[i][0], self.bpm[i][2]) for i in rowidx+extrarow]
+        trec = [(self.trim[i][0], self.trim[i][2]) for i in colidx+extracol]
 
+        return m, brec, trec
             
 
-"""
-Twiss
-~~~~~~
-
-:author: Lingyun Yang
-:date: 2011-05-13 12:40
-
-stores twiss data.
-"""
 
 class TwissItem:
     """
@@ -488,6 +443,7 @@ class TwissItem:
     *eta*            dispersion
     *phi*            phase
     ===============  =======================================================
+
     """
 
     def __init__(self, **kwargs):
@@ -510,18 +466,19 @@ class TwissItem:
 
     def get(self, name):
         """
-        get twiss value
+        get twiss value in tuple or float
 
-        :param name: twiss item name
-        :type name: str
-        :return: twiss value
-        :rtype: tuple, float
-        :Example:
+        Parameters
+        -----------
+        name: str, twiss item name
 
-            >>> get('alpha')
-            (0.0, 0.0)
-            >>> get('betax')
-            0.1
+        Examples
+        ---------
+        >>> get('alpha')
+        (0.0, 0.0)
+        >>> get('betax')
+        0.1
+
         """
         d = {'alphax': self.alpha[0], 'alphay': self.alpha[1],
              'betax': self.beta[0], 'betay': self.beta[1],
@@ -555,15 +512,16 @@ class TwissItem:
     
 class Twiss:
     """
-    Twiss table
+    Twiss stores a twiss table
 
     A list of twiss items and related element names. It has tunes and
     chromaticities.
 
-    :Example:
+    Examples
+    ---------
+    >>> tw = Twiss()
+    >>> print tw[0]
 
-        tw = Twiss()
-        print tw[0]
     """
     def __init__(self, name):
         self._elements = []
@@ -601,8 +559,7 @@ class Twiss:
 
     def append(self, twi):
         """
-        :param twi: twiss value at one point
-        :type twi: :class:`~aphla.twiss.TwissItem`
+        add a twiss item :class:`TwissItem`
         """
 
         self._twlist.append(twi)
@@ -611,15 +568,17 @@ class Twiss:
         """
         return a list of twiss functions when given a list of element name.
         
-        - *col*, a list of columns : 's', 'beta', 'betax', 'betay',
-          'alpha', 'alphax', 'alphay', 'phi', 'phix', 'phiy'.
-        - *clean*, skip the unknown elements 
+        Parameters
+        -----------
+        col : list
+            columns : 's', 'beta', 'betax', 'betay', 'alpha', 'alphax',
+            'alphay', 'phi', 'phix', 'phiy'.  If without 'x' or 'y' postfix,
+            'beta', 'alpha' and 'phi' will be expanded to two columns.
         
-        :Example:
+        Examples
+        ---------
+        >>> getTwiss(['E1', 'E2'], col=('s', 'beta'))
 
-          getTwiss(['E1', 'E2'], col=('s', 'beta'))
-
-        'beta', 'alpha' and 'phi' will be expanded to two columns.
         """
         elem = kwargs.get('elements', None)
         spos = kwargs.get('spos', None)
@@ -662,10 +621,12 @@ class Twiss:
         return np.array(ret, 'd')
 
 
-    def load_hdf5(self, filename, group = "twiss"):
-        """
-        read data from HDF5 file
-        """
+    def load(self, filename, **kwargs):
+        """loading hdf5 file in a group default 'twiss'"""
+        self._load_hdf5(filename, **kwargs)
+
+    def _load_hdf5(self, filename, group = "twiss"):
+        """read data from HDF5 file in *group*"""
         import h5py
         f = h5py.File(filename, 'r')
         self.element = f[group]['element']
@@ -680,7 +641,7 @@ class Twiss:
 
         f.close()
         
-    def load_sqlite3(self, fname, table="twiss"):
+    def _load_sqlite3(self, fname, table="twiss"):
         """
         read twiss from sqlite db file *fname*.
 

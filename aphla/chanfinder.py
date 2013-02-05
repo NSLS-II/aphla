@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Channel Finder
 ---------------
@@ -13,6 +11,9 @@ tags. This can help us to identify the associated element name, type, location
 for every PV. The PVs are also tagged for 'default' read/write for a element
 it is linked.
 """
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from __future__ import print_function, unicode_literals
 
 from fnmatch import fnmatch
@@ -413,6 +414,11 @@ class ChannelFinderAgent(object):
         alltags = set()
         for r in self.rows: alltags.update(r[2])
         return [t for t in alltags if fnmatch(t, pat)]
+
+    def splitPropertyValue(self, prpt, sep = ";"):
+        for r in self.rows:
+            if prpt not in r[1]: continue
+            r[1][prpt] = r[1][prpt].split(sep)
 
     def groups(self, key = 'elemName', **kwargs):
         """

@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+"""
+Resource Management
+--------------------
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 import os
 

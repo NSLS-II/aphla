@@ -9,9 +9,11 @@ NSLS2 V2 Unit Test
 - test_*_l2 for beam steering test
 """
 
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 # cause timeout by nosetest
-#from cothread.catools import caget
-#print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
+# from cothread.catools import caget
+# print caget('SR:C00-Glb:G00{POS:00}RB-S', timeout=10)
 
 import sys, os, time
 from fnmatch import fnmatch
@@ -102,11 +104,49 @@ def waitForStablePv(**kwargs):
         return timeout, dvstd
 
 """
+Channel Finder
+~~~~~~~~~~~~~~
+"""
+
+class T000_ChanFinder(unittest.TestCase):
+    """
+    """
+    def setUp(self):
+        self.cfs_url = os.environ.get('HLA_CFS_URL', None)
+        self.cfdb ="test_nsls2v2.sqlite"
+        pass
+
+    def test_db_tags_l0(self):
+        """read CFS_URL export to sqlite"""
+        cfa = ap.chanfinder.ChannelFinderAgent()
+        cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
+        cfa.exportSqlite(self.cfdb)
+        cfa2 = ap.chanfinder.ChannelFinderAgent()
+        cfa2.importSqlite(self.cfdb)
+
+        tags = cfa2.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
+        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
+
+    def test_url_tags_l0(self):
+        #http://web01.nsls2.bnl.gov/ChannelFinder
+        cfa = ap.chanfinder.ChannelFinderAgent()
+        cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
+        if self.cfs_url is None: return
+        self.assertIsNotNone(self.cfs_url)
+
+        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
+        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
+            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
+
+
+
+"""
 Element
 ~~~~~~~
 """
 
-class Test0Element(unittest.TestCase):
+class T010_Element(unittest.TestCase):
     def setUp(self):
         ap.machines.use(LAT_SR)
         pass 
@@ -128,7 +168,9 @@ class Test0Element(unittest.TestCase):
         self.assertTrue(nux > 30.0)
         self.assertTrue(nuy > 15.0)
 
-    def test_dcct_l0(self):
+    def test_dcct_current_l0(self):
+        self.assertGreater(ap.getCurrent(), 100.0)
+
         dccts = ap.getElements('dcct')
         self.assertEqual(len(dccts), 1)
         dcct = dccts[0]
@@ -149,9 +191,9 @@ class Test0Element(unittest.TestCase):
         self.assertLess(dcct.value, 600.0)
 
         self.assertGreater(dcct.value, 1.0)
-        self.assertGreater(ap.eget('DCCT', 'value', unit=None), 1.0)
-        self.assertEqual(len(ap.eget('DCCT', ['value'], unit=None)), 1)
-        self.assertGreater(ap.eget('DCCT', ['value'], unit=None)[0], 1.0)
+        self.assertGreater(ap.eget('DCCT', 'value', unitsys=None), 1.0)
+        self.assertEqual(len(ap.eget('DCCT', ['value'], unitsys=None)), 1)
+        self.assertGreater(ap.eget('DCCT', ['value'], unitsys=None)[0], 1.0)
 
     def test_bpm_l0(self):
         bpms = ap.getElements('BPM')
@@ -253,61 +295,6 @@ class Test0Element(unittest.TestCase):
         v0 = ap.getRfVoltage()
 
 
-    @unittest.skip("ORM data PV changed")
-    def test_corr_orbit_l2(self):
-        bpm = ap.getElements('P*C1[0-3]*')
-        trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
-        v0 = ap.getOrbit('P*', spos=True)
-        ap.correctOrbit([e.name for e in bpm], [e.name for e in trim])
-        time.sleep(4)
-        v1 = ap.getOrbit('P*', spos=True)
-        import matplotlib.pylab as plt
-        plt.clf()
-        ax = plt.subplot(211) 
-        fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X') 
-        fig = plt.plot(v0[:,-1], v0[:,1], 'g-o', label='Y')
-        ax = plt.subplot(212)
-        fig = plt.plot(v1[:,-1], v1[:,0], 'r-x', label='X')
-        fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y')
-        plt.savefig("test_nsls2_orbit_correct.png")
-
-
-
-"""
-Channel Finder
-~~~~~~~~~~~~~~
-"""
-
-class Test0ChanFinderCsvData(unittest.TestCase):
-    """
-    """
-    def setUp(self):
-        #self.cfs_csv = 'nsls2v1_cfs.csv'
-        srcdir = resource_filename(__name__, os.path.join(*MACHINE))
-        self.cfs_db = os.path.join(srcdir, 'nsls2v2.sqlite')
-        self.cfs_url = os.environ.get('HLA_CFS_URL', None)
-        pass
-
-    @unittest.skip("skip csv/sqlite data")
-    def test_db_tags_l0(self):
-        cfa = ap.chanfinder.ChannelFinderAgent()
-        self.assertTrue(os.path.exists(self.cfs_db), "file '%s' does not exist" % self.cfs_db)
-        cfa._importSqliteDb1(self.cfs_db)
-
-        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
-        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
-            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
-
-    def test_url_tags_l0(self):
-        #http://web01.nsls2.bnl.gov/ChannelFinder
-        if self.cfs_url is None: return
-        self.assertIsNotNone(self.cfs_url)
-        cfa = ap.chanfinder.ChannelFinderAgent()
-        cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
-
-        tags = cfa.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
-        for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
-            self.assertIn(ap.machines.HLA_TAG_SYS_PREFIX + '.' + t, tags)
 
 
 
@@ -316,7 +303,7 @@ Lattice
 -------------
 """
 
-class Test0Lattice(unittest.TestCase):
+class T020_Lattice(unittest.TestCase):
     """
     Lattice testing
     """
@@ -376,7 +363,7 @@ class Test0Lattice(unittest.TestCase):
             self.assertGreaterEqual(
                 elem1[i].sb - elem1[i-1].sb, -1e-9,
                 msg="{0}({4},sb={1})<{2}({5}, sb={3}), d={6}".format(
-                    elem1[i].name, elem1[i].sb, 
+                    elem1[i].name, elem1[i].sb,
                     elem1[i-1].name, elem1[i-1].sb,
                     elem1[i].index, elem1[i-1].index,
                     elem1[i].sb - elem1[i-1].sb))
@@ -423,7 +410,7 @@ Test1Lattice
 ~~~~~~~~~~~~~
 """
         
-class Test1LatticeSr(unittest.TestCase):
+class T030_LatticeSr(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeSr")
         self.lat = ap.machines.getLattice('V2SR')
@@ -540,7 +527,7 @@ class Test1LatticeSr(unittest.TestCase):
         self.assertEqual(len(h[0]), 3)
 
         
-class TestLatticeLtd1(unittest.TestCase):
+class T040_LatticeLtd1(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtd1")
         ap.machines.use("V1LTD1")
@@ -610,7 +597,7 @@ class TestLatticeLtd1(unittest.TestCase):
         pass
 
 
-class TestLatticeLtb(unittest.TestCase):
+class T050_LatticeLtb(unittest.TestCase):
     def setUp(self):
         logging.info("TestLatticeLtb")
         self.lat  = ap.machines.getLattice('V1LTB')
@@ -647,7 +634,7 @@ Twiss
 ~~~~~
 """
 
-class Test0Tunes(unittest.TestCase):
+class T060_Tunes(unittest.TestCase):
     def setUp(self):
         ap.machines.use("V2SR")
         logging.info("TestTunes")
@@ -761,17 +748,36 @@ class TestOrbit(unittest.TestCase):
 
     - orbit dimension
     """
-
     def setUp(self):
         ap.machines.use("V2SR")
         self.logger = logging.getLogger("tests.TestOrbit")
         self.lat = ap.machines.getLattice('V2SR')
         self.assertTrue(self.lat)
+        self.kickers = []
+        cors = self.lat.getElementList('COR')
+        for c in cors:
+            cx, cy = None, None
+            if 'x' in c.fields(): cx = c.x
+            if 'y' in c.fields(): cy = c.y
+            self.kickers.append([c, cx, cy])
 
     def tearDown(self):
         self.logger.info("tearDown")
-        pass
-        
+        for kicker,vx,vy in self.kickers:
+            if vx is not None: kicker.x = vx
+            if vy is not None: kicker.y = vy
+       
+    def _random_kick(self, n, vx = 1e-4, vy = 1e-4):
+        v0 = ap.getOrbit()
+        hcors = self.lat.getElementList('COR')
+        for i in range(n):
+            k = np.random.randint(len(hcors))
+            v0x, v0y = hcors[k].x, hcors[k].y
+            self.kickers.append([hcors[k], v0x, v0y])
+            hcors[k].x = vx
+            hcors[k].y = vy
+        ap.hlalib.waitStableOrbit(v0, minwait=3)
+
     def test_orbit_read_l0(self):
         self.logger.info("reading orbit")    
         self.assertGreater(len(ap.getElements('BPM')), 0)
@@ -786,6 +792,28 @@ class TestOrbit(unittest.TestCase):
         self.assertGreater(len(v), 0)
         v = ap.getOrbit('p[lhm]*')
         self.assertGreater(len(v), 0)
+
+    def test_corr_orbit_l2(self):
+        self._random_kick(3)
+        obt = ap.getOrbit()
+        bpm = ap.getElements('BPM')[60:101]
+        trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
+        v0 = ap.getOrbit('p*', spos=True)
+        ap.correctOrbit(bpm, trim, repeat=5, scale=0.9)
+        time.sleep(4)
+        v1 = ap.getOrbit('p*', spos=True)
+
+        import matplotlib.pylab as plt
+        plt.clf()
+        ax = plt.subplot(211) 
+        fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X(before)') 
+        fig = plt.plot(v1[:,-1], v1[:,0], 'g-o', label='X(after)')
+        plt.legend()
+        ax = plt.subplot(212)
+        fig = plt.plot(v0[:,-1], v0[:,1], 'r-x', label='Y(before)')
+        fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y(after)')
+        plt.legend()
+        plt.savefig("test_nsls2_orbit_correct.png")
 
     @unittest.skip
     def test_orbit_bump(self):
@@ -980,13 +1008,13 @@ class TestBba(unittest.TestCase):
             self.assertGreater(abs(qlst[i].k1), 0.0)
 
     def test_bba_l2(self):
-
+        """test bba"""
         q, cor, bpm = ap.getElements(['ql3g2c29a', 'cl2g2c29a', 'pl2g2c29a'])
-        q.put("k1", -1.4894162702, unit=None)
-        cor.put("x", 0.0, unit=None)
-        cor.put("y", 0.0, unit=None)
+        q.put("k1", -1.4894162702, unitsys=None)
+        cor.put("x", 0.0, unitsys=None)
+        cor.put("y", 0.0, unitsys=None)
 
-        print q.fields(), q.get('k1', unit=None)
+        print q.fields(), q.get('k1', unitsys=None)
 
         inp = { 'quad': (q, 'k1'), 'cor': (cor, 'x'),
                 'bpm': (bpm, 'x'),
@@ -1282,7 +1310,7 @@ class TestRmCol(unittest.TestCase):
         #trim = ap.getElements('ch1g6c15b')[0]
         trim = ap.getElements('cl2g6c30b')[0]
         bpmlst = [e.name for e in ap.getElements('BPM')]
-        trim.put('x', 0.0, unit = None)
+        trim.put('x', 0.0, unitsys = None)
 
         fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
         ormline = ap.orm.RmCol(bpmlst, trim)
@@ -1300,7 +1328,7 @@ class TestRmCol(unittest.TestCase):
         #trim = ap.getElements('ch1g6c15b')[0]
         trim = ap.getElements('cl2g6c30b')[0]
         bpmlst = [e.name for e in ap.getElements('BPM')]
-        trim.put('x', 0.0, unit=None)
+        trim.put('x', 0.0, unitsys=None)
 
         fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
         ormline = ap.orm.RmCol(bpmlst, trim)

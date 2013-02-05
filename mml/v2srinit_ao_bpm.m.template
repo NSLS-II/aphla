@@ -12,10 +12,10 @@ AO.BPMx.Monitor.Mode = 'Simulator';
 AO.BPMx.Monitor.DataType = 'Scalar';
 AO.BPMx.Monitor.ChannelNames = { %(bpmx_monitor_pv)s };
 
-AO.BPMx.Monitor.HW2PhysicsParams = 1e-3;  %% HW [mm], Simulator [Meters]
-AO.BPMx.Monitor.Physics2HWParams = 1000;
+AO.BPMx.Monitor.HW2PhysicsParams = 1;  %% HW [mm], Simulator [Meters]
+AO.BPMx.Monitor.Physics2HWParams = 1;
 AO.BPMx.Monitor.Units            = 'Hardware';
-AO.BPMx.Monitor.HWUnits          = 'mm';
+AO.BPMx.Monitor.HWUnits          = 'Meter';
 AO.BPMx.Monitor.PhysicsUnits     = 'Meter';
 %%AO.BPMx.Monitor.SpecialFunctionGet = @getx_ltb;
 
@@ -43,10 +43,10 @@ AO.BPMy.Monitor.Mode = 'Simulator';
 AO.BPMy.Monitor.DataType = 'Scalar';
 AO.BPMy.Monitor.ChannelNames = { %(bpmy_monitor_pv)s };
 
-AO.BPMy.Monitor.HW2PhysicsParams = 1e-3;  %% HW [mm], Simulator [Meters]
-AO.BPMy.Monitor.Physics2HWParams = 1000;
+AO.BPMy.Monitor.HW2PhysicsParams = 1;  %% HW [mm], Simulator [Meters]
+AO.BPMy.Monitor.Physics2HWParams = 1;
 AO.BPMy.Monitor.Units            = 'Hardware';
-AO.BPMy.Monitor.HWUnits          = 'mm';
+AO.BPMy.Monitor.HWUnits          = 'Meter';
 AO.BPMy.Monitor.PhysicsUnits     = 'Meter';
 
 AO.BPMy.Sum.MemberOf = {'PlotFamily'; 'BPM'; 'BPMy'; 'Monitor'; 'Sum';};

@@ -1,4 +1,8 @@
 """
+Machine Structure Initialization
+--------------------------------
+
+
 In ``aphla`` one machine includes several accelerator structure,
 e.g. "nsls2v2" is a machine with several submachine or lattice V1LTD, V1LTB,
 V2SR.
@@ -6,6 +10,8 @@ V2SR.
 Submachines are also called lattice in ``aphla``. Each lattice has a list of
 elements, magnet or instrument. The submachines/lattices can share elements.
 """
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 from ..unitconv import *
 from ..element import *
@@ -33,19 +39,20 @@ HLA_TAG_SYS_PREFIX = HLA_TAG_PREFIX + '.sys'
 #
 HLA_VFAMILY = 'HLA:VIRTUAL'
 HLA_VBPM   = 'HLA:VBPM'
-HLA_VHCOR   = 'HLA:VHCOR'
-HLA_VVCOR   = 'HLA:VVCOR'
+HLA_VHCOR  = 'HLA:VHCOR'
+HLA_VVCOR  = 'HLA:VVCOR'
 HLA_VQUAD  = 'HLA:VQUAD'
 HLA_VSEXT  = 'HLA:VSEXT'
 
+
+# HOME = os.environ['HOME'] will NOT work on Windows,
+# unless %HOME% is set on Windows, which is not the case by default.
+_home_hla = os.path.join(os.path.expanduser('~'), '.hla')
+HLA_ROOT      = os.environ.get('HLA_ROOT', _home_hla)
 HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
-# HOME path
-HOME = os.path.expanduser('~')
-# HOME = os.environ['HOME'] will NOT work on Windows,
-# unless %HOME% is set on Windows, which is not the case by default.
 
 _lattice_dict = {}
 
@@ -53,16 +60,19 @@ _lattice_dict = {}
 _lat = None
 
 def init(machine, submachines = "*", **kwargs):
+    """use load instead"""
     load(machine, submachines = submachines, **kwargs)
 
 def load(machine, submachines = "*", **kwargs):
     """
-    load submachine lattices in machine
+    load submachine lattices in machine.
 
-    :param machine: the exact name of machine
-    :param submachine: pattern of sub machines
-    :param use_cache: optional bool, default False, use cache
-    :param save_cache: optional bool, default False, save cache
+    Parameters
+    -----------
+    machine: str. the exact name of machine
+    submachine: str. default '*'. pattern of sub machines
+    use_cache: bool. default False. use cache
+    save_cache: bool. default False, save cache
     """
     
     use_cache = kwargs.get('use_cache',False)
@@ -84,38 +94,12 @@ def load(machine, submachines = "*", **kwargs):
     m = __import__(machine, globals(), locals(), [], -1)
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
     # update machine name for each lattice
-
-    # some extra group info is not ready unitl returned from machines init.
-    # This vELEM creation can not be done in createLattice
-    for k,vlat in lats.items():
-        vlat.machine = machine
-        # a virtual bpm. its field is a "merge" of all bpms.
-        iv = 100000
-        vpar = { 'virtual': 1, 'name': None, 'family': HLA_VFAMILY,
-                 'index': None }
-        for fam,vfam in [('BPM', HLA_VBPM), ('HCOR', HLA_VHCOR),
-                     ('VCOR', HLA_VVCOR), ('QUAD', HLA_VQUAD),
-                     ('SEXT', HLA_VSEXT)]:
-            # a virtual element. its field is a "merge" of all bpms.
-            velem = vlat.getElementList(fam)
-            vpar.update({'name': vfam, 'index': iv + 1})
-            if velem:
-                allvelem = merge(velem, **vpar)
-                vlat.insertElement(allvelem, groups=[HLA_VFAMILY])
-
-            iv = iv + 1
-
+    
     global _lat, _lattice_dict
     _lattice_dict.update(lats)
     _lat = lat
     logger.info("setting default lattice '%s'" % _lat.name)
 
-
-    for k,v in _lattice_dict.items():
-        if not v._group: continue
-        for e in v._group.get(HLA_VFAMILY, []):
-            e.virtual = 1
-        
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
                                  if _lat == v][0]
@@ -123,10 +107,10 @@ def load(machine, submachines = "*", **kwargs):
         
 
 def loadCache(machine_name):
-    
+    """load the cached machine"""
     global _lat, _lattice_dict
     
-    cache_folderpath = os.path.join(HOME,'.hla')
+    cache_folderpath = HLA_ROOT
     cache_filepath = os.path.join(cache_folderpath,
                                   machine_name+'_lattices.cpkl')
     with open(cache_filepath,'rb') as f:
@@ -136,8 +120,8 @@ def loadCache(machine_name):
         
 
 def saveCache(machine_name, lattice_dict, selected_lattice_name):
-    
-    cache_folderpath = os.path.join(HOME,'.hla')
+    """save machine as cache"""
+    cache_folderpath = HLA_ROOT
     if not os.path.exists(cache_folderpath):
         os.mkdir(cache_folderpath)
     cache_filepath = os.path.join(cache_folderpath,
@@ -146,17 +130,62 @@ def saveCache(machine_name, lattice_dict, selected_lattice_name):
         pickle.dump(selected_lattice_name,f,2)
         pickle.dump(lattice_dict,f,2)
 
+def saveChannelFinderDb(dst, url = None):
+    """save the channel finder as a local DB
+
+    Parameters
+    -----------
+    url : str. channel finder URL, default use environment *HLA_CFS_URL*
+    dst : str. destination db filename. 
+    """
+    cfa = ChannelFinderAgent()
+    if url is None: url = os.environ.get('HLA_CFS_URL', None)
+    if url is None: 
+        raise RuntimeError("no URL defined for downloading")
+    cfa.downloadCfs(url, property=[
+                ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
+    cfa.exportSqlite(dst)
+
+
+def createVirtualElements(vlat):
+    """create common merged virtual element"""
+    # virutal elements
+    vfams = [('BPM', HLA_VBPM), ('HCOR', HLA_VHCOR),
+             ('VCOR', HLA_VVCOR), ('QUAD', HLA_VQUAD),
+             ('SEXT', HLA_VSEXT)]
+    # a virtual bpm. its field is a "merge" of all bpms.
+    iv = 100000
+    vpar = { 'virtual': 1, 'name': None, 'family': HLA_VFAMILY,
+             'index': None }
+    for fam,vfam in vfams:
+        # a virtual element. its field is a "merge" of all bpms.
+        velem = vlat.getElementList(fam)
+        vpar.update({'name': vfam, 'index': iv + 1})
+        if velem:
+            allvelem = merge(velem, **vpar)
+            vlat.insertElement(allvelem, groups=[HLA_VFAMILY])
+            allvelem.virtual = 1
+
+        iv = iv + 1
+    
 def findCfaConfig(srcname, machine, submachines):
     """
     find the appropriate config for ChannelFinderAgent
 
     initialize the virtual accelerator 'V2SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
-    - `${HOME}/.hla/nsls2v2.sqlite`
-    - channel finder in ${HLA_CFS_URL}
-    - `nsls2v2.sqlite` with aphla package.
+    - `${HLA_ROOT}/machine.csv`
+    - `${HLA_ROOT}/machine.sqlite`
+    - channel finder in ${HLA_CFS_URL} with tags `aphla.sys.submachine`
+    - `machine.csv` with aphla package.
+    - `machine.sqlite` with aphla package.
+
+    Examples
+    ---------
+    >>> findCfaConfig("/data/nsls2v2.sqlite", "nsls2", "*")
 
     """
+
     cfa = ChannelFinderAgent()
 
     # if source is an explicit file name
@@ -170,26 +199,24 @@ def findCfaConfig(srcname, machine, submachines):
             raise RuntimeError("Unknown explicit source '%s'" % srcname)
         return cfa
 
-    # matching HOME -> CF -> Package
-    homesrc = os.path.join(os.environ['HOME'], '.hla', srcname)
+    # if only filename provided, searching known directories in order.
+    # matching HLA_ROOT -> CF -> Package
+    homesrc = os.path.join(HLA_ROOT, srcname)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(homesrc + '.csv'):
         msg = "Creating lattice from '%s.csv'" % homesrc
         logger.info(msg)
         cfa.importCsv(homesrc + '.csv')
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif os.path.exists(homesrc + '.sqlite'):
         msg = "Creating lattice from '%s.sqlite'" % homesrc
         logger.info(msg)
         cfa.importSqlite(homesrc + '.sqlite')
-        #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, property=[('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
-        # map the cf property name to alpha property name
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+        cfa.downloadCfs(HLA_CFS_URL, property=[
+                ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
     elif resource_exists(__name__, os.path.join(machine, srcname + '.csv')):
         name = resource_filename(__name__, os.path.join(machine, 
                                                         srcname + '.csv'))
@@ -197,14 +224,9 @@ def findCfaConfig(srcname, machine, submachines):
         msg = "Creating lattice from '%s'" % name
         logger.info(msg)
         cfa.importCsv(name)
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif resource_exists(__name__, os.path.join(machine, srcname + '.sqlite')):
         name = resource_filename(__name__, os.path.join(machine, 
                                                         srcname + '.sqlite'))
-        msg = "Creating lattice from '%s'" % name
-        logger.info(msg)
-        #print(msg)
-        #src_pkg_csv.endswith('.sqlite')
         msg = "Creating lattice from '%s'" % name
         logger.info(msg)
         cfa.importSqlite(name)
@@ -221,11 +243,16 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
     """
     create a lattice from channel finder data
 
-    :param name: lattice name, e.g. 'SR', 'LTD'
-    :param pvrec: list of pv records `(pv, property dict, list of tags)`
-    :param systag: process records which has this systag. e.g. `aphla.sys.SR`
-    :param desc: description is this lattice
-    :return: :class:`~aphla.lattice.Lattice`
+    Parameters
+    -----------
+    name: lattice name, e.g. 'SR', 'LTD'
+    pvrec: list of pv records `(pv, property dict, list of tags)`
+    systag: process records which has this systag. e.g. `aphla.sys.SR`
+    desc: description is this lattice
+    
+    Returns
+    ---------
+    lat : the :class:`~aphla.lattice.Lattice` type.
     """
 
     logger.debug("creating '%s':%s" % (name, desc))
@@ -257,7 +284,9 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
 
             #lat.appendElement(elem)
             lat.insertElement(elem)
-        
+        # 
+        if HLA_VFAMILY in prpt.get('group', []): elem.virtual = 1
+
         handle = prpt.get('handle', None).lower()
         if handle == 'get': prpt['handle'] = 'readback'
         elif handle == 'put': prpt['handle'] = 'setpoint'
@@ -288,8 +317,6 @@ def use(lattice):
 
     use :func:`~hla.machines.lattices` to get a dict of lattices and its mode
     name
-
-    When switching lattice, twiss data is not sychronized.
     """
     global _lat, _lattice_dict
     if isinstance(lattice, Lattice):
@@ -301,37 +328,35 @@ def use(lattice):
 
 def getLattice(lat = None):
     """
-    return a :class:`~aphla.lattice.Lattice` object with given name. return the
+    return the lattice with given name, if None returns the current lattice.
+
+    a :class:`~aphla.lattice.Lattice` object with given name. return the
     current lattice by default.
 
     .. seealso:: :func:`~aphla.machines.lattices`
     """
-    if lat is None:
-        return _lat
+    if lat is None:  return _lat
 
     global _lattice_dict
-    #for k, v in _lattice_dict.items():
-    #    print k, v.mode
     return _lattice_dict.get(lat, None)
 
 def lattices():
     """
     get a list of available lattices
 
-    Example::
-
-      >>> lattices()
+    Examples
+    --------
+    >>> lattices()
       [ 'LTB', 'LTB-txt', 'SR', 'SR-txt']
-      >>> use('LTB-txt')
+    >>> use('LTB-txt')
 
-    A lattice can be used with :func:`~aphla.machines.use`
     """
-    #return dict((k, v.mode) for k,v in _lattice_dict.iteritems())
     return _lattice_dict.keys()
 
 
 def machines():
     """all available machines"""
-    from pkg_resources import resource_filename, resource_listdir, resource_isdir
-    return [d for d in resource_listdir(__name__, ".") if resource_isdir(__name__, d)]
+    from pkg_resources import resource_listdir, resource_isdir
+    return [d for d in resource_listdir(__name__, ".") 
+            if resource_isdir(__name__, d)]
 

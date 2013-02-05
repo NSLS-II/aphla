@@ -1,17 +1,21 @@
+
 .. HLA documentation master file, created by
    sphinx-quickstart on Wed Oct  6 15:27:47 2010.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. _userguide:
 
-Welcome to HLA documentation!
-===================================
+************************
+``aphla`` User Guide
+************************
 
 .. htmlonly::
    :Release: |version|
    :Date: |today|
 
-   Download :download:`PDF <aphla.pdf>`
+Download :download:`PDF <_build/latex/aphla_userguide.pdf>`,
+:download:`Library Reference (PDF) <_build/latex/aphla_libref.pdf>`
 
 .. raw:: latex
 
@@ -37,16 +41,13 @@ Welcome to HLA documentation!
    :maxdepth: 2
 
    intro.rst
-   installation.rst
    tutorial.rst
-   nsls2req.rst
+   aplibgui.rst
+   unitconv.rst
    channelfinder.rst
-   libref.rst
-   todo.rst
-   appendix.rst
-   quickstart.rst
    faq.rst
-   history.rst
+   libref.rst
+   appendix.rst
 
 .. _EPICS: http://www.aps.anl.gov/epics
 .. _Python: http://www.python.org/

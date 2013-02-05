@@ -91,7 +91,7 @@ def measDispersion(elem, dfreq = 1e-5, alphac = 3.6261976841792413e-04,
 
     ::
 
-      >>> etax, etay = measDispersion('P*C0[1-4]*')
+      >>> etax, etay = measDispersion('p*c0[1-4]*')
     """
 
     eta = alphac - 1.0/gamma/gamma
@@ -138,7 +138,7 @@ def measDispersion(elem, dfreq = 1e-5, alphac = 3.6261976841792413e-04,
     ret[:,2] = s
     return ret
 
-    
+
 
 def measChromaticity(gamma = 3.0e5/.511, alphac = 3.6261976841792413e-04):
     """
