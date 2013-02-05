@@ -68,15 +68,33 @@ class SimpleListDlg(QDialog):
 class ElementPropertyTableModel(QAbstractTableModel):
     def __init__(self, elems):
         super(ElementPropertyTableModel, self).__init__()
-        self._allelems = elems
-        self._elem  = []
-        self._desc  = []
-        self._field = []
-        self._value = []
         self._unitsys = [None, 'phy']
-        self._unit = []
-        self._elemidx = []  # the index in _allelems
-        self._load()
+        self._allelems = elems
+
+    def _init_data(self):
+        self._elem, self._field, self._src = [], [], []
+        for i,elem in enumerate(elems):
+            # the head
+            self._field.append(None)
+            self._elem.append(elem)
+            self._rdonly.append(True)
+            # every fields, readback and setpoint
+            for fld in elem.fields():
+                self._field.append(fld) 
+                self._elem.append(elem)
+                self._src.append('readback')
+                if elem.settable(fld):
+                    self._field.append(fld)
+                    self._elem.append(elem)
+                    self._src.append('setpoint')
+
+        nrow = len(self._elem)
+
+        self._desc  = [None] * nrow   # description
+        self._value = [[None, None] for i in range(nrow)]
+        self._unit = ['' for i in range(nrow)]
+
+        self._update_data(0, nrow, allmeta = True)
 
     def _get_quiet(self, elem, fld, src, u):
         """get but ignore exceptions"""
@@ -93,41 +111,37 @@ class ElementPropertyTableModel(QAbstractTableModel):
 
         return v, usymb
 
-    def _load(self):
-        ik = 0
-        # self._field.extend(["<b>Test</b>", "v.r", "v.w"])
-        # self._value.extend([None, [[0,1,2,3], None], [[10,20,30,40], None]])
-        # self._unit.extend([None, ["", ""], ["", ""]])
-        # self._elemidx.extend([0, None, None])
-        # self._desc.extend(["sb = 0.0\nse = 1.0"])
-        # ik = 1
-        
-        for elem in self._allelems:
-            self._elem.append(elem)
-            self._field.append("<b>%s</b>" % elem.name)
-            self._value.append(None)
-            self._desc.append("family = %s\nsb = %.4g\nlength= %.4g\n" \
-                              % (elem.family,elem.sb, elem.length))
-            self._elemidx.append(ik)
-            self._unit.append(None)
-            for var in sorted(elem.fields()):
-                # postfix for field name, field__r and field__w
-                vlst, ulst = [], []
-                # columns for unit system
-                for u in self._unitsys:
-                    v1, usymb1 = self._get_quiet(elem, var, 'readback', u)
-                    v2, usymb2 = self._get_quiet(elem, var, 'setpoint', u)
+    def _get_data(self, ielem, iunit):
+        """get (readback, setpoint) for element field. None if error"""
+        #if ielem >= len(self._elems): return None
+        #if self._value[ielem] is None: return None
+        #if iunit >=
 
-                    vlst.append([v1, v2])
-                    ulst.append([usymb1, usymb2])
-                self._elem.append(elem)
-                self._field.append(var) # a text like "k1..r"
-                self._value.append(vlst)
-                self._unit.append(ulst)
-                self._elemidx.append(ik)
-            ik += 1
-        self._NF = len(self._field)
-        #print self._value
+        elem, fld = self._elem[ielem], self._field[ielem]
+        v1, u1 = self._get_quiet(elem, fld, 'readback', self._unitsys[iunit])
+        v2, u2 = self._get_quiet(elem, fld, 'setpoint', self._unitsys[iunit])
+        
+        return v1, v2
+
+    def _update_data_row(self, i):
+        elem, fld, src = self._elem[i], self._field[i], self._src[i]
+
+        for icol,u in enumerate(self._unitsys):
+            v1, u1 = self._get_quiet(elem, fld, src, u)
+            self._value[i][icol] = v1
+            self._unit[i][icol]  = u1
+
+        
+    def _update_data(self, i0, i1, allmeta = False):
+        i0 = max(i0, 0)
+        i1 = min(i1, len(self._elem))
+
+        for i in range(i0, i1):
+            self._update_data_row(i)
+            if allmeta:
+                self._desc.append("family = %s\nsb = %.4g\nlength= %.4g\n" \
+                                      % (elem.family,elem.sb, elem.length))
+
 
     def isHeadIndex(self, i):
         if self._value[i] is None: return True
@@ -153,23 +167,26 @@ class ElementPropertyTableModel(QAbstractTableModel):
         if not index.isValid() or index.row() >= self._NF:
             return QVariant()
 
-        r, col  = index.row(), index.column()
-        
-        vals, units = self._value[r], self._unit[r]
-
+        row, col  = index.row(), index.column()
+        fld, vals = self._field[row], self._value[row]
+        unit = self._unit[row][col-1]
+        # for each of the role
         if role == Qt.DisplayRole:
-            if col == C_FIELD: return QVariant(self._field[r])
+            if col == C_FIELD: return QVariant(fld)
             #print r, col, self._field[r], self._value[r]
-            if vals is None: return QVariant()
+            if self._value[row] is None: return QVariant()
             # all for display
-            if isinstance(vals[col-1], (tuple, list)):
+            if isinstance(self._value[row][col-1], (tuple, list)):
                 #return QVariant.fromList([QVariant(v) for v in vals[col-1]])
                 return QVariant("[...]")
             elif vals[col-1] is not None:
                 #print "converting", val, unit
-                return self._format_value(vals[col-1], units[col-1])
+                #vr, vw = self._get_data(row, col-1)
+                #self._value[row] = [vr, vw]
+                # readback and unit
+                return self._format_value(vals[0], u)
         elif role == Qt.EditRole:
-            if col == C_FIELD: return QVariant(self._field[r])
+            if col == C_FIELD: return QVariant(fld)
             #print r, col, self._field[r], self._value[r]
             if vals is None: return QVariant()
             if isinstance(vals[col-1], (tuple, list)):
@@ -177,16 +194,13 @@ class ElementPropertyTableModel(QAbstractTableModel):
             elif vals[col-1] is not None:
                 return QVariant(vals[col-1])
         elif role == Qt.TextAlignmentRole:
-            if col == C_FIELD: return QVariant(Qt.AlignLeft)
-            else: return QVariant(Qt.AlignRight)
+            if col == C_FIELD: return QVariant(Qt.AlignLeft|Qt.AlignBottom)
+            else: return QVariant(Qt.AlignRight|Qt.AlignBottom)
         elif role == Qt.ToolTipRole:
-            if col == C_FIELD and self._value[r] is None:
-                try:
-                    tip = self._desc[self._elemidx[r]]
-                except:
-                    return QVariant()
-                return QVariant(tip)
-
+            if self._value[row] is None:
+                return QVariant(self._desc[row])
+            else:
+                col > C_FIELD and 
         #print "Asking data role=", role
         return QVariant()
 
@@ -263,20 +277,6 @@ class ElementPropertyTableModel(QAbstractTableModel):
                       index, index)
             return True
         return False
-
-    def _update_element(self, row):
-        """updating records of element from row"""
-        if self._field[row] is None or self._value[row] is None: return
-        k = row
-        while self._elemidx[k] is None and k >= 0: k = k - 1
-        if k < 0: return
-        elem = self._allelems[k]
-        for col,u in enumerate(self._unitsys):
-            try:
-                v = elem.get(self._field[row], unitsys=u)
-            except:
-                v = None
-            self._value[row][col] = v
 
     def updateData(self):
         for i in range(self.rowCount()):
