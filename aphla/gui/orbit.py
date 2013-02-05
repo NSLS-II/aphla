@@ -606,6 +606,9 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
     def timerEvent(self, e):
+        if not self.elemeditor.isHidden():
+            self.elemeditor.updateModelData()
+
         if self.live_orbit:
             self.itimer += 1
             #self.updatePlots()
