@@ -29,7 +29,7 @@ class _NullHandler(logging.Handler):
         pass
 
 #APHLA_LOG = os.path.join(tempfile.gettempdir(), "aphla.log")
-APHLA_LOG = 'aphla.log'
+#APHLA_LOG = 'aphla.log'
 #logging.basicConfig(filename=APHLA_LOG,
 #    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
 #    level=logging.DEBUG)
@@ -39,6 +39,12 @@ _lghdl = _NullHandler()
 _lghdl.setLevel(logging.INFO)
 _lghdl.setFormatter(_lgfmt)
 logging.getLogger('aphla').addHandler(_lghdl)
+
+def enableLog(f = "aphla.log", level=logging.DEBUG):
+    _lgh = logging.FileHandler(f)
+    _lgh.setLevel(level)
+    _lgh.setFormatter(_lgfmt)
+    logging.getLogger('aphla').addHandler(_lgh)
 
 #
 

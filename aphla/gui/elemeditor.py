@@ -93,11 +93,13 @@ class ElementPropertyTableModel(QAbstractTableModel):
             self._elemidx.append(ik)
             self._unit.append(None)
             for var in sorted(elem.fields()):
-                for src,s in [('readback', '..r'), ('setpoint', '..w')]:
+                # postfix for field name, field__r and field__w
+                for src,s in [('readback', '__r'), ('setpoint', '__w')]:
                     vlst, ulst = [], []
+                    # columns for unit system
                     for u in self._unitsys:
                         try:
-                            v = float(elem.get(var, source=src, unit=u))
+                            v = float(elem.get(var, source=src, unitsys=u))
                         except:
                             v = None
                         # check the unit
@@ -108,14 +110,14 @@ class ElementPropertyTableModel(QAbstractTableModel):
 
                         vlst.append(v)
                         ulst.append(usymb)
-                    if not any(vlst): continue
+                    if all([v is None for v in vlst]): continue
                     self._field.append(var + s) # a text like "k1..r"
                     self._value.append(vlst)
                     self._unit.append(ulst)
                     self._elemidx.append(None)
             ik += 1
         self._NF = len(self._field)
-        #print self._value
+        print self._value
 
     def isHeadIndex(self, i):
         if self._value[i] is None: return True
@@ -303,8 +305,8 @@ class ElementPropertyDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         row, col = index.row(), index.column()
         model = index.model()
-        #print "Creating editor", row, col, model._value[row]
-        if model._value[row] is not None and model._field[row].endswith('.w'):
+        print "Creating editor", row, col, model._value[row]
+        if model._value[row] is not None and model._field[row].endswith('_w'):
             #spinbox = QDoubleSpinBox(parent)
             #spinbox.setRange(-100, 100)
             #spinbox.setSingleStep(2)
@@ -318,8 +320,10 @@ class ElementPropertyDelegate(QStyledItemDelegate):
                          self.commitAndCloseEditor)
             return led
         elif isinstance(model._value[row][col-1], collections.Iterable):
+            print "Ignore list type values"
             pass
         else:
+            print "Can not create editor"
             return QStyledItemDelegate.createEditor(self, parent, option,
                                                     index)
 
@@ -466,7 +470,7 @@ class MTestForm(QDialog):
         super(MTestForm, self).__init__(parent)
         elems = ap.getElements("C10")
         #elems = []
-        #print elems
+        print elems
         self.model = ElementPropertyTableModel(elems)
         self.tablev = QTableView()
         self.tablev.setModel(self.model)

@@ -27,15 +27,6 @@ _cf_map = {'elemName': 'name',
            'system': 'system'
 }
 
-_db_map = {'elem_type': 'family',
-           'lat_index': 'index',
-           'position': 'se',
-           'elem_group': 'group',
-           'dev_name': 'devname',
-           'elem_field': 'field'
-}
-
-
 
 def init_submachines(machine, submachines, **kwargs):
     """ 
@@ -44,12 +35,13 @@ def init_submachines(machine, submachines, **kwargs):
     srcname = kwargs.get('src', 'nsls2v2')
     cfa = findCfaConfig(srcname, machine, submachines)
 
-    # the column name in CSV or the property name in channel finder is
-    # different from the Lattice class property, need to rename.
-    if cfa.source.endswith(".sqlite") or cfa.source.endswith(".csv"):
-        for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
-    elif cfa.source.startswith("http"):
-        for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+    # the column name in CSV or the property name in channel finder will be
+    # the same (NOT different) from the Lattice class property, need to rename.
+    #
+    #if cfa.source.endswith(".sqlite") or cfa.source.endswith(".csv"):
+    #    for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
+    #elif cfa.source.startswith("http"):
+    for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
 
     cfa.splitPropertyValue('group')
 
@@ -114,8 +106,8 @@ def init_submachines(machine, submachines, **kwargs):
     lattice_dict['V2SR'].loop = True
 
     for bpm in lattice_dict['V2SR'].getElementList('BPM'):
-        bpm.setUnit('x', 'm')
-        bpm.setUnit('y', 'm')
+        bpm.setRawUnit('x', 'm')
+        bpm.setRawUnit('y', 'm')
 
     for k,vlat in lattice_dict.items():
         createVirtualElements(vlat)

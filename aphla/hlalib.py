@@ -158,30 +158,34 @@ def _levenshtein_distance(first, second):
 def getElements(group, include_virtual=False):
     """searching for elements.
 
-    :param group: a list of element name or a name pattern.
-    :type group: list or string
-    :param include_virtual: include virtual element or not.
-    :type include_virtual: bool
-    
-    :return: returns a list of matched element objects.
-    
-    :Example:
-
-      >>> getElements('NO_SUCH_ELEMENT')
-      []
-      >>> getElements('PH1G2C30A')
-      [PH1G2C30A:BPM @ sb=4.935000]
-      >>> getElements('BPM')
-      ...
-      >>> getElements('F*G1C0*')
-      ...
-      >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
-      ...
-
     this calls :func:`~aphla.lattice.Lattice.getElementList` of the current
     lattice.
 
     The default does not include virtual element.
+
+    Parameters
+    -----------
+    group: str, list.
+        a list of element name or a name pattern.
+    include_virtual: include virtual element or not.
+
+    Returns
+    ---------
+     elemlist: a list of matched element objects.
+    
+    Examples
+    ----------
+    >>> getElements('NO_SUCH_ELEMENT')
+      []
+    >>> getElements('PH1G2C30A')
+      [PH1G2C30A:BPM @ sb=4.935000]
+    >>> getElements('BPM')
+      ...
+    >>> getElements('F*G1C0*')
+      ...
+    >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
+      ...
+
     """
 
     # return the input if it is a list of element object
@@ -216,14 +220,14 @@ def eget(elem, fields = None, **kwargs):
     :type fields: str, list
     :param header: optional (True, False), whether returns the (name, field) list. 
  
-    :Example:
+    Examples
+    ---------
+    >>> eget('DCCT', 'value')
+    >>> eget('BPM', 'x')
+    >>> val, head = eget('p*c30*', ['x', 'y'], header=True)
 
-        >>> eget('DCCT', 'value')
-        >>> eget('BPM', 'x')
-        >>> val, head = eget('p*c30*', ['x', 'y'], header=True)
-
-        >>> bpm = getElements('p*c30*')
-        >>> eget(bpm, ['x', 'y'], header=True)
+    >>> bpm = getElements('p*c30*')
+    >>> eget(bpm, ['x', 'y'], header=True)
 
     The optional parameters are unit. see :func:`~aphla.element.CaElement.get`
 
@@ -315,7 +319,8 @@ def getLocations(group):
     Get the location of a group, i.e. a family, an element or a list of
     elements
 
-    Example::
+    Examples
+    ---------
 
       >>> s = getLocations('BPM')
       >>> s = getLocations(['PM1G4C27B', 'PH2G2C28A'])

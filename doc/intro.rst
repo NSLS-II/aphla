@@ -60,5 +60,3 @@ This is for the very impatient ones at NSLS-II. See :doc:`tutorial`
 .. testcleanup::
 
      cx[0].x = 0.0
-
-

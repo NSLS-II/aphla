@@ -26,7 +26,7 @@ import os, sys
 import applotresources
 
 from elempickdlg import ElementPickDlg
-from orbitconfdlg import OrbitPlotConfig
+#from orbitconfdlg import OrbitPlotConfig
 from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
 from aporbitdata import ApVirtualElemData
 from orbitcorrdlg import OrbitCorrDlg

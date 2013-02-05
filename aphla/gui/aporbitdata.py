@@ -130,7 +130,7 @@ class ApVirtualElemData(ApPlotData):
         #print "Updating orbit data"
         try:
             self.y[i,:] = self.yscale * np.array(self.velem.get(
-                self.yfield, unit=self.yunitsys))
+                self.yfield, unitsys=self.yunitsys))
         except:
             logger.error("Can not get data '%s'" % self.yfield)
             raise
