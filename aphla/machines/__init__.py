@@ -44,14 +44,15 @@ HLA_VVCOR  = 'HLA:VVCOR'
 HLA_VQUAD  = 'HLA:VQUAD'
 HLA_VSEXT  = 'HLA:VSEXT'
 
+
+# HOME = os.environ['HOME'] will NOT work on Windows,
+# unless %HOME% is set on Windows, which is not the case by default.
+_home_hla = os.path.join(os.path.expanduser('~'), '.hla')
+HLA_ROOT      = os.environ.get('HLA_ROOT', _home_hla)
 HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
 HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
 HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
 
-# HOME path
-HOME = os.path.expanduser('~')
-# HOME = os.environ['HOME'] will NOT work on Windows,
-# unless %HOME% is set on Windows, which is not the case by default.
 
 _lattice_dict = {}
 
@@ -109,7 +110,7 @@ def loadCache(machine_name):
     """load the cached machine"""
     global _lat, _lattice_dict
     
-    cache_folderpath = os.path.join(HOME,'.hla')
+    cache_folderpath = HLA_ROOT
     cache_filepath = os.path.join(cache_folderpath,
                                   machine_name+'_lattices.cpkl')
     with open(cache_filepath,'rb') as f:
@@ -120,7 +121,7 @@ def loadCache(machine_name):
 
 def saveCache(machine_name, lattice_dict, selected_lattice_name):
     """save machine as cache"""
-    cache_folderpath = os.path.join(HOME,'.hla')
+    cache_folderpath = HLA_ROOT
     if not os.path.exists(cache_folderpath):
         os.mkdir(cache_folderpath)
     cache_filepath = os.path.join(cache_folderpath,
@@ -128,6 +129,23 @@ def saveCache(machine_name, lattice_dict, selected_lattice_name):
     with open(cache_filepath,'wb') as f:
         pickle.dump(selected_lattice_name,f,2)
         pickle.dump(lattice_dict,f,2)
+
+def saveChannelFinderDb(dst, url = None):
+    """save the channel finder as a local DB
+
+    Parameters
+    -----------
+    url : str. channel finder URL, default use environment *HLA_CFS_URL*
+    dst : str. destination db filename. 
+    """
+    cfa = ChannelFinderAgent()
+    if url is None: url = os.environ.get('HLA_CFS_URL', None)
+    if url is None: 
+        raise RuntimeError("no URL defined for downloading")
+    cfa.downloadCfs(url, property=[
+                ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
+    cfa.exportSqlite(dst)
+
 
 def createVirtualElements(vlat):
     """create common merged virtual element"""
@@ -156,9 +174,11 @@ def findCfaConfig(srcname, machine, submachines):
 
     initialize the virtual accelerator 'V2SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
 
-    - `${HOME}/.hla/nsls2v2.sqlite`
-    - channel finder in ${HLA_CFS_URL}
-    - `nsls2v2.sqlite` with aphla package.
+    - `${HLA_ROOT}/machine.csv`
+    - `${HLA_ROOT}/machine.sqlite`
+    - channel finder in ${HLA_CFS_URL} with tags `aphla.sys.submachine`
+    - `machine.csv` with aphla package.
+    - `machine.sqlite` with aphla package.
 
     Examples
     ---------
@@ -179,27 +199,24 @@ def findCfaConfig(srcname, machine, submachines):
             raise RuntimeError("Unknown explicit source '%s'" % srcname)
         return cfa
 
-    # matching HOME -> CF -> Package
-    homesrc = os.path.join(os.environ['HOME'], '.hla', srcname)
+    # if only filename provided, searching known directories in order.
+    # matching HLA_ROOT -> CF -> Package
+    homesrc = os.path.join(HLA_ROOT, srcname)
     HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
 
     if os.path.exists(homesrc + '.csv'):
         msg = "Creating lattice from '%s.csv'" % homesrc
         logger.info(msg)
         cfa.importCsv(homesrc + '.csv')
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif os.path.exists(homesrc + '.sqlite'):
         msg = "Creating lattice from '%s.sqlite'" % homesrc
         logger.info(msg)
         cfa.importSqlite(homesrc + '.sqlite')
-        #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         logger.info(msg)
         cfa.downloadCfs(HLA_CFS_URL, property=[
                 ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
-        # map the cf property name to alpha property name
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif resource_exists(__name__, os.path.join(machine, srcname + '.csv')):
         name = resource_filename(__name__, os.path.join(machine, 
                                                         srcname + '.csv'))
@@ -207,14 +224,9 @@ def findCfaConfig(srcname, machine, submachines):
         msg = "Creating lattice from '%s'" % name
         logger.info(msg)
         cfa.importCsv(name)
-        #for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
     elif resource_exists(__name__, os.path.join(machine, srcname + '.sqlite')):
         name = resource_filename(__name__, os.path.join(machine, 
                                                         srcname + '.sqlite'))
-        msg = "Creating lattice from '%s'" % name
-        logger.info(msg)
-        #print(msg)
-        #src_pkg_csv.endswith('.sqlite')
         msg = "Creating lattice from '%s'" % name
         logger.info(msg)
         cfa.importSqlite(name)
