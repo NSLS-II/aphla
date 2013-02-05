@@ -191,9 +191,9 @@ class T010_Element(unittest.TestCase):
         self.assertLess(dcct.value, 600.0)
 
         self.assertGreater(dcct.value, 1.0)
-        self.assertGreater(ap.eget('DCCT', 'value', unit=None), 1.0)
-        self.assertEqual(len(ap.eget('DCCT', ['value'], unit=None)), 1)
-        self.assertGreater(ap.eget('DCCT', ['value'], unit=None)[0], 1.0)
+        self.assertGreater(ap.eget('DCCT', 'value', unitsys=None), 1.0)
+        self.assertEqual(len(ap.eget('DCCT', ['value'], unitsys=None)), 1)
+        self.assertGreater(ap.eget('DCCT', ['value'], unitsys=None)[0], 1.0)
 
     def test_bpm_l0(self):
         bpms = ap.getElements('BPM')
@@ -1010,11 +1010,11 @@ class TestBba(unittest.TestCase):
     def test_bba_l2(self):
         """test bba"""
         q, cor, bpm = ap.getElements(['ql3g2c29a', 'cl2g2c29a', 'pl2g2c29a'])
-        q.put("k1", -1.4894162702, unit=None)
-        cor.put("x", 0.0, unit=None)
-        cor.put("y", 0.0, unit=None)
+        q.put("k1", -1.4894162702, unitsys=None)
+        cor.put("x", 0.0, unitsys=None)
+        cor.put("y", 0.0, unitsys=None)
 
-        print q.fields(), q.get('k1', unit=None)
+        print q.fields(), q.get('k1', unitsys=None)
 
         inp = { 'quad': (q, 'k1'), 'cor': (cor, 'x'),
                 'bpm': (bpm, 'x'),
@@ -1310,7 +1310,7 @@ class TestRmCol(unittest.TestCase):
         #trim = ap.getElements('ch1g6c15b')[0]
         trim = ap.getElements('cl2g6c30b')[0]
         bpmlst = [e.name for e in ap.getElements('BPM')]
-        trim.put('x', 0.0, unit = None)
+        trim.put('x', 0.0, unitsys = None)
 
         fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
         ormline = ap.orm.RmCol(bpmlst, trim)
@@ -1328,7 +1328,7 @@ class TestRmCol(unittest.TestCase):
         #trim = ap.getElements('ch1g6c15b')[0]
         trim = ap.getElements('cl2g6c30b')[0]
         bpmlst = [e.name for e in ap.getElements('BPM')]
-        trim.put('x', 0.0, unit=None)
+        trim.put('x', 0.0, unitsys=None)
 
         fname = time.strftime("orm_sub1_%Y%m%d_%H%M.hdf5")
         ormline = ap.orm.RmCol(bpmlst, trim)

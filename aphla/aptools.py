@@ -135,7 +135,7 @@ def setLocalBump(bpm, trim, ref, **kwargs):
             # find the index of first matching BPM
             i = (i for i,b in enumerate(bpm) if b.name == name).next()
         except:
-            v0 = getExactElement(name).get(field, unit=None)
+            v0 = getExactElement(name).get(field, unitsys=None)
             u1 = getExactElement(name).getUnit(field, unitsys=None)
         else:
             if field == 'x': 

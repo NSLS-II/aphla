@@ -121,8 +121,8 @@ class BbaBowtie:
 
         verbose = kwargs.get('verbose', 0)
 
-        qk0 = self._q.get(self._qf, unit=None)
-        xp0 = self._c.get(self._cf, unit=None)
+        qk0 = self._q.get(self._qf, unitsys=None)
+        xp0 = self._c.get(self._cf, unitsys=None)
 
         # ignore kick list if dkick is provided.
         self.cor_kick = [xp0 + dk for dk in self.cor_dkick]
@@ -137,7 +137,7 @@ class BbaBowtie:
         ## initial orbit-quad
         obtref = getOrbit()
         # change quad
-        self._q.put(self._qf, qk0 + self.quad_dkick, unit=None)
+        self._q.put(self._qf, qk0 + self.quad_dkick, unitsys=None)
 
         timeout, log = waitStableOrbit(
             obtref, diffstd_list=True, verbose=verbose, 
@@ -151,7 +151,7 @@ class BbaBowtie:
         #print "step down quad"
         #print "-- reset quad:", self._q.name
         obtref = getOrbit()
-        self._q.put(self._qf, qk0, unit=None)
+        self._q.put(self._qf, qk0, unitsys=None)
         timeout, log = waitStableOrbit(
             obtref,
             diffstd=self.orbit_diffstd, verbose=verbose, 
@@ -165,7 +165,7 @@ class BbaBowtie:
             obt = self._get_orbit()     # for checking orbit changed
             #print "setting trim:", self._c.name, j, dxp
             obtref = getOrbit()
-            self._c.put(self._cf, dxp, unit=None)
+            self._c.put(self._cf, dxp, unitsys=None)
             timeout, log = waitStableOrbit(
                 obtref,
                 diffstd=self.orbit_diffstd, minwait = self.minwait,
@@ -180,8 +180,8 @@ class BbaBowtie:
         #caput(self.trim_pvsp, xp0)
         #caput(self.quad_pvsp, qk0 + self.dqk1)
         obtref = getOrbit()
-        self._c.put(self._cf, xp0, unit=None)
-        self._q.put(self._qf, qk0 + self.quad_dkick, unit=None)
+        self._c.put(self._cf, xp0, unitsys=None)
+        self._q.put(self._qf, qk0 + self.quad_dkick, unitsys=None)
         timeout, log = waitStableOrbit(
             obtref, diffstd=self.orbit_diffstd, minwait = self.minwait,
             diffstd_list= True, verbose=verbose)
@@ -192,7 +192,7 @@ class BbaBowtie:
             #print "setting trim:", self._c.name, j, dxp
             #caput(self.trim_pvsp, dxp)
             obtref = getOrbit()
-            self._c.put(self._cf, dxp, unit=None)
+            self._c.put(self._cf, dxp, unitsys=None)
             timeout, log = waitStableOrbit(
                 obtref, diffstd=self.orbit_diffstd, minwait = self.minwait,
                 diffstd_list=True, verbose=verbose)
@@ -203,8 +203,8 @@ class BbaBowtie:
         #print "reset quad and trim"
         #caput(self.quad_pvsp, qk0)
         #caput(self.trim_pvsp, xp0)
-        self._q.put(self._qf, qk0, unit=None)
-        self._c.put(self._cf, xp0, unit=None)
+        self._q.put(self._qf, qk0, unitsys=None)
+        self._c.put(self._cf, xp0, unitsys=None)
 
 
     def align(self, **kwargs):

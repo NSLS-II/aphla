@@ -117,7 +117,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         for elem in elemlst:
             msg += "<strong>%s:</strong><br>" % elem.name
             for v in elem.fields():
-                msg += "  %s: %s<br>" % (v, str(elem.get(v, unit=None)))
+                msg += "  %s: %s<br>" % (v, str(elem.get(v, unitsys=None)))
 
         msgbox.setText(msg)
         msgbox.exec_()

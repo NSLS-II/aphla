@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 #]
 
 # current
-def getCurrent(name='dcct', field='value', unit=None):
+def getCurrent(name='dcct', field='value', unitsys=None):
     """Get the current from the first DCCT element
 
     :param str name: the name of DCCT, default 'dcct'
@@ -46,28 +46,28 @@ def getCurrent(name='dcct', field='value', unit=None):
     seealso :func:`eget`
     """
     _current = getElements(name)
-    if _current: return _current[0].get(field, unit=unit)
+    if _current: return _current[0].get(field, unitsys=unitsys)
     else: return None
 
 # rf
-def getRfFrequency(name = 'rfcavity', field = 'f', unit=None):
+def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None):
     """
     Get the frequency from the first 'RFCAVITY' element.
 
     seealso :func:`eget`, :func:`getRfVoltage`, :func:`putRfFrequency`
     """
     _rf = getElements(name)
-    if _rf: return _rf[0].get(field, unit=unit)
+    if _rf: return _rf[0].get(field, unitsys=unitsys)
     else: return None
 
 
-def putRfFrequency(f, name = 'rfcavity', field = 'f', unit=None):
+def putRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
     """set the rf frequency for the first 'RFCAVITY' element"""
     _rf = getElements(name)
-    if _rf: return _rf[0].put(field, f, unit=unit)
+    if _rf: return _rf[0].put(field, f, unitsys=unitsys)
     else: raise RuntimeError("element '%s' not found" % name)
 
-def getRfVoltage(name = 'rfcavity', field='v', unit=None):
+def getRfVoltage(name = 'rfcavity', field='v', unitsys=None):
     """
     Get the voltage of the first 'RFCAVITY' element
 
@@ -78,7 +78,7 @@ def getRfVoltage(name = 'rfcavity', field='v', unit=None):
     return None if no element found
     """
     _rf = getElements(name)
-    if _rf: return _rf[0].get(field, unit=unit)
+    if _rf: return _rf[0].get(field, unitsys=unitsys)
     else: return None
 
 def stepRfFrequency(df = 0.010):
@@ -995,7 +995,7 @@ def waitChanged(elemlst, fields, v0, **kwargs):
     wait = kwargs.get('wait', (2, 1, 0))
     maxtrial= kwargs.get('maxtrial', 20)
     full = kwargs.get('full', False)
-    unit = kwargs.get('unit', None)
+    unitsys = kwargs.get('unitsys', None)
 
     if CA_OFFLINE: 
         if full: return (True, 0)
@@ -1005,7 +1005,7 @@ def waitChanged(elemlst, fields, v0, **kwargs):
 
     ntrial = 0
     while True:
-        v1 = np.ravel(eget(elemlst, fields, unit=unit))
+        v1 = np.ravel(eget(elemlst, fields, unitsys=unitsys))
         time.sleep(wait[1])
         ntrial = ntrial + 1
         if np.std(v1 - np.array(v0)) > diffstd: break
@@ -1048,7 +1048,7 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
 
     wait = kwargs.get('wait', (2, 1, 0))
     maxtrial= kwargs.get('maxtrial', 3)
-    unit = kwargs.get('unit', None)
+    unitsys = kwargs.get('unitsys', None)
 
     if CA_OFFLINE: return True
 
@@ -1056,7 +1056,7 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
 
     v = np.zeros((len(elemlst), maxtrial), 'd')
     for i in range(maxtrial):
-        v[:,i] = np.ravel(eget(elemlst, fields, unit=unit))
+        v[:,i] = np.ravel(eget(elemlst, fields, unitsys=unitsys))
         time.sleep(wait[1])
 
     time.sleep(wait[2])
