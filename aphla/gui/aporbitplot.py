@@ -579,13 +579,15 @@ class ApPlot(Qwt.QwtPlot):
             #print "disabling desired orbit and quit"
             return
 
+        self.curve2.attach(self)
+        self.curve2.setVisible(True)
         if x is not None:
             self.curve2.setData(x, y)
             return
         data = self.curve2.data()
         vx = [data.x(i) for i in range(data.size())]
         self.curve2.setData(vx, y)
-
+        
     def setColor(self, c):
         symb = self.curve1.symbol()
         pen = symb.pen()
