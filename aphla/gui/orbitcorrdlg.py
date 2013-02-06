@@ -10,7 +10,8 @@ from PyQt4.Qt import Qt, SIGNAL
 from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
                          QDoubleSpinBox, QGridLayout, QVBoxLayout,
                          QHBoxLayout, QSizePolicy, QHeaderView,
-                         QDialogButtonBox, QPushButton, QApplication)
+                         QDialogButtonBox, QPushButton, QApplication,
+                         QLabel, QGroupBox, QLineEdit, QDoubleValidator)
 
 class DoubleSpinBoxCell(QDoubleSpinBox):
     def __init__(self, row = -1, col = -1, val = 0.0, parent = None):
@@ -21,7 +22,8 @@ class DoubleSpinBoxCell(QDoubleSpinBox):
         self.setDecimals(10)
 
 class OrbitCorrDlg(QDialog):
-    def __init__(self, bpm, s, x, y, stepsize = (None, None), orbit_plots = None,
+    def __init__(self, bpm, s, x, y, xunit = '', yunit = '',
+                 stepsize = 0.001, orbit_plots = None,
                  correct_orbit = None, parent = None):
         self.bpm = bpm
         super(OrbitCorrDlg, self).__init__(parent)
@@ -41,16 +43,17 @@ class OrbitCorrDlg(QDialog):
 
             it = DoubleSpinBoxCell(i, 2, x[i])
             it.setRange(-100000, 100000)
-            if stepsize[0] is not None: it.setSingleStep(stepsize[0])
+            it.setSuffix(" " + xunit)
+            it.setSingleStep(stepsize)
             #if xref is not None: it.setValue(xref[i])
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
-            #self.connect(it, SIGNAL("
             self.table.setCellWidget(it.row, it.col, it)
 
             it = DoubleSpinBoxCell(i, 3, y[i])
             it.setRange(-100000, 100000)
-            if stepsize[1] is not None: it.setSingleStep(stepsize[1])
+            it.setSuffix(" " + yunit)
+            it.setSingleStep(stepsize)
             #if yref is not None: it.setValue(yref[i])
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
@@ -68,12 +71,31 @@ class OrbitCorrDlg(QDialog):
         self.correctOrbitBtn = QPushButton("Apply")
         self.correctOrbitBtn.setStyleSheet("QPushButton:disabled { color: gray }");
         self.connect(self.correctOrbitBtn, SIGNAL("clicked()"), self.call_apply)
-        hbox = QHBoxLayout()
-        hbox.addStretch(1)
-        hbox.addWidget(self.correctOrbitBtn)
-        layout = QVBoxLayout()
+
+        vbox1 = QVBoxLayout()
+        #hbox.addStretch(1)
+        gb = QGroupBox("settings")
+        lbl = QLabel("step size:")
+        self.stepsizebox = QLineEdit(str(stepsize), parent=self)
+        self.stepsizebox.setValidator(QDoubleValidator(self))
+        self.connect(self.stepsizebox, SIGNAL("textChanged(QString)"), self.update_cell_stepsize)
+        vbox1.addWidget(lbl)
+        vbox1.addWidget(self.stepsizebox)
+        lbl.setBuddy(self.stepsizebox)
+        vbox1.setStretch(0, 0)
+        vbox1.setStretch(1, 0)
+
+        gb.setLayout(vbox1)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(gb)
+        vbox.addStretch(1.0)
+        vbox.addWidget(self.correctOrbitBtn)
+        layout = QHBoxLayout()
         layout.addWidget(self.table)
-        layout.addLayout(hbox) 
+        layout.addLayout(vbox) 
+        layout.setStretch(0, 1)
+        layout.setStretch(1, 0)
         self.setLayout(layout)
         #self.update_orbit = update_orbit
         self.orbit_plots = orbit_plots
@@ -86,6 +108,13 @@ class OrbitCorrDlg(QDialog):
 
     #def _cell_clicked(self, row, col):
     #    print row, col
+
+    def update_cell_stepsize(self, text):
+        for i in range(self.table.rowCount()):
+            for j in [2, 3]:
+                it = self.table.cellWidget(i, j)
+                if it is None: continue
+                it.setSingleStep(float(self.stepsizebox.text()))
 
     def call_update(self, val):
         sender = self.sender()

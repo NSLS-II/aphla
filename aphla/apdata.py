@@ -332,10 +332,16 @@ class OrmData:
         Parameters
         -----------
         bpm : a list of bpm (name, field) tuple
-        trim: a list of trim (name, field) tuple
+        trim : a list of trim (name, field) tuple
         ignore_unmeasured : optional, bool.
             if True, the input bpm/trim pairs which are not in the OrmData
             will be ignored. Otherwise raise ValueError.
+
+        Returns
+        --------
+        m : the matrix
+        bpmlst : a list of (bpmname, field)
+        trimlst : a list of (trimname, field)
 
         Examples
         ---------
@@ -389,8 +395,8 @@ class OrmData:
 
         Parameters
         -----------
-        bpmlst: list of (bpmname, field)
-        trimlst: list of (trimname, field)
+        bpmrec : a list of (bpmname, field) tuple. e.g. [('BPM1', 'x')]
+        trimrec : a list of (trimname, field) tuple, similar to *bpmrec*
         full : bool
             return full matrix besides the columns and rows for given trims
             and bpms.
@@ -466,11 +472,12 @@ class TwissItem:
 
     def get(self, name):
         """
-        get twiss value in tuple or float
+        get twiss value in tuple or float.
 
         Parameters
         -----------
-        name: str, twiss item name
+        name : str, twiss item name: 'alpha', 'beta', 'gamma', 'phi'.
+            the item name can add postfix 'x' or 'y' if only one plane is wanted.
 
         Examples
         ---------
@@ -534,7 +541,7 @@ class Twiss:
         try:
             i = self._elements.index(elemname)
             return i
-        except IndexError:
+        except:
             return None
 
         return None
@@ -561,26 +568,25 @@ class Twiss:
         """
         add a twiss item :class:`TwissItem`
         """
-
         self._twlist.append(twi)
 
-    def getTwiss(self, col, **kwargs):
+    def getTwiss(self, elemlst, col, **kwargs):
         """
         return a list of twiss functions when given a list of element name.
         
         Parameters
         -----------
-        col : list
-            columns : 's', 'beta', 'betax', 'betay', 'alpha', 'alphax',
-            'alphay', 'phi', 'phix', 'phiy'.  If without 'x' or 'y' postfix,
-            'beta', 'alpha' and 'phi' will be expanded to two columns.
-        
+        elemlst : list. names of elements.
+        col : list. columns can be 's', 'beta', 'betax', 'betay', 'alpha',
+            'alphax', 'alphay', 'phi', 'phix', 'phiy'. If without 'x' or 
+            'y' postfix, 'beta', 'alpha' and 'phi' will be expanded to
+            two columns.
+
         Examples
         ---------
         >>> getTwiss(['E1', 'E2'], col=('s', 'beta'))
 
         """
-        elem = kwargs.get('elements', None)
         spos = kwargs.get('spos', None)
 
         if not col: return None
@@ -588,7 +594,7 @@ class Twiss:
 
         # check if element is valid
         iret = []
-        for e in elem:
+        for e in elemlst:
             i = self._find_element(e)
             if i >= 0: iret.append(i)
             elif clean: continue

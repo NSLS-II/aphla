@@ -29,8 +29,7 @@ _cf_map = {'elemName': 'name',
 
 
 def init_submachines(machine, submachines, **kwargs):
-    """ 
-    """
+    """ initialize the submachines."""
     # if src provides an explicit filename/url to initialize
     srcname = kwargs.get('src', 'nsls2v2')
     cfa = findCfaConfig(srcname, machine, submachines)
@@ -62,6 +61,15 @@ def init_submachines(machine, submachines, **kwargs):
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
 
+    # setting unit
+    for e in lattice_dict['V2SR'].getElementList('QUAD'):
+        e.setRawUnit('k1', 'm^{-2}')
+    for e in lattice_dict['V2SR'].getElementList('SEXT'):
+        e.setRawUnit('k2', 'm^{-3}')
+    for e in lattice_dict['V2SR'].getElementList('COR'):
+        if 'x' in e.fields(): e.setRawUnit('x', 'rad')
+        if 'y' in e.fields(): e.setRawUnit('y', 'rad')
+        
     # get the file, search current dir first
     data_filename = getResource('nsls2v2.hdf5', __name__)
     if data_filename:

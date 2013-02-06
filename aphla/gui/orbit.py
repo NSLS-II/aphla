@@ -273,6 +273,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.windowMenu = self.menuBar().addMenu("&Windows")
         self.windowMenu.addAction("Cascade", self.mdiarea.cascadeSubWindows)
         self.windowMenu.addAction("Tile", self.mdiarea.tileSubWindows)
+        self.windowMenu.addAction("Previous", self.mdiarea.activatePreviousSubWindow)
+        self.windowMenu.addAction("Next", self.mdiarea.activateNextSubWindow)
         self.windowMenu.addSeparator()
         viewDcct = QAction("Beam Current", self)
         viewDcct.setCheckable(True)
@@ -324,7 +326,8 @@ class OrbitPlotMainWindow(QMainWindow):
                      self.__setLattice)
         machToolBar.addWidget(self.machBox)
         machToolBar.addWidget(self.latBox)
-
+        machToolBar.addAction(QIcon(":/new_bpm.png"), "Orbits", self.newOrbitPlots)
+        machToolBar.addAction(QIcon(":/new_cor.png"), "Correctors", self.newCorrectorPlots)
 
     def initMachine(self, v):
         vm = str(v)
@@ -412,10 +415,37 @@ class OrbitPlotMainWindow(QMainWindow):
         if len(self.mdiarea.subWindowList()) > 0:
             self.elemeditor.setEnabled(True)
 
+        return p
+
     def subPlotDestroyed(self):
         if len(self.mdiarea.subWindowList()) == 0:
             self.elemeditor.setEnabled(False)
         
+
+    def newOrbitPlots(self):
+        lat = str(self.latBox.currentText())
+        if not lat or lat not in aphla.machines.lattices():
+            print "No lattice available"
+            return
+
+        p1 = self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x',
+                               "Hori. Orbit")
+        p2 = self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'y',
+                               "Vert. Orbit", Qt.blue)
+        if self.timerId is None: self.timerId = self.startTimer(self.dt)
+        #print "fullname", p.fullname()
+
+    def newCorrectorPlots(self):
+        lat = str(self.latBox.currentText())
+        if not lat or lat not in aphla.machines.lattices():
+            print "No lattice available"
+            return
+
+        p1 = self._newVelemPlot(lat, aphla.machines.HLA_VHCOR, 'x',
+                               "Hori. Corr", Qt.red)
+        p2 = self._newVelemPlot(lat, aphla.machines.HLA_VVCOR, 'y',
+                                "Vert. Corr", Qt.blue)
+        if self.timerId is None: self.timerId = self.startTimer(self.dt)
         
     def newPlot(self):
         lat = str(self.latBox.currentText())
@@ -425,23 +455,22 @@ class OrbitPlotMainWindow(QMainWindow):
             return
 
         if famname == "H Orbit":
-            try:
-                self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x', "Hori. Orbit")
-            except:
-                print traceback.print_exc()
-                print "Failed"
-        elif famname == "V Orbit":
-            self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'y', "Vert. Orbit",
-                               Qt.blue)
+            self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x',
+                               "Hori. Orbit")
+        elif famname == "V Orbit": 
+            self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'y',
+                               "Vert. Orbit", Qt.blue)
         elif famname == "H Corrector":
             self._newVelemPlot(lat, aphla.machines.HLA_VHCOR, 'x', "Hori. Corr")
         elif famname == "V Corrector":
             self._newVelemPlot(lat, aphla.machines.HLA_VVCOR, 'y', "Vert. Corr",
                                Qt.blue)
         elif famname == "Quad":
+            # plot all fields
             self._newVelemPlot(lat, aphla.machines.HLA_VQUAD, None,
                                "Quadrupole", Qt.black)
         elif famname == "Sext":
+            # plot all fields
             self._newVelemPlot(lat, aphla.machines.HLA_VSEXT, None,
                                "Sextupole", Qt.black)
             
@@ -593,15 +622,27 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def getVisibleElements(self, elemname):
         mach = str(self.machBox.currentText())
-        if not mach or mach not in self._machlat: return []
+        if not mach or mach not in self._machlat:
+            self.logger.warn("machine '{0}' is not available: {1}".format(
+                mach, self._machlat.keys()))
+            return []
         lat  = str(self.latBox.currentText())
-        if not lat or lat not in self._machlat[mach]: return []
+        if not lat or lat not in self._machlat[mach]:
+            self.logger.warn("lattice '{0}' is not available for '{1}':{2}".format(
+                lat, mach, self._machlat[mach].keys()))
+            return []
         _lat = self._machlat[mach][lat]
-        if not _lat: return []
+        if not _lat: 
+            self.logger.warn("lattice '%s' is not available" % lat)
+            return []
         w = self.mdiarea.currentSubWindow()
-        if not w: return []
+        if not w: 
+            self.logger.warn("no active plot")
+            return []
         elems = _lat.getElementList(elemname)
         xl, xr = w.currentXlim()
+        self.logger.info("searching for '{0}' in range [{1}, {2}]".format(
+            elemname, xl, xr))
         return [e for e in elems if e.se > xl and e.sb < xr]
 
 
@@ -617,10 +658,11 @@ class OrbitPlotMainWindow(QMainWindow):
                 if not isinstance(w, ApMdiSubPlot): continue
                 w.updatePlot()
                 w.aplot.replot()
-
             self.statusBar().showMessage("plot updated: {0}".format(
                 time.strftime("%F %T")))
-
+        else:
+            self.statusBar().showMessage("live update disabled")
+            
             
     def singleShot(self):
         for w in self.mdiarea.subWindowList():
@@ -662,8 +704,17 @@ class OrbitPlotMainWindow(QMainWindow):
         #print len(bpms), bpms
         #print len(trims), trims
         #print len(obt), obt
+        sp0 = []
+        for tr in trims:
+            vx, vy = None, None
+            if 'x' in tr.fields(): vx = tr.get('x', unitsys=None)
+            if 'y' in tr.fields(): vy = tr.get('y', unitsys=None)
+            sp0.append((vx, vy))
 
         aphla.setLocalBump(bpms, trims, obt)
+
+        return sp0
+
         #try:
         #    aphla.setLocalBump(bpms, trims, obt)
         #except Exception as e:
@@ -679,11 +730,13 @@ class OrbitPlotMainWindow(QMainWindow):
             s, x, xe = wx.data.data(nomask=True)
             s, y, ye = wy.data.data(nomask=True)
             x, y = [0.0]*len(s), [0.0] * len(s)
+            xunit = wx.data.yunit
+            yunit = wy.data.yunit
             #print np.shape(x), np.shape(y)
             self.corbitdlg = OrbitCorrDlg(
                 self._lat.getElementList(wx.data.names()), 
-                s, x, y, 
-                stepsize = (10e-7, 10e-7), 
+                s, x, y, xunit = xunit, yunit=yunit,
+                stepsize = 10e-7, 
                 orbit_plots=(wx, wy),
                 correct_orbit = self._correctOrbit)
             self.corbitdlg.resize(600, 500)
@@ -707,7 +760,7 @@ def main(par=None):
     demo = OrbitPlotMainWindow(machines=mlist)
     #demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")
-    demo.resize(800,500)
+    demo.resize(1000,600)
     #print aphla.machines.lattices()
     demo.show()
     # print app.style() # QCommonStyle

@@ -78,9 +78,9 @@ class ElementPropertyTableModel(QAbstractTableModel):
                         ('setpoint', '_w', True)]
         self._unit = []
 
-        self._load()
+        self.load(elems)
 
-    def _load(self):
+    def load(self, allelems):
         ik = 0
         # self._field.extend(["<b>Test</b>", "v.r", "v.w"])
         # self._value.extend([None, [[0,1,2,3], None], [[10,20,30,40], None]])
@@ -89,7 +89,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         # self._desc.extend(["sb = 0.0\nse = 1.0"])
         # ik = 1
         
-        for elem in self._allelems:
+        for elem in allelems:
             self._elem.append(elem)
             self._field.append("<b>%s</b>" % elem.name)
             self._fieldpfx.append('')
@@ -293,6 +293,14 @@ class ElementPropertyTableModel(QAbstractTableModel):
             return True
         return False
 
+    def clear(self):
+        self._allelems = []
+        self._elem = []
+        self._desc  = []
+        self._field, self._fieldpfx, self._value = [], [], []
+        self._editable = []
+        self._unit = []
+
     
 class ElementPropertyDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
@@ -396,7 +404,7 @@ class ElementPropertyDelegate(QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         #print "Setting model data", editor.text()
         #print "  sender", self.sender()
-        traceback.print_stack(file=sys.stdout)
+        #traceback.print_stack(file=sys.stdout)
 
         if index.column() >= C_VAL_RAW:
             model.setData(index, QVariant(editor.text()))
@@ -443,6 +451,8 @@ class ElementEditorDock(QDockWidget):
         
         vbox = QVBoxLayout()
         vbox.addWidget(gb)
+        self.model = None
+        self.delegate = None
         self.tableview = QTableView()
         vbox.addWidget(self.tableview)
 
@@ -461,10 +471,44 @@ class ElementEditorDock(QDockWidget):
         elemname = str(self.elemBox.currentText())
         t0 = time.time()
         elems = self.parent().getVisibleElements(elemname)
+        self.parent().logger.info("Found elems: {0}".format(len(elems)))
+        if self.model and self.model.rowCount() > 0:
+            del self.model
+            del self.delegate
+            #self.model.clear()
+        self.model = ElementPropertyTableModel(elems)
+        self.delegate = ElementPropertyDelegate()
+        self.tableview.reset()
+        self.tableview.setModel(self.model)
+        self.tableview.setItemDelegate(self.delegate)
+        self.model.load(elems)
+        #print "model size:", self.model.rowCount(), self.model.columnCount()
+        for i in range(self.model.rowCount()):
+            print i, self.model._elem[i].name, self.model._field[i], self.model._value[i]
+            if self.model.isHeadIndex(i):
+                self.tableview.setSpan(i, 0, 1, self.model.columnCount())
+            elif self.tableview.columnSpan(i, 0) > 1:
+                self.tableview.setSpan(i, 0, 1, 1)
+        idx0 = self.model.index(0, 0)
+        idx1 = self.model.index(self.model.rowCount() - 1,
+                                self.model.columnCount()-1)
+        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
+                        idx0, idx1)
+        #for i in range(self.model.columnCount()):
+        self.tableview.resizeColumnsToContents()
+        #rz = self.tableview.geometry()
+        #fullwidth = sum([self.tableview.columnWidth(i) for i in range(ncol)])
+        #self.tableview.setMinimumWidth(fullwidth+20)
+        #self.tableview.setMaximumWidth(fullwidth+60)
+        #self.tableview.adjustSize()
+        self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"), 
+                     self.processCell)
+            
         t1 = time.time()
-        self._addElements(elems)
+        #self._addElements(elems)
         t2 = time.time()
         print "DT:", t1 - t0, t2 - t1
+
     def refreshBox(self):
         self.noTableUpdate = True
         self.elemBox.clear()
@@ -483,21 +527,7 @@ class ElementEditorDock(QDockWidget):
         #                        "element " + str(elemnames) + " not found")
         #    return
             #print elem.name, elem.sb, elem.fields()
-        self.model = ElementPropertyTableModel(elems=elems)
-        self.tableview.setModel(self.model)
-        self.tableview.setItemDelegate(ElementPropertyDelegate(self))
-        for i in self.model.subHeadIndex():
-            self.tableview.setSpan(i, 0, 1, self.model.columnCount()) 
-        #for i in range(self.model.columnCount()):
-        self.tableview.resizeColumnsToContents()
-        #rz = self.tableview.geometry()
-        ncol = self.tableview.model().columnCount()
-        #fullwidth = sum([self.tableview.columnWidth(i) for i in range(ncol)])
-        #self.tableview.setMinimumWidth(fullwidth+20)
-        #self.tableview.setMaximumWidth(fullwidth+60)
-        #self.tableview.adjustSize()
-        self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"), 
-                     self.processCell)
+        #self.tableview.reset()
         # wid = QWidget()
         # vbox = QVBoxLayout()
         # vbox.addWidget(QLabel("Name:   %s" % elem.name))
@@ -512,6 +542,7 @@ class ElementEditorDock(QDockWidget):
         # wid.setLayout(vbox)
         # self.addTab(wid, elem.name)
         #self.adjustSize()
+        pass
 
     def closeTab(self, index):
         self.removeTab(index)

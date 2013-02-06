@@ -1053,6 +1053,7 @@ def merge(elems, **kwargs):
     The other properties of the new element are initialized by
     the input *kwargs*.
 
+    It does not merge the unit conversion. All raw unit.
     seealso :class:`CaElement`
     """
     count, pvdict = {}, {}
@@ -1078,6 +1079,12 @@ def merge(elems, **kwargs):
     for k,v in pvdict.iteritems():
         if len(v[0]) > 0: elem.setFieldGetAction(v[0], k, None, '')
         if len(v[1]) > 0: elem.setFieldPutAction(v[1], k, None, '')
+
+    # if all raw units are the same, so are the merged element
+    for fld in elem.fields():
+        units = sorted([e.getUnit(fld, unitsys=None) for e in elems])
+        if units[0] == units[-1]:
+            elem.setRawUnit(fld, units[0])
 
     elem.sb = [e.sb for e in elems]
     elem.se = [e.se for e in elems]

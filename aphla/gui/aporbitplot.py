@@ -554,7 +554,7 @@ class ApPlot(Qwt.QwtPlot):
             #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
             self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
         else:
-            bound = self.curve1.boundingRect()
+            bound = self.curvesBound()
             w = bound.width()
             h = bound.height()
         
@@ -605,7 +605,7 @@ class ApPlot(Qwt.QwtPlot):
     def curvesBound(self):
         bd = self.curve1.boundingRect()
         if self.curve2.isVisible():
-            bd = b1.united(self.curve2.boundingRect())
+            bd = bd.united(self.curve2.boundingRect())
         return bd
 
 class ApPlotControlButton(QPushButton):
@@ -805,6 +805,10 @@ class ApMdiSubPlot(QMdiSubWindow):
 
     def machine(self):
         return self.data.machine
+
+    def fullname(self):
+        return (self.data.machine, self.data.lattice, 
+                self.data.name, self.data.yfield)
 
     def plotCurve2(self, y, x = None):
         self.aplot.plotCurve2(y, x)

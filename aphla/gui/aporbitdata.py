@@ -108,6 +108,7 @@ class ApVirtualElemData(ApPlotData):
         self.plane   = kw.get("plane", None)
 
         self.velem = velem
+        self.name    = velem.name
         sb, se = np.array(self.velem.sb), np.array(self.velem.se)
         if not kw.has_key('s'): kw.update({'s': 0.5*(sb+se)})
 
@@ -117,9 +118,11 @@ class ApVirtualElemData(ApPlotData):
         # prefer 'phy' unit
         if 'phy' in self.velem.getUnitSystems(field):  self.yunitsys = 'phy'
         if kw.get('update', True): self.update()
+        
+        self.yunit = self.velem.getUnit(self.yfield, self.yunitsys)
 
     def label(self):
-        return "%s [%s]" % (self.yfield, self.velem.getUnit(self.yfield))
+        return "%s [%s]" % (self.yfield, self.yunit)
 
     def update(self):
         """
@@ -145,4 +148,3 @@ class ApVirtualElemData(ApPlotData):
 
     def names(self):
         return self.velem._name
-

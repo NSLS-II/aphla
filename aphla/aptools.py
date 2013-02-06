@@ -84,14 +84,14 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     
     Parameters
     -----------
-    bpm: list of BPMs objects for new bumpped orbit. 
-    trim: list of corrector objects used for orbit correction. 
-    ref: target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
-    scale: optional, float
+    bpm : list of BPMs objects for new bumpped orbit. 
+    trim : list of corrector objects used for orbit correction. 
+    ref : target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
+    scale : optional, float
         factor to scale calculated kick strength change, between 0 and 1.0
-    check: optional, bool
+    check : optional, bool
         roll back the corrector settings if the orbit gets worse.
-    ormdata: optional, :class:`~aphla.apdata.OrmData`
+    ormdata : optional, :class:`~aphla.apdata.OrmData`
         use provided OrmData instead of the system default.
 
     Notes
@@ -170,10 +170,10 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
 
     Parameters
     -----------
-    bpm: list of BPM objects, default all 'BPM'
-    trimlst: list of Trim objects, default all 'COR'
-    plane: optional, [ 'HV' | 'H' | 'V' ], default 'HV'
-    repeat: optional, integer, default 1
+    bpm : list of BPM objects, default all 'BPM'
+    trimlst : list of Trim objects, default all 'COR'
+    plane : optional, [ 'HV' | 'H' | 'V' ], default 'HV'
+    repeat : optional, integer, default 1
         numbers of correction 
 
     Notes

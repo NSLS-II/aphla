@@ -677,9 +677,8 @@ class T060_Tunes(unittest.TestCase):
         pass
 
 
-    @unittest.skip
     def test_beta_get(self):
-        beta = ap.machines.getLattice().getBeta('P*C1[5-6]*')
+        beta = ap.machines.getLattice().getBeta('p*c1[5-6]*')
         s, twx, twy = beta[:,-1], beta[:,0], beta[:,1]
         if False:
             import matplotlib.pylab as plt
