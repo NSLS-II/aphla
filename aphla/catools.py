@@ -50,27 +50,30 @@ def _ca_put_sim(pvs, vals):
 
 def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
            count=0, throw=False):
-    """
-    channel access read
-    
-    :param pvs: process variables
-    :type pvs: list, string
-    :param timeout: timeout in seconds
-    :param throw: throw exception or not
-    :return: channel value
-    :rtype: list or value
+    """channel access read
     
     This is a simple wrap of cothread.catools, support UTF8 string
-
-    :Example:
-
-        >>> caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
-        >>> caget(['SR:PV1', 'SR:PV2', 'SR:PV3'])
 
     Throw cothread.Timedout exception when timeout. This is a wrap of original
     `cothread.catools.caget`.
 
     seealso :func:`~aphla.catools.caput`
+
+    Parameters
+    -----------
+    pvs : str, list. process variables
+    timeout : int. timeout in seconds
+    throw : bool. throw exception or not
+    
+    Returns
+    ---------
+    val : list or value. channel value
+
+    Examples
+    ----------
+    >>> caget('SR:C01-MG:G04B{Quad:M1}Fld-I')
+    >>> caget(['SR:PV1', 'SR:PV2', 'SR:PV3'])
+
     """
     #print "AA"
     #logger.info("caget %s" % str(pvs))
@@ -100,28 +103,29 @@ def caget(pvs, timeout=5, datatype=None, format=ct.FORMAT_RAW,
             raise
 
 def caput(pvs, values, timeout=5, wait=True, throw=True):
-    """
-    channel access write.
-
-    :param pvs: process variables
-    :type pvs: list, string
-    :param values: setting values
-    :type pvs: list, float/int
-    :return: see :func:`cothread.catools.caput`
-    :rtype: see :func:`cothread.catools.caput`
-
-    :Examples:
-
-    >>> caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
-    >>> caput(['SR:PV1', 'SR:PV2'], [0.1, 0.2])
+    """channel access write.
 
     This is simple wrap of `cothread.catools.caput` to support UTF8 string
 
-    Throw cothread.Timedout exception when timeout.
-    
     see original :func:`cothread.catools.caput` for details
 
-    seealso :func:`~aphla.catools.caget`
+    Parameters
+    -----------
+    pvs : str, list. process variables
+    values : float/int, list. setting values
+    timeout : int.
+    wait : bool.
+    throw : bool.
+
+    Returns
+    ---------
+    see :func:`cothread.catools.caput`
+
+    Examples
+    ----------
+    >>> caput('SR:C01-MG:G04B{Quad:M1}Fld-I', 0.1)
+    >>> caput(['SR:PV1', 'SR:PV2'], [0.1, 0.2])
+
     """
 
     logger.info("setting '%s' '%s'" % (str(pvs), str(values)))
@@ -145,21 +149,26 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
         else:
             raise cothread.Timedout
 
-def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1),  maxtrial=20):
-    """
-    set pvs and waiting until the setting takes effect
+def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1), maxtrial=20):
+    """set pvs and waiting until the setting takes effect
 
-    :param pvs: PVs for setting
-    :type pvs: list, string
-    :param values: setting values for *pvs*
-    :type values: list, string
-    :param pvmonitors: PVs for testing the effects of new PV setting.
-    :type pvmonitors: list
-    :param diffstd: threshold value of effective change of *pvmonitors*.
-    :param wait: waiting time for initial and each step (seconds)
-    :param maxtrial: maximum trial before return.
-    :return: True if pvmonitors change significant enough, False otherwise.
+    Parameters
+    ------------
+    pvs : str, list. PVs for setting
+    values : list. setting values for *pvs*
+    pvmonitors : list. PVs for testing the effects of new PV setting.
+    diffstd : float. optional(1e-6). threshold value of effective change 
+        of *pvmonitors*.
+    wait : tuple, optional(2,1). waiting time for initial and each step,
+        in seconds
+    maxtrial : maximum trial before return.
 
+    Returns
+    ----------
+    b : True if pvmonitors change significant enough, False otherwise.
+
+    Notes
+    -------
     It sets the pvs with new values and tests the monitor values see if the
     changes are significant enough. This significance is measured by comparing
     the std of monitor value changes due to the *pvs* changes. If it exceeds
@@ -189,18 +198,23 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1),  maxtrial=20):
 
 
 def caRmCorrect(resp, kker, m, **kwarg):
-    """
-    correct the resp using kker and response matrix.
+    """correct the resp using kker and response matrix.
 
-    :param resp: PV list of the target, e.g. orbit, tune
-    :param kker: PV list of the controllers, e.g. corrector
-    :param m: response matrix where :math:`m_{ij}=\Delta resp_i/\Delta kker_j`
-    :param scale: scaling factor applied to the calculated kker
-    :param ref: the targeting value of resp PVs
-    :param rcond: the rcond for cutting singular values. 
-    :param check: stop if the orbit gets worse.
-    :param wait: waiting (seconds) before check.
-    :return: converged (True) or not (False). None if it did not check.
+    Parameters
+    ------------
+    resp : PV list of the response target, e.g. orbit, tune
+    kker : PV list of the controllers, e.g. corrector
+    m : response matrix where :math:`m_{ij}=\Delta resp_i/\Delta kker_j`
+    scale : scaling factor applied to the calculated kker
+    ref : the targeting value of resp PVs
+    rcond : the rcond for cutting singular values. 
+    check : stop if the orbit gets worse.
+    wait : waiting (seconds) before check.
+
+    Returns
+    --------
+    b : converged (True) or not (False). None if it did not check.
+
     """
     scale = kwarg.get('scale', 0.68)
     ref   = kwarg.get('ref', None)

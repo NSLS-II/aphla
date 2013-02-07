@@ -29,8 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Lattice:
-    """
-    Lattice
+    """Lattice
 
     - *name*
     - *mode*
@@ -75,10 +74,11 @@ class Lattice:
         return None
 
     def _find_element_s(self, s, eps = 1e-9, loc='left'):
-        """
-        given s location, find an element at this location. If this is
-        drift space, find the element at 'left' or 'right' of the given
-        point.
+        """given s location, find an element at this location. 
+
+        If this is drift space, find the element at 'left' or 'right' of the
+        given point.
+
         """
         if not loc in ['left', 'right']:
             raise ValueError('loc must be in ["left", "right"]')
@@ -109,16 +109,16 @@ class Lattice:
         else: return False
 
     def insertElement(self, elem, i = None, groups = None):
-        """
-        insert an element at index *i* or append it.
-
-        :param elem: element object
-        :type elem: :class:`~aphla.element.CaElement`, 
-                    :class:`~aphla.element.AbstractElement`
-        :param int i: the index to insert. append if *None*
-        :param list groups: group names the element belongs to.
+        """insert an element at index *i* or append it.
 
         seealso :func:`appendElement`
+
+        Parameters
+        ------------
+        elem : element object. :class:`~aphla.element.CaElement`, :class:`~aphla.element.AbstractElement`
+        i : int. the index to insert. append if *None*
+        groups : group names the element belongs to.
+
         """
         if i is not None:
             self._elements.insert(i, elem)
@@ -157,8 +157,7 @@ class Lattice:
         else: return None
 
     def appendElement(self, elem):
-        """
-        append a new element to lattice. 
+        """append a new element to lattice. 
 
         callers are responsible for avoiding duplicate elements (call
         hasElement before).
@@ -166,29 +165,20 @@ class Lattice:
         seealso :func:`insertElement`
         """
         self._elements.append(elem)
-        #for g in elem.group:
-        #    if not g: continue
-        #    self.addGroupMember(g, elem.name, newgroup=True)
 
     def size(self):
-        """
-        total number of elements, including magnets and diagnostic instruments
-        """
+        """total number of elements."""
         return len(self._elements)
 
     def remove(self, elemname):
-        """
-        remove the element, return None if not find the element.
-        """
+        """remove the element, return None if not find the element."""
         for i,e in enumerate(self._elements):
             if e.name != elemname: continue
             return self._elements.pop(i)
         return None
 
     def save(self, fname, dbmode = 'c'):
-        """
-        save the lattice into binary data, using writing *dbmode*. The exact
-        dataset name is defined by *mode*, default is 'undefined'.
+        """save the lattice into binary data, using writing *dbmode*.
 
         seealso Python Standard Lib `shelve`
         """
@@ -201,9 +191,8 @@ class Lattice:
         f[pref+'chromaticity'] = self.chromaticity
         f.close()
 
-    def load(self, fname, mode = ''):
-        """
-        load the lattice from binary data
+    def load(self, fname):
+        """load the lattice from binary data
 
         In the db file, all lattice has a key with prefix 'lat.mode.'. If the
         given mode is empty string, then use 'lat.'
@@ -211,10 +200,7 @@ class Lattice:
         seealso Python Standard Lib `shelve`
         """
         f = shelve.open(fname, 'r')
-        if not mode:
-            pref = "lat."
-        else:
-            pref = 'lat.%s.' % mode
+        pref = "lat."
         self._group  = f[pref+'group']
         self._elements  = f[pref+'elements']
         self.mode     = f[pref+'mode']
@@ -225,15 +211,16 @@ class Lattice:
         f.close()
 
     def mergeGroups(self, parent, children):
-        """
-        merge child group(s) into a parent group
+        """merge child group(s) into a parent group
 
-        the new parent group is replaced by this new merge of children groups
+        the new parent group is replaced by this new merge of children
+        groups. no duplicate element will appears in merged *parent* group
         
-        :Example:
+        Examples
+        ---------
+        >>> mergeGroups('BPM', ['BPMX', 'BPMY'])
+        >>> mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
 
-            >>> mergeGroups('BPM', ['BPMX', 'BPMY'])
-            >>> mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
         """
         if isinstance(children, str):
             chlist = [children]
@@ -345,29 +332,31 @@ class Lattice:
         """
         get a list of element objects.
 
-        :param group: element list or pattern
-        :type group: list, string
-        :rtype: a list of element objects
+        Parameters
+        -----------
+        group : str, list. element name, pattern or name list.
+            when it is str, searching for an element with name *group*, if not
+            found, searching for a group with name *group*. At last treat it
+            as a pattern to match the element names.  When the input *group*
+            is a list, each string in this list will be treated as exact
+            string instead of pattern.
 
-        :Example:
+        virtual : bool. optional(True). Including virtual element or not.
 
-            >>> getElementList('BPM')
-            >>> getElementList('PL*')
-            >>> getElementList('C02')
-            >>> getElementList(['BPM'])
-            [None]
+        Returns
+        --------
+        elemlst : a list of element objects.
 
-        The input *group* is an element name, a pattern or group name. It
-        is treated as an exact name first, and compared with element
-        nmame, then group name. If no elements matched, it will treat
-        input as a pattern and match with the element name.
-
-        When the input *group* is a list, each string in this list will be
-        treated as exact string instead of pattern.
+        Examples
+        ----------
+        >>> getElementList('BPM')
+        >>> getElementList('PL*')
+        >>> getElementList('C02')
+        >>> getElementList(['BPM1', 'BPM2'])
 
         """
 
-        virtual = kwargs.get('virtual', 1)
+        virtual = kwargs.get('virtual', True)
         # do exact element name match first
         elem = self._find_exact_element(group)
         if elem is not None: return [elem]
@@ -391,8 +380,7 @@ class Lattice:
             return [self._find_exact_element(e) for e in group]
             
     def _matchElementCgs(self, elem, **kwargs):
-        """
-        check properties of an element
+        """check properties of an element
         
         - *cell*
         - *girder*
@@ -803,7 +791,7 @@ class Lattice:
         return ret
 
 
-def parseElementName(name):
+def _parseElementName(name):
     """
     searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
     girder='G1', cell='C30', symmetry='A'

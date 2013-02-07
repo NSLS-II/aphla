@@ -22,7 +22,7 @@
 
   - GUI (Graphical User Interface) 
 
-    - aplauncher (Y. Hidaka): "phone-book" of all high-level applications, scripts, ...
+    - aplauncher (Y. Hidaka): gateway of all high-level applications, scripts, ...
     - aporbit (L. Yang): orbit and magnet monitor. middle level control of any element which are tagged in channel finder.
     - apbba (L. Yang): beam based alignment
     - plotter (Y. Hidaka): plotter vs. ipython/python notebook is like MathCAD vs. Matlab/Mathematica/Maple

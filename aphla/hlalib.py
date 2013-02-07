@@ -106,9 +106,7 @@ def _reset_rf():
 #
 
 def _reset_trims(verbose=False):
-    """
-    reset all trims in group "HCOR" and "VCOR"
-    """
+    """reset all trims in group *HCOR* and *VCOR* """
     trimx = machines._lat.getGroupMembers(['*', 'HCOR'], op='intersection')
     trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
     pv = []
@@ -165,13 +163,12 @@ def getElements(group, include_virtual=False):
 
     Parameters
     -----------
-    group: str, list.
-        a list of element name or a name pattern.
-    include_virtual: include virtual element or not.
+    group : str, list. a list of element name or a name pattern.
+    include_virtual : include virtual element or not.
 
     Returns
     ---------
-     elemlist: a list of matched element objects.
+     elemlist : a list of matched element objects.
     
     Examples
     ----------
@@ -213,12 +210,12 @@ def getExactElement(elemname):
 
 def eget(elem, fields = None, **kwargs):
     """get elements field values
-    
-    :param elem: element name, name list, pattern or object list
-    :type elem: str, list
-    :param fields: field name or name list
-    :type fields: str, list
-    :param header: optional (True, False), whether returns the (name, field) list. 
+
+    Parameters
+    -----------
+    elem : str, list. element name, name list, pattern or object list
+    fields : str, list. field name or name list
+    header : bool. optional(False), whether returns the (name, field) list. 
  
     Examples
     ---------
@@ -229,6 +226,8 @@ def eget(elem, fields = None, **kwargs):
     >>> bpm = getElements('p*c30*')
     >>> eget(bpm, ['x', 'y'], header=True)
 
+    Notes
+    -------
     The optional parameters are unit. see :func:`~aphla.element.CaElement.get`
 
     It calls :func:`getElements` to obtain a list of elements, then call
@@ -264,12 +263,13 @@ def eget(elem, fields = None, **kwargs):
 
         
 def getPvList(elem, field, handle = 'readback', **kwargs):
-    """
-    return a pv list for given element or element list
+    """return a pv list for given element or element list
 
-    :param elem: element pattern, name list or CaElement object list
-    :param field: e.g. 'x', 'y', 'k1'
-    :param handle: 'READBACK' or 'SETPOINT'
+    Parameters
+    ------------
+    elem : element pattern, name list or CaElement object list
+    field : e.g. 'x', 'y', 'k1'
+    handle : 'readback' or 'setpoint'
 
     Keyword arguments:
 

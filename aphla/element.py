@@ -76,23 +76,21 @@ class AbstractElement(object):
         for g in kwargs.get('group', []): self.group.add(g)
         
     def profile(self, vscale=1.0):
-        """
-        the profile for drawing the lattice, return as x, y, c
+        """the profile for drawing the lattice.
 
-        - *x* x coordinate
-        - *y* y coordinate
-        - *c* color
+        The return is a tuple of (x, y, color) where (*x*, *y) are coordinates
+        and *color* is one of the ['k', 'r', 'b'] depending its family.
         
         It recognize the following *family*:
 
-        - 'QUAD', quadrupole
-        - 'DIPOLE', dipole
-        - 'SEXT', sextupole
-        - ['HCOR' | 'VCOR' | 'TRIMX' | 'TRIMY'], corrector
-        - ['BPM' | 'BPMX' | 'BPMY'], beam position monitor
+        - 'QUAD', quadrupole, box height *vscale*, no negative
+        - 'DIPOLE', dipole. box height vscale both positive and negative.
+        - 'SEXT', sextupole. box height 1.4*vscale
+        - ['HCOR' | 'VCOR' | 'TRIMX' | 'TRIMY'], corrector, thin line
+        - ['BPM' | 'BPMX' | 'BPMY'], beam position monitor, thin line
+        - The rest unrecognized element, it returns a box with height 
+          0.2*vscale and color 'k'.
 
-        For unrecognized element, it returns a straight line, i.e. `([s0, s1],
-        [0, 0], 'k')`
         """
         b, e = self.sb, max(self.sb + self.length, self.se)
         h = vscale
@@ -592,8 +590,7 @@ class CaElement(AbstractElement):
                 super(CaElement, self).__setattr__(name, value)
             
     def _pv_1(self, **kwargs):
-        """
-        One input
+        """find the pv when len(kwargs)==1.
         
         - tag: 
         - tags: all tags are met
@@ -639,13 +636,13 @@ class CaElement(AbstractElement):
         search for pv with specified *tag*, *tags*, *field*, *handle* or a
         combinatinon of *field* and *handle*.
 
-        :Example:
-
-            >>> pv() # returns all pvs.
-            >>> pv(tag='aphla.X')
-            >>> pv(tags=['aphla.EGET', 'aphla.Y'])
-            >>> pv(field = "x")
-            >>> pv(field="x", handle='readback')
+        Examples
+        ----------
+        >>> pv() # returns all pvs.
+        >>> pv(tag='aphla.X')
+        >>> pv(tags=['aphla.EGET', 'aphla.Y'])
+        >>> pv(field = "x")
+        >>> pv(field="x", handle='readback')
 
         seealso :class:`CaDecorator`
         """
@@ -666,9 +663,9 @@ class CaElement(AbstractElement):
         else: return []
 
     def hasPv(self, pv, inalias = False):
-        """
-        check if this element has pv, inalias=True will also check its alias
-        elements. 
+        """check if this element has pv.
+
+        inalias=True will also check its alias elements. 
 
         If the alias (child) has its aliases (grand children), they are not
         checked. (no infinite loop)
@@ -681,9 +678,7 @@ class CaElement(AbstractElement):
         return False
         
     def appendStatusPv(self, pv, desc, order=True):
-        """
-        append (func, pv, description) to status
-        """
+        """append (func, pv, description) to status"""
         decr = self._field['status']
         if not decr: self._field['status'] = CaDecorator(trace=self.trace)
         
@@ -740,9 +735,7 @@ class CaElement(AbstractElement):
         for e in self.alias: e.__setattr__(att, val)
 
     def addUnitConversion(self, field, uc, src, dst):
-        """
-        add unit conversion for field
-        """
+        """add unit conversion for field"""
         # src, dst is unit system name
         self._field[field].unitconv[(src, dst)] = uc
 
@@ -750,8 +743,7 @@ class CaElement(AbstractElement):
         return self._field[field]._unit_conv(x, src, dst)
 
     def get_unit_systems(self, field):
-        """
-        get a list all unit systems for field. 
+        """get a list all unit systems for field. 
 
         None is the lower level unit, e.g. in EPICS channel
         """
@@ -762,8 +754,7 @@ class CaElement(AbstractElement):
         return list(set(src).intersection(dst))
 
     def getUnitSystems(self, field = None):
-        """
-        return a list of available unit systems for field. 
+        """return a list of available unit systems for field. 
 
         If no field specified, return a dictionary for all fields and their
         unit systems.
@@ -777,8 +768,7 @@ class CaElement(AbstractElement):
             return self.get_unit_systems(field)
 
     def getUnit(self, field, unitsys='phy'):
-        """
-        get the unit name of a unit system, e.g. unitsys='phy'
+        """get the unit name of a unit system, e.g. unitsys='phy'
 
         return '' if no such unit system.
         """
@@ -801,9 +791,7 @@ class CaElement(AbstractElement):
 
 
     def updatePvRecord(self, pvname, properties, tags = []):
-        """
-        update the pv with property dictionary and tag list.
-        """
+        """update the pv with property dictionary and tag list."""
         if not isinstance(pvname, (str, unicode)):
             raise TypeError("%s is not a valid type" % (type(pvname)))
 
@@ -849,8 +837,7 @@ class CaElement(AbstractElement):
         else: self._pvtags[pvname] = set(tags)
 
     def setFieldGetAction(self, v, field, idx = None, desc = ''):
-        """
-        set the action when reading *field*.
+        """set the action when reading *field*.
 
         the previous action will be replaced if it was defined.
         *v* is single PV or a list/tuple
@@ -861,8 +848,7 @@ class CaElement(AbstractElement):
         self._field[field].setReadbackPv(v, idx)
 
     def setFieldPutAction(self, v, field, idx=None, desc = ''):
-        """
-        set the action for writing *field*.
+        """set the action for writing *field*.
 
         the previous action will be replaced if it was define.
         *v* is a single PV or a list/tuple
@@ -873,23 +859,15 @@ class CaElement(AbstractElement):
         self._field[field].setSetpointPv(v, idx)
         
     def fields(self):
-        """
-        return element's fields, not sorted.
-        """
+        """return element's fields, not sorted."""
         return self._field.keys()
 
     def stepSize(self, field):
-        """
-        return the stepsize of field
-        """
+        """return the stepsize of field"""
         return self._field[field].stepSize()
 
     def boundary(self, field):
-        """
-        return the (low, high) range of *field*
-        
-        :rtype: tuple of (low, high)
-        """
+        """return the (low, high) range of *field*"""
         return self._field[field].boundary()
 
     def collect(self, elemlist, **kwargs):
@@ -940,14 +918,12 @@ class CaElement(AbstractElement):
         self._field[fieldname].revert()
         for e in self.alias: e._field[fieldname].revert()
 
-    def mark(self, fieldname, data = 'setpoint'):
-        self._field[fieldname].mark(data)
-        for e in self.alias: e._field[fieldname].mark(data)
+    def mark(self, fieldname, handle = 'setpoint'):
+        self._field[fieldname].mark(handle)
+        for e in self.alias: e._field[fieldname].mark(handle)
 
     def reset(self, fieldname):
-        """
-        see CaDecorator::reset()
-        """
+        """see CaDecorator::reset()"""
         self._field[fieldname].reset()
         for e in self.alias: e._field[fieldname].reset()
 
@@ -955,40 +931,40 @@ class CaElement(AbstractElement):
         """
         read value of a single field, returns None if no such field.
         """
-        source = kwargs.get('source', 'readback').lower()
+        handle = kwargs.get('handle', 'readback').lower()
         unitsys = kwargs.get('unitsys', None)
     
         if not self._field.has_key(field):
             v = None
-        elif source == 'readback':
+        elif handle == 'readback':
             v = self._field[field].getReadback(unitsys)
-        elif source.lower() == 'setpoint':
+        elif handle.lower() == 'setpoint':
             v = self._field[field].getSetpoint(unitsys)
         else:
-            raise ValueError("unknow source {0}" % field)
+            raise ValueError("unknow handle {0}" % field)
         
         # convert unit when required
         return v
         
-    def get(self, fields, source='readback', unitsys='phy'):
+    def get(self, fields, handle='readback', unitsys='phy'):
+        """get the values for given fields. None if not exists.
+
+        Parameters
+        -------------
+        fields : str, list. field
+        handle : str. 'readback' or 'setpoint'.
+        unitsys : the unit system. None for lower level unit.
+
+        Example
+        -----------
+        >>> get('x')
+        >>> get(['x', 'y'])
+        >>> get(['x', 'unknown'])
+          [ 0, None]
+
         """
-        get the values for given fields. 
 
-        :param fields: field
-        :type fields: str, list
-        :param source: 'readback' or 'setpoint'.
-        :param unitsys: the unit system
-        :rtype: None if the field does not exist.
-
-        :Example:
-
-            >>> get('x')
-            >>> get(['x', 'y'])
-            >>> get(['x', 'unknown'])
-            [ 0, None]
-        """
-
-        kw = {'source': source, 'unitsys': unitsys}
+        kw = {'handle': handle, 'unitsys': unitsys}
         if isinstance(fields, (str, unicode)):
             return self._get_field(fields, **kw)
         else:
@@ -996,8 +972,7 @@ class CaElement(AbstractElement):
             return [ self._get_field(v, **kw) for v in fields]
 
     def _put_field(self, field, val, unitsys, **kwargs):
-        """
-        set *val* to *field*.
+        """set *val* to *field*.
 
         seealso :func:`pv(field=field)`
         """
@@ -1018,8 +993,7 @@ class CaElement(AbstractElement):
         
 
     def put(self, field, val, unitsys = 'phy'):
-        """
-        set *val* to *field*.
+        """set *val* to *field*.
 
         seealso :func:`pv(field=field)`
         """
@@ -1027,9 +1001,7 @@ class CaElement(AbstractElement):
         for e in self.alias: e._put_field(field, val, unitsys=unitsys)
 
     def settable(self, field):
-        """
-        check if the field has any setpoint PV
-        """
+        """check if the field has any setpoint PV"""
         if field not in self._field.keys():
             return False
         return self._field[field].settable()
@@ -1048,14 +1020,24 @@ def merge(elems, **kwargs):
     merge the fields for all elements in a list return it as a single
     element. 
 
-    :param list elems: a list of element object
-    
-    The other properties of the new element are initialized by
-    the input *kwargs*.
+    Parameters
+    -----------
+    elems : list. a list of element object
+    kwargs: dict. other properties of the new element.
 
+    Examples
+    ----------
+    >>> bpm = getElements('BPM') 
+    >>> vpar = { 'virtual': 1, 'name': 'VBPM' }
+    >>> vbpm = merge(bpm, **vpar)
+
+    Notes
+    ------
     It does not merge the unit conversion. All raw unit.
     seealso :class:`CaElement`
+
     """
+
     count, pvdict = {}, {}
     for e in elems:
         fds = e.fields()
