@@ -103,6 +103,9 @@ def waitForStablePv(**kwargs):
     if diffstd_list:
         return timeout, dvstd
 
+def figname(name):
+    return time.strftime("%y%m%d_%H%M%S_") + name
+    
 """
 Channel Finder
 ~~~~~~~~~~~~~~
@@ -591,7 +594,7 @@ class T040_LatticeLtd1(unittest.TestCase):
              fontsize=16, horizontalalignment='right',
              verticalalignment='bottom', transform=ax.transAxes)
 
-        plt.savefig("test2.png")
+        plt.savefig(figname("test2.png"))
 
     def test_virtualelements_l0(self):
         pass
@@ -638,6 +641,7 @@ class T060_Tunes(unittest.TestCase):
     def setUp(self):
         ap.machines.use("V2SR")
         logging.info("TestTunes")
+        self.plot = True
 
     def test_tunes_l0(self):
         nu = ap.getTunes()
@@ -657,7 +661,7 @@ class T060_Tunes(unittest.TestCase):
             plt.plot(s, etax, '-x', label=r'$\eta_x$')
             plt.plot(s, etay, '-o', label=r'$\eta_y$')
             plt.legend(loc='upper right')
-            plt.savefig('test_twiss_dispersion_meas.png')
+            plt.savefig(figname('test_twiss_dispersion_meas.png'))
 
         self.assertGreater(max(abs(etax)), 0.15)
         self.assertGreater(max(abs(etay)), 0.0)
@@ -673,14 +677,14 @@ class T060_Tunes(unittest.TestCase):
             plt.plot(s, phix, '-x', label=r'$\phi_x$')
             plt.plot(s, phiy, '-o', label=r'$\phi_y$')
             plt.legend(loc='upper left')
-            plt.savefig('test_twiss_phase_get.png')            
+            plt.savefig(figname('test_twiss_phase_get.png'))
         pass
 
 
     def test_beta_get(self):
         beta = ap.machines.getLattice().getBeta('p*c1[5-6]*')
         s, twx, twy = beta[:,-1], beta[:,0], beta[:,1]
-        if False:
+        if self.plot:
             import matplotlib.pylab as plt
             twl = ap.machines.getLattice().getBeamlineProfile(s[0], s[-1])
             sprof, vprof = [], []
@@ -693,13 +697,12 @@ class T060_Tunes(unittest.TestCase):
             plt.plot(s, twx, '-x', label=r'$\beta_x$')
             plt.plot(s, twy, '-o', label=r'$\beta_y$')
             plt.legend(loc='upper right')
-            plt.savefig('test_twiss_beta_get.png')            
+            plt.savefig(figname('test_twiss_beta_get.png'))
         self.assertGreater(max(abs(twx)), 20.0)
         self.assertGreater(max(abs(twy)), 20.0)
 
         pass
 
-    @unittest.skip
     def test_tune_get(self):
         """
         The tunes stored in lattice._twiss is not live, while ap.getTunes is
@@ -812,7 +815,7 @@ class TestOrbit(unittest.TestCase):
         fig = plt.plot(v0[:,-1], v0[:,1], 'r-x', label='Y(before)')
         fig = plt.plot(v1[:,-1], v1[:,1], 'g-o', label='Y(after)')
         plt.legend()
-        plt.savefig("test_nsls2_orbit_correct.png")
+        plt.savefig(figname("test_nsls2_orbit_correct.png"))
 
     @unittest.skip
     def test_orbit_bump(self):
@@ -946,7 +949,7 @@ class TestOrbitControl(unittest.TestCase):
         plt.plot(d[:,0], m[0,0]*d[:,0] + b1, 'b-')
         plt.plot(d[:,0], d[:,2], 'rv--')
         plt.plot(d[:,0], m[1,0]*d[:,0] + b2, 'r-')
-        plt.savefig("test_orm.png")
+        plt.savefig(figname("test_orm.png"))
         hcor.x = x0
 
     def test_local_bump(self):
@@ -985,7 +988,7 @@ class TestOrbitControl(unittest.TestCase):
         v = ap.getOrbit(spos=True)
         plt.plot(v[:,-1], v[:,0], '-.')
         plt.plot(v[:,-1], v[:,1], '--')
-        plt.savefig("test_localbump.png")
+        plt.savefig(figname("test_localbump.png"))
 
 
 """
@@ -1294,7 +1297,7 @@ class TestOrmData(unittest.TestCase):
                 plt.plot(trim_k[j,:]*1000.0, 1e6*((x[i,1:4] - x[i,0])- trim_k[j,:]*orm.m[i,j]), 'o')
                 plt.ylabel("Difference from prediction [um]")
                 plt.xlabel("kick [mrad]")
-                plt.savefig("orm-check-t%03d-%03d.png" % (j,i))
+                plt.savefig(figname("orm-check-t%03d-%03d.png" % (j,i)))
                 if i > 100: break
             break
         print "Time:", time.time() - t1
@@ -1321,7 +1324,7 @@ class TestRmCol(unittest.TestCase):
             plt.figure()
             for j in range(nbpmrow):
                 plt.plot(ormline.rawkick[:], ormline.rawresp[:,j], '-o')
-            plt.savefig("rm_orm_sub1_%s.png" % trim.name)
+            plt.savefig(figname("rm_orm_sub1_%s.png" % trim.name))
 
     def test_measure_orm_sub2_l2(self):
         #trim = ap.getElements('ch1g6c15b')[0]
@@ -1339,7 +1342,7 @@ class TestRmCol(unittest.TestCase):
             plt.figure()
             for j in range(nbpmrow):
                 plt.plot(ormline.rawkick[:], ormline.rawresp[:,j], '-o')
-            plt.savefig("rm_orm_sub1_%s.png" % trim.name)
+            plt.savefig(figname("rm_orm_sub1_%s.png" % trim.name))
 
 
 class TestOrm(unittest.TestCase):

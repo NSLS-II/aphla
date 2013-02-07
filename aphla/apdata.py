@@ -531,7 +531,7 @@ class Twiss:
 
     """
     def __init__(self, name):
-        self._elements = []
+        self.element = []
         self._twlist = []
         self._name = name
         self.tune = (None, None)
@@ -539,7 +539,7 @@ class Twiss:
         
     def _find_element(self, elemname):
         try:
-            i = self._elements.index(elemname)
+            i = self.element.index(elemname)
             return i
         except:
             return None
@@ -557,10 +557,10 @@ class Twiss:
             return None
 
     def __repr__(self):
-        if not self._elements or not self._twlist: return ''
+        if not self.element or not self._twlist: return ''
 
-        s = "# %d " % len(self._elements) + TwissItem.header() + '\n'
-        for i, e in enumerate(self._elements):
+        s = "# %d " % len(self.element) + TwissItem.header() + '\n'
+        for i, e in enumerate(self.element):
             s = s + "%16s " % e + self._twlist[i].__repr__() + '\n'
         return s
 
@@ -635,8 +635,8 @@ class Twiss:
         """read data from HDF5 file in *group*"""
         import h5py
         f = h5py.File(filename, 'r')
-        self.element = f[group]['element']
-        self.tune = f[group]['tune']
+        self.element = list(f[group]['element'])
+        self.tune = tuple(f[group]['tune'])
         self._twlist = []
         tw = f[group]['twtable']
         m, n = np.shape(tw)
@@ -675,7 +675,7 @@ class Twiss:
             for i,v in enumerate(ihead):
                 if v[-1] is not None: lst[i] = row[v[-1]]
 
-            self._elements.append(lst[0])
+            self.element.append(lst[0])
             twi.update(lst[1:])
             self._twlist.append(twi)
         # by-pass the front-end which do not allow parameterize table name
