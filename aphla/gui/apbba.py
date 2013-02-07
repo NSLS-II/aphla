@@ -11,7 +11,7 @@ app = cothread.iqt()
 import sys
 import gui_resources
 #import bpmtabledlg
-from elementpickdlg import ElementPickDlg
+from elempickdlg import ElementPickDlg
 #from apbbaconfdlg import BbaConfig
 #from orbitplot import OrbitPlot
 from aphla import conf, bba

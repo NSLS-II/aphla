@@ -699,21 +699,25 @@ class OrbitPlotMainWindow(QMainWindow):
         return None
 
 
-    def _correctOrbit(self, bpms, obt):
+    def _correctOrbit(self, bpms, obt, **kwargs):
         trims = self._lat.getElementList('HCOR')+ self._lat.getElementList('VCOR')
         #print len(bpms), bpms
         #print len(trims), trims
         #print len(obt), obt
-        sp0 = []
-        for tr in trims:
-            vx, vy = None, None
-            if 'x' in tr.fields(): vx = tr.get('x', unitsys=None)
-            if 'y' in tr.fields(): vy = tr.get('y', unitsys=None)
-            sp0.append((vx, vy))
+        #sp0 = []
+        #for tr in trims:
+        #    vx, vy = None, None
+        #    if 'x' in tr.fields(): vx = tr.get('x', unitsys=None)
+        #    if 'y' in tr.fields(): vy = tr.get('y', unitsys=None)
+        #    sp0.append((vx, vy))
 
-        aphla.setLocalBump(bpms, trims, obt)
-
-        return sp0
+        repeat = kwargs.pop("repeat", 1)
+        kwargs['verbose'] = 0
+        for i in range(repeat):
+            self.logger.info("setting a local bump")
+            QApplication.processEvents()
+            aphla.setLocalBump(bpms, trims, obt, **kwargs)
+        #return sp0
 
         #try:
         #    aphla.setLocalBump(bpms, trims, obt)
@@ -736,7 +740,7 @@ class OrbitPlotMainWindow(QMainWindow):
             self.corbitdlg = OrbitCorrDlg(
                 self._lat.getElementList(wx.data.names()), 
                 s, x, y, xunit = xunit, yunit=yunit,
-                stepsize = 10e-7, 
+                stepsize = 200e-6, 
                 orbit_plots=(wx, wy),
                 correct_orbit = self._correctOrbit)
             self.corbitdlg.resize(600, 500)

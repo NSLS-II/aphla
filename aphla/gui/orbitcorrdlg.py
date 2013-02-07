@@ -11,7 +11,9 @@ from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
                          QDoubleSpinBox, QGridLayout, QVBoxLayout,
                          QHBoxLayout, QSizePolicy, QHeaderView,
                          QDialogButtonBox, QPushButton, QApplication,
-                         QLabel, QGroupBox, QLineEdit, QDoubleValidator)
+                         QLabel, QGroupBox, QLineEdit, QDoubleValidator,
+                         QIntValidator, QSizePolicy, QDialogButtonBox, 
+                         QFormLayout, QSpinBox, QProgressBar, QAbstractButton)
 
 class DoubleSpinBoxCell(QDoubleSpinBox):
     def __init__(self, row = -1, col = -1, val = 0.0, parent = None):
@@ -26,6 +28,7 @@ class OrbitCorrDlg(QDialog):
                  stepsize = 0.001, orbit_plots = None,
                  correct_orbit = None, parent = None):
         self.bpm = bpm
+        self._stepsize0 = stepsize
         super(OrbitCorrDlg, self).__init__(parent)
         self.table = QTableWidget(len(bpm), 4)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -68,43 +71,75 @@ class OrbitCorrDlg(QDialog):
         #self.table.setColumnWidth(0, 300)
         self.table.setColumnWidth(1, 80)
 
-        self.correctOrbitBtn = QPushButton("Apply")
-        self.correctOrbitBtn.setStyleSheet("QPushButton:disabled { color: gray }");
-        self.connect(self.correctOrbitBtn, SIGNAL("clicked()"), self.call_apply)
 
-        vbox1 = QVBoxLayout()
-        #hbox.addStretch(1)
-        gb = QGroupBox("settings")
-        lbl = QLabel("step size:")
+        frmbox = QFormLayout()
         self.stepsizebox = QLineEdit(str(stepsize), parent=self)
         self.stepsizebox.setValidator(QDoubleValidator(self))
-        self.connect(self.stepsizebox, SIGNAL("textChanged(QString)"), self.update_cell_stepsize)
-        vbox1.addWidget(lbl)
-        vbox1.addWidget(self.stepsizebox)
-        lbl.setBuddy(self.stepsizebox)
-        vbox1.setStretch(0, 0)
-        vbox1.setStretch(1, 0)
+        # or connect the returnPressed() signal
+        self.connect(self.stepsizebox, SIGNAL("textEdited(QString)"), 
+                     self.update_cell_stepsize)
+        frmbox.addRow("&Cell step size", self.stepsizebox)
+        self.repeatbox = QSpinBox()
+        self.repeatbox.setRange(1, 20)
+        self.repeatbox.setValue(3)
+        # or connect the returnPressed() signal
+        frmbox.addRow("&Repeat correction", self.repeatbox)
 
-        gb.setLayout(vbox1)
+        self.scalebox = QDoubleSpinBox()
+        self.scalebox.setRange(0.01, 5.00)
+        self.scalebox.setSingleStep(0.01)
+        self.scalebox.setValue(0.68)
+        frmbox.addRow("&Scale correctors", self.scalebox)
 
-        vbox = QVBoxLayout()
-        vbox.addWidget(gb)
-        vbox.addStretch(1.0)
-        vbox.addWidget(self.correctOrbitBtn)
-        layout = QHBoxLayout()
+        #vbox.addStretch(1.0)
+        #self.qdb = QDialogButtonBox(self)
+        #self.qdb.addButton("APP", QDialogButtonBox.ApplyRole)
+        #self.qdb.addButton("R", QDialogButtonBox.ResetRole)
+        #btn.setDefault(True)
+        #self.qdb.addButton(QDialogButtonBox.Cancel)
+        #self.qdb.addButton(QDialogButtonBox.Help)
+
+        self.progress = QProgressBar()
+        self.progress.setMaximum(self.repeatbox.value())
+        hbox = QHBoxLayout()
+        hbox.addStretch()
+
+        btn = QPushButton("Reset")
+        self.connect(btn, SIGNAL("clicked()"), self._reset)
+        hbox.addWidget(btn)
+        btn = QPushButton("Close")
+        self.connect(btn, SIGNAL("clicked()"), self.accept)
+        hbox.addWidget(btn)
+        self.correctOrbitBtn = QPushButton("Apply")
+        #self.correctOrbitBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.correctOrbitBtn.setStyleSheet("QPushButton:disabled { color: gray }");
+        self.connect(self.correctOrbitBtn, SIGNAL("clicked()"), self.call_apply)
+        self.correctOrbitBtn.setDefault(True)
+        hbox.addWidget(self.correctOrbitBtn)
+
+        layout = QVBoxLayout()
+        layout.addLayout(frmbox) 
         layout.addWidget(self.table)
-        layout.addLayout(vbox) 
-        layout.setStretch(0, 1)
-        layout.setStretch(1, 0)
+        layout.addWidget(self.progress)
+        #layout.addWidget(self.qdb)
+        layout.addLayout(hbox)
         self.setLayout(layout)
         #self.update_orbit = update_orbit
         self.orbit_plots = orbit_plots
         self.correct_orbit = correct_orbit
+        self._x0 = tuple(x)  # save for reset
+        self._y0 = tuple(y)  # save for reset
         self.val = [s, x, y]
 
         # draw the target orbit
         self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
         self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
+
+        self.connect(self.repeatbox, SIGNAL("valueChanged(int)"),
+                     self.progress.setMaximum)
+
+        #self.connect(self.qdb, SIGNAL("clicked(QAbstractButton)"), self._action)
+        #self.connect(self.qdb, SIGNAL("helpRequested()"), self._help)
 
     #def _cell_clicked(self, row, col):
     #    print row, col
@@ -125,17 +160,53 @@ class OrbitCorrDlg(QDialog):
         #for p in self.orbit_plots:
         #    #self.update_orbit(self.val[0], self.val[1])
         self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
+        self.orbit_plots[0].aplot.scaleYLeft()
         self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
+        self.orbit_plots[1].aplot.scaleYLeft()
 
 
     def call_apply(self):
         #print "apply the orbit"
         self.correctOrbitBtn.setEnabled(False)
-        self.correct_orbit(self.bpm, zip(self.val[1], self.val[2]))
+        scale = float(self.scalebox.text())
+        nrepeat = self.repeatbox.value()
+        self.progress.setValue(0)
+        QApplication.processEvents()
+        for i in range(nrepeat):
+            self.correct_orbit(self.bpm, zip(self.val[1], self.val[2]),
+                               scale = scale)
+            self.progress.setValue(i+1)
+            QApplication.processEvents()
         self.correctOrbitBtn.setEnabled(True)
+
+    def _help(self):
+        print "HELP"
 
     def done(self, r):
         for p in self.orbit_plots:
             p.plotCurve2(None, None)
 
         QDialog.done(self, r)
+
+    def _reset(self):
+        for i in range(len(self.bpm)):
+            it = self.table.cellWidget(i, 2)
+            it.setValue(self._x0[i])
+            it = self.table.cellWidget(i, 3)
+            it.setValue(self._y0[i])
+
+        self.repeatbox.setValue(3)
+        self.scalebox.setValue(0.68)
+        self.stepsizebox.setText(str(self._stepsize0))
+        self.progress.setMaximum(3)
+        self.progress.setValue(0)
+        
+    def _action(self, btn):
+        #role = self.qdb.buttonRole(btn)
+        #print "Role:", role
+        #if role == QDialogButtonBox.ApplyRole:
+        #    self.call_apply()
+        #elif role == QDialogButtonBox.RejectRole:
+        #    self.reject()
+        pass
+

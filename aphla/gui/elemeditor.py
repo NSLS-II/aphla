@@ -389,7 +389,7 @@ class ElementPropertyDelegate(QStyledItemDelegate):
 
     def setEditorData(self, editor, index):
         r,c = index.row(), index.column()
-        text = index.model().data(index, Qt.DisplayRole).toString()
+        text = index.model().data(index, Qt.EditRole).toString()
         #print "Setting editor to", text, index.model()._value[r]
         if index.column() >= C_VAL_RAW:
             #value = text.toDouble()[0]
@@ -472,6 +472,7 @@ class ElementEditorDock(QDockWidget):
         t0 = time.time()
         elems = self.parent().getVisibleElements(elemname)
         self.parent().logger.info("Found elems: {0}".format(len(elems)))
+        t1 = time.time()
         if self.model and self.model.rowCount() > 0:
             del self.model
             del self.delegate
@@ -482,6 +483,7 @@ class ElementEditorDock(QDockWidget):
         self.tableview.setModel(self.model)
         self.tableview.setItemDelegate(self.delegate)
         self.model.load(elems)
+        t2 = time.time()            
         #print "model size:", self.model.rowCount(), self.model.columnCount()
         for i in range(self.model.rowCount()):
             print i, self.model._elem[i].name, self.model._field[i], self.model._value[i]
@@ -503,10 +505,8 @@ class ElementEditorDock(QDockWidget):
         #self.tableview.adjustSize()
         self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"), 
                      self.processCell)
-            
-        t1 = time.time()
+
         #self._addElements(elems)
-        t2 = time.time()
         print "DT:", t1 - t0, t2 - t1
 
     def refreshBox(self):
