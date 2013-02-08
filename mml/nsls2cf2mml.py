@@ -276,17 +276,17 @@ def export_mml_init(template, latname):
     #for i,e in enumerate(hcms):
     #    print i, e, e.pv(field='x', handle='readback')
     hcm_devlist = "; ".join(['%d %d' % (v[0], v[1]) for v in calc_devlist(hvcms)])
-    hcm_commonnames = ";".join(mml_namelist([e.name for e in hvcms]))
-    hcm_monitor_pv =  ";".join(["'%s'" % e.pv(field='x', handle='readback')[0] for e in hvcms])
-    hcm_setpoint_pv =  ";".join(["'%s'" % e.pv(field='x', handle='setpoint')[0] for e in hvcms])
-    hcm_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(hvcms))])
-    hcm_fault_pv = ";".join(["'fakepv'" for i in range(len(hvcms))])
+    hcm_commonnames = "; ".join(mml_namelist([e.name for e in hvcms]))
+    hcm_monitor_pv  =  "; ".join(mml_namelist([e.pv(field='x', handle='readback')[0] for e in hvcms]))
+    hcm_setpoint_pv =  "; ".join(mml_namelist([e.pv(field='x', handle='setpoint')[0] for e in hvcms]))
+    hcm_oncontrol_pv = "; ".join(["'fakepv'" for i in range(len(hvcms))])
+    hcm_fault_pv = "; ".join(["'fakepv'" for i in range(len(hvcms))])
 
     vcm_devlist = "; ".join(['%s %d' % (e.cell[1:], i+1) for i,e in enumerate(hvcms)])
-    vcm_commonnames = ";".join(mml_namelist([e.name for e in hvcms]))
-    vcm_monitor_pv =  ";".join(mml_namelist([e.pv(field='y', handle='readback')[0] for e in hvcms]))
-    vcm_setpoint_pv =  ";".join(mml_namelist([e.pv(field='y', handle='setpoint')[0] for e in hvcms]))
-    vcm_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(hvcms))])
+    vcm_commonnames = "; ".join(mml_namelist([e.name for e in hvcms]))
+    vcm_monitor_pv  =  "; ".join(mml_namelist([e.pv(field='y', handle='readback')[0] for e in hvcms]))
+    vcm_setpoint_pv =  "; ".join(mml_namelist([e.pv(field='y', handle='setpoint')[0] for e in hvcms]))
+    vcm_oncontrol_pv = "; ".join(["'fakepv'" for i in range(len(hvcms))])
     vcm_fault_pv = ";".join(["'fakepv'" for i in range(len(hvcms))])
 
     ao_hvcm = open(template['hvcm'], 'r').read() % {
@@ -314,9 +314,9 @@ def export_mml_init(template, latname):
                  ]:
         quads = ap.getElements(qfam[0])
         q_devlist = "; ".join(['1 %d' % i for i in range(1, len(quads)+1)])
-        q_commonnames = ";".join(mml_namelist([e.name for e in quads]))
-        q_monitor_pv =  ";".join(["'%s'" % e.pv(field='k1', handle='readback')[0] for e in quads])
-        q_setpoint_pv =  ";".join(["'%s'" % e.pv(field='k1', handle='setpoint')[0] for e in quads])
+        q_commonnames = "; ".join(mml_namelist([e.name for e in quads]))
+        q_monitor_pv  = "; ".join(mml_namelist([e.pv(field='k1', handle='readback')[0] for e in quads]))
+        q_setpoint_pv = "; ".join(mml_namelist([e.pv(field='k1', handle='setpoint')[0] for e in quads]))
         q_oncontrol_pv = ";".join(["'fakepv'" for i in range(len(quads))])
         q_fault_pv = ";".join(["'fakepv'" for i in range(len(quads))])
 
