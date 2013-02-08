@@ -368,6 +368,24 @@ class OrbitPlotMainWindow(QMainWindow):
             if k == str(self.latBox.currentText()): continue
             self.latBox.addItem(k)
 
+    def _current_mach_lat(self):
+        """return the current machine name and lattice object"""
+        mach = str(self.machBox.currentText())
+        if not mach or mach not in self._machlat:
+            self.logger.warn("machine '{0}' is not available: {1}".format(
+                mach, self._machlat.keys()))
+            return None, None
+        lat  = str(self.latBox.currentText())
+        if not lat or lat not in self._machlat[mach]:
+            self.logger.warn("lattice '{0}' is not available for '{1}':{2}".format(
+                lat, mach, self._machlat[mach].keys()))
+            return mach, None
+        _lat = self._machlat[mach][lat]
+        if not _lat: 
+            self.logger.warn("lattice '%s' is not available" % lat)
+            return mach, None
+        return mach, _lat
+
     def click_machine(self, act):
         self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
 
@@ -377,49 +395,47 @@ class OrbitPlotMainWindow(QMainWindow):
         latname = str(self.sender().text())
         if latname: self.__setLattice(latname)
 
-    def _newVelemPlot(self, latname, elem, field, title, c = None):
+    def _newVelemPlots(self, velem, field, title, **kw):
         """plot the field(s) for element"""
-        lat = aphla.machines.getLattice(latname)
-        if not lat:
-            self.logger.error("no default lattice available")
-            return
-        machname = str(self.machBox.currentText())
-        #print "New a plot"
-        magprof = lat.getBeamlineProfile()
-        velem = lat._find_exact_element(elem)
+        c = kw.get('c', None)
+        lat = kw.get('lat', None)
+        if lat is not None:
+            
+        # magprof = lat.getBeamlineProfile()
         fields = [field]
-        if field is None:
-            fields = velem.fields()
+        if field is None: fields = velem.fields()
 
+        plots = []
         for fld in fields:
-            print "Processing", fld
+            print "Processing", velem.name, fld
             p = ApMdiSubPlot()
             #QObject.installEventFilter(p.aplot)
-            p.data = ApVirtualElemData(velem, fld, machine=lat.machine,
-                                       lattice=latname)
+            p.data = ApVirtualElemData(velem, fld, machine=mach, lattice=lat.name)
             if c is not None: p.aplot.setColor(c)
             p.setAttribute(Qt.WA_DeleteOnClose)
             p.setWindowTitle("[%s.%s] %s %s" % (machname, latname, title, fld))
-            p.wid.setMagnetProfile(magprof)
+            #p.wid.setMagnetProfile(magprof)
             self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
                          self.elementSelected)
             self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
-            print "update the plot"
+            #print "update the plot"
             p.updatePlot()
             # set the zoom stack
-            print "autozoom"
+            #print "autozoom"
             p.aplot.setErrorBar(self.error_bar)
             p.wid.autoScaleXY()
             p.aplot.replot()
             self.mdiarea.addSubWindow(p)
-            print "Show"
+            #print "Show"
             p.show()
+            plots.append(p)
 
         print "Enable the buttons"
         if len(self.mdiarea.subWindowList()) > 0:
             self.elemeditor.setEnabled(True)
 
-        return p
+        return plots
+
 
     def subPlotDestroyed(self):
         if len(self.mdiarea.subWindowList()) == 0:
@@ -427,16 +443,13 @@ class OrbitPlotMainWindow(QMainWindow):
         
 
     def newOrbitPlots(self):
-        lat = str(self.latBox.currentText())
-        if not lat or lat not in aphla.machines.lattices():
-            print "No lattice available"
-            return
-        bpms = 
-        self._vbpm = 
-        p1 = self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x',
-                               "Hori. Orbit")
-        p2 = self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'y',
-                               "Vert. Orbit", Qt.blue)
+        mach, lat = self._current_mach_lat()
+        bpms = lat.getElementList('BPM')
+        vbpmx = aphla.element.merge(bpms, field='x')
+        p1s = self._newVelemPlots(vbpmx, 'x', "Hori. Orbit", c=Qt.red)
+        vbpmx = aphla.element.merge(bpms, field='y')        
+        p2s = self._newVelemPlots(vbpmy, 'y', "Vert. Orbit", Qt.blue)
+
         if self.timerId is None: self.timerId = self.startTimer(self.dt)
         #print "fullname", p.fullname()
 
@@ -446,9 +459,9 @@ class OrbitPlotMainWindow(QMainWindow):
             print "No lattice available"
             return
 
-        p1 = self._newVelemPlot(lat, aphla.machines.HLA_VHCOR, 'x',
+        p1s = self._newVelemPlots(aphla.machines.HLA_VHCOR, 'x',
                                "Hori. Corr", Qt.red)
-        p2 = self._newVelemPlot(lat, aphla.machines.HLA_VVCOR, 'y',
+        p2s = self._newVelemPlot(lat, aphla.machines.HLA_VVCOR, 'y',
                                 "Vert. Corr", Qt.blue)
         if self.timerId is None: self.timerId = self.startTimer(self.dt)
         
@@ -637,20 +650,7 @@ class OrbitPlotMainWindow(QMainWindow):
                 len(self._dead_cor), self._dead_cor))
 
     def getVisibleElements(self, elemname):
-        mach = str(self.machBox.currentText())
-        if not mach or mach not in self._machlat:
-            self.logger.warn("machine '{0}' is not available: {1}".format(
-                mach, self._machlat.keys()))
-            return []
-        lat  = str(self.latBox.currentText())
-        if not lat or lat not in self._machlat[mach]:
-            self.logger.warn("lattice '{0}' is not available for '{1}':{2}".format(
-                lat, mach, self._machlat[mach].keys()))
-            return []
-        _lat = self._machlat[mach][lat]
-        if not _lat: 
-            self.logger.warn("lattice '%s' is not available" % lat)
-            return []
+
         w = self.mdiarea.currentSubWindow()
         if not w: 
             self.logger.warn("no active plot")
