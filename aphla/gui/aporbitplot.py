@@ -413,7 +413,7 @@ class ApPlot(Qwt.QwtPlot):
 
         self.curvemag = None
 
-        self.setMinimumSize(500, 200)
+        self.setMinimumSize(300, 200)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
         grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))

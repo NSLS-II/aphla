@@ -686,7 +686,7 @@ class T060_Tunes(unittest.TestCase):
         s, twx, twy = beta[:,-1], beta[:,0], beta[:,1]
         if self.plot:
             import matplotlib.pylab as plt
-            twl = ap.machines.getLattice().getBeamlineProfile(s[0], s[-1])
+            twl = ap.machines.getLattice().getBeamlineProfile(sb=s[0], se=s[-1])
             sprof, vprof = [], []
             for tw in twl:
                 sprof.extend(tw[0])
@@ -700,8 +700,6 @@ class T060_Tunes(unittest.TestCase):
             plt.savefig(figname('test_twiss_beta_get.png'))
         self.assertGreater(max(abs(twx)), 20.0)
         self.assertGreater(max(abs(twy)), 20.0)
-
-        pass
 
     def test_tune_get(self):
         """

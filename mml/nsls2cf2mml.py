@@ -257,8 +257,8 @@ def export_mml_init(template, latname):
     bpmx_devlist = "; ".join(['%d %d' % (v[0], v[1]) for v in calc_devlist(bpms)])
     bpmx_commonnames = "; ".join(mml_namelist([e.name for e in bpms]))
     bpmy_commonnames = "; ".join(mml_namelist([e.name for e in bpms]))
-    bpmx_monitor_pv = ";".join(["'%s'" % e.pv(field='x')[0] for e in bpms])
-    bpmy_monitor_pv = ";".join(["'%s'" % e.pv(field='x')[0] for e in bpms])
+    bpmx_monitor_pv = ";".join(mml_namelist([e.pv(field='x')[0] for e in bpms]))
+    bpmy_monitor_pv = ";".join(mml_namelist([e.pv(field='x')[0] for e in bpms]))
     # fake
     bpmx_sum_pv = ";".join(["'pv1'" for i in range(len(bpms))])
     bpmy_sum_pv = ";".join(["'pv1'" for i in range(len(bpms))])

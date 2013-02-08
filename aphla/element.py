@@ -11,7 +11,7 @@ import re
 import copy
 import logging
 import warnings
-from catools import caget, caput
+from catools import caget, caput, FORMAT_CTRL, FORMAT_TIME
 from unitconv import *
 
 logger = logging.getLogger(__name__)
@@ -186,7 +186,7 @@ class AbstractElement(object):
             self.index = int(prpt['index'])
 
 
-class CaDecorator:
+class CaAction:
     """
     manages channel access for an element field.
 
@@ -212,6 +212,7 @@ class CaDecorator:
         self.pvunit = '' # most of the cases, the unit is "Ampere", the current
         self.rb = []  # bufferred readback value 
         self.sp = []  # bufferred setpoint value
+        self._sp1 = [] # the last bufferred sp value when sp dimension changes.
         self.field = ''
         self.desc = kwargs.get('desc', None)
         self.order = self.Ascending
@@ -345,23 +346,40 @@ class CaDecorator:
         keep the old setpoint value if `trace=True`. Only upto `trace_limit`
         number of history data are kept.
         """
-        if self.pvsp:
-            rawval = self._unit_conv(val, unitsys, None)
-            ret = caput(self.pvsp, rawval, wait=True)
-            if self.trace: 
-                if isinstance(val, (list, tuple)):
-                    self.sp.append(rawval[:])
-                elif isinstance(val, (float, int)):
-                    self.sp.append(rawval)
-                else:
-                    raise RuntimeError("unsupported datatype '%s' "
-                                       "for tracing object value." %
-                                       type(val))
-                if len(self.sp) > self.trace_limit: 
-                    # keep the first for reset
-                    self.sp.pop(1)
-            return ret
-        else: return None
+        if isinstance(val, (float, int)):
+            rawval = [self._unit_conv(val, unitsys, None)] * len(self.pvsp)
+        else:
+            rawval = [self._unit_conv(v, unitsys, None) for v in val]
+
+        # under and over flow check
+        for i,lim in enumerate(self.pvlim):
+            if lim is None: continue
+            if lim[0] is not None and rawval[i] < lim[0]:
+                raise ValueError("PV '{0}' sp value '{1}' underflow {2}".format(
+                        self.pvsp[i], rawval[i], lim))
+            elif lim[1] is not None and rawval[i] > lim[1]:
+                raise ValueError("PV '{0}' sp value '{1}' overflow {2}".format(
+                    self.pvsp[i], rawval[i], lim))
+
+        retlst = caput(self.pvsp, rawval, wait=True)
+        for i,ret in enumerate(retlst):
+            if ret.ok: continue
+            raise RuntimeError("Failed at setting {0} to {1}".format(
+                    self.pvsp[i], rawval[i]))
+
+        if self.trace: 
+            if isinstance(val, (list, tuple)):
+                self.sp.append(rawval[:])
+            elif isinstance(val, (float, int)):
+                self.sp.append(rawval)
+            else:
+                raise RuntimeError("unsupported datatype '%s' "
+                                   "for tracing object value." %
+                                   type(val))
+            if len(self.sp) > self.trace_limit: 
+                # keep the first for reset
+                self.sp.pop(1)
+        return retlst
 
     def setReadbackPv(self, pv, idx = None):
         """
@@ -403,24 +421,46 @@ class CaDecorator:
         if idx is None:
             if isinstance(pv, (str, unicode)):
                 self.pvsp = [pv]
-                self.pvh = [None]
-                self.pvlim = [None]
             elif isinstance(pv, (tuple, list)):
                 self.pvsp = [p for p in pv]
-                self.pvh = [None] * len(pv)
-                self.pvlim = [None] * len(pv)
+            #lim_h = [self._get_sp_lim_h(pvi) for pvi in self.pvsp]
+            self.pvlim = [(None, None) for i in range(len(self.pvsp))]
+            self.pvh = [None for i in range(len(self.pvsp))]
         elif not isinstance(pv, (tuple, list)):
             while idx >= len(self.pvsp): 
                 self.pvsp.append(None)
                 self.pvh.append(None)
                 self.pvlim.append(None)
             self.pvsp[idx] = pv
+            self.pvlim[idx] = (None, None)
             self.pvh[idx] = None
-            self.pvlim[idx] = None
         else:
             raise RuntimeError("invalid setpoint pv '%s' for position '%s'" % 
                                (str(pv), str(idx)))
 
+        # roll the buffer.
+        self._sp1 = self.sp
+        self.sp = []
+
+    def _get_sp_lim_h(self, pvi, r = 1000):
+        # get the EPICS ctrl_limit and stepsize. For floating point values,
+        # the default step size is 1/1000 of the range. for integer value.
+        try:
+            v = caget(pvi, format=FORMAT_CTRL)
+            low, hi = v.lower_ctrl_limit, v.upper_ctrl_limit
+        except:
+            logger.error("error on reading PV limits {0}".format(pvi))
+            if v.ok and v.is_integer(): return None, 1
+            return None, None
+
+        if v.is_integer() and hi > low:
+            return (low, hi), 1
+        elif hi > low:
+            return (low, hi), (hi-low)*1.0/r
+        elif v.is_integer():
+            return None, 1
+        else: 
+            return None, None
 
     def setStepSize(self, val, **kwargs):
         """
@@ -448,41 +488,68 @@ class CaDecorator:
             for i,pvi in enumerate(self.pvsp):
                 if pv == pvi: self.pvh[i] = val
 
-    def setBoundary(self, low, high, **kwargs):
+    def setBoundary(self, **kwargs):
         """
         set the boundary values for the setpoint PV. 
 
-        :param float low: the lower boundary value
-        :param float high: the higher boundary value
-        :param int index: index in the PV list.
-        :param str pv: pv name
+        Parameters
+        -------------
+        low : int, float. the lower boundary value, default None
+        high : int, float. the higher boundary value, default None
+        r : float. scale range as the stepsize. default 1000.
+        index : int. index in the PV list. default None
+        pv : str. pv name. default None
 
+        Examples
+        ---------
+        >>> caa.setBoundary()
+        >>> caa.setBoundary(low = 0)
+
+        Notes
+        ------
         when using *index*, the corresponding PV with that index should be set
         before.
 
         all PVs with same name will be updated if there are duplicates in
         setpoint pv list.
 
+        The stepsize is set to (high-low)/r only when both low and high are
+        provided or none is provide. When none of the low and high are
+        provided and the values are int, the stepsize is set to 1. use
+        :func:`setStepSize` to explicitly set the stepsize.
+
         seealso :func:`setStepSize`
+
         """
-        idx = kwargs.get('index', None)
-        pv  = kwargs.get('pv', None)
-        if idx is not None:
-            if idx >= len(self.pvsp):
-                raise RuntimeError("no setpoint PV defined for index %d" % idx)
-            self.pvlim[idx] = (low, high)
-        elif pv is not None:
-            for i,pvi in enumerate(self.pvsp):
-                if pv == pvi: self.pvlim[i] = (low, high)
-        
+        if 'index' in kwargs: idx = [kwargs['index']]
+        elif 'pv' in kwargs:
+            idx = [self.pvsp.index(pv)]
+        else:
+            idx = range(len(self.pvsp))
+        r = kwargs.get("r", 1000)
+        low, hi = kwargs.get("low", None), kwargs.get("high", None)
+        for i in idx:
+            if low is None and hi is None:
+                lowhi, h = self._get_sp_lim_h(self.pvsp[i], r)
+                self.pvh[i] = h
+            elif low is None:
+                # h stepsize is not set
+                lowhi = (self.pvlim[i][0], hi)
+            elif hi is None:
+                # h stepsize is not set
+                lowhi = (low, self.pvlim[i][1])
+            else:
+                lowhi = (low, hi)
+                self.pvh[i] = (hi - low)/r
+            self.pvlim[i] = lowhi
+
     def appendReadback(self, pv):
         """append the pv as readback"""
         self.pvrb.append(pv)
 
     def appendSetpoint(self, pv):
         """append the pv as setpoint"""
-        self.pvsp.append(pv)
-        self.pvh.append(None)
+        self.setSetpointPv(pv, len(self.pvsp))
 
     def removeReadback(self, pv):
         """remove the pv from readback"""
@@ -492,8 +559,13 @@ class CaDecorator:
         """remove the pv from setpoint"""
         i = self.pvsp.index(pv)
         self.pvsp.pop(i)
+        self.pvlim.pop(i)
         self.pvh.pop(i)
-        
+        # the history needs to be changed....
+        self._sp1 = self.sp
+        self.sp = []
+
+
     def stepSize(self, **kwargs):
         """
         return the stepsize of setpoint PV list
@@ -542,17 +614,26 @@ class CaDecorator:
         else:
             return self.pvlim[:]
         
-    def stepUp(self, n = 1):
+    def _step_sp(self, n, unitsys, fact):
+        if None in self.pvh:
+            raise RuntimeError("stepsize is not defined for PV: {0}".format(
+                    self.pvsp))
+        
+        rawval0 = caget(self.pvsp)
+        rawval1 = [rawval0[i] + fact*h for i in enumerate(self.pvh)]
+        return self.putSetpoint(rawval1, unitsys = None)
+
+    def stepUp(self, n = 1, unitsys = None):
         """
         step up the setpoint value.
         """
-        raise NotImplementedError("waiting for data")
+        self._step_sp(n, unitsys, 1.0)
 
-    def stepDown(self, n = 1):
+    def stepDown(self, n = 1, unitsys = None):
         """
         step down the setpoint value.
         """
-        raise NotImplementedError("waiting for data")
+        self._step_sp(n, unitsys, -1.0)
 
     def settable(self):
         """check if it can be set"""
@@ -644,7 +725,7 @@ class CaElement(AbstractElement):
         >>> pv(field = "x")
         >>> pv(field="x", handle='readback')
 
-        seealso :class:`CaDecorator`
+        seealso :class:`CaAction`
         """
         if len(kwargs) == 0:
             return self._pvtags.keys()
@@ -680,7 +761,7 @@ class CaElement(AbstractElement):
     def appendStatusPv(self, pv, desc, order=True):
         """append (func, pv, description) to status"""
         decr = self._field['status']
-        if not decr: self._field['status'] = CaDecorator(trace=self.trace)
+        if not decr: self._field['status'] = CaAction(trace=self.trace)
         
         self._field['status'].appendReadback(pv)
 
@@ -843,7 +924,7 @@ class CaElement(AbstractElement):
         *v* is single PV or a list/tuple
         """
         if not self._field.has_key(field):
-            self._field[field] = CaDecorator(trace=self.trace)
+            self._field[field] = CaAction(trace=self.trace)
 
         self._field[field].setReadbackPv(v, idx)
 
@@ -854,7 +935,7 @@ class CaElement(AbstractElement):
         *v* is a single PV or a list/tuple
         """
         if not self._field.has_key(field):
-            self._field[field] = CaDecorator(trace=self.trace)
+            self._field[field] = CaAction(trace=self.trace)
 
         self._field[field].setSetpointPv(v, idx)
         
@@ -866,9 +947,26 @@ class CaElement(AbstractElement):
         """return the stepsize of field"""
         return self._field[field].stepSize()
 
-    def boundary(self, field):
-        """return the (low, high) range of *field*"""
-        return self._field[field].boundary()
+    def updateBoundary(self, field = None, lowhi = None, r = None):
+        if field is None: fields = self._field.keys()
+        else: fields = [field]
+
+        kw = {}
+        if lowhi is not None: 
+            kw['low'] = lowhi[0]
+            kw['high'] = lowhi[1]
+
+        if r is not None: kw['r'] = r
+        for fld in fields:
+                self._field[fld].setBoundary(**kw)
+
+    def boundary(self, field = None):
+        """return the (low, high) range of *field* or all fields (raw unit)"""
+        if field is not None:
+            return self._field[field].boundary()
+        else:
+            return dict([(fld, act.boundary()) 
+                         for fld,act in self._field.iteritems()])
 
     def collect(self, elemlist, **kwargs):
         """
@@ -881,7 +979,7 @@ class CaElement(AbstractElement):
         fields = kwargs.get("fields", [])
         attrs  = kwargs.get("attrs", [])
         for field in fields:
-            pd = CaDecorator(trace=self.trace)
+            pd = CaAction(trace=self.trace)
             for elem in elemlist:
                 pd.pvrb += elem._field[field].pvrb
                 pd.pvsp += elem._field[field].pvsp
@@ -923,7 +1021,7 @@ class CaElement(AbstractElement):
         for e in self.alias: e._field[fieldname].mark(handle)
 
     def reset(self, fieldname):
-        """see CaDecorator::reset()"""
+        """see CaAction::reset()"""
         self._field[fieldname].reset()
         for e in self.alias: e._field[fieldname].reset()
 
@@ -1015,7 +1113,7 @@ class CaElement(AbstractElement):
         return False
 
 
-def merge(elems, **kwargs):
+def merge(elems, field = None, **kwargs):
     """
     merge the fields for all elements in a list return it as a single
     element. 
@@ -1038,6 +1136,7 @@ def merge(elems, **kwargs):
 
     """
 
+    # count 'field' owners and its rb,wb PVs.
     count, pvdict = {}, {}
     for e in elems:
         fds = e.fields()
@@ -1051,16 +1150,29 @@ def merge(elems, **kwargs):
             pvdict[f][0].extend(pvrb)
             pvdict[f][1].extend(pvsp)
 
-    # consider only the common fields
-    for k,v in count.iteritems(): 
-        if v < len(elems): 
-            print("field '%s' has %d < %d" % (k, v, len(elems)))
-            pvdict.pop(k)
-    #print pvdict.keys()
+
     elem = CaElement(**kwargs)
-    for k,v in pvdict.iteritems():
-        if len(v[0]) > 0: elem.setFieldGetAction(v[0], k, None, '')
-        if len(v[1]) > 0: elem.setFieldPutAction(v[1], k, None, '')
+    # consider only the common fields
+    if field is None: 
+        for k,v in count.iteritems(): 
+            if v < len(elems): 
+                print("field '%s' has %d < %d" % (k, v, len(elems)))
+                pvdict.pop(k)
+        #print pvdict.keys()
+        for fld,pvs in pvdict.iteritems():
+            if len(pvs[0]) > 0: elem.setFieldGetAction(pvs[0], fld, None, '')
+            if len(pvs[1]) > 0: elem.setFieldPutAction(pvs[1], fld, None, '')
+        elem.sb = [e.sb for e in elems]
+        elem.se = [e.se for e in elems]
+        elem._name = [e.name for e in elems]
+    elif field in pvdict:
+        elem.setFieldGetAction(pvdict[field][0], field, None, '')
+        elem.setFieldGetAction(pvdict[field][1], field, None, '')
+        # count the element who has the field
+        elemgrp = [e for e in elems if field in e.fields()]
+        elem.sb = [e.sb for e in elemgrp] 
+        elem.sb = [e.sb for e in elemgrp]
+        elem._name = [e.name for e in elemgrp]
 
     # if all raw units are the same, so are the merged element
     for fld in elem.fields():
@@ -1068,8 +1180,5 @@ def merge(elems, **kwargs):
         if units[0] == units[-1]:
             elem.setRawUnit(fld, units[0])
 
-    elem.sb = [e.sb for e in elems]
-    elem.se = [e.se for e in elems]
-    elem._name = [e.name for e in elems]
     return elem
 

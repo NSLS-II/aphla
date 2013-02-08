@@ -105,6 +105,9 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.elemeditor.hide()
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
+        self._vbpm = None
+        self._dead_bpm = [] # dead BPM
+        self._dead_cor = [] # dead corrector
 
         # logging
         self.logdock = QDockWidget("Log")
@@ -200,11 +203,11 @@ class OrbitPlotMainWindow(QMainWindow):
         #viewAutoScale.setChecked(False)
         #self.connect(viewAutoScale, SIGNAL("toggled(bool)"), self.zoomAutoScale)
 
-        #controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
-        #                                 "Choose BPM", self)
-        #self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
-        #             self.chooseBpm)
-
+        controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
+                                         "Choose BPM", self)
+        self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
+                     self.chooseBpm)
+        
         #controlResetPvDataAction = QAction(QIcon(":/control_reset.png"),
         #                                   "Reset BPM statistics", self)
         #self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
@@ -258,7 +261,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
         #
         self.controlMenu = self.menuBar().addMenu("&Control")
-        #self.controlMenu.addAction(controlChooseBpmAction)
+        self.controlMenu.addAction(controlChooseBpmAction)
+        self.controlMenu.addAction("Choose COR", self.chooseCorrector)
         #self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
         #self.controlMenu.addAction(controlZoomInPlot1Action)
@@ -427,7 +431,8 @@ class OrbitPlotMainWindow(QMainWindow):
         if not lat or lat not in aphla.machines.lattices():
             print "No lattice available"
             return
-
+        bpms = 
+        self._vbpm = 
         p1 = self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x',
                                "Hori. Orbit")
         p2 = self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'y',
@@ -602,23 +607,34 @@ class OrbitPlotMainWindow(QMainWindow):
         for w in self.mdiarea.subWindowList():
             w.wid.autoScaleXY()
             
-    #def zoomAutoScale(self, v):
-    #    for p in self._active_plots():
-    #        p.setAxisAutoScale(Qwt.QwtPlot.yLeft, v)
                     
     def chooseBpm(self):
-        bpms = [(self.vbpm._name[i], self.obtdata.keep[i])
-                for i in range(len(self.obtdata.keep))]
-        #print bpms
-        form = ElementPickDlg(bpms, 'BPM', self)
+        bpms = [e.name for e in aphla.getElements('BPM')]
+        form = ElementPickDlg(bpms, self._dead_bpm, 'BPM', self)
 
         if form.exec_(): 
             choice = form.result()
+            dead_bpm = []
             for i in range(len(bpms)):
-                if bpms[i][0] in choice:
-                    self.obtdata.keep[i] = True
-                else:
-                    self.obtdata.keep[i] = False
+                if bpms[i] in choice: continue
+                dead_bpm.append(bpms[i])
+            self._dead_bpm = dead_bpm
+        self.logger.info("{0} bpms {1} are disabled".format(
+                len(self._dead_bpm), self._dead_bpm))
+
+    def chooseCorrector(self):
+        cors = [e.name for e in aphla.getElements('COR')]
+        form = ElementPickDlg(cors, self._dead_cor, 'COR', self)
+
+        if form.exec_(): 
+            choice = form.result()
+            dead_elem = []
+            for i in range(len(cors)):
+                if cors[i] in choice: continue
+                dead_elem.append(cors[i])
+            self._dead_cor = dead_elem
+        self.logger.info("{0} bpms {1} are disabled".format(
+                len(self._dead_cor), self._dead_cor))
 
     def getVisibleElements(self, elemname):
         mach = str(self.machBox.currentText())

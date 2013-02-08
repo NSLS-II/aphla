@@ -105,7 +105,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
                     # columns for unit system
                     for u in self._unitsys:
                         try:
-                            v = float(elem.get(var, source=src, unitsys=u))
+                            v = float(elem.get(var, handle=src, unitsys=u))
                         except:
                             v = None
                         # check the unit
@@ -130,7 +130,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
 
     def _get_quiet(self, elem, var, src, u):
         try:
-            v = elem.get(var, source=src, unitsys=u)
+            v = elem.get(var, handle=src, unitsys=u)
         except:
             v = None
         # check the unit

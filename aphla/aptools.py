@@ -173,8 +173,9 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     bpm : list of BPM objects, default all 'BPM'
     trimlst : list of Trim objects, default all 'COR'
     plane : optional, [ 'HV' | 'H' | 'V' ], default 'HV'
-    repeat : optional, integer, default 1
-        numbers of correction 
+    rcond : optional, cutting ratio for singular values, default 1e-4.
+    scale : optional, scaling corrector strength, default 0.68
+    repeat : optional, integer, default 1. numbers of correction 
 
     Notes
     -----
@@ -184,13 +185,17 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     :func:`setLocalBump`.
 
     Examples
-    --------
+    ---------
     >>> bpms = getElements(['BPM1', 'BPM2'])
     >>> trims = getElements(['T1', 'T2', 'T3'])
     >>> correctOrbit(bpms, trims) 
     """
 
     plane = kwargs.pop('plane', 'HV')
+
+    # using rcond 1e-4 if not provided.
+    kwargs.setdefault('rcond', 1e-4)
+    kwargs.setdefault('scale', 0.68)
 
     # an orbit based these bpm
     if bpmlst is None:

@@ -21,7 +21,7 @@ import sys, time, os
 import cothread
 import cothread.catools as ct
 from cothread import Timedout
-from cothread.catools import camonitor, FORMAT_TIME
+from cothread.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
 import random
 
 import numpy as np
