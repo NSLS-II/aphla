@@ -85,6 +85,11 @@ class OrbitCorrDlg(QDialog):
         # or connect the returnPressed() signal
         frmbox.addRow("&Repeat correction", self.repeatbox)
 
+        self.rcondbox = QLineEdit(str(stepsize), parent=self)
+        self.rcondbox.setValidator(QDoubleValidator(0, 1, 0, self))
+        self.rcondbox.setText("1e-4")
+        frmbox.addRow("r&cond for SVD", self.rcondbox)
+
         self.scalebox = QDoubleSpinBox()
         self.scalebox.setRange(0.01, 5.00)
         self.scalebox.setSingleStep(0.01)
@@ -168,13 +173,15 @@ class OrbitCorrDlg(QDialog):
     def call_apply(self):
         #print "apply the orbit"
         self.correctOrbitBtn.setEnabled(False)
-        scale = float(self.scalebox.text())
         nrepeat = self.repeatbox.value()
+        scale   = float(self.scalebox.text())
+        rcond   = float(self.rcondbox.text())
         self.progress.setValue(0)
         QApplication.processEvents()
         for i in range(nrepeat):
-            self.correct_orbit(self.bpm, zip(self.val[1], self.val[2]),
-                               scale = scale)
+            self.correct_orbit(bpms = self.bpm, trims = None,
+                               obt = zip(self.val[1], self.val[2]),
+                               scale = scale, rcond = rcond)
             self.progress.setValue(i+1)
             QApplication.processEvents()
         self.correctOrbitBtn.setEnabled(True)

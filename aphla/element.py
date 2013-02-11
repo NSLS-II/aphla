@@ -14,7 +14,7 @@ import warnings
 from catools import caget, caput, FORMAT_CTRL, FORMAT_TIME
 from unitconv import *
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class AbstractElement(object):
     """The :class:`AbstractElement` contains most of the lattice properties, such
@@ -312,7 +312,7 @@ class CaAction:
         """
         if self.pvrb: 
             #print __name__
-            #logger.info("testing")
+            #_logger.info("testing")
             rawret = caget(self.pvrb)
             ret = self._unit_conv(rawret, None, unitsys)
             if self.trace: 
@@ -449,7 +449,7 @@ class CaAction:
             v = caget(pvi, format=FORMAT_CTRL)
             low, hi = v.lower_ctrl_limit, v.upper_ctrl_limit
         except:
-            logger.error("error on reading PV limits {0}".format(pvi))
+            _logger.error("error on reading PV limits {0}".format(pvi))
             if v.ok and v.is_integer(): return None, 1
             return None, None
 
@@ -565,6 +565,11 @@ class CaAction:
         self._sp1 = self.sp
         self.sp = []
 
+    def remove(self, pv):
+        if pv in self.pvrb:
+            self.removeReadback(pv)
+        if pv in self.pvsp:
+            self.removeSetpoint(pv)
 
     def stepSize(self, **kwargs):
         """
@@ -900,7 +905,7 @@ class CaElement(AbstractElement):
                     raise ValueError("invalid handle value '%s' for pv '%s'" % 
                                      (elemhandle, pvname))
                 if pvunit: self._field[fieldname].pvunit = pvunit
-                logger.info("'%s' field '%s'[%s] = '%s'" % (
+                _logger.debug("'%s' field '%s'[%s] = '%s'" % (
                         elemhandle, fieldname, idx, pvname))
 
         # check element field
@@ -911,7 +916,7 @@ class CaElement(AbstractElement):
         #    fieldname, idx = g.group(1), g.group(2)
         #    if idx is not None: 
         #        idx = int(idx[1:-1])
-        #        logger.info("%s %s[%d]" % (pvname, fieldname, idx))
+        #        _logger.info("%s %s[%d]" % (pvname, fieldname, idx))
                         
         # update the (pv, tags) dictionary
         if pvname in self._pvtags.keys(): self._pvtags[pvname].update(tags)
@@ -1166,14 +1171,18 @@ def merge(elems, field = None, **kwargs):
         elem.se = [e.se for e in elems]
         elem._name = [e.name for e in elems]
     elif field in pvdict:
-        elem.setFieldGetAction(pvdict[field][0], field, None, '')
-        elem.setFieldGetAction(pvdict[field][1], field, None, '')
+        pvrb, pvsp = pvdict[field][0], pvdict[field][1]
+        if len(pvrb) > 0: elem.setFieldGetAction(pvrb, field, None, '')
+        if len(pvsp) > 0: elem.setFieldPutAction(pvsp, field, None, '')
         # count the element who has the field
         elemgrp = [e for e in elems if field in e.fields()]
         elem.sb = [e.sb for e in elemgrp] 
-        elem.sb = [e.sb for e in elemgrp]
+        elem.se = [e.se for e in elemgrp]
         elem._name = [e.name for e in elemgrp]
-
+        print pvsp
+    else:
+        _logger.warn("no pv merged for {0}".format([
+                    e.name for e in elems]))
     # if all raw units are the same, so are the merged element
     for fld in elem.fields():
         units = sorted([e.getUnit(fld, unitsys=None) for e in elems])

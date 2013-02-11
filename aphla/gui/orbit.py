@@ -111,24 +111,32 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # logging
         self.logdock = QDockWidget("Log")
+        self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         textedit = QPlainTextEdit()
+        
         self.logger = logging.getLogger(__name__)
+        #self.guilogger = logging.getLogger("aphla.gui")
+        self.guilogger = logging.getLogger("aphla")
         handler = QTextEditLoggingHandler(textedit)
-        self.logger.addHandler(handler)
-        self.logger.setLevel(logging.INFO)
+        self.guilogger.addHandler(handler)
+        self.guilogger.setLevel(logging.INFO)
         self.logdock.setWidget(textedit)
         self.logdock.setAllowedAreas(Qt.BottomDockWidgetArea)
         self.logdock.setFeatures(QDockWidget.DockWidgetMovable|
                                  QDockWidget.DockWidgetClosable)
         self.logdock.setFloating(False)
-        self.logdock.setMinimumHeight(50)
-        self.logdock.setMaximumHeight(200)
+        self.logdock.setMinimumHeight(20)
+        self.logdock.setMaximumHeight(100)
         self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        self.logdock.resize(200, 80)
+        self.logdock.resize(200, 60)
         #print self.logdock.sizeHint()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.logdock)
-
+        print self.logdock.sizeHint()
+        print self.logdock.minimumSize()
+        print self.logdock.maximumSize()
         #self.logger.info("INFO")
+        #self.logdock.setMinimumHeight(40)
+        #self.logdock.setMaximumHeight(160)
 
         self.createMenuToolBar()
 
@@ -208,10 +216,10 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
                      self.chooseBpm)
         
-        #controlResetPvDataAction = QAction(QIcon(":/control_reset.png"),
-        #                                   "Reset BPM statistics", self)
-        #self.connect(controlResetPvDataAction, SIGNAL("triggered()"),
-        #             self.resetPvData)
+        controlCorrOrbitAction = QAction(QIcon(":/control_corrorbit.png"),
+                                         "Correct orbit", self)
+        self.connect(controlCorrOrbitAction, SIGNAL("triggered()"),
+                     self._correctOrbit)
 
         drift_from_now = QAction("Drift from Now", self)
         drift_from_now.setCheckable(True)
@@ -270,6 +278,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.controlMenu.addAction(controlZoomInPlot2Action)
         #self.controlMenu.addAction(controlZoomOutPlot2Action)
         self.controlMenu.addSeparator()
+        self.controlMenu.addAction(controlCorrOrbitAction)
         self.controlMenu.addAction(steer_orbit)
         #for ac in self.controlMenu.actions(): ac.setDisabled(True)
 
@@ -316,7 +325,8 @@ class OrbitPlotMainWindow(QMainWindow):
         #viewToolBar.addAction(viewErrorBarAction)
 
         controlToolBar = self.addToolBar("Control")
-        #controlToolBar.addAction(controlChooseBpmAction)
+        controlToolBar.addAction(controlChooseBpmAction)
+        controlToolBar.addAction(controlCorrOrbitAction)
         #controlToolBar.addAction(controlResetPvDataAction)
 
         machToolBar = self.addToolBar("Machines")
@@ -398,10 +408,10 @@ class OrbitPlotMainWindow(QMainWindow):
     def _newVelemPlots(self, velem, field, title, **kw):
         """plot the field(s) for element"""
         c = kw.get('c', None)
-        lat = kw.get('lat', None)
-        if lat is not None:
-            
-        # magprof = lat.getBeamlineProfile()
+        lat = kw.get('lat', '')
+        mach = kw.get('mach', '')
+        magprof = kw.get('magprof', None)
+        # 
         fields = [field]
         if field is None: fields = velem.fields()
 
@@ -410,11 +420,11 @@ class OrbitPlotMainWindow(QMainWindow):
             print "Processing", velem.name, fld
             p = ApMdiSubPlot()
             #QObject.installEventFilter(p.aplot)
-            p.data = ApVirtualElemData(velem, fld, machine=mach, lattice=lat.name)
+            p.data = ApVirtualElemData(velem, fld, machine=mach, lattice=lat)
             if c is not None: p.aplot.setColor(c)
             p.setAttribute(Qt.WA_DeleteOnClose)
-            p.setWindowTitle("[%s.%s] %s %s" % (machname, latname, title, fld))
-            #p.wid.setMagnetProfile(magprof)
+            p.setWindowTitle("[%s.%s] %s %s" % (mach, lat, title, fld))
+            if magprof: p.wid.setMagnetProfile(magprof)
             self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
                          self.elementSelected)
             self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
@@ -444,11 +454,17 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def newOrbitPlots(self):
         mach, lat = self._current_mach_lat()
-        bpms = lat.getElementList('BPM')
+        bpms = [e for e in lat.getElementList('BPM') 
+                if e.name not in self._dead_bpm]
+        magprof = lat.getBeamlineProfile()
         vbpmx = aphla.element.merge(bpms, field='x')
-        p1s = self._newVelemPlots(vbpmx, 'x', "Hori. Orbit", c=Qt.red)
-        vbpmx = aphla.element.merge(bpms, field='y')        
-        p2s = self._newVelemPlots(vbpmy, 'y', "Vert. Orbit", Qt.blue)
+        p1s = self._newVelemPlots(vbpmx, 'x', "Hori. Orbit", 
+                                  lat=lat.name, mach=mach, magprof=magprof, 
+                                  c=Qt.red)
+        vbpmy = aphla.element.merge(bpms, field='y')   
+        p2s = self._newVelemPlots(vbpmy, 'y', "Vert. Orbit",
+                                  lat=lat.name, mach=mach, magprof=magprof,
+                                  c=Qt.blue)
 
         if self.timerId is None: self.timerId = self.startTimer(self.dt)
         #print "fullname", p.fullname()
@@ -631,9 +647,29 @@ class OrbitPlotMainWindow(QMainWindow):
             for i in range(len(bpms)):
                 if bpms[i] in choice: continue
                 dead_bpm.append(bpms[i])
+            # do nothing if dead element list did not change
+            if set(dead_bpm) == set(self._dead_bpm): return
             self._dead_bpm = dead_bpm
         self.logger.info("{0} bpms {1} are disabled".format(
                 len(self._dead_bpm), self._dead_bpm))
+        rmw = []
+        live_bpm = set(bpms) - set(self._dead_bpm)
+        for w in self.mdiarea.subWindowList():
+            velem = w.data.velem
+            if set(velem._name) == live_bpm: continue
+            rmw.append(w)
+
+        for w in rmw:
+            w.raise_()
+            tit = str(w.windowTitle())
+            # ask if need to close the dated plot
+            r = QMessageBox.warning(
+                self, "BPM", 
+                'The BPM data in window<br>'
+                '<font color="blue">{0}</font><br>'
+                'is invalid now. Do you want to close them ?'.format(tit), 
+                QMessageBox.Yes|QMessageBox.No)
+            if r == QMessageBox.Yes: w.close()
 
     def chooseCorrector(self):
         cors = [e.name for e in aphla.getElements('COR')]
@@ -646,7 +682,7 @@ class OrbitPlotMainWindow(QMainWindow):
                 if cors[i] in choice: continue
                 dead_elem.append(cors[i])
             self._dead_cor = dead_elem
-        self.logger.info("{0} bpms {1} are disabled".format(
+        self.logger.info("{0} correctors {1} are disabled".format(
                 len(self._dead_cor), self._dead_cor))
 
     def getVisibleElements(self, elemname):
@@ -655,7 +691,7 @@ class OrbitPlotMainWindow(QMainWindow):
         if not w: 
             self.logger.warn("no active plot")
             return []
-        elems = _lat.getElementList(elemname)
+        elems = self._lat.getElementList(elemname)
         xl, xr = w.currentXlim()
         self.logger.info("searching for '{0}' in range [{1}, {2}]".format(
             elemname, xl, xr))
@@ -714,21 +750,29 @@ class OrbitPlotMainWindow(QMainWindow):
 
         return None
 
+    def _correctOrbit(self, **kwargs):
+        bpms = kwargs.get('bpms', None)
+        if bpms is None:
+            bpms = [e for e in self._lat.getElementList('BPM') 
+                    if e.name not in self._dead_bpm]
+        trims = kwargs.get('trims', None)
+        if trims is None:
+            alltrims = set(self._lat.getElementList('HCOR') + \
+                self._lat.getElementList('VCOR'))
+            trims = [e for e in alltrims if e.name not in self._dead_cor]
+        obt = kwargs.get('obt', None)
+        if obt is None:
+            obt = [[0.0, 0.0] for i in range(len(bpms))]
 
-    def _correctOrbit(self, bpms, obt, **kwargs):
-        trims = self._lat.getElementList('HCOR')+ self._lat.getElementList('VCOR')
-        #print len(bpms), bpms
-        #print len(trims), trims
-        #print len(obt), obt
-        #sp0 = []
-        #for tr in trims:
-        #    vx, vy = None, None
-        #    if 'x' in tr.fields(): vx = tr.get('x', unitsys=None)
-        #    if 'y' in tr.fields(): vy = tr.get('y', unitsys=None)
-        #    sp0.append((vx, vy))
+        self.logger.info("corrector orbit with BPM {0}/{1}, COR {2}/{3}".format(
+                len(bpms), len(self._lat.getElementList('BPM')),
+                len(trims), len(alltrims)))
 
         repeat = kwargs.pop("repeat", 1)
         kwargs['verbose'] = 0
+        # use 1.0 if not set scaling the kicker strength
+        kwargs.setdefault('scale', 1.0)
+        kwargs['dead'] = self._dead_bpm + self._dead_cor
         for i in range(repeat):
             self.logger.info("setting a local bump")
             QApplication.processEvents()

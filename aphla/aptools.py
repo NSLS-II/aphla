@@ -86,11 +86,13 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     -----------
     bpm : list of BPMs objects for new bumpped orbit. 
     trim : list of corrector objects used for orbit correction. 
+    dead : name list of dead BPMs and correctors names.
     ref : target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
     scale : optional, float
         factor to scale calculated kick strength change, between 0 and 1.0
     check : optional, bool
         roll back the corrector settings if the orbit gets worse.
+    rcond : optional, double (1e-4). rcond*max_singularvalue will be kept.
     ormdata : optional, :class:`~aphla.apdata.OrmData`
         use provided OrmData instead of the system default.
 
@@ -117,6 +119,7 @@ def setLocalBump(bpm, trim, ref, **kwargs):
 
     ormdata = kwargs.pop('ormdata', None)
     repeat = kwargs.pop('repeat', 1)
+    dead   = kwargs.pop('dead', [])
 
     if ormdata is None: ormdata = machines._lat.ormdata
     
@@ -126,8 +129,9 @@ def setLocalBump(bpm, trim, ref, **kwargs):
 
     # get the matrix and (bpm, field), (trim, field) list as OrmData required
     bpmrec = _zip_element_field(bpm, ['x', 'y'])
-    trimrec = _zip_element_field(bpm, ['x', 'y'])
-    m, bpmrec, trimrec = ormdata.getMatrix(bpmrec, trimrec, full=True)
+    trimrec = _zip_element_field(trim, ['x', 'y'])
+    m, bpmrec, trimrec = ormdata.getMatrix(bpmrec, trimrec, full=True,
+                                           ignore = dead)
 
     bpmref = []
     for name,field in bpmrec:
@@ -170,12 +174,13 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
 
     Parameters
     -----------
-    bpm : list of BPM objects, default all 'BPM'
+    bpmlst : list of BPM objects, default all 'BPM'
     trimlst : list of Trim objects, default all 'COR'
     plane : optional, [ 'HV' | 'H' | 'V' ], default 'HV'
     rcond : optional, cutting ratio for singular values, default 1e-4.
     scale : optional, scaling corrector strength, default 0.68
     repeat : optional, integer, default 1. numbers of correction 
+    deadlst : list of dead BPM and corrector names.
 
     Notes
     -----

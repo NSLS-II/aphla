@@ -12,8 +12,8 @@ from .. import (OrmData, Twiss, UcPoly)
 
 from fnmatch import fnmatch
 import logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+_logger = logging.getLogger(__name__)
+#_logger.setLevel(logging.DEBUG)
 
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
@@ -46,20 +46,20 @@ def init_submachines(machine, submachines, **kwargs):
 
     lattice_dict = {}
 
-    #logger.error("HELP")
+    #_logger.error("HELP")
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
-    logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
+    _logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
 
     for latname in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
         if not fnmatch(latname, submachines): continue
 
         lattag = HLA_TAG_SYS_PREFIX + '.' + latname
-        logger.info("Initializing lattice %s (%s)" % (latname, lattag))
+        _logger.info("Initializing lattice %s (%s)" % (latname, lattag))
         lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
                                                desc = cfa.source)
         lattice_dict[latname].machine = machine
         if lattice_dict[latname].size() == 0:
-            logger.warn("lattice '%s' has no elements" % latname)
+            _logger.warn("lattice '%s' has no elements" % latname)
 
     # setting unit
     for e in lattice_dict['V2SR'].getElementList('QUAD'):
@@ -80,19 +80,20 @@ def init_submachines(machine, submachines, **kwargs):
         # hack for h5py < 2.1.1
         ormfile = getResource('v2sr_orm.hdf5', __name__)
         lattice_dict['V2SR'].ormdata.load(ormfile)        
-        logger.info("using ORM data '%s'" % ormfile)
+        _logger.info("using ORM data '%s'" % ormfile)
 
         lattice_dict['V2SR']._twiss = Twiss(data_filename)
         #lattice_dict['V2SR']._twiss.load_hdf5(data_filename, "V2SR/twiss")
         # hack for h5py < 2.1.1
         twissfile = getResource('v2sr_twiss.hdf5', __name__)
         lattice_dict['V2SR']._twiss.load(twissfile)
-        logger.info("using Twiss data '%s'" % twissfile)
+        _logger.info("using Twiss data '%s'" % twissfile)
 
         data_filename = getResource('v2sr_unitconv.hdf5', __name__)
         setUnitConversion(lattice_dict['V2SR'], data_filename, "unitconv")
+        _logger.info("using unitconv data '%s'" % data_filename)
     else:
-        logger.warning("No ORM '%s' found" % data_filename)
+        _logger.warning("No ORM '%s' found" % data_filename)
 
     # tune element from twiss
     #twiss = _lattice_dict['V2SR'].getElementList('twiss')[0]
@@ -116,8 +117,10 @@ def init_submachines(machine, submachines, **kwargs):
     for bpm in lattice_dict['V2SR'].getElementList('BPM'):
         bpm.setRawUnit('x', 'm')
         bpm.setRawUnit('y', 'm')
+    _logger.info("raw unit for BPM x and y are set")
 
     for k,vlat in lattice_dict.items():
         createVirtualElements(vlat)
+    _logger.info("virtual elements created")
 
     return lattice_dict, lattice_dict['V2SR']

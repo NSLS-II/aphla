@@ -27,7 +27,7 @@ import random
 import numpy as np
 
 import logging
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 CA_OFFLINE = False
 
@@ -128,7 +128,7 @@ def caput(pvs, values, timeout=5, wait=True, throw=True):
 
     """
 
-    logger.info("setting '%s' '%s'" % (str(pvs), str(values)))
+    _logger.debug("setting '%s' '%s'" % (str(pvs), str(values)))
 
     if CA_OFFLINE: return _ca_put_sim(pvs, values)
 
@@ -223,6 +223,9 @@ def caRmCorrect(resp, kker, m, **kwarg):
     rcond = kwarg.get('rcond', 1e-4)
     verb  = kwarg.get('verbose', 0)
 
+    _logger.info("nkk={0}, nresp={1}, scale={2}, rcond={3}, wait={4}".format(
+            len(kker), len(resp), scale, rcond, wait))
+
     v0 = np.array(caget(resp), 'd')
     if ref is not None: v0 = v0 - ref
     
@@ -243,11 +246,14 @@ def caRmCorrect(resp, kker, m, **kwarg):
 
         if ref is not None: v1 = v1 - np.array(ref)
         norm2 = np.linalg.norm(v1)
+        msg = "Euclidian norm: pred./realized", norm1/norm0, norm2/norm0
+        _logger.info(msg)
         if verb > 0:
-            print("Euclidian norm: pred./realized", norm1/norm0, norm2/norm0)
+            print(msg)
         if norm2 > norm0:
-            print("Failed to reduce orbit distortion, restoring...", 
-                  norm0, norm2)
+            msg = "Failed to reduce orbit distortion, restoring..." 
+            _logger.warn(msg) 
+            print(msg, norm0, norm2)
             caput(kker, k0)
             return False
         else:

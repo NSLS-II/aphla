@@ -755,10 +755,12 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.aplot = self.wid.aplot
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWidget(self.wid)
-        self.data = data
+        self.data = data # ApVirtualElement
         self.err_only  = False
         self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elementSelected)
+        self.setMinimumSize(400, 300)
+        self.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
 
     def updatePlot(self):
         #print "updating the data"

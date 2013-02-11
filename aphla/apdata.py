@@ -14,7 +14,7 @@ import numpy as np
 import shelve
 
 import logging
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class OrmData:
     """
@@ -260,7 +260,7 @@ class OrmData:
         for i,b in enumerate(self.bpm):
             if b[0] == elem and b[2] == field: return i
         for i,t in enumerate(self.trim):
-            if b[0] == elem and b[2] == field: return i
+            if t[0] == elem and t[2] == field: return i
             
         raise ValueError("(%s,%s) are not in this ORM data" % (elem, field))
 
@@ -367,21 +367,21 @@ class OrmData:
             itrim = [i for i,v in enumerate(self.trim) if (v[0], v[2]) in trim]
         
         if len(ibpm) != len(set(ibpm)): 
-            logger.warn("BPM list has duplicates")
+            _logger.warn("BPM list has duplicates")
         if len(itrim) != len(set(itrim)): 
-            logger.warn("Trim list has duplicates")
+            _logger.warn("Trim list has duplicates")
 
             
         if len(ibpm) < len(bpm):
             if not ignore_unmeasured:
                 raise ValueError("Some BPMs are absent in orm measurement")
             else:
-                logger.warn("Some BPMs not in the measured ORM are ignored")
+                _logger.warn("Some BPMs not in the measured ORM are ignored")
         if len(itrim) < len(trim):
             if not ignore_unmeasured:
                 raise ValueError("Some Trims are absent in orm measurement")
             else:
-                logger.warn("Some Trims not in the measured ORM are ignored")
+                _logger.warn("Some Trims not in the measured ORM are ignored")
         
         mat = np.take(np.take(self.m, ibpm, axis=0), itrim, axis=1)
 
@@ -389,7 +389,7 @@ class OrmData:
         trimlst = [(self.trim[i][0], self.trim[i][2]) for i in itrim]
         return mat, bpmlst, trimlst
 
-    def getMatrix(self, bpmrec, trimrec, full=True):
+    def getMatrix(self, bpmrec, trimrec, **kwargs):
         """
         return the matrix for given bpms and trims.
 
@@ -397,9 +397,10 @@ class OrmData:
         -----------
         bpmrec : a list of (bpmname, field) tuple. e.g. [('BPM1', 'x')]
         trimrec : a list of (trimname, field) tuple, similar to *bpmrec*
-        full : bool
+        full : bool, default True
             return full matrix besides the columns and rows for given trims
             and bpms.
+        ignore : a list of element names which is ignored in the result.
 
         Returns
         --------
@@ -420,17 +421,25 @@ class OrmData:
 
         """
 
-        rowidx = [self.index(bpm, f) for bpm, f in bpmrec]
-        colidx = [self.index(cor, f) for cor, f in trimrec]
+        full = kwargs.get('full', True)
+        ignore = kwargs.get('ignore', [])
 
-        extrarow = [i for i in range(len(self.bpm)) if i not in rowidx]
-        extracol = [i for i in range(len(self.trim)) if i not in colidx]
+        _logger.info("ignore elements:{0}".format(ignore))
+        # the upper left corner, BPM/COR from input.
+        rowidx = [self.index(bpm, f) for bpm, f in bpmrec if bpm not in ignore]
+        colidx = [self.index(cor, f) for cor, f in trimrec if cor not in ignore]
+
+        extrarow = [i for i in range(len(self.bpm)) 
+                    if i not in rowidx and self.bpm[i][0] not in ignore]
+        extracol = [i for i in range(len(self.trim)) 
+                    if i not in colidx and self.trim[i][0] not in ignore]
 
         m = np.take(np.take(self.m, rowidx+extrarow, axis=0),
                     colidx+extracol, axis=1)
         brec = [(self.bpm[i][0], self.bpm[i][2]) for i in rowidx+extrarow]
         trec = [(self.trim[i][0], self.trim[i][2]) for i in colidx+extracol]
 
+        _logger.info("get BPM {0}, COR {1}".format(len(brec), len(trec)))
         return m, brec, trec
             
 

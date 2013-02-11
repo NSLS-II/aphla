@@ -132,8 +132,8 @@ class ApVirtualElemData(ApPlotData):
         i = (self.icur + 1) % self.samples
         #print "Updating orbit data"
         try:
-            self.y[i,:] = self.yscale * np.array(self.velem.get(
-                self.yfield, unitsys=self.yunitsys))
+            vy = self.velem.get(self.yfield, unitsys=self.yunitsys)
+            self.y[i,:] = self.yscale * np.array(vy)
         except:
             logger.error("Can not get data '%s'" % self.yfield)
             raise
@@ -148,3 +148,11 @@ class ApVirtualElemData(ApPlotData):
 
     def names(self):
         return self.velem._name
+
+    def remove(self, name):
+        if name not in self.velem._name: return
+        i = self.velem._name.index(name)
+        for fld,act in self.velem._field.iteritems():
+            pv = act.pvrb[i]
+            act.remove(pv)
+
