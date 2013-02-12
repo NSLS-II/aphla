@@ -6,8 +6,8 @@ NSLS2V2 Machine Structure Initialization
 # :author: Lingyun Yang <lyyang@bnl.gov>
 
 from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, setUnitConversion,
-                createLattice, createVirtualElements, findCfaConfig, 
-                getResource)
+                setGoldenLattice, createLattice, createVirtualElements,
+                findCfaConfig, getResource)
 from .. import (OrmData, Twiss, UcPoly)
 
 from fnmatch import fnmatch
@@ -92,6 +92,11 @@ def init_submachines(machine, submachines, **kwargs):
         data_filename = getResource('v2sr_unitconv.hdf5', __name__)
         setUnitConversion(lattice_dict['V2SR'], data_filename, "unitconv")
         _logger.info("using unitconv data '%s'" % data_filename)
+
+        data_filename = getResource('v2sr_golden.hdf5', __name__)
+        setGoldenLattice(lattice_dict['V2SR'], data_filename, "golden")
+        _logger.info("using golden lattice data '%s'" % data_filename)
+
     else:
         _logger.warning("No ORM '%s' found" % data_filename)
 

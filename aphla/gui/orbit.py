@@ -131,9 +131,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.logdock.resize(200, 60)
         #print self.logdock.sizeHint()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.logdock)
-        print self.logdock.sizeHint()
-        print self.logdock.minimumSize()
-        print self.logdock.maximumSize()
+        #print self.logdock.sizeHint()
+        #print self.logdock.minimumSize()
+        #print self.logdock.maximumSize()
         #self.logger.info("INFO")
         #self.logdock.setMinimumHeight(40)
         #self.logdock.setMaximumHeight(160)
@@ -440,7 +440,7 @@ class OrbitPlotMainWindow(QMainWindow):
             p.show()
             plots.append(p)
 
-        print "Enable the buttons"
+        #print "Enable the buttons"
         if len(self.mdiarea.subWindowList()) > 0:
             self.elemeditor.setEnabled(True)
 
@@ -470,15 +470,18 @@ class OrbitPlotMainWindow(QMainWindow):
         #print "fullname", p.fullname()
 
     def newCorrectorPlots(self):
-        lat = str(self.latBox.currentText())
-        if not lat or lat not in aphla.machines.lattices():
-            print "No lattice available"
-            return
-
-        p1s = self._newVelemPlots(aphla.machines.HLA_VHCOR, 'x',
-                               "Hori. Corr", Qt.red)
-        p2s = self._newVelemPlot(lat, aphla.machines.HLA_VVCOR, 'y',
-                                "Vert. Corr", Qt.blue)
+        mach, lat = self._current_mach_lat()
+        cors = [e for e in lat.getElementList('COR') 
+                if e.name not in self._dead_bpm]
+        magprof = lat.getBeamlineProfile()
+        vcorx = aphla.element.merge(cors, field='x')
+        p1s = self._newVelemPlots(vcorx, 'x', "Hori. Corr", 
+                                  lat = lat.name, mach=mach, magprof=magprof,
+                                  c = Qt.red)
+        vcory = aphla.element.merge(cors, field='y')
+        p2s = self._newVelemPlots(vcory, 'y', "Vert. Corr", 
+                                  lat = lat.name, mach=mach, magprof=magprof,
+                                  c = Qt.blue)
         if self.timerId is None: self.timerId = self.startTimer(self.dt)
         
     def newPlot(self):

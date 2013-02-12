@@ -849,6 +849,55 @@ class TestOrbit(unittest.TestCase):
         ap.hlalib._reset_trims()
         time.sleep(10)
 
+    def test_golden(self):
+        f = open("golden.txt", "w")
+        cors = ap.getElements('COR')
+        for c in cors:
+            c.x = 0.0
+            c.y = 0.0
+        time.sleep(2)
+        obt0a = ap.getOrbit(spos=True)
+        for scale in [1.0, 0.9, 0.8, 0.7, 0.6]:
+            ap.correctOrbit(scale=scale, wait=3)
+        time.sleep(6)
+        obt0 = ap.getOrbit(spos=True)
+        d0 = np.zeros((len(cors), 2), 'd')
+        for i,c in enumerate(cors):
+            d0[i,0] = c.x
+            d0[i,1] = c.y
+            c.setGolden('x', d0[i,0], unitsys=None)
+            c.setGolden('y', d0[i,1], unitsys=None)
+            f.write("{0} x {1}\n".format(c.name, d0[i,0]))
+            f.write("{0} y {1}\n".format(c.name, d0[i,1]))
+        f.close()
+        # now reset the orbit
+        time.sleep(5)
+        for c in cors:
+            c.x = 0.0
+            c.y = 0.0
+        for i,c in enumerate(cors):
+            c.reset('x', data='golden')
+            c.reset('y', data='golden')
+        time.sleep(6)
+        d1 = np.zeros((len(cors), 2), 'd')
+        for i,c in enumerate(cors):
+            d1[i,0] = c.x
+            d1[i,1] = c.y
+        obt1 = ap.getOrbit(spos=True)
+
+        plt.subplot(311)
+        plt.plot(obt0a[:,-1], obt0a[:,0], 'g-')
+        plt.plot(obt0[:,-1], obt0[:,0], 'r-')
+        plt.plot(obt1[:,-1], obt1[:,0], 'b--')
+        plt.subplot(312)
+        plt.plot(d1[:,0] - d0[:,0], 'r-')
+        plt.plot(d1[:,1] - d0[:,1], 'b--')
+        plt.subplot(313)
+        plt.plot(obt0[:,-1], obt1[:,0] - obt0[:,0], 'r-x')
+        plt.plot(obt1[:,-1], obt1[:,1] - obt0[:,1], 'b-o')
+        plt.savefig(figname("test_golden.png"))
+
+
 class TestOrbitControl(unittest.TestCase): 
     def setUp(self):
         ap.machines.use("V2SR")

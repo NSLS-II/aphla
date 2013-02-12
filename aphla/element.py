@@ -206,6 +206,7 @@ class CaAction:
     def __init__(self, **kwargs):
         self.pvrb = []
         self.pvsp = []
+        self.golden = []
         self.pvh  = [] # step size
         self.pvlim = [] # lower/upper limit 
         # buffer the initial value and last setting/reading
@@ -271,15 +272,32 @@ class CaAction:
         self.sp.pop()
         caput(self.pvsp, self.sp[-1])
         
-    def reset(self):
+    def reset(self, data = 'origin'):
         """
         reset the setpoint to the ealiest known history. If the `trace_limit`
         is large enough, the setpoint will be restored to the value before
         changed in aphla for the first time.
+
+        Parameters
+        -----------
+        data : str. 'origin' or 'golden'. 'origin' data is the earliest history.
+
+        Returns
+        --------
+        v : None or previous data if set a new value.
         """
-        if not self.sp: return
-        caput(slef.pvsp, self.sp[0])
-        self.sp = []
+        ret = None
+        if data == 'origin' and self.sp:
+            ret = caget(self.pvsp)
+            caput(self.pvsp, self.sp[0])
+            self.sp = []
+        elif data == 'golden' and self.golden and self.pvsp:
+            ret = caget(self.pvsp)
+            caput(self.pvsp, self.golden)
+            _logger.debug("setting {0} to {1}".format(
+                    self.pvsp, self.golden))
+            print "setting {0} to {1}".format(self.pvsp, self.golden)
+        return None
 
     def mark(self, data = 'setpoint'):
         """
@@ -325,6 +343,24 @@ class CaAction:
             else: return ret
         else: return None
 
+    def getGolden(self, unitsys = None):
+        """return golden value in unitsys"""
+        return self._unit_conv(self.golden, None, unitsys)
+
+
+    def setGolden(self, val, unitsys = None):
+        """set golden value in unitsys"""
+        ret = self._unit_conv(val, unitsys, None)
+        if isinstance(ret, (list, tuple)):
+            for i in range(len(self.golden)):
+                self.golden[i] = ret[i]
+        elif len(self.golden) == 1: 
+            self.golden[0] = ret
+        else:
+            raise RuntimeError("improper golden val {0} for {1}".format(
+                    ret, self.pvsp))
+
+
     def getSetpoint(self, unitsys = None):
         """
         return the value of setpoint PV or None if such PV is not defined.
@@ -335,6 +371,7 @@ class CaAction:
             if len(self.pvsp) == 1: return ret[0]
             else: return ret
         else: return None
+
 
     def putSetpoint(self, val, unitsys = None):
         """
@@ -397,13 +434,16 @@ class CaAction:
                 self.pvrb = [pv]
             elif isinstance(pv, (tuple, list)):
                 self.pvrb = [p for p in pv]
+            while len(self.golden) < len(self.pvrb): self.golden.append(None)
         elif not isinstance(pv, (tuple, list)):
             while idx >= len(self.pvrb): self.pvrb.append(None)
+            while idx >= len(self.golden): self.golden.append(None)
             self.pvrb[idx] = pv
         else:
             raise RuntimeError("invalid readback pv '%s' for position '%s'" % 
                                (str(pv), str(idx)))
 
+        
     def setSetpointPv(self, pv, idx = None, **kwargs):
         """
         set the PV for setpoint at position idx. 
@@ -426,14 +466,17 @@ class CaAction:
             #lim_h = [self._get_sp_lim_h(pvi) for pvi in self.pvsp]
             self.pvlim = [(None, None) for i in range(len(self.pvsp))]
             self.pvh = [None for i in range(len(self.pvsp))]
+            self.golden = [None for i in self.pvsp]
         elif not isinstance(pv, (tuple, list)):
             while idx >= len(self.pvsp): 
                 self.pvsp.append(None)
                 self.pvh.append(None)
                 self.pvlim.append(None)
+                self.golden.append(None)
             self.pvsp[idx] = pv
             self.pvlim[idx] = (None, None)
             self.pvh[idx] = None
+            self.golden[idx] = None
         else:
             raise RuntimeError("invalid setpoint pv '%s' for position '%s'" % 
                                (str(pv), str(idx)))
@@ -660,6 +703,7 @@ class CaElement(AbstractElement):
         """
         #AbstractElement.__init__(self, **kwargs)
         self.__dict__['_field'] = {}
+        self.__dict__['_golden'] = {}  # the golden values for fields.
         self.__dict__['_pvtags'] = {}
         self.__dict__['virtual'] = kwargs.get('virtual', 0)
         self.__dict__['trace'] = kwargs.get('trace', False)
@@ -898,9 +942,9 @@ class CaElement(AbstractElement):
                 fieldname, idx = g.group(1), g.group(2)
                 if idx is not None: idx = int(idx[1:-1])
                 if elemhandle == 'readback': 
-                    self.setFieldGetAction(pvname, fieldname, idx)
+                    self.setGetAction(pvname, fieldname, idx)
                 elif elemhandle == 'setpoint':
-                    self.setFieldPutAction(pvname, fieldname, idx)
+                    self.setPutAction(pvname, fieldname, idx)
                 else:
                     raise ValueError("invalid handle value '%s' for pv '%s'" % 
                                      (elemhandle, pvname))
@@ -922,7 +966,7 @@ class CaElement(AbstractElement):
         if pvname in self._pvtags.keys(): self._pvtags[pvname].update(tags)
         else: self._pvtags[pvname] = set(tags)
 
-    def setFieldGetAction(self, v, field, idx = None, desc = ''):
+    def setGetAction(self, v, field, idx = None, desc = ''):
         """set the action when reading *field*.
 
         the previous action will be replaced if it was defined.
@@ -933,7 +977,7 @@ class CaElement(AbstractElement):
 
         self._field[field].setReadbackPv(v, idx)
 
-    def setFieldPutAction(self, v, field, idx=None, desc = ''):
+    def setPutAction(self, v, field, idx=None, desc = ''):
         """set the action for writing *field*.
 
         the previous action will be replaced if it was define.
@@ -1025,10 +1069,10 @@ class CaElement(AbstractElement):
         self._field[fieldname].mark(handle)
         for e in self.alias: e._field[fieldname].mark(handle)
 
-    def reset(self, fieldname):
-        """see CaAction::reset()"""
-        self._field[fieldname].reset()
-        for e in self.alias: e._field[fieldname].reset()
+    def reset(self, fieldname, data='golden'):
+        """data='golden' or 'origin'. see CaAction::reset()"""
+        self._field[fieldname].reset(data)
+        for e in self.alias: e._field[fieldname].reset(data)
 
     def _get_field(self, field, **kwargs):
         """
@@ -1041,8 +1085,10 @@ class CaElement(AbstractElement):
             v = None
         elif handle == 'readback':
             v = self._field[field].getReadback(unitsys)
-        elif handle.lower() == 'setpoint':
+        elif handle == 'setpoint':
             v = self._field[field].getSetpoint(unitsys)
+        elif handle == 'golden':
+            v = self._field[field].getGolden(unitsys)
         else:
             raise ValueError("unknow handle {0}" % field)
         
@@ -1055,7 +1101,7 @@ class CaElement(AbstractElement):
         Parameters
         -------------
         fields : str, list. field
-        handle : str. 'readback' or 'setpoint'.
+        handle : str. 'readback', 'setpoint' or 'golden'.
         unitsys : the unit system. None for lower level unit.
 
         Example
@@ -1075,25 +1121,26 @@ class CaElement(AbstractElement):
             return [ self._get_field(v, **kw) for v in fields]
 
     def _put_field(self, field, val, unitsys, **kwargs):
-        """set *val* to *field*.
+        """set *val* to *field*. handle='golden' will set value as golden.
 
         seealso :func:`pv(field=field)`
         """
 
         att = field
-        if self.__dict__['_field'].has_key(att):
-            decr = self.__dict__['_field'][att]
-            if not decr:
-                raise AttributeError("field '%s' is not defined for '%s'" % (
-                        att, self.name))
-            if not decr.pvsp:
-                raise ValueError("field '%s' in '%s' is not writable" % (
-                        att, self.name))
-            decr.putSetpoint(val, unitsys)
-        else:
+        if not self.__dict__['_field'].has_key(att):
             raise RuntimeError("field '%s' is not defined for '%s'" % (
                     att, self.name))
-        
+
+        decr = self.__dict__['_field'][att]
+        if not decr:
+            raise AttributeError("field '%s' is not defined for '%s'" % (
+                    att, self.name))
+        if not decr.pvsp:
+            raise ValueError("field '%s' in '%s' is not writable" % (
+                        att, self.name))
+
+        decr.putSetpoint(val, unitsys)
+
 
     def put(self, field, val, unitsys = 'phy'):
         """set *val* to *field*.
@@ -1103,6 +1150,14 @@ class CaElement(AbstractElement):
         self._put_field(field, val, unitsys)
         for e in self.alias: e._put_field(field, val, unitsys=unitsys)
 
+    def setGolden(self, field, val, unitsys = 'phy'):
+        """set the golden value for field"""
+        try:
+            self._field[field].setGolden(val, unitsys)
+        except:
+            print "errors in setting golden for {0}.{1}".format(self.name, field)
+            raise
+ 
     def settable(self, field):
         """check if the field has any setpoint PV"""
         if field not in self._field.keys():
@@ -1165,21 +1220,21 @@ def merge(elems, field = None, **kwargs):
                 pvdict.pop(k)
         #print pvdict.keys()
         for fld,pvs in pvdict.iteritems():
-            if len(pvs[0]) > 0: elem.setFieldGetAction(pvs[0], fld, None, '')
-            if len(pvs[1]) > 0: elem.setFieldPutAction(pvs[1], fld, None, '')
+            if len(pvs[0]) > 0: elem.setGetAction(pvs[0], fld, None, '')
+            if len(pvs[1]) > 0: elem.setPutAction(pvs[1], fld, None, '')
         elem.sb = [e.sb for e in elems]
         elem.se = [e.se for e in elems]
         elem._name = [e.name for e in elems]
     elif field in pvdict:
         pvrb, pvsp = pvdict[field][0], pvdict[field][1]
-        if len(pvrb) > 0: elem.setFieldGetAction(pvrb, field, None, '')
-        if len(pvsp) > 0: elem.setFieldPutAction(pvsp, field, None, '')
+        if len(pvrb) > 0: elem.setGetAction(pvrb, field, None, '')
+        if len(pvsp) > 0: elem.setPutAction(pvsp, field, None, '')
         # count the element who has the field
         elemgrp = [e for e in elems if field in e.fields()]
         elem.sb = [e.sb for e in elemgrp] 
         elem.se = [e.se for e in elemgrp]
         elem._name = [e.name for e in elemgrp]
-        print pvsp
+        #print pvsp
     else:
         _logger.warn("no pv merged for {0}".format([
                     e.name for e in elems]))

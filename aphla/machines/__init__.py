@@ -311,6 +311,16 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
     return lat
 
 
+def setGoldenLattice(lat, h5fname, grp = "golden"):
+    g = h5py.File(h5fname, 'r')[grp]
+    unitsys = g['value'].attrs['unitsys']
+    if unitsys == '': unitsys = None
+    for i,elemname in enumerate(g['element']):
+        elem = lat.getElementList(elemname)
+        if not elem: continue
+        elem[0].setGolden(g['field'][i], g['value'][i], unitsys=unitsys)
+    # the waveform ... ignored now
+
 def use(lattice):
     """
     switch to a lattice
