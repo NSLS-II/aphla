@@ -48,7 +48,7 @@ def init_submachines(machine, submachines, **kwargs):
 
     #_logger.error("HELP")
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
-    _logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
+    _logger.info("Initializing lattice: %s" % HLA_TAG_SYS_PREFIX)
 
     for latname in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
         if not fnmatch(latname, submachines): continue
@@ -85,17 +85,26 @@ def init_submachines(machine, submachines, **kwargs):
         lattice_dict['V2SR']._twiss = Twiss(data_filename)
         #lattice_dict['V2SR']._twiss.load_hdf5(data_filename, "V2SR/twiss")
         # hack for h5py < 2.1.1
-        twissfile = getResource('v2sr_twiss.hdf5', __name__)
-        lattice_dict['V2SR']._twiss.load(twissfile)
-        _logger.info("using Twiss data '%s'" % twissfile)
-
+        data_filename = getResource('v2sr_twiss.hdf5', __name__)
+        if data_filename is not None:
+            lattice_dict['V2SR']._twiss.load(data_filename)
+            _logger.info("using Twiss data '%s'" % data_filename)
+        else:
+            _logger.warn("twiss data 'v2sr_twiss.hdf5' not found")
+            
         data_filename = getResource('v2sr_unitconv.hdf5', __name__)
-        setUnitConversion(lattice_dict['V2SR'], data_filename, "unitconv")
-        _logger.info("using unitconv data '%s'" % data_filename)
+        if data_filename is not None:
+            setUnitConversion(lattice_dict['V2SR'], data_filename, "unitconv")
+            _logger.info("using unitconv data '%s'" % data_filename)
+        else:
+            _logger.warn("unitconv data 'v2sr_unitconv.hdf5' not found")
 
         data_filename = getResource('v2sr_golden.hdf5', __name__)
-        setGoldenLattice(lattice_dict['V2SR'], data_filename, "golden")
-        _logger.info("using golden lattice data '%s'" % data_filename)
+        if data_filename is not None:
+            setGoldenLattice(lattice_dict['V2SR'], data_filename, "golden")
+            _logger.info("using golden lattice data '%s'" % data_filename)
+        else:
+            _logger.warn("golden lattice data 'v2sr_golden.hdf5' not found")
 
     else:
         _logger.warning("No ORM '%s' found" % data_filename)
