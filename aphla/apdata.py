@@ -25,7 +25,7 @@ class OrmData:
     - *m* 2D matrix, len(bpm) * len(trim)
     """
     _fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
-    def __init__(self, datafile = None):
+    def __init__(self, datafile = None, group = None):
         # points for trim setting when calc dx/dkick
         #npts = 6
 
@@ -44,10 +44,12 @@ class OrmData:
         self._rawkick = None
         self.m = None
 
-        if datafile is not None:
+        if datafile is not None and group is not None:
+            self.load(datafile, group)
+        elif datafile is not None:
             self.load(datafile)
 
-        
+
     def _io_format(self, filename, formt):
         rt, ext = splitext(filename)
         if formt:
@@ -58,7 +60,7 @@ class OrmData:
             fmt = 'HDF5'
         return fmt
     
-    def _save_hdf5(self, filename, group = "ormdata"):
+    def _save_hdf5(self, filename, group = "orm"):
         """
         save data in hdf5 format in */group*
 
@@ -207,8 +209,10 @@ class OrmData:
         #print self.trim
 
     def getBpmNames(self):
-        """The BPM names of ORM. It has same order as appeared in orm rows. 
-        The result may have duplicate bpm names in the return list.
+        """The BPM names of ORM. 
+
+        It has same order as appeared in orm rows.  The result may have
+        duplicate bpm names in the return list.
         """
         return [v[0] for v in self.bpm]
     
@@ -220,7 +224,8 @@ class OrmData:
         return False
 
     def getTrimNames(self):
-        """
+        """a list of corrector names.
+        
         The same order as appeared in orm columns. It may have duplicate trim
         names in the return list.
         """
@@ -265,7 +270,7 @@ class OrmData:
         raise ValueError("(%s,%s) are not in this ORM data" % (elem, field))
 
 
-    def update(self, src):
+    def __update(self, src):
         """
         update the data using a new OrmData object *src*
         
@@ -324,7 +329,19 @@ class OrmData:
         self.m = m
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
-        
+
+    def get(self, bpm, bpmfld, trim, trimfld):
+        """get the matrix element by bpm/trim name and field"""
+        irow, icol = None, None
+        for i,r in enumerate(self.bpm):
+            if r[0] != bpm or r[2] != bpmfld: continue
+            irow = i
+        for i,r in enumerate(self.trim):
+            if r[0] != trim or r[2] != trimfld: continue
+            icol = i
+        if irow is None or icol is None: return None
+        return self.m[irow, icol]
+
     def getSubMatrix(self, bpm, trim, **kwargs):
         """
         get submatrix for certain bpm and trim.

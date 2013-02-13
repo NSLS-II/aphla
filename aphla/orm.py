@@ -92,7 +92,7 @@ class RmCol:
                              wait=wait, diffstd=self.bpmdiffstd)
 
             v1 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
-            ret[i+1,:] = v1
+            ret[i+1,:] = v1[:]
             
             if verbose:
                 print "kx= % .2e  resp= [% .4e, % .4e], stable= %s" % (
