@@ -29,17 +29,16 @@ from elempickdlg import ElementPickDlg
 #from orbitconfdlg import OrbitPlotConfig
 from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
 from aporbitdata import ApVirtualElemData
-from orbitcorrdlg import OrbitCorrDlg
 from aporbitphy import *
 from elemeditor import *
 
 
 import time
-from PyQt4.QtCore import QSize, SIGNAL, Qt, QObject
+from PyQt4.QtCore import QSize, SIGNAL, QThread, Qt, QObject
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
-    QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget
+    QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor
 )
 import PyQt4.Qwt5 as Qwt
 
@@ -55,7 +54,7 @@ class QTextEditLoggingHandler(logging.Handler):
 
     def emit(self, record):
         self.textedit.appendPlainText(self.format(record))
-
+        self.textedit.moveCursor(QTextCursor.End)
 
 
 class OrbitPlotMainWindow(QMainWindow):
@@ -63,7 +62,7 @@ class OrbitPlotMainWindow(QMainWindow):
     the main window has three major widgets: current, orbit tabs and element
     editor.
     """
-    def __init__(self, parent = None, machines=[]):
+    def __init__(self, parent = None, machines=[], default_machine = ''):
         QMainWindow.__init__(self, parent)
         self.setIconSize(QSize(32, 32))
         self.error_bar = True
@@ -141,11 +140,23 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.createMenuToolBar()
 
+        # 
+        default_lat = ''
+        if default_machine.find('.') > 0:
+            default_machine, default_lat = default_machine.split('.', 1)
+        self.machinit = ApMachInitThread(default_machine, default_lat)
+        self.connect(self.machinit, SIGNAL("initialized(PyQt_PyObject)"),
+                     self._mach_init_done)
+        #self.machinit.moveToThread(self._machinit_thread)
+        #_machinit_thread.start(QThread.LowPriority)
+        self.machinit.start()
+        # print "Thread started", self.machinit.isRunning()
+
+        
         # update at 1/2Hz
         self.dt, self.itimer = 1500, 0
         self.timerId = None
         #self.timerId = self.startTimer(self.dt)
-        self.corbitdlg = None # orbit correction dlg
 
         self.vbpm = None
         self.statusBar().showMessage("Welcome")
@@ -153,6 +164,42 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.initMachine("nsls2v2")
         #self._newVelemPlot("V2SR", aphla.machines.HLA_VBPM, 'x', 
         #                   "H Orbit", c = None)
+
+    def _mach_init_done(self, mach):
+        #print "Done with initializing", self.machinit.mach, \
+        #    self.machinit.latname
+        self.logger.info("'{0}' initialization finished".format(mach))
+        self.machinit.quit()
+        #print aphla.machines.getLattice()
+        latlst = {}
+        for latname in ap.machines.lattices():
+            lat = ap.machines.getLattice(latname)
+            if lat.machine == str(mach): latlst[latname] = lat
+        self._machlat[str(mach)] = latlst
+        self._update_mach_lat(str(mach), "V2SR")
+
+    def _update_mach_lat(self, vm, lat = None):
+        #print "updating box for '%s'" % vm, lat
+        self.machBox.setEnabled(False)
+        self.latBox.setEnabled(False)
+        self.machBox.setCurrentIndex(self.machBox.findText(vm))
+        self.latBox.clear()
+        for k in self._machlat[vm].keys():
+            #if k == '_HLA_DEFAULT_': continue
+            #if k == str(self.latBox.currentText()): continue
+            self.latBox.addItem(k)
+        if lat is None:
+            latobj = aphla.machines.getLattice()
+            #print "Using lattice", latobj.name
+            self.latBox.setCurrentIndex(self.latBox.findText(latobj.name))
+        else:
+            self.latBox.setCurrentIndex(self.latBox.findText(lat))
+            
+        #if '_HLA_DEFAULT_' in self._machlat[vm]:
+        #    i = self.latBox.findText(self._machlat[vm]
+        #    self.latBox.addItem(self._machlat[vm]['_HLA_DEFAULT_'].name)
+        self.latBox.setEnabled(True)
+        self.machBox.setEnabled(True)
 
     def createMenuToolBar(self):
         #
@@ -215,12 +262,12 @@ class OrbitPlotMainWindow(QMainWindow):
         controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
                                          "Choose BPM", self)
         self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
-                     self.chooseBpm)
+                     self.physics.chooseBpm)
         
         controlCorrOrbitAction = QAction(QIcon(":/control_corrorbit.png"),
                                          "Correct orbit", self)
         self.connect(controlCorrOrbitAction, SIGNAL("triggered()"),
-                     self._correctOrbit)
+                     self.physics.correctOrbit)
 
         drift_from_now = QAction("Drift from Now", self)
         drift_from_now.setCheckable(True)
@@ -232,7 +279,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
         steer_orbit = QAction("Steer Orbit ...", self)
         #steer_orbit.setDisabled(True)
-        self.connect(steer_orbit, SIGNAL("triggered()"), self.createLocalBump)
+        self.connect(steer_orbit, SIGNAL("triggered()"), 
+                     self.createLocalBump)
         
         self.viewMenu.addAction(drift_from_now)
         self.viewMenu.addAction(drift_from_golden)
@@ -271,7 +319,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #
         self.controlMenu = self.menuBar().addMenu("&Control")
         self.controlMenu.addAction(controlChooseBpmAction)
-        self.controlMenu.addAction("Choose COR", self.chooseCorrector)
+        self.controlMenu.addAction("Choose COR", self.physics.chooseCorrector)
         #self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
         #self.controlMenu.addAction(controlZoomInPlot1Action)
@@ -335,52 +383,49 @@ class OrbitPlotMainWindow(QMainWindow):
 
         machToolBar = self.addToolBar("Machines")
         self.machBox = QComboBox()
+        self.machBox.setDisabled(True)
         self.machBox.addItem("(None)")
         self.machBox.addItems(self._machlat.keys())
         self.connect(self.machBox, SIGNAL("currentIndexChanged(QString)"),
                      self.initMachine)
         self.latBox = QComboBox()
-        self.connect(self.latBox, SIGNAL("currentIndexChanged(QString)"), 
-                     self.__setLattice)
+        self.latBox.setDisabled(True)
+        #self.connect(self.latBox, SIGNAL("currentIndexChanged(QString)"), 
+        #             self.__setLattice)
         machToolBar.addWidget(self.machBox)
         machToolBar.addWidget(self.latBox)
         machToolBar.addAction(QIcon(":/new_bpm.png"), "Orbits", self.newOrbitPlots)
         machToolBar.addAction(QIcon(":/new_cor.png"), "Correctors", self.newCorrectorPlots)
 
+
     def initMachine(self, v):
         vm = str(v)
         if vm == "(None)": 
+            self.latBox.setDisabled(True)
             self.latBox.clear()
             return
         try:
             if vm not in self._machlat or not self._machlat[vm]:
                 self.logger.info("initializing machine '%s'" % vm)
                 aphla.machines.init(vm)
-                # did not make sure user lattice has the same name
-                mrec = {'_HLA_DEFAULT_': aphla.machines.getLattice()}
                 for latname in aphla.machines.lattices():
                     lat = aphla.machines.getLattice(latname)
                     if lat.machine != vm: continue
                     mrec[latname] = lat
-                    print lat.name, latname
-                print "default is:", mrec['_HLA_DEFAULT_'].name
+                    #print lat.name, latname
                 self._machlat[vm] = mrec
             else:
                 self.logger.warn("using previous initialized machine '%s'" % vm)
+
+            self._update_mach_lat(vm)
         except:
             QMessageBox.critical(self, "aphla", 
                                  "machine '%s' can not be initialized" % vm,
                                  QMessageBox.Ok)
             self.machBox.setCurrentIndex(self.machBox.findText("(None)"))
-            return
+            self.latBox.setDisabled(True)
+            self.latBox.clear()
 
-        self.latBox.clear()
-        if '_HLA_DEFAULT_' in self._machlat[vm]:
-            self.latBox.addItem(self._machlat[vm]['_HLA_DEFAULT_'].name)
-        for k in self._machlat[vm].keys():
-            if k == '_HLA_DEFAULT_': continue
-            if k == str(self.latBox.currentText()): continue
-            self.latBox.addItem(k)
 
     def _current_mach_lat(self):
         """return the current machine name and lattice object"""
@@ -421,7 +466,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         plots = []
         for fld in fields:
-            print "Processing", velem.name, fld
+            #print "Processing element", velem.name, fld
             p = ApMdiSubPlot()
             #QObject.installEventFilter(p.aplot)
             p.data = ApVirtualElemData(velem, fld, machine=mach, lattice=lat)
@@ -525,20 +570,15 @@ class OrbitPlotMainWindow(QMainWindow):
 
         famname = self.sender().text()
         mks = []
+        lat = self._machlat[w.machine()][w.lattice()]
         # need to convert to python str
-        for elem in self._lat.getElementList(str(famname)):
+        for elem in lat.getElementList(str(famname)):
             if elem.family != famname: continue
             if elem.virtual: continue
             mks.append([elem.name, 0.5*(elem.sb+elem.se)])
 
         w.setMarkers(mks, on)
 
-    def __setLattice(self, latname):
-        if not latname: return
-        self._lat = aphla.machines.getLattice(unicode(latname, 'utf-8'))
-        aphla.machines.use(str(latname))
-        self.logger.info("using lattice '%s'" % latname)
-        #self.setLattice(lat)
 
     def updateMachMenu(self):
         self.machMenu.clear()
@@ -552,15 +592,16 @@ class OrbitPlotMainWindow(QMainWindow):
         self.machMenu.addMenu(newPlotMenu)
         self.machMenu.addSeparator()
 
-        mach_group = QActionGroup(self)
-        for mach in self._machlat.keys():
-            ac = QAction(mach, self)
-            ac.setCheckable(True)
-            mach_group.addAction(ac)
-            if mach == self.machBox.currentText(): ac.setChecked(True)
-            self.machMenu.addAction(ac)
-        self.connect(mach_group, SIGNAL("triggered(QAction*)"), self.click_machine)
-        self.machMenu.addSeparator()
+        if not self.machinit.isRunning():
+            mach_group = QActionGroup(self)
+            for mach in self._machlat.keys():
+                ac = QAction(mach, self)
+                ac.setCheckable(True)
+                mach_group.addAction(ac)
+                if mach == self.machBox.currentText(): ac.setChecked(True)
+                self.machMenu.addAction(ac)
+            self.connect(mach_group, SIGNAL("triggered(QAction*)"), self.click_machine)
+            self.machMenu.addSeparator()
 
         fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
         fileQuitAction.setShortcut("Ctrl+Q")
@@ -573,25 +614,28 @@ class OrbitPlotMainWindow(QMainWindow):
         #print self._machlat.keys()
 
     def _reset_correctors(self):
+        self.logger.info("reset correctors")
         aphla.hlalib._reset_trims()
 
     def _reset_quadrupoles(self):
+        self.logger.info("reset quadrupoles")
         aphla.hlalib._reset_quad()
 
-
     def _random_hkick(self):
-        hcors = self._lat.getElementList('HCOR')
+        mach, lat = self._current_mach_lat()
+        hcors = lat.getElementList('HCOR')
         i = np.random.randint(len(hcors))
-        print "Setting {0}/{1} HCOR".format(i, len(hcors))
+        self.logger.info("Setting {0}/{1} HCOR".format(i, len(hcors)))
         hcors[i].x += 1e-7
 
 
     def _random_vkick(self):
-        cors = self._lat.getElementList('VCOR')
+        mach, lat = self._current_mach_lat()
+        cors = lat.getElementList('VCOR')
         i = np.random.randint(len(cors))
-        print "kick {0} by 1e-7".format(cors[i].name),
         cors[i].y += 1e-7
-        print " kick=",cors[i].y
+        self.logger.info("increased kicker '{0}' by 1e-7 ({1} {2})".format(
+                cors[i].name, cors[i].y, cors[i].getUnit('y', None)))
 
     def viewDcctPlot(self, on):
         self.dcct.setVisible(on)
@@ -644,61 +688,14 @@ class OrbitPlotMainWindow(QMainWindow):
             w.wid.autoScaleXY()
             
                     
-    def chooseBpm(self):
-        bpms = [e.name for e in aphla.getElements('BPM')]
-        form = ElementPickDlg(bpms, self._dead_bpm, 'BPM', self)
-
-        if form.exec_(): 
-            choice = form.result()
-            dead_bpm = []
-            for i in range(len(bpms)):
-                if bpms[i] in choice: continue
-                dead_bpm.append(bpms[i])
-            # do nothing if dead element list did not change
-            if set(dead_bpm) == set(self._dead_bpm): return
-            self._dead_bpm = dead_bpm
-        self.logger.info("{0} bpms {1} are disabled".format(
-                len(self._dead_bpm), self._dead_bpm))
-        rmw = []
-        live_bpm = set(bpms) - set(self._dead_bpm)
-        for w in self.mdiarea.subWindowList():
-            velem = w.data.velem
-            if set(velem._name) == live_bpm: continue
-            rmw.append(w)
-
-        for w in rmw:
-            w.raise_()
-            tit = str(w.windowTitle())
-            # ask if need to close the dated plot
-            r = QMessageBox.warning(
-                self, "BPM", 
-                'The BPM data in window<br>'
-                '<font color="blue">{0}</font><br>'
-                'is invalid now. Do you want to close them ?'.format(tit), 
-                QMessageBox.Yes|QMessageBox.No)
-            if r == QMessageBox.Yes: w.close()
-
-    def chooseCorrector(self):
-        cors = [e.name for e in aphla.getElements('COR')]
-        form = ElementPickDlg(cors, self._dead_cor, 'COR', self)
-
-        if form.exec_(): 
-            choice = form.result()
-            dead_elem = []
-            for i in range(len(cors)):
-                if cors[i] in choice: continue
-                dead_elem.append(cors[i])
-            self._dead_cor = dead_elem
-        self.logger.info("{0} correctors {1} are disabled".format(
-                len(self._dead_cor), self._dead_cor))
-
     def getVisibleElements(self, elemname):
 
         w = self.mdiarea.currentSubWindow()
         if not w: 
             self.logger.warn("no active plot")
             return []
-        elems = self._lat.getElementList(elemname)
+        lat = self._machlat[w.machine()][w.lattice()]
+        elems = lat.getElementList(elemname)
         xl, xr = w.currentXlim()
         self.logger.info("searching for '{0}' in range [{1}, {2}]".format(
             elemname, xl, xr))
@@ -758,78 +755,18 @@ class OrbitPlotMainWindow(QMainWindow):
 
         return None
 
-    def _correctOrbit(self, **kwargs):
-        bpms = kwargs.get('bpms', None)
-        if bpms is None:
-            bpms = [e for e in self._lat.getElementList('BPM') 
-                    if e.name not in self._dead_bpm]
-        trims = kwargs.get('trims', None)
-        if trims is None:
-            alltrims = set(self._lat.getElementList('HCOR') + \
-                self._lat.getElementList('VCOR'))
-            trims = [e for e in alltrims if e.name not in self._dead_cor]
-        obt = kwargs.get('obt', None)
-        if obt is None:
-            obt = [[0.0, 0.0] for i in range(len(bpms))]
-
-        self.logger.info("corrector orbit with BPM {0}/{1}, COR {2}/{3}".format(
-                len(bpms), len(self._lat.getElementList('BPM')),
-                len(trims), len(alltrims)))
-
-        repeat = kwargs.pop("repeat", 1)
-        kwargs['verbose'] = 0
-        # use 1.0 if not set scaling the kicker strength
-        kwargs.setdefault('scale', 1.0)
-        kwargs['dead'] = self._dead_bpm + self._dead_cor
-        for i in range(repeat):
-            self.logger.info("setting a local bump")
-            QApplication.processEvents()
-            aphla.setLocalBump(bpms, trims, obt, **kwargs)
-        #return sp0
-
-        #try:
-        #    aphla.setLocalBump(bpms, trims, obt)
-        #except Exception as e:
-        #    QMessageBox.warning(self, "Error:", " {0}".format(e))
-
     def createLocalBump(self):
         wx = self.activeOrbitPlot('x')
         wy = self.activeOrbitPlot('y')
-
-        if self.corbitdlg is None:
-            #print self.obtdata.elem_names
-            # assuming BPM has both x and y, the following s are same
-            s, x, xe = wx.data.data(nomask=True)
-            s, y, ye = wy.data.data(nomask=True)
-            x, y = [0.0]*len(s), [0.0] * len(s)
-            xunit = wx.data.yunit
-            yunit = wy.data.yunit
-            #print np.shape(x), np.shape(y)
-            self.corbitdlg = OrbitCorrDlg(
-                self._lat.getElementList(wx.data.names()), 
-                s, x, y, xunit = xunit, yunit=yunit,
-                stepsize = 200e-6, 
-                orbit_plots=(wx, wy),
-                correct_orbit = self._correctOrbit)
-            self.corbitdlg.resize(600, 500)
-            self.corbitdlg.setWindowTitle("Create Local Bump")
-            #self.connect(self.corbitdlg, SIGNAL("finished(int)"),
-            #             self.plot1.curve2.setVisible)
-            #self.obtxplot.plotDesiredOrbit(self.orbitx_data.golden(), 
-            #                            self.orbitx_data.x)
-            #self.obtyplot.plotDesiredOrbit(self.orbity_data.golden(), 
-            #                            self.orbity_data.x)
-
-        self.corbitdlg.show()
-        self.corbitdlg.raise_()
-        self.corbitdlg.activateWindow()
+        self.physics.createLocalBump(wx, wy)
 
 
 def main(par=None):
     #app.setStyle(st)
     mlist = os.environ.get('HLA_MACHINE_LIST', '').split()
+    mach = os.environ.get('HLA_MACHINE', None)
     if not mlist: mlist = aphla.machines.machines()
-    demo = OrbitPlotMainWindow(machines=mlist)
+    demo = OrbitPlotMainWindow(machines=mlist, default_machine=mach)
     #demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")
     demo.resize(1000,600)
