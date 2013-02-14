@@ -262,6 +262,7 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
         self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
         #self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
         self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Sticks))
+        #self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Steps))
         self.setSymbol(kw.get('curveSymbol', Qwt.QwtSymbol()))
         self.errorPen = kw.get('errorPen', QPen(Qt.NoPen))
         self.errorCap = kw.get('errorCap', 0)
@@ -362,14 +363,18 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
 
 
 class ApPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None, lat = None,
-                 live = True, errorbar = True, title=None): 
+    def __init__(self, parent = None, errorbar = True, title=None): 
+        """initialization
         
+        Parameters
+        -----------
+        parent : None
+        lat : 
+        """
         super(ApPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
         self.errorOnTop = errorbar
-        self.live = live
         self.setAutoReplot(False)
 
         self.plotLayout().setAlignCanvasToScales(True)
@@ -393,6 +398,8 @@ class ApPlot(Qwt.QwtPlot):
         self.curve2.attach(self)
         self.curve1.setZ(self.curve2.z() + 1.0)
         self.curve2.setVisible(False)
+
+        self.excurv = []
 
         #print "PV golden:", pvs_golden
         pvs_golden = None
@@ -519,7 +526,7 @@ class ApPlot(Qwt.QwtPlot):
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         self.picker1.addMagnetProfile(sb, se, name, minlen)
 
-    def updatePlot(self):
+    def __updatePlot(self):
         self.curve1.setData()
         if self.golden is not None: self.golden.update()
 
@@ -534,7 +541,7 @@ class ApPlot(Qwt.QwtPlot):
             #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
             self.setAxisScale(Qwt.QwtPlot.xBottom, sl - dx, sr + dx)
         else:
-            bound = self.curve1.boundingRect()
+            bound = self.curvesBound()
             w = bound.width()
             h = bound.height()
             #bound.adjust(0.0, -h*.1, 0.0, h*.1)
@@ -602,10 +609,23 @@ class ApPlot(Qwt.QwtPlot):
         pen.setColor(c)
         self.curve1.setPen(pen)
 
+    def addCurve(self, **kwargs):
+        x = kwargs.get('x', None)
+        y = kwargs.get('y', None)
+        yerr = kwargs.get('yerr', None)
+        curv = ApPlotCurve()
+        if x and y: curv.setData(x, y, yerr)
+        curv.attach(self)
+        self.excurv.append(curv)
+        return curv
+
     def curvesBound(self):
         bd = self.curve1.boundingRect()
         if self.curve2.isVisible():
             bd = bd.united(self.curve2.boundingRect())
+        for curv in self.excurv:
+            if not curv.isVisible(): continue
+            bd = bd.united(curv.boundingRect())
         return bd
 
 class ApPlotControlButton(QPushButton):
@@ -660,7 +680,7 @@ class ApPlotWidget(QWidget):
         icol += 1
 
         self.live = True
-        self.aplot = ApPlot(self, live= self.live)
+        self.aplot = ApPlot(self)
         self.aplot.plotLayout().setCanvasMargin(4)
         self.aplot.plotLayout().setAlignCanvasToScales(True)
 
@@ -749,23 +769,26 @@ class ApOrbitPlot(ApPlotWidget):
 
 
 class ApMdiSubPlot(QMdiSubWindow):
-    def __init__(self, parent = None, data = None):
+    def __init__(self, parent = None, data = None, live = True):
         super(ApMdiSubPlot, self).__init__(parent)
         self.wid = ApPlotWidget(parent)
         self.aplot = self.wid.aplot
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWidget(self.wid)
         self.data = data # ApVirtualElement
+        self.live = live
         self.err_only  = False
         self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elementSelected)
         self.setMinimumSize(400, 300)
         self.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
 
-    def updatePlot(self):
+    def updatePlot(self, s = None, y = None, yerr = None):
         #print "updating the data"
-        self.data.update()
-        s, y, yerr = self.data.data()
+        if (s, y, yerr) == (None, None, None) and self.data:
+            self.data.update()
+            s, y, yerr = self.data.data()
+
         #return
         #print "set data", type(s), type(y), type(yerr)
         if self.err_only: self.aplot.curve1.setData(s, yerr)
@@ -774,11 +797,6 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.aplot.setAxisTitle(Qwt.QwtPlot.yLeft, self.data.label())
         #print "replot"
         #print s, y, yerr
-        try:
-            #self.aplot.replot()
-            pass
-        except:
-            print "ERROR"
         #print "done replot"
 
     def elementSelected(self, elem):
@@ -814,3 +832,5 @@ class ApMdiSubPlot(QMdiSubWindow):
 
     def plotCurve2(self, y, x = None):
         self.aplot.plotCurve2(y, x)
+
+

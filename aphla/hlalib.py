@@ -535,14 +535,17 @@ def getPhase(group, **kwargs):
 def getBeta(group, **kwargs):
     """
     get the beta function from stored data.
-
-    :Example:
-
-      >>> getBeta('Q*', spos = True)
-
-    - *src*: 'DB' from database, 'VA' virtual accelerator
-
+    
     this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
+
+    Parameters
+    -----------
+    src : str. 'DB' from database, 'VA' virtual accelerator
+
+    Examples
+    ---------
+    >>> getBeta('Q*', spos = False)
+
     """
     src = kwargs.pop("src", 'DB')
 
@@ -551,10 +554,10 @@ def getBeta(group, **kwargs):
     if kwargs.get('spos', False): col = ('beta', 's')
 
     if src == 'DB':
-        if not machines._twiss:
+        if not machines._lat._twiss:
             logger.error("ERROR: No twiss data loaeded")
             return None
-        return machines._twiss.getTwiss([e.name for e in elem], 
+        return machines._lat._twiss.getTwiss([e.name for e in elem], 
                                         col=col, **kwargs)
     elif src == 'VA':
         twiss = getElements('twiss')[0]
@@ -607,10 +610,10 @@ def getEta(group, **kwargs):
     if kwargs.get('spos', False): col = ('eta', 's')
 
     if src == 'DB':
-        if not machines._twiss:
+        if not machines._lat._twiss:
             logger.error("ERROR: No twiss data loaeded")
             return None
-        return machines._twiss.getTwiss([e.name for e in elem], 
+        return machines._lat._twiss.getTwiss([e.name for e in elem], 
                                         col=col, **kwargs)
     elif src == 'VA':
         twiss = getElements('twiss')[0]

@@ -104,7 +104,8 @@ def waitForStablePv(**kwargs):
         return timeout, dvstd
 
 def figname(name):
-    return time.strftime("%y%m%d_%H%M%S_") + name
+    rt, ext = os.path.splitext(name)
+    return rt + time.strftime("_%y%m%d_%H%M%S") + ext
     
 """
 Channel Finder
@@ -651,14 +652,28 @@ class T060_Tunes(unittest.TestCase):
         self.assertGreater(nu[0], 0.0)
         self.assertGreater(nu[1], 0.0)
 
-    @unittest.skip
-    def test_dispersion_meas_l2(self):
-        #s, etax, etay = ap.measDispersion('*')
-        eta = ap.measDispersion('P*C0[2-4]*')
+    def test_meas_beta_l2(self):
+        qs = ap.getGroupMembers(['C30', 'QUAD'])
+        k1, nu, beta = ap.measBeta(qs)
+        if PLOTTING:
+            for i,q in enumerate(qs):
+                plt.clf()
+                plt.subplot(211)
+                plt.plot(k1[i,:], nu[i,:,0], 'r-v')
+                plt.subplot(212)
+                plt.plot(k1[i,:], nu[i,:,1], 'r-v')
+                plt.savefig(figname("meas_beta_nu_%s.png" % q.name))
+
+            plt.clf()
+            plt.plot(beta[:,-1], beta[:,0], 'r-v')
+            plt.plot(beta[:,-1], beta[:,1], 'b-o')
+            plt.savefig(figname("meas_beta_beta.png"))
+
+    def test_meas_dispersion_l2(self):
+        eta = ap.measDispersion('p*c0[2-4]*')
         s, etax, etay = eta[:,-1], eta[:,0], eta[:,1]
 
-        if False:
-            import matplotlib.pylab as plt
+        if PLOTTING:
             plt.clf()
             plt.plot(s, etax, '-x', label=r'$\eta_x$')
             plt.plot(s, etay, '-o', label=r'$\eta_y$')
@@ -1209,7 +1224,7 @@ class TestOrm(unittest.TestCase):
         self.assertIn(trimlst2[0], ormdata_dst.getTrimNames())
 
 
-    @unittest.skip("orm data is not ready")
+    @unittest.skip("not implemented yet")
     def test_update_swapped(self):
         """
         same dimension, swapped rows
@@ -1242,7 +1257,7 @@ class TestOrm(unittest.TestCase):
             i0, j0 = (i-2+nrow) % nrow, (j + ncol) % ncol
             self.assertEqual(ormdata_dst.m[i0,j0], 0.0)
 
-    @unittest.skip("no sub matrix")
+    @unittest.skip("not implemented yet")
     def test_update_submatrix(self):
         """
         same dimension, swapped rows
@@ -1270,14 +1285,6 @@ class TestOrm(unittest.TestCase):
             for i,j in idx:
                 self.assertEqual(ormdata_dst.m[i0,j0], 0.0)
 
-        #orm1 = hla.measorm.Orm(bpm = [], trim = [])
-        #orm1.load('a.hdf5')
-        #orm2 = hla.measorm.Orm(bpm = [], trim = [])
-        #orm2.load('b.hdf5')
-        #orm = orm1.merge(orm2)
-        #orm.checkLinearity()
-        #orm.save('c.hdf5')
-        
 
 
 class TestRmCol(unittest.TestCase):

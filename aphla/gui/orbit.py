@@ -30,6 +30,7 @@ from elempickdlg import ElementPickDlg
 from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
 from aporbitdata import ApVirtualElemData
 from orbitcorrdlg import OrbitCorrDlg
+from aporbitphy import *
 from elemeditor import *
 
 
@@ -86,7 +87,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.dcct.updatePlot()
 
         self.mdiarea = QMdiArea()
-
+        self.physics = ApOrbitPhysics(mdiarea = self.mdiarea)
         self.live_orbit = True
 
         self.setCentralWidget(self.mdiarea)
@@ -280,6 +281,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.controlMenu.addSeparator()
         self.controlMenu.addAction(controlCorrOrbitAction)
         self.controlMenu.addAction(steer_orbit)
+        self.controlMenu.addSeparator()
+        self.controlMenu.addAction("meas Beta", self.physics.measBeta)
+        self.controlMenu.addAction("meas Dispersion", self.physics.measDispersion)
         #for ac in self.controlMenu.actions(): ac.setDisabled(True)
 
         # Window
@@ -711,6 +715,7 @@ class OrbitPlotMainWindow(QMainWindow):
             #self.updateStatus()
             for w in self.mdiarea.subWindowList():
                 if not isinstance(w, ApMdiSubPlot): continue
+                if not w.live: continue
                 w.updatePlot()
                 w.aplot.replot()
             self.statusBar().showMessage("plot updated: {0}".format(
