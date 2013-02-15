@@ -19,6 +19,98 @@ setao([]);
 %(ao_q)s
 
 
+
+%% Tune %%
+AO.TUNE.FamilyName = 'TUNE';
+AO.TUNE.MemberOf   = {'TUNE'};
+AO.TUNE.Status = [1;1;0];
+AO.TUNE.DeviceList = [1 1;1 2;1 3];
+AO.TUNE.ElementList = [1;2;3];
+
+AO.TUNE.Monitor.MemberOf   = {'TUNE'; 'Monitor'};
+AO.TUNE.Monitor.Mode = 'Simulator';     %% 'Online' 'Simulator', 'Manual' or 'Special'
+AO.TUNE.Monitor.DataType = 'Scalar';
+AO.TUNE.Monitor.HW2PhysicsParams = 1;
+AO.TUNE.Monitor.Physics2HWParams = 1;
+AO.TUNE.Monitor.Units        = 'Hardware';
+AO.TUNE.Monitor.HWUnits      = 'Tune';
+AO.TUNE.Monitor.PhysicsUnits = 'Tune';
+%% AO.TUNE.Monitor.SpecialFunctionGet = 'gettune_als';
+Ao.TUNE.Monitor.ChannelNames = ['V:2-SR-BI{TUNE}X-I', 'V:2-SR-BI{TUNE}Y-I']
+
+
+%% DCCT %%
+
+AO.DCCT.FamilyName = 'DCCT';
+AO.DCCT.MemberOf = {'DCCT'; 'Beam Current';};
+AO.DCCT.Status = 1;
+AO.DCCT.DeviceList = [1 1];
+AO.DCCT.ElementList = 1;
+
+AO.DCCT.Monitor.MemberOf   = {'DCCT'; 'Beam Current'; 'Monitor'};
+AO.DCCT.Monitor.Mode = 'Simulator';
+AO.DCCT.Monitor.DataType = 'Scalar';
+AO.DCCT.Monitor.ChannelNames = 'cmm:beam_current';      %% Fast but "noisy"
+AO.DCCT.Monitor.HW2PhysicsParams = 1;
+AO.DCCT.Monitor.Physics2HWParams = 1;
+AO.DCCT.Monitor.Units        = 'Hardware';
+AO.DCCT.Monitor.HWUnits      = 'mAmps';
+AO.DCCT.Monitor.PhysicsUnits = 'mAmps';
+AO.DCCT.Monitor.ChannelNames = 'V:2-SR-BI{DCCT}CUR-I';
+
+%% AO.DCCT.LowPass.MemberOf   = {'DCCT'; 'Beam Current'; 'LowPass'};
+%% AO.DCCT.LowPass.Mode = 'Simulator';
+%% AO.DCCT.LowPass.DataType = 'Scalar';
+%% AO.DCCT.LowPass.ChannelNames = 'SR05W___DCCT2__AM01';      %% Fast but "noisy"
+%% AO.DCCT.LowPass.SpecialFunctionGet = 'getdcct_als';  %% 'SR05W___DCCT2__AM01' (from ___DCCTLP) - slow!
+%% AO.DCCT.LowPass.HW2PhysicsParams = 1;
+%% AO.DCCT.LowPass.Physics2HWParams = 1;
+%% AO.DCCT.LowPass.Units        = 'Hardware';
+%% AO.DCCT.LowPass.HWUnits      = 'mAmps';
+%% AO.DCCT.LowPass.PhysicsUnits = 'mAmps';
+
+
+%% RF
+
+AO.RF.FamilyName = 'RF';
+AO.RF.MemberOf   = {'RF'};
+AO.RF.Status = 1;
+AO.RF.DeviceList = [1 1];
+AO.RF.ElementList = 1;
+
+AO.RF.Monitor.MemberOf   = {'PlotFamily'; 'RF'; 'Monitor'};
+AO.RF.Monitor.Mode = 'Simulator';     %% 'Online' 'Simulator', 'Manual' or 'Special'
+AO.RF.Monitor.DataType = 'Scalar';
+AO.RF.Monitor.ChannelNames = 'V:2-SR:C30-RF:G1{CAV:3656}Freq:I'; 
+AO.RF.Monitor.HW2PhysicsParams = 1e6;
+AO.RF.Monitor.Physics2HWParams = 1/1e6;
+AO.RF.Monitor.Units        = 'Hardware';
+AO.RF.Monitor.HWUnits       = 'MHz';
+AO.RF.Monitor.PhysicsUnits  = 'Hz';
+
+AO.RF.Setpoint.MemberOf   = {'Save/Restore'; 'RF'; 'Setpoint'};
+AO.RF.Setpoint.Mode = 'Simulator';     %% 'Online' 'Simulator', 'Manual' or 'Special'
+AO.RF.Setpoint.DataType = 'Scalar';
+AO.RF.Setpoint.ChannelNames = 'V:2-SR:C30-RF:G1{CAV:3656}Freq:SP';  %%  User operation (small changes, ~5K) [Volts]
+AO.RF.Setpoint.HW2PhysicsParams = 1e6;
+AO.RF.Setpoint.Physics2HWParams = 1/1e6;
+AO.RF.Setpoint.Units        = 'Hardware';
+AO.RF.Setpoint.HWUnits      = 'MHz';
+AO.RF.Setpoint.PhysicsUnits = 'Hz';
+AO.RF.Setpoint.Range = [498.5 500.5];
+AO.RF.Setpoint.Tolerance = 1;
+%% AO.RF.Setpoint.SpecialFunctionSet = @setrf_als;
+%% AO.RF.Setpoint.SpecialFunctionGet = @getrf_als;
+
+AO.RF.Power.Mode = 'Simulator';     %% 'Online' 'Simulator', 'Manual' or 'Special'
+AO.RF.Power.DataType = 'Scalar';
+AO.RF.Power.ChannelNames = 'V:2-SR:C30-RF:G1{CAV:3656}Volt:I';
+AO.RF.Power.HW2PhysicsParams = 1e-6;
+AO.RF.Power.Physics2HWParams = 1e6;
+AO.RF.Power.Units        = 'Hardware';
+AO.RF.Power.HWUnits      = 'V';
+AO.RF.Power.PhysicsUnits = 'MV';
+
 %% Save the AO so that family2dev will work
 %% setao(AO);
 

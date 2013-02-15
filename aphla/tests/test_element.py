@@ -86,12 +86,13 @@ class TestElement(unittest.TestCase):
         self.assertEqual(hcor.pv(field='x', handle='readback'), [pvrb])
         self.assertEqual(hcor.pv(field='x', handle='setpoint'), [pvsp])
         self.assertIsNone(hcor.stepSize('x'))
-        self.assertIsNone(hcor.boundary('x'), None)
+        self.assertIsNone(hcor.boundary('x')[0])
+        self.assertIsNone(hcor.boundary('x')[1])
         
         self.assertEqual(hcor.pv(field='y'), [])
         self.assertEqual(hcor.pv(field='y', handle='readback'), [])
         self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
-        
+
 
     def __compareElements(self, e1, e2):
         self.assertEqual(sorted(e1.__dict__.keys()), sorted(e2.__dict__.keys()))

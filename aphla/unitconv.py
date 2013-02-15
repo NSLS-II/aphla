@@ -36,8 +36,9 @@ class UcPoly(UcAbstract):
         return "%s -> %s: %s" % (src, dst, str(self.p))
 
     def eval(self, x):
-        if isinstance(x, Iterable):
-            return [self.p(v) for v in x]
+        if x is None: return None
+        elif isinstance(x, Iterable):
+            return [self.p(v) if v is not None else None for v in x]
         else:
             return self.p(x)
 
@@ -49,8 +50,9 @@ class UcInterp1(UcAbstract):
         self.xp, self.fp = x, y
 
     def eval(self, x):
-        if x < self.xp[0] or x > self.xp[-1]: return None
-        return np.interp(x, self.xp, self.fp)
+        if x is None: return None
+        elif x < self.xp[0] or x > self.xp[-1]: return None
+        else: return np.interp(x, self.xp, self.fp)
 
 class UcInterpN(UcAbstract):
     """n-D linear interpolation"""
@@ -65,11 +67,12 @@ class UcInterpN(UcAbstract):
         self.xp, self.fp = x, y
 
     def eval(self, x):
+        """if None, returns None"""
         if not isinstance(x, Iterable):
             raise RuntimeError("expecting an iterable input")
         ret = []
         for i,v in enumerate(x):
-            if x < self.xp[i][0] or x > self.xp[i][-1]:
+            if x is None or x < self.xp[i][0] or x > self.xp[i][-1]:
                 ret.append(None)
             else:
                 ret.append(np.interp(x[i], self.xp[i], self.fp[i]))

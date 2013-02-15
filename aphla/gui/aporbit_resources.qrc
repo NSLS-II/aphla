@@ -1,6 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
 <file alias="file_quit.png">./images/file_quit.png</file>
+<file alias="new_bpm.png">./images/new_bpm.png</file>
+<file alias="new_cor.png">./images/new_cor.png</file>
 <file alias="view_livedata.png">./images/view_livedata.png</file>
 <file alias="view_singleshot.png">./images/view_singleshot.png</file>
 <file alias="view_errorbar.png">./images/view_errorbar.png</file>
@@ -17,5 +19,6 @@
 <file alias="control_choosebpm.png">./images/control_choosebpm.png</file>
 <file alias="control_reset.png">./images/control_reset.png</file>
 <file alias="control_play.png">./images/control_play.png</file>
+<file alias="control_corrorbit.png">./images/control_corrorbit.png</file>
 </qresource>
 </RCC>

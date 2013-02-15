@@ -18,10 +18,10 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
         QGridLayout, QVBoxLayout, QTableView, QWidget, QApplication,
         QTableWidget, QDialogButtonBox, QTableWidgetItem)
 
+import traceback
 import collections
 import numpy as np
-import sys
-import re
+import sys, time
 C_FIELD, C_VAL_RAW = 0, 1
 
 class SimpleListDlg(QDialog):
@@ -69,20 +69,68 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def __init__(self, elems):
         super(ElementPropertyTableModel, self).__init__()
         self._allelems = elems
-        self._elem  = []
+        self._elem = []
         self._desc  = []
-        self._field = []
-        self._value = []
+        self._field, self._fieldpfx, self._value = [], [], []
+        self._editable = []
         self._unitsys = [None, 'phy']
+        self._source = [('readback', '_r', False), 
+                        ('setpoint', '_w', True)]
         self._unit = []
-        self._elemidx = []  # the index in _allelems
-        self._load()
 
-    def _get_quiet(self, elem, fld, src, u):
-        """get but ignore exceptions"""
-        # the value
+        self.load(elems)
+
+    def load(self, allelems):
+        ik = 0
+        # self._field.extend(["<b>Test</b>", "v.r", "v.w"])
+        # self._value.extend([None, [[0,1,2,3], None], [[10,20,30,40], None]])
+        # self._unit.extend([None, ["", ""], ["", ""]])
+        # self._elemidx.extend([0, None, None])
+        # self._desc.extend(["sb = 0.0\nse = 1.0"])
+        # ik = 1
+        
+        for elem in allelems:
+            self._elem.append(elem)
+            self._field.append("<b>%s</b>" % elem.name)
+            self._fieldpfx.append('')
+            self._value.append(None)
+            self._editable.append(None)
+            self._desc.append("family = %s\nsb = %.4g\nlength= %.4g\n" \
+                              % (elem.family,elem.sb, elem.length))
+            self._unit.append(None)
+            for var in sorted(elem.fields()):
+                # postfix for field name, field__r and field__w
+                for src,pfx,edt in self._source:
+                    vlst, ulst = [], []
+                    # columns for unit system
+                    for u in self._unitsys:
+                        try:
+                            v = float(elem.get(var, handle=src, unitsys=u))
+                        except:
+                            v = None
+                        # check the unit
+                        try:
+                            usymb = elem.getUnit(var, unitsys=u)
+                        except:
+                            usymb = ""
+
+                        vlst.append(v)
+                        ulst.append(usymb)
+                    if all([v is None for v in vlst]): continue
+                    self._elem.append(elem)
+                    self._field.append(var)
+                    self._fieldpfx.append(pfx)
+                    self._value.append(vlst)
+                    self._unit.append(ulst)
+                    self._desc.append(None)
+                    self._editable.append([edt] * len(vlst))
+            ik += 1
+        self._NF = len(self._field)
+        #print self._value
+
+    def _get_quiet(self, elem, var, src, u):
         try:
-            v = elem.get(fld, source=src, unitsys=u)
+            v = elem.get(var, handle=src, unitsys=u)
         except:
             v = None
         # check the unit
@@ -92,43 +140,24 @@ class ElementPropertyTableModel(QAbstractTableModel):
             usymb = ""
 
         return v, usymb
+            
+    def _update_data(self, i):
+        if self._value[i] is None: return
+        elem, fld = self._elem[i], self._field[i]
+        src = None
+        for k,v in enumerate(self._source):
+            if v[1] != self._fieldpfx[i]: continue
+            src = v[0]
 
-    def _load(self):
-        ik = 0
-        # self._field.extend(["<b>Test</b>", "v.r", "v.w"])
-        # self._value.extend([None, [[0,1,2,3], None], [[10,20,30,40], None]])
-        # self._unit.extend([None, ["", ""], ["", ""]])
-        # self._elemidx.extend([0, None, None])
-        # self._desc.extend(["sb = 0.0\nse = 1.0"])
-        # ik = 1
-        
-        for elem in self._allelems:
-            self._elem.append(elem)
-            self._field.append("<b>%s</b>" % elem.name)
-            self._value.append(None)
-            self._desc.append("family = %s\nsb = %.4g\nlength= %.4g\n" \
-                              % (elem.family,elem.sb, elem.length))
-            self._elemidx.append(ik)
-            self._unit.append(None)
-            for var in sorted(elem.fields()):
-                # postfix for field name, field__r and field__w
-                vlst, ulst = [], []
-                # columns for unit system
-                for u in self._unitsys:
-                    v1, usymb1 = self._get_quiet(elem, var, 'readback', u)
-                    v2, usymb2 = self._get_quiet(elem, var, 'setpoint', u)
-
-                    vlst.append([v1, v2])
-                    ulst.append([usymb1, usymb2])
-                self._elem.append(elem)
-                self._field.append(var) # a text like "k1..r"
-                self._value.append(vlst)
-                self._unit.append(ulst)
-                self._elemidx.append(ik)
-            ik += 1
-        self._NF = len(self._field)
+        #print "updating", elem.name
+        for k,u in enumerate(self._unitsys):
+            #self._field[i] = "<b>%s</b>" % elem.name
+            v, usymb = self._get_quiet(elem, fld, src, u)
+            #print "  updated:", elem.name, fld, src, u, v
+            if v is not None: 
+                self._value[i][k] = float(v)
         #print self._value
-
+        
     def isHeadIndex(self, i):
         if self._value[i] is None: return True
         else: return False
@@ -158,7 +187,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         vals, units = self._value[r], self._unit[r]
 
         if role == Qt.DisplayRole:
-            if col == C_FIELD: return QVariant(self._field[r])
+            if col == C_FIELD: return QVariant(self._field[r]+self._fieldpfx[r])
             #print r, col, self._field[r], self._value[r]
             if vals is None: return QVariant()
             # all for display
@@ -169,7 +198,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 #print "converting", val, unit
                 return self._format_value(vals[col-1], units[col-1])
         elif role == Qt.EditRole:
-            if col == C_FIELD: return QVariant(self._field[r])
+            if col == C_FIELD: return QVariant(self._field[r]+self._fieldpfx[r])
             #print r, col, self._field[r], self._value[r]
             if vals is None: return QVariant()
             if isinstance(vals[col-1], (tuple, list)):
@@ -180,12 +209,8 @@ class ElementPropertyTableModel(QAbstractTableModel):
             if col == C_FIELD: return QVariant(Qt.AlignLeft)
             else: return QVariant(Qt.AlignRight)
         elif role == Qt.ToolTipRole:
-            if col == C_FIELD and self._value[r] is None:
-                try:
-                    tip = self._desc[self._elemidx[r]]
-                except:
-                    return QVariant()
-                return QVariant(tip)
+            if col == C_FIELD and self._desc[r]:
+                return QVariant(self._desc[r])
 
         #print "Asking data role=", role
         return QVariant()
@@ -202,28 +227,23 @@ class ElementPropertyTableModel(QAbstractTableModel):
             elif section == C_VAL_RAW: return QVariant("None(Raw)")
             else: return QVariant(self._unitsys[section-1])
         elif orientation == Qt.Vertical:
-            if self._elemidx[section] is not None:
-                return QVariant(self._elemidx[section] + 1)
-            else:
-                return QVariant()
+            if self._value[section] is None: return QVariant()
+            idx = [k for k in range(section+1) if self._value[k] is None]
+            return QVariant(len(idx))
+
         return QVariant(int(section+1))
 
     def flags(self, index):
+        #print "flags:", 
         if not index.isValid():
             return Qt.ItemIsEnabled
         row, col = index.row(), index.column()
         field = self._field[row]
         if self._value[row] is None: return Qt.ItemIsEnabled
-        elif re.match(self._editablefld, self._field[row]):
-            #print "found editable", self._field[row], 
-            if self._value[row][col-1] is not None:
-                #print "Y"
-                return Qt.ItemFlags(
-                    QAbstractTableModel.flags(self, index)|
-                    Qt.ItemIsEditable)
-            else:
-                pass
-                #print "N"
+        elif self._editable[row][col-1]:
+            return Qt.ItemFlags(
+                QAbstractTableModel.flags(self, index)|
+                Qt.ItemIsEditable)
         else:
             return Qt.ItemIsEnabled
         
@@ -233,7 +253,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         return len(self._field)
     
     def columnCount(self, index=QModelIndex()):
-        return len(self._unitsys) + 1
+        return 3
 
     def isList(self, index):
         r, c = index.row(), index.column()
@@ -250,39 +270,38 @@ class ElementPropertyTableModel(QAbstractTableModel):
             elif value.canConvert(QVariant.List):
                 val = [v.toFloat()[0] for v in value.toList()]
                 self._value[row][col-1] = val
+                print "Did not set {0}.{1} for real machine".format(
+                    self._elem[row].name, self._field[row])
             else:
                 #print "Editting pv col=", col, value, value.toDouble()
                 # put the value to machine
-                fld = self._field[row][:-3]
+                fld = self._field[row]
                 vd = value.toDouble()[0]
                 unit = self._unitsys[col-1]
-                k = self._elemidx[row]
-                elem = self._allelems[k].put(fld, vd, unitsys=unit)
+
+                print "Putting {0} to {1}.{2} in role {3}".format(
+                    vd, self._elem[row].name, fld, role)
+                # need to update model data, otherwise, setEditorData will
+                # call model for un-updated value
+                self._elem[row].put(fld, vd, unitsys=unit)
+                for i in range(len(self._elem)): self._update_data(i)
                 self._value[row][col-1] = vd
+            idx0 = self.index(0, 0)
+            idx1 = self.index(len(self._elem) - 1, self.columnCount()-1)
             self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
-                      index, index)
+                      idx0, idx1)
             return True
         return False
 
-    def _update_element(self, row):
-        """updating records of element from row"""
-        if self._field[row] is None or self._value[row] is None: return
-        k = row
-        while self._elemidx[k] is None and k >= 0: k = k - 1
-        if k < 0: return
-        elem = self._allelems[k]
-        for col,u in enumerate(self._unitsys):
-            try:
-                v = elem.get(self._field[row], unitsys=u)
-            except:
-                v = None
-            self._value[row][col] = v
+    def clear(self):
+        self._allelems = []
+        self._elem = []
+        self._desc  = []
+        self._field, self._fieldpfx, self._value = [], [], []
+        self._editable = []
+        self._unit = []
 
-    def updateData(self):
-        for i in range(self.rowCount()):
-            self._update_element(i)
-
-
+    
 class ElementPropertyDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super(ElementPropertyDelegate, self).__init__(parent)
@@ -312,7 +331,7 @@ class ElementPropertyDelegate(QStyledItemDelegate):
         #     document.setDefaultFont(option.font)
         #     document.setHtml("<font><b>...</b></font>")
         #     #color = Qt.lightGray #palette.highlight().color()
-
+            
         #     painter.save()
         #     #painter.fillRect(option.rect, color)
         #     painter.translate(option.rect.x(), option.rect.y())
@@ -339,8 +358,8 @@ class ElementPropertyDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         row, col = index.row(), index.column()
         model = index.model()
-        print "Creating editor", row, col, model._value[row]
-        if model._value[row] is not None and model._field[row].endswith('_w'):
+        #print "Creating editor", row, col, model._value[row]
+        if model._value[row] is not None and model._editable[row][col-1]:
             #spinbox = QDoubleSpinBox(parent)
             #spinbox.setRange(-100, 100)
             #spinbox.setSingleStep(2)
@@ -363,36 +382,38 @@ class ElementPropertyDelegate(QStyledItemDelegate):
 
     def commitAndCloseEditor(self):
         editor = self.sender()
-        if isinstance(editor, (QTextEdit, QLineEdit)):
-            self.emit(SIGNAL("commitData(QWidget*)"), editor)
-            self.emit(SIGNAL("closeEditor(QWidget*)"), editor)
+        #print "commit and close:", editor.text()
+        #if isinstance(editor, (QTextEdit, QLineEdit)):
+        #    self.emit(SIGNAL("commitData(QWidget*)"), editor)
+        #    self.emit(SIGNAL("closeEditor(QWidget*)"), editor)
 
     def setEditorData(self, editor, index):
-        text = index.model().data(index, Qt.DisplayRole).toString()
-        print "Setting editor to", text
-        if index.column() == C_VAL_RAW or index.column() == VALUE_SP:
-            value = text.toDouble()[0]
+        r,c = index.row(), index.column()
+        text = index.model().data(index, Qt.EditRole).toString()
+        #print "Setting editor to", text, index.model()._value[r]
+        if index.column() >= C_VAL_RAW:
+            #value = text.toDouble()[0]
             #print text, value
             #value = index.model().data(index, Qt.DisplayRole)
             #editor.setValue(value)
+            #print "    set editor to ", text
             editor.setText(text)
         else:
             QStyledItemDelegate.setEditorData(self, editor, index)
 
     def setModelData(self, editor, model, index):
-        print "Setting model", editor.text()
+        #print "Setting model data", editor.text()
+        #print "  sender", self.sender()
+        #traceback.print_stack(file=sys.stdout)
+
         if index.column() >= C_VAL_RAW:
             model.setData(index, QVariant(editor.text()))
         else:
             QStyledItemDelegate.setModelData(self, editor, model, index)
 
     def editorEvent(self, event, model, option, index):
-        # MouseButtonDblClick 4
-        # MouseButtonPress 2
-        # MouseButtonRelease 3
-        print "received an editor event:", event.type()
+        #print "editor event"
         if event.type() == QEvent.MouseButtonDblClick and model.isList(index):
-            print "Popup list editor"
             # read-only ?
             if model.flags(index) & Qt.ItemIsEditable: mode = 'w'
             else: mode = 'r'
@@ -430,6 +451,8 @@ class ElementEditorDock(QDockWidget):
         
         vbox = QVBoxLayout()
         vbox.addWidget(gb)
+        self.model = None
+        self.delegate = None
         self.tableview = QTableView()
         vbox.addWidget(self.tableview)
 
@@ -446,8 +469,45 @@ class ElementEditorDock(QDockWidget):
 
     def refreshTable(self):
         elemname = str(self.elemBox.currentText())
+        t0 = time.time()
         elems = self.parent().getVisibleElements(elemname)
-        self._addElements(elems)
+        self.parent().logger.info("Found elems: {0}".format(len(elems)))
+        t1 = time.time()
+        if self.model and self.model.rowCount() > 0:
+            del self.model
+            del self.delegate
+            #self.model.clear()
+        self.model = ElementPropertyTableModel(elems)
+        self.delegate = ElementPropertyDelegate()
+        self.tableview.reset()
+        self.tableview.setModel(self.model)
+        self.tableview.setItemDelegate(self.delegate)
+        self.model.load(elems)
+        t2 = time.time()            
+        #print "model size:", self.model.rowCount(), self.model.columnCount()
+        for i in range(self.model.rowCount()):
+            print i, self.model._elem[i].name, self.model._field[i], self.model._value[i]
+            if self.model.isHeadIndex(i):
+                self.tableview.setSpan(i, 0, 1, self.model.columnCount())
+            elif self.tableview.columnSpan(i, 0) > 1:
+                self.tableview.setSpan(i, 0, 1, 1)
+        idx0 = self.model.index(0, 0)
+        idx1 = self.model.index(self.model.rowCount() - 1,
+                                self.model.columnCount()-1)
+        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
+                        idx0, idx1)
+        #for i in range(self.model.columnCount()):
+        self.tableview.resizeColumnsToContents()
+        #rz = self.tableview.geometry()
+        #fullwidth = sum([self.tableview.columnWidth(i) for i in range(ncol)])
+        #self.tableview.setMinimumWidth(fullwidth+20)
+        #self.tableview.setMaximumWidth(fullwidth+60)
+        #self.tableview.adjustSize()
+        self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"), 
+                     self.processCell)
+
+        #self._addElements(elems)
+        print "DT:", t1 - t0, t2 - t1
 
     def refreshBox(self):
         self.noTableUpdate = True
@@ -455,7 +515,9 @@ class ElementEditorDock(QDockWidget):
         self.noTableUpdate = False
 
     def processCell(self, index):
-        print "Process cell", index.row(), index.column()
+        #print "Process cell", index.row(), index.column()
+        #print "   val:", self.model._value[index.row()][index.column()]
+        pass
 
     def _addElements(self, elems):
         #self.setVisible(True)
@@ -465,21 +527,7 @@ class ElementEditorDock(QDockWidget):
         #                        "element " + str(elemnames) + " not found")
         #    return
             #print elem.name, elem.sb, elem.fields()
-        self.model = ElementPropertyTableModel(elems=elems)
-        self.tableview.setModel(self.model)
-        self.tableview.setItemDelegate(ElementPropertyDelegate(self))
-        for i in self.model.subHeadIndex():
-            self.tableview.setSpan(i, 0, 1, self.model.columnCount()) 
-        #for i in range(self.model.columnCount()):
-        self.tableview.resizeColumnsToContents()
-        #rz = self.tableview.geometry()
-        ncol = self.tableview.model().columnCount()
-        #fullwidth = sum([self.tableview.columnWidth(i) for i in range(ncol)])
-        #self.tableview.setMinimumWidth(fullwidth+20)
-        #self.tableview.setMaximumWidth(fullwidth+60)
-        #self.tableview.adjustSize()
-        self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"), 
-                     self.processCell)
+        #self.tableview.reset()
         # wid = QWidget()
         # vbox = QVBoxLayout()
         # vbox.addWidget(QLabel("Name:   %s" % elem.name))
@@ -494,6 +542,7 @@ class ElementEditorDock(QDockWidget):
         # wid.setLayout(vbox)
         # self.addTab(wid, elem.name)
         #self.adjustSize()
+        pass
 
     def closeTab(self, index):
         self.removeTab(index)
@@ -504,7 +553,7 @@ class ElementEditorDock(QDockWidget):
         self.refreshBtn.setEnabled(v)
 
     def updateModelData(self):
-        if self.model: self.model.updateData()
+        pass
 
 class MTestForm(QDialog):
     def __init__(self, parent=None):

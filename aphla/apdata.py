@@ -14,7 +14,7 @@ import numpy as np
 import shelve
 
 import logging
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class OrmData:
     """
@@ -25,7 +25,7 @@ class OrmData:
     - *m* 2D matrix, len(bpm) * len(trim)
     """
     _fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
-    def __init__(self, datafile = None):
+    def __init__(self, datafile = None, group = None):
         # points for trim setting when calc dx/dkick
         #npts = 6
 
@@ -44,10 +44,12 @@ class OrmData:
         self._rawkick = None
         self.m = None
 
-        if datafile is not None:
+        if datafile is not None and group is not None:
+            self.load(datafile, group)
+        elif datafile is not None:
             self.load(datafile)
 
-        
+
     def _io_format(self, filename, formt):
         rt, ext = splitext(filename)
         if formt:
@@ -58,7 +60,7 @@ class OrmData:
             fmt = 'HDF5'
         return fmt
     
-    def _save_hdf5(self, filename, group = "ormdata"):
+    def _save_hdf5(self, filename, group = "orm"):
         """
         save data in hdf5 format in */group*
 
@@ -207,8 +209,10 @@ class OrmData:
         #print self.trim
 
     def getBpmNames(self):
-        """The BPM names of ORM. It has same order as appeared in orm rows. 
-        The result may have duplicate bpm names in the return list.
+        """The BPM names of ORM. 
+
+        It has same order as appeared in orm rows.  The result may have
+        duplicate bpm names in the return list.
         """
         return [v[0] for v in self.bpm]
     
@@ -220,7 +224,8 @@ class OrmData:
         return False
 
     def getTrimNames(self):
-        """
+        """a list of corrector names.
+        
         The same order as appeared in orm columns. It may have duplicate trim
         names in the return list.
         """
@@ -260,12 +265,12 @@ class OrmData:
         for i,b in enumerate(self.bpm):
             if b[0] == elem and b[2] == field: return i
         for i,t in enumerate(self.trim):
-            if b[0] == elem and b[2] == field: return i
+            if t[0] == elem and t[2] == field: return i
             
         raise ValueError("(%s,%s) are not in this ORM data" % (elem, field))
 
 
-    def update(self, src):
+    def __update(self, src):
         """
         update the data using a new OrmData object *src*
         
@@ -324,7 +329,19 @@ class OrmData:
         self.m = m
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
-        
+
+    def get(self, bpm, bpmfld, trim, trimfld):
+        """get the matrix element by bpm/trim name and field"""
+        irow, icol = None, None
+        for i,r in enumerate(self.bpm):
+            if r[0] != bpm or r[2] != bpmfld: continue
+            irow = i
+        for i,r in enumerate(self.trim):
+            if r[0] != trim or r[2] != trimfld: continue
+            icol = i
+        if irow is None or icol is None: return None
+        return self.m[irow, icol]
+
     def getSubMatrix(self, bpm, trim, **kwargs):
         """
         get submatrix for certain bpm and trim.
@@ -332,10 +349,16 @@ class OrmData:
         Parameters
         -----------
         bpm : a list of bpm (name, field) tuple
-        trim: a list of trim (name, field) tuple
+        trim : a list of trim (name, field) tuple
         ignore_unmeasured : optional, bool.
             if True, the input bpm/trim pairs which are not in the OrmData
             will be ignored. Otherwise raise ValueError.
+
+        Returns
+        --------
+        m : the matrix
+        bpmlst : a list of (bpmname, field)
+        trimlst : a list of (trimname, field)
 
         Examples
         ---------
@@ -361,21 +384,21 @@ class OrmData:
             itrim = [i for i,v in enumerate(self.trim) if (v[0], v[2]) in trim]
         
         if len(ibpm) != len(set(ibpm)): 
-            logger.warn("BPM list has duplicates")
+            _logger.warn("BPM list has duplicates")
         if len(itrim) != len(set(itrim)): 
-            logger.warn("Trim list has duplicates")
+            _logger.warn("Trim list has duplicates")
 
             
         if len(ibpm) < len(bpm):
             if not ignore_unmeasured:
                 raise ValueError("Some BPMs are absent in orm measurement")
             else:
-                logger.warn("Some BPMs not in the measured ORM are ignored")
+                _logger.warn("Some BPMs not in the measured ORM are ignored")
         if len(itrim) < len(trim):
             if not ignore_unmeasured:
                 raise ValueError("Some Trims are absent in orm measurement")
             else:
-                logger.warn("Some Trims not in the measured ORM are ignored")
+                _logger.warn("Some Trims not in the measured ORM are ignored")
         
         mat = np.take(np.take(self.m, ibpm, axis=0), itrim, axis=1)
 
@@ -383,17 +406,18 @@ class OrmData:
         trimlst = [(self.trim[i][0], self.trim[i][2]) for i in itrim]
         return mat, bpmlst, trimlst
 
-    def getMatrix(self, bpmrec, trimrec, full=True):
+    def getMatrix(self, bpmrec, trimrec, **kwargs):
         """
         return the matrix for given bpms and trims.
 
         Parameters
         -----------
-        bpmlst: list of (bpmname, field)
-        trimlst: list of (trimname, field)
-        full : bool
+        bpmrec : a list of (bpmname, field) tuple. e.g. [('BPM1', 'x')]
+        trimrec : a list of (trimname, field) tuple, similar to *bpmrec*
+        full : bool, default True
             return full matrix besides the columns and rows for given trims
             and bpms.
+        ignore : a list of element names which is ignored in the result.
 
         Returns
         --------
@@ -414,17 +438,25 @@ class OrmData:
 
         """
 
-        rowidx = [self.index(bpm, f) for bpm, f in bpmrec]
-        colidx = [self.index(cor, f) for cor, f in trimrec]
+        full = kwargs.get('full', True)
+        ignore = kwargs.get('ignore', [])
 
-        extrarow = [i for i in range(len(self.bpm)) if i not in rowidx]
-        extracol = [i for i in range(len(self.trim)) if i not in colidx]
+        _logger.info("ignore elements:{0}".format(ignore))
+        # the upper left corner, BPM/COR from input.
+        rowidx = [self.index(bpm, f) for bpm, f in bpmrec if bpm not in ignore]
+        colidx = [self.index(cor, f) for cor, f in trimrec if cor not in ignore]
+
+        extrarow = [i for i in range(len(self.bpm)) 
+                    if i not in rowidx and self.bpm[i][0] not in ignore]
+        extracol = [i for i in range(len(self.trim)) 
+                    if i not in colidx and self.trim[i][0] not in ignore]
 
         m = np.take(np.take(self.m, rowidx+extrarow, axis=0),
                     colidx+extracol, axis=1)
         brec = [(self.bpm[i][0], self.bpm[i][2]) for i in rowidx+extrarow]
         trec = [(self.trim[i][0], self.trim[i][2]) for i in colidx+extracol]
 
+        _logger.info("get BPM {0}, COR {1}".format(len(brec), len(trec)))
         return m, brec, trec
             
 
@@ -466,11 +498,12 @@ class TwissItem:
 
     def get(self, name):
         """
-        get twiss value in tuple or float
+        get twiss value in tuple or float.
 
         Parameters
         -----------
-        name: str, twiss item name
+        name : str, twiss item name: 'alpha', 'beta', 'gamma', 'phi'.
+            the item name can add postfix 'x' or 'y' if only one plane is wanted.
 
         Examples
         ---------
@@ -524,7 +557,7 @@ class Twiss:
 
     """
     def __init__(self, name):
-        self._elements = []
+        self.element = []
         self._twlist = []
         self._name = name
         self.tune = (None, None)
@@ -532,9 +565,9 @@ class Twiss:
         
     def _find_element(self, elemname):
         try:
-            i = self._elements.index(elemname)
+            i = self.element.index(elemname)
             return i
-        except IndexError:
+        except:
             return None
 
         return None
@@ -550,10 +583,10 @@ class Twiss:
             return None
 
     def __repr__(self):
-        if not self._elements or not self._twlist: return ''
+        if not self.element or not self._twlist: return ''
 
-        s = "# %d " % len(self._elements) + TwissItem.header() + '\n'
-        for i, e in enumerate(self._elements):
+        s = "# %d " % len(self.element) + TwissItem.header() + '\n'
+        for i, e in enumerate(self.element):
             s = s + "%16s " % e + self._twlist[i].__repr__() + '\n'
         return s
 
@@ -561,26 +594,25 @@ class Twiss:
         """
         add a twiss item :class:`TwissItem`
         """
-
         self._twlist.append(twi)
 
-    def getTwiss(self, col, **kwargs):
+    def getTwiss(self, elemlst, col, **kwargs):
         """
         return a list of twiss functions when given a list of element name.
         
         Parameters
         -----------
-        col : list
-            columns : 's', 'beta', 'betax', 'betay', 'alpha', 'alphax',
-            'alphay', 'phi', 'phix', 'phiy'.  If without 'x' or 'y' postfix,
-            'beta', 'alpha' and 'phi' will be expanded to two columns.
-        
+        elemlst : list. names of elements.
+        col : list. columns can be 's', 'beta', 'betax', 'betay', 'alpha',
+            'alphax', 'alphay', 'phi', 'phix', 'phiy'. If without 'x' or 
+            'y' postfix, 'beta', 'alpha' and 'phi' will be expanded to
+            two columns.
+
         Examples
         ---------
         >>> getTwiss(['E1', 'E2'], col=('s', 'beta'))
 
         """
-        elem = kwargs.get('elements', None)
         spos = kwargs.get('spos', None)
 
         if not col: return None
@@ -588,7 +620,7 @@ class Twiss:
 
         # check if element is valid
         iret = []
-        for e in elem:
+        for e in elemlst:
             i = self._find_element(e)
             if i >= 0: iret.append(i)
             elif clean: continue
@@ -629,8 +661,8 @@ class Twiss:
         """read data from HDF5 file in *group*"""
         import h5py
         f = h5py.File(filename, 'r')
-        self.element = f[group]['element']
-        self.tune = f[group]['tune']
+        self.element = list(f[group]['element'])
+        self.tune = tuple(f[group]['tune'])
         self._twlist = []
         tw = f[group]['twtable']
         m, n = np.shape(tw)
@@ -669,7 +701,7 @@ class Twiss:
             for i,v in enumerate(ihead):
                 if v[-1] is not None: lst[i] = row[v[-1]]
 
-            self._elements.append(lst[0])
+            self.element.append(lst[0])
             twi.update(lst[1:])
             self._twlist.append(twi)
         # by-pass the front-end which do not allow parameterize table name

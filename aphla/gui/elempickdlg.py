@@ -15,16 +15,16 @@ from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox,
 
 class ElementPickDlg(QDialog):
 
-    def __init__(self, elem, title='Elements:', parent=None):
+    def __init__(self, elem, dead_elem, title='Elements:', parent=None):
         super(ElementPickDlg, self).__init__(parent)
         self.elemlst = QListWidget()
         # enable multi-selection
         self.elemlst.setSelectionMode(QAbstractItemView.MultiSelection)
-        for e,chk in elem:
+        for e in elem:
             w = QListWidgetItem(e)
             w.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsSelectable |
                        Qt.ItemIsEnabled)
-            if chk: w.setCheckState(Qt.Checked)
+            if e not in dead_elem: w.setCheckState(Qt.Checked)
             else: w.setCheckState(Qt.Unchecked)
             self.elemlst.addItem(w)
 

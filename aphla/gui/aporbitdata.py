@@ -108,6 +108,7 @@ class ApVirtualElemData(ApPlotData):
         self.plane   = kw.get("plane", None)
 
         self.velem = velem
+        self.name    = velem.name
         sb, se = np.array(self.velem.sb), np.array(self.velem.se)
         if not kw.has_key('s'): kw.update({'s': 0.5*(sb+se)})
 
@@ -117,9 +118,11 @@ class ApVirtualElemData(ApPlotData):
         # prefer 'phy' unit
         if 'phy' in self.velem.getUnitSystems(field):  self.yunitsys = 'phy'
         if kw.get('update', True): self.update()
+        
+        self.yunit = self.velem.getUnit(self.yfield, self.yunitsys)
 
     def label(self):
-        return "%s [%s]" % (self.yfield, self.velem.getUnit(self.yfield))
+        return "%s [%s]" % (self.yfield, self.yunit)
 
     def update(self):
         """
@@ -129,8 +132,8 @@ class ApVirtualElemData(ApPlotData):
         i = (self.icur + 1) % self.samples
         #print "Updating orbit data"
         try:
-            self.y[i,:] = self.yscale * np.array(self.velem.get(
-                self.yfield, unitsys=self.yunitsys))
+            vy = self.velem.get(self.yfield, unitsys=self.yunitsys)
+            self.y[i,:] = self.yscale * np.array(vy)
         except:
             logger.error("Can not get data '%s'" % self.yfield)
             raise
@@ -145,4 +148,11 @@ class ApVirtualElemData(ApPlotData):
 
     def names(self):
         return self.velem._name
+
+    def remove(self, name):
+        if name not in self.velem._name: return
+        i = self.velem._name.index(name)
+        for fld,act in self.velem._field.iteritems():
+            pv = act.pvrb[i]
+            act.remove(pv)
 

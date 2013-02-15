@@ -1,5 +1,7 @@
 :orphan:
 
+.. _nsls2-softreq:
+
 NSLS2 Commissioning Requirement
 ===============================================================
 
@@ -9,7 +11,6 @@ NSLS2 Commissioning Requirement
 .. role:: hladetails
 
 
-.. _Software Requirement:
 
 This chapter describes software requirement for NSLS-II
 commissioning. This list is mainly from [Willeke2009]_ and [Krinsky2010]_ (See `References`_)
@@ -246,6 +247,8 @@ physics, data acquisition, hardware control, and so on, can work
 together effectively and productively.
 
 
+.. _nsls2-software-plan:
+
 Planned and Implemented Software
 ---------------------------------
 
@@ -277,11 +280,16 @@ starting points for further development.
 - :hladone:`Unit conversion in python-aphla` (L.Yang)
 - :hla:`MASAR and Smooth Ramping` (G.Shen, machine save and restore)
     - :hladone:`list channels we are interested.`
-    - :hladone:`ramp (i.e. linear interpolation) whole group at certain rate.`
+    - :hla:`ramp (i.e. linear interpolation) whole group at certain rate.`
     - :hladone:`searching for channels with wild-card`
-    - :hladone:`save/restore state of the machine`
-    - :hla:`linear interpolation to a saved state.`
+    - :hladone:`save state of the machine`
+    - :hla:`restore saved state of the machine`
+    - :hla:`linear interpolation from current state to a saved state.`
     - :hla:`open-end ramping with weight on each PV`
+    - :hla:`manage, editing capability for stored accelerator status.`
+    - :hla:`smoothly ramp from one stage to another.`
+    - :hla:`smooth ramping of one set of magnets (PVs)`
+    - :hla:`compare two stages, online and saved data, two data file.`
 
 - client to explore archived data (CSS, command line tool)
     - in certain time frame
@@ -317,12 +325,6 @@ starting points for further development.
     - Beam containment status display and control
     - Top-off status monitor
     - Machine protection system display and control
-
-- :hla:`MASAR: Accelerator parameter store/restore (*)` (G.Shen)
-    - :hla:`manage, editing capability for stored accelerator status.`
-    - :hla:`smoothly ramp from one stage to another.`
-    - :hla:`smooth ramping of one set of magnets (PVs)`
-    - :hla:`compare two stages, online and saved data, two data file.`
 
 - Temperature monitoring display (CSS panel)
     - Tunnel air temperature and humidity monitor
@@ -381,7 +383,7 @@ which are easier for us to integrate and expand.
 - :hla:`Turn-by-turn BPM data` 
     - :hla:`closed orbit established using corrector and single shot BPM
       data` (S. Seletskiy)
-    - :hladone:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
+    - :hla:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
     - :hla:`Realtime tune based on turn-by-turn BPM` (Diagnostics, PV/CF)
     - :hladone:`BPM buttons readout.` (PV/CF)
     - :hla:`Correct orbit based on single shot orbit` (S. Seletskiy)

@@ -302,8 +302,56 @@ HLA Lib Summary
 The following are some common functions. Please see :doc:`libref` for a list of
 documented modules, methods and functions.
 
-.. include:: hlasummary.txt
+.. currentmodule:: aphla
 
+.. autosummary::
+   :toctree: generated
+
+   aphla.calcLifetime
+   aphla.correctOrbit
+   aphla.eget
+   aphla.getBeamlineProfile
+   aphla.getBeta
+   aphla.getBpms
+   aphla.getChromaticity
+   aphla.getChromaticityRm
+   aphla.getClosest
+   aphla.getCurrent
+   aphla.getDispersion
+   aphla.getDistance
+   aphla.getElements
+   aphla.getEta
+   aphla.getExactElement
+   aphla.getFastOrbit
+   aphla.getFftTune
+   aphla.getGroupMembers
+   aphla.getGroups
+   aphla.aptools.getLifetime
+   aphla.getLocations
+   aphla.getNeighbors
+   aphla.getOrbit
+   aphla.getPhase
+   aphla.getPvList
+   aphla.getQuads
+   aphla.getRfFrequency
+   aphla.getRfVoltage
+   aphla.getTbtOrbit
+   aphla.getTune
+   aphla.getTuneRm
+   aphla.getTunes
+   aphla.meastwiss.measBeta
+   aphla.meastwiss.measChromaticity
+   aphla.meastwiss.measDispersion
+   aphla.aptools.measOrbitRm
+   aphla.putRfFrequency
+   aphla.aptools.saveImage
+   aphla.aptools.setLocalBump
+   aphla.stepRfFrequency
+
+..   aphla.fitGaussian1
+..   aphla.fitGaussianImage
+
+.. include:: hlasummary.txt
 
 .. 
   /.. math::

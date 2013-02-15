@@ -42,7 +42,7 @@ end
 AD = getad;
 AD.Machine = 'NSLS2';          % Will already be defined if setpathmml was used
 AD.SubMachine = 'V2SR';         % Will already be defined if setpathmml was used
-AD.MachineType = 'Transport';  % Will already be defined if setpathmml was used
+AD.MachineType = 'StorageRing';  % Will already be defined if setpathmmal was used
 AD.OperationalMode = '';       % Gets filled in later
 AD.HarmonicNumber = [];
 

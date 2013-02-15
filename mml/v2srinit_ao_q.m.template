@@ -9,7 +9,7 @@ AO.%(q_family)s.CommonNames = [ %(q_commonnames)s ];
 AO.%(q_family)s.Monitor.MemberOf = {'QUAD'; 'Magnet'; 'PlotFamily'; 'Monitor'; 'Save';};
 AO.%(q_family)s.Monitor.Mode = 'Simulator';
 AO.%(q_family)s.Monitor.DataType = 'Scalar';
-AO.%(q_family)s.Monitor.ChannelNames = { %(q_monitor_pv)s };
+AO.%(q_family)s.Monitor.ChannelNames = [ %(q_monitor_pv)s ];
 
 AO.%(q_family)s.Monitor.HW2PhysicsFcn = @hw2at;
 AO.%(q_family)s.Monitor.Physics2HWFcn = @at2hw;
@@ -22,14 +22,14 @@ AO.%(q_family)s.Monitor.PhysicsUnits = '1/Meter^2';
 AO.%(q_family)s.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
 AO.%(q_family)s.Setpoint.Mode = 'Simulator';
 AO.%(q_family)s.Setpoint.DataType = 'Scalar';
-AO.%(q_family)s.Setpoint.ChannelNames = { %(q_setpoint_pv)s };
+AO.%(q_family)s.Setpoint.ChannelNames = [ %(q_setpoint_pv)s ];
 
 AO.%(q_family)s.Setpoint.HW2PhysicsFcn = @hw2at;
 AO.%(q_family)s.Setpoint.Physics2HWFcn = @at2hw;
 AO.%(q_family)s.Setpoint.Units        = 'Hardware';
 AO.%(q_family)s.Setpoint.HWUnits      = '1/Meter^2';
 AO.%(q_family)s.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.%(q_family)s.Setpoint.Range = [0 160];
+AO.%(q_family)s.Setpoint.Range = [-1 1];
 AO.%(q_family)s.Setpoint.Tolerance = .1;
 AO.%(q_family)s.Setpoint.DeltaRespMat = 1;
 %%AO.%(q_family)s.Setpoint.RampRate = .15;
@@ -49,7 +49,7 @@ AO.%(q_family)s.Setpoint.DeltaRespMat = 1;
 AO.%(q_family)s.OnControl.MemberOf = {'QUAD'; 'Magnet'; 'PlotFamily'; 'Boolean Control';};
 AO.%(q_family)s.OnControl.Mode = 'Simulator';
 AO.%(q_family)s.OnControl.DataType = 'Scalar';
-AO.%(q_family)s.OnControl.ChannelNames = { %(q_oncontrol_pv)s };
+AO.%(q_family)s.OnControl.ChannelNames = [ %(q_oncontrol_pv)s ];
 
 AO.%(q_family)s.OnControl.HW2PhysicsParams = 1;
 AO.%(q_family)s.OnControl.Physics2HWParams = 1;
@@ -82,7 +82,7 @@ AO.%(q_family)s.OnControl.Range = [0 1];
 AO.%(q_family)s.Fault.MemberOf = {'QUAD'; 'Magnet'; 'PlotFamily'; 'Boolean Monitor';};
 AO.%(q_family)s.Fault.Mode = 'Simulator';
 AO.%(q_family)s.Fault.DataType = 'Scalar';
-AO.%(q_family)s.Fault.ChannelNames = { %(q_fault_pv)s };
+AO.%(q_family)s.Fault.ChannelNames = [ %(q_fault_pv)s ];
 
 AO.%(q_family)s.Fault.HW2PhysicsParams = 1;
 AO.%(q_family)s.Fault.Physics2HWParams = 1;
