@@ -3,7 +3,7 @@
 :author: Lingyun Yang lyyang@bnl.gov
 
 This is the main file for GUI app `aporbit`. A high level viewer and editor.
-pp"""
+"""
 
 # for debugging, requires: python configure.py --trace ...
 if 1:
@@ -27,21 +27,20 @@ import applotresources
 
 from elempickdlg import ElementPickDlg
 #from orbitconfdlg import OrbitPlotConfig
-from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
+from aporbitplot import ApOrbitPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
 from aporbitdata import ApVirtualElemData
 from aporbitphy import *
 from elemeditor import *
 
 
-import time
 from PyQt4.QtCore import QSize, SIGNAL, QThread, Qt, QObject
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
-    QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor
-)
+    QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor)
 import PyQt4.Qwt5 as Qwt
 
+import time
 import numpy as np
 
 class QTextEditLoggingHandler(logging.Handler):
@@ -54,7 +53,7 @@ class QTextEditLoggingHandler(logging.Handler):
 
     def emit(self, record):
         self.textedit.appendPlainText(self.format(record))
-        self.textedit.moveCursor(QTextCursor.End)
+        #self.textedit.moveCursor(QTextCursor.End)
 
 
 class OrbitPlotMainWindow(QMainWindow):
@@ -72,6 +71,39 @@ class OrbitPlotMainWindow(QMainWindow):
         for m in machines: 
             self._machlat[m] = {}
 
+        # logging
+        self.logdock = QDockWidget("Log")
+        self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        textedit = QPlainTextEdit(self.logdock)
+        
+        self.logger = logging.getLogger(__name__)
+        self.guilogger = logging.getLogger("aphla.gui")
+        # the "aphla" include lib part logging. When the lib is inside
+        # QThread, logging message will be sent to TextEdit which is cross
+        # thread.
+        # self.guilogger = logging.getLogger("aphla")
+        handler = QTextEditLoggingHandler(textedit)
+        self.guilogger.addHandler(handler)
+        self.guilogger.setLevel(logging.INFO)
+        self.logdock.setWidget(textedit)
+        self.logdock.setAllowedAreas(Qt.BottomDockWidgetArea)
+        self.logdock.setFeatures(QDockWidget.DockWidgetMovable|
+                                 QDockWidget.DockWidgetClosable)
+        self.logdock.setFloating(False)
+        self.logdock.setMinimumHeight(20)
+        self.logdock.setMaximumHeight(100)
+        self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.logdock.resize(200, 60)
+        #print self.logdock.sizeHint()
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.logdock)
+        #print self.logdock.sizeHint()
+        #print self.logdock.minimumSize()
+        #print self.logdock.maximumSize()
+        #self.logger.info("INFO")
+        #self.logdock.setMinimumHeight(40)
+        #self.logdock.setMaximumHeight(160)
+
+        ## DCCT current plot
         self.dcct = DcctCurrentPlot()
         #self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
         self.dcct.setMinimumHeight(100)
@@ -85,6 +117,7 @@ class OrbitPlotMainWindow(QMainWindow):
         
         self.dcct.updatePlot()
 
+        ## MDI area
         self.mdiarea = QMdiArea()
         self.physics = ApOrbitPhysics(mdiarea = self.mdiarea)
         self.live_orbit = True
@@ -109,34 +142,6 @@ class OrbitPlotMainWindow(QMainWindow):
         self._dead_bpm = [] # dead BPM
         self._dead_cor = [] # dead corrector
 
-        # logging
-        self.logdock = QDockWidget("Log")
-        self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        textedit = QPlainTextEdit()
-        
-        self.logger = logging.getLogger(__name__)
-        #self.guilogger = logging.getLogger("aphla.gui")
-        self.guilogger = logging.getLogger("aphla")
-        handler = QTextEditLoggingHandler(textedit)
-        self.guilogger.addHandler(handler)
-        self.guilogger.setLevel(logging.INFO)
-        self.logdock.setWidget(textedit)
-        self.logdock.setAllowedAreas(Qt.BottomDockWidgetArea)
-        self.logdock.setFeatures(QDockWidget.DockWidgetMovable|
-                                 QDockWidget.DockWidgetClosable)
-        self.logdock.setFloating(False)
-        self.logdock.setMinimumHeight(20)
-        self.logdock.setMaximumHeight(100)
-        self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        self.logdock.resize(200, 60)
-        #print self.logdock.sizeHint()
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.logdock)
-        #print self.logdock.sizeHint()
-        #print self.logdock.minimumSize()
-        #print self.logdock.maximumSize()
-        #self.logger.info("INFO")
-        #self.logdock.setMinimumHeight(40)
-        #self.logdock.setMaximumHeight(160)
 
         self.createMenuToolBar()
 
@@ -147,10 +152,11 @@ class OrbitPlotMainWindow(QMainWindow):
         self.machinit = ApMachInitThread(default_machine, default_lat)
         self.connect(self.machinit, SIGNAL("initialized(PyQt_PyObject)"),
                      self._mach_init_done)
-        #self.machinit.moveToThread(self._machinit_thread)
-        #_machinit_thread.start(QThread.LowPriority)
+        ###self.machinit.moveToThread(self._machinit_thread)
+        ###_machinit_thread.start(QThread.LowPriority)
+        self.logger.info("backgroud initializing {0}.{1} ...".format(
+            default_machine, default_lat))
         self.machinit.start()
-        # print "Thread started", self.machinit.isRunning()
 
         
         # update at 1/2Hz
@@ -164,19 +170,25 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.initMachine("nsls2v2")
         #self._newVelemPlot("V2SR", aphla.machines.HLA_VBPM, 'x', 
         #                   "H Orbit", c = None)
+        #print "Thread started", self.machinit.isRunning()
 
-    def _mach_init_done(self, mach):
-        #print "Done with initializing", self.machinit.mach, \
-        #    self.machinit.latname
-        self.logger.info("'{0}' initialization finished".format(mach))
-        self.machinit.quit()
-        #print aphla.machines.getLattice()
+
+    def _mach_init_done(self, machlat):
+        # convert from tuple to mach and lat
+        mach, latname = machlat
+        self.logger.info("'{0}.{1}' initialized".format(mach, latname))
+        #self.machinit.quit()
+        # print aphla.machines.getLattice()
         latlst = {}
-        for latname in ap.machines.lattices():
-            lat = ap.machines.getLattice(latname)
-            if lat.machine == str(mach): latlst[latname] = lat
-        self._machlat[str(mach)] = latlst
-        self._update_mach_lat(str(mach), "V2SR")
+        for name in ap.machines.lattices():
+            lat = ap.machines.getLattice(name)
+            if lat.machine == mach: latlst[name] = lat
+        self._machlat[mach] = latlst
+        if latname not in latlst:
+            errmsg = "'{0}' not available in aphla lib".format(latname)
+            self.logger.error(errmsg)
+            raise RuntimeError(errmsg)
+        self._update_mach_lat(mach, latname)
 
     def _update_mach_lat(self, vm, lat = None):
         #print "updating box for '%s'" % vm, lat
@@ -408,6 +420,7 @@ class OrbitPlotMainWindow(QMainWindow):
             if vm not in self._machlat or not self._machlat[vm]:
                 self.logger.info("initializing machine '%s'" % vm)
                 aphla.machines.init(vm)
+                mrec = {}
                 for latname in aphla.machines.lattices():
                     lat = aphla.machines.getLattice(latname)
                     if lat.machine != vm: continue
@@ -425,7 +438,7 @@ class OrbitPlotMainWindow(QMainWindow):
             self.machBox.setCurrentIndex(self.machBox.findText("(None)"))
             self.latBox.setDisabled(True)
             self.latBox.clear()
-
+            self.logger.exception("machine '%s' can not be initialized" % vm)
 
     def _current_mach_lat(self):
         """return the current machine name and lattice object"""
@@ -447,12 +460,6 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def click_machine(self, act):
         self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
-
-    def click_lattice(self):
-        #print self.sender()
-        #print aphla.machines.lattices()
-        latname = str(self.sender().text())
-        if latname: self.__setLattice(latname)
 
     def _newVelemPlots(self, velem, field, title, **kw):
         """plot the field(s) for element"""
@@ -520,46 +527,80 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def newCorrectorPlots(self):
         mach, lat = self._current_mach_lat()
-        cors = [e for e in lat.getElementList('COR') 
-                if e.name not in self._dead_bpm]
         magprof = lat.getBeamlineProfile()
-        vcorx = aphla.element.merge(cors, field='x')
-        p1s = self._newVelemPlots(vcorx, 'x', "Hori. Corr", 
-                                  lat = lat.name, mach=mach, magprof=magprof,
-                                  c = Qt.red)
-        vcory = aphla.element.merge(cors, field='y')
-        p2s = self._newVelemPlots(vcory, 'y', "Vert. Corr", 
-                                  lat = lat.name, mach=mach, magprof=magprof,
-                                  c = Qt.blue)
+        cors = [e for e in lat.getElementList('COR') 
+                if e.name not in self._dead_cor]
+        #
+        if 'HCOR' in lat.getGroups():
+            hcors = [e for e in lat.getElementList('HCOR') 
+                     if e.name not in self._dead_cor]
+        else: 
+            hcors = cors
+        
+        if hcors:
+            vhcor = aphla.element.merge(hcors, field='x')
+            p1s = self._newVelemPlots( vhcor, 'x', "Hori. Corr", 
+                lat = lat.name, mach=mach, magprof=magprof, c = Qt.red)
+        else:
+            self.logger.error("no HCOR/COR found for '{0}.{1}'".format(
+                mach, lat.name))
+
+        if 'VCOR' in lat.getGroups():
+            vcors = [e for e in lat.getElementList('VCOR') 
+                     if e.name not in self._dead_cor]
+        else: 
+            vcors = cors
+        
+        if vcors:
+            vvcor = aphla.element.merge(vcors, field='y')
+            p2s = self._newVelemPlots(vvcor, 'y', "Vert. Corr",
+                lat = lat.name, mach=mach, magprof=magprof, c = Qt.blue)
+        else:
+            self.logger.error("no VCOR/COR found for '{0}.{1}'".format(
+                mach, lat.name))
+        
         if self.timerId is None: self.timerId = self.startTimer(self.dt)
         
     def newPlot(self):
-        lat = str(self.latBox.currentText())
-        famname = self.sender().text()
-        if not lat or lat not in aphla.machines.lattices():
-            print "New plot:", famname, "are not available"
-            return
+        mach, lat = self._current_mach_lat()
+        magprof = lat.getBeamlineProfile()
 
+        famname = self.sender().text()
         if famname == "H Orbit":
-            self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'x',
-                               "Hori. Orbit")
+            vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
+            if vbpm:
+                self._newVelemPlots(vbpm, 'x', "Hori. Orbit",
+                    lat = lat.name, mach=mach, magprof=magprof, c=Qt.red)
+            else:
+               self.logger.error("no '{0}' found".format(
+                    aphla.machines.HLA_VBPM))
         elif famname == "V Orbit": 
-            self._newVelemPlot(lat, aphla.machines.HLA_VBPM, 'y',
-                               "Vert. Orbit", Qt.blue)
+            vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
+            self._newVelemPlots(vbpm, 'y', "Vert. Orbit", 
+                lat = lat.name, mach=mach, magprof=magprof, c=Qt.blue)
         elif famname == "H Corrector":
-            self._newVelemPlot(lat, aphla.machines.HLA_VHCOR, 'x', "Hori. Corr")
+            velem = lat._find_exact_element(aphla.machines.HLA_VHCOR)
+            self._newVelemPlots(velem, 'x', "Hori. Corr",
+                lat = lat.name, mach=mach, magprof=magprof)
         elif famname == "V Corrector":
-            self._newVelemPlot(lat, aphla.machines.HLA_VVCOR, 'y', "Vert. Corr",
-                               Qt.blue)
+            velem = lat._find_exact_element(aphla.machines.HLA_VHCOR)
+            self._newVelemPlots(velem, 'y', "Vert. Corr",
+                lat = lat.name, mach=mach, magprof=magprof, c=Qt.blue)
         elif famname == "Quad":
             # plot all fields
-            self._newVelemPlot(lat, aphla.machines.HLA_VQUAD, None,
-                               "Quadrupole", Qt.black)
+            velem = lat._find_exact_element(aphla.machines.HLA_VQUAD)
+            if velem:
+                self._newVelemPlots(velem, None, "Quadrupole", 
+                    lat = lat.name, mach=mach, magprof=magprof, c=Qt.black)
+            else:
+               self.logger.error("no '{0}' found".format(
+                    aphla.machines.HLA_VQUAD))
         elif famname == "Sext":
             # plot all fields
-            self._newVelemPlot(lat, aphla.machines.HLA_VSEXT, None,
-                               "Sextupole", Qt.black)
-            
+             velem = lat._find_exact_element(aphla.machines.HLA_VSEXT)
+             self._newVelemPlots(velem, None, "Sextupole",
+                lat = lat.name, mach=mach, magprof=magprof, c=Qt.black)
+
         #self.mdiarea.cascadeSubWindows()
         #print self.mdiarea.subWindowList()
         if self.timerId is None: self.timerId = self.startTimer(self.dt)
@@ -639,12 +680,6 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def viewDcctPlot(self, on):
         self.dcct.setVisible(on)
-
-    def _active_plots(self):
-        i = self.tabs.currentIndex()
-        itab = self.tabs.currentWidget()
-        return [v for v in itab.findChildren(ApPlot)]
-        #return self.tabs.findChildren()
 
     def liveData(self, on):
         """Switch on/off live data taking"""
@@ -766,6 +801,7 @@ def main(par=None):
     mlist = os.environ.get('HLA_MACHINE_LIST', '').split()
     mach = os.environ.get('HLA_MACHINE', None)
     if not mlist: mlist = aphla.machines.machines()
+    print "Machines:", mlist
     demo = OrbitPlotMainWindow(machines=mlist, default_machine=mach)
     #demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")

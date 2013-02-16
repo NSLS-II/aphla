@@ -654,7 +654,14 @@ class T060_Tunes(unittest.TestCase):
 
     def test_meas_beta_l2(self):
         qs = ap.getGroupMembers(['C30', 'QUAD'])
-        k1, nu, beta = ap.measBeta(qs)
+        beta, k1, nu = ap.measBeta(qs, full=True)
+        self.assertEqual(np.shape(beta), (len(qs), 3))
+        #self.assertEqual(np.shape(k1)[1], 3)
+        self.assertEqual(np.shape(k1)[0], len(qs))
+        self.assertEqual(np.shape(nu)[0], len(qs))
+        self.assertEqual(np.shape(k1)[1], np.shape(nu)[1])
+        #self.assertEqual(np.shape(k1)[0], len(qs))
+
         if PLOTTING:
             for i,q in enumerate(qs):
                 plt.clf()
@@ -746,10 +753,9 @@ class T060_Tunes(unittest.TestCase):
         self.assertNotEqual(tunes0b[1], tunes1[1])
         
 
-    @unittest.skip
+    @unittest.skip("not implemented")
     def test_chromaticities(self):
-        lat = ap.machines.getLattice()
-        ch = lat.getChromaticities()
+        ch = ap.getChromaticities()
         self.assertEqual(abs(ch[0]), 0)
         self.assertEqual(abs(ch[1]), 0)
         pass

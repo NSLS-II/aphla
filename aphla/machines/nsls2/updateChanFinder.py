@@ -46,6 +46,7 @@ cfinput = {
 OWNER = 'cf-aphla'
 PRPTOWNER = 'cf-asd'
 
+
 def simple_test():
     cf = ChannelFinderClient(**cfinput)
     #cf.set(property=Property('test-prop1', 'lyyang', 'v1'))
@@ -89,6 +90,23 @@ def simple_test():
     #        for p in ch.Properties: 
     #            print p.Name,"=",p.Value,", ", 
     #        print " /"
+
+def run_simple_task():
+    cf = ChannelFinderClient(**cfinput)
+
+    chs = cf.find(property=[('elemType', 'RFCAVITY')])
+    if chs is not None:
+        for ch in chs:
+            print ch.Name,
+            for p in ch.Properties:
+                print p.Name,"=",p.Value,", ",
+            print " /"
+            #addPvProperty(cf, ch.Name, "elemPosition", "633.566", PRPTOWNER)
+            #addPvProperty(cf, ch.Name, "elemIndex", "2928", PRPTOWNER)
+            #addPvProperty(cf, ch.Name, "elemLength", "0.0", PRPTOWNER)
+            #addPvProperty(cf, ch.Name, "cell", "C24", PRPTOWNER)
+            addPvProperty(cf, ch.Name, "girder", "G", PRPTOWNER)
+
 
 def hasPvs(cf, pvs):
     """check if the pvs exist"""
@@ -433,8 +451,9 @@ if __name__ == "__main__":
         cfs_append_from_csv1(arg.csv1, update_only = arg.update_only)
     elif arg.csv2:
         cfs_append_from_csv2(arg.csv2, update_only = arg.update_only)
-
-
+    else:
+        #cf = ChannelFinderClient(**cfinput)
+        run_simple_task()
 
     #addPvTags('LTB:MG{HCor:2BD1}Fld-SP', 'aphla.sys.LTD1')
     #addPvTags('LTB:MG{VCor:2BD1}Fld-SP', 'aphla.sys.LTD1')

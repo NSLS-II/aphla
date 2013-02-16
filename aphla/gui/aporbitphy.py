@@ -5,8 +5,8 @@ Physics Routines for aporbit
 """
 
 import aphla as ap
-from PyQt4.QtCore import QObject, Qt, QSettings, QSize, QThread, SIGNAL
-from PyQt4.QtGui import QApplication, QBrush, QMdiArea, QPen
+from PyQt4.QtCore import QObject, Qt, QSettings, QSize, QString, QThread, SIGNAL
+from PyQt4.QtGui import QApplication, QBrush, QMdiArea, QMessageBox, QPen
 import PyQt4.Qwt5 as Qwt
 
 from elempickdlg import ElementPickDlg
@@ -22,17 +22,25 @@ class ApMachInitThread(QThread):
         super(ApMachInitThread, self).__init__()
         self.mach = mach
         self.latname = lat
-        print "init:", self.mach, self.latname
 
     def run(self):
-        print "in machinit", self.mach, self.latname
-        #for i in range(10):
-        #    time.sleep(1)
-        ap.machines.init(self.mach)
-        if self.latname: ap.machines.use(self.latname)
-        print "finished"
-        self.emit(SIGNAL("initialized(PyQt_PyObject)"), self.mach)
+        #
+        # Note: logging is not recommended: Cross Thread signal.
+        # 
+        #print "initializing ", self.mach, self.latname
+        #_logger.info("background initializing {0}.{1}".format(
+        #    self.mach, self.latname))
 
+        ap.machines.init(self.mach)
+        #print "initialized ", self.mach, self.latname
+        if self.latname: ap.machines.use(self.latname)
+        else: self.latname = ap.machines.getLattice().name
+        #_logger.info("initialized {0}, using {1}".format(
+        #    self.mach, self.latname))
+        # send the signal to caller thread
+        self.emit(SIGNAL("initialized(PyQt_PyObject)"), 
+                  (self.mach, self.latname))
+        #print "signal sent"
 
 class ApOrbitPhysics:
     def __init__(self, mdiarea):

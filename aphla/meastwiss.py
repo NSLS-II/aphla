@@ -101,9 +101,11 @@ def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
     Parameters
     -----------
     elem : BPM name, list or pattern
-    df : frequency change MHz
-    alphac : 
-    gamma : 
+    df : float. frequency change MHz
+    alphac : float. momentum compaction factor.
+    gamma : float. beam energy.
+    num_points : int. points to fit line
+    full : reserved.
 
     Returns
     --------
@@ -166,8 +168,10 @@ def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
 
 
 def measChromaticity(gamma = 3.0e5/.511, alphac = 3.6261976841792413e-04):
-    """
-    Measure the chromaticity
+    """Measure the chromaticity
+
+    Parameters
+    -----------
     """
     eta = alphac - 1/gamma/gamma
 
