@@ -19,7 +19,7 @@ from PyQt4.QtGui import (
     QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
     QMessageBox, QPainter, QPixmap, QPrintDialog, QPushButton,
     QPrinter, QSpinBox, QPen, QBrush, QFontMetrics, QSizePolicy,
-    QMdiSubWindow, QTableWidget)
+    QMdiSubWindow, QTableWidget, QHBoxLayout, QVBoxLayout)
 
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
@@ -648,8 +648,8 @@ class ApPlotWidget(QWidget):
     def __init__(self, parent = None, iconsize = 24, title=None):
         super(ApPlotWidget, self).__init__(parent)
 
-        majbox = QGridLayout()
-
+        #majbox = QGridLayout()
+        hbox = QHBoxLayout()
         icol = 0
         for icon,act in [(":/view_zoom_xy.png", self.autoScaleXY),
                          (":/view_zoomin_y.png", self.zoomInY),
@@ -659,24 +659,29 @@ class ApPlotWidget(QWidget):
                          (":/view_zoomout_x.png", self.zoomOutX),
                          (":/view_zoom_x.png", self.autoScaleX)]:
             bt = ApPlotControlButton(iconres=icon, iconsize=24, action = act)
-            majbox.addWidget(bt, 0, icol)
-            majbox.setColumnStretch(icol, 0)
+            #majbox.addWidget(bt, 0, icol)
+            #majbox.setColumnStretch(icol, 0)
+            hbox.addWidget(bt)
             icol = icol + 1
 
+        ## a button has menu
         self.moreopt = QMenu("")
         a1 = QAction(QIcon(":/file_quit.png"), "&Quit", self)
         a1.setToolTip("Quit the application")
         a1.setStatusTip("Quit the application")
         a1.setCheckable(True)
-        #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
+        ##fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
         self.connect(a1, SIGNAL("toggled(bool)"), self.a1toggle)
-        self.moreopt.addAction(a1)
+        #self.moreopt.addAction(a1)
+        #self.moreopt.addAction("Edit Elements", self.editElements)
+        #bt = QPushButton("More")
+        #bt.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        #bt.setMenu(self.moreopt)
+        #majbox.addWidget(bt, 0, icol)
+        #majbox.setColumnStretch(icol, 0)
+        #hbox.addWidget(bt)
 
-        bt = QPushButton("More")
-        bt.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        bt.setMenu(self.moreopt)
-        majbox.addWidget(bt, 0, icol)
-        majbox.setColumnStretch(icol, 0)
+        hbox.addStretch()
         icol += 1
 
         self.live = True
@@ -684,14 +689,22 @@ class ApPlotWidget(QWidget):
         self.aplot.plotLayout().setCanvasMargin(4)
         self.aplot.plotLayout().setAlignCanvasToScales(True)
 
-        majbox.addWidget(self.aplot, 1, 0, 1, 10)
+        vbox = QVBoxLayout()
+        vbox.addLayout(hbox)
+        vbox.addWidget(self.aplot)
+        #majbox.addWidget(self.aplot, 1, 0, 1, 10)
 
         self.title = QLabel()
-        ncol = majbox.columnCount()
-        majbox.addWidget(self.title, 0, ncol-1)
+        #ncol = majbox.columnCount()
+        #majbox.addWidget(self.title, 0, ncol-1)
         if title: self.title.setText(title)
         #majbox.setColumnStretch(3, 1)
-        self.setLayout(majbox)
+        self.setLayout(vbox)
+
+    def editElements(self):
+        ax = self.aplot.axisScaleDiv(Qwt.QwtPlot.xBottom)
+        xl, xr =  (ax.lowerBound(), ax.upperBound())
+        self.emit(SIGNAL("editVisibleElements(float, float)"), xl, xr)
 
     def setMagnetProfile(self, magnet_profile):
         self.aplot.setMagnetProfile(magnet_profile)
@@ -802,6 +815,10 @@ class ApMdiSubPlot(QMdiSubWindow):
     def elementSelected(self, elem):
         eleminfo = [self.data.machine, self.data.lattice, elem]
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), eleminfo)
+
+    def editElements(self):
+        self.emit(SIGNAL("editVisibleElements()"))
+
 
     def currentXlim(self):
         """a tuple of (xmin, xmax)"""
