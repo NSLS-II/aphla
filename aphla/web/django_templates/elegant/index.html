@@ -1,0 +1,9 @@
+{% if latest_ch_list %}
+    <ul>
+    {% for ch in latest_ch_list %}
+        <li><a href="/polls/{{ ch.id }}/">{{ ch.pv }}</a>, {{ch.elemName}} </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No pvs are available.</p>
+{% endif %}

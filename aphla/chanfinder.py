@@ -320,7 +320,8 @@ class ChannelFinderAgent(object):
         prpts.append("tags")
         c = conn.cursor()
         c.execute("drop table if exists " + tbl)
-        c.execute("create table " + tbl + "(" + ','.join(prpts) + ")")
+        c.execute("create table " + tbl + "(id integer NOT NULL PRIMARY KEY, "
+                  + ','.join(prpts) + ")")
         for r in self.rows:
             pv = r[0]
             k,v0 = zip(*(r[1].items()))
@@ -328,7 +329,7 @@ class ChannelFinderAgent(object):
             query = "insert into " + tbl + "(pv," + ",".join(k) +  \
                     ", tags) values (" + ",".join(["?"] * (len(k)+2)) + ")"
             c.execute(query, v)
-            
+
         conn.commit()
 
     def _export_csv_1(self, fname):
