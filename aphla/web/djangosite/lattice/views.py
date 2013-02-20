@@ -39,3 +39,42 @@ def contact(request):
         form = ContactForm()
 
     return render(request, 'lattice/contact.html', {'form': form})
+
+def elegant(request):
+    elemdeflst, elemidx, elemlst = [], {}, []
+    for s in open('lattice/ring_par.txt', 'r').readlines()[3:]:
+        name, tp, L, se, k1, k2, angle, km = (s.split() + [None, None])[:8]
+        if name == '_BEG_': continue
+        rec = "%s: %s" % (name, tp)
+        if tp in ['MARK', 'BPM']:
+            pass
+        elif tp in ['FTRIM', 'SQ_TRIM', 'TRIMD']:
+            rec = "{0}: KICK".format(name) 
+        elif tp == 'TRIMX':
+            rec = "{0}: HKICK".format(name) 
+        elif tp == 'TRIMY':
+            rec = "{0}: VKICK".format(name) 
+        elif tp == 'DRIF':
+            rec += ", L={0}".format(L)
+        elif tp == 'DIPOLE':
+            rec += ", L={0}, angle={1}".format(L, angle)
+        elif tp == 'QUAD':
+            rec += ", L={0}, K1={1}".format(L, k1)
+        elif tp == 'SEXT':
+            rec += ", L={0}, K2={1}".format(L, k2)
+        elif tp in ['IVU', 'DW', 'EPU']:
+            rec = "{0}: DRIFT, L={1}".format(name, L)
+        else:
+            raise ValueError("unknow type {0} for '{1}'".format(tp, name))
+
+        if name not in elemidx:
+            elemdeflst.append(rec)
+            elemidx.setdefault(name, len(elemdeflst)-1)
+        elif rec != elemdeflst[elemidx[name]]:
+            raise RuntimeError("{0} was defined as {1}, different from this new definition '{2}'".format(name, elemdeflst[elemidx[name]], rec))
+
+        elemlst.append(name)
+
+    template = loader.get_template('lattice/lattice.html')
+    context = Context({'element_deflist': elemdeflst, 'element_list': elemlst,})
+    return HttpResponse(template.render(context))

@@ -310,18 +310,38 @@ class ChannelFinderAgent(object):
         """
         export to sqlite table, drop if exists.
         """
+        vacharlen = [8, 16, 32, 128]
         prpts, tags = set(), set()
+        prptlen = {'pv': 16, 'tags': 32}
         for r in self.rows:
+            prptlen['pv'] = max(prptlen['pv'], len(r[0]))
             prpts.update(r[1].keys())
+            for k,v in r[1].items():
+                prptlen.setdefault(k, 8)
+                prptlen[k] = max(prptlen[k], len(v))
+
             tags.update(r[2])
+            prptlen['tags'] = max(prptlen['tags'], len(','.join(r[2])))
+
         conn = sqlite3.connect(fname)
         prpts = sorted(prpts)
         prpts.insert(0, "pv")
         prpts.append("tags")
+        prptrec = []
+        for k in prpts:
+            if prptlen[k] > 255:
+                raise ValueError("{0} is too long".format(k))
+            elif prptlen[k] > 127: prptrec.append(k + " VARCHAR(255)")
+            elif prptlen[k] > 63: prptrec.append(k + " VARCHAR(127)")
+            elif prptlen[k] > 31: prptrec.append(k + " VARCHAR(63)")
+            elif prptlen[k] > 15: prptrec.append(k + " VARCHAR(31)")
+            elif prptlen[k] > 7: prptrec.append(k + " VARCHAR(15)")
+            else: prptrec.append(k + " VARCHAR(8)")
+
         c = conn.cursor()
         c.execute("drop table if exists " + tbl)
         c.execute("create table " + tbl + "(id integer NOT NULL PRIMARY KEY, "
-                  + ','.join(prpts) + ")")
+                  + ','.join(prptrec) + ")")
         for r in self.rows:
             pv = r[0]
             k,v0 = zip(*(r[1].items()))
