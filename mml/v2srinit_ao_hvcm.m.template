@@ -1,11 +1,11 @@
 %% HCM
 AO.HCM.FamilyName  = 'HCM';
-AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR'; 'Corrector'};
+AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR'; 'Corrector'; 'PlotFamily'};
 AO.HCM.DeviceList  = [ %(hcm_devlist)s ];
 AO.HCM.ElementList = (1:size(AO.HCM.DeviceList,1))';
 AO.HCM.Status      = ones(size(AO.HCM.DeviceList,1),1);
 AO.HCM.Position    = [];
-AO.HCM.CommonNames = { %(hcm_commonnames)s };
+AO.HCM.CommonNames = [ %(hcm_commonnames)s ];
 
 AO.HCM.Monitor.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Monitor'; 'PlotFamily'; 'Save';};
 AO.HCM.Monitor.Mode = 'Simulator';
@@ -19,7 +19,7 @@ AO.HCM.Monitor.PhysicsUnits = 'Radian';
 %%AO.HCM.Monitor.Real2RawFcn = @real2raw_ltb;
 %%AO.HCM.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.HCM.Setpoint.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.HCM.Setpoint.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'PlotFamily'; 'Setpoint'; 'MachineConfig'};
 AO.HCM.Setpoint.Mode = 'Simulator';
 AO.HCM.Setpoint.DataType = 'Scalar';
 AO.HCM.Setpoint.ChannelNames = [ %(hcm_setpoint_pv)s ];
@@ -81,12 +81,12 @@ AO.HCM.Fault.PhysicsUnits = '';
 
 %% VCM
 AO.VCM.FamilyName  = 'VCM';
-AO.VCM.MemberOf    = {'VCM'; 'Magnet'; 'COR';};
+AO.VCM.MemberOf    = {'VCM'; 'Magnet'; 'COR'; 'PlotFamily'};
 AO.VCM.DeviceList  = AO.HCM.DeviceList;
 AO.VCM.ElementList = (1:size(AO.VCM.DeviceList,1))';
 AO.VCM.Status      = ones(size(AO.VCM.DeviceList,1),1);
 AO.VCM.Position    = [];
-AO.VCM.CommonNames = { %(vcm_commonnames)s };
+AO.VCM.CommonNames = [ %(vcm_commonnames)s ];
 
 AO.VCM.Monitor.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Monitor'; 'PlotFamily'; 'Save';};
 AO.VCM.Monitor.Mode = 'Simulator';
@@ -101,7 +101,7 @@ AO.VCM.Monitor.PhysicsUnits = 'Radian';
 %%AO.VCM.Monitor.Real2RawFcn = @real2raw_ltb;
 %%AO.VCM.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.VCM.Setpoint.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.VCM.Setpoint.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'PlotFamily'; 'Setpoint'; 'MachineConfig'};
 AO.VCM.Setpoint.Mode = 'Simulator';
 AO.VCM.Setpoint.DataType = 'Scalar';
 AO.VCM.Setpoint.ChannelNames = [ %(vcm_setpoint_pv)s ];

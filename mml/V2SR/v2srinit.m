@@ -77,12 +77,12 @@ AO.BPMy.Sum.PhysicsUnits     = '';
 
 % HCM
 AO.HCM.FamilyName  = 'HCM';
-AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR'; 'Corrector'};
+AO.HCM.MemberOf    = {'HCM'; 'Magnet'; 'COR'; 'Corrector'; 'PlotFamily'};
 AO.HCM.DeviceList  = [ 30 1; 30 2; 30 3; 30 4; 30 5; 30 6; 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 2 1; 2 2; 2 3; 2 4; 2 5; 2 6; 3 1; 3 2; 3 3; 3 4; 3 5; 3 6; 4 1; 4 2; 4 3; 4 4; 4 5; 4 6; 5 1; 5 2; 5 3; 5 4; 5 5; 5 6; 6 1; 6 2; 6 3; 6 4; 6 5; 6 6; 7 1; 7 2; 7 3; 7 4; 7 5; 7 6; 8 1; 8 2; 8 3; 8 4; 8 5; 8 6; 9 1; 9 2; 9 3; 9 4; 9 5; 9 6; 10 1; 10 2; 10 3; 10 4; 10 5; 10 6; 11 1; 11 2; 11 3; 11 4; 11 5; 11 6; 12 1; 12 2; 12 3; 12 4; 12 5; 12 6; 13 1; 13 2; 13 3; 13 4; 13 5; 13 6; 14 1; 14 2; 14 3; 14 4; 14 5; 14 6; 15 1; 15 2; 15 3; 15 4; 15 5; 15 6; 16 1; 16 2; 16 3; 16 4; 16 5; 16 6; 17 1; 17 2; 17 3; 17 4; 17 5; 17 6; 18 1; 18 2; 18 3; 18 4; 18 5; 18 6; 19 1; 19 2; 19 3; 19 4; 19 5; 19 6; 20 1; 20 2; 20 3; 20 4; 20 5; 20 6; 21 1; 21 2; 21 3; 21 4; 21 5; 21 6; 22 1; 22 2; 22 3; 22 4; 22 5; 22 6; 23 1; 23 2; 23 3; 23 4; 23 5; 23 6; 24 1; 24 2; 24 3; 24 4; 24 5; 24 6; 25 1; 25 2; 25 3; 25 4; 25 5; 25 6; 26 1; 26 2; 26 3; 26 4; 26 5; 26 6; 27 1; 27 2; 27 3; 27 4; 27 5; 27 6; 28 1; 28 2; 28 3; 28 4; 28 5; 28 6; 29 1; 29 2; 29 3; 29 4; 29 5; 29 6 ];
 AO.HCM.ElementList = (1:size(AO.HCM.DeviceList,1))';
 AO.HCM.Status      = ones(size(AO.HCM.DeviceList,1),1);
 AO.HCM.Position    = [];
-AO.HCM.CommonNames = { 'ch1g2c30a'; 'ch2g2c30a'; 'cm1g4c30a'; 'cm1g4c30b'; 'cl2g6c30b'; 'cl1g6c30b'; 'cl1g2c01a'; 'cl2g2c01a'; 'cm1g4c01a'; 'cm1g4c01b'; 'ch2g6c01b'; 'ch1g6c01b'; 'ch1g2c02a'; 'ch2g2c02a'; 'cm1g4c02a'; 'cm1g4c02b'; 'cl2g6c02b'; 'cl1g6c02b'; 'cl1g2c03a'; 'cl2g2c03a'; 'cm1g4c03a'; 'cm1g4c03b'; 'ch2g6c03b'; 'ch1g6c03b'; 'ch1g2c04a'; 'ch2g2c04a'; 'cm1g4c04a'; 'cm1g4c04b'; 'cl2g6c04b'; 'cl1g6c04b'; 'cl1g2c05a'; 'cl2g2c05a'; 'cm1g4c05a'; 'cm1g4c05b'; 'ch2g6c05b'; 'ch1g6c05b'; 'ch1g2c06a'; 'ch2g2c06a'; 'cm1g4c06a'; 'cm1g4c06b'; 'cl2g6c06b'; 'cl1g6c06b'; 'cl1g2c07a'; 'cl2g2c07a'; 'cm1g4c07a'; 'cm1g4c07b'; 'ch2g6c07b'; 'ch1g6c07b'; 'ch1g2c08a'; 'ch2g2c08a'; 'cm1g4c08a'; 'cm1g4c08b'; 'cl2g6c08b'; 'cl1g6c08b'; 'cl1g2c09a'; 'cl2g2c09a'; 'cm1g4c09a'; 'cm1g4c09b'; 'ch2g6c09b'; 'ch1g6c09b'; 'ch1g2c10a'; 'ch2g2c10a'; 'cm1g4c10a'; 'cm1g4c10b'; 'cl2g6c10b'; 'cl1g6c10b'; 'cl1g2c11a'; 'cl2g2c11a'; 'cm1g4c11a'; 'cm1g4c11b'; 'ch2g6c11b'; 'ch1g6c11b'; 'ch1g2c12a'; 'ch2g2c12a'; 'cm1g4c12a'; 'cm1g4c12b'; 'cl2g6c12b'; 'cl1g6c12b'; 'cl1g2c13a'; 'cl2g2c13a'; 'cm1g4c13a'; 'cm1g4c13b'; 'ch2g6c13b'; 'ch1g6c13b'; 'ch1g2c14a'; 'ch2g2c14a'; 'cm1g4c14a'; 'cm1g4c14b'; 'cl2g6c14b'; 'cl1g6c14b'; 'cl1g2c15a'; 'cl2g2c15a'; 'cm1g4c15a'; 'cm1g4c15b'; 'ch2g6c15b'; 'ch1g6c15b'; 'ch1g2c16a'; 'ch2g2c16a'; 'cm1g4c16a'; 'cm1g4c16b'; 'cl2g6c16b'; 'cl1g6c16b'; 'cl1g2c17a'; 'cl2g2c17a'; 'cm1g4c17a'; 'cm1g4c17b'; 'ch2g6c17b'; 'ch1g6c17b'; 'ch1g2c18a'; 'ch2g2c18a'; 'cm1g4c18a'; 'cm1g4c18b'; 'cl2g6c18b'; 'cl1g6c18b'; 'cl1g2c19a'; 'cl2g2c19a'; 'cm1g4c19a'; 'cm1g4c19b'; 'ch2g6c19b'; 'ch1g6c19b'; 'ch1g2c20a'; 'ch2g2c20a'; 'cm1g4c20a'; 'cm1g4c20b'; 'cl2g6c20b'; 'cl1g6c20b'; 'cl1g2c21a'; 'cl2g2c21a'; 'cm1g4c21a'; 'cm1g4c21b'; 'ch2g6c21b'; 'ch1g6c21b'; 'ch1g2c22a'; 'ch2g2c22a'; 'cm1g4c22a'; 'cm1g4c22b'; 'cl2g6c22b'; 'cl1g6c22b'; 'cl1g2c23a'; 'cl2g2c23a'; 'cm1g4c23a'; 'cm1g4c23b'; 'ch2g6c23b'; 'ch1g6c23b'; 'ch1g2c24a'; 'ch2g2c24a'; 'cm1g4c24a'; 'cm1g4c24b'; 'cl2g6c24b'; 'cl1g6c24b'; 'cl1g2c25a'; 'cl2g2c25a'; 'cm1g4c25a'; 'cm1g4c25b'; 'ch2g6c25b'; 'ch1g6c25b'; 'ch1g2c26a'; 'ch2g2c26a'; 'cm1g4c26a'; 'cm1g4c26b'; 'cl2g6c26b'; 'cl1g6c26b'; 'cl1g2c27a'; 'cl2g2c27a'; 'cm1g4c27a'; 'cm1g4c27b'; 'ch2g6c27b'; 'ch1g6c27b'; 'ch1g2c28a'; 'ch2g2c28a'; 'cm1g4c28a'; 'cm1g4c28b'; 'cl2g6c28b'; 'cl1g6c28b'; 'cl1g2c29a'; 'cl2g2c29a'; 'cm1g4c29a'; 'cm1g4c29b'; 'ch2g6c29b'; 'ch1g6c29b' };
+AO.HCM.CommonNames = [ 'ch1g2c30a'; 'ch2g2c30a'; 'cm1g4c30a'; 'cm1g4c30b'; 'cl2g6c30b'; 'cl1g6c30b'; 'cl1g2c01a'; 'cl2g2c01a'; 'cm1g4c01a'; 'cm1g4c01b'; 'ch2g6c01b'; 'ch1g6c01b'; 'ch1g2c02a'; 'ch2g2c02a'; 'cm1g4c02a'; 'cm1g4c02b'; 'cl2g6c02b'; 'cl1g6c02b'; 'cl1g2c03a'; 'cl2g2c03a'; 'cm1g4c03a'; 'cm1g4c03b'; 'ch2g6c03b'; 'ch1g6c03b'; 'ch1g2c04a'; 'ch2g2c04a'; 'cm1g4c04a'; 'cm1g4c04b'; 'cl2g6c04b'; 'cl1g6c04b'; 'cl1g2c05a'; 'cl2g2c05a'; 'cm1g4c05a'; 'cm1g4c05b'; 'ch2g6c05b'; 'ch1g6c05b'; 'ch1g2c06a'; 'ch2g2c06a'; 'cm1g4c06a'; 'cm1g4c06b'; 'cl2g6c06b'; 'cl1g6c06b'; 'cl1g2c07a'; 'cl2g2c07a'; 'cm1g4c07a'; 'cm1g4c07b'; 'ch2g6c07b'; 'ch1g6c07b'; 'ch1g2c08a'; 'ch2g2c08a'; 'cm1g4c08a'; 'cm1g4c08b'; 'cl2g6c08b'; 'cl1g6c08b'; 'cl1g2c09a'; 'cl2g2c09a'; 'cm1g4c09a'; 'cm1g4c09b'; 'ch2g6c09b'; 'ch1g6c09b'; 'ch1g2c10a'; 'ch2g2c10a'; 'cm1g4c10a'; 'cm1g4c10b'; 'cl2g6c10b'; 'cl1g6c10b'; 'cl1g2c11a'; 'cl2g2c11a'; 'cm1g4c11a'; 'cm1g4c11b'; 'ch2g6c11b'; 'ch1g6c11b'; 'ch1g2c12a'; 'ch2g2c12a'; 'cm1g4c12a'; 'cm1g4c12b'; 'cl2g6c12b'; 'cl1g6c12b'; 'cl1g2c13a'; 'cl2g2c13a'; 'cm1g4c13a'; 'cm1g4c13b'; 'ch2g6c13b'; 'ch1g6c13b'; 'ch1g2c14a'; 'ch2g2c14a'; 'cm1g4c14a'; 'cm1g4c14b'; 'cl2g6c14b'; 'cl1g6c14b'; 'cl1g2c15a'; 'cl2g2c15a'; 'cm1g4c15a'; 'cm1g4c15b'; 'ch2g6c15b'; 'ch1g6c15b'; 'ch1g2c16a'; 'ch2g2c16a'; 'cm1g4c16a'; 'cm1g4c16b'; 'cl2g6c16b'; 'cl1g6c16b'; 'cl1g2c17a'; 'cl2g2c17a'; 'cm1g4c17a'; 'cm1g4c17b'; 'ch2g6c17b'; 'ch1g6c17b'; 'ch1g2c18a'; 'ch2g2c18a'; 'cm1g4c18a'; 'cm1g4c18b'; 'cl2g6c18b'; 'cl1g6c18b'; 'cl1g2c19a'; 'cl2g2c19a'; 'cm1g4c19a'; 'cm1g4c19b'; 'ch2g6c19b'; 'ch1g6c19b'; 'ch1g2c20a'; 'ch2g2c20a'; 'cm1g4c20a'; 'cm1g4c20b'; 'cl2g6c20b'; 'cl1g6c20b'; 'cl1g2c21a'; 'cl2g2c21a'; 'cm1g4c21a'; 'cm1g4c21b'; 'ch2g6c21b'; 'ch1g6c21b'; 'ch1g2c22a'; 'ch2g2c22a'; 'cm1g4c22a'; 'cm1g4c22b'; 'cl2g6c22b'; 'cl1g6c22b'; 'cl1g2c23a'; 'cl2g2c23a'; 'cm1g4c23a'; 'cm1g4c23b'; 'ch2g6c23b'; 'ch1g6c23b'; 'ch1g2c24a'; 'ch2g2c24a'; 'cm1g4c24a'; 'cm1g4c24b'; 'cl2g6c24b'; 'cl1g6c24b'; 'cl1g2c25a'; 'cl2g2c25a'; 'cm1g4c25a'; 'cm1g4c25b'; 'ch2g6c25b'; 'ch1g6c25b'; 'ch1g2c26a'; 'ch2g2c26a'; 'cm1g4c26a'; 'cm1g4c26b'; 'cl2g6c26b'; 'cl1g6c26b'; 'cl1g2c27a'; 'cl2g2c27a'; 'cm1g4c27a'; 'cm1g4c27b'; 'ch2g6c27b'; 'ch1g6c27b'; 'ch1g2c28a'; 'ch2g2c28a'; 'cm1g4c28a'; 'cm1g4c28b'; 'cl2g6c28b'; 'cl1g6c28b'; 'cl1g2c29a'; 'cl2g2c29a'; 'cm1g4c29a'; 'cm1g4c29b'; 'ch2g6c29b'; 'ch1g6c29b' ];
 
 AO.HCM.Monitor.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Monitor'; 'PlotFamily'; 'Save';};
 AO.HCM.Monitor.Mode = 'Simulator';
@@ -96,7 +96,7 @@ AO.HCM.Monitor.PhysicsUnits = 'Radian';
 %AO.HCM.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.HCM.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.HCM.Setpoint.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.HCM.Setpoint.MemberOf = {'HCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'PlotFamily'; 'Setpoint'; 'MachineConfig'};
 AO.HCM.Setpoint.Mode = 'Simulator';
 AO.HCM.Setpoint.DataType = 'Scalar';
 AO.HCM.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G2{CXH1:16}Fld:SP  '; 'V:2-SR:C30-MG:G2{CXH2:31}Fld:SP  '; 'V:2-SR:C30-MG:G4{CXM1:42}Fld:SP  '; 'V:2-SR:C30-MG:G4{CXM1:70}Fld:SP  '; 'V:2-SR:C30-MG:G6{CXL2:90}Fld:SP  '; 'V:2-SR:C30-MG:G6{CXL1:99}Fld:SP  '; 'V:2-SR:C01-MG:G2{CXL1:135}Fld:SP '; 'V:2-SR:C01-MG:G2{CXL2:144}Fld:SP '; 'V:2-SR:C01-MG:G4{CXM1:162}Fld:SP '; 'V:2-SR:C01-MG:G4{CXM1:190}Fld:SP '; 'V:2-SR:C01-MG:G6{CXH2:203}Fld:SP '; 'V:2-SR:C01-MG:G6{CXH1:218}Fld:SP '; 'V:2-SR:C02-MG:G2{CXH1:250}Fld:SP '; 'V:2-SR:C02-MG:G2{CXH2:265}Fld:SP '; 'V:2-SR:C02-MG:G4{CXM1:276}Fld:SP '; 'V:2-SR:C02-MG:G4{CXM1:304}Fld:SP '; 'V:2-SR:C02-MG:G6{CXL2:324}Fld:SP '; 'V:2-SR:C02-MG:G6{CXL1:333}Fld:SP '; 'V:2-SR:C03-MG:G2{CXL1:382}Fld:SP '; 'V:2-SR:C03-MG:G2{CXL2:391}Fld:SP '; 'V:2-SR:C03-MG:G4{CXM1:409}Fld:SP '; 'V:2-SR:C03-MG:G4{CXM1:437}Fld:SP '; 'V:2-SR:C03-MG:G6{CXH2:450}Fld:SP '; 'V:2-SR:C03-MG:G6{CXH1:465}Fld:SP '; 'V:2-SR:C04-MG:G2{CXH1:497}Fld:SP '; 'V:2-SR:C04-MG:G2{CXH2:512}Fld:SP '; 'V:2-SR:C04-MG:G4{CXM1:523}Fld:SP '; 'V:2-SR:C04-MG:G4{CXM1:551}Fld:SP '; 'V:2-SR:C04-MG:G6{CXL2:571}Fld:SP '; 'V:2-SR:C04-MG:G6{CXL1:580}Fld:SP '; 'V:2-SR:C05-MG:G2{CXL1:630}Fld:SP '; 'V:2-SR:C05-MG:G2{CXL2:639}Fld:SP '; 'V:2-SR:C05-MG:G4{CXM1:657}Fld:SP '; 'V:2-SR:C05-MG:G4{CXM1:685}Fld:SP '; 'V:2-SR:C05-MG:G6{CXH2:698}Fld:SP '; 'V:2-SR:C05-MG:G6{CXH1:713}Fld:SP '; 'V:2-SR:C06-MG:G2{CXH1:745}Fld:SP '; 'V:2-SR:C06-MG:G2{CXH2:760}Fld:SP '; 'V:2-SR:C06-MG:G4{CXM1:771}Fld:SP '; 'V:2-SR:C06-MG:G4{CXM1:799}Fld:SP '; 'V:2-SR:C06-MG:G6{CXL2:819}Fld:SP '; 'V:2-SR:C06-MG:G6{CXL1:828}Fld:SP '; 'V:2-SR:C07-MG:G2{CXL1:864}Fld:SP '; 'V:2-SR:C07-MG:G2{CXL2:873}Fld:SP '; 'V:2-SR:C07-MG:G4{CXM1:891}Fld:SP '; 'V:2-SR:C07-MG:G4{CXM1:919}Fld:SP '; 'V:2-SR:C07-MG:G6{CXH2:932}Fld:SP '; 'V:2-SR:C07-MG:G6{CXH1:947}Fld:SP '; 'V:2-SR:C08-MG:G2{CXH1:1003}Fld:SP'; 'V:2-SR:C08-MG:G2{CXH2:1018}Fld:SP'; 'V:2-SR:C08-MG:G4{CXM1:1029}Fld:SP'; 'V:2-SR:C08-MG:G4{CXM1:1057}Fld:SP'; 'V:2-SR:C08-MG:G6{CXL2:1077}Fld:SP'; 'V:2-SR:C08-MG:G6{CXL1:1086}Fld:SP'; 'V:2-SR:C09-MG:G2{CXL1:1122}Fld:SP'; 'V:2-SR:C09-MG:G2{CXL2:1131}Fld:SP'; 'V:2-SR:C09-MG:G4{CXM1:1149}Fld:SP'; 'V:2-SR:C09-MG:G4{CXM1:1177}Fld:SP'; 'V:2-SR:C09-MG:G6{CXH2:1190}Fld:SP'; 'V:2-SR:C09-MG:G6{CXH1:1205}Fld:SP'; 'V:2-SR:C10-MG:G2{CXH1:1250}Fld:SP'; 'V:2-SR:C10-MG:G2{CXH2:1265}Fld:SP'; 'V:2-SR:C10-MG:G4{CXM1:1276}Fld:SP'; 'V:2-SR:C10-MG:G4{CXM1:1304}Fld:SP'; 'V:2-SR:C10-MG:G6{CXL2:1324}Fld:SP'; 'V:2-SR:C10-MG:G6{CXL1:1333}Fld:SP'; 'V:2-SR:C11-MG:G2{CXL1:1382}Fld:SP'; 'V:2-SR:C11-MG:G2{CXL2:1391}Fld:SP'; 'V:2-SR:C11-MG:G4{CXM1:1409}Fld:SP'; 'V:2-SR:C11-MG:G4{CXM1:1437}Fld:SP'; 'V:2-SR:C11-MG:G6{CXH2:1450}Fld:SP'; 'V:2-SR:C11-MG:G6{CXH1:1465}Fld:SP'; 'V:2-SR:C12-MG:G2{CXH1:1497}Fld:SP'; 'V:2-SR:C12-MG:G2{CXH2:1512}Fld:SP'; 'V:2-SR:C12-MG:G4{CXM1:1523}Fld:SP'; 'V:2-SR:C12-MG:G4{CXM1:1551}Fld:SP'; 'V:2-SR:C12-MG:G6{CXL2:1571}Fld:SP'; 'V:2-SR:C12-MG:G6{CXL1:1580}Fld:SP'; 'V:2-SR:C13-MG:G2{CXL1:1616}Fld:SP'; 'V:2-SR:C13-MG:G2{CXL2:1625}Fld:SP'; 'V:2-SR:C13-MG:G4{CXM1:1643}Fld:SP'; 'V:2-SR:C13-MG:G4{CXM1:1671}Fld:SP'; 'V:2-SR:C13-MG:G6{CXH2:1684}Fld:SP'; 'V:2-SR:C13-MG:G6{CXH1:1699}Fld:SP'; 'V:2-SR:C14-MG:G2{CXH1:1731}Fld:SP'; 'V:2-SR:C14-MG:G2{CXH2:1746}Fld:SP'; 'V:2-SR:C14-MG:G4{CXM1:1757}Fld:SP'; 'V:2-SR:C14-MG:G4{CXM1:1785}Fld:SP'; 'V:2-SR:C14-MG:G6{CXL2:1805}Fld:SP'; 'V:2-SR:C14-MG:G6{CXL1:1814}Fld:SP'; 'V:2-SR:C15-MG:G2{CXL1:1850}Fld:SP'; 'V:2-SR:C15-MG:G2{CXL2:1859}Fld:SP'; 'V:2-SR:C15-MG:G4{CXM1:1877}Fld:SP'; 'V:2-SR:C15-MG:G4{CXM1:1905}Fld:SP'; 'V:2-SR:C15-MG:G6{CXH2:1918}Fld:SP'; 'V:2-SR:C15-MG:G6{CXH1:1933}Fld:SP'; 'V:2-SR:C16-MG:G2{CXH1:1965}Fld:SP'; 'V:2-SR:C16-MG:G2{CXH2:1980}Fld:SP'; 'V:2-SR:C16-MG:G4{CXM1:1991}Fld:SP'; 'V:2-SR:C16-MG:G4{CXM1:2019}Fld:SP'; 'V:2-SR:C16-MG:G6{CXL2:2039}Fld:SP'; 'V:2-SR:C16-MG:G6{CXL1:2048}Fld:SP'; 'V:2-SR:C17-MG:G2{CXL1:2084}Fld:SP'; 'V:2-SR:C17-MG:G2{CXL2:2093}Fld:SP'; 'V:2-SR:C17-MG:G4{CXM1:2111}Fld:SP'; 'V:2-SR:C17-MG:G4{CXM1:2139}Fld:SP'; 'V:2-SR:C17-MG:G6{CXH2:2152}Fld:SP'; 'V:2-SR:C17-MG:G6{CXH1:2167}Fld:SP'; 'V:2-SR:C18-MG:G2{CXH1:2223}Fld:SP'; 'V:2-SR:C18-MG:G2{CXH2:2238}Fld:SP'; 'V:2-SR:C18-MG:G4{CXM1:2249}Fld:SP'; 'V:2-SR:C18-MG:G4{CXM1:2277}Fld:SP'; 'V:2-SR:C18-MG:G6{CXL2:2297}Fld:SP'; 'V:2-SR:C18-MG:G6{CXL1:2306}Fld:SP'; 'V:2-SR:C19-MG:G2{CXL1:2342}Fld:SP'; 'V:2-SR:C19-MG:G2{CXL2:2351}Fld:SP'; 'V:2-SR:C19-MG:G4{CXM1:2369}Fld:SP'; 'V:2-SR:C19-MG:G4{CXM1:2397}Fld:SP'; 'V:2-SR:C19-MG:G6{CXH2:2410}Fld:SP'; 'V:2-SR:C19-MG:G6{CXH1:2425}Fld:SP'; 'V:2-SR:C20-MG:G2{CXH1:2457}Fld:SP'; 'V:2-SR:C20-MG:G2{CXH2:2472}Fld:SP'; 'V:2-SR:C20-MG:G4{CXM1:2483}Fld:SP'; 'V:2-SR:C20-MG:G4{CXM1:2511}Fld:SP'; 'V:2-SR:C20-MG:G6{CXL2:2531}Fld:SP'; 'V:2-SR:C20-MG:G6{CXL1:2540}Fld:SP'; 'V:2-SR:C21-MG:G2{CXL1:2576}Fld:SP'; 'V:2-SR:C21-MG:G2{CXL2:2585}Fld:SP'; 'V:2-SR:C21-MG:G4{CXM1:2603}Fld:SP'; 'V:2-SR:C21-MG:G4{CXM1:2631}Fld:SP'; 'V:2-SR:C21-MG:G6{CXH2:2644}Fld:SP'; 'V:2-SR:C21-MG:G6{CXH1:2659}Fld:SP'; 'V:2-SR:C22-MG:G2{CXH1:2691}Fld:SP'; 'V:2-SR:C22-MG:G2{CXH2:2706}Fld:SP'; 'V:2-SR:C22-MG:G4{CXM1:2717}Fld:SP'; 'V:2-SR:C22-MG:G4{CXM1:2745}Fld:SP'; 'V:2-SR:C22-MG:G6{CXL2:2765}Fld:SP'; 'V:2-SR:C22-MG:G6{CXL1:2774}Fld:SP'; 'V:2-SR:C23-MG:G2{CXL1:2830}Fld:SP'; 'V:2-SR:C23-MG:G2{CXL2:2839}Fld:SP'; 'V:2-SR:C23-MG:G4{CXM1:2857}Fld:SP'; 'V:2-SR:C23-MG:G4{CXM1:2885}Fld:SP'; 'V:2-SR:C23-MG:G6{CXH2:2898}Fld:SP'; 'V:2-SR:C23-MG:G6{CXH1:2913}Fld:SP'; 'V:2-SR:C24-MG:G2{CXH1:2945}Fld:SP'; 'V:2-SR:C24-MG:G2{CXH2:2960}Fld:SP'; 'V:2-SR:C24-MG:G4{CXM1:2971}Fld:SP'; 'V:2-SR:C24-MG:G4{CXM1:2999}Fld:SP'; 'V:2-SR:C24-MG:G6{CXL2:3019}Fld:SP'; 'V:2-SR:C24-MG:G6{CXL1:3028}Fld:SP'; 'V:2-SR:C25-MG:G2{CXL1:3064}Fld:SP'; 'V:2-SR:C25-MG:G2{CXL2:3073}Fld:SP'; 'V:2-SR:C25-MG:G4{CXM1:3091}Fld:SP'; 'V:2-SR:C25-MG:G4{CXM1:3119}Fld:SP'; 'V:2-SR:C25-MG:G6{CXH2:3132}Fld:SP'; 'V:2-SR:C25-MG:G6{CXH1:3147}Fld:SP'; 'V:2-SR:C26-MG:G2{CXH1:3179}Fld:SP'; 'V:2-SR:C26-MG:G2{CXH2:3194}Fld:SP'; 'V:2-SR:C26-MG:G4{CXM1:3205}Fld:SP'; 'V:2-SR:C26-MG:G4{CXM1:3233}Fld:SP'; 'V:2-SR:C26-MG:G6{CXL2:3253}Fld:SP'; 'V:2-SR:C26-MG:G6{CXL1:3262}Fld:SP'; 'V:2-SR:C27-MG:G2{CXL1:3298}Fld:SP'; 'V:2-SR:C27-MG:G2{CXL2:3307}Fld:SP'; 'V:2-SR:C27-MG:G4{CXM1:3325}Fld:SP'; 'V:2-SR:C27-MG:G4{CXM1:3353}Fld:SP'; 'V:2-SR:C27-MG:G6{CXH2:3366}Fld:SP'; 'V:2-SR:C27-MG:G6{CXH1:3381}Fld:SP'; 'V:2-SR:C28-MG:G2{CXH1:3437}Fld:SP'; 'V:2-SR:C28-MG:G2{CXH2:3452}Fld:SP'; 'V:2-SR:C28-MG:G4{CXM1:3463}Fld:SP'; 'V:2-SR:C28-MG:G4{CXM1:3491}Fld:SP'; 'V:2-SR:C28-MG:G6{CXL2:3511}Fld:SP'; 'V:2-SR:C28-MG:G6{CXL1:3520}Fld:SP'; 'V:2-SR:C29-MG:G2{CXL1:3556}Fld:SP'; 'V:2-SR:C29-MG:G2{CXL2:3565}Fld:SP'; 'V:2-SR:C29-MG:G4{CXM1:3583}Fld:SP'; 'V:2-SR:C29-MG:G4{CXM1:3611}Fld:SP'; 'V:2-SR:C29-MG:G6{CXH2:3624}Fld:SP'; 'V:2-SR:C29-MG:G6{CXH1:3639}Fld:SP' ];
@@ -158,12 +158,12 @@ AO.HCM.Fault.PhysicsUnits = '';
 
 % VCM
 AO.VCM.FamilyName  = 'VCM';
-AO.VCM.MemberOf    = {'VCM'; 'Magnet'; 'COR';};
+AO.VCM.MemberOf    = {'VCM'; 'Magnet'; 'COR'; 'PlotFamily'};
 AO.VCM.DeviceList  = AO.HCM.DeviceList;
 AO.VCM.ElementList = (1:size(AO.VCM.DeviceList,1))';
 AO.VCM.Status      = ones(size(AO.VCM.DeviceList,1),1);
 AO.VCM.Position    = [];
-AO.VCM.CommonNames = { 'ch1g2c30a'; 'ch2g2c30a'; 'cm1g4c30a'; 'cm1g4c30b'; 'cl2g6c30b'; 'cl1g6c30b'; 'cl1g2c01a'; 'cl2g2c01a'; 'cm1g4c01a'; 'cm1g4c01b'; 'ch2g6c01b'; 'ch1g6c01b'; 'ch1g2c02a'; 'ch2g2c02a'; 'cm1g4c02a'; 'cm1g4c02b'; 'cl2g6c02b'; 'cl1g6c02b'; 'cl1g2c03a'; 'cl2g2c03a'; 'cm1g4c03a'; 'cm1g4c03b'; 'ch2g6c03b'; 'ch1g6c03b'; 'ch1g2c04a'; 'ch2g2c04a'; 'cm1g4c04a'; 'cm1g4c04b'; 'cl2g6c04b'; 'cl1g6c04b'; 'cl1g2c05a'; 'cl2g2c05a'; 'cm1g4c05a'; 'cm1g4c05b'; 'ch2g6c05b'; 'ch1g6c05b'; 'ch1g2c06a'; 'ch2g2c06a'; 'cm1g4c06a'; 'cm1g4c06b'; 'cl2g6c06b'; 'cl1g6c06b'; 'cl1g2c07a'; 'cl2g2c07a'; 'cm1g4c07a'; 'cm1g4c07b'; 'ch2g6c07b'; 'ch1g6c07b'; 'ch1g2c08a'; 'ch2g2c08a'; 'cm1g4c08a'; 'cm1g4c08b'; 'cl2g6c08b'; 'cl1g6c08b'; 'cl1g2c09a'; 'cl2g2c09a'; 'cm1g4c09a'; 'cm1g4c09b'; 'ch2g6c09b'; 'ch1g6c09b'; 'ch1g2c10a'; 'ch2g2c10a'; 'cm1g4c10a'; 'cm1g4c10b'; 'cl2g6c10b'; 'cl1g6c10b'; 'cl1g2c11a'; 'cl2g2c11a'; 'cm1g4c11a'; 'cm1g4c11b'; 'ch2g6c11b'; 'ch1g6c11b'; 'ch1g2c12a'; 'ch2g2c12a'; 'cm1g4c12a'; 'cm1g4c12b'; 'cl2g6c12b'; 'cl1g6c12b'; 'cl1g2c13a'; 'cl2g2c13a'; 'cm1g4c13a'; 'cm1g4c13b'; 'ch2g6c13b'; 'ch1g6c13b'; 'ch1g2c14a'; 'ch2g2c14a'; 'cm1g4c14a'; 'cm1g4c14b'; 'cl2g6c14b'; 'cl1g6c14b'; 'cl1g2c15a'; 'cl2g2c15a'; 'cm1g4c15a'; 'cm1g4c15b'; 'ch2g6c15b'; 'ch1g6c15b'; 'ch1g2c16a'; 'ch2g2c16a'; 'cm1g4c16a'; 'cm1g4c16b'; 'cl2g6c16b'; 'cl1g6c16b'; 'cl1g2c17a'; 'cl2g2c17a'; 'cm1g4c17a'; 'cm1g4c17b'; 'ch2g6c17b'; 'ch1g6c17b'; 'ch1g2c18a'; 'ch2g2c18a'; 'cm1g4c18a'; 'cm1g4c18b'; 'cl2g6c18b'; 'cl1g6c18b'; 'cl1g2c19a'; 'cl2g2c19a'; 'cm1g4c19a'; 'cm1g4c19b'; 'ch2g6c19b'; 'ch1g6c19b'; 'ch1g2c20a'; 'ch2g2c20a'; 'cm1g4c20a'; 'cm1g4c20b'; 'cl2g6c20b'; 'cl1g6c20b'; 'cl1g2c21a'; 'cl2g2c21a'; 'cm1g4c21a'; 'cm1g4c21b'; 'ch2g6c21b'; 'ch1g6c21b'; 'ch1g2c22a'; 'ch2g2c22a'; 'cm1g4c22a'; 'cm1g4c22b'; 'cl2g6c22b'; 'cl1g6c22b'; 'cl1g2c23a'; 'cl2g2c23a'; 'cm1g4c23a'; 'cm1g4c23b'; 'ch2g6c23b'; 'ch1g6c23b'; 'ch1g2c24a'; 'ch2g2c24a'; 'cm1g4c24a'; 'cm1g4c24b'; 'cl2g6c24b'; 'cl1g6c24b'; 'cl1g2c25a'; 'cl2g2c25a'; 'cm1g4c25a'; 'cm1g4c25b'; 'ch2g6c25b'; 'ch1g6c25b'; 'ch1g2c26a'; 'ch2g2c26a'; 'cm1g4c26a'; 'cm1g4c26b'; 'cl2g6c26b'; 'cl1g6c26b'; 'cl1g2c27a'; 'cl2g2c27a'; 'cm1g4c27a'; 'cm1g4c27b'; 'ch2g6c27b'; 'ch1g6c27b'; 'ch1g2c28a'; 'ch2g2c28a'; 'cm1g4c28a'; 'cm1g4c28b'; 'cl2g6c28b'; 'cl1g6c28b'; 'cl1g2c29a'; 'cl2g2c29a'; 'cm1g4c29a'; 'cm1g4c29b'; 'ch2g6c29b'; 'ch1g6c29b' };
+AO.VCM.CommonNames = [ 'ch1g2c30a'; 'ch2g2c30a'; 'cm1g4c30a'; 'cm1g4c30b'; 'cl2g6c30b'; 'cl1g6c30b'; 'cl1g2c01a'; 'cl2g2c01a'; 'cm1g4c01a'; 'cm1g4c01b'; 'ch2g6c01b'; 'ch1g6c01b'; 'ch1g2c02a'; 'ch2g2c02a'; 'cm1g4c02a'; 'cm1g4c02b'; 'cl2g6c02b'; 'cl1g6c02b'; 'cl1g2c03a'; 'cl2g2c03a'; 'cm1g4c03a'; 'cm1g4c03b'; 'ch2g6c03b'; 'ch1g6c03b'; 'ch1g2c04a'; 'ch2g2c04a'; 'cm1g4c04a'; 'cm1g4c04b'; 'cl2g6c04b'; 'cl1g6c04b'; 'cl1g2c05a'; 'cl2g2c05a'; 'cm1g4c05a'; 'cm1g4c05b'; 'ch2g6c05b'; 'ch1g6c05b'; 'ch1g2c06a'; 'ch2g2c06a'; 'cm1g4c06a'; 'cm1g4c06b'; 'cl2g6c06b'; 'cl1g6c06b'; 'cl1g2c07a'; 'cl2g2c07a'; 'cm1g4c07a'; 'cm1g4c07b'; 'ch2g6c07b'; 'ch1g6c07b'; 'ch1g2c08a'; 'ch2g2c08a'; 'cm1g4c08a'; 'cm1g4c08b'; 'cl2g6c08b'; 'cl1g6c08b'; 'cl1g2c09a'; 'cl2g2c09a'; 'cm1g4c09a'; 'cm1g4c09b'; 'ch2g6c09b'; 'ch1g6c09b'; 'ch1g2c10a'; 'ch2g2c10a'; 'cm1g4c10a'; 'cm1g4c10b'; 'cl2g6c10b'; 'cl1g6c10b'; 'cl1g2c11a'; 'cl2g2c11a'; 'cm1g4c11a'; 'cm1g4c11b'; 'ch2g6c11b'; 'ch1g6c11b'; 'ch1g2c12a'; 'ch2g2c12a'; 'cm1g4c12a'; 'cm1g4c12b'; 'cl2g6c12b'; 'cl1g6c12b'; 'cl1g2c13a'; 'cl2g2c13a'; 'cm1g4c13a'; 'cm1g4c13b'; 'ch2g6c13b'; 'ch1g6c13b'; 'ch1g2c14a'; 'ch2g2c14a'; 'cm1g4c14a'; 'cm1g4c14b'; 'cl2g6c14b'; 'cl1g6c14b'; 'cl1g2c15a'; 'cl2g2c15a'; 'cm1g4c15a'; 'cm1g4c15b'; 'ch2g6c15b'; 'ch1g6c15b'; 'ch1g2c16a'; 'ch2g2c16a'; 'cm1g4c16a'; 'cm1g4c16b'; 'cl2g6c16b'; 'cl1g6c16b'; 'cl1g2c17a'; 'cl2g2c17a'; 'cm1g4c17a'; 'cm1g4c17b'; 'ch2g6c17b'; 'ch1g6c17b'; 'ch1g2c18a'; 'ch2g2c18a'; 'cm1g4c18a'; 'cm1g4c18b'; 'cl2g6c18b'; 'cl1g6c18b'; 'cl1g2c19a'; 'cl2g2c19a'; 'cm1g4c19a'; 'cm1g4c19b'; 'ch2g6c19b'; 'ch1g6c19b'; 'ch1g2c20a'; 'ch2g2c20a'; 'cm1g4c20a'; 'cm1g4c20b'; 'cl2g6c20b'; 'cl1g6c20b'; 'cl1g2c21a'; 'cl2g2c21a'; 'cm1g4c21a'; 'cm1g4c21b'; 'ch2g6c21b'; 'ch1g6c21b'; 'ch1g2c22a'; 'ch2g2c22a'; 'cm1g4c22a'; 'cm1g4c22b'; 'cl2g6c22b'; 'cl1g6c22b'; 'cl1g2c23a'; 'cl2g2c23a'; 'cm1g4c23a'; 'cm1g4c23b'; 'ch2g6c23b'; 'ch1g6c23b'; 'ch1g2c24a'; 'ch2g2c24a'; 'cm1g4c24a'; 'cm1g4c24b'; 'cl2g6c24b'; 'cl1g6c24b'; 'cl1g2c25a'; 'cl2g2c25a'; 'cm1g4c25a'; 'cm1g4c25b'; 'ch2g6c25b'; 'ch1g6c25b'; 'ch1g2c26a'; 'ch2g2c26a'; 'cm1g4c26a'; 'cm1g4c26b'; 'cl2g6c26b'; 'cl1g6c26b'; 'cl1g2c27a'; 'cl2g2c27a'; 'cm1g4c27a'; 'cm1g4c27b'; 'ch2g6c27b'; 'ch1g6c27b'; 'ch1g2c28a'; 'ch2g2c28a'; 'cm1g4c28a'; 'cm1g4c28b'; 'cl2g6c28b'; 'cl1g6c28b'; 'cl1g2c29a'; 'cl2g2c29a'; 'cm1g4c29a'; 'cm1g4c29b'; 'ch2g6c29b'; 'ch1g6c29b' ];
 
 AO.VCM.Monitor.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Monitor'; 'PlotFamily'; 'Save';};
 AO.VCM.Monitor.Mode = 'Simulator';
@@ -178,7 +178,7 @@ AO.VCM.Monitor.PhysicsUnits = 'Radian';
 %AO.VCM.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.VCM.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.VCM.Setpoint.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.VCM.Setpoint.MemberOf = {'VCM'; 'Magnet'; 'COR'; 'Save/Restore'; 'PlotFamily'; 'Setpoint'; 'MachineConfig'};
 AO.VCM.Setpoint.Mode = 'Simulator';
 AO.VCM.Setpoint.DataType = 'Scalar';
 AO.VCM.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G2{CYH1:17}Fld:SP  '; 'V:2-SR:C30-MG:G2{CYH2:32}Fld:SP  '; 'V:2-SR:C30-MG:G4{CYM1:43}Fld:SP  '; 'V:2-SR:C30-MG:G4{CYM1:71}Fld:SP  '; 'V:2-SR:C30-MG:G6{CYL2:91}Fld:SP  '; 'V:2-SR:C30-MG:G6{CYL1:100}Fld:SP '; 'V:2-SR:C01-MG:G2{CYL1:136}Fld:SP '; 'V:2-SR:C01-MG:G2{CYL2:145}Fld:SP '; 'V:2-SR:C01-MG:G4{CYM1:163}Fld:SP '; 'V:2-SR:C01-MG:G4{CYM1:191}Fld:SP '; 'V:2-SR:C01-MG:G6{CYH2:204}Fld:SP '; 'V:2-SR:C01-MG:G6{CYH1:219}Fld:SP '; 'V:2-SR:C02-MG:G2{CYH1:251}Fld:SP '; 'V:2-SR:C02-MG:G2{CYH2:266}Fld:SP '; 'V:2-SR:C02-MG:G4{CYM1:277}Fld:SP '; 'V:2-SR:C02-MG:G4{CYM1:305}Fld:SP '; 'V:2-SR:C02-MG:G6{CYL2:325}Fld:SP '; 'V:2-SR:C02-MG:G6{CYL1:334}Fld:SP '; 'V:2-SR:C03-MG:G2{CYL1:383}Fld:SP '; 'V:2-SR:C03-MG:G2{CYL2:392}Fld:SP '; 'V:2-SR:C03-MG:G4{CYM1:410}Fld:SP '; 'V:2-SR:C03-MG:G4{CYM1:438}Fld:SP '; 'V:2-SR:C03-MG:G6{CYH2:451}Fld:SP '; 'V:2-SR:C03-MG:G6{CYH1:466}Fld:SP '; 'V:2-SR:C04-MG:G2{CYH1:498}Fld:SP '; 'V:2-SR:C04-MG:G2{CYH2:513}Fld:SP '; 'V:2-SR:C04-MG:G4{CYM1:524}Fld:SP '; 'V:2-SR:C04-MG:G4{CYM1:552}Fld:SP '; 'V:2-SR:C04-MG:G6{CYL2:572}Fld:SP '; 'V:2-SR:C04-MG:G6{CYL1:581}Fld:SP '; 'V:2-SR:C05-MG:G2{CYL1:631}Fld:SP '; 'V:2-SR:C05-MG:G2{CYL2:640}Fld:SP '; 'V:2-SR:C05-MG:G4{CYM1:658}Fld:SP '; 'V:2-SR:C05-MG:G4{CYM1:686}Fld:SP '; 'V:2-SR:C05-MG:G6{CYH2:699}Fld:SP '; 'V:2-SR:C05-MG:G6{CYH1:714}Fld:SP '; 'V:2-SR:C06-MG:G2{CYH1:746}Fld:SP '; 'V:2-SR:C06-MG:G2{CYH2:761}Fld:SP '; 'V:2-SR:C06-MG:G4{CYM1:772}Fld:SP '; 'V:2-SR:C06-MG:G4{CYM1:800}Fld:SP '; 'V:2-SR:C06-MG:G6{CYL2:820}Fld:SP '; 'V:2-SR:C06-MG:G6{CYL1:829}Fld:SP '; 'V:2-SR:C07-MG:G2{CYL1:865}Fld:SP '; 'V:2-SR:C07-MG:G2{CYL2:874}Fld:SP '; 'V:2-SR:C07-MG:G4{CYM1:892}Fld:SP '; 'V:2-SR:C07-MG:G4{CYM1:920}Fld:SP '; 'V:2-SR:C07-MG:G6{CYH2:933}Fld:SP '; 'V:2-SR:C07-MG:G6{CYH1:948}Fld:SP '; 'V:2-SR:C08-MG:G2{CYH1:1004}Fld:SP'; 'V:2-SR:C08-MG:G2{CYH2:1019}Fld:SP'; 'V:2-SR:C08-MG:G4{CYM1:1030}Fld:SP'; 'V:2-SR:C08-MG:G4{CYM1:1058}Fld:SP'; 'V:2-SR:C08-MG:G6{CYL2:1078}Fld:SP'; 'V:2-SR:C08-MG:G6{CYL1:1087}Fld:SP'; 'V:2-SR:C09-MG:G2{CYL1:1123}Fld:SP'; 'V:2-SR:C09-MG:G2{CYL2:1132}Fld:SP'; 'V:2-SR:C09-MG:G4{CYM1:1150}Fld:SP'; 'V:2-SR:C09-MG:G4{CYM1:1178}Fld:SP'; 'V:2-SR:C09-MG:G6{CYH2:1191}Fld:SP'; 'V:2-SR:C09-MG:G6{CYH1:1206}Fld:SP'; 'V:2-SR:C10-MG:G2{CYH1:1251}Fld:SP'; 'V:2-SR:C10-MG:G2{CYH2:1266}Fld:SP'; 'V:2-SR:C10-MG:G4{CYM1:1277}Fld:SP'; 'V:2-SR:C10-MG:G4{CYM1:1305}Fld:SP'; 'V:2-SR:C10-MG:G6{CYL2:1325}Fld:SP'; 'V:2-SR:C10-MG:G6{CYL1:1334}Fld:SP'; 'V:2-SR:C11-MG:G2{CYL1:1383}Fld:SP'; 'V:2-SR:C11-MG:G2{CYL2:1392}Fld:SP'; 'V:2-SR:C11-MG:G4{CYM1:1410}Fld:SP'; 'V:2-SR:C11-MG:G4{CYM1:1438}Fld:SP'; 'V:2-SR:C11-MG:G6{CYH2:1451}Fld:SP'; 'V:2-SR:C11-MG:G6{CYH1:1466}Fld:SP'; 'V:2-SR:C12-MG:G2{CYH1:1498}Fld:SP'; 'V:2-SR:C12-MG:G2{CYH2:1513}Fld:SP'; 'V:2-SR:C12-MG:G4{CYM1:1524}Fld:SP'; 'V:2-SR:C12-MG:G4{CYM1:1552}Fld:SP'; 'V:2-SR:C12-MG:G6{CYL2:1572}Fld:SP'; 'V:2-SR:C12-MG:G6{CYL1:1581}Fld:SP'; 'V:2-SR:C13-MG:G2{CYL1:1617}Fld:SP'; 'V:2-SR:C13-MG:G2{CYL2:1626}Fld:SP'; 'V:2-SR:C13-MG:G4{CYM1:1644}Fld:SP'; 'V:2-SR:C13-MG:G4{CYM1:1672}Fld:SP'; 'V:2-SR:C13-MG:G6{CYH2:1685}Fld:SP'; 'V:2-SR:C13-MG:G6{CYH1:1700}Fld:SP'; 'V:2-SR:C14-MG:G2{CYH1:1732}Fld:SP'; 'V:2-SR:C14-MG:G2{CYH2:1747}Fld:SP'; 'V:2-SR:C14-MG:G4{CYM1:1758}Fld:SP'; 'V:2-SR:C14-MG:G4{CYM1:1786}Fld:SP'; 'V:2-SR:C14-MG:G6{CYL2:1806}Fld:SP'; 'V:2-SR:C14-MG:G6{CYL1:1815}Fld:SP'; 'V:2-SR:C15-MG:G2{CYL1:1851}Fld:SP'; 'V:2-SR:C15-MG:G2{CYL2:1860}Fld:SP'; 'V:2-SR:C15-MG:G4{CYM1:1878}Fld:SP'; 'V:2-SR:C15-MG:G4{CYM1:1906}Fld:SP'; 'V:2-SR:C15-MG:G6{CYH2:1919}Fld:SP'; 'V:2-SR:C15-MG:G6{CYH1:1934}Fld:SP'; 'V:2-SR:C16-MG:G2{CYH1:1966}Fld:SP'; 'V:2-SR:C16-MG:G2{CYH2:1981}Fld:SP'; 'V:2-SR:C16-MG:G4{CYM1:1992}Fld:SP'; 'V:2-SR:C16-MG:G4{CYM1:2020}Fld:SP'; 'V:2-SR:C16-MG:G6{CYL2:2040}Fld:SP'; 'V:2-SR:C16-MG:G6{CYL1:2049}Fld:SP'; 'V:2-SR:C17-MG:G2{CYL1:2085}Fld:SP'; 'V:2-SR:C17-MG:G2{CYL2:2094}Fld:SP'; 'V:2-SR:C17-MG:G4{CYM1:2112}Fld:SP'; 'V:2-SR:C17-MG:G4{CYM1:2140}Fld:SP'; 'V:2-SR:C17-MG:G6{CYH2:2153}Fld:SP'; 'V:2-SR:C17-MG:G6{CYH1:2168}Fld:SP'; 'V:2-SR:C18-MG:G2{CYH1:2224}Fld:SP'; 'V:2-SR:C18-MG:G2{CYH2:2239}Fld:SP'; 'V:2-SR:C18-MG:G4{CYM1:2250}Fld:SP'; 'V:2-SR:C18-MG:G4{CYM1:2278}Fld:SP'; 'V:2-SR:C18-MG:G6{CYL2:2298}Fld:SP'; 'V:2-SR:C18-MG:G6{CYL1:2307}Fld:SP'; 'V:2-SR:C19-MG:G2{CYL1:2343}Fld:SP'; 'V:2-SR:C19-MG:G2{CYL2:2352}Fld:SP'; 'V:2-SR:C19-MG:G4{CYM1:2370}Fld:SP'; 'V:2-SR:C19-MG:G4{CYM1:2398}Fld:SP'; 'V:2-SR:C19-MG:G6{CYH2:2411}Fld:SP'; 'V:2-SR:C19-MG:G6{CYH1:2426}Fld:SP'; 'V:2-SR:C20-MG:G2{CYH1:2458}Fld:SP'; 'V:2-SR:C20-MG:G2{CYH2:2473}Fld:SP'; 'V:2-SR:C20-MG:G4{CYM1:2484}Fld:SP'; 'V:2-SR:C20-MG:G4{CYM1:2512}Fld:SP'; 'V:2-SR:C20-MG:G6{CYL2:2532}Fld:SP'; 'V:2-SR:C20-MG:G6{CYL1:2541}Fld:SP'; 'V:2-SR:C21-MG:G2{CYL1:2577}Fld:SP'; 'V:2-SR:C21-MG:G2{CYL2:2586}Fld:SP'; 'V:2-SR:C21-MG:G4{CYM1:2604}Fld:SP'; 'V:2-SR:C21-MG:G4{CYM1:2632}Fld:SP'; 'V:2-SR:C21-MG:G6{CYH2:2645}Fld:SP'; 'V:2-SR:C21-MG:G6{CYH1:2660}Fld:SP'; 'V:2-SR:C22-MG:G2{CYH1:2692}Fld:SP'; 'V:2-SR:C22-MG:G2{CYH2:2707}Fld:SP'; 'V:2-SR:C22-MG:G4{CYM1:2718}Fld:SP'; 'V:2-SR:C22-MG:G4{CYM1:2746}Fld:SP'; 'V:2-SR:C22-MG:G6{CYL2:2766}Fld:SP'; 'V:2-SR:C22-MG:G6{CYL1:2775}Fld:SP'; 'V:2-SR:C23-MG:G2{CYL1:2831}Fld:SP'; 'V:2-SR:C23-MG:G2{CYL2:2840}Fld:SP'; 'V:2-SR:C23-MG:G4{CYM1:2858}Fld:SP'; 'V:2-SR:C23-MG:G4{CYM1:2886}Fld:SP'; 'V:2-SR:C23-MG:G6{CYH2:2899}Fld:SP'; 'V:2-SR:C23-MG:G6{CYH1:2914}Fld:SP'; 'V:2-SR:C24-MG:G2{CYH1:2946}Fld:SP'; 'V:2-SR:C24-MG:G2{CYH2:2961}Fld:SP'; 'V:2-SR:C24-MG:G4{CYM1:2972}Fld:SP'; 'V:2-SR:C24-MG:G4{CYM1:3000}Fld:SP'; 'V:2-SR:C24-MG:G6{CYL2:3020}Fld:SP'; 'V:2-SR:C24-MG:G6{CYL1:3029}Fld:SP'; 'V:2-SR:C25-MG:G2{CYL1:3065}Fld:SP'; 'V:2-SR:C25-MG:G2{CYL2:3074}Fld:SP'; 'V:2-SR:C25-MG:G4{CYM1:3092}Fld:SP'; 'V:2-SR:C25-MG:G4{CYM1:3120}Fld:SP'; 'V:2-SR:C25-MG:G6{CYH2:3133}Fld:SP'; 'V:2-SR:C25-MG:G6{CYH1:3148}Fld:SP'; 'V:2-SR:C26-MG:G2{CYH1:3180}Fld:SP'; 'V:2-SR:C26-MG:G2{CYH2:3195}Fld:SP'; 'V:2-SR:C26-MG:G4{CYM1:3206}Fld:SP'; 'V:2-SR:C26-MG:G4{CYM1:3234}Fld:SP'; 'V:2-SR:C26-MG:G6{CYL2:3254}Fld:SP'; 'V:2-SR:C26-MG:G6{CYL1:3263}Fld:SP'; 'V:2-SR:C27-MG:G2{CYL1:3299}Fld:SP'; 'V:2-SR:C27-MG:G2{CYL2:3308}Fld:SP'; 'V:2-SR:C27-MG:G4{CYM1:3326}Fld:SP'; 'V:2-SR:C27-MG:G4{CYM1:3354}Fld:SP'; 'V:2-SR:C27-MG:G6{CYH2:3367}Fld:SP'; 'V:2-SR:C27-MG:G6{CYH1:3382}Fld:SP'; 'V:2-SR:C28-MG:G2{CYH1:3438}Fld:SP'; 'V:2-SR:C28-MG:G2{CYH2:3453}Fld:SP'; 'V:2-SR:C28-MG:G4{CYM1:3464}Fld:SP'; 'V:2-SR:C28-MG:G4{CYM1:3492}Fld:SP'; 'V:2-SR:C28-MG:G6{CYL2:3512}Fld:SP'; 'V:2-SR:C28-MG:G6{CYL1:3521}Fld:SP'; 'V:2-SR:C29-MG:G2{CYL1:3557}Fld:SP'; 'V:2-SR:C29-MG:G2{CYL2:3566}Fld:SP'; 'V:2-SR:C29-MG:G4{CYM1:3584}Fld:SP'; 'V:2-SR:C29-MG:G4{CYM1:3612}Fld:SP'; 'V:2-SR:C29-MG:G6{CYH2:3625}Fld:SP'; 'V:2-SR:C29-MG:G6{CYH1:3640}Fld:SP' ];
@@ -256,7 +256,7 @@ AO.VCM.Fault.PhysicsUnits = 'Second';
 % Quad
 
 AO.QH1.FamilyName = 'QH1';
-AO.QH1.MemberOf   = {'QUAD';  'Magnet';};
+AO.QH1.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.QH1.DeviceList = [ 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 1 7; 1 8; 1 9; 1 10; 1 11; 1 12; 1 13; 1 14; 1 15; 1 16; 1 17; 1 18; 1 19; 1 20; 1 21; 1 22; 1 23; 1 24; 1 25; 1 26; 1 27; 1 28; 1 29; 1 30 ];
 AO.QH1.ElementList = (1:size(AO.QH1.DeviceList,1))';
 AO.QH1.Status = ones(size(AO.QH1.DeviceList,1),1);
@@ -276,7 +276,7 @@ AO.QH1.Monitor.PhysicsUnits = '1/Meter^2';
 %AO.QH1.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.QH1.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.QH1.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.QH1.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.QH1.Setpoint.Mode = 'Simulator';
 AO.QH1.Setpoint.DataType = 'Scalar';
 AO.QH1.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G2{QH1:13}Fld:SP  '; 'V:2-SR:C01-MG:G6{QH1:222}Fld:SP '; 'V:2-SR:C02-MG:G2{QH1:247}Fld:SP '; 'V:2-SR:C03-MG:G6{QH1:469}Fld:SP '; 'V:2-SR:C04-MG:G2{QH1:494}Fld:SP '; 'V:2-SR:C05-MG:G6{QH1:717}Fld:SP '; 'V:2-SR:C06-MG:G2{QH1:742}Fld:SP '; 'V:2-SR:C07-MG:G6{QH1:951}Fld:SP '; 'V:2-SR:C08-MG:G2{QH1:1000}Fld:SP'; 'V:2-SR:C09-MG:G6{QH1:1209}Fld:SP'; 'V:2-SR:C10-MG:G2{QH1:1247}Fld:SP'; 'V:2-SR:C11-MG:G6{QH1:1469}Fld:SP'; 'V:2-SR:C12-MG:G2{QH1:1494}Fld:SP'; 'V:2-SR:C13-MG:G6{QH1:1703}Fld:SP'; 'V:2-SR:C14-MG:G2{QH1:1728}Fld:SP'; 'V:2-SR:C15-MG:G6{QH1:1937}Fld:SP'; 'V:2-SR:C16-MG:G2{QH1:1962}Fld:SP'; 'V:2-SR:C17-MG:G6{QH1:2171}Fld:SP'; 'V:2-SR:C18-MG:G2{QH1:2220}Fld:SP'; 'V:2-SR:C19-MG:G6{QH1:2429}Fld:SP'; 'V:2-SR:C20-MG:G2{QH1:2454}Fld:SP'; 'V:2-SR:C21-MG:G6{QH1:2663}Fld:SP'; 'V:2-SR:C22-MG:G2{QH1:2688}Fld:SP'; 'V:2-SR:C23-MG:G6{QH1:2917}Fld:SP'; 'V:2-SR:C24-MG:G2{QH1:2942}Fld:SP'; 'V:2-SR:C25-MG:G6{QH1:3151}Fld:SP'; 'V:2-SR:C26-MG:G2{QH1:3176}Fld:SP'; 'V:2-SR:C27-MG:G6{QH1:3385}Fld:SP'; 'V:2-SR:C28-MG:G2{QH1:3434}Fld:SP'; 'V:2-SR:C29-MG:G6{QH1:3643}Fld:SP' ];
@@ -286,9 +286,9 @@ AO.QH1.Setpoint.Physics2HWFcn = @at2hw;
 AO.QH1.Setpoint.Units        = 'Hardware';
 AO.QH1.Setpoint.HWUnits      = '1/Meter^2';
 AO.QH1.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.QH1.Setpoint.Range = [-1 1];
+AO.QH1.Setpoint.Range = [-10 10];
 AO.QH1.Setpoint.Tolerance = .1;
-AO.QH1.Setpoint.DeltaRespMat = 1;
+AO.QH1.Setpoint.DeltaRespMat = .1;
 %AO.QH1.Setpoint.RampRate = .15;
 %AO.QH1.Setpoint.RunFlagFcn = @getrunflag_ltb;
 
@@ -348,7 +348,7 @@ AO.QH1.Fault.HWUnits      = '';
 AO.QH1.Fault.PhysicsUnits = '';
 
 AO.QH2.FamilyName = 'QH2';
-AO.QH2.MemberOf   = {'QUAD';  'Magnet';};
+AO.QH2.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.QH2.DeviceList = [ 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 1 7; 1 8; 1 9; 1 10; 1 11; 1 12; 1 13; 1 14; 1 15; 1 16; 1 17; 1 18; 1 19; 1 20; 1 21; 1 22; 1 23; 1 24; 1 25; 1 26; 1 27; 1 28; 1 29; 1 30 ];
 AO.QH2.ElementList = (1:size(AO.QH2.DeviceList,1))';
 AO.QH2.Status = ones(size(AO.QH2.DeviceList,1),1);
@@ -368,7 +368,7 @@ AO.QH2.Monitor.PhysicsUnits = '1/Meter^2';
 %AO.QH2.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.QH2.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.QH2.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.QH2.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.QH2.Setpoint.Mode = 'Simulator';
 AO.QH2.Setpoint.DataType = 'Scalar';
 AO.QH2.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G2{QH2:20}Fld:SP  '; 'V:2-SR:C01-MG:G6{QH2:215}Fld:SP '; 'V:2-SR:C02-MG:G2{QH2:254}Fld:SP '; 'V:2-SR:C03-MG:G6{QH2:462}Fld:SP '; 'V:2-SR:C04-MG:G2{QH2:501}Fld:SP '; 'V:2-SR:C05-MG:G6{QH2:710}Fld:SP '; 'V:2-SR:C06-MG:G2{QH2:749}Fld:SP '; 'V:2-SR:C07-MG:G6{QH2:944}Fld:SP '; 'V:2-SR:C08-MG:G2{QH2:1007}Fld:SP'; 'V:2-SR:C09-MG:G6{QH2:1202}Fld:SP'; 'V:2-SR:C10-MG:G2{QH2:1254}Fld:SP'; 'V:2-SR:C11-MG:G6{QH2:1462}Fld:SP'; 'V:2-SR:C12-MG:G2{QH2:1501}Fld:SP'; 'V:2-SR:C13-MG:G6{QH2:1696}Fld:SP'; 'V:2-SR:C14-MG:G2{QH2:1735}Fld:SP'; 'V:2-SR:C15-MG:G6{QH2:1930}Fld:SP'; 'V:2-SR:C16-MG:G2{QH2:1969}Fld:SP'; 'V:2-SR:C17-MG:G6{QH2:2164}Fld:SP'; 'V:2-SR:C18-MG:G2{QH2:2227}Fld:SP'; 'V:2-SR:C19-MG:G6{QH2:2422}Fld:SP'; 'V:2-SR:C20-MG:G2{QH2:2461}Fld:SP'; 'V:2-SR:C21-MG:G6{QH2:2656}Fld:SP'; 'V:2-SR:C22-MG:G2{QH2:2695}Fld:SP'; 'V:2-SR:C23-MG:G6{QH2:2910}Fld:SP'; 'V:2-SR:C24-MG:G2{QH2:2949}Fld:SP'; 'V:2-SR:C25-MG:G6{QH2:3144}Fld:SP'; 'V:2-SR:C26-MG:G2{QH2:3183}Fld:SP'; 'V:2-SR:C27-MG:G6{QH2:3378}Fld:SP'; 'V:2-SR:C28-MG:G2{QH2:3441}Fld:SP'; 'V:2-SR:C29-MG:G6{QH2:3636}Fld:SP' ];
@@ -378,9 +378,9 @@ AO.QH2.Setpoint.Physics2HWFcn = @at2hw;
 AO.QH2.Setpoint.Units        = 'Hardware';
 AO.QH2.Setpoint.HWUnits      = '1/Meter^2';
 AO.QH2.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.QH2.Setpoint.Range = [-1 1];
+AO.QH2.Setpoint.Range = [-10 10];
 AO.QH2.Setpoint.Tolerance = .1;
-AO.QH2.Setpoint.DeltaRespMat = 1;
+AO.QH2.Setpoint.DeltaRespMat = .1;
 %AO.QH2.Setpoint.RampRate = .15;
 %AO.QH2.Setpoint.RunFlagFcn = @getrunflag_ltb;
 
@@ -440,7 +440,7 @@ AO.QH2.Fault.HWUnits      = '';
 AO.QH2.Fault.PhysicsUnits = '';
 
 AO.QH3.FamilyName = 'QH3';
-AO.QH3.MemberOf   = {'QUAD';  'Magnet';};
+AO.QH3.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.QH3.DeviceList = [ 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 1 7; 1 8; 1 9; 1 10; 1 11; 1 12; 1 13; 1 14; 1 15; 1 16; 1 17; 1 18; 1 19; 1 20; 1 21; 1 22; 1 23; 1 24; 1 25; 1 26; 1 27; 1 28; 1 29; 1 30 ];
 AO.QH3.ElementList = (1:size(AO.QH3.DeviceList,1))';
 AO.QH3.Status = ones(size(AO.QH3.DeviceList,1),1);
@@ -460,7 +460,7 @@ AO.QH3.Monitor.PhysicsUnits = '1/Meter^2';
 %AO.QH3.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.QH3.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.QH3.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.QH3.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.QH3.Setpoint.Mode = 'Simulator';
 AO.QH3.Setpoint.DataType = 'Scalar';
 AO.QH3.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G2{QH3:24}Fld:SP  '; 'V:2-SR:C01-MG:G6{QH3:211}Fld:SP '; 'V:2-SR:C02-MG:G2{QH3:258}Fld:SP '; 'V:2-SR:C03-MG:G6{QH3:458}Fld:SP '; 'V:2-SR:C04-MG:G2{QH3:505}Fld:SP '; 'V:2-SR:C05-MG:G6{QH3:706}Fld:SP '; 'V:2-SR:C06-MG:G2{QH3:753}Fld:SP '; 'V:2-SR:C07-MG:G6{QH3:940}Fld:SP '; 'V:2-SR:C08-MG:G2{QH3:1011}Fld:SP'; 'V:2-SR:C09-MG:G6{QH3:1198}Fld:SP'; 'V:2-SR:C10-MG:G2{QH3:1258}Fld:SP'; 'V:2-SR:C11-MG:G6{QH3:1458}Fld:SP'; 'V:2-SR:C12-MG:G2{QH3:1505}Fld:SP'; 'V:2-SR:C13-MG:G6{QH3:1692}Fld:SP'; 'V:2-SR:C14-MG:G2{QH3:1739}Fld:SP'; 'V:2-SR:C15-MG:G6{QH3:1926}Fld:SP'; 'V:2-SR:C16-MG:G2{QH3:1973}Fld:SP'; 'V:2-SR:C17-MG:G6{QH3:2160}Fld:SP'; 'V:2-SR:C18-MG:G2{QH3:2231}Fld:SP'; 'V:2-SR:C19-MG:G6{QH3:2418}Fld:SP'; 'V:2-SR:C20-MG:G2{QH3:2465}Fld:SP'; 'V:2-SR:C21-MG:G6{QH3:2652}Fld:SP'; 'V:2-SR:C22-MG:G2{QH3:2699}Fld:SP'; 'V:2-SR:C23-MG:G6{QH3:2906}Fld:SP'; 'V:2-SR:C24-MG:G2{QH3:2953}Fld:SP'; 'V:2-SR:C25-MG:G6{QH3:3140}Fld:SP'; 'V:2-SR:C26-MG:G2{QH3:3187}Fld:SP'; 'V:2-SR:C27-MG:G6{QH3:3374}Fld:SP'; 'V:2-SR:C28-MG:G2{QH3:3445}Fld:SP'; 'V:2-SR:C29-MG:G6{QH3:3632}Fld:SP' ];
@@ -470,9 +470,9 @@ AO.QH3.Setpoint.Physics2HWFcn = @at2hw;
 AO.QH3.Setpoint.Units        = 'Hardware';
 AO.QH3.Setpoint.HWUnits      = '1/Meter^2';
 AO.QH3.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.QH3.Setpoint.Range = [-1 1];
+AO.QH3.Setpoint.Range = [-10 10];
 AO.QH3.Setpoint.Tolerance = .1;
-AO.QH3.Setpoint.DeltaRespMat = 1;
+AO.QH3.Setpoint.DeltaRespMat = .1;
 %AO.QH3.Setpoint.RampRate = .15;
 %AO.QH3.Setpoint.RunFlagFcn = @getrunflag_ltb;
 
@@ -532,7 +532,7 @@ AO.QH3.Fault.HWUnits      = '';
 AO.QH3.Fault.PhysicsUnits = '';
 
 AO.QL1.FamilyName = 'QL1';
-AO.QL1.MemberOf   = {'QUAD';  'Magnet';};
+AO.QL1.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.QL1.DeviceList = [ 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 1 7; 1 8; 1 9; 1 10; 1 11; 1 12; 1 13; 1 14; 1 15; 1 16; 1 17; 1 18; 1 19; 1 20; 1 21; 1 22; 1 23; 1 24; 1 25; 1 26; 1 27; 1 28; 1 29; 1 30 ];
 AO.QL1.ElementList = (1:size(AO.QL1.DeviceList,1))';
 AO.QL1.Status = ones(size(AO.QL1.DeviceList,1),1);
@@ -552,7 +552,7 @@ AO.QL1.Monitor.PhysicsUnits = '1/Meter^2';
 %AO.QL1.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.QL1.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.QL1.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.QL1.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.QL1.Setpoint.Mode = 'Simulator';
 AO.QL1.Setpoint.DataType = 'Scalar';
 AO.QL1.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G6{QL1:103}Fld:SP '; 'V:2-SR:C01-MG:G2{QL1:132}Fld:SP '; 'V:2-SR:C02-MG:G6{QL1:337}Fld:SP '; 'V:2-SR:C03-MG:G2{QL1:379}Fld:SP '; 'V:2-SR:C04-MG:G6{QL1:584}Fld:SP '; 'V:2-SR:C05-MG:G2{QL1:627}Fld:SP '; 'V:2-SR:C06-MG:G6{QL1:832}Fld:SP '; 'V:2-SR:C07-MG:G2{QL1:861}Fld:SP '; 'V:2-SR:C08-MG:G6{QL1:1090}Fld:SP'; 'V:2-SR:C09-MG:G2{QL1:1119}Fld:SP'; 'V:2-SR:C10-MG:G6{QL1:1337}Fld:SP'; 'V:2-SR:C11-MG:G2{QL1:1379}Fld:SP'; 'V:2-SR:C12-MG:G6{QL1:1584}Fld:SP'; 'V:2-SR:C13-MG:G2{QL1:1613}Fld:SP'; 'V:2-SR:C14-MG:G6{QL1:1818}Fld:SP'; 'V:2-SR:C15-MG:G2{QL1:1847}Fld:SP'; 'V:2-SR:C16-MG:G6{QL1:2052}Fld:SP'; 'V:2-SR:C17-MG:G2{QL1:2081}Fld:SP'; 'V:2-SR:C18-MG:G6{QL1:2310}Fld:SP'; 'V:2-SR:C19-MG:G2{QL1:2339}Fld:SP'; 'V:2-SR:C20-MG:G6{QL1:2544}Fld:SP'; 'V:2-SR:C21-MG:G2{QL1:2573}Fld:SP'; 'V:2-SR:C22-MG:G6{QL1:2778}Fld:SP'; 'V:2-SR:C23-MG:G2{QL1:2827}Fld:SP'; 'V:2-SR:C24-MG:G6{QL1:3032}Fld:SP'; 'V:2-SR:C25-MG:G2{QL1:3061}Fld:SP'; 'V:2-SR:C26-MG:G6{QL1:3266}Fld:SP'; 'V:2-SR:C27-MG:G2{QL1:3295}Fld:SP'; 'V:2-SR:C28-MG:G6{QL1:3524}Fld:SP'; 'V:2-SR:C29-MG:G2{QL1:3553}Fld:SP' ];
@@ -562,9 +562,9 @@ AO.QL1.Setpoint.Physics2HWFcn = @at2hw;
 AO.QL1.Setpoint.Units        = 'Hardware';
 AO.QL1.Setpoint.HWUnits      = '1/Meter^2';
 AO.QL1.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.QL1.Setpoint.Range = [-1 1];
+AO.QL1.Setpoint.Range = [-10 10];
 AO.QL1.Setpoint.Tolerance = .1;
-AO.QL1.Setpoint.DeltaRespMat = 1;
+AO.QL1.Setpoint.DeltaRespMat = .1;
 %AO.QL1.Setpoint.RampRate = .15;
 %AO.QL1.Setpoint.RunFlagFcn = @getrunflag_ltb;
 
@@ -624,7 +624,7 @@ AO.QL1.Fault.HWUnits      = '';
 AO.QL1.Fault.PhysicsUnits = '';
 
 AO.QL2.FamilyName = 'QL2';
-AO.QL2.MemberOf   = {'QUAD';  'Magnet';};
+AO.QL2.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.QL2.DeviceList = [ 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 1 7; 1 8; 1 9; 1 10; 1 11; 1 12; 1 13; 1 14; 1 15; 1 16; 1 17; 1 18; 1 19; 1 20; 1 21; 1 22; 1 23; 1 24; 1 25; 1 26; 1 27; 1 28; 1 29; 1 30 ];
 AO.QL2.ElementList = (1:size(AO.QL2.DeviceList,1))';
 AO.QL2.Status = ones(size(AO.QL2.DeviceList,1),1);
@@ -644,7 +644,7 @@ AO.QL2.Monitor.PhysicsUnits = '1/Meter^2';
 %AO.QL2.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.QL2.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.QL2.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.QL2.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.QL2.Setpoint.Mode = 'Simulator';
 AO.QL2.Setpoint.DataType = 'Scalar';
 AO.QL2.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G6{QL2:94}Fld:SP  '; 'V:2-SR:C01-MG:G2{QL2:141}Fld:SP '; 'V:2-SR:C02-MG:G6{QL2:328}Fld:SP '; 'V:2-SR:C03-MG:G2{QL2:388}Fld:SP '; 'V:2-SR:C04-MG:G6{QL2:575}Fld:SP '; 'V:2-SR:C05-MG:G2{QL2:636}Fld:SP '; 'V:2-SR:C06-MG:G6{QL2:823}Fld:SP '; 'V:2-SR:C07-MG:G2{QL2:870}Fld:SP '; 'V:2-SR:C08-MG:G6{QL2:1081}Fld:SP'; 'V:2-SR:C09-MG:G2{QL2:1128}Fld:SP'; 'V:2-SR:C10-MG:G6{QL2:1328}Fld:SP'; 'V:2-SR:C11-MG:G2{QL2:1388}Fld:SP'; 'V:2-SR:C12-MG:G6{QL2:1575}Fld:SP'; 'V:2-SR:C13-MG:G2{QL2:1622}Fld:SP'; 'V:2-SR:C14-MG:G6{QL2:1809}Fld:SP'; 'V:2-SR:C15-MG:G2{QL2:1856}Fld:SP'; 'V:2-SR:C16-MG:G6{QL2:2043}Fld:SP'; 'V:2-SR:C17-MG:G2{QL2:2090}Fld:SP'; 'V:2-SR:C18-MG:G6{QL2:2301}Fld:SP'; 'V:2-SR:C19-MG:G2{QL2:2348}Fld:SP'; 'V:2-SR:C20-MG:G6{QL2:2535}Fld:SP'; 'V:2-SR:C21-MG:G2{QL2:2582}Fld:SP'; 'V:2-SR:C22-MG:G6{QL2:2769}Fld:SP'; 'V:2-SR:C23-MG:G2{QL2:2836}Fld:SP'; 'V:2-SR:C24-MG:G6{QL2:3023}Fld:SP'; 'V:2-SR:C25-MG:G2{QL2:3070}Fld:SP'; 'V:2-SR:C26-MG:G6{QL2:3257}Fld:SP'; 'V:2-SR:C27-MG:G2{QL2:3304}Fld:SP'; 'V:2-SR:C28-MG:G6{QL2:3515}Fld:SP'; 'V:2-SR:C29-MG:G2{QL2:3562}Fld:SP' ];
@@ -654,9 +654,9 @@ AO.QL2.Setpoint.Physics2HWFcn = @at2hw;
 AO.QL2.Setpoint.Units        = 'Hardware';
 AO.QL2.Setpoint.HWUnits      = '1/Meter^2';
 AO.QL2.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.QL2.Setpoint.Range = [-1 1];
+AO.QL2.Setpoint.Range = [-10 10];
 AO.QL2.Setpoint.Tolerance = .1;
-AO.QL2.Setpoint.DeltaRespMat = 1;
+AO.QL2.Setpoint.DeltaRespMat = .1;
 %AO.QL2.Setpoint.RampRate = .15;
 %AO.QL2.Setpoint.RunFlagFcn = @getrunflag_ltb;
 
@@ -716,7 +716,7 @@ AO.QL2.Fault.HWUnits      = '';
 AO.QL2.Fault.PhysicsUnits = '';
 
 AO.QL3.FamilyName = 'QL3';
-AO.QL3.MemberOf   = {'QUAD';  'Magnet';};
+AO.QL3.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.QL3.DeviceList = [ 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 1 7; 1 8; 1 9; 1 10; 1 11; 1 12; 1 13; 1 14; 1 15; 1 16; 1 17; 1 18; 1 19; 1 20; 1 21; 1 22; 1 23; 1 24; 1 25; 1 26; 1 27; 1 28; 1 29; 1 30 ];
 AO.QL3.ElementList = (1:size(AO.QL3.DeviceList,1))';
 AO.QL3.Status = ones(size(AO.QL3.DeviceList,1),1);
@@ -736,7 +736,7 @@ AO.QL3.Monitor.PhysicsUnits = '1/Meter^2';
 %AO.QL3.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.QL3.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.QL3.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.QL3.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.QL3.Setpoint.Mode = 'Simulator';
 AO.QL3.Setpoint.DataType = 'Scalar';
 AO.QL3.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G6{QL3:83}Fld:SP  '; 'V:2-SR:C01-MG:G2{QL3:152}Fld:SP '; 'V:2-SR:C02-MG:G6{QL3:317}Fld:SP '; 'V:2-SR:C03-MG:G2{QL3:399}Fld:SP '; 'V:2-SR:C04-MG:G6{QL3:564}Fld:SP '; 'V:2-SR:C05-MG:G2{QL3:647}Fld:SP '; 'V:2-SR:C06-MG:G6{QL3:812}Fld:SP '; 'V:2-SR:C07-MG:G2{QL3:881}Fld:SP '; 'V:2-SR:C08-MG:G6{QL3:1070}Fld:SP'; 'V:2-SR:C09-MG:G2{QL3:1139}Fld:SP'; 'V:2-SR:C10-MG:G6{QL3:1317}Fld:SP'; 'V:2-SR:C11-MG:G2{QL3:1399}Fld:SP'; 'V:2-SR:C12-MG:G6{QL3:1564}Fld:SP'; 'V:2-SR:C13-MG:G2{QL3:1633}Fld:SP'; 'V:2-SR:C14-MG:G6{QL3:1798}Fld:SP'; 'V:2-SR:C15-MG:G2{QL3:1867}Fld:SP'; 'V:2-SR:C16-MG:G6{QL3:2032}Fld:SP'; 'V:2-SR:C17-MG:G2{QL3:2101}Fld:SP'; 'V:2-SR:C18-MG:G6{QL3:2290}Fld:SP'; 'V:2-SR:C19-MG:G2{QL3:2359}Fld:SP'; 'V:2-SR:C20-MG:G6{QL3:2524}Fld:SP'; 'V:2-SR:C21-MG:G2{QL3:2593}Fld:SP'; 'V:2-SR:C22-MG:G6{QL3:2758}Fld:SP'; 'V:2-SR:C23-MG:G2{QL3:2847}Fld:SP'; 'V:2-SR:C24-MG:G6{QL3:3012}Fld:SP'; 'V:2-SR:C25-MG:G2{QL3:3081}Fld:SP'; 'V:2-SR:C26-MG:G6{QL3:3246}Fld:SP'; 'V:2-SR:C27-MG:G2{QL3:3315}Fld:SP'; 'V:2-SR:C28-MG:G6{QL3:3504}Fld:SP'; 'V:2-SR:C29-MG:G2{QL3:3573}Fld:SP' ];
@@ -746,9 +746,9 @@ AO.QL3.Setpoint.Physics2HWFcn = @at2hw;
 AO.QL3.Setpoint.Units        = 'Hardware';
 AO.QL3.Setpoint.HWUnits      = '1/Meter^2';
 AO.QL3.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.QL3.Setpoint.Range = [-1 1];
+AO.QL3.Setpoint.Range = [-10 10];
 AO.QL3.Setpoint.Tolerance = .1;
-AO.QL3.Setpoint.DeltaRespMat = 1;
+AO.QL3.Setpoint.DeltaRespMat = .1;
 %AO.QL3.Setpoint.RampRate = .15;
 %AO.QL3.Setpoint.RunFlagFcn = @getrunflag_ltb;
 
@@ -808,7 +808,7 @@ AO.QL3.Fault.HWUnits      = '';
 AO.QL3.Fault.PhysicsUnits = '';
 
 AO.QM1.FamilyName = 'QM1';
-AO.QM1.MemberOf   = {'QUAD';  'Magnet';};
+AO.QM1.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.QM1.DeviceList = [ 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 1 7; 1 8; 1 9; 1 10; 1 11; 1 12; 1 13; 1 14; 1 15; 1 16; 1 17; 1 18; 1 19; 1 20; 1 21; 1 22; 1 23; 1 24; 1 25; 1 26; 1 27; 1 28; 1 29; 1 30; 1 31; 1 32; 1 33; 1 34; 1 35; 1 36; 1 37; 1 38; 1 39; 1 40; 1 41; 1 42; 1 43; 1 44; 1 45; 1 46; 1 47; 1 48; 1 49; 1 50; 1 51; 1 52; 1 53; 1 54; 1 55; 1 56; 1 57; 1 58; 1 59; 1 60 ];
 AO.QM1.ElementList = (1:size(AO.QM1.DeviceList,1))';
 AO.QM1.Status = ones(size(AO.QM1.DeviceList,1),1);
@@ -828,7 +828,7 @@ AO.QM1.Monitor.PhysicsUnits = '1/Meter^2';
 %AO.QM1.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.QM1.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.QM1.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.QM1.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.QM1.Setpoint.Mode = 'Simulator';
 AO.QM1.Setpoint.DataType = 'Scalar';
 AO.QM1.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G4{QM1:46}Fld:SP  '; 'V:2-SR:C30-MG:G4{QM1:67}Fld:SP  '; 'V:2-SR:C01-MG:G4{QM1:166}Fld:SP '; 'V:2-SR:C01-MG:G4{QM1:187}Fld:SP '; 'V:2-SR:C02-MG:G4{QM1:280}Fld:SP '; 'V:2-SR:C02-MG:G4{QM1:301}Fld:SP '; 'V:2-SR:C03-MG:G4{QM1:413}Fld:SP '; 'V:2-SR:C03-MG:G4{QM1:434}Fld:SP '; 'V:2-SR:C04-MG:G4{QM1:527}Fld:SP '; 'V:2-SR:C04-MG:G4{QM1:548}Fld:SP '; 'V:2-SR:C05-MG:G4{QM1:661}Fld:SP '; 'V:2-SR:C05-MG:G4{QM1:682}Fld:SP '; 'V:2-SR:C06-MG:G4{QM1:775}Fld:SP '; 'V:2-SR:C06-MG:G4{QM1:796}Fld:SP '; 'V:2-SR:C07-MG:G4{QM1:895}Fld:SP '; 'V:2-SR:C07-MG:G4{QM1:916}Fld:SP '; 'V:2-SR:C08-MG:G4{QM1:1033}Fld:SP'; 'V:2-SR:C08-MG:G4{QM1:1054}Fld:SP'; 'V:2-SR:C09-MG:G4{QM1:1153}Fld:SP'; 'V:2-SR:C09-MG:G4{QM1:1174}Fld:SP'; 'V:2-SR:C10-MG:G4{QM1:1280}Fld:SP'; 'V:2-SR:C10-MG:G4{QM1:1301}Fld:SP'; 'V:2-SR:C11-MG:G4{QM1:1413}Fld:SP'; 'V:2-SR:C11-MG:G4{QM1:1434}Fld:SP'; 'V:2-SR:C12-MG:G4{QM1:1527}Fld:SP'; 'V:2-SR:C12-MG:G4{QM1:1548}Fld:SP'; 'V:2-SR:C13-MG:G4{QM1:1647}Fld:SP'; 'V:2-SR:C13-MG:G4{QM1:1668}Fld:SP'; 'V:2-SR:C14-MG:G4{QM1:1761}Fld:SP'; 'V:2-SR:C14-MG:G4{QM1:1782}Fld:SP'; 'V:2-SR:C15-MG:G4{QM1:1881}Fld:SP'; 'V:2-SR:C15-MG:G4{QM1:1902}Fld:SP'; 'V:2-SR:C16-MG:G4{QM1:1995}Fld:SP'; 'V:2-SR:C16-MG:G4{QM1:2016}Fld:SP'; 'V:2-SR:C17-MG:G4{QM1:2115}Fld:SP'; 'V:2-SR:C17-MG:G4{QM1:2136}Fld:SP'; 'V:2-SR:C18-MG:G4{QM1:2253}Fld:SP'; 'V:2-SR:C18-MG:G4{QM1:2274}Fld:SP'; 'V:2-SR:C19-MG:G4{QM1:2373}Fld:SP'; 'V:2-SR:C19-MG:G4{QM1:2394}Fld:SP'; 'V:2-SR:C20-MG:G4{QM1:2487}Fld:SP'; 'V:2-SR:C20-MG:G4{QM1:2508}Fld:SP'; 'V:2-SR:C21-MG:G4{QM1:2607}Fld:SP'; 'V:2-SR:C21-MG:G4{QM1:2628}Fld:SP'; 'V:2-SR:C22-MG:G4{QM1:2721}Fld:SP'; 'V:2-SR:C22-MG:G4{QM1:2742}Fld:SP'; 'V:2-SR:C23-MG:G4{QM1:2861}Fld:SP'; 'V:2-SR:C23-MG:G4{QM1:2882}Fld:SP'; 'V:2-SR:C24-MG:G4{QM1:2975}Fld:SP'; 'V:2-SR:C24-MG:G4{QM1:2996}Fld:SP'; 'V:2-SR:C25-MG:G4{QM1:3095}Fld:SP'; 'V:2-SR:C25-MG:G4{QM1:3116}Fld:SP'; 'V:2-SR:C26-MG:G4{QM1:3209}Fld:SP'; 'V:2-SR:C26-MG:G4{QM1:3230}Fld:SP'; 'V:2-SR:C27-MG:G4{QM1:3329}Fld:SP'; 'V:2-SR:C27-MG:G4{QM1:3350}Fld:SP'; 'V:2-SR:C28-MG:G4{QM1:3467}Fld:SP'; 'V:2-SR:C28-MG:G4{QM1:3488}Fld:SP'; 'V:2-SR:C29-MG:G4{QM1:3587}Fld:SP'; 'V:2-SR:C29-MG:G4{QM1:3608}Fld:SP' ];
@@ -838,9 +838,9 @@ AO.QM1.Setpoint.Physics2HWFcn = @at2hw;
 AO.QM1.Setpoint.Units        = 'Hardware';
 AO.QM1.Setpoint.HWUnits      = '1/Meter^2';
 AO.QM1.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.QM1.Setpoint.Range = [-1 1];
+AO.QM1.Setpoint.Range = [-10 10];
 AO.QM1.Setpoint.Tolerance = .1;
-AO.QM1.Setpoint.DeltaRespMat = 1;
+AO.QM1.Setpoint.DeltaRespMat = .1;
 %AO.QM1.Setpoint.RampRate = .15;
 %AO.QM1.Setpoint.RunFlagFcn = @getrunflag_ltb;
 
@@ -900,7 +900,7 @@ AO.QM1.Fault.HWUnits      = '';
 AO.QM1.Fault.PhysicsUnits = '';
 
 AO.QM2.FamilyName = 'QM2';
-AO.QM2.MemberOf   = {'QUAD';  'Magnet';};
+AO.QM2.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.QM2.DeviceList = [ 1 1; 1 2; 1 3; 1 4; 1 5; 1 6; 1 7; 1 8; 1 9; 1 10; 1 11; 1 12; 1 13; 1 14; 1 15; 1 16; 1 17; 1 18; 1 19; 1 20; 1 21; 1 22; 1 23; 1 24; 1 25; 1 26; 1 27; 1 28; 1 29; 1 30; 1 31; 1 32; 1 33; 1 34; 1 35; 1 36; 1 37; 1 38; 1 39; 1 40; 1 41; 1 42; 1 43; 1 44; 1 45; 1 46; 1 47; 1 48; 1 49; 1 50; 1 51; 1 52; 1 53; 1 54; 1 55; 1 56; 1 57; 1 58; 1 59; 1 60 ];
 AO.QM2.ElementList = (1:size(AO.QM2.DeviceList,1))';
 AO.QM2.Status = ones(size(AO.QM2.DeviceList,1),1);
@@ -920,7 +920,7 @@ AO.QM2.Monitor.PhysicsUnits = '1/Meter^2';
 %AO.QM2.Monitor.Real2RawFcn = @real2raw_ltb;
 %AO.QM2.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.QM2.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.QM2.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.QM2.Setpoint.Mode = 'Simulator';
 AO.QM2.Setpoint.DataType = 'Scalar';
 AO.QM2.Setpoint.ChannelNames = [ 'V:2-SR:C30-MG:G4{QM2:57}Fld:SP  '; 'V:2-SR:C30-MG:G4{QM2:61}Fld:SP  '; 'V:2-SR:C01-MG:G4{QM2:177}Fld:SP '; 'V:2-SR:C01-MG:G4{QM2:181}Fld:SP '; 'V:2-SR:C02-MG:G4{QM2:291}Fld:SP '; 'V:2-SR:C02-MG:G4{QM2:295}Fld:SP '; 'V:2-SR:C03-MG:G4{QM2:424}Fld:SP '; 'V:2-SR:C03-MG:G4{QM2:428}Fld:SP '; 'V:2-SR:C04-MG:G4{QM2:538}Fld:SP '; 'V:2-SR:C04-MG:G4{QM2:542}Fld:SP '; 'V:2-SR:C05-MG:G4{QM2:672}Fld:SP '; 'V:2-SR:C05-MG:G4{QM2:676}Fld:SP '; 'V:2-SR:C06-MG:G4{QM2:786}Fld:SP '; 'V:2-SR:C06-MG:G4{QM2:790}Fld:SP '; 'V:2-SR:C07-MG:G4{QM2:906}Fld:SP '; 'V:2-SR:C07-MG:G4{QM2:910}Fld:SP '; 'V:2-SR:C08-MG:G4{QM2:1044}Fld:SP'; 'V:2-SR:C08-MG:G4{QM2:1048}Fld:SP'; 'V:2-SR:C09-MG:G4{QM2:1164}Fld:SP'; 'V:2-SR:C09-MG:G4{QM2:1168}Fld:SP'; 'V:2-SR:C10-MG:G4{QM2:1291}Fld:SP'; 'V:2-SR:C10-MG:G4{QM2:1295}Fld:SP'; 'V:2-SR:C11-MG:G4{QM2:1424}Fld:SP'; 'V:2-SR:C11-MG:G4{QM2:1428}Fld:SP'; 'V:2-SR:C12-MG:G4{QM2:1538}Fld:SP'; 'V:2-SR:C12-MG:G4{QM2:1542}Fld:SP'; 'V:2-SR:C13-MG:G4{QM2:1658}Fld:SP'; 'V:2-SR:C13-MG:G4{QM2:1662}Fld:SP'; 'V:2-SR:C14-MG:G4{QM2:1772}Fld:SP'; 'V:2-SR:C14-MG:G4{QM2:1776}Fld:SP'; 'V:2-SR:C15-MG:G4{QM2:1892}Fld:SP'; 'V:2-SR:C15-MG:G4{QM2:1896}Fld:SP'; 'V:2-SR:C16-MG:G4{QM2:2006}Fld:SP'; 'V:2-SR:C16-MG:G4{QM2:2010}Fld:SP'; 'V:2-SR:C17-MG:G4{QM2:2126}Fld:SP'; 'V:2-SR:C17-MG:G4{QM2:2130}Fld:SP'; 'V:2-SR:C18-MG:G4{QM2:2264}Fld:SP'; 'V:2-SR:C18-MG:G4{QM2:2268}Fld:SP'; 'V:2-SR:C19-MG:G4{QM2:2384}Fld:SP'; 'V:2-SR:C19-MG:G4{QM2:2388}Fld:SP'; 'V:2-SR:C20-MG:G4{QM2:2498}Fld:SP'; 'V:2-SR:C20-MG:G4{QM2:2502}Fld:SP'; 'V:2-SR:C21-MG:G4{QM2:2618}Fld:SP'; 'V:2-SR:C21-MG:G4{QM2:2622}Fld:SP'; 'V:2-SR:C22-MG:G4{QM2:2732}Fld:SP'; 'V:2-SR:C22-MG:G4{QM2:2736}Fld:SP'; 'V:2-SR:C23-MG:G4{QM2:2872}Fld:SP'; 'V:2-SR:C23-MG:G4{QM2:2876}Fld:SP'; 'V:2-SR:C24-MG:G4{QM2:2986}Fld:SP'; 'V:2-SR:C24-MG:G4{QM2:2990}Fld:SP'; 'V:2-SR:C25-MG:G4{QM2:3106}Fld:SP'; 'V:2-SR:C25-MG:G4{QM2:3110}Fld:SP'; 'V:2-SR:C26-MG:G4{QM2:3220}Fld:SP'; 'V:2-SR:C26-MG:G4{QM2:3224}Fld:SP'; 'V:2-SR:C27-MG:G4{QM2:3340}Fld:SP'; 'V:2-SR:C27-MG:G4{QM2:3344}Fld:SP'; 'V:2-SR:C28-MG:G4{QM2:3478}Fld:SP'; 'V:2-SR:C28-MG:G4{QM2:3482}Fld:SP'; 'V:2-SR:C29-MG:G4{QM2:3598}Fld:SP'; 'V:2-SR:C29-MG:G4{QM2:3602}Fld:SP' ];
@@ -930,9 +930,9 @@ AO.QM2.Setpoint.Physics2HWFcn = @at2hw;
 AO.QM2.Setpoint.Units        = 'Hardware';
 AO.QM2.Setpoint.HWUnits      = '1/Meter^2';
 AO.QM2.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.QM2.Setpoint.Range = [-1 1];
+AO.QM2.Setpoint.Range = [-10 10];
 AO.QM2.Setpoint.Tolerance = .1;
-AO.QM2.Setpoint.DeltaRespMat = 1;
+AO.QM2.Setpoint.DeltaRespMat = .1;
 %AO.QM2.Setpoint.RampRate = .15;
 %AO.QM2.Setpoint.RunFlagFcn = @getrunflag_ltb;
 
@@ -1063,7 +1063,7 @@ AO.RF.Monitor.Units        = 'Hardware';
 AO.RF.Monitor.HWUnits       = 'MHz';
 AO.RF.Monitor.PhysicsUnits  = 'Hz';
 
-AO.RF.Setpoint.MemberOf   = {'Save/Restore'; 'RF'; 'Setpoint'};
+AO.RF.Setpoint.MemberOf   = {'Save/Restore'; 'RF'; 'Setpoint'; 'PlotFamily'};
 AO.RF.Setpoint.Mode = 'Simulator';     % 'Online' 'Simulator', 'Manual' or 'Special'
 AO.RF.Setpoint.DataType = 'Scalar';
 AO.RF.Setpoint.ChannelNames = 'V:2-SR:C30-RF:G1{CAV:3656}Freq:SP';  %  User operation (small changes, ~5K) [Volts]
