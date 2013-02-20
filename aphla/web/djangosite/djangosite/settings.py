@@ -1,4 +1,4 @@
-# Django settings for lattice project.
+# Django settings for djangosite project.
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -97,17 +97,17 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'lattice.urls'
+ROOT_URLCONF = 'djangosite.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'lattice.wsgi.application'
+WSGI_APPLICATION = 'djangosite.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    "/Users/lyyang/devel/nsls2-hla/aphla/web/django_templates",
-    "/home/lyyang/devel/nsls2-hla/aphla/web/django_templates"
+    "/Users/lyyang/devel/nsls2-hla/aphla/web/templates",
+    "/home/lyyang/devel/nsls2-hla/aphla/web/templates"
 )
 
 INSTALLED_APPS = (
@@ -121,7 +121,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'elegant',
+    'lattice',
 )
 
 # A sample logging configuration. The only tangible logging

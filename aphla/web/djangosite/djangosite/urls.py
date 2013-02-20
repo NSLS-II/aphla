@@ -9,7 +9,7 @@ urlpatterns = patterns('',
     # url(r'^$', 'lattice.views.home', name='home'),
     # url(r'^lattice/', include('lattice.foo.urls')),
 
-    url(r'^elegant/', include('elegant.urls')),
+    url(r'^lattice/', include('lattice.urls')),
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 

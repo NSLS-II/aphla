@@ -5,7 +5,7 @@ from django.core.servers.basehttp import FileWrapper
 from django import forms
 from django.shortcuts import render
 
-from elegant.models import Channel
+from lattice.models import Channel
 
 import StringIO
 
@@ -17,10 +17,9 @@ class ContactForm(forms.Form):
     choice = forms.ChoiceField(widget=forms.RadioSelect, choices=(
             ('1', 'First'), ('2', 'Second'), ('3', 'Third')))
 
-
 def index(request):
-    latest_ch_list = Channel.objects.filter(pv__startswith='V:2')
-    template = loader.get_template('elegant/index.html')
+    latest_ch_list = Channel.objects.using("lattice").filter(pv__startswith='V:2')
+    template = loader.get_template('lattice/index.html')
     context = Context({'latest_ch_list': latest_ch_list,})
     return HttpResponse(template.render(context))
 
@@ -39,4 +38,4 @@ def contact(request):
     else:
         form = ContactForm()
 
-    return render(request, 'elegant/contact.html', {'form': form})
+    return render(request, 'lattice/contact.html', {'form': form})
