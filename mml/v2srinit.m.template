@@ -88,7 +88,7 @@ AO.RF.Monitor.Units        = 'Hardware';
 AO.RF.Monitor.HWUnits       = 'MHz';
 AO.RF.Monitor.PhysicsUnits  = 'Hz';
 
-AO.RF.Setpoint.MemberOf   = {'Save/Restore'; 'RF'; 'Setpoint'};
+AO.RF.Setpoint.MemberOf   = {'Save/Restore'; 'RF'; 'Setpoint'; 'PlotFamily'};
 AO.RF.Setpoint.Mode = 'Simulator';     %% 'Online' 'Simulator', 'Manual' or 'Special'
 AO.RF.Setpoint.DataType = 'Scalar';
 AO.RF.Setpoint.ChannelNames = 'V:2-SR:C30-RF:G1{CAV:3656}Freq:SP';  %%  User operation (small changes, ~5K) [Volts]
