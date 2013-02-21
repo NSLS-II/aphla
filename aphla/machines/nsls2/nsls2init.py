@@ -88,6 +88,8 @@ def init_submachines(machine, submachines, **kwargs):
     # LTB 
     if 'LTB' in lattice_dict: lattice_dict['LTB'].loop = False
     data_filename = getResource('ltb_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['LTD1'], data_filename, "unitconv")
+    setUnitConversion(lattice_dict['LTD2'], data_filename, "unitconv")
     setUnitConversion(lattice_dict['LTB'], data_filename, "unitconv")
     #_lat = _lattice_dict['LTB']
 
