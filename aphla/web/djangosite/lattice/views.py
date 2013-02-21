@@ -19,7 +19,7 @@ class ContactForm(forms.Form):
 
 class LatticeForm(forms.Form):
     fmtchoice = forms.ChoiceField(widget=forms.RadioSelect, choices=(
-            ('EL', 'Elegant'), ('TR', 'Tracy (Not Available yet)'),
+            ('EL', 'Elegant (ID removed)'), ('TR', 'Tracy (Not Available yet)'),
             ('MAD', 'MAD ? NO'), ('AT', 'AT ? check Matlab Middle Layer')))
     
 
@@ -69,7 +69,8 @@ def elegant(request):
     mp = {'BPM': 'MONI', 'TRIMX': 'HKICK', 'TRIMY': 'VKICK', 
           'FTRIM': 'KICK', 'SQ_TRIM': 'KICK', 'TRIMD': 'KICK',
           'DIPOLE': 'SBEN' }
-    for s in open('lattice/ring_par.txt', 'r').readlines()[3:]:
+    ROOTWR = os.path.dirname(__file__)
+    for s in open(os.path.join(ROOTWR, 'ring_par.txt'), 'r').readlines()[3:]:
         name, tp, L, se, k1, k2, angle, km = (s.split() + [None, None])[:8]
         if name == '_BEG_': continue
         if tp in mp:
@@ -106,7 +107,7 @@ def elegant(request):
     # write 
     eledir, eleroot = tempfile.gettempdir(), tempfile.gettempprefix()
     ele = os.path.join(eledir, eleroot + ".ele")
-    tmplate = open("lattice/elegant.ele.template", 'r').read()
+    tmplate = open(os.path.join(ROOTWR, "elegant.ele.template"), 'r').read()
     f = open(ele, 'w')
     f.write(tmplate % {'lte': eleroot + ".lte"})
     f.close()
@@ -120,11 +121,11 @@ def elegant(request):
 
     cwd = os.getcwd()
     os.chdir(eledir)
-    stat, out = commands.getstatusoutput("elegant %s.ele" % eleroot)
+    out_err, out = commands.getstatusoutput("elegant %s.ele" % eleroot)
     #response = HttpResponse(out.replace('\n', '<br>'))
     #return response
     
-    stat, twiss = commands.getstatusoutput("sddsprintout -col={ElementName,s,betax,betay,etax,psix,psiy} %s.twi" % eleroot)
+    twiss_err, twiss = commands.getstatusoutput("sddsprintout -col=ElementName -col=s -col=betax -col=betay -col=etax -col=psix -col=psiy %s.twi" % eleroot)
 
     #buf.seek(0)
     #response = HttpResponse(buf.read(), mimetype='application/lte')
@@ -139,9 +140,14 @@ def elegant(request):
 
     template = loader.get_template('lattice/elegant.html')
     val = {'ele': open(ele, 'r').read(), 
-                       'lte': open(os.path.join(
-                    eledir, eleroot+".lte"), 'r').read(),
-                       'stdout' : out,
-                       'twiss' : twiss,}
+           'lte': open(os.path.join(
+               eledir, eleroot+".lte"), 'r').read(),
+           'stdout' : out,
+           'stdout_err': out_err,
+           'twiss' : twiss,
+           'twiss_err': twiss_err}
+    if twiss_err:
+        raise RuntimeError("error printing file: '%s.twi'" % os.path.join(eledir, eleroot))
+
     #return HttpResponse(template.render(context))
     return render(request, 'lattice/elegant.html', val)
