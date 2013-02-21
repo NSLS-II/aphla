@@ -56,6 +56,7 @@ class Lattice:
         self.sb, self.se = 0.0, 0.0
         self.ormdata = None
         self.loop = True
+        self.Ek = None
 
     def __getitem__(self, key):
         if isinstance(key, int):

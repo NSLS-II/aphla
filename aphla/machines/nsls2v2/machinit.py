@@ -127,6 +127,7 @@ def init_submachines(machine, submachines, **kwargs):
     lattice_dict['V2SR'].sb = 0.0
     lattice_dict['V2SR'].se = 791.958
     lattice_dict['V2SR'].loop = True
+    lattice_dict['V2SR'].Ek = 3000.0
 
     for bpm in lattice_dict['V2SR'].getElementList('BPM'):
         bpm.setRawUnit('x', 'm')
