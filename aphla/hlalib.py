@@ -33,6 +33,20 @@ logger = logging.getLogger(__name__)
 #    'waitStableOrbit', 
 #]
 
+def setEnergy(Ek):
+    """set energy (MeV) for current submachine
+
+    see also :func:`setEnergy`
+    """
+    machines._lat.Ek = Ek
+
+def getEnergy():
+    """get current submachine beam energy (MeV)
+
+    see also :func:`setEnergy`
+    """
+    return machines._lat.Ek
+
 # current
 def getCurrent(name='dcct', field='value', unitsys=None):
     """Get the current from the first DCCT element

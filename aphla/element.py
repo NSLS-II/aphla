@@ -220,6 +220,7 @@ class CaAction:
         self.trace = kwargs.get('trace', False)
         self.trace_limit = 200
         self.unitconv = {}
+        self.timeout = 2
 
     def __eq__(self, other):
         return self.pvrb == other.pvrb and \
@@ -288,12 +289,12 @@ class CaAction:
         """
         ret = None
         if data == 'origin' and self.sp:
-            ret = caget(self.pvsp)
-            caput(self.pvsp, self.sp[0])
+            ret = caget(self.pvsp, timeout=self.timeout)
+            caput(self.pvsp, self.sp[0], timeout=self.timeout)
             self.sp = []
         elif data == 'golden' and self.golden and self.pvsp:
-            ret = caget(self.pvsp)
-            caput(self.pvsp, self.golden)
+            ret = caget(self.pvsp, timeout=self.timeout)
+            caput(self.pvsp, self.golden, timeout=self.timeout)
             _logger.debug("setting {0} to {1}".format(
                     self.pvsp, self.golden))
             print "setting {0} to {1}".format(self.pvsp, self.golden)
@@ -315,13 +316,13 @@ class CaAction:
         When the queue is full, pop the 2nd data keep the first for `reset`
         """
         if data == 'readback':
-            self.rb.append(caget(self.pvrb))
+            self.rb.append(caget(self.pvrb, timeout=self.timeout))
             if len(self.rb) > self.trace_limit: self.rb.pop(1)
         elif data == 'setpoint':
-            self.sp.append(caget(self.pvsp))
+            self.sp.append(caget(self.pvsp, timeout=self.timeout))
             if len(self.sp) > self.trace_limit: self.sp.pop(1)
         elif data == 'rb2setpoint':
-            self.sp.append(caget(self.pvrb))
+            self.sp.append(caget(self.pvrb, timeout=self.timeout))
             if len(self.sp) > self.trace_limit: self.sp.pop(1)
 
     def getReadback(self, unitsys = None):
@@ -331,7 +332,7 @@ class CaAction:
         if self.pvrb: 
             #print __name__
             #_logger.info("testing")
-            rawret = caget(self.pvrb)
+            rawret = caget(self.pvrb, timeout=self.timeout)
             ret = self._unit_conv(rawret, None, unitsys)
             if self.trace: 
                 self.rb.append(copy.deepcopy(rawret))
@@ -357,7 +358,7 @@ class CaAction:
         elif len(self.golden) == 1: 
             self.golden[0] = ret
         else:
-            raise RuntimeError("improper golden val {0} for {1}".format(
+            raise ValueError("improper golden val {0} for {1}".format(
                     ret, self.pvsp))
 
 
@@ -366,11 +367,12 @@ class CaAction:
         return the value of setpoint PV or None if such PV is not defined.
         """
         if self.pvsp:
-            rawret = caget(self.pvsp)
+            rawret = caget(self.pvsp, timeout=self.timeout)
             ret = self._unit_conv(rawret, None, unitsys)
             if len(self.pvsp) == 1: return ret[0]
             else: return ret
-        else: return None
+        else: 
+            raise ValueError("no setpoint PVs")
 
 
     def putSetpoint(self, val, unitsys = None):
@@ -489,7 +491,7 @@ class CaAction:
         # get the EPICS ctrl_limit and stepsize. For floating point values,
         # the default step size is 1/1000 of the range. for integer value.
         try:
-            v = caget(pvi, format=FORMAT_CTRL)
+            v = caget(pvi, timeout=self.timeout, format=FORMAT_CTRL)
             low, hi = v.lower_ctrl_limit, v.upper_ctrl_limit
         except:
             _logger.error("error on reading PV limits {0}".format(pvi))
@@ -667,7 +669,7 @@ class CaAction:
             raise RuntimeError("stepsize is not defined for PV: {0}".format(
                     self.pvsp))
         
-        rawval0 = caget(self.pvsp)
+        rawval0 = caget(self.pvsp, timeout=self.timeout)
         rawval1 = [rawval0[i] + fact*h for i in enumerate(self.pvh)]
         return self.putSetpoint(rawval1, unitsys = None)
 

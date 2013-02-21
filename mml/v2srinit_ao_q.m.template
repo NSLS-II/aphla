@@ -1,5 +1,5 @@
 AO.%(q_family)s.FamilyName = '%(q_family)s';
-AO.%(q_family)s.MemberOf   = {'QUAD';  'Magnet';};
+AO.%(q_family)s.MemberOf   = {'QUAD';  'Magnet'; 'PlotFamily'};
 AO.%(q_family)s.DeviceList = [ %(q_devlist)s ];
 AO.%(q_family)s.ElementList = (1:size(AO.%(q_family)s.DeviceList,1))';
 AO.%(q_family)s.Status = ones(size(AO.%(q_family)s.DeviceList,1),1);
@@ -19,7 +19,7 @@ AO.%(q_family)s.Monitor.PhysicsUnits = '1/Meter^2';
 %%AO.%(q_family)s.Monitor.Real2RawFcn = @real2raw_ltb;
 %%AO.%(q_family)s.Monitor.Raw2RealFcn = @raw2real_ltb;
 
-AO.%(q_family)s.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'};
+AO.%(q_family)s.Setpoint.MemberOf = {'QUAD'; 'Magnet'; 'Save/Restore'; 'Setpoint'; 'MachineConfig'; 'PlotFamily'};
 AO.%(q_family)s.Setpoint.Mode = 'Simulator';
 AO.%(q_family)s.Setpoint.DataType = 'Scalar';
 AO.%(q_family)s.Setpoint.ChannelNames = [ %(q_setpoint_pv)s ];
@@ -29,9 +29,9 @@ AO.%(q_family)s.Setpoint.Physics2HWFcn = @at2hw;
 AO.%(q_family)s.Setpoint.Units        = 'Hardware';
 AO.%(q_family)s.Setpoint.HWUnits      = '1/Meter^2';
 AO.%(q_family)s.Setpoint.PhysicsUnits = '1/Meter^2';
-AO.%(q_family)s.Setpoint.Range = [-1 1];
+AO.%(q_family)s.Setpoint.Range = [-10 10];
 AO.%(q_family)s.Setpoint.Tolerance = .1;
-AO.%(q_family)s.Setpoint.DeltaRespMat = 1;
+AO.%(q_family)s.Setpoint.DeltaRespMat = .1;
 %%AO.%(q_family)s.Setpoint.RampRate = .15;
 %%AO.%(q_family)s.Setpoint.RunFlagFcn = @getrunflag_ltb;
 

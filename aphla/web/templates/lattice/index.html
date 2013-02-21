@@ -1,0 +1,11 @@
+<ul>
+<li> This is a demo site.
+<li> The generated lattice <font color="red">should not</font> be used for production purpose.
+<li> As of 2/21/2013, only elegant format is implemented.
+<li> There will be a test run on generated elegant lattice, twiss table will be printed.
+</ul>
+
+<form action="/lattice/" method="post">{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Submit" />
+</form>

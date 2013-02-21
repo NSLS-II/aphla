@@ -94,6 +94,9 @@ def init_submachines(machine, submachines, **kwargs):
     #
     # SR
     lattice_dict['SR'].loop = True
+    lattice_dict['SR'].sb = 0.0
+    lattice_dict['SR'].se = 791.958
+    lattice_dict['SR'].Ek = 3000.0
     #uc_m2mm = UcPoly1d('m', 'mm', [1e3, 0])
     #uc_mm2m = UcPoly1d('mm', 'm', [1e-3, 0])
     #

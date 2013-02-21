@@ -37,7 +37,8 @@ from PyQt4.QtCore import QSize, SIGNAL, QThread, Qt, QObject
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
-    QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor)
+    QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor,
+    QWhatsThis)
 import PyQt4.Qwt5 as Qwt
 
 import time
@@ -133,6 +134,7 @@ class OrbitPlotMainWindow(QMainWindow):
                                     QDockWidget.DockWidgetClosable)
         self.elemeditor.setFloating(False)
         self.elemeditor.setEnabled(False)
+        self.elemeditor.setMinimumWidth(300)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
@@ -387,6 +389,7 @@ class OrbitPlotMainWindow(QMainWindow):
         viewToolBar.addAction(viewLiveAction)
         viewToolBar.addAction(viewSingleShotAction)
         #viewToolBar.addAction(viewErrorBarAction)
+        viewToolBar.addAction(QWhatsThis.createAction(self))
 
         controlToolBar = self.addToolBar("Control")
         controlToolBar.addAction(controlChooseBpmAction)
@@ -817,6 +820,8 @@ def main(par=None):
 if __name__ == '__main__':
     #hla.clean_init()
     main(sys.argv)
+    #import cProfile
+    #cProfile.run('main()')
 
 # Local Variables: ***
 # mode: python ***

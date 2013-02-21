@@ -1,0 +1,33 @@
+&run_setup
+    lattice = "%(lte)s",
+    use_beamline = RING,
+    magnets = %%s.mag,
+    p_central_mev = 3000.0,
+    default_order = 3,
+    random_number_seed = 9784782334,
+    final = "%%s.fin",
+    parameters = "%%s.par",
+&end
+
+&run_control 
+    n_steps = 1,
+!    n_indices=1,
+!    n_passes = 1
+&end
+
+&twiss_output 
+    filename = "%%s.twi",
+    statistics=1, 
+    output_at_each_step=1,
+    radiation_integrals=1,
+    compute_driving_terms=1,
+&end
+
+
+&bunched_beam
+!    n_particles_per_bunch = 1,
+!    centroid[0] = 1e-4, 0, 1e-4, 0, 0, 1e-4
+&end
+
+&track
+&end
