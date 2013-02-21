@@ -1,0 +1,24 @@
+Your '.lte' file has been generated
+<form action="/lattice/download" method="post"> {% csrf_token %}
+<input type="submit" value="Download" />
+</form>
+
+<pre>
+{{ ele }}
+</pre>
+
+<pre>
+{{ lte }}
+</pre>
+
+<pre>
+{{ stdout }}
+</pre>
+
+{% if twiss %}
+<pre>
+{{ twiss }}
+</pre>
+{% endif %}
+
+
