@@ -106,6 +106,21 @@ class ApOrbitPhysics:
         _logger.info("{0} correctors {1} are disabled".format(
                 len(self.deadcor), self.deadcor))
 
+    def elementChecked(self, elem, stat):
+        print "element state:", elem, stat
+        if 'COR' in elem.group:
+            if stat == False and elem.name not in self.deadcor:
+                self.deadcor.append(elem.name)
+            elif stat == True and elem.name in self.deadcor:
+                self.deadcor.remove(elem.name)
+            print self.deadcor
+        if "BPM" in elem.group:
+            if stat == False and elem.name not in self.deadbpm:
+                self.deadbpm.append(elem.name)
+            elif stat == True and elem.name in self.deadbpm:
+                self.deadbpm.remove(elem.name)
+            print self.deadbpm
+            
 
     def correctOrbit(self, **kwargs):
         """

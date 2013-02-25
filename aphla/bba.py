@@ -26,15 +26,24 @@ import logging
 _logger = logging.getLogger(__name__)
 
 class BbaBowtie:
-    """
-    beam based alignment with bowtie plot method (ALS)
+    """beam based alignment with bowtie plot method (ALS)
 
+    For each pair of neighboring (BPM,Quad), a corrector is scanned. The beam
+    is kicked and through different offset of BPM and Quad. We assume the BPM
+    reading is approximately same as the beam position in the paired nearby
+    Quad. Depending on the beam offset, changing the quadrupole strength will
+    bring extra kick to the beam. Unless the beam is kicked through the center
+    of that quadrupole. This algorithm fits a line for a proper corrector
+    strength which kicks the beam through the center of the quadrupole. When
+    this strength applied, the BPM reading is the center of that quadrupole.
+ 
     Examples
     ---------
     >>> quadname = 'qh1g2c02a'
     >>> quad = getExactElement(quadname)
     >>> bpm = getClosest(quadname, 'BPM')
-    >>> 'par = {'bpm': 
+    >>> 'par = {'bpm':
+
     """
     def __init__(self, **kwargs):
         """
@@ -130,25 +139,28 @@ class BbaBowtie:
         - if dkick is set, kick will be renewed.
         - if dqk1 is set, qk1 will be renewed.
         """
+        # guihook QApplication::processEvents
         guihook = kwargs.get("guihook", None)
+        # progress bar widget
         pbar = kwargs.get("progress", None)
 
-        print __file__, "measuring bba"
+        #print __file__, "measuring bba"
         verbose = kwargs.get('verbose', 0)
-        if pbar: pbar.setValue(5)
+
         # record the initial values
         self._vb0 = self._b.get(self._bf, unitsys=None)
         qk0 = self._q.get(self._qf, unitsys=None)
         xp0 = self._c.get(self._cf, unitsys=None)
-        print "getting {0} {1}".format(qk0, xp0)
+        #print "getting {0} {1}".format(qk0, xp0)
         self._vq0 = qk0
         self._vc0 = xp0
+        if pbar: pbar.setValue(5)
 
         # ignore kick list if dkick is provided.
         self.cor_kick = [xp0 + dk for dk in self.cor_dkicks]
 
         obt00 = self._get_orbit()
-        print "obtshape:", np.shape(obt00)
+        #print "obtshape:", np.shape(obt00)
         self.orbit = np.zeros((2, 1+len(self.cor_dkicks), len(obt00)), 'd')
         # one more for original orbit
         ##
@@ -164,13 +176,13 @@ class BbaBowtie:
             obtref, diffstd_list=True, verbose=verbose, 
             diffstd=self.orbit_diffstd, minwait=self.minwait)
         obt01 = self._get_orbit()
-        print "   reading orbit", np.shape(obt01)
+        #print "   reading orbit", np.shape(obt01)
         # orbit before and after quad inc
         self.orbit[0, 0, :] = obt00[:]
         self.orbit[1, 0, :] = obt01[:]
 
-        print "step down quad"
-        print "-- reset quad:", self._q.name
+        #print "step down quad"
+        #print "-- reset quad:", self._q.name
         if guihook is not None: guihook()
         if pbar: pbar.setValue(20)
 
@@ -181,7 +193,7 @@ class BbaBowtie:
             diffstd=self.orbit_diffstd, verbose=verbose, 
             diffstd_list=True, minwait=self.minwait)
 
-        print "   reading orbit", np.shape(getOrbit())
+        #print "   reading orbit", np.shape(getOrbit())
         obt02 = self._get_orbit()
         if guihook is not None: guihook()
 
@@ -203,7 +215,7 @@ class BbaBowtie:
 
         # adjust qk
         obt = self._get_orbit()
-        print "reset cor, inc quad"
+        #print "reset cor, inc quad"
         #caput(self.trim_pvsp, xp0)
         #caput(self.quad_pvsp, qk0 + self.dqk1)
         obtref = getOrbit()
@@ -214,7 +226,7 @@ class BbaBowtie:
             diffstd_list= True, verbose=verbose)
         if pbar: pbar.setValue(60)
 
-        print "  get orbit", np.shape(getOrbit())
+        #print "  get orbit", np.shape(getOrbit())
         obt = self._get_orbit()
         for j,dxp in enumerate(self.cor_kick):
             if guihook is not None: guihook()
@@ -231,12 +243,16 @@ class BbaBowtie:
             if pbar: pbar.setValue(60 + int(j*30.0/len(self.cor_kick)))
 
         # reset qk
-        print "reset quad and trim"
+        #print "reset quad and trim"
         #caput(self.quad_pvsp, qk0)
         #caput(self.trim_pvsp, xp0)
         self._q.put(self._qf, qk0, unitsys=None)
         self._c.put(self._cf, xp0, unitsys=None)
-        print "measurement done"
+        _logger.info("measurement done: " \
+                     "q={0}, dq={1}, b={2}, c={3}, dc={4}".format(
+                         self._q.name, self.quad_dkick,
+                         self._b.name, self._c.name, self.cor_dkicks))
+
         if pbar: pbar.setValue(100)
 
 
@@ -248,7 +264,7 @@ class BbaBowtie:
         # [12:45 PM] (sandbox/venv) $ caget "SR:C30-MG:G02A{HCor:H2}Fld-SP"
         # SR:C30-MG:G02A{HCor:H2}Fld-SP  0
         from cothread.catools import caget, caput
-        print __file__, "BBA align", caget('V:2-SR:C30-BI:G2{PH1:11}SA:X')
+        #print __file__, "BBA align", caget('V:2-SR:C30-BI:G2{PH1:11}SA:X')
         self._measure(**kwargs)
         self._analyze()
         # 
@@ -336,8 +352,8 @@ class BbaBowtie:
             facecolor='green', alpha=0.8, histtype='stepfilled', 
             label='filtered')
         hbins2 = hbins.tolist()
-        print "bins:", min(hbins2), max(hbins2)
-        print hn, hpatch, hbins
+        #print "bins:", min(hbins2), max(hbins2)
+        #print hn, hpatch, hbins
         while hbins2[0] > min(self.x_intercept): hbins2.insert(0, hbins2[0] - d)
         while hbins2[-1] < max(self.x_intercept): hbins2.append(hbins2[-1] + d)
         #print hbins2

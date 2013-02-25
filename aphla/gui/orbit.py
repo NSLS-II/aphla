@@ -138,6 +138,9 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
+        self.connect(self.elemeditor, 
+                     SIGNAL("elementChecked(PyQt_PyObject, bool)"),
+                     self.physics.elementChecked)
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
         self._vbpm = None
@@ -729,8 +732,10 @@ class OrbitPlotMainWindow(QMainWindow):
         """auto scale X and Y"""
         for w in self.mdiarea.subWindowList():
             w.wid.autoScaleXY()
-            
-                    
+    
+    def getDeadElements(self):
+        return self._dead_cor + self._dead_bpm
+
     def getVisibleElements(self, elemname):
 
         w = self.mdiarea.currentSubWindow()

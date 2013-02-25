@@ -107,6 +107,7 @@ def figname(name):
     rt, ext = os.path.splitext(name)
     return rt + time.strftime("_%y%m%d_%H%M%S") + ext
     
+
 """
 Channel Finder
 ~~~~~~~~~~~~~~
@@ -1081,17 +1082,18 @@ class TestBba(unittest.TestCase):
 
     def test_bba_l2(self):
         """test bba"""
+        # hard coded quad and its strength
         q, cor, bpm = ap.getElements(['ql3g2c29a', 'cl2g2c29a', 'pl2g2c29a'])
         q.put("k1", -1.4894162702, unitsys=None)
         cor.put("x", 0.0, unitsys=None)
         cor.put("y", 0.0, unitsys=None)
 
-        print q.fields(), q.get('k1', unitsys=None)
+        #print q.fields(), q.get('k1', unitsys=None)
 
         inp = { 'quad': (q, 'k1'), 'cor': (cor, 'x'),
                 'bpm': (bpm, 'x'),
                 'quad_dkick': -6e-2, 
-                'cor_kick': np.linspace(-6e-6, 1e-4, 5) }
+                'cor_dkicks': np.linspace(-6e-6, 1e-4, 5) }
 
         bba = ap.bba.BbaBowtie(**inp)
         bba.align()
