@@ -3,15 +3,17 @@ Physics Routines for aporbit
 ============================
 
 """
-
+import numpy as np
 import aphla as ap
+
 from PyQt4.QtCore import QObject, Qt, QSettings, QSize, QString, QThread, SIGNAL
-from PyQt4.QtGui import QApplication, QBrush, QMdiArea, QMessageBox, QPen
+from PyQt4.QtGui import QApplication, QBrush, QMdiArea, QMessageBox, QPen, QDialog
 import PyQt4.Qwt5 as Qwt
 
 from elempickdlg import ElementPickDlg
 from orbitcorrdlg import OrbitCorrDlg
 from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
+from apbba import ApBbaDlg
 
 import time
 import logging
@@ -42,13 +44,19 @@ class ApMachInitThread(QThread):
                   (self.mach, self.latname))
         #print "signal sent"
 
+
 class ApOrbitPhysics:
     def __init__(self, mdiarea):
         self.mdiarea = mdiarea
         self.deadbpm = []
         self.deadcor = []
         self.corbitdlg = None # orbit correction dlg
+        self.bbadlg = None
         pass
+
+    def close(self):
+        if self.corbitdlg: self.corbitdlg.close()
+        if self.bbadlg: self.bbadlg.close()
 
     def chooseBpm(self):
         bpms = [e.name for e in ap.getElements('BPM')]
@@ -98,6 +106,21 @@ class ApOrbitPhysics:
         _logger.info("{0} correctors {1} are disabled".format(
                 len(self.deadcor), self.deadcor))
 
+    def elementChecked(self, elem, stat):
+        print "element state:", elem, stat
+        if 'COR' in elem.group:
+            if stat == False and elem.name not in self.deadcor:
+                self.deadcor.append(elem.name)
+            elif stat == True and elem.name in self.deadcor:
+                self.deadcor.remove(elem.name)
+            print self.deadcor
+        if "BPM" in elem.group:
+            if stat == False and elem.name not in self.deadbpm:
+                self.deadbpm.append(elem.name)
+            elif stat == True and elem.name in self.deadbpm:
+                self.deadbpm.remove(elem.name)
+            print self.deadbpm
+            
 
     def correctOrbit(self, **kwargs):
         """
@@ -136,7 +159,7 @@ class ApOrbitPhysics:
         #    QMessageBox.warning(self, "Error:", " {0}".format(e))
 
     def createLocalBump(self, wx, wy):
-
+        """create local bump"""
         if self.corbitdlg is None:
             #print self.obtdata.elem_names
             # assuming BPM has both x and y, the following s are same
@@ -297,3 +320,38 @@ class ApOrbitPhysics:
         #print "autozoom"
         #p.aplot.setErrorBar(self.error_bar)
         
+    def runBba(self, bpms):
+        """create local bump"""
+        inp = {'bpms': [], 'quads': [], 'cors': [], 'quad_dkicks': [],
+               'cor_dkicks': []}
+        for bpm in bpms:
+            inp['bpms'].extend([(bpm, 'x'), (bpm, 'y')])
+            quad = ap.getClosest(bpm, 'QUAD')
+            inp['quads'].extend([(quad, 'k1'), (quad, 'k1')])
+            cor = ap.getNeighbors(bpm, 'HCOR', 1)[0]
+            inp['cors'].append((cor, 'x'))
+            cor = ap.getNeighbors(bpm, 'VCOR', 1)[0]
+            inp['cors'].append((cor, 'y'))
+            inp['quad_dkicks'].extend([1e-2, 1e-2])
+            inp['cor_dkicks'].extend([np.linspace(-6e-5, 6e-5, 4),
+                                     np.linspace(-6e-5, 6e-5, 4)])
+                                     
+        if self.bbadlg is None:
+            #print self.obtdata.elem_names
+            # assuming BPM has both x and y, the following s are same
+            self.bbadlg = ApBbaDlg()
+            self.bbadlg.resize(500, 200)
+            self.bbadlg.setWindowTitle("Beam based alignment")
+            #self.obtxplot.plotDesiredOrbit(self.orbitx_data.golden(), 
+            #                            self.orbitx_data.x)
+            #self.obtyplot.plotDesiredOrbit(self.orbity_data.golden(), 
+            #                            self.orbity_data.x)
+
+        self.bbadlg.show()
+        self.bbadlg.raise_()
+        self.bbadlg.activateWindow()
+
+        from cothread.catools import caget, caput
+        print __file__, "BBA align", caget('V:2-SR:C30-BI:G2{PH1:11}SA:X')
+
+        self.bbadlg.runAlignment(**inp)

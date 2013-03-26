@@ -431,6 +431,9 @@ class OrmData:
         and the upper left corner is for given bpms and trims. Otherwise only
         the upper left corner is provided.        
 
+        if both bpmrec and trimrec are None, use the original full matrix
+        (minus the ignore list when provided)
+
         Examples
         ---------
         >>> getMatrix([('bpm1', 'x'), ('bpm1', 'y')],
@@ -443,19 +446,30 @@ class OrmData:
 
         _logger.info("ignore elements:{0}".format(ignore))
         # the upper left corner, BPM/COR from input.
-        rowidx = [self.index(bpm, f) for bpm, f in bpmrec if bpm not in ignore]
-        colidx = [self.index(cor, f) for cor, f in trimrec if cor not in ignore]
+        if bpmrec is None and trimrec is None:
+            rowidx = [self.index(v[0], v[2]) for v in self.bpm 
+                      if v[0] not in ignore]
+            colidx = [self.index(v[0], v[2]) for v in self.trim 
+                      if v[0] not in ignore]
+        else:
+            rowidx = [self.index(b, f) for b,f in bpmrec if b not in ignore]
+            colidx = [self.index(c, f) for c,f in trimrec if c not in ignore]
 
-        extrarow = [i for i in range(len(self.bpm)) 
-                    if i not in rowidx and self.bpm[i][0] not in ignore]
-        extracol = [i for i in range(len(self.trim)) 
-                    if i not in colidx and self.trim[i][0] not in ignore]
+        #print rowidx + extrarow
+        #print colidx + extracol
+        if full:
+            # full matrix
+            extrarow = [i for i in range(len(self.bpm)) 
+                        if i not in rowidx and self.bpm[i][0] not in ignore]
+            extracol = [i for i in range(len(self.trim)) 
+                        if i not in colidx and self.trim[i][0] not in ignore]
+            rowidx = rowidx + extrarow
+            colidx = colidx + extracol
 
-        m = np.take(np.take(self.m, rowidx+extrarow, axis=0),
-                    colidx+extracol, axis=1)
-        brec = [(self.bpm[i][0], self.bpm[i][2]) for i in rowidx+extrarow]
-        trec = [(self.trim[i][0], self.trim[i][2]) for i in colidx+extracol]
-
+        m = np.take(np.take(self.m, rowidx, axis=0), colidx, axis=1)
+        brec = [(self.bpm[i][0], self.bpm[i][2]) for i in rowidx]
+        trec = [(self.trim[i][0], self.trim[i][2]) for i in colidx]
+            
         _logger.info("get BPM {0}, COR {1}".format(len(brec), len(trec)))
         return m, brec, trec
             
