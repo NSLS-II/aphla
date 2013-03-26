@@ -1,19 +1,13 @@
 from numpy import *
-import os
 import commands
 
-import time
-import datetime
-import re
-import string
-import sys
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
-# python 
-'''
-from sdds2py import *
-a=sdds2py(FileName,para_col,para_col_name)
-output=sdds2py('Tester0.twi','col','s')
-'''
 
 def sdds2py(FileName,para_col,para_col_name):
 	'''
@@ -33,24 +27,27 @@ def sdds2py(FileName,para_col,para_col_name):
 	print cmd
 
 	if para_col[0:3]=='par':
-#		print para_col[0:3]
 		value=commands.getoutput(cmd)
 		if value[0:5]=='error':
 			print value
 		else:
-			value=float(value)
+			if is_number(value):
+				value=float(value)
 	elif para_col[0:3]=='col':
 		col=commands.getoutput(cmd)
 		if col[0:5]=='error':
 			value=col
 			print col
 		else:
-			value=array([float(i) for i in col.split('\n')])
+			value=array([i for i in col.split('\n')])
+			if is_number(value[0]):
+				value=array([float(i) for i in col.split('\n')])
 	else:
-#		para_col[0:3]
 		value='incorrect input'
+
 
 	print value
 
 	return value
+
 
