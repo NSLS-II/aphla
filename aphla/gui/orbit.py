@@ -27,7 +27,7 @@ import applotresources
 
 from elempickdlg import ElementPickDlg
 #from orbitconfdlg import OrbitPlotConfig
-from aporbitplot import ApOrbitPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
+from aporbitplot import ApOrbitPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot, ApSvdPlot
 from aporbitdata import ApVirtualElemData
 from aporbitphy import *
 from elemeditor import *
@@ -38,7 +38,7 @@ from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
     QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor,
-    QWhatsThis)
+                         QWhatsThis, QDialog)
 import PyQt4.Qwt5 as Qwt
 
 import time
@@ -333,6 +333,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewZoomIn15Action)
         self.viewMenu.addAction(viewZoomAutoAction)
         self.viewMenu.addSeparator()
+        self.viewMenu.addAction("ORM SV", self.plotSVD)
         # a bug in PyQwt5 for datetime x-axis, waiting for Debian 7
         #self.viewMenu.addAction(viewDcct)
         #for ac in self.viewMenu.actions(): ac.setDisabled(True)
@@ -814,6 +815,21 @@ class OrbitPlotMainWindow(QMainWindow):
         bpms = [e for e in lat.getElementList('BPM') 
                 if e.name not in self._dead_bpm][:1]
         self.physics.runBba(bpms)
+
+    def plotSVD(self):
+        mach, lat = self._current_mach_lat()
+        if not lat.ormdata:
+            QMessageBox.critical(self, "ORM SVD", 
+                                 "machine '%s' ORM data is not available" % \
+                                 mach,
+                                 QMessageBox.Ok)
+            return
+        m, brec, trec = lat.ormdata.getMatrix(None, None, full=False, 
+                                              ignore=self.getDeadElements())
+        U, s, V = np.linalg.svd(m, full_matrices=True)
+        #print np.shape(s), s
+        self.sp = ApSvdPlot(s)
+        self.sp.show()
 
 def main(par=None):
     #app.setStyle(st)
