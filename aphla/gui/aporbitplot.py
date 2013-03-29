@@ -13,9 +13,9 @@ from PyQt4.QtCore import (
     QSize, QRectF, QLine, pyqtSignal)
 
 from PyQt4.QtGui import (
-    QAction, QApplication, QWidget, QColor,
+    QAction, QApplication, QWidget, QColor, QDialog,
     QDockWidget, QFileDialog, QFrame, QGridLayout, QIcon,
-    QImage, QImageReader, QMenu,
+    QImage, QImageReader, QMenu, QComboBox,
     QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
     QMessageBox, QPainter, QPixmap, QPrintDialog, QPushButton,
     QPrinter, QSpinBox, QPen, QBrush, QFontMetrics, QSizePolicy,
@@ -851,3 +851,67 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.aplot.plotCurve2(y, x)
 
 
+class ApSvdPlot(QDialog):
+    def __init__(self, s):
+        super(QDialog, self).__init__()
+
+        self.s = s[:]
+
+        self.p = Qwt.QwtPlot()
+
+        self.c1 = Qwt.QwtPlotCurve("S-values")
+        self.c1.setData(range(len(s)), s)
+        self.c1.attach(self.p)
+        #self.c1.setYAxis(Qwt.QwtPlot.yLeft)
+        self.c1.setPen(QPen(Qt.blue, 2))
+        #self.p.enableAxis(Qwt.QwtPlot.yLeft)
+        self.p.setAxisTitle(Qwt.QwtPlot.yLeft, "Singular Values")
+
+        self.c2 = Qwt.QwtPlotCurve("S/max(S) (log scale)")
+        self.c2.setData(range(len(s)), s/np.max(s))
+        self.c2.setPen(QPen(Qt.red, 3))
+        self.c2.attach(self.p)
+        self.c2.setYAxis(Qwt.QwtPlot.yRight)
+        self.p.enableAxis(Qwt.QwtPlot.yRight)
+        self.p.setAxisTitle(Qwt.QwtPlot.yRight, "Singular Values (logscale)")
+
+        eg = Qwt.QwtLog10ScaleEngine()
+        self.p.setAxisScaleEngine(Qwt.QwtPlot.yRight, eg)
+        self.p.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend)
+
+        grid1 = Qwt.QwtPlotGrid()
+        grid1.attach(self.p)
+        grid1.setPen(QPen(Qt.black, 0.2, Qt.DotLine))
+
+        hb = QHBoxLayout()
+        hb.addWidget(QLabel("Show top"))
+        self.ns = QComboBox()
+        for i in [5,10,25,40,60,80,100,120,160] + range(200,len(s)+1,50): 
+            self.ns.addItem("%d" % i)
+        self.ns.addItem("%d" % len(s))
+
+        hb.addWidget(self.ns)
+        hb.addStretch()
+
+        vb = QVBoxLayout()
+        vb.addLayout(hb)
+        vb.addWidget(self.p)
+        self.setLayout(vb)
+        self.resize(400, 300)
+
+        self.picker1 = None
+        #self.zoomer1 = None
+        self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
+                                         Qwt.QwtPlot.yLeft,
+                                         Qwt.QwtPicker.DragSelection,
+                                         Qwt.QwtPicker.AlwaysOff,
+                                         self.p.canvas())
+        self.zoomer1.setRubberBandPen(QPen(Qt.black))
+        self.connect(self.ns, SIGNAL("currentIndexChanged(QString)"),
+                     self.updatePlot)
+
+    def updatePlot(self, txt):
+        n, err = txt.toInt()
+        self.c1.setData(range(1, n+1), self.s[:n])
+        self.c2.setData(range(1, n+1), self.s[:n]/np.max(self.s))
+        self.p.replot()

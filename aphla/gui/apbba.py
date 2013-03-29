@@ -5,21 +5,24 @@ AP Beam Based Alignment
 """
 # :author: Lingyun Yang <lyyang@bnl.gov>
 
-import cothread
-app = cothread.iqt()
+#import cothread
+#app = cothread.iqt()
 
-import sys
+import sys, time
 import gui_resources
 #import bpmtabledlg
 from elempickdlg import ElementPickDlg
 #from apbbaconfdlg import BbaConfig
 #from orbitplot import OrbitPlot
-from aphla import conf, bba
+#from aphla import conf, bba
 
-from PyQt4.QtCore import QSize, SIGNAL, Qt
+import aphla as ap
+
+from PyQt4.QtCore import QSize, SIGNAL, QThread, Qt
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QVBoxLayout, 
     QWidget, QTabWidget, QLabel, QIcon, QApplication, QImage, QPixmap,
-    QSizePolicy, QFileDialog)
+    QSizePolicy, QFileDialog, QDialog, QTableWidget, QHeaderView, QHBoxLayout,
+    QProgressBar, QTableWidgetItem, QFormLayout)
 # 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -39,7 +42,7 @@ class BbaMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
-        fig.subplots_adjust(bottom=0.15)
+        fig.subplots_adjust(bottom=0.2)
         self.axes = fig.add_subplot(111)
         # We want the axes cleared every time plot() is called
         self.axes.hold(True)
@@ -49,7 +52,7 @@ class BbaMplCanvas(FigureCanvas):
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
         # to avoid the cut off of xlabel
-        self.setMinimumSize(400, 300)
+        self.setMinimumSize(250, 200)
         FigureCanvas.setSizePolicy(self,
                                    QSizePolicy.Expanding,
                                    QSizePolicy.Expanding)
@@ -248,6 +251,148 @@ class BbaMainWindow(QMainWindow):
         f.close()
 
 
+class ApBbaThread(QThread):
+    def __init__(self):
+        super(ApBbaThread, self).__init__()
+
+    def run(self):
+        #
+        # Note: logging is not recommended: Cross Thread signal.
+        # 
+        #print "initializing ", self.mach, self.latname
+        #_logger.info("background initializing {0}.{1}".format(
+        #    self.mach, self.latname))
+        print "Measurement finished"
+
+
+class ApBbaDlg(QDialog):
+    def __init__(self, parent = None, **kwargs):
+        super(ApBbaDlg, self).__init__(parent)
+
+        self.bpms  = []
+        self.quads = []
+        self.corrs  = []
+        self.quad_dkicks = []
+        self.cor_dkicks = []
+
+        self.bba = ap.bba.BbaBowtie()
+
+        self.table = QTableWidget(0, 5)
+        self.table.setMinimumHeight(120)
+        self.table.setMinimumWidth(500)
+        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        hdview = QHeaderView(Qt.Horizontal)
+        self.table.setHorizontalHeaderLabels(
+            ['QUAD', 'BPM.field', 'BPM center', "Corr", "Kick"])
+
+        fmbox = QFormLayout()
+        self.subprogress = QProgressBar()
+        self.subprogress.setTextVisible(True)
+        self.subprogress.setSizePolicy(QSizePolicy.MinimumExpanding,
+                                       QSizePolicy.Fixed)
+        self.progress    = QProgressBar()
+        self.progress.setTextVisible(True)
+        self.progress.setSizePolicy(QSizePolicy.MinimumExpanding, 
+                                    QSizePolicy.Fixed)
+        fmbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        fmbox.addRow("Current BPM", self.subprogress)
+        fmbox.addRow("All Alignment", self.progress)
+        #self.progress.setMaximum(self.repeatbox.value())
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.table)
+        vbox.addLayout(fmbox)
+
+        #hbox.addStretch() 
+        self.widtab = QTabWidget()
+
+        vbox.addWidget(self.widtab)
+
+        self.setLayout(vbox)
+
+        self.connect(self.widtab, SIGNAL("currentChanged(int)"),
+                     self.activateResult)
+        self.connect(self.table, SIGNAL("cellClicked(int, int)"),
+                     self.activateResult)
+        #self.bbathread = ApBbaThread()
+        #self.connect(self.bbathread, 
+        #             SIGNAL("aligned(QString, QString, float, float)"), 
+        #             self.setResult)
+        #self.connect(self.bbathread, 
+        #             SIGNAL("startAlign(QString, QString, QString)"), 
+        #             self.appendRecord)
+
+        #self.connect(self.bbathread, 
+        #             SIGNAL("aligned(QString, QString, float, float)"), 
+        #             self.bbadlg.appendResult)
+
+    def setInput(self, **kwargs):
+        self.bpms = kwargs.get('bpms', [])
+        self.quads = kwargs.get('quads', [])
+        self.cors  = kwargs.get('cors', [])
+        self.quad_dkicks = kwargs.get('quad_dkicks', [])
+        self.cor_dkicks = kwargs.get('cor_dkicks', [])
+
+    def runAlignment(self, **kwargs):
+        self.setInput(**kwargs)
+        #self.bbathread.start()
+        print "Starting %d measurements" % len(self.bpms)
+        self.progress.setMaximum(len(self.bpms))
+        self.subprogress.setMaximum(100)
+        from cothread.catools import caget, caput
+        print __file__, "BBA align", caget('V:2-SR:C30-BI:G2{PH1:11}SA:X')
+        self.table.setRowCount(len(self.bpms))
+        for i,bpmrec in enumerate(self.bpms):
+            print i, bpmrec[0].name, self.quads[i][0].name
+            self.bba.setInput(bpmrec, self.quads[i], self.cors[i],
+                              self.quad_dkicks[i], self.cor_dkicks[i])
+            #self.emit(SIGNAL("startAlign(QString, QString, QString)"), 
+            #          self.quads[i][0].name, bpmrec[0].name, bpmrec[1])
+            self.setNames(i, self.quads[i][0].name, bpmrec[0].name, 
+                          bpmrec[1], self.cors[i][0].name)
+            self.bba.align(verbose=2, guihook = QApplication.processEvents,
+                           logger = None, progress = self.subprogress)
+
+            cv1 = BbaMplCanvas()
+            cv2 = BbaMplCanvas()
+            self.bba.plot(cv1.axes, cv2.axes, factor=(1e6, 1e6))
+            cv1.draw()
+            cv2.draw()
+
+            wid = QWidget(self)
+            hbox = QHBoxLayout()
+            hbox.addWidget(cv1)
+            hbox.addWidget(cv2)
+            wid.setLayout(hbox)
+            self.widtab.addTab(wid, "%s.%s" % (bpmrec[0].name, bpmrec[1]))
+            self.widtab.setCurrentIndex(i)
+
+            #time.sleep(.1)
+
+            #self.emit(SIGNAL("aligned(QString, QString, float, float)"), 
+            #          bpmrec[0].name, bpmrec[1], 0.0, 0.0)
+            self.setResult(i, bpmrec[0].name, bpmrec[1], 
+                           self.bba.bpm_fitted, self.bba.cor_fitted)
+            self.progress.setValue(i + 1)
+
+    def activateResult(self, i = 0, j = 0):
+        if i < self.widtab.count() and i != self.widtab.currentIndex():
+            self.widtab.setCurrentIndex(i)
+        if i < self.table.rowCount() and i != self.table.currentRow():
+            self.table.setCurrentCell(i, 1)
+
+    def setNames(self, i, quadname, bpmname, fld, corname):
+        self.table.setItem(i, 0, QTableWidgetItem(quadname))
+        self.table.setItem(i, 1, 
+                           QTableWidgetItem("{0}.{1}".format(bpmname, fld)))
+        self.table.setItem(i, 3, QTableWidgetItem(corname))
+
+    def setResult(self, i, bpmname, fld, bpmval, corval):
+        #self.table.setItem(n, 1, QTableWidgetItem(bpmname))
+        #self.table.setItem(n, 2, QTableWidgetItem(fld))
+        self.table.setItem(i, 2, QTableWidgetItem("%g" % bpmval))
+        self.table.setItem(i, 4, QTableWidgetItem("%g" % corval))
+        self.table.setCurrentCell(i, 1)
+        
 def main(args = None):
     #app = QApplication(args)
     demo = BbaMainWindow()

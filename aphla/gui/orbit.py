@@ -27,7 +27,7 @@ import applotresources
 
 from elempickdlg import ElementPickDlg
 #from orbitconfdlg import OrbitPlotConfig
-from aporbitplot import ApOrbitPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
+from aporbitplot import ApOrbitPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot, ApSvdPlot
 from aporbitdata import ApVirtualElemData
 from aporbitphy import *
 from elemeditor import *
@@ -38,7 +38,7 @@ from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
     QHBoxLayout, QGridLayout, QWidget, QTabWidget, QLabel, QIcon, QActionGroup,
     QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor,
-    QWhatsThis)
+                         QWhatsThis, QDialog)
 import PyQt4.Qwt5 as Qwt
 
 import time
@@ -138,6 +138,9 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
+        self.connect(self.elemeditor, 
+                     SIGNAL("elementChecked(PyQt_PyObject, bool)"),
+                     self.physics.elementChecked)
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
         self._vbpm = None
@@ -174,6 +177,10 @@ class OrbitPlotMainWindow(QMainWindow):
         #                   "H Orbit", c = None)
         #print "Thread started", self.machinit.isRunning()
 
+
+    def closeEvent(self, event):
+        self.physics.close()
+        event.accept()
 
     def _mach_init_done(self, machlat):
         # convert from tuple to mach and lat
@@ -326,6 +333,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addAction(viewZoomIn15Action)
         self.viewMenu.addAction(viewZoomAutoAction)
         self.viewMenu.addSeparator()
+        self.viewMenu.addAction("ORM SV", self.plotSVD)
         # a bug in PyQwt5 for datetime x-axis, waiting for Debian 7
         #self.viewMenu.addAction(viewDcct)
         #for ac in self.viewMenu.actions(): ac.setDisabled(True)
@@ -346,6 +354,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.controlMenu.addSeparator()
         self.controlMenu.addAction("meas Beta", self.physics.measBeta)
         self.controlMenu.addAction("meas Dispersion", self.physics.measDispersion)
+        self.controlMenu.addAction("beam based alignment", self.runBba)
         #for ac in self.controlMenu.actions(): ac.setDisabled(True)
 
         # Window
@@ -724,8 +733,10 @@ class OrbitPlotMainWindow(QMainWindow):
         """auto scale X and Y"""
         for w in self.mdiarea.subWindowList():
             w.wid.autoScaleXY()
-            
-                    
+    
+    def getDeadElements(self):
+        return self._dead_cor + self._dead_bpm
+
     def getVisibleElements(self, elemname):
 
         w = self.mdiarea.currentSubWindow()
@@ -798,6 +809,27 @@ class OrbitPlotMainWindow(QMainWindow):
         wy = self.activeOrbitPlot('y')
         self.physics.createLocalBump(wx, wy)
 
+
+    def runBba(self):
+        mach, lat = self._current_mach_lat()
+        bpms = [e for e in lat.getElementList('BPM') 
+                if e.name not in self._dead_bpm][:1]
+        self.physics.runBba(bpms)
+
+    def plotSVD(self):
+        mach, lat = self._current_mach_lat()
+        if not lat.ormdata:
+            QMessageBox.critical(self, "ORM SVD", 
+                                 "machine '%s' ORM data is not available" % \
+                                 mach,
+                                 QMessageBox.Ok)
+            return
+        m, brec, trec = lat.ormdata.getMatrix(None, None, full=False, 
+                                              ignore=self.getDeadElements())
+        U, s, V = np.linalg.svd(m, full_matrices=True)
+        #print np.shape(s), s
+        self.sp = ApSvdPlot(s)
+        self.sp.show()
 
 def main(par=None):
     #app.setStyle(st)
