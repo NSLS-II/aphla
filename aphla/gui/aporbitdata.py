@@ -150,9 +150,15 @@ class ApVirtualElemData(ApPlotData):
         return self.velem._name
 
     def remove(self, name):
-        if name not in self.velem._name: return
+        """remove name from velem, raise error if name is not in velem"""
+        #if name not in self.velem._name: return
         i = self.velem._name.index(name)
         for fld,act in self.velem._field.iteritems():
             pv = act.pvrb[i]
             act.remove(pv)
 
+    def disable(self, name):
+        """disable name in velem, raise error if name is not in velem"""
+        #if name not in self.velem._name: return
+        i = self.velem._name.index(name)
+        self.keep[i] = False
