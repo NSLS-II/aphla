@@ -344,16 +344,20 @@ def cfs_append_from_csv2(rec_list, update_only):
         if not cf.find(name=pv):
             errpvs.append(pv)
             print "PV '%s' does not exist" % pv
-    if errpvs: 
-        raise RuntimeError("PVs '{0}' are missing".format(errpvs))
+    #if errpvs: 
+    #    #raise RuntimeError("PVs '{0}' are missing".format(errpvs))
+    #    print 
 
+    logging.warn("{0} does not exist in DB".format(errpvs))
 
     for k,v in prpt_data.iteritems():
-        updatePropertyPvs(cf, k[0], prpt_owner, k[1], v)
-        logging.info("add property {0} for pvs {1}".format(k, v))
+        vf = [pv for pv in v if pv not in errpvs]
+        updatePropertyPvs(cf, k[0], prpt_owner, k[1], vf)
+        logging.info("add property {0} for pvs {1}".format(k, vf))
     for k,v in tag_data.iteritems():
-        addTagPvs(cf, k, v, tag_owner)
-        logging.info("add tag {0} for pvs {1}".format(k, v))
+        vf = [pv for pv in v if pv not in errpvs]
+        addTagPvs(cf, k, vf, tag_owner)
+        logging.info("add tag {0} for pvs {1}".format(k, vf))
 
 
 
