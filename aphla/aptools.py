@@ -96,6 +96,11 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     ormdata : optional, :class:`~aphla.apdata.OrmData`
         use provided OrmData instead of the system default.
 
+    Returns
+    --------
+    err : error code, see :func:`~aphla.catools.caRmCorrect`
+    msg : error message
+
     Notes
     ------
     if `ref[i][j]` is `None`, use the current hardware result, i.e. try not to
@@ -165,8 +170,10 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     for i in range(repeat):
         #for k,b in enumerate(bpmpvs):
         #    if bpmref[k] != 0.0: print(k, bpmlst[k], b, bpmref[k])
-        caRmCorrect(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
+        ret = caRmCorrect(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
+        if ret[0] != 0: return ret
 
+    return (0, None)
 
 def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     """

@@ -10,7 +10,8 @@ from collections import Iterable
 import h5py
 import logging
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.DEBUG)
 
 class UcAbstract(object):
     """
@@ -82,6 +83,8 @@ class UcInterpN(UcAbstract):
 def setUnitConversion(lat, h5file, group):
     """set the unit conversion for lattice with input from hdf5 file"""
     g = h5py.File(h5file, 'r')[group]
+    _logger.info("setting unit conversion for {0} from data file {1}:{2}".format(
+        lat.name, h5file, g.items()))
     for k,v in g.items():
         if not v.attrs.get('_class_', None): continue 
         if not v.attrs.get('unitsys', None): continue
@@ -99,21 +102,40 @@ def setUnitConversion(lat, h5file, group):
         else:
             raise RuntimeError("unknow unit converter")
 
+        # find the element list
         elems = v.attrs.get('elements', [])
 
         eobjs = []
+        #lat._find_exact_element(ename) for ename in elems if lat.hasElement(ename)]
         for ename in elems:
             eobj = lat._find_exact_element(ename)
-            if not eobj: continue
+            if not eobj: 
+                _logger.warn("dataset '{0}': element {1} not found. ignored".format(
+                    k, ename))
+                continue
             eobjs.append(eobj)
 
-        fams = v.attrs.get('families', [])
-        for fam in fams: eobjs += lat.getElementList(fam)
+        fams = v.attrs.get('groups', [])
+        for fam in fams:
+            egrps = lat.getElementList(fam)
+            if not egrps:
+                _logger.warn("dataset '{0}': group {1} not found. ignored".format(
+                    k, fam))
+            eobjs += egrps
 
+        _logger.info("unitconversion data for elems={0}, fams={1}".format(elems, fams))
+        _logger.info("unitconversion will be updated for {0}".format([e.name for e in eobjs]))
         for eobj in eobjs:
             if fld not in eobj.fields():
-                logger.warn("'%s' has no field '%s' for unit conversion" % (
+                realfld = v.attrs.get('rawfield', None)
+                if realfld is None:
+                    _logger.warn("'%s' has no field '%s' for unit conversion" % (
                         ename, fld))
-            else:
-                eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
+                    continue
+                else:
+                    eobj.addAliasField(fld, realfld)
+
+            _logger.info("adding unit conversion for {0}, from {1} to {2}".format(
+                fld, usrcsys, udstsys))
+            eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
 

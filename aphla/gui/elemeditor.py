@@ -24,6 +24,8 @@ import traceback
 import collections
 import numpy as np
 import sys, time
+from functools import partial
+
 C_FIELD, C_VAL_RAW = 0, 1
 _DBG_VERBOSE = 1
 
@@ -287,7 +289,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         return isinstance(self._value[r][c-1], (list, tuple))
 
     def setData(self, index, value, role=Qt.EditRole):
-        print "setting data", index.row(), index.column(), value.toInt()
+        #print "setting data", index.row(), index.column(), value.toInt()
         if not index.isValid(): return False
         
         #if index.isValid() and 0 <= index.row() < self._NF:
@@ -297,12 +299,12 @@ class ElementPropertyTableModel(QAbstractTableModel):
             #print "Editting property, ignore"
             checkstate, err = value.toInt()
             if checkstate == Qt.Unchecked:
-                print "disable row ", row
+                #print "disable row ", row
                 self.setElementActive(row, False)
                 self.emit(SIGNAL("toggleElementState(PyQt_PyObject, bool)"), 
                           elem, False)
             elif checkstate == Qt.Checked:
-                print "enable row", row
+                #print "enable row", row
                 self.setElementActive(row, True)
                 self.emit(SIGNAL("toggleElementState(PyQt_PyObject, bool)"),
                           elem, True)
@@ -311,8 +313,8 @@ class ElementPropertyTableModel(QAbstractTableModel):
         elif value.canConvert(QVariant.List):
             val = [v.toFloat()[0] for v in value.toList()]
             self._value[row][col-1] = val
-            print "Did not set {0}.{1} for real machine".format(
-                elem.name, fld)
+            _logger.info("Did not set {0}.{1} for real machine".format(
+                elem.name, fld))
         else:
             #print "Editting pv col=", col, value, value.toDouble()
             # put the value to machine
@@ -594,7 +596,6 @@ class ElementPropertyView(QTableView):
         if not act:
             m_dis.setChecked(True)
 
-        from functools import partial
         self.connect(m_dis, SIGNAL("toggled(bool)"),
                      partial(self.disableElement, irow=irow))
         cmenu.addAction(m_dis)
@@ -746,7 +747,7 @@ class ElementEditorDock(QDockWidget):
             self.valMeter.setEnabled(True)
 
     def elementStateChanged(self, elem, stat):
-        print "State changed:", elem, stat
+        #print "State changed:", elem, stat
         self.emit(SIGNAL("elementChecked(PyQt_PyObject, bool)"), elem, stat)
 
     def processCell(self, index):

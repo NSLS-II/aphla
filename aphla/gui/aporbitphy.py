@@ -48,8 +48,7 @@ class ApMachInitThread(QThread):
 class ApOrbitPhysics:
     def __init__(self, mdiarea):
         self.mdiarea = mdiarea
-        self.deadbpm = []
-        self.deadcor = []
+        self.deadelems = set()
         self.corbitdlg = None # orbit correction dlg
         self.bbadlg = None
         pass
@@ -58,69 +57,40 @@ class ApOrbitPhysics:
         if self.corbitdlg: self.corbitdlg.close()
         if self.bbadlg: self.bbadlg.close()
 
-    def chooseBpm(self):
-        bpms = [e.name for e in ap.getElements('BPM')]
-        form = ElementPickDlg(bpms, self.deadbpm, 'BPM')
-
-        if form.exec_(): 
-            choice = form.result()
-            dead_bpm = []
-            for i in range(len(bpms)):
-                if bpms[i] in choice: continue
-                dead_bpm.append(bpms[i])
-            # do nothing if dead element list did not change
-            if set(dead_bpm) == set(self.deadbpm): return
-            self.deadbpm = dead_bpm
-        _logger.info("{0} bpms {1} are disabled".format(
-                len(self.deadbpm), self.deadbpm))
-        rmw = []
-        live_bpm = set(bpms) - set(self.deadbpm)
+    def updateDeadElementPlots(self):
         for w in self.mdiarea.subWindowList():
-            velem = w.data.velem
-            if set(velem._name) == live_bpm: continue
-            rmw.append(w)
+            for e in self.deadelems:
+                if e.name not in w.data.names(): continue
+                w.data.disable(e.name)
 
-        for w in rmw:
-            w.raise_()
-            tit = str(w.windowTitle())
-            # ask if need to close the dated plot
-            r = QMessageBox.warning(
-                self, "BPM", 
-                'The BPM data in window<br>'
-                '<font color="blue">{0}</font><br>'
-                'is invalid now. Do you want to close them ?'.format(tit), 
-                QMessageBox.Yes|QMessageBox.No)
-            if r == QMessageBox.Yes: w.close()
-
-    def chooseCorrector(self):
-        cors = [e.name for e in ap.getElements('COR')]
-        form = ElementPickDlg(cors, self.deadcor, 'COR')
+        
+    def chooseElement(self, fam):
+        elems = ap.getElements(fam)
+        form = ElementPickDlg(elems, self.deadelems, fam)
 
         if form.exec_(): 
             choice = form.result()
-            dead_elem = []
-            for i in range(len(cors)):
-                if cors[i] in choice: continue
-                dead_elem.append(cors[i])
-            self.deadcor = dead_elem
-        _logger.info("{0} correctors {1} are disabled".format(
-                len(self.deadcor), self.deadcor))
+            deadlst = []
+            for i in range(len(elems)):
+                if elems[i].name in choice: continue
+                deadlst.append(elems[i])
+            # do nothing if dead element list did not change
+            if set(deadlst) == self.deadelems: return
+            self.deadelems = set(deadlst)
+
+        _logger.info("{0} {1} '{2}' are disabled".format(
+                len(deadlst), fam, [e.name for e in deadlst]))
+        self.updateDeadElementPlots()
 
     def elementChecked(self, elem, stat):
-        print "element state:", elem, stat
-        if 'COR' in elem.group:
-            if stat == False and elem.name not in self.deadcor:
-                self.deadcor.append(elem.name)
-            elif stat == True and elem.name in self.deadcor:
-                self.deadcor.remove(elem.name)
-            print self.deadcor
-        if "BPM" in elem.group:
-            if stat == False and elem.name not in self.deadbpm:
-                self.deadbpm.append(elem.name)
-            elif stat == True and elem.name in self.deadbpm:
-                self.deadbpm.remove(elem.name)
-            print self.deadbpm
-            
+        #print "element state:", elem, stat
+        if stat == False and elem not in self.deadelems:
+            self.deadelems.add(elem)
+            _logger.info("'%s' is disabled" % elem.name)
+        elif stat == True and elem in self.deadelems:
+            self.deadelems.add(elem)
+            _logger.info("'%s' is enabled" % elem.name)
+        self.updateDeadElementPlots()
 
     def correctOrbit(self, **kwargs):
         """
@@ -129,11 +99,11 @@ class ApOrbitPhysics:
         bpms = kwargs.get('bpms', None)
         if bpms is None:
             bpms = [e for e in ap.getElements('BPM') 
-                    if e.name not in self.deadbpm]
+                    if e not in self.deadelems]
         trims = kwargs.get('trims', None)
         if trims is None:
             alltrims = set(ap.getElements('HCOR') + ap.getElements('VCOR'))
-            trims = [e for e in alltrims if e.name not in self.deadcor]
+            trims = [e for e in alltrims if e not in self.deadelems]
         obt = kwargs.get('obt', None)
         if obt is None:
             obt = [[0.0, 0.0] for i in range(len(bpms))]
@@ -146,11 +116,15 @@ class ApOrbitPhysics:
         kwargs['verbose'] = 0
         # use 1.0 if not set scaling the kicker strength
         kwargs.setdefault('scale', 1.0)
-        kwargs['dead'] = self.deadbpm + self.deadcor
+        kwargs['dead'] = list(self.deadelems)
         for i in range(repeat):
             _logger.info("setting a local bump")
             QApplication.processEvents()
-            ap.setLocalBump(bpms, trims, obt, **kwargs)
+            ret = ap.setLocalBump(bpms, trims, obt, **kwargs)
+            if ret[0] != 0:
+                _logger.error(ret[1])
+                break
+
         #return sp0
 
         #try:
