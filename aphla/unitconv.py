@@ -99,21 +99,27 @@ def setUnitConversion(lat, h5file, group):
         else:
             raise RuntimeError("unknow unit converter")
 
+        # find the element list
         elems = v.attrs.get('elements', [])
 
-        eobjs = []
-        for ename in elems:
-            eobj = lat._find_exact_element(ename)
-            if not eobj: continue
-            eobjs.append(eobj)
+        eobjs = [eobj for ename in elems if lat._find_exact_element(ename)]
+        #for ename in elems:
+        #    eobj = lat._find_exact_element(ename)
+        #    if not eobj: continue
+        #    eobjs.append(eobj)
 
         fams = v.attrs.get('families', [])
         for fam in fams: eobjs += lat.getElementList(fam)
 
         for eobj in eobjs:
             if fld not in eobj.fields():
-                logger.warn("'%s' has no field '%s' for unit conversion" % (
+                realfld = v.attrs['realfield']
+                if realfld is None:
+                    logger.warn("'%s' has no field '%s' for unit conversion" % (
                         ename, fld))
-            else:
-                eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
+                    continue
+                else:
+                    eobj.appendAliasField(fld, realfld)
+
+            eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
 
