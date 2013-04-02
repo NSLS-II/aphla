@@ -22,6 +22,7 @@ from aphla.catools import camonitor, FORMAT_TIME
 
 import logging
 import os, sys
+from functools import partial
 
 import applotresources
 
@@ -142,11 +143,6 @@ class OrbitPlotMainWindow(QMainWindow):
                      SIGNAL("elementChecked(PyQt_PyObject, bool)"),
                      self.physics.elementChecked)
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
-
-        self._vbpm = None
-        self._dead_bpm = [] # dead BPM
-        self._dead_cor = [] # dead corrector
-
 
         self.createMenuToolBar()
 
@@ -283,7 +279,7 @@ class OrbitPlotMainWindow(QMainWindow):
         controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
                                          "Choose BPM", self)
         self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
-                     self.physics.chooseBpm)
+                     partial(self.physics.chooseElement, 'BPM'))
         
         controlCorrOrbitAction = QAction(QIcon(":/control_corrorbit.png"),
                                          "Correct orbit", self)
@@ -314,7 +310,22 @@ class OrbitPlotMainWindow(QMainWindow):
         self.viewMenu.addSeparator()
         #self.viewMenu.addAction(viewAutoScale)
         self.viewMenu.addAction(viewErrorBarAction)
-        
+
+        menu_style = QMenu("Style", self.viewMenu)
+        menu_style.addAction("lines", self.setPlotStyle)
+        menu_style.addAction("sticks", self.setPlotStyle)
+        menu_style.addSeparator()
+        menu_style.addAction("solid line", self.setPlotStyle)
+        menu_style.addAction("dash line", self.setPlotStyle)
+        menu_style.addAction("dot line", self.setPlotStyle)
+        menu_style.addAction("line width up", self.setPlotStyle)
+        menu_style.addAction("line width down", self.setPlotStyle)
+        menu_style.addSeparator()
+        menu_style.addAction("red", self.setPlotStyle)
+        menu_style.addAction("blue", self.setPlotStyle)
+        menu_style.addAction("green", self.setPlotStyle)
+        self.viewMenu.addMenu(menu_style)
+
         drift_group = QActionGroup(self)
         drift_group.addAction(drift_from_none)
         drift_group.addAction(drift_from_now)
@@ -341,7 +352,8 @@ class OrbitPlotMainWindow(QMainWindow):
         #
         self.controlMenu = self.menuBar().addMenu("&Control")
         self.controlMenu.addAction(controlChooseBpmAction)
-        self.controlMenu.addAction("Choose COR", self.physics.chooseCorrector)
+        self.controlMenu.addAction("Choose COR", 
+                                   partial(self.physics.chooseElement, 'COR'))
         #self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
         #self.controlMenu.addAction(controlZoomInPlot1Action)
@@ -523,7 +535,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def newOrbitPlots(self):
         mach, lat = self._current_mach_lat()
         bpms = [e for e in lat.getElementList('BPM') 
-                if e.name not in self._dead_bpm]
+                if e not in self.physics.deadelems]
         magprof = lat.getBeamlineProfile()
         vbpmx = aphla.element.merge(bpms, field='x')
         p1s = self._newVelemPlots(vbpmx, 'x', "Hori. Orbit", 
@@ -541,11 +553,11 @@ class OrbitPlotMainWindow(QMainWindow):
         mach, lat = self._current_mach_lat()
         magprof = lat.getBeamlineProfile()
         cors = [e for e in lat.getElementList('COR') 
-                if e.name not in self._dead_cor]
+                if e not in self.physics.deadelems]
         #
         if 'HCOR' in lat.getGroups():
             hcors = [e for e in lat.getElementList('HCOR') 
-                     if e.name not in self._dead_cor]
+                     if e not in self.physics.deadelems]
         else: 
             hcors = cors
         
@@ -559,7 +571,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         if 'VCOR' in lat.getGroups():
             vcors = [e for e in lat.getElementList('VCOR') 
-                     if e.name not in self._dead_cor]
+                     if e not in self.physics.deadelems]
         else: 
             vcors = cors
         
@@ -696,7 +708,36 @@ class OrbitPlotMainWindow(QMainWindow):
     def liveData(self, on):
         """Switch on/off live data taking"""
         self.live_orbit = on
-        
+
+    def setPlotStyle(self):
+        w = self.mdiarea.currentSubWindow()
+        if not w: return
+        pen = w.aplot.curve1.pen()
+        st = self.sender().text()
+        if st == "lines":
+            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Lines)
+        elif st == "dash line":
+            pen.setStyle(Qt.DashLine)
+            w.aplot.curve1.setPen(pen)
+        elif st == "dot line":
+            pen.setStyle(Qt.DotLine)
+            w.aplot.curve1.setPen(pen)
+        elif st == "sticks":
+            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Sticks)
+        elif st == "line width up":
+            pen.setWidth(pen.width() + 0.1)
+            w.aplot.curve1.setPen(pen)
+        elif st == "line width down":
+            pen.setWidth(pen.width() - 0.1)
+            w.aplot.curve1.setPen(pen)
+        elif st == "red":
+            w.aplot.setColor(Qt.red)
+        elif st == "blue":
+            w.aplot.setColor(Qt.blue)
+        elif st == "green":
+            w.aplot.setColor(Qt.green)
+        pass
+
     def errorBar(self, on):
         self.error_bar = on
         for w in self.mdiarea.subWindowList():
@@ -735,7 +776,7 @@ class OrbitPlotMainWindow(QMainWindow):
             w.wid.autoScaleXY()
     
     def getDeadElements(self):
-        return self._dead_cor + self._dead_bpm
+        return self.physics.deadelems
 
     def getVisibleElements(self, elemname):
 
@@ -813,7 +854,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def runBba(self):
         mach, lat = self._current_mach_lat()
         bpms = [e for e in lat.getElementList('BPM') 
-                if e.name not in self._dead_bpm][:1]
+                if e not in self.physics.deadelems]
         self.physics.runBba(bpms)
 
     def plotSVD(self):

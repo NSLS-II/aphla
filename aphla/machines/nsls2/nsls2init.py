@@ -93,6 +93,8 @@ def init_submachines(machine, submachines, **kwargs):
     setUnitConversion(lattice_dict['LTB'], data_filename, "unitconv")
     #_lat = _lattice_dict['LTB']
 
+    data_filename = getResource('br_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['BR'], data_filename, "unitconv")
     #
     # SR
     lattice_dict['SR'].loop = True

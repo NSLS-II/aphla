@@ -210,21 +210,32 @@ def caRmCorrect(resp, kker, m, **kwarg):
     rcond : the rcond for cutting singular values. 
     check : stop if the orbit gets worse.
     wait : waiting (seconds) before check.
+    bc: str. bounds checking. 'exception', 'ignore', 'abort', 'boundary', None
+    kkerlim: (ncor, 2) array. The limits for controllers
 
     Returns
     --------
-    b : converged (True) or not (False). None if it did not check.
+    err : converged or not checked (0), error (>0).
+    msg : error message or None
 
     """
     scale = kwarg.get('scale', 0.68)
     ref   = kwarg.get('ref', None)
     check = kwarg.get('check', True)
     wait  = kwarg.get('wait', 6)
-    rcond = kwarg.get('rcond', 1e-4)
+    rcond = kwarg.get('rcond', 1e-3)
     verb  = kwarg.get('verbose', 0)
+    lim   = kwarg.get('kkerlim', None)
+    bc    = kwarg.get('bc', None)
 
     _logger.info("nkk={0}, nresp={1}, scale={2}, rcond={3}, wait={4}".format(
             len(kker), len(resp), scale, rcond, wait))
+
+    if lim is None:
+        lim = np.zeros((len(kker), 2), 'd')
+        for i,pv in enumerate(kker):
+            v = caget(pv, timeout=2, format=ct.FORMAT_CTRL)
+            lim[i,:] = (v.lower_ctrl_limit, v.upper_ctrl_limit)
 
     v0 = np.array(caget(resp), 'd')
     if ref is not None: v0 = v0 - ref
@@ -237,7 +248,51 @@ def caRmCorrect(resp, kker, m, **kwarg):
 
     norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
     k0 = np.array(caget(kker), 'd')
-    caput(kker, k0+dk*scale)
+    k1 = k0 + dk*scale
+
+    kkerin, k1in = [], []
+    # bounds checking
+    for i in range(len(kker)):
+        # force setting, rely on the lower level rules.
+        if bc is None or bc == 'force':
+            kkerin.append(kker[i])
+            k1in.append(k1[i])
+            continue
+
+        if k1[i] < lim[i,0]:
+            msg = "{0} value {1} exceeds lower boundary {2}".format(
+                    kker[i], k1[i], lim[i,0])
+            _logger.warn(msg)
+            if bc == 'abort':
+                return (1, msg)
+            elif bc == 'exception':
+                raise ValueError(msg)
+            elif bc == 'boundary':
+                kkerin.append(kker[i])
+                k1in.append(lim[i,0])
+            elif bc == 'ignore':
+                continue
+            # end of lower bc 
+        elif k1[i] > lim[i,1]:
+            msg = "{0} value {1} exceeds upper boundary {2}".format(
+                    kker[i], k1[i], lim[i,1])
+            _logger.warn(msg)
+            if bc == 'abort':
+                return (1, msg)
+            elif bc == 'exception':
+                raise ValueError(msg)
+            elif bc == 'boundary':
+                kkerin.append(kker[i])
+                k1in.append(lim[i,1])
+            elif bc == 'ignore':
+                continue
+            # end of lower bc 
+        else:
+            kkerin.append(kker[i])
+            k1in.append(k1[i])
+
+    # the real setting
+    caput(kkerin, k1in)
 
     # wait and check
     if check == True:
@@ -255,9 +310,9 @@ def caRmCorrect(resp, kker, m, **kwarg):
             _logger.warn(msg) 
             print(msg, norm0, norm2)
             caput(kker, k0)
-            return False
+            return (2, msg)
         else:
-            return True
+            return (0, None)
     else:
-        return None
+        return (0, None)
 

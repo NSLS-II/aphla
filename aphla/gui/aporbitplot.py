@@ -380,13 +380,13 @@ class ApPlot(Qwt.QwtPlot):
         self.plotLayout().setAlignCanvasToScales(True)
 
         self.curve1 = ApPlotCurve(
-            curvePen = QPen(Qt.red, 3),
+            curvePen = QPen(Qt.red, 3.0),
             curveSymbol = Qwt.QwtSymbol(
                 Qwt.QwtSymbol.Ellipse,
                 QBrush(Qt.red),
-                QPen(Qt.black, 1),
+                QPen(Qt.black, 1.0),
                 QSize(8, 8)),
-            errorPen = QPen(Qt.black, 1),
+            errorPen = QPen(Qt.black, 1.0),
             errorCap = 6,
             errorOnTop = self.errorOnTop,
             )
@@ -423,7 +423,11 @@ class ApPlot(Qwt.QwtPlot):
         self.setMinimumSize(300, 200)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
-        grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
+        pen = grid1.majPen()
+        pen.setStyle(Qt.DotLine)
+        pen.setWidthF(1.2)
+        grid1.setMajPen(pen)
+        #print "Width", grid1.majPen().widthF(), grid1.majPen().color()
 
         self.picker1 = None
         #self.zoomer1 = None
@@ -827,6 +831,10 @@ class ApMdiSubPlot(QMdiSubWindow):
 
     def setMarkers(self, mks, on):
         self.aplot.setMarkers(mks, on)
+
+    def disableElement(self, name):
+        if name in self.data.names():
+            self.data.disable(name)
 
     def setReferenceData(self, dat = None):
         if isinstance(dat, float):

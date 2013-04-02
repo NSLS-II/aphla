@@ -87,7 +87,7 @@ class OrbitCorrDlg(QDialog):
 
         self.rcondbox = QLineEdit(str(stepsize), parent=self)
         self.rcondbox.setValidator(QDoubleValidator(0, 1, 0, self))
-        self.rcondbox.setText("1e-4")
+        self.rcondbox.setText("1e-2")
         frmbox.addRow("r&cond for SVD", self.rcondbox)
 
         self.scalebox = QDoubleSpinBox()

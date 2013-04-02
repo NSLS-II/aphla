@@ -14,7 +14,20 @@ import warnings
 from catools import caget, caput, FORMAT_CTRL, FORMAT_TIME
 from unitconv import *
 
+# public symbols
+__all__ = [ "CaElement", "merge",
+            "DISABLED", "READONLY", "ASCENDING", "DESCENDING", "UNSPECIFIED" ]
+
 _logger = logging.getLogger(__name__)
+
+# flags
+DISABLED = 0x01
+READONLY = 0x02
+
+UNSPECIFIED = 0
+ASCENDING   = 1
+DESCENDING  = 2
+RANDOM      = 3
 
 class AbstractElement(object):
     """The :class:`AbstractElement` contains most of the lattice properties, such
@@ -199,10 +212,6 @@ class CaAction:
 
     None in unit conversion means the lower level unit, like the PV in EPICS.
     """
-    NoOrder    = 0
-    Ascending  = 1
-    Descending = 2
-    Random     = 3
     def __init__(self, **kwargs):
         self.pvrb = []
         self.pvsp = []
@@ -216,7 +225,8 @@ class CaAction:
         self._sp1 = [] # the last bufferred sp value when sp dimension changes.
         self.field = ''
         self.desc = kwargs.get('desc', None)
-        self.order = self.Ascending
+        self.order = ASCENDING
+        self.opflags = 0
         self.trace = kwargs.get('trace', False)
         self.trace_limit = 200
         self.unitconv = {}
@@ -232,17 +242,17 @@ class CaAction:
         """
         insert `v` to an ordered list `lst`
         """
-        if len(lst) == 0 or self.order == self.NoOrder:
+        if len(lst) == 0 or self.order == UNSPECIFIED:
             if isinstance(v, (tuple, list)): lst.extend(v)
             else: lst.append(v)
             return 0
 
-        if self.order == self.Ascending:
+        if self.order == ASCENDING:
             for i,x in enumerate(lst):
                 if x < v: continue
                 lst.insert(i, v)
                 return i
-        elif self.order == self.Descending:
+        elif self.order == DESCENDING:
             for i,x in enumerate(lst):
                 if x > v: continue
                 lst.insert(i, v)
@@ -329,6 +339,8 @@ class CaAction:
         """
         return the value of readback PV or None if such pv is not defined.
         """
+        if self.opflags & DISABLED: raise IOError("reading a disabled element")
+
         if self.pvrb: 
             #print __name__
             #_logger.info("testing")
@@ -375,7 +387,7 @@ class CaAction:
             raise ValueError("no setpoint PVs")
 
 
-    def putSetpoint(self, val, unitsys = None):
+    def putSetpoint(self, val, unitsys = None, bc = 'exception'):
         """
         set a new setpoint.
 
@@ -385,6 +397,9 @@ class CaAction:
         keep the old setpoint value if `trace=True`. Only upto `trace_limit`
         number of history data are kept.
         """
+        if self.opflags & DISABLED: raise IOError("setting an disabled element")
+        if self.opflags & READONLY: raise IOError("setting a readonly field")
+
         if isinstance(val, (float, int)):
             rawval = [self._unit_conv(val, unitsys, None)] * len(self.pvsp)
         else:
@@ -392,14 +407,38 @@ class CaAction:
 
         # under and over flow check
         for i,lim in enumerate(self.pvlim):
-            if lim is None: continue
-            if lim[0] is not None and rawval[i] < lim[0]:
-                raise ValueError("PV '{0}' sp value '{1}' underflow {2}".format(
-                        self.pvsp[i], rawval[i], lim))
-            elif lim[1] is not None and rawval[i] > lim[1]:
-                raise ValueError("PV '{0}' sp value '{1}' overflow {2}".format(
-                    self.pvsp[i], rawval[i], lim))
+            if lim is None: 
+                self.pvlim[i], h = self._get_sp_lim_h(self.pvsp[i])
+            low, hi = self.pvlim[i]
+            # warning if no proper boundary 
+            if low is None or hi is None:
+                _logger.warn("PV '{0}' limit is not set".format(self.pvsp[i]))
 
+            bc_err, bc_val = None, None
+            if low is not None and rawval[i] < self.pvlim[i][0]:
+                bc_err = "PV '{0}' sp value '{1}' underflow {2}".format(
+                        self.pvsp[i], rawval[i], self.pvlim[i][0])
+                bc_val = self.pvlim[i][0]
+                #raise ValueError()
+            elif hi is not None and rawval[i] > self.pvlim[i][1]:
+                bc_err = "PV '{0}' sp value '{1}' overflow {2}".format(
+                    self.pvsp[i], rawval[i], self.pvlim[i][1])
+                bc_val = self.pvlim[i][1]
+                #raise ValueError()
+
+            if bc_err and bc == 'exception':
+                raise OverflowError(bc_err)
+            elif bc_err and bc == 'boundary':
+                _logger.info("setting {0} to its boundary {1} instead of {2}".\
+                                 format(self.pvsp[i], bc_val, rawval[i]))
+                print "setting {0} to its boundary {1} instead of {2}".\
+                                 format(self.pvsp[i], bc_val, rawval[i])
+                rawval[i] = bc_val
+            elif bc_err and bc == 'ignore':
+                return
+                        
+
+        print self.pvsp, rawval
         retlst = caput(self.pvsp, rawval, wait=True)
         for i,ret in enumerate(retlst):
             if ret.ok: continue
@@ -466,7 +505,8 @@ class CaAction:
             elif isinstance(pv, (tuple, list)):
                 self.pvsp = [p for p in pv]
             #lim_h = [self._get_sp_lim_h(pvi) for pvi in self.pvsp]
-            self.pvlim = [(None, None) for i in range(len(self.pvsp))]
+            # None means not checked yet. (None, None) checked but no limit
+            self.pvlim = [None for i in range(len(self.pvsp))]
             self.pvh = [None for i in range(len(self.pvsp))]
             self.golden = [None for i in self.pvsp]
         elif not isinstance(pv, (tuple, list)):
@@ -476,7 +516,7 @@ class CaAction:
                 self.pvlim.append(None)
                 self.golden.append(None)
             self.pvsp[idx] = pv
-            self.pvlim[idx] = (None, None)
+            self.pvlim[idx] = None
             self.pvh[idx] = None
             self.golden[idx] = None
         else:
@@ -490,6 +530,7 @@ class CaAction:
     def _get_sp_lim_h(self, pvi, r = 1000):
         # get the EPICS ctrl_limit and stepsize. For floating point values,
         # the default step size is 1/1000 of the range. for integer value.
+        # range (None, None) means checked, None alone means not checked yet.
         try:
             v = caget(pvi, timeout=self.timeout, format=FORMAT_CTRL)
             low, hi = v.lower_ctrl_limit, v.upper_ctrl_limit
@@ -503,9 +544,9 @@ class CaAction:
         elif hi > low:
             return (low, hi), (hi-low)*1.0/r
         elif v.is_integer():
-            return None, 1
+            return (None, None), 1
         else: 
-            return None, None
+            return (None, None), None
 
     def setStepSize(self, val, **kwargs):
         """
@@ -543,7 +584,7 @@ class CaAction:
         high : int, float. the higher boundary value, default None
         r : float. scale range as the stepsize. default 1000.
         index : int. index in the PV list. default None
-        pv : str. pv name. default None
+        pv : str. pv name. needed if pvsp is a list. default None
 
         Examples
         ---------
@@ -574,19 +615,17 @@ class CaAction:
         r = kwargs.get("r", 1000)
         low, hi = kwargs.get("low", None), kwargs.get("high", None)
         for i in idx:
-            if low is None and hi is None:
-                lowhi, h = self._get_sp_lim_h(self.pvsp[i], r)
-                self.pvh[i] = h
-            elif low is None:
-                # h stepsize is not set
-                lowhi = (self.pvlim[i][0], hi)
-            elif hi is None:
-                # h stepsize is not set
-                lowhi = (low, self.pvlim[i][1])
-            else:
-                lowhi = (low, hi)
-                self.pvh[i] = (hi - low)/r
-            self.pvlim[i] = lowhi
+            # update boundary if not yet
+            if self.pvlim[i] is None: 
+                self.pvlim[i], h = self._get_sp_lim_h(self.pvsp[i], r)
+
+            if low is not None:
+                self.pvlim[i] = (low, self.pvlim[i][1])
+            if hi is not None:
+                self.pvlim[i] = (self.pvlim[i][0], hi)
+                
+            if self.pvlim[i][0] is not None and self.pvlim[i][1] is not None:
+                self.pvh[i] = (self.pvlim[i][1] - self.pvlim[i][0])/r
 
     def appendReadback(self, pv):
         """append the pv as readback"""
@@ -687,6 +726,9 @@ class CaAction:
 
     def settable(self):
         """check if it can be set"""
+        if self.opflags & DISABLED: return False
+        if self.opflags & READONLY: return False
+
         if not self.pvsp: return False
         else: return True
 
@@ -1009,7 +1051,7 @@ class CaElement(AbstractElement):
 
         if r is not None: kw['r'] = r
         for fld in fields:
-                self._field[fld].setBoundary(**kw)
+            self._field[fld].setBoundary(**kw)
 
     def boundary(self, field = None):
         """return the (low, high) range of *field* or all fields (raw unit)"""
@@ -1062,6 +1104,18 @@ class CaElement(AbstractElement):
             self._field[fieldname].trace = False
             self._field[fieldname].sp = []
 
+    def disableField(self, fieldname):
+        self._field[fieldname].opflags |= DISABLED
+
+    def enableField(self, fieldname):
+        self._field[fieldname].opflags &= ~DISABLED
+
+    def setFieldReadonly(self, fieldname):
+        self._field[fieldname].opflags |= READONLY
+
+    def resetFieldReadonly(self, fieldname):
+        self._field[fieldname].opflags &= ~READONLY
+ 
     def revert(self, fieldname):
         """undo the field value to its previous one"""
         self._field[fieldname].revert()
@@ -1141,16 +1195,27 @@ class CaElement(AbstractElement):
             raise ValueError("field '%s' in '%s' is not writable" % (
                         att, self.name))
 
-        decr.putSetpoint(val, unitsys)
+        bc = kwargs.get('bc', 'exception')
+
+        decr.putSetpoint(val, unitsys, bc=bc)
 
 
-    def put(self, field, val, unitsys = 'phy'):
+    def put(self, field, val, unitsys = 'phy', bc='exception'):
         """set *val* to *field*.
+
+        Parameters
+        ==========
+        field : str. Element field
+        val : float, int. The new value
+        unitsys : str. Unit system
+        bc : str. Bounds checking: "exception" will raise a ValueError. 
+            "ignore" will abort the whole setting. "boundary" will use the 
+            boundary value it is crossing.
 
         seealso :func:`pv(field=field)`
         """
-        self._put_field(field, val, unitsys)
-        for e in self.alias: e._put_field(field, val, unitsys=unitsys)
+        self._put_field(field, val, unitsys=unitsys, bc=bc)
+        for e in self.alias: e._put_field(field, val, unitsys=unitsys, bc=bc)
 
     def setGolden(self, field, val, unitsys = 'phy'):
         """set the golden value for field"""
@@ -1161,18 +1226,18 @@ class CaElement(AbstractElement):
             raise
  
     def settable(self, field):
-        """check if the field has any setpoint PV"""
-        if field not in self._field.keys():
-            return False
+        """check if the field can be changed. not disabled, nor readonly."""
+        if field not in self._field.keys(): return False
+        if self._field[field].opflags & DISABLED: return False
+        if self._field[field].opflags & READONLY: return False
+
         return self._field[field].settable()
 
     def readable(self, field):
-        """
-        check if the field is defined
-        """
-        if field in self._field.keys():
-            return True
-        return False
+        """check if the field readable (not disabled)."""
+        if field not in self._field.keys(): return False
+        if self._field[field].opflags & DISABLED: return False
+        return True
 
 
 def merge(elems, field = None, **kwargs):
