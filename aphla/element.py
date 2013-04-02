@@ -858,8 +858,9 @@ class CaElement(AbstractElement):
         
         self._field['status'].appendReadback(pv)
 
-    def appendAliasField(self, newfld, fld):
-        self._field[newfld] = self._field[fld]
+    def addAliasField(self, newfld, fld):
+        import copy
+        self._field[newfld] = copy.deepcopy(self._field[fld])
 
     def status(self):
         ret = self.name
