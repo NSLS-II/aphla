@@ -196,71 +196,80 @@ def init_br(grp):
     grp[ds].attrs["unitsys"] = ",".join(["b2", "", "phy"])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "SF" ]
+    #grp[ds].attrs["groups"] = [ "SF" ]
+    grp[ds].attrs["elements"] = [ "A1SF1", "A1SF2", "A2SF1", "A2SF2", "A3SF1", "A3SF2", "A4SF1", "A4SF2" ]
 
     ds = "SF_I_S"
     grp[ds] = [-0.000000000001254857,0.000000001387766,-0.0000005019888,0.012911,0.150391]
     grp[ds].attrs["unitsys"] = ",".join(["b2", "phy", ""])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "SF" ]
+    #grp[ds].attrs["groups"] = [ "SF" ]
+    grp[ds].attrs["elements"] = [ "A1SF1", "A1SF2", "A2SF1", "A2SF2", "A3SF1", "A3SF2", "A4SF1", "A4SF2" ]
 
     ds = "SD_S_I"
     grp[ds] = [0.004355193,-0.075572,0.44161,76.776102,-10.94581]
     grp[ds].attrs["unitsys"] = ",".join(["b2", "", "phy"])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "SD" ]
+    #grp[ds].attrs["groups"] = [ "SD" ]
+    grp[ds].attrs["elements"] = [ "A1SD1", "A1SD2", "A2SD1", "A2SD2", "A3SD1", "A3SD2", "A4SD1", "A4SD2" ]
 
     ds = "SD_I_S"
     grp[ds] = [-0.000000000001532404,0.000000001996622,-0.0000008688711,0.013002,0.142524]
     grp[ds].attrs["unitsys"] = ",".join(["b2", "phy", ""])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "SD" ]
+    #grp[ds].attrs["groups"] = [ "SD" ]
+    grp[ds].attrs["elements"] = [ "A1SD1", "A1SD2", "A2SD1", "A2SD2", "A3SD1", "A3SD2", "A4SD1", "A4SD2" ]
 
     ds = "CX_BL_I"
     grp[ds] = [-0.00000400923,0.00002840724,-0.00001164229,0.003035044,0.0002609]
-    grp[ds].attrs["unitsys"] = ",".join(["b0", "", "phy"])
+    grp[ds].attrs["unitsys"] = ",".join(["x", "", "phy"])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "CX" ]
+    #grp[ds].attrs["groups"] = [ "CX" ]
+    grp[ds].attrs["elements"] = ["A1CX1", "A1CX2", "A1CX3", "A2CX1", "A2CX2", "A2CX3", "A3CX1", "A3CX2", "A3CX3", "A4CX1", "A4CX2", "A4CX3" ]
 
-    
     ds = "CX_I_BL"
     grp[ds] = [12596160,-290657.3,460.207254,329.420128,-0.085972]
-    grp[ds].attrs["unitsys"] = ",".join(["b0", "phy", ""])
+    grp[ds].attrs["unitsys"] = ",".join(["x", "phy", ""])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "CX" ]
+    #grp[ds].attrs["groups"] = [ "CX" ]
+    grp[ds].attrs["elements"] = ["A1CX1", "A1CX2", "A1CX3", "A2CX1", "A2CX2", "A2CX3", "A3CX1", "A3CX2", "A3CX3", "A4CX1", "A4CX2", "A4CX3" ]
 
     ds = "CXW_BL_I"
     grp[ds] = [-0.0000004065819,-0.0000001740966,0.00003364862,0.002029932,0.000178]
-    grp[ds].attrs["unitsys"] = ",".join(["b0", "", "phy"])
+    grp[ds].attrs["unitsys"] = ",".join(["x", "", "phy"])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "CXW" ]
+    #grp[ds].attrs["groups"] = [ "CXW" ]
+    grp[ds].attrs["elements"] = ["DSCXW1", "DSCXW2", "ISCXW1", "ISCXW2", "CSCXW1", "CSCXW2", "XSCXW1", "XSCXW2"]
 
     ds = "CXW_I_BL"
     grp[ds] = [5422072,89327.08,-4096.401,494.086812,-0.087818]
-    grp[ds].attrs["unitsys"] = ",".join(["b0", "phy", ""])
+    grp[ds].attrs["unitsys"] = ",".join(["x", "phy", ""])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "CXW" ]
+    #grp[ds].attrs["groups"] = [ "CXW" ]
+    grp[ds].attrs["elements"] = ["DSCXW1", "DSCXW2", "ISCXW1", "ISCXW2", "CSCXW1", "CSCXW2", "XSCXW1", "XSCXW2"]
 
     ds = "CY_I_BL"
     grp[ds] = [-0.000001273542,0.000008457713,0.00000410853,0.002084707,0.0001506]
-    grp[ds].attrs["unitsys"] = ",".join(["b0", "phy", ""])
+    grp[ds].attrs["unitsys"] = ",".join(["y", "phy", ""])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "CY" ]
+    #grp[ds].attrs["groups"] = [ "CY" ]
+    grp[ds].attrs["elements"] = ["A1CY1", "A1CY2", "A1CY3", "A1CY4", "A2CY1", "A2CY2", "A2CY3", "A2CY4", "A3CY1", "A3CY2", "A3CY3", "A3CY4", "A4CY1", "A4CY2", "A4CY3", "A4CY4" ]
 
     ds = "CY_BL_I"
     grp[ds] = [27343890,-396997.8,-406.980945,479.889581,-0.072261]
-    grp[ds].attrs["unitsys"] = ",".join(["b0", "", "phy"])
+    grp[ds].attrs["unitsys"] = ",".join(["y", "", "phy"])
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
-    grp[ds].attrs["groups"] = [ "CY" ]
+    #grp[ds].attrs["groups"] = [ "CY" ]
+    grp[ds].attrs["elements"] = ["A1CY1", "A1CY2", "A1CY3", "A1CY4", "A2CY1", "A2CY2", "A2CY3", "A2CY4", "A3CY1", "A3CY2", "A3CY3", "A3CY4", "A4CY1", "A4CY2", "A4CY3", "A4CY4" ]
 
 
 def read(h5fname, grp):
