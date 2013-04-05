@@ -1136,13 +1136,13 @@ class CaElement(AbstractElement):
 
     def _get_field(self, field, **kwargs):
         """
-        read value of a single field, returns None if no such field.
+        read value of a single field, raise RuntimeError if no such field.
         """
         handle = kwargs.get('handle', 'readback').lower()
         unitsys = kwargs.get('unitsys', None)
     
         if not self._field.has_key(field):
-            v = None
+            raise RuntimeError("field {0} is not defined for {1}".format(field, self.name))
         elif handle == 'readback':
             v = self._field[field].getReadback(unitsys)
         elif handle == 'setpoint':
