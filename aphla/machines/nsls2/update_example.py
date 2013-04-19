@@ -1,5 +1,5 @@
 import sys, os
-import h5py
+#import h5py
 
 import channelfinder
 
@@ -22,9 +22,9 @@ PRPTOWNER = 'cf-asd'
 def update():
     cf = ChannelFinderClient(**cfinput)
 
-    chs = cf.find(property=[('elemType', 'SEXT'), ('elemField', 'K1')])
-    print "updating {0} elemField=b0".format([ch.Name for ch in chs])
-    cf.update(property=Property('elemField', PRPTOWNER, 'b2'),
+    chs = cf.find(property=[('elemType', 'QUAD'), ('system', 'BR')])
+    #print "updating {0} elemField=b0".format([ch.Name for ch in chs])
+    cf.update(property=Property('elemLength', PRPTOWNER, '0.305'),
                   channelNames = [ch.Name for ch in chs])
 
 if __name__ == "__main__":
