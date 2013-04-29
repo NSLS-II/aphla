@@ -231,15 +231,16 @@ class Lattice:
             raise ValueError("children can be string or list of string")
 
         #if not self._group.has_key(parent):
-        self._group[parent] = []
+        pl = []
 
         for child in chlist:
             if not self._group.has_key(child):
                 logger.warn("WARNING: no %s group found" % child)
                 continue
             for elem in self._group[child]:
-                if elem in self._group[parent]: continue
-                self._group[parent].append(elem)
+                if elem in pl: continue
+                pl.append(elem)
+        self._group[parent] = pl
 
             
     def sortElements(self, namelist = None):
