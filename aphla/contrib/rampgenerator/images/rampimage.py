@@ -1,5 +1,5 @@
-from rampgenerator.core.defaults import VOLTAGE_RANGE, CONVERT_COEFF
-from rampgenerator.core.ramplist import RampList
+from ..core.defaults import VOLTAGE_RANGE, CONVERT_COEFF
+from ..core.ramplist import RampList
 
 
 class RampImage(object):
