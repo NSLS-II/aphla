@@ -208,6 +208,24 @@ class OrmData:
 
         #print self.trim
 
+    def exportBlock(self, fname, bpmplane, trimplane):
+        dt = OrmData()
+        ibpm  = [i for i,v in enumerate(self.bpm) if v[2] == bpmplane]
+        itrim = [i for i,v in enumerate(self.trim) if v[2] == trimplane]
+        dt.bpm  = [self.bpm[i] for i in ibpm]
+        dt.trim = [self.trim[i] for i in itrim]
+
+        npt = np.shape(self._rawkick)
+        dt.m = np.zeros((len(ibpm), len(itrim)), 'd')
+        dt._rawkick = np.zeros((len(itrim), npt[1]), 'd')
+        #dt._raworbit = np.zeros((len(ibpm), len(itrim), npt[1]), 'd')
+        for j in range(len(itrim)):
+            dt._rawkick[j,:] = self._rawkick[itrim[j],:]
+            for i in range(len(ibpm)):
+                dt.m[i,j] = self.m[ibpm[i], itrim[j]]
+                #dt._raworbit[i,j,:] = self._raworbit[ibpm[i], itrim[j],:]
+        dt.save(fname)
+
     def getBpmNames(self):
         """The BPM names of ORM. 
 
