@@ -384,7 +384,8 @@ class CaAction:
             if len(self.pvsp) == 1: return ret[0]
             else: return ret
         else: 
-            raise ValueError("no setpoint PVs")
+            #raise ValueError("no setpoint PVs")
+            return None
 
 
     def putSetpoint(self, val, unitsys = None, bc = 'exception'):

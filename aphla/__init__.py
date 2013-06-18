@@ -56,6 +56,7 @@ from apdata import OrmData
 
 from meastwiss import *
 from aptools import *
+import snapshot
 
 import bba
 
