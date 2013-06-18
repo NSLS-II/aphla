@@ -918,6 +918,7 @@ class CaElement(AbstractElement):
         self._field[field].unitconv[(src, dst)] = uc
 
     def convertUnit(self, field, x, src, dst):
+        """convert value x between units without setting hardware"""
         return self._field[field]._unit_conv(x, src, dst)
 
     def get_unit_systems(self, field):
