@@ -47,24 +47,23 @@ Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
    >>> ap.machines.init("nsls2v2")
 
-:func:`~aphla.machines.init("nsls2v2")` will initialize the lattice structure of
-`NSLS2 Virtual Accelerastor #2`. It is not the hardware initialization and did
-not do any hardware operation inside. 
+:func:`~aphla.machines.init("nsls2v2")` will initialize the lattice structures
+of `NSLS2 Virtual Accelerastor #2`. It is not the hardware initialization and
+did not do any hardware operation inside.
 
 .. note::
 
-    By default, this initialization will search search for channel finder
-    server and use the data there. It can be overwritten with your own config
-    file.
+    By default, this initialization will search for channel finder server and
+    use the data there. This data can be overwritten with your own config file.
 
 ``aphla`` can keep several initialized lattices, depending how many
 *aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
-*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB* for the real machine. The
-`V1` prefix before `SR`, `LTD1` means it is the `virtual accelerator #1`
-counter part. :func:`~aphla.machines.lattices` lists the initialized lattices
-and :func:`~aphla.machines.use` will switch to the named lattice as the
-current lattice. This current lattice is the domain for functions like
-:func:`~aphla.hlalib.getElements`.
+*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB* for the real *nsls2*
+machine. The `V1` prefix before `SR`, `LTD1` means it is the `virtual
+accelerator #1` counter part. :func:`~aphla.machines.lattices` lists the
+initialized lattices and :func:`~aphla.machines.use` will switch to the named
+lattice as the current lattice. This current lattice is the domain for
+functions like :func:`~aphla.hlalib.getElements`.
 
 .. code-block:: python
 
@@ -302,14 +301,18 @@ HLA Lib Summary
 The following are some common functions. Please see :doc:`libref` for a list of
 documented modules, methods and functions.
 
+The function names may have a shorter alias version under ``aphla``,
+e.g. `aphla.correctOrbit` is same as `aphla.aptools.correctOrbit`, and
+`aphla.measBeta` is the same as `aphla.meastwiss.measBeta`.
+
 .. currentmodule:: aphla
 
 .. autosummary::
    :toctree: generated
 
-   aphla.calcLifetime
-   aphla.correctOrbit
-   aphla.eget
+   aphla.aptools.calcLifetime
+   aphla.aptools.correctOrbit
+   aphla.hlalib.eget
    aphla.getBeamlineProfile
    aphla.getBeta
    aphla.getBpms
@@ -340,6 +343,7 @@ documented modules, methods and functions.
    aphla.getTuneRm
    aphla.getTunes
    aphla.meastwiss.measBeta
+   aphla.measBeta
    aphla.meastwiss.measChromaticity
    aphla.meastwiss.measDispersion
    aphla.aptools.measOrbitRm
@@ -350,8 +354,7 @@ documented modules, methods and functions.
 
 ..   aphla.fitGaussian1
 ..   aphla.fitGaussianImage
-
-.. include:: hlasummary.txt
+..   include :/: hlasummary.txt
 
 .. 
   /.. math::

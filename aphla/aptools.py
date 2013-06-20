@@ -82,24 +82,15 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
-    Parameters
-    -----------
-    bpm : list of BPMs objects for new bumpped orbit. 
-    trim : list of corrector objects used for orbit correction. 
-    dead : name list of dead BPMs and correctors names.
-    ref : target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
-    scale : optional, float
-        factor to scale calculated kick strength change, between 0 and 1.0
-    check : optional, bool
-        roll back the corrector settings if the orbit gets worse.
-    rcond : optional, double (1e-4). rcond*max_singularvalue will be kept.
-    ormdata : optional, :class:`~aphla.apdata.OrmData`
-        use provided OrmData instead of the system default.
-
-    Returns
-    --------
-    err : error code, see :func:`~aphla.catools.caRmCorrect`
-    msg : error message
+    :param list bpm: list of BPMs objects for new bumpped orbit. 
+    :param list trim: list of corrector objects used for orbit correction. 
+    :param list dead: name list of dead BPMs and correctors names.
+    :param list ref: target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
+    :param float scale: optional, factor to scale calculated kick strength change, between 0 and 1.0
+    :param bool check: optional, roll back the corrector settings if the orbit gets worse.
+    :param float rcond: optional, (1e-4). rcond*max_singularvalue will be kept.
+    :param ormdata: optional, :class:`~aphla.apdata.OrmData`. Use provided OrmData instead of the system default.
+    :return: `(err, msg)`. The error code and message.
 
     Notes
     ------
