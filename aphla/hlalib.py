@@ -75,7 +75,7 @@ def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None):
     else: return None
 
 
-def putRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
+def setRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
     """set the rf frequency for the first 'RFCAVITY' element"""
     _rf = getElements(name)
     if _rf: return _rf[0].put(field, f, unitsys=unitsys)

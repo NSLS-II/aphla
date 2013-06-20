@@ -15,7 +15,7 @@ import itertools
 from . import machines
 from catools import caRmCorrect 
 from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
-    getClosest, getRfFrequency, putRfFrequency, getTunes, getOrbit,
+    getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
     getLocations)
 from orm import Orm
 import logging
