@@ -336,8 +336,8 @@ def getLocations(group):
     Examples
     ---------
 
-      >>> s = getLocations('BPM')
-      >>> s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
+    >>> s = getLocations('BPM')
+    >>> s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
 
     It has a same input as :func:`getElements` and accepts group name,
     element name, element name pattern and a list of element names.

@@ -46,7 +46,7 @@ class Lattice:
         self.name = name
         self._twiss = None
         # group name and its element
-        self._group = None
+        self._group = {}
         # guaranteed in the order of s.
         self._elements = []
         # data set
@@ -221,6 +221,7 @@ class Lattice:
         ---------
         >>> mergeGroups('BPM', ['BPMX', 'BPMY'])
         >>> mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
+        >>> mergeGroups('BPM', ['BPM', 'UBPM'])
 
         """
         if isinstance(children, str):
@@ -504,6 +505,7 @@ class Lattice:
         """
         if self._illegalGroupName(group):
             raise ValueError('illegal group name %s' % group)
+
         if not self._group.has_key(group):
             self._group[group] = []
         else:

@@ -12,6 +12,7 @@ import copy
 import logging
 import warnings
 from catools import caget, caput, FORMAT_CTRL, FORMAT_TIME
+from collections import Iterable
 from unitconv import *
 
 # public symbols
@@ -271,6 +272,24 @@ class CaAction:
         else:
             return uc.eval(x)
 
+    def _all_within_range(self, v, low, high):
+        # did not check for string type
+        if isinstance(v, (str, unicode)): return True
+        if low is None and high is None: return True
+
+        if isinstance(v, (float, int)):
+            if low is None: return v <= high
+            elif high is None: return v >= low
+            elif v > high or v < low: return False
+            else: return True
+        elif isinstance(v, (list, tuple)):
+            for vi in v:
+                if not self._all_within_range(vi, low, high): return False
+            return True
+        else:
+            raise RuntimeError("unknow data type '{0}:{1}'".format(v, type(v)))
+
+
     def revert(self):
         """
         revert the setpoint to the last setting
@@ -345,15 +364,15 @@ class CaAction:
             #print __name__
             #_logger.info("testing")
             rawret = caget(self.pvrb, timeout=self.timeout)
-            ret = self._unit_conv(rawret, None, unitsys)
             if self.trace: 
                 self.rb.append(copy.deepcopy(rawret))
                 if len(self.rb) > self.trace_limit: 
                     # keep the first one for `reset`
                     self.rb.pop(1)
             if len(self.pvrb) == 1: 
-                return ret[0]
-            else: return ret
+                return self._unit_conv(rawret[0], None, unitsys)
+            else: 
+                return [ self._unit_conv(v, None, unitsys)  for v in rawret ]
         else: return None
 
     def getGolden(self, unitsys = None):
@@ -380,9 +399,8 @@ class CaAction:
         """
         if self.pvsp:
             rawret = caget(self.pvsp, timeout=self.timeout)
-            ret = self._unit_conv(rawret, None, unitsys)
-            if len(self.pvsp) == 1: return ret[0]
-            else: return ret
+            if len(self.pvsp) == 1: return self._unit_conv(rawret[0], None, unitsys)
+            else: return [ self._unit_conv(v, None, unitsys) for v in rawret ]
         else: 
             #raise ValueError("no setpoint PVs")
             return None
@@ -397,14 +415,17 @@ class CaAction:
 
         keep the old setpoint value if `trace=True`. Only upto `trace_limit`
         number of history data are kept.
+
+        bc = 'boundary' is the same as 'ignore' for this moment.
         """
         if self.opflags & DISABLED: raise IOError("setting an disabled element")
         if self.opflags & READONLY: raise IOError("setting a readonly field")
 
-        if isinstance(val, (float, int)):
+        if isinstance(val, (float, int, str)):
             rawval = [self._unit_conv(val, unitsys, None)] * len(self.pvsp)
         else:
-            rawval = [self._unit_conv(v, unitsys, None) for v in val]
+            # one more level of nest, due to pvsp=[]
+            rawval = [ [self._unit_conv(v, unitsys, None) for v in val] ]
 
         # under and over flow check
         for i,lim in enumerate(self.pvlim):
@@ -416,27 +437,17 @@ class CaAction:
                 _logger.warn("PV '{0}' limit is not set".format(self.pvsp[i]))
 
             bc_err, bc_val = None, None
-            if low is not None and rawval[i] < self.pvlim[i][0]:
-                bc_err = "PV '{0}' sp value '{1}' underflow {2}".format(
-                        self.pvsp[i], rawval[i], self.pvlim[i][0])
-                bc_val = self.pvlim[i][0]
-                #raise ValueError()
-            elif hi is not None and rawval[i] > self.pvlim[i][1]:
-                bc_err = "PV '{0}' sp value '{1}' overflow {2}".format(
-                    self.pvsp[i], rawval[i], self.pvlim[i][1])
-                bc_val = self.pvlim[i][1]
-                #raise ValueError()
-
-            if bc_err and bc == 'exception':
-                raise OverflowError(bc_err)
-            elif bc_err and bc == 'boundary':
-                _logger.info("setting {0} to its boundary {1} instead of {2}".\
+            if not self._all_within_range(rawval[i], low, hi):
+                if bc_err and bc == 'exception':
+                    raise OverflowError(bc_err)
+                elif bc_err and bc == 'boundary':
+                    _logger.info("setting {0} to its boundary {1} instead of {2}".\
                                  format(self.pvsp[i], bc_val, rawval[i]))
-                print "setting {0} to its boundary {1} instead of {2}".\
+                    print "setting {0} to its boundary {1} instead of {2}".\
                                  format(self.pvsp[i], bc_val, rawval[i])
-                rawval[i] = bc_val
-            elif bc_err and bc == 'ignore':
-                return
+                    #rawval[i] = bc_val
+                elif bc_err and bc == 'ignore':
+                    return
                         
 
         print self.pvsp, rawval
@@ -537,17 +548,16 @@ class CaAction:
             low, hi = v.lower_ctrl_limit, v.upper_ctrl_limit
         except:
             _logger.error("error on reading PV limits {0}".format(pvi))
-            if v.ok and v.is_integer(): return None, 1
-            return None, None
-
-        if v.is_integer() and hi > low:
-            return (low, hi), 1
-        elif hi > low:
-            return (low, hi), (hi-low)*1.0/r
-        elif v.is_integer():
-            return (None, None), 1
-        else: 
             return (None, None), None
+
+        try:
+            if v.is_integer() and hi > low: return (low, hi), 1
+            elif hi > low: return (low, hi), (hi-low)*1.0/r
+            elif v.is_integer(): return (None, None), 1
+        except:
+            pass
+
+        return (None, None), None
 
     def setStepSize(self, val, **kwargs):
         """

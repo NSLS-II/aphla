@@ -64,6 +64,7 @@ def caget(pvs, timeout=1, datatype=None, format=ct.FORMAT_RAW,
     pvs : str, list. process variables
     timeout : int. timeout in seconds
     throw : bool. throw exception or not
+    count : specify number of waveform points
     
     Returns
     ---------

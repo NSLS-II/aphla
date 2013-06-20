@@ -17,12 +17,33 @@ import logging
 _logger = logging.getLogger(__name__)
 
 class OrmData:
-    """
-    Orbit Response Matrix Data
+    r"""Orbit Response Matrix Data
 
     - *bpm* is a list of tuple (name, location, field)
     - *trim* is a list of tuple (name, location, field)
     - *m* 2D matrix, len(bpm) * len(trim)
+
+    HDF5 format (.hdf5) is the preferred output for ORM data. It also supports
+    shelve (.pkl) output format for short term storage.
+
+    All data is saved in a group (like folder in file system, with default
+    name "orm"):
+
+    - *orm/m*, the response matrix with dimension (nbpm, ntrim).
+    - *orm/bpm/element*, a list of BPM names.
+    - *orm/bpm/location*, the s-position of bpms.
+    - *orm/bpm/plane*, {'x', 'y'}.
+    - *orm/bpm/_bpmpv*, optional. EPICS PVs for bpms.
+    - *orm/trim/element*, corrector names
+    - *orm/trim/location*, s-positions of correctors.
+    - *orm/trim/plane*, {'x', 'y'}
+    - *orm/trim/_trimpvrb*, optional, the readback EPICS PVs
+    - *orm/trim/_trimpvsp*, optional, the setpoint EPICS PVs
+    - *orm/_rawdata_/raworbit, optional, (ntrim, nbpm, npoints) ??
+    - *orm/_rawdata_/rawkick, optional, (ntrim, npoints)
+    - *orm/_rawdata_/mask, optional, (nbpm, ntrim)
+
+    The private dataset has a prefix "_" in its name.
     """
     _fmtdict = {'.hdf5': 'HDF5', '.pkl':'shelve'}
     def __init__(self, datafile = None, group = None):
@@ -62,9 +83,11 @@ class OrmData:
     
     def _save_hdf5(self, filename, group = "orm"):
         """
-        save data in hdf5 format in */group*
+        save data in hdf5 format in HDF5 group (h5py.Group object).
 
-        Note: h5py before v2.0 does not accept unicode directly.
+        Note
+        -----
+        h5py before v2.0 does not accept unicode directly.
         """
         import h5py
         h5zip = None # 'gzip' works in default install
@@ -152,17 +175,14 @@ class OrmData:
 
     def save(self, filename, **kwargs):
         """
-        save the orm data into one file, the public data set are:
+        save the orm data into file, HDF5 or shelve.
 
-        =================   =====================================
-        Data                Description
-        =================   =====================================
-        m                   matrix
-        bpm                 list
-        trim                list
-        =================   =====================================
 
-        some more private dataset with a prefix "_" in its name.
+        Example
+        -------
+        >>> save("orm.hdf5")
+        >>> save("orm.pkl")
+        >>> save("orm.shelve", format="shelve")
         """
 
         fmt = self._io_format(filename, kwargs.pop("format", None))
@@ -207,6 +227,24 @@ class OrmData:
             raise ValueError("format %s is not supported" % format)
 
         #print self.trim
+
+    def exportBlock(self, fname, bpmplane, trimplane):
+        dt = OrmData()
+        ibpm  = [i for i,v in enumerate(self.bpm) if v[2] == bpmplane]
+        itrim = [i for i,v in enumerate(self.trim) if v[2] == trimplane]
+        dt.bpm  = [self.bpm[i] for i in ibpm]
+        dt.trim = [self.trim[i] for i in itrim]
+
+        npt = np.shape(self._rawkick)
+        dt.m = np.zeros((len(ibpm), len(itrim)), 'd')
+        dt._rawkick = np.zeros((len(itrim), npt[1]), 'd')
+        #dt._raworbit = np.zeros((len(ibpm), len(itrim), npt[1]), 'd')
+        for j in range(len(itrim)):
+            dt._rawkick[j,:] = self._rawkick[itrim[j],:]
+            for i in range(len(ibpm)):
+                dt.m[i,j] = self.m[ibpm[i], itrim[j]]
+                #dt._raworbit[i,j,:] = self._raworbit[ibpm[i], itrim[j],:]
+        dt.save(fname)
 
     def getBpmNames(self):
         """The BPM names of ORM. 

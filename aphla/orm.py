@@ -200,6 +200,7 @@ class Orm:
         t_start = time.time()
         self._rawkick = []
         rawobt, rawm, rawkick = [], [], []
+        # a flat list of (trim, plane) 
         trimsets = list(itertools.product(self.trim, trimflds))
         for i,krec in enumerate(trimsets):
             kicker, kfld = krec
@@ -217,6 +218,7 @@ class Orm:
                 print "%d/%d '%s/%s.%s'" % (
                     i, len(trimsets), rflds, kicker.name, kfld)
 
+            # measure one column of RM
             ormline.measure(rflds, kfld, unitsys=self.unit, verbose=verbose)
             rawobt.append(ormline.rawresp)
             rawm.append(ormline.m)
@@ -261,6 +263,7 @@ class Orm:
 
         self.m = np.array(rawm, 'd').T
         self._rawkick = np.array(rawkick, 'd')
+        # roll shape from (nkick, npoint, nbpm) to (nbpm, nkick, npoint)
         self._raworbit = np.rollaxis(np.array(rawobt, 'd'), 2, 0)
         # save for every trim settings
         self.save(output)

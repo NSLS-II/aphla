@@ -213,3 +213,6 @@ latex_preamble = '\\usepackage{relsize}'
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+numpydoc_show_class_members = False
+

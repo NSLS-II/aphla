@@ -64,6 +64,6 @@ import bba
 # require newer version of scipy, not available in controls terminal yet.
 #import curve_fitting
 
-import contrib
+#import contrib
 
 import gui
