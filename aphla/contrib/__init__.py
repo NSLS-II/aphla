@@ -7,4 +7,5 @@ Modules contributed from other members.
 
 import sdds2py
 import extendwf
+import rampgenerator
 
