@@ -730,7 +730,7 @@ class Lattice:
         elemlst = [e.name for e in self.getElementList(elem)]
         if spos: col.append('s')
 
-        return self._twiss.getTwiss(elemlst, col = col)
+        return self._twiss.get(elemlst, col = col)
 
     def getPhase(self, elem, spos = True):
         """

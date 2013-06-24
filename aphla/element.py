@@ -377,8 +377,10 @@ class CaAction:
 
     def getGolden(self, unitsys = None):
         """return golden value in unitsys"""
-        return self._unit_conv(self.golden, None, unitsys)
-
+        if len(self.golden) == 1:
+            return self._unit_conv(self.golden[0], None, unitsys)
+        else:
+            return self._unit_conv(self.golden, None, unitsys)
 
     def setGolden(self, val, unitsys = None):
         """set golden value in unitsys"""
@@ -745,8 +747,7 @@ class CaAction:
 
 
 class CaElement(AbstractElement):
-    """
-    Element with Channel Access ability
+    r"""Element with Channel Access ability.
 
     'field' -> Object Attr.
     """
@@ -874,6 +875,9 @@ class CaElement(AbstractElement):
         self._field[newfld] = copy.deepcopy(self._field[fld])
 
     def status(self):
+        """
+        string representation of value, golden setpoint, range for each field.
+        """
         ret = self.name
         if not self._field.keys(): return ret
 
@@ -883,7 +887,9 @@ class CaElement(AbstractElement):
             decr = self._field[att]
             if not decr: continue
             val = decr.getReadback()
-            ret = ret + head % att + str(val)
+            val1 = decr.getGolden()
+            val2 = decr.boundary()
+            ret = ret + head % att + str(val) + " (%s) " % str(val1) + " [%s]" % str(val2)
         return ret
 
     def __getattr__(self, att):
@@ -958,7 +964,7 @@ class CaElement(AbstractElement):
             return self.get_unit_systems(field)
 
     def getUnit(self, field, unitsys='phy'):
-        """get the unit name of a unit system, e.g. unitsys='phy'
+        """get the unit symbol of a unit system, e.g. unitsys='phy'
 
         return '' if no such unit system.
         """
@@ -966,18 +972,23 @@ class CaElement(AbstractElement):
             return self._field[field].pvunit
 
         for k,v in self._field[field].unitconv.iteritems():
-            if k[0] == unitsys: return v.direction[0]
-            elif k[1] == unitsys: return v.direction[1]
-            
+            if k[0] == unitsys: return v.srcunit
+            elif k[1] == unitsys: return v.dstunit
+
         return ''
 
-    def setRawUnit(self, field, u):
-        """set the unit symbol for raw unit system"""
+    def setUnit(self, field, u, unitsys='phy'):
+        """set the unit symbol for a unit system
+        """
         if field not in self._field.keys(): 
             raise RuntimeError("element '%s' has no '%s' field" % \
-                               self.name, field)
+                                   self.name, field)
 
-        self._field[field].pvunit = u
+        if unitsys is None: self._field[field].pvunit = u
+            
+        for k,v in self._field[field].unitconv.iteritems():
+            if k[0] == unitsys: v.srcunit = u
+            elif k[1] == unitsys: v.dstunit = u
 
 
     def updatePvRecord(self, pvname, properties, tags = []):
@@ -1325,7 +1336,7 @@ def merge(elems, field = None, **kwargs):
     for fld in elem.fields():
         units = sorted([e.getUnit(fld, unitsys=None) for e in elems])
         if units[0] == units[-1]:
-            elem.setRawUnit(fld, units[0])
+            elem.setUnit(fld, units[0], unitsys=None)
 
     return elem
 
