@@ -25,8 +25,11 @@ if __name__ == "__main__":
     m = f['orm']['m']
     bpms = f['orm']['bpm']['element']
     plane = f['orm']['bpm']['plane']
+    # the index for BPM x and y reading
     bpmxi = [i for i in range(len(plane)) if plane[i] == 'x']
     bpmyi = [i for i in range(len(plane)) if plane[i] == 'y']
+    print "BPM x index:", bpmxi, " ... %d in total" % len(bpmxi)
+    print "BPM y index:", bpmyi, " ... %d in total" % len(bpmyi)
 
     cors = f['orm']['trim']['element']
     plane = f['orm']['trim']['plane']
@@ -36,8 +39,14 @@ if __name__ == "__main__":
     # take only the x-x part
     # the measurement is only slow corrector
     # for interface demo purpose, just take the first 90
-    mxx = np.take(np.take(m, bpmxi, axis=0), corxi[:90], axis=1)
-    myy = np.take(np.take(m, bpmyi, axis=0), coryi[:90], axis=1)
+    #mxx = np.take(np.take(m, bpmxi, axis=0), corxi[:90], axis=1)
+    #myy = np.take(np.take(m, bpmyi, axis=0), coryi[:90], axis=1)
+
+    mxx = np.take(np.take(m, bpmxi, axis=0), corxi, axis=1)
+    myy = np.take(np.take(m, bpmyi, axis=0), coryi, axis=1)
+
+    print "ORM MXX (BPMx,hcor)", np.shape(mxx)
+    print "ORM MYY (BPMy,vcor)", np.shape(myy)
 
     # mxx = u s v^h = Ux*diag(sx)*Vhx
     Ux, sx, Vhx = np.linalg.svd(mxx, full_matrices=False)
