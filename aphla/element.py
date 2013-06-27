@@ -943,7 +943,6 @@ class CaElement(AbstractElement):
         src, dst = zip(*(self._field[field].unitconv.keys()))
 
         ret = set(src).union(set(dst))
-        print "ret: ", ret
         return list(ret)
 
     def getUnitSystems(self, field = None):
