@@ -98,6 +98,9 @@ def init_submachines(machine, submachines, **kwargs):
 
     data_filename = getResource('bts_unitconv.hdf5', __name__)
     setUnitConversion(lattice_dict['BTS'], data_filename, "unitconv")
+
+    data_filename = getResource('btd_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['BTD'], data_filename, "unitconv")
     #
     # SR
     lattice_dict['SR'].loop = True

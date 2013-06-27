@@ -710,7 +710,7 @@ def read(h5fname, grp):
 
 
 if __name__ == "__main__":
-    if False:
+    if True:
         f = h5py.File("nsls2.hdf5", 'w')
         grp = f.create_group("LTB")
         grp["unitconv"] = h5py.ExternalLink("ltb_unitconv.hdf5", "unitconv")
@@ -718,6 +718,8 @@ if __name__ == "__main__":
         grp["unitconv"] = h5py.ExternalLink("br_unitconv.hdf5", "unitconv")
         grp = f.create_group("BTS")
         grp["unitconv"] = h5py.ExternalLink("bts_unitconv.hdf5", "unitconv")
+        grp = f.create_group("BTD")
+        grp["unitconv"] = h5py.ExternalLink("btd_unitconv.hdf5", "unitconv")
         f.close()
 
     if False:
@@ -734,8 +736,15 @@ if __name__ == "__main__":
         f.close()
         read("ltb_unitconv.hdf5", "unitconv")
 
-    if True:
+    if False:
         f = h5py.File("bts_unitconv.hdf5", 'w')
+        grp = f.create_group("unitconv")
+        import_uc_data(grp, "bts_unitconv.ini")
+        f.close()
+
+    if True:
+        # btd use same data as in bts
+        f = h5py.File("btd_unitconv.hdf5", 'w')
         grp = f.create_group("unitconv")
         import_uc_data(grp, "bts_unitconv.ini")
         f.close()
