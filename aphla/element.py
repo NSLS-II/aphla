@@ -925,7 +925,7 @@ class CaElement(AbstractElement):
 
     def addUnitConversion(self, field, uc, src, dst):
         """add unit conversion for field"""
-        # src, dst is unit system name
+        # src, dst is unit system name, e.g. None for raw, phy
         self._field[field].unitconv[(src, dst)] = uc
 
     def convertUnit(self, field, x, src, dst):
@@ -941,7 +941,10 @@ class CaElement(AbstractElement):
         #if not self._field[field].unitconv.keys(): return []
 
         src, dst = zip(*(self._field[field].unitconv.keys()))
-        return list(set(src).intersection(dst))
+
+        ret = set(src).union(set(dst))
+        print "ret: ", ret
+        return list(ret)
 
     def getUnitSystems(self, field = None):
         """return a list of available unit systems for field. 
