@@ -55,7 +55,7 @@ def init_submachines(machine, submachines, **kwargs):
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     _logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
 
-    for latname in ['SR', 'LTB', 'LTD1', 'LTD2', 'BR']:
+    for latname in ['SR', 'LTB', 'LTD1', 'LTD2', 'BR', 'BTD', 'BTS']:
         if not fnmatch(latname, submachines): continue
 
         lattag = HLA_TAG_SYS_PREFIX + '.' + latname
@@ -95,6 +95,9 @@ def init_submachines(machine, submachines, **kwargs):
 
     data_filename = getResource('br_unitconv.hdf5', __name__)
     setUnitConversion(lattice_dict['BR'], data_filename, "unitconv")
+
+    data_filename = getResource('bts_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['BTS'], data_filename, "unitconv")
     #
     # SR
     lattice_dict['SR'].loop = True

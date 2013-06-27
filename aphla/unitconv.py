@@ -83,18 +83,30 @@ class UcInterpN(UcAbstract):
 def setUnitConversion(lat, h5file, group):
     """set the unit conversion for lattice with input from hdf5 file"""
     g = h5py.File(h5file, 'r')[group]
-    _logger.info("setting unit conversion for {0} from data file {1}:{2}".format(
+    _logger.info("setting unit conversion for lattice {0} "
+                 "from data file {1}:{2}".format(
         lat.name, h5file, g.items()))
     for k,v in g.items():
         if not v.attrs.get('_class_', None): continue 
-        if not v.attrs.get('unitsys', None): continue
 
-        fld, usrcsys, udstsys = v.attrs['unitsys'].split(',')
+        # use separated three attrs first, otherwise, use 'unitsys' attr.
+        fld = v.attrs.get('field', None)
+        usrcsys = v.attrs.get('src_unit_sys', None)
+        udstsys = v.attrs.get('dst_unit_sys', None)
+        if fld is None:
+            fld, usrcsys, udstsys = v.attrs.get('unitsys', ",,").split(',')
+        if not fld: continue
+
         # instead of '', None is the unit for lower level(epics) data
         if usrcsys == '': usrcsys = None
         if udstsys == '': udstsys = None
         # the unit name, e.g., A, T/m, ...
-        usrc, udst = v.attrs.get('direction', ('', ''))
+        # check src_unit/dst_unit first, then direction as a backup
+        usrc = v.attrs.get('src_unit', None)
+        udst = v.attrs.get('dst_unit', None)
+        if usrc is None and udst is None:
+            usrc, udst = v.attrs.get('direction', (None, None))
+
         if v.attrs['_class_'] == 'polynomial':
             uc = UcPoly(usrc, udst, list(v))
         elif v.attrs['_class_'] == 'interpolation':
@@ -135,7 +147,7 @@ def setUnitConversion(lat, h5file, group):
                 else:
                     eobj.addAliasField(fld, realfld)
 
-            _logger.info("adding unit conversion for {0}, from {1} to {2}".format(
-                fld, usrcsys, udstsys))
+            _logger.info("adding unit conversion for {0}.{1}, from {2} to {3}".format(
+                ename, fld, usrcsys, udstsys))
             eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
 

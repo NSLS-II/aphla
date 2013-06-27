@@ -5,6 +5,7 @@ create unit conversion data for NSLS-II
 
 import os
 import sys
+import re
 import numpy as np
 import h5py
 import ConfigParser
@@ -680,8 +681,8 @@ def import_uc_data(grp, fname):
         dst_unit = d.get("dst_unit", "")
         ucp   = d.get("polynomial", None)
         uctbl = d.get("table", None)
-        groups   = d.get("groups", "")
-        elements = d.get("elements", "")
+        groups   = re.findall(r'\w+', d.get("groups", ""))
+        elements = re.findall(r'\w+', d.get("elements", ""))
         fld  = d.get("field")
         print "%s: %s,%s,%s" % (sec, fld, src_unit_sys, dst_unit_sys)
 
@@ -696,8 +697,8 @@ def import_uc_data(grp, fname):
         grp[ds].attrs["field"] = fld
         grp[ds].attrs["dst_unit_sys"] = dst_unit_sys
         #grp[ds].attrs["direction"] = ("", "")
-        grp[ds].attrs["groups"] = groups.split(" ,")
-        grp[ds].attrs["elements"] = elements.split(" ,")
+        if groups: grp[ds].attrs["groups"] = groups
+        if elements: grp[ds].attrs["elements"] = elements
 
 def read(h5fname, grp):
     g = h5py.File(h5fname, 'r')[grp]
@@ -709,7 +710,7 @@ def read(h5fname, grp):
 
 
 if __name__ == "__main__":
-    if True:
+    if False:
         f = h5py.File("nsls2.hdf5", 'w')
         grp = f.create_group("LTB")
         grp["unitconv"] = h5py.ExternalLink("ltb_unitconv.hdf5", "unitconv")
@@ -719,14 +720,14 @@ if __name__ == "__main__":
         grp["unitconv"] = h5py.ExternalLink("bts_unitconv.hdf5", "unitconv")
         f.close()
 
-    if True:
+    if False:
         f = h5py.File("br_unitconv.hdf5", 'w')
         grp = f.create_group("unitconv")
         init_br(grp)
         init_br_1k(grp)
         f.close()
 
-    if True:
+    if False:
         f = h5py.File("ltb_unitconv.hdf5", 'w')
         grp = f.create_group("unitconv")
         init_ltb(grp)
