@@ -14,20 +14,31 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
 
 class UcAbstract(object):
-    """
-    an identity conversion with unit names.
+    """an identity conversion with unit names.
+
+    - *direction*, i.e. (src, dst) from src unit, to dst unit.
+    - *invertible*, in case of linear, has both f(x) and f^{-1}(y).
+
+    This src, dst are unit name, e.g. Tesla, T-m. They are helpful for
+    display, but not essential for unit conversion.  They are not unit system
+    names. Unit system is a concept in higher level managed by element (and
+    action)
+
+    See CaElement and CaAction for unit system.
     """
     def __init__(self, src, dst):
         self.direction = (src, dst)
+        self.invertible = False
 
     def __str__(self):
         src, dst = self.direction[0], self.direction[1]
         return "%s -> %s: identity" % (src, dst)
 
-    def eval(self, x):
+    def eval(self, x, inv = False):
         return x
 
 class UcPoly(UcAbstract):
+    """a polynomial unit conversion"""
     def __init__(self, src, dst, coef):
         super(UcPoly, self).__init__(src, dst)
         self.p = np.poly1d(coef)
@@ -36,9 +47,35 @@ class UcPoly(UcAbstract):
         src, dst = self.direction[0], self.direction[1]
         return "%s -> %s: %s" % (src, dst, str(self.p))
 
-    def eval(self, x):
+    def _inv_eval(self, x):
+        """evaluate the inverse"""
+        if not self.invertible:
+            raise RuntimeError("inverse is not permitted for (%s -> %s)" % 
+                               self.direction)
+        if self.p.order == 1:
+            # y = ax + b
+            # x = 1/a * y - b/a
+            a, b = self.p.coeffs
+            ar, br = 1.0/a, -b*1.0/a
+            if isinstance(x, Iterable):
+                # keep None to None 
+                return [ar*v + br if v is not None else None for v in x]
+            else:
+                return ar*x + br
+        elif self.p.order == 0:
+            raise RuntimeError("can not inverse a constant for (%s -> %s)" %
+                               self.direction)
+        else:
+            raise RuntimeError("can not inverse polynomial order > 2 "
+                               "for (%s -> %s)" % self.direction)
+
+            
+    def eval(self, x, inv = False):
         if x is None: return None
-        elif isinstance(x, Iterable):
+
+        if inv: return self._inv_eval(x)
+        
+        if isinstance(x, Iterable):
             return [self.p(v) if v is not None else None for v in x]
         else:
             return self.p(x)
@@ -50,10 +87,20 @@ class UcInterp1(UcAbstract):
         #self.f = np.interpolate.interp1d(x, y)
         self.xp, self.fp = x, y
 
-    def eval(self, x):
+    def _inv_eval(self, x):
+        if x is None: return None
+        elif x < min(self.fp[0], self.fp[-1]): return None
+        elif x > max(self.fp[0], self.fp[-1]): return None
+        else:
+            # interp returns boundary if x is outside of fp
+            return np.interp(x, self.fp, self.xp)
+
+    def eval(self, x, inv = False):
         if x is None: return None
         elif x < self.xp[0] or x > self.xp[-1]: return None
-        else: return np.interp(x, self.xp, self.fp)
+        else:
+            # interp returns boundary if x is outside of xp
+            return np.interp(x, self.xp, self.fp)
 
 class UcInterpN(UcAbstract):
     """n-D linear interpolation"""
@@ -67,8 +114,11 @@ class UcInterpN(UcAbstract):
         super(UcInterpN, self).__init__(src, dst)
         self.xp, self.fp = x, y
 
-    def eval(self, x):
+    def eval(self, x, inv = False):
         """if None, returns None"""
+        if inv: raise RuntimeError("inverse not supported for (%s -> %s)" %
+                                   self.direction)
+
         if not isinstance(x, Iterable):
             raise RuntimeError("expecting an iterable input")
         ret = []
@@ -114,6 +164,8 @@ def setUnitConversion(lat, h5file, group):
         else:
             raise RuntimeError("unknow unit converter")
 
+        # integer - invertible
+        uc.invertible = v.attrs.get('invertible')
         # find the element list
         elems = v.attrs.get('elements', [])
 

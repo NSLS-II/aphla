@@ -265,12 +265,18 @@ class CaAction:
     def _unit_conv(self, x, src, dst):
         if (src, dst) == (None, None): return x
 
+        # try (src, dst) first
         uc = self.unitconv.get((src, dst), None)
-        if uc is None:
+        if uc is not None:
+            return uc.eval(x)
+
+        # then inverse (dst, src)
+        uc = self.unitconv.get((dst, src), None)
+        if uc is not None and uc.invertible:
+            return uc.eval(x, True)
+        else:
             raise RuntimeError("no method for unit conversion from "
                                "'%s' to '%s'" % (src, dst))
-        else:
-            return uc.eval(x)
 
     def _all_within_range(self, v, low, high):
         # did not check for string type
@@ -592,7 +598,7 @@ class CaAction:
         -------------
         low : int, float. the lower boundary value, default None
         high : int, float. the higher boundary value, default None
-        r : float. scale range as the stepsize. default 1000.
+        r : float. divide the range to get the stepsize. default 1000.
         index : int. index in the PV list. default None
         pv : str. pv name. needed if pvsp is a list. default None
 
@@ -922,18 +928,34 @@ class CaElement(AbstractElement):
             #raise AttributeError("Error")
         for e in self.alias: e.__setattr__(att, val)
 
+    def convertible(self, field, src, dst):
+        """check the unit conversion is possible or not"""
+
+        if src is None and dst is None: return True
+
+        uc = self._field[field].unitconv.get((src, dst), None)
+        if uc is not None: return True
+        
+        uc = self._field[field].unitconv.get((dst, src), None)
+        if uc is not None and uc.invertible: return True
+
+        return False
+
     def addUnitConversion(self, field, uc, src, dst):
         """add unit conversion for field"""
         # src, dst is unit system name, e.g. None for raw, phy
         self._field[field].unitconv[(src, dst)] = uc
 
     def convertUnit(self, field, x, src, dst):
+        """convert unit without setting the hardware"""
         return self._field[field]._unit_conv(x, src, dst)
 
     def get_unit_systems(self, field):
-        """get a list all unit systems for field. 
+        """get a list of all unit systems for field. 
 
-        None is the lower level unit, e.g. in EPICS channel
+        None is the lower level unit, e.g. in EPICS channel. Use convertible
+        to see if the conversion is possible between any two unit systems.
+
         """
         if not self._field[field].unitconv: return [None]
         #if not self._field[field].unitconv.keys(): return []
@@ -958,7 +980,10 @@ class CaElement(AbstractElement):
             return self.get_unit_systems(field)
 
     def getUnit(self, field, unitsys='phy'):
-        """get the unit name of a unit system, e.g. unitsys='phy'
+        """get the unit name of a unit system.
+
+        The unit name, e.g. "T/m" for integrated quadrupole strength, is
+        helpful for plotting routines.
 
         return '' if no such unit system.
         """
@@ -969,7 +994,7 @@ class CaElement(AbstractElement):
             if k[0] == unitsys: return v.direction[0]
             elif k[1] == unitsys: return v.direction[1]
             
-        return ''
+        return None
 
     def setRawUnit(self, field, u):
         """set the unit symbol for raw unit system"""
@@ -1057,6 +1082,18 @@ class CaElement(AbstractElement):
         return self._field[field].stepSize()
 
     def updateBoundary(self, field = None, lowhi = None, r = None):
+        """update the boundary for field
+        
+        - *field*
+        - *lowhi*, tuple for low and high boundary. e.g. (0, 1) 
+        - *r*, int. Divide the range (hi-low) by r to get the stepsize.
+
+        Examples
+        ---------
+        >>> updateBoundary('b1', (0, 2), 10) 
+
+        The above example sets 'b1' range to (0, 2) and stepsize 0.2
+        """
         if field is None: fields = self._field.keys()
         else: fields = [field]
 

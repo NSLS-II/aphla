@@ -681,6 +681,7 @@ def import_uc_data(grp, fname):
         dst_unit = d.get("dst_unit", "")
         ucp   = d.get("polynomial", None)
         uctbl = d.get("table", None)
+        invertible = int(d.get("invertible", 0))
         groups   = re.findall(r'\w+', d.get("groups", ""))
         elements = re.findall(r'\w+', d.get("elements", ""))
         fld  = d.get("field")
@@ -696,6 +697,7 @@ def import_uc_data(grp, fname):
         grp[ds].attrs["src_unit_sys"] = src_unit_sys
         grp[ds].attrs["field"] = fld
         grp[ds].attrs["dst_unit_sys"] = dst_unit_sys
+        grp[ds].attrs["invertible"] = invertible
         #grp[ds].attrs["direction"] = ("", "")
         if groups: grp[ds].attrs["groups"] = groups
         if elements: grp[ds].attrs["elements"] = elements
@@ -736,7 +738,7 @@ if __name__ == "__main__":
         f.close()
         read("ltb_unitconv.hdf5", "unitconv")
 
-    if False:
+    if True:
         f = h5py.File("bts_unitconv.hdf5", 'w')
         grp = f.create_group("unitconv")
         import_uc_data(grp, "bts_unitconv.ini")

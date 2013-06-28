@@ -1,5 +1,5 @@
 #   set point           ,     								Properties          ,  							     Tag   
-BTS-MG{Bend:1}I:Sp1-SP        , elemHandle=put,   elemIndex= 36	, elemName= B1	  ,  devName= B1	    ,  elemLength= 1.4	, elemPosition=9.77729		, elemType=BEND,  system=BTS,   elemField=bend,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Bend:1}I:Sp1-SP        , elemHandle=put,   elemIndex= 36	, elemName= B1	  ,  devName= B1	    ,  elemLength= 1.4	, elemPosition=9.77729		, elemType=BEND,  system=BTS,   elemField=b0,  aphla.sys.BTS,   aphla.sys.BTD
 
 BTS-MG{Quad:1}I:Sp1-SP        , elemHandle=put,   elemIndex= 30	, elemName= Q1	  ,  devName= Q1	    ,  elemLength= 0.35	, elemPosition=7.15426		,         elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
 BTS-MG{Quad:2}I:Sp1-SP        , elemHandle=put,   elemIndex= 34	, elemName= Q2	  ,  devName= Q2	 	  ,  elemLength= 0.35	, elemPosition=8.03335		,         elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
@@ -35,7 +35,7 @@ BTS-BI:BD1{VF:2}TIFF1:WriteFile          , elemHandle=put,   elemIndex= 53 , ele
 BTS-BI:BD1{VF:2}TIFF1:NumCapture         , elemHandle=put,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition=	19.3086	, elemType=FLAG ,  system=BTS,   elemField=nCapture,   aphla.sys.BTD
 
 #  READBACK         ,     								Properties          ,  							     Tag   
-BTS-MG{Bend:1}I:Ps1DCCT1-I         , elemHandle=get,   elemIndex= 36	, elemName= B1	  ,  devName= B1	    ,  elemLength= 1.4	, elemPosition=9.77729		, elemType=BEND,  system=BTS,   elemField=bend,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Bend:1}I:Ps1DCCT1-I         , elemHandle=get,   elemIndex= 36	, elemName= B1	  ,  devName= B1	    ,  elemLength= 1.4	, elemPosition=9.77729		, elemType=BEND,  system=BTS,   elemField=b0,  aphla.sys.BTS,   aphla.sys.BTD
 BTS-MG{Bend:1}RpStart1-Cmd       ,   elemHandle=get,  elemIndex= 36	, elemName= B1	  ,  devName= B1	    ,  elemLength= 1.4	, elemPosition=9.77729		,  elemType=BEND,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
 
 BTS-MG{Quad:1}I:Ps1DCCT1-I         , elemHandle=get,     elemIndex= 30	, elemName= Q1	  ,  devName= Q1	    ,  elemLength= 0.35	, elemPosition=7.15426		,        elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
