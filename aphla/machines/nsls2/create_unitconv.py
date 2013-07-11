@@ -110,8 +110,8 @@ def init_br(grp):
     grp[ds] = [0.0000000000002407631,-0.0000000004006765,0.0000001924432,0.001497716,0.001682902]
     grp[ds].attrs["unitsys"] = ",".join(["b0", "", "phy"])
     grp[ds].attrs["field"] = "b0"
-    grp[ds].attrs["src_unit_sys"] = "phy"
-    grp[ds].attrs["dst_unit_sys"] = ""
+    grp[ds].attrs["src_unit_sys"] = ""
+    grp[ds].attrs["dst_unit_sys"] = "phy"
     grp[ds].attrs["direction"] = ("", "")
     grp[ds].attrs["_class_"] = "polynomial"
     grp[ds].attrs["elements"] = [ "BD2" ]
@@ -712,7 +712,7 @@ def read(h5fname, grp):
 
 
 if __name__ == "__main__":
-    if True:
+    if False:
         f = h5py.File("nsls2.hdf5", 'w')
         grp = f.create_group("LTB")
         grp["unitconv"] = h5py.ExternalLink("ltb_unitconv.hdf5", "unitconv")
@@ -724,7 +724,7 @@ if __name__ == "__main__":
         grp["unitconv"] = h5py.ExternalLink("btd_unitconv.hdf5", "unitconv")
         f.close()
 
-    if False:
+    if True:
         f = h5py.File("br_unitconv.hdf5", 'w')
         grp = f.create_group("unitconv")
         init_br(grp)
@@ -738,13 +738,13 @@ if __name__ == "__main__":
         f.close()
         read("ltb_unitconv.hdf5", "unitconv")
 
-    if True:
+    if False:
         f = h5py.File("bts_unitconv.hdf5", 'w')
         grp = f.create_group("unitconv")
         import_uc_data(grp, "bts_unitconv.ini")
         f.close()
 
-    if True:
+    if False:
         # btd use same data as in bts
         f = h5py.File("btd_unitconv.hdf5", 'w')
         grp = f.create_group("unitconv")
