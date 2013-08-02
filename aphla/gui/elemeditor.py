@@ -26,6 +26,8 @@ import numpy as np
 import sys, time
 from functools import partial
 
+import qrangeslider
+
 C_FIELD, C_VAL_RAW = 0, 1
 _DBG_VERBOSE = 1
 
@@ -619,7 +621,13 @@ class ElementEditorDock(QDockWidget):
         self.elems = elems
         self.elemCompleter = QCompleter(elems)
         self.elemBox.setCompleter(self.elemCompleter)
+
+        self.rangeSlider = qrangeslider.QRangeSlider()
+        self.rangeSlider.setMin(0)
+        self.rangeSlider.setMax(100)
+        #self.rangeSlider.setRange(10, 70)
         #self.elemBox.insertSeparator(len(self.elems))
+        fmbox.addRow("Range", self.rangeSlider)
         fmbox.addRow("Filter", self.elemBox)
         #self.refreshBtn = QPushButton("refresh")
         #fmbox.addRow(self.elemBox)
