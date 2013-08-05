@@ -75,7 +75,7 @@ def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None):
     else: return None
 
 
-def putRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
+def setRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
     """set the rf frequency for the first 'RFCAVITY' element"""
     _rf = getElements(name)
     if _rf: return _rf[0].put(field, f, unitsys=unitsys)
@@ -336,8 +336,8 @@ def getLocations(group):
     Examples
     ---------
 
-      >>> s = getLocations('BPM')
-      >>> s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
+    >>> s = getLocations('BPM')
+    >>> s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
 
     It has a same input as :func:`getElements` and accepts group name,
     element name, element name pattern and a list of element names.
@@ -536,42 +536,43 @@ def getPhase(group, **kwargs):
     """
     get the phase from stored data
 
-    this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
+    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
     """
     if not machines._twiss: return None
     elem = getElements(group)
-    col = ('phi',)
-    if kwargs.get('spos', False): col = ('phi', 's')
+    col = ['phix', 'phiy']
+    if kwargs.get('spos', False): col.append('s')
     
-    return machines._twiss.getTwiss([e.name for e in elem], col=col, **kwargs)
+    return machines._twiss.get([e.name for e in elem], col=col, **kwargs)
 #
 #
 def getBeta(group, **kwargs):
     """
     get the beta function from stored data.
     
-    this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
+    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
 
     Parameters
     -----------
-    src : str. 'DB' from database, 'VA' virtual accelerator
+    src : str.
+        'DB' from database, 'VA' from 'twiss' element of virtual accelerator
 
     Examples
     ---------
-    >>> getBeta('Q*', spos = False)
+    >>> getBeta('q*', spos = False)
 
     """
     src = kwargs.pop("src", 'DB')
 
     elem = getElements(group)
-    col = ('beta',)
-    if kwargs.get('spos', False): col = ('beta', 's')
+    col = ['betax', 'betay']
+    if kwargs.get('spos', False): col.append('s')
 
     if src == 'DB':
         if not machines._lat._twiss:
             logger.error("ERROR: No twiss data loaeded")
             return None
-        return machines._lat._twiss.getTwiss([e.name for e in elem], 
+        return machines._lat._twiss.get([e.name for e in elem], 
                                         col=col, **kwargs)
     elif src == 'VA':
         twiss = getElements('twiss')[0]
@@ -600,34 +601,36 @@ def getDispersion(group, **kwargs):
     return getEta(group, **kwargs)
 
 def getEta(group, **kwargs):
-    """
-    get the dispersion from stored data
+    """get the dispersion from stored data
 
-    similar to :func:`getBeta`, it calls :func:`~aphla.twiss.Twiss.getTwiss`
+    Parameters
+    -----------
+    src : str. 
+        'DB' from database; 'VA' from virtual accelerator where a 'twiss'
+        element must exist.
+
+    similar to :func:`getBeta`, it calls :func:`~aphla.apdata.TwissData.get`
     of the current twiss data.
 
-    :Example:
+    Examples
+    --------
+    >>> getEta('P*', spos = True, src = 'DB')
+    >>> getEta('BPM')
+    >>> getEta(['BPM1', 'BPM2'])
 
-        >>> getEta('P*', spos = True, src = 'DB')
-        >>> getEta('BPM')
-        >>> getEta(['BPM1', 'BPM2'])
-
-    - *src*: 'DB' from database, 'VA' from virtual accelerator
-
-    seealso :func:`getElements`
     """
 
     src = kwargs.pop("src", 'DB')
 
     elem = getElements(group)
-    col = ('eta',)
-    if kwargs.get('spos', False): col = ('eta', 's')
+    col = ['etax', 'etay']
+    if kwargs.get('spos', False): col.append('s')
 
     if src == 'DB':
         if not machines._lat._twiss:
             logger.error("ERROR: No twiss data loaeded")
             return None
-        return machines._lat._twiss.getTwiss([e.name for e in elem], 
+        return machines._lat._twiss.get([e.name for e in elem], 
                                         col=col, **kwargs)
     elif src == 'VA':
         twiss = getElements('twiss')[0]

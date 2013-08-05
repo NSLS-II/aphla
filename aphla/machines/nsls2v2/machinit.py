@@ -7,8 +7,8 @@ NSLS2V2 Machine Structure Initialization
 
 from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, setUnitConversion,
                 setGoldenLattice, createLattice, createVirtualElements,
-                findCfaConfig, getResource)
-from .. import (OrmData, Twiss, UcPoly)
+                findCfaConfig, getResource, addIdentityUnitConversion)
+from .. import (OrmData, TwissData, UcPoly)
 
 from fnmatch import fnmatch
 import logging
@@ -63,13 +63,19 @@ def init_submachines(machine, submachines, **kwargs):
 
     # setting unit
     for e in lattice_dict['V2SR'].getElementList('QUAD'):
-        e.setRawUnit('k1', 'm^{-2}')
+        e.setUnit('k1', 'm^{-2}', unitsys=None)
+        addIdentityUnitConversion(e, "k1", None, 'phy')
     for e in lattice_dict['V2SR'].getElementList('SEXT'):
-        e.setRawUnit('k2', 'm^{-3}')
+        e.setUnit('k2', 'm^{-3}', unitsys=None)
+        addIdentityUnitConversion(e, "k2", None, 'phy')
     for e in lattice_dict['V2SR'].getElementList('COR'):
-        if 'x' in e.fields(): e.setRawUnit('x', 'rad')
-        if 'y' in e.fields(): e.setRawUnit('y', 'rad')
-        
+        if 'x' in e.fields():
+            e.setUnit('x', 'rad', unitsys=None)
+            addIdentityUnitConversion(e, "x", None, 'phy')
+        if 'y' in e.fields(): 
+            e.setUnit('y', 'rad', unitsys=None)
+            addIdentityUnitConversion(e, "y", None, 'phy')
+
     # get the file, search current dir first
     data_filename = getResource('nsls2v2.hdf5', __name__)
     if data_filename:
@@ -82,7 +88,7 @@ def init_submachines(machine, submachines, **kwargs):
         lattice_dict['V2SR'].ormdata.load(ormfile)        
         _logger.info("using ORM data '%s'" % ormfile)
 
-        lattice_dict['V2SR']._twiss = Twiss(data_filename)
+        lattice_dict['V2SR']._twiss = TwissData(data_filename)
         #lattice_dict['V2SR']._twiss.load_hdf5(data_filename, "V2SR/twiss")
         # hack for h5py < 2.1.1
         data_filename = getResource('v2sr_twiss.hdf5', __name__)
@@ -91,7 +97,7 @@ def init_submachines(machine, submachines, **kwargs):
             _logger.info("using Twiss data '%s'" % data_filename)
         else:
             _logger.warn("twiss data 'v2sr_twiss.hdf5' not found")
-            
+
         data_filename = getResource('v2sr_unitconv.hdf5', __name__)
         if data_filename is not None:
             setUnitConversion(lattice_dict['V2SR'], data_filename, "unitconv")
@@ -130,8 +136,11 @@ def init_submachines(machine, submachines, **kwargs):
     lattice_dict['V2SR'].Ek = 3000.0
 
     for bpm in lattice_dict['V2SR'].getElementList('BPM'):
-        bpm.setRawUnit('x', 'm')
-        bpm.setRawUnit('y', 'm')
+        bpm.setUnit('x', 'm', unitsys=None)
+        bpm.setUnit('y', 'm', unitsys=None)
+        addIdentityUnitConversion(bpm, 'x', None, 'phy')
+        addIdentityUnitConversion(bpm, 'y', None, 'phy')
+
     _logger.info("raw unit for BPM x and y are set")
 
     for k,vlat in lattice_dict.items():

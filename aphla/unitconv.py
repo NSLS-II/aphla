@@ -28,7 +28,8 @@ class UcAbstract(object):
     """
     def __init__(self, src, dst):
         self.direction = (src, dst)
-        self.invertible = False
+        self.srcunit = None
+        self.dstunit = None
 
     def __str__(self):
         src, dst = self.direction[0], self.direction[1]
@@ -203,3 +204,13 @@ def setUnitConversion(lat, h5file, group):
                 ename, fld, usrcsys, udstsys))
             eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
 
+def addIdentityUnitConversion(elem, fld, usrcsys, udstsys):
+    """set unit conversion for two unitsys which are equivalent
+
+    This is usually the case for BPM where raw data are in physics unit.
+    """
+    uc = UcAbstract(usrcsys, udstsys)
+    uc.dstunit = elem.getUnit(fld, usrcsys)
+    uc.srcunit = uc.dstunit
+    elem.addUnitConversion(fld, uc, usrcsys, udstsys)
+    

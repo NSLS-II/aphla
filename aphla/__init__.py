@@ -12,7 +12,7 @@ A procedural interface is provided.
 
 from __future__ import print_function
 
-__version__ = "Unknow"
+__version__ = "0.7.11"
 try:
     from version import version as __version__
 except:
@@ -56,6 +56,7 @@ from apdata import OrmData
 
 from meastwiss import *
 from aptools import *
+import snapshot
 
 import bba
 

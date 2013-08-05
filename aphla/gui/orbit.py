@@ -134,7 +134,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
                                     QDockWidget.DockWidgetClosable)
         self.elemeditor.setFloating(False)
-        self.elemeditor.setEnabled(False)
+        #self.elemeditor.setEnabled(False)
         self.elemeditor.setMinimumWidth(300)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
@@ -194,6 +194,9 @@ class OrbitPlotMainWindow(QMainWindow):
             self.logger.error(errmsg)
             raise RuntimeError(errmsg)
         self._update_mach_lat(mach, latname)
+        mach, lat = self._current_mach_lat()
+        self.logger.info("lattice s range: {0}".format(lat.getLocationRange()))
+        self.elemeditor.setRange(*(lat.getLocationRange()))
 
     def _update_mach_lat(self, vm, lat = None):
         #print "updating box for '%s'" % vm, lat
@@ -778,18 +781,33 @@ class OrbitPlotMainWindow(QMainWindow):
     def getDeadElements(self):
         return self.physics.deadelems
 
-    def getVisibleElements(self, elemname):
-
+    def getVisibleRange(self):
+        w = self.mdiarea.currentSubWindow()
+        if not w: 
+            mach, lat = self._current_mach_lat()
+            self.logger.warn("no active plot, use full range of {0}.{1}".format(
+                mach, lat.name))
+            return lat.getLocationRange()
+        else:
+            return w.currentXlim()
+        
+    def getVisibleElements(self, elemname, sb = None, se = None):
         w = self.mdiarea.currentSubWindow()
         if not w: 
             self.logger.warn("no active plot")
-            return []
-        lat = self._machlat[w.machine()][w.lattice()]
+            mach, lat = self._current_mach_lat()
+        else:
+            lat = self._machlat[w.machine()][w.lattice()]
         elems = lat.getElementList(elemname)
-        xl, xr = w.currentXlim()
+        if sb is not None: 
+            elems = [e for e in elems if e.sb >= sb]
+        if se is not None:
+            elems = [e for e in elems if e.se <= se]
+
         self.logger.info("searching for '{0}' in range [{1}, {2}]".format(
-            elemname, xl, xr))
-        return [e for e in elems if e.se > xl and e.sb < xr]
+            elemname, sb, se))
+
+        return elems
 
 
     def timerEvent(self, e):

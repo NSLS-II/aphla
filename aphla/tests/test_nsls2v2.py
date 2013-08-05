@@ -67,6 +67,9 @@ BPM2='pm1g4c30a'
 # plotting ?
 PLOTTING = True
 
+user = os.getlogin()
+utusers = ['jenkins']
+
 def markForStablePv():
     global ref_v0, PV_REF_RB
     ref_v0 = np.array(ap.caget(PV_REF_RB), 'd')
@@ -543,6 +546,7 @@ class T040_LatticeLtd1(unittest.TestCase):
     def tearDown(self):
         ap.machines._lat = self.lat
 
+    @unittest.skipIf(user not in utusers, "not running in unit test server") 
     def test_image_l0(self):
         #lat = ap.machines._lat
         ap.machines.use('V1LTD1')
@@ -612,6 +616,7 @@ class T050_LatticeLtb(unittest.TestCase):
     def readInvalidFieldY(self, e):
         k = e.y
         
+    @unittest.skipIf(user not in utusers, "not running in unit test server") 
     def test_field_l0(self):
         bpmlst = self.lat.getElementList('BPM')
         self.assertGreater(len(bpmlst), 0)
@@ -632,6 +637,7 @@ class T050_LatticeLtb(unittest.TestCase):
             #self.assertGreaterEqual(abs(e.x), 0.0)
             pass
 
+    @unittest.skipIf(user not in utusers, "not running in unit test server") 
     def test_virtualelements_l0(self):
         pass
 
@@ -1013,7 +1019,7 @@ class TestOrbitControl(unittest.TestCase):
         #
         ormd = ap.machines._lat.ormdata
         bpmr, trimr = [(bpm1.name, 'x'), (bpm2.name, 'x')], [(hcor.name, 'x')]
-        m, b, t = ormd.getSubMatrix(bpmr, trimr)
+        m, b, t = ormd.getMatrix(bpmr, trimr, full=False)
         import matplotlib.pylab as plt
         plt.clf()
         plt.plot(d[:,0], d[:,1], 'bo--')
@@ -1163,8 +1169,10 @@ class TestOrm(unittest.TestCase):
         bpms = ap.getElements('BPM')
         trims = ap.getElements('COR')
         
-        #nbpm, ntrim = 5, 3
-        nbpm, ntrim = len(bpms), len(trims)
+        # if jenkins run this test, measure whole ORM
+        nbpm, ntrim = 5, 2
+        if os.getlogin() in ['jenkins']:
+            nbpm, ntrim = len(bpms), len(trims)
         bpmlst = [b.name for b in bpms[:nbpm]]
         trimlst = [t.name for t in trims[:ntrim]]
         fname = time.strftime("orm_%Y%m%d_%H%M.hdf5")
@@ -1288,7 +1296,7 @@ class TestOrm(unittest.TestCase):
                 trims.add(ormdata.trim[j][0])
                 planes[1].add(ormdata.trim[j][1])
 
-            m = ormdata.getSubMatrix(bpm, trim, planes)
+            m = ormdata.getSubMatrix(bpm, trim, planes, full=False)
 
             for i,j in idx:
                 self.assertEqual(ormdata_dst.m[i0,j0], 0.0)

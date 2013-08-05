@@ -14,7 +14,7 @@ from os.path import join
 from catools import caget, caput
 import numpy as np
 from hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes, 
-                    waitStableOrbit, getRfFrequency, putRfFrequency)
+                    waitStableOrbit, getRfFrequency, setRfFrequency)
 
 __all__ = [ 'measBeta', 'measDispersion', 'measChromaticity' ]
 
@@ -137,7 +137,7 @@ def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
     cod = np.zeros((len(dflst), 2*nbpm), 'd')
     for i,df in enumerate(dflst): 
         v0 = getOrbit()
-        putRfFrequency(f0 + df)
+        setRfFrequency(f0 + df)
         if verbose > 0:
             print i, "df=", df, " f=", f0
         waitStableOrbit(v0)
@@ -151,7 +151,7 @@ def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
 
 
     # restore
-    putRfFrequency(f0)
+    setRfFrequency(f0)
 
     # fitting
     p = np.polyfit(dflst, cod, deg = 1)

@@ -35,7 +35,9 @@ from channelfinder import Channel, Property, Tag
 
 import conf
 
-cfsurl = os.environ.get('HLA_CFS_URL', 'https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder')
+cfsurl = os.environ.get(
+    'HLA_CFS_URL', 
+    'https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder')
 
 cfinput = {
     'BaseURL': cfsurl,
@@ -106,7 +108,8 @@ def run_simple_task():
             #addPvProperty(cf, ch.Name, "elemLength", "0.0", PRPTOWNER)
             #addPvProperty(cf, ch.Name, "cell", "C24", PRPTOWNER)
             addPvProperty(cf, ch.Name, "girder", "G", PRPTOWNER)
-
+    else:
+        print "did not found RFCAVITY"
 
 def hasPvs(cf, pvs):
     """check if the pvs exist"""
@@ -216,8 +219,8 @@ def updatePropertyPvs(cf, p, owner, v, pvs):
         # meaningless.
         cf.set(property=Property(p, owner, v))
         logging.info("create new property (%s,%s,%s)" % (p, owner, v))
-    cf.update(property=Property(p, owner, v), channelNames=pvs)
-    logging.info("batch add property (%s,%s,%s) for %d pvs" % (p, owner, v, len(pvs)))
+    ret = cf.update(property=Property(p, owner, v), channelNames=pvs)
+    logging.info("batch add property (%s,%s,%s) for %d pvs (ret=%s)" % (p, owner, v, len(pvs), str(ret)))
 
 def appendPropertyPvs(cf, p, owner, v, pvs, sep=";"):
     """
@@ -328,17 +331,34 @@ def cfs_append_from_csv2(rec_list, update_only):
         if s[0].strip().startswith('#'): continue
         
         pv = s[0].strip()
+        logging.info("updating '{0}'".format(pv))
+        #cf.update(property=Property('elemType', PRPTOWNER, 'QUAD'),
+        #          channelNames = [pv])
+        #chs = cf.find(name=pv)
+        #sys.exit(0)
+        #logging.info("{0} and {1}".format(chs[0].Name, type(chs[0].Name)))
+        #logging.info("{0} and {1}".format(pv, type(pv)))
+
         allpvs.append(pv)
+        prpt_list, tag_list = [], []
         for r in s[1:]:
             if r.find('=') > 0:
                 prpt, val = [v.strip() for v in r.split('=')]
                 prpt_data.setdefault((prpt, val), [])
                 prpt_data[(prpt, val)].append(pv)
+                #prpt_list.append(Property(prpt, prpt_owner, val))
+                #logging.info("'{0}': {1}={2} ({3})".format(pv, prpt, val, prpt_owner))
+                #addPvProperty(cf, chs[0].Name, prpt, val, prpt_owner)
             else:
                 # it is a tag
-                tag_data.setdefault(r.strip(), [])
-                tag_data[r.strip()].append(pv)
-
+                tag = r.strip()
+                if not tag: continue
+                tag_data.setdefault(tag, [])
+                tag_data[tag].append(pv)
+                #tag_list.append(Tag(r.strip()), tag_owner)
+                logging.info("{0}: {1} ({2})".format(pv, tag, tag_owner))
+                #addPvTag(cf, pv, tag, tag_owner)
+        
     errpvs = []
     for pv in allpvs:
         if not cf.find(name=pv):
@@ -352,6 +372,9 @@ def cfs_append_from_csv2(rec_list, update_only):
 
     for k,v in prpt_data.iteritems():
         vf = [pv for pv in v if pv not in errpvs]
+        if not vf: 
+            logging.info("no valid PVs for {0}".format(k))
+            continue
         updatePropertyPvs(cf, k[0], prpt_owner, k[1], vf)
         logging.info("add property {0} for pvs {1}".format(k, vf))
     for k,v in tag_data.iteritems():
@@ -454,6 +477,7 @@ if __name__ == "__main__":
     elif arg.csv1:
         cfs_append_from_csv1(arg.csv1, update_only = arg.update_only)
     elif arg.csv2:
+        # explicit
         cfs_append_from_csv2(arg.csv2, update_only = arg.update_only)
     else:
         #cf = ChannelFinderClient(**cfinput)

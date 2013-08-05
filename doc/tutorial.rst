@@ -301,18 +301,18 @@ HLA Lib Summary
 The following are some common functions. Please see :doc:`libref` for a list of
 documented modules, methods and functions.
 
-The function names may have a shorter alias version under ``aphla``,
-e.g. `aphla.correctOrbit` is same as `aphla.aptools.correctOrbit`, and
-`aphla.measBeta` is the same as `aphla.meastwiss.measBeta`.
+The functions below are an alias from submodules under ``aphla``,
+e.g. `aphla.correctOrbit` is from `aphla.aptools.correctOrbit`, and
+`aphla.measBeta` is from `aphla.meastwiss.measBeta`.
 
 .. currentmodule:: aphla
 
 .. autosummary::
    :toctree: generated
 
-   aphla.aptools.calcLifetime
-   aphla.aptools.correctOrbit
-   aphla.hlalib.eget
+   aphla.calcLifetime
+   aphla.correctOrbit
+   aphla.eget
    aphla.getBeamlineProfile
    aphla.getBeta
    aphla.getBpms
@@ -344,10 +344,10 @@ e.g. `aphla.correctOrbit` is same as `aphla.aptools.correctOrbit`, and
    aphla.getTunes
    aphla.meastwiss.measBeta
    aphla.measBeta
-   aphla.meastwiss.measChromaticity
-   aphla.meastwiss.measDispersion
-   aphla.aptools.measOrbitRm
-   aphla.putRfFrequency
+   aphla.measChromaticity
+   aphla.measDispersion
+   aphla.measOrbitRm
+   aphla.setRfFrequency
    aphla.aptools.saveImage
    aphla.aptools.setLocalBump
    aphla.stepRfFrequency
