@@ -604,12 +604,12 @@ class ElementPropertyView(QTableView):
         cmenu.exec_(e.globalPos())
 
 class ElementEditorDock(QDockWidget):
-    def __init__(self, parent, elems=[]):
+    def __init__(self, parent, elems=[], sb = None, se = None):
         QDockWidget.__init__(self, parent)
         self.model = None
         #self.connect(self, SIGNAL('tabCloseRequested(int)'), self.closeTab)
         #gb = QGroupBox("select")
-        fmbox = QFormLayout()
+        fmbox = QGridLayout()
 
         #fmbox.addRow("S-Range", self.lblRange)
 
@@ -622,20 +622,22 @@ class ElementEditorDock(QDockWidget):
         self.elemCompleter = QCompleter(elems)
         self.elemBox.setCompleter(self.elemCompleter)
 
-        self.rangeSlider = qrangeslider.QRangeSlider()
-        self.rangeSlider.setMin(0)
-        self.rangeSlider.setMax(100)
+        #self.rangeSlider = qrangeslider.QRangeSlider()
+        #self.rangeSlider.setMin(0)
+        #self.rangeSlider.setMax(100)
         #self.rangeSlider.setRange(10, 70)
         #self.elemBox.insertSeparator(len(self.elems))
-        fmbox.addRow("Range", self.rangeSlider)
-        fmbox.addRow("Filter", self.elemBox)
+        #fmbox.addRow("Range", self.rangeSlider)
+        fmbox.addWidget(QLabel("Filter"), 0, 0)
+        fmbox.addWidget(self.elemBox, 0, 1)
         #self.refreshBtn = QPushButton("refresh")
         #fmbox.addRow(self.elemBox)
 
-        self.fldGroup = QGroupBox()
+        self.lblInfo = QLabel()
+
+        #self.fldGroup = QGroupBox()
         fmbox2 = QFormLayout()
-        self.lblName  = QLabel()
-        self.lblField = QLabel()
+        self.lblNameField  = QLabel()
         self.lblStep  = QLabel()
         self.lblRange = QLabel()
         self.valMeter = Qwt.QwtThermo()
@@ -643,14 +645,14 @@ class ElementEditorDock(QDockWidget):
         self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding, 
                                     QSizePolicy.Fixed)
         self.valMeter.setEnabled(False)
-        #fmbox2.addRow("Name", self.lblName)
+        fmbox2.addRow("Name", self.lblNameField)
         #fmbox2.addRow("Field", self.lblField)
         fmbox2.addRow("Step", self.lblStep)
         #fmbox2.addRow("Range", self.valMeter)
         fmbox2.addRow("Range", self.lblRange)
-        #fmbox2.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        fmbox2.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         fmbox2.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
-        self.fldGroup.setLayout(fmbox2)
+        #self.fldGroup.setLayout(fmbox2)
 
 
         self.model = None
@@ -658,11 +660,13 @@ class ElementEditorDock(QDockWidget):
         self.tableview = ElementPropertyView()
         #self.tableview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tableview.setWhatsThis("double click cell to enter editing mode")
-        fmbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        #fmbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         vbox = QVBoxLayout()
         vbox.addLayout(fmbox)
         vbox.addWidget(self.tableview)
-        vbox.addWidget(self.fldGroup)
+        #vbox.addWidget(self.lblInfo)
+        vbox.addLayout(fmbox2)
+        #vbox.addWidget(self.fldGroup)
         cw = QWidget(self)
         cw.setLayout(vbox)
         self.setWidget(cw)
@@ -678,13 +682,13 @@ class ElementEditorDock(QDockWidget):
         self.noTableUpdate = True
 
     def refreshTable(self, txt = None):
-        elemname = str(self.elemBox.text())
-        if txt is not None: elemname = txt
+        elemname = str(self.elemBox.text()) if txt is None else txt
         self.elemBox.selectAll()
         t0 = time.time()
         #elems = [e for e in self.parent().getVisibleElements(elemname)
         #          if e.family in ['BPM', 'COR', 'HCOR']][:40]
-        elems = self.parent().getVisibleElements(elemname)
+        self.sb, self.se = self.parent().getVisibleRange()
+        elems = self.parent().getVisibleElements(elemname, self.sb, self.se)
         deadelems = self.parent().getDeadElements()
         _logger.info("Found elems: {0}".format(len(elems)))
         QApplication.processEvents()
@@ -744,6 +748,9 @@ class ElementEditorDock(QDockWidget):
         self.lblStep.setText(str(elem.stepSize(fld)))
         elem.updateBoundary()
         bd = elem.boundary(fld)
+        #self.lblInfo.setText("{0}.{1} in {2} ss={3}".format(
+        #    elem.name, fld, bd, elem.stepSize(fld)))
+        self.lblNameField.setText("{0}.{1}".format(elem.name, fld))
         if True:
             self.lblRange.setText(str(bd))
         elif bd is None or bd[0] is None or bd[1] is None: 
@@ -752,6 +759,8 @@ class ElementEditorDock(QDockWidget):
             rg = Qwt.QwtDoubleInterval(bd[0], bd[1])
             self.valMeter.setScale(rg, (bd[1]-bd[0])/2.01)
             self.valMeter.setValue(elem.get(fld, unitsys = None))
+            print elem.get(fld, unitsys=None)
+            print self.valMeter.value()
             self.valMeter.setEnabled(True)
 
     def elementStateChanged(self, elem, stat):
@@ -798,6 +807,15 @@ class ElementEditorDock(QDockWidget):
 
     def updateModelData(self):
         pass
+
+    def setRange(self, vmin, vmax):
+        #self.rangeSlider.setMin(int(vmin))
+        #self.rangeSlider.setMax(int(vmax))
+        #if self.rangeSlider.end() > vmax: self.rangeSlider.setEnd(vmax)
+        #if self.rangeSlider.start() < vmin: self.rangeSlider.setStart(vmin)
+        self.sb = vmin
+        self.se = vmax
+        #self.refreshTable()
 
 class MTestForm(QDialog):
     def __init__(self, parent=None):

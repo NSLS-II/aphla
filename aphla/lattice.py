@@ -303,6 +303,21 @@ class Lattice:
         else:
             raise ValueError("not recognized type of *elems*")
 
+    def getLocationRange(self):
+        s0, s1 = 0.0, 1.0
+        for elem in self._elements:
+            if elem.virtual: continue
+            if isinstance(elem.sb, (int, float)): 
+                s0 = elem.sb
+                break
+        for i in range(1, 1+len(self._elements)):
+            elem = self._elements[-i]
+            if elem.virtual: continue
+            if isinstance(elem.se, (int, float)) and elem.se > s0:
+                s1 = elem.se
+                break
+        return s0, s1
+
     def getLine(self, srange, eps = 1e-9):
         """
         get a list of element within range=(s0, s1).
