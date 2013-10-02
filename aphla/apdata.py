@@ -13,6 +13,9 @@ from os.path import splitext
 import numpy as np
 import shelve
 import h5py
+import sqlite3
+
+import warnings
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -621,3 +624,134 @@ class TwissData:
         c.close()
         conn.close()
 
+
+def _updateLatticePvDb(dbfname, cfslist):
+    """
+    update sqlite3 DB with a list of (pv, properties, tags)
+    """
+    # elemName, elemType, system is "NOT NULL"
+    conn = sqlite3.connect(dbfname)
+    c = conn.cursor()
+    # elements need to insert
+    elem_sets, pv_sets = [], []
+    for i,rec in enumerate(cfslist):
+        pv, prpts, tags = rec
+        ukey = (prpts.get("elemName", ''), prpts.get("elemType", ''),
+                prpts.get("system", ''))
+        # skip if already in the to-be-inserted list
+        if ukey in elem_sets: continue
+        c.execute("""SELECT * from elements where elemName=?
+                       AND elemType=? AND system=?""", ukey )
+        if len(c.fetchall()) > 0: continue
+        elem_sets.append(ukey)
+    c.executemany("""INSERT INTO elements (elemName, elemType, system)
+                     VALUES (?, ?, ?)""", elem_sets)
+    # insert or replace pv
+    c.executemany("""INSERT OR REPLACE INTO pvs (pv) VALUES (?)""", 
+                  [(r[0],) for r in cfslist])
+    conn.commit()
+    # the pv and elements are ready to update
+    elem_cols = [("cell", ""), ("elemLength", 0.0),
+                 ("elemPosition", None), ("girder", ""), ("symmetry", ""),
+                 ("elemIndex", None), ("elemGroups", ""), ("k1", None),
+                 ("k2", None), ("angle", None), ("fieldPolar", None),
+                 ("virtual", 0),
+                 # the three unique constraint
+                 ("elemName", ''), ("elemType", ''), ("system", '')]
+    q_elem_update = ",".join(["%s=?" % v[0] for v in elem_cols[:-3]])
+    pv_cols = [("elemHandle", None), ("elemField", None), 
+               ("hostName", ""), ("devName", ""), ("iocName", ""),
+               ("hlaHigh", None), ("hlaLow", None), ("hlaValRef", None)]
+    q_pvs_update = ",".join(["%s=?" % v[0] for v in pv_cols])
+    for i,rec in enumerate(cfslist):
+        pv, prpts, tags = rec
+        ukey = [prpts.get(k[0], k[1]) for k in elem_cols] 
+        c.execute("""UPDATE elements set """ + q_elem_update +
+                  """ where elemName=? AND elemType=? AND system=?""", ukey)
+        ukey = [";".join(tags),] + [prpts.get(k[0], k[1]) for k in pv_cols] + \
+               [prpts.get("elemName", ''), prpts.get("elemType", ''),
+                prpts.get("system", ''), pv]
+        c.execute("""UPDATE pvs set tags=?,""" + q_pvs_update +
+                  """,elem_id=(select id from elements where 
+                        elemName=? AND elemType=? AND system=?) where pv=?""",
+                  ukey)
+    msg = "[%s] updated %d records" % (__name__, len(cfslist))
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ? )""", (msg,))
+    conn.commit()
+    conn.close()
+
+                         
+def updateLatticePvDb(dbfname, csv2fname):
+    """
+    update the sqlite3 DB with CSV file
+    """
+    from chanfinder import ChannelFinderAgent
+    cfa = ChannelFinderAgent()
+    cfa.importCsv(csv2fname)
+    _updateLatticePvDb(dbfname, cfa.rows)
+
+    conn = sqlite3.connect(dbfname)
+    c = conn.cursor()
+    msg = "[%s] updated with '%s'" % (__name__, csv2fname)
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ? )""", (msg,))
+    conn.commit()
+    conn.close()
+
+def createLatticePvDb(dbfname, csv2fname = None):
+    """
+    create a new sqlite3 DB. remove if same file exists.
+    """
+    #if os.path.exists(dbfname): os.remove(dbfname)
+    conn = sqlite3.connect(dbfname)
+    c = conn.cursor()
+    c.execute("""DROP TABLE IF EXISTS info""")
+    c.execute("""DROP TABLE IF EXISTS elements""")
+    c.execute("""DROP TABLE IF EXISTS pvs""")
+    c.execute("""CREATE TABLE info
+                 (id INTEGER PRIMARY KEY, timestamp TEXT NOT NULL,
+                  name TEXT NOT NULL, value TEXT)""")
+    msg = "[%s] tables created" % (__name__,)
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ?)""", (msg,))
+    c.execute("""CREATE TABLE elements
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  elemName TEXT NOT NULL,
+                  elemType TEXT NOT NULL,
+                  system   TEXT NOT NULL,
+                  cell     TEXT,
+                  girder   TEXT,
+                  symmetry TEXT,
+                  elemLength   REAL,
+                  elemPosition REAL,
+                  elemIndex    INTEGER,
+                  elemGroups   TEXT,
+                  k1           REAL,
+                  k2           REAL,
+                  angle        REAL,
+                  fieldPolar   INTEGER,
+                  virtual      INTEGER)""")
+    conn.commit()
+
+    c.execute("""CREATE TABLE pvs
+                 (pv TEXT PRIMARY KEY,
+                  elemHandle TEXT,
+                  elemField  TEXT,
+                  hostName   TEXT,
+                  devName    TEXT,
+                  iocName    TEXT,
+                  tags       TEXT,
+                  hlaHigh   REAL,
+                  hlaLow    REAL,
+                  hlaValRef REAL,
+                  elem_id   INTEGER,
+                  FOREIGN KEY(elem_id) REFERENCES elements(id))""")
+    conn.commit()
+    conn.close()
+    if csv2fname is not None: updateLatticePvDb(dbfname, csv2fname)
+
+
+if __name__ == "__main__":
+    createLatticePvDb('test.sqlite', '/home/lyyang/devel/nsls2-hla/aphla/machines/nsls2/BR-20130123-Diag.txt')
+    updateLatticePvDb('test.sqlite', '/home/lyyang/devel/nsls2-hla/aphla/machines/nsls2/BR-20130123-Diag.txt')

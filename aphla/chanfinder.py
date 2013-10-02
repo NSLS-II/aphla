@@ -95,7 +95,7 @@ class ChannelFinderAgent(object):
             del prptdict
 
         
-    def sort(self, key):
+    def sort(self, fld, dtype = None):
         """
         sort the data by 'pv' or other property name.
 
@@ -105,10 +105,16 @@ class ChannelFinderAgent(object):
             >>> sort('elemName')
         """
         from operator import itemgetter
-        if key == 'pv':
+        if fld == 'pv':
             self.rows.sort(key = itemgetter(0))
-        else:
-            self.rows.sort(key=lambda k: k[1][key])            
+        elif dtype is None:
+            self.rows.sort(key=lambda k: k[1][fld])            
+        elif dtype == 'str':
+            self.rows.sort(key=lambda k: str(k[1].get(fld, "")))
+        elif dtype == 'float':
+            self.rows.sort(key=lambda k: float(k[1].get(fld, 0.0)))
+        elif dtype == 'int':
+            self.rows.sort(key=lambda k: int(k[1].get(fld, 0)))
 
     def renameProperty(self, oldkey, newkey):
         """
@@ -122,7 +128,7 @@ class ChannelFinderAgent(object):
         #print("Renamed %s records" % n)
 
     
-    def importCsv(self, fname):
+    def loadCsv(self, fname):
         """
         import data from CSV (comma separated values).
 
@@ -143,7 +149,7 @@ class ChannelFinderAgent(object):
             self._import_csv_2(fname)
         self.source = fname
 
-    def _import_csv_1(self, fname):
+    def _load_csv_1(self, fname):
         """
         It is recommended to put PV name as the first column and then all the
         property columns. The tags which have no header are in the last
@@ -179,7 +185,7 @@ class ChannelFinderAgent(object):
             #print s[ipv], prpts, tags
             self.rows.append([s[ipv], prpts, tags])
 
-    def _import_csv_2(self, fname):
+    def _load_csv_2(self, fname):
         """
         import data from CSV (comma separated values). 
 
@@ -188,23 +194,27 @@ class ChannelFinderAgent(object):
 
           PV1, elemName=Name, elemPosition=0.2, aphla.sys.SR,aphla.elemfield.f1
         """
-        import csv
-        rd = csv.reader(open(fname, 'r'))
-        for s in rd:
-            pv = s[0]
-            prpts, tags = {}, []
-            for cell in s[1:]:
-                if cell.find('=') > 0:
-                    k, v = cell.split('=')
-                    prpts[k.strip()] = v.strip()
-                else:
-                    tags.append(cell.strip())
+        f = open(fname, 'r')
+        for i,line in enumerate(f.readlines()):
+            s = line.strip()
+            if s.startswith('#'): continue
+            r = [v.strip() for v in s.split(',')]
 
-            if pv.startswith('#') and len(prpts) == 0: continue
+            pv = r[0]
+            if not pv: continue
+
+            prpts, tags = {}, []
+            for col in r[1:]:
+                try:
+                    k, v = col.split('=')
+                    prpts[k.strip()] = v.strip()
+                except ValueError as e:
+                    tags.append(col.strip())
+
             self.rows.append([pv, prpts, tags])
 
 
-    def _importSqliteDb1(self, fname, **kwargs):
+    def _loadSqliteDb1(self, fname, **kwargs):
         """
         import from sqlite database (v1 with two tables)
         
@@ -223,7 +233,8 @@ class ChannelFinderAgent(object):
         """
         conn = sqlite3.connect(fname)
         c = conn.cursor()
-        c.execute('''select * from pvs,elements where pvs.elem_id=elements.elem_id''')
+        c.execute("""select * from pvs,elements 
+                  where pvs.elem_id=elements.id""")
         # head of columns
         allcols = [v[0] for v in c.description]
         # default using all columns
@@ -255,7 +266,7 @@ class ChannelFinderAgent(object):
         conn.close()
         self.source = fname
 
-    def importSqlite(self, fname, **kwargs):
+    def loadSqlite(self, fname, **kwargs):
         """
         import from sqlite database table 'channels'
         
@@ -306,55 +317,17 @@ class ChannelFinderAgent(object):
         conn.close()
         self.source = fname
 
-    def exportSqlite(self, fname, tbl = "channels"):
+    def saveSqlite(self, fname, tbl = "channels"):
         """
         export to sqlite table, drop if exists.
         """
-        vacharlen = [8, 16, 32, 128]
-        prpts, tags = set(), set()
-        prptlen = {'pv': 16, 'tags': 32}
-        for r in self.rows:
-            prptlen['pv'] = max(prptlen['pv'], len(r[0]))
-            prpts.update(r[1].keys())
-            for k,v in r[1].items():
-                prptlen.setdefault(k, 8)
-                prptlen[k] = max(prptlen[k], len(v))
+        import apdata
+        apdata.createLatticePvDb(fname, None)
+        apdata._updateLatticePvDb(fname, self.rows)
 
-            tags.update(r[2])
-            prptlen['tags'] = max(prptlen['tags'], len(','.join(r[2])))
-
-        conn = sqlite3.connect(fname)
-        prpts = sorted(prpts)
-        prpts.insert(0, "pv")
-        prpts.append("tags")
-        prptrec = []
-        for k in prpts:
-            if prptlen[k] > 255:
-                raise ValueError("{0} is too long".format(k))
-            elif prptlen[k] > 127: prptrec.append(k + " VARCHAR(255)")
-            elif prptlen[k] > 63: prptrec.append(k + " VARCHAR(127)")
-            elif prptlen[k] > 31: prptrec.append(k + " VARCHAR(63)")
-            elif prptlen[k] > 15: prptrec.append(k + " VARCHAR(31)")
-            elif prptlen[k] > 7: prptrec.append(k + " VARCHAR(15)")
-            else: prptrec.append(k + " VARCHAR(8)")
-
-        c = conn.cursor()
-        c.execute("drop table if exists " + tbl)
-        c.execute("create table " + tbl + "(id integer NOT NULL PRIMARY KEY, "
-                  + ','.join(prptrec) + ")")
-        for r in self.rows:
-            pv = r[0]
-            k,v0 = zip(*(r[1].items()))
-            v = [r[0]] + list(v0) + [",".join(r[2])]
-            query = "insert into " + tbl + "(pv," + ",".join(k) +  \
-                    ", tags) values (" + ",".join(["?"] * (len(k)+2)) + ")"
-            c.execute(query, v)
-
-        conn.commit()
-
-    def _export_csv_1(self, fname):
+    def _save_csv_1(self, fname):
         """
-        export the CFS in CSV format.
+        save the CFS in CSV format.
         """
         # find out all the property names
         prpts_set = set()
@@ -382,7 +355,7 @@ class ChannelFinderAgent(object):
                 writer.writerow([r[0]] + prpt + list(r[2]))
         del writer
 
-    def _export_csv_2(self, fname):
+    def _save_csv_2(self, fname):
         """
         export the CFS in CSV2 format (explicit).
         """
@@ -392,7 +365,7 @@ class ChannelFinderAgent(object):
                 p = ",".join(["%s=%s" % (k,v) for k,v in r[1].items()])
                 f.write(",".join([r[0], p, ",".join(r[2])]) + "\n")
 
-    def _importJson(self, fname):
+    def _loadJson(self, fname):
         self.source = fname
         import json
         f = open(fname, 'r')
@@ -401,7 +374,7 @@ class ChannelFinderAgent(object):
         self.rows = d['rows']
         f.close()
 
-    def _exportJson(self, fname):
+    def _saveJson(self, fname):
         import json
         f = open(fname, 'w')
         json.dump({'__cdate': self.__cdate, 'rows': self.rows}, f)
@@ -495,3 +468,8 @@ class ChannelFinderAgent(object):
         #print(pv, prpt, tags)
 
      
+if __name__ == "__main__":
+    cfa = ChannelFinderAgent()
+    cfa._importSqliteDb1('test.sqlite')
+    print(cfa.rows)
+    cfa.exportSqlite("test2.sqlite")

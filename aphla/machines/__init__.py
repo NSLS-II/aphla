@@ -24,7 +24,8 @@ import os
 import glob
 from pkg_resources import resource_string, resource_exists, resource_filename
 import cPickle as pickle
-
+import ConfigParser
+import fnmatch
 import logging
 _logger = logging.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -61,9 +62,9 @@ _lat = None
 
 def init(machine, submachines = "*", **kwargs):
     """use load instead"""
-    load(machine, submachines = submachines, **kwargs)
+    load_v1(machine, submachines = submachines, **kwargs)
 
-def load(machine, submachines = "*", **kwargs):
+def load_v1(machine, submachines = "*", **kwargs):
     """
     load submachine lattices in machine.
 
@@ -75,8 +76,8 @@ def load(machine, submachines = "*", **kwargs):
     save_cache: bool. default False, save cache
     """
     
-    use_cache = kwargs.get('use_cache',False)
-    save_cache = kwargs.get('save_cache',False)
+    use_cache = kwargs.get('use_cache', False)
+    save_cache = kwargs.get('save_cache', False)
     
     if use_cache:
         try:
@@ -99,6 +100,66 @@ def load(machine, submachines = "*", **kwargs):
     _lattice_dict.update(lats)
     _lat = lat
     _logger.info("setting default lattice '%s'" % _lat.name)
+
+    if save_cache:
+        selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
+                                 if _lat == v][0]
+        saveCache(machine, _lattice_dict, selected_lattice_name)
+        
+def _findMachinePath(machine):
+    # if machine is an abs path
+    if os.path.isabs(machine): return machine
+    # try "machine" in ~/.hla/
+    home_machine = os.path.join(os.path.expanduser("~"), ".hla", machine)
+    if os.path.isdir(home_machine): return home_machine
+    # try the package
+    pkg_machine = resource_filename(__name__, machine)
+    if os.path.isdir(pkg_machine): return pkg_machine
+
+    return None
+
+def load_v2(machine, submachines = "*", **kwargs):
+    """
+    load submachine lattices in machine.
+
+    Parameters
+    -----------
+    machine: str. the exact name of machine
+    submachine: str. default '*'. pattern of sub machines
+    use_cache: bool. default False. use cache
+    save_cache: bool. default False, save cache
+    """
+    
+    use_cache = kwargs.get('use_cache', False)
+    save_cache = kwargs.get('save_cache', False)
+
+    if use_cache:
+        try:
+            loadCache(machine)
+        except:
+            print('Lattice initialization using cache failed. ' +
+                  'Will attempt initialization with other method(s).')
+            save_cache = True
+        else:
+            # Loading from cache was successful.
+            return
+        
+    #importlib.import_module(machine, 'machines')
+    _logger.debug("importing '%s'" % machine)
+    machdir = _findMachinePath(machine)
+    if machdir is None:
+        _logger.error("can not find machine data directory for '%s'" % machine)
+        return
+
+    cfg = ConfigParser.ConfigParser()
+    cfg.readfp(open(os.path.join(machdir, "aphla.ini"), 'r'))
+    _logger.debug("using config file: 'aphla.ini'")
+    print(cfg.sections())
+    # for all submachines specified in INI and matches the pattern
+    msect = [subm.strip() for subm in 
+             cfg.get("COMMON", "SubMachines", "").split(",")
+             if fnmatch.fnmatch(subm.strip(), submachines)]
+    print(msect)
 
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
@@ -167,7 +228,7 @@ def createVirtualElements(vlat):
             allvelem.virtual = 1
 
         iv = iv + 1
-    
+
 def findCfaConfig(srcname, machine, submachines):
     """
     find the appropriate config for ChannelFinderAgent
