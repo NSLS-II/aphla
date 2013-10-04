@@ -1168,7 +1168,7 @@ class TestOrm(unittest.TestCase):
         
         # if jenkins run this test, measure whole ORM
         nbpm, ntrim = 5, 2
-        if os.getlogin() in ['jenkins']:
+        if "JENKINS_URL" in os.environ:
             nbpm, ntrim = len(bpms), len(trims)
         bpmlst = [b.name for b in bpms[:nbpm]]
         trimlst = [t.name for t in trims[:ntrim]]
