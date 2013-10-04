@@ -146,7 +146,7 @@ def setLocalBump(bpm, trim, ref, **kwargs):
             else:
                 raise RuntimeError("unknow field %s" % field)
 
-        if u1 == 'm': v = v0
+        if u1 == 'm' or u1 == '': v = v0
         elif u1 == 'mm': v = 1000.0*v0
         elif u1 == 'um': v = 1.0e6*v0
         else: raise RuntimeError("unknow unit '%s'" % u1)

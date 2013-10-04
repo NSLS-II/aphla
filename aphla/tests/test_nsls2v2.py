@@ -38,7 +38,7 @@ logging.info("initializing NSLS2V2")
 
 MACHINE = ("..", "machines", "nsls2v2")
 import aphla as ap
-ap.machines.init(MACHINE[-1])
+ap.machines.load(MACHINE[-1])
 
 LAT_SR = "V2SR"
 
@@ -128,9 +128,9 @@ class T000_ChanFinder(unittest.TestCase):
         """read CFS_URL export to sqlite"""
         cfa = ap.chanfinder.ChannelFinderAgent()
         cfa.downloadCfs(self.cfs_url, tagName=ap.machines.HLA_TAG_PREFIX + '.*')
-        cfa.exportSqlite(self.cfdb)
+        cfa.saveSqlite(self.cfdb)
         cfa2 = ap.chanfinder.ChannelFinderAgent()
-        cfa2.importSqlite(self.cfdb)
+        cfa2.loadSqlite(self.cfdb)
 
         tags = cfa2.tags(ap.machines.HLA_TAG_SYS_PREFIX + '.V*')
         for t in ['V2SR', 'V1LTB', 'V1LTD1', 'V1LTD2']:
@@ -360,6 +360,7 @@ class T020_Lattice(unittest.TestCase):
     def test_locations_l0(self):
         elem1 = self.lat.getElementList('*')
         for i in range(1, len(elem1)):
+            if elem1[i-1].name in ['twiss', 'orbit']: continue
             if elem1[i-1].virtual: continue
             if elem1[i].virtual: continue
             #self.assertGreaterEqual(elem1[i].sb, elem1[i-1].sb,
@@ -370,7 +371,7 @@ class T020_Lattice(unittest.TestCase):
             #                            elem1[i].sb - elem1[i-1].sb))
             self.assertGreaterEqual(
                 elem1[i].sb - elem1[i-1].sb, -1e-9,
-                msg="{0}({4},sb={1})<{2}({5}, sb={3}), d={6}".format(
+                msg="{0}({4},sb={1})<{2}({5}, sb={3}), diff={6}".format(
                     elem1[i].name, elem1[i].sb,
                     elem1[i-1].name, elem1[i-1].sb,
                     elem1[i].index, elem1[i-1].index,

@@ -79,7 +79,6 @@ class OrmData:
         -----
         h5py before v2.0 does not accept unicode directly.
         """
-        import h5py
         h5zip = None # 'gzip' works in default install
         f = h5py.File(filename, 'w')
         grp = f.create_group(group)
@@ -142,7 +141,6 @@ class OrmData:
         load data group *grp* from hdf5 file *filename*
         """
         grp = group
-        import h5py
         f = h5py.File(filename, 'r')
         g = f[grp]['bpm']
         self.bpm = zip(g["element"], g["location"], g["plane"])
@@ -513,7 +511,8 @@ class TwissData:
         ret = []
         for e in elemlst:
             if e not in self.element:
-                raise RuntimeError("element '%s' is not in twiss data" % e)
+                raise RuntimeError("element '{0}' is not in twiss "
+                                   "data: {1}".format(e, self.element))
             i = self.element.index(e)
             dat = []
             for c in col:
@@ -533,7 +532,6 @@ class TwissData:
 
     def _load_hdf5_v1(self, filename, group = "twiss"):
         """read data from HDF5 file in *group*"""
-        import h5py
         f = h5py.File(filename, 'r')
         self.element = list(f[group]['element'])
         self.tune = tuple(f[group]['tune'])
@@ -551,7 +549,8 @@ class TwissData:
         for i,k in enumerate(self._cols):
             self._twtable[:,i] = grp['twtable'][:,k]
         f.close()
-
+        _logger.info("loaded {0} elements from {1}".format(
+                len(self._twtable), filename))
 
     def _save_hdf5_v2(self, filename, group = "twiss"):
         # data type
@@ -631,6 +630,8 @@ def _updateLatticePvDb(dbfname, cfslist):
     """
     # elemName, elemType, system is "NOT NULL"
     conn = sqlite3.connect(dbfname)
+    # save byte string instead of the default unicode
+    conn.text_factory = str
     c = conn.cursor()
     # elements need to insert
     elem_sets, pv_sets = [], []

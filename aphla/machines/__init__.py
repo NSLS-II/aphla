@@ -22,6 +22,7 @@ from ..resource import getResource
 
 import os
 import glob
+import re
 from pkg_resources import resource_string, resource_exists, resource_filename
 import cPickle as pickle
 import ConfigParser
@@ -42,6 +43,7 @@ HLA_VFAMILY = 'HLA:VIRTUAL'
 HLA_VBPM   = 'HLA:VBPM'
 HLA_VHCOR  = 'HLA:VHCOR'
 HLA_VVCOR  = 'HLA:VVCOR'
+HLA_VCOR   = 'HLA:VCOR'
 HLA_VQUAD  = 'HLA:VQUAD'
 HLA_VSEXT  = 'HLA:VSEXT'
 
@@ -49,18 +51,34 @@ HLA_VSEXT  = 'HLA:VSEXT'
 # HOME = os.environ['HOME'] will NOT work on Windows,
 # unless %HOME% is set on Windows, which is not the case by default.
 _home_hla = os.path.join(os.path.expanduser('~'), '.hla')
-HLA_ROOT      = os.environ.get('HLA_ROOT', _home_hla)
-HLA_DATA_DIRS = os.environ.get('HLA_DATA_DIRS', None)
-HLA_MACHINE   = os.environ.get('HLA_MACHINE', None)
-HLA_DEBUG     = int(os.environ.get('HLA_DEBUG', 0))
+HLA_CONFIG_DIR = os.environ.get('HLA_CONFIG_DIR', _home_hla)
+HLA_OUTPUT_DIR = os.environ.get('HLA_OUTPUT_DIR', None)
+HLA_MACHINE    = os.environ.get('HLA_MACHINE', None)
+HLA_DEBUG      = int(os.environ.get('HLA_DEBUG', 0))
+
+# the properties used for initializing Element are different than
+# ChannelFinderAgent (CFS or SQlite). This needs a re-map.
+# convert from CFS property to Element property
+_cf_map = {'elemName': 'name', 
+           'elemField': 'field', 
+           'devName': 'devname',
+           'elemType': 'family',
+           'elemGroups': 'groups', 
+           'elemHandle': 'handle',
+           'elemIndex': 'index', 
+           'elemPosition': 'se',
+           'elemLength': 'length',
+           'system': 'system'
+}
 
 
+# keep all loaded lattice
 _lattice_dict = {}
 
 # the current lattice
 _lat = None
 
-def init(machine, submachines = "*", **kwargs):
+def _init(machine, submachines = "*", **kwargs):
     """use load instead"""
     load_v1(machine, submachines = submachines, **kwargs)
 
@@ -83,8 +101,8 @@ def load_v1(machine, submachines = "*", **kwargs):
         try:
             loadCache(machine)
         except:
-            print('Lattice initialization using cache failed. ' +
-                  'Will attempt initialization with other method(s).')
+            _logger.error('Lattice initialization using cache failed. ' +
+                          'Will attempt initialization with other method(s).')
             save_cache = True
         else:
             # Loading from cache was successful.
@@ -109,16 +127,17 @@ def load_v1(machine, submachines = "*", **kwargs):
 def _findMachinePath(machine):
     # if machine is an abs path
     if os.path.isabs(machine): return machine
-    # try "machine" in ~/.hla/
-    home_machine = os.path.join(os.path.expanduser("~"), ".hla", machine)
+    # try "machine" in HLA_CONFIG_DIR and ~/.hla/
+    home_machine = os.path.join(HLA_CONFIG_DIR, machine)
     if os.path.isdir(home_machine): return home_machine
     # try the package
     pkg_machine = resource_filename(__name__, machine)
+    _logger.info("trying '%s'" % pkg_machine)
     if os.path.isdir(pkg_machine): return pkg_machine
 
     return None
 
-def load_v2(machine, submachines = "*", **kwargs):
+def load(machine, submachines = "*", **kwargs):
     """
     load submachine lattices in machine.
 
@@ -128,6 +147,8 @@ def load_v2(machine, submachines = "*", **kwargs):
     submachine: str. default '*'. pattern of sub machines
     use_cache: bool. default False. use cache
     save_cache: bool. default False, save cache
+
+    This machine can be a path to config dir.
     """
     
     use_cache = kwargs.get('use_cache', False)
@@ -137,7 +158,7 @@ def load_v2(machine, submachines = "*", **kwargs):
         try:
             loadCache(machine)
         except:
-            print('Lattice initialization using cache failed. ' +
+            _logger.error('Lattice initialization using cache failed. ' +
                   'Will attempt initialization with other method(s).')
             save_cache = True
         else:
@@ -145,21 +166,96 @@ def load_v2(machine, submachines = "*", **kwargs):
             return
         
     #importlib.import_module(machine, 'machines')
-    _logger.debug("importing '%s'" % machine)
     machdir = _findMachinePath(machine)
     if machdir is None:
         _logger.error("can not find machine data directory for '%s'" % machine)
         return
 
+    _logger.debug("importing '%s' from '%s'" % (machine, machdir))
+
     cfg = ConfigParser.ConfigParser()
     cfg.readfp(open(os.path.join(machdir, "aphla.ini"), 'r'))
     _logger.debug("using config file: 'aphla.ini'")
-    print(cfg.sections())
+    d = dict(cfg.items("COMMON"))
+    # set proper output directory
+    global HLA_OUTPUT_DIR
+    HLA_OUTPUT_DIR = d.get("output_dir", _home_hla)
+    # the default submachine
+    accdefault = d.get("default_submachine", None)
+
+    # print(cfg.sections())
     # for all submachines specified in INI and matches the pattern
-    msect = [subm.strip() for subm in 
-             cfg.get("COMMON", "SubMachines", "").split(",")
-             if fnmatch.fnmatch(subm.strip(), submachines)]
-    print(msect)
+    msects = [subm for subm in re.findall(r'\w+', d.get("submachines", ""))
+             if fnmatch.fnmatch(subm, submachines)]
+    # print(msect)
+    global _lat, _lattice_dict
+    for msect in msects:
+        d = dict(cfg.items(msect))
+        accstruct = d.get("cfs_url", None)
+        if accstruct is None:
+            raise RuntimeError("No accelerator data source (cfs_url) available "
+                               "for '%s'" % msect)
+        #print cfa.rows[:3]
+        acctag = d.get("cfs_tag", "aphla.sys.%s" % msect)
+        cfa = ChannelFinderAgent()
+        accsqlite = os.path.join(machdir, accstruct)
+        if re.match(r"https?://.*", accstruct, re.I):
+            _logger.debug("using CFS '%s' for '%s'" % (accstruct, msect))
+            cfa.downloadCfs(accstruct, property=[('elemName', '*'), 
+                                                 ('iocName', '*')],
+                            tagName=acctag)
+        elif os.path.isfile(accsqlite):
+            _logger.debug("using SQlite '%s'" % accsqlite)
+            cfa.loadSqlite(accsqlite)
+        else:
+            _logger.debug("NOT CFS '%s'" % accstruct)
+            _logger.debug("NOT SQlite '%s'" % accsqlite)
+            raise RuntimeError("Unknown accelerator data source '%s'" % accstruct)
+
+        for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+        cfa.splitPropertyValue('group')
+
+        lat = createLattice(msect, cfa.rows, acctag, cfa.source)
+        lat.sb = d.get("s_begin", 0.0)
+        lat.se = d.get("s_end", 0.0)
+        lat.loop = bool(d.get("loop", True))
+
+        uconvfile = d.get("unit_conversion", None)
+        if uconvfile is not None: 
+            _logger.debug("loading unit conversion '%s'" % uconvfile)
+            loadUnitConversion(lat, os.path.join(machdir, uconvfile))
+
+        ormfile = d.get("orbit_response_matrix", None)
+        if ormfile is not None:
+            _logger.debug("loading ORM data '%s'" % ormfile)
+            lat.ormdata = OrmData(os.path.join(machdir, ormfile))
+
+        twissfile = d.get("twiss", None)
+        if twissfile is not None:
+            _logger.debug("loading Twiss data '%s'" % twissfile)
+            lat._twiss = TwissData(os.path.join(machdir, twissfile))
+            lat._twiss.load(os.path.join(machdir, twissfile))
+            _logger.debug("loaded {0} twiss data".format(
+                    len(lat._twiss.element)))
+
+        goldenfile = d.get("golden", None)
+        if goldenfile is not None:
+            _logger.debug("using golden lattice data '%s'" % goldenfile)
+            setGoldenLattice(lat, os.path.join(machdir, goldenfile), "golden")
+
+        vex = lambda k: re.findall(r"\w+", d.get(k, ""))
+        vfams = { HLA_VBPM: ('BPM', vex("virtual_bpm_exclude")) }
+        createVirtualElements(lat, vfams)
+        _lattice_dict[msect] = lat
+        
+    if accdefault in _lattice_dict: _lat = _lattice_dict[accdefault]
+    elif len(_lattice_dict) > 0:
+        k = _lattice_dict.keys()[0]
+        _logger.debug("default submachine not defined, "
+                      "use the first available one '%s'" % k)
+        _lat = _lattice_dict[k]
+    else:
+        raise RuntimeError("NO accelerator structures available")
 
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
@@ -208,19 +304,18 @@ def saveChannelFinderDb(dst, url = None):
     cfa.exportSqlite(dst)
 
 
-def createVirtualElements(vlat):
+def createVirtualElements(vlat, vfams):
     """create common merged virtual element"""
     # virutal elements
-    vfams = [('BPM', HLA_VBPM), ('HCOR', HLA_VHCOR),
-             ('VCOR', HLA_VVCOR), ('QUAD', HLA_VQUAD),
-             ('SEXT', HLA_VSEXT)]
     # a virtual bpm. its field is a "merge" of all bpms.
     iv = 100000
     vpar = { 'virtual': 1, 'name': None, 'family': HLA_VFAMILY,
              'index': None }
-    for fam,vfam in vfams:
-        # a virtual element. its field is a "merge" of all bpms.
-        velem = vlat.getElementList(fam)
+    for vfam,famr in vfams.items():
+        _logger.debug("creating virtual element {0} {1}".format(vfam, famr))
+        # a virtual element. its field is a "merge" of all elems.
+        fam, exfam = famr
+        velem = [e for e in vlat.getElementList(fam) if e.name not in exfam]
         vpar.update({'name': vfam, 'index': iv + 1})
         if velem:
             allvelem = merge(velem, **vpar)
@@ -321,7 +416,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
     # a new lattice
     lat = Lattice(name, desc)
     for rec in pvrec:
-        #_logger.debug("{0}".format(rec))
+        _logger.debug("{0}".format(rec))
         # skip if there's no properties.
         if rec[1] is None: continue
         if systag not in rec[2]: continue
@@ -332,15 +427,18 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
             prpt['sb'] = float(prpt['se']) - float(prpt.get('length', 0))
         name = prpt.get('name', None)
 
-        _logger.debug("{0} {1} {2}".format(rec[0], rec[1], rec[2]))
+        #_logger.debug("{0} {1} {2}".format(rec[0], rec[1], rec[2]))
 
         # find if the element exists.
         elem = lat._find_exact_element(name=name)
         if elem is None:
+            _logger.debug("new element: '%s'" % name)
             try:
                 elem = CaElement(**prpt)
+                gl = [g.strip() for g in prpt.get('groups', '').split(';')]
+                elem.group.update(gl)
             except:
-                print("Error: creating element '{0}' with '{1}'".format(name, prpt))
+                _logger.error("Error: creating element '{0}' with '{1}'".format(name, prpt))
                 raise
 
             #lat.appendElement(elem)
@@ -374,6 +472,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
 
 
 def setGoldenLattice(lat, h5fname, grp = "golden"):
+    import h5py
     g = h5py.File(h5fname, 'r')[grp]
     unitsys = g['value'].attrs['unitsys']
     if unitsys == '': unitsys = None
@@ -382,6 +481,7 @@ def setGoldenLattice(lat, h5fname, grp = "golden"):
         if not elem: continue
         elem[0].setGolden(g['field'][i], g['value'][i], unitsys=unitsys)
     # the waveform ... ignored now
+
 
 def use(lattice):
     """

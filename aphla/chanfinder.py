@@ -36,7 +36,7 @@ class ChannelFinderAgent(object):
         """
         self.__cdate = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
         self.source = None
-
+        self.use_unicode = False
         # the data is in `rows`. It has (n,3) shape, n*(pv, prpts, tags) with
         # type (str, dict, list)
         self.rows = []  
@@ -91,10 +91,19 @@ class ChannelFinderAgent(object):
             else:
                 prpts = None
             # the empty tags could be None
-            self.rows.append([ch.Name, prpts, ch.getTags()])
+            if self.use_unicode:
+                self.rows.append([unicode(ch.Name), 
+                                  dict([(unicode(k), unicode(v))
+                                        for k,v in prpts.iteritems()]),
+                                  [unicode(v) for v in ch.getTags()]])
+            else:
+                self.rows.append([ch.Name.encode('ascii'), 
+                                  dict([(k.encode('ascii'), v.encode('ascii'))
+                                        for k,v in prpts.iteritems()]),
+                                  [v.encode('ascii') for v in ch.getTags()]])
             del prptdict
 
-        
+
     def sort(self, fld, dtype = None):
         """
         sort the data by 'pv' or other property name.
@@ -144,9 +153,9 @@ class ChannelFinderAgent(object):
         """
         head = open(fname, 'r').readline()
         if head.split(',')[0].strip() in ['pv', 'PV']:
-            self._import_csv_1(fname)
+            self._load_csv_1(fname)
         else:
-            self._import_csv_2(fname)
+            self._load_csv_2(fname)
         self.source = fname
 
     def _load_csv_1(self, fname):
@@ -214,7 +223,7 @@ class ChannelFinderAgent(object):
             self.rows.append([pv, prpts, tags])
 
 
-    def _loadSqliteDb1(self, fname, **kwargs):
+    def loadSqlite(self, fname, **kwargs):
         """
         import from sqlite database (v1 with two tables)
         
@@ -232,9 +241,10 @@ class ChannelFinderAgent(object):
         tags are separated by ';'
         """
         conn = sqlite3.connect(fname)
+        # use byte string instead of the default unicode
+        conn.text_factory = str
         c = conn.cursor()
-        c.execute("""select * from pvs,elements 
-                  where pvs.elem_id=elements.id""")
+        c.execute(r"select * from pvs,elements where pvs.elem_id=elements.id")
         # head of columns
         allcols = [v[0] for v in c.description]
         # default using all columns
@@ -259,58 +269,8 @@ class ChannelFinderAgent(object):
             if not row[itags]:
                 tags = []
             else:
-                tags = [v.strip() for v in row[itags].split(tagsep)]
-            self.rows.append([pv, prpts, tags])
-
-        c.close()
-        conn.close()
-        self.source = fname
-
-    def loadSqlite(self, fname, **kwargs):
-        """
-        import from sqlite database table 'channels'
-        
-        :param fname: sqlite db file name
-        
-        - NULL/None or '' will be ignored
-        - *properties*, a list of column names for properties
-        - *pvcol* default 'pv', the column name for pv
-        - *tagscol* default 'tags', the column name for tags
-        - *tagsep* default ';'
-
-        The default properties will have all in 'elements' and 'pvs' tables, 
-        except the pv and tags columns.
-
-        tags are separated by ';'
-        """
-        conn = sqlite3.connect(fname)
-        c = conn.cursor()
-        c.execute('''select * from channels''')
-        # head of columns
-        allcols = [v[0] for v in c.description]
-        # default using all columns
-        proplist= kwargs.get('properties', allcols)
-        pvcol = kwargs.get('pvcol', 'pv')
-        tagscol = kwargs.get('tagscol', 'tags')
-        tagsep = kwargs.get('tagsep', ';')
-
-        icols = [i for i in range(len(c.description)) \
-                 if c.description[i][0] in proplist]
-
-        ipv = allcols.index(pvcol)
-        itags = allcols.index(tagscol)
-        for row in c:
-            pv = row[ipv]
-            prpts = {}
-            for i in icols:
-                if i in [ipv, itags]: continue
-                # NULL or '' will be ignored
-                if row[i] is None or row[i] == '': continue
-                prpts[allcols[i]] = row[i]
-            if not row[itags]:
-                tags = []
-            else:
-                tags = [v.strip() for v in row[itags].split(tagsep)]
+                tags = [v.strip().encode('ascii') 
+                        for v in row[itags].split(tagsep)]
             self.rows.append([pv, prpts, tags])
 
         c.close()

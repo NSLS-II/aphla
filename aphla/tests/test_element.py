@@ -86,6 +86,7 @@ class TestElement(unittest.TestCase):
         self.assertEqual(hcor.pv(field='x', handle='readback'), [pvrb])
         self.assertEqual(hcor.pv(field='x', handle='setpoint'), [pvsp])
         self.assertIsNone(hcor.stepSize('x'))
+        hcor.updateBoundary()
         self.assertIsNone(hcor.boundary('x')[0])
         self.assertIsNone(hcor.boundary('x')[1])
         
