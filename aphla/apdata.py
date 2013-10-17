@@ -71,7 +71,7 @@ class OrmData:
             self.load(datafile)
 
 
-    def _save_hdf5(self, filename, group = "orm"):
+    def _save_hdf5(self, filename, group = "OrbitResponseMatrix"):
         """
         save data in hdf5 format in HDF5 group (h5py.Group object).
 
@@ -136,7 +136,7 @@ class OrmData:
         
         f.close()
 
-    def _load_hdf5(self, filename, group = "orm"):
+    def _load_hdf5(self, filename, group = "OrbitResponseMatrix"):
         """
         load data group *grp* from hdf5 file *filename*
         """

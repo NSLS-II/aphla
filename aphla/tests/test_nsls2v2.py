@@ -32,7 +32,7 @@ import logging
 logging.basicConfig(filename="utest.log",
     format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
     level=logging.DEBUG)
-
+from cothread import catools
 
 logging.info("initializing NSLS2V2")
 
@@ -66,7 +66,13 @@ BPM2='pm1g4c30a'
 
 # plotting ?
 PLOTTING = True
+V1LTD1_OFFLINE = False
+try:
+    catools.caget("LTB:BI{BPM:1}Pos:X-I")
+except:
+    V1LTD1_OFFLINE = True
 
+logging.info("V1LTD1_OFFLINE={0}".format(V1LTD1_OFFLINE))
 
 def markForStablePv():
     global ref_v0, PV_REF_RB
@@ -545,6 +551,7 @@ class T040_LatticeLtd1(unittest.TestCase):
     def tearDown(self):
         ap.machines._lat = self.lat
 
+    @unittest.skipIf(V1LTD1_OFFLINE, "V1LTD1 offline")
     def test_image_l0(self):
         #lat = ap.machines._lat
         #ap.machines.use('V1LTD1')
@@ -601,6 +608,7 @@ class T040_LatticeLtd1(unittest.TestCase):
 
         plt.savefig(figname("test2.png"))
 
+    @unittest.skipIf(V1LTD1_OFFLINE, "V1LTD1 offline")
     def test_virtualelements_l0(self):
         pass
 
@@ -612,18 +620,19 @@ class T050_LatticeLtb(unittest.TestCase):
         self.assertTrue(self.lat)
         self.logger = logging.getLogger('tests.TestLatticeLtb')
 
+    @unittest.skipIf(V1LTD1_OFFLINE, "V1LTD1 offline")
     def readInvalidFieldY(self, e):
         k = e.y
         
+    @unittest.skipIf(V1LTD1_OFFLINE, "V1LTD1 offline")
     def test_field_l0(self):
         bpmlst = self.lat.getElementList('BPM')
         self.assertGreater(len(bpmlst), 0)
         
         elem = bpmlst[0]
-        self.assertGreaterEqual(abs(elem.x), 0, "failed retrieve {0}.x".format(
-                elem.name))
-        self.assertGreaterEqual(abs(elem.y), 0, "failed retrieve {0}.y".format(
-                elem.name))
+        self.logger.info("checking '{0}'".format(elem.name))
+        self.assertGreaterEqual(abs(elem.x), 0)
+        self.assertGreaterEqual(abs(elem.y), 0)
 
         hcorlst = self.lat.getElementList('HCOR')
         self.assertGreater(len(hcorlst), 0)
@@ -1168,7 +1177,8 @@ class TestOrm(unittest.TestCase):
         
         # if jenkins run this test, measure whole ORM
         nbpm, ntrim = 5, 2
-        if "JENKINS_URL" in os.environ:
+        if "JENKINS_URL" in os.environ and \
+           int(os.environ.get("BUILD_NUMBER", "0")) % 2 == 0:
             nbpm, ntrim = len(bpms), len(trims)
         bpmlst = [b.name for b in bpms[:nbpm]]
         trimlst = [t.name for t in trims[:ntrim]]

@@ -219,29 +219,24 @@ def load(machine, submachines = "*", **kwargs):
         lat.sb = d.get("s_begin", 0.0)
         lat.se = d.get("s_end", 0.0)
         lat.loop = bool(d.get("loop", True))
+        lat.machine = machine
 
         uconvfile = d.get("unit_conversion", None)
         if uconvfile is not None: 
             _logger.debug("loading unit conversion '%s'" % uconvfile)
             loadUnitConversion(lat, os.path.join(machdir, uconvfile))
 
-        ormfile = d.get("orbit_response_matrix", None)
-        if ormfile is not None:
-            _logger.debug("loading ORM data '%s'" % ormfile)
-            lat.ormdata = OrmData(os.path.join(machdir, ormfile))
-
-        twissfile = d.get("twiss", None)
-        if twissfile is not None:
-            _logger.debug("loading Twiss data '%s'" % twissfile)
-            lat._twiss = TwissData(os.path.join(machdir, twissfile))
-            lat._twiss.load(os.path.join(machdir, twissfile))
-            _logger.debug("loaded {0} twiss data".format(
-                    len(lat._twiss.element)))
-
-        goldenfile = d.get("golden", None)
-        if goldenfile is not None:
-            _logger.debug("using golden lattice data '%s'" % goldenfile)
-            setGoldenLattice(lat, os.path.join(machdir, goldenfile), "golden")
+        physics_data = d.get("physics_data", None)
+        if physics_data is not None:
+            phy_fname = os.path.join(machdir, physics_data)
+            #_logger.debug("loading ORM data '%s'" % ormfile)
+            lat.ormdata = OrmData(phy_fname)
+            #_logger.debug("loading Twiss data '%s'" % twissfile)
+            lat._twiss = TwissData(phy_fname)
+            lat._twiss.load(phy_fname)
+            #_logger.debug("loaded {0} twiss data".format(len(lat._twiss.element)))
+            #_logger.debug("using golden lattice data '%s'" % goldenfile)
+            setGoldenLattice(lat, phy_fname, "Golden")
 
         vex = lambda k: re.findall(r"\w+", d.get(k, ""))
         vfams = { HLA_VBPM: ('BPM', vex("virtual_bpm_exclude")) }

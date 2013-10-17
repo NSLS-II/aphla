@@ -183,6 +183,8 @@ def loadUnitConversion(lat, fname):
         if usrc is None and udst is None:
             usrc, udst = d.get('direction', (None, None))
 
+        _logger.debug("{0}[{1}] -> {2}[{3}]".format(usrcsys, usrc, udstsys, udst))
+
         if 'polynomial' in d:
             p = [float(v) for v in re.findall(r'[^ ,;]+', d['polynomial'])]
             _logger.debug("field '{0}' polynomial {1}".format(fld, p))
@@ -193,6 +195,10 @@ def loadUnitConversion(lat, fname):
             uc = UcInterp1(usrc, udst, v[:,int(ix)], v[:,int(iy)])
         else:
             raise RuntimeError("unknow unit converter")
+        
+        # the unit symbol
+        uc.srcunit = usrc
+        uc.dstunit = udst
 
         # find the element list
         elems = re.findall(r'\w+', d.get('elements', ""))

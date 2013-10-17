@@ -110,3 +110,10 @@ If it has been a long time after you checkout the code from the server, you can
 
   $ hg pull (update the local files with server's)
 
+Configuration
+----------------
+
+.. code-block:: bash
+
+  $ h5copy -p -i v2sr_twiss.hdf5 -s Twiss -o nsls2v2.hdf5 -d /V2SR/Twiss
+

@@ -174,13 +174,15 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def _format_value(self, val, unit = ""):
         """format as QVariant"""
         if val is None: return QVariant()
+        if len(unit) > 0: usymb = "[{0}]".format(unit)
+        else: usymb = ""
         if isinstance(val, (str, unicode)):
-            if len(val) < 8: return QVariant(str(val) + unit)
-            return QVariant(str(val)[:8]+"... "+unit)
+            if len(val) < 8: return QVariant(str(val) + usymb)
+            return QVariant(str(val)[:8]+"... "+usymb)
         elif isinstance(val, collections.Iterable):
-            return QVariant(str(val)[:8]+"... "+unit)
+            return QVariant(str(val)[:8]+"... "+usymb)
         else:
-            return QVariant("{0:.4g} {1}".format(val, unit))
+            return QVariant("{0:.4g} {1}".format(val, usymb))
 
     def data(self, index, role=Qt.DisplayRole):
         """return data as a QVariant"""
@@ -735,7 +737,7 @@ class ElementEditorDock(QDockWidget):
         #             self.processCell)
         t3 = time.time()
         #self._addElements(elems)
-        print "DT:", t1 - t0, t2 - t1, t3 - t2
+        #print "DT:", t1 - t0, t2 - t1, t3 - t2
         self.elemBox.deselect()
         self.tableview.setFocus()
         self.tableview.resizeColumnToContents(0)

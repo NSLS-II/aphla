@@ -183,14 +183,15 @@ class OrbitPlotMainWindow(QMainWindow):
         mach, latname = machlat
         self.logger.info("'{0}.{1}' initialized".format(mach, latname))
         #self.machinit.quit()
-        # print aphla.machines.getLattice()
+        print aphla.machines.lattices()
         latlst = {}
         for name in ap.machines.lattices():
             lat = ap.machines.getLattice(name)
             if lat.machine == mach: latlst[name] = lat
         self._machlat[mach] = latlst
         if latname not in latlst:
-            errmsg = "'{0}' not available in aphla lib".format(latname)
+            errmsg = "'{0}' not available in aphla lib:{1}".format(
+                latname, latlst.keys())
             self.logger.error(errmsg)
             raise RuntimeError(errmsg)
         self._update_mach_lat(mach, latname)
@@ -446,7 +447,7 @@ class OrbitPlotMainWindow(QMainWindow):
         try:
             if vm not in self._machlat or not self._machlat[vm]:
                 self.logger.info("initializing machine '%s'" % vm)
-                aphla.machines.init(vm)
+                aphla.machines.load(vm)
                 mrec = {}
                 for latname in aphla.machines.lattices():
                     lat = aphla.machines.getLattice(latname)
