@@ -1,0 +1,1639 @@
+#pv_name, el_idx_va, machine, cell, girder, handle, el_name_va, el_field_va, el_type_va
+V:1-SR-BI:SUPER{BPM:4}SA:X,4,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:4}SA:Y,4,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL1:8}Fld:SP,8,V:1-SR,,,setpoint,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{QL1:8}Fld:I,8,V:1-SR,,,readback,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{S1:10}Fld:SP,10,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:10}Fld:I,10,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:13}Fld:SP,13,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:13}Fld:I,13,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{QL2:15}Fld:SP,15,V:1-SR,,,setpoint,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{QL2:15}Fld:I,15,V:1-SR,,,readback,QL2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:17}SA:X,17,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:17}SA:Y,17,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL3:19}Fld:SP,19,V:1-SR,,,setpoint,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{QL3:19}Fld:I,19,V:1-SR,,,readback,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{S2:21}Fld:SP,21,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:21}Fld:I,21,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:24}Fld:SP,24,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:24}Fld:I,24,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{BEND:26}Fld:SP,26,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:26}Fld:I,26,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:30}Fld:SP,30,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:30}Fld:I,30,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:32}SA:X,32,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:32}SA:Y,32,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:34}Fld:SP,34,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:34}Fld:I,34,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:37}Fld:SP,37,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:37}Fld:I,37,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:39}Fld:SP,39,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:39}Fld:I,39,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:41}Fld:SP,41,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:41}Fld:I,41,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:44}Fld:SP,44,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:44}Fld:I,44,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:46}SA:X,46,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:46}SA:Y,46,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:48}Fld:SP,48,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:48}Fld:I,48,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:50}Fld:SP,50,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:50}Fld:I,50,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:53}Fld:SP,53,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:53}Fld:I,53,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:55}SA:X,55,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:55}SA:Y,55,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:57}Fld:SP,57,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:57}Fld:I,57,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:61}Fld:SP,61,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:61}Fld:I,61,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:63}Fld:SP,63,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:63}Fld:I,63,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S4:65}Fld:SP,65,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:65}Fld:I,65,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:68}Fld:SP,68,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:68}Fld:I,68,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-BI:SUPER{BPM:70}SA:X,70,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:70}SA:Y,70,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:72}Fld:SP,72,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:72}Fld:I,72,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S3:74}Fld:SP,74,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:74}Fld:I,74,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:77}Fld:SP,77,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:77}Fld:I,77,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS1:79}Fld:SP,79,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:79}Fld:I,79,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:83}SA:X,83,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:83}SA:Y,83,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:86}SA:X,86,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:86}SA:Y,86,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:90}Fld:SP,90,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:90}Fld:I,90,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:92}Fld:SP,92,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:92}Fld:I,92,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:95}Fld:SP,95,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:95}Fld:I,95,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:97}Fld:SP,97,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:97}Fld:I,97,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:99}SA:X,99,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:99}SA:Y,99,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:101}Fld:SP,101,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:101}Fld:I,101,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:104}Fld:SP,104,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:104}Fld:I,104,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:106}Fld:SP,106,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:106}Fld:I,106,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:108}Fld:SP,108,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:108}Fld:I,108,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:112}Fld:SP,112,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:112}Fld:I,112,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:114}SA:X,114,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:114}SA:Y,114,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:116}Fld:SP,116,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:116}Fld:I,116,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:119}Fld:SP,119,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:119}Fld:I,119,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:121}Fld:SP,121,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:121}Fld:I,121,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:123}Fld:SP,123,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:123}Fld:I,123,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:126}Fld:SP,126,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:126}Fld:I,126,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:128}SA:X,128,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:128}SA:Y,128,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:130}Fld:SP,130,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:130}Fld:I,130,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:132}Fld:SP,132,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:132}Fld:I,132,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:135}Fld:SP,135,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:135}Fld:I,135,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:137}SA:X,137,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:137}SA:Y,137,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:139}Fld:SP,139,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:139}Fld:I,139,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:143}Fld:SP,143,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:143}Fld:I,143,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:145}Fld:SP,145,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:145}Fld:I,145,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:147}Fld:SP,147,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:147}Fld:I,147,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:150}Fld:SP,150,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:150}Fld:I,150,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:152}SA:X,152,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:152}SA:Y,152,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:154}Fld:SP,154,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:154}Fld:I,154,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:156}Fld:SP,156,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:156}Fld:I,156,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:159}Fld:SP,159,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:159}Fld:I,159,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:161}Fld:SP,161,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:161}Fld:I,161,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:165}SA:X,165,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:165}SA:Y,165,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:173}SA:X,173,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:173}SA:Y,173,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:177}Fld:SP,177,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:177}Fld:I,177,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:179}Fld:SP,179,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:179}Fld:I,179,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:182}Fld:SP,182,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:182}Fld:I,182,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:184}Fld:SP,184,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:184}Fld:I,184,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:186}SA:X,186,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:186}SA:Y,186,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:188}Fld:SP,188,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:188}Fld:I,188,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:191}Fld:SP,191,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:191}Fld:I,191,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:193}Fld:SP,193,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:193}Fld:I,193,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:195}Fld:SP,195,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:195}Fld:I,195,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:199}Fld:SP,199,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:199}Fld:I,199,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:201}SA:X,201,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:201}SA:Y,201,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:203}Fld:SP,203,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:203}Fld:I,203,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:206}Fld:SP,206,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:206}Fld:I,206,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:208}Fld:SP,208,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:208}Fld:I,208,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:210}Fld:SP,210,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:210}Fld:I,210,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:213}Fld:SP,213,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:213}Fld:I,213,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:215}SA:X,215,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:215}SA:Y,215,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:217}Fld:SP,217,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:217}Fld:I,217,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:219}Fld:SP,219,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:219}Fld:I,219,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:222}Fld:SP,222,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:222}Fld:I,222,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:224}SA:X,224,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:224}SA:Y,224,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:226}Fld:SP,226,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:226}Fld:I,226,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:230}Fld:SP,230,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:230}Fld:I,230,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:232}Fld:SP,232,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:232}Fld:I,232,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:234}Fld:SP,234,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:234}Fld:I,234,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:237}Fld:SP,237,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:237}Fld:I,237,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:239}SA:X,239,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:239}SA:Y,239,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:241}Fld:SP,241,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:241}Fld:I,241,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:243}Fld:SP,243,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:243}Fld:I,243,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:246}Fld:SP,246,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:246}Fld:I,246,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:248}Fld:SP,248,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:248}Fld:I,248,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:252}SA:X,252,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:252}SA:Y,252,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:255}SA:X,255,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:255}SA:Y,255,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:259}Fld:SP,259,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:259}Fld:I,259,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S3:261}Fld:SP,261,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:261}Fld:I,261,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:264}Fld:SP,264,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:264}Fld:I,264,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS2:266}Fld:SP,266,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:266}Fld:I,266,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:268}SA:X,268,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:268}SA:Y,268,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S4:270}Fld:SP,270,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:270}Fld:I,270,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:273}Fld:SP,273,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:273}Fld:I,273,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{QS3:275}Fld:SP,275,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:275}Fld:I,275,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:277}Fld:SP,277,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:277}Fld:I,277,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:281}Fld:SP,281,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:281}Fld:I,281,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:283}SA:X,283,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:283}SA:Y,283,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:285}Fld:SP,285,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:285}Fld:I,285,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:288}Fld:SP,288,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:288}Fld:I,288,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:290}Fld:SP,290,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:290}Fld:I,290,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:292}Fld:SP,292,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:292}Fld:I,292,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:295}Fld:SP,295,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:295}Fld:I,295,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:297}SA:X,297,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:297}SA:Y,297,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:299}Fld:SP,299,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:299}Fld:I,299,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:301}Fld:SP,301,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:301}Fld:I,301,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:304}Fld:SP,304,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:304}Fld:I,304,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:306}SA:X,306,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:306}SA:Y,306,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:308}Fld:SP,308,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:308}Fld:I,308,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:312}Fld:SP,312,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:312}Fld:I,312,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{SB:314}Fld:SP,314,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:314}Fld:I,314,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:317}Fld:SP,317,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:317}Fld:I,317,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{Q3:319}Fld:SP,319,V:1-SR,,,setpoint,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{Q3:319}Fld:I,319,V:1-SR,,,readback,Q3,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:321}SA:X,321,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:321}SA:Y,321,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q2:323}Fld:SP,323,V:1-SR,,,setpoint,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{Q2:323}Fld:I,323,V:1-SR,,,readback,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{SA:325}Fld:SP,325,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:325}Fld:I,325,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:328}Fld:SP,328,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:328}Fld:I,328,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{Q1:330}Fld:SP,330,V:1-SR,,,setpoint,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{Q1:330}Fld:I,330,V:1-SR,,,readback,Q1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:334}SA:X,334,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:334}SA:Y,334,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q4:343}Fld:SP,343,V:1-SR,,,setpoint,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:343}Fld:I,343,V:1-SR,,,readback,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q5:345}Fld:SP,345,V:1-SR,,,setpoint,Q5,K,Quadrupole
+V:1-SR-MG:SUPER{Q5:345}Fld:I,345,V:1-SR,,,readback,Q5,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:350}Fld:SP,350,V:1-SR,,,setpoint,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:350}Fld:I,350,V:1-SR,,,readback,Q4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:352}SA:X,352,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:352}SA:Y,352,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:360}SA:X,360,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:360}SA:Y,360,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q1:364}Fld:SP,364,V:1-SR,,,setpoint,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{Q1:364}Fld:I,364,V:1-SR,,,readback,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{SA:366}Fld:SP,366,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:366}Fld:I,366,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:369}Fld:SP,369,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:369}Fld:I,369,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{Q2:371}Fld:SP,371,V:1-SR,,,setpoint,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{Q2:371}Fld:I,371,V:1-SR,,,readback,Q2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:373}SA:X,373,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:373}SA:Y,373,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q3:375}Fld:SP,375,V:1-SR,,,setpoint,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{Q3:375}Fld:I,375,V:1-SR,,,readback,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{SB:377}Fld:SP,377,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:377}Fld:I,377,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:380}Fld:SP,380,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:380}Fld:I,380,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{BEND:382}Fld:SP,382,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:382}Fld:I,382,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:386}Fld:SP,386,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:386}Fld:I,386,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:388}SA:X,388,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:388}SA:Y,388,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:390}Fld:SP,390,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:390}Fld:I,390,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:393}Fld:SP,393,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:393}Fld:I,393,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:395}Fld:SP,395,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:395}Fld:I,395,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:397}Fld:SP,397,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:397}Fld:I,397,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:400}Fld:SP,400,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:400}Fld:I,400,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:402}SA:X,402,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:402}SA:Y,402,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:404}Fld:SP,404,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:404}Fld:I,404,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:406}Fld:SP,406,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:406}Fld:I,406,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:409}Fld:SP,409,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:409}Fld:I,409,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:411}SA:X,411,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:411}SA:Y,411,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:413}Fld:SP,413,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:413}Fld:I,413,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:417}Fld:SP,417,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:417}Fld:I,417,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:419}Fld:SP,419,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:419}Fld:I,419,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S4:421}Fld:SP,421,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:421}Fld:I,421,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:424}Fld:SP,424,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:424}Fld:I,424,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-BI:SUPER{BPM:426}SA:X,426,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:426}SA:Y,426,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:428}Fld:SP,428,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:428}Fld:I,428,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S3:430}Fld:SP,430,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:430}Fld:I,430,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:433}Fld:SP,433,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:433}Fld:I,433,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS1:435}Fld:SP,435,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:435}Fld:I,435,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:439}SA:X,439,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:439}SA:Y,439,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:442}SA:X,442,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:442}SA:Y,442,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:446}Fld:SP,446,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:446}Fld:I,446,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:448}Fld:SP,448,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:448}Fld:I,448,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:451}Fld:SP,451,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:451}Fld:I,451,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:453}Fld:SP,453,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:453}Fld:I,453,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:455}SA:X,455,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:455}SA:Y,455,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:457}Fld:SP,457,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:457}Fld:I,457,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:460}Fld:SP,460,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:460}Fld:I,460,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:462}Fld:SP,462,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:462}Fld:I,462,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:464}Fld:SP,464,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:464}Fld:I,464,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:468}Fld:SP,468,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:468}Fld:I,468,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:470}SA:X,470,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:470}SA:Y,470,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:472}Fld:SP,472,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:472}Fld:I,472,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:475}Fld:SP,475,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:475}Fld:I,475,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:477}Fld:SP,477,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:477}Fld:I,477,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:479}Fld:SP,479,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:479}Fld:I,479,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:482}Fld:SP,482,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:482}Fld:I,482,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:484}SA:X,484,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:484}SA:Y,484,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:486}Fld:SP,486,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:486}Fld:I,486,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:488}Fld:SP,488,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:488}Fld:I,488,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:491}Fld:SP,491,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:491}Fld:I,491,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:493}SA:X,493,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:493}SA:Y,493,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:495}Fld:SP,495,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:495}Fld:I,495,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:499}Fld:SP,499,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:499}Fld:I,499,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:501}Fld:SP,501,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:501}Fld:I,501,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:503}Fld:SP,503,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:503}Fld:I,503,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:506}Fld:SP,506,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:506}Fld:I,506,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:508}SA:X,508,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:508}SA:Y,508,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:510}Fld:SP,510,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:510}Fld:I,510,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:512}Fld:SP,512,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:512}Fld:I,512,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:515}Fld:SP,515,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:515}Fld:I,515,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:517}Fld:SP,517,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:517}Fld:I,517,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:521}SA:X,521,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:521}SA:Y,521,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:524}SA:X,524,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:524}SA:Y,524,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:528}Fld:SP,528,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:528}Fld:I,528,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:530}Fld:SP,530,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:530}Fld:I,530,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:533}Fld:SP,533,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:533}Fld:I,533,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:535}Fld:SP,535,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:535}Fld:I,535,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:537}SA:X,537,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:537}SA:Y,537,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:539}Fld:SP,539,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:539}Fld:I,539,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:542}Fld:SP,542,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:542}Fld:I,542,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:544}Fld:SP,544,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:544}Fld:I,544,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:546}Fld:SP,546,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:546}Fld:I,546,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:550}Fld:SP,550,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:550}Fld:I,550,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:552}SA:X,552,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:552}SA:Y,552,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:554}Fld:SP,554,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:554}Fld:I,554,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:557}Fld:SP,557,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:557}Fld:I,557,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:559}Fld:SP,559,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:559}Fld:I,559,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:561}Fld:SP,561,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:561}Fld:I,561,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:564}Fld:SP,564,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:564}Fld:I,564,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:566}SA:X,566,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:566}SA:Y,566,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:568}Fld:SP,568,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:568}Fld:I,568,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:570}Fld:SP,570,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:570}Fld:I,570,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:573}Fld:SP,573,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:573}Fld:I,573,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:575}SA:X,575,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:575}SA:Y,575,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:577}Fld:SP,577,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:577}Fld:I,577,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:581}Fld:SP,581,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:581}Fld:I,581,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:583}Fld:SP,583,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:583}Fld:I,583,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:585}Fld:SP,585,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:585}Fld:I,585,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:588}Fld:SP,588,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:588}Fld:I,588,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:590}SA:X,590,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:590}SA:Y,590,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:592}Fld:SP,592,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:592}Fld:I,592,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:594}Fld:SP,594,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:594}Fld:I,594,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:597}Fld:SP,597,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:597}Fld:I,597,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:599}Fld:SP,599,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:599}Fld:I,599,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:603}SA:X,603,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:603}SA:Y,603,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:606}SA:X,606,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:606}SA:Y,606,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:610}Fld:SP,610,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:610}Fld:I,610,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S3:612}Fld:SP,612,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:612}Fld:I,612,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:615}Fld:SP,615,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:615}Fld:I,615,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS2:617}Fld:SP,617,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:617}Fld:I,617,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:619}SA:X,619,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:619}SA:Y,619,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S4:621}Fld:SP,621,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:621}Fld:I,621,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:624}Fld:SP,624,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:624}Fld:I,624,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{QS3:626}Fld:SP,626,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:626}Fld:I,626,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:628}Fld:SP,628,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:628}Fld:I,628,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:632}Fld:SP,632,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:632}Fld:I,632,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:634}SA:X,634,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:634}SA:Y,634,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:636}Fld:SP,636,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:636}Fld:I,636,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:639}Fld:SP,639,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:639}Fld:I,639,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:641}Fld:SP,641,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:641}Fld:I,641,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:643}Fld:SP,643,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:643}Fld:I,643,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:646}Fld:SP,646,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:646}Fld:I,646,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:648}SA:X,648,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:648}SA:Y,648,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:650}Fld:SP,650,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:650}Fld:I,650,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:652}Fld:SP,652,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:652}Fld:I,652,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:655}Fld:SP,655,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:655}Fld:I,655,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:657}SA:X,657,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:657}SA:Y,657,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:659}Fld:SP,659,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:659}Fld:I,659,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:663}Fld:SP,663,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:663}Fld:I,663,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{S2:665}Fld:SP,665,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:665}Fld:I,665,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:668}Fld:SP,668,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:668}Fld:I,668,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{QL3:670}Fld:SP,670,V:1-SR,,,setpoint,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{QL3:670}Fld:I,670,V:1-SR,,,readback,QL3,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:672}SA:X,672,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:672}SA:Y,672,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL2:674}Fld:SP,674,V:1-SR,,,setpoint,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{QL2:674}Fld:I,674,V:1-SR,,,readback,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{S1:676}Fld:SP,676,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:676}Fld:I,676,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:679}Fld:SP,679,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:679}Fld:I,679,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{QL1:681}Fld:SP,681,V:1-SR,,,setpoint,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{QL1:681}Fld:I,681,V:1-SR,,,readback,QL1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:685}SA:X,685,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:685}SA:Y,685,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:688}SA:X,688,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:688}SA:Y,688,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL1:692}Fld:SP,692,V:1-SR,,,setpoint,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{QL1:692}Fld:I,692,V:1-SR,,,readback,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{S1:694}Fld:SP,694,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:694}Fld:I,694,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:697}Fld:SP,697,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:697}Fld:I,697,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{QL2:699}Fld:SP,699,V:1-SR,,,setpoint,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{QL2:699}Fld:I,699,V:1-SR,,,readback,QL2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:701}SA:X,701,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:701}SA:Y,701,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL3:703}Fld:SP,703,V:1-SR,,,setpoint,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{QL3:703}Fld:I,703,V:1-SR,,,readback,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{S2:705}Fld:SP,705,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:705}Fld:I,705,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:708}Fld:SP,708,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:708}Fld:I,708,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{BEND:710}Fld:SP,710,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:710}Fld:I,710,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:714}Fld:SP,714,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:714}Fld:I,714,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:716}SA:X,716,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:716}SA:Y,716,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:718}Fld:SP,718,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:718}Fld:I,718,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:721}Fld:SP,721,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:721}Fld:I,721,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:723}Fld:SP,723,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:723}Fld:I,723,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:725}Fld:SP,725,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:725}Fld:I,725,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:728}Fld:SP,728,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:728}Fld:I,728,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:730}SA:X,730,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:730}SA:Y,730,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:732}Fld:SP,732,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:732}Fld:I,732,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:734}Fld:SP,734,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:734}Fld:I,734,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:737}Fld:SP,737,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:737}Fld:I,737,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:739}SA:X,739,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:739}SA:Y,739,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:741}Fld:SP,741,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:741}Fld:I,741,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:745}Fld:SP,745,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:745}Fld:I,745,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:747}Fld:SP,747,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:747}Fld:I,747,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S4:749}Fld:SP,749,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:749}Fld:I,749,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:752}Fld:SP,752,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:752}Fld:I,752,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-BI:SUPER{BPM:754}SA:X,754,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:754}SA:Y,754,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:756}Fld:SP,756,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:756}Fld:I,756,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S3:758}Fld:SP,758,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:758}Fld:I,758,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:761}Fld:SP,761,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:761}Fld:I,761,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS1:763}Fld:SP,763,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:763}Fld:I,763,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:767}SA:X,767,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:767}SA:Y,767,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:770}SA:X,770,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:770}SA:Y,770,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:774}Fld:SP,774,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:774}Fld:I,774,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:776}Fld:SP,776,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:776}Fld:I,776,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:779}Fld:SP,779,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:779}Fld:I,779,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:781}Fld:SP,781,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:781}Fld:I,781,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:783}SA:X,783,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:783}SA:Y,783,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:785}Fld:SP,785,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:785}Fld:I,785,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:788}Fld:SP,788,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:788}Fld:I,788,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:790}Fld:SP,790,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:790}Fld:I,790,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:792}Fld:SP,792,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:792}Fld:I,792,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:796}Fld:SP,796,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:796}Fld:I,796,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:798}SA:X,798,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:798}SA:Y,798,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:800}Fld:SP,800,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:800}Fld:I,800,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:803}Fld:SP,803,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:803}Fld:I,803,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:805}Fld:SP,805,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:805}Fld:I,805,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:807}Fld:SP,807,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:807}Fld:I,807,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:810}Fld:SP,810,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:810}Fld:I,810,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:812}SA:X,812,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:812}SA:Y,812,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:814}Fld:SP,814,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:814}Fld:I,814,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:816}Fld:SP,816,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:816}Fld:I,816,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:819}Fld:SP,819,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:819}Fld:I,819,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:821}SA:X,821,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:821}SA:Y,821,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:823}Fld:SP,823,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:823}Fld:I,823,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:827}Fld:SP,827,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:827}Fld:I,827,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:829}Fld:SP,829,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:829}Fld:I,829,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:831}Fld:SP,831,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:831}Fld:I,831,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:834}Fld:SP,834,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:834}Fld:I,834,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:836}SA:X,836,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:836}SA:Y,836,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:838}Fld:SP,838,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:838}Fld:I,838,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:840}Fld:SP,840,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:840}Fld:I,840,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:843}Fld:SP,843,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:843}Fld:I,843,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:845}Fld:SP,845,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:845}Fld:I,845,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:849}SA:X,849,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:849}SA:Y,849,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:857}SA:X,857,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:857}SA:Y,857,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:861}Fld:SP,861,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:861}Fld:I,861,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:863}Fld:SP,863,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:863}Fld:I,863,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:866}Fld:SP,866,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:866}Fld:I,866,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:868}Fld:SP,868,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:868}Fld:I,868,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:870}SA:X,870,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:870}SA:Y,870,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:872}Fld:SP,872,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:872}Fld:I,872,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:875}Fld:SP,875,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:875}Fld:I,875,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:877}Fld:SP,877,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:877}Fld:I,877,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:879}Fld:SP,879,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:879}Fld:I,879,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:883}Fld:SP,883,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:883}Fld:I,883,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:885}SA:X,885,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:885}SA:Y,885,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:887}Fld:SP,887,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:887}Fld:I,887,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:890}Fld:SP,890,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:890}Fld:I,890,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:892}Fld:SP,892,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:892}Fld:I,892,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:894}Fld:SP,894,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:894}Fld:I,894,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:897}Fld:SP,897,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:897}Fld:I,897,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:899}SA:X,899,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:899}SA:Y,899,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:901}Fld:SP,901,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:901}Fld:I,901,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:903}Fld:SP,903,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:903}Fld:I,903,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:906}Fld:SP,906,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:906}Fld:I,906,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:908}SA:X,908,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:908}SA:Y,908,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:910}Fld:SP,910,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:910}Fld:I,910,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:914}Fld:SP,914,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:914}Fld:I,914,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:916}Fld:SP,916,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:916}Fld:I,916,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:918}Fld:SP,918,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:918}Fld:I,918,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:921}Fld:SP,921,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:921}Fld:I,921,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:923}SA:X,923,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:923}SA:Y,923,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:925}Fld:SP,925,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:925}Fld:I,925,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:927}Fld:SP,927,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:927}Fld:I,927,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:930}Fld:SP,930,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:930}Fld:I,930,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:932}Fld:SP,932,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:932}Fld:I,932,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:936}SA:X,936,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:936}SA:Y,936,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:944}SA:X,944,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:944}SA:Y,944,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:948}Fld:SP,948,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:948}Fld:I,948,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S3:950}Fld:SP,950,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:950}Fld:I,950,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:953}Fld:SP,953,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:953}Fld:I,953,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS2:955}Fld:SP,955,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:955}Fld:I,955,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:957}SA:X,957,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:957}SA:Y,957,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S4:959}Fld:SP,959,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:959}Fld:I,959,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:962}Fld:SP,962,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:962}Fld:I,962,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{QS3:964}Fld:SP,964,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:964}Fld:I,964,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:966}Fld:SP,966,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:966}Fld:I,966,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:970}Fld:SP,970,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:970}Fld:I,970,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:972}SA:X,972,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:972}SA:Y,972,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:974}Fld:SP,974,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:974}Fld:I,974,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:977}Fld:SP,977,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:977}Fld:I,977,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:979}Fld:SP,979,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:979}Fld:I,979,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:981}Fld:SP,981,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:981}Fld:I,981,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:984}Fld:SP,984,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:984}Fld:I,984,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:986}SA:X,986,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:986}SA:Y,986,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:988}Fld:SP,988,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:988}Fld:I,988,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:990}Fld:SP,990,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:990}Fld:I,990,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:993}Fld:SP,993,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:993}Fld:I,993,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:995}SA:X,995,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:995}SA:Y,995,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:997}Fld:SP,997,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:997}Fld:I,997,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1001}Fld:SP,1001,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1001}Fld:I,1001,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{SB:1003}Fld:SP,1003,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1003}Fld:I,1003,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1006}Fld:SP,1006,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1006}Fld:I,1006,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{Q3:1008}Fld:SP,1008,V:1-SR,,,setpoint,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{Q3:1008}Fld:I,1008,V:1-SR,,,readback,Q3,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1010}SA:X,1010,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1010}SA:Y,1010,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q2:1012}Fld:SP,1012,V:1-SR,,,setpoint,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{Q2:1012}Fld:I,1012,V:1-SR,,,readback,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{SA:1014}Fld:SP,1014,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1014}Fld:I,1014,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1017}Fld:SP,1017,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1017}Fld:I,1017,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{Q1:1019}Fld:SP,1019,V:1-SR,,,setpoint,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{Q1:1019}Fld:I,1019,V:1-SR,,,readback,Q1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1023}SA:X,1023,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1023}SA:Y,1023,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q4:1032}Fld:SP,1032,V:1-SR,,,setpoint,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:1032}Fld:I,1032,V:1-SR,,,readback,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q5:1034}Fld:SP,1034,V:1-SR,,,setpoint,Q5,K,Quadrupole
+V:1-SR-MG:SUPER{Q5:1034}Fld:I,1034,V:1-SR,,,readback,Q5,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:1039}Fld:SP,1039,V:1-SR,,,setpoint,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:1039}Fld:I,1039,V:1-SR,,,readback,Q4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1041}SA:X,1041,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1041}SA:Y,1041,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1049}SA:X,1049,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1049}SA:Y,1049,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q1:1053}Fld:SP,1053,V:1-SR,,,setpoint,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{Q1:1053}Fld:I,1053,V:1-SR,,,readback,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{SA:1055}Fld:SP,1055,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1055}Fld:I,1055,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1058}Fld:SP,1058,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1058}Fld:I,1058,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{Q2:1060}Fld:SP,1060,V:1-SR,,,setpoint,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{Q2:1060}Fld:I,1060,V:1-SR,,,readback,Q2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1062}SA:X,1062,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1062}SA:Y,1062,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q3:1064}Fld:SP,1064,V:1-SR,,,setpoint,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{Q3:1064}Fld:I,1064,V:1-SR,,,readback,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{SB:1066}Fld:SP,1066,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1066}Fld:I,1066,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1069}Fld:SP,1069,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1069}Fld:I,1069,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{BEND:1071}Fld:SP,1071,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1071}Fld:I,1071,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1075}Fld:SP,1075,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1075}Fld:I,1075,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1077}SA:X,1077,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1077}SA:Y,1077,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1079}Fld:SP,1079,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1079}Fld:I,1079,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1082}Fld:SP,1082,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1082}Fld:I,1082,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1084}Fld:SP,1084,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1084}Fld:I,1084,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1086}Fld:SP,1086,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1086}Fld:I,1086,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1089}Fld:SP,1089,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1089}Fld:I,1089,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1091}SA:X,1091,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1091}SA:Y,1091,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1093}Fld:SP,1093,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1093}Fld:I,1093,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1095}Fld:SP,1095,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1095}Fld:I,1095,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1098}Fld:SP,1098,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1098}Fld:I,1098,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1100}SA:X,1100,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1100}SA:Y,1100,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1102}Fld:SP,1102,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1102}Fld:I,1102,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1106}Fld:SP,1106,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1106}Fld:I,1106,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1108}Fld:SP,1108,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1108}Fld:I,1108,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S4:1110}Fld:SP,1110,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1110}Fld:I,1110,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1113}Fld:SP,1113,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1113}Fld:I,1113,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1115}SA:X,1115,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1115}SA:Y,1115,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1117}Fld:SP,1117,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1117}Fld:I,1117,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S3:1119}Fld:SP,1119,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1119}Fld:I,1119,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1122}Fld:SP,1122,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1122}Fld:I,1122,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1124}Fld:SP,1124,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1124}Fld:I,1124,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1128}SA:X,1128,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1128}SA:Y,1128,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1131}SA:X,1131,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1131}SA:Y,1131,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1135}Fld:SP,1135,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1135}Fld:I,1135,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1137}Fld:SP,1137,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1137}Fld:I,1137,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1140}Fld:SP,1140,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1140}Fld:I,1140,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1142}Fld:SP,1142,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1142}Fld:I,1142,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1144}SA:X,1144,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1144}SA:Y,1144,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:1146}Fld:SP,1146,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1146}Fld:I,1146,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1149}Fld:SP,1149,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1149}Fld:I,1149,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:1151}Fld:SP,1151,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1151}Fld:I,1151,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1153}Fld:SP,1153,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1153}Fld:I,1153,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1157}Fld:SP,1157,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1157}Fld:I,1157,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1159}SA:X,1159,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1159}SA:Y,1159,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1161}Fld:SP,1161,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1161}Fld:I,1161,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1164}Fld:SP,1164,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1164}Fld:I,1164,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1166}Fld:SP,1166,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1166}Fld:I,1166,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1168}Fld:SP,1168,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1168}Fld:I,1168,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1171}Fld:SP,1171,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1171}Fld:I,1171,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1173}SA:X,1173,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1173}SA:Y,1173,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1175}Fld:SP,1175,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1175}Fld:I,1175,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1177}Fld:SP,1177,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1177}Fld:I,1177,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1180}Fld:SP,1180,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1180}Fld:I,1180,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1182}SA:X,1182,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1182}SA:Y,1182,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1184}Fld:SP,1184,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1184}Fld:I,1184,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1188}Fld:SP,1188,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1188}Fld:I,1188,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1190}Fld:SP,1190,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1190}Fld:I,1190,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:1192}Fld:SP,1192,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1192}Fld:I,1192,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1195}Fld:SP,1195,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1195}Fld:I,1195,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1197}SA:X,1197,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1197}SA:Y,1197,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1199}Fld:SP,1199,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1199}Fld:I,1199,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1201}Fld:SP,1201,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1201}Fld:I,1201,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1204}Fld:SP,1204,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1204}Fld:I,1204,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1206}Fld:SP,1206,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1206}Fld:I,1206,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1210}SA:X,1210,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1210}SA:Y,1210,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1213}SA:X,1213,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1213}SA:Y,1213,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1217}Fld:SP,1217,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1217}Fld:I,1217,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1219}Fld:SP,1219,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1219}Fld:I,1219,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1222}Fld:SP,1222,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1222}Fld:I,1222,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1224}Fld:SP,1224,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1224}Fld:I,1224,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1226}SA:X,1226,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1226}SA:Y,1226,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:1228}Fld:SP,1228,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1228}Fld:I,1228,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1231}Fld:SP,1231,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1231}Fld:I,1231,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:1233}Fld:SP,1233,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1233}Fld:I,1233,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1235}Fld:SP,1235,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1235}Fld:I,1235,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1239}Fld:SP,1239,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1239}Fld:I,1239,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1241}SA:X,1241,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1241}SA:Y,1241,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1243}Fld:SP,1243,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1243}Fld:I,1243,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1246}Fld:SP,1246,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1246}Fld:I,1246,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1248}Fld:SP,1248,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1248}Fld:I,1248,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1250}Fld:SP,1250,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1250}Fld:I,1250,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1253}Fld:SP,1253,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1253}Fld:I,1253,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1255}SA:X,1255,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1255}SA:Y,1255,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1257}Fld:SP,1257,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1257}Fld:I,1257,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1259}Fld:SP,1259,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1259}Fld:I,1259,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1262}Fld:SP,1262,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1262}Fld:I,1262,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1264}SA:X,1264,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1264}SA:Y,1264,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1266}Fld:SP,1266,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1266}Fld:I,1266,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1270}Fld:SP,1270,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1270}Fld:I,1270,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1272}Fld:SP,1272,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1272}Fld:I,1272,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:1274}Fld:SP,1274,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1274}Fld:I,1274,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1277}Fld:SP,1277,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1277}Fld:I,1277,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1279}SA:X,1279,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1279}SA:Y,1279,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1281}Fld:SP,1281,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1281}Fld:I,1281,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1283}Fld:SP,1283,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1283}Fld:I,1283,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1286}Fld:SP,1286,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1286}Fld:I,1286,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1288}Fld:SP,1288,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1288}Fld:I,1288,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1292}SA:X,1292,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1292}SA:Y,1292,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1295}SA:X,1295,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1295}SA:Y,1295,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1299}Fld:SP,1299,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1299}Fld:I,1299,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S3:1301}Fld:SP,1301,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1301}Fld:I,1301,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1304}Fld:SP,1304,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1304}Fld:I,1304,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1306}Fld:SP,1306,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1306}Fld:I,1306,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1308}SA:X,1308,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1308}SA:Y,1308,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S4:1310}Fld:SP,1310,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1310}Fld:I,1310,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1313}Fld:SP,1313,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1313}Fld:I,1313,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{QS3:1315}Fld:SP,1315,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1315}Fld:I,1315,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1317}Fld:SP,1317,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1317}Fld:I,1317,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1321}Fld:SP,1321,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1321}Fld:I,1321,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1323}SA:X,1323,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1323}SA:Y,1323,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1325}Fld:SP,1325,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1325}Fld:I,1325,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1328}Fld:SP,1328,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1328}Fld:I,1328,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1330}Fld:SP,1330,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1330}Fld:I,1330,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1332}Fld:SP,1332,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1332}Fld:I,1332,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1335}Fld:SP,1335,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1335}Fld:I,1335,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1337}SA:X,1337,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1337}SA:Y,1337,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1339}Fld:SP,1339,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1339}Fld:I,1339,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1341}Fld:SP,1341,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1341}Fld:I,1341,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1344}Fld:SP,1344,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1344}Fld:I,1344,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1346}SA:X,1346,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1346}SA:Y,1346,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1348}Fld:SP,1348,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1348}Fld:I,1348,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1352}Fld:SP,1352,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1352}Fld:I,1352,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{S2:1354}Fld:SP,1354,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:1354}Fld:I,1354,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:1357}Fld:SP,1357,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:1357}Fld:I,1357,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{QL3:1359}Fld:SP,1359,V:1-SR,,,setpoint,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{QL3:1359}Fld:I,1359,V:1-SR,,,readback,QL3,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1361}SA:X,1361,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1361}SA:Y,1361,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL2:1363}Fld:SP,1363,V:1-SR,,,setpoint,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{QL2:1363}Fld:I,1363,V:1-SR,,,readback,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{S1:1365}Fld:SP,1365,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:1365}Fld:I,1365,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:1368}Fld:SP,1368,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:1368}Fld:I,1368,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{QL1:1370}Fld:SP,1370,V:1-SR,,,setpoint,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{QL1:1370}Fld:I,1370,V:1-SR,,,readback,QL1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1374}SA:X,1374,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1374}SA:Y,1374,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1377}SA:X,1377,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1377}SA:Y,1377,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL1:1381}Fld:SP,1381,V:1-SR,,,setpoint,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{QL1:1381}Fld:I,1381,V:1-SR,,,readback,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{S1:1383}Fld:SP,1383,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:1383}Fld:I,1383,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:1386}Fld:SP,1386,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:1386}Fld:I,1386,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{QL2:1388}Fld:SP,1388,V:1-SR,,,setpoint,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{QL2:1388}Fld:I,1388,V:1-SR,,,readback,QL2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1390}SA:X,1390,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1390}SA:Y,1390,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL3:1392}Fld:SP,1392,V:1-SR,,,setpoint,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{QL3:1392}Fld:I,1392,V:1-SR,,,readback,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{S2:1394}Fld:SP,1394,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:1394}Fld:I,1394,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:1397}Fld:SP,1397,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:1397}Fld:I,1397,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{BEND:1399}Fld:SP,1399,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1399}Fld:I,1399,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1403}Fld:SP,1403,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1403}Fld:I,1403,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1405}SA:X,1405,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1405}SA:Y,1405,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1407}Fld:SP,1407,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1407}Fld:I,1407,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1410}Fld:SP,1410,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1410}Fld:I,1410,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1412}Fld:SP,1412,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1412}Fld:I,1412,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1414}Fld:SP,1414,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1414}Fld:I,1414,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1417}Fld:SP,1417,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1417}Fld:I,1417,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1419}SA:X,1419,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1419}SA:Y,1419,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1421}Fld:SP,1421,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1421}Fld:I,1421,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1423}Fld:SP,1423,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1423}Fld:I,1423,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1426}Fld:SP,1426,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1426}Fld:I,1426,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1428}SA:X,1428,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1428}SA:Y,1428,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1430}Fld:SP,1430,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1430}Fld:I,1430,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1434}Fld:SP,1434,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1434}Fld:I,1434,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1436}Fld:SP,1436,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1436}Fld:I,1436,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S4:1438}Fld:SP,1438,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1438}Fld:I,1438,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1441}Fld:SP,1441,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1441}Fld:I,1441,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1443}SA:X,1443,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1443}SA:Y,1443,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1445}Fld:SP,1445,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1445}Fld:I,1445,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S3:1447}Fld:SP,1447,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1447}Fld:I,1447,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1450}Fld:SP,1450,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1450}Fld:I,1450,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1452}Fld:SP,1452,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1452}Fld:I,1452,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1456}SA:X,1456,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1456}SA:Y,1456,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1459}SA:X,1459,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1459}SA:Y,1459,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1463}Fld:SP,1463,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1463}Fld:I,1463,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1465}Fld:SP,1465,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1465}Fld:I,1465,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1468}Fld:SP,1468,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1468}Fld:I,1468,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1470}Fld:SP,1470,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1470}Fld:I,1470,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1472}SA:X,1472,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1472}SA:Y,1472,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:1474}Fld:SP,1474,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1474}Fld:I,1474,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1477}Fld:SP,1477,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1477}Fld:I,1477,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:1479}Fld:SP,1479,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1479}Fld:I,1479,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1481}Fld:SP,1481,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1481}Fld:I,1481,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1485}Fld:SP,1485,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1485}Fld:I,1485,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1487}SA:X,1487,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1487}SA:Y,1487,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1489}Fld:SP,1489,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1489}Fld:I,1489,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1492}Fld:SP,1492,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1492}Fld:I,1492,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1494}Fld:SP,1494,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1494}Fld:I,1494,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1496}Fld:SP,1496,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1496}Fld:I,1496,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1499}Fld:SP,1499,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1499}Fld:I,1499,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1501}SA:X,1501,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1501}SA:Y,1501,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1503}Fld:SP,1503,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1503}Fld:I,1503,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1505}Fld:SP,1505,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1505}Fld:I,1505,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1508}Fld:SP,1508,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1508}Fld:I,1508,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1510}SA:X,1510,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1510}SA:Y,1510,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1512}Fld:SP,1512,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1512}Fld:I,1512,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1516}Fld:SP,1516,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1516}Fld:I,1516,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1518}Fld:SP,1518,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1518}Fld:I,1518,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:1520}Fld:SP,1520,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1520}Fld:I,1520,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1523}Fld:SP,1523,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1523}Fld:I,1523,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1525}SA:X,1525,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1525}SA:Y,1525,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1527}Fld:SP,1527,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1527}Fld:I,1527,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1529}Fld:SP,1529,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1529}Fld:I,1529,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1532}Fld:SP,1532,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1532}Fld:I,1532,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1534}Fld:SP,1534,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1534}Fld:I,1534,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1538}SA:X,1538,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1538}SA:Y,1538,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-RF:SUPER{RF:1540}Freq:SP,1540,V:1-SR,,,setpoint,RF,f,Cavity
+V:1-SR-RF:SUPER{RF:1540}Freq:I,1540,V:1-SR,,,readback,RF,f,Cavity
+V:1-SR-RF:SUPER{RF:1540}Volt:SP,1540,V:1-SR,,,setpoint,RF,v,Cavity
+V:1-SR-RF:SUPER{RF:1540}Volt:I,1540,V:1-SR,,,readback,RF,v,Cavity
+V:1-SR-BI:SUPER{BPM:1542}SA:X,1542,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1542}SA:Y,1542,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1546}Fld:SP,1546,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1546}Fld:I,1546,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1548}Fld:SP,1548,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1548}Fld:I,1548,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1551}Fld:SP,1551,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1551}Fld:I,1551,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1553}Fld:SP,1553,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1553}Fld:I,1553,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1555}SA:X,1555,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1555}SA:Y,1555,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:1557}Fld:SP,1557,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1557}Fld:I,1557,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1560}Fld:SP,1560,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1560}Fld:I,1560,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:1562}Fld:SP,1562,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1562}Fld:I,1562,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1564}Fld:SP,1564,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1564}Fld:I,1564,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1568}Fld:SP,1568,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1568}Fld:I,1568,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1570}SA:X,1570,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1570}SA:Y,1570,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1572}Fld:SP,1572,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1572}Fld:I,1572,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1575}Fld:SP,1575,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1575}Fld:I,1575,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1577}Fld:SP,1577,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1577}Fld:I,1577,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1579}Fld:SP,1579,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1579}Fld:I,1579,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1582}Fld:SP,1582,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1582}Fld:I,1582,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1584}SA:X,1584,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1584}SA:Y,1584,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1586}Fld:SP,1586,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1586}Fld:I,1586,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1588}Fld:SP,1588,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1588}Fld:I,1588,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1591}Fld:SP,1591,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1591}Fld:I,1591,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1593}SA:X,1593,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1593}SA:Y,1593,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1595}Fld:SP,1595,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1595}Fld:I,1595,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1599}Fld:SP,1599,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1599}Fld:I,1599,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1601}Fld:SP,1601,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1601}Fld:I,1601,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:1603}Fld:SP,1603,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1603}Fld:I,1603,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1606}Fld:SP,1606,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1606}Fld:I,1606,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1608}SA:X,1608,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1608}SA:Y,1608,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1610}Fld:SP,1610,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1610}Fld:I,1610,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1612}Fld:SP,1612,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1612}Fld:I,1612,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1615}Fld:SP,1615,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1615}Fld:I,1615,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1617}Fld:SP,1617,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1617}Fld:I,1617,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1621}SA:X,1621,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1621}SA:Y,1621,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1624}SA:X,1624,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1624}SA:Y,1624,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1628}Fld:SP,1628,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1628}Fld:I,1628,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S3:1630}Fld:SP,1630,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1630}Fld:I,1630,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1633}Fld:SP,1633,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1633}Fld:I,1633,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1635}Fld:SP,1635,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1635}Fld:I,1635,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1637}SA:X,1637,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1637}SA:Y,1637,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S4:1639}Fld:SP,1639,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1639}Fld:I,1639,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1642}Fld:SP,1642,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1642}Fld:I,1642,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{QS3:1644}Fld:SP,1644,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1644}Fld:I,1644,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1646}Fld:SP,1646,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1646}Fld:I,1646,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1650}Fld:SP,1650,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1650}Fld:I,1650,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1652}SA:X,1652,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1652}SA:Y,1652,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1654}Fld:SP,1654,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1654}Fld:I,1654,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1657}Fld:SP,1657,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1657}Fld:I,1657,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1659}Fld:SP,1659,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1659}Fld:I,1659,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1661}Fld:SP,1661,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1661}Fld:I,1661,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1664}Fld:SP,1664,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1664}Fld:I,1664,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1666}SA:X,1666,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1666}SA:Y,1666,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1668}Fld:SP,1668,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1668}Fld:I,1668,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1670}Fld:SP,1670,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1670}Fld:I,1670,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1673}Fld:SP,1673,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1673}Fld:I,1673,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1675}SA:X,1675,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1675}SA:Y,1675,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1677}Fld:SP,1677,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1677}Fld:I,1677,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1681}Fld:SP,1681,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1681}Fld:I,1681,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{SB:1683}Fld:SP,1683,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1683}Fld:I,1683,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1686}Fld:SP,1686,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1686}Fld:I,1686,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{Q3:1688}Fld:SP,1688,V:1-SR,,,setpoint,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{Q3:1688}Fld:I,1688,V:1-SR,,,readback,Q3,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1690}SA:X,1690,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1690}SA:Y,1690,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q2:1692}Fld:SP,1692,V:1-SR,,,setpoint,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{Q2:1692}Fld:I,1692,V:1-SR,,,readback,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{SA:1694}Fld:SP,1694,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1694}Fld:I,1694,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1697}Fld:SP,1697,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1697}Fld:I,1697,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{Q1:1699}Fld:SP,1699,V:1-SR,,,setpoint,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{Q1:1699}Fld:I,1699,V:1-SR,,,readback,Q1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1704}SA:X,1704,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1704}SA:Y,1704,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{EPU48:1707}Gap:SP,1707,V:1-SR,,,setpoint,EPU48,GAP,insertion
+V:1-SR-MG:SUPER{EPU48:1707}Gap:I,1707,V:1-SR,,,readback,EPU48,GAP,insertion
+V:1-SR-MG:SUPER{EPU48:1707}Phase:SP,1707,V:1-SR,,,setpoint,EPU48,PHASE,insertion
+V:1-SR-MG:SUPER{EPU48:1707}Phase:I,1707,V:1-SR,,,readback,EPU48,PHASE,insertion
+V:1-SR-MG:SUPER{Q4:1712}Fld:SP,1712,V:1-SR,,,setpoint,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:1712}Fld:I,1712,V:1-SR,,,readback,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q5:1714}Fld:SP,1714,V:1-SR,,,setpoint,Q5,K,Quadrupole
+V:1-SR-MG:SUPER{Q5:1714}Fld:I,1714,V:1-SR,,,readback,Q5,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:1719}Fld:SP,1719,V:1-SR,,,setpoint,Q4,K,Quadrupole
+V:1-SR-MG:SUPER{Q4:1719}Fld:I,1719,V:1-SR,,,readback,Q4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1721}SA:X,1721,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1721}SA:Y,1721,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{EPU48:1725}Gap:SP,1725,V:1-SR,,,setpoint,EPU48,GAP,insertion
+V:1-SR-MG:SUPER{EPU48:1725}Gap:I,1725,V:1-SR,,,readback,EPU48,GAP,insertion
+V:1-SR-MG:SUPER{EPU48:1725}Phase:SP,1725,V:1-SR,,,setpoint,EPU48,PHASE,insertion
+V:1-SR-MG:SUPER{EPU48:1725}Phase:I,1725,V:1-SR,,,readback,EPU48,PHASE,insertion
+V:1-SR-BI:SUPER{BPM:1728}SA:X,1728,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1728}SA:Y,1728,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q1:1733}Fld:SP,1733,V:1-SR,,,setpoint,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{Q1:1733}Fld:I,1733,V:1-SR,,,readback,Q1,K,Quadrupole
+V:1-SR-MG:SUPER{SA:1735}Fld:SP,1735,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1735}Fld:I,1735,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1738}Fld:SP,1738,V:1-SR,,,setpoint,SA,K,Sextupole
+V:1-SR-MG:SUPER{SA:1738}Fld:I,1738,V:1-SR,,,readback,SA,K,Sextupole
+V:1-SR-MG:SUPER{Q2:1740}Fld:SP,1740,V:1-SR,,,setpoint,Q2,K,Quadrupole
+V:1-SR-MG:SUPER{Q2:1740}Fld:I,1740,V:1-SR,,,readback,Q2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1742}SA:X,1742,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1742}SA:Y,1742,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{Q3:1744}Fld:SP,1744,V:1-SR,,,setpoint,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{Q3:1744}Fld:I,1744,V:1-SR,,,readback,Q3,K,Quadrupole
+V:1-SR-MG:SUPER{SB:1746}Fld:SP,1746,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1746}Fld:I,1746,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1749}Fld:SP,1749,V:1-SR,,,setpoint,SB,K,Sextupole
+V:1-SR-MG:SUPER{SB:1749}Fld:I,1749,V:1-SR,,,readback,SB,K,Sextupole
+V:1-SR-MG:SUPER{BEND:1751}Fld:SP,1751,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1751}Fld:I,1751,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1755}Fld:SP,1755,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1755}Fld:I,1755,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1757}SA:X,1757,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1757}SA:Y,1757,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1759}Fld:SP,1759,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1759}Fld:I,1759,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1762}Fld:SP,1762,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1762}Fld:I,1762,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1764}Fld:SP,1764,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1764}Fld:I,1764,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1766}Fld:SP,1766,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1766}Fld:I,1766,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1769}Fld:SP,1769,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1769}Fld:I,1769,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1771}SA:X,1771,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1771}SA:Y,1771,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1773}Fld:SP,1773,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1773}Fld:I,1773,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1775}Fld:SP,1775,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1775}Fld:I,1775,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1778}Fld:SP,1778,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1778}Fld:I,1778,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1780}SA:X,1780,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1780}SA:Y,1780,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1782}Fld:SP,1782,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1782}Fld:I,1782,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1786}Fld:SP,1786,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1786}Fld:I,1786,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1788}Fld:SP,1788,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1788}Fld:I,1788,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S4:1790}Fld:SP,1790,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1790}Fld:I,1790,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1793}Fld:SP,1793,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1793}Fld:I,1793,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1795}SA:X,1795,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1795}SA:Y,1795,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1797}Fld:SP,1797,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1797}Fld:I,1797,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S3:1799}Fld:SP,1799,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1799}Fld:I,1799,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1802}Fld:SP,1802,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1802}Fld:I,1802,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1804}Fld:SP,1804,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1804}Fld:I,1804,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1808}SA:X,1808,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1808}SA:Y,1808,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1811}SA:X,1811,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1811}SA:Y,1811,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1815}Fld:SP,1815,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1815}Fld:I,1815,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1817}Fld:SP,1817,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1817}Fld:I,1817,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1820}Fld:SP,1820,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1820}Fld:I,1820,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1822}Fld:SP,1822,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1822}Fld:I,1822,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1824}SA:X,1824,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1824}SA:Y,1824,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:1826}Fld:SP,1826,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1826}Fld:I,1826,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1829}Fld:SP,1829,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1829}Fld:I,1829,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:1831}Fld:SP,1831,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1831}Fld:I,1831,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1833}Fld:SP,1833,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1833}Fld:I,1833,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1837}Fld:SP,1837,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1837}Fld:I,1837,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1839}SA:X,1839,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1839}SA:Y,1839,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1841}Fld:SP,1841,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1841}Fld:I,1841,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1844}Fld:SP,1844,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1844}Fld:I,1844,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1846}Fld:SP,1846,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1846}Fld:I,1846,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1848}Fld:SP,1848,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1848}Fld:I,1848,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1851}Fld:SP,1851,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1851}Fld:I,1851,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1853}SA:X,1853,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1853}SA:Y,1853,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1855}Fld:SP,1855,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1855}Fld:I,1855,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1857}Fld:SP,1857,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1857}Fld:I,1857,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1860}Fld:SP,1860,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1860}Fld:I,1860,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1862}SA:X,1862,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1862}SA:Y,1862,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1864}Fld:SP,1864,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1864}Fld:I,1864,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1868}Fld:SP,1868,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1868}Fld:I,1868,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1870}Fld:SP,1870,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1870}Fld:I,1870,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:1872}Fld:SP,1872,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1872}Fld:I,1872,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1875}Fld:SP,1875,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1875}Fld:I,1875,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1877}SA:X,1877,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1877}SA:Y,1877,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1879}Fld:SP,1879,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1879}Fld:I,1879,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1881}Fld:SP,1881,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1881}Fld:I,1881,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1884}Fld:SP,1884,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1884}Fld:I,1884,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1886}Fld:SP,1886,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1886}Fld:I,1886,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1890}SA:X,1890,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1890}SA:Y,1890,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{EPU46:1895}Gap:SP,1895,V:1-SR,,,setpoint,EPU46,GAP,insertion
+V:1-SR-MG:SUPER{EPU46:1895}Gap:I,1895,V:1-SR,,,readback,EPU46,GAP,insertion
+V:1-SR-MG:SUPER{EPU46:1895}Phase:SP,1895,V:1-SR,,,setpoint,EPU46,PHASE,insertion
+V:1-SR-MG:SUPER{EPU46:1895}Phase:I,1895,V:1-SR,,,readback,EPU46,PHASE,insertion
+V:1-SR-BI:SUPER{BPM:1900}SA:X,1900,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1900}SA:Y,1900,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1904}Fld:SP,1904,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1904}Fld:I,1904,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1906}Fld:SP,1906,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1906}Fld:I,1906,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1909}Fld:SP,1909,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1909}Fld:I,1909,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1911}Fld:SP,1911,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1911}Fld:I,1911,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1913}SA:X,1913,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1913}SA:Y,1913,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S6:1915}Fld:SP,1915,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1915}Fld:I,1915,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1918}Fld:SP,1918,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1918}Fld:I,1918,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{QS3:1920}Fld:SP,1920,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1920}Fld:I,1920,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1922}Fld:SP,1922,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1922}Fld:I,1922,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:1926}Fld:SP,1926,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1926}Fld:I,1926,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1928}SA:X,1928,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1928}SA:Y,1928,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:1930}Fld:SP,1930,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1930}Fld:I,1930,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1933}Fld:SP,1933,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1933}Fld:I,1933,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:1935}Fld:SP,1935,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1935}Fld:I,1935,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:1937}Fld:SP,1937,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1937}Fld:I,1937,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1940}Fld:SP,1940,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:1940}Fld:I,1940,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1942}SA:X,1942,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1942}SA:Y,1942,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:1944}Fld:SP,1944,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:1944}Fld:I,1944,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:1946}Fld:SP,1946,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1946}Fld:I,1946,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1949}Fld:SP,1949,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:1949}Fld:I,1949,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1951}SA:X,1951,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1951}SA:Y,1951,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:1953}Fld:SP,1953,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:1953}Fld:I,1953,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:1957}Fld:SP,1957,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:1957}Fld:I,1957,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS3:1959}Fld:SP,1959,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:1959}Fld:I,1959,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{S6:1961}Fld:SP,1961,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1961}Fld:I,1961,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1964}Fld:SP,1964,V:1-SR,,,setpoint,S6,K,Sextupole
+V:1-SR-MG:SUPER{S6:1964}Fld:I,1964,V:1-SR,,,readback,S6,K,Sextupole
+V:1-SR-BI:SUPER{BPM:1966}SA:X,1966,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1966}SA:Y,1966,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS2:1968}Fld:SP,1968,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1968}Fld:I,1968,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{S5:1970}Fld:SP,1970,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1970}Fld:I,1970,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1973}Fld:SP,1973,V:1-SR,,,setpoint,S5,K,Sextupole
+V:1-SR-MG:SUPER{S5:1973}Fld:I,1973,V:1-SR,,,readback,S5,K,Sextupole
+V:1-SR-MG:SUPER{QS1:1975}Fld:SP,1975,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1975}Fld:I,1975,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1979}SA:X,1979,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1979}SA:Y,1979,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1982}SA:X,1982,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1982}SA:Y,1982,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS1:1986}Fld:SP,1986,V:1-SR,,,setpoint,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{QS1:1986}Fld:I,1986,V:1-SR,,,readback,QS1,K,Quadrupole
+V:1-SR-MG:SUPER{S3:1988}Fld:SP,1988,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1988}Fld:I,1988,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1991}Fld:SP,1991,V:1-SR,,,setpoint,S3,K,Sextupole
+V:1-SR-MG:SUPER{S3:1991}Fld:I,1991,V:1-SR,,,readback,S3,K,Sextupole
+V:1-SR-MG:SUPER{QS2:1993}Fld:SP,1993,V:1-SR,,,setpoint,QS2,K,Quadrupole
+V:1-SR-MG:SUPER{QS2:1993}Fld:I,1993,V:1-SR,,,readback,QS2,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:1995}SA:X,1995,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:1995}SA:Y,1995,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{S4:1997}Fld:SP,1997,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:1997}Fld:I,1997,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:2000}Fld:SP,2000,V:1-SR,,,setpoint,S4,K,Sextupole
+V:1-SR-MG:SUPER{S4:2000}Fld:I,2000,V:1-SR,,,readback,S4,K,Sextupole
+V:1-SR-MG:SUPER{QS3:2002}Fld:SP,2002,V:1-SR,,,setpoint,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{QS3:2002}Fld:I,2002,V:1-SR,,,readback,QS3,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:2004}Fld:SP,2004,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:2004}Fld:I,2004,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{QS4:2008}Fld:SP,2008,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:2008}Fld:I,2008,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:2010}SA:X,2010,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:2010}SA:Y,2010,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{SD:2012}Fld:SP,2012,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:2012}Fld:I,2012,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:2015}Fld:SP,2015,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:2015}Fld:I,2015,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{QS5:2017}Fld:SP,2017,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:2017}Fld:I,2017,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SF:2019}Fld:SP,2019,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:2019}Fld:I,2019,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:2022}Fld:SP,2022,V:1-SR,,,setpoint,SF,K,Sextupole
+V:1-SR-MG:SUPER{SF:2022}Fld:I,2022,V:1-SR,,,readback,SF,K,Sextupole
+V:1-SR-BI:SUPER{BPM:2024}SA:X,2024,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:2024}SA:Y,2024,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS5:2026}Fld:SP,2026,V:1-SR,,,setpoint,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{QS5:2026}Fld:I,2026,V:1-SR,,,readback,QS5,K,Quadrupole
+V:1-SR-MG:SUPER{SD:2028}Fld:SP,2028,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:2028}Fld:I,2028,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:2031}Fld:SP,2031,V:1-SR,,,setpoint,SD,K,Sextupole
+V:1-SR-MG:SUPER{SD:2031}Fld:I,2031,V:1-SR,,,readback,SD,K,Sextupole
+V:1-SR-BI:SUPER{BPM:2033}SA:X,2033,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:2033}SA:Y,2033,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QS4:2035}Fld:SP,2035,V:1-SR,,,setpoint,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{QS4:2035}Fld:I,2035,V:1-SR,,,readback,QS4,K,Quadrupole
+V:1-SR-MG:SUPER{BEND:2039}Fld:SP,2039,V:1-SR,,,setpoint,BEND,T,Bending
+V:1-SR-MG:SUPER{BEND:2039}Fld:I,2039,V:1-SR,,,readback,BEND,T,Bending
+V:1-SR-MG:SUPER{S2:2041}Fld:SP,2041,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:2041}Fld:I,2041,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:2044}Fld:SP,2044,V:1-SR,,,setpoint,S2,K,Sextupole
+V:1-SR-MG:SUPER{S2:2044}Fld:I,2044,V:1-SR,,,readback,S2,K,Sextupole
+V:1-SR-MG:SUPER{QL3:2046}Fld:SP,2046,V:1-SR,,,setpoint,QL3,K,Quadrupole
+V:1-SR-MG:SUPER{QL3:2046}Fld:I,2046,V:1-SR,,,readback,QL3,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:2048}SA:X,2048,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:2048}SA:Y,2048,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-MG:SUPER{QL2:2050}Fld:SP,2050,V:1-SR,,,setpoint,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{QL2:2050}Fld:I,2050,V:1-SR,,,readback,QL2,K,Quadrupole
+V:1-SR-MG:SUPER{S1:2052}Fld:SP,2052,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:2052}Fld:I,2052,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:2055}Fld:SP,2055,V:1-SR,,,setpoint,S1,K,Sextupole
+V:1-SR-MG:SUPER{S1:2055}Fld:I,2055,V:1-SR,,,readback,S1,K,Sextupole
+V:1-SR-MG:SUPER{QL1:2057}Fld:SP,2057,V:1-SR,,,setpoint,QL1,K,Quadrupole
+V:1-SR-MG:SUPER{QL1:2057}Fld:I,2057,V:1-SR,,,readback,QL1,K,Quadrupole
+V:1-SR-BI:SUPER{BPM:2061}SA:X,2061,V:1-SR,,,readback,BPM,X,Beam Position Monitor
+V:1-SR-BI:SUPER{BPM:2061}SA:Y,2061,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
+V:1-SR-BI{TUNE}X-I,-1,V:1-SR,,,readback,twiss,TUNEX,
+V:1-SR-BI{TUNE}Y-I,-1,V:1-SR,,,readback,twiss,TUNEY,
+V:1-SR-BI{ALPHA}X-I,-1,V:1-SR,,,readback,twiss,ALPHAX,
+V:1-SR-BI{ALPHA}Y-I,-1,V:1-SR,,,readback,twiss,ALPHAY,
+V:1-SR-BI{BETA}X-I,-1,V:1-SR,,,readback,twiss,BETAX,
+V:1-SR-BI{BETA}Y-I,-1,V:1-SR,,,readback,twiss,BETAY,
+V:1-SR-BI{ETA}X-I,-1,V:1-SR,,,readback,twiss,ETAX,
+V:1-SR-BI{ETA}Y-I,-1,V:1-SR,,,readback,twiss,ETAY,
+V:1-SR-BI{PHI}X-I,-1,V:1-SR,,,readback,twiss,PHIX,
+V:1-SR-BI{PHI}Y-I,-1,V:1-SR,,,readback,twiss,PHIY,
+V:1-SR-BI{ORBIT}X-I,-1,V:1-SR,,,readback,twiss,ORBITX,
+V:1-SR-BI{ORBIT}Y-I,-1,V:1-SR,,,readback,twiss,ORBITY,
+V:1-SR-BI{POS}-I,-1,V:1-SR,,,readback,twiss,S,
+V:1-SR-BI{NAME}-I,-1,V:1-SR,,,readback,twiss,NAME,

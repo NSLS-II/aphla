@@ -453,14 +453,15 @@ class TwissData:
 
     """
     def __init__(self, name):
+        self._name = name
+        self.tune   = (0.0, 0.0)
+        self.chrom  = (0.0, 0.0)
+        self.alphac = 0.0 #
         self.element = []
         self._twtable = []
-        self._name = name
-        self.tune = None #(np.nan, np.nan)
-        self.chrom = None #(np.nan, np.nan)
         self._cols = ['s', 'alphax', 'alphay', 'betax', 'betay',
                       'gammax', 'gammay', 'etax', 'etay', 'phix', 'phiy']
-        
+
     def _find_element(self, elemname):
         try:
             i = self.element.index(elemname)
@@ -530,7 +531,19 @@ class TwissData:
         """loading hdf5 file in a group default 'twiss'"""
         self._load_hdf5_v2(filename, **kwargs)
 
-    def _load_hdf5_v1(self, filename, group = "twiss"):
+    def set(self, **kw):
+        """set data, delete all previous data"""
+        if "element" in kw:
+            self.element = kw["element"]
+        NROW = len(self.element)
+        self._twtable = np.zeros((NROW, len(self._cols)), 'd')
+        for i,k in enumerate(self._cols):
+            self._twtable[:,i] = kw.get(k, np.nan)
+        self.chrom = kw.get("chrom", None)
+        self.tune = kw.get("tune", None)
+        self.alphac = kw.get("alphac", None)
+
+    def _load_hdf5_v1(self, filename, group = "Twiss"):
         """read data from HDF5 file in *group*"""
         f = h5py.File(filename, 'r')
         self.element = list(f[group]['element'])
@@ -539,7 +552,7 @@ class TwissData:
         f.close()
 
 
-    def _load_hdf5_v2(self, filename, group = "twiss"):
+    def _load_hdf5_v2(self, filename, group = "Twiss"):
         """read data from HDF5 file in *group*"""
         f = h5py.File(filename, 'r')
         grp = f[group]
@@ -552,7 +565,7 @@ class TwissData:
         _logger.info("loaded {0} elements from {1}".format(
                 len(self._twtable), filename))
 
-    def _save_hdf5_v2(self, filename, group = "twiss"):
+    def _save_hdf5_v2(self, filename, group = "Twiss"):
         # data type
         dt = np.dtype( [ 
             ('element', h5py.special_dtype(vlen=bytes)),
@@ -577,11 +590,12 @@ class TwissData:
         f = h5py.File(filename)
         grp = f.create_group(group)
         grp['twtable'] = data
-        if self.tune is not None: grp['tune'] = np.array(self.tune)
-        if self.chrom is not None: grp['chrom'] = np.array(self.chrom)
+        grp['tune'] = np.array(self.tune)
+        grp['chrom'] = np.array(self.chrom)
+        grp['alphac'] = self.alphac
         f.close()
 
-    def _load_sqlite3(self, fname, table="twiss"):
+    def _load_sqlite3(self, fname, table="Twiss"):
         """read twiss from sqlite db file."""
         import sqlite3
         conn = sqlite3.connect(fname)
