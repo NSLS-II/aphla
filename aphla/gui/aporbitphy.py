@@ -29,11 +29,11 @@ class ApMachInitThread(QThread):
         #
         # Note: logging is not recommended: Cross Thread signal.
         # 
-        #print "initializing ", self.mach, self.latname
+        print "initializing ", self.mach, self.latname
         #_logger.info("background initializing {0}.{1}".format(
         #    self.mach, self.latname))
 
-        ap.machines.init(self.mach)
+        ap.machines.load(self.mach)
         #print "initialized ", self.mach, self.latname
         if self.latname: ap.machines.use(self.latname)
         else: self.latname = ap.machines.getLattice().name
@@ -42,7 +42,7 @@ class ApMachInitThread(QThread):
         # send the signal to caller thread
         self.emit(SIGNAL("initialized(PyQt_PyObject)"), 
                   (self.mach, self.latname))
-        #print "signal sent"
+        print "signal sent"
 
 
 class ApOrbitPhysics:
