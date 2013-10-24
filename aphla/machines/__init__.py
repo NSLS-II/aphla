@@ -29,7 +29,7 @@ import ConfigParser
 import fnmatch
 import logging
 _logger = logging.getLogger(__name__)
-#logger.setLevel(logging.DEBUG)
+_logger.setLevel(logging.DEBUG)
 #
 HLA_TAG_PREFIX = 'aphla'
 HLA_TAG_EGET = HLA_TAG_PREFIX + '.eget'
@@ -52,7 +52,7 @@ HLA_VSEXT  = 'HLA:VSEXT'
 # unless %HOME% is set on Windows, which is not the case by default.
 _home_hla = os.path.join(os.path.expanduser('~'), '.hla')
 HLA_CONFIG_DIR = os.environ.get('HLA_CONFIG_DIR', _home_hla)
-HLA_OUTPUT_DIR = os.environ.get('HLA_OUTPUT_DIR', None)
+#HLA_OUTPUT_DIR = os.environ.get('HLA_OUTPUT_DIR', None)
 HLA_MACHINE    = os.environ.get('HLA_MACHINE', None)
 HLA_DEBUG      = int(os.environ.get('HLA_DEBUG', 0))
 
@@ -126,16 +126,22 @@ def load_v1(machine, submachines = "*", **kwargs):
         
 def _findMachinePath(machine):
     # if machine is an abs path
-    if os.path.isabs(machine): return machine
-    # try "machine" in HLA_CONFIG_DIR and ~/.hla/
+    if os.path.isabs(machine) and os.path.isdir(machine):
+        mname = os.path.basename(os.path.realpath(machine))
+        return machine, mname
+    # try "machine" in HLA_CONFIG_DIR and ~/.hla/ (default)
     home_machine = os.path.join(HLA_CONFIG_DIR, machine)
-    if os.path.isdir(home_machine): return home_machine
+    if os.path.isdir(home_machine):
+        mname = os.path.basename(os.path.realpath(machine))
+        return home_machine, mname
     # try the package
     pkg_machine = resource_filename(__name__, machine)
     _logger.info("trying '%s'" % pkg_machine)
-    if os.path.isdir(pkg_machine): return pkg_machine
+    if os.path.isdir(pkg_machine):
+        mname = os.path.basename(os.path.realpath(pkg_machine))
+        return pkg_machine, mname
 
-    return None
+    return None, ""
 
 def load(machine, submachines = "*", **kwargs):
     """
@@ -151,6 +157,8 @@ def load(machine, submachines = "*", **kwargs):
     This machine can be a path to config dir.
     """
     
+    global _lattice_dict, _lat
+
     use_cache = kwargs.get('use_cache', False)
     save_cache = kwargs.get('save_cache', False)
 
@@ -166,7 +174,7 @@ def load(machine, submachines = "*", **kwargs):
             return
         
     #importlib.import_module(machine, 'machines')
-    machdir = _findMachinePath(machine)
+    machdir, machname = _findMachinePath(machine)
     if machdir is None:
         _logger.error("can not find machine data directory for '%s'" % machine)
         return
@@ -178,7 +186,7 @@ def load(machine, submachines = "*", **kwargs):
     _logger.debug("using config file: 'aphla.ini'")
     d = dict(cfg.items("COMMON"))
     # set proper output directory
-    global HLA_OUTPUT_DIR
+    # global HLA_OUTPUT_DIR
     HLA_OUTPUT_DIR = d.get("output_dir", _home_hla)
     # the default submachine
     accdefault = d.get("default_submachine", None)
@@ -188,7 +196,6 @@ def load(machine, submachines = "*", **kwargs):
     msects = [subm for subm in re.findall(r'\w+', d.get("submachines", ""))
              if fnmatch.fnmatch(subm, submachines)]
     # print(msect)
-    global _lat, _lattice_dict
     for msect in msects:
         d = dict(cfg.items(msect))
         accstruct = d.get("cfs_url", None)
@@ -212,13 +219,17 @@ def load(machine, submachines = "*", **kwargs):
             _logger.debug("NOT SQlite '%s'" % accsqlite)
             raise RuntimeError("Unknown accelerator data source '%s'" % accstruct)
 
+        cfa.splitPropertyValue('elemGroups')
+        cfa.splitChainedElement('elemName')
         for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
-        cfa.splitPropertyValue('group')
+
+        #print "New CFA:", cfa.rows
 
         lat = createLattice(msect, cfa.rows, acctag, cfa.source)
         lat.sb = d.get("s_begin", 0.0)
         lat.se = d.get("s_end", 0.0)
         lat.loop = bool(d.get("loop", True))
+        lat.machine = machname
 
         uconvfile = d.get("unit_conversion", None)
         if uconvfile is not None: 
@@ -244,7 +255,13 @@ def load(machine, submachines = "*", **kwargs):
             setGoldenLattice(lat, os.path.join(machdir, goldenfile), "golden")
 
         vex = lambda k: re.findall(r"\w+", d.get(k, ""))
-        vfams = { HLA_VBPM: ('BPM', vex("virtual_bpm_exclude")) }
+        vfams = { HLA_VBPM:  ('BPM',  vex("virtual_bpm_exclude")),
+                  HLA_VHCOR: ('HCOR', vex("virtual_hcor_exclude")),
+                  HLA_VVCOR: ('VCOR', vex("virtual_vcor_exclude")),
+                  HLA_VCOR:  ('COR',  vex("virtual_cor_exclude")),
+                  HLA_VQUAD: ('QUAD', vex("virtual_quad_exclude")),
+                  HLA_VSEXT: ('SEXT', vex("virtual_sext_exclude")),
+        }
         createVirtualElements(lat, vfams)
         _lattice_dict[msect] = lat
         
@@ -266,7 +283,8 @@ def load(machine, submachines = "*", **kwargs):
 def loadCache(machine_name):
     """load the cached machine"""
     global _lat, _lattice_dict
-    
+    raise NotImplemented("not implemented yet")
+
     cache_folderpath = HLA_ROOT
     cache_filepath = os.path.join(cache_folderpath,
                                   machine_name+'_lattices.cpkl')
@@ -278,6 +296,7 @@ def loadCache(machine_name):
 
 def saveCache(machine_name, lattice_dict, selected_lattice_name):
     """save machine as cache"""
+    raise NotImplemented("not implemented yet")
     cache_folderpath = HLA_ROOT
     if not os.path.exists(cache_folderpath):
         os.mkdir(cache_folderpath)
@@ -308,7 +327,7 @@ def createVirtualElements(vlat, vfams):
     """create common merged virtual element"""
     # virutal elements
     # a virtual bpm. its field is a "merge" of all bpms.
-    iv = 100000
+    iv = -100
     vpar = { 'virtual': 1, 'name': None, 'family': HLA_VFAMILY,
              'index': None }
     for vfam,famr in vfams.items():
@@ -316,13 +335,13 @@ def createVirtualElements(vlat, vfams):
         # a virtual element. its field is a "merge" of all elems.
         fam, exfam = famr
         velem = [e for e in vlat.getElementList(fam) if e.name not in exfam]
-        vpar.update({'name': vfam, 'index': iv + 1})
+        vpar.update({'name': vfam, 'index': iv})
         if velem:
             allvelem = merge(velem, **vpar)
             vlat.insertElement(allvelem, groups=[HLA_VFAMILY])
             allvelem.virtual = 1
 
-        iv = iv + 1
+        iv = iv - 100
 
 def findCfaConfig(srcname, machine, submachines):
     """
@@ -394,7 +413,7 @@ def findCfaConfig(srcname, machine, submachines):
 
     return cfa
 
-def createLattice(name, pvrec, systag, desc = 'channelfinder', 
+def createLattice(latname, pvrec, systag, desc = 'channelfinder', 
                   vbpm = True, vcor = True):
     """
     create a lattice from channel finder data
@@ -411,17 +430,18 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
     lat : the :class:`~aphla.lattice.Lattice` type.
     """
 
-    _logger.debug("creating '%s':%s" % (name, desc))
-    _logger.debug("%d pvs found in '%s'" % (len(pvrec), name))
+    _logger.debug("creating '%s':%s" % (latname, desc))
+    _logger.debug("%d pvs found in '%s'" % (len(pvrec), latname))
     # a new lattice
-    lat = Lattice(name, desc)
+    lat = Lattice(latname, desc)
     for rec in pvrec:
         _logger.debug("{0}".format(rec))
         # skip if there's no properties.
         if rec[1] is None: continue
-        if systag not in rec[2]: continue
+        if rec[0] and systag not in rec[2]: continue
+        if rec[1].get("system", "") != latname: continue
         if 'name' not in rec[1]: continue
-        pv = rec[0]
+        #print "PASSED"
         prpt = rec[1]
         if 'se' in prpt:
             prpt['sb'] = float(prpt['se']) - float(prpt.get('length', 0))
@@ -435,12 +455,13 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
             _logger.debug("new element: '%s'" % name)
             try:
                 elem = CaElement(**prpt)
-                gl = [g.strip() for g in prpt.get('groups', '').split(';')]
+                gl = [g.strip() for g in prpt.get('groups', [])]
                 elem.group.update(gl)
             except:
                 _logger.error("Error: creating element '{0}' with '{1}'".format(name, prpt))
                 raise
-
+            
+            #print "inserting:", elem
             #lat.appendElement(elem)
             lat.insertElement(elem)
         # 
@@ -454,7 +475,8 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
         if handle == 'get': prpt['handle'] = 'READBACK'
         elif handle == 'put': prpt['handle'] = 'SETPOINT'
 
-        elem.updatePvRecord(pv, prpt, rec[2])
+        pv = rec[0]
+        if pv: elem.updatePvRecord(pv, prpt, rec[2])
 
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
@@ -467,7 +489,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
     for g in sorted(lat._group.keys()):
         _logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
-        
+    
     return lat
 
 
@@ -493,7 +515,7 @@ def use(lattice):
     global _lat, _lattice_dict
     if isinstance(lattice, Lattice):
         _lat = lattice
-    elif _lattice_dict.get(lattice, None):
+    elif lattice in _lattice_dict:
         _lat = _lattice_dict[lattice]
     else:
         raise ValueError("no lattice %s was defined" % lattice)
