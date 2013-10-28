@@ -267,6 +267,7 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
         self.errorPen = kw.get('errorPen', QPen(Qt.NoPen))
         self.errorCap = kw.get('errorCap', 0)
         self.errorOnTop = kw.get('errorOnTop', True)
+        self.setTitle(kw.get("title", ""))
         self.__live = False
         self.showDifference = False
 
@@ -617,7 +618,20 @@ class ApPlot(Qwt.QwtPlot):
         x = kwargs.get('x', None)
         y = kwargs.get('y', None)
         yerr = kwargs.get('yerr', None)
-        curv = ApPlotCurve()
+        curv = ApPlotCurve(
+            curvePen = kwargs.get("curvePen", QPen(Qt.black, 2.0)),
+            curveStyle = kwargs.get("curveStyle", Qwt.QwtPlotCurve.Lines),
+            curveSymbol = kwargs.get("curveSymbol", Qwt.QwtSymbol(
+                    Qwt.QwtSymbol.Ellipse,
+                    QBrush(Qt.red),
+                    QPen(Qt.black, 1.0),
+                    QSize(8, 8))),
+            errorPen = kwargs.get("errorPen", QPen(Qt.black, 1.0)),
+            errorCap = kwargs.get("errorCap", 6),
+            errorOnTop = kwargs.get("errorOnTop", False),
+            title = kwargs.get("title", "")
+            )
+
         if x and y: curv.setData(x, y, yerr)
         curv.attach(self)
         self.excurv.append(curv)
