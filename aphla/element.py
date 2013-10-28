@@ -1311,7 +1311,7 @@ def merge(elems, field = None, **kwargs):
             pvdict[f][1].extend(pvsp)
 
     elem = CaElement(**kwargs)
-    print elem
+    print "merged:", elem
     # consider only the common fields
     if field is None: 
         for k,v in count.iteritems(): 
@@ -1340,7 +1340,7 @@ def merge(elems, field = None, **kwargs):
                     e.name for e in elems]))
     # if all raw units are the same, so are the merged element
     for fld in elem.fields():
-        units = sorted([e.getUnit(fld, unitsys=None) for e in elems])
+        units = sorted([e.getUnit(fld, unitsys=None) for e in elems if fld in e.fields()])
         if units[0] == units[-1]:
             elem.setUnit(fld, units[0], unitsys=None)
 

@@ -233,7 +233,7 @@ class ChannelFinderAgent(object):
         - *properties*, a list of column names for properties
         - *pvcol* default 'pv', the column name for pv
         - *tagscol* default 'tags', the column name for tags
-        - *tagsep* default ';'
+        - *sep* default ';'
 
         The default properties will have all in 'elements' and 'pvs' tables, 
         except the pv and tags columns.
@@ -251,7 +251,7 @@ class ChannelFinderAgent(object):
         proplist= kwargs.get('properties', allcols)
         pvcol = kwargs.get('pvcol', 'pv')
         tagscol = kwargs.get('tagscol', 'tags')
-        tagsep = kwargs.get('tagsep', ';')
+        sep = kwargs.get('sep', ';')
 
         icols = [i for i in range(len(c.description)) \
                  if c.description[i][0] in proplist]
@@ -259,6 +259,7 @@ class ChannelFinderAgent(object):
         ipv = allcols.index(pvcol)
         itags = allcols.index(tagscol)
         for row in c:
+            #print(row)
             pv = row[ipv]
             prpts = {}
             for i in icols:
@@ -270,12 +271,38 @@ class ChannelFinderAgent(object):
                 tags = []
             else:
                 tags = [v.strip().encode('ascii') 
-                        for v in row[itags].split(tagsep)]
+                        for v in row[itags].split(sep)]
             self.rows.append([pv, prpts, tags])
 
+        #
+        c.execute("select * from elements t1 left join pvs t2 on "
+                  "t1.id = t2.elem_id where t2.elem_id is NULL")
+        allcols = [v[0] for v in c.description]
+        # default using all columns
+        proplist= kwargs.get('properties', allcols)
+        icols = [i for i in range(len(c.description)) \
+                 if c.description[i][0] in proplist]
+
+        ipv = allcols.index(pvcol)
+        itags = allcols.index(tagscol)
+        for row in c:
+            pv, prpts = "", {}
+            for i in icols:
+                if i in [ipv, itags]: continue
+                # NULL or '' will be ignored
+                if row[i] is None or row[i] == '': continue
+                prpts[allcols[i]] = row[i]
+            if not row[itags]:
+                tags = []
+            else:
+                tags = [v.strip().encode('ascii') 
+                        for v in row[itags].split(sep)]
+            self.rows.append([pv, prpts, tags])
+        
         c.close()
         conn.close()
         self.source = fname
+        #print("Imported:\n", self.rows)
 
     def saveSqlite(self, fname, tbl = "channels"):
         """
@@ -400,6 +427,27 @@ class ChannelFinderAgent(object):
             v = ret.setdefault(r[1][key], [])
             v.append(i)
         return ret
+
+    def splitChainedElement(self, prpt, sep=";"):
+        old_rows = self.rows
+        self.rows = []
+        for i,r in enumerate(old_rows):
+            prptlst = r[1][prpt].split(sep)
+            if len(prptlst) == 1:
+                self.rows.append(r)
+                continue
+            ext = []
+            for v in prptlst:
+                ext.append([r[0], {prpt: v}, r[2]])
+            for k,v in r[1].items():
+                if k == prpt: continue
+                prptlst = v.split(sep)
+                if len(prptlst) == 1:
+                    for ei in ext: ei[1][k] = v
+                else:
+                    for j,ei in enumerate(ext): ei[1][k] = prptlst[j]
+            self.rows.extend(ext)
+        #print("New splited:\n", self.rows)
 
     def __sub__(self, rhs):
         """

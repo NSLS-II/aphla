@@ -541,16 +541,29 @@ class OrbitPlotMainWindow(QMainWindow):
         bpms = [e for e in lat.getElementList('BPM') 
                 if e not in self.physics.deadelems]
         magprof = lat.getBeamlineProfile()
-        vbpmx = aphla.element.merge(bpms, field='x')
-        p1s = self._newVelemPlots(vbpmx, 'x', "Hori. Orbit", 
-                                  lat=lat.name, mach=mach, magprof=magprof, 
-                                  c=Qt.red)
-        vbpmy = aphla.element.merge(bpms, field='y')   
-        p2s = self._newVelemPlots(vbpmy, 'y', "Vert. Orbit",
-                                  lat=lat.name, mach=mach, magprof=magprof,
-                                  c=Qt.blue)
 
-        if self.timerId is None: self.timerId = self.startTimer(self.dt)
+        errmsgs = []
+        vbpmx = aphla.element.merge(bpms, field='x')
+        if 'x' in vbpmx.fields():
+            p1s = self._newVelemPlots(vbpmx, 'x', "Hori. Orbit", 
+                                      lat=lat.name, mach=mach, magprof=magprof, 
+                                      c=Qt.red)
+        else:
+            errmsgs.append("No horizontal data from BPMs")
+
+        vbpmy = aphla.element.merge(bpms, field='y')   
+        if 'y' in vbpmy.fields():
+            p2s = self._newVelemPlots(vbpmy, 'y', "Vert. Orbit",
+                                      lat=lat.name, mach=mach, magprof=magprof,
+                                      c=Qt.blue)
+        else:
+            errmsgs.append("No vertical data from BPMs")
+
+        if errmsgs:
+            QMessageBox.critical(self, "H/V Orbit", "\n".join(errmsgs),
+                                 QMessageBox.Ok)
+        else:
+            if self.timerId is None: self.timerId = self.startTimer(self.dt)
         #print "fullname", p.fullname()
 
     def newCorrectorPlots(self):
