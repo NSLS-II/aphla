@@ -280,15 +280,11 @@
  DL01G1C03A   DRIF          0.1207   76.653      0         0          0        
  PU1G1C03A    BPM           0        76.653      0         0          0        
  DL02G1C03A   DRIF          1.04278  77.6958     0         0          0        
- CU1XG1C03ID1  TRIMX         0        77.6958     0         0          0        
- CU1YG1C03ID1  TRIMY         0        77.6958     0         0          0        
- CS1XG1C03ID1  TRIMX         0        77.6958     0         0          0        
- CS1YG1C03ID1  TRIMY         0        77.6958     0         0          0        
+ CU1G1C03ID1  TRIM         0        77.6958     0         0          0        
+ CS1G1C03ID1  TRIM         0        77.6958     0         0          0        
  IVU20G1C03C     IVU           3.0      80.6958     0         0          0      ./kickmap/U20_3m_FY09.txt
- CU2XG1C03ID2  TRIMX         0        80.6958     0         0          0        
- CU2YG1C03ID2  TRIMY         0        80.6958     0         0          0        
- CS2XG1C03ID2  TRIMX         0        80.6958     0         0          0        
- CS2YG1C03ID2  TRIMY         0        80.6958     0         0          0        
+ CU2G1C03ID2  TRIM         0        80.6958     0         0          0        
+ CS2G1C03ID2  TRIM         0        80.6958     0         0          0        
  DL07G1C03A   DRIF          1.17863  81.8744     0         0          0        
  PU4G1C03A    BPM           0        81.8744     0         0          0        
  DL08G1C03A   DRIF          0.11905  81.9935     0         0          0        
@@ -478,15 +474,11 @@
  DL02G1C05A   DRIF          2.66348  131.993     0         0          0        
  PU2G1C05A    BPM           0        131.993     0         0          0        
  DL05G1C05A   DRIF          0.55551  132.549     0         0          0        
- CU1XG1C05ID2  TRIMX         0        132.549     0         0          0        
- CU1YG1C05ID2  TRIMY         0        132.549     0         0          0        
- CS1XG1C05ID2  TRIMX         0        132.549     0         0          0        
- CS1YG1C05ID2  TRIMY         0        132.549     0         0          0        
+ CU1G1C05ID2  TRIM         0        132.549     0         0          0        
+ CS1G1C05ID2  TRIM         0        132.549     0         0          0        
  IVU21G1C05D     IVU           1.5      134.049     0         0          0   
- CU2XG1C05ID2  TRIMX         0        134.049     0         0          0        
- CU2YG1C05ID2  TRIMY         0        134.049     0         0          0        
- CS2XG1C05ID2  TRIMX         0        134.049     0         0          0        
- CS2YG1C05ID2  TRIMY         0        134.049     0         0          0        
+ CU2G1C05ID2  TRIM         0        134.049     0         0          0        
+ CS2G1C05ID2  TRIM         0        134.049     0         0          0        
  DL07G1C05A   DRIF          0.49006  134.539     0         0          0        
  PU4G1C05A    BPM           0        134.539     0         0          0        
  DL08G1C05A   DRIF          0.25211  134.791     0         0          0        
@@ -767,26 +759,18 @@
  DH01G1C08A   DRIF          0.50285  207.527     0         0          0        
  PU1G1C08A    BPM           0        207.527     0         0          0        
  DH02G1C08A   DRIF          0.07175  207.598     0         0          0        
- CU1XG1C08ID1  TRIMX         0        207.598     0         0          0        
- CU1YG1C08ID1  TRIMY         0        207.598     0         0          0        
- CS1XG1C08ID1  TRIMX         0        207.598     0         0          0        
- CS1YG1C08ID1  TRIMY         0        207.598     0         0          0        
+ CU1G1C08ID1  TRIM         0        207.598     0         0          0        
+ CS1G1C08ID1  TRIM         0        207.598     0         0          0        
  DW100G1C08U     DW           3.4      210.998     0         0          0    ./kickmap/W100_pole90mm_40div_7m_060611.txt
- CU2XG1C08ID1  TRIMX         0        210.998     0         0          0        
- CU2YG1C08ID1  TRIMY         0        210.998     0         0          0        
- CS2XG1C08ID1  TRIMX         0        210.998     0         0          0        
- CS2YG1C08ID1  TRIMY         0        210.998     0         0          0        
+ CU2G1C08ID1  TRIM         0        210.998     0         0          0        
+ CS2G1C08ID1  TRIM         0        210.998     0         0          0        
  DH04G1C08A   DRIF          0.1905   211.189     0         0          0        
  DH05G1C08A   DRIF          0.1905   211.379     0         0          0        
- CU1XG1C08ID2  TRIMX         0        211.379     0         0          0        
- CU1YG1C08ID2  TRIMY         0        211.379     0         0          0        
- CS1XG1C08ID2  TRIMX         0        211.379     0         0          0        
- CS1YG1C08ID2  TRIMY         0        211.379     0         0          0        
+ CU1G1C08ID2  TRIM         0        211.379     0         0          0        
+ CS1G1C08ID2  TRIM         0        211.379     0         0          0        
  DW100G1C08D     DW           3.4      214.779     0         0          0
- CU2XG1C08ID2  TRIMX         0        214.779     0         0          0        
- CU2YG1C08ID2  TRIMY         0        214.779     0         0          0        
- CS2XG1C08ID2  TRIMX         0        214.779     0         0          0        
- CS2YG1C08ID2  TRIMY         0        214.779     0         0          0        
+ CU2G1C08ID2  TRIM         0        214.779     0         0          0        
+ CS2G1C08ID2  TRIM         0        214.779     0         0          0        
  DH07G1C08A   DRIF          0.0872   214.866     0         0          0        
  PU4G1C08A    BPM           0        214.866     0         0          0        
  DH08G1C08A   DRIF          0.61609  215.483     0         0          0        
@@ -975,15 +959,11 @@
  DH01G1C10A   DRIF          0.26632  260.087     0         0          0        
  PU1G1C10A    BPM           0        260.087     0         0          0        
  DH02G1C10A   DRIF          2.39878  262.486     0         0          0        
- CU1XG1C10ID1  TRIMX         0        262.486     0         0          0        
- CU1YG1C10ID1  TRIMY         0        262.486     0         0          0        
- CS1XG1C10ID1  TRIMX         0        262.486     0         0          0        
- CS1YG1C10ID1  TRIMY         0        262.486     0         0          0        
+ CU1G1C10ID1  TRIM         0        262.486     0         0          0        
+ CS1G1C10ID1  TRIM         0        262.486     0         0          0        
  IVU22G1C10C     IVU           3.0      265.486     0         0          0        
- CU2XG1C10ID2  TRIMX         0        265.486     0         0          0        
- CU2YG1C10ID2  TRIMY         0        265.486     0         0          0        
- CS2XG1C10ID2  TRIMX         0        265.486     0         0          0        
- CS2YG1C10ID2  TRIMY         0        265.486     0         0          0        
+ CU2G1C10ID2  TRIM         0        265.486     0         0          0        
+ CS2G1C10ID2  TRIM         0        265.486     0         0          0        
  DH07G1C10A   DRIF          2.52858  268.015     0         0          0        
  PU4G1C10A    BPM           0        268.015     0         0          0        
  DH08G1C10A   DRIF          0.26521  268.28      0         0          0        
@@ -1080,15 +1060,11 @@
  DL01G1C11A   DRIF          0.1207   287.842     0         0          0        
  PU1G1C11A    BPM           0        287.842     0         0          0        
  DL02G1C11A   DRIF          1.04278  288.885     0         0          0        
- CU1XG1C11ID1  TRIMX         0        288.885     0         0          0        
- CU1YG1C11ID1  TRIMY         0        288.885     0         0          0        
- CS1XG1C11ID1  TRIMX         0        288.885     0         0          0        
- CS1YG1C11ID1  TRIMY         0        288.885     0         0          0        
+ CU1G1C11ID1  TRIM         0        288.885     0         0          0        
+ CS1G1C11ID1  TRIM         0        288.885     0         0          0        
  IVU20G1C11C     IVU           3.0      291.885     0         0          0  
- CU2XG1C11ID2  TRIMX         0        291.885     0         0          0        
- CU2YG1C11ID2  TRIMY         0        291.885     0         0          0        
- CS2XG1C11ID2  TRIMX         0        291.885     0         0          0        
- CS2YG1C11ID2  TRIMY         0        291.885     0         0          0        
+ CU2G1C11ID2  TRIM         0        291.885     0         0          0        
+ CS2G1C11ID2  TRIM         0        291.885     0         0          0        
  DL07G1C11A   DRIF          1.17863  293.063     0         0          0        
  PU4G1C11A    BPM           0        293.063     0         0          0        
  DL08G1C11A   DRIF          0.11905  293.182     0         0          0        
@@ -1737,26 +1713,18 @@
  DH01G1C18A   DRIF          0.50285  471.513     0         0          0        
  PU1G1C18A    BPM           0        471.513     0         0          0        
  DH02G1C18A   DRIF          0.07175  471.584     0         0          0        
- CU1XG1C18ID1  TRIMX         0        471.584     0         0          0        
- CU1YG1C18ID1  TRIMY         0        471.584     0         0          0        
- CS1XG1C18ID1  TRIMX         0        471.584     0         0          0        
- CS1YG1C18ID1  TRIMY         0        471.584     0         0          0        
+ CU1G1C18ID1  TRIM         0        471.584     0         0          0        
+ CS1G1C18ID1  TRIM         0        471.584     0         0          0        
  DW100G1C18U     DW           3.4      474.984     0         0          0        
- CU2XG1C18ID1  TRIMX         0        474.984     0         0          0        
- CU2YG1C18ID1  TRIMY         0        474.984     0         0          0        
- CS2XG1C18ID1  TRIMX         0        474.984     0         0          0        
- CS2YG1C18ID1  TRIMY         0        474.984     0         0          0        
+ CU2G1C18ID1  TRIM         0        474.984     0         0          0        
+ CS2G1C18ID1  TRIM         0        474.984     0         0          0        
  DH04G1C18A   DRIF          0.1905   475.175     0         0          0        
  DH05G1C18A   DRIF          0.1905   475.365     0         0          0        
- CU1XG1C18ID2  TRIMX         0        475.365     0         0          0        
- CU1YG1C18ID2  TRIMY         0        475.365     0         0          0        
- CS1XG1C18ID2  TRIMX         0        475.365     0         0          0        
- CS1YG1C18ID2  TRIMY         0        475.365     0         0          0        
+ CU1G1C18ID2  TRIM         0        475.365     0         0          0        
+ CS1G1C18ID2  TRIM         0        475.365     0         0          0        
  DW100G1C18D     DW           3.4      478.765     0         0          0        
- CU2XG1C18ID2  TRIMX         0        478.765     0         0          0        
- CU2YG1C18ID2  TRIMY         0        478.765     0         0          0        
- CS2XG1C18ID2  TRIMX         0        478.765     0         0          0        
- CS2YG1C18ID2  TRIMY         0        478.765     0         0          0        
+ CU2G1C18ID2  TRIM         0        478.765     0         0          0        
+ CS2G1C18ID2  TRIM         0        478.765     0         0          0        
  DH07G1C18A   DRIF          0.0872   478.852     0         0          0        
  PU4G1C18A    BPM           0        478.852     0         0          0        
  DH08G1C18A   DRIF          0.61609  479.469     0         0          0        
@@ -2219,26 +2187,18 @@
  DFT2         DRIF          0.051    604.409     0         0          0        
  DLDK         DRIF          0.095    604.504     0         0          0        
  DL01G1C23A   DRIF          0.45848  604.963     0         0          0        
- CU1XG1C23ID1  TRIMX         0        604.963     0         0          0        
- CU1YG1C23ID1  TRIMY         0        604.963     0         0          0        
- CS1XG1C23ID1  TRIMX         0        604.963     0         0          0        
- CS1YG1C23ID1  TRIMY         0        604.963     0         0          0        
+ CU1G1C23ID1  TRIM         0        604.963     0         0          0        
+ CS1G1C23ID1  TRIM         0        604.963     0         0          0        
  EPU49G1C23U      EPU          2        606.963     0         0          0     ./kickmap/EU49_2m_ver.txt       
- CU2XG1C23ID1  TRIMX         0        606.963     0         0          0        
- CU2YG1C23ID1  TRIMY         0        606.963     0         0          0        
- CS2XG1C23ID1  TRIMX         0        606.963     0         0          0        
- CS2YG1C23ID1  TRIMY         0        606.963     0         0          0        
+ CU2G1C23ID1  TRIM         0        606.963     0         0          0        
+ CS2G1C23ID1  TRIM         0        606.963     0         0          0        
  DL04G1C23A   DRIF          0.205    607.168     0         0          0        
  DL05G1C23A   DRIF          0.28     607.448     0         0          0        
- CU1XG1C23ID2  TRIMX         0        607.448     0         0          0        
- CU1YG1C23ID2  TRIMY         0        607.448     0         0          0        
- CS1XG1C23ID2  TRIMX         0        607.448     0         0          0        
- CS1YG1C23ID2  TRIMY         0        607.448     0         0          0        
+ CU1G1C23ID2  TRIM         0        607.448     0         0          0        
+ CS1G1C23ID2  TRIM         0        607.448     0         0          0        
  EPU49G1C23D     EPU           2        609.448     0         0          0       
- CU2XG1C23ID2  TRIMX         0        609.448     0         0          0        
- CU2YG1C23ID2  TRIMY         0        609.448     0         0          0        
- CS2XG1C23ID2  TRIMX         0        609.448     0         0          0        
- CS2YG1C23ID2  TRIMY         0        609.448     0         0          0        
+ CU2G1C23ID2  TRIM         0        609.448     0         0          0        
+ CS2G1C23ID2  TRIM         0        609.448     0         0          0        
  DL07G1C23A   DRIF          0.51768  609.965     0         0          0        
  DLDK         DRIF          0.095    610.06      0         0          0        
  DFT2         DRIF          0.051    610.111     0         0          0        
@@ -2701,26 +2661,18 @@
  DH01G1C28A   DRIF          0.50285  735.499     0         0          0        
  PU1G1C28A    BPM           0        735.499     0         0          0        
  DH02G1C28A   DRIF          0.07175  735.57      0         0          0        
- CU1XG1C28ID1  TRIMX         0        735.57      0         0          0        
- CU1YG1C28ID1  TRIMY         0        735.57      0         0          0        
- CS1XG1C28ID1  TRIMX         0        735.57      0         0          0        
- CS1YG1C28ID1  TRIMY         0        735.57      0         0          0        
+ CU1G1C28ID1  TRIM         0        735.57      0         0          0        
+ CS1G1C28ID1  TRIM         0        735.57      0         0          0        
  DW100G1C28U      DW          3.4      738.97      0         0          0        
- CU2XG1C28ID1  TRIMX         0        738.97      0         0          0        
- CU2YG1C28ID1  TRIMY         0        738.97      0         0          0        
- CS2XG1C28ID1  TRIMX         0        738.97      0         0          0        
- CS2YG1C28ID1  TRIMY         0        738.97      0         0          0        
+ CU2G1C28ID1  TRIM         0        738.97      0         0          0        
+ CS2G1C28ID1  TRIM         0        738.97      0         0          0        
  DH04G1C28A   DRIF          0.1905   739.161     0         0          0        
  DH05G1C28A   DRIF          0.1905   739.351     0         0          0        
- CU1XG1C28ID2  TRIMX         0        739.351     0         0          0        
- CU1YG1C28ID2  TRIMY         0        739.351     0         0          0        
- CS1XG1C28ID2  TRIMX         0        739.351     0         0          0        
- CS1YG1C28ID2  TRIMY         0        739.351     0         0          0        
+ CU1G1C28ID2  TRIM         0        739.351     0         0          0        
+ CS1G1C28ID2  TRIM         0        739.351     0         0          0        
  DW100G1C28D      DW          3.4      742.751     0         0          0        
- CU2XG1C28ID2  TRIMX         0        742.751     0         0          0        
- CU2YG1C28ID2  TRIMY         0        742.751     0         0          0        
- CS2XG1C28ID2  TRIMX         0        742.751     0         0          0        
- CS2YG1C28ID2  TRIMY         0        742.751     0         0          0        
+ CU2G1C28ID2  TRIM         0        742.751     0         0          0        
+ CS2G1C28ID2  TRIM         0        742.751     0         0          0        
  DH07G1C28A   DRIF          0.0872   742.839     0         0          0        
  PU4G1C28A    BPM           0        742.839     0         0          0        
  DH08G1C28A   DRIF          0.61609  743.455     0         0          0        

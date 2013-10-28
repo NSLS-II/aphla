@@ -19,6 +19,7 @@ from ..apdata import *
 from ..lattice import Lattice
 from ..chanfinder import ChannelFinderAgent
 from ..resource import getResource
+from .. import catools
 
 import os
 import glob
@@ -527,3 +528,61 @@ def machines():
     return [d for d in resource_listdir(__name__, ".") 
             if resource_isdir(__name__, d)]
 
+def _saveSnapshot0(fname, lat = None):
+    """the general version"""
+    latobj = _lat
+    if lat is not None: latobj = _lattice_dict.get(lat, None)
+    if latobj is None:
+        raise RuntimeError("Lattice '{0}' is not found".format(lat))
+    
+    dscalar, dvec = [], []
+    for elem in latobj._elements:
+        for fld in elem.fields():
+            d = elem.get(fld, unitsys=None)
+            if isinstance(d, (int, float,)):
+                dscalar.append((elem.name, fld, d,))
+            else:
+                try:
+                    dvec.append((elem.name, fld, tuple(d)))
+                except:
+                    print("WARNING: unknown data format '{0}.{1}'. "
+                          "Ignored".format(elem.name, fld))
+
+    saveSnapshotH5(fname, dscalar, dvec)
+
+def _saveSnapshotCa(fname, lat = None):
+    """channel access"""
+    import datetime
+    t0 = datetime.datetime.now()
+    latobj = _lat
+    if lat is not None: latobj = _lattice_dict.get(lat, None)
+    if latobj is None:
+        raise RuntimeError("Lattice '{0}' is not found".format(lat))
+    
+    elems, pvlst = [], []
+    for elem in latobj._elements:
+        for fld in elem.fields():
+            pvrbl = elem.pv(field=fld, handle="readback")
+            if len(pvrbl) == 0:
+                pvrb = ''
+            elif len(pvrbl) == 1:
+                pvrb = pvrbl[0]
+            else:
+                pvrb = pvrbl
+
+            pvspl = elem.pv(field=fld, handle="setpoint")
+            if len(pvspl) == 0:
+                pvsp = ''
+            elif len(pvspl) == 1:
+                pvsp = pvspl[0]
+            else:
+                pvsp = pvspl
+
+            elems.append([elem.name, fld])
+            pvlst.append([pvsp, pvrb])
+
+    t1 = datetime.datetime.now()
+    print("PV prepare dt= {0} s".format((t1-t0).seconds))
+    catools.caSnapshot(fname, _lat.name, elems, pvlst)
+    t2 = datetime.datetime.now()
+    print("total dt= {0} s".format((t2-t0).seconds))

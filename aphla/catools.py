@@ -84,24 +84,37 @@ def caget(pvs, timeout=1, datatype=None, format=ct.FORMAT_RAW,
     if CA_OFFLINE: return _ca_get_sim(pvs)
 
     if isinstance(pvs, str):
-        pvs2 = pvs
+        return ct.caget(pvs, timeout=timeout, datatype=datatype,
+                        format=format, count=count, throw=throw)
     elif isinstance(pvs, unicode):
         pvs2 = pvs.encode("ascii")
+        return ct.caget(pvs2, timeout=timeout, datatype=datatype,
+                        format=format, count=count, throw=throw)
     elif isinstance(pvs, (tuple, list)):
-        pvs2 = [pv.encode("ascii") for pv in pvs]
+        pvs2 = [pv.encode("ascii") for pv in pvs if pv]
+        dr = ct.caget(pvs2, timeout=timeout, datatype=datatype,
+                      format=format, count=count, throw=throw)
+        if len(pvs2) == len(pvs): return [v for v in dr]
+
+        j, rt = 0, []
+        for i,pv in enumerate(pvs):
+            if not pv: 
+                rt.append(None)
+                continue
+            rt.append(dr[j])
+            j += 1
+        return rt
     else:
         raise ValueError("Unknown type " + str(type(pvs)))
 
-    try:
-        return ct.caget(pvs2, timeout=timeout, datatype=datatype,
-                        format=format, count=count, throw=throw)
-    except:
-        if os.environ.get('APHLAS_DISABLE_CA', 0):
-            print "TIMEOUT: reading", pvs
-            if isinstance(pvs, (unicode, str)): return 0.0
-            else: return [0.0] * len(pvs2)
-        else:
-            raise
+def cagetr(pvs, **kwargs):
+    """caget recursive version"""
+    if not pvs: return None
+    if isinstance(pvs, (str, unicode)): return caget(pvs, **kwargs)
+    if all([isinstance(pv, (str, unicode)) or pv is None for pv in pvs]):
+        return caget(pvs, **kwargs)
+    return [cagetr(pv, **kwargs) for pv in pvs]
+
 
 def caput(pvs, values, timeout=2, wait=True, throw=True):
     """channel access write.
@@ -317,3 +330,83 @@ def caRmCorrect(resp, kker, m, **kwarg):
     else:
         return (0, None)
 
+def caSnapshot(fname, group, elems, pvlst):
+    import h5py, datetime
+    t0 = datetime.datetime.now()
+    scalar, vector, ignored = [], [], []
+    dat = cagetr(pvlst)
+    t1 = datetime.datetime.now()
+    print("CAIO dt= {0} us".format((t1-t0).microseconds))
+
+    f = h5py.File(fname, "w")
+    grp = f.create_group(group)
+    wfdt = np.dtype([("setpoint", 'd'), ('readback', 'd')])
+
+    for i,d in enumerate(dat):
+        #print(elems[i], pvlst[i], d)
+        wfds = "wf_%s.%s" % (elems[i][0], elems[i][1])
+        # d is a list of RB and SP
+        if d[0] is None and d[1] is None: 
+            # funny situation
+            ignored.extend([elems[i], pvlst[i]])
+        elif d[0] is not None and d[1] is not None:
+            if isinstance(d[0], (int, float)):
+                scalar.append((elems[i][0], elems[i][1],
+                               pvlst[i][0], d[0],
+                               pvlst[i][1], d[1]))
+            elif isinstance(d[0], str):
+                raise RuntimeError("str not supported yet")
+            elif isinstance(d[0], (list, np.ndarray)) and \
+                    all([isinstance(v, (int, float)) for v in d[0]]) and \
+                    all([isinstance(v, (int, float)) for v in d[1]]):
+                #vector.append([elems[i], tuple(d[0]), tuple(d[1])])
+                grp[wfds] = np.array(zip(d), dtype=wfdt)
+            elif isinstance(d[0], (list, np.ndarray)) and \
+                    all([isinstance(v, str) for v in d[0]]) and \
+                    all([isinstance(v, str) for v in d[1]]):
+                #vector.append([elems[i], tuple(d[0]), tuple(d[1])])
+                grp[wfds] = np.array(d)
+
+        elif d[0] is None:
+            if isinstance(d[1], (int, float)):
+                scalar.append((elems[i][0], elems[i][1],
+                               pvlst[i][0], None,
+                               pvlst[i][1], d[1]))
+            elif isinstance(d[1], (list, np.ndarray)) and \
+                    all([isinstance(v, (int, float)) for v in d[1]]):
+                print elems[i], pvlst[i]
+                grp[wfds] = np.array([(None, v) for v in d[1]], dtype=wfdt)
+            elif isinstance(d[1], (list, np.ndarray)) and \
+                    all([isinstance(v, str) for v in d[1]]):
+                grp[wfds] = np.array([('', v) for v in d[1]],
+                                     dtype=np.dtype([('setpoint', 'S64'), 
+                                                     ('readback', 'S64')]))
+        elif d[1] is None:
+            if isinstance(d[0], (int, float)):
+                scalar.append((elems[i][0], elems[i][1],
+                               pvlst[i][0], d[0],
+                               pvlst[i][1], None))
+            elif isinstance(d[0], (list, np.ndarray)) and \
+                    all([isinstance(v, (int, float)) for v in d[0]]):
+                dtmp = np.zeros((len(d[0]), 2), 'd')
+                dtmp[:,0], dtmp[:,1] = d[0], None
+                grp[wfds] = np.array(dtmp, dtype=wfdt)
+            elif isinstance(d[0], (list, np.ndarray)) and \
+                    all([isinstance(v, str) for v in d[0]]):
+                grp[wfds] = np.array([('', v) for v in d[0]])
+
+    t2 = datetime.datetime.now()
+    print("Filter: dt= {0} us".format((t2-t1).microseconds))
+    N1 = max([len(v[0]) for v in scalar])
+    N2 = max([len(v[1]) for v in scalar])
+    dt = np.dtype([('element', "S%d" % N1), ('field', "S%d" % N2),
+                   ('pvsp', "S64"), ("setpoint", 'd'),
+                   ('pvrb', "S64"), ('readback', 'd')])
+    for i,v in enumerate(scalar):
+        print(i, v)
+    d = np.array(scalar, dtype=dt)
+    grp["_scalar_"] = d
+    f.close()
+    t3 = datetime.datetime.now()
+    print("H5io: dt= {0} us".format((t3-t2).microseconds))
+    

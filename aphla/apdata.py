@@ -6,7 +6,7 @@
 
 """
 
-__all__ = ['OrmData', 'TwissData']
+__all__ = ['OrmData', 'TwissData', 'saveSnapshotH5']
 
 import os
 from os.path import splitext
@@ -750,7 +750,8 @@ def createLatticePvDb(dbfname, csv2fname = None):
     conn.commit()
 
     c.execute("""CREATE TABLE pvs
-                 (pv TEXT PRIMARY KEY,
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  pv TEXT,
                   elemHandle TEXT,
                   elemField  TEXT,
                   hostName   TEXT,
@@ -765,6 +766,22 @@ def createLatticePvDb(dbfname, csv2fname = None):
     conn.commit()
     conn.close()
     if csv2fname is not None: updateLatticePvDb(dbfname, csv2fname)
+
+
+def saveSnapshotH5(fname, dscalar, dvector):
+    N1 = max([len(v[0]) for v in dscalar])
+    N2 = max([len(v[1]) for v in dscalar])
+    dt = np.dtype([('element', "S%d" % N1),
+                   ('field', "S%d" % N2), ("value", 'd')])
+    d = np.array(dscalar, dtype=dt)
+    f = h5py.File(fname, 'w')
+    grp = f.create_group("scalar")
+    grp["data"] = d
+    grp = f.create_group("waveform")
+    for v in dvector:
+        grp["%s.%s" % (v[0], v[1])] = v[2]
+    f.close()
+    pass
 
 
 if __name__ == "__main__":
