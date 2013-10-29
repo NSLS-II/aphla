@@ -349,10 +349,16 @@ def save_lat_epics(fname, lat, group = None, mode='a'):
     #print datnames
     allpvs = [v[3] for v in datnames]
     alldat = caget(allpvs, format=FORMAT_TIME)
-    scalars = []
+    scalars, dead = [], []
+    sz_name, sz_fld, sz_pv = 0, 0, 0
     for i,dat in enumerate(alldat):
         name, fld, rb, pv = datnames[i][:4]
-        if isinstance(dat, cothread.dbr.ca_array):
+        if len(name) > sz_name: sz_name = len(name)
+        if len(fld) > sz_fld: sz_fld = len(fld)
+        if len(pv) > sz_pv: sz_pv = len(pv)
+        if not dat.ok:
+            dead.append((name,fld,rb,pv,np.nan, 0.0, ""))
+        elif isinstance(dat, cothread.dbr.ca_array):
             dsname = "wf_{0}.{1}_{2}".format(name,fld,rb)
             grp[dsname] = dat
             grp[dsname].attrs["element"] = name
@@ -366,9 +372,6 @@ def save_lat_epics(fname, lat, group = None, mode='a'):
                             str(dat.datetime)))
 
     if not scalars: return
-    sz_name = max([len(v[0]) for v in scalars])
-    sz_fld  = max([len(v[1]) for v in scalars])
-    sz_pv   = max([len(v[3]) for v in scalars])
 
     dt = np.dtype([("element", 'S%d' % sz_name),
                    ('field', 'S%d' % sz_fld),
@@ -378,6 +381,7 @@ def save_lat_epics(fname, lat, group = None, mode='a'):
                    ('timestamp', 'd'),
                    ('datetime', 'S32')])
     grp["__scalars__"] = np.array(scalars, dtype=dt)
+    grp["__dead__"] = np.array(dead, dtype=dt)
     h5f.close()
 
 
