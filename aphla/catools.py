@@ -330,83 +330,54 @@ def caRmCorrect(resp, kker, m, **kwarg):
     else:
         return (0, None)
 
-def caSnapshot(fname, group, elems, pvlst):
-    import h5py, datetime
-    t0 = datetime.datetime.now()
-    scalar, vector, ignored = [], [], []
-    dat = cagetr(pvlst)
-    t1 = datetime.datetime.now()
-    print("CAIO dt= {0} us".format((t1-t0).microseconds))
+def save_lat_epics(fname, lat, group = None, mode='a'):
+    import h5py
+    h5f = h5py.File(fname, mode)
+    if not group: grp = h5f.create_group(lat.name)
+    else: grp = h5f.create_group(group)
 
-    f = h5py.File(fname, "w")
-    grp = f.create_group(group)
-    wfdt = np.dtype([("setpoint", 'd'), ('readback', 'd')])
+    # get the pv list
+    datnames = []
+    for e in lat.getElementList('*', virtual=False):
+        print e
+        for k in e.fields():
+            for hdl,tag in [('readback', 0), ('setpoint', 1)]:
+                pvs = [s.encode("ascii") for s in e.pv(field=k, handle=hdl)]
+                if not pvs: continue
+                for pv in pvs:
+                    datnames.append((e.name, k, tag, pv))
+    #print datnames
+    allpvs = [v[3] for v in datnames]
+    alldat = caget(allpvs, format=FORMAT_TIME)
+    scalars = []
+    for i,dat in enumerate(alldat):
+        name, fld, rb, pv = datnames[i][:4]
+        if isinstance(dat, cothread.dbr.ca_array):
+            dsname = "wf_{0}.{1}_{2}".format(name,fld,rb)
+            grp[dsname] = dat
+            grp[dsname].attrs["element"] = name
+            grp[dsname].attrs["field"] = fld
+            grp[dsname].attrs["pv"] = pv
+            grp[dsname].attrs["rw"] = rb
+            grp[dsname].attrs["datetime"] = str(dat.datetime)
+            grp[dsname].attrs["timestamp"] = dat.timestamp
+        else:
+            scalars.append((name,fld,rb,pv,dat, dat.timestamp,
+                            str(dat.datetime)))
 
-    for i,d in enumerate(dat):
-        #print(elems[i], pvlst[i], d)
-        wfds = "wf_%s.%s" % (elems[i][0], elems[i][1])
-        # d is a list of RB and SP
-        if d[0] is None and d[1] is None: 
-            # funny situation
-            ignored.extend([elems[i], pvlst[i]])
-        elif d[0] is not None and d[1] is not None:
-            if isinstance(d[0], (int, float)):
-                scalar.append((elems[i][0], elems[i][1],
-                               pvlst[i][0], d[0],
-                               pvlst[i][1], d[1]))
-            elif isinstance(d[0], str):
-                raise RuntimeError("str not supported yet")
-            elif isinstance(d[0], (list, np.ndarray)) and \
-                    all([isinstance(v, (int, float)) for v in d[0]]) and \
-                    all([isinstance(v, (int, float)) for v in d[1]]):
-                #vector.append([elems[i], tuple(d[0]), tuple(d[1])])
-                grp[wfds] = np.array(zip(d), dtype=wfdt)
-            elif isinstance(d[0], (list, np.ndarray)) and \
-                    all([isinstance(v, str) for v in d[0]]) and \
-                    all([isinstance(v, str) for v in d[1]]):
-                #vector.append([elems[i], tuple(d[0]), tuple(d[1])])
-                grp[wfds] = np.array(d)
+    if not scalars: return
+    sz_name = max([len(v[0]) for v in scalars])
+    sz_fld  = max([len(v[1]) for v in scalars])
+    sz_pv   = max([len(v[3]) for v in scalars])
 
-        elif d[0] is None:
-            if isinstance(d[1], (int, float)):
-                scalar.append((elems[i][0], elems[i][1],
-                               pvlst[i][0], None,
-                               pvlst[i][1], d[1]))
-            elif isinstance(d[1], (list, np.ndarray)) and \
-                    all([isinstance(v, (int, float)) for v in d[1]]):
-                print elems[i], pvlst[i]
-                grp[wfds] = np.array([(None, v) for v in d[1]], dtype=wfdt)
-            elif isinstance(d[1], (list, np.ndarray)) and \
-                    all([isinstance(v, str) for v in d[1]]):
-                grp[wfds] = np.array([('', v) for v in d[1]],
-                                     dtype=np.dtype([('setpoint', 'S64'), 
-                                                     ('readback', 'S64')]))
-        elif d[1] is None:
-            if isinstance(d[0], (int, float)):
-                scalar.append((elems[i][0], elems[i][1],
-                               pvlst[i][0], d[0],
-                               pvlst[i][1], None))
-            elif isinstance(d[0], (list, np.ndarray)) and \
-                    all([isinstance(v, (int, float)) for v in d[0]]):
-                dtmp = np.zeros((len(d[0]), 2), 'd')
-                dtmp[:,0], dtmp[:,1] = d[0], None
-                grp[wfds] = np.array(dtmp, dtype=wfdt)
-            elif isinstance(d[0], (list, np.ndarray)) and \
-                    all([isinstance(v, str) for v in d[0]]):
-                grp[wfds] = np.array([('', v) for v in d[0]])
+    dt = np.dtype([("element", 'S%d' % sz_name),
+                   ('field', 'S%d' % sz_fld),
+                   ('rw', 'i'), 
+                   ('pv', 'S%d' % sz_pv),
+                   ('value', 'd'),
+                   ('timestamp', 'd'),
+                   ('datetime', 'S32')])
+    grp["__scalars__"] = np.array(scalars, dtype=dt)
+    h5f.close()
 
-    t2 = datetime.datetime.now()
-    print("Filter: dt= {0} us".format((t2-t1).microseconds))
-    N1 = max([len(v[0]) for v in scalar])
-    N2 = max([len(v[1]) for v in scalar])
-    dt = np.dtype([('element', "S%d" % N1), ('field', "S%d" % N2),
-                   ('pvsp', "S64"), ("setpoint", 'd'),
-                   ('pvrb', "S64"), ('readback', 'd')])
-    for i,v in enumerate(scalar):
-        print(i, v)
-    d = np.array(scalar, dtype=dt)
-    grp["_scalar_"] = d
-    f.close()
-    t3 = datetime.datetime.now()
-    print("H5io: dt= {0} us".format((t3-t2).microseconds))
-    
+

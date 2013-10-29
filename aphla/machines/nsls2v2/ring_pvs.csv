@@ -3069,22 +3069,22 @@ V:2-SR:C30-MG:G1{FXH1:3652}Fld:SP,3652,V:2-SR,C30,G1,setpoint,FXH1G1C30A,,Horizo
 V:2-SR:C30-MG:G1{FXH1:3652}Fld:I,3652,V:2-SR,C30,G1,readback,FXH1G1C30A,,Horizontal Corrector
 V:2-SR:C30-MG:G1{FYH1:3653}Fld:SP,3653,V:2-SR,C30,G1,setpoint,FYH1G1C30A,,Vertical Corrector
 V:2-SR:C30-MG:G1{FYH1:3653}Fld:I,3653,V:2-SR,C30,G1,readback,FYH1G1C30A,,Vertical Corrector
-V:2-SR-BI{TUNE}X-I,,V:2-SR,,,readback,tune,x,
-V:2-SR-BI{TUNE}Y-I,,V:2-SR,,,readback,tune,y,
-V:2-SR-BI{ALPHA}X-I,,V:2-SR,,,readback,twiss,alphax,
-V:2-SR-BI{ALPHA}Y-I,,V:2-SR,,,readback,twiss,alphay,
-V:2-SR-BI{BETA}X-I,,V:2-SR,,,readback,twiss,betax,
-V:2-SR-BI{BETA}Y-I,,V:2-SR,,,readback,twiss,betay,
-V:2-SR-BI{ETA}X-I,,V:2-SR,,,readback,twiss,etax,
-V:2-SR-BI{ETA}Y-I,,V:2-SR,,,readback,twiss,etay,
-V:2-SR-BI{PHI}X-I,,V:2-SR,,,readback,twiss,phix,
-V:2-SR-BI{PHI}Y-I,,V:2-SR,,,readback,twiss,phiy,
-V:2-SR-BI{ORBIT}X-I,,V:2-SR,,,readback,orbit,x,
-V:2-SR-BI{ORBIT}Y-I,,V:2-SR,,,readback,orbit,y,
-V:2-SR-BI{POS}-I,,V:2-SR,,,readback,twiss,s,
-V:2-SR-BI{NAME}-I,,V:2-SR,,,readback,twiss,names,
-V:2-SR-BI{DCCT}CUR-I,,V:2-SR,,,readback,dcct,value,DCCT
-V:2-SR:C30-RF:G1{CAV:3656}Freq:I,,V:2-SR,,,readback,rfcavity,f,RFCAVITY
-V:2-SR:C30-RF:G1{CAV:3656}Freq:SP,,V:2-SR,,,setpoint,rfcavity,f,RFCAVITY
-V:2-SR:C30-RF:G1{CAV:3656}Volt:I,,V:2-SR,,,readback,rfcavity,v,RFCAVITY 
-V:2-SR:C30-RF:G1{CAV:3656}Volt:SP,,V:2-SR,,,setpoint,rfcavity,v,RFCAVITY 
+V:2-SR-BI{TUNE}X-I,-1,V:2-SR,,,readback,twiss,TUNEX,
+V:2-SR-BI{TUNE}Y-I,-1,V:2-SR,,,readback,twiss,TUNEY,
+V:2-SR-BI{ALPHA}X-I,-1,V:2-SR,,,readback,twiss,ALPHAX,
+V:2-SR-BI{ALPHA}Y-I,-1,V:2-SR,,,readback,twiss,ALPHAY,
+V:2-SR-BI{BETA}X-I,-1,V:2-SR,,,readback,twiss,BETAX,
+V:2-SR-BI{BETA}Y-I,-1,V:2-SR,,,readback,twiss,BETAY,
+V:2-SR-BI{ETA}X-I,-1,V:2-SR,,,readback,twiss,ETAX,
+V:2-SR-BI{ETA}Y-I,-1,V:2-SR,,,readback,twiss,ETAY,
+V:2-SR-BI{PHI}X-I,-1,V:2-SR,,,readback,twiss,PHIX,
+V:2-SR-BI{PHI}Y-I,-1,V:2-SR,,,readback,twiss,PHIY,
+V:2-SR-BI{ORBIT}X-I,-1,V:2-SR,,,readback,twiss,ORBITX,
+V:2-SR-BI{ORBIT}Y-I,-1,V:2-SR,,,readback,twiss,ORBITY,
+V:2-SR-BI{POS}-I,-1,V:2-SR,,,readback,twiss,S,
+V:2-SR-BI{NAME}-I,-1,V:2-SR,,,readback,twiss,NAME,
+V:2-SR-BI{DCCT}CUR-I,-2,V:2-SR,,,readback,dcct,current,DCCT
+V:2-SR:C30-RF:G1{CAV:3656}Freq:I,3656,V:2-SR,,,readback,RF,f,Cavity
+V:2-SR:C30-RF:G1{CAV:3656}Freq:SP,3656,V:2-SR,,,setpoint,RF,f,Cavity
+V:2-SR:C30-RF:G1{CAV:3656}Volt:I,3656,V:2-SR,,,readback,RF,v,Cavity 
+V:2-SR:C30-RF:G1{CAV:3656}Volt:SP,3656,V:2-SR,,,setpoint,RF,v,Cavity 

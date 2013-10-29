@@ -16,7 +16,10 @@ import sqlite3
 import argparse
 import aphla as ap
 
-mp = {("Beam Position Monitor", "X"): ("BPM", "x"),
+# change element type and field
+mp = {("Horizontal Corrector", ""): ("COR", "x"),
+      ("Vertical Corrector", ""): ("COR", "y"),
+      ("Beam Position Monitor", "X"): ("BPM", "x"),
       ("Beam Position Monitor", "Y"): ("BPM", "y"),
       ("Bending", "T"): ("BEND", "b0"),
       ("Quadrupole", "K"): ("QUAD", "b1"),
@@ -39,11 +42,12 @@ mp = {("Beam Position Monitor", "X"): ("BPM", "x"),
       ("", "ORBITX"): ("orbit", "x"),
       ("", "ORBITY"): ("orbit", "y"),
       ("", "S"): ("twiss", "s"),
+      ("DCCT", "current"): ("DCCT", "current"),
       }
 
 #pv_twiss_s = None
 
-def import_pvs(dbf, src):
+def import_pvs(dbf, src, latname):
     sp = ","
     lines = open(src, 'r').readlines()
     head = [v.strip() for v in lines[0].split(sp)]
@@ -80,7 +84,9 @@ def import_pvs(dbf, src):
                   """elemField=?,elem_id=(select id from elements """
                   """where elemIndex=?) where pv=?""", (
                 elemfield,elemidx, pvname,)) 
-    
+        if latname: c.execute("""UPDATE pvs set tags=? where pv=?""",
+                              ("aphla.sys." + latname, pvname))
+
     msg = "[%s] updated pvs with '%s'" % (__name__, src)
     c.execute("""insert into info(timestamp,name,value)
                  values (datetime('now'), "log", ? )""", (msg,))
@@ -88,7 +94,7 @@ def import_pvs(dbf, src):
     conn.close()
     pass
 
-def import_elements(dbf, src):
+def import_elements(dbf, src, latname):
     sp = ","
     lines = open(src, 'r').readlines()
     head = [v.strip() for v in lines[0].split(sp)]
@@ -114,11 +120,12 @@ def import_elements(dbf, src):
     elr = []
     for elem,lst in elem_fam.items():
         if len(lst) == 1:
-            elr.append([elem.lower(), lst[0], "", "", ""])
+            elr.append([elem.lower(), int(lst[0]), "", "", ""])
         elif len(lst) > 1:
             for j,k in enumerate(lst):
                 newname = "%s:%s" % (elem.lower(), j)
                 elr.append([newname, k, elem.upper(), "", ""])
+    for e in elr: print e
     conn = sqlite3.connect(dbf)
     # save byte string instead of the default unicode
     conn.text_factory = str
@@ -133,8 +140,10 @@ def import_elements(dbf, src):
     for line in lines[1:]:
         r = [v.strip() for v in line.split(sp)]
         elemidx0 = r[iidx]
+        print r
         elemtype, elemfield = mp[(r[itype], r[ifield])]
-        system = r[isys]
+        if latname: system = latname
+        else: system = r[isys]
         c.execute("""update elements set """
                   """elemType=?,system=?,cell=?,girder=? """
                   """where elemIndex=?""", (
@@ -223,17 +232,20 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group()
     parser.add_argument('dbf', metavar='dbfile', type=str, 
                    help='a SQLite file')
+    parser.add_argument('--lattice', type=str, 
+                        help="lattice name")
     group.add_argument('--csv', type=str, 
                        help="update with csv file (table)")
     parser.add_argument('-s', '--update-s', action="store_true", 
                         help="update s location from EPICS")
+
     
     arg = parser.parse_args()
 
     if arg.csv and arg.dbf:
         ap.apdata.createLatticePvDb(arg.dbf, None)
-        import_elements(arg.dbf, arg.csv)
-        import_pvs(arg.dbf, arg.csv)
+        import_elements(arg.dbf, arg.csv, arg.lattice)
+        import_pvs(arg.dbf, arg.csv, arg.lattice)
 
     if arg.update_s:
         update_spos(arg.dbf, arg.csv)

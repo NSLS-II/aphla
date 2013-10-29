@@ -33,18 +33,20 @@ import sys, time
 from functools import partial
 from fnmatch import fnmatch
 import qrangeslider
+import h5py
 
-C_ELEMENT, C_FIELD, C_PV, C_VALUES = 0, 1, 2, 3
+C_ELEMENT, C_FIELD, C_PV, C_RW, C_VALUES = 0, 1, 2, 3, 4
 _DBG_VERBOSE = 1
 
 #import logging
 #_logger = logging.getLogger(__name__)
 
 class SnapshotRow(object):
-    def __init__(self, pv, element, field, values):
+    def __init__(self, pv, element, field, rw, values):
         self.pv = pv
         self.element = element
         self.field = field
+        self.rw = int(rw)
         # live data + a list of values from each dataset
         self.values = [None] + [v for v in values]
         self.hlvalues = {}
@@ -127,17 +129,22 @@ class LatSnapshotTableModel(QAbstractTableModel):
 
     def updateLiveData(self):
         for i,r in enumerate(self._rows):
-            r.values[0] = self._cadata.get(r.pv, None)
+            self._rows[i].values[0] = self._cadata.get(r.pv, None)
+            #print r.pv, self._cadata.get(r.pv, None), r.values
+        #print self._rows
 
-    def addDataSet(self, pvs, elements, fields, values, **kwarg):
+    def addDataSet(self, pvs, elements, fields, rw, values, **kwarg):
         self.dstitle.append(kwarg.get("title", ""))
         # assume no duplicate PV in pvs
         if not self._rows:
-            n = max([len(pvs), len(elements), len(fields), len(values)])
+            n = max([len(pvs), len(elements), len(fields), len(rw), 
+                     len(values)])
             self._rows = [
-                SnapshotRow(pvs[i], elements[i], fields[i], [values[i]])
+                SnapshotRow(pvs[i], elements[i], fields[i], rw[i], [values[i]])
                 for i in range(n)]
+
             self._mask = [0] * n
+            #print "initial import %d records" % n
         else:
             #print "Add extra"
             mpv = dict([(r.pv,i) for i,r in enumerate(self._rows)])
@@ -147,7 +154,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
                 if j == -1:
                     # a new record
                     vals = [None] * nset + [values[i]]
-                    r = SnapshotRow(pv, elements[i], fields[i], vals)
+                    r = SnapshotRow(pv, elements[i], fields[i], rw[i], vals)
                     self._rows.append(r)
                     self._mask.append(0)
                     continue
@@ -157,18 +164,18 @@ class LatSnapshotTableModel(QAbstractTableModel):
                 else:
                     raise RuntimeError("pv meaning does not agree")
         self._cadata.addPvList(pvs)
+        #print self._cadata.data
 
     def sort(self, col, order):
-        print self._rows
+        #print self._rows
         if col == C_PV:
-            print "sorting: PV"
             self._rows = sorted(self._rows, key=lambda r: r.pv)
         elif col == C_ELEMENT:
-            print "sorting: Element"
             self._rows = sorted(self._rows, key=lambda r: r.element)
         elif col == C_FIELD:
-            print "sorting: field"
             self._rows = sorted(self._rows, key=lambda r: r.field)
+        elif col == C_RW:
+            self._rows = sorted(self._rows, key=lambda r: r.rw)
         else:
             return
 
@@ -215,10 +222,11 @@ class LatSnapshotTableModel(QAbstractTableModel):
         r = self._rows[ri]
 
         if role == Qt.DisplayRole:
-            if cj == C_PV: return QVariant(r.pv)
-            elif cj == C_ELEMENT: return QVariant(r.element)
-            elif cj == C_FIELD: return QVariant(r.field)
-
+            if cj == C_PV:
+                return QVariant(QString(r.pv))
+            elif cj == C_ELEMENT: return QVariant(QString(r.element))
+            elif cj == C_FIELD: return QVariant(QString(r.field))
+            elif cj == C_RW: return QVariant(r.rw)
             # the data sections
             fmt = "%.6g"
             ids, j = divmod(cj - C_VALUES, 2)
@@ -231,6 +239,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
 
             dd = d1 - d0
             if self.dsref[1] == 0: return QVariant(fmt % dd)
+            elif d0 == 0.0: return QVariant()
             else: return QVariant((fmt % (dd/d0 * 100.0)) + " %")
             # all for display
         #elif role == Qt.TextAlignmentRole:
@@ -267,7 +276,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
             if section == C_PV: return QVariant("PV")
             elif section == C_ELEMENT: return QVariant("Element")
             elif section == C_FIELD: return QVariant("Field")
-
+            elif section == C_RW: return QVariant("R/W")
             ids, j = divmod(section-C_VALUES, 2)
             if j == 1: return QVariant("diff")
             else: return QVariant(self.dstitle[ids])
@@ -288,7 +297,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
         return len(self._rows)
     
     def columnCount(self, index=QModelIndex()):
-        if not self._rows: return C_VALUES
+        if not self._rows: return 0
         return C_VALUES + len(self._rows[0].values)*2
 
     def setData(self, index, value, role=Qt.EditRole):
@@ -675,13 +684,13 @@ class LatSnapshotMain(QDialog):
         dstitle = ["DS 1", "DS 2"]
         e = ["e1", "e1", "e2", "e2"]
         f = ["f4", "f3", "f2", "f1"]
-        self.model.addDataSet(pvs[:4], e, f,
-                              [.0009, 0.0005, .0004, .0007],
-                              title="DS 1")
-        self.model.addDataSet(pvs[:4], e, f,
-                              [.001, .0006, .0005, .0008],
-                              title="DS 2")
-        for t in dstitle: self.cmbRefDs.addItem(t)
+        #self.model.addDataSet(pvs[:4], e, f,
+        #                      [.0009, 0.0005, .0004, .0007],
+        #                      title="DS 1")
+        #self.model.addDataSet(pvs[:4], e, f,
+        #                      [.001, .0006, .0005, .0008],
+        #                      title="DS 2")
+        #for t in dstitle: self.cmbRefDs.addItem(t)
 
         self.tableview = LatSnapshotView()
         #self.tableview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -738,7 +747,7 @@ class LatSnapshotMain(QDialog):
         self.noTableUpdate = True
         self.cbxHidePv.setChecked(True)
 
-        self.timerId = self.startTimer(1000)
+        self.timerId = self.startTimer(1500)
 
     def setModelReferenceData(self):
         self.model.dsref[0] = self.cmbRefDs.currentIndex()
@@ -796,14 +805,63 @@ class LatSnapshotMain(QDialog):
     def saveLatSnapshotH5(self, fname):
         pass
 
+    def _choose_common_lattice(self, fileNames):
+        grps = {}
+        for fname in fileNames: 
+            f = h5py.File(str(fname), 'r')
+            for k,v in f.items():
+                if not isinstance(v, h5py.Group): continue
+                grps.setdefault(k, 0)
+                grps[k] += 1
+        dlg = QDialog()
+        gp = QGroupBox("Choose Lattice")
+        vbox = QVBoxLayout()
+        rbt = []
+        for k,v in grps.items():
+            if v < len(fileNames): continue
+            rbt.append(QtGui.QRadioButton(k))
+            vbox.addWidget(rbt[-1])
+        vbox.addStretch(1)
+        if not rbt: return None
+        rbt[0].setChecked(True)
+        gp.setLayout(vbox)
+        vbox2 = QVBoxLayout()
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
+                                     QDialogButtonBox.Cancel)
+        dlg.connect(buttonBox, SIGNAL("accepted()"), dlg.accept)
+        dlg.connect(buttonBox, SIGNAL("rejected()"), dlg.reject)
+        vbox2.addWidget(gp)
+        vbox2.addWidget(buttonBox)
+        dlg.setLayout(vbox2)
+        if dlg.exec_() == QDialog.Rejected: return
+        latname = ""
+        for bt in rbt:
+            if bt.isChecked(): 
+                return str(bt.text())
+
+        return None
+        
     def loadLatSnapshotH5(self):
         dpath = os.environ.get("HLA_DATA_DIRS", "~")
-        fileName = QtGui.QFileDialog.getOpenFileNames(
+        fileNames = QtGui.QFileDialog.getOpenFileNames(
             self,
             "Open Data",
             dpath, "Data Files (*.h5 *.hdf5)")
-        for f in fileName: print f
-        pass
+        latname = self._choose_common_lattice(fileNames)
+        if not latname: return
+        print "Accepted the choice:", latname
+        for fname in fileNames:
+            f = h5py.File(str(fname), 'r')
+            ds = f[latname]["__scalars__"]
+            #print ds[:,"element"]
+            self.model.addDataSet(ds[:,"pv"], ds[:,"element"],
+                                  ds[:,"field"], ds[:,"rw"], ds[:,"value"],
+                                  title=str(fname))
+            self.cmbRefDs.addItem(str(fname))
+            f.close()
+        self.model.updateLiveData()
+        self.model.emit(SIGNAL("layoutChanged()"))
+        print "Model rows:", self.model._rows
 
     def refreshTable(self, txt = None):
         return

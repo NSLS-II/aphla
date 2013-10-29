@@ -48,10 +48,11 @@ class CaDataMonitor:
         elif isinstance(pvs, str):
             n = 1
             self.pvs = [pvs]
-        self.data = dict([(pv,np.nan) for pv in self.pvs])
-        self._count = [0] * n
-        self._buf = dict([(pv, []) for pv in self.pvs])
-        self._icur = [0] * n
+        d0 = caget(self.pvs)
+        self.data = dict([(pv,d0[i]) for i,pv in enumerate(self.pvs)])
+        self._count = [1] * n
+        self._buf = dict([(pv, [d0[i]]) for i,pv in enumerate(self.pvs)])
+        self._icur = [1] * n
         self.dead = []
 
         self.monitors = camonitor(self.pvs, self._ca_update,
@@ -66,10 +67,12 @@ class CaDataMonitor:
         set PV data to zero
         """
         for m in self.monitors: m.close()
-        for k,v in self.data.items(): self.data[k] = []
-        self._icur = [0] * len(self.pvs)
-        self._buf = dict([(pv,[]) for pv in self.pvs])
-        self._count = [0] * len(self.pvs)
+        d0 = caget(self.pvs)
+        #for k,v in self.data.items(): self.data[k] = []
+        for i,pv in enumerate(self.pvs): self.data[pv] = [d0[i]]
+        self._icur = [1] * len(self.pvs)
+        self._buf = dict([(pv,[d0[i]]) for i,pv in enumerate(self.pvs)])
+        self._count = [1] * len(self.pvs)
         self.monitors = camonitor(self.pvs, self._ca_update,
                                   format=cothread.catools.FORMAT_TIME,
                                   throw=False)
@@ -77,11 +80,12 @@ class CaDataMonitor:
     def addPv(self, pv):
         if pv in self.pvs: return
         for m in self.monitors: m.close()
-        self.data[pv] = np.nan
+        d0 = caget(pv)
+        self.data[pv] = d0
         self.pvs.append(pv)
-        self._count.append(0)
-        self._buf[pv] = []
-        self._icur.append(0)
+        self._count.append(1)
+        self._buf[pv] = [d0]
+        self._icur.append(1)
 
         self.monitors = camonitor(self.pvs, self._ca_update,
                                   format=cothread.catools.FORMAT_TIME)
@@ -91,12 +95,13 @@ class CaDataMonitor:
         if not cpvlst: return
 
         for m in self.monitors: m.close()
-        for pv in cpvlst:
-            self.data[pv] = np.nan
+        d0 = caget(cpvlst)
+        for i,pv in enumerate(cpvlst):
+            self.data[pv] = d0[i]
             self.pvs.append(pv)
-            self._buf[pv] = []
-        self._count.extend([0] * len(cpvlst))
-        self._icur.extend([0] * len(cpvlst))
+            self._buf[pv] = [d0[i]]
+        self._count.extend([1] * len(cpvlst))
+        self._icur.extend([1] * len(cpvlst))
 
         self.monitors = camonitor(self.pvs, self._ca_update,
                                   format=cothread.catools.FORMAT_TIME)
@@ -109,8 +114,8 @@ class CaDataMonitor:
         self._count[idx] += 1
         pv = self.pvs[idx]
         #print "updating", pv, val, self._count[idx],
-        if self._count[idx] % 5 == 0:
-            print "updating", self.pvs[idx], val, self._count[idx]
+        #if self._count[idx] % 5 == 0:
+        #    print "updating", self.pvs[idx], val, self._count[idx]
         if self._count[idx] < self.samples:
             self._buf[pv].append(val)
         else:

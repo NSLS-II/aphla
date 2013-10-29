@@ -248,23 +248,6 @@ def load(machine, submachines = "*", **kwargs):
             #_logger.debug("loaded {0} twiss data".format(len(lat._twiss.element)))
             #_logger.debug("using golden lattice data '%s'" % goldenfile)
             setGoldenLattice(lat, phy_fname, "Golden")
-        ormfile = d.get("orbit_response_matrix", None)
-        if ormfile is not None:
-            _logger.debug("loading ORM data '%s'" % ormfile)
-            lat.ormdata = OrmData(os.path.join(machdir, ormfile))
-
-        twissfile = d.get("twiss", None)
-        if twissfile is not None:
-            _logger.debug("loading Twiss data '%s'" % twissfile)
-            lat._twiss = TwissData(os.path.join(machdir, twissfile))
-            lat._twiss.load(os.path.join(machdir, twissfile))
-            _logger.debug("loaded {0} twiss data".format(
-                    len(lat._twiss.element)))
-
-        goldenfile = d.get("golden", None)
-        if goldenfile is not None:
-            _logger.debug("using golden lattice data '%s'" % goldenfile)
-            setGoldenLattice(lat, os.path.join(machdir, goldenfile), "golden")
 
         vex = lambda k: re.findall(r"\w+", d.get(k, ""))
         vfams = { HLA_VBPM:  ('BPM',  vex("virtual_bpm_exclude")),
@@ -566,61 +549,27 @@ def machines():
     return [d for d in resource_listdir(__name__, ".") 
             if resource_isdir(__name__, d)]
 
-def _saveSnapshot0(fname, lat = None):
-    """the general version"""
-    latobj = _lat
-    if lat is not None: latobj = _lattice_dict.get(lat, None)
-    if latobj is None:
-        raise RuntimeError("Lattice '{0}' is not found".format(lat))
+def saveSnapshot(fname, lats):
+    """save snapshot of a list of lattices
+
+    - fname output file name
+    - lats list/str lattice name
+
+    The not-found lattice will be ignored.
+    """
+    import h5py
+    livelats = []
+    if lats is None:
+        livelats.append(getLattice(lats))
+    elif isinstance(lats, (str, unicode)):
+        livelats.append(getLattice(lats))
+    elif isinstance(lats, (list, tuple)):
+        livelats.extend([getLattice(lat) for lat in lats])
     
-    dscalar, dvec = [], []
-    for elem in latobj._elements:
-        for fld in elem.fields():
-            d = elem.get(fld, unitsys=None)
-            if isinstance(d, (int, float,)):
-                dscalar.append((elem.name, fld, d,))
-            else:
-                try:
-                    dvec.append((elem.name, fld, tuple(d)))
-                except:
-                    print("WARNING: unknown data format '{0}.{1}'. "
-                          "Ignored".format(elem.name, fld))
+    f = h5py.File(fname, 'w')
+    f.close()
 
-    saveSnapshotH5(fname, dscalar, dvec)
+    for lat in livelats:
+        if lat is None: continue
+        catools.save_lat_epics(fname, lat, mode='a')
 
-def _saveSnapshotCa(fname, lat = None):
-    """channel access"""
-    import datetime
-    t0 = datetime.datetime.now()
-    latobj = _lat
-    if lat is not None: latobj = _lattice_dict.get(lat, None)
-    if latobj is None:
-        raise RuntimeError("Lattice '{0}' is not found".format(lat))
-    
-    elems, pvlst = [], []
-    for elem in latobj._elements:
-        for fld in elem.fields():
-            pvrbl = elem.pv(field=fld, handle="readback")
-            if len(pvrbl) == 0:
-                pvrb = ''
-            elif len(pvrbl) == 1:
-                pvrb = pvrbl[0]
-            else:
-                pvrb = pvrbl
-
-            pvspl = elem.pv(field=fld, handle="setpoint")
-            if len(pvspl) == 0:
-                pvsp = ''
-            elif len(pvspl) == 1:
-                pvsp = pvspl[0]
-            else:
-                pvsp = pvspl
-
-            elems.append([elem.name, fld])
-            pvlst.append([pvsp, pvrb])
-
-    t1 = datetime.datetime.now()
-    print("PV prepare dt= {0} s".format((t1-t0).seconds))
-    catools.caSnapshot(fname, _lat.name, elems, pvlst)
-    t2 = datetime.datetime.now()
-    print("total dt= {0} s".format((t2-t0).seconds))
