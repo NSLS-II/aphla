@@ -632,7 +632,7 @@ class ApPlot(Qwt.QwtPlot):
             title = kwargs.get("title", "")
             )
 
-        if x and y: curv.setData(x, y, yerr)
+        if x is not None and y is not None: curv.setData(x, y, yerr)
         curv.attach(self)
         self.excurv.append(curv)
         return curv

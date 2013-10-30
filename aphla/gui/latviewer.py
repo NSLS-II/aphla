@@ -127,14 +127,15 @@ class LatSnapshotTableModel(QAbstractTableModel):
 
 
     def addDataSet(self, pvs, elements, fields, rw, values, ts, **kwarg):
+        wf = kwarg.get("wf", [0] * len(pvs))
         self.dstitle.append(kwarg.get("title", ""))
         # assume no duplicate PV in pvs
         if not self._rows:
             n = max([len(pvs), len(elements), len(fields), len(rw), 
-                     len(values), len(ts)])
+                     len(values), len(ts), len(wf)])
             self._rows = [
                 SnapshotRow(pvs[i], elements[i], fields[i], rw[i],
-                            [values[i]], ts[i])
+                            [values[i]], ts[i], wf[i])
                 for i in range(n)]
 
             self._mask = [0] * n
@@ -150,7 +151,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
                     # a new record
                     vals = [None] * nset + [values[i]]
                     r = SnapshotRow(pv, elements[i], fields[i], rw[i], vals,
-                                    ts[i])
+                                    ts[i], wf[i])
                     self._rows.append(r)
                     self._mask.append(0)
                     continue
@@ -202,19 +203,49 @@ class LatSnapshotTableModel(QAbstractTableModel):
                   idx0, idx1)
 
 
+    def _calc_diff(self, vals, iref, mode):
+        """calculate the difference, relative or absolute, returns None if 
+        the data does not make sense"""
+        dd = []
+        try:
+            vf = [float(v) for v in vals]
+            dd = [v - vf[iref] for i,v in enumerate(vf)]
+            if mode == 1:
+                dd = [ v*100.0/vf[iref] for i,v in enumerate(dd)]
+            return dd
+        except TypeError:
+            pass
+        except ZeroDivisionError:
+            print "Divided by zero"
+            return None
+
+        dd = []
+        try:
+            for i,vf1 in enumerate(vals):
+                vf2a = [float(v) for v in vf1]
+                vf2r = [float(v) for v in vals[iref]]
+                vdf = [v - vf2r[j] for j,v in enumerate(vf2a)]
+                if mode == 1:
+                    vdf = [v*100.0/vf2r[j] for j,v in enumerate(vdf)]
+                dd.append(vdf)
+            return dd
+        except ValueError:
+            # can not convert string to float
+            return None
+        except:
+            raise
+
+        print "Failed"
+        return None
+
     def getSnapshotData(self):
         idx, ret = [], []
         validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
         for i,r in enumerate(validrows):
             ri = [v for v in r.values]
-            vref = ri[self.dsref[0]]
-            if self.dsref[1] == 1 and np.abs(vref) == 0.0:
-                continue
-            if self.dsref[1] == 0:
-                ri.extend([v - vref for v in ri])
-            elif self.dsref[1] == 1:
-                ri.extend([(v - vref) * 100.0 / vref for v in ri])
-
+            dd = self._calc_diff(ri, self.dsref[0], self.dsref[1])
+            if not dd: continue
+            ri.extend(dd)
             idx.append(i)
             ret.append(ri)
         return idx, ret
@@ -237,9 +268,12 @@ class LatSnapshotTableModel(QAbstractTableModel):
             elif cj == C_ELEMENT: return QVariant(QString(r.element))
             elif cj == C_FIELD: return QVariant(QString(r.field))
             elif cj == C_RW: return QVariant(r.rw)
+
+            if r.wf > 0: return QVariant("[...]")
             # the data sections
             fmt = "%.6g"
             ids, j = divmod(cj - C_VALUES, 2)
+
             d0 = r.values[self.dsref[0]]
             d1 = r.values[ids]
             # the difference
@@ -669,14 +703,14 @@ class LatSnapshotMain(QDialog):
         vbox.addStretch()
         vbox.addLayout(fmbox2)
 
-        extraPlot = QtGui.QFrame()
-        extraPlot.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
+        self.extraPlot = QtGui.QFrame()
+        self.extraPlot.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
         self.wfplt = ApPlot()
         rhsLayout = QtGui.QVBoxLayout()
         rhsLayout.addWidget(self.wfplt)
-        extraPlot.setLayout(rhsLayout)
-        vbox.addWidget(extraPlot)
-        extraPlot.hide()
+        self.extraPlot.setLayout(rhsLayout)
+        vbox.addWidget(self.extraPlot)
+        self.extraPlot.hide()
         self.model = LatSnapshotTableModel()
 
         self.tableview = LatSnapshotView()
@@ -749,17 +783,15 @@ class LatSnapshotMain(QDialog):
         if len(rows) != 1: 
             raise RuntimeError("Invalid selections: {0}".format(rows))
         row = rows[0]
-        if row > len(dat): return
-        if not isinstance(dat[row][0], list): return
-        print "Ready to plot"
-        p = self.wfplt
-        if not x or not dat:
-            for c in p.excurv: c.setData([], [], None)
+        if row not in x: 
+            print "Data is invalid", rows, x, dat
             return
-        n = len(dat[0]) // 2
-        #p = self.plt
+
+        p = self.wfplt
         p.curve1.detach()
         p.curve2.detach()
+        n = len(dat[0]) // 2
+        #p = self.plt
         pens = [QtGui.QPen(Qt.red, 1.0),  QtGui.QPen(Qt.green, 1.0), 
                 QtGui.QPen(Qt.blue, 1.0),
                 QtGui.QPen(Qt.black, 1.0)]
@@ -776,16 +808,26 @@ class LatSnapshotMain(QDialog):
                                QtGui.QBrush(Qt.black), QtGui.QPen(Qt.black, 1.0),
                                QSize(8, 8))]
         print len(dat), len(dat[0]), min([len(d) for d in dat]), max([len(d) for d in dat])
+        i = x.index(row)
+        d = dat[i]
+        n = len(d) // 2
+        if n != len(self.model.dstitle):
+            for c in p.excurv: c.setData([], [], None)
+            self.extraPlot.hide()
+            return
+
         for i in range(n):
-            y0 = [d[n+i] for d in dat]
+            #print "data:", d[i]
             if i >= len(p.excurv):
-                p.addCurve(x=x, y=y0, curveStyle=Qwt.QwtPlotCurve.Lines,
+                p.addCurve(x=range(len(d[n+i])), y=d[n+i],
+                           curveStyle=Qwt.QwtPlotCurve.Lines,
                            curvePen=pens[i % len(pens)],
                            curveSymbol=symbs[i % len(symbs)],
-                           title="DS %d" % i)
+                           title="%s" % self.model.dstitle[i])
             else:
-                p.excurv[i].setData(x, y0, None)
+                p.excurv[i].setData(range(len(d[n+i])), d[n+i], None)
         p.replot()
+        self.extraPlot.show()
 
         
 
@@ -890,10 +932,24 @@ class LatSnapshotMain(QDialog):
         for fname in fileNames:
             f = h5py.File(str(fname), 'r')
             ds = f[latname]["__scalars__"]
+            pvs   = list(ds[:, "pv"])
+            elems = list(ds[:, "element"])
+            flds  = list(ds[:, "field"])
+            rws   = list(ds[:, "rw"])
+            vals  = list(ds[:, "value"])
+            ts    = list(ds[:, "timestamp"] )
+            wf    = [0] * len(pvs)
             #print ds[:,"element"]
-            self.model.addDataSet(ds[:,"pv"], ds[:,"element"],
-                                  ds[:,"field"], ds[:,"rw"], ds[:,"value"],
-                                  ds[:,"timestamp"],
+            for k,v in f[latname].items():
+                if not k.startswith("wf_"): continue
+                pvs.append(v.attrs["pv"])
+                elems.append(v.attrs["element"])
+                flds.append(v.attrs["field"])
+                rws.append(v.attrs["rw"])
+                vals.append(list(v))
+                ts.append(v.attrs["timestamp"])
+                wf.append(len(v))
+            self.model.addDataSet(pvs, elems, flds, rws, vals, ts, wf=wf,
                                   title=str(fname))
             self.cmbRefDs.addItem(str(fname))
             f.close()
