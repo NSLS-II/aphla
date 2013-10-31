@@ -6,6 +6,60 @@ import re
 from apdata import createLatticePvDb
 import sqlite3
 
+def _nsls2_filter_element_type_group(elemlst):
+    """
+    ignore drift.
+    TRIMD -> COR, [HCOR, VCOR]
+    """
+    relst, rglst = [], []
+    for i,elem in enumerate(elemlst):
+        idx, name, tp, s0, L, s1 = elem
+        grp, cell, girder, symm = "", "", "", ""
+        g = re.match(r"([A-Z0-9]+)(G[0-9])(C[0-9][0-9])(.+)", name, re.I)
+        if g: 
+            grp, girder, cell, symm = [g.group(i) for i in range(1,5)]
+
+        if tp in ['DRIF', 'MARK']:
+            # ignore drift
+            pass
+        elif tp in ['BPM', 'QUAD', 'SEXT', 'IVU', 'DW', 'EPU']:
+            relst.append([name, idx, tp, s0, L, s1, cell, girder, symm, grp])
+        elif tp in ['TRIM', 'TRIMD']:
+            newgrp =";".join(sorted([grp, "HCOR", "VCOR"]))
+            relst.append([name, idx, "COR", s0, L, s1,
+                          cell, girder, symm, newgrp])
+        elif tp == 'FTRIM':
+            relst.append([name, idx, "FCOR", s0, L, s1,
+                            cell, girder, symm, grp])
+        elif tp == 'SQ_TRIM':
+            newgrp = ";".join(sorted([grp, "HCOR", "VCOR", "SQCOR"]))
+            relst.append([name, idx, "COR", s0, L, s1, 
+                          cell, girder, symm, newgrp])
+            pass
+        elif tp == 'DIPOLE':
+            #warnings.warn("'{0}: {1}' is not processed".format(name, fam))
+            relst.append([name, idx, "BEND", s0, L, s1, 
+                            cell, girder, symm, grp])
+            pass
+        elif tp == "TRIMX":
+            #warnings.warn("'{0}: {1}' is not processed".format(name, fam))
+            newgrp = ";".join(sorted([grp, "HCOR"]))
+            relst.append([name, idx, "COR", s0, L, s1, 
+                          cell, girder, symm, newgrp])
+            pass
+        elif tp == "TRIMY":
+            #warnings.warn("'{0}: {1}' is not processed".format(name, fam))
+            newgrp = ";".join(sorted([grp, "VCOR"]))
+            relst.append([name, idx, "COR", s0, L, s1,
+                          cell, girder, symm, newgrp])
+            pass
+        else:
+            raise RuntimeError("Unknow type '%s'" % tp)
+
+        idx += 100
+
+    return relst
+
 def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
     """convert the NSLS2 lattice table
 
@@ -75,24 +129,51 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
     elemx = zip(*elems)
     print "# New finite length elements:", len(elems)
 
-    f = open(fdst, 'w')
+    allelems = []
     for i,e in enumerate(elems_0):
         if i in elemx[0]:
             g = re.match(r"(C[A-Z0-9]+)([XY])(G[0-9]C[0-9]+ID[0-9])", e[0])
             name = "%s%s" % (g.group(1), g.group(3))
-            f.write("%d, %s, %s, %.4f, %.4f, %.4f\n" % (
-                    e[7]*100, name.lower(), "TRIM", e[3]-e[2], e[2], e[3]))
+            allelems.append([e[7]*100, name, "TRIM", e[3]-e[2], e[2], e[3]])
         elif i in elemx[1]:
             continue
         else:
-            f.write("%d, %s, %s, %.4f, %.4f, %.4f\n" % (
-                    e[7]*100, e[0].lower(), e[1], e[3]-e[2], e[2], e[3]))
-            
+            allelems.append([e[7]*100, e[0], e[1], e[3]-e[2], e[2], e[3]])
+    # combine with finite-length elements
     for e in elems_1:
-        f.write("%d, %s, %s, %.4f, %.4f, %.4f\n" % (
-                e[7]*100, e[0].lower(), e[1], e[3]-e[2], e[2], e[3]))
+        allelems.append([e[7]*100, e[0], e[1], e[3]-e[2], e[2], e[3]])
+
+    elems = _nsls2_filter_element_type_group(allelems)
+
+    f = open(fdst, 'w')
+    for i,elem in enumerate(elems):
+        #name, idx, tp, s0, L, s1, c, g, s, grp = elem
+        elem[0] = elem[0].lower()
+        f.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}\n".format(*elem))
+
     f.close()
 
+
+def convVirtAccTwiss(fdst, fsrc, grpname = False):
+    f = open(fsrc, 'r')
+    tunes = f.readline()
+    chrom = f.readline()
+    alphac = f.readline()
+    energy = f.readline()
+    for i in range(3): f.readline()
+    elems = []
+    for i,line in enumerate(f.readlines()):
+        idx, name, s1 = [v.strip() for v in line.split()[:3]]
+        elems.append([name, idx, "", 0.0, 0.0, float(s1), "", "", "", ""])
+    f.close()
+    if grpname:
+        for e in elems: e[0] = "%s:%s" % (e[0], e[1])
+
+    f = open(fdst, "w")
+    for e in elems:
+        f.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}\n".format(*e))
+    f.close()
+    
 
 def convVirtAccPvs(fdst, fsrc, sep = ","):
     """
@@ -107,24 +188,24 @@ def convVirtAccPvs(fdst, fsrc, sep = ","):
            ("Bending", "T"): ("BEND", "b0"),
            ("Quadrupole", "K"): ("QUAD", "b1"),
            ("Sextupole", "K"): ("SEXT", "b2"),
-           ("Cavity", "f"): ("RFCAVITY", "f"),
-           ("Cavity", "v"): ("RFCAVITY", "v"),
+           ("RFCavity", "f"): ("RFCAVITY", "f"),
+           ("RFCavity", "v"): ("RFCAVITY", "v"),
            ("insertion", "GAP"): ("ID", "gap"),
            ("insertion", "PHASE"): ("ID", "phase"),
-           ("", "TUNEX"): ("tune", "x"),
-           ("", "TUNEY"): ("tune", "y"),
-           ("", "ALPHAX"): ("twiss", "alphax"),
-           ("", "ALPHAY"): ("twiss", "alphay"),
-           ("", "BETAX"): ("twiss", "betax"),
-           ("", "BETAY"): ("twiss", "betay"),
-           ("", "ETAX"): ("twiss", "etax"),
-           ("", "ETAY"): ("twiss", "etay"),
-           ("", "PHIX"): ("twiss", "phix"),
-           ("", "PHIY"): ("twiss", "phiy"),
-           ("", "NAME"): ("twiss", "name"),
-           ("", "ORBITX"): ("orbit", "x"),
-           ("", "ORBITY"): ("orbit", "y"),
-           ("", "S"): ("twiss", "s"),
+           ("TWISS", "TUNEX"): ("tune", "x"),
+           ("TWISS", "TUNEY"): ("tune", "y"),
+           ("TWISS", "ALPHAX"): ("twiss", "alphax"),
+           ("TWISS", "ALPHAY"): ("twiss", "alphay"),
+           ("TWISS", "BETAX"): ("twiss", "betax"),
+           ("TWISS", "BETAY"): ("twiss", "betay"),
+           ("TWISS", "ETAX"): ("twiss", "etax"),
+           ("TWISS", "ETAY"): ("twiss", "etay"),
+           ("TWISS", "PHIX"): ("twiss", "phix"),
+           ("TWISS", "PHIY"): ("twiss", "phiy"),
+           ("TWISS", "NAME"): ("twiss", "name"),
+           ("TWISS", "ORBITX"): ("orbit", "x"),
+           ("TWISS", "ORBITY"): ("orbit", "y"),
+           ("TWISS", "S"): ("twiss", "s"),
            ("DCCT", "current"): ("DCCT", "current"),
            }
 
@@ -148,8 +229,8 @@ def convVirtAccPvs(fdst, fsrc, sep = ","):
         elemtype, elemfield = mp[(r[itype], r[ifield])]
         elemidx0 = r[iidx]
         pvr.append([pvname, pvhandle, elemname, elemidx0, elemtype, elemfield])
-        f.write("%s, %s, %s, %s, %s, %s\n" % (
-                pvname, pvhandle, elemname.lower(), elemidx0,
+        f.write("%s,%s,%s,%s,%s,%s\n" % (pvname, pvhandle,
+                elemname.lower(), elemidx0,
                 elemtype, elemfield))
     f.close()
 
@@ -160,8 +241,10 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
     name_index: postfix with the index.
     """
     createLatticePvDb(fdb, None)
-    elems = [v.split(",") for v in open(felem, 'r').readlines()]
-    pvs = [v.split(",") for v in open(fpv, 'r').readlines()]
+    #name, idx, tp, s0, L, s1, c, g, s, grp = elem
+    elems = [v.strip().split(",") for v in open(felem, 'r').readlines()]
+    #pv, handle, elemname, elemidx0, elemtype, elemfield
+    pvs = [v.strip().split(",") for v in open(fpv, 'r').readlines()]
 
     latname    = kwarg.get("latname", "SR")
     system     = kwarg.get("system", latname)
@@ -171,16 +254,68 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
     # save byte string instead of the default unicode
     conn.text_factory = str
     c = conn.cursor()
-    c.executemany("""INSERT INTO elements (elemName, elemIndex, """
-                  """elemGroups, elemType, system)"""
-                  """VALUES (?,?,?,?,?)""",
-                  [(v[1].strip(), v[0].strip(), "", v[2].strip(), system) for 
-                   v in elems])
+    c.executemany("""INSERT INTO elements (elemName,elemIndex,elemType,"""
+                  """elemLength,elemPosition,"""
+                  """cell,girder,symmetry,elemGroups,system)"""
+                  """VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                  [(name,idx,tp,L,s1,cl,gd,sm,grp,system) 
+                   for (name, idx, tp, s0, L, s1, cl, gd, sm, grp)
+                   in elems])
+    conn.commit()
+    msg = "[%s] new 'elements' table" % (__name__,)
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ? )""", (msg,))
+    systag = "aphla.sys.%s" % latname
+    c.executemany("""INSERT into pvs (pv,elemHandle,elemField,elem_id,tags) """
+                  """values (?,?,?,?,?)""",
+                  [(pv,hdl,fld,int(eid),systag) 
+                   for (pv,hdl,ename,eid,etp,fld) in pvs])
+    conn.commit()
+    msg = "[%s] new 'pvs' table" % (__name__,)
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ? )""", (msg,))
+    conn.commit()
+    #
+    names = [e[0] for e in elems]
+    vrec = {"twiss": ["twiss", -100, "TWISS", 0.0, 0.0, "", "", "", "", system],
+            "dcct": ["dcct", -200, "DCCT", 0.0, 0.0, "", "", "", "", system],
+            "rfcavity": ["rfcavity", -300, "RFCAVITY", 0.0, 0.0, "", "", "", "",
+                         system],
+    }
+    for k,v in vrec.items():
+        if k in names: continue
+        c.execute("""INSERT INTO elements (elemName,elemIndex,elemType,"""
+                  """elemLength,elemPosition,"""
+                  """cell,girder,symmetry,elemGroups,system)"""
+                  """VALUES (?,?,?,?,?,?,?,?,?,?)""", v)
+        names.append(k)
+    conn.commit()
+
+    # assuming element name is unique
+    for (pv,hdl,ename,eid,etp,fld) in pvs:
+        if name_index and int(eid) >= 0: ename = "%s:%s" % (ename, eid)
+        if ename not in names:
+            raise RuntimeError("No {0}".format(ename))
+        c.execute("""UPDATE pvs set """
+                  """elem_id=(select id from elements """
+                  """where elemName=? and system=?) """
+                  """where pv=?""", 
+                  (ename,system,pv,))
+        #c.execute("""UPDATE pvs set """
+        #          """elem_id=(select id from elements """
+        #          """where elemName=? and elemType=? and system=?) """
+        #          """where pv=?""", 
+        #          (ename,etp,system,pv,))
     conn.commit()
     conn.close()
 
 if __name__ == "__main__":
-    convNSLS2LatTable("test_elem.txt", "./nsls2v2/ring_par.txt")
-    convVirtAccPvs("test_pvs.txt", "./nsls2v2/ring_pvs.csv")
-    createSqliteDb("test.sqlite", "test_elem.txt", "test_pvs.txt")
+    f1, f2, f3 = "test_elem.txt", "test_pvs.txt", "test.sqlite"
+    #convNSLS2LatTable(f1, "./nsls2v2/ring_par.txt")
+    #convVirtAccPvs(f2, "./nsls2v2/ring_pvs.csv")
+    #createSqliteDb(f3, "test_elem.txt", "test_pvs.txt")
+
+    convVirtAccTwiss(f1, "./tpsv1/tps-twiss.txt", grpname=True)
+    convVirtAccPvs(f2, "./tpsv1/TDMB1826_OB_Chamb_ID.csv")
+    createSqliteDb(f3, f1, f2, name_index=True)
 

@@ -1203,10 +1203,10 @@ V:1-SR-MG:SUPER{QS1:1534}Fld:SP,1534,V:1-SR,,,setpoint,QS1,K,Quadrupole
 V:1-SR-MG:SUPER{QS1:1534}Fld:I,1534,V:1-SR,,,readback,QS1,K,Quadrupole
 V:1-SR-BI:SUPER{BPM:1538}SA:X,1538,V:1-SR,,,readback,BPM,X,Beam Position Monitor
 V:1-SR-BI:SUPER{BPM:1538}SA:Y,1538,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
-V:1-SR-RF:SUPER{RF:1540}Freq:SP,1540,V:1-SR,,,setpoint,RF,f,Cavity
-V:1-SR-RF:SUPER{RF:1540}Freq:I,1540,V:1-SR,,,readback,RF,f,Cavity
-V:1-SR-RF:SUPER{RF:1540}Volt:SP,1540,V:1-SR,,,setpoint,RF,v,Cavity
-V:1-SR-RF:SUPER{RF:1540}Volt:I,1540,V:1-SR,,,readback,RF,v,Cavity
+V:1-SR-RF:SUPER{RF:1540}Freq:SP,1540,V:1-SR,,,setpoint,RF,f,RFCavity
+V:1-SR-RF:SUPER{RF:1540}Freq:I,1540,V:1-SR,,,readback,RF,f,RFCavity
+V:1-SR-RF:SUPER{RF:1540}Volt:SP,1540,V:1-SR,,,setpoint,RF,v,RFCavity
+V:1-SR-RF:SUPER{RF:1540}Volt:I,1540,V:1-SR,,,readback,RF,v,RFCavity
 V:1-SR-BI:SUPER{BPM:1542}SA:X,1542,V:1-SR,,,readback,BPM,X,Beam Position Monitor
 V:1-SR-BI:SUPER{BPM:1542}SA:Y,1542,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
 V:1-SR-MG:SUPER{QS1:1546}Fld:SP,1546,V:1-SR,,,setpoint,QS1,K,Quadrupole
@@ -1623,17 +1623,17 @@ V:1-SR-MG:SUPER{QL1:2057}Fld:SP,2057,V:1-SR,,,setpoint,QL1,K,Quadrupole
 V:1-SR-MG:SUPER{QL1:2057}Fld:I,2057,V:1-SR,,,readback,QL1,K,Quadrupole
 V:1-SR-BI:SUPER{BPM:2061}SA:X,2061,V:1-SR,,,readback,BPM,X,Beam Position Monitor
 V:1-SR-BI:SUPER{BPM:2061}SA:Y,2061,V:1-SR,,,readback,BPM,Y,Beam Position Monitor
-V:1-SR-BI{TUNE}X-I,-1,V:1-SR,,,readback,twiss,TUNEX,
-V:1-SR-BI{TUNE}Y-I,-1,V:1-SR,,,readback,twiss,TUNEY,
-V:1-SR-BI{ALPHA}X-I,-1,V:1-SR,,,readback,twiss,ALPHAX,
-V:1-SR-BI{ALPHA}Y-I,-1,V:1-SR,,,readback,twiss,ALPHAY,
-V:1-SR-BI{BETA}X-I,-1,V:1-SR,,,readback,twiss,BETAX,
-V:1-SR-BI{BETA}Y-I,-1,V:1-SR,,,readback,twiss,BETAY,
-V:1-SR-BI{ETA}X-I,-1,V:1-SR,,,readback,twiss,ETAX,
-V:1-SR-BI{ETA}Y-I,-1,V:1-SR,,,readback,twiss,ETAY,
-V:1-SR-BI{PHI}X-I,-1,V:1-SR,,,readback,twiss,PHIX,
-V:1-SR-BI{PHI}Y-I,-1,V:1-SR,,,readback,twiss,PHIY,
-V:1-SR-BI{ORBIT}X-I,-1,V:1-SR,,,readback,twiss,ORBITX,
-V:1-SR-BI{ORBIT}Y-I,-1,V:1-SR,,,readback,twiss,ORBITY,
-V:1-SR-BI{POS}-I,-1,V:1-SR,,,readback,twiss,S,
-V:1-SR-BI{NAME}-I,-1,V:1-SR,,,readback,twiss,NAME,
+V:1-SR-BI{TUNE}X-I,-1,V:1-SR,,,readback,twiss,TUNEX,TWISS
+V:1-SR-BI{TUNE}Y-I,-1,V:1-SR,,,readback,twiss,TUNEY,TWISS
+V:1-SR-BI{ALPHA}X-I,-1,V:1-SR,,,readback,twiss,ALPHAX,TWISS
+V:1-SR-BI{ALPHA}Y-I,-1,V:1-SR,,,readback,twiss,ALPHAY,TWISS
+V:1-SR-BI{BETA}X-I,-1,V:1-SR,,,readback,twiss,BETAX,TWISS
+V:1-SR-BI{BETA}Y-I,-1,V:1-SR,,,readback,twiss,BETAY,TWISS
+V:1-SR-BI{ETA}X-I,-1,V:1-SR,,,readback,twiss,ETAX,TWISS
+V:1-SR-BI{ETA}Y-I,-1,V:1-SR,,,readback,twiss,ETAY,TWISS
+V:1-SR-BI{PHI}X-I,-1,V:1-SR,,,readback,twiss,PHIX,TWISS
+V:1-SR-BI{PHI}Y-I,-1,V:1-SR,,,readback,twiss,PHIY,TWISS
+V:1-SR-BI{ORBIT}X-I,-1,V:1-SR,,,readback,twiss,ORBITX,TWISS
+V:1-SR-BI{ORBIT}Y-I,-1,V:1-SR,,,readback,twiss,ORBITY,TWISS
+V:1-SR-BI{POS}-I,-1,V:1-SR,,,readback,twiss,S,TWISS
+V:1-SR-BI{NAME}-I,-1,V:1-SR,,,readback,twiss,NAME,TWISS
