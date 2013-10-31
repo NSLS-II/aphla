@@ -21,6 +21,8 @@ from ..chanfinder import ChannelFinderAgent
 from ..resource import getResource
 from .. import catools
 
+import utils
+
 import os
 import glob
 import re
@@ -434,7 +436,7 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
         # skip if there's no properties.
         if rec[1] is None: continue
         if rec[0] and systag not in rec[2]: continue
-        if rec[1].get("system", "") != latname: continue
+        #if rec[1].get("system", "") != latname: continue
         if 'name' not in rec[1]: continue
         #print "PASSED"
         prpt = rec[1]

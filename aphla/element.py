@@ -1311,7 +1311,7 @@ def merge(elems, field = None, **kwargs):
             pvdict[f][1].extend(pvsp)
 
     elem = CaElement(**kwargs)
-    print "merged:", elem
+    #print "merged:", elem
     # consider only the common fields
     if field is None: 
         for k,v in count.iteritems(): 

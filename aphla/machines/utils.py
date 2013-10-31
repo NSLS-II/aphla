@@ -1,10 +1,8 @@
 import os
 import sys
 import re
-#from math import abs
-#from ..apdata import createLatticePvDb
-from apdata import createLatticePvDb
 import sqlite3
+from ..apdata import createLatticePvDb
 
 def _nsls2_filter_element_type_group(elemlst):
     """
@@ -89,8 +87,8 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
         if float(L) == 0.0: elems_0.append(ds)
         else: elems_1.append(ds)
 
-    print "# Finite length elements:", len(elems_1)
-    print "# Zero length elements:", len(elems_0)
+    #print "# Finite length elements:", len(elems_1)
+    #print "# Zero length elements:", len(elems_0)
     elems = []
     while True:
         ncmb, elems = 0, [list(elems_1[0])]
@@ -108,7 +106,7 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
                 ncmb += 1
         elems_1 = elems
         if ncmb == 0: break
-    print "# New finite length elements:", len(elems)
+    #print "# New finite length elements:", len(elems)
     
     # filter zero length element
     elems = []
@@ -127,7 +125,7 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
             if gc == ("X", "Y"): elems.append((i, j))
             elif gc == ("Y", "X"): elems.append((j, i))
     elemx = zip(*elems)
-    print "# New finite length elements:", len(elems)
+    #print "# New finite length elements:", len(elems)
 
     allelems = []
     for i,e in enumerate(elems_0):
@@ -144,6 +142,14 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
         allelems.append([e[7]*100, e[0], e[1], e[3]-e[2], e[2], e[3]])
 
     elems = _nsls2_filter_element_type_group(allelems)
+
+    gstat = {}
+    for i,elem in enumerate(elems):
+        gstat.setdefault(elem[2], 0)
+        gstat[elem[2]] += 1
+    print "Imported elements:", len(elems), fsrc
+    for g,n in gstat.items():
+        print "{0:>10} {1}".format(g,n)
 
     f = open(fdst, 'w')
     for i,elem in enumerate(elems):
@@ -308,14 +314,4 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
         #          (ename,etp,system,pv,))
     conn.commit()
     conn.close()
-
-if __name__ == "__main__":
-    f1, f2, f3 = "test_elem.txt", "test_pvs.txt", "test.sqlite"
-    #convNSLS2LatTable(f1, "./nsls2v2/ring_par.txt")
-    #convVirtAccPvs(f2, "./nsls2v2/ring_pvs.csv")
-    #createSqliteDb(f3, "test_elem.txt", "test_pvs.txt")
-
-    convVirtAccTwiss(f1, "./tpsv1/tps-twiss.txt", grpname=True)
-    convVirtAccPvs(f2, "./tpsv1/TDMB1826_OB_Chamb_ID.csv")
-    createSqliteDb(f3, f1, f2, name_index=True)
 
