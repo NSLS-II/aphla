@@ -185,6 +185,9 @@ def update_spos(dbf, src):
     ca_names = caget(pv_name)
     ca_spos  = caget(pv_spos)
 
+    if len(ca_names) != len(ca_spos):
+        raise RuntimeError("names does not agree with spos")
+
     conn = sqlite3.connect(dbf)
     # save byte string instead of the default unicode
     conn.text_factory = str
@@ -194,8 +197,9 @@ def update_spos(dbf, src):
     for i,ix in enumerate(idx):
         j = int(ix)
         if j < 0: continue
+        if j >= len(ca_spos): continue
         L = ca_spos[j] - ca_spos[j-1]
-        print ix, names[i], ca_names[j-1], L
+        #print ix, names[i], ca_names[j-1], L
         c.execute("""UPDATE elements set elemPosition=?,elemLength=? """
                   """where elemIndex=?""",
                   (ca_spos[j-1], L, ix))
@@ -232,10 +236,12 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group()
     parser.add_argument('dbf', metavar='dbfile', type=str, 
                    help='a SQLite file')
-    parser.add_argument('--lattice', type=str, 
+    parser.add_argument('--latname', type=str, 
                         help="lattice name")
     group.add_argument('--csv', type=str, 
                        help="update with csv file (table)")
+    parser.add_argument('--latpar', type=str, 
+                        help="lattice parameter")
     parser.add_argument('-s', '--update-s', action="store_true", 
                         help="update s location from EPICS")
 

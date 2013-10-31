@@ -621,11 +621,12 @@ class ApPlot(Qwt.QwtPlot):
         curv = ApPlotCurve(
             curvePen = kwargs.get("curvePen", QPen(Qt.black, 2.0)),
             curveStyle = kwargs.get("curveStyle", Qwt.QwtPlotCurve.Lines),
-            curveSymbol = kwargs.get("curveSymbol", Qwt.QwtSymbol(
-                    Qwt.QwtSymbol.Ellipse,
-                    QBrush(Qt.red),
-                    QPen(Qt.black, 1.0),
-                    QSize(8, 8))),
+            #curveSymbol = kwargs.get("curveSymbol", Qwt.QwtSymbol(
+            #        Qwt.QwtSymbol.Ellipse,
+            #        QBrush(Qt.red),
+            #        QPen(Qt.black, 1.0),
+            #        QSize(8, 8))),
+            curveSymbol = kwargs.get("curveSymbol", Qwt.QwtSymbol()),
             errorPen = kwargs.get("errorPen", QPen(Qt.black, 1.0)),
             errorCap = kwargs.get("errorCap", 6),
             errorOnTop = kwargs.get("errorOnTop", False),

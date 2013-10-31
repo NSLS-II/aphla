@@ -212,12 +212,12 @@ class LatSnapshotTableModel(QAbstractTableModel):
             dd = [v - vf[iref] for i,v in enumerate(vf)]
             if mode == 1:
                 dd = [ v*100.0/vf[iref] for i,v in enumerate(dd)]
-            return dd
+            return dd, 0
         except TypeError:
             pass
         except ZeroDivisionError:
             print "Divided by zero"
-            return None
+            return None, None
 
         dd = []
         try:
@@ -225,25 +225,47 @@ class LatSnapshotTableModel(QAbstractTableModel):
                 vf2a = [float(v) for v in vf1]
                 vf2r = [float(v) for v in vals[iref]]
                 vdf = [v - vf2r[j] for j,v in enumerate(vf2a)]
-                if mode == 1:
-                    vdf = [v*100.0/vf2r[j] for j,v in enumerate(vdf)]
                 dd.append(vdf)
-            return dd
+            if mode == 0: return dd, range(len(vals[0]))
         except ValueError:
             # can not convert string to float
-            return None
+            #raise
+            return None, None
+        except TypeError:
+            #raise
+            return None, None
         except:
+            #print vals, iref, mode
             raise
 
-        print "Failed"
-        return None
+        if mode == 1:
+            idx, ret = [], []
+            for i,vj in enumerate(vals[iref]):
+                if np.abs(vj) == 0.0: continue
+                idx.append(i)
+                ret.append([v[i]/vj for v in dd])
+            return zip(*ret), idx 
+        return None, 0
+
+    def getSnapshotRecord(self, idx):
+        validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
+        print idx, len(validrows)
+        try:
+            r = validrows[idx]
+            print r, self.dsref
+            dd, idx = self._calc_diff(r.values, self.dsref[0], self.dsref[1])
+            return idx, r.values + dd
+        except IndexError:
+            print "index error: len(validrows)= {0}, i={1}".format(
+                len(validrows), idx)
+            raise
 
     def getSnapshotData(self):
         idx, ret = [], []
         validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
         for i,r in enumerate(validrows):
             ri = [v for v in r.values]
-            dd = self._calc_diff(ri, self.dsref[0], self.dsref[1])
+            dd, iddx = self._calc_diff(ri, self.dsref[0], self.dsref[1])
             if not dd: continue
             ri.extend(dd)
             idx.append(i)
@@ -274,17 +296,13 @@ class LatSnapshotTableModel(QAbstractTableModel):
             fmt = "%.6g"
             ids, j = divmod(cj - C_VALUES, 2)
 
-            d0 = r.values[self.dsref[0]]
-            d1 = r.values[ids]
-            # the difference
-            if j == 0 and d1 is not None: return QVariant(fmt % d1)
-            elif j == 0: return QVariant()
-            elif d1 is None or d0 is None: return QVariant()
-
-            dd = d1 - d0
-            if self.dsref[1] == 0: return QVariant(fmt % dd)
-            elif d0 == 0.0: return QVariant()
-            else: return QVariant((fmt % (dd/d0 * 100.0)) + " %")
+            dd = self._calc_diff(r.values, self.dsref[0], self.dsref[1])
+            if dd is None: dlst = zip(r.values, [None] * len(r.values))
+            else: dlst = zip(r.values, dd)
+            v = dlst[ids][j]
+            if v is None: return QVariant()
+            try: return QVariant(fmt % v)
+            except: return QVariant()
             # all for display
         #elif role == Qt.TextAlignmentRole:
         #    if cj == C_FIELD: return QVariant(Qt.AlignLeft | Qt.AlignVCenter)
@@ -778,13 +796,15 @@ class LatSnapshotMain(QDialog):
         self.timerId = self.startTimer(1500)
 
     def selRow(self, i1, i2):
-        x, dat = self.model.getSnapshotData()
         rows = [i.top() for i in i1]
         if len(rows) != 1: 
+            self.extraPlot.hide()
             raise RuntimeError("Invalid selections: {0}".format(rows))
         row = rows[0]
-        if row not in x: 
+        x, dat = self.model.getSnapshotRecord(row)
+        if not x or not dat:
             print "Data is invalid", rows, x, dat
+            self.extraPlot.hide()
             return
 
         p = self.wfplt
@@ -808,10 +828,9 @@ class LatSnapshotMain(QDialog):
                                QtGui.QBrush(Qt.black), QtGui.QPen(Qt.black, 1.0),
                                QSize(8, 8))]
         print len(dat), len(dat[0]), min([len(d) for d in dat]), max([len(d) for d in dat])
-        i = x.index(row)
-        d = dat[i]
-        n = len(d) // 2
+        n = len(dat) // 2
         if n != len(self.model.dstitle):
+            print n, self.model.dstitle, "does not agree"
             for c in p.excurv: c.setData([], [], None)
             self.extraPlot.hide()
             return
@@ -819,13 +838,13 @@ class LatSnapshotMain(QDialog):
         for i in range(n):
             #print "data:", d[i]
             if i >= len(p.excurv):
-                p.addCurve(x=range(len(d[n+i])), y=d[n+i],
+                p.addCurve(x=x, y=dat[n+i],
                            curveStyle=Qwt.QwtPlotCurve.Lines,
                            curvePen=pens[i % len(pens)],
-                           curveSymbol=symbs[i % len(symbs)],
+                           #curveSymbol=symbs[i % len(symbs)],
                            title="%s" % self.model.dstitle[i])
             else:
-                p.excurv[i].setData(range(len(d[n+i])), d[n+i], None)
+                p.excurv[i].setData(x, dat[n+i], None)
         p.replot()
         self.extraPlot.show()
 

@@ -95,7 +95,7 @@ class CaDataMonitor:
         if not cpvlst: return
 
         for m in self.monitors: m.close()
-        d0 = caget(cpvlst)
+        d0 = caget(cpvlst, timeout=1, throw=False)
         for i,pv in enumerate(cpvlst):
             self.data[pv] = d0[i]
             self.pvs.append(pv)
