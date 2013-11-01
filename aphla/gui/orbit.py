@@ -5,27 +5,16 @@
 This is the main file for GUI app `aporbit`. A high level viewer and editor.
 """
 
-# for debugging, requires: python configure.py --trace ...
-if 1:
-    import sip
-    sip.settracemask(0x3f)
-
 from pkg_resources import require
 require('cothread>=2.2')
 
 import cothread
 app = cothread.iqt()
 
-import traceback
 import aphla
-from aphla.catools import camonitor, FORMAT_TIME
-
-import logging
-import os, sys
-from functools import partial
+from aphla.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
 
 import applotresources
-
 from elempickdlg import ElementPickDlg
 #from orbitconfdlg import OrbitPlotConfig
 from aporbitplot import ApOrbitPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot, ApSvdPlot
@@ -33,7 +22,13 @@ from aporbitdata import ApVirtualElemData
 from aporbitphy import *
 from elemeditor import *
 
+import logging
+import os, sys
+from functools import partial
+import time
+import numpy as np
 
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import QSize, SIGNAL, QThread, Qt, QObject
 from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QVBoxLayout, QPen, QSizePolicy, QMessageBox, QSplitter, QPushButton,
@@ -41,9 +36,6 @@ from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor,
                          QWhatsThis, QDialog)
 import PyQt4.Qwt5 as Qwt
-
-import time
-import numpy as np
 
 class QTextEditLoggingHandler(logging.Handler):
     def __init__(self, textedit):
@@ -153,6 +145,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.machinit = ApMachInitThread(default_machine, default_lat)
         self.connect(self.machinit, SIGNAL("initialized(PyQt_PyObject)"),
                      self._mach_init_done)
+        self.connect(self.machinit, SIGNAL("connected(PyQt_PyObject)"),
+                     self.logger.info)
+
         ###self.machinit.moveToThread(self._machinit_thread)
         ###_machinit_thread.start(QThread.LowPriority)
         self.logger.info("backgroud initializing {0}.{1} ...".format(
@@ -906,16 +901,27 @@ class OrbitPlotMainWindow(QMainWindow):
 
 def main(par=None):
     #app.setStyle(st)
+    splash_px = QtGui.QPixmap('splash_screen_1.png')
+    splash = QtGui.QSplashScreen(splash_px, Qt.WindowStaysOnTopHint)
+    splash.setMask(splash_px.mask())
+    splash.show()
+    splash.raise_()
+    app.processEvents()
+
     mlist = os.environ.get('HLA_MACHINE_LIST', '').split()
     mach = os.environ.get('HLA_MACHINE', None)
     if not mlist: mlist = aphla.machines.machines()
     print "Machines:", mlist
+    splash.showMessage("Yes")
     demo = OrbitPlotMainWindow(machines=mlist, default_machine=mach)
+    demo.raise_()
     #demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")
     demo.resize(1000,600)
     #print aphla.machines.lattices()
     demo.show()
+    time.sleep(10)
+    splash.finish(demo)
     # print app.style() # QCommonStyle
     #sys.exit(app.exec_())
     cothread.WaitForQuit()

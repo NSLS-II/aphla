@@ -14,7 +14,7 @@ from elempickdlg import ElementPickDlg
 from orbitcorrdlg import OrbitCorrDlg
 from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
 from apbba import ApBbaDlg
-
+import cothread
 import time
 import logging
 _logger = logging.getLogger(__name__)
@@ -40,9 +40,20 @@ class ApMachInitThread(QThread):
         #_logger.info("initialized {0}, using {1}".format(
         #    self.mach, self.latname))
         # send the signal to caller thread
+        elems = ap.getElements("*")
+        pvs = []
+        for e in elems: pvs.extend(e.pv())
+        #mons = ap.catools.ct.connect(pvs, wait=False)
+        cothread.Callback(self._connect_pvs, pvs)
         self.emit(SIGNAL("initialized(PyQt_PyObject)"), 
                   (self.mach, self.latname))
-        print "signal sent"
+        #print "signal sent"
+
+    def _connect_pvs(self, pvs):
+        #cothread.catools.connect(pvs, timeout = 8)
+        ap.catools.ct.caget(pvs)
+        self.emit(SIGNAL("connected(PyQt_PyObject)"), "%d" % len(pvs))
+
 
 
 class ApOrbitPhysics:

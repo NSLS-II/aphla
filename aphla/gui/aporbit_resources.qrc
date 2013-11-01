@@ -20,5 +20,6 @@
 <file alias="control_reset.png">./images/control_reset.png</file>
 <file alias="control_play.png">./images/control_play.png</file>
 <file alias="control_corrorbit.png">./images/control_corrorbit.png</file>
+<file alias="splash_screen_1.png">./images/python-logo-master-v3-TM.png</file>
 </qresource>
 </RCC>
