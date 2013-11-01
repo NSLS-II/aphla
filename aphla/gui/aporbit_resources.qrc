@@ -16,6 +16,10 @@
 <file alias="view_zoom_xy.png">./images/view_zoom_xy.png</file>
 <file alias="view_zoom_x.png">./images/view_zoom_x.png</file>
 <file alias="view_zoom_y.png">./images/view_zoom_y.png</file>
+<file alias="view_move_up.png">./images/view_move_up.png</file>
+<file alias="view_move_down.png">./images/view_move_down.png</file>
+<file alias="view_move_left.png">./images/view_move_left.png</file>
+<file alias="view_move_right.png">./images/view_move_right.png</file>
 <file alias="control_choosebpm.png">./images/control_choosebpm.png</file>
 <file alias="control_reset.png">./images/control_reset.png</file>
 <file alias="control_play.png">./images/control_play.png</file>

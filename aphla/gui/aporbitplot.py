@@ -515,7 +515,7 @@ class ApPlot(Qwt.QwtPlot):
         #self.timerId = self.startTimer(1000)
 
     def alignScales(self):
-        #raise RuntimeError("what is this")
+        # raise RuntimeError("ERROR")
         return
         self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)
         self.canvas().setLineWidth(1)
@@ -676,7 +676,12 @@ class ApPlotWidget(QWidget):
                          (":/view_zoom_y.png", self.autoScaleY),
                          (":/view_zoomin_x.png", self.zoomInX),
                          (":/view_zoomout_x.png", self.zoomOutX),
-                         (":/view_zoom_x.png", self.autoScaleX)]:
+                         (":/view_zoom_x.png", self.autoScaleX),
+                         (":/view_move_left.png", None),
+                         (":/view_move_right.png", None),
+                         (":/view_move_up.png", None),
+                         (":/view_move_down.png", None),
+        ]:
             bt = ApPlotControlButton(iconres=icon, iconsize=24, action = act)
             #majbox.addWidget(bt, 0, icol)
             #majbox.setColumnStretch(icol, 0)
@@ -801,8 +806,9 @@ class ApOrbitPlot(ApPlotWidget):
 
 
 class ApMdiSubPlot(QMdiSubWindow):
-    def __init__(self, parent = None, data = None, live = True):
+    def __init__(self, mach, lat, parent = None, data = None, live = True):
         super(ApMdiSubPlot, self).__init__(parent)
+        self.machlat = (mach, lat)
         self.wid = ApPlotWidget(parent)
         self.aplot = self.wid.aplot
         self.setAttribute(Qt.WA_DeleteOnClose)

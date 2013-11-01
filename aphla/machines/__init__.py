@@ -160,7 +160,9 @@ def load(machine, submachines = "*", **kwargs):
     This machine can be a path to config dir.
     """
     
-    global _lattice_dict, _lat
+    #global _lattice_dict, _lat
+
+    lat_dict, lat0 = {}, None
 
     use_cache = kwargs.get('use_cache', False)
     save_cache = kwargs.get('save_cache', False)
@@ -260,22 +262,26 @@ def load(machine, submachines = "*", **kwargs):
                   HLA_VSEXT: ('SEXT', vex("virtual_sext_exclude")),
         }
         createVirtualElements(lat, vfams)
-        _lattice_dict[msect] = lat
+        lat_dict[msect] = lat
         
-    if accdefault in _lattice_dict: _lat = _lattice_dict[accdefault]
-    elif len(_lattice_dict) > 0:
-        k = _lattice_dict.keys()[0]
+    lat0 = lat_dict.get(accdefault, None)
+    if lat0 is None and len(lat_dict) > 0:
         _logger.debug("default submachine not defined, "
                       "use the first available one '%s'" % k)
-        _lat = _lattice_dict[k]
-    else:
+        lat0 = lat_dict[sorted(lat_dict.keys())[0]]
+
+    if lat0 is None: 
         raise RuntimeError("NO accelerator structures available")
 
+    _lat = lat0
+    _lattice_dict.update(lat_dict)
     if save_cache:
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
                                  if _lat == v][0]
         saveCache(machine, _lattice_dict, selected_lattice_name)
-        
+
+    return lat0, lat_dict
+
 
 def loadCache(machine_name):
     """load the cached machine"""
