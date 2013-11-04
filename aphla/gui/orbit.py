@@ -17,11 +17,12 @@ from aphla.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
 import applotresources
 from elempickdlg import ElementPickDlg
 #from orbitconfdlg import OrbitPlotConfig
-from aporbitplot import ApOrbitPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot, ApSvdPlot
-from aporbitdata import ApVirtualElemData
+from aporbitplot import ApMdiSubPlot, ApSvdPlot
+from aporbitdata import ApVirtualElemData, ManagedPvData
 from aporbitphy import *
 from elemeditor import *
 from pvmanager import CaDataMonitor
+from latviewer import LatSnapshotMain
 
 import logging
 import os, sys
@@ -37,6 +38,9 @@ from PyQt4.QtGui import (QMainWindow, QAction, QActionGroup, QMenu, QTableView,
     QPlainTextEdit, QMdiArea, QMdiSubWindow, QDockWidget, QTextCursor,
                          QWhatsThis, QDialog)
 import PyQt4.Qwt5 as Qwt
+
+SUBWIN_ALL     = -1
+SUBWIN_CURRENT = 0
 
 class QTextEditLoggingHandler(logging.Handler):
     def __init__(self, textedit):
@@ -100,18 +104,16 @@ class OrbitPlotMainWindow(QMainWindow):
                 m, ", ".join([lat.name for k,lat in lats.items()])))
 
         ## DCCT current plot
-        self.dcct = DcctCurrentPlot()
-        #self.dcct.curve.setData(np.linspace(0, 50, 50), np.linspace(0, 50, 50))
-        self.dcct.setMinimumHeight(100)
-        self.dcct.setMaximumHeight(150)
+        #self.dcct = DcctCurrentPlot()
+        #self.dcct.setMinimumHeight(100)
+        #self.dcct.setMaximumHeight(150)
 
-        t0 = time.time()
-        t = np.linspace(t0 - 8*3600*24, t0, 100)
-        self.dcct.curve.t = t
-        v = 500*np.exp((t[0] - t[:50])/(4*3600*24))
-        self.dcct.curve.v = v.tolist()+v.tolist()
-        
-        self.dcct.updatePlot()
+        #t0 = time.time()
+        #t = np.linspace(t0 - 8*3600*24, t0, 100)
+        #self.dcct.curve.t = t
+        #v = 500*np.exp((t[0] - t[:50])/(4*3600*24))
+        #self.dcct.curve.v = v.tolist()+v.tolist()
+        #self.dcct.updatePlot()
 
         ## MDI area
         self.mdiarea = QMdiArea()
@@ -151,8 +153,8 @@ class OrbitPlotMainWindow(QMainWindow):
         
         # update at 1/2Hz
         self.dt, self.itimer = 1500, 0
-        self.timerId = None
-        #self.timerId = self.startTimer(self.dt)
+        #self.timerId = None
+        self.timerId = self.startTimer(self.dt)
 
         self.vbpm = None
         self.statusBar().showMessage("Welcome")
@@ -162,6 +164,10 @@ class OrbitPlotMainWindow(QMainWindow):
         #                   "H Orbit", c = None)
         #print "Thread started", self.machinit.isRunning()
 
+        self.newElementPlot("BPM", "x")
+        self.newElementPlot("BPM", "y")
+        #self.newElementPlot("HCOR", "x")
+        #self.newElementPlot("VCOR", "y")
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -181,13 +187,32 @@ class OrbitPlotMainWindow(QMainWindow):
         self.physics.close()
         event.accept()
 
+    def test_1(self):
+        pass
+
     def createMenuToolBar(self):
         #
         # file menu
         #
-        self.machMenu = self.menuBar().addMenu("&Machines")
-        self.connect(self.machMenu, SIGNAL("aboutToShow()"),
-                     self.updateMachMenu)
+        #self.machMenu = self.menuBar().addMenu("&Machines")
+        #self.connect(self.machMenu, SIGNAL("aboutToShow()"),
+        #             self.updateMachMenu)
+        self.openMenu = self.menuBar().addMenu("&Open")
+        self.openMenu.addAction("New ...", self.openNewPlot)
+        self.openMenu.addAction("Open Snapshot ...", self.openSnapshot)
+
+        self.openMenu.addSeparator()
+        self.openMenu.addAction("Save Lattice ...", self.saveLatSnapshot)
+        self.openMenu.addAction("Save Machine ...", self.saveMachSnapshot)
+
+        fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
+        fileQuitAction.setShortcut("Ctrl+Q")
+        fileQuitAction.setToolTip("Quit the application")
+        fileQuitAction.setStatusTip("Quit the application")
+        #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
+        self.connect(fileQuitAction, SIGNAL("triggered()"),
+                     self.close)
+        self.openMenu.addAction(fileQuitAction)
 
         # view
         self.viewMenu = self.menuBar().addMenu("&View")
@@ -198,7 +223,6 @@ class OrbitPlotMainWindow(QMainWindow):
             famAct.setCheckable(True)
             self.connect(famAct, SIGNAL("toggled(bool)"), self.click_markfam)
             mkmenu.addAction(famAct)
-        self.viewMenu.addMenu(mkmenu)
 
         # live data
         viewLiveAction = QAction(QIcon(":/view_livedata.png"),
@@ -221,24 +245,10 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(viewErrorBarAction, SIGNAL("toggled(bool)"),
                      self.errorBar)
 
-        # scale
-        viewZoomOut15Action = QAction(QIcon(":/view_zoomout.png"),
-                                         "Zoom out x1.5 (All)", self)
-        self.connect(viewZoomOut15Action, SIGNAL("triggered()"),
-                     self.zoomOut15)
-        viewZoomIn15Action = QAction(QIcon(":/view_zoomin.png"),
-                                        "Zoom in x1.5 (All)", self)
-        self.connect(viewZoomIn15Action, SIGNAL("triggered()"),
-                     self.zoomIn15)
-        viewZoomAutoAction = QAction(QIcon(":/view_zoom.png"),
-                                        "Auto Fit (All)", self)
-        self.connect(viewZoomAutoAction, SIGNAL("triggered()"),
-                     self.zoomAuto)
-        #viewAutoScale = QAction("Auto Scale", self)
-        #viewAutoScale.setCheckable(True)
-        #viewAutoScale.setChecked(False)
-        #self.connect(viewAutoScale, SIGNAL("toggled(bool)"), self.zoomAutoScale)
+        zoomM = QMenu("Zoom", self.viewMenu)
 
+        #
+        #
         controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
                                          "Choose BPM", self)
         self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
@@ -262,32 +272,18 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(steer_orbit, SIGNAL("triggered()"), 
                      self.createLocalBump)
         
+        self.viewMenu.addAction(viewLiveAction)
+        self.viewMenu.addAction(viewSingleShotAction)
+        self.viewMenu.addSeparator()
+
         self.viewMenu.addAction(drift_from_now)
         self.viewMenu.addAction(drift_from_golden)
         self.viewMenu.addAction(drift_from_none)
-
-        self.viewMenu.addSeparator()
-        self.viewMenu.addAction(viewLiveAction)
-        self.viewMenu.addAction(viewSingleShotAction)
-
-        self.viewMenu.addSeparator()
         #self.viewMenu.addAction(viewAutoScale)
         self.viewMenu.addAction(viewErrorBarAction)
+        self.viewMenu.addSeparator()
 
-        menu_style = QMenu("Style", self.viewMenu)
-        menu_style.addAction("lines", self.setPlotStyle)
-        menu_style.addAction("sticks", self.setPlotStyle)
-        menu_style.addSeparator()
-        menu_style.addAction("solid line", self.setPlotStyle)
-        menu_style.addAction("dash line", self.setPlotStyle)
-        menu_style.addAction("dot line", self.setPlotStyle)
-        menu_style.addAction("line width up", self.setPlotStyle)
-        menu_style.addAction("line width down", self.setPlotStyle)
-        menu_style.addSeparator()
-        menu_style.addAction("red", self.setPlotStyle)
-        menu_style.addAction("blue", self.setPlotStyle)
-        menu_style.addAction("green", self.setPlotStyle)
-        self.viewMenu.addMenu(menu_style)
+        self.viewMenu.addMenu(mkmenu)
 
         drift_group = QActionGroup(self)
         drift_group.addAction(drift_from_none)
@@ -302,11 +298,26 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(drift_from_golden, SIGNAL("triggered()"), 
                      self.setDriftGolden)
 
+        viewStyle = QMenu("Line Style", self.viewMenu)
+        for act in ["Increase Point Size", "Decrease Point Size", None,
+                    "NoCurve", "Lines", "Sticks", None,
+                    "Solid Line", "Dashed Line", "Dotted Line", None,
+                    "Increase Line Width", "Decrease Line Width", None,
+                    "NoSymbol", "Ellipse", "Rect", "Diamond", "Triangle",
+                    "Cross", "XCross", "HLine", "VLine",
+                    "Star1", "Star2", "Hexagon", None,
+                    "Red", "Blue", "Green"]:
+            if act is None:
+                viewStyle.addSeparator()
+            else:
+                viewStyle.addAction(act, self.setPlotStyle)
+        self.viewMenu.addMenu(viewStyle)
+
         self.viewMenu.addSeparator()
-        self.viewMenu.addAction(viewZoomOut15Action)
-        self.viewMenu.addAction(viewZoomIn15Action)
-        self.viewMenu.addAction(viewZoomAutoAction)
-        self.viewMenu.addSeparator()
+        #self.viewMenu.addAction(viewZoomOut15Action)
+        #self.viewMenu.addAction(viewZoomIn15Action)
+        #self.viewMenu.addAction(viewZoomAutoAction)
+        #self.viewMenu.addSeparator()
         self.viewMenu.addAction("ORM SV", self.plotSVD)
         # a bug in PyQwt5 for datetime x-axis, waiting for Debian 7
         #self.viewMenu.addAction(viewDcct)
@@ -334,18 +345,19 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # Window
         self.windowMenu = self.menuBar().addMenu("&Windows")
+        self.windowMenu.addAction(self.elemeditor.toggleViewAction())
+        self.windowMenu.addAction(self.logdock.toggleViewAction())
+        self.windowMenu.addSeparator()
         self.windowMenu.addAction("Cascade", self.mdiarea.cascadeSubWindows)
         self.windowMenu.addAction("Tile", self.mdiarea.tileSubWindows)
         self.windowMenu.addAction("Previous", self.mdiarea.activatePreviousSubWindow)
         self.windowMenu.addAction("Next", self.mdiarea.activateNextSubWindow)
         self.windowMenu.addSeparator()
-        viewDcct = QAction("Beam Current", self)
-        viewDcct.setCheckable(True)
-        viewDcct.setChecked(True)
-        self.connect(viewDcct, SIGNAL("toggled(bool)"), self.dcct.setVisible)
-        self.windowMenu.addAction(viewDcct)
-        self.windowMenu.addAction(self.elemeditor.toggleViewAction())
-        self.windowMenu.addAction(self.logdock.toggleViewAction())
+        #viewDcct = QAction("Beam Current", self)
+        #viewDcct.setCheckable(True)
+        #viewDcct.setChecked(True)
+        #self.connect(viewDcct, SIGNAL("toggled(bool)"), self.dcct.setVisible)
+        #self.windowMenu.addAction(viewDcct)
 
         # debug
         self.debugMenu = self.menuBar().addMenu("&Debug")
@@ -359,27 +371,6 @@ class OrbitPlotMainWindow(QMainWindow):
         self.helpMenu = self.menuBar().addMenu("&Help")
 
         #toolbar
-        #toolbar = QToolBar(self)
-        #self.addToolBar(toolbar)
-        #fileToolBar = self.addToolBar("File")
-        #fileToolBar.setObjectName("FileToolBar")
-        #fileToolBar.addAction(fileQuitAction)
-        #
-        viewToolBar = self.addToolBar("View")
-        viewToolBar.setObjectName("ViewToolBar")
-        viewToolBar.addAction(viewZoomOut15Action)
-        viewToolBar.addAction(viewZoomIn15Action)
-        viewToolBar.addAction(viewZoomAutoAction)
-        viewToolBar.addAction(viewLiveAction)
-        viewToolBar.addAction(viewSingleShotAction)
-        #viewToolBar.addAction(viewErrorBarAction)
-        viewToolBar.addAction(QWhatsThis.createAction(self))
-
-        controlToolBar = self.addToolBar("Control")
-        controlToolBar.addAction(controlChooseBpmAction)
-        controlToolBar.addAction(controlCorrOrbitAction)
-        #controlToolBar.addAction(controlResetPvDataAction)
-
         machToolBar = self.addToolBar("Machines")
         self.machBox = QComboBox()
         self.latBox = QComboBox()
@@ -387,117 +378,99 @@ class OrbitPlotMainWindow(QMainWindow):
         #             self.__setLattice)
         machToolBar.addWidget(self.machBox)
         machToolBar.addWidget(self.latBox)
-        machToolBar.addAction(QIcon(":/new_bpm.png"), "Orbits", self.newOrbitPlots)
-        machToolBar.addAction(QIcon(":/new_cor.png"), "Correctors", self.newCorrectorPlots)
+        #toolbar = QToolBar(self)
+        #self.addToolBar(toolbar)
+        #fileToolBar = self.addToolBar("File")
+        #fileToolBar.setObjectName("FileToolBar")
+        #fileToolBar.addAction(fileQuitAction)
 
+        #
+        viewToolBar1 = self.addToolBar("Live View")
+        #viewToolBar.setObjectName("ViewToolBar")
+        #viewToolBar.addAction(viewZoomOut15Action)
+        #viewToolBar.addAction(viewZoomIn15Action)
+        #viewToolBar.addAction(viewZoomAutoAction)
+        viewToolBar1.addAction(viewLiveAction)
+        viewToolBar1.addAction(viewSingleShotAction)
+        viewToolBar1.addSeparator()
+        #viewToolBar1.addAction(QIcon(":/new_bpm.png"), "Orbits", self.newOrbitPlots)
+        #viewToolBar1.addAction(QIcon(":/new_cor.png"), "Correctors", self.newCorrectorPlots)
+        #viewToolBar.addAction(viewErrorBarAction)
+        #viewToolBar.addAction(QWhatsThis.createAction(self))
+
+        viewToolBar2 = self.addToolBar("Scale Plot")
+        zoomActions = [(":/view_zoom_xy.png", "Fit", self.scalePlot),
+                       (None, None, None),
+                       (":/view_zoom_y.png", "Fit In Y", self.scalePlot),
+                       (":/view_zoomin_y.png", "Zoom In Y", self.scalePlot),
+                       (":/view_zoomout_y.png", "Zoom Out Y", self.scalePlot),
+                       (":/view_move_up.png", "Move Up", self.scalePlot),
+                       (":/view_move_down.png", "Move Down", self.scalePlot),
+                       (None, None, None),
+                       (":/view_zoom_x.png", "Fit In X", self.scalePlot),
+                       (":/view_zoomin_x.png", "Zoom In X", self.scalePlot),
+                       (":/view_zoomout_x.png", "Zoom Out X", self.scalePlot),
+                       (":/view_move_left.png", "Move Left", self.scalePlot),
+                       (":/view_move_right.png", "Move Right", self.scalePlot),
+                       ]
+        
+        
+        for ico,name,hdl in zoomActions:
+            if hdl is None: continue
+            viewToolBar2.addAction(QIcon(ico), name, hdl)
+
+        controlToolBar = self.addToolBar("Control")
+        controlToolBar.addAction(controlChooseBpmAction)
+        controlToolBar.addAction(controlCorrOrbitAction)
+        #controlToolBar.addAction(controlResetPvDataAction)
 
     def _current_mach_lat(self):
         """return the current machine name and lattice object"""
-        mach = str(self.machBox.currentText())
-        if not mach or mach not in self._machlat:
-            self.logger.warn("machine '{0}' is not available: {1}".format(
-                mach, self._machlat.keys()))
-            return None, None
-        lat  = str(self.latBox.currentText())
-        if not lat or lat not in self._machlat[mach]:
-            self.logger.warn("lattice '{0}' is not available for '{1}':{2}".format(
-                lat, mach, self._machlat[mach].keys()))
-            return mach, None
-        _lat = self._machlat[mach][lat]
-        if not _lat: 
-            self.logger.warn("lattice '%s' is not available" % lat)
-            return mach, None
-        return mach, _lat
+        mach     = str(self.machBox.currentText())
+        latname  = str(self.latBox.currentText())
+        lat_dict, lat0 = self._mach[mach]
+        return mach, lat_dict[latname]
 
     def click_machine(self, act):
         self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
 
     def newElementPlot(self, elem, field, **kw):
         """plot the field for element"""
-        lat = self._mach[str(self.machBox.currentText())]
+        mach, lat = kw.get("machlat", self._current_mach_lat())
+        handle = kw.get("handle", "readback")
+        elems = lat.getElementList(elem)
+        s   = [ e.sb for e in elems ]
+        pvs = [ e.pv(field=field, handle=handle)[0] for e in elems ]
+        pvm = CaDataMonitor(pvs)
 
+        magprof = lat.getBeamlineProfile()
 
-
-
-        c = kw.get('c', None)
-        lat = kw.get('lat', '')
-        mach = kw.get('mach', '')
-        magprof = kw.get('magprof', None)
-        # 
-        fields = [field]
-        if field is None: fields = velem.fields()
-
-        plots = []
-        for fld in fields:
-            #print "Processing element", velem.name, fld
-            p = ApMdiSubPlot()
-            #QObject.installEventFilter(p.aplot)
-            p.data = ApVirtualElemData(velem, fld, machine=mach, lattice=lat)
-            if c is not None: p.aplot.setColor(c)
-            p.setAttribute(Qt.WA_DeleteOnClose)
-            p.setWindowTitle("[%s.%s] %s %s" % (mach, lat, title, fld))
-            if magprof: p.wid.setMagnetProfile(magprof)
-            self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
-                         self.elementSelected)
-            self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
-            #print "update the plot"
-            p.updatePlot()
-            # set the zoom stack
-            #print "autozoom"
-            p.aplot.setErrorBar(self.error_bar)
-            p.wid.autoScaleXY()
-            p.aplot.replot()
-            self.mdiarea.addSubWindow(p)
-            #print "Show"
-            p.show()
-            plots.append(p)
+        p = ApMdiSubPlot(element_fields=[(e.name, field) for e in elems])
+        #QObject.installEventFilter(p.aplot)
+        p.data = ManagedPvData(pvm, s, pvs)
+        p.setAttribute(Qt.WA_DeleteOnClose)
+        str_elem = "{0}".format(elem)
+        if len(str_elem) > 12: str_elem = str_elem[:9] + "..."
+        str_field = "{0}".format(field)
+        if len(str_field) > 12: str_field = str_field[:9] + "..."
+        p.setWindowTitle("[%s.%s] %s %s" % (
+                mach, lat.name, str_elem, str_field))
+        p.aplot.setMagnetProfile(magprof)
+        self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
+                     self.elementSelected)
+        self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
+        p.updatePlot()
+        # set the zoom stack
+        p.aplot.setErrorBar(self.error_bar)
+        #p.wid.autoScaleXY()
+        #p.aplot.replot()
+        self.mdiarea.addSubWindow(p)
+        #print "Show"
+        p.show()
 
         #print "Enable the buttons"
         if len(self.mdiarea.subWindowList()) > 0:
             self.elemeditor.setEnabled(True)
-
-        return plots
-        
-    def _newVelemPlots(self, velem, field, title, **kw):
-        """plot the field(s) for element"""
-        c = kw.get('c', None)
-        lat = kw.get('lat', '')
-        mach = kw.get('mach', '')
-        magprof = kw.get('magprof', None)
-        # 
-        fields = [field]
-        if field is None: fields = velem.fields()
-
-        plots = []
-        for fld in fields:
-            #print "Processing element", velem.name, fld
-            p = ApMdiSubPlot()
-            #QObject.installEventFilter(p.aplot)
-            p.data = ApVirtualElemData(velem, fld, machine=mach, lattice=lat)
-            if c is not None: p.aplot.setColor(c)
-            p.setAttribute(Qt.WA_DeleteOnClose)
-            p.setWindowTitle("[%s.%s] %s %s" % (mach, lat, title, fld))
-            if magprof: p.wid.setMagnetProfile(magprof)
-            self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
-                         self.elementSelected)
-            self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
-            #print "update the plot"
-            p.updatePlot()
-            # set the zoom stack
-            #print "autozoom"
-            p.aplot.setErrorBar(self.error_bar)
-            p.wid.autoScaleXY()
-            p.aplot.replot()
-            self.mdiarea.addSubWindow(p)
-            #print "Show"
-            p.show()
-            plots.append(p)
-
-        #print "Enable the buttons"
-        if len(self.mdiarea.subWindowList()) > 0:
-            self.elemeditor.setEnabled(True)
-
-        return plots
 
 
     def subPlotDestroyed(self):
@@ -505,163 +478,72 @@ class OrbitPlotMainWindow(QMainWindow):
             self.elemeditor.setEnabled(False)
         
 
-    def newOrbitPlots(self):
+    def saveLatSnapshot(self):
+        dpath = os.environ.get("HLA_DATA_DIRS", "~")
+        fileName = QtGui.QFileDialog.getSaveFileName(
+            self, "Save Lattice Snapshot Data",
+            dpath, "Data Files (*.h5 *.hdf5);;All Files(*)")
+        if not fileName: return
         mach, lat = self._current_mach_lat()
-        bpms = [e for e in lat.getElementList('BPM') 
-                if e not in self.physics.deadelems]
-        magprof = lat.getBeamlineProfile()
+        ap.catools.save_lat_epics(fileName, lat, mode='a')
 
-        errmsgs = []
-        vbpmx = aphla.element.merge(bpms, field='x')
-        if 'x' in vbpmx.fields():
-            p1s = self._newVelemPlots(vbpmx, 'x', "Hori. Orbit", 
-                                      lat=lat.name, mach=mach, magprof=magprof, 
-                                      c=Qt.red)
-        else:
-            errmsgs.append("No horizontal data from BPMs")
-
-        vbpmy = aphla.element.merge(bpms, field='y')   
-        if 'y' in vbpmy.fields():
-            p2s = self._newVelemPlots(vbpmy, 'y', "Vert. Orbit",
-                                      lat=lat.name, mach=mach, magprof=magprof,
-                                      c=Qt.blue)
-        else:
-            errmsgs.append("No vertical data from BPMs")
-
-        if errmsgs:
-            QMessageBox.critical(self, "H/V Orbit", "\n".join(errmsgs),
-                                 QMessageBox.Ok)
-        else:
-            if self.timerId is None: self.timerId = self.startTimer(self.dt)
-        #print "fullname", p.fullname()
-
-    def newCorrectorPlots(self):
+    def saveMachSnapshot(self):
+        dpath = os.environ.get("HLA_DATA_DIRS", "~")
+        fileName = QtGui.QFileDialog.getSaveFileName(
+            self, "Save Lattice Snapshot Data",
+            dpath, "Data Files (*.h5 *.hdf5);;All Files(*)")
+        if not fileName: return
+        fileName = str(fileName)
+        f = h5py.File(str(fileName), 'w')
+        f.close()
         mach, lat = self._current_mach_lat()
-        magprof = lat.getBeamlineProfile()
-        cors = [e for e in lat.getElementList('COR') 
-                if e not in self.physics.deadelems]
-        #
-        if 'HCOR' in lat.getGroups():
-            hcors = [e for e in lat.getElementList('HCOR') 
-                     if e not in self.physics.deadelems]
-        else: 
-            hcors = cors
-        
-        if hcors:
-            vhcor = aphla.element.merge(hcors, field='x')
-            p1s = self._newVelemPlots( vhcor, 'x', "Hori. Corr", 
-                lat = lat.name, mach=mach, magprof=magprof, c = Qt.red)
-        else:
-            self.logger.error("no HCOR/COR found for '{0}.{1}'".format(
-                mach, lat.name))
+        for k,lat in self._mach[mach][0].items():
+            ap.catools.save_lat_epics(fileName, lat, mode='a')
 
-        if 'VCOR' in lat.getGroups():
-            vcors = [e for e in lat.getElementList('VCOR') 
-                     if e not in self.physics.deadelems]
-        else: 
-            vcors = cors
-        
-        if vcors:
-            vvcor = aphla.element.merge(vcors, field='y')
-            p2s = self._newVelemPlots(vvcor, 'y', "Vert. Corr",
-                lat = lat.name, mach=mach, magprof=magprof, c = Qt.blue)
-        else:
-            self.logger.error("no VCOR/COR found for '{0}.{1}'".format(
-                mach, lat.name))
-        
-        if self.timerId is None: self.timerId = self.startTimer(self.dt)
-        
-    def newPlot(self):
+
+    def openSnapshot(self):
+        self.logger.info("loading snapshot?")
+        lv = LatSnapshotMain()
+        self.logger.info("initialized")
+        #lv.loadLatSnapshotH5()
+        lv.exec_()
+
+    def openNewPlot(self):
         mach, lat = self._current_mach_lat()
-        magprof = lat.getBeamlineProfile()
+        fl = QtGui.QFormLayout()
+        fl.addRow("Machine", QtGui.QLabel("%s" % mach))
+        fl.addRow("Lattice", QtGui.QLabel("%s" % lat.name))
+        elem, fld = QtGui.QLineEdit(), QtGui.QLineEdit()
+        fl.addRow("Elements", elem)
+        fl.addRow("Field", fld)
+        dlg = QtGui.QDialog()
+        bx = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+                                    QtGui.QDialogButtonBox.Cancel)
+        self.connect(bx, SIGNAL("accepted()"), dlg.accept)
+        self.connect(bx, SIGNAL("rejected()"), dlg.reject)
+        h1 = QtGui.QHBoxLayout()
+        h1.addStretch()
+        h1.addWidget(bx)
+        v1 = QtGui.QVBoxLayout()
+        v1.addLayout(fl)
+        v1.addLayout(h1)
+        dlg.setLayout(v1)
 
-        famname = self.sender().text()
-        if famname == "H Orbit":
-            vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
-            if vbpm:
-                self._newVelemPlots(vbpm, 'x', "Hori. Orbit",
-                    lat = lat.name, mach=mach, magprof=magprof, c=Qt.red)
-            else:
-               self.logger.error("no '{0}' found".format(
-                    aphla.machines.HLA_VBPM))
-        elif famname == "V Orbit": 
-            vbpm = lat._find_exact_element(aphla.machines.HLA_VBPM)
-            self._newVelemPlots(vbpm, 'y', "Vert. Orbit", 
-                lat = lat.name, mach=mach, magprof=magprof, c=Qt.blue)
-        elif famname == "H Corrector":
-            velem = lat._find_exact_element(aphla.machines.HLA_VHCOR)
-            self._newVelemPlots(velem, 'x', "Hori. Corr",
-                lat = lat.name, mach=mach, magprof=magprof)
-        elif famname == "V Corrector":
-            velem = lat._find_exact_element(aphla.machines.HLA_VHCOR)
-            self._newVelemPlots(velem, 'y', "Vert. Corr",
-                lat = lat.name, mach=mach, magprof=magprof, c=Qt.blue)
-        elif famname == "Quad":
-            # plot all fields
-            velem = lat._find_exact_element(aphla.machines.HLA_VQUAD)
-            if velem:
-                self._newVelemPlots(velem, None, "Quadrupole", 
-                    lat = lat.name, mach=mach, magprof=magprof, c=Qt.black)
-            else:
-               self.logger.error("no '{0}' found".format(
-                    aphla.machines.HLA_VQUAD))
-        elif famname == "Sext":
-            # plot all fields
-             velem = lat._find_exact_element(aphla.machines.HLA_VSEXT)
-             self._newVelemPlots(velem, None, "Sextupole",
-                lat = lat.name, mach=mach, magprof=magprof, c=Qt.black)
-
-        #self.mdiarea.cascadeSubWindows()
-        #print self.mdiarea.subWindowList()
-        if self.timerId is None: self.timerId = self.startTimer(self.dt)
+        if dlg.exec_():
+            self.newElementPlot(str(elem.text()), str(fld.text()),
+                                machlat=(mach, lat))
 
     def click_markfam(self, on):
-        w = self.mdiarea.currentSubWindow()
-        if not w: return
-
         famname = self.sender().text()
         mks = []
-        lat = self._machlat[w.machine()][w.lattice()]
+        mach, lat = self._current_mach_lat()
         # need to convert to python str
         for elem in lat.getElementList(str(famname)):
             if elem.family != famname: continue
             if elem.virtual: continue
             mks.append([elem.name, 0.5*(elem.sb+elem.se)])
 
-        w.setMarkers(mks, on)
-
-
-    def updateMachMenu(self):
-        self.machMenu.clear()
-        newPlotMenu = QMenu("New", self.machMenu)
-        newPlotMenu.addAction("H Orbit", self.newPlot)
-        newPlotMenu.addAction("V Orbit", self.newPlot)
-        newPlotMenu.addAction("H Corrector", self.newPlot)
-        newPlotMenu.addAction("V Corrector", self.newPlot)
-        newPlotMenu.addAction("Quad", self.newPlot)
-        newPlotMenu.addAction("Sext", self.newPlot)
-        self.machMenu.addMenu(newPlotMenu)
-        self.machMenu.addSeparator()
-
-        if not self.machinit.isRunning():
-            mach_group = QActionGroup(self)
-            for mach in self._machlat.keys():
-                ac = QAction(mach, self)
-                ac.setCheckable(True)
-                mach_group.addAction(ac)
-                if mach == self.machBox.currentText(): ac.setChecked(True)
-                self.machMenu.addAction(ac)
-            self.connect(mach_group, SIGNAL("triggered(QAction*)"), self.click_machine)
-            self.machMenu.addSeparator()
-
-        fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
-        fileQuitAction.setShortcut("Ctrl+Q")
-        fileQuitAction.setToolTip("Quit the application")
-        fileQuitAction.setStatusTip("Quit the application")
-        #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
-        self.connect(fileQuitAction, SIGNAL("triggered()"),
-                     self.close)
-        self.machMenu.addAction(fileQuitAction)
+        for w in self.mdiarea.subWindowList(): w.setMarkers(mks, on)
         #print self._machlat.keys()
 
     def _reset_correctors(self):
@@ -677,7 +559,7 @@ class OrbitPlotMainWindow(QMainWindow):
         hcors = lat.getElementList('HCOR')
         i = np.random.randint(len(hcors))
         self.logger.info("Setting {0}/{1} HCOR".format(i, len(hcors)))
-        hcors[i].x += 1e-7
+        hcors[i].x += 2e-7
 
 
     def _random_vkick(self):
@@ -698,31 +580,60 @@ class OrbitPlotMainWindow(QMainWindow):
     def setPlotStyle(self):
         w = self.mdiarea.currentSubWindow()
         if not w: return
-        pen = w.aplot.curve1.pen()
-        st = self.sender().text()
-        if st == "lines":
+        pen, symb = w.aplot.curve1.pen(), w.aplot.curve1.symbol()
+        ptstyle = dict([("NoSymbol", Qwt.QwtSymbol.NoSymbol),
+                        ("Ellipse", Qwt.QwtSymbol.Ellipse),
+                        ("Rect", Qwt.QwtSymbol.Rect),
+                        ("Diamond", Qwt.QwtSymbol.Diamond),
+                        ("Triangle", Qwt.QwtSymbol.Triangle),
+                        ("Cross", Qwt.QwtSymbol.Cross),
+                        ("XCross", Qwt.QwtSymbol.XCross),
+                        ("HLine", Qwt.QwtSymbol.HLine),
+                        ("VLine", Qwt.QwtSymbol.VLine),
+                        ("Star1", Qwt.QwtSymbol.Star1),
+                        ("Star2", Qwt.QwtSymbol.Star2),
+                        ("Hexagon", Qwt.QwtSymbol.Hexagon),])
+
+        st = str(self.sender().text())
+        if st == "Increase Point Size":
+            sz = symb.size()
+            symb.setSize(QSize(sz.width()+1, sz.height()+1))
+            w.aplot.curve1.setSymbol(symb)
+        elif st == "Decrease Point Size":
+            sz = symb.size()
+            symb.setSize(QSize(sz.width()-1, sz.height()-1))
+            w.aplot.curve1.setSymbol(symb)
+        elif st == "NoCurve":
+            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.NoCurve)            
+        elif st == "Lines":
             w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Lines)
-        elif st == "dash line":
+        elif st == "Sticks":
+            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Sticks)
+        elif st == "Dashed Line":
             pen.setStyle(Qt.DashLine)
             w.aplot.curve1.setPen(pen)
-        elif st == "dot line":
+        elif st == "Dotted line":
             pen.setStyle(Qt.DotLine)
             w.aplot.curve1.setPen(pen)
-        elif st == "sticks":
-            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Sticks)
-        elif st == "line width up":
+        elif st == "Increase Line Width":
             pen.setWidth(pen.width() + 0.1)
             w.aplot.curve1.setPen(pen)
-        elif st == "line width down":
+        elif st == "Decrease Line Width":
             pen.setWidth(pen.width() - 0.1)
             w.aplot.curve1.setPen(pen)
-        elif st == "red":
+        elif st in ptstyle:
+            print "Using style:", st, symb.style()
+            symb.setStyle(ptstyle[st])
+            w.aplot.curve1.setSymbol(symb)
+        elif st == "Red":
             w.aplot.setColor(Qt.red)
-        elif st == "blue":
+        elif st == "Blue":
             w.aplot.setColor(Qt.blue)
-        elif st == "green":
+        elif st == "Green":
             w.aplot.setColor(Qt.green)
-        pass
+        else:
+            self.logger.error("Unknow action: '{0}'".format(st))
+
 
     def errorBar(self, on):
         self.error_bar = on
@@ -731,36 +642,52 @@ class OrbitPlotMainWindow(QMainWindow):
             w.aplot.replot()
 
     def setDriftNone(self):
-        w = self.mdiarea.currentSubWindow()
-        if not w: return
-        w.setReferenceData(0.0)
+        for w in self.mdiarea.subWindowList():
+            w.setReferenceData(0.0)
 
     def setDriftNow(self):
-        w = self.mdiarea.currentSubWindow()
-        if not w: return
-        # use the current data as reference
-        w.setReferenceData()
+        for w in self.mdiarea.subWindowList():
+            # use the current data as reference
+            w.setReferenceData()
 
     def setDriftGolden(self):
         #self.plot1.setDrift('golden')
         #self.plot2.setDrift('golden')
         raise RuntimeError("No golden orbit defined yet")
 
-    def zoomOut15(self):
-        """zoom out Y"""
-        for w in self.mdiarea.subWindowList():
-            w.wid.zoomOutY()
-            
-    def zoomIn15(self):
-        """ zoom in Y"""
-        for w in self.mdiarea.subWindowList():
-            w.wid.zoomInY()
+    def scalePlot(self):
+        w = self.mdiarea.currentSubWindow()
+        if not w: return
+        st, p = self.sender().text(), w.aplot
+        if st == "Fit":
+            p.scaleXBottom()
+            p.scaleYLeft()
+            # a hack
+            bound = p.curvesBound()
+            p.zoomer1.setZoomStack([bound])
+        elif st == "Fit In Y":
+            p.scaleYLeft()
+        elif st == "Zoom In Y":
+            p.scaleYLeft(1./1.5)
+        elif st == "Zoom Out Y":
+            p.scaleYLeft(1.5)
+        elif st == "Move Up":
+            p.moveCurves(Qwt.QwtPlot.yLeft, 0.8)
+        elif st == "Move Down":
+            p.moveCurves(Qwt.QwtPlot.yLeft, -0.8)
+        elif st == "Fit In X":
+            p.scaleXBottom()
+        elif st == "Zoom In X":
+            p.scaleXBottom(1.0/1.5)
+        elif st == "Zoom Out X":
+            p.scaleXBottom(1.5)            
+        elif st == "Move Left":
+            p.moveCurves(Qwt.QwtPlot.xBottom, 0.8)
+        elif st == "Move Right":
+            p.moveCurves(Qwt.QwtPlot.xBottom, -0.8)
+        else:
+            self.logger.error("unknow action '{0}'".format(st))
 
-    def zoomAuto(self):
-        """auto scale X and Y"""
-        for w in self.mdiarea.subWindowList():
-            w.wid.autoScaleXY()
-    
     def getDeadElements(self):
         return self.physics.deadelems
 
@@ -776,11 +703,7 @@ class OrbitPlotMainWindow(QMainWindow):
         
     def getVisibleElements(self, elemname, sb = None, se = None):
         w = self.mdiarea.currentSubWindow()
-        if not w: 
-            self.logger.warn("no active plot")
-            mach, lat = self._current_mach_lat()
-        else:
-            lat = self._machlat[w.machine()][w.lattice()]
+        mach, lat = self._current_mach_lat()
         elems = lat.getElementList(elemname)
         if sb is not None: 
             elems = [e for e in elems if e.sb >= sb]
@@ -791,7 +714,6 @@ class OrbitPlotMainWindow(QMainWindow):
             elemname, sb, se))
 
         return elems
-
 
     def timerEvent(self, e):
         if not self.elemeditor.isHidden():
@@ -805,7 +727,6 @@ class OrbitPlotMainWindow(QMainWindow):
                 if not isinstance(w, ApMdiSubPlot): continue
                 if not w.live: continue
                 w.updatePlot()
-                w.aplot.replot()
             self.statusBar().showMessage("plot updated: {0}".format(
                 time.strftime("%F %T")))
         else:
@@ -816,20 +737,17 @@ class OrbitPlotMainWindow(QMainWindow):
         for w in self.mdiarea.subWindowList():
             if not isinstance(w, ApMdiSubPlot):  continue
             w.updatePlot()
-            w.aplot.replot()
 
         self.statusBar().showMessage("plot updated: {0}".format(
             time.strftime("%F %T")))
 
-    #def resetPvData(self):
-    #    self.obtdata.reset()
-    #    #hla.hlalib._reset_trims()
 
     def elementSelected(self, elems):
         """this action is ignored"""
         mach, lat, elemnames = elems
-        _lat = self._machlat[mach][lat]
-        
+        #_lat = self._machlat[mach][lat]
+        self.logger.info("element selected")
+
         #elemobjs = _lat.getElementList(elemnames)
         #self._elemed.addElements(elemobjs)
 
@@ -872,6 +790,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #print np.shape(s), s
         self.sp = ApSvdPlot(s)
         self.sp.show()
+
 
 def main(par=None):
     #app.setStyle(st)
@@ -922,7 +841,6 @@ def main(par=None):
 
 # Admire!
 if __name__ == '__main__':
-    #hla.clean_init()
     main(sys.argv)
     #import cProfile
     #cProfile.run('main()')

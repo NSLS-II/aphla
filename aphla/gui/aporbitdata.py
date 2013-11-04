@@ -162,3 +162,31 @@ class ApVirtualElemData(ApPlotData):
         #if name not in self.velem._name: return
         i = self.velem._name.index(name)
         self.keep[i] = False
+
+
+class ManagedPvData(ApPlotData):
+    def __init__(self, pvm, s, pvs, **kw):
+        """
+        updating immediately by default, unless update=False
+        """
+        ApPlotData.__init__(self, s, **kw)
+        self._pvm = pvm
+        self._pvs = pvs
+        
+    def label(self):
+        return "%s [%s]" % ("", "")
+
+    def update(self):
+        """
+        update the orbit data from virtual element.
+        """
+        # y and errbar sync with plot, not changing data.
+        i = (self.icur + 1) % self.samples
+        #print "Updating orbit data"
+        for j,pv in enumerate(self._pvs):
+            if not self.keep[j]: continue
+            self.y[i,j] = self._pvm.get(pv)
+            self.yerrbar[j] = np.std(self.y[:,j])
+        self.icount += 1
+        self.icur = i
+

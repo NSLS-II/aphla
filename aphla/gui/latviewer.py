@@ -24,7 +24,7 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
         QFormLayout, QLabel, QSizePolicy, QCompleter, QMenu, QAction,
         QTabWidget, QCheckBox)
 import PyQt4.Qwt5 as Qwt
-from aporbitplot import ApPlot, ApPlotWidget
+from aporbitplot import ApPlot
 #import traceback
 import collections
 import numpy as np
@@ -748,9 +748,9 @@ class LatSnapshotMain(QDialog):
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self.tableview, "Table")
-        self.plt = ApPlotWidget()
+        self.plt = ApPlot()
         #self.plt = ApPlot()
-        self.plt.aplot.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend)
+        self.plt.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend)
 
 
         self.tabs.addTab(self.plt, "Plot")
@@ -858,7 +858,7 @@ class LatSnapshotMain(QDialog):
         if self.cbxLive.checkState() == Qt.Checked:
             self.model.updateLiveData()
         if self.tabs.currentIndex() == 1:
-            p = self.plt.aplot
+            p = self.plt
             x, dat = self.model.getSnapshotData()
             if not x or not dat:
                 for c in p.excurv: c.setData([], [], None)
@@ -939,14 +939,19 @@ class LatSnapshotMain(QDialog):
 
         return None
         
-    def loadLatSnapshotH5(self):
-        dpath = os.environ.get("HLA_DATA_DIRS", "~")
-        fileNames = QtGui.QFileDialog.getOpenFileNames(
-            self,
-            "Open Data",
-            dpath, "Data Files (*.h5 *.hdf5)")
+    def loadLatSnapshotH5(self, fnames = None):
+        if fnames is None:
+            dpath = os.environ.get("HLA_DATA_DIRS", "~")
+            fileNames = QtGui.QFileDialog.getOpenFileNames(
+                self,
+                "Open Data",
+                dpath, "Data Files (*.h5 *.hdf5)")
+        else:
+            fileNames = fnames
+
         latname = self._choose_common_lattice(fileNames)
         if not latname: return
+        
         #print "Accepted the choice:", latname
         for fname in fileNames:
             f = h5py.File(str(fname), 'r')
@@ -972,6 +977,7 @@ class LatSnapshotMain(QDialog):
                                   title=str(fname))
             self.cmbRefDs.addItem(str(fname))
             f.close()
+
         self.model.updateLiveData()
         self.model.emit(SIGNAL("layoutChanged()"))
         #print "Model rows:", self.model._rows

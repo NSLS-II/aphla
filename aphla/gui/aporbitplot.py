@@ -538,6 +538,12 @@ class ApPlot(Qwt.QwtPlot):
     def setErrorBar(self, on):
         self.curve1.errorOnTop = on
 
+    def moveCurves(self, ax, fraction = 0.80):
+        scalediv = self.axisScaleDiv(ax)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        sl1, sr1 = sl + (sr-sl)*fraction, sr + (sr-sl)*fraction
+        self.setAxisScale(ax, sl1, sr1)
+
     def scaleXBottom(self, factor = None):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.xBottom)
         sr, sl = scalediv.upperBound(), scalediv.lowerBound()
@@ -647,173 +653,16 @@ class ApPlot(Qwt.QwtPlot):
             bd = bd.united(curv.boundingRect())
         return bd
 
-class ApPlotControlButton(QPushButton):
-    def __init__(self, parent = None, iconres = None, iconsize = 24,
-                 action = None, tip = ''):
-        super(ApPlotControlButton, self).__init__("")
-        self.maxiconsize = 64
-        if tip: self.setToolTip(tip)
-        #bt1 = QPushButton("")
-        if iconres: self.setIcon(QIcon(iconres))
-        self.setIconSize(QSize(iconsize, iconsize))
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        self.setMinimumSize(16, 16)
-        self.setMaximumSize(self.maxiconsize, self.maxiconsize)
-        if action: self.connect(self, SIGNAL("clicked()"), action)
-        self.setFixedSize(iconsize,iconsize)
-        self.adjustSize()
-
-class ApPlotWidget(QWidget):
-    def __init__(self, parent = None, iconsize = 24, title=None):
-        super(ApPlotWidget, self).__init__(parent)
-
-        #majbox = QGridLayout()
-        hbox = QHBoxLayout()
-        icol = 0
-        for icon,act in [(":/view_zoom_xy.png", self.autoScaleXY),
-                         (":/view_zoomin_y.png", self.zoomInY),
-                         (":/view_zoomout_y.png", self.zoomOutY),
-                         (":/view_zoom_y.png", self.autoScaleY),
-                         (":/view_zoomin_x.png", self.zoomInX),
-                         (":/view_zoomout_x.png", self.zoomOutX),
-                         (":/view_zoom_x.png", self.autoScaleX),
-                         (":/view_move_left.png", None),
-                         (":/view_move_right.png", None),
-                         (":/view_move_up.png", None),
-                         (":/view_move_down.png", None),
-        ]:
-            bt = ApPlotControlButton(iconres=icon, iconsize=24, action = act)
-            #majbox.addWidget(bt, 0, icol)
-            #majbox.setColumnStretch(icol, 0)
-            hbox.addWidget(bt)
-            icol = icol + 1
-
-        ## a button has menu
-        self.moreopt = QMenu("")
-        a1 = QAction(QIcon(":/file_quit.png"), "&Quit", self)
-        a1.setToolTip("Quit the application")
-        a1.setStatusTip("Quit the application")
-        a1.setCheckable(True)
-        ##fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
-        self.connect(a1, SIGNAL("toggled(bool)"), self.a1toggle)
-        #self.moreopt.addAction(a1)
-        #self.moreopt.addAction("Edit Elements", self.editElements)
-        #bt = QPushButton("More")
-        #bt.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        #bt.setMenu(self.moreopt)
-        #majbox.addWidget(bt, 0, icol)
-        #majbox.setColumnStretch(icol, 0)
-        #hbox.addWidget(bt)
-
-        hbox.addStretch()
-        icol += 1
-
-        self.live = True
-        self.aplot = ApPlot(self)
-        self.aplot.plotLayout().setCanvasMargin(4)
-        self.aplot.plotLayout().setAlignCanvasToScales(True)
-
-        vbox = QVBoxLayout()
-        vbox.addLayout(hbox)
-        vbox.addWidget(self.aplot)
-        #majbox.addWidget(self.aplot, 1, 0, 1, 10)
-
-        self.title = QLabel()
-        #ncol = majbox.columnCount()
-        #majbox.addWidget(self.title, 0, ncol-1)
-        if title: self.title.setText(title)
-        #majbox.setColumnStretch(3, 1)
-        self.setLayout(vbox)
-
-    def editElements(self):
-        ax = self.aplot.axisScaleDiv(Qwt.QwtPlot.xBottom)
-        xl, xr =  (ax.lowerBound(), ax.upperBound())
-        self.emit(SIGNAL("editVisibleElements(float, float)"), xl, xr)
-
-    def setMagnetProfile(self, magnet_profile):
-        self.aplot.setMagnetProfile(magnet_profile)
-
-    def setMarkers(self, mks, on = True):
-        self.aplot.setMarkers(mks, on)
-
-    def setAxisTitle(self, axis, title):
-        self.aplot.setAxisTitle(axis, title)
-
-    def setAxisScale(self, axis, minv, maxv):
-        self.aplot.setAxisScale(axis, minv, maxv)
-
-    def detachCurves(self):
-        self.aplot.curve1.attach(None)
-        self.aplot.curve2.attach(None)
-        if self.aplot.curvemag: self.aplot.curvemag.attach(None)
-        
-    def attachCurves(self):
-        self.aplot.curve1.attach(self.aplot)
-        self.aplot.curve2.attach(self.aplot)
-        if self.aplot.curvemag: self.aplot.curvemag.attach(self.aplot)
-
-    def zoomInX(self):
-        self.aplot.scaleXBottom(0.68)
-        self.aplot.replot()
-
-    def zoomOutX(self):
-        self.aplot.scaleXBottom(1.5)
-        self.aplot.replot()
-
-    def zoomInY(self):
-        self.aplot.scaleYLeft(0.68)
-        self.aplot.replot()
-
-    def zoomOutY(self):
-        self.aplot.scaleYLeft(1.5)
-        self.aplot.replot()
-
-    def autoScaleXY(self):
-        self.aplot.scaleXBottom()
-        self.aplot.scaleYLeft()
-        self.aplot.replot()        
-        bound = self.aplot.curvesBound()
-        self.aplot.zoomer1.setZoomStack([bound])
-
-    def autoScaleX(self):
-        self.aplot.scaleXBottom()
-        self.aplot.replot()
-
-    def autoScaleY(self):
-        self.aplot.scaleYLeft()
-        self.aplot.replot()
-
-
-    def a1toggle(self, v):
-        print v
-
-    def zoom(self):
-        print "zoom"
-
-
-class ApOrbitPlot(ApPlotWidget):
-    def __init__(self, parent = None, title = None):
-        super(ApOrbitPlot, self).__init__(parent, iconsize=24, title=title)
-        
-
-    def updatePlot(self, x, y, err = None):
-        self.aplot.curve1.setData(x, y, err)
-        #print "orbit updated"
-        self.aplot.replot()
-        #if self.aplot.live and self.zoomer1:
-        #    self.zoomer1.setZoomBase(self.curve1.boundingRect())
-        #print self.aplot.zoomer1.zoomStack()
-
 
 class ApMdiSubPlot(QMdiSubWindow):
-    def __init__(self, mach, lat, parent = None, data = None, live = True):
+    def __init__(self, parent = None, data = None, live = True,
+                 element_fields = []):
         super(ApMdiSubPlot, self).__init__(parent)
-        self.machlat = (mach, lat)
-        self.wid = ApPlotWidget(parent)
-        self.aplot = self.wid.aplot
+        self.aplot = ApPlot()
+        self.setWidget(self.aplot)
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.setWidget(self.wid)
         self.data = data # ApVirtualElement
+        self._eflist = element_fields
         self.live = live
         self.err_only  = False
         self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
@@ -836,6 +685,7 @@ class ApMdiSubPlot(QMdiSubWindow):
         #print "replot"
         #print s, y, yerr
         #print "done replot"
+        self.aplot.replot()
 
     def elementSelected(self, elem):
         eleminfo = [self.data.machine, self.data.lattice, elem]

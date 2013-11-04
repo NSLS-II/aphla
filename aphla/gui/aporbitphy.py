@@ -12,48 +12,12 @@ import PyQt4.Qwt5 as Qwt
 
 from elempickdlg import ElementPickDlg
 from orbitcorrdlg import OrbitCorrDlg
-from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
+from aporbitplot import ApPlot, ApMdiSubPlot
 from apbba import ApBbaDlg
 import cothread
 import time
 import logging
 _logger = logging.getLogger(__name__)
-
-class ApMachInitThread(QThread):
-    def __init__(self, mach, lat):
-        super(ApMachInitThread, self).__init__()
-        self.mach = mach
-        self.latname = lat
-
-    def run(self):
-        #
-        # Note: logging is not recommended: Cross Thread signal.
-        # 
-        print "initializing ", self.mach, self.latname
-        #_logger.info("background initializing {0}.{1}".format(
-        #    self.mach, self.latname))
-
-        ap.machines.load(self.mach)
-        #print "initialized ", self.mach, self.latname
-        if self.latname: ap.machines.use(self.latname)
-        else: self.latname = ap.machines.getLattice().name
-        #_logger.info("initialized {0}, using {1}".format(
-        #    self.mach, self.latname))
-        # send the signal to caller thread
-        elems = ap.getElements("*")
-        pvs = []
-        for e in elems: pvs.extend(e.pv())
-        #mons = ap.catools.ct.connect(pvs, wait=False)
-        cothread.Callback(self._connect_pvs, pvs)
-        self.emit(SIGNAL("initialized(PyQt_PyObject)"), 
-                  (self.mach, self.latname))
-        #print "signal sent"
-
-    def _connect_pvs(self, pvs):
-        #cothread.catools.connect(pvs, timeout = 8)
-        ap.catools.ct.caget(pvs)
-        self.emit(SIGNAL("connected(PyQt_PyObject)"), "%d" % len(pvs))
-
 
 
 class ApOrbitPhysics:
