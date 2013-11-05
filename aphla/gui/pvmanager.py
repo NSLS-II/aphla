@@ -30,7 +30,7 @@ class CaDataMonitor:
         self.samples = samples
         
         self.simulation = kwargs.get('simulation', False)
-
+        self.val_default = kwargs.get("default", np.nan)
         if not pvs:
             self.pvs = []
             self.data = {}
@@ -48,8 +48,11 @@ class CaDataMonitor:
         elif isinstance(pvs, str):
             n = 1
             self.pvs = [pvs]
-        d0 = caget(self.pvs)
-        self.data = dict([(pv,d0[i]) for i,pv in enumerate(self.pvs)])
+        d0 = caget(self.pvs, throw=False)
+        self.data = dict([(pv, d0[i]) for i,pv in enumerate(self.pvs)])
+        for k,v in self.data.items():
+            if not v.ok: self.data[k] = self.val_default
+
         self._count = [1] * n
         self._buf = dict([(pv, [d0[i]]) for i,pv in enumerate(self.pvs)])
         self._icur = [1] * n

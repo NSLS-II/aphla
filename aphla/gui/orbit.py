@@ -166,8 +166,10 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.newElementPlot("BPM", "x")
         self.newElementPlot("BPM", "y")
-        #self.newElementPlot("HCOR", "x")
-        #self.newElementPlot("VCOR", "y")
+        self.newElementPlot("HCOR", "x")
+        self.newElementPlot("VCOR", "y")
+        self.newElementPlot("q*", "b1")
+        self.newElementPlot("c*", 'x')
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -439,8 +441,17 @@ class OrbitPlotMainWindow(QMainWindow):
         mach, lat = kw.get("machlat", self._current_mach_lat())
         handle = kw.get("handle", "readback")
         elems = lat.getElementList(elem)
-        s   = [ e.sb for e in elems ]
-        pvs = [ e.pv(field=field, handle=handle)[0] for e in elems ]
+        s, pvs = [], []
+        for e in elems:
+            epv = e.pv(field=field, handle=handle)
+            if not epv: continue
+            pvs.append(epv[0])
+            s.append(e.sb)
+
+        if not pvs:
+            self.logger.error("no data found for elements '{0}' and field '{1}'".format(elem, field))
+            return
+
         pvm = CaDataMonitor(pvs)
 
         magprof = lat.getBeamlineProfile()
