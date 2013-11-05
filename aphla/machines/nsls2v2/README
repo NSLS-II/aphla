@@ -1,0 +1,2 @@
+- data/init_db.py: initialize a sqlite db from two text files.
+
