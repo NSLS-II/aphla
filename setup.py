@@ -88,7 +88,7 @@ setup(
     #                    'numpy', 'scipy'],
     entry_points = {
         'gui_scripts': [
-            'aporbit = aphla.gui.orbit:main',
+            'mleap = aphla.gui.mleap:main',
             'apbba = aphla.gui.apbba:main',
             'aplauncher = aphla.gui.aplauncher:main',
             'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',

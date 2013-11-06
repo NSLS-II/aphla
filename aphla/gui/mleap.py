@@ -14,7 +14,7 @@ app = cothread.iqt()
 import aphla
 from aphla.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
 
-import applotresources
+import mleapresources
 from elempickdlg import ElementPickDlg
 #from orbitconfdlg import OrbitPlotConfig
 from aporbitplot import ApMdiSubPlot, ApSvdPlot
@@ -26,6 +26,7 @@ from latviewer import LatSnapshotMain
 
 import logging
 import os, sys
+import platform
 from functools import partial
 import time
 import numpy as np
@@ -60,7 +61,7 @@ class OrbitPlotMainWindow(QMainWindow):
     the main window has three major widgets: current, orbit tabs and element
     editor.
     """
-    def __init__(self, parent = None, machines=[]):
+    def __init__(self, parent = None, machines=[], **kwargs):
         QMainWindow.__init__(self, parent)
         self.setIconSize(QSize(32, 32))
         self.error_bar = True
@@ -71,6 +72,9 @@ class OrbitPlotMainWindow(QMainWindow):
         textedit = QPlainTextEdit(self.logdock)
         
         self.logger = logging.getLogger(__name__)
+        for msg in kwargs.get("infos", []):
+            self.logger.info(msg)
+
         self.guilogger = logging.getLogger("aphla.gui")
         # the "aphla" include lib part logging. When the lib is inside
         # QThread, logging message will be sent to TextEdit which is cross
@@ -371,7 +375,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # help
         self.helpMenu = self.menuBar().addMenu("&Help")
-
+        self.helpMenu.addAction("About mleap", self.showAbout)
+                                                                         
         #toolbar
         machToolBar = self.addToolBar("Machines")
         self.machBox = QComboBox()
@@ -425,6 +430,20 @@ class OrbitPlotMainWindow(QMainWindow):
         controlToolBar.addAction(controlChooseBpmAction)
         controlToolBar.addAction(controlCorrOrbitAction)
         #controlToolBar.addAction(controlResetPvDataAction)
+
+    def showAbout(self):
+        QMessageBox.about(
+            self, self.tr("mleap"),
+            (self.tr("""<b>Machine/Lattice Editor And Plotter</b> v %1
+                <p>Copyright &copy; 2013 BNL. 
+                All rights reserved.
+                <p>This application can be used to perform
+                high level accelerator controls.
+                <p>Python %2 - Qt %3 - PyQt %4 
+                on %5""").arg(aphla.version.version)
+                .arg(platform.python_version()).arg(QtCore.QT_VERSION_STR)
+                .arg(QtCore.PYQT_VERSION_STR).arg(platform.system())))
+
 
     def _current_mach_lat(self):
         """return the current machine name and lattice object"""
@@ -806,6 +825,8 @@ class OrbitPlotMainWindow(QMainWindow):
 def main(par=None):
     #app.setStyle(st)
     app.setOverrideCursor(QtGui.QCursor(Qt.WaitCursor))
+    app.setWindowIcon(QIcon(":/mainwin_2.png"))
+
     splash_px = QtGui.QPixmap(':/splash_screen_1.png')
     splash = QtGui.QSplashScreen(splash_px, Qt.WindowStaysOnTopHint)
     splash.setMask(splash_px.mask())
@@ -820,20 +841,27 @@ def main(par=None):
     
     mlist = os.environ.get('HLA_MACHINES', '').split(";")
     if not mlist: mlist = aphla.machines.machines()
-    machs = []
+    machs, infos = [], []
     for m in mlist:
         splash.showMessage("Initializing {0}".format(m),
                            Qt.AlignRight | Qt.AlignBottom)
         app.processEvents()
         lat0, latdict = ap.machines.load(m)
         machs.append((m, latdict, lat0))
-
+        infos.append("%s initialized" % m)
+        splash.showMessage("Connecting to {0}".format(m),
+                           Qt.AlignRight | Qt.AlignBottom)
+        pvs = []
+        for elem in lat0.getElementList("*"):
+            pvs.extend(elem.pv())
+        n = sum([1 for v in cothread.catools.caget(pvs, throw=False) if v.ok])
+        infos.append("%d out of %d PVs are alive" % (n, len(pvs)))
     
-    splash.showMessage("{0}".format(m),
+    splash.showMessage("Using {0} as default machine".format(m),
                        Qt.AlignRight | Qt.AlignBottom)
     app.processEvents()
     
-    mwin = OrbitPlotMainWindow(machines=machs)
+    mwin = OrbitPlotMainWindow(machines=machs, infos=infos)
     splash.showMessage("Window created", Qt.AlignRight | Qt.AlignBottom)
     #demo = QtGui.QMainWindow()
     #demo.raise_()

@@ -651,16 +651,13 @@ def _updateLatticePvDb(dbfname, cfslist):
     elem_sets, pv_sets = [], []
     for i,rec in enumerate(cfslist):
         pv, prpts, tags = rec
-        ukey = (prpts.get("elemName", ''), prpts.get("elemType", ''),
-                prpts.get("system", ''))
+        ukey = (prpts.get("elemName", ''),)
         # skip if already in the to-be-inserted list
         if ukey in elem_sets: continue
-        c.execute("""SELECT * from elements where elemName=?
-                       AND elemType=? AND system=?""", ukey )
+        c.execute("""SELECT * from elements where elemName=?""", ukey)
         if len(c.fetchall()) > 0: continue
         elem_sets.append(ukey)
-    c.executemany("""INSERT INTO elements (elemName, elemType, system)
-                     VALUES (?, ?, ?)""", elem_sets)
+    c.executemany("""INSERT INTO elements (elemName) VALUES (?)""", elem_sets)
     # insert or replace pv
     c.executemany("""INSERT OR REPLACE INTO pvs (pv) VALUES (?)""", 
                   [(r[0],) for r in cfslist])
@@ -672,7 +669,7 @@ def _updateLatticePvDb(dbfname, cfslist):
                  ("k2", None), ("angle", None), ("fieldPolar", None),
                  ("virtual", 0),
                  # the three unique constraint
-                 ("elemName", ''), ("elemType", ''), ("system", '')]
+                 ("elemName", ''), ("elemType", '')]
     q_elem_update = ",".join(["%s=?" % v[0] for v in elem_cols[:-3]])
     pv_cols = [("elemHandle", None), ("elemField", None), 
                ("hostName", ""), ("devName", ""), ("iocName", ""),
@@ -682,7 +679,7 @@ def _updateLatticePvDb(dbfname, cfslist):
         pv, prpts, tags = rec
         ukey = [prpts.get(k[0], k[1]) for k in elem_cols] 
         c.execute("""UPDATE elements set """ + q_elem_update +
-                  """ where elemName=? AND elemType=? AND system=?""", ukey)
+                  """ where elemName=?""", ukey)
         ukey = [";".join(tags),] + [prpts.get(k[0], k[1]) for k in pv_cols] + \
                [prpts.get("elemName", ''), prpts.get("elemType", ''),
                 prpts.get("system", ''), pv]
@@ -697,7 +694,7 @@ def _updateLatticePvDb(dbfname, cfslist):
     conn.close()
 
                          
-def updateLatticePvDb(dbfname, csv2fname):
+def _updateLatticePvDb(dbfname, csv2fname):
     """
     update the sqlite3 DB with CSV file
     """
@@ -732,9 +729,8 @@ def createLatticePvDb(dbfname, csv2fname = None):
                  values (datetime('now'), "log", ?)""", (msg,))
     c.execute("""CREATE TABLE elements
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  elemName TEXT NOT NULL,
+                  elemName TEXT UNIQUE,
                   elemType TEXT NOT NULL,
-                  system   TEXT NOT NULL,
                   cell     TEXT,
                   girder   TEXT,
                   symmetry TEXT,
@@ -746,12 +742,13 @@ def createLatticePvDb(dbfname, csv2fname = None):
                   k2           REAL,
                   angle        REAL,
                   fieldPolar   INTEGER,
-                  virtual      INTEGER)""")
+                  virtual      INTEGER DEFAULT 0)""")
     conn.commit()
 
     c.execute("""CREATE TABLE pvs
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   pv TEXT,
+                  elemName   TEXT,
                   elemHandle TEXT,
                   elemField  TEXT,
                   hostName   TEXT,
@@ -761,8 +758,8 @@ def createLatticePvDb(dbfname, csv2fname = None):
                   hlaHigh   REAL,
                   hlaLow    REAL,
                   hlaValRef REAL,
-                  elem_id   INTEGER,
-                  FOREIGN KEY(elem_id) REFERENCES elements(id))""")
+                  UNIQUE (pv,elemName,elemField) ON CONFLICT REPLACE,
+                  FOREIGN KEY(elemName) REFERENCES elements(elemName))""")
     conn.commit()
     conn.close()
     if csv2fname is not None: updateLatticePvDb(dbfname, csv2fname)

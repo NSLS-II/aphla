@@ -25,5 +25,7 @@
 <file alias="control_play.png">./images/control_play.png</file>
 <file alias="control_corrorbit.png">./images/control_corrorbit.png</file>
 <file alias="splash_screen_1.png">./images/python-logo-master-v3-TM.png</file>
+<file alias="mainwin_1.png">./images/screenflow-icon.png</file>
+<file alias="mainwin_2.png">./images/python-powered-h-140x182.png</file>
 </qresource>
 </RCC>

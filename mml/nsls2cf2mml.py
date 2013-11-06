@@ -6,13 +6,13 @@ from fnmatch import fnmatch
 atdefdict = {}
 
 def patch(latname, elem, k, **kwargs):
-    d={'V1LTD1': {'q1': {'k1': -12.38103029065561},
+    d={'LTD1': {'q1': {'k1': -12.38103029065561},
                   'q2': {'k1': 13.05625044521254},
                   'q3': {'k1': -4.291155182},
                   'q1bd1': {'k1': -8.984411885820821},
                   'q2bd1': {'k1': 7.98520609273425}
               },
-       'V2SR': {"sl1g*c*[ab]": { "k2": -1.95754},
+       'SR': {"sl1g*c*[ab]": { "k2": -1.95754},
                 "sl2g*c*[ab]": { "k2": 25.9682},
                 "sl3g*c*[ab]": { "k2": -28.2618},
                 "sm1g*c*a": { "k2": -24.131},
@@ -137,6 +137,8 @@ def convert_at_lattice(latname):
             #rec['name'] = 'DFT_%s' % e.name
             # a default drift
             oupt.append(rec.copy())
+            pass
+        elif e.family in ['BEND', 'IVU', 'DW', 'EPU']:
             pass
         else:
             print i,e
@@ -380,7 +382,7 @@ def export_mml_init(template, latname):
 
 
 if __name__ == "__main__":
-    ap.machines.init("nsls2v2")
+    ap.machines.load("nsls2")
 
     # save the current lattice
     lat = ap.machines.getLattice()    
@@ -391,7 +393,7 @@ if __name__ == "__main__":
     #export_at_lattice("nsls2v1ltd1.m.template", latname)
     #export_mml_init("v1ltd1init.m.template", latname)
 
-    latname = 'V2SR'
+    latname = 'SR'
     ap.machines.use(latname)
     export_at_lattice("nsls2v2sr.m.template", latname)
     templates = {'main': "v2srinit.m.template", 

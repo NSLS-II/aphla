@@ -239,12 +239,15 @@ class ChannelFinderAgent(object):
         except the pv and tags columns.
 
         tags are separated by ';'
+
+        pv name can be duplicate (chained element)
         """
         conn = sqlite3.connect(fname)
         # use byte string instead of the default unicode
         conn.text_factory = str
         c = conn.cursor()
-        c.execute(r"select * from pvs,elements where pvs.elem_id=elements.id")
+        c.execute(r"select * from pvs,elements "
+                  "where pvs.elemName=elements.elemName")
         # head of columns
         allcols = [v[0] for v in c.description]
         # default using all columns
@@ -276,7 +279,7 @@ class ChannelFinderAgent(object):
 
         #
         c.execute("select * from elements t1 left join pvs t2 on "
-                  "t1.id = t2.elem_id where t2.elem_id is NULL")
+                  "t1.elemName = t2.elemName where t2.elemName is NULL")
         allcols = [v[0] for v in c.description]
         # default using all columns
         proplist= kwargs.get('properties', allcols)

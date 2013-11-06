@@ -160,7 +160,7 @@ def load(machine, submachines = "*", **kwargs):
     This machine can be a path to config dir.
     """
     
-    #global _lattice_dict, _lat
+    global _lattice_dict, _lat
 
     lat_dict, lat0 = {}, None
 
@@ -438,10 +438,12 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
     # a new lattice
     lat = Lattice(latname, desc)
     for rec in pvrec:
-        _logger.debug("{0}".format(rec))
+        _logger.debug("processing {0}".format(rec))
         # skip if there's no properties.
         if rec[1] is None: continue
-        if rec[0] and systag not in rec[2]: continue
+        if rec[0] and systag not in rec[2]: 
+            _logger.debug("%s is not tagged '%s'" % (rec[0], systag))
+            continue
         #if rec[1].get("system", "") != latname: continue
         if 'name' not in rec[1]: continue
         #print "PASSED"
@@ -455,7 +457,6 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
         # find if the element exists.
         elem = lat._find_exact_element(name=name)
         if elem is None:
-            _logger.debug("new element: '%s'" % name)
             try:
                 elem = CaElement(**prpt)
                 gl = [g.strip() for g in prpt.get('groups', [])]
@@ -464,9 +465,12 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
                 _logger.error("Error: creating element '{0}' with '{1}'".format(name, prpt))
                 raise
             
+            _logger.debug("created new element: '%s'" % name)
             #print "inserting:", elem
             #lat.appendElement(elem)
             lat.insertElement(elem)
+        else:
+            _logger.debug("using existed element %s" % (name,))
         # 
         if HLA_VFAMILY in prpt.get('group', []): elem.virtual = 1
 

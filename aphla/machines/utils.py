@@ -20,6 +20,9 @@ def _nsls2_filter_element_type_group(elemlst):
         if tp in ['DRIF', 'MARK']:
             # ignore drift
             pass
+        elif tp == "QUAD" and name.startswith("SQ"):
+            relst.append([name, idx, "SKQUAD", s0, L, s1, cell, girder,
+                          symm, grp])
         elif tp in ['BPM', 'QUAD', 'SEXT', 'IVU', 'DW', 'EPU']:
             relst.append([name, idx, tp, s0, L, s1, cell, girder, symm, grp])
         elif tp in ['TRIM', 'TRIMD']:
@@ -253,7 +256,6 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
     pvs = [v.strip().split(",") for v in open(fpv, 'r').readlines()]
 
     latname    = kwarg.get("latname", "SR")
-    system     = kwarg.get("system", latname)
     name_index = kwarg.get("name_index", False)
 
     conn = sqlite3.connect(fdb)
@@ -262,9 +264,9 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
     c = conn.cursor()
     c.executemany("""INSERT INTO elements (elemName,elemIndex,elemType,"""
                   """elemLength,elemPosition,"""
-                  """cell,girder,symmetry,elemGroups,system)"""
-                  """VALUES (?,?,?,?,?,?,?,?,?,?)""",
-                  [(name,idx,tp,L,s1,cl,gd,sm,grp,system) 
+                  """cell,girder,symmetry,elemGroups)"""
+                  """VALUES (?,?,?,?,?,?,?,?,?)""",
+                  [(name,idx,tp,L,s1,cl,gd,sm,grp) 
                    for (name, idx, tp, s0, L, s1, cl, gd, sm, grp)
                    in elems])
     conn.commit()
@@ -272,10 +274,11 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
     c.execute("""insert into info(timestamp,name,value)
                  values (datetime('now'), "log", ? )""", (msg,))
     systag = "aphla.sys.%s" % latname
-    c.executemany("""INSERT into pvs (pv,elemHandle,elemField,elem_id,tags) """
-                  """values (?,?,?,?,?)""",
-                  [(pv,hdl,fld,int(eid),systag) 
-                   for (pv,hdl,ename,eid,etp,fld) in pvs])
+    c.executemany("""INSERT into pvs """
+                  """(pv,elemName,elemIndex,elemHandle,elemField,tags) """
+                  """values (?,?,?,?,?,?)""",
+                  [(pv,ename,int(eidx),hdl,fld,systag) 
+                   for (pv,hdl,ename,eidx,etp,fld) in pvs])
     conn.commit()
     msg = "[%s] new 'pvs' table" % (__name__,)
     c.execute("""insert into info(timestamp,name,value)
@@ -283,17 +286,16 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
     conn.commit()
     #
     names = [e[0] for e in elems]
-    vrec = {"twiss": ["twiss", -100, "TWISS", 0.0, 0.0, "", "", "", "", system],
-            "dcct": ["dcct", -200, "DCCT", 0.0, 0.0, "", "", "", "", system],
-            "rfcavity": ["rfcavity", -300, "RFCAVITY", 0.0, 0.0, "", "", "", "",
-                         system],
-    }
+    vrec = {
+        "twiss": ["twiss", -100, "TWISS", 0.0, 0.0, "", "", "", ""],
+        "dcct": ["dcct", -200, "DCCT", 0.0, 0.0, "", "", "", ""],
+        "rfcavity": ["rfcavity", -300, "RFCAVITY", 0.0, 0.0, "", "", "", ""], }
     for k,v in vrec.items():
         if k in names: continue
         c.execute("""INSERT INTO elements (elemName,elemIndex,elemType,"""
                   """elemLength,elemPosition,"""
-                  """cell,girder,symmetry,elemGroups,system)"""
-                  """VALUES (?,?,?,?,?,?,?,?,?,?)""", v)
+                  """cell,girder,symmetry,elemGroups)"""
+                  """VALUES (?,?,?,?,?,?,?,?,?)""", v)
         names.append(k)
     conn.commit()
 
@@ -304,9 +306,9 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
             raise RuntimeError("No {0}".format(ename))
         c.execute("""UPDATE pvs set """
                   """elem_id=(select id from elements """
-                  """where elemName=? and system=?) """
-                  """where pv=?""", 
-                  (ename,system,pv,))
+                  """where elemName=? and elemIndex=?) """
+                  """where pv=? and elemName=? and elemIndex=?""", 
+                  (ename,int(eid),pv,ename,int(eid)))
         #c.execute("""UPDATE pvs set """
         #          """elem_id=(select id from elements """
         #          """where elemName=? and elemType=? and system=?) """
@@ -314,4 +316,5 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
         #          (ename,etp,system,pv,))
     conn.commit()
     conn.close()
+
 
