@@ -249,7 +249,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
 
     def getSnapshotRecord(self, idx):
         validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
-        print idx, len(validrows)
+        #print idx, len(validrows)
         try:
             r = validrows[idx]
             print r, self.dsref
@@ -259,6 +259,8 @@ class LatSnapshotTableModel(QAbstractTableModel):
             print "index error: len(validrows)= {0}, i={1}".format(
                 len(validrows), idx)
             raise
+        except:
+            print idx, r.values, dd
 
     def getSnapshotData(self):
         idx, ret = [], []
@@ -404,13 +406,14 @@ class LatSnapshotTableModel(QAbstractTableModel):
             #print "Editting pv col=", col, value, value.toDouble()
             # put the value to machine
             vd = value.toDouble()[0]
-            unit = self._unitsys[col-1]
+            #unit = self._unitsys[col-1]
 
             #_logger.info("Putting {0} to {1}.{2} in role {3}".format(
             #    vd, elem.name, fld, role))
             # need to update model data, otherwise, setEditorData will
             # call model for un-updated value
-            elem.put(fld, vd, unitsys=unit)
+            #elem.put(fld, vd, unitsys=unit)
+            elem.put(fld, vd, unitsys=None)
             #for i in range(len(self._elemrec)): self._update_data(i)
             self._value[row][col-1] = vd
         # update the whole table ?
@@ -941,7 +944,7 @@ class LatSnapshotMain(QDialog):
         
     def loadLatSnapshotH5(self, fnames = None):
         if fnames is None:
-            dpath = os.environ.get("HLA_DATA_DIRS", "~")
+            dpath = os.environ.get("HLA_DATA_DIR", "")
             fileNames = QtGui.QFileDialog.getOpenFileNames(
                 self,
                 "Open Data",

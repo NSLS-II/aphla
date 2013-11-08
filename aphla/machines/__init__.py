@@ -54,9 +54,8 @@ HLA_VSEXT  = 'HLA:VSEXT'
 # HOME = os.environ['HOME'] will NOT work on Windows,
 # unless %HOME% is set on Windows, which is not the case by default.
 _home_hla = os.path.join(os.path.expanduser('~'), '.hla')
-HLA_CONFIG_DIR = os.environ.get('HLA_CONFIG_DIR', _home_hla)
-#HLA_OUTPUT_DIR = os.environ.get('HLA_OUTPUT_DIR', None)
-HLA_MACHINE    = os.environ.get('HLA_MACHINE', None)
+HLA_CONFIG_DIR = os.environ.get("HLA_CONFIG_DIR", _home_hla)
+HLA_DATA_DIR   = os.environ.get("HLA_DATA_DIR", os.path.expanduser('~'))
 HLA_DEBUG      = int(os.environ.get('HLA_DEBUG', 0))
 
 # the properties used for initializing Element are different than

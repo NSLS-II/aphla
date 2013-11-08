@@ -28,7 +28,7 @@ import logging
 import os, sys
 import platform
 from functools import partial
-import time
+import datetime,time
 import numpy as np
 
 from PyQt4 import QtCore, QtGui
@@ -508,33 +508,69 @@ class OrbitPlotMainWindow(QMainWindow):
             self.elemeditor.setEnabled(False)
         
 
+    def _prepare_parent_dirs(self):
+        dt = datetime.datetime.now()
+        dpath = os.path.join(os.environ.get("HLA_DATA_DIR", ""),
+                             dt.strftime("%Y_%m"))
+        if os.path.exists(dpath): return dpath
+
+        r = QMessageBox.question(
+            self, "Create directories",
+            "The default directories do not exist<br>"
+            "%s<br>"
+            "Create them ?" % dpath,
+            QMessageBox.Yes | QMessageBox.No)
+        if r == QMessageBox.Yes: 
+            qd = QtCore.QDir()
+            qd.mkpath(dpath)
+            self.logger.info("created '%s'" % dpath)
+            return dpath
+        return False
+
     def saveLatSnapshot(self):
-        dpath = os.environ.get("HLA_DATA_DIRS", "~")
+        mach, lat = self._current_mach_lat()
+        dpath = self._prepare_parent_dirs()
+        if not dpath:
+            QMessageBox.warning(self, "Abort", "Aborted")
+            return
+        dt = datetime.datetime.now()
+        fname = os.path.join(dpath,
+            dt.strftime("snapshot_%d_%H%M%S_") + lat.name + ".hdf5")
         fileName = QtGui.QFileDialog.getSaveFileName(
             self, "Save Lattice Snapshot Data",
-            dpath, "Data Files (*.h5 *.hdf5);;All Files(*)")
+            fname,
+            "Data Files (*.h5 *.hdf5);;All Files(*)")
+        fileName = str(fileName)
         if not fileName: return
-        mach, lat = self._current_mach_lat()
         ap.catools.save_lat_epics(fileName, lat, mode='a')
+        self.logger.info("snapshot created '%s'" % fileName)
 
     def saveMachSnapshot(self):
-        dpath = os.environ.get("HLA_DATA_DIRS", "~")
+        mach, lat = self._current_mach_lat()
+        dpath = self._prepare_parent_dirs()
+        if not dpath:
+            QMessageBox.warning(self, "Abort", "Aborted")
+            return
+        dt = datetime.datetime.now()
+        fname = os.path.join(dpath, dt.strftime("snapshot_%d_%H%M%S.hdf5"))
         fileName = QtGui.QFileDialog.getSaveFileName(
             self, "Save Lattice Snapshot Data",
-            dpath, "Data Files (*.h5 *.hdf5);;All Files(*)")
+            fname,
+            "Data Files (*.h5 *.hdf5);;All Files(*)")
         if not fileName: return
         fileName = str(fileName)
         f = h5py.File(str(fileName), 'w')
         f.close()
-        mach, lat = self._current_mach_lat()
+        self.logger.info("clean snapshot file created: '%s'" % fileName)
         for k,lat in self._mach[mach][0].items():
             ap.catools.save_lat_epics(fileName, lat, mode='a')
-
+            self.logger.info("lattice snapshot appended for '%s'" % lat.name)
 
     def openSnapshot(self):
-        self.logger.info("loading snapshot?")
-        lv = LatSnapshotMain()
-        self.logger.info("initialized")
+        #self.logger.info("loading snapshot?")
+        lv = LatSnapshotMain(self)
+        lv.setWindowFlags(Qt.Window)
+        #self.logger.info("initialized")
         #lv.loadLatSnapshotH5()
         lv.exec_()
 
@@ -881,8 +917,8 @@ def main(par=None):
 # Admire!
 if __name__ == '__main__':
     main(sys.argv)
-    #import cProfile
-    #cProfile.run('main()')
+    import cProfile
+    cProfile.run('main()')
 
 # Local Variables: ***
 # mode: python ***
