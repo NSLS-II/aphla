@@ -272,7 +272,8 @@ class ElementPropertyTableModel(QAbstractTableModel):
         elem, fld, hdl = self._elemrec[row]
         vals = self._value[row]
         if vals is None:
-            return Qt.ItemIsEnabled | Qt.ItemIsEditable | Qt.ItemIsUserCheckable | Qt.ItemIsSelectable
+            return Qt.ItemIsEnabled | Qt.ItemIsEditable | \
+                Qt.ItemIsUserCheckable | Qt.ItemIsSelectable
         elif vals[col-1] is None:
             return Qt.ItemIsEnabled
         elif hdl == 'setpoint' and row not in self._inactive:
@@ -313,7 +314,8 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 self.emit(SIGNAL("toggleElementState(PyQt_PyObject, bool)"),
                           elem, True)
             else:
-                raise RuntimeError("unknown check state for cell (%d,%d)" % (row, col))
+                raise RuntimeError("unknown check state for cell (%d,%d)" % 
+                                   (row, col))
         elif value.canConvert(QVariant.List):
             val = [v.toFloat()[0] for v in value.toList()]
             self._value[row][col-1] = val
@@ -553,7 +555,8 @@ class ElementPropertyDelegate(QStyledItemDelegate):
                 model.setData(index, vals)
             return True
 
-        return QStyledItemDelegate.editorEvent(self, event, model, option, index)
+        return QStyledItemDelegate.editorEvent(
+            self, event, model, option, index)
 
     def updateEditorGeometry(self, editor, opt, index):
         #print "geometry:", opt.rect
@@ -565,7 +568,6 @@ class ElementPropertyView(QTableView):
     def __init__(self, parent = None):
         QTableView.__init__(self, parent)
         self.timerId = self.startTimer(3000)
-
 
     def disableElement(self, checked=True, irow=-1):
         if irow < 0: return

@@ -31,65 +31,62 @@ class CaDataMonitor:
         
         self.simulation = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
-        if not pvs:
-            self.pvs = []
-            self.data = {}
-            self._count = []
-            self._buf = {}
-            self._icur = []
-            self.dead = []
-            self.monitors = []
-            return
+        timeout = kwargs.get("timeout", 2)
+        self.pvs = []
+        self.data = {}
+        self._count = []
+        self._buf = {}
+        self._icur = []
+        self._dead = []
+        self.monitors = []
 
-        n = 1
+        if not pvs: return
+
         if isinstance(pvs, (list, tuple)):
-            n = len(pvs)
-            self.pvs = pvs[:]
+            # convert to uniq list
+            self.pvs = list(set(pvs))
         elif isinstance(pvs, str):
-            n = 1
             self.pvs = [pvs]
-        d0 = caget(self.pvs, throw=False)
-        self.data = dict([(pv, d0[i]) for i,pv in enumerate(self.pvs)])
-        for k,v in self.data.items():
-            if not v.ok: self.data[k] = self.val_default
 
-        self._count = [1] * n
-        self._buf = dict([(pv, [d0[i]]) for i,pv in enumerate(self.pvs)])
-        self._icur = [1] * n
-        self.dead = []
+        self.resetData(timeout)
 
         self.monitors = camonitor(self.pvs, self._ca_update,
-                                  format=cothread.catools.FORMAT_TIME)
+                                  format=cothread.catools.FORMAT_TIME,
+                                  throw = False)
 
     def closeMonitors(self):
         for p in self.monitors: p.close()
         self.monitors = []
 
-    def resetData(self):
+    def resetData(self, timeout):
         """
         set PV data to zero
         """
-        for m in self.monitors: m.close()
-        d0 = caget(self.pvs)
-        #for k,v in self.data.items(): self.data[k] = []
-        for i,pv in enumerate(self.pvs): self.data[pv] = [d0[i]]
-        self._icur = [1] * len(self.pvs)
-        self._buf = dict([(pv,[d0[i]]) for i,pv in enumerate(self.pvs)])
-        self._count = [1] * len(self.pvs)
-        self.monitors = camonitor(self.pvs, self._ca_update,
-                                  format=cothread.catools.FORMAT_TIME,
-                                  throw=False)
+        # update data
+        n = len(self.pvs)
+        d0 = caget(self.pvs, timeout=timeout, throw=False)
+        self._dead = []
+        self._count = [1] * n
+        self._icur = [1] * n
+        for i,pv in enumerate(self.pvs):
+            if d0[i].ok:
+                self.data[pv] = d0[0]
+                self._buf[pv] = [d0[i]]
+                #if pv in self._dead: self._dead.pop(self._dead.index(pv))
+            else: 
+                self._dead.append(pv)
+                self._count[i] = 0
+                self._icur[i] = 0
+        #print "d0=", d0
+        print "dead=", self._dead
+
+
 
     def addPv(self, pv):
         if pv in self.pvs: return
         for m in self.monitors: m.close()
-        d0 = caget(pv)
-        self.data[pv] = d0
         self.pvs.append(pv)
-        self._count.append(1)
-        self._buf[pv] = [d0]
-        self._icur.append(1)
-
+        self.resetData(2)
         self.monitors = camonitor(self.pvs, self._ca_update,
                                   format=cothread.catools.FORMAT_TIME)
 
@@ -97,14 +94,9 @@ class CaDataMonitor:
         cpvlst = [pv for pv in pvlst if pv not in self.pvs]
         if not cpvlst: return
 
+        self.pvs = list(set(cpvlst + self.pvs))
         for m in self.monitors: m.close()
-        d0 = caget(cpvlst, timeout=1, throw=False)
-        for i,pv in enumerate(cpvlst):
-            self.data[pv] = d0[i]
-            self.pvs.append(pv)
-            self._buf[pv] = [d0[i]]
-        self._count.extend([1] * len(cpvlst))
-        self._icur.extend([1] * len(cpvlst))
+        self.resetData(2)
 
         self.monitors = camonitor(self.pvs, self._ca_update,
                                   format=cothread.catools.FORMAT_TIME)
@@ -129,7 +121,11 @@ class CaDataMonitor:
         self.data[pv] = val
 
     def get(self, pv, default = np.nan):
+        if pv in self._dead: return None
         return self.data.get(pv, default)
+
+    def dead(self, pv):
+        return (pv in self._dead)
 
 
 class Example(QtGui.QWidget):
@@ -163,6 +159,7 @@ class Example(QtGui.QWidget):
             d = self.cadata.data[pv]
             lbl.setText("{0}".format(d))
             #print d.ok, d.timestamp, d.datetime, dir(d)
+
     def show_msg(self):
         QtGui.QMessageBox.critical(
             self, "aphla", "Testing", QtGui.QMessageBox.Ok)

@@ -34,7 +34,7 @@ from functools import partial
 from fnmatch import fnmatch
 import qrangeslider
 import h5py
-import datetime
+from datetime import datetime, date, time
 
 C_ELEMENT, C_FIELD, C_PV, C_RW, C_VALUES = 0, 1, 2, 3, 4
 _DBG_VERBOSE = 1
@@ -54,6 +54,9 @@ class SnapshotRow(object):
         self.values = [None] + [v for v in values]
         self.hlvalues = {}
         self.ts = 0.0
+        self.numerical = True
+        self.diffs = [None for i in range(len(self.values))]
+        self.dead  = [False for i in range(len(self.values))]
 
     def __str__(self):
         v = "{0}".format(self.values)
@@ -63,105 +66,204 @@ class SnapshotRow(object):
         v = "{0}".format(self.values)
         return "{0}, {1}, {2}, {3}".format(self.pv, self.element,
                                            self.field, v)
-        
 
-class SimpleListDlg(QDialog):
-    def __init__(self, parent = None, datalist = None, mode='r'):
-        super(SimpleListDlg, self).__init__(parent)
-        self.tbl = QTableWidget()
-        self.mode = mode # read only or write 'r'/'w'
-        self.values = []
-        if datalist is not None:
-            data = datalist.toList()
-            self.tbl.setRowCount(len(data))
-            self.tbl.setColumnCount(1)
-            for i,val in enumerate(data):
-                #print i, val.toFloat()
-                self.values.append(val.toFloat()[0])
-                it = QTableWidgetItem("%g" % val.toFloat()[0])
-                if self.mode == 'r': 
-                    it.setFlags(it.flags() & ~Qt.ItemIsEditable)
-                self.tbl.setItem(i,0,it)
-        
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
-                                     QDialogButtonBox.Cancel)
-        layout = QVBoxLayout()
-        layout.addWidget(self.tbl)
-        layout.addWidget(buttonBox)
-        self.setLayout(layout)
+    def _update_abs_diff(self, iref):
+        for i,v in enumerate(self.values):
+            if self.dead[i]:
+                self.diffs[i] = None
+            elif v is None:
+                self.diffs[i] = None
+            elif self.values[iref] is None:
+                self.diffs[i] = None
+            elif self.wf == 0:
+                self.diffs[i] = v - self.values[iref]
+            elif self.wf == 1:
+                for j,vj in enumerate(v):
+                    self.diffs[i][j] = vj - self.values[iref][j]
+            else:
+                raise RuntimeError("unknown data for diff")
 
-        self.connect(buttonBox, SIGNAL("accepted()"), self.accept)
-        self.connect(buttonBox, SIGNAL("rejected()"), self.reject)
+    def _update_rel_diff(self, iref):
+        for i,v in enumerate(self.diffs):
+            if v is None or self.values[iref] is None:
+                self.diffs[i] = None
+            elif self.wf == 0 and self.values[iref] == 0.0:
+                #self.diffs[i] = np.inf
+                self.diffs[i] = None
+            elif self.wf == 0:
+                self.diffs[i] = v / self.values[iref]
+            elif self.wf == 1:
+                for j,vj in enumerate(v):
+                    vr = self.values[iref][j]
+                    if vr == 0.0:
+                        #self.diffs[i][j] = np.inf
+                        self.diffs[i][j] = None
+                    else:
+                        self.diffs[i][j] = vj / vr
 
+    def updateDiff(self, iref, mode):
+        """calculate the difference, relative or absolute, returns None if 
+        the data does not make sense"""
+        n = len(self.values)
+        try:
+            if self.dead[iref]:
+                for i in range(n): self.diffs[i] = None
+                return
+        except:
+            print self.pv, n, len(self.dead), self.values, self.diffs, self.dead
+            raise
 
-    def accept(self):
-        self.values = []
-        for i in range(self.tbl.rowCount()):
-            v = self.tbl.item(i,0).data(Qt.EditRole).toFloat()
-            if self.mode == 'w': self.values.append(v[0])
-        self.done(0)
-
-    def reject(self):
-        self.values = []
-        self.done(0)
-
+        self._update_abs_diff(iref)
+        if mode == 1:
+            self._update_rel_diff(iref)
+    
 
 class LatSnapshotTableModel(QAbstractTableModel):
     def __init__(self):
         super(LatSnapshotTableModel, self).__init__()
         self._cadata = pvmanager.CaDataMonitor([])
         self._rows = []
-        self._mask = []
+        self._mask   = []
         self.dstitle = ["Live Data"]
         self.dstimestamp = [0.0]
         self.dsref = [0, 0] # live data as reference, abs diff
 
 
-    def updateLiveData(self):
-        for i,r in enumerate(self._rows):
+    def updateCells(self, **kwargs):
+        i0 = kwargs.get("i0", 0)
+        i1 = kwargs.get("i1", len(self._rows))
+        
+        for i in range(i0, i1):
+            r = self._rows[i]
+            # ignore dead PV.
+            if r.dead[0]: continue
+            if self._cadata.dead(r.pv):
+                r.dead[0] = True
+                continue
             self._rows[i].values[0] = self._cadata.get(r.pv, None)
-        idx0 = self.index(0, C_VALUES - 1)
-        idx1 = self.index(self.rowCount()-1, self.columnCount() - 1)
+            self._rows[i].updateDiff(*self.dsref)
+        idx0 = self.index(i0, self.columnCount() - 1)
+        idx1 = self.index(i1, self.columnCount() - 1)
+
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                   idx0, idx1)
+
+    def _choose_common_lattice(self, fileNames):
+        grps = {}
+        for fname in fileNames: 
+            f = h5py.File(str(fname), 'r')
+            for k,v in f.items():
+                if not isinstance(v, h5py.Group): continue
+                grps.setdefault(k, 0)
+                grps[k] += 1
+        dlg = QDialog()
+        gp = QGroupBox("Choose Lattice")
+        vbox = QVBoxLayout()
+        rbt = []
+        for k,v in grps.items():
+            if v < len(fileNames): continue
+            rbt.append(QtGui.QRadioButton(k))
+            vbox.addWidget(rbt[-1])
+        vbox.addStretch(1)
+        if not rbt: return None
+        rbt[0].setChecked(True)
+        gp.setLayout(vbox)
+        vbox2 = QVBoxLayout()
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
+                                     QDialogButtonBox.Cancel)
+        dlg.connect(buttonBox, SIGNAL("accepted()"), dlg.accept)
+        dlg.connect(buttonBox, SIGNAL("rejected()"), dlg.reject)
+        vbox2.addWidget(gp)
+        vbox2.addWidget(buttonBox)
+        dlg.setLayout(vbox2)
+        if dlg.exec_() == QDialog.Rejected: return
+        latname = ""
+        for bt in rbt:
+            if bt.isChecked(): 
+                return str(bt.text())
+
+        return None
+
+    def loadLatSnapshotH5(self, fnames):
+        if fnames is None:
+            dpath = os.environ.get("HLA_DATA_DIR", "")
+            fileNames = QtGui.QFileDialog.getOpenFileNames(
+                None,
+                "Open Data",
+                dpath, "Data Files (*.h5 *.hdf5)")
+        else:
+            fileNames = fnames
+
+        latname = self._choose_common_lattice(fileNames)
+        if not latname: return
+        
+        #print "Accepted the choice:", latname
+        for fname in fileNames:
+            f = h5py.File(str(fname), 'r')
+            ds = f[latname]["__scalars__"]
+            pvs   = list(ds[:, "pv"])
+            elems = list(ds[:, "element"])
+            flds  = list(ds[:, "field"])
+            rws   = list(ds[:, "rw"])
+            vals  = list(ds[:, "value"])
+            ts    = list(ds[:, "timestamp"] )
+            wf    = [0] * len(pvs)
+            for k,v in f[latname].items():
+                if not k.startswith("wf_"): continue
+                pvs.append(v.attrs["pv"])
+                elems.append(v.attrs["element"])
+                flds.append(v.attrs["field"])
+                rws.append(v.attrs["rw"])
+                vals.append(list(v))
+                ts.append(v.attrs["timestamp"])
+                wf.append(len(v))
+            self.addDataSet(pvs, elems, flds, rws, vals, ts, wf=wf,
+                                  title=str(fname))
+            f.close()
+
+        self.updateCells()
+        self.emit(SIGNAL("layoutChanged()"))
+
+        return [str(fname) for fname in fileNames]
 
 
     def addDataSet(self, pvs, elements, fields, rw, values, ts, **kwarg):
         wf = kwarg.get("wf", [0] * len(pvs))
-        self.dstitle.append(kwarg.get("title", ""))
         # assume no duplicate PV in pvs
-        if not self._rows:
-            n = max([len(pvs), len(elements), len(fields), len(rw), 
-                     len(values), len(ts), len(wf)])
-            self._rows = [
-                SnapshotRow(pvs[i], elements[i], fields[i], rw[i],
-                            [values[i]], ts[i], wf[i])
-                for i in range(n)]
+        #print "Add extra"
+        mpv = {}
+        for i,r in enumerate(self._rows):
+            mpv.setdefault(r.pv, [])
+            mpv[r.pv].append(i)
 
-            self._mask = [0] * n
-            self.dstimestamp.append(max(ts))
-            #print "initial import %d records" % n
-        else:
-            #print "Add extra"
-            mpv = dict([(r.pv,i) for i,r in enumerate(self._rows)])
-            nset = len(self._rows[0].values)
-            for i,pv in enumerate(pvs):
-                j = mpv.get(pv, -1)
-                if j == -1:
-                    # a new record
-                    vals = [None] * nset + [values[i]]
-                    r = SnapshotRow(pv, elements[i], fields[i], rw[i], vals,
-                                    ts[i], wf[i])
-                    self._rows.append(r)
-                    self._mask.append(0)
-                    continue
-                elif elements[i] == self._rows[j].element and \
-                        fields[i] == self._rows[j].field:
+        # expand one column for each row
+        #for i,r in enumerate(self._rows):
+        #    r.values.append(None)
+        #    r.diffs.append(None)
+        #    r.dead.append(False)
+        nset = len(self.dstitle) - 1
+        for i,pv in enumerate(pvs):
+            idx = mpv.get(pv, [])
+            for j in idx:
+                if elements[i] == self._rows[j].element and \
+                   fields[i] == self._rows[j].field:
                     self._rows[j].values.append(values[i])
-                else:
-                    raise RuntimeError("pv meaning does not agree")
-            self.dstimestamp.append(max(ts))
+                    self._rows[j].diffs.append(None)
+                    self._rows[j].dead.append(False)
+                    break
+            else:
+                # pv could be duplicate
+                # a new record
+                vals = [None] * nset + [values[i]]
+                r = SnapshotRow(pv, elements[i], fields[i], rw[i], vals,
+                                ts[i], wf[i])
+                self._rows.append(r)
+                self._mask.append(0)
+
         self._cadata.addPvList(pvs)
+        self.dstitle.append(kwarg.get("title", ""))
+        self.dstimestamp.append(max(ts))
+        print "ds:", len(self.dstitle), self.dstitle, len(self._rows[0].values)
 
         idx0 = self.index(0, C_VALUES - 1)
         idx1 = self.index(self.rowCount()-1, self.columnCount() - 1)
@@ -196,83 +298,43 @@ class LatSnapshotTableModel(QAbstractTableModel):
             elif self._mask[i] == 0:
                 self._mask[i] = 1
         #print "Sum of mask:", np.sum(self._mask)
-        self.emit(SIGNAL("layoutChanged()"))
-        idx0 = self.index(0, C_VALUES - 1)
-        idx1 = self.index(self.rowCount()-1, self.columnCount() - 1)
+        idx0 = self.index(0, self.columnCount() - 1)
+        idx1 = self.index(len(self._rows), self.columnCount() - 1)
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                   idx0, idx1)
-
-
-    def _calc_diff(self, vals, iref, mode):
-        """calculate the difference, relative or absolute, returns None if 
-        the data does not make sense"""
-        dd = []
-        try:
-            vf = [float(v) for v in vals]
-            dd = [v - vf[iref] for i,v in enumerate(vf)]
-            if mode == 1:
-                dd = [ v*100.0/vf[iref] for i,v in enumerate(dd)]
-            return dd, 0
-        except TypeError:
-            pass
-        except ZeroDivisionError:
-            print "Divided by zero"
-            return None, None
-
-        dd = []
-        try:
-            for i,vf1 in enumerate(vals):
-                vf2a = [float(v) for v in vf1]
-                vf2r = [float(v) for v in vals[iref]]
-                vdf = [v - vf2r[j] for j,v in enumerate(vf2a)]
-                dd.append(vdf)
-            if mode == 0: return dd, range(len(vals[0]))
-        except ValueError:
-            # can not convert string to float
-            #raise
-            return None, None
-        except TypeError:
-            #raise
-            return None, None
-        except:
-            #print vals, iref, mode
-            raise
-
-        if mode == 1:
-            idx, ret = [], []
-            for i,vj in enumerate(vals[iref]):
-                if np.abs(vj) == 0.0: continue
-                idx.append(i)
-                ret.append([v[i]/vj for v in dd])
-            return zip(*ret), idx 
-        return None, 0
+        #self.emit(SIGNAL("layoutChanged()"))
+        #print "mask updated"
+        #print idx0, idx1
 
     def getSnapshotRecord(self, idx):
-        validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
-        #print idx, len(validrows)
-        try:
-            r = validrows[idx]
-            print r, self.dsref
-            dd, idx = self._calc_diff(r.values, self.dsref[0], self.dsref[1])
-            return idx, r.values + dd
-        except IndexError:
-            print "index error: len(validrows)= {0}, i={1}".format(
-                len(validrows), idx)
-            raise
-        except:
-            print idx, r.values, dd
+        validrows = [ r for i,r in enumerate(self._rows) 
+                      if self._mask[i] == 0 ]
+        return validrows[idx]
 
     def getSnapshotData(self):
-        idx, ret = [], []
         validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
-        for i,r in enumerate(validrows):
-            ri = [v for v in r.values]
-            dd, iddx = self._calc_diff(ri, self.dsref[0], self.dsref[1])
-            if not dd: continue
-            ri.extend(dd)
+        return validrows
+
+    def getDiffs(self):
+        idx, diffs = [], []
+        for i,r in enumerate(self._rows):
+            if self._mask[i]: continue
             idx.append(i)
-            ret.append(ri)
-        return idx, ret
+            diffs.append(r.diffs)
+        return idx, diffs
+
+    def _ca_to_qvariant(self, val, **kwargs):
+        """convert ca_* to qvariant data"""
+        if val is None: return QVariant()
+        elif isinstance(val, cothread.dbr.ca_float): return QVariant(float(val))
+        elif isinstance(val, cothread.dbr.ca_int): return QVariant(int(val))
+        else:
+            pv = kwargs.get("pv", "")
+            raise RuntimeError("invalid data type {0} "
+                               "(pv={1}, pvmanager={2},{3})".format(
+                                   type(val), kwargs.get("pv", ""),
+                                   type(self._cadata.get(pv, None)),
+                                   type(self._cadata.data.get(pv, None))))
 
 
     def data(self, index, role=Qt.DisplayRole):
@@ -282,6 +344,8 @@ class LatSnapshotTableModel(QAbstractTableModel):
             return QVariant()
 
         ri, cj  = index.row(), index.column()
+        ids, idsj = divmod(cj - C_VALUES, 2)
+
         validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
         if ri >= len(validrows): return QVariant()
 
@@ -293,18 +357,25 @@ class LatSnapshotTableModel(QAbstractTableModel):
             elif cj == C_FIELD: return QVariant(QString(r.field))
             elif cj == C_RW: return QVariant(r.rw)
 
-            if r.wf > 0: return QVariant("[...]")
+            # the values columns
+            if r.wf: return QVariant("[...]")
+            # the live data is not available
             # the data sections
-            fmt = "%.6g"
-            ids, j = divmod(cj - C_VALUES, 2)
+            # fmt = "%.6g"
+            #print r.element, r.field, cothread.catools.caget(r.pv), r.values, r.diffs
 
-            dd = self._calc_diff(r.values, self.dsref[0], self.dsref[1])
-            if dd is None: dlst = zip(r.values, [None] * len(r.values))
-            else: dlst = zip(r.values, dd)
-            v = dlst[ids][j]
-            if v is None: return QVariant()
-            try: return QVariant(fmt % v)
-            except: return QVariant()
+            if r.dead[ids] and idsj == 0:
+                return QVariant(QString("Disconnected"))
+            elif cj == C_VALUES: return self._ca_to_qvariant(r.values[0])
+
+            if idsj == 0: val = r.values[ids]
+            elif idsj == 1: val = r.diffs[ids]
+
+            if val is None: return QVariant()
+            elif isinstance(val, float): return QVariant(float(val))
+            elif isinstance(val, int): return QVariant(int(val))
+            else: return QVariant(QString(str(val)))
+
             # all for display
         #elif role == Qt.TextAlignmentRole:
         #    if cj == C_FIELD: return QVariant(Qt.AlignLeft | Qt.AlignVCenter)
@@ -312,14 +383,12 @@ class LatSnapshotTableModel(QAbstractTableModel):
         #elif role == Qt.ToolTipRole:
         #    if col == C_FIELD and self._desc[r]:
         #        return QVariant(self._desc[r])
-        #elif role == Qt.ForegroundRole:
-        #    if r in self._inactive and self.isHeadIndex(r):
-        #        return QColor(Qt.darkGray)
-        #    elif r in self._inactive:
-        #        return QColor(Qt.lightGray)
-        #    #else: return QColor(Qt.black)
-        #elif role == Qt.BackgroundRole:
-        #    if self.isHeadIndex(r): return QColor(Qt.lightGray)            
+        elif role == Qt.ForegroundRole:
+            if ids >= 0 and r.dead[ids] and idsj == 0:
+                return QColor(Qt.white)
+        elif role == Qt.BackgroundRole:
+            if ids >= 0 and r.dead[ids] and idsj == 0:
+                return QColor(Qt.red)
         #elif role == Qt.CheckStateRole:
         #    if vals is not None: return QVariant()
         #    elif r in self._inactive: return Qt.Unchecked
@@ -341,18 +410,21 @@ class LatSnapshotTableModel(QAbstractTableModel):
             elif section == C_ELEMENT: return QVariant("Element")
             elif section == C_FIELD: return QVariant("Field")
             elif section == C_RW: return QVariant("R/W")
-            ids, j = divmod(section-C_VALUES, 2)
-            if j == 1: return QVariant("diff")
-            else: 
+            ids, idsj = divmod(section-C_VALUES, 2)
+            if ids < len(self.dstitle) and idsj == 1: return QVariant("diff")
+            elif ids < len(self.dstitle) and idsj == 0:
+                #print "ds:", len(self.dstimestamp), len(self.dstitle), ids
                 ts = self.dstimestamp[ids]
                 return QVariant("%s\n%s" % (
-                    self.dstitle[ids], datetime.datetime.fromtimestamp(ts)))
+                    os.path.basename(self.dstitle[ids]), 
+                    datetime.fromtimestamp(ts)))
+            return QVariant()
         elif orientation == Qt.Vertical:
             validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
             if section >= len(validrows): return QVariant()
             return QVariant(section)
 
-        return QVariant(int(section+1))
+        return QVariant()
 
     def flags(self, index):
         validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
@@ -369,7 +441,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
         return Qt.ItemIsEnabled
         
     def rowCount(self, index=QModelIndex()):
-        validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
+        validrows = [i for i in range(len(self._rows)) if self._mask[i] == 0]
         return len(validrows)
     
     def columnCount(self, index=QModelIndex()):
@@ -606,31 +678,32 @@ class LatSnapshotDelegate(QStyledItemDelegate):
 class LatSnapshotView(QTableView):
     def __init__(self, parent = None):
         QTableView.__init__(self, parent)
-        #self.timerId = self.startTimer(1000)
-
+        #self.update_count = 0
+        #self.timerId = self.startTimer(2000)
 
     def contextMenuEvent(self, e):
         mdl = self.model()
+        idx = self.indexAt(e.pos())
+        d = mdl.data(idx, role=Qt.DisplayRole)
         irow = self.rowAt(e.y())
+        icol = self.columnAt(e.x())
         #print "Row:", self.rowAt(e.y())
         cmenu = QMenu()
-        m_dis = QAction("disabled", self)
-        m_dis.setCheckable(True)
-        act = mdl.isActive(irow)
-        if not act:
-            m_dis.setChecked(True)
-
-        self.connect(m_dis, SIGNAL("toggled(bool)"),
-                     partial(self.disableElement, irow=irow))
-        cmenu.addAction(m_dis)
+        c = QApplication.clipboard()
+        if icol == C_PV:
+            cmenu.addAction("&Copy", 
+                            partial(c.setText, d.toString()), "CTRL+C")
         cmenu.exec_(e.globalPos())
+
 
     def setColumnHiddenState(self, state, icol = 0):
         #print icol, state
         if state == Qt.Unchecked:
             self.setColumnHidden(icol, False)
+            #self.showColumn(icol)
         else:
             self.setColumnHidden(icol, True)
+            #self.hideColumn(icol)
 
     def setDiffColumnHiddenState(self, state):
         mdl = self.model()
@@ -692,14 +765,10 @@ class LatSnapshotMain(QDialog):
         self.cmbRefTp.addItem("absolute diff")
         self.cmbRefTp.addItem("relative diff [%]")
 
-        hbelem = QHBoxLayout()
-        hbelem.addWidget(self.elemNameBox, 2.0)
-        hbelem.addWidget(self.elemFldBox, 1.0)
-        hbdiff = QHBoxLayout()
-        hbdiff.addWidget(self.cmbRefDs, 2.0)
-        hbdiff.addWidget(self.cmbRefTp, 1.0)
-        fmbox2.addRow("Reference", hbdiff)
-        fmbox2.addRow("Element", hbelem)
+        fmbox2.addRow("Reference", self.cmbRefDs)
+        fmbox2.addRow("Difference", self.cmbRefTp)
+        fmbox2.addRow("Element", self.elemNameBox)
+        fmbox2.addRow("Field", self.elemFldBox)
         fmbox2.addRow("PV", self.pvBox)
         fmbox2.addRow("Name", self.lblNameField)
         #fmbox2.addRow("Field", self.lblField)
@@ -709,28 +778,45 @@ class LatSnapshotMain(QDialog):
         fmbox2.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         fmbox2.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
         #self.fldGroup.setLayout(fmbox2)
-        self.btnLoad = QPushButton("Load")
+        tblGrpBox = QtGui.QGroupBox("Lattice Data")
         self.cbxLive = QCheckBox("Live")
         self.cbxLive.setChecked(True)
         self.cbxHidePv = QCheckBox("Hide PV")
         self.cbxHideDiff = QCheckBox("Hide Difference")
         self.cbxHideTimeStamp = QCheckBox("Hide timestamp")
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.btnLoad)
-        vbox.addWidget(self.cbxLive)
-        vbox.addWidget(self.cbxHidePv)
-        vbox.addWidget(self.cbxHideDiff)
-        vbox.addWidget(self.cbxHideTimeStamp)
-        vbox.addStretch()
-        vbox.addLayout(fmbox2)
+        vbox1 = QVBoxLayout()
+        vbox1.addWidget(self.cbxLive)
+        vbox1.addWidget(self.cbxHidePv)
+        vbox1.addWidget(self.cbxHideDiff)
+        vbox1.addWidget(self.cbxHideTimeStamp)
+        vbox1.addStretch()
+        tblGrpBox.setLayout(vbox1)
 
+        vbox2 = QVBoxLayout()
+        self.btnLoad    = QPushButton("Load")
+        self.btnSave    = QPushButton("Save")
+        self.btnOneshot = QPushButton("Oneshot")
+        vbox2.addWidget(self.btnLoad)
+        vbox2.addWidget(self.btnSave)
+        vbox2.addWidget(self.btnOneshot)
+        vbox2.addStretch()
+        hbox1 = QHBoxLayout()
+        hbox1.addWidget(tblGrpBox, 1.0)
+        btnFrm = QtGui.QFrame()
+        btnFrm.setFrameStyle(QtGui.QFrame.VLine | QtGui.QFrame.Sunken)
+        hbox1.addWidget(btnFrm)
+        hbox1.addLayout(vbox2, 0.0)
+        vbox = QVBoxLayout()
+        vbox.addLayout(hbox1, 0.0)
+        vbox.addLayout(fmbox2, 1.0)
+        
         self.extraPlot = QtGui.QFrame()
         self.extraPlot.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
         self.wfplt = ApPlot()
         rhsLayout = QtGui.QVBoxLayout()
         rhsLayout.addWidget(self.wfplt)
         self.extraPlot.setLayout(rhsLayout)
-        vbox.addWidget(self.extraPlot)
+        vbox.addWidget(self.extraPlot, 10.0)
         self.extraPlot.hide()
         self.model = LatSnapshotTableModel()
 
@@ -746,20 +832,23 @@ class LatSnapshotMain(QDialog):
         #self.tableview.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
 
         sm = self.tableview.selectionModel()
-        self.connect(sm, SIGNAL("selectionChanged(QItemSelection,QItemSelection)"),
-                     self.selRow)
+        self.connect(
+            sm, SIGNAL("selectionChanged(QItemSelection,QItemSelection)"),
+            self.selRow)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self.tableview, "Table")
         self.plt = ApPlot()
         #self.plt = ApPlot()
         self.plt.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend)
+        self.plt.curve1.detach()
+        self.plt.curve2.detach()
 
 
         self.tabs.addTab(self.plt, "Plot")
         hbox = QHBoxLayout()
-        hbox.addWidget(self.tabs, 1)
-        hbox.addLayout(vbox, 0.1)
+        hbox.addWidget(self.tabs, 2)
+        hbox.addLayout(vbox, 0)
         #vbox.addWidget(self.fldGroup)
         #cw = QWidget(self)
         #cw.setLayout(hbox)
@@ -800,11 +889,14 @@ class LatSnapshotMain(QDialog):
 
     def selRow(self, i1, i2):
         rows = [i.top() for i in i1]
+        if not rows: return
+
         if len(rows) != 1: 
             self.extraPlot.hide()
             raise RuntimeError("Invalid selections: {0}".format(rows))
+        print rows
         row = rows[0]
-        x, dat = self.model.getSnapshotRecord(row)
+        r = self.model.getSnapshotRecord(row)
         if not x or not dat:
             print "Data is invalid", rows, x, dat
             self.extraPlot.hide()
@@ -851,140 +943,87 @@ class LatSnapshotMain(QDialog):
         p.replot()
         self.extraPlot.show()
 
-        
 
     def setModelReferenceData(self):
         self.model.dsref[0] = self.cmbRefDs.currentIndex()
         self.model.dsref[1] = self.cmbRefTp.currentIndex()
 
     def timerEvent(self, e):
-        if self.cbxLive.checkState() == Qt.Checked:
-            self.model.updateLiveData()
+        if e.timerId() != self.timerId: return
+        if self.cbxLive.checkState() == Qt.Unchecked: return
+            #self.tabs.currentIndex() =?= 0
+
+        self.model.updateCells()
+
+        #    self.model.updateLiveData()
+        #    #self.model.updateVisibleData()
         if self.tabs.currentIndex() == 1:
             p = self.plt
-            x, dat = self.model.getSnapshotData()
-            if not x or not dat:
+            idx, diffs = self.model.getDiffs()
+            if not idx or not diffs:
                 for c in p.excurv: c.setData([], [], None)
                 return
-            n = len(dat[0]) // 2
             #p = self.plt
-            p.curve1.detach()
-            p.curve2.detach()
             pens = [QtGui.QPen(Qt.red, 1.0),  QtGui.QPen(Qt.green, 1.0), 
                     QtGui.QPen(Qt.blue, 1.0),
                     QtGui.QPen(Qt.black, 1.0)]
-            symbs = [Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
-                                   QtGui.QBrush(Qt.red), QtGui.QPen(Qt.black, 1.0),
-                                  QSize(8, 8)),
-                    Qwt.QwtSymbol(Qwt.QwtSymbol.Diamond,
-                                  QtGui.QBrush(Qt.green), QtGui.QPen(Qt.black, 1.0),
-                                  QSize(8, 8)),
-                    Qwt.QwtSymbol(Qwt.QwtSymbol.Triangle,
-                                  QtGui.QBrush(Qt.blue), QtGui.QPen(Qt.black, 1.0),
-                                  QSize(8, 8)),
-                    Qwt.QwtSymbol(Qwt.QwtSymbol.Star1,
-                                  QtGui.QBrush(Qt.black), QtGui.QPen(Qt.black, 1.0),
-                                  QSize(8, 8))]
-            print len(dat), len(dat[0]), min([len(d) for d in dat]), max([len(d) for d in dat])
-            for i in range(n):
-                y0 = [d[n+i] for d in dat]
+            symbs = [
+                Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
+                              QtGui.QBrush(Qt.red), QtGui.QPen(Qt.black, 1.0),
+                              QSize(8, 8)),
+                Qwt.QwtSymbol(Qwt.QwtSymbol.Diamond,
+                              QtGui.QBrush(Qt.green), QtGui.QPen(Qt.black, 1.0),
+                              QSize(8, 8)),
+                Qwt.QwtSymbol(Qwt.QwtSymbol.Triangle,
+                              QtGui.QBrush(Qt.blue), QtGui.QPen(Qt.black, 1.0),
+                              QSize(8, 8)),
+                Qwt.QwtSymbol(Qwt.QwtSymbol.Star1,
+                              QtGui.QBrush(Qt.black), QtGui.QPen(Qt.black, 1.0),
+                              QSize(8, 8))]
+            #print len(dat), len(dat[0]), min([len(d) for d in dat]), max([len(d) for d in dat])
+            for i in range(len(self.model.dstitle)):
+                x, y = [], []
                 if i >= len(p.excurv):
-                    p.addCurve(x=x, y=y0, curveStyle=Qwt.QwtPlotCurve.Lines,
+                    print "Add a new line:", i
+                    p.addCurve(x=x, y=y, curveStyle=Qwt.QwtPlotCurve.Lines,
                                curvePen=pens[i % len(pens)],
                                curveSymbol=symbs[i % len(symbs)],
-                               title="DS %d" % i)
-                else:
-                    p.excurv[i].setData(x, y0, None)
+                               title=str(self.model.dstitle[i]))
+                #if i == self.model.dsref[0]: continue
+                #p.excurv[i].detach()
+                for j,v in enumerate(diffs):
+                    if i >= len(v): continue
+                    if v[i] is None: continue
+                    x.append(idx[j])
+                    y.append(v[i])
+                    if not isinstance(v[i], (float, int)):
+                        raise RuntimeError("invalid data i={0}, {1}".format(
+                            i, v[i]))
+                print "Size:", len(x), len(y), y[:5]
+                p.excurv[i].setData(x, y, None)
+                #p.excurv[i].attach(p)
             p.replot()
+            print "reploted"
+
 
     def filterTableRows(self):
         name, fld = self.elemNameBox.text(), self.elemFldBox.text()
         pv = self.pvBox.text()
         self.model.filterRows(name, fld, pv)
 
-
     def saveLatSnapshotH5(self, fname):
         pass
 
-    def _choose_common_lattice(self, fileNames):
-        grps = {}
-        for fname in fileNames: 
-            f = h5py.File(str(fname), 'r')
-            for k,v in f.items():
-                if not isinstance(v, h5py.Group): continue
-                grps.setdefault(k, 0)
-                grps[k] += 1
-        dlg = QDialog()
-        gp = QGroupBox("Choose Lattice")
-        vbox = QVBoxLayout()
-        rbt = []
-        for k,v in grps.items():
-            if v < len(fileNames): continue
-            rbt.append(QtGui.QRadioButton(k))
-            vbox.addWidget(rbt[-1])
-        vbox.addStretch(1)
-        if not rbt: return None
-        rbt[0].setChecked(True)
-        gp.setLayout(vbox)
-        vbox2 = QVBoxLayout()
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
-                                     QDialogButtonBox.Cancel)
-        dlg.connect(buttonBox, SIGNAL("accepted()"), dlg.accept)
-        dlg.connect(buttonBox, SIGNAL("rejected()"), dlg.reject)
-        vbox2.addWidget(gp)
-        vbox2.addWidget(buttonBox)
-        dlg.setLayout(vbox2)
-        if dlg.exec_() == QDialog.Rejected: return
-        latname = ""
-        for bt in rbt:
-            if bt.isChecked(): 
-                return str(bt.text())
-
-        return None
-        
     def loadLatSnapshotH5(self, fnames = None):
-        if fnames is None:
-            dpath = os.environ.get("HLA_DATA_DIR", "")
-            fileNames = QtGui.QFileDialog.getOpenFileNames(
-                self,
-                "Open Data",
-                dpath, "Data Files (*.h5 *.hdf5)")
-        else:
-            fileNames = fnames
-
-        latname = self._choose_common_lattice(fileNames)
-        if not latname: return
-        
-        #print "Accepted the choice:", latname
-        for fname in fileNames:
-            f = h5py.File(str(fname), 'r')
-            ds = f[latname]["__scalars__"]
-            pvs   = list(ds[:, "pv"])
-            elems = list(ds[:, "element"])
-            flds  = list(ds[:, "field"])
-            rws   = list(ds[:, "rw"])
-            vals  = list(ds[:, "value"])
-            ts    = list(ds[:, "timestamp"] )
-            wf    = [0] * len(pvs)
-            #print ds[:,"element"]
-            for k,v in f[latname].items():
-                if not k.startswith("wf_"): continue
-                pvs.append(v.attrs["pv"])
-                elems.append(v.attrs["element"])
-                flds.append(v.attrs["field"])
-                rws.append(v.attrs["rw"])
-                vals.append(list(v))
-                ts.append(v.attrs["timestamp"])
-                wf.append(len(v))
-            self.model.addDataSet(pvs, elems, flds, rws, vals, ts, wf=wf,
-                                  title=str(fname))
+        st = self.cbxLive.checkState()
+        self.cbxLive.setCheckState(Qt.Unchecked)
+        for fname in self.model.loadLatSnapshotH5(fnames):
             self.cmbRefDs.addItem(str(fname))
-            f.close()
-
-        self.model.updateLiveData()
-        self.model.emit(SIGNAL("layoutChanged()"))
-        #print "Model rows:", self.model._rows
-        self.tableview.resizeColumnsToContents()
+        #self.tableview.resizeColumnsToContents()
+        self.tableview.resizeColumnToContents(C_ELEMENT)
+        self.tableview.resizeColumnToContents(C_FIELD)
+        self.tableview.resizeColumnToContents(C_RW)
+        self.cbxLive.setCheckState(st)
 
     def refreshTable(self, txt = None):
         return
@@ -1165,6 +1204,8 @@ if __name__ == "__main__":
     #form = MTestForm()
     form = LatSnapshotMain()
     form.resize(900, 500)
+    #fname = "/epics/data/aphla/data/2013_11/snapshot_08_102731_SR.hdf5"
+    #form.loadLatSnapshotH5([fname])
     form.show()
     #app.exec_()
     cothread.WaitForQuit()

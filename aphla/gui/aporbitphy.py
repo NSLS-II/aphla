@@ -41,13 +41,16 @@ class ApOrbitPhysics:
         
     def chooseElement(self, fam):
         elems = ap.getElements(fam)
-        form = ElementPickDlg(elems, self.deadelems, fam)
+        allelems = [e.name for e in elems]
+        unchecked = [e.name for e in self.deadelems]
+        form = ElementPickDlg(allelems, unchecked,
+                              title="Choose {0}".format(fam))
 
+        deadlst = []
         if form.exec_(): 
             choice = form.result()
-            deadlst = []
-            for i in range(len(elems)):
-                if elems[i].name in choice: continue
+            for i,e in enumerate(allelems):
+                if e in choice: continue
                 deadlst.append(elems[i])
             # do nothing if dead element list did not change
             if set(deadlst) == self.deadelems: return

@@ -30,7 +30,7 @@ import time
 import numpy as np
 import sip
 
-import applotresources
+import mleapresources
 
 # sip has a bug affecting PyQwt
 # http://blog.gmane.org/gmane.comp.graphics.qwt.python/month=20101001
@@ -282,6 +282,9 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
         if self.x1 is None or self.y1 is None:
             return Qwt.QwtPlotCurve.boundingRect(self)
         
+        if not self.x1 or not self.y1:
+            return Qwt.QwtPlotCurve.boundingRect(self)
+            
         x, y, y2 = self.x1, self.y1, self.e1
         xmin, xmax = min(x), max(x)
         if y2 is None:

@@ -27,14 +27,15 @@ class ApPlotData(object):
     """
     def __init__(self, s, **kw):
         self.s        = s
-        self.samples  = kw.get('samples', 10)
-        self.yscale   = kw.get('scale', 1.0)
-        self.yref     = kw.get('yref', None)
-        self.yunitsys = kw.get('unitsys', None)
-        self.yunit    = kw.get('unit', '')
+        self.samples  = kw.pop('samples', 10)
+        self.yscale   = kw.pop('scale', 1.0)
+        self.yref     = kw.pop('yref', None)
+        self.yunitsys = kw.pop('unitsys', None)
+        self.yunit    = kw.pop('unit', '')
+        self.ylabel   = kw.pop('label', "")
 
-        self.picker_profile = kw.get('picker_profile', None)
-        self.magnet_profile = kw.get('magnet_profile', None)
+        self.picker_profile = kw.pop('picker_profile', None)
+        self.magnet_profile = kw.pop('magnet_profile', None)
 
         n = len(self.s)
         dim = (self.samples, n)
@@ -57,7 +58,7 @@ class ApPlotData(object):
         #self.update()
 
     def label(self):
-        return ''
+        return self.ylabel
 
     def ymin(self, axis='s'):
         c, i = divmod(self.icount - 1, self.samples)
@@ -172,9 +173,11 @@ class ManagedPvData(ApPlotData):
         ApPlotData.__init__(self, s, **kw)
         self._pvm = pvm
         self._pvs = pvs
-        
+        self._element  = kw.get('element', [])
+        self._field    = kw.get('field', [])
+
     def label(self):
-        return "%s [%s]" % ("", "")
+        return "%s [%s]" % (self.ylabel, self.yunit)
 
     def update(self):
         """
@@ -189,4 +192,13 @@ class ManagedPvData(ApPlotData):
             self.yerrbar[j] = np.std(self.y[:,j])
         self.icount += 1
         self.icur = i
+
+    def names(self):
+        return self._element
+
+    def disable(self, name):
+        """disable name in velem, raise error if name is not in velem"""
+        #if name not in self.velem._name: return
+        i = self._element.index(name)
+        self.keep[i] = False
 

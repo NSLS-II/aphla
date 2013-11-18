@@ -57,7 +57,6 @@ class AbstractElement(object):
     *group*     list of groups the element belongs to
     ==========  ===================================================
 
-    
     *index* is used for sorting elements in a list if it is not
     None. Otherwise sorted according to *sb*.
     """
@@ -85,6 +84,7 @@ class AbstractElement(object):
         self.girder   = kwargs.get('girder', None)
         self.symmetry = kwargs.get('symmetry', None)
         self.sequence = kwargs.get('sequence', (0, 0))
+        self.flag   = 0
 
         self.group = set([self.family, self.cell, self.girder, self.symmetry])
         for g in kwargs.get('group', []): self.group.add(g)

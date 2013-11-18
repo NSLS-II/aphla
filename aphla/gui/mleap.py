@@ -72,8 +72,6 @@ class OrbitPlotMainWindow(QMainWindow):
         textedit = QPlainTextEdit(self.logdock)
         
         self.logger = logging.getLogger(__name__)
-        for msg in kwargs.get("infos", []):
-            self.logger.info(msg)
 
         self.guilogger = logging.getLogger("aphla.gui")
         # the "aphla" include lib part logging. When the lib is inside
@@ -101,6 +99,8 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.logdock.setMinimumHeight(40)
         #self.logdock.setMaximumHeight(160)
 
+        for msg in kwargs.get("infos", []):
+            self.logger.info(msg)
         # dict of (machine, (lattice dict, default_lat))
         self._mach = dict([(v[0], (v[1], v[2])) for v in machines])
         for m,(lats,lat0) in self._mach.items():
@@ -173,7 +173,6 @@ class OrbitPlotMainWindow(QMainWindow):
         self.newElementPlot("HCOR", "x")
         self.newElementPlot("VCOR", "y")
         self.newElementPlot("q*", "b1")
-        self.newElementPlot("c*", 'x')
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -205,7 +204,6 @@ class OrbitPlotMainWindow(QMainWindow):
         #             self.updateMachMenu)
         self.openMenu = self.menuBar().addMenu("&Open")
         self.openMenu.addAction("New ...", self.openNewPlot)
-        self.openMenu.addAction("Open Snapshot ...", self.openSnapshot)
 
         self.openMenu.addSeparator()
         self.openMenu.addAction("Save Lattice ...", self.saveLatSnapshot)
@@ -330,12 +328,13 @@ class OrbitPlotMainWindow(QMainWindow):
         #for ac in self.viewMenu.actions(): ac.setDisabled(True)
 
         #
-        self.controlMenu = self.menuBar().addMenu("&Control")
+        self.controlMenu = self.menuBar().addMenu("&Tools")
         self.controlMenu.addAction(controlChooseBpmAction)
         self.controlMenu.addAction("Choose COR", 
                                    partial(self.physics.chooseElement, 'COR'))
         #self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
+        self.controlMenu.addAction("Lattice Snapshot ...", self.openSnapshot)
         #self.controlMenu.addAction(controlZoomInPlot1Action)
         #self.controlMenu.addAction(controlZoomOutPlot1Action)
         #self.controlMenu.addAction(controlZoomInPlot2Action)
@@ -353,17 +352,17 @@ class OrbitPlotMainWindow(QMainWindow):
         self.windowMenu = self.menuBar().addMenu("&Windows")
         self.windowMenu.addAction(self.elemeditor.toggleViewAction())
         self.windowMenu.addAction(self.logdock.toggleViewAction())
+        #viewDcct = QAction("Beam Current", self)
+        #viewDcct.setCheckable(True)
+        #viewDcct.setChecked(True)
+        #self.connect(viewDcct, SIGNAL("toggled(bool)"), self.dcct.setVisible)
+        #self.windowMenu.addAction(viewDcct)
         self.windowMenu.addSeparator()
         self.windowMenu.addAction("Cascade", self.mdiarea.cascadeSubWindows)
         self.windowMenu.addAction("Tile", self.mdiarea.tileSubWindows)
         self.windowMenu.addAction("Previous", self.mdiarea.activatePreviousSubWindow)
         self.windowMenu.addAction("Next", self.mdiarea.activateNextSubWindow)
         self.windowMenu.addSeparator()
-        #viewDcct = QAction("Beam Current", self)
-        #viewDcct.setCheckable(True)
-        #viewDcct.setChecked(True)
-        #self.connect(viewDcct, SIGNAL("toggled(bool)"), self.dcct.setVisible)
-        #self.windowMenu.addAction(viewDcct)
 
         # debug
         self.debugMenu = self.menuBar().addMenu("&Debug")
@@ -460,13 +459,13 @@ class OrbitPlotMainWindow(QMainWindow):
         mach, lat = kw.get("machlat", self._current_mach_lat())
         handle = kw.get("handle", "readback")
         elems = lat.getElementList(elem)
-        s, pvs = [], []
+        s, pvs, elemnames = [], [], []
         for e in elems:
             epv = e.pv(field=field, handle=handle)
             if not epv: continue
             pvs.append(epv[0])
             s.append(e.sb)
-
+            elemnames.append(e.name)
         if not pvs:
             self.logger.error("no data found for elements '{0}' and field '{1}'".format(elem, field))
             return
@@ -477,7 +476,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
         p = ApMdiSubPlot(element_fields=[(e.name, field) for e in elems])
         #QObject.installEventFilter(p.aplot)
-        p.data = ManagedPvData(pvm, s, pvs)
+        p.data = ManagedPvData(pvm, s, pvs, element=elemnames,
+                               label="{0}.{1}".format(elem,field))
         p.setAttribute(Qt.WA_DeleteOnClose)
         str_elem = "{0}".format(elem)
         if len(str_elem) > 12: str_elem = str_elem[:9] + "..."
@@ -542,7 +542,7 @@ class OrbitPlotMainWindow(QMainWindow):
             "Data Files (*.h5 *.hdf5);;All Files(*)")
         fileName = str(fileName)
         if not fileName: return
-        ap.catools.save_lat_epics(fileName, lat, mode='a')
+        aphla.catools.save_lat_epics(fileName, lat, mode='a')
         self.logger.info("snapshot created '%s'" % fileName)
 
     def saveMachSnapshot(self):
@@ -559,11 +559,12 @@ class OrbitPlotMainWindow(QMainWindow):
             "Data Files (*.h5 *.hdf5);;All Files(*)")
         if not fileName: return
         fileName = str(fileName)
+        import h5py
         f = h5py.File(str(fileName), 'w')
         f.close()
         self.logger.info("clean snapshot file created: '%s'" % fileName)
         for k,lat in self._mach[mach][0].items():
-            ap.catools.save_lat_epics(fileName, lat, mode='a')
+            aphla.catools.save_lat_epics(fileName, lat, mode='a')
             self.logger.info("lattice snapshot appended for '%s'" % lat.name)
 
     def openSnapshot(self):
@@ -782,6 +783,8 @@ class OrbitPlotMainWindow(QMainWindow):
         return elems
 
     def timerEvent(self, e):
+        if e.timerId() != self.timerId: return
+
         if not self.elemeditor.isHidden():
             self.elemeditor.updateModelData()
 
@@ -882,7 +885,7 @@ def main(par=None):
         splash.showMessage("Initializing {0}".format(m),
                            Qt.AlignRight | Qt.AlignBottom)
         app.processEvents()
-        lat0, latdict = ap.machines.load(m)
+        lat0, latdict = aphla.machines.load(m)
         machs.append((m, latdict, lat0))
         infos.append("%s initialized" % m)
         splash.showMessage("Connecting to {0}".format(m),
@@ -916,9 +919,9 @@ def main(par=None):
 
 # Admire!
 if __name__ == '__main__':
-    main(sys.argv)
+    # main(sys.argv)
     import cProfile
-    cProfile.run('main()')
+    cProfile.run('main()', "prfoutput.txt")
 
 # Local Variables: ***
 # mode: python ***
