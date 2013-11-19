@@ -289,6 +289,10 @@ class LatSnapshotTableModel(QAbstractTableModel):
 
     def filterRows(self, name, field, pv):
         self.emit(SIGNAL("layoutAboutToBeChanged()"))
+        validrows =  [ r for i,r in enumerate(self._rows) 
+                      if self._mask[i] == 0 ]
+        #self.removeRows(0, len(validrows))
+        n0 = len(validrows)
         for i,r in enumerate(self._rows):
             if fnmatch(r.element, "*%s*" % name) and \
                fnmatch(r.field, "*%s*" % field) and \
@@ -300,20 +304,29 @@ class LatSnapshotTableModel(QAbstractTableModel):
         #print "Sum of mask:", np.sum(self._mask)
         idx0 = self.index(0, self.columnCount() - 1)
         idx1 = self.index(len(self._rows), self.columnCount() - 1)
+
+        validrows =  [ r for i,r in enumerate(self._rows) 
+                      if self._mask[i] == 0 ]
+        n1 = len(validrows)
+        self.insertRows(0, len(validrows))
+
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                   idx0, idx1)
         #self.emit(SIGNAL("layoutChanged()"))
         #print "mask updated"
         #print idx0, idx1
 
+
     def getSnapshotRecord(self, idx):
-        validrows = [ r for i,r in enumerate(self._rows) 
-                      if self._mask[i] == 0 ]
-        return validrows[idx]
+        n = 0
+        for i,r in enumerate(self._rows):
+            if self._mask[i]: continue
+            n += 1
+            if n == idx: return r
+        return None
 
     def getSnapshotData(self):
-        validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
-        return validrows
+        return [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
 
     def getDiffs(self):
         idx, diffs = [], []
@@ -729,6 +742,7 @@ class LatSnapshotView(QTableView):
 class LatSnapshotMain(QDialog):
     def __init__(self, parent = None):
         QDialog.__init__(self, parent)
+        self.setWindowFlags(Qt.WindowCloseButtonHint|Qt.WindowMinMaxButtonsHint)
         #self.model = None
         #self.connect(self, SIGNAL('tabCloseRequested(int)'), self.closeTab)
         #gb = QGroupBox("select")
@@ -738,24 +752,9 @@ class LatSnapshotMain(QDialog):
         self.pvBox = QLineEdit()
         self.elemNameBox = QLineEdit()
         self.elemNameBox.setToolTip(
-            "list element name and field pattern"
-            "Examples are '*', 'HCOR', 'BPM', 'QUAD', 'c*c20a', 'q*g2*'"
+            "list element name filter, xamples are 'c*c20a', 'q*g2*'"
             )
-        self.elemFldBox = QLineEdit("*")
-        #self.elems = elems
-        #self.elemCompleter = QCompleter(elems)
-        #self.elemBox.setCompleter(self.elemCompleter)
-
-        #self.rangeSlider = qrangeslider.QRangeSlider()
-        #self.rangeSlider.setMin(0)
-        #self.rangeSlider.setMax(100)
-        #self.rangeSlider.setRange(10, 70)
-        #self.elemBox.insertSeparator(len(self.elems))
-        #fmbox.addRow("Range", self.rangeSlider)
-        #fmbox.addWidget(QLabel("Filter"), 0, 0)
-        #fmbox.addWidget(self.elemBox, 0, 1)
-        #self.refreshBtn = QPushButton("refresh")
-        #fmbox.addRow(self.elemBox)
+        self.elemFldBox = QLineEdit("")
 
         self.lblInfo = QLabel()
 
@@ -829,10 +828,13 @@ class LatSnapshotMain(QDialog):
         vbox.addWidget(self.extraPlot, 10.0)
         self.extraPlot.hide()
         self.model = LatSnapshotTableModel()
-
+        #self.proxymodel = QtGui.QSortFilterProxyModel()
+        #self.proxymodel.setSourceModel(self.model)
+   
         self.tableview = LatSnapshotView()
         #self.tableview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tableview.setModel(self.model)
+        #self.tableview.setModel(self.proxymodel)
         #self.tableview.setItemDelegate(LatSnapshotDelegate(self))
         self.tableview.setSortingEnabled(True)
         self.tableview.setWhatsThis("double click cell to enter editing mode")
@@ -890,6 +892,7 @@ class LatSnapshotMain(QDialog):
                      self.filterTableRows)
         #
         self.connect(self.btnLoad, SIGNAL("pressed()"), self.loadLatSnapshotH5)
+        self.connect(self.btnSave, SIGNAL("pressed()"), self.saveLatSnapshotH5)
 
         self.setWindowTitle("Element Editor")
         self.noTableUpdate = True
@@ -1019,10 +1022,16 @@ class LatSnapshotMain(QDialog):
     def filterTableRows(self):
         name, fld = self.elemNameBox.text(), self.elemFldBox.text()
         pv = self.pvBox.text()
+        #n0 = self.model.rowCount()
         self.model.filterRows(name, fld, pv)
+        #n1 = self.model.rowCount()
+        #for i in range(n1, n0):
+        #    self.tableview.hideRow(i)
 
-    def saveLatSnapshotH5(self, fname):
-        pass
+    def saveLatSnapshotH5(self):
+        QtGui.QMessageBox.warning(self, "Not Implemented",
+                            "'saveLatSnapshotH5 is not implemented yet")
+        
 
     def loadLatSnapshotH5(self, fnames = None):
         st = self.cbxLive.checkState()
@@ -1213,7 +1222,7 @@ if __name__ == "__main__":
     #ap.machines.init("nsls2v2")
     #form = MTestForm()
     form = LatSnapshotMain()
-    form.resize(900, 500)
+    form.resize(1024, 700)
     #fname = "/epics/data/aphla/data/2013_11/snapshot_08_102731_SR.hdf5"
     #form.loadLatSnapshotH5([fname])
     form.show()

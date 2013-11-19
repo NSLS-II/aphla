@@ -172,7 +172,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.newElementPlot("BPM", "y")
         self.newElementPlot("HCOR", "x")
         self.newElementPlot("VCOR", "y")
-        self.newElementPlot("q*", "b1")
+        self.newElementPlot("QUAD", "b1")
+        self.newElementPlot("SEXT", "b2")
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -360,8 +361,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.windowMenu.addSeparator()
         self.windowMenu.addAction("Cascade", self.mdiarea.cascadeSubWindows)
         self.windowMenu.addAction("Tile", self.mdiarea.tileSubWindows)
-        self.windowMenu.addAction("Previous", self.mdiarea.activatePreviousSubWindow)
-        self.windowMenu.addAction("Next", self.mdiarea.activateNextSubWindow)
+        # "ctrl+page up", "ctrl+page down"
+        self.windowMenu.addAction("Previous", self.mdiarea.activatePreviousSubWindow, "Ctrl+Left")
+        self.windowMenu.addAction("Next", self.mdiarea.activateNextSubWindow, "Ctrl+Right")
         self.windowMenu.addSeparator()
 
         # debug
@@ -906,10 +908,10 @@ def main(par=None):
     #demo.raise_()
     #demo.setLattice(aphla.machines.getLattice('V2SR'))
     #demo.setWindowTitle("NSLS-II")
-    mwin.resize(1000,600)
+    #mwin.resize(1000,600)
     #print aphla.machines.lattices()
     splash.finish(mwin)
-    mwin.show()
+    mwin.showMaximized()
     app.processEvents()
     app.restoreOverrideCursor()
     # print app.style() # QCommonStyle

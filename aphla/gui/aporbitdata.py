@@ -188,7 +188,12 @@ class ManagedPvData(ApPlotData):
         #print "Updating orbit data"
         for j,pv in enumerate(self._pvs):
             if not self.keep[j]: continue
-            self.y[i,j] = self._pvm.get(pv)
+            try:
+                self.y[i,j] = self._pvm.get(pv)
+            except:
+                print "MESSAGE: pv='{0}', val='{1}'".format(pv, self._pvm.get(pv))
+                raise
+
             self.yerrbar[j] = np.std(self.y[:,j])
         self.icount += 1
         self.icur = i

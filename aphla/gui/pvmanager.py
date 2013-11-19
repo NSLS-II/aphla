@@ -51,8 +51,7 @@ class CaDataMonitor:
         self.resetData(timeout)
 
         self.monitors = camonitor(self.pvs, self._ca_update,
-                                  format=cothread.catools.FORMAT_TIME,
-                                  throw = False)
+                                  format=cothread.catools.FORMAT_TIME)
 
     def closeMonitors(self):
         for p in self.monitors: p.close()
@@ -70,7 +69,7 @@ class CaDataMonitor:
         self._icur = [1] * n
         for i,pv in enumerate(self.pvs):
             if d0[i].ok:
-                self.data[pv] = d0[0]
+                self.data[pv] = d0[i]
                 self._buf[pv] = [d0[i]]
                 #if pv in self._dead: self._dead.pop(self._dead.index(pv))
             else: 
@@ -78,8 +77,7 @@ class CaDataMonitor:
                 self._count[i] = 0
                 self._icur[i] = 0
         #print "d0=", d0
-        print "dead=", self._dead
-
+        #print "dead=", self._dead
 
 
     def addPv(self, pv):

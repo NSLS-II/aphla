@@ -279,12 +279,9 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
         """
         Return the bounding rectangle of the data, error bars included.
         """
-        if self.x1 is None or self.y1 is None:
+        if self.x1 is None or len(self.x1) == 0:
             return Qwt.QwtPlotCurve.boundingRect(self)
         
-        if not self.x1 or not self.y1:
-            return Qwt.QwtPlotCurve.boundingRect(self)
-            
         x, y, y2 = self.x1, self.y1, self.e1
         xmin, xmax = min(x), max(x)
         if y2 is None:
