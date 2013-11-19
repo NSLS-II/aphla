@@ -45,9 +45,9 @@ Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
 .. doctest::
 
-   >>> ap.machines.init("nsls2v2")
+   >>> ap.machines.load("nsls2v2")
 
-:func:`~aphla.machines.init("nsls2v2")` will initialize the lattice structures
+:func:`~aphla.machines.load("nsls2v2")` will initialize the lattice structures
 of `NSLS2 Virtual Accelerastor #2`. It is not the hardware initialization and
 did not do any hardware operation inside.
 

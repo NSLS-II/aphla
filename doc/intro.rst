@@ -31,7 +31,7 @@ This is for the very impatient ones at NSLS-II. See :doc:`tutorial`
 
 .. doctest::
 
-     >>> ap.machines.init("nsls2v2")
+     >>> ap.machines.load("nsls2v2")
 
 - Get the orbit
 
