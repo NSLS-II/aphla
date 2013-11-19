@@ -687,14 +687,24 @@ class LatSnapshotView(QTableView):
         d = mdl.data(idx, role=Qt.DisplayRole)
         irow = self.rowAt(e.y())
         icol = self.columnAt(e.x())
-        #print "Row:", self.rowAt(e.y())
+        print "Row:", self.rowAt(e.y())
         cmenu = QMenu()
         c = QApplication.clipboard()
         if icol == C_PV:
             cmenu.addAction("&Copy", 
                             partial(c.setText, d.toString()), "CTRL+C")
+            cmenu.addAction("Copy Column", partial(self.copy_pvs, c.setText))
         cmenu.exec_(e.globalPos())
 
+
+    def copy_pvs(self, f, full=False):
+        mdl = self.model()
+        if full:
+            s = "\n".join([r.pv for r in mdl._rows])
+        else:
+            valid = mdl.getSnapshotData()
+            s = "\n".join([r.pv for r in valid])
+        f(s)
 
     def setColumnHiddenState(self, state, icol = 0):
         #print icol, state
