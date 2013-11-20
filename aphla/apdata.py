@@ -47,8 +47,8 @@ class OrmData:
     - *orm/_rawdata_/rawkick, optional, (ntrim, npoints)
     - *orm/_rawdata_/mask, optional, (nbpm, ntrim)
 
-    The private dataset has a prefix "_" in its name.
-    """
+    The private dataset has a prefix "_" in its name."""
+
     def __init__(self, datafile = None, group = None):
         # list of tuple, (name, location, plane)
         self.bpm = []

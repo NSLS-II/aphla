@@ -21,9 +21,10 @@ The HLA package we are developing has three parts
 .. testsetup::
 
    from __future__ import print_function, unicode_literals
+   import aphla
 
 
-HLA Initialization
+Initialization
 -------------------
 
 Before using ``aphla`` we can import some python modules for data analysis
@@ -47,23 +48,12 @@ Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
    >>> ap.machines.load("nsls2v2")
 
-:func:`~aphla.machines.load("nsls2v2")` will initialize the lattice structures
-of `NSLS2 Virtual Accelerastor #2`. It is not the hardware initialization and
-did not do any hardware operation inside.
-
-.. note::
-
-    By default, this initialization will search for channel finder server and
-    use the data there. This data can be overwritten with your own config file.
-
-``aphla`` can keep several initialized lattices, depending how many
-*aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
-*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB* for the real *nsls2*
-machine. The `V1` prefix before `SR`, `LTD1` means it is the `virtual
-accelerator #1` counter part. :func:`~aphla.machines.lattices` lists the
-initialized lattices and :func:`~aphla.machines.use` will switch to the named
-lattice as the current lattice. This current lattice is the domain for
-functions like :func:`~aphla.hlalib.getElements`.
+:func:`~aphla.machines.load("nsls2v2")` will initialize the a lattice
+structure, here *nsls2v2* means `NSLS2 Virtual Accelerastor #2`. This is not the
+hardware initialization and did not do any hardware operation
+inside. *nsls2v2* is the machine name which defines several lattices. For the
+default real accelerator at NSLS-II, we use *nsls2*. Once the machine is
+loaded, we can check the available lattices and switch between.
 
 .. code-block:: python
 
@@ -71,11 +61,12 @@ functions like :func:`~aphla.hlalib.getElements`.
    [u'V1LTD1', u'V1LTD2', u'V1LTB', u'V1SR']
    >>> ap.machines.use("V1SR")
 
-Switching between lattices should be always a safe operation itself, but may
-affect the following operations.
+Switching between lattices should be always a safe operation itself, but all
+the operations, such as searching elements, taking snapshot and correct orbit,
+will be limited to the current active lattice.
 
 
-HLA Element Searching
+Element Searching
 ---------------------
 
 The lattice is merely a list of elements. In order to control the element,
