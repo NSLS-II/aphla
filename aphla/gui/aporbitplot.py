@@ -421,7 +421,7 @@ class ApPlot(Qwt.QwtPlot):
 
         self.curvemag = None
 
-        self.setMinimumSize(300, 200)
+        #self.setMinimumSize(300, 100)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
         pen = grid1.majPen()
@@ -667,7 +667,7 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.err_only  = False
         self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elementSelected)
-        self.setMinimumSize(400, 300)
+        self.setMinimumSize(600, 150)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
     def updatePlot(self, s = None, y = None, yerr = None):

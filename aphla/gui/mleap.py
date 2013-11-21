@@ -102,8 +102,8 @@ class OrbitPlotMainWindow(QMainWindow):
         for msg in kwargs.get("infos", []):
             self.logger.info(msg)
         # dict of (machine, (lattice dict, default_lat))
-        self._mach = dict([(v[0], (v[1], v[2])) for v in machines])
-        for m,(lats,lat0) in self._mach.items():
+        self._mach = dict([(v[0], (v[1],v[2],v[3])) for v in machines])
+        for m,(lats,lat0,pvm) in self._mach.items():
             self.logger.info("machine '%s' initialized: [%s]" % (
                 m, ", ".join([lat.name for k,lat in lats.items()])))
 
@@ -123,16 +123,14 @@ class OrbitPlotMainWindow(QMainWindow):
         self.mdiarea = QMdiArea()
         self.connect(self.mdiarea, SIGNAL("subWindowActivated(QMdiSubWindow)"),
                      self.updateMachineLatticeNames)
-
+        self.mdiarea.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.physics = ApOrbitPhysics(mdiarea = self.mdiarea)
         self.live_orbit = True
 
         self.setCentralWidget(self.mdiarea)
 
         #self._elemed = ElementPropertyTabs()
-        self.elemeditor = ElementEditorDock(
-            parent=self,
-            elems=["BPM", "HCOR", "VCOR", "QUAD", "SEXT", "*"])
+        self.elemeditor = ElementEditorDock(parent=self)
         self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)
         self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
                                     QDockWidget.DockWidgetClosable)
@@ -145,6 +143,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(self.elemeditor, 
                      SIGNAL("elementChecked(PyQt_PyObject, bool)"),
                      self.physics.elementChecked)
+        self.connect(self.elemeditor,
+                     SIGNAL("reloadElements(QString)"),
+                     self.reloadElementsEditor)
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
         self.createMenuToolBar()
@@ -172,8 +173,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.newElementPlot("BPM", "y")
         self.newElementPlot("HCOR", "x")
         self.newElementPlot("VCOR", "y")
-        self.newElementPlot("QUAD", "b1")
-        self.newElementPlot("SEXT", "b2")
+        #self.newElementPlot("QUAD", "b1")
+        #self.newElementPlot("SEXT", "b2")
+
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -183,11 +185,19 @@ class OrbitPlotMainWindow(QMainWindow):
     def reloadLatticeNames(self, mach):
         self.latBox.clear()
         cur_mach = str(self.machBox.currentText())
-        lats, lat0 = self._mach.get(cur_mach, ({}, None))
+        lats, lat0, pvm = self._mach.get(cur_mach, ({}, None, None))
         self.latBox.addItems([QString(lat) for lat in lats.keys()])
         if lat0:
             i = self.latBox.findText(lat0.name)
             self.latBox.setCurrentIndex(i)
+
+    def reloadElementsEditor(self, elems):
+        mach, lat = self._current_mach_lat()
+        cadata = self._mach[mach][2]
+        #sb, se = self.getVisibleRange()
+        #elemlst = self.getVisibleElements(elems, sb, se)
+        elemlst = lat.getElementList(str(elems))
+        self.elemeditor.loadElements(elemlst, cadata)
 
     def closeEvent(self, event):
         self.physics.close()
@@ -361,6 +371,8 @@ class OrbitPlotMainWindow(QMainWindow):
         self.windowMenu.addSeparator()
         self.windowMenu.addAction("Cascade", self.mdiarea.cascadeSubWindows)
         self.windowMenu.addAction("Tile", self.mdiarea.tileSubWindows)
+        self.windowMenu.addAction("Tile Horizontally",
+                                  self.tileSubWindowsHorizontally)
         # "ctrl+page up", "ctrl+page down"
         self.windowMenu.addAction("Previous", self.mdiarea.activatePreviousSubWindow, "Ctrl+Left")
         self.windowMenu.addAction("Next", self.mdiarea.activateNextSubWindow, "Ctrl+Right")
@@ -450,7 +462,7 @@ class OrbitPlotMainWindow(QMainWindow):
         """return the current machine name and lattice object"""
         mach     = str(self.machBox.currentText())
         latname  = str(self.latBox.currentText())
-        lat_dict, lat0 = self._mach[mach]
+        lat_dict, lat0, pvm = self._mach[mach]
         return mach, lat_dict[latname]
 
     def click_machine(self, act):
@@ -500,20 +512,19 @@ class OrbitPlotMainWindow(QMainWindow):
         #print "Show"
         p.show()
 
-        #print "Enable the buttons"
-        if len(self.mdiarea.subWindowList()) > 0:
-            self.elemeditor.setEnabled(True)
-
+        ##print "Enable the buttons"
+        #if len(self.mdiarea.subWindowList()) > 0:
+        #    self.elemeditor.setEnabled(True)
 
     def subPlotDestroyed(self):
-        if len(self.mdiarea.subWindowList()) == 0:
-            self.elemeditor.setEnabled(False)
-        
+        #if len(self.mdiarea.subWindowList()) == 0:
+        #    self.elemeditor.setEnabled(False)
+        pass
 
-    def _prepare_parent_dirs(self):
+    def _prepare_parent_dirs(self, mach=""):
         dt = datetime.datetime.now()
         dpath = os.path.join(os.environ.get("HLA_DATA_DIR", ""),
-                             dt.strftime("%Y_%m"))
+                             mach, dt.strftime("%Y_%m"))
         if os.path.exists(dpath): return dpath
 
         r = QMessageBox.question(
@@ -531,7 +542,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def saveLatSnapshot(self):
         mach, lat = self._current_mach_lat()
-        dpath = self._prepare_parent_dirs()
+        dpath = self._prepare_parent_dirs(mach)
         if not dpath:
             QMessageBox.warning(self, "Abort", "Aborted")
             return
@@ -549,7 +560,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def saveMachSnapshot(self):
         mach, lat = self._current_mach_lat()
-        dpath = self._prepare_parent_dirs()
+        dpath = self._prepare_parent_dirs(mach)
         if not dpath:
             QMessageBox.warning(self, "Abort", "Aborted")
             return
@@ -787,8 +798,8 @@ class OrbitPlotMainWindow(QMainWindow):
     def timerEvent(self, e):
         if e.timerId() != self.timerId: return
 
-        if not self.elemeditor.isHidden():
-            self.elemeditor.updateModelData()
+        #if not self.elemeditor.isHidden():
+        #    self.elemeditor.updateModelData()
 
         if self.live_orbit:
             self.itimer += 1
@@ -863,6 +874,16 @@ class OrbitPlotMainWindow(QMainWindow):
         self.sp.show()
 
 
+    def tileSubWindowsHorizontally(self):
+        pos = QtCore.QPoint(0, 0)
+        subwins = self.mdiarea.subWindowList()
+        for w in subwins:
+            height = self.mdiarea.height()/len(subwins)
+            rect = QtCore.QRect(0, 0, self.mdiarea.width(), height)
+            w.setGeometry(rect)
+            w.move(pos)
+            pos.setY(pos.y() + w.height())
+
 def main(par=None):
     #app.setStyle(st)
     app.setOverrideCursor(QtGui.QCursor(Qt.WaitCursor))
@@ -886,17 +907,26 @@ def main(par=None):
     for m in mlist:
         splash.showMessage("Initializing {0}".format(m),
                            Qt.AlignRight | Qt.AlignBottom)
-        app.processEvents()
         lat0, latdict = aphla.machines.load(m)
-        machs.append((m, latdict, lat0))
         infos.append("%s initialized" % m)
         splash.showMessage("Connecting to {0}".format(m),
                            Qt.AlignRight | Qt.AlignBottom)
-        pvs = []
-        for elem in lat0.getElementList("*"):
-            pvs.extend(elem.pv())
-        n = sum([1 for v in cothread.catools.caget(pvs, throw=False) if v.ok])
-        infos.append("%d out of %d PVs are alive" % (n, len(pvs)))
+        pvs = set()
+        for latname, latobj in latdict.items():
+            splash.showMessage("checking {0}.{1}".format(m, latname),
+                               Qt.AlignRight | Qt.AlignBottom)            
+            app.processEvents()
+            for elem in latobj.getElementList("*"):
+                pvs.update(elem.pv())
+
+
+        # pv manager 
+        pvm = CaDataMonitor()
+        pvm.addPv(pvs)
+        machs.append((m, latdict, lat0, pvm))
+
+        infos.append("%d out of %d PVs are alive" % (
+            pvm.activeCount(), len(pvm)))
     
     splash.showMessage("Using {0} as default machine".format(m),
                        Qt.AlignRight | Qt.AlignBottom)
@@ -914,6 +944,7 @@ def main(par=None):
     mwin.showMaximized()
     app.processEvents()
     app.restoreOverrideCursor()
+    mwin.tileSubWindowsHorizontally()
     # print app.style() # QCommonStyle
     #sys.exit(app.exec_())
     cothread.WaitForQuit()

@@ -20,7 +20,7 @@ from collections import deque
 from PyQt4 import QtGui
 
 class CaDataMonitor:
-    def __init__(self, **kwargs):
+    def __init__(self, pvs = [], **kwargs):
         """
         - pvs a list of PV
         - samples number of data points for std/var/average
@@ -28,13 +28,15 @@ class CaDataMonitor:
         optional:
         - simulation [True|False] use simulated data or real pv data
         """
-        self.samples     = kwargs.get("samples", 5)
+        self.samples     = kwargs.get("samples", 10)
         self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
         self.timeout     = kwargs.get("timeout", 2)
         self.data = {}
         self._monitors = {}
         self._dead = set()
+
+        if pvs: self.addPv(pvs)
 
     def addPv(self, pvs):
         """add a pv or list of pvs"""
@@ -55,7 +57,7 @@ class CaDataMonitor:
         if len(newpvs) == 0: return
 
         d = caget(newpvs, **kw_cg)
-        newmons = camonitor(newpvs, self._ca_update_pv, **kw_cm)
+        newmons = camonitor(newpvs, self._ca_update, **kw_cm)
         for i,pv in enumerate(newpvs):
             if not d[i].ok:
                 self._dead.add(newpvs[i])
@@ -63,13 +65,12 @@ class CaDataMonitor:
                 self._monitors[pv] = newmons[i]
                 self.data[pv] = deque([d[i]], self.samples)
 
-
-    def _ca_update_pv(self, val, idx = None):
+    def _ca_update(self, val, idx = None):
         """
         update the reading, average, index and variance.
         """
         pv = val.name
-        if val.ok: self.data[pv].append(val)
+        if val.ok and pv in self.data: self.data[pv].append(val)
         #print "updating", idx, val, val.name, len(self.data[pv])
 
     def close(self, pv):
@@ -87,6 +88,17 @@ class CaDataMonitor:
 
     def dead(self, pv):
         return (pv in self._dead)
+
+    def __len__(self):
+        return len(self.data)
+
+    def activeCount(self):
+        return len([True for pv,cam in self._monitors.items()
+                    if cam is not None])
+
+    def deadCount(self):
+        return len([True for pv,cam in self._monitors.items()
+                    if cam is None])
 
 
 class Example(QtGui.QWidget):

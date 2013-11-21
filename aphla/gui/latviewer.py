@@ -260,7 +260,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
                 self._rows.append(r)
                 self._mask.append(0)
 
-        self._cadata.addPvList(pvs)
+        self._cadata.addPv(pvs)
         self.dstitle.append(kwarg.get("title", ""))
         self.dstimestamp.append(max(ts))
         print "ds:", len(self.dstitle), self.dstitle, len(self._rows[0].values)
