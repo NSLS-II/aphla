@@ -937,6 +937,9 @@ class CaElement(AbstractElement):
         """add unit conversion for field"""
         # src, dst is unit system name, e.g. None for raw, phy
         self._field[field].unitconv[(src, dst)] = uc
+        # just overwrite, need to check ?
+        if src is None: self._field[field].pvunit = uc.srcunit
+        elif dst is None: self._field[field].pvunit = uc.dstunit
 
     def convertUnit(self, field, x, src, dst):
         """convert value x between units without setting hardware"""

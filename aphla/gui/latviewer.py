@@ -804,10 +804,14 @@ class LatSnapshotMain(QDialog):
         vbox2 = QVBoxLayout()
         self.btnLoad    = QPushButton("Load")
         self.btnSave    = QPushButton("Save")
-        self.btnOneshot = QPushButton("Oneshot")
+        self.btnOneshot = QPushButton("One Shot")
+        self.btnPut     = QPushButton("Put")
+        self.btnRamp    = QPushButton("Ramp")
         vbox2.addWidget(self.btnLoad)
         vbox2.addWidget(self.btnSave)
         vbox2.addWidget(self.btnOneshot)
+        vbox2.addWidget(self.btnPut)
+        vbox2.addWidget(self.btnRamp)
         vbox2.addStretch()
         hbox1 = QHBoxLayout()
         hbox1.addWidget(tblGrpBox, 1.0)
@@ -893,6 +897,9 @@ class LatSnapshotMain(QDialog):
         #
         self.connect(self.btnLoad, SIGNAL("pressed()"), self.loadLatSnapshotH5)
         self.connect(self.btnSave, SIGNAL("pressed()"), self.saveLatSnapshotH5)
+        self.connect(self.btnOneshot, SIGNAL("pressed()"), self._dead_button)
+        self.connect(self.btnPut, SIGNAL("pressed()"), self._dead_button)
+        self.connect(self.btnRamp, SIGNAL("pressed()"), self._dead_button)
 
         self.setWindowTitle("Element Editor")
         self.noTableUpdate = True
@@ -907,7 +914,7 @@ class LatSnapshotMain(QDialog):
         if len(rows) != 1: 
             self.extraPlot.hide()
             raise RuntimeError("Invalid selections: {0}".format(rows))
-        print rows
+        #print rows
         row = rows[0]
         r = self.model.getSnapshotRecord(row)
         if not x or not dat:
@@ -935,7 +942,7 @@ class LatSnapshotMain(QDialog):
                  Qwt.QwtSymbol(Qwt.QwtSymbol.Star1,
                                QtGui.QBrush(Qt.black), QtGui.QPen(Qt.black, 1.0),
                                QSize(8, 8))]
-        print len(dat), len(dat[0]), min([len(d) for d in dat]), max([len(d) for d in dat])
+        #print len(dat), len(dat[0]), min([len(d) for d in dat]), max([len(d) for d in dat])
         n = len(dat) // 2
         if n != len(self.model.dstitle):
             print n, self.model.dstitle, "does not agree"
@@ -1012,11 +1019,11 @@ class LatSnapshotMain(QDialog):
                     if not isinstance(v[i], (float, int)):
                         raise RuntimeError("invalid data i={0}, {1}".format(
                             i, v[i]))
-                print "Size:", len(x), len(y), y[:5]
+                #print "Size:", len(x), len(y), y[:5]
                 p.excurv[i].setData(x, y, None)
                 #p.excurv[i].attach(p)
             p.replot()
-            print "reploted"
+            #print "reploted"
 
 
     def filterTableRows(self):
@@ -1032,6 +1039,10 @@ class LatSnapshotMain(QDialog):
         QtGui.QMessageBox.warning(self, "Not Implemented",
                             "'saveLatSnapshotH5 is not implemented yet")
         
+
+    def _dead_button(self):
+        QtGui.QMessageBox.warning(self, "Not Implemented",
+                            "This is not implemented yet")
 
     def loadLatSnapshotH5(self, fnames = None):
         st = self.cbxLive.checkState()

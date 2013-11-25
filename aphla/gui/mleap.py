@@ -907,7 +907,7 @@ def main(par=None):
     for m in mlist:
         splash.showMessage("Initializing {0}".format(m),
                            Qt.AlignRight | Qt.AlignBottom)
-        lat0, latdict = aphla.machines.load(m)
+        lat0, latdict = aphla.machines.load(m, return_lattices=True)
         infos.append("%s initialized" % m)
         splash.showMessage("Connecting to {0}".format(m),
                            Qt.AlignRight | Qt.AlignBottom)

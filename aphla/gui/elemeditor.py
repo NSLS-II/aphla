@@ -90,6 +90,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         self._elemrec = []
         self._cadata  = kwargs.get("cadata", None) 
         self._unitsys = [None, 'phy']
+        self._data = []
 
     def loadElements(self, elems, cadata = None):
         self.beginResetModel()
@@ -105,8 +106,8 @@ class ElementPropertyTableModel(QAbstractTableModel):
 
     def updateData(self, row0, row1):
         if len(self._elemrec) == 0: return
-        print "Size:", len(self._elemrec)
-        print "Updating", row0, row1
+        #print "Size:", len(self._elemrec)
+        #print "Updating", row0, row1
         idx0 = self.index(row0, 0)
         idx1 = self.index(row1, self.columnCount()-1)
         print idx0.row(), idx0.column(), idx1.row(), idx1.column()
@@ -153,7 +154,8 @@ class ElementPropertyTableModel(QAbstractTableModel):
                         val.append(x1)
                     except:
                         val.append("N/A")
-            if len(val) == 1: val = val[0]
+            if len(val) == 0: val = ""
+            elif len(val) == 1: val = val[0]
         else:
             val = elem.get(fld, unitsys=usys)
             if not val.ok: return DISCON, usymb
@@ -649,7 +651,7 @@ class ElementEditorDock(QDockWidget):
         self.tableview.setWhatsThis("double click cell to enter editing mode")
         #fmbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 
-        self.model.loadElements(aphla.getElements("*")[:10])
+        #self.model.loadElements(aphla.getElements("*")[:10])
 
         vbox = QVBoxLayout()
         vbox.addLayout(fmbox)

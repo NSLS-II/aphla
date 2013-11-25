@@ -165,6 +165,8 @@ def load(machine, submachines = "*", **kwargs):
 
     use_cache = kwargs.get('use_cache', False)
     save_cache = kwargs.get('save_cache', False)
+    verbose = kwargs.get('verbose', 0)
+    return_lattices = kwargs.get("return_lattices", False)
 
     if use_cache:
         try:
@@ -179,6 +181,9 @@ def load(machine, submachines = "*", **kwargs):
         
     #importlib.import_module(machine, 'machines')
     machdir, machname = _findMachinePath(machine)
+    if verbose:
+        print "loading machine data '%s: %s'" % (machname, machdir)
+
     if machdir is None:
         _logger.error("can not find machine data directory for '%s'" % machine)
         return
@@ -193,7 +198,7 @@ def load(machine, submachines = "*", **kwargs):
     # global HLA_OUTPUT_DIR
     HLA_OUTPUT_DIR = d.get("output_dir", _home_hla)
     # the default submachine
-    accdefault = d.get("default_submachine", None)
+    accdefault = d.get("default_submachine", "")
 
     # print(cfg.sections())
     # for all submachines specified in INI and matches the pattern
@@ -262,6 +267,16 @@ def load(machine, submachines = "*", **kwargs):
         }
         createVirtualElements(lat, vfams)
         lat_dict[msect] = lat
+        if verbose:
+            nelems = len(lat.getElementList('*'))
+            if msect == accdefault:
+                print "%s (*): %d elements" % (msect, nelems)
+            else:
+                print "%s: %d elements" % (msect, nelems)
+            print "  BPM: %d, COR: %d, QUAD: %d, SEXT: %d" % (
+                len(lat.getElementList('BPM')), len(lat.getElementList('COR')),
+                len(lat.getElementList('QUAD')),
+                len(lat.getElementList('SEXT')))
         
     lat0 = lat_dict.get(accdefault, None)
     if lat0 is None and len(lat_dict) > 0:
@@ -279,7 +294,11 @@ def load(machine, submachines = "*", **kwargs):
                                  if _lat == v][0]
         saveCache(machine, _lattice_dict, selected_lattice_name)
 
-    return lat0, lat_dict
+    #if verbose:
+    #    print "Default lattice:", lat0.name
+
+    if return_lattices:
+        return lat0, lat_dict
 
 
 def loadCache(machine_name):
