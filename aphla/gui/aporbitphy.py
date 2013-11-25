@@ -94,7 +94,7 @@ class ApOrbitPhysics:
         kwargs['verbose'] = 0
         # use 1.0 if not set scaling the kicker strength
         kwargs.setdefault('scale', 1.0)
-        kwargs['dead'] = list(self.deadelems)
+        kwargs['dead'] = [e.name for e in list(self.deadelems)]
         for i in range(repeat):
             _logger.info("setting a local bump")
             QApplication.processEvents()

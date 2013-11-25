@@ -667,7 +667,7 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.err_only  = False
         self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elementSelected)
-        self.setMinimumSize(600, 150)
+        self.setMinimumSize(400, 100)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
     def updatePlot(self, s = None, y = None, yerr = None):

@@ -520,7 +520,11 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
 
 def setGoldenLattice(lat, h5fname, grp = "golden"):
     import h5py
-    g = h5py.File(h5fname, 'r')[grp]
+    f = h5py.File(h5fname, 'r')
+    if grp not in f:
+        _logger.warn("no '%s' in '%s'. Ignore" % (grp, h5fname))
+        return
+    g = f[grp]
     unitsys = g['value'].attrs['unitsys']
     if unitsys == '': unitsys = None
     for i,elemname in enumerate(g['element']):

@@ -110,7 +110,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         #print "Updating", row0, row1
         idx0 = self.index(row0, 0)
         idx1 = self.index(row1, self.columnCount()-1)
-        print idx0.row(), idx0.column(), idx1.row(), idx1.column()
+        #print idx0.row(), idx0.column(), idx1.row(), idx1.column()
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                  idx0, idx1)
 
@@ -145,7 +145,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
             val = []
             for pv in pvs:
                 x = self._cadata.get(pv, None)
-                print pv, x
+                #print pv, x
                 if x is None or not x.ok: 
                     val.append(DISCON)
                 else:
@@ -176,13 +176,11 @@ class ElementPropertyTableModel(QAbstractTableModel):
         r, col  = index.row(), index.column()
         #print self._elemrec[r]
         elem, idx, fld = self._elemrec[r]
-        print r, col, elem.name, fld, idx
+        #print r, col, elem.name, fld, idx
 
         if role == Qt.DisplayRole:
-            if idx == 0:
-                if col == C_FIELD: return QVariant(QString(elem.name))
-                else: return QVariant()
-            elif col == C_FIELD:
+            if col == C_FIELD:
+                if idx == 0: return QVariant(QString(elem.name))
                 return QVariant(fld)
             elif col == C_VAL_SP:
                 val, usymb = self._format_cadata(elem, fld, "setpoint", None)
@@ -725,8 +723,8 @@ class ElementEditorDock(QDockWidget):
             rg = Qwt.QwtDoubleInterval(bd[0], bd[1])
             self.valMeter.setScale(rg, (bd[1]-bd[0])/2.01)
             self.valMeter.setValue(elem.get(fld, unitsys = None))
-            print elem.get(fld, unitsys=None)
-            print self.valMeter.value()
+            #print elem.get(fld, unitsys=None)
+            #print self.valMeter.value()
             self.valMeter.setEnabled(True)
 
     def elementStateChanged(self, elem, stat):
@@ -793,7 +791,7 @@ class MTestForm(QtGui.QMainWindow):
         self.cadata.addPv(pvs)
         elems = ap.getElements("SEXT")[:5]
         #elems = []
-        print elems
+        #print elems
         pvs = []
         self.elemeditor = ElementEditorDock(parent=self)
         self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)

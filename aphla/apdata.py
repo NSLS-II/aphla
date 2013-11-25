@@ -142,6 +142,10 @@ class OrmData:
         """
         grp = group
         f = h5py.File(filename, 'r')
+        if group not in f:
+            _logger.warn("No '%s' group in '%s'. Ignore." % (group, filename))
+            return
+
         g = f[grp]['bpm']
         self.bpm = zip(g["element"], g["location"], g["plane"])
         g = f[grp]['trim']
@@ -555,6 +559,9 @@ class TwissData:
     def _load_hdf5_v2(self, filename, group = "Twiss"):
         """read data from HDF5 file in *group*"""
         f = h5py.File(filename, 'r')
+        if group not in f:
+            _logger.warn("no '%s' in '%s', ignore" % (group, filename))
+            return
         grp = f[group]
         self.tune = tuple(grp['tune'])
         self.element = list(grp['twtable']['element'])

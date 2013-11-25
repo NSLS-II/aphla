@@ -275,9 +275,9 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
                  values (datetime('now'), "log", ? )""", (msg,))
     systag = "aphla.sys.%s" % latname
     c.executemany("""INSERT into pvs """
-                  """(pv,elemName,elemIndex,elemHandle,elemField,tags) """
-                  """values (?,?,?,?,?,?)""",
-                  [(pv,ename,int(eidx),hdl,fld,systag) 
+                  """(pv,elemName,elemHandle,elemField,tags) """
+                  """values (?,?,?,?,?)""",
+                  [(pv,ename,hdl,fld,systag) 
                    for (pv,hdl,ename,eidx,etp,fld) in pvs])
     conn.commit()
     msg = "[%s] new 'pvs' table" % (__name__,)
@@ -299,22 +299,6 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
         names.append(k)
     conn.commit()
 
-    # assuming element name is unique
-    for (pv,hdl,ename,eid,etp,fld) in pvs:
-        if name_index and int(eid) >= 0: ename = "%s:%s" % (ename, eid)
-        if ename not in names:
-            raise RuntimeError("No {0}".format(ename))
-        c.execute("""UPDATE pvs set """
-                  """elem_id=(select id from elements """
-                  """where elemName=? and elemIndex=?) """
-                  """where pv=? and elemName=? and elemIndex=?""", 
-                  (ename,int(eid),pv,ename,int(eid)))
-        #c.execute("""UPDATE pvs set """
-        #          """elem_id=(select id from elements """
-        #          """where elemName=? and elemType=? and system=?) """
-        #          """where pv=?""", 
-        #          (ename,etp,system,pv,))
-    conn.commit()
     conn.close()
 
 
