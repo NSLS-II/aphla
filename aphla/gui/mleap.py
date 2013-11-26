@@ -197,6 +197,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #sb, se = self.getVisibleRange()
         #elemlst = self.getVisibleElements(elems, sb, se)
         elemlst = lat.getElementList(str(elems))
+        print "cadata is:", cadata
         self.elemeditor.loadElements(elemlst, cadata)
 
     def closeEvent(self, event):

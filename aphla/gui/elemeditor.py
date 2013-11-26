@@ -90,6 +90,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         self._elemrec = []
         self._cadata  = kwargs.get("cadata", None) 
         self._unitsys = [None, 'phy']
+        self._unitsymb = [None, []]
         self._data = []
 
     def loadElements(self, elems, cadata = None):
@@ -102,6 +103,9 @@ class ElementPropertyTableModel(QAbstractTableModel):
             for var in sorted(elem.fields()):
                 ik += 1
                 self._elemrec.append((elem, ik, var))
+                for j,u in enumerate(self._unitsys[1:]):
+                    self._unitsymb[1+j].append(elem.getUnit(var, unitsys=u))
+
         self.endResetModel()
 
     def updateData(self, row0, row1):
@@ -120,53 +124,38 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def isSubHeader(self, i):
         return self._elemrec[i][1] == 0
 
-    def _get_data(self, elem, fld, hdl, u):
-        # check the unit
-        usymb = elem.getUnit(var, unitsys=u)
-
-        if self._cadata:
-            pv = elem.pv(field=fld, handle=hdl)
-            x = self._cadata.get(pv, None)
-            if not x.ok: return None, usymb
-            val = elem.convertUnit(fld, x, None, u)
+    def _cadata_to_qvariant(self, val):
+        if val is None:
+            return QVariant()
+        elif isinstance(val, float):
+            return QVariant(float(val))
+        elif isinstance(val, str):
+            return QVariant(QString(val))
+        elif isinstance(val, int):
+            return QVariant(int(val))
+        elif isinstance(val, (list, tuple)):
+            return [self._cadata_to_qvariant(v) for v in val]
         else:
-            val = elem.get(fld, unitsys=u)
-            if not val.ok: return None, usymb
+            raise RuntimeError("Unknow data type: {0} ({1})".format(
+                    type(val), val))
 
-        return val, usymb
-
-    def _format_cadata(self, elem, fld, hdl, usys = None):
-        """format as string"""
-        # check the unit
-        usymb = elem.getUnit(fld, unitsys=usys)
-        DISCON = "Disconnected"
+    def _get_cadata_qv(self, elem, fld, hdl, u = None):
         if self._cadata:
             pvs = elem.pv(field=fld, handle=hdl)
-            val = []
-            for pv in pvs:
-                x = self._cadata.get(pv, None)
-                #print pv, x
-                if x is None or not x.ok: 
-                    val.append(DISCON)
-                else:
-                    try:
-                        x1 = elem.convertUnit(fld, x, None, usys)
-                        val.append(x1)
-                    except:
-                        val.append("N/A")
-            if len(val) == 0: val = ""
-            elif len(val) == 1: val = val[0]
+            vals = [self._cadata.get(pv, None) for pv in 
+                    elem.pv(field=fld, handle=hdl)]
+            if len(vals) == 0 or u not in elem.getUnitSystems(field=fld):
+                return QVariant()
+            elif len(vals) == 1:
+                x = elem.convertUnit(fld, vals[0], None, u)
+                return self._cadata_to_qvariant(x)
+            else:
+                x = [elem.convertUnit(fld, v, None, u) for v in vals]
+                return self._cadata_to_qvariant(x)
         else:
-            val = elem.get(fld, unitsys=usys)
-            if not val.ok: return DISCON, usymb
-
-        if isinstance(val, (str, unicode)) and len(val) > 8:
-            return val[:8]+"...", usymb
-        elif isinstance(val, collections.Iterable):
-            return str(val)[:8]+"...", usymb
-        else:
-            return "{0:.6g}".format(val), usymb
-
+            return QVariant()
+        return QVariant()
+        
     def data(self, index, role=Qt.DisplayRole):
         """return data as a QVariant"""
         #print "data model=",role
@@ -183,15 +172,11 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 if idx == 0: return QVariant(QString(elem.name))
                 return QVariant(fld)
             elif col == C_VAL_SP:
-                val, usymb = self._format_cadata(elem, fld, "setpoint", None)
-                if usymb: return QVariant("%s [%s]".format(val, usymb))
-                return QVariant(val)
+                return self._get_cadata_qv(elem, fld, "setpoint", None)
             elif col >= C_VAL_RB:
                 iusys = col - C_VAL_RB
                 usys = self._unitsys[iusys]
-                val, usymb = self._format_cadata(elem, fld, "readback", usys)
-                if usymb: return QVariant("%s [%s]".format(val, usymb))
-                return QVariant(val)
+                return self._get_cadata_qv(elem, fld, "readback", usys)
         elif role == Qt.EditRole:
             if col == C_FIELD: 
                 raise RuntimeError("what is this ?")
@@ -215,6 +200,8 @@ class ElementPropertyTableModel(QAbstractTableModel):
             elif col == C_VAL_RB:
                 pv = elem.pv(field=fld, handle="readback")
                 return QVariant("{0}".format(pv))
+            elif col > C_VAL_RB:
+                return QVariant(self._unitsymb[col-C_VAL_RB][r])
         elif role == Qt.ForegroundRole:
             if idx == 0: return QColor(Qt.darkGray)
             #if r in self._inactive and self.isHeadIndex(r):
@@ -586,9 +573,9 @@ class ElementPropertyView(QTableView):
         cmenu.exec_(e.globalPos())
 
 class ElementEditorDock(QDockWidget):
-    def __init__(self, parent, cadata = None):
+    def __init__(self, parent):
         QDockWidget.__init__(self, parent)
-        self.cadata = cadata
+        #self.cadata = cadata
         #self.model = None
         fmbox = QGridLayout()
 
@@ -691,6 +678,7 @@ class ElementEditorDock(QDockWidget):
         t0 = time.time()
         _logger.info("Found elems: {0}".format(len(elems)))
         QApplication.processEvents()
+        print "cadata", cadata
         self.model.loadElements(elems, cadata)
         #print "model size:", self.model.rowCount(), self.model.columnCount()
         for i in range(self.model.rowCount()):
@@ -821,7 +809,7 @@ class MTestForm(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     import aphla as ap
-    ap.machines.load("nsls2")
+    ap.machines.load("nsls2v2")
     form = MTestForm()
     form.resize(800, 600)
     form.show()

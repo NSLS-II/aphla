@@ -81,9 +81,10 @@ class CaDataMonitor:
         self.data[pv].clear()
 
     def get(self, pv, default = np.nan):
-        if pv in self._dead: return None
+        if pv in self._dead: return default
         lst = self.data.get(pv, [])
         if len(lst) == 0: return default
+        elif not lst[-1].ok: return default
         return lst[-1]
 
     def dead(self, pv):
@@ -134,7 +135,7 @@ class Example(QtGui.QWidget):
         for i,lbl in enumerate(self.lbl):
             # print "timer ..."
             pv = self.pvs[i]
-            d = self.cadata.get(pv)
+            d = self.cadata.get(pv, None)
             lbl.setText("{0}".format(d))
             #print d.ok, d.timestamp, d.datetime, dir(d)
         self.count += 1
