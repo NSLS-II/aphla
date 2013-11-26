@@ -669,8 +669,8 @@ class ElementEditorDock(QDockWidget):
 
     def refreshTable(self, txt = None):
         self.model.clear()
-        print "emitting 'reloadElements'"
-        print "model=", self.tableview.model()
+        #print "emitting 'reloadElements'"
+        #print "model=", self.tableview.model()
         self.emit(SIGNAL("reloadElements(QString)"), self.elemBox.text())
     
     def loadElements(self, elems, cadata):
@@ -678,7 +678,7 @@ class ElementEditorDock(QDockWidget):
         t0 = time.time()
         _logger.info("Found elems: {0}".format(len(elems)))
         QApplication.processEvents()
-        print "cadata", cadata
+        #print "cadata", cadata
         self.model.loadElements(elems, cadata)
         #print "model size:", self.model.rowCount(), self.model.columnCount()
         for i in range(self.model.rowCount()):
@@ -802,7 +802,7 @@ class MTestForm(QtGui.QMainWindow):
         #self.reloadElementsEditor("*")
 
     def reloadElementsEditor(self, elems):
-        print "reloading with ", elems
+        #print "reloading with ", elems
         elemlst = ap.getElements(str(elems))
         self.elemeditor.loadElements(elemlst, self.cadata)
 
