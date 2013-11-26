@@ -126,7 +126,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
 
     def _cadata_to_qvariant(self, val):
         if val is None:
-            return QVariant()
+            return QVariant(QString("Disconnected"))
         elif isinstance(val, float):
             return QVariant(float(val))
         elif isinstance(val, str):
@@ -233,7 +233,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
             if section == C_FIELD: return QVariant("Field")
             elif section == C_VAL_SP: return QVariant("Setpoint")
             elif section == C_VAL_RB: return QVariant("Readback")
-            else: return QVariant(self._unitsys[section-3])
+            else: return QVariant(self._unitsys[section-C_VAL_RB])
         elif orientation == Qt.Vertical:
             #if self._value[section] is not None: return QVariant()
             #idx = [k for k in range(section+1) if self._value[k] is None]
