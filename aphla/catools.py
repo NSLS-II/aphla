@@ -84,24 +84,37 @@ def caget(pvs, timeout=1, datatype=None, format=ct.FORMAT_RAW,
     if CA_OFFLINE: return _ca_get_sim(pvs)
 
     if isinstance(pvs, str):
-        pvs2 = pvs
+        return ct.caget(pvs, timeout=timeout, datatype=datatype,
+                        format=format, count=count, throw=throw)
     elif isinstance(pvs, unicode):
         pvs2 = pvs.encode("ascii")
+        return ct.caget(pvs2, timeout=timeout, datatype=datatype,
+                        format=format, count=count, throw=throw)
     elif isinstance(pvs, (tuple, list)):
-        pvs2 = [pv.encode("ascii") for pv in pvs]
+        pvs2 = [pv.encode("ascii") for pv in pvs if pv]
+        dr = ct.caget(pvs2, timeout=timeout, datatype=datatype,
+                      format=format, count=count, throw=throw)
+        if len(pvs2) == len(pvs): return [v for v in dr]
+
+        j, rt = 0, []
+        for i,pv in enumerate(pvs):
+            if not pv: 
+                rt.append(None)
+                continue
+            rt.append(dr[j])
+            j += 1
+        return rt
     else:
         raise ValueError("Unknown type " + str(type(pvs)))
 
-    try:
-        return ct.caget(pvs2, timeout=timeout, datatype=datatype,
-                        format=format, count=count, throw=throw)
-    except:
-        if os.environ.get('APHLAS_DISABLE_CA', 0):
-            print "TIMEOUT: reading", pvs
-            if isinstance(pvs, (unicode, str)): return 0.0
-            else: return [0.0] * len(pvs2)
-        else:
-            raise
+def cagetr(pvs, **kwargs):
+    """caget recursive version"""
+    if not pvs: return None
+    if isinstance(pvs, (str, unicode)): return caget(pvs, **kwargs)
+    if all([isinstance(pv, (str, unicode)) or pv is None for pv in pvs]):
+        return caget(pvs, **kwargs)
+    return [cagetr(pv, **kwargs) for pv in pvs]
+
 
 def caput(pvs, values, timeout=2, wait=True, throw=True):
     """channel access write.
@@ -316,4 +329,59 @@ def caRmCorrect(resp, kker, m, **kwarg):
             return (0, None)
     else:
         return (0, None)
+
+def save_lat_epics(fname, lat, group = None, mode='a'):
+    import h5py
+    h5f = h5py.File(fname, mode)
+    if not group: grp = h5f.create_group(lat.name)
+    else: grp = h5f.create_group(group)
+
+    # get the pv list
+    datnames = []
+    for e in lat.getElementList('*', virtual=False):
+        print e
+        for k in e.fields():
+            for hdl,tag in [('readback', 0), ('setpoint', 1)]:
+                pvs = [s.encode("ascii") for s in e.pv(field=k, handle=hdl)]
+                if not pvs: continue
+                for pv in pvs:
+                    datnames.append((e.name, k, tag, pv))
+    #print datnames
+    allpvs = [v[3] for v in datnames]
+    alldat = caget(allpvs, format=FORMAT_TIME)
+    scalars, dead = [], []
+    sz_name, sz_fld, sz_pv = 0, 0, 0
+    for i,dat in enumerate(alldat):
+        name, fld, rb, pv = datnames[i][:4]
+        if len(name) > sz_name: sz_name = len(name)
+        if len(fld) > sz_fld: sz_fld = len(fld)
+        if len(pv) > sz_pv: sz_pv = len(pv)
+        if not dat.ok:
+            dead.append((name,fld,rb,pv,np.nan, 0.0, ""))
+        elif isinstance(dat, cothread.dbr.ca_array):
+            dsname = "wf_{0}.{1}_{2}".format(name,fld,rb)
+            grp[dsname] = dat
+            grp[dsname].attrs["element"] = name
+            grp[dsname].attrs["field"] = fld
+            grp[dsname].attrs["pv"] = pv
+            grp[dsname].attrs["rw"] = rb
+            grp[dsname].attrs["datetime"] = str(dat.datetime)
+            grp[dsname].attrs["timestamp"] = dat.timestamp
+        else:
+            scalars.append((name,fld,rb,pv,dat, dat.timestamp,
+                            str(dat.datetime)))
+
+    if not scalars: return
+
+    dt = np.dtype([("element", 'S%d' % sz_name),
+                   ('field', 'S%d' % sz_fld),
+                   ('rw', 'i'), 
+                   ('pv', 'S%d' % sz_pv),
+                   ('value', 'd'),
+                   ('timestamp', 'd'),
+                   ('datetime', 'S32')])
+    grp["__scalars__"] = np.array(scalars, dtype=dt)
+    grp["__dead__"] = np.array(dead, dtype=dt)
+    h5f.close()
+
 

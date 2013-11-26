@@ -12,37 +12,12 @@ import PyQt4.Qwt5 as Qwt
 
 from elempickdlg import ElementPickDlg
 from orbitcorrdlg import OrbitCorrDlg
-from aporbitplot import ApOrbitPlot, ApPlot, DcctCurrentPlot, ApPlotWidget, ApMdiSubPlot
+from aporbitplot import ApPlot, ApMdiSubPlot
 from apbba import ApBbaDlg
-
+import cothread
 import time
 import logging
 _logger = logging.getLogger(__name__)
-
-class ApMachInitThread(QThread):
-    def __init__(self, mach, lat):
-        super(ApMachInitThread, self).__init__()
-        self.mach = mach
-        self.latname = lat
-
-    def run(self):
-        #
-        # Note: logging is not recommended: Cross Thread signal.
-        # 
-        #print "initializing ", self.mach, self.latname
-        #_logger.info("background initializing {0}.{1}".format(
-        #    self.mach, self.latname))
-
-        ap.machines.init(self.mach)
-        #print "initialized ", self.mach, self.latname
-        if self.latname: ap.machines.use(self.latname)
-        else: self.latname = ap.machines.getLattice().name
-        #_logger.info("initialized {0}, using {1}".format(
-        #    self.mach, self.latname))
-        # send the signal to caller thread
-        self.emit(SIGNAL("initialized(PyQt_PyObject)"), 
-                  (self.mach, self.latname))
-        #print "signal sent"
 
 
 class ApOrbitPhysics:
@@ -66,13 +41,16 @@ class ApOrbitPhysics:
         
     def chooseElement(self, fam):
         elems = ap.getElements(fam)
-        form = ElementPickDlg(elems, self.deadelems, fam)
+        allelems = [e.name for e in elems]
+        unchecked = [e.name for e in self.deadelems]
+        form = ElementPickDlg(allelems, unchecked,
+                              title="Choose {0}".format(fam))
 
+        deadlst = []
         if form.exec_(): 
             choice = form.result()
-            deadlst = []
-            for i in range(len(elems)):
-                if elems[i].name in choice: continue
+            for i,e in enumerate(allelems):
+                if e in choice: continue
                 deadlst.append(elems[i])
             # do nothing if dead element list did not change
             if set(deadlst) == self.deadelems: return
@@ -116,7 +94,7 @@ class ApOrbitPhysics:
         kwargs['verbose'] = 0
         # use 1.0 if not set scaling the kicker strength
         kwargs.setdefault('scale', 1.0)
-        kwargs['dead'] = list(self.deadelems)
+        kwargs['dead'] = [e.name for e in list(self.deadelems)]
         for i in range(repeat):
             _logger.info("setting a local bump")
             QApplication.processEvents()

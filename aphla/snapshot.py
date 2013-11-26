@@ -62,6 +62,7 @@ def _save_epics_data_2(lat, grp):
             dset.attrs['pv'] = pv
             dset.attrs['val'] = ['raw', 'phy']
 
+        
 def _save_data_2(grp, vscalar, vvec):
     for v in vscalar:
         dset = grp.create_dataset("%s.%s" % (v[0], v[1]), (2,), 
@@ -93,14 +94,14 @@ def saveSnapshot(fname, lats):
     f = h5py.File(fname, 'w')
     for lat in livelats:
         if lat is None: continue
-        vs, vv = _read_epics_data(lat)
+        print "Saving lattice:", lat.name
         grp = f.create_group(lat.name)
         #_save_data_1(grp, vs, vv)
         #_save_data_2(grp, vs, vv)
         #_save_data_2(grp, [('a', '0', 'pv', 0, 0),
         #                   ('a', '1', 'pv', 0, 0),],
         #             [('a', '2', ['c', 'd'], [1,2,3], [4,5,6])])
-        _save_epics_data_2(lat, grp)
+        _save_lat_epics(grp, lat)
 
     f.close()
 

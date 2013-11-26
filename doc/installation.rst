@@ -110,3 +110,21 @@ If it has been a long time after you checkout the code from the server, you can
 
   $ hg pull (update the local files with server's)
 
+Configuration
+----------------
+
+.. code-block:: bash
+
+  $ h5copy -p -i v2sr_twiss.hdf5 -s Twiss -o nsls2v2.hdf5 -d /V2SR/Twiss
+
+
+
+``aphla`` can keep several initialized lattices, depending how many
+*aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
+*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB* for the real *nsls2*
+machine. The `V1` prefix before `SR`, `LTD1` means it is the `virtual
+accelerator #1` counter part. :func:`~aphla.machines.lattices` lists the
+initialized lattices and :func:`~aphla.machines.use` will switch to the named
+lattice as the current lattice. This current lattice is the domain for
+functions like :func:`~aphla.hlalib.getElements`.
+

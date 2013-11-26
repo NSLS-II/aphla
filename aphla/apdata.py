@@ -6,13 +6,16 @@
 
 """
 
-__all__ = ['OrmData', 'TwissData']
+__all__ = ['OrmData', 'TwissData', 'saveSnapshotH5']
 
 import os
 from os.path import splitext
 import numpy as np
 import shelve
 import h5py
+import sqlite3
+
+import warnings
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -44,8 +47,8 @@ class OrmData:
     - *orm/_rawdata_/rawkick, optional, (ntrim, npoints)
     - *orm/_rawdata_/mask, optional, (nbpm, ntrim)
 
-    The private dataset has a prefix "_" in its name.
-    """
+    The private dataset has a prefix "_" in its name."""
+
     def __init__(self, datafile = None, group = None):
         # list of tuple, (name, location, plane)
         self.bpm = []
@@ -68,7 +71,7 @@ class OrmData:
             self.load(datafile)
 
 
-    def _save_hdf5(self, filename, group = "orm"):
+    def _save_hdf5(self, filename, group = "OrbitResponseMatrix"):
         """
         save data in hdf5 format in HDF5 group (h5py.Group object).
 
@@ -76,7 +79,6 @@ class OrmData:
         -----
         h5py before v2.0 does not accept unicode directly.
         """
-        import h5py
         h5zip = None # 'gzip' works in default install
         f = h5py.File(filename, 'w')
         grp = f.create_group(group)
@@ -134,13 +136,16 @@ class OrmData:
         
         f.close()
 
-    def _load_hdf5(self, filename, group = "orm"):
+    def _load_hdf5(self, filename, group = "OrbitResponseMatrix"):
         """
         load data group *grp* from hdf5 file *filename*
         """
         grp = group
-        import h5py
         f = h5py.File(filename, 'r')
+        if group not in f:
+            _logger.warn("No '%s' group in '%s'. Ignore." % (group, filename))
+            return
+
         g = f[grp]['bpm']
         self.bpm = zip(g["element"], g["location"], g["plane"])
         g = f[grp]['trim']
@@ -452,14 +457,15 @@ class TwissData:
 
     """
     def __init__(self, name):
+        self._name = name
+        self.tune   = (0.0, 0.0)
+        self.chrom  = (0.0, 0.0)
+        self.alphac = 0.0 #
         self.element = []
         self._twtable = []
-        self._name = name
-        self.tune = None #(np.nan, np.nan)
-        self.chrom = None #(np.nan, np.nan)
         self._cols = ['s', 'alphax', 'alphay', 'betax', 'betay',
                       'gammax', 'gammay', 'etax', 'etay', 'phix', 'phiy']
-        
+
     def _find_element(self, elemname):
         try:
             i = self.element.index(elemname)
@@ -510,7 +516,8 @@ class TwissData:
         ret = []
         for e in elemlst:
             if e not in self.element:
-                raise RuntimeError("element '%s' is not in twiss data" % e)
+                raise RuntimeError("element '{0}' is not in twiss "
+                                   "data: {1}".format(e, self.element))
             i = self.element.index(e)
             dat = []
             for c in col:
@@ -528,9 +535,20 @@ class TwissData:
         """loading hdf5 file in a group default 'twiss'"""
         self._load_hdf5_v2(filename, **kwargs)
 
-    def _load_hdf5_v1(self, filename, group = "twiss"):
+    def set(self, **kw):
+        """set data, delete all previous data"""
+        if "element" in kw:
+            self.element = kw["element"]
+        NROW = len(self.element)
+        self._twtable = np.zeros((NROW, len(self._cols)), 'd')
+        for i,k in enumerate(self._cols):
+            self._twtable[:,i] = kw.get(k, np.nan)
+        self.chrom = kw.get("chrom", None)
+        self.tune = kw.get("tune", None)
+        self.alphac = kw.get("alphac", None)
+
+    def _load_hdf5_v1(self, filename, group = "Twiss"):
         """read data from HDF5 file in *group*"""
-        import h5py
         f = h5py.File(filename, 'r')
         self.element = list(f[group]['element'])
         self.tune = tuple(f[group]['tune'])
@@ -538,9 +556,12 @@ class TwissData:
         f.close()
 
 
-    def _load_hdf5_v2(self, filename, group = "twiss"):
+    def _load_hdf5_v2(self, filename, group = "Twiss"):
         """read data from HDF5 file in *group*"""
         f = h5py.File(filename, 'r')
+        if group not in f:
+            _logger.warn("no '%s' in '%s', ignore" % (group, filename))
+            return
         grp = f[group]
         self.tune = tuple(grp['tune'])
         self.element = list(grp['twtable']['element'])
@@ -548,9 +569,10 @@ class TwissData:
         for i,k in enumerate(self._cols):
             self._twtable[:,i] = grp['twtable'][:,k]
         f.close()
+        _logger.info("loaded {0} elements from {1}".format(
+                len(self._twtable), filename))
 
-
-    def _save_hdf5_v2(self, filename, group = "twiss"):
+    def _save_hdf5_v2(self, filename, group = "Twiss"):
         # data type
         dt = np.dtype( [ 
             ('element', h5py.special_dtype(vlen=bytes)),
@@ -575,11 +597,12 @@ class TwissData:
         f = h5py.File(filename)
         grp = f.create_group(group)
         grp['twtable'] = data
-        if self.tune is not None: grp['tune'] = np.array(self.tune)
-        if self.chrom is not None: grp['chrom'] = np.array(self.chrom)
+        grp['tune'] = np.array(self.tune)
+        grp['chrom'] = np.array(self.chrom)
+        grp['alphac'] = self.alphac
         f.close()
 
-    def _load_sqlite3(self, fname, table="twiss"):
+    def _load_sqlite3(self, fname, table="Twiss"):
         """read twiss from sqlite db file."""
         import sqlite3
         conn = sqlite3.connect(fname)
@@ -621,3 +644,150 @@ class TwissData:
         c.close()
         conn.close()
 
+
+def _updateLatticePvDb(dbfname, cfslist):
+    """
+    update sqlite3 DB with a list of (pv, properties, tags)
+    """
+    # elemName, elemType, system is "NOT NULL"
+    conn = sqlite3.connect(dbfname)
+    # save byte string instead of the default unicode
+    conn.text_factory = str
+    c = conn.cursor()
+    # elements need to insert
+    elem_sets, pv_sets = [], []
+    for i,rec in enumerate(cfslist):
+        pv, prpts, tags = rec
+        ukey = (prpts.get("elemName", ''),)
+        # skip if already in the to-be-inserted list
+        if ukey in elem_sets: continue
+        c.execute("""SELECT * from elements where elemName=?""", ukey)
+        if len(c.fetchall()) > 0: continue
+        elem_sets.append(ukey)
+    c.executemany("""INSERT INTO elements (elemName) VALUES (?)""", elem_sets)
+    # insert or replace pv
+    c.executemany("""INSERT OR REPLACE INTO pvs (pv) VALUES (?)""", 
+                  [(r[0],) for r in cfslist])
+    conn.commit()
+    # the pv and elements are ready to update
+    elem_cols = [("cell", ""), ("elemLength", 0.0),
+                 ("elemPosition", None), ("girder", ""), ("symmetry", ""),
+                 ("elemIndex", None), ("elemGroups", ""), ("k1", None),
+                 ("k2", None), ("angle", None), ("fieldPolar", None),
+                 ("virtual", 0),
+                 # the three unique constraint
+                 ("elemName", ''), ("elemType", '')]
+    q_elem_update = ",".join(["%s=?" % v[0] for v in elem_cols[:-3]])
+    pv_cols = [("elemHandle", None), ("elemField", None), 
+               ("hostName", ""), ("devName", ""), ("iocName", ""),
+               ("hlaHigh", None), ("hlaLow", None), ("hlaValRef", None)]
+    q_pvs_update = ",".join(["%s=?" % v[0] for v in pv_cols])
+    for i,rec in enumerate(cfslist):
+        pv, prpts, tags = rec
+        ukey = [prpts.get(k[0], k[1]) for k in elem_cols] 
+        c.execute("""UPDATE elements set """ + q_elem_update +
+                  """ where elemName=?""", ukey)
+        ukey = [";".join(tags),] + [prpts.get(k[0], k[1]) for k in pv_cols] + \
+               [prpts.get("elemName", ''), prpts.get("elemType", ''),
+                prpts.get("system", ''), pv]
+        c.execute("""UPDATE pvs set tags=?,""" + q_pvs_update +
+                  """,elem_id=(select id from elements where 
+                        elemName=? AND elemType=? AND system=?) where pv=?""",
+                  ukey)
+    msg = "[%s] updated %d records" % (__name__, len(cfslist))
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ? )""", (msg,))
+    conn.commit()
+    conn.close()
+
+                         
+def _updateLatticePvDb(dbfname, csv2fname):
+    """
+    update the sqlite3 DB with CSV file
+    """
+    from chanfinder import ChannelFinderAgent
+    cfa = ChannelFinderAgent()
+    cfa.importCsv(csv2fname)
+    _updateLatticePvDb(dbfname, cfa.rows)
+
+    conn = sqlite3.connect(dbfname)
+    c = conn.cursor()
+    msg = "[%s] updated with '%s'" % (__name__, csv2fname)
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ? )""", (msg,))
+    conn.commit()
+    conn.close()
+
+def createLatticePvDb(dbfname, csv2fname = None):
+    """
+    create a new sqlite3 DB. remove if same file exists.
+    """
+    #if os.path.exists(dbfname): os.remove(dbfname)
+    conn = sqlite3.connect(dbfname)
+    c = conn.cursor()
+    c.execute("""DROP TABLE IF EXISTS info""")
+    c.execute("""DROP TABLE IF EXISTS elements""")
+    c.execute("""DROP TABLE IF EXISTS pvs""")
+    c.execute("""CREATE TABLE info
+                 (id INTEGER PRIMARY KEY, timestamp TEXT NOT NULL,
+                  name TEXT NOT NULL, value TEXT)""")
+    msg = "[%s] tables created" % (__name__,)
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ?)""", (msg,))
+    c.execute("""CREATE TABLE elements
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  elemName TEXT UNIQUE,
+                  elemType TEXT NOT NULL,
+                  cell     TEXT,
+                  girder   TEXT,
+                  symmetry TEXT,
+                  elemLength   REAL,
+                  elemPosition REAL,
+                  elemIndex    INTEGER,
+                  elemGroups   TEXT,
+                  k1           REAL,
+                  k2           REAL,
+                  angle        REAL,
+                  fieldPolar   INTEGER,
+                  virtual      INTEGER DEFAULT 0)""")
+    conn.commit()
+
+    c.execute("""CREATE TABLE pvs
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  pv TEXT,
+                  elemName   TEXT,
+                  elemHandle TEXT,
+                  elemField  TEXT,
+                  hostName   TEXT,
+                  devName    TEXT,
+                  iocName    TEXT,
+                  tags       TEXT,
+                  hlaHigh   REAL,
+                  hlaLow    REAL,
+                  hlaValRef REAL,
+                  UNIQUE (pv,elemName,elemField) ON CONFLICT REPLACE,
+                  FOREIGN KEY(elemName) REFERENCES elements(elemName))""")
+    conn.commit()
+    conn.close()
+    if csv2fname is not None: updateLatticePvDb(dbfname, csv2fname)
+
+
+def saveSnapshotH5(fname, dscalar, dvector):
+    N1 = max([len(v[0]) for v in dscalar])
+    N2 = max([len(v[1]) for v in dscalar])
+    dt = np.dtype([('element', "S%d" % N1),
+                   ('field', "S%d" % N2), ("value", 'd')])
+    d = np.array(dscalar, dtype=dt)
+    f = h5py.File(fname, 'w')
+    grp = f.create_group("scalar")
+    grp["data"] = d
+    grp = f.create_group("waveform")
+    for v in dvector:
+        grp["%s.%s" % (v[0], v[1])] = v[2]
+    f.close()
+    pass
+
+
+if __name__ == "__main__":
+    createLatticePvDb('test.sqlite', '/home/lyyang/devel/nsls2-hla/aphla/machines/nsls2/BR-20130123-Diag.txt')
+    updateLatticePvDb('test.sqlite', '/home/lyyang/devel/nsls2-hla/aphla/machines/nsls2/BR-20130123-Diag.txt')

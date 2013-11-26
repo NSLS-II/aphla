@@ -57,13 +57,12 @@ class AbstractElement(object):
     *group*     list of groups the element belongs to
     ==========  ===================================================
 
-    
     *index* is used for sorting elements in a list if it is not
     None. Otherwise sorted according to *sb*.
     """
 
     # format string for __str__
-    _STR_FORMAT = "%d %s %s %.3f %.3f %s %s %s %s %s"
+    _STR_FORMAT = "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}"
     #__slots__ = []
     def __init__(self, **kwargs):
         """
@@ -85,10 +84,11 @@ class AbstractElement(object):
         self.girder   = kwargs.get('girder', None)
         self.symmetry = kwargs.get('symmetry', None)
         self.sequence = kwargs.get('sequence', (0, 0))
+        self.flag   = 0
 
         self.group = set([self.family, self.cell, self.girder, self.symmetry])
         for g in kwargs.get('group', []): self.group.add(g)
-        
+
     def profile(self, vscale=1.0):
         """the profile for drawing the lattice.
 
@@ -124,25 +124,29 @@ class AbstractElement(object):
             return [b, b, e, e], [0, 0.2*h, 0.2*h, 0], 'k'
 
     def __str__(self):
-        return AbstractElement._STR_FORMAT % (
+        return AbstractElement._STR_FORMAT.format(
             self.index, self.name, self.family, self.sb, self.length,
             self.devname, self.cell, self.girder, self.symmetry, self.sequence)
 
     def __repr__(self):
         return "%s:%s @ sb=%f" % (self.name, self.family, self.sb)
-            
+
     def __lt__(self, other):
         """use *index* if not None, otherwise use *sb*"""
-        if self.index is None or other.index is None:
+        if self.index is None and other.index is None:
+            return True
+        elif self.index is None:
+            return False
+        elif other.index is None:
+            return True
+        elif self.index > 0 and other.index > 0:
             return self.sb < other.sb
+        elif self.index > 0:
+            return True
+        elif other.index > 0:
+            return False
         else:
-            return self.index < other.index
-
-    def __gt__(self, other):
-        """use *index* if not None, otherwise use *sb*"""
-        if self.index is None or other.index is None:
-            return self.sb > other.sb
-        else:
+            # both less than 0
             return self.index > other.index
 
     def __eq__(self, other):
@@ -952,6 +956,9 @@ class CaElement(AbstractElement):
         """add unit conversion for field"""
         # src, dst is unit system name, e.g. None for raw, phy
         self._field[field].unitconv[(src, dst)] = uc
+        # just overwrite, need to check ?
+        if src is None: self._field[field].pvunit = uc.srcunit
+        elif dst is None: self._field[field].pvunit = uc.dstunit
 
     def convertUnit(self, field, x, src, dst):
         """convert value x between units without setting hardware"""
@@ -1342,13 +1349,13 @@ def merge(elems, field = None, **kwargs):
             pvdict[f][0].extend(pvrb)
             pvdict[f][1].extend(pvsp)
 
-
     elem = CaElement(**kwargs)
+    #print "merged:", elem
     # consider only the common fields
     if field is None: 
         for k,v in count.iteritems(): 
             if v < len(elems): 
-                print("field '%s' has %d < %d" % (k, v, len(elems)))
+                _logger.warn("field '%s' has %d < %d" % (k, v, len(elems)))
                 pvdict.pop(k)
         #print pvdict.keys()
         for fld,pvs in pvdict.iteritems():
@@ -1366,13 +1373,13 @@ def merge(elems, field = None, **kwargs):
         elem.sb = [e.sb for e in elemgrp] 
         elem.se = [e.se for e in elemgrp]
         elem._name = [e.name for e in elemgrp]
-        #print pvsp
+        print pvsp
     else:
         _logger.warn("no pv merged for {0}".format([
                     e.name for e in elems]))
     # if all raw units are the same, so are the merged element
     for fld in elem.fields():
-        units = sorted([e.getUnit(fld, unitsys=None) for e in elems])
+        units = sorted([e.getUnit(fld, unitsys=None) for e in elems if fld in e.fields()])
         if units[0] == units[-1]:
             elem.setUnit(fld, units[0], unitsys=None)
 

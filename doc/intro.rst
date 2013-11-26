@@ -15,34 +15,33 @@ which is used for writing further scripts and interactive controls.
 Quick Start
 --------------
 
-This is for the very impatient ones at NSLS-II. See :doc:`tutorial`
+This is for the very impatient ones at NSLS-II. See :doc:`tutorial` for more details.
 
-- Remote login the server: *ssh -Y youraccount@lsasd2.ls.bnl.gov*
 - Enter IPython::
      $ ipython -pylab
 
 - Import `aphla`
 
-.. doctest::
+  .. doctest::
     
      >>> import aphla as ap
 
 - Initialize the "NSLS2V2" (virtual accelerator lattice structure)
 
-.. doctest::
+  .. doctest::
 
-     >>> ap.machines.init("nsls2v2")
+     >>> ap.machines.load("nsls2v2")
 
 - Get the orbit
 
-.. doctest::
+  .. doctest::
 
      >>> d = ap.getOrbit()
      >>> x, y, s = ap.getOrbit(spos=True).T
 
 - Get a list of correctors, print the name and strength of one corrector.
 
-.. doctest::
+  .. doctest::
 
      >>> cx = ap.getElements('ch*c19*')
      >>> print cx[0].name, cx[0].x
@@ -50,13 +49,13 @@ This is for the very impatient ones at NSLS-II. See :doc:`tutorial`
 
 - Set the corrector and read the new setting
 
-.. doctest::
+  .. doctest::
 
      >>> cx[0].x = 5e-8
      >>> print "%s %.3e" % (cx[0].name, cx[0].x)
      cxl1g2c19a 5.000e-08
 
 
-.. testcleanup::
+  .. testcleanup::
 
      cx[0].x = 0.0

@@ -3,8 +3,8 @@ import os
 import subprocess
 
 MAJOR = 0
-MINOR = 7
-MICRO = 11
+MINOR = 8
+MICRO = 0
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
@@ -88,7 +88,7 @@ setup(
     #                    'numpy', 'scipy'],
     entry_points = {
         'gui_scripts': [
-            'aporbit = aphla.gui.orbit:main',
+            'mleap = aphla.gui.mleap:main',
             'apbba = aphla.gui.apbba:main',
             'aplauncher = aphla.gui.aplauncher:main',
             'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',

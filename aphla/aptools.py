@@ -26,7 +26,7 @@ __all__ = [ 'calcLifetime',
     'saveImage', 'fitGaussian1', 'fitGaussianImage'
 ]
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 def _zip_element_field(elems, fields, **kwargs):
     """
@@ -36,8 +36,10 @@ def _zip_element_field(elems, fields, **kwargs):
     returns a flat list of (name, field)
     """
     compress = kwargs.get('compress', True)
+    choices  = kwargs.get('choices', [e.name for e in elems])
     ret = []
     for b,f in itertools.product(elems, fields):
+        if b.name not in choices: continue
         if f in b.fields():
             ret.append((b.name, f))
         elif not compress:
@@ -124,8 +126,11 @@ def setLocalBump(bpm, trim, ref, **kwargs):
             machines._lat.name)
 
     # get the matrix and (bpm, field), (trim, field) list as OrmData required
-    bpmrec = _zip_element_field(bpm, ['x', 'y'])
-    trimrec = _zip_element_field(trim, ['x', 'y'])
+    bpmrec = _zip_element_field(bpm, ['x', 'y'],
+                                choices=ormdata.getBpmNames())
+    trimrec = _zip_element_field(trim, ['x', 'y'],
+                                 choices=ormdata.getTrimNames())
+
     m, bpmrec, trimrec = ormdata.getMatrix(bpmrec, trimrec, full=True,
                                            ignore = dead)
 
@@ -146,7 +151,7 @@ def setLocalBump(bpm, trim, ref, **kwargs):
             else:
                 raise RuntimeError("unknow field %s" % field)
 
-        if u1 == 'm': v = v0
+        if u1 == 'm' or u1 == '': v = v0
         elif u1 == 'mm': v = 1000.0*v0
         elif u1 == 'um': v = 1.0e6*v0
         else: raise RuntimeError("unknow unit '%s'" % u1)
@@ -685,7 +690,7 @@ def measOrbitRm(bpm, trim, output, **kwargs):
     seealso :class:`~aphla.orm.Orm`, :func:`~aphla.orm.Orm.measure`
     """
 
-    logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
+    _logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
     orm = Orm(bpm, trim)
     orm.minwait = kwargs.get('minwait', 3)
 
