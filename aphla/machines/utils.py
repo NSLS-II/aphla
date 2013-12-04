@@ -368,14 +368,14 @@ def convChannelFinderToSqlite(url, prefix = '', ignore = []):
     for tag in tags:
         latname = tag[len(tagprefx):]
         if latname in ignore: continue
-        cfa = ap.chanfinder.ChannelFinderAgent()
+        cfa = ChannelFinderAgent()
         cfa.downloadCfs(url, property=[('hostName', '*')], tagName=tag)
-        cfa.splitPropertyValue('elemGroups')
+        #cfa.splitPropertyValue('elemGroups')
         cfa.splitChainedElement('elemName')
         cfa.saveSqlite("%s%s.sqlite" % (prefix, latname))
 
 def convCsvToSqlite(fdb, fcsv):
-    cfa = ap.chanfinder.ChannelFinderAgent()
+    cfa = ChannelFinderAgent()
     cfa.loadCsv(fcsv)
     cfa.saveSqlite(fdb)
 
