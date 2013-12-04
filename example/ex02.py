@@ -23,7 +23,7 @@ if __name__ == '__main__':
     gamma = 3.0e3/.511
     eta = alphac - 1/gamma/gamma
     # orbit at cell 3-6 BPMs
-    bpmobj = ap.getElements('P*C0[3-6]*')
+    bpmobj = ap.getElements('p*c0[3-6]*')
     bpmnames = [b.name for b in bpmobj]
 
     s1 = [b.sb for b in bpmobj]

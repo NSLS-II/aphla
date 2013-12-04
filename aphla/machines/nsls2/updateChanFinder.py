@@ -236,9 +236,16 @@ def appendPropertyPvs(cf, p, owner, v, pvs, sep=";"):
         ch = cf.find(name=pv, property=[(p, '*')])
         if not ch:
             cf.update(property=Property(p, owner, v), channelName=pv)
+        elif len(ch) > 1:
+            raise RuntimeError("more than one result for pv={0}".format(pv))
         else:
-            val0 = ch.getProperties().get(p, [])
-            val = sep.join(sorted(v.split(sep) + val0))
+            vals = set()
+            val0 = ch[0].getProperties().get(p, "")
+            for val in val0.split(sep):
+                vals.add(val)
+            print v, vals
+            vals = set(v.split(sep) + list(vals))
+            val = sep.join(sorted(list(vals)))
             cf.update(property=Property(p, owner, val), channelName=pv)
 
     logging.info("batch append property (%s,%s,%s) for %d pvs" % (p, owner, v, len(pvs)))
@@ -407,7 +414,7 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
         if not line.strip(): continue
         if line.strip().find('#') == 0: continue
 
-        rec = line.strip().split()
+        rec = [v.strip() for v in line.strip().split()]
         if len(rec) <= 2: 
             logging.warning("skiping line %d: %s" % (i, line))
             continue

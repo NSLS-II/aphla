@@ -3,6 +3,10 @@ import sys
 import re
 import sqlite3
 from ..apdata import createLatticePvDb
+from ..chanfinder import ChannelFinderAgent
+
+from channelfinder import ChannelFinderClient
+from channelfinder import Channel, Property, Tag
 
 def _nsls2_filter_element_type_group(elemlst):
     """
@@ -301,4 +305,77 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
 
     conn.close()
 
+
+
+def _saveSqliteDb(cfa, fname, sep=";"):
+    """
+    save cfa data to sqlite db file.
+    
+    the input groups, elemNames like "QH1;QH" has to be separated as list.
+    """
+    uniq, pvs, elems = set(), [], []
+    for i,r in enumerate(cfa.rows):
+        pv,prpt,tags = r
+        if not prpt.get("elemName", None): 
+            raise RuntimeError("no element name defined {0}".format(r))
+        if not prpt.get("elemType", None):
+            raise RuntimeError("no element type defined {0}".format(r))
+            
+        elemname = prpt["elemName"].lower()
+        if elemname in uniq: continue
+        uniq.add(elemname)
+        grps = ";".join(prpt.get("elemGroups", []))
+        elems.append((elemname,
+                      prpt.get("elemIndex", -1),
+                      prpt.get("elemType", None),
+                      prpt.get("elemPosition", None),
+                      prpt.get("elemLength", 0.0),
+                      None,
+                      prpt.get("cell", None),
+                      prpt.get("girder", None),
+                      prpt.get("symmetry", None),
+                      grps))
+    print fname, len(elems)
+    for i,e in enumerate(elems):
+        if i > 5: break
+        print e
+
+    ap.apdata.createLatticePvDb(fname)
+    conn = sqlite3.connect(fname)
+    # save byte string instead of the default unicode
+    conn.text_factory = str
+    c = conn.cursor()
+    c.executemany("""INSERT INTO elements (elemName,elemIndex,elemType,"""
+                  """elemLength,elemPosition,"""
+                  """cell,girder,symmetry,elemGroups)"""
+                  """VALUES (?,?,?,?,?,?,?,?,?)""",
+                  [(name,idx,tp,L,s1,cl,gd,sm,grp) 
+                   for (name, idx, tp, s0, L, s1, cl, gd, sm, grp)
+                   in elems])
+    conn.commit()
+    conn.close()
+
+def convChannelFinderToSqlite(url, prefix = '', ignore = []):
+    """
+    url - channel finder server URL
+    prefix - output DB file name prefix
+    ignore - list of ignored lattice name 
+    """
+    cf = ChannelFinderClient(BaseURL=url)
+    tagprefx = "aphla.sys."
+    tags = [tag.Name for tag in cf.getAllTags() 
+            if tag.Name.startswith(tagprefx)]
+    for tag in tags:
+        latname = tag[len(tagprefx):]
+        if latname in ignore: continue
+        cfa = ap.chanfinder.ChannelFinderAgent()
+        cfa.downloadCfs(url, property=[('hostName', '*')], tagName=tag)
+        cfa.splitPropertyValue('elemGroups')
+        cfa.splitChainedElement('elemName')
+        cfa.saveSqlite("%s%s.sqlite" % (prefix, latname))
+
+def convCsvToSqlite(fdb, fcsv):
+    cfa = ap.chanfinder.ChannelFinderAgent()
+    cfa.loadCsv(fcsv)
+    cfa.saveSqlite(fdb)
 
