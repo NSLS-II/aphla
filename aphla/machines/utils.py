@@ -355,7 +355,7 @@ def _saveSqliteDb(cfa, fname, sep=";"):
     conn.commit()
     conn.close()
 
-def convChannelFinderToSqlite(url, prefix = '', ignore = []):
+def convCfsToSqlite(url, prefix = '', ignore = []):
     """
     url - channel finder server URL
     prefix - output DB file name prefix
