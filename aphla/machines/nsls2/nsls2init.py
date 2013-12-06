@@ -7,7 +7,7 @@ NSLS2 Machine Structure Initialization
 
 from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource,
                 setUnitConversion, createVirtualElements)
-from .. import (OrmData, Twiss)
+from .. import (OrmData, TwissData)
 
 from fnmatch import fnmatch
 import logging
@@ -70,7 +70,7 @@ def init_submachines(machine, submachines, **kwargs):
     data_filename = getResource('sr.hdf5', __name__)
     if data_filename:
         lattice_dict['SR'].ormdata = OrmData(data_filename)
-        lattice_dict['SR']._twiss = Twiss(data_filename)
+        lattice_dict['SR']._twiss = TwissData(data_filename)
         lattice_dict['SR']._twiss.load_hdf5(data_filename)
         _logger.info("using ORM data '%s'" % data_filename)
     else:
@@ -98,6 +98,9 @@ def init_submachines(machine, submachines, **kwargs):
 
     data_filename = getResource('bts_unitconv.hdf5', __name__)
     setUnitConversion(lattice_dict['BTS'], data_filename, "unitconv")
+
+    data_filename = getResource('btd_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['BTD'], data_filename, "unitconv")
     #
     # SR
     lattice_dict['SR'].loop = True

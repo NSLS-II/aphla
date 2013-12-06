@@ -74,6 +74,8 @@ class ChannelFinderAgent(object):
         else:
             #print kwargs
             chs = cf.find(**kwargs)
+        if not chs: return
+
         if keep_prpts is None:
             # use all possible property names
             keep_prpts = [p.Name for p in cf.getAllProperties()]
@@ -307,11 +309,12 @@ class ChannelFinderAgent(object):
         self.source = fname
         #print("Imported:\n", self.rows)
 
-    def saveSqlite(self, fname, tbl = "channels"):
+    def saveSqlite(self, fname):
         """
         export to sqlite table, drop if exists.
         """
         import apdata
+        # create a new empty DB, then update
         apdata.createLatticePvDb(fname, None)
         apdata._updateLatticePvDb(fname, self.rows)
 

@@ -658,13 +658,16 @@ def _updateLatticePvDb(dbfname, cfslist):
     elem_sets, pv_sets = [], []
     for i,rec in enumerate(cfslist):
         pv, prpts, tags = rec
-        ukey = (prpts.get("elemName", ''),)
+        ukey = (prpts.get("elemName", ""),
+                prpts.get("elemType", ""))
         # skip if already in the to-be-inserted list
         if ukey in elem_sets: continue
-        c.execute("""SELECT * from elements where elemName=?""", ukey)
+        c.execute("""SELECT * from elements where elemName=? and elemType=?""",
+                  ukey)
         if len(c.fetchall()) > 0: continue
         elem_sets.append(ukey)
-    c.executemany("""INSERT INTO elements (elemName) VALUES (?)""", elem_sets)
+    c.executemany("""INSERT INTO elements (elemName,elemType) VALUES (?,?)""",
+                  elem_sets)
     # insert or replace pv
     c.executemany("""INSERT OR REPLACE INTO pvs (pv) VALUES (?)""", 
                   [(r[0],) for r in cfslist])
@@ -677,7 +680,7 @@ def _updateLatticePvDb(dbfname, cfslist):
                  ("virtual", 0),
                  # the three unique constraint
                  ("elemName", ''), ("elemType", '')]
-    q_elem_update = ",".join(["%s=?" % v[0] for v in elem_cols[:-3]])
+    q_elem_update = ",".join(["%s=?" % v[0] for v in elem_cols[:-2]])
     pv_cols = [("elemHandle", None), ("elemField", None), 
                ("hostName", ""), ("devName", ""), ("iocName", ""),
                ("hlaHigh", None), ("hlaLow", None), ("hlaValRef", None)]
@@ -686,13 +689,12 @@ def _updateLatticePvDb(dbfname, cfslist):
         pv, prpts, tags = rec
         ukey = [prpts.get(k[0], k[1]) for k in elem_cols] 
         c.execute("""UPDATE elements set """ + q_elem_update +
-                  """ where elemName=?""", ukey)
+                  """ where elemName=? and elemType=?""", ukey)
         ukey = [";".join(tags),] + [prpts.get(k[0], k[1]) for k in pv_cols] + \
-               [prpts.get("elemName", ''), prpts.get("elemType", ''),
-                prpts.get("system", ''), pv]
+               [prpts.get("elemName", ''), prpts.get("elemType", ''), pv]
         c.execute("""UPDATE pvs set tags=?,""" + q_pvs_update +
-                  """,elem_id=(select id from elements where 
-                        elemName=? AND elemType=? AND system=?) where pv=?""",
+                  """,elemName=(select elemName from elements where 
+                        elemName=? AND elemType=?) where pv=?""",
                   ukey)
     msg = "[%s] updated %d records" % (__name__, len(cfslist))
     c.execute("""insert into info(timestamp,name,value)
@@ -701,23 +703,6 @@ def _updateLatticePvDb(dbfname, cfslist):
     conn.close()
 
                          
-def _updateLatticePvDb(dbfname, csv2fname):
-    """
-    update the sqlite3 DB with CSV file
-    """
-    from chanfinder import ChannelFinderAgent
-    cfa = ChannelFinderAgent()
-    cfa.importCsv(csv2fname)
-    _updateLatticePvDb(dbfname, cfa.rows)
-
-    conn = sqlite3.connect(dbfname)
-    c = conn.cursor()
-    msg = "[%s] updated with '%s'" % (__name__, csv2fname)
-    c.execute("""insert into info(timestamp,name,value)
-                 values (datetime('now'), "log", ? )""", (msg,))
-    conn.commit()
-    conn.close()
-
 def createLatticePvDb(dbfname, csv2fname = None):
     """
     create a new sqlite3 DB. remove if same file exists.

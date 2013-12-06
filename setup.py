@@ -6,7 +6,7 @@ MAJOR = 0
 MINOR = 8
 MICRO = 0
 ISRELEASED = True
-VERSION = '%d.%d.%db1' % (MAJOR, MINOR, MICRO)
+VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 def hg_version():
     def _minimal_ext_cmd(cmd):
