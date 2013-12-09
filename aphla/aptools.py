@@ -603,9 +603,9 @@ def saveImage(elemname, filename, **kwargs):
     field = kwargs.get('field', 'image')
     fitgaussian = kwargs.get('fitgaussian', False)
     elem = getElements(elemname)[0]
-    d = elem.get(field)
-    width = kwargs.get('width', elem.get(field + "_nx"))
-    height = kwargs.get('height', elem.get(field + "_ny"))
+    d = elem.get(field, unitsys=None)
+    width = kwargs.get('width', elem.get(field + "_nx", unitsys=None))
+    height = kwargs.get('height', elem.get(field + "_ny", unitsys=None))
     xlim = kwargs.get('xlim', (0, width))
     ylim = kwargs.get('ylim', (0, height))
     d2 = np.reshape(d, (height, width))
@@ -617,9 +617,11 @@ def saveImage(elemname, filename, **kwargs):
         plt.clf()
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.imshow(d2, interpolation="nearest", cmap=plt.cm.bwr)
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
+        im = ax.imshow(d2, interpolation="nearest", cmap=plt.cm.jet,
+                       origin=kwargs.get("origin", "upper"))
+        cb = plt.colorbar(im)
+        #ax.set_xlim(xlim)
+        #ax.set_ylim(ylim)
         if fitgaussian:
             params = fitGaussianImage(d2)
             (height, y, x, width_y, width_x) = params
@@ -629,7 +631,6 @@ def saveImage(elemname, filename, **kwargs):
                         (x, y, width_x, width_y),
                     fontsize=16, horizontalalignment='right',
                     verticalalignment='bottom', transform=ax.transAxes)
-            
         plt.savefig(filename)
 
 
