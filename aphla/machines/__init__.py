@@ -35,10 +35,10 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
 #
 HLA_TAG_PREFIX = 'aphla'
-HLA_TAG_EGET = HLA_TAG_PREFIX + '.eget'
-HLA_TAG_EPUT = HLA_TAG_PREFIX + '.eput'
-HLA_TAG_X    = HLA_TAG_PREFIX + '.x'
-HLA_TAG_Y    = HLA_TAG_PREFIX + '.y'
+#HLA_TAG_EGET = HLA_TAG_PREFIX + '.eget'
+#HLA_TAG_EPUT = HLA_TAG_PREFIX + '.eput'
+#HLA_TAG_X    = HLA_TAG_PREFIX + '.x'
+#HLA_TAG_Y    = HLA_TAG_PREFIX + '.y'
 HLA_TAG_SYS_PREFIX = HLA_TAG_PREFIX + '.sys'
 
 #
@@ -145,7 +145,7 @@ def _findMachinePath(machine):
 
     return None, ""
 
-def load(machine, submachines = "*", **kwargs):
+def load(machine, submachine = "*", **kwargs):
     """
     load submachine lattices in machine.
 
@@ -203,7 +203,7 @@ def load(machine, submachines = "*", **kwargs):
     # print(cfg.sections())
     # for all submachines specified in INI and matches the pattern
     msects = [subm for subm in re.findall(r'\w+', d.get("submachines", ""))
-             if fnmatch.fnmatch(subm, submachines)]
+             if fnmatch.fnmatch(subm, submachine)]
     # print(msect)
     for msect in msects:
         d = dict(cfg.items(msect))
@@ -217,9 +217,10 @@ def load(machine, submachines = "*", **kwargs):
         accsqlite = os.path.join(machdir, accstruct)
         if re.match(r"https?://.*", accstruct, re.I):
             _logger.debug("using CFS '%s' for '%s'" % (accstruct, msect))
-            cfa.downloadCfs(accstruct, property=[('elemName', '*'), 
-                                                 ('iocName', '*')],
-                            tagName=acctag)
+            #cfa.downloadCfs(accstruct, property=[('elemName', '*'), 
+            #                                     ('iocName', '*')],
+            #                tagName=acctag)
+            cfa.downloadCfs(accstruct, property=[('elemName', '*'),], tagName=acctag)
         elif os.path.isfile(accsqlite):
             _logger.debug("using SQlite '%s'" % accsqlite)
             cfa.loadSqlite(accsqlite)
@@ -278,6 +279,7 @@ def load(machine, submachines = "*", **kwargs):
                 len(lat.getElementList('QUAD')),
                 len(lat.getElementList('SEXT')))
         
+    # set the default submachine, if no, use the first one
     lat0 = lat_dict.get(accdefault, None)
     if lat0 is None and len(lat_dict) > 0:
         _logger.debug("default submachine not defined, "
@@ -411,8 +413,9 @@ def findCfaConfig(srcname, machine, submachines):
     elif os.environ.get('HLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         _logger.info(msg)
-        cfa.downloadCfs(HLA_CFS_URL, property=[
-                ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
+        #cfa.downloadCfs(HLA_CFS_URL, property=[
+        #        ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
+        cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     elif resource_exists(__name__, os.path.join(machine, srcname + '.csv')):
         name = resource_filename(__name__, os.path.join(machine, 
                                                         srcname + '.csv'))
@@ -466,6 +469,11 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
         if 'name' not in rec[1]: continue
         #print "PASSED"
         prpt = rec[1]
+        if "hostName" not in prpt:
+            _logger.warn("no 'hostName' for {0}".format(rec))
+        if "iocName" not in prpt:
+            _logger.warn("no 'iocName' for {0}".format(rec))
+
         if 'se' in prpt:
             prpt['sb'] = float(prpt['se']) - float(prpt.get('length', 0))
         name = prpt.get('name', None)

@@ -40,12 +40,14 @@ cfs_pat = {
     ("SR:C*-MG{PS:S*}I:Ps1DCCT1-I", "get", "", "", "SEXT", "b2")]
 }
 
+# hard coded (pentent, cell_list) dict.
 pentent = {}
 for i in range(30):
     pi, pj = divmod(i, 6)
     j = i + 23
     if j > 30: j = j - 30
     pentent.setdefault("P%d" % (pi+1,), []).append("C%02d" % j)
+
 #for k in sorted(pentent.keys()):
 #    print k,pentent[k]
 
@@ -473,7 +475,56 @@ def checkSqliteDb(fdb):
     pass
 
 
+def initCfs(fpv, sep=","):
+    dat = {}
+    for line in open(fpv, 'r').readlines():
+        #pv, hdl, name, idx, fam, fld
+        rec = [v.strip() for v in line.split(sep)]
+        pv, prpt = rec[0], rec[1:]
+        dat.setdefault(pv, [])
+        dat[pv].append(tuple(rec[1:]))
+
+    import conf
+    cfinput = {
+        'BaseURL': cfsurl,
+        'username': conf.username,
+        'password': conf.password
+    }
+    cf = ChannelFinderClient(**cfinput)
+    prpts = [p.Name for p in cf.getAllProperties()]
+    for p in ["elemName", "elemIndex", "elemType", "elemField"]:
+        if p in prpts: continue
+        # property owner is cf-asd
+        logging.info("add new property '%s'" % p)
+        cf.set(property=Property(p, "cf-asd"))
+
+    for pv,prptsets in dat.items():
+        if len(prptsets) == 1:
+            hdl, name, idx, fam, fld = prptsets[0]
+            #cf.update(channel=Channel(pv, "cf-update", properties=[
+            #    Property("elemHandle", "cf-asd", hdl),
+            #    Property("elemName",   "cf-asd", name),
+            #    Property("elemIndex",  "cf-asd", idx),
+            #    Property("elemType",   "cf-asd", fam),
+            #    Property("elemField",  "cf-asd", fld)]))
+            cf.update(property=Property("elemHandle", "cf-asd", hdl),
+                      channelName=pv)
+            cf.update(property=Property("elemName",   "cf-asd", name),
+                      channelName=pv)
+            cf.update(property=Property("elemIndex",  "cf-asd", idx),
+                      channelName=pv)
+            cf.update(property=Property("elemType",   "cf-asd", fam),
+                      channelName=pv)
+            cf.update(property=Property("elemField",  "cf-asd", fld),
+                      channelName=pv)
+            logging.info("Done with %s" % pv)
+
 if __name__ == "__main__":
+    initCfs("sr_pvs_QUAD.txt", "aphla.sys.SR")
+    initCfs("sr_pvs_SKQUAD.txt", "aphla.sys.SR")
+    initCfs("sr_pvs_COR.txt", "aphla.sys.SR")
+    sys.exit(0)
+    
     dbfname = "nsls2_sr.sqlite"
     ap.apdata.createLatticePvDb(dbfname)
 

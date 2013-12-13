@@ -135,6 +135,8 @@ class ElementPropertyTableModel(QAbstractTableModel):
             return QVariant(int(val))
         elif isinstance(val, (list, tuple)):
             return [self._cadata_to_qvariant(v) for v in val]
+        elif isinstance(val, cothread.dbr.ca_array):
+            return [self._cadata_to_qvariant(v) for v in val]
         else:
             raise RuntimeError("Unknow data type: {0} ({1})".format(
                     type(val), val))

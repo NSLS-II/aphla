@@ -210,7 +210,9 @@ def loadUnitConversion(lat, fname):
     _logger.info("loading unit conversion for lattice {0} from "
                  "file {1}".format(lat.name, fname))
     import ConfigParser
-    cfg = ConfigParser.ConfigParser(allow_no_value=False)
+    # python 2.7 only:
+    #cfg = ConfigParser.ConfigParser(allow_no_value=False)
+    cfg = ConfigParser.ConfigParser()
     cfg.readfp(open(fname), 'r')
     for sec in cfg.sections():
         if not cfg.has_option(sec, 'field'):

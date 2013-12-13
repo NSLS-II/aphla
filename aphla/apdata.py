@@ -645,9 +645,17 @@ class TwissData:
         conn.close()
 
 
-def _updateLatticePvDb(dbfname, cfslist):
+def _updateLatticePvDb(dbfname, cfslist, sep=";"):
     """
     update sqlite3 DB with a list of (pv, properties, tags)
+
+    It only updates common columns of DB table and cfslist.
+
+    Constraints:
+
+    - elemName is unique
+    - (pv,elemName,elemField) is unique
+    - elemType can not be NULL
     """
     # elemName, elemType, system is "NOT NULL"
     conn = sqlite3.connect(dbfname)
@@ -661,51 +669,95 @@ def _updateLatticePvDb(dbfname, cfslist):
         ukey = (prpts.get("elemName", ""),
                 prpts.get("elemType", ""))
         # skip if already in the to-be-inserted list
-        if ukey in elem_sets: continue
-        c.execute("""SELECT * from elements where elemName=? and elemType=?""",
-                  ukey)
+        # elemName has to be unique
+        if ukey[0] in [v[0] for v in elem_sets]: continue
+        c.execute("""SELECT * from elements where elemName=?""", (ukey[0],))
+        # no need to insert if exists
         if len(c.fetchall()) > 0: continue
         elem_sets.append(ukey)
+        #new pvs
+        ukey = (pv, prpts.get("elemName", ""), prpts.get("elemField", ""))
+        if ukey in pv_sets: continue
+        pv_sets.append(ukey)
+
     c.executemany("""INSERT INTO elements (elemName,elemType) VALUES (?,?)""",
                   elem_sets)
     # insert or replace pv
-    c.executemany("""INSERT OR REPLACE INTO pvs (pv) VALUES (?)""", 
-                  [(r[0],) for r in cfslist])
+    c.executemany("""INSERT INTO pvs (pv,elemName,elemField) VALUES (?,?,?)""",
+                  pv_sets)
     conn.commit()
-    # the pv and elements are ready to update
-    elem_cols = [("cell", ""), ("elemLength", 0.0),
-                 ("elemPosition", None), ("girder", ""), ("symmetry", ""),
-                 ("elemIndex", None), ("elemGroups", ""), ("k1", None),
-                 ("k2", None), ("angle", None), ("fieldPolar", None),
-                 ("virtual", 0),
-                 # the three unique constraint
-                 ("elemName", ''), ("elemType", '')]
-    q_elem_update = ",".join(["%s=?" % v[0] for v in elem_cols[:-2]])
-    pv_cols = [("elemHandle", None), ("elemField", None), 
-               ("hostName", ""), ("devName", ""), ("iocName", ""),
-               ("hlaHigh", None), ("hlaLow", None), ("hlaValRef", None)]
-    q_pvs_update = ",".join(["%s=?" % v[0] for v in pv_cols])
+
+    c.execute("PRAGMA table_info(elements)")
+    tbl_elements_cols = [v[1] for v in c.fetchall()]
+    for col in tbl_elements_cols:
+        if col in ["elemName"]: continue
+        vals = []
+        for i,rec in enumerate(cfslist):
+            pv, prpts, tags = rec
+            if col not in prpts: continue
+            vals.append((prpts[col], prpts["elemName"]))
+        if len(vals) == 0: continue
+        try:
+            c.executemany("UPDATE elements set %s=? where elemName=?" % col,
+                          vals)
+        except:
+            print "Error at updating {0} {1}".format(col, vals)
+            raise
+
+        conn.commit()
+
+    c.execute("PRAGMA table_info(pvs)")
+    tbl_pvs_cols = [v[1] for v in c.fetchall()]
+    for col in tbl_pvs_cols:
+        if col in ['pv', 'elemName', 'elemField', 'tags']:
+            continue
+        vals = []
+        for i,rec in enumerate(cfslist):
+            pv, prpts, tags = rec
+            if col not in prpts: continue
+            if not prpts.has_key("elemField") or not prpts.has_key("elemName"):
+                print "Incomplete record for pv={0}: {1} {2}".format(
+                    pv, prpts, tags)
+                continue
+            # elemGroups is a list
+            vals.append((prpts[col], pv, prpts["elemName"], prpts["elemField"]))
+
+        if len(vals) == 0: continue
+        c.executemany("""UPDATE pvs set %s=? where pv=? and """
+                      """elemName=? and elemField=?""" % col,
+                      vals)
+        conn.commit()
+
+    # update tags
+    vals = []
     for i,rec in enumerate(cfslist):
         pv, prpts, tags = rec
-        ukey = [prpts.get(k[0], k[1]) for k in elem_cols] 
-        c.execute("""UPDATE elements set """ + q_elem_update +
-                  """ where elemName=? and elemType=?""", ukey)
-        ukey = [";".join(tags),] + [prpts.get(k[0], k[1]) for k in pv_cols] + \
-               [prpts.get("elemName", ''), prpts.get("elemType", ''), pv]
-        c.execute("""UPDATE pvs set tags=?,""" + q_pvs_update +
-                  """,elemName=(select elemName from elements where 
-                        elemName=? AND elemType=?) where pv=?""",
-                  ukey)
+        if not tags: continue
+        if not prpts.has_key("elemField") or not prpts.has_key("elemName"):
+            print "Incomplete record for pv={0}: {1} {2}".format(
+                pv, prpts, tags)
+            continue
+        vals.append((sep.join(sorted(tags)),
+                     pv, prpts["elemName"], prpts["elemField"]))
+    if len(vals) > 0: 
+        c.executemany("""UPDATE pvs set tags=? where pv=? and """
+                      """elemName=? and elemField=?""", vals)
+        conn.commit()
+
     msg = "[%s] updated %d records" % (__name__, len(cfslist))
     c.execute("""insert into info(timestamp,name,value)
                  values (datetime('now'), "log", ? )""", (msg,))
     conn.commit()
     conn.close()
 
-                         
+
 def createLatticePvDb(dbfname, csv2fname = None):
     """
     create a new sqlite3 DB. remove if same file exists.
+
+    - elemName is unique
+    - (pv,elemName,elemField) is unique
+    - elemType can not be NULL
     """
     #if os.path.exists(dbfname): os.remove(dbfname)
     conn = sqlite3.connect(dbfname)
