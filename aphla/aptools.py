@@ -9,8 +9,9 @@ Accelerator Physics Tools module defines some small AP routines.
 from __future__ import print_function
 
 import numpy as np
-import time, datetime, sys
+import time, datetime, sys, os
 import itertools
+import tempfile
 
 from . import machines
 from catools import caRmCorrect 
@@ -23,7 +24,8 @@ import logging
 __all__ = [ 'calcLifetime', 
     'getLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump',
-    'saveImage', 'fitGaussian1', 'fitGaussianImage'
+    'saveImage', 'fitGaussian1', 'fitGaussianImage',
+    'stripView'
 ]
 
 _logger = logging.getLogger(__name__)
@@ -709,4 +711,57 @@ def getSubOrm(bpm, trim, flags = 'XX'):
     #return _orm.getSubMatrix(bpm, trim, flags)
     raise NotImplementedError()
 
+
+def stripView(elempat, field, **kwargs):
+    """
+    open a striptool to view live stream data
+
+    - elempat, element name, name list, object list, family or pattern.
+    - field, element field
+    - handle, optional, "readback" or "setpoint"
+    - pvs, optional, extra list of PVs.
+    """
+    handle = kwargs.get("handle", "readback")
+    pvs = kwargs.get("pvs", [])
+    for e in getElements(elempat):
+        pvs.extend(e.pv(field=field, handle=handle))
+
+    fcfg, fname = tempfile.mkstemp(suffix=".stp", prefix="aphla-", text=True)
+    import os
+    os.write(fcfg, """StripConfig                   1.2
+Strip.Time.Timespan           300
+Strip.Time.NumSamples         7200
+Strip.Time.SampleInterval     1.000000
+Strip.Time.RefreshInterval    1.000000
+Strip.Color.Background        65535     65535     65535     
+Strip.Color.Foreground        0         0         0         
+Strip.Color.Grid              49087     49087     49087     
+Strip.Color.Color1            0         0         65535     
+Strip.Color.Color2            27499     36494     8995      
+Strip.Color.Color3            42405     10794     10794     
+Strip.Color.Color4            24415     40606     41120     
+Strip.Color.Color5            65535     42405     0         
+Strip.Color.Color6            41120     8224      61680     
+Strip.Color.Color7            65535     0         0         
+Strip.Color.Color8            65535     55255     0         
+Strip.Color.Color9            48316     36751     36751     
+Strip.Color.Color10           39578     52685     12850     
+Strip.Option.GridXon          1
+Strip.Option.GridYon          1
+Strip.Option.AxisYcolorStat   1
+Strip.Option.GraphLineWidth   2
+""")
+    for i,pv in enumerate(pvs):
+        os.write(fcfg, "Strip.Curve.%d.Name       %s\n" % (i, pv))
+        #os.write(fcfg, "Strip.Curve.%d.Units      mA\n" % i)
+        #os.write(fcfg, "Strip.Curve.%d.Min      0.0\n" % i)
+        #os.write(fcfg, "Strip.Curve.%d.Max      1.0\n" % i)
+        #os.write(fcfg, "Strip.Curve.%d.Comment    %d\n" % (i, i))
+        os.write(fcfg, "Strip.Curve.%d.Precision  6\n" % i)
+        os.write(fcfg, "Strip.Curve.%d.Scale      0\n" % i)
+        os.write(fcfg, "Strip.Curve.%d.PlotStatus 1\n" % i)
+    os.close(fcfg)
+
+    from subprocess import Popen
+    Popen(["striptool", fname])
 
