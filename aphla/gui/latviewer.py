@@ -10,6 +10,7 @@ list all properties of lattice.
 import cothread
 app = cothread.iqt()
 
+import aphla
 import pvmanager
 
 from PyQt4 import QtGui
@@ -81,7 +82,10 @@ class SnapshotRow(object):
                 for j,vj in enumerate(v):
                     self.diffs[i][j] = vj - self.values[iref][j]
             else:
-                raise RuntimeError("unknown data for diff")
+                raise RuntimeError(
+                    "unknown data for diff {0} {1} {2} {3}\n wf={4}".format(
+                        self.element, self.field, self.pv, self.values,
+                        self.wf))
 
     def _update_rel_diff(self, iref):
         for i,v in enumerate(self.diffs):
@@ -120,6 +124,8 @@ class SnapshotRow(object):
 class SaveSnapshotDialog(QDialog):
     def __init__(self, machs, mach):
         super(SaveSnapshotDialog, self).__init__()
+        self._lat_dict = machs
+        self._cur_mach = mach
         #self.fldGroup = QGroupBox()
         self.lblNameField  = QLabel()
         self.lblStep  = QLabel()
@@ -130,14 +136,15 @@ class SaveSnapshotDialog(QDialog):
                                     QSizePolicy.Fixed)
         self.valMeter.setEnabled(False)
         self.cmbMach = QtGui.QComboBox()
-        for k in machs.keys(): self.cmbMach.addItem(k)
-        if mach:
-            i = self.cmbMach.findText(mach)
+        for k in self._lat_dict.keys():
+            self.cmbMach.addItem(k)
+        if self._cur_mach:
+            i = self.cmbMach.findText(self._cur_mach)
             self.cmbMach.setCurrentIndex(i)
 
         self.cmbLat = QtGui.QComboBox()
         self.cmbLat.addItem("*")
-        for k in machs.get(str(self.cmbMach.currentText()), {}).keys():
+        for k in self._lat_dict.get(str(self.cmbMach.currentText()), {}).keys():
             self.cmbLat.addItem(k)
         self.cmbLat.setCurrentIndex(0)
 
@@ -160,6 +167,22 @@ class SaveSnapshotDialog(QDialog):
         vbox2.addWidget(self.tblPvs)
         vbox2.addWidget(grpStat)
         self.setLayout(vbox2)
+        self.update_pvlist()
+
+    def update_pvlist(self):
+        self.tblPvs.setColumnCount(2)
+        for machname,latdict in self._lat_dict.items():
+            if machname != str(self.cmbMach.currentText()): continue
+            for latname,lat in latdict.items():
+                if str(self.cmbLat.currentText()) not in ["*", latname]:
+                    continue
+                pvs = aphla.lattice.saveArchivePvs(lat)
+                n0 = self.tblPvs.rowCount()
+                self.tblPvs.setRowCount( n0 + len(pvs))
+                for i in range(n0, n0 + len(pvs)):
+                    self.tblPvs.setItem(
+                        i,0,
+                        QtGui.QTableWidgetItem(str(pvs[i-n0][0])))
 
 
 class LatSnapshotTableModel(QAbstractTableModel):
@@ -737,6 +760,23 @@ class LatSnapshotView(QTableView):
         QTableView.__init__(self, parent)
         #self.update_count = 0
         #self.timerId = self.startTimer(2000)
+        self.headers = self.horizontalHeader()
+        self.headers.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.headers.customContextMenuRequested.connect(self.show_header)
+        self.headers.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+
+    def show_header(self, position):
+        print "Position", position, self.headers.logicalIndexAt(position)
+        for i in range(self.headers.count()):
+            print self.headers.headerData(i, Qt.Horizontal)
+        cmenu = QMenu()
+        #c = QApplication.clipboard()
+
+        #    cmenu.addAction("&Copy", 
+        #                    partial(c.setText, d.toString()), "CTRL+C")
+        #    cmenu.addAction("Copy Column", partial(self.copy_pvs, c.setText))
+        #cmenu.exec_(e.globalPos())
+
 
     def contextMenuEvent(self, e):
         mdl = self.model()
@@ -837,12 +877,14 @@ class LatSnapshotMain(QDialog):
         tblGrpBox = QtGui.QGroupBox("Lattice Data")
         #self.cbxLive = QCheckBox("Live")
         #self.cbxLive.setChecked(True)
-        self.cbxHidePv = QCheckBox("Hide PV")
-        self.cbxHideDiff = QCheckBox("Hide Difference")
+        self.cbxHidePv        = QCheckBox("Hide PV")
+        self.cbxHideReadback  = QCheckBox("Hide Readback")
+        self.cbxHideDiff      = QCheckBox("Hide Difference")
         self.cbxHideTimeStamp = QCheckBox("Hide timestamp")
         vbox1 = QVBoxLayout()
         #vbox1.addWidget(self.cbxLive)
         vbox1.addWidget(self.cbxHidePv)
+        vbox1.addWidget(self.cbxHideReadback)
         vbox1.addWidget(self.cbxHideDiff)
         vbox1.addWidget(self.cbxHideTimeStamp)
         vbox1.addStretch()
@@ -874,11 +916,11 @@ class LatSnapshotMain(QDialog):
 
         vbox = QVBoxLayout()
 
+        vbox.addWidget(tblFltBox, 0.0)
         vbox.addWidget(self.extraPlot, 10.0)
-        vbox.addWidget(tblFltBox)
-        vbox.addWidget(tblGrpBox)
+        vbox.addWidget(tblGrpBox, 0.0)
         vbox.addStretch()
-        vbox.addLayout(gbox1)
+        vbox.addLayout(gbox1, 0.0)
 
         self.model = LatSnapshotTableModel()
         #self.proxymodel = QtGui.QSortFilterProxyModel()
@@ -950,7 +992,7 @@ class LatSnapshotMain(QDialog):
         self.connect(self.btnPut, SIGNAL("pressed()"), self._dead_button)
         self.connect(self.btnRamp, SIGNAL("pressed()"), self._dead_button)
 
-        self.setWindowTitle("Element Editor")
+        self.setWindowTitle("Snapshot Tool")
         self.noTableUpdate = True
         #self.cbxHidePv.setChecked(True)
 

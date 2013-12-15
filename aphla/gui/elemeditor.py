@@ -127,7 +127,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def _cadata_to_qvariant(self, val):
         if val is None:
             return QVariant(QString("Disconnected"))
-        elif isinstance(val, float):
+        elif isinstance(val, (float, np.float32)):
             return QVariant(float(val))
         elif isinstance(val, str):
             return QVariant(QString(val))
