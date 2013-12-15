@@ -7,7 +7,7 @@ Response Matrix
 :author: Lingyun Yang
 :license:
 
-:class:`~hla.orm.Orm` is an Orbit Response Matrix (ORM) 
+:class:`~hla.respmat.OrbitRespMat` is an Orbit Response Matrix (ORM) 
 
 
 """
@@ -16,7 +16,7 @@ import sys, time
 import numpy as np
 
 #import matplotlib.pylab as plt
-from hlalib import getElements, getPvList, waitChanged, eget
+from hlalib import getElements, getPvList, waitChanged, getTunes, eget
 from catools import caget, caput, caputwait, Timedout
 from apdata import OrmData
 import itertools
@@ -112,7 +112,9 @@ class RmCol:
         self.m = p[0,:] # the slope
         self._c = p[1,:] # the constant 
 
-class Orm:
+
+
+class OrbitRespMat:
     """
     Orbit Response Matrix
     """
@@ -125,7 +127,7 @@ class Orm:
 
         .. highlight:: python
         
-          orm = Orm(['BPM1', 'BPM2'], ['TRIM1', 'TRIM2'])
+          orm = OrbitRespMat(['BPM1', 'BPM2'], ['TRIM1', 'TRIM2'])
         
         """
         # points for trim setting when calc dx/dkick
@@ -540,4 +542,42 @@ class Orm:
              np.sum(self._mask), len(self.trim)*len(self.bpm))
         return s
 
+
+#
+def measTuneRespMat(quads, **kwargs):
+    """
+    Measure the Tune Response Matrix, coupled terms or not.
+
+    :param output:
+    :param verbose:
+    :param dkick:
+    """
+    output  = kwargs.get("output", "tunerm.hdf5")
+    verbose = kwargs.get("verbose", 1)
+    maxdk   = kwargs.get("maxdk", 1e-2)
+    ctrlflds = kwargs.get("quadfield", 'b1')
+    delay   = kwargs.get("delay", 3)
+
+    t_start = time.time()
+    for i,q in enumerate(getElements(quads)):
+        if ctrlflds not in q.fields(): continue
+        b1 = q.b1
+        b1l = np.linspace(-maxdk, maxdk, 4)
+        tunes = np.zeros((len(b1l), 2), 'd')
+        nux0, nuy0 = getTunes()
+        for i,db1 in enumerate(b1l):
+            q.b1 = b1 + db1
+            time.sleep(delay)
+            nux, nuy = getTunes()
+            tunes[i,:] = (nux - nux0, nuy - nuy0)
+        
+        q.b1 = b1
+        for i,plane in enumerate(["x", "y"]):
+            # p is in nature order
+            p, residuals, rank, singular_values, rcond = np.polyfit(
+                b1l, tunes[:,i], 1, full=True)
+            print q.name, q.b1, plane, tunes[0,i], tunes[-1,i], p[0], p[1]
+
+    t_end = time.time()
+    print "-- Time cost: %.2f min" % ((t_end - t_start)/60.0)
 

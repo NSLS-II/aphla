@@ -22,7 +22,7 @@ from aporbitdata import ApVirtualElemData, ManagedPvData
 from aporbitphy import *
 from elemeditor import *
 from pvmanager import CaDataMonitor
-from latviewer import LatSnapshotMain
+from latviewer import SaveSnapshotDialog, LatSnapshotMain
 
 import logging
 import os, sys
@@ -63,6 +63,8 @@ class OrbitPlotMainWindow(QMainWindow):
     """
     def __init__(self, parent = None, machines=[], **kwargs):
         QMainWindow.__init__(self, parent)
+        self.iqtApp = kwargs.get("iqt", None)
+
         self.setIconSize(QSize(32, 32))
         self.error_bar = True
 
@@ -101,7 +103,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         for msg in kwargs.get("infos", []):
             self.logger.info(msg)
-        # dict of (machine, (lattice dict, default_lat))
+        # dict of (machine, (lattice dict, default_lat, pvm))
         self._mach = dict([(v[0], (v[1],v[2],v[3])) for v in machines])
         for m,(lats,lat0,pvm) in self._mach.items():
             self.logger.info("machine '%s' initialized: [%s]" % (
@@ -124,7 +126,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(self.mdiarea, SIGNAL("subWindowActivated(QMdiSubWindow)"),
                      self.updateMachineLatticeNames)
         self.mdiarea.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.physics = ApOrbitPhysics(mdiarea = self.mdiarea)
+        self.physics = ApOrbitPhysics(self.mdiarea, iqt=self.iqtApp)
         self.live_orbit = True
 
         self.setCentralWidget(self.mdiarea)
@@ -218,8 +220,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.openMenu.addAction("New ...", self.openNewPlot)
 
         self.openMenu.addSeparator()
-        self.openMenu.addAction("Save Lattice ...", self.saveLatSnapshot)
-        self.openMenu.addAction("Save Machine ...", self.saveMachSnapshot)
+        self.openMenu.addAction("Save Lattice ...", self.saveSnapshot)
 
         fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
         fileQuitAction.setShortcut("Ctrl+Q")
@@ -541,6 +542,12 @@ class OrbitPlotMainWindow(QMainWindow):
             return dpath
         return False
 
+    def saveSnapshot(self):
+        latdict = dict([(k,v[0]) for k,v in self._mach.items()])
+        mach, lat = self._current_mach_lat()
+        snapdlg = SaveSnapshotDialog(latdict, mach)
+        snapdlg.exec_()
+
     def saveLatSnapshot(self):
         mach, lat = self._current_mach_lat()
         dpath = self._prepare_parent_dirs(mach)
@@ -583,7 +590,9 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def openSnapshot(self):
         #self.logger.info("loading snapshot?")
-        lv = LatSnapshotMain(self)
+        latdict = dict([(k,v[0]) for k,v in self._mach.items()])
+        mach, lat = self._current_mach_lat()
+        lv = LatSnapshotMain(self, latdict, mach)
         lv.setWindowFlags(Qt.Window)
         #self.logger.info("initialized")
         #lv.loadLatSnapshotH5()
@@ -933,7 +942,7 @@ def main(par=None):
                        Qt.AlignRight | Qt.AlignBottom)
     app.processEvents()
     
-    mwin = OrbitPlotMainWindow(machines=machs, infos=infos)
+    mwin = OrbitPlotMainWindow(machines=machs, infos=infos, iqt=app)
     splash.showMessage("Window created", Qt.AlignRight | Qt.AlignBottom)
     #demo = QtGui.QMainWindow()
     #demo.raise_()

@@ -21,8 +21,9 @@ _logger = logging.getLogger(__name__)
 
 
 class ApOrbitPhysics:
-    def __init__(self, mdiarea):
+    def __init__(self, mdiarea, **kwargs):
         self.mdiarea = mdiarea
+        self.iqtApp = kwargs.get("iqt", None)
         self.deadelems = set()
         self.corbitdlg = None # orbit correction dlg
         self.bbadlg = None

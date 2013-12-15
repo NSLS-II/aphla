@@ -663,6 +663,8 @@ def getTunes(source='machine'):
     if source == 'machine':
         # return only the first matched element
         nu = getElements('tune')
+        if not nu:
+            raise RuntimeError("can not find element 'tune'") 
         return nu[0].x, nu[0].y
     elif source == 'database':
         return machines._lat.getTunes()

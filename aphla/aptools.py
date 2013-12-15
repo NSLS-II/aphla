@@ -18,7 +18,7 @@ from catools import caRmCorrect
 from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
     getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
     getLocations)
-from orm import Orm
+from respmat import OrbitRespMat
 import logging
 
 __all__ = [ 'calcLifetime', 
@@ -670,6 +670,11 @@ def _checkOrbitRmData(od):
         
     return vbpm, vtrim
 
+def measTuneRm(quad, output, **kwargs):
+    """
+    measure the tune response matrix
+    """
+    
 def measChromRm(sextlst):
     """
     measure chromaticity response matrix for sextupoles
@@ -690,11 +695,12 @@ def measOrbitRm(bpm, trim, output, **kwargs):
     :param str output: output filename
     :param float minwait: waiting seconds before each orbit measurement.
 
-    seealso :class:`~aphla.orm.Orm`, :func:`~aphla.orm.Orm.measure`
+    seealso :class:`~aphla.respmat.OrbitRespMat`, 
+    :func:`~aphla.respmat.OrbitRespMat.measure`
     """
 
     _logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
-    orm = Orm(bpm, trim)
+    orm = OrbitRespMat(bpm, trim)
     orm.minwait = kwargs.get('minwait', 3)
 
     orm.measure(output = output, **kwargs)

@@ -330,7 +330,14 @@ def caRmCorrect(resp, kker, m, **kwarg):
     else:
         return (0, None)
 
-def save_lat_epics(fname, lat, group = None, mode='a'):
+def save_lat_epics(fname, pvs, **kwargs):
+
+    group  = kwargs.get("group", None)
+    mode   = kwargs.get("mode", 'a')
+    ignore = kwargs.get("ignore", [])
+    timeout = kwargs.get("timeout", 10)
+    extrapvs = kwargs.get("extrapvs", [])
+
     import h5py
     h5f = h5py.File(fname, mode)
     if not group: grp = h5f.create_group(lat.name)
@@ -338,17 +345,11 @@ def save_lat_epics(fname, lat, group = None, mode='a'):
 
     # get the pv list
     datnames = []
-    for e in lat.getElementList('*', virtual=False):
-        print e
-        for k in e.fields():
-            for hdl,tag in [('readback', 0), ('setpoint', 1)]:
-                pvs = [s.encode("ascii") for s in e.pv(field=k, handle=hdl)]
-                if not pvs: continue
-                for pv in pvs:
-                    datnames.append((e.name, k, tag, pv))
+    for pv, name, fam, fld, rw in pvs:
+        datnames.append((name, fld, rw, pv))
     #print datnames
-    allpvs = [v[3] for v in datnames]
-    alldat = caget(allpvs, format=FORMAT_TIME)
+    allpvs = [v[3] for v in datnames] + extrapvs
+    alldat = caget(allpvs, format=FORMAT_TIME, timeout=timeout)
     scalars, dead = [], []
     sz_name, sz_fld, sz_pv = 0, 0, 0
     for i,dat in enumerate(alldat):

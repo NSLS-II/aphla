@@ -57,6 +57,7 @@ class Lattice:
         self.ormdata = None
         self.loop = True
         self.Ek = None
+        self.arpvs = None
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -834,4 +835,24 @@ def _parseElementName(name):
 
 
     
-    
+def saveArchivePvs(lat, **kwargs):
+    """
+    generate file for archiving lattice
+    """
+    fname = kwargs.get("output", None)
+
+    pvs = []
+    for e in lat.getElementList("*", virtual=False):
+        for k in e.fields():
+            for hdl,tag in [('readback', 0), ('setpoint', 1)]:
+                for pv in e.pv(field=k, handle=hdl):
+                    pvs.append((pv, e.name, e.family, k, tag))
+
+    if fname is None: return pvs
+
+    f = open(fname, "w")
+    for r in pvs:
+        pv, name, fam, fld, rw = r
+        f.write("%s,%s,%s,%s,%d\n" % (pv, name, fam, fld, rw))
+    f.close()
+

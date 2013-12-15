@@ -240,6 +240,7 @@ def load(machine, submachine = "*", **kwargs):
         lat.se = d.get("s_end", 0.0)
         lat.loop = bool(d.get("loop", True))
         lat.machine = machname
+        lat.arpvs = d.get("archive_pvs", None)
 
         uconvfile = d.get("unit_conversion", None)
         if uconvfile is not None: 

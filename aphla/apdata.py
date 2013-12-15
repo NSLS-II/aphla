@@ -443,7 +443,6 @@ class OrmData:
         return m, brec, trec
             
 
-
 class TwissData:
     """Twiss stores a twiss table.
 
@@ -801,6 +800,7 @@ def createLatticePvDb(dbfname, csv2fname = None):
                   tags       TEXT,
                   hlaHigh   REAL,
                   hlaLow    REAL,
+                  hlaStep   REAL,
                   hlaValRef REAL,
                   UNIQUE (pv,elemName,elemField) ON CONFLICT REPLACE,
                   FOREIGN KEY(elemName) REFERENCES elements(elemName))""")
@@ -825,6 +825,6 @@ def saveSnapshotH5(fname, dscalar, dvector):
     pass
 
 
-if __name__ == "__main__":
-    createLatticePvDb('test.sqlite', '/home/lyyang/devel/nsls2-hla/aphla/machines/nsls2/BR-20130123-Diag.txt')
-    updateLatticePvDb('test.sqlite', '/home/lyyang/devel/nsls2-hla/aphla/machines/nsls2/BR-20130123-Diag.txt')
+#if __name__ == "__main__":
+#    createLatticePvDb('test.sqlite', '/home/lyyang/devel/nsls2-hla/aphla/machines/nsls2/BR-20130123-Diag.txt')
+#    updateLatticePvDb('test.sqlite', '/home/lyyang/devel/nsls2-hla/aphla/machines/nsls2/BR-20130123-Diag.txt')
