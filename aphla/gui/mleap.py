@@ -22,7 +22,7 @@ from aporbitdata import ApVirtualElemData, ManagedPvData
 from aporbitphy import *
 from elemeditor import *
 from pvmanager import CaDataMonitor
-from latviewer import SaveSnapshotDialog, LatSnapshotMain
+from latviewer import LatSnapshotMain
 
 import logging
 import os, sys
@@ -523,25 +523,6 @@ class OrbitPlotMainWindow(QMainWindow):
         #    self.elemeditor.setEnabled(False)
         pass
 
-    def _prepare_parent_dirs(self, mach=""):
-        dt = datetime.datetime.now()
-        dpath = os.path.join(os.environ.get("HLA_DATA_DIR", ""),
-                             mach, dt.strftime("%Y_%m"))
-        if os.path.exists(dpath): return dpath
-
-        r = QMessageBox.question(
-            self, "Create directories",
-            "The default directories do not exist<br>"
-            "%s<br>"
-            "Create them ?" % dpath,
-            QMessageBox.Yes | QMessageBox.No)
-        if r == QMessageBox.Yes: 
-            qd = QtCore.QDir()
-            qd.mkpath(dpath)
-            self.logger.info("created '%s'" % dpath)
-            return dpath
-        return False
-
     def saveSnapshot(self):
         latdict = dict([(k,v[0]) for k,v in self._mach.items()])
         mach, lat = self._current_mach_lat()
@@ -592,7 +573,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.logger.info("loading snapshot?")
         latdict = dict([(k,v[0]) for k,v in self._mach.items()])
         mach, lat = self._current_mach_lat()
-        lv = LatSnapshotMain(self, latdict, mach)
+        lv = LatSnapshotMain(self, latdict, mach, self.logger)
         lv.setWindowFlags(Qt.Window)
         #self.logger.info("initialized")
         #lv.loadLatSnapshotH5()
