@@ -128,21 +128,24 @@ def load_v1(machine, submachines = "*", **kwargs):
         
 def _findMachinePath(machine):
     # if machine is an abs path
+    _logger.debug("trying abs path '%s'" % machine)
     if os.path.isabs(machine) and os.path.isdir(machine):
         mname = os.path.basename(os.path.realpath(machine))
         return machine, mname
     # try "machine" in HLA_CONFIG_DIR and ~/.hla/ (default)
+    _logger.debug("trying path '%s' '%s'" % (HLA_CONFIG_DIR, machine))
     home_machine = os.path.join(HLA_CONFIG_DIR, machine)
     if os.path.isdir(home_machine):
         mname = os.path.basename(os.path.realpath(machine))
         return home_machine, mname
     # try the package
     pkg_machine = resource_filename(__name__, machine)
-    _logger.info("trying '%s'" % pkg_machine)
+    _logger.info("trying system dir '%s'" % pkg_machine)
     if os.path.isdir(pkg_machine):
         mname = os.path.basename(os.path.realpath(pkg_machine))
         return pkg_machine, mname
 
+    _logger.warn("can not find machine dir")
     return None, ""
 
 def load(machine, submachine = "*", **kwargs):
