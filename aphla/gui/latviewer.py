@@ -8,7 +8,8 @@ list all properties of lattice.
 """
 
 import cothread
-app = cothread.iqt()
+if __name__ == "__main__":
+    app = cothread.iqt()
 
 import aphla
 import pvmanager
@@ -26,6 +27,7 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
         QTabWidget, QCheckBox, QMessageBox)
 import PyQt4.Qwt5 as Qwt
 from aporbitplot import ApPlot
+from pvmanager import CaDataMonitor
 #import traceback
 import collections
 import numpy as np
@@ -125,184 +127,11 @@ class SnapshotRow(object):
         if mode == 1:
             self._update_rel_diff(iref)
     
-class SaveSnapshotWidget(QWidget):
-    def __init__(self, parent, machs, mach, logger):
-        super(SaveSnapshotWidget, self).__init__(parent)
-        self._lat_dict = machs
-        self._cur_mach = mach
-        self._logger = logger
-        self._pvlst = {}
-        #self.fldGroup = QGroupBox()
-        self.lblNameField  = QLabel()
-        self.lblStep  = QLabel()
-        self.lblRange = QLabel()
-        self.valMeter = Qwt.QwtThermo()
-        self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
-        self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding, 
-                                    QSizePolicy.Fixed)
-        self.valMeter.setEnabled(False)
-        self.cmbMach = QtGui.QComboBox()
-        for k in self._lat_dict.keys():
-            self.cmbMach.addItem(k)
-        if self._cur_mach:
-            i = self.cmbMach.findText(self._cur_mach)
-            self.cmbMach.setCurrentIndex(i)
-
-        self.cmbLat = QtGui.QComboBox()
-        self.cmbLat.addItem("*")
-        for k in self._lat_dict.get(str(self.cmbMach.currentText()), {}).keys():
-            self.cmbLat.addItem(k)
-        self.cmbLat.setCurrentIndex(0)
-
-        self.btnBrowsePv = QtGui.QPushButton("Browse...")
-        gdbox = QtGui.QGridLayout()
-        for i,(lbl,wid) in enumerate([("Machine:", self.cmbMach),
-                                      ("Lattice:", self.cmbLat),
-                                      ("Extra PVs:", self.btnBrowsePv)]):
-            hbox = QtGui.QHBoxLayout()
-            hbox.addWidget(QLabel(lbl))
-            hbox.addWidget(wid)
-            hbox.addStretch()
-            gdbox.addLayout(hbox, 0, i)
-
-        self.tblPvs = QtGui.QTableWidget()
-
-        vbox2 = QtGui.QVBoxLayout()
-        vbox2.addLayout(gdbox)
-        vbox2.addWidget(self.tblPvs)
-
-        hbox2 = QtGui.QHBoxLayout()
-        self.btnSave = QtGui.QPushButton("Save...")
-        hbox2.addStretch()
-        hbox2.addWidget(self.btnSave)
-        vbox2.addLayout(hbox2)
-
-        self.setLayout(vbox2)
-
-        self.connect(self.cmbMach, SIGNAL("currentIndexChanged(QString)"),
-                     self.update_latlist)
-        self.connect(self.cmbLat, SIGNAL("currentIndexChanged(QString)"),
-                     self.update_pvlist)
-        self.connect(self.btnSave, SIGNAL("clicked()"), self.saveSnapshot)
-
-        self.update_pvlist()
-        self.setMinimumWidth(600)
-
-    def _prepare_parent_dirs(self, mach=""):
-        dt = datetime.now()
-        dpath = os.path.join(os.environ.get("HLA_DATA_DIR", ""),
-                             mach, dt.strftime("%Y_%m"))
-        if os.path.exists(dpath): return dpath
-
-        r = QtGui.QMessageBox.question(
-            self, "Create directories",
-            "The default directories do not exist<br>"
-            "%s<br>"
-            "Create them ?" % dpath,
-            QtGui.QMessageBox.Yes | QMessageBox.No)
-        if r == QMessageBox.Yes: 
-            qd = QtCore.QDir()
-            qd.mkpath(dpath)
-            self._logger.info("created '%s'" % dpath)
-            return dpath
-        return False
-
-    def update_latlist(self, mach):
-        self.cmbLat.clear()
-        self.cmbLat.addItem("*")
-        for latname in self._lat_dict.get(mach, {}).keys():
-            self.cmbLat.addItem(latname)
-        self.update_pvlist()
-
-    def update_pvtable(self):
-        self.tblPvs.clear()
-        self.tblPvs.setColumnCount(8)
-        npvs = sum([len(pvs) for k,pvs in self._pvlst.items()])
-        self.tblPvs.setRowCount(npvs)
-        stat = {}
-        for lat,pvlst in self._pvlst.items():
-            for i,pvr in enumerate(pvlst):
-                pv, name, fam, fld, rw = pvr
-                self.tblPvs.setItem(i,0, QtGui.QTableWidgetItem(pv))
-                self.tblPvs.setItem(i,2, QtGui.QTableWidgetItem(name))
-                self.tblPvs.setItem(i,3, QtGui.QTableWidgetItem(fam))
-                self.tblPvs.setItem(i,4, QtGui.QTableWidgetItem(fld))
-                self.tblPvs.setItem(i,5, QtGui.QTableWidgetItem(lat))
-                self.tblPvs.setItem(i,6, QtGui.QTableWidgetItem(rw))
-                stat.setdefault(fam, 0)
-                stat[fam] += 1
-        self.tblPvs.resizeColumnToContents(0)
-        s = ", ".join(["%s: %d" % (k,v) for k,v in stat.items()])
-        if self._logger: self._logger.info("archived: %s" % s)
-
-    def update_pvlist(self):
-        machname = str(self.cmbMach.currentText())
-        self._pvlst = {}
-        for latname,lat in self._lat_dict[machname].items():
-            if str(self.cmbLat.currentText()) not in ["*", latname]:
-                continue
-            pvs = aphla.lattice.saveArchivePvs(lat)
-            self._pvlst[latname] = pvs
-        self.update_pvtable()
-
-    def saveSnapshot(self):
-        mach = str(self.cmbMach.currentText())
-        dpath = self._prepare_parent_dirs(mach)
-        if not dpath:
-            QMessageBox.warning(self, "Abort", "Aborted")
-            return
-        dt = datetime.now()
-        fname_pref = os.path.join(dpath, dt.strftime("snapshot_%d_%H%M%S_"))
-        fname = fname_pref + mach + ".hdf5"
-        if self.cmbLat.currentText() != "*":
-            fname = fname_pref + str(self.cmbLat.currentText()) + ".hdf5"
-        print fname
-
-        fileName = QtGui.QFileDialog.getSaveFileName(
-            self, "Save Lattice Snapshot Data",
-            QString(fname),
-            "Data Files (*.h5 *.hdf5);;All Files(*)")
-        fileName = str(fileName)
-        if not fileName: return
-        idx0 = 0
-        for latname,allpvr in self._pvlst.items():
-            pvs = [pvr[0] for pvr in allpvr]
-            dat = aphla.catools.readPvs(pvs)
-            for j,d in enumerate(dat):
-                i = j + idx0
-                if d is None:
-                    val, dt = "", ""
-                    self.tblPvs.setItem(i,1, QtGui.QTableWidgetItem(val))
-                    self.tblPvs.setItem(i,7, QtGui.QTableWidgetItem(dt))
-                    self.tblPvs.item(i,0).setBackground(Qt.red)
-                    self.tblPvs.item(i,1).setBackground(Qt.red)
-                else:
-                    val, dt = "{0}".format(d[0]), datetime.fromtimestamp(d[2])
-                    if d[1] is not None and d[1] > 2:
-                        val = "[{0} ...]".format(d[0][0])
-                    self.tblPvs.setItem(i,1, QtGui.QTableWidgetItem(val))
-                    self.tblPvs.setItem(i,7, QtGui.QTableWidgetItem(str(dt)))
-                    #self.tblPvs.item(i,1).setBackground(Qt.green)
-                    #self.tblPvs.item(i,1).setBackground(Qt.green)
-            vals = [d[0] if d is not None else None for d in dat]
-            size = [d[1] if d is not None else None for d in dat]
-            tmstamp = [d[2] if d is not None else None for d in dat]
-            elemnames, fams, flds, rbsp = zip(*allpvr)[1:]
-            aphla.lattice.saveSnapshot(fileName, latname, 
-                                       pvs, vals, size, tmstamp, rbsp,
-                                       elemnames, flds, mode='w')
-            self._logger.info("snapshot '%s' created: '%s'" % (
-                    latname, fileName))
-            idx0 += len(pvs)
-
-        self.tblPvs.setVisible(False)
-        self.tblPvs.resizeColumnsToContents()
-        self.tblPvs.setVisible(True)
-
 class LatSnapshotTableModel(QAbstractTableModel):
     def __init__(self):
         super(LatSnapshotTableModel, self).__init__()
-        self._cadata = pvmanager.CaDataMonitor([])
+        #self._cadata = pvmanager.CaDataMonitor([])
+        self._cadata = pvmanager.CaDataGetter([])
         self._rows = []
         self._mask   = []
         self.dstitle = ["Last Shot"]
@@ -1253,12 +1082,16 @@ class SnapshotViewerWidget(QWidget):
     def loadSnapshotH5(self, fnames = None):
         #st = self.cbxLive.checkState()
         #self.cbxLive.setCheckState(Qt.Unchecked)
+        fnames = ['/Users/lyyang/devel/nsls2-hla/nsls2v2/2013_12/Untitled.h5']
         for fname in self.model.loadSnapshotH5(fnames):
             self.cmbRefDs.addItem(str(fname))
+
         #self.tableview.resizeColumnsToContents()
-        self.tableview.resizeColumnToContents(C_ELEMENT)
-        self.tableview.resizeColumnToContents(C_FIELD)
-        self.tableview.resizeColumnToContents(C_RW)
+        #self.tableview.setVisible(False)
+        #self.tableview.resizeColumnToContents(C_ELEMENT)
+        #self.tableview.resizeColumnToContents(C_FIELD)
+        #self.tableview.resizeColumnToContents(C_RW)
+        #self.tableview.setVisible(True)
         #self.cbxLive.setCheckState(st)
 
     def refreshTable(self, txt = None):
@@ -1398,6 +1231,181 @@ class SnapshotViewerWidget(QWidget):
         self.se = vmax
         #self.refreshTable()
 
+class SaveSnapshotWidget(QWidget):
+    def __init__(self, parent, machs, mach, logger):
+        super(SaveSnapshotWidget, self).__init__(parent)
+        self._lat_dict = machs
+        self._cur_mach = mach
+        self._logger = logger
+        self._pvlst = {}
+        #self.fldGroup = QGroupBox()
+        self.lblNameField  = QLabel()
+        self.lblStep  = QLabel()
+        self.lblRange = QLabel()
+        self.valMeter = Qwt.QwtThermo()
+        self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
+        self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding, 
+                                    QSizePolicy.Fixed)
+        self.valMeter.setEnabled(False)
+        self.cmbMach = QtGui.QComboBox()
+        for k in self._lat_dict.keys():
+            self.cmbMach.addItem(k)
+        if self._cur_mach:
+            i = self.cmbMach.findText(self._cur_mach)
+            self.cmbMach.setCurrentIndex(i)
+
+        self.cmbLat = QtGui.QComboBox()
+        self.cmbLat.addItem("*")
+        for k in self._lat_dict.get(str(self.cmbMach.currentText()), {}).keys():
+            self.cmbLat.addItem(k)
+        self.cmbLat.setCurrentIndex(0)
+
+        self.btnBrowsePv = QtGui.QPushButton("Browse...")
+        gdbox = QtGui.QGridLayout()
+        for i,(lbl,wid) in enumerate([("Machine:", self.cmbMach),
+                                      ("Lattice:", self.cmbLat),
+                                      ("Extra PVs:", self.btnBrowsePv)]):
+            hbox = QtGui.QHBoxLayout()
+            hbox.addWidget(QLabel(lbl))
+            hbox.addWidget(wid)
+            hbox.addStretch()
+            gdbox.addLayout(hbox, 0, i)
+
+        self.tblPvs = QtGui.QTableWidget()
+
+        vbox2 = QtGui.QVBoxLayout()
+        vbox2.addLayout(gdbox)
+        vbox2.addWidget(self.tblPvs)
+
+        hbox2 = QtGui.QHBoxLayout()
+        self.btnSave = QtGui.QPushButton("Save...")
+        hbox2.addStretch()
+        hbox2.addWidget(self.btnSave)
+        vbox2.addLayout(hbox2)
+
+        self.setLayout(vbox2)
+
+        self.connect(self.cmbMach, SIGNAL("currentIndexChanged(QString)"),
+                     self.update_latlist)
+        self.connect(self.cmbLat, SIGNAL("currentIndexChanged(QString)"),
+                     self.update_pvlist)
+        self.connect(self.btnSave, SIGNAL("clicked()"), self.saveSnapshot)
+
+        self.update_pvlist()
+        self.setMinimumWidth(600)
+
+    def _prepare_parent_dirs(self, mach=""):
+        dt = datetime.now()
+        dpath = os.path.join(os.environ.get("HLA_DATA_DIR", ""),
+                             mach, dt.strftime("%Y_%m"))
+        if os.path.exists(dpath): return dpath
+
+        r = QtGui.QMessageBox.question(
+            self, "Create directories",
+            "The default directories do not exist<br>"
+            "%s<br>"
+            "Create them ?" % dpath,
+            QtGui.QMessageBox.Yes | QMessageBox.No)
+        if r == QMessageBox.Yes: 
+            qd = QtCore.QDir()
+            qd.mkpath(dpath)
+            self._logger.info("created '%s'" % dpath)
+            return dpath
+        return False
+
+    def update_latlist(self, mach):
+        self.cmbLat.clear()
+        self.cmbLat.addItem("*")
+        for latname in self._lat_dict.get(mach, {}).keys():
+            self.cmbLat.addItem(latname)
+        self.update_pvlist()
+
+    def update_pvtable(self):
+        self.tblPvs.clear()
+        self.tblPvs.setColumnCount(8)
+        npvs = sum([len(pvs) for k,pvs in self._pvlst.items()])
+        self.tblPvs.setRowCount(npvs)
+        stat = {}
+        for lat,pvlst in self._pvlst.items():
+            for i,pvr in enumerate(pvlst):
+                pv, name, fam, fld, rw = pvr
+                self.tblPvs.setItem(i,0, QtGui.QTableWidgetItem(pv))
+                self.tblPvs.setItem(i,2, QtGui.QTableWidgetItem(name))
+                self.tblPvs.setItem(i,3, QtGui.QTableWidgetItem(fam))
+                self.tblPvs.setItem(i,4, QtGui.QTableWidgetItem(fld))
+                self.tblPvs.setItem(i,5, QtGui.QTableWidgetItem(lat))
+                self.tblPvs.setItem(i,6, QtGui.QTableWidgetItem(rw))
+                stat.setdefault(fam, 0)
+                stat[fam] += 1
+        self.tblPvs.resizeColumnToContents(0)
+        s = ", ".join(["%s: %d" % (k,v) for k,v in stat.items()])
+        if self._logger: self._logger.info("archived: %s" % s)
+
+    def update_pvlist(self):
+        machname = str(self.cmbMach.currentText())
+        self._pvlst = {}
+        for latname,lat in self._lat_dict[machname].items():
+            if str(self.cmbLat.currentText()) not in ["*", latname]:
+                continue
+            pvs = aphla.lattice.saveArchivePvs(lat)
+            self._pvlst[latname] = pvs
+        self.update_pvtable()
+
+    def saveSnapshot(self):
+        mach = str(self.cmbMach.currentText())
+        dpath = self._prepare_parent_dirs(mach)
+        if not dpath:
+            QMessageBox.warning(self, "Abort", "Aborted")
+            return
+        dt = datetime.now()
+        fname_pref = os.path.join(dpath, dt.strftime("snapshot_%d_%H%M%S_"))
+        fname = fname_pref + mach + ".hdf5"
+        if self.cmbLat.currentText() != "*":
+            fname = fname_pref + str(self.cmbLat.currentText()) + ".hdf5"
+        print fname
+
+        fileName = QtGui.QFileDialog.getSaveFileName(
+            self, "Save Lattice Snapshot Data",
+            QString(fname),
+            "Data Files (*.h5 *.hdf5);;All Files(*)")
+        fileName = str(fileName)
+        if not fileName: return
+        idx0 = 0
+        for latname,allpvr in self._pvlst.items():
+            pvs = [pvr[0] for pvr in allpvr]
+            dat = aphla.catools.readPvs(pvs)
+            for j,d in enumerate(dat):
+                i = j + idx0
+                if d is None:
+                    val, dt = "", ""
+                    self.tblPvs.setItem(i,1, QtGui.QTableWidgetItem(val))
+                    self.tblPvs.setItem(i,7, QtGui.QTableWidgetItem(dt))
+                    self.tblPvs.item(i,0).setBackground(Qt.red)
+                    self.tblPvs.item(i,1).setBackground(Qt.red)
+                else:
+                    val, dt = "{0}".format(d[0]), datetime.fromtimestamp(d[2])
+                    if d[1] is not None and d[1] > 2:
+                        val = "[{0} ...]".format(d[0][0])
+                    self.tblPvs.setItem(i,1, QtGui.QTableWidgetItem(val))
+                    self.tblPvs.setItem(i,7, QtGui.QTableWidgetItem(str(dt)))
+                    #self.tblPvs.item(i,1).setBackground(Qt.green)
+                    #self.tblPvs.item(i,1).setBackground(Qt.green)
+            vals = [d[0] if d is not None else None for d in dat]
+            size = [d[1] if d is not None else None for d in dat]
+            tmstamp = [d[2] if d is not None else None for d in dat]
+            elemnames, fams, flds, rbsp = zip(*allpvr)[1:]
+            aphla.lattice.saveSnapshot(fileName, latname, 
+                                       pvs, vals, size, tmstamp, rbsp,
+                                       elemnames, flds, mode='w')
+            self._logger.info("snapshot '%s' created: '%s'" % (
+                    latname, fileName))
+            idx0 += len(pvs)
+
+        self.tblPvs.setVisible(False)
+        self.tblPvs.resizeColumnsToContents()
+        self.tblPvs.setVisible(True)
+
+
 class LatSnapshotMain(QDialog):
     def __init__(self, parent, latdict, mach, logger):
         QDialog.__init__(self, parent)
@@ -1450,9 +1458,8 @@ class MTestForm(QDialog):
 
 if __name__ == "__main__":
     #app = QApplication(sys.argv)
-    #ap.machines.init("nsls2v2")
-    #form = MTestForm()
-    form = LatSnapshotMain(None, {}, "", None)
+    lat0, latdict = aphla.machines.load("nsls2v2", return_lattices=True)
+    form = LatSnapshotMain(None, {"nsls2v2": latdict}, "nsls2v2", None)
     form.resize(1024, 700)
     #fname = "/epics/data/aphla/data/2013_11/snapshot_08_102731_SR.hdf5"
     #form.loadLatSnapshotH5([fname])

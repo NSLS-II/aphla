@@ -102,6 +102,91 @@ class CaDataMonitor:
                     if cam is None])
 
 
+class CaDataGetter:
+    def __init__(self, pvs = [], **kwargs):
+        """
+        - pvs a list of PV
+        - samples number of data points for std/var/average
+
+        optional:
+        - simulation [True|False] use simulated data or real pv data
+        """
+        self.samples     = kwargs.get("samples", 10)
+        self.simulation  = kwargs.get('simulation', False)
+        self.val_default = kwargs.get("default", np.nan)
+        self.timeout     = kwargs.get("timeout", 3)
+        self.data = {}
+        self._monitors = {}
+        self._dead = set()
+
+        if pvs: self.addPv(pvs)
+
+    def addPv(self, pvs):
+        """add a pv or list of pvs"""
+        if isinstance(pvs, (list, tuple, set)):
+            newpvs = [ pv for pv in pvs if pv not in self.data ]
+        elif isinstance(pvs, str) and pvs not in self.data:
+            newpvs = [ pvs ]
+        else:
+            newpvs = []
+        
+        if len(newpvs) == 0: return
+        for pv in newpvs:
+            self.data[pv] = deque([], self.samples)
+
+        self.update()
+
+    def update(self):
+        kw_cg = {"format": cothread.catools.FORMAT_CTRL,
+                 "timeout": self.timeout,
+                 "throw": False}
+        kw_cm = {"format": cothread.catools.FORMAT_TIME }
+
+        newpvs = self.data.keys() + list(self._dead)
+        d = caget(newpvs, **kw_cg)
+        # try 3 times
+        for k in range(3):
+            tmppvs = []
+            for i,pv in enumerate(newpvs):
+                if not d[i].ok:
+                    tmppvs.append(pv)
+                elif pv in self.data:
+                    self.data[pv].append(d[i])
+                else:
+                    self.data[pv] = deque([d[i]], self.samples)
+            newpvs = tmppvs
+            if not tmppvs: break
+            d = caget(newpvs, **kw_cg)
+
+        for pv in newpvs:
+            if pv in self.data: self.data.pop(pv)
+        self._dead = set(newpvs)
+
+    def close(self, pv):
+        self.data[pv].clear()
+
+    def get(self, pv, default = np.nan):
+        if pv in self._dead: return default
+        lst = self.data.get(pv, [])
+        if len(lst) == 0: return default
+        elif not lst[-1].ok: return default
+        return lst[-1]
+
+    def dead(self, pv):
+        return (pv in self._dead)
+
+    def __len__(self):
+        return len(self.data)
+
+    def activeCount(self):
+        return len([True for pv,cam in self._monitors.items()
+                    if cam is not None])
+
+    def deadCount(self):
+        return len([True for pv,cam in self._monitors.items()
+                    if cam is None])
+
+
 class Example(QtGui.QWidget):
     
     def __init__(self, pvs):

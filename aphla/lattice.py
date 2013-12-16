@@ -875,7 +875,7 @@ def saveSnapshot(fname, group, pvs, val, size, timestamp, rbsp, elemname,
     for i,pv in enumerate(pvs):
         name, fld, rb, tmstamp = elemname[i], elemfld[i], rbsp[i], timestamp[i]
         if val[i] is None:
-            dead.append(i)
+            dead.append([name, fld, -1, pv, None, 0, ""])
         elif size[i] is not None and size[i] > 1:
             dsname = b"wf_{0}_{1}.{2}_{3}".format(i,name,fld,rb)
             dt_obj = datetime.fromtimestamp(tmstamp)
