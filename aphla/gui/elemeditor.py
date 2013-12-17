@@ -251,12 +251,12 @@ class ElementPropertyTableModel(QAbstractTableModel):
             return Qt.ItemIsEnabled
         row, col = index.row(), index.column()
         elem, idx, fld = self._elemrec[row]
-        if idx == 0:
-            return Qt.ItemIsEnabled
-        elif idx == C_VAL_SP:
-            return Qt.ItemFlags(QAbstractTableModel.flags(self, index) |
-                Qt.ItemIsEditable)
 
+        if col == C_VAL_SP:
+            return Qt.ItemFlags(QAbstractTableModel.flags(self, index) |
+                                Qt.ItemIsSelectable)
+            #return Qt.ItemFlags(QAbstractTableModel.flags(self, index) |
+            #    Qt.ItemIsEditable)
         return Qt.ItemIsEnabled
         
     def rowCount(self, index=QModelIndex()):
@@ -408,6 +408,10 @@ class ElementPropertyDelegate(QStyledItemDelegate):
         return QStyledItemDelegate.sizeHint(self, option, index)
 
     def createEditor(self, parent, option, index):
+
+        # bypass for now
+        return QStyledItemDelegate.createEditor(self, parent, option, index)
+
         row, col = index.row(), index.column()
         model = index.model()
         #print "Creating editor", row, col, \
@@ -588,7 +592,6 @@ class ElementEditorDock(QDockWidget):
             )
         self.elemBox.setCompleter(QCompleter([
             "*", "BPM", "COR", "HCOR", "VCOR", "QUAD"]))
-
         #self.rangeSlider = qrangeslider.QRangeSlider()
         #self.rangeSlider.setMin(0)
         #self.rangeSlider.setMax(100)
@@ -600,23 +603,44 @@ class ElementEditorDock(QDockWidget):
         #self.refreshBtn = QPushButton("refresh")
         #fmbox.addRow(self.elemBox)
 
+        self._active_elem = None
+        self._active_idx  = None
+
         self.lblInfo = QLabel()
 
         #self.fldGroup = QGroupBox()
         fmbox2 = QFormLayout()
         self.lblNameField  = QLabel()
-        self.lblStep  = QLabel()
-        self.lblRange = QLabel()
+        self.ledStep  = QLineEdit(".1")
+        self.ledStep.setValidator(QtGui.QDoubleValidator())
+        self.connect(self.ledStep, SIGNAL("textChanged(QString)"),
+                     self.setSpStepsize)
+        self.spb1 = QtGui.QDoubleSpinBox()
+        self.spb2 = QtGui.QDoubleSpinBox()
+        self.spb5 = QtGui.QDoubleSpinBox()
+        self.connect(self.spb5, SIGNAL("valueChanged(double)"),
+                     self.spb2.setValue)
+        self.connect(self.spb2, SIGNAL("valueChanged(double)"),
+                     self.spb1.setValue)
+        self.connect(self.spb1, SIGNAL("valueChanged(double)"),
+                     self.spb5.setValue)
+        self.connect(self.spb1, SIGNAL("valueChanged(double)"),
+                     self.setActiveCell)
+
+        #self.lblRange = QLabel()
         self.valMeter = Qwt.QwtThermo()
         self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
         self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding, 
                                     QSizePolicy.Fixed)
         self.valMeter.setEnabled(False)
-        fmbox2.addRow("Name", self.lblNameField)
+        fmbox2.addRow("Name:", self.lblNameField)
         #fmbox2.addRow("Field", self.lblField)
-        fmbox2.addRow("Step", self.lblStep)
+        fmbox2.addRow("Stepsize:", self.ledStep)
         #fmbox2.addRow("Range", self.valMeter)
-        fmbox2.addRow("Range", self.lblRange)
+        #fmbox2.addRow("Range", self.lblRange)
+        fmbox2.addRow("Step x1:", self.spb1)
+        fmbox2.addRow("Step x2:", self.spb2)
+        fmbox2.addRow("Step x5:", self.spb5)
         fmbox2.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         fmbox2.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
         #self.fldGroup.setLayout(fmbox2)
@@ -627,6 +651,8 @@ class ElementEditorDock(QDockWidget):
                      SIGNAL("toggleElementState(PyQt_PyObject, bool)"),
                      self.elementStateChanged)
         self.tableview = ElementPropertyView()
+        self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"),
+                     self.editingCell)
         self.delegate = ElementPropertyDelegate()
         self.connect(self.delegate, SIGNAL("editingElement(PyQt_PyObject)"),
                      self.updateCellInfo)
@@ -637,7 +663,6 @@ class ElementEditorDock(QDockWidget):
         #self.tableview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tableview.setWhatsThis("double click cell to enter editing mode")
         #fmbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-
         #self.model.loadElements(aphla.getElements("*")[:10])
 
         vbox = QVBoxLayout()
@@ -697,8 +722,67 @@ class ElementEditorDock(QDockWidget):
             w = self.tableview.columnWidth(i)
             self.tableview.setColumnWidth(i, w + 5)
 
+    def setActiveCell(self, val):
+        if self._active_elem is None:
+            __logger.warn("no active element selected")
+            return
+        elem, ik, fld = self._active_elem
+        #print elem, fld, elem.get(fld, handle="setpoint", unitsys=None)
+        elem.put(fld, val, unitsys=None)
+        #print elem, fld, elem.get(fld, handle="setpoint", unitsys=None), " setted"
+        idx0 = self.model.index(self._active_idx.row(), 0)
+        idx1 = self.model.index(self._active_idx.row(), self.model.columnCount()-1)
+
+        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
+                        idx0, idx1)
+
+    def setSpStepsize(self, s):
+        stp = float(s)
+        self.spb1.setSingleStep(stp)
+        self.spb2.setSingleStep(2.0*stp)
+        self.spb5.setSingleStep(5.0*stp)
+
+    def editingCell(self, idx):
+        r,c = idx.row(), idx.column()
+        if c != C_VAL_SP:
+            self._active_elem, self._active_idx = None, None
+            self.lblNameField.setText("")
+            for e in [self.lblNameField, self.ledStep, 
+                      self.spb1, self.spb2, self.spb5]:
+                e.setDisabled(True)
+            return
+
+        stp = float(self.ledStep.text())
+        self.spb1.setSingleStep(stp)
+        self.spb2.setSingleStep(2.0*stp)
+        self.spb5.setSingleStep(5.0*stp)
+
+        self._active_elem = self.model._elemrec[r]
+        self._active_idx = idx
+        val, succ = self.model.data(idx).toDouble()
+        if not succ:
+            print "can not convert value {0} for {1}.{2}".format(
+                self.model.data(idx), elem, fld)
+        elem, ik, fld = self._active_elem
+        #print "{0}, {1}".format(elem, fld), val
+        elem.updateBoundary()
+        bdl, bdr = elem.boundary(fld)
+        if bdl is None:
+            bdl = -sys.float_info.max
+        if bdr is None:
+            bdr = sys.float_info.max
+        for spb in [self.spb1, self.spb2, self.spb5]:
+            spb.setMinimum(bdl)
+            spb.setMaximum(bdr)
+            spb.setDecimals(10) # no scientific notation
+            spb.setValue(val)
+        #self.lblInfo.setText("{0}.{1} in {2} ss={3}".format(
+        #    elem.name, fld, bd, elem.stepSize(fld)))
+        self.lblNameField.setText("{0}.{1},  range: [{2}, {3}]".format(
+                elem.name, fld, bdl, bdr))
+
     def updateCellInfo(self, elemrec):
-        elem, fld, hdl = elemrec
+        elem, ik, fld = elemrec
         self.lblStep.setText(str(elem.stepSize(fld)))
         elem.updateBoundary()
         bd = elem.boundary(fld)

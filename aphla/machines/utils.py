@@ -2,11 +2,16 @@ import os
 import sys
 import re
 import sqlite3
+from .. import apdata
 from ..apdata import createLatticePvDb
 from ..chanfinder import ChannelFinderAgent
 
 from channelfinder import ChannelFinderClient
 from channelfinder import Channel, Property, Tag
+
+import logging
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.DEBUG)
 
 def _nsls2_filter_element_type_group(elemlst):
     """
@@ -313,6 +318,7 @@ def _saveSqliteDb(cfa, fname, sep=";"):
     
     the input groups, elemNames like "QH1;QH" has to be separated as list.
     """
+    raise RuntimeError("Not Implemented")
     uniq, pvs, elems = set(), [], []
     for i,r in enumerate(cfa.rows):
         pv,prpt,tags = r
@@ -320,8 +326,11 @@ def _saveSqliteDb(cfa, fname, sep=";"):
             raise RuntimeError("no element name defined {0}".format(r))
         if not prpt.get("elemType", None):
             raise RuntimeError("no element type defined {0}".format(r))
-            
+        
         elemname = prpt["elemName"].lower()
+        if elemname.find(sep) >= 0: 
+            raise RuntimeError("elemName can not have %s: %s" % (
+                    sep, elemname))
         if elemname in uniq: continue
         uniq.add(elemname)
         grps = ";".join(prpt.get("elemGroups", []))
@@ -340,7 +349,7 @@ def _saveSqliteDb(cfa, fname, sep=";"):
         if i > 5: break
         print e
 
-    ap.apdata.createLatticePvDb(fname)
+    createLatticePvDb(fname)
     conn = sqlite3.connect(fname)
     # save byte string instead of the default unicode
     conn.text_factory = str
@@ -374,8 +383,15 @@ def convCfsToSqlite(url, prefix = '', ignore = []):
         cfa.splitChainedElement('elemName')
         cfa.saveSqlite("%s%s.sqlite" % (prefix, latname))
 
-def convCsvToSqlite(fdb, fcsv):
-    cfa = ChannelFinderAgent()
-    cfa.loadCsv(fcsv)
-    cfa.saveSqlite(fdb)
+def convCsvToSqlite(fdb, *fcsvlst, **kwargs):
+    sep = kwargs.get("sep", ";")
+    _logger.info("creating new SQLite db: '%s'" % fdb)
+    createLatticePvDb(fdb)
+    for fcsv in fcsvlst:
+        cfa = ChannelFinderAgent()
+        cfa.loadCsv(fcsv)
+        _logger.debug("loaded {0} records from {1}".format(
+                len(cfa.rows), fcsv))
+        cfa.splitPropertyValue("elemGroups", sep)
+        apdata._updateLatticePvDb(fdb, cfa.rows, sep)
 

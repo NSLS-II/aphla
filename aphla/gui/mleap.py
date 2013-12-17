@@ -138,7 +138,7 @@ class OrbitPlotMainWindow(QMainWindow):
                                     QDockWidget.DockWidgetClosable)
         self.elemeditor.setFloating(False)
         #self.elemeditor.setEnabled(False)
-        self.elemeditor.setMinimumWidth(300)
+        self.elemeditor.setMinimumWidth(400)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
@@ -217,7 +217,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.connect(self.machMenu, SIGNAL("aboutToShow()"),
         #             self.updateMachMenu)
         self.openMenu = self.menuBar().addMenu("&Open")
-        self.openMenu.addAction("New ...", self.openNewPlot)
+        self.openMenu.addAction("New Plot ...", self.openNewPlot)
 
         self.openMenu.addSeparator()
         self.openMenu.addAction("Save Lattice ...", self.saveSnapshot)

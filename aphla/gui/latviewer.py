@@ -126,7 +126,25 @@ class SnapshotRow(object):
         self._update_abs_diff(iref)
         if mode == 1:
             self._update_rel_diff(iref)
-    
+
+class LatSnapshotSortFilterProxyModel(QtGui.QSortFilterProxyModel):
+    def __init__(self, parent = None):
+        super(LatSnapshotSortFilterProxyModel, self).__init__(parent)
+        self.fltFld = ""
+        self.fltPv  = ""
+
+    def filterAcceptsRow(self, srcRow, srcParent):
+        i0 = self.sourceModel().index(srcRow, 0, srcParent)
+        i1 = self.sourceModel().index(srcRow, 1, srcParent)
+        i2 = self.sourceModel().index(srcRow, 2, srcParent)
+        name = self.sourceModel().data(i0).toString()
+        fld  = self.sourceModel().data(i1).toString()
+        pv   = self.sourceModel().data(i2).toString()
+
+        return name.contains(self.filterRegExp()) and \
+            fld.contains(self.fltFld) and \
+            pv.contains(self.fltPv)
+
 class LatSnapshotTableModel(QAbstractTableModel):
     def __init__(self):
         super(LatSnapshotTableModel, self).__init__()
@@ -372,10 +390,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
         ri, cj  = index.row(), index.column()
         ids, idsj = divmod(cj - C_VALUES, 2)
 
-        validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
-        if ri >= len(validrows): return QVariant()
-
-        r = validrows[ri]
+        r = self._rows[ri]
         if role == Qt.DisplayRole:
             if cj == C_PV:
                 return QVariant(QString(r.pv))
@@ -467,9 +482,10 @@ class LatSnapshotTableModel(QAbstractTableModel):
         return Qt.ItemIsEnabled
         
     def rowCount(self, index=QModelIndex()):
-        validrows = [i for i in range(len(self._rows)) if self._mask[i] == 0]
-        return len(validrows)
-    
+        #validrows = [i for i in range(len(self._rows)) if self._mask[i] == 0]
+        #return len(validrows)
+        return len(self._rows)
+
     def columnCount(self, index=QModelIndex()):
         if not self._rows: return 0
         return C_VALUES + len(self._rows[0].values)*2
@@ -869,13 +885,14 @@ class SnapshotViewerWidget(QWidget):
         vbox.addLayout(gbox1, 0.0)
 
         self.model = LatSnapshotTableModel()
-        #self.proxymodel = QtGui.QSortFilterProxyModel()
-        #self.proxymodel.setSourceModel(self.model)
-   
+        self.proxymodel = LatSnapshotSortFilterProxyModel()
+        self.proxymodel.setSourceModel(self.model)
+        self.proxymodel.setDynamicSortFilter(True)
+
         self.tableview = LatSnapshotView()
         #self.tableview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tableview.setModel(self.model)
-        #self.tableview.setModel(self.proxymodel)
+        #self.tableview.setModel(self.model)
+        self.tableview.setModel(self.proxymodel)
         #self.tableview.setItemDelegate(LatSnapshotDelegate(self))
         self.tableview.setSortingEnabled(True)
         self.tableview.setWhatsThis("double click cell to enter editing mode")
@@ -927,11 +944,11 @@ class SnapshotViewerWidget(QWidget):
 
         #
         self.connect(self.elemNameBox, SIGNAL("textChanged(QString)"),
-                     self.filterTableRows)
+                     self.filterChanged)
         self.connect(self.elemFldBox, SIGNAL("textChanged(QString)"),
-                     self.filterTableRows)
+                     self.filterChanged)
         self.connect(self.pvBox, SIGNAL("textChanged(QString)"),
-                     self.filterTableRows)
+                     self.filterChanged)
         #
         self.connect(self.btnLoad, SIGNAL("pressed()"), self.loadSnapshotH5)
         self.connect(self.btnOneshot, SIGNAL("pressed()"), self._dead_button)
@@ -943,6 +960,14 @@ class SnapshotViewerWidget(QWidget):
         #self.cbxHidePv.setChecked(True)
 
         #self.timerId = self.startTimer(1500)
+
+    def filterChanged(self, txt):
+        self.proxymodel.fltFld  = self.elemFldBox.text()
+        self.proxymodel.fltPv = self.pvBox.text()
+        rx = QtCore.QRegExp(self.elemNameBox.text(),
+                            Qt.CaseInsensitive,
+                            QtCore.QRegExp.Wildcard)
+        self.proxymodel.setFilterRegExp(rx)
 
     def selRow(self, i1, i2):
         rows = [i.top() for i in i1]
@@ -1086,7 +1111,7 @@ class SnapshotViewerWidget(QWidget):
         for fname in self.model.loadSnapshotH5(fnames):
             self.cmbRefDs.addItem(str(fname))
 
-        #self.tableview.resizeColumnsToContents()
+        self.tableview.resizeColumnsToContents()
         #self.tableview.setVisible(False)
         #self.tableview.resizeColumnToContents(C_ELEMENT)
         #self.tableview.resizeColumnToContents(C_FIELD)

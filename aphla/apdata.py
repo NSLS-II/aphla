@@ -19,6 +19,7 @@ import warnings
 
 import logging
 _logger = logging.getLogger(__name__)
+_logger.setLevel(logging.DEBUG)
 
 class OrmData:
     r"""Orbit Response Matrix Data
@@ -661,7 +662,8 @@ def _updateLatticePvDb(dbfname, cfslist, sep=";"):
     # save byte string instead of the default unicode
     conn.text_factory = str
     c = conn.cursor()
-    # elements need to insert
+
+    # new elements and pvs need to insert
     elem_sets, pv_sets = [], []
     for i,rec in enumerate(cfslist):
         pv, prpts, tags = rec
@@ -669,25 +671,36 @@ def _updateLatticePvDb(dbfname, cfslist, sep=";"):
                 prpts.get("elemType", ""))
         # skip if already in the to-be-inserted list
         # elemName has to be unique
-        if ukey[0] in [v[0] for v in elem_sets]: continue
-        c.execute("""SELECT * from elements where elemName=?""", (ukey[0],))
-        # no need to insert if exists
-        if len(c.fetchall()) > 0: continue
-        elem_sets.append(ukey)
-        #new pvs
+        if ukey[0] not in [v[0] for v in elem_sets]:
+            c.execute("""SELECT * from elements where elemName=?""", (ukey[0],))
+            # no need to insert if exists
+            if len(c.fetchall()) == 0:
+                elem_sets.append(ukey)
+        # same as elemName, find the new pvs
         ukey = (pv, prpts.get("elemName", ""), prpts.get("elemField", ""))
-        if ukey in pv_sets: continue
-        pv_sets.append(ukey)
+        if ukey not in pv_sets:
+            c.execute("""SELECT * from pvs where """
+                      """pv=? and elemName=? and elemField=?""",
+                      ukey)
+            if len(c.fetchall()) == 0:
+                pv_sets.append(ukey)
 
+    for elem in elem_sets:
+        _logger.debug("adding new element: {0}".format(elem))
     c.executemany("""INSERT INTO elements (elemName,elemType) VALUES (?,?)""",
                   elem_sets)
-    # insert or replace pv
+    _logger.debug("added {0} elements".format(len(elem_sets)))
+
+    for pv in pv_sets:
+        _logger.debug("adding new pv: {0}".format(pv))
     c.executemany("""INSERT INTO pvs (pv,elemName,elemField) VALUES (?,?,?)""",
                   pv_sets)
+    _logger.debug("added {0} pvs".format(len(pv_sets)))
     conn.commit()
 
     c.execute("PRAGMA table_info(elements)")
     tbl_elements_cols = [v[1] for v in c.fetchall()]
+    # update the elements table if cfslist has the same column
     for col in tbl_elements_cols:
         if col in ["elemName"]: continue
         vals = []
@@ -695,7 +708,9 @@ def _updateLatticePvDb(dbfname, cfslist, sep=";"):
             pv, prpts, tags = rec
             if col not in prpts: continue
             vals.append((prpts[col], prpts["elemName"]))
-        if len(vals) == 0: continue
+        if len(vals) == 0:
+            _logger.debug("elements: no data for column '{0}'".format(col))
+            continue
         try:
             c.executemany("UPDATE elements set %s=? where elemName=?" % col,
                           vals)
@@ -704,6 +719,8 @@ def _updateLatticePvDb(dbfname, cfslist, sep=";"):
             raise
 
         conn.commit()
+        _logger.debug("elements: updated column '{0}' with {1} records".format(
+                col, len(vals)))
 
     c.execute("PRAGMA table_info(pvs)")
     tbl_pvs_cols = [v[1] for v in c.fetchall()]
@@ -721,11 +738,15 @@ def _updateLatticePvDb(dbfname, cfslist, sep=";"):
             # elemGroups is a list
             vals.append((prpts[col], pv, prpts["elemName"], prpts["elemField"]))
 
-        if len(vals) == 0: continue
+        if len(vals) == 0:
+            _logger.debug("pvs: no data for column '{0}'".format(col))
+            continue
         c.executemany("""UPDATE pvs set %s=? where pv=? and """
                       """elemName=? and elemField=?""" % col,
                       vals)
         conn.commit()
+        _logger.debug("pvs: updated column '{0}' with {1} records".format(
+                col, len(vals)))
 
     # update tags
     vals = []
@@ -733,7 +754,7 @@ def _updateLatticePvDb(dbfname, cfslist, sep=";"):
         pv, prpts, tags = rec
         if not tags: continue
         if not prpts.has_key("elemField") or not prpts.has_key("elemName"):
-            print "Incomplete record for pv={0}: {1} {2}".format(
+            print "Incomplete record for pv={0}: {1} {2}. IGNORED".format(
                 pv, prpts, tags)
             continue
         vals.append((sep.join(sorted(tags)),
@@ -742,6 +763,7 @@ def _updateLatticePvDb(dbfname, cfslist, sep=";"):
         c.executemany("""UPDATE pvs set tags=? where pv=? and """
                       """elemName=? and elemField=?""", vals)
         conn.commit()
+        _logger.debug("pvs: updated tags for {0} rows".format(len(vals)))
 
     msg = "[%s] updated %d records" % (__name__, len(cfslist))
     c.execute("""insert into info(timestamp,name,value)
