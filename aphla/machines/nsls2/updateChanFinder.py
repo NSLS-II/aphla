@@ -219,8 +219,9 @@ def updatePropertyPvs(cf, p, owner, v, pvs):
         # meaningless.
         cf.set(property=Property(p, owner, v))
         logging.info("create new property (%s,%s,%s)" % (p, owner, v))
+    logging.info("adding property (%s,%s,%s) for %d pvs: %s" % (
+            p, owner, v, len(pvs), str(pvs)))
     ret = cf.update(property=Property(p, owner, v), channelNames=pvs)
-    logging.info("batch add property (%s,%s,%s) for %d pvs (ret=%s)" % (p, owner, v, len(pvs), str(ret)))
 
 def appendPropertyPvs(cf, p, owner, v, pvs, sep=";"):
     """
@@ -353,9 +354,6 @@ def cfs_append_from_csv2(rec_list, update_only):
                 prpt, val = [v.strip() for v in r.split('=')]
                 prpt_data.setdefault((prpt, val), [])
                 prpt_data[(prpt, val)].append(pv)
-                #prpt_list.append(Property(prpt, prpt_owner, val))
-                #logging.info("'{0}': {1}={2} ({3})".format(pv, prpt, val, prpt_owner))
-                #addPvProperty(cf, chs[0].Name, prpt, val, prpt_owner)
             else:
                 # it is a tag
                 tag = r.strip()
@@ -368,9 +366,24 @@ def cfs_append_from_csv2(rec_list, update_only):
         
     errpvs = []
     for pv in allpvs:
-        if not cf.find(name=pv):
+        chs = cf.find(name=pv)
+        if not chs:
             errpvs.append(pv)
             print "PV '%s' does not exist" % pv
+            continue
+        elif len(chs) != 1:
+            print "Find two results for pv=%s" % pv
+            continue
+        for prpt,val in chs[0].getProperties().items():
+            pvlst = prpt_data.get((prpt, val), [])
+            if not pvlst: continue
+            try:
+                j = pvlst.index(pv)
+                prpt_data[(prpt,val)].pop(j)
+            except:
+                # the existing data is not in the update list, skip
+                pass
+
     #if errpvs: 
     #    #raise RuntimeError("PVs '{0}' are missing".format(errpvs))
     #    print 
