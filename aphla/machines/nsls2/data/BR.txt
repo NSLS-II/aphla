@@ -979,10 +979,6 @@ BR-PS{PS:BD1}I-I, elemHandle=get, elemIndex=14, elemName=BD1, devName=BD1, elemL
 BR-PS{PS:BF}I-I, elemHandle=get, elemIndex=26, elemName=BF, devName=BF, elemLength=1.24, elemPosition=9.64189, elemType=BEND, system=BR, elemField=b0, aphla.sys.BR 
 BR-PS{PS:BD2}I-I, elemHandle=get, elemIndex=207, elemName=BD2, devName=BD2, elemLength=1.3, elemPosition=85.5167, elemType=BEND, system=BR, elemField=b0, aphla.sys.BR 
 
-BR-PS{PS:QF}I-I, elemHandle=get, elemIndex=12, elemName=QF, devName=QF, elemLength=0.3, elemPosition=4.61, elemType=QUAD, system=BR, elemField=b1, aphla.sys.BR 
-BR-PS{PS:QG}I-I, elemHandle=get, elemIndex=20, elemName=QG, devName=QG, elemLength=0.3, elemPosition=7.3919, elemType=QUAD, system=BR, elemField=b1, aphla.sys.BR 
-BR-PS{PS:QD}I-I, elemHandle=get, elemIndex=24, elemName=QD, devName=QD, elemLength=0.3, elemPosition=8.2019, elemType=QUAD, system=BR, elemField=b1, aphla.sys.BR 
-
 BR:A1-PS{6A:SF1}I-I, elemHandle=get, elemIndex=28, elemName=A1SF1, devName=A1SF1, elemLength=0.12, elemPosition=9.93189, elemType=SEXT, system=BR, elemField=b2, aphla.sys.BR 
 BR:A1-PS{6A:SD1}I-I, elemHandle=get, elemIndex=46, elemName=A1SD1, devName=A1SD1, elemLength=0.12, elemPosition=17.1029, elemType=SEXT, system=BR, elemField=b2, aphla.sys.BR 
 BR:A1-PS{6A:SD2}I-I, elemHandle=get, elemIndex=56, elemName=A1SD2, devName=A1SD2, elemLength=0.12, elemPosition=22.4729, elemType=SEXT, system=BR, elemField=b2, aphla.sys.BR 
