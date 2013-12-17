@@ -11,6 +11,7 @@ require('cothread>=2.2')
 import cothread
 app = cothread.iqt()
 
+import re
 import aphla
 from aphla.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
 
@@ -173,8 +174,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.newElementPlot("BPM", "x")
         self.newElementPlot("BPM", "y")
-        self.newElementPlot("HCOR", "x")
-        self.newElementPlot("VCOR", "y")
+        #self.newElementPlot("HCOR", "x")
+        #self.newElementPlot("VCOR", "y")
         #self.newElementPlot("QUAD", "b1")
         #self.newElementPlot("SEXT", "b2")
 
@@ -218,6 +219,12 @@ class OrbitPlotMainWindow(QMainWindow):
         #             self.updateMachMenu)
         self.openMenu = self.menuBar().addMenu("&Open")
         self.openMenu.addAction("New Plot ...", self.openNewPlot)
+        self.openMenu.addAction("New BPM Plot", partial(
+                self.newElementPlots, "BPM", "x,y"))
+        self.openMenu.addAction("New HCOR Plot", partial(
+                self.newElementPlots, "HCOR", "x"))
+        self.openMenu.addAction("New VCOR Plot", partial(
+                self.newElementPlots, "VCOR", "y"))
 
         self.openMenu.addSeparator()
         self.openMenu.addAction("Save Lattice ...", self.saveSnapshot)
@@ -470,7 +477,11 @@ class OrbitPlotMainWindow(QMainWindow):
     def click_machine(self, act):
         self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
 
-    def newElementPlot(self, elem, field, **kw):
+    def newElementPlots(self, elem, fields, **kw):
+        for fld in re.findall(r'[^ ,]', fields):
+            self._newElementPlot(elem, fld, **kw)
+
+    def _newElementPlot(self, elem, field, **kw):
         """plot the field for element"""
         mach, lat = kw.get("machlat", self._current_mach_lat())
         handle = kw.get("handle", "readback")
@@ -601,7 +612,7 @@ class OrbitPlotMainWindow(QMainWindow):
         dlg.setLayout(v1)
 
         if dlg.exec_():
-            self.newElementPlot(str(elem.text()), str(fld.text()),
+            self.newElementPlots(str(elem.text()), str(fld.text()),
                                 machlat=(mach, lat))
 
     def click_markfam(self, on):
