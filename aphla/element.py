@@ -336,7 +336,7 @@ class CaAction:
             caput(self.pvsp, self.golden, timeout=self.timeout)
             _logger.debug("setting {0} to {1}".format(
                     self.pvsp, self.golden))
-            print "setting {0} to {1}".format(self.pvsp, self.golden)
+            #print "setting {0} to {1}".format(self.pvsp, self.golden)
         return None
 
     def mark(self, data = 'setpoint'):
@@ -455,14 +455,14 @@ class CaAction:
                 elif bc_err and bc == 'boundary':
                     _logger.info("setting {0} to its boundary {1} instead of {2}".\
                                  format(self.pvsp[i], bc_val, rawval[i]))
-                    print "setting {0} to its boundary {1} instead of {2}".\
-                                 format(self.pvsp[i], bc_val, rawval[i])
+                    #print "setting {0} to its boundary {1} instead of {2}".\
+                    #             format(self.pvsp[i], bc_val, rawval[i])
                     #rawval[i] = bc_val
                 elif bc_err and bc == 'ignore':
                     return
                         
 
-        print self.pvsp, rawval
+        #print self.pvsp, rawval
         retlst = caput(self.pvsp, rawval, wait=True)
         for i,ret in enumerate(retlst):
             if ret.ok: continue
@@ -821,7 +821,7 @@ class CaElement(AbstractElement):
         fieldset = set(fields)
         ret = []
         for k,v in self._field.iteritems():
-            print k, v
+            #print k, v
             if k in fieldset:
                 ret.extend(v['eget'])
                 ret.extend(v['eput'])
@@ -1373,7 +1373,7 @@ def merge(elems, field = None, **kwargs):
         elem.sb = [e.sb for e in elemgrp] 
         elem.se = [e.se for e in elemgrp]
         elem._name = [e.name for e in elemgrp]
-        print pvsp
+        #print pvsp
     else:
         _logger.warn("no pv merged for {0}".format([
                     e.name for e in elems]))

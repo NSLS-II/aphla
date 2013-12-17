@@ -14,6 +14,7 @@ caget will have noises and caput will do nothing.
 
 __all__ = [
     'caget', 'caput', 'caputwait', 'caRmCorrect', 
+    'readPvs',
     'Timedout', 'CA_OFFLINE', 'FORMAT_TIME'
 ]
 
@@ -330,58 +331,25 @@ def caRmCorrect(resp, kker, m, **kwarg):
     else:
         return (0, None)
 
-def save_lat_epics(fname, lat, group = None, mode='a'):
-    import h5py
-    h5f = h5py.File(fname, mode)
-    if not group: grp = h5f.create_group(lat.name)
-    else: grp = h5f.create_group(group)
-
-    # get the pv list
-    datnames = []
-    for e in lat.getElementList('*', virtual=False):
-        print e
-        for k in e.fields():
-            for hdl,tag in [('readback', 0), ('setpoint', 1)]:
-                pvs = [s.encode("ascii") for s in e.pv(field=k, handle=hdl)]
-                if not pvs: continue
-                for pv in pvs:
-                    datnames.append((e.name, k, tag, pv))
-    #print datnames
-    allpvs = [v[3] for v in datnames]
-    alldat = caget(allpvs, format=FORMAT_TIME)
-    scalars, dead = [], []
-    sz_name, sz_fld, sz_pv = 0, 0, 0
-    for i,dat in enumerate(alldat):
-        name, fld, rb, pv = datnames[i][:4]
-        if len(name) > sz_name: sz_name = len(name)
-        if len(fld) > sz_fld: sz_fld = len(fld)
-        if len(pv) > sz_pv: sz_pv = len(pv)
-        if not dat.ok:
-            dead.append((name,fld,rb,pv,np.nan, 0.0, ""))
-        elif isinstance(dat, cothread.dbr.ca_array):
-            dsname = "wf_{0}.{1}_{2}".format(name,fld,rb)
-            grp[dsname] = dat
-            grp[dsname].attrs["element"] = name
-            grp[dsname].attrs["field"] = fld
-            grp[dsname].attrs["pv"] = pv
-            grp[dsname].attrs["rw"] = rb
-            grp[dsname].attrs["datetime"] = str(dat.datetime)
-            grp[dsname].attrs["timestamp"] = dat.timestamp
-        else:
-            scalars.append((name,fld,rb,pv,dat, dat.timestamp,
-                            str(dat.datetime)))
-
-    if not scalars: return
-
-    dt = np.dtype([("element", 'S%d' % sz_name),
-                   ('field', 'S%d' % sz_fld),
-                   ('rw', 'i'), 
-                   ('pv', 'S%d' % sz_pv),
-                   ('value', 'd'),
-                   ('timestamp', 'd'),
-                   ('datetime', 'S32')])
-    grp["__scalars__"] = np.array(scalars, dtype=dt)
-    grp["__dead__"] = np.array(dead, dtype=dt)
-    h5f.close()
-
+def readPvs(pvs, **kwargs):
+    """
+    returns a list of (value, length, timestamp)
+    """
+    timeout = kwargs.get("timeout", 3)
+    niter   = kwargs.get("niter", 3)
+    tmppvs = [v for v in pvs]
+    tmp = dict([(pv, None) for pv in pvs])
+    for i in range(niter):
+        tmpdat = caget(tmppvs, format=FORMAT_TIME, timeout=timeout)
+        dead = []
+        for pv,val in zip(tmppvs, tmpdat):
+            if not val.ok:
+                dead.append(pv)
+                continue
+            try:
+                tmp[pv] = (val, len(val), val.timestamp)
+            except:
+                tmp[pv] = (val, None, val.timestamp)
+        tmppvs = dead
+    return [tmp[pv] for pv in pvs]
 

@@ -11,6 +11,7 @@ require('cothread>=2.2')
 import cothread
 app = cothread.iqt()
 
+import re
 import aphla
 from aphla.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
 
@@ -63,6 +64,8 @@ class OrbitPlotMainWindow(QMainWindow):
     """
     def __init__(self, parent = None, machines=[], **kwargs):
         QMainWindow.__init__(self, parent)
+        self.iqtApp = kwargs.get("iqt", None)
+
         self.setIconSize(QSize(32, 32))
         self.error_bar = True
 
@@ -101,7 +104,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         for msg in kwargs.get("infos", []):
             self.logger.info(msg)
-        # dict of (machine, (lattice dict, default_lat))
+        # dict of (machine, (lattice dict, default_lat, pvm))
         self._mach = dict([(v[0], (v[1],v[2],v[3])) for v in machines])
         for m,(lats,lat0,pvm) in self._mach.items():
             self.logger.info("machine '%s' initialized: [%s]" % (
@@ -124,7 +127,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(self.mdiarea, SIGNAL("subWindowActivated(QMdiSubWindow)"),
                      self.updateMachineLatticeNames)
         self.mdiarea.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.physics = ApOrbitPhysics(mdiarea = self.mdiarea)
+        self.physics = ApOrbitPhysics(self.mdiarea, iqt=self.iqtApp)
         self.live_orbit = True
 
         self.setCentralWidget(self.mdiarea)
@@ -136,7 +139,7 @@ class OrbitPlotMainWindow(QMainWindow):
                                     QDockWidget.DockWidgetClosable)
         self.elemeditor.setFloating(False)
         #self.elemeditor.setEnabled(False)
-        self.elemeditor.setMinimumWidth(300)
+        self.elemeditor.setMinimumWidth(400)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
@@ -171,8 +174,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.newElementPlot("BPM", "x")
         self.newElementPlot("BPM", "y")
-        self.newElementPlot("HCOR", "x")
-        self.newElementPlot("VCOR", "y")
+        #self.newElementPlot("HCOR", "x")
+        #self.newElementPlot("VCOR", "y")
         #self.newElementPlot("QUAD", "b1")
         #self.newElementPlot("SEXT", "b2")
 
@@ -215,11 +218,16 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.connect(self.machMenu, SIGNAL("aboutToShow()"),
         #             self.updateMachMenu)
         self.openMenu = self.menuBar().addMenu("&Open")
-        self.openMenu.addAction("New ...", self.openNewPlot)
+        self.openMenu.addAction("New Plot ...", self.openNewPlot)
+        self.openMenu.addAction("New BPM Plot", partial(
+                self.newElementPlots, "BPM", "x,y"))
+        self.openMenu.addAction("New HCOR Plot", partial(
+                self.newElementPlots, "HCOR", "x"))
+        self.openMenu.addAction("New VCOR Plot", partial(
+                self.newElementPlots, "VCOR", "y"))
 
         self.openMenu.addSeparator()
-        self.openMenu.addAction("Save Lattice ...", self.saveLatSnapshot)
-        self.openMenu.addAction("Save Machine ...", self.saveMachSnapshot)
+        self.openMenu.addAction("Save Lattice ...", self.saveSnapshot)
 
         fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
         fileQuitAction.setShortcut("Ctrl+Q")
@@ -469,7 +477,11 @@ class OrbitPlotMainWindow(QMainWindow):
     def click_machine(self, act):
         self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
 
-    def newElementPlot(self, elem, field, **kw):
+    def newElementPlots(self, elem, fields, **kw):
+        for fld in re.findall(r'[^ ,]', fields):
+            self._newElementPlot(elem, fld, **kw)
+
+    def _newElementPlot(self, elem, field, **kw):
         """plot the field for element"""
         mach, lat = kw.get("machlat", self._current_mach_lat())
         handle = kw.get("handle", "readback")
@@ -522,24 +534,11 @@ class OrbitPlotMainWindow(QMainWindow):
         #    self.elemeditor.setEnabled(False)
         pass
 
-    def _prepare_parent_dirs(self, mach=""):
-        dt = datetime.datetime.now()
-        dpath = os.path.join(os.environ.get("HLA_DATA_DIR", ""),
-                             mach, dt.strftime("%Y_%m"))
-        if os.path.exists(dpath): return dpath
-
-        r = QMessageBox.question(
-            self, "Create directories",
-            "The default directories do not exist<br>"
-            "%s<br>"
-            "Create them ?" % dpath,
-            QMessageBox.Yes | QMessageBox.No)
-        if r == QMessageBox.Yes: 
-            qd = QtCore.QDir()
-            qd.mkpath(dpath)
-            self.logger.info("created '%s'" % dpath)
-            return dpath
-        return False
+    def saveSnapshot(self):
+        latdict = dict([(k,v[0]) for k,v in self._mach.items()])
+        mach, lat = self._current_mach_lat()
+        snapdlg = SaveSnapshotDialog(latdict, mach)
+        snapdlg.exec_()
 
     def saveLatSnapshot(self):
         mach, lat = self._current_mach_lat()
@@ -583,7 +582,9 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def openSnapshot(self):
         #self.logger.info("loading snapshot?")
-        lv = LatSnapshotMain(self)
+        latdict = dict([(k,v[0]) for k,v in self._mach.items()])
+        mach, lat = self._current_mach_lat()
+        lv = LatSnapshotMain(self, latdict, mach, self.logger)
         lv.setWindowFlags(Qt.Window)
         #self.logger.info("initialized")
         #lv.loadLatSnapshotH5()
@@ -611,7 +612,7 @@ class OrbitPlotMainWindow(QMainWindow):
         dlg.setLayout(v1)
 
         if dlg.exec_():
-            self.newElementPlot(str(elem.text()), str(fld.text()),
+            self.newElementPlots(str(elem.text()), str(fld.text()),
                                 machlat=(mach, lat))
 
     def click_markfam(self, on):
@@ -933,7 +934,7 @@ def main(par=None):
                        Qt.AlignRight | Qt.AlignBottom)
     app.processEvents()
     
-    mwin = OrbitPlotMainWindow(machines=machs, infos=infos)
+    mwin = OrbitPlotMainWindow(machines=machs, infos=infos, iqt=app)
     splash.showMessage("Window created", Qt.AlignRight | Qt.AlignBottom)
     #demo = QtGui.QMainWindow()
     #demo.raise_()

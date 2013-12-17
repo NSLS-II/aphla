@@ -8,11 +8,13 @@ list all properties of lattice.
 """
 
 import cothread
-app = cothread.iqt()
+if __name__ == "__main__":
+    app = cothread.iqt()
 
+import aphla
 import pvmanager
 
-from PyQt4 import QtGui
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (QAbstractTableModel, QDataStream, QFile,
         QIODevice, QModelIndex, QRegExp, QSize, QString, QVariant, Qt,
         SIGNAL, QEvent)
@@ -22,9 +24,10 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
         QGridLayout, QVBoxLayout, QTableView, QWidget, QApplication,
         QTableWidget, QDialogButtonBox, QStatusBar, QTableWidgetItem,
         QFormLayout, QLabel, QSizePolicy, QCompleter, QMenu, QAction,
-        QTabWidget, QCheckBox)
+        QTabWidget, QCheckBox, QMessageBox)
 import PyQt4.Qwt5 as Qwt
 from aporbitplot import ApPlot
+from pvmanager import CaDataMonitor
 #import traceback
 import collections
 import numpy as np
@@ -50,7 +53,7 @@ class SnapshotRow(object):
         self.rw = int(rw)
         self.ts = float(ts)
         self.wf = wf    # waveform: 0 - scalar
-        # live data + a list of values from each dataset
+        # mach data + a list of values from each dataset
         self.values = [None] + [v for v in values]
         self.hlvalues = {}
         self.ts = 0.0
@@ -77,11 +80,18 @@ class SnapshotRow(object):
                 self.diffs[i] = None
             elif self.wf == 0:
                 self.diffs[i] = v - self.values[iref]
-            elif self.wf == 1:
-                for j,vj in enumerate(v):
-                    self.diffs[i][j] = vj - self.values[iref][j]
+            elif self.wf >= 1:
+                #for j,vj in enumerate(v):
+                #    try:
+                #        self.diffs[i][j] = vj - self.values[iref][j]
+                #    except:
+                #        self.diffs[i][j] = None
+                self.diffs[i] = None
             else:
-                raise RuntimeError("unknown data for diff")
+                raise RuntimeError(
+                    "unknown data for diff {0} {1} {2} {3}\n wf={4}".format(
+                        self.element, self.field, self.pv, self.values,
+                        self.wf))
 
     def _update_rel_diff(self, iref):
         for i,v in enumerate(self.diffs):
@@ -116,17 +126,35 @@ class SnapshotRow(object):
         self._update_abs_diff(iref)
         if mode == 1:
             self._update_rel_diff(iref)
-    
+
+class LatSnapshotSortFilterProxyModel(QtGui.QSortFilterProxyModel):
+    def __init__(self, parent = None):
+        super(LatSnapshotSortFilterProxyModel, self).__init__(parent)
+        self.fltFld = ""
+        self.fltPv  = ""
+
+    def filterAcceptsRow(self, srcRow, srcParent):
+        i0 = self.sourceModel().index(srcRow, 0, srcParent)
+        i1 = self.sourceModel().index(srcRow, 1, srcParent)
+        i2 = self.sourceModel().index(srcRow, 2, srcParent)
+        name = self.sourceModel().data(i0).toString()
+        fld  = self.sourceModel().data(i1).toString()
+        pv   = self.sourceModel().data(i2).toString()
+
+        return name.contains(self.filterRegExp()) and \
+            fld.contains(self.fltFld) and \
+            pv.contains(self.fltPv)
 
 class LatSnapshotTableModel(QAbstractTableModel):
     def __init__(self):
         super(LatSnapshotTableModel, self).__init__()
-        self._cadata = pvmanager.CaDataMonitor([])
+        #self._cadata = pvmanager.CaDataMonitor([])
+        self._cadata = pvmanager.CaDataGetter([])
         self._rows = []
         self._mask   = []
-        self.dstitle = ["Live Data"]
+        self.dstitle = ["Last Shot"]
         self.dstimestamp = [0.0]
-        self.dsref = [0, 0] # live data as reference, abs diff
+        self.dsref = [0, 0] # last shot data as reference, abs diff
 
 
     def updateCells(self, **kwargs):
@@ -156,6 +184,11 @@ class LatSnapshotTableModel(QAbstractTableModel):
                 if not isinstance(v, h5py.Group): continue
                 grps.setdefault(k, 0)
                 grps[k] += 1
+        print grps
+        comm_lat = [k for k,v in grps.items() if v == len(fileNames)]
+        if len(comm_lat) == 1: return comm_lat[0]
+
+        # need to choose one common lattice
         dlg = QDialog()
         gp = QGroupBox("Choose Lattice")
         vbox = QVBoxLayout()
@@ -184,7 +217,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
 
         return None
 
-    def loadLatSnapshotH5(self, fnames):
+    def loadSnapshotH5(self, fnames):
         if fnames is None:
             dpath = os.environ.get("HLA_DATA_DIR", "")
             fileNames = QtGui.QFileDialog.getOpenFileNames(
@@ -194,10 +227,11 @@ class LatSnapshotTableModel(QAbstractTableModel):
         else:
             fileNames = fnames
 
+        print "Checking files:", fileNames
         latname = self._choose_common_lattice(fileNames)
         if not latname: return
         
-        #print "Accepted the choice:", latname
+        print "Accepted the choice:", latname
         for fname in fileNames:
             f = h5py.File(str(fname), 'r')
             ds = f[latname]["__scalars__"]
@@ -208,6 +242,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
             vals  = list(ds[:, "value"])
             ts    = list(ds[:, "timestamp"] )
             wf    = [0] * len(pvs)
+            # read waveforms
             for k,v in f[latname].items():
                 if not k.startswith("wf_"): continue
                 pvs.append(v.attrs["pv"])
@@ -230,21 +265,17 @@ class LatSnapshotTableModel(QAbstractTableModel):
     def addDataSet(self, pvs, elements, fields, rw, values, ts, **kwarg):
         wf = kwarg.get("wf", [0] * len(pvs))
         # assume no duplicate PV in pvs
-        #print "Add extra"
         mpv = {}
         for i,r in enumerate(self._rows):
             mpv.setdefault(r.pv, [])
             mpv[r.pv].append(i)
 
         # expand one column for each row
-        #for i,r in enumerate(self._rows):
-        #    r.values.append(None)
-        #    r.diffs.append(None)
-        #    r.dead.append(False)
         nset = len(self.dstitle) - 1
         for i,pv in enumerate(pvs):
             idx = mpv.get(pv, [])
             for j in idx:
+                # if find existing record by (name,field)
                 if elements[i] == self._rows[j].element and \
                    fields[i] == self._rows[j].field:
                     self._rows[j].values.append(values[i])
@@ -359,10 +390,7 @@ class LatSnapshotTableModel(QAbstractTableModel):
         ri, cj  = index.row(), index.column()
         ids, idsj = divmod(cj - C_VALUES, 2)
 
-        validrows = [r for i,r in enumerate(self._rows) if self._mask[i] == 0]
-        if ri >= len(validrows): return QVariant()
-
-        r = validrows[ri]
+        r = self._rows[ri]
         if role == Qt.DisplayRole:
             if cj == C_PV:
                 return QVariant(QString(r.pv))
@@ -454,9 +482,10 @@ class LatSnapshotTableModel(QAbstractTableModel):
         return Qt.ItemIsEnabled
         
     def rowCount(self, index=QModelIndex()):
-        validrows = [i for i in range(len(self._rows)) if self._mask[i] == 0]
-        return len(validrows)
-    
+        #validrows = [i for i in range(len(self._rows)) if self._mask[i] == 0]
+        #return len(validrows)
+        return len(self._rows)
+
     def columnCount(self, index=QModelIndex()):
         if not self._rows: return 0
         return C_VALUES + len(self._rows[0].values)*2
@@ -693,6 +722,23 @@ class LatSnapshotView(QTableView):
         QTableView.__init__(self, parent)
         #self.update_count = 0
         #self.timerId = self.startTimer(2000)
+        self.headers = self.horizontalHeader()
+        self.headers.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.headers.customContextMenuRequested.connect(self.show_header)
+        self.headers.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+
+    def show_header(self, position):
+        print "Position", position, self.headers.logicalIndexAt(position)
+        for i in range(self.headers.count()):
+            print self.headers.headerData(i, Qt.Horizontal)
+        cmenu = QMenu()
+        #c = QApplication.clipboard()
+
+        #    cmenu.addAction("&Copy", 
+        #                    partial(c.setText, d.toString()), "CTRL+C")
+        #    cmenu.addAction("Copy Column", partial(self.copy_pvs, c.setText))
+        #cmenu.exec_(e.globalPos())
+
 
     def contextMenuEvent(self, e):
         mdl = self.model()
@@ -738,11 +784,13 @@ class LatSnapshotView(QTableView):
         for i in range(C_VALUES + 1, mdl.columnCount(), 2):
             self.setColumnHidden(i, s)
 
+class SnapshotViewerWidget(QWidget):
+    def __init__(self, parent, latdict, mach, logger):
+        super(SnapshotViewerWidget, self).__init__(parent)
 
-class LatSnapshotMain(QDialog):
-    def __init__(self, parent = None):
-        QDialog.__init__(self, parent)
-        self.setWindowFlags(Qt.WindowCloseButtonHint|Qt.WindowMinMaxButtonsHint)
+        self._lat_dict = latdict
+        self._cur_mach = mach
+        self._logger = logger
         #self.model = None
         #self.connect(self, SIGNAL('tabCloseRequested(int)'), self.closeTab)
         #gb = QGroupBox("select")
@@ -769,76 +817,82 @@ class LatSnapshotMain(QDialog):
                                     QSizePolicy.Fixed)
         self.valMeter.setEnabled(False)
         self.cmbRefDs = QtGui.QComboBox()
-        self.cmbRefDs.addItem("Live Data")
+        self.cmbRefDs.addItem("Last Shot")
         self.cmbRefTp = QtGui.QComboBox()
-        self.cmbRefTp.addItem("absolute diff")
-        self.cmbRefTp.addItem("relative diff [%]")
+        self.cmbRefTp.addItem("Absolute diff")
+        self.cmbRefTp.addItem("Relative diff [%]")
 
         fmbox2.addRow("Reference", self.cmbRefDs)
         fmbox2.addRow("Difference", self.cmbRefTp)
         fmbox2.addRow("Element", self.elemNameBox)
         fmbox2.addRow("Field", self.elemFldBox)
         fmbox2.addRow("PV", self.pvBox)
-        fmbox2.addRow("Name", self.lblNameField)
-        #fmbox2.addRow("Field", self.lblField)
-        fmbox2.addRow("Step", self.lblStep)
-        #fmbox2.addRow("Range", self.valMeter)
-        fmbox2.addRow("Range", self.lblRange)
+        #fmbox2.addRow("Name", self.lblNameField)
+        #fmbox2.addRow("Step", self.lblStep)
+        #fmbox2.addRow("Range", self.lblRange)
         fmbox2.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         fmbox2.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
         #self.fldGroup.setLayout(fmbox2)
+        tblFltBox = QtGui.QGroupBox("Filter")
+        tblFltBox.setLayout(fmbox2)
+
         tblGrpBox = QtGui.QGroupBox("Lattice Data")
-        self.cbxLive = QCheckBox("Live")
-        self.cbxLive.setChecked(True)
-        self.cbxHidePv = QCheckBox("Hide PV")
-        self.cbxHideDiff = QCheckBox("Hide Difference")
+        #self.cbxLive = QCheckBox("Live")
+        #self.cbxLive.setChecked(True)
+        self.cbxHidePv        = QCheckBox("Hide PV")
+        self.cbxHideReadback  = QCheckBox("Hide Readback")
+        self.cbxHideDiff      = QCheckBox("Hide Difference")
         self.cbxHideTimeStamp = QCheckBox("Hide timestamp")
         vbox1 = QVBoxLayout()
-        vbox1.addWidget(self.cbxLive)
+        #vbox1.addWidget(self.cbxLive)
         vbox1.addWidget(self.cbxHidePv)
+        vbox1.addWidget(self.cbxHideReadback)
         vbox1.addWidget(self.cbxHideDiff)
         vbox1.addWidget(self.cbxHideTimeStamp)
         vbox1.addStretch()
         tblGrpBox.setLayout(vbox1)
 
-        vbox2 = QVBoxLayout()
-        self.btnLoad    = QPushButton("Load")
+        gbox1 = QGridLayout()
+        self.btnLoad    = QPushButton("Load...")
         self.btnSave    = QPushButton("Save")
         self.btnOneshot = QPushButton("One Shot")
         self.btnPut     = QPushButton("Put")
         self.btnRamp    = QPushButton("Ramp")
-        vbox2.addWidget(self.btnLoad)
-        vbox2.addWidget(self.btnSave)
-        vbox2.addWidget(self.btnOneshot)
-        vbox2.addWidget(self.btnPut)
-        vbox2.addWidget(self.btnRamp)
-        vbox2.addStretch()
-        hbox1 = QHBoxLayout()
-        hbox1.addWidget(tblGrpBox, 1.0)
-        btnFrm = QtGui.QFrame()
-        btnFrm.setFrameStyle(QtGui.QFrame.VLine | QtGui.QFrame.Sunken)
-        hbox1.addWidget(btnFrm)
-        hbox1.addLayout(vbox2, 0.0)
-        vbox = QVBoxLayout()
-        vbox.addLayout(hbox1, 0.0)
-        vbox.addLayout(fmbox2, 1.0)
-        
+        gbox1.addWidget(self.btnLoad, 0, 0)
+        gbox1.addWidget(self.btnSave, 0, 1)
+        gbox1.addWidget(self.btnOneshot, 0, 2)
+        gbox1.addWidget(self.btnPut, 0, 3)
+        gbox1.addWidget(self.btnRamp, 1, 0)
+        #btnFrm = QtGui.QFrame()
+        #btnFrm.setFrameStyle(QtGui.QFrame.VLine | QtGui.QFrame.Sunken)
+        #hbox1.addWidget(btnFrm)
+        #hbox1.addLayout(vbox2, 0.0)
+
         self.extraPlot = QtGui.QFrame()
         self.extraPlot.setFrameStyle(QtGui.QFrame.HLine | QtGui.QFrame.Sunken)
         self.wfplt = ApPlot()
         rhsLayout = QtGui.QVBoxLayout()
         rhsLayout.addWidget(self.wfplt)
         self.extraPlot.setLayout(rhsLayout)
-        vbox.addWidget(self.extraPlot, 10.0)
         self.extraPlot.hide()
+
+        vbox = QVBoxLayout()
+
+        vbox.addWidget(tblFltBox, 0.0)
+        vbox.addWidget(self.extraPlot, 10.0)
+        vbox.addWidget(tblGrpBox, 0.0)
+        vbox.addStretch()
+        vbox.addLayout(gbox1, 0.0)
+
         self.model = LatSnapshotTableModel()
-        #self.proxymodel = QtGui.QSortFilterProxyModel()
-        #self.proxymodel.setSourceModel(self.model)
-   
+        self.proxymodel = LatSnapshotSortFilterProxyModel()
+        self.proxymodel.setSourceModel(self.model)
+        self.proxymodel.setDynamicSortFilter(True)
+
         self.tableview = LatSnapshotView()
         #self.tableview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tableview.setModel(self.model)
-        #self.tableview.setModel(self.proxymodel)
+        #self.tableview.setModel(self.model)
+        self.tableview.setModel(self.proxymodel)
         #self.tableview.setItemDelegate(LatSnapshotDelegate(self))
         self.tableview.setSortingEnabled(True)
         self.tableview.setWhatsThis("double click cell to enter editing mode")
@@ -852,24 +906,25 @@ class LatSnapshotMain(QDialog):
             sm, SIGNAL("selectionChanged(QItemSelection,QItemSelection)"),
             self.selRow)
 
-        self.tabs = QTabWidget()
-        self.tabs.addTab(self.tableview, "Table")
         self.plt = ApPlot()
         #self.plt = ApPlot()
         self.plt.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend)
         self.plt.curve1.detach()
         self.plt.curve2.detach()
+        self.plt.hide()
 
-
-        self.tabs.addTab(self.plt, "Plot")
         hbox = QHBoxLayout()
-        hbox.addWidget(self.tabs, 2)
+        hbox.addWidget(self.tableview, 2)
         hbox.addLayout(vbox, 0)
         #vbox.addWidget(self.fldGroup)
         #cw = QWidget(self)
         #cw.setLayout(hbox)
         #self.setWidget(cw)
-        self.setLayout(hbox)
+        vbox2 = QVBoxLayout()
+        vbox2.addWidget(self.plt, 0.0)
+        vbox2.addLayout(hbox, 1.0)
+
+        self.setLayout(vbox2)
 
         #self.connect(self.elemBox, SIGNAL("editingFinished()"), 
         #             self.refreshTable)
@@ -889,23 +944,30 @@ class LatSnapshotMain(QDialog):
 
         #
         self.connect(self.elemNameBox, SIGNAL("textChanged(QString)"),
-                     self.filterTableRows)
+                     self.filterChanged)
         self.connect(self.elemFldBox, SIGNAL("textChanged(QString)"),
-                     self.filterTableRows)
+                     self.filterChanged)
         self.connect(self.pvBox, SIGNAL("textChanged(QString)"),
-                     self.filterTableRows)
+                     self.filterChanged)
         #
-        self.connect(self.btnLoad, SIGNAL("pressed()"), self.loadLatSnapshotH5)
-        self.connect(self.btnSave, SIGNAL("pressed()"), self.saveLatSnapshotH5)
+        self.connect(self.btnLoad, SIGNAL("pressed()"), self.loadSnapshotH5)
         self.connect(self.btnOneshot, SIGNAL("pressed()"), self._dead_button)
         self.connect(self.btnPut, SIGNAL("pressed()"), self._dead_button)
         self.connect(self.btnRamp, SIGNAL("pressed()"), self._dead_button)
 
-        self.setWindowTitle("Element Editor")
+        self.setWindowTitle("Snapshot Tool")
         self.noTableUpdate = True
         #self.cbxHidePv.setChecked(True)
 
-        self.timerId = self.startTimer(1500)
+        #self.timerId = self.startTimer(1500)
+
+    def filterChanged(self, txt):
+        self.proxymodel.fltFld  = self.elemFldBox.text()
+        self.proxymodel.fltPv = self.pvBox.text()
+        rx = QtCore.QRegExp(self.elemNameBox.text(),
+                            Qt.CaseInsensitive,
+                            QtCore.QRegExp.Wildcard)
+        self.proxymodel.setFilterRegExp(rx)
 
     def selRow(self, i1, i2):
         rows = [i.top() for i in i1]
@@ -970,14 +1032,14 @@ class LatSnapshotMain(QDialog):
 
     def timerEvent(self, e):
         if e.timerId() != self.timerId: return
-        if self.cbxLive.checkState() == Qt.Unchecked: return
+        #if self.cbxLive.checkState() == Qt.Unchecked: return
             #self.tabs.currentIndex() =?= 0
 
         self.model.updateCells()
 
         #    self.model.updateLiveData()
         #    #self.model.updateVisibleData()
-        if self.tabs.currentIndex() == 1:
+        if True:
             p = self.plt
             idx, diffs = self.model.getDiffs()
             if not idx or not diffs:
@@ -1035,25 +1097,27 @@ class LatSnapshotMain(QDialog):
         #for i in range(n1, n0):
         #    self.tableview.hideRow(i)
 
-    def saveLatSnapshotH5(self):
-        QtGui.QMessageBox.warning(self, "Not Implemented",
-                            "'saveLatSnapshotH5 is not implemented yet")
-        
+    #def saveLatSnapshotH5(self):
+    #    snapdlg.exec_()
 
     def _dead_button(self):
         QtGui.QMessageBox.warning(self, "Not Implemented",
                             "This is not implemented yet")
 
-    def loadLatSnapshotH5(self, fnames = None):
-        st = self.cbxLive.checkState()
-        self.cbxLive.setCheckState(Qt.Unchecked)
-        for fname in self.model.loadLatSnapshotH5(fnames):
+    def loadSnapshotH5(self, fnames = None):
+        #st = self.cbxLive.checkState()
+        #self.cbxLive.setCheckState(Qt.Unchecked)
+        fnames = ['/Users/lyyang/devel/nsls2-hla/nsls2v2/2013_12/Untitled.h5']
+        for fname in self.model.loadSnapshotH5(fnames):
             self.cmbRefDs.addItem(str(fname))
-        #self.tableview.resizeColumnsToContents()
-        self.tableview.resizeColumnToContents(C_ELEMENT)
-        self.tableview.resizeColumnToContents(C_FIELD)
-        self.tableview.resizeColumnToContents(C_RW)
-        self.cbxLive.setCheckState(st)
+
+        self.tableview.resizeColumnsToContents()
+        #self.tableview.setVisible(False)
+        #self.tableview.resizeColumnToContents(C_ELEMENT)
+        #self.tableview.resizeColumnToContents(C_FIELD)
+        #self.tableview.resizeColumnToContents(C_RW)
+        #self.tableview.setVisible(True)
+        #self.cbxLive.setCheckState(st)
 
     def refreshTable(self, txt = None):
         return
@@ -1192,6 +1256,195 @@ class LatSnapshotMain(QDialog):
         self.se = vmax
         #self.refreshTable()
 
+class SaveSnapshotWidget(QWidget):
+    def __init__(self, parent, machs, mach, logger):
+        super(SaveSnapshotWidget, self).__init__(parent)
+        self._lat_dict = machs
+        self._cur_mach = mach
+        self._logger = logger
+        self._pvlst = {}
+        #self.fldGroup = QGroupBox()
+        self.lblNameField  = QLabel()
+        self.lblStep  = QLabel()
+        self.lblRange = QLabel()
+        self.valMeter = Qwt.QwtThermo()
+        self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
+        self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding, 
+                                    QSizePolicy.Fixed)
+        self.valMeter.setEnabled(False)
+        self.cmbMach = QtGui.QComboBox()
+        for k in self._lat_dict.keys():
+            self.cmbMach.addItem(k)
+        if self._cur_mach:
+            i = self.cmbMach.findText(self._cur_mach)
+            self.cmbMach.setCurrentIndex(i)
+
+        self.cmbLat = QtGui.QComboBox()
+        self.cmbLat.addItem("*")
+        for k in self._lat_dict.get(str(self.cmbMach.currentText()), {}).keys():
+            self.cmbLat.addItem(k)
+        self.cmbLat.setCurrentIndex(0)
+
+        self.btnBrowsePv = QtGui.QPushButton("Browse...")
+        gdbox = QtGui.QGridLayout()
+        for i,(lbl,wid) in enumerate([("Machine:", self.cmbMach),
+                                      ("Lattice:", self.cmbLat),
+                                      ("Extra PVs:", self.btnBrowsePv)]):
+            hbox = QtGui.QHBoxLayout()
+            hbox.addWidget(QLabel(lbl))
+            hbox.addWidget(wid)
+            hbox.addStretch()
+            gdbox.addLayout(hbox, 0, i)
+
+        self.tblPvs = QtGui.QTableWidget()
+
+        vbox2 = QtGui.QVBoxLayout()
+        vbox2.addLayout(gdbox)
+        vbox2.addWidget(self.tblPvs)
+
+        hbox2 = QtGui.QHBoxLayout()
+        self.btnSave = QtGui.QPushButton("Save...")
+        hbox2.addStretch()
+        hbox2.addWidget(self.btnSave)
+        vbox2.addLayout(hbox2)
+
+        self.setLayout(vbox2)
+
+        self.connect(self.cmbMach, SIGNAL("currentIndexChanged(QString)"),
+                     self.update_latlist)
+        self.connect(self.cmbLat, SIGNAL("currentIndexChanged(QString)"),
+                     self.update_pvlist)
+        self.connect(self.btnSave, SIGNAL("clicked()"), self.saveSnapshot)
+
+        self.update_pvlist()
+        self.setMinimumWidth(600)
+
+    def _prepare_parent_dirs(self, mach=""):
+        dt = datetime.now()
+        dpath = os.path.join(os.environ.get("HLA_DATA_DIR", ""),
+                             mach, dt.strftime("%Y_%m"))
+        if os.path.exists(dpath): return dpath
+
+        r = QtGui.QMessageBox.question(
+            self, "Create directories",
+            "The default directories do not exist<br>"
+            "%s<br>"
+            "Create them ?" % dpath,
+            QtGui.QMessageBox.Yes | QMessageBox.No)
+        if r == QMessageBox.Yes: 
+            qd = QtCore.QDir()
+            qd.mkpath(dpath)
+            self._logger.info("created '%s'" % dpath)
+            return dpath
+        return False
+
+    def update_latlist(self, mach):
+        self.cmbLat.clear()
+        self.cmbLat.addItem("*")
+        for latname in self._lat_dict.get(mach, {}).keys():
+            self.cmbLat.addItem(latname)
+        self.update_pvlist()
+
+    def update_pvtable(self):
+        self.tblPvs.clear()
+        self.tblPvs.setColumnCount(8)
+        npvs = sum([len(pvs) for k,pvs in self._pvlst.items()])
+        self.tblPvs.setRowCount(npvs)
+        stat = {}
+        for lat,pvlst in self._pvlst.items():
+            for i,pvr in enumerate(pvlst):
+                pv, name, fam, fld, rw = pvr
+                self.tblPvs.setItem(i,0, QtGui.QTableWidgetItem(pv))
+                self.tblPvs.setItem(i,2, QtGui.QTableWidgetItem(name))
+                self.tblPvs.setItem(i,3, QtGui.QTableWidgetItem(fam))
+                self.tblPvs.setItem(i,4, QtGui.QTableWidgetItem(fld))
+                self.tblPvs.setItem(i,5, QtGui.QTableWidgetItem(lat))
+                self.tblPvs.setItem(i,6, QtGui.QTableWidgetItem(rw))
+                stat.setdefault(fam, 0)
+                stat[fam] += 1
+        self.tblPvs.resizeColumnToContents(0)
+        s = ", ".join(["%s: %d" % (k,v) for k,v in stat.items()])
+        if self._logger: self._logger.info("archived: %s" % s)
+
+    def update_pvlist(self):
+        machname = str(self.cmbMach.currentText())
+        self._pvlst = {}
+        for latname,lat in self._lat_dict[machname].items():
+            if str(self.cmbLat.currentText()) not in ["*", latname]:
+                continue
+            pvs = aphla.lattice.saveArchivePvs(lat)
+            self._pvlst[latname] = pvs
+        self.update_pvtable()
+
+    def saveSnapshot(self):
+        mach = str(self.cmbMach.currentText())
+        dpath = self._prepare_parent_dirs(mach)
+        if not dpath:
+            QMessageBox.warning(self, "Abort", "Aborted")
+            return
+        dt = datetime.now()
+        fname_pref = os.path.join(dpath, dt.strftime("snapshot_%d_%H%M%S_"))
+        fname = fname_pref + mach + ".hdf5"
+        if self.cmbLat.currentText() != "*":
+            fname = fname_pref + str(self.cmbLat.currentText()) + ".hdf5"
+        print fname
+
+        fileName = QtGui.QFileDialog.getSaveFileName(
+            self, "Save Lattice Snapshot Data",
+            QString(fname),
+            "Data Files (*.h5 *.hdf5);;All Files(*)")
+        fileName = str(fileName)
+        if not fileName: return
+        idx0 = 0
+        for latname,allpvr in self._pvlst.items():
+            pvs = [pvr[0] for pvr in allpvr]
+            dat = aphla.catools.readPvs(pvs)
+            for j,d in enumerate(dat):
+                i = j + idx0
+                if d is None:
+                    val, dt = "", ""
+                    self.tblPvs.setItem(i,1, QtGui.QTableWidgetItem(val))
+                    self.tblPvs.setItem(i,7, QtGui.QTableWidgetItem(dt))
+                    self.tblPvs.item(i,0).setBackground(Qt.red)
+                    self.tblPvs.item(i,1).setBackground(Qt.red)
+                else:
+                    val, dt = "{0}".format(d[0]), datetime.fromtimestamp(d[2])
+                    if d[1] is not None and d[1] > 2:
+                        val = "[{0} ...]".format(d[0][0])
+                    self.tblPvs.setItem(i,1, QtGui.QTableWidgetItem(val))
+                    self.tblPvs.setItem(i,7, QtGui.QTableWidgetItem(str(dt)))
+                    #self.tblPvs.item(i,1).setBackground(Qt.green)
+                    #self.tblPvs.item(i,1).setBackground(Qt.green)
+            vals = [d[0] if d is not None else None for d in dat]
+            size = [d[1] if d is not None else None for d in dat]
+            tmstamp = [d[2] if d is not None else None for d in dat]
+            elemnames, fams, flds, rbsp = zip(*allpvr)[1:]
+            aphla.lattice.saveSnapshot(fileName, latname, 
+                                       pvs, vals, size, tmstamp, rbsp,
+                                       elemnames, flds, mode='w')
+            self._logger.info("snapshot '%s' created: '%s'" % (
+                    latname, fileName))
+            idx0 += len(pvs)
+
+        self.tblPvs.setVisible(False)
+        self.tblPvs.resizeColumnsToContents()
+        self.tblPvs.setVisible(True)
+
+
+class LatSnapshotMain(QDialog):
+    def __init__(self, parent, latdict, mach, logger):
+        QDialog.__init__(self, parent)
+        self.setWindowFlags(Qt.WindowCloseButtonHint|Qt.WindowMinMaxButtonsHint)
+        snapview = SnapshotViewerWidget(self, latdict, mach, logger)
+        snapsave = SaveSnapshotWidget(self, latdict, mach, logger)
+        
+        tabs = QTabWidget()
+        tabs.addTab(snapview, "View")
+        tabs.addTab(snapsave, "Save")
+        vbox = QVBoxLayout()
+        vbox.addWidget(tabs)
+        self.setLayout(vbox)
+
 class MTestForm(QDialog):
     def __init__(self, parent=None):
         super(MTestForm, self).__init__(parent)
@@ -1230,9 +1483,8 @@ class MTestForm(QDialog):
 
 if __name__ == "__main__":
     #app = QApplication(sys.argv)
-    #ap.machines.init("nsls2v2")
-    #form = MTestForm()
-    form = LatSnapshotMain()
+    lat0, latdict = aphla.machines.load("nsls2v2", return_lattices=True)
+    form = LatSnapshotMain(None, {"nsls2v2": latdict}, "nsls2v2", None)
     form.resize(1024, 700)
     #fname = "/epics/data/aphla/data/2013_11/snapshot_08_102731_SR.hdf5"
     #form.loadLatSnapshotH5([fname])
