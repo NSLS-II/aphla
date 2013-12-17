@@ -31,7 +31,7 @@ class CaDataMonitor:
         self.samples     = kwargs.get("samples", 10)
         self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
-        self.timeout     = kwargs.get("timeout", 2)
+        self.timeout     = kwargs.get("timeout", 3)
         self.data = {}
         self._monitors = {}
         self._dead = set()
@@ -87,7 +87,10 @@ class CaDataMonitor:
         elif not lst[-1].ok: return default
         return lst[-1]
 
-    def dead(self, pv):
+    def dead(self):
+        return self._dead
+
+    def isDead(self, pv):
         return (pv in self._dead)
 
     def __len__(self):

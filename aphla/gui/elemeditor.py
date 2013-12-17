@@ -92,6 +92,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         self._unitsys = [None, 'phy']
         self._unitsymb = [None, []]
         self._data = []
+        self._inactive = []
 
     def loadElements(self, elems, cadata = None):
         self.beginResetModel()
@@ -144,11 +145,11 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def _get_cadata_qv(self, elem, fld, hdl, u = None):
         if self._cadata:
             pvs = elem.pv(field=fld, handle=hdl)
+            if len(pvs) == 0 or u not in elem.getUnitSystems(field=fld):
+                return QVariant()
             vals = [self._cadata.get(pv, None) for pv in 
                     elem.pv(field=fld, handle=hdl)]
-            if len(vals) == 0 or u not in elem.getUnitSystems(field=fld):
-                return QVariant()
-            elif len(vals) == 1:
+            if len(vals) == 1:
                 x = elem.convertUnit(fld, vals[0], None, u)
                 return self._cadata_to_qvariant(x)
             else:
@@ -198,10 +199,10 @@ class ElementPropertyTableModel(QAbstractTableModel):
                     elem.family, elem.sb, elem.length))
             elif col == C_VAL_SP:
                 pv = elem.pv(field=fld, handle="setpoint")
-                return QVariant("{0}".format(pv))
+                return QVariant(", ".join(pv))
             elif col == C_VAL_RB:
                 pv = elem.pv(field=fld, handle="readback")
-                return QVariant("{0}".format(pv))
+                return QVariant(", ".join(pv))
             elif col > C_VAL_RB:
                 return QVariant(self._unitsymb[col-C_VAL_RB][r])
         elif role == Qt.ForegroundRole:
@@ -565,16 +566,24 @@ class ElementPropertyView(QTableView):
     def contextMenuEvent(self, e):
         mdl = self.model()
         irow = self.rowAt(e.y())
+        icol = self.columnAt(e.x())
         #print "Row:", self.rowAt(e.y())
         cmenu = QMenu()
         m_dis = QAction("disabled", self)
         m_dis.setCheckable(True)
         act = mdl.isActive(irow)
+        c = QApplication.clipboard()
         if not act:
             m_dis.setChecked(True)
 
         self.connect(m_dis, SIGNAL("toggled(bool)"),
                      partial(self.disableElement, irow=irow))
+        if icol in [C_VAL_SP, C_VAL_RB]:
+            pvs = mdl.data(self.indexAt(e.pos()), Qt.ToolTipRole).toString()
+            cmenu.addAction(
+                "&Copy PV",
+                partial(c.setText, pvs), "CTRL+C")
+                            
         cmenu.addAction(m_dis)
         cmenu.exec_(e.globalPos())
 

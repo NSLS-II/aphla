@@ -109,7 +109,8 @@ class OrbitPlotMainWindow(QMainWindow):
         for m,(lats,lat0,pvm) in self._mach.items():
             self.logger.info("machine '%s' initialized: [%s]" % (
                 m, ", ".join([lat.name for k,lat in lats.items()])))
-
+            for pv in pvm.dead():
+                self.logger.warn("'{0}' is disconnected.".format(pv))
         ## DCCT current plot
         #self.dcct = DcctCurrentPlot()
         #self.dcct.setMinimumHeight(100)
@@ -172,13 +173,13 @@ class OrbitPlotMainWindow(QMainWindow):
         #                   "H Orbit", c = None)
         #print "Thread started", self.machinit.isRunning()
 
-        self.newElementPlot("BPM", "x")
-        self.newElementPlot("BPM", "y")
+        self.newElementPlots("BPM", "x")
+        self.newElementPlots("BPM", "y")
         #self.newElementPlot("HCOR", "x")
         #self.newElementPlot("VCOR", "y")
         #self.newElementPlot("QUAD", "b1")
         #self.newElementPlot("SEXT", "b2")
-
+        
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -923,7 +924,7 @@ def main(par=None):
 
 
         # pv manager 
-        pvm = CaDataMonitor()
+        pvm = CaDataMonitor(timeout=5)
         pvm.addPv(pvs)
         machs.append((m, latdict, lat0, pvm))
 
