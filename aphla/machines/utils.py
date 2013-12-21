@@ -383,7 +383,7 @@ def convCfsToSqlite(url, prefix = '', ignore = []):
         cfa.splitChainedElement('elemName')
         cfa.saveSqlite("%s%s.sqlite" % (prefix, latname))
 
-def convCsvToSqlite(fdb, *fcsvlst, **kwargs):
+def convCsvToSqlite(fdb, tag, *fcsvlst, **kwargs):
     sep = kwargs.get("sep", ";")
     _logger.info("creating new SQLite db: '%s'" % fdb)
     createLatticePvDb(fdb)
@@ -393,5 +393,10 @@ def convCsvToSqlite(fdb, *fcsvlst, **kwargs):
         _logger.debug("loaded {0} records from {1}".format(
                 len(cfa.rows), fcsv))
         cfa.splitPropertyValue("elemGroups", sep)
-        apdata._updateLatticePvDb(fdb, cfa.rows, sep)
+        cflst = []
+        for r in cfa.rows:
+            pv, prpt, tags = r
+            if tag not in tags: continue
+            cflst.append(r)
+        apdata._updateLatticePvDb(fdb, cflst, **kwargs)
 
