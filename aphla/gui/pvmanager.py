@@ -17,9 +17,9 @@ import threading, time
 import random
 from collections import deque
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 
-class CaDataMonitor:
+class CaDataMonitor(QtCore.QObject):
     def __init__(self, pvs = [], **kwargs):
         """
         - pvs a list of PV
@@ -28,6 +28,7 @@ class CaDataMonitor:
         optional:
         - simulation [True|False] use simulated data or real pv data
         """
+        super(CaDataMonitor, self).__init__()
         self.samples     = kwargs.get("samples", 10)
         self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
@@ -69,8 +70,10 @@ class CaDataMonitor:
         """
         update the reading, average, index and variance.
         """
+        if not val.ok: return
         pv = val.name
-        if val.ok and pv in self.data: self.data[pv].append(val)
+        if pv in self.data: self.data[pv].append(val)
+        self.emit(SIGNAL("dataChanged(PyQt_PyObject)"), val)
         #print "updating", idx, val, val.name, len(self.data[pv])
 
     def close(self, pv):

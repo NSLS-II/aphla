@@ -94,7 +94,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         self._data = []
         self._inactive = []
 
-    def loadElements(self, elems, cadata = None):
+    def loadElements(self, elems, flds, cadata = None):
         self.beginResetModel()
         self.clear()
         self._cadata = cadata
@@ -102,6 +102,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
             ik = 0
             self._elemrec.append((elem, ik, None))
             for var in sorted(elem.fields()):
+                if flds and var not in flds: continue
                 ik += 1
                 self._elemrec.append((elem, ik, var))
                 for j,u in enumerate(self._unitsys[1:]):
@@ -175,11 +176,15 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 if idx == 0: return QVariant(QString(elem.name))
                 return QVariant(fld)
             elif col == C_VAL_SP:
-                return self._get_cadata_qv(elem, fld, "setpoint", None)
+                val = self._get_cadata_qv(elem, fld, "setpoint", None)
             elif col >= C_VAL_RB:
                 iusys = col - C_VAL_RB
                 usys = self._unitsys[iusys]
-                return self._get_cadata_qv(elem, fld, "readback", usys)
+                val = self._get_cadata_qv(elem, fld, "readback", usys)
+            #
+            if isinstance(val, list):
+                return QVariant("[ ... ]")
+            return val
         elif role == Qt.EditRole:
             if col == C_FIELD: 
                 raise RuntimeError("what is this ?")
@@ -592,25 +597,34 @@ class ElementEditorDock(QDockWidget):
         QDockWidget.__init__(self, parent)
         #self.cadata = cadata
         #self.model = None
-        fmbox = QGridLayout()
+        fmbox = QFormLayout()
 
-        self.elemBox = QLineEdit()
-        self.elemBox.setToolTip(
+        self.elemName = QLineEdit()
+        self.elemName.setToolTip(
             "list elements within the range of the active plot.<br>"
             "Examples are '*', 'HCOR', 'BPM', 'QUAD', 'c*c20a', 'q*g2*'"
             )
-        self.elemBox.setCompleter(QCompleter([
+        self.elemName.setCompleter(QCompleter([
             "*", "BPM", "COR", "HCOR", "VCOR", "QUAD"]))
+
+        self.elemField = QLineEdit()
+        self.elemField.setToolTip(
+            "Element fields separated by comma, space or both."
+            "e.g. 'x, y'"
+            )
+
         #self.rangeSlider = qrangeslider.QRangeSlider()
         #self.rangeSlider.setMin(0)
         #self.rangeSlider.setMax(100)
         #self.rangeSlider.setRange(10, 70)
-        #self.elemBox.insertSeparator(len(self.elems))
+        #self.elemName.insertSeparator(len(self.elems))
         #fmbox.addRow("Range", self.rangeSlider)
-        fmbox.addWidget(QLabel("Filter"), 0, 0)
-        fmbox.addWidget(self.elemBox, 0, 1)
+        fmbox.addRow("Elements:", self.elemName)
+        fmbox.addRow("Fields:", self.elemField)
+        fmbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        fmbox.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
         #self.refreshBtn = QPushButton("refresh")
-        #fmbox.addRow(self.elemBox)
+        #fmbox.addRow(self.elemName)
 
         self._active_elem = None
         self._active_idx  = None
@@ -636,6 +650,7 @@ class ElementEditorDock(QDockWidget):
         self.connect(self.spb1, SIGNAL("valueChanged(double)"),
                      self.setActiveCell)
 
+        self.lblPv = QLabel("")
         self.lblRange = QLabel("")
         self.valMeter = Qwt.QwtThermo()
         self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
@@ -647,14 +662,14 @@ class ElementEditorDock(QDockWidget):
         self.connect(self.ledSet, SIGNAL("editingFinished()"),
                      self.setDirectValue)
         fmbox2.addRow("Name:", self.lblNameField)
-        #fmbox2.addRow("Field", self.lblField)
         #fmbox2.addRow("Range", self.valMeter)
         fmbox2.addRow("Range:", self.lblRange)
+        fmbox2.addRow("PV:", self.lblPv)
+        fmbox2.addRow("Set:", self.ledSet)
         fmbox2.addRow("Stepsize:", self.ledStep)
         fmbox2.addRow("Step x1:", self.spb1)
         fmbox2.addRow("Step x2:", self.spb2)
         fmbox2.addRow("Step x5:", self.spb5)
-        fmbox2.addRow("Set:", self.ledSet)
         fmbox2.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         fmbox2.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
         self.gpCellEditor.setLayout(fmbox2)
@@ -689,11 +704,13 @@ class ElementEditorDock(QDockWidget):
         cw.setLayout(vbox)
         self.setWidget(cw)
 
-        #self.connect(self.elemBox, SIGNAL("editingFinished()"), 
+        #self.connect(self.elemName, SIGNAL("editingFinished()"), 
         #             self.refreshTable)
-        self.connect(self.elemBox, SIGNAL("returnPressed()"), 
-                     self.refreshTable)
-        #self.connect(self.elemBox, SIGNAL("currentIndexChanged(QString)"),
+        self.connect(self.elemName, SIGNAL("returnPressed()"), 
+                     self.reloadElements)
+        self.connect(self.elemField, SIGNAL("returnPressed()"), 
+                     self.reloadElements)
+        #self.connect(self.elemName, SIGNAL("currentIndexChanged(QString)"),
         #             self.refreshTable)
 
         self.setWindowTitle("Element Editor")
@@ -712,19 +729,17 @@ class ElementEditorDock(QDockWidget):
         self.model.updateData(row1, row2)
         #QApplication.processEvent()
 
-    def refreshTable(self, txt = None):
-        self.model.clear()
-        #print "emitting 'reloadElements'"
-        #print "model=", self.tableview.model()
-        self.emit(SIGNAL("reloadElements(QString)"), self.elemBox.text())
-    
-    def loadElements(self, elems, cadata):
-        #self.elemBox.selectAll()
+    def reloadElements(self):
+        mach, latobj, cadata = self.parent().getCurrentMachLattice(cadata=True)
+        elems = latobj.getElementList(str(self.elemName.text()))
+        flds  = str(self.elemField.text())
+
+        #self.elemName.selectAll()
         t0 = time.time()
         _logger.info("Found elems: {0}".format(len(elems)))
         QApplication.processEvents()
         #print "cadata", cadata
-        self.model.loadElements(elems, cadata)
+        self.model.loadElements(elems, flds, cadata)
         #print "model size:", self.model.rowCount(), self.model.columnCount()
         for i in range(self.model.rowCount()):
             elem, fld, hdl = self.model._elemrec[i]
@@ -733,7 +748,7 @@ class ElementEditorDock(QDockWidget):
                 self.tableview.setSpan(i, 0, 1, self.model.columnCount())
             elif self.tableview.columnSpan(i, 0) > 1:
                 self.tableview.setSpan(i, 0, 1, 1)
-        #self.elemBox.deselect()
+        #self.elemName.deselect()
         self.tableview.setFocus()
         self.tableview.resizeColumnToContents(0)
         for i in range(self.model.columnCount()):
@@ -805,6 +820,8 @@ class ElementEditorDock(QDockWidget):
         #    elem.name, fld, bd, elem.stepSize(fld)))
         self.lblNameField.setText("{0}.{1}".format(elem.name, fld))
         self.lblRange.setText("[{0}, {1}]".format(bdl, bdr))
+        pvl = elem.pv(field=fld, handle="setpoint")
+        self.lblPv.setText("{0}".format(pvl))
 
     def updateCellInfo(self, elemrec):
         elem, ik, fld = elemrec
@@ -865,7 +882,7 @@ class ElementEditorDock(QDockWidget):
         if self.count() <= 0: self.setVisible(False)
 
     def setEnabled(self, v):
-        self.elemBox.setEnabled(v)
+        self.elemName.setEnabled(v)
         #self.refreshBtn.setEnabled(v)
 
     def updateModelData(self):

@@ -111,6 +111,8 @@ class OrbitPlotMainWindow(QMainWindow):
                 m, ", ".join([lat.name for k,lat in lats.items()])))
             for pv in pvm.dead():
                 self.logger.warn("'{0}' is disconnected.".format(pv))
+            self.connect(pvm, SIGNAL("dataChanged(PyQt_PyObject)"), 
+                         self._test)
         ## DCCT current plot
         #self.dcct = DcctCurrentPlot()
         #self.dcct.setMinimumHeight(100)
@@ -147,9 +149,6 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(self.elemeditor, 
                      SIGNAL("elementChecked(PyQt_PyObject, bool)"),
                      self.physics.elementChecked)
-        self.connect(self.elemeditor,
-                     SIGNAL("reloadElements(QString)"),
-                     self.reloadElementsEditor)
         self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
         self.createMenuToolBar()
@@ -173,13 +172,16 @@ class OrbitPlotMainWindow(QMainWindow):
         #                   "H Orbit", c = None)
         #print "Thread started", self.machinit.isRunning()
 
-        self.newElementPlots("BPM", "x")
-        self.newElementPlots("BPM", "y")
+        self.newElementPlots("BPM", "x, y")
+        #self.newElementPlot("BPM", "y")
         #self.newElementPlot("HCOR", "x")
         #self.newElementPlot("VCOR", "y")
         #self.newElementPlot("QUAD", "b1")
         #self.newElementPlot("SEXT", "b2")
         
+
+    def _test(self, val):
+        print "data changed:", val.pv, val
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -194,15 +196,6 @@ class OrbitPlotMainWindow(QMainWindow):
         if lat0:
             i = self.latBox.findText(lat0.name)
             self.latBox.setCurrentIndex(i)
-
-    def reloadElementsEditor(self, elems):
-        mach, lat = self._current_mach_lat()
-        cadata = self._mach[mach][2]
-        #sb, se = self.getVisibleRange()
-        #elemlst = self.getVisibleElements(elems, sb, se)
-        elemlst = lat.getElementList(str(elems))
-        #print "cadata is:", cadata
-        self.elemeditor.loadElements(elemlst, cadata)
 
     def closeEvent(self, event):
         self.physics.close()
@@ -467,24 +460,27 @@ class OrbitPlotMainWindow(QMainWindow):
                 .arg(platform.python_version()).arg(QtCore.QT_VERSION_STR)
                 .arg(QtCore.PYQT_VERSION_STR).arg(platform.system())))
 
-
-    def _current_mach_lat(self):
+    def getCurrentMachLattice(self, cadata = False):
         """return the current machine name and lattice object"""
         mach     = str(self.machBox.currentText())
         latname  = str(self.latBox.currentText())
         lat_dict, lat0, pvm = self._mach[mach]
-        return mach, lat_dict[latname]
+        if not cadata:
+            return mach, lat_dict[latname]
+        else:
+            return mach, lat_dict[latname], pvm
 
     def click_machine(self, act):
         self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
 
     def newElementPlots(self, elem, fields, **kw):
-        for fld in re.findall(r'[^ ,]', fields):
+        self.logger.info("new plots: %s %s" % (elem, fields))
+        for fld in re.findall(r'[^ ,]+', fields):
             self._newElementPlot(elem, fld, **kw)
 
     def _newElementPlot(self, elem, field, **kw):
         """plot the field for element"""
-        mach, lat = kw.get("machlat", self._current_mach_lat())
+        mach, lat = kw.get("machlat", self.getCurrentMachLattice())
         handle = kw.get("handle", "readback")
         elems = lat.getElementList(elem)
         s, pvs, elemnames = [], [], []
@@ -537,12 +533,12 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def saveSnapshot(self):
         latdict = dict([(k,v[0]) for k,v in self._mach.items()])
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         snapdlg = SaveSnapshotDialog(latdict, mach)
         snapdlg.exec_()
 
     def saveLatSnapshot(self):
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         dpath = self._prepare_parent_dirs(mach)
         if not dpath:
             QMessageBox.warning(self, "Abort", "Aborted")
@@ -560,7 +556,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.logger.info("snapshot created '%s'" % fileName)
 
     def saveMachSnapshot(self):
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         dpath = self._prepare_parent_dirs(mach)
         if not dpath:
             QMessageBox.warning(self, "Abort", "Aborted")
@@ -584,7 +580,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def openSnapshot(self):
         #self.logger.info("loading snapshot?")
         latdict = dict([(k,v[0]) for k,v in self._mach.items()])
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         lv = LatSnapshotMain(self, latdict, mach, self.logger)
         lv.setWindowFlags(Qt.Window)
         #self.logger.info("initialized")
@@ -592,7 +588,7 @@ class OrbitPlotMainWindow(QMainWindow):
         lv.exec_()
 
     def openNewPlot(self):
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         fl = QtGui.QFormLayout()
         fl.addRow("Machine", QtGui.QLabel("%s" % mach))
         fl.addRow("Lattice", QtGui.QLabel("%s" % lat.name))
@@ -619,7 +615,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def click_markfam(self, on):
         famname = self.sender().text()
         mks = []
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         # need to convert to python str
         for elem in lat.getElementList(str(famname)):
             if elem.family != famname: continue
@@ -638,7 +634,7 @@ class OrbitPlotMainWindow(QMainWindow):
         aphla.hlalib._reset_quad()
 
     def _random_hkick(self):
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         hcors = lat.getElementList('HCOR')
         i = np.random.randint(len(hcors))
         self.logger.info("Setting {0}/{1} HCOR".format(i, len(hcors)))
@@ -646,7 +642,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
     def _random_vkick(self):
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         cors = lat.getElementList('VCOR')
         i = np.random.randint(len(cors))
         cors[i].y += 1e-7
@@ -777,7 +773,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def getVisibleRange(self):
         w = self.mdiarea.currentSubWindow()
         if not w: 
-            mach, lat = self._current_mach_lat()
+            mach, lat = self.getCurrentMachLattice()
             self.logger.warn("no active plot, use full range of {0}.{1}".format(
                 mach, lat.name))
             return lat.getLocationRange()
@@ -786,7 +782,7 @@ class OrbitPlotMainWindow(QMainWindow):
         
     def getVisibleElements(self, elemname, sb = None, se = None):
         w = self.mdiarea.currentSubWindow()
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         elems = lat.getElementList(elemname)
         if sb is not None: 
             elems = [e for e in elems if e.sb >= sb]
@@ -856,13 +852,13 @@ class OrbitPlotMainWindow(QMainWindow):
 
 
     def runBba(self):
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         bpms = [e for e in lat.getElementList('BPM') 
                 if e not in self.physics.deadelems]
         self.physics.runBba(bpms)
 
     def plotSVD(self):
-        mach, lat = self._current_mach_lat()
+        mach, lat = self.getCurrentMachLattice()
         if not lat.ormdata:
             QMessageBox.critical(self, "ORM SVD", 
                                  "machine '%s' ORM data is not available" % \
