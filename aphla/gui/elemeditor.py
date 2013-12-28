@@ -88,32 +88,57 @@ class ElementPropertyTableModel(QAbstractTableModel):
         super(ElementPropertyTableModel, self).__init__()
         # elem obj, idx, name/fld
         self._elemrec = []
-        self._cadata  = kwargs.get("cadata", None) 
+        self._cadata  = None
         self._unitsys = [None, 'phy']
         self._unitsymb = [None, []]
         self._data = []
         self._inactive = []
+        self._pvidx = {}
 
-    def loadElements(self, elems, flds, cadata = None):
+    def loadElements(self, elems, flds):
         self.beginResetModel()
         self.clear()
-        self._cadata = cadata
         for elem in elems:
             ik = 0
-            self._elemrec.append((elem, ik, None))
+            self._elemrec.append((elem, ik, None, None, None))
+            self._data.append(None)
             for var in sorted(elem.fields()):
+                # check only fields interested
                 if flds and var not in flds: continue
                 ik += 1
-                self._elemrec.append((elem, ik, var))
+                self._elemrec.append(
+                    (elem, ik, var, elem.pv(field=var, handle="setpoint"),
+                     elem.pv(field=var, handle="readback")))
                 for j,u in enumerate(self._unitsys[1:]):
                     self._unitsymb[1+j].append(elem.getUnit(var, unitsys=u))
+                # setpoint and readback data
+                self._data.append([None, None])
+
+        # collect all the PVs
+        pvs, npvs = set(), 0
+        for i,r in enumerate(self._elemrec):
+            elem, ik, var, pvsp, pvrb = r
+            if var is None: continue
+            pvs.update(pvsp)
+            pvs.update(pvrb)
+            npvs += len(pvsp) + len(pvrb)
+            for pv in pvsp:
+                self._pvidx.setdefault(pv, [])
+                self._pvidx[pv].append((i, C_VAL_SP))
+            for pv in pvrb:
+                self._pvidx.setdefault(pv, [])
+                self._pvidx[pv].append((i, C_VAL_RB))
+        
+        self._cadata = CaDataMonitor(list(pvs))
+        self.connect(self._cadata, SIGNAL("dataChanged(PyQt_PyObject)"), self.updatePvData)
 
         self.endResetModel()
 
-    def updateData(self, row0, row1):
-        if len(self._elemrec) == 0: return
+    def updatePvData(self, val):
+        # update with pv=val.name, val is the value
+        if not self._elemrec: return
         #print "Size:", len(self._elemrec)
-        #print "Updating", row0, row1
+        print "Updating", val.name, val
         idx0 = self.index(row0, 0)
         idx1 = self.index(row1, self.columnCount()-1)
         #print idx0.row(), idx0.column(), idx1.row(), idx1.column()
@@ -345,6 +370,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         self._elemrec = []
         self._value   = []
         self._unit    = []
+        self._pvidx   = {}
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                   idx0, idx1)
 
