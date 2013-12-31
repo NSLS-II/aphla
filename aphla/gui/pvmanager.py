@@ -36,6 +36,7 @@ class CaDataMonitor(QtCore.QObject):
         self.data = {}
         self._monitors = {}
         self._dead = set()
+        self._wfsize = {}
 
         if pvs: self.addPv(pvs)
 
@@ -65,6 +66,10 @@ class CaDataMonitor(QtCore.QObject):
             else:
                 self._monitors[pv] = newmons[i]
                 self.data[pv] = deque([d[i]], self.samples)
+                try:
+                    self._wfsize[pv] = len(d[i])
+                except:
+                    self._wfsize[pv] = None
 
     def _ca_update(self, val, idx = None):
         """
@@ -73,8 +78,8 @@ class CaDataMonitor(QtCore.QObject):
         if not val.ok: return
         pv = val.name
         if pv in self.data: self.data[pv].append(val)
-        self.emit(SIGNAL("dataChanged(PyQt_PyObject)"), val)
-        #print "updating", idx, val, val.name, len(self.data[pv])
+        print "updating", idx, val, val.name, len(self.data[pv])
+        self.emit(QtCore.SIGNAL("dataChanged(PyQt_PyObject)"), val)
 
     def close(self, pv):
         p = self._monitors.get(pv, None)
@@ -82,6 +87,7 @@ class CaDataMonitor(QtCore.QObject):
         p.close()
         self._monitors[pv] = None
         self.data[pv].clear()
+        #self._wfsize.pop(pv, None)
 
     def get(self, pv, default = np.nan):
         if pv in self._dead: return default
@@ -89,6 +95,9 @@ class CaDataMonitor(QtCore.QObject):
         if len(lst) == 0: return default
         elif not lst[-1].ok: return default
         return lst[-1]
+
+    def waveFormSize(self, pv):
+        return self._wfsize.get(pv, None)
 
     def dead(self):
         return self._dead

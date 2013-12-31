@@ -154,3 +154,21 @@ def saveBpmFa(fname, mode, data):
     h5f["data_fa_timestamp"] = np.array([v[6] for v in data], "S")
     h5f.close()
 
+
+def pltRmCol(m, dx, raw_data, labels = []):
+    import matplotlib.pylab as plt
+    fig = plt.figure(figsize=(10, len(m)*2), dpi=100)
+    for i in range(len(m)):
+        y   = np.average(raw_data[i,:,:], axis=1)
+        err = np.std(raw_data[i,:,:], axis=1)
+
+        xl = (dx[-1] - dx[0])
+        t = np.linspace(dx[0] - 0.075*xl, dx[-1]+0.075*xl, 10)
+        c = np.average(raw_data[i,:,:])
+        yr = [t[j] * m[i] + c for j in range(len(t))]
+
+        plt.subplot(len(m), 1, i+1)
+        plt.errorbar(dx, y, yerr=err, )
+        plt.plot(t, yr, '-')
+
+

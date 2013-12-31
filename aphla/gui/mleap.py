@@ -111,8 +111,8 @@ class OrbitPlotMainWindow(QMainWindow):
                 m, ", ".join([lat.name for k,lat in lats.items()])))
             for pv in pvm.dead():
                 self.logger.warn("'{0}' is disconnected.".format(pv))
-            self.connect(pvm, SIGNAL("dataChanged(PyQt_PyObject)"), 
-                         self._test)
+            #self.connect(pvm, SIGNAL("dataChanged(PyQt_PyObject)"), 
+            #             self._test)
         ## DCCT current plot
         #self.dcct = DcctCurrentPlot()
         #self.dcct.setMinimumHeight(100)
@@ -181,7 +181,7 @@ class OrbitPlotMainWindow(QMainWindow):
         
 
     def _test(self, val):
-        print "data changed:", val.pv, val
+        print "data changed:", val.name, val
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -494,7 +494,7 @@ class OrbitPlotMainWindow(QMainWindow):
             self.logger.error("no data found for elements '{0}' and field '{1}'".format(elem, field))
             return
 
-        pvm = CaDataMonitor(pvs)
+        lats, lat0, pvm = self._mach[mach]
 
         magprof = lat.getBeamlineProfile()
 
