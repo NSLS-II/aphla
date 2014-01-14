@@ -1,0 +1,114 @@
+#   set point           ,     								Properties          ,  							     Tag   
+BTS-MG{Bend:1}I:Sp1-SP        , elemHandle=put,   elemIndex= 36	, elemName= B1	  ,  devName= B1	    ,  elemLength= 1.4	, elemPosition=9.77729		, elemType=BEND,  system=BTS,   elemField=b0,  aphla.sys.BTS,   aphla.sys.BTD
+
+BTS-MG{Quad:1}I:Sp1-SP        , elemHandle=put,   elemIndex= 30	, elemName= Q1	  ,  devName= Q1	    ,  elemLength= 0.35	, elemPosition=7.15426		,         elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Quad:2}I:Sp1-SP        , elemHandle=put,   elemIndex= 34	, elemName= Q2	  ,  devName= Q2	 	  ,  elemLength= 0.35	, elemPosition=8.03335		,         elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Quad:3}I:Sp1-SP        , elemHandle=put,   elemIndex= 38	, elemName= Q3	  ,  devName= Q3	 	  ,  elemLength= 0.35	, elemPosition=10.445 		,         elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Quad:1}I:Sp1-SP        , elemHandle=put,   elemIndex= 45	, elemName= Q1BD	  ,  devName= Q1BD	    ,  elemLength= 0.35	, elemPosition=14.1721		, elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Quad:2}I:Sp1-SP        , elemHandle=put,   elemIndex= 47	, elemName= Q2BD	  ,  devName= Q2BD	 	  ,  elemLength= 0.35	, elemPosition=14.7721		, elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+
+
+BTS-MG{Cor:1}I:Sp1-SP      , elemHandle=put,      elemIndex= 27	, elemName= CX1	      ,  devName= C1	      ,  elemLength= 0.05	, elemPosition=6.66763	,     elemType=HCOR ,  system=BTS,   elemField=x,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:1}I:Sp2-SP      , elemHandle=put,      elemIndex= 28	, elemName= CY1	      ,  devName= C1	      ,  elemLength= 0.05	, elemPosition=6.66763	,     elemType=VCOR ,  system=BTS,   elemField=y,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:2}I:Sp1-SP      , elemHandle=put,      elemIndex= 40	, elemName= CX2	      ,  devName= C2	  	  ,  elemLength= 0.05	, elemPosition=10.6508  ,     elemType=HCOR ,  system=BTS,   elemField=x,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:2}I:Sp2-SP      , elemHandle=put,      elemIndex= 41	, elemName= CY2	      ,  devName= C2	  	  ,  elemLength= 0.05	, elemPosition=10.6508  ,     elemType=VCOR ,  system=BTS,   elemField=y,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Cor:1}I:Sp1-SP      , elemHandle=put,   elemIndex= 49	, elemName= CX1BD	      ,  devName= C1BD	      ,  elemLength= 0.05	, elemPosition=16.0837	, elemType=HCOR ,  system=BTS,   elemField=x,   aphla.sys.BTD
+BTS-MG:BD{Cor:1}I:Sp2-SP      , elemHandle=put,   elemIndex= 50	, elemName= CY1BD	      ,  devName= C1BD	      ,  elemLength= 0.05	, elemPosition=16.0837	, elemType=VCOR ,  system=BTS,   elemField=y,   aphla.sys.BTD
+
+BTS-BI{BPM:1}Pos:UsrXoffset-SP     , elemHandle=put,   elemIndex= 22	  , elemName= P1	      ,  devName= P1	   ,  elemLength= 0.	,  elemPosition=4.46584	, elemType=BPM  ,  system=BTS,   elemField=goldenX,     aphla.sys.BTS,   aphla.sys.BTD 
+BTS-BI{BPM:1}Pos:UsrYoffset-SP     , elemHandle=put,   elemIndex= 22	  , elemName= P1	      ,  devName= P1	   ,  elemLength= 0.	,  elemPosition=4.46584	, elemType=BPM  ,  system=BTS,   elemField=goldenY,     aphla.sys.BTS,   aphla.sys.BTD 
+
+BTS-BI{VF:2}Pos-Sel                     , elemHandle=put,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=position,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}cam1:Acquire                , elemHandle=put,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=acquire,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}TIFF1:WriteFile             , elemHandle=put,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=saveImage,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}TIFF1:NumCapture            , elemHandle=put,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=nCapture,  aphla.sys.BTS,   aphla.sys.BTD
+
+BTS-BI:BD1{VF:1}Pos-Sel                  , elemHandle=put,   elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	, elemType=FLAG ,  system=BTS,   elemField=position,   aphla.sys.BTD
+BTS-BI:BD1{VF:1}cam1:Acquire             , elemHandle=put,   elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	, elemType=FLAG ,  system=BTS,   elemField=acquire,   aphla.sys.BTD
+BTS-BI:BD1{VF:1}TIFF1:WriteFile          , elemHandle=put,   elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	, elemType=FLAG ,  system=BTS,   elemField=saveImage,   aphla.sys.BTD
+BTS-BI:BD1{VF:1}TIFF1:NumCapture         , elemHandle=put,   elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	, elemType=FLAG ,  system=BTS,   elemField=nCapture,   aphla.sys.BTD
+
+                                                                                                                  
+BTS-BI:BD1{VF:2}Pos-Sel                  , elemHandle=put,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition= 19.3086	, elemType=FLAG ,  system=BTS,   elemField=position,   aphla.sys.BTD
+BTS-BI:BD1{VF:2}cam1:Acquire             , elemHandle=put,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition= 19.3086	, elemType=FLAG ,  system=BTS,   elemField=acquire,   aphla.sys.BTD
+BTS-BI:BD1{VF:2}TIFF1:WriteFile          , elemHandle=put,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition=	19.3086	, elemType=FLAG ,  system=BTS,   elemField=saveImage,   aphla.sys.BTD
+BTS-BI:BD1{VF:2}TIFF1:NumCapture         , elemHandle=put,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition=	19.3086	, elemType=FLAG ,  system=BTS,   elemField=nCapture,   aphla.sys.BTD
+
+#  READBACK         ,     								Properties          ,  							     Tag   
+BTS-MG{Bend:1}I:Ps1DCCT1-I         , elemHandle=get,   elemIndex= 36	, elemName= B1	  ,  devName= B1	    ,  elemLength= 1.4	, elemPosition=9.77729		, elemType=BEND,  system=BTS,   elemField=b0,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Bend:1}RpStart1-Cmd       ,   elemHandle=get,  elemIndex= 36	, elemName= B1	  ,  devName= B1	    ,  elemLength= 1.4	, elemPosition=9.77729		,  elemType=BEND,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+
+BTS-MG{Quad:1}I:Ps1DCCT1-I         , elemHandle=get,     elemIndex= 30	, elemName= Q1	  ,  devName= Q1	    ,  elemLength= 0.35	, elemPosition=7.15426		,        elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Quad:2}I:Ps1DCCT1-I         , elemHandle=get,     elemIndex= 34	, elemName= Q2	  ,  devName= Q2	 	  ,  elemLength= 0.35	, elemPosition=8.03335		,        elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Quad:3}I:Ps1DCCT1-I         , elemHandle=get,     elemIndex= 38	, elemName= Q3	  ,  devName= Q3	 	  ,  elemLength= 0.35	, elemPosition=10.445 		,        elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Quad:1}I:Ps1DCCT1-I         , elemHandle=get,     elemIndex= 45	, elemName= Q1BD	  ,  devName= Q1BD	    ,  elemLength= 0.35	, elemPosition=14.1721		 	, elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Quad:2}I:Ps1DCCT1-I         , elemHandle=get,     elemIndex= 47	, elemName= Q2BD	  ,  devName= Q2BD	 	  ,  elemLength= 0.35	, elemPosition=14.7721		 	, elemType=QUAD,  system=BTS,   elemField=b1,  aphla.sys.BTS,   aphla.sys.BTD
+
+BTS-MG{Quad:1}RpStart1-Cmd    , elemHandle=get,   elemIndex= 30	, elemName= Q1	  ,  devName= Q1	    ,  elemLength= 0.35	, elemPosition=7.15426		,          elemType=QUAD,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Quad:2}RpStart1-Cmd    , elemHandle=get,   elemIndex= 34	, elemName= Q2	  ,  devName= Q2	 	  ,  elemLength= 0.35	, elemPosition=8.03335		,          elemType=QUAD,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Quad:3}RpStart1-Cmd    , elemHandle=get,   elemIndex= 38	, elemName= Q3	  ,  devName= Q3	 	  ,  elemLength= 0.35	, elemPosition=10.445 		,          elemType=QUAD,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Quad:1}RpStart1-Cmd    , elemHandle=get,   elemIndex= 45	, elemName= Q1BD	  ,  devName= Q1BD	    ,  elemLength= 0.35	, elemPosition=14.1721				, elemType=QUAD,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Quad:2}RpStart1-Cmd    , elemHandle=get,   elemIndex= 47	, elemName= Q2BD	  ,  devName= Q2BD	 	  ,  elemLength= 0.35	, elemPosition=14.7721				, elemType=QUAD,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+
+
+BTS-MG{Cor:1}I:Ps1DCCT1-I          , elemHandle=get,      elemIndex= 27	, elemName= CX1	      ,  devName= C1	      ,  elemLength= 0.05	, elemPosition=6.66763	,     elemType=HCOR ,  system=BTS,   elemField=x,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:1}I:Ps2DCCT1-I          , elemHandle=get,      elemIndex= 28	, elemName= CY1	      ,  devName= C1	      ,  elemLength= 0.05	, elemPosition=6.66763	,     elemType=VCOR ,  system=BTS,   elemField=y,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:2}I:Ps1DCCT1-I          , elemHandle=get,      elemIndex= 40	, elemName= CX2	      ,  devName= C2	  	  ,  elemLength= 0.05	, elemPosition=10.6508  ,     elemType=HCOR ,  system=BTS,   elemField=x,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:2}I:Ps2DCCT1-I          , elemHandle=get,      elemIndex= 41	, elemName= CY2	      ,  devName= C2	  	  ,  elemLength= 0.05	, elemPosition=10.6508  ,     elemType=VCOR ,  system=BTS,   elemField=y,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Cor:1}I:Ps1DCCT1-I          , elemHandle=get,   elemIndex= 49	, elemName= CX1BD	      ,  devName= C1BD	      ,  elemLength= 0.05	, elemPosition=16.0837	, elemType=HCOR ,  system=BTS,   elemField=x,    aphla.sys.BTD
+BTS-MG:BD{Cor:1}I:Ps2DCCT1-I          , elemHandle=get,   elemIndex= 50	, elemName= CY1BD	      ,  devName= C1BD	      ,  elemLength= 0.05	, elemPosition=16.0837	, elemType=VCOR ,  system=BTS,   elemField=y,    aphla.sys.BTD
+
+                                                                                                          
+BTS-MG{Cor:1}RpStart1-Cmd     , elemHandle=get,       elemIndex= 27	, elemName= CX1	      ,  devName= C1	      ,  elemLength= 0.05	, elemPosition=6.66763	,    elemType=HCOR ,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:1}RpStart2-Cmd     , elemHandle=get,       elemIndex= 28	, elemName= CY1	      ,  devName= C1	      ,  elemLength= 0.05	, elemPosition=6.66763	,    elemType=VCOR ,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:2}RpStart1-Cmd     , elemHandle=get,       elemIndex= 40	, elemName= CX2	      ,  devName= C2	  	  ,  elemLength= 0.05	, elemPosition=10.6508  ,    elemType=HCOR ,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG{Cor:2}RpStart2-Cmd     , elemHandle=get,       elemIndex= 41	, elemName= CY2	      ,  devName= C2	  	  ,  elemLength= 0.05	, elemPosition=10.6508  ,    elemType=VCOR ,  system=BTS,   elemField=ramping,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-MG:BD{Cor:1}RpStart1-Cmd     , elemHandle=get,    elemIndex= 49	, elemName= CX1BD	      ,  devName= C1BD	      ,  elemLength= 0.05	, elemPosition=16.0837	, elemType=HCOR ,  system=BTS,   elemField=ramping,    aphla.sys.BTD
+BTS-MG:BD{Cor:1}RpStart2-Cmd     , elemHandle=get,    elemIndex= 50	, elemName= CY1BD	      ,  devName= C1BD	      ,  elemLength= 0.05	, elemPosition=16.0837	, elemType=VCOR ,  system=BTS,   elemField=ramping,    aphla.sys.BTD
+
+
+BTS-BI{BPM:1}I-I                   , elemHandle=get,   elemIndex= 22	  , elemName= P1	      ,  devName= P1	   ,  elemLength= 0.	,  elemPosition=4.46584	,  elemType=BPM  ,  system=BTS,   elemField=I,         aphla.sys.BTS,   aphla.sys.BTD 
+BTS-BI{BPM:1}Pos:X-I               , elemHandle=get,   elemIndex= 22	  , elemName= P1	      ,  devName= P1	   ,  elemLength= 0.	,  elemPosition=4.46584	,  elemType=BPM  ,  system=BTS,   elemField=x,         aphla.sys.BTS,   aphla.sys.BTD 
+BTS-BI{BPM:1}Pos:Y-I               , elemHandle=get,   elemIndex= 22	  , elemName= P1	      ,  devName= P1	   ,  elemLength= 0.	,  elemPosition=4.46584	, elemType=BPM  ,  system=BTS,   elemField=y,         aphla.sys.BTS,   aphla.sys.BTD 
+
+BTS-BI{FC:1}AveQOverINOS-I         , elemHandle=get,   elemIndex= 55	  , elemName= FC1	    ,  devName= FC1	   ,  elemLength= 0.	,  elemPosition=20.0085	  , elemType=FC	  ,  system=BTS,   elemField=Q,          aphla.sys.BTD 
+BTS-BI{FC:1}StdQOverINOS-I         , elemHandle=get,   elemIndex= 55	  , elemName= FC1	    ,  devName= FC1	   ,  elemLength= 0.	,  elemPosition=20.0085  , elemType=FC	  ,  system=BTS,   elemField=Qerr,          aphla.sys.BTD 
+
+BTS-BI{FCT:1}NbrBunches-I          , elemHandle=get,   elemIndex= 51	  , elemName= FCT1	  ,  devName= FCT1	   ,  elemLength= 0.	,  elemPosition=16.9902	, elemType=FCT	  ,  system=BTS,   elemField=nBunches,          aphla.sys.BTD                                                                                                                                   
+                                                                                                                                    
+BTS-BI{VF:2}Pos-Sts                    , elemHandle=get,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=position,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}TIFF1:FileNumber_RBV       , elemHandle=get,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=imageNumber,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}TIFF1:FullFileName_RBV     , elemHandle=get,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=imageName,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}X-Gauss:Sigma-I            , elemHandle=get,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=sigmaX,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}Y-Gauss:Sigma-I            , elemHandle=get,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=sigmaY,  aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}Stats1:CentroidX_RBV       , elemHandle=get,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=centroidX,     aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}Stats1:CentroidY_RBV       , elemHandle=get,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=centroidY,     aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}ROI1:SizeX_RBV             , elemHandle=get,   elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=sizeX  , aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}ROI1:SizeY_RBV             , elemHandle=get,  elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=sizeY  , aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}ROI1:MinX_RBV              , elemHandle=get,  elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=minX   , aphla.sys.BTS,   aphla.sys.BTD
+BTS-BI{VF:2}ROI1:MinY_RBV              , elemHandle=get,  elemIndex= 32 , elemName=  VF2	    ,  devName= VF2	         	  ,  elemLength= 0.	, elemPosition=7.36867	, elemType=FLAG ,  system=BTS,   elemField=minY   , aphla.sys.BTS,   aphla.sys.BTD                                                                                                                                                                                      
+
+BTS-BI:BD1{VF:1}Pos-Sts                 , elemHandle=get,    elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	,  elemType=FLAG ,  system=BTS,   elemField=position,    aphla.sys.BTD
+BTS-BI:BD1{VF:1}TIFF1:FileNumber_RBV    , elemHandle=get,    elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	,  elemType=FLAG ,  system=BTS,   elemField=imageNumber,   aphla.sys.BTD
+BTS-BI:BD1{VF:1}TIFF1:FullFileName_RBV  , elemHandle=get,    elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	,  elemType=FLAG ,  system=BTS,   elemField=imageName,   aphla.sys.BTD
+BTS-BI:BD1{VF:1}X-Gauss:Sigma-I         , elemHandle=get,    elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	,  elemType=FLAG ,  system=BTS,   elemField=sigmaX,      aphla.sys.BTD
+BTS-BI:BD1{VF:1}Y-Gauss:Sigma-I         , elemHandle=get,    elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	, elemType=FLAG ,  system=BTS,   elemField=sigmaY,      aphla.sys.BTD
+BTS-BI:BD1{VF:1}Stats1:CentroidX_RBV    , elemHandle=get,    elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	, elemType=FLAG ,  system=BTS,   elemField=centroidX,    aphla.sys.BTD
+BTS-BI:BD1{VF:1}Stats1:CentroidY_RBV    , elemHandle=get,    elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	, elemType=FLAG ,  system=BTS,   elemField=centroidY,    aphla.sys.BTD
+BTS-BI:BD1{VF:1}ROI1:SizeX_RBV          , elemHandle=get,    elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	, elemType=FLAG ,  system=BTS,   elemField=sizeX  ,   aphla.sys.BTD
+BTS-BI:BD1{VF:1}ROI1:SizeY_RBV          , elemHandle=get,   elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	,  elemType=FLAG ,  system=BTS,   elemField=sizeY  ,   aphla.sys.BTD
+BTS-BI:BD1{VF:1}ROI1:MinX_RBV           , elemHandle=get,   elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	,  elemType=FLAG ,  system=BTS,   elemField=minX   ,   aphla.sys.BTD
+BTS-BI:BD1{VF:1}ROI1:MinY_RBV           , elemHandle=get,   elemIndex= 43 , elemName= VF1BD	  ,  devName= VF1BD		   	  ,  elemLength= 0.	, elemPosition=13.1938	,  elemType=FLAG ,  system=BTS,   elemField=minY   ,   aphla.sys.BTD
+                                                           
+BTS-BI:BD1{VF:2}Pos-Sts                 , elemHandle=get,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition= 19.3086	, elemType=FLAG ,  system=BTS,   elemField=position,    aphla.sys.BTD
+BTS-BI:BD1{VF:2}TIFF1:FileNumber_RBV    , elemHandle=get,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition= 19.3086	, elemType=FLAG ,  system=BTS,   elemField=imageNumber,   aphla.sys.BTD
+BTS-BI:BD1{VF:2}TIFF1:FullFileName_RBV  , elemHandle=get,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition=	19.3086	, elemType=FLAG ,  system=BTS,   elemField=imageName,   aphla.sys.BTD
+BTS-BI:BD1{VF:2}X-Gauss:Sigma-I         , elemHandle=get,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition=	19.3086	, elemType=FLAG ,  system=BTS,   elemField=sigmaX,      aphla.sys.BTD
+BTS-BI:BD1{VF:2}Y-Gauss:Sigma-I         , elemHandle=get,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition= 19.3086	, elemType=FLAG ,  system=BTS,   elemField=sigmaY,      aphla.sys.BTD
+BTS-BI:BD1{VF:2}Stats1:CentroidX_RBV    , elemHandle=get,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition= 19.3086	, elemType=FLAG ,  system=BTS,   elemField=centroidX,    aphla.sys.BTD
+BTS-BI:BD1{VF:2}Stats1:CentroidY_RBV    , elemHandle=get,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition=	19.3086	, elemType=FLAG ,  system=BTS,   elemField=centroidY,    aphla.sys.BTD
+BTS-BI:BD1{VF:2}ROI1:SizeX_RBV          , elemHandle=get,   elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition=	19.3086	, elemType=FLAG ,  system=BTS,   elemField=sizeX  ,   aphla.sys.BTD
+BTS-BI:BD1{VF:2}ROI1:SizeY_RBV          , elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition= 19.3086	, elemType=FLAG ,  system=BTS,   elemField=sizeY  ,   aphla.sys.BTD
+BTS-BI:BD1{VF:2}ROI1:MinX_RBV           , elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition= 19.3086	, elemType=FLAG ,  system=BTS,   elemField=minX   ,   aphla.sys.BTD
+BTS-BI:BD1{VF:2}ROI1:MinY_RBV           , elemIndex= 53 , elemName= VF2BD	  ,  devName= VF2BD		   	  ,  elemLength= 0.	, elemPosition=	19.3086	, elemType=FLAG ,  system=BTS,   elemField=minY   ,   aphla.sys.BTD
+                                     

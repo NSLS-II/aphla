@@ -7,19 +7,27 @@ aporbit Plot
 The viewer module for `aporbit` GUI. This defines a plot and container widget.
 """
 
+import cothread
+
+if __name__ == "__main__":
+    app = cothread.iqt()
+    import aphla
+
+from collections import deque
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (
     PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
     QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
     QSize, QRectF, QLine, pyqtSignal)
 
 from PyQt4.QtGui import (
-    QAction, QApplication, QWidget, QColor,
+    QAction, QApplication, QWidget, QColor, QDialog,
     QDockWidget, QFileDialog, QFrame, QGridLayout, QIcon,
-    QImage, QImageReader, QMenu,
+    QImage, QImageReader, QMenu, QComboBox,
     QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
     QMessageBox, QPainter, QPixmap, QPrintDialog, QPushButton,
     QPrinter, QSpinBox, QPen, QBrush, QFontMetrics, QSizePolicy,
-    QMdiSubWindow, QTableWidget)
+    QMdiSubWindow, QTableWidget, QHBoxLayout, QVBoxLayout)
 
 import PyQt4.Qwt5 as Qwt
 from PyQt4.Qwt5.anynumpy import *
@@ -30,7 +38,7 @@ import time
 import numpy as np
 import sip
 
-import applotresources
+import mleapresources
 
 # sip has a bug affecting PyQwt
 # http://blog.gmane.org/gmane.comp.graphics.qwt.python/month=20101001
@@ -117,7 +125,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         for elem in elemlst:
             msg += "<strong>%s:</strong><br>" % elem.name
             for v in elem.fields():
-                msg += "  %s: %s<br>" % (v, str(elem.get(v, unit=None)))
+                msg += "  %s: %s<br>" % (v, str(elem.get(v, unitsys=None)))
 
         msgbox.setText(msg)
         msgbox.exec_()
@@ -262,22 +270,24 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
         self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
         #self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
         self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Sticks))
+        #self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Steps))
         self.setSymbol(kw.get('curveSymbol', Qwt.QwtSymbol()))
         self.errorPen = kw.get('errorPen', QPen(Qt.NoPen))
         self.errorCap = kw.get('errorCap', 0)
         self.errorOnTop = kw.get('errorOnTop', True)
+        self.setTitle(kw.get("title", ""))
         self.__live = False
         self.showDifference = False
 
     def setData(self, x, y, e):
         self.x1, self.y1, self.e1 = x, y, e
-        Qwt.QwtPlotCurve.setData(self, self.x1, self.y1)
-
+        Qwt.QwtPlotCurve.setData(self, list(self.x1), list(self.y1))
+            
     def boundingRect(self):
         """
         Return the bounding rectangle of the data, error bars included.
         """
-        if self.x1 is None or self.y1 is None:
+        if self.x1 is None or len(self.x1) == 0:
             return Qwt.QwtPlotCurve.boundingRect(self)
         
         x, y, y2 = self.x1, self.y1, self.e1
@@ -362,26 +372,30 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
 
 
 class ApPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None, lat = None,
-                 live = True, errorbar = True, title=None): 
+    def __init__(self, parent = None, errorbar = True, title=None): 
+        """initialization
         
+        Parameters
+        -----------
+        parent : None
+        lat : 
+        """
         super(ApPlot, self).__init__(parent)
         
         self.setCanvasBackground(Qt.white)
         self.errorOnTop = errorbar
-        self.live = live
         self.setAutoReplot(False)
 
         self.plotLayout().setAlignCanvasToScales(True)
 
         self.curve1 = ApPlotCurve(
-            curvePen = QPen(Qt.red, 3),
+            curvePen = QPen(Qt.red, 3.0),
             curveSymbol = Qwt.QwtSymbol(
                 Qwt.QwtSymbol.Ellipse,
                 QBrush(Qt.red),
-                QPen(Qt.black, 1),
+                QPen(Qt.black, 1.0),
                 QSize(8, 8)),
-            errorPen = QPen(Qt.black, 1),
+            errorPen = QPen(Qt.black, 1.0),
             errorCap = 6,
             errorOnTop = self.errorOnTop,
             )
@@ -389,9 +403,12 @@ class ApPlot(Qwt.QwtPlot):
         self.curve1.attach(self)
 
         self.curve2 = Qwt.QwtPlotCurve()
-        self.curve2.setPen(QPen(Qt.red, 4))
+        self.curve2.setPen(QPen(Qt.green, 3, Qt.DashLine))
         self.curve2.attach(self)
-        #self.curve2.setVisible(False)
+        self.curve2.setZ(self.curve1.z() + 2.0)
+        self.curve2.setVisible(False)
+
+        self.excurv = []
 
         #print "PV golden:", pvs_golden
         pvs_golden = None
@@ -412,10 +429,14 @@ class ApPlot(Qwt.QwtPlot):
 
         self.curvemag = None
 
-        self.setMinimumSize(500, 200)
+        #self.setMinimumSize(300, 100)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
-        grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
+        pen = grid1.majPen()
+        pen.setStyle(Qt.DotLine)
+        pen.setWidthF(1.2)
+        grid1.setMajPen(pen)
+        #print "Width", grid1.majPen().widthF(), grid1.majPen().color()
 
         self.picker1 = None
         #self.zoomer1 = None
@@ -436,6 +457,7 @@ class ApPlot(Qwt.QwtPlot):
         #self.marker.setValue(100, 0)
         #self.marker.setLabel(Qwt.QwtText("Hello"))
         #self.connect(self, SIGNAL("doubleClicked
+
 
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
@@ -501,7 +523,8 @@ class ApPlot(Qwt.QwtPlot):
         #self.timerId = self.startTimer(1000)
 
     def alignScales(self):
-        raise RuntimeError("what is this")
+        # raise RuntimeError("ERROR")
+        return
         self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)
         self.canvas().setLineWidth(1)
         for i in range(Qwt.QwtPlot.axisCnt):
@@ -516,26 +539,61 @@ class ApPlot(Qwt.QwtPlot):
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         self.picker1.addMagnetProfile(sb, se, name, minlen)
 
-    def updatePlot(self):
+    def __updatePlot(self):
         self.curve1.setData()
         if self.golden is not None: self.golden.update()
-        self.replot()
-
-    def setDrift(self, mode = 'no'):
-        self.curve1.setDrift(mode)
 
     def setErrorBar(self, on):
         self.curve1.errorOnTop = on
-        self.replot()
 
-    def _scaleVertical(self, factor = 1.0/1.5):
+    def moveCurves(self, ax, fraction = 0.80):
+        scalediv = self.axisScaleDiv(ax)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        sl1, sr1 = sl + (sr-sl)*fraction, sr + (sr-sl)*fraction
+        self.setAxisScale(ax, sl1, sr1)
+
+    def scaleXBottom(self, factor = None):
+        scalediv = self.axisScaleDiv(Qwt.QwtPlot.xBottom)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dx = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.xBottom, sl - dx, sr + dx)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            xmin = bound.left()
+            xmax = bound.right()
+            if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            #if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        #self.replot()
+        
+    def scaleYLeft(self, factor = None):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
         sr, sl = scalediv.upperBound(), scalediv.lowerBound()
-        dy = (sr - sl)*(factor - 1)/2.0
+        if factor is not None:
+            dy = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
         
-        #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
-        self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
-        self.replot()
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            ymin = bound.top() - h*.05
+            ymax = bound.bottom() + h*.03
+            xmin = bound.left()
+            xmax = bound.right()
+            #if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        #self.replot()
 
     def plotCurve2(self, y, x = None):
         """
@@ -547,13 +605,15 @@ class ApPlot(Qwt.QwtPlot):
             #print "disabling desired orbit and quit"
             return
 
+        self.curve2.attach(self)
+        self.curve2.setVisible(True)
         if x is not None:
             self.curve2.setData(x, y)
             return
         data = self.curve2.data()
         vx = [data.x(i) for i in range(data.size())]
         self.curve2.setData(vx, y)
-
+        
     def setColor(self, c):
         symb = self.curve1.symbol()
         pen = symb.pen()
@@ -568,181 +628,516 @@ class ApPlot(Qwt.QwtPlot):
         pen.setColor(c)
         self.curve1.setPen(pen)
 
+    def addCurve(self, **kwargs):
+        x = kwargs.get('x', None)
+        y = kwargs.get('y', None)
+        yerr = kwargs.get('yerr', None)
+        curv = ApPlotCurve(
+            curvePen = kwargs.get("curvePen", QPen(Qt.black, 2.0)),
+            curveStyle = kwargs.get("curveStyle", Qwt.QwtPlotCurve.Lines),
+            #curveSymbol = kwargs.get("curveSymbol", Qwt.QwtSymbol(
+            #        Qwt.QwtSymbol.Ellipse,
+            #        QBrush(Qt.red),
+            #        QPen(Qt.black, 1.0),
+            #        QSize(8, 8))),
+            curveSymbol = kwargs.get("curveSymbol", Qwt.QwtSymbol()),
+            errorPen = kwargs.get("errorPen", QPen(Qt.black, 1.0)),
+            errorCap = kwargs.get("errorCap", 6),
+            errorOnTop = kwargs.get("errorOnTop", False),
+            title = kwargs.get("title", "")
+            )
 
-class ApPlotControlButton(QPushButton):
-    def __init__(self, parent = None, iconres = None, iconsize = 24,
-                 action = None):
-        super(ApPlotControlButton, self).__init__("")
-        self.maxiconsize = 64
-        #bt1 = QPushButton("")
-        if iconres: self.setIcon(QIcon(iconres))
-        self.setIconSize(QSize(iconsize, iconsize))
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        self.setMinimumSize(16, 16)
-        self.setMaximumSize(self.maxiconsize, self.maxiconsize)
-        if action: self.connect(self, SIGNAL("clicked()"), action)
-        self.setFixedSize(iconsize,iconsize)
-        self.adjustSize()
+        if x is not None and y is not None: curv.setData(x, y, yerr)
+        curv.attach(self)
+        self.excurv.append(curv)
+        return curv
 
-class ApPlotWidget(QWidget):
-    def __init__(self, parent = None, iconsize = 24, title=None):
-        super(ApPlotWidget, self).__init__(parent)
+    def curvesBound(self):
+        bd = self.curve1.boundingRect()
+        if self.curve2.isVisible():
+            bd = bd.united(self.curve2.boundingRect())
+        for curv in self.excurv:
+            if not curv.isVisible(): continue
+            bd = bd.united(curv.boundingRect())
+        return bd
 
-        majbox = QGridLayout()
 
-        icol = 0
-        for icon,act in [(":/view_zoom_xy.png", self.zoomAuto),
-                         (":/view_zoomin_y.png", self.zoomIn),
-                         (":/view_zoomout_y.png", self.zoomOut),
-                         (":/view_zoomin_x.png", self.zoom),
-                         (":/view_zoomout_x.png", self.zoom),
-                         (":/view_zoomin_y.png", self.zoom)]:
-            bt = ApPlotControlButton(iconres=icon, iconsize=24, action = act)
-            majbox.addWidget(bt, 0, icol)
-            majbox.setColumnStretch(icol, 0)
-            icol = icol + 1
+class ApLivePlotPvList(Qwt.QwtPlot):
+    def __init__(self, pvs, **kwargs): 
+        """initialization
+        
+        Parameters
+        -----------
+        parent : None
+        lat : 
+        """
+        parent   = kwargs.pop("parent", None)
+        errorbar = kwargs.get("errorbar", False)
+        title    = kwargs.get("title", None)
+        pvm      = kwargs.get("pvm", None)
+        samples  = kwargs.get("samples", 10)
 
-        self.moreopt = QMenu("")
-        a1 = QAction(QIcon(":/file_quit.png"), "&Quit", self)
-        a1.setToolTip("Quit the application")
-        a1.setStatusTip("Quit the application")
-        a1.setCheckable(True)
-        #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
-        self.connect(a1, SIGNAL("toggled(bool)"), self.a1toggle)
-        self.moreopt.addAction(a1)
+        super(ApLivePlotPvList, self).__init__(parent)
 
-        bt = QPushButton("More")
-        bt.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        bt.setMenu(self.moreopt)
-        majbox.addWidget(bt, 0, icol)
-        majbox.setColumnStretch(icol, 0)
-        icol += 1
+        self._hold = True
+        self._pvs = tuple([pv for pv in pvs])
+        self._val_golden = kwargs.get("golden", [0.0] * len(pvs))
+        self._val_ref    = kwargs.get("reference", [0.0] * len(pvs))
 
-        self.live = True
-        self.aplot = ApPlot(self, live= self.live)
-        self.aplot.plotLayout().setCanvasMargin(4)
-        self.aplot.plotLayout().setAlignCanvasToScales(True)
+        if pvm is None:
+            self._data = dict([(pv, deque([ap.catools.caget(pv)], samples))
+                               for pv in pvs])
+        else:
+            self._data = dict([(pv, deque([pvm.get(pv)], samples))
+                               for pv in pvs])
+        self._x = kwargs.pop("x", range(len(pvs)))
+            
+        self.connect(pvm, QtCore.SIGNAL("dataChanged(PyQt_PyObject)"),
+                     self.updatePvData)
 
-        majbox.addWidget(self.aplot, 1, 0, 1, 10)
+        self.setCanvasBackground(Qt.white)
+        self.errorOnTop = errorbar
+        # disable implicit replotting, use manual replot() instead.
+        self.setAutoReplot(False)
 
-        self.title = QLabel()
-        ncol = majbox.columnCount()
-        majbox.addWidget(self.title, 0, ncol-1)
-        if title: self.title.setText(title)
-        #majbox.setColumnStretch(3, 1)
-        self.setLayout(majbox)
+        self.plotLayout().setAlignCanvasToScales(True)
 
-    def setMagnetProfile(self, magnet_profile):
-        self.aplot.setMagnetProfile(magnet_profile)
+        self._curve0 = ApPlotCurve(curvePen = QPen(Qt.black, 2),
+                                   errorOnTop = False
+                                   )
+        self._curve0.attach(self)
+
+        self._curve1 = ApPlotCurve(
+            curvePen = QPen(Qt.red, 3.0),
+            curveSymbol = Qwt.QwtSymbol(
+                Qwt.QwtSymbol.Ellipse,
+                QBrush(Qt.red),
+                QPen(Qt.black, 1.0),
+                QSize(8, 8)),
+            errorPen = QPen(Qt.black, 1.0),
+            errorCap = 6,
+            errorOnTop = self.errorOnTop,
+            )
+
+        self._curve1.attach(self)
+
+        self._curve2 = Qwt.QwtPlotCurve()
+        self._curve2.setPen(QPen(Qt.green, 3, Qt.DashLine))
+        self._curve2.attach(self)
+        self._curve2.setZ(self._curve1.z() + 2.0)
+        self._curve2.setVisible(False)
+
+        self.curves = [self._curve0, self._curve1, self._curve2]
+
+        #print "Golden orbit is attached"
+        #self.bound = self.curve1.boundingRect()
+        #if self.golden is not None:
+        #    self.bound = self.bound.united(self.golden.boundingRect())
+
+        self.curvemag = None
+
+        #self.setMinimumSize(300, 100)
+        grid1 = Qwt.QwtPlotGrid()
+        grid1.attach(self)
+        pen = grid1.majPen()
+        pen.setStyle(Qt.DotLine)
+        pen.setWidthF(1.2)
+        grid1.setMajPen(pen)
+        #print "Width", grid1.majPen().widthF(), grid1.majPen().color()
+
+        self.picker1 = None
+        #self.zoomer1 = None
+        self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
+                                         Qwt.QwtPlot.yLeft,
+                                         Qwt.QwtPicker.DragSelection,
+                                         Qwt.QwtPicker.AlwaysOff,
+                                         self.canvas())
+        self.zoomer1.setRubberBandPen(QPen(Qt.black))
+
+        self.markers = []
+
+        #self.addMarkers(None)
+        #self.marker = Qwt.QwtPlotMarker()
+        #self.marker.attach(self)
+        #self.marker.setLabelAlignment(Qt.AlignLeft)
+        #self.marker.setLabelAlignment(Qt.AlignBottom)
+        #self.marker.setValue(100, 0)
+        #self.marker.setLabel(Qwt.QwtText("Hello"))
+        #self.connect(self, SIGNAL("doubleClicked
+        self.scaleXBottom()
+        self.scaleYLeft()
+        self.replot()
+        self._hold = False
+
+    def updatePvData(self, val):
+        if self._hold: return
+        self._hold = True
+        pv = val.name
+        try:
+            i = self._pvs.index(val.name)
+        except:
+            return
+        if pv not in self._pvs: return
+        self._data[pv].append(val)
+        y = [self._data[pv][-1] for pv in self._pvs]
+        e = [np.std(self._data[pv]) for pv in self._pvs]
+        self._curve1.setData(self._x, y, e)
+        self.replot()
+        print pv, val
+        self._hold = False
 
     def setMarkers(self, mks, on = True):
-        self.aplot.setMarkers(mks, on)
+        names, locs = zip(*mks)
+        if not on:
+            for r in self.markers:
+                if r[0] in names: r[1].detach()
+        else:
+            known_names, mklst = [], []
+            if self.markers: known_names, mklst = zip(*self.markers)
+            for r in mks:
+                if r[0] in known_names:
+                    i = known_names.index(r[0])
+                    mklst[i].attach(self)
+                    continue
+                mk1 = Qwt.QwtPlotMarker()
+                mk1.setSymbol(Qwt.QwtSymbol(
+                Qwt.QwtSymbol.Diamond,
+                QBrush(Qt.blue),
+                QPen(Qt.red, 1),
+                QSize(12, 12)))
+                mk1.setValue(r[1], 0)
+                mk1.setAxis(Qwt.QwtPlot.xBottom, Qwt.QwtPlot.yRight)
+                mk1.attach(self)
+                self.markers.append([r[0], mk1])
 
-    def setAxisTitle(self, axis, title):
-        self.aplot.setAxisTitle(axis, title)
+    def elementDoubleClicked(self, elem):
+        print "element selected:", elem
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
 
-    def setAxisScale(self, axis, minv, maxv):
-        self.aplot.setAxisScale(axis, minv, maxv)
+    
+    def setMagnetProfile(self, mprof):
+        self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
+        # get x, y, color(optional)
+        # x, y and profile(left, right, name)
+        mags, magv, magp = [], [], []
+        for rec in mprof:
+            mags.extend(rec[0])
+            magv.extend(rec[1])
+            if rec[3]:
+                magp.append((min(rec[0]), max(rec[0]), 
+                             rec[3].encode('ascii')))
+        self.curvemag.setData(mags, magv)
+        self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
+        # fixed scale
+        self.setAxisScale(Qwt.QwtPlot.yRight, -2, 20)
+        self.enableAxis(Qwt.QwtPlot.yRight, False)
 
-    def detachCurves(self):
-        self.aplot.curve1.attach(None)
-        self.aplot.curve2.attach(None)
-        if self.aplot.curvemag: self.aplot.curvemag.attach(None)
+        self.curvemag.attach(self)
+
+        if magp and sip.SIP_VERSION_STR > '4.10.2':
+            self.picker1 = MagnetPicker(self.canvas(), profile=magp)
+            #sb = [v[0] for v in magp]
+            #se = [v[1] for v in magp]
+            #names = [v[2] for v in magp]
+            #self.picker1.addMagnetProfile(sb, se, names)
+            self.picker1.setTrackerPen(QPen(Qt.red, 4))
+            self.connect(self.picker1, 
+                         SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
+                         self.elementDoubleClicked)
         
-    def attachCurves(self):
-        self.aplot.curve1.attach(self.aplot)
-        self.aplot.curve2.attach(self.aplot)
-        if self.aplot.curvemag: self.aplot.curvemag.attach(self.aplot)
+        #self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
+        #             self.zoomed1)
+        #self.timerId = self.startTimer(1000)
 
-    def zoomIn(self):
-        self.aplot._scaleVertical(1.0/1.5)
+    def alignScales(self):
+        # raise RuntimeError("ERROR")
+        return
+        self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)
+        self.canvas().setLineWidth(1)
+        for i in range(Qwt.QwtPlot.axisCnt):
+            scaleWidget = self.axisWidget(i)
+            if scaleWidget:
+                scaleWidget.setMargin(0)
+            scaleDraw = self.axisScaleDraw(i)
+            if scaleDraw:
+                scaleDraw.enableComponent(
+                    Qwt.QwtAbstractScaleDraw.Backbone, False)
 
-    def zoomOut(self):
-        self.aplot._scaleVertical(1.5/1.0)
+    def addMagnetProfile(self, sb, se, name, minlen = 0.2):
+        self.picker1.addMagnetProfile(sb, se, name, minlen)
 
-    def zoomAuto(self):
-        #self.aplot.replot()
-        #print "Auto Zoom", self.title, self.aplot.zoomer1.zoomStack()
-        bound = self.aplot.curve1.boundingRect()
-        w = bound.width()
-        h = bound.height()
+    def __updatePlot(self):
+        self._curve1.setData()
+        if self.golden is not None: self.golden.update()
+
+    def setErrorBar(self, on):
+        self._curve1.errorOnTop = on
+
+    def moveCurves(self, ax, fraction = 0.80):
+        scalediv = self.axisScaleDiv(ax)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        sl1, sr1 = sl + (sr-sl)*fraction, sr + (sr-sl)*fraction
+        self.setAxisScale(ax, sl1, sr1)
+
+    def scaleXBottom(self, factor = None):
+        scalediv = self.axisScaleDiv(Qwt.QwtPlot.xBottom)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dx = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.xBottom, sl - dx, sr + dx)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            xmin = bound.left()
+            xmax = bound.right()
+            if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            #if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        #self.replot()
         
-        bound.adjust(0.0, -h*.1, 0.0, h*.1)
-        #xmin = bound.left() - w*.03
-        #xmax = bound.right() + w*.03
-        ymin = bound.top() - h*.05
-        ymax = bound.bottom() + h*.03
-        xmin = bound.left()
-        xmax = bound.right()
-        #ymin = bound.top()
-        #ymax = bound.bottom()
-        print "bound:", bound, w, h
-        #print "x, y= ", xmin, xmax, ymin, ymax
-        if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
-        #else: self.setAxisAutoScale(Qwt.Qwt.Plot.xBottom)
-
-        if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
-        #else: self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
-        self.aplot.zoomer1.setZoomStack([bound])
-        self.aplot.replot()
-        #print "Auto Zoom", self.title
-        #print "   base:", self.aplot.zoomer1.zoomBase()
-        #print "   rect:", self.aplot.zoomer1.zoomRect()
-        #print "   index:", self.aplot.zoomer1.zoomRectIndex()
-        #print "   stack:", self.aplot.zoomer1.zoomStack()
-        #print ""
-
-    def a1toggle(self, v):
-        print v
-
-    def zoom(self):
-        print "zoom"
-
-
-class ApOrbitPlot(ApPlotWidget):
-    def __init__(self, parent = None, title = None):
-        super(ApOrbitPlot, self).__init__(parent, iconsize=24, title=title)
+    def scaleYLeft(self, factor = None):
+        scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dy = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
         
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            ymin = bound.top() - h*.05
+            ymax = bound.bottom() + h*.03
+            xmin = bound.left()
+            xmax = bound.right()
+            #if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
 
-    def updatePlot(self, x, y, err = None):
-        self.aplot.curve1.setData(x, y, err)
-        #print "orbit updated"
-        self.aplot.replot()
-        #if self.aplot.live and self.zoomer1:
-        #    self.zoomer1.setZoomBase(self.curve1.boundingRect())
-        #print self.aplot.zoomer1.zoomStack()
+        # leave replot to the caller
+        #self.replot()
+
+    def plotCurve2(self, y, x = None):
+        """
+        hide curve if x,y are both None
+        """
+        if y is None and x is None:
+            self.curve2.detach()
+            self.curve2.setVisible(False)
+            #print "disabling desired orbit and quit"
+            return
+
+        self.curve2.attach(self)
+        self.curve2.setVisible(True)
+        if x is not None:
+            self.curve2.setData(x, y)
+            return
+        data = self.curve2.data()
+        vx = [data.x(i) for i in range(data.size())]
+        self.curve2.setData(vx, y)
+        
+    def setColor(self, c):
+        symb = self._curve1.symbol()
+        pen = symb.pen()
+        pen.setColor(c)
+        symb.setPen(pen)
+        br = symb.brush()
+        br.setColor(c)
+        symb.setBrush(br)
+        self._curve1.setSymbol(symb)
+
+        pen = self._curve1.pen()
+        pen.setColor(c)
+        self._curve1.setPen(pen)
+
+    def addCurve(self, **kwargs):
+        x = kwargs.get('x', None)
+        y = kwargs.get('y', None)
+        yerr = kwargs.get('yerr', None)
+        curv = ApPlotCurve(
+            curvePen = kwargs.get("curvePen", QPen(Qt.black, 2.0)),
+            curveStyle = kwargs.get("curveStyle", Qwt.QwtPlotCurve.Lines),
+            #curveSymbol = kwargs.get("curveSymbol", Qwt.QwtSymbol(
+            #        Qwt.QwtSymbol.Ellipse,
+            #        QBrush(Qt.red),
+            #        QPen(Qt.black, 1.0),
+            #        QSize(8, 8))),
+            curveSymbol = kwargs.get("curveSymbol", Qwt.QwtSymbol()),
+            errorPen = kwargs.get("errorPen", QPen(Qt.black, 1.0)),
+            errorCap = kwargs.get("errorCap", 6),
+            errorOnTop = kwargs.get("errorOnTop", False),
+            title = kwargs.get("title", "")
+            )
+
+        if x is not None and y is not None: curv.setData(x, y, yerr)
+        curv.attach(self)
+        self.excurv.append(curv)
+        return curv
+
+    def curvesBound(self):
+        bd = self._curve1.boundingRect()
+        if self._curve2.isVisible():
+            bd = bd.united(self._curve2.boundingRect())
+        for curv in self.curves:
+            if not curv.isVisible(): continue
+            bd = bd.united(curv.boundingRect())
+        return bd
 
 
 class ApMdiSubPlot(QMdiSubWindow):
-    def __init__(self, parent = None, data = None):
+    def __init__(self, parent = None, data = None, live = True,
+                 element_fields = []):
         super(ApMdiSubPlot, self).__init__(parent)
-        self.wid = ApPlotWidget(parent)
-        self.aplot = self.wid.aplot
+        self.aplot = ApPlot()
+        self.setWidget(self.aplot)
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.setWidget(self.wid)
-        self.data = data
+        self.data = data # ApVirtualElement
+        self._eflist = element_fields
+        self.live = live
         self.err_only  = False
-
         self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
                      self.elementSelected)
+        self.setMinimumSize(400, 100)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-    def updatePlot(self):
-        self.data.update()
-        s, y, yerr = self.data.orbit()
+    def updatePlot(self, s = None, y = None, yerr = None):
+        #print "updating the data"
+        if (s, y, yerr) == (None, None, None) and self.data:
+            self.data.update()
+            s, y, yerr = self.data.data()
+
+        #return
+        #print "set data", type(s), type(y), type(yerr)
         if self.err_only: self.aplot.curve1.setData(s, yerr)
         else: self.aplot.curve1.setData(s, y, yerr)
         # set unit
         self.aplot.setAxisTitle(Qwt.QwtPlot.yLeft, self.data.label())
-
+        #print "replot"
+        #print s, y, yerr
+        #print "done replot"
         self.aplot.replot()
 
     def elementSelected(self, elem):
         eleminfo = [self.data.machine, self.data.lattice, elem]
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), eleminfo)
 
+    def editElements(self):
+        self.emit(SIGNAL("editVisibleElements()"))
+
 
     def currentXlim(self):
         """a tuple of (xmin, xmax)"""
         ax = self.aplot.axisScaleDiv(Qwt.QwtPlot.xBottom)
         return (ax.lowerBound(), ax.upperBound())
+
+    def setMarkers(self, mks, on):
+        self.aplot.setMarkers(mks, on)
+
+    def disableElement(self, name):
+        if name in self.data.names():
+            self.data.disable(name)
+
+    def setReferenceData(self, dat = None):
+        if isinstance(dat, float):
+            self.data.yref = np.ones(len(self.data.yref), 'd') * dat
+        elif dat:
+            self.data.yref = np.array(dat, 'd')
+        else:
+            s, y, yerr = self.data.data()
+            self.data.yref = y
+
+    def lattice(self):
+        return self.data.lattice
+
+    def machine(self):
+        return self.data.machine
+
+    def fullname(self):
+        return (self.data.machine, self.data.lattice, 
+                self.data.name, self.data.yfield)
+
+    def plotCurve2(self, y, x = None):
+        self.aplot.plotCurve2(y, x)
+
+
+class ApSvdPlot(QDialog):
+    def __init__(self, s):
+        super(QDialog, self).__init__()
+
+        self.s = s[:]
+
+        self.p = Qwt.QwtPlot()
+
+        self.c1 = Qwt.QwtPlotCurve("S-values")
+        self.c1.setData(range(len(s)), s)
+        self.c1.attach(self.p)
+        #self.c1.setYAxis(Qwt.QwtPlot.yLeft)
+        self.c1.setPen(QPen(Qt.blue, 2))
+        #self.p.enableAxis(Qwt.QwtPlot.yLeft)
+        self.p.setAxisTitle(Qwt.QwtPlot.yLeft, "Singular Values")
+
+        self.c2 = Qwt.QwtPlotCurve("S/max(S) (log scale)")
+        self.c2.setData(range(len(s)), s/np.max(s))
+        self.c2.setPen(QPen(Qt.red, 3))
+        self.c2.attach(self.p)
+        self.c2.setYAxis(Qwt.QwtPlot.yRight)
+        self.p.enableAxis(Qwt.QwtPlot.yRight)
+        self.p.setAxisTitle(Qwt.QwtPlot.yRight, "Singular Values (logscale)")
+
+        eg = Qwt.QwtLog10ScaleEngine()
+        self.p.setAxisScaleEngine(Qwt.QwtPlot.yRight, eg)
+        self.p.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend)
+
+        grid1 = Qwt.QwtPlotGrid()
+        grid1.attach(self.p)
+        grid1.setPen(QPen(Qt.black, 0.2, Qt.DotLine))
+
+        hb = QHBoxLayout()
+        hb.addWidget(QLabel("Show top"))
+        self.ns = QComboBox()
+        for i in [5,10,25,40,60,80,100,120,160] + range(200,len(s)+1,50): 
+            self.ns.addItem("%d" % i)
+        self.ns.addItem("%d" % len(s))
+
+        hb.addWidget(self.ns)
+        hb.addStretch()
+
+        vb = QVBoxLayout()
+        vb.addLayout(hb)
+        vb.addWidget(self.p)
+        self.setLayout(vb)
+        self.resize(400, 300)
+
+        self.picker1 = None
+        #self.zoomer1 = None
+        self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
+                                         Qwt.QwtPlot.yLeft,
+                                         Qwt.QwtPicker.DragSelection,
+                                         Qwt.QwtPicker.AlwaysOff,
+                                         self.p.canvas())
+        self.zoomer1.setRubberBandPen(QPen(Qt.black))
+        self.connect(self.ns, SIGNAL("currentIndexChanged(QString)"),
+                     self.updatePlot)
+
+    def updatePlot(self, txt):
+        n, err = txt.toInt()
+        self.c1.setData(range(1, n+1), self.s[:n])
+        self.c2.setData(range(1, n+1), self.s[:n]/np.max(self.s))
+        self.p.replot()
+
+
+if __name__ == "__main__":
+    import pvmanager
+    pvs0 = ['LTB-MG{Quad:1}I:Ps1DCCT1-I', 'LTB-MG{Quad:2}I:Ps1DCCT1-I', 'LTB-MG{Quad:3}I:Ps1DCCT1-I']
+    pvs1 = ["BR:A2-BI{BPM:1}FA-X", "BR:A2-BI{BPM:2}FA-X"]
+    pvm = pvmanager.CaDataMonitor(pvs0)
+    w = ApLivePlotPvList(pvs0, pvm = pvm)
+    w.show()
+    cothread.WaitForQuit()
+
 

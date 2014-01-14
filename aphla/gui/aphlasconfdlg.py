@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+"""
+aphla Config
+-------------
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
 
 import sys
 

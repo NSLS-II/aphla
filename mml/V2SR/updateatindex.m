@@ -36,12 +36,12 @@ end
 try
     % Horizontal correctors are at every AT corrector
     AO.HCM.AT.ATType = 'COR';
-    AO.HCM.AT.ATIndex = buildatindex(AO.HCM.FamilyName, Indices.HVCM);
+    AO.HCM.AT.ATIndex = buildatindex(AO.HCM.FamilyName, Indices.COR);
     AO.HCM.Position = findspos(THERING, AO.HCM.AT.ATIndex(:,1))';
 
     % Not all correctors are vertical correctors
     AO.VCM.AT.ATType = 'COR';
-    AO.VCM.AT.ATIndex = buildatindex(AO.VCM.FamilyName, Indices.HVCM);
+    AO.VCM.AT.ATIndex = buildatindex(AO.VCM.FamilyName, Indices.COR);
     AO.VCM.Position = findspos(THERING, AO.VCM.AT.ATIndex(:,1))';
 catch
     warning('Corrector family not found in the model.');
@@ -50,32 +50,61 @@ end
 
 % QUADRUPOLES
 try
-    AO.Q.AT.ATType = 'QUAD';
-    AO.Q.AT.ATIndex = buildatindex(AO.Q.FamilyName, Indices.QUAD);
-    AO.Q.Position = findspos(THERING, AO.Q.AT.ATIndex(:,1))';
+   %
+    AO.QH1.AT.ATType = 'QH1';
+    AO.QH1.AT.ATIndex = buildatindex(AO.QH1.FamilyName);
+    AO.QH1.Position = findspos(THERING, AO.QH1.AT.ATIndex(:,1))';
+
+    AO.QH2.AT.ATType = 'QH2';
+    AO.QH2.AT.ATIndex = buildatindex(AO.QH2.FamilyName);
+    AO.QH2.Position = findspos(THERING, AO.QH2.AT.ATIndex(:,1))';
+
+    AO.QH3.AT.ATType = 'QH3';
+    AO.QH3.AT.ATIndex = buildatindex(AO.QH3.FamilyName);
+    AO.QH3.Position = findspos(THERING, AO.QH3.AT.ATIndex(:,1))';
+
+    AO.QL1.AT.ATType = 'QL1';
+    AO.QL1.AT.ATIndex = buildatindex(AO.QL1.FamilyName);
+    AO.QL1.Position = findspos(THERING, AO.QL1.AT.ATIndex(:,1))';
+
+    AO.QL2.AT.ATType = 'QL2';
+    AO.QL2.AT.ATIndex = buildatindex(AO.QL2.FamilyName);
+    AO.QL2.Position = findspos(THERING, AO.QL2.AT.ATIndex(:,1))';
+
+    AO.QL3.AT.ATType = 'QL3';
+    AO.QL3.AT.ATIndex = buildatindex(AO.QL3.FamilyName);
+    AO.QL3.Position = findspos(THERING, AO.QL3.AT.ATIndex(:,1))';
+
+    AO.QM1.AT.ATType = 'QM1';
+    AO.QM1.AT.ATIndex = buildatindex(AO.QM1.FamilyName);
+    AO.QM1.Position = findspos(THERING, AO.QM1.AT.ATIndex(:,1))';
+
+    AO.QM2.AT.ATType = 'QM2';
+    AO.QM2.AT.ATIndex = buildatindex(AO.QM2.FamilyName);
+    AO.QM2.Position = findspos(THERING, AO.QM2.AT.ATIndex(:,1))';
 catch
     warning('Q family not found in the model.');
 end
 
 
 % BEND
-try
-    AO.BEND.AT.ATType = 'BEND';
-    AO.BEND.AT.ATIndex = buildatindex(AO.BEND.FamilyName, Indices.BEND);
-    AO.BEND.Position = findspos(THERING, AO.BEND.AT.ATIndex(:,1))';
-catch
-    warning('BEND family not found in the model.');
-end
+%try
+%    AO.BEND.AT.ATType = 'BEND';
+%    AO.BEND.AT.ATIndex = buildatindex(AO.BEND.FamilyName);
+%    AO.BEND.Position = findspos(THERING, AO.BEND.AT.ATIndex(:,1))';
+%catch
+%    warning('BEND family not found in the model.');
+%end
 
 
 % SCREEN
-try
-    AO.Screen.AT.ATType = 'TV';
-    AO.Screen.AT.ATIndex = buildatindex(AO.Screen.FamilyName, Indices.SCREEN);
-    AO.Screen.Position = findspos(THERING, AO.Screen.AT.ATIndex(:,1))';
-catch
-    warning('Screen family not found in the model.');
-end
+%try
+%    AO.Screen.AT.ATType = 'TV';
+%    AO.Screen.AT.ATIndex = buildatindex(AO.Screen.FamilyName, Indices.SCREEN);
+%    AO.Screen.Position = findspos(THERING, AO.Screen.AT.ATIndex(:,1))';
+%catch
+%    warning('Screen family not found in the model.');
+%end
 
 setao(AO);
 

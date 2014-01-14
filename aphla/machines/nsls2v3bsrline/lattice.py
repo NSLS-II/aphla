@@ -1,5 +1,12 @@
+"""
+NSLS2V3BsrLine Machine Structure Initialization
+-------------------------------------------------
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from .. import (HLA_TAG_SYS_PREFIX, HLA_VBPM, HLA_VFAMILY,
-                ChannelFinderAgent, Lattice, getResource)
+                ChannelFinderAgent, Lattice, getResource, createVirtualElements)
 from ... import element
 
 from pkg_resources import resource_string, resource_exists, resource_filename
@@ -127,7 +134,8 @@ def init_submachines(machine, submachines, **kwargs):
                                                desc = cfa.source, create_vbpm = False)
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
-
+            
+        lattice_dict[latname].machine = machine
 
     lattice_dict['V3BSRLINE'].loop = False
     _lat = lattice_dict['V3BSRLINE']
@@ -187,15 +195,17 @@ def init_submachines(machine, submachines, **kwargs):
     #for i,e in enumerate(_lat._elements):
     #    logger.debug("{0}: {1}".format(i, e))
 
+    createVirtualElements(_lat)
+
     # a virtual bpm. its field is a "merge" of all bpms.
-    bpms = _lat.getElementList('BPM')
+    #bpms = _lat.getElementList('BPM')
     #logger.debug("bpms:{0}".format(bpms))
     #for i,e in enumerate(bpms):
     #    logger.debug("{0}: {1}".format(i, e))
-        
-    allbpm = element.merge(bpms, **{'virtual': 1, 'name': HLA_VBPM,
-                            'family': HLA_VFAMILY})
-    _lat.insertElement(allbpm, groups=[HLA_VFAMILY])
+    #    
+    #allbpm = element.merge(bpms, **{'virtual': 1, 'name': HLA_VBPM,
+    #                        'family': HLA_VFAMILY})
+    #_lat.insertElement(allbpm, groups=[HLA_VFAMILY])
 
     # the last thing (when virtual elem is ready)
     _lat.buildGroups()

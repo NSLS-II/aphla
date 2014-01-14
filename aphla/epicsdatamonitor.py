@@ -1,3 +1,11 @@
+"""
+EPICS Data Monitor
+-------------------
+
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 import numpy as np
 from cothread.catools import camonitor, caget
 import threading, time
@@ -86,7 +94,7 @@ class CaDataMonitor:
         """
         update the reading, average, index and variance.
         """
-        #print "updating", val, idx, self.avg[idx], self.std[idx]
+        print "updating", val, idx, self.avg[idx], self.std[idx]
         self.recent[idx] = val
         self._count[idx] += 1
         i0 = self._icur[idx]
@@ -109,7 +117,7 @@ class CaDataMonitor:
 
 def _test1():
     import time
-    a = CaDataMonitor(['SR:C01-BI:G02A{BPM:L1}SA:X-I', 'SR:C01-BI:G02A{BPM:L1}SA:Y-I'])
+    a = CaDataMonitor(['V:2-SR:C02-BI:G2{PH1:245}SA:X', 'V:2-SR:C02-BI:G2{PH1:245}SA:Y'])
     print a.data
 
     print "A"
@@ -135,4 +143,4 @@ def _test2():
     b.closeMonitors()
 
 if __name__ == "__main__":
-    _test2()
+    _test1()

@@ -1,13 +1,11 @@
-#!/usr/bin/env python
-
 """
 Core APHLA Libraries
-~~~~~~~~~~~~~~~~~~~~~
-
-:author: Lingyun Yang
+---------------------
 
 Defines the fundamental routines.
 """
+
+# :author: Lingyun Yang
 
 import logging
 import numpy as np
@@ -35,47 +33,73 @@ logger = logging.getLogger(__name__)
 #    'waitStableOrbit', 
 #]
 
-# current
-def getCurrent():
-    """
-    Get the current from the first 'dcct' element
+def setEnergy(Ek):
+    """set energy (MeV) for current submachine
 
-    seealso :func:`getElements`
+    see also :func:`setEnergy`
     """
-    _current = getElements('dcct')
-    if len(_current) == 1:
-        return _current[0].value
-    elif len(_current) > 1:
-        return [c.value for c in _current]
-    else:
-        return None
+    machines._lat.Ek = Ek
+
+def getEnergy():
+    """get current submachine beam energy (MeV)
+
+    see also :func:`setEnergy`
+    """
+    return machines._lat.Ek
+
+# current
+def getCurrent(name='dcct', field='value', unitsys=None):
+    """Get the current from the first DCCT element
+
+    :param str name: the name of DCCT, default 'dcct'
+    :param str field: the field of DCCT, default 'value'
+    :param unit: the desired unit sytem, default None, no conversion.
+
+    returns None if no 'dcct' element found
+
+    seealso :func:`eget`
+    """
+    _current = getElements(name)
+    if _current: return _current[0].get(field, unitsys=unitsys)
+    else: return None
 
 # rf
-def getRfFrequency(unit='MHz'):
+def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None):
     """
     Get the frequency from the first 'RFCAVITY' element.
 
-    The unit is MHz.
+    seealso :func:`eget`, :func:`getRfVoltage`, :func:`putRfFrequency`
     """
-    _rf, = getElements('RFCAVITY')
-    return _rf.f
+    _rf = getElements(name)
+    if _rf: return _rf[0].get(field, unitsys=unitsys)
+    else: return None
 
-def putRfFrequency(f):
+
+def setRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
     """set the rf frequency for the first 'RFCAVITY' element"""
-    _rf, = getElements('RFCAVITY')
-    _rf.f = f
+    _rf = getElements(name)
+    if _rf: return _rf[0].put(field, f, unitsys=unitsys)
+    else: raise RuntimeError("element '%s' not found" % name)
 
-def getRfVoltage():
-    """Get the voltage of the first 'RFCAVITY' element"""
-    _rf, = getElements('RFCAVITY')
-    return _rf.v
+def getRfVoltage(name = 'rfcavity', field='v', unitsys=None):
+    """
+    Get the voltage of the first 'RFCAVITY' element
+
+    :param str name: cavity name
+    :param str field: field name for voltage, default 'v'
+    :param str unit: unit system
+
+    return None if no element found
+    """
+    _rf = getElements(name)
+    if _rf: return _rf[0].get(field, unitsys=unitsys)
+    else: return None
 
 def stepRfFrequency(df = 0.010):
     """
-    change one step of the 'RFCAVITY' element
+    change one step of the first 'RFCAVITY' element
 
-    seealso :func:`~aphla.hlalib.getRfFrequency`, 
-    :func:`~aphla.hlalib.putRfFrequency`
+    seealso :func:`getRfFrequency`, :func:`putRfFrequency`
 
     .. warning:: 
 
@@ -96,9 +120,7 @@ def _reset_rf():
 #
 
 def _reset_trims(verbose=False):
-    """
-    reset all trims in group "HCOR" and "VCOR"
-    """
+    """reset all trims in group *HCOR* and *VCOR* """
     trimx = machines._lat.getGroupMembers(['*', 'HCOR'], op='intersection')
     trimy = machines._lat.getGroupMembers(['*', 'VCOR'], op='intersection')
     pv = []
@@ -148,30 +170,33 @@ def _levenshtein_distance(first, second):
 def getElements(group, include_virtual=False):
     """searching for elements.
 
-    :param group: a list of element name or a name pattern.
-    :type group: list or string
-    :param include_virtual: include virtual element or not.
-    :type include_virtual: bool
-    
-    :return: returns a list of matched element objects.
-    
-    :Example:
-
-      >>> getElements('NO_SUCH_ELEMENT')
-      []
-      >>> getElements('PH1G2C30A')
-      [PH1G2C30A:BPM @ sb=4.935000]
-      >>> getElements('BPM')
-      ...
-      >>> getElements('F*G1C0*')
-      ...
-      >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
-      ...
-
     this calls :func:`~aphla.lattice.Lattice.getElementList` of the current
     lattice.
 
     The default does not include virtual element.
+
+    Parameters
+    -----------
+    group : str, list. a list of element name or a name pattern.
+    include_virtual : include virtual element or not.
+
+    Returns
+    ---------
+     elemlist : a list of matched element objects.
+    
+    Examples
+    ----------
+    >>> getElements('NO_SUCH_ELEMENT')
+      []
+    >>> getElements('PH1G2C30A')
+      [PH1G2C30A:BPM @ sb=4.935000]
+    >>> getElements('BPM')
+      ...
+    >>> getElements('F*G1C0*')
+      ...
+    >>> getElements(['FH2G1C30A', 'FH2G1C28A'])
+      ...
+
     """
 
     # return the input if it is a list of element object
@@ -193,27 +218,44 @@ def getElements(group, include_virtual=False):
 
     return ret
 
+def getExactElement(elemname):
+    """find the element with exact name"""
+    return machines._lat._find_exact_element(name=elemname)
+
 def eget(elem, fields = None, **kwargs):
-    """
-    get elements field values
-    
-    :param elem: element name, name list, pattern or object list
-    :type elem: str, list
-    :param fields: field name or name list
-    :type fields: str, list
-    :param header: optional (True, False), whether returns the (name, field) list. 
+    """get elements field values
+
+    Parameters
+    -----------
+    elem : str, list. element name, name list, pattern or object list
+    fields : str, list. field name or name list
+    header : bool. optional(False), whether returns the (name, field) list. 
  
-    :Example:
+    Examples
+    ---------
+    >>> eget('DCCT', 'value')
+    >>> eget('BPM', 'x')
+    >>> val, head = eget('p*c30*', ['x', 'y'], header=True)
 
-        >>> eget('DCCT', 'value')
-        >>> eget('BPM', 'x')
-        >>> eget('p*c30*', ['x', 'y'], header=True)
+    >>> bpm = getElements('p*c30*')
+    >>> eget(bpm, ['x', 'y'], header=True)
 
-        >>> bpm = getElements('p*c30*')
-        >>> eget(bpm, ['x', 'y'], header=True)
+    Notes
+    -------
+    The optional parameters are unit. see :func:`~aphla.element.CaElement.get`
 
-    seealso :func:`getElements`, :func:`~aphla.element.CaElement.get`
+    It calls :func:`getElements` to obtain a list of elements, then call
+    :func:`~aphla.element.CaElement.get` for each field. This could be a
+    slow process when the element list is large.
+
+    The return value is a list with same size as element list. When more than
+    one field is provided, the return value is a 2D list. 
+
+    When header is True, a list of (element name, field) which has same shape
+    as return value is also returned.
+
     """
+
     header = kwargs.pop('header', False)
 
     elst = getElements(elem)
@@ -233,17 +275,15 @@ def eget(elem, fields = None, **kwargs):
         # h,v should have same dimension
     return v, h
 
-#def eset(elem = None, field = None, **kwargs):
-#    if elem is not None:
-#        elst = getElements(elem)
         
 def getPvList(elem, field, handle = 'readback', **kwargs):
-    """
-    return a pv list for given element list
+    """return a pv list for given element or element list
 
-    :param elem: element pattern, name list or CaElement object list
-    :param field: e.g. 'x', 'y', 'k1'
-    :param handle: 'READBACK' or 'SETPOINT'
+    Parameters
+    ------------
+    elem : element pattern, name list or CaElement object list
+    field : e.g. 'x', 'y', 'k1'
+    handle : 'readback' or 'setpoint'
 
     Keyword arguments:
 
@@ -293,10 +333,11 @@ def getLocations(group):
     Get the location of a group, i.e. a family, an element or a list of
     elements
 
-    Example::
+    Examples
+    ---------
 
-      >>> s = getLocations('BPM')
-      >>> s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
+    >>> s = getLocations('BPM')
+    >>> s = getLocations(['PM1G4C27B', 'PH2G2C28A'])
 
     It has a same input as :func:`getElements` and accepts group name,
     element name, element name pattern and a list of element names.
@@ -309,8 +350,9 @@ def getLocations(group):
 
 def addGroup(group):
     """
-    add a new group, *group* should be plain string, characters in
-    \[a-zA-Z0-9\_\]
+    add a new group to current submachine.
+
+    *group* should be plain string, characters in \[a-zA-Z0-9\_\]
 
     raise *ValueError* if *group* is an illegal name.
 
@@ -390,27 +432,32 @@ def getGroupMembers(groups, op = 'intersection', **kwargs):
 
 def getNeighbors(element, group, n = 3):
     """
-    Get a list of n elements belongs to group. 
-
-    :param element: the central element
-    :type element: str, :class:`~aphla.element.AbstractElement`
-    :param group: the neighbors belong to
-    :return: a list of element in given group
-
-    The list is sorted along s (the beam direction).
+    Get a list of n objects in *group* before and after *element* 
 
     it calls :meth:`~aphla.lattice.Lattice.getNeighbors` of the current
     lattice to get neighbors.
 
-    :Example:
+    Parameters
+    -----------
+    element: str, object. the central element name
+    group: str, the neighbors belong to
 
-      >>> getNeighbors('X', 'BPM', 2) # their names are ['1','2','X', '3', '4']
-      >>> getNeighbors('QC', 'QUAD', 1) # their names are ['Q1', 'QC', 'Q2']
-      >>> el = hla.getNeighbors('PH2G6C25B', 'P*C10*', 2)
-      >>> [e.name for e in el]
+    Returns
+    --------
+    elems : a list of element in given group with size 2*n+1. The list is
+        sorted along s (the beam direction).
+
+
+    Examples
+    ----------
+    >>> getNeighbors('X', 'BPM', 2) # their names are ['1','2','X', '3', '4']
+    >>> getNeighbors('QC', 'QUAD', 1) # their names are ['Q1', 'QC', 'Q2']
+    >>> el = hla.getNeighbors('PH2G6C25B', 'P*C10*', 2)
+    >>> [e.name for e in el]
       ['PL2G6C10B', 'PL1G6C10B', 'PH2G6C25B', 'PH1G2C10A', 'PH2G2C10A']
-      >>> [e.sb for e in el]
+    >>> [e.sb for e in el]
       [284.233, 286.797, 678.903, 268.921, 271.446]
+
     """
 
     if isinstance(element, (str, unicode)):
@@ -421,41 +468,51 @@ def getNeighbors(element, group, n = 3):
 
 def getClosest(element, group):
     """
-    Get the closest element in *group*
-
-    :param element: the element name or object
-    :param group: the closest neighbor belongs to
-
-    :Example:
-
-      >>> getClosest('PM1G4C27B', 'BPM')
+    Get the closest neighbor in *group* for an element
 
     It calls :meth:`~aphla.lattice.Lattice.getClosest`
+
+    Parameters
+    -----------
+    element: str, object. the element name or object
+    group: str, the closest neighbor belongs to this group
+
+    Examples
+    ----------
+    >>> getClosest('pm1g4c27b', 'BPM') # find the closest BPM to 'pm1g4c27b'
+
     """
     if isinstance(element, (str, unicode)):
         return machines._lat.getClosest(element, group)
     else:
         return machines._lat.getClosest(element.name, group)
 
-def getBeamlineProfile(s1 = 0, s2 = None):
+def getBeamlineProfile(sb = 0, se = None):
     """
-    return the beamline profile from s1 to s2
+    return the beamline profile from sposition sb to se
+
+    :param float sb: s-begin
+    :param float se: s-end, None means the end of beamline.
 
     it calls :meth:`~aphla.lattice.Lattice.getBeamlineProfile` of the
     current lattice.
     """
-    return machines._lat.getBeamlineProfile(s1=s1, s2=s2)
+    return machines._lat.getBeamlineProfile(s1=sb, s2=se)
 
 
 def getDistance(elem1, elem2, absolute=True):
     """
     return distance between two element name
 
-    :param str elem1: name or object of one element
-    :param str elem2: name or object of the other element
-    :param bool absolute: return s2 - s1 or the absolute value.
+    Parameters
+    -----------
+    elem1: str, object. name or object of one element
+    elem2: str, object. name or object of the other element
+    absolute: bool. return s2 - s1 or the absolute value.
 
-    raise RuntimeError if None or more than one elements are found
+    Raises
+    -------
+    it raises RuntimeError if None or more than one elements are found
     """
     e1 = getElements(elem1)
     e2 = getElements(elem2)
@@ -479,39 +536,43 @@ def getPhase(group, **kwargs):
     """
     get the phase from stored data
 
-    this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
+    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
     """
     if not machines._twiss: return None
     elem = getElements(group)
-    col = ('phi',)
-    if kwargs.get('spos', False): col = ('phi', 's')
+    col = ['phix', 'phiy']
+    if kwargs.get('spos', False): col.append('s')
     
-    return machines._twiss.getTwiss([e.name for e in elem], col=col, **kwargs)
+    return machines._twiss.get([e.name for e in elem], col=col, **kwargs)
 #
 #
 def getBeta(group, **kwargs):
     """
     get the beta function from stored data.
+    
+    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
 
-    :Example:
+    Parameters
+    -----------
+    src : str.
+        'DB' from database, 'VA' from 'twiss' element of virtual accelerator
 
-      >>> getBeta('Q*', spos = True)
+    Examples
+    ---------
+    >>> getBeta('q*', spos = False)
 
-    - *src*: 'DB' from database, 'VA' virtual accelerator
-
-    this calls :func:`~aphla.twiss.Twiss.getTwiss` of the current twiss data.
     """
     src = kwargs.pop("src", 'DB')
 
     elem = getElements(group)
-    col = ('beta',)
-    if kwargs.get('spos', False): col = ('beta', 's')
+    col = ['betax', 'betay']
+    if kwargs.get('spos', False): col.append('s')
 
     if src == 'DB':
-        if not machines._twiss:
+        if not machines._lat._twiss:
             logger.error("ERROR: No twiss data loaeded")
             return None
-        return machines._twiss.getTwiss([e.name for e in elem], 
+        return machines._lat._twiss.get([e.name for e in elem], 
                                         col=col, **kwargs)
     elif src == 'VA':
         twiss = getElements('twiss')[0]
@@ -540,34 +601,36 @@ def getDispersion(group, **kwargs):
     return getEta(group, **kwargs)
 
 def getEta(group, **kwargs):
-    """
-    get the dispersion from stored data
+    """get the dispersion from stored data
 
-    similar to :func:`getBeta`, it calls :func:`~aphla.twiss.Twiss.getTwiss`
+    Parameters
+    -----------
+    src : str. 
+        'DB' from database; 'VA' from virtual accelerator where a 'twiss'
+        element must exist.
+
+    similar to :func:`getBeta`, it calls :func:`~aphla.apdata.TwissData.get`
     of the current twiss data.
 
-    :Example:
+    Examples
+    --------
+    >>> getEta('P*', spos = True, src = 'DB')
+    >>> getEta('BPM')
+    >>> getEta(['BPM1', 'BPM2'])
 
-        >>> getEta('P*', spos = True, src = 'DB')
-        >>> getEta('BPM')
-        >>> getEta(['BPM1', 'BPM2'])
-
-    - *src*: 'DB' from database, 'VA' from virtual accelerator
-
-    seealso :func:`getElements`
     """
 
     src = kwargs.pop("src", 'DB')
 
     elem = getElements(group)
-    col = ('eta',)
-    if kwargs.get('spos', False): col = ('eta', 's')
+    col = ['etax', 'etay']
+    if kwargs.get('spos', False): col.append('s')
 
     if src == 'DB':
-        if not machines._twiss:
+        if not machines._lat._twiss:
             logger.error("ERROR: No twiss data loaeded")
             return None
-        return machines._twiss.getTwiss([e.name for e in elem], 
+        return machines._lat._twiss.get([e.name for e in elem], 
                                         col=col, **kwargs)
     elif src == 'VA':
         twiss = getElements('twiss')[0]
@@ -599,20 +662,22 @@ def getTunes(source='machine'):
     """
     if source == 'machine':
         # return only the first matched element
-        nu, = getElements('tune')
-        return nu.x, nu.y
+        nu = getElements('tune')
+        if not nu:
+            raise RuntimeError("can not find element 'tune'") 
+        return nu[0].x, nu[0].y
     elif source == 'database':
         return machines._lat.getTunes()
     elif source == 'model':
         raise NotImplementedError()
 
 def getTune(source='machine', plane = 'h'):
-    """
-    get one of the tune, 'h' or 'v'
+    """get one of the tune, 'h' or 'v'
 
-    :Example:
+    Examples
+    ---------
+    >>> getTune(plane='v')
 
-        >>> getTune(plane='v')
     """
     nux, nuy = getTunes(source)
     if plane == 'h': return nux
@@ -621,8 +686,7 @@ def getTune(source='machine', plane = 'h'):
         raise ValueError("plane must be either h or v")
 
 def getFftTune(plane = 'hv', mode = ''):
-    """
-    get tune from FFT
+    """get tune from FFT
 
     .. warning::
 
@@ -834,7 +898,7 @@ def _reset_bpm_offset():
     logger.info("Reset the bpm offset")
 
 def _reset_quad():
-    raise RuntimeError("does not work for SR above V1SR")
+    #raise RuntimeError("does not work for SR above V1SR")
 
     qtag = {'H2': (1.47765, 30), 
             'H3': (-1.70755, 30),
@@ -846,7 +910,7 @@ def _reset_quad():
             'L1': (-1.56216, 30)}
     
     for tag, v in qtag.items():
-        qlst = getElements('Q%s*' % tag)
+        qlst = getElements('Q%s' % tag)
         qval, qnum = v
         if len(qlst) != qnum:
             raise ValueError("ring does not have exactly %d %s (%d)" % \
@@ -953,7 +1017,7 @@ def waitChanged(elemlst, fields, v0, **kwargs):
     wait = kwargs.get('wait', (2, 1, 0))
     maxtrial= kwargs.get('maxtrial', 20)
     full = kwargs.get('full', False)
-    unit = kwargs.get('unit', None)
+    unitsys = kwargs.get('unitsys', None)
 
     if CA_OFFLINE: 
         if full: return (True, 0)
@@ -963,7 +1027,7 @@ def waitChanged(elemlst, fields, v0, **kwargs):
 
     ntrial = 0
     while True:
-        v1 = np.ravel(eget(elemlst, fields, unit=unit))
+        v1 = np.ravel(eget(elemlst, fields, unitsys=unitsys))
         time.sleep(wait[1])
         ntrial = ntrial + 1
         if np.std(v1 - np.array(v0)) > diffstd: break
@@ -1006,7 +1070,7 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
 
     wait = kwargs.get('wait', (2, 1, 0))
     maxtrial= kwargs.get('maxtrial', 3)
-    unit = kwargs.get('unit', None)
+    unitsys = kwargs.get('unitsys', None)
 
     if CA_OFFLINE: return True
 
@@ -1014,7 +1078,7 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
 
     v = np.zeros((len(elemlst), maxtrial), 'd')
     for i in range(maxtrial):
-        v[:,i] = np.ravel(eget(elemlst, fields, unit=unit))
+        v[:,i] = np.ravel(eget(elemlst, fields, unitsys=unitsys))
         time.sleep(wait[1])
 
     time.sleep(wait[2])

@@ -27,14 +27,15 @@ class ApPlotData(object):
     """
     def __init__(self, s, **kw):
         self.s        = s
-        self.samples  = kw.get('samples', 10)
-        self.yscale   = kw.get('scale', 1.0)
-        self.yref     = kw.get('yref', None)
-        self.yunitsys = kw.get('unitsys', None)
-        self.yunit    = kw.get('unit', '')
+        self.samples  = kw.pop('samples', 10)
+        self.yscale   = kw.pop('scale', 1.0)
+        self.yref     = kw.pop('yref', None)
+        self.yunitsys = kw.pop('unitsys', None)
+        self.yunit    = kw.pop('unit', '')
+        self.ylabel   = kw.pop('label', "")
 
-        self.picker_profile = kw.get('picker_profile', None)
-        self.magnet_profile = kw.get('magnet_profile', None)
+        self.picker_profile = kw.pop('picker_profile', None)
+        self.magnet_profile = kw.pop('magnet_profile', None)
 
         n = len(self.s)
         dim = (self.samples, n)
@@ -57,7 +58,7 @@ class ApPlotData(object):
         #self.update()
 
     def label(self):
-        return ''
+        return self.ylabel
 
     def ymin(self, axis='s'):
         c, i = divmod(self.icount - 1, self.samples)
@@ -86,9 +87,7 @@ class ApPlotData(object):
         y = np.compress(self.keep, self.y, axis=1)
         return np.std(y, axis = ax)
 
-
-
-    def orbit(self, nomask=False):
+    def data(self, nomask=False):
         """
         return horizontal orbit: (s, y, errorbar)
         """
@@ -107,8 +106,10 @@ class ApVirtualElemData(ApPlotData):
         """
         self.machine = kw.get("machine", None)
         self.lattice = kw.get("lattice", None)
+        self.plane   = kw.get("plane", None)
 
         self.velem = velem
+        self.name    = velem.name
         sb, se = np.array(self.velem.sb), np.array(self.velem.se)
         if not kw.has_key('s'): kw.update({'s': 0.5*(sb+se)})
 
@@ -118,9 +119,11 @@ class ApVirtualElemData(ApPlotData):
         # prefer 'phy' unit
         if 'phy' in self.velem.getUnitSystems(field):  self.yunitsys = 'phy'
         if kw.get('update', True): self.update()
+        
+        self.yunit = self.velem.getUnit(self.yfield, self.yunitsys)
 
     def label(self):
-        return "%s [%s]" % (self.yfield, self.velem.getUnit(self.yfield))
+        return "%s [%s]" % (self.yfield, self.yunit)
 
     def update(self):
         """
@@ -130,8 +133,8 @@ class ApVirtualElemData(ApPlotData):
         i = (self.icur + 1) % self.samples
         #print "Updating orbit data"
         try:
-            self.y[i,:] = self.yscale * np.array(self.velem.get(
-                self.yfield, unit=self.yunitsys))
+            vy = self.velem.get(self.yfield, unitsys=self.yunitsys)
+            self.y[i,:] = [self.yscale * x if x else np.nan for x in vy]
         except:
             logger.error("Can not get data '%s'" % self.yfield)
             raise
@@ -143,4 +146,64 @@ class ApVirtualElemData(ApPlotData):
         self.yerrbar[:] = np.std(self.y, axis=0)
         self.icount += 1
         self.icur = i
+
+    def names(self):
+        return self.velem._name
+
+    def remove(self, name):
+        """remove name from velem, raise error if name is not in velem"""
+        #if name not in self.velem._name: return
+        i = self.velem._name.index(name)
+        for fld,act in self.velem._field.iteritems():
+            pv = act.pvrb[i]
+            act.remove(pv)
+
+    def disable(self, name):
+        """disable name in velem, raise error if name is not in velem"""
+        #if name not in self.velem._name: return
+        i = self.velem._name.index(name)
+        self.keep[i] = False
+
+
+class ManagedPvData(ApPlotData):
+    def __init__(self, pvm, s, pvs, **kw):
+        """
+        updating immediately by default, unless update=False
+        """
+        ApPlotData.__init__(self, s, **kw)
+        self._pvm = pvm
+        self._pvs = pvs
+        self._element  = kw.get('element', [])
+        self._field    = kw.get('field', [])
+
+    def label(self):
+        return "%s [%s]" % (self.ylabel, self.yunit)
+
+    def update(self):
+        """
+        update the orbit data from virtual element.
+        """
+        # y and errbar sync with plot, not changing data.
+        i = (self.icur + 1) % self.samples
+        #print "Updating orbit data"
+        for j,pv in enumerate(self._pvs):
+            if not self.keep[j]: continue
+            try:
+                self.y[i,j] = self._pvm.get(pv)
+            except:
+                print "MESSAGE: pv='{0}', val='{1}'".format(pv, self._pvm.get(pv))
+                raise
+
+            self.yerrbar[j] = np.std(self.y[:,j])
+        self.icount += 1
+        self.icur = i
+
+    def names(self):
+        return self._element
+
+    def disable(self, name):
+        """disable name in velem, raise error if name is not in velem"""
+        #if name not in self.velem._name: return
+        i = self._element.index(name)
+        self.keep[i] = False
 

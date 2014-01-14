@@ -44,10 +44,6 @@ symbol                                        description
 :func:`~aphla.hlalib.getTune`                 get tune                                     
 :func:`~aphla.hlalib.getTuneRm`               Not implemented yet                          
 :func:`~aphla.hlalib.getTunes`                get tunes from ['machine', 'database']       
-:func:`~aphla.machines.initNSLS2`             initialize the NSLS2 accelerator lattice 'SR', 'LTD1', 'LTD2', 'LTB'.
-:func:`~aphla.machines.initNSLS2V1`           initialize the virtual accelerator 'V1SR', 'V1LTD1', 'V1LTD2', 'V1LTB' from
-:func:`~aphla.machines.initNSLS2V1SRTwiss`    initialize the twiss data from virtual accelerator
-:func:`~aphla.machines.initTLS`               initialize the Taiwan Light Source accelerator lattice 'SR'.
 :func:`~aphla.meastwiss.measBeta`             Measure the beta function by varying quadrupole strength
 :func:`~aphla.measorm.measChromRm`            measure chromaticity response matrix         
 :func:`~aphla.meastwiss.measChromaticity`     Measure the chromaticity                     

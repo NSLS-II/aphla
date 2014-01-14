@@ -11,18 +11,20 @@ Tutorial
    place for reading code and their output. But here explains things in more
    details.
 
+
 The HLA package we are developing has three parts
 
 - HLA Library: the element access model, lattice management and data IO.
 - HLA scripts: some measurement and analysis routines.
-- HLA GUI applications: ``aplauncher``, ``aporbit``, ``apbba``, ...
+- HLA GUI applications: ``aplauncher``, ``mleap``, ``apbba``, ...
 
 .. testsetup::
 
    from __future__ import print_function, unicode_literals
+   import aphla
 
 
-HLA Initialization
+Initialization
 -------------------
 
 Before using ``aphla`` we can import some python modules for data analysis
@@ -33,7 +35,7 @@ and plotting.
    >>> import aphla as ap    # import aphla package
    >>> import numpy as np    # import NumPy
    >>> import matplotlib.pylab as plt    # matplotlib for plotting
-   >>> import time
+   >>> import time           # for sleep/delay
 
 .. note::
 
@@ -44,26 +46,14 @@ Initialize the NSLS2 Virtual Storage Ring lattice and load the twiss data:
 
 .. doctest::
 
-   >>> ap.machines.init("nsls2v2")
+   >>> ap.machines.load("nsls2v2")
 
-:func:`~aphla.machines.init("nsls2v2")` will initialize the lattice structure of
-`NSLS2 Virtual Accelerastor #2`. It is not the hardware initialization and did
-not do any hardware operation inside. 
-
-.. note::
-
-    By default, this initialization will search search for channel finder
-    server and use the data there. It can be overwritten with your own config
-    file.
-
-``aphla`` can keep several initialized lattices, depending how many
-*aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
-*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB* for the real machine. The
-`V1` prefix before `SR`, `LTD1` means it is the `virtual accelerator #1`
-counter part. :func:`~aphla.machines.lattices` lists the initialized lattices
-and :func:`~aphla.machines.use` will switch to the named lattice as the
-current lattice. This current lattice is the domain for functions like
-:func:`~aphla.hlalib.getElements`.
+:func:`~aphla.machines.load("nsls2v2")` will initialize the a lattice
+structure, here *nsls2v2* means `NSLS2 Virtual Accelerastor #2`. This is not the
+hardware initialization and did not do any hardware operation
+inside. *nsls2v2* is the machine name which defines several lattices. For the
+default real accelerator at NSLS-II, we use *nsls2*. Once the machine is
+loaded, we can check the available lattices and switch between.
 
 .. code-block:: python
 
@@ -71,11 +61,13 @@ current lattice. This current lattice is the domain for functions like
    [u'V1LTD1', u'V1LTD2', u'V1LTB', u'V1SR']
    >>> ap.machines.use("V1SR")
 
-Switching between lattices should be always a safe operation itself, but may
-affect the following operations.
+Switching between lattices should be always a safe operation itself, but all
+the operations, such as searching elements, taking snapshot and correct orbit,
+will be limited to the current active lattice.
 
 
-HLA Element Searching
+
+Element Searching
 ---------------------
 
 The lattice is merely a list of elements. In order to control the element,
@@ -90,7 +82,7 @@ Here are some examples:
    >>> len(bpm) # 180 in tital, guaranteed in increasing order of s coordinate.
    180
    >>> bpm[0].name
-   u'PH1G2C30A'
+   u'ph1g2c30a'
    >>> bpm[0].family, bpm[0].cell, bpm[0].girder
    (u'BPM', u'C30', u'G2')
 
@@ -111,7 +103,11 @@ Each element has a set of properties associated:
 - *group*. *family*, *cell*, *girder* and *symmetry* are special named groups
   and form the default group that element belongs to. A BPM in girder 2 cell 2
   could be in group 'C02', 'G2', 'BPM' and more. e.g. 'PM1' is a resonable
-  group name for bpm 'PM1G4C02B'.
+  group name for bpm 'pm1g4c02b'.
+
+Although `aphla` does not rely on this, we suggest to use lower cases for
+element names and upper case for family, girder, cell and group name which
+represent several elements.
 
 An element can only belong to one *family*, *cell*, *girder* and
 *symmetry*. But it can be in many groups:
@@ -155,8 +151,8 @@ pattern string follows Unix filename convension, see :ref:`Wildcard Matching
 
 .. doctest::
 
-   >>> ap.getElements('P*C01*A') #doctest: +NORMALIZE_WHITESPACE
-   [PL1G2C01A:BPM @ sb=29.988600, PL2G2C01A:BPM @ sb=32.552300, PM1G4C01A:BPM @ sb=38.301800]
+   >>> ap.getElements('p*c01*a') #doctest: +NORMALIZE_WHITESPACE
+   [pl1g2c01a:BPM @ sb=29.988600, pl2g2c01a:BPM @ sb=32.552300, pm1g4c01a:BPM @ sb=38.301800]
    >>> ap.getGroups('P*C01*A') # a union of the groups of matched elements
    [u'BPM', u'C01', u'G4', u'G2', u'A']
 
@@ -164,40 +160,37 @@ pattern string follows Unix filename convension, see :ref:`Wildcard Matching
 HLA Element Control
 ---------------------
 
-   >>> el = ap.getElements(['SQMG4C05A', 'QM2G4C05B', 'CXH2G6C05B', 'PM1G4C05A'])
-   >>> for e in el: print e.status() #doctest: +ELLIPSIS
-   SQMG4C05A
-   QM2G4C05B
-     k1: 1.222...
-   CXH2G6C05B
-     x: ...
-   PM1G4C05A
-     y: ...
-     x: ...
+The element property associated to the hardware control is called *field* in
+`aphla`. Each field has *readback* and/or *setpoint* as its *handle*.
 
-   >>> for e in el: print e.name, e.pv('eget'), e.value #doctest: +SKIP
-   SQMG4C05A [u'SR:C05-MG:G04A{SQuad:M1}Fld-I'] 0.0
-   QM2G4C05B [u'SR:C05-MG:G04B{Quad:M2}Fld-I'] 1.22232651254
-   CXH2G6C05B [u'SR:C05-MG:G06B{HCor:H2}Fld-I'] 0.0
-   PM1G4C05A [u'SR:C05-BI:G04A{BPM:M1}SA:X-I', u'SR:C05-BI:G04A{BPM:M1}SA:Y-I'] [0.00024599597546417758, 5.0644899005954578e-05]
-   
-It is easy to read/write the default value of an element:
+The following example list available fields in an element and get one readback
+PV for field "x".
 
 .. doctest::
 
-   >>> e = ap.getElements('CXH2G2C30A')
-   >>> print e.status #doctest: +SKIP
-   CXH2G2C30A
-     READBACK (SR:C30-MG:G02A{HCor:H2}Fld-I): 0.0
-     SETPOINT aphla.eput (SR:C30-MG:G02A{HCor:H2}Fld-SP): 1e-07
-     READBACK (SR:C30-MG:G02A{HCor:H2}Fld-I): 9.9982402533e-08
-     SETPOINT (SR:C30-MG:G02A{HCor:H2}Fld-SP): 1e-07
+   >>> el = ap.getElements("HCOR")
+   >>> c1 = el[0]
+   >>> print c1.fields()
+   [ "x" ]
+   >>> print c1.pv(field="x", handle="readback")
+   [ "pv" ]
 
-   >>> print e.value #doctest: +SKIP
-   0.0
-   >>> e.value = 1e-7 #doctest: +SKIP
-   >>> e.value #doctest: +SKIP
-   9.998240253299763e-08
+`aphla` supports unit conversion. The conversion is done between two unit
+systems and the raw data from the lower level equipment control system are
+called raw (use None in Python) unit system. We can configured more than one
+unit systems for the element fields.
+
+With given field, we can read and write (if it has setpoint handle) in two
+ways: the raw unit way and the unit converted way.
+
+.. doctest::
+
+   >>> print c1.getUnitSystems()
+   >>> print "Raw unit:", c1.x, c1.get("x", unitsys=None)
+   >>> print "'phy' unit system:", c1.get(field="x", unitsys="phy")
+   >>> print "The unit symbol:", c1.getUnit(field="x", unitsys="phy")
+
+
 
 
 More Examples
@@ -233,8 +226,8 @@ Twiss parameters
 
 .. doctest::
 
-   >>> beta = ap.getBeta('P*G2*C03*A') #doctest: +ELLIPSIS 
-   >>> bpm = ap.getElements('P*G2*C03*A')
+   >>> beta = ap.getBeta('p*g2*c03*a') #doctest: +ELLIPSIS 
+   >>> bpm = ap.getElements('p*g2*c03*a')
    >>> beta_sub1 = ap.getBeta(bpm) #doctest: +ELLIPSIS
    >>> beta_sub2 = ap.getBeta(bpm, loc='b') #doctest: +ELLIPSIS
 
@@ -261,15 +254,15 @@ Correct the orbit and plot the orbits before/after the correction:
 .. doctest::
 
    >>> print ap.__path__ #doctest: +SKIP
-   >>> bpm = ap.getElements('P*C1[0-3]*')
+   >>> bpm = ap.getElements('p*c1[0-3]*')
    >>> trim = ap.getGroupMembers(['*', '[HV]COR'], op='intersection')
    >>> print len(bpm), len(trim) #doctest: +NORMALIZE_WHITESPACE
    24 360
-   >>> v0 = ap.getOrbit('P*', spos=True)
+   >>> v0 = ap.getOrbit('p*', spos=True)
    >>> ap.correctOrbit(bpm, trim, repeat=3) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
    Euclidian norm: ...
    >>> time.sleep(4)
-   >>> v1 = ap.getOrbit('P*', spos=True)
+   >>> v1 = ap.getOrbit('p*', spos=True)
    >>> plt.clf()
    >>> ax = plt.subplot(211) 
    >>> fig = plt.plot(v0[:,-1], v0[:,0], 'r-x', label='X') 
@@ -294,6 +287,67 @@ Correct the orbit and plot the orbits before/after the correction:
    `iPython <http://ipython.scipy.org>`_, `matplotlib
    <http://matplotlib.sourceforge.net>`_.
 
+
+HLA Lib Summary
+---------------------
+
+The following are some common functions. Please see :doc:`libref` for a list of
+documented modules, methods and functions.
+
+The functions below are an alias from submodules under ``aphla``,
+e.g. `aphla.correctOrbit` is from `aphla.aptools.correctOrbit`, and
+`aphla.measBeta` is from `aphla.meastwiss.measBeta`.
+
+.. currentmodule:: aphla
+
+.. autosummary::
+   :toctree: generated
+
+   aphla.calcLifetime
+   aphla.correctOrbit
+   aphla.eget
+   aphla.getBeamlineProfile
+   aphla.getBeta
+   aphla.getBpms
+   aphla.getChromaticity
+   aphla.getChromaticityRm
+   aphla.getClosest
+   aphla.getCurrent
+   aphla.getDispersion
+   aphla.getDistance
+   aphla.getElements
+   aphla.getEta
+   aphla.getExactElement
+   aphla.getFastOrbit
+   aphla.getFftTune
+   aphla.getGroupMembers
+   aphla.getGroups
+   aphla.aptools.getLifetime
+   aphla.getLocations
+   aphla.getNeighbors
+   aphla.getOrbit
+   aphla.getPhase
+   aphla.getPvList
+   aphla.getQuads
+   aphla.getRfFrequency
+   aphla.getRfVoltage
+   aphla.getTbtOrbit
+   aphla.getTune
+   aphla.getTuneRm
+   aphla.getTunes
+   aphla.meastwiss.measBeta
+   aphla.measBeta
+   aphla.measChromaticity
+   aphla.measDispersion
+   aphla.measOrbitRm
+   aphla.setRfFrequency
+   aphla.aptools.saveImage
+   aphla.aptools.setLocalBump
+   aphla.stepRfFrequency
+
+..   aphla.fitGaussian1
+..   aphla.fitGaussianImage
+..   include :/: hlasummary.txt
 
 .. 
   /.. math::

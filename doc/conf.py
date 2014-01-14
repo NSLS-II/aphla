@@ -47,7 +47,9 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'contents'
+master_doc = 'userguide'
+
+unused_docs = []
 
 # General information about the project.
 project = u'aphla'
@@ -75,9 +77,11 @@ release = aphla.__version__
 # List of documents that shouldn't be included in the build.
 #unused_docs = []
 
+#exclude_patterns = ['libref*.rst']
+
 # List of directories, relative to source directory, that shouldn't be searched
 # for source files.
-exclude_trees = ['_build']
+exclude_trees = ['_build', '_templates']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -187,7 +191,9 @@ latex_font_size = '11pt'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('contents', 'aphla.tex', u'HLA Documentation',
+  ('userguide', 'aphla_userguide.tex', u'HLA User Guide',
+   u'Lingyun Yang', 'manual'),
+  ('libref', 'aphla_libref.tex', u'HLA Library Reference',
    u'Lingyun Yang, Yoshi Hidaka, Jinhyuk Choi', 'manual'),
 ]
 
@@ -197,7 +203,7 @@ latex_documents = [
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
-#latex_use_parts = False
+# latex_use_parts = True
 
 # Additional stuff for the LaTeX preamble.
 latex_preamble = '\\usepackage{relsize}'
@@ -207,3 +213,6 @@ latex_preamble = '\\usepackage{relsize}'
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+numpydoc_show_class_members = False
+

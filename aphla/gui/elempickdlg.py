@@ -15,19 +15,21 @@ from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox,
 
 class ElementPickDlg(QDialog):
 
-    def __init__(self, elem, title='Elements:', parent=None):
+    def __init__(self, allelems, unchecked, parent=None,
+                 title='Choose Elements:'):
+        """elemobj"""
         super(ElementPickDlg, self).__init__(parent)
+        self.setWindowTitle(title)
         self.elemlst = QListWidget()
         # enable multi-selection
         self.elemlst.setSelectionMode(QAbstractItemView.MultiSelection)
-        for e,chk in elem:
+        for e in allelems:
             w = QListWidgetItem(e)
             w.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsSelectable |
                        Qt.ItemIsEnabled)
-            if chk: w.setCheckState(Qt.Checked)
+            if e not in unchecked: w.setCheckState(Qt.Checked)
             else: w.setCheckState(Qt.Unchecked)
             self.elemlst.addItem(w)
-
         #self.elemlst.setSortingEnabled(True)
 
         elemLabel = QLabel(title)
@@ -44,7 +46,6 @@ class ElementPickDlg(QDialog):
         self.connect(buttonBox, SIGNAL("accepted()"), self.accept)
         self.connect(buttonBox, SIGNAL("rejected()"), self.reject)
 
-        self.setWindowTitle("Choose elements")
 
 
     def result(self):

@@ -1,5 +1,7 @@
+:orphan:
+
 Installation
-=============
+--------------
 
 .. warning::
 
@@ -9,7 +11,7 @@ Installation
 
 
 Depending Packages
--------------------
+~~~~~~~~~~~~~~~~~~
 
 There are some packages required before using HLA. In the following, we will
 take Debian/Ubuntu Linux as an example to show how to install them.
@@ -70,7 +72,7 @@ working on is *nsls2* and the channel finder service URL is at
 
 
 Code Repository for HLA Developers
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **SKIP THIS PART IF YOU DO NOT NEED TO DEVELOP HLA APPLICATIONS**
 
@@ -107,4 +109,22 @@ If it has been a long time after you checkout the code from the server, you can
 .. code-block:: bash
 
   $ hg pull (update the local files with server's)
+
+Configuration
+----------------
+
+.. code-block:: bash
+
+  $ h5copy -p -i v2sr_twiss.hdf5 -s Twiss -o nsls2v2.hdf5 -d /V2SR/Twiss
+
+
+
+``aphla`` can keep several initialized lattices, depending how many
+*aphla.sys.* tags in the configuration. Currently we have *aphla.sys.SR*,
+*aphla.sys.LTD1*, *aphla.sys.LTD2*, *aphla.sys.LTB* for the real *nsls2*
+machine. The `V1` prefix before `SR`, `LTD1` means it is the `virtual
+accelerator #1` counter part. :func:`~aphla.machines.lattices` lists the
+initialized lattices and :func:`~aphla.machines.use` will switch to the named
+lattice as the current lattice. This current lattice is the domain for
+functions like :func:`~aphla.hlalib.getElements`.
 

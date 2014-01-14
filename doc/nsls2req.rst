@@ -1,3 +1,7 @@
+:orphan:
+
+.. _nsls2-softreq:
+
 NSLS2 Commissioning Requirement
 ===============================================================
 
@@ -6,7 +10,7 @@ NSLS2 Commissioning Requirement
 .. role:: hladone
 .. role:: hladetails
 
-.. _Software Requirement:
+
 
 This chapter describes software requirement for NSLS-II
 commissioning. This list is mainly from [Willeke2009]_ and [Krinsky2010]_ (See `References`_)
@@ -66,11 +70,11 @@ Without Beam
     - Test personnel protection system
     - Test loss control monitoring system
     - Prepare, review, sign safety documentation
-    - :hla:`Complete staff training`
+    - :hla:`Complete staff training` (python-aphla, css)
     - :hla:`Verify that named devices in control system control proper hardware`
-    - Check polarity of all magnets
+    - :hla:`Check polarity of all magnets`
     - :hlawarn:`Complete survey of magnetic elements`
-    - Test diagnostic equipment without beam
+    - :hla:`Test diagnostic equipment without beam` (python-aphla, css)
 
 Phase 1 - without ID
 ~~~~~~~~~~~~~~~~~~~~~
@@ -96,8 +100,8 @@ Phase 1 - without ID
     - achieve 1Hz accumulation of injected bunches into ring
     - commission loss control monitoring system
         - Monitor beam loss. :hladetails:`Get loss monitor readings from beam containment
-          system (beam loss monitor)`.
-    - use visible synchrotron light monitor to study transverse beam profile and disturbance due to kickers.
+          system (beam loss monitor)`. (extra development)
+    - use visible synchrotron light monitor to study transverse beam profile and disturbance due to kickers. 
     - improve injection efficiency and RF capture
     - reduce beam loss due to kicker excitation
     - improve orbit and tune
@@ -243,6 +247,8 @@ physics, data acquisition, hardware control, and so on, can work
 together effectively and productively.
 
 
+.. _nsls2-software-plan:
+
 Planned and Implemented Software
 ---------------------------------
 
@@ -266,20 +272,26 @@ starting points for further development.
       example a readback differs from setting point larger than its
       threshhold. 
     - :hla:`major magnets reading: (Dipole, Quad, Sext, Trim, ...)` (CSS operation panel)
-- Permit system monitor and control (CSS panel)
-- Data logger and data display (CSS panel)
+- Permit system monitor and control (CSS panel and low level lock)
+- LCM data monitoring and warning/alarm (S. Kramer, L. Yang and Y. Hu)
+- Data logger and data display (CSS panel, python-aphla)
 - Electronic logbook (OLog)
 - :hla:`Unit conversion service` (G.Shen)
 - :hladone:`Unit conversion in python-aphla` (L.Yang)
-- :hladone:`Smooth Ramping` (G.Shen)
+- :hla:`MASAR and Smooth Ramping` (G.Shen, machine save and restore)
     - :hladone:`list channels we are interested.`
-    - :hladone:`ramp (i.e. linear interpolation) whole group at certain rate.`
+    - :hla:`ramp (i.e. linear interpolation) whole group at certain rate.`
     - :hladone:`searching for channels with wild-card`
-    - :hladone:`save/restore state of the machine`
-    - :hla:`linear interpolation to a saved state.`
+    - :hladone:`save state of the machine`
+    - :hla:`restore saved state of the machine`
+    - :hla:`linear interpolation from current state to a saved state.`
     - :hla:`open-end ramping with weight on each PV`
+    - :hla:`manage, editing capability for stored accelerator status.`
+    - :hla:`smoothly ramp from one stage to another.`
+    - :hla:`smooth ramping of one set of magnets (PVs)`
+    - :hla:`compare two stages, online and saved data, two data file.`
 
-- client to explore archive data (CSS)
+- client to explore archived data (CSS, command line tool)
     - in certain time frame
     - link to logbook to view reasons for shutdown, current drop (optional ?)
     - simple statistic for the data: average, variance, maximum, minimum.
@@ -288,51 +300,49 @@ starting points for further development.
     - export data. plot/save/print figures.
 
 - Major Subsystem
-    - RF display and control. (operation panel)
+    - RF display and control. (operation/CSS panel)
         - page with all relevant settings, read back, status, parameters
         - optional: RF feedback status which detects orbit drift vs RF
           frequency.
-    - Vacuum display and control. "Water flow" or 3D plot of vacuum status
+    - Vacuum display and control. "Water flow" or 3D plot of vacuum status (operation/CSS panel)
         - Pressure vs index.
         - optional: Pressure vs pump location.
         - optional: waterflow plot.   along the ring with time line info.
-    - Magnet temperature interlock display and control (operation panel)
-    - Cryogenics system display and control (operation panel)
+    - Magnet temperature interlock display and control (operation/CSS panel)
+    - Cryogenics system display and control (operation/CSS panel)
     - Pulsed magnet systems monitor and control
-    - :hla:`Fast orbit feedback control above cell level` 
+    - :hla:`Fast orbit feedback control above cell level` (CSS panel, Y. Tian)
         - :hla:`turn on/off`
         - :hla:`disable/enable certain trim/BPM`
         - :hla:`update(import/export) RespMatrix`
         - :hla:`fast/slow strength shift`
         - :hla:`fast/slow strength monitoring and analysis`
-    - Insertion Device (see the following)
+    - Insertion Device (see the following) (CSS panel, python-aphla by Y. Li)
 
-- Safety Systems
-    - Personal protection system status display
+- Safety Systems (CSS panel)
+    - Personal protection system status display 
     - Equipment protection status display and control
     - Beam containment status display and control
     - Top-off status monitor
     - Machine protection system display and control
 
-- :hla:`Accelerator parameter store/restore (*)` (G.Shen)
-    - :hla:`manage, editing capability for stored accelerator status.`
-    - :hla:`smoothly ramp from one stage to another.`
-    - :hla:`smooth ramping of one set of magnets (PVs)`
-    - :hla:`compare two stages, online and saved data, two data file.`
-
-- Temperature monitoring display
+- Temperature monitoring display (CSS panel)
     - Tunnel air temperature and humidity monitor
     - Water colling system display
     - magnet and crygenics temperature display
 
-- Injection Control
+- Injection Control (injection group, CSS, Python, Matlab)
+- First turn orbit establishment (S. Seletskiy)
 - Front-end monitoring and control
-- Scraper and movable mask operations
+- Scraper and movable mask operations (CSS panel)
 - :hla:`General high level element control (GUI)`
-    - CSS widgets with channel finder service. (G.Carcassi)
-    - :hla:`Selector/Tuner for PV/Element control.` (Y.Hidaka)
+    - CSS widgets with channel finder service. (G. Carcassi)
+    - :hla:`Selector/Tuner for PV/Element control.` (Y. Hidaka)
+    - :hla:`Plotter` (Y. Hidaka)
+    - :hla:`aporbit, general AP elements viewer and controller` (L. Yang)
 - :hladone:`Simulation code integration`
     - :hladone:`PyTracy`  (J.Choi)
+    - :hla:`Lattice export, elegant and tracy format, in twiss server` (G. Shen)
 
 
 Software for Beam Diagnostics
@@ -348,9 +358,9 @@ which are easier for us to integrate and expand.
 
 - :hla:`Beam orbit display`. (L.Yang)
     - :hladone:`display closed orbit (static), 1Hz rate`
-    - :hla:`machine clock for turn-by-turn BPM reading`
+    - :hladone:`machine clock for turn-by-turn BPM reading` (PV/CF)
     - :hladone:`turn by turn bpm reading (including single turn)`
-    - :hla:`single turn`
+    - :hladone:`single turn` (PV/CF)
     - :hladone:`Plot orbit change from now on.`
     - :hladone:`BPM status information`
     - :hladone:`difference (referecne orbit display)`
@@ -372,11 +382,11 @@ which are easier for us to integrate and expand.
 
 - :hla:`Turn-by-turn BPM data` 
     - :hla:`closed orbit established using corrector and single shot BPM
-      data`
-    - :hladone:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
-    - :hla:`Realtime tune based on turn-by-turn BPM`
-    - :hladone:`BPM buttons readout.`
-    - :hla:`Correct orbit based on single shot orbit`
+      data` (S. Seletskiy)
+    - :hla:`get/plot turn-by-turn BPM signal, including orbit and sub/diff`
+    - :hla:`Realtime tune based on turn-by-turn BPM` (Diagnostics, PV/CF)
+    - :hladone:`BPM buttons readout.` (PV/CF)
+    - :hla:`Correct orbit based on single shot orbit` (S. Seletskiy)
 
 - :hladone:`Beam current history and lifetime display` (L.Yang)
 - :hla:`Bunch intensity display and history display/analysis (*)` (Y.Hu, L.Yang)
@@ -393,7 +403,7 @@ which are easier for us to integrate and expand.
 
 - :hla:`Beam profile: current, size, rms, center, image.` (Y.Hu, etc.)
 - :hla:`Bunch length and profile if it is available (*)` (Y.Hu, etc.)
-- :hla:`Measure BPM linearity` (Y.Hu, etc.)
+- :hla:`Measure BPM linearity`
 - Bad BPM identification should be done in other application. Data
   synchronization to be done in low level server part.
 - :hla:`postmortem data reading/analysis`

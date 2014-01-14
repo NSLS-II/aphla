@@ -28,10 +28,9 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR)/*
+	-rm -rf $(BUILDDIR)/* ./generated/aphla.*.rst
 
 html:
-	touch contents.rst
 	#python utils/hla_names.py > commands.txt
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	#python utils/inject_commands_table.py

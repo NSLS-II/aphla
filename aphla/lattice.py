@@ -18,19 +18,20 @@ seealso :mod:`~aphla.element`, :mod:`~aphla.twiss`, :mod:`~aphla.machines`
 """
 
 from __future__ import print_function, unicode_literals
+#from __future__ import print_function
 
 import re
 from math import log10
 import shelve
 import numpy as np
 from fnmatch import fnmatch
+from datetime import datetime
 
 import logging
 logger = logging.getLogger(__name__)
 
 class Lattice:
-    """
-    Lattice
+    """Lattice
 
     - *name*
     - *mode*
@@ -47,7 +48,7 @@ class Lattice:
         self.name = name
         self._twiss = None
         # group name and its element
-        self._group = None
+        self._group = {}
         # guaranteed in the order of s.
         self._elements = []
         # data set
@@ -57,6 +58,8 @@ class Lattice:
         self.sb, self.se = 0.0, 0.0
         self.ormdata = None
         self.loop = True
+        self.Ek = None
+        self.arpvs = None
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -75,10 +78,11 @@ class Lattice:
         return None
 
     def _find_element_s(self, s, eps = 1e-9, loc='left'):
-        """
-        given s location, find an element at this location. If this is
-        drift space, find the element at 'left' or 'right' of the given
-        point.
+        """given s location, find an element at this location. 
+
+        If this is drift space, find the element at 'left' or 'right' of the
+        given point.
+
         """
         if not loc in ['left', 'right']:
             raise ValueError('loc must be in ["left", "right"]')
@@ -109,16 +113,16 @@ class Lattice:
         else: return False
 
     def insertElement(self, elem, i = None, groups = None):
-        """
-        insert an element at index *i* or append it.
-
-        :param elem: element object
-        :type elem: :class:`~aphla.element.CaElement`, 
-                    :class:`~aphla.element.AbstractElement`
-        :param int i: the index to insert. append if *None*
-        :param list groups: group names the element belongs to.
+        """insert an element at index *i* or append it.
 
         seealso :func:`appendElement`
+
+        Parameters
+        ------------
+        elem : element object. :class:`~aphla.element.CaElement`, :class:`~aphla.element.AbstractElement`
+        i : int. the index to insert. append if *None*
+        groups : group names the element belongs to.
+
         """
         if i is not None:
             self._elements.insert(i, elem)
@@ -157,8 +161,7 @@ class Lattice:
         else: return None
 
     def appendElement(self, elem):
-        """
-        append a new element to lattice. 
+        """append a new element to lattice. 
 
         callers are responsible for avoiding duplicate elements (call
         hasElement before).
@@ -166,29 +169,20 @@ class Lattice:
         seealso :func:`insertElement`
         """
         self._elements.append(elem)
-        #for g in elem.group:
-        #    if not g: continue
-        #    self.addGroupMember(g, elem.name, newgroup=True)
 
     def size(self):
-        """
-        total number of elements, including magnets and diagnostic instruments
-        """
+        """total number of elements."""
         return len(self._elements)
 
     def remove(self, elemname):
-        """
-        remove the element, return None if not find the element.
-        """
+        """remove the element, return None if not find the element."""
         for i,e in enumerate(self._elements):
             if e.name != elemname: continue
             return self._elements.pop(i)
         return None
 
     def save(self, fname, dbmode = 'c'):
-        """
-        save the lattice into binary data, using writing *dbmode*. The exact
-        dataset name is defined by *mode*, default is 'undefined'.
+        """save the lattice into binary data, using writing *dbmode*.
 
         seealso Python Standard Lib `shelve`
         """
@@ -201,9 +195,8 @@ class Lattice:
         f[pref+'chromaticity'] = self.chromaticity
         f.close()
 
-    def load(self, fname, mode = ''):
-        """
-        load the lattice from binary data
+    def load(self, fname):
+        """load the lattice from binary data
 
         In the db file, all lattice has a key with prefix 'lat.mode.'. If the
         given mode is empty string, then use 'lat.'
@@ -211,10 +204,7 @@ class Lattice:
         seealso Python Standard Lib `shelve`
         """
         f = shelve.open(fname, 'r')
-        if not mode:
-            pref = "lat."
-        else:
-            pref = 'lat.%s.' % mode
+        pref = "lat."
         self._group  = f[pref+'group']
         self._elements  = f[pref+'elements']
         self.mode     = f[pref+'mode']
@@ -225,15 +215,17 @@ class Lattice:
         f.close()
 
     def mergeGroups(self, parent, children):
-        """
-        merge child group(s) into a parent group
+        """merge child group(s) into a parent group
 
-        the new parent group is replaced by this new merge of children groups
+        the new parent group is replaced by this new merge of children
+        groups. no duplicate element will appears in merged *parent* group
         
-        :Example:
+        Examples
+        ---------
+        >>> mergeGroups('BPM', ['BPMX', 'BPMY'])
+        >>> mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
+        >>> mergeGroups('BPM', ['BPM', 'UBPM'])
 
-            >>> mergeGroups('BPM', ['BPMX', 'BPMY'])
-            >>> mergeGroups('TRIM', ['TRIMX', 'TRIMY'])
         """
         if isinstance(children, str):
             chlist = [children]
@@ -243,15 +235,16 @@ class Lattice:
             raise ValueError("children can be string or list of string")
 
         #if not self._group.has_key(parent):
-        self._group[parent] = []
+        pl = []
 
         for child in chlist:
             if not self._group.has_key(child):
                 logger.warn("WARNING: no %s group found" % child)
                 continue
             for elem in self._group[child]:
-                if elem in self._group[parent]: continue
-                self._group[parent].append(elem)
+                if elem in pl: continue
+                pl.append(elem)
+        self._group[parent] = pl
 
             
     def sortElements(self, namelist = None):
@@ -313,6 +306,21 @@ class Lattice:
         else:
             raise ValueError("not recognized type of *elems*")
 
+    def getLocationRange(self):
+        s0, s1 = 0.0, 1.0
+        for elem in self._elements:
+            if elem.virtual: continue
+            if isinstance(elem.sb, (int, float)): 
+                s0 = elem.sb
+                break
+        for i in range(1, 1+len(self._elements)):
+            elem = self._elements[-i]
+            if elem.virtual: continue
+            if isinstance(elem.se, (int, float)) and elem.se > s0:
+                s1 = elem.se
+                break
+        return s0, s1
+
     def getLine(self, srange, eps = 1e-9):
         """
         get a list of element within range=(s0, s1).
@@ -345,29 +353,31 @@ class Lattice:
         """
         get a list of element objects.
 
-        :param group: element list or pattern
-        :type group: list, string
-        :rtype: a list of element objects
+        Parameters
+        -----------
+        group : str, list. element name, pattern or name list.
+            when it is str, searching for an element with name *group*, if not
+            found, searching for a group with name *group*. At last treat it
+            as a pattern to match the element names.  When the input *group*
+            is a list, each string in this list will be treated as exact
+            string instead of pattern.
 
-        :Example:
+        virtual : bool. optional(True). Including virtual element or not.
 
-            >>> getElementList('BPM')
-            >>> getElementList('PL*')
-            >>> getElementList('C02')
-            >>> getElementList(['BPM'])
-            [None]
+        Returns
+        --------
+        elemlst : a list of element objects.
 
-        The input *group* is an element name, a pattern or group name. It
-        is treated as an exact name first, and compared with element
-        nmame, then group name. If no elements matched, it will treat
-        input as a pattern and match with the element name.
-
-        When the input *group* is a list, each string in this list will be
-        treated as exact string instead of pattern.
+        Examples
+        ----------
+        >>> getElementList('BPM')
+        >>> getElementList('PL*')
+        >>> getElementList('C02')
+        >>> getElementList(['BPM1', 'BPM2'])
 
         """
 
-        virtual = kwargs.get('virtual', 1)
+        virtual = kwargs.get('virtual', True)
         # do exact element name match first
         elem = self._find_exact_element(group)
         if elem is not None: return [elem]
@@ -391,8 +401,7 @@ class Lattice:
             return [self._find_exact_element(e) for e in group]
             
     def _matchElementCgs(self, elem, **kwargs):
-        """
-        check properties of an element
+        """check properties of an element
         
         - *cell*
         - *girder*
@@ -514,6 +523,7 @@ class Lattice:
         """
         if self._illegalGroupName(group):
             raise ValueError('illegal group name %s' % group)
+
         if not self._group.has_key(group):
             self._group[group] = []
         else:
@@ -738,7 +748,7 @@ class Lattice:
         elemlst = [e.name for e in self.getElementList(elem)]
         if spos: col.append('s')
 
-        return self._twiss.getTwiss(elemlst, col = col)
+        return self._twiss.get(elemlst, col = col)
 
     def getPhase(self, elem, spos = True):
         """
@@ -778,7 +788,7 @@ class Lattice:
         s1 = kwargs.get("s1", 0.0)
         s2 = kwargs.get("s2", None)
         highlight = kwargs.get("highlight", None)
-        
+
         prof = []
         for elem in self._elements:
             if elem.virtual: continue
@@ -787,6 +797,9 @@ class Lattice:
             x1, y1, c = elem.profile()
             #if elem.family == highlight: c = 'b'
             prof.append((x1, y1, c, elem.name))
+
+        if not prof: return []
+
         # filter the zero
         ret = [prof[0]]
         for p in prof[1:]:
@@ -800,7 +813,7 @@ class Lattice:
         return ret
 
 
-def parseElementName(name):
+def _parseElementName(name):
     """
     searching G*C*A type of string. e.g. 'CFXH1G1C30A' will be parsed as
     girder='G1', cell='C30', symmetry='A'
@@ -824,4 +837,72 @@ def parseElementName(name):
 
 
     
-    
+def saveArchivePvs(lat, **kwargs):
+    """
+    generate file for archiving lattice
+    """
+    fname = kwargs.get("output", None)
+
+    pvs = []
+    for e in lat.getElementList("*", virtual=False):
+        for k in e.fields():
+            for hdl,tag in [('readback', 0), ('setpoint', 1)]:
+                for pv in e.pv(field=k, handle=hdl):
+                    pvs.append((pv, e.name, e.family, k, tag))
+
+    if fname is None: return pvs
+
+    f = open(fname, "w")
+    for r in pvs:
+        pv, name, fam, fld, rw = r
+        f.write("%s,%s,%s,%s,%d\n" % (pv, name, fam, fld, rw))
+    f.close()
+
+def saveSnapshot(fname, group, pvs, val, size, timestamp, rbsp, elemname,
+                 elemfld, **kwargs):
+    mode   = kwargs.get("mode", 'a')
+    ignore = kwargs.get("ignore", [])
+
+    import h5py
+    h5f = h5py.File(fname, mode)
+    if not group: grp = h5f[b"/"]
+    else: grp = h5f.create_group(group)
+
+    scalars, dead = [], []
+    sz_name = max([len(name) for name in elemname])
+    sz_fld  = max([len(fld) for fld in elemfld])
+    sz_pv   = max([len(pv) for pv in pvs])
+    for i,pv in enumerate(pvs):
+        name, fld, rb, tmstamp = elemname[i], elemfld[i], rbsp[i], timestamp[i]
+        if val[i] is None:
+            dead.append([name, fld, -1, pv, None, 0, ""])
+        elif size[i] is not None and size[i] > 1:
+            dsname = b"wf_{0}_{1}.{2}_{3}".format(i,name,fld,rb)
+            dt_obj = datetime.fromtimestamp(tmstamp)
+            grp[dsname] = val[i]
+            # numpy and hdf5 needs ascii literal
+            grp[dsname].attrs[b"element"]   = name
+            grp[dsname].attrs[b"field"]     = fld
+            grp[dsname].attrs[b"pv"]        = pv
+            grp[dsname].attrs[b"rw"]        = rb
+            grp[dsname].attrs[b"datetime"]  = str(dt_obj)
+            grp[dsname].attrs[b"timestamp"] = tmstamp
+        else:
+            dt_obj = datetime.fromtimestamp(tmstamp)
+            scalars.append((name, fld, rb, pv, val[i], tmstamp, str(dt_obj)))
+
+
+    # numpy and hdf5 needs ascii literal
+    dt = np.dtype([(b"element", np.str_, sz_name+1),
+                   (b'field', np.str_, sz_fld+1),
+                   (b'rw', np.int32),
+                   (b'pv', np.str_, sz_pv+1),
+                   (b'value', np.float64),
+                   (b'timestamp', np.float64),
+                   (b'datetime', np.str_, 32)])
+    if scalars:
+        grp[b"__scalars__"] = np.array(scalars, dtype=dt)
+    if dead:
+        grp[b"__dead__"] = np.array(dead, dtype=dt)
+
+    h5f.close()

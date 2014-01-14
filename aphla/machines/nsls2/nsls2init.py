@@ -1,11 +1,18 @@
+"""
+NSLS2 Machine Structure Initialization
+--------------------------------------
+"""
+
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from .. import (HLA_TAG_SYS_PREFIX, createLattice, findCfaConfig, getResource,
-                setUnitConversion)
-from .. import (OrmData, Twiss)
+                setUnitConversion, createVirtualElements)
+from .. import (OrmData, TwissData)
 
 from fnmatch import fnmatch
 import logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.DEBUG)
 
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
@@ -44,29 +51,30 @@ def init_submachines(machine, submachines, **kwargs):
 
     lattice_dict = {}
 
-    #logger.error("HELP")
+    #_logger.error("HELP")
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
-    logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
+    _logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
 
-    for latname in ['SR', 'LTB', 'LTD1', 'LTD2', 'BR']:
+    for latname in ['SR', 'LTB', 'LTD1', 'LTD2', 'BR', 'BTD', 'BTS']:
         if not fnmatch(latname, submachines): continue
 
         lattag = HLA_TAG_SYS_PREFIX + '.' + latname
-        logger.info("Initializing lattice %s (%s)" % (latname, lattag))
+        _logger.info("Initializing lattice %s (%s)" % (latname, lattag))
         lattice_dict[latname] = createLattice(latname, cfa.rows, lattag,
                                                desc = cfa.source)
+        lattice_dict[latname].machine = machine
         if lattice_dict[latname].size() == 0:
-            logger.warn("lattice '%s' has no elements" % latname)
+            _logger.warn("lattice '%s' has no elements" % latname)
 
     # get the file, search current dir first
     data_filename = getResource('sr.hdf5', __name__)
     if data_filename:
         lattice_dict['SR'].ormdata = OrmData(data_filename)
-        lattice_dict['SR']._twiss = Twiss(data_filename)
+        lattice_dict['SR']._twiss = TwissData(data_filename)
         lattice_dict['SR']._twiss.load_hdf5(data_filename)
-        logger.info("using ORM data '%s'" % data_filename)
+        _logger.info("using ORM data '%s'" % data_filename)
     else:
-        logger.warning("No ORM '%s' found" % data_filename)
+        _logger.warning("No ORM '%s' found" % data_filename)
 
     # tune element from twiss
     #twiss = _lattice_dict['V2SR'].getElementList('twiss')[0]
@@ -80,17 +88,35 @@ def init_submachines(machine, submachines, **kwargs):
     # LTB 
     if 'LTB' in lattice_dict: lattice_dict['LTB'].loop = False
     data_filename = getResource('ltb_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['LTD1'], data_filename, "unitconv")
+    setUnitConversion(lattice_dict['LTD2'], data_filename, "unitconv")
     setUnitConversion(lattice_dict['LTB'], data_filename, "unitconv")
     #_lat = _lattice_dict['LTB']
 
+    data_filename = getResource('br_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['BR'], data_filename, "unitconv")
+
+    data_filename = getResource('bts_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['BTS'], data_filename, "unitconv")
+
+    data_filename = getResource('btd_unitconv.hdf5', __name__)
+    setUnitConversion(lattice_dict['BTD'], data_filename, "unitconv")
     #
     # SR
     lattice_dict['SR'].loop = True
+    lattice_dict['SR'].sb = 0.0
+    lattice_dict['SR'].se = 791.958
+    lattice_dict['SR'].Ek = 3000.0
     #uc_m2mm = UcPoly1d('m', 'mm', [1e3, 0])
     #uc_mm2m = UcPoly1d('mm', 'm', [1e-3, 0])
     #
     #for e in lattice_dict['V2SR'].getElementList('BPM'):
     #    e.addUnitConversion('x', uc_m2mm, None, "phy")
     #    e.addUnitConversion('x', uc_mm2m, "phy", None)
+
+    # merge common magnets to virtual elements
+    for k,vlat in lattice_dict.items():
+        createVirtualElements(vlat)
+    _logger.info("virtual elements created")
 
     return lattice_dict, lattice_dict['SR']

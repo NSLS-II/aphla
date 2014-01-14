@@ -3,7 +3,7 @@ import os
 import subprocess
 
 MAJOR = 0
-MINOR = 7
+MINOR = 8
 MICRO = 5
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -33,7 +33,7 @@ def hg_version():
 
 def write_version_py(filename='aphla/version.py'):
     cnt = """
-# THIS FILE IS GENERATED FROM NUMPY SETUP.PY
+# THIS FILE IS GENERATED FROM APHLA SETUP.PY
 short_version = '%(version)s'
 version = '%(version)s'
 full_version = '%(full_version)s'
@@ -48,7 +48,7 @@ if not release:
     FULLVERSION = VERSION
     if os.path.exists('.hg'):
         HG_REVISION = hg_version()
-    elif os.path.exists('numpy/version.py'):
+    elif os.path.exists('aphla/version.py'):
         # must be a source distribution, use existing version file
         from aphla.version import hg_revision as HG_REVISION
     else:
@@ -88,7 +88,7 @@ setup(
     #                    'numpy', 'scipy'],
     entry_points = {
         'gui_scripts': [
-            'aporbit = aphla.gui.orbit:main',
+            'mleap = aphla.gui.mleap:main',
             'apbba = aphla.gui.apbba:main',
             'aplauncher = aphla.gui.aplauncher:main',
             'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',

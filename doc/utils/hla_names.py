@@ -1,7 +1,15 @@
 """
 autogenerate some tables for aphla namespace
 """
+# :author: Lingyun Yang <lyyang@bnl.gov>
+
 from aphla import *
+ignored_commands = [
+    'ChannelFinderAgent', 'NullHandler', 'OrmData', 'caget', 'caput',
+    'addGroup', 'addGroupMembers', 'caRmCorrect', 'caputwait',
+    'getCurrentMode', 'getModes', 'removeGroup', 'removeGroupMembers',
+    'saveMode', 'waitChanged', 'waitStable', 'waitStableOrbit', 'fnmatch']
+
 d = locals()
 keys = d.keys()
 keys.sort()
@@ -22,7 +30,8 @@ for k in keys:
         mod = 'unknown'
     else:
         if mod.startswith('aphla'):
-            if k[0].isupper():
+            if k in ignored_commands: doc = None
+            elif k[0].isupper():
                 k = ':class:`~%s.%s`'%(mod, k)
             else:
                 k = ':func:`~%s.%s`'%(mod, k)
@@ -32,8 +41,9 @@ for k in keys:
             k = '`%s <%s>`_'%(k, 'http://sd-2116.dedibox.fr/pydocweb/doc/%s.%s'%(mod, k))
         elif mod.startswith('cothread'):
             k = '`%s <%s>`_'%(k, 'http://controls.diamond.ac.uk/downloads/python/cothread/')
-
-    if doc is None: doc = ' '
+        else:
+            continue
+    if doc is None: continue
     
     mod, k, doc = mod.strip(), k.strip(), doc.strip()[:80]
     #print mod, k, doc
@@ -42,9 +52,9 @@ for k in keys:
     #modd.setdefault(mod, []).append((k, doc))
     modd.setdefault('aphla', []).append((k, doc))
 
-print "Commands"
-print "========"
-print ""
+#print "Commands"
+#print "========"
+#print ""
 #print ".. toctree::"
 #print "   :maxdepth: 2"
 #print ""
@@ -55,7 +65,6 @@ print ""
 #print "-------------"
 #print ""
 
-ignore_commands = ['ChannelFinderAgent', 'NullHandler', 'OrmData', 'caget', 'caput']
 mods = modd.keys()
 mods.sort()
 for mod in mods:
@@ -64,16 +73,18 @@ for mod in mods:
     #print mod
     #print border
     
+    N = 10
     print
     funcs, docs = zip(*modd[mod])
     maxfunc = max([len(f) for f in funcs])
-    maxdoc = max(40, max([len(d) for d in docs]) )
-    border = ' '.join(['='*maxfunc, '='*maxdoc])
+    maxdoc = max(120, max([len(d) for d in docs]) )
+    border = ' '.join(['='*(maxfunc), '='*maxdoc])
     print border
     print ' '.join(['symbol'.ljust(maxfunc), 'description'.ljust(maxdoc)])
     print border
     for func, doc in modd[mod]:
-        if any([func.endswith(f+'`') for f in ignore_commands]): continue
+        #
+        #if any([func.endswith(f+'`') for f in ignored_commands]): continue
         row = ' '.join([func.ljust(maxfunc), doc.ljust(maxfunc)])
         print row
 

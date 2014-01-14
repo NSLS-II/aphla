@@ -1,7 +1,11 @@
 .. _appendix:
 
+Appendix
+=============
+
+
 Acronym and API Prefix
-=========================
+------------------------
 
 We recommend to use full word instead of acronym, but for the most
 common ones, acronym makes life easier. The following list serves as a
@@ -30,7 +34,7 @@ sp(setpoint), rb(readback) are common acronyms.
 
 
 Terminology for High Level Applications
-------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 The naming convension and terminology should follow the definitions of
@@ -122,7 +126,7 @@ A set of commonly used words are explained in the following:
 
 
 Specifications for Servers and Databases
-=========================================
+-----------------------------------------
 
 **DISCLAIMER:**
 
@@ -135,7 +139,7 @@ HLA are interfering or relying on this specific implementation**
 
 
 Services and DB
------------------
+~~~~~~~~~~~~~~~~
 
 - Model service: read/save models (magnets settings, linear lattice)
   from/to IRMIS for HLA.
@@ -167,3 +171,9 @@ different models. These model provide the access to the following data:
 - Linear lattice parameter, i.e. the twiss parameters from simulators
 - Potential values: orbit response matrix, tune and chromaticity
   correction matrix. (or a link/tag to the binary file which stores them)
+
+
+.. include:: installation.rst
+.. include:: history.rst
+.. include:: todo.rst
+.. include:: hla_meeting_2013_0207.rst

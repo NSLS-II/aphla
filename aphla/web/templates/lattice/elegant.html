@@ -1,0 +1,29 @@
+Your elegant '.lte' file has been generated
+<form action="/lattice/download" method="post"> {% csrf_token %}
+<input type="submit" value="Download" />
+</form>
+
+<h1>Output of Elegant Test Run</h1>
+<pre>
+{{ stdout }}
+</pre>
+
+<h1> Elegant testing ELE file</h1>
+<pre>
+{{ ele }}
+</pre>
+
+<h1> Lattice (click button on the top to download)</h1>
+<pre>
+{{ lte }}
+</pre>
+
+
+<h1> Twiss </h1>
+{% if twiss %}
+<pre>
+{{ twiss }}
+</pre>
+{% endif %}
+
+

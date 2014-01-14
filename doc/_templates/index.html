@@ -6,25 +6,27 @@
   <h1>Intro</h1>
 
   <p><tt class="docutils literal"><span class="pre">aphla</span></tt> is a
- python library for accelerator physics commissioning and experiments
- developed at NSLS-II, BNL. It takes advantages of NSLS-II service oriented
- architecture, e.g. channel finder service, model service and unit conversion
- service, to become a package more than equipment control. <tt class="docutils
+ python library for accelerator commissioning and beam study. It is initially
+ developed at the <a href="http://www.bnl.gov/nsls2/">National Synchrotron
+ Light Source II</a>, <a href="http://www.bnl.gov">Brookhaven National
+ Laboratory</a>. It takes advantages of NSLS-II service oriented architecture,
+ e.g. channel finder service, model service and unit conversion service, to
+ become a package more than equipment control. <tt class="docutils
  literal"><span class="pre">aphla</span></tt> could be used for other
  facilities.</p>
+
+  <h1>Get Started</h1>
 
   <p>A simple example which read the current orbit and show the plot</p>
 
   <pre>
 >>> import aphla as ap
->>> ap.machines.init("nsls2v2")
->>> ap.getOrbit(spos=True)</pre>
-
-  <p>For the power user, you have full control of each PV </p>
-
-  <h1>Get Started</h1>
+>>> ap.machines.load("nsls2")
+>>> ap.machines.use("SR")
+>>> ap.getOrbit(spos=True)
+>>> for bpm in ap.getElements('BPM'): print bpm.sb, bpm.name, bpm.x, bpm.y
+</pre>
   <ul>
-    <li><a href="quickstart.html">Quick start for NSLS-II.</a></li>
     <li><a href="tutorial.html">Tutorial</a> has more details for the
     installation and settings <br/></li>
     <li><a href="examples.html">Code examples</a> are always helpful for impatient people like me.</li>
@@ -43,6 +45,8 @@
   <h1>Reference</h1>
 
   <ul>
+    <li><a href="userguide.html">User guide</a>(<a href="_downloads/userguide.pdf">PDF</a>)</li>
     <li><a href="libref.html">Library reference guide</a></li>
+    <li><a href="nsls2req.html">NSLS-II HLA requirement</a></li>    
   </ul>
 {% endblock %}

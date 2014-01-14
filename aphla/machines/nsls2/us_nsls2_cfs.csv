@@ -1,7 +1,0 @@
-PV,devName,elemField,elemName,elemType,handle,length,ordinal,sEnd,system
-LTB-MG{Cor:1}I:RampEnd1-SP,C1,,CX1,HCOR,SETPOINT,0.15,9,0.642092,LTB,aphla.eput,aphla.x,aphla.sys.LTB,aphla.sys.LTD1,aphla.sys.LTD2,aphla.HD,aphla.elemfield.x
-LTB-MG{Cor:1}I:RampEnd2-SP,C1,,CY1,VCOR,SETPOINT,0.15,10,0.642092,LTB,aphla.eput,aphla.y,aphla.sys.LTB,aphla.sys.LTD1,aphla.sys.LTD2,aphla.HD,aphla.elemfield.y
-LTB-MG{Quad:1}I:RampEnd1-SP,Q1,,Q1,QUAD,SETPOINT,0.15,13,0.839362,LTB,aphla.eput,aphla.sys.LTB,aphla.sys.LTD1,aphla.sys.LTD2,aphla.HD,aphla.elemfield.k1
-LTB-MG{Cor:1}I:Ps1DCCT1-I,C1,,CX1,HCOR,READBACK,0.15,9,0.642092,LTB,aphla.eget,aphla.x,aphla.sys.LTB,aphla.sys.LTD1,aphla.sys.LTD2,aphla.HD,aphla.elemfield.x
-LTB-MG{Cor:1}I:Ps2DCCT1-I,C1,,CY1,VCOR,READBACK,0.15,10,0.642092,LTB,aphla.eget,aphla.y,aphla.sys.LTB,aphla.sys.LTD1,aphla.sys.LTD2,aphla.HD,aphla.elemfield.y
-LTB-MG{Quad:1}I:Ps1DCCT1-I,Q1,,Q1,QUAD,READBACK,0.15,13,0.839362,LTB,aphla.eget,aphla.sys.LTB,aphla.sys.LTD1,aphla.sys.LTD2,aphla.HD,aphla.elemfield.k1
