@@ -68,11 +68,6 @@ import aphla as ap
 TYPE_OBJECT = 1
 TYPE_NAME   = 2
 
-MACHINE_DICT = { # (Machine Display Name): (Folder Name for Init/Config Data)
-    'NSLS2': 'nsls2',
-    'NSLS2V2': 'nsls2v2',
-    }
-
 ENUM_ELEM_FULL_DESCRIP_NAME = 0
 ENUM_ELEM_SHORT_DESCRIP_NAME = 1 # used for column headers
 ENUM_ELEM_DATA_TYPE = 2
@@ -1827,7 +1822,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.radioButton_channels.setEnabled(False)
             self.radioButton_elements.setEnabled(False)
 
-        machine_name_list = sorted(MACHINE_DICT.keys())
+        machine_name_list = sorted(ap.machines.machines())
         comboBox_machine_model = QStandardItemModel()
         for machine in machine_name_list:
             comboBox_machine_model.appendRow(QStandardItem(machine))
@@ -2707,13 +2702,13 @@ class ChannelExplorerAppSettings():
 
         machine_name = self.__settings.value('machine_name')
         if machine_name is None:
-            #machine_name = 'NSLS2V2'
-            machine_name = 'NSLS2'
+            machine_name = 'nsls2'
+            #machine_name = ap.machines.machines()[0]
         self.machine_name = machine_name
 
         lattice_name = self.__settings.value('lattice_name')
         if lattice_name is None:
-            lattice_name = 'V2SR'
+            lattice_name = ap.machines.lattices()[0]
         self.lattice_name = lattice_name
 
         filter_mode = self.__settings.value('filter_mode')
@@ -3113,7 +3108,7 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
                                       'display': ['sensitive','insensitive']}
         self.column_sorting_dict = {'value': [True,False],
                                     'display': ['Enabled','Disabled']}
-        self.machine_list = sorted(MACHINE_DICT.keys())
+        self.machine_list = sorted(ap.machines.machines())
 
         self.showStartupSettings()
 
@@ -3277,7 +3272,7 @@ def initMachine(machine_name):
         ap.machines._lat = None
         ap.machines._lattice_dict = {}
 
-    machine_init_folder_name = MACHINE_DICT[machine_name]
+    machine_init_folder_name = machine_name
 
     print 'Initializing lattices...'
     tStart = tic()
