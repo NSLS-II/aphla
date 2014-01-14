@@ -2708,7 +2708,11 @@ class ChannelExplorerAppSettings():
 
         lattice_name = self.__settings.value('lattice_name')
         if lattice_name is None:
-            lattice_name = ap.machines.lattices()[0]
+            lattices = ap.machines.lattices()
+            if lattices == []:
+                ap.machines.load(self.machine_name)
+                lattices = ap.machines.lattices()
+            lattice_name = lattices[0]
         self.lattice_name = lattice_name
 
         filter_mode = self.__settings.value('filter_mode')
