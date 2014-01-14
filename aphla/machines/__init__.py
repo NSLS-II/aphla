@@ -254,7 +254,7 @@ def load(machine, submachine = "*", **kwargs):
         if physics_data is not None:
             phy_fname = os.path.join(machdir, physics_data)
             #_logger.debug("loading ORM data '%s'" % ormfile)
-            lat.ormdata = OrmData(phy_fname)
+            lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix/orm")
             #_logger.debug("loading Twiss data '%s'" % twissfile)
             lat._twiss = TwissData(phy_fname)
             lat._twiss.load(phy_fname)
