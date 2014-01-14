@@ -858,8 +858,8 @@ def saveArchivePvs(lat, **kwargs):
         f.write("%s,%s,%s,%s,%d\n" % (pv, name, fam, fld, rw))
     f.close()
 
-def saveSnapshot(fname, group, pvs, val, size, timestamp, rbsp, elemname,
-                 elemfld, **kwargs):
+def saveSnapshotFlat(fname, group, pvs, val, size, timestamp, rbsp, elemname,
+    elemfld, **kwargs):
     mode   = kwargs.get("mode", 'a')
     ignore = kwargs.get("ignore", [])
 

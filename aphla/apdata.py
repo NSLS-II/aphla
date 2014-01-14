@@ -67,7 +67,7 @@ class OrmData:
         self.m = None
 
         if datafile is not None and group is not None:
-            self.load(datafile, group)
+            self.load(datafile, group = group)
         elif datafile is not None:
             self.load(datafile)
 

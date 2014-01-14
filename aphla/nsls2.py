@@ -68,6 +68,7 @@ def _maxTimeSpan(timestamps):
              for i in range(len(timestamps))]
     return max(delta) - min(delta)
 
+    
 
 def brBpmTbt(**kwargs):
     """
@@ -82,6 +83,7 @@ def brBpmTbt(**kwargs):
     """
     tc = kwargs.get("timeout", 6)
     single_trig = kwargs.get("single_trig", True)
+    verbose = kwargs.get("verbose", 0)
 
     t0 = datetime.now()
     lat = ap.machines.getLattice()
@@ -93,15 +95,22 @@ def brBpmTbt(**kwargs):
     pv_evg = "BR-BI{BPM}Evt:Single-Cmd"
     br_trig_pvs, br_wfm_enable_pvs, br_wfmsel_pvs = [], [], []
     br_ddrts_pvs = [] # timestamp
+    br_ts_pvs, br_tsns_pvs = [], [] # timestamp second and nano sec
+    br_trig_ts_pvs, br_trig_tsns_pvs = [], [] # trigger timestamp
     bpms = ap.getElements("BPM")
     # did not consider the 'ddrTbtWfEnable' PV
     for bpm in bpms:
         pvx = bpm.pv(field="x")[0]
         #print bpm.name, pvh, caget(pvh)
-        br_trig_pvs.append(pvx.replace("Pos:X-I", "Trig:TrigSrc-SP"))
+        br_trig_pvs.append(  pvx.replace("Pos:X-I", "Trig:TrigSrc-SP"))
         br_wfmsel_pvs.append(pvx.replace("Pos:X-I", "DDR:WfmSel-SP"))
-        br_ddrts_pvs.append(pvx.replace("Pos:X-I", "TS:DdrTrigDate-I"))
+        br_ddrts_pvs.append( pvx.replace("Pos:X-I", "TS:DdrTrigDate-I"))
         br_wfm_enable_pvs.append(pvx.replace("Pos:X-I", "ddrTbtWfEnable"))
+        br_ts_pvs.append(    pvx.replace("Pos:X-I", "TS-I"))
+        br_tsns_pvs.append(  pvx.replace("Pos:X-I", "TS:NS-I"))
+        br_trig_ts_pvs.append(   pvx.replace("Pos:X-I", "Trig:TsSec-I"))
+        br_trig_tsns_pvs.append( pvx.replace("Pos:X-I", "Trig:TsOff-I"))
+
     # save initial val
     wfsel0   = ap.catools.caget(br_wfmsel_pvs)
     trigsrc0 = ap.catools.caget(br_trig_pvs)
@@ -116,17 +125,33 @@ def brBpmTbt(**kwargs):
         # set the event
         ap.catools.caput(pv_evg, 1, wait=True)
         dcct1 = ap.catools.caget(pv_dcct, count=1000)
-        time.sleep(kwargs.get("sleep", 8))
+        time.sleep(1.0)
+        n = 0
+        while True:
+            tss  = ap.catools.caget(br_trig_ts_pvs)
+            tsns = ap.catools.caget(br_trig_tsns_pvs)
+            ts = [s + 1.0e-9*tsns[i] for i,s in enumerate(tss)]
+            mdt = max(ts) - min(ts)
+            n = n + 1
+            if mdt < 1.0: break
+            time.sleep(0.5)
+            if n > 15:
+                ap.catools.caput(br_trig_pvs, 1, wait=True)
+                raise RuntimeError("BPMs are not ready after %d trials" % n)
+        if verbose > 0:
+            print "BPMs agrees within %f sec" % mdt
 
     data = []
     ddrts0   = ap.catools.caget(br_ddrts_pvs)
     mdt = _maxTimeSpan(ddrts0)
-    while mdt > 1.0:
-        print "Timestamp does not agree, wait ..."
-        time.sleep(1.0)
-        ddrts0   = ap.catools.caget(br_ddrts_pvs)
-        mdt = _maxTimeSpan(ddrts0)
-        
+    if single_trig:
+        while mdt > 1.0:
+            if verbose > 0:
+                print "Timestamp does not agree (max dt= %f), wait ..." % mdt
+            time.sleep(1.0)
+            ddrts0   = ap.catools.caget(br_ddrts_pvs)
+            mdt = _maxTimeSpan(ddrts0)
+
     for ibpm,bpm in enumerate(bpms):
         x, y = np.array(bpm.xtbt, 'd'), np.array(bpm.ytbt, 'd')
         I = np.array(bpm.Itbt, 'd')
@@ -145,7 +170,7 @@ def brBpmTbt(**kwargs):
         # restore the br_trig_pvs
         ap.catools.caput(pv_evg, 0, wait=True)
         ap.catools.caput(br_trig_pvs, 1, wait=True)
-        ap.catools.caput(br_wfmsel_pvs, wfsel0, wait=True)
+        #ap.catools.caput(br_wfmsel_pvs, wfsel0, wait=True)
     t1 = datetime.now()
 
     output_dir = kwargs.get("output_dir", "")
@@ -189,15 +214,22 @@ def brBpmFa(**kwargs):
     pv_evg = "BR-BI{BPM}Evt:Single-Cmd"
     br_trig_pvs, br_wfmsel_pvs, br_wfm_enable_pvs = [], [], []
     br_ddrts_pvs = []
+    br_ts_pvs, br_tsns_pvs = [], [] # timestamp second and nano sec
+    br_trig_ts_pvs, br_trig_tsns_pvs = [], [] # trigger timestamp
     bpms = ap.getElements("BPM")
     # did not consider the 'ddrTbtWfEnable' PV
     for bpm in bpms:
         pvx = bpm.pv(field="x")[0]
         #print bpm.name, pvh, caget(pvh)
-        br_trig_pvs.append(pvx.replace("Pos:X-I", "Trig:TrigSrc-SP"))
+        br_trig_pvs.append(  pvx.replace("Pos:X-I", "Trig:TrigSrc-SP"))
         br_wfmsel_pvs.append(pvx.replace("Pos:X-I", "DDR:WfmSel-SP"))
+        br_ddrts_pvs.append( pvx.replace("Pos:X-I", "TS:DdrTrigDate-I"))
         br_wfm_enable_pvs.append(pvx.replace("Pos:X-I", "ddrFaWfEnable"))
-        br_ddrts_pvs.append(pvx.replace("Pos:X-I", "TS:DdrTrigDate-I"))
+        br_ts_pvs.append(    pvx.replace("Pos:X-I", "TS-I"))
+        br_tsns_pvs.append(  pvx.replace("Pos:X-I", "TS:NS-I"))
+        br_trig_ts_pvs.append(   pvx.replace("Pos:X-I", "Trig:TsSec-I"))
+        br_trig_tsns_pvs.append( pvx.replace("Pos:X-I", "Trig:TsOff-I"))
+
     # save initial val
     wfsel0   = ap.catools.caget(br_wfmsel_pvs)
     trigsrc0 = ap.catools.caget(br_trig_pvs)
