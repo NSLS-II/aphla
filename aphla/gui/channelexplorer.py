@@ -2134,7 +2134,8 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             self.choice_dict[prop_name] = list(matched_table_model.table[:,i])
             if data_type.endswith('_list'): # and (not ( (prop_name == 'fields') and (self.model.object_type) ) ):
                 # Flatten the list of lists
-                if (self.choice_dict[prop_name] != []) and ( isinstance(self.choice_dict[prop_name][0], list) ):
+                if (self.choice_dict[prop_name] != []) and \
+                   ( isinstance(self.choice_dict[prop_name][0], (list, set)) ):
                     if data_type.startswith('string'):
                         empty_list_filler = ''
                     else:
@@ -2156,7 +2157,8 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
                 key_func = lower
             else:
                 key_func = None
-            self.choice_dict[prop_name] = sorted(set(self.choice_dict[prop_name]),key=key_func)
+            self.choice_dict[prop_name] = \
+                sorted(list(set(self.choice_dict[prop_name])),key=key_func)
 
             choice_combobox_model.setData(
                 choice_combobox_model.index(i,0),
@@ -2705,7 +2707,8 @@ class ChannelExplorerAppSettings():
 
         machine_name = self.__settings.value('machine_name')
         if machine_name is None:
-            machine_name = 'NSLS2V2'
+            #machine_name = 'NSLS2V2'
+            machine_name = 'NSLS2'
         self.machine_name = machine_name
 
         lattice_name = self.__settings.value('lattice_name')
@@ -2819,6 +2822,7 @@ class ChannelExplorerApp(QObject):
         if machine_name is None:
             machine_name = self.settings.machine_name
 
+        print 'Machine Name = {0:s}'.format(machine_name)
         initMachine(machine_name)
 
         if lattice_name is None:
@@ -3277,7 +3281,8 @@ def initMachine(machine_name):
 
     print 'Initializing lattices...'
     tStart = tic()
-    ap.machines.init(machine_init_folder_name, use_cache=True)
+    #ap.machines.load(machine_init_folder_name, use_cache=True)
+    ap.machines.load(machine_init_folder_name, use_cache=False)
     print 'Initialization took', toc(tStart), 'seconds.'
 
 
