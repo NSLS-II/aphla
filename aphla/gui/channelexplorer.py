@@ -447,8 +447,9 @@ class FilterTableModel(QAbstractTableModel):
                 setattr(self._filter_list[current_selected_row_ind], col_handle, False)
                 setattr(self._filter_list[row], col_handle, True)
 
-            self.emit(SIGNAL('dataChanged(QModelIndex,QModelIndex)'),
-                      index, index)
+            self.emit(
+                SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                index, index)
             return True
 
 
@@ -2382,6 +2383,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         horizHeader.setStretchLastSection(False)
         #
         t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True)
+        #
+        # Emit a signal requesting relevant signals to be connected to the
+        # newly created model
+        self.emit(SIGNAL('connectNewFilterTableModel'), t.model())
 
         ## Related Simple Filter
         f = self.model.filters_simple[0]
@@ -2880,16 +2885,9 @@ class ChannelExplorerApp(QObject):
                      SIGNAL('editTextChanged(const QString &)'),
                      self.view.on_filter_value_change)
 
-
-        self.connect(self.view.tableView_filter.model(),
-                     SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                     self.view.tableView_filter.model().onDataChange)
-        self.connect(self.view.tableView_filter.model(),
-                     SIGNAL('filterSelectionChanged'),
-                     self.model.onFilterSelectionChange)
-        self.connect(self.view.tableView_filter.model(),
-                     SIGNAL('filterSelectionChanged'),
-                     self.view.switchSearchResultViews)
+        self.connect(self.view,
+                     SIGNAL('connectNewFilterTableModel'),
+                     self._connect_signals_to_FilterTableModel)
 
         self.connect(self.view.pushButton_search, SIGNAL('clicked()'),
                      self.model.search)
@@ -3019,6 +3017,26 @@ class ChannelExplorerApp(QObject):
                                         parentWindow = self.parentWindow,
                                         settings = self.settings,
                                         debug = debug)
+
+    #----------------------------------------------------------------------
+    def _connect_signals_to_FilterTableModel(self, filterTableModel):
+        """Since a FilterTableModel is destroyed and recreated every time
+        the selected lattice is changed, you must reconnect relevant signals
+        each time a new one is created."""
+
+        self.connect(
+            filterTableModel,
+            SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+            filterTableModel.onDataChange)
+        self.connect(
+            filterTableModel,
+            SIGNAL('filterSelectionChanged'),
+            self.model.onFilterSelectionChange)
+        self.connect(
+            filterTableModel,
+            SIGNAL('filterSelectionChanged'),
+            self.view.switchSearchResultViews)
+
 
 ########################################################################
 class ColumnsDialog(QDialog):
