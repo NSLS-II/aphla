@@ -17,7 +17,7 @@ from PyQt4.QtGui import (QStandardItem, QStandardItemModel, QMessageBox)
 
 import aphla as ap
 if ap.machines._lat is None:
-    ap.initNSLS2V2()
+    ap.machines.load('nsls2', use_cache=False)
 
 import config as const
 from aphla.gui.utils.addr import (getIPs, getMACs)

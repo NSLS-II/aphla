@@ -30,6 +30,7 @@ import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
+
 import sys, os
 from subprocess import Popen, PIPE
 from time import time, strftime, localtime
@@ -40,13 +41,13 @@ import numpy as np
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (QObject, QSize, SIGNAL, Qt, QEvent, QRect)
-from PyQt4.QtGui import (QApplication, QMainWindow, QStandardItemModel,
-     QStandardItem, QDockWidget, QWidget, QGridLayout, QSplitter,
-     QTreeView, QTableView, QTabWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-     QSpacerItem, QSizePolicy, QCheckBox, QLineEdit, QLabel, QTextEdit,
-     QAction, QSortFilterProxyModel, QAbstractItemView, QMenu,
-     QComboBox, QStackedWidget, QActionGroup, QIcon, QKeySequence, QCursor,
-     QToolButton, QStyle)
+from PyQt4.QtGui import (
+    QApplication, QMainWindow, QStandardItemModel, QStandardItem, QDockWidget,
+    QWidget, QGridLayout, QSplitter, QTreeView, QTableView, QTabWidget,
+    QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QSizePolicy, QCheckBox,
+    QLineEdit, QLabel, QTextEdit, QAction, QSortFilterProxyModel,
+    QAbstractItemView, QMenu, QComboBox, QStackedWidget, QActionGroup, QIcon,
+    QKeySequence, QCursor, QToolButton, QStyle)
 
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
 
@@ -55,15 +56,14 @@ from Qt4Designer_files.ui_lattice_tuner_for_reference import Ui_MainWindow
 import aphla.gui.utils.gui_icons
 import TunerUtils.config as const
 from TunerUtils import tunerConfigSetupDialog as TunerConfigSetupDialog
-from TunerUtils.tunerModels import (TreeItem, TreeModel,
-                                    TunerConfigSetupBaseModel, TunerConfigSetupTableModel,
-                                    TunerConfigSetupTreeModel,
-                                    TunerSnapshotBaseModel, TunerSnapshotTableModel,
-                                    TunerSnapshotTreeModel)
+from TunerUtils.tunerModels import (
+    TreeItem, TreeModel, TunerConfigSetupBaseModel, TunerConfigSetupTableModel,
+    TunerConfigSetupTreeModel, TunerSnapshotBaseModel, TunerSnapshotTableModel,
+    TunerSnapshotTreeModel)
 
 import aphla as ap
 if ap.machines._lat is None:
-    ap.machines.init('nsls2v2',use_cache=True)
+    ap.machines.load('nsls2', use_cache=False)
 
 #----------------------------------------------------------------------
 def datestr(time_in_seconds_from_Epoch):
@@ -1092,10 +1092,12 @@ class TunerApp(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, use_cached_lattice=False):
         """Constructor"""
 
         QObject.__init__(self)
+
+        self.use_cached_lattice = use_cached_lattice
 
         self._initModel()
         self._initView(self.model)
@@ -1126,7 +1128,9 @@ class TunerApp(QObject):
     def openNewConfigSetupDialog(self, garbage):
         """"""
 
-        result = TunerConfigSetupDialog.make(isModal=True,parentWindow=self.view)
+        result = TunerConfigSetupDialog.make(
+            isModal=True, parentWindow=self.view,
+            use_cached_lattice=self.use_cached_lattice)
 
         config_base_model = result.model.output
 
@@ -1134,10 +1138,10 @@ class TunerApp(QObject):
 
 
 #----------------------------------------------------------------------
-def make():
+def make(use_cached_lattice=False):
     """"""
 
-    app = TunerApp()
+    app = TunerApp(use_cached_lattice=use_cached_lattice)
     app.view.show()
 
     return app
@@ -1161,6 +1165,12 @@ def isCothreadUsed():
 def main(args):
     """"""
 
+    if len(args) == 2:
+        if args[1].lower() == 'true':
+            use_cached_lattice = True
+        else:
+            use_cached_lattice = False
+
     using_cothread = isCothreadUsed()
 
     if using_cothread:
@@ -1176,7 +1186,7 @@ def main(args):
         qapp = QApplication(args)
 
 
-    app = make()
+    app = make(use_cached_lattice=use_cached_lattice)
 
     if using_cothread:
         cothread.WaitForQuit()

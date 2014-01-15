@@ -119,8 +119,6 @@ FILTER_TABLE_COLUMN_ODICT['filter_value'] = 'Value'
 FILTER_TABLE_COLUMN_HANDLE_LIST    = FILTER_TABLE_COLUMN_ODICT.keys()
 FILTER_TABLE_COLUMN_DISP_NAME_LIST = FILTER_TABLE_COLUMN_ODICT.values()
 
-USE_CACHED_LATTICE = False
-
 ########################################################################
 class Filter():
     """"""
@@ -1188,7 +1186,7 @@ class ChannelExplorerModel(QObject):
 
     #----------------------------------------------------------------------
     def __init__(self, machine_name, object_type='element', settings=None,
-                 debug = False):
+                 use_cached_lattice = False, debug = False):
         """
         """
 
@@ -1211,6 +1209,8 @@ class ChannelExplorerModel(QObject):
         self.allDict = {'_elements':[],'_channels':[],
                         'objects':[]}
         self.update_allDict_on_machine_or_lattice_change(object_type)
+
+        self.use_cached_lattice = use_cached_lattice
 
     #----------------------------------------------------------------------
     def onFilterSelectionChange(self, selected_filter):
@@ -1275,7 +1275,7 @@ class ChannelExplorerModel(QObject):
     def on_machine_change(self, machine_name):
         """"""
 
-        initMachine(machine_name)
+        initMachine(machine_name, use_cached_lattice=self.use_cached_lattice)
 
         self.emit(SIGNAL('machineChanged'))
 
@@ -2663,7 +2663,7 @@ class ChannelExplorerAppSettings():
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, caller):
+    def __init__(self, caller, use_cached_lattice=False):
         """Constructor
 
         Attribute naming convetion:
@@ -2677,6 +2677,8 @@ class ChannelExplorerAppSettings():
         self.__caller = caller
 
         self.__settings = QSettings('HLA','ChannelExplorer')
+
+        self.use_cached_lattice = use_cached_lattice
 
         self.loadViewSizeSettings()
         self.loadMiscellaneousSettings()
@@ -2720,7 +2722,7 @@ class ChannelExplorerAppSettings():
             lattices = ap.machines.lattices()
             if lattices == []:
                 ap.machines.load(self.machine_name,
-                                 use_cache=USE_CACHED_LATTICE)
+                                 use_cache=self.use_cached_lattice)
                 lattices = ap.machines.lattices()
             lattice_name = lattices[0]
         self.lattice_name = lattice_name
@@ -2820,19 +2822,21 @@ class ChannelExplorerApp(QObject):
     #----------------------------------------------------------------------
     def __init__(self, modal = True, parentWindow = None,
                  init_object_type = 'element', can_modify_object_type = True,
-                 machine_name = None, lattice_name = None, caller = None,
+                 machine_name = None, lattice_name = None,
+                 use_cached_lattice = False, caller = None,
                  debug = False):
         """Constructor"""
 
         QObject.__init__(self)
 
-        self.settings = ChannelExplorerAppSettings(caller)
+        self.settings = ChannelExplorerAppSettings(
+            caller, use_cached_lattice=use_cached_lattice)
 
         if machine_name is None:
             machine_name = self.settings.machine_name
 
         print 'Machine Name = {0:s}'.format(machine_name)
-        initMachine(machine_name)
+        initMachine(machine_name, use_cached_lattice=use_cached_lattice)
 
         if lattice_name is None:
             lattice_name = self.settings.lattice_name
@@ -2855,7 +2859,8 @@ class ChannelExplorerApp(QObject):
         self.modal = modal
         self.parentWindow = parentWindow
 
-        self._initModel(machine_name, init_object_type, debug=debug)
+        self._initModel(machine_name, init_object_type,
+                        use_cached_lattice=use_cached_lattice, debug=debug)
         self._initView(can_modify_object_type, lattice_name, caller,
                        all_prop_name_list, default_visible_prop_key_list,
                        permanently_visible_prop_key_list, debug=debug)
@@ -2999,12 +3004,14 @@ class ChannelExplorerApp(QObject):
 
 
     #----------------------------------------------------------------------
-    def _initModel(self, machine_name, object_type, debug = False):
+    def _initModel(self, machine_name, object_type, use_cached_lattice = False,
+                   debug = False):
         """ """
 
         self.model = ChannelExplorerModel(machine_name,
                                           object_type=object_type,
                                           settings=self.settings,
+                                          use_cached_lattice=use_cached_lattice,
                                           debug=debug)
 
     #----------------------------------------------------------------------
@@ -3292,7 +3299,7 @@ def lower(none_or_str_or_unicode_string):
         return str(none_or_str_or_unicode_string).lower()
 
 #----------------------------------------------------------------------
-def initMachine(machine_name):
+def initMachine(machine_name, use_cached_lattice=False):
     """"""
 
     if ap.machines._lat:
@@ -3304,7 +3311,7 @@ def initMachine(machine_name):
     print 'Initializing lattices...'
     tStart = tic()
     #ap.machines.load(machine_init_folder_name, use_cache=True)
-    ap.machines.load(machine_init_folder_name, use_cache=USE_CACHED_LATTICE)
+    ap.machines.load(machine_init_folder_name, use_cache=use_cached_lattice)
     print 'Initialization took', toc(tStart), 'seconds.'
 
 
@@ -3312,7 +3319,7 @@ def initMachine(machine_name):
 #----------------------------------------------------------------------
 def make(modal = True, parentWindow = None,
          init_object_type = 'element', can_modify_object_type = True,
-         output_type = TYPE_OBJECT,
+         output_type = TYPE_OBJECT, use_cached_lattice = False,
          machine_name = None, lattice_name = None,
          caller = None, debug = False):
     """ """
@@ -3329,7 +3336,8 @@ def make(modal = True, parentWindow = None,
 
     app = ChannelExplorerApp(modal, parentWindow,
                              init_object_type, can_modify_object_type,
-                             machine_name, lattice_name, caller, debug=debug)
+                             machine_name, lattice_name, use_cached_lattice,
+                             caller, debug=debug)
     view = app.view
 
     if app.modal :
@@ -3362,11 +3370,10 @@ def main(args=None):
     """ """
 
     if len(args) == 2:
-        global USE_CACHED_LATTICE
         if args[1].lower() == 'true':
-            USE_CACHED_LATTICE = True
+            use_cached_lattice = True
         else:
-            USE_CACHED_LATTICE = False
+            use_cached_lattice = False
 
     #qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
 
@@ -3392,7 +3399,8 @@ def main(args=None):
 
     result = make(modal=True, output_type=TYPE_OBJECT,
                   init_object_type='channel',
-                  caller='__main__',debug=False)
+                  use_cached_lattice=use_cached_lattice,
+                  caller='__main__', debug=False)
 
     if result.has_key('dialog_result'): # When modal
         app           = result['app']

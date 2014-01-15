@@ -21,17 +21,12 @@ import h5py
 import traceback
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import (SIGNAL, QObject, QSettings)
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import (qApp, QApplication, QDialog, QStandardItem,
-     QStandardItemModel, QSortFilterProxyModel, QAbstractItemView,
-     QAction, QIcon, QMenu, QInputDialog, QKeySequence, QItemSelection,
-     QItemSelectionModel, QItemSelectionRange, QTableView, QFileDialog,
-     QMessageBox)
-
-import aphla as ap
-if ap.machines._lat is None:
-    ap.machines.init('nsls2v2',use_cache=True)
+from PyQt4.QtCore import (Qt, SIGNAL, QObject, QSettings, QRect)
+from PyQt4.QtGui import (
+    qApp, QApplication, QDialog, QStandardItem, QStandardItemModel,
+    QSortFilterProxyModel, QAbstractItemView, QAction, QIcon, QMenu,
+    QInputDialog, QKeySequence, QItemSelection, QItemSelectionModel,
+    QItemSelectionRange, QTableView, QFileDialog, QMessageBox)
 
 from tunerModels import (TreeItem, TreeModel, TunerConfigSetupBaseModel,
                          TunerConfigSetupTableModel, TunerConfigSetupTreeModel)
@@ -662,10 +657,12 @@ class TunerConfigSetupApp(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, isModal, parentWindow):
+    def __init__(self, isModal, parentWindow, use_cached_lattice=False):
         """Constructor"""
 
         QObject.__init__(self)
+
+        self.use_cached_lattice = use_cached_lattice
 
         self.settings = TunerConfigSetupAppSettings()
 
@@ -808,7 +805,9 @@ class TunerConfigSetupApp(QObject):
         result = channelexplorer.make(modal=True, init_object_type='channel',
                                       can_modify_object_type=False,
                                       output_type=channelexplorer.TYPE_OBJECT,
-                                      caller='aplattuner', debug=False)
+                                      caller='aplattuner',
+                                      use_cached_lattice=self.use_cached_lattice,
+                                      debug=False)
 
         selected_channels = result['dialog_result']
 
@@ -855,10 +854,11 @@ class TunerConfigSetupApp(QObject):
         return selected_channels, channelGroupInfo
 
 #----------------------------------------------------------------------
-def make(isModal=True, parentWindow=None):
+def make(isModal=True, parentWindow=None, use_cached_lattice=False):
     """"""
 
-    app = TunerConfigSetupApp(isModal, parentWindow)
+    app = TunerConfigSetupApp(isModal, parentWindow,
+                              use_cached_lattice=use_cached_lattice)
 
     if isModal:
         app.view.exec_()
