@@ -490,7 +490,10 @@ class FilterTableModel(QAbstractTableModel):
         f.combobox_list_filter_operator = filter_operators
         f.filter_operator = filter_operators[0]
 
-        value_list = [str(f.get(o,property_key)) for o in f.parentSet] # Use str() to convert None
+        if property_key == 'fields':
+            value_list = [f.get(o,property_key) for o in f.parentSet]
+        else: # Use str() to convert None
+            value_list = [str(f.get(o,property_key)) for o in f.parentSet]
         if not data_type.endswith('_list'):
             value_list = sorted( list(set(value_list)), key=lower )
         else:
