@@ -119,6 +119,7 @@ FILTER_TABLE_COLUMN_ODICT['filter_value'] = 'Value'
 FILTER_TABLE_COLUMN_HANDLE_LIST    = FILTER_TABLE_COLUMN_ODICT.keys()
 FILTER_TABLE_COLUMN_DISP_NAME_LIST = FILTER_TABLE_COLUMN_ODICT.values()
 
+USE_CACHED_LATTICE = False
 
 ########################################################################
 class Filter():
@@ -2718,7 +2719,8 @@ class ChannelExplorerAppSettings():
         if lattice_name is None:
             lattices = ap.machines.lattices()
             if lattices == []:
-                ap.machines.load(self.machine_name)
+                ap.machines.load(self.machine_name,
+                                 use_cache=USE_CACHED_LATTICE)
                 lattices = ap.machines.lattices()
             lattice_name = lattices[0]
         self.lattice_name = lattice_name
@@ -3302,7 +3304,7 @@ def initMachine(machine_name):
     print 'Initializing lattices...'
     tStart = tic()
     #ap.machines.load(machine_init_folder_name, use_cache=True)
-    ap.machines.load(machine_init_folder_name, use_cache=False)
+    ap.machines.load(machine_init_folder_name, use_cache=USE_CACHED_LATTICE)
     print 'Initialization took', toc(tStart), 'seconds.'
 
 
@@ -3358,6 +3360,13 @@ def make(modal = True, parentWindow = None,
 #----------------------------------------------------------------------
 def main(args=None):
     """ """
+
+    if len(args) == 2:
+        global USE_CACHED_LATTICE
+        if args[1].lower() == 'true':
+            USE_CACHED_LATTICE = True
+        else:
+            USE_CACHED_LATTICE = False
 
     #qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
 
