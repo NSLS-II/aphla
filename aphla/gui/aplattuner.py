@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 '''
 TODO
+*) Select all channels by default after apchx search finishes in config setup
+
 *) Open dialog at start-up to allow user either create a new config
 or open existing configs
 *) Use Qt Undo Framework for non-EPICS commands
@@ -252,9 +254,10 @@ class TunerSnapshotModel(QObject):
         self.settings = settings
 
         self.base_model = TunerSnapshotBaseModel(config_base_model)
-        self.table_model = TunerSnapshotTableModel(base_model=self.base_model)
+        self.table_model = TunerSnapshotTableModel(
+            base_model=self.base_model)
         self.tree_model = TunerSnapshotTreeModel(
-                    self.base_model.all_col_name_list, base_model=self.base_model)
+            self.base_model.all_col_name_list, base_model=self.base_model)
 
         # Metadata
         self.time_snapshot_taken = time() # current time in seconds from Epoch
@@ -551,25 +554,40 @@ class TunerDockWidget(QDockWidget):
         self.model = model
         isinstance(model,TunerSnapshotModel)
 
-        #self.proxyModel = QSortFilterProxyModel()
-        #self.proxyModel.setSourceModel(self.model)
-        #self.proxyModel.setDynamicSortFilter(True)
-        #self.proxyModel.setSortRole(self.model.SortRole)
+        # Set up table view
+        tbV = self.tableView
+        proxyModel = QSortFilterProxyModel()
+        proxyModel.setSourceModel(self.model.table_model)
+        proxyModel.setDynamicSortFilter(False)
+        tbV.setModel(proxyModel)
+        tbV.setCornerButtonEnabled(True)
+        tbV.setShowGrid(True)
+        tbV.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        tbV.setSelectionBehavior(QAbstractItemView.SelectItems)
+        tbV.setAlternatingRowColors(True)
+        tbV.setSortingEnabled(False)
+        horizHeader = tbV.horizontalHeader()
+        horizHeader.setSortIndicatorShown(False)
+        horizHeader.setStretchLastSection(False)
+        horizHeader.setMovable(False)
+
+        # Set up tree view
+        trV = self.treeView
         proxyModel = QSortFilterProxyModel()
         proxyModel.setSourceModel(self.model.tree_model)
         proxyModel.setDynamicSortFilter(False)
-
-        #self.treeView.setModel(self.proxyModel)
-        self.treeView.setModel(proxyModel)
-        self.treeView.setItemsExpandable(True)
-        self.treeView.setRootIsDecorated(True)
-        self.treeView.setAllColumnsShowFocus(True)
-        self.treeView.setHeaderHidden(False)
-        self.treeView.setSortingEnabled(True)
-
+        trV.setModel(proxyModel)
+        trV.setItemsExpandable(True)
+        trV.setRootIsDecorated(True)
+        trV.setAllColumnsShowFocus(True)
+        trV.setHeaderHidden(False)
+        trV.setSortingEnabled(True)
+        trV.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        horizHeader = trV.header()
+        horizHeader.setSortIndicatorShown(True)
+        horizHeader.setStretchLastSection(True)
+        horizHeader.setMovable(False)
         self._expandAll_and_resizeColumn()
-
-        self.treeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         self.connect(self.pushButton_step_up,SIGNAL('toggled(bool)'),
                      self.onStepUpPushed)
@@ -1044,6 +1062,7 @@ class TunerView(QMainWindow, Ui_MainWindow):
         #dockWidget.raise_()
 
         dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_table)
+        #dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_tree)
 
         self.updateMetadataTab(dockWidget, base_model, page='config')
         if base_model.isSnapshot():

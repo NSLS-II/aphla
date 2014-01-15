@@ -493,6 +493,8 @@ class TunerConfigSetupTableModel(QAbstractTableModel):
         else:
             self.base_model = base_model
 
+        #self.resetModel()
+
     #----------------------------------------------------------------------
     def resetModel(self):
         """"""
@@ -526,7 +528,9 @@ class TunerConfigSetupTableModel(QAbstractTableModel):
 
         if role == QtCore.Qt.DisplayRole:
             #value = getattr(b.config_channel_list[row], col_key)
-            value = getattr(b,'k_'+col_key)[row]
+            col_list = getattr(b,'k_'+col_key)
+            if col_list != []: value = col_list[row]
+            else             : value = 'N/A'
             return value
         else:
             return None
@@ -606,6 +610,8 @@ class TunerConfigSetupTreeModel(TreeModel):
             self.base_model = base_model
 
         TreeModel.__init__(self, all_column_name_list)
+
+        self.resetModel()
 
     #----------------------------------------------------------------------
     def resetModel(self):
