@@ -2399,7 +2399,11 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         #
         model_property = self.createPropertyListModel(
             self.comboBox_simple_property)
+        current_selected_index = self.comboBox_simple_property.currentIndex()
+        # After setModel(), currentIndex is reset to 0.
         self.comboBox_simple_property.setModel(model_property)
+        # Restoring the original currentIndex
+        self.comboBox_simple_property.setCurrentIndex(current_selected_index)
         self.comboBox_simple_property.setSizeAdjustPolicy(
             QComboBox.AdjustToContents)
         self.comboBox_simple_property.setCurrentIndex(
