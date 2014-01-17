@@ -2,6 +2,15 @@
 '''
 TODO
 *) Select all channels by default after apchx search finishes in config setup
+*) Double-click an array item, then open an array dialog with list of array
+   elements (together with its plot on the side, if the array is a number list,
+   not a string list)
+*) Open dialog to select which columns to save when saving config/snapshot file.
+*) Weight & Step Size should be NaN for all the channels that do not have
+   pvsp.
+*) allow customize significant digits for display and saving in text format
+*) being able to set the wait time (< 1 sec) between the time SP sent from PC
+and the time caget() sent to all relevant PV's for updating.
 
 *) Open dialog at start-up to allow user either create a new config
 or open existing configs
@@ -368,7 +377,7 @@ class CustomDockWidgetTitleBar(QWidget):
         self.dockWidget = parentDockWidget
 
         self.title = TitleLabel(self)
-        self.title.setText('testing')
+        self.title.setText('untitled')
 
         min_button_height = 10
 

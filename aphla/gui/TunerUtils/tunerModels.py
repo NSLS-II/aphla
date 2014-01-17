@@ -60,7 +60,8 @@ def getChannelProperty(obj, propertyName):
     if propertyName == 'fields':
         return field
 
-    if propertyName not in ('pvrb','pvsp'):
+    if propertyName not in ('pvrb','pvsp','#unit','#unitsys','#unicon',
+                            '#golden'):
 
         x = getattr(element, propertyName)
 
@@ -92,6 +93,42 @@ def getChannelProperty(obj, propertyName):
                 x = x[0]
         except: # For DIPOLE, there is no field specified
             x = ''
+    elif propertyName == '#golden':
+        x = element._field[field].golden[0]
+    elif propertyName == '#unitsys':
+        unitsys_dict = element.getUnitSystems()
+        x = unitsys_dict[field]
+    elif propertyName == '#unit':
+        unitsys_dict = element.getUnitSystems()
+        unitsys_list = unitsys_dict[field]
+        unit_str_list = [element.getUnit(field, unitsys=unitsys)
+                         for unitsys in unitsys_list]
+        x = unit_str_list
+    elif propertyName == '#unicon':
+        CaAction = element._field[field]
+        unicon_list = []
+        for (src_unit, dst_unit), unicon \
+            in CaAction.unitconv.iteritems():
+            d = dict(src=src_unit, dst=dst_unit)
+            if isinstance(unicon, ap.unitconv.UcPoly):
+                coeffs = list(unicon.p.coeffs)
+                d['type'] = 'UcPoly'
+                d['prop'] = {'coef': coeffs}
+            elif isinstance(unicon, ap.unitconv.UcInterp1):
+                d['type'] = 'UcInterp1'
+                xlist = list(unicon.xp); ylist = list(unicon.fp)
+                d['prop'] = {'xlist': xlist, 'ylist': ylist}
+            elif isinstance(unicon, ap.unitconv.UcInterpN):
+                d['type'] = 'UcInterpN'
+                list_of_xlist = list(unicon.xp)
+                list_of_ylist = list(unicon.fp)
+                d['prop'] = {
+                    'list_of_xlist': list_of_xlist,
+                    'list_of_ylist': list_of_ylist}
+            else:
+                raise TypeError('Unexpected unitconv object')
+            unicon_list.append(d)
+        x = str(unicon_list)
 
     return x
 
@@ -527,11 +564,18 @@ class TunerConfigSetupTableModel(QAbstractTableModel):
             return None
 
         if role == QtCore.Qt.DisplayRole:
-            #value = getattr(b.config_channel_list[row], col_key)
             col_list = getattr(b,'k_'+col_key)
             if col_list != []: value = col_list[row]
             else             : value = 'N/A'
-            return value
+
+            if value is None:
+                return 'None'
+            elif value is '':
+                return "''"
+            elif isinstance(value, (list, tuple, set)):
+                return str(value)
+            else:
+                return value
         else:
             return None
 
