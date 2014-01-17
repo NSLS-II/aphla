@@ -645,7 +645,7 @@ class TwissData:
         conn.close()
 
 
-def _updateLatticePvDb(dbfname, cfslist, sep=";"):
+def _updateLatticePvDb(dbfname, cfslist, **kwargs):
     """
     update sqlite3 DB with a list of (pv, properties, tags)
 
@@ -657,6 +657,7 @@ def _updateLatticePvDb(dbfname, cfslist, sep=";"):
     - (pv,elemName,elemField) is unique
     - elemType can not be NULL
     """
+    sep    = kwargs.get("sep", ";")
     # elemName, elemType, system is "NOT NULL"
     conn = sqlite3.connect(dbfname)
     # save byte string instead of the default unicode

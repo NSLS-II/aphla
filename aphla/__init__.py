@@ -33,7 +33,8 @@ class _NullHandler(logging.Handler):
 #logging.basicConfig(filename=APHLA_LOG,
 #    format='%(asctime)s - %(name)s [%(levelname)s]: %(message)s',
 #    level=logging.DEBUG)
-_lgfmt = logging.Formatter("%(asctime)s - %(name)s [%(levelname)s]: %(message)s")
+_lgfmt = logging.Formatter(
+    "%(asctime)s - %(name)s [%(levelname)s]: %(message)s")
 # set null handler when logging for a library.
 _lghdl = _NullHandler()
 _lghdl.setLevel(logging.INFO)

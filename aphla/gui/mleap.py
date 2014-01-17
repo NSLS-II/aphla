@@ -109,7 +109,8 @@ class OrbitPlotMainWindow(QMainWindow):
         for m,(lats,lat0,pvm) in self._mach.items():
             self.logger.info("machine '%s' initialized: [%s]" % (
                 m, ", ".join([lat.name for k,lat in lats.items()])))
-
+            for pv in pvm.dead():
+                self.logger.warn("'{0}' is disconnected.".format(pv))
         ## DCCT current plot
         #self.dcct = DcctCurrentPlot()
         #self.dcct.setMinimumHeight(100)
@@ -175,7 +176,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.newElementPlot("VCOR", "y")
         #self.newElementPlot("QUAD", "b1")
         #self.newElementPlot("SEXT", "b2")
-
+        
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -194,9 +195,6 @@ class OrbitPlotMainWindow(QMainWindow):
     def closeEvent(self, event):
         self.physics.close()
         event.accept()
-
-    def test_1(self):
-        pass
 
     def createMenuToolBar(self):
         #
@@ -464,16 +462,15 @@ class OrbitPlotMainWindow(QMainWindow):
         else:
             return mach, lat_dict[latname], pvm
 
-    def click_machine(self, act):
-        self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
-
     def newElementPlots(self, elem, fields, **kw):
-        for fld in re.findall(r'[^ ,]', fields):
+        self.logger.info("new plots: %s %s" % (elem, fields))
+        for fld in re.findall(r'[^ ,]+', fields):
             self._newElementPlot(elem, fld, **kw)
 
     def _newElementPlot(self, elem, field, **kw):
         """plot the field for element"""
-        mach, lat = kw.get("machlat", self.getCurrentMachLattice())
+        _mach, _lat, _pvm = self.getCurrentMachLattice(cadata=True)
+        mach, lat, pvm = kw.get("machlat", (_mach, _lat, _pvm))
         handle = kw.get("handle", "readback")
         elems = lat.getElementList(elem)
         s, pvs, elemnames = [], [], []
@@ -484,10 +481,9 @@ class OrbitPlotMainWindow(QMainWindow):
             s.append(e.sb)
             elemnames.append(e.name)
         if not pvs:
-            self.logger.error("no data found for elements '{0}' and field '{1}'".format(elem, field))
+            self.logger.error("no data found for elements '{0}' "
+                              "and field '{1}'".format(elem, field))
             return
-
-        pvm = CaDataMonitor(pvs)
 
         magprof = lat.getBeamlineProfile()
 
@@ -913,7 +909,7 @@ def main(par=None):
 
 
         # pv manager 
-        pvm = CaDataMonitor()
+        pvm = CaDataMonitor(timeout=5)
         pvm.addPv(pvs)
         machs.append((m, latdict, lat0, pvm))
 

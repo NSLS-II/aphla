@@ -1,0 +1,158 @@
+#set point, Properties, Tag 
+# missing pulse magnet : pulsed septum (22.9988, SP1SI, 124),kick3 (24.3886, BU3SI, 127), kick4 (26.5139, BU4SI, 133), BPM (25.7139, P2SI, 130)
+#LTB-MG{Bend:2}I:Sp1-SP, elemHandle=put, elemIndex=52, elemName=B2, devName=B2, elemLength=0.35, elemPosition=8.45413, elemType=BEND, system=LTB, elemField=bl, aphla.sys.LTB 
+#LTB-MG{Bend:3}I:Sp1-SP, elemHandle=put, elemIndex=76, elemName=B3, devName=B3, elemLength=0.35, elemPosition=13.6886, elemType=BEND, system=LTB, elemField=bl, aphla.sys.LTB 
+#LTB-MG{Bend:4}I:Sp1-SP, elemHandle=put, elemIndex=86, elemName=B4, devName=B4, elemLength=0.35, elemPosition=15.8376, elemType=BEND, system=LTB, elemField=bl, aphla.sys.LTB 
+
+LTB-MG{Quad:7}I:Sp1-SP, elemHandle=put, elemIndex=55, elemName=Q7, devName=Q7, elemLength=0.15, elemPosition=9.4818, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:8}I:Sp1-SP, elemHandle=put, elemIndex=57, elemName=Q8, devName=Q8, elemLength=0.15, elemPosition=10.0358, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:9}I:Sp1-SP, elemHandle=put, elemIndex=61, elemName=Q9, devName=Q9, elemLength=0.15, elemPosition=11.0265, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:10}I:Sp1-SP, elemHandle=put, elemIndex=84, elemName=Q10, devName=Q10, elemLength=0.15, elemPosition=14.6631, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:11}I:Sp1-SP, elemHandle=put, elemIndex=96, elemName=Q11, devName=Q11, elemLength=0.15, elemPosition=16.7483, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:12}I:Sp1-SP, elemHandle=put, elemIndex=98, elemName=Q12, devName=Q12, elemLength=0.15, elemPosition=17.6653, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:13}I:Sp1-SP, elemHandle=put, elemIndex=104, elemName=Q13, devName=Q13, elemLength=0.15, elemPosition=18.5824, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:14}I:Sp1-SP, elemHandle=put, elemIndex=106, elemName=Q14, devName=Q14, elemLength=0.15, elemPosition=19.4994, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:15}I:Sp1-SP, elemHandle=put, elemIndex=114, elemName=Q15, devName=Q15, elemLength=0.15, elemPosition=20.3564, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+
+LTB-MG{Cor:5}I:Sp1-SP, elemHandle=put, elemIndex=64, elemName=CX5, devName=C5, elemLength=0., elemPosition=11.1398, elemType=HCOR, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-MG{Cor:5}I:Sp2-SP, elemHandle=put, elemIndex=65, elemName=CY5, devName=C5, elemLength=0., elemPosition=11.1398, elemType=VCOR, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-MG{Cor:6}I:Sp1-SP, elemHandle=put, elemIndex=93, elemName=CX6, devName=C6, elemLength=0., elemPosition=16.362, elemType=HCOR, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-MG{Cor:6}I:Sp2-SP, elemHandle=put, elemIndex=94, elemName=CY6, devName=C6, elemLength=0., elemPosition=16.362, elemType=VCOR, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-MG{Cor:7}I:Sp1-SP, elemHandle=put, elemIndex=101, elemName=CX7, devName=C7, elemLength=0., elemPosition=18.0382, elemType=HCOR, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-MG{Cor:7}I:Sp2-SP, elemHandle=put, elemIndex=102, elemName=CY7, devName=C7, elemLength=0., elemPosition=18.0382, elemType=VCOR, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-MG{Cor:8}I:Sp1-SP, elemHandle=put, elemIndex=117, elemName=CX8, devName=C8, elemLength=0., elemPosition=20.5161, elemType=HCOR, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-MG{Cor:8}I:Sp2-SP, elemHandle=put, elemIndex=118, elemName=CY8, devName=C8, elemLength=0., elemPosition=20.5161, elemType=VCOR, system=LTB, elemField=y, aphla.sys.LTB 
+
+LTB-BI{BPM:3}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=68, elemName=P3, devName=P3, elemLength=0., elemPosition=11.353, elemType=BPM, system=LTB, elemField=goldenX, aphla.sys.LTB 
+LTB-BI{BPM:4}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=79, elemName=P4, devName=P4, elemLength=0., elemPosition=13.9128, elemType=BPM, system=LTB, elemField=goldenX, aphla.sys.LTB 
+LTB-BI{BPM:5}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=89, elemName=P5, devName=P5, elemLength=0., elemPosition=16.0618, elemType=BPM, system=LTB, elemField=goldenX, aphla.sys.LTB 
+LTB-BI{BPM:6}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=121, elemName=P6, devName=P6, elemLength=0., elemPosition=21.6023, elemType=BPM, system=LTB, elemField=goldenX, aphla.sys.LTB 
+#BR:IS-BI{BPM:2}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=130, elemName=P2SI, devName=P2SI, elemLength=0., elemPosition=25.7139, elemType=BPM, system=LTB, elemField=goldenX, aphla.sys.LTB 
+
+LTB-BI{BPM:3}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=68, elemName=P3, devName=P3, elemLength=0., elemPosition=11.353, elemType=BPM, system=LTB, elemField=goldenY, aphla.sys.LTB 
+LTB-BI{BPM:4}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=79, elemName=P4, devName=P4, elemLength=0., elemPosition=13.9128, elemType=BPM, system=LTB, elemField=goldenY, aphla.sys.LTB 
+LTB-BI{BPM:5}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=89, elemName=P5, devName=P5, elemLength=0., elemPosition=16.0618, elemType=BPM, system=LTB, elemField=goldenY, aphla.sys.LTB 
+LTB-BI{BPM:6}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=121, elemName=P6, devName=P6, elemLength=0., elemPosition=21.6023, elemType=BPM, system=LTB, elemField=goldenY, aphla.sys.LTB 
+#BR:IS-BI{BPM:2}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=130, elemName=P2SI, devName=P2SI, elemLength=0., elemPosition=25.7139, elemType=BPM, system=LTB, elemField=goldenY, aphla.sys.LTB 
+
+LTB-BI{VF:3}Pos-Sel,          elemHandle=put, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=position, aphla.sys.LTB 
+LTB-BI{VF:3}cam1:Acquire,     elemHandle=put, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=acquire, aphla.sys.LTB 
+LTB-BI{VF:3}TIFF1:WriteFile,  elemHandle=put, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=save, aphla.sys.LTB 
+LTB-BI{VF:3}TIFF1:NumCapture, elemHandle=put, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=nCapture, aphla.sys.LTB 
+ 
+LTB-BI{VF:4}Pos-Sel,          elemHandle=put, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=position, aphla.sys.LTB 
+LTB-BI{VF:4}cam1:Acquire,     elemHandle=put, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=acquire, aphla.sys.LTB 
+LTB-BI{VF:4}TIFF1:WriteFile,  elemHandle=put, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=save, aphla.sys.LTB 
+LTB-BI{VF:4}TIFF1:NumCapture, elemHandle=put, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=nCapture, aphla.sys.LTB 
+ 
+LTB-BI{VF:5}Pos-Sel,          elemHandle=put, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=position, aphla.sys.LTB 
+LTB-BI{VF:5}cam1:Acquire,     elemHandle=put, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=acquire, aphla.sys.LTB 
+LTB-BI{VF:5}TIFF1:WriteFile,  elemHandle=put, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=save, aphla.sys.LTB 
+LTB-BI{VF:5}TIFF1:NumCapture, elemHandle=put, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=nCapture, aphla.sys.LTB 
+
+# READBACK, Properties, Tag 
+#LTB-MG{Bend:2}I:Ps1DCCT1-I, elemHandle=get, elemIndex=52, elemName=B2, devName=B2, elemLength=0.35, elemPosition=8.45413, elemType=BEND, system=LTB, elemField=bl, aphla.sys.LTB 
+#LTB-MG{Bend:3}I:Ps1DCCT1-I, elemHandle=get, elemIndex=76, elemName=B3, devName=B3, elemLength=0.35, elemPosition=13.6886, elemType=BEND, system=LTB, elemField=bl, aphla.sys.LTB 
+#LTB-MG{Bend:4}I:Ps1DCCT1-I, elemHandle=get, elemIndex=86, elemName=B4, devName=B4, elemLength=0.35, elemPosition=15.8376, elemType=BEND, system=LTB, elemField=bl, aphla.sys.LTB 
+
+#LTB-MG{Bend:2}RpStart1-Cmd, elemHandle=get, elemIndex=52, elemName=B2, devName=B2, elemLength=0.35, elemPosition=8.45413, elemType=BEND, system=LTB, elemField=ramping, aphla.sys.LTB 
+#LTB-MG{Bend:3}RpStart1-Cmd, elemHandle=get, elemIndex=76, elemName=B3, devName=B3, elemLength=0.35, elemPosition=13.6886, elemType=BEND, system=LTB, elemField=ramping, aphla.sys.LTB 
+#LTB-MG{Bend:4}RpStart1-Cmd, elemHandle=get, elemIndex=86, elemName=B4, devName=B4, elemLength=0.35, elemPosition=15.8376, elemType=BEND, system=LTB, elemField=ramping, aphla.sys.LTB 
+
+LTB-MG{Quad:7}I:Ps1DCCT1-I, elemHandle=get, elemIndex=55, elemName=Q7, devName=Q7, elemLength=0.15, elemPosition=9.4818, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:8}I:Ps1DCCT1-I, elemHandle=get, elemIndex=57, elemName=Q8, devName=Q8, elemLength=0.15, elemPosition=10.0358, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:9}I:Ps1DCCT1-I, elemHandle=get, elemIndex=61, elemName=Q9, devName=Q9, elemLength=0.15, elemPosition=11.0265, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:10}I:Ps1DCCT1-I, elemHandle=get, elemIndex=84, elemName=Q10, devName=Q10, elemLength=0.15, elemPosition=14.6631, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:11}I:Ps1DCCT1-I, elemHandle=get, elemIndex=96, elemName=Q11, devName=Q11, elemLength=0.15, elemPosition=16.7483, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:12}I:Ps1DCCT1-I, elemHandle=get, elemIndex=98, elemName=Q12, devName=Q12, elemLength=0.15, elemPosition=17.6653, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:13}I:Ps1DCCT1-I, elemHandle=get, elemIndex=104, elemName=Q13, devName=Q13, elemLength=0.15, elemPosition=18.5824, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:14}I:Ps1DCCT1-I, elemHandle=get, elemIndex=106, elemName=Q14, devName=Q14, elemLength=0.15, elemPosition=19.4994, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+LTB-MG{Quad:15}I:Ps1DCCT1-I, elemHandle=get, elemIndex=114, elemName=Q15, devName=Q15, elemLength=0.15, elemPosition=20.3564, elemType=QUAD, system=LTB, elemField=b1, aphla.sys.LTB 
+
+LTB-MG{Quad:7}RpStart1-Cmd, elemHandle=get, elemIndex=55, elemName=Q7, devName=Q7, elemLength=0.15, elemPosition=9.4818, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Quad:8}RpStart1-Cmd, elemHandle=get, elemIndex=57, elemName=Q8, devName=Q8, elemLength=0.15, elemPosition=10.0358, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Quad:9}RpStart1-Cmd, elemHandle=get, elemIndex=61, elemName=Q9, devName=Q9, elemLength=0.15, elemPosition=11.0265, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Quad:10}RpStart1-Cmd, elemHandle=get, elemIndex=84, elemName=Q10, devName=Q10, elemLength=0.15, elemPosition=14.6631, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Quad:11}RpStart1-Cmd, elemHandle=get, elemIndex=96, elemName=Q11, devName=Q11, elemLength=0.15, elemPosition=16.7483, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Quad:12}RpStart1-Cmd, elemHandle=get, elemIndex=98, elemName=Q12, devName=Q12, elemLength=0.15, elemPosition=17.6653, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Quad:13}RpStart1-Cmd, elemHandle=get, elemIndex=104, elemName=Q13, devName=Q13, elemLength=0.15, elemPosition=18.5824, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Quad:14}RpStart1-Cmd, elemHandle=get, elemIndex=106, elemName=Q14, devName=Q14, elemLength=0.15, elemPosition=19.4994, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Quad:15}RpStart1-Cmd, elemHandle=get, elemIndex=114, elemName=Q15, devName=Q15, elemLength=0.15, elemPosition=20.3564, elemType=QUAD, system=LTB, elemField=ramping, aphla.sys.LTB 
+
+LTB-MG{Cor:5}I:Ps1DCCT1-I, elemHandle=get, elemIndex=64, elemName=CX5, devName=C5, elemLength=0., elemPosition=11.1398, elemType=HCOR, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-MG{Cor:5}I:Ps2DCCT1-I, elemHandle=get, elemIndex=65, elemName=CY5, devName=C5, elemLength=0., elemPosition=11.1398, elemType=VCOR, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-MG{Cor:6}I:Ps1DCCT1-I, elemHandle=get, elemIndex=93, elemName=CX6, devName=C6, elemLength=0., elemPosition=16.362, elemType=HCOR, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-MG{Cor:6}I:Ps2DCCT1-I, elemHandle=get, elemIndex=94, elemName=CY6, devName=C6, elemLength=0., elemPosition=16.362, elemType=VCOR, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-MG{Cor:7}I:Ps1DCCT1-I, elemHandle=get, elemIndex=101, elemName=CX7, devName=C7, elemLength=0., elemPosition=18.0382, elemType=HCOR, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-MG{Cor:7}I:Ps2DCCT1-I, elemHandle=get, elemIndex=102, elemName=CY7, devName=C7, elemLength=0., elemPosition=18.0382, elemType=VCOR, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-MG{Cor:8}I:Ps1DCCT1-I, elemHandle=get, elemIndex=117, elemName=CX8, devName=C8, elemLength=0., elemPosition=20.5161, elemType=HCOR, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-MG{Cor:8}I:Ps2DCCT1-I, elemHandle=get, elemIndex=118, elemName=CY8, devName=C8, elemLength=0., elemPosition=20.5161, elemType=VCOR, system=LTB, elemField=y, aphla.sys.LTB 
+ 
+LTB-MG{Cor:5}RpStart1-Cmd, elemHandle=get, elemIndex=64, elemName=CX5, devName=C5, elemLength=0., elemPosition=11.1398, elemType=HCOR, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Cor:5}RpStart2-Cmd, elemHandle=get, elemIndex=65, elemName=CY5, devName=C5, elemLength=0., elemPosition=11.1398, elemType=VCOR, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Cor:6}RpStart1-Cmd, elemHandle=get, elemIndex=93, elemName=CX6, devName=C6, elemLength=0., elemPosition=16.362, elemType=HCOR, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Cor:6}RpStart2-Cmd, elemHandle=get, elemIndex=94, elemName=CY6, devName=C6, elemLength=0., elemPosition=16.362, elemType=VCOR, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Cor:7}RpStart1-Cmd, elemHandle=get, elemIndex=101, elemName=CX7, devName=C7, elemLength=0., elemPosition=18.0382, elemType=HCOR, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Cor:7}RpStart2-Cmd, elemHandle=get, elemIndex=102, elemName=CY7, devName=C7, elemLength=0., elemPosition=18.0382, elemType=VCOR, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Cor:8}RpStart1-Cmd, elemHandle=get, elemIndex=117, elemName=CX8, devName=C8, elemLength=0., elemPosition=20.5161, elemType=HCOR, system=LTB, elemField=ramping, aphla.sys.LTB 
+LTB-MG{Cor:8}RpStart2-Cmd, elemHandle=get, elemIndex=118, elemName=CY8, devName=C8, elemLength=0., elemPosition=20.5161, elemType=VCOR, system=LTB, elemField=ramping, aphla.sys.LTB 
+
+LTB-BI{BPM:3}I-I, elemHandle=get, elemIndex=68, elemName=P3, devName=P3, elemLength=0., elemPosition=11.353, elemType=BPM, system=LTB, elemField=I, aphla.sys.LTB 
+LTB-BI{BPM:4}I-I, elemHandle=get, elemIndex=79, elemName=P4, devName=P4, elemLength=0., elemPosition=13.9128, elemType=BPM, system=LTB, elemField=I, aphla.sys.LTB 
+LTB-BI{BPM:5}I-I, elemHandle=get, elemIndex=89, elemName=P5, devName=P5, elemLength=0., elemPosition=16.0618, elemType=BPM, system=LTB, elemField=I, aphla.sys.LTB 
+LTB-BI{BPM:6}I-I, elemHandle=get, elemIndex=121, elemName=P6, devName=P6, elemLength=0., elemPosition=21.6023, elemType=BPM, system=LTB, elemField=I, aphla.sys.LTB 
+#BR:IS-BI{BPM:2}Sum-I, elemHandle=get, elemIndex=130, elemName=P2SI, devName=P2SI, elemLength=0., elemPosition=25.7139, elemType=BPM, system=LTB, elemField=I, aphla.sys.LTB 
+
+LTB-BI{BPM:3}Pos:X-I, elemHandle=get, elemIndex=68, elemName=P3, devName=P3, elemLength=0., elemPosition=11.353, elemType=BPM, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-BI{BPM:4}Pos:X-I, elemHandle=get, elemIndex=79, elemName=P4, devName=P4, elemLength=0., elemPosition=13.9128, elemType=BPM, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-BI{BPM:5}Pos:X-I, elemHandle=get, elemIndex=89, elemName=P5, devName=P5, elemLength=0., elemPosition=16.0618, elemType=BPM, system=LTB, elemField=x, aphla.sys.LTB 
+LTB-BI{BPM:6}Pos:X-I, elemHandle=get, elemIndex=121, elemName=P6, devName=P6, elemLength=0., elemPosition=21.6023, elemType=BPM, system=LTB, elemField=x, aphla.sys.LTB 
+#BR:IS-BI{BPM:2}Pos:X-I, elemHandle=get, elemIndex=130, elemName=P2SI, devName=P2SI, elemLength=0., elemPosition=25.7139, elemType=BPM, system=LTB, elemField=x, aphla.sys.LTB 
+
+LTB-BI{BPM:3}Pos:Y-I, elemHandle=get, elemIndex=68, elemName=P3, devName=P3, elemLength=0., elemPosition=11.353, elemType=BPM, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-BI{BPM:4}Pos:Y-I, elemHandle=get, elemIndex=79, elemName=P4, devName=P4, elemLength=0., elemPosition=13.9128, elemType=BPM, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-BI{BPM:5}Pos:Y-I, elemHandle=get, elemIndex=89, elemName=P5, devName=P5, elemLength=0., elemPosition=16.0618, elemType=BPM, system=LTB, elemField=y, aphla.sys.LTB 
+LTB-BI{BPM:6}Pos:Y-I, elemHandle=get, elemIndex=121, elemName=P6, devName=P6, elemLength=0., elemPosition=21.6023, elemType=BPM, system=LTB, elemField=y, aphla.sys.LTB 
+#BR:IS-BI{BPM:2}Pos:Y-I, elemHandle=get, elemIndex=130, elemName=P2SI, devName=P2SI, elemLength=0., elemPosition=25.7139, elemType=BPM, system=LTB, elemField=y, aphla.sys.LTB 
+
+LTB-BI{ICT:2}AveQOverINOS-I, elemHandle=get, elemIndex=110, elemName=ICT2, devName=ICT2, elemLength=0., elemPosition=19.7953, elemType=ICT, system=LTB, elemField=Q, aphla.sys.LTB
+LTB-BI{ICT:2}StdQOverINOS-I, elemHandle=get, elemIndex=110, elemName=ICT2, devName=ICT2, elemLength=0., elemPosition=19.7953, elemType=ICT, system=LTB, elemField=Qerr, aphla.sys.LTB
+
+LTB-BI{FCT:2}NbrBunches-I, elemHandle=get, elemIndex=108, elemName=FCT2, devName=FCT2, elemLength=0., elemPosition=19.6029, elemType=FCT, system=LTB, elemField=nBunches, aphla.sys.LTB 
+ 
+LTB-BI{VF:3}Pos-Sts,                elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=position, aphla.sys.LTB 
+LTB-BI{VF:3}TIFF1:FileNumber_RBV,   elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=imageNumber, aphla.sys.LTB 
+LTB-BI{VF:3}TIFF1:FullFileName_RBV, elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=imageName, aphla.sys.LTB 
+LTB-BI{VF:3}X-Gauss:Sigma-I,        elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=sigmaX, aphla.sys.LTB 
+LTB-BI{VF:3}Y-Gauss:Sigma-I,        elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=sigmaY, aphla.sys.LTB 
+LTB-BI{VF:3}Stats1:CentroidX_RBV,   elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=centerX, aphla.sys.LTB 
+LTB-BI{VF:3}Stats1:CentroidY_RBV,   elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=centerY, aphla.sys.LTB 
+LTB-BI{VF:3}ROI1:SizeX_RBV,         elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=sizeX, aphla.sys.LTB 
+LTB-BI{VF:3}ROI1:SizeY_RBV,         elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=sizeY, aphla.sys.LTB 
+LTB-BI{VF:3}ROI1:MinX_RBV,          elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=minX, aphla.sys.LTB 
+LTB-BI{VF:3}ROI1:MinY_RBV,          elemHandle=get, elemIndex=73, elemName=VF3, devName=VF3, elemLength=0., elemPosition=12.8671, elemType=FLAG, system=LTB, elemField=minY, aphla.sys.LTB 
+ 
+LTB-BI{VF:4}Pos-Sts,                elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=position, aphla.sys.LTB 
+LTB-BI{VF:4}TIFF1:FileNumber_RBV,   elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=imageNumber, aphla.sys.LTB 
+LTB-BI{VF:4}TIFF1:FullFileName_RBV, elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=imageName, aphla.sys.LTB 
+LTB-BI{VF:4}X-Gauss:Sigma-I,        elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=sigmaX, aphla.sys.LTB 
+LTB-BI{VF:4}Y-Gauss:Sigma-I,        elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=sigmaY, aphla.sys.LTB 
+LTB-BI{VF:4}Stats1:CentroidX_RBV,   elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=centerX, aphla.sys.LTB 
+LTB-BI{VF:4}Stats1:CentroidY_RBV,   elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=centerY, aphla.sys.LTB 
+LTB-BI{VF:4}ROI1:SizeX_RBV,         elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=sizeX, aphla.sys.LTB 
+LTB-BI{VF:4}ROI1:SizeY_RBV,         elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=sizeY, aphla.sys.LTB 
+LTB-BI{VF:4}ROI1:MinX_RBV,          elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=minX, aphla.sys.LTB 
+LTB-BI{VF:4}ROI1:MinY_RBV,          elemHandle=get, elemIndex=82, elemName=VF4, devName=VF4, elemLength=0., elemPosition=14.0974, elemType=FLAG, system=LTB, elemField=minY, aphla.sys.LTB 
+ 
+LTB-BI{VF:5}Pos-Sts,                elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=position, aphla.sys.LTB 
+LTB-BI{VF:5}TIFF1:FileNumber_RBV,   elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=imageNumber, aphla.sys.LTB 
+LTB-BI{VF:5}TIFF1:FullFileName_RBV, elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=imageName, aphla.sys.LTB 
+LTB-BI{VF:5}X-Gauss:Sigma-I,        elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=sigmaX, aphla.sys.LTB 
+LTB-BI{VF:5}Y-Gauss:Sigma-I,        elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=sigmaY, aphla.sys.LTB 
+LTB-BI{VF:5}Stats1:CentroidX_RBV,   elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=centerX, aphla.sys.LTB 
+LTB-BI{VF:5}Stats1:CentroidY_RBV,   elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=centerY, aphla.sys.LTB 
+LTB-BI{VF:5}ROI1:SizeX_RBV,         elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=sizeX, aphla.sys.LTB 
+LTB-BI{VF:5}ROI1:SizeY_RBV,         elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=sizeY, aphla.sys.LTB 
+LTB-BI{VF:5}ROI1:MinX_RBV,          elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=minX, aphla.sys.LTB 
+LTB-BI{VF:5}ROI1:MinY_RBV,          elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=minY, aphla.sys.LTB 
+ 

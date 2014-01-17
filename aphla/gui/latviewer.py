@@ -733,7 +733,6 @@ class LatSnapshotView(QTableView):
             print self.headers.headerData(i, Qt.Horizontal)
         cmenu = QMenu()
         #c = QApplication.clipboard()
-
         #    cmenu.addAction("&Copy", 
         #                    partial(c.setText, d.toString()), "CTRL+C")
         #    cmenu.addAction("Copy Column", partial(self.copy_pvs, c.setText))
@@ -746,7 +745,7 @@ class LatSnapshotView(QTableView):
         d = mdl.data(idx, role=Qt.DisplayRole)
         irow = self.rowAt(e.y())
         icol = self.columnAt(e.x())
-        print "Row:", self.rowAt(e.y())
+        #print "Row:", self.rowAt(e.y())
         cmenu = QMenu()
         c = QApplication.clipboard()
         if icol == C_PV:
