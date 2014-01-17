@@ -28,6 +28,7 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
 import PyQt4.Qwt5 as Qwt
 
 from pvmanager import CaDataMonitor
+from aporbitplot import ApPlot
 import traceback
 import collections
 import numpy as np
@@ -106,15 +107,12 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 if flds and var not in flds: continue
                 ik += 1
                 self._elemrec.append((elem, ik, var))
-                data = [elem.get(var, handle="setpoint", unitsys=None),
-                        elem.get(var, handle="readback", unitsys=None)]
+                data = [None, None]
                 for j,u in enumerate(self._unitsys[1:]):
                     self._unitsymb[1+j].append(elem.getUnit(var, unitsys=u))
-                    try:
-                        data.append(elem.convertUnit(var, data[1], None, u))
-                    except:
-                        data.append(None)
+                    data.append(None)
                 self._data.append(data)
+            print elem
         self.endResetModel()
 
     def _get_cadata_qv(self, elem, fld, hdl, u = None):
@@ -767,10 +765,11 @@ class ElementEditorDock(QDockWidget):
         #self.elemName.selectAll()
         t0 = time.time()
         _logger.info("Found elems: {0}".format(len(elems)))
+        print "found: {0} elements".format(len(elems))
         QApplication.processEvents()
-        #print "cadata", cadata
+        print "cadata", cadata
         self.model.loadElements(elems, flds, cadata)
-        #print "model size:", self.model.rowCount(), self.model.columnCount()
+        print "model size:", self.model.rowCount(), self.model.columnCount()
         for i in range(self.model.rowCount()):
             elem, fld, hdl = self.model._elemrec[i]
             #print i, elem.name, fld, self.model._value[i]

@@ -234,7 +234,7 @@ class DcctCurrentPlot(Qwt.QwtPlot):
 
 
 
-class ApPlotCurve(Qwt.QwtPlotCurve):
+class ApCaCurve(Qwt.QwtPlotCurve):
     """
     Orbit curve
     """
@@ -260,18 +260,17 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
         self.x1, self.y1, self.e1 = None, None, None
         self.yref = None # no mask applied
         self.setPen(kw.get('curvePen', QPen(Qt.NoPen)))
-        #self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
-        self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Sticks))
+        self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Lines))
+        #self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Sticks))
         #self.setStyle(kw.get('curveStyle', Qwt.QwtPlotCurve.Steps))
         self.setSymbol(kw.get('curveSymbol', Qwt.QwtSymbol()))
         self.errorPen = kw.get('errorPen', QPen(Qt.NoPen))
         self.errorCap = kw.get('errorCap', 0)
-        self.errorOnTop = kw.get('errorOnTop', True)
+        self.errorOnTop = kw.get('errorOnTop', False)
         self.setTitle(kw.get("title", ""))
-        self.__live = False
         self.showDifference = False
 
-    def setData(self, x, y, e):
+    def setData(self, x, y, e = None):
         self.x1, self.y1, self.e1 = x, y, e
         Qwt.QwtPlotCurve.setData(self, list(self.x1), list(self.y1))
             
@@ -364,7 +363,36 @@ class ApPlotCurve(Qwt.QwtPlotCurve):
 
 
 class ApPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None, errorbar = True, title=None): 
+    COLORS = [("Blue", Qt.blue),
+              ("Green", Qt.green),
+              ("Red", Qt.red), 
+              ("Cyan", Qt.cyan),
+              ("Magenta", Qt.magenta),
+              ("Yellow", Qt.yellow),
+              ("Black", Qt.black)]
+    SYMBOLS = [("NoSymbol", Qwt.QwtSymbol.NoSymbol),
+               ("Ellipse", Qwt.QwtSymbol.Ellipse),
+               ("Rect", Qwt.QwtSymbol.Rect),
+               ("Diamond", Qwt.QwtSymbol.Diamond),
+               ("Triangle", Qwt.QwtSymbol.Triangle),
+               ("Cross", Qwt.QwtSymbol.Cross),
+               ("XCross", Qwt.QwtSymbol.XCross),
+               ("HLine", Qwt.QwtSymbol.HLine),
+               ("VLine", Qwt.QwtSymbol.VLine),
+               ("Star1", Qwt.QwtSymbol.Star1),
+               ("Star2", Qwt.QwtSymbol.Star2),
+               ("Hexagon", Qwt.QwtSymbol.Hexagon)]
+    CURVE_STYLES = [("No Curve", Qwt.QwtPlotCurve.NoCurve),
+              ("Lines", Qwt.QwtPlotCurve.Lines),
+              ("Sticks", Qwt.QwtPlotCurve.Sticks)]
+    # Qt.PenStyle
+    PEN_STYLES = [("Solid Line", Qt.SolidLIne),
+                  ("Dashed Line", Qt.DashLine),
+                  ("Dotted Line", Qt.DotLine),
+                  ("Dash-Dotted Line", Qt.DashDotLine),
+                  ("Dash-Dot-Dotted Line", Qt.DashDotDotLine)]
+
+    def __init__(self, parent = None, errorbar = False, title=None): 
         """initialization
         
         Parameters
@@ -380,35 +408,10 @@ class ApPlot(Qwt.QwtPlot):
 
         self.plotLayout().setAlignCanvasToScales(True)
 
-        self.curve1 = ApPlotCurve(
-            curvePen = QPen(Qt.red, 3.0),
-            curveSymbol = Qwt.QwtSymbol(
-                Qwt.QwtSymbol.Ellipse,
-                QBrush(Qt.red),
-                QPen(Qt.black, 1.0),
-                QSize(8, 8)),
-            errorPen = QPen(Qt.black, 1.0),
-            errorCap = 6,
-            errorOnTop = self.errorOnTop,
-            )
+        self.curves = {"_golden_": None, "_saved_": None}
 
-        self.curve1.attach(self)
-
-        self.curve2 = Qwt.QwtPlotCurve()
-        self.curve2.setPen(QPen(Qt.green, 3, Qt.DashLine))
-        self.curve2.attach(self)
-        self.curve2.setZ(self.curve1.z() + 2.0)
-        self.curve2.setVisible(False)
-
-        self.excurv = []
-
-        #print "PV golden:", pvs_golden
-        pvs_golden = None
-        if pvs_golden is None: self.golden = None
-        else:
-            #for pv in pvs_golden: print pv, caget(pv.encode("ascii"))
-            self.golden = ApPlotCurve(
-                x,
+        self.curves["_golden_"] = ApPlotCurve(
+            x,
                 pvs_golden,
                 curvePen = QPen(Qt.black, 2),
                 errorOnTop = False
