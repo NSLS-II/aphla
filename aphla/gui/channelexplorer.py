@@ -30,6 +30,7 @@ sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
 import sys
+from copy import deepcopy
 from fnmatch import fnmatchcase
 from operator import and_, not_, add
 import numpy as np
@@ -72,22 +73,25 @@ ENUM_ELEM_FULL_DESCRIP_NAME = 0
 ENUM_ELEM_SHORT_DESCRIP_NAME = 1 # used for column headers
 ENUM_ELEM_DATA_TYPE = 2
 ELEM_PROPERTIES ={
-    'name': ['Name','Name','string'],
-    'devname': ['Device Name','Dev.Name','string'],
-    'cell': ['Cell','Cell','string'],
-    'family': ['Family','Family','string'],
-    'girder': ['Girder','Girder','string'],
-    'group': ['Group','Group','string_list'],
-    'index': ['Lattice Index','Lat.Ind.','int'],
-    'length': ['Effective Length','Eff.Len.','float'],
-    'phylen': ['Physical Length','Phys.Len.','float'],
-    'pv': ['PV(s)','PV(s)','string_list'], # callable
-    'sb': ['s(beginning)','sb','float'],
-    'se': ['s(end)','se','float'],
+    'name'    : ['Name','Name','string'],
+    'devname' : ['Device Name','Dev.Name','string'],
+    'cell'    : ['Cell','Cell','string'],
+    'family'  : ['Family','Family','string'],
+    'girder'  : ['Girder','Girder','string'],
+    'group'   : ['Group','Group','string_list'],
+    'index'   : ['Lattice Index','Lat.Ind.','int'],
+    'length'  : ['Effective Length','Eff.Len.','float'],
+    'phylen'  : ['Physical Length','Phys.Len.','float'],
+    'pv'      : ['PV(s)','PV(s)','string_list'], # callable
+    'sb'      : ['s(beginning)','sb','float'],
+    'se'      : ['s(end)','se','float'],
     'symmetry': ['Symmetry','Symmetry','string'],
-    'virtual': ['Virtual','Virtual','bool'],
+    'virtual' : ['Virtual','Virtual','bool'],
     'sequence': ['Sequence','Sequence','int_list'],
-    'fields':['Fields','Fields','string_list'], # callable
+    'fields'  : ['Fields','Fields','string_list'], # callable
+    'unit'    : ['Unit String','Unit','string_list'], # custom func
+    'unitsys' : ['Unit System','UnitSys','string_list'], # custom func
+    'unicon'  : ['Unit Conversion','UnitConv','string_list'], # custom func
     }
 PROP_KEY_LIST = sorted(ELEM_PROPERTIES.keys(),key=str.lower)
 FULL_DESCRIP_NAME_LIST = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
@@ -199,28 +203,102 @@ class Filter():
 
             element = obj
 
-            x = getattr(element,propertyName)
+            if propertyName not in ('unit','unitsys','unicon'):
+                x = getattr(element,propertyName)
 
-            if callable(x):
-                x = x()
+                if callable(x):
+                    x = x()
+            else:
+                unitsys_dict = element.getUnitSystems()
+                if propertyName == 'unitsys':
+                    x = str(unitsys_dict)
+                elif propertyName == 'unit':
+                    unit_str_dict = deepcopy(unitsys_dict)
+                    for field, unitsys_list in unit_str_dict.iteritems():
+                        unit_str_list = [element.getUnit(field, unitsys=unitsys)
+                                         for unitsys in unitsys_list]
+                        unit_str_dict[field] = unit_str_list
+                    x = str(unit_str_dict)
+                elif propertyName == 'unicon':
+                    unicon_dict = {}
+                    for field, CaAction in element._field.iteritems():
+                        unicon_dict[field] = []
+                        for (src_unit, dst_unit), unicon \
+                            in CaAction.unitconv.iteritems():
+                            d = dict(src=src_unit, dst=dst_unit)
+                            if isinstance(unicon, ap.unitconv.UcPoly):
+                                coeffs = list(unicon.p.coeffs)
+                                d['type'] = 'UcPoly'
+                                d['prop'] = {'coef': coeffs}
+                            elif isinstance(unicon, ap.unitconv.UcInterp1):
+                                d['type'] = 'UcInterp1'
+                                xlist = list(unicon.xp); ylist = list(unicon.fp)
+                                d['prop'] = {'xlist': xlist, 'ylist': ylist}
+                            elif isinstance(unicon, ap.unitconv.UcInterpN):
+                                d['type'] = 'UcInterpN'
+                                list_of_xlist = list(unicon.xp)
+                                list_of_ylist = list(unicon.fp)
+                                d['prop'] = {
+                                    'list_of_xlist': list_of_xlist,
+                                    'list_of_ylist': list_of_ylist}
+                            else:
+                                raise TypeError('Unexpected unitconv object')
+                            unicon_dict[field].append(d)
+
+                    x = str(unicon_dict)
 
         else: # for 'channel' object (= tuple of 'element' object & field name)
 
             element = obj[0]
             field = obj[1]
 
-            x = getattr(element,propertyName)
+            if propertyName not in ('unit','unitsys','unicon'):
+                x = getattr(element,propertyName)
 
-            if propertyName == 'fields':
-                x = [field]
-            elif propertyName == 'pv':
-                try:
-                    x = element.pv(field=field,handle='readback')[:]
-                    x.extend(element.pv(field=field,handle='setpoint')[:])
-                    #x = element._field[field].pvrb
-                    #x.extend(element._field[field].pvsp)
-                except: # For DIPOLE, there is no field specified
-                    x = element.pv()[:]
+                if propertyName == 'fields':
+                    x = [field]
+                elif propertyName == 'pv':
+                    try:
+                        x = element.pv(field=field,handle='readback')[:]
+                        x.extend(element.pv(field=field,handle='setpoint')[:])
+                        #x = element._field[field].pvrb
+                        #x.extend(element._field[field].pvsp)
+                    except: # For DIPOLE, there is no field specified
+                        x = element.pv()[:]
+            else:
+                unitsys_dict = element.getUnitSystems()
+                if propertyName == 'unitsys':
+                    x = unitsys_dict[field]
+                elif propertyName == 'unit':
+                    unitsys_list = unitsys_dict[field]
+                    unit_str_list = [element.getUnit(field, unitsys=unitsys)
+                                     for unitsys in unitsys_list]
+                    x = unit_str_list
+                elif propertyName == 'unicon':
+                    CaAction = element._field[field]
+                    unicon_list = []
+                    for (src_unit, dst_unit), unicon \
+                        in CaAction.unitconv.iteritems():
+                        d = dict(src=src_unit, dst=dst_unit)
+                        if isinstance(unicon, ap.unitconv.UcPoly):
+                            coeffs = list(unicon.p.coeffs)
+                            d['type'] = 'UcPoly'
+                            d['prop'] = {'coef': coeffs}
+                        elif isinstance(unicon, ap.unitconv.UcInterp1):
+                            d['type'] = 'UcInterp1'
+                            xlist = list(unicon.xp); ylist = list(unicon.fp)
+                            d['prop'] = {'xlist': xlist, 'ylist': ylist}
+                        elif isinstance(unicon, ap.unitconv.UcInterpN):
+                            d['type'] = 'UcInterpN'
+                            list_of_xlist = list(unicon.xp)
+                            list_of_ylist = list(unicon.fp)
+                            d['prop'] = {
+                                'list_of_xlist': list_of_xlist,
+                                'list_of_ylist': list_of_ylist}
+                        else:
+                            raise TypeError('Unexpected unitconv object')
+                        unicon_list.append(d)
+                    x = str(unicon_list)
 
         return x
 
