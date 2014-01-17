@@ -92,6 +92,7 @@ ELEM_PROPERTIES ={
     'unit'    : ['Unit String','Unit','string_list'], # custom func
     'unitsys' : ['Unit System','UnitSys','string_list'], # custom func
     'unicon'  : ['Unit Conversion','UnitConv','string_list'], # custom func
+    'golden'  : ['Golden','Golden','float'], # custom func
     }
 PROP_KEY_LIST = sorted(ELEM_PROPERTIES.keys(),key=str.lower)
 FULL_DESCRIP_NAME_LIST = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
@@ -203,11 +204,18 @@ class Filter():
 
             element = obj
 
-            if propertyName not in ('unit','unitsys','unicon'):
+            if propertyName not in ('unit','unitsys','unicon','golden'):
                 x = getattr(element,propertyName)
 
                 if callable(x):
                     x = x()
+
+            elif propertyName == 'golden':
+                golden_list = []
+                for field in element.fields():
+                    golden_list += element._field[field].golden
+                x = golden_list
+
             else:
                 unitsys_dict = element.getUnitSystems()
                 if propertyName == 'unitsys':
@@ -252,7 +260,7 @@ class Filter():
             element = obj[0]
             field = obj[1]
 
-            if propertyName not in ('unit','unitsys','unicon'):
+            if propertyName not in ('unit','unitsys','unicon','golden'):
                 x = getattr(element,propertyName)
 
                 if propertyName == 'fields':
@@ -265,6 +273,11 @@ class Filter():
                         #x.extend(element._field[field].pvsp)
                     except: # For DIPOLE, there is no field specified
                         x = element.pv()[:]
+
+            elif propertyName == 'golden':
+
+                x = element._field[field].golden[0]
+
             else:
                 unitsys_dict = element.getUnitSystems()
                 if propertyName == 'unitsys':
@@ -2235,8 +2248,15 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
                 key_func = lower
             else:
                 key_func = None
-            self.choice_dict[prop_name] = \
-                sorted(list(set(self.choice_dict[prop_name])),key=key_func)
+
+            try:
+                sorted_unique_list = \
+                    sorted(list(set(self.choice_dict[prop_name])),key=key_func)
+            except TypeError:
+                stringfied = [str(L) for L in self.choice_dict[prop_name]]
+                sorted_unique_list = sorted(list(set(stringfied)))
+            self.choice_dict[prop_name] = sorted_unique_list
+
 
             choice_combobox_model.setData(
                 choice_combobox_model.index(i,0),
