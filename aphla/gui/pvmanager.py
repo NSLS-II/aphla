@@ -82,12 +82,18 @@ class CaDataMonitor(QtCore.QObject):
             f(val, idx)
         #print "updating", idx, val, val.name, len(self.data[pv])
 
-    def close(self, pv):
-        p = self._monitors.get(pv, None)
-        if p is None: return
-        p.close()
-        self._monitors[pv] = None
-        self.data[pv].clear()
+    def close(self, pv = None):
+        pl = []
+        if pv is None:
+            # close all
+            pl = self._monitors.keys()
+        elif pv is not None and pv in self._monitors:
+            pl.append(pv)
+
+        for pvi in pl:
+            self._monitors[pvi].close()
+            self._monitors[pvi] = None
+            self.data[pvi].clear()
 
     def get(self, pv, default = np.nan):
         if pv in self._dead: return default
@@ -112,7 +118,8 @@ class CaDataMonitor(QtCore.QObject):
     def deadCount(self):
         return len([True for pv,cam in self._monitors.items()
                     if cam is None])
-
+    def pvs(self):
+        return self._monitors.keys() + self._dead
 
 class CaDataGetter:
     def __init__(self, pvs = [], **kwargs):

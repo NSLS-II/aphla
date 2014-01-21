@@ -34,6 +34,9 @@ import aphla as ap
 
 import time
 import numpy as np
+from collections import deque
+from datetime import datetime
+
 import sip
 
 import mleapresources
@@ -188,9 +191,14 @@ class ApCaTimeSeriesPlot(Qwt.QwtPlot):
         sd.setMinimumExtent(fmh*2)
         #print "Scale Draw Extent:", sd.minimumExtent()
 
-        self._t, self._pvs, self._vals = [], pvs, []
+        self.drift = False
+
+        self._t, self._vals, self._refs = [], {}, {}
+        self._pvs = pvs
         self.curves = [ Qwt.QwtPlotCurve(pv) for pv in pvs ]
         for i,c in enumerate(self.curves):
+            self._vals.setdefault(self._pvs[i], [])
+            self._refs[pv] = -1
             name, color = COLORS[i % len(COLORS)]
             c.setPen(QPen(color))
             c.attach(self)
@@ -203,26 +211,42 @@ class ApCaTimeSeriesPlot(Qwt.QwtPlot):
         self.mark1.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
         #self.mark1.setPen(QPen(QColor(0, 255, 0)))
         self.mark1.attach(self)
+        self.live = True
+        self.__hold = False
         self._timerId = self.startTimer(1500)
         
     def timerEvent(self, e):
-        
-    def updateDcct(self, curr):
-        self.curve.v.append(curr)
-        self.curve.t.append(curr.timestamp)
-        #print self.curve.t, self.curve.v
-        lb = Qwt.QwtText("%.2f mA" % curr.real)
-        lb.setColor(Qt.blue)
-        self.mark1.setValue(curr.timestamp, 0)
-        self.mark1.setLabel(lb)
+        if not self.live: return
+        if self.__hold: return
 
-    def updatePlot(self, val):
-        data = self.curve.data()
-        x = [data.x(i) for i in range(data.size())] + [val.timestamp]
-        y = [data.y(i) for i in range(data.size())] + [val]
-        self.curve.setData(x, y)
-        self.setAxisScale(Qwt.QwtPlot.xBottom, x[0], x[-1])
+        self.__hold = True
+        self.updateData()
+        if self.drift:
+            for i,pv in enumerate(self._pvs):
+                y0 = self._vals[pv][self._refs[pv]]
+                self.curves[i].setData(
+                    self._t, [d - y0 for d in self._vals[pv]])
+                #self.mark1.setValue(self._t[self._refs[pv]], 0.0)
+        else:
+            for i,pv in enumerate(self._pvs):
+                self.curves[i].setData(self._t, self._vals[pv])
+            
+        self.setAxisScale(Qwt.QwtPlot.xBottom, self._t[0], self._t[-1])
         self.replot()
+        self.__hold = False
+
+    def saveAsReference(self, pv = None):
+        for i,pv in enumerate(self._pvs):
+            self._refs[pv] = len(self._vals[pv]) - 1
+
+    def updateData(self):
+        self._t.append(float(datetime.now().strftime("%s")))
+        for i,v in enumerate(caget(self._pvs, timeout=0.8)):
+            self._vals[v.name].append(v if v.ok else np.nan)
+        
+    def closeEvent(self, e):
+        print "Close"
+        e.accept()
 
 class ApErrBarCurve(Qwt.QwtPlotCurve):
     """
@@ -373,22 +397,21 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
         parent = kwargs.pop("parent", None)
         super(ApCaWaveformPlot, self).__init__(parent)
         self.live = kwargs.get("live", True)
+        self.__hold = False
 
         self.setCanvasBackground(Qt.white)
         self.setAutoReplot(False)
 
         self.plotLayout().setAlignCanvasToScales(True)
 
-        self._pvs, self.curves = pvs, []
-        self._golden, self._ref = [], []
+        self.drift = False
+        self._pvs, self.curves, self._ref = pvs, [], []
         for i,pv in enumerate(pvs):
+            name, color = COLORS[i % len(COLORS)]
             c = Qwt.QwtPlotCurve()
-            #c.setBrush(QBrush(COLORS[i % len(COLORS)]))
-            c.setPen(QPen(COLORS[i % len(COLORS)][1], 1.5))
-            #c.setPen(QPen(Qt.red, 4))
+            c.setPen(QPen(color, 1.5))
             c.attach(self)
             self.curves.append(c)
-            self._golden.append(None)
             self._ref.append(None)
 
         # one more plot with second y axis
@@ -427,16 +450,27 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
         self._cadata.addPv(pvs)
 
     def _ca_update(self, val, idx = None):
+        if self.__hold: return
+        if not self.live: return
+
         self.count += 1
-        #print "Updating %s: " % self._pvs[idx], len(val)
         c = self.curves[idx]
 
-        if self._ref[idx] is not None:
-            y = [val[i] - yi for i,yi in enumerate(self._ref[idx])]
+        if self._ref[idx] is not None and self.drift:
+            vref = self._ref[idx]
+            y = [val[i] - yi for i,yi in enumerate(vref)]
             c.setData(range(len(val)), y)
         else:
             c.setData(range(len(val)), val)
         self.replot()
+
+    def saveAsReference(self):
+        self.__hold = True
+        for i,c in enumerate(self.curves):
+            d = c.data()
+            self._ref[i] = [d.y(j) for j in range(d.size())]
+            print i, np.average(self._ref[i])
+        self.__hold = False
 
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
@@ -593,6 +627,9 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
             bd = bd.united(self.curve2.boundingRect())
         return bd
 
+    def closeEvent(self, e):
+        self._cadata.close()
+        e.accept()
 
 class ApCaArrayPlot(Qwt.QwtPlot):
     def __init__(self, pvs, **kwargs):
@@ -607,14 +644,16 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         parent = kwargs.pop("parent", None)
         super(ApCaArrayPlot, self).__init__(parent)
         self.live = kwargs.get("live", True)
+        self.__hold = False
 
         self.setCanvasBackground(Qt.white)
         self.setAutoReplot(False)
 
         self.plotLayout().setAlignCanvasToScales(True)
 
+        self.drift = False
         self._count = []
-        self._pvs, self.curves = {}, []
+        self._pvs, self.curves, self._y = {}, [], []
         self._golden, self._ref = [], []
         self._x = kwargs.get("x", [])
         for i,pvl in enumerate(pvs):
@@ -635,6 +674,7 @@ class ApCaArrayPlot(Qwt.QwtPlot):
                 self._pvs.setdefault(pv, [])
                 self._pvs[pv].append((i,j))
             self._count.append([0] * len(pvl))
+            self._y = [[0.0] * len(pvl)]
         # one more plot with second y axis
         self.curve2 = Qwt.QwtPlotCurve()
 
@@ -670,18 +710,29 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         self._cadata.addPv(self._pvs.keys())
 
     def _ca_update(self, val, idx = None):
+        if self.__hold: return
+        if not self.live: return
         #print "Updating %s: " % val.name, self._pvs[val.name], val
         for i,j in self._pvs.get(val.name, []):
             self._count[i][j] += 1
+            self._y[i][j] = val
             c = self.curves[i]
             x, y, e1 = c.data()
-            if self._ref[i] is not None:
-                y[j] = val - self._ref[i][j]
+            if self._ref[i] is not None and self.drift:
+                y = [self._y[i][k] - self._ref[i][k]
+                     for k in range(len(self._y[i]))]
             else:
-                y[j] = val
+                y = self._y[i]
             c.setData(y, x, e1)
 
         self.replot()
+
+    def saveAsReference(self):
+        self.__hold = True
+        for i,c in enumerate(self.curves):
+            xi, yi, ei = c.data()
+            self._ref[i] = yi
+        self.__hold = False
 
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
@@ -838,6 +889,9 @@ class ApCaArrayPlot(Qwt.QwtPlot):
             bd = bd.united(self.curve2.boundingRect())
         return bd
 
+    def closeEvent(self, e):
+        self._cadata.close()
+        e.accept()
 
 
 class ApMdiSubPlot(QMdiSubWindow):
@@ -981,9 +1035,9 @@ class ApSvdPlot(QDialog):
         self.c2.setData(range(1, n+1), self.s[:n]/np.max(self.s))
         self.p.replot()
 
-
 if __name__ == "__main__":
     #p = ApCaWaveformPlot(['V:2-SR-BI{BETA}X-I', 'V:2-SR-BI{BETA}Y-I'])
+    #p = ApCaWaveformPlot(['V:2-SR-BI{ORBIT}X-I', 'V:2-SR-BI{ORBIT}Y-I'])
     #p = ApCaArrayPlot([('V:2-SR:C29-BI:G2{PL1:3551}SA:X',
     #                    'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
     #                    'V:2-SR:C29-BI:G4{PM1:3596}SA:X',
@@ -991,11 +1045,10 @@ if __name__ == "__main__":
     #                    'V:2-SR:C29-BI:G6{PH2:3630}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH1:3645}SA:X',)])
     import time
-    p = ApCaTimeSeriesPlot()
-    for i in range(30):
-        p.updatePlot(caget('V:2-SR:C29-BI:G2{PL1:3551}SA:X', 
-                           format=FORMAT_TIME))
-        time.sleep(0.5)
+    pvs = ['V:2-SR:C29-BI:G2{PL1:3551}SA:X',
+           'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
+           'V:2-SR:C29-BI:G4{PM1:3596}SA:X',]
+    p = ApCaTimeSeriesPlot(pvs[:1])
     p.show()
     cothread.WaitForQuit()
 
