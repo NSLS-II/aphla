@@ -1,0 +1,30 @@
+LN-BI{BPM:1}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=10, elemName=P1, devName=P1, elemLength=0., elemPosition=1.226, elemType=BPM, system=LN, elemField=goldenX, aphla.sys.LN 
+LN-BI{BPM:2}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=20, elemName=P2, devName=P2, elemLength=0., elemPosition=1.990, elemType=BPM, system=LN, elemField=goldenX, aphla.sys.LN 
+LN-BI{BPM:3}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=30, elemName=P3, devName=P3, elemLength=0., elemPosition=9.229, elemType=BPM, system=LN, elemField=goldenX, aphla.sys.LN 
+LN-BI{BPM:4}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=40, elemName=P4, devName=P4, elemLength=0., elemPosition=15.814, elemType=BPM, system=LN, elemField=goldenX, aphla.sys.LN 
+LN-BI{BPM:5}Pos:UsrXoffset-SP, elemHandle=put, elemIndex=50, elemName=P5, devName=P5, elemLength=0., elemPosition=22.399, elemType=BPM, system=LN, elemField=goldenX, aphla.sys.LN 
+                                 
+LN-BI{BPM:1}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=10, elemName=P1, devName=P1, elemLength=0., elemPosition=1.226, elemType=BPM, system=LN, elemField=goldenY, aphla.sys.LN 
+LN-BI{BPM:2}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=20, elemName=P2, devName=P2, elemLength=0., elemPosition=1.990, elemType=BPM, system=LN, elemField=goldenY, aphla.sys.LN 
+LN-BI{BPM:3}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=30, elemName=P3, devName=P3, elemLength=0., elemPosition=9.229, elemType=BPM, system=LN, elemField=goldenY, aphla.sys.LN 
+LN-BI{BPM:4}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=40, elemName=P4, devName=P4, elemLength=0., elemPosition=15.814, elemType=BPM, system=LN, elemField=goldenY, aphla.sys.LN 
+LN-BI{BPM:5}Pos:UsrYoffset-SP, elemHandle=put, elemIndex=50, elemName=P5, devName=P5, elemLength=0., elemPosition=22.399, elemType=BPM, system=LN, elemField=goldenY, aphla.sys.LN 
+
+LN-BI{BPM:1}I-I, elemHandle=get, elemIndex=10, elemName=P1, devName=P1, elemLength=0., elemPosition=1.226, elemType=BPM, system=LN, elemField=I, aphla.sys.LN 
+LN-BI{BPM:2}I-I, elemHandle=get, elemIndex=20, elemName=P2, devName=P2, elemLength=0., elemPosition=1.990, elemType=BPM, system=LN, elemField=I, aphla.sys.LN 
+LN-BI{BPM:3}I-I, elemHandle=get, elemIndex=30, elemName=P3, devName=P3, elemLength=0., elemPosition=9.229, elemType=BPM, system=LN, elemField=I, aphla.sys.LN 
+LN-BI{BPM:4}I-I, elemHandle=get, elemIndex=40, elemName=P4, devName=P4, elemLength=0., elemPosition=15.814,elemType=BPM, system=LN, elemField=I, aphla.sys.LN 
+LN-BI{BPM:5}I-I, elemHandle=get, elemIndex=50, elemName=P5, devName=P5, elemLength=0., elemPosition=22.399,elemType=BPM, system=LN, elemField=I, aphla.sys.LN 
+
+LN-BI{BPM:1}Pos:X-I, elemHandle=get, elemIndex=10, elemName=P1, devName=P1, elemLength=0., elemPosition=1.226, elemType=BPM, system=LN, elemField=x, aphla.sys.LN 
+LN-BI{BPM:2}Pos:X-I, elemHandle=get, elemIndex=20, elemName=P2, devName=P2, elemLength=0., elemPosition=1.990, elemType=BPM, system=LN, elemField=x, aphla.sys.LN 
+LN-BI{BPM:3}Pos:X-I, elemHandle=get, elemIndex=30, elemName=P3, devName=P3, elemLength=0., elemPosition=9.229, elemType=BPM, system=LN, elemField=x, aphla.sys.LN 
+LN-BI{BPM:4}Pos:X-I, elemHandle=get, elemIndex=40, elemName=P4, devName=P4, elemLength=0., elemPosition=15.814,elemType=BPM, system=LN, elemField=x, aphla.sys.LN 
+LN-BI{BPM:5}Pos:X-I, elemHandle=get, elemIndex=50, elemName=P5, devName=P5, elemLength=0., elemPosition=22.399,elemType=BPM, system=LN, elemField=x, aphla.sys.LN 
+
+LN-BI{BPM:1}Pos:Y-I, elemHandle=get, elemIndex=10, elemName=P1, devName=P1, elemLength=0., elemPosition=1.226, elemType=BPM, system=LN, elemField=y, aphla.sys.LN 
+LN-BI{BPM:2}Pos:Y-I, elemHandle=get, elemIndex=20, elemName=P2, devName=P2, elemLength=0., elemPosition=1.990, elemType=BPM, system=LN, elemField=y, aphla.sys.LN 
+LN-BI{BPM:3}Pos:Y-I, elemHandle=get, elemIndex=30, elemName=P3, devName=P3, elemLength=0., elemPosition=9.229, elemType=BPM, system=LN, elemField=y, aphla.sys.LN 
+LN-BI{BPM:4}Pos:Y-I, elemHandle=get, elemIndex=40, elemName=P4, devName=P4, elemLength=0., elemPosition=15.814,elemType=BPM, system=LN, elemField=y, aphla.sys.LN 
+LN-BI{BPM:5}Pos:Y-I, elemHandle=get, elemIndex=50, elemName=P5, devName=P5, elemLength=0., elemPosition=22.399,elemType=BPM, system=LN, elemField=y, aphla.sys.LN 
+

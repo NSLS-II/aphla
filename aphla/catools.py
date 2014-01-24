@@ -49,7 +49,7 @@ def _ca_put_sim(pvs, vals):
     """
     return ct.ca_nothing
 
-def caget(pvs, timeout=1, datatype=None, format=ct.FORMAT_RAW,
+def caget(pvs, timeout=2, datatype=None, format=ct.FORMAT_TIME,
            count=0, throw=False):
     """channel access read
     
@@ -210,6 +210,46 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1), maxtrial=20):
             return True
         elif ntrial > maxtrial:
             return False
+
+def measCaRmCol(kker, resp, **kwargs):
+    """measure the response matrix column between PVs
+    """
+
+    wait = kwargs.get("wait", 1.5)
+    timeout = kwargs.get("timeout", 5)
+    verbose = kwargs.get("verbose", 0)
+    npt     = kwargs.get("npoints", 5)
+
+    n0 = len(resp)
+    dxlst, x0 = [], caget(kker, timeout=timeout)
+    if "dxlst" in kwargs:
+        dxlst = kwargs.get("dxlst")
+    elif "xlst" in kwargs:
+        dxlst = [ x - x0 for x in kwargs["xlst"][i]]
+    elif "dxmax" in kwargs:
+        nx = kwargs.get("nx", 5)
+        dxmax = np.abs(kwargs["dxmax"])
+        dxlst = list(np.linspace(-dxmax, dxmax, nx))
+    else:
+        raise RuntimeError("need input for at least of the parameters: dxlst, xlst, dxmax")
+
+    
+    n1 = len(dxlst)
+    m = np.zeros(n0, 'd')
+    raw_data = np.zeros((n0, n1, npt), 'd')
+    for i,dx in enumerate(dxlst):
+        caput(kker, x0 + dx)
+        time.sleep(wait)
+        for j in range(npt):
+            raw_data[:,i,j] = caget(resp, timeout=timeout)
+            time.sleep(wait)
+    caput(kker, x0)
+
+    # return raw_data
+    for i in range(n0):
+        p = np.polyfit(dxlst, np.average(raw_data[i,:,:], axis=1), 2)
+        m[i] = p[1]
+    return m, dxlst, raw_data
 
 
 def caRmCorrect(resp, kker, m, **kwarg):

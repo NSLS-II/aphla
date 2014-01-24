@@ -30,7 +30,6 @@ import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
-
 import sys, os
 from subprocess import Popen, PIPE
 from time import time, strftime, localtime
@@ -69,14 +68,14 @@ if ap.machines._lat is None:
 #----------------------------------------------------------------------
 def datestr(time_in_seconds_from_Epoch):
     """"""
-    
+
     frac_sec = time_in_seconds_from_Epoch - floor(time_in_seconds_from_Epoch)
     time_format = '%Y-%m-%d (%a) %H:%M:%S.' + str(frac_sec)[2:]
-    
+
     return strftime(time_format, localtime(time_in_seconds_from_Epoch))
-    
-        
-        
+
+
+
 #########################################################################
 #class TunerConfigModelOld(AbstractTunerConfigModel):
     #""""""
@@ -84,12 +83,12 @@ def datestr(time_in_seconds_from_Epoch):
     ##----------------------------------------------------------------------
     #def __init__(self, config_dict=None):
         #"""Constructor"""
-        
+
         #AbstractTunerConfigModel.__init__(self,config_dict=config_dict,
                                           #col_name_list=const.ALL_COL_NAMES)
         ##AbstractTunerConfigModel.__init__(self,config_dict=config_dict,
                                           ##col_name_list=const.DEFAULT_VISIBLE_COL_LIST_FOR_CONFIG_VIEW)
-                
+
         #self.username = getusername()
         #self.time_created = time() # current time in seconds from Epoch
 
@@ -97,117 +96,117 @@ def datestr(time_in_seconds_from_Epoch):
             #self.ref_channel_group = {'name:':'', 'weight':0., 'channel_name_list':[]}
         #else:
             #self.ref_channel_group = self.channel_group_list[0]
-        
+
         #self.ref_step_size = 0.
-        
+
         #self.update_normalized_weight_list()
-        
+
         #self.update_step_size_list()
 
         #self._get_channel_name_flat_list()
-        
+
         #self._get_pv_flat_list()
-        
+
         #self._update_pv_values()
-        
+
         #self._init_RB = self._current_RB[:]
         #self._init_SP = self._current_SP[:]
         #self._init_RB_time = self._current_RB_time[:]
         #self._init_SP_time = self._current_SP_time[:]
-        
+
         #self._target_SP = self._init_SP[:]
-        
+
         #self._update_derived_pv_values()
-        
+
         #self._update_model()
-        
+
     ##----------------------------------------------------------------------
     #def _update_model(self):
         #""""""
-        
+
         #self.updateGroupBasedModel()
-        
-        
-        
+
+
+
     ##----------------------------------------------------------------------
     #def _update_pv_values(self):
         #""""""
-        
+
         #pv_results = caget(self._pv_flat_list,format=FORMAT_TIME)
         #pvrb_results = pv_results[:len(self._pvrb_flat_list)]
         #pvsp_results = pv_results[len(self._pvrb_flat_list):]
-        
+
         ##compact_current_RB = np.array([(p.real,p.timestamp) for p in pvrb_results])
         ##compact_current_SP = np.array([(p.real,p.timestamp) for p in pvsp_results])
-        
+
         ##self._current_RB = np.array([float('NaN') for c in self._all_channel_name_flat_list])
         ##for (ind,val_and_timestamp) in zip(self._pvrb_nonempty_ind_list, compact_current_RB):
             ##self._current_RB[ind] = val_and_timestamp
-            
+
         #pvrb_dict_keys = self._pvrb_dict.keys()
         #self._current_RB = np.array([pvrb_results[self._pvrb_dict[c]].real
-                                     #if c in pvrb_dict_keys 
-                                     #else float('NaN') 
+                                     #if c in pvrb_dict_keys
+                                     #else float('NaN')
                                      #for c in self._all_channel_name_flat_list])
         #self._current_RB_time = np.array([pvrb_results[self._pvrb_dict[c]].timestamp
-                                          #if c in pvrb_dict_keys 
-                                          #else float('NaN') 
+                                          #if c in pvrb_dict_keys
+                                          #else float('NaN')
                                           #for c in self._all_channel_name_flat_list])
 
         #pvsp_dict_keys = self._pvsp_dict.keys()
         #self._current_SP = np.array([pvsp_results[self._pvsp_dict[c]].real
-                                     #if c in pvsp_dict_keys 
-                                     #else float('NaN') 
+                                     #if c in pvsp_dict_keys
+                                     #else float('NaN')
                                      #for c in self._all_channel_name_flat_list])
         #self._current_SP_time = np.array([pvsp_results[self._pvsp_dict[c]].timestamp
-                                          #if c in pvsp_dict_keys 
-                                          #else float('NaN') 
+                                          #if c in pvsp_dict_keys
+                                          #else float('NaN')
                                           #for c in self._all_channel_name_flat_list])
-        
+
     ##----------------------------------------------------------------------
     #def _update_derived_pv_values(self):
         #""""""
-        
+
         #self._D_target_SP_current_SP = self._target_SP - self._current_SP
         #self._D_current_RB_init_RB = self._current_RB - self._init_RB
         #self._D_current_SP_init_SP = self._current_SP - self._init_SP
         #self._D_current_RB_current_SP = self._current_RB - self._current_SP
-        
-        
+
+
     ##----------------------------------------------------------------------
     #def update_normalized_weight_list(self):
         #""""""
-        
+
         #weight_list = [cg['weight'] for cg in self.channel_group_list]
-        
+
         #ref_weight = self.ref_channel_group['weight']
-        
+
         #if (ref_weight == 0.) or (ref_weight == float('NaN')):
             #self.normalized_weight_list = [float('NaN') for w in weight_list]
         #else:
             #self.normalized_weight_list = [w/ref_weight for w in weight_list]
-            
-            
-        
+
+
+
     ##----------------------------------------------------------------------
     #def update_step_size_list(self):
         #""""""
-        
+
         #self.step_size_list = [self.ref_step_size*nw for nw in self.normalized_weight_list]
-        
-        
+
+
     ##----------------------------------------------------------------------
     #def _get_channel_name_flat_list(self):
         #""""""
-        
+
         #self._all_channel_name_flat_list = []
         #for g in self.channel_group_list:
             #self._all_channel_name_flat_list.extend(g['channel_name_list'])
-        
+
     ##----------------------------------------------------------------------
     #def _get_pv_flat_list(self):
         #""""""
-        
+
         #self._pvrb_flat_list = []
         ##self._pvrb_nonempty_ind_list = []
         #self._pvrb_dict = {}
@@ -235,59 +234,59 @@ def datestr(time_in_seconds_from_Epoch):
                 #pass
             #else:
                 #raise ValueError("Multiple pv's found for setpoint: "+str(pv))
-                
+
         #self._pv_flat_list = self._pvrb_flat_list + self._pvsp_flat_list
-        
-        
+
+
 
 ########################################################################
 class TunerSnapshotModel(QObject):
     """"""
-        
+
     #----------------------------------------------------------------------
     def __init__(self, config_base_model, settings=None):
         """Constructor"""
-                
+
         QObject.__init__(self)
-        
+
         self.settings = settings
-        
+
         self.base_model = TunerSnapshotBaseModel(config_base_model)
         self.table_model = TunerSnapshotTableModel(base_model=self.base_model)
         self.tree_model = TunerSnapshotTreeModel(
-                    self.base_model.all_col_name_list, base_model=self.base_model)        
+                    self.base_model.all_col_name_list, base_model=self.base_model)
 
         # Metadata
         self.time_snapshot_taken = time() # current time in seconds from Epoch
-        
-        
-        
+
+
+
         self.all_channel_name_flat_list = []
         self.pvrb_values = [] #[(val1,timestamp1),(val2,timestamp2)] # in the order of flat channel list
         self.pvsp_values = [] #[(val1,timestamp1),(val2,timestamp2)]
-        
-    
+
+
 ########################################################################
 class TitleRenameLineEdit(QLineEdit):
     """"""
-    
+
     #----------------------------------------------------------------------
     def __init__(self, parent):
         """Constructor"""
-            
+
         QLineEdit.__init__(self, parent)
-        
+
         self.connect(self, SIGNAL('editingFinished()'),
                      self.finalizeText)
-        
+
         self.setWindowFlags(Qt.CustomizeWindowHint)
-        
+
         self.hide()
-                
+
     #----------------------------------------------------------------------
     def setText(self, text):
         """"""
-        
+
         QLineEdit.setText(self, text)
         title_label = self.parent().title
         label_rect = title_label.geometry()
@@ -297,79 +296,79 @@ class TitleRenameLineEdit(QLineEdit):
         self.setFocus()
         self.selectAll()
         self.show()
-        
+
     #----------------------------------------------------------------------
     def keyPressEvent(self, event):
         """"""
-        
+
         if (event.key() == Qt.Key_Escape):
             QLineEdit.setText(self, '')
             self.hide()
         else:
             QLineEdit.keyPressEvent(self, event)
-            
+
     #----------------------------------------------------------------------
     def focusOutEvent(self, event):
         """"""
-        
+
         QLineEdit.focusOutEvent(self, event)
-        
+
         self.emit(SIGNAL('editingFinished()'))
-        
+
     #----------------------------------------------------------------------
     def finalizeText(self):
         """"""
-        
+
         if self.text() != '':
             self.parent().title.setText(self.text())
-        
+
         self.hide()
-    
+
 ########################################################################
 class TitleLabel(QLabel):
     """"""
-        
+
     #----------------------------------------------------------------------
     def __init__(self, *args):
         """Constructor"""
-                
+
         QLabel.__init__(self, *args)
-        
+
         self._editor = TitleRenameLineEdit(self.parent())
-        
+
     #----------------------------------------------------------------------
     def mouseDoubleClickEvent(self, event):
         """"""
-        
+
         self.edit()
-        
+
         event.accept()
-        
+
     #----------------------------------------------------------------------
     def edit(self):
         """"""
-        
+
         self._editor.setText(self.text())
-        
-            
-        
+
+
+
 ########################################################################
 class CustomDockWidgetTitleBar(QWidget):
     """"""
-        
+
     #----------------------------------------------------------------------
     def __init__(self, parentDockWidget):
         """Constructor"""
-        
+
         QWidget.__init__(self, parentDockWidget)
-        
+
         self.dockWidget = parentDockWidget
-        
+
         self.title = TitleLabel(self)
         self.title.setText('testing')
-        
+
         min_button_height = 10
-        
+
         self.minimizeButton = QToolButton(self)
         #self.minimizeButton.setIcon(QIcon(':/up_arrow.png'))
         self.minimizeButton.setIcon( QApplication.style().standardIcon(
@@ -406,7 +405,7 @@ class CustomDockWidgetTitleBar(QWidget):
         self.closeButton.setIcon( QApplication.style().standardIcon(
             QStyle.SP_TitleBarCloseButton) )
         self.closeButton.setMinimumHeight(min_button_height)
-        
+
         self.connect(self.minimizeButton,SIGNAL('clicked()'),
                      self.minimizeDockWidget)
         self.connect(self.maximizeButton,SIGNAL('clicked()'),
@@ -419,9 +418,9 @@ class CustomDockWidgetTitleBar(QWidget):
                      self.dockDockWidget)
         self.connect(self.closeButton,SIGNAL('clicked()'),
                      self.closeDockWidget)
-        
+
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        
+
 
         hbox = QHBoxLayout(self)
         #
@@ -435,28 +434,28 @@ class CustomDockWidgetTitleBar(QWidget):
         #
         hbox.insertStretch(1,500)
         hbox.setSpacing(0)
-        
+
         self.window_state = Qt.WindowNoState
         self.float_state = False
         self.updateButtons()
-        
-        self.connect(self.dockWidget, 
+
+        self.connect(self.dockWidget,
                      SIGNAL('topLevelChanged(bool)'),
                      self.updateButtons)
-        
+
     #----------------------------------------------------------------------
     def renameTitle(self):
         """"""
-        
+
         self.title.edit()
-        
+
     #----------------------------------------------------------------------
     def updateButtons(self, floating=None):
         """"""
-        
+
         if floating is None:
             floating = self.dockWidget.isFloating()
-            
+
         if floating:
             self.dockButton.show()
             self.undockButton.hide()
@@ -473,11 +472,11 @@ class CustomDockWidgetTitleBar(QWidget):
             self.minimizeButton.hide()
             self.restoreButton.hide()
             self.maximizeButton.hide()
-        
+
     #----------------------------------------------------------------------
     def minimizeDockWidget(self):
         """"""
-        
+
         if self.dockWidget.windowState() not in (Qt.WindowNoState,
                                                  Qt.WindowMaximized,
                                                  Qt.WindowFullScreen,
@@ -490,68 +489,68 @@ class CustomDockWidgetTitleBar(QWidget):
         So, the window state must be changed to something other than
         WindowMinimized for the minimization process to happen. Here,
         WindowActive state is being used for that purpose.
-        '''        
-        
+        '''
+
         self.dockWidget.showMinimized()
         ## or
         #self.dockWidget.setWindowState(Qt.WindowMinimized)
-        
+
         self.window_state = Qt.WindowMinimized
         self.updateButtons()
 
     #----------------------------------------------------------------------
     def maximizeDockWidget(self):
         """"""
-        
+
         self.dockWidget.showMaximized()
 
         self.window_state = Qt.WindowMaximized
         self.updateButtons()
-        
+
     #----------------------------------------------------------------------
     def restoreDockWidget(self):
         """"""
-        
+
         self.dockWidget.showNormal()
-        
+
         self.window_state = Qt.WindowNoState
         self.updateButtons()
-        
+
     #----------------------------------------------------------------------
     def undockDockWidget(self):
         """"""
-        
+
         self.dockWidget.setFloating(True)
-        
+
         self.updateButtons()
-        
+
     #----------------------------------------------------------------------
     def dockDockWidget(self):
         """"""
-        
+
         self.dockWidget.setFloating(False)
-        
+
         self.updateButtons()
-        
+
     #----------------------------------------------------------------------
     def closeDockWidget(self):
         """"""
         self.dockWidget.close()
-        
-    
+
+
 ########################################################################
 class TunerDockWidget(QDockWidget):
     """"""
-    
+
     #----------------------------------------------------------------------
     def __init__(self, model, parent):
         """Constructor"""
-        
+
         self._initUI(parent)
-        
-        self.model = model        
+
+        self.model = model
         isinstance(model,TunerSnapshotModel)
-        
+
         #self.proxyModel = QSortFilterProxyModel()
         #self.proxyModel.setSourceModel(self.model)
         #self.proxyModel.setDynamicSortFilter(True)
@@ -559,7 +558,7 @@ class TunerDockWidget(QDockWidget):
         proxyModel = QSortFilterProxyModel()
         proxyModel.setSourceModel(self.model.tree_model)
         proxyModel.setDynamicSortFilter(False)
-        
+
         #self.treeView.setModel(self.proxyModel)
         self.treeView.setModel(proxyModel)
         self.treeView.setItemsExpandable(True)
@@ -567,14 +566,14 @@ class TunerDockWidget(QDockWidget):
         self.treeView.setAllColumnsShowFocus(True)
         self.treeView.setHeaderHidden(False)
         self.treeView.setSortingEnabled(True)
-        
+
         self._expandAll_and_resizeColumn()
-        
+
         self.treeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        
+
         self.connect(self.pushButton_step_up,SIGNAL('toggled(bool)'),
                      self.onStepUpPushed)
-        
+
         self.actionRename = QAction(QIcon(), 'Rename', self)
         self.addRobustShortcut(self.actionRename, Qt.Key_F2)
         self.connect(self.actionRename, SIGNAL('triggered()'),
@@ -589,14 +588,14 @@ class TunerDockWidget(QDockWidget):
                                QKeySequence(Qt.ControlModifier + Qt.Key_2))
         self.actionViewChannelBased.setCheckable(True)
         self.actionGroupViewMode = QActionGroup(self) # Action Group for View Mode (Group-based vs. Channel-based)
-        self.actionGroupViewMode.setExclusive(True)        
+        self.actionGroupViewMode.setExclusive(True)
         self.actionViewGroupBased.setActionGroup(self.actionGroupViewMode)
         self.actionViewChannelBased.setActionGroup(self.actionGroupViewMode)
         default_action = self.actionViewChannelBased
         default_action.setChecked(True)
         self.onViewModeActionGroupTriggered(default_action)
         self.connect(self.actionGroupViewMode, SIGNAL('triggered(QAction *)'),
-                     self.onViewModeActionGroupTriggered)      
+                     self.onViewModeActionGroupTriggered)
         self.menuViewMode = QMenu('View Mode')
         self.menuViewMode.addAction(self.actionViewGroupBased)
         self.menuViewMode.addAction(self.actionViewChannelBased)
@@ -655,30 +654,30 @@ class TunerDockWidget(QDockWidget):
         self.contextMenu.addAction(self.actionSaveAs)
         #
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'), 
+        self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
-        
+
         self.customTitleBar = CustomDockWidgetTitleBar(self)
         self.setTitleBarWidget(self.customTitleBar)
-        
-        
+
+
     #----------------------------------------------------------------------
     def onViewModeActionGroupTriggered(self, action):
         """"""
-        
+
         self.showMinimized()
-        
+
         if action == self.actionViewChannelBased:
             self.stackedWidget.setCurrentWidget(self.page_table)
         elif action == self.actionViewGroupBased:
             self.stackedWidget.setCurrentWidget(self.page_tree)
         else:
             raise ValueError('Unexpected action:'+str(action))
-        
+
     #----------------------------------------------------------------------
     def addRobustShortcut(self, action, shortcut_key):
         """"""
-        
+
         action.setShortcut(shortcut_key)
 
         if action not in self.actions():
@@ -686,27 +685,27 @@ class TunerDockWidget(QDockWidget):
         ''' This addAction is critical for the shortcut to always work for
         context menus. For the shortcut to work, the widget to which
         the desired action is added must be listening for key events.
-        
+
         '''
-        
+
     #----------------------------------------------------------------------
     def openContextMenu(self, qpoint):
         """"""
-        
+
         self.contextMenu.exec_(QCursor.pos())
-            
+
     #----------------------------------------------------------------------
     def closeEvent(self, event):
         """"""
-        
+
         event.accept()
-        
+
     #----------------------------------------------------------------------
     def _initUI(self, parent):
         """"""
-        
+
         QDockWidget.__init__(self, parent)
-        
+
         dockWidgetContents = QWidget()
         top_gridLayout = QGridLayout(dockWidgetContents)
         #
@@ -726,7 +725,7 @@ class TunerDockWidget(QDockWidget):
         self.tableView = QTableView(self.page_table)
         gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
         self.stackedWidget.addWidget(self.page_table)
-        
+
         ##
         self.tabWidget_mode = QTabWidget(self.splitter)
         #
@@ -800,7 +799,7 @@ class TunerDockWidget(QDockWidget):
         spacerItem = QSpacerItem(137,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
         horizontalLayout_10.addItem(spacerItem)
         self.tabWidget_mode.addTab(self.tab_ramp_mode,'Ramp Mode')
-        
+
         ##
         self.tabWidget_metadata = QTabWidget(self.splitter)
         #
@@ -861,37 +860,37 @@ class TunerDockWidget(QDockWidget):
         horizontalLayout_32.addWidget(self.textEdit_snapshot_description)
         verticalLayout_31.addLayout(horizontalLayout_32)
         self.tabWidget_metadata.addTab(self.tab_snapshot_metadata,'Snapshot Metadata')
-        
+
         top_gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
         self.setWidget(dockWidgetContents)
-        
-        
+
+
     #----------------------------------------------------------------------
     def onStepUpPushed(self, garbage):
         """"""
-        
+
         self.emit(SIGNAL('stepUpPushed'))
-        
-        
+
+
     #----------------------------------------------------------------------
     def _expandAll_and_resizeColumn(self):
         """"""
-        
+
         self.treeView.expandAll()
         self.treeView.resizeColumnToContents(0)
-        
+
     #----------------------------------------------------------------------
     def renameTitle(self):
         """"""
-        
+
         self.titleBarWidget().renameTitle()
-    
+
     #----------------------------------------------------------------------
     def launchColumnSelector(self):
         """"""
-        
+
         pass
-    
+
     #----------------------------------------------------------------------
     def showStepModeTab(self):
         """"""
@@ -900,28 +899,28 @@ class TunerDockWidget(QDockWidget):
     def showRampModeTab(self):
         """"""
         pass
-    
+
     #----------------------------------------------------------------------
     def showConfigMetaTab(self):
         """"""
         pass
-    
+
     #----------------------------------------------------------------------
     def showSnapshotMetaTab(self):
         """"""
         pass
-    
+
     #----------------------------------------------------------------------
     def takeSnapshot(self):
         """"""
         pass
-    
+
     #----------------------------------------------------------------------
     def saveAs(self):
         """"""
         pass
-    
-        
+
+
 
 ########################################################################
 class TunerModel(QObject):
@@ -930,38 +929,38 @@ class TunerModel(QObject):
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
-        
+
         QObject.__init__(self)
-        
+
         self.model_list = [] # A list of TunerSnapshotModel objects
-        
+
     #----------------------------------------------------------------------
     def createNewConfig(self, config_dict):
         """"""
-        
+
         newConfigModel = TunerConfigModel(config_name=config_dict['config_name'],
             description=config_dict['description'],channel_group_list=[],
             col_name_list=[])
-        
+
         self.model_list.append(newConfigModel)
-        
+
         self.emit(SIGNAL('newConfigModelCreated'),newConfigModel)
-        
+
     #----------------------------------------------------------------------
     def addNewSnapshotModel(self, config_base_model):
         """"""
-        
+
         if config_base_model is None:
             return
-        
+
         new_snapshot_model = TunerSnapshotModel(config_base_model)
-        
+
         self.model_list.append(new_snapshot_model)
-        
+
         index = len(self.model_list)-1
         self.emit(SIGNAL('newSnapshotModelAdded'), index)
-        
-    
+
+
 ########################################################################
 class TunerView(QMainWindow, Ui_MainWindow):
     """"""
@@ -969,18 +968,18 @@ class TunerView(QMainWindow, Ui_MainWindow):
     #----------------------------------------------------------------------
     def __init__(self, model):
         """Constructor"""
-        
+
         QMainWindow.__init__(self)
-        
+
         self.model = model
-        
+
         self.setupUi(self)
         self.dockWidget_example.deleteLater()
-        
+
         self.centralwidget = QWidget(self)
         self.setCentralWidget(self.centralwidget)
         self.centralWidget().hide()
-        
+
         self.setDockNestingEnabled(True)
 
         tab_position = QTabWidget.South
@@ -988,69 +987,69 @@ class TunerView(QMainWindow, Ui_MainWindow):
         self.setTabPosition(QtCore.Qt.BottomDockWidgetArea, tab_position)
         self.setTabPosition(QtCore.Qt.RightDockWidgetArea, tab_position)
         self.setTabPosition(QtCore.Qt.LeftDockWidgetArea, tab_position)
-        
+
         self.configDockWidgetList = []
-        
+
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'), 
+        self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
-        
+
     #----------------------------------------------------------------------
     def openContextMenu(self):
         """
         Default context menu would show nothing if no dockwidget has been
         created yet. However, once a dockwidget is created, it will show
         the list of dockwidgets to allow users to show/hide dockwidgets.
-        
+
         Instead of this default context menu, a custom context menu will be shown.
         """
-        
+
         pass
-        
+
     #----------------------------------------------------------------------
     def createTunerDockWidget(self, index):
         """"""
-        
+
         snapshot_model = self.model.model_list[index]
         base_model = snapshot_model.base_model
-        
+
         isinstance(snapshot_model,TunerSnapshotModel)
         isinstance(base_model,TunerConfigSetupBaseModel)
-        
+
         dockWidget = TunerDockWidget(snapshot_model, self)
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), dockWidget)
-        
+
         dockWidget.lineEdit_config_username.setReadOnly(True)
         dockWidget.lineEdit_config_timestamp.setReadOnly(True)
         dockWidget.textEdit_config_description.setReadOnly(True)
         dockWidget.lineEdit_snapshot_username.setReadOnly(True)
         dockWidget.lineEdit_snapshot_timestamp.setReadOnly(True)
         dockWidget.textEdit_snapshot_description.setReadOnly(True)
-        
+
         self.configDockWidgetList.append(dockWidget)
         dockWidget.setObjectName('configDock'+str(len(self.configDockWidgetList)))
-        
+
         if base_model.isSnapshot():
             dock_title = base_model.getName('snapshot')
         else:
             dock_title = base_model.getName('config')
         if dock_title == '': dock_title = 'untitled'
         dockWidget.setWindowTitle(dock_title)
-        
+
         dockWidget.setFloating(False) # Dock the new dockwidget by default
         if len(self.configDockWidgetList) >= 2:
             #self.splitDockWidget(self.configDockWidgetList[-2], dockWidget,
                                  #QtCore.Qt.Horizontal)
             self.tabifyDockWidget(self.configDockWidgetList[-2], dockWidget)
         #dockWidget.raise_()
-        
+
         dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_table)
-        
+
         self.updateMetadataTab(dockWidget, base_model, page='config')
         if base_model.isSnapshot():
             self.updateMetadataTab(dockWidget, base_model, page='snapshot')
-            
-        
+
+
     #----------------------------------------------------------------------
     def updateMetadataTab(self, dockWidget, base_model, page='config'):
         """"""
@@ -1065,18 +1064,18 @@ class TunerView(QMainWindow, Ui_MainWindow):
         dockWidget.textEdit_config_description.setText(
             base_model.getDescription(page,include_appended=True)
         )
-        
+
     #----------------------------------------------------------------------
     def createTunerConfigDockWidget(self, configModel):
         """"""
-        
+
         dockWidget = TunerDockWidget(configModel, self)
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), dockWidget)
-        
+
         self.configDockWidgetList.append(dockWidget)
         dockWidget.setObjectName('configDock'+str(len(self.configDockWidgetList)))
         dockWidget.setWindowTitle(dockWidget.objectName())
-        
+
         dockWidget.setFloating(False) # Dock the new dockwidget by default
         if len(self.configDockWidgetList) >= 2:
             #self.splitDockWidget(self.configDockWidgetList[-2], dockWidget,
@@ -1084,10 +1083,10 @@ class TunerView(QMainWindow, Ui_MainWindow):
             self.tabifyDockWidget(self.configDockWidgetList[-2], dockWidget)
         #dockWidget.raise_()
 
-        
-        
-        
-    
+
+
+
+
 ########################################################################
 class TunerApp(QObject):
     """"""
@@ -1095,12 +1094,12 @@ class TunerApp(QObject):
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
-        
+
         QObject.__init__(self)
-        
+
         self._initModel()
         self._initView(self.model)
-        
+
         self.connect(self.view.actionNewConfig,SIGNAL('triggered(bool)'),
                      self.openNewConfigSetupDialog)
         #self.connect(self, SIGNAL('tunerConfigDictLoaded'),
@@ -1109,38 +1108,38 @@ class TunerApp(QObject):
                      #self.view.createTunerConfigDockWidget)
         self.connect(self.model, SIGNAL('newSnapshotModelAdded'),
                      self.view.createTunerDockWidget)
-    
+
     #----------------------------------------------------------------------
     def _initModel(self):
         """"""
-        
+
         self.model = TunerModel()
-        
+
     #----------------------------------------------------------------------
     def _initView(self, model):
         """"""
-        
+
         self.view = TunerView(model)
-    
-    
+
+
     #----------------------------------------------------------------------
     def openNewConfigSetupDialog(self, garbage):
         """"""
-        
+
         result = TunerConfigSetupDialog.make(isModal=True,parentWindow=self.view)
-        
+
         config_base_model = result.model.output
 
         self.model.addNewSnapshotModel(config_base_model)
-        
-    
+
+
 #----------------------------------------------------------------------
 def make():
     """"""
-    
+
     app = TunerApp()
     app.view.show()
-    
+
     return app
 
 #----------------------------------------------------------------------
@@ -1148,35 +1147,35 @@ def isCothreadUsed():
     """"""
 
     g = copy(globals())
-    
+
     using_cothread = False
     for (k,v) in g.iteritems():
         if isinstance(v, types.ModuleType):
             if v.__name__ == 'cothread':
                 using_cothread = True
                 break
-            
+
     return using_cothread
-    
+
 #----------------------------------------------------------------------
 def main(args):
     """"""
 
     using_cothread = isCothreadUsed()
-    
+
     if using_cothread:
         # If Qt is to be used (for any GUI) then the cothread library needs to be informed,
         # before any work is done with Qt. Without this line below, the GUI window will not
         # show up and freeze the program.
         # Note that for a dialog box to be modal, i.e., blocking the application
         # execution until user input is given, you need to set the input
-        # argument "user_timer" to be True.        
+        # argument "user_timer" to be True.
         #cothread.iqt(use_timer = True)
         cothread.iqt()
     else:
         qapp = QApplication(args)
 
-    
+
     app = make()
 
     if using_cothread:
@@ -1184,10 +1183,10 @@ def main(args):
     else:
         exit_status = qapp.exec_()
         sys.exit(exit_status)
-    
-    
 
-#----------------------------------------------------------------------    
+
+
+#----------------------------------------------------------------------
 if __name__ == "__main__" :
     main(sys.argv)
-    
+

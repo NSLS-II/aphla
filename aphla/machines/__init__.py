@@ -262,7 +262,7 @@ def load(machine, submachine = "*", **kwargs):
         if physics_data is not None:
             phy_fname = os.path.join(machdir, physics_data)
             #_logger.debug("loading ORM data '%s'" % ormfile)
-            lat.ormdata = OrmData(phy_fname)
+            lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix/orm")
             #_logger.debug("loading Twiss data '%s'" % twissfile)
             lat._twiss = TwissData(phy_fname)
             lat._twiss.load(phy_fname)
@@ -318,21 +318,26 @@ def load(machine, submachine = "*", **kwargs):
 def loadCache(machine_name):
     """load the cached machine"""
     global _lat, _lattice_dict
-    raise NotImplemented("not implemented yet")
 
-    cache_folderpath = HLA_ROOT
+    cache_folderpath = _home_hla
     cache_filepath = os.path.join(cache_folderpath,
                                   machine_name+'_lattices.cpkl')
+    
+    print 'Loading cached lattice from {0:s}...'.format(cache_filepath)
+
     with open(cache_filepath,'rb') as f:
         selected_lattice_name = pickle.load(f)
         _lattice_dict = pickle.load(f)
+
+    print 'Finished loading cached lattice.'
+
     _lat = _lattice_dict[selected_lattice_name]
         
 
 def saveCache(machine_name, lattice_dict, selected_lattice_name):
     """save machine as cache"""
-    raise NotImplemented("not implemented yet")
-    cache_folderpath = HLA_ROOT
+
+    cache_folderpath = _home_hla
     if not os.path.exists(cache_folderpath):
         os.mkdir(cache_folderpath)
     cache_filepath = os.path.join(cache_folderpath,

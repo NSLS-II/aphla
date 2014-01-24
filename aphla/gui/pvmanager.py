@@ -37,6 +37,7 @@ class CaDataMonitor(QtCore.QObject):
         self.hook = {}
         self._monitors = {}
         self._dead = set()
+        self._wfsize = {}
 
         if pvs: self.addPv(pvs)
 
@@ -66,6 +67,10 @@ class CaDataMonitor(QtCore.QObject):
             else:
                 self._monitors[pv] = newmons[i]
                 self.data[pv] = deque([d[i]], self.samples)
+                try:
+                    self._wfsize[pv] = len(d[i])
+                except:
+                    self._wfsize[pv] = None
 
     def addHook(self, pv, f):
         self.hook.setdefault(pv, [])
@@ -80,7 +85,6 @@ class CaDataMonitor(QtCore.QObject):
         if pv in self.data: self.data[pv].append(val)
         for f in self.hook.get(pv, []):
             f(val, idx)
-        #print "updating", idx, val, val.name, len(self.data[pv])
 
     def close(self, pv):
         p = self._monitors.get(pv, None)
@@ -88,6 +92,7 @@ class CaDataMonitor(QtCore.QObject):
         p.close()
         self._monitors[pv] = None
         self.data[pv].clear()
+        #self._wfsize.pop(pv, None)
 
     def get(self, pv, default = np.nan):
         if pv in self._dead: return default
@@ -95,6 +100,9 @@ class CaDataMonitor(QtCore.QObject):
         if len(lst) == 0: return default
         elif not lst[-1].ok: return default
         return lst[-1]
+
+    def waveFormSize(self, pv):
+        return self._wfsize.get(pv, None)
 
     def dead(self):
         return self._dead
