@@ -28,6 +28,7 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
 import PyQt4.Qwt5 as Qwt
 
 from pvmanager import CaDataMonitor
+from aporbitplot import ApPlot
 import traceback
 import collections
 import numpy as np
@@ -87,9 +88,9 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def __init__(self, **kwargs):
         super(ElementPropertyTableModel, self).__init__()
         # elem obj, idx, name/fld
-        self._elemrec = []
-        self._cadata  = None
-        self._unitsys = [None, 'phy']
+        self._elemrec  = []
+        self._data_src = kwargs.get("cadata", None) 
+        self._unitsys  = [None, 'phy']
         self._unitsymb = [None, []]
         self._data = []
         self._inactive = []
@@ -98,6 +99,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def loadElements(self, elems, flds):
         self.beginResetModel()
         self.clear()
+        self._data_src = cadata
         for elem in elems:
             ik = 0
             self._elemrec.append((elem, ik, None, None, None))
@@ -107,13 +109,13 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 if flds and var not in flds: continue
                 ik += 1
                 self._elemrec.append(
-                    (elem, ik, var, elem.pv(field=var, handle="setpoint"),
+                data = [None, None]
                      elem.pv(field=var, handle="readback")))
                 for j,u in enumerate(self._unitsys[1:]):
                     self._unitsymb[1+j].append(elem.getUnit(var, unitsys=u))
-                # setpoint and readback data
-                self._data.append([None, None])
-
+                    data.append(None)
+                self._data.append(data)
+            print elem
         # collect all the PVs
         pvs, npvs = set(), 0
         for i,r in enumerate(self._elemrec):
@@ -131,12 +133,47 @@ class ElementPropertyTableModel(QAbstractTableModel):
         
         self._cadata = CaDataMonitor(list(pvs))
         self.connect(self._cadata, SIGNAL("dataChanged(PyQt_PyObject)"), self.updatePvData)
-
         self.endResetModel()
 
-    def updatePvData(self, val):
-        # update with pv=val.name, val is the value
-        if not self._elemrec: return
+    def _get_cadata_qv(self, elem, fld, hdl, u = None):
+        if self._datasrc:
+            pvs = elem.pv(field=fld, handle=hdl)
+            if len(pvs) == 0 or u not in elem.getUnitSystems(field=fld):
+                return QVariant()
+            vals = [self._cadata.get(pv, None) for pv in 
+                    elem.pv(field=fld, handle=hdl)]
+            if len(vals) == 1:
+                x = elem.convertUnit(fld, vals[0], None, u)
+                return self._cadata_to_qvariant(x)
+            else:
+                x = [elem.convertUnit(fld, v, None, u) for v in vals]
+                return self._cadata_to_qvariant(x)
+        else:
+            return QVariant()
+        return QVariant()
+
+        #for i in range(row0, row1+1):
+        for i in range(len(self._elemrec)):
+            elem, ik, var = self._elemrec[i]
+            #print i, elem.name, self._data[i]
+            if var is None: continue
+            if self._data[i] is None: continue
+            for j,hdl in enumerate(["setpoint", "readback"]):
+                pv = elem.pv(field=var, handle=hdl)
+                if len(pv) == 0:
+                    self._data[i][j] = ""
+                elif len(pv) == 1:
+                    self._data[i][j] = self._data_src.get(pv[0], None)
+                else:
+                    self._data[i][j] = [self._data_src.get(pvi, None)
+                                        for pvi in pv]
+
+            for j,u in enumerate(self._unitsys[1:]):
+                try:
+                    self._data[i][j+2] = elem.convertUnit(
+                        var, self._data[i][1], None, u)
+                except:
+                    self._data[i][j+2] = None
         #print "Size:", len(self._elemrec)
         print "Updating", val.name, val
         idx0 = self.index(row0, 0)
@@ -168,22 +205,6 @@ class ElementPropertyTableModel(QAbstractTableModel):
             raise RuntimeError("Unknow data type: {0} ({1})".format(
                     type(val), val))
 
-    def _get_cadata_qv(self, elem, fld, hdl, u = None):
-        if self._cadata:
-            pvs = elem.pv(field=fld, handle=hdl)
-            if len(pvs) == 0 or u not in elem.getUnitSystems(field=fld):
-                return QVariant()
-            vals = [self._cadata.get(pv, None) for pv in 
-                    elem.pv(field=fld, handle=hdl)]
-            if len(vals) == 1:
-                x = elem.convertUnit(fld, vals[0], None, u)
-                return self._cadata_to_qvariant(x)
-            else:
-                x = [elem.convertUnit(fld, v, None, u) for v in vals]
-                return self._cadata_to_qvariant(x)
-        else:
-            return QVariant()
-        return QVariant()
         
     def data(self, index, role=Qt.DisplayRole):
         """return data as a QVariant"""
@@ -201,11 +222,11 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 if idx == 0: return QVariant(QString(elem.name))
                 return QVariant(fld)
             elif col == C_VAL_SP:
-                val = self._get_cadata_qv(elem, fld, "setpoint", None)
+                val = self._cadata_to_qvariant(self._data[r][col - C_VAL_SP])
             elif col >= C_VAL_RB:
                 iusys = col - C_VAL_RB
                 usys = self._unitsys[iusys]
-                val = self._get_cadata_qv(elem, fld, "readback", usys)
+                val = self._cadata_to_qvariant(self._data[r][col - C_VAL_SP])
             #
             if isinstance(val, list):
                 return QVariant("[ ... ]")
@@ -741,7 +762,7 @@ class ElementEditorDock(QDockWidget):
 
         self.setWindowTitle("Element Editor")
         self.noTableUpdate = True
-        #self.timerId = self.startTimer(3000)
+        self.timerId = self.startTimer(800)
 
     def setDirectValue(self):
         val = float(self.ledSet.text())
@@ -763,10 +784,11 @@ class ElementEditorDock(QDockWidget):
         #self.elemName.selectAll()
         t0 = time.time()
         _logger.info("Found elems: {0}".format(len(elems)))
+        print "found: {0} elements".format(len(elems))
         QApplication.processEvents()
-        #print "cadata", cadata
+        print "cadata", cadata
         self.model.loadElements(elems, flds, cadata)
-        #print "model size:", self.model.rowCount(), self.model.columnCount()
+        print "model size:", self.model.rowCount(), self.model.columnCount()
         for i in range(self.model.rowCount()):
             elem, fld, hdl = self.model._elemrec[i]
             #print i, elem.name, fld, self.model._value[i]
@@ -923,6 +945,8 @@ class ElementEditorDock(QDockWidget):
         self.se = vmax
         #self.refreshTable()
 
+
+# test purpose
 class MTestForm(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(MTestForm, self).__init__(parent)

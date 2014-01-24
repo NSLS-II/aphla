@@ -60,6 +60,7 @@ class Lattice:
         self.loop = True
         self.Ek = None
         self.arpvs = None
+        self.OUTPUT_DIR = None
 
     def __getitem__(self, key):
         if isinstance(key, int):

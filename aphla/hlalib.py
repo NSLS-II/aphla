@@ -47,6 +47,10 @@ def getEnergy():
     """
     return machines._lat.Ek
 
+def getOutputDir():
+    """get the output data dir for the current lattice""" 
+    return machines._lat.OUTPUT_DIR
+
 # current
 def getCurrent(name='dcct', field='value', unitsys=None):
     """Get the current from the first DCCT element

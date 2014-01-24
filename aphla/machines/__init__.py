@@ -55,7 +55,6 @@ HLA_VSEXT  = 'HLA:VSEXT'
 # unless %HOME% is set on Windows, which is not the case by default.
 _home_hla = os.path.join(os.path.expanduser('~'), '.hla')
 HLA_CONFIG_DIR = os.environ.get("HLA_CONFIG_DIR", _home_hla)
-HLA_DATA_DIR   = os.environ.get("HLA_DATA_DIR", os.path.expanduser('~'))
 HLA_DEBUG      = int(os.environ.get('HLA_DEBUG', 0))
 
 # the properties used for initializing Element are different than
@@ -188,18 +187,25 @@ def load(machine, submachine = "*", **kwargs):
         print "loading machine data '%s: %s'" % (machname, machdir)
 
     if machdir is None:
-        _logger.error("can not find machine data directory for '%s'" % machine)
-        return
+        msg = "can not find machine data directory for '%s'" % machine
+        _logger.error(msg)
+        raise RuntimeError(msg)
 
     _logger.debug("importing '%s' from '%s'" % (machine, machdir))
 
     cfg = ConfigParser.ConfigParser()
-    cfg.readfp(open(os.path.join(machdir, "aphla.ini"), 'r'))
-    _logger.debug("using config file: 'aphla.ini'")
+    try:
+        cfg.readfp(open(os.path.join(machdir, "aphla.ini"), 'r'))
+        _logger.debug("using config file: 'aphla.ini'")
+    except:
+        raise RuntimeError("can not open '%s' to read configurations" % (
+                os.path.join(machdir, "aphla.ini")))
+
     d = dict(cfg.items("COMMON"))
-    # set proper output directory
-    # global HLA_OUTPUT_DIR
-    HLA_OUTPUT_DIR = d.get("output_dir", _home_hla)
+    # set proper output directory in the order of env > aphla.ini > $HOME
+    HLA_OUTPUT_DIR = os.environ.get("HLA_DATA_DIR",
+                                    d.get("output_dir",
+                                          os.path.expanduser('~')))
     # the default submachine
     accdefault = d.get("default_submachine", "")
 
@@ -244,6 +250,8 @@ def load(machine, submachine = "*", **kwargs):
         lat.loop = bool(d.get("loop", True))
         lat.machine = machname
         lat.arpvs = d.get("archive_pvs", None)
+        lat.OUTPUT_DIR = d.get("output_dir", 
+                               os.path.join(HLA_OUTPUT_DIR, msect))
 
         uconvfile = d.get("unit_conversion", None)
         if uconvfile is not None: 
@@ -565,6 +573,16 @@ def use(lattice):
         _lat = _lattice_dict[lattice]
     else:
         raise ValueError("no lattice %s was defined" % lattice)
+
+def getOutputDir(lat = None):
+    """
+    return the output data dir of lat. None if lat does not exist.
+
+    lat = None will use the default current lattice.
+    """
+
+    if lat is None: return _lat.OUTPUT_DIR
+    return _lattice_dict.get(lat, None)
 
 def getLattice(lat = None):
     """

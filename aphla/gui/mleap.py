@@ -111,8 +111,6 @@ class OrbitPlotMainWindow(QMainWindow):
                 m, ", ".join([lat.name for k,lat in lats.items()])))
             for pv in pvm.dead():
                 self.logger.warn("'{0}' is disconnected.".format(pv))
-            #self.connect(pvm, SIGNAL("dataChanged(PyQt_PyObject)"), 
-            #             self._test)
         ## DCCT current plot
         #self.dcct = DcctCurrentPlot()
         #self.dcct.setMinimumHeight(100)
@@ -180,9 +178,6 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.newElementPlot("SEXT", "b2")
         
 
-    def _test(self, val):
-        print "data changed:", val.name, val
-
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
         self.machBox.setCurrentIndex(i)
@@ -200,9 +195,6 @@ class OrbitPlotMainWindow(QMainWindow):
     def closeEvent(self, event):
         self.physics.close()
         event.accept()
-
-    def test_1(self):
-        pass
 
     def createMenuToolBar(self):
         #
@@ -470,9 +462,6 @@ class OrbitPlotMainWindow(QMainWindow):
         else:
             return mach, lat_dict[latname], pvm
 
-    def click_machine(self, act):
-        self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
-
     def newElementPlots(self, elem, fields, **kw):
         self.logger.info("new plots: %s %s" % (elem, fields))
         for fld in re.findall(r'[^ ,]+', fields):
@@ -480,7 +469,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def _newElementPlot(self, elem, field, **kw):
         """plot the field for element"""
-        mach, lat = kw.get("machlat", self.getCurrentMachLattice())
+        _mach, _lat, _pvm = self.getCurrentMachLattice(cadata=True)
+        mach, lat, pvm = kw.get("machlat", (_mach, _lat, _pvm))
         handle = kw.get("handle", "readback")
         elems = lat.getElementList(elem)
         s, pvs, elemnames = [], [], []
@@ -491,10 +481,9 @@ class OrbitPlotMainWindow(QMainWindow):
             s.append(e.sb)
             elemnames.append(e.name)
         if not pvs:
-            self.logger.error("no data found for elements '{0}' and field '{1}'".format(elem, field))
+            self.logger.error("no data found for elements '{0}' "
+                              "and field '{1}'".format(elem, field))
             return
-
-        lats, lat0, pvm = self._mach[mach]
 
         magprof = lat.getBeamlineProfile()
 

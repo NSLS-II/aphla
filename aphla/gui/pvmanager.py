@@ -34,6 +34,7 @@ class CaDataMonitor(QtCore.QObject):
         self.val_default = kwargs.get("default", np.nan)
         self.timeout     = kwargs.get("timeout", 3)
         self.data = {}
+        self.hook = {}
         self._monitors = {}
         self._dead = set()
         self._wfsize = {}
@@ -71,6 +72,10 @@ class CaDataMonitor(QtCore.QObject):
                 except:
                     self._wfsize[pv] = None
 
+    def addHook(self, pv, f):
+        self.hook.setdefault(pv, [])
+        self.hook[pv].append(f)
+
     def _ca_update(self, val, idx = None):
         """
         update the reading, average, index and variance.
@@ -78,8 +83,8 @@ class CaDataMonitor(QtCore.QObject):
         if not val.ok: return
         pv = val.name
         if pv in self.data: self.data[pv].append(val)
-        print "updating", idx, val, val.name, len(self.data[pv])
-        self.emit(QtCore.SIGNAL("dataChanged(PyQt_PyObject)"), val)
+        for f in self.hook.get(pv, []):
+            f(val, idx)
 
     def close(self, pv):
         p = self._monitors.get(pv, None)
