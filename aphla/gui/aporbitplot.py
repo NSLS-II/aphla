@@ -211,6 +211,10 @@ class ApCaTimeSeriesPlot(Qwt.QwtPlot):
         grid1.attach(self)
         grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
 
+        legend = Qwt.QwtLegend()
+        legend.setItemMode(Qwt.QwtLegend.CheckableItem)
+        self.insertLegend(legend, self.RightLegend)
+
         self.mark1 = Qwt.QwtPlotMarker()
         self.mark1.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
         #self.mark1.setPen(QPen(QColor(0, 255, 0)))
@@ -438,6 +442,14 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
                                          Qwt.QwtPicker.AlwaysOff,
                                          self.canvas())
         self.zoomer1.setRubberBandPen(QPen(Qt.black))
+        # zoom in and out and Home
+        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyRedo, Qt.Key_I)
+        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyUndo, Qt.Key_O)
+        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyHome, Qt.Key_Home)
+        #self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect3, Qt.NoButton)
+        #self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect6, Qt.NoButton)
+        # right click will not zoom to home
+        self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect2, Qt.NoButton)
 
         self.markers = []
         #self.addMarkers(None)
@@ -478,6 +490,13 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
             print i, np.average(self._ref[i])
         self.__hold = False
 
+    def setDrift(self, on):
+        if on:
+            self.saveAsReference()
+            self.drift = True
+        else:
+            self.drift = False
+
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
         if not on:
@@ -506,6 +525,16 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
     #    print "element selected:", elem
     #    self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
     
+    def contextMenuEvent(self, e):
+        cmenu = QMenu()
+        m_drift = QAction("Drift", self)
+        m_drift.setCheckable(True)
+        #c = QApplication.clipboard()
+        m_drift.setChecked(self.drift)
+        self.connect(m_drift, SIGNAL("toggled(bool)"), self.setDrift)
+        cmenu.addAction(m_drift)
+        cmenu.exec_(e.globalPos())
+
     def setMagnetProfile(self, mprof):
         self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
         # get x, y, color(optional)
@@ -700,6 +729,14 @@ class ApCaArrayPlot(Qwt.QwtPlot):
                                          Qwt.QwtPicker.AlwaysOff,
                                          self.canvas())
         self.zoomer1.setRubberBandPen(QPen(Qt.black))
+        # zoom in and out and Home
+        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyRedo, Qt.Key_I)
+        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyUndo, Qt.Key_O)
+        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyHome, Qt.Key_Home)
+        #self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect3, Qt.NoButton)
+        #self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect6, Qt.NoButton)
+        # right click will not zoom to home
+        self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect2, Qt.NoButton)
 
         self.markers = []
         #self.addMarkers(None)
@@ -1371,6 +1408,7 @@ class ApSvdPlot(QDialog):
 if __name__ == "__main__":
     #p = ApCaWaveformPlot(['V:2-SR-BI{BETA}X-I', 'V:2-SR-BI{BETA}Y-I'])
     #p = ApCaWaveformPlot(['V:2-SR-BI{ORBIT}X-I', 'V:2-SR-BI{ORBIT}Y-I'])
+    p = ApCaWaveformPlot(['BR-BI{DCCT:1}I-Wf'])
     #p = ApCaArrayPlot([('V:2-SR:C29-BI:G2{PL1:3551}SA:X',
     #                    'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
     #                    'V:2-SR:C29-BI:G4{PM1:3596}SA:X',
@@ -1378,10 +1416,12 @@ if __name__ == "__main__":
     #                    'V:2-SR:C29-BI:G6{PH2:3630}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH1:3645}SA:X',)])
     import time
-    pvs = ['V:2-SR:C29-BI:G2{PL1:3551}SA:X',
-           'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
-           'V:2-SR:C29-BI:G4{PM1:3596}SA:X',]
-    p = ApCaTimeSeriesPlot(pvs[:1])
+    #pvs = ['V:2-SR:C29-BI:G2{PL1:3551}SA:X',
+    #       'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
+    #       'V:2-SR:C29-BI:G4{PM1:3596}SA:X',]
+    #pvs = ['BR:A3-BI{BPM:6}Cnt:Trig-I', 'BR:A3-BI{BPM:7}Cnt:Trig-I']
+    #pvs = ['LTB-MG{Bend:1}Energy-I-cal']
+    #p = ApCaTimeSeriesPlot(pvs)
     p.show()
     cothread.WaitForQuit()
 

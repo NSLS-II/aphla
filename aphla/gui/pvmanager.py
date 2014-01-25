@@ -86,13 +86,17 @@ class CaDataMonitor(QtCore.QObject):
         for f in self.hook.get(pv, []):
             f(val, idx)
 
-    def close(self, pv):
-        p = self._monitors.get(pv, None)
-        if p is None: return
-        p.close()
-        self._monitors[pv] = None
-        self.data[pv].clear()
-        #self._wfsize.pop(pv, None)
+    def close(self, pv = None):
+        pvs = []
+        if pv is None:
+            pvs = self._monitors.keys()
+        elif pv in self._monitors:
+            pvs = [ pv ]
+        
+        for pvi in pvs:
+            self._monitors[pvi].close()
+            self._monitors[pvi] = None
+            self.data[pvi].clear()
 
     def get(self, pv, default = np.nan):
         if pv in self._dead: return default
