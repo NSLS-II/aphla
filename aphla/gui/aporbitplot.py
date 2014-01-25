@@ -232,6 +232,7 @@ class ApCaTimeSeriesPlot(Qwt.QwtPlot):
                 self.curves[i].setData(self._t, self._vals[pv])
             
         self.setAxisScale(Qwt.QwtPlot.xBottom, self._t[0], self._t[-1])
+        #self.zoomer.setZoomBase(False)
         self.replot()
         self.__hold = False
 
@@ -463,6 +464,7 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
         else:
             c.setData(range(len(val)), val)
         self.replot()
+        if self.count == 1: self.zoomer1.setZoomBase(False)
 
     def saveAsReference(self):
         self.__hold = True
