@@ -682,6 +682,7 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         self.__hold = False
 
         self.setCanvasBackground(Qt.white)
+        #self.setAxisAutoScale(Qwt.QwtPlot.yLeft, False)
         self.setAutoReplot(False)
 
         self.plotLayout().setAlignCanvasToScales(True)
@@ -737,6 +738,8 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         #self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect6, Qt.NoButton)
         # right click will not zoom to home
         self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect2, Qt.NoButton)
+        self.connect(self.zoomer1, SIGNAL("zoomed(const QwtDoubleRect&)"),
+                     self.zoomed)
 
         self.markers = []
         #self.addMarkers(None)
@@ -751,6 +754,14 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         for pv in self._pvs.keys():
             self._cadata.addHook(pv, self._ca_update)
         self._cadata.addPv(self._pvs.keys())
+
+    def zoomed(self, r):
+        #if self.zoomer1.zoomRectIndex() == 0:
+        #    self.setAxisAutoScale(self.zoomer1.xAxis())
+        #    self.setAxisAutoScale(self.zoomer1.yAxis())
+        #    self.replot()
+        #print "zoomed"
+        pass
 
     def _ca_update(self, val, idx = None):
         if self.__hold: return
@@ -776,6 +787,47 @@ class ApCaArrayPlot(Qwt.QwtPlot):
             xi, yi, ei = c.data()
             self._ref[i] = yi
         self.__hold = False
+
+    def setDrift(self, on):
+        if on:
+            self.saveAsReference()
+            self.drift = True
+        else:
+            self.drift = False
+        self.replot()
+
+    def _setAutoScale(self, on):
+        if on:
+            self.zoomer1.reset()
+            self.zoomer1.setEnabled(False)
+            self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+        else:
+            self.__hold = True
+            self.zoomer1.setEnabled(True)
+            asd = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
+            print asd.lowerBound(), asd.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.yLeft, asd.lowerBound(),
+                              asd.upperBound())
+            # has to replot before base
+            self.zoomer1.setZoomBase(True)
+            self.__hold = False
+
+    def contextMenuEvent(self, e):
+        cmenu = QMenu()
+        m_drift = QAction("Drift", self)
+        m_drift.setCheckable(True)
+        #c = QApplication.clipboard()
+        m_drift.setChecked(self.drift)
+        self.connect(m_drift, SIGNAL("toggled(bool)"), self.setDrift)
+        cmenu.addAction(m_drift)
+
+        m_autoscale = QAction("Auto Scale", self)
+        m_autoscale.setCheckable(True)
+        m_autoscale.setChecked(self.axisAutoScale(Qwt.QwtPlot.yLeft))
+        self.connect(m_autoscale, SIGNAL("toggled(bool)"), self._setAutoScale)
+        cmenu.addAction(m_autoscale)
+
+        cmenu.exec_(e.globalPos())
 
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
@@ -1408,13 +1460,13 @@ class ApSvdPlot(QDialog):
 if __name__ == "__main__":
     #p = ApCaWaveformPlot(['V:2-SR-BI{BETA}X-I', 'V:2-SR-BI{BETA}Y-I'])
     #p = ApCaWaveformPlot(['V:2-SR-BI{ORBIT}X-I', 'V:2-SR-BI{ORBIT}Y-I'])
-    p = ApCaWaveformPlot(['BR-BI{DCCT:1}I-Wf'])
-    #p = ApCaArrayPlot([('V:2-SR:C29-BI:G2{PL1:3551}SA:X',
-    #                    'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
-    #                    'V:2-SR:C29-BI:G4{PM1:3596}SA:X',
-    #                    'V:2-SR:C29-BI:G4{PM1:3606}SA:X',
-    #                    'V:2-SR:C29-BI:G6{PH2:3630}SA:X',
-    #                    'V:2-SR:C29-BI:G6{PH1:3645}SA:X',)])
+    #p = ApCaWaveformPlot(['BR-BI{DCCT:1}I-Wf'])
+    p = ApCaArrayPlot([('V:2-SR:C29-BI:G2{PL1:3551}SA:X',
+                        'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
+                        'V:2-SR:C29-BI:G4{PM1:3596}SA:X',
+                        'V:2-SR:C29-BI:G4{PM1:3606}SA:X',
+                        'V:2-SR:C29-BI:G6{PH2:3630}SA:X',
+                        'V:2-SR:C29-BI:G6{PH1:3645}SA:X',)])
     import time
     #pvs = ['V:2-SR:C29-BI:G2{PL1:3551}SA:X',
     #       'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
