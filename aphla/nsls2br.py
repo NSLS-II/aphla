@@ -26,36 +26,36 @@ def _brBpmScrub(**kwargs):
     waveforms - list of Tbt, Fa and Adc
     """
 
-    lat = ap.machines.getLattice()
+    lat = machines.getLattice()
     if lat.name != "BR":
         raise RuntimeError("the current lattice is not 'BR': %s" % lat.name)
 
     waveforms = kwargs.get("waveforms", ["Tbt", "Fa", "Adc"])
-    bpms = ap.getElements("BPM")
+    bpms = getElements("BPM")
     # did not consider the 'ddrTbtWfEnable' PV
     for bpm in bpms:
         pvx = bpm.pv(field="x")[0]
         pv = pvx.replace("Pos:X-I", "Trig:TrigSrc-SP")
         # 0 - internal, 1 - external
-        ap.catools.caput(pv, 0, wait=True)
+        caput(pv, 0, wait=True)
         pv = pvx.replace("Pos:X-I", "DDR:WfmSel-SP")
         for fld in waveforms:
             pv = pvx.replace("Pos:X-I", "ddr%sWfEnable" % fld)
-            ap.catools.caput(pv, 0, wait=True)
+            caput(pv, 0, wait=True)
             # offset
             pv = pvx.replace("Pos:X-I", "ddr%sOffset" % fld)
-            ap.catools.caput(pv, 0, wait=True)
+            caput(pv, 0, wait=True)
 
     time.sleep(2)
     for bpm in bpms:
         pvx = bpm.pv(field="x")[0]
         pv = pvx.replace("Pos:X-I", "Trig:TrigSrc-SP")
         # 0 - internal, 1 - external
-        ap.catools.caput(pv, 1, wait=True)
+        caput(pv, 1, wait=True)
         pv = pvx.replace("Pos:X-I", "DDR:WfmSel-SP")
         for fld in waveforms:
             pv = pvx.replace("Pos:X-I", "ddr%sWfEnable" % fld)
-            ap.catools.caput(pv, 1, wait=True)
+            caput(pv, 1, wait=True)
     time.sleep(2)
 
 
@@ -268,8 +268,7 @@ def getBrBpmData(**kwargs):
     """
     timeout - 6sec
     sleep - 4sec
-    output_dir - 
-    output_file -
+    output - True, use default file name, str - user specified filename
 
     returns name, x, y, Isum, timestamp, offset
 
@@ -322,12 +321,20 @@ def getBrBpmData(**kwargs):
 
     data = (names, x, y, Is, ts, offset)
 
-    if kwargs.has_key("output_dir" ) or kwargs.has_key("output_file"):
+    if kwargs.has_key("output"):
         # default output dir and file
-        output_dir = kwargs.pop("output_dir", "")
-        fopt = "bpm_%s_%d_" % (waveform, trig_src) + \
-            t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
-        output_file = kwargs.get("output_file", os.path.join(output_dir, fopt))
+        output_file = kwargs["output"]
+        if output_file is True:
+            # use the default file name
+            output_dir = os.path.join(machines.getOutputDir(),
+                                      t0.strftime("%Y_%m"),
+                                      "bpm")
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            fopt = "bpm_%s_%d_" % (waveform, trig_src) + \
+                t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
+            output_file = os.path.join(output_dir, fopt)
+
         # save the data
         _saveBrBpmData(output_file, waveform, data,
                        h5group=kwargs.get("h5group", "/"),
@@ -843,14 +850,21 @@ def measBrCaRmCol(kker, **kwargs):
     """measure the response matrix column between PVs (DC)
 
     kker - SP PV for corrector (waveform)
+    timeout - 6 sec
+    npoints - number of orbits for each kick.
+    dxlst - a list of kick (raw unit), overwrite the choice of dxmax
+    dxmax - range of kick [-dxmax, dxmax]
+    ndx - default 4. Together with dxmax, specify a equally spaced kicks [-dxmax, dxmax].
     wait - 
+    output_file - save the results
+
+    return the output file name
     """
     timeout = kwargs.pop("timeout", 6)
     wait    = kwargs.pop("wait", 1.5)
     verbose = kwargs.pop("verbose", 0)
     npt     = kwargs.pop("npoints", 4)
     wfm     = kwargs.pop("waveform", "Fa")
-    output_file = kwargs.pop("output_file", "br_orbit_rm.hdf5")
     
     t0 = datetime.now()
     dxlst, x0 = [], np.array(caget(kker, timeout=timeout), 'd')
@@ -862,6 +876,14 @@ def measBrCaRmCol(kker, **kwargs):
         dxlst = list(np.linspace(-dxmax, dxmax, nx))
     else:
         raise RuntimeError("need input for at least of the parameters: dxlst, xlst, dxmax")
+
+    # use the provided filename or default datetimed filename
+    output_file = kwargs.pop(
+        "output_file",
+        os.path.join(machines.getOutputDir(),
+                     t0.strftime("%Y_%m"),
+                     "orm",
+                     t0.strftime("orm_%Y_%m_%d_%H%M%S.hdf5")))
 
     # save dx list
     h5f = h5py.File(output_file)
@@ -909,5 +931,5 @@ def measBrCaRmCol(kker, **kwargs):
     h5f = h5py.File(output_file)
     h5f[kker].attrs["orm_t1"] = t1.strftime("%Y_%m_%d_%H:%M:%S.%f")
     h5f.close()
-
+    return output_file
 

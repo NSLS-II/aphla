@@ -581,8 +581,12 @@ def getOutputDir(lat = None):
     lat = None will use the default current lattice.
     """
 
-    if lat is None: return _lat.OUTPUT_DIR
-    return _lattice_dict.get(lat, None)
+    if lat is None:
+        return _lat.OUTPUT_DIR
+    elif lat in _lattice_dict:
+        _lattice_dict[lat].OUTPUT_DIR
+    else:
+        raise RuntimeError("no output_dir defined for lattice '%s'" % lat)
 
 def getLattice(lat = None):
     """
