@@ -124,7 +124,8 @@ class CaDataMonitor(QtCore.QObject):
     def deadCount(self):
         return len([True for pv,cam in self._monitors.items()
                     if cam is None])
-
+    def pvs(self):
+        return self._monitors.keys() + self._dead
 
 class CaDataGetter:
     def __init__(self, pvs = [], **kwargs):
