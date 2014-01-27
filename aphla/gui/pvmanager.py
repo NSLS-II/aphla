@@ -13,6 +13,7 @@ if __name__ == "__main__":
     app = cothread.iqt()
 
 from cothread.catools import camonitor, caget
+from datetime import datetime
 import threading, time
 import random
 from collections import deque
@@ -24,20 +25,19 @@ class CaDataMonitor(QtCore.QObject):
         """
         - pvs a list of PV
         - samples number of data points for std/var/average
-
-        optional:
-        - simulation [True|False] use simulated data or real pv data
         """
         super(CaDataMonitor, self).__init__()
         self.samples     = kwargs.get("samples", 10)
-        self.simulation  = kwargs.get('simulation', False)
+        #self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
         self.timeout     = kwargs.get("timeout", 3)
+        self._min_dt     = kwargs.get("wait", 0.0)
         self.data = {}
         self.hook = {}
         self._monitors = {}
         self._dead = set()
         self._wfsize = {}
+        self._t0 = datetime.now()
 
         if pvs: self.addPv(pvs)
 
@@ -83,8 +83,12 @@ class CaDataMonitor(QtCore.QObject):
         if not val.ok: return
         pv = val.name
         if pv in self.data: self.data[pv].append(val)
-        for f in self.hook.get(pv, []):
-            f(val, idx)
+        # call callback if long enough
+        dt = datetime.now() - self._t0
+        if dt.total_seconds() > self._min_dt:
+            for f in self.hook.get(pv, []):
+                f(val, idx)
+            self._t0 = datetime.now()
 
     def close(self, pv = None):
         pvs = []
@@ -132,12 +136,9 @@ class CaDataGetter:
         """
         - pvs a list of PV
         - samples number of data points for std/var/average
-
-        optional:
-        - simulation [True|False] use simulated data or real pv data
         """
         self.samples     = kwargs.get("samples", 10)
-        self.simulation  = kwargs.get('simulation', False)
+        #self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
         self.timeout     = kwargs.get("timeout", 3)
         self.data = {}

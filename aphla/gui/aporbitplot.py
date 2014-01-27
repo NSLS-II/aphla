@@ -679,6 +679,7 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         parent = kwargs.pop("parent", None)
         super(ApCaArrayPlot, self).__init__(parent)
         self.live = kwargs.get("live", True)
+        self.labels = kwargs.get("labels", None)
         self.__hold = False
 
         self.setCanvasBackground(Qt.white)
@@ -686,16 +687,20 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         self.setAutoReplot(False)
 
         self.plotLayout().setAlignCanvasToScales(True)
+        self.setMinimumSize(600, 100)
 
         self.drift = False
         self._count = []
-        self._pvs, self.curves, self._y = {}, [], []
+        self.curves, self._y = [], []
+        self._pvs = {} # (pv, (i_curve, j_point))
         self._golden, self._ref = [], []
         self._x = kwargs.get("x", [])
         for i,pvl in enumerate(pvs):
             name, color = COLORS[i%len(COLORS)]
             #c = Qwt.QwtPlotCurve()
             c = ApErrBarCurve(color)
+            if self.labels is None or not self.labels[i]:
+                c.setTitle("[%s ...]" % pvl[0])
             #c.setBrush(QBrush(COLORS[i % len(COLORS)]))
             #c.setPen(QPen(colors))
             #c.setPen(QPen(Qt.red, 4))
@@ -710,10 +715,10 @@ class ApCaArrayPlot(Qwt.QwtPlot):
                 self._pvs.setdefault(pv, [])
                 self._pvs[pv].append((i,j))
             self._count.append([0] * len(pvl))
-            self._y = [[0.0] * len(pvl)]
+            self._y.append([0.0] * len(pvl))
         # one more plot with second y axis
         self.curve2 = Qwt.QwtPlotCurve()
-
+        
         #self.setMinimumSize(300, 100)
         grid1 = Qwt.QwtPlotGrid()
         grid1.attach(self)
@@ -721,6 +726,13 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         pen.setStyle(Qt.DotLine)
         pen.setWidthF(1.2)
         grid1.setMajPen(pen)
+
+        # legend
+        legend = Qwt.QwtLegend()
+        legend.setItemMode(Qwt.QwtLegend.CheckableItem)
+        self.insertLegend(legend, self.RightLegend)
+        for c in self.curves:
+            self.showCurve(c, True)
 
         self.picker1 = None
         #self.zoomer1 = None
@@ -750,10 +762,15 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         #self.marker.setValue(100, 0)
         #self.marker.setLabel(Qwt.QwtText("Hello"))
         #self.connect(self, SIGNAL("doubleClicked
-        self._cadata = CaDataMonitor()
+        # min wait for call back 0.6 sec
+        self._cadata = CaDataMonitor(wait=0.6)
         for pv in self._pvs.keys():
-            self._cadata.addHook(pv, self._ca_update)
+            #self._cadata.addHook(pv, self._ca_update)
+            self._cadata.addHook(pv, self._ca_update_all)
         self._cadata.addPv(self._pvs.keys())
+
+        self.connect(self, SIGNAL("legendChecked(QwtPlotItem*, bool)"),
+                     self.showCurve)
 
     def zoomed(self, r):
         #if self.zoomer1.zoomRectIndex() == 0:
@@ -782,6 +799,29 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         self.replot()
         QtGui.qApp.processEvents()
 
+    def _ca_update_all(self, val, idx = None):
+        if self.__hold: return
+        if not self.live: return
+        #print "Updating %s: " % val.name, self._pvs[val.name], val
+        for pv in self._pvs.keys():
+            v1 = self._cadata.get(pv)
+            for i,j in self._pvs.get(pv, []):
+                self._count[i][j] += 1
+                self._y[i][j] = v1
+
+        for i, c in enumerate(self.curves):
+            x, y, e1 = c.data()
+            if self._ref[i] is not None and self.drift:
+                y = [self._y[i][k] - self._ref[i][k]
+                     for k in range(len(self._y[i]))]
+            else:
+                y = self._y[i]
+            c.setData(y, x, e1)
+
+        if any([c.isVisible() for c in self.curves]):
+            self.replot()
+        QtGui.qApp.processEvents()
+
     def saveAsReference(self):
         self.__hold = True
         for i,c in enumerate(self.curves):
@@ -806,12 +846,21 @@ class ApCaArrayPlot(Qwt.QwtPlot):
             self.__hold = True
             self.zoomer1.setEnabled(True)
             asd = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
-            print asd.lowerBound(), asd.upperBound()
+            #print asd.lowerBound(), asd.upperBound()
             self.setAxisScale(Qwt.QwtPlot.yLeft, asd.lowerBound(),
                               asd.upperBound())
             # has to replot before base
             self.zoomer1.setZoomBase(True)
             self.__hold = False
+
+    def showCurve(self, c, on):
+        c.setVisible(on)
+        w = self.legend().find(c)
+        if w and w.inherits("QwtLegendItem"):
+            w.setChecked(on)
+
+        #if any([c.isVisible() for c in self.curves])
+        self.replot()
 
     def contextMenuEvent(self, e):
         cmenu = QMenu()
@@ -1132,99 +1181,190 @@ class ApSvdPlot(QDialog):
         self.p.replot()
 
 if __name__ == "__main__":
-    pvs = ["SR:C19-BI{BPM:1}Pos:X-I", "SR:C19-BI{BPM:2}Pos:X-I",
-           "SR:C19-BI{BPM:3}Pos:X-I", "SR:C19-BI{BPM:4}Pos:X-I",
-"SR:C19-BI{BPM:5}Pos:X-I","SR:C19-BI{BPM:6}Pos:X-I",
-"SR:C18-BI{BPM:1}Pos:X-I","SR:C18-BI{BPM:2}Pos:X-I",
-"SR:C18-BI{BPM:3}Pos:X-I","SR:C18-BI{BPM:4}Pos:X-I",
-"SR:C18-BI{BPM:5}Pos:X-I","SR:C18-BI{BPM:6}Pos:X-I",
-"SR:C13-BI{BPM:1}Pos:X-I","SR:C13-BI{BPM:2}Pos:X-I",
-"SR:C13-BI{BPM:3}Pos:X-I","SR:C13-BI{BPM:4}Pos:X-I",
-"SR:C13-BI{BPM:5}Pos:X-I","SR:C13-BI{BPM:6}Pos:X-I",
-"SR:C12-BI{BPM:1}Pos:X-I","SR:C12-BI{BPM:2}Pos:X-I",
-"SR:C12-BI{BPM:3}Pos:X-I","SR:C12-BI{BPM:4}Pos:X-I",
-"SR:C12-BI{BPM:5}Pos:X-I","SR:C12-BI{BPM:6}Pos:X-I",
-"SR:C11-BI{BPM:1}Pos:X-I","SR:C11-BI{BPM:2}Pos:X-I",
-"SR:C11-BI{BPM:3}Pos:X-I","SR:C11-BI{BPM:4}Pos:X-I",
-"SR:C11-BI{BPM:5}Pos:X-I","SR:C11-BI{BPM:6}Pos:X-I",
-"SR:C10-BI{BPM:1}Pos:X-I","SR:C10-BI{BPM:2}Pos:X-I",
-"SR:C10-BI{BPM:3}Pos:X-I","SR:C10-BI{BPM:4}Pos:X-I",
-"SR:C10-BI{BPM:5}Pos:X-I","SR:C10-BI{BPM:6}Pos:X-I",
-"SR:C17-BI{BPM:1}Pos:X-I","SR:C17-BI{BPM:2}Pos:X-I",
-"SR:C17-BI{BPM:3}Pos:X-I","SR:C17-BI{BPM:4}Pos:X-I",
-"SR:C17-BI{BPM:5}Pos:X-I","SR:C17-BI{BPM:6}Pos:X-I",
-"SR:C16-BI{BPM:1}Pos:X-I","SR:C16-BI{BPM:2}Pos:X-I",
-"SR:C16-BI{BPM:3}Pos:X-I","SR:C16-BI{BPM:4}Pos:X-I",
-"SR:C16-BI{BPM:5}Pos:X-I","SR:C16-BI{BPM:6}Pos:X-I",
-"SR:C15-BI{BPM:1}Pos:X-I","SR:C15-BI{BPM:2}Pos:X-I",
-"SR:C15-BI{BPM:3}Pos:X-I","SR:C15-BI{BPM:4}Pos:X-I",
-"SR:C15-BI{BPM:5}Pos:X-I","SR:C15-BI{BPM:6}Pos:X-I",
-"SR:C14-BI{BPM:1}Pos:X-I","SR:C14-BI{BPM:2}Pos:X-I",
-"SR:C14-BI{BPM:3}Pos:X-I","SR:C14-BI{BPM:4}Pos:X-I",
-"SR:C14-BI{BPM:5}Pos:X-I","SR:C14-BI{BPM:6}Pos:X-I",
-"SR:C30-BI{BPM:1}Pos:X-I","SR:C30-BI{BPM:2}Pos:X-I",
-"SR:C30-BI{BPM:3}Pos:X-I","SR:C30-BI{BPM:4}Pos:X-I",
-"SR:C30-BI{BPM:5}Pos:X-I","SR:C30-BI{BPM:6}Pos:X-I",
-"SR:C09-BI{BPM:1}Pos:X-I","SR:C09-BI{BPM:2}Pos:X-I",
-"SR:C09-BI{BPM:3}Pos:X-I","SR:C09-BI{BPM:4}Pos:X-I",
-"SR:C09-BI{BPM:5}Pos:X-I","SR:C09-BI{BPM:6}Pos:X-I",
-"SR:C08-BI{BPM:1}Pos:X-I","SR:C08-BI{BPM:2}Pos:X-I",
-"SR:C08-BI{BPM:3}Pos:X-I","SR:C08-BI{BPM:4}Pos:X-I",
-"SR:C08-BI{BPM:5}Pos:X-I","SR:C08-BI{BPM:6}Pos:X-I",
-"SR:C03-BI{BPM:1}Pos:X-I","SR:C03-BI{BPM:2}Pos:X-I",
-"SR:C03-BI{BPM:3}Pos:X-I","SR:C03-BI{BPM:4}Pos:X-I",
-"SR:C03-BI{BPM:5}Pos:X-I","SR:C03-BI{BPM:6}Pos:X-I",
-"SR:C02-BI{BPM:1}Pos:X-I","SR:C02-BI{BPM:2}Pos:X-I",
-"SR:C02-BI{BPM:3}Pos:X-I","SR:C02-BI{BPM:4}Pos:X-I",
-"SR:C02-BI{BPM:5}Pos:X-I","SR:C02-BI{BPM:6}Pos:X-I",
-"SR:C01-BI{BPM:1}Pos:X-I","SR:C01-BI{BPM:2}Pos:X-I",
-"SR:C01-BI{BPM:3}Pos:X-I","SR:C01-BI{BPM:4}Pos:X-I",
-"SR:C01-BI{BPM:5}Pos:X-I","SR:C01-BI{BPM:6}Pos:X-I",
-"SR:C07-BI{BPM:1}Pos:X-I","SR:C07-BI{BPM:2}Pos:X-I",
-"SR:C07-BI{BPM:3}Pos:X-I","SR:C07-BI{BPM:4}Pos:X-I",
-"SR:C07-BI{BPM:5}Pos:X-I","SR:C07-BI{BPM:6}Pos:X-I",
-"SR:C06-BI{BPM:1}Pos:X-I","SR:C06-BI{BPM:2}Pos:X-I",
-"SR:C06-BI{BPM:3}Pos:X-I","SR:C06-BI{BPM:4}Pos:X-I",
-"SR:C06-BI{BPM:5}Pos:X-I","SR:C06-BI{BPM:6}Pos:X-I",
-"SR:C05-BI{BPM:1}Pos:X-I","SR:C05-BI{BPM:2}Pos:X-I",
-"SR:C05-BI{BPM:3}Pos:X-I","SR:C05-BI{BPM:4}Pos:X-I",
-"SR:C05-BI{BPM:5}Pos:X-I","SR:C05-BI{BPM:6}Pos:X-I",
-"SR:C04-BI{BPM:1}Pos:X-I","SR:C04-BI{BPM:2}Pos:X-I",
-"SR:C04-BI{BPM:3}Pos:X-I","SR:C04-BI{BPM:4}Pos:X-I",
-"SR:C04-BI{BPM:5}Pos:X-I","SR:C04-BI{BPM:6}Pos:X-I",
-"SR:C22-BI{BPM:1}Pos:X-I","SR:C22-BI{BPM:2}Pos:X-I",
-"SR:C22-BI{BPM:3}Pos:X-I","SR:C22-BI{BPM:4}Pos:X-I",
-"SR:C22-BI{BPM:5}Pos:X-I","SR:C22-BI{BPM:6}Pos:X-I",
-"SR:C23-BI{BPM:1}Pos:X-I","SR:C23-BI{BPM:2}Pos:X-I",
-"SR:C23-BI{BPM:3}Pos:X-I","SR:C23-BI{BPM:4}Pos:X-I",
-"SR:C23-BI{BPM:5}Pos:X-I","SR:C23-BI{BPM:6}Pos:X-I",
-"SR:C20-BI{BPM:1}Pos:X-I","SR:C20-BI{BPM:2}Pos:X-I",
-"SR:C20-BI{BPM:3}Pos:X-I","SR:C20-BI{BPM:4}Pos:X-I",
-"SR:C20-BI{BPM:5}Pos:X-I","SR:C20-BI{BPM:6}Pos:X-I",
-"SR:C21-BI{BPM:1}Pos:X-I","SR:C21-BI{BPM:2}Pos:X-I",
-"SR:C21-BI{BPM:3}Pos:X-I","SR:C21-BI{BPM:4}Pos:X-I",
-"SR:C21-BI{BPM:5}Pos:X-I","SR:C21-BI{BPM:6}Pos:X-I",
-"SR:C26-BI{BPM:1}Pos:X-I","SR:C26-BI{BPM:2}Pos:X-I",
-"SR:C26-BI{BPM:3}Pos:X-I","SR:C26-BI{BPM:4}Pos:X-I",
-"SR:C26-BI{BPM:5}Pos:X-I","SR:C26-BI{BPM:6}Pos:X-I",
-"SR:C27-BI{BPM:1}Pos:X-I","SR:C27-BI{BPM:2}Pos:X-I",
-"SR:C27-BI{BPM:3}Pos:X-I","SR:C27-BI{BPM:4}Pos:X-I",
-"SR:C27-BI{BPM:5}Pos:X-I","SR:C27-BI{BPM:6}Pos:X-I",
-"SR:C24-BI{BPM:1}Pos:X-I","SR:C24-BI{BPM:2}Pos:X-I",
-"SR:C24-BI{BPM:3}Pos:X-I","SR:C24-BI{BPM:4}Pos:X-I",
-"SR:C24-BI{BPM:5}Pos:X-I","SR:C24-BI{BPM:6}Pos:X-I",
-"SR:C25-BI{BPM:1}Pos:X-I","SR:C25-BI{BPM:2}Pos:X-I",
-"SR:C25-BI{BPM:3}Pos:X-I","SR:C25-BI{BPM:4}Pos:X-I",
-"SR:C25-BI{BPM:5}Pos:X-I","SR:C25-BI{BPM:6}Pos:X-I",
-"SR:C28-BI{BPM:1}Pos:X-I","SR:C28-BI{BPM:2}Pos:X-I",
-"SR:C28-BI{BPM:3}Pos:X-I","SR:C28-BI{BPM:4}Pos:X-I",
-"SR:C28-BI{BPM:5}Pos:X-I","SR:C28-BI{BPM:6}Pos:X-I",
-"SR:C29-BI{BPM:1}Pos:X-I","SR:C29-BI{BPM:2}Pos:X-I",
-"SR:C29-BI{BPM:3}Pos:X-I","SR:C29-BI{BPM:4}Pos:X-I",
-"SR:C29-BI{BPM:5}Pos:X-I","SR:C29-BI{BPM:6}Pos:X-I"]
+    pvs = [("SR:C19-BI{BPM:1}Pos:X-I", "SR:C19-BI{BPM:2}Pos:X-I",
+            "SR:C19-BI{BPM:3}Pos:X-I", "SR:C19-BI{BPM:4}Pos:X-I",
+            "SR:C19-BI{BPM:5}Pos:X-I","SR:C19-BI{BPM:6}Pos:X-I",
+            "SR:C18-BI{BPM:1}Pos:X-I","SR:C18-BI{BPM:2}Pos:X-I",
+            "SR:C18-BI{BPM:3}Pos:X-I","SR:C18-BI{BPM:4}Pos:X-I",
+            "SR:C18-BI{BPM:5}Pos:X-I","SR:C18-BI{BPM:6}Pos:X-I",
+            "SR:C13-BI{BPM:1}Pos:X-I","SR:C13-BI{BPM:2}Pos:X-I",
+            "SR:C13-BI{BPM:3}Pos:X-I","SR:C13-BI{BPM:4}Pos:X-I",
+            "SR:C13-BI{BPM:5}Pos:X-I","SR:C13-BI{BPM:6}Pos:X-I",
+            "SR:C12-BI{BPM:1}Pos:X-I","SR:C12-BI{BPM:2}Pos:X-I",
+            "SR:C12-BI{BPM:3}Pos:X-I","SR:C12-BI{BPM:4}Pos:X-I",
+            "SR:C12-BI{BPM:5}Pos:X-I","SR:C12-BI{BPM:6}Pos:X-I",
+            "SR:C11-BI{BPM:1}Pos:X-I","SR:C11-BI{BPM:2}Pos:X-I",
+            "SR:C11-BI{BPM:3}Pos:X-I","SR:C11-BI{BPM:4}Pos:X-I",
+            "SR:C11-BI{BPM:5}Pos:X-I","SR:C11-BI{BPM:6}Pos:X-I",
+            "SR:C10-BI{BPM:1}Pos:X-I","SR:C10-BI{BPM:2}Pos:X-I",
+            "SR:C10-BI{BPM:3}Pos:X-I","SR:C10-BI{BPM:4}Pos:X-I",
+            "SR:C10-BI{BPM:5}Pos:X-I","SR:C10-BI{BPM:6}Pos:X-I",
+            "SR:C17-BI{BPM:1}Pos:X-I","SR:C17-BI{BPM:2}Pos:X-I",
+            "SR:C17-BI{BPM:3}Pos:X-I","SR:C17-BI{BPM:4}Pos:X-I",
+            "SR:C17-BI{BPM:5}Pos:X-I","SR:C17-BI{BPM:6}Pos:X-I",
+            "SR:C16-BI{BPM:1}Pos:X-I","SR:C16-BI{BPM:2}Pos:X-I",
+            "SR:C16-BI{BPM:3}Pos:X-I","SR:C16-BI{BPM:4}Pos:X-I",
+            "SR:C16-BI{BPM:5}Pos:X-I","SR:C16-BI{BPM:6}Pos:X-I",
+            "SR:C15-BI{BPM:1}Pos:X-I","SR:C15-BI{BPM:2}Pos:X-I",
+            "SR:C15-BI{BPM:3}Pos:X-I","SR:C15-BI{BPM:4}Pos:X-I",
+            "SR:C15-BI{BPM:5}Pos:X-I","SR:C15-BI{BPM:6}Pos:X-I",
+            "SR:C14-BI{BPM:1}Pos:X-I","SR:C14-BI{BPM:2}Pos:X-I",
+            "SR:C14-BI{BPM:3}Pos:X-I","SR:C14-BI{BPM:4}Pos:X-I",
+            "SR:C14-BI{BPM:5}Pos:X-I","SR:C14-BI{BPM:6}Pos:X-I",
+            "SR:C30-BI{BPM:1}Pos:X-I","SR:C30-BI{BPM:2}Pos:X-I",
+            "SR:C30-BI{BPM:3}Pos:X-I","SR:C30-BI{BPM:4}Pos:X-I",
+            "SR:C30-BI{BPM:5}Pos:X-I","SR:C30-BI{BPM:6}Pos:X-I",
+            "SR:C09-BI{BPM:1}Pos:X-I","SR:C09-BI{BPM:2}Pos:X-I",
+            "SR:C09-BI{BPM:3}Pos:X-I","SR:C09-BI{BPM:4}Pos:X-I",
+            "SR:C09-BI{BPM:5}Pos:X-I","SR:C09-BI{BPM:6}Pos:X-I",
+            "SR:C08-BI{BPM:1}Pos:X-I","SR:C08-BI{BPM:2}Pos:X-I",
+            "SR:C08-BI{BPM:3}Pos:X-I","SR:C08-BI{BPM:4}Pos:X-I",
+            "SR:C08-BI{BPM:5}Pos:X-I","SR:C08-BI{BPM:6}Pos:X-I",
+            "SR:C03-BI{BPM:1}Pos:X-I","SR:C03-BI{BPM:2}Pos:X-I",
+            "SR:C03-BI{BPM:3}Pos:X-I","SR:C03-BI{BPM:4}Pos:X-I",
+            "SR:C03-BI{BPM:5}Pos:X-I","SR:C03-BI{BPM:6}Pos:X-I",
+            "SR:C02-BI{BPM:1}Pos:X-I","SR:C02-BI{BPM:2}Pos:X-I",
+            "SR:C02-BI{BPM:3}Pos:X-I","SR:C02-BI{BPM:4}Pos:X-I",
+            "SR:C02-BI{BPM:5}Pos:X-I","SR:C02-BI{BPM:6}Pos:X-I",
+            "SR:C01-BI{BPM:1}Pos:X-I","SR:C01-BI{BPM:2}Pos:X-I",
+            "SR:C01-BI{BPM:3}Pos:X-I","SR:C01-BI{BPM:4}Pos:X-I",
+            "SR:C01-BI{BPM:5}Pos:X-I","SR:C01-BI{BPM:6}Pos:X-I",
+            "SR:C07-BI{BPM:1}Pos:X-I","SR:C07-BI{BPM:2}Pos:X-I",
+            "SR:C07-BI{BPM:3}Pos:X-I","SR:C07-BI{BPM:4}Pos:X-I",
+            "SR:C07-BI{BPM:5}Pos:X-I","SR:C07-BI{BPM:6}Pos:X-I",
+            "SR:C06-BI{BPM:1}Pos:X-I","SR:C06-BI{BPM:2}Pos:X-I",
+            "SR:C06-BI{BPM:3}Pos:X-I","SR:C06-BI{BPM:4}Pos:X-I",
+            "SR:C06-BI{BPM:5}Pos:X-I","SR:C06-BI{BPM:6}Pos:X-I",
+            "SR:C05-BI{BPM:1}Pos:X-I","SR:C05-BI{BPM:2}Pos:X-I",
+            "SR:C05-BI{BPM:3}Pos:X-I","SR:C05-BI{BPM:4}Pos:X-I",
+            "SR:C05-BI{BPM:5}Pos:X-I","SR:C05-BI{BPM:6}Pos:X-I",
+            "SR:C04-BI{BPM:1}Pos:X-I","SR:C04-BI{BPM:2}Pos:X-I",
+            "SR:C04-BI{BPM:3}Pos:X-I","SR:C04-BI{BPM:4}Pos:X-I",
+            "SR:C04-BI{BPM:5}Pos:X-I","SR:C04-BI{BPM:6}Pos:X-I",
+            "SR:C22-BI{BPM:1}Pos:X-I","SR:C22-BI{BPM:2}Pos:X-I",
+            "SR:C22-BI{BPM:3}Pos:X-I","SR:C22-BI{BPM:4}Pos:X-I",
+            "SR:C22-BI{BPM:5}Pos:X-I","SR:C22-BI{BPM:6}Pos:X-I",
+            "SR:C23-BI{BPM:1}Pos:X-I","SR:C23-BI{BPM:2}Pos:X-I",
+            "SR:C23-BI{BPM:3}Pos:X-I","SR:C23-BI{BPM:4}Pos:X-I",
+            "SR:C23-BI{BPM:5}Pos:X-I","SR:C23-BI{BPM:6}Pos:X-I",
+            "SR:C20-BI{BPM:1}Pos:X-I","SR:C20-BI{BPM:2}Pos:X-I",
+            "SR:C20-BI{BPM:3}Pos:X-I","SR:C20-BI{BPM:4}Pos:X-I",
+            "SR:C20-BI{BPM:5}Pos:X-I","SR:C20-BI{BPM:6}Pos:X-I",
+            "SR:C21-BI{BPM:1}Pos:X-I","SR:C21-BI{BPM:2}Pos:X-I",
+            "SR:C21-BI{BPM:3}Pos:X-I","SR:C21-BI{BPM:4}Pos:X-I",
+            "SR:C21-BI{BPM:5}Pos:X-I","SR:C21-BI{BPM:6}Pos:X-I",
+            "SR:C26-BI{BPM:1}Pos:X-I","SR:C26-BI{BPM:2}Pos:X-I",
+            "SR:C26-BI{BPM:3}Pos:X-I","SR:C26-BI{BPM:4}Pos:X-I",
+            "SR:C26-BI{BPM:5}Pos:X-I","SR:C26-BI{BPM:6}Pos:X-I",
+            "SR:C27-BI{BPM:1}Pos:X-I","SR:C27-BI{BPM:2}Pos:X-I",
+            "SR:C27-BI{BPM:3}Pos:X-I","SR:C27-BI{BPM:4}Pos:X-I",
+            "SR:C27-BI{BPM:5}Pos:X-I","SR:C27-BI{BPM:6}Pos:X-I",
+            "SR:C24-BI{BPM:1}Pos:X-I","SR:C24-BI{BPM:2}Pos:X-I",
+            "SR:C24-BI{BPM:3}Pos:X-I","SR:C24-BI{BPM:4}Pos:X-I",
+            "SR:C24-BI{BPM:5}Pos:X-I","SR:C24-BI{BPM:6}Pos:X-I",
+            "SR:C25-BI{BPM:1}Pos:X-I","SR:C25-BI{BPM:2}Pos:X-I",
+            "SR:C25-BI{BPM:3}Pos:X-I","SR:C25-BI{BPM:4}Pos:X-I",
+            "SR:C25-BI{BPM:5}Pos:X-I","SR:C25-BI{BPM:6}Pos:X-I",
+            "SR:C28-BI{BPM:1}Pos:X-I","SR:C28-BI{BPM:2}Pos:X-I",
+            "SR:C28-BI{BPM:3}Pos:X-I","SR:C28-BI{BPM:4}Pos:X-I",
+            "SR:C28-BI{BPM:5}Pos:X-I","SR:C28-BI{BPM:6}Pos:X-I",
+            "SR:C29-BI{BPM:1}Pos:X-I","SR:C29-BI{BPM:2}Pos:X-I",
+            "SR:C29-BI{BPM:3}Pos:X-I","SR:C29-BI{BPM:4}Pos:X-I",
+            "SR:C29-BI{BPM:5}Pos:X-I","SR:C29-BI{BPM:6}Pos:X-I"),
+           ("SR:C19-BI{BPM:1}Pos:Y-I", "SR:C19-BI{BPM:2}Pos:Y-I",
+            "SR:C19-BI{BPM:3}Pos:Y-I", "SR:C19-BI{BPM:4}Pos:Y-I",
+            "SR:C19-BI{BPM:5}Pos:Y-I","SR:C19-BI{BPM:6}Pos:Y-I",
+            "SR:C18-BI{BPM:1}Pos:Y-I","SR:C18-BI{BPM:2}Pos:Y-I",
+            "SR:C18-BI{BPM:3}Pos:Y-I","SR:C18-BI{BPM:4}Pos:Y-I",
+            "SR:C18-BI{BPM:5}Pos:Y-I","SR:C18-BI{BPM:6}Pos:Y-I",
+            "SR:C13-BI{BPM:1}Pos:Y-I","SR:C13-BI{BPM:2}Pos:Y-I",
+            "SR:C13-BI{BPM:3}Pos:Y-I","SR:C13-BI{BPM:4}Pos:Y-I",
+            "SR:C13-BI{BPM:5}Pos:Y-I","SR:C13-BI{BPM:6}Pos:Y-I",
+            "SR:C12-BI{BPM:1}Pos:Y-I","SR:C12-BI{BPM:2}Pos:Y-I",
+            "SR:C12-BI{BPM:3}Pos:Y-I","SR:C12-BI{BPM:4}Pos:Y-I",
+            "SR:C12-BI{BPM:5}Pos:Y-I","SR:C12-BI{BPM:6}Pos:Y-I",
+            "SR:C11-BI{BPM:1}Pos:Y-I","SR:C11-BI{BPM:2}Pos:Y-I",
+            "SR:C11-BI{BPM:3}Pos:Y-I","SR:C11-BI{BPM:4}Pos:Y-I",
+            "SR:C11-BI{BPM:5}Pos:Y-I","SR:C11-BI{BPM:6}Pos:Y-I",
+            "SR:C10-BI{BPM:1}Pos:Y-I","SR:C10-BI{BPM:2}Pos:Y-I",
+            "SR:C10-BI{BPM:3}Pos:Y-I","SR:C10-BI{BPM:4}Pos:Y-I",
+            "SR:C10-BI{BPM:5}Pos:Y-I","SR:C10-BI{BPM:6}Pos:Y-I",
+            "SR:C17-BI{BPM:1}Pos:Y-I","SR:C17-BI{BPM:2}Pos:Y-I",
+            "SR:C17-BI{BPM:3}Pos:Y-I","SR:C17-BI{BPM:4}Pos:Y-I",
+            "SR:C17-BI{BPM:5}Pos:Y-I","SR:C17-BI{BPM:6}Pos:Y-I",
+            "SR:C16-BI{BPM:1}Pos:Y-I","SR:C16-BI{BPM:2}Pos:Y-I",
+            "SR:C16-BI{BPM:3}Pos:Y-I","SR:C16-BI{BPM:4}Pos:Y-I",
+            "SR:C16-BI{BPM:5}Pos:Y-I","SR:C16-BI{BPM:6}Pos:Y-I",
+            "SR:C15-BI{BPM:1}Pos:Y-I","SR:C15-BI{BPM:2}Pos:Y-I",
+            "SR:C15-BI{BPM:3}Pos:Y-I","SR:C15-BI{BPM:4}Pos:Y-I",
+            "SR:C15-BI{BPM:5}Pos:Y-I","SR:C15-BI{BPM:6}Pos:Y-I",
+            "SR:C14-BI{BPM:1}Pos:Y-I","SR:C14-BI{BPM:2}Pos:Y-I",
+            "SR:C14-BI{BPM:3}Pos:Y-I","SR:C14-BI{BPM:4}Pos:Y-I",
+            "SR:C14-BI{BPM:5}Pos:Y-I","SR:C14-BI{BPM:6}Pos:Y-I",
+            "SR:C30-BI{BPM:1}Pos:Y-I","SR:C30-BI{BPM:2}Pos:Y-I",
+            "SR:C30-BI{BPM:3}Pos:Y-I","SR:C30-BI{BPM:4}Pos:Y-I",
+            "SR:C30-BI{BPM:5}Pos:Y-I","SR:C30-BI{BPM:6}Pos:Y-I",
+            "SR:C09-BI{BPM:1}Pos:Y-I","SR:C09-BI{BPM:2}Pos:Y-I",
+            "SR:C09-BI{BPM:3}Pos:Y-I","SR:C09-BI{BPM:4}Pos:Y-I",
+            "SR:C09-BI{BPM:5}Pos:Y-I","SR:C09-BI{BPM:6}Pos:Y-I",
+            "SR:C08-BI{BPM:1}Pos:Y-I","SR:C08-BI{BPM:2}Pos:Y-I",
+            "SR:C08-BI{BPM:3}Pos:Y-I","SR:C08-BI{BPM:4}Pos:Y-I",
+            "SR:C08-BI{BPM:5}Pos:Y-I","SR:C08-BI{BPM:6}Pos:Y-I",
+            "SR:C03-BI{BPM:1}Pos:Y-I","SR:C03-BI{BPM:2}Pos:Y-I",
+            "SR:C03-BI{BPM:3}Pos:Y-I","SR:C03-BI{BPM:4}Pos:Y-I",
+            "SR:C03-BI{BPM:5}Pos:Y-I","SR:C03-BI{BPM:6}Pos:Y-I",
+            "SR:C02-BI{BPM:1}Pos:Y-I","SR:C02-BI{BPM:2}Pos:Y-I",
+            "SR:C02-BI{BPM:3}Pos:Y-I","SR:C02-BI{BPM:4}Pos:Y-I",
+            "SR:C02-BI{BPM:5}Pos:Y-I","SR:C02-BI{BPM:6}Pos:Y-I",
+            "SR:C01-BI{BPM:1}Pos:Y-I","SR:C01-BI{BPM:2}Pos:Y-I",
+            "SR:C01-BI{BPM:3}Pos:Y-I","SR:C01-BI{BPM:4}Pos:Y-I",
+            "SR:C01-BI{BPM:5}Pos:Y-I","SR:C01-BI{BPM:6}Pos:Y-I",
+            "SR:C07-BI{BPM:1}Pos:Y-I","SR:C07-BI{BPM:2}Pos:Y-I",
+            "SR:C07-BI{BPM:3}Pos:Y-I","SR:C07-BI{BPM:4}Pos:Y-I",
+            "SR:C07-BI{BPM:5}Pos:Y-I","SR:C07-BI{BPM:6}Pos:Y-I",
+            "SR:C06-BI{BPM:1}Pos:Y-I","SR:C06-BI{BPM:2}Pos:Y-I",
+            "SR:C06-BI{BPM:3}Pos:Y-I","SR:C06-BI{BPM:4}Pos:Y-I",
+            "SR:C06-BI{BPM:5}Pos:Y-I","SR:C06-BI{BPM:6}Pos:Y-I",
+            "SR:C05-BI{BPM:1}Pos:Y-I","SR:C05-BI{BPM:2}Pos:Y-I",
+            "SR:C05-BI{BPM:3}Pos:Y-I","SR:C05-BI{BPM:4}Pos:Y-I",
+            "SR:C05-BI{BPM:5}Pos:Y-I","SR:C05-BI{BPM:6}Pos:Y-I",
+            "SR:C04-BI{BPM:1}Pos:Y-I","SR:C04-BI{BPM:2}Pos:Y-I",
+            "SR:C04-BI{BPM:3}Pos:Y-I","SR:C04-BI{BPM:4}Pos:Y-I",
+            "SR:C04-BI{BPM:5}Pos:Y-I","SR:C04-BI{BPM:6}Pos:Y-I",
+            "SR:C22-BI{BPM:1}Pos:Y-I","SR:C22-BI{BPM:2}Pos:Y-I",
+            "SR:C22-BI{BPM:3}Pos:Y-I","SR:C22-BI{BPM:4}Pos:Y-I",
+            "SR:C22-BI{BPM:5}Pos:Y-I","SR:C22-BI{BPM:6}Pos:Y-I",
+            "SR:C23-BI{BPM:1}Pos:Y-I","SR:C23-BI{BPM:2}Pos:Y-I",
+            "SR:C23-BI{BPM:3}Pos:Y-I","SR:C23-BI{BPM:4}Pos:Y-I",
+            "SR:C23-BI{BPM:5}Pos:Y-I","SR:C23-BI{BPM:6}Pos:Y-I",
+            "SR:C20-BI{BPM:1}Pos:Y-I","SR:C20-BI{BPM:2}Pos:Y-I",
+            "SR:C20-BI{BPM:3}Pos:Y-I","SR:C20-BI{BPM:4}Pos:Y-I",
+            "SR:C20-BI{BPM:5}Pos:Y-I","SR:C20-BI{BPM:6}Pos:Y-I",
+            "SR:C21-BI{BPM:1}Pos:Y-I","SR:C21-BI{BPM:2}Pos:Y-I",
+            "SR:C21-BI{BPM:3}Pos:Y-I","SR:C21-BI{BPM:4}Pos:Y-I",
+            "SR:C21-BI{BPM:5}Pos:Y-I","SR:C21-BI{BPM:6}Pos:Y-I",
+            "SR:C26-BI{BPM:1}Pos:Y-I","SR:C26-BI{BPM:2}Pos:Y-I",
+            "SR:C26-BI{BPM:3}Pos:Y-I","SR:C26-BI{BPM:4}Pos:Y-I",
+            "SR:C26-BI{BPM:5}Pos:Y-I","SR:C26-BI{BPM:6}Pos:Y-I",
+            "SR:C27-BI{BPM:1}Pos:Y-I","SR:C27-BI{BPM:2}Pos:Y-I",
+            "SR:C27-BI{BPM:3}Pos:Y-I","SR:C27-BI{BPM:4}Pos:Y-I",
+            "SR:C27-BI{BPM:5}Pos:Y-I","SR:C27-BI{BPM:6}Pos:Y-I",
+            "SR:C24-BI{BPM:1}Pos:Y-I","SR:C24-BI{BPM:2}Pos:Y-I",
+            "SR:C24-BI{BPM:3}Pos:Y-I","SR:C24-BI{BPM:4}Pos:Y-I",
+            "SR:C24-BI{BPM:5}Pos:Y-I","SR:C24-BI{BPM:6}Pos:Y-I",
+            "SR:C25-BI{BPM:1}Pos:Y-I","SR:C25-BI{BPM:2}Pos:Y-I",
+            "SR:C25-BI{BPM:3}Pos:Y-I","SR:C25-BI{BPM:4}Pos:Y-I",
+            "SR:C25-BI{BPM:5}Pos:Y-I","SR:C25-BI{BPM:6}Pos:Y-I",
+            "SR:C28-BI{BPM:1}Pos:Y-I","SR:C28-BI{BPM:2}Pos:Y-I",
+            "SR:C28-BI{BPM:3}Pos:Y-I","SR:C28-BI{BPM:4}Pos:Y-I",
+            "SR:C28-BI{BPM:5}Pos:Y-I","SR:C28-BI{BPM:6}Pos:Y-I",
+            "SR:C29-BI{BPM:1}Pos:Y-I","SR:C29-BI{BPM:2}Pos:Y-I",
+            "SR:C29-BI{BPM:3}Pos:Y-I","SR:C29-BI{BPM:4}Pos:Y-I",
+            "SR:C29-BI{BPM:5}Pos:Y-I","SR:C29-BI{BPM:6}Pos:Y-I"),
+           ]
 
-    #p = ApCaWaveformPlot(['V:2-SR-BI{BETA}X-I', 'V:2-SR-BI{BETA}Y-I'])
-    #p = ApCaWaveformPlot(['V:2-SR-BI{ORBIT}X-I', 'V:2-SR-BI{ORBIT}Y-I'])
+    #p = ApCaWaveformPlot(['V:2-SR-BI{BETA}Y-I', 'V:2-SR-BI{BETA}Y-I'])
+    #p = ApCaWaveformPlot(['V:2-SR-BI{ORBIT}Y-I', 'V:2-SR-BI{ORBIT}Y-I'])
     #p = ApCaWaveformPlot(['BR-BI{DCCT:1}I-Wf'])
     #p = ApCaArrayPlot([('V:2-SR:C29-BI:G2{PL1:3551}SA:X',
     #                    'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
@@ -1232,7 +1372,7 @@ if __name__ == "__main__":
     #                    'V:2-SR:C29-BI:G4{PM1:3606}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH2:3630}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH1:3645}SA:X',)])
-    p = ApCaArrayPlot([pvs])
+    p = ApCaArrayPlot(pvs)
     import time
     #pvs = ['V:2-SR:C29-BI:G2{PL1:3551}SA:X',
     #       'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
