@@ -1328,10 +1328,12 @@ def isCothreadUsed():
     return using_cothread
 
 #----------------------------------------------------------------------
-def main(args):
+def main(args=None):
     """"""
 
-    if len(args) == 2:
+    if (args is None) or (len(args) == 1):
+        use_cached_lattice = False
+    elif len(args) == 2:
         if args[1].lower() == 'true':
             use_cached_lattice = True
         else:
