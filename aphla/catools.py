@@ -212,7 +212,12 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1), maxtrial=20):
             return False
 
 def measCaRmCol(kker, resp, **kwargs):
-    """measure the response matrix column between PVs
+    """
+    measure the response matrix column between PVs
+    wait - default 1.5 seconds
+    timeout - default 5 sec, EPICS CA timeout
+    npoints - default 5, observation per kick
+    verbose - default 0
     """
 
     wait = kwargs.get("wait", 1.5)
@@ -231,8 +236,8 @@ def measCaRmCol(kker, resp, **kwargs):
         dxmax = np.abs(kwargs["dxmax"])
         dxlst = list(np.linspace(-dxmax, dxmax, nx))
     else:
-        raise RuntimeError("need input for at least of the parameters: dxlst, xlst, dxmax")
-
+        raise RuntimeError("need input for at least of the parameters: "
+                           "dxlst, xlst, dxmax")
     
     n1 = len(dxlst)
     m = np.zeros(n0, 'd')
@@ -378,6 +383,7 @@ def readPvs(pvs, **kwargs):
     timeout = kwargs.get("timeout", 3)
     niter   = kwargs.get("niter", 3)
     tmppvs = [v for v in pvs]
+    # avoid double read in case pvs has duplicates.
     tmp = dict([(pv, None) for pv in pvs])
     for i in range(niter):
         tmpdat = caget(tmppvs, format=FORMAT_TIME, timeout=timeout)
