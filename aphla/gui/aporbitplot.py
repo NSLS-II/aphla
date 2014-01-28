@@ -13,7 +13,6 @@ if __name__ == "__main__":
     app = cothread.iqt()
     import aphla
 
-from collections import deque
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (
     PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
@@ -40,6 +39,7 @@ import time
 import numpy as np
 from collections import deque
 from datetime import datetime
+from functools import partial
 
 import sip
 
@@ -168,94 +168,6 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         # emit with a list of element names
         self.emit(SIGNAL("elementDoubleClicked(PyQt_PyObject)"), elements)
 
-
-class ApCaTimeSeriesPlot(Qwt.QwtPlot):
-    def __init__(self, pvs, parent = None, **kw):
-        super(ApCaTimeSeriesPlot, self).__init__(parent)
-
-        #self.setAutoReplot(False)
-        self.plotLayout().setAlignCanvasToScales(True)
-        #self.setAxisTitle(Qwt.QwtPlot.xBottom, "Time")
-        #self.setAxisScaleDraw(Qwt.QwtPlot.xBottom, TimeScaleDraw())
-        self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 240)
-        #self.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -10.0)
-        self.setAxisLabelAlignment(Qwt.QwtPlot.xBottom, Qt.AlignLeft)
-        scaleWidget = self.axisWidget(Qwt.QwtPlot.xBottom)
-        fmh = QFontMetrics(scaleWidget.font()).height()
-        #scaleWidget.setMinBorderDist(0, fmh/2)
-        
-        #self.setAxisTitle(Qwt.QwtPlot.yLeft, "I")
-        #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
-        if sip.SIP_VERSION_STR > '4.10.2':
-            DateTimeScaleEngine.enableInAxis(self, Qwt.QwtPlot.xBottom)
-        sd = self.axisScaleDraw(Qwt.QwtPlot.xBottom)
-        #fmh = QFontMetrics(scaleWidget.font()).height()
-        #scaleWidget.setMinBorderDist(0, fmh/2)
-        #print "Scale Draw Extent:", sd.minimumExtent()
-        sd.setMinimumExtent(fmh*2)
-        #print "Scale Draw Extent:", sd.minimumExtent()
-
-        self.drift = False
-
-        self._t, self._vals, self._refs = [], {}, {}
-        self._pvs = pvs
-        self.curves = [ Qwt.QwtPlotCurve(pv) for pv in pvs ]
-        for i,c in enumerate(self.curves):
-            self._vals.setdefault(self._pvs[i], [])
-            self._refs[pv] = -1
-            name, color = COLORS[i % len(COLORS)]
-            c.setPen(QPen(color))
-            c.attach(self)
-
-        grid1 = Qwt.QwtPlotGrid()
-        grid1.attach(self)
-        grid1.setPen(QPen(Qt.black, 0, Qt.DotLine))
-
-        legend = Qwt.QwtLegend()
-        legend.setItemMode(Qwt.QwtLegend.CheckableItem)
-        self.insertLegend(legend, self.RightLegend)
-
-        self.mark1 = Qwt.QwtPlotMarker()
-        self.mark1.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
-        #self.mark1.setPen(QPen(QColor(0, 255, 0)))
-        self.mark1.attach(self)
-        self.live = True
-        self.__hold = False
-        self._timerId = self.startTimer(1500)
-        
-    def timerEvent(self, e):
-        if not self.live: return
-        if self.__hold: return
-
-        self.__hold = True
-        self.updateData()
-        if self.drift:
-            for i,pv in enumerate(self._pvs):
-                y0 = self._vals[pv][self._refs[pv]]
-                self.curves[i].setData(
-                    self._t, [d - y0 for d in self._vals[pv]])
-                #self.mark1.setValue(self._t[self._refs[pv]], 0.0)
-        else:
-            for i,pv in enumerate(self._pvs):
-                self.curves[i].setData(self._t, self._vals[pv])
-            
-        self.setAxisScale(Qwt.QwtPlot.xBottom, self._t[0], self._t[-1])
-        #self.zoomer.setZoomBase(False)
-        self.replot()
-        self.__hold = False
-
-    def saveAsReference(self, pv = None):
-        for i,pv in enumerate(self._pvs):
-            self._refs[pv] = len(self._vals[pv]) - 1
-
-    def updateData(self):
-        self._t.append(float(datetime.now().strftime("%s")))
-        for i,v in enumerate(caget(self._pvs, timeout=0.8)):
-            self._vals[v.name].append(v if v.ok else np.nan)
-        
-    def closeEvent(self, e):
-        print "Close"
-        e.accept()
 
 class ApErrBarCurve(Qwt.QwtPlotCurve):
     """
@@ -393,46 +305,29 @@ class ApErrBarCurve(Qwt.QwtPlotCurve):
         Qwt.QwtPlotCurve.drawFromTo(self, painter, xMap, yMap, first, last)
 
 
-class ApCaWaveformPlot(Qwt.QwtPlot):
-    def __init__(self, pvs, **kwargs):
-        """initialization
-        
-        Parameters
-        -----------
-        pvs: waveform PV list
-        parent : None
-        title : 
-        """
-        parent = kwargs.pop("parent", None)
-        super(ApCaWaveformPlot, self).__init__(parent)
-        self.live = kwargs.get("live", True)
-        self.__hold = False
-
-        self.setCanvasBackground(Qt.white)
-        self.setAutoReplot(False)
-
-        self.plotLayout().setAlignCanvasToScales(True)
-
+class ApCaPlot(Qwt.QwtPlot):
+    def __init__(self, parent = None):
+        super(Qwt.QwtPlot, self).__init__(parent)
         self.drift = False
-        self._pvs, self.curves, self._ref = pvs, [], []
-        for i,pv in enumerate(pvs):
-            name, color = COLORS[i % len(COLORS)]
-            c = Qwt.QwtPlotCurve()
-            c.setPen(QPen(color, 1.5))
-            c.attach(self)
-            self.curves.append(c)
-            self._ref.append(None)
+        self.live = True
+        self.curves = []
+        self._hold = False
+        self._cadata = None
 
-        # one more plot with second y axis
-        self.curve2 = Qwt.QwtPlotCurve()
+        grid = Qwt.QwtPlotGrid()
+        grid.attach(self)
+        grid.setPen(QPen(Qt.black, 0, Qt.DotLine))
+        #grid1 = Qwt.QwtPlotGrid()
+        #grid1.attach(self)
+        #pen = grid1.majPen()
+        #pen.setStyle(Qt.DotLine)
+        #pen.setWidthF(1.2)
+        #grid1.setMajPen(pen)
 
-        #self.setMinimumSize(300, 100)
-        grid1 = Qwt.QwtPlotGrid()
-        grid1.attach(self)
-        pen = grid1.majPen()
-        pen.setStyle(Qt.DotLine)
-        pen.setWidthF(1.2)
-        grid1.setMajPen(pen)
+
+        legend = Qwt.QwtLegend()
+        legend.setItemMode(Qwt.QwtLegend.CheckableItem)
+        self.insertLegend(legend, self.RightLegend)
 
         self.picker1 = None
         #self.zoomer1 = None
@@ -450,8 +345,14 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
         #self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect6, Qt.NoButton)
         # right click will not zoom to home
         self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect2, Qt.NoButton)
+        self.connect(self.zoomer1, SIGNAL("zoomed(const QwtDoubleRect&)"),
+                     self.zoomed)
 
-        self.markers = []
+        self.marks = [] # Qwt.QwtPlotMarker()
+        #self.mark1.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        #self.mark1.setPen(QPen(QColor(0, 255, 0)))
+        #self.mark1.attach(self)
+        #self.markers = []
         #self.addMarkers(None)
         #self.marker = Qwt.QwtPlotMarker()
         #self.marker.attach(self)
@@ -459,43 +360,10 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
         #self.marker.setLabelAlignment(Qt.AlignBottom)
         #self.marker.setValue(100, 0)
         #self.marker.setLabel(Qwt.QwtText("Hello"))
-        #self.connect(self, SIGNAL("doubleClicked
-        self.count = 0
-        self._cadata = CaDataMonitor()
-        for pv in pvs:
-            self._cadata.addHook(pv, self._ca_update)
-        self._cadata.addPv(pvs)
 
-    def _ca_update(self, val, idx = None):
-        if self.__hold: return
-        if not self.live: return
+        self.connect(self, SIGNAL("legendChecked(QwtPlotItem*, bool)"),
+                     self.showCurve)
 
-        self.count += 1
-        c = self.curves[idx]
-
-        if self._ref[idx] is not None and self.drift:
-            vref = self._ref[idx]
-            y = [val[i] - yi for i,yi in enumerate(vref)]
-            c.setData(range(len(val)), y)
-        else:
-            c.setData(range(len(val)), val)
-        self.replot()
-        if self.count == 1: self.zoomer1.setZoomBase(False)
-
-    def saveAsReference(self):
-        self.__hold = True
-        for i,c in enumerate(self.curves):
-            d = c.data()
-            self._ref[i] = [d.y(j) for j in range(d.size())]
-            print i, np.average(self._ref[i])
-        self.__hold = False
-
-    def setDrift(self, on):
-        if on:
-            self.saveAsReference()
-            self.drift = True
-        else:
-            self.drift = False
 
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
@@ -520,20 +388,6 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
                 mk1.setAxis(Qwt.QwtPlot.xBottom, Qwt.QwtPlot.yRight)
                 mk1.attach(self)
                 self.markers.append([r[0], mk1])
-
-    #def elementDoubleClicked(self, elem):
-    #    print "element selected:", elem
-    #    self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
-    
-    def contextMenuEvent(self, e):
-        cmenu = QMenu()
-        m_drift = QAction("Drift", self)
-        m_drift.setCheckable(True)
-        #c = QApplication.clipboard()
-        m_drift.setChecked(self.drift)
-        self.connect(m_drift, SIGNAL("toggled(bool)"), self.setDrift)
-        cmenu.addAction(m_drift)
-        cmenu.exec_(e.globalPos())
 
     def setMagnetProfile(self, mprof):
         self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
@@ -568,6 +422,313 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
         #self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
         #             self.zoomed1)
         #self.timerId = self.startTimer(1000)
+        self.showCurve(self.curvemag, True)
+
+    def addMagnetProfile(self, sb, se, name, minlen = 0.2):
+        self.picker1.addMagnetProfile(sb, se, name, minlen)
+
+    def showCurve(self, c, on):
+        c.setVisible(on)
+        w = self.legend().find(c)
+        if w and w.inherits("QwtLegendItem"):
+            w.setChecked(on)
+
+        #if any([c.isVisible() for c in self.curves])
+        self.replot()
+
+    def curvesBound(self, yax = Qwt.QwtPlot.yLeft):
+        bd = QtCore.QRectF()
+        for c in self.curves:
+            if not c.isVisible(): continue
+            if c.yAxis() != yax: continue
+            bd = bd.united(c.boundingRect())
+        return bd
+
+    def resetPlot(self, ax = Qwt.QwtPlot.yLeft):
+        bd = self.curvesBound()
+        if not bd.isValid(): return
+        self.setAxisScale(ax, bd.bottom(), bd.top())
+        self.setAxisScale(Qwt.QwtPlot.xBottom, bd.left(), bd.right())
+
+
+    def contextMenuEvent(self, e):
+        cmenu = QMenu()
+        m_drift = QAction("Drift", self)
+        m_drift.setCheckable(True)
+        #c = QApplication.clipboard()
+        m_drift.setChecked(self.drift)
+        self.connect(m_drift, SIGNAL("toggled(bool)"), self.setDrift)
+        cmenu.addAction(m_drift)
+
+        m_autoscale = QAction("Auto Scale", self)
+        m_autoscale.setCheckable(True)
+        m_autoscale.setChecked(self.axisAutoScale(Qwt.QwtPlot.yLeft))
+        self.connect(m_autoscale, SIGNAL("toggled(bool)"), self._setAutoScale)
+        cmenu.addAction(m_autoscale)
+
+        cmenu.addSeparator()
+        #m_xzoomin = QAction("Zoom in X", self)
+        #m_xzoomin.setShortcut(
+        #self.connect(m_xzoomin, SIGNAL("triggered(bool)"),
+        #             partial(self.scaleX, factor=0.7))
+        cmenu.addAction("Zoom in X", partial(self.scaleX, factor=0.7),
+                        QtGui.QKeySequence.ZoomIn)
+        cmenu.addAction("Zoom out X", partial(self.scaleX, factor=1.4),
+                        QtGui.QKeySequence.ZoomOut)
+        cmenu.addAction("Auto fit X", self.scaleX)
+
+        cmenu.addSeparator()
+        cmenu.addAction("Zoom in Y", partial(self.scaleY, factor=0.7))
+        cmenu.addAction("Zoom out Y", partial(self.scaleY, factor=1.4))
+        cmenu.addAction("Auto fit Y", self.scaleY)
+
+        cmenu.addSeparator()
+        m_reset = QAction("Reset Plot", self)
+        self.connect(m_reset, SIGNAL("triggered(bool)"), self.resetPlot)
+        cmenu.addAction(m_reset)
+
+
+        cmenu.exec_(e.globalPos())
+
+    def setDrift(self, on):
+        if on:
+            self.saveAsReference()
+            self.drift = True
+        else:
+            self.drift = False
+        self.replot()
+
+    def _setAutoScale(self, on):
+        if on:
+            self.zoomer1.reset()
+            self.zoomer1.setEnabled(False)
+            self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+        else:
+            self._hold = True
+            self.zoomer1.setEnabled(True)
+            asd = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
+            #print asd.lowerBound(), asd.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.yLeft, asd.lowerBound(),
+                              asd.upperBound())
+            # has to replot before base
+            self.zoomer1.setZoomBase(True)
+            self._hold = False
+
+    def scaleX(self, factor = None, axis = Qwt.QwtPlot.xBottom):
+        if self.axisAutoScale(axis):
+            self._setAutoScale(False)
+
+        scalediv = self.axisScaleDiv(axis)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dx = (sr - sl)*(factor-1.0)/2
+            self.setAxisScale(axis, sl - dx, sr + dx)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            xmin = bound.left()
+            xmax = bound.right()
+            if w > 0.0: self.setAxisScale(axis, xmin, xmax)
+            #if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        self.replot()
+        
+    def scaleY(self, factor = None, axis = Qwt.QwtPlot.yLeft):
+        if self.axisAutoScale(axis):
+            self._setAutoScale(False)
+
+        scalediv = self.axisScaleDiv(axis)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dy = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(axis, sl - dy, sr + dy)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
+        
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            ymin = bound.top() - h*.05
+            ymax = bound.bottom() + h*.03
+            xmin = bound.left()
+            xmax = bound.right()
+            #if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        self.replot()
+
+    def zoomed(self, r):
+        print "Zoomed"
+        pass
+
+    def closeEvent(self, e):
+        if self._cadata is not None: self._cadata.close()
+        e.accept()
+
+
+class ApCaTimeSeriesPlot(ApCaPlot):
+    def __init__(self, pvs, parent = None, **kw):
+        super(ApCaTimeSeriesPlot, self).__init__(parent)
+
+        #self.setAutoReplot(False)
+        self.plotLayout().setAlignCanvasToScales(True)
+        #self.setAxisTitle(Qwt.QwtPlot.xBottom, "Time")
+        #self.setAxisScaleDraw(Qwt.QwtPlot.xBottom, TimeScaleDraw())
+        self.setAxisScale(Qwt.QwtPlot.xBottom, 0, 240)
+        #self.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -10.0)
+        self.setAxisLabelAlignment(Qwt.QwtPlot.xBottom, Qt.AlignLeft)
+        scaleWidget = self.axisWidget(Qwt.QwtPlot.xBottom)
+        fmh = QFontMetrics(scaleWidget.font()).height()
+        #scaleWidget.setMinBorderDist(0, fmh/2)
+        
+        #self.setAxisTitle(Qwt.QwtPlot.yLeft, "I")
+        #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
+        if sip.SIP_VERSION_STR > '4.10.2':
+            DateTimeScaleEngine.enableInAxis(self, Qwt.QwtPlot.xBottom)
+        sd = self.axisScaleDraw(Qwt.QwtPlot.xBottom)
+        #fmh = QFontMetrics(scaleWidget.font()).height()
+        #scaleWidget.setMinBorderDist(0, fmh/2)
+        #print "Scale Draw Extent:", sd.minimumExtent()
+        sd.setMinimumExtent(fmh*2)
+        #print "Scale Draw Extent:", sd.minimumExtent()
+
+        self._t, self._vals, self._refs = [], {}, {}
+        self._pvs = pvs
+        self.curves = [ Qwt.QwtPlotCurve(pv) for pv in pvs ]
+        for i,c in enumerate(self.curves):
+            self._vals.setdefault(self._pvs[i], [])
+            self._refs[pv] = -1
+            name, color = COLORS[i % len(COLORS)]
+            c.setPen(QPen(color))
+            c.attach(self)
+
+        self._timerId = self.startTimer(1500)
+        
+    def timerEvent(self, e):
+        if not self.live: return
+        if self._hold: return
+
+        self._hold = True
+        self.updateData()
+        if self.drift:
+            for i,pv in enumerate(self._pvs):
+                y0 = self._vals[pv][self._refs[pv]]
+                self.curves[i].setData(
+                    self._t, [d - y0 for d in self._vals[pv]])
+                #self.mark1.setValue(self._t[self._refs[pv]], 0.0)
+        else:
+            for i,pv in enumerate(self._pvs):
+                self.curves[i].setData(self._t, self._vals[pv])
+            
+        self.setAxisScale(Qwt.QwtPlot.xBottom, self._t[0], self._t[-1])
+        #self.zoomer.setZoomBase(False)
+        self.replot()
+        self._hold = False
+
+    def saveAsReference(self, pv = None):
+        for i,pv in enumerate(self._pvs):
+            self._refs[pv] = len(self._vals[pv]) - 1
+
+    def updateData(self):
+        self._t.append(float(datetime.now().strftime("%s")))
+        for i,v in enumerate(caget(self._pvs, timeout=0.8)):
+            self._vals[v.name].append(v if v.ok else np.nan)
+        
+    def closeEvent(self, e):
+        print "Close"
+        e.accept()
+
+
+class ApCaWaveformPlot(ApCaPlot):
+    def __init__(self, pvs, **kwargs):
+        """initialization
+        
+        Parameters
+        -----------
+        pvs: waveform PV list
+        parent : None
+        title : 
+        """
+        parent = kwargs.pop("parent", None)
+        super(ApCaWaveformPlot, self).__init__(parent)
+
+        self.setCanvasBackground(Qt.white)
+        self.setAutoReplot(False)
+
+        self.plotLayout().setAlignCanvasToScales(True)
+
+        self._pvs, self.curves, self._ref = pvs, [], []
+        for i,pv in enumerate(pvs):
+            name, color = COLORS[i % len(COLORS)]
+            c = Qwt.QwtPlotCurve()
+            c.setPen(QPen(color, 1.5))
+            c.attach(self)
+            self.curves.append(c)
+            self._ref.append(None)
+
+        # one more plot with second y axis
+        #self.curve2 = Qwt.QwtPlotCurve()
+
+        #self.setMinimumSize(300, 100)
+
+        #self.connect(self, SIGNAL("doubleClicked
+        self.count = 0
+        self._cadata = CaDataMonitor()
+        for pv in pvs:
+            self._cadata.addHook(pv, self._ca_update)
+        self._cadata.addPv(pvs)
+
+    def _ca_update(self, val, idx = None):
+        if self._hold: return
+        if not self.live: return
+
+        self.count += 1
+        c = self.curves[idx]
+
+        if self._ref[idx] is not None and self.drift:
+            vref = self._ref[idx]
+            y = [val[i] - yi for i,yi in enumerate(vref)]
+            c.setData(range(len(val)), y)
+        else:
+            c.setData(range(len(val)), val)
+        self.replot()
+        if self.count == 1: self.zoomer1.setZoomBase(False)
+
+    def saveAsReference(self):
+        self._hold = True
+        for i,c in enumerate(self.curves):
+            d = c.data()
+            self._ref[i] = [d.y(j) for j in range(d.size())]
+            print i, np.average(self._ref[i])
+        self._hold = False
+
+    def setDrift(self, on):
+        if on:
+            self.saveAsReference()
+            self.drift = True
+        else:
+            self.drift = False
+
+
+    #def elementDoubleClicked(self, elem):
+    #    print "element selected:", elem
+    #    self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
+    
+    def contextMenuEvent(self, e):
+        cmenu = QMenu()
+        m_drift = QAction("Drift", self)
+        m_drift.setCheckable(True)
+        #c = QApplication.clipboard()
+        m_drift.setChecked(self.drift)
+        self.connect(m_drift, SIGNAL("toggled(bool)"), self.setDrift)
+        cmenu.addAction(m_drift)
+        cmenu.exec_(e.globalPos())
+
 
     def alignScales(self):
         # raise RuntimeError("ERROR")
@@ -583,9 +744,6 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
                 scaleDraw.enableComponent(
                     Qwt.QwtAbstractScaleDraw.Backbone, False)
 
-    def addMagnetProfile(self, sb, se, name, minlen = 0.2):
-        self.picker1.addMagnetProfile(sb, se, name, minlen)
-
     def setErrorBar(self, on):
         self.curves1[0].errorOnTop = on
 
@@ -595,48 +753,6 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
         sl1, sr1 = sl + (sr-sl)*fraction, sr + (sr-sl)*fraction
         self.setAxisScale(ax, sl1, sr1)
 
-    def scaleXBottom(self, factor = None):
-        scalediv = self.axisScaleDiv(Qwt.QwtPlot.xBottom)
-        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
-        if factor is not None:
-            dx = (sr - sl)*(factor-1.0)/2
-            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
-            self.setAxisScale(Qwt.QwtPlot.xBottom, sl - dx, sr + dx)
-        else:
-            bound = self.curvesBound()
-            w = bound.width()
-            h = bound.height()
-            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
-            xmin = bound.left()
-            xmax = bound.right()
-            if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
-            #if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
-
-        # leave replot to the caller
-        #self.replot()
-        
-    def scaleYLeft(self, factor = None):
-        scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
-        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
-        if factor is not None:
-            dy = (sr - sl)*(factor-1.0)/2
-            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
-            self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
-        else:
-            bound = self.curvesBound()
-            w = bound.width()
-            h = bound.height()
-        
-            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
-            ymin = bound.top() - h*.05
-            ymax = bound.bottom() + h*.03
-            xmin = bound.left()
-            xmax = bound.right()
-            #if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
-            if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
-
-        # leave replot to the caller
-        #self.replot()
 
     def setColor(self, c):
         symb = self.curve1.symbol()
@@ -652,21 +768,9 @@ class ApCaWaveformPlot(Qwt.QwtPlot):
         pen.setColor(c)
         self.curves1[0].setPen(pen)
 
-    def curvesBound(self):
-        bd = self.curves1[0].boundingRect()
-        if self.curves1[1].isVisible():
-            bd = bd.united(self.curves1[1].boundingRect())
-        if self.curves1[2].isVisible():
-            bd = bd.united(self.curves1[2].boundingRect())
-        if self.curve2.isVisible():
-            bd = bd.united(self.curve2.boundingRect())
-        return bd
 
-    def closeEvent(self, e):
-        self._cadata.close()
-        e.accept()
 
-class ApCaArrayPlot(Qwt.QwtPlot):
+class ApCaArrayPlot(ApCaPlot):
     def __init__(self, pvs, **kwargs):
         """initialization
         
@@ -678,9 +782,7 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         """
         parent = kwargs.pop("parent", None)
         super(ApCaArrayPlot, self).__init__(parent)
-        self.live = kwargs.get("live", True)
         self.labels = kwargs.get("labels", None)
-        self.__hold = False
 
         self.setCanvasBackground(Qt.white)
         #self.setAxisAutoScale(Qwt.QwtPlot.yLeft, False)
@@ -689,7 +791,6 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         self.plotLayout().setAlignCanvasToScales(True)
         self.setMinimumSize(600, 100)
 
-        self.drift = False
         self._count = []
         self.curves, self._y = [], []
         self._pvs = {} # (pv, (i_curve, j_point))
@@ -701,6 +802,8 @@ class ApCaArrayPlot(Qwt.QwtPlot):
             c = ApErrBarCurve(color)
             if self.labels is None or not self.labels[i]:
                 c.setTitle("[%s ...]" % pvl[0])
+            else:
+                c.setTitle(self.labels[i])
             #c.setBrush(QBrush(COLORS[i % len(COLORS)]))
             #c.setPen(QPen(colors))
             #c.setPen(QPen(Qt.red, 4))
@@ -719,70 +822,19 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         # one more plot with second y axis
         self.curve2 = Qwt.QwtPlotCurve()
         
-        #self.setMinimumSize(300, 100)
-        grid1 = Qwt.QwtPlotGrid()
-        grid1.attach(self)
-        pen = grid1.majPen()
-        pen.setStyle(Qt.DotLine)
-        pen.setWidthF(1.2)
-        grid1.setMajPen(pen)
-
-        # legend
-        legend = Qwt.QwtLegend()
-        legend.setItemMode(Qwt.QwtLegend.CheckableItem)
-        self.insertLegend(legend, self.RightLegend)
         for c in self.curves:
             self.showCurve(c, True)
+
         self.showCurve(self.curve2, True)
 
-        self.picker1 = None
-        #self.zoomer1 = None
-        self.zoomer1 = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
-                                         Qwt.QwtPlot.yLeft,
-                                         Qwt.QwtPicker.DragSelection,
-                                         Qwt.QwtPicker.AlwaysOff,
-                                         self.canvas())
-        self.zoomer1.setRubberBandPen(QPen(Qt.black))
-        # zoom in and out and Home
-        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyRedo, Qt.Key_I)
-        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyUndo, Qt.Key_O)
-        self.zoomer1.setKeyPattern(Qwt.QwtEventPattern.KeyHome, Qt.Key_Home)
-        #self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect3, Qt.NoButton)
-        #self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect6, Qt.NoButton)
-        # right click will not zoom to home
-        self.zoomer1.setMousePattern(Qwt.QwtEventPattern.MouseSelect2, Qt.NoButton)
-        self.connect(self.zoomer1, SIGNAL("zoomed(const QwtDoubleRect&)"),
-                     self.zoomed)
-
-        self.markers = []
-        #self.addMarkers(None)
-        #self.marker = Qwt.QwtPlotMarker()
-        #self.marker.attach(self)
-        #self.marker.setLabelAlignment(Qt.AlignLeft)
-        #self.marker.setLabelAlignment(Qt.AlignBottom)
-        #self.marker.setValue(100, 0)
-        #self.marker.setLabel(Qwt.QwtText("Hello"))
-        #self.connect(self, SIGNAL("doubleClicked
-        # min wait for call back 0.6 sec
         self._cadata = CaDataMonitor(wait=0.6)
         for pv in self._pvs.keys():
             #self._cadata.addHook(pv, self._ca_update)
             self._cadata.addHook(pv, self._ca_update_all)
         self._cadata.addPv(self._pvs.keys())
 
-        self.connect(self, SIGNAL("legendChecked(QwtPlotItem*, bool)"),
-                     self.showCurve)
-
-    def zoomed(self, r):
-        #if self.zoomer1.zoomRectIndex() == 0:
-        #    self.setAxisAutoScale(self.zoomer1.xAxis())
-        #    self.setAxisAutoScale(self.zoomer1.yAxis())
-        #    self.replot()
-        #print "zoomed"
-        pass
-
     def _ca_update(self, val, idx = None):
-        if self.__hold: return
+        if self._hold: return
         if not self.live: return
         #print "Updating %s: " % val.name, self._pvs[val.name], val
         for i,j in self._pvs.get(val.name, []):
@@ -801,7 +853,7 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         QtGui.qApp.processEvents()
 
     def _ca_update_all(self, val, idx = None):
-        if self.__hold: return
+        if self._hold: return
         if not self.live: return
         #print "Updating %s: " % val.name, self._pvs[val.name], val
         for pv in self._pvs.keys():
@@ -824,61 +876,11 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         QtGui.qApp.processEvents()
 
     def saveAsReference(self):
-        self.__hold = True
+        self._hold = True
         for i,c in enumerate(self.curves):
             xi, yi, ei = c.data()
             self._ref[i] = yi
-        self.__hold = False
-
-    def setDrift(self, on):
-        if on:
-            self.saveAsReference()
-            self.drift = True
-        else:
-            self.drift = False
-        self.replot()
-
-    def _setAutoScale(self, on):
-        if on:
-            self.zoomer1.reset()
-            self.zoomer1.setEnabled(False)
-            self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
-        else:
-            self.__hold = True
-            self.zoomer1.setEnabled(True)
-            asd = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
-            #print asd.lowerBound(), asd.upperBound()
-            self.setAxisScale(Qwt.QwtPlot.yLeft, asd.lowerBound(),
-                              asd.upperBound())
-            # has to replot before base
-            self.zoomer1.setZoomBase(True)
-            self.__hold = False
-
-    def showCurve(self, c, on):
-        c.setVisible(on)
-        w = self.legend().find(c)
-        if w and w.inherits("QwtLegendItem"):
-            w.setChecked(on)
-
-        #if any([c.isVisible() for c in self.curves])
-        self.replot()
-
-    def contextMenuEvent(self, e):
-        cmenu = QMenu()
-        m_drift = QAction("Drift", self)
-        m_drift.setCheckable(True)
-        #c = QApplication.clipboard()
-        m_drift.setChecked(self.drift)
-        self.connect(m_drift, SIGNAL("toggled(bool)"), self.setDrift)
-        cmenu.addAction(m_drift)
-
-        m_autoscale = QAction("Auto Scale", self)
-        m_autoscale.setCheckable(True)
-        m_autoscale.setChecked(self.axisAutoScale(Qwt.QwtPlot.yLeft))
-        self.connect(m_autoscale, SIGNAL("toggled(bool)"), self._setAutoScale)
-        cmenu.addAction(m_autoscale)
-
-        cmenu.exec_(e.globalPos())
+        self._hold = False
 
     def setMarkers(self, mks, on = True):
         names, locs = zip(*mks)
@@ -908,41 +910,6 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         print "element selected:", elem
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
     
-    def setMagnetProfile(self, mprof):
-        self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
-        # get x, y, color(optional)
-        # x, y and profile(left, right, name)
-        mags, magv, magp = [], [], []
-        for rec in mprof:
-            mags.extend(rec[0])
-            magv.extend(rec[1])
-            if rec[3]:
-                magp.append((min(rec[0]), max(rec[0]), 
-                             rec[3].encode('ascii')))
-        self.curvemag.setData(mags, magv)
-        self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
-        # fixed scale
-        self.setAxisScale(Qwt.QwtPlot.yRight, -2, 20)
-        self.enableAxis(Qwt.QwtPlot.yRight, False)
-
-        self.curvemag.attach(self)
-
-        if magp and sip.SIP_VERSION_STR > '4.10.2':
-            self.picker1 = MagnetPicker(self.canvas(), profile=magp)
-            #sb = [v[0] for v in magp]
-            #se = [v[1] for v in magp]
-            #names = [v[2] for v in magp]
-            #self.picker1.addMagnetProfile(sb, se, names)
-            self.picker1.setTrackerPen(QPen(Qt.red, 4))
-            self.connect(self.picker1, 
-                         SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
-                         self.elementDoubleClicked)
-        self.showCurve(self.curvemag, True)
-
-        #self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
-        #             self.zoomed1)
-        #self.timerId = self.startTimer(1000)
-
     def alignScales(self):
         # raise RuntimeError("ERROR")
         return
@@ -956,9 +923,6 @@ class ApCaArrayPlot(Qwt.QwtPlot):
             if scaleDraw:
                 scaleDraw.enableComponent(
                     Qwt.QwtAbstractScaleDraw.Backbone, False)
-
-    def addMagnetProfile(self, sb, se, name, minlen = 0.2):
-        self.picker1.addMagnetProfile(sb, se, name, minlen)
 
     def setErrorBar(self, on):
         self.curves1[0].errorOnTop = on
@@ -1026,16 +990,6 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         pen.setColor(c)
         self.curves1[0].setPen(pen)
 
-    def curvesBound(self):
-        bd = self.curves1[0].boundingRect()
-        if self.curves1[1].isVisible():
-            bd = bd.united(self.curves1[1].boundingRect())
-        if self.curves1[2].isVisible():
-            bd = bd.united(self.curves1[2].boundingRect())
-        if self.curve2.isVisible():
-            bd = bd.united(self.curve2.boundingRect())
-        return bd
-
     def closeEvent(self, e):
         self._cadata.close()
         e.accept()
@@ -1063,7 +1017,6 @@ class ApMdiSubPlot(QMdiSubWindow):
 
     def editElements(self):
         self.emit(SIGNAL("editVisibleElements()"))
-
 
     def currentXlim(self):
         """a tuple of (xmin, xmax)"""

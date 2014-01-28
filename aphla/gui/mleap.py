@@ -413,26 +413,24 @@ class OrbitPlotMainWindow(QMainWindow):
         #viewToolBar.addAction(viewErrorBarAction)
         #viewToolBar.addAction(QWhatsThis.createAction(self))
 
-        viewToolBar2 = self.addToolBar("Scale Plot")
-        zoomActions = [(":/view_zoom_xy.png", "Fit", self.scalePlot),
-                       (None, None, None),
-                       (":/view_zoom_y.png", "Fit In Y", self.scalePlot),
-                       (":/view_zoomin_y.png", "Zoom In Y", self.scalePlot),
-                       (":/view_zoomout_y.png", "Zoom Out Y", self.scalePlot),
-                       (":/view_move_up.png", "Move Up", self.scalePlot),
-                       (":/view_move_down.png", "Move Down", self.scalePlot),
-                       (None, None, None),
-                       (":/view_zoom_x.png", "Fit In X", self.scalePlot),
-                       (":/view_zoomin_x.png", "Zoom In X", self.scalePlot),
-                       (":/view_zoomout_x.png", "Zoom Out X", self.scalePlot),
-                       (":/view_move_left.png", "Move Left", self.scalePlot),
-                       (":/view_move_right.png", "Move Right", self.scalePlot),
-                       ]
-        
-        
-        for ico,name,hdl in zoomActions:
-            if hdl is None: continue
-            viewToolBar2.addAction(QIcon(ico), name, hdl)
+        #viewToolBar2 = self.addToolBar("Scale Plot")
+        #zoomActions = [(":/view_zoom_xy.png", "Fit", self.scalePlot),
+        #               (None, None, None),
+        #               (":/view_zoom_y.png", "Fit In Y", self.scalePlot),
+        #               (":/view_zoomin_y.png", "Zoom In Y", self.scalePlot),
+        #               (":/view_zoomout_y.png", "Zoom Out Y", self.scalePlot),
+        #               (":/view_move_up.png", "Move Up", self.scalePlot),
+        #               (":/view_move_down.png", "Move Down", self.scalePlot),
+        #               (None, None, None),
+        #               (":/view_zoom_x.png", "Fit In X", self.scalePlot),
+        #               (":/view_zoomin_x.png", "Zoom In X", self.scalePlot),
+        #               (":/view_zoomout_x.png", "Zoom Out X", self.scalePlot),
+        #               (":/view_move_left.png", "Move Left", self.scalePlot),
+        #               (":/view_move_right.png", "Move Right", self.scalePlot),
+        #               ]
+        #for ico,name,hdl in zoomActions:
+        #    if hdl is None: continue
+        #    viewToolBar2.addAction(QIcon(ico), name, hdl)
 
         controlToolBar = self.addToolBar("Control")
         controlToolBar.addAction(controlChooseBpmAction)
@@ -469,7 +467,8 @@ class OrbitPlotMainWindow(QMainWindow):
         handle = kw.get("handle", "readback")
         elems = lat.getElementList(elem)
         x, pvs = [], []
-        for fld in re.findall(r'[^ ,]+', fields):
+        field_list = re.findall(r'[^ ,]+', fields)
+        for fld in field_list:
             si, pvsi = [], []
             for e in elems:
                 epv = e.pv(field=fld, handle=handle)
@@ -486,7 +485,8 @@ class OrbitPlotMainWindow(QMainWindow):
 
         magprof = lat.getBeamlineProfile()
 
-        p = ApMdiSubPlot(pvs=pvs, x = x)
+        p = ApMdiSubPlot(pvs=pvs, x = x, 
+                         labels=["%s.%s" % (elem,fld) for fld in field_list])
         #QObject.installEventFilter(p.aplot)
         #p.data = ManagedPvData(pvm, s, pvs, element=elemnames,
         #                       label="{0}.{1}".format(elem,field))
