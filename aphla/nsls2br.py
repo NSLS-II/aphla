@@ -14,6 +14,7 @@ from datetime import datetime
 import numpy as np
 import h5py
 import re
+import warnings
 
 import machines
 from catools import caget, caput
@@ -21,6 +22,7 @@ from hlalib import getElements
 
 import matplotlib.pylab as plt
 
+    
 def _brBpmScrub(**kwargs):
     """
     waveforms - list of Tbt, Fa and Adc
@@ -71,7 +73,7 @@ def _maxTimeSpan(timestamps):
              for i in range(len(timestamps))]
     return max(delta) - min(delta)
 
-    
+
 
 def resetBrBpms(wfmsel = 1):
     """
@@ -321,7 +323,7 @@ def getBrBpmData(**kwargs):
 
     data = (names, x, y, Is, ts, offset)
 
-    if kwargs.has_key("output"):
+    if kwargs.get("output", None):
         # default output dir and file
         output_file = kwargs["output"]
         if output_file is True:
@@ -791,6 +793,12 @@ def generateBrRamping(IFb, IFt, **kwargs):
 
     for i in range(T9, N): v[i] = IFb
 
+    # warning
+    if max(v) > Ift:
+        warning.warn("max(I) > Ift : {0} > {1}".format(max(v), IFt))
+    if min(v) < IFb:
+        warning.warn("min(I) < Ifb : {0} < {1}".format(min(v), IFb))
+
     return v
 
 def generateBrRampingBump(Tc, DTc, DTft, Ic, v0 = None):
@@ -850,15 +858,17 @@ def measBrCaRmCol(kker, **kwargs):
     """measure the response matrix column between PVs (DC)
 
     kker - SP PV for corrector (waveform)
-    timeout - 6 sec
+    waveform - "Fa" or "Tbt"
+    timeout - 6 sec, EPICS CA timeout
     npoints - number of orbits for each kick.
     dxlst - a list of kick (raw unit), overwrite the choice of dxmax
     dxmax - range of kick [-dxmax, dxmax]
-    ndx - default 4. Together with dxmax, specify a equally spaced kicks [-dxmax, dxmax].
-    wait - 
-    output_file - save the results
+    ndx - default 4. Specify kicks in [-dxmax, dxmax].
+    wait - default 1.5 second
+    output - save the results
+    verbose - default 0
 
-    return the output file name
+    return the output file name. The output will be in HDF5 file format.
     """
     timeout = kwargs.pop("timeout", 6)
     wait    = kwargs.pop("wait", 1.5)
@@ -875,11 +885,12 @@ def measBrCaRmCol(kker, **kwargs):
         nx    = kwargs.pop("ndx", 4)
         dxlst = list(np.linspace(-dxmax, dxmax, nx))
     else:
-        raise RuntimeError("need input for at least of the parameters: dxlst, xlst, dxmax")
+        raise RuntimeError("need input for at least of the parameters: "
+                           "dxlst, xlst, dxmax")
 
     # use the provided filename or default datetimed filename
     output_file = kwargs.pop(
-        "output_file",
+        "output",
         os.path.join(machines.getOutputDir(),
                      t0.strftime("%Y_%m"),
                      "orm",
@@ -913,10 +924,11 @@ def measBrCaRmCol(kker, **kwargs):
         caput(kker, xi, wait=True, timeout=timeout)
         time.sleep(wait*3)
         for j in range(npt):
-            obt, fname = getBrBpmData(waveform=wfm, verbose=verbose-1,
-                                      output_file=output_file,
-                                      h5group="%s/%s_dx%d__pt%d" % (kker, wfm, i, j),
-                                      **kwargs)    
+            obt, fname = getBrBpmData(
+                waveform=wfm, verbose=verbose-1,
+                output_file=output_file,
+                h5group="%s/%s_dx%d__pt%d" % (kker, wfm, i, j),
+                **kwargs)    
             if verbose > 1:
                 name, x, y, Is, ts, ddroffset = obt
                 print "  %d/%d" % (j,npt), np.average(x[0]), np.std(x[0])

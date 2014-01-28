@@ -733,6 +733,7 @@ class ApCaArrayPlot(Qwt.QwtPlot):
         self.insertLegend(legend, self.RightLegend)
         for c in self.curves:
             self.showCurve(c, True)
+        self.showCurve(self.curve2, True)
 
         self.picker1 = None
         #self.zoomer1 = None
@@ -903,9 +904,9 @@ class ApCaArrayPlot(Qwt.QwtPlot):
                 mk1.attach(self)
                 self.markers.append([r[0], mk1])
 
-    #def elementDoubleClicked(self, elem):
-    #    print "element selected:", elem
-    #    self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
+    def elementDoubleClicked(self, elem):
+        print "element selected:", elem
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
     
     def setMagnetProfile(self, mprof):
         self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
@@ -936,7 +937,8 @@ class ApCaArrayPlot(Qwt.QwtPlot):
             self.connect(self.picker1, 
                          SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
                          self.elementDoubleClicked)
-        
+        self.showCurve(self.curvemag, True)
+
         #self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
         #             self.zoomed1)
         #self.timerId = self.startTimer(1000)
@@ -1040,41 +1042,24 @@ class ApCaArrayPlot(Qwt.QwtPlot):
 
 
 class ApMdiSubPlot(QMdiSubWindow):
-    def __init__(self, parent = None, data = None, live = True,
-                 element_fields = []):
+    def __init__(self, parent = None, **kw):
         super(ApMdiSubPlot, self).__init__(parent)
-        self.aplot = ApPlot()
-        self.setWidget(self.aplot)
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.data = data # ApVirtualElement
-        self._eflist = element_fields
-        self.live = live
         self.err_only  = False
-        self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
-                     self.elementSelected)
+        self.live = True
+        pvs = kw.pop("pvs", [])
+        #self.aplot = ApCaWaveformPlot(pvs)
+        self.aplot = ApCaArrayPlot(pvs, **kw)
+        #self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
+        #             self.elementSelected)
+        self.setWidget(self.aplot)
         self.setMinimumSize(400, 100)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-    def updatePlot(self, s = None, y = None, yerr = None):
-        #print "updating the data"
-        if (s, y, yerr) == (None, None, None) and self.data:
-            self.data.update()
-            s, y, yerr = self.data.data()
-
-        #return
-        #print "set data", type(s), type(y), type(yerr)
-        if self.err_only: self.aplot.curve1.setData(s, yerr)
-        else: self.aplot.curve1.setData(s, y, yerr)
-        # set unit
-        self.aplot.setAxisTitle(Qwt.QwtPlot.yLeft, self.data.label())
-        #print "replot"
-        #print s, y, yerr
-        #print "done replot"
-        self.aplot.replot()
-
     def elementSelected(self, elem):
-        eleminfo = [self.data.machine, self.data.lattice, elem]
-        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), eleminfo)
+        #eleminfo = [self.data.machine, self.data.lattice, elem]
+        #self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), eleminfo)
+        pass
 
     def editElements(self):
         self.emit(SIGNAL("editVisibleElements()"))
@@ -1088,31 +1073,31 @@ class ApMdiSubPlot(QMdiSubWindow):
     def setMarkers(self, mks, on):
         self.aplot.setMarkers(mks, on)
 
-    def disableElement(self, name):
-        if name in self.data.names():
-            self.data.disable(name)
+    #def disableElement(self, name):
+    #    if name in self.data.names():
+    #        self.data.disable(name)
 
-    def setReferenceData(self, dat = None):
-        if isinstance(dat, float):
-            self.data.yref = np.ones(len(self.data.yref), 'd') * dat
-        elif dat:
-            self.data.yref = np.array(dat, 'd')
-        else:
-            s, y, yerr = self.data.data()
-            self.data.yref = y
+    #def setReferenceData(self, dat = None):
+    #    if isinstance(dat, float):
+    #        self.data.yref = np.ones(len(self.data.yref), 'd') * dat
+    #    elif dat:
+    #        self.data.yref = np.array(dat, 'd')
+    #    else:
+    #        s, y, yerr = self.data.data()
+    #        self.data.yref = y
 
-    def lattice(self):
-        return self.data.lattice
+    #def lattice(self):
+    #    return self.data.lattice
 
-    def machine(self):
-        return self.data.machine
+    #def machine(self):
+    #    return self.data.machine
 
-    def fullname(self):
-        return (self.data.machine, self.data.lattice, 
-                self.data.name, self.data.yfield)
+    #def fullname(self):
+    #    return (self.data.machine, self.data.lattice, 
+    #            self.data.name, self.data.yfield)
 
-    def plotCurve2(self, y, x = None):
-        self.aplot.plotCurve2(y, x)
+    #def plotCurve2(self, y, x = None):
+    #    self.aplot.plotCurve2(y, x)
 
 
 class ApSvdPlot(QDialog):
