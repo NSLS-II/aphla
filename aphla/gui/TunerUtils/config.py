@@ -27,6 +27,8 @@ ENUM_STR_FORMAT = 4
 ENUM_EDITABLE = 5
 PROP_DICT = {
     'group_name'  : ['Group Name', 'GroupName', 'string', False, STR_FMT_DEFAULT, True],
+    'machine_name': ['Machine', 'Machine', 'string', False, STR_FMT_DEFAULT, False],
+    'lattice_name': ['Lattice', 'Lattice', 'string', False, STR_FMT_DEFAULT, False],
     'channel_name': ['Channel Name', 'ChannelName', 'string', False, STR_FMT_DEFAULT, False], # can be either a channel name (elem_name.field_name) or PV tuple (PV_readback, PV_setpoint)
     'elem_name'   : ['Element Name', 'Elem.Name', 'string', False, STR_FMT_DEFAULT, False],
     'field'       : ['Field', 'Field', 'string', False, STR_FMT_DEFAULT, False],
@@ -44,7 +46,7 @@ PROP_DICT = {
     'sb'          : ['s(beginning)', 'sb', 'float', False, STR_FMT_LENGTH_METER, False],
     'se'          : ['s(end)', 'se', 'float', False, STR_FMT_LENGTH_METER, False],
     'symmetry'    : ['Symmetry', 'Symmetry', 'string', False, STR_FMT_DEFAULT, False],
-    'unit'        : ['Unit String', 'Unit', 'string', False, STR_FMT_DEFAULT, False],
+    'unitsymb'    : ['Unit Symbol', 'Unit Symb.', 'string', False, STR_FMT_DEFAULT, False],
     'unitsys'     : ['Unit System', 'Unit Sys.', 'string', False, STR_FMT_DEFAULT, False],
     'unicon'      : ['Unit Conversion', 'Uni.Con.', 'string', False, STR_FMT_DEFAULT, False],
     'weight'      : ['Weight', 'Weight', 'float', False, STR_FMT_WEIGHT_FACTOR, True],
@@ -87,25 +89,27 @@ PROP_DICT = {
 
 CHANNEL_PROP_DICT = {
     # (PROP_DICT's key) (Corresponding HLA Channel Attribute Name)
-    'elem_name' : 'name',
-    'field'     : 'fields',
-    'pvrb'      : 'pvrb',
-    'pvsp'      : 'pvsp',
-    'devname'   : 'devname',
-    'cell'      : 'cell',
-    'family'    : 'family',
-    'girder'    : 'girder',
-    'elem_group': 'group',
-    'lat_index' : 'index',
-    'eff_len'   : 'length',
-    'phys_len'  : 'phylen',
-    'sb'        : 'sb',
-    'se'        : 'se',
-    'symmetry'  : 'symmetry',
-    'unit'      : '#unit',    # Non-HLA Channel Attribute
-    'unitsys'   : '#unitsys', # Non-HLA Channel Attribute
-    'unicon'    : '#unicon',  # Non-HLA Channel Attribute
-    'golden'    : '#golden',  # Non-HLA Channel Attribute
+    'machine_name': '#machine_name', # Non-HLA Channel Attribute
+    'lattice_name': '#lattice_name', # Non-HLA Channel Attribute
+    'elem_name'   : 'name',
+    'field'       : 'fields',
+    'pvrb'        : 'pvrb',
+    'pvsp'        : 'pvsp',
+    'devname'     : 'devname',
+    'cell'        : 'cell',
+    'family'      : 'family',
+    'girder'      : 'girder',
+    'elem_group'  : 'group',
+    'lat_index'   : 'index',
+    'eff_len'     : 'length',
+    'phys_len'    : 'phylen',
+    'sb'          : 'sb',
+    'se'          : 'se',
+    'symmetry'    : 'symmetry',
+    'unitsymb'    : '#unitsymb',# Non-HLA Channel Attribute
+    'unitsys'     : '#unitsys', # Non-HLA Channel Attribute
+    'unicon'      : '#unicon',  # Non-HLA Channel Attribute
+    'golden'      : '#golden',  # Non-HLA Channel Attribute
     }
 
 # Full list of all the available column names for
@@ -132,7 +136,7 @@ EDITABLE_COL_KEYS = [k for (k,v) in PROP_DICT.iteritems() if v[ENUM_EDITABLE]]
 DEFAULT_VISIBLE_COL_KEYS_FOR_CONFIG_SETUP = [
     'group_name',
     'channel_name',
-    #'unit',
+    #'unitsymb',
     #'unitsys',
     'weight',
 ]
@@ -140,7 +144,7 @@ DEFAULT_VISIBLE_COL_KEYS_FOR_CONFIG_SETUP = [
 DEFAULT_VISIBLE_COL_KEYS_FOR_SNAPSHOT_VIEW = [
     'group_name',
     'channel_name',
-    #'unit',
+    #'unitsymb',
     #'unitsys',
     'weight',
     'step_size',

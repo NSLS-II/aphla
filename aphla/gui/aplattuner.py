@@ -336,6 +336,9 @@ class TitleRenameLineEdit(QLineEdit):
 
         self.hide()
 
+        self.emit(SIGNAL('dockTitleChangeFinalized'))
+
+
 ########################################################################
 class TitleLabel(QLabel):
     """"""
@@ -347,6 +350,14 @@ class TitleLabel(QLabel):
         QLabel.__init__(self, *args)
 
         self._editor = TitleRenameLineEdit(self.parent())
+        self.connect(self._editor, SIGNAL('dockTitleChangeFinalized'),
+                     self.emitTitleChangedSignal)
+
+    #----------------------------------------------------------------------
+    def emitTitleChangedSignal(self):
+        """"""
+
+        self.emit(SIGNAL('dockTitleChanged'))
 
     #----------------------------------------------------------------------
     def mouseDoubleClickEvent(self, event):
@@ -362,8 +373,6 @@ class TitleLabel(QLabel):
 
         self._editor.setText(self.text())
 
-
-
 ########################################################################
 class CustomDockWidgetTitleBar(QWidget):
     """"""
@@ -378,6 +387,8 @@ class CustomDockWidgetTitleBar(QWidget):
 
         self.title = TitleLabel(self)
         self.title.setText('untitled')
+        self.connect(self.title, SIGNAL('dockTitleChanged'),
+                     self._emitTitleChangeSignal)
 
         min_button_height = 10
 
@@ -460,6 +471,11 @@ class CustomDockWidgetTitleBar(QWidget):
         """"""
 
         self.title.edit()
+
+    #----------------------------------------------------------------------
+    def _emitTitleChangeSignal(self):
+        """"""
+        self.emit(SIGNAL('customDockTitleChanged'))
 
     #----------------------------------------------------------------------
     def updateButtons(self, floating=None):
@@ -686,7 +702,28 @@ class TunerDockWidget(QDockWidget):
 
         self.customTitleBar = CustomDockWidgetTitleBar(self)
         self.setTitleBarWidget(self.customTitleBar)
+        self.connect(self.customTitleBar, SIGNAL('customDockTitleChanged'),
+                     self._updateWindowTitle)
 
+    #----------------------------------------------------------------------
+    def _updateWindowTitle(self):
+        """
+        As the built-in window title does not get automatically changed,
+        when the custom window title is changed, this update is being
+        performed in this function.
+        """
+
+        # This title appears at the top of the dock either when docked,
+        # tabified, or floated. And this is editable.
+        dock_title = self.customTitleBar.title.text()
+
+        # This tile appears at the bottom of the dock tab only when more than
+        # one docks are tabified. And this is not editable.
+        self.setWindowTitle(dock_title)
+
+        self.update()
+
+        print 'Updating window title'
 
     #----------------------------------------------------------------------
     def onViewModeActionGroupTriggered(self, action):
@@ -1061,7 +1098,13 @@ class TunerView(QMainWindow, Ui_MainWindow):
         else:
             dock_title = base_model.getName('config')
         if dock_title == '': dock_title = 'untitled'
+
+        # This tile appears at the bottom of the dock tab only when more than
+        # one docks are tabified. And this is not editable.
         dockWidget.setWindowTitle(dock_title)
+        # This title appears at the top of the dock either when docked,
+        # tabified, or floated. And this is editable.
+        dockWidget.customTitleBar.title.setText(dock_title)
 
         dockWidget.setFloating(False) # Dock the new dockwidget by default
         if len(self.configDockWidgetList) >= 2:

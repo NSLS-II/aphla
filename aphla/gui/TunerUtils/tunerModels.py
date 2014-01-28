@@ -60,7 +60,7 @@ def getChannelProperty(obj, propertyName):
     if propertyName == 'fields':
         return field
 
-    if propertyName not in ('pvrb','pvsp','#unit','#unitsys','#unicon',
+    if propertyName not in ('pvrb','pvsp','#unitsymb','#unitsys','#unicon',
                             '#golden'):
 
         x = getattr(element, propertyName)
@@ -93,12 +93,16 @@ def getChannelProperty(obj, propertyName):
                 x = x[0]
         except: # For DIPOLE, there is no field specified
             x = ''
+    elif propertyName == '#machine_name':
+        pass
+    elif propertyName == '#lattice_name':
+        pass
     elif propertyName == '#golden':
         x = element._field[field].golden[0]
     elif propertyName == '#unitsys':
         unitsys_dict = element.getUnitSystems()
         x = unitsys_dict[field]
-    elif propertyName == '#unit':
+    elif propertyName == '#unitsymb':
         unitsys_dict = element.getUnitSystems()
         unitsys_list = unitsys_dict[field]
         unit_str_list = [element.getUnit(field, unitsys=unitsys)
@@ -398,6 +402,8 @@ class TunerConfigSetupBaseModel(QObject):
 
         self.group_name_list = []
         self.grouped_ind_list = []
+
+        self.ref_step_size = 1.0
 
     #----------------------------------------------------------------------
     def findDuplicateChannels(self, new_channel_name_list):
