@@ -35,28 +35,41 @@ import PyQt4.Qt as Qt
 from PyQt4.QtXml import QDomDocument
 
 XML_ITEM_TAG_NAME = 'item'
-MODEL_ITEM_PROPERTY_NAMES = ['path','linkedFile','args','useImport','singleton','itemType']
-COLUMN_NAMES = ['Path','Linked File','Arguments','Use Import','Singleton','Item Type']
-XML_ITEM_PROPERTY_NAMES = ['dispName','itemType','linkedFile','useImport','singleton','args']
-DEFAULT_XML_ITEM = {'dispName':'', 'itemType':'page', 'linkedFile':'',
-                    'useImport':False, 'singleton':False, 'args':''}
+MODEL_ITEM_PROPERTY_NAMES = ['path', 'itemType', 'command', 'useImport',
+                             'importArgs', 'desc']
+COLUMN_NAMES = ['Path', 'Item Type', 'Command / Py Module', 'Use Import',
+                'Import Arguments', 'Description']
+XML_ITEM_PROPERTY_NAMES = ['dispName', 'itemType', 'command', 'useImport',
+                           'importArgs', 'desc']
+DEFAULT_XML_ITEM = {'dispName':'', 'itemType':'page', 'command':'',
+                    'useImport':False, 'importArgs':'', 'desc':''}
 ITEM_PROPERTIES_DIALOG_OBJECTS = {'dispName':'lineEdit_dispName',
                                   'itemType':'comboBox_itemType',
-                                  'linkedFile':'comboBox_linkedFile',
+                                  'command':'comboBox_command',
                                   'useImport':'comboBox_useImport',
-                                  'singleton':'comboBox_singleton',
-                                  'args':'lineEdit_args'}
-ITEM_PROP_DLG_OBJ_ENABLED_FOR_PAGE = ['lineEdit_dispName', 'comboBox_itemType']
-ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP = ['lineEdit_dispName',
+                                  'importArgs':'lineEdit_importArgs',
+                                  'desc':'plainTextEdit_description'}
+ITEM_PROP_DLG_OBJ_ENABLED_FOR_PAGE = ['lineEdit_dispName', 'comboBox_itemType',
+                                      'plainTextEdit_description']
+ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_IMPORT = ['lineEdit_dispName',
+                                            'comboBox_itemType',
+                                            'comboBox_command',
+                                            'comboBox_useImport',
+                                            'lineEdit_importArgs',
+                                            'plainTextEdit_description']
+ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN = ['lineEdit_dispName',
+                                           'comboBox_itemType',
+                                           'comboBox_command',
+                                           'comboBox_useImport',
+                                           'plainTextEdit_description']
+ITEM_PROP_DLG_OBJ_ENABLED_FOR_LIB = ['lineEdit_dispName',
                                      'comboBox_itemType',
-                                     'comboBox_linkedFile',
-                                     'comboBox_useImport',
-                                     'comboBox_singleton',
-                                     'lineEdit_args']
-
+                                     'comboBox_command',
+                                     'plainTextEdit_description']
 
 ITEM_COLOR_PAGE = Qt.Qt.black
-ITEM_COLOR_APP = Qt.Qt.red
+ITEM_COLOR_APP  = Qt.Qt.red
+ITEM_COLOR_LIB  = Qt.Qt.green
 
 # Forward slash '/' will be used as a file path separator for both
 # in Linux & Windows. Even if '/' is used in Windows, shutil and os functions still properly work.
@@ -89,8 +102,6 @@ MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
 # the path line editbox.
 # *) path auto completion & naviation from path line editbox
 # *) Add <description> to XML
-# *) Implement <singleton>
-# *) Implement <args> for popen
 # *) More thorough separate search window
 # *) Implement "Visible Columns..." & "Arrange Items" actions
 # *) Temporary user XML saving functionality whenever hierarchy is changed
@@ -131,8 +142,8 @@ class SearchModel(Qt.QStandardItemModel):
         rootItem = LauncherModelItem('searchRoot')
         rootItem.ItemType = 'page'
         rootItem.path = SEPARATOR + rootItem.dispName
-        rootItem.linkedFile = ''
-        rootItem.args = ''
+        rootItem.command = ''
+        rootItem.importArgs = ''
         rootItem.useImport = False
         rootItem.singleton = False
         rootItem.updateIconAndColor()
@@ -158,7 +169,7 @@ class LauncherModel(Qt.QStandardItemModel):
 
         self.pathList = []
         self.pModelIndList = []
-        self.linkedFileList = [] # Initial list population will occur when a
+        self.commandList = [] # Initial list population will occur when a
         # LauncherModelItemPropertiesDialog is created for the first time.
 
         ## First, parse system XML file and construct a tree model
@@ -204,11 +215,13 @@ class LauncherModel(Qt.QStandardItemModel):
             item = LauncherModelItem(dispName)
             item.path = item.path + item.dispName
             item.itemType = info['itemType']
-            item.linkedFile = info['linkedFile']
+            item.command = info['command']
             if info['useImport'] == 'True':
                 item.useImport = True
             else:
                 item.useImport = False
+            item.importArgs = info['importArgs']
+            item.desc = info['desc']
 
             item.updateIconAndColor()
 
@@ -469,10 +482,10 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
 
         self.item = selectedItem
 
-        # Update the list of linkedFile strings that already exist in the model
+        # Update the list of command strings that already exist in the model
         itemList = [model.itemFromIndex(Qt.QModelIndex(pInd))
                     for pInd in model.pModelIndList]
-        model.linkedFileList = list(set([item.linkedFile for item in itemList]))
+        model.commandList = list(set([item.command for item in itemList]))
 
         partitionedStrings = selectedItem.path.rpartition(SEPARATOR)
         self.parentPath = partitionedStrings[0]
@@ -491,8 +504,8 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                 obj.setText(getattr(self.item,propName))
             elif objName.startswith('comboBox'):
 
-                if propName == 'linkedFile':
-                    obj.addItems(model.linkedFileList)
+                if propName == 'command':
+                    obj.addItems(model.commandList)
 
                 search_string = str(getattr(self.item,propName))
                 matchedInd = obj.findText(search_string,
@@ -513,7 +526,16 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                     msgBox.setIcon(Qt.QMessageBox.Critical)
                     msgBox.exec_()
 
+            elif objName == 'plainTextEdit_description':
+                obj.setProperty('plainText', self.item.desc)
+
+            else:
+                raise ValueError('Unexpected object name: {0:s}'.format(objName))
+
         self.connect(self.comboBox_itemType,
+                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     self.updateEnableStates)
+        self.connect(self.comboBox_useImport,
                      Qt.SIGNAL('currentIndexChanged(const QString &)'),
                      self.updateEnableStates)
 
@@ -523,6 +545,8 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
         # to exclude USER_MODIFIABLE_ROOT_PATH itself from modifiable item list
 
         self.updateEnableStates(self.item.itemType)
+        if str(self.item.itemType).lower() == 'app':
+            self.updateEnableStates(self.item.useImport)
 
     #----------------------------------------------------------------------
     def updateEnableStates(self, itemTypeQString):
@@ -532,9 +556,18 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
             enabledObjectNames = []
         else:
             if str(itemTypeQString).lower() == 'app':
-                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP
-            else: # str(itemTypeQString).lower() == 'page'
+                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
+            elif str(itemTypeQString).lower() == 'library':
+                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_LIB
+            elif str(itemTypeQString).lower() == 'page':
                 enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_PAGE
+            elif str(itemTypeQString).lower() == 'false':
+                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
+            elif str(itemTypeQString).lower() == 'true':
+                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_IMPORT
+            else:
+                raise ValueError('Unexpected string: {0:s}'.format(
+                    str(itemTypeQString)))
 
         for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
             obj = getattr(self, objName)
@@ -582,7 +615,8 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
             msgBox = Qt.QMessageBox()
             msgBox.setText( (
                 'Empty item name not allowed.') )
-            msgBox.setInformativeText( 'Please enter a non-empty string as an item name.')
+            msgBox.setInformativeText(
+                'Please enter a non-empty string as an item name.')
             msgBox.setIcon(Qt.QMessageBox.Critical)
             msgBox.exec_()
             return
@@ -592,8 +626,9 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
             msgBox = Qt.QMessageBox()
             msgBox.setText( (
                 'Duplicate item name detected.') )
-            msgBox.setInformativeText( 'The name ' + '"' + dispName + '"' +
-                                       ' is already used in this page. Please use a different name.')
+            msgBox.setInformativeText(
+                'The name ' + '"' + dispName + '"' +
+                ' is already used in this page. Please use a different name.')
             msgBox.setIcon(Qt.QMessageBox.Critical)
             msgBox.exec_()
             return
@@ -626,6 +661,14 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                 else:
                     setattr(self.item, propName, text)
 
+            elif objName == 'plainTextEdit_description':
+
+                text = str(obj.property('plainText'))
+                setattr(self.item, propName, text)
+
+            else:
+                raise ValueError('Unexpected object name: {0:s}'.format(objName))
+
         super(LauncherModelItemPropertiesDialog, self).accept() # will hide the dialog
 
     #----------------------------------------------------------------------
@@ -653,12 +696,12 @@ class LauncherModelItem(Qt.QStandardItem):
             self.dispName = args[0]
         else:
             self.dispName = DEFAULT_XML_ITEM['dispName']
-        self.itemType = DEFAULT_XML_ITEM['itemType'] # Either 'app' or 'page'
-        self.path = SEPARATOR
-        self.linkedFile = DEFAULT_XML_ITEM['linkedFile'] # Empty string for 'page'
-        self.args = DEFAULT_XML_ITEM['args'] # Empty string for 'page'
-        self.useImport = DEFAULT_XML_ITEM['useImport']
-        self.singleton = DEFAULT_XML_ITEM['singleton']
+        self.itemType   = DEFAULT_XML_ITEM['itemType'] # Either 'app' or 'page'
+        self.path       = SEPARATOR
+        self.command    = DEFAULT_XML_ITEM['command'] # Empty string for 'page'
+        self.importArgs = DEFAULT_XML_ITEM['importArgs'] # Empty string for 'page'
+        self.useImport  = DEFAULT_XML_ITEM['useImport']
+        self.desc       = DEFAULT_XML_ITEM['desc']
 
         # Make the item NOT editable by default
         self.setFlags(self.flags() & ~Qt.Qt.ItemIsEditable)
@@ -1504,7 +1547,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 else:
                     raise ValueError('Unexpected sender')
                 self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                          item.linkedFile, useImport, item.args)
+                          item.command, useImport, item.importArgs)
         elif selectionType == 'MultipleAppAndPageSelection':
             raise ValueError('openPageOrApps function should not be called with selectionType = ' + selectionType)
         else:
@@ -1603,9 +1646,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         useImport = True
 
         for selectedItem in self.selectedItemList:
-            args = selectedItem.path
+            importArgs = selectedItem.path
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      appLauncherFilename, useImport, args)
+                      appLauncherFilename, useImport, importArgs)
 
     #----------------------------------------------------------------------
     def disableTabView(self):
@@ -2331,7 +2374,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         elif item.itemType == 'app':
 
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      item.linkedFile, item.useImport, item.args)
+                      item.command, item.useImport, item.importArgs)
 
 
     #----------------------------------------------------------------------
@@ -2347,7 +2390,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             pass
         elif item.itemType == 'app':
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      item.linkedFile, item.useImport, item.args)
+                      item.command, item.useImport, item.importArgs)
 
 
     #----------------------------------------------------------------------

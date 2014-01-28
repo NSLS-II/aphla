@@ -4,10 +4,10 @@
         <item>
             <dispName>Clock</dispName>
             <itemType>app</itemType>
-            <linkedFile>xclock</linkedFile>
+            <command>xclock</command>
             <useImport>False</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <importArgs></importArgs>
+            <desc></desc>
         </item>
     ">
 
@@ -15,10 +15,10 @@
         <item>
             <dispName>Orbit</dispName>
             <itemType>app</itemType>
-            <linkedFile>aporbit</linkedFile>
+            <command>aporbit</command>
             <useImport>False</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <importArgs></importArgs>
+            <desc></desc>
         </item>
     ">
 
@@ -26,33 +26,33 @@
         <item>
             <dispName>Beam Based Alignment</dispName>
             <itemType>app</itemType>
-            <linkedFile>apbba</linkedFile>
+            <command>apbba</command>
             <useImport>False</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <importArgs></importArgs>
+            <desc></desc>
         </item>
     ">
-    
+
     <!ENTITY appCurrentMonitor "
         <item>
-            <dispName>Current Monitor</dispName>      
+            <dispName>Current Monitor</dispName>
             <itemType>app</itemType>
-            <linkedFile>apcurrentmonitor</linkedFile>
+            <command>apcurrentmonitor</command>
             <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <importArgs></importArgs>
+            <desc></desc>
         </item>
     ">
-    
 
-    <!ENTITY appLatticeTuner "
+
+    <!ENTITY appTinker "
         <item>
-            <dispName>Lattice Tuner</dispName>
+            <dispName>Tinker (PreTune)</dispName>
             <itemType>app</itemType>
-            <linkedFile>aplattuner</linkedFile>
+            <command>aptinker</command>
             <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <importArgs></importArgs>
+            <desc></desc>
         </item>
     ">
 
@@ -61,10 +61,10 @@
         <item>
             <dispName>Launcher</dispName>
             <itemType>app</itemType>
-            <linkedFile>aplauncher</linkedFile>
+            <command>aplauncher</command>
             <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args>/root</args>
+            <importArgs>/root</importArgs>
+            <desc></desc>
         </item>
     ">
 
@@ -72,46 +72,51 @@
         <item>
             <dispName>Plotter</dispName>
             <itemType>app</itemType>
-            <linkedFile>applotter</linkedFile>
+            <command>applotter</command>
             <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <importArgs></importArgs>
+            <desc></desc>
         </item>
     ">
 
 ]>
 <hierarchy>
-    
+
     <item>
         <dispName>root</dispName>
         <itemType>page</itemType>
-        
+        <desc></desc>
+
         <item>
             <dispName>Commissioning</dispName>
             <itemType>page</itemType>
+            <desc></desc>
         </item>  <!-- Commissioning -->
 
         <item>
             <dispName>Operation</dispName>
             <itemType>page</itemType>
+            <desc></desc>
         </item>  <!-- Operation -->
-        
+
         <item>
             <dispName>Studies</dispName>
             <itemType>page</itemType>
+            <desc></desc>
         </item>  <!-- Studies -->
 
         <item>
             <dispName>Test</dispName>
             <itemType>page</itemType>
+            <desc></desc>
             &appClock;
             &appOrbit;
             &appBBA;
-            &appCurrentMonitor; 
+            &appCurrentMonitor;
             &appLatticeTuner;
             &appLauncher;
             &appPlotter;
         </item> <!-- Test -->
-        
+
     </item>  <!-- root -->
 </hierarchy>
