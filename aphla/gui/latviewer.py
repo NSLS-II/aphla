@@ -26,7 +26,6 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
         QFormLayout, QLabel, QSizePolicy, QCompleter, QMenu, QAction,
         QTabWidget, QCheckBox, QMessageBox)
 import PyQt4.Qwt5 as Qwt
-from aporbitplot import ApPlot
 from pvmanager import CaDataMonitor
 #import traceback
 import collections

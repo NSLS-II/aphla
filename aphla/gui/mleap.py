@@ -6,7 +6,7 @@ This is the main file for GUI app `aporbit`. A high level viewer and editor.
 """
 
 from pkg_resources import require
-require('cothread>=2.2')
+require('cothread>=2.7')
 
 import cothread
 app = cothread.iqt()
@@ -134,20 +134,20 @@ class OrbitPlotMainWindow(QMainWindow):
         self.setCentralWidget(self.mdiarea)
 
         #self._elemed = ElementPropertyTabs()
-        self.elemeditor = ElementEditorDock(parent=self)
-        self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)
-        self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
-                                    QDockWidget.DockWidgetClosable)
-        self.elemeditor.setFloating(False)
+        #self.elemeditor = ElementEditorDock(parent=self)
+        #self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)
+        #self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
+        #                            QDockWidget.DockWidgetClosable)
+        #self.elemeditor.setFloating(False)
         #self.elemeditor.setEnabled(False)
-        self.elemeditor.setMinimumWidth(400)
+        #self.elemeditor.setMinimumWidth(400)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
-        self.connect(self.elemeditor, 
-                     SIGNAL("elementChecked(PyQt_PyObject, bool)"),
-                     self.physics.elementChecked)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
+        #self.connect(self.elemeditor, 
+        #             SIGNAL("elementChecked(PyQt_PyObject, bool)"),
+        #             self.physics.elementChecked)
+        #self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
         self.createMenuToolBar()
         
@@ -170,7 +170,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #                   "H Orbit", c = None)
         #print "Thread started", self.machinit.isRunning()
 
-        self.newElementPlots("BPM", "x, y")
+        #self.newElementPlots("BPM", "x, y")
         #self.newElementPlot("BPM", "y")
         #self.newElementPlot("HCOR", "x")
         #self.newElementPlot("VCOR", "y")
@@ -356,7 +356,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # Window
         self.windowMenu = self.menuBar().addMenu("&Windows")
-        self.windowMenu.addAction(self.elemeditor.toggleViewAction())
+        #self.windowMenu.addAction(self.elemeditor.toggleViewAction())
         self.windowMenu.addAction(self.logdock.toggleViewAction())
         #viewDcct = QAction("Beam Current", self)
         #viewDcct.setCheckable(True)
