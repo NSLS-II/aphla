@@ -208,25 +208,33 @@ class TunerConfigSetupModel(QObject):
 
 
     #----------------------------------------------------------------------
-    def importNewChannelsFromSelector(self, selected_channels, channelGroupInfo):
+    def importNewChannelsFromSelector(self, selection_dict, channelGroupInfo):
         """"""
 
-        elemName_list = [elem.name for (elem,fieldName) in selected_channels]
+        machine           = selection_dict['machine']
+        lattice           = selection_dict['lattice']
+        elem_obj_field_list = selection_dict['selection']
+
         channelName_list = [elem.name+'.'+fieldName
-                            for (elem,fieldName) in selected_channels]
+                            for (elem,fieldName) in elem_obj_field_list]
+        fullChName_list = ['.'.join([machine, lattice, elem.name, fieldName])
+                           for (elem, fieldName) in elem_obj_field_list]
 
         if channelGroupInfo == {}:
             channelGroupName_list = channelName_list[:]
             weight_list = [float('nan') for c in channelName_list]
         else:
-            channelGroupName_list = [channelGroupInfo['name'] for c in channelName_list]
-            weight_list = [channelGroupInfo['weight'] for c in channelName_list]
+            channelGroupName_list = [channelGroupInfo['name']
+                                     for c in channelName_list]
+            weight_list = [channelGroupInfo['weight']
+                           for c in channelName_list]
         step_size_list = weight_list[:]
 
-        new_lists_dict = {'group_name': channelGroupName_list,
+        new_lists_dict = {'group_name'  : channelGroupName_list,
                           'channel_name': channelName_list,
-                          'weight': weight_list,
-                          'step_size': step_size_list}
+                          'full_ch_name': fullChName_list,
+                          'weight'      : weight_list,
+                          'step_size'   : step_size_list}
 
         self.updateModels(new_lists_dict)
 
@@ -273,13 +281,15 @@ class TunerConfigSetupModel(QObject):
 
         tStart = tic()
 
-        if self.base_model.config_name == '':
-            self.base_model.config_name = new_dict['config_name']
-        del new_dict['config_name']
+        if new_dict.has_key('config_name'):
+            if self.base_model.config_name == '':
+                self.base_model.config_name = new_dict['config_name']
+            del new_dict['config_name']
 
-        if self.base_model.description == '':
-            self.base_model.description = new_dict['description']
-        del new_dict['description']
+        if new_dict.has_key('description'):
+            if self.base_model.description == '':
+                self.base_model.description = new_dict['description']
+            del new_dict['description']
 
         self.base_model.appendChannels(new_dict)
         print 'before reset', toc(tStart)
@@ -875,7 +885,7 @@ class TunerConfigSetupApp(QObject):
 
         tStart = tic()
 
-        if selected_channels != []:
+        if selected_channels != {}:
             selected_channels, channelGroupInfo = \
                 self._askChannelGroupNameAndWeight(selected_channels)
             self.model.importNewChannelsFromSelector(selected_channels,

@@ -3447,16 +3447,24 @@ def make(modal = True, parentWindow = None,
 
         if view.result() == QDialog.Accepted:
             if output_type == TYPE_OBJECT:
-                output = app.model.selectedObjects
+                output = {'machine': ap.machines._lat.machine,
+                          'lattice': ap.machines._lat.name,
+                          'selection': app.model.selectedObjects}
             elif output_type == TYPE_NAME:
                 try:
-                    output = [e.name for e in app.model.selectedObjects]
+                    output = {'machine': ap.machines._lat.machine,
+                              'lattice': ap.machines._lat.name,
+                              'selection': [e.name for e in
+                                            app.model.selectedObjects]}
                 except:
-                    output = [(e[0].name,e[1]) for e in app.model.selectedObjects]
+                    output = {'machine': ap.machines._lat.machine,
+                              'lattice': ap.machines._lat.name,
+                              'selection': [(e[0].name,e[1]) for e
+                                            in app.model.selectedObjects]}
             else:
-                output = []
+                output = {}
         else:
-            output = []
+            output = {}
 
         result = {'app': app,
                   'dialog_result': output}

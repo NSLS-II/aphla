@@ -51,7 +51,7 @@ import types
 import numpy as np
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import (QObject, QSize, SIGNAL, Qt, QEvent, QRect)
+from PyQt4.QtCore import (QObject, QSize, SIGNAL, Qt, QEvent, QRect, QSettings)
 from PyQt4.QtGui import (
     QApplication, QMainWindow, QStandardItemModel, QStandardItem, QDockWidget,
     QWidget, QGridLayout, QSplitter, QTreeView, QTableView, QTabWidget,
@@ -579,6 +579,11 @@ class TunerDockWidget(QDockWidget):
         self.model = model
         isinstance(model,TunerSnapshotModel)
 
+        self._settings = QSettings('HLA', 'Tinker')
+
+        self.loadViewSizeSettings()
+        self.loadMiscSettings()
+
         # Set up table view
         tbV = self.tableView
         proxyModel = QSortFilterProxyModel()
@@ -613,6 +618,12 @@ class TunerDockWidget(QDockWidget):
         horizHeader.setStretchLastSection(True)
         horizHeader.setMovable(False)
         self._expandAll_and_resizeColumn()
+
+        desired_visible_col_full_name_list = [
+            const.PROP_DICT[k][const.ENUM_FULL_DESCRIP_NAME]
+            for k in self.visible_col_key_list]
+        self.on_column_selection_change(desired_visible_col_full_name_list,
+                                        force_visibility_update=True)
 
         self.connect(self.pushButton_step_up,SIGNAL('toggled(bool)'),
                      self.onStepUpPushed)
@@ -706,6 +717,80 @@ class TunerDockWidget(QDockWidget):
                      self._updateWindowTitle)
 
     #----------------------------------------------------------------------
+    def loadViewSizeSettings(self):
+
+        self._settings.beginGroup('viewSize')
+
+        self._position = self._settings.value('position')
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveViewSizeSettings(self):
+
+        self._settings.beginGroup('viewSize')
+
+        self._settings.setValue('position', self._position)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def loadMiscSettings(self):
+
+        self._settings.beginGroup('misc')
+
+        self.visible_col_key_list = \
+            self._settings.value('visible_col_key_list')
+        if self.visible_col_key_list is None:
+            self.visible_col_key_list = \
+                const.DEFAULT_VISIBLE_COL_KEYS_FOR_SNAPSHOT_VIEW
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveMiscSettings(self):
+
+        self._settings.beginGroup('misc')
+
+        self._settings.setValue('visible_col_key_list',
+                                self.visible_col_key_list)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def on_column_selection_change(self, new_visible_col_full_name_list,
+                                   force_visibility_update=False):
+        """"""
+
+        current_visible_col_full_name_list = [
+            const.PROP_DICT[col_key][const.ENUM_FULL_DESCRIP_NAME]
+            for col_key in self.visible_col_key_list]
+
+        if (not force_visibility_update) and \
+           (new_visible_col_full_name_list ==
+            current_visible_col_full_name_list):
+            return
+
+        self.visible_col_key_list = [
+            const.ALL_PROP_KEYS[const.FULL_DESCRIP_NAME_LIST.index(name)]
+            for name in new_visible_col_full_name_list]
+
+        visible_column_order = self.get_visible_column_order()
+
+        for horizHeader in [self.treeView.header(),
+                            self.tableView.horizontalHeader()]:
+            for (i,col_logical_ind) in enumerate(visible_column_order):
+                new_visual_index = i
+                current_visual_index = horizHeader.visualIndex(col_logical_ind)
+                horizHeader.moveSection(current_visual_index,
+                                        new_visual_index)
+            for i in range(len(const.ALL_PROP_KEYS)):
+                if i not in visible_column_order:
+                    horizHeader.hideSection(i)
+                else:
+                    horizHeader.showSection(i)
+
+    #----------------------------------------------------------------------
     def _updateWindowTitle(self):
         """
         As the built-in window title does not get automatically changed,
@@ -762,7 +847,17 @@ class TunerDockWidget(QDockWidget):
     def closeEvent(self, event):
         """"""
 
+        self.saveViewSizeSettings()
+        self.saveMiscSettings()
+
         event.accept()
+
+    #----------------------------------------------------------------------
+    def get_visible_column_order(self):
+        """"""
+
+        return [self.model.base_model.all_col_key_list.index(key)
+                for key in self.visible_col_key_list]
 
     #----------------------------------------------------------------------
     def _initUI(self, parent):

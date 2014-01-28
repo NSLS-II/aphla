@@ -16,11 +16,20 @@ from PyQt4.QtCore import (SIGNAL, QObject, QAbstractItemModel,
 from PyQt4.QtGui import (QStandardItem, QStandardItemModel, QMessageBox)
 
 import aphla as ap
+MACHINES = ap.machines.machines()
+MACHINE_LOAD_STAT = dict.fromkeys(MACHINES, False)
 if ap.machines._lat is None:
-    ap.machines.load('nsls2', use_cache=False)
+    for machine in MACHINES:
+        try:
+            ap.machines.load(machine, use_cache=False,
+                             save_cache=True)
+            MACHINE_LOAD_STAT[machine] = True
+            break
+        except: pass
 
 import config as const
 from aphla.gui.utils.addr import (getIPs, getMACs)
+
 
 #----------------------------------------------------------------------
 def getusername():
@@ -55,13 +64,14 @@ def getChannelProperty(obj, propertyName):
     propertyName can be a property of element or a function of element
     """
 
-    element, field = obj
+    machine_name, lattice_name, element, field = obj
 
     if propertyName == 'fields':
         return field
 
-    if propertyName not in ('pvrb','pvsp','#unitsymb','#unitsys','#unicon',
-                            '#golden'):
+    if propertyName not in (
+        'pvrb','pvsp','#machine_name','#lattice_name',
+        '#unitsymb','#unitsys','#unicon','#golden'):
 
         x = getattr(element, propertyName)
 
@@ -94,9 +104,9 @@ def getChannelProperty(obj, propertyName):
         except: # For DIPOLE, there is no field specified
             x = ''
     elif propertyName == '#machine_name':
-        pass
+        x = machine_name
     elif propertyName == '#lattice_name':
-        pass
+        x = lattice_name
     elif propertyName == '#golden':
         x = element._field[field].golden[0]
     elif propertyName == '#unitsys':
@@ -137,19 +147,36 @@ def getChannelProperty(obj, propertyName):
     return x
 
 #----------------------------------------------------------------------
-def getChannelObjectList(channel_name_list):
+def getChannelObjectList(full_channel_name_list):
     """"""
 
-    elem_field_tuple_list = [ch_name.split('.') for ch_name in channel_name_list]
+    ch_name_composition_list = [ch_name.split('.') for ch_name
+                                in full_channel_name_list]
 
-    return [(ap.getElements(elem_name)[0], field_name)
-            for (elem_name,field_name) in elem_field_tuple_list]
+    ch_obj_list = [None]*len(full_channel_name_list)
+    for i, ch_name_composition in enumerate(ch_name_composition_list):
+        machine_name = ch_name_composition[0]
+        lattice_name = ch_name_composition[1]
+        elem_name    = ch_name_composition[2:-1]
+        field_name   = ch_name_composition[-1]
+
+        if machine_name != ap.machines._lat.machine:
+            ap.machines.load(machine_name)
+        if lattice_name != ap.machines._lat.name:
+            ap.machines.use(lattice_name)
+
+        ch_obj_list[i] = (machine_name,
+                          lattice_name,
+                          ap.getElements(elem_name)[0],
+                          field_name)
+
+    return ch_obj_list
 
 #----------------------------------------------------------------------
-def getChannelPropertyListsDict(channel_name_list):
+def getChannelPropertyListsDict(full_channel_name_list):
     """"""
 
-    channel_object_list = getChannelObjectList(channel_name_list)
+    channel_object_list = getChannelObjectList(full_channel_name_list)
 
     D = {}
     for (k,v) in const.CHANNEL_PROP_DICT.iteritems():
@@ -414,15 +441,36 @@ class TunerConfigSetupBaseModel(QObject):
         return list(np.intersect1d(existing_channel_name_list, new_channel_name_list))
 
     #----------------------------------------------------------------------
-    def findNonExistentChannels(self, new_channel_name_list):
+    def findNonExistentChannels(self, new_full_ch_name_list):
         """"""
 
-        elem_name_tuple, field_tuple = zip(*[ch.split('.')
-                                             for ch in new_channel_name_list])
+        machine_name_tuple, lat_name_tuple, elem_name_tuple, field_tuple = \
+            zip(*[ch.split('.') for ch in new_full_ch_name_list])
+        unique_machine_names = list(set(machine_name_tuple))
 
-        # First find if the corresponding elements exist
-        non_existent_elem_name_list = [elem_name for elem_name in elem_name_tuple
-                                       if ap.getElements(elem_name)==[]]
+        # Find if the corresponding elements and their fields exist
+        non_existent_elem_name_list    = []
+        non_existent_channel_name_list = []
+        for loaded_machine_name in unique_machine_names:
+            if loaded_machine_name != ap.machines._lat.machine:
+                if MACHINE_LOAD_STAT[loaded_machine_name]:
+                    ap.machines.load(loaded_machine_name,
+                                     use_cache=True)
+                else:
+                    ap.machines.load(loaded_machine_name,
+                                     use_cache=False,
+                                     save_cache=True)
+            for machine_name, lat_name, elem_name, field in \
+                zip(machine_name_tuple, lat_name_tuple, elem_name_tuple,
+                    field_tuple):
+                if machine_name == loaded_machine_name:
+                    ap.machines.use(lat_name)
+                    matched_elems = ap.getElements(elem_name)
+                    if matched_elems == []:
+                        non_existent_elem_name_list.append(elem_name)
+                    elif field not in matched_elems[0].fields():
+                        non_existent_channel_name_list.append(elem_name+field)
+
         if non_existent_elem_name_list:
             msgBox = QMessageBox()
             msgBox.setText('Non-existent Element Name(s) Found')
@@ -434,11 +482,6 @@ class TunerConfigSetupBaseModel(QObject):
             msgBox.exec_()
             return non_existent_elem_name_list
 
-        # Then check if the field exists for the corresponding elements
-        elem_list = [ap.getElements(elem_name)[0] for elem_name in elem_name_tuple]
-        non_existent_channel_name_list = [elem.name+field for (field, elem)
-                                          in zip(field_tuple, elem_list)
-                                          if field not in elem.fields()]
         if non_existent_channel_name_list:
             msgBox = QMessageBox()
             msgBox.setText('Non-existent Channel Name(s) Found')
@@ -456,10 +499,13 @@ class TunerConfigSetupBaseModel(QObject):
     def appendChannels(self, new_lists_dict):
         """"""
 
-        if self.findNonExistentChannels(new_lists_dict['channel_name']) != []:
+        #if self.findNonExistentChannels(new_lists_dict['channel_name']) != []:
+            #return
+        if self.findNonExistentChannels(new_lists_dict['full_ch_name']) != []:
             return
 
-        dupChannels = self.findDuplicateChannels(new_lists_dict['channel_name'])
+        #dupChannels = self.findDuplicateChannels(new_lists_dict['channel_name'])
+        dupChannels = self.findDuplicateChannels(new_lists_dict['full_ch_name'])
         if dupChannels != []:
             info_text_list = ['The following channel names already exist:'] + \
                 [''] + dupChannels + [''] + \
@@ -484,7 +530,7 @@ class TunerConfigSetupBaseModel(QObject):
 
         for (k,v) in new_lists_dict.iteritems():
             getattr(self, 'k_'+k).extend(v)
-            if k == 'channel_name':
+            if k == 'full_ch_name':
                 channelPropertyListsDict = getChannelPropertyListsDict(v)
                 for (k2, v2) in channelPropertyListsDict.iteritems():
                     getattr(self, 'k_'+k2).extend(v2)
