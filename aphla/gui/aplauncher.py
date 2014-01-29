@@ -1590,30 +1590,32 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         selectionType = self.getSelectionType()
 
         if selectionType == 'NoSelection':
-            raise ValueError('openPageOrApps function should not be called with selectionType = ' + selectionType)
+            raise ValueError('openPageOrApps function should not be called '
+                             'with selectionType = ' + selectionType)
         elif selectionType == 'SinglePageSelection':
             self._callbackDoubleClickOnMainPaneItem(None)
         elif selectionType == 'MultiplePageSelection':
-            raise ValueError('openPageOrApps function should not be called with selectionType = ' + selectionType)
+            raise ValueError('openPageOrApps function should not be called '
+                             'with selectionType = ' + selectionType)
         elif (selectionType == 'SingleAppSelection') or \
              (selectionType == 'MultipleAppSelection'):
             sender = self.sender()
             for item in self.selectedItemList:
-                if sender == self.actionOpenWithImport:
-                    useImport = True
-                elif sender == self.actionOpenWithPopen:
-                    useImport = False
-                elif sender == self.actionOpen:
+                #if sender == self.actionOpenWithImport:
+                    #useImport = True
+                #elif sender == self.actionOpenWithPopen:
+                    #useImport = False
+                if sender == self.actionOpen:
                     useImport = item.useImport
                 else:
                     raise ValueError('Unexpected sender')
                 self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
                           item.command, useImport, item.importArgs)
         elif selectionType == 'MultipleAppAndPageSelection':
-            raise ValueError('openPageOrApps function should not be called with selectionType = ' + selectionType)
+            raise ValueError('openPageOrApps function should not be called '
+                             'with selectionType = ' + selectionType)
         else:
             raise ValueError('Unexpected selection type: ' + selectionType)
-
 
 
     #----------------------------------------------------------------------
@@ -1782,12 +1784,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.actionOpen, Qt.SIGNAL('triggered()'),
                      self.openPageOrApps)
 
-        self.actionOpenWithImport = Qt.QAction(Qt.QIcon(), 'Open w/ import', self)
-        self.connect(self.actionOpenWithImport, Qt.SIGNAL('triggered()'),
-                     self.openPageOrApps)
-        self.actionOpenWithPopen = Qt.QAction(Qt.QIcon(), 'Open w/ Popen', self)
-        self.connect(self.actionOpenWithPopen, Qt.SIGNAL('triggered()'),
-                     self.openPageOrApps)
+        #self.actionOpenWithImport = Qt.QAction(Qt.QIcon(), 'Open w/ import', self)
+        #self.connect(self.actionOpenWithImport, Qt.SIGNAL('triggered()'),
+                     #self.openPageOrApps)
+        #self.actionOpenWithPopen = Qt.QAction(Qt.QIcon(), 'Open w/ Popen', self)
+        #self.connect(self.actionOpenWithPopen, Qt.SIGNAL('triggered()'),
+                     #self.openPageOrApps)
 
         self.actionCut = Qt.QAction(Qt.QIcon(), 'Cut', self)
         self.actionCut.setShortcut(
@@ -1835,9 +1837,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         # TODO
         self.actionArrangeItems = Qt.QAction(Qt.QIcon(), 'Arrange Items', self)
+        self.connect(self.actionArrangeItems, Qt.SIGNAL('triggered()'),
+                     self._not_implemented_yet)
         # TODO
-        self.actionVisibleColumns = Qt.QAction(Qt.QIcon(), 'Visible Columns...', self)
-        #self.connect()
+        self.actionVisibleColumns = Qt.QAction(Qt.QIcon(), 'Visible Columns...',
+                                               self)
+        self.connect(self.actionVisibleColumns, Qt.SIGNAL('triggered()'),
+                     self._not_implemented_yet)
 
         self.actionDelete = Qt.QAction(Qt.QIcon(), 'Delete', self)
         self.actionDelete.setShortcut(Qt.Qt.Key_Delete)
@@ -1855,8 +1861,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.actionSelectAll = Qt.QAction(Qt.QIcon(), 'Select All', self)
         #self.actionSelectAll.setShortcut(
             #Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_A))
+        self.actionSelectAll.setShortcut(Qt.QKeySequence.SelectAll)
         self.addAction(self.actionSelectAll)
-        #self.connect()
+        self.connect(self.actionSelectAll, Qt.SIGNAL('triggered()'),
+                     self._not_implemented_yet)
 
         self.actionToggleSidePaneVisibility = \
             Qt.QAction(Qt.QIcon(), 'Side Pane', self)
@@ -1894,6 +1902,18 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.actionGroupViewMode, Qt.SIGNAL('triggered(QAction *)'),
                      self.onViewModeActionGroupTriggered)
 
+    #----------------------------------------------------------------------
+    def _not_implemented_yet(self):
+        """"""
+
+        msgBox = Qt.QMessageBox()
+        msgBox.setText( (
+            'This action has not been implemented yet.') )
+        msgBox.setInformativeText(self.sender().text())
+        #msgBox.setInformativeText( str(sys.exc_info()) )
+        msgBox.setIcon(Qt.QMessageBox.Critical)
+        msgBox.exec_()
+        return
 
     #----------------------------------------------------------------------
     def _initMenus(self):
@@ -2418,6 +2438,14 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.selectedPersModelIndexList = []
 
     #----------------------------------------------------------------------
+    def selectAllItems(self):
+        """"""
+
+        #m = self.getCurrentMainPane()
+        #m.listView.selectionModel().select()
+        self._not_implemented_yet()
+
+    #----------------------------------------------------------------------
     def _callbackDoubleClickOnMainPaneItem(self, modelIndex_NotUsed):
         """"""
 
@@ -2912,8 +2940,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                      (selectionType == 'MultipleAppSelection'):
                     sender.addSeparator()
                     sender.addAction(self.actionOpen)
-                    sender.addAction(self.actionOpenWithImport)
-                    sender.addAction(self.actionOpenWithPopen)
+                    #sender.addAction(self.actionOpenWithImport)
+                    #sender.addAction(self.actionOpenWithPopen)
                 else:
                     pass
 
@@ -2990,8 +3018,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 self.contextMenu.addAction(self.actionOpenInNewTab)
                 self.contextMenu.addAction(self.actionOpenInNewWindow)
             elif selectionType == 'SingleAppSelection':
-                self.contextMenu.addAction(self.actionOpenWithImport)
-                self.contextMenu.addAction(self.actionOpenWithPopen)
+                pass
+                #self.contextMenu.addAction(self.actionOpenWithImport)
+                #self.contextMenu.addAction(self.actionOpenWithPopen)
             else:
                 raise ValueError('Unexpected selection type detected: ' + selectionType)
 
@@ -3061,8 +3090,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             elif selectionType == 'SingleAppSelection':
 
                 self.contextMenu.addAction(self.actionOpen)
-                self.contextMenu.addAction(self.actionOpenWithImport)
-                self.contextMenu.addAction(self.actionOpenWithPopen)
+                #self.contextMenu.addAction(self.actionOpenWithImport)
+                #self.contextMenu.addAction(self.actionOpenWithPopen)
 
                 self.contextMenu.addSeparator()
                 self.contextMenu.addAction(self.actionCut)
@@ -3095,8 +3124,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             elif selectionType == 'MultipleAppSelection':
 
                 self.contextMenu.addAction(self.actionOpen)
-                self.contextMenu.addAction(self.actionOpenWithImport)
-                self.contextMenu.addAction(self.actionOpenWithPopen)
+                #self.contextMenu.addAction(self.actionOpenWithImport)
+                #self.contextMenu.addAction(self.actionOpenWithPopen)
 
                 self.contextMenu.addSeparator()
                 self.contextMenu.addAction(self.actionCut)
