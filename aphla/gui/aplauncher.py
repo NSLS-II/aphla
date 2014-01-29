@@ -15,8 +15,8 @@ unnecessary duplicate import actions for some modules.
 
 """
 
-import sys
-import os
+import sys, os
+import os.path as osp
 import errno
 import time
 import posixpath
@@ -88,8 +88,9 @@ SEPARATOR = '/' # used as system file path separator as well as launcher page
                 # path separator
 HOME_PATH = str(Qt.QDir.homePath())
 DOT_HLA_QFILEPATH = HOME_PATH + SEPARATOR + '.hla'
-SYSTEM_XML_FILENAME = 'us_nsls2_launcher_hierarchy.xml'
-USER_XML_FILENAME = 'user_launcher_hierarchy.xml'
+SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
+USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
+USER_TEMP_XML_FILENAME = 'user_launcher_hierarchy.xml.temp'
 USER_MODIFIABLE_ROOT_PATH = '/root/Favorites'
 
 import utils.gui_icons
@@ -1102,10 +1103,41 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
         self.model.writeToXMLFile(user_XML_Filepath, rootModelItem)
 
+        temp_user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + \
+            USER_TEMP_XML_FILENAME
+        if osp.exists(temp_user_XML_Filepath):
+            try: os.remove(temp_user_XML_Filepath)
+            except:
+                print ' '
+                print 'WARNING: Failed to delete temporary user XML file.'
+                print ' '
+
         # Save QSettings
         self.saveSettings()
 
         event.accept()
+
+    #----------------------------------------------------------------------
+    def saveTempUserHierarchy(self):
+        """
+        To avoid losing a user change in the hierarchy due to a crash,
+        whenever a change in the hierarchy is detected, the change is saved
+        into a temporary file.
+
+        In the event of a crash, a user will be asked if he/she wants to
+        restore the temporary saved file.
+        """
+
+        # Save the current hierarchy in the user-modifiable section to
+        # a temporary user hierarchy XML file.
+        temp_user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + \
+            USER_TEMP_XML_FILENAME
+        temp_user_XML_Filepath.replace('\\','/') # On Windows, convert Windows
+        # path separator ('\\') to Linux path separator ('/')
+
+        rootModelItem = self.model.itemFromIndex( Qt.QModelIndex(
+            self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
+        self.model.writeToXMLFile(temp_user_XML_Filepath, rootModelItem)
 
     #----------------------------------------------------------------------
     def saveSettings(self):
@@ -1493,6 +1525,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.updatePath()
 
         self.model.update_search_index()
+        self.saveTempUserHierarchy()
 
         if self.inSearchMode():
             searchItem = self.selectedSearchItemList[0]
@@ -1997,8 +2030,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         else:
             raise ValueError('Unexpected sender: ' + self.sender().text())
 
-
-
         self.propertiesDialogView = \
             LauncherModelItemPropertiesDialog(self.model, selectedItem)
         self.propertiesDialogView.exec_()
@@ -2047,6 +2078,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
 
             self.updatePath()
+
+            self.model.update_search_index()
+            self.saveTempUserHierarchy()
 
     #----------------------------------------------------------------------
     def updateRow(self, updated1stColumnItem):
@@ -2109,6 +2143,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.updatePath()
 
         self.model.update_search_index()
+        self.saveTempUserHierarchy()
 
         if self.inSearchMode():
             self.onSearchTextChange(self.lineEdit_search.text())
@@ -2284,6 +2319,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.updatePath()
 
         self.model.update_search_index()
+        self.saveTempUserHierarchy()
 
     #----------------------------------------------------------------------
     def pasteSubItems(self, sourceParentItem, targetParentItem):
