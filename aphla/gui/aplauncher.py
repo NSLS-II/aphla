@@ -200,6 +200,58 @@ class LauncherModel(Qt.QStandardItemModel):
         self.completer.setCompletionMode(Qt.QCompleter.PopupCompletion)
         self.updateCompleterModel(SEPARATOR + 'root')
 
+        # Create search indexes
+        self.search_index_item_list = []
+        self.search_index_path_list = []
+        self.search_index_name_list = []
+        self.search_index_desc_list = []
+        self.update_search_index(parent_item=None, index_item=None,
+                                 index_path=None, index_name=None,
+                                 index_desc=None)
+
+        print self.search_index_name_list
+        print self.search_index_desc_list
+
+    #----------------------------------------------------------------------
+    def update_search_index(self, parent_item=None, index_item=None,
+                            index_path=None, index_name=None, index_desc=None):
+        """
+        """
+
+        col_ind_path = self.headerLabels.index('Path')
+        col_ind_name = self.headerLabels.index('Name')
+        col_ind_desc = self.headerLabels.index('Description')
+
+        if index_item is None: index_item = []
+        if index_path is None: index_path = []
+        if index_name is None: index_name = []
+        if index_desc is None: index_desc = []
+
+        if parent_item is None:
+            rootItem    = self.item(0,0)
+            parent_item = rootItem
+
+            root = True
+        else:
+            root = False
+
+        for row in range(parent_item.rowCount()):
+            index_item.append(parent_item.child(row))
+            index_path.append(parent_item.child(row,col_ind_path).text().lower())
+            index_name.append(parent_item.child(row,col_ind_name).text().lower())
+            index_desc.append(parent_item.child(row,col_ind_desc).text().lower())
+            if parent_item.child(row).hasChildren():
+                self.update_search_index(parent_item=parent_item.child(row),
+                                         index_item=index_item,
+                                         index_path=index_path,
+                                         index_name=index_name,
+                                         index_desc=index_desc)
+
+        if root:
+            self.search_index_item_list = index_item
+            self.search_index_path_list = index_path
+            self.search_index_name_list = index_name
+            self.search_index_desc_list = index_desc
 
     #----------------------------------------------------------------------
     def construct_tree_model(self, dom, parent_item = None,
@@ -904,7 +956,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self._initActions()
         self._initMainToolbar()
 
-        self.model = model # Used for TreeView on side pane for which sorting is disabled
+        self.model = model # Used for TreeView on side pane for which
+                           # sorting is disabled
 
         self.setupUi(self)
 
@@ -1180,31 +1233,16 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                  'searchRootIndex':currentPath['searchRootIndex']}
 
 
-        # Method 1 (Which one is faster? Method 1 or Method 2?)
-        columnIndex = 0
-        matchedItems = self.model.findItems(
-            newSearchText,
-            (Qt.Qt.MatchContains | Qt.Qt.MatchRecursive),
-            columnIndex)
-
-        ## Method 2
-        ## Note that the 1st argyment of "match" function is not
-        ## for the model index of partial seaching under that branch.
-        ## Rather, it is only used for specifying the search column.
-        ## Removal of matched results outside of the selected
-        ## branch must be done manually.
-        #matchedModelIndices = self.model.match(
-            #searchRootIndex, Qt.Qt.DisplayRole, newSearchText,
-            #-1, (Qt.Qt.MatchContains | Qt.Qt.MatchRecursive) )
-        #matchedItems = [self.model.itemFromIndex(i)
-                        #for i in matchedModelIndices]
-
-
-        # Remove the matched items that are not under the branch
-        # of the current root index
         searchRootItem = self.model.itemFromIndex(searchRootIndex)
-        matchedItems = [i for i in matchedItems
-                        if i.path.startswith(searchRootItem.path)]
+        newSearchText = newSearchText.lower()
+        matchedItems = [
+            item for item, path, name, desc in zip(
+                self.model.search_index_item_list,
+                self.model.search_index_path_list,
+                self.model.search_index_name_list,
+                self.model.search_index_desc_list)
+            if path.startswith(searchRootItem.path) and
+            ((newSearchText in name) or (newSearchText in desc))]
 
         # Update completer model
         self.model.updateCompleterModel(searchRootItem.path)
