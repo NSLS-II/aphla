@@ -604,19 +604,26 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
     def updateEnableStates(self, itemTypeQString):
         """"""
 
+        itemType = str(itemTypeQString).lower()
+
         if not self.isItemPropertiesModifiable:
             enabledObjectNames = []
         else:
-            if str(itemTypeQString).lower() == 'app':
+            if itemType == 'app':
                 enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
-            elif str(itemTypeQString).lower() == 'library':
+            elif itemType == 'library':
                 enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_LIB
-            elif str(itemTypeQString).lower() == 'page':
+            elif itemType == 'page':
                 enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_PAGE
-            elif str(itemTypeQString).lower() == 'false':
-                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
-            elif str(itemTypeQString).lower() == 'true':
-                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_IMPORT
+            elif itemType in ('true', 'false'):
+                if getattr(self, 'comboBox_itemType').currentText().lower() \
+                   == 'app':
+                    if itemType == 'false': enabledObjectNames = \
+                        ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
+                    else:                   enabledObjectNames = \
+                        ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_IMPORT
+                else:
+                    return
             else:
                 raise ValueError('Unexpected string: {0:s}'.format(
                     str(itemTypeQString)))
@@ -656,7 +663,11 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                         msgBox.setInformativeText( str(sys.exc_info()) )
                         msgBox.setIcon(Qt.QMessageBox.Critical)
                         msgBox.exec_()
-
+                elif objName == 'plainTextEdit_description':
+                    pass
+                else:
+                    raise ValueError('Unexpected object name: {0:s}'.
+                                     format(objName))
 
     #----------------------------------------------------------------------
     def accept(self):
