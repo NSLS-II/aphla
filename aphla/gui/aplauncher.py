@@ -1620,7 +1620,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 else:
                     raise ValueError('Unexpected sender')
                 self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                          item.command, item.workingDir, useImport,
+                          item.path, item.command, item.workingDir, useImport,
                           item.importArgs)
         elif selectionType == 'MultipleAppAndPageSelection':
             raise ValueError('openPageOrApps function should not be called '
@@ -1722,7 +1722,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         for selectedItem in self.selectedItemList:
             importArgs = selectedItem.path
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      appLauncherFilename, selectedItem.workingDir,
+                      '', appLauncherFilename, selectedItem.workingDir,
                       useImport, importArgs)
 
     #----------------------------------------------------------------------
@@ -1913,6 +1913,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.actionIconsView.setChecked(True) # Default selection for the view mode
         self.connect(self.actionGroupViewMode, Qt.SIGNAL('triggered(QAction *)'),
                      self.onViewModeActionGroupTriggered)
+
+        self.actionRunningSubprocs = Qt.QAction(Qt.QIcon(),
+                                                'Runngin Subprocesses...', self)
+        self.addAction(self.actionRunningSubprocs)
+        self.connect(self.actionRunningSubprocs,
+                     Qt.SIGNAL('triggered()'), self.print_running_subprocs)
 
     #----------------------------------------------------------------------
     def _not_implemented_yet(self):
@@ -2479,7 +2485,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         elif item.itemType == 'app':
 
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      item.command, item.workingDir, item.useImport,
+                      item.path, item.command, item.workingDir, item.useImport,
                       item.importArgs)
 
 
@@ -2496,7 +2502,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             pass
         elif item.itemType == 'app':
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      item.command, item.workingDir, item.useImport,
+                      item.path, item.command, item.workingDir, item.useImport,
                       item.importArgs)
 
 
@@ -3007,6 +3013,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 sender.addAction(self.actionListView)
                 sender.addAction(self.actionDetailsView)
 
+                sender.addSeparator()
+                sender.addAction(self.actionRunningSubprocs)
+
             elif sender == self.menuGo:
 
                 sender.addAction(self.actionGoUp)
@@ -3160,7 +3169,11 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 raise TypeError('Unexpected selection type: ' + selectionType)
 
 
+    #----------------------------------------------------------------------
+    def print_running_subprocs(self):
+        """"""
 
+        self.emit(Qt.SIGNAL('printRunningSubprocs'))
 
 
 ########################################################################
@@ -3173,7 +3186,8 @@ class LauncherApp(Qt.QObject):
 
         Qt.QObject.__init__(self)
 
-        self.appList = []
+        self.appList  = []
+        self.subprocs = []
 
         self._initModel()
 
@@ -3181,6 +3195,8 @@ class LauncherApp(Qt.QObject):
 
         self.connect(self.view, Qt.SIGNAL('sigAppExecutionRequested'),
                      self.launchApp)
+        self.connect(self.view, Qt.SIGNAL('printRunningSubprocs'),
+                     self.print_running_subprocs)
 
     #----------------------------------------------------------------------
     def _initModel(self):
@@ -3201,7 +3217,7 @@ class LauncherApp(Qt.QObject):
         self.view = LauncherView(self.model, initRootPath)
 
     #----------------------------------------------------------------------
-    def launchApp(self, appCommand, workingDir, useImport, args):
+    def launchApp(self, item_path, appCommand, workingDir, useImport, args):
         """ """
 
         '''
@@ -3317,16 +3333,18 @@ class LauncherApp(Qt.QObject):
                 self.view.statusBar().showMessage(message)
                 print message
                 self.view.repaint()
-                command_expression = _subs_tilde_with_home(command_expression)
-                p = Popen(command_expression, shell=True, stdin=PIPE,
+                subs_cmd = _subs_tilde_with_home(command_expression)
+                p = Popen(subs_cmd, shell=True, stdin=PIPE,
                           cwd=workingDir)
                 print '** PID = {0:d}'.format(p.pid)
                 print ' '
                 message = ('# Launch sequence for "{0:s}" has been completed.'.
-                           format(command_expression))
+                           format(subs_cmd))
                 self.view.statusBar().showMessage(message)
                 print ' '
                 print message
+                self.subprocs.append(dict(p=p, path=item_path,
+                                          cmd=command_expression))
             except:
                 msgBox = Qt.QMessageBox()
                 message = ('Launching ' + '"'+command_expression+'"' +
@@ -3341,6 +3359,28 @@ class LauncherApp(Qt.QObject):
                 print err_info_str
                 msgBox.setIcon(Qt.QMessageBox.Critical)
                 msgBox.exec_()
+
+    #----------------------------------------------------------------------
+    def print_running_subprocs(self):
+        """"""
+
+        print '### Currently Running Subprocesses ###'
+        print '(Path in Launcher): (Command Expression)'
+
+        finished_subp_inds = []
+        for i, subp_dict in enumerate(self.subprocs):
+            p = subp_dict['p']
+            if p.poll() is None:
+                print '{0:s}: {1:s}'.format(subp_dict['path'],
+                                            subp_dict['cmd'])
+            else:
+                finished_subp_inds.append(i)
+
+        for ind in finished_subp_inds[::-1]:
+            self.subprocs.pop(ind)
+
+        if len(self.subprocs) == 0:
+            print '* There is currently no running subprocess.'
 
 #----------------------------------------------------------------------
 def _subs_tilde_with_home(string):
