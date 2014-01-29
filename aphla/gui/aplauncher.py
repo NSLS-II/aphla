@@ -22,8 +22,9 @@ import time
 import posixpath
 from copy import copy
 import types
-from subprocess import Popen
+from subprocess import Popen, PIPE
 import traceback
+import re
 from cStringIO import StringIO
 import sip
 sip.setapi('QString', 2)
@@ -35,31 +36,35 @@ import PyQt4.Qt as Qt
 from PyQt4.QtXml import QDomDocument
 
 XML_ITEM_TAG_NAME = 'item'
-MODEL_ITEM_PROPERTY_NAMES = ['path', 'itemType', 'command', 'useImport',
-                             'importArgs', 'desc']
-COLUMN_NAMES = ['Path', 'Item Type', 'Command / Py Module', 'Use Import',
-                'Import Arguments', 'Description']
-XML_ITEM_PROPERTY_NAMES = ['dispName', 'itemType', 'command', 'useImport',
-                           'importArgs', 'desc']
+MODEL_ITEM_PROPERTY_NAMES = ['path', 'itemType', 'command', 'workingDir',
+                             'useImport', 'importArgs', 'desc']
+COLUMN_NAMES = ['Path', 'Item Type', 'Command / Py Module', 'Working Directory',
+                'Use Import', 'Import Arguments', 'Description']
+XML_ITEM_PROPERTY_NAMES = ['dispName', 'itemType', 'command', 'workingDir',
+                           'useImport', 'importArgs', 'desc']
 DEFAULT_XML_ITEM = {'dispName':'', 'itemType':'page', 'command':'',
-                    'useImport':False, 'importArgs':'', 'desc':''}
-ITEM_PROPERTIES_DIALOG_OBJECTS = {'dispName':'lineEdit_dispName',
-                                  'itemType':'comboBox_itemType',
-                                  'command':'comboBox_command',
-                                  'useImport':'comboBox_useImport',
-                                  'importArgs':'lineEdit_importArgs',
-                                  'desc':'plainTextEdit_description'}
+                    'workingDir': '', 'useImport':False, 'importArgs':'',
+                    'desc':''}
+ITEM_PROPERTIES_DIALOG_OBJECTS = {'dispName'  :'lineEdit_dispName',
+                                  'itemType'  :'comboBox_itemType',
+                                  'command'   :'comboBox_command',
+                                  'workingDir':'lineEdit_workingDir',
+                                  'useImport' :'comboBox_useImport',
+                                  'importArgs': 'lineEdit_importArgs',
+                                  'desc'      : 'plainTextEdit_description'}
 ITEM_PROP_DLG_OBJ_ENABLED_FOR_PAGE = ['lineEdit_dispName', 'comboBox_itemType',
                                       'plainTextEdit_description']
 ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_IMPORT = ['lineEdit_dispName',
                                             'comboBox_itemType',
                                             'comboBox_command',
+                                            'lineEdit_workingDir',
                                             'comboBox_useImport',
                                             'lineEdit_importArgs',
                                             'plainTextEdit_description']
 ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN = ['lineEdit_dispName',
                                            'comboBox_itemType',
                                            'comboBox_command',
+                                           'lineEdit_workingDir',
                                            'comboBox_useImport',
                                            'plainTextEdit_description']
 ITEM_PROP_DLG_OBJ_ENABLED_FOR_LIB = ['lineEdit_dispName',
@@ -79,8 +84,10 @@ ITEM_COLOR_LIB  = Qt.Qt.green
 # By the way, the QFile document says "QFile expects the file separator to be '/' regardless of operating system.
 # The use of other separators (e.g., '\') is not supported."
 # However, on Windows, using '\' still works fine.
-SEPARATOR = '/' # used as system file path separator as well as launcher page path separator
-DOT_HLA_QFILEPATH = str(Qt.QDir.homePath()) + SEPARATOR + '.hla'
+SEPARATOR = '/' # used as system file path separator as well as launcher page
+                # path separator
+HOME_PATH = str(Qt.QDir.homePath())
+DOT_HLA_QFILEPATH = HOME_PATH + SEPARATOR + '.hla'
 SYSTEM_XML_FILENAME = 'us_nsls2_launcher_hierarchy.xml'
 USER_XML_FILENAME = 'user_launcher_hierarchy.xml'
 USER_MODIFIABLE_ROOT_PATH = '/root/Favorites'
@@ -143,6 +150,7 @@ class SearchModel(Qt.QStandardItemModel):
         rootItem.ItemType = 'page'
         rootItem.path = SEPARATOR + rootItem.dispName
         rootItem.command = ''
+        rootItem.workingDir = ''
         rootItem.importArgs = ''
         rootItem.useImport = False
         rootItem.singleton = False
@@ -263,6 +271,7 @@ class LauncherModel(Qt.QStandardItemModel):
             item.path = item.path + item.dispName
             item.itemType = info['itemType']
             item.command = info['command']
+            item.workingDir = info['workingDir']
             if info['useImport'] == 'True':
                 item.useImport = True
             else:
@@ -757,6 +766,7 @@ class LauncherModelItem(Qt.QStandardItem):
         self.itemType   = DEFAULT_XML_ITEM['itemType'] # Either 'app' or 'page'
         self.path       = SEPARATOR
         self.command    = DEFAULT_XML_ITEM['command'] # Empty string for 'page'
+        self.workingDir = DEFAULT_XML_ITEM['workingDir'] # Empty string for 'page'
         self.importArgs = DEFAULT_XML_ITEM['importArgs'] # Empty string for 'page'
         self.useImport  = DEFAULT_XML_ITEM['useImport']
         self.desc       = DEFAULT_XML_ITEM['desc']
@@ -1610,7 +1620,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 else:
                     raise ValueError('Unexpected sender')
                 self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                          item.command, useImport, item.importArgs)
+                          item.command, item.workingDir, useImport,
+                          item.importArgs)
         elif selectionType == 'MultipleAppAndPageSelection':
             raise ValueError('openPageOrApps function should not be called '
                              'with selectionType = ' + selectionType)
@@ -1711,7 +1722,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         for selectedItem in self.selectedItemList:
             importArgs = selectedItem.path
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      appLauncherFilename, useImport, importArgs)
+                      appLauncherFilename, selectedItem.workingDir,
+                      useImport, importArgs)
 
     #----------------------------------------------------------------------
     def disableTabView(self):
@@ -2467,7 +2479,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         elif item.itemType == 'app':
 
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      item.command, item.useImport, item.importArgs)
+                      item.command, item.workingDir, item.useImport,
+                      item.importArgs)
 
 
     #----------------------------------------------------------------------
@@ -2483,7 +2496,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             pass
         elif item.itemType == 'app':
             self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      item.command, item.useImport, item.importArgs)
+                      item.command, item.workingDir, item.useImport,
+                      item.importArgs)
 
 
     #----------------------------------------------------------------------
@@ -3187,7 +3201,7 @@ class LauncherApp(Qt.QObject):
         self.view = LauncherView(self.model, initRootPath)
 
     #----------------------------------------------------------------------
-    def launchApp(self, appFilename, useImport, args):
+    def launchApp(self, appCommand, workingDir, useImport, args):
         """ """
 
         '''
@@ -3200,14 +3214,21 @@ class LauncherApp(Qt.QObject):
         the returned object as "global". With either way, the opened GUI
         window will not disappear immediately.
         '''
+
+        workingDir = _subs_tilde_with_home(workingDir)
+
         if useImport:
+
+            if workingDir != '':
+                os.chdir(workingDir)
+                print 'Changed working directory to {0:s}'.format(workingDir)
 
             module = None
 
             errorMessage = ''
 
             try:
-                moduleName = 'aphla.gui.'+appFilename
+                moduleName = 'aphla.gui.'+appCommand
                 message = 'Trying to import ' + moduleName + '...'
                 self.view.statusBar().showMessage(message)
                 print message
@@ -3229,13 +3250,13 @@ class LauncherApp(Qt.QObject):
 
             if not module:
                 try:
-                    message = 'Trying to import ' + appFilename + '...'
+                    message = 'Trying to import ' + appCommand + '...'
                     self.view.statusBar().showMessage(message)
                     print message
                     self.view.repaint()
-                    module = __import__(appFilename)
+                    module = __import__(appCommand)
                 except ImportError as e:
-                    message = 'Importing ' + appFilename + ' failed: ' + str(e)
+                    message = 'Importing ' + appCommand + ' failed: ' + str(e)
                     self.view.statusBar().showMessage(message)
                     print message
                     errorMessage += '\n' + str(e)
@@ -3249,7 +3270,7 @@ class LauncherApp(Qt.QObject):
 
             if module:
                 try:
-                    message = 'Trying to launch ' + appFilename + '...'
+                    message = 'Trying to launch ' + appCommand + '...'
                     self.view.statusBar().showMessage(message)
                     print message
                     self.view.repaint()
@@ -3257,7 +3278,7 @@ class LauncherApp(Qt.QObject):
                         self.appList.append(module.make(args))
                     else:
                         self.appList.append(module.make())
-                    message = appFilename + ' successfully launched.'
+                    message = appCommand + ' successfully launched.'
                     self.view.statusBar().showMessage(message)
                     print message
                 except:
@@ -3275,7 +3296,7 @@ class LauncherApp(Qt.QObject):
 
             else:
                 msgBox = Qt.QMessageBox()
-                message = ('Importing ' + appFilename +
+                message = ('Importing ' + appCommand +
                            ' module has failed.')
                 msgBox.setText(message)
                 msgBox.setInformativeText( str(errorMessage) )
@@ -3285,26 +3306,51 @@ class LauncherApp(Qt.QObject):
                 msgBox.exec_()
 
         else:
+
+            if workingDir == '':
+                workingDir = os.getcwd()
+
             try:
-                command_expression = appFilename
-                message = 'Trying to launch ' + command_expression + '...'
+                command_expression = appCommand
+                message = ('### Trying to launch "{0:s}"...'.
+                           format(command_expression))
                 self.view.statusBar().showMessage(message)
                 print message
                 self.view.repaint()
-                p = Popen(command_expression, shell=True)
-                message = '"'+command_expression+'"' + ' successfully launched.'
+                command_expression = _subs_tilde_with_home(command_expression)
+                p = Popen(command_expression, shell=True, stdin=PIPE,
+                          cwd=workingDir)
+                print '** PID = {0:d}'.format(p.pid)
+                print ' '
+                message = ('# Launch sequence for "{0:s}" has been completed.'.
+                           format(command_expression))
                 self.view.statusBar().showMessage(message)
+                print ' '
                 print message
             except:
                 msgBox = Qt.QMessageBox()
                 message = ('Launching ' + '"'+command_expression+'"' +
                            ' with Popen has failed.')
                 msgBox.setText(message)
-                msgBox.setInformativeText( str(sys.exc_info()) )
-                print message
-                print sys.exc_info()
+                ei = sys.exc_info()
+                err_info_str = ei[1].__repr__()
+                err_info_str += ('\nError occurred at aplauncher.py on Line '
+                                 '{0:d}'.format(ei[-1].tb_lineno))
+                msgBox.setInformativeText(err_info_str)
+                print '#', message
+                print err_info_str
                 msgBox.setIcon(Qt.QMessageBox.Critical)
                 msgBox.exec_()
+
+#----------------------------------------------------------------------
+def _subs_tilde_with_home(string):
+    """"""
+
+    if string.startswith('~'):
+        string = HOME_PATH + string[1:]
+    string = string.replace(' ~', ' '+HOME_PATH)
+
+    return string
 
 #----------------------------------------------------------------------
 def make(initRootPath=''):

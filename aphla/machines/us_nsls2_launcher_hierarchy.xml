@@ -5,6 +5,7 @@
             <dispName>Clock</dispName>
             <itemType>app</itemType>
             <command>xclock</command>
+            <workingDir></workingDir>
             <useImport>False</useImport>
             <importArgs></importArgs>
             <desc></desc>
@@ -16,6 +17,7 @@
             <dispName>Orbit</dispName>
             <itemType>app</itemType>
             <command>aporbit</command>
+            <workingDir></workingDir>
             <useImport>False</useImport>
             <importArgs></importArgs>
             <desc></desc>
@@ -27,6 +29,7 @@
             <dispName>Beam Based Alignment</dispName>
             <itemType>app</itemType>
             <command>apbba</command>
+            <workingDir></workingDir>
             <useImport>False</useImport>
             <importArgs></importArgs>
             <desc></desc>
@@ -38,6 +41,7 @@
             <dispName>Current Monitor</dispName>
             <itemType>app</itemType>
             <command>apcurrentmonitor</command>
+            <workingDir></workingDir>
             <useImport>True</useImport>
             <importArgs></importArgs>
             <desc></desc>
@@ -50,6 +54,7 @@
             <dispName>Tinker (PreTune)</dispName>
             <itemType>app</itemType>
             <command>aptinker</command>
+            <workingDir></workingDir>
             <useImport>True</useImport>
             <importArgs></importArgs>
             <desc></desc>
@@ -62,6 +67,7 @@
             <dispName>Launcher</dispName>
             <itemType>app</itemType>
             <command>aplauncher</command>
+            <workingDir></workingDir>
             <useImport>True</useImport>
             <importArgs>/root</importArgs>
             <desc></desc>
@@ -73,6 +79,7 @@
             <dispName>Plotter</dispName>
             <itemType>app</itemType>
             <command>applotter</command>
+            <workingDir></workingDir>
             <useImport>True</useImport>
             <importArgs></importArgs>
             <desc></desc>
