@@ -205,12 +205,7 @@ class LauncherModel(Qt.QStandardItemModel):
         self.search_index_path_list = []
         self.search_index_name_list = []
         self.search_index_desc_list = []
-        self.update_search_index(parent_item=None, index_item=None,
-                                 index_path=None, index_name=None,
-                                 index_desc=None)
-
-        print self.search_index_name_list
-        print self.search_index_desc_list
+        self.update_search_index()
 
     #----------------------------------------------------------------------
     def update_search_index(self, parent_item=None, index_item=None,
@@ -1252,26 +1247,27 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 {'searchText':newSearchText,
                  'searchRootIndex':currentPath['searchRootIndex']}
 
-
-        searchRootItem = self.model.itemFromIndex(searchRootIndex)
         if newSearchText.startswith(('"',"'")) and \
            newSearchText.endswith  (('"',"'")): # exact word searching
             newSearchText_tokens = [newSearchText[1:-1]]
         else: # token searching
             newSearchText_tokens = newSearchText.lower().split()
+
+        searchRootItem = self.model.itemFromIndex(searchRootIndex)
+        search_root_path = searchRootItem.path.lower()
+
         matchedItems = [
             item for item, path, name, desc in zip(
                 self.model.search_index_item_list,
                 self.model.search_index_path_list,
                 self.model.search_index_name_list,
                 self.model.search_index_desc_list)
-            if path.startswith(searchRootItem.path) and
+            if path.startswith(search_root_path) and
             (self._search_tokens_found(newSearchText_tokens, name) or
              self._search_tokens_found(newSearchText_tokens, desc))]
 
         # Update completer model
         self.model.updateCompleterModel(searchRootItem.path)
-
 
         dispNameList = [str(i.text()) for i in matchedItems]
         print dispNameList
@@ -1485,6 +1481,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
         self.model.updateCompleterModel(self.getCurrentRootPath())
         self.updatePath()
+
+        self.model.update_search_index()
 
         if self.inSearchMode():
             searchItem = self.selectedSearchItemList[0]
@@ -2072,6 +2070,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.removeDeletedItemsFromHistory()
         self.updatePath()
 
+        self.model.update_search_index()
+
         if self.inSearchMode():
             self.onSearchTextChange(self.lineEdit_search.text())
 
@@ -2244,6 +2244,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
         self.updatePath()
+
+        self.model.update_search_index()
 
     #----------------------------------------------------------------------
     def pasteSubItems(self, sourceParentItem, targetParentItem):
