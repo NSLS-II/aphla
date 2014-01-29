@@ -25,13 +25,17 @@ from hlalib import getElements
 import matplotlib.pylab as plt
 
 
-def resetSrBpms(wfmsel = 1):
+def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
     Adc, Tbt and Fa waveforms.
     """
-    pvprefs = [bpm.pv(field="x")[0].replace("Pos:X-I", "")
-               for bpm in getElements("BPM")]
+    elems = [e for e in getElements(name) if e.pv(field="x")]
+    pvprefs = [bpm.pv(field="x")[0].replace("Pos:X-I", "") for bpm in elems]
+
+    if verbose:
+        print "resetting {0} BPMS: {1}".format(len(elems), elems)
+
     for i,pvx in enumerate(pvprefs):
         pvs = [ pvx + "Trig:TrigSrc-SP" for pvx in pvprefs]
         caput(pvs, 1, wait=True)
@@ -54,12 +58,30 @@ def resetSrBpms(wfmsel = 1):
         pvs = [  pvx + "ddrFaOffset" for pvx in pvprefs]
         caput(pvs, 0, wait=True)
         #
+        pvs = [ pvx + "Burst:AdcEnableLen-SP" for pvx in pvprefs]
+        caput(pvs, [1000000] * len(pvs), wait=True)
+        pvs = [ pvx + "Burst:TbtEnableLen-SP" for pvx in pvprefs]
+        caput(pvs,  [100000] * len(pvs), wait=True)
+        pvs = [ pvx + "Burst:FaEnableLen-SP" for pvx in pvprefs]
+        caput(pvs,    [9000] * len(pvs), wait=True)
+        #
+        pvs = [ pvx + "ERec:AdcEnableLen-SP" for pvx in pvprefs]
+        if verbose: print pvs
+        caput(pvs, [100000] * len(pvs), wait=True)
+        pvs = [ pvx + "ERec:TbtEnableLen-SP" for pvx in pvprefs]
+        if verbose: print pvs
+        caput(pvs, [100000] * len(pvs), wait=True)
+        pvs = [ pvx + "ERec:FaEnableLen-SP" for pvx in pvprefs]
+        if verbose: print pvs
+        caput(pvs,   [9000] * len(pvs), wait=True)
+    
     
 def _srBpmTrigData(pvprefs, waveform, **kwargs):
     """
     """
     offset = kwargs.pop("offset", 0)
     sleep  = kwargs.pop("sleep", 0.5)
+    count  = kwargs.pop("count", 0)
     tc = kwargs.get("timeout", 6)
     verbose = kwargs.get("verbose", 0)
 
@@ -70,6 +92,12 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
     pv_trig = []
     pv_wfmsel, pv_adcwfm, pv_tbtwfm, pv_fawfm = [], [], [], []
     pv_adcoffset, pv_tbtoffset, pv_faoffset = [], [], []
+    # available data points
+    pv_adclen, pv_tbtlen, pv_falen = [], [], []
+    # available data points in CA
+    pv_adccalen, pv_tbtcalen, pv_facalen = [], [], []
+    #
+    pv_bbaxoff, pv_bbayoff = [], []
     pv_ddrts = [] # timestamp
     pv_ts, pv_tsns = [], [] # timestamp second and nano sec
     pv_trigts, pv_trigtsns = [], [] # trigger timestamp
@@ -77,6 +105,10 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
     # did not consider the 'ddrTbtWfEnable' PV
     for i,pvx in enumerate(pvprefs):
         #print bpm.name, pvh, caget(pvh)
+        #
+        pv_bbaxoff.append( pvx + "BbaXOff-SP")
+        pv_bbayoff.append( pvx + "BbaYOff-SP")
+        # 
         pv_trig.append(  pvx + "Trig:TrigSrc-SP")
         pv_wfmsel.append(pvx + "DDR:WfmSel-SP")
         pv_ddrts.append( pvx + "TS:DdrTrigDate-I")
@@ -90,6 +122,14 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
         pv_trigts.append(  pvx + "Trig:TsSec-I")
         pv_trigtsns.append(pvx + "Trig:TsOff-I")
         #
+        pv_adclen.append(  pvx + "Burst:AdcEnableLen-SP")
+        pv_tbtlen.append(  pvx + "Burst:TbtEnableLen-SP")
+        pv_falen.append(   pvx + "Burst:FaEnableLen-SP")
+        #
+        pv_adccalen.append(pvx + "ERec:AdcEnableLen-SP")
+        pv_tbtcalen.append(pvx + "ERec:TbtEnableLen-SP")
+        pv_facalen.append( pvx + "ERec:FaEnableLen-SP")
+
         pv_ddrtx.append(pvx + "DDR:TxStatus-I")
 
     # save initial val
@@ -155,18 +195,20 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
     if verbose > 0:
         print "Trials: %d, Trig=%.2e ns." % (n, mdt)
         print "Sec:", tss_r
-        print "dSec:", [s - min(tss) for s in tss]
+        print "dSec: ", [s - min(tss) for s in tss]
+        print "dNsec:", [s - min(tsns) for s in tsns]
         print "NSec", tsns
 
     # redundent check
     ddrts0 = caget(pv_ddrts)
     ddroffset = caget(pv_ddroffset, timeout=tc)
-    data = (caget(pv_x), caget(pv_y), caget(pv_S))
+    data = (caget(pv_x, count=count), caget(pv_y, count=count),
+            caget(pv_S, count=count))
     #
     data = np.array(data, 'd')
 
     # set 0 - internal trig, 1 - external trig
-    caput(pv_trig, 1, wait=True)
+    #caput(pv_trig, 1, wait=True)
 
     return data[0], data[1], data[2], ddrts0, ddroffset
 
@@ -222,6 +264,7 @@ def getSrBpmData(**kwargs):
     verbose  = kwargs.get("verbose", 0)
     waveform = kwargs.pop("waveform", "Tbt")
     name     = kwargs.pop("name", "BPM")
+    count    = kwargs.get("count", 0)
     #timeout  = kwargs.get("timeout", 6)
 
     lat = machines.getLattice()
@@ -253,9 +296,9 @@ def getSrBpmData(**kwargs):
             pv_offset = [pv + "ddrFaOffset" for pv in pvpref]
 
         pv_ts = [pv + "TS:DdrTrigDate-I" for pv in pvpref]
-        x  = np.array(caget(pv_x), 'd')
-        y  = np.array(caget(pv_y), 'd') 
-        Is = np.array(caget(pv_S), 'd')
+        x  = np.array(caget(pv_x, count=count), 'd')
+        y  = np.array(caget(pv_y, count=count), 'd') 
+        Is = np.array(caget(pv_S, count=count), 'd')
         ts = caget(pv_ts)
         offset = caget(pv_offset)
 
