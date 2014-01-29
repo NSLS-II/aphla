@@ -1205,6 +1205,15 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         #print 'Main Pane Focus out'
 
     #----------------------------------------------------------------------
+    def _search_tokens_found(self, newSearchText_tokens, text):
+        """
+        Return True if all tokens are found in the text being searched.
+        Return False otherwise.
+        """
+
+        return all([token in text for token in newSearchText_tokens])
+
+    #----------------------------------------------------------------------
     def onSearchTextChange(self, newSearchText):
         """"""
 
@@ -1245,7 +1254,11 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
 
         searchRootItem = self.model.itemFromIndex(searchRootIndex)
-        newSearchText = newSearchText.lower()
+        if newSearchText.startswith(('"',"'")) and \
+           newSearchText.endswith  (('"',"'")): # exact word searching
+            newSearchText_tokens = [newSearchText[1:-1]]
+        else: # token searching
+            newSearchText_tokens = newSearchText.lower().split()
         matchedItems = [
             item for item, path, name, desc in zip(
                 self.model.search_index_item_list,
@@ -1253,7 +1266,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 self.model.search_index_name_list,
                 self.model.search_index_desc_list)
             if path.startswith(searchRootItem.path) and
-            ((newSearchText in name) or (newSearchText in desc))]
+            (self._search_tokens_found(newSearchText_tokens, name) or
+             self._search_tokens_found(newSearchText_tokens, desc))]
 
         # Update completer model
         self.model.updateCompleterModel(searchRootItem.path)
