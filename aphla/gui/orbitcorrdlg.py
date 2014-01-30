@@ -6,11 +6,11 @@ Dialog for Orbit Correction and Local Bump
 
 # :author: Lingyun Yang <lyyang@bnl.gov>
 
-
 if __name__ == "__main__":
     import cothread
     app = cothread.iqt()
     import aphla
+
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.Qt import Qt, SIGNAL
@@ -24,6 +24,7 @@ from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
 import PyQt4.Qwt5 as Qwt
 
 from aporbitplot import ApCaArrayPlot
+from aphla import catools, getElements, setLocalBump
 
 class DoubleSpinBoxCell(QDoubleSpinBox):
     def __init__(self, row = -1, col = -1, val = 0.0, parent = None):
@@ -34,12 +35,12 @@ class DoubleSpinBoxCell(QDoubleSpinBox):
         self.setDecimals(10)
 
 class OrbitCorrDlg(QDialog):
-    def __init__(self, bpms = None,
-                 stepsize = 0.001, orbit_plots = None,
-                 correct_orbit = None, parent = None):
+    def __init__(self, bpms = None, cors = None, parent = None):
+        super(OrbitCorrDlg, self).__init__(parent)
+        # add bpms
         self.bpms = bpms
         if bpms is None:
-            self.bpms = ap.getElements("BPM")
+            self.bpms = getElements("BPM")
         self.bpms = [bpm for bpm in self.bpms if bpm.flag == 0]
         pvx = [bpm.pv(field="x", handle="readback")[0] for bpm in self.bpms]
         pvy = [bpm.pv(field="y", handle="readback")[0] for bpm in self.bpms]
@@ -47,26 +48,48 @@ class OrbitCorrDlg(QDialog):
         self._update_current_orbit()
 
         s = [bpm.sb for bpm in self.bpms]
-        self.plot = ApCaArrayPlot([pvx, pvy], x = [s, s])
+        self.bpm_plot = ApCaArrayPlot([pvx, pvy], x = [s, s])
         magprof = aphla.getBeamlineProfile()
-        self.plot.setMagnetProfile(magprof)
-        self.plot.setMinimumHeight(120)
-        self.plot.setMaximumHeight(200)
+        self.bpm_plot.setMagnetProfile(magprof)
 
         self.xc = Qwt.QwtPlotCurve()
         self.xc.setTitle("Target X")
-        self.xc.attach(self.plot)
+        self.xc.attach(self.bpm_plot)
         self.xc.setData(s, self.x0)
-        self.plot.showCurve(self.xc, True)
+        self.bpm_plot.showCurve(self.xc, True)
 
         self.yc = Qwt.QwtPlotCurve()
         self.yc.setTitle("Target Y")
-        self.yc.attach(self.plot)
+        self.yc.attach(self.bpm_plot)
         self.yc.setData(s, self.y0)
-        self.plot.showCurve(self.yc, True)
-        
-        self._stepsize0 = stepsize
-        super(OrbitCorrDlg, self).__init__(parent)
+        self.bpm_plot.showCurve(self.yc, True)
+        self.bpm_plot.setContentsMargins(12, 10, 10, 10)
+
+        self.cors = cors
+        if cors is None:
+            self.cors = []
+            for c in getElements("HCOR") + getElements("VCOR"):
+                if c not in self.cors:
+                    self.cors.append(c)
+        pvx = [c.pv(field="x", handle="setpoint")[0]
+               for c in getElements("HCOR") if c in self.cors]
+        pvy = [c.pv(field="y", handle="setpoint")[0]
+               for c in getElements("VCOR") if c in self.cors]
+        s = [c.sb for c in self.cors]
+        self.cor_plot = ApCaArrayPlot([pvx, pvy], x = [s, s],
+                                      labels=["HCOR", "VCOR"])
+        magprof = aphla.getBeamlineProfile()
+        self.cor_plot.setMagnetProfile(magprof)
+        self.cor_plot.setContentsMargins(12, 10, 10, 10)
+        #self.cor_plot.setMinimumHeight(200)
+        #self.cor_plot.setMaximumHeight(250)
+
+        tabs = QtGui.QTabWidget()
+        tabs.addTab(self.bpm_plot, "Orbit")
+        tabs.addTab(self.cor_plot, "Correctors")
+        tabs.setMinimumHeight(200)
+        tabs.setMaximumHeight(280)
+
         self.table = QTableWidget(len(self.bpms), 6)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         hdview = QHeaderView(Qt.Horizontal)
@@ -118,7 +141,7 @@ class OrbitCorrDlg(QDialog):
         # or connect the returnPressed() signal
         frmbox.addRow("&Repeat correction", self.repeatbox)
 
-        self.rcondbox = QLineEdit(str(stepsize), parent=self)
+        self.rcondbox = QLineEdit()
         self.rcondbox.setValidator(QDoubleValidator(0, 1, 0, self))
         self.rcondbox.setText("1e-2")
         frmbox.addRow("r&cond for SVD", self.rcondbox)
@@ -135,6 +158,13 @@ class OrbitCorrDlg(QDialog):
         hln2.setFrameShape(QtGui.QFrame.HLine)
         frmbox.addRow(hln2)
 
+        self.progress = QProgressBar()
+        self.progress.setMaximum(self.repeatbox.value())
+        self.progress.setMaximumHeight(15)
+        frmbox.addRow(self.progress)
+
+        grp = QtGui.QGroupBox("Local Bump")
+        grp.setLayout(frmbox)
         #vbox.addStretch(1.0)
         #self.qdb = QDialogButtonBox(self)
         #self.qdb.addButton("APP", QDialogButtonBox.ApplyRole)
@@ -143,8 +173,20 @@ class OrbitCorrDlg(QDialog):
         #self.qdb.addButton(QDialogButtonBox.Cancel)
         #self.qdb.addButton(QDialogButtonBox.Help)
 
-        self.progress = QProgressBar()
-        self.progress.setMaximum(self.repeatbox.value())
+        layout = QVBoxLayout()
+        layout.addWidget(tabs)
+
+        hb1 = QHBoxLayout()
+        hb1.addWidget(self.table, 1)
+        hb1.addWidget(grp) 
+
+        layout.addLayout(hb1, 1)
+
+        hln = QtGui.QFrame()
+        hln.setLineWidth(3)
+        hln.setFrameStyle(QtGui.QFrame.Sunken)
+        hln.setFrameShape(QtGui.QFrame.HLine)
+        layout.addWidget(hln)
 
         hbox = QHBoxLayout()
 
@@ -163,16 +205,7 @@ class OrbitCorrDlg(QDialog):
         self.correctOrbitBtn.setDefault(True)
         hbox.addWidget(self.correctOrbitBtn)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.plot)
-
-        hb1 = QHBoxLayout()
-        hb1.addWidget(self.table, 1)
-        hb1.addLayout(frmbox) 
-
-        layout.addLayout(hb1, 1)
-
-        layout.addWidget(self.progress)
+        #layout.addWidget(self.progress)
         #layout.addWidget(self.qdb)
         layout.addLayout(hbox)
         self.setLayout(layout)
@@ -182,8 +215,8 @@ class OrbitCorrDlg(QDialog):
         #self.val = [s, x, y]
         self.setMinimumWidth(1000)
         # draw the target orbit
-        #self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
-        #self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
+        #self.bpm_plots[0].plotCurve2(self.val[1], self.val[0])
+        #self.bpm_plots[1].plotCurve2(self.val[2], self.val[0])
 
         self.connect(self.base_orbit_box,
                      SIGNAL("currentIndexChanged(QString)"), 
@@ -202,8 +235,8 @@ class OrbitCorrDlg(QDialog):
     def _update_current_orbit(self):
         pvx = [bpm.pv(field="x", handle="readback")[0] for bpm in self.bpms]
         pvy = [bpm.pv(field="y", handle="readback")[0] for bpm in self.bpms]
-        self.x0 = [float(v) for v in aphla.catools.caget(pvx)]
-        self.y0 = [float(v) for v in aphla.catools.caget(pvy)]
+        self.x0 = [float(v) for v in catools.caget(pvx)]
+        self.y0 = [float(v) for v in catools.caget(pvy)]
 
     def _update_orbit_plot(self):
         s = [bpm.sb for bpm in self.bpms]
@@ -215,7 +248,7 @@ class OrbitCorrDlg(QDialog):
             vy1[i],err = self.table.item(i, jy).data(Qt.DisplayRole).toFloat()
         self.xc.setData(s, vx1)
         self.yc.setData(s, vy1)
-        self.plot.replot()
+        self.bpm_plot.replot()
 
     def updateTargetOrbit(self, baseobt):
         if baseobt == "All Zeros":
@@ -256,8 +289,6 @@ class OrbitCorrDlg(QDialog):
 
     def call_apply(self):
         #print "apply the orbit"
-        trims = [c for c in aphla.getElements("HCOR") + aphla.getElements("VCOR")
-                 if c.flag == 0]
         obt = []
         jx, jy = 4, 5
         for i in range(self.table.rowCount()):
@@ -267,21 +298,29 @@ class OrbitCorrDlg(QDialog):
 
         self.correctOrbitBtn.setEnabled(False)
         nrepeat = self.repeatbox.value()
-        scale   = float(self.scalebox.text())
-        rcond   = float(self.rcondbox.text())
+        kw = { "scale": float(self.scalebox.text()),
+               "rcond": float(self.rcondbox.text()) }
         self.progress.setValue(0)
         QApplication.processEvents()
         for i in range(nrepeat):
-            aphla.setLocalBump(self.bpms, trims, obt)
+            err, msg = setLocalBump(self.bpms, self.cors, obt, **kw)
             self.progress.setValue(i+1)
             QApplication.processEvents()
+            if err != 0:
+                QtGui.QMessageBox.critical(
+                    self, "Local Orbit Bump", 
+                    "ERROR: {0}\nAbort.".format(msg),
+                    QtGui.QMessageBox.Ok)
+                #self.progress.setValue(0)
+                break
+       
         self.correctOrbitBtn.setEnabled(True)
 
     def _help(self):
         print "HELP"
 
     def done(self, r):
-        #for p in self.orbit_plots:
+        #for p in self.bpm_plots:
         #    p.plotCurve2(None, None)
 
         QDialog.done(self, r)

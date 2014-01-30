@@ -368,9 +368,9 @@ def caRmCorrect(resp, kker, m, **kwarg):
         if norm2 > norm0:
             msg = "Failed to reduce orbit distortion, restoring..." 
             _logger.warn(msg) 
-            print(msg, norm0, norm2)
+            #print(msg, norm0, norm2)
             caput(kker, k0)
-            return (2, msg)
+            return (2, "{0} {1} {2}".format(msg, norm0, norm2))
         else:
             return (0, None)
     else:
