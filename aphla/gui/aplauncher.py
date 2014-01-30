@@ -3492,14 +3492,14 @@ class LauncherApp(Qt.QObject):
         """"""
 
         print '### Currently Running Subprocesses ###'
-        print '(Path in Launcher): (Command Expression)'
+        print '(PID) : (Path in Launcher) : (Command Expression)'
 
         finished_subp_inds = []
         for i, subp_dict in enumerate(self.subprocs):
             p = subp_dict['p']
             if p.poll() is None:
-                print '{0:s}: {1:s}'.format(subp_dict['path'],
-                                            subp_dict['cmd'])
+                print '{0:d} : {1:s} : {2:s}'.format(
+                    p.pid, subp_dict['path'], subp_dict['cmd'])
             else:
                 finished_subp_inds.append(i)
 
