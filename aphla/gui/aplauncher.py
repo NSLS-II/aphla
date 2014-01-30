@@ -25,6 +25,7 @@ import types
 from subprocess import Popen, PIPE
 import traceback
 import re
+import shutil
 from cStringIO import StringIO
 import sip
 sip.setapi('QString', 2)
@@ -91,11 +92,15 @@ DOT_HLA_QFILEPATH = HOME_PATH + SEPARATOR + '.hla'
 SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
 USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
 USER_TEMP_XML_FILENAME = 'user_launcher_hierarchy.xml.temp'
+USER_XML_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
+USER_TEMP_XML_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_XML_FILENAME
 USER_MODIFIABLE_ROOT_PATH = '/root/Favorites'
 
 import utils.gui_icons
 from Qt4Designer_files.ui_launcher import Ui_MainWindow
 from Qt4Designer_files.ui_launcher_item_properties import Ui_Dialog
+from Qt4Designer_files.ui_launcher_restore_hierarchy import Ui_Dialog \
+     as Ui_Dialog_restore_hie
 
 import aphla as ap
 
@@ -133,6 +138,19 @@ def almost_equal(x, y, absTol=1e-18, relTol=1e-7):
     assert tests
     return abs(x - y) <= max(tests)
 
+########################################################################
+class StartDirPaths():
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+
+        self.restore_hierarchy = os.getcwd()
+
+
+START_DIRS = StartDirPaths()
+
 
 ########################################################################
 class SearchModel(Qt.QStandardItemModel):
@@ -157,8 +175,6 @@ class SearchModel(Qt.QStandardItemModel):
         rootItem.singleton = False
         rootItem.updateIconAndColor()
         self.setItem(0, rootItem)
-
-
 
 ########################################################################
 class LauncherModel(Qt.QStandardItemModel):
@@ -192,10 +208,7 @@ class LauncherModel(Qt.QStandardItemModel):
         # the XML file to build the corresponding tree structure.
 
         ## Then parse user XML file and append the data to the tree model
-        user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
-        user_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/')
-        #
-        doc = self.open_XML_HierarchyFile(user_XML_Filepath)
+        doc = self.open_XML_HierarchyFile(USER_XML_FILEPATH)
         rootItem = self.item(0,0)
         self.construct_tree_model(doc.firstChild(),
                                   parent_item=rootItem,
@@ -524,6 +537,88 @@ class LauncherModel(Qt.QStandardItemModel):
 
 
 ########################################################################
+class LauncherRestoreHierarchyDialog(Qt.QDialog, Ui_Dialog_restore_hie):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+
+        Qt.QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.start_dirs = START_DIRS
+
+        self.checkBox_backup.setChecked(False)
+        self.lineEdit_backup_filepath.setEnabled(False)
+
+        self.connect(self.pushButton_browse, Qt.SIGNAL('clicked()'),
+                     self.openFileSelector)
+        self.connect(self.checkBox_backup, Qt.SIGNAL('stateChanged(int)'),
+                     self._updateEnableStates)
+
+    #----------------------------------------------------------------------
+    def _updateEnableStates(self, qtCheckState):
+        """"""
+
+        if qtCheckState == Qt.Qt.Checked:
+            self.lineEdit_backup_filepath.setEnabled(True)
+        elif qtCheckState == Qt.Qt.Unchecked:
+            self.lineEdit_backup_filepath.setEnabled(False)
+        else:
+            raise ValueError('Unexpected Qt CheckedState value.')
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        if self.checkBox_backup.isChecked():
+            msgBox = Qt.QMessageBox()
+            backup_filepath = self.lineEdit_backup_filepath.text()
+            if osp.exists(osp.dirname(backup_filepath)):
+                shutil.copy(USER_XML_FILEPATH, backup_filepath)
+                msgBox.setText('Successfully backed up the current hierarchy to:')
+                msgBox.setInformativeText('{0:s}'.format(backup_filepath))
+                msgBox.setIcon(Qt.QMessageBox.Information)
+                msgBox.exec_()
+            else:
+                msgBox.setText('Invalid file path specified:')
+                msgBox.setInformativeText('{0:s} does not exist'.format(
+                    osp.dirname(backup_filepath)))
+                msgBox.setIcon(Qt.QMessageBox.Critical)
+                msgBox.exec_()
+                return
+
+        super(LauncherRestoreHierarchyDialog, self).accept()
+        # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(LauncherRestoreHierarchyDialog, self).reject()
+        # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def openFileSelector(self):
+        """"""
+
+        caption = 'Save Current User Hierarchy File'
+        selected_filter_str = ('XML files (*.xml)')
+        filter_str = ';;'.join([selected_filter_str, 'All files (*)'])
+        save_filepath = Qt.QFileDialog.getSaveFileName(
+            caption=caption, directory=self.start_dirs.restore_hierarchy,
+            filter=filter_str)
+        if not save_filepath:
+            return
+
+        self.start_dirs.restore_hierarchy = osp.dirname(save_filepath)
+
+        self.lineEdit_backup_filepath.setText(save_filepath)
+
+
+########################################################################
 class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
     """"""
 
@@ -744,9 +839,6 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
         """"""
 
         super(LauncherModelItemPropertiesDialog, self).reject() # will hide the dialog
-
-
-
 
 
 ########################################################################
@@ -1096,17 +1188,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         # Save the current hierarchy in the user-modifiable section to
         # the user hierarchy XML file.
-        user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
-        user_XML_Filepath.replace('\\','/') # On Windows, convert Windows path separator ('\\') to Linux path separator ('/')
-
         rootModelItem = self.model.itemFromIndex( Qt.QModelIndex(
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
-        self.model.writeToXMLFile(user_XML_Filepath, rootModelItem)
+        self.model.writeToXMLFile(USER_XML_FILEPATH, rootModelItem)
 
-        temp_user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + \
-            USER_TEMP_XML_FILENAME
-        if osp.exists(temp_user_XML_Filepath):
-            try: os.remove(temp_user_XML_Filepath)
+        if osp.exists(USER_TEMP_XML_FILEPATH):
+            try: os.remove(USER_TEMP_XML_FILEPATH)
             except:
                 print ' '
                 print 'WARNING: Failed to delete temporary user XML file.'
@@ -1130,14 +1217,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         # Save the current hierarchy in the user-modifiable section to
         # a temporary user hierarchy XML file.
-        temp_user_XML_Filepath = DOT_HLA_QFILEPATH + SEPARATOR + \
-            USER_TEMP_XML_FILENAME
-        temp_user_XML_Filepath.replace('\\','/') # On Windows, convert Windows
-        # path separator ('\\') to Linux path separator ('/')
-
         rootModelItem = self.model.itemFromIndex( Qt.QModelIndex(
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
-        self.model.writeToXMLFile(temp_user_XML_Filepath, rootModelItem)
+        self.model.writeToXMLFile(USER_TEMP_XML_FILEPATH, rootModelItem)
 
     #----------------------------------------------------------------------
     def saveSettings(self):
@@ -3235,6 +3317,15 @@ class LauncherApp(Qt.QObject):
                      self.print_running_subprocs)
 
     #----------------------------------------------------------------------
+    def _shutdown(self):
+        """
+        TODO: Gracefully terminate all the running subprocesses
+        """
+
+
+
+
+    #----------------------------------------------------------------------
     def _initModel(self):
         """ """
 
@@ -3475,10 +3566,25 @@ def main(args = None):
     else:
         qapp = Qt.QApplication(args)
 
-
     initRootPath = SEPARATOR + 'root'
     app = LauncherApp(initRootPath)
     app.view.show()
+
+    # Check if there is a temporarily saved user file from an
+    # ungracefully terminated previous session. If found, ask a user if he/she
+    # wants to use this file, instead of the last successfully saved official
+    # user file.
+    if osp.exists(USER_TEMP_XML_FILEPATH):
+        restoreHierarchyDialog = LauncherRestoreHierarchyDialog()
+        restoreHierarchyDialog.exec_()
+
+        if restoreHierarchyDialog.result() == Qt.QDialog.Accepted:
+            shutil.move(USER_TEMP_XML_FILEPATH, USER_XML_FILEPATH)
+
+            new_app = LauncherApp(initRootPath)
+            new_app.view.show()
+
+            app.view.close()
 
     if using_cothread:
         cothread.WaitForQuit()
