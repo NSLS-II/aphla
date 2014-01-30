@@ -12,6 +12,7 @@ if __name__ == "__main__":
     app = cothread.iqt()
     import aphla
 
+from PyQt4 import QtGui, QtCore
 from PyQt4.Qt import Qt, SIGNAL
 from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
                          QDoubleSpinBox, QGridLayout, QVBoxLayout,
@@ -42,16 +43,28 @@ class OrbitCorrDlg(QDialog):
         self.bpms = [bpm for bpm in self.bpms if bpm.flag == 0]
         pvx = [bpm.pv(field="x", handle="readback")[0] for bpm in self.bpms]
         pvy = [bpm.pv(field="y", handle="readback")[0] for bpm in self.bpms]
+        self.x0, self.y0 = None, None
+        self._update_current_orbit()
+
         s = [bpm.sb for bpm in self.bpms]
         self.plot = ApCaArrayPlot([pvx, pvy], x = [s, s])
         magprof = aphla.getBeamlineProfile()
         self.plot.setMagnetProfile(magprof)
+        self.plot.setMinimumHeight(120)
+        self.plot.setMaximumHeight(200)
+
         self.xc = Qwt.QwtPlotCurve()
-        self.xc.setTitle("X")
+        self.xc.setTitle("Target X")
         self.xc.attach(self.plot)
-        self.xc.setData(s, [0.0] * len(s))
+        self.xc.setData(s, self.x0)
         self.plot.showCurve(self.xc, True)
 
+        self.yc = Qwt.QwtPlotCurve()
+        self.yc.setTitle("Target Y")
+        self.yc.attach(self.plot)
+        self.yc.setData(s, self.y0)
+        self.plot.showCurve(self.yc, True)
+        
         self._stepsize0 = stepsize
         super(OrbitCorrDlg, self).__init__(parent)
         self.table = QTableWidget(len(self.bpms), 6)
@@ -70,45 +83,14 @@ class OrbitCorrDlg(QDialog):
             #it.setMinimumWidth(80)
             self.table.setItem(i, 1, it)
 
-            #it = DoubleSpinBoxCell(i, 2, bpm.x)
-            it = DoubleSpinBoxCell(i, 2, 0.0)
-            it.setRange(-100000, 100000)
-            it.setSuffix(" ")
-            it.setSingleStep(stepsize)
-            #if xref is not None: it.setValue(xref[i])
-            it.setMinimumWidth(88)
-            self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
-            self.table.setCellWidget(it.row, it.col, it)
-
-            #it = DoubleSpinBoxCell(i, 3, bpm.y)
-            it = DoubleSpinBoxCell(i, 3, 0.0)
-            it.setRange(-100000, 100000)
-            it.setSuffix(" ")
-            it.setSingleStep(stepsize)
-            #if yref is not None: it.setValue(yref[i])
-            it.setMinimumWidth(88)
-            self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
-            self.table.setCellWidget(it.row, it.col, it)
-
-            #it = DoubleSpinBoxCell(i, 2, bpm.x)
-            it = DoubleSpinBoxCell(i, 4, 0.0)
-            it.setRange(-100000, 100000)
-            it.setSuffix(" ")
-            it.setSingleStep(stepsize)
-            #if xref is not None: it.setValue(xref[i])
-            it.setMinimumWidth(88)
-            self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
-            self.table.setCellWidget(it.row, it.col, it)
-
-            #it = DoubleSpinBoxCell(i, 3, bpm.y)
-            it = DoubleSpinBoxCell(i, 5, 0.0)
-            it.setRange(-100000, 100000)
-            it.setSuffix(" ")
-            it.setSingleStep(stepsize)
-            #if yref is not None: it.setValue(yref[i])
-            it.setMinimumWidth(88)
-            self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
-            self.table.setCellWidget(it.row, it.col, it)
+            for j in range(2, 6):
+                it = QTableWidgetItem(str(0.0))
+                it.setData(Qt.DisplayRole, str(0.0))
+                it.setFlags(it.flags() | Qt.ItemIsEditable)
+                self.table.setItem(i, j, it) 
+            # use the current orbit 
+            self.table.item(i,4).setData(Qt.DisplayRole, str(self.x0[i]))
+            self.table.item(i,5).setData(Qt.DisplayRole, str(self.y0[i]))
 
         #self.connect(self.table, SIGNAL("cellClicked(int, int)"),
         #             self._cell_clicked)
@@ -119,14 +101,17 @@ class OrbitCorrDlg(QDialog):
         #self.table.setColumnWidth(0, 300)
         self.table.setColumnWidth(1, 80)
 
-
         frmbox = QFormLayout()
-        self.stepsizebox = QLineEdit(str(stepsize), parent=self)
-        self.stepsizebox.setValidator(QDoubleValidator(self))
-        # or connect the returnPressed() signal
-        self.connect(self.stepsizebox, SIGNAL("textEdited(QString)"), 
-                     self.update_cell_stepsize)
-        frmbox.addRow("&Cell step size", self.stepsizebox)
+        self.base_orbit_box = QtGui.QComboBox()
+        self.base_orbit_box.addItems([
+                "Current Orbit", "All Zeros"])
+        frmbox.addRow("Orbit Base", self.base_orbit_box)
+
+        hln1 = QtGui.QFrame()
+        hln1.setLineWidth(3)
+        hln1.setFrameStyle(QtGui.QFrame.Sunken)
+        hln1.setFrameShape(QtGui.QFrame.HLine)
+        frmbox.addRow(hln1)
         self.repeatbox = QSpinBox()
         self.repeatbox.setRange(1, 20)
         self.repeatbox.setValue(3)
@@ -144,6 +129,12 @@ class OrbitCorrDlg(QDialog):
         self.scalebox.setValue(0.68)
         frmbox.addRow("&Scale correctors", self.scalebox)
 
+        hln2 = QtGui.QFrame()
+        hln2.setLineWidth(3)
+        hln2.setFrameStyle(QtGui.QFrame.Sunken)
+        hln2.setFrameShape(QtGui.QFrame.HLine)
+        frmbox.addRow(hln2)
+
         #vbox.addStretch(1.0)
         #self.qdb = QDialogButtonBox(self)
         #self.qdb.addButton("APP", QDialogButtonBox.ApplyRole)
@@ -154,12 +145,14 @@ class OrbitCorrDlg(QDialog):
 
         self.progress = QProgressBar()
         self.progress.setMaximum(self.repeatbox.value())
+
         hbox = QHBoxLayout()
-        hbox.addStretch()
 
         btn = QPushButton("Reset")
-        self.connect(btn, SIGNAL("clicked()"), self._reset)
+        self.connect(btn, SIGNAL("clicked()"), self.resetBumps)
         hbox.addWidget(btn)
+
+        hbox.addStretch()
         btn = QPushButton("Close")
         self.connect(btn, SIGNAL("clicked()"), self.accept)
         hbox.addWidget(btn)
@@ -171,32 +164,88 @@ class OrbitCorrDlg(QDialog):
         hbox.addWidget(self.correctOrbitBtn)
 
         layout = QVBoxLayout()
-        layout.addLayout(frmbox) 
-        layout.addWidget(self.table)
         layout.addWidget(self.plot)
+
+        hb1 = QHBoxLayout()
+        hb1.addWidget(self.table, 1)
+        hb1.addLayout(frmbox) 
+
+        layout.addLayout(hb1, 1)
+
         layout.addWidget(self.progress)
         #layout.addWidget(self.qdb)
         layout.addLayout(hbox)
         self.setLayout(layout)
         #self.update_orbit = update_orbit
-        self.orbit_plots = orbit_plots
-        self.correct_orbit = correct_orbit
         #self._x0 = tuple(x)  # save for reset
         #self._y0 = tuple(y)  # save for reset
         #self.val = [s, x, y]
-
+        self.setMinimumWidth(1000)
         # draw the target orbit
         #self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
         #self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
 
+        self.connect(self.base_orbit_box,
+                     SIGNAL("currentIndexChanged(QString)"), 
+                     self.updateTargetOrbit)
         self.connect(self.repeatbox, SIGNAL("valueChanged(int)"),
                      self.progress.setMaximum)
+        self.connect(self.table, SIGNAL("cellChanged (int, int)"),
+                     self.updateBump)
 
         #self.connect(self.qdb, SIGNAL("clicked(QAbstractButton)"), self._action)
         #self.connect(self.qdb, SIGNAL("helpRequested()"), self._help)
 
     #def _cell_clicked(self, row, col):
     #    print row, col
+
+    def _update_current_orbit(self):
+        pvx = [bpm.pv(field="x", handle="readback")[0] for bpm in self.bpms]
+        pvy = [bpm.pv(field="y", handle="readback")[0] for bpm in self.bpms]
+        self.x0 = [float(v) for v in aphla.catools.caget(pvx)]
+        self.y0 = [float(v) for v in aphla.catools.caget(pvy)]
+
+    def _update_orbit_plot(self):
+        s = [bpm.sb for bpm in self.bpms]
+        vx1 = [ 0.0 ] * len(self.bpms)
+        vy1 = [ 0.0 ] * len(self.bpms)
+        jx, jy = 4, 5
+        for i in range(self.table.rowCount()):
+            vx1[i],err = self.table.item(i, jx).data(Qt.DisplayRole).toFloat()
+            vy1[i],err = self.table.item(i, jy).data(Qt.DisplayRole).toFloat()
+        self.xc.setData(s, vx1)
+        self.yc.setData(s, vy1)
+        self.plot.replot()
+
+    def updateTargetOrbit(self, baseobt):
+        if baseobt == "All Zeros":
+            jx0, jx1 = 2, 4
+            jy0, jy1 = 3, 5
+            for i in range(self.table.rowCount()):
+                it0 = self.table.item(i, jx0)
+                it1 = self.table.item(i, jx1)
+                it1.setData(Qt.DisplayRole, it0.data(Qt.DisplayRole))
+                it0 = self.table.item(i, jy0)
+                it1 = self.table.item(i, jy1)
+                it1.setData(Qt.DisplayRole, it0.data(Qt.DisplayRole))
+        elif baseobt == "Current Orbit":
+            self._update_current_orbit()
+            jx0, jx1 = 2, 4
+            jy0, jy1 = 3, 5
+            for i in range(self.table.rowCount()):
+                dx0,err = self.table.item(i, jx0).data(Qt.DisplayRole).toFloat()
+                it = self.table.item(i, jx1)
+                it.setData(Qt.DisplayRole, self.x0[i] + dx0)
+
+                dy0,err = self.table.item(i, jy0).data(Qt.DisplayRole).toFloat()
+                it = self.table.item(i, jy1)
+                it.setData(Qt.DisplayRole, self.y0[i] + dy0)
+        self._update_orbit_plot()
+
+    def updateBump(self, row, col):
+        #print "updating ", row, col
+        if col == 2 or col == 3:
+            self.updateTargetOrbit(self.base_orbit_box.currentText())
 
     def update_cell_stepsize(self, text):
         for i in range(self.table.rowCount()):
@@ -205,24 +254,17 @@ class OrbitCorrDlg(QDialog):
                 if it is None: continue
                 it.setSingleStep(float(self.stepsizebox.text()))
 
-    def call_update(self, val):
-        sender = self.sender()
-        #print "row/col", sender.row, sender.col, sender.value()
-        #print "  value was", self.val[sender.col-2][sender.row]
-        self.table.setCurrentCell(sender.row, sender.col)
-        vl = []
-        for i in range(self.table.rowCount()):
-            it = self.table.cellWidget(i,sender.col)
-            vl.append(float(it.value()))
-
-        if sender.col == 4:
-            data = self.xc.data()
-            x = [data.x(i) for i in range(data.size())]
-            self.xc.setData(x, vl)
-        self.plot.replot()
-
     def call_apply(self):
         #print "apply the orbit"
+        trims = [c for c in aphla.getElements("HCOR") + aphla.getElements("VCOR")
+                 if c.flag == 0]
+        obt = []
+        jx, jy = 4, 5
+        for i in range(self.table.rowCount()):
+            x1,err = self.table.item(i, jx).data(Qt.DisplayRole).toFloat()
+            y1,err = self.table.item(i, jy).data(Qt.DisplayRole).toFloat()
+            obt.append([x1, y1])
+
         self.correctOrbitBtn.setEnabled(False)
         nrepeat = self.repeatbox.value()
         scale   = float(self.scalebox.text())
@@ -230,9 +272,7 @@ class OrbitCorrDlg(QDialog):
         self.progress.setValue(0)
         QApplication.processEvents()
         for i in range(nrepeat):
-            self.correct_orbit(bpms = self.bpm, trims = None,
-                               obt = zip(self.val[1], self.val[2]),
-                               scale = scale, rcond = rcond)
+            aphla.setLocalBump(self.bpms, trims, obt)
             self.progress.setValue(i+1)
             QApplication.processEvents()
         self.correctOrbitBtn.setEnabled(True)
@@ -246,19 +286,13 @@ class OrbitCorrDlg(QDialog):
 
         QDialog.done(self, r)
 
-    def _reset(self):
-        for i in range(len(self.bpm)):
-            it = self.table.cellWidget(i, 2)
-            it.setValue(self._x0[i])
-            it = self.table.cellWidget(i, 3)
-            it.setValue(self._y0[i])
+    def resetBumps(self):
+        jx0, jy0 = 2, 3
+        for i in range(self.table.rowCount()):
+            self.table.item(i, jx0).setData(Qt.DisplayRole, str(0.0))
+            self.table.item(i, jy0).setData(Qt.DisplayRole, str(0.0))
+        self.updateTargetOrbit(self.base_orbit_box.currentText())
 
-        self.repeatbox.setValue(3)
-        self.scalebox.setValue(0.68)
-        self.stepsizebox.setText(str(self._stepsize0))
-        self.progress.setMaximum(3)
-        self.progress.setValue(0)
-        
     def _action(self, btn):
         #role = self.qdb.buttonRole(btn)
         #print "Role:", role
