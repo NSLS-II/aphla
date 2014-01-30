@@ -6,6 +6,12 @@ Dialog for Orbit Correction and Local Bump
 
 # :author: Lingyun Yang <lyyang@bnl.gov>
 
+
+if __name__ == "__main__":
+    import cothread
+    app = cothread.iqt()
+    import aphla
+
 from PyQt4.Qt import Qt, SIGNAL
 from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
                          QDoubleSpinBox, QGridLayout, QVBoxLayout,
@@ -14,6 +20,9 @@ from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
                          QLabel, QGroupBox, QLineEdit, QDoubleValidator,
                          QIntValidator, QSizePolicy, QDialogButtonBox, 
                          QFormLayout, QSpinBox, QProgressBar, QAbstractButton)
+import PyQt4.Qwt5 as Qwt
+
+from aporbitplot import ApCaArrayPlot
 
 class DoubleSpinBoxCell(QDoubleSpinBox):
     def __init__(self, row = -1, col = -1, val = 0.0, parent = None):
@@ -24,38 +33,77 @@ class DoubleSpinBoxCell(QDoubleSpinBox):
         self.setDecimals(10)
 
 class OrbitCorrDlg(QDialog):
-    def __init__(self, bpm, s, x, y, xunit = '', yunit = '',
+    def __init__(self, bpms = None,
                  stepsize = 0.001, orbit_plots = None,
                  correct_orbit = None, parent = None):
-        self.bpm = bpm
+        self.bpms = bpms
+        if bpms is None:
+            self.bpms = ap.getElements("BPM")
+        self.bpms = [bpm for bpm in self.bpms if bpm.flag == 0]
+        pvx = [bpm.pv(field="x", handle="readback")[0] for bpm in self.bpms]
+        pvy = [bpm.pv(field="y", handle="readback")[0] for bpm in self.bpms]
+        s = [bpm.sb for bpm in self.bpms]
+        self.plot = ApCaArrayPlot([pvx, pvy], x = [s, s])
+        magprof = aphla.getBeamlineProfile()
+        self.plot.setMagnetProfile(magprof)
+        self.xc = Qwt.QwtPlotCurve()
+        self.xc.setTitle("X")
+        self.xc.attach(self.plot)
+        self.xc.setData(s, [0.0] * len(s))
+        self.plot.showCurve(self.xc, True)
+
         self._stepsize0 = stepsize
         super(OrbitCorrDlg, self).__init__(parent)
-        self.table = QTableWidget(len(bpm), 4)
+        self.table = QTableWidget(len(self.bpms), 6)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         hdview = QHeaderView(Qt.Horizontal)
-        self.table.setHorizontalHeaderLabels(['BPM', 's', 'x', 'y'])
-        for i in range(len(self.bpm)):
-            it = QTableWidgetItem(self.bpm[i].name)
+        self.table.setHorizontalHeaderLabels(
+            ['BPM Name', 's', 'X Bump', 'Y Bump', "Target X", "Target Y"])
+        
+        for i,bpm in enumerate(self.bpms):
+            it = QTableWidgetItem(bpm.name)
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             self.table.setItem(i, 0, it)
 
-            it = QTableWidgetItem(str(s[i]))
+            it = QTableWidgetItem(str(bpm.sb))
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             #it.setMinimumWidth(80)
             self.table.setItem(i, 1, it)
 
-            it = DoubleSpinBoxCell(i, 2, x[i])
+            #it = DoubleSpinBoxCell(i, 2, bpm.x)
+            it = DoubleSpinBoxCell(i, 2, 0.0)
             it.setRange(-100000, 100000)
-            it.setSuffix(" " + xunit)
+            it.setSuffix(" ")
             it.setSingleStep(stepsize)
             #if xref is not None: it.setValue(xref[i])
             it.setMinimumWidth(88)
             self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
             self.table.setCellWidget(it.row, it.col, it)
 
-            it = DoubleSpinBoxCell(i, 3, y[i])
+            #it = DoubleSpinBoxCell(i, 3, bpm.y)
+            it = DoubleSpinBoxCell(i, 3, 0.0)
             it.setRange(-100000, 100000)
-            it.setSuffix(" " + yunit)
+            it.setSuffix(" ")
+            it.setSingleStep(stepsize)
+            #if yref is not None: it.setValue(yref[i])
+            it.setMinimumWidth(88)
+            self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
+            self.table.setCellWidget(it.row, it.col, it)
+
+            #it = DoubleSpinBoxCell(i, 2, bpm.x)
+            it = DoubleSpinBoxCell(i, 4, 0.0)
+            it.setRange(-100000, 100000)
+            it.setSuffix(" ")
+            it.setSingleStep(stepsize)
+            #if xref is not None: it.setValue(xref[i])
+            it.setMinimumWidth(88)
+            self.connect(it, SIGNAL("valueChanged(double)"), self.call_update)
+            self.table.setCellWidget(it.row, it.col, it)
+
+            #it = DoubleSpinBoxCell(i, 3, bpm.y)
+            it = DoubleSpinBoxCell(i, 5, 0.0)
+            it.setRange(-100000, 100000)
+            it.setSuffix(" ")
             it.setSingleStep(stepsize)
             #if yref is not None: it.setValue(yref[i])
             it.setMinimumWidth(88)
@@ -125,6 +173,7 @@ class OrbitCorrDlg(QDialog):
         layout = QVBoxLayout()
         layout.addLayout(frmbox) 
         layout.addWidget(self.table)
+        layout.addWidget(self.plot)
         layout.addWidget(self.progress)
         #layout.addWidget(self.qdb)
         layout.addLayout(hbox)
@@ -132,13 +181,13 @@ class OrbitCorrDlg(QDialog):
         #self.update_orbit = update_orbit
         self.orbit_plots = orbit_plots
         self.correct_orbit = correct_orbit
-        self._x0 = tuple(x)  # save for reset
-        self._y0 = tuple(y)  # save for reset
-        self.val = [s, x, y]
+        #self._x0 = tuple(x)  # save for reset
+        #self._y0 = tuple(y)  # save for reset
+        #self.val = [s, x, y]
 
         # draw the target orbit
-        self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
-        self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
+        #self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
+        #self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
 
         self.connect(self.repeatbox, SIGNAL("valueChanged(int)"),
                      self.progress.setMaximum)
@@ -161,14 +210,16 @@ class OrbitCorrDlg(QDialog):
         #print "row/col", sender.row, sender.col, sender.value()
         #print "  value was", self.val[sender.col-2][sender.row]
         self.table.setCurrentCell(sender.row, sender.col)
-        self.val[sender.col-1][sender.row] = sender.value()
-        #for p in self.orbit_plots:
-        #    #self.update_orbit(self.val[0], self.val[1])
-        self.orbit_plots[0].plotCurve2(self.val[1], self.val[0])
-        self.orbit_plots[0].aplot.scaleYLeft()
-        self.orbit_plots[1].plotCurve2(self.val[2], self.val[0])
-        self.orbit_plots[1].aplot.scaleYLeft()
+        vl = []
+        for i in range(self.table.rowCount()):
+            it = self.table.cellWidget(i,sender.col)
+            vl.append(float(it.value()))
 
+        if sender.col == 4:
+            data = self.xc.data()
+            x = [data.x(i) for i in range(data.size())]
+            self.xc.setData(x, vl)
+        self.plot.replot()
 
     def call_apply(self):
         #print "apply the orbit"
@@ -190,8 +241,8 @@ class OrbitCorrDlg(QDialog):
         print "HELP"
 
     def done(self, r):
-        for p in self.orbit_plots:
-            p.plotCurve2(None, None)
+        #for p in self.orbit_plots:
+        #    p.plotCurve2(None, None)
 
         QDialog.done(self, r)
 
@@ -217,3 +268,14 @@ class OrbitCorrDlg(QDialog):
         #    self.reject()
         pass
 
+if __name__ == "__main__":
+    import aphla as ap
+    ap.machines.load("nsls2v2")
+    bpms = ap.getElements("BPM")
+    form = OrbitCorrDlg(bpms) 
+    form.resize(600, 500)
+    form.setWindowTitle("Create Local Bump")
+    form.show()
+    #form.reloadElements("*")
+    #app.exec_()
+    cothread.WaitForQuit()
