@@ -90,6 +90,12 @@ class CaDataMonitor(QtCore.QObject):
                 f(val, idx)
             self._t0 = datetime.now()
 
+    def pull(self):
+        vals = caget(self.data.keys())
+        for v in vals:
+            if not v.ok: continue
+            self.data[v.name].append(v)
+
     def close(self, pv = None):
         pvs = []
         if pv is None:

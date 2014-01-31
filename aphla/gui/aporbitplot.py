@@ -424,6 +424,9 @@ class ApCaPlot(Qwt.QwtPlot):
         #self.timerId = self.startTimer(1000)
         self.showCurve(self.curvemag, True)
 
+    def elementDoubleClicked(self, elems):
+        pass
+
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         self.picker1.addMagnetProfile(sb, se, name, minlen)
 
@@ -438,9 +441,14 @@ class ApCaPlot(Qwt.QwtPlot):
 
     def curvesBound(self, yax = Qwt.QwtPlot.yLeft):
         bd = QtCore.QRectF()
-        for c in self.curves:
+        #for c in self.curves:
+        #    if not c.isVisible(): continue
+        #    if c.yAxis() != yax: continue
+        #    bd = bd.united(c.boundingRect())
+        for c in self.itemList():
             if not c.isVisible(): continue
             if c.yAxis() != yax: continue
+            if isinstance(c, Qwt.QwtPlotGrid): continue
             bd = bd.united(c.boundingRect())
         return bd
 
@@ -483,10 +491,12 @@ class ApCaPlot(Qwt.QwtPlot):
         cmenu.addAction("Auto fit Y", self.scaleY)
 
         cmenu.addSeparator()
+        cmenu.addAction("Update", self.pullCaData)
+
+        cmenu.addSeparator()
         m_reset = QAction("Reset Plot", self)
         self.connect(m_reset, SIGNAL("triggered(bool)"), self.resetPlot)
         cmenu.addAction(m_reset)
-
 
         cmenu.exec_(e.globalPos())
 
@@ -564,6 +574,9 @@ class ApCaPlot(Qwt.QwtPlot):
 
     def zoomed(self, r):
         print "Zoomed"
+        pass
+
+    def pullCaData(self):
         pass
 
     def closeEvent(self, e):
@@ -874,6 +887,11 @@ class ApCaArrayPlot(ApCaPlot):
         if any([c.isVisible() for c in self.curves]):
             self.replot()
         QtGui.qApp.processEvents()
+
+    def pullCaData(self):
+        if not self._cadata: return
+        self._cadata.pull()
+        self._ca_update_all(None, None)
 
     def saveAsReference(self):
         self._hold = True

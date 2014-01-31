@@ -265,7 +265,7 @@ def load(machine, submachine = "*", **kwargs):
             lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix")
             #_logger.debug("loading Twiss data '%s'" % twissfile)
             lat._twiss = TwissData(phy_fname)
-            lat._twiss.load(phy_fname)
+            lat._twiss.load(phy_fname, group="Twiss")
             #_logger.debug("loaded {0} twiss data".format(len(lat._twiss.element)))
             #_logger.debug("using golden lattice data '%s'" % goldenfile)
             setGoldenLattice(lat, phy_fname, "Golden")

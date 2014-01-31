@@ -23,8 +23,8 @@ from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
                          QFormLayout, QSpinBox, QProgressBar, QAbstractButton)
 import PyQt4.Qwt5 as Qwt
 
-from aporbitplot import ApCaArrayPlot
-from aphla import catools, getElements, setLocalBump
+from aporbitplot import ApCaPlot, ApCaArrayPlot
+from aphla import catools, getElements, setLocalBump, getBeta, getEta
 
 class DoubleSpinBoxCell(QDoubleSpinBox):
     def __init__(self, row = -1, col = -1, val = 0.0, parent = None):
@@ -33,6 +33,14 @@ class DoubleSpinBoxCell(QDoubleSpinBox):
         self.col = col
         self.setValue(val)
         self.setDecimals(10)
+
+class OrbitCorrGeneral(QtGui.QWidget):
+    def __init__(self, parent = None):
+        super(OrbitCorrGeneral, self).__init__(parent)
+
+class OrbitCorrNBumps(QtGui.QWidget):
+    def __init__(self, parent = None):
+        super(OrbitCorrNBumps, self).__init__(parent)
 
 class OrbitCorrDlg(QDialog):
     def __init__(self, bpms = None, cors = None, parent = None):
@@ -78,15 +86,37 @@ class OrbitCorrDlg(QDialog):
         s = [c.sb for c in self.cors]
         self.cor_plot = ApCaArrayPlot([pvx, pvy], x = [s, s],
                                       labels=["HCOR", "VCOR"])
-        magprof = aphla.getBeamlineProfile()
+        #magprof = aphla.getBeamlineProfile()
         self.cor_plot.setMagnetProfile(magprof)
         self.cor_plot.setContentsMargins(12, 10, 10, 10)
         #self.cor_plot.setMinimumHeight(200)
         #self.cor_plot.setMaximumHeight(250)
 
+        self.tw_plot = ApCaPlot()
+        cbetax = Qwt.QwtPlotCurve()
+        cbetay = Qwt.QwtPlotCurve()
+        cetax  = Qwt.QwtPlotCurve()
+        beta = getBeta("[pqs]*", spos=True)
+        eta = getEta("[pqs]*", spos = True)
+        cbetax.setData(beta[:,-1], beta[:,0])
+        cbetay.setData(beta[:,-1], beta[:,1])
+        cetax.setData(  eta[:,-1],  eta[:,0])
+        cbetax.attach(self.tw_plot)
+        cbetax.setTitle("Beta X")
+        cbetay.attach(self.tw_plot)
+        cbetay.setTitle("Beta Y")
+        cetax.attach( self.tw_plot)
+        cetax.setTitle("Eta X")
+        self.tw_plot.setMagnetProfile(magprof)
+        self.tw_plot.setContentsMargins(12, 10, 10, 10)
+        self.tw_plot.showCurve(cbetax, True)
+        self.tw_plot.showCurve(cbetay, True)
+        self.tw_plot.showCurve(cetax, True)
+
         tabs = QtGui.QTabWidget()
         tabs.addTab(self.bpm_plot, "Orbit")
         tabs.addTab(self.cor_plot, "Correctors")
+        tabs.addTab(self.tw_plot, "Twiss")
         tabs.setMinimumHeight(200)
         tabs.setMaximumHeight(280)
 
@@ -123,6 +153,18 @@ class OrbitCorrDlg(QDialog):
         #    print "width", i, self.table.columnWidth(i)
         #self.table.setColumnWidth(0, 300)
         self.table.setColumnWidth(1, 80)
+
+        self.table4 = QTableWidget(4, 8)
+        self.table4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        hdview = QHeaderView(Qt.Horizontal)
+        self.table4.setHorizontalHeaderLabels(
+            ['Corrector', 's', 'X', 'Y', 'Beta X', 'Beta Y', 'Phi X', 'Phi Y'])
+        self.table4.resizeColumnsToContents()
+        #self.table.horizontalHeader().setStretchLastSection(True)
+        #for i in range(4):
+        #    print "width", i, self.table.columnWidth(i)
+        #self.table.setColumnWidth(0, 300)
+        self.table4.setColumnWidth(1, 80)
 
         frmbox = QFormLayout()
         self.base_orbit_box = QtGui.QComboBox()
