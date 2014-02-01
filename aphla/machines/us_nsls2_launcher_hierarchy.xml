@@ -3,61 +3,55 @@
     <!ENTITY appClock "
         <item>
             <dispName>Clock</dispName>
-            <itemType>app</itemType>
-            <command>xclock</command>
-            <workingDir></workingDir>
-            <useImport>False</useImport>
-            <importArgs></importArgs>
             <desc></desc>
+            <icon>exe</icon>
+            <itemType>exe</itemType>
+            <command>xclock</command>
+            <cwd></cwd>
+            <sourceFilepath></sourceFilepath>
+            <editor></editor>
+            <helpHeader></helpHeader>
         </item>
     ">
 
     <!ENTITY appOrbit "
         <item>
             <dispName>Orbit</dispName>
-            <itemType>app</itemType>
-            <command>aporbit</command>
-            <workingDir></workingDir>
-            <useImport>False</useImport>
-            <importArgs></importArgs>
             <desc></desc>
+            <icon>exe</icon>
+            <itemType>exe</itemType>
+            <command>aporbit</command>
+            <cwd></cwd>
+            <sourceFilepath></sourceFilepath>
+            <editor></editor>
+            <helpHeader></helpHeader>
         </item>
     ">
 
     <!ENTITY appBBA "
         <item>
             <dispName>Beam Based Alignment</dispName>
-            <itemType>app</itemType>
+            <desc></desc>
+            <icon>exe</icon>
+            <itemType>exe</itemType>
             <command>apbba</command>
-            <workingDir></workingDir>
-            <useImport>False</useImport>
-            <importArgs></importArgs>
-            <desc></desc>
+            <cwd></cwd>
+            <sourceFilepath></sourceFilepath>
+            <editor></editor>
+            <helpHeader></helpHeader>
         </item>
     ">
-
-    <!ENTITY appCurrentMonitor "
-        <item>
-            <dispName>Current Monitor</dispName>
-            <itemType>app</itemType>
-            <command>apcurrentmonitor</command>
-            <workingDir></workingDir>
-            <useImport>True</useImport>
-            <importArgs></importArgs>
-            <desc></desc>
-        </item>
-    ">
-
 
     <!ENTITY appTinker "
         <item>
             <dispName>Tinker (PreTune)</dispName>
-            <itemType>app</itemType>
-            <command>aptinker</command>
-            <workingDir></workingDir>
-            <useImport>True</useImport>
-            <importArgs></importArgs>
             <desc></desc>
+            <icon>py</icon>
+            <itemType>py</itemType>
+            <moduleName>aplattuner</moduleName>
+            <args></args>
+            <cwd></cwd>
+            <editor></editor>
         </item>
     ">
 
@@ -65,24 +59,13 @@
     <!ENTITY appLauncher "
         <item>
             <dispName>Launcher</dispName>
-            <itemType>app</itemType>
-            <command>aplauncher</command>
-            <workingDir></workingDir>
-            <useImport>True</useImport>
-            <importArgs>/root</importArgs>
             <desc></desc>
-        </item>
-    ">
-
-    <!ENTITY appPlotter "
-        <item>
-            <dispName>Plotter</dispName>
-            <itemType>app</itemType>
-            <command>applotter</command>
-            <workingDir></workingDir>
-            <useImport>True</useImport>
-            <importArgs></importArgs>
-            <desc></desc>
+            <icon>py</icon>
+            <itemType>py</itemType>
+            <moduleName>aplauncher</moduleName>
+            <args></args>
+            <cwd></cwd>
+            <editor></editor>
         </item>
     ">
 
@@ -91,38 +74,41 @@
 
     <item>
         <dispName>root</dispName>
-        <itemType>page</itemType>
         <desc></desc>
+        <icon>page</icon>
+        <itemType>page</itemType>
 
         <item>
             <dispName>Commissioning</dispName>
-            <itemType>page</itemType>
             <desc></desc>
+            <icon>page</icon>
+            <itemType>page</itemType>
         </item>  <!-- Commissioning -->
 
         <item>
             <dispName>Operation</dispName>
-            <itemType>page</itemType>
             <desc></desc>
+            <icon>page</icon>
+            <itemType>page</itemType>
         </item>  <!-- Operation -->
 
         <item>
             <dispName>Studies</dispName>
-            <itemType>page</itemType>
             <desc></desc>
+            <icon>page</icon>
+            <itemType>page</itemType>
         </item>  <!-- Studies -->
 
         <item>
             <dispName>Test</dispName>
-            <itemType>page</itemType>
             <desc></desc>
+            <icon>page</icon>
+            <itemType>page</itemType>
             &appClock;
             &appOrbit;
             &appBBA;
-            &appCurrentMonitor;
-            &appLatticeTuner;
+            &appTinker;
             &appLauncher;
-            &appPlotter;
         </item> <!-- Test -->
 
     </item>  <!-- root -->
