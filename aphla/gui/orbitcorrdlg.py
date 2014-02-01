@@ -292,10 +292,52 @@ class OrbitCorrGeneral(QtGui.QWidget):
 
 class OrbitCorrNBumps(QtGui.QWidget):
     def __init__(self, bpms, cors, plots = [], parent = None):
+        super(OrbitCorrNBumps, self).__init__(parent)
         self.bpm_all, self.cor_all = bpms, cors
         self.cors = []
         self._plots = plots
-        super(OrbitCorrNBumps, self).__init__(parent)
+        self._corlst1 = QtGui.QTreeWidget()
+        header = ["Element", "Family", "s [m]", "Beta X", "Beta Y",
+                  "Phi X", "Phi Y"]
+        self._corlst1.setColumnCount(len(header))
+        self._corlst1.setHeaderLabels(header)
+        prevcell = None
+        for i,c in enumerate(self.cor_all):
+            if c.cell and (prevcell is None or c.cell != prevcell.text(0)):
+                # a new parent
+                prevcell = QtGui.QTreeWidgetItem()
+                prevcell.setText(0, c.cell)
+                self._corlst1.addTopLevelItem(prevcell)
+            it = QtGui.QTreeWidgetItem()
+            it.setText(0, c.name)
+            it.setText(1, c.family)
+            it.setText(2, str(c.sb))
+            try:
+                beta = getBeta(c.name)
+                phse = getPhase(c.name)
+                it.setText(3, "%.5f" % beta[0,0])
+                it.setText(4, "%.5f" % beta[0,1])
+                it.setText(5, "%.5f" % phse[0,0])
+                it.setText(6, "%.5f" % phse[0,1])
+            except:
+                pass
+
+            if c.cell:
+                prevcell.addChild(it)
+            else:
+                self._corlst1.addTopLevelItem(it)
+                prevcell = it
+        #self._corlst1.resizeColumnToContents(0)
+        self._corlst1.setColumnWidth(0, 150)
+        self._corlst1.expandAll()
+
+        self.connect(self._corlst1, SIGNAL("doubleClicked(QModelIndex)"),
+                     self.addCorrector)
+
+        vbox1 = QtGui.QVBoxLayout()
+        vbox1.addWidget(self._corlst1, 1)
+
+        #self.elemlst.setSelectionMode(QAbstractItemView.MultiSelection)
         self.table4 = QTableWidget(4, 12)
         self.table4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         hdview = QHeaderView(Qt.Horizontal)
@@ -317,60 +359,44 @@ class OrbitCorrNBumps(QtGui.QWidget):
             2*self.table4.frameWidth()
         self.table4.setMinimumHeight(htbl + 10)
         #self.table4.setMaximumHeight(htbl + 10)
-
-        grp = QtGui.QGroupBox("Correctors")
-        gbox = QtGui.QGridLayout()
-        self.cbox = [QtGui.QComboBox(), QtGui.QComboBox(),
-                     QtGui.QComboBox(), QtGui.QComboBox()]
-        for i,c in enumerate(self.cbox):
-            c.addItem("")
-            for cobj in self.cor_all: c.addItem(cobj.name)
-            c.setCurrentIndex(i + 10)
-            gbox.addWidget(c, 0, i+1)
-            gbox.setColumnStretch(i+1, 1)
-            self.connect(c, SIGNAL("currentIndexChanged(QString)"),
-                         self.updateCorrectors)
-            
-        gbox.addWidget(QtGui.QLabel("Correctors:"), 0, 0)
-        grp.setLayout(gbox)
-
-        vbox1 = QtGui.QVBoxLayout()
         vbox1.addWidget(self.table4)
-        vbox1.addWidget(grp)
-        vbox1.addStretch()
 
         hbox1 = QtGui.QHBoxLayout()
-        hbox1.addStretch()
-        btnClear = QtGui.QPushButton("Clear")
-        hbox1.addWidget(btnClear)
+        hbox1.addLayout(vbox1)
+
+        vbox2 = QtGui.QVBoxLayout()
+        vbox2.addStretch()
         btnZoomin = QtGui.QPushButton("Zoom In")
-        hbox1.addWidget(btnZoomin)
-        btnApply = QtGui.QPushButton("Apply")
-        hbox1.addWidget(btnApply)
+        btnApply  = QtGui.QPushButton("Apply")
+        vbox2.addWidget(btnZoomin)
+        vbox2.addWidget(btnApply)
+        
+        hbox1.addLayout(vbox2)
+        self.setLayout(hbox1)
 
-        vbox1.addLayout(hbox1, 0)
-        #vbox1.addStretch()
-        self.setLayout(vbox1)
+        self.connect(btnZoomin, SIGNAL("clicked()"), self._zoom_in_plots)
 
-        self.connect(self.table4, SIGNAL("cellChanged(int,int)"),
-                     self.updateTable)
-        self.connect(btnZoomin, SIGNAL("clicked()"),
-                     self._zoom_in_plots)
+    def addCorrector(self, idx):
+        #['Corrector', 's', 'Beta X', 'Beta Y', 'Phi X', 'Phi Y',
+        #     "dPhiX", "dPhiY", "dX", "dY", "X", "Y"])
+        it0 = self._corlst1.selectedItems()[-1]
+        i = len(self.cors)
+        # name, s
+        self.table4.item(i,0).setData(Qt.DisplayRole, it0.text(0))
+        self.table4.item(i,1).setData(Qt.DisplayRole, it0.text(2))
+        self.table4.item(i,2).setData(Qt.DisplayRole, it0.text(3))
+        self.table4.item(i,3).setData(Qt.DisplayRole, it0.text(4))
+        self.table4.item(i,4).setData(Qt.DisplayRole, it0.text(5))
+        self.table4.item(i,5).setData(Qt.DisplayRole, it0.text(6))
+        self.table4.resizeColumnsToContents()
+        self.updateCorrectors(None)
 
     def updateCorrectors(self, name):
-        corls = [str(c.currentText()) for c in self.cbox]
-        for i,c1 in enumerate(corls[:-1]):
-            if not c1: continue
-            for j,c2 in enumerate(corls[i+1:]):
-                if not c2: continue
-                if c1 == c2:
-                    QtGui.QMessageBox.critical(
-                        self, "Local Orbit Bump", 
-                        "ERROR: Can not have duplicate correctors",
-                        QtGui.QMessageBox.Ok)
-                    return
-                #self.progress.setValue(0)
+        corls = [self.table4.item(i,0).data(Qt.DisplayRole).toString()
+                 for i in range(self.table4.rowCount())]
         self.cors = [c for c in self.cor_all if c.name in corls]
+        print corls, self.cors
+
         if len(self.cors) < 3: return
         nux, nuy = getTunes(source="database")
         beta = getBeta([c.name for c in self.cors])
@@ -380,12 +406,12 @@ class OrbitCorrNBumps(QtGui.QWidget):
         #print phse, type(phse)
         tb = self.table4
         for i,c in enumerate(self.cors):
-            tb.item(i,0).setData(Qt.DisplayRole, c.name)
-            tb.item(i,1).setData(Qt.DisplayRole, c.sb)
-            tb.item(i,2).setData(Qt.DisplayRole, "%.4f" % (beta[i,0],))
-            tb.item(i,3).setData(Qt.DisplayRole, "%.4f" % (beta[i,1],))
-            tb.item(i,4).setData(Qt.DisplayRole, "%.4f" % (phse[i,0],))
-            tb.item(i,5).setData(Qt.DisplayRole, "%.4f" % (phse[i,1],))
+            #tb.item(i,0).setData(Qt.DisplayRole, c.name)
+            #tb.item(i,1).setData(Qt.DisplayRole, c.sb)
+            #tb.item(i,2).setData(Qt.DisplayRole, "%.4f" % (beta[i,0],))
+            #tb.item(i,3).setData(Qt.DisplayRole, "%.4f" % (beta[i,1],))
+            #tb.item(i,4).setData(Qt.DisplayRole, "%.4f" % (phse[i,0],))
+            #tb.item(i,5).setData(Qt.DisplayRole, "%.4f" % (phse[i,1],))
             # 
             dphx = phse[i,0] - phse[0,0]
             if dphx < 0: dphx += nux * 2 * 3.14159
@@ -601,7 +627,7 @@ if __name__ == "__main__":
     form = OrbitCorrDlg(bpms) 
     #form = OrbitCorrGeneral(bpms, cors)
     #form = OrbitCorrNBumps(bpms, cors)
-    form.resize(600, 500)
+    form.resize(1000, 400)
     form.setWindowTitle("Create Local Bump")
     form.show()
     #form.reloadElements("*")
