@@ -14,13 +14,66 @@ from datetime import datetime
 import numpy as np
 import h5py
 import re
+import warnings
 
 import machines
 from catools import caget, caput
 from hlalib import getElements
 
 import matplotlib.pylab as plt
-from nsls2 import _maxTimeSpan
+
+    
+def _brBpmScrub(**kwargs):
+    """
+    waveforms - list of Tbt, Fa and Adc
+    """
+
+    lat = machines.getLattice()
+    if lat.name != "BR":
+        raise RuntimeError("the current lattice is not 'BR': %s" % lat.name)
+
+    waveforms = kwargs.get("waveforms", ["Tbt", "Fa", "Adc"])
+    bpms = getElements("BPM")
+    # did not consider the 'ddrTbtWfEnable' PV
+    for bpm in bpms:
+        pvx = bpm.pv(field="x")[0]
+        pv = pvx.replace("Pos:X-I", "Trig:TrigSrc-SP")
+        # 0 - internal, 1 - external
+        caput(pv, 0, wait=True)
+        pv = pvx.replace("Pos:X-I", "DDR:WfmSel-SP")
+        for fld in waveforms:
+            pv = pvx.replace("Pos:X-I", "ddr%sWfEnable" % fld)
+            caput(pv, 0, wait=True)
+            # offset
+            pv = pvx.replace("Pos:X-I", "ddr%sOffset" % fld)
+            caput(pv, 0, wait=True)
+
+    time.sleep(2)
+    for bpm in bpms:
+        pvx = bpm.pv(field="x")[0]
+        pv = pvx.replace("Pos:X-I", "Trig:TrigSrc-SP")
+        # 0 - internal, 1 - external
+        caput(pv, 1, wait=True)
+        pv = pvx.replace("Pos:X-I", "DDR:WfmSel-SP")
+        for fld in waveforms:
+            pv = pvx.replace("Pos:X-I", "ddr%sWfEnable" % fld)
+            caput(pv, 1, wait=True)
+    time.sleep(2)
+
+
+def _maxTimeSpan(timestamps):
+    # take out the part beyond microsecond (nano second + ' EST')
+    dtl = [ datetime.strptime(s[:-7], "%Y-%m-%d %H:%M:%S.%f")
+            for s in timestamps ]
+    if len(dtl) <= 1: return 0
+    delta1 = [(t - dtl[0]).total_seconds() for t in dtl]
+    # the nano second part
+    delta2 = [float(s[-7:-4]) for s in timestamps]
+    delta = [delta1[i] + (delta2[i] - delta2[0])*1e-9
+             for i in range(len(timestamps))]
+    return max(delta) - min(delta)
+
+
 
 def resetBrBpms(wfmsel = 1):
     """
@@ -217,8 +270,7 @@ def getBrBpmData(**kwargs):
     """
     timeout - 6sec
     sleep - 4sec
-    output_dir - 
-    output_file -
+    output - True, use default file name, str - user specified filename
 
     returns name, x, y, Isum, timestamp, offset
 
@@ -271,12 +323,20 @@ def getBrBpmData(**kwargs):
 
     data = (names, x, y, Is, ts, offset)
 
-    if kwargs.has_key("output_dir" ) or kwargs.has_key("output_file"):
+    if kwargs.get("output", None):
         # default output dir and file
-        output_dir = kwargs.pop("output_dir", "")
-        fopt = "bpm_%s_%d_" % (waveform, trig_src) + \
-            t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
-        output_file = kwargs.get("output_file", os.path.join(output_dir, fopt))
+        output_file = kwargs["output"]
+        if output_file is True:
+            # use the default file name
+            output_dir = os.path.join(machines.getOutputDir(),
+                                      t0.strftime("%Y_%m"),
+                                      "bpm")
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            fopt = "bpm_%s_%d_" % (waveform, trig_src) + \
+                t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
+            output_file = os.path.join(output_dir, fopt)
+
         # save the data
         _saveBrBpmData(output_file, waveform, data,
                        h5group=kwargs.get("h5group", "/"),
@@ -733,6 +793,12 @@ def generateBrRamping(IFb, IFt, **kwargs):
 
     for i in range(T9, N): v[i] = IFb
 
+    # warning
+    if max(v) > Ift:
+        warning.warn("max(I) > Ift : {0} > {1}".format(max(v), IFt))
+    if min(v) < IFb:
+        warning.warn("min(I) < Ifb : {0} < {1}".format(min(v), IFb))
+
     return v
 
 def generateBrRampingBump(Tc, DTc, DTft, Ic, v0 = None):
@@ -792,14 +858,23 @@ def measBrCaRmCol(kker, **kwargs):
     """measure the response matrix column between PVs (DC)
 
     kker - SP PV for corrector (waveform)
-    wait - 
+    waveform - "Fa" or "Tbt"
+    timeout - 6 sec, EPICS CA timeout
+    npoints - number of orbits for each kick.
+    dxlst - a list of kick (raw unit), overwrite the choice of dxmax
+    dxmax - range of kick [-dxmax, dxmax]
+    ndx - default 4. Specify kicks in [-dxmax, dxmax].
+    wait - default 1.5 second
+    output - save the results
+    verbose - default 0
+
+    return the output file name. The output will be in HDF5 file format.
     """
     timeout = kwargs.pop("timeout", 6)
     wait    = kwargs.pop("wait", 1.5)
     verbose = kwargs.pop("verbose", 0)
     npt     = kwargs.pop("npoints", 4)
     wfm     = kwargs.pop("waveform", "Fa")
-    output_file = kwargs.pop("output_file", "br_orbit_rm.hdf5")
     
     t0 = datetime.now()
     dxlst, x0 = [], np.array(caget(kker, timeout=timeout), 'd')
@@ -810,7 +885,16 @@ def measBrCaRmCol(kker, **kwargs):
         nx    = kwargs.pop("ndx", 4)
         dxlst = list(np.linspace(-dxmax, dxmax, nx))
     else:
-        raise RuntimeError("need input for at least of the parameters: dxlst, xlst, dxmax")
+        raise RuntimeError("need input for at least of the parameters: "
+                           "dxlst, xlst, dxmax")
+
+    # use the provided filename or default datetimed filename
+    output_file = kwargs.pop(
+        "output",
+        os.path.join(machines.getOutputDir(),
+                     t0.strftime("%Y_%m"),
+                     "orm",
+                     t0.strftime("orm_%Y_%m_%d_%H%M%S.hdf5")))
 
     # save dx list
     h5f = h5py.File(output_file)
@@ -840,10 +924,11 @@ def measBrCaRmCol(kker, **kwargs):
         caput(kker, xi, wait=True, timeout=timeout)
         time.sleep(wait*3)
         for j in range(npt):
-            obt, fname = getBrBpmData(waveform=wfm, verbose=verbose-1,
-                                      output_file=output_file,
-                                      h5group="%s/%s_dx%d__pt%d" % (kker, wfm, i, j),
-                                      **kwargs)    
+            obt, fname = getBrBpmData(
+                waveform=wfm, verbose=verbose-1,
+                output_file=output_file,
+                h5group="%s/%s_dx%d__pt%d" % (kker, wfm, i, j),
+                **kwargs)    
             if verbose > 1:
                 name, x, y, Is, ts, ddroffset = obt
                 print "  %d/%d" % (j,npt), np.average(x[0]), np.std(x[0])
@@ -858,5 +943,5 @@ def measBrCaRmCol(kker, **kwargs):
     h5f = h5py.File(output_file)
     h5f[kker].attrs["orm_t1"] = t1.strftime("%Y_%m_%d_%H:%M:%S.%f")
     h5f.close()
-
+    return output_file
 

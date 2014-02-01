@@ -21,7 +21,8 @@ __all__ = [ "CaElement", "merge",
 
 _logger = logging.getLogger(__name__)
 
-# flags
+# flags bit pattern
+LIVE     = 0x00
 DISABLED = 0x01
 READONLY = 0x02
 
@@ -203,7 +204,10 @@ class AbstractElement(object):
         if prpt.has_key('index'):
             self.index = int(prpt['index'])
 
+    def isActive(self):
+        return self.flag | DISABLED
 
+        
 class CaAction:
     """
     manages channel access for an element field.

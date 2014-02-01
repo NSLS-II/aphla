@@ -12,7 +12,7 @@ A procedural interface is provided.
 
 from __future__ import print_function
 
-__version__ = "0.7.11"
+__version__ = "0.8.6"
 try:
     from version import version as __version__
 except:
@@ -70,4 +70,4 @@ import bba
 import gui
 
 import nsls2
-import nsls2br
+#import nsls2br

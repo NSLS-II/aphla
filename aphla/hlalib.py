@@ -542,12 +542,12 @@ def getPhase(group, **kwargs):
 
     this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
     """
-    if not machines._twiss: return None
+    if not machines._lat._twiss: return None
     elem = getElements(group)
     col = ['phix', 'phiy']
     if kwargs.get('spos', False): col.append('s')
     
-    return machines._twiss.get([e.name for e in elem], col=col, **kwargs)
+    return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
 #
 #
 def getBeta(group, **kwargs):
@@ -559,20 +559,20 @@ def getBeta(group, **kwargs):
     Parameters
     -----------
     src : str.
-        'DB' from database, 'VA' from 'twiss' element of virtual accelerator
+        'database' from database, 'VA' from 'twiss' element of virtual accelerator
 
     Examples
     ---------
     >>> getBeta('q*', spos = False)
 
     """
-    src = kwargs.pop("src", 'DB')
+    src = kwargs.pop("src", 'database')
 
     elem = getElements(group)
     col = ['betax', 'betay']
     if kwargs.get('spos', False): col.append('s')
 
-    if src == 'DB':
+    if src == 'database':
         if not machines._lat._twiss:
             logger.error("ERROR: No twiss data loaeded")
             return None
@@ -609,8 +609,8 @@ def getEta(group, **kwargs):
 
     Parameters
     -----------
-    src : str. 
-        'DB' from database; 'VA' from virtual accelerator where a 'twiss'
+    source : str. 
+        'database' from database; 'VA' from virtual accelerator where a 'twiss'
         element must exist.
 
     similar to :func:`getBeta`, it calls :func:`~aphla.apdata.TwissData.get`
@@ -618,19 +618,19 @@ def getEta(group, **kwargs):
 
     Examples
     --------
-    >>> getEta('P*', spos = True, src = 'DB')
+    >>> getEta('P*', spos = True, source = 'database')
     >>> getEta('BPM')
     >>> getEta(['BPM1', 'BPM2'])
 
     """
 
-    src = kwargs.pop("src", 'DB')
+    src = kwargs.pop("source", 'database')
 
     elem = getElements(group)
     col = ['etax', 'etay']
     if kwargs.get('spos', False): col.append('s')
 
-    if src == 'DB':
+    if src == 'database':
         if not machines._lat._twiss:
             logger.error("ERROR: No twiss data loaeded")
             return None
@@ -672,8 +672,6 @@ def getTunes(source='machine'):
         return nu[0].x, nu[0].y
     elif source == 'database':
         return machines._lat.getTunes()
-    elif source == 'model':
-        raise NotImplementedError()
 
 def getTune(source='machine', plane = 'h'):
     """get one of the tune, 'h' or 'v'

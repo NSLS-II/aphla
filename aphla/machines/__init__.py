@@ -262,10 +262,10 @@ def load(machine, submachine = "*", **kwargs):
         if physics_data is not None:
             phy_fname = os.path.join(machdir, physics_data)
             #_logger.debug("loading ORM data '%s'" % ormfile)
-            lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix/orm")
+            lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix")
             #_logger.debug("loading Twiss data '%s'" % twissfile)
             lat._twiss = TwissData(phy_fname)
-            lat._twiss.load(phy_fname)
+            lat._twiss.load(phy_fname, group="Twiss")
             #_logger.debug("loaded {0} twiss data".format(len(lat._twiss.element)))
             #_logger.debug("using golden lattice data '%s'" % goldenfile)
             setGoldenLattice(lat, phy_fname, "Golden")
@@ -581,8 +581,12 @@ def getOutputDir(lat = None):
     lat = None will use the default current lattice.
     """
 
-    if lat is None: return _lat.OUTPUT_DIR
-    return _lattice_dict.get(lat, None)
+    if lat is None:
+        return _lat.OUTPUT_DIR
+    elif lat in _lattice_dict:
+        _lattice_dict[lat].OUTPUT_DIR
+    else:
+        raise RuntimeError("no output_dir defined for lattice '%s'" % lat)
 
 def getLattice(lat = None):
     """
