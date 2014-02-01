@@ -111,12 +111,17 @@
               </item>
               <item>
                <property name="text">
-                <string>Text File</string>
+                <string>HDF5 File</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>HDF5 File</string>
+                <string>JSON File</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Text File</string>
                </property>
               </item>
              </widget>
@@ -130,12 +135,17 @@
               </item>
               <item>
                <property name="text">
-                <string>Text File</string>
+                <string>HDF5 File</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>HDF5 File</string>
+                <string>JSON File</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Text File</string>
                </property>
               </item>
              </widget>
