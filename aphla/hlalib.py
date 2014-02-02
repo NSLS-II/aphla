@@ -548,6 +548,19 @@ def getPhase(group, **kwargs):
     if kwargs.get('spos', False): col.append('s')
     
     return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
+##
+def getAlpha(group, **kwargs):
+    """
+    get the phase from stored data
+
+    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
+    """
+    if not machines._lat._twiss: return None
+    elem = getElements(group)
+    col = ['alphax', 'alphay']
+    if kwargs.get('spos', False): col.append('s')
+    
+    return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
 #
 #
 def getBeta(group, **kwargs):

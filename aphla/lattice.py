@@ -790,20 +790,16 @@ class Lattice:
         s1 = kwargs.get("s1", self.sb)
         s2 = kwargs.get("s2", self.se)
         highlight = kwargs.get("highlight", None)
-        print(kwargs)
         prof = []
         if s1 > self.sb:
             prof.append(([self.sb, self.sb], [0.0, 0.0], 'k', ""))
         for i,elem in enumerate(self._elements):
             if elem.virtual: continue
-            print(i,elem.name, elem.sb, elem.se, elem.profile())
             if elem.se < s1: continue
             if elem.sb > s2: break
             x1, y1, c = elem.profile()
             #if elem.family == highlight: c = 'b'
             prof.append((x1, y1, c, elem.name))
-
-        print(self.sb, self.se, s1, s2, prof)
 
         if not prof: return []
 
