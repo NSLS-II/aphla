@@ -71,8 +71,8 @@ SYMBOLS = [("NoSymbol", Qwt.QwtSymbol.NoSymbol),
            ("Star2", Qwt.QwtSymbol.Star2),
            ("Hexagon", Qwt.QwtSymbol.Hexagon)]
 CURVE_STYLES = [("No Curve", Qwt.QwtPlotCurve.NoCurve),
-          ("Lines", Qwt.QwtPlotCurve.Lines),
-          ("Sticks", Qwt.QwtPlotCurve.Sticks)]
+                ("Lines", Qwt.QwtPlotCurve.Lines),
+                ("Sticks", Qwt.QwtPlotCurve.Sticks)]
 # Qt.PenStyle
 PEN_STYLES = [("Solid Line", Qt.SolidLine),
               ("Dashed Line", Qt.DashLine),
@@ -366,6 +366,9 @@ class ApCaPlot(Qwt.QwtPlot):
 
 
     def setMarkers(self, mks, on = True):
+        if not mks:
+            self.clearMarkers()
+            return
         names, locs = zip(*mks)
         if not on:
             for r in self.markers:
@@ -388,6 +391,11 @@ class ApCaPlot(Qwt.QwtPlot):
                 mk1.setAxis(Qwt.QwtPlot.xBottom, Qwt.QwtPlot.yRight)
                 mk1.attach(self)
                 self.markers.append([r[0], mk1])
+
+    def clearMarkers(self):
+        for name, mk in self.markers:
+            mk.detach(self)
+        self.markers = []
 
     def setMagnetProfile(self, mprof):
         self.curvemag = Qwt.QwtPlotCurve("Magnet Profile")
@@ -461,6 +469,17 @@ class ApCaPlot(Qwt.QwtPlot):
 
     def contextMenuEvent(self, e):
         cmenu = QMenu()
+
+        cmenu.addAction("Update", self.pullCaData)
+
+        cmenu.addSeparator()
+
+        m_reset = QAction("Reset Plot", self)
+        self.connect(m_reset, SIGNAL("triggered(bool)"), self.resetPlot)
+        cmenu.addAction(m_reset)
+
+        cmenu.addSeparator()
+
         m_drift = QAction("Drift", self)
         m_drift.setCheckable(True)
         #c = QApplication.clipboard()
@@ -475,10 +494,6 @@ class ApCaPlot(Qwt.QwtPlot):
         cmenu.addAction(m_autoscale)
 
         cmenu.addSeparator()
-        #m_xzoomin = QAction("Zoom in X", self)
-        #m_xzoomin.setShortcut(
-        #self.connect(m_xzoomin, SIGNAL("triggered(bool)"),
-        #             partial(self.scaleX, factor=0.7))
         cmenu.addAction("Zoom in X", partial(self.scaleX, factor=0.7),
                         QtGui.QKeySequence.ZoomIn)
         cmenu.addAction("Zoom out X", partial(self.scaleX, factor=1.4),
@@ -491,12 +506,28 @@ class ApCaPlot(Qwt.QwtPlot):
         cmenu.addAction("Auto fit Y", self.scaleY)
 
         cmenu.addSeparator()
-        cmenu.addAction("Update", self.pullCaData)
+        subm = QtGui.QMenu("Line Style", cmenu)
+        for cmd in ["Increase Line Width", "Decrease Line Width"]:
+            subm.addAction(cmd, partial(self.setPlotStyle, cmd=cmd))
+        subm.addSeparator()
+        for k,v in CURVE_STYLES:
+            subm.addAction(k, partial(self.setPlotStyle, cmd=k))
+        subm.addSeparator()
+        for cmd in ["Increase Point Size", "Decrease Point Size"]:
+            subm.addAction(cmd, partial(self.setPlotStyle, cmd=cmd))
+        subm.addSeparator()
+        for k,v in SYMBOLS:
+            subm.addAction(k, partial(self.setPlotStyle, cmd=k))
+        subm.addSeparator()
+        for k,v in COLORS:
+            subm.addAction(k, partial(self.setPlotStyle, color=v))
 
-        cmenu.addSeparator()
-        m_reset = QAction("Reset Plot", self)
-        self.connect(m_reset, SIGNAL("triggered(bool)"), self.resetPlot)
-        cmenu.addAction(m_reset)
+        cmenu.addMenu(subm)
+
+        subm = QtGui.QMenu("Marker Style", cmenu)
+        for k,v in SYMBOLS:
+            subm.addAction(k, partial(self.setMarkerStyle, cmd=k))
+        cmenu.addMenu(subm)
 
         cmenu.exec_(e.globalPos())
 
@@ -583,6 +614,76 @@ class ApCaPlot(Qwt.QwtPlot):
         if self._cadata is not None: self._cadata.close()
         e.accept()
 
+    def _set_symbol(self, c, s = None, dsize = None, color = None):
+        print "setting symbol:", s, dsize, color
+        symb = c.symbol()
+        if s is not None:
+            symb.setStyle(s)
+        if dsize is not None:
+            sz = symb.size() + QtCore.QSize(dsize, dsize)
+            symb.setSize(sz)
+        c.setSymbol(symb)
+
+    def _set_line(self, c, ls = None, dwidth = None, color = None):
+        pen, symb = c.pen(), c.symbol()
+        if ls in [v[1] for v in CURVE_STYLES]:
+            c.setStyle(ls)
+        elif ls in [v[1] for v in PEN_STYLES]:
+            pen.setStyle(ls)
+            c.setPen(pen)
+        if dwidth is not None:
+            pen.setWidth(pen.width() + dwidth)
+            c.setPen(pen)
+        if color is not None:
+            pen.setColor(color)
+            c.setPen(pen)
+
+    def setPlotStyle(self, **kwargs):
+        for c in self.itemList():
+            if not c.isVisible(): continue
+            #if isinstance(c, Qwt.QwtPlotGrid): continue
+            if not isinstance(c, (Qwt.QwtPlotCurve,)):
+                continue
+            st = kwargs.get("cmd", None)
+            if st == "Increase Point Size":
+                self._set_symbol(c, None, 1)
+            elif st == "Decrease Point Size":
+                self._set_symbol(c, None, -1)
+            elif st in [v[0] for v in CURVE_STYLES]:
+                for name,val in CURVE_STYLES:
+                    if name == st: self._set_line(c, val)
+            elif st in [v[0] for v in PEN_STYLES]:
+                for name,val in PEN_STYLES:
+                    if name == st: self._set_line(c, val)
+            elif st in [v[0] for v in SYMBOLS]:
+                for name,val in SYMBOLS:
+                    if name == st: self._set_symbol(c, val)            
+            elif st == "Increase Line Width":
+                self._set_line(c, None, 1)
+            elif st == "Decrease Line Width":
+                self._set_line(c, None, -1)
+            color = kwargs.get("color", None)
+            if color in [v[1] for v in COLORS]:
+                self._set_symbol(c, color=color)
+                self._set_line(c, color=color)
+        self.replot()
+
+    def setMarkerStyle(self, **kwargs):
+        for name,c in self.markers:
+            if not c.isVisible(): continue
+            st = kwargs.get("cmd", None)
+            if st == "Increase Size":
+                self._set_symbol(c, None, 1)
+            elif st == "Decrease Size":
+                self._set_symbol(c, None, -1)
+            elif st in [v[0] for v in SYMBOLS]:
+                for name,val in SYMBOLS:
+                    if name == st: self._set_symbol(c, val)            
+            color = kwargs.get("color", None)
+            if color in [v[1] for v in COLORS]:
+                self._set_symbol(c, color=color)
+                self._set_line(c, color=color)
+        self.replot()
 
 class ApCaTimeSeriesPlot(ApCaPlot):
     def __init__(self, pvs, parent = None, **kw):
@@ -717,7 +818,7 @@ class ApCaWaveformPlot(ApCaPlot):
         for i,c in enumerate(self.curves):
             d = c.data()
             self._ref[i] = [d.y(j) for j in range(d.size())]
-            print i, np.average(self._ref[i])
+            #print i, np.average(self._ref[i])
         self._hold = False
 
     def setDrift(self, on):
@@ -901,7 +1002,7 @@ class ApCaArrayPlot(ApCaPlot):
         self._hold = False
 
     def elementDoubleClicked(self, elem):
-        print "element selected:", elem
+        #print "element selected:", elem
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
     
     def alignScales(self):

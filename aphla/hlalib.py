@@ -491,17 +491,17 @@ def getClosest(element, group):
     else:
         return machines._lat.getClosest(element.name, group)
 
-def getBeamlineProfile(sb = 0, se = None):
+def getBeamlineProfile(**kwargs):
     """
     return the beamline profile from sposition sb to se
 
-    :param float sb: s-begin
-    :param float se: s-end, None means the end of beamline.
+    :param float s1: s-begin
+    :param float s2: s-end, None means the end of beamline.
 
     it calls :meth:`~aphla.lattice.Lattice.getBeamlineProfile` of the
     current lattice.
     """
-    return machines._lat.getBeamlineProfile(s1=sb, s2=se)
+    return machines._lat.getBeamlineProfile(**kwargs)
 
 
 def getDistance(elem1, elem2, absolute=True):

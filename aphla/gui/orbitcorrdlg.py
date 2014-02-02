@@ -87,12 +87,14 @@ class OrbitCorrGeneral(QtGui.QWidget):
         self.x0, self.y0 = None, None
         self._update_current_orbit()
 
-        self.table = QTableWidget(len(self.bpms), 6)
+        self.table = QTableWidget(len(self.bpms), 9)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         hdview = QHeaderView(Qt.Horizontal)
         self.table.setHorizontalHeaderLabels(
-            ['BPM Name', 's', 'X Bump', 'Y Bump', "Target X", "Target Y"])
-        
+            ['BPM Name', 's', "Beta X", "Beta Y",
+             "Eta X", 'X Bump', 'Y Bump', "Target X", "Target Y"])
+        beta = ap.getBeta([b.name for b in self.bpms])
+        eta = ap.getEta([b.name for b in self.bpms])
         for i,bpm in enumerate(self.bpms):
             it = QTableWidgetItem(bpm.name)
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
@@ -102,8 +104,11 @@ class OrbitCorrGeneral(QtGui.QWidget):
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             #it.setMinimumWidth(80)
             self.table.setItem(i, 1, it)
+            self.table.setItem(i, 2, QTableWidgetItem("%.4f" % beta[i,0]))
+            self.table.setItem(i, 3, QTableWidgetItem("%.4f" % beta[i,1]))
+            self.table.setItem(i, 4, QTableWidgetItem("%.4f" % eta[i,0]))
 
-            for j in range(2, 6):
+            for j in range(5, 9):
                 it = QTableWidgetItem(str(0.0))
                 it.setData(Qt.DisplayRole, str(0.0))
                 it.setFlags(it.flags() | Qt.ItemIsEditable)
@@ -215,7 +220,7 @@ class OrbitCorrGeneral(QtGui.QWidget):
         self.y0 = [float(v) for v in catools.caget(pvy)]
 
     def resetBumps(self):
-        jx0, jy0 = 2, 3
+        jx0, jy0 = 5, 6
         for i in range(self.table.rowCount()):
             self.table.item(i, jx0).setData(Qt.DisplayRole, str(0.0))
             self.table.item(i, jy0).setData(Qt.DisplayRole, str(0.0))
@@ -224,7 +229,7 @@ class OrbitCorrGeneral(QtGui.QWidget):
     def call_apply(self):
         #print "apply the orbit"
         obt = []
-        jx, jy = 4, 5
+        jx, jy = 7, 8
         for i in range(self.table.rowCount()):
             x1,err = self.table.item(i, jx).data(Qt.DisplayRole).toFloat()
             y1,err = self.table.item(i, jy).data(Qt.DisplayRole).toFloat()
@@ -251,16 +256,16 @@ class OrbitCorrGeneral(QtGui.QWidget):
         self.correctOrbitBtn.setEnabled(True)
 
     def getTargetOrbit(self):
-        x = [self.table.item(i,4).data(Qt.DisplayRole).toFloat()[0]
+        x = [self.table.item(i,7).data(Qt.DisplayRole).toFloat()[0]
              for i in range(self.table.rowCount())]
-        y = [self.table.item(i,5).data(Qt.DisplayRole).toFloat()[0]
+        y = [self.table.item(i,8).data(Qt.DisplayRole).toFloat()[0]
              for i in range(self.table.rowCount())]
         return (self.sb, x), (self.sb, y)
 
     def updateTargetOrbit(self, baseobt):
         if baseobt == "All Zeros":
-            jx0, jx1 = 2, 4
-            jy0, jy1 = 3, 5
+            jx0, jx1 = 5, 7
+            jy0, jy1 = 6, 8
             for i in range(self.table.rowCount()):
                 it0 = self.table.item(i, jx0)
                 it1 = self.table.item(i, jx1)
@@ -270,8 +275,8 @@ class OrbitCorrGeneral(QtGui.QWidget):
                 it1.setData(Qt.DisplayRole, it0.data(Qt.DisplayRole))
         elif baseobt == "Current Orbit":
             self._update_current_orbit()
-            jx0, jx1 = 2, 4
-            jy0, jy1 = 3, 5
+            jx0, jx1 = 5, 7
+            jy0, jy1 = 6, 8
             for i in range(self.table.rowCount()):
                 dx0,err = self.table.item(i, jx0).data(Qt.DisplayRole).toFloat()
                 it = self.table.item(i, jx1)
@@ -287,7 +292,7 @@ class OrbitCorrGeneral(QtGui.QWidget):
 
     def updateBump(self, row, col):
         #print "updating ", row, col
-        if col == 2 or col == 3:
+        if col == 5 or col == 6:
             self.updateTargetOrbit(self.base_orbit_box.currentText())
 
 
@@ -357,8 +362,8 @@ class OrbitCorrNBumps(QtGui.QWidget):
         htbl = (hrow * 4) + self.table4.horizontalHeader().height() +\
             2*self.table4.frameWidth()
         self.table4.setMinimumHeight(htbl + 10)
-        #self.table4.setMaximumHeight(htbl + 10)
-        vbox1.addWidget(self.table4)
+        self.table4.setMaximumHeight(htbl + 10)
+        vbox1.addWidget(self.table4, 0)
 
         hbox1 = QtGui.QHBoxLayout()
         hbox1.addLayout(vbox1, 2)
@@ -400,10 +405,11 @@ class OrbitCorrNBumps(QtGui.QWidget):
         #             self.delCorrector)
 
     def _clear_correctors(self):
+        self.cors = []
         for i in range(self.table4.rowCount()):
             for j in range(self.table4.columnCount()):
                 self.table4.item(i,j).setData(Qt.DisplayRole, "")
-        self.cors = []
+        self.updateCorrectors(None)
 
     def _calc_source(self):
         self.src_x.setText(self.src_x.text() + QtCore.QString(" ??"))
@@ -415,6 +421,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
         it0 = self._corlst1.selectedItems()[-1]
         i = len(self.cors)
         # name, s
+        print self.cors
         self.table4.item(i,0).setData(Qt.DisplayRole, it0.text(0))
         self.table4.item(i,1).setData(Qt.DisplayRole, it0.text(2))
         self.table4.item(i,2).setData(Qt.DisplayRole, it0.text(3))
@@ -440,18 +447,21 @@ class OrbitCorrNBumps(QtGui.QWidget):
     def updateCorrectors(self, name):
         corls = [self.table4.item(i,0).data(Qt.DisplayRole).toString()
                  for i in range(self.table4.rowCount())]
-        self.cors = [c for c in self.cor_all if c.name in corls]
+        _cors = [c for c in self.cor_all if c.name in corls]
         #print corls, self.cors
 
-        if len(self.cors) < 3: return
+        if len(_cors) < 3:
+            self.cors = _cors
+            return
+
         nux, nuy = getTunes(source="database")
-        beta = getBeta([c.name for c in self.cors])
-        phse = getPhase([c.name for c in self.cors])
+        beta = getBeta([c.name for c in _cors])
+        phse = getPhase([c.name for c in _cors])
         
         #print beta, type(beta)
         #print phse, type(phse)
         tb = self.table4
-        for i,c in enumerate(self.cors):
+        for i,c in enumerate(_cors):
             #tb.item(i,0).setData(Qt.DisplayRole, c.name)
             #tb.item(i,1).setData(Qt.DisplayRole, c.sb)
             #tb.item(i,2).setData(Qt.DisplayRole, "%.4f" % (beta[i,0],))
@@ -479,13 +489,15 @@ class OrbitCorrNBumps(QtGui.QWidget):
         tb.resizeColumnsToContents()
         tb.setColumnWidth(8, 80)
         tb.setColumnWidth(9, 80)
+        self.cors = _cors
 
         self.emit(SIGNAL("correctorChanged(PyQt_PyObject)"), self.cors)
 
     def _zoom_in_plots(self):
         s = []
         for i in range(self.table4.rowCount()):
-            val, err = self.table4.item(i,1).data(Qt.DisplayRole).toFloat()
+            val, ok = self.table4.item(i,1).data(Qt.DisplayRole).toFloat()
+            if not ok: continue
             s.append(val)
 
         s0, s1 = min(s), max(s)
@@ -495,7 +507,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
             p.replot()
         
     def updateTable(self, row, col):
-        print self.table4.currentRow(), self.table4.currentColumn()
+        #print self.table4.currentRow(), self.table4.currentColumn()
         if col != 8 and col != 9: return
         if len(self.cors) < 3: return
         bx = [self.table4.item(i,2).data(Qt.DisplayRole).toFloat()[0]
@@ -578,19 +590,26 @@ class OrbitCorrDlg(QDialog):
         # add twiss plots
         self.tw_plot = ApCaPlot()
         cbetax = Qwt.QwtPlotCurve()
+        pen = cbetax.pen()
+        pen.setColor(Qt.red)
+        cbetax.setPen(pen)
         cbetay = Qwt.QwtPlotCurve()
+        pen.setColor(Qt.green)
+        cbetay.setPen(pen)
         cetax  = Qwt.QwtPlotCurve()
+        pen.setColor(Qt.blue)
+        cetax.setPen(pen)
         beta = getBeta("[pqs]*", spos=True)
         eta = getEta("[pqs]*", spos = True)
         cbetax.setData(beta[:,-1], beta[:,0])
         cbetay.setData(beta[:,-1], beta[:,1])
-        cetax.setData(  eta[:,-1],  eta[:,0])
+        cetax.setData(  eta[:,-1],  100.0*eta[:,0])
         cbetax.attach(self.tw_plot)
         cbetax.setTitle("Beta X")
         cbetay.attach(self.tw_plot)
         cbetay.setTitle("Beta Y")
         cetax.attach( self.tw_plot)
-        cetax.setTitle("Eta X")
+        cetax.setTitle("100*Eta X")
         self.tw_plot.setMagnetProfile(magprof)
         self.tw_plot.setContentsMargins(12, 10, 10, 10)
         self.tw_plot.showCurve(cbetax, True)
@@ -606,7 +625,7 @@ class OrbitCorrDlg(QDialog):
         tabs.setMaximumHeight(280)
 
         layout = QVBoxLayout()
-        layout.addWidget(tabs)
+        layout.addWidget(tabs, 1)
 
         tabs = QtGui.QTabWidget()
         tab_general_cor = OrbitCorrGeneral(bpmls, corls)
@@ -623,21 +642,21 @@ class OrbitCorrDlg(QDialog):
                      SIGNAL("correctorChanged(PyQt_PyObject)"),
                      self._update_corr_plot)
         tabs.addTab(tab_nbump_cor, "3/4 Bumps")
-        layout.addWidget(tabs)
+        layout.addWidget(tabs, 3)
 
-        hln = QtGui.QFrame()
-        hln.setLineWidth(3)
-        hln.setFrameStyle(QtGui.QFrame.Sunken)
-        hln.setFrameShape(QtGui.QFrame.HLine)
-        layout.addWidget(hln)
+        #hln = QtGui.QFrame()
+        #hln.setLineWidth(3)
+        #hln.setFrameStyle(QtGui.QFrame.Sunken)
+        #hln.setFrameShape(QtGui.QFrame.HLine)
+        #layout.addWidget(hln)
 
-        hbox = QHBoxLayout()
+        #hbox = QHBoxLayout()
 
-        hbox.addStretch()
-        btn = QPushButton("Close")
-        self.connect(btn, SIGNAL("clicked()"), self.accept)
-        hbox.addWidget(btn)
-        layout.addLayout(hbox)
+        #hbox.addStretch()
+        #btn = QPushButton("Close")
+        #self.connect(btn, SIGNAL("clicked()"), self.accept)
+        #hbox.addWidget(btn)
+        #layout.addLayout(hbox)
 
         self.setLayout(layout)
         #self.update_orbit = update_orbit
@@ -678,11 +697,11 @@ class OrbitCorrDlg(QDialog):
     def _help(self):
         print "HELP"
 
-    def done(self, r):
-        #for p in self.bpm_plots:
-        #    p.plotCurve2(None, None)
-
-        QDialog.done(self, r)
+    #def done(self, r):
+    #    #for p in self.bpm_plots:
+    #    #    p.plotCurve2(None, None)#
+    #    
+    #    QDialog.done(self, r)
 
     def _action(self, btn):
         #role = self.qdb.buttonRole(btn)
