@@ -3737,9 +3737,13 @@ def main(args = None):
         # execution until user input is given, you need to set the input
         # argument "user_timer" to be True.
         #cothread.iqt(use_timer = True)
-        cothread.iqt()
+        qapp = cothread.iqt()
     else:
         qapp = Qt.QApplication(args)
+
+    font = Qt.QFont()
+    font.setPointSize(16)
+    qapp.setFont(font)
 
     initRootPath = SEPARATOR + 'root'
     app = LauncherApp(initRootPath)
