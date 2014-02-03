@@ -369,6 +369,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
 
         fmbox = QtGui.QFormLayout()
         self.src = QtGui.QLineEdit()
+        self.src.setValidator(QtGui.QDoubleValidator())
         self.src_x = QtGui.QLabel("???")
         self.src_xp = QtGui.QLabel("???")
         fmbox.addRow("Location", self.src)
@@ -413,8 +414,31 @@ class OrbitCorrNBumps(QtGui.QWidget):
         self.updateCorrectors(None)
 
     def _calc_source(self):
+        st = float(self.src.text())
         self.src_x.setText(self.src_x.text() + QtCore.QString(" ??"))
         self.src_xp.setText(self.src_xp.text() + QtCore.QString(" ??"))
+        if len(self.cors) == 3:
+            s0, ok = self.table4.item(0, 1).data(Qt.DisplayRole).toFloat()
+            s1, ok = self.table4.item(1, 1).data(Qt.DisplayRole).toFloat()
+            s2, ok = self.table4.item(2, 1).data(Qt.DisplayRole).toFloat()
+            a0, ok = self.table4.item(0, 2).data(Qt.DisplayRole).toFloat()
+            a1, ok = self.table4.item(1, 2).data(Qt.DisplayRole).toFloat()
+            a2, ok = self.table4.item(2, 2).data(Qt.DisplayRole).toFloat()
+            b0, ok = self.table4.item(0, 4).data(Qt.DisplayRole).toFloat()
+            b1, ok = self.table4.item(1, 4).data(Qt.DisplayRole).toFloat()
+            b2, ok = self.table4.item(2, 4).data(Qt.DisplayRole).toFloat()
+            ph0, ok = self.table4.item(0, 6).data(Qt.DisplayRole).toFloat()
+            ph1, ok = self.table4.item(1, 6).data(Qt.DisplayRole).toFloat()
+            ph2, ok = self.table4.item(2, 6).data(Qt.DisplayRole).toFloat()
+            th0, ok = self.table4.item(0, 10).data(Qt.DisplayRole).toFloat()
+            th1, ok = self.table4.item(1, 10).data(Qt.DisplayRole).toFloat()
+            th2, ok = self.table4.item(2, 10).data(Qt.DisplayRole).toFloat()
+            if st > s0 and st < s1:
+                bt = (st - s0)/(s1 - s0) * (b1 - b0)
+                at = (st - s0)/(s1 - s0) * (a1 - a0)
+                pht = (st - s0)/(s1 - s0) * (ph1 - ph0)
+                dx = th0*np.sqrt(b1*bt)*np.sin(pht - ph0)
+                self.src_x.setText("%.4f" % dx)
 
     def _cheat(self):
         s = aphla.catools.caget('V:2-SR-BI{POS}-I')
@@ -423,6 +447,8 @@ class OrbitCorrNBumps(QtGui.QWidget):
         p = self._plots[0]
         p._cheat[0].setData(s, x)
         p._cheat[1].setData(s, y)
+        p.showCurve(p._cheat[0], True)
+        p.showCurve(p._cheat[1], True)
         p.replot()
 
     def addCorrector(self, idx):
@@ -431,7 +457,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
         it0 = self._corlst1.selectedItems()[-1]
         i = len(self.cors)
         # name, s
-        print self.cors
+        #print self.cors
         self.table4.item(i,0).setData(Qt.DisplayRole, it0.text(0))
         self.table4.item(i,1).setData(Qt.DisplayRole, it0.text(2))
         self.table4.item(i,2).setData(Qt.DisplayRole, it0.text(3))
@@ -463,6 +489,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
         #print corls, self.cors
 
         if len(_cors) < 3:
+            print "less than 3 corr, skip"
             self.cors = _cors
             return
 
@@ -475,6 +502,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
         tb = self.table4
         jx, jy = 8, 9
         for i,c in enumerate(_cors):
+            print i, c.name, c.sb
             #tb.item(i,0).setData(Qt.DisplayRole, c.name)
             #tb.item(i,1).setData(Qt.DisplayRole, c.sb)
             #tb.item(i,2).setData(Qt.DisplayRole, "%.4f" % (beta[i,0],))
@@ -521,7 +549,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
         
     def updateTable(self, row, col):
         #print self.table4.currentRow(), self.table4.currentColumn()
-        if col != 8 and col != 9: return
+        if col != 10 and col != 11: return
         if len(self.cors) < 3: return
         jbx, jby = 4, 5
         jdphx, jdphy = 8, 9
