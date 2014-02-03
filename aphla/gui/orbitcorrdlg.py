@@ -184,7 +184,7 @@ class OrbitCorrGeneral(QtGui.QWidget):
         #self.qdb.addButton(QDialogButtonBox.Help)
 
         gbox = QtGui.QGridLayout()
-        btn = QPushButton("Reset")
+        btn = QPushButton("Clear")
         self.connect(btn, SIGNAL("clicked()"), self.resetBumps)
         gbox.addWidget(btn, 0, 1)
 
@@ -379,19 +379,20 @@ class OrbitCorrNBumps(QtGui.QWidget):
             2*self.table4.frameWidth()
         self.table4.setMinimumHeight(htbl + 10)
         self.table4.setMaximumHeight(htbl + 15)
+        self.table4.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         vbox1.addWidget(self.table4, 0)
 
         hbox1 = QtGui.QHBoxLayout()
         hbox1.addLayout(vbox1, 2)
 
-        vbox3 = QtGui.QFormLayout()
+        hbox3 = QtGui.QHBoxLayout()
         self.rdbxbump = QtGui.QRadioButton("X Bump")
         self.rdbybump = QtGui.QRadioButton("Y BUmp")
         self.rdbxbump.setChecked(True)
-        vbox3.addWidget(self.rdbxbump)
-        vbox3.addWidget(self.rdbybump)
+        hbox3.addWidget(self.rdbxbump)
+        hbox3.addWidget(self.rdbybump)
         grp1 = QtGui.QGroupBox("Plane")
-        grp1.setLayout(vbox3)
+        grp1.setLayout(hbox3)
 
         fmbox = QtGui.QFormLayout()
         self.src = QtGui.QLineEdit()
@@ -409,14 +410,18 @@ class OrbitCorrNBumps(QtGui.QWidget):
         vbox2.addWidget(grp1)
         vbox2.addWidget(grp2)
         vbox2.addStretch()
+        gbox4 = QtGui.QGridLayout()
         btnClear = QtGui.QPushButton("Clear")
         btnZoomin = QtGui.QPushButton("Zoom In")
         btnApply  = QtGui.QPushButton("Apply")
         btnCheat = QtGui.QPushButton("_CHEAT_")
-        vbox2.addWidget(btnClear)
-        vbox2.addWidget(btnZoomin)
-        vbox2.addWidget(btnApply)
-        vbox2.addWidget(btnCheat)
+        gbox4.addWidget(btnClear, 0, 1)
+        gbox4.addWidget(btnZoomin, 1, 1)
+        gbox4.addWidget(btnApply, 2, 1)
+        gbox4.addWidget(btnCheat, 3, 1)
+        gbox4.setColumnStretch(1, 0)
+        gbox4.setColumnStretch(0, 1)
+        vbox2.addLayout(gbox4)
         hbox1.addLayout(vbox2)
         self.setLayout(hbox1)
 
@@ -518,7 +523,12 @@ class OrbitCorrNBumps(QtGui.QWidget):
 
         self.table4.resizeColumnsToContents()
         self.cors.append(newc)
-        print "Emitting signal"
+        #print "Emitting signal"
+        if len(self.cors) == 4:
+            self.src.setText(str(0.5*(self.cors[1].sb + self.cors[2].sb)))
+            self.src_x.setText("0.001")
+            self.src_xp.setText("0.0")
+
         self.emit(SIGNAL("correctorChanged(PyQt_PyObject)"), self.cors)
 
     def delCorrector(self, idx):
@@ -600,6 +610,15 @@ class OrbitCorrNBumps(QtGui.QWidget):
             np.sqrt(bt*b[3])*np.sin(ph[3]-ph[2]) - \
             dxp*np.sqrt(bt/b[3])*np.sin(pht-ph[1])/np.sin(ph[3]-ph[2])
 
+        print "Four kicks", dt1, dt2, dt3, dt4
+        
+        self.table4.item(0,jdx).setData(Qt.DisplayRole, str(dt1))
+        self.table4.item(1,jdx).setData(Qt.DisplayRole, str(dt2))
+        self.table4.item(2,jdx).setData(Qt.DisplayRole, str(dt3))
+        self.table4.item(3,jdx).setData(Qt.DisplayRole, str(dt4))
+
+        return
+
         # same kick for theta2
         dth1, ok = self.table4.item(0,jdx).data(Qt.DisplayRole).toFloat()
         dth2 = -dth1
@@ -612,7 +631,6 @@ class OrbitCorrNBumps(QtGui.QWidget):
         self.table4.item(1,jdx).setData(Qt.DisplayRole, str(dth2))
         self.table4.item(2,jdx).setData(Qt.DisplayRole, str(dth3))
         self.table4.item(3,jdx).setData(Qt.DisplayRole, str(dth4))
-        print dt1, dt2, dt3, dt4
 
     def updateTable(self, row, col):
         #print self.table4.currentRow(), self.table4.currentColumn()
