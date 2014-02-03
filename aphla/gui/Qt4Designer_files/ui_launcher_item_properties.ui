@@ -214,11 +214,6 @@
          </item>
          <item>
           <property name="text">
-           <string>$wing_new_window</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>$nano</string>
           </property>
          </item>
@@ -402,11 +397,6 @@
          </item>
          <item>
           <property name="text">
-           <string>$wing_new_window</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>gedit</string>
           </property>
          </item>
@@ -571,11 +561,6 @@
          <item>
           <property name="text">
            <string>$wing</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>$wing_new_window</string>
           </property>
          </item>
          <item>
