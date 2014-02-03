@@ -661,6 +661,45 @@ def getEta(group, **kwargs):
         ret[:,1] = np.take(twiss.etay, idx)
         return ret
 
+def getTwiss(group, columns, **kwargs):
+    """
+    get the twiss data
+    - group, same as `getElements`, can be one or a list of element names, type, ...
+    - columns, a sublist of [s, betax(y), alphax(y), gammax(y), etax(y), phix(y)]
+    - source, optional, default database (no other source yet)
+
+    example:
+
+    >>> getTwiss("BPM", ["s", "betax", "betay"])
+    >>> getTwiss(["p1", "p2"], ["s", "etax"])
+    """
+
+    col = [c for c in columns]
+    elem = getElements(group)
+    src = kwargs.pop("source", "database")
+    if src == "database":
+        if not machines._lat._twiss:
+            logger.error("ERROR: no twiss data loaded")
+            return None
+        return machines._lat._twiss.get([e.name for e in elem],
+                                        col=col)
+    else:
+        return None
+
+def getTwissAt(s, columns, **kwargs):
+    """
+    similar to getTwiss, but at specific location
+    """
+    col = [c for c in columns]
+    src = kwargs.pop("source", "database")
+    if src == "database":
+        if not machines._lat._twiss:
+            logger.error("ERROR: no twiss data loaded")
+            return None
+        return machines._lat._twiss.at(s, col=col)
+    else:
+        return [None] * len(columns)
+    
 def getChromaticity(source='machine'):
     """
     get chromaticity **Not Implemented Yet**

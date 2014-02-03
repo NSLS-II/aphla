@@ -615,7 +615,6 @@ class ApCaPlot(Qwt.QwtPlot):
         e.accept()
 
     def _set_symbol(self, c, s = None, dsize = None, color = None):
-        print "setting symbol:", s, dsize, color
         symb = c.symbol()
         if s is not None:
             symb.setStyle(s)
