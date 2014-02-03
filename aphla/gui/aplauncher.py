@@ -63,10 +63,10 @@ XML_ITEM_PROPERTY_NAME_DICT = dict(
     py  =['moduleName', 'cwd', 'args', 'editor'],
     exe =['command', 'cwd', 'sourceFilepath', 'editor', 'helpHeader'],
 )
-XML_ITEM_PROPERTY_NAMES = XML_ITEM_COMMON_PROPERTY_NAMES[:]
-for _, v in XML_ITEM_PROPERTY_NAME_DICT.iteritems():
-    XML_ITEM_PROPERTY_NAMES.extend(v)
-XML_ITEM_PROPERTY_NAMES = list(set(XML_ITEM_PROPERTY_NAMES))
+XML_ITEM_TYPE_SPECIFIC_PROP_NAMES = list(set(
+    sum(XML_ITEM_PROPERTY_NAME_DICT.values(), [])))
+XML_ITEM_PROPERTY_NAMES = XML_ITEM_COMMON_PROPERTY_NAMES[:] + \
+    XML_ITEM_TYPE_SPECIFIC_PROP_NAMES[:]
 #XML_ITEM_PROPERTY_NAMES = ['dispName', 'itemType', 'command', 'workingDir',
                            #'useImport', 'importArgs', 'desc']
 MODEL_ITEM_PROPERTY_NAME_DICT = deepcopy(XML_ITEM_PROPERTY_NAME_DICT)
@@ -96,25 +96,25 @@ ITEM_PROPERTIES_DIALOG_OBJECTS = dict(
     itemType = 'comboBox_itemType',
     page= dict(desc='plainTextEdit_page_description'),
     info= dict(desc='plainTextEdit_info_description'),
-    txt = dict(src_filepath='lineEdit_txt_src_filepath',
-               browse      ='pushButton_txt_browse',
-               editor      ='comboBox_txt_editor',
-               help_header ='comboBox_txt_helpHeaderType',
-               desc        ='plainTextEdit_txt_description',),
+    txt = dict(sourceFilepath='lineEdit_txt_src_filepath',
+               browse        ='pushButton_txt_browse',
+               editor        ='comboBox_txt_editor',
+               helpHeader    ='comboBox_txt_helpHeaderType',
+               desc          ='plainTextEdit_txt_description',),
     py  = dict(moduleName='comboBox_py_moduleName',
                cwd       ='lineEdit_py_workingDir',
-               browseWD    ='pushButton_py_browseWD',
+               browseWD  ='pushButton_py_browseWD',
                args      ='lineEdit_py_args',
                editor    ='comboBox_py_editor',
                desc      ='plainTextEdit_py_description',),
     exe = dict(command     ='comboBox_exe_command',
                cwd         ='lineEdit_exe_workingDir',
                browseWD    ='pushButton_exe_browseWD',
-               src_filepath='lineEdit_exe_src_filepath',
-               browse      ='pushButton_exe_browse',
-               editor      ='comboBox_exe_editor',
-               help_header ='comboBox_exe_helpHeaderType',
-               desc        ='plainTextEdit_exe_description',),
+               sourceFilepath='lineEdit_exe_src_filepath',
+               browse        ='pushButton_exe_browse',
+               editor        ='comboBox_exe_editor',
+               helpHeader    ='comboBox_exe_helpHeaderType',
+               desc          ='plainTextEdit_exe_description',),
 )
 #ITEM_PROPERTIES_DIALOG_OBJECTS = {'dispName'  :'lineEdit_dispName',
                                   #'itemType'  :'comboBox_itemType',
@@ -255,8 +255,11 @@ class LauncherModel(Qt.QStandardItemModel):
 
         self.pathList = []
         self.pModelIndList = []
-        self.commandList = [] # Initial list population will occur when a
+
+        # Initial list population will occur when a
         # LauncherModelItemPropertiesDialog is created for the first time.
+        self.commandList    = []
+        self.moduleNameList = []
 
         ## First, parse system XML file and construct a tree model
         system_XML_Filepath = os.path.join(MACHINES_FOLDERPATH,
@@ -512,6 +515,16 @@ class LauncherModel(Qt.QStandardItemModel):
         return info
 
     #----------------------------------------------------------------------
+    def _getXMLPropNames(self, itemType):
+        """"""
+
+        if itemType in ('page', 'info'):
+            return XML_ITEM_COMMON_PROPERTY_NAMES
+        else:
+            return XML_ITEM_COMMON_PROPERTY_NAMES[:] + \
+                   XML_ITEM_PROPERTY_NAME_DICT[itemType]
+
+    #----------------------------------------------------------------------
     def constructXMLElementsFromModel(self, doc, parentModelItem, parentDOMElement):
         """"""
 
@@ -520,16 +533,19 @@ class LauncherModel(Qt.QStandardItemModel):
         for childItem in childItemList:
             childElement = doc.createElement(XML_ITEM_TAG_NAME)
 
-            for (ii,prop_name) in enumerate(XML_ITEM_PROPERTY_NAMES):
+            itemType = childItem.itemType
+
+            for prop_name in self._getXMLPropNames(itemType):
                 p = getattr(childItem,prop_name)
-                if not isinstance(p,str):
-                    p = str(p)
+                #if not isinstance(p,str):
+                    #p = str(p)
+                if p == 'N/A': p = ''
                 elem = doc.createElement(prop_name)
                 elemNodeText = doc.createTextNode(p)
                 elem.appendChild(elemNodeText)
                 childElement.appendChild(elem)
-                if (prop_name == 'itemType') and (p == 'page'):
-                    break
+                #if (prop_name == 'itemType') and (p == 'page'):
+                    #break
 
             if childItem.hasChildren():
                 self.constructXMLElementsFromModel(doc, childItem, childElement)
@@ -559,11 +575,11 @@ class LauncherModel(Qt.QStandardItemModel):
         # Create the XML element corresponding to the root model item
         modelRootDOMElement = doc.createElement(XML_ITEM_TAG_NAME)
         prop_name_list = XML_ITEM_COMMON_PROPERTY_NAMES
-        for (ii,prop_name) in enumerate(prop_name_list):
+        for prop_name in prop_name_list:
         #for (ii,prop_name) in enumerate(XML_ITEM_PROPERTY_NAMES):
             p = getattr(rootModelItem,prop_name)
-            if not isinstance(p,str):
-                p = str(p)
+            #if not isinstance(p,str):
+                #p = str(p)
             if p == 'N/A': p = ''
             elem = doc.createElement(prop_name)
             elemNodeText = doc.createTextNode(p)
@@ -784,7 +800,7 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, model, selectedItem, *args):
+    def __init__(self, model, selectedItem, parentItem, *args):
         """Constructor"""
 
         Qt.QDialog.__init__(self, *args)
@@ -795,32 +811,53 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
 
         self.item = selectedItem
 
-        # Update the list of command strings that already exist in the model
+        # Update the list of command strings and module names that already
+        #exist in the model
         itemList = [model.itemFromIndex(Qt.QModelIndex(pInd))
                     for pInd in model.pModelIndList]
-        model.commandList = list(set([item.command for item in itemList]))
+        model.commandList    = list(set([item.command    for item in itemList
+                                         if item.command    != 'N/A']))
+        model.moduleNameList = list(set([item.moduleName for item in itemList
+                                         if item.moduleName != 'N/A']))
 
-        partitionedStrings = selectedItem.path.rpartition(SEPARATOR)
-        self.parentPath = partitionedStrings[0]
+        #partitionedStrings = self.item.path.rpartition(SEPARATOR)
+        #self.parentPath = partitionedStrings[0]
+        if parentItem is not None:
+            self.parentPath = parentItem.path
+        else:
+            self.parentPath = SEPARATOR
         self.lineEdit_parentPath.setText(self.parentPath)
 
         # Create list of existing paths to be compared with a new path.
         self.existingPathList = model.pathList[:]
         # If this dialog is created for modifying an existing item, you must
         # remove the path of this item from the list.
-        if selectedItem.path in self.existingPathList:
-            self.existingPathList.remove(selectedItem.path)
+        if self.item.path in self.existingPathList:
+            self.existingPathList.remove(self.item.path)
 
-        for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
+        itemType = self.item.itemType
+        propNameList = ['dispName', 'itemType']
+        objNameList = [ITEM_PROPERTIES_DIALOG_OBJECTS[k] for k in propNameList]
+        propNameList += ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].keys()
+        objNameList  += [ITEM_PROPERTIES_DIALOG_OBJECTS[itemType][k] for k in
+                         ITEM_PROPERTIES_DIALOG_OBJECTS[itemType]]
+
+        for (propName, objName) in zip(propNameList, objNameList):
             obj = getattr(self, objName)
             if objName.startswith('lineEdit'):
-                obj.setText(getattr(self.item,propName))
+                obj.setText(getattr(self.item, propName))
             elif objName.startswith('comboBox'):
 
                 if propName == 'command':
                     obj.addItems(model.commandList)
+                elif propName == 'moduleName':
+                    obj.addItems(model.moduleNameList)
 
-                search_string = str(getattr(self.item,propName))
+                if propName != 'itemType':
+                    search_string = getattr(self.item, propName)
+                else:
+                    search_string = self._getDescriptiveItemType(
+                        getattr(self.item, propName))
                 matchedInd = obj.findText(search_string,
                                           Qt.Qt.MatchExactly)
 
@@ -832,83 +869,153 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                 if matchedInd != -1:
                     obj.setCurrentIndex(matchedInd)
                 else:
-                    msgBox = Qt.QMessageBox()
-                    msgBox.setText( (
-                        'No matching item found in ' + objName) )
-                    msgBox.setInformativeText( str(sys.exc_info()) )
-                    msgBox.setIcon(Qt.QMessageBox.Critical)
-                    msgBox.exec_()
+                    print 'No matching item found in {0:s}'.format(objName)
+                    search_string = DEFAULT_XML_ITEM[propName]
+                    print ('Using default value of "{0:s}" for "{1:s}"'.
+                           format(search_string, propName))
+                    matchedInd = obj.findText(search_string,
+                                              Qt.Qt.MatchExactly)
 
-            elif objName == 'plainTextEdit_description':
+                    if matchedInd == -1:
+                        raise ValueError('Default value not found in combobox choices.')
+                    else:
+                        obj.setCurrentIndex(matchedInd)
+
+                    #msgBox = Qt.QMessageBox()
+                    #msgBox.setText( (
+                        #'No matching item found in ' + objName) )
+                    #msgBox.setInformativeText( str(sys.exc_info()) )
+                    #msgBox.setIcon(Qt.QMessageBox.Critical)
+                    #msgBox.exec_()
+
+            elif objName.startswith('plainTextEdit') and \
+                 objName.endswith('description'):
                 obj.setProperty('plainText', self.item.desc)
+
+            elif objName.startswith('pushButton'):
+                pass
 
             else:
                 raise ValueError('Unexpected object name: {0:s}'.format(objName))
 
         self.connect(self.comboBox_itemType,
                      Qt.SIGNAL('currentIndexChanged(const QString &)'),
-                     self.updateEnableStates)
-        self.connect(self.comboBox_useImport,
-                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
-                     self.updateEnableStates)
+                     self.switchItemSpecificPropObjects)
+        #self.connect(self.comboBox_useImport,
+                     #Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     #self.updateEnableStates)
 
         self.isItemPropertiesModifiable = self.item.path.startswith(
             USER_MODIFIABLE_ROOT_PATH+SEPARATOR)
         # Adding SEPARATOR at the end of USER_MODIFIABLE_ROOT_PATH is essential
         # to exclude USER_MODIFIABLE_ROOT_PATH itself from modifiable item list
 
-        self.updateEnableStates(self.item.itemType)
-        if str(self.item.itemType).lower() == 'app':
-            self.updateEnableStates(self.item.useImport)
+        self.switchItemSpecificPropObjects(self.item.itemType)
+        #if str(self.item.itemType).lower() == 'app':
+            #self.updateEnableStates(self.item.useImport)
 
     #----------------------------------------------------------------------
-    def updateEnableStates(self, itemTypeQString):
+    def _getItemType(self, descriptiveItemTypeStr):
         """"""
 
-        itemType = str(itemTypeQString).lower()
+        if descriptiveItemTypeStr in ('Executable (Popen)', 'exe'):
+            itemType = 'exe'
+        elif descriptiveItemTypeStr in ('Python Module (import executable)', 'py'):
+            itemType = 'py'
+        elif descriptiveItemTypeStr in ('Page', 'page'):
+            itemType = 'page'
+        elif descriptiveItemTypeStr in ('Info', 'info'):
+            itemType = 'info'
+        elif descriptiveItemTypeStr in ('Text', 'txt'):
+            itemType = 'txt'
+        else:
+            raise ValueError('Unexected descriptive item type string: {0:s}'.
+                             format(descriptiveItemTypeStr))
+
+        return itemType
+
+    #----------------------------------------------------------------------
+    def _getDescriptiveItemType(self, itemType):
+        """"""
+
+        if itemType == 'exe':
+            descriptiveItemTypeStr = 'Executable (Popen)'
+        elif itemType == 'py':
+            descriptiveItemTypeStr = 'Python Module (import executable)'
+        elif itemType == 'page':
+            descriptiveItemTypeStr = 'Page'
+        elif itemType == 'info':
+            descriptiveItemTypeStr = 'Info'
+        elif itemType == 'txt':
+            descriptiveItemTypeStr = 'Text'
+        else:
+            raise ValueError('Unexected itemType: {0:s}'.
+                             format(itemType))
+
+        return descriptiveItemTypeStr
+
+    #----------------------------------------------------------------------
+    def switchItemSpecificPropObjects(self, itemType_or_descriptiveItemTypeStr):
+        """"""
+
+        #itemType = str(itemTypeQString).lower()
+        itemType = self._getItemType(itemType_or_descriptiveItemTypeStr)
+
+        itemTypeList = ['page', 'info', 'txt', 'py', 'exe']
+        self.stackedWidget.setCurrentIndex(itemTypeList.index(itemType))
 
         if not self.isItemPropertiesModifiable:
-            enabledObjectNames = []
-        else:
-            if itemType == 'app':
-                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
-            elif itemType == 'library':
-                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_LIB
-            elif itemType == 'page':
-                enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_PAGE
-            elif itemType in ('true', 'false'):
-                if getattr(self, 'comboBox_itemType').currentText().lower() \
-                   == 'app':
-                    if itemType == 'false': enabledObjectNames = \
-                        ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
-                    else:                   enabledObjectNames = \
-                        ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_IMPORT
-                else:
-                    return
-            else:
-                raise ValueError('Unexpected string: {0:s}'.format(
-                    str(itemTypeQString)))
 
-        for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
-            obj = getattr(self, objName)
-            if objName in enabledObjectNames:
-                obj.setEnabled(True)
-            else:
+            obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['dispName'])
+            obj.setEnabled(False)
+            obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['itemType'])
+            obj.setEnabled(False)
+
+            for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
+                obj = getattr(self, objName)
                 obj.setEnabled(False)
 
-                # If the item whose properties to be shown is read-only,
-                # then do not reset the values for disabled objects.
-                # However, if the item is writable AND the display object
-                # is disabled, then reset the value to the default value.
-                if not self.isItemPropertiesModifiable:
-                    continue
+            return
+
+        else:
+            if (itemType == 'exe') and \
+               (getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['exe']\
+                        ['sourceFilepath']).text() == ''):
+                disabledObjectNames = \
+                    ITEM_PROP_DLG_OBJ_ENABLED_EXE_NONEMPTY_SRC_FILEPATH
+            else:
+                disabledObjectNames = []
+
+            #if itemType == 'app':
+                #enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
+            #elif itemType == 'library':
+                #enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_LIB
+            #elif itemType == 'page':
+                #enabledObjectNames = ITEM_PROP_DLG_OBJ_ENABLED_FOR_PAGE
+            #elif itemType in ('true', 'false'):
+                #if getattr(self, 'comboBox_itemType').currentText().lower() \
+                   #== 'app':
+                    #if itemType == 'false': enabledObjectNames = \
+                        #ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_POPEN
+                    #else:                   enabledObjectNames = \
+                        #ITEM_PROP_DLG_OBJ_ENABLED_FOR_APP_IMPORT
+                #else:
+                    #return
+            #else:
+                #raise ValueError('Unexpected string: {0:s}'.format(
+                    #str(itemTypeQString)))
+
+        for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
+            obj = getattr(self, objName)
+            if objName in disabledObjectNames:
+                obj.setEnabled(False)
 
                 # Reset values to default
                 if objName.startswith('lineEdit'):
                     obj.setText(DEFAULT_XML_ITEM[propName])
                 elif objName.startswith('comboBox'):
 
-                    search_string = str(DEFAULT_XML_ITEM[propName])
+                    search_string = DEFAULT_XML_ITEM[propName]
                     matchedInd = obj.findText(search_string,
                                               Qt.Qt.MatchExactly)
                     # If no match found, try case-insensitive search
@@ -924,11 +1031,58 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                         msgBox.setInformativeText( str(sys.exc_info()) )
                         msgBox.setIcon(Qt.QMessageBox.Critical)
                         msgBox.exec_()
-                elif objName == 'plainTextEdit_description':
+
+                elif objName.startswith(('plainTextEdit', 'pushButton')):
                     pass
+
                 else:
                     raise ValueError('Unexpected object name: {0:s}'.
                                      format(objName))
+
+            else:
+                obj.setEnabled(True)
+
+
+        #for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
+            #obj = getattr(self, objName)
+            #if objName in enabledObjectNames:
+                #obj.setEnabled(True)
+            #else:
+                #obj.setEnabled(False)
+
+                ## If the item whose properties to be shown is read-only,
+                ## then do not reset the values for disabled objects.
+                ## However, if the item is writable AND the display object
+                ## is disabled, then reset the value to the default value.
+                #if not self.isItemPropertiesModifiable:
+                    #continue
+
+                ## Reset values to default
+                #if objName.startswith('lineEdit'):
+                    #obj.setText(DEFAULT_XML_ITEM[propName])
+                #elif objName.startswith('comboBox'):
+
+                    #search_string = str(DEFAULT_XML_ITEM[propName])
+                    #matchedInd = obj.findText(search_string,
+                                              #Qt.Qt.MatchExactly)
+                    ## If no match found, try case-insensitive search
+                    #if matchedInd == -1:
+                        #matchedInd = obj.findText(search_string,
+                                                  #Qt.Qt.MatchFixedString)
+                    #if matchedInd != -1:
+                        #obj.setCurrentIndex(matchedInd)
+                    #else:
+                        #msgBox = Qt.QMessageBox()
+                        #msgBox.setText( (
+                            #'No matching item found in ' + objName) )
+                        #msgBox.setInformativeText( str(sys.exc_info()) )
+                        #msgBox.setIcon(Qt.QMessageBox.Critical)
+                        #msgBox.exec_()
+                #elif objName == 'plainTextEdit_description':
+                    #pass
+                #else:
+                    #raise ValueError('Unexpected object name: {0:s}'.
+                                     #format(objName))
 
     #----------------------------------------------------------------------
     def accept(self):
@@ -959,39 +1113,61 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
         else:
             self.lineEdit_dispName.setText(dispName)
 
+        obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['dispName'])
+        self.item.dispName = obj.text()
+        self.item.setText(self.item.dispName)
 
-        for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
+        obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['itemType'])
+        itemType = self._getItemType(obj.currentText())
+        self.item.itemType = itemType
+
+        for (propName, objName) in \
+            ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
             obj = getattr(self, objName)
             if objName.startswith('lineEdit'):
-                text = str(obj.text())
-                setattr(self.item, propName, text)
-                if propName == 'dispName':
-                    self.item.setText(self.item.dispName)
-
+                setattr(self.item, propName, obj.text())
             elif objName.startswith('comboBox'):
-
-                text = str(obj.currentText())
-                if objName == 'comboBox_itemType':
-                    text = text.lower()
-                    setattr(self.item, propName, text)
-                elif (objName == 'comboBox_useImport') or \
-                     (objName == 'comboBox_singleton'):
-                    if text == 'True':
-                        setattr(self.item, propName, True)
-                    elif text == 'False':
-                        setattr(self.item, propName, False)
-                    else:
-                        raise ValueError('Boolean text representation expected, but received: ' + text)
-                else:
-                    setattr(self.item, propName, text)
-
-            elif objName == 'plainTextEdit_description':
-
-                text = str(obj.property('plainText'))
-                setattr(self.item, propName, text)
-
+                setattr(self.item, propName, obj.currentText())
+            elif objName.startswith('plainTextEdit') and \
+                 objName.endswith('description'):
+                self.item.desc = obj.property('plainText')
+            elif objName.startswith('pushButton'):
+                pass
             else:
                 raise ValueError('Unexpected object name: {0:s}'.format(objName))
+
+        #for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
+            #obj = getattr(self, objName)
+            #if objName.startswith('lineEdit'):
+                #text = str(obj.text())
+                #setattr(self.item, propName, text)
+                #if propName == 'dispName':
+                    #self.item.setText(self.item.dispName)
+
+            #elif objName.startswith('comboBox'):
+
+                #text = str(obj.currentText())
+                #if objName == 'comboBox_itemType':
+                    #text = text.lower()
+                    #setattr(self.item, propName, text)
+                #elif (objName == 'comboBox_useImport') or \
+                     #(objName == 'comboBox_singleton'):
+                    #if text == 'True':
+                        #setattr(self.item, propName, True)
+                    #elif text == 'False':
+                        #setattr(self.item, propName, False)
+                    #else:
+                        #raise ValueError('Boolean text representation expected, but received: ' + text)
+                #else:
+                    #setattr(self.item, propName, text)
+
+            #elif objName == 'plainTextEdit_description':
+
+                #text = str(obj.property('plainText'))
+                #setattr(self.item, propName, text)
+
+            #else:
+                #raise ValueError('Unexpected object name: {0:s}'.format(objName))
 
         super(LauncherModelItemPropertiesDialog, self).accept() # will hide the dialog
 
@@ -1022,7 +1198,10 @@ class LauncherModelItem(Qt.QStandardItem):
         self.icon     = DEFAULT_XML_ITEM['icon']
         self.itemType = DEFAULT_XML_ITEM['itemType']
 
-        self.help     = ''
+        self.help     = 'N/A'
+
+        for prop_name in XML_ITEM_TYPE_SPECIFIC_PROP_NAMES:
+            setattr(self, prop_name, 'N/A')
 
         for prop_name in XML_ITEM_PROPERTY_NAME_DICT[self.itemType]:
             setattr(self, prop_name, DEFAULT_XML_ITEM[prop_name])
@@ -1631,7 +1810,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def openContextMenu(self, qpoint):
         """"""
 
-        print 'Opening context menu'
+        #print 'Opening context menu'
 
         self.updateMenuItems()
 
@@ -1884,40 +2063,24 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.updatePath()
 
     #----------------------------------------------------------------------
-    def openPageOrApps(self):
+    def runExecutable(self):
         """"""
 
         selectionType = self.getSelectionType()
 
-        if selectionType == 'NoSelection':
-            raise ValueError('openPageOrApps function should not be called '
-                             'with selectionType = ' + selectionType)
-        elif selectionType == 'SinglePageSelection':
-            self._callbackDoubleClickOnMainPaneItem(None)
-        elif selectionType == 'MultiplePageSelection':
-            raise ValueError('openPageOrApps function should not be called '
-                             'with selectionType = ' + selectionType)
-        elif (selectionType == 'SingleAppSelection') or \
-             (selectionType == 'MultipleAppSelection'):
-            sender = self.sender()
+        if selectionType in ('SingleExeSelection',
+                             'SinglePyModuleSelection',
+                             'MultipleExecutableSelection'):
             for item in self.selectedItemList:
-                #if sender == self.actionOpenWithImport:
-                    #useImport = True
-                #elif sender == self.actionOpenWithPopen:
-                    #useImport = False
-                if sender == self.actionOpen:
-                    useImport = item.useImport
-                else:
-                    raise ValueError('Unexpected sender')
-                self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                          item.path, item.command, item.workingDir, useImport,
-                          item.importArgs)
-        elif selectionType == 'MultipleAppAndPageSelection':
-            raise ValueError('openPageOrApps function should not be called '
-                             'with selectionType = ' + selectionType)
+                if item.itemType == 'exe':
+                    self.emit(Qt.SIGNAL('sigExeRunRequested'),
+                              item.path, item.command, item.cwd)
+                elif item.itemType == 'py':
+                    self.emit(Qt.SIGNAL('sigPyModRunRequested'),
+                              item.path, item.moduleName, item.cwd, item.args)
         else:
-            raise ValueError('Unexpected selection type: ' + selectionType)
-
+            raise ValueError('Unexpected selectionType: {0:s}'.
+                             format(selectionType))
 
     #----------------------------------------------------------------------
     def openInNewTab(self):
@@ -2037,9 +2200,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         self.splitterPanes.setSizes(original_splitter_sizes)
 
-
-
-
     #----------------------------------------------------------------------
     def _initActions(self):
         """"""
@@ -2082,16 +2242,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.actionOpenInNewWindow, Qt.SIGNAL('triggered()'),
                      self.openInNewWindow)
 
-        self.actionOpen = Qt.QAction(Qt.QIcon(), 'Open', self)
-        self.connect(self.actionOpen, Qt.SIGNAL('triggered()'),
-                     self.openPageOrApps)
-
-        #self.actionOpenWithImport = Qt.QAction(Qt.QIcon(), 'Open w/ import', self)
-        #self.connect(self.actionOpenWithImport, Qt.SIGNAL('triggered()'),
-                     #self.openPageOrApps)
-        #self.actionOpenWithPopen = Qt.QAction(Qt.QIcon(), 'Open w/ Popen', self)
-        #self.connect(self.actionOpenWithPopen, Qt.SIGNAL('triggered()'),
-                     #self.openPageOrApps)
+        self.actionRun = Qt.QAction(Qt.QIcon(), 'Run', self)
+        self.connect(self.actionRun, Qt.SIGNAL('triggered()'),
+                     self.runExecutable)
 
         self.actionCut = Qt.QAction(Qt.QIcon(), 'Cut', self)
         self.actionCut.setShortcut(
@@ -2129,12 +2282,24 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                      self.openPropertiesDialog)
 
 
-        self.actionCreateNewPage = Qt.QAction(Qt.QIcon(), 'Create New Page Item', self)
+        self.actionCreateNewPage = Qt.QAction(Qt.QIcon(),
+                                              'Create New Page Item', self)
         self.connect(self.actionCreateNewPage, Qt.SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
-        self.actionCreateNewApp = Qt.QAction(Qt.QIcon(), 'Create New App Item', self)
-        self.connect(self.actionCreateNewApp, Qt.SIGNAL('triggered()'),
+        self.actionCreateNewExe = Qt.QAction(Qt.QIcon(),
+                                             'Create New Executable Item', self)
+        self.connect(self.actionCreateNewExe, Qt.SIGNAL('triggered()'),
+                     self.openPropertiesDialog)
+
+        self.actionCreateNewTxt = Qt.QAction(Qt.QIcon(),
+                                             'Create New Text Item', self)
+        self.connect(self.actionCreateNewTxt, Qt.SIGNAL('triggered()'),
+                     self.openPropertiesDialog)
+
+        self.actionCreateNewInfo = Qt.QAction(Qt.QIcon(),
+                                             'Create New Info Item', self)
+        self.connect(self.actionCreateNewInfo, Qt.SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
         # TODO
@@ -2261,20 +2426,20 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         m = self.getCurrentMainPane()
         parentItem = self.itemFromIndex(m.listView.rootIndex())
 
-        if self.sender() == self.actionCreateNewPage:
+        if self.sender() in (self.actionCreateNewPage, self.actionCreateNewExe,
+                             self.actionCreateNewTxt, self.actionCreateNewInfo):
             selectedItem = LauncherModelItem()
             selectedItem.path = parentItem.path + SEPARATOR # Without adding SEPARATOR
             # at the end of parent item path, users will not be able to add a new item
             # right below USER_MODIFIABLE_ROOT_PATH.
-            selectedItem.itemType = 'page'
-            createNewItem = True
-            selectedItem.setFlags(selectedItem.flags() | Qt.Qt.ItemIsEditable)
-        elif self.sender() == self.actionCreateNewApp:
-            selectedItem = LauncherModelItem()
-            selectedItem.path = parentItem.path + SEPARATOR # Without adding SEPARATOR
-            # at the end of parent item path, users will not be able to add a new item
-            # right below USER_MODIFIABLE_ROOT_PATH.
-            selectedItem.itemType = 'app'
+            if self.sender() == self.actionCreateNewPage:
+                selectedItem.itemType = 'page'
+            elif self.sender() == self.actionCreateNewExe:
+                selectedItem.itemType = 'exe'
+            elif self.sender() == self.actionCreateNewTxt:
+                selectedItem.itemType = 'txt'
+            elif self.sender() == self.actionCreateNewInfo:
+                selectedItem.itemType = 'info'
             createNewItem = True
             selectedItem.setFlags(selectedItem.flags() | Qt.Qt.ItemIsEditable)
         elif self.sender() == self.actionProperties:
@@ -2283,18 +2448,29 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             else:
                 selectedItem = parentItem
                 self.selectedItemList = [selectedItem]
+                parentItem = parentItem.parent()
             createNewItem = False
         else:
             raise ValueError('Unexpected sender: ' + self.sender().text())
 
         self.propertiesDialogView = \
-            LauncherModelItemPropertiesDialog(self.model, selectedItem)
+            LauncherModelItemPropertiesDialog(self.model, selectedItem,
+                                              parentItem)
         self.propertiesDialogView.exec_()
+
+        isModifiable = selectedItem.path.startswith(USER_MODIFIABLE_ROOT_PATH)
+        if not isModifiable:
+            return
 
         if self.propertiesDialogView.result() == Qt.QDialog.Accepted:
             if not createNewItem:
                 parentItem = selectedItem.parent()
-                selectedItem.path = parentItem.path + SEPARATOR + selectedItem.dispName
+                if parentItem is not None:
+                    parentPath = parentItem.path
+                else:
+                    parentPath = ''
+                selectedItem.path = parentPath + SEPARATOR + \
+                    selectedItem.dispName
                 self.updateRow(selectedItem)
                 if self.inSearchMode():
                     searchItem = self.selectedSearchItemList[0]
@@ -2602,10 +2778,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
                 self.pasteSubItems(childItem, pastedChildItem)
 
-
-
-
-
     #----------------------------------------------------------------------
     def renameItem(self):
         """"""
@@ -2696,8 +2868,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         if self.tabWidget.count() == 1:
             self.disableTabView()
 
-
-
     #----------------------------------------------------------------------
     def _callbackClickOnMainPaneItem(self, modelIndex_NotUsed):
         """ """
@@ -2775,11 +2945,25 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
             self.clearSelection()
 
-        elif item.itemType == 'app':
+        #elif item.itemType == 'app':
 
-            self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
-                      item.path, item.command, item.workingDir, item.useImport,
-                      item.importArgs)
+            #self.emit(Qt.SIGNAL('sigAppExecutionRequested'),
+                      #item.path, item.command, item.workingDir, item.useImport,
+                      #item.importArgs)
+
+        elif item.itemType == 'exe':
+            self.emit(Qt.SIGNAL('sigExeRunRequested'),
+                      item.path, item.command, item.cwd)
+        elif item.itemType == 'py':
+            self.emit(Qt.SIGNAL('sigPyModRunRequested'),
+                      item.path, item.moduleName, item.cwd, item.args)
+        elif item.itemType == 'txt':
+            self.emit(Qt.SIGNAL('sigTxtOpenRequested'),
+                      item.path, item.sourceFilepath, item.editor)
+        elif item.itemType == 'info':
+            self.emit(Qt.SIGNAL('sigPropertiesOpenRequested'),)
+        else:
+            raise ValueError('Unexpected itemType: {0:s}'.format(item.itemType))
 
 
     #----------------------------------------------------------------------
@@ -3157,19 +3341,32 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             selectionType = 'NoSelection'
         else:
             if len(self.selectedItemList) == 1:
-                if self.selectedItemList[0].itemType == 'app':
-                    selectionType = 'SingleAppSelection'
-                else: # self.selectedItemList[0].itemType == 'page'
+                itemType = self.selectedItemList[0].itemType
+                if itemType == 'page':
                     selectionType = 'SinglePageSelection'
+                elif itemType == 'exe':
+                    selectionType = 'SingleExeSelection'
+                elif itemType == 'py':
+                    selectionType = 'SinglePyModuleSelection'
+                elif itemType == 'txt':
+                    selectionType = 'SingleTxtSelection'
+                elif itemType == 'info':
+                    selectionType = 'SingleInfoSelection'
+                else:
+                    raise ValueError('Unexpected itemType: {0:s}'.
+                                     format(itemType))
             else:
-                itemTypes = list(set([item.itemType for item
-                                      in self.selectedItemList]))
-                if itemTypes == ['app']:
-                    selectionType = 'MultipleAppSelection'
-                elif itemTypes == ['page']:
+                itemTypes = set([item.itemType for item
+                                 in self.selectedItemList])
+                if itemTypes == set(['page']):
                     selectionType = 'MultiplePageSelection'
-                else: # Both app(s) & page(s)
-                    selectionType = 'MultipleAppAndPageSelection'
+                elif itemTypes in (set(['exe']), set(['py']),
+                                   set(['exe','py'])):
+                    selectionType == 'MultipleExecutableSelection'
+                elif itemTypes == set(['txt']):
+                    selectionType == 'MultipleTxtSelection'
+                else:
+                    selectionType = 'MultipleMixedTypeSelection'
 
         return selectionType
 
@@ -3198,13 +3395,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 Qt.QModelIndex(currentRootPersModInd) )
             searchModeDisabledActionList = [self.actionPaste,
                                             self.actionCreateNewPage,
-                                            self.actionCreateNewApp]
+                                            self.actionCreateNewExe]
 
         isModifiable = currentRootItem.path.startswith(
             USER_MODIFIABLE_ROOT_PATH)
         modificationActionList = [
             self.actionCut, self.actionPaste, self.actionRename,
-            self.actionDelete, self.actionCreateNewApp, self.actionCreateNewPage
+            self.actionDelete, self.actionCreateNewExe, self.actionCreateNewPage
         ]
         if isModifiable:
             enableState = True
@@ -3218,7 +3415,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         for a in searchModeDisabledActionList:
             a.setEnabled(False)
 
-
         # Override Enable state for "Paste" if self.clipboard is an empty list
         if not self.clipboard:
             self.actionPaste.setEnabled(False)
@@ -3230,7 +3426,6 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
            (currentRootItem.path in [item.path for item in self.selectedItemList]):
             self.actionDelete.setEnabled(False)
 
-
         sender = self.sender()
         #print sender.title()
 
@@ -3241,26 +3436,38 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             if sender == self.menuFile:
 
                 sender.addAction(self.actionCreateNewPage)
-                sender.addAction(self.actionCreateNewApp)
+                sender.addAction(self.actionCreateNewExe)
+                sender.addAction(self.actionCreateNewTxt)
+                sender.addAction(self.actionCreateNewInfo)
 
-                if (selectionType == 'SinglePageSelection') or \
-                   (selectionType == 'MultiplePageSelection'):
+                if selectionType in ('SinglePageSelection',
+                                     'MultiplePageSelection'):
                     sender.addSeparator()
                     sender.addAction(self.actionOpen)
                     sender.addAction(self.actionOpenInNewTab)
                     sender.addAction(self.actionOpenInNewWindow)
-                elif (selectionType == 'SingleAppSelection') or \
-                     (selectionType == 'MultipleAppSelection'):
+                elif selectionType in ('SingleExeSelection',
+                                       'SinglePyModuleSelection',
+                                       'MultipleExecutableSelection'):
                     sender.addSeparator()
-                    sender.addAction(self.actionOpen)
+                    sender.addAction(self.actionRun)
+                    #sender.addAction(self.actionOpen)
                     #sender.addAction(self.actionOpenWithImport)
                     #sender.addAction(self.actionOpenWithPopen)
+                elif selectionType in ('SingleTxtSelection',
+                                       'MultipleTxtSelection'):
+                    pass
+                elif selectionType in ('SingleInfoSelection'):
+                    pass
                 else:
                     pass
 
-                if (selectionType == 'NoSelection') or \
-                   (selectionType == 'SinglePageSelection') or \
-                   (selectionType == 'SingleAppSelection'):
+                if selectionType in ('NoSelection',
+                                     'SinglePageSelection',
+                                     'SingleExeSelection',
+                                     'SinglePyModuleSelection',
+                                     'SingleTxtSelection',
+                                     'SingleInfoSelection'):
                     sender.addSeparator()
                     sender.addAction(self.actionProperties)
 
@@ -3366,7 +3573,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             if selectionType == 'NoSelection':
 
                 self.contextMenu.addAction(self.actionCreateNewPage)
-                self.contextMenu.addAction(self.actionCreateNewApp)
+                self.contextMenu.addAction(self.actionCreateNewExe)
 
                 self.contextMenu.addSeparator()
                 if m.stackedWidget.currentIndex() == self.treeView_stack_index:
@@ -3486,8 +3693,14 @@ class LauncherApp(Qt.QObject):
 
         self._initView(initRootPath)
 
-        self.connect(self.view, Qt.SIGNAL('sigAppExecutionRequested'),
-                     self.launchApp)
+        #self.connect(self.view, Qt.SIGNAL('sigAppExecutionRequested'),
+                     #self.launchApp)
+        self.connect(self.view, Qt.SIGNAL('sigExeRunRequested'),
+                     self.launchExe)
+        self.connect(self.view, Qt.SIGNAL('sigTxtOpenRequested'),
+                     self.openTxtFile)
+        self.connect(self.view, Qt.SIGNAL('sigPropertiesOpenRequested'),
+                     self.view.openPropertiesDialog)
         self.connect(self.view, Qt.SIGNAL('printRunningSubprocs'),
                      self.print_running_subprocs)
 
@@ -3517,6 +3730,136 @@ class LauncherApp(Qt.QObject):
             initRootPath = self.model.pathList[0]
 
         self.view = LauncherView(self.model, initRootPath)
+
+    #----------------------------------------------------------------------
+    def launchExe(self, item_path, appCommand, workingDir):
+        """"""
+
+        if workingDir == '':
+            workingDir = os.getcwd()
+        else:
+            workingDir = _subs_tilde_with_home(workingDir)
+
+        try:
+            command_expression = appCommand
+            message = ('### Trying to launch "{0:s}"...'.
+                       format(command_expression))
+            self.view.statusBar().showMessage(message)
+            print message
+            self.view.repaint()
+            subs_cmd = _subs_tilde_with_home(command_expression)
+            p = Popen(subs_cmd, shell=True, stdin=PIPE,
+                      cwd=workingDir)
+            print '** PID = {0:d}'.format(p.pid)
+            print ' '
+            message = ('# Launch sequence for "{0:s}" has been completed.'.
+                       format(subs_cmd))
+            self.view.statusBar().showMessage(message)
+            print ' '
+            print message
+            self.subprocs.append(dict(p=p, path=item_path,
+                                      cmd=command_expression))
+        except:
+            msgBox = Qt.QMessageBox()
+            message = ('Launching ' + '"'+command_expression+'"' +
+                       ' with Popen has failed.')
+            msgBox.setText(message)
+            ei = sys.exc_info()
+            err_info_str = ei[1].__repr__()
+            err_info_str += ('\nError occurred at aplauncher.py on Line '
+                             '{0:d}'.format(ei[-1].tb_lineno))
+            msgBox.setInformativeText(err_info_str)
+            print '#', message
+            print err_info_str
+            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.exec_()
+
+    #----------------------------------------------------------------------
+    def which(self, cmd):
+        """"""
+
+        p = Popen('bash -c "which {0:s}"'.format(cmd), shell=True, stdout=PIPE)
+        out, err = p.communicate()
+        if err:
+            raise ValueError(err)
+        else:
+            return out
+
+    #----------------------------------------------------------------------
+    def openTxtFile(self, item_path, filepath, editor):
+        """"""
+
+        if filepath == '':
+            return
+
+        filepath = _subs_tilde_with_home(filepath)
+
+        try:
+            if not editor.startswith('$'):
+                cmd = editor.split()[0]
+                if self.which(cmd) != '':
+                    cmd = ' '.join([editor, filepath])
+                else:
+                    raise ValueError('Command not found: {0:s}'.format(cmd))
+            elif editor in ('$nano', '$vi'):
+                cmd = editor[1:]
+                if self.which(cmd) != '':
+                    cmd = 'gnome-terminal -e "{0:s} {1:s}"'.format(editor[1:],
+                                                                   filepath)
+                else:
+                    raise ValueError('Command not found: {0:s}'.format(cmd))
+            elif editor == '$matlab':
+                if self.which('matlabl') != '':
+                    cmd = 'matlab -r "edit {0:s}"'.format(filepath)
+                else:
+                    raise ValueError('Command not found: matlab')
+            elif editor == '$wing':
+                p = Popen('bash -c "compgen -ac | grep wing"', shell=True,
+                          stdout=PIPE)
+                out, err = p.communicate()
+                available_wings = list(set(out.split()))
+                if 'wing-101-4.1' in available_wings:
+                    cmd = 'wing-101-4.1 {0:s}'.format(filepath)
+                elif 'wing64_4.1' in available_wings:
+                    cmd = 'wing64_4.1 {0:s}'.format(filepath)
+                else:
+                    raise ValueError('Wing IDE not found')
+            else:
+                raise ValueError('Unexpected editor: {0:s}'.format(editor))
+
+            message = ('### Trying to open "{0:s}" with the editor "{1:s}"...'.
+                       format(filepath, editor))
+            self.view.statusBar().showMessage(message)
+            print message
+            self.view.repaint()
+            if editor == 'gedit':
+                stdin = open(os.devnull, 'r')
+            else:
+                stdin = PIPE
+            p = Popen(cmd, shell=True, stdin=stdin)
+            print '** PID = {0:d}'.format(p.pid)
+            print ' '
+            message = ('# Launch sequence for editing "{0:s}" has been completed.'.
+                       format(filepath))
+            self.view.statusBar().showMessage(message)
+            print ' '
+            print message
+            self.subprocs.append(dict(p=p, path=item_path, cmd=cmd))
+
+        except:
+            msgBox = Qt.QMessageBox()
+            message = ('Opening "{0:s}" with the editor "{1:s}" has failed.'.
+                       format(filepath, editor))
+            msgBox.setText(message)
+            ei = sys.exc_info()
+            err_info_str = ei[1].__repr__()
+            err_info_str += ('\nError occurred at aplauncher.py on Line '
+                             '{0:d}'.format(ei[-1].tb_lineno))
+            msgBox.setInformativeText(err_info_str)
+            print '#', message
+            print err_info_str
+            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.exec_()
 
     #----------------------------------------------------------------------
     def launchApp(self, item_path, appCommand, workingDir, useImport, args):
