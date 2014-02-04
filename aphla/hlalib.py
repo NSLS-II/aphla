@@ -491,17 +491,17 @@ def getClosest(element, group):
     else:
         return machines._lat.getClosest(element.name, group)
 
-def getBeamlineProfile(sb = 0, se = None):
+def getBeamlineProfile(**kwargs):
     """
     return the beamline profile from sposition sb to se
 
-    :param float sb: s-begin
-    :param float se: s-end, None means the end of beamline.
+    :param float s1: s-begin
+    :param float s2: s-end, None means the end of beamline.
 
     it calls :meth:`~aphla.lattice.Lattice.getBeamlineProfile` of the
     current lattice.
     """
-    return machines._lat.getBeamlineProfile(s1=sb, s2=se)
+    return machines._lat.getBeamlineProfile(**kwargs)
 
 
 def getDistance(elem1, elem2, absolute=True):
@@ -545,6 +545,19 @@ def getPhase(group, **kwargs):
     if not machines._lat._twiss: return None
     elem = getElements(group)
     col = ['phix', 'phiy']
+    if kwargs.get('spos', False): col.append('s')
+    
+    return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
+##
+def getAlpha(group, **kwargs):
+    """
+    get the phase from stored data
+
+    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
+    """
+    if not machines._lat._twiss: return None
+    elem = getElements(group)
+    col = ['alphax', 'alphay']
     if kwargs.get('spos', False): col.append('s')
     
     return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
@@ -648,6 +661,45 @@ def getEta(group, **kwargs):
         ret[:,1] = np.take(twiss.etay, idx)
         return ret
 
+def getTwiss(group, columns, **kwargs):
+    """
+    get the twiss data
+    - group, same as `getElements`, can be one or a list of element names, type, ...
+    - columns, a sublist of [s, betax(y), alphax(y), gammax(y), etax(y), phix(y)]
+    - source, optional, default database (no other source yet)
+
+    example:
+
+    >>> getTwiss("BPM", ["s", "betax", "betay"])
+    >>> getTwiss(["p1", "p2"], ["s", "etax"])
+    """
+
+    col = [c for c in columns]
+    elem = getElements(group)
+    src = kwargs.pop("source", "database")
+    if src == "database":
+        if not machines._lat._twiss:
+            logger.error("ERROR: no twiss data loaded")
+            return None
+        return machines._lat._twiss.get([e.name for e in elem],
+                                        col=col)
+    else:
+        return None
+
+def getTwissAt(s, columns, **kwargs):
+    """
+    similar to getTwiss, but at specific location
+    """
+    col = [c for c in columns]
+    src = kwargs.pop("source", "database")
+    if src == "database":
+        if not machines._lat._twiss:
+            logger.error("ERROR: no twiss data loaded")
+            return None
+        return machines._lat._twiss.at(s, col=col)
+    else:
+        return [None] * len(columns)
+    
 def getChromaticity(source='machine'):
     """
     get chromaticity **Not Implemented Yet**

@@ -245,8 +245,8 @@ def load(machine, submachine = "*", **kwargs):
         #print "New CFA:", cfa.rows
 
         lat = createLattice(msect, cfa.rows, acctag, cfa.source)
-        lat.sb = d.get("s_begin", 0.0)
-        lat.se = d.get("s_end", 0.0)
+        lat.sb = float(d.get("s_begin", 0.0))
+        lat.se = float(d.get("s_end", 0.0))
         lat.loop = bool(d.get("loop", True))
         lat.machine = machname
         lat.arpvs = d.get("archive_pvs", None)

@@ -493,6 +493,24 @@ class TwissData:
             s = s + "%16s " % e + self._twtable[i].__repr__() + '\n'
         return s
 
+    def at(self, s, col, **kwargs):
+        if s < self._twtable[0,0] or s > self._twtable[-1,0]:
+            return None
+        dat = []
+        for i in range(1, len(self._twtable)):
+            if self._twtable[i,0] < s: continue
+            for c in col:
+                if c in self._cols:
+                    j = self._cols.index(c)
+                    x0, x1 = self._twtable[i-1:i+1, j]
+                    fc = (s - self._twtable[i-1,0]) / \
+                        (self._twtable[i,0] - self._twtable[i-1,0])
+                    dat.append(x0 + (x1-x0)*fc)
+                else:
+                    dat.append(None)
+            break
+        return dat
+            
     def get(self, elemlst, col, **kwargs):
         """get a list of twiss functions when given a list of element names.
         
