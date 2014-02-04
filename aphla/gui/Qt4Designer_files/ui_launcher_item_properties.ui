@@ -166,7 +166,7 @@
       </layout>
      </widget>
      <widget class="QWidget" name="page_txt">
-      <layout class="QGridLayout" name="gridLayout_5">
+      <layout class="QGridLayout" name="gridLayout_13">
        <item row="0" column="0">
         <widget class="QLabel" name="label_10">
          <property name="text">
@@ -277,40 +277,96 @@
          </item>
         </widget>
        </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_8">
-         <property name="text">
-          <string>Description</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1" rowspan="2" colspan="2">
-        <widget class="QPlainTextEdit" name="plainTextEdit_txt_description">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>71</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <spacer name="verticalSpacer_3">
+       <item row="3" column="0" colspan="3">
+        <widget class="QSplitter" name="splitter_txt">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>296</height>
-          </size>
-         </property>
-        </spacer>
+         <widget class="QWidget" name="">
+          <layout class="QGridLayout" name="gridLayout_11">
+           <item row="0" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_6">
+             <item>
+              <widget class="QLabel" name="label_30">
+               <property name="text">
+                <string>Help in</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_31">
+               <property name="text">
+                <string>Source File   </string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="1" rowspan="2">
+            <widget class="QPlainTextEdit" name="plainTextEdit_txt_help">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <spacer name="verticalSpacer_8">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>38</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="">
+          <layout class="QGridLayout" name="gridLayout_12">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_8">
+             <property name="text">
+              <string>Description  </string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" rowspan="2">
+            <widget class="QPlainTextEdit" name="plainTextEdit_txt_description">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <spacer name="verticalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>296</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>
      <widget class="QWidget" name="page_pymod">
-      <layout class="QGridLayout" name="gridLayout">
+      <layout class="QGridLayout" name="gridLayout_10">
        <item row="0" column="0">
         <widget class="QLabel" name="label_16">
          <property name="text">
@@ -422,35 +478,94 @@
          </item>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_18">
-         <property name="text">
-          <string>Description</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1" rowspan="2" colspan="2">
-        <widget class="QPlainTextEdit" name="plainTextEdit_py_description">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>71</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <spacer name="verticalSpacer_4">
+       <item row="4" column="0" colspan="3">
+        <widget class="QSplitter" name="splitter_py">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>263</height>
-          </size>
+         <property name="childrenCollapsible">
+          <bool>false</bool>
          </property>
-        </spacer>
+         <widget class="QWidget" name="">
+          <layout class="QGridLayout" name="gridLayout_8">
+           <item row="0" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_7">
+             <item>
+              <widget class="QLabel" name="label_32">
+               <property name="text">
+                <string>Help in</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_33">
+               <property name="text">
+                <string>Source File      </string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="1" rowspan="2">
+            <widget class="QPlainTextEdit" name="plainTextEdit_py_help">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <spacer name="verticalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>28</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="">
+          <layout class="QGridLayout" name="gridLayout_9">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_18">
+             <property name="text">
+              <string>Description     </string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <spacer name="verticalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>263</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="0" column="1" rowspan="2">
+            <widget class="QPlainTextEdit" name="plainTextEdit_py_description">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -628,35 +743,94 @@
          </item>
         </widget>
        </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="label_22">
-         <property name="text">
-          <string>Description</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1" rowspan="2" colspan="2">
-        <widget class="QPlainTextEdit" name="plainTextEdit_exe_description">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>71</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
-        <spacer name="verticalSpacer_5">
+       <item row="5" column="0" colspan="3">
+        <widget class="QSplitter" name="splitter_exe">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>129</height>
-          </size>
+         <property name="childrenCollapsible">
+          <bool>false</bool>
          </property>
-        </spacer>
+         <widget class="QWidget" name="">
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="0" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_8">
+             <item>
+              <widget class="QLabel" name="label_34">
+               <property name="text">
+                <string>Help in</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_35">
+               <property name="text">
+                <string>Source File   </string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="1" rowspan="2">
+            <widget class="QPlainTextEdit" name="plainTextEdit_exe_help">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <spacer name="verticalSpacer_6">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>17</width>
+               <height>28</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="">
+          <layout class="QGridLayout" name="gridLayout_5">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_22">
+             <property name="text">
+              <string>Description  </string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" rowspan="2">
+            <widget class="QPlainTextEdit" name="plainTextEdit_exe_description">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <spacer name="verticalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>17</width>
+               <height>38</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </widget>
        </item>
       </layout>
       <zorder>comboBox_exe_editor</zorder>
@@ -672,6 +846,9 @@
       <zorder>pushButton_exe_browse</zorder>
       <zorder></zorder>
       <zorder>pushButton_exe_browseWD</zorder>
+      <zorder>plainTextEdit_exe_help</zorder>
+      <zorder>layoutWidget_2</zorder>
+      <zorder>verticalSpacer_6</zorder>
      </widget>
     </widget>
    </item>
