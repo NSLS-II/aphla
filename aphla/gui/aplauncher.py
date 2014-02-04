@@ -36,6 +36,8 @@ import cothread
 import PyQt4.Qt as Qt
 from PyQt4.QtXml import QDomDocument
 
+ORIGINAL_SYS_PATH = sys.path[:]
+
 XML_ITEM_TAG_NAME = 'item'
 XML_ITEM_COMMON_PROPERTY_NAMES = ['dispName', 'desc', 'icon', 'itemType']
 XML_ITEM_PROPERTY_NAME_DICT = dict(
@@ -161,7 +163,9 @@ class StartDirPaths():
     def __init__(self):
         """Constructor"""
 
-        self.restore_hierarchy = os.getcwd()
+        self.restore_hierarchy              = os.getcwd()
+        self.item_properties_workingDir     = os.getcwd()
+        self.item_properties_sourceFilepath = os.getcwd()
 
 
 START_DIRS = StartDirPaths()
@@ -304,8 +308,32 @@ class LauncherModel(Qt.QStandardItemModel):
             f = item.sourceFilepath
             header_type = item.helpHeader
         elif item.itemType == 'py':
-            f = __import__(item.moduleName).__file__
-            if f.endswith('.pyc'): f = f[:-1]
+            try:
+                sys.path = ORIGINAL_SYS_PATH[:]
+                if item.cwd not in ('','N/A'):
+                    cwd = _subs_tilde_with_home(item.cwd)
+                    if osp.exists(cwd):
+                        print 'Changing directory to {0:s}'.format(cwd)
+                        os.chdir(cwd)
+                        if cwd not in sys.path:
+                            sys.path.insert(0, cwd)
+                    else:
+                        print 'No such directory exist: {0:s}'.format(cwd)
+                        print ('Trying to import "{0:s}" without cd...'.
+                               format(item.moduleName))
+
+                topLevelModule = __import__(item.moduleName)
+                submod_list = item.moduleName.split('.')
+                if len(submod_list) == 1:
+                    f = topLevelModule.__file__
+                else:
+                    m = topLevelModule
+                    for submod in submod_list[1:]:
+                        m = getattr(m, submod)
+                    f = m.__file__
+                if f.endswith('.pyc'): f = f[:-1]
+            except ImportError:
+                f = ''
             header_type = 'python'
         elif item.itemType == 'exe':
             f = item.sourceFilepath
@@ -754,7 +782,8 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
 
         self.setWindowFlags(Qt.Qt.Window) # To add Maximize & Minimize buttons
 
-        self.item = selectedItem
+        self.model = model
+        self.item  = selectedItem
 
         # Update the list of command strings and module names that already
         #exist in the model
@@ -830,14 +859,6 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                         else:
                             obj.setCurrentIndex(matchedInd)
 
-                        #msgBox = Qt.QMessageBox()
-                        #msgBox.setText( (
-                            #'No matching item found in ' + objName) )
-                        #msgBox.setInformativeText( str(sys.exc_info()) )
-                        #msgBox.setIcon(Qt.QMessageBox.Critical)
-                        #msgBox.exec_()
-
-
             elif objName.startswith('plainTextEdit'):
                 if objName.endswith('description'):
                     obj.setProperty('plainText', self.item.desc)
@@ -860,6 +881,31 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
         self.connect(self.lineEdit_exe_src_filepath,
                      Qt.SIGNAL('textChanged(const QString &)'),
                      self._updateEnableStates)
+        self.connect(self.pushButton_txt_browse, Qt.SIGNAL('clicked()'),
+                     self._getExistingFile)
+        self.connect(self.pushButton_py_browseWD, Qt.SIGNAL('clicked()'),
+                     self._getExistingDir)
+        self.connect(self.pushButton_exe_browse, Qt.SIGNAL('clicked()'),
+                     self._getExistingFile)
+        self.connect(self.pushButton_exe_browseWD, Qt.SIGNAL('clicked()'),
+                     self._getExistingDir)
+        self.connect(self.lineEdit_exe_src_filepath,
+                     Qt.SIGNAL('editingFinished()'),
+                     self._updateHelpTxt_src_lineEdit)
+        self.connect(self.lineEdit_txt_src_filepath,
+                     Qt.SIGNAL('editingFinished()'),
+                     self._updateHelpTxt_src_lineEdit)
+        self.connect(self.comboBox_exe_helpHeaderType,
+                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     self._updateHelpTxt_combo_helpHeader)
+        self.connect(self.comboBox_txt_helpHeaderType,
+                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     self._updateHelpTxt_combo_helpHeader)
+        self.connect(self.comboBox_py_moduleName,
+                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     self._updateHelpTxt_combo_moduleName)
+        self.connect(self.lineEdit_py_workingDir, Qt.SIGNAL('editingFinished()'),
+                     self._updateHelpTxt_py_cwd_lineEdit)
 
         self.isItemPropertiesModifiable = self.item.path.startswith(
             USER_MODIFIABLE_ROOT_PATH+SEPARATOR)
@@ -867,6 +913,154 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
         # to exclude USER_MODIFIABLE_ROOT_PATH itself from modifiable item list
 
         self.switchItemSpecificPropObjects(self.item.itemType)
+
+    #----------------------------------------------------------------------
+    def _getExistingDir(self):
+        """"""
+
+        if self.sender() == self.pushButton_exe_browseWD:
+            receiving_lineEdit = self.lineEdit_exe_workingDir
+        elif self.sender() == self.pushButton_py_browseWD:
+            receiving_lineEdit = self.lineEdit_py_workingDir
+        else:
+            raise ValueError('Unexpected sender: {0:s}'.
+                             format(self.sender().__repr__()))
+
+        caption = 'Select Working Directory'
+        if osp.exists(receiving_lineEdit.text()):
+            starting_dir_path = receiving_lineEdit.text()
+        else:
+            starting_dir_path = START_DIRS.item_properties_workingDir
+        dir_path = Qt.QFileDialog.getExistingDirectory(
+            self, caption, starting_dir_path)
+
+        if not dir_path:
+            return
+
+        START_DIRS.item_properties_workingDir = dir_path
+
+        receiving_lineEdit.setText(dir_path)
+
+        if self.item.itemType == 'py':
+            self.item.cwd = dir_path
+            help_text = self.model.get_help_header_text(self.item)
+            self.plainTextEdit_py_help.setProperty('plainText', help_text)
+
+    #----------------------------------------------------------------------
+    def _getExistingFile(self):
+        """"""
+
+        if self.sender() == self.pushButton_exe_browse:
+            receiving_lineEdit = self.lineEdit_exe_src_filepath
+
+        elif self.sender() == self.pushButton_txt_browse:
+            receiving_lineEdit = self.lineEdit_txt_src_filepath
+        else:
+            raise ValueError('Unexpected sender: {0:s}'.
+                             format(self.sender().__repr__()))
+
+        caption = 'Select Source File'
+        if osp.exists(receiving_lineEdit.text()):
+            starting_dir_path = osp.dirname(receiving_lineEdit.text())
+        else:
+            starting_dir_path = START_DIRS.item_properties_sourceFilepath
+
+        all_files_filter_str = 'All files (*)'
+        filepath = Qt.QFileDialog.getOpenFileName(
+            caption=caption, directory=starting_dir_path,
+            filter=all_files_filter_str)
+
+        if not filepath:
+            return
+
+        START_DIRS.item_properties_sourceFilepath = osp.dirname(filepath)
+
+        receiving_lineEdit.setText(filepath)
+
+        self._updateHelpTxt_browse(filepath)
+
+    #----------------------------------------------------------------------
+    def _updateHelpTxt_py_cwd_lineEdit(self):
+        """"""
+
+        self.item.cwd = self.lineEdit_py_workingDir.text()
+        help_text = self.model.get_help_header_text(self.item)
+        self.plainTextEdit_py_help.setProperty('plainText', help_text)
+
+    #----------------------------------------------------------------------
+    def _updateHelpTxt_browse(self, new_src_filepath):
+        """"""
+
+        if self.item.itemType == 'exe':
+            plainTextEdit = self.plainTextEdit_exe_help
+            self.item.helpHeader = self.comboBox_exe_helpHeaderType.currentText()
+        elif self.item.itemType == 'txt':
+            plainTextEdit = self.plainTextEdit_txt_help
+            self.item.helpHeader = self.comboBox_txt_helpHeaderType.currentText()
+        else:
+            raise ValueError('Unexpected itemType: {0:s}'.
+                             format(self.item.itemType))
+
+        if osp.exists(new_src_filepath):
+            self.item.sourceFilepath = new_src_filepath
+            help_text = self.model.get_help_header_text(self.item)
+        else:
+            help_text = ''
+
+        plainTextEdit.setProperty('plainText', help_text)
+
+    #----------------------------------------------------------------------
+    def _updateHelpTxt_src_lineEdit(self):
+        """"""
+
+        if self.item.itemType == 'exe':
+            plainTextEdit = self.plainTextEdit_exe_help
+            self.item.helpHeader = self.comboBox_exe_helpHeaderType.currentText()
+            new_src_filepath = self.lineEdit_exe_src_filepath.text()
+        elif self.item.itemType == 'txt':
+            plainTextEdit = self.plainTextEdit_txt_help
+            self.item.helpHeader = self.comboBox_txt_helpHeaderType.currentText()
+            new_src_filepath = self.lineEdit_txt_src_filepath.text()
+        else:
+            raise ValueError('Unexpected itemType: {0:s}'.
+                             format(self.item.itemType))
+
+        if osp.exists(new_src_filepath):
+            self.item.sourceFilepath = new_src_filepath
+            help_text = self.model.get_help_header_text(self.item)
+        else:
+            help_text = ''
+
+        plainTextEdit.setProperty('plainText', help_text)
+
+    #----------------------------------------------------------------------
+    def _updateHelpTxt_combo_helpHeader(self, helpHeaderType):
+        """"""
+
+        self.item.helpHeader = helpHeaderType
+
+        if self.item.itemType == 'exe':
+            plainTextEdit = self.plainTextEdit_exe_help
+        elif self.item.itemType == 'txt':
+            plainTextEdit = self.plainTextEdit_txt_help
+        else:
+            raise ValueError('Unexpected itemType: {0:s}'.
+                             format(self.item.itemType))
+
+        help_text = self.model.get_help_header_text(self.item)
+
+        plainTextEdit.setProperty('plainText', help_text)
+
+    #----------------------------------------------------------------------
+    def _updateHelpTxt_combo_moduleName(self, moduleName):
+        """"""
+
+        self.item.moduleName = self.comboBox_py_moduleName.currentText()
+        self.item.cwd = self.lineEdit_py_workingDir.text()
+
+        help_text = self.model.get_help_header_text(self.item)
+
+        self.plainTextEdit_py_help.setProperty('plainText', help_text)
 
     #----------------------------------------------------------------------
     def _updateEnableStates(self, new_text):
@@ -929,8 +1123,8 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
     def switchItemSpecificPropObjects(self, itemType_or_descriptiveItemTypeStr):
         """"""
 
-        #itemType = str(itemTypeQString).lower()
         itemType = self._getItemType(itemType_or_descriptiveItemTypeStr)
+        self.item.itemType = itemType
 
         itemTypeList = ['page', 'info', 'txt', 'py', 'exe']
         self.stackedWidget.setCurrentIndex(itemTypeList.index(itemType))
@@ -993,48 +1187,6 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
 
             else:
                 obj.setEnabled(True)
-
-
-        #for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS.items():
-            #obj = getattr(self, objName)
-            #if objName in enabledObjectNames:
-                #obj.setEnabled(True)
-            #else:
-                #obj.setEnabled(False)
-
-                ## If the item whose properties to be shown is read-only,
-                ## then do not reset the values for disabled objects.
-                ## However, if the item is writable AND the display object
-                ## is disabled, then reset the value to the default value.
-                #if not self.isItemPropertiesModifiable:
-                    #continue
-
-                ## Reset values to default
-                #if objName.startswith('lineEdit'):
-                    #obj.setText(DEFAULT_XML_ITEM[propName])
-                #elif objName.startswith('comboBox'):
-
-                    #search_string = str(DEFAULT_XML_ITEM[propName])
-                    #matchedInd = obj.findText(search_string,
-                                              #Qt.Qt.MatchExactly)
-                    ## If no match found, try case-insensitive search
-                    #if matchedInd == -1:
-                        #matchedInd = obj.findText(search_string,
-                                                  #Qt.Qt.MatchFixedString)
-                    #if matchedInd != -1:
-                        #obj.setCurrentIndex(matchedInd)
-                    #else:
-                        #msgBox = Qt.QMessageBox()
-                        #msgBox.setText( (
-                            #'No matching item found in ' + objName) )
-                        #msgBox.setInformativeText( str(sys.exc_info()) )
-                        #msgBox.setIcon(Qt.QMessageBox.Critical)
-                        #msgBox.exec_()
-                #elif objName == 'plainTextEdit_description':
-                    #pass
-                #else:
-                    #raise ValueError('Unexpected object name: {0:s}'.
-                                     #format(objName))
 
     #----------------------------------------------------------------------
     def accept(self):
@@ -3740,7 +3892,7 @@ class LauncherApp(Qt.QObject):
     def launchExe(self, item_path, appCommand, workingDir):
         """"""
 
-        if workingDir == '':
+        if workingDir in ('', 'N/A'):
             workingDir = os.getcwd()
         else:
             workingDir = _subs_tilde_with_home(workingDir)
@@ -3885,14 +4037,16 @@ class LauncherApp(Qt.QObject):
         window will not disappear immediately.
         """
 
+        sys.path = ORIGINAL_SYS_PATH[:]
+
         if workingDir in ('', 'N/A'):
-            workingDir = os.getcwd()
+            pass
         else:
             workingDir = _subs_tilde_with_home(workingDir)
-
-        if workingDir != '':
             os.chdir(workingDir)
             print 'Changed working directory to {0:s}'.format(workingDir)
+            if workingDir not in sys.path:
+                sys.path.insert(0, workingDir)
 
         module = None
 
