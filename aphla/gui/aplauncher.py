@@ -3823,7 +3823,6 @@ class LauncherApp(Qt.QObject):
                     new_window_flag = '--new'
                 else:
                     new_window_flag = ''
-                new_window_flag = '--new'
                 p = Popen('bash -c "compgen -ac | grep wing"', shell=True,
                           stdout=PIPE)
                 out, err = p.communicate()
