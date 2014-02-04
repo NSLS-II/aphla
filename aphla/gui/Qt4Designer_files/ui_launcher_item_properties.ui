@@ -22,6 +22,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
      <widget class="QWidget" name="page">
       <layout class="QGridLayout" name="gridLayout_4">
        <item row="0" column="1">
@@ -111,7 +114,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>71</height>
+           <height>20</height>
           </size>
          </property>
         </widget>
@@ -145,7 +148,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>71</height>
+           <height>20</height>
           </size>
          </property>
         </widget>
@@ -194,7 +197,7 @@
        <item row="1" column="1" colspan="2">
         <widget class="QComboBox" name="comboBox_txt_editor">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -205,6 +208,11 @@
          <item>
           <property name="text">
            <string>gedit</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>$wing_new_window</string>
           </property>
          </item>
          <item>
@@ -282,7 +290,10 @@
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <widget class="QWidget" name="">
+         <property name="childrenCollapsible">
+          <bool>false</bool>
+         </property>
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QGridLayout" name="gridLayout_11">
            <item row="0" column="0">
             <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -310,6 +321,9 @@
                <height>20</height>
               </size>
              </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
            <item row="1" column="0">
@@ -327,7 +341,7 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QGridLayout" name="gridLayout_12">
            <item row="0" column="0">
             <widget class="QLabel" name="label_8">
@@ -380,7 +394,7 @@
           <bool>true</bool>
          </property>
          <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -438,7 +452,7 @@
        <item row="3" column="1" colspan="2">
         <widget class="QComboBox" name="comboBox_py_editor">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -446,6 +460,11 @@
          <property name="editable">
           <bool>true</bool>
          </property>
+         <item>
+          <property name="text">
+           <string>$wing_new_window</string>
+          </property>
+         </item>
          <item>
           <property name="text">
            <string>$wing</string>
@@ -486,7 +505,7 @@
          <property name="childrenCollapsible">
           <bool>false</bool>
          </property>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QGridLayout" name="gridLayout_8">
            <item row="0" column="0">
             <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -514,6 +533,9 @@
                <height>20</height>
               </size>
              </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
            <item row="1" column="0">
@@ -531,7 +553,7 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QGridLayout" name="gridLayout_9">
            <item row="0" column="0">
             <widget class="QLabel" name="label_18">
@@ -584,7 +606,7 @@
           <bool>true</bool>
          </property>
          <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -660,7 +682,7 @@
        <item row="3" column="1" colspan="2">
         <widget class="QComboBox" name="comboBox_exe_editor">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -671,6 +693,11 @@
          <item>
           <property name="text">
            <string>gedit</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>$wing_new_window</string>
           </property>
          </item>
          <item>
@@ -751,7 +778,7 @@
          <property name="childrenCollapsible">
           <bool>false</bool>
          </property>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QGridLayout" name="gridLayout">
            <item row="0" column="0">
             <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -779,6 +806,9 @@
                <height>20</height>
               </size>
              </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
            <item row="1" column="0">
@@ -796,7 +826,7 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QGridLayout" name="gridLayout_5">
            <item row="0" column="0">
             <widget class="QLabel" name="label_22">
@@ -833,22 +863,17 @@
         </widget>
        </item>
       </layout>
+      <zorder>splitter_exe</zorder>
       <zorder>comboBox_exe_editor</zorder>
-      <zorder>verticalSpacer_5</zorder>
-      <zorder>plainTextEdit_exe_description</zorder>
       <zorder>comboBox_exe_command</zorder>
       <zorder>label_20</zorder>
       <zorder>lineEdit_exe_workingDir</zorder>
       <zorder>label_21</zorder>
-      <zorder>label_22</zorder>
       <zorder>lineEdit_exe_src_filepath</zorder>
       <zorder>comboBox_exe_helpHeaderType</zorder>
       <zorder>pushButton_exe_browse</zorder>
       <zorder></zorder>
       <zorder>pushButton_exe_browseWD</zorder>
-      <zorder>plainTextEdit_exe_help</zorder>
-      <zorder>layoutWidget_2</zorder>
-      <zorder>verticalSpacer_6</zorder>
      </widget>
     </widget>
    </item>
