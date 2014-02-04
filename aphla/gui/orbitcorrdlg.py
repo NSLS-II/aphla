@@ -301,7 +301,6 @@ class OrbitCorrGeneral(QtGui.QWidget):
 class Bump3XCor(QtGui.QWidget):
     def __init__(self, parent = None):
         super(Bump3XCor, self).__init__(parent)
-        self._scale = [0.0, 0.0, 0.0]
         self._twiss = None
         self.xcor = QtGui.QComboBox()
         self.dxi = QtGui.QLineEdit("0.0")
@@ -352,7 +351,7 @@ class Bump3XCor(QtGui.QWidget):
 class Bump3XSrc(QtGui.QWidget):
     def __init__(self, parent = None):
         super(Bump3XSrc, self).__init__(parent)
-        self.scale = [0.0, 0.0, 0.0]
+        self._twiss = None
         self.loc = QtGui.QLineEdit()
         self.dxi = QtGui.QLineEdit("0.0")
         fmbox = QtGui.QFormLayout()
@@ -365,21 +364,45 @@ class Bump3XSrc(QtGui.QWidget):
         self.connect(self.dxi, SIGNAL("editingFinished()"),
                      self._update_dx)
 
-    def setFactors(self, val):
-        for i,v in enumerate(val):
-            self.scale[i] = v
+    def setTwiss(self, tw):
+        self._twiss = tw
 
     def dx(self):
-        #i0 = self.xcor.currentIndex()
-        #if self.scale[i0] == 0.0 or i0 == -1:
-        #    return [0.0, 0.0, 0.0]
-        #sc = [v/self.scale[i0] for v in self.scale]
-        #return [v*float(self.dxi.text()) for v in sc]
-        pass
+        if self._twiss is None: return [0.0, 0.0, 0.0]
+        si = float(self.loc.text())
+        xi = float(self.dxi.text())
+        s1, s2, s3 = self._twiss["s"]
+        b1, b2, b3 = self._twiss["beta"]
+        a1, a2, a3 = self._twiss["alpha"]
+        ph1, ph2, ph3 = self._twiss["phi"]
+        dph1, dph2, dph3 = self._twiss["dphi"]
+        if si < s1 or si > s3: return [0.0, 0.0, 0.0]
+
+        cx21 = -np.sqrt(b1/b2)*(np.sin(dph3 - dph1) / 
+                                np.sin(dph3 - dph2))
+        cx31 = -np.sqrt(b1/b3)*(np.sin(dph2 - dph1) / 
+                                np.sin(dph2 - dph3))
+
+        fc = [1.0, cx21, cx31]
+        if self._twiss['plane'] in ["y", "Y"]:
+            col = ["alphay", "betay", "phiy"]
+        else:
+            col = ["alphax", "betax", "phix"]
+        aft, bt, pht = ap.getTwissAt(si, col)
+
+        print bt, aft, pht, self._twiss
+        if si < s2:
+            th1 = xi/(np.sqrt(b1*bt)*np.sin(pht - ph1))
+            return [th1, th1*fc[1], th1*fc[2]]
+        elif si < s3:
+            th3 = xi/(np.sqrt(b3*bt)*np.sin(ph3 - pht))
+            return [th3/cx31, th3/cx31*cx21, th3]
+        else:
+            return [0.0, 0.0, 0.0]
 
     def _update_dx(self):
         vals = self.dx()
-        print "New dkick:", vals
+        print "New dkick:", vals, self._twiss
         self.emit(SIGNAL("dKickUpdated(PyQt_PyObject)"), vals)
 
 class Bump4XCor(QtGui.QWidget):
@@ -653,7 +676,8 @@ class OrbitCorrNBumps(QtGui.QWidget):
 
         self.table4.resizeColumnsToContents()
         self.cors.append(newc)
-        tw = {'s': [], 'beta': [], 'phi': [], 'alpha': [], 'dphi': []}
+        tw = {'s': [], 'beta': [], 'phi': [], 'alpha': [], 'dphi': [],
+              'plane': "X"}
         for i in range(len(self.cors)):
             j, ok = self.table4.item(i,0).data(Qt.UserRole).toInt()
             tw['s'].append(self._twiss[j,0])
@@ -661,19 +685,26 @@ class OrbitCorrNBumps(QtGui.QWidget):
                 tw['alpha'].append(self._twiss[j,1])
                 tw['beta'].append( self._twiss[j,3])
                 tw['phi'].append(  self._twiss[j,5])
+                tw["plane"] = "X"
             elif self.rdbybump.isChecked():
                 tw['alpha'].append(self._twiss[j,2])
                 tw['beta'].append( self._twiss[j,4])
                 tw['phi'].append(  self._twiss[j,6])
+                tw["plane"] = "Y"
             d, ok = self.table4.item(i,5).data(Qt.UserRole).toFloat()
             tw['dphi'].append(d)
-        print tw
+        #print tw
         for i in range(self.bump_tabs.count()):
             wi = self.bump_tabs.widget(i)
             if isinstance(wi, Bump3XCor) and len(self.cors) == 3:
                 wi.setDisabled(True)
                 wi.setTwiss(tw)
                 wi.setElements([c.name for c in self.cors])
+                wi.setDisabled(False)
+            if isinstance(wi, Bump3XSrc) and len(self.cors) == 3:
+                wi.setDisabled(True)
+                wi.setTwiss(tw)
+                #wi.setElements([c.name for c in self.cors])
                 wi.setDisabled(False)
 
         self.emit(SIGNAL("correctorChanged(PyQt_PyObject)"), self.cors)
