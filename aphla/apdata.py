@@ -494,6 +494,9 @@ class TwissData:
         return s
 
     def at(self, s, col, **kwargs):
+        """
+        get twiss at a location `s`. Linear interpolation.
+        """
         if s < self._twtable[0,0] or s > self._twtable[-1,0]:
             return None
         dat = []
