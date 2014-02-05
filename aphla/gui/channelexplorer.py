@@ -3411,14 +3411,18 @@ def make(modal = True, parentWindow = None,
 
 
 #----------------------------------------------------------------------
-def main(args=None):
+def main():
     """ """
+
+    args = sys.argv
 
     if len(args) == 2:
         if args[1].lower() == 'true':
             use_cached_lattice = True
         else:
             use_cached_lattice = False
+    else:
+        use_cached_lattice = False
 
     #qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
 
@@ -3465,5 +3469,5 @@ def main(args=None):
 
 #----------------------------------------------------------------------
 if __name__ == "__main__" :
-    main(sys.argv)
+    main()
 
