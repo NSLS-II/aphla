@@ -110,7 +110,7 @@ ITEM_COLOR_PAGE = Qt.Qt.black
 ITEM_COLOR_INFO = Qt.Qt.black
 ITEM_COLOR_PY   = Qt.Qt.blue
 ITEM_COLOR_EXE  = Qt.Qt.blue
-ITEM_COLOR_TXT  = Qt.Qt.green
+ITEM_COLOR_TXT  = Qt.Qt.magenta
 
 # Forward slash '/' will be used as a file path separator for both
 # in Linux & Windows. Even if '/' is used in Windows, shutil and os functions
@@ -1314,11 +1314,11 @@ class LauncherModelItem(Qt.QStandardItem):
             self.setIcon(Qt.QIcon(":/folder.png"))
             self.setForeground(Qt.QBrush(ITEM_COLOR_PAGE))
         elif self.itemType == 'info':
-            self.setIcon(Qt.QIcon(":/generic_app.png"))
+            self.setIcon(Qt.QIcon(":/info_item.png"))
             self.setForeground(Qt.QBrush(ITEM_COLOR_INFO))
         elif self.itemType == 'txt':
-            self.setIcon(Qt.QIcon(":/generic_app.png"))
-            self.setForeground(Qt.QBrush(ITEM_COLOR_PY))
+            self.setIcon(Qt.QIcon(":/txt_item.png"))
+            self.setForeground(Qt.QBrush(ITEM_COLOR_TXT))
         elif self.itemType == 'py':
             self.setIcon(Qt.QIcon(":/python.png"))
             self.setForeground(Qt.QBrush(ITEM_COLOR_PY))
