@@ -172,7 +172,14 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
     f.close()
 
 
-def convVirtAccTwiss(fdst, fsrc, grpname = False):
+def convVirtAccTwiss(fdst, fsrc, **kwargs):
+    """
+    skip_elements: list of lower case element names
+    """
+    grpname = kwargs.get("grpname", False)
+    index_step = kwargs.get("index_step", 1)
+    skip_elements = kwargs.get("skip_elements", [])
+
     f = open(fsrc, 'r')
     tunes = f.readline()
     chrom = f.readline()
@@ -182,10 +189,14 @@ def convVirtAccTwiss(fdst, fsrc, grpname = False):
     elems = []
     for i,line in enumerate(f.readlines()):
         idx, name, s1 = [v.strip() for v in line.split()[:3]]
+        if name.lower() in skip_elements: continue
         elems.append([name, idx, "", 0.0, 0.0, float(s1), "", "", "", ""])
     f.close()
     if grpname:
-        for e in elems: e[0] = "%s:%s" % (e[0], e[1])
+        for e in elems:
+            e[0] = "%s:%s" % (e[0], e[1].replace("-", "_"))
+    for e in elems:
+        e[1] = "%d" % (int(e[1]) * index_step)
 
     f = open(fdst, "w")
     for e in elems:
@@ -193,7 +204,7 @@ def convVirtAccTwiss(fdst, fsrc, grpname = False):
     f.close()
     
 
-def convVirtAccPvs(fdst, fsrc, sep = ","):
+def convVirtAccPvs(fdst, fsrc, sep = ",", grpname=False):
     """
     Output:
     pv, handle, element_name, va_index, element_type, field
@@ -206,8 +217,8 @@ def convVirtAccPvs(fdst, fsrc, sep = ","):
            ("Bending", "T"): ("BEND", "b0"),
            ("Quadrupole", "K"): ("QUAD", "b1"),
            ("Sextupole", "K"): ("SEXT", "b2"),
-           ("RFCavity", "f"): ("RFCAVITY", "f"),
-           ("RFCavity", "v"): ("RFCAVITY", "v"),
+           ("Cavity Frequency", ""): ("RFCAVITY", "f"),
+           ("Cavity Voltage", ""): ("RFCAVITY", "v"),
            ("insertion", "GAP"): ("ID", "gap"),
            ("insertion", "PHASE"): ("ID", "phase"),
            ("TWISS", "TUNEX"): ("tune", "x"),
@@ -244,6 +255,8 @@ def convVirtAccPvs(fdst, fsrc, sep = ","):
         pvname = r[ipv]
         pvhandle = "put" if r[ihandle] == "setpoint" else "get"
         elemname = r[ielem]
+        if grpname:
+            elemname = elemname + ":" + r[iidx].replace("-", "_")
         elemtype, elemfield = mp[(r[itype], r[ifield])]
         elemidx0 = r[iidx]
         pvr.append([pvname, pvhandle, elemname, elemidx0, elemtype, elemfield])
@@ -299,14 +312,17 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
         "twiss": ["twiss", -100, "TWISS", 0.0, 0.0, "", "", "", ""],
         "dcct": ["dcct", -200, "DCCT", 0.0, 0.0, "", "", "", ""],
         "rfcavity": ["rfcavity", -300, "RFCAVITY", 0.0, 0.0, "", "", "", ""], }
-    for k,v in vrec.items():
-        if k in names: continue
-        c.execute("""INSERT INTO elements (elemName,elemIndex,elemType,"""
-                  """elemLength,elemPosition,"""
-                  """cell,girder,symmetry,elemGroups)"""
-                  """VALUES (?,?,?,?,?,?,?,?,?)""", v)
-        names.append(k)
-    conn.commit()
+    velems = kwarg.get("virtual_elems", vrec.keys())
+    if velems:
+        for k,v in vrec.items():
+            if k in names: continue
+            if k not in velems: continue
+            c.execute("""INSERT INTO elements (elemName,elemIndex,elemType,"""
+                      """elemLength,elemPosition,"""
+                      """cell,girder,symmetry,elemGroups)"""
+                      """VALUES (?,?,?,?,?,?,?,?,?)""", v)
+            names.append(k)
+        conn.commit()
 
     conn.close()
 
