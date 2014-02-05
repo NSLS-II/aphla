@@ -65,8 +65,11 @@ COLUMN_NAME_DICT = dict(
     helpHeader='Help Header Type', moduleName='Module Name', args='Import Args',
     desc='Description', help='Help Text',
 )
-COLUMN_NAMES = [COLUMN_NAME_DICT[prop_name]
-                for prop_name in MODEL_ITEM_PROPERTY_NAMES]
+ALL_COLUMN_NAMES = ['Name'] + [COLUMN_NAME_DICT[prop_name]
+                               for prop_name in MODEL_ITEM_PROPERTY_NAMES]
+DEFAULT_VISIBLE_COL_NAMES = ['Name', 'Item Type', 'Command', 'Help Text',
+                             'Description']
+PERM_VISIBLE_COL_NAMES = ['Name']
 DEFAULT_XML_ITEM = dict(
     dispName='', desc='', icon='page', itemType='page', command='', cwd='',
     editor='gedit', sourceFilepath='', helpHeader='python', moduleName='',
@@ -137,6 +140,7 @@ from Qt4Designer_files.ui_launcher_restore_hierarchy import Ui_Dialog \
      as Ui_Dialog_restore_hie
 
 import aphla as ap
+from aphla.gui.utils.orderselector import ColumnsDialog
 
 MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
 
@@ -150,7 +154,7 @@ MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
 # *) path auto completion & naviation from path line editbox
 # *) Add <description> to XML
 # *) More thorough separate search window
-# *) Implement "Visible Columns..." & "Arrange Items" actions
+# *) Implement "Arrange Items" actions
 # *) Temporary user XML saving functionality whenever hierarchy is changed
 # *) Add PYTHONPATH editor
 
@@ -212,8 +216,7 @@ class LauncherModel(Qt.QStandardItemModel):
 
         Qt.QStandardItemModel.__init__(self, *args)
 
-        self.headerLabels = ['Name']
-        self.headerLabels.extend(COLUMN_NAMES)
+        self.headerLabels = ALL_COLUMN_NAMES
         self.setHorizontalHeaderLabels(self.headerLabels)
         self.setColumnCount(len(self.headerLabels))
 
@@ -1601,9 +1604,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self, Qt.SIGNAL('sigClearSelection'),
                      self.clearSelection)
 
-
         # Load QSettings
         self.loadSettings()
+
+        self.visible_column_full_name_list = PERM_VISIBLE_COL_NAMES
+        self.onColumnSelectionChange(DEFAULT_VISIBLE_COL_NAMES,
+                                     force_visibility_update=True)
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
@@ -2421,13 +2427,16 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         # TODO
         self.actionArrangeItems = Qt.QAction(Qt.QIcon(), 'Arrange Items', self)
+        self.actionArrangeItems.setEnabled(False)
         self.connect(self.actionArrangeItems, Qt.SIGNAL('triggered()'),
                      self._not_implemented_yet)
-        # TODO
+
         self.actionVisibleColumns = Qt.QAction(Qt.QIcon(), 'Visible Columns...',
                                                self)
         self.connect(self.actionVisibleColumns, Qt.SIGNAL('triggered()'),
-                     self._not_implemented_yet)
+                     self.launchColumnsDialog)
+        self.connect(self, Qt.SIGNAL('columnSelectionReturned'),
+                     self.onColumnSelectionChange)
 
         self.actionDelete = Qt.QAction(Qt.QIcon(), 'Delete', self)
         self.actionDelete.setShortcut(Qt.Qt.Key_Delete)
@@ -2516,6 +2525,52 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         msgBox.setIcon(Qt.QMessageBox.Critical)
         msgBox.exec_()
         return
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        all_column_full_name_list = ALL_COLUMN_NAMES
+        visible_column_full_name_list = self.visible_column_full_name_list
+        permanently_visible_column_full_name_list = PERM_VISIBLE_COL_NAMES
+
+        dialog = ColumnsDialog(all_column_full_name_list,
+                               visible_column_full_name_list,
+                               permanently_visible_column_full_name_list,
+                               parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.emit(Qt.SIGNAL('columnSelectionReturned'), dialog.output)
+
+    #----------------------------------------------------------------------
+    def onColumnSelectionChange(self, new_vis_col_full_names,
+                                force_visibility_update=False):
+        """"""
+
+        if (not force_visibility_update) and \
+           (new_vis_col_full_names == self.visible_column_full_name_list):
+            return
+
+        new_vis_col_logical_indexes = [ALL_COLUMN_NAMES.index(full_name)
+                                       for full_name in new_vis_col_full_names]
+
+        m = self.getCurrentMainPane()
+
+        header = m.treeView.header()
+
+        for (i, col_logical_ind) in enumerate(new_vis_col_logical_indexes):
+            new_visual_ind = i
+            current_visual_ind = header.visualIndex(col_logical_ind)
+            header.moveSection(current_visual_ind, new_visual_ind)
+
+        for i in range(len(ALL_COLUMN_NAMES)):
+            if i not in new_vis_col_logical_indexes:
+                header.hideSection(i)
+            else:
+                header.showSection(i)
+
+        self.visible_column_full_name_list = new_vis_col_full_names
 
     #----------------------------------------------------------------------
     def _initMenus(self):
@@ -3794,13 +3849,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 self.contextMenu.addAction(self.actionCreateNewInfo)
 
                 self.contextMenu.addSeparator()
+                self.contextMenu.addAction(self.actionPaste)
+
+                self.contextMenu.addSeparator()
                 if m.stackedWidget.currentIndex() == self.treeView_stack_index:
                     self.contextMenu.addAction(self.actionVisibleColumns)
                 else:
                     self.contextMenu.addAction(self.actionArrangeItems)
-
-                self.contextMenu.addSeparator()
-                self.contextMenu.addAction(self.actionPaste)
 
                 self.contextMenu.addSeparator()
                 self.contextMenu.addAction(self.actionProperties)
@@ -3812,9 +3867,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 self.contextMenu.addAction(self.actionOpenInNewTab)
                 self.contextMenu.addAction(self.actionOpenInNewWindow)
 
-                self.add_basic_item_context_menus()
-
-                self.contextMenu.addAction(self.actionProperties)
+                self.add_basic_item_context_menus(m)
 
                 if selectionType == 'MultiplePageSelection':
                     self.actionOpen.setEnabled(False)
@@ -3833,7 +3886,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
                 self.contextMenu.addAction(self.actionRun)
 
-                self.add_basic_item_context_menus()
+                self.add_basic_item_context_menus(m)
 
                 if selectionType == 'MultipleExecutableSelection':
                     self.actionRename.setEnabled(False)
@@ -3847,7 +3900,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
                 self.contextMenu.addAction(self.actionEditTxt)
 
-                self.add_basic_item_context_menus()
+                self.add_basic_item_context_menus(m)
 
                 if selectionType == 'MultipleTxtSelection':
                     self.actionRename.setEnabled(False)
@@ -3858,13 +3911,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
             elif selectionType in ('SingleInfoSelection'):
 
-                self.add_basic_item_context_menus()
+                self.add_basic_item_context_menus(m)
 
                 self.contextMenu.setDefaultAction(self.actionProperties)
 
             elif selectionType == 'MultipleMixedTypeSelection':
 
-                self.add_basic_item_context_menus()
+                self.add_basic_item_context_menus(m)
 
                 self.actionRename.setEnabled(False)
                 #
@@ -3874,7 +3927,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 raise TypeError('Unexpected selection type: ' + selectionType)
 
     #----------------------------------------------------------------------
-    def add_basic_item_context_menus(self):
+    def add_basic_item_context_menus(self, currentMainPane):
         """"""
 
         self.contextMenu.addSeparator()
@@ -3887,6 +3940,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.actionDelete)
+
+        self.contextMenu.addSeparator()
+        if currentMainPane.stackedWidget.currentIndex() == \
+           self.treeView_stack_index:
+            self.contextMenu.addAction(self.actionVisibleColumns)
+        else:
+            self.contextMenu.addAction(self.actionArrangeItems)
 
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.actionProperties)
