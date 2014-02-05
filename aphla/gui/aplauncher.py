@@ -36,6 +36,8 @@ import cothread
 import PyQt4.Qt as Qt
 from PyQt4.QtXml import QDomDocument
 
+APP = None
+
 ORIGINAL_SYS_PATH = sys.path[:]
 
 XML_ITEM_TAG_NAME = 'item'
@@ -163,9 +165,13 @@ class StartDirPaths():
     def __init__(self):
         """Constructor"""
 
-        self.restore_hierarchy              = os.getcwd()
-        self.item_properties_workingDir     = os.getcwd()
-        self.item_properties_sourceFilepath = os.getcwd()
+        cwd = os.getcwd()
+
+        self.restore_hierarchy              = cwd
+        self.item_properties_workingDir     = cwd
+        self.item_properties_sourceFilepath = cwd
+        self.export_user_xml                = cwd
+        self.import_user_xml                = cwd
 
 
 START_DIRS = StartDirPaths()
@@ -2429,6 +2435,18 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.connect(self.actionDelete, Qt.SIGNAL('triggered()'),
                      self.deleteItems)
 
+        self.actionImportUserXML = Qt.QAction(
+            Qt.QIcon(), 'Import user hierarchy...', self)
+        self.addAction(self.actionImportUserXML)
+        self.connect(self.actionImportUserXML, Qt.SIGNAL('triggered()'),
+                     self.importUserXML)
+
+        self.actionExportUserXML = Qt.QAction(
+            Qt.QIcon(), 'Export user hierarchy...', self)
+        self.addAction(self.actionExportUserXML)
+        self.connect(self.actionExportUserXML, Qt.SIGNAL('triggered()'),
+                     self.exportUserXML)
+
         self.actionCloseTabOrWindow = Qt.QAction(Qt.QIcon(), 'Close', self)
         self.actionCloseTabOrWindow.setShortcut(
             Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_W))
@@ -2529,6 +2547,49 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         else:
             self.treeViewSide.setVisible(False)
 
+    #----------------------------------------------------------------------
+    def importUserXML(self):
+        """"""
+
+        all_files_filter_str = 'All files (*)'
+        caption = 'Import Launcher User Hierarchy XML'
+        filter_str = ';;'.join(['XML files (*.xml)',
+                                all_files_filter_str])
+        filepath = Qt.QFileDialog.getOpenFileName(
+            caption=caption, directory=START_DIRS.import_user_xml,
+            filter=filter_str)
+        if not filepath:
+            return
+
+        START_DIRS.import_user_xml = os.path.dirname(filepath)
+
+        shutil.copy(filepath, USER_XML_FILEPATH)
+
+        self.emit(Qt.SIGNAL('sigRestartLauncher'), filepath)
+
+    #----------------------------------------------------------------------
+    def exportUserXML(self):
+        """"""
+
+        all_files_filter_str = 'All files (*)'
+        caption = 'Export Current Launcher User Hierarchy XML'
+        filter_str = ';;'.join(['XML files (*.xml)',
+                                all_files_filter_str])
+        save_filepath = Qt.QFileDialog.getSaveFileName(
+            caption=caption, directory=START_DIRS.export_user_xml,
+            filter=filter_str)
+        if not save_filepath:
+            return
+
+        START_DIRS.export_user_xml = os.path.dirname(save_filepath)
+
+        if osp.exists(USER_TEMP_XML_FILEPATH):
+            shutil.copy(USER_TEMP_XML_FILEPATH, save_filepath)
+        else:
+            shutil.copy(USER_XML_FILEPATH, save_filepath)
+
+        print ('Successfully exported current launcher user hierarchy to {0:s}'.
+               format(save_filepath))
 
     #----------------------------------------------------------------------
     def openPropertiesDialog(self):
@@ -3627,6 +3688,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                     sender.addAction(self.actionProperties)
 
                 sender.addSeparator()
+                sender.addAction(self.actionImportUserXML)
+                sender.addAction(self.actionExportUserXML)
+
+                sender.addSeparator()
                 sender.addAction(self.actionCloseTabOrWindow)
 
             elif sender == self.menuEdit:
@@ -4141,10 +4206,12 @@ def make(initRootPath=''):
     if initRootPath:
         initRootPath.replace(posixpath.sep, os.sep)
 
-    app = LauncherApp(initRootPath)
-    app.view.show()
+    global APP
 
-    return app
+    APP = LauncherApp(initRootPath)
+    APP.view.show()
+
+    return APP
 
 #----------------------------------------------------------------------
 def isCothreadUsed():
@@ -4160,6 +4227,24 @@ def isCothreadUsed():
                 break
 
     return using_cothread
+
+#----------------------------------------------------------------------
+def restartLauncher(imported_xml_filepath):
+    """"""
+
+    initRootPath = SEPARATOR + 'root'
+    new_app = LauncherApp(initRootPath)
+    new_app.view.show()
+
+    print ('Successfully imported launcher user hierarchy from {0:s}'.
+           format(imported_xml_filepath))
+
+    global APP
+
+    APP.view.close()
+
+    APP = new_app
+    APP.connect(APP.view, Qt.SIGNAL('sigRestartLauncher'), restartLauncher)
 
 #----------------------------------------------------------------------
 def main(args = None):
@@ -4183,9 +4268,11 @@ def main(args = None):
     font.setPointSize(16)
     qapp.setFont(font)
 
+    global APP
+
     initRootPath = SEPARATOR + 'root'
-    app = LauncherApp(initRootPath)
-    app.view.show()
+    APP = LauncherApp(initRootPath)
+    APP.view.show()
 
     # Check if there is a temporarily saved user file from an
     # ungracefully terminated previous session. If found, ask a user if he/she
@@ -4201,7 +4288,11 @@ def main(args = None):
             new_app = LauncherApp(initRootPath)
             new_app.view.show()
 
-            app.view.close()
+            APP.view.close()
+
+            APP = new_app
+
+    APP.connect(APP.view, Qt.SIGNAL('sigRestartLauncher'), restartLauncher)
 
     if using_cothread:
         cothread.WaitForQuit()
