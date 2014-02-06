@@ -3779,6 +3779,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
            (currentRootItem.path in [item.path for item in self.selectedItemList]):
             self.actionDelete.setEnabled(False)
 
+        # TODO: Re-enable tabs once known bugs related to tabs are resolved
+        self.actionOpenInNewTab.setEnabled(False)
+
         sender = self.sender()
         #print sender.title()
 
