@@ -514,7 +514,8 @@ class LauncherModel(QStandardItemModel):
                 if prop_name != 'path':
                     setattr(item, prop_name, 'N/A')
 
-            item.path     = item.path + item.dispName
+            item.path     = item.path + item.dispName # This assignment is
+            # meaningful only for "/root".
             item.desc     = info['desc']
             item.icon     = info['icon']
             item.itemType = info['itemType']
@@ -539,6 +540,12 @@ class LauncherModel(QStandardItemModel):
                     self.pathList.append(item.path)
                 else:
                     raise ValueError('Duplicate path found: '+item.path)
+
+                if item.path.startswith(USER_MODIFIABLE_ROOT_PATH+SEPARATOR):
+                    item.setEditable(True)
+                else:
+                    item.setEditable(False)
+
                 parent_item.setChild(child_index, 0, item)
                 for (ii,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                     p = getattr(item,prop_name)
@@ -1550,11 +1557,59 @@ class CustomTreeView(QTreeView):
     def editSlot(self, modelIndex):
         """"""
 
+        m = self.model()
+        if isinstance(m, QSortFilterProxyModel):
+            sm = m.sourceModel()
+            item = sm.itemFromIndex(m.mapToSource(modelIndex))
+        else:
+            item = m.itemFromIndex(modelIndex)
+
+        # This check here should not be needed, but it is necessary for now
+        # to have this code work properly
+        if ( not isinstance(item, QStandardItem) ) and \
+           item.path.startswith(USER_MODIFIABLE_ROOT_PATH+SEPARATOR):
+            item.setEditable(True)
+        else:
+            item.setEditable(False)
+
+        dispName_col = 0
+        if (item.column() == dispName_col) and item.isEditable():
+            pass
+        else:
+            if isinstance(m, QSortFilterProxyModel):
+                dispName_sourceIndex = sm.index(item.row(), dispName_col,
+                                                item.parent().index())
+                modelIndex = m.mapFromSource(dispName_sourceIndex)
+                dispName_item = sm.itemFromIndex(dispName_sourceIndex)
+                if not dispName_item.isEditable():
+                    return
+            else:
+                modelIndex = m.index(item.row(), dispName_col,
+                                     item.parent().index())
+                dispName_item = m.itemFromIndex(modelIndex)
+                if not dispName_item.isEditable():
+                    return
+
         super(QTreeView,self).edit(modelIndex)
 
     #----------------------------------------------------------------------
     def edit(self, modelIndex, trigger, event):
         """"""
+
+        m = self.model()
+        if isinstance(m, QSortFilterProxyModel):
+            sm = m.sourceModel()
+            item = sm.itemFromIndex(m.mapToSource(modelIndex))
+        else:
+            item = m.itemFromIndex(modelIndex)
+
+        dispName_col = 0
+        if item is None: # No selection
+            pass
+        elif (item.column() == dispName_col) and item.isEditable():
+            pass
+        else:
+            trigger = QAbstractItemView.NoEditTriggers # diable editing
 
         if trigger == QAbstractItemView.AllEditTriggers:
             self.modelIndexBeingRenamed = modelIndex
@@ -1604,17 +1659,63 @@ class CustomListView(QListView):
     def editSlot(self, modelIndex):
         """"""
 
+        m = self.model()
+        if isinstance(m, QSortFilterProxyModel):
+            sm = m.sourceModel()
+            item = sm.itemFromIndex(m.mapToSource(modelIndex))
+        else:
+            item = m.itemFromIndex(modelIndex)
+
+        # This check here should not be needed, but it is necessary for now
+        # to have this code work properly
+        if item.path.startswith(USER_MODIFIABLE_ROOT_PATH+SEPARATOR):
+            item.setEditable(True)
+        else:
+            item.setEditable(False)
+
+        dispName_col = 0
+        if (item.column() == dispName_col) and item.isEditable():
+                pass
+        else:
+            if isinstance(m, QSortFilterProxyModel):
+                dispName_sourceIndex = sm.index(item.row(), dispName_col,
+                                                item.parent().index())
+                modelIndex = m.mapFromSource(dispName_sourceIndex)
+                dispName_item = sm.itemFromIndex(dispName_sourceIndex)
+                if not dispName_item.isEditable():
+                    return
+            else:
+                modelIndex = m.index(item.row(), dispName_col,
+                                     item.parent().index())
+                dispName_item = m.itemFromIndex(modelIndex)
+                if not dispName_item.isEditable():
+                    return
+
         super(QListView,self).edit(modelIndex)
 
     #----------------------------------------------------------------------
     def edit(self, modelIndex, trigger, event):
         """"""
 
+        m = self.model()
+        if isinstance(m, QSortFilterProxyModel):
+            sm = m.sourceModel()
+            item = sm.itemFromIndex(m.mapToSource(modelIndex))
+        else:
+            item = m.itemFromIndex(modelIndex)
+
+        dispName_col = 0
+        if item is None: # No selection
+            pass
+        elif (item.column() == dispName_col) and item.isEditable():
+            pass
+        else:
+            trigger = QAbstractItemView.NoEditTriggers # diable editing
+
         if trigger == QAbstractItemView.AllEditTriggers:
             self.modelIndexBeingRenamed = modelIndex
 
         return super(QListView,self).edit(modelIndex, trigger, event)
-
 
 
 ########################################################################
@@ -2869,7 +2970,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             elif self.sender() == self.actionCreateNewInfo:
                 selectedItem.itemType = 'info'
             createNewItem = True
-            selectedItem.setFlags(selectedItem.flags() | Qt.ItemIsEditable)
 
         elif self.sender() in (self.actionProperties,
                                self): # When info item is double clicked
