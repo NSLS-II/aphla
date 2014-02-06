@@ -1,6 +1,17 @@
 #! /usr/bin/env python
 '''
 TODO
+*) Select all channels by default after apchx search finishes in config setup
+*) Double-click an array item, then open an array dialog with list of array
+   elements (together with its plot on the side, if the array is a number list,
+   not a string list)
+*) Open dialog to select which columns to save when saving config/snapshot file.
+*) Weight & Step Size should be NaN for all the channels that do not have
+   pvsp.
+*) allow customize significant digits for display and saving in text format
+*) being able to set the wait time (< 1 sec) between the time SP sent from PC
+and the time caget() sent to all relevant PV's for updating.
+
 *) Open dialog at start-up to allow user either create a new config
 or open existing configs
 *) Use Qt Undo Framework for non-EPICS commands
@@ -30,6 +41,7 @@ import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
+
 import sys, os
 from subprocess import Popen, PIPE
 from time import time, strftime, localtime
@@ -39,14 +51,14 @@ import types
 import numpy as np
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import (QObject, QSize, SIGNAL, Qt, QEvent, QRect)
-from PyQt4.QtGui import (QApplication, QMainWindow, QStandardItemModel,
-     QStandardItem, QDockWidget, QWidget, QGridLayout, QSplitter,
-     QTreeView, QTableView, QTabWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-     QSpacerItem, QSizePolicy, QCheckBox, QLineEdit, QLabel, QTextEdit,
-     QAction, QSortFilterProxyModel, QAbstractItemView, QMenu,
-     QComboBox, QStackedWidget, QActionGroup, QIcon, QKeySequence, QCursor,
-     QToolButton, QStyle)
+from PyQt4.QtCore import (QObject, QSize, SIGNAL, Qt, QEvent, QRect, QSettings)
+from PyQt4.QtGui import (
+    QApplication, QMainWindow, QStandardItemModel, QStandardItem, QDockWidget,
+    QWidget, QGridLayout, QSplitter, QTreeView, QTableView, QTabWidget,
+    QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QSizePolicy, QCheckBox,
+    QLineEdit, QLabel, QTextEdit, QAction, QSortFilterProxyModel,
+    QAbstractItemView, QMenu, QComboBox, QStackedWidget, QActionGroup, QIcon,
+    QKeySequence, QCursor, QToolButton, QStyle)
 
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
 
@@ -55,15 +67,14 @@ from Qt4Designer_files.ui_lattice_tuner_for_reference import Ui_MainWindow
 import aphla.gui.utils.gui_icons
 import TunerUtils.config as const
 from TunerUtils import tunerConfigSetupDialog as TunerConfigSetupDialog
-from TunerUtils.tunerModels import (TreeItem, TreeModel,
-                                    TunerConfigSetupBaseModel, TunerConfigSetupTableModel,
-                                    TunerConfigSetupTreeModel,
-                                    TunerSnapshotBaseModel, TunerSnapshotTableModel,
-                                    TunerSnapshotTreeModel)
+from TunerUtils.tunerModels import (
+    TreeItem, TreeModel, TunerConfigSetupBaseModel, TunerConfigSetupTableModel,
+    TunerConfigSetupTreeModel, TunerSnapshotBaseModel, TunerSnapshotTableModel,
+    TunerSnapshotTreeModel)
 
 import aphla as ap
 if ap.machines._lat is None:
-    ap.machines.init('nsls2v2',use_cache=True)
+    ap.machines.load('nsls2', use_cache=False)
 
 #----------------------------------------------------------------------
 def datestr(time_in_seconds_from_Epoch):
@@ -252,9 +263,10 @@ class TunerSnapshotModel(QObject):
         self.settings = settings
 
         self.base_model = TunerSnapshotBaseModel(config_base_model)
-        self.table_model = TunerSnapshotTableModel(base_model=self.base_model)
+        self.table_model = TunerSnapshotTableModel(
+            base_model=self.base_model)
         self.tree_model = TunerSnapshotTreeModel(
-                    self.base_model.all_col_name_list, base_model=self.base_model)
+            self.base_model.all_col_name_list, base_model=self.base_model)
 
         # Metadata
         self.time_snapshot_taken = time() # current time in seconds from Epoch
@@ -324,6 +336,9 @@ class TitleRenameLineEdit(QLineEdit):
 
         self.hide()
 
+        self.emit(SIGNAL('dockTitleChangeFinalized'))
+
+
 ########################################################################
 class TitleLabel(QLabel):
     """"""
@@ -335,6 +350,14 @@ class TitleLabel(QLabel):
         QLabel.__init__(self, *args)
 
         self._editor = TitleRenameLineEdit(self.parent())
+        self.connect(self._editor, SIGNAL('dockTitleChangeFinalized'),
+                     self.emitTitleChangedSignal)
+
+    #----------------------------------------------------------------------
+    def emitTitleChangedSignal(self):
+        """"""
+
+        self.emit(SIGNAL('dockTitleChanged'))
 
     #----------------------------------------------------------------------
     def mouseDoubleClickEvent(self, event):
@@ -350,8 +373,6 @@ class TitleLabel(QLabel):
 
         self._editor.setText(self.text())
 
-
-
 ########################################################################
 class CustomDockWidgetTitleBar(QWidget):
     """"""
@@ -365,7 +386,9 @@ class CustomDockWidgetTitleBar(QWidget):
         self.dockWidget = parentDockWidget
 
         self.title = TitleLabel(self)
-        self.title.setText('testing')
+        self.title.setText('untitled')
+        self.connect(self.title, SIGNAL('dockTitleChanged'),
+                     self._emitTitleChangeSignal)
 
         min_button_height = 10
 
@@ -448,6 +471,11 @@ class CustomDockWidgetTitleBar(QWidget):
         """"""
 
         self.title.edit()
+
+    #----------------------------------------------------------------------
+    def _emitTitleChangeSignal(self):
+        """"""
+        self.emit(SIGNAL('customDockTitleChanged'))
 
     #----------------------------------------------------------------------
     def updateButtons(self, floating=None):
@@ -551,25 +579,51 @@ class TunerDockWidget(QDockWidget):
         self.model = model
         isinstance(model,TunerSnapshotModel)
 
-        #self.proxyModel = QSortFilterProxyModel()
-        #self.proxyModel.setSourceModel(self.model)
-        #self.proxyModel.setDynamicSortFilter(True)
-        #self.proxyModel.setSortRole(self.model.SortRole)
+        self._settings = QSettings('HLA', 'Tinker')
+
+        self.loadViewSizeSettings()
+        self.loadMiscSettings()
+
+        # Set up table view
+        tbV = self.tableView
+        proxyModel = QSortFilterProxyModel()
+        proxyModel.setSourceModel(self.model.table_model)
+        proxyModel.setDynamicSortFilter(False)
+        tbV.setModel(proxyModel)
+        tbV.setCornerButtonEnabled(True)
+        tbV.setShowGrid(True)
+        tbV.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        tbV.setSelectionBehavior(QAbstractItemView.SelectItems)
+        tbV.setAlternatingRowColors(True)
+        tbV.setSortingEnabled(False)
+        horizHeader = tbV.horizontalHeader()
+        horizHeader.setSortIndicatorShown(False)
+        horizHeader.setStretchLastSection(False)
+        horizHeader.setMovable(False)
+
+        # Set up tree view
+        trV = self.treeView
         proxyModel = QSortFilterProxyModel()
         proxyModel.setSourceModel(self.model.tree_model)
         proxyModel.setDynamicSortFilter(False)
-
-        #self.treeView.setModel(self.proxyModel)
-        self.treeView.setModel(proxyModel)
-        self.treeView.setItemsExpandable(True)
-        self.treeView.setRootIsDecorated(True)
-        self.treeView.setAllColumnsShowFocus(True)
-        self.treeView.setHeaderHidden(False)
-        self.treeView.setSortingEnabled(True)
-
+        trV.setModel(proxyModel)
+        trV.setItemsExpandable(True)
+        trV.setRootIsDecorated(True)
+        trV.setAllColumnsShowFocus(True)
+        trV.setHeaderHidden(False)
+        trV.setSortingEnabled(True)
+        trV.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        horizHeader = trV.header()
+        horizHeader.setSortIndicatorShown(True)
+        horizHeader.setStretchLastSection(True)
+        horizHeader.setMovable(False)
         self._expandAll_and_resizeColumn()
 
-        self.treeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        desired_visible_col_full_name_list = [
+            const.PROP_DICT[k][const.ENUM_FULL_DESCRIP_NAME]
+            for k in self.visible_col_key_list]
+        self.on_column_selection_change(desired_visible_col_full_name_list,
+                                        force_visibility_update=True)
 
         self.connect(self.pushButton_step_up,SIGNAL('toggled(bool)'),
                      self.onStepUpPushed)
@@ -659,7 +713,102 @@ class TunerDockWidget(QDockWidget):
 
         self.customTitleBar = CustomDockWidgetTitleBar(self)
         self.setTitleBarWidget(self.customTitleBar)
+        self.connect(self.customTitleBar, SIGNAL('customDockTitleChanged'),
+                     self._updateWindowTitle)
 
+    #----------------------------------------------------------------------
+    def loadViewSizeSettings(self):
+
+        self._settings.beginGroup('viewSize')
+
+        self._position = self._settings.value('position')
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveViewSizeSettings(self):
+
+        self._settings.beginGroup('viewSize')
+
+        self._settings.setValue('position', self._position)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def loadMiscSettings(self):
+
+        self._settings.beginGroup('misc')
+
+        self.visible_col_key_list = \
+            self._settings.value('visible_col_key_list')
+        if self.visible_col_key_list is None:
+            self.visible_col_key_list = \
+                const.DEFAULT_VISIBLE_COL_KEYS_FOR_SNAPSHOT_VIEW
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveMiscSettings(self):
+
+        self._settings.beginGroup('misc')
+
+        self._settings.setValue('visible_col_key_list',
+                                self.visible_col_key_list)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def on_column_selection_change(self, new_visible_col_full_name_list,
+                                   force_visibility_update=False):
+        """"""
+
+        current_visible_col_full_name_list = [
+            const.PROP_DICT[col_key][const.ENUM_FULL_DESCRIP_NAME]
+            for col_key in self.visible_col_key_list]
+
+        if (not force_visibility_update) and \
+           (new_visible_col_full_name_list ==
+            current_visible_col_full_name_list):
+            return
+
+        self.visible_col_key_list = [
+            const.ALL_PROP_KEYS[const.FULL_DESCRIP_NAME_LIST.index(name)]
+            for name in new_visible_col_full_name_list]
+
+        visible_column_order = self.get_visible_column_order()
+
+        for horizHeader in [self.treeView.header(),
+                            self.tableView.horizontalHeader()]:
+            for (i,col_logical_ind) in enumerate(visible_column_order):
+                new_visual_index = i
+                current_visual_index = horizHeader.visualIndex(col_logical_ind)
+                horizHeader.moveSection(current_visual_index,
+                                        new_visual_index)
+            for i in range(len(const.ALL_PROP_KEYS)):
+                if i not in visible_column_order:
+                    horizHeader.hideSection(i)
+                else:
+                    horizHeader.showSection(i)
+
+    #----------------------------------------------------------------------
+    def _updateWindowTitle(self):
+        """
+        As the built-in window title does not get automatically changed,
+        when the custom window title is changed, this update is being
+        performed in this function.
+        """
+
+        # This title appears at the top of the dock either when docked,
+        # tabified, or floated. And this is editable.
+        dock_title = self.customTitleBar.title.text()
+
+        # This tile appears at the bottom of the dock tab only when more than
+        # one docks are tabified. And this is not editable.
+        self.setWindowTitle(dock_title)
+
+        self.update()
+
+        print 'Updating window title'
 
     #----------------------------------------------------------------------
     def onViewModeActionGroupTriggered(self, action):
@@ -698,7 +847,17 @@ class TunerDockWidget(QDockWidget):
     def closeEvent(self, event):
         """"""
 
+        self.saveViewSizeSettings()
+        self.saveMiscSettings()
+
         event.accept()
+
+    #----------------------------------------------------------------------
+    def get_visible_column_order(self):
+        """"""
+
+        return [self.model.base_model.all_col_key_list.index(key)
+                for key in self.visible_col_key_list]
 
     #----------------------------------------------------------------------
     def _initUI(self, parent):
@@ -1034,7 +1193,13 @@ class TunerView(QMainWindow, Ui_MainWindow):
         else:
             dock_title = base_model.getName('config')
         if dock_title == '': dock_title = 'untitled'
+
+        # This tile appears at the bottom of the dock tab only when more than
+        # one docks are tabified. And this is not editable.
         dockWidget.setWindowTitle(dock_title)
+        # This title appears at the top of the dock either when docked,
+        # tabified, or floated. And this is editable.
+        dockWidget.customTitleBar.title.setText(dock_title)
 
         dockWidget.setFloating(False) # Dock the new dockwidget by default
         if len(self.configDockWidgetList) >= 2:
@@ -1044,6 +1209,7 @@ class TunerView(QMainWindow, Ui_MainWindow):
         #dockWidget.raise_()
 
         dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_table)
+        #dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_tree)
 
         self.updateMetadataTab(dockWidget, base_model, page='config')
         if base_model.isSnapshot():
@@ -1092,10 +1258,12 @@ class TunerApp(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, use_cached_lattice=False):
         """Constructor"""
 
         QObject.__init__(self)
+
+        self.use_cached_lattice = use_cached_lattice
 
         self._initModel()
         self._initView(self.model)
@@ -1126,7 +1294,9 @@ class TunerApp(QObject):
     def openNewConfigSetupDialog(self, garbage):
         """"""
 
-        result = TunerConfigSetupDialog.make(isModal=True,parentWindow=self.view)
+        result = TunerConfigSetupDialog.make(
+            isModal=True, parentWindow=self.view,
+            use_cached_lattice=self.use_cached_lattice)
 
         config_base_model = result.model.output
 
@@ -1134,10 +1304,10 @@ class TunerApp(QObject):
 
 
 #----------------------------------------------------------------------
-def make():
+def make(use_cached_lattice=False):
     """"""
 
-    app = TunerApp()
+    app = TunerApp(use_cached_lattice=use_cached_lattice)
     app.view.show()
 
     return app
@@ -1158,8 +1328,16 @@ def isCothreadUsed():
     return using_cothread
 
 #----------------------------------------------------------------------
-def main(args):
+def main(args=None):
     """"""
+
+    if (args is None) or (len(args) == 1):
+        use_cached_lattice = False
+    elif len(args) == 2:
+        if args[1].lower() == 'true':
+            use_cached_lattice = True
+        else:
+            use_cached_lattice = False
 
     using_cothread = isCothreadUsed()
 
@@ -1176,7 +1354,7 @@ def main(args):
         qapp = QApplication(args)
 
 
-    app = make()
+    app = make(use_cached_lattice=use_cached_lattice)
 
     if using_cothread:
         cothread.WaitForQuit()

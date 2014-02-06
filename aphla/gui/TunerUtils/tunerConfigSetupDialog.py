@@ -18,20 +18,16 @@ import numpy as np
 from datetime import datetime
 from time import time, strftime, localtime
 import h5py
+import json
 import traceback
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import (SIGNAL, QObject, QSettings)
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import (qApp, QApplication, QDialog, QStandardItem,
-     QStandardItemModel, QSortFilterProxyModel, QAbstractItemView,
-     QAction, QIcon, QMenu, QInputDialog, QKeySequence, QItemSelection,
-     QItemSelectionModel, QItemSelectionRange, QTableView, QFileDialog,
-     QMessageBox)
-
-import aphla as ap
-if ap.machines._lat is None:
-    ap.machines.init('nsls2v2',use_cache=True)
+from PyQt4.QtCore import (Qt, SIGNAL, QObject, QSettings, QRect)
+from PyQt4.QtGui import (
+    qApp, QApplication, QDialog, QStandardItem, QStandardItemModel,
+    QSortFilterProxyModel, QAbstractItemView, QAction, QIcon, QMenu,
+    QInputDialog, QKeySequence, QItemSelection, QItemSelectionModel,
+    QItemSelectionRange, QTableView, QFileDialog, QMessageBox)
 
 from tunerModels import (TreeItem, TreeModel, TunerConfigSetupBaseModel,
                          TunerConfigSetupTableModel, TunerConfigSetupTreeModel)
@@ -45,6 +41,10 @@ from tunerdb import (TunerHDF5Manager, TunerTextFileManager,
                      TunerDeltaDatabase, TunerMainDatabase)
 from aphla.gui.utils.tictoc import tic, toc
 
+FILE_FILTER_DICT = {'Text File': 'Text files (*.txt)',
+                    'HDF5 File': 'HDF5 files (*.h5 *.hdf5)',
+                    'JSON File': 'JSON files (*.json)',
+                    }
 
 ########################################################################
 class TunerConfigSetupModel(QObject):
@@ -122,6 +122,38 @@ class TunerConfigSetupModel(QObject):
         return data
 
     #----------------------------------------------------------------------
+    def saveConfigToJSON(self, save_filepath, opt_col_name_lists_to_save=None):
+        """"""
+
+        b = self.base_model
+
+        group_id_list = ['']*len(b.k_channel_name)
+        for group_id, (group_name, grouped_ch_index_list) in \
+            enumerate(zip(b.group_name_list, b.grouped_ind_list)):
+            for ch_index in grouped_ch_index_list:
+                group_id_list[ch_index] = group_id
+
+        record = {}
+        # Required to save
+        record['ip_str'], record['mac_str'], record['username'] = b.userinfo
+        record['config_name']           = b.config_name
+        record['time_created']          = b.time_created
+        record['description']           = b.description
+        record['appended_descriptions'] = b.appended_descriptions
+        record['ref_step_size']         = b.ref_step_size
+        record['channel_name_list']     = b.k_channel_name
+        record['group_name_list']       = b.group_name_list
+        record['group_id_list']         = group_id_list
+        record['weight_list']           = b.k_weight
+        record['unitsys_list']          = b.k_unitsys
+        record['unit_list']             = b.k_unit
+        # Optional
+        #record['unicon_list']           = b.k_unicon
+
+        with open(save_filepath, 'w') as f:
+            json.dump(record, f, indent=3)
+
+    #----------------------------------------------------------------------
     def saveConfigToHDF5(self, save_filepath):
         """"""
 
@@ -176,25 +208,33 @@ class TunerConfigSetupModel(QObject):
 
 
     #----------------------------------------------------------------------
-    def importNewChannelsFromSelector(self, selected_channels, channelGroupInfo):
+    def importNewChannelsFromSelector(self, selection_dict, channelGroupInfo):
         """"""
 
-        elemName_list = [elem.name for (elem,fieldName) in selected_channels]
+        machine           = selection_dict['machine']
+        lattice           = selection_dict['lattice']
+        elem_obj_field_list = selection_dict['selection']
+
         channelName_list = [elem.name+'.'+fieldName
-                            for (elem,fieldName) in selected_channels]
+                            for (elem,fieldName) in elem_obj_field_list]
+        fullChName_list = ['.'.join([machine, lattice, elem.name, fieldName])
+                           for (elem, fieldName) in elem_obj_field_list]
 
         if channelGroupInfo == {}:
             channelGroupName_list = channelName_list[:]
             weight_list = [float('nan') for c in channelName_list]
         else:
-            channelGroupName_list = [channelGroupInfo['name'] for c in channelName_list]
-            weight_list = [channelGroupInfo['weight'] for c in channelName_list]
+            channelGroupName_list = [channelGroupInfo['name']
+                                     for c in channelName_list]
+            weight_list = [channelGroupInfo['weight']
+                           for c in channelName_list]
         step_size_list = weight_list[:]
 
-        new_lists_dict = {'group_name': channelGroupName_list,
+        new_lists_dict = {'group_name'  : channelGroupName_list,
                           'channel_name': channelName_list,
-                          'weight': weight_list,
-                          'step_size': step_size_list}
+                          'full_ch_name': fullChName_list,
+                          'weight'      : weight_list,
+                          'step_size'   : step_size_list}
 
         self.updateModels(new_lists_dict)
 
@@ -213,11 +253,45 @@ class TunerConfigSetupModel(QObject):
         self.updateModels(new_lists_dict)
 
     #----------------------------------------------------------------------
-    def updateModels(self, new_lists_dict):
+    def importNewChannelsFromJSONFile(self, json_dict):
+        """"""
+
+        step_size_list = [json_dict['ref_step_size']*w
+                          for w in json_dict['weight_list']]
+        group_name_list = [json_dict['group_name_list'][i]
+                           for i in json_dict['group_id_list']]
+
+        new_dict = {
+            'config_name': json_dict['config_name'],
+            'description': json_dict['description'],
+            # The rest are lists
+            'group_name': group_name_list,
+            'channel_name': json_dict['channel_name_list'],
+            'weight': json_dict['weight_list'],
+            'step_size': step_size_list,
+            'unitsymb': json_dict['unit_list'],
+            'unitsys': json_dict['unitsys_list'],
+        }
+
+        self.updateModels(new_dict)
+
+    #----------------------------------------------------------------------
+    def updateModels(self, new_dict):
         """"""
 
         tStart = tic()
-        self.base_model.appendChannels(new_lists_dict)
+
+        if new_dict.has_key('config_name'):
+            if self.base_model.config_name == '':
+                self.base_model.config_name = new_dict['config_name']
+            del new_dict['config_name']
+
+        if new_dict.has_key('description'):
+            if self.base_model.description == '':
+                self.base_model.description = new_dict['description']
+            del new_dict['description']
+
+        self.base_model.appendChannels(new_dict)
         print 'before reset', toc(tStart)
         self.table_model.resetModel()
         self.tree_model.resetModel()
@@ -662,10 +736,12 @@ class TunerConfigSetupApp(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, isModal, parentWindow):
+    def __init__(self, isModal, parentWindow, use_cached_lattice=False):
         """Constructor"""
 
         QObject.__init__(self)
+
+        self.use_cached_lattice = use_cached_lattice
 
         self.settings = TunerConfigSetupAppSettings()
 
@@ -682,7 +758,6 @@ class TunerConfigSetupApp(QObject):
         self.connect(self.view.comboBox_view,
                      SIGNAL('currentIndexChanged(int)'),
                      self.view.on_view_base_change)
-
 
     #----------------------------------------------------------------------
     def _initModel(self):
@@ -707,13 +782,11 @@ class TunerConfigSetupApp(QObject):
             self._launchChannelExplorer()
         elif import_type == 'Database':
             raise NotImplementedError(import_type)
-        elif import_type == 'Text File':
-
-            caption = 'Load Tuner Configuration Data from Text File'
-            text_files_filter_str = 'Text files (*.txt)'
+        else:
             all_files_filter_str = 'All files (*)'
-            filter_str = ';;'.join([text_files_filter_str, all_files_filter_str])
-            #selected_filter_str = text_files_filter_str
+            caption = 'Load Tuner Configuration from {0:s}'.format(import_type)
+            filter_str = ';;'.join([FILE_FILTER_DICT[import_type],
+                                    all_files_filter_str])
             filepath = QFileDialog.getOpenFileName(
                 caption=caption, directory=self.starting_directory_path,
                 filter=filter_str)
@@ -723,83 +796,79 @@ class TunerConfigSetupApp(QObject):
 
             self.starting_directory_path = os.path.dirname(filepath)
 
-            m = TunerTextFileManager(load=True, filepath=filepath)
-            m.exec_()
-            if m.selection is not None:
-                data = m.loadConfigTextFile()
-            else:
-                return
+            if import_type == 'Text File':
 
-            if data is not None:
-                self.model.importNewChannelsFromTextFile(data)
-            else:
-                return
+                m = TunerTextFileManager(load=True, filepath=filepath)
+                m.exec_()
+                if m.selection is not None:
+                    data = m.loadConfigTextFile()
+                else:
+                    return
 
-        elif import_type == 'HDF5 File':
-            raise NotImplementedError(import_type)
-        else:
-            raise ValueError('Unexpected import_type selected: '+str(import_type))
+                if data is not None:
+                    self.model.importNewChannelsFromTextFile(data)
+                else:
+                    return
+
+            elif import_type == 'HDF5 File':
+                raise NotImplementedError(import_type)
+
+            elif import_type == 'JSON File':
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+
+                if data is not None:
+                    self.model.importNewChannelsFromJSONFile(data)
+                else:
+                    return
 
     #----------------------------------------------------------------------
     def _exportConfigData(self):
         """"""
 
+        # Update base model
+        b = self.model.base_model
+        b.time_created = time() # current time in seconds from Epoch
+        b.config_name = self.view.lineEdit_config_name.text()
+        b.description = self.view.textEdit.toPlainText()
+
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
 
-        import_type = self.view.comboBox_export.currentText()
+        export_type = self.view.comboBox_export.currentText()
 
-        if import_type == 'Database':
-
+        if export_type == 'Database':
             self.model.saveConfigToDB()
             msgBox.setText('Config successfully saved to database.')
-
-        elif import_type == 'Text File':
-
-            caption = 'Save Tuner Configuration Data to Text File'
-            text_files_filter_str = 'Text files (*.txt)'
-            all_files_filter_str = 'All files (*)'
-            filter_str = ';;'.join([text_files_filter_str, all_files_filter_str])
-            #selected_filter_str = text_files_filter_str
-            save_filepath = QFileDialog.getSaveFileName(
-                caption=caption, directory=self.starting_directory_path,
-                filter=filter_str)
-            if not save_filepath:
-                return
-
-            self.starting_directory_path = os.path.dirname(save_filepath)
-
-            m = TunerTextFileManager(load=False, filepath=save_filepath)
-            m.exec_()
-
-            data = self.model.getConfigDataForTextFile(m.selection)
-
-            m.saveConfigTextFile(data)
-
-            msgBox.setText('Config successfully saved to Text file.')
-
-        elif import_type == 'HDF5 File':
-
-            caption = 'Save Tuner Configuration Data to HDF5 File'
-            text_files_filter_str = 'HDF5 files (*.h5 *.hdf5)'
-            all_files_filter_str = 'All files (*)'
-            filter_str = ';;'.join([text_files_filter_str, all_files_filter_str])
-            #selected_filter_str = text_files_filter_str
-            save_filepath = QFileDialog.getSaveFileName(
-                caption=caption, directory=self.starting_directory_path,
-                filter=filter_str)
-            if not save_filepath:
-                return
-
-            self.starting_directory_path = os.path.dirname(save_filepath)
-
-            self.model.saveConfigToHDF5(save_filepath)
-            msgBox.setText('Config successfully saved to HDF5 file.')
         else:
-            raise ValueError('Unexpected import_type selected: '+str(import_type))
+            all_files_filter_str = 'All files (*)'
+            caption = 'Save Tuner Configuration to {0:s}'.format(export_type)
+            filter_str = ';;'.join([FILE_FILTER_DICT[export_type],
+                                    all_files_filter_str])
+            save_filepath = QFileDialog.getSaveFileName(
+                caption=caption, directory=self.starting_directory_path,
+                filter=filter_str)
+            if not save_filepath:
+                return
+
+            self.starting_directory_path = os.path.dirname(save_filepath)
+
+            if export_type == 'Text File':
+                m = TunerTextFileManager(load=False, filepath=save_filepath)
+                m.exec_()
+
+                data = self.model.getConfigDataForTextFile(m.selection)
+
+                m.saveConfigTextFile(data)
+            elif export_type == 'JSON File':
+                self.model.saveConfigToJSON(save_filepath)
+            elif export_type == 'HDF5 File':
+                self.model.saveConfigToHDF5(save_filepath)
+
+            msgBox.setText('Config successfully saved to {0:s}: {1:s}.'.
+                           format(export_type, save_filepath))
 
         msgBox.exec_()
-
 
     #----------------------------------------------------------------------
     def _launchChannelExplorer(self):
@@ -808,13 +877,15 @@ class TunerConfigSetupApp(QObject):
         result = channelexplorer.make(modal=True, init_object_type='channel',
                                       can_modify_object_type=False,
                                       output_type=channelexplorer.TYPE_OBJECT,
-                                      caller='aplattuner', debug=False)
+                                      caller='aplattuner',
+                                      use_cached_lattice=self.use_cached_lattice,
+                                      debug=False)
 
         selected_channels = result['dialog_result']
 
         tStart = tic()
 
-        if selected_channels != []:
+        if selected_channels != {}:
             selected_channels, channelGroupInfo = \
                 self._askChannelGroupNameAndWeight(selected_channels)
             self.model.importNewChannelsFromSelector(selected_channels,
@@ -855,10 +926,11 @@ class TunerConfigSetupApp(QObject):
         return selected_channels, channelGroupInfo
 
 #----------------------------------------------------------------------
-def make(isModal=True, parentWindow=None):
+def make(isModal=True, parentWindow=None, use_cached_lattice=False):
     """"""
 
-    app = TunerConfigSetupApp(isModal, parentWindow)
+    app = TunerConfigSetupApp(isModal, parentWindow,
+                              use_cached_lattice=use_cached_lattice)
 
     if isModal:
         app.view.exec_()

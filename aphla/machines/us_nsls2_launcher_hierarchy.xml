@@ -3,56 +3,55 @@
     <!ENTITY appClock "
         <item>
             <dispName>Clock</dispName>
-            <itemType>app</itemType>
-            <linkedFile>xclock</linkedFile>
-            <useImport>False</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <desc></desc>
+            <icon>gui_app</icon>
+            <itemType>exe</itemType>
+            <command>xclock</command>
+            <cwd></cwd>
+            <sourceFilepath></sourceFilepath>
+            <editor></editor>
+            <helpHeader></helpHeader>
         </item>
     ">
 
     <!ENTITY appOrbit "
         <item>
             <dispName>Orbit</dispName>
-            <itemType>app</itemType>
-            <linkedFile>aporbit</linkedFile>
-            <useImport>False</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <desc></desc>
+            <icon>gui_app</icon>
+            <itemType>exe</itemType>
+            <command>aporbit</command>
+            <cwd></cwd>
+            <sourceFilepath></sourceFilepath>
+            <editor></editor>
+            <helpHeader></helpHeader>
         </item>
     ">
 
     <!ENTITY appBBA "
         <item>
             <dispName>Beam Based Alignment</dispName>
-            <itemType>app</itemType>
-            <linkedFile>apbba</linkedFile>
-            <useImport>False</useImport>
-            <singleton>False</singleton>
-            <args></args>
+            <desc></desc>
+            <icon>gui_app</icon>
+            <itemType>exe</itemType>
+            <command>apbba</command>
+            <cwd></cwd>
+            <sourceFilepath></sourceFilepath>
+            <editor></editor>
+            <helpHeader></helpHeader>
         </item>
     ">
-    
-    <!ENTITY appCurrentMonitor "
-        <item>
-            <dispName>Current Monitor</dispName>      
-            <itemType>app</itemType>
-            <linkedFile>apcurrentmonitor</linkedFile>
-            <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args></args>
-        </item>
-    ">
-    
 
-    <!ENTITY appLatticeTuner "
+    <!ENTITY appTinker "
         <item>
-            <dispName>Lattice Tuner</dispName>
-            <itemType>app</itemType>
-            <linkedFile>aplattuner</linkedFile>
-            <useImport>True</useImport>
-            <singleton>False</singleton>
+            <dispName>Tinker (PreTune)</dispName>
+            <desc></desc>
+            <icon>py</icon>
+            <itemType>py</itemType>
+            <moduleName>aplattuner</moduleName>
             <args></args>
+            <cwd></cwd>
+            <editor></editor>
         </item>
     ">
 
@@ -60,58 +59,57 @@
     <!ENTITY appLauncher "
         <item>
             <dispName>Launcher</dispName>
-            <itemType>app</itemType>
-            <linkedFile>aplauncher</linkedFile>
-            <useImport>True</useImport>
-            <singleton>False</singleton>
-            <args>/root</args>
-        </item>
-    ">
-
-    <!ENTITY appPlotter "
-        <item>
-            <dispName>Plotter</dispName>
-            <itemType>app</itemType>
-            <linkedFile>applotter</linkedFile>
-            <useImport>True</useImport>
-            <singleton>False</singleton>
+            <desc></desc>
+            <icon>py</icon>
+            <itemType>py</itemType>
+            <moduleName>aplauncher</moduleName>
             <args></args>
+            <cwd></cwd>
+            <editor></editor>
         </item>
     ">
 
 ]>
 <hierarchy>
-    
+
     <item>
         <dispName>root</dispName>
+        <desc></desc>
+        <icon>page</icon>
         <itemType>page</itemType>
-        
+
         <item>
             <dispName>Commissioning</dispName>
+            <desc></desc>
+            <icon>page</icon>
             <itemType>page</itemType>
         </item>  <!-- Commissioning -->
 
         <item>
             <dispName>Operation</dispName>
+            <desc></desc>
+            <icon>page</icon>
             <itemType>page</itemType>
         </item>  <!-- Operation -->
-        
+
         <item>
             <dispName>Studies</dispName>
+            <desc></desc>
+            <icon>page</icon>
             <itemType>page</itemType>
         </item>  <!-- Studies -->
 
         <item>
             <dispName>Test</dispName>
+            <desc></desc>
+            <icon>page</icon>
             <itemType>page</itemType>
             &appClock;
             &appOrbit;
             &appBBA;
-            &appCurrentMonitor; 
-            &appLatticeTuner;
+            &appTinker;
             &appLauncher;
-            &appPlotter;
         </item> <!-- Test -->
-        
+
     </item>  <!-- root -->
 </hierarchy>

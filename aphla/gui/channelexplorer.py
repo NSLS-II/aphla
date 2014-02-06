@@ -30,6 +30,7 @@ sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
 import sys
+from copy import deepcopy
 from fnmatch import fnmatchcase
 from operator import and_, not_, add
 import numpy as np
@@ -56,7 +57,7 @@ from PyQt4.QtGui import (qApp, QDialog, QStandardItemModel, QStandardItem,
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 from Qt4Designer_files.ui_channel_explorer_startup_set_dialog \
      import Ui_Dialog as Ui_Dialog_startup_settings
-from aphla.gui.utils.orderselector import OrderSelector
+from aphla.gui.utils.orderselector import OrderSelector, ColumnsDialog
 from aphla.gui.utils.formattext import whitespace_delimited_lines, tab_delimited_unformatted_lines
 
 from aphla.gui.utils.tictoc import tic, toc
@@ -72,22 +73,26 @@ ENUM_ELEM_FULL_DESCRIP_NAME = 0
 ENUM_ELEM_SHORT_DESCRIP_NAME = 1 # used for column headers
 ENUM_ELEM_DATA_TYPE = 2
 ELEM_PROPERTIES ={
-    'name': ['Name','Name','string'],
-    'devname': ['Device Name','Dev.Name','string'],
-    'cell': ['Cell','Cell','string'],
-    'family': ['Family','Family','string'],
-    'girder': ['Girder','Girder','string'],
-    'group': ['Group','Group','string_list'],
-    'index': ['Lattice Index','Lat.Ind.','int'],
-    'length': ['Effective Length','Eff.Len.','float'],
-    'phylen': ['Physical Length','Phys.Len.','float'],
-    'pv': ['PV(s)','PV(s)','string_list'], # callable
-    'sb': ['s(beginning)','sb','float'],
-    'se': ['s(end)','se','float'],
+    'name'    : ['Name','Name','string'],
+    'devname' : ['Device Name','Dev.Name','string'],
+    'cell'    : ['Cell','Cell','string'],
+    'family'  : ['Family','Family','string'],
+    'girder'  : ['Girder','Girder','string'],
+    'group'   : ['Group','Group','string_list'],
+    'index'   : ['Lattice Index','Lat.Ind.','int'],
+    'length'  : ['Effective Length','Eff.Len.','float'],
+    'phylen'  : ['Physical Length','Phys.Len.','float'],
+    'pv'      : ['PV(s)','PV(s)','string_list'], # callable
+    'sb'      : ['s(beginning)','sb','float'],
+    'se'      : ['s(end)','se','float'],
     'symmetry': ['Symmetry','Symmetry','string'],
-    'virtual': ['Virtual','Virtual','bool'],
+    'virtual' : ['Virtual','Virtual','bool'],
     'sequence': ['Sequence','Sequence','int_list'],
-    'fields':['Fields','Fields','string_list'], # callable
+    'fields'  : ['Fields','Fields','string_list'], # callable
+    'unit'    : ['Unit String','Unit','string_list'], # custom func
+    'unitsys' : ['Unit System','UnitSys','string_list'], # custom func
+    'unicon'  : ['Unit Conversion','UnitConv','string_list'], # custom func
+    'golden'  : ['Golden','Golden','float'], # custom func
     }
 PROP_KEY_LIST = sorted(ELEM_PROPERTIES.keys(),key=str.lower)
 FULL_DESCRIP_NAME_LIST = [ELEM_PROPERTIES[name][ENUM_ELEM_FULL_DESCRIP_NAME]
@@ -118,8 +123,6 @@ FILTER_TABLE_COLUMN_ODICT['filter_value'] = 'Value'
 
 FILTER_TABLE_COLUMN_HANDLE_LIST    = FILTER_TABLE_COLUMN_ODICT.keys()
 FILTER_TABLE_COLUMN_DISP_NAME_LIST = FILTER_TABLE_COLUMN_ODICT.values()
-
-USE_CACHED_LATTICE = False
 
 ########################################################################
 class Filter():
@@ -201,28 +204,114 @@ class Filter():
 
             element = obj
 
-            x = getattr(element,propertyName)
+            if propertyName not in ('unit','unitsys','unicon','golden'):
+                x = getattr(element,propertyName)
 
-            if callable(x):
-                x = x()
+                if callable(x):
+                    x = x()
+
+            elif propertyName == 'golden':
+                golden_list = []
+                for field in element.fields():
+                    golden_list += element._field[field].golden
+                x = golden_list
+
+            else:
+                unitsys_dict = element.getUnitSystems()
+                if propertyName == 'unitsys':
+                    x = str(unitsys_dict)
+                elif propertyName == 'unit':
+                    unit_str_dict = deepcopy(unitsys_dict)
+                    for field, unitsys_list in unit_str_dict.iteritems():
+                        unit_str_list = [element.getUnit(field, unitsys=unitsys)
+                                         for unitsys in unitsys_list]
+                        unit_str_dict[field] = unit_str_list
+                    x = str(unit_str_dict)
+                elif propertyName == 'unicon':
+                    unicon_dict = {}
+                    for field, CaAction in element._field.iteritems():
+                        unicon_dict[field] = []
+                        for (src_unit, dst_unit), unicon \
+                            in CaAction.unitconv.iteritems():
+                            d = dict(src=src_unit, dst=dst_unit)
+                            if isinstance(unicon, ap.unitconv.UcPoly):
+                                coeffs = list(unicon.p.coeffs)
+                                d['type'] = 'UcPoly'
+                                d['prop'] = {'coef': coeffs}
+                            elif isinstance(unicon, ap.unitconv.UcInterp1):
+                                d['type'] = 'UcInterp1'
+                                xlist = list(unicon.xp); ylist = list(unicon.fp)
+                                d['prop'] = {'xlist': xlist, 'ylist': ylist}
+                            elif isinstance(unicon, ap.unitconv.UcInterpN):
+                                d['type'] = 'UcInterpN'
+                                list_of_xlist = list(unicon.xp)
+                                list_of_ylist = list(unicon.fp)
+                                d['prop'] = {
+                                    'list_of_xlist': list_of_xlist,
+                                    'list_of_ylist': list_of_ylist}
+                            else:
+                                raise TypeError('Unexpected unitconv object')
+                            unicon_dict[field].append(d)
+
+                    x = str(unicon_dict)
 
         else: # for 'channel' object (= tuple of 'element' object & field name)
 
             element = obj[0]
             field = obj[1]
 
-            x = getattr(element,propertyName)
+            if propertyName not in ('unit','unitsys','unicon','golden'):
+                x = getattr(element,propertyName)
 
-            if propertyName == 'fields':
-                x = [field]
-            elif propertyName == 'pv':
-                try:
-                    x = element.pv(field=field,handle='readback')[:]
-                    x.extend(element.pv(field=field,handle='setpoint')[:])
-                    #x = element._field[field].pvrb
-                    #x.extend(element._field[field].pvsp)
-                except: # For DIPOLE, there is no field specified
-                    x = element.pv()[:]
+                if propertyName == 'fields':
+                    x = [field]
+                elif propertyName == 'pv':
+                    try:
+                        x = element.pv(field=field,handle='readback')[:]
+                        x.extend(element.pv(field=field,handle='setpoint')[:])
+                        #x = element._field[field].pvrb
+                        #x.extend(element._field[field].pvsp)
+                    except: # For DIPOLE, there is no field specified
+                        x = element.pv()[:]
+
+            elif propertyName == 'golden':
+
+                x = element._field[field].golden[0]
+
+            else:
+                unitsys_dict = element.getUnitSystems()
+                if propertyName == 'unitsys':
+                    x = unitsys_dict[field]
+                elif propertyName == 'unit':
+                    unitsys_list = unitsys_dict[field]
+                    unit_str_list = [element.getUnit(field, unitsys=unitsys)
+                                     for unitsys in unitsys_list]
+                    x = unit_str_list
+                elif propertyName == 'unicon':
+                    CaAction = element._field[field]
+                    unicon_list = []
+                    for (src_unit, dst_unit), unicon \
+                        in CaAction.unitconv.iteritems():
+                        d = dict(src=src_unit, dst=dst_unit)
+                        if isinstance(unicon, ap.unitconv.UcPoly):
+                            coeffs = list(unicon.p.coeffs)
+                            d['type'] = 'UcPoly'
+                            d['prop'] = {'coef': coeffs}
+                        elif isinstance(unicon, ap.unitconv.UcInterp1):
+                            d['type'] = 'UcInterp1'
+                            xlist = list(unicon.xp); ylist = list(unicon.fp)
+                            d['prop'] = {'xlist': xlist, 'ylist': ylist}
+                        elif isinstance(unicon, ap.unitconv.UcInterpN):
+                            d['type'] = 'UcInterpN'
+                            list_of_xlist = list(unicon.xp)
+                            list_of_ylist = list(unicon.fp)
+                            d['prop'] = {
+                                'list_of_xlist': list_of_xlist,
+                                'list_of_ylist': list_of_ylist}
+                        else:
+                            raise TypeError('Unexpected unitconv object')
+                        unicon_list.append(d)
+                    x = str(unicon_list)
 
         return x
 
@@ -1188,7 +1277,7 @@ class ChannelExplorerModel(QObject):
 
     #----------------------------------------------------------------------
     def __init__(self, machine_name, object_type='element', settings=None,
-                 debug = False):
+                 use_cached_lattice = False, debug = False):
         """
         """
 
@@ -1211,6 +1300,8 @@ class ChannelExplorerModel(QObject):
         self.allDict = {'_elements':[],'_channels':[],
                         'objects':[]}
         self.update_allDict_on_machine_or_lattice_change(object_type)
+
+        self.use_cached_lattice = use_cached_lattice
 
     #----------------------------------------------------------------------
     def onFilterSelectionChange(self, selected_filter):
@@ -1275,7 +1366,7 @@ class ChannelExplorerModel(QObject):
     def on_machine_change(self, machine_name):
         """"""
 
-        initMachine(machine_name)
+        initMachine(machine_name, use_cached_lattice=self.use_cached_lattice)
 
         self.emit(SIGNAL('machineChanged'))
 
@@ -2157,8 +2248,15 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
                 key_func = lower
             else:
                 key_func = None
-            self.choice_dict[prop_name] = \
-                sorted(list(set(self.choice_dict[prop_name])),key=key_func)
+
+            try:
+                sorted_unique_list = \
+                    sorted(list(set(self.choice_dict[prop_name])),key=key_func)
+            except TypeError:
+                stringfied = [str(L) for L in self.choice_dict[prop_name]]
+                sorted_unique_list = sorted(list(set(stringfied)))
+            self.choice_dict[prop_name] = sorted_unique_list
+
 
             choice_combobox_model.setData(
                 choice_combobox_model.index(i,0),
@@ -2399,7 +2497,11 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         #
         model_property = self.createPropertyListModel(
             self.comboBox_simple_property)
+        current_selected_index = self.comboBox_simple_property.currentIndex()
+        # After setModel(), currentIndex is reset to 0.
         self.comboBox_simple_property.setModel(model_property)
+        # Restoring the original currentIndex
+        self.comboBox_simple_property.setCurrentIndex(current_selected_index)
         self.comboBox_simple_property.setSizeAdjustPolicy(
             QComboBox.AdjustToContents)
         self.comboBox_simple_property.setCurrentIndex(
@@ -2663,7 +2765,7 @@ class ChannelExplorerAppSettings():
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, caller):
+    def __init__(self, caller, use_cached_lattice=False):
         """Constructor
 
         Attribute naming convetion:
@@ -2677,6 +2779,8 @@ class ChannelExplorerAppSettings():
         self.__caller = caller
 
         self.__settings = QSettings('HLA','ChannelExplorer')
+
+        self.use_cached_lattice = use_cached_lattice
 
         self.loadViewSizeSettings()
         self.loadMiscellaneousSettings()
@@ -2720,7 +2824,7 @@ class ChannelExplorerAppSettings():
             lattices = ap.machines.lattices()
             if lattices == []:
                 ap.machines.load(self.machine_name,
-                                 use_cache=USE_CACHED_LATTICE)
+                                 use_cache=self.use_cached_lattice)
                 lattices = ap.machines.lattices()
             lattice_name = lattices[0]
         self.lattice_name = lattice_name
@@ -2820,19 +2924,21 @@ class ChannelExplorerApp(QObject):
     #----------------------------------------------------------------------
     def __init__(self, modal = True, parentWindow = None,
                  init_object_type = 'element', can_modify_object_type = True,
-                 machine_name = None, lattice_name = None, caller = None,
+                 machine_name = None, lattice_name = None,
+                 use_cached_lattice = False, caller = None,
                  debug = False):
         """Constructor"""
 
         QObject.__init__(self)
 
-        self.settings = ChannelExplorerAppSettings(caller)
+        self.settings = ChannelExplorerAppSettings(
+            caller, use_cached_lattice=use_cached_lattice)
 
         if machine_name is None:
             machine_name = self.settings.machine_name
 
         print 'Machine Name = {0:s}'.format(machine_name)
-        initMachine(machine_name)
+        initMachine(machine_name, use_cached_lattice=use_cached_lattice)
 
         if lattice_name is None:
             lattice_name = self.settings.lattice_name
@@ -2855,7 +2961,8 @@ class ChannelExplorerApp(QObject):
         self.modal = modal
         self.parentWindow = parentWindow
 
-        self._initModel(machine_name, init_object_type, debug=debug)
+        self._initModel(machine_name, init_object_type,
+                        use_cached_lattice=use_cached_lattice, debug=debug)
         self._initView(can_modify_object_type, lattice_name, caller,
                        all_prop_name_list, default_visible_prop_key_list,
                        permanently_visible_prop_key_list, debug=debug)
@@ -2999,12 +3106,14 @@ class ChannelExplorerApp(QObject):
 
 
     #----------------------------------------------------------------------
-    def _initModel(self, machine_name, object_type, debug = False):
+    def _initModel(self, machine_name, object_type, use_cached_lattice = False,
+                   debug = False):
         """ """
 
         self.model = ChannelExplorerModel(machine_name,
                                           object_type=object_type,
                                           settings=self.settings,
+                                          use_cached_lattice=use_cached_lattice,
                                           debug=debug)
 
     #----------------------------------------------------------------------
@@ -3041,71 +3150,6 @@ class ChannelExplorerApp(QObject):
             filterTableModel,
             SIGNAL('filterSelectionChanged'),
             self.view.switchSearchResultViews)
-
-
-########################################################################
-class ColumnsDialog(QDialog):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, full_column_name_list, init_selected_colum_name_list,
-                 permanently_selected_column_name_list, parentWindow = None):
-        """Constructor"""
-
-        QDialog.__init__(self, parent=parentWindow)
-
-        self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons
-
-        self.setWindowTitle('Column Visibility/Order')
-
-        self.verticalLayout = QVBoxLayout(self)
-
-        widget = QWidget(self)
-        self.visible_column_order_selector = OrderSelector(
-            parentWidget=widget,
-            full_string_list=full_column_name_list,
-            init_selected_string_list=init_selected_colum_name_list,
-            permanently_selected_string_list=permanently_selected_column_name_list,
-            label_text_NotSelected='NOT Visible Column Names:',
-            label_text_Selected='Visible Column Names:')
-        self.verticalLayout.addWidget(widget)
-
-        self.buttonBox = QDialogButtonBox(self)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
-        self.verticalLayout.addWidget(self.buttonBox)
-
-        self.output = None
-
-        self.connect(self.buttonBox, SIGNAL('accepted()'), self.accept)
-        self.connect(self.buttonBox, SIGNAL('rejected()'), self.reject)
-
-    #----------------------------------------------------------------------
-    def closeEvent(self, event):
-        """"""
-
-        self.output = None
-
-        event.accept()
-
-    #----------------------------------------------------------------------
-    def accept(self):
-        """"""
-
-        selected_listView = self.visible_column_order_selector.view.listView_Selected
-        SMod = selected_listView.model()
-        self.output = [SMod.item(row_ind,0).text() for row_ind in range(SMod.rowCount())]
-
-        super(ColumnsDialog, self).accept()
-
-    #----------------------------------------------------------------------
-    def reject(self):
-        """"""
-
-        self.output = None
-
-        super(ColumnsDialog, self).reject()
-
 
 ########################################################################
 class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
@@ -3292,7 +3336,7 @@ def lower(none_or_str_or_unicode_string):
         return str(none_or_str_or_unicode_string).lower()
 
 #----------------------------------------------------------------------
-def initMachine(machine_name):
+def initMachine(machine_name, use_cached_lattice=False):
     """"""
 
     if ap.machines._lat:
@@ -3304,7 +3348,7 @@ def initMachine(machine_name):
     print 'Initializing lattices...'
     tStart = tic()
     #ap.machines.load(machine_init_folder_name, use_cache=True)
-    ap.machines.load(machine_init_folder_name, use_cache=USE_CACHED_LATTICE)
+    ap.machines.load(machine_init_folder_name, use_cache=use_cached_lattice)
     print 'Initialization took', toc(tStart), 'seconds.'
 
 
@@ -3312,7 +3356,7 @@ def initMachine(machine_name):
 #----------------------------------------------------------------------
 def make(modal = True, parentWindow = None,
          init_object_type = 'element', can_modify_object_type = True,
-         output_type = TYPE_OBJECT,
+         output_type = TYPE_OBJECT, use_cached_lattice = False,
          machine_name = None, lattice_name = None,
          caller = None, debug = False):
     """ """
@@ -3329,7 +3373,8 @@ def make(modal = True, parentWindow = None,
 
     app = ChannelExplorerApp(modal, parentWindow,
                              init_object_type, can_modify_object_type,
-                             machine_name, lattice_name, caller, debug=debug)
+                             machine_name, lattice_name, use_cached_lattice,
+                             caller, debug=debug)
     view = app.view
 
     if app.modal :
@@ -3337,16 +3382,24 @@ def make(modal = True, parentWindow = None,
 
         if view.result() == QDialog.Accepted:
             if output_type == TYPE_OBJECT:
-                output = app.model.selectedObjects
+                output = {'machine': ap.machines._lat.machine,
+                          'lattice': ap.machines._lat.name,
+                          'selection': app.model.selectedObjects}
             elif output_type == TYPE_NAME:
                 try:
-                    output = [e.name for e in app.model.selectedObjects]
+                    output = {'machine': ap.machines._lat.machine,
+                              'lattice': ap.machines._lat.name,
+                              'selection': [e.name for e in
+                                            app.model.selectedObjects]}
                 except:
-                    output = [(e[0].name,e[1]) for e in app.model.selectedObjects]
+                    output = {'machine': ap.machines._lat.machine,
+                              'lattice': ap.machines._lat.name,
+                              'selection': [(e[0].name,e[1]) for e
+                                            in app.model.selectedObjects]}
             else:
-                output = []
+                output = {}
         else:
-            output = []
+            output = {}
 
         result = {'app': app,
                   'dialog_result': output}
@@ -3358,15 +3411,18 @@ def make(modal = True, parentWindow = None,
 
 
 #----------------------------------------------------------------------
-def main(args=None):
+def main():
     """ """
 
+    args = sys.argv
+
     if len(args) == 2:
-        global USE_CACHED_LATTICE
         if args[1].lower() == 'true':
-            USE_CACHED_LATTICE = True
+            use_cached_lattice = True
         else:
-            USE_CACHED_LATTICE = False
+            use_cached_lattice = False
+    else:
+        use_cached_lattice = False
 
     #qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
 
@@ -3392,7 +3448,8 @@ def main(args=None):
 
     result = make(modal=True, output_type=TYPE_OBJECT,
                   init_object_type='channel',
-                  caller='__main__',debug=False)
+                  use_cached_lattice=use_cached_lattice,
+                  caller='__main__', debug=False)
 
     if result.has_key('dialog_result'): # When modal
         app           = result['app']
@@ -3412,5 +3469,5 @@ def main(args=None):
 
 #----------------------------------------------------------------------
 if __name__ == "__main__" :
-    main(sys.argv)
+    main()
 

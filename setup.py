@@ -75,13 +75,13 @@ setup(
     include_package_data = True,
     #package_data = {
     #    # any these files
-    #    'aphla.gui': ['data/*'], 
+    #    'aphla.gui': ['data/*'],
     #    'aphla.machines': ['*']},
     #py_modules = [
     #    # GUI
     #    'aphla.gui.gui_resources',
     #    'aphla.gui.aplauncher',
-    #    'aphla.gui.orbit', 'aphla.gui.orbitconfdlg', 
+    #    'aphla.gui.orbit', 'aphla.gui.orbitconfdlg',
     #    'aphla.gui.apbba'],
     #    'aphla.gui.channelexplorer',
     #install_requires = ['distribute', 'matplotlib', 'cothread',
@@ -92,7 +92,8 @@ setup(
             'apbba = aphla.gui.apbba:main',
             'aplauncher = aphla.gui.aplauncher:main',
             'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',
-            'apchx = aphla.gui.channelexplorer:main'
+            'apchx = aphla.gui.channelexplorer:main',
+            'aptinker = aphla.gui.aplattuner:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",
