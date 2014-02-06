@@ -19,6 +19,7 @@
     <file alias="folder.png">images/folder.png</file>
     <file alias="python.png">images/python-logo-48.png</file>
     <file alias="generic_app.png">images/application-128.png</file>
+    <file alias="cmd_app.png">images/cmd.png</file>
     <file alias="css48.png">images/css48.png</file>
     <file alias="matlab_mfile.png">images/m-007.png</file>
     <file alias="info_item.png">images/onebit_38.png</file>

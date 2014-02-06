@@ -87,7 +87,7 @@ DEFAULT_XML_ITEM = dict(
 )
 ICONS = dict(page=':/folder.png', info=':/info_item.png', txt=':/txt_item.png',
              py=':/python.png', gui_app=':/generic_app.png',
-             cmd_app=':/generic_app.png', css=':/css48.png',
+             cmd_app=':/cmd_app.png', css=':/css48.png',
              mfile=':/matlab_mfile.png')
 DEFAULT_ICON_NAMES = dict(page='page', info='info', txt='txt', py='py',
                           exe='gui_app')
