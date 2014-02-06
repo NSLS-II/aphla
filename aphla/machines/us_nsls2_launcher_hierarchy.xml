@@ -4,7 +4,7 @@
         <item>
             <dispName>Clock</dispName>
             <desc></desc>
-            <icon>exe</icon>
+            <icon>gui_app</icon>
             <itemType>exe</itemType>
             <command>xclock</command>
             <cwd></cwd>
@@ -18,7 +18,7 @@
         <item>
             <dispName>Orbit</dispName>
             <desc></desc>
-            <icon>exe</icon>
+            <icon>gui_app</icon>
             <itemType>exe</itemType>
             <command>aporbit</command>
             <cwd></cwd>
@@ -32,7 +32,7 @@
         <item>
             <dispName>Beam Based Alignment</dispName>
             <desc></desc>
-            <icon>exe</icon>
+            <icon>gui_app</icon>
             <itemType>exe</itemType>
             <command>apbba</command>
             <cwd></cwd>

@@ -40,7 +40,8 @@ from PyQt4.QtGui import (
     QApplication, QFont, QWidget, QStandardItemModel, QStandardItem, QComboBox,
     QCompleter, QDialog, QMessageBox, QFileDialog, QIcon, QBrush, QTreeView,
     QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
-    QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup, QKeySequence
+    QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup,
+    QKeySequence
 )
 from PyQt4.QtXml import QDomDocument
 
@@ -83,9 +84,17 @@ DEFAULT_XML_ITEM = dict(
     editor='gedit', sourceFilepath='', helpHeader='python', moduleName='',
     args='',
 )
+ICONS = dict(page=':/folder.png', info=':/info_item.png', txt=':/txt_item.png',
+             py=':/python.png', gui_app=':/generic_app.png',
+             cmd_app=':/generic_app.png', css=':/css48.png',
+             mfile=':/matlab_mfile.png')
+DEFAULT_ICON_NAMES = dict(page='page', info='info', txt='txt', py='py',
+                          exe='gui_app')
+DEFAULT_ICONS = {k: ICONS[v] for (k,v) in DEFAULT_ICON_NAMES.iteritems()}
 ITEM_PROPERTIES_DIALOG_OBJECTS = dict(
     dispName = 'lineEdit_dispName',
     itemType = 'comboBox_itemType',
+    icon     = 'pushButton_icon',
     page= dict(desc='plainTextEdit_page_description'),
     info= dict(desc='plainTextEdit_info_description'),
     txt = dict(sourceFilepath='lineEdit_txt_src_filepath',
@@ -146,6 +155,7 @@ from Qt4Designer_files.ui_launcher import Ui_MainWindow
 from Qt4Designer_files.ui_launcher_item_properties import Ui_Dialog
 from Qt4Designer_files.ui_launcher_restore_hierarchy import Ui_Dialog \
      as Ui_Dialog_restore_hie
+from Qt4Designer_files.ui_icon_picker import Ui_Dialog as Ui_Dialog_icon
 
 import aphla as ap
 from aphla.gui.utils.orderselector import ColumnsDialog
@@ -859,6 +869,63 @@ class LauncherRestoreHierarchyDialog(QDialog, Ui_Dialog_restore_hie):
 
         self.lineEdit_backup_filepath.setText(save_filepath)
 
+########################################################################
+class IconPickerDialog(QDialog, Ui_Dialog_icon):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, item):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.item = item
+
+        self.setWindowTitle('Pick an Icon')
+
+        self.model = IconPickerModel()
+
+        self.listView.setModel(self.model)
+        self.listView.setViewMode(QListView.IconMode)
+        self.listView.setWrapping(True)
+        self.listView.setIconSize(QSize(50,50))
+        self.listView.setGridSize(QSize(70,70))
+        self.listView.setUniformItemSizes(True)
+        self.listView.setResizeMode(QListView.Adjust)
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        self.item.icon = self.model.itemFromIndex(
+            self.listView.selectedIndexes()[0]).toolTip()
+
+        super(IconPickerDialog, self).accept() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(IconPickerDialog, self).reject() # will hide the dialog
+
+
+########################################################################
+class IconPickerModel(QStandardItemModel):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+
+        QStandardItemModel.__init__(self)
+
+        for i, (k, v) in enumerate(ICONS.iteritems()):
+            item = QStandardItem()
+            item.setToolTip(k)
+            item.setIcon(QIcon(v))
+            self.insertRow(i, item)
 
 ########################################################################
 class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
@@ -875,7 +942,8 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
 
         self.model = model
-        self.item  = selectedItem
+        self.origItem = selectedItem
+        self.item     = selectedItem.shallowCopy()
 
         # Update the list of command strings and module names that already
         #exist in the model
@@ -902,7 +970,7 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
             self.existingPathList.remove(self.item.path)
 
         itemType = self.item.itemType
-        propNameList = ['dispName', 'itemType']
+        propNameList = ['dispName', 'itemType', 'icon']
         objNameList = [ITEM_PROPERTIES_DIALOG_OBJECTS[k] for k in propNameList]
         propNameList += ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].keys()
         objNameList  += [ITEM_PROPERTIES_DIALOG_OBJECTS[itemType][k] for k in
@@ -961,8 +1029,11 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
                                      format(objName))
 
             elif objName.startswith('pushButton'):
-                pass
-
+                if objName == 'pushButton_icon':
+                    obj.setIcon(QIcon(ICONS[self.item.icon]))
+                    obj.setToolTip(self.item.icon)
+                else:
+                    pass
             else:
                 raise ValueError('Unexpected object name: {0:s}'.
                                  format(objName))
@@ -998,13 +1069,27 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
                      self._updateHelpTxt_combo_moduleName)
         self.connect(self.lineEdit_py_workingDir, SIGNAL('editingFinished()'),
                      self._updateHelpTxt_py_cwd_lineEdit)
+        self.connect(self.pushButton_icon, SIGNAL('clicked()'),
+                     self.showIconList)
 
         self.isItemPropertiesModifiable = self.item.path.startswith(
             USER_MODIFIABLE_ROOT_PATH+SEPARATOR)
         # Adding SEPARATOR at the end of USER_MODIFIABLE_ROOT_PATH is essential
         # to exclude USER_MODIFIABLE_ROOT_PATH itself from modifiable item list
 
-        self.switchItemSpecificPropObjects(self.item.itemType)
+        self.switchItemSpecificPropObjects(self.item.itemType,
+                                           use_default_icon=False)
+
+    #----------------------------------------------------------------------
+    def showIconList(self):
+        """"""
+
+        p = IconPickerDialog(self.item)
+        p.exec_()
+
+        obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['icon'])
+        obj.setIcon(QIcon(ICONS[self.item.icon]))
+        obj.setToolTip(self.item.icon)
 
     #----------------------------------------------------------------------
     def _getExistingDir(self):
@@ -1212,7 +1297,8 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         return descriptiveItemTypeStr
 
     #----------------------------------------------------------------------
-    def switchItemSpecificPropObjects(self, itemType_or_descriptiveItemTypeStr):
+    def switchItemSpecificPropObjects(self, itemType_or_descriptiveItemTypeStr,
+                                      use_default_icon=True):
         """"""
 
         itemType = self._getItemType(itemType_or_descriptiveItemTypeStr)
@@ -1226,6 +1312,8 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['dispName'])
             obj.setEnabled(False)
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['itemType'])
+            obj.setEnabled(False)
+            obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['icon'])
             obj.setEnabled(False)
 
             for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
@@ -1242,6 +1330,11 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
                     ITEM_PROP_DLG_OBJ_ENABLED_EXE_NONEMPTY_SRC_FILEPATH
             else:
                 disabledObjectNames = []
+
+            if use_default_icon:
+                obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['icon'])
+                obj.setIcon(QIcon(DEFAULT_ICONS[itemType]))
+                obj.setToolTip(DEFAULT_ICON_NAMES[itemType])
 
         for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
             obj = getattr(self, objName)
@@ -1271,7 +1364,6 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
 
                 elif objName.startswith(('plainTextEdit', 'pushButton')):
                     pass
-
                 else:
                     raise ValueError('Unexpected object name: {0:s}'.
                                      format(objName))
@@ -1309,23 +1401,26 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
             self.lineEdit_dispName.setText(dispName)
 
         obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['dispName'])
-        self.item.dispName = obj.text()
-        self.item.setText(self.item.dispName)
+        self.origItem.dispName = obj.text()
+        self.origItem.setText(self.origItem.dispName)
 
         obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['itemType'])
         itemType = self._getItemType(obj.currentText())
-        self.item.itemType = itemType
+        self.origItem.itemType = itemType
+
+        obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['icon'])
+        self.origItem.icon = obj.toolTip()
 
         for (propName, objName) in \
             ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
             obj = getattr(self, objName)
             if objName.startswith('lineEdit'):
-                setattr(self.item, propName, obj.text())
+                setattr(self.origItem, propName, obj.text())
             elif objName.startswith('comboBox'):
-                setattr(self.item, propName, obj.currentText())
+                setattr(self.origItem, propName, obj.currentText())
             elif objName.startswith('plainTextEdit') and \
                  objName.endswith(('description','help')):
-                self.item.desc = obj.property('plainText')
+                self.origItem.desc = obj.property('plainText')
             elif objName.startswith('pushButton'):
                 pass
             else:
@@ -1380,6 +1475,8 @@ class LauncherModelItem(QStandardItem):
 
         copiedItem.setFlags(self.flags())
 
+        copiedItem.icon = self.icon
+
         for p in MODEL_ITEM_PROPERTY_NAMES:
             setattr(copiedItem, p, getattr(self, p))
 
@@ -1393,22 +1490,27 @@ class LauncherModelItem(QStandardItem):
         """"""
 
         if self.itemType == 'page':
-            self.setIcon(QIcon(":/folder.png"))
+            #self.setIcon(QIcon(":/folder.png"))
             self.setForeground(QBrush(ITEM_COLOR_PAGE))
         elif self.itemType == 'info':
-            self.setIcon(QIcon(":/info_item.png"))
+            #self.setIcon(QIcon(":/info_item.png"))
             self.setForeground(QBrush(ITEM_COLOR_INFO))
         elif self.itemType == 'txt':
-            self.setIcon(QIcon(":/txt_item.png"))
+            #self.setIcon(QIcon(":/txt_item.png"))
             self.setForeground(QBrush(ITEM_COLOR_TXT))
         elif self.itemType == 'py':
-            self.setIcon(QIcon(":/python.png"))
+            #self.setIcon(QIcon(":/python.png"))
             self.setForeground(QBrush(ITEM_COLOR_PY))
         elif self.itemType == 'exe':
-            self.setIcon(QIcon(":/generic_app.png"))
+            #self.setIcon(QIcon(":/generic_app.png"))
             self.setForeground(QBrush(ITEM_COLOR_EXE))
         else:
             raise ValueError('Unexpected itemType: {0:s}'.format(self.itemType))
+
+        if self.icon in ICONS.keys():
+            self.setIcon(QIcon(ICONS[self.icon]))
+        else:
+            raise ValueError('Unexpected icon: {0:s}'.format(self.icon))
 
 ########################################################################
 class CustomTreeView(QTreeView):
