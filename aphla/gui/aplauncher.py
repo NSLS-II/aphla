@@ -1850,8 +1850,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         settings.setValue('splitterPanes_sizes',self.splitterPanes.sizes())
         settings.endGroup()
 
-        print 'Settings saved.'
-
+        #print 'Settings saved.'
 
     #----------------------------------------------------------------------
     def loadSettings(self):
@@ -1860,31 +1859,26 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         settings = QSettings('HLA','Launcher')
 
         settings.beginGroup('MainWindow')
-        rect = settings.value('position') # .toRect() # need to be appended for v.1 API
-        #if rect == QRect():
-            #rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
+        rect = settings.value('position')
         if not rect:
             rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
         self.setGeometry(rect)
-        splitterPanes_sizes = settings.value('splitterPanes_sizes') # .toList() # need to be appended for v.1 API
-        #splitterPanes_sizes = [s.toInt()[0] for s in splitterPanes_sizes] # needed for v.1 API
+        splitterPanes_sizes = settings.value('splitterPanes_sizes')
         if splitterPanes_sizes == None:
             splitterPanes_sizes = [self.width()*(1./5), self.width()*(4./5)]
         else:
             splitterPanes_sizes = [int(s) for s in splitterPanes_sizes]
         self.splitterPanes.setSizes(splitterPanes_sizes)
 
-        #if splitterPanes_sizes == []:
-            #splitterPanes_sizes = [self.width()*(1./5), self.width()*(4./5)]
-        #else:
-            ##self.splitterPanes.setSizes([splitterPanes_sizes[0].toInt()[0],
-                                         ##splitterPanes_sizes[1].toInt()[0]])
-            #self.splitterPanes.setSizes(splitterPanes_sizes)
         settings.endGroup()
 
-        print 'Settings loaded.'
+        #print 'Settings loaded.'
 
+    #----------------------------------------------------------------------
+    def sizeHint(self):
+        """"""
 
+        return QSize(800, 600)
 
     #----------------------------------------------------------------------
     def onViewModeActionGroupTriggered(self, action):
