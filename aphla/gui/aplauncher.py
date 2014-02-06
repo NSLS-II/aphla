@@ -2214,6 +2214,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         newTreeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         newTreeView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
+        newTreeView.setUniformRowHeights(True)
+
         newTreeView.setDragDropMode(QAbstractItemView.NoDragDrop)
 
         newTreeView.setEditTriggers(QAbstractItemView.EditKeyPressed |
