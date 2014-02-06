@@ -57,7 +57,7 @@ from PyQt4.QtGui import (qApp, QDialog, QStandardItemModel, QStandardItem,
 from Qt4Designer_files.ui_channel_explorer import Ui_Dialog
 from Qt4Designer_files.ui_channel_explorer_startup_set_dialog \
      import Ui_Dialog as Ui_Dialog_startup_settings
-from aphla.gui.utils.orderselector import OrderSelector
+from aphla.gui.utils.orderselector import OrderSelector, ColumnsDialog
 from aphla.gui.utils.formattext import whitespace_delimited_lines, tab_delimited_unformatted_lines
 
 from aphla.gui.utils.tictoc import tic, toc
@@ -3151,71 +3151,6 @@ class ChannelExplorerApp(QObject):
             SIGNAL('filterSelectionChanged'),
             self.view.switchSearchResultViews)
 
-
-########################################################################
-class ColumnsDialog(QDialog):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, full_column_name_list, init_selected_colum_name_list,
-                 permanently_selected_column_name_list, parentWindow = None):
-        """Constructor"""
-
-        QDialog.__init__(self, parent=parentWindow)
-
-        self.setWindowFlags(QtCore.Qt.Window) # To add Maximize & Minimize buttons
-
-        self.setWindowTitle('Column Visibility/Order')
-
-        self.verticalLayout = QVBoxLayout(self)
-
-        widget = QWidget(self)
-        self.visible_column_order_selector = OrderSelector(
-            parentWidget=widget,
-            full_string_list=full_column_name_list,
-            init_selected_string_list=init_selected_colum_name_list,
-            permanently_selected_string_list=permanently_selected_column_name_list,
-            label_text_NotSelected='NOT Visible Column Names:',
-            label_text_Selected='Visible Column Names:')
-        self.verticalLayout.addWidget(widget)
-
-        self.buttonBox = QDialogButtonBox(self)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
-        self.verticalLayout.addWidget(self.buttonBox)
-
-        self.output = None
-
-        self.connect(self.buttonBox, SIGNAL('accepted()'), self.accept)
-        self.connect(self.buttonBox, SIGNAL('rejected()'), self.reject)
-
-    #----------------------------------------------------------------------
-    def closeEvent(self, event):
-        """"""
-
-        self.output = None
-
-        event.accept()
-
-    #----------------------------------------------------------------------
-    def accept(self):
-        """"""
-
-        selected_listView = self.visible_column_order_selector.view.listView_Selected
-        SMod = selected_listView.model()
-        self.output = [SMod.item(row_ind,0).text() for row_ind in range(SMod.rowCount())]
-
-        super(ColumnsDialog, self).accept()
-
-    #----------------------------------------------------------------------
-    def reject(self):
-        """"""
-
-        self.output = None
-
-        super(ColumnsDialog, self).reject()
-
-
 ########################################################################
 class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
     """"""
@@ -3476,14 +3411,18 @@ def make(modal = True, parentWindow = None,
 
 
 #----------------------------------------------------------------------
-def main(args=None):
+def main():
     """ """
+
+    args = sys.argv
 
     if len(args) == 2:
         if args[1].lower() == 'true':
             use_cached_lattice = True
         else:
             use_cached_lattice = False
+    else:
+        use_cached_lattice = False
 
     #qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
 
@@ -3530,5 +3469,5 @@ def main(args=None):
 
 #----------------------------------------------------------------------
 if __name__ == "__main__" :
-    main(sys.argv)
+    main()
 
