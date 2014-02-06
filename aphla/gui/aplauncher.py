@@ -33,9 +33,6 @@ sip.setapi('QVariant', 2)
 
 import cothread
 
-import PyQt4.Qt as Qt
-from PyQt4.QtXml import QDomDocument
-
 from PyQt4.QtCore import (
     Qt, SIGNAL, QObject, QDir, QFile, QIODevice, QTextStream, QModelIndex,
     QPersistentModelIndex, QSettings, QRect)
@@ -45,6 +42,7 @@ from PyQt4.QtGui import (
     QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
     QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup, QKeySequence
 )
+from PyQt4.QtXml import QDomDocument
 
 APP = None
 
@@ -151,6 +149,7 @@ from Qt4Designer_files.ui_launcher_restore_hierarchy import Ui_Dialog \
 
 import aphla as ap
 from aphla.gui.utils.orderselector import ColumnsDialog
+from aphla.gui.utils import xmltodict
 
 MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
 
@@ -409,6 +408,81 @@ class LauncherModel(QStandardItemModel):
                         else:
                             break
 
+        elif header_type == 'CSS':
+
+            with open(f, 'r') as fobj:
+                css_text = fobj.read()
+
+            source_file_dirpath = osp.dirname(f)
+
+            source_dict = xmltodict.parse(css_text)
+            help_button_widget = [
+                w for w in source_dict['display']['widget']
+                if w.has_key('text') \
+                and isinstance(w['text'], (str, unicode)) \
+                and (w['text'].strip().lower() == 'help') \
+                and w.has_key('@typeId') \
+                and (w['@typeId'] ==
+                     'org.csstudio.opibuilder.widgets.ActionButton') \
+                and w.has_key('actions') \
+                and w['actions'].has_key('action') \
+                and w['actions']['action'].has_key('@type') \
+                and (w['actions']['action']['@type'] == 'OPEN_DISPLAY') \
+                and w['actions']['action'].has_key('path')
+            ]
+
+            if len(help_button_widget) == 0:
+                help_button_widget = None
+            elif len(help_button_widget) == 1:
+                help_button_widget = help_button_widget[0]
+            else:
+                print ('WARNING: multiple help buttons found in specified CSS '
+                       'source OPI file.')
+                print ('Help text being displayed corresponds to the first one '
+                       'detected.')
+                help_button_widget = help_button_widget[0]
+
+            if help_button_widget is None:
+                help_text = ''
+            else:
+                help_filename = help_button_widget['actions']['action']['path']
+                help_filepath = osp.join(source_file_dirpath,
+                                         help_filename)
+                if not osp.exists(help_filepath):
+                    print ('WARNING: Found linked help filepath does not '
+                           'exist: {0:s}'.format(help_filepath))
+                    help_text = ''
+                else:
+                    with open(help_filepath, 'r') as fobj:
+                        raw_help_text = fobj.read()
+
+                    help_dict = xmltodict.parse(raw_help_text)
+                    help_label_widget = [
+                        w['widget'] for w in help_dict['display']['widget']
+                        if (w['@typeId'] ==
+                            'org.csstudio.opibuilder.widgets.groupingContainer') \
+                        and w['widget'].has_key('@typeId') \
+                        and (w['widget']['@typeId'] ==
+                             'org.csstudio.opibuilder.widgets.Label')
+                        and w['widget'].has_key('text')
+                    ]
+
+                    if len(help_label_widget) == 0:
+                        help_label_widget = None
+                    elif len(help_label_widget) == 1:
+                        help_label_widget = help_label_widget[0]
+                    else:
+                        print ('WARNING: multiple help labels found in '
+                               'linked help CSS OPI file.')
+                        print ('Help text being displayed corresponds to the '
+                               'first one detected.')
+                        help_label_widget = help_label_widget[0]
+
+                    if help_label_widget is None:
+                        help_text = ''
+                    else:
+                        help_text = help_label_widget['text']
+
         else:
             raise ValueError('Unexpected help header type: {0:s}'.
                              format(header_type))
@@ -460,8 +534,8 @@ class LauncherModel(QStandardItemModel):
                 parent_item.setChild(child_index, 0, item)
                 for (ii,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                     p = getattr(item,prop_name)
-                    if not isinstance(p,str):
-                        p = str(p)
+                    #if not isinstance(p,str):
+                        #p = str(p)
                     parent_item.setChild(child_index, ii+1,QStandardItem(p))
 
             else:
@@ -479,7 +553,6 @@ class LauncherModel(QStandardItemModel):
 
             self.construct_tree_model(dom.nextSibling().firstChild(),
                                       parent_item, child_index)
-
 
     #----------------------------------------------------------------------
     def getItemInfo(self, dom):
@@ -1838,7 +1911,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.model.updateCompleterModel(searchRootItem.path)
 
         dispNameList = [str(i.text()) for i in matchedItems]
-        print dispNameList
+        #print dispNameList
 
         rootItem = LauncherModelItem()
         m.searchModel.setRowCount(0) # clear all existing rows
@@ -1855,8 +1928,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             rootItem.setChild(i,0,newItem)
             for (j,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                 p = getattr(item,prop_name)
-                if not isinstance(p,str):
-                    p = str(p)
+                #if not isinstance(p,str):
+                    #p = str(p)
                 rootItem.setChild(i,j+1,QStandardItem(p))
 
         self.updateView(m)
@@ -2735,8 +2808,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                     for (ii,propName) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                         p = getattr(searchItem, propName)
 
-                        if not isinstance(p,str):
-                            p = str(p)
+                        #if not isinstance(p,str):
+                            #p = str(p)
 
                         parentSearchItem.setChild(row, ii+1, QStandardItem(p))
 
@@ -2754,8 +2827,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
                     p = getattr(selectedItem, propName)
 
-                    if not isinstance(p,str):
-                        p = str(p)
+                    #if not isinstance(p,str):
+                        #p = str(p)
 
                     parentItem.setChild(row, ii+1, QStandardItem(p))
 
@@ -2780,8 +2853,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
             p = getattr(updated1stColumnItem, propName)
 
-            if not isinstance(p,str):
-                p = str(p)
+            #if not isinstance(p,str):
+                #p = str(p)
 
             parentItem.child(row,ii+1).setText(p)
 
@@ -2985,8 +3058,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             currentRootItem.setChild(rowIndex, 0, pastedItem)
             for (i,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                 p = getattr(pastedItem,prop_name)
-                if not isinstance(p,str):
-                    p = str(p)
+                #if not isinstance(p,str):
+                    #p = str(p)
                 currentRootItem.setChild(rowIndex,i+1,QStandardItem(p))
 
             # Recursively paste sub-items, if exist
@@ -3035,8 +3108,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 targetParentItem.setChild(r, 0, pastedChildItem)
                 for (i,propName) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                     p = getattr(pastedChildItem,propName)
-                    if not isinstance(p,str):
-                        p = str(p)
+                    #if not isinstance(p,str):
+                        #p = str(p)
                     targetParentItem.setChild(r,i+1,QStandardItem(p))
 
                 self.pasteSubItems(childItem, pastedChildItem)

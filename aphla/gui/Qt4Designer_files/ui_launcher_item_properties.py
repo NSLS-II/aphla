@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'ui_launcher_item_properties.ui'
 #
-# Created: Tue Feb  4 15:12:47 2014
-#      by: PyQt4 UI code generator 4.9.1
+# Created: Wed Feb  5 19:22:38 2014
+#      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -108,7 +108,7 @@ class Ui_Dialog(object):
         self.label_11.setObjectName(_fromUtf8("label_11"))
         self.gridLayout_13.addWidget(self.label_11, 1, 0, 1, 1)
         self.comboBox_txt_editor = QtGui.QComboBox(self.page_txt)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBox_txt_editor.sizePolicy().hasHeightForWidth())
@@ -139,6 +139,7 @@ class Ui_Dialog(object):
         sizePolicy.setHeightForWidth(self.comboBox_txt_helpHeaderType.sizePolicy().hasHeightForWidth())
         self.comboBox_txt_helpHeaderType.setSizePolicy(sizePolicy)
         self.comboBox_txt_helpHeaderType.setObjectName(_fromUtf8("comboBox_txt_helpHeaderType"))
+        self.comboBox_txt_helpHeaderType.addItem(_fromUtf8(""))
         self.comboBox_txt_helpHeaderType.addItem(_fromUtf8(""))
         self.comboBox_txt_helpHeaderType.addItem(_fromUtf8(""))
         self.comboBox_txt_helpHeaderType.addItem(_fromUtf8(""))
@@ -193,7 +194,7 @@ class Ui_Dialog(object):
         self.gridLayout_10.addWidget(self.label_16, 0, 0, 1, 1)
         self.comboBox_py_moduleName = QtGui.QComboBox(self.page_pymod)
         self.comboBox_py_moduleName.setEnabled(True)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBox_py_moduleName.sizePolicy().hasHeightForWidth())
@@ -226,7 +227,7 @@ class Ui_Dialog(object):
         self.label_17.setObjectName(_fromUtf8("label_17"))
         self.gridLayout_10.addWidget(self.label_17, 3, 0, 1, 1)
         self.comboBox_py_editor = QtGui.QComboBox(self.page_pymod)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBox_py_editor.sizePolicy().hasHeightForWidth())
@@ -291,7 +292,7 @@ class Ui_Dialog(object):
         self.gridLayout_7.addWidget(self.label_20, 0, 0, 1, 1)
         self.comboBox_exe_command = QtGui.QComboBox(self.page_exe)
         self.comboBox_exe_command.setEnabled(True)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBox_exe_command.sizePolicy().hasHeightForWidth())
@@ -333,7 +334,7 @@ class Ui_Dialog(object):
         self.label_21.setObjectName(_fromUtf8("label_21"))
         self.gridLayout_7.addWidget(self.label_21, 3, 0, 1, 1)
         self.comboBox_exe_editor = QtGui.QComboBox(self.page_exe)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.comboBox_exe_editor.sizePolicy().hasHeightForWidth())
@@ -364,6 +365,7 @@ class Ui_Dialog(object):
         sizePolicy.setHeightForWidth(self.comboBox_exe_helpHeaderType.sizePolicy().hasHeightForWidth())
         self.comboBox_exe_helpHeaderType.setSizePolicy(sizePolicy)
         self.comboBox_exe_helpHeaderType.setObjectName(_fromUtf8("comboBox_exe_helpHeaderType"))
+        self.comboBox_exe_helpHeaderType.addItem(_fromUtf8(""))
         self.comboBox_exe_helpHeaderType.addItem(_fromUtf8(""))
         self.comboBox_exe_helpHeaderType.addItem(_fromUtf8(""))
         self.comboBox_exe_helpHeaderType.addItem(_fromUtf8(""))
@@ -418,7 +420,7 @@ class Ui_Dialog(object):
 
         self.retranslateUi(Dialog)
         self.stackedWidget_2.setCurrentIndex(0)
-        self.stackedWidget.setCurrentIndex(0)
+        self.stackedWidget.setCurrentIndex(4)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -449,7 +451,8 @@ class Ui_Dialog(object):
         self.label_25.setText(QtGui.QApplication.translate("Dialog", "Type", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_txt_helpHeaderType.setItemText(0, QtGui.QApplication.translate("Dialog", "python", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_txt_helpHeaderType.setItemText(1, QtGui.QApplication.translate("Dialog", "matlab", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_txt_helpHeaderType.setItemText(2, QtGui.QApplication.translate("Dialog", "None", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_txt_helpHeaderType.setItemText(2, QtGui.QApplication.translate("Dialog", "CSS", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_txt_helpHeaderType.setItemText(3, QtGui.QApplication.translate("Dialog", "None", None, QtGui.QApplication.UnicodeUTF8))
         self.label_30.setText(QtGui.QApplication.translate("Dialog", "Help in", None, QtGui.QApplication.UnicodeUTF8))
         self.label_31.setText(QtGui.QApplication.translate("Dialog", "Source File   ", None, QtGui.QApplication.UnicodeUTF8))
         self.label_8.setText(QtGui.QApplication.translate("Dialog", "Description  ", None, QtGui.QApplication.UnicodeUTF8))
@@ -488,7 +491,8 @@ class Ui_Dialog(object):
         self.label_28.setText(QtGui.QApplication.translate("Dialog", "Type", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_exe_helpHeaderType.setItemText(0, QtGui.QApplication.translate("Dialog", "python", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_exe_helpHeaderType.setItemText(1, QtGui.QApplication.translate("Dialog", "matlab", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_exe_helpHeaderType.setItemText(2, QtGui.QApplication.translate("Dialog", "None", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_exe_helpHeaderType.setItemText(2, QtGui.QApplication.translate("Dialog", "CSS", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_exe_helpHeaderType.setItemText(3, QtGui.QApplication.translate("Dialog", "None", None, QtGui.QApplication.UnicodeUTF8))
         self.label_34.setText(QtGui.QApplication.translate("Dialog", "Help in", None, QtGui.QApplication.UnicodeUTF8))
         self.label_35.setText(QtGui.QApplication.translate("Dialog", "Source File   ", None, QtGui.QApplication.UnicodeUTF8))
         self.label_22.setText(QtGui.QApplication.translate("Dialog", "Description  ", None, QtGui.QApplication.UnicodeUTF8))
