@@ -35,7 +35,7 @@ import cothread
 
 from PyQt4.QtCore import (
     Qt, SIGNAL, QObject, QDir, QFile, QIODevice, QTextStream, QModelIndex,
-    QPersistentModelIndex, QSettings, QRect)
+    QPersistentModelIndex, QSettings, QRect, QSize)
 from PyQt4.QtGui import (
     QApplication, QFont, QWidget, QStandardItemModel, QStandardItem, QComboBox,
     QCompleter, QDialog, QMessageBox, QFileDialog, QIcon, QBrush, QTreeView,
@@ -1538,6 +1538,10 @@ class MainPane(QWidget):
         listView.setRootIndex(initRootProxyModelIndex)
         listView.setViewMode(initListViewMode)
         listView.setContextMenuPolicy(Qt.CustomContextMenu)
+        width = height = 100
+        listView.setGridSize(QSize(width, height))
+        listView.setWrapping(True) # for layout wrapping
+        listView.setWordWrap(True) # for word wrapping
         self.listView = listView
 
         treeView.setModel(self.proxyModel)
