@@ -36,6 +36,16 @@ import cothread
 import PyQt4.Qt as Qt
 from PyQt4.QtXml import QDomDocument
 
+from PyQt4.QtCore import (
+    Qt, SIGNAL, QObject, QDir, QFile, QIODevice, QTextStream, QModelIndex,
+    QPersistentModelIndex, QSettings, QRect)
+from PyQt4.QtGui import (
+    QApplication, QFont, QWidget, QStandardItemModel, QStandardItem, QComboBox,
+    QCompleter, QDialog, QMessageBox, QFileDialog, QIcon, QBrush, QTreeView,
+    QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
+    QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup, QKeySequence
+)
+
 APP = None
 
 ORIGINAL_SYS_PATH = sys.path[:]
@@ -106,16 +116,16 @@ ITEM_PROPERTIES_DIALOG_OBJECTS = dict(
 ITEM_PROP_DLG_OBJ_ENABLED_EXE_NONEMPTY_SRC_FILEPATH = [
     'comboBox_exe_editor', 'comboBox_exe_helpHeaderType']
 
-ITEM_COLOR_PAGE = Qt.Qt.black
-ITEM_COLOR_INFO = Qt.Qt.black
-ITEM_COLOR_PY   = Qt.Qt.blue
-ITEM_COLOR_EXE  = Qt.Qt.blue
-ITEM_COLOR_TXT  = Qt.Qt.magenta
+ITEM_COLOR_PAGE = Qt.black
+ITEM_COLOR_INFO = Qt.black
+ITEM_COLOR_PY   = Qt.blue
+ITEM_COLOR_EXE  = Qt.blue
+ITEM_COLOR_TXT  = Qt.magenta
 
 # Forward slash '/' will be used as a file path separator for both
 # in Linux & Windows. Even if '/' is used in Windows, shutil and os functions
 # still properly work.
-# Qt.QDir.homePath() will return the home path string using '/' even on Windows.
+# QDir.homePath() will return the home path string using '/' even on Windows.
 # Therefore, '/' is being used consistently in this code.
 #
 # By the way, the QFile document says "QFile expects the file separator to be
@@ -124,7 +134,7 @@ ITEM_COLOR_TXT  = Qt.Qt.magenta
 # However, on Windows, using '\' still works fine.
 SEPARATOR = '/' # used as system file path separator as well as launcher page
                 # path separator
-HOME_PATH = str(Qt.QDir.homePath())
+HOME_PATH = str(QDir.homePath())
 DOT_HLA_QFILEPATH = HOME_PATH + SEPARATOR + '.hla'
 SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
 USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
@@ -182,7 +192,7 @@ START_DIRS = StartDirPaths()
 
 
 ########################################################################
-class SearchModel(Qt.QStandardItemModel):
+class SearchModel(QStandardItemModel):
     """
     """
 
@@ -190,7 +200,7 @@ class SearchModel(Qt.QStandardItemModel):
     def __init__(self, model, *args):
         """Constructor"""
 
-        Qt.QStandardItemModel.__init__(self, *args)
+        QStandardItemModel.__init__(self, *args)
 
         self.setHorizontalHeaderLabels(model.headerLabels)
 
@@ -206,7 +216,7 @@ class SearchModel(Qt.QStandardItemModel):
         self.setItem(0, rootItem)
 
 ########################################################################
-class LauncherModel(Qt.QStandardItemModel):
+class LauncherModel(QStandardItemModel):
     """
     """
 
@@ -214,7 +224,7 @@ class LauncherModel(Qt.QStandardItemModel):
     def __init__(self, *args):
         """Constructor"""
 
-        Qt.QStandardItemModel.__init__(self, *args)
+        QStandardItemModel.__init__(self, *args)
 
         self.headerLabels = ALL_COLUMN_NAMES
         self.setHorizontalHeaderLabels(self.headerLabels)
@@ -247,11 +257,11 @@ class LauncherModel(Qt.QStandardItemModel):
                                   child_index=rootItem.rowCount())
 
         # Set up completer for search
-        self.completer = Qt.QCompleter()
-        self.completer.setCompletionRole(Qt.Qt.DisplayRole)
+        self.completer = QCompleter()
+        self.completer.setCompletionRole(Qt.DisplayRole)
         self.completer.setCompletionColumn = 0
         self.completer.setCaseSensitivity(False)
-        self.completer.setCompletionMode(Qt.QCompleter.PopupCompletion)
+        self.completer.setCompletionMode(QCompleter.PopupCompletion)
         self.updateCompleterModel(SEPARATOR + 'root')
 
         # Create search indexes
@@ -452,7 +462,7 @@ class LauncherModel(Qt.QStandardItemModel):
                     p = getattr(item,prop_name)
                     if not isinstance(p,str):
                         p = str(p)
-                    parent_item.setChild(child_index, ii+1,Qt.QStandardItem(p))
+                    parent_item.setChild(child_index, ii+1,QStandardItem(p))
 
             else:
                 self.setItem(self.nRows, item)
@@ -583,12 +593,12 @@ class LauncherModel(Qt.QStandardItemModel):
         doc.appendChild(xmlRootDOMElement)
 
 
-        f = Qt.QFile(XML_Filepath)
+        f = QFile(XML_Filepath)
 
-        if not f.open(Qt.QIODevice.WriteOnly | Qt.QIODevice.Text):
+        if not f.open(QIODevice.WriteOnly | QIODevice.Text):
             raise IOError('Failed to open ' + XML_Filepath + ' for writing.')
 
-        stream = Qt.QTextStream(f)
+        stream = QTextStream(f)
 
         indent = 4
         stream << doc.toString(indent)
@@ -603,7 +613,7 @@ class LauncherModel(Qt.QStandardItemModel):
         """
 
 
-        f = Qt.QFile(XML_Filepath)
+        f = QFile(XML_Filepath)
         if not f.exists():
             # If the system XML file cannot be located, stop here.
             XML_Filename = os.path.split(XML_Filepath)
@@ -629,7 +639,7 @@ class LauncherModel(Qt.QStandardItemModel):
             if not f.exists():
                 raise IOError('Failed to create an empty User XML file')
 
-        if not f.open(Qt.QIODevice.ReadOnly):
+        if not f.open(QIODevice.ReadOnly):
             raise IOError('Failed to open ' + XML_Filepath)
 
         doc = QDomDocument('')
@@ -656,7 +666,7 @@ class LauncherModel(Qt.QStandardItemModel):
             self.pathElementList.extend(p.split(SEPARATOR))
         self.pathElementList = list(set(self.pathElementList))
         self.pathElementList.pop(self.pathElementList.index(''))
-        self.pathElementModel = Qt.QStandardItemModel(
+        self.pathElementModel = QStandardItemModel(
             len(self.pathElementList), 1, self.completer)
         for (i, p) in enumerate(self.pathElementList):
             self.pathElementModel.setData(self.pathElementModel.index(i,0),
@@ -671,7 +681,7 @@ class LauncherModel(Qt.QStandardItemModel):
         if not parentItem:
             rootItem = self.item(0,0)
             self.pathList = [rootItem.path]
-            self.pModelIndList = [Qt.QPersistentModelIndex(self.indexFromItem(rootItem))]
+            self.pModelIndList = [QPersistentModelIndex(self.indexFromItem(rootItem))]
             parentItem = rootItem
 
         for i in range(parentItem.rowCount()):
@@ -680,7 +690,7 @@ class LauncherModel(Qt.QStandardItemModel):
                 self.pathList.append(childItem.path)
             else:
                 raise ValueError('Duplicate path found: ' + childItem.path)
-            self.pModelIndList.append(Qt.QPersistentModelIndex(self.indexFromItem(childItem)))
+            self.pModelIndList.append(QPersistentModelIndex(self.indexFromItem(childItem)))
 
             self.updatePathLookupLists(childItem)
 
@@ -696,14 +706,14 @@ class LauncherModel(Qt.QStandardItemModel):
 
 
 ########################################################################
-class LauncherRestoreHierarchyDialog(Qt.QDialog, Ui_Dialog_restore_hie):
+class LauncherRestoreHierarchyDialog(QDialog, Ui_Dialog_restore_hie):
     """"""
 
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
 
-        Qt.QDialog.__init__(self)
+        QDialog.__init__(self)
 
         self.setupUi(self)
 
@@ -712,18 +722,18 @@ class LauncherRestoreHierarchyDialog(Qt.QDialog, Ui_Dialog_restore_hie):
         self.checkBox_backup.setChecked(False)
         self.lineEdit_backup_filepath.setEnabled(False)
 
-        self.connect(self.pushButton_browse, Qt.SIGNAL('clicked()'),
+        self.connect(self.pushButton_browse, SIGNAL('clicked()'),
                      self.openFileSelector)
-        self.connect(self.checkBox_backup, Qt.SIGNAL('stateChanged(int)'),
+        self.connect(self.checkBox_backup, SIGNAL('stateChanged(int)'),
                      self._updateEnableStates)
 
     #----------------------------------------------------------------------
     def _updateEnableStates(self, qtCheckState):
         """"""
 
-        if qtCheckState == Qt.Qt.Checked:
+        if qtCheckState == Qt.Checked:
             self.lineEdit_backup_filepath.setEnabled(True)
-        elif qtCheckState == Qt.Qt.Unchecked:
+        elif qtCheckState == Qt.Unchecked:
             self.lineEdit_backup_filepath.setEnabled(False)
         else:
             raise ValueError('Unexpected Qt CheckedState value.')
@@ -733,19 +743,19 @@ class LauncherRestoreHierarchyDialog(Qt.QDialog, Ui_Dialog_restore_hie):
         """"""
 
         if self.checkBox_backup.isChecked():
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             backup_filepath = self.lineEdit_backup_filepath.text()
             if osp.exists(osp.dirname(backup_filepath)):
                 shutil.copy(USER_XML_FILEPATH, backup_filepath)
                 msgBox.setText('Successfully backed up the current hierarchy to:')
                 msgBox.setInformativeText('{0:s}'.format(backup_filepath))
-                msgBox.setIcon(Qt.QMessageBox.Information)
+                msgBox.setIcon(QMessageBox.Information)
                 msgBox.exec_()
             else:
                 msgBox.setText('Invalid file path specified:')
                 msgBox.setInformativeText('{0:s} does not exist'.format(
                     osp.dirname(backup_filepath)))
-                msgBox.setIcon(Qt.QMessageBox.Critical)
+                msgBox.setIcon(QMessageBox.Critical)
                 msgBox.exec_()
                 return
 
@@ -766,7 +776,7 @@ class LauncherRestoreHierarchyDialog(Qt.QDialog, Ui_Dialog_restore_hie):
         caption = 'Save Current User Hierarchy File'
         selected_filter_str = ('XML files (*.xml)')
         filter_str = ';;'.join([selected_filter_str, 'All files (*)'])
-        save_filepath = Qt.QFileDialog.getSaveFileName(
+        save_filepath = QFileDialog.getSaveFileName(
             caption=caption, directory=self.start_dirs.restore_hierarchy,
             filter=filter_str)
         if not save_filepath:
@@ -778,25 +788,25 @@ class LauncherRestoreHierarchyDialog(Qt.QDialog, Ui_Dialog_restore_hie):
 
 
 ########################################################################
-class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
+class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
     """"""
 
     #----------------------------------------------------------------------
     def __init__(self, model, selectedItem, parentItem, *args):
         """Constructor"""
 
-        Qt.QDialog.__init__(self, *args)
+        QDialog.__init__(self, *args)
 
         self.setupUi(self)
 
-        self.setWindowFlags(Qt.Qt.Window) # To add Maximize & Minimize buttons
+        self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
 
         self.model = model
         self.item  = selectedItem
 
         # Update the list of command strings and module names that already
         #exist in the model
-        itemList = [model.itemFromIndex(Qt.QModelIndex(pInd))
+        itemList = [model.itemFromIndex(QModelIndex(pInd))
                     for pInd in model.pModelIndList]
         model.commandList    = list(set([item.command    for item in itemList
                                          if item.command    != 'N/A']))
@@ -846,12 +856,12 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                     obj.setCurrentIndex(0)
                 else:
                     matchedInd = obj.findText(search_string,
-                                              Qt.Qt.MatchExactly)
+                                              Qt.MatchExactly)
 
                     # If no match found, try case-insensitive search
                     if matchedInd == -1:
                         matchedInd = obj.findText(search_string,
-                                                  Qt.Qt.MatchFixedString)
+                                                  Qt.MatchFixedString)
 
                     if matchedInd != -1:
                         obj.setCurrentIndex(matchedInd)
@@ -861,7 +871,7 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                         print ('Using default value of "{0:s}" for "{1:s}"'.
                                format(search_string, propName))
                         matchedInd = obj.findText(search_string,
-                                                  Qt.Qt.MatchExactly)
+                                                  Qt.MatchExactly)
 
                         if matchedInd == -1:
                             raise ValueError('Default value not found in combobox choices.')
@@ -885,35 +895,35 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                                  format(objName))
 
         self.connect(self.comboBox_itemType,
-                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     SIGNAL('currentIndexChanged(const QString &)'),
                      self.switchItemSpecificPropObjects)
         self.connect(self.lineEdit_exe_src_filepath,
-                     Qt.SIGNAL('textChanged(const QString &)'),
+                     SIGNAL('textChanged(const QString &)'),
                      self._updateEnableStates)
-        self.connect(self.pushButton_txt_browse, Qt.SIGNAL('clicked()'),
+        self.connect(self.pushButton_txt_browse, SIGNAL('clicked()'),
                      self._getExistingFile)
-        self.connect(self.pushButton_py_browseWD, Qt.SIGNAL('clicked()'),
+        self.connect(self.pushButton_py_browseWD, SIGNAL('clicked()'),
                      self._getExistingDir)
-        self.connect(self.pushButton_exe_browse, Qt.SIGNAL('clicked()'),
+        self.connect(self.pushButton_exe_browse, SIGNAL('clicked()'),
                      self._getExistingFile)
-        self.connect(self.pushButton_exe_browseWD, Qt.SIGNAL('clicked()'),
+        self.connect(self.pushButton_exe_browseWD, SIGNAL('clicked()'),
                      self._getExistingDir)
         self.connect(self.lineEdit_exe_src_filepath,
-                     Qt.SIGNAL('editingFinished()'),
+                     SIGNAL('editingFinished()'),
                      self._updateHelpTxt_src_lineEdit)
         self.connect(self.lineEdit_txt_src_filepath,
-                     Qt.SIGNAL('editingFinished()'),
+                     SIGNAL('editingFinished()'),
                      self._updateHelpTxt_src_lineEdit)
         self.connect(self.comboBox_exe_helpHeaderType,
-                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     SIGNAL('currentIndexChanged(const QString &)'),
                      self._updateHelpTxt_combo_helpHeader)
         self.connect(self.comboBox_txt_helpHeaderType,
-                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     SIGNAL('currentIndexChanged(const QString &)'),
                      self._updateHelpTxt_combo_helpHeader)
         self.connect(self.comboBox_py_moduleName,
-                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     SIGNAL('currentIndexChanged(const QString &)'),
                      self._updateHelpTxt_combo_moduleName)
-        self.connect(self.lineEdit_py_workingDir, Qt.SIGNAL('editingFinished()'),
+        self.connect(self.lineEdit_py_workingDir, SIGNAL('editingFinished()'),
                      self._updateHelpTxt_py_cwd_lineEdit)
 
         self.isItemPropertiesModifiable = self.item.path.startswith(
@@ -940,7 +950,7 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
             starting_dir_path = receiving_lineEdit.text()
         else:
             starting_dir_path = START_DIRS.item_properties_workingDir
-        dir_path = Qt.QFileDialog.getExistingDirectory(
+        dir_path = QFileDialog.getExistingDirectory(
             self, caption, starting_dir_path)
 
         if not dir_path:
@@ -975,7 +985,7 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
             starting_dir_path = START_DIRS.item_properties_sourceFilepath
 
         all_files_filter_str = 'All files (*)'
-        filepath = Qt.QFileDialog.getOpenFileName(
+        filepath = QFileDialog.getOpenFileName(
             caption=caption, directory=starting_dir_path,
             filter=all_files_filter_str)
 
@@ -1171,20 +1181,19 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
                 elif objName.startswith('comboBox'):
 
                     search_string = DEFAULT_XML_ITEM[propName]
-                    matchedInd = obj.findText(search_string,
-                                              Qt.Qt.MatchExactly)
+                    matchedInd = obj.findText(search_string, Qt.MatchExactly)
                     # If no match found, try case-insensitive search
                     if matchedInd == -1:
                         matchedInd = obj.findText(search_string,
-                                                  Qt.Qt.MatchFixedString)
+                                                  Qt.MatchFixedString)
                     if matchedInd != -1:
                         obj.setCurrentIndex(matchedInd)
                     else:
-                        msgBox = Qt.QMessageBox()
+                        msgBox = QMessageBox()
                         msgBox.setText( (
                             'No matching item found in ' + objName) )
                         msgBox.setInformativeText( str(sys.exc_info()) )
-                        msgBox.setIcon(Qt.QMessageBox.Critical)
+                        msgBox.setIcon(QMessageBox.Critical)
                         msgBox.exec_()
 
                 elif objName.startswith(('plainTextEdit', 'pushButton')):
@@ -1203,24 +1212,24 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
 
         dispName = str(self.lineEdit_dispName.text())
         if dispName == '':
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             msgBox.setText( (
                 'Empty item name not allowed.') )
             msgBox.setInformativeText(
                 'Please enter a non-empty string as an item name.')
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
             return
 
         path = self.parentPath + SEPARATOR + dispName
         if path in self.existingPathList:
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             msgBox.setText( (
                 'Duplicate item name detected.') )
             msgBox.setInformativeText(
                 'The name ' + '"' + dispName + '"' +
                 ' is already used in this page. Please use a different name.')
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
             return
         else:
@@ -1260,7 +1269,7 @@ class LauncherModelItemPropertiesDialog(Qt.QDialog, Ui_Dialog):
         # will hide the dialog
 
 ########################################################################
-class LauncherModelItem(Qt.QStandardItem):
+class LauncherModelItem(QStandardItem):
     """
     """
 
@@ -1268,7 +1277,7 @@ class LauncherModelItem(Qt.QStandardItem):
     def __init__(self, *args):
         """Constructor"""
 
-        Qt.QStandardItem.__init__(self, *args)
+        QStandardItem.__init__(self, *args)
 
         self.path = SEPARATOR
         if args:
@@ -1288,7 +1297,7 @@ class LauncherModelItem(Qt.QStandardItem):
             setattr(self, prop_name, DEFAULT_XML_ITEM[prop_name])
 
         # Make the item NOT editable by default
-        self.setFlags(self.flags() & ~Qt.Qt.ItemIsEditable)
+        self.setFlags(self.flags() & ~Qt.ItemIsEditable)
 
     #----------------------------------------------------------------------
     def shallowCopy(self):
@@ -1311,32 +1320,32 @@ class LauncherModelItem(Qt.QStandardItem):
         """"""
 
         if self.itemType == 'page':
-            self.setIcon(Qt.QIcon(":/folder.png"))
-            self.setForeground(Qt.QBrush(ITEM_COLOR_PAGE))
+            self.setIcon(QIcon(":/folder.png"))
+            self.setForeground(QBrush(ITEM_COLOR_PAGE))
         elif self.itemType == 'info':
-            self.setIcon(Qt.QIcon(":/info_item.png"))
-            self.setForeground(Qt.QBrush(ITEM_COLOR_INFO))
+            self.setIcon(QIcon(":/info_item.png"))
+            self.setForeground(QBrush(ITEM_COLOR_INFO))
         elif self.itemType == 'txt':
-            self.setIcon(Qt.QIcon(":/txt_item.png"))
-            self.setForeground(Qt.QBrush(ITEM_COLOR_TXT))
+            self.setIcon(QIcon(":/txt_item.png"))
+            self.setForeground(QBrush(ITEM_COLOR_TXT))
         elif self.itemType == 'py':
-            self.setIcon(Qt.QIcon(":/python.png"))
-            self.setForeground(Qt.QBrush(ITEM_COLOR_PY))
+            self.setIcon(QIcon(":/python.png"))
+            self.setForeground(QBrush(ITEM_COLOR_PY))
         elif self.itemType == 'exe':
-            self.setIcon(Qt.QIcon(":/generic_app.png"))
-            self.setForeground(Qt.QBrush(ITEM_COLOR_EXE))
+            self.setIcon(QIcon(":/generic_app.png"))
+            self.setForeground(QBrush(ITEM_COLOR_EXE))
         else:
             raise ValueError('Unexpected itemType: {0:s}'.format(self.itemType))
 
 ########################################################################
-class CustomTreeView(Qt.QTreeView):
+class CustomTreeView(QTreeView):
     """"""
 
     #----------------------------------------------------------------------
     def __init__(self, *args):
         """Constructor"""
 
-        Qt.QTreeView.__init__(self, *args)
+        QTreeView.__init__(self, *args)
 
     #----------------------------------------------------------------------
     def focusInEvent(self, event):
@@ -1344,7 +1353,7 @@ class CustomTreeView(Qt.QTreeView):
 
         super(CustomTreeView,self).focusInEvent(event)
 
-        self.emit(Qt.SIGNAL('focusObtained()'))
+        self.emit(SIGNAL('focusObtained()'))
 
     #----------------------------------------------------------------------
     def focusOutEvent(self, event):
@@ -1352,7 +1361,7 @@ class CustomTreeView(Qt.QTreeView):
 
         super(CustomTreeView,self).focusOutEvent(event)
 
-        self.emit(Qt.SIGNAL('focusLost()'))
+        self.emit(SIGNAL('focusLost()'))
 
     #----------------------------------------------------------------------
     def closeEditor(self, editor, hint):
@@ -1360,35 +1369,35 @@ class CustomTreeView(Qt.QTreeView):
         overwriting QAbstractItemView virtual protected slot
         """
 
-        super(Qt.QTreeView,self).closeEditor(editor,hint)
+        super(QTreeView,self).closeEditor(editor,hint)
 
-        self.emit(Qt.SIGNAL('closingItemRenameEditor'), editor)
+        self.emit(SIGNAL('closingItemRenameEditor'), editor)
 
     #----------------------------------------------------------------------
     def editSlot(self, modelIndex):
         """"""
 
-        super(Qt.QTreeView,self).edit(modelIndex)
+        super(QTreeView,self).edit(modelIndex)
 
     #----------------------------------------------------------------------
     def edit(self, modelIndex, trigger, event):
         """"""
 
-        if trigger == Qt.QAbstractItemView.AllEditTriggers:
+        if trigger == QAbstractItemView.AllEditTriggers:
             self.modelIndexBeingRenamed = modelIndex
 
-        return super(Qt.QTreeView,self).edit(modelIndex, trigger, event)
+        return super(QTreeView,self).edit(modelIndex, trigger, event)
 
 
 ########################################################################
-class CustomListView(Qt.QListView):
+class CustomListView(QListView):
     """"""
 
     #----------------------------------------------------------------------
     def __init__(self, *args):
         """Constructor"""
 
-        Qt.QListView.__init__(self, *args)
+        QListView.__init__(self, *args)
 
         self.modelIndexBeingRenamed = None
 
@@ -1398,7 +1407,7 @@ class CustomListView(Qt.QListView):
 
         super(CustomListView,self).focusInEvent(event)
 
-        self.emit(Qt.SIGNAL('focusObtained()'))
+        self.emit(SIGNAL('focusObtained()'))
 
     #----------------------------------------------------------------------
     def focusOutEvent(self, event):
@@ -1406,7 +1415,7 @@ class CustomListView(Qt.QListView):
 
         super(CustomListView,self).focusOutEvent(event)
 
-        self.emit(Qt.SIGNAL('focusLost()'))
+        self.emit(SIGNAL('focusLost()'))
 
     #----------------------------------------------------------------------
     def closeEditor(self, editor, hint):
@@ -1414,29 +1423,29 @@ class CustomListView(Qt.QListView):
         overwriting QAbstractItemView virtual protected slot
         """
 
-        super(Qt.QListView,self).closeEditor(editor,hint)
+        super(QListView,self).closeEditor(editor,hint)
 
-        self.emit(Qt.SIGNAL('closingItemRenameEditor'), editor)
+        self.emit(SIGNAL('closingItemRenameEditor'), editor)
 
     #----------------------------------------------------------------------
     def editSlot(self, modelIndex):
         """"""
 
-        super(Qt.QListView,self).edit(modelIndex)
+        super(QListView,self).edit(modelIndex)
 
     #----------------------------------------------------------------------
     def edit(self, modelIndex, trigger, event):
         """"""
 
-        if trigger == Qt.QAbstractItemView.AllEditTriggers:
+        if trigger == QAbstractItemView.AllEditTriggers:
             self.modelIndexBeingRenamed = modelIndex
 
-        return super(Qt.QListView,self).edit(modelIndex, trigger, event)
+        return super(QListView,self).edit(modelIndex, trigger, event)
 
 
 
 ########################################################################
-class MainPane(Qt.QWidget):
+class MainPane(QWidget):
     """"""
 
     #----------------------------------------------------------------------
@@ -1444,9 +1453,9 @@ class MainPane(Qt.QWidget):
                  initListViewMode=CustomListView.IconMode):
         """Constructor"""
 
-        Qt.QWidget.__init__(self)
+        QWidget.__init__(self)
 
-        self.proxyModel = Qt.QSortFilterProxyModel() # Used for views on main
+        self.proxyModel = QSortFilterProxyModel() # Used for views on main
         # pane for which sorting is enabled
         self.proxyModel.setSourceModel(model)
 
@@ -1455,7 +1464,7 @@ class MainPane(Qt.QWidget):
         listView.setModel(self.proxyModel)
         listView.setRootIndex(initRootProxyModelIndex)
         listView.setViewMode(initListViewMode)
-        listView.setContextMenuPolicy(Qt.Qt.CustomContextMenu)
+        listView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.listView = listView
 
         treeView.setModel(self.proxyModel)
@@ -1465,7 +1474,7 @@ class MainPane(Qt.QWidget):
         treeView.setAllColumnsShowFocus(True)
         treeView.setHeaderHidden(False)
         treeView.setSortingEnabled(True)
-        treeView.setContextMenuPolicy(Qt.Qt.CustomContextMenu)
+        treeView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.treeView = treeView
 
         self.stackedWidget = stackedWidget
@@ -1473,12 +1482,12 @@ class MainPane(Qt.QWidget):
         self.searchModel = SearchModel(model)
         self.searchItemBeingEdited = None
 
-        self.pathHistory = [Qt.QPersistentModelIndex(initRootModelIndex)]
+        self.pathHistory = [QPersistentModelIndex(initRootModelIndex)]
         self.pathHistoryCurrentIndex = 0
 
 
 ########################################################################
-class LauncherView(Qt.QMainWindow, Ui_MainWindow):
+class LauncherView(QMainWindow, Ui_MainWindow):
     """
     """
 
@@ -1486,7 +1495,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def __init__(self, model, initRootPath):
         """Constructor"""
 
-        Qt.QMainWindow.__init__(self)
+        QMainWindow.__init__(self)
 
         self._initActions()
         self._initMainToolbar()
@@ -1512,15 +1521,15 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.treeViewSide.setSortingEnabled(False)
         self.treeViewSide.setRootIndex(self.model.indexFromItem(
             self.model.item(0,0) ) )
-        self.treeViewSide.setContextMenuPolicy(Qt.Qt.CustomContextMenu)
-        self.treeViewSide.setSelectionMode(Qt.QAbstractItemView.SingleSelection)
-        self.treeViewSide.setEditTriggers(Qt.QAbstractItemView.EditKeyPressed |
-                                          Qt.QAbstractItemView.SelectedClicked)
-        self.connect(self.treeViewSide, Qt.SIGNAL('focusObtained()'),
+        self.treeViewSide.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.treeViewSide.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.treeViewSide.setEditTriggers(QAbstractItemView.EditKeyPressed |
+                                          QAbstractItemView.SelectedClicked)
+        self.connect(self.treeViewSide, SIGNAL('focusObtained()'),
                      self.onSidePaneFocusIn)
-        self.connect(self.treeViewSide, Qt.SIGNAL('focusLost()'),
+        self.connect(self.treeViewSide, SIGNAL('focusLost()'),
                      self.onSidePaneFocusOut)
-        self.connect(self.treeViewSide, Qt.SIGNAL('closingItemRenameEditor'),
+        self.connect(self.treeViewSide, SIGNAL('closingItemRenameEditor'),
                      self.onItemRenameEditorClosing)
 
         # Add the main pane list view & tree view
@@ -1547,7 +1556,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         rootPModelIndex = self.model.pModelIndexFromPath(initRootPath)
         if not rootPModelIndex:
             raise IOError('Invalid initial root path provided: ' + initRootPath)
-        rootModelIndex = Qt.QModelIndex(rootPModelIndex)
+        rootModelIndex = QModelIndex(rootPModelIndex)
         self.mainPaneList = [MainPane(model,rootModelIndex,self.stackedWidgetMainPane,
                                       self.listViewMain,self.treeViewMain)]
 
@@ -1562,7 +1571,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.lastFocusedView = None
 
         ## Create context menus
-        self.contextMenu = Qt.QMenu()
+        self.contextMenu = QMenu()
 
         ## Initialize clipboard
         self.clipboard = []
@@ -1576,21 +1585,21 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         ## Make connections
         self.connect(self.treeViewSide.selectionModel(),
-                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
                      self.onSelectionChange)
         self.connect(self.treeViewSide,
-                     Qt.SIGNAL('doubleClicked(const QModelIndex &)'),
+                     SIGNAL('doubleClicked(const QModelIndex &)'),
                      self._callbackDoubleClickOnSidePaneItem)
         self.connect(self.treeViewSide,
-                     Qt.SIGNAL('clicked(const QModelIndex &)'),
+                     SIGNAL('clicked(const QModelIndex &)'),
                      self._callbackClickOnSidePaneItem)
         self.connect(self.treeViewSide,
-                     Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
 
 
         self.connect(self.comboBox_view_mode,
-                     Qt.SIGNAL('currentIndexChanged(const QString &)'),
+                     SIGNAL('currentIndexChanged(const QString &)'),
                      self.updateMainPaneViewMode)
 
 
@@ -1598,10 +1607,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         # However, if this causes crashes (this tends to happen when you add
         # a breakpoint in the callback function), switch the signal back to "textEdited"
         # and try to debug the code.
-        self.connect(self.lineEdit_search, Qt.SIGNAL('textChanged(const QString &)'),
+        self.connect(self.lineEdit_search, SIGNAL('textChanged(const QString &)'),
                      self.onSearchTextChange)
 
-        self.connect(self, Qt.SIGNAL('sigClearSelection'),
+        self.connect(self, SIGNAL('sigClearSelection'),
                      self.clearSelection)
 
         # Load QSettings
@@ -1617,7 +1626,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         # Save the current hierarchy in the user-modifiable section to
         # the user hierarchy XML file.
-        rootModelItem = self.model.itemFromIndex( Qt.QModelIndex(
+        rootModelItem = self.model.itemFromIndex( QModelIndex(
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
         self.model.writeToXMLFile(USER_XML_FILEPATH, rootModelItem)
 
@@ -1646,7 +1655,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         # Save the current hierarchy in the user-modifiable section to
         # a temporary user hierarchy XML file.
-        rootModelItem = self.model.itemFromIndex( Qt.QModelIndex(
+        rootModelItem = self.model.itemFromIndex( QModelIndex(
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
         self.model.writeToXMLFile(USER_TEMP_XML_FILEPATH, rootModelItem)
 
@@ -1654,7 +1663,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def saveSettings(self):
         """"""
 
-        settings = Qt.QSettings('HLA','Launcher')
+        settings = QSettings('HLA','Launcher')
 
         settings.beginGroup('MainWindow')
         settings.setValue('position',self.geometry())
@@ -1668,14 +1677,14 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def loadSettings(self):
         """"""
 
-        settings = Qt.QSettings('HLA','Launcher')
+        settings = QSettings('HLA','Launcher')
 
         settings.beginGroup('MainWindow')
         rect = settings.value('position') # .toRect() # need to be appended for v.1 API
-        #if rect == Qt.QRect():
-            #rect = Qt.QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
+        #if rect == QRect():
+            #rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
         if not rect:
-            rect = Qt.QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
+            rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
         self.setGeometry(rect)
         splitterPanes_sizes = settings.value('splitterPanes_sizes') # .toList() # need to be appended for v.1 API
         #splitterPanes_sizes = [s.toInt()[0] for s in splitterPanes_sizes] # needed for v.1 API
@@ -1708,18 +1717,21 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             if s.currentIndex() == self.treeView_stack_index:
                 s.setCurrentIndex(self.listView_stack_index)
             m.listView.setViewMode(CustomListView.IconMode)
-            index = self.comboBox_view_mode.findText('Icons View', Qt.Qt.MatchExactly)
+            index = self.comboBox_view_mode.findText('Icons View',
+                                                     Qt.MatchExactly)
         elif action == self.actionListView:
             if s.currentIndex() == self.treeView_stack_index:
                 s.setCurrentIndex(self.listView_stack_index)
             m.listView.setViewMode(CustomListView.ListMode)
-            index = self.comboBox_view_mode.findText('List View', Qt.Qt.MatchExactly)
+            index = self.comboBox_view_mode.findText('List View',
+                                                     Qt.MatchExactly)
         elif action == self.actionDetailsView:
             if s.currentIndex() == self.listView_stack_index:
                 s.setCurrentIndex(self.treeView_stack_index)
             for c in range(self.model.columnCount()):
                 m.treeView.resizeColumnToContents(c)
-            index = self.comboBox_view_mode.findText('Details View', Qt.Qt.MatchExactly)
+            index = self.comboBox_view_mode.findText('Details View',
+                                                     Qt.MatchExactly)
         else:
             raise ValueError('Unexpected view mode action')
 
@@ -1770,7 +1782,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         # If currentPath is a persistent model index of "searchModel",
         # then you need to convert currentPath into the corresponding
         # persistent model index of "self.model" first.
-        if ( type(currentPath) == Qt.QPersistentModelIndex ) and \
+        if ( type(currentPath) == QPersistentModelIndex ) and \
            ( type(currentPath.model()) == SearchModel ):
             currentPath = self.convertSearchModelPModIndToModelPModInd(
                 m.searchModel, currentPath)
@@ -1779,7 +1791,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             # If the latest history path is a search result,
             # then remove the path, since user decided not to do search
             # any more.
-            if type(currentPath) != Qt.QPersistentModelIndex:
+            if type(currentPath) != QPersistentModelIndex:
                 m.pathHistory = m.pathHistory[:m.pathHistoryCurrentIndex]
                 m.pathHistoryCurrentIndex = len(m.pathHistory)-1
                 # History update must happen before calling "self.updateView"
@@ -1788,14 +1800,14 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
             return
 
-        if type(currentPath) == Qt.QPersistentModelIndex:
-            searchRootIndex = Qt.QModelIndex(currentPath)
+        if type(currentPath) == QPersistentModelIndex:
+            searchRootIndex = QModelIndex(currentPath)
             m.pathHistory = m.pathHistory[:(m.pathHistoryCurrentIndex+1)]
             m.pathHistory.append({'searchText':newSearchText,
                                   'searchRootIndex':currentPath})
             m.pathHistoryCurrentIndex = len(m.pathHistory)-1
         else:
-            searchRootIndex = Qt.QModelIndex(currentPath['searchRootIndex'])
+            searchRootIndex = QModelIndex(currentPath['searchRootIndex'])
             m.pathHistory[m.pathHistoryCurrentIndex] = \
                 {'searchText':newSearchText,
                  'searchRootIndex':currentPath['searchRootIndex']}
@@ -1838,14 +1850,14 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             # referenced back to the corresponding persistent model index of
             # self.model.
             newItem.sourcePersistentModelIndex = \
-                Qt.QPersistentModelIndex(self.model.indexFromItem(item))
+                QPersistentModelIndex(self.model.indexFromItem(item))
             ## TODO: Highlight the search matching portion of the dispaly text
             rootItem.setChild(i,0,newItem)
             for (j,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
                 p = getattr(item,prop_name)
                 if not isinstance(p,str):
                     p = str(p)
-                rootItem.setChild(i,j+1,Qt.QStandardItem(p))
+                rootItem.setChild(i,j+1,QStandardItem(p))
 
         self.updateView(m)
 
@@ -1926,31 +1938,31 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def _initMainPaneTreeViewSettings(self, newTreeView):
         """"""
 
-        newTreeView.setSelectionMode(Qt.QAbstractItemView.ExtendedSelection)
-        newTreeView.setSelectionBehavior(Qt.QAbstractItemView.SelectRows)
+        newTreeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        newTreeView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
-        newTreeView.setDragDropMode(Qt.QAbstractItemView.NoDragDrop)
+        newTreeView.setDragDropMode(QAbstractItemView.NoDragDrop)
 
-        newTreeView.setEditTriggers(Qt.QAbstractItemView.EditKeyPressed |
-                                    Qt.QAbstractItemView.SelectedClicked)
+        newTreeView.setEditTriggers(QAbstractItemView.EditKeyPressed |
+                                    QAbstractItemView.SelectedClicked)
 
         self.connect(newTreeView.selectionModel(),
-                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
                      self.onSelectionChange)
         self.connect(newTreeView,
-                     Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
         self.connect(newTreeView,
-                     Qt.SIGNAL('doubleClicked(const QModelIndex &)'),
+                     SIGNAL('doubleClicked(const QModelIndex &)'),
                      self._callbackDoubleClickOnMainPaneItem)
         self.connect(newTreeView,
-                     Qt.SIGNAL('clicked(const QModelIndex &)'),
+                     SIGNAL('clicked(const QModelIndex &)'),
                      self._callbackClickOnMainPaneItem)
-        self.connect(newTreeView, Qt.SIGNAL('focusObtained()'),
+        self.connect(newTreeView, SIGNAL('focusObtained()'),
                      self.onMainPaneFocusIn)
-        self.connect(newTreeView, Qt.SIGNAL('focusLost()'),
+        self.connect(newTreeView, SIGNAL('focusLost()'),
                      self.onMainPaneFocusOut)
-        self.connect(newTreeView, Qt.SIGNAL('closingItemRenameEditor'),
+        self.connect(newTreeView, SIGNAL('closingItemRenameEditor'),
                      self.onItemRenameEditorClosing)
 
 
@@ -1958,34 +1970,34 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def _initMainPaneListViewSettings(self, newListView):
         """"""
 
-        newListView.setSelectionMode(Qt.QAbstractItemView.ExtendedSelection)
-        newListView.setSelectionBehavior(Qt.QAbstractItemView.SelectRows)
+        newListView.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        newListView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         newListView.setResizeMode(CustomListView.Adjust)
         newListView.setWrapping(True)
-        newListView.setDragDropMode(Qt.QAbstractItemView.NoDragDrop)
+        newListView.setDragDropMode(QAbstractItemView.NoDragDrop)
 
-        newListView.setEditTriggers(Qt.QAbstractItemView.EditKeyPressed |
-                                    Qt.QAbstractItemView.SelectedClicked)
+        newListView.setEditTriggers(QAbstractItemView.EditKeyPressed |
+                                    QAbstractItemView.SelectedClicked)
 
 
         self.connect(newListView.selectionModel(),
-                     Qt.SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
+                     SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
                      self.onSelectionChange)
         self.connect(newListView,
-                     Qt.SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
         self.connect(newListView,
-                     Qt.SIGNAL('doubleClicked(const QModelIndex &)'),
+                     SIGNAL('doubleClicked(const QModelIndex &)'),
                      self._callbackDoubleClickOnMainPaneItem)
         self.connect(newListView,
-                     Qt.SIGNAL('clicked(const QModelIndex &)'),
+                     SIGNAL('clicked(const QModelIndex &)'),
                      self._callbackClickOnMainPaneItem)
-        self.connect(newListView, Qt.SIGNAL('focusObtained()'),
+        self.connect(newListView, SIGNAL('focusObtained()'),
                      self.onMainPaneFocusIn)
-        self.connect(newListView, Qt.SIGNAL('focusLost()'),
+        self.connect(newListView, SIGNAL('focusLost()'),
                      self.onMainPaneFocusOut)
-        self.connect(newListView, Qt.SIGNAL('closingItemRenameEditor'),
+        self.connect(newListView, SIGNAL('closingItemRenameEditor'),
                      self.onItemRenameEditorClosing)
 
     #----------------------------------------------------------------------
@@ -2003,11 +2015,11 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         # and whether there will be no duplicate path if the new dispName is accepted.
         dispName = str(editorText)
         if dispName == '':
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             msgBox.setText( (
                 'Empty item name not allowed.') )
             msgBox.setInformativeText( 'Please enter a non-empty string as an item name.')
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
             self.renameItem() # Re-open the editor
             return
@@ -2017,12 +2029,12 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         if originalSourceItemPath in existingPathList:
             existingPathList.remove(originalSourceItemPath)
         if path in existingPathList:
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             msgBox.setText( (
                 'Duplicate item name detected.') )
             msgBox.setInformativeText( 'The name ' + '"' + dispName + '"' +
                                        ' is already used in this page. Please use a different name.')
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
             self.renameItem() # Re-open the editor
             return
@@ -2070,7 +2082,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         clickedOnSearchModeMainPane = False
 
         model = itemSelectionModel.model()
-        if type(model) == Qt.QSortFilterProxyModel: # When selection change ocurred on a Main Pane
+        if type(model) == QSortFilterProxyModel: # When selection change ocurred on a Main Pane
             m = self.getCurrentMainPane()
             sourceModelIndexList = [m.proxyModel.mapToSource(proxyModelIndex)
                                     for proxyModelIndex
@@ -2091,7 +2103,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         if not clickedOnSearchModeMainPane: # For selection change on a Mane Pane in Non-Search Mode & on a Side Pane
             if all([i.isValid() for i in sourceModelIndexList]):
-                self.selectedPersModelIndexList = [Qt.QPersistentModelIndex(i)
+                self.selectedPersModelIndexList = [QPersistentModelIndex(i)
                                                    for i in sourceModelIndexList]
             else:
                 raise ValueError('Invalid model index detected.')
@@ -2099,7 +2111,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.selectedItemList = [self.model.itemFromIndex(i)
                                      for i in sourceModelIndexList]
         else: # For selection change on a Mane Pane in Search Mode
-            self.selectedItemList = [self.model.itemFromIndex(Qt.QModelIndex(pModInd))
+            self.selectedItemList = [self.model.itemFromIndex(QModelIndex(pModInd))
                                      for pModInd in self.selectedPersModelIndexList]
 
         #if self.selectedItemList:
@@ -2123,7 +2135,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         """"""
 
         tab_page = self.tabWidget.widget(new_current_page_index)
-        currentStackedWidget = tab_page.findChildren(Qt.QStackedWidget)[0]
+        currentStackedWidget = tab_page.findChildren(QStackedWidget)[0]
         visibleViewIndex = currentStackedWidget.currentIndex()
 
         if visibleViewIndex == self.listView_stack_index:
@@ -2161,10 +2173,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                              'MultipleExecutableSelection'):
             for item in self.selectedItemList:
                 if item.itemType == 'exe':
-                    self.emit(Qt.SIGNAL('sigExeRunRequested'),
+                    self.emit(SIGNAL('sigExeRunRequested'),
                               item.path, item.command, item.cwd)
                 elif item.itemType == 'py':
-                    self.emit(Qt.SIGNAL('sigPyModRunRequested'),
+                    self.emit(SIGNAL('sigPyModRunRequested'),
                               item.moduleName, item.cwd, item.args)
         else:
             raise ValueError('Unexpected selectionType: {0:s}'.
@@ -2179,7 +2191,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         if selectionType in ('SingleTxtSelection',
                              'MultipleTxtSelection'):
             for item in self.selectedItemList:
-                self.emit(Qt.SIGNAL('sigTxtOpenRequested'),
+                self.emit(SIGNAL('sigTxtOpenRequested'),
                           item.path, item.sourceFilepath, item.editor)
         else:
             raise ValueError('Unexpected selectionType: {0:s}'.
@@ -2211,14 +2223,14 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
             original_splitter_sizes = self.splitterPanes.sizes()
 
-            self.tabWidget = Qt.QTabWidget(self.splitterPanes)
+            self.tabWidget = QTabWidget(self.splitterPanes)
             self.tabWidget.setObjectName("tabWidget")
             self.tabWidget.setVisible(True)
             self.tabWidget.setTabsClosable(True)
             self.tabWidget.setMovable(True)
 
             # Move the current stacked widget to a tab
-            new_tab = Qt.QWidget()
+            new_tab = QWidget()
             m.stackedWidget.setParent(new_tab)
             currentHistoryItem = m.pathHistory[m.pathHistoryCurrentIndex]
             if type(currentHistoryItem) == dict:
@@ -2226,37 +2238,36 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             else:
                 currentRootPersModInd = currentHistoryItem
             currentRootItem = self.model.itemFromIndex(
-                Qt.QModelIndex(currentRootPersModInd) )
+                QModelIndex(currentRootPersModInd) )
             self.tabWidget.addTab(new_tab, currentRootItem.dispName)
             #
-            tab_gridLayout = Qt.QGridLayout(new_tab)
+            tab_gridLayout = QGridLayout(new_tab)
             tab_gridLayout.addWidget(m.stackedWidget,0,0,1,1)
 
             self.splitterPanes.setSizes(original_splitter_sizes)
 
             self.connect(self.tabWidget,
-                         Qt.SIGNAL('tabCloseRequested(int)'),
-                         self.closeTab);
-            self.connect(self.tabWidget, Qt.SIGNAL("currentChanged(int)"),
+                         SIGNAL('tabCloseRequested(int)'), self.closeTab);
+            self.connect(self.tabWidget, SIGNAL("currentChanged(int)"),
                          self.onTabSelectionChange)
 
 
         for selectedItem in self.selectedItemList:
-            new_tab = Qt.QWidget()
-            new_stackedWidget = Qt.QStackedWidget(new_tab)
+            new_tab = QWidget()
+            new_stackedWidget = QStackedWidget(new_tab)
             #
-            tab_gridLayout = Qt.QGridLayout(new_tab)
+            tab_gridLayout = QGridLayout(new_tab)
             tab_gridLayout.addWidget(new_stackedWidget,0,0,1,1)
             #
-            new_page1 = Qt.QWidget()
-            page1_gridLayout = Qt.QGridLayout(new_page1)
+            new_page1 = QWidget()
+            page1_gridLayout = QGridLayout(new_page1)
             page1_gridLayout.setContentsMargins(-1, 0, 0, 0)
             new_listView = CustomListView(new_page1)
             new_listView.setViewMode(self.selectedListViewMode)
             page1_gridLayout.addWidget(new_listView, 0, 0, 1, 1)
             new_stackedWidget.addWidget(new_page1)
-            new_page2 = Qt.QWidget()
-            page2_gridLayout = Qt.QGridLayout(new_page2)
+            new_page2 = QWidget()
+            page2_gridLayout = QGridLayout(new_page2)
             page2_gridLayout.setContentsMargins(-1, 0, 0, 0)
             new_treeView = CustomTreeView(new_page2)
             page2_gridLayout.addWidget(new_treeView, 0, 0, 1, 1)
@@ -2284,7 +2295,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         """"""
 
         for selectedItem in self.selectedItemList:
-            self.emit(Qt.SIGNAL('sigPyModRunRequested'),
+            self.emit(SIGNAL('sigPyModRunRequested'),
                       'aphla.gui.aplauncher', selectedItem.cwd,
                       selectedItem.path)
 
@@ -2293,9 +2304,8 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         """"""
 
         self.disconnect(self.tabWidget,
-                        Qt.SIGNAL('tabCloseRequested(int)'),
-                        self.closeTab);
-        self.disconnect(self.tabWidget, Qt.SIGNAL("currentChanged(int)"),
+                        SIGNAL('tabCloseRequested(int)'), self.closeTab);
+        self.disconnect(self.tabWidget, SIGNAL("currentChanged(int)"),
                         self.onTabSelectionChange)
 
         m = self.mainPaneList[0]
@@ -2315,214 +2325,214 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         """"""
 
         # Action for Back button
-        self.actionGoBack = Qt.QAction(Qt.QIcon(":/left_arrow.png"),
+        self.actionGoBack = QAction(QIcon(":/left_arrow.png"),
                                        "Back", self);
         self.actionGoBack.setCheckable(False)
         self.actionGoBack.setEnabled(False)
         self.addAction(self.actionGoBack)
-        self.connect(self.actionGoBack, Qt.SIGNAL("triggered()"),
+        self.connect(self.actionGoBack, SIGNAL("triggered()"),
                      self.goBack)
 
         # Action for Forward button
-        self.actionGoForward = Qt.QAction(Qt.QIcon(":/right_arrow.png"),
+        self.actionGoForward = QAction(QIcon(":/right_arrow.png"),
                                           "Forward", self);
         self.actionGoForward.setCheckable(False)
         self.actionGoForward.setEnabled(False)
         self.addAction(self.actionGoForward)
-        self.connect(self.actionGoForward, Qt.SIGNAL("triggered()"),
+        self.connect(self.actionGoForward, SIGNAL("triggered()"),
                      self.goForward)
 
         # Action for Up button
-        self.actionGoUp = Qt.QAction(Qt.QIcon(":/up_arrow.png"),
+        self.actionGoUp = QAction(QIcon(":/up_arrow.png"),
                                      "Open Parent", self);
         self.actionGoUp.setCheckable(False)
         self.actionGoUp.setEnabled(False)
         self.addAction(self.actionGoUp)
-        self.connect(self.actionGoUp, Qt.SIGNAL("triggered()"),
+        self.connect(self.actionGoUp, SIGNAL("triggered()"),
                      self.goUp)
 
 
-        self.actionOpen = Qt.QAction(Qt.QIcon(), 'Open', self)
-        self.connect(self.actionOpen, Qt.SIGNAL('triggered()'),
+        self.actionOpen = QAction(QIcon(), 'Open', self)
+        self.connect(self.actionOpen, SIGNAL('triggered()'),
                      self.openPage)
 
-        self.actionOpenInNewTab = Qt.QAction(Qt.QIcon(),
+        self.actionOpenInNewTab = QAction(QIcon(),
                                              'Open in New Tab', self)
-        self.connect(self.actionOpenInNewTab, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionOpenInNewTab, SIGNAL('triggered()'),
                      self.openInNewTab)
 
-        self.actionOpenInNewWindow = Qt.QAction(Qt.QIcon(),
+        self.actionOpenInNewWindow = QAction(QIcon(),
                                                 'Open in New Window', self)
-        self.connect(self.actionOpenInNewWindow, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionOpenInNewWindow, SIGNAL('triggered()'),
                      self.openInNewWindow)
 
-        self.actionRun = Qt.QAction(Qt.QIcon(), 'Run', self)
-        self.connect(self.actionRun, Qt.SIGNAL('triggered()'),
+        self.actionRun = QAction(QIcon(), 'Run', self)
+        self.connect(self.actionRun, SIGNAL('triggered()'),
                      self.runExecutable)
 
-        self.actionEditTxt = Qt.QAction(Qt.QIcon(), 'Edit', self)
-        self.connect(self.actionEditTxt, Qt.SIGNAL('triggered()'),
+        self.actionEditTxt = QAction(QIcon(), 'Edit', self)
+        self.connect(self.actionEditTxt, SIGNAL('triggered()'),
                      self.editTxtFile)
 
-        self.actionCut = Qt.QAction(Qt.QIcon(), 'Cut', self)
+        self.actionCut = QAction(QIcon(), 'Cut', self)
         self.actionCut.setShortcut(
-            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_X))
+            QKeySequence(Qt.ControlModifier + Qt.Key_X))
         self.addAction(self.actionCut)
-        self.connect(self.actionCut, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionCut, SIGNAL('triggered()'),
                      self.cutItems)
 
-        self.actionCopy = Qt.QAction(Qt.QIcon(), 'Copy', self)
+        self.actionCopy = QAction(QIcon(), 'Copy', self)
         self.actionCopy.setShortcut(
-            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_C))
+            QKeySequence(Qt.ControlModifier + Qt.Key_C))
         self.addAction(self.actionCopy)
-        self.connect(self.actionCopy, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionCopy, SIGNAL('triggered()'),
                      self.copyItems)
 
-        self.actionPaste = Qt.QAction(Qt.QIcon(), 'Paste', self)
+        self.actionPaste = QAction(QIcon(), 'Paste', self)
         self.actionPaste.setShortcut(
-            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_V))
+            QKeySequence(Qt.ControlModifier + Qt.Key_V))
         self.addAction(self.actionPaste)
-        self.connect(self.actionPaste, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionPaste, SIGNAL('triggered()'),
                      self.pasteItems)
 
 
-        self.actionRename = Qt.QAction(Qt.QIcon(), 'Rename', self)
-        self.actionRename.setShortcut(Qt.Qt.Key_F2)
+        self.actionRename = QAction(QIcon(), 'Rename', self)
+        self.actionRename.setShortcut(Qt.Key_F2)
         self.addAction(self.actionRename)
-        self.connect(self.actionRename, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionRename, SIGNAL('triggered()'),
                      self.renameItem)
 
-        self.actionProperties = Qt.QAction(Qt.QIcon(), 'Properties', self)
+        self.actionProperties = QAction(QIcon(), 'Properties', self)
         self.actionProperties.setShortcut(
-            Qt.QKeySequence(Qt.Qt.AltModifier + Qt.Qt.Key_Return))
+            QKeySequence(Qt.AltModifier + Qt.Key_Return))
         self.addAction(self.actionProperties)
-        self.connect(self.actionProperties, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionProperties, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
 
-        self.actionCreateNewPage = Qt.QAction(Qt.QIcon(),
+        self.actionCreateNewPage = QAction(QIcon(),
                                               'Create New Page Item', self)
-        self.connect(self.actionCreateNewPage, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionCreateNewPage, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
-        self.actionCreateNewExe = Qt.QAction(Qt.QIcon(),
+        self.actionCreateNewExe = QAction(QIcon(),
                                              'Create New Executable Item', self)
-        self.connect(self.actionCreateNewExe, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionCreateNewExe, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
-        self.actionCreateNewPyMod = Qt.QAction(
-            Qt.QIcon(), 'Create New Executable Python Module Item', self)
-        self.connect(self.actionCreateNewPyMod, Qt.SIGNAL('triggered()'),
+        self.actionCreateNewPyMod = QAction(
+            QIcon(), 'Create New Executable Python Module Item', self)
+        self.connect(self.actionCreateNewPyMod, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
-        self.actionCreateNewTxt = Qt.QAction(Qt.QIcon(),
+        self.actionCreateNewTxt = QAction(QIcon(),
                                              'Create New Text Item', self)
-        self.connect(self.actionCreateNewTxt, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionCreateNewTxt, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
-        self.actionCreateNewInfo = Qt.QAction(Qt.QIcon(),
+        self.actionCreateNewInfo = QAction(QIcon(),
                                              'Create New Info Item', self)
-        self.connect(self.actionCreateNewInfo, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionCreateNewInfo, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
         # TODO
-        self.actionArrangeItems = Qt.QAction(Qt.QIcon(), 'Arrange Items', self)
+        self.actionArrangeItems = QAction(QIcon(), 'Arrange Items', self)
         self.actionArrangeItems.setEnabled(False)
-        self.connect(self.actionArrangeItems, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionArrangeItems, SIGNAL('triggered()'),
                      self._not_implemented_yet)
 
-        self.actionVisibleColumns = Qt.QAction(Qt.QIcon(), 'Visible Columns...',
+        self.actionVisibleColumns = QAction(QIcon(), 'Visible Columns...',
                                                self)
-        self.connect(self.actionVisibleColumns, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionVisibleColumns, SIGNAL('triggered()'),
                      self.launchColumnsDialog)
-        self.connect(self, Qt.SIGNAL('columnSelectionReturned'),
+        self.connect(self, SIGNAL('columnSelectionReturned'),
                      self.onColumnSelectionChange)
 
-        self.actionDelete = Qt.QAction(Qt.QIcon(), 'Delete', self)
-        self.actionDelete.setShortcut(Qt.Qt.Key_Delete)
+        self.actionDelete = QAction(QIcon(), 'Delete', self)
+        self.actionDelete.setShortcut(Qt.Key_Delete)
         self.addAction(self.actionDelete)
-        self.connect(self.actionDelete, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionDelete, SIGNAL('triggered()'),
                      self.deleteItems)
 
-        self.actionImportUserXML = Qt.QAction(
-            Qt.QIcon(), 'Import user hierarchy...', self)
+        self.actionImportUserXML = QAction(
+            QIcon(), 'Import user hierarchy...', self)
         self.addAction(self.actionImportUserXML)
-        self.connect(self.actionImportUserXML, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionImportUserXML, SIGNAL('triggered()'),
                      self.importUserXML)
 
-        self.actionExportUserXML = Qt.QAction(
-            Qt.QIcon(), 'Export user hierarchy...', self)
+        self.actionExportUserXML = QAction(
+            QIcon(), 'Export user hierarchy...', self)
         self.addAction(self.actionExportUserXML)
-        self.connect(self.actionExportUserXML, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionExportUserXML, SIGNAL('triggered()'),
                      self.exportUserXML)
 
-        self.actionCloseTabOrWindow = Qt.QAction(Qt.QIcon(), 'Close', self)
+        self.actionCloseTabOrWindow = QAction(QIcon(), 'Close', self)
         self.actionCloseTabOrWindow.setShortcut(
-            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_W))
+            QKeySequence(Qt.ControlModifier + Qt.Key_W))
         self.addAction(self.actionCloseTabOrWindow)
-        self.connect(self.actionCloseTabOrWindow, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionCloseTabOrWindow, SIGNAL('triggered()'),
                      self.closeTabOrWindow)
 
-        self.actionSelectAll = Qt.QAction(Qt.QIcon(), 'Select All', self)
+        self.actionSelectAll = QAction(QIcon(), 'Select All', self)
         #self.actionSelectAll.setShortcut(
-            #Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_A))
-        self.actionSelectAll.setShortcut(Qt.QKeySequence.SelectAll)
+            #QKeySequence(Qt.ControlModifier + Qt.Key_A))
+        self.actionSelectAll.setShortcut(QKeySequence.SelectAll)
         self.addAction(self.actionSelectAll)
-        self.connect(self.actionSelectAll, Qt.SIGNAL('triggered()'),
+        self.connect(self.actionSelectAll, SIGNAL('triggered()'),
                      self._not_implemented_yet)
 
         self.actionToggleSidePaneVisibility = \
-            Qt.QAction(Qt.QIcon(), 'Side Pane', self)
-        self.actionToggleSidePaneVisibility.setShortcut(Qt.Qt.Key_F9)
+            QAction(QIcon(), 'Side Pane', self)
+        self.actionToggleSidePaneVisibility.setShortcut(Qt.Key_F9)
         self.addAction(self.actionToggleSidePaneVisibility)
         self.actionToggleSidePaneVisibility.setCheckable(True)
         self.actionToggleSidePaneVisibility.setChecked(True)
         self.connect(self.actionToggleSidePaneVisibility,
-                     Qt.SIGNAL('triggered(bool)'),
+                     SIGNAL('triggered(bool)'),
                      self.toggleSidePaneVisibility)
 
 
         # Action Group for Main Pane View Mode
-        self.actionGroupViewMode = Qt.QActionGroup(self)
+        self.actionGroupViewMode = QActionGroup(self)
         self.actionGroupViewMode.setExclusive(True)
-        self.actionIconsView = Qt.QAction(Qt.QIcon(), 'Icons View',
+        self.actionIconsView = QAction(QIcon(), 'Icons View',
                                           self.actionGroupViewMode)
         self.actionIconsView.setCheckable(True)
         self.actionIconsView.setShortcut(
-            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_1))
+            QKeySequence(Qt.ControlModifier + Qt.Key_1))
         self.addAction(self.actionIconsView)
-        self.actionListView = Qt.QAction(Qt.QIcon(), 'List View',
+        self.actionListView = QAction(QIcon(), 'List View',
                                          self.actionGroupViewMode)
         self.actionListView.setCheckable(True)
         self.actionListView.setShortcut(
-            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_2))
+            QKeySequence(Qt.ControlModifier + Qt.Key_2))
         self.addAction(self.actionListView)
-        self.actionDetailsView = Qt.QAction(Qt.QIcon(), 'Details View',
+        self.actionDetailsView = QAction(QIcon(), 'Details View',
                                             self.actionGroupViewMode)
         self.actionDetailsView.setCheckable(True)
         self.actionDetailsView.setShortcut(
-            Qt.QKeySequence(Qt.Qt.ControlModifier + Qt.Qt.Key_3))
+            QKeySequence(Qt.ControlModifier + Qt.Key_3))
         self.addAction(self.actionDetailsView)
         self.actionIconsView.setChecked(True) # Default selection for the view mode
-        self.connect(self.actionGroupViewMode, Qt.SIGNAL('triggered(QAction *)'),
+        self.connect(self.actionGroupViewMode, SIGNAL('triggered(QAction *)'),
                      self.onViewModeActionGroupTriggered)
 
-        self.actionRunningSubprocs = Qt.QAction(Qt.QIcon(),
+        self.actionRunningSubprocs = QAction(QIcon(),
                                                 'Runngin Subprocesses...', self)
         self.addAction(self.actionRunningSubprocs)
         self.connect(self.actionRunningSubprocs,
-                     Qt.SIGNAL('triggered()'), self.print_running_subprocs)
+                     SIGNAL('triggered()'), self.print_running_subprocs)
 
     #----------------------------------------------------------------------
     def _not_implemented_yet(self):
         """"""
 
-        msgBox = Qt.QMessageBox()
+        msgBox = QMessageBox()
         msgBox.setText( (
             'This action has not been implemented yet.') )
         msgBox.setInformativeText(self.sender().text())
         #msgBox.setInformativeText( str(sys.exc_info()) )
-        msgBox.setIcon(Qt.QMessageBox.Critical)
+        msgBox.setIcon(QMessageBox.Critical)
         msgBox.exec_()
         return
 
@@ -2541,7 +2551,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         dialog.exec_()
 
         if dialog.output is not None:
-            self.emit(Qt.SIGNAL('columnSelectionReturned'), dialog.output)
+            self.emit(SIGNAL('columnSelectionReturned'), dialog.output)
 
     #----------------------------------------------------------------------
     def onColumnSelectionChange(self, new_vis_col_full_names,
@@ -2582,15 +2592,15 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.menuGo.setTitle('&Go')
         self.menuHelp.setTitle('&Help')
 
-        self.connect(self.menuFile, Qt.SIGNAL('aboutToShow()'),
+        self.connect(self.menuFile, SIGNAL('aboutToShow()'),
                      self.updateMenuItems)
-        self.connect(self.menuEdit, Qt.SIGNAL('aboutToShow()'),
+        self.connect(self.menuEdit, SIGNAL('aboutToShow()'),
                      self.updateMenuItems)
-        self.connect(self.menuView, Qt.SIGNAL('aboutToShow()'),
+        self.connect(self.menuView, SIGNAL('aboutToShow()'),
                      self.updateMenuItems)
-        self.connect(self.menuGo, Qt.SIGNAL('aboutToShow()'),
+        self.connect(self.menuGo, SIGNAL('aboutToShow()'),
                      self.updateMenuItems)
-        self.connect(self.menuHelp, Qt.SIGNAL('aboutToShow()'),
+        self.connect(self.menuHelp, SIGNAL('aboutToShow()'),
                      self.updateMenuItems)
 
     #----------------------------------------------------------------------
@@ -2610,7 +2620,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         caption = 'Import Launcher User Hierarchy XML'
         filter_str = ';;'.join(['XML files (*.xml)',
                                 all_files_filter_str])
-        filepath = Qt.QFileDialog.getOpenFileName(
+        filepath = QFileDialog.getOpenFileName(
             caption=caption, directory=START_DIRS.import_user_xml,
             filter=filter_str)
         if not filepath:
@@ -2620,7 +2630,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         shutil.copy(filepath, USER_XML_FILEPATH)
 
-        self.emit(Qt.SIGNAL('sigRestartLauncher'), filepath)
+        self.emit(SIGNAL('sigRestartLauncher'), filepath)
 
     #----------------------------------------------------------------------
     def exportUserXML(self):
@@ -2630,7 +2640,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         caption = 'Export Current Launcher User Hierarchy XML'
         filter_str = ';;'.join(['XML files (*.xml)',
                                 all_files_filter_str])
-        save_filepath = Qt.QFileDialog.getSaveFileName(
+        save_filepath = QFileDialog.getSaveFileName(
             caption=caption, directory=START_DIRS.export_user_xml,
             filter=filter_str)
         if not save_filepath:
@@ -2681,7 +2691,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             elif self.sender() == self.actionCreateNewInfo:
                 selectedItem.itemType = 'info'
             createNewItem = True
-            selectedItem.setFlags(selectedItem.flags() | Qt.Qt.ItemIsEditable)
+            selectedItem.setFlags(selectedItem.flags() | Qt.ItemIsEditable)
 
         elif self.sender() in (self.actionProperties,
                                self): # When info item is double clicked
@@ -2704,7 +2714,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         if not isModifiable:
             return
 
-        if self.propertiesDialogView.result() == Qt.QDialog.Accepted:
+        if self.propertiesDialogView.result() == QDialog.Accepted:
             if not createNewItem:
                 parentItem = selectedItem.parent()
                 if parentItem is not None:
@@ -2728,7 +2738,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                         if not isinstance(p,str):
                             p = str(p)
 
-                        parentSearchItem.setChild(row, ii+1, Qt.QStandardItem(p))
+                        parentSearchItem.setChild(row, ii+1, QStandardItem(p))
 
                     self.model.updateCompleterModel(self.getCurrentRootPath())
 
@@ -2747,7 +2757,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                     if not isinstance(p,str):
                         p = str(p)
 
-                    parentItem.setChild(row, ii+1, Qt.QStandardItem(p))
+                    parentItem.setChild(row, ii+1, QStandardItem(p))
 
 
                 self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
@@ -2785,28 +2795,28 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         if self.getCurrentMainPanePath().startswith(USER_MODIFIABLE_ROOT_PATH):
             selectedDeletableItems = self.selectedItemList
         else:
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             msgBox.setText( (
                 'All selected items cannot be deleted. You do not have write permission.') )
             msgBox.setInformativeText( str(sys.exc_info()) )
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
             return
 
-        msgBox = Qt.QMessageBox()
-        msgBox.addButton(Qt.QMessageBox.Yes)
-        msgBox.addButton(Qt.QMessageBox.Cancel)
-        msgBox.setDefaultButton(Qt.QMessageBox.Cancel)
-        msgBox.setEscapeButton(Qt.QMessageBox.Cancel)
+        msgBox = QMessageBox()
+        msgBox.addButton(QMessageBox.Yes)
+        msgBox.addButton(QMessageBox.Cancel)
+        msgBox.setDefaultButton(QMessageBox.Cancel)
+        msgBox.setEscapeButton(QMessageBox.Cancel)
         msgBox.setText( 'Delete selected items"?' )
         infoText = ''
         for item in selectedDeletableItems:
             infoText += item.path + '\n'
         msgBox.setInformativeText(infoText)
-        msgBox.setIcon(Qt.QMessageBox.Question)
+        msgBox.setIcon(QMessageBox.Question)
         msgBox.setWindowTitle('Delete')
         choice = msgBox.exec_()
-        if choice == Qt.QMessageBox.Cancel:
+        if choice == QMessageBox.Cancel:
             return
 
         for item in selectedDeletableItems:
@@ -2836,7 +2846,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         for m in self.mainPaneList:
             indexesToBeRemovedFrom_History = []
             for (index,p) in enumerate(m.pathHistory):
-                if type(p) == Qt.QPersistentModelIndex:
+                if type(p) == QPersistentModelIndex:
                     pass
                 elif type(p) == dict:
                     p = p['searchRootIndex']
@@ -2890,10 +2900,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         for (clipIndex, item) in enumerate(self.clipboard):
 
             if item.path in currentRootItem.path:
-                msgBox = Qt.QMessageBox()
+                msgBox = QMessageBox()
                 msgBox.setText( (
                     'You cannot paste a parent item into a sub-item.') )
-                msgBox.setIcon(Qt.QMessageBox.Critical)
+                msgBox.setIcon(QMessageBox.Critical)
                 msgBox.exec_()
                 self.renameItem() # Re-open the editor
                 return
@@ -2909,10 +2919,10 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 # If the pasted item is due to "cut", then stop the paste
                 # action.
                 if self.clipboardType == 'cut':
-                    msgBox = Qt.QMessageBox()
+                    msgBox = QMessageBox()
                     msgBox.setText( (
                         'You cannot paste a cut item into the same page.') )
-                    msgBox.setIcon(Qt.QMessageBox.Critical)
+                    msgBox.setIcon(QMessageBox.Critical)
                     msgBox.exec_()
                     return
                 else:
@@ -2929,32 +2939,32 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             elif newPath in self.model.pathList: # When source item dispName conflicts with
                 # an existing item in the target path, ask the user whether to overwrite or not.
                 if not replaceAll:
-                    msgBox = Qt.QMessageBox()
-                    msgBox.addButton(Qt.QMessageBox.YesToAll)
-                    msgBox.addButton(Qt.QMessageBox.Yes)
-                    msgBox.addButton(Qt.QMessageBox.No)
-                    msgBox.addButton(Qt.QMessageBox.NoToAll)
-                    msgBox.setDefaultButton(Qt.QMessageBox.No)
-                    msgBox.setEscapeButton(Qt.QMessageBox.No)
+                    msgBox = QMessageBox()
+                    msgBox.addButton(QMessageBox.YesToAll)
+                    msgBox.addButton(QMessageBox.Yes)
+                    msgBox.addButton(QMessageBox.No)
+                    msgBox.addButton(QMessageBox.NoToAll)
+                    msgBox.setDefaultButton(QMessageBox.No)
+                    msgBox.setEscapeButton(QMessageBox.No)
                     msgBox.setText( (
                         'Replace item "' + pastedItem.dispName + '"?') )
                     msgBox.setInformativeText(
                         'An item with the same name already exists in "' + parentPath +
                         '". Replacing it will overwrite the item.')
-                    msgBox.setIcon(Qt.QMessageBox.Question)
+                    msgBox.setIcon(QMessageBox.Question)
                     msgBox.setWindowTitle('Item Conflict')
                     choice = msgBox.exec_()
                 else:
-                    choice = Qt.QMessageBox.Yes
+                    choice = QMessageBox.Yes
 
-                if (choice == Qt.QMessageBox.Yes) or \
-                   (choice == Qt.QMessageBox.YesToAll):
-                    if choice == Qt.QMessageBox.YesToAll:
+                if (choice == QMessageBox.Yes) or \
+                   (choice == QMessageBox.YesToAll):
+                    if choice == QMessageBox.YesToAll:
                         replaceAll = True
                     # Remove the conflicting item
                     persModIndToBeRemoved = self.model.pModelIndexFromPath(newPath)
                     itemToBeRemoved = self.itemFromIndex(
-                        Qt.QModelIndex(persModIndToBeRemoved))
+                        QModelIndex(persModIndToBeRemoved))
                     self.model.pathList.remove(newPath)
                     removeSucess = self.model.removeRow(
                         itemToBeRemoved.row(),
@@ -2964,9 +2974,9 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                         self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
                     else:
                         raise ValueError('Item removal failed.')
-                elif choice == Qt.QMessageBox.No:
+                elif choice == QMessageBox.No:
                     continue
-                elif choice == Qt.QMessageBox.NoToAll:
+                elif choice == QMessageBox.NoToAll:
                     break
                 else:
                     raise ValueError('Unexpected selection')
@@ -2977,7 +2987,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 p = getattr(pastedItem,prop_name)
                 if not isinstance(p,str):
                     p = str(p)
-                currentRootItem.setChild(rowIndex,i+1,Qt.QStandardItem(p))
+                currentRootItem.setChild(rowIndex,i+1,QStandardItem(p))
 
             # Recursively paste sub-items, if exist
             self.pasteSubItems(item, pastedItem)
@@ -3027,7 +3037,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                     p = getattr(pastedChildItem,propName)
                     if not isinstance(p,str):
                         p = str(p)
-                    targetParentItem.setChild(r,i+1,Qt.QStandardItem(p))
+                    targetParentItem.setChild(r,i+1,QStandardItem(p))
 
                 self.pasteSubItems(childItem, pastedChildItem)
 
@@ -3082,7 +3092,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         viewModeToolbar.setObjectName("toolbar_view_mode")
         viewModeToolbar.setFloatable(False)
         viewModeToolbar.setMovable(False)
-        viewModeComboBox = Qt.QComboBox(viewModeToolbar)
+        viewModeComboBox = QComboBox(viewModeToolbar)
         viewModeComboBox.setObjectName("comboBox_view_mode")
         viewModeComboBox.addItem("Icons View")
         viewModeComboBox.addItem("List View")
@@ -3116,7 +3126,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         self.tabWidget.removeTab(tab_index);
 
         # Remove MainPane from self.mainPaneList
-        stackedWidget = w.findChild(Qt.QStackedWidget)
+        stackedWidget = w.findChild(QStackedWidget)
         self.mainPaneList.remove( self.getParentMainPane(stackedWidget) )
 
         # Disable tab view since there is only 1 tab now
@@ -3201,16 +3211,16 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             self.clearSelection()
 
         elif item.itemType == 'exe':
-            self.emit(Qt.SIGNAL('sigExeRunRequested'),
+            self.emit(SIGNAL('sigExeRunRequested'),
                       item.path, item.command, item.cwd)
         elif item.itemType == 'py':
-            self.emit(Qt.SIGNAL('sigPyModRunRequested'),
+            self.emit(SIGNAL('sigPyModRunRequested'),
                       item.moduleName, item.cwd, item.args)
         elif item.itemType == 'txt':
-            self.emit(Qt.SIGNAL('sigTxtOpenRequested'),
+            self.emit(SIGNAL('sigTxtOpenRequested'),
                       item.path, item.sourceFilepath, item.editor)
         elif item.itemType == 'info':
-            self.emit(Qt.SIGNAL('sigPropertiesOpenRequested'),)
+            self.emit(SIGNAL('sigPropertiesOpenRequested'),)
         else:
             raise ValueError('Unexpected itemType: {0:s}'.format(item.itemType))
 
@@ -3227,23 +3237,23 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         if item.itemType == 'page':
             pass
         elif item.itemType == 'exe':
-            self.emit(Qt.SIGNAL('sigExeRunRequested'),
+            self.emit(SIGNAL('sigExeRunRequested'),
                       item.path, item.command, item.cwd)
         elif item.itemType == 'py':
-            self.emit(Qt.SIGNAL('sigPyModRunRequested'),
+            self.emit(SIGNAL('sigPyModRunRequested'),
                       item.moduleName, item.cwd, item.args)
         elif item.itemType == 'txt':
-            self.emit(Qt.SIGNAL('sigTxtOpenRequested'),
+            self.emit(SIGNAL('sigTxtOpenRequested'),
                       item.path, item.sourceFilepath, item.editor)
         elif item.itemType == 'info':
-            self.emit(Qt.SIGNAL('sigPropertiesOpenRequested'),)
+            self.emit(SIGNAL('sigPropertiesOpenRequested'),)
         else:
             raise ValueError('Unexpected itemType: {0:s}'.format(item.itemType))
 
     #----------------------------------------------------------------------
     def itemFromIndex(self, modelIndex):
         """
-        "modelIndex" can be a Qt.QModelIndex that is coming from Main Pane
+        "modelIndex" can be a QModelIndex that is coming from Main Pane
         views either on search mode or on non-search mode, as well as coming
         from Side Pane.
         """
@@ -3251,14 +3261,14 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         m = self.getCurrentMainPane()
 
-        if type(modelIndex.model()) == Qt.QSortFilterProxyModel:
+        if type(modelIndex.model()) == QSortFilterProxyModel:
             proxyModelIndex = modelIndex
             sourceModelIndex = m.proxyModel.mapToSource(proxyModelIndex)
 
             if self.inSearchMode():
                 searchItem = m.searchModel.itemFromIndex(sourceModelIndex)
                 currentHistoryItem = m.pathHistory[m.pathHistoryCurrentIndex]
-                sourceModelIndex = Qt.QModelIndex(currentHistoryItem['searchRootIndex'])
+                sourceModelIndex = QModelIndex(currentHistoryItem['searchRootIndex'])
             else:
                 pass
 
@@ -3279,7 +3289,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         else:
             currentRootPersModInd = currentHistoryItem
 
-        return Qt.QModelIndex(currentRootPersModInd)
+        return QModelIndex(currentRootPersModInd)
 
     #----------------------------------------------------------------------
     def getCurrentRootPath(self):
@@ -3296,7 +3306,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def getSourceModelIndex(self, proxyOrSourceModelIndex, mainPane):
         """"""
 
-        if type(proxyOrSourceModelIndex.model()) == Qt.QSortFilterProxyModel:
+        if type(proxyOrSourceModelIndex.model()) == QSortFilterProxyModel:
             proxyModelIndex = proxyOrSourceModelIndex
             sourceModelIndex = mainPane.proxyModel.mapToSource(proxyModelIndex)
         else:
@@ -3311,7 +3321,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         m = self.getCurrentMainPane()
 
         persistentSourceModelIndex = m.pathHistory[m.pathHistoryCurrentIndex]
-        if type(persistentSourceModelIndex) == Qt.QPersistentModelIndex: # When the main pane is showing non-search info
+        if type(persistentSourceModelIndex) == QPersistentModelIndex: # When the main pane is showing non-search info
             return False
         else: # When the main pane is showing search info
             return True
@@ -3331,7 +3341,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             if m.proxyModel.sourceModel() == m.searchModel:
                 m.proxyModel.setSourceModel(self.model)
 
-            sourceModelIndex = Qt.QModelIndex(
+            sourceModelIndex = QModelIndex(
                 m.pathHistory[m.pathHistoryCurrentIndex])
 
             proxyModelIndex = m.proxyModel.mapFromSource(sourceModelIndex)
@@ -3371,7 +3381,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         if self.tabWidget:
             currentTabPage = self.tabWidget.currentWidget()
-            currentStackedWidget = currentTabPage.findChildren(Qt.QStackedWidget)[0]
+            currentStackedWidget = currentTabPage.findChildren(QStackedWidget)[0]
             matchedMainPane = [m for m in self.mainPaneList
                                if m.stackedWidget == currentStackedWidget]
             if len(matchedMainPane) == 1:
@@ -3388,7 +3398,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         childWidgetType = type(childWidget)
 
-        if childWidgetType == Qt.QStackedWidget:
+        if childWidgetType == QStackedWidget:
             matchedMainPane = [m for m in self.mainPaneList
                                if m.stackedWidget == childWidget]
         elif childWidgetType == CustomListView:
@@ -3412,7 +3422,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         """"""
 
         searchModelItem = searchModel.itemFromIndex(
-            Qt.QModelIndex(searchModelPerModInd))
+            QModelIndex(searchModelPerModInd))
 
         return searchModelItem.sourcePersistentModelIndex
 
@@ -3426,7 +3436,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         m = self.getCurrentMainPane()
         pModInd = m.pathHistory[m.pathHistoryCurrentIndex]
-        if type(pModInd) == Qt.QPersistentModelIndex:
+        if type(pModInd) == QPersistentModelIndex:
             # If pModInd is a persistent model index of "searchModel",
             # then you need to convert pModInd into the corresponding
             # persistent model index of "self.model" first.
@@ -3434,13 +3444,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 pModInd = self.convertSearchModelPModIndToModelPModInd(
                     m.searchModel, pModInd)
 
-            currentRootItem = self.model.itemFromIndex(Qt.QModelIndex(pModInd))
+            currentRootItem = self.model.itemFromIndex(QModelIndex(pModInd))
             pathStr = currentRootItem.path
         else: # When main pane is showing search info
             searchInfo = pModInd
             searchRootIndex = searchInfo['searchRootIndex']
             searchRootItem = self.model.itemFromIndex(
-                Qt.QModelIndex(searchRootIndex))
+                QModelIndex(searchRootIndex))
             pathStr = ('Search Results in ' + searchRootItem.path)
 
         return pathStr
@@ -3452,7 +3462,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         #m = self.getCurrentMainPane()
         #pModInd = m.pathHistory[m.pathHistoryCurrentIndex]
-        #if type(pModInd) == Qt.QPersistentModelIndex:
+        #if type(pModInd) == QPersistentModelIndex:
             ## If pModInd is a persistent model index of "searchModel",
             ## then you need to convert pModInd into the corresponding
             ## persistent model index of "self.model" first.
@@ -3460,13 +3470,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 #pModInd = self.convertSearchModelPModIndToModelPModInd(
                     #m.searchModel, pModInd)
 
-            #currentRootItem = self.model.itemFromIndex(Qt.QModelIndex(pModInd))
+            #currentRootItem = self.model.itemFromIndex(QModelIndex(pModInd))
             #pathStr = currentRootItem.path
         #else: # When main pane is showing search info
             #searchInfo = pModInd
             #searchRootIndex = searchInfo['searchRootIndex']
             #searchRootItem = self.model.itemFromIndex(
-                #Qt.QModelIndex(searchRootIndex))
+                #QModelIndex(searchRootIndex))
             #pathStr = ('Search Results in ' + searchRootItem.path)
 
         self.lineEdit_path.setText(self.getCurrentMainPanePath())
@@ -3478,13 +3488,13 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         """"""
 
         m = self.getCurrentMainPane()
-        currentIndex = Qt.QModelIndex(m.pathHistory[m.pathHistoryCurrentIndex])
+        currentIndex = QModelIndex(m.pathHistory[m.pathHistoryCurrentIndex])
         currentPathItem = self.model.itemFromIndex(currentIndex)
         parentPathItem = currentPathItem.parent()
         parentPathIndex = self.model.indexFromItem(parentPathItem)
 
         if parentPathIndex.isValid():
-            pModelIndex = Qt.QPersistentModelIndex(parentPathIndex)
+            pModelIndex = QPersistentModelIndex(parentPathIndex)
         else:
             print 'Invalid model index detected.'
             return
@@ -3498,7 +3508,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
         self.updateStatesOfNavigationButtons()
 
-        self.emit(Qt.SIGNAL('sigClearSelection'))
+        self.emit(SIGNAL('sigClearSelection'))
 
 
     #----------------------------------------------------------------------
@@ -3514,7 +3524,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
             self.updateStatesOfNavigationButtons()
 
-            self.emit(Qt.SIGNAL('sigClearSelection'))
+            self.emit(SIGNAL('sigClearSelection'))
 
 
     #----------------------------------------------------------------------
@@ -3530,7 +3540,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
 
             self.updateStatesOfNavigationButtons()
 
-            self.emit(Qt.SIGNAL('sigClearSelection'))
+            self.emit(SIGNAL('sigClearSelection'))
 
 
     #----------------------------------------------------------------------
@@ -3546,7 +3556,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         iHist = m.pathHistoryCurrentIndex
         nHist = len(hist)
         currentPerModInd = hist[iHist]
-        if type(currentPerModInd) == Qt.QPersistentModelIndex:
+        if type(currentPerModInd) == QPersistentModelIndex:
             # If currentPerModInd is a persistent model index of "searchModel",
             # then you need to convert currentPerModInd into the corresponding
             # persistent model index of "self.model" first.
@@ -3554,7 +3564,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
                 currentPerModInd = self.convertSearchModelPModIndToModelPModInd(
                     m.searchModel, currentPerModInd)
 
-            currentPathIndex = Qt.QModelIndex(currentPerModInd)
+            currentPathIndex = QModelIndex(currentPerModInd)
             currentPathStr = self.model.itemFromIndex(currentPathIndex).path
 
             if currentPathStr == (SEPARATOR + 'root'):
@@ -3591,7 +3601,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             print 'Unknown view mode'
 
         triggeredAction.setChecked(True)
-        self.actionGroupViewMode.emit(Qt.SIGNAL('triggered(QAction *)'),
+        self.actionGroupViewMode.emit(SIGNAL('triggered(QAction *)'),
                                       triggeredAction)
 
     #----------------------------------------------------------------------
@@ -3653,7 +3663,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
             currentHistoryItem = m.pathHistory[m.pathHistoryCurrentIndex]
             currentRootPersModInd = currentHistoryItem['searchRootIndex']
             currentRootItem = self.model.itemFromIndex(
-                Qt.QModelIndex(currentRootPersModInd) )
+                QModelIndex(currentRootPersModInd) )
             searchModeDisabledActionList = [self.actionPaste,
                                             self.actionCreateNewPage,
                                             self.actionCreateNewInfo,
@@ -3699,7 +3709,7 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
         sender = self.sender()
         #print sender.title()
 
-        if type(sender) == Qt.QMenu: # Clicked on Menu Bar
+        if type(sender) == QMenu: # Clicked on Menu Bar
 
             sender.clear()
 
@@ -3955,18 +3965,18 @@ class LauncherView(Qt.QMainWindow, Ui_MainWindow):
     def print_running_subprocs(self):
         """"""
 
-        self.emit(Qt.SIGNAL('printRunningSubprocs'))
+        self.emit(SIGNAL('printRunningSubprocs'))
 
 
 ########################################################################
-class LauncherApp(Qt.QObject):
+class LauncherApp(QObject):
     """ """
 
     #----------------------------------------------------------------------
     def __init__(self, initRootPath):
         """Constructor"""
 
-        Qt.QObject.__init__(self)
+        QObject.__init__(self)
 
         self.appList  = []
         self.subprocs = []
@@ -3975,15 +3985,15 @@ class LauncherApp(Qt.QObject):
 
         self._initView(initRootPath)
 
-        self.connect(self.view, Qt.SIGNAL('sigExeRunRequested'),
+        self.connect(self.view, SIGNAL('sigExeRunRequested'),
                      self.launchExe)
-        self.connect(self.view, Qt.SIGNAL('sigPyModRunRequested'),
+        self.connect(self.view, SIGNAL('sigPyModRunRequested'),
                      self.launchPyModule)
-        self.connect(self.view, Qt.SIGNAL('sigTxtOpenRequested'),
+        self.connect(self.view, SIGNAL('sigTxtOpenRequested'),
                      self.openTxtFile)
-        self.connect(self.view, Qt.SIGNAL('sigPropertiesOpenRequested'),
+        self.connect(self.view, SIGNAL('sigPropertiesOpenRequested'),
                      self.view.openPropertiesDialog)
-        self.connect(self.view, Qt.SIGNAL('printRunningSubprocs'),
+        self.connect(self.view, SIGNAL('printRunningSubprocs'),
                      self.print_running_subprocs)
 
     #----------------------------------------------------------------------
@@ -4042,7 +4052,7 @@ class LauncherApp(Qt.QObject):
             self.subprocs.append(dict(p=p, path=item_path,
                                       cmd=command_expression))
         except:
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             message = ('Launching ' + '"'+command_expression+'"' +
                        ' with Popen has failed.')
             msgBox.setText(message)
@@ -4053,7 +4063,7 @@ class LauncherApp(Qt.QObject):
             msgBox.setInformativeText(err_info_str)
             print '#', message
             print err_info_str
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
 
     #----------------------------------------------------------------------
@@ -4135,7 +4145,7 @@ class LauncherApp(Qt.QObject):
             self.subprocs.append(dict(p=p, path=item_path, cmd=cmd))
 
         except:
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             message = ('Opening "{0:s}" with the editor "{1:s}" has failed.'.
                        format(filepath, editor))
             msgBox.setText(message)
@@ -4146,7 +4156,7 @@ class LauncherApp(Qt.QObject):
             msgBox.setInformativeText(err_info_str)
             print '#', message
             print err_info_str
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
 
     #----------------------------------------------------------------------
@@ -4186,17 +4196,17 @@ class LauncherApp(Qt.QObject):
             message = 'Importing {0:s} failed: {1:s}'.format(module_name, str(e))
             self.view.statusBar().showMessage(message)
             print message
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             msgBox.setText(message)
             msgBox.setInformativeText( str(errorMessage) )
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
         except:
-            msgBox = Qt.QMessageBox()
+            msgBox = QMessageBox()
             msgBox.setText( (
                 'Unexpected error while launching an app w/ import: ') )
             msgBox.setInformativeText( str(sys.exc_info()) )
-            msgBox.setIcon(Qt.QMessageBox.Critical)
+            msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
 
         if module:
@@ -4213,7 +4223,7 @@ class LauncherApp(Qt.QObject):
                 self.view.statusBar().showMessage(message)
                 print message
             except:
-                msgBox = Qt.QMessageBox()
+                msgBox = QMessageBox()
                 msgBox.setText( (
                     'Error while launching an app w/ import: ') )
                 #msgBox.setInformativeText( str(sys.exc_info()) )
@@ -4222,7 +4232,7 @@ class LauncherApp(Qt.QObject):
                 traceback.print_exc(None,mystderr)
                 msgBox.setInformativeText( mystderr.getvalue() )
                 sys.stderr = stderr_backup
-                msgBox.setIcon(Qt.QMessageBox.Critical)
+                msgBox.setIcon(QMessageBox.Critical)
                 msgBox.exec_()
 
     #----------------------------------------------------------------------
@@ -4304,7 +4314,7 @@ def restartLauncher(imported_xml_filepath):
     APP.view.close()
 
     APP = new_app
-    APP.connect(APP.view, Qt.SIGNAL('sigRestartLauncher'), restartLauncher)
+    APP.connect(APP.view, SIGNAL('sigRestartLauncher'), restartLauncher)
 
 #----------------------------------------------------------------------
 def main(args = None):
@@ -4322,9 +4332,9 @@ def main(args = None):
         #cothread.iqt(use_timer = True)
         qapp = cothread.iqt()
     else:
-        qapp = Qt.QApplication(args)
+        qapp = QApplication(args)
 
-    font = Qt.QFont()
+    font = QFont()
     font.setPointSize(16)
     qapp.setFont(font)
 
@@ -4342,7 +4352,7 @@ def main(args = None):
         restoreHierarchyDialog = LauncherRestoreHierarchyDialog()
         restoreHierarchyDialog.exec_()
 
-        if restoreHierarchyDialog.result() == Qt.QDialog.Accepted:
+        if restoreHierarchyDialog.result() == QDialog.Accepted:
             shutil.move(USER_TEMP_XML_FILEPATH, USER_XML_FILEPATH)
 
             new_app = LauncherApp(initRootPath)
@@ -4352,7 +4362,7 @@ def main(args = None):
 
             APP = new_app
 
-    APP.connect(APP.view, Qt.SIGNAL('sigRestartLauncher'), restartLauncher)
+    APP.connect(APP.view, SIGNAL('sigRestartLauncher'), restartLauncher)
 
     if using_cothread:
         cothread.WaitForQuit()
