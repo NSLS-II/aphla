@@ -603,3 +603,7 @@ QL1G2C25A 3 MagnetMeasurements/RotatingCoil/Latest_Data/rot_coil_QDP-9809-0003_0
 CL2G6C16B 3 MagnetMeasurements/RotatingCoil/Latest_Data/rot_coil_CRR-1000-0031_000.xls
 QL1G2C05A 3 MagnetMeasurements/RotatingCoil/Latest_Data/rot_coil_QDP-9809-0057_000.xls
 SH1G6C25B 3 MagnetMeasurements/RotatingCoil/Latest_Data/rot_coil_STP-9801-0050_001.xls
+QH3G6C07B 2 MagnetMeasurements/RotatingCoil/Latest_Data/rot_coil_QDW-9813-0003_000.xls
+QH3G6C17B 2 MagnetMeasurements/RotatingCoil/Latest_Data/rot_coil_QDW-9813-0002_000.xls
+QH3G2C18A 2 MagnetMeasurements/RotatingCoil/Latest_Data/rot_coil_QDP-9810-0003_000.xls
+QH3G2C08A 2 MagnetMeasurements/RotatingCoil/Latest_Data/rot_coil_QDP-9810-0002_000.xls
