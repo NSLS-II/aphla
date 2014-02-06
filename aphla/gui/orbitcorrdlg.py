@@ -187,7 +187,6 @@ class OrbitCorrGeneral(QtGui.QWidget):
         btn = QPushButton("Clear")
         self.connect(btn, SIGNAL("clicked()"), self.resetBumps)
         gbox.addWidget(btn, 0, 1)
-
         self.correctOrbitBtn = QPushButton("Apply")
         #self.correctOrbitBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.correctOrbitBtn.setStyleSheet("QPushButton:disabled { color: gray }");
