@@ -1,0 +1,28 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file alias="data_cursor.png">images/tool_data_cursor.png</file>
+    <file alias="hand.png">images/tool_hand.png</file>
+    <file alias="legend.png">images/tool_legend.png</file>
+    <file alias="pointer.png">images/tool_pointer.png</file>
+    <file alias="zoom_in.png">images/tool_zoom_in.png</file>
+    <file alias="zoom_out.png">images/tool_zoom_out.png</file>
+    <file alias="plus.png">images/icon-plus.png</file>
+    <file alias="minus.png">images/minus-icon.gif</file>
+    <file alias="up_arrow.png">images/up.png</file>
+    <file alias="down_arrow.png">images/down.png</file>
+    <file alias="left_arrow.png">images/left.png</file>
+    <file alias="right_arrow.png">images/right.png</file>
+    <file alias="play_forward.png">images/play.png</file>
+    <file alias="play_backward.png">images/play_backward.png</file>
+    <file alias="forward_one_step.png">images/forward_one_step.png</file>
+    <file alias="backward_one_step.png">images/backward_one_step.png</file>
+    <file alias="folder.png">images/folder.png</file>
+    <file alias="python.png">images/python-logo-48.png</file>
+    <file alias="generic_app.png">images/application-128.png</file>
+    <file alias="cmd_app.png">images/cmd.png</file>
+    <file alias="css48.png">images/css48.png</file>
+    <file alias="matlab_mfile.png">images/m-007.png</file>
+    <file alias="info_item.png">images/onebit_38.png</file>
+    <file alias="txt_item.png">images/onebit_39.png</file>
+</qresource>
+</RCC>
