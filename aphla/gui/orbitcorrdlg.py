@@ -368,7 +368,8 @@ class Bump3XSrc(QtGui.QWidget):
         self._twiss = tw
 
     def dx(self):
-        if self._twiss is None: return [0.0, 0.0, 0.0]
+        if self._twiss is None or not self.loc.text():
+            return [0.0, 0.0, 0.0]
         si = float(self.loc.text())
         xi = float(self.dxi.text())
         s1, s2, s3 = self._twiss["s"]
@@ -405,6 +406,7 @@ class Bump3XSrc(QtGui.QWidget):
         print "New dkick:", vals, self._twiss
         self.emit(SIGNAL("dKickUpdated(PyQt_PyObject)"), vals)
 
+
 class Bump4XCor(QtGui.QWidget):
     def __init__(self, parent = None):
         super(Bump4XCor, self).__init__(parent)
@@ -415,15 +417,22 @@ class Bump4XCor(QtGui.QWidget):
         fmbox.addRow("dX (dY) 2", self.dxi2)
         self.setLayout(fmbox)
 
+    def dx(self):
+        return [0.0, 0.0, 0.0, 0.0]
+
+
 class Bump4XSrc(QtGui.QWidget):
     def __init__(self, parent = None):
         super(Bump4XSrc, self).__init__(parent)
         self.loc = QtGui.QLineEdit("")
-        self.ang = QtGui.QLineEdit("")
+        self.ang = QtGui.QLineEdit("0.0")
         fmbox = QtGui.QFormLayout()
         fmbox.addRow("Location", self.loc)
         fmbox.addRow("Angle",    self.ang)
         self.setLayout(fmbox)
+
+    def dx(self):
+        return [0.0, 0.0, 0.0, 0.0]
 
 
 class OrbitCorrNBumps(QtGui.QWidget):
