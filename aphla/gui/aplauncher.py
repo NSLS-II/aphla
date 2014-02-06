@@ -1036,6 +1036,7 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
             elif objName.startswith('pushButton'):
                 if objName == 'pushButton_icon':
                     obj.setIcon(QIcon(ICONS[self.item.icon]))
+                    obj.setIconSize(QSize(50,50))
                     obj.setToolTip(self.item.icon)
                 else:
                     pass
