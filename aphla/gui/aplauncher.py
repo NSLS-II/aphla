@@ -899,6 +899,7 @@ class IconPickerDialog(QDialog, Ui_Dialog_icon):
         self.listView.setGridSize(QSize(70,70))
         self.listView.setUniformItemSizes(True)
         self.listView.setResizeMode(QListView.Adjust)
+        self.listView.setMovement(QListView.Static)
 
     #----------------------------------------------------------------------
     def accept(self):
@@ -1740,8 +1741,13 @@ class MainPane(QWidget):
         listView.setRootIndex(initRootProxyModelIndex)
         listView.setViewMode(initListViewMode)
         listView.setContextMenuPolicy(Qt.CustomContextMenu)
-        width = height = 100
-        listView.setGridSize(QSize(width, height))
+        self.listView_IconMode_grid_width = 100
+        self.listView_IconMode_grid_height = 100
+        if listView.viewMode() == CustomListView.IconMode:
+            listView.setGridSize(QSize(self.listView_IconMode_grid_width,
+                                       self.listView_IconMode_grid_height))
+        else:
+            listView.setGridSize(Qsize())
         listView.setWrapping(True) # for layout wrapping
         listView.setWordWrap(True) # for word wrapping
         self.listView = listView
@@ -1990,12 +1996,15 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             if s.currentIndex() == self.treeView_stack_index:
                 s.setCurrentIndex(self.listView_stack_index)
             m.listView.setViewMode(CustomListView.IconMode)
+            m.listView.setGridSize(QSize(m.listView_IconMode_grid_width,
+                                         m.listView_IconMode_grid_height))
             index = self.comboBox_view_mode.findText('Icons View',
                                                      Qt.MatchExactly)
         elif action == self.actionListView:
             if s.currentIndex() == self.treeView_stack_index:
                 s.setCurrentIndex(self.listView_stack_index)
             m.listView.setViewMode(CustomListView.ListMode)
+            m.listView.setGridSize(QSize())
             index = self.comboBox_view_mode.findText('List View',
                                                      Qt.MatchExactly)
         elif action == self.actionDetailsView:
