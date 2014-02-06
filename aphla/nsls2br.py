@@ -150,24 +150,25 @@ def _brBpmTrigData(pvprefs, waveform, **kwargs):
     if waveform == "Adc":
         caput(pv_wfmsel, 0, wait=True)
         caput(pv_adcwfm, 1, wait=True)
-        caput(pv_adcoffset, 0, wait=True)
+        caput(pv_adcoffset, offset, wait=True)
         pv_ddroffset = pv_adcoffset
         prf = ""
     elif waveform == "Tbt":
         caput(pv_wfmsel, 1, wait=True)
         caput(pv_tbtwfm, 1, wait=True)
-        caput(pv_tbtoffset, 0, wait=True)
+        caput(pv_tbtoffset, offset, wait=True)
         pv_ddroffset = pv_tbtoffset
         prf = "TBT"
     elif waveform == "Fa":
         caput(pv_wfmsel, 2, wait=True)
         caput(pv_fawfm,  1, wait=True)
-        caput(pv_faoffset, 0, wait=True)
+        caput(pv_faoffset, offset, wait=True)
         pv_ddroffset = pv_faoffset
         prf = "FA"
     else:
         raise RuntimeError("unknow waveform '%s'" % waveform)
 
+    time.sleep(3)
     pv_x, pv_y, pv_S = [], [], []
     pv_A, pv_B, pv_C, pv_D = [], [], [], []
     for i,pvx in enumerate(pvprefs):
