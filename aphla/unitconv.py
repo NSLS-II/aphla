@@ -9,6 +9,7 @@ import numpy as np
 from collections import Iterable
 import logging
 import re
+import os
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
@@ -30,13 +31,14 @@ class UcAbstract(object):
         self.direction = (src, dst)
         self.srcunit = None
         self.dstunit = None
+        self.polarity = 1
 
     def __str__(self):
         src, dst = self.direction[0], self.direction[1]
         return "%s -> %s: identity" % (src, dst)
 
     def eval(self, x, inv = False):
-        return x
+        return self.polarity*x
 
 class UcPoly(UcAbstract):
     """a polynomial unit conversion"""
@@ -60,9 +62,10 @@ class UcPoly(UcAbstract):
             ar, br = 1.0/a, -b*1.0/a
             if isinstance(x, Iterable):
                 # keep None to None 
-                return [ar*v + br if v is not None else None for v in x]
+                return [(ar*self.polarity*v + br)
+                        if v is not None else None for v in x]
             else:
-                return ar*x + br
+                return (ar*self.polarity*x + br)
         elif self.p.order == 0:
             raise RuntimeError("can not inverse a constant for (%s -> %s)" %
                                self.direction)
@@ -70,40 +73,62 @@ class UcPoly(UcAbstract):
             raise RuntimeError("can not inverse polynomial order > 2 "
                                "for (%s -> %s)" % self.direction)
 
-            
+
     def eval(self, x, inv = False):
         if x is None: return None
 
         if inv: return self._inv_eval(x)
         
         if isinstance(x, Iterable):
-            return [self.p(v) if v is not None else None for v in x]
+            return [self.polarity * self.p(v) 
+                    if v is not None else None for v in x]
         else:
-            return self.p(x)
+            return self.polarity * self.p(x)
 
 class UcInterp1(UcAbstract):
     """linear interpolation"""
     def __init__(self, src, dst, x, y):
         super(UcInterp1, self).__init__(src, dst)
         #self.f = np.interpolate.interp1d(x, y)
+        # has to be increasing for linear interpolation
         self.xp, self.fp = x, y
+        self._fp_r, self._xp_r = None, None
+        if not np.all(np.diff(self.xp) > 0):
+            raise RuntimeErorr("increasing data are needed for interpolation")
+        if np.all(np.diff(self.fp) > 0):
+            # fp increasing
+            self.invertible = 1
+            self._xp_r = [v for v in self.fp]
+            self._fp_r = [v for v in self.xp]
+        elif np.all(np.diff(self.fp) < 0):
+            self.invertivle = 1
+            self._xp_r = [v for v in reversed(self.fp)]
+            self._fp_r = [v for v in reversed(self.xp)]
+        else:
+            self.invertivle = 0
 
     def _inv_eval(self, x):
         if x is None: return None
-        elif x < min(self.fp[0], self.fp[-1]): return None
-        elif x > max(self.fp[0], self.fp[-1]): return None
+        elif x/self.polarity < self._xp_r[0]: return None
+        elif x/self.polarity > self._xp_r[-1]: return None
         else:
             # interp returns boundary if x is outside of fp
-            return np.interp(x, self.fp, self.xp)
+            return np.interp(self.polarity*x, self._xp_r, self._fp_r)
 
     def eval(self, x, inv = False):
+        if inv:
+            if not self.invertible: return None
+            else:
+                return self._inv_eval(x)
+        # 
         if x is None: return None
-        elif x < self.xp[0] or x > self.xp[-1]: return None
+        elif x < min(self.xp[0], self.xp[-1]): return None
+        elif x > max(self.xp[0], self.xp[-1]): return None
         else:
             # interp returns boundary if x is outside of xp
-            return np.interp(x, self.xp, self.fp)
+            return self.polarity*np.interp(x, self.xp, self.fp)
 
-class UcInterpN(UcAbstract):
+class _UcInterpN(UcAbstract):
     """n-D linear interpolation"""
     def __init__(self, src, dst, x, y):
         """
@@ -133,31 +158,34 @@ class UcInterpN(UcAbstract):
 
 def loadUnitConversionH5(lat, h5file, group):
     """set the unit conversion for lattice with input from hdf5 file"""
-    import h5py
-    g = h5py.File(h5file, 'r')[group]
+
     _logger.info("setting unit conversion for lattice {0} "
-                 "from data file {1}:{2}".format(
-        lat.name, h5file, g.items()))
+                 "from data file '{1}': '{2}'".format(
+                     lat.name, h5file, group))
+
+    import h5py
+    g = h5py.File(h5file, 'r')
+    if group: g = g[group]
+
     for k,v in g.items():
-        if not v.attrs.get('_class_', None): continue 
+        #if not v.attrs.get('_class_', None): continue 
 
         # use separated three attrs first, otherwise, use 'unitsys' attr.
         fld = v.attrs.get('field', None)
+        if not fld: continue
+
         usrcsys = v.attrs.get('src_unit_sys', None)
         udstsys = v.attrs.get('dst_unit_sys', None)
-        if fld is None:
-            fld, usrcsys, udstsys = v.attrs.get('unitsys', ",,").split(',')
-        if not fld: continue
+        #if fld is None:
+        #    fld, usrcsys, udstsys = v.attrs.get('unitsys', ",,").split(',')
 
         # instead of '', None is the unit for lower level(epics) data
         if usrcsys == '': usrcsys = None
         if udstsys == '': udstsys = None
         # the unit name, e.g., A, T/m, ...
         # check src_unit/dst_unit first, then direction as a backup
-        usrc = v.attrs.get('src_unit', None)
-        udst = v.attrs.get('dst_unit', None)
-        if usrc is None and udst is None:
-            usrc, udst = v.attrs.get('direction', (None, None))
+        usrc = v.attrs.get('src_unit', '')
+        udst = v.attrs.get('dst_unit', '')
 
         if v.attrs['_class_'] == 'polynomial':
             uc = UcPoly(usrc, udst, list(v))
@@ -167,7 +195,7 @@ def loadUnitConversionH5(lat, h5file, group):
             raise RuntimeError("unknow unit converter")
 
         # integer - invertible
-        uc.invertible = v.attrs.get('invertible')
+        uc.polarity   = v.attrs.get('polarity', 1)
         # find the element list
         elems = v.attrs.get('elements', [])
 
@@ -205,10 +233,10 @@ def loadUnitConversionH5(lat, h5file, group):
                 ename, fld, usrcsys, udstsys))
             eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
 
-def loadUnitConversion(lat, fname):
+def loadUnitConversionIni(lat, fname):
     """load the unit conversion for lattice from INI file"""
     _logger.info("loading unit conversion for lattice {0} from "
-                 "file {1}".format(lat.name, fname))
+                 "file '{1}'".format(lat.name, fname))
     import ConfigParser
     # python 2.7 only:
     #cfg = ConfigParser.ConfigParser(allow_no_value=False)
@@ -305,3 +333,16 @@ def addIdentityUnitConversion(elem, fld, usrcsys, udstsys):
     uc.srcunit = uc.dstunit
     elem.addUnitConversion(fld, uc, usrcsys, udstsys)
     
+def loadUnitConversion(lat, machdir, datafile):
+    """
+    datafile = ['file name'] or ['file name', 'group']
+    """
+    fname, grp = datafile if len(datafile) == 2 else (datafile[0], '')
+    rt, ext = os.path.splitext(fname)
+    if ext.upper() == ".INI":
+        loadUnitConversionIni(lat, os.path.join(machdir, fname))
+    elif ext.upper() in [".HDF5", ".H5"]:
+        loadUnitConversionH5(lat, os.path.join(machdir, fname), grp)
+    else:
+        raise RuntimeError("unknown unit conversion: {0}{1}".format(
+            machdir, datafile))
