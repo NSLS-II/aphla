@@ -1,18 +1,19 @@
 #! /usr/bin/env python
 
-"""
+"""GUI application for launching other GUI applications
 
-GUI application for launching other GUI applications
+Version 1.0.0
 
 :author: Yoshiteru Hidaka
 :license:
 
 This GUI application is a launcher program that allows users to start any
 individual application they want to use with a single click on the launcher
-panel. This launcher program can also allow sharing of the data between
-each application opened through this program, thereby eliminating
-unnecessary duplicate import actions for some modules.
+panel.
 
+This application also provides a hierarchical view of available applications
+through which users can find and launch an application of interest. It can
+also search an application by keywords.
 """
 
 import sys, os
@@ -2504,8 +2505,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         """"""
 
         # Action for Back button
-        self.actionGoBack = QAction(QIcon(":/left_arrow.png"),
-                                       "Back", self);
+        self.actionGoBack = QAction(QIcon(":/left_arrow.png"), "Back", self)
         self.actionGoBack.setCheckable(False)
         self.actionGoBack.setEnabled(False)
         self.addAction(self.actionGoBack)
@@ -2513,8 +2513,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                      self.goBack)
 
         # Action for Forward button
-        self.actionGoForward = QAction(QIcon(":/right_arrow.png"),
-                                          "Forward", self);
+        self.actionGoForward = QAction(QIcon(":/right_arrow.png"), "Forward",
+                                       self)
         self.actionGoForward.setCheckable(False)
         self.actionGoForward.setEnabled(False)
         self.addAction(self.actionGoForward)
@@ -2522,8 +2522,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                      self.goForward)
 
         # Action for Up button
-        self.actionGoUp = QAction(QIcon(":/up_arrow.png"),
-                                     "Open Parent", self);
+        self.actionGoUp = QAction(QIcon(":/up_arrow.png"), "Open Parent", self)
         self.actionGoUp.setCheckable(False)
         self.actionGoUp.setEnabled(False)
         self.addAction(self.actionGoUp)
@@ -2536,12 +2535,12 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                      self.openPage)
 
         self.actionOpenInNewTab = QAction(QIcon(),
-                                             'Open in New Tab', self)
+                                          'Open in New Tab', self)
         self.connect(self.actionOpenInNewTab, SIGNAL('triggered()'),
                      self.openInNewTab)
 
         self.actionOpenInNewWindow = QAction(QIcon(),
-                                                'Open in New Window', self)
+                                             'Open in New Window', self)
         self.connect(self.actionOpenInNewWindow, SIGNAL('triggered()'),
                      self.openInNewWindow)
 
@@ -2590,12 +2589,12 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
 
         self.actionCreateNewPage = QAction(QIcon(),
-                                              'Create New Page Item', self)
+                                           'Create New Page Item', self)
         self.connect(self.actionCreateNewPage, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
         self.actionCreateNewExe = QAction(QIcon(),
-                                             'Create New Executable Item', self)
+                                          'Create New Executable Item', self)
         self.connect(self.actionCreateNewExe, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
@@ -2605,12 +2604,12 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                      self.openPropertiesDialog)
 
         self.actionCreateNewTxt = QAction(QIcon(),
-                                             'Create New Text Item', self)
+                                          'Create New Text Item', self)
         self.connect(self.actionCreateNewTxt, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
         self.actionCreateNewInfo = QAction(QIcon(),
-                                             'Create New Info Item', self)
+                                           'Create New Info Item', self)
         self.connect(self.actionCreateNewInfo, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
@@ -2621,7 +2620,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                      self._not_implemented_yet)
 
         self.actionVisibleColumns = QAction(QIcon(), 'Visible Columns...',
-                                               self)
+                                            self)
         self.connect(self.actionVisibleColumns, SIGNAL('triggered()'),
                      self.launchColumnsDialog)
         self.connect(self, SIGNAL('columnSelectionReturned'),
@@ -2675,19 +2674,19 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionGroupViewMode = QActionGroup(self)
         self.actionGroupViewMode.setExclusive(True)
         self.actionIconsView = QAction(QIcon(), 'Icons View',
-                                          self.actionGroupViewMode)
+                                       self.actionGroupViewMode)
         self.actionIconsView.setCheckable(True)
         self.actionIconsView.setShortcut(
             QKeySequence(Qt.ControlModifier + Qt.Key_1))
         self.addAction(self.actionIconsView)
         self.actionListView = QAction(QIcon(), 'List View',
-                                         self.actionGroupViewMode)
+                                      self.actionGroupViewMode)
         self.actionListView.setCheckable(True)
         self.actionListView.setShortcut(
             QKeySequence(Qt.ControlModifier + Qt.Key_2))
         self.addAction(self.actionListView)
         self.actionDetailsView = QAction(QIcon(), 'Details View',
-                                            self.actionGroupViewMode)
+                                         self.actionGroupViewMode)
         self.actionDetailsView.setCheckable(True)
         self.actionDetailsView.setShortcut(
             QKeySequence(Qt.ControlModifier + Qt.Key_3))
@@ -2696,11 +2695,27 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.connect(self.actionGroupViewMode, SIGNAL('triggered(QAction *)'),
                      self.onViewModeActionGroupTriggered)
 
-        self.actionRunningSubprocs = QAction(QIcon(),
-                                                'Runngin Subprocesses...', self)
+        self.actionRunningSubprocs = QAction(QIcon(), 'Runngin Subprocesses...',
+                                             self)
         self.addAction(self.actionRunningSubprocs)
         self.connect(self.actionRunningSubprocs,
                      SIGNAL('triggered()'), self.print_running_subprocs)
+
+        self.actionHelpAbout = QAction(QIcon(), 'About...', self)
+        self.addAction(self.actionHelpAbout)
+        self.connect(self.actionHelpAbout, SIGNAL('triggered()'),
+                     self.showHelpAbout)
+
+    #----------------------------------------------------------------------
+    def showHelpAbout(self):
+        """"""
+
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle('HLA Launcher')
+        msgBox.setInformativeText(__doc__)
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.exec_()
+        return
 
     #----------------------------------------------------------------------
     def _not_implemented_yet(self):
@@ -3984,7 +3999,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 sender.addAction(self.actionGoForward)
 
             elif sender == self.menuHelp:
-                pass
+
+                sender.addAction(self.actionHelpAbout)
+
             else:
                 raise('Unexpected menu sender '+sender.title())
 
