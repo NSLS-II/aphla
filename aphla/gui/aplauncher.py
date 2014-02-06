@@ -166,16 +166,13 @@ MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
 
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
-# *) Right-click on column name and allow add/remove visible properties
 # *) Bypass XML tree construction, if XML file not changed. Load
-# directory the tree model data for faster start-up.
+# directly the tree model data for faster start-up.
+# *) Use database for in-code help texts for performance
 # *) Implement page jumping with the path buttons hidden under
 # the path line editbox.
 # *) path auto completion & naviation from path line editbox
-# *) Add <description> to XML
 # *) More thorough separate search window
-# *) Implement "Arrange Items" actions
-# *) Temporary user XML saving functionality whenever hierarchy is changed
 # *) Add PYTHONPATH editor
 
 ## FIXIT
@@ -2607,12 +2604,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.connect(self.actionCreateNewInfo, SIGNAL('triggered()'),
                      self.openPropertiesDialog)
 
-        # TODO
-        self.actionArrangeItems = QAction(QIcon(), 'Arrange Items', self)
-        self.actionArrangeItems.setEnabled(False)
-        self.connect(self.actionArrangeItems, SIGNAL('triggered()'),
-                     self._not_implemented_yet)
-
         self.actionVisibleColumns = QAction(QIcon(), 'Visible Columns...',
                                             self)
         self.connect(self.actionVisibleColumns, SIGNAL('triggered()'),
@@ -2719,7 +2710,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         msgBox.setText( (
             'This action has not been implemented yet.') )
         msgBox.setInformativeText(self.sender().text())
-        #msgBox.setInformativeText( str(sys.exc_info()) )
         msgBox.setIcon(QMessageBox.Critical)
         msgBox.exec_()
         return
@@ -3972,11 +3962,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
                 sender.addAction(self.actionToggleSidePaneVisibility)
 
-                sender.addSeparator()
                 if m.stackedWidget.currentIndex() == self.treeView_stack_index:
+                    sender.addSeparator()
                     sender.addAction(self.actionVisibleColumns)
-                else:
-                    sender.addAction(self.actionArrangeItems)
 
                 sender.addSeparator()
                 sender.addAction(self.actionIconsView)
@@ -4054,11 +4042,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 self.contextMenu.addSeparator()
                 self.contextMenu.addAction(self.actionPaste)
 
-                self.contextMenu.addSeparator()
                 if m.stackedWidget.currentIndex() == self.treeView_stack_index:
+                    self.contextMenu.addSeparator()
                     self.contextMenu.addAction(self.actionVisibleColumns)
-                else:
-                    self.contextMenu.addAction(self.actionArrangeItems)
 
                 self.contextMenu.addSeparator()
                 self.contextMenu.addAction(self.actionProperties)
@@ -4144,12 +4130,10 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.actionDelete)
 
-        self.contextMenu.addSeparator()
         if currentMainPane.stackedWidget.currentIndex() == \
            self.treeView_stack_index:
+            self.contextMenu.addSeparator()
             self.contextMenu.addAction(self.actionVisibleColumns)
-        else:
-            self.contextMenu.addAction(self.actionArrangeItems)
 
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.actionProperties)
