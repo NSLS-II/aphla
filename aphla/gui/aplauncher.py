@@ -2098,8 +2098,16 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         settings = QSettings('HLA','Launcher')
 
         settings.beginGroup('MainWindow')
-        settings.setValue('position',self.geometry())
-        settings.setValue('splitterPanes_sizes',self.splitterPanes.sizes())
+
+        settings.setValue('position', self.geometry())
+
+        settings.setValue('splitterPanes_sizes', self.splitterPanes.sizes())
+
+        current_path_text = self.lineEdit_path.text()
+        if not current_path_text.startswith('/'): # Search Mode
+            current_path_text = ''
+        settings.setValue('last_item_path', current_path_text)
+
         settings.endGroup()
 
         #print 'Settings saved.'
@@ -2111,16 +2119,35 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         settings = QSettings('HLA','Launcher')
 
         settings.beginGroup('MainWindow')
+
         rect = settings.value('position')
         if not rect:
             rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
         self.setGeometry(rect)
+
         splitterPanes_sizes = settings.value('splitterPanes_sizes')
-        if splitterPanes_sizes == None:
+        if splitterPanes_sizes is None:
             splitterPanes_sizes = [self.width()*(1./5), self.width()*(4./5)]
         else:
             splitterPanes_sizes = [int(s) for s in splitterPanes_sizes]
         self.splitterPanes.setSizes(splitterPanes_sizes)
+
+        last_item_path = settings.value('last_item_path')
+        if (last_item_path is None) or (last_item_path == ''):
+            pass
+        else:
+            if last_item_path in self.model.pathList:
+                m = self.getCurrentMainPane()
+
+                m.pathHistory = [self.model.pModelIndexFromPath(last_item_path)]
+                m.pathHistoryCurrentIndex = 0
+
+                # path history must be updated before calling "updateView" function
+                self.updateView(m)
+
+                self.updateStatesOfNavigationButtons()
+
+                self.emit(SIGNAL('sigClearSelection'))
 
         settings.endGroup()
 
