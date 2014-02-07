@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_launcher_item_properties.ui'
 #
-# Created: Wed Feb  5 21:35:50 2014
+# Created: Thu Feb  6 20:06:16 2014
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -457,12 +457,12 @@ class Ui_Dialog(object):
         self.pushButton_txt_browse.setText(QtGui.QApplication.translate("Dialog", "Browse...", None, QtGui.QApplication.UnicodeUTF8))
         self.label_11.setText(QtGui.QApplication.translate("Dialog", "Editor", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_txt_editor.setItemText(0, QtGui.QApplication.translate("Dialog", "gedit", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_txt_editor.setItemText(1, QtGui.QApplication.translate("Dialog", "$wing_new_window", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_txt_editor.setItemText(2, QtGui.QApplication.translate("Dialog", "$wing", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_txt_editor.setItemText(3, QtGui.QApplication.translate("Dialog", "$nano", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_txt_editor.setItemText(1, QtGui.QApplication.translate("Dialog", "&wing_new_window", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_txt_editor.setItemText(2, QtGui.QApplication.translate("Dialog", "&wing", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_txt_editor.setItemText(3, QtGui.QApplication.translate("Dialog", "&nano", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_txt_editor.setItemText(4, QtGui.QApplication.translate("Dialog", "emacs", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_txt_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "$vi", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_txt_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "$matlab", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_txt_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "&vi", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_txt_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "&matlab", None, QtGui.QApplication.UnicodeUTF8))
         self.label_12.setText(QtGui.QApplication.translate("Dialog", "Help Header", None, QtGui.QApplication.UnicodeUTF8))
         self.label_25.setText(QtGui.QApplication.translate("Dialog", "Type", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_txt_helpHeaderType.setItemText(0, QtGui.QApplication.translate("Dialog", "python", None, QtGui.QApplication.UnicodeUTF8))
@@ -478,13 +478,13 @@ class Ui_Dialog(object):
         self.pushButton_py_browseWD.setText(QtGui.QApplication.translate("Dialog", "Browse...", None, QtGui.QApplication.UnicodeUTF8))
         self.label_19.setText(QtGui.QApplication.translate("Dialog", "Arguments", None, QtGui.QApplication.UnicodeUTF8))
         self.label_17.setText(QtGui.QApplication.translate("Dialog", "Editor", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_py_editor.setItemText(0, QtGui.QApplication.translate("Dialog", "$wing_new_window", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_py_editor.setItemText(1, QtGui.QApplication.translate("Dialog", "$wing", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_py_editor.setItemText(0, QtGui.QApplication.translate("Dialog", "&wing_new_window", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_py_editor.setItemText(1, QtGui.QApplication.translate("Dialog", "&wing", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_py_editor.setItemText(2, QtGui.QApplication.translate("Dialog", "gedit", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_py_editor.setItemText(3, QtGui.QApplication.translate("Dialog", "$nano", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_py_editor.setItemText(3, QtGui.QApplication.translate("Dialog", "&nano", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_py_editor.setItemText(4, QtGui.QApplication.translate("Dialog", "emacs", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_py_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "$vi", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_py_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "$matlab", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_py_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "&vi", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_py_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "&matlab", None, QtGui.QApplication.UnicodeUTF8))
         self.label_32.setText(QtGui.QApplication.translate("Dialog", "Help in", None, QtGui.QApplication.UnicodeUTF8))
         self.label_33.setText(QtGui.QApplication.translate("Dialog", "Source File      ", None, QtGui.QApplication.UnicodeUTF8))
         self.label_18.setText(QtGui.QApplication.translate("Dialog", "Description     ", None, QtGui.QApplication.UnicodeUTF8))
@@ -497,12 +497,12 @@ class Ui_Dialog(object):
         self.pushButton_exe_browse.setText(QtGui.QApplication.translate("Dialog", "Browse...", None, QtGui.QApplication.UnicodeUTF8))
         self.label_21.setText(QtGui.QApplication.translate("Dialog", "Editor", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_exe_editor.setItemText(0, QtGui.QApplication.translate("Dialog", "gedit", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_exe_editor.setItemText(1, QtGui.QApplication.translate("Dialog", "$wing_new_window", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_exe_editor.setItemText(2, QtGui.QApplication.translate("Dialog", "$wing", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_exe_editor.setItemText(3, QtGui.QApplication.translate("Dialog", "$nano", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_exe_editor.setItemText(1, QtGui.QApplication.translate("Dialog", "&wing_new_window", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_exe_editor.setItemText(2, QtGui.QApplication.translate("Dialog", "&wing", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_exe_editor.setItemText(3, QtGui.QApplication.translate("Dialog", "&nano", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_exe_editor.setItemText(4, QtGui.QApplication.translate("Dialog", "emacs", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_exe_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "$vi", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox_exe_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "$matlab", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_exe_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "&vi", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_exe_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "&matlab", None, QtGui.QApplication.UnicodeUTF8))
         self.label_23.setText(QtGui.QApplication.translate("Dialog", "Help Header", None, QtGui.QApplication.UnicodeUTF8))
         self.label_28.setText(QtGui.QApplication.translate("Dialog", "Type", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_exe_helpHeaderType.setItemText(0, QtGui.QApplication.translate("Dialog", "python", None, QtGui.QApplication.UnicodeUTF8))

@@ -2995,7 +2995,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 selectedItem.command        = ''
                 selectedItem.cwd            = ''
                 selectedItem.sourceFilepath = ''
-                selectedItem.editor         = '$wing_new_window'
+                selectedItem.editor         = '&wing_new_window'
                 selectedItem.helpHeader     = 'python'
                 selectedItem.help = ''
             elif self.sender() == self.actionCreateNewPyMod:
@@ -4399,25 +4399,25 @@ class LauncherApp(QObject):
         filepath = _subs_tilde_with_home(filepath)
 
         try:
-            if not editor.startswith('$'):
+            if not editor.startswith('&'):
                 cmd = editor.split()[0]
                 if self.which(cmd) != '':
                     cmd = ' '.join([editor, filepath])
                 else:
                     raise ValueError('Command not found: {0:s}'.format(cmd))
-            elif editor in ('$nano', '$vi'):
+            elif editor in ('&nano', '&vi'):
                 cmd = editor[1:]
                 if self.which(cmd) != '':
                     cmd = 'gnome-terminal -e "{0:s} {1:s}"'.format(editor[1:],
                                                                    filepath)
                 else:
                     raise ValueError('Command not found: {0:s}'.format(cmd))
-            elif editor == '$matlab':
+            elif editor == '&matlab':
                 if self.which('matlabl') != '':
                     cmd = 'matlab -r "edit {0:s}"'.format(filepath)
                 else:
                     raise ValueError('Command not found: matlab')
-            elif editor.startswith('$wing'):
+            elif editor.startswith('&wing'):
                 if editor.endswith('_new_window'):
                     new_window_flag = '--new'
                 else:
