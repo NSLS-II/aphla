@@ -873,14 +873,16 @@ class AliasEditor(QDialog, Ui_Dialog_aliase):
         self.pushButton_minus.setIcon(QIcon(':/minus.png'))
         self.pushButton_minus.setIconSize(QSize(40,40))
 
-        sorted_alias_keys = sorted(self.aliases.keys())
-        self.tableWidget.setRowCount(len(sorted_alias_keys))
-        for i, k in enumerate(sorted_alias_keys):
-            v = self.aliases[k]
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(k[1:])) # exclude '%'
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(v))
+        w = self.tableWidget
 
-        self.tableWidget.resizeColumnsToContents()
+        w.setRowCount(len(self.aliases))
+        for i, alias in enumerate(self.aliases):
+            k = alias['key']
+            v = alias['value']
+            w.setItem(i, 0, QTableWidgetItem(k[1:])) # exclude '%'
+            w.setItem(i, 1, QTableWidgetItem(v))
+
+        w.resizeColumnsToContents()
 
         self.connect(self.pushButton_plus, SIGNAL('clicked()'),
                      self.addAlias)
@@ -891,12 +893,35 @@ class AliasEditor(QDialog, Ui_Dialog_aliase):
     def accept(self):
         """"""
 
-        self.aliases = {}
-        for i in range(self.tableWidget.rowCount()):
-            k = '%' + self.tableWidget.item(i, 0).text()
-            v =       self.tableWidget.item(i, 1).text()
+        w = self.tableWidget
+
+        nRows = w.rowCount()
+
+        self.aliases = [OrderedDict() for i in range(nRows)]
+        empty_indexes = []
+        for i in range(nRows):
+            k = '%' + w.item(i, 0).text()
+            v =       w.item(i, 1).text()
+
             if (k != '%') and (v != ''):
-                self.aliases[k] = v
+
+                if len(k.split()) != 1:
+                    msgBox = QMessageBox()
+                    msgBox.setText('An alias cannot contain any whitespace.')
+                    msgBox.setInformativeText(
+                        'Invalid alias found: "{0:s}"'.format(k[1:]))
+                    msgBox.setIcon(QMessageBox.Critical)
+                    msgBox.exec_()
+                    return
+                else:
+                    self.aliases[i]['key']   = k
+                    self.aliases[i]['value'] = v
+
+            else:
+                empty_indexes.append(i)
+
+        for i in empty_indexes[::-1]:
+            self.aliases.pop(i)
 
         super(AliasEditor, self).accept() # will hide the dialog
 
@@ -916,8 +941,8 @@ class AliasEditor(QDialog, Ui_Dialog_aliase):
         else:
             newRow = currentRow + 1
         self.tableWidget.insertRow(newRow)
-        self.tableWidget.setItem(newRow, 0, QTableWidgetItem())
-        self.tableWidget.setItem(newRow, 1, QTableWidgetItem())
+        self.tableWidget.setItem(newRow, 0, QTableWidgetItem(''))
+        self.tableWidget.setItem(newRow, 1, QTableWidgetItem(''))
 
     #----------------------------------------------------------------------
     def removeAlias(self):
