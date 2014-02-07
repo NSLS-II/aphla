@@ -256,7 +256,7 @@ def load(machine, submachine = "*", **kwargs):
         uconvfile = d.get("unit_conversion", None)
         if uconvfile is not None: 
             _logger.debug("loading unit conversion '%s'" % uconvfile)
-            loadUnitConversion(lat, os.path.join(machdir, uconvfile))
+            loadUnitConversion(lat, machdir, uconvfile.split(", "))
 
         physics_data = d.get("physics_data", None)
         if physics_data is not None:

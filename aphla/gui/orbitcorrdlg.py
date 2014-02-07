@@ -184,10 +184,9 @@ class OrbitCorrGeneral(QtGui.QWidget):
         #self.qdb.addButton(QDialogButtonBox.Help)
 
         gbox = QtGui.QGridLayout()
-        btn = QPushButton("Reset")
+        btn = QPushButton("Clear")
         self.connect(btn, SIGNAL("clicked()"), self.resetBumps)
         gbox.addWidget(btn, 0, 1)
-
         self.correctOrbitBtn = QPushButton("Apply")
         #self.correctOrbitBtn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.correctOrbitBtn.setStyleSheet("QPushButton:disabled { color: gray }");
@@ -368,7 +367,8 @@ class Bump3XSrc(QtGui.QWidget):
         self._twiss = tw
 
     def dx(self):
-        if self._twiss is None: return [0.0, 0.0, 0.0]
+        if self._twiss is None or not self.loc.text():
+            return [0.0, 0.0, 0.0]
         si = float(self.loc.text())
         xi = float(self.dxi.text())
         s1, s2, s3 = self._twiss["s"]
@@ -405,6 +405,7 @@ class Bump3XSrc(QtGui.QWidget):
         print "New dkick:", vals, self._twiss
         self.emit(SIGNAL("dKickUpdated(PyQt_PyObject)"), vals)
 
+
 class Bump4XCor(QtGui.QWidget):
     def __init__(self, parent = None):
         super(Bump4XCor, self).__init__(parent)
@@ -415,15 +416,22 @@ class Bump4XCor(QtGui.QWidget):
         fmbox.addRow("dX (dY) 2", self.dxi2)
         self.setLayout(fmbox)
 
+    def dx(self):
+        return [0.0, 0.0, 0.0, 0.0]
+
+
 class Bump4XSrc(QtGui.QWidget):
     def __init__(self, parent = None):
         super(Bump4XSrc, self).__init__(parent)
         self.loc = QtGui.QLineEdit("")
-        self.ang = QtGui.QLineEdit("")
+        self.ang = QtGui.QLineEdit("0.0")
         fmbox = QtGui.QFormLayout()
         fmbox.addRow("Location", self.loc)
         fmbox.addRow("Angle",    self.ang)
         self.setLayout(fmbox)
+
+    def dx(self):
+        return [0.0, 0.0, 0.0, 0.0]
 
 
 class OrbitCorrNBumps(QtGui.QWidget):
@@ -509,6 +517,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
             2*self.table4.frameWidth()
         self.table4.setMinimumHeight(htbl + 10)
         self.table4.setMaximumHeight(htbl + 15)
+        self.table4.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         vbox1.addWidget(self.table4, 0)
 
         hbox1 = QtGui.QHBoxLayout()
@@ -554,14 +563,18 @@ class OrbitCorrNBumps(QtGui.QWidget):
         vbox2.addWidget(grp1)
         vbox2.addWidget(self.bump_tabs)
         vbox2.addStretch()
+        gbox4 = QtGui.QGridLayout()
         btnClear = QtGui.QPushButton("Clear")
         btnZoomin = QtGui.QPushButton("Zoom In")
         btnApply  = QtGui.QPushButton("Apply")
         btnCheat = QtGui.QPushButton("_CHEAT_")
-        vbox2.addWidget(btnClear)
-        vbox2.addWidget(btnZoomin)
-        vbox2.addWidget(btnApply)
-        vbox2.addWidget(btnCheat)
+        gbox4.addWidget(btnClear, 0, 1)
+        gbox4.addWidget(btnZoomin, 1, 1)
+        gbox4.addWidget(btnApply, 2, 1)
+        gbox4.addWidget(btnCheat, 3, 1)
+        gbox4.setColumnStretch(1, 0)
+        gbox4.setColumnStretch(0, 1)
+        vbox2.addLayout(gbox4)
         hbox1.addLayout(vbox2)
         self.setLayout(hbox1)
 
