@@ -27,6 +27,7 @@ import types
 from subprocess import Popen, PIPE
 import traceback
 import re
+import json
 import shutil
 from cStringIO import StringIO
 import sip
@@ -144,12 +145,7 @@ ITEM_COLOR_TXT  = Qt.magenta
 SEPARATOR = '/' # used as system file path separator as well as launcher page
                 # path separator
 HOME_PATH = str(QDir.homePath())
-DOT_HLA_QFILEPATH = HOME_PATH + SEPARATOR + '.hla'
-SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
-USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
-USER_TEMP_XML_FILENAME = 'user_launcher_hierarchy.xml.temp'
-USER_XML_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
-USER_TEMP_XML_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_XML_FILENAME
+
 USER_MODIFIABLE_ROOT_PATH = '/root/Favorites'
 
 import utils.gui_icons
@@ -164,6 +160,22 @@ from aphla.gui.utils.orderselector import ColumnsDialog
 from aphla.gui.utils import xmltodict
 
 MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
+
+DOT_HLA_QFILEPATH = HOME_PATH + SEPARATOR + '.hla'
+
+SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
+USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
+USER_TEMP_XML_FILENAME = USER_XML_FILENAME + '.temp'
+SYSTEM_XML_FILEPATH    = osp.join(MACHINES_FOLDERPATH, SYSTEM_XML_FILENAME)
+USER_XML_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
+USER_TEMP_XML_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_XML_FILENAME
+
+SYSTEM_ALIAS_FILENAME    = 'us_nsls2_launcher_aliases.json'
+USER_ALIAS_FILENAME      = 'user_launcher_aliases.json'
+USER_TEMP_ALIAS_FILENAME = USER_ALIAS_FILENAME + '.temp'
+SYSTEM_ALIAS_FILEPATH    = osp.join(MACHINES_FOLDERPATH, SYSTEM_ALIAS_FILENAME)
+USER_ALIAS_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_ALIAS_FILENAME
+USER_TEMP_ALIAS_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_ALIAS_FILENAME
 
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
@@ -246,6 +258,22 @@ class LauncherModel(QStandardItemModel):
         self.commandList    = []
         self.moduleNameList = []
 
+        ## Load aliases for the following item property fields:
+        ##     command, cwd, sourceFilepath, editor
+        # If there is no user alias file exists, first load the system alias
+        # file, and then clone the system one and save it as the user alias
+        # file.
+        # If there is a user alias file, the aliases are loaded from the user
+        # alias file.
+        if not osp.exists(USER_ALIAS_FILEPATH):
+            with open(SYSTEM_ALIAS_FILEPATH, 'r') as f:
+                temp_aliases = json.load(f)
+            shutil.copy(SYSTEM_ALIAS_FILEPATH, USER_ALIAS_FILEPATH)
+        else:
+            with open(USER_ALIAS_FILEPATH, 'r') as f:
+                temp_aliases = json.load(f)
+        self.aliases = self._validate_aliases(temp_aliases)
+
         ## First, parse system XML file and construct a tree model
         system_XML_Filepath = os.path.join(MACHINES_FOLDERPATH,
                                            SYSTEM_XML_FILENAME)
@@ -279,6 +307,39 @@ class LauncherModel(QStandardItemModel):
         self.search_index_desc_list = []
         self.search_index_help_list = []
         self.update_search_index()
+
+    #----------------------------------------------------------------------
+    def _validate_aliases(self, temp_aliases):
+        """
+        Aliases must be a string without whitespaces.
+        """
+
+        aliases = {}
+        for k, v in temp_aliases.iteritems():
+            if len(k.split()) != 1:
+                print 'An alias cannot contain any whitespace.'
+                raise ValueError('Invalid alias found: {0:s}'.format(k))
+            else:
+                aliases['%'+k] = v
+
+        return aliases
+
+    #----------------------------------------------------------------------
+    def subs_aliases(self, text_before_subs):
+        """"""
+
+        aliases = self.aliases.keys()
+
+        splitted_text = text_before_subs.split(' ')
+        splitted_text_after_subs = splitted_text[:]
+        for i, s in enumerate(splitted_text):
+            matched_alias = [a for a in aliases if s.startswith(a)]
+            if matched_alias != []:
+                matched_alias = matched_alias[0]
+                splitted_text_after_subs[i] = s.replace(
+                    matched_alias, self.aliases[matched_alias])
+
+        return ' '.join(splitted_text_after_subs)
 
     #----------------------------------------------------------------------
     def update_search_index(self, parent_item=None, index_item=None,
@@ -338,7 +399,8 @@ class LauncherModel(QStandardItemModel):
             try:
                 sys.path = ORIGINAL_SYS_PATH[:]
                 if item.cwd not in ('','N/A'):
-                    cwd = _subs_tilde_with_home(item.cwd)
+                    cwd = self.subs_aliases(item.cwd)
+                    cwd = _subs_tilde_with_home(cwd)
                     if osp.exists(cwd):
                         print 'Changing directory to {0:s}'.format(cwd)
                         os.chdir(cwd)
@@ -367,6 +429,9 @@ class LauncherModel(QStandardItemModel):
             header_type = item.helpHeader
         else:
             return 'N/A'
+
+        f = self.subs_aliases(f)
+        f = _subs_tilde_with_home(f)
 
         help_text = ''
 
@@ -712,9 +777,10 @@ class LauncherModel(QStandardItemModel):
             # If the user XML file cannot be found, then create an empty one in
             # ".hla" directory under the user home directory.
 
-            # This section of code creates ".hla" directory under th user home directory,
-            # if it does not already exist. This method assures no race condtion will happen
-            # in the process of creating the new directory.
+            # This section of code creates ".hla" directory under the user home
+            # directory, if it does not already exist. This method assures no
+            # race condtion will happen in the process of creating the new
+            #directory.
             try:
                 os.makedirs(DOT_HLA_QFILEPATH)
             except OSError, e:
@@ -1014,17 +1080,23 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
                     if matchedInd != -1:
                         obj.setCurrentIndex(matchedInd)
                     else:
-                        print 'No matching item found in {0:s}'.format(objName)
-                        search_string = DEFAULT_XML_ITEM[propName]
-                        print ('Using default value of "{0:s}" for "{1:s}"'.
-                               format(search_string, propName))
-                        matchedInd = obj.findText(search_string,
-                                                  Qt.MatchExactly)
-
-                        if matchedInd == -1:
-                            raise ValueError('Default value not found in combobox choices.')
-                        else:
+                        if propName == 'editor':
+                            obj.addItems([search_string])
+                            matchedInd = obj.findText(search_string,
+                                                      Qt.MatchExactly)
                             obj.setCurrentIndex(matchedInd)
+                        else:
+                            print 'No matching item found in {0:s}'.format(objName)
+                            search_string = DEFAULT_XML_ITEM[propName]
+                            print ('Using default value of "{0:s}" for "{1:s}"'.
+                                   format(search_string, propName))
+                            matchedInd = obj.findText(search_string,
+                                                      Qt.MatchExactly)
+
+                            if matchedInd == -1:
+                                raise ValueError('Default value not found in combobox choices.')
+                            else:
+                                obj.setCurrentIndex(matchedInd)
 
             elif objName.startswith('plainTextEdit'):
                 if objName.endswith('description'):
@@ -4342,6 +4414,7 @@ class LauncherApp(QObject):
         if workingDir in ('', 'N/A'):
             workingDir = os.getcwd()
         else:
+            workingDir = self.model.subs_aliases(workingDir)
             workingDir = _subs_tilde_with_home(workingDir)
 
         try:
@@ -4351,9 +4424,9 @@ class LauncherApp(QObject):
             self.view.statusBar().showMessage(message)
             print message
             self.view.repaint()
-            subs_cmd = _subs_tilde_with_home(command_expression)
-            p = Popen(subs_cmd, shell=True, stdin=PIPE,
-                      cwd=workingDir)
+            subs_cmd = self.model.subs_aliases(command_expression)
+            subs_cmd = _subs_tilde_with_home(subs_cmd)
+            p = Popen(subs_cmd, shell=True, stdin=PIPE, cwd=workingDir)
             print '** PID = {0:d}'.format(p.pid)
             print ' '
             message = ('# Launch sequence for "{0:s}" has been completed.'.
@@ -4396,7 +4469,11 @@ class LauncherApp(QObject):
         if filepath == '':
             return
 
+        filepath = self.model.subs_aliases(filepath)
         filepath = _subs_tilde_with_home(filepath)
+
+        editor = self.model.subs_aliases(editor)
+        editor = _subs_tilde_with_home(editor)
 
         try:
             if not editor.startswith('&'):
@@ -4489,6 +4566,7 @@ class LauncherApp(QObject):
         if workingDir in ('', 'N/A'):
             pass
         else:
+            workingDir = self.model.subs_aliases(workingDir)
             workingDir = _subs_tilde_with_home(workingDir)
             os.chdir(workingDir)
             print 'Changed working directory to {0:s}'.format(workingDir)
@@ -4510,7 +4588,7 @@ class LauncherApp(QObject):
             print message
             msgBox = QMessageBox()
             msgBox.setText(message)
-            msgBox.setInformativeText( str(errorMessage) )
+            #msgBox.setInformativeText( str(e) )
             msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
         except:
