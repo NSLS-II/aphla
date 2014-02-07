@@ -2071,8 +2071,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                            'still running?')
             detailedText = ''
             for subp_dict in self.running_subproc_list:
-                detailedText += 'PID {0:d} :: {1:s} ::\n    {2:s}'.format(
-                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd']) + '\n'
+                detailedText += 'PID {0:d} :: {1:s} ::\n    {2:s}\n'.format(
+                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd'])
             msgBox.setDetailedText(detailedText)
             msgBox.setIcon(QMessageBox.Question)
             msgBox.setWindowTitle('Shut Down Applications')
@@ -2975,7 +2975,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                                              self)
         self.addAction(self.actionRunningSubprocs)
         self.connect(self.actionRunningSubprocs,
-                     SIGNAL('triggered()'), self.print_running_subprocs)
+                     SIGNAL('triggered()'), self.show_running_subprocs)
 
         self.actionHelpAbout = QAction(QIcon(), 'About...', self)
         self.addAction(self.actionHelpAbout)
@@ -4447,6 +4447,36 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         self.emit(SIGNAL('printRunningSubprocs'))
 
+    #----------------------------------------------------------------------
+    def show_running_subprocs(self):
+        """"""
+
+        self.emit(SIGNAL('sigUpdateRunningSubprocs'))
+
+        nProc = len(self.running_subproc_list)
+
+        if nProc != 0:
+            infoText     = '# PID # :: # Path in Launcher #\n\n'
+            detailedText = ('# PID # :: # Path in Launcher # :: '
+                            '# Command Expression #\n\n')
+            for subp_dict in self.running_subproc_list:
+                infoText += 'PID {0:d} :: {1:s}\n'.format(subp_dict['p'].pid,
+                                                          subp_dict['path'])
+                detailedText += \
+                    'PID {0:d} :: {1:s} ::\n    {2:s}\n'.format(
+                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd'])
+
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle('Currently Running Subprocesses')
+        msgBox.setIcon(QMessageBox.Information)
+
+        if nProc == 0:
+            msgBox.setText('There is currently no running subprocess.')
+        else:
+            msgBox.setInformativeText(infoText)
+            msgBox.setDetailedText(detailedText)
+
+        msgBox.exec_()
 
 ########################################################################
 class LauncherApp(QObject):
