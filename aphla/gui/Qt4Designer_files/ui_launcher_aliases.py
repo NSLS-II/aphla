@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'aphla/gui/Qt4Designer_files/ui_launcher_aliases.ui'
 #
-# Created: Thu Feb  6 22:05:59 2014
+# Created: Fri Feb  7 17:08:09 2014
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,7 +30,7 @@ class Ui_Dialog(object):
         self.tableWidget.setHorizontalHeaderItem(0, item)
         item = QtGui.QTableWidgetItem()
         self.tableWidget.setHorizontalHeaderItem(1, item)
-        self.gridLayout.addWidget(self.tableWidget, 0, 0, 1, 4)
+        self.gridLayout.addWidget(self.tableWidget, 0, 0, 1, 5)
         self.pushButton_plus = QtGui.QPushButton(Dialog)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -51,13 +51,21 @@ class Ui_Dialog(object):
         self.pushButton_minus.setIconSize(QtCore.QSize(30, 30))
         self.pushButton_minus.setObjectName(_fromUtf8("pushButton_minus"))
         self.gridLayout.addWidget(self.pushButton_minus, 1, 1, 1, 1)
+        self.pushButton_restore_default = QtGui.QPushButton(Dialog)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pushButton_restore_default.sizePolicy().hasHeightForWidth())
+        self.pushButton_restore_default.setSizePolicy(sizePolicy)
+        self.pushButton_restore_default.setObjectName(_fromUtf8("pushButton_restore_default"))
+        self.gridLayout.addWidget(self.pushButton_restore_default, 1, 2, 1, 1)
         spacerItem = QtGui.QSpacerItem(129, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem, 1, 2, 1, 1)
+        self.gridLayout.addItem(spacerItem, 1, 3, 1, 1)
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-        self.gridLayout.addWidget(self.buttonBox, 1, 3, 1, 1)
+        self.gridLayout.addWidget(self.buttonBox, 1, 4, 1, 1)
 
         self.retranslateUi(Dialog)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), Dialog.accept)
@@ -71,4 +79,5 @@ class Ui_Dialog(object):
         item.setText(QtGui.QApplication.translate("Dialog", "Alias", None, QtGui.QApplication.UnicodeUTF8))
         item = self.tableWidget.horizontalHeaderItem(1)
         item.setText(QtGui.QApplication.translate("Dialog", "String Value", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_restore_default.setText(QtGui.QApplication.translate("Dialog", "Restore Default", None, QtGui.QApplication.UnicodeUTF8))
 

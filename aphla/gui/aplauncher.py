@@ -264,6 +264,8 @@ class LauncherModel(QStandardItemModel):
         self.nRows = 0
         self.construct_tree(xml_dict, xml_dict['hierarchy']['@version'])
 
+        self.default_aliases = deepcopy(self.aliases)
+
         ## Then parse user XML file and append the data to the tree model
         with open(USER_XML_FILEPATH, 'r') as f:
             xml_dict = xmltodict.parse(
@@ -857,14 +859,12 @@ class AliasEditor(QDialog, Ui_Dialog_aliase):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, alias_dict):
+    def __init__(self, alias_dict_list, default_alias_dict_list):
         """Constructor"""
 
         QDialog.__init__(self)
 
         self.setupUi(self)
-
-        self.aliases = deepcopy(alias_dict)
 
         self.setWindowTitle('Aliases')
 
@@ -873,8 +873,25 @@ class AliasEditor(QDialog, Ui_Dialog_aliase):
         self.pushButton_minus.setIcon(QIcon(':/minus.png'))
         self.pushButton_minus.setIconSize(QSize(40,40))
 
+        self.default_aliases = deepcopy(default_alias_dict_list)
+        self.aliases         = deepcopy(alias_dict_list)
+
+        self.updateModel()
+
+        self.connect(self.pushButton_plus, SIGNAL('clicked()'),
+                     self.addAlias)
+        self.connect(self.pushButton_minus, SIGNAL('clicked()'),
+                     self.removeAlias)
+        self.connect(self.pushButton_restore_default, SIGNAL('clicked()'),
+                     self.restore_default)
+
+    #----------------------------------------------------------------------
+    def updateModel(self):
+        """"""
+
         w = self.tableWidget
 
+        w.setRowCount(0) # clear existing items
         w.setRowCount(len(self.aliases))
         for i, alias in enumerate(self.aliases):
             k = alias['key']
@@ -883,11 +900,6 @@ class AliasEditor(QDialog, Ui_Dialog_aliase):
             w.setItem(i, 1, QTableWidgetItem(v))
 
         w.resizeColumnsToContents()
-
-        self.connect(self.pushButton_plus, SIGNAL('clicked()'),
-                     self.addAlias)
-        self.connect(self.pushButton_minus, SIGNAL('clicked()'),
-                     self.removeAlias)
 
     #----------------------------------------------------------------------
     def accept(self):
@@ -950,6 +962,15 @@ class AliasEditor(QDialog, Ui_Dialog_aliase):
 
         currentRow = self.tableWidget.currentRow()
         self.tableWidget.removeRow(currentRow)
+
+    #----------------------------------------------------------------------
+    def restore_default(self):
+        """"""
+
+        self.aliases = deepcopy(self.default_aliases)
+
+        self.updateModel()
+
 
 ########################################################################
 class IconPickerDialog(QDialog, Ui_Dialog_icon):
@@ -2962,7 +2983,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def launchAliasEditor(self):
         """"""
 
-        dialog = AliasEditor(self.model.aliases)
+        dialog = AliasEditor(self.model.aliases, self.model.default_aliases)
         dialog.exec_()
 
         if dialog.result:
