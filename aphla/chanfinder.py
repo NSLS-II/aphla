@@ -88,8 +88,6 @@ class ChannelFinderAgent(object):
             if prptdict is not None:
                 prpts = dict([v for v in prptdict.iteritems()])
                 # convert the data type
-                for k in converter:
-                    prpts[k] = converter[k](prpts[k])
             else:
                 prpts = None
             # the empty tags could be None
@@ -103,6 +101,9 @@ class ChannelFinderAgent(object):
                                   dict([(k.encode('ascii'), v.encode('ascii'))
                                         for k,v in prpts.iteritems()]),
                                   [v.encode('ascii') for v in ch.getTags()]])
+            if self.rows[-1][1]:
+                for k in converter:
+                    self.rows[-1][1][k] = converter[k](prpts[k])
             del prptdict
 
 
