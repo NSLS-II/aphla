@@ -44,7 +44,7 @@ from PyQt4.QtGui import (
     QCompleter, QDialog, QMessageBox, QFileDialog, QIcon, QBrush, QTreeView,
     QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
     QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup,
-    QKeySequence
+    QKeySequence, QTableWidgetItem
 )
 from PyQt4.QtXml import QDomDocument
 
@@ -154,6 +154,7 @@ from Qt4Designer_files.ui_launcher_item_properties import Ui_Dialog
 from Qt4Designer_files.ui_launcher_restore_hierarchy import Ui_Dialog \
      as Ui_Dialog_restore_hie
 from Qt4Designer_files.ui_icon_picker import Ui_Dialog as Ui_Dialog_icon
+from Qt4Designer_files.ui_launcher_aliases import Ui_Dialog as Ui_Dialog_aliase
 
 import aphla as ap
 from aphla.gui.utils.orderselector import ColumnsDialog
@@ -940,6 +941,80 @@ class LauncherRestoreHierarchyDialog(QDialog, Ui_Dialog_restore_hie):
         self.start_dirs.restore_hierarchy = osp.dirname(save_filepath)
 
         self.lineEdit_backup_filepath.setText(save_filepath)
+
+########################################################################
+class AliasEditor(QDialog, Ui_Dialog_aliase):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, alias_dict):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.aliases = deepcopy(alias_dict)
+
+        self.setWindowTitle('Aliases')
+
+        self.pushButton_plus.setIcon(QIcon(':/plus.png'))
+        self.pushButton_plus.setIconSize(QSize(40,40))
+        self.pushButton_minus.setIcon(QIcon(':/minus.png'))
+        self.pushButton_minus.setIconSize(QSize(40,40))
+
+        sorted_alias_keys = sorted(self.aliases.keys())
+        self.tableWidget.setRowCount(len(sorted_alias_keys))
+        for i, k in enumerate(sorted_alias_keys):
+            v = self.aliases[k]
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(k[1:])) # exclude '%'
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(v))
+
+        self.tableWidget.resizeColumnsToContents()
+
+        self.connect(self.pushButton_plus, SIGNAL('clicked()'),
+                     self.addAlias)
+        self.connect(self.pushButton_minus, SIGNAL('clicked()'),
+                     self.removeAlias)
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        self.aliases = {}
+        for i in range(self.tableWidget.rowCount()):
+            k = '%' + self.tableWidget.item(i, 0).text()
+            v =       self.tableWidget.item(i, 1).text()
+            if (k != '%') and (v != ''):
+                self.aliases[k] = v
+
+        super(AliasEditor, self).accept() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(AliasEditor, self).reject() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def addAlias(self):
+        """"""
+
+        currentRow = self.tableWidget.currentRow()
+        if self.tableWidget.rowCount() == 0:
+            newRow = 0
+        else:
+            newRow = currentRow + 1
+        self.tableWidget.insertRow(newRow)
+        self.tableWidget.setItem(newRow, 0, QTableWidgetItem())
+        self.tableWidget.setItem(newRow, 1, QTableWidgetItem())
+
+    #----------------------------------------------------------------------
+    def removeAlias(self):
+        """"""
+
+        currentRow = self.tableWidget.currentRow()
+        self.tableWidget.removeRow(currentRow)
 
 ########################################################################
 class IconPickerDialog(QDialog, Ui_Dialog_icon):
@@ -2823,6 +2898,10 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.connect(self, SIGNAL('columnSelectionReturned'),
                      self.onColumnSelectionChange)
 
+        self.actionAliases = QAction(QIcon(), 'Aliases...', self)
+        self.connect(self.actionAliases, SIGNAL('triggered()'),
+                     self.launchAliasEditor)
+
         self.actionDelete = QAction(QIcon(), 'Delete', self)
         self.actionDelete.setShortcut(Qt.Key_Delete)
         self.addAction(self.actionDelete)
@@ -2942,6 +3021,16 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         if dialog.output is not None:
             self.emit(SIGNAL('columnSelectionReturned'), dialog.output)
+
+    #----------------------------------------------------------------------
+    def launchAliasEditor(self):
+        """"""
+
+        dialog = AliasEditor(self.model.aliases)
+        dialog.exec_()
+
+        if dialog.result:
+            self.model.aliases = dialog.aliases
 
     #----------------------------------------------------------------------
     def onColumnSelectionChange(self, new_vis_col_full_names,
@@ -4168,6 +4257,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 if selectionType != 'NoSelection':
                     sender.addSeparator()
                     sender.addAction(self.actionDelete)
+
+                sender.addSeparator()
+                sender.addAction(self.actionAliases)
 
             elif sender == self.menuView:
 
