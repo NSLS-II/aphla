@@ -75,15 +75,22 @@ for fam, ql, qk1 in [("SH1", 0.2, 19.8329),
 
     I = [q.convertUnit("b2", qk1*ql, 'phy', None)/I0 - 1.0 for q in qlst]
     print "Summary:", fam, min(rdiff[2:,0]), max(rdiff[2:,1]),
-    print "K1L=%.3f" % (qk1*ql,), I0, min(I), max(I)
+    print "K1L=%.3f" % (qk1*ql,), I0, min(I), max(I), qlst[0].length
     if np.abs(min(I)) > 0.005 or np.abs(max(I)) > 0.005:
         plt.clf()
         plt.plot(I)
         plt.xticks(range(len(qlst)), [q.name for q in qlst], rotation=90)
         plt.savefig("tmp_warn_%s.png" % fam)
+    d = {}
     for q in qlst:
+        pv = q.pv(field="b2", handle="setpoint")[0]
+        d.setdefault(pv, [])
+        d[pv].append((q.name, ql, qk1,
+                      q.convertUnit("b2", qk1*ql, 'phy', None)))
+    for k,v in d.items():
         fout.write("%s %.5f % 9.5f %10.5f\n" % (
-            q.name, ql, qk1, q.convertUnit("b2", qk1*ql, 'phy', None)))
+            v[0][0], v[0][1], v[0][2],
+            np.average([t[3] for t in v])))
 
 fout.close()
 
