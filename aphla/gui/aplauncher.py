@@ -19,6 +19,7 @@ also search an application by keywords.
 import sys, os
 import os.path as osp
 import errno
+from signal import SIGTERM, SIGKILL
 import time
 import posixpath
 from copy import copy, deepcopy
@@ -1777,7 +1778,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self, model, initRootPath):
+    def __init__(self, model, initRootPath, running_subproc_list):
         """Constructor"""
 
         QMainWindow.__init__(self)
@@ -1787,6 +1788,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         self.model = model # Used for TreeView on side pane for which
                            # sorting is disabled
+        self.running_subproc_list = running_subproc_list
 
         self.setupUi(self)
 
@@ -1909,6 +1911,29 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def closeEvent(self, event):
         """"""
 
+        self.emit(SIGNAL('sigUpdateRunningSubprocs'))
+
+        if len(self.running_subproc_list) != 0:
+            msgBox = QMessageBox()
+            msgBox.addButton(QMessageBox.Yes)
+            msgBox.addButton(QMessageBox.Cancel)
+            msgBox.setDefaultButton(QMessageBox.Cancel)
+            msgBox.setEscapeButton(QMessageBox.Cancel)
+            msgBox.setText('Do you want to automatically shut down all applications'
+                           ' that have been launched from this launcher and are '
+                           'still running?')
+            detailedText = ''
+            for subp_dict in self.running_subproc_list:
+                detailedText += 'PID {0:d} :: {1:s} ::\n    {2:s}'.format(
+                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd']) + '\n'
+            msgBox.setDetailedText(detailedText)
+            msgBox.setIcon(QMessageBox.Question)
+            msgBox.setWindowTitle('Shut Down Applications')
+            choice = msgBox.exec_()
+            if choice == QMessageBox.Cancel:
+                event.ignore()
+                return
+
         # Save the current hierarchy in the user-modifiable section to
         # the user hierarchy XML file.
         rootModelItem = self.model.itemFromIndex( QModelIndex(
@@ -1924,6 +1949,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         # Save QSettings
         self.saveSettings()
+
+        self.emit(SIGNAL('sigMainWindowBeingClosed'))
 
         event.accept()
 
@@ -4284,24 +4311,20 @@ class LauncherApp(QObject):
                      self.view.openPropertiesDialog)
         self.connect(self.view, SIGNAL('printRunningSubprocs'),
                      self.print_running_subprocs)
-
-    #----------------------------------------------------------------------
-    def _shutdown(self):
-        """
-        TODO: Gracefully terminate all the running subprocesses
-        """
-
-
-
+        self.connect(self.view, SIGNAL('sigUpdateRunningSubprocs'),
+                     self.update_running_subprocs)
+        self.connect(self.view, SIGNAL('sigMainWindowBeingClosed'),
+                     self._shutdown_subprocs)
 
     #----------------------------------------------------------------------
     def _initModel(self):
         """ """
 
-        self.model = LauncherModel() # Used for TreeView on side pane for which sorting is disabled
+        self.model = LauncherModel()
+        # Used for TreeView on side pane for which sorting is disabled
 
-        self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
-
+        self.model.updatePathLookupLists()
+        # Do not pass any argument in order to refresh entire path list
 
     #----------------------------------------------------------------------
     def _initView(self, initRootPath):
@@ -4310,7 +4333,7 @@ class LauncherApp(QObject):
         if not initRootPath:
             initRootPath = self.model.pathList[0]
 
-        self.view = LauncherView(self.model, initRootPath)
+        self.view = LauncherView(self.model, initRootPath, self.subprocs)
 
     #----------------------------------------------------------------------
     def launchExe(self, item_path, appCommand, workingDir):
@@ -4525,26 +4548,120 @@ class LauncherApp(QObject):
                 msgBox.exec_()
 
     #----------------------------------------------------------------------
-    def print_running_subprocs(self):
+    def update_running_subprocs(self):
         """"""
-
-        print '### Currently Running Subprocesses ###'
-        print '(PID) : (Path in Launcher) : (Command Expression)'
 
         finished_subp_inds = []
         for i, subp_dict in enumerate(self.subprocs):
             p = subp_dict['p']
-            if p.poll() is None:
-                print '{0:d} : {1:s} : {2:s}'.format(
-                    p.pid, subp_dict['path'], subp_dict['cmd'])
-            else:
+            if p.poll() is not None:
                 finished_subp_inds.append(i)
 
         for ind in finished_subp_inds[::-1]:
             self.subprocs.pop(ind)
 
+    #----------------------------------------------------------------------
+    def print_running_subprocs(self):
+        """"""
+
+        self.update_running_subprocs()
+
+        print ' '
+        print '### Currently Running Subprocesses ###'
+        print '(PID) : (Path in Launcher) : (Command Expression)'
+
         if len(self.subprocs) == 0:
             print '* There is currently no running subprocess.'
+        else:
+            for subp_dict in self.subprocs:
+                print '{0:d} : {1:s} : {2:s}'.format(
+                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd'])
+
+    #----------------------------------------------------------------------
+    def _shutdown_subprocs(self):
+        """
+        Gracefully terminate all the running subprocesses, if a user wants
+        to. If a graceful termination fails, it will try to force kill it.
+        """
+
+        self.update_running_subprocs()
+
+        for subp_dict in self.subprocs:
+            p = subp_dict['p']
+            self.kill_proc_tree(p, item_path=subp_dict['path'])
+
+    #----------------------------------------------------------------------
+    def kill_proc_tree(self, parent_Popen_obj_or_pid, item_path='', ps_cmd=''):
+        """"""
+
+        if isinstance(parent_Popen_obj_or_pid, int):
+            parent_Popen_obj = None
+            parent_pid = parent_Popen_obj_or_pid
+        elif isinstance(parent_Popen_obj_or_pid, Popen):
+            parent_Popen_obj = parent_Popen_obj_or_pid
+            parent_pid = parent_Popen_obj.pid
+
+
+        # Check if this process has child processes.
+        # If it does, first try to terminate the child processes.
+        # Do this recursively.
+        cmd = 'ps -eo "%U %p %P %c" | grep {0:s} | grep {1:d}'.format(
+            self.getusername(), parent_pid)
+        pp = Popen(cmd, shell=True, stdout=PIPE)
+        out, err = pp.communicate()
+        if err:
+            print cmd
+            print 'ERROR: {0:s}'.format(err)
+        else:
+            lines = out.splitlines()
+            split_lines = [line.split()[1:] for line in lines]
+            childprocs = [(int(split_line[0]), ' '.join(split_line[2:]))
+                          for split_line in split_lines
+                          if split_line[1] == str(parent_pid)]
+            for subpid, subcmd in childprocs:
+                self.kill_proc_tree(subpid, ps_cmd=subcmd)
+
+        # Finally try to terminate this process gracefully
+        if parent_Popen_obj is not None:
+            parent_Popen_obj.terminate()
+        else:
+            os.kill(parent_pid, SIGTERM)
+
+        # Check if the process has been really terminated.
+        # If not, force kill the process.
+        if item_path:
+            process_tag = 'proc (PID={0:d}) "{1:s}"'.format(parent_pid,
+                                                            item_path)
+        elif ps_cmd:
+            process_tag = 'child proc (PID={0:d}) <{1:s}>'.format(parent_pid,
+                                                                  ps_cmd)
+        else:
+            process_tag = 'proc (PID={0:d})'.format(parent_pid)
+        if parent_Popen_obj is not None:
+            if parent_Popen_obj.poll() is not None:
+                parent_Popen_obj.kill()
+                print 'Force killed {0:s}'.format(process_tag)
+            else:
+                print 'Gracefully terminated {0:s}'.format(process_tag)
+        else:
+            try:
+                os.kill(parent_pid, 0)
+                os.kill(parent_pid, SIGKILL)
+                print 'Force killed {0:s}'.format(process_tag)
+            except OSError, e:
+                print 'Gracefully terminated {0:s}'.format(process_tag)
+
+    #----------------------------------------------------------------------
+    def getusername(self):
+        """"""
+
+        p = Popen('whoami',stdout=PIPE,stderr=PIPE)
+        username, error = p.communicate()
+
+        if error:
+            raise OSError('Error for whoami: '+error)
+        else:
+            return username.strip()
 
 #----------------------------------------------------------------------
 def _subs_tilde_with_home(string):
