@@ -909,31 +909,47 @@ class AliasEditor(QDialog, Ui_Dialog_aliase):
 
         nRows = w.rowCount()
 
-        self.aliases = [OrderedDict() for i in range(nRows)]
-        empty_indexes = []
-        for i in range(nRows):
-            k = '%' + w.item(i, 0).text()
-            v =       w.item(i, 1).text()
+        alias_tuples = [('%' + w.item(i, 0).text(),
+                               w.item(i, 1).text()) for i in range(nRows)]
 
-            if (k != '%') and (v != ''):
+        # Remove empty rows
+        alias_tuples = [(k, v) for (k, v) in alias_tuples
+                        if (k != '%') and (v != '')]
 
-                if len(k.split()) != 1:
-                    msgBox = QMessageBox()
-                    msgBox.setText('An alias cannot contain any whitespace.')
-                    msgBox.setInformativeText(
-                        'Invalid alias found: "{0:s}"'.format(k[1:]))
-                    msgBox.setIcon(QMessageBox.Critical)
-                    msgBox.exec_()
-                    return
-                else:
-                    self.aliases[i]['key']   = k
-                    self.aliases[i]['value'] = v
+        # Check if whitespace in alias keys
+        whitespace_alias_keys = [k[1:] for (k, v) in alias_tuples
+                                 if len(k.split()) != 1]
+        if whitespace_alias_keys != []:
+            msgBox = QMessageBox()
+            msgBox.setText('An alias cannot contain any whitespace.')
+            infoText = 'Invalid alias(es) found:\n'
+            for k in whitespace_alias_keys:
+                infoText += '   "{0:s}"\n'.format(k)
+            msgBox.setInformativeText(infoText)
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+            return
 
-            else:
-                empty_indexes.append(i)
+        # Check if duplicates in alias keys
+        alias_keys = [k for (k, v) in alias_tuples]
+        duplicate_keys = [alias_key for alias_key in set(alias_keys)
+                          if alias_keys.count(alias_key) != 1]
+        if duplicate_keys != []:
+            msgBox = QMessageBox()
+            msgBox.setText('Duplicate alias keys have been found.')
+            infoText = ''
+            for k in duplicate_keys:
+                infoText += '   "{0:s}"\n'.format(k[1:])
+            msgBox.setInformativeText(infoText)
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+            return
 
-        for i in empty_indexes[::-1]:
-            self.aliases.pop(i)
+        self.aliases = []
+        for k, v in alias_tuples:
+            d = OrderedDict()
+            d['key'] = k; d['value'] = v
+            self.aliases.append(d)
 
         super(AliasEditor, self).accept() # will hide the dialog
 
