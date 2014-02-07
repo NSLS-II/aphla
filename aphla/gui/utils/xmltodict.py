@@ -6,7 +6,15 @@ xmltodict-0.8.5.tar.gz was downloaded on 02/05/2014 by Y. Hidaka from
 https://github.com/martinblech/xmltodict/releases/tag/v0.8.5
 
 This comment section has been added by Y. Hidaka on 02/05/2014 to the original
-`xmltodict.py` file. No other part of the code has been modified.
+`xmltodict.py` file.
+
+The following lists the changes made to the original `xmltodict.py` file:
+
+1) 02/07/2014 by Y. Hidaka
+
+Added `samedepth` keyword argument to _emit() in order to remove extra newline
+characters for items that are at the same depth.
+
 
 Copyright (C) 2012 Martin Blech and individual contributors.
 
@@ -262,7 +270,8 @@ def _emit(key, value, content_handler,
           preprocessor=None,
           pretty=False,
           newl='\n',
-          indent='\t'):
+          indent='\t',
+          samedepth=False):
     if preprocessor is not None:
         result = preprocessor(key, value)
         if result is None:
@@ -293,14 +302,19 @@ def _emit(key, value, content_handler,
         if pretty and depth:
             content_handler.ignorableWhitespace(newl + indent * depth)
         content_handler.startElement(key, AttributesImpl(attrs))
-        for child_key, child_value in children:
-            _emit(child_key, child_value, content_handler,
-                  attr_prefix, cdata_key, depth+1, preprocessor,
-                  pretty, newl, indent)
+        for iChild, (child_key, child_value) in enumerate(children):
+            if iChild != len(children)-1:
+                _emit(child_key, child_value, content_handler,
+                      attr_prefix, cdata_key, depth+1, preprocessor,
+                      pretty, newl, indent, True)
+            else:
+                _emit(child_key, child_value, content_handler,
+                      attr_prefix, cdata_key, depth+1, preprocessor,
+                      pretty, newl, indent)
         if cdata is not None:
             content_handler.characters(cdata)
         content_handler.endElement(key)
-        if pretty and depth:
+        if pretty and depth and (not samedepth):
             content_handler.ignorableWhitespace(newl + indent * (depth - 1))
 
 def unparse(input_dict, output=None, encoding='utf-8', **kwargs):

@@ -1,4 +1,0 @@
-{
-    "terminal": "gnome-terminal --disable-factory",
-    "css": "run-css -r 3.2.13a"
-}

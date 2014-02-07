@@ -70,7 +70,16 @@
     ">
 
 ]>
-<hierarchy>
+<hierarchy version="1.0">
+
+    <alias>
+        <key>terminal</key>
+        <value>gnome-terminal --disable-factory</value>
+    </alias>
+    <alias>
+        <key>css</key>
+        <value>run-css -r 3.2.13a</value>
+    </alias>
 
     <item>
         <dispName>root</dispName>

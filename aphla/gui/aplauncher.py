@@ -2,7 +2,7 @@
 
 """GUI application for launching other GUI applications
 
-Version 1.0.0
+Version 1.0
 
 :author: Yoshiteru Hidaka
 :license:
@@ -15,6 +15,8 @@ This application also provides a hierarchical view of available applications
 through which users can find and launch an application of interest. It can
 also search an application by keywords.
 """
+
+__version__ = '1.0'
 
 import sys, os
 import os.path as osp
@@ -29,6 +31,7 @@ import traceback
 import re
 import json
 import shutil
+from collections import OrderedDict
 from cStringIO import StringIO
 import sip
 sip.setapi('QString', 2)
@@ -46,7 +49,6 @@ from PyQt4.QtGui import (
     QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup,
     QKeySequence, QTableWidgetItem
 )
-from PyQt4.QtXml import QDomDocument
 
 APP = None
 
@@ -171,13 +173,6 @@ SYSTEM_XML_FILEPATH    = osp.join(MACHINES_FOLDERPATH, SYSTEM_XML_FILENAME)
 USER_XML_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
 USER_TEMP_XML_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_XML_FILENAME
 
-SYSTEM_ALIAS_FILENAME    = 'us_nsls2_launcher_aliases.json'
-USER_ALIAS_FILENAME      = 'user_launcher_aliases.json'
-USER_TEMP_ALIAS_FILENAME = USER_ALIAS_FILENAME + '.temp'
-SYSTEM_ALIAS_FILEPATH    = osp.join(MACHINES_FOLDERPATH, SYSTEM_ALIAS_FILENAME)
-USER_ALIAS_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_ALIAS_FILENAME
-USER_TEMP_ALIAS_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_ALIAS_FILENAME
-
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
 # *) Bypass XML tree construction, if XML file not changed. Load
@@ -259,39 +254,24 @@ class LauncherModel(QStandardItemModel):
         self.commandList    = []
         self.moduleNameList = []
 
-        ## Load aliases for the following item property fields:
-        ##     command, cwd, sourceFilepath, editor
-        # If there is no user alias file exists, first load the system alias
-        # file, and then clone the system one and save it as the user alias
-        # file.
-        # If there is a user alias file, the aliases are loaded from the user
-        # alias file.
-        if not osp.exists(USER_ALIAS_FILEPATH):
-            with open(SYSTEM_ALIAS_FILEPATH, 'r') as f:
-                temp_aliases = json.load(f)
-            shutil.copy(SYSTEM_ALIAS_FILEPATH, USER_ALIAS_FILEPATH)
-        else:
-            with open(USER_ALIAS_FILEPATH, 'r') as f:
-                temp_aliases = json.load(f)
-        self.aliases = self._validate_aliases(temp_aliases)
+        self.aliases = [] # aliase definitions are now included in the
+        # hierarchy XML files
 
         ## First, parse system XML file and construct a tree model
-        system_XML_Filepath = os.path.join(MACHINES_FOLDERPATH,
-                                           SYSTEM_XML_FILENAME)
-        system_XML_Filepath.replace('\\','/') # On Windows, convert Windows
-        # path separator ('\\') to Linux path separator ('/')
-        #
+        with open(SYSTEM_XML_FILEPATH, 'r') as f:
+            xml_dict = xmltodict.parse(
+                f, postprocessor=_xmltodict_subs_None_w_emptyStr)
         self.nRows = 0
-        doc = self.open_XML_HierarchyFile(system_XML_Filepath)
-        self.construct_tree_model(doc.firstChild()) # Recursively search through
-        # the XML file to build the corresponding tree structure.
+        self.construct_tree(xml_dict, xml_dict['hierarchy']['@version'])
 
         ## Then parse user XML file and append the data to the tree model
-        doc = self.open_XML_HierarchyFile(USER_XML_FILEPATH)
+        with open(USER_XML_FILEPATH, 'r') as f:
+            xml_dict = xmltodict.parse(
+                f, postprocessor=_xmltodict_subs_None_w_emptyStr)
         rootItem = self.item(0,0)
-        self.construct_tree_model(doc.firstChild(),
-                                  parent_item=rootItem,
-                                  child_index=rootItem.rowCount())
+        self.construct_tree(xml_dict, xml_dict['hierarchy']['@version'],
+                            parent_item=rootItem,
+                            child_index=rootItem.rowCount())
 
         # Set up completer for search
         self.completer = QCompleter()
@@ -315,13 +295,33 @@ class LauncherModel(QStandardItemModel):
         Aliases must be a string without whitespaces.
         """
 
-        aliases = {}
-        for k, v in temp_aliases.iteritems():
+        aliases = [OrderedDict() for i in range(len(temp_aliases))]
+        for i, temp_alias in enumerate(temp_aliases):
+            k = temp_alias['key']
+            v = temp_alias['value']
             if len(k.split()) != 1:
                 print 'An alias cannot contain any whitespace.'
                 raise ValueError('Invalid alias found: {0:s}'.format(k))
             else:
-                aliases['%'+k] = v
+                aliases[i]['key']   = '%' + k
+                aliases[i]['value'] = v
+
+        return aliases
+
+    #----------------------------------------------------------------------
+    def _get_aliases_prepared_for_saving(self):
+        """"""
+
+        aliases = [OrderedDict() for i in range(len(self.aliases))]
+        for i, alias in enumerate(self.aliases):
+            k = alias['key']
+            v = alias['value']
+            if len(k.split()) != 1:
+                print 'An alias cannot contain any whitespace.'
+                raise ValueError('Invalid alias found: {0:s}'.format(k))
+            else:
+                aliases[i]['key']   = k[1:] # Remove the prefix "%"
+                aliases[i]['value'] = v
 
         return aliases
 
@@ -329,16 +329,18 @@ class LauncherModel(QStandardItemModel):
     def subs_aliases(self, text_before_subs):
         """"""
 
-        aliases = self.aliases.keys()
+        aliases = [d['key'] for d in self.aliases]
 
         splitted_text = text_before_subs.split(' ')
         splitted_text_after_subs = splitted_text[:]
         for i, s in enumerate(splitted_text):
-            matched_alias = [a for a in aliases if s.startswith(a)]
-            if matched_alias != []:
-                matched_alias = matched_alias[0]
+            matched_alias_ind = [j for j, a in enumerate(aliases)
+                                 if s.startswith(a)]
+            if matched_alias_ind != []:
+                matched_alias_ind = matched_alias_ind[0]
+                matched_alias = self.aliases[matched_alias_ind]
                 splitted_text_after_subs[i] = s.replace(
-                    matched_alias, self.aliases[matched_alias])
+                    matched_alias['key'], matched_alias['value'])
 
         return ' '.join(splitted_text_after_subs)
 
@@ -565,101 +567,94 @@ class LauncherModel(QStandardItemModel):
         return help_text
 
     #----------------------------------------------------------------------
-    def construct_tree_model(self, dom, parent_item = None,
-                             child_index = None):
+    def construct_tree(self, xml_dict, version, parent_item=None,
+                       child_index=None):
         """
+        Recursively search through the json-like dictionary derived from the
+        XML file to build the corresponding tree structure
         """
 
-        info = self.getItemInfo(dom)
+        if version == '1.0':
+            if xml_dict.has_key('hierarchy'):
+                h = xml_dict['hierarchy']
+                if h.has_key('alias'):
+                    self.aliases = self._validate_aliases(h['alias'])
+                d = h['item']
+            else:
+                d = xml_dict
 
-        if info:
-            dispName = str(info['dispName'])
+            if d.has_key('dispName'):
+                dispName = d['dispName']
 
-            item = LauncherModelItem(dispName)
+                item = LauncherModelItem(dispName)
 
-            for prop_name in MODEL_ITEM_PROPERTY_NAMES:
-                if prop_name != 'path':
-                    setattr(item, prop_name, 'N/A')
+                for prop_name in MODEL_ITEM_PROPERTY_NAMES:
+                    if prop_name != 'path':
+                        setattr(item, prop_name, 'N/A')
 
-            item.path     = item.path + item.dispName # This assignment is
-            # meaningful only for "/root".
-            item.desc     = info['desc']
-            item.icon     = info['icon']
-            item.itemType = info['itemType']
+                item.path     = item.path + item.dispName # This assignment
+                # is meaningful only when path == '/root'.
+                item.desc     = d['desc']
+                item.icon     = d['icon']
+                item.itemType = d['itemType']
 
-            for prop_name in MODEL_ITEM_PROPERTY_NAME_DICT[item.itemType]:
-                setattr(item, prop_name, info[prop_name])
+                for prop_name in MODEL_ITEM_PROPERTY_NAME_DICT[item.itemType]:
+                    setattr(item, prop_name, d[prop_name])
 
-            if item.helpHeader == '':
-                item.helpHeader = 'None'
+                if item.helpHeader == '':
+                    item.helpHeader = 'None'
 
-            # Get help text at the header of the source file
-            item.help = self.get_help_header_text(item)
+                # Get help text at the header of the source file
+                item.help = self.get_help_header_text(item)
 
-            item.updateIconAndColor()
+                item.updateIconAndColor()
 
-            for sibling_dom in info['sibling_DOMs']:
-                item.appendRow(LauncherModelItem())
-
-            if (parent_item is not None) and (child_index is not None):
-                item.path = parent_item.path + item.path
-                if item.path not in self.pathList:
-                    self.pathList.append(item.path)
+                if d.has_key('item'):
+                    if isinstance(d['item'], list):
+                        child_items = d['item']
+                    else:
+                        child_items = [d['item']]
+                    nChildren = len(child_items)
+                    for i in range(nChildren):
+                        item.appendRow(LauncherModelItem())
                 else:
-                    raise ValueError('Duplicate path found: '+item.path)
+                    child_items = []
 
-                if item.path.startswith(USER_MODIFIABLE_ROOT_PATH+SEPARATOR):
-                    item.setEditable(True)
+                if (parent_item is not None) and (child_index is not None):
+                    item.path = parent_item.path + item.path
+                    if item.path not in self.pathList:
+                        self.pathList.append(item.path)
+                    else:
+                        raise ValueError('Duplicate path found: {0:s}'.
+                                         format(item.path))
+
+                    if item.path.startswith(USER_MODIFIABLE_ROOT_PATH +
+                                            SEPARATOR):
+                        item.setEditable(True)
+                    else:
+                        item.setEditable(False)
+
+                    parent_item.setChild(child_index, 0, item)
+                    for i, prop_name in enumerate(MODEL_ITEM_PROPERTY_NAMES):
+                        p = getattr(item, prop_name)
+                        parent_item.setChild(child_index, i+1,
+                                             QStandardItem(p))
                 else:
-                    item.setEditable(False)
+                    self.setItem(self.nRows, item)
+                    self.nRows += 1
 
-                parent_item.setChild(child_index, 0, item)
-                for (ii,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
-                    p = getattr(item,prop_name)
-                    #if not isinstance(p,str):
-                        #p = str(p)
-                    parent_item.setChild(child_index, ii+1,QStandardItem(p))
+                parent_item = item
+                for child_index, sub_xml_dict in enumerate(child_items):
+                    self.construct_tree(sub_xml_dict, version,
+                                        parent_item=parent_item,
+                                        child_index=child_index)
 
             else:
-                self.setItem(self.nRows, item)
-                self.nRows += 1
+                raise ValueError('Each item must have dispName property.')
 
-            parent_item = item
-            for (child_index, sibling_dom) in \
-                enumerate(info['sibling_DOMs']):
-                self.construct_tree_model(sibling_dom, parent_item,
-                                          child_index)
         else:
-            if not child_index:
-                child_index = 0
-
-            self.construct_tree_model(dom.nextSibling().firstChild(),
-                                      parent_item, child_index)
-
-    #----------------------------------------------------------------------
-    def getItemInfo(self, dom):
-        """
-        """
-
-        node = dom.firstChild()
-
-        info = DEFAULT_XML_ITEM.copy()
-        info['sibling_DOMs'] = []
-
-        while not node.isNull():
-            nodeName = str(node.nodeName())
-            if nodeName in XML_ITEM_PROPERTY_NAMES:
-                nodeValue = str(node.firstChild().nodeValue())
-                info[nodeName] = nodeValue
-            elif nodeName == XML_ITEM_TAG_NAME:
-                info['sibling_DOMs'].append(node)
-
-            node = node.nextSibling()
-
-        if not info['dispName']:
-            info = {}
-
-        return info
+            raise ValueError('Unexpected hierarchy format version: {0:s}'.
+                             format(h['@version']))
 
     #----------------------------------------------------------------------
     def _getXMLPropNames(self, itemType):
@@ -672,142 +667,57 @@ class LauncherModel(QStandardItemModel):
                    XML_ITEM_PROPERTY_NAME_DICT[itemType]
 
     #----------------------------------------------------------------------
-    def constructXMLElementsFromModel(self, doc, parentModelItem, parentDOMElement):
+    def write_hierarchy_to_XML_file(self, XML_filepath, rootModelItem):
         """"""
 
-        childItemList = [parentModelItem.child(i,0) for i in
-                         range(parentModelItem.rowCount())]
-        for childItem in childItemList:
-            childElement = doc.createElement(XML_ITEM_TAG_NAME)
+        if __version__ == '1.0':
 
-            itemType = childItem.itemType
+            rootItemDict = OrderedDict()
+            for prop_name in XML_ITEM_COMMON_PROPERTY_NAMES:
+                p = getattr(rootModelItem, prop_name)
+                if p == 'N/A': p = None
+                if p == ''   : p = None
+                rootItemDict[prop_name] = p
 
-            for prop_name in self._getXMLPropNames(itemType):
-                p = getattr(childItem,prop_name)
-                #if not isinstance(p,str):
-                    #p = str(p)
-                if p == 'N/A': p = ''
-                elem = doc.createElement(prop_name)
-                elemNodeText = doc.createTextNode(p)
-                elem.appendChild(elemNodeText)
-                childElement.appendChild(elem)
-                #if (prop_name == 'itemType') and (p == 'page'):
-                    #break
+            self.construct_XML_dict_from_model(rootModelItem, rootItemDict)
+
+            hierarchy = OrderedDict()
+            hierarchy['@version'] = __version__
+            hierarchy['alias']    = self._get_aliases_prepared_for_saving()
+            hierarchy['item']     = rootItemDict
+
+            d = OrderedDict()
+            d['hierarchy'] = hierarchy
+
+            with open(XML_filepath, 'w') as f:
+                xmltodict.unparse(d, output=f, pretty=True, newl='\n',
+                                  indent=' '*4)
+        else:
+            raise ValueError('Unexpected version: {0:s}'.format(__version__))
+
+    #----------------------------------------------------------------------
+    def construct_XML_dict_from_model(self, parentModelItem, parentDict):
+        """"""
+
+        nChildren = parentModelItem.rowCount()
+
+        childItemList = [parentModelItem.child(i,0) for i in range(nChildren)]
+        childDictList = [OrderedDict()              for i in range(nChildren)]
+
+        for i, childItem in enumerate(childItemList):
+            for prop_name in self._getXMLPropNames(childItem.itemType):
+                p = getattr(childItem, prop_name)
+                if p == 'N/A': p = None
+                if p == ''   : p = None
+                childDictList[i][prop_name] = p
 
             if childItem.hasChildren():
-                self.constructXMLElementsFromModel(doc, childItem, childElement)
+                self.construct_XML_dict_from_model(childItem, childDictList[i])
 
-            parentDOMElement.appendChild(childElement)
-
-
-    #----------------------------------------------------------------------
-    def writeToXMLFile(self, XML_Filepath, rootModelItem):
-        """"""
-
-        if rootModelItem.itemType == 'page':
-            pass
+        if nChildren == 1:
+            parentDict['item'] = childDictList[0]
         else:
-            raise ValueError('Root model item to be written must be type "page".')
-
-        doc = QDomDocument('')
-
-        # Create XML file declaration header
-        header = doc.createProcessingInstruction('xml', 'version="1.0" encoding="UTF-8"')
-        doc.appendChild(header)
-
-        # Create the XML root element (different from the XML element corresponding
-        # to the root model item)
-        xmlRootDOMElement = doc.createElement('hierarchy')
-
-        # Create the XML element corresponding to the root model item
-        modelRootDOMElement = doc.createElement(XML_ITEM_TAG_NAME)
-        prop_name_list = XML_ITEM_COMMON_PROPERTY_NAMES
-        for prop_name in prop_name_list:
-        #for (ii,prop_name) in enumerate(XML_ITEM_PROPERTY_NAMES):
-            p = getattr(rootModelItem,prop_name)
-            #if not isinstance(p,str):
-                #p = str(p)
-            if p == 'N/A': p = ''
-            elem = doc.createElement(prop_name)
-            elemNodeText = doc.createTextNode(p)
-            elem.appendChild(elemNodeText)
-            modelRootDOMElement.appendChild(elem)
-            #if (prop_name == 'itemType') and (p == 'page'):
-                #break
-
-
-        # Append the XML element corresponding to the root model item as a child of
-        # the XML root element
-        xmlRootDOMElement.appendChild(modelRootDOMElement)
-
-        # Construct all the child elements recursively based on all the child model
-        # items of the given root model item
-        self.constructXMLElementsFromModel(doc, rootModelItem, modelRootDOMElement)
-
-        # Finally, append the XML root element to the DOM object
-        doc.appendChild(xmlRootDOMElement)
-
-
-        f = QFile(XML_Filepath)
-
-        if not f.open(QIODevice.WriteOnly | QIODevice.Text):
-            raise IOError('Failed to open ' + XML_Filepath + ' for writing.')
-
-        stream = QTextStream(f)
-
-        indent = 4
-        stream << doc.toString(indent)
-
-        f.close()
-
-
-
-    #----------------------------------------------------------------------
-    def open_XML_HierarchyFile(self, XML_Filepath):
-        """
-        """
-
-
-        f = QFile(XML_Filepath)
-        if not f.exists():
-            # If the system XML file cannot be located, stop here.
-            XML_Filename = os.path.split(XML_Filepath)
-            if SYSTEM_XML_FILENAME == XML_Filename:
-                raise OSError(XML_Filepath + ' does not exist.')
-
-            # If the user XML file cannot be found, then create an empty one in
-            # ".hla" directory under the user home directory.
-
-            # This section of code creates ".hla" directory under the user home
-            # directory, if it does not already exist. This method assures no
-            # race condtion will happen in the process of creating the new
-            #directory.
-            try:
-                os.makedirs(DOT_HLA_QFILEPATH)
-            except OSError, e:
-                if e.errno != errno.EEXIST:
-                    raise OSError('Failed to create .hla directory')
-
-            # Create an empty user XML file
-            rootModelItem = LauncherModelItem('Favorites')
-            self.writeToXMLFile(XML_Filepath, rootModelItem)
-            # Make sure that the file has been successfully created.
-            if not f.exists():
-                raise IOError('Failed to create an empty User XML file')
-
-        if not f.open(QIODevice.ReadOnly):
-            raise IOError('Failed to open ' + XML_Filepath)
-
-        doc = QDomDocument('')
-
-        if not doc.setContent(f):
-            f.close()
-            raise IOError('Failed to parse ' + XML_Filepath)
-        f.close()
-
-        return doc
-
-
+            parentDict['item'] = childDictList
 
     #----------------------------------------------------------------------
     def updateCompleterModel(self, currentRootPath):
@@ -2085,7 +1995,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         # the user hierarchy XML file.
         rootModelItem = self.model.itemFromIndex( QModelIndex(
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
-        self.model.writeToXMLFile(USER_XML_FILEPATH, rootModelItem)
+        self.model.write_hierarchy_to_XML_file(USER_XML_FILEPATH, rootModelItem)
 
         if osp.exists(USER_TEMP_XML_FILEPATH):
             try: os.remove(USER_TEMP_XML_FILEPATH)
@@ -2116,7 +2026,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         # a temporary user hierarchy XML file.
         rootModelItem = self.model.itemFromIndex( QModelIndex(
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
-        self.model.writeToXMLFile(USER_TEMP_XML_FILEPATH, rootModelItem)
+        self.model.write_hierarchy_to_XML_file(USER_TEMP_XML_FILEPATH,
+                                               rootModelItem)
 
     #----------------------------------------------------------------------
     def saveSettings(self):
@@ -4872,6 +4783,15 @@ def _subs_tilde_with_home(string):
     string = string.replace(' ~', ' '+HOME_PATH)
 
     return string
+
+#----------------------------------------------------------------------
+def _xmltodict_subs_None_w_emptyStr(path, key, value):
+    """"""
+
+    if value is None:
+        return (key, '')
+    else:
+        return (key, value)
 
 #----------------------------------------------------------------------
 def make(initRootPath=''):
