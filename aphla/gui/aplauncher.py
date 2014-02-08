@@ -47,7 +47,7 @@ from PyQt4.QtGui import (
     QCompleter, QDialog, QMessageBox, QFileDialog, QIcon, QBrush, QTreeView,
     QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
     QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup,
-    QKeySequence, QTableWidgetItem
+    QKeySequence, QTableWidgetItem, QSizePolicy, QFontInfo
 )
 
 APP = None
@@ -2026,6 +2026,20 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         QMainWindow.__init__(self)
 
+        # Load Startup Preferences
+        self.default_pref = dict(font_size=16,
+                                 vis_col_list=DEFAULT_VISIBLE_COL_NAMES,
+                                 view_mode='Icon View', icon_grid_size='Medium',
+                                 side_pane_vis=True)
+        if osp.exists(PREF_JSON_FILEPATH):
+            with open(PREF_JSON_FILEPATH, 'r') as f:
+                pref = json.load(f)
+        else:
+            pref = self.default_pref
+        #
+        self.app_wide_font_size = pref['font_size'] # Application-wide font
+        # size will be applied in main() later.
+
         self._initActions()
         self._initMainToolbar()
 
@@ -2144,20 +2158,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         # Load QSettings
         self.loadSettings()
 
-        # Load Startup Preferences
-        self.default_pref = dict(font_size=16,
-                                 vis_col_list=DEFAULT_VISIBLE_COL_NAMES,
-                                 view_mode='Icon View', icon_grid_size='Medium',
-                                 side_pane_vis=True)
-        if osp.exists(PREF_JSON_FILEPATH):
-            with open(PREF_JSON_FILEPATH, 'r') as f:
-                pref = json.load(f)
-        else:
-            pref = self.default_pref
-        #
-        self.app_wide_font_size = pref['font_size'] # Application-wide font
-        # size will be applied in main() later.
-        #
+        # Applying Startup Preferences
         self.visible_column_full_name_list = PERM_VISIBLE_COL_NAMES
         self.onColumnSelectionChange(pref['vis_col_list'],
                                      force_visibility_update=True)
@@ -3764,6 +3765,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         backToolbar.setObjectName("toolbar_back")
         backToolbar.setFloatable(False)
         backToolbar.setMovable(False)
+        backToolbar.setIconSize(QSize(self.app_wide_font_size,
+                                      self.app_wide_font_size))
         backToolbar.addAction(self.actionGoBack)
 
         # Forward button
@@ -3771,6 +3774,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         forwardToolbar.setObjectName("toolbar_forward")
         forwardToolbar.setFloatable(False)
         forwardToolbar.setMovable(False)
+        forwardToolbar.setIconSize(QSize(self.app_wide_font_size,
+                                         self.app_wide_font_size))
         forwardToolbar.addAction(self.actionGoForward)
 
         # Up button
@@ -3778,6 +3783,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         upToolbar.setObjectName("toolbar_up")
         upToolbar.setFloatable(False)
         upToolbar.setMovable(False)
+        upToolbar.setIconSize(QSize(self.app_wide_font_size,
+                                    self.app_wide_font_size))
         upToolbar.addAction(self.actionGoUp)
 
         # View Mode combo box
@@ -3785,13 +3792,16 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         viewModeToolbar.setObjectName("toolbar_view_mode")
         viewModeToolbar.setFloatable(False)
         viewModeToolbar.setMovable(False)
+        viewModeToolbar.setIconSize(QSize(self.app_wide_font_size,
+                                          self.app_wide_font_size))
         viewModeComboBox = QComboBox(viewModeToolbar)
         viewModeComboBox.setObjectName("comboBox_view_mode")
         viewModeComboBox.addItem("Icons View")
         viewModeComboBox.addItem("List View")
         viewModeComboBox.addItem("Details View")
-        viewModeComboBox.setMinimumHeight(viewModeToolbar.height()*1.2)
-        viewModeComboBox.adjustSize()
+        viewModeComboBox.setFixedHeight(10+self.app_wide_font_size)
+        viewModeComboBox.setFixedWidth((10+self.app_wide_font_size)*
+                                       len('Details View')*0.5)
         viewModeToolbar.setMinimumWidth(viewModeComboBox.width())
         viewModeToolbar.adjustSize()
         self.comboBox_view_mode = viewModeComboBox
@@ -3804,7 +3814,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             self.closeTab(self.tabWidget.currentIndex())
         else:
             self.close()
-
 
     #----------------------------------------------------------------------
     def closeTab(self, tab_index):
