@@ -156,7 +156,8 @@ from Qt4Designer_files.ui_launcher_item_properties import Ui_Dialog
 from Qt4Designer_files.ui_launcher_restore_hierarchy import Ui_Dialog \
      as Ui_Dialog_restore_hie
 from Qt4Designer_files.ui_icon_picker import Ui_Dialog as Ui_Dialog_icon
-from Qt4Designer_files.ui_launcher_aliases import Ui_Dialog as Ui_Dialog_aliase
+from Qt4Designer_files.ui_launcher_aliases import Ui_Dialog as Ui_Dialog_alias
+from Qt4Designer_files.ui_launcher_pref import Ui_Dialog as Ui_Dialog_pref
 
 import aphla as ap
 from aphla.gui.utils.orderselector import ColumnsDialog
@@ -172,6 +173,8 @@ USER_TEMP_XML_FILENAME = USER_XML_FILENAME + '.temp'
 SYSTEM_XML_FILEPATH    = osp.join(MACHINES_FOLDERPATH, SYSTEM_XML_FILENAME)
 USER_XML_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
 USER_TEMP_XML_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_XML_FILENAME
+
+PREF_JSON_FILEPATH = osp.join(DOT_HLA_QFILEPATH, 'launcher_startup_pref.json')
 
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
@@ -855,7 +858,128 @@ class LauncherRestoreHierarchyDialog(QDialog, Ui_Dialog_restore_hie):
         self.lineEdit_backup_filepath.setText(save_filepath)
 
 ########################################################################
-class AliasEditor(QDialog, Ui_Dialog_aliase):
+class PreferencesEditor(QDialog, Ui_Dialog_pref):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, default_pref):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowTitle('Startup Preferences')
+
+        self.default_pref = default_pref
+
+        self.load_pref_json()
+
+        self.connect(self.pushButton_restore_default, SIGNAL('clicked()'),
+                     self.restore_default_pref)
+        self.connect(self.pushButton_edit_visible_columns, SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+
+    #----------------------------------------------------------------------
+    def load_pref_json(self):
+        """"""
+
+        if osp.exists(PREF_JSON_FILEPATH):
+            with open(PREF_JSON_FILEPATH, 'r') as f:
+                self.pref = json.load(f)
+        else:
+            # Use default startup preferences
+            self.pref = deepcopy(self.default_pref)
+
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def save_pref_json(self):
+        """"""
+
+        with open(PREF_JSON_FILEPATH, 'w') as f:
+            json.dump(self.pref, f, indent=3, sort_keys=True,
+                      separators=(',', ': '))
+
+    #----------------------------------------------------------------------
+    def restore_default_pref(self):
+        """"""
+
+        self.pref = deepcopy(self.default_pref)
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def update_view(self):
+        """"""
+
+        index = self.comboBox_font_size.findText(str(self.pref['font_size']),
+                                                 Qt.MatchExactly)
+        self.comboBox_font_size.setCurrentIndex(index)
+
+        self.update_column_list_only()
+
+        index = self.comboBox_view_mode.findText(self.pref['view_mode'],
+                                                 Qt.MatchExactly)
+        self.comboBox_view_mode.setCurrentIndex(index)
+
+        index = self.comboBox_icon_grid_size.findText(
+            self.pref['icon_grid_size'], Qt.MatchExactly)
+        self.comboBox_icon_grid_size.setCurrentIndex(index)
+
+        self.checkBox_side_pane_visible.setChecked(self.pref['side_pane_vis'])
+
+    #----------------------------------------------------------------------
+    def update_column_list_only(self):
+        """"""
+
+        self.listWidget_visible_columns.clear()
+        self.listWidget_visible_columns.addItems(self.pref['vis_col_list'])
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        all_column_full_name_list = ALL_COLUMN_NAMES
+        visible_column_full_name_list = self.pref['vis_col_list']
+        permanently_visible_column_full_name_list = PERM_VISIBLE_COL_NAMES
+
+        dialog = ColumnsDialog(all_column_full_name_list,
+                               visible_column_full_name_list,
+                               permanently_visible_column_full_name_list,
+                               parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.pref['vis_col_list'] = dialog.output[:]
+            self.update_column_list_only()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        self.pref['font_size'] = int(self.comboBox_font_size.currentText())
+
+        # self.pref['vis_col_list'] is already updated whenever the list is
+        # modified by column dialog. So, there is no need to update here.
+
+        self.pref['view_mode'] = self.comboBox_view_mode.currentText()
+
+        self.pref['icon_grid_size'] = self.comboBox_icon_grid_size.currentText()
+
+        self.pref['side_pane_vis'] = self.checkBox_side_pane_visible.isChecked()
+
+        self.save_pref_json()
+
+        super(PreferencesEditor, self).accept() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(PreferencesEditor, self).reject() # will hide the dialog
+
+########################################################################
+class AliasEditor(QDialog, Ui_Dialog_alias):
     """"""
 
     #----------------------------------------------------------------------
@@ -1951,7 +2075,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         self.tabWidget = None
 
-
         self.listView_stack_index = 0
         self.treeView_stack_index = 1
 
@@ -1988,7 +2111,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         self.lineEdit_search.setCompleter(self.model.completer)
 
-
         ## Make connections
         self.connect(self.treeViewSide.selectionModel(),
                      SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
@@ -2022,9 +2144,34 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         # Load QSettings
         self.loadSettings()
 
+        # Load Startup Preferences
+        self.default_pref = dict(font_size=16,
+                                 vis_col_list=DEFAULT_VISIBLE_COL_NAMES,
+                                 view_mode='Icon View', icon_grid_size='Medium',
+                                 side_pane_vis=True)
+        if osp.exists(PREF_JSON_FILEPATH):
+            with open(PREF_JSON_FILEPATH, 'r') as f:
+                pref = json.load(f)
+        else:
+            pref = self.default_pref
+        #
+        self.app_wide_font_size = pref['font_size'] # Application-wide font
+        # size will be applied in main() later.
+        #
         self.visible_column_full_name_list = PERM_VISIBLE_COL_NAMES
-        self.onColumnSelectionChange(DEFAULT_VISIBLE_COL_NAMES,
+        self.onColumnSelectionChange(pref['vis_col_list'],
                                      force_visibility_update=True)
+        #
+        if pref['view_mode'] == 'Icon View':
+            self.actionIconsView.setChecked(True)
+        elif pref['view_mode'] == 'List View':
+            self.actionListView.setChecked(True)
+        else:
+            self.actionDetailsView.setChecked(True)
+        #
+        # TODO: Icon View Grid Size changed here
+        #
+        self.actionToggleSidePaneVisibility.setChecked(pref['side_pane_vis'])
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
@@ -2101,7 +2248,13 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         settings.setValue('position', self.geometry())
 
-        settings.setValue('splitterPanes_sizes', self.splitterPanes.sizes())
+        if self.actionToggleSidePaneVisibility.isChecked():
+            settings.setValue('splitterPanes_sizes',
+                              self.splitterPanes.sizes())
+        else: # If side pane is not visible right now, don't change the
+        # splitter ratio.
+            settings.setValue('splitterPanes_sizes',
+                              settings.value('splitterPanes_sizes'))
 
         m = self.getCurrentMainPane()
         current_item_obj = m.pathHistory[m.pathHistoryCurrentIndex]
@@ -2168,36 +2321,72 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def onViewModeActionGroupTriggered(self, action):
         """"""
 
-        m = self.getCurrentMainPane()
-        s = m.stackedWidget;
-
         if action == self.actionIconsView:
-            if s.currentIndex() == self.treeView_stack_index:
-                s.setCurrentIndex(self.listView_stack_index)
-            m.listView.setViewMode(CustomListView.IconMode)
-            m.listView.setGridSize(QSize(m.listView_IconMode_grid_width,
-                                         m.listView_IconMode_grid_height))
-            index = self.comboBox_view_mode.findText('Icons View',
-                                                     Qt.MatchExactly)
+            self.switchedToIconsView(checked=True)
         elif action == self.actionListView:
-            if s.currentIndex() == self.treeView_stack_index:
-                s.setCurrentIndex(self.listView_stack_index)
-            m.listView.setViewMode(CustomListView.ListMode)
-            m.listView.setGridSize(QSize())
-            index = self.comboBox_view_mode.findText('List View',
-                                                     Qt.MatchExactly)
+            self.switchedToListView(checked=True)
         elif action == self.actionDetailsView:
-            if s.currentIndex() == self.listView_stack_index:
-                s.setCurrentIndex(self.treeView_stack_index)
-            for c in range(self.model.columnCount()):
-                m.treeView.resizeColumnToContents(c)
-            index = self.comboBox_view_mode.findText('Details View',
-                                                     Qt.MatchExactly)
+            self.switchedToDetailsView(checked=True)
         else:
             raise ValueError('Unexpected view mode action')
 
+    #----------------------------------------------------------------------
+    def switchedToIconsView(self, checked=True):
+        """"""
+
+        if not checked:
+            return
+
+        m = self.getCurrentMainPane()
+        s = m.stackedWidget;
+
+        if s.currentIndex() == self.treeView_stack_index:
+            s.setCurrentIndex(self.listView_stack_index)
+        m.listView.setViewMode(CustomListView.IconMode)
+        m.listView.setGridSize(QSize(m.listView_IconMode_grid_width,
+                                     m.listView_IconMode_grid_height))
+        index = self.comboBox_view_mode.findText('Icons View',
+                                                 Qt.MatchExactly)
+
         self.comboBox_view_mode.setCurrentIndex(index)
 
+    #----------------------------------------------------------------------
+    def switchedToListView(self, checked=True):
+        """"""
+
+        if not checked:
+            return
+
+        m = self.getCurrentMainPane()
+        s = m.stackedWidget;
+
+        if s.currentIndex() == self.treeView_stack_index:
+            s.setCurrentIndex(self.listView_stack_index)
+        m.listView.setViewMode(CustomListView.ListMode)
+        m.listView.setGridSize(QSize())
+        index = self.comboBox_view_mode.findText('List View',
+                                                 Qt.MatchExactly)
+
+        self.comboBox_view_mode.setCurrentIndex(index)
+
+    #----------------------------------------------------------------------
+    def switchedToDetailsView(self, checked=True):
+        """"""
+
+        if not checked:
+            return
+
+        m = self.getCurrentMainPane()
+        s = m.stackedWidget;
+
+        if s.currentIndex() == self.listView_stack_index:
+            s.setCurrentIndex(self.treeView_stack_index)
+        for c in range(self.model.columnCount()):
+            m.treeView.resizeColumnToContents(c)
+        index = self.comboBox_view_mode.findText('Details View',
+                                                 Qt.MatchExactly)
+
+        self.comboBox_view_mode.setCurrentIndex(index)
 
     #----------------------------------------------------------------------
     def onSidePaneFocusIn(self):
@@ -2907,6 +3096,11 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.connect(self.actionAliases, SIGNAL('triggered()'),
                      self.launchAliasEditor)
 
+        self.actionStartupPref = QAction(QIcon(), 'Startup Preferences...',
+                                         self)
+        self.connect(self.actionStartupPref, SIGNAL('triggered()'),
+                     self.launchPrefEditor)
+
         self.actionDelete = QAction(QIcon(), 'Delete', self)
         self.actionDelete.setShortcut(Qt.Key_Delete)
         self.addAction(self.actionDelete)
@@ -2949,6 +3143,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.connect(self.actionToggleSidePaneVisibility,
                      SIGNAL('triggered(bool)'),
                      self.toggleSidePaneVisibility)
+        self.connect(self.actionToggleSidePaneVisibility,
+                     SIGNAL('toggled(bool)'),
+                     self.toggleSidePaneVisibility)
 
 
         # Action Group for Main Pane View Mode
@@ -2975,6 +3172,12 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionIconsView.setChecked(True) # Default selection for the view mode
         self.connect(self.actionGroupViewMode, SIGNAL('triggered(QAction *)'),
                      self.onViewModeActionGroupTriggered)
+        self.connect(self.actionIconsView, SIGNAL('toggled(bool)'),
+                     self.switchedToIconsView)
+        self.connect(self.actionListView, SIGNAL('toggled(bool)'),
+                     self.switchedToListView)
+        self.connect(self.actionDetailsView, SIGNAL('toggled(bool)'),
+                     self.switchedToDetailsView)
 
         self.actionRunningSubprocs = QAction(QIcon(), 'Runngin Subprocesses...',
                                              self)
@@ -3036,6 +3239,13 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         if dialog.result:
             self.model.aliases = dialog.aliases
+
+    #----------------------------------------------------------------------
+    def launchPrefEditor(self):
+        """"""
+
+        dialog = PreferencesEditor(self.default_pref)
+        dialog.exec_()
 
     #----------------------------------------------------------------------
     def onColumnSelectionChange(self, new_vis_col_full_names,
@@ -4266,6 +4476,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 sender.addSeparator()
                 sender.addAction(self.actionAliases)
 
+                sender.addSeparator()
+                sender.addAction(self.actionStartupPref)
+
             elif sender == self.menuView:
 
                 sender.addAction(self.actionToggleSidePaneVisibility)
@@ -4954,15 +5167,15 @@ def main(args = None):
     else:
         qapp = QApplication(args)
 
-    font = QFont()
-    font.setPointSize(16)
-    qapp.setFont(font)
-
     global APP
 
     initRootPath = SEPARATOR + 'root'
     APP = LauncherApp(initRootPath)
     APP.view.show()
+
+    font = QFont()
+    font.setPointSize(APP.view.app_wide_font_size)
+    qapp.setFont(font)
 
     # Check if there is a temporarily saved user file from an
     # ungracefully terminated previous session. If found, ask a user if he/she
