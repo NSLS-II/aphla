@@ -2103,10 +2103,15 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         settings.setValue('splitterPanes_sizes', self.splitterPanes.sizes())
 
-        current_path_text = self.lineEdit_path.text()
-        if not current_path_text.startswith('/'): # Search Mode
-            current_path_text = ''
-        settings.setValue('last_item_path', current_path_text)
+        m = self.getCurrentMainPane()
+        current_item_obj = m.pathHistory[m.pathHistoryCurrentIndex]
+        if isinstance(current_item_obj, dict): # in Search Mode
+            current_path = ''
+        else:
+            current_item = self.itemFromIndex(QModelIndex(
+                m.pathHistory[m.pathHistoryCurrentIndex]))
+            current_path = current_item.path
+        settings.setValue('last_item_path', current_path)
 
         settings.endGroup()
 
