@@ -27,6 +27,7 @@ import numpy as np
 from aporbitplot import ApCaPlot, ApCaArrayPlot
 from aphla import (catools, getElements, setLocalBump,
                    getTwiss, getTunes, getTwissAt)
+from functools import partial
 
 class DoubleSpinBoxCell(QDoubleSpinBox):
     def __init__(self, row = -1, col = -1, val = 0.0, parent = None):
@@ -296,6 +297,236 @@ class OrbitCorrGeneral(QtGui.QWidget):
             self.updateTargetOrbit(self.base_orbit_box.currentText())
 
 
+class CorrectorViewer(QtGui.QWidget):
+    def __init__(self, cors, parent=None):
+        super(CorrectorViewer, self).__init__(parent)
+        self._plane = "X"
+        self._cors = cors
+        self._corlst1 = QtGui.QTreeWidget()
+        self._header = dict([("Element", 0), ("Family", 1), ("s [m]", 2),
+                             ("Alpha X", 3), ("Alpha Y", 4), ("Beta X", 5),
+                             ("Beta Y", 6), ("Phi X", 7), ("Phi Y", 8),
+                             ("Eta X", 9)])
+        self._twiss = np.zeros((len(self._cors), 8), 'd')
+        self._tunes = getTunes(source="database")
+        self._corlst1.setColumnCount(len(self._header))
+        self._corlst1.setHeaderLabels(
+            sorted(self._header, key=self._header.get))
+        self._corlst1.header().setStretchLastSection(False)
+        prevcell = None
+        for i,c in enumerate(self._cors):
+            if c.cell and (prevcell is None or c.cell != prevcell.text(0)):
+                # a new parent
+                prevcell = QtGui.QTreeWidgetItem()
+                prevcell.setText(0, c.cell)
+                self._corlst1.addTopLevelItem(prevcell)
+            it = QtGui.QTreeWidgetItem()
+            it.setData(0, Qt.UserRole, i)
+            it.setText(self._header["Element"], c.name)
+            it.setText(self._header["Family"], c.family)
+            it.setText(self._header["s [m]"], "%.3f" % c.sb)
+            try:
+                tw = getTwiss(c.name, 
+                              ["s", "alphax", "alphay", "betax", "betay",
+                               "phix", "phiy", "etax"])
+                self._twiss[i,:] = tw[0,:]
+                it.setText(self._header["Alpha X"], "%.4f" % self._twiss[i,1])
+                it.setText(self._header["Alpha Y"], "%.4f" % self._twiss[i,2])
+                it.setText(self._header["Beta X"],  "%.4f" % self._twiss[i,3])
+                it.setText(self._header["Beta Y"],  "%.4f" % self._twiss[i,4])
+                it.setText(self._header["Phi X"],   "%.4f" % self._twiss[i,5])
+                it.setText(self._header["Phi Y"],   "%.4f" % self._twiss[i,6])
+                it.setText(self._header["Eta X"],   "%.4f" % self._twiss[i,7])
+            except:
+                it.setDisabled(True)
+                pass
+
+            if c.cell:
+                prevcell.addChild(it)
+            else:
+                self._corlst1.addTopLevelItem(it)
+                prevcell = it
+            for j in range(2, len(self._header)):
+                it.setTextAlignment(j, Qt.AlignRight)
+        self._corlst1.expandAll()
+        for i in range(len(self._header)):
+            self._corlst1.resizeColumnToContents(i)
+        #self._corlst1.setColumnWidth(0, 150)
+
+        #self.elemlst.setSelectionMode(QAbstractItemView.MultiSelection)
+        columns = ['Corrector', 's', 'Alpha', 'Beta',
+                   'Phi', "dPhi", "Initial Kick", "dKick",
+                   "Final Kick (set)", "Final Kick (read)"]
+        self.table4 = QTableWidget(0, len(columns))
+        #self.table4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        hdview = QHeaderView(Qt.Horizontal)
+        self.table4.setHorizontalHeaderLabels(columns)
+        #for i in range(4):
+        #    for j in range(len(columns)):
+        #        it = QTableWidgetItem()
+        #        if j > 0: it.setTextAlignment(
+        #            Qt.AlignRight | Qt.AlignVCenter)
+        #        if columns[j] != "dKick":
+        #            it.setFlags(it.flags() & (~Qt.ItemIsEditable))
+        #        self.table4.setItem(i, j, it)
+        #self.table4.resizeColumnsToContents()
+        #self.table4.horizontalHeader().setStretchLastSection(True)
+        #hrow = self.table4.rowHeight(0)
+        #htbl = (hrow * 4) + self.table4.horizontalHeader().height() +\
+        #    2*self.table4.frameWidth()
+        #self.table4.setMinimumHeight(htbl + 10)
+        #self.table4.setMaximumHeight(htbl + 15)
+        #self.table4.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        #print "Size:", htbl + 10
+        self.table4.resize(self.table4.width(), 150)
+
+        splitter = QtGui.QSplitter(Qt.Vertical)
+        splitter.addWidget(self._corlst1)
+        splitter.addWidget(self.table4)
+        vbox1 = QtGui.QVBoxLayout()
+        vbox1.addWidget(splitter)
+        self.setLayout(vbox1)
+
+        self.connect(self._corlst1, SIGNAL("doubleClicked(QModelIndex)"),
+                     self.addCorrector)
+        #self.connect(self.src, SIGNAL("returnPressed()"),
+        #             self._calc_source)
+        #self.connect(self.table4, SIGNAL("cellChanged(int, int)"),
+        #             self.updateTable)
+
+        #self.connect(self.table4, SIGNAL("doubleClicked(QModelIndex)"),
+        #             self.delCorrector)
+
+    def addCorrector(self, idx):
+        if not self._corlst1.selectedItems(): return
+        #print self._corlst1.itemFromIndex(idx).text(0)
+        nrow = self.table4.rowCount()
+        if nrow >= 4:
+            QtGui.QMessageBox.critical(
+                self, "Local Orbit Bump", 
+                "ERROR: We need only 3 or 4 correctors.",
+                QtGui.QMessageBox.Ok)
+                #self.progress.setValue(0)
+            return
+        self.table4.setRowCount(nrow+1)
+        it0 = self._corlst1.selectedItems()[-1]
+        icor, ok = it0.data(0, Qt.UserRole).toInt()
+        if icor < 0: return
+        newc = self._cors[icor]
+        for j in range(self.table4.columnCount()):
+            it = QTableWidgetItem()
+            if j > 0: it.setTextAlignment(
+                Qt.AlignRight | Qt.AlignVCenter)
+            header = self.table4.horizontalHeaderItem(j)
+            if header.text() != "dKick":
+                it.setFlags(it.flags() & (~Qt.ItemIsEditable))
+            else:
+                it.setData(Qt.DisplayRole, "0")
+                it.setData(Qt.UserRole, 0.0)
+            self.table4.setItem(nrow, j, it)
+        #self.table4.item(nrow,0).setData(Qt.UserRole, idx)
+        for j,h in [(0, "Element"), (1, "s [m]")]:
+            self.table4.item(nrow,j).setData(Qt.DisplayRole,
+                                          it0.text(self._header[h]))
+        for j in range(self._corlst1.columnCount()):
+            it0.setForeground(j, Qt.red)
+        it0.setDisabled(True)
+        #self.emit(SIGNAL("correctorChanged(PyQt_PyObject)"), self.cors)
+        self.updateTwiss(rows = [nrow])
+
+    def updateTwiss(self, plane="X", rows = None):
+        if plane == "X":
+            jl = [self._header[h] for h in ["Alpha X", "Beta X", "Phi X"]]
+            nu = self._tunes[0]
+        elif plane == "Y":
+            jl = [self._header[h] for h in ["Alpha Y", "Beta Y", "Phi Y"]]
+            nu = self._tunes[1]
+        row_list = range(self.table4.rowCount()) if rows is None else rows
+        for i in row_list:
+            elemname = self.table4.item(i,0).data(Qt.DisplayRole).toString()
+            it0 = self._corlst1.findItems(
+                elemname, Qt.MatchExactly | Qt.MatchRecursive)[0]
+            
+            self.table4.item(i,2).setText(it0.text(jl[0]))
+            self.table4.item(i,3).setText(it0.text(jl[1]))
+            self.table4.item(i,4).setText(it0.text(jl[2]))
+            self.table4.item(i,4).setData(Qt.UserRole, float(it0.text(jl[2])))
+
+            if i == 0:
+                self.table4.item(i,5).setText("0.0")
+                self.table4.item(i,5).setData(Qt.UserRole, 0.0)
+            else:
+                dph, ok = self.table4.item(i-1,5).data(Qt.UserRole).toFloat()
+                ph0, ok = self.table4.item(i-1,4).data(Qt.UserRole).toFloat()
+                ph1, ok = self.table4.item(i,4).data(Qt.UserRole).toFloat()
+                dph = dph + ph1 - ph0
+                if ph1 < ph0:
+                    dph = dph + 2.0*np.pi*nu
+                print i, dph
+                self.table4.item(i,5).setData(Qt.UserRole, dph)
+                self.table4.item(i,5).setText("%.5g" % dph)
+            icor, ok = self.table4.item(i,0).data(Qt.UserRole).toInt()
+            c = self._cors[icor]
+            kick = c.x if plane == "X" else c.y
+            self.table4.item(i,6).setData(Qt.UserRole, kick)
+            self.table4.item(i,6).setText("%.5g" % kick)
+        self._plane = plane
+
+    def clear(self):
+        for i in range(self.table4.rowCount()):
+            elemname = self.table4.item(i,0).data(Qt.DisplayRole).toString()
+            it0 = self._corlst1.findItems(
+                elemname, Qt.MatchExactly | Qt.MatchRecursive)[0]
+            it0.setDisabled(False)
+            for j in range(self._corlst1.columnCount()):
+                it0.setForeground(j, Qt.black)
+        self.table4.setRowCount(0)
+    
+    def setKick(self, dkick):
+        nrow = min(self.table4.rowCount(), len(dkick))
+        for j in range(self.table4.columnCount()):
+            header = self.table4.horizontalHeaderItem(j)
+            if header.text() != "dKick": continue
+            for i in range(nrow):
+                it = self.table4.item(i, j)
+                it.setData(Qt.DisplayRole, "{0}".format(dkick[i]))
+                it.setData(Qt.UserRole, dkick[i])
+
+    def applyCorrection(self):
+        for j in range(self.table4.columnCount()):
+            header = self.table4.horizontalHeaderItem(j)
+            if header.text() != "dKick": continue
+            for i in range(nrow):
+                it = self.table4.item(i, j)
+                dk, ok = it.data(Qt.UserRole).toFloat()
+                icor, ok = self.table4.item(i,0).data(Qt.UserRole).toInt()
+                cor = self._cors[icor]
+                if self._plane == "X":
+                    cor.x = cor.x + dk
+                elif self._plane == "Y":
+                    cor.y = cor.y + dk
+
+    def getTwiss(self):
+        tw = {"s": [], "Alpha": [], "Beta": [],
+              "Phi": [], "dPhi": []}
+        nrow = self.table4.rowCount()
+        for j in range(self.table4.columnCount()):
+            header = self.table4.horizontalHeaderItem(j)
+            if header.text() not in tw.keys():
+                continue
+            k = str(header.text())
+            for i in range(nrow):
+                it = self.table4.item(i, j)
+                v0, ok0 = it.data(Qt.UserRole).toFloat()
+                v1, ok1 = it.data(Qt.DisplayRole).toFloat()
+                if ok0:
+                    tw[k].append(v0)
+                elif ok1:
+                    tw[k].append(v1)
+                else:
+                    tw[k].append(np.nan)
+        return tw
+
 # Bump from corrector strength
 class Bump3XCor(QtGui.QWidget):
     def __init__(self, parent = None):
@@ -348,21 +579,55 @@ class Bump3XCor(QtGui.QWidget):
 
 # Bump from a location
 class Bump3XSrc(QtGui.QWidget):
-    def __init__(self, parent = None):
+    def __init__(self, cors, parent = None):
         super(Bump3XSrc, self).__init__(parent)
         self._twiss = None
         self.loc = QtGui.QLineEdit()
         self.dxi = QtGui.QLineEdit("0.0")
+        self._corview = CorrectorViewer(cors)
+        hbox3 = QtGui.QHBoxLayout()
+        self.rdbxbump = QtGui.QRadioButton("X Bump")
+        self.rdbybump = QtGui.QRadioButton("Y BUmp")
+        self.rdbxbump.setChecked(True)
+        hbox3.addWidget(self.rdbxbump)
+        hbox3.addWidget(self.rdbybump)
+        grp1 = QtGui.QGroupBox("Plane")
+        grp1.setLayout(hbox3)
+
         fmbox = QtGui.QFormLayout()
         fmbox.addRow("Location", self.loc)
         fmbox.addRow("dX (dY)", self.dxi)
-        self.setLayout(fmbox)
+        vbox1 = QtGui.QVBoxLayout()
+        vbox1.addWidget(grp1)
+        vbox1.addLayout(fmbox)
+        gbox4 = QtGui.QGridLayout()
+        btnClear = QtGui.QPushButton("Clear")
+        btnZoomin = QtGui.QPushButton("Zoom In")
+        btnApply  = QtGui.QPushButton("Apply")
+        btnCheat = QtGui.QPushButton("_CHEAT_")
+        gbox4.addWidget(btnClear, 0, 1)
+        gbox4.addWidget(btnZoomin, 1, 1)
+        gbox4.addWidget(btnApply, 2, 1)
+        gbox4.addWidget(btnCheat, 3, 1)
+        gbox4.setColumnStretch(1, 0)
+        gbox4.setColumnStretch(0, 1)
+        vbox1.addStretch()
+        vbox1.addLayout(gbox4)
+        
+        hbox1 = QtGui.QHBoxLayout()
+        hbox1.addWidget(self._corview, 1)
+        hbox1.addLayout(vbox1)
+        self.setLayout(hbox1)
 
+        self.connect(self.rdbxbump, SIGNAL("clicked()"),
+                     partial(self._corview.updateTwiss, plane="X"))
+        self.connect(self.rdbybump, SIGNAL("clicked()"),
+                     partial(self._corview.updateTwiss, plane="Y"))
         self.connect(self.loc, SIGNAL("editingFinished()"),
                      self._update_dx)
         self.connect(self.dxi, SIGNAL("editingFinished()"),
                      self._update_dx)
-
+        
     def setTwiss(self, tw):
         self._twiss = tw
 
@@ -401,6 +666,7 @@ class Bump3XSrc(QtGui.QWidget):
             return [0.0, 0.0, 0.0]
 
     def _update_dx(self):
+        print self._corview.getTwiss()
         vals = self.dx()
         print "New dkick:", vals, self._twiss
         self.emit(SIGNAL("dKickUpdated(PyQt_PyObject)"), vals)
@@ -1024,9 +1290,11 @@ if __name__ == "__main__":
     ap.machines.load("nsls2v2")
     bpms = ap.getElements("BPM")
     cors = ap.getElements("COR")
-    form = OrbitCorrDlg(bpms) 
+    #form = OrbitCorrDlg(bpms) 
     #form = OrbitCorrGeneral(bpms, cors)
     #form = OrbitCorrNBumps(bpms, cors)
+    #form = CorrectorViewer(cors)
+    form = Bump3XSrc(cors)
     form.resize(1000, 400)
     form.setWindowTitle("Create Local Bump")
     form.show()
