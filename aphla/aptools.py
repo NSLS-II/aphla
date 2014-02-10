@@ -223,8 +223,10 @@ def setLocalBump(bpm, trim, ref, **kwargs):
             if field == 'x': 
                 # v0 [m], u1 is lower level unit (EPICS)
                 v0, u1 = ref[i][0], bpm[i].getUnit('x', unitsys=None)
+                if ref[i][0] is None: v0 = bpm[i].x
             elif field == 'y': 
                 v0, u1 = ref[i][1], bpm[i].getUnit('y', unitsys=None)
+                if ref[i][1] is None: v0 = bpm[i].y
             else:
                 raise RuntimeError("unknow field %s" % field)
 
@@ -284,7 +286,7 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
 
     # an orbit based these bpm
     if bpmlst is None:
-        bpmlst = getElements('BPM')
+        bpmlst = [e for e in getElements('BPM') if e.isEnabled()]
 
     N = len(bpmlst)
     if plane == 'H': ref = zip([0.0] * N, [None] * N)
@@ -293,7 +295,7 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     
     # pv for trim
     if trimlst is None:
-        trimlst = getElements('COR')
+        trimlst = [e for e in getElements('COR') if e.isEnabled()]
 
     setLocalBump(bpmlst, trimlst, ref, **kwargs)
 

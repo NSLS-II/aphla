@@ -606,7 +606,7 @@ class ApCaPlot(Qwt.QwtPlot):
         self.replot()
 
     def zoomed(self, r):
-        print "Zoomed"
+        #print "Zoomed"
         pass
 
     def pullCaData(self):
@@ -965,7 +965,7 @@ class ApCaArrayPlot(ApCaPlot):
             c.setData(y, x, e1)
 
         self.replot()
-        QtGui.qApp.processEvents()
+        #QtGui.qApp.processEvents()
 
     def _ca_update_all(self, val, idx = None):
         if self._hold: return
@@ -988,7 +988,7 @@ class ApCaArrayPlot(ApCaPlot):
 
         if any([c.isVisible() for c in self.curves]):
             self.replot()
-        QtGui.qApp.processEvents()
+        #QtGui.qApp.processEvents()
 
     def pullCaData(self):
         if not self._cadata: return

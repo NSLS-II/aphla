@@ -20,6 +20,34 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
+def chooseElement(fam):
+    elems = ap.getElements(fam)
+    allelems  = [(e.name, Qt.Checked) if e.isEnabled()
+                 else (e.name, Qt.Unchecked) for e in elems]
+    enabled_0 = [i for i,e in enumerate(elems) if e.isEnabled()]
+    extra_cols = [('s [m]', [e.sb for e in elems])]
+    form = ElementPickDlg(allelems, title="Choose {0}".format(fam),
+                          extra_cols = extra_cols)
+
+    if form.exec_(): 
+        enabled = form.checkedIndices()
+        el0, el1 = [], []
+        for i,e in enumerate(elems):
+            if i in enabled_0 and i not in enabled:
+                el0.append(i)
+            elif i not in enabled_0 and i in enabled:
+                el1.append(i)
+            if i in enabled: e.setEnabled(True)
+            else: e.setEnabled(False)
+
+        if el0:
+            _logger.info("{0} {1} '{2}' are disabled".format(
+                len(el0), fam, [elems[i].name for i in el0]))
+        if el1:
+            _logger.info("{0} {1} '{2}' are enabled".format(
+                len(el1), fam, [elems[i].name for i in el1]))
+
+
 class ApOrbitPhysics:
     def __init__(self, mdiarea, **kwargs):
         self.mdiarea = mdiarea
@@ -40,37 +68,6 @@ class ApOrbitPhysics:
                 w.data.disable(e.name)
 
         
-    def chooseElement(self, fam):
-        elems = ap.getElements(fam)
-        allelems = [e.name for e in elems]
-        unchecked = [e.name for e in self.deadelems]
-        form = ElementPickDlg(allelems, unchecked,
-                              title="Choose {0}".format(fam))
-
-        deadlst = []
-        if form.exec_(): 
-            choice = form.result()
-            for i,e in enumerate(allelems):
-                if e in choice: continue
-                deadlst.append(elems[i])
-            # do nothing if dead element list did not change
-            if set(deadlst) == self.deadelems: return
-            self.deadelems = set(deadlst)
-
-        _logger.info("{0} {1} '{2}' are disabled".format(
-                len(deadlst), fam, [e.name for e in deadlst]))
-        self.updateDeadElementPlots()
-
-    def elementChecked(self, elem, stat):
-        #print "element state:", elem, stat
-        if stat == False and elem not in self.deadelems:
-            self.deadelems.add(elem)
-            _logger.info("'%s' is disabled" % elem.name)
-        elif stat == True and elem in self.deadelems:
-            self.deadelems.add(elem)
-            _logger.info("'%s' is enabled" % elem.name)
-        self.updateDeadElementPlots()
-
     def correctOrbit(self, **kwargs):
         """
         """

@@ -1466,17 +1466,17 @@ class OrbitCorrDlg(QDialog):
         self._update_orbit_plot(xobt, yobt)
         tabs.addTab(tab_general_cor, "General Bump")
 
+        tab_bump3xcor = Bump3XCor(corls)
         tab_bump3xsrc = Bump3XSrc(corls)
+        tab_bump4xcor = Bump4XCor(corls)
+        tab_bump4xsrc = Bump4XSrc(corls)
         #plots=[self.bpm_plot, self.cor_plot, self.tw_plot])
         #self.connect(tab_nbump_cor, 
         #             SIGNAL("correctorChanged(PyQt_PyObject)"),
         #             self._update_corr_plot)
         tabs.addTab(tab_bump3xcor, "3 Cors. dI")
-        tab_bump4xcor = Bump4XCor(corls)
         tabs.addTab(tab_bump3xsrc, "3 Cors. dX")
-        tab_bump3xcor = Bump3XCor(corls)
         tabs.addTab(tab_bump4xcor, "4 Cors. dI")
-        tab_bump4xsrc = Bump4XSrc(corls)
         tabs.addTab(tab_bump4xsrc, "4 Cors. dX")
         layout.addWidget(tabs, 3)
 

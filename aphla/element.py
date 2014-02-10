@@ -17,14 +17,13 @@ from unitconv import *
 
 # public symbols
 __all__ = [ "CaElement", "merge",
-            "DISABLED", "READONLY", "ASCENDING", "DESCENDING", "UNSPECIFIED" ]
+            "ASCENDING", "DESCENDING", "UNSPECIFIED" ]
 
 _logger = logging.getLogger(__name__)
 
 # flags bit pattern
-LIVE     = 0x00
-DISABLED = 0x01
-READONLY = 0x02
+_DISABLED = 0x01
+_READONLY = 0x02
 
 UNSPECIFIED = 0
 ASCENDING   = 1
@@ -204,8 +203,14 @@ class AbstractElement(object):
         if prpt.has_key('index'):
             self.index = int(prpt['index'])
 
-    def isActive(self):
-        return self.flag | DISABLED
+    def isEnabled(self):
+        return not (self.flag & _DISABLED)
+
+    def setEnabled(self, b):
+        if b:
+            self.flag = self.flag & ~_DISABLED
+        else:
+            self.flag = self.flag | _DISABLED
 
         
 class CaAction:
