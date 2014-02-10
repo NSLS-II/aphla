@@ -436,7 +436,7 @@ class CorrectorViewer(QtGui.QWidget):
         self.updateTwiss(rows = [nrow])
         self.table4.resizeColumnsToContents()
         if self.table4.rowCount() == self._nmax:
-            print "All correctors are ready"
+            #print "All correctors are ready"
             self.emit(SIGNAL("correctorsComplete()"))
 
     def updateTwiss(self, plane="X", rows = None):
@@ -467,7 +467,7 @@ class CorrectorViewer(QtGui.QWidget):
                 dph = dph + ph1 - ph0
                 if ph1 < ph0:
                     dph = dph + 2.0*np.pi*nu
-                print i, dph
+                #print i, dph
                 self.table4.item(i,5).setData(Qt.UserRole, dph)
                 self.table4.item(i,5).setText("%.5g" % dph)
             icor, ok = self.table4.item(i,0).data(Qt.UserRole).toInt()
@@ -554,11 +554,11 @@ class CorrectorViewer(QtGui.QWidget):
                 if self._plane == "X":
                     kk = cor.x + dk
                     cor.x = kk
-                    print "Setted x:", cor.name, kk, dk
+                    #print "Setted x:", cor.name, kk, dk
                 elif self._plane == "Y":
                     kk = cor.y + dk
                     cor.y = kk
-                    print "Setted Y:", cor.name, kk, dk
+                    #print "Setted Y:", cor.name, kk, dk
                 self.table4.item(i,j+1).setData(
                     Qt.DisplayRole, "{0}".format(kk))
 
@@ -611,11 +611,9 @@ class BumpNCor(QtGui.QWidget):
         btnClear  = QtGui.QPushButton("Clear")
         btnZoomin = QtGui.QPushButton("Zoom In")
         btnApply  = QtGui.QPushButton("Apply")
-        btnCheat  = QtGui.QPushButton("_CHEAT_")
         self.gboxBtn.addWidget(btnClear, 0, 1)
         self.gboxBtn.addWidget(btnZoomin, 1, 1)
         self.gboxBtn.addWidget(btnApply, 2, 1)
-        self.gboxBtn.addWidget(btnCheat, 3, 1)
         self.gboxBtn.setColumnStretch(1, 0)
         self.gboxBtn.setColumnStretch(0, 1)
 
@@ -831,7 +829,7 @@ class Bump3XSrc(BumpNCor):
         self.lblAlfa.setText("{0}".format(at))
         self.lblPhi.setText("{0}".format(pht))
         vals = self.dx(tw, xt)
-        print "New dkick:", vals
+        #print "New dkick:", vals
         self.corview.setKick(vals)
         #self.emit(SIGNAL("dKickUpdated(PyQt_PyObject)"), vals)
 
@@ -1106,11 +1104,9 @@ class OrbitCorrNBumps(QtGui.QWidget):
         btnClear = QtGui.QPushButton("Clear")
         btnZoomin = QtGui.QPushButton("Zoom In")
         btnApply  = QtGui.QPushButton("Apply")
-        btnCheat = QtGui.QPushButton("_CHEAT_")
         gbox4.addWidget(btnClear, 0, 1)
         gbox4.addWidget(btnZoomin, 1, 1)
         gbox4.addWidget(btnApply, 2, 1)
-        gbox4.addWidget(btnCheat, 3, 1)
         gbox4.setColumnStretch(1, 0)
         gbox4.setColumnStretch(0, 1)
         vbox2.addLayout(gbox4)
@@ -1120,7 +1116,6 @@ class OrbitCorrNBumps(QtGui.QWidget):
         self.connect(btnClear, SIGNAL("clicked()"), self._clear_correctors)
         self.connect(btnZoomin, SIGNAL("clicked()"), self._zoom_in_plots)
         self.connect(btnApply, SIGNAL("clicked()"), self._apply_bump)
-        self.connect(btnCheat, SIGNAL("clicked()"), self._cheat)
         self.connect(self._corlst1, SIGNAL("doubleClicked(QModelIndex)"),
                      self.addCorrector)
         #self.connect(self.src, SIGNAL("returnPressed()"),
@@ -1132,7 +1127,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
         #             self.delCorrector)
 
     def _set_cor(self, vals):
-        print "Received:", vals
+        #print "Received:", vals
         if vals is None: return
         for i,v in enumerate(vals):
             self.table4.item(i,7).setData(Qt.DisplayRole, "%.5f" % v)
@@ -1172,17 +1167,6 @@ class OrbitCorrNBumps(QtGui.QWidget):
                                                at*np.sin(pht-ph[0]))
                 self.src_xp.setText("%.5f" % dxp)
 
-    def _cheat(self):
-        s = aphla.catools.caget('V:2-SR-BI{POS}-I')
-        x = aphla.catools.caget('V:2-SR-BI{ORBIT}X-I')
-        y = aphla.catools.caget('V:2-SR-BI{ORBIT}Y-I')
-        p = self._plots[0]
-        p._cheat[0].setData(s, x)
-        p._cheat[1].setData(s, y)
-        p.showCurve(p._cheat[0], True)
-        p.showCurve(p._cheat[1], True)
-        p.replot()
-
     def addCorrector(self, idx):
         #['Corrector', 's', 'Beta X', 'Beta Y', 'Phi X', 'Phi Y',
         #     "dPhiX", "dPhiY", "dX", "dY", "X", "Y"])
@@ -1220,7 +1204,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
             dph = dph + ph1 - ph0
             if ph1 < ph0:
                 dph = dph + 2.0*np.pi*nu
-            print i, dph
+            #print i, dph
             self.table4.item(i,5).setData(Qt.UserRole, dph)
             self.table4.item(i,5).setText("%.5g" % dph)
         self.table4.item(i,6).setData(Qt.UserRole, kick)
@@ -1331,7 +1315,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
         self.table4.item(1,jdx).setData(Qt.DisplayRole, str(dth2))
         self.table4.item(2,jdx).setData(Qt.DisplayRole, str(dth3))
         self.table4.item(3,jdx).setData(Qt.DisplayRole, str(dth4))
-        print dt1, dt2, dt3, dt4
+        #print dt1, dt2, dt3, dt4
 
     def updateTable(self, row, col):
         #print self.table4.currentRow(), self.table4.currentColumn()
@@ -1487,13 +1471,13 @@ class OrbitCorrDlg(QDialog):
         #self.connect(tab_nbump_cor, 
         #             SIGNAL("correctorChanged(PyQt_PyObject)"),
         #             self._update_corr_plot)
-        tabs.addTab(tab_bump3xsrc, "3 Cors. dX")
-        tab_bump3xcor = Bump3XCor(corls)
         tabs.addTab(tab_bump3xcor, "3 Cors. dI")
         tab_bump4xcor = Bump4XCor(corls)
-        tabs.addTab(tab_bump4xcor, "4 Cors. dX")
+        tabs.addTab(tab_bump3xsrc, "3 Cors. dX")
+        tab_bump3xcor = Bump3XCor(corls)
+        tabs.addTab(tab_bump4xcor, "4 Cors. dI")
         tab_bump4xsrc = Bump4XSrc(corls)
-        tabs.addTab(tab_bump4xsrc, "4 Cors. dI")
+        tabs.addTab(tab_bump4xsrc, "4 Cors. dX")
         layout.addWidget(tabs, 3)
 
         self.connect(tab_bump3xcor, SIGNAL("zoomInCorrectors(PyQt_PyObject)"),
@@ -1520,13 +1504,13 @@ class OrbitCorrDlg(QDialog):
         #hln.setFrameShape(QtGui.QFrame.HLine)
         #layout.addWidget(hln)
 
-        #hbox = QHBoxLayout()
-
-        #hbox.addStretch()
-        #btn = QPushButton("Close")
-        #self.connect(btn, SIGNAL("clicked()"), self.accept)
-        #hbox.addWidget(btn)
-        #layout.addLayout(hbox)
+        # the cheat button
+        hbox = QHBoxLayout()
+        hbox.addStretch()
+        btn = QPushButton("__CHEAT__")
+        self.connect(btn, SIGNAL("clicked()"), self._cheat)
+        hbox.addWidget(btn)
+        layout.addLayout(hbox)
 
         self.setLayout(layout)
         #self.update_orbit = update_orbit
@@ -1550,6 +1534,17 @@ class OrbitCorrDlg(QDialog):
         self.xc.setData(sx, vx)
         self.yc.setData(sy, vy)
         self.bpm_plot.replot()
+
+    def _cheat(self):
+        s = aphla.catools.caget('V:2-SR-BI{POS}-I')
+        x = aphla.catools.caget('V:2-SR-BI{ORBIT}X-I')
+        y = aphla.catools.caget('V:2-SR-BI{ORBIT}Y-I')
+        p = self.bpm_plot
+        p._cheat[0].setData(s, x)
+        p._cheat[1].setData(s, y)
+        p.showCurve(p._cheat[0], True)
+        p.showCurve(p._cheat[1], True)
+        p.replot()
 
     def _zoom_in_cors(self, corls):
         mks = [(c.name, c.sb) for c in corls]

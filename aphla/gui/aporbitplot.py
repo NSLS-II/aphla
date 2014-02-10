@@ -970,9 +970,9 @@ class ApCaArrayPlot(ApCaPlot):
     def _ca_update_all(self, val, idx = None):
         if self._hold: return
         if not self.live: return
-        #print "Updating %s: " % val.name, self._pvs[val.name], val
         for pv in self._pvs.keys():
             v1 = self._cadata.get(pv)
+            #print "Updating %s: " % pv, v1
             for i,j in self._pvs.get(pv, []):
                 self._count[i][j] += 1
                 self._y[i][j] = v1
