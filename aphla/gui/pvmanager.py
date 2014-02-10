@@ -71,10 +71,14 @@ class CaDataMonitor(QtCore.QObject):
                     self._wfsize[pv] = len(d[i])
                 except:
                     self._wfsize[pv] = None
+                for fhk in self.hook.get(pv, []):
+                    fhk(pv, None)
 
     def addHook(self, pv, f):
         self.hook.setdefault(pv, [])
         self.hook[pv].append(f)
+        if self.data.get(pv, []):
+            f(self.data[pv][-1], None)
 
     def _ca_update(self, val, idx = None):
         """

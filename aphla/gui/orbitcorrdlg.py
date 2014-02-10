@@ -432,6 +432,7 @@ class CorrectorViewer(QtGui.QWidget):
         for j in range(self._corlst1.columnCount()):
             it0.setForeground(j, Qt.red)
         it0.setDisabled(True)
+        self.emit(SIGNAL("correctorAdded(PyQt_PyObject)"), newc)
         self.updateTwiss(rows = [nrow])
         self.table4.resizeColumnsToContents()
         if self.table4.rowCount() == self._nmax:
@@ -475,6 +476,7 @@ class CorrectorViewer(QtGui.QWidget):
             self.table4.item(i,6).setData(Qt.UserRole, kick)
             self.table4.item(i,6).setText("%.5g" % kick)
         self._plane = plane
+        #self.updateKickReadings(col=0)
 
     def clear(self):
         for i in range(self.table4.rowCount()):
@@ -486,7 +488,15 @@ class CorrectorViewer(QtGui.QWidget):
                 it0.setForeground(j, Qt.black)
         self.table4.setRowCount(0)
     
-    def updateKickReadings(self, irow = None, col = 0):
+    def resetCalculations(self):
+        for j in range(self.table4.columnCount()):
+            header = self.table4.horizontalHeaderItem(j)
+            if header.text().contains("Kick"):
+                for i in range(self.table4.rowCount()):
+                    self.table4.item(i,j).setData(Qt.DisplayRole, "")
+                    self.table4.item(i,j).setData(Qt.UserRole, 0.0)
+        
+    def updateCorReadings(self, irow = None, col = 0):
         rows = range(self.table4.rowCount())
         if irow is not None:
             rows = [irow]
@@ -520,7 +530,7 @@ class CorrectorViewer(QtGui.QWidget):
                     it.setData(Qt.DisplayRole, "")
                     it.setData(Qt.UserRole, 0.0)
                     self.table4.item(i,j+1).setData(Qt.DisplayRole, "")
-                    self.updateKickReadings(irow=i, col=0)
+                    self.updateCorReadings(irow=i, col=0)
                 else:
                     it.setData(Qt.UserRole, float(dkick[i]))
                     it.setData(Qt.DisplayRole, "{0}".format(dkick[i]))
@@ -553,7 +563,7 @@ class CorrectorViewer(QtGui.QWidget):
                     Qt.DisplayRole, "{0}".format(kk))
 
         # update the final readings
-        self.updateKickReadings(irow=None, col=1)
+        self.updateCorReadings(irow=None, col=1)
 
     def getTwiss(self):
         tw = {"s": [], "Alpha": [], "Beta": [],
@@ -583,15 +593,10 @@ class CorrectorViewer(QtGui.QWidget):
             ret.append(self._cors[icor])
         return ret
 
-# Bump from corrector strength
-class Bump3XCor(QtGui.QWidget):
-    def __init__(self, cors, parent = None):
-        super(Bump3XCor, self).__init__(parent)
-        self.xcor = QtGui.QComboBox()
-        self.dxi = QtGui.QLineEdit("0.0")
-        #self.loc = QtGui.QLineEdit()
-        #self.lbl
-        self._corview = CorrectorViewer(cors, nmax=3)
+class BumpNCor(QtGui.QWidget):
+    def __init__(self, cors, nmax, parent = None):
+        super(BumpNCor, self).__init__(parent)
+        self.corview = CorrectorViewer(cors, nmax=nmax)
 
         hbox3 = QtGui.QHBoxLayout()
         self.rdbxbump = QtGui.QRadioButton("X Bump")
@@ -599,8 +604,52 @@ class Bump3XCor(QtGui.QWidget):
         self.rdbxbump.setChecked(True)
         hbox3.addWidget(self.rdbxbump)
         hbox3.addWidget(self.rdbybump)
-        grp1 = QtGui.QGroupBox("Plane")
-        grp1.setLayout(hbox3)
+        self.grpPlane = QtGui.QGroupBox("Plane")
+        self.grpPlane.setLayout(hbox3)
+
+        self.gboxBtn = QtGui.QGridLayout()
+        btnClear  = QtGui.QPushButton("Clear")
+        btnZoomin = QtGui.QPushButton("Zoom In")
+        btnApply  = QtGui.QPushButton("Apply")
+        btnCheat  = QtGui.QPushButton("_CHEAT_")
+        self.gboxBtn.addWidget(btnClear, 0, 1)
+        self.gboxBtn.addWidget(btnZoomin, 1, 1)
+        self.gboxBtn.addWidget(btnApply, 2, 1)
+        self.gboxBtn.addWidget(btnCheat, 3, 1)
+        self.gboxBtn.setColumnStretch(1, 0)
+        self.gboxBtn.setColumnStretch(0, 1)
+
+        self.connect(self.rdbxbump, SIGNAL("clicked()"),
+                     partial(self.changePlane, "X"))
+        self.connect(self.rdbybump, SIGNAL("clicked()"),
+                     partial(self.changePlane, "Y"))
+        self.connect(btnClear, SIGNAL("clicked()"), self.clear)
+        self.connect(btnApply, SIGNAL("clicked()"),
+                     self.corview.applyKick)
+        self.connect(btnZoomin, SIGNAL("clicked()"),
+                     self._zoom_in)
+        
+    def clear(self):
+        self.corview.clear()
+
+    def changePlane(self, plane):
+        self.corview.updateTwiss(plane=plane)
+        self.corview.resetCalculations()
+        self.corview.updateCorReadings()
+        self.emit(SIGNAL("planeChanged(PyQt_PyObject)"), str(plane))
+
+    def _zoom_in(self):
+        self.emit(SIGNAL("zoomInCorrectors(PyQt_PyObject)"),
+                  self.corview.selectedCorrectors())
+    
+# Bump from corrector strength
+class Bump3XCor(BumpNCor):
+    def __init__(self, cors, parent = None):
+        super(Bump3XCor, self).__init__(cors, 3, parent)
+        self.xcor = QtGui.QComboBox()
+        self.dxi = QtGui.QLineEdit("0.0")
+        #self.loc = QtGui.QLineEdit()
+        #self.lbl
 
         fmbox = QtGui.QFormLayout()
         fmbox.addRow("Indep. Cor", self.xcor)
@@ -608,59 +657,35 @@ class Bump3XCor(QtGui.QWidget):
         #fmbox.addRow("location", self.loc)
 
         vbox1 = QtGui.QVBoxLayout()
-        vbox1.addWidget(grp1)
+        vbox1.addWidget(self.grpPlane)
         vbox1.addLayout(fmbox)
 
-        gbox4 = QtGui.QGridLayout()
-        btnClear  = QtGui.QPushButton("Clear")
-        #btnZoomin = QtGui.QPushButton("Zoom In")
-        btnApply  = QtGui.QPushButton("Apply")
-        btnCheat  = QtGui.QPushButton("_CHEAT_")
-        gbox4.addWidget(btnClear, 0, 1)
-        #gbox4.addWidget(btnZoomin, 1, 1)
-        gbox4.addWidget(btnApply, 2, 1)
-        gbox4.addWidget(btnCheat, 3, 1)
-        gbox4.setColumnStretch(1, 0)
-        gbox4.setColumnStretch(0, 1)
         vbox1.addStretch()
-        vbox1.addLayout(gbox4)
+        vbox1.addLayout(self.gboxBtn)
         
         hbox1 = QtGui.QHBoxLayout()
-        hbox1.addWidget(self._corview, 1)
+        hbox1.addWidget(self.corview, 1)
         hbox1.addLayout(vbox1)
         self.setLayout(hbox1)
 
-        self.connect(self.rdbxbump, SIGNAL("clicked()"),
-                     partial(self._corview.updateTwiss, plane="X"))
-        self.connect(self.rdbybump, SIGNAL("clicked()"),
-                     partial(self._corview.updateTwiss, plane="Y"))
-        self.connect(self._corview, SIGNAL("correctorsComplete()"),
-                     self._set_correctors)
         self.connect(self.xcor, SIGNAL("currentIndexChanged(int)"),
                      self._update_dx)
         self.connect(self.dxi, SIGNAL("returnPressed()"),
                      self._update_dx)
-        self.connect(btnClear, SIGNAL("clicked()"), self.clear)
-        self.connect(btnApply, SIGNAL("clicked()"),
-                     self._corview.applyKick)
-        #self.connect(btnZoomin, SIGNAL("clicked()"),
-        #             self._zoom_in)
+        self.connect(self.corview, SIGNAL("correctorsComplete()"),
+                     self._set_correctors)
 
     def clear(self):
         self.xcor.setDisabled(True)
         self.xcor.clear()
         self.xcor.setDisabled(False)
         self.dxi.setText("0")
-        self._corview.clear()
-        
+        BumpNCor.clear(self)
+
     def _set_correctors(self):
         #print "Setting correctors"
         names = [QtCore.QString(c.name) 
-                 for c in self._corview.selectedCorrectors()]
-        self.xcor.clear()
-        self.xcor.addItems(names)
-
-    def setElements(self, names):
+                 for c in self.corview.selectedCorrectors()]
         self.xcor.clear()
         self.xcor.addItems(names)
 
@@ -681,36 +706,26 @@ class Bump3XCor(QtGui.QWidget):
         return [v/fc[ibase]*dxi for v in fc]
 
     def _update_dx(self):
-        if len(self._corview.selectedCorrectors()) < 3:
+        if len(self.corview.selectedCorrectors()) < 3:
             QtGui.QMessageBox.critical(
                 self, "Local Orbit Bump", 
                 "ERROR: please select 3 correctors.",
                 QtGui.QMessageBox.Ok)
             return
-        tw = self._corview.getTwiss()        
+        tw = self.corview.getTwiss()        
         if not self.dxi.text():
             return
         dkick = self.dx(tw, float(self.dxi.text()),
                         ibase = self.xcor.currentIndex())
-        self._corview.setKick(dkick)
+        self.corview.setKick(dkick)
         
 
 # Bump from a location
-class Bump3XSrc(QtGui.QWidget):
+class Bump3XSrc(BumpNCor):
     def __init__(self, cors, parent = None):
-        super(Bump3XSrc, self).__init__(parent)
-        self._twiss = None
+        super(Bump3XSrc, self).__init__(cors, 3, parent)
         self.loc = QtGui.QLineEdit()
         self.dxi = QtGui.QLineEdit("0.0")
-        self._corview = CorrectorViewer(cors, nmax=3)
-        hbox3 = QtGui.QHBoxLayout()
-        self.rdbxbump = QtGui.QRadioButton("X Bump")
-        self.rdbybump = QtGui.QRadioButton("Y BUmp")
-        self.rdbxbump.setChecked(True)
-        hbox3.addWidget(self.rdbxbump)
-        hbox3.addWidget(self.rdbybump)
-        grp1 = QtGui.QGroupBox("Plane")
-        grp1.setLayout(hbox3)
 
         self.lblBeta = QtGui.QLabel()
         self.lblAlfa = QtGui.QLabel()
@@ -722,31 +737,15 @@ class Bump3XSrc(QtGui.QWidget):
         fmbox.addRow("Alpha", self.lblAlfa)
         fmbox.addRow("Phi", self.lblPhi)
         vbox1 = QtGui.QVBoxLayout()
-        vbox1.addWidget(grp1)
+        vbox1.addWidget(self.grpPlane)
         vbox1.addLayout(fmbox)
-        gbox4 = QtGui.QGridLayout()
-        btnClear = QtGui.QPushButton("Clear")
-        #btnZoomin = QtGui.QPushButton("Zoom In")
-        btnApply  = QtGui.QPushButton("Apply")
-        btnCheat = QtGui.QPushButton("_CHEAT_")
-        gbox4.addWidget(btnClear, 0, 1)
-        #gbox4.addWidget(btnZoomin, 1, 1)
-        gbox4.addWidget(btnApply, 2, 1)
-        gbox4.addWidget(btnCheat, 3, 1)
-        gbox4.setColumnStretch(1, 0)
-        gbox4.setColumnStretch(0, 1)
-        vbox1.addStretch()
-        vbox1.addLayout(gbox4)
+        vbox1.addLayout(self.gboxBtn)
         
         hbox1 = QtGui.QHBoxLayout()
-        hbox1.addWidget(self._corview, 1)
+        hbox1.addWidget(self.corview, 1)
         hbox1.addLayout(vbox1)
         self.setLayout(hbox1)
 
-        self.connect(self.rdbxbump, SIGNAL("clicked()"),
-                     partial(self._corview.updateTwiss, plane="X"))
-        self.connect(self.rdbybump, SIGNAL("clicked()"),
-                     partial(self._corview.updateTwiss, plane="Y"))
         self.connect(self.loc, SIGNAL("returnPressed()"),
                      self._update_dx)
         self.connect(self.dxi, SIGNAL("returnPressed()"),
@@ -755,25 +754,20 @@ class Bump3XSrc(QtGui.QWidget):
                      self._clear_dkick)
         self.connect(self.dxi, SIGNAL("textEdited(QString)"),
                      self._clear_dkick)
-        self.connect(btnClear, SIGNAL("clicked()"), self.clear)
-        self.connect(btnApply, SIGNAL("clicked()"),
-                     self._corview.applyKick)
-        #self.connect(self.loc, SIGNAL("editingFinished()"),
-        #             self._update_dx)
-        #self.connect(self.dxi, SIGNAL("editingFinished()"),
-        #             self._update_dx)
+        self.connect(self, SIGNAL("planeChanged(PyQt_PyObject)"),
+                     self._clear_dkick)
 
     def clear(self):
+        BumpNCor.clear(self)
         self.lblBeta.setText("")
         self.lblAlfa.setText("")
         self.lblPhi.setText("")
-        self._corview.clear()
-
+        
     def _clear_dkick(self):
         self.lblBeta.setText("")
         self.lblAlfa.setText("")
         self.lblPhi.setText("")
-        self._corview.setKick([None] * 3)
+        self.corview.setKick([None] * 3)
 
     def dx(self, tw, xt = 0.0):
         #print tw, self.sender()
@@ -810,13 +804,13 @@ class Bump3XSrc(QtGui.QWidget):
             return [0.0, 0.0, 0.0]
 
     def _update_dx(self):
-        if len(self._corview.selectedCorrectors()) < 3:
+        if len(self.corview.selectedCorrectors()) < 3:
             QtGui.QMessageBox.critical(
                 self, "Local Orbit Bump", 
                 "ERROR: please select 3 correctors.",
                 QtGui.QMessageBox.Ok)
             return
-        tw = self._corview.getTwiss()        
+        tw = self.corview.getTwiss()        
         if not self.loc.text() or not self.dxi.text():
             return
         st = float(self.loc.text())
@@ -829,78 +823,47 @@ class Bump3XSrc(QtGui.QWidget):
         tw["Beta"].append(bt)
         tw["Alpha"].append(at)
         tw["Phi"].append(pht)
+        if pht > tw["Phi"][1]:
+            tw["dPhi"].append(pht - tw["Phi"][1] + tw["dPhi"][1])
+        else:
+            tw["dPhi"].append(tw["Phi"][2] - (tw["Phi"][2] - pht))
         self.lblBeta.setText("{0}".format(bt))
         self.lblAlfa.setText("{0}".format(at))
         self.lblPhi.setText("{0}".format(pht))
         vals = self.dx(tw, xt)
         print "New dkick:", vals
-        self._corview.setKick(vals)
+        self.corview.setKick(vals)
         #self.emit(SIGNAL("dKickUpdated(PyQt_PyObject)"), vals)
 
 
-class Bump4XCor(QtGui.QWidget):
+class Bump4XCor(BumpNCor):
     def __init__(self, cors, parent = None):
-        super(Bump4XCor, self).__init__(parent)
+        super(Bump4XCor, self).__init__(cors, 4, parent)
         self.dxi1 = QtGui.QLineEdit("0.0")
         self.dxi2 = QtGui.QLineEdit("0.0")
         fmbox = QtGui.QFormLayout()
         fmbox.addRow("dX (dY) 1", self.dxi1)
         fmbox.addRow("dX (dY) 2", self.dxi2)
 
-        self._corview = CorrectorViewer(cors, nmax=4)
-
-        hbox3 = QtGui.QHBoxLayout()
-        self.rdbxbump = QtGui.QRadioButton("X Bump")
-        self.rdbybump = QtGui.QRadioButton("Y BUmp")
-        self.rdbxbump.setChecked(True)
-        hbox3.addWidget(self.rdbxbump)
-        hbox3.addWidget(self.rdbybump)
-        grp1 = QtGui.QGroupBox("Plane")
-        grp1.setLayout(hbox3)
-
         vbox1 = QtGui.QVBoxLayout()
-        vbox1.addWidget(grp1)
+        vbox1.addWidget(self.grpPlane)
         vbox1.addLayout(fmbox)
 
-        gbox4 = QtGui.QGridLayout()
-        btnClear  = QtGui.QPushButton("Clear")
-        #btnZoomin = QtGui.QPushButton("Zoom In")
-        btnApply  = QtGui.QPushButton("Apply")
-        btnCheat  = QtGui.QPushButton("_CHEAT_")
-        gbox4.addWidget(btnClear, 0, 1)
-        #gbox4.addWidget(btnZoomin, 1, 1)
-        gbox4.addWidget(btnApply, 2, 1)
-        gbox4.addWidget(btnCheat, 3, 1)
-        gbox4.setColumnStretch(1, 0)
-        gbox4.setColumnStretch(0, 1)
         vbox1.addStretch()
-        vbox1.addLayout(gbox4)
+        vbox1.addLayout(self.gboxBtn)
         
         hbox1 = QtGui.QHBoxLayout()
-        hbox1.addWidget(self._corview, 1)
+        hbox1.addWidget(self.corview, 1)
         hbox1.addLayout(vbox1)
         self.setLayout(hbox1)
 
-        self.connect(self.rdbxbump, SIGNAL("clicked()"),
-                     partial(self._corview.updateTwiss, plane="X"))
-        self.connect(self.rdbybump, SIGNAL("clicked()"),
-                     partial(self._corview.updateTwiss, plane="Y"))
-        #self.connect(self._corview, SIGNAL("correctorsComplete()"),
-        #             self._set_correctors)
-        #self.connect(self.xcor, SIGNAL("currentIndexChanged(int)"),
-        #             self._update_dx)
         self.connect(self.dxi1, SIGNAL("returnPressed()"),
                      self._update_dx)
         self.connect(self.dxi2, SIGNAL("returnPressed()"),
                      self._update_dx)
-        self.connect(btnClear, SIGNAL("clicked()"), self.clear)
-        self.connect(btnApply, SIGNAL("clicked()"),
-                     self._corview.applyKick)
-        #self.connect(btnZoomin, SIGNAL("clicked()"),
-        #             self._zoom_in)
 
     def clear(self):
-        self._corview.clear()
+        BumpNCor.clear(self)
         self.dxi1.setText("")
         self.dxi2.setText("")
 
@@ -917,34 +880,98 @@ class Bump4XCor(QtGui.QWidget):
         return [dxi1, dxi2, dxi3, dxi4]
 
     def _update_dx(self):
-        if len(self._corview.selectedCorrectors()) < 4:
+        if len(self.corview.selectedCorrectors()) < 4:
             QtGui.QMessageBox.critical(
                 self, "Local Orbit Bump", 
                 "ERROR: please select 4 correctors.",
                 QtGui.QMessageBox.Ok)
             return
-        tw = self._corview.getTwiss()        
+        tw = self.corview.getTwiss()        
         if not self.dxi1.text() or not self.dxi2.text():
             return
         dkick = self.dx(tw, float(self.dxi1.text()), float(self.dxi2.text()))
-        self._corview.setKick(dkick)
+        self.corview.setKick(dkick)
 
 
-class Bump4XSrc(QtGui.QWidget):
+class Bump4XSrc(BumpNCor):
     def __init__(self, cors, parent = None):
-        super(Bump4XSrc, self).__init__(parent)
+        super(Bump4XSrc, self).__init__(cors, 4, parent)
         self.loc = QtGui.QLineEdit("")
+        self.dxi = QtGui.QLineEdit("0.0")
         self.ang = QtGui.QLineEdit("0.0")
         fmbox = QtGui.QFormLayout()
         fmbox.addRow("Location", self.loc)
+        fmbox.addRow("dX (dY)",  self.dxi)
         fmbox.addRow("Angle",    self.ang)
-        self.setLayout(fmbox)
+        
+        vbox1 = QtGui.QVBoxLayout()
+        vbox1.addWidget(self.grpPlane)
+        vbox1.addLayout(fmbox)
 
-    def dx(self, tw):
-        return [0.0, 0.0, 0.0, 0.0]
+        vbox1.addStretch()
+        vbox1.addLayout(self.gboxBtn)
+        
+        hbox1 = QtGui.QHBoxLayout()
+        hbox1.addWidget(self.corview, 1)
+        hbox1.addLayout(vbox1)
+        self.setLayout(hbox1)
+
+        self.connect(self.loc, SIGNAL("returnPressed()"),
+                     self._update_dx)
+        self.connect(self.dxi, SIGNAL("returnPressed()"),
+                     self._update_dx)
+        self.connect(self.ang, SIGNAL("returnPressed()"),
+                     self._update_dx)
+
+    def dx(self, tw, dx, dxp):
+        a0,  a1,  a2,  a3,  at  = tw["Alpha"]
+        b0,  b1,  b2,  b3,  bt  = tw["Beta"]
+        ph0, ph1, ph2, ph3, pht = tw["dPhi"]
+        
+        dt1 = dx*(np.cos(pht-ph1) - at*np.sin(pht-ph1))/\
+            np.sqrt(bt*b0)*np.sin(ph1-ph0) - \
+            dxp*np.sqrt(bt/b0)*np.sin(pht-ph1)/np.sin(ph1-ph0)
+        dt2 = -dx*(np.cos(pht-ph0) - at*np.sin(pht-ph0))/\
+            np.sqrt(bt*b1)*np.sin(ph1-ph0) + \
+            dxp*np.sqrt(bt/b1)*np.sin(pht-ph0)/np.sin(ph1-ph0)
+        dt3 = -dx*(np.cos(ph3-pht) - at*np.sin(pht-ph3))/\
+            np.sqrt(bt*b2)*np.sin(ph3-ph2) + \
+            dxp*np.sqrt(bt/b2)*np.sin(pht-ph3)/np.sin(ph3-ph2)
+        dt4 = dx*(np.cos(ph2-pht) - at*np.sin(pht-ph2))/\
+            np.sqrt(bt*b3)*np.sin(ph3-ph2) - \
+            dxp*np.sqrt(bt/b3)*np.sin(pht-ph1)/np.sin(ph3-ph2)
+
+        # same kick for theta2
+        return [dt1, dt2, dt3, dt4]
 
     def _update_dx(self):
-        return
+        if len(self.corview.selectedCorrectors()) < 4:
+            QtGui.QMessageBox.critical(
+                self, "Local Orbit Bump", 
+                "ERROR: please select 4 correctors.",
+                QtGui.QMessageBox.Ok)
+            return
+        tw = self.corview.getTwiss()        
+        try:
+            st  = float(self.loc.text())
+            dxt = float(self.dxi.text())
+            ang = float(self.ang.text())
+        except:
+            return
+        if self.rdbxbump.isChecked():
+            bt, at, pht = getTwissAt(st, ["betax", "alphax", "phix"])
+        elif self.rdbybump.isChecked():
+            bt, at, pht = getTwissAt(st, ["betay", "alphay", "phiy"])
+        tw["s"].append(st)
+        tw["Beta"].append(bt)
+        tw["Alpha"].append(at)
+        tw["Phi"].append(pht)
+        if pht > tw["Phi"][1]:
+            tw["dPhi"].append(pht - tw["Phi"][1] + tw["dPhi"][1])
+        else:
+            tw["dPhi"].append(tw["Phi"][2] - (tw["Phi"][2] - pht))
+        dkick = self.dx(tw, dxt, ang)
+        self.corview.setKick(dkick)
 
 class OrbitCorrNBumps(QtGui.QWidget):
     def __init__(self, bpms, cors, plots = [], parent = None):
@@ -1469,6 +1496,24 @@ class OrbitCorrDlg(QDialog):
         tabs.addTab(tab_bump4xsrc, "4 Cors. dI")
         layout.addWidget(tabs, 3)
 
+        self.connect(tab_bump3xcor, SIGNAL("zoomInCorrectors(PyQt_PyObject)"),
+                     self._zoom_in_cors)
+        self.connect(tab_bump3xsrc, SIGNAL("zoomInCorrectors(PyQt_PyObject)"),
+                     self._zoom_in_cors)
+        self.connect(tab_bump4xcor, SIGNAL("zoomInCorrectors(PyQt_PyObject)"),
+                     self._zoom_in_cors)
+        self.connect(tab_bump4xsrc, SIGNAL("zoomInCorrectors(PyQt_PyObject)"),
+                     self._zoom_in_cors)
+
+        self.connect(tab_bump3xcor, SIGNAL("clearCorrectors(PyQt_PyObject)"),
+                     self._clear_cors)
+        self.connect(tab_bump3xsrc, SIGNAL("clearCorrectors(PyQt_PyObject)"),
+                     self._clear_cors)
+        self.connect(tab_bump4xcor, SIGNAL("clearCorrectors(PyQt_PyObject)"),
+                     self._clear_cors)
+        self.connect(tab_bump4xsrc, SIGNAL("clearCorrectors(PyQt_PyObject)"),
+                     self._clear_cors)
+
         #hln = QtGui.QFrame()
         #hln.setLineWidth(3)
         #hln.setFrameStyle(QtGui.QFrame.Sunken)
@@ -1506,18 +1551,27 @@ class OrbitCorrDlg(QDialog):
         self.yc.setData(sy, vy)
         self.bpm_plot.replot()
 
-    def _update_corr_plot(self, corls):
+    def _zoom_in_cors(self, corls):
         mks = [(c.name, c.sb) for c in corls]
         s0 = min([c.sb for c in corls])
         s1 = max([c.se for c in corls])
         ds = (s1 - s0) / 10.0
         self.bpm_plot.setMarkers(mks)
-        #self.bpm_plot.setAxisScale(Qwt.QwtPlot.xBottom, s0-ds, s1+ds)
+        self.bpm_plot.setAxisScale(Qwt.QwtPlot.xBottom, s0-ds, s1+ds)
         self.bpm_plot.replot()
         self.cor_plot.setMarkers(mks)
         self.cor_plot.replot()
         self.tw_plot.setMarkers(mks)
         self.tw_plot.replot()
+
+    def _clear_cors(self, corls):
+        self.bpm_plot.setMarkers([])
+        self.bpm_plot.replot()
+        self.cor_plot.setMarkers([])
+        self.cor_plot.replot()
+        self.tw_plot.setMarkers([])
+        self.tw_plot.replot()
+
 
     def _help(self):
         print "HELP"
@@ -1546,6 +1600,7 @@ if __name__ == "__main__":
     #form = OrbitCorrGeneral(bpms, cors)
     #form = OrbitCorrNBumps(bpms, cors)
     #form = CorrectorViewer(cors)
+    #form = Bump3XCor(cors)
     #form = Bump3XSrc(cors)
     form.resize(1000, 400)
     form.setWindowTitle("Create Local Bump")
