@@ -48,6 +48,20 @@ def chooseElement(fam):
                 len(el1), fam, [elems[i].name for i in el1]))
 
 
+def openLocalBump():
+    """create local bump"""
+    corbitdlg = OrbitCorrDlg(
+        ap.getElements(wx.data.names()), 
+        s, x, y, xunit = xunit, yunit=yunit,
+        stepsize = 200e-6, 
+        orbit_plots=(wx, wy),
+        correct_orbit = self.correctOrbit)
+    #corbitdlg.resize(600, 500)
+    corbitdlg.setWindowTitle("Create Local Bump")
+    corbitdlg.show()
+    corbitdlg.raise_()
+    corbitdlg.activateWindow()
+
 class ApOrbitPhysics:
     def __init__(self, mdiarea, **kwargs):
         self.mdiarea = mdiarea
@@ -68,75 +82,6 @@ class ApOrbitPhysics:
                 w.data.disable(e.name)
 
         
-    def correctOrbit(self, **kwargs):
-        """
-        """
-        # use the current aphla lattice
-        bpms = kwargs.get('bpms', None)
-        if bpms is None:
-            bpms = [e for e in ap.getElements('BPM') 
-                    if e not in self.deadelems]
-        trims = kwargs.get('trims', None)
-        if trims is None:
-            alltrims = set(ap.getElements('HCOR') + ap.getElements('VCOR'))
-            trims = [e for e in alltrims if e not in self.deadelems]
-        obt = kwargs.get('obt', None)
-        if obt is None:
-            obt = [[0.0, 0.0] for i in range(len(bpms))]
-
-        _logger.info("corrector orbit with BPM {0}/{1}, COR {2}/{3}".format(
-                len(bpms), len(ap.getElements('BPM')),
-                len(trims), len(alltrims)))
-
-        repeat = kwargs.pop("repeat", 1)
-        kwargs['verbose'] = 0
-        # use 1.0 if not set scaling the kicker strength
-        kwargs.setdefault('scale', 1.0)
-        kwargs['dead'] = [e.name for e in list(self.deadelems)]
-        for i in range(repeat):
-            _logger.info("setting a local bump")
-            QApplication.processEvents()
-            ret = ap.setLocalBump(bpms, trims, obt, **kwargs)
-            if ret[0] != 0:
-                _logger.error(ret[1])
-                break
-
-        #return sp0
-
-        #try:
-        #    ap.setLocalBump(bpms, trims, obt)
-        #except Exception as e:
-        #    QMessageBox.warning(self, "Error:", " {0}".format(e))
-
-    def createLocalBump(self, wx, wy):
-        """create local bump"""
-        if self.corbitdlg is None:
-            #print self.obtdata.elem_names
-            # assuming BPM has both x and y, the following s are same
-            s, x, xe = wx.data.data(nomask=True)
-            s, y, ye = wy.data.data(nomask=True)
-            x, y = [0.0]*len(s), [0.0] * len(s)
-            xunit = wx.data.yunit
-            yunit = wy.data.yunit
-            #print np.shape(x), np.shape(y)
-            self.corbitdlg = OrbitCorrDlg(
-                ap.getElements(wx.data.names()), 
-                s, x, y, xunit = xunit, yunit=yunit,
-                stepsize = 200e-6, 
-                orbit_plots=(wx, wy),
-                correct_orbit = self.correctOrbit)
-            self.corbitdlg.resize(600, 500)
-            self.corbitdlg.setWindowTitle("Create Local Bump")
-            #self.connect(self.corbitdlg, SIGNAL("finished(int)"),
-            #             self.plot1.curve2.setVisible)
-            #self.obtxplot.plotDesiredOrbit(self.orbitx_data.golden(), 
-            #                            self.orbitx_data.x)
-            #self.obtyplot.plotDesiredOrbit(self.orbity_data.golden(), 
-            #                            self.orbity_data.x)
-
-        self.corbitdlg.show()
-        self.corbitdlg.raise_()
-        self.corbitdlg.activateWindow()
 
     def measBeta(self):
         p = ApMdiSubPlot(live=False)

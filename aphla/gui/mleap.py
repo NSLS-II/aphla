@@ -68,7 +68,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.setIconSize(QSize(32, 32))
         self.error_bar = True
-
+        self._dlgOrbitCor = None
         # logging
         self.logdock = QDockWidget("Log")
         self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
@@ -391,8 +391,12 @@ class OrbitPlotMainWindow(QMainWindow):
         #viewToolBar1.addAction(viewLiveAction)
         #viewToolBar1.addAction(viewSingleShotAction)
         #viewToolBar1.addSeparator()
-        #viewToolBar1.addAction(QIcon(":/new_bpm.png"), "Orbits", self.newOrbitPlots)
-        #viewToolBar1.addAction(QIcon(":/new_cor.png"), "Correctors", self.newCorrectorPlots)
+        viewToolBar1.addAction(
+            QIcon(":/new_bpm.png"), "Orbits",
+            partial(self.newElementPlots, "BPM", "x,y"))
+        viewToolBar1.addAction(
+            QIcon(":/new_cor.png"), "Correctors",
+            partial(self.newElementPlots, "COR", "x,y"))
         #viewToolBar.addAction(viewErrorBarAction)
         #viewToolBar.addAction(QWhatsThis.createAction(self))
 
@@ -416,15 +420,19 @@ class OrbitPlotMainWindow(QMainWindow):
         #    viewToolBar2.addAction(QIcon(ico), name, hdl)
 
         controlToolBar = self.addToolBar("Control")
-        #controlToolBar.addAction(controlChooseBpmAction)
-        #controlToolBar.addAction(controlCorrOrbitAction)
+        controlToolBar.addAction(
+            QIcon(":/control_orbitcor.png"), "Correct Orbit",
+            aphla.correctOrbit)
+        controlToolBar.addAction(
+            QIcon(":/control_localbump.png"), "Local Bump ...",
+            self.createLocalBump)
         #controlToolBar.addAction(controlResetPvDataAction)
 
     def showAbout(self):
         QMessageBox.about(
             self, self.tr("mleap"),
             (self.tr("""<b>Machine/Lattice Editor And Plotter</b> v %1
-                <p>Copyright &copy; 2013 BNL. 
+                <p>Copyright &copy; Lingyun Yang, BNL, 2013-2014. 
                 All rights reserved.
                 <p>This application can be used to perform
                 high level accelerator controls.
@@ -629,84 +637,6 @@ class OrbitPlotMainWindow(QMainWindow):
         """Switch on/off live data taking"""
         self.live_orbit = on
 
-    def setPlotStyle(self):
-        w = self.mdiarea.currentSubWindow()
-        if not w: return
-        pen, symb = w.aplot.curve1.pen(), w.aplot.curve1.symbol()
-        ptstyle = dict([("NoSymbol", Qwt.QwtSymbol.NoSymbol),
-                        ("Ellipse", Qwt.QwtSymbol.Ellipse),
-                        ("Rect", Qwt.QwtSymbol.Rect),
-                        ("Diamond", Qwt.QwtSymbol.Diamond),
-                        ("Triangle", Qwt.QwtSymbol.Triangle),
-                        ("Cross", Qwt.QwtSymbol.Cross),
-                        ("XCross", Qwt.QwtSymbol.XCross),
-                        ("HLine", Qwt.QwtSymbol.HLine),
-                        ("VLine", Qwt.QwtSymbol.VLine),
-                        ("Star1", Qwt.QwtSymbol.Star1),
-                        ("Star2", Qwt.QwtSymbol.Star2),
-                        ("Hexagon", Qwt.QwtSymbol.Hexagon),])
-
-        st = str(self.sender().text())
-        if st == "Increase Point Size":
-            sz = symb.size()
-            symb.setSize(QSize(sz.width()+1, sz.height()+1))
-            w.aplot.curve1.setSymbol(symb)
-        elif st == "Decrease Point Size":
-            sz = symb.size()
-            symb.setSize(QSize(sz.width()-1, sz.height()-1))
-            w.aplot.curve1.setSymbol(symb)
-        elif st == "NoCurve":
-            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.NoCurve)            
-        elif st == "Lines":
-            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Lines)
-        elif st == "Sticks":
-            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Sticks)
-        elif st == "Dashed Line":
-            pen.setStyle(Qt.DashLine)
-            w.aplot.curve1.setPen(pen)
-        elif st == "Dotted line":
-            pen.setStyle(Qt.DotLine)
-            w.aplot.curve1.setPen(pen)
-        elif st == "Increase Line Width":
-            pen.setWidth(pen.width() + 0.1)
-            w.aplot.curve1.setPen(pen)
-        elif st == "Decrease Line Width":
-            pen.setWidth(pen.width() - 0.1)
-            w.aplot.curve1.setPen(pen)
-        elif st in ptstyle:
-            print "Using style:", st, symb.style()
-            symb.setStyle(ptstyle[st])
-            w.aplot.curve1.setSymbol(symb)
-        elif st == "Red":
-            w.aplot.setColor(Qt.red)
-        elif st == "Blue":
-            w.aplot.setColor(Qt.blue)
-        elif st == "Green":
-            w.aplot.setColor(Qt.green)
-        else:
-            self.logger.error("Unknow action: '{0}'".format(st))
-
-
-    def errorBar(self, on):
-        self.error_bar = on
-        for w in self.mdiarea.subWindowList():
-            w.aplot.setErrorBar(on)
-            w.aplot.replot()
-
-    def setDriftNone(self):
-        for w in self.mdiarea.subWindowList():
-            w.setReferenceData(0.0)
-
-    def setDriftNow(self):
-        for w in self.mdiarea.subWindowList():
-            # use the current data as reference
-            w.setReferenceData()
-
-    def setDriftGolden(self):
-        #self.plot1.setDrift('golden')
-        #self.plot2.setDrift('golden')
-        raise RuntimeError("No golden orbit defined yet")
-
     def scalePlot(self):
         w = self.mdiarea.currentSubWindow()
         if not w: return
@@ -739,9 +669,6 @@ class OrbitPlotMainWindow(QMainWindow):
             p.moveCurves(Qwt.QwtPlot.xBottom, -0.8)
         else:
             self.logger.error("unknow action '{0}'".format(st))
-
-    def getDeadElements(self):
-        return self.physics.deadelems
 
     def getVisibleRange(self):
         w = self.mdiarea.currentSubWindow()
@@ -819,10 +746,16 @@ class OrbitPlotMainWindow(QMainWindow):
         return None
 
     def createLocalBump(self):
-        wx = self.activeOrbitPlot('x')
-        wy = self.activeOrbitPlot('y')
-        self.physics.createLocalBump(wx, wy)
-
+        """create local bump"""
+        if self._dlgOrbitCor is None:
+            bpms = ap.getElements("BPM")
+            cors = ap.getElements("COR")
+            self._dlgOrbitCor = OrbitCorrDlg(bpms, cors)
+            #corbitdlg.resize(600, 500)
+            self._dlgOrbitCor.setWindowTitle("Create Local Bump")
+        self._dlgOrbitCor.show()
+        self._dlgOrbitCor.raise_()
+        self._dlgOrbitCor.activateWindow()
 
     def runBba(self):
         mach, lat = self.getCurrentMachLattice()

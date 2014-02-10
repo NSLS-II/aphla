@@ -26,7 +26,7 @@ import PyQt4.Qwt5 as Qwt
 import numpy as np
 from aporbitplot import ApCaPlot, ApCaArrayPlot
 from aphla import (catools, getElements, setLocalBump,
-                   getTwiss, getTunes, getTwissAt)
+                   getTwiss, getTunes, getTwissAt, getBeamlineProfile)
 from functools import partial
 
 class DoubleSpinBoxCell(QDoubleSpinBox):
@@ -1370,7 +1370,7 @@ class OrbitCorrDlg(QDialog):
 
         s = [bpm.sb for bpm in bpmls]
         self.bpm_plot = ApCaArrayPlot([pvx, pvy], x = [s, s])
-        magprof = aphla.getBeamlineProfile()
+        magprof = getBeamlineProfile()
         self.bpm_plot.setMagnetProfile(magprof)
 
         self.xc = Qwt.QwtPlotCurve()
@@ -1536,9 +1536,9 @@ class OrbitCorrDlg(QDialog):
         self.bpm_plot.replot()
 
     def _cheat(self):
-        s = aphla.catools.caget('V:2-SR-BI{POS}-I')
-        x = aphla.catools.caget('V:2-SR-BI{ORBIT}X-I')
-        y = aphla.catools.caget('V:2-SR-BI{ORBIT}Y-I')
+        s = catools.caget('V:2-SR-BI{POS}-I')
+        x = catools.caget('V:2-SR-BI{ORBIT}X-I')
+        y = catools.caget('V:2-SR-BI{ORBIT}Y-I')
         p = self.bpm_plot
         p._cheat[0].setData(s, x)
         p._cheat[1].setData(s, y)

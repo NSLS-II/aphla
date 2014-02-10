@@ -377,7 +377,7 @@ class CaAction:
         """
         return the value of readback PV or None if such pv is not defined.
         """
-        if self.opflags & DISABLED: raise IOError("reading a disabled element")
+        if self.opflags & _DISABLED: raise IOError("reading a disabled element")
 
         if self.pvrb: 
             #print __name__
@@ -439,8 +439,9 @@ class CaAction:
 
         bc = 'boundary' is the same as 'ignore' for this moment.
         """
-        if self.opflags & DISABLED: raise IOError("setting an disabled element")
-        if self.opflags & READONLY: raise IOError("setting a readonly field")
+        if self.opflags & _DISABLED:
+            raise IOError("setting an disabled element")
+        if self.opflags & _READONLY: raise IOError("setting a readonly field")
 
         if isinstance(val, (float, int, str)):
             rawval = [self._unit_conv(val, unitsys, None)] * len(self.pvsp)
@@ -758,8 +759,8 @@ class CaAction:
 
     def settable(self):
         """check if it can be set"""
-        if self.opflags & DISABLED: return False
-        if self.opflags & READONLY: return False
+        if self.opflags & _DISABLED: return False
+        if self.opflags & _READONLY: return False
 
         if not self.pvsp: return False
         else: return True
@@ -1186,16 +1187,16 @@ class CaElement(AbstractElement):
             self._field[fieldname].sp = []
 
     def disableField(self, fieldname):
-        self._field[fieldname].opflags |= DISABLED
+        self._field[fieldname].opflags |= _DISABLED
 
     def enableField(self, fieldname):
-        self._field[fieldname].opflags &= ~DISABLED
+        self._field[fieldname].opflags &= ~_DISABLED
 
     def setFieldReadonly(self, fieldname):
-        self._field[fieldname].opflags |= READONLY
+        self._field[fieldname].opflags |= _READONLY
 
     def resetFieldReadonly(self, fieldname):
-        self._field[fieldname].opflags &= ~READONLY
+        self._field[fieldname].opflags &= ~_READONLY
  
     def revert(self, fieldname):
         """undo the field value to its previous one"""
@@ -1309,15 +1310,15 @@ class CaElement(AbstractElement):
     def settable(self, field):
         """check if the field can be changed. not disabled, nor readonly."""
         if field not in self._field.keys(): return False
-        if self._field[field].opflags & DISABLED: return False
-        if self._field[field].opflags & READONLY: return False
+        if self._field[field].opflags & _DISABLED: return False
+        if self._field[field].opflags & _READONLY: return False
 
         return self._field[field].settable()
 
     def readable(self, field):
         """check if the field readable (not disabled)."""
         if field not in self._field.keys(): return False
-        if self._field[field].opflags & DISABLED: return False
+        if self._field[field].opflags & _DISABLED: return False
         return True
 
 
