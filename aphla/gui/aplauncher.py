@@ -922,10 +922,6 @@ class PreferencesEditor(QDialog, Ui_Dialog_pref):
                                                  Qt.MatchExactly)
         self.comboBox_view_mode.setCurrentIndex(index)
 
-        index = self.comboBox_icon_grid_size.findText(
-            self.pref['icon_grid_size'], Qt.MatchExactly)
-        self.comboBox_icon_grid_size.setCurrentIndex(index)
-
         self.checkBox_side_pane_visible.setChecked(self.pref['side_pane_vis'])
 
     #----------------------------------------------------------------------
@@ -963,8 +959,6 @@ class PreferencesEditor(QDialog, Ui_Dialog_pref):
         # modified by column dialog. So, there is no need to update here.
 
         self.pref['view_mode'] = self.comboBox_view_mode.currentText()
-
-        self.pref['icon_grid_size'] = self.comboBox_icon_grid_size.currentText()
 
         self.pref['side_pane_vis'] = self.checkBox_side_pane_visible.isChecked()
 
@@ -2029,8 +2023,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         # Load Startup Preferences
         self.default_pref = dict(font_size=16,
                                  vis_col_list=DEFAULT_VISIBLE_COL_NAMES,
-                                 view_mode='Icon View', icon_grid_size='Medium',
-                                 side_pane_vis=True)
+                                 view_mode='Icon View', side_pane_vis=True)
         if osp.exists(PREF_JSON_FILEPATH):
             with open(PREF_JSON_FILEPATH, 'r') as f:
                 pref = json.load(f)
