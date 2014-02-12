@@ -20,6 +20,7 @@ seealso :mod:`~aphla.element`, :mod:`~aphla.twiss`, :mod:`~aphla.machines`
 from __future__ import print_function, unicode_literals
 #from __future__ import print_function
 
+import sys
 import re
 from math import log10
 import shelve
@@ -55,11 +56,12 @@ class Lattice:
         self.mode = mode
         self.tune = [ None, None]
         self.chromaticity = [None, None]
-        self.sb, self.se = 0.0, 0.0
+        self.sb, self.se = 0.0, sys.float_info.max
         self.ormdata = None
         self.loop = True
         self.Ek = None
         self.arpvs = None
+        self.OUTPUT_DIR = None
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -785,21 +787,24 @@ class Lattice:
 
         Virtual element is not included.
         """
-        s1 = kwargs.get("s1", 0.0)
-        s2 = kwargs.get("s2", None)
+        s1 = kwargs.get("s1", self.sb)
+        s2 = kwargs.get("s2", self.se)
         highlight = kwargs.get("highlight", None)
-
         prof = []
-        for elem in self._elements:
+        if s1 > self.sb:
+            prof.append(([self.sb, self.sb], [0.0, 0.0], 'k', ""))
+        for i,elem in enumerate(self._elements):
             if elem.virtual: continue
-            elif elem.se < s1: continue
-            elif s2 is not None and elem.sb > s2: break
+            if elem.se < s1: continue
+            if elem.sb > s2: break
             x1, y1, c = elem.profile()
             #if elem.family == highlight: c = 'b'
             prof.append((x1, y1, c, elem.name))
 
         if not prof: return []
 
+        if prof[-1][0] < self.se:
+            prof.append(([self.se, self.se], [0.0, 0.0], 'k', ""))
         # filter the zero
         ret = [prof[0]]
         for p in prof[1:]:

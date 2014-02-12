@@ -493,6 +493,24 @@ class TwissData:
             s = s + "%16s " % e + self._twtable[i].__repr__() + '\n'
         return s
 
+    def at(self, s, col, **kwargs):
+        if s < self._twtable[0,0] or s > self._twtable[-1,0]:
+            return None
+        dat = []
+        for i in range(1, len(self._twtable)):
+            if self._twtable[i,0] < s: continue
+            for c in col:
+                if c in self._cols:
+                    j = self._cols.index(c)
+                    x0, x1 = self._twtable[i-1:i+1, j]
+                    fc = (s - self._twtable[i-1,0]) / \
+                        (self._twtable[i,0] - self._twtable[i-1,0])
+                    dat.append(x0 + (x1-x0)*fc)
+                else:
+                    dat.append(None)
+            break
+        return dat
+            
     def get(self, elemlst, col, **kwargs):
         """get a list of twiss functions when given a list of element names.
         
@@ -532,8 +550,11 @@ class TwissData:
 
 
     def load(self, filename, **kwargs):
-        """loading hdf5 file in a group default 'twiss'"""
-        self._load_hdf5_v2(filename, **kwargs)
+        """loading hdf5 file in a group default 'Twiss'"""
+        if filename.endswith(".hdf5") or filename.endswith(".h5"):
+            self._load_hdf5_v2(filename, **kwargs)
+        elif filename.endswith(".txt"):
+            self._load_txt(filename)
 
     def set(self, **kw):
         """set data, delete all previous data"""
@@ -546,6 +567,47 @@ class TwissData:
         self.chrom = kw.get("chrom", None)
         self.tune = kw.get("tune", None)
         self.alphac = kw.get("alphac", None)
+
+    def _load_txt(self, filename):
+        """
+        load the Twiss data in txt format:
+
+        ::
+
+          Tune: 0.0 0.0
+          Chrom: 0.0 0.0
+          Alpha_c: 0.0
+          element s alphax alphay betax betay gammax gammay etax etay phix phiy
+          BPM1 0.0 0.0 ....
+        """
+
+        f = open(filename, 'r')
+        self.tune = tuple([float(v) for v in f.readline().split()[1:3]])
+        self.chrom = tuple([float(v) for v in f.readline().split()[1:3]])
+        self.alphac = float(f.readline().split()[1])
+
+        # check columns
+        cols = tuple([v.strip() for v in f.readline().split()])
+        print cols
+
+        for i,s in enumerate(f):
+            data = s.split()
+            self._twtable.append([None for c in self._cols])
+            print i, s, data
+            for j,c in enumerate(cols):
+                print j, c
+                if c == "element":
+                    self.element.append(data[j])
+                elif c in self._cols:
+                    k = self._cols.index(c)
+                    self._twtable[-1][k] = float(data[j])
+                #else:
+                #    raise RuntimeError("can not find '%s'" % c)
+
+            print self._twtable[-1]
+        #self._twtable = np.array(self._twtable, 'd')
+        f.close()
+                
 
     def _load_hdf5_v1(self, filename, group = "Twiss"):
         """read data from HDF5 file in *group*"""
@@ -592,7 +654,7 @@ class TwissData:
         data = np.ndarray((len(self.element),), dtype=dt)
         data['element'] = self.element
         for i,k in enumerate(self._cols):
-            data[k] = self._twtable[:,i]
+            data[k] = [v[i] for v in self._twtable]
 
         f = h5py.File(filename)
         grp = f.create_group(group)

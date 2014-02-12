@@ -13,6 +13,7 @@ if __name__ == "__main__":
     app = cothread.iqt()
 
 from cothread.catools import camonitor, caget
+from datetime import datetime
 import threading, time
 import random
 from collections import deque
@@ -24,19 +25,19 @@ class CaDataMonitor(QtCore.QObject):
         """
         - pvs a list of PV
         - samples number of data points for std/var/average
-
-        optional:
-        - simulation [True|False] use simulated data or real pv data
         """
         super(CaDataMonitor, self).__init__()
         self.samples     = kwargs.get("samples", 10)
-        self.simulation  = kwargs.get('simulation', False)
+        #self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
         self.timeout     = kwargs.get("timeout", 3)
+        self._min_dt     = kwargs.get("wait", 0.0)
         self.data = {}
+        self.hook = {}
         self._monitors = {}
         self._dead = set()
         self._wfsize = {}
+        self._t0 = datetime.now()
 
         if pvs: self.addPv(pvs)
 
@@ -71,6 +72,10 @@ class CaDataMonitor(QtCore.QObject):
                 except:
                     self._wfsize[pv] = None
 
+    def addHook(self, pv, f):
+        self.hook.setdefault(pv, [])
+        self.hook[pv].append(f)
+
     def _ca_update(self, val, idx = None):
         """
         update the reading, average, index and variance.
@@ -78,16 +83,30 @@ class CaDataMonitor(QtCore.QObject):
         if not val.ok: return
         pv = val.name
         if pv in self.data: self.data[pv].append(val)
-        print "updating", idx, val, val.name, len(self.data[pv])
-        self.emit(QtCore.SIGNAL("dataChanged(PyQt_PyObject)"), val)
+        # call callback if long enough
+        dt = datetime.now() - self._t0
+        if dt.total_seconds() > self._min_dt:
+            for f in self.hook.get(pv, []):
+                f(val, idx)
+            self._t0 = datetime.now()
 
-    def close(self, pv):
-        p = self._monitors.get(pv, None)
-        if p is None: return
-        p.close()
-        self._monitors[pv] = None
-        self.data[pv].clear()
-        #self._wfsize.pop(pv, None)
+    def pull(self):
+        vals = caget(self.data.keys())
+        for v in vals:
+            if not v.ok: continue
+            self.data[v.name].append(v)
+
+    def close(self, pv = None):
+        pvs = []
+        if pv is None:
+            pvs = self._monitors.keys()
+        elif pv in self._monitors:
+            pvs = [ pv ]
+        
+        for pvi in pvs:
+            self._monitors[pvi].close()
+            self._monitors[pvi] = None
+            self.data[pvi].clear()
 
     def get(self, pv, default = np.nan):
         if pv in self._dead: return default
@@ -115,19 +134,17 @@ class CaDataMonitor(QtCore.QObject):
     def deadCount(self):
         return len([True for pv,cam in self._monitors.items()
                     if cam is None])
-
+    def pvs(self):
+        return self._monitors.keys() + self._dead
 
 class CaDataGetter:
     def __init__(self, pvs = [], **kwargs):
         """
         - pvs a list of PV
         - samples number of data points for std/var/average
-
-        optional:
-        - simulation [True|False] use simulated data or real pv data
         """
         self.samples     = kwargs.get("samples", 10)
-        self.simulation  = kwargs.get('simulation', False)
+        #self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
         self.timeout     = kwargs.get("timeout", 3)
         self.data = {}

@@ -111,8 +111,6 @@ class OrbitPlotMainWindow(QMainWindow):
                 m, ", ".join([lat.name for k,lat in lats.items()])))
             for pv in pvm.dead():
                 self.logger.warn("'{0}' is disconnected.".format(pv))
-            #self.connect(pvm, SIGNAL("dataChanged(PyQt_PyObject)"), 
-            #             self._test)
         ## DCCT current plot
         #self.dcct = DcctCurrentPlot()
         #self.dcct.setMinimumHeight(100)
@@ -136,20 +134,20 @@ class OrbitPlotMainWindow(QMainWindow):
         self.setCentralWidget(self.mdiarea)
 
         #self._elemed = ElementPropertyTabs()
-        self.elemeditor = ElementEditorDock(parent=self)
-        self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)
-        self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
-                                    QDockWidget.DockWidgetClosable)
-        self.elemeditor.setFloating(False)
+        #self.elemeditor = ElementEditorDock(parent=self)
+        #self.elemeditor.setAllowedAreas(Qt.RightDockWidgetArea)
+        #self.elemeditor.setFeatures(QDockWidget.DockWidgetMovable|
+        #                            QDockWidget.DockWidgetClosable)
+        #self.elemeditor.setFloating(False)
         #self.elemeditor.setEnabled(False)
-        self.elemeditor.setMinimumWidth(400)
+        #self.elemeditor.setMinimumWidth(400)
         #self.elemeditor.setWidget(self._elemed)
         #self.elemeditor.show()
         #self.elemeditor.hide()
-        self.connect(self.elemeditor, 
-                     SIGNAL("elementChecked(PyQt_PyObject, bool)"),
-                     self.physics.elementChecked)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
+        #self.connect(self.elemeditor, 
+        #             SIGNAL("elementChecked(PyQt_PyObject, bool)"),
+        #             self.physics.elementChecked)
+        #self.addDockWidget(Qt.RightDockWidgetArea, self.elemeditor)
 
         self.createMenuToolBar()
         
@@ -172,16 +170,13 @@ class OrbitPlotMainWindow(QMainWindow):
         #                   "H Orbit", c = None)
         #print "Thread started", self.machinit.isRunning()
 
-        self.newElementPlots("BPM", "x, y")
+        #self.newElementPlots("BPM", "x, y")
         #self.newElementPlot("BPM", "y")
         #self.newElementPlot("HCOR", "x")
         #self.newElementPlot("VCOR", "y")
         #self.newElementPlot("QUAD", "b1")
         #self.newElementPlot("SEXT", "b2")
         
-
-    def _test(self, val):
-        print "data changed:", val.name, val
 
     def updateMachineLatticeNames(self, wsub):
         i = self.machBox.findText(wsub.machlat[0])
@@ -200,9 +195,6 @@ class OrbitPlotMainWindow(QMainWindow):
     def closeEvent(self, event):
         self.physics.close()
         event.accept()
-
-    def test_1(self):
-        pass
 
     def createMenuToolBar(self):
         #
@@ -243,17 +235,17 @@ class OrbitPlotMainWindow(QMainWindow):
             mkmenu.addAction(famAct)
 
         # live data
-        viewLiveAction = QAction(QIcon(":/view_livedata.png"),
-                                    "Live", self)
-        viewLiveAction.setCheckable(True)
-        viewLiveAction.setChecked(self.live_orbit)
-        self.connect(viewLiveAction, SIGNAL("toggled(bool)"),
-                     self.liveData)
-
-        viewSingleShotAction = QAction(QIcon(":/view_singleshot.png"),
-                                       "Single Shot", self)
-        self.connect(viewSingleShotAction, SIGNAL("triggered()"),
-                     self.singleShot)
+        #viewLiveAction = QAction(QIcon(":/view_livedata.png"),
+        #                            "Live", self)
+        #viewLiveAction.setCheckable(True)
+        #viewLiveAction.setChecked(self.live_orbit)
+        #self.connect(viewLiveAction, SIGNAL("toggled(bool)"),
+        #             self.liveData)
+        #
+        #viewSingleShotAction = QAction(QIcon(":/view_singleshot.png"),
+        #                               "Single Shot", self)
+        #self.connect(viewSingleShotAction, SIGNAL("triggered()"),
+        #             self.singleShot)
         
         # errorbar
         viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
@@ -277,44 +269,44 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(controlCorrOrbitAction, SIGNAL("triggered()"),
                      self.physics.correctOrbit)
 
-        drift_from_now = QAction("Drift from Now", self)
-        drift_from_now.setCheckable(True)
-        drift_from_now.setShortcut("Ctrl+N")
-        drift_from_golden = QAction("Drift from Golden", self)
-        drift_from_golden.setCheckable(True)
-        drift_from_none = QAction("None", self)
-        drift_from_none.setCheckable(True)
+        #drift_from_now = QAction("Drift from Now", self)
+        #drift_from_now.setCheckable(True)
+        #drift_from_now.setShortcut("Ctrl+N")
+        #drift_from_golden = QAction("Drift from Golden", self)
+        #drift_from_golden.setCheckable(True)
+        #drift_from_none = QAction("None", self)
+        #drift_from_none.setCheckable(True)
 
         steer_orbit = QAction("Steer Orbit ...", self)
         #steer_orbit.setDisabled(True)
         self.connect(steer_orbit, SIGNAL("triggered()"), 
                      self.createLocalBump)
         
-        self.viewMenu.addAction(viewLiveAction)
-        self.viewMenu.addAction(viewSingleShotAction)
-        self.viewMenu.addSeparator()
+        #self.viewMenu.addAction(viewLiveAction)
+        #self.viewMenu.addAction(viewSingleShotAction)
+        #self.viewMenu.addSeparator()
 
-        self.viewMenu.addAction(drift_from_now)
-        self.viewMenu.addAction(drift_from_golden)
-        self.viewMenu.addAction(drift_from_none)
+        #self.viewMenu.addAction(drift_from_now)
+        #self.viewMenu.addAction(drift_from_golden)
+        #self.viewMenu.addAction(drift_from_none)
         #self.viewMenu.addAction(viewAutoScale)
-        self.viewMenu.addAction(viewErrorBarAction)
-        self.viewMenu.addSeparator()
+        #self.viewMenu.addAction(viewErrorBarAction)
+        #self.viewMenu.addSeparator()
 
         self.viewMenu.addMenu(mkmenu)
 
-        drift_group = QActionGroup(self)
-        drift_group.addAction(drift_from_none)
-        drift_group.addAction(drift_from_now)
-        drift_group.addAction(drift_from_golden)
-        drift_from_none.setChecked(True)
+        #drift_group = QActionGroup(self)
+        #drift_group.addAction(drift_from_none)
+        #drift_group.addAction(drift_from_now)
+        #drift_group.addAction(drift_from_golden)
+        #drift_from_none.setChecked(True)
 
         sep = self.viewMenu.addSeparator()
         #sep.setText("Drift")
-        self.connect(drift_from_now, SIGNAL("triggered()"), self.setDriftNow)
-        self.connect(drift_from_none, SIGNAL("triggered()"), self.setDriftNone)
-        self.connect(drift_from_golden, SIGNAL("triggered()"), 
-                     self.setDriftGolden)
+        #self.connect(drift_from_now, SIGNAL("triggered()"), self.setDriftNow)
+        #self.connect(drift_from_none, SIGNAL("triggered()"), self.setDriftNone)
+        #self.connect(drift_from_golden, SIGNAL("triggered()"), 
+        #             self.setDriftGolden)
 
         viewStyle = QMenu("Line Style", self.viewMenu)
         for act in ["Increase Point Size", "Decrease Point Size", None,
@@ -364,7 +356,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         # Window
         self.windowMenu = self.menuBar().addMenu("&Windows")
-        self.windowMenu.addAction(self.elemeditor.toggleViewAction())
+        #self.windowMenu.addAction(self.elemeditor.toggleViewAction())
         self.windowMenu.addAction(self.logdock.toggleViewAction())
         #viewDcct = QAction("Beam Current", self)
         #viewDcct.setCheckable(True)
@@ -413,34 +405,32 @@ class OrbitPlotMainWindow(QMainWindow):
         #viewToolBar.addAction(viewZoomOut15Action)
         #viewToolBar.addAction(viewZoomIn15Action)
         #viewToolBar.addAction(viewZoomAutoAction)
-        viewToolBar1.addAction(viewLiveAction)
-        viewToolBar1.addAction(viewSingleShotAction)
-        viewToolBar1.addSeparator()
+        #viewToolBar1.addAction(viewLiveAction)
+        #viewToolBar1.addAction(viewSingleShotAction)
+        #viewToolBar1.addSeparator()
         #viewToolBar1.addAction(QIcon(":/new_bpm.png"), "Orbits", self.newOrbitPlots)
         #viewToolBar1.addAction(QIcon(":/new_cor.png"), "Correctors", self.newCorrectorPlots)
         #viewToolBar.addAction(viewErrorBarAction)
         #viewToolBar.addAction(QWhatsThis.createAction(self))
 
-        viewToolBar2 = self.addToolBar("Scale Plot")
-        zoomActions = [(":/view_zoom_xy.png", "Fit", self.scalePlot),
-                       (None, None, None),
-                       (":/view_zoom_y.png", "Fit In Y", self.scalePlot),
-                       (":/view_zoomin_y.png", "Zoom In Y", self.scalePlot),
-                       (":/view_zoomout_y.png", "Zoom Out Y", self.scalePlot),
-                       (":/view_move_up.png", "Move Up", self.scalePlot),
-                       (":/view_move_down.png", "Move Down", self.scalePlot),
-                       (None, None, None),
-                       (":/view_zoom_x.png", "Fit In X", self.scalePlot),
-                       (":/view_zoomin_x.png", "Zoom In X", self.scalePlot),
-                       (":/view_zoomout_x.png", "Zoom Out X", self.scalePlot),
-                       (":/view_move_left.png", "Move Left", self.scalePlot),
-                       (":/view_move_right.png", "Move Right", self.scalePlot),
-                       ]
-        
-        
-        for ico,name,hdl in zoomActions:
-            if hdl is None: continue
-            viewToolBar2.addAction(QIcon(ico), name, hdl)
+        #viewToolBar2 = self.addToolBar("Scale Plot")
+        #zoomActions = [(":/view_zoom_xy.png", "Fit", self.scalePlot),
+        #               (None, None, None),
+        #               (":/view_zoom_y.png", "Fit In Y", self.scalePlot),
+        #               (":/view_zoomin_y.png", "Zoom In Y", self.scalePlot),
+        #               (":/view_zoomout_y.png", "Zoom Out Y", self.scalePlot),
+        #               (":/view_move_up.png", "Move Up", self.scalePlot),
+        #               (":/view_move_down.png", "Move Down", self.scalePlot),
+        #               (None, None, None),
+        #               (":/view_zoom_x.png", "Fit In X", self.scalePlot),
+        #               (":/view_zoomin_x.png", "Zoom In X", self.scalePlot),
+        #               (":/view_zoomout_x.png", "Zoom Out X", self.scalePlot),
+        #               (":/view_move_left.png", "Move Left", self.scalePlot),
+        #               (":/view_move_right.png", "Move Right", self.scalePlot),
+        #               ]
+        #for ico,name,hdl in zoomActions:
+        #    if hdl is None: continue
+        #    viewToolBar2.addAction(QIcon(ico), name, hdl)
 
         controlToolBar = self.addToolBar("Control")
         controlToolBar.addAction(controlChooseBpmAction)
@@ -470,42 +460,40 @@ class OrbitPlotMainWindow(QMainWindow):
         else:
             return mach, lat_dict[latname], pvm
 
-    def click_machine(self, act):
-        self.machBox.setCurrentIndex(self.machBox.findText(act.text()))
-
     def newElementPlots(self, elem, fields, **kw):
         self.logger.info("new plots: %s %s" % (elem, fields))
-        for fld in re.findall(r'[^ ,]+', fields):
-            self._newElementPlot(elem, fld, **kw)
-
-    def _newElementPlot(self, elem, field, **kw):
-        """plot the field for element"""
-        mach, lat = kw.get("machlat", self.getCurrentMachLattice())
+        _mach, _lat, _pvm = self.getCurrentMachLattice(cadata=True)
+        mach, lat = kw.get("machlat", (_mach, _lat))
         handle = kw.get("handle", "readback")
         elems = lat.getElementList(elem)
-        s, pvs, elemnames = [], [], []
-        for e in elems:
-            epv = e.pv(field=field, handle=handle)
-            if not epv: continue
-            pvs.append(epv[0])
-            s.append(e.sb)
-            elemnames.append(e.name)
-        if not pvs:
-            self.logger.error("no data found for elements '{0}' and field '{1}'".format(elem, field))
-            return
+        x, pvs = [], []
+        field_list = re.findall(r'[^ ,]+', fields)
+        for fld in field_list:
+            si, pvsi = [], []
+            for e in elems:
+                epv = e.pv(field=fld, handle=handle)
+                if not epv: continue
+                pvsi.append(epv[0])
+                si.append(e.sb)
+            x.append(si)
+            pvs.append(pvsi)
 
-        lats, lat0, pvm = self._mach[mach]
+        if not pvs:
+            self.logger.error("no data found for elements '{0}' "
+                              "and field '{1}'".format(elem, field))
+            return
 
         magprof = lat.getBeamlineProfile()
 
-        p = ApMdiSubPlot(element_fields=[(e.name, field) for e in elems])
+        p = ApMdiSubPlot(pvs=pvs, x = x, 
+                         labels=["%s.%s" % (elem,fld) for fld in field_list])
         #QObject.installEventFilter(p.aplot)
-        p.data = ManagedPvData(pvm, s, pvs, element=elemnames,
-                               label="{0}.{1}".format(elem,field))
+        #p.data = ManagedPvData(pvm, s, pvs, element=elemnames,
+        #                       label="{0}.{1}".format(elem,field))
         p.setAttribute(Qt.WA_DeleteOnClose)
         str_elem = "{0}".format(elem)
         if len(str_elem) > 12: str_elem = str_elem[:9] + "..."
-        str_field = "{0}".format(field)
+        str_field = "{0}".format(fields)
         if len(str_field) > 12: str_field = str_field[:9] + "..."
         p.setWindowTitle("[%s.%s] %s %s" % (
                 mach, lat.name, str_elem, str_field))
@@ -513,9 +501,9 @@ class OrbitPlotMainWindow(QMainWindow):
         self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
                      self.elementSelected)
         self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
-        p.updatePlot()
+        #p.updatePlot()
         # set the zoom stack
-        p.aplot.setErrorBar(self.error_bar)
+        #p.aplot.setErrorBar(self.error_bar)
         #p.wid.autoScaleXY()
         #p.aplot.replot()
         self.mdiarea.addSubWindow(p)
@@ -800,18 +788,18 @@ class OrbitPlotMainWindow(QMainWindow):
         #if not self.elemeditor.isHidden():
         #    self.elemeditor.updateModelData()
 
-        if self.live_orbit:
-            self.itimer += 1
-            #self.updatePlots()
-            #self.updateStatus()
-            for w in self.mdiarea.subWindowList():
-                if not isinstance(w, ApMdiSubPlot): continue
-                if not w.live: continue
-                w.updatePlot()
-            self.statusBar().showMessage("plot updated: {0}".format(
-                time.strftime("%F %T")))
-        else:
-            self.statusBar().showMessage("live update disabled")
+        #if self.live_orbit:
+        #    self.itimer += 1
+        #    #self.updatePlots()
+        #    #self.updateStatus()
+        #    for w in self.mdiarea.subWindowList():
+        #        if not isinstance(w, ApMdiSubPlot): continue
+        #        if not w.live: continue
+        #        w.updatePlot()
+        #    self.statusBar().showMessage("plot updated: {0}".format(
+        #        time.strftime("%F %T")))
+        #else:
+        #    self.statusBar().showMessage("live update disabled")
             
             
     def singleShot(self):

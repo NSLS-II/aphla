@@ -28,6 +28,7 @@ from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
 import PyQt4.Qwt5 as Qwt
 
 from pvmanager import CaDataMonitor
+#from aporbitplot import ApPlot
 import traceback
 import collections
 import numpy as np
@@ -35,7 +36,7 @@ import sys, time
 from functools import partial
 import qrangeslider
 
-C_FIELD, C_VAL_SP, C_VAL_RB = 0, 1, 2
+C_ELEM, C_FIELD, C_VAL_SP, C_VAL_RB = range(4)
 _DBG_VERBOSE = 1
 
 import logging
@@ -87,69 +88,83 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def __init__(self, **kwargs):
         super(ElementPropertyTableModel, self).__init__()
         # elem obj, idx, name/fld
-        self._elemrec = []
-        self._cadata  = None
-        self._unitsys = [None, 'phy']
-        self._unitsymb = [None, []]
-        self._data = []
+        self._cadata   = None
+        self._unitsys  = ['phy']
+        self._unitsymb = []
+        self._data     = []
+        self._block    = []
         self._inactive = []
         self._pvidx = {}
 
-    def loadElements(self, elems, flds):
+    def loadElements(self, rows):
+        """
+        elemplist - a list of (elem obj, field). *field=None* means separator.
+        """
         self.beginResetModel()
         self.clear()
-        for elem in elems:
-            ik = 0
-            self._elemrec.append((elem, ik, None, None, None))
-            self._data.append(None)
-            for var in sorted(elem.fields()):
-                # check only fields interested
-                if flds and var not in flds: continue
-                ik += 1
-                self._elemrec.append(
-                    (elem, ik, var, elem.pv(field=var, handle="setpoint"),
-                     elem.pv(field=var, handle="readback")))
-                for j,u in enumerate(self._unitsys[1:]):
-                    self._unitsymb[1+j].append(elem.getUnit(var, unitsys=u))
-                # setpoint and readback data
-                self._data.append([None, None])
-
-        # collect all the PVs
-        pvs, npvs = set(), 0
-        for i,r in enumerate(self._elemrec):
-            elem, ik, var, pvsp, pvrb = r
-            if var is None: continue
-            pvs.update(pvsp)
-            pvs.update(pvrb)
-            npvs += len(pvsp) + len(pvrb)
-            for pv in pvsp:
+        for i, (elem, fld) in enumerate(rows):
+            pvsp = elem.pv(field=fld, handle="setpoint")
+            for j,pv in enumerate(pvsp):
                 self._pvidx.setdefault(pv, [])
-                self._pvidx[pv].append((i, C_VAL_SP))
-            for pv in pvrb:
+                self._pvidx[pv].append((i,C_VAL_SP,j))
+            pvrb = elem.pv(field=fld, handle="readback")
+            for j,pv in enumerate(pvrb):
                 self._pvidx.setdefault(pv, [])
-                self._pvidx[pv].append((i, C_VAL_RB))
-        
-        self._cadata = CaDataMonitor(list(pvs))
-        self.connect(self._cadata, SIGNAL("dataChanged(PyQt_PyObject)"), self.updatePvData)
+                self._pvidx[pv].append((i,C_VAL_RB,j))
 
+            rec = [elem, fld, [None] * len(pvsp), [None] * len(pvrb)]
+            for j,s in enumerate(self._unitsys):
+                rec.append([None] * len(pvrb))
+            self._data.append(rec)
+
+        if len(rows) > 0:
+            self._block = [0]
+            k = 0
+            for i in range(1, len(rows)):
+                elem, fld = rows[i]
+                if elem != rows[i-1][0]:
+                    k += 1
+                self._block.append(k)
+
+        self._cadata = CaDataMonitor()
+        for pv in self._pvidx.keys():
+            self._cadata.addHook(pv, self._ca_update)
+        self._cadata.addPv(self._pvidx.keys())
         self.endResetModel()
 
-    def updatePvData(self, val):
-        # update with pv=val.name, val is the value
-        if not self._elemrec: return
-        #print "Size:", len(self._elemrec)
-        print "Updating", val.name, val
-        idx0 = self.index(row0, 0)
-        idx1 = self.index(row1, self.columnCount()-1)
-        #print idx0.row(), idx0.column(), idx1.row(), idx1.column()
-        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
-                 idx0, idx1)
+    def _ca_update(self, val, idx = None):
+        pv = val.name
+        for i,j,k in self._pvidx[pv]:
+            self._data[i][j][k] = val
+            if j == C_VAL_RB:
+                elem, fld = self._data[i][:2]
+                for isys, usys in enumerate(self._unitsys):
+                    if usys not in elem.getUnitSystems(field=fld):
+                        self._data[i][j+isys+1][k] = ''
+                        continue
+                    self._data[i][j+isys+1][k] = \
+                        elem.convertUnit(fld, val, None, usys)
+            idx0 = self.index(i, j)
+            idx1 = self.index(i, self.columnCount()-1)
+            self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
+                      idx0, idx1)
+        #QtGui.qApp.processEvents()
 
-    def subHeaderIndex(self):
-        return [i for i,r in enumerate(self._elemrec) if r[1] == 0]
+    def _cell_to_qv(self, i, j):
+        # assume it is a cadata
+        if len(self._data[i][j]) == 0:
+            return QVariant()
+        elif len(self._data[i][j]) > 1:
+            return QVariant("...")
+
+        #print "data:", i, j, self._data[i][j]
+        # single PV
+        return self._cadata_to_qvariant(self._data[i][j][0])
+        # single value
+
 
     def isSubHeader(self, i):
-        return self._elemrec[i][1] == 0
+        return self._data[i][1] is None
 
     def _cadata_to_qvariant(self, val):
         if val is None:
@@ -168,48 +183,22 @@ class ElementPropertyTableModel(QAbstractTableModel):
             raise RuntimeError("Unknow data type: {0} ({1})".format(
                     type(val), val))
 
-    def _get_cadata_qv(self, elem, fld, hdl, u = None):
-        if self._cadata:
-            pvs = elem.pv(field=fld, handle=hdl)
-            if len(pvs) == 0 or u not in elem.getUnitSystems(field=fld):
-                return QVariant()
-            vals = [self._cadata.get(pv, None) for pv in 
-                    elem.pv(field=fld, handle=hdl)]
-            if len(vals) == 1:
-                x = elem.convertUnit(fld, vals[0], None, u)
-                return self._cadata_to_qvariant(x)
-            else:
-                x = [elem.convertUnit(fld, v, None, u) for v in vals]
-                return self._cadata_to_qvariant(x)
-        else:
-            return QVariant()
-        return QVariant()
         
     def data(self, index, role=Qt.DisplayRole):
         """return data as a QVariant"""
         #print "data model=",role
-        if not index.isValid() or index.row() >= len(self._elemrec):
+        if not index.isValid() or index.row() >= len(self._data):
             return QVariant()
 
         r, col  = index.row(), index.column()
-        #print self._elemrec[r]
-        elem, idx, fld = self._elemrec[r]
-        #print r, col, elem.name, fld, idx
-
+        elem, fld = self._data[r][:2]
         if role == Qt.DisplayRole:
-            if col == C_FIELD:
-                if idx == 0: return QVariant(QString(elem.name))
-                return QVariant(fld)
-            elif col == C_VAL_SP:
-                val = self._get_cadata_qv(elem, fld, "setpoint", None)
-            elif col >= C_VAL_RB:
-                iusys = col - C_VAL_RB
-                usys = self._unitsys[iusys]
-                val = self._get_cadata_qv(elem, fld, "readback", usys)
-            #
-            if isinstance(val, list):
-                return QVariant("[ ... ]")
-            return val
+            #print r, col, self._data[r]
+            if col == C_ELEM:
+                return QVariant(QString(elem.name))
+            elif col == C_FIELD:
+                return QVariant(QString(fld))
+            return self._cell_to_qv(r, col)
         elif role == Qt.EditRole:
             if col == C_FIELD: 
                 raise RuntimeError("what is this ?")
@@ -224,7 +213,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
             if col == C_FIELD: return QVariant(Qt.AlignLeft | Qt.AlignVCenter)
             else: return QVariant(Qt.AlignRight | Qt.AlignBottom)
         elif role == Qt.ToolTipRole:
-            if idx == 0:
+            if col == C_ELEM or col == C_FIELD:
                 return QVariant("{0}, sb={1}, L={2}".format(
                     elem.family, elem.sb, elem.length))
             elif col == C_VAL_SP:
@@ -233,23 +222,25 @@ class ElementPropertyTableModel(QAbstractTableModel):
             elif col == C_VAL_RB:
                 pv = elem.pv(field=fld, handle="readback")
                 return QVariant(", ".join(pv))
-            elif col > C_VAL_RB:
-                return QVariant(self._unitsymb[col-C_VAL_RB][r])
+            #elif col > C_VAL_RB:
+            #    return QVariant(self._unitsymb[col-C_VAL_RB][r])
         elif role == Qt.ForegroundRole:
-            if idx == 0: return QColor(Qt.darkGray)
+            #if idx == 0: return QColor(Qt.darkGray)
             #if r in self._inactive and self.isHeadIndex(r):
             #    return QColor(Qt.darkGray)
             #elif r in self._inactive:
             #    return QColor(Qt.lightGray)
             #else: return QColor(Qt.black)
+            return QVariant()
         elif role == Qt.BackgroundRole:
-            #if self.isHeadIndex(r): return QColor(Qt.lightGray)            
-            if idx == 0: return QColor(Qt.lightGray)
+            if self._block[r] % 2 == 0: return QVariant()
+            else: return QColor(Qt.lightGray)
         elif role == Qt.CheckStateRole:
             #if vals is not None: return QVariant()
             #elif r in self._inactive: return Qt.Unchecked
             #else: return Qt.Checked 
-            if idx == 0 and col == C_FIELD: return Qt.Checked
+            #if idx == 0 and col == C_FIELD: return Qt.Checked
+            return QVariant()
         else:
             return QVariant()
         #print "Asking data role=", role
@@ -263,15 +254,19 @@ class ElementPropertyTableModel(QAbstractTableModel):
         if role != Qt.DisplayRole:
             return QVariant()
         if orientation == Qt.Horizontal:
+            #print "Section:", section, C_VAL_RB
             if section == C_FIELD: return QVariant("Field")
             elif section == C_VAL_SP: return QVariant("Setpoint")
             elif section == C_VAL_RB: return QVariant("Readback")
-            else: return QVariant(self._unitsys[section-C_VAL_RB])
+            elif section > C_VAL_RB and section < C_VAL_RB + len(self._unitsys):
+                return QVariant(self._unitsys[section-1-C_VAL_RB])
+            else:
+                return QVariant()
         elif orientation == Qt.Vertical:
             #if self._value[section] is not None: return QVariant()
             #idx = [k for k in range(section+1) if self._value[k] is None]
             #return QVariant(len(idx))
-            return QVariant()
+            return QVariant(section)
 
         #return QVariant(int(section+1))
         return QVariant()
@@ -281,9 +276,9 @@ class ElementPropertyTableModel(QAbstractTableModel):
         if not index.isValid():
             return Qt.ItemIsEnabled
         row, col = index.row(), index.column()
-        elem, idx, fld = self._elemrec[row]
+        elem, fld = self._data[row][:2]
 
-        if col == C_VAL_SP:
+        if col == C_VAL_SP and fld is not None:
             return Qt.ItemFlags(QAbstractTableModel.flags(self, index) |
                                 Qt.ItemIsSelectable)
             #return Qt.ItemFlags(QAbstractTableModel.flags(self, index) |
@@ -291,16 +286,11 @@ class ElementPropertyTableModel(QAbstractTableModel):
         return Qt.ItemIsEnabled
         
     def rowCount(self, index=QModelIndex()):
-        return len(self._elemrec)
+        return len(self._data)
     
     def columnCount(self, index=QModelIndex()):
-        return len(self._unitsys) + 2
+        return C_VAL_RB + len(self._unitsys) + 1
 
-    def isList(self, index):
-        r, c = index.row(), index.column()
-        elem, idx, fld = self._elemrec[r]
-        if idx == 0: return False
-        return len(elem.pv(field=fld, handle="setpoint")) > 1
 
     def setData(self, index, value, role=Qt.EditRole):
         #print "setting data", index.row(), index.column(), value.toInt()
@@ -308,7 +298,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         
         #if index.isValid() and 0 <= index.row() < self._NF:
         row, col = index.row(), index.column()
-        elem, fld, hdl = self._elemrec[row]
+        elem, fld = self._data[row][:2]
         if col == C_FIELD:
             #print "Editting property, ignore"
             checkstate, err = value.toInt()
@@ -366,11 +356,10 @@ class ElementPropertyTableModel(QAbstractTableModel):
 
     def clear(self):
         idx0 = self.index(0, 0)
-        idx1 = self.index(len(self._elemrec) - 1, self.columnCount()-1)
-        self._elemrec = []
-        self._value   = []
-        self._unit    = []
+        idx1 = self.index(len(self._data) - 1, self.columnCount()-1)
+        self._data    = []
         self._pvidx   = {}
+        if self._cadata: self._cadata.close()
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                   idx0, idx1)
 
@@ -470,7 +459,7 @@ class ElementPropertyDelegate(QStyledItemDelegate):
             return QStyledItemDelegate.createEditor(self, parent, option,
                                                     index)
 
-        elem, fld, hdl = model._elemrec[row]
+        elem, fld = model._data[row][:2]
         elem.updateBoundary()
         bd = elem.boundary(fld)
         ss = elem.stepSize(fld)
@@ -741,7 +730,7 @@ class ElementEditorDock(QDockWidget):
 
         self.setWindowTitle("Element Editor")
         self.noTableUpdate = True
-        #self.timerId = self.startTimer(3000)
+        #self.timerId = self.startTimer(800)
 
     def setDirectValue(self):
         val = float(self.ledSet.text())
@@ -755,31 +744,21 @@ class ElementEditorDock(QDockWidget):
         self.model.updateData(row1, row2)
         #QApplication.processEvent()
 
-    def reloadElements(self):
-        mach, latobj, cadata = self.parent().getCurrentMachLattice(cadata=True)
-        elems = latobj.getElementList(str(self.elemName.text()))
-        flds  = str(self.elemField.text())
-
-        #self.elemName.selectAll()
-        t0 = time.time()
-        _logger.info("Found elems: {0}".format(len(elems)))
-        QApplication.processEvents()
-        #print "cadata", cadata
-        self.model.loadElements(elems, flds, cadata)
-        #print "model size:", self.model.rowCount(), self.model.columnCount()
-        for i in range(self.model.rowCount()):
-            elem, fld, hdl = self.model._elemrec[i]
-            #print i, elem.name, fld, self.model._value[i]
-            if self.model.isSubHeader(i):
-                self.tableview.setSpan(i, 0, 1, self.model.columnCount())
-            elif self.tableview.columnSpan(i, 0) > 1:
-                self.tableview.setSpan(i, 0, 1, 1)
+    def reloadElements(self, elems):
+        self.model.loadElements(elems)
+        print "model size:", self.model.rowCount(), self.model.columnCount()
+        #for i in range(self.model.rowCount()):
+        #    #print i, elem.name, fld, self.model._value[i]
+        #    if self.model.isSubHeader(i):
+        #        self.tableview.setSpan(i, 0, 1, self.model.columnCount())
+        #    elif self.tableview.columnSpan(i, 0) > 1:
+        #        self.tableview.setSpan(i, 0, 1, 1)
         #self.elemName.deselect()
         self.tableview.setFocus()
         self.tableview.resizeColumnToContents(0)
-        for i in range(self.model.columnCount()):
-            w = self.tableview.columnWidth(i)
-            self.tableview.setColumnWidth(i, w + 5)
+        #for i in range(self.model.columnCount()):
+        #    w = self.tableview.columnWidth(i)
+        #    self.tableview.setColumnWidth(i, w + 5)
 
     def setActiveCell(self, val):
         if self._active_elem is None:
@@ -804,7 +783,7 @@ class ElementEditorDock(QDockWidget):
 
     def editingCell(self, idx):
         r,c = idx.row(), idx.column()
-        elem, ik, fld = self.model._elemrec[r]
+        elem, fld = self.model._data[r][:2]
         s = self.model.data(idx).toString()
         if c != C_VAL_SP or len(s) == 0:
             self._active_elem, self._active_idx = None, None
@@ -923,6 +902,8 @@ class ElementEditorDock(QDockWidget):
         self.se = vmax
         #self.refreshTable()
 
+
+# test purpose
 class MTestForm(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(MTestForm, self).__init__(parent)
@@ -963,9 +944,13 @@ class MTestForm(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     import aphla as ap
-    ap.machines.load("nsls2v2")
-    form = MTestForm()
-    form.resize(800, 600)
+    ap.machines.load("nsls2")
+    elems = []
+    for bpm in ap.getElements("BPM"):
+        elems.append((bpm, 'x'))
+        elems.append((bpm, 'y'))
+    form = ElementEditorDock(None)
+    form.reloadElements(elems)
     form.show()
     #form.reloadElements("*")
     #app.exec_()

@@ -12,7 +12,7 @@ import PyQt4.Qwt5 as Qwt
 
 from elempickdlg import ElementPickDlg
 from orbitcorrdlg import OrbitCorrDlg
-from aporbitplot import ApPlot, ApMdiSubPlot
+from aporbitplot import ApMdiSubPlot
 from apbba import ApBbaDlg
 import cothread
 import time
