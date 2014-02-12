@@ -156,3 +156,7 @@ LTB-BI{VF:5}ROI1:SizeY_RBV,         elemHandle=get, elemIndex=112, elemName=VF5,
 LTB-BI{VF:5}ROI1:MinX_RBV,          elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=minX, aphla.sys.LTB 
 LTB-BI{VF:5}ROI1:MinY_RBV,          elemHandle=get, elemIndex=112, elemName=VF5, devName=VF5, elemLength=0., elemPosition=20.0333, elemType=FLAG, system=LTB, elemField=minY, aphla.sys.LTB 
  
+LTB-MG{Bend:2}I:Sp1-SP, elemHandle=put, elemIndex=52, elemName=B2, devName=B2, elemLength=0.35, elemPosition=8.45413, elemType=BEND, system=LTB, elemField=b0, aphla.sys.LTB 
+LTB-MG{Bend:3_4}I:Sp1-SP, elemHandle=put, elemIndex=76, elemName=B3, devName=B3, elemLength=0.35, elemPosition=13.6886, elemType=BEND, system=LTB, elemField=b0, aphla.sys.LTB 
+LTB-MG{Bend:2}I:Ps1DCCT1-I, elemHandle=get, elemIndex=52, elemName=B2, devName=B2, elemLength=0.35, elemPosition=8.45413, elemType=BEND, system=LTB, elemField=bl, aphla.sys.LTB 
+LTB-MG{Bend:3_4}I:Ps1DCCT1-I, elemHandle=get, elemIndex=76, elemName=B3, devName=B3, elemLength=0.35, elemPosition=13.6886, elemType=BEND, system=LTB, elemField=b0, aphla.sys.LTB 

@@ -10,8 +10,10 @@ Defines the fundamental routines.
 import logging
 import numpy as np
 import time
+import os
 from fnmatch import fnmatch
-from catools import caget, caput, CA_OFFLINE
+from datetime import datetime
+from catools import caget, caput, CA_OFFLINE, savePvs
 import machines
 import element
 import itertools
@@ -1140,3 +1142,23 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
     else: return False
     
 
+
+def saveLattice(output, **kwargs):
+    # save the lattice
+    lat = kwargs.get("lattice", None)
+    if lat is None:
+        lat = machines._lat
+
+    if lat.arpvs is not None:
+        pvs = [s.strip() for s in open(lat.arpvs, 'r').readlines()]
+    else:
+        pvs = reduce(lambda a,b: a+b,
+                     [e.pv() for e in lat.getElementList("*", virtual=False)])
+
+    if output is None:
+        t0 = datetime.now()
+        output = os.path.join(
+            lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
+            t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
+
+    savePvs(output, pvs, group=lat.name)

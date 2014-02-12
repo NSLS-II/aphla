@@ -366,9 +366,8 @@ class ApCaPlot(Qwt.QwtPlot):
 
 
     def setMarkers(self, mks, on = True):
-        if not mks:
-            self.clearMarkers()
-            return
+        self.clearMarkers()
+        if not mks: return
         names, locs = zip(*mks)
         if not on:
             for r in self.markers:
@@ -383,18 +382,22 @@ class ApCaPlot(Qwt.QwtPlot):
                     continue
                 mk1 = Qwt.QwtPlotMarker()
                 mk1.setSymbol(Qwt.QwtSymbol(
-                        Qwt.QwtSymbol.Diamond,
+                        #Qwt.QwtSymbol.Diamond,
+                        Qwt.QwtSymbol.Star1,
                         QBrush(Qt.blue),
                         QPen(Qt.red, 1),
-                        QSize(12, 12)))
+                        QSize(10, 10)))
                 mk1.setValue(r[1], 0)
+                mk1.setLabel(Qwt.QwtText(r[0]))
+                mk1.setLabelAlignment(Qt.AlignTop)
+                #mk1.setLabelAlignment(Qt.AlignBottom)
                 mk1.setAxis(Qwt.QwtPlot.xBottom, Qwt.QwtPlot.yRight)
                 mk1.attach(self)
                 self.markers.append([r[0], mk1])
 
     def clearMarkers(self):
         for name, mk in self.markers:
-            mk.detach(self)
+            mk.detach()
         self.markers = []
 
     def setMagnetProfile(self, mprof):
@@ -604,7 +607,7 @@ class ApCaPlot(Qwt.QwtPlot):
         self.replot()
 
     def zoomed(self, r):
-        print "Zoomed"
+        #print "Zoomed"
         pass
 
     def pullCaData(self):
@@ -963,14 +966,14 @@ class ApCaArrayPlot(ApCaPlot):
             c.setData(y, x, e1)
 
         self.replot()
-        QtGui.qApp.processEvents()
+        #QtGui.qApp.processEvents()
 
     def _ca_update_all(self, val, idx = None):
         if self._hold: return
         if not self.live: return
-        #print "Updating %s: " % val.name, self._pvs[val.name], val
         for pv in self._pvs.keys():
             v1 = self._cadata.get(pv)
+            #print "Updating %s: " % pv, v1
             for i,j in self._pvs.get(pv, []):
                 self._count[i][j] += 1
                 self._y[i][j] = v1
@@ -986,7 +989,7 @@ class ApCaArrayPlot(ApCaPlot):
 
         if any([c.isVisible() for c in self.curves]):
             self.replot()
-        QtGui.qApp.processEvents()
+        #QtGui.qApp.processEvents()
 
     def pullCaData(self):
         if not self._cadata: return

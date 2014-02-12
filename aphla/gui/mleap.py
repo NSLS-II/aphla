@@ -2,7 +2,7 @@
 """
 :author: Lingyun Yang lyyang@bnl.gov
 
-This is the main file for GUI app `aporbit`. A high level viewer and editor.
+This is the main file for GUI app `mleap`. A high level viewer and editor.
 """
 
 from pkg_resources import require
@@ -21,7 +21,7 @@ from elempickdlg import ElementPickDlg
 from aporbitplot import ApMdiSubPlot, ApSvdPlot
 from aporbitdata import ApVirtualElemData, ManagedPvData
 from aporbitphy import *
-from elemeditor import *
+from elemeditor import ElementEditor
 from pvmanager import CaDataMonitor
 from latviewer import LatSnapshotMain
 
@@ -68,7 +68,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         self.setIconSize(QSize(32, 32))
         self.error_bar = True
-
+        self._dlgOrbitCor = None
         # logging
         self.logdock = QDockWidget("Log")
         self.logdock.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
@@ -233,42 +233,20 @@ class OrbitPlotMainWindow(QMainWindow):
             famAct.setCheckable(True)
             self.connect(famAct, SIGNAL("toggled(bool)"), self.click_markfam)
             mkmenu.addAction(famAct)
-
-        # live data
-        #viewLiveAction = QAction(QIcon(":/view_livedata.png"),
-        #                            "Live", self)
-        #viewLiveAction.setCheckable(True)
-        #viewLiveAction.setChecked(self.live_orbit)
-        #self.connect(viewLiveAction, SIGNAL("toggled(bool)"),
-        #             self.liveData)
-        #
-        #viewSingleShotAction = QAction(QIcon(":/view_singleshot.png"),
-        #                               "Single Shot", self)
-        #self.connect(viewSingleShotAction, SIGNAL("triggered()"),
-        #             self.singleShot)
+        # 
         
         # errorbar
-        viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
-                                    "Errorbar", self)
-        viewErrorBarAction.setCheckable(True)
-        viewErrorBarAction.setChecked(True)
-        self.connect(viewErrorBarAction, SIGNAL("toggled(bool)"),
-                     self.errorBar)
-
-        zoomM = QMenu("Zoom", self.viewMenu)
+        #viewErrorBarAction = QAction(QIcon(":/view_errorbar.png"),
+        #                            "Errorbar", self)
+        #viewErrorBarAction.setCheckable(True)
+        #viewErrorBarAction.setChecked(True)
+        #self.connect(viewErrorBarAction, SIGNAL("toggled(bool)"),
+        #             self.errorBar)
+        #
+        #zoomM = QMenu("Zoom", self.viewMenu)
 
         #
         #
-        controlChooseBpmAction = QAction(QIcon(":/control_choosebpm.png"),
-                                         "Choose BPM", self)
-        self.connect(controlChooseBpmAction, SIGNAL("triggered()"),
-                     partial(self.physics.chooseElement, 'BPM'))
-        
-        controlCorrOrbitAction = QAction(QIcon(":/control_corrorbit.png"),
-                                         "Correct orbit", self)
-        self.connect(controlCorrOrbitAction, SIGNAL("triggered()"),
-                     self.physics.correctOrbit)
-
         #drift_from_now = QAction("Drift from Now", self)
         #drift_from_now.setCheckable(True)
         #drift_from_now.setShortcut("Ctrl+N")
@@ -277,11 +255,6 @@ class OrbitPlotMainWindow(QMainWindow):
         #drift_from_none = QAction("None", self)
         #drift_from_none.setCheckable(True)
 
-        steer_orbit = QAction("Steer Orbit ...", self)
-        #steer_orbit.setDisabled(True)
-        self.connect(steer_orbit, SIGNAL("triggered()"), 
-                     self.createLocalBump)
-        
         #self.viewMenu.addAction(viewLiveAction)
         #self.viewMenu.addAction(viewSingleShotAction)
         #self.viewMenu.addSeparator()
@@ -308,22 +281,22 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.connect(drift_from_golden, SIGNAL("triggered()"), 
         #             self.setDriftGolden)
 
-        viewStyle = QMenu("Line Style", self.viewMenu)
-        for act in ["Increase Point Size", "Decrease Point Size", None,
-                    "NoCurve", "Lines", "Sticks", None,
-                    "Solid Line", "Dashed Line", "Dotted Line", None,
-                    "Increase Line Width", "Decrease Line Width", None,
-                    "NoSymbol", "Ellipse", "Rect", "Diamond", "Triangle",
-                    "Cross", "XCross", "HLine", "VLine",
-                    "Star1", "Star2", "Hexagon", None,
-                    "Red", "Blue", "Green"]:
-            if act is None:
-                viewStyle.addSeparator()
-            else:
-                viewStyle.addAction(act, self.setPlotStyle)
-        self.viewMenu.addMenu(viewStyle)
+        #viewStyle = QMenu("Line Style", self.viewMenu)
+        #for act in ["Increase Point Size", "Decrease Point Size", None,
+        #            "NoCurve", "Lines", "Sticks", None,
+        #            "Solid Line", "Dashed Line", "Dotted Line", None,
+        #            "Increase Line Width", "Decrease Line Width", None,
+        #            "NoSymbol", "Ellipse", "Rect", "Diamond", "Triangle",
+        #            "Cross", "XCross", "HLine", "VLine",
+        #            "Star1", "Star2", "Hexagon", None,
+        #            "Red", "Blue", "Green"]:
+        #    if act is None:
+        #        viewStyle.addSeparator()
+        #    else:
+        #        viewStyle.addAction(act, self.setPlotStyle)
+        #self.viewMenu.addMenu(viewStyle)
 
-        self.viewMenu.addSeparator()
+        #self.viewMenu.addSeparator()
         #self.viewMenu.addAction(viewZoomOut15Action)
         #self.viewMenu.addAction(viewZoomIn15Action)
         #self.viewMenu.addAction(viewZoomAutoAction)
@@ -335,9 +308,12 @@ class OrbitPlotMainWindow(QMainWindow):
 
         #
         self.controlMenu = self.menuBar().addMenu("&Tools")
-        self.controlMenu.addAction(controlChooseBpmAction)
-        self.controlMenu.addAction("Choose COR", 
-                                   partial(self.physics.chooseElement, 'COR'))
+        
+        self.controlMenu.addAction(
+            QIcon(":/control_choosebpm.png"), "En-/Disable BPM",
+            partial(chooseElement, 'BPM'))
+        self.controlMenu.addAction(
+            "En-/Disable COR", partial(chooseElement, 'COR'))
         #self.controlMenu.addAction(controlResetPvDataAction)
         self.controlMenu.addSeparator()
         self.controlMenu.addAction("Lattice Snapshot ...", self.openSnapshot)
@@ -346,8 +322,16 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.controlMenu.addAction(controlZoomInPlot2Action)
         #self.controlMenu.addAction(controlZoomOutPlot2Action)
         self.controlMenu.addSeparator()
-        self.controlMenu.addAction(controlCorrOrbitAction)
-        self.controlMenu.addAction(steer_orbit)
+        self.controlMenu.addAction("Correct Hor. orbit",
+            partial(aphla.correctOrbit, plane="H"))
+        self.controlMenu.addAction("Correct Vert. orbit",
+            partial(aphla.correctOrbit, plane="V"))
+        self.controlMenu.addAction(
+            QIcon(":/control_corrorbit.png"), "Correct orbit",
+            partial(aphla.correctOrbit, plane="HV"))
+        #steer_orbit.setDisabled(True)
+        self.controlMenu.addAction("Local Bump ...", self.createLocalBump)
+        self.controlMenu.addAction("Element Editor ...", self.showElementEditor)
         self.controlMenu.addSeparator()
         self.controlMenu.addAction("meas Beta", self.physics.measBeta)
         self.controlMenu.addAction("meas Dispersion", self.physics.measDispersion)
@@ -387,8 +371,8 @@ class OrbitPlotMainWindow(QMainWindow):
                                                                          
         #toolbar
         machToolBar = self.addToolBar("Machines")
-        self.machBox = QComboBox()
-        self.latBox = QComboBox()
+        self.machBox = QtGui.QComboBox()
+        self.latBox = QtGui.QComboBox()
         #self.connect(self.latBox, SIGNAL("currentIndexChanged(QString)"), 
         #             self.__setLattice)
         machToolBar.addWidget(self.machBox)
@@ -408,8 +392,12 @@ class OrbitPlotMainWindow(QMainWindow):
         #viewToolBar1.addAction(viewLiveAction)
         #viewToolBar1.addAction(viewSingleShotAction)
         #viewToolBar1.addSeparator()
-        #viewToolBar1.addAction(QIcon(":/new_bpm.png"), "Orbits", self.newOrbitPlots)
-        #viewToolBar1.addAction(QIcon(":/new_cor.png"), "Correctors", self.newCorrectorPlots)
+        viewToolBar1.addAction(
+            QIcon(":/new_bpm.png"), "Orbits",
+            partial(self.newElementPlots, "BPM", "x,y"))
+        viewToolBar1.addAction(
+            QIcon(":/new_cor.png"), "Correctors",
+            partial(self.newElementPlots, "COR", "x,y"))
         #viewToolBar.addAction(viewErrorBarAction)
         #viewToolBar.addAction(QWhatsThis.createAction(self))
 
@@ -433,15 +421,19 @@ class OrbitPlotMainWindow(QMainWindow):
         #    viewToolBar2.addAction(QIcon(ico), name, hdl)
 
         controlToolBar = self.addToolBar("Control")
-        controlToolBar.addAction(controlChooseBpmAction)
-        controlToolBar.addAction(controlCorrOrbitAction)
+        controlToolBar.addAction(
+            QIcon(":/control_orbitcor.png"), "Correct Orbit",
+            aphla.correctOrbit)
+        controlToolBar.addAction(
+            QIcon(":/control_localbump.png"), "Local Bump ...",
+            self.createLocalBump)
         #controlToolBar.addAction(controlResetPvDataAction)
 
     def showAbout(self):
         QMessageBox.about(
             self, self.tr("mleap"),
             (self.tr("""<b>Machine/Lattice Editor And Plotter</b> v %1
-                <p>Copyright &copy; 2013 BNL. 
+                <p>Copyright &copy; Lingyun Yang, BNL, 2013-2014. 
                 All rights reserved.
                 <p>This application can be used to perform
                 high level accelerator controls.
@@ -449,6 +441,11 @@ class OrbitPlotMainWindow(QMainWindow):
                 on %5""").arg(aphla.version.version)
                 .arg(platform.python_version()).arg(QtCore.QT_VERSION_STR)
                 .arg(QtCore.PYQT_VERSION_STR).arg(platform.system())))
+
+    def showElementEditor(self):
+        ed = ElementEditor(parent=self)
+        ed.setWindowFlags(Qt.Window)
+        ed.show()
 
     def getCurrentMachLattice(self, cadata = False):
         """return the current machine name and lattice object"""
@@ -624,17 +621,19 @@ class OrbitPlotMainWindow(QMainWindow):
     def _random_hkick(self):
         mach, lat = self.getCurrentMachLattice()
         hcors = lat.getElementList('HCOR')
-        i = np.random.randint(len(hcors))
-        self.logger.info("Setting {0}/{1} HCOR".format(i, len(hcors)))
-        hcors[i].x += 2e-7
+        for k in range(3):
+            i = np.random.randint(len(hcors))
+            self.logger.info("Setting {0}/{1} HCOR".format(i, len(hcors)))
+            hcors[i].x += np.random.rand() * 2e-6
 
 
     def _random_vkick(self):
         mach, lat = self.getCurrentMachLattice()
         cors = lat.getElementList('VCOR')
-        i = np.random.randint(len(cors))
-        cors[i].y += 1e-7
-        self.logger.info("increased kicker '{0}' by 1e-7 ({1} {2})".format(
+        for k in range(3):
+            i = np.random.randint(len(cors))
+            cors[i].y += np.random.rand() * 1e-6
+            self.logger.info("increased kicker '{0}' by 1e-7 ({1} {2})".format(
                 cors[i].name, cors[i].y, cors[i].getUnit('y', None)))
 
     def viewDcctPlot(self, on):
@@ -643,84 +642,6 @@ class OrbitPlotMainWindow(QMainWindow):
     def liveData(self, on):
         """Switch on/off live data taking"""
         self.live_orbit = on
-
-    def setPlotStyle(self):
-        w = self.mdiarea.currentSubWindow()
-        if not w: return
-        pen, symb = w.aplot.curve1.pen(), w.aplot.curve1.symbol()
-        ptstyle = dict([("NoSymbol", Qwt.QwtSymbol.NoSymbol),
-                        ("Ellipse", Qwt.QwtSymbol.Ellipse),
-                        ("Rect", Qwt.QwtSymbol.Rect),
-                        ("Diamond", Qwt.QwtSymbol.Diamond),
-                        ("Triangle", Qwt.QwtSymbol.Triangle),
-                        ("Cross", Qwt.QwtSymbol.Cross),
-                        ("XCross", Qwt.QwtSymbol.XCross),
-                        ("HLine", Qwt.QwtSymbol.HLine),
-                        ("VLine", Qwt.QwtSymbol.VLine),
-                        ("Star1", Qwt.QwtSymbol.Star1),
-                        ("Star2", Qwt.QwtSymbol.Star2),
-                        ("Hexagon", Qwt.QwtSymbol.Hexagon),])
-
-        st = str(self.sender().text())
-        if st == "Increase Point Size":
-            sz = symb.size()
-            symb.setSize(QSize(sz.width()+1, sz.height()+1))
-            w.aplot.curve1.setSymbol(symb)
-        elif st == "Decrease Point Size":
-            sz = symb.size()
-            symb.setSize(QSize(sz.width()-1, sz.height()-1))
-            w.aplot.curve1.setSymbol(symb)
-        elif st == "NoCurve":
-            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.NoCurve)            
-        elif st == "Lines":
-            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Lines)
-        elif st == "Sticks":
-            w.aplot.curve1.setStyle(Qwt.QwtPlotCurve.Sticks)
-        elif st == "Dashed Line":
-            pen.setStyle(Qt.DashLine)
-            w.aplot.curve1.setPen(pen)
-        elif st == "Dotted line":
-            pen.setStyle(Qt.DotLine)
-            w.aplot.curve1.setPen(pen)
-        elif st == "Increase Line Width":
-            pen.setWidth(pen.width() + 0.1)
-            w.aplot.curve1.setPen(pen)
-        elif st == "Decrease Line Width":
-            pen.setWidth(pen.width() - 0.1)
-            w.aplot.curve1.setPen(pen)
-        elif st in ptstyle:
-            print "Using style:", st, symb.style()
-            symb.setStyle(ptstyle[st])
-            w.aplot.curve1.setSymbol(symb)
-        elif st == "Red":
-            w.aplot.setColor(Qt.red)
-        elif st == "Blue":
-            w.aplot.setColor(Qt.blue)
-        elif st == "Green":
-            w.aplot.setColor(Qt.green)
-        else:
-            self.logger.error("Unknow action: '{0}'".format(st))
-
-
-    def errorBar(self, on):
-        self.error_bar = on
-        for w in self.mdiarea.subWindowList():
-            w.aplot.setErrorBar(on)
-            w.aplot.replot()
-
-    def setDriftNone(self):
-        for w in self.mdiarea.subWindowList():
-            w.setReferenceData(0.0)
-
-    def setDriftNow(self):
-        for w in self.mdiarea.subWindowList():
-            # use the current data as reference
-            w.setReferenceData()
-
-    def setDriftGolden(self):
-        #self.plot1.setDrift('golden')
-        #self.plot2.setDrift('golden')
-        raise RuntimeError("No golden orbit defined yet")
 
     def scalePlot(self):
         w = self.mdiarea.currentSubWindow()
@@ -754,9 +675,6 @@ class OrbitPlotMainWindow(QMainWindow):
             p.moveCurves(Qwt.QwtPlot.xBottom, -0.8)
         else:
             self.logger.error("unknow action '{0}'".format(st))
-
-    def getDeadElements(self):
-        return self.physics.deadelems
 
     def getVisibleRange(self):
         w = self.mdiarea.currentSubWindow()
@@ -834,10 +752,16 @@ class OrbitPlotMainWindow(QMainWindow):
         return None
 
     def createLocalBump(self):
-        wx = self.activeOrbitPlot('x')
-        wy = self.activeOrbitPlot('y')
-        self.physics.createLocalBump(wx, wy)
-
+        """create local bump"""
+        if self._dlgOrbitCor is None:
+            bpms = ap.getElements("BPM")
+            cors = ap.getElements("COR")
+            self._dlgOrbitCor = OrbitCorrDlg(bpms, cors)
+            #corbitdlg.resize(600, 500)
+            self._dlgOrbitCor.setWindowTitle("Create Local Bump")
+        self._dlgOrbitCor.show()
+        self._dlgOrbitCor.raise_()
+        self._dlgOrbitCor.activateWindow()
 
     def runBba(self):
         mach, lat = self.getCurrentMachLattice()
@@ -920,6 +844,7 @@ def main(par=None):
     app.processEvents()
     
     mwin = OrbitPlotMainWindow(machines=machs, infos=infos, iqt=app)
+    mwin.setWindowTitle("mleap - a high level lattice viewer and editor")
     splash.showMessage("Window created", Qt.AlignRight | Qt.AlignBottom)
     #demo = QtGui.QMainWindow()
     #demo.raise_()

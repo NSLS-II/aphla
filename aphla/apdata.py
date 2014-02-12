@@ -464,7 +464,7 @@ class TwissData:
         self.element = []
         self._twtable = []
         self._cols = ['s', 'alphax', 'alphay', 'betax', 'betay',
-                      'gammax', 'gammay', 'etax', 'etay', 'phix', 'phiy']
+                      'etax', 'etaxp', 'etay', 'etayp', 'phix', 'phiy']
 
     def _find_element(self, elemname):
         try:
@@ -494,6 +494,9 @@ class TwissData:
         return s
 
     def at(self, s, col, **kwargs):
+        """
+        get twiss at a location `s`. Linear interpolation.
+        """
         if s < self._twtable[0,0] or s > self._twtable[-1,0]:
             return None
         dat = []
@@ -520,7 +523,7 @@ class TwissData:
             names of elements.
         col : list. 
             columns can be 's', 'betax', 'betay', 'alphax', 'alphay', 'phix',
-            'phiy', 'etax', 'etay'. 
+            'phiy', 'etax', 'etaxp', 'etay', 'etayp'. 
 
         Examples
         ---------
@@ -577,7 +580,7 @@ class TwissData:
           Tune: 0.0 0.0
           Chrom: 0.0 0.0
           Alpha_c: 0.0
-          element s alphax alphay betax betay gammax gammay etax etay phix phiy
+          element s alphax alphay betax betay etax etaxp etay etayp phix phiy
           BPM1 0.0 0.0 ....
         """
 
@@ -588,14 +591,14 @@ class TwissData:
 
         # check columns
         cols = tuple([v.strip() for v in f.readline().split()])
-        print cols
+        #print cols
 
         for i,s in enumerate(f):
             data = s.split()
             self._twtable.append([None for c in self._cols])
-            print i, s, data
+            #print i, s, data
             for j,c in enumerate(cols):
-                print j, c
+                #print j, c
                 if c == "element":
                     self.element.append(data[j])
                 elif c in self._cols:
@@ -604,7 +607,7 @@ class TwissData:
                 #else:
                 #    raise RuntimeError("can not find '%s'" % c)
 
-            print self._twtable[-1]
+            #print self._twtable[-1]
         #self._twtable = np.array(self._twtable, 'd')
         f.close()
                 
@@ -643,10 +646,10 @@ class TwissData:
             ('alphay', np.float64),
             ('betax',  np.float64),
             ('betay',  np.float64),
-            ('gammax', np.float64),
-            ('gammay', np.float64),
             ('etax',   np.float64),
+            ('etaxp',  np.float64),
             ('etay',   np.float64),
+            ('etayp',  np.float64),
             ('phix',   np.float64),
             ('phiy',   np.float64),
             ] )

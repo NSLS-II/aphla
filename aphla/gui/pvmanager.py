@@ -31,7 +31,7 @@ class CaDataMonitor(QtCore.QObject):
         #self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
         self.timeout     = kwargs.get("timeout", 3)
-        self._min_dt     = kwargs.get("wait", 0.0)
+        self._min_dt     = kwargs.get("wait", 0.7)
         self.data = {}
         self.hook = {}
         self._monitors = {}
@@ -71,10 +71,14 @@ class CaDataMonitor(QtCore.QObject):
                     self._wfsize[pv] = len(d[i])
                 except:
                     self._wfsize[pv] = None
+                for fhk in self.hook.get(pv, []):
+                    fhk(d[i], None)
 
     def addHook(self, pv, f):
         self.hook.setdefault(pv, [])
         self.hook[pv].append(f)
+        if self.data.get(pv, []):
+            f(self.data[pv][-1], None)
 
     def _ca_update(self, val, idx = None):
         """

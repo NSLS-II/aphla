@@ -17,14 +17,13 @@ from unitconv import *
 
 # public symbols
 __all__ = [ "CaElement", "merge",
-            "DISABLED", "READONLY", "ASCENDING", "DESCENDING", "UNSPECIFIED" ]
+            "ASCENDING", "DESCENDING", "UNSPECIFIED" ]
 
 _logger = logging.getLogger(__name__)
 
 # flags bit pattern
-LIVE     = 0x00
-DISABLED = 0x01
-READONLY = 0x02
+_DISABLED = 0x01
+_READONLY = 0x02
 
 UNSPECIFIED = 0
 ASCENDING   = 1
@@ -204,8 +203,14 @@ class AbstractElement(object):
         if prpt.has_key('index'):
             self.index = int(prpt['index'])
 
-    def isActive(self):
-        return self.flag | DISABLED
+    def isEnabled(self):
+        return not (self.flag & _DISABLED)
+
+    def setEnabled(self, b):
+        if b:
+            self.flag = self.flag & ~_DISABLED
+        else:
+            self.flag = self.flag | _DISABLED
 
         
 class CaAction:
@@ -286,11 +291,12 @@ class CaAction:
             raise RuntimeError("no method for unit conversion from "
                                "'%s' to '%s'" % (src, dst))
 
-    def _all_within_range(self, v, low, high):
+    def _all_within_range(self, v, lowhigh):
         # did not check for string type
         if isinstance(v, (str, unicode)): return True
-        if low is None and high is None: return True
+        if lowhigh is None: return True
 
+        low, high = lowhigh
         if isinstance(v, (float, int)):
             if low is None: return v <= high
             elif high is None: return v >= low
@@ -372,7 +378,7 @@ class CaAction:
         """
         return the value of readback PV or None if such pv is not defined.
         """
-        if self.opflags & DISABLED: raise IOError("reading a disabled element")
+        if self.opflags & _DISABLED: raise IOError("reading a disabled element")
 
         if self.pvrb: 
             #print __name__
@@ -414,9 +420,12 @@ class CaAction:
         return the value of setpoint PV or None if such PV is not defined.
         """
         if self.pvsp:
-            rawret = caget(self.pvsp, timeout=self.timeout)
-            if len(self.pvsp) == 1: return self._unit_conv(rawret[0], None, unitsys)
-            else: return [ self._unit_conv(v, None, unitsys) for v in rawret ]
+            rawret = caget(self.pvsp, timeout=self.timeout, format=FORMAT_CTRL)
+            for i in range(len(self.pvsp)):
+                if self.pvlim[i] is None:
+                    self.pvlim[i] = (rawret[i].lower_ctrl_limit,
+                                     rawret[i].upper_ctrl_limit)
+            return self._unit_conv(rawret, None, unitsys)
         else: 
             #raise ValueError("no setpoint PVs")
             return None
@@ -434,8 +443,9 @@ class CaAction:
 
         bc = 'boundary' is the same as 'ignore' for this moment.
         """
-        if self.opflags & DISABLED: raise IOError("setting an disabled element")
-        if self.opflags & READONLY: raise IOError("setting a readonly field")
+        if self.opflags & _DISABLED:
+            raise IOError("setting an disabled element")
+        if self.opflags & _READONLY: raise IOError("setting a readonly field")
 
         if isinstance(val, (float, int, str)):
             rawval = [self._unit_conv(val, unitsys, None)] * len(self.pvsp)
@@ -445,26 +455,18 @@ class CaAction:
 
         # under and over flow check
         for i,lim in enumerate(self.pvlim):
-            if lim is None: 
-                self.pvlim[i], h = self._get_sp_lim_h(self.pvsp[i])
-            low, hi = self.pvlim[i]
-            # warning if no proper boundary 
-            if low is None or hi is None:
-                _logger.warn("PV '{0}' limit is not set".format(self.pvsp[i]))
+            if lim is None: self._update_sp_lim_h(i)
+            lowhigh = self.pvlim[i]
+            if self._all_within_range(rawval[i], lowhigh): continue
 
-            bc_err, bc_val = None, None
-            if not self._all_within_range(rawval[i], low, hi):
-                if bc_err and bc == 'exception':
-                    raise OverflowError(bc_err)
-                elif bc_err and bc == 'boundary':
-                    _logger.info("setting {0} to its boundary {1} instead of {2}".\
-                                 format(self.pvsp[i], bc_val, rawval[i]))
-                    #print "setting {0} to its boundary {1} instead of {2}".\
-                    #             format(self.pvsp[i], bc_val, rawval[i])
-                    #rawval[i] = bc_val
-                elif bc_err and bc == 'ignore':
-                    return
-                        
+            if bc == 'exception':
+                raise OverflowError(bc_err)
+            elif bc == 'boundary':
+                _logger.info("setting {0} to its boundary {1} instead of {2}".\
+                                 format(self.pvsp[i], lowhigh, rawval[i]))
+                #rawval[i] = bc_val
+            elif bc == 'ignore':
+                return       
 
         #print self.pvsp, rawval
         retlst = caput(self.pvsp, rawval, wait=True)
@@ -555,25 +557,19 @@ class CaAction:
         self._sp1 = self.sp
         self.sp = []
 
-    def _get_sp_lim_h(self, pvi, r = 1000):
+    def _update_sp_lim_h(self, i, r = 1000):
         # get the EPICS ctrl_limit and stepsize. For floating point values,
         # the default step size is 1/1000 of the range. for integer value.
         # range (None, None) means checked, None alone means not checked yet.
         try:
-            v = caget(pvi, timeout=self.timeout, format=FORMAT_CTRL)
-            low, hi = v.lower_ctrl_limit, v.upper_ctrl_limit
+            v = caget(self.pvsp[i], timeout=self.timeout, format=FORMAT_CTRL)
+            if isinstance(v, str): return
+            if v.ok:
+                self.pvlim[i] = (v.lower_ctrl_limit, v.upper_ctrl_limit)
+                if v.is_integer(): self.pvh[i] = 1
+                else: self.pvh[i] = (self.pvlim[i][1] - self.pvlim[0])/r
         except:
-            _logger.error("error on reading PV limits {0}".format(pvi))
-            return (None, None), None
-
-        try:
-            if v.is_integer() and hi > low: return (low, hi), 1
-            elif hi > low: return (low, hi), (hi-low)*1.0/r
-            elif v.is_integer(): return (None, None), 1
-        except:
-            pass
-
-        return (None, None), None
+            _logger.error("error on reading PV limits {0}".format(self.pvsp[i]))
 
     def setStepSize(self, val, **kwargs):
         """
@@ -641,18 +637,11 @@ class CaAction:
             idx = range(len(self.pvsp))
         r = kwargs.get("r", 1000)
         low, hi = kwargs.get("low", None), kwargs.get("high", None)
-        for i in idx:
-            # update boundary if not yet
-            if self.pvlim[i] is None: 
-                self.pvlim[i], h = self._get_sp_lim_h(self.pvsp[i], r)
 
-            if low is not None:
-                self.pvlim[i] = (low, self.pvlim[i][1])
-            if hi is not None:
-                self.pvlim[i] = (self.pvlim[i][0], hi)
-                
-            if self.pvlim[i][0] is not None and self.pvlim[i][1] is not None:
-                self.pvh[i] = (self.pvlim[i][1] - self.pvlim[i][0])/r
+        # update boundary if not yet
+        for i in idx:
+            if self.pvlim[i] is None: 
+                self._update_sp_lim_h(i, r)
 
     def appendReadback(self, pv):
         """append the pv as readback"""
@@ -753,8 +742,8 @@ class CaAction:
 
     def settable(self):
         """check if it can be set"""
-        if self.opflags & DISABLED: return False
-        if self.opflags & READONLY: return False
+        if self.opflags & _DISABLED: return False
+        if self.opflags & _READONLY: return False
 
         if not self.pvsp: return False
         else: return True
@@ -1181,16 +1170,16 @@ class CaElement(AbstractElement):
             self._field[fieldname].sp = []
 
     def disableField(self, fieldname):
-        self._field[fieldname].opflags |= DISABLED
+        self._field[fieldname].opflags |= _DISABLED
 
     def enableField(self, fieldname):
-        self._field[fieldname].opflags &= ~DISABLED
+        self._field[fieldname].opflags &= ~_DISABLED
 
     def setFieldReadonly(self, fieldname):
-        self._field[fieldname].opflags |= READONLY
+        self._field[fieldname].opflags |= _READONLY
 
     def resetFieldReadonly(self, fieldname):
-        self._field[fieldname].opflags &= ~READONLY
+        self._field[fieldname].opflags &= ~_READONLY
  
     def revert(self, fieldname):
         """undo the field value to its previous one"""
@@ -1304,15 +1293,15 @@ class CaElement(AbstractElement):
     def settable(self, field):
         """check if the field can be changed. not disabled, nor readonly."""
         if field not in self._field.keys(): return False
-        if self._field[field].opflags & DISABLED: return False
-        if self._field[field].opflags & READONLY: return False
+        if self._field[field].opflags & _DISABLED: return False
+        if self._field[field].opflags & _READONLY: return False
 
         return self._field[field].settable()
 
     def readable(self, field):
         """check if the field readable (not disabled)."""
         if field not in self._field.keys(): return False
-        if self._field[field].opflags & DISABLED: return False
+        if self._field[field].opflags & _DISABLED: return False
         return True
 
 

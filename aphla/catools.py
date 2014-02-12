@@ -49,7 +49,7 @@ def _ca_put_sim(pvs, vals):
     """
     return ct.ca_nothing
 
-def caget(pvs, timeout=2, datatype=None, format=ct.FORMAT_TIME,
+def caget(pvs, timeout=6, datatype=None, format=ct.FORMAT_TIME,
            count=0, throw=False):
     """channel access read
     
@@ -382,9 +382,9 @@ def readPvs(pvs, **kwargs):
     """
     timeout = kwargs.get("timeout", 3)
     niter   = kwargs.get("niter", 3)
-    tmppvs = [v for v in pvs]
     # avoid double read in case pvs has duplicates.
     tmp = dict([(pv, None) for pv in pvs])
+    tmppvs = tmp.keys()
     for i in range(niter):
         tmpdat = caget(tmppvs, format=FORMAT_TIME, timeout=timeout)
         dead = []
@@ -397,5 +397,32 @@ def readPvs(pvs, **kwargs):
             except:
                 tmp[pv] = (val, None, val.timestamp)
         tmppvs = dead
+        for pv in tmppvs: tmp[pv] = (val, None, None)
     return [tmp[pv] for pv in pvs]
+
+
+def savePvs(fname, pvs, **kwargs):
+
+    group  = kwargs.get("group", '/')
+    mode   = kwargs.get("mode", 'a')
+    ignore = kwargs.get("ignore", [])
+    timeout = kwargs.get("timeout", 10)
+
+    import h5py
+    h5f = h5py.File(fname, mode)
+    grp = h5f.require_group(group)
+
+    allpvs = list(set(pvs + kwargs.get("extrapvs", [])))
+    alldat = caget(allpvs, format=FORMAT_TIME, timeout=timeout)
+    for i,pv in enumerate(allpvs):
+        dat = alldat[i]
+        if not dat.ok:
+            grp[pv] = ""
+            grp[pv].attrs["ok"] = False
+        else:
+            grp[pv] = dat
+            grp[pv].attrs["ok"] = True
+            grp[pv].attrs["datetime"] = str(dat.datetime)
+            grp[pv].attrs["timestamp"] = dat.timestamp
+    h5f.close()
 
