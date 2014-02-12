@@ -367,6 +367,7 @@ class ApCaPlot(Qwt.QwtPlot):
 
     def setMarkers(self, mks, on = True):
         self.clearMarkers()
+        if not mks: return
         names, locs = zip(*mks)
         if not on:
             for r in self.markers:

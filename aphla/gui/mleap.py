@@ -21,7 +21,7 @@ from elempickdlg import ElementPickDlg
 from aporbitplot import ApMdiSubPlot, ApSvdPlot
 from aporbitdata import ApVirtualElemData, ManagedPvData
 from aporbitphy import *
-from elemeditor import *
+from elemeditor import ElementEditor
 from pvmanager import CaDataMonitor
 from latviewer import LatSnapshotMain
 
@@ -331,6 +331,7 @@ class OrbitPlotMainWindow(QMainWindow):
             partial(aphla.correctOrbit, plane="HV"))
         #steer_orbit.setDisabled(True)
         self.controlMenu.addAction("Local Bump ...", self.createLocalBump)
+        self.controlMenu.addAction("Element Editor ...", self.showElementEditor)
         self.controlMenu.addSeparator()
         self.controlMenu.addAction("meas Beta", self.physics.measBeta)
         self.controlMenu.addAction("meas Dispersion", self.physics.measDispersion)
@@ -370,8 +371,8 @@ class OrbitPlotMainWindow(QMainWindow):
                                                                          
         #toolbar
         machToolBar = self.addToolBar("Machines")
-        self.machBox = QComboBox()
-        self.latBox = QComboBox()
+        self.machBox = QtGui.QComboBox()
+        self.latBox = QtGui.QComboBox()
         #self.connect(self.latBox, SIGNAL("currentIndexChanged(QString)"), 
         #             self.__setLattice)
         machToolBar.addWidget(self.machBox)
@@ -440,6 +441,11 @@ class OrbitPlotMainWindow(QMainWindow):
                 on %5""").arg(aphla.version.version)
                 .arg(platform.python_version()).arg(QtCore.QT_VERSION_STR)
                 .arg(QtCore.PYQT_VERSION_STR).arg(platform.system())))
+
+    def showElementEditor(self):
+        ed = ElementEditor(parent=self)
+        ed.setWindowFlags(Qt.Window)
+        ed.exec_()
 
     def getCurrentMachLattice(self, cadata = False):
         """return the current machine name and lattice object"""

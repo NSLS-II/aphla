@@ -38,6 +38,8 @@ class UcAbstract(object):
         return "%s -> %s: identity" % (src, dst)
 
     def eval(self, x, inv = False):
+        if isinstance(x, Iterable):
+            return [self.polarity * v for v in x]
         return self.polarity*x
 
 class UcPoly(UcAbstract):
@@ -223,14 +225,15 @@ def loadUnitConversionH5(lat, h5file, group):
             if fld not in eobj.fields():
                 realfld = v.attrs.get('rawfield', None)
                 if realfld is None:
-                    _logger.warn("'%s' has no field '%s' for unit conversion" % (
-                        ename, fld))
+                    _logger.warn("'%s' has no field '%s' for unit conversion" \
+                                     % (eobj.name, fld))
                     continue
                 else:
                     eobj.addAliasField(fld, realfld)
 
-            _logger.info("adding unit conversion for {0}.{1}, from {2} to {3}".format(
-                ename, fld, usrcsys, udstsys))
+            _logger.info("adding unit conversion for {0}.{1}, "
+                         "from {2} to {3}".format(
+                    eobj.name, fld, usrcsys, udstsys))
             eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
 
 def loadUnitConversionIni(lat, fname):
