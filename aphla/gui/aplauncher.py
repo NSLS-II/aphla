@@ -765,8 +765,6 @@ class LauncherModel(QStandardItemModel):
 
             self.updatePathLookupLists(childItem)
 
-
-
     #----------------------------------------------------------------------
     def pModelIndexFromPath(self, path):
         """"""
@@ -774,7 +772,6 @@ class LauncherModel(QStandardItemModel):
         index = self.pathList.index(path)
 
         return self.pModelIndList[index]
-
 
 ########################################################################
 class LauncherRestoreHierarchyDialog(QDialog, Ui_Dialog_restore_hie):
@@ -1729,7 +1726,6 @@ class LauncherModelItem(QStandardItem):
 
         return copiedItem
 
-
     #----------------------------------------------------------------------
     def updateIconAndColor(self):
         """"""
@@ -2069,6 +2065,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.connect(self.treeViewSide, SIGNAL('closingItemRenameEditor'),
                      self.onItemRenameEditorClosing)
 
+        #self.setFocusPolicy(Qt.ClickFocus)
+        #self.connect(self, SIGNAL('focusObtained'), self.updateHierarchy)
+
         # Add the main pane list view & tree view
         self.listViewMain = CustomListView(self.pageListView)
         self.listViewMain.setObjectName('listViewMain')
@@ -2149,7 +2148,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                      self.clearSelection)
 
         # Load QSettings
-        self.loadSettings()
+        self.loadSettings(initRootPath)
 
         # Applying Startup Preferences
         self.visible_column_full_name_list = PERM_VISIBLE_COL_NAMES
@@ -2163,9 +2162,15 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         else:
             self.actionDetailsView.setChecked(True)
         #
-        # TODO: Icon View Grid Size changed here
-        #
         self.actionToggleSidePaneVisibility.setChecked(pref['side_pane_vis'])
+
+    #----------------------------------------------------------------------
+    def focusInEvent(self, event):
+        """"""
+
+        super(LauncherView, self).focusInEvent(event)
+
+        self.emit(SIGNAL('focusObtained'))
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
@@ -2176,6 +2181,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         if len(self.running_subproc_list) != 0:
             msgBox = QMessageBox()
             msgBox.addButton(QMessageBox.Yes)
+            msgBox.addButton(QMessageBox.No)
             msgBox.addButton(QMessageBox.Cancel)
             msgBox.setDefaultButton(QMessageBox.Cancel)
             msgBox.setEscapeButton(QMessageBox.Cancel)
@@ -2210,7 +2216,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         # Save QSettings
         self.saveSettings()
 
-        self.emit(SIGNAL('sigMainWindowBeingClosed'))
+        if (len(self.running_subproc_list) != 0) and (choice == QMessageBox.Yes):
+            self.emit(SIGNAL('sigMainWindowBeingClosed'))
 
         event.accept()
 
@@ -2265,7 +2272,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         #print 'Settings saved.'
 
     #----------------------------------------------------------------------
-    def loadSettings(self):
+    def loadSettings(self, initRootPath):
         """"""
 
         settings = QSettings('HLA','Launcher')
@@ -2285,7 +2292,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.splitterPanes.setSizes(splitterPanes_sizes)
 
         last_item_path = settings.value('last_item_path')
-        if (last_item_path is None) or (last_item_path == ''):
+        if (last_item_path is None) or (last_item_path == '') or \
+           (initRootPath != '/root'):
             pass
         else:
             if last_item_path in self.model.pathList:
@@ -2941,9 +2949,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         """"""
 
         for selectedItem in self.selectedItemList:
-            self.emit(SIGNAL('sigPyModRunRequested'),
-                      'aphla.gui.aplauncher', selectedItem.cwd,
-                      selectedItem.path)
+            self.emit(SIGNAL('sigExeRunRequested'), 'New aplauncher Window',
+                      'aplauncher "{0:s}"'.format(selectedItem.path),
+                      selectedItem.cwd)
 
     #----------------------------------------------------------------------
     def disableTabView(self):
@@ -3299,6 +3307,19 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             self.treeViewSide.setVisible(True)
         else:
             self.treeViewSide.setVisible(False)
+
+    #----------------------------------------------------------------------
+    #def updateHierarchy(self):
+        #""""""
+
+        #if osp.exists(USER_TEMP_XML_FILEPATH):
+            #temp_user_file_mtime = osp.getmtime(USER_TEMP_XML_FILEPATH)
+            #if temp_user_file_mtime > self.model_last_updated_timestamp:
+                #self.emit(SIGNAL('sigRestartLauncher'), USER_TEMP_XML_FILEPATH)
+        #else:
+            #user_file_mtime = osp.getmtime(USER_XML_FILEPATH)
+            #if user_file_mtime > self.model_last_updated_timestamp:
+                #self.emit(SIGNAL('sigRestartLauncher'), USER_XML_FILEPATH)
 
     #----------------------------------------------------------------------
     def importUserXML(self):
@@ -4403,6 +4424,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         # TODO: Re-enable tabs once known bugs related to tabs are resolved
         self.actionOpenInNewTab.setEnabled(False)
+        # TODO: Re-enable "Open in New Window" once known bugs related to it
+        # are resolved
+        self.actionOpenInNewWindow.setEnabled(False)
 
         sender = self.sender()
         #print sender.title()
@@ -4712,8 +4736,10 @@ class LauncherApp(QObject):
         self.subprocs = []
 
         self._initModel()
+        model_last_updated_timestamp = time.time()
 
         self._initView(initRootPath)
+        self.view.model_last_updated_timestamp = model_last_updated_timestamp
 
         self.connect(self.view, SIGNAL('sigExeRunRequested'),
                      self.launchExe)
@@ -4948,7 +4974,21 @@ class LauncherApp(QObject):
                 print message
                 self.view.repaint()
                 if args not in ('', 'N/A'):
-                    self.appList.append(module.make(*args.split()))
+                    if ('"' in args) and (args.count('"') % 2 == 0):
+                        arg_list = [a.strip() for a in args.split('"') if a]
+                    elif ("'" in args) and (args.count("'") % 2 == 0):
+                        arg_list = [a.strip() for a in args.split("'") if a]
+                    else:
+                        arg_list = args.split()
+
+                    arg_list = [True if a in ('True', 'true') else a
+                                for a in arg_list]
+                    arg_list = [False if a in ('False', 'false') else a
+                                for a in arg_list]
+
+                    print 'Arguments ='
+                    print arg_list
+                    self.appList.append(module.make(*arg_list))
                 else:
                     self.appList.append(module.make())
                 message = module_name + ' successfully launched.'
@@ -5103,7 +5143,7 @@ def _xmltodict_subs_None_w_emptyStr(path, key, value):
         return (key, value)
 
 #----------------------------------------------------------------------
-def make(initRootPath=''):
+def make(initRootPath='', new_window=False):
     """"""
 
     # If the platform is other than a POSIX system, then convert
@@ -5113,8 +5153,15 @@ def make(initRootPath=''):
 
     global APP
 
-    APP = LauncherApp(initRootPath)
-    APP.view.show()
+    if new_window:
+        print 'Starting a launcher in a new window'
+
+        new_app = LauncherApp(initRootPath)
+        new_app.view.show()
+
+    else:
+        APP = LauncherApp(initRootPath)
+        APP.view.show()
 
     return APP
 
@@ -5152,7 +5199,7 @@ def restartLauncher(imported_xml_filepath):
     APP.connect(APP.view, SIGNAL('sigRestartLauncher'), restartLauncher)
 
 #----------------------------------------------------------------------
-def main(args = None):
+def main():
     """ """
 
     using_cothread = isCothreadUsed()
@@ -5167,11 +5214,17 @@ def main(args = None):
         #cothread.iqt(use_timer = True)
         qapp = cothread.iqt()
     else:
-        qapp = QApplication(args)
+        qapp = QApplication(sys.argv)
 
     global APP
 
-    initRootPath = SEPARATOR + 'root'
+    #print sys.argv
+    if len(sys.argv) == 2:
+        initRootPath = sys.argv[1]
+        print 'Initial path set to {0:s}'.format(initRootPath)
+    else:
+        initRootPath = SEPARATOR + 'root'
+
     APP = LauncherApp(initRootPath)
     APP.view.show()
 
@@ -5208,5 +5261,5 @@ def main(args = None):
 
 #----------------------------------------------------------------------
 if __name__ == "__main__" :
-    main(sys.argv)
+    main()
 
