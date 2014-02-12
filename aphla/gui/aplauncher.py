@@ -3134,7 +3134,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionSelectAll.setShortcut(QKeySequence.SelectAll)
         self.addAction(self.actionSelectAll)
         self.connect(self.actionSelectAll, SIGNAL('triggered()'),
-                     self._not_implemented_yet)
+                     self.selectAllItems)
 
         self.actionToggleSidePaneVisibility = \
             QAction(QIcon(), 'Side Pane', self)
@@ -3903,9 +3903,10 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def selectAllItems(self):
         """"""
 
-        #m = self.getCurrentMainPane()
-        #m.listView.selectionModel().select()
-        self._not_implemented_yet()
+        m = self.getCurrentMainPane()
+
+        m.listView.selectAll()
+        m.treeView.selectAll()
 
     #----------------------------------------------------------------------
     def _callbackDoubleClickOnMainPaneItem(self, modelIndex_NotUsed):
