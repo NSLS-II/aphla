@@ -46,6 +46,7 @@ class Lattice:
 
     def __init__(self, name, mode = 'undefined'):
         self.machine = ''
+        self.machdir = ''
         self.name = name
         self._twiss = None
         # group name and its element
@@ -61,7 +62,7 @@ class Lattice:
         self.loop = True
         self.Ek = None
         self.arpvs = None
-        self.OUTPUT_DIR = None
+        self.OUTPUT_DIR = ''
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -863,51 +864,3 @@ def saveArchivePvs(lat, **kwargs):
         f.write("%s,%s,%s,%s,%d\n" % (pv, name, fam, fld, rw))
     f.close()
 
-def saveSnapshotFlat(fname, group, pvs, val, size, timestamp, rbsp, elemname,
-    elemfld, **kwargs):
-    mode   = kwargs.get("mode", 'a')
-    ignore = kwargs.get("ignore", [])
-
-    import h5py
-    h5f = h5py.File(fname, mode)
-    if not group: grp = h5f[b"/"]
-    else: grp = h5f.create_group(group)
-
-    scalars, dead = [], []
-    sz_name = max([len(name) for name in elemname])
-    sz_fld  = max([len(fld) for fld in elemfld])
-    sz_pv   = max([len(pv) for pv in pvs])
-    for i,pv in enumerate(pvs):
-        name, fld, rb, tmstamp = elemname[i], elemfld[i], rbsp[i], timestamp[i]
-        if val[i] is None:
-            dead.append([name, fld, -1, pv, None, 0, ""])
-        elif size[i] is not None and size[i] > 1:
-            dsname = b"wf_{0}_{1}.{2}_{3}".format(i,name,fld,rb)
-            dt_obj = datetime.fromtimestamp(tmstamp)
-            grp[dsname] = val[i]
-            # numpy and hdf5 needs ascii literal
-            grp[dsname].attrs[b"element"]   = name
-            grp[dsname].attrs[b"field"]     = fld
-            grp[dsname].attrs[b"pv"]        = pv
-            grp[dsname].attrs[b"rw"]        = rb
-            grp[dsname].attrs[b"datetime"]  = str(dt_obj)
-            grp[dsname].attrs[b"timestamp"] = tmstamp
-        else:
-            dt_obj = datetime.fromtimestamp(tmstamp)
-            scalars.append((name, fld, rb, pv, val[i], tmstamp, str(dt_obj)))
-
-
-    # numpy and hdf5 needs ascii literal
-    dt = np.dtype([(b"element", np.str_, sz_name+1),
-                   (b'field', np.str_, sz_fld+1),
-                   (b'rw', np.int32),
-                   (b'pv', np.str_, sz_pv+1),
-                   (b'value', np.float64),
-                   (b'timestamp', np.float64),
-                   (b'datetime', np.str_, 32)])
-    if scalars:
-        grp[b"__scalars__"] = np.array(scalars, dtype=dt)
-    if dead:
-        grp[b"__dead__"] = np.array(dead, dtype=dt)
-
-    h5f.close()

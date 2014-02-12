@@ -49,3 +49,4 @@ syntax:regexp
 ^utils/BSR_Model\..*
 ^aphla/machines/nsls2/conf.py
 ^.coverage
+^machine_data/nsls2/MagnetMeasurements

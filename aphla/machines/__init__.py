@@ -249,6 +249,7 @@ def load(machine, submachine = "*", **kwargs):
         lat.se = float(d.get("s_end", 0.0))
         lat.loop = bool(d.get("loop", True))
         lat.machine = machname
+        lat.machdir = machdir
         lat.arpvs = d.get("archive_pvs", None)
         lat.OUTPUT_DIR = d.get("output_dir", 
                                os.path.join(HLA_OUTPUT_DIR, msect))
@@ -256,7 +257,7 @@ def load(machine, submachine = "*", **kwargs):
         uconvfile = d.get("unit_conversion", None)
         if uconvfile is not None: 
             _logger.debug("loading unit conversion '%s'" % uconvfile)
-            loadUnitConversion(lat, os.path.join(machdir, uconvfile))
+            loadUnitConversion(lat, machdir, uconvfile.split(", "))
 
         physics_data = d.get("physics_data", None)
         if physics_data is not None:
@@ -621,28 +622,4 @@ def machines():
     from pkg_resources import resource_listdir, resource_isdir
     return [d for d in resource_listdir(__name__, ".") 
             if resource_isdir(__name__, d)]
-
-def saveSnapshot(fname, lats):
-    """save snapshot of a list of lattices
-
-    - fname output file name
-    - lats list/str lattice name
-
-    The not-found lattice will be ignored.
-    """
-    import h5py
-    livelats = []
-    if lats is None:
-        livelats.append(getLattice(lats))
-    elif isinstance(lats, (str, unicode)):
-        livelats.append(getLattice(lats))
-    elif isinstance(lats, (list, tuple)):
-        livelats.extend([getLattice(lat) for lat in lats])
-    
-    f = h5py.File(fname, 'w')
-    f.close()
-
-    for lat in livelats:
-        if lat is None: continue
-        catools.save_lat_epics(fname, lat, mode='a')
 

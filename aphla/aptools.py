@@ -21,8 +21,7 @@ from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
 from respmat import OrbitRespMat
 import logging
 
-__all__ = [ 'calcLifetime', 'saveLattice',
-    'getLifetime',  'measOrbitRm',
+__all__ = [ 'calcLifetime', 'getLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
     'stripView'
@@ -47,80 +46,6 @@ def _zip_element_field(elems, fields, **kwargs):
         elif not compress:
             ret.append((b.name, None))
     return ret
-
-def saveLattice(output, **kwargs):
-    """
-    output - output HDF5 file name
-    h5group - default "/"
-    mode - default "a" ("w" will overwrite existing file)
-    exclude_pvs - list of pv patterns to exclude
-    exclude - list of (element, family, field, handle) to exclude
-    """
-    group = kwargs.get("h5group", "/")
-    mode = kwargs.get("mode", "a")
-
-    _lat = ap.machines.getLattice()
-
-    if output is None:
-        t0 = datetime.now()
-        ts = t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
-        output = "%s_snapshot_%s.hdf5" % (_lat.name.lower(), ts)
-    f = h5py.File(output, mode)
-    if group not in f:
-        grp = f.create_group(group)
-    else:
-        grp = f[group]
-
-    grp = grp.create_group(_lat.name)
-    # 
-    pvd = {}
-    for e in _lat.getElementList("*", virtual=False):
-        # exclude the ignored (family, name, field, hdl)
-        for fld in e.fields():
-            for hdl in ["setpoint", "readback"]:
-                v = (e.name, e.family, fld, hdl)
-                ex_curr = False
-                for expat in kwargs.get("exclude", []):
-                    # exclude the current record
-                    matched = all([re.match(p, v[i])
-                                   for i,p in enumerate(expat)])
-                    if matched:
-                        ex_curr = True
-                        break
-                if ex_curr: continue
-
-                for pv in e.pv(field=fld, handle=hdl):
-                    # exclude the ignored PVs
-                    for pvpat in kwargs.get("exclude_pvs", []):
-                        if re.match(pvpat, pv): break
-                    else:
-                        pvd.setdefault(pv, [])
-                        pvd[pv].append((e.name, e.family, fld, hdl))
-
-    pvs, dead = pvd.keys(), []
-    data = ap.catools.readPvs(pvs)
-    for i,pv in enumerate(pvs):
-        val, length, ts = data[i]
-        if not val.ok:
-            dead.append(pvs[i])
-            continue
-        for pvr in pvd[pv]:
-            name, fam, fld, hdl = pvr
-            gname = "%s/%s" % (name, fld)
-            if gname in grp:
-                g = grp[gname]
-            else:
-                g = grp.create_group(gname)
-
-            g[pv] = val
-            if length is not None:
-                g[pv].attrs["size"] = length
-            g[pv].attrs["timestamp"] = ts
-            g[pv].attrs["handle"] = hdl
-            dts = datetime.fromtimestamp(ts)
-            g[pv].attrs["datetime"] = dts.strftime("%Y-%m-%d %H:%M:%S.%f")
-            g[pv].attrs["aliases"] = pvd[pv]
-    f.close()
 
 
 def getLifetime(tinterval=3, npoints = 8, verbose=False):
@@ -223,8 +148,10 @@ def setLocalBump(bpm, trim, ref, **kwargs):
             if field == 'x': 
                 # v0 [m], u1 is lower level unit (EPICS)
                 v0, u1 = ref[i][0], bpm[i].getUnit('x', unitsys=None)
+                if ref[i][0] is None: v0 = bpm[i].x
             elif field == 'y': 
                 v0, u1 = ref[i][1], bpm[i].getUnit('y', unitsys=None)
+                if ref[i][1] is None: v0 = bpm[i].y
             else:
                 raise RuntimeError("unknow field %s" % field)
 
@@ -284,7 +211,7 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
 
     # an orbit based these bpm
     if bpmlst is None:
-        bpmlst = getElements('BPM')
+        bpmlst = [e for e in getElements('BPM') if e.isEnabled()]
 
     N = len(bpmlst)
     if plane == 'H': ref = zip([0.0] * N, [None] * N)
@@ -293,7 +220,7 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     
     # pv for trim
     if trimlst is None:
-        trimlst = getElements('COR')
+        trimlst = [e for e in getElements('COR') if e.isEnabled()]
 
     setLocalBump(bpmlst, trimlst, ref, **kwargs)
 
