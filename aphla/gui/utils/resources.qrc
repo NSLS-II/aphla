@@ -6,8 +6,8 @@
     <file alias="pointer.png">images/tool_pointer.png</file>
     <file alias="zoom_in.png">images/tool_zoom_in.png</file>
     <file alias="zoom_out.png">images/tool_zoom_out.png</file>
-    <file alias="plus.png">images/icon-plus.png</file>
-    <file alias="minus.png">images/minus-icon.gif</file>
+    <file alias="plus.png">images/onebit_31.png</file>
+    <file alias="minus.png">images/onebit_32.png</file>
     <file alias="up_arrow.png">images/up.png</file>
     <file alias="down_arrow.png">images/down.png</file>
     <file alias="left_arrow.png">images/left.png</file>
