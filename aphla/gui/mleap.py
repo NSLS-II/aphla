@@ -445,7 +445,7 @@ class OrbitPlotMainWindow(QMainWindow):
     def showElementEditor(self):
         ed = ElementEditor(parent=self)
         ed.setWindowFlags(Qt.Window)
-        ed.exec_()
+        ed.show()
 
     def getCurrentMachLattice(self, cadata = False):
         """return the current machine name and lattice object"""

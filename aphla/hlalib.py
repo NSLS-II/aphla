@@ -1157,8 +1157,8 @@ def saveLattice(output, **kwargs):
 
     if output is None:
         t0 = datetime.now()
-        ts = t0.strftime("%d_%H%M%S")
-        output = os.path.join(lat.OUTPUT_DIR,
-                              "snapshot_%s_%s.hdf5" % (ts, lat.name))
+        output = os.path.join(
+            lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
+            t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
 
     savePvs(output, pvs, group=lat.name)

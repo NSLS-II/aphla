@@ -16,11 +16,6 @@ import pvmanager
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt, SIGNAL, QString, QVariant
-#from PyQt4.QtGui import (QDialog, QDockWidget, QGroupBox, QPushButton, QHBoxLayout, 
-#        QGridLayout, QVBoxLayout, QTableView, QWidget, QApplication,
-#        QTableWidget, QDialogButtonBox, QStatusBar, QTableWidgetItem,
-#        QFormLayout, QCompleter, QMenu, QAction,
-#        QTabWidget, QCheckBox)
 import PyQt4.Qwt5 as Qwt
 from pvmanager import CaDataMonitor
 from aporbitplot import ApCaPlot, ApCaWaveformPlot
@@ -42,13 +37,13 @@ _DBG_VERBOSE = 1
 #_logger = logging.getLogger(__name__)
 
 class SnapshotRow(object):
-    def __init__(self, pv, element, field, rw, values, ts, wf = 0):
+    def __init__(self, pv, element, field, rw, values, ts):
         self.pv = pv
         self.element = element
         self.field = field
         self.rw = int(rw)
         self.ts = float(ts)
-        self.wf = wf    # waveform: 0 - scalar
+        self.shape = tuple()    # waveform: 0 - scalar
         # mach data + a list of values from each dataset
         self.values = [None] + [v for v in values]
         self.hlvalues = {}

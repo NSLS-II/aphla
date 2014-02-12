@@ -20,7 +20,7 @@ from PyQt4.QtCore import (QAbstractTableModel, QDataStream, QFile,
         QIODevice, QModelIndex, QRegExp, QSize, QString, QVariant, Qt,
         SIGNAL, QEvent)
 from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
-        QSpinBox, QStyle, QStyledItemDelegate, QTextDocument, QTextEdit, 
+        QSpinBox, QStyle, QTextDocument, QTextEdit, 
         QDialog, QDockWidget, QGroupBox, QPushButton, QHBoxLayout, 
         QGridLayout, QVBoxLayout, QTableView, QWidget, QApplication,
         QTableWidget, QDialogButtonBox, QStatusBar, QTableWidgetItem,
@@ -35,6 +35,7 @@ import numpy as np
 import sys, time
 from functools import partial
 import qrangeslider
+from datetime import datetime
 
 import aphla
 
@@ -57,9 +58,11 @@ class ElementPropertyTableModel(QAbstractTableModel):
         self._inactive = []
         self._pvidx = {} # map pv to row,column,idx
         self._pvlst = [] # map row to pv list
-        self._deadpvs = set()
+        self._cadata = None
+        self._t0 = datetime.now()
 
     def clear(self):
+        if self._cadata: self._cadata.close()
         idx0 = self.index(0, 0)
         idx1 = self.index(len(self._data) - 1, self.columnCount()-1)
         self._data   = []
@@ -87,19 +90,36 @@ class ElementPropertyTableModel(QAbstractTableModel):
             rec = [elem, fld, [None] * len(pvsp), [None] * len(pvrb)]
             for j,s in enumerate(self._unitsys):
                 rec.append([None] * len(pvrb))
-            self._data.append(rec)
+            self._data.append(tuple(rec))
             self._pvlst.append(pvsp + pvrb)
 
-        if len(rows) > 0:
-            self._block = [0]
-            k = 0
-            for i in range(1, len(rows)):
-                elem, fld = rows[i]
-                if elem != rows[i-1][0]:
-                    k += 1
-                self._block.append(k)
-        self.updateData(0, len(self._data))
+        self._block = [0]
+        k = 0
+        for i in range(1, len(rows)):
+            elem, fld = rows[i]
+            if elem != rows[i-1][0]:
+                k += 1
+            self._block.append(k)
+
+        self._cadata = CaDataMonitor(wait=0.0)
+        for pv in self._pvidx.keys():
+            #self._cadata.addHook(pv, self._ca_update)
+            self._cadata.addHook(pv, self._ca_update)
+        self._cadata.addPv(self._pvidx.keys())
+
         self.endResetModel()
+
+    def _ca_update(self, val, idx = None):
+        #print val.name, val
+        for i,j,k in self._pvidx[val.name]:
+            self._data[i][j][k] = val
+        t1 = datetime.now()
+        if (t1-self._t0).total_seconds() > 1:
+            idx0 = self.index(0, C_VAL_SP)
+            idx1 = self.index(len(self._data)-1, self.columnCount()-1)
+            self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
+                      idx0, idx1)
+            self._t0 = datetime.now()
 
     def getElementField(self, row):
         return self._data[row][:2]
@@ -130,6 +150,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
                             continue
                         self._data[i][j+isys+1][k] = \
                             elem.convertUnit(fld, val, None, usys)
+        print "Updated"
         idx0 = self.index(row0, C_VAL_SP)
         idx1 = self.index(row1-1, self.columnCount()-1)
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
@@ -146,7 +167,11 @@ class ElementPropertyTableModel(QAbstractTableModel):
         # size 1
         val = self._data[i][j][0]
         if val is None:
-            return QVariant(QString("Disconnected"))
+            if j > C_VAL_RB:
+                # no such physics unit
+                return QVariant()
+            else:
+                return QVariant(QString("Disconnected"))
         elif isinstance(val, (float, np.float32)):
             return QVariant(float(val))
         elif isinstance(val, str):
@@ -177,7 +202,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         r, col  = index.row(), index.column()
         elem, fld = self._data[r][:2]
         if role == Qt.DisplayRole:
-            #print r, col, self._data[r]
+            #if r == 0: print r, col, elem.name, fld, self._data[r][col], "//"
             if col == C_ELEM:
                 return QVariant(QString(elem.name))
             elif col == C_FIELD:
@@ -291,215 +316,6 @@ class ElementPropertyTableModel(QAbstractTableModel):
         return irow not in self._inactive
 
     
-class ElementPropertyDelegate(QStyledItemDelegate):
-    def __init__(self, parent=None):
-        super(ElementPropertyDelegate, self).__init__(parent)
-        self._modified = False
-
-    def paint(self, painter, option, index):
-        #if index.column() == SETPOINT:
-        #print index.row(), index.column()
-        model = index.model()
-        row, col = index.row(), index.column()
-        if index.column() == 0 and model.isSubHeader(index.row()):
-            QStyledItemDelegate.paint(self, painter, option, index)
-            return
-            text = model.data(index).toString()
-            palette = QApplication.palette()
-            document = QTextDocument()
-            document.setDefaultFont(option.font)
-            document.setHtml(text)
-            color = Qt.lightGray #palette.highlight().color()
-            
-            painter.save()
-            painter.fillRect(option.rect, color)
-            painter.translate(option.rect.x(), option.rect.y())
-            document.drawContents(painter)
-            painter.restore()
-        # elif index.column() > 0 and \
-        #         isinstance(model._value[row][col-1], collections.Iterable):
-        #     palette = QApplication.palette()
-        #     document = QTextDocument()
-        #     document.setDefaultFont(option.font)
-        #     document.setHtml("<font><b>...</b></font>")
-        #     #color = Qt.lightGray #palette.highlight().color()
-            
-        #     painter.save()
-        #     #painter.fillRect(option.rect, color)
-        #     painter.translate(option.rect.x(), option.rect.y())
-        #     document.drawContents(painter)
-        #     painter.restore()            
-        else:
-            QStyledItemDelegate.paint(self, painter, option, index)
-        
-    def sizeHint(self, option, index):
-        fm = option.fontMetrics
-        row, col = index.row(), index.column()
-        model = index.model()
-        if not model:
-            return QStyledItemDelegate.sizeHint(self, option, index)
-
-        if col == 0 and model.isSubHeader(row):
-            # the element name
-            return QSize(1, fm.height())
-        else:
-            text = index.model().data(index).toString()
-            document = QTextDocument()
-            document.setDefaultFont(option.font)
-            document.setHtml(text)
-            sz = max(document.idealWidth(), 15)
-            if col == 0:
-                return QSize(document.idealWidth(), fm.height())
-            else:
-                return QSize(sz, fm.height())
-            
-        return QStyledItemDelegate.sizeHint(self, option, index)
-
-    def createEditor(self, parent, option, index):
-
-        # bypass for now
-        return QStyledItemDelegate.createEditor(self, parent, option, index)
-
-        row, col = index.row(), index.column()
-        model = index.model()
-        #print "Creating editor", row, col, \
-        #    [(type(v),v) for v in model._value[row]]
-
-        self._modified = False
-
-        if not (model.flags(index) & Qt.ItemIsEditable):
-            return QStyledItemDelegate.createEditor(self, parent, option,
-                                                    index)
-        
-        # ignore if no value stored
-        if model._value[row] is None:
-            return QStyledItemDelegate.createEditor(self, parent, option,
-                                                    index)
-        # a list value (waveform)
-        if isinstance(model._value[row][col-1], collections.Iterable):
-            _logger.warn("Ignore list type values for (%d,%d)" % (row, col))
-            return QStyledItemDelegate.createEditor(self, parent, option,
-                                                    index)
-
-        if not isinstance(model._value[row][col-1], (int, float)):
-            print "Can not create editor"
-            return QStyledItemDelegate.createEditor(self, parent, option,
-                                                    index)
-
-        elem, fld = model._data[row][:2]
-        elem.updateBoundary()
-        bd = elem.boundary(fld)
-        ss = elem.stepSize(fld)
-
-        #if any([v is None for v in (bd[0], bd[1], ss)]):
-        if True:
-            led = QLineEdit(parent)
-            led.setText("")
-            led.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-            self.connect(led, SIGNAL("returnPressed()"),
-                         self.commitAndCloseEditor)
-            #self.lblRange.setText("[ {0}, {1} ] / {2}".format(
-            #        bd[0], bd[1], elem.stepSize(fld)))
-            #self.lblStep.setText("{0}".format(elem.stepSize(fld)))
-            return led
-        else:
-            slider = Qwt.QwtSlider(parent)
-            ss = min(ss, (bd[1]-bd[0])/100)
-            slider.setRange(bd[0], bd[1], ss)
-            slider.setValue(model._value[row][col-1])
-            #slider.setBorderWidth(1)
-            #slider.setThumbWidth(20)
-            slider.setScaleMaxMinor(10)
-            return slider
-
-
-    def commitAndCloseEditor(self):
-        editor = self.sender()
-        self._modified = True
-        #print "commit and close:", editor.text()
-        #if isinstance(editor, (QTextEdit, QLineEdit)):
-        #    self.emit(SIGNAL("commitData(QWidget*)"), editor)
-        #    self.emit(SIGNAL("closeEditor(QWidget*)"), editor)
-
-    def setEditorData(self, editor, index):
-        row, col = index.row(), index.column()
-        if row == C_FIELD:
-            return QStyledItemDelegate.setEditorData(self, editor, index)
-
-        val = index.model().data(index, Qt.EditRole)
-
-        #elem, fld, hdl = index.model()._elemrec[row]
-        #elem.updateBoundary()
-        #bd = elem.boundary(fld)
-        #if self.valmeter and bd:
-        #    vdbl, ok = val.toFloat()
-        #    if ok and bd[0] and bd[1]:
-        #        self.valmeter.setRange(bd[0], bd[1])
-        #        self.valmeter.setValue(vdbl)
-        #        self.valmeter.setVisible(True)
-        #print "Setting editor to", text, index.model()._value[r]
-        if isinstance(editor, QLineEdit):
-            text = val.toString()
-            #print "    set editor ", editor, "to", text
-            editor.setText(text)
-        elif isinstance(editor, Qwt.QwtSlider):
-            value, err = val.toFloat()
-            #print "slider value:", value
-            #value = index.model().data(index, Qt.DisplayRole)
-            editor.setValue(value)
-        else:
-            _logger.error("unknown editor, can not set its data")
-
-        self.emit(SIGNAL("editingElement(PyQt_PyObject)"), 
-                  index.model()._elemrec[row])
-
-    def setModelData(self, editor, model, index):
-        """copy data from editor to model"""
-        #if _DBG_VERBOSE: print "updating model data", editor.text(),
-        #print "  sender", self.sender()
-        #traceback.print_stack(file=sys.stdout)
-        row, col = index.row(), index.column()
-        if row == C_FIELD:
-            #if _DBG_VERBOSE: print "skip"
-            return QStyledItemDelegate.setModelData(self, editor, model, index)
-
-        if not self._modified: return
-        if isinstance(editor, QLineEdit):
-            model.setData(index, QVariant(editor.text()))
-            #if _DBG_VERBOSE: print "done"
-        elif isinstance(editor, Qwt.QwtSlider):
-            model.setData(index, QVariant(editor.value()))
-            #if _DBG_VERBOSE: print "done"
-        else:
-            #if _DBG_VERBOSE: print "skip"
-            pass
-
-    def editorEvent(self, event, model, option, index):
-        #print "editor event"
-        #if event.type() == QEvent.MouseButtonDblClick:
-        #    # read-only ?
-        #    if model.flags(index) & Qt.ItemIsEditable: mode = 'w'
-        #    else: mode = 'r'
-        #    #print mode
-        #    data = model.data(index, role=Qt.EditRole)
-        #    fm = SimpleListDlg(datalist=data, mode = mode)
-        #    fm.setModal(True)
-        #    fm.exec_()
-        #    if fm.values:
-        #        #print fm.values
-        #        vals = QVariant.fromList([QVariant(d) for d in fm.values])
-        #        model.setData(index, vals)
-        #    return True
-
-        return QStyledItemDelegate.editorEvent(
-            self, event, model, option, index)
-
-    def updateEditorGeometry(self, editor, opt, index):
-        #print "geometry:", opt.rect
-        #opt.rect.adjust(0, 30, 100, 60)
-        QStyledItemDelegate.updateEditorGeometry(self, editor, opt, index)
-
-        
 class ElementPropertyView(QTableView):
     def __init__(self, parent = None):
         QTableView.__init__(self, parent)
@@ -624,9 +440,9 @@ class ElementEditor(QtGui.QDialog):
         self.tableview = ElementPropertyView()
         self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"),
                      self.editingCell)
-        self.delegate = ElementPropertyDelegate()
-        self.connect(self.delegate, SIGNAL("editingElement(PyQt_PyObject)"),
-                     self.updateCellInfo)
+        #self.delegate = ElementPropertyDelegate()
+        #self.connect(self.delegate, SIGNAL("editingElement(PyQt_PyObject)"),
+        #             self.updateCellInfo)
 
         #t2 = time.time()
         self.tableview.setModel(self.model)
@@ -656,23 +472,24 @@ class ElementEditor(QtGui.QDialog):
         self.setWindowTitle("Element Editor")
         self.noTableUpdate = True
         self.resize(800, 600)
-        self.timerId = self.startTimer(1000)
+        self.setWindowFlags(Qt.Window)
+        #self.timerId = self.startTimer(1000)
 
 
     def setDirectValue(self):
         val = float(self.ledSet.text())
         self.spb1.setValue(val)
 
-    def timerEvent(self, e):
-        if self.model.rowCount() < 1: return
-
-        #row1 = self.tableview.rowAt(0)
-        #if row1 == -1: row1 = 0
-        #row2 = self.tableview.rowAt(self.height())
-        #if row2 == -1: row2 = self.model.rowCount()
-        row1, row2 = 0, self.model.rowCount()
-        self.model.updateData(row1, row2)
-        #QApplication.processEvent()
+    #def timerEvent(self, e):
+    #    if self.model.rowCount() < 1: return
+    # 
+    #    #row1 = self.tableview.rowAt(0)
+    #    #if row1 == -1: row1 = 0
+    #    #row2 = self.tableview.rowAt(self.height())
+    #    #if row2 == -1: row2 = self.model.rowCount()
+    #    row1, row2 = 0, self.model.rowCount()
+    #    self.model.updateData(row1, row2)
+    #    #QApplication.processEvent()
 
     def _reload_elements(self):
         fam = str(self.elemName.text())
@@ -696,6 +513,7 @@ class ElementEditor(QtGui.QDialog):
         #self.elemName.deselect()
         self.tableview.setFocus()
         self.tableview.resizeColumnToContents(0)
+        self.tableview.resizeColumnToContents(1)
         #for i in range(self.model.columnCount()):
         #    w = self.tableview.columnWidth(i)
         #    self.tableview.setColumnWidth(i, w + 5)
@@ -854,13 +672,13 @@ if __name__ == "__main__":
     import aphla as ap
     ap.machines.load("nsls2")
     elems = []
-    for bpm in ap.getElements("COR")[:3]:
+    for bpm in ap.getElements("COR"):
         elems.append((bpm, 'x'))
         elems.append((bpm, 'y'))
     form = ElementEditor(None)
     form.reloadElements(elems)
-    form.resize(800, 600)
+    #form.resize(800, 600)
     print "Elements reloaded"
     #form.reloadElements("*")
-    #app.exec_()
+    form.show()
     cothread.WaitForQuit()
