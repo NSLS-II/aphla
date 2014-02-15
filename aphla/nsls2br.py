@@ -168,7 +168,7 @@ def _brBpmTrigData(pvprefs, waveform, **kwargs):
     else:
         raise RuntimeError("unknow waveform '%s'" % waveform)
 
-    time.sleep(3)
+    time.sleep(1.5)
     pv_x, pv_y, pv_S = [], [], []
     pv_A, pv_B, pv_C, pv_D = [], [], [], []
     for i,pvx in enumerate(pvprefs):
@@ -186,7 +186,7 @@ def _brBpmTrigData(pvprefs, waveform, **kwargs):
     # set the event
     caput(pv_evg, 1, wait=True)
 
-    time.sleep(1.2)
+    time.sleep(sleep)
 
     # check timestamp
     n = 0
@@ -202,7 +202,7 @@ def _brBpmTrigData(pvprefs, waveform, **kwargs):
         if mdt < 1.0 and mdt_s < 1.0:
             #print "Max dt=", mdt, mdt_s, "tried %d times" % n
             break
-        time.sleep(0.5)
+        time.sleep(0.6)
         # quit if failed too many times
         if n > 20:
             caput(pv_trig, [1] * len(pv_trig), wait=True)
