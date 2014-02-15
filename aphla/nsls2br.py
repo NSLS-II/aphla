@@ -795,7 +795,7 @@ def generateBrRamping(IFb, IFt, **kwargs):
     for i in range(T9, N): v[i] = IFb
 
     # warning
-    if max(v) > Ift:
+    if max(v) > IFt:
         warning.warn("max(I) > Ift : {0} > {1}".format(max(v), IFt))
     if min(v) < IFb:
         warning.warn("min(I) < Ifb : {0} < {1}".format(min(v), IFb))
