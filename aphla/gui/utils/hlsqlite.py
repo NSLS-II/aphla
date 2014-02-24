@@ -192,15 +192,39 @@ class SQLiteDatabase():
 
     #----------------------------------------------------------------------
     def getTableNames(self):
-        """"""
+        """
+        Show all the table names (including temporary ones)
+        """
 
-        self.cur.execute('SELECT name FROM sqlite_master WHERE type="table" ORDER BY name')
+        self.cur.execute(
+            '''SELECT name FROM
+                   (SELECT * FROM sqlite_master UNION ALL
+                    SELECT * FROM sqlite_temp_master)
+               WHERE type="table" ORDER BY name''')
         table_name_list = [tup[0] for tup in self.cur.fetchall()]
 
         if DEBUG:
             print 'Existing tables:', table_name_list
 
         return table_name_list
+
+    #----------------------------------------------------------------------
+    def getViewNames(self):
+        """
+        Show all the view names (including temporary ones)
+        """
+
+        self.cur.execute(
+            '''SELECT name FROM
+                   (SELECT * FROM sqlite_master UNION ALL
+                    SELECT * FROM sqlite_temp_master)
+               WHERE type="view" ORDER BY name''')
+        view_name_list = [tup[0] for tup in self.cur.fetchall()]
+
+        if DEBUG:
+            print 'Existing tables:', view_name_list
+
+        return view_name_list
 
     #----------------------------------------------------------------------
     def getColumnNames(self, table_name):
