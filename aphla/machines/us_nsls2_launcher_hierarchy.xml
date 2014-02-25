@@ -42,36 +42,13 @@
         </item>
     ">
 
-    <!ENTITY appTinker "
-        <item>
-            <dispName>Tinker (PreTune)</dispName>
-            <desc></desc>
-            <icon>py</icon>
-            <itemType>py</itemType>
-            <moduleName>aplattuner</moduleName>
-            <args></args>
-            <cwd></cwd>
-            <editor></editor>
-        </item>
-    ">
-
-
-    <!ENTITY appLauncher "
-        <item>
-            <dispName>Launcher</dispName>
-            <desc></desc>
-            <icon>py</icon>
-            <itemType>py</itemType>
-            <moduleName>aplauncher</moduleName>
-            <args></args>
-            <cwd></cwd>
-            <editor></editor>
-        </item>
-    ">
-
 ]>
 <hierarchy version="1.0">
 
+    <alias>
+        <key>aphla_lib_path</key>
+        <value>/epics/op/apps/aphla/lib/python/aphla-0.8.7-py2.7.egg</value>
+    </alias>
     <alias>
         <key>terminal</key>
         <value>gnome-terminal --disable-factory</value>
@@ -88,37 +65,48 @@
         <itemType>page</itemType>
 
         <item>
-            <dispName>Commissioning</dispName>
+            <dispName>Python Scripts</dispName>
             <desc></desc>
             <icon>page</icon>
             <itemType>page</itemType>
-        </item>  <!-- Commissioning -->
+        </item>  <!-- Python Scripts -->
 
         <item>
-            <dispName>Operation</dispName>
+            <dispName>MATLAB Scripts</dispName>
             <desc></desc>
             <icon>page</icon>
             <itemType>page</itemType>
-        </item>  <!-- Operation -->
+        </item>  <!-- MATLAB Scripts -->
 
         <item>
-            <dispName>Studies</dispName>
-            <desc></desc>
-            <icon>page</icon>
-            <itemType>page</itemType>
-        </item>  <!-- Studies -->
-
-        <item>
-            <dispName>Test</dispName>
+            <dispName>Examples</dispName>
             <desc></desc>
             <icon>page</icon>
             <itemType>page</itemType>
             &appClock;
-            &appOrbit;
-            &appBBA;
-            &appTinker;
-            &appLauncher;
-        </item> <!-- Test -->
+            <item>
+                <dispName>Launcher</dispName>
+                <desc></desc>
+                <icon>gui_app</icon>
+                <itemType>exe</itemType>
+                <command>aplauncher</command>
+                <cwd></cwd>
+                <sourceFilepath>%aphla_lib_path/aphla/gui/aplauncher.py</sourceFilepath>
+                <editor>gedit</editor>
+                <helpHeader>python</helpHeader>
+            </item>
+            <item>
+                <dispName>Tinker (PreTune)</dispName>
+                <desc></desc>
+                <icon>gui_app</icon>
+                <itemType>exe</itemType>
+                <command>aptinker</command>
+                <cwd></cwd>
+                <sourceFilepath>%aphla_lib_path/aphla/gui/aplattuner.py</sourceFilepath>
+                <editor>gedit</editor>
+                <helpHeader>python</helpHeader>
+            </item>
+        </item> <!-- Examples -->
 
     </item>  <!-- root -->
 </hierarchy>
