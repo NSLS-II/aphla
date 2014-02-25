@@ -47,7 +47,8 @@ from PyQt4.QtGui import (
     QCompleter, QDialog, QMessageBox, QFileDialog, QIcon, QBrush, QTreeView,
     QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
     QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup,
-    QKeySequence, QTableWidgetItem, QSizePolicy, QFontInfo
+    QKeySequence, QTableWidgetItem, QSizePolicy, QFontInfo, QLineEdit,
+    QPushButton, QPlainTextEdit
 )
 
 APP = None
@@ -1565,15 +1566,22 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         if not self.isItemPropertiesModifiable:
 
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['dispName'])
-            obj.setEnabled(False)
+            obj.setReadOnly(True)
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['itemType'])
             obj.setEnabled(False)
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['icon'])
             obj.setEnabled(False)
 
-            for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
+            for (propName, objName) in \
+                ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
                 obj = getattr(self, objName)
-                obj.setEnabled(False)
+                if isinstance(obj, (QLineEdit, QPlainTextEdit)):
+                    obj.setReadOnly(True)
+                elif isinstance(obj, (QPushButton, QComboBox)):
+                    obj.setEnabled(False)
+                else:
+                    raise ValueError('Unexpected object type: {0:s}'.format(
+                        type(obj)))
 
             return
 
