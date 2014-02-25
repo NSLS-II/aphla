@@ -1434,6 +1434,12 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
             raise ValueError('Unexpected itemType: {0:s}'.
                              format(self.item.itemType))
 
+        if new_src_filepath == self.item.sourceFilepath:
+            return
+        else:
+            new_src_filepath = self.model.subs_aliases(new_src_filepath)
+            new_src_filepath = _subs_tilde_with_home(new_src_filepath)
+
         if osp.exists(new_src_filepath):
             self.item.sourceFilepath = new_src_filepath
             help_text = self.model.get_help_header_text(self.item)
@@ -1457,6 +1463,12 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         else:
             raise ValueError('Unexpected itemType: {0:s}'.
                              format(self.item.itemType))
+
+        if new_src_filepath == self.item.sourceFilepath:
+            return
+        else:
+            new_src_filepath = self.model.subs_aliases(new_src_filepath)
+            new_src_filepath = _subs_tilde_with_home(new_src_filepath)
 
         if osp.exists(new_src_filepath):
             self.item.sourceFilepath = new_src_filepath
