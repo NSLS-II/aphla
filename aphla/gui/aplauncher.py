@@ -2843,7 +2843,10 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         selectionType = self.getSelectionType()
 
         if selectionType in ('SingleTxtSelection',
-                             'MultipleTxtSelection'):
+                             'MultipleTxtSelection',
+                             'SingleExeSelection',
+                             'SinglePyModuleSelection',
+                             'MultipleExecutableSelection'):
             for item in self.selectedItemList:
                 self.emit(SIGNAL('sigTxtOpenRequested'),
                           item.path, item.sourceFilepath, item.editor)
@@ -4429,6 +4432,14 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         # are resolved
         self.actionOpenInNewWindow.setEnabled(False)
 
+        source_filepaths = [item.sourceFilepath
+                            for item in self.selectedItemList
+                            if item.sourceFilepath]
+        if source_filepaths != []:
+            self.actionEditTxt.setEnabled(True)
+        else:
+            self.actionEditTxt.setEnabled(False)
+
         sender = self.sender()
         #print sender.title()
 
@@ -4451,6 +4462,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                                        'MultipleExecutableSelection'):
                     sender.addSeparator()
                     sender.addAction(self.actionRun)
+                    sender.addSeparator()
+                    sender.addAction(self.actionEditTxt)
                 elif selectionType in ('SingleTxtSelection',
                                        'MultipleTxtSelection'):
                     sender.addSeparator()
@@ -4551,6 +4564,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             elif selectionType in ('SingleExeSelection',
                                    'SinglePyModuleSelection'):
                 self.contextMenu.addAction(self.actionRun)
+                self.contextMenu.addSeparator()
+                self.contextMenu.addAction(self.actionEditTxt)
                 self.contextMenu.setDefaultAction(self.actionRun)
             elif selectionType in ('SingleTxtSelection'):
                 self.contextMenu.addAction(self.actionEditTxt)
@@ -4622,6 +4637,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                                    'MultipleExecutableSelection'):
 
                 self.contextMenu.addAction(self.actionRun)
+                self.contextMenu.addSeparator()
+                self.contextMenu.addAction(self.actionEditTxt)
 
                 self.add_basic_item_context_menus(m)
 
