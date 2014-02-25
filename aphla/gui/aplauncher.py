@@ -583,7 +583,13 @@ class LauncherModel(QStandardItemModel):
             if xml_dict.has_key('hierarchy'):
                 h = xml_dict['hierarchy']
                 if h.has_key('alias'):
-                    self.aliases = self._validate_aliases(h['alias'])
+                    for a in self._validate_aliases(h['alias']):
+                        existing_alias_keys = [a2['key'] for a2 in self.aliases]
+                        if a['key'] in existing_alias_keys:
+                            self.aliases[existing_alias_keys.index(a['key'])]\
+                                ['value'] = a['value']
+                        else:
+                            self.aliases.append(a)
                 d = h['item']
             else:
                 d = xml_dict
