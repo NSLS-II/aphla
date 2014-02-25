@@ -751,7 +751,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
         return None
 
-    def createLocalBump(self):
+    def createLocalBump_(self):
         """create local bump"""
         if self._dlgOrbitCor is None:
             bpms = ap.getElements("BPM")
@@ -762,6 +762,18 @@ class OrbitPlotMainWindow(QMainWindow):
         self._dlgOrbitCor.show()
         self._dlgOrbitCor.raise_()
         self._dlgOrbitCor.activateWindow()
+
+    def createLocalBump(self):
+        """create local bump"""
+        bpms = ap.getElements("BPM")
+        cors = ap.getElements("COR")
+        dlgOrbitCor = OrbitCorrDlg(bpms, cors, parent=self)
+        #corbitdlg.resize(600, 500)
+        dlgOrbitCor.setWindowTitle("Create Local Bump")
+        dlgOrbitCor.show()
+        dlgOrbitCor.raise_()
+        dlgOrbitCor.activateWindow()
+        dlgOrbitCor.setAttribute(Qt.WA_DeleteOnClose)
 
     def runBba(self):
         mach, lat = self.getCurrentMachLattice()

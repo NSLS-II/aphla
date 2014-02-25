@@ -38,6 +38,7 @@ class CaDataMonitor(QtCore.QObject):
         self._dead = set()
         self._wfsize = {}
         self._t0 = datetime.now()
+        self._live = False
 
         if pvs: self.addPv(pvs)
 
@@ -84,6 +85,7 @@ class CaDataMonitor(QtCore.QObject):
         """
         update the reading, average, index and variance.
         """
+        if not self._live: return
         if not val.ok: return
         pv = val.name
         if pv in self.data: self.data[pv].append(val)
@@ -119,6 +121,10 @@ class CaDataMonitor(QtCore.QObject):
         elif not lst[-1].ok: return default
         return lst[-1]
 
+    def getRange(self):
+        vals = [v[-1] for k,v in self.data.items() if v and v[-1].ok] 
+        return min(vals), max(vals)
+
     def waveFormSize(self, pv):
         return self._wfsize.get(pv, None)
 
@@ -140,6 +146,12 @@ class CaDataMonitor(QtCore.QObject):
                     if cam is None])
     def pvs(self):
         return self._monitors.keys() + self._dead
+
+    def start(self):
+        self._live = True
+    
+    def stop(self):
+        self._live = False
 
 class CaDataGetter:
     def __init__(self, pvs = [], **kwargs):

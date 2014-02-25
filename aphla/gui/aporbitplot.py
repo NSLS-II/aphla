@@ -492,7 +492,7 @@ class ApCaPlot(Qwt.QwtPlot):
 
         m_autoscale = QAction("Auto Scale", self)
         m_autoscale.setCheckable(True)
-        m_autoscale.setChecked(self.axisAutoScale(Qwt.QwtPlot.yLeft))
+        m_autoscale.setChecked(False)#self.axisAutoScale(Qwt.QwtPlot.yLeft))
         self.connect(m_autoscale, SIGNAL("toggled(bool)"), self._setAutoScale)
         cmenu.addAction(m_autoscale)
 
@@ -607,7 +607,8 @@ class ApCaPlot(Qwt.QwtPlot):
         self.replot()
 
     def zoomed(self, r):
-        #print "Zoomed"
+        print "L/R:", r.left(), r.right()
+        print "T/B:", r.top(), r.bottom()
         pass
 
     def pullCaData(self):
@@ -798,6 +799,7 @@ class ApCaWaveformPlot(ApCaPlot):
         for pv in pvs:
             self._cadata.addHook(pv, self._ca_update)
         self._cadata.addPv(pvs)
+        print "range:", self._cadata.getRange()
 
     def _ca_update(self, val, idx = None):
         if self._hold: return
@@ -948,6 +950,9 @@ class ApCaArrayPlot(ApCaPlot):
             #self._cadata.addHook(pv, self._ca_update)
             self._cadata.addHook(pv, self._ca_update_all)
         self._cadata.addPv(self._pvs.keys())
+        ymin, ymax = self._cadata.getRange()
+        self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+        self._cadata.start()
 
     def _ca_update(self, val, idx = None):
         if self._hold: return
