@@ -446,6 +446,13 @@ class LauncherModel(QStandardItemModel):
         if (header_type == 'None') or (f == ''):
             pass
 
+        elif not osp.exists(f):
+
+            help_text = '''## ERROR: Failed to get help text in source file ##
+
+The following file does not exist:
+    {0:s}'''.format(f)
+
         elif header_type == 'python':
             help_header_quote = ''
             with open(f, 'r') as fobj:
