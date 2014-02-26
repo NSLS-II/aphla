@@ -152,17 +152,17 @@ import aphla as ap
 from aphla.gui.utils.orderselector import ColumnsDialog
 from aphla.gui.utils import xmltodict
 
-MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
-
 HOME_PATH      = osp.expanduser('~')
 APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
 if not osp.exists(APHLA_CONF_DIR):
     os.makedirs(APHLA_CONF_DIR)
+APHLA_APSCRIPTS_DIR = os.getenv('APHLA_APSCRIPTS_DIR',
+                                '/epics/op/apps/apscripts')
 
-SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
-USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
+GROUP_XML_FILENAME     = 'aplauncher_group_hierarchy.xml'
+USER_XML_FILENAME      = 'aplauncher_user_hierarchy.xml'
 USER_TEMP_XML_FILENAME = USER_XML_FILENAME + '.temp'
-SYSTEM_XML_FILEPATH    = osp.join(MACHINES_FOLDERPATH, SYSTEM_XML_FILENAME)
+GROUP_XML_FILEPATH     = osp.join(APHLA_APSCRIPTS_DIR, GROUP_XML_FILENAME)
 USER_XML_FILEPATH      = osp.join(APHLA_CONF_DIR     , USER_XML_FILENAME)
 USER_TEMP_XML_FILEPATH = osp.join(APHLA_CONF_DIR     , USER_TEMP_XML_FILENAME)
 
@@ -253,7 +253,7 @@ class LauncherModel(QStandardItemModel):
         # hierarchy XML files
 
         ## First, parse system XML file and construct a tree model
-        with open(SYSTEM_XML_FILEPATH, 'r') as f:
+        with open(GROUP_XML_FILEPATH, 'r') as f:
             xml_dict = xmltodict.parse(
                 f, postprocessor=_xmltodict_subs_None_w_emptyStr)
         self.nRows = 0
