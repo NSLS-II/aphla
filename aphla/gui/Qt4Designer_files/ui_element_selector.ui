@@ -227,7 +227,7 @@
             </size>
            </property>
            <property name="text">
-            <string>HLA Command:</string>
+            <string>APHLA Command:</string>
            </property>
           </widget>
          </item>

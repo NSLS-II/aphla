@@ -237,7 +237,7 @@ class Ui_Dialog(object):
         __sortingEnabled = self.tableWidget_filter.isSortingEnabled()
         self.tableWidget_filter.setSortingEnabled(False)
         self.tableWidget_filter.setSortingEnabled(__sortingEnabled)
-        self.label_4.setText(QtGui.QApplication.translate("Dialog", "HLA Command:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_4.setText(QtGui.QApplication.translate("Dialog", "APHLA Command:", None, QtGui.QApplication.UnicodeUTF8))
         self.plainTextEdit.setPlainText(QtGui.QApplication.translate("Dialog", "hla.getElements(*)", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("Dialog", "Choice List", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidget_choice_list.horizontalHeaderItem(0).setText(QtGui.QApplication.translate("Dialog", "Name", None, QtGui.QApplication.UnicodeUTF8))

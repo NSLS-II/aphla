@@ -2316,7 +2316,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def saveSettings(self):
         """"""
 
-        settings = QSettings('HLA','Launcher')
+        settings = QSettings('APHLA','Launcher')
 
         settings.beginGroup('MainWindow')
 
@@ -2348,7 +2348,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def loadSettings(self, initRootPath):
         """"""
 
-        settings = QSettings('HLA','Launcher')
+        settings = QSettings('APHLA','Launcher')
 
         settings.beginGroup('MainWindow')
 
@@ -3273,7 +3273,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         """"""
 
         msgBox = QMessageBox()
-        msgBox.setWindowTitle('HLA Launcher')
+        msgBox.setWindowTitle('APHLA Launcher')
         msgBox.setInformativeText(__doc__)
         msgBox.setIcon(QMessageBox.Information)
         msgBox.exec_()

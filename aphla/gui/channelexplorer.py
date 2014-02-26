@@ -2,7 +2,7 @@
 
 """
 
-GUI application for selecting and browsing HLA element(s) & channel(s) interactively.
+GUI application for selecting and browsing APHLA element(s) & channel(s) interactively.
 
 
 :author: Yoshiteru Hidaka
@@ -11,7 +11,7 @@ GUI application for selecting and browsing HLA element(s) & channel(s) interacti
 This GUI application is a dialog that allows users to see all the available
 elements, narrow them down by search filtering, and finally select the elements
 of interest and return the selected elements as an input to another function
-or GUI application. In addition to HLA elements, you can search by channels.
+or GUI application. In addition to APHLA elements, you can search by channels.
 A channel is simply a tuple of an element name and one of its field names.
 
 """
@@ -2779,7 +2779,7 @@ class ChannelExplorerAppSettings():
 
         self.__caller = caller
 
-        self.__settings = QSettings('HLA','ChannelExplorer')
+        self.__settings = QSettings('APHLA','ChannelExplorer')
 
         self.use_cached_lattice = use_cached_lattice
 
