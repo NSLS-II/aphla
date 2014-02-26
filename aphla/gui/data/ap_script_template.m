@@ -2,4 +2,4 @@
 %
 % Helpful description here.
 
-print 'Hello World'
+disp(['Hello World'])

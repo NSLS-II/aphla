@@ -579,7 +579,7 @@ class TunerDockWidget(QDockWidget):
         self.model = model
         isinstance(model,TunerSnapshotModel)
 
-        self._settings = QSettings('HLA', 'Tinker')
+        self._settings = QSettings('APHLA', 'Tinker')
 
         self.loadViewSizeSettings()
         self.loadMiscSettings()

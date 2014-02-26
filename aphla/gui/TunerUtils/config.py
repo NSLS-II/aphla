@@ -89,9 +89,9 @@ PROP_DICT = {
     }
 
 CHANNEL_PROP_DICT = {
-    # (PROP_DICT's key) (Corresponding HLA Channel Attribute Name)
-    'machine_name': '#machine_name', # Non-HLA Channel Attribute
-    'lattice_name': '#lattice_name', # Non-HLA Channel Attribute
+    # (PROP_DICT's key) (Corresponding APHLA Channel Attribute Name)
+    'machine_name': '#machine_name', # Non-APHLA Channel Attribute
+    'lattice_name': '#lattice_name', # Non-APHLA Channel Attribute
     'elem_name'   : 'name',
     'field'       : 'fields',
     'pvrb'        : 'pvrb',
@@ -107,10 +107,10 @@ CHANNEL_PROP_DICT = {
     'sb'          : 'sb',
     'se'          : 'se',
     'symmetry'    : 'symmetry',
-    'unitsymb'    : '#unitsymb',# Non-HLA Channel Attribute
-    'unitsys'     : '#unitsys', # Non-HLA Channel Attribute
-    'unicon'      : '#unicon',  # Non-HLA Channel Attribute
-    'golden'      : '#golden',  # Non-HLA Channel Attribute
+    'unitsymb'    : '#unitsymb',# Non-APHLA Channel Attribute
+    'unitsys'     : '#unitsys', # Non-APHLA Channel Attribute
+    'unicon'      : '#unicon',  # Non-APHLA Channel Attribute
+    'golden'      : '#golden',  # Non-APHLA Channel Attribute
     }
 
 # Full list of all the available column names for

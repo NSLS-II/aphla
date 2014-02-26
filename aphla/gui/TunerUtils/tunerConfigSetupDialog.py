@@ -672,7 +672,7 @@ class TunerConfigSetupAppSettings():
          3) No-underscored prefix means settings properties related to miscellaneous.
         """
 
-        self.__settings = QSettings('HLA','TunerConfigSetupDialog')
+        self.__settings = QSettings('APHLA','TunerConfigSetupDialog')
 
         self.loadViewSizeSettings()
         self.loadMiscellaneousSettings()

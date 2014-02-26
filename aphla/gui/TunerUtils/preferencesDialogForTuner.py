@@ -14,7 +14,7 @@ if USE_DEV_SRC:
         sys.path.insert(0, dev_src_dir_path)
 
     else:
-        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
+        print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default APHLA.'
 
 import PyQt4.Qt as Qt
 import gui_icons
