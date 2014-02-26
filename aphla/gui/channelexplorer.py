@@ -2732,6 +2732,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
 
         self.saveViewSizeSettings()
 
+        self.settings.machine_name = self.comboBox_machine.currentText()
+        self.settings.lattice_name = self.comboBox_lattice.currentText()
+        self.settings.saveMiscellaneousSettings()
+
         event.accept()
 
     #----------------------------------------------------------------------
@@ -2815,19 +2819,9 @@ class ChannelExplorerAppSettings():
         self.__settings.beginGroup('miscellaneous')
 
         machine_name = self.__settings.value('machine_name')
-        if machine_name is None:
-            machine_name = 'nsls2'
-            #machine_name = ap.machines.machines()[0]
         self.machine_name = machine_name
 
         lattice_name = self.__settings.value('lattice_name')
-        if lattice_name is None:
-            lattices = ap.machines.lattices()
-            if lattices == []:
-                ap.machines.load(self.machine_name,
-                                 use_cache=self.use_cached_lattice)
-                lattices = ap.machines.lattices()
-            lattice_name = lattices[0]
         self.lattice_name = lattice_name
 
         filter_mode = self.__settings.value('filter_mode')
@@ -2932,14 +2926,21 @@ class ChannelExplorerApp(QObject):
 
         QObject.__init__(self)
 
+        self.use_cached_lattice = use_cached_lattice
+
         self.settings = ChannelExplorerAppSettings(
             caller, use_cached_lattice=use_cached_lattice)
 
         if machine_name is None:
             machine_name = self.settings.machine_name
 
+        if machine_name not in ap.machines.machines():
+            machine_name = 'nsls2'
+
         print 'Machine Name = {0:s}'.format(machine_name)
         initMachine(machine_name, use_cached_lattice=use_cached_lattice)
+
+        self.settings.machine_name = machine_name
 
         if lattice_name is None:
             lattice_name = self.settings.lattice_name
@@ -2947,12 +2948,14 @@ class ChannelExplorerApp(QObject):
         try:
             print 'Using Lattice:', lattice_name
             ap.machines.use(lattice_name)
+            self.settings.lattice_name = lattice_name
         except:
             print 'Lattice loading failed.'
             lattice_name_list = ap.machines.lattices()
             fallback_lattice_name = lattice_name_list[0]
             print 'Will try using Lattice:', fallback_lattice_name
             ap.machines.use(fallback_lattice_name)
+            self.settings.lattice_name = fallback_lattice_name
 
         all_prop_name_list = PROP_KEY_LIST[:]
         default_visible_prop_key_list = self.settings.default_visible_prop_key_list
@@ -3077,10 +3080,10 @@ class ChannelExplorerApp(QObject):
                                                  for name in self.settings.default_visible_prop_key_list]
         permanently_visible_column_name_list = []
 
-        dialog = StartupSettingsDialog(all_column_full_name_list,
-                                       default_visible_column_full_name_list,
-                                       permanently_visible_column_name_list,
-                                       self.settings, parentWindow=self.view)
+        dialog = StartupSettingsDialog(
+            all_column_full_name_list, default_visible_column_full_name_list,
+            permanently_visible_column_name_list, self.settings,
+            use_cached_lattice=self.use_cached_lattice, parentWindow=self.view)
         dialog.exec_()
 
 
@@ -3159,10 +3162,12 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
     #----------------------------------------------------------------------
     def __init__(self, full_column_name_list, init_selected_colum_full_name_list,
                  permanently_selected_column_name_list,
-                 settings, parentWindow = None):
+                 settings, use_cached_lattice=False, parentWindow=None):
         """Constructor"""
 
         QDialog.__init__(self, parent=parentWindow)
+
+        self.use_cached_lattice = use_cached_lattice
 
         self.settings = settings
 
@@ -3181,6 +3186,28 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
         self.column_sorting_dict = {'value': [True,False],
                                     'display': ['Enabled','Disabled']}
         self.machine_list = sorted(ap.machines.machines())
+
+        self.comboBox_machine.clear()
+        self.comboBox_machine.addItems(self.machine_list)
+
+        lat = ap.machines.getLattice()
+        if lat is None:
+            self.comboBox_machine.setCurrentIndex(0)
+            machine_name = self.machine_list[0]
+            ap.machines.load(machine_name, use_cache=self.use_cached_lattice)
+        else:
+            ind = self.machine_list.index(lat.machine)
+            self.comboBox_machine.setCurrentIndex(ind)
+            machine_name = self.machine_list[ind]
+
+        self.lattice_list = ap.machines.lattices()
+
+        self.comboBox_lattice_name.clear()
+        self.comboBox_lattice_name.addItems(self.lattice_list)
+
+        lat = ap.machines.getLattice()
+        ind = self.lattice_list.index(lat.name)
+        self.comboBox_lattice_name.setCurrentIndex(ind)
 
         self.showStartupSettings()
 
@@ -3202,6 +3229,24 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
         self.connect(self.pushButton_restore_default,
                      SIGNAL('clicked()'),
                      self.restoreDefault)
+
+        self.connect(self.comboBox_machine,
+                     SIGNAL('currentIndexChanged(const QString &)'),
+                     self.update_machine_lattice_list)
+
+    #----------------------------------------------------------------------
+    def update_machine_lattice_list(self, new_machine_name):
+        """"""
+
+        ap.machines.load(new_machine_name, use_cache=self.use_cached_lattice)
+
+
+        self.lattice_list = ap.machines.lattices()
+
+        self.comboBox_lattice_name.clear()
+        self.comboBox_lattice_name.addItems(self.lattice_list)
+
+        self.comboBox_lattice_name.setCurrentIndex(0)
 
     #----------------------------------------------------------------------
     def showStartupSettings(self):
@@ -3241,7 +3286,8 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
         matched_ind = self.machine_list.index(self.settings.machine_name)
         self.comboBox_machine.setCurrentIndex(matched_ind)
         #
-        self.lineEdit_lattice_name.setText(self.settings.lattice_name)
+        matched_ind = self.lattice_list.index(self.settings.lattice_name)
+        self.comboBox_lattice_name.setCurrentIndex(matched_ind)
 
     #----------------------------------------------------------------------
     def restoreDefault(self):
@@ -3300,7 +3346,7 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
         #
         self.settings.machine_name = self.comboBox_machine.currentText()
         #
-        self.settings.lattice_name = self.lineEdit_lattice_name.text()
+        self.settings.lattice_name = self.comboBox_lattice_name.currentText()
 
         self.settings.saveMiscellaneousSettings()
 
@@ -3311,7 +3357,6 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
         """"""
 
         super(StartupSettingsDialog, self).reject()
-
 
 #----------------------------------------------------------------------
 def propertyKeyAndDataTypeFromDisplayedPropertyName(displayed_property_name):
@@ -3324,8 +3369,6 @@ def propertyKeyAndDataTypeFromDisplayedPropertyName(displayed_property_name):
             break
 
     return (property_key, data_type)
-
-
 
 #----------------------------------------------------------------------
 def lower(none_or_str_or_unicode_string):
@@ -3348,11 +3391,8 @@ def initMachine(machine_name, use_cached_lattice=False):
 
     print 'Initializing lattices...'
     tStart = tic()
-    #ap.machines.load(machine_init_folder_name, use_cache=True)
     ap.machines.load(machine_init_folder_name, use_cache=use_cached_lattice)
     print 'Initialization took', toc(tStart), 'seconds.'
-
-
 
 #----------------------------------------------------------------------
 def make(modal = True, parentWindow = None,
@@ -3361,16 +3401,6 @@ def make(modal = True, parentWindow = None,
          machine_name = None, lattice_name = None,
          caller = None, debug = False):
     """ """
-
-    #if not ap.machines._lat:
-        #print 'Initializing lattices...'
-        #tStart = tic()
-        #aphla_init_func()
-        #print str(toc(tStart))
-        #print 'Done.'
-
-    #print 'Using Lattice:', lattice_name
-    #ap.machines.use(lattice_name)
 
     app = ChannelExplorerApp(modal, parentWindow,
                              init_object_type, can_modify_object_type,
@@ -3417,30 +3447,21 @@ def main():
 
     args = sys.argv
 
-    if len(args) == 2:
-        if args[1].lower() == 'true':
+    valid_options_str = 'Valid options are either --help or --use-cache.'
+    if len(args) == 1:
+        use_cached_lattice = False
+    elif len(args) == 2:
+        if args[1] == '--help':
+            print __doc__
+            return
+        elif args[1] == '--use-cache':
             use_cached_lattice = True
         else:
-            use_cached_lattice = False
+            print 'Unexpected option: {0:s}'.format(args[1])
+            raise ValueError(valid_options_str)
     else:
-        use_cached_lattice = False
-
-    #qapp = Qt.QApplication(args) # Necessary whether modal or non-modal
-
-    #result = make(modal = True, output_type = TYPE_OBJECT)
-
-    #if result.has_key('dialog_result'): # When modal
-        #app           = result['app']
-        #dialog_result = result['dialog_result']
-
-        #print dialog_result
-        #print 'Length = ', len(dialog_result)
-
-
-    #else: # When non-modal
-        #app = result['app']
-        #exit_status = qapp.exec_()
-        #sys.exit(exit_status)
+        print 'There can be at most one option.'
+        raise ValueError(valid_options_str)
 
     cothread.iqt()
 
