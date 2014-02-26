@@ -53,7 +53,7 @@ HLA_VSEXT  = 'HLA:VSEXT'
 
 # HOME = os.environ['HOME'] will NOT work on Windows,
 # unless %HOME% is set on Windows, which is not the case by default.
-_home_hla = os.path.join(os.path.expanduser('~'), '.hla')
+_home_hla = os.path.join(os.path.expanduser('~'), '.aphla')
 HLA_CONFIG_DIR = os.environ.get("HLA_CONFIG_DIR", _home_hla)
 HLA_DEBUG      = int(os.environ.get('HLA_DEBUG', 0))
 
@@ -131,7 +131,7 @@ def _findMachinePath(machine):
     if os.path.isabs(machine) and os.path.isdir(machine):
         mname = os.path.basename(os.path.realpath(machine))
         return machine, mname
-    # try "machine" in HLA_CONFIG_DIR and ~/.hla/ (default)
+    # try "machine" in HLA_CONFIG_DIR and ~/.aphla/ (default)
     _logger.debug("trying path '%s' '%s'" % (HLA_CONFIG_DIR, machine))
     home_machine = os.path.join(HLA_CONFIG_DIR, machine)
     if os.path.isdir(home_machine):

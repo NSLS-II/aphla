@@ -212,7 +212,7 @@ class AbstractElement(object):
         else:
             self.flag = self.flag | _DISABLED
 
-        
+
 class CaAction:
     """
     manages channel access for an element field.
@@ -292,6 +292,7 @@ class CaAction:
                                "'%s' to '%s'" % (src, dst))
 
     def _all_within_range(self, v, lowhigh):
+        """if lowhigh is not valid, returns true"""
         # did not check for string type
         if isinstance(v, (str, unicode)): return True
         if lowhigh is None: return True
@@ -300,6 +301,7 @@ class CaAction:
         if isinstance(v, (float, int)):
             if low is None: return v <= high
             elif high is None: return v >= low
+            elif high <= low: return True
             elif v > high or v < low: return False
             else: return True
         elif isinstance(v, (list, tuple)):
