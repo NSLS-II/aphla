@@ -38,20 +38,53 @@ class ElementPickDlg(QtGui.QDialog):
         buttonBox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok|
                                            QtGui.QDialogButtonBox.Cancel)
 
+        btnAll  = QtGui.QPushButton("Select All")
+        btnNone = QtGui.QPushButton("Select None")
+        btnInv  = QtGui.QPushButton("Invert Selection")
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(btnAll)
+        hbox.addWidget(btnNone)
+        hbox.addWidget(btnInv)
+        hbox.addStretch()
+
         layout = QtGui.QGridLayout()
         layout.addWidget(elemLabel, 0, 0)
         layout.addWidget(self.elemlst, 1, 0)
-        layout.addWidget(buttonBox, 2, 0)
+        layout.addLayout(hbox, 2, 0)
+        layout.addWidget(buttonBox, 3, 0)
         self.setLayout(layout)
+
+        self.connect(btnAll, SIGNAL("clicked()"), self._sel_all)
+        self.connect(btnNone, SIGNAL("clicked()"), self._sel_none)
+        self.connect(btnInv, SIGNAL("clicked()"), self._sel_inv)
 
         self.connect(buttonBox, SIGNAL("accepted()"), self.accept)
         self.connect(buttonBox, SIGNAL("rejected()"), self.reject)
+
+    def _sel_all(self):
+        for i in range(self.elemlst.topLevelItemCount()):
+            it = self.elemlst.topLevelItem(i)
+            it.setCheckState(0, Qt.Checked)
+
+    def _sel_none(self):
+        for i in range(self.elemlst.topLevelItemCount()):
+            it = self.elemlst.topLevelItem(i)
+            it.setCheckState(0, Qt.Unchecked)
+
+    def _sel_inv(self):
+        for i in range(self.elemlst.topLevelItemCount()):
+            it = self.elemlst.topLevelItem(i)
+            if it.checkState(0) == Qt.Checked:
+                it.setCheckState(0, Qt.Unchecked)
+            elif it.checkState(0) == Qt.Unchecked:
+                it.setCheckState(0, Qt.Checked)
 
     def checkStates(self):
         #print self.elemlst.selectedItems()
         ret = []
         for i in range(self.elemlst.topLevelItemCount()):
-            ret.append(self.elemlst.item(i).checkState())
+            it = self.elemlst.topLevelItem(i)
+            ret.append(it.checkState(0))
         return ret
 
     def checkedNames(self):

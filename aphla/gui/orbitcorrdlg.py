@@ -1362,7 +1362,7 @@ class OrbitCorrDlg(QDialog):
         bpmls = bpms
         if bpms is None:
             bpmls = getElements("BPM")
-        bpmls = [bpm for bpm in bpmls if bpm.flag == 0]
+        bpmls = [bpm for bpm in bpmls if bpm.isEnabled()]
         pvx = [bpm.pv(field="x", handle="readback")[0] for bpm in bpmls]
         pvy = [bpm.pv(field="y", handle="readback")[0] for bpm in bpmls]
         #
@@ -1586,11 +1586,21 @@ class OrbitCorrDlg(QDialog):
         #    self.reject()
         pass
 
+    def closeEvent(self, e):
+        self.bpm_plot.close()
+        self.cor_plot.close()
+        self.tw_plot.close()
+        e.accept()
+
+
 if __name__ == "__main__":
     import aphla as ap
     ap.machines.load("nsls2v2")
     bpms = ap.getElements("BPM")
     cors = ap.getElements("COR")
+    bpms[1].setEnabled(False)
+    cors[1].setEnabled(False)
+
     form = OrbitCorrDlg(bpms) 
     #form = OrbitCorrGeneral(bpms, cors)
     #form = OrbitCorrNBumps(bpms, cors)
