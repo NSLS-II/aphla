@@ -1991,13 +1991,15 @@ class TreeViewItemDelegate(QItemDelegate):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, proxyModel):
+    def __init__(self, proxyModel, searchModel):
         """Constructor"""
 
         QItemDelegate.__init__(self)
 
         self.proxyModel = proxyModel
         self.sourceModel = self.proxyModel.sourceModel()
+
+        self.searchModel = searchModel
 
         f = QFont()
         self.fm = QFontMetrics(f)
@@ -2008,6 +2010,9 @@ class TreeViewItemDelegate(QItemDelegate):
 
         source_index = self.proxyModel.mapToSource(index)
         item = self.sourceModel.itemFromIndex(source_index)
+
+        if item is None: # currently in search mode
+            item = self.searchModel.itemFromIndex(source_index)
 
         rect = self.fm.boundingRect(item.text())
         width  = rect.width()
@@ -2047,8 +2052,12 @@ class MainPane(QWidget):
         listView.setWordWrap(True) # for word wrapping
         self.listView = listView
 
+        self.searchModel = SearchModel(model)
+        self.searchItemBeingEdited = None
+
         treeView.setModel(self.proxyModel)
-        treeView.setItemDelegate(TreeViewItemDelegate(self.proxyModel))
+        treeView.setItemDelegate(TreeViewItemDelegate(self.proxyModel,
+                                                      self.searchModel))
         treeView.setRootIndex(initRootProxyModelIndex)
         treeView.setItemsExpandable(True)
         treeView.setRootIsDecorated(True)
@@ -2059,9 +2068,6 @@ class MainPane(QWidget):
         self.treeView = treeView
 
         self.stackedWidget = stackedWidget
-
-        self.searchModel = SearchModel(model)
-        self.searchItemBeingEdited = None
 
         self.pathHistory = [QPersistentModelIndex(initRootModelIndex)]
         self.pathHistoryCurrentIndex = 0
