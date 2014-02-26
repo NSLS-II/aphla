@@ -152,17 +152,17 @@ import aphla as ap
 from aphla.gui.utils.orderselector import ColumnsDialog
 from aphla.gui.utils import xmltodict
 
-MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
-
 HOME_PATH      = osp.expanduser('~')
 APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
 if not osp.exists(APHLA_CONF_DIR):
     os.makedirs(APHLA_CONF_DIR)
+APHLA_APSCRIPTS_DIR = os.getenv('APHLA_APSCRIPTS_DIR',
+                                '/epics/op/apps/apscripts')
 
-SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
-USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
+GROUP_XML_FILENAME     = 'aplauncher_group_hierarchy.xml'
+USER_XML_FILENAME      = 'aplauncher_user_hierarchy.xml'
 USER_TEMP_XML_FILENAME = USER_XML_FILENAME + '.temp'
-SYSTEM_XML_FILEPATH    = osp.join(MACHINES_FOLDERPATH, SYSTEM_XML_FILENAME)
+GROUP_XML_FILEPATH     = osp.join(APHLA_APSCRIPTS_DIR, GROUP_XML_FILENAME)
 USER_XML_FILEPATH      = osp.join(APHLA_CONF_DIR     , USER_XML_FILENAME)
 USER_TEMP_XML_FILEPATH = osp.join(APHLA_CONF_DIR     , USER_TEMP_XML_FILENAME)
 
@@ -253,7 +253,7 @@ class LauncherModel(QStandardItemModel):
         # hierarchy XML files
 
         ## First, parse system XML file and construct a tree model
-        with open(SYSTEM_XML_FILEPATH, 'r') as f:
+        with open(GROUP_XML_FILEPATH, 'r') as f:
             xml_dict = xmltodict.parse(
                 f, postprocessor=_xmltodict_subs_None_w_emptyStr)
         self.nRows = 0
@@ -1193,6 +1193,16 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
 
         self.setupUi(self)
 
+        minWidth = 1
+        self.comboBox_exe_command.setMinimumWidth(minWidth)
+        self.comboBox_exe_editor.setMinimumWidth(minWidth)
+        self.comboBox_exe_helpHeaderType.setMinimumWidth(minWidth)
+        self.comboBox_itemType.setMinimumWidth(minWidth)
+        self.comboBox_py_editor.setMinimumWidth(minWidth)
+        self.comboBox_py_moduleName.setMinimumWidth(minWidth)
+        self.comboBox_txt_editor.setMinimumWidth(minWidth)
+        self.comboBox_txt_helpHeaderType.setMinimumWidth(minWidth)
+
         self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
 
         self.model = model
@@ -1658,10 +1668,17 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         dispName = str(self.lineEdit_dispName.text())
         if dispName == '':
             msgBox = QMessageBox()
-            msgBox.setText( (
-                'Empty item name not allowed.') )
+            msgBox.setText('Empty item name not allowed.')
             msgBox.setInformativeText(
                 'Please enter a non-empty string as an item name.')
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+            return
+        elif '/' in dispName:
+            msgBox = QMessageBox()
+            msgBox.setText('"/" in item name not allowed.')
+            msgBox.setInformativeText(
+                'Please enter a string without "/" as an item name.')
             msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
             return
@@ -1801,6 +1818,9 @@ class CustomTreeView(QTreeView):
 
         QTreeView.__init__(self, *args)
 
+        self.modelIndexBeingRenamed = None
+        self.original_name = ''
+
     #----------------------------------------------------------------------
     def focusInEvent(self, event):
         """"""
@@ -1823,6 +1843,30 @@ class CustomTreeView(QTreeView):
         overwriting QAbstractItemView virtual protected slot
         """
 
+        new_item_name = editor.text()
+
+        if new_item_name == '':
+            editor.setText(self.original_name)
+
+            msgbox = QMessageBox()
+            msgbox.setText('Empty item name not allowed.')
+            msgbox.setInformativeText(
+                'Please enter a non-empty string as an item name.')
+            msgbox.setIcon(QMessageBox.Critical)
+            msgbox.exec_()
+            return
+
+        if '/' in new_item_name:
+            editor.setText(self.original_name)
+
+            msgbox = QMessageBox()
+            msgbox.setText('"/" in item name not allowed.')
+            msgbox.setInformativeText(
+                'Please enter a string without "/" as an item name.')
+            msgbox.setIcon(QMessageBox.Critical)
+            msgbox.exec_()
+            return
+
         super(QTreeView,self).closeEditor(editor,hint)
 
         self.emit(SIGNAL('closingItemRenameEditor'), editor)
@@ -1840,7 +1884,7 @@ class CustomTreeView(QTreeView):
 
         # This check here should not be needed, but it is necessary for now
         # to have this code work properly
-        if ( not isinstance(item, QStandardItem) ) and \
+        if ( item.column() == 0 ) and \
            item.path.startswith(USER_MODIFIABLE_ROOT_PATH+SEPARATOR):
             item.setEditable(True)
         else:
@@ -1887,6 +1931,7 @@ class CustomTreeView(QTreeView):
 
         if trigger == QAbstractItemView.AllEditTriggers:
             self.modelIndexBeingRenamed = modelIndex
+            self.original_name = item.text()
 
         return super(QTreeView,self).edit(modelIndex, trigger, event)
 
@@ -1902,6 +1947,7 @@ class CustomListView(QListView):
         QListView.__init__(self, *args)
 
         self.modelIndexBeingRenamed = None
+        self.original_name = ''
 
     #----------------------------------------------------------------------
     def focusInEvent(self, event):
@@ -1924,6 +1970,30 @@ class CustomListView(QListView):
         """
         overwriting QAbstractItemView virtual protected slot
         """
+
+        new_item_name = editor.text()
+
+        if new_item_name == '':
+            editor.setText(self.original_name)
+
+            msgbox = QMessageBox()
+            msgbox.setText('Empty item name not allowed.')
+            msgbox.setInformativeText(
+                'Please enter a non-empty string as an item name.')
+            msgbox.setIcon(QMessageBox.Critical)
+            msgbox.exec_()
+            return
+
+        if '/' in new_item_name:
+            editor.setText(self.original_name)
+
+            msgbox = QMessageBox()
+            msgbox.setText('"/" in item name not allowed.')
+            msgbox.setInformativeText(
+                'Please enter a string without "/" as an item name.')
+            msgbox.setIcon(QMessageBox.Critical)
+            msgbox.exec_()
+            return
 
         super(QListView,self).closeEditor(editor,hint)
 
@@ -1988,6 +2058,7 @@ class CustomListView(QListView):
 
         if trigger == QAbstractItemView.AllEditTriggers:
             self.modelIndexBeingRenamed = modelIndex
+            self.original_name = item.text()
 
         return super(QListView,self).edit(modelIndex, trigger, event)
 
@@ -3127,8 +3198,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionRename = QAction(QIcon(), 'Rename', self)
         self.actionRename.setShortcut(Qt.Key_F2)
         self.addAction(self.actionRename)
-        self.connect(self.actionRename, SIGNAL('triggered()'),
-                     self.renameItem)
+        self.connect(self.actionRename, SIGNAL('triggered()'), self.renameItem)
 
         self.actionProperties = QAction(QIcon(), 'Properties', self)
         self.actionProperties.setShortcut(
@@ -3843,8 +3913,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             if not selectedItem.isEditable():
                 selectedItem.setEditable(True)
             self.lastFocusedView.editSlot(selectedModelIndex)
-
-
 
     #----------------------------------------------------------------------
     def _initMainToolbar(self):
