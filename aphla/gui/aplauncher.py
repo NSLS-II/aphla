@@ -48,7 +48,7 @@ from PyQt4.QtGui import (
     QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
     QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup,
     QKeySequence, QTableWidgetItem, QSizePolicy, QFontInfo, QLineEdit,
-    QPushButton, QPlainTextEdit
+    QPushButton, QPlainTextEdit, QItemDelegate, QFontMetrics
 )
 
 APP = None
@@ -1986,6 +1986,34 @@ class CustomListView(QListView):
 
         return super(QListView,self).edit(modelIndex, trigger, event)
 
+########################################################################
+class TreeViewItemDelegate(QItemDelegate):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, proxyModel):
+        """Constructor"""
+
+        QItemDelegate.__init__(self)
+
+        self.proxyModel = proxyModel
+        self.sourceModel = self.proxyModel.sourceModel()
+
+        f = QFont()
+        self.fm = QFontMetrics(f)
+
+    #----------------------------------------------------------------------
+    def sizeHint(self, option, index):
+        """"""
+
+        source_index = self.proxyModel.mapToSource(index)
+        item = self.sourceModel.itemFromIndex(source_index)
+
+        rect = self.fm.boundingRect(item.text())
+        width  = rect.width()
+        height = rect.height()
+
+        return QSize(min([width, 400]), min([50, height*2]))
 
 ########################################################################
 class MainPane(QWidget):
@@ -2020,6 +2048,7 @@ class MainPane(QWidget):
         self.listView = listView
 
         treeView.setModel(self.proxyModel)
+        treeView.setItemDelegate(TreeViewItemDelegate(self.proxyModel))
         treeView.setRootIndex(initRootProxyModelIndex)
         treeView.setItemsExpandable(True)
         treeView.setRootIsDecorated(True)
