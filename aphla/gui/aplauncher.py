@@ -40,7 +40,7 @@ sip.setapi('QVariant', 2)
 import cothread
 
 from PyQt4.QtCore import (
-    Qt, SIGNAL, QObject, QDir, QFile, QIODevice, QTextStream, QModelIndex,
+    Qt, SIGNAL, QObject, QFile, QIODevice, QTextStream, QModelIndex,
     QPersistentModelIndex, QSettings, QRect, QSize)
 from PyQt4.QtGui import (
     QApplication, QFont, QWidget, QStandardItemModel, QStandardItem, QComboBox,
@@ -135,19 +135,7 @@ ITEM_COLOR_PY   = Qt.blue
 ITEM_COLOR_EXE  = Qt.blue
 ITEM_COLOR_TXT  = Qt.magenta
 
-# Forward slash '/' will be used as a file path separator for both
-# in Linux & Windows. Even if '/' is used in Windows, shutil and os functions
-# still properly work.
-# QDir.homePath() will return the home path string using '/' even on Windows.
-# Therefore, '/' is being used consistently in this code.
-#
-# By the way, the QFile document says "QFile expects the file separator to be
-# '/' regardless of operating system.
-# The use of other separators (e.g., '\') is not supported."
-# However, on Windows, using '\' still works fine.
-SEPARATOR = '/' # used as system file path separator as well as launcher page
-                # path separator
-HOME_PATH = str(QDir.homePath())
+SEPARATOR = '/' # used launcher path separator
 
 USER_MODIFIABLE_ROOT_PATH = '/root/Favorites'
 
@@ -166,16 +154,19 @@ from aphla.gui.utils import xmltodict
 
 MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
 
-DOT_HLA_QFILEPATH = HOME_PATH + SEPARATOR + '.hla'
+HOME_PATH      = osp.expanduser('~')
+APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_CONF_DIR):
+    os.makedirs(APHLA_CONF_DIR)
 
 SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
 USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
 USER_TEMP_XML_FILENAME = USER_XML_FILENAME + '.temp'
 SYSTEM_XML_FILEPATH    = osp.join(MACHINES_FOLDERPATH, SYSTEM_XML_FILENAME)
-USER_XML_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
-USER_TEMP_XML_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_XML_FILENAME
+USER_XML_FILEPATH      = osp.join(APHLA_CONF_DIR     , USER_XML_FILENAME)
+USER_TEMP_XML_FILEPATH = osp.join(APHLA_CONF_DIR     , USER_TEMP_XML_FILENAME)
 
-PREF_JSON_FILEPATH = osp.join(DOT_HLA_QFILEPATH, 'launcher_startup_pref.json')
+PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'launcher_startup_pref.json')
 
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
@@ -271,6 +262,20 @@ class LauncherModel(QStandardItemModel):
         self.default_aliases = deepcopy(self.aliases)
 
         ## Then parse user XML file and append the data to the tree model
+        if not osp.exists(USER_XML_FILEPATH):
+            init_user_launcher_hierarchy = \
+                '''<?xml version="1.0" encoding="utf-8"?>
+<hierarchy version="1.0">
+    <item>
+        <dispName>Favorites</dispName>
+        <desc></desc>
+        <icon>page</icon>
+        <itemType>page</itemType>
+    </item>
+</hierarchy>'''
+            with open(USER_XML_FILEPATH, 'w') as f:
+                f.write(init_user_launcher_hierarchy)
+        #
         with open(USER_XML_FILEPATH, 'r') as f:
             xml_dict = xmltodict.parse(
                 f, postprocessor=_xmltodict_subs_None_w_emptyStr)
