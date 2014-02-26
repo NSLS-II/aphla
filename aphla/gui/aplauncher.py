@@ -1193,6 +1193,16 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
 
         self.setupUi(self)
 
+        minWidth = 1
+        self.comboBox_exe_command.setMinimumWidth(minWidth)
+        self.comboBox_exe_editor.setMinimumWidth(minWidth)
+        self.comboBox_exe_helpHeaderType.setMinimumWidth(minWidth)
+        self.comboBox_itemType.setMinimumWidth(minWidth)
+        self.comboBox_py_editor.setMinimumWidth(minWidth)
+        self.comboBox_py_moduleName.setMinimumWidth(minWidth)
+        self.comboBox_txt_editor.setMinimumWidth(minWidth)
+        self.comboBox_txt_helpHeaderType.setMinimumWidth(minWidth)
+
         self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
 
         self.model = model
