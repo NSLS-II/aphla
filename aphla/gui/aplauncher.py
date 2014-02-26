@@ -47,7 +47,8 @@ from PyQt4.QtGui import (
     QCompleter, QDialog, QMessageBox, QFileDialog, QIcon, QBrush, QTreeView,
     QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
     QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup,
-    QKeySequence, QTableWidgetItem, QSizePolicy, QFontInfo
+    QKeySequence, QTableWidgetItem, QSizePolicy, QFontInfo, QLineEdit,
+    QPushButton, QPlainTextEdit, QItemDelegate, QFontMetrics
 )
 
 APP = None
@@ -446,6 +447,13 @@ class LauncherModel(QStandardItemModel):
         if (header_type == 'None') or (f == ''):
             pass
 
+        elif not osp.exists(f):
+
+            help_text = '''## ERROR: Failed to get help text in source file ##
+
+The following file does not exist:
+    {0:s}'''.format(f)
+
         elif header_type == 'python':
             help_header_quote = ''
             with open(f, 'r') as fobj:
@@ -583,7 +591,13 @@ class LauncherModel(QStandardItemModel):
             if xml_dict.has_key('hierarchy'):
                 h = xml_dict['hierarchy']
                 if h.has_key('alias'):
-                    self.aliases = self._validate_aliases(h['alias'])
+                    for a in self._validate_aliases(h['alias']):
+                        existing_alias_keys = [a2['key'] for a2 in self.aliases]
+                        if a['key'] in existing_alias_keys:
+                            self.aliases[existing_alias_keys.index(a['key'])]\
+                                ['value'] = a['value']
+                        else:
+                            self.aliases.append(a)
                 d = h['item']
             else:
                 d = xml_dict
@@ -1420,6 +1434,12 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
             raise ValueError('Unexpected itemType: {0:s}'.
                              format(self.item.itemType))
 
+        if new_src_filepath == self.item.sourceFilepath:
+            return
+        else:
+            new_src_filepath = self.model.subs_aliases(new_src_filepath)
+            new_src_filepath = _subs_tilde_with_home(new_src_filepath)
+
         if osp.exists(new_src_filepath):
             self.item.sourceFilepath = new_src_filepath
             help_text = self.model.get_help_header_text(self.item)
@@ -1443,6 +1463,12 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         else:
             raise ValueError('Unexpected itemType: {0:s}'.
                              format(self.item.itemType))
+
+        if new_src_filepath == self.item.sourceFilepath:
+            return
+        else:
+            new_src_filepath = self.model.subs_aliases(new_src_filepath)
+            new_src_filepath = _subs_tilde_with_home(new_src_filepath)
 
         if osp.exists(new_src_filepath):
             self.item.sourceFilepath = new_src_filepath
@@ -1552,15 +1578,22 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         if not self.isItemPropertiesModifiable:
 
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['dispName'])
-            obj.setEnabled(False)
+            obj.setReadOnly(True)
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['itemType'])
             obj.setEnabled(False)
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['icon'])
             obj.setEnabled(False)
 
-            for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
+            for (propName, objName) in \
+                ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
                 obj = getattr(self, objName)
-                obj.setEnabled(False)
+                if isinstance(obj, (QLineEdit, QPlainTextEdit)):
+                    obj.setReadOnly(True)
+                elif isinstance(obj, (QPushButton, QComboBox)):
+                    obj.setEnabled(False)
+                else:
+                    raise ValueError('Unexpected object type: {0:s}'.format(
+                        type(obj)))
 
             return
 
@@ -1953,6 +1986,34 @@ class CustomListView(QListView):
 
         return super(QListView,self).edit(modelIndex, trigger, event)
 
+########################################################################
+class TreeViewItemDelegate(QItemDelegate):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, proxyModel):
+        """Constructor"""
+
+        QItemDelegate.__init__(self)
+
+        self.proxyModel = proxyModel
+        self.sourceModel = self.proxyModel.sourceModel()
+
+        f = QFont()
+        self.fm = QFontMetrics(f)
+
+    #----------------------------------------------------------------------
+    def sizeHint(self, option, index):
+        """"""
+
+        source_index = self.proxyModel.mapToSource(index)
+        item = self.sourceModel.itemFromIndex(source_index)
+
+        rect = self.fm.boundingRect(item.text())
+        width  = rect.width()
+        height = rect.height()
+
+        return QSize(min([width, 400]), min([50, height*2]))
 
 ########################################################################
 class MainPane(QWidget):
@@ -1987,6 +2048,7 @@ class MainPane(QWidget):
         self.listView = listView
 
         treeView.setModel(self.proxyModel)
+        treeView.setItemDelegate(TreeViewItemDelegate(self.proxyModel))
         treeView.setRootIndex(initRootProxyModelIndex)
         treeView.setItemsExpandable(True)
         treeView.setRootIsDecorated(True)
