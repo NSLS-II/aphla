@@ -191,17 +191,29 @@ class SQLiteDatabase():
                 f.write('{0:s}\n'.format(line))
 
     #----------------------------------------------------------------------
-    def getTableNames(self):
+    def getTableNames(self, square_brackets=True):
         """
         Show all the table names (including temporary ones)
+
+        If a table name contains a whitespace, the table name will be
+        enclosed by square brackets if `square_brackets` is True. If False,
+        the table name will be enclosed by double quotes (").
         """
+
+        if square_brackets:
+            enclosures = ['[', ']']
+        else:
+            enclosures = ['"', '"']
 
         self.cur.execute(
             '''SELECT name FROM
                    (SELECT * FROM sqlite_master UNION ALL
                     SELECT * FROM sqlite_temp_master)
                WHERE type="table" ORDER BY name''')
-        table_name_list = [tup[0] for tup in self.cur.fetchall()]
+        table_name_list = [tup[0] if len(tup[0].split()) == 1 else
+                           '{0}{1}{2}'.format(enclosures[0], tup[0],
+                                              enclosures[1])
+                           for tup in self.cur.fetchall()]
 
         if DEBUG:
             print 'Existing tables:', table_name_list
@@ -209,17 +221,29 @@ class SQLiteDatabase():
         return table_name_list
 
     #----------------------------------------------------------------------
-    def getViewNames(self):
+    def getViewNames(self, square_brackets=True):
         """
         Show all the view names (including temporary ones)
+
+        If a table name contains a whitespace, the table name will be
+        enclosed by square brackets if `square_brackets` is True. If False,
+        the table name will be enclosed by double quotes (").
         """
+
+        if square_brackets:
+            enclosures = ['[', ']']
+        else:
+            enclosures = ['"', '"']
 
         self.cur.execute(
             '''SELECT name FROM
                    (SELECT * FROM sqlite_master UNION ALL
                     SELECT * FROM sqlite_temp_master)
                WHERE type="view" ORDER BY name''')
-        view_name_list = [tup[0] for tup in self.cur.fetchall()]
+        view_name_list = [tup[0] if len(tup[0].split()) == 1 else
+                          '{0}{1}{2}'.format(enclosures[0], tup[0],
+                                             enclosures[1])
+                          for tup in self.cur.fetchall()]
 
         if DEBUG:
             print 'Existing tables:', view_name_list
