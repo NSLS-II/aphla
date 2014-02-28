@@ -5009,6 +5009,8 @@ class LauncherApp(QObject):
                     cmd = ' '.join([editor, filepath])
                 else:
                     raise ValueError('Command not found: {0:s}'.format(cmd))
+            elif editor == '&default':
+                cmd = 'xdg-open {0:s}'.format(filepath)
             elif editor in ('&nano', '&vi'):
                 cmd = editor[1:]
                 if self.which(cmd) != '':

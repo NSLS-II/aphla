@@ -146,7 +146,7 @@
    <item row="1" column="0">
     <widget class="QStackedWidget" name="stackedWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="page_page">
       <layout class="QGridLayout" name="gridLayout_3">
@@ -253,6 +253,11 @@
          <property name="editable">
           <bool>true</bool>
          </property>
+         <item>
+          <property name="text">
+           <string>&amp;default</string>
+          </property>
+         </item>
          <item>
           <property name="text">
            <string>gedit</string>
@@ -515,6 +520,11 @@
          </property>
          <item>
           <property name="text">
+           <string>&amp;default</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>&amp;wing_new_window</string>
           </property>
          </item>
@@ -743,6 +753,11 @@
          <property name="editable">
           <bool>true</bool>
          </property>
+         <item>
+          <property name="text">
+           <string>&amp;default</string>
+          </property>
+         </item>
          <item>
           <property name="text">
            <string>gedit</string>
