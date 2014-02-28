@@ -3478,7 +3478,7 @@ def main():
         dialog_result = result['dialog_result']
 
         print dialog_result
-        print 'Length = ', len(dialog_result)
+        print 'Length = {0:d}'.format(len(dialog_result['selection']))
 
 
     else: # When non-modal
@@ -3488,6 +3488,7 @@ def main():
 
     cothread.WaitForQuit()
 
+    return dialog_result
 
 #----------------------------------------------------------------------
 if __name__ == "__main__" :
