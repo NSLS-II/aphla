@@ -3447,7 +3447,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def onColumnSelectionChange(self, new_vis_col_full_names,
                                 force_visibility_update=False):
         """"""
-
+        
         if (not force_visibility_update) and \
            (new_vis_col_full_names == self.visible_column_full_name_list):
             return
@@ -4276,6 +4276,15 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 m.searchModel.index(0,0) )
             m.listView.setRootIndex(proxyModelIndex)
             m.treeView.setRootIndex(proxyModelIndex)
+            
+            # Bug fix for showing all columns (not only the visible columns)
+            # when typing a keyword with no match and re-typing a keyword
+            # with some match in Search mode.
+            header = m.treeView.header()
+            if len(self.visible_column_full_name_list) != header.count():
+                self.onColumnSelectionChange(
+                    self.visible_column_full_name_list,
+                    force_visibility_update=True)
 
 
         self.updatePath()
