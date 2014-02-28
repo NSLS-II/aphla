@@ -24,9 +24,9 @@ PRPTOWNER = 'cf-asd'
 def update():
     cf = ChannelFinderClient(**cfinput)
 
-    pv="SR:C30-MG{PS:QH1A}I:Ps1DCCT1-I"
-    cf.update(property=Property('elemType', PRPTOWNER, 'SEXT'),
-              channelNames = [pv])
+    #pv="SR:C30-MG{PS:QH1A}I:Ps1DCCT1-I"
+    #cf.update(property=Property('elemType', PRPTOWNER, 'SEXT'),
+    #          channelNames = [pv])
     #chs = cf.find(name=pv)
     #print "updating {0}".format([ch.Name for ch in chs])
     #print "updating {0} elemField=b0".format([ch.Name for ch in chs])
@@ -34,6 +34,7 @@ def update():
     #          channelNames = [ch.Name for ch in chs])
     #cf.update(property=Property('system', PRPTOWNER, 'SR'),
     #              channelNames = [ch.Name for ch in chs])
+    cf.update(property=Property('elemGroups', PRPTOWNER), originalPropertyName='elemGroup')
 
 if __name__ == "__main__":
     update()

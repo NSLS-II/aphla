@@ -2,7 +2,7 @@
 
 """
 
-GUI application for selecting HLA channel(s) interactively
+GUI application for selecting APHLA channel(s) interactively
 
 :author: Yoshiteru Hidaka
 :license:
@@ -24,23 +24,6 @@ to have a read PV. A knob simply needs to be able to change setpoints.
 """
 
 import sys
-
-#USE_DEV_SRC = True
-#if USE_DEV_SRC:
-    ## Force Python to use your development modules,
-    ## instead of the modules already installed on the system.
-    #import os
-    #if os.environ.has_key('HLA_DEV_SRC'):
-        #dev_src_dir_path = os.environ['HLA_DEV_SRC']
-
-        #if dev_src_dir_path in sys.path:
-            #sys.path.remove(dev_src_dir_path)
-
-        #sys.path.insert(0, dev_src_dir_path)
-
-    #else:
-        #print 'Environment variable named "HLA_DEV_SRC" is not defined. Using default HLA.'
-
 import fnmatch
 from operator import and_, not_
 

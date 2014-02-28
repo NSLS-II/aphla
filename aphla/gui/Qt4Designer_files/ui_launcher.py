@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'ui_launcher.ui'
 #
-# Created: Tue Mar  6 15:38:22 2012
-#      by: PyQt4 UI code generator 4.8.3
+# Created: Fri Feb  7 21:34:11 2014
+#      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -25,6 +25,11 @@ class Ui_MainWindow(object):
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.splitter_2 = QtGui.QSplitter(self.centralwidget)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.splitter_2.sizePolicy().hasHeightForWidth())
+        self.splitter_2.setSizePolicy(sizePolicy)
         self.splitter_2.setOrientation(QtCore.Qt.Horizontal)
         self.splitter_2.setObjectName(_fromUtf8("splitter_2"))
         self.layoutWidget = QtGui.QWidget(self.splitter_2)
@@ -66,7 +71,7 @@ class Ui_MainWindow(object):
         self.stackedWidget_path.addWidget(self.page_4)
         self.horizontalLayout.addWidget(self.stackedWidget_path)
         self.lineEdit_search = QtGui.QLineEdit(self.splitter_2)
-        self.lineEdit_search.setMaximumSize(QtCore.QSize(16777215, 29))
+        self.lineEdit_search.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.lineEdit_search.setText(_fromUtf8(""))
         self.lineEdit_search.setObjectName(_fromUtf8("lineEdit_search"))
         self.verticalLayout.addWidget(self.splitter_2)
@@ -91,7 +96,7 @@ class Ui_MainWindow(object):
         self.gridLayout_5.addLayout(self.verticalLayout, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 23))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 15))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -124,15 +129,12 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "HLA App Launcer", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "APHLA Launcer", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("MainWindow", "Path:", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_path_button_list_back.setText(QtGui.QApplication.translate("MainWindow", "Back", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_path_button_list_1.setText(QtGui.QApplication.translate("MainWindow", "Folder", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_path_button_list_forward.setText(QtGui.QApplication.translate("MainWindow", "Forward", None, QtGui.QApplication.UnicodeUTF8))
-        try: # TOREMOVE_ON_DEB7 For older PyQt backward compatibility
-            self.lineEdit_search.setPlaceholderText(QtGui.QApplication.translate("MainWindow", "Quick search", None, QtGui.QApplication.UnicodeUTF8))
-        except:
-            pass
+        self.lineEdit_search.setPlaceholderText(QtGui.QApplication.translate("MainWindow", "Quick search", None, QtGui.QApplication.UnicodeUTF8))
         self.menuFile.setTitle(QtGui.QApplication.translate("MainWindow", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.menuEdit.setTitle(QtGui.QApplication.translate("MainWindow", "Edit", None, QtGui.QApplication.UnicodeUTF8))
         self.menuView.setTitle(QtGui.QApplication.translate("MainWindow", "View", None, QtGui.QApplication.UnicodeUTF8))

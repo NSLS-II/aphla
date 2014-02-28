@@ -2,7 +2,7 @@
 
 """GUI application for launching other GUI applications
 
-Version 1.0.0
+Version 1.0
 
 :author: Yoshiteru Hidaka
 :license:
@@ -16,9 +16,12 @@ through which users can find and launch an application of interest. It can
 also search an application by keywords.
 """
 
+__version__ = '1.0'
+
 import sys, os
 import os.path as osp
 import errno
+from signal import SIGTERM, SIGKILL
 import time
 import posixpath
 from copy import copy, deepcopy
@@ -26,7 +29,9 @@ import types
 from subprocess import Popen, PIPE
 import traceback
 import re
+import json
 import shutil
+from collections import OrderedDict
 from cStringIO import StringIO
 import sip
 sip.setapi('QString', 2)
@@ -35,16 +40,16 @@ sip.setapi('QVariant', 2)
 import cothread
 
 from PyQt4.QtCore import (
-    Qt, SIGNAL, QObject, QDir, QFile, QIODevice, QTextStream, QModelIndex,
+    Qt, SIGNAL, QObject, QFile, QIODevice, QTextStream, QModelIndex,
     QPersistentModelIndex, QSettings, QRect, QSize)
 from PyQt4.QtGui import (
     QApplication, QFont, QWidget, QStandardItemModel, QStandardItem, QComboBox,
     QCompleter, QDialog, QMessageBox, QFileDialog, QIcon, QBrush, QTreeView,
     QAbstractItemView, QListView, QSortFilterProxyModel, QMainWindow, QMenu,
     QStackedWidget, QTabWidget, QGridLayout, QAction, QActionGroup,
-    QKeySequence
+    QKeySequence, QTableWidgetItem, QSizePolicy, QFontInfo, QLineEdit,
+    QPushButton, QPlainTextEdit, QItemDelegate, QFontMetrics
 )
-from PyQt4.QtXml import QDomDocument
 
 APP = None
 
@@ -130,25 +135,8 @@ ITEM_COLOR_PY   = Qt.blue
 ITEM_COLOR_EXE  = Qt.blue
 ITEM_COLOR_TXT  = Qt.magenta
 
-# Forward slash '/' will be used as a file path separator for both
-# in Linux & Windows. Even if '/' is used in Windows, shutil and os functions
-# still properly work.
-# QDir.homePath() will return the home path string using '/' even on Windows.
-# Therefore, '/' is being used consistently in this code.
-#
-# By the way, the QFile document says "QFile expects the file separator to be
-# '/' regardless of operating system.
-# The use of other separators (e.g., '\') is not supported."
-# However, on Windows, using '\' still works fine.
-SEPARATOR = '/' # used as system file path separator as well as launcher page
-                # path separator
-HOME_PATH = str(QDir.homePath())
-DOT_HLA_QFILEPATH = HOME_PATH + SEPARATOR + '.hla'
-SYSTEM_XML_FILENAME    = 'us_nsls2_launcher_hierarchy.xml'
-USER_XML_FILENAME      = 'user_launcher_hierarchy.xml'
-USER_TEMP_XML_FILENAME = 'user_launcher_hierarchy.xml.temp'
-USER_XML_FILEPATH      = DOT_HLA_QFILEPATH + SEPARATOR + USER_XML_FILENAME
-USER_TEMP_XML_FILEPATH = DOT_HLA_QFILEPATH + SEPARATOR + USER_TEMP_XML_FILENAME
+SEPARATOR = '/' # used launcher path separator
+
 USER_MODIFIABLE_ROOT_PATH = '/root/Favorites'
 
 import utils.gui_icons
@@ -157,12 +145,28 @@ from Qt4Designer_files.ui_launcher_item_properties import Ui_Dialog
 from Qt4Designer_files.ui_launcher_restore_hierarchy import Ui_Dialog \
      as Ui_Dialog_restore_hie
 from Qt4Designer_files.ui_icon_picker import Ui_Dialog as Ui_Dialog_icon
+from Qt4Designer_files.ui_launcher_aliases import Ui_Dialog as Ui_Dialog_alias
+from Qt4Designer_files.ui_launcher_pref import Ui_Dialog as Ui_Dialog_pref
 
 import aphla as ap
 from aphla.gui.utils.orderselector import ColumnsDialog
 from aphla.gui.utils import xmltodict
 
-MACHINES_FOLDERPATH = os.path.dirname(os.path.abspath(ap.machines.__file__))
+HOME_PATH      = osp.expanduser('~')
+APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_CONF_DIR):
+    os.makedirs(APHLA_CONF_DIR)
+APHLA_APSCRIPTS_DIR = os.getenv('APHLA_APSCRIPTS_DIR',
+                                '/epics/op/apps/apscripts')
+
+GROUP_XML_FILENAME     = 'aplauncher_group_hierarchy.xml'
+USER_XML_FILENAME      = 'aplauncher_user_hierarchy.xml'
+USER_TEMP_XML_FILENAME = USER_XML_FILENAME + '.temp'
+GROUP_XML_FILEPATH     = osp.join(APHLA_APSCRIPTS_DIR, GROUP_XML_FILENAME)
+USER_XML_FILEPATH      = osp.join(APHLA_CONF_DIR     , USER_XML_FILENAME)
+USER_TEMP_XML_FILEPATH = osp.join(APHLA_CONF_DIR     , USER_TEMP_XML_FILENAME)
+
+PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'launcher_startup_pref.json')
 
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
@@ -245,23 +249,40 @@ class LauncherModel(QStandardItemModel):
         self.commandList    = []
         self.moduleNameList = []
 
+        self.aliases = [] # aliase definitions are now included in the
+        # hierarchy XML files
+
         ## First, parse system XML file and construct a tree model
-        system_XML_Filepath = os.path.join(MACHINES_FOLDERPATH,
-                                           SYSTEM_XML_FILENAME)
-        system_XML_Filepath.replace('\\','/') # On Windows, convert Windows
-        # path separator ('\\') to Linux path separator ('/')
-        #
+        with open(GROUP_XML_FILEPATH, 'r') as f:
+            xml_dict = xmltodict.parse(
+                f, postprocessor=_xmltodict_subs_None_w_emptyStr)
         self.nRows = 0
-        doc = self.open_XML_HierarchyFile(system_XML_Filepath)
-        self.construct_tree_model(doc.firstChild()) # Recursively search through
-        # the XML file to build the corresponding tree structure.
+        self.construct_tree(xml_dict, xml_dict['hierarchy']['@version'])
+
+        self.default_aliases = deepcopy(self.aliases)
 
         ## Then parse user XML file and append the data to the tree model
-        doc = self.open_XML_HierarchyFile(USER_XML_FILEPATH)
+        if not osp.exists(USER_XML_FILEPATH):
+            init_user_launcher_hierarchy = \
+                '''<?xml version="1.0" encoding="utf-8"?>
+<hierarchy version="1.0">
+    <item>
+        <dispName>Favorites</dispName>
+        <desc></desc>
+        <icon>page</icon>
+        <itemType>page</itemType>
+    </item>
+</hierarchy>'''
+            with open(USER_XML_FILEPATH, 'w') as f:
+                f.write(init_user_launcher_hierarchy)
+        #
+        with open(USER_XML_FILEPATH, 'r') as f:
+            xml_dict = xmltodict.parse(
+                f, postprocessor=_xmltodict_subs_None_w_emptyStr)
         rootItem = self.item(0,0)
-        self.construct_tree_model(doc.firstChild(),
-                                  parent_item=rootItem,
-                                  child_index=rootItem.rowCount())
+        self.construct_tree(xml_dict, xml_dict['hierarchy']['@version'],
+                            parent_item=rootItem,
+                            child_index=rootItem.rowCount())
 
         # Set up completer for search
         self.completer = QCompleter()
@@ -278,6 +299,61 @@ class LauncherModel(QStandardItemModel):
         self.search_index_desc_list = []
         self.search_index_help_list = []
         self.update_search_index()
+
+    #----------------------------------------------------------------------
+    def _validate_aliases(self, temp_aliases):
+        """
+        Aliases must be a string without whitespaces.
+        """
+
+        aliases = [OrderedDict() for i in range(len(temp_aliases))]
+        for i, temp_alias in enumerate(temp_aliases):
+            k = temp_alias['key']
+            v = temp_alias['value']
+            if len(k.split()) != 1:
+                print 'An alias cannot contain any whitespace.'
+                raise ValueError('Invalid alias found: {0:s}'.format(k))
+            else:
+                aliases[i]['key']   = '%' + k
+                aliases[i]['value'] = v
+
+        return aliases
+
+    #----------------------------------------------------------------------
+    def _get_aliases_prepared_for_saving(self):
+        """"""
+
+        aliases = [OrderedDict() for i in range(len(self.aliases))]
+        for i, alias in enumerate(self.aliases):
+            k = alias['key']
+            v = alias['value']
+            if len(k.split()) != 1:
+                print 'An alias cannot contain any whitespace.'
+                raise ValueError('Invalid alias found: {0:s}'.format(k))
+            else:
+                aliases[i]['key']   = k[1:] # Remove the prefix "%"
+                aliases[i]['value'] = v
+
+        return aliases
+
+    #----------------------------------------------------------------------
+    def subs_aliases(self, text_before_subs):
+        """"""
+
+        aliases = [d['key'] for d in self.aliases]
+
+        splitted_text = text_before_subs.split(' ')
+        splitted_text_after_subs = splitted_text[:]
+        for i, s in enumerate(splitted_text):
+            matched_alias_ind = [j for j, a in enumerate(aliases)
+                                 if s.startswith(a)]
+            if matched_alias_ind != []:
+                matched_alias_ind = matched_alias_ind[0]
+                matched_alias = self.aliases[matched_alias_ind]
+                splitted_text_after_subs[i] = s.replace(
+                    matched_alias['key'], matched_alias['value'])
+
+        return ' '.join(splitted_text_after_subs)
 
     #----------------------------------------------------------------------
     def update_search_index(self, parent_item=None, index_item=None,
@@ -337,7 +413,8 @@ class LauncherModel(QStandardItemModel):
             try:
                 sys.path = ORIGINAL_SYS_PATH[:]
                 if item.cwd not in ('','N/A'):
-                    cwd = _subs_tilde_with_home(item.cwd)
+                    cwd = self.subs_aliases(item.cwd)
+                    cwd = _subs_tilde_with_home(cwd)
                     if osp.exists(cwd):
                         print 'Changing directory to {0:s}'.format(cwd)
                         os.chdir(cwd)
@@ -367,10 +444,20 @@ class LauncherModel(QStandardItemModel):
         else:
             return 'N/A'
 
+        f = self.subs_aliases(f)
+        f = _subs_tilde_with_home(f)
+
         help_text = ''
 
         if (header_type == 'None') or (f == ''):
             pass
+
+        elif not osp.exists(f):
+
+            help_text = '''## ERROR: Failed to get help text in source file ##
+
+The following file does not exist:
+    {0:s}'''.format(f)
 
         elif header_type == 'python':
             help_header_quote = ''
@@ -498,101 +585,100 @@ class LauncherModel(QStandardItemModel):
         return help_text
 
     #----------------------------------------------------------------------
-    def construct_tree_model(self, dom, parent_item = None,
-                             child_index = None):
+    def construct_tree(self, xml_dict, version, parent_item=None,
+                       child_index=None):
         """
+        Recursively search through the json-like dictionary derived from the
+        XML file to build the corresponding tree structure
         """
 
-        info = self.getItemInfo(dom)
+        if version == '1.0':
+            if xml_dict.has_key('hierarchy'):
+                h = xml_dict['hierarchy']
+                if h.has_key('alias'):
+                    for a in self._validate_aliases(h['alias']):
+                        existing_alias_keys = [a2['key'] for a2 in self.aliases]
+                        if a['key'] in existing_alias_keys:
+                            self.aliases[existing_alias_keys.index(a['key'])]\
+                                ['value'] = a['value']
+                        else:
+                            self.aliases.append(a)
+                d = h['item']
+            else:
+                d = xml_dict
 
-        if info:
-            dispName = str(info['dispName'])
+            if d.has_key('dispName'):
+                dispName = d['dispName']
 
-            item = LauncherModelItem(dispName)
+                item = LauncherModelItem(dispName)
 
-            for prop_name in MODEL_ITEM_PROPERTY_NAMES:
-                if prop_name != 'path':
-                    setattr(item, prop_name, 'N/A')
+                for prop_name in MODEL_ITEM_PROPERTY_NAMES:
+                    if prop_name != 'path':
+                        setattr(item, prop_name, 'N/A')
 
-            item.path     = item.path + item.dispName # This assignment is
-            # meaningful only for "/root".
-            item.desc     = info['desc']
-            item.icon     = info['icon']
-            item.itemType = info['itemType']
+                item.path     = item.path + item.dispName # This assignment
+                # is meaningful only when path == '/root'.
+                item.desc     = d['desc']
+                item.icon     = d['icon']
+                item.itemType = d['itemType']
 
-            for prop_name in MODEL_ITEM_PROPERTY_NAME_DICT[item.itemType]:
-                setattr(item, prop_name, info[prop_name])
+                for prop_name in MODEL_ITEM_PROPERTY_NAME_DICT[item.itemType]:
+                    setattr(item, prop_name, d[prop_name])
 
-            if item.helpHeader == '':
-                item.helpHeader = 'None'
+                if item.helpHeader == '':
+                    item.helpHeader = 'None'
 
-            # Get help text at the header of the source file
-            item.help = self.get_help_header_text(item)
+                # Get help text at the header of the source file
+                item.help = self.get_help_header_text(item)
 
-            item.updateIconAndColor()
+                item.updateIconAndColor()
 
-            for sibling_dom in info['sibling_DOMs']:
-                item.appendRow(LauncherModelItem())
-
-            if (parent_item is not None) and (child_index is not None):
-                item.path = parent_item.path + item.path
-                if item.path not in self.pathList:
-                    self.pathList.append(item.path)
+                if d.has_key('item'):
+                    if isinstance(d['item'], list):
+                        child_items = d['item']
+                    else:
+                        child_items = [d['item']]
+                    nChildren = len(child_items)
+                    for i in range(nChildren):
+                        item.appendRow(LauncherModelItem())
                 else:
-                    raise ValueError('Duplicate path found: '+item.path)
+                    child_items = []
 
-                if item.path.startswith(USER_MODIFIABLE_ROOT_PATH+SEPARATOR):
-                    item.setEditable(True)
+                if (parent_item is not None) and (child_index is not None):
+                    item.path = parent_item.path + item.path
+                    if item.path not in self.pathList:
+                        self.pathList.append(item.path)
+                    else:
+                        raise ValueError('Duplicate path found: {0:s}'.
+                                         format(item.path))
+
+                    if item.path.startswith(USER_MODIFIABLE_ROOT_PATH +
+                                            SEPARATOR):
+                        item.setEditable(True)
+                    else:
+                        item.setEditable(False)
+
+                    parent_item.setChild(child_index, 0, item)
+                    for i, prop_name in enumerate(MODEL_ITEM_PROPERTY_NAMES):
+                        p = getattr(item, prop_name)
+                        parent_item.setChild(child_index, i+1,
+                                             QStandardItem(p))
                 else:
-                    item.setEditable(False)
+                    self.setItem(self.nRows, item)
+                    self.nRows += 1
 
-                parent_item.setChild(child_index, 0, item)
-                for (ii,prop_name) in enumerate(MODEL_ITEM_PROPERTY_NAMES):
-                    p = getattr(item,prop_name)
-                    #if not isinstance(p,str):
-                        #p = str(p)
-                    parent_item.setChild(child_index, ii+1,QStandardItem(p))
+                parent_item = item
+                for child_index, sub_xml_dict in enumerate(child_items):
+                    self.construct_tree(sub_xml_dict, version,
+                                        parent_item=parent_item,
+                                        child_index=child_index)
 
             else:
-                self.setItem(self.nRows, item)
-                self.nRows += 1
+                raise ValueError('Each item must have dispName property.')
 
-            parent_item = item
-            for (child_index, sibling_dom) in \
-                enumerate(info['sibling_DOMs']):
-                self.construct_tree_model(sibling_dom, parent_item,
-                                          child_index)
         else:
-            if not child_index:
-                child_index = 0
-
-            self.construct_tree_model(dom.nextSibling().firstChild(),
-                                      parent_item, child_index)
-
-    #----------------------------------------------------------------------
-    def getItemInfo(self, dom):
-        """
-        """
-
-        node = dom.firstChild()
-
-        info = DEFAULT_XML_ITEM.copy()
-        info['sibling_DOMs'] = []
-
-        while not node.isNull():
-            nodeName = str(node.nodeName())
-            if nodeName in XML_ITEM_PROPERTY_NAMES:
-                nodeValue = str(node.firstChild().nodeValue())
-                info[nodeName] = nodeValue
-            elif nodeName == XML_ITEM_TAG_NAME:
-                info['sibling_DOMs'].append(node)
-
-            node = node.nextSibling()
-
-        if not info['dispName']:
-            info = {}
-
-        return info
+            raise ValueError('Unexpected hierarchy format version: {0:s}'.
+                             format(h['@version']))
 
     #----------------------------------------------------------------------
     def _getXMLPropNames(self, itemType):
@@ -605,141 +691,57 @@ class LauncherModel(QStandardItemModel):
                    XML_ITEM_PROPERTY_NAME_DICT[itemType]
 
     #----------------------------------------------------------------------
-    def constructXMLElementsFromModel(self, doc, parentModelItem, parentDOMElement):
+    def write_hierarchy_to_XML_file(self, XML_filepath, rootModelItem):
         """"""
 
-        childItemList = [parentModelItem.child(i,0) for i in
-                         range(parentModelItem.rowCount())]
-        for childItem in childItemList:
-            childElement = doc.createElement(XML_ITEM_TAG_NAME)
+        if __version__ == '1.0':
 
-            itemType = childItem.itemType
+            rootItemDict = OrderedDict()
+            for prop_name in XML_ITEM_COMMON_PROPERTY_NAMES:
+                p = getattr(rootModelItem, prop_name)
+                if p == 'N/A': p = None
+                if p == ''   : p = None
+                rootItemDict[prop_name] = p
 
-            for prop_name in self._getXMLPropNames(itemType):
-                p = getattr(childItem,prop_name)
-                #if not isinstance(p,str):
-                    #p = str(p)
-                if p == 'N/A': p = ''
-                elem = doc.createElement(prop_name)
-                elemNodeText = doc.createTextNode(p)
-                elem.appendChild(elemNodeText)
-                childElement.appendChild(elem)
-                #if (prop_name == 'itemType') and (p == 'page'):
-                    #break
+            self.construct_XML_dict_from_model(rootModelItem, rootItemDict)
+
+            hierarchy = OrderedDict()
+            hierarchy['@version'] = __version__
+            hierarchy['alias']    = self._get_aliases_prepared_for_saving()
+            hierarchy['item']     = rootItemDict
+
+            d = OrderedDict()
+            d['hierarchy'] = hierarchy
+
+            with open(XML_filepath, 'w') as f:
+                xmltodict.unparse(d, output=f, pretty=True, newl='\n',
+                                  indent=' '*4)
+        else:
+            raise ValueError('Unexpected version: {0:s}'.format(__version__))
+
+    #----------------------------------------------------------------------
+    def construct_XML_dict_from_model(self, parentModelItem, parentDict):
+        """"""
+
+        nChildren = parentModelItem.rowCount()
+
+        childItemList = [parentModelItem.child(i,0) for i in range(nChildren)]
+        childDictList = [OrderedDict()              for i in range(nChildren)]
+
+        for i, childItem in enumerate(childItemList):
+            for prop_name in self._getXMLPropNames(childItem.itemType):
+                p = getattr(childItem, prop_name)
+                if p == 'N/A': p = None
+                if p == ''   : p = None
+                childDictList[i][prop_name] = p
 
             if childItem.hasChildren():
-                self.constructXMLElementsFromModel(doc, childItem, childElement)
+                self.construct_XML_dict_from_model(childItem, childDictList[i])
 
-            parentDOMElement.appendChild(childElement)
-
-
-    #----------------------------------------------------------------------
-    def writeToXMLFile(self, XML_Filepath, rootModelItem):
-        """"""
-
-        if rootModelItem.itemType == 'page':
-            pass
+        if nChildren == 1:
+            parentDict['item'] = childDictList[0]
         else:
-            raise ValueError('Root model item to be written must be type "page".')
-
-        doc = QDomDocument('')
-
-        # Create XML file declaration header
-        header = doc.createProcessingInstruction('xml', 'version="1.0" encoding="UTF-8"')
-        doc.appendChild(header)
-
-        # Create the XML root element (different from the XML element corresponding
-        # to the root model item)
-        xmlRootDOMElement = doc.createElement('hierarchy')
-
-        # Create the XML element corresponding to the root model item
-        modelRootDOMElement = doc.createElement(XML_ITEM_TAG_NAME)
-        prop_name_list = XML_ITEM_COMMON_PROPERTY_NAMES
-        for prop_name in prop_name_list:
-        #for (ii,prop_name) in enumerate(XML_ITEM_PROPERTY_NAMES):
-            p = getattr(rootModelItem,prop_name)
-            #if not isinstance(p,str):
-                #p = str(p)
-            if p == 'N/A': p = ''
-            elem = doc.createElement(prop_name)
-            elemNodeText = doc.createTextNode(p)
-            elem.appendChild(elemNodeText)
-            modelRootDOMElement.appendChild(elem)
-            #if (prop_name == 'itemType') and (p == 'page'):
-                #break
-
-
-        # Append the XML element corresponding to the root model item as a child of
-        # the XML root element
-        xmlRootDOMElement.appendChild(modelRootDOMElement)
-
-        # Construct all the child elements recursively based on all the child model
-        # items of the given root model item
-        self.constructXMLElementsFromModel(doc, rootModelItem, modelRootDOMElement)
-
-        # Finally, append the XML root element to the DOM object
-        doc.appendChild(xmlRootDOMElement)
-
-
-        f = QFile(XML_Filepath)
-
-        if not f.open(QIODevice.WriteOnly | QIODevice.Text):
-            raise IOError('Failed to open ' + XML_Filepath + ' for writing.')
-
-        stream = QTextStream(f)
-
-        indent = 4
-        stream << doc.toString(indent)
-
-        f.close()
-
-
-
-    #----------------------------------------------------------------------
-    def open_XML_HierarchyFile(self, XML_Filepath):
-        """
-        """
-
-
-        f = QFile(XML_Filepath)
-        if not f.exists():
-            # If the system XML file cannot be located, stop here.
-            XML_Filename = os.path.split(XML_Filepath)
-            if SYSTEM_XML_FILENAME == XML_Filename:
-                raise OSError(XML_Filepath + ' does not exist.')
-
-            # If the user XML file cannot be found, then create an empty one in
-            # ".hla" directory under the user home directory.
-
-            # This section of code creates ".hla" directory under th user home directory,
-            # if it does not already exist. This method assures no race condtion will happen
-            # in the process of creating the new directory.
-            try:
-                os.makedirs(DOT_HLA_QFILEPATH)
-            except OSError, e:
-                if e.errno != errno.EEXIST:
-                    raise OSError('Failed to create .hla directory')
-
-            # Create an empty user XML file
-            rootModelItem = LauncherModelItem('Favorites')
-            self.writeToXMLFile(XML_Filepath, rootModelItem)
-            # Make sure that the file has been successfully created.
-            if not f.exists():
-                raise IOError('Failed to create an empty User XML file')
-
-        if not f.open(QIODevice.ReadOnly):
-            raise IOError('Failed to open ' + XML_Filepath)
-
-        doc = QDomDocument('')
-
-        if not doc.setContent(f):
-            f.close()
-            raise IOError('Failed to parse ' + XML_Filepath)
-        f.close()
-
-        return doc
-
-
+            parentDict['item'] = childDictList
 
     #----------------------------------------------------------------------
     def updateCompleterModel(self, currentRootPath):
@@ -782,8 +784,6 @@ class LauncherModel(QStandardItemModel):
 
             self.updatePathLookupLists(childItem)
 
-
-
     #----------------------------------------------------------------------
     def pModelIndexFromPath(self, path):
         """"""
@@ -791,7 +791,6 @@ class LauncherModel(QStandardItemModel):
         index = self.pathList.index(path)
 
         return self.pModelIndList[index]
-
 
 ########################################################################
 class LauncherRestoreHierarchyDialog(QDialog, Ui_Dialog_restore_hie):
@@ -875,6 +874,255 @@ class LauncherRestoreHierarchyDialog(QDialog, Ui_Dialog_restore_hie):
         self.lineEdit_backup_filepath.setText(save_filepath)
 
 ########################################################################
+class PreferencesEditor(QDialog, Ui_Dialog_pref):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, default_pref):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowTitle('Startup Preferences')
+
+        self.default_pref = default_pref
+
+        self.load_pref_json()
+
+        self.connect(self.pushButton_restore_default, SIGNAL('clicked()'),
+                     self.restore_default_pref)
+        self.connect(self.pushButton_edit_visible_columns, SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+
+    #----------------------------------------------------------------------
+    def load_pref_json(self):
+        """"""
+
+        if osp.exists(PREF_JSON_FILEPATH):
+            with open(PREF_JSON_FILEPATH, 'r') as f:
+                self.pref = json.load(f)
+        else:
+            # Use default startup preferences
+            self.pref = deepcopy(self.default_pref)
+
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def save_pref_json(self):
+        """"""
+
+        with open(PREF_JSON_FILEPATH, 'w') as f:
+            json.dump(self.pref, f, indent=3, sort_keys=True,
+                      separators=(',', ': '))
+
+    #----------------------------------------------------------------------
+    def restore_default_pref(self):
+        """"""
+
+        self.pref = deepcopy(self.default_pref)
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def update_view(self):
+        """"""
+
+        index = self.comboBox_font_size.findText(str(self.pref['font_size']),
+                                                 Qt.MatchExactly)
+        self.comboBox_font_size.setCurrentIndex(index)
+
+        self.update_column_list_only()
+
+        index = self.comboBox_view_mode.findText(self.pref['view_mode'],
+                                                 Qt.MatchExactly)
+        self.comboBox_view_mode.setCurrentIndex(index)
+
+        self.checkBox_side_pane_visible.setChecked(self.pref['side_pane_vis'])
+
+    #----------------------------------------------------------------------
+    def update_column_list_only(self):
+        """"""
+
+        self.listWidget_visible_columns.clear()
+        self.listWidget_visible_columns.addItems(self.pref['vis_col_list'])
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        all_column_full_name_list = ALL_COLUMN_NAMES
+        visible_column_full_name_list = self.pref['vis_col_list']
+        permanently_visible_column_full_name_list = PERM_VISIBLE_COL_NAMES
+
+        dialog = ColumnsDialog(all_column_full_name_list,
+                               visible_column_full_name_list,
+                               permanently_visible_column_full_name_list,
+                               parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.pref['vis_col_list'] = dialog.output[:]
+            self.update_column_list_only()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        self.pref['font_size'] = int(self.comboBox_font_size.currentText())
+
+        # self.pref['vis_col_list'] is already updated whenever the list is
+        # modified by column dialog. So, there is no need to update here.
+
+        self.pref['view_mode'] = self.comboBox_view_mode.currentText()
+
+        self.pref['side_pane_vis'] = self.checkBox_side_pane_visible.isChecked()
+
+        self.save_pref_json()
+
+        super(PreferencesEditor, self).accept() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(PreferencesEditor, self).reject() # will hide the dialog
+
+########################################################################
+class AliasEditor(QDialog, Ui_Dialog_alias):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, alias_dict_list, default_alias_dict_list):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowTitle('Aliases')
+
+        self.pushButton_plus.setIcon(QIcon(':/plus.png'))
+        self.pushButton_plus.setIconSize(QSize(40,40))
+        self.pushButton_minus.setIcon(QIcon(':/minus.png'))
+        self.pushButton_minus.setIconSize(QSize(40,40))
+
+        self.default_aliases = deepcopy(default_alias_dict_list)
+        self.aliases         = deepcopy(alias_dict_list)
+
+        self.updateModel()
+
+        self.connect(self.pushButton_plus, SIGNAL('clicked()'),
+                     self.addAlias)
+        self.connect(self.pushButton_minus, SIGNAL('clicked()'),
+                     self.removeAlias)
+        self.connect(self.pushButton_restore_default, SIGNAL('clicked()'),
+                     self.restore_default)
+
+    #----------------------------------------------------------------------
+    def updateModel(self):
+        """"""
+
+        w = self.tableWidget
+
+        w.setRowCount(0) # clear existing items
+        w.setRowCount(len(self.aliases))
+        for i, alias in enumerate(self.aliases):
+            k = alias['key']
+            v = alias['value']
+            w.setItem(i, 0, QTableWidgetItem(k[1:])) # exclude '%'
+            w.setItem(i, 1, QTableWidgetItem(v))
+
+        w.resizeColumnsToContents()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        w = self.tableWidget
+
+        nRows = w.rowCount()
+
+        alias_tuples = [('%' + w.item(i, 0).text(),
+                               w.item(i, 1).text()) for i in range(nRows)]
+
+        # Remove empty rows
+        alias_tuples = [(k, v) for (k, v) in alias_tuples
+                        if (k != '%') and (v != '')]
+
+        # Check if whitespace in alias keys
+        whitespace_alias_keys = [k[1:] for (k, v) in alias_tuples
+                                 if len(k.split()) != 1]
+        if whitespace_alias_keys != []:
+            msgBox = QMessageBox()
+            msgBox.setText('An alias cannot contain any whitespace.')
+            infoText = 'Invalid alias(es) found:\n'
+            for k in whitespace_alias_keys:
+                infoText += '   "{0:s}"\n'.format(k)
+            msgBox.setInformativeText(infoText)
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+            return
+
+        # Check if duplicates in alias keys
+        alias_keys = [k for (k, v) in alias_tuples]
+        duplicate_keys = [alias_key for alias_key in set(alias_keys)
+                          if alias_keys.count(alias_key) != 1]
+        if duplicate_keys != []:
+            msgBox = QMessageBox()
+            msgBox.setText('Duplicate alias keys have been found.')
+            infoText = ''
+            for k in duplicate_keys:
+                infoText += '   "{0:s}"\n'.format(k[1:])
+            msgBox.setInformativeText(infoText)
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+            return
+
+        self.aliases = []
+        for k, v in alias_tuples:
+            d = OrderedDict()
+            d['key'] = k; d['value'] = v
+            self.aliases.append(d)
+
+        super(AliasEditor, self).accept() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(AliasEditor, self).reject() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def addAlias(self):
+        """"""
+
+        currentRow = self.tableWidget.currentRow()
+        if self.tableWidget.rowCount() == 0:
+            newRow = 0
+        else:
+            newRow = currentRow + 1
+        self.tableWidget.insertRow(newRow)
+        self.tableWidget.setItem(newRow, 0, QTableWidgetItem(''))
+        self.tableWidget.setItem(newRow, 1, QTableWidgetItem(''))
+
+    #----------------------------------------------------------------------
+    def removeAlias(self):
+        """"""
+
+        currentRow = self.tableWidget.currentRow()
+        self.tableWidget.removeRow(currentRow)
+
+    #----------------------------------------------------------------------
+    def restore_default(self):
+        """"""
+
+        self.aliases = deepcopy(self.default_aliases)
+
+        self.updateModel()
+
+
+########################################################################
 class IconPickerDialog(QDialog, Ui_Dialog_icon):
     """"""
 
@@ -945,6 +1193,16 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
 
         self.setupUi(self)
 
+        minWidth = 1
+        self.comboBox_exe_command.setMinimumWidth(minWidth)
+        self.comboBox_exe_editor.setMinimumWidth(minWidth)
+        self.comboBox_exe_helpHeaderType.setMinimumWidth(minWidth)
+        self.comboBox_itemType.setMinimumWidth(minWidth)
+        self.comboBox_py_editor.setMinimumWidth(minWidth)
+        self.comboBox_py_moduleName.setMinimumWidth(minWidth)
+        self.comboBox_txt_editor.setMinimumWidth(minWidth)
+        self.comboBox_txt_helpHeaderType.setMinimumWidth(minWidth)
+
         self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
 
         self.model = model
@@ -1013,17 +1271,23 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
                     if matchedInd != -1:
                         obj.setCurrentIndex(matchedInd)
                     else:
-                        print 'No matching item found in {0:s}'.format(objName)
-                        search_string = DEFAULT_XML_ITEM[propName]
-                        print ('Using default value of "{0:s}" for "{1:s}"'.
-                               format(search_string, propName))
-                        matchedInd = obj.findText(search_string,
-                                                  Qt.MatchExactly)
-
-                        if matchedInd == -1:
-                            raise ValueError('Default value not found in combobox choices.')
-                        else:
+                        if propName == 'editor':
+                            obj.addItems([search_string])
+                            matchedInd = obj.findText(search_string,
+                                                      Qt.MatchExactly)
                             obj.setCurrentIndex(matchedInd)
+                        else:
+                            print 'No matching item found in {0:s}'.format(objName)
+                            search_string = DEFAULT_XML_ITEM[propName]
+                            print ('Using default value of "{0:s}" for "{1:s}"'.
+                                   format(search_string, propName))
+                            matchedInd = obj.findText(search_string,
+                                                      Qt.MatchExactly)
+
+                            if matchedInd == -1:
+                                raise ValueError('Default value not found in combobox choices.')
+                            else:
+                                obj.setCurrentIndex(matchedInd)
 
             elif objName.startswith('plainTextEdit'):
                 if objName.endswith('description'):
@@ -1185,6 +1449,12 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
             raise ValueError('Unexpected itemType: {0:s}'.
                              format(self.item.itemType))
 
+        if new_src_filepath == self.item.sourceFilepath:
+            return
+        else:
+            new_src_filepath = self.model.subs_aliases(new_src_filepath)
+            new_src_filepath = _subs_tilde_with_home(new_src_filepath)
+
         if osp.exists(new_src_filepath):
             self.item.sourceFilepath = new_src_filepath
             help_text = self.model.get_help_header_text(self.item)
@@ -1208,6 +1478,12 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         else:
             raise ValueError('Unexpected itemType: {0:s}'.
                              format(self.item.itemType))
+
+        if new_src_filepath == self.item.sourceFilepath:
+            return
+        else:
+            new_src_filepath = self.model.subs_aliases(new_src_filepath)
+            new_src_filepath = _subs_tilde_with_home(new_src_filepath)
 
         if osp.exists(new_src_filepath):
             self.item.sourceFilepath = new_src_filepath
@@ -1317,15 +1593,22 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         if not self.isItemPropertiesModifiable:
 
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['dispName'])
-            obj.setEnabled(False)
+            obj.setReadOnly(True)
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['itemType'])
             obj.setEnabled(False)
             obj = getattr(self, ITEM_PROPERTIES_DIALOG_OBJECTS['icon'])
             obj.setEnabled(False)
 
-            for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
+            for (propName, objName) in \
+                ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
                 obj = getattr(self, objName)
-                obj.setEnabled(False)
+                if isinstance(obj, (QLineEdit, QPlainTextEdit)):
+                    obj.setReadOnly(True)
+                elif isinstance(obj, (QPushButton, QComboBox)):
+                    obj.setEnabled(False)
+                else:
+                    raise ValueError('Unexpected object type: {0:s}'.format(
+                        type(obj)))
 
             return
 
@@ -1385,10 +1668,17 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         dispName = str(self.lineEdit_dispName.text())
         if dispName == '':
             msgBox = QMessageBox()
-            msgBox.setText( (
-                'Empty item name not allowed.') )
+            msgBox.setText('Empty item name not allowed.')
             msgBox.setInformativeText(
                 'Please enter a non-empty string as an item name.')
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+            return
+        elif '/' in dispName:
+            msgBox = QMessageBox()
+            msgBox.setText('"/" in item name not allowed.')
+            msgBox.setInformativeText(
+                'Please enter a string without "/" as an item name.')
             msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
             return
@@ -1491,7 +1781,6 @@ class LauncherModelItem(QStandardItem):
 
         return copiedItem
 
-
     #----------------------------------------------------------------------
     def updateIconAndColor(self):
         """"""
@@ -1529,6 +1818,9 @@ class CustomTreeView(QTreeView):
 
         QTreeView.__init__(self, *args)
 
+        self.modelIndexBeingRenamed = None
+        self.original_name = ''
+
     #----------------------------------------------------------------------
     def focusInEvent(self, event):
         """"""
@@ -1551,6 +1843,30 @@ class CustomTreeView(QTreeView):
         overwriting QAbstractItemView virtual protected slot
         """
 
+        new_item_name = editor.text()
+
+        if new_item_name == '':
+            editor.setText(self.original_name)
+
+            msgbox = QMessageBox()
+            msgbox.setText('Empty item name not allowed.')
+            msgbox.setInformativeText(
+                'Please enter a non-empty string as an item name.')
+            msgbox.setIcon(QMessageBox.Critical)
+            msgbox.exec_()
+            return
+
+        if '/' in new_item_name:
+            editor.setText(self.original_name)
+
+            msgbox = QMessageBox()
+            msgbox.setText('"/" in item name not allowed.')
+            msgbox.setInformativeText(
+                'Please enter a string without "/" as an item name.')
+            msgbox.setIcon(QMessageBox.Critical)
+            msgbox.exec_()
+            return
+
         super(QTreeView,self).closeEditor(editor,hint)
 
         self.emit(SIGNAL('closingItemRenameEditor'), editor)
@@ -1568,7 +1884,7 @@ class CustomTreeView(QTreeView):
 
         # This check here should not be needed, but it is necessary for now
         # to have this code work properly
-        if ( not isinstance(item, QStandardItem) ) and \
+        if ( item.column() == 0 ) and \
            item.path.startswith(USER_MODIFIABLE_ROOT_PATH+SEPARATOR):
             item.setEditable(True)
         else:
@@ -1615,6 +1931,7 @@ class CustomTreeView(QTreeView):
 
         if trigger == QAbstractItemView.AllEditTriggers:
             self.modelIndexBeingRenamed = modelIndex
+            self.original_name = item.text()
 
         return super(QTreeView,self).edit(modelIndex, trigger, event)
 
@@ -1630,6 +1947,7 @@ class CustomListView(QListView):
         QListView.__init__(self, *args)
 
         self.modelIndexBeingRenamed = None
+        self.original_name = ''
 
     #----------------------------------------------------------------------
     def focusInEvent(self, event):
@@ -1652,6 +1970,30 @@ class CustomListView(QListView):
         """
         overwriting QAbstractItemView virtual protected slot
         """
+
+        new_item_name = editor.text()
+
+        if new_item_name == '':
+            editor.setText(self.original_name)
+
+            msgbox = QMessageBox()
+            msgbox.setText('Empty item name not allowed.')
+            msgbox.setInformativeText(
+                'Please enter a non-empty string as an item name.')
+            msgbox.setIcon(QMessageBox.Critical)
+            msgbox.exec_()
+            return
+
+        if '/' in new_item_name:
+            editor.setText(self.original_name)
+
+            msgbox = QMessageBox()
+            msgbox.setText('"/" in item name not allowed.')
+            msgbox.setInformativeText(
+                'Please enter a string without "/" as an item name.')
+            msgbox.setIcon(QMessageBox.Critical)
+            msgbox.exec_()
+            return
 
         super(QListView,self).closeEditor(editor,hint)
 
@@ -1716,9 +2058,43 @@ class CustomListView(QListView):
 
         if trigger == QAbstractItemView.AllEditTriggers:
             self.modelIndexBeingRenamed = modelIndex
+            self.original_name = item.text()
 
         return super(QListView,self).edit(modelIndex, trigger, event)
 
+########################################################################
+class TreeViewItemDelegate(QItemDelegate):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, proxyModel, searchModel):
+        """Constructor"""
+
+        QItemDelegate.__init__(self)
+
+        self.proxyModel = proxyModel
+        self.sourceModel = self.proxyModel.sourceModel()
+
+        self.searchModel = searchModel
+
+        f = QFont()
+        self.fm = QFontMetrics(f)
+
+    #----------------------------------------------------------------------
+    def sizeHint(self, option, index):
+        """"""
+
+        source_index = self.proxyModel.mapToSource(index)
+        item = self.sourceModel.itemFromIndex(source_index)
+
+        if item is None: # currently in search mode
+            item = self.searchModel.itemFromIndex(source_index)
+
+        rect = self.fm.boundingRect(item.text())
+        width  = rect.width()
+        height = rect.height()
+
+        return QSize(min([width, 400]), min([50, height*2]))
 
 ########################################################################
 class MainPane(QWidget):
@@ -1752,7 +2128,12 @@ class MainPane(QWidget):
         listView.setWordWrap(True) # for word wrapping
         self.listView = listView
 
+        self.searchModel = SearchModel(model)
+        self.searchItemBeingEdited = None
+
         treeView.setModel(self.proxyModel)
+        treeView.setItemDelegate(TreeViewItemDelegate(self.proxyModel,
+                                                      self.searchModel))
         treeView.setRootIndex(initRootProxyModelIndex)
         treeView.setItemsExpandable(True)
         treeView.setRootIsDecorated(True)
@@ -1764,9 +2145,6 @@ class MainPane(QWidget):
 
         self.stackedWidget = stackedWidget
 
-        self.searchModel = SearchModel(model)
-        self.searchItemBeingEdited = None
-
         self.pathHistory = [QPersistentModelIndex(initRootModelIndex)]
         self.pathHistoryCurrentIndex = 0
 
@@ -1777,16 +2155,30 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self, model, initRootPath):
+    def __init__(self, model, initRootPath, running_subproc_list):
         """Constructor"""
 
         QMainWindow.__init__(self)
+
+        # Load Startup Preferences
+        self.default_pref = dict(font_size=16,
+                                 vis_col_list=DEFAULT_VISIBLE_COL_NAMES,
+                                 view_mode='Icon View', side_pane_vis=True)
+        if osp.exists(PREF_JSON_FILEPATH):
+            with open(PREF_JSON_FILEPATH, 'r') as f:
+                pref = json.load(f)
+        else:
+            pref = self.default_pref
+        #
+        self.app_wide_font_size = pref['font_size'] # Application-wide font
+        # size will be applied in main() later.
 
         self._initActions()
         self._initMainToolbar()
 
         self.model = model # Used for TreeView on side pane for which
                            # sorting is disabled
+        self.running_subproc_list = running_subproc_list
 
         self.setupUi(self)
 
@@ -1817,6 +2209,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.connect(self.treeViewSide, SIGNAL('closingItemRenameEditor'),
                      self.onItemRenameEditorClosing)
 
+        #self.setFocusPolicy(Qt.ClickFocus)
+        #self.connect(self, SIGNAL('focusObtained'), self.updateHierarchy)
+
         # Add the main pane list view & tree view
         self.listViewMain = CustomListView(self.pageListView)
         self.listViewMain.setObjectName('listViewMain')
@@ -1829,7 +2224,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self._initMenus()
 
         self.tabWidget = None
-
 
         self.listView_stack_index = 0
         self.treeView_stack_index = 1
@@ -1867,7 +2261,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         self.lineEdit_search.setCompleter(self.model.completer)
 
-
         ## Make connections
         self.connect(self.treeViewSide.selectionModel(),
                      SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
@@ -1899,21 +2292,63 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                      self.clearSelection)
 
         # Load QSettings
-        self.loadSettings()
+        self.loadSettings(initRootPath)
 
+        # Applying Startup Preferences
         self.visible_column_full_name_list = PERM_VISIBLE_COL_NAMES
-        self.onColumnSelectionChange(DEFAULT_VISIBLE_COL_NAMES,
+        self.onColumnSelectionChange(pref['vis_col_list'],
                                      force_visibility_update=True)
+        #
+        if pref['view_mode'] == 'Icon View':
+            self.actionIconsView.setChecked(True)
+        elif pref['view_mode'] == 'List View':
+            self.actionListView.setChecked(True)
+        else:
+            self.actionDetailsView.setChecked(True)
+        #
+        self.actionToggleSidePaneVisibility.setChecked(pref['side_pane_vis'])
+
+    #----------------------------------------------------------------------
+    def focusInEvent(self, event):
+        """"""
+
+        super(LauncherView, self).focusInEvent(event)
+
+        self.emit(SIGNAL('focusObtained'))
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
         """"""
 
+        self.emit(SIGNAL('sigUpdateRunningSubprocs'))
+
+        if len(self.running_subproc_list) != 0:
+            msgBox = QMessageBox()
+            msgBox.addButton(QMessageBox.Yes)
+            msgBox.addButton(QMessageBox.No)
+            msgBox.addButton(QMessageBox.Cancel)
+            msgBox.setDefaultButton(QMessageBox.Cancel)
+            msgBox.setEscapeButton(QMessageBox.Cancel)
+            msgBox.setText('Do you want to automatically shut down all applications'
+                           ' that have been launched from this launcher and are '
+                           'still running?')
+            detailedText = ''
+            for subp_dict in self.running_subproc_list:
+                detailedText += 'PID {0:d} :: {1:s} ::\n    {2:s}\n'.format(
+                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd'])
+            msgBox.setDetailedText(detailedText)
+            msgBox.setIcon(QMessageBox.Question)
+            msgBox.setWindowTitle('Shut Down Applications')
+            choice = msgBox.exec_()
+            if choice == QMessageBox.Cancel:
+                event.ignore()
+                return
+
         # Save the current hierarchy in the user-modifiable section to
         # the user hierarchy XML file.
         rootModelItem = self.model.itemFromIndex( QModelIndex(
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
-        self.model.writeToXMLFile(USER_XML_FILEPATH, rootModelItem)
+        self.model.write_hierarchy_to_XML_file(USER_XML_FILEPATH, rootModelItem)
 
         if osp.exists(USER_TEMP_XML_FILEPATH):
             try: os.remove(USER_TEMP_XML_FILEPATH)
@@ -1924,6 +2359,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         # Save QSettings
         self.saveSettings()
+
+        if (len(self.running_subproc_list) != 0) and (choice == QMessageBox.Yes):
+            self.emit(SIGNAL('sigMainWindowBeingClosed'))
 
         event.accept()
 
@@ -1942,38 +2380,78 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         # a temporary user hierarchy XML file.
         rootModelItem = self.model.itemFromIndex( QModelIndex(
             self.model.pModelIndexFromPath(USER_MODIFIABLE_ROOT_PATH) ) )
-        self.model.writeToXMLFile(USER_TEMP_XML_FILEPATH, rootModelItem)
+        self.model.write_hierarchy_to_XML_file(USER_TEMP_XML_FILEPATH,
+                                               rootModelItem)
 
     #----------------------------------------------------------------------
     def saveSettings(self):
         """"""
 
-        settings = QSettings('HLA','Launcher')
+        settings = QSettings('APHLA','Launcher')
 
         settings.beginGroup('MainWindow')
-        settings.setValue('position',self.geometry())
-        settings.setValue('splitterPanes_sizes',self.splitterPanes.sizes())
+
+        settings.setValue('position', self.geometry())
+
+        if self.actionToggleSidePaneVisibility.isChecked():
+            settings.setValue('splitterPanes_sizes',
+                              self.splitterPanes.sizes())
+        else: # If side pane is not visible right now, don't change the
+        # splitter ratio.
+            settings.setValue('splitterPanes_sizes',
+                              settings.value('splitterPanes_sizes'))
+
+        m = self.getCurrentMainPane()
+        current_item_obj = m.pathHistory[m.pathHistoryCurrentIndex]
+        if isinstance(current_item_obj, dict): # in Search Mode
+            current_path = ''
+        else:
+            current_item = self.itemFromIndex(QModelIndex(
+                m.pathHistory[m.pathHistoryCurrentIndex]))
+            current_path = current_item.path
+        settings.setValue('last_item_path', current_path)
+
         settings.endGroup()
 
         #print 'Settings saved.'
 
     #----------------------------------------------------------------------
-    def loadSettings(self):
+    def loadSettings(self, initRootPath):
         """"""
 
-        settings = QSettings('HLA','Launcher')
+        settings = QSettings('APHLA','Launcher')
 
         settings.beginGroup('MainWindow')
+
         rect = settings.value('position')
         if not rect:
             rect = QRect(0,0,self.sizeHint().width(),self.sizeHint().height())
         self.setGeometry(rect)
+
         splitterPanes_sizes = settings.value('splitterPanes_sizes')
-        if splitterPanes_sizes == None:
+        if splitterPanes_sizes is None:
             splitterPanes_sizes = [self.width()*(1./5), self.width()*(4./5)]
         else:
             splitterPanes_sizes = [int(s) for s in splitterPanes_sizes]
         self.splitterPanes.setSizes(splitterPanes_sizes)
+
+        last_item_path = settings.value('last_item_path')
+        if (last_item_path is None) or (last_item_path == '') or \
+           (initRootPath != '/root'):
+            pass
+        else:
+            if last_item_path in self.model.pathList:
+                m = self.getCurrentMainPane()
+
+                m.pathHistory = [self.model.pModelIndexFromPath(last_item_path)]
+                m.pathHistoryCurrentIndex = 0
+
+                # path history must be updated before calling "updateView" function
+                self.updateView(m)
+
+                self.updateStatesOfNavigationButtons()
+
+                self.emit(SIGNAL('sigClearSelection'))
 
         settings.endGroup()
 
@@ -1989,36 +2467,72 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def onViewModeActionGroupTriggered(self, action):
         """"""
 
-        m = self.getCurrentMainPane()
-        s = m.stackedWidget;
-
         if action == self.actionIconsView:
-            if s.currentIndex() == self.treeView_stack_index:
-                s.setCurrentIndex(self.listView_stack_index)
-            m.listView.setViewMode(CustomListView.IconMode)
-            m.listView.setGridSize(QSize(m.listView_IconMode_grid_width,
-                                         m.listView_IconMode_grid_height))
-            index = self.comboBox_view_mode.findText('Icons View',
-                                                     Qt.MatchExactly)
+            self.switchedToIconsView(checked=True)
         elif action == self.actionListView:
-            if s.currentIndex() == self.treeView_stack_index:
-                s.setCurrentIndex(self.listView_stack_index)
-            m.listView.setViewMode(CustomListView.ListMode)
-            m.listView.setGridSize(QSize())
-            index = self.comboBox_view_mode.findText('List View',
-                                                     Qt.MatchExactly)
+            self.switchedToListView(checked=True)
         elif action == self.actionDetailsView:
-            if s.currentIndex() == self.listView_stack_index:
-                s.setCurrentIndex(self.treeView_stack_index)
-            for c in range(self.model.columnCount()):
-                m.treeView.resizeColumnToContents(c)
-            index = self.comboBox_view_mode.findText('Details View',
-                                                     Qt.MatchExactly)
+            self.switchedToDetailsView(checked=True)
         else:
             raise ValueError('Unexpected view mode action')
 
+    #----------------------------------------------------------------------
+    def switchedToIconsView(self, checked=True):
+        """"""
+
+        if not checked:
+            return
+
+        m = self.getCurrentMainPane()
+        s = m.stackedWidget;
+
+        if s.currentIndex() == self.treeView_stack_index:
+            s.setCurrentIndex(self.listView_stack_index)
+        m.listView.setViewMode(CustomListView.IconMode)
+        m.listView.setGridSize(QSize(m.listView_IconMode_grid_width,
+                                     m.listView_IconMode_grid_height))
+        index = self.comboBox_view_mode.findText('Icons View',
+                                                 Qt.MatchExactly)
+
         self.comboBox_view_mode.setCurrentIndex(index)
 
+    #----------------------------------------------------------------------
+    def switchedToListView(self, checked=True):
+        """"""
+
+        if not checked:
+            return
+
+        m = self.getCurrentMainPane()
+        s = m.stackedWidget;
+
+        if s.currentIndex() == self.treeView_stack_index:
+            s.setCurrentIndex(self.listView_stack_index)
+        m.listView.setViewMode(CustomListView.ListMode)
+        m.listView.setGridSize(QSize())
+        index = self.comboBox_view_mode.findText('List View',
+                                                 Qt.MatchExactly)
+
+        self.comboBox_view_mode.setCurrentIndex(index)
+
+    #----------------------------------------------------------------------
+    def switchedToDetailsView(self, checked=True):
+        """"""
+
+        if not checked:
+            return
+
+        m = self.getCurrentMainPane()
+        s = m.stackedWidget;
+
+        if s.currentIndex() == self.listView_stack_index:
+            s.setCurrentIndex(self.treeView_stack_index)
+        for c in range(self.model.columnCount()):
+            m.treeView.resizeColumnToContents(c)
+        index = self.comboBox_view_mode.findText('Details View',
+                                                 Qt.MatchExactly)
+
+        self.comboBox_view_mode.setCurrentIndex(index)
 
     #----------------------------------------------------------------------
     def onSidePaneFocusIn(self):
@@ -2473,7 +2987,10 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         selectionType = self.getSelectionType()
 
         if selectionType in ('SingleTxtSelection',
-                             'MultipleTxtSelection'):
+                             'MultipleTxtSelection',
+                             'SingleExeSelection',
+                             'SinglePyModuleSelection',
+                             'MultipleExecutableSelection'):
             for item in self.selectedItemList:
                 self.emit(SIGNAL('sigTxtOpenRequested'),
                           item.path, item.sourceFilepath, item.editor)
@@ -2579,9 +3096,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         """"""
 
         for selectedItem in self.selectedItemList:
-            self.emit(SIGNAL('sigPyModRunRequested'),
-                      'aphla.gui.aplauncher', selectedItem.cwd,
-                      selectedItem.path)
+            self.emit(SIGNAL('sigExeRunRequested'), 'New aplauncher Window',
+                      'aplauncher "{0:s}"'.format(selectedItem.path),
+                      selectedItem.cwd)
 
     #----------------------------------------------------------------------
     def disableTabView(self):
@@ -2681,8 +3198,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionRename = QAction(QIcon(), 'Rename', self)
         self.actionRename.setShortcut(Qt.Key_F2)
         self.addAction(self.actionRename)
-        self.connect(self.actionRename, SIGNAL('triggered()'),
-                     self.renameItem)
+        self.connect(self.actionRename, SIGNAL('triggered()'), self.renameItem)
 
         self.actionProperties = QAction(QIcon(), 'Properties', self)
         self.actionProperties.setShortcut(
@@ -2724,6 +3240,15 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.connect(self, SIGNAL('columnSelectionReturned'),
                      self.onColumnSelectionChange)
 
+        self.actionAliases = QAction(QIcon(), 'Aliases...', self)
+        self.connect(self.actionAliases, SIGNAL('triggered()'),
+                     self.launchAliasEditor)
+
+        self.actionStartupPref = QAction(QIcon(), 'Startup Preferences...',
+                                         self)
+        self.connect(self.actionStartupPref, SIGNAL('triggered()'),
+                     self.launchPrefEditor)
+
         self.actionDelete = QAction(QIcon(), 'Delete', self)
         self.actionDelete.setShortcut(Qt.Key_Delete)
         self.addAction(self.actionDelete)
@@ -2755,7 +3280,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionSelectAll.setShortcut(QKeySequence.SelectAll)
         self.addAction(self.actionSelectAll)
         self.connect(self.actionSelectAll, SIGNAL('triggered()'),
-                     self._not_implemented_yet)
+                     self.selectAllItems)
 
         self.actionToggleSidePaneVisibility = \
             QAction(QIcon(), 'Side Pane', self)
@@ -2765,6 +3290,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionToggleSidePaneVisibility.setChecked(True)
         self.connect(self.actionToggleSidePaneVisibility,
                      SIGNAL('triggered(bool)'),
+                     self.toggleSidePaneVisibility)
+        self.connect(self.actionToggleSidePaneVisibility,
+                     SIGNAL('toggled(bool)'),
                      self.toggleSidePaneVisibility)
 
 
@@ -2792,12 +3320,18 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionIconsView.setChecked(True) # Default selection for the view mode
         self.connect(self.actionGroupViewMode, SIGNAL('triggered(QAction *)'),
                      self.onViewModeActionGroupTriggered)
+        self.connect(self.actionIconsView, SIGNAL('toggled(bool)'),
+                     self.switchedToIconsView)
+        self.connect(self.actionListView, SIGNAL('toggled(bool)'),
+                     self.switchedToListView)
+        self.connect(self.actionDetailsView, SIGNAL('toggled(bool)'),
+                     self.switchedToDetailsView)
 
         self.actionRunningSubprocs = QAction(QIcon(), 'Runngin Subprocesses...',
                                              self)
         self.addAction(self.actionRunningSubprocs)
         self.connect(self.actionRunningSubprocs,
-                     SIGNAL('triggered()'), self.print_running_subprocs)
+                     SIGNAL('triggered()'), self.show_running_subprocs)
 
         self.actionHelpAbout = QAction(QIcon(), 'About...', self)
         self.addAction(self.actionHelpAbout)
@@ -2809,7 +3343,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         """"""
 
         msgBox = QMessageBox()
-        msgBox.setWindowTitle('HLA Launcher')
+        msgBox.setWindowTitle('APHLA Launcher')
         msgBox.setInformativeText(__doc__)
         msgBox.setIcon(QMessageBox.Information)
         msgBox.exec_()
@@ -2843,6 +3377,23 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         if dialog.output is not None:
             self.emit(SIGNAL('columnSelectionReturned'), dialog.output)
+
+    #----------------------------------------------------------------------
+    def launchAliasEditor(self):
+        """"""
+
+        dialog = AliasEditor(self.model.aliases, self.model.default_aliases)
+        dialog.exec_()
+
+        if dialog.result:
+            self.model.aliases = dialog.aliases
+
+    #----------------------------------------------------------------------
+    def launchPrefEditor(self):
+        """"""
+
+        dialog = PreferencesEditor(self.default_pref)
+        dialog.exec_()
 
     #----------------------------------------------------------------------
     def onColumnSelectionChange(self, new_vis_col_full_names,
@@ -2902,6 +3453,19 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             self.treeViewSide.setVisible(True)
         else:
             self.treeViewSide.setVisible(False)
+
+    #----------------------------------------------------------------------
+    #def updateHierarchy(self):
+        #""""""
+
+        #if osp.exists(USER_TEMP_XML_FILEPATH):
+            #temp_user_file_mtime = osp.getmtime(USER_TEMP_XML_FILEPATH)
+            #if temp_user_file_mtime > self.model_last_updated_timestamp:
+                #self.emit(SIGNAL('sigRestartLauncher'), USER_TEMP_XML_FILEPATH)
+        #else:
+            #user_file_mtime = osp.getmtime(USER_XML_FILEPATH)
+            #if user_file_mtime > self.model_last_updated_timestamp:
+                #self.emit(SIGNAL('sigRestartLauncher'), USER_XML_FILEPATH)
 
     #----------------------------------------------------------------------
     def importUserXML(self):
@@ -2968,7 +3532,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 selectedItem.command        = ''
                 selectedItem.cwd            = ''
                 selectedItem.sourceFilepath = ''
-                selectedItem.editor         = '$wing_new_window'
+                selectedItem.editor         = '&wing_new_window'
                 selectedItem.helpHeader     = 'python'
                 selectedItem.help = ''
             elif self.sender() == self.actionCreateNewPyMod:
@@ -3350,8 +3914,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 selectedItem.setEditable(True)
             self.lastFocusedView.editSlot(selectedModelIndex)
 
-
-
     #----------------------------------------------------------------------
     def _initMainToolbar(self):
         """"""
@@ -3361,6 +3923,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         backToolbar.setObjectName("toolbar_back")
         backToolbar.setFloatable(False)
         backToolbar.setMovable(False)
+        backToolbar.setIconSize(QSize(self.app_wide_font_size,
+                                      self.app_wide_font_size))
         backToolbar.addAction(self.actionGoBack)
 
         # Forward button
@@ -3368,6 +3932,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         forwardToolbar.setObjectName("toolbar_forward")
         forwardToolbar.setFloatable(False)
         forwardToolbar.setMovable(False)
+        forwardToolbar.setIconSize(QSize(self.app_wide_font_size,
+                                         self.app_wide_font_size))
         forwardToolbar.addAction(self.actionGoForward)
 
         # Up button
@@ -3375,6 +3941,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         upToolbar.setObjectName("toolbar_up")
         upToolbar.setFloatable(False)
         upToolbar.setMovable(False)
+        upToolbar.setIconSize(QSize(self.app_wide_font_size,
+                                    self.app_wide_font_size))
         upToolbar.addAction(self.actionGoUp)
 
         # View Mode combo box
@@ -3382,13 +3950,16 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         viewModeToolbar.setObjectName("toolbar_view_mode")
         viewModeToolbar.setFloatable(False)
         viewModeToolbar.setMovable(False)
+        viewModeToolbar.setIconSize(QSize(self.app_wide_font_size,
+                                          self.app_wide_font_size))
         viewModeComboBox = QComboBox(viewModeToolbar)
         viewModeComboBox.setObjectName("comboBox_view_mode")
         viewModeComboBox.addItem("Icons View")
         viewModeComboBox.addItem("List View")
         viewModeComboBox.addItem("Details View")
-        viewModeComboBox.setMinimumHeight(viewModeToolbar.height()*1.2)
-        viewModeComboBox.adjustSize()
+        viewModeComboBox.setFixedHeight(10+self.app_wide_font_size)
+        viewModeComboBox.setFixedWidth((10+self.app_wide_font_size)*
+                                       len('Details View')*0.5)
         viewModeToolbar.setMinimumWidth(viewModeComboBox.width())
         viewModeToolbar.adjustSize()
         self.comboBox_view_mode = viewModeComboBox
@@ -3401,7 +3972,6 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             self.closeTab(self.tabWidget.currentIndex())
         else:
             self.close()
-
 
     #----------------------------------------------------------------------
     def closeTab(self, tab_index):
@@ -3477,9 +4047,10 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def selectAllItems(self):
         """"""
 
-        #m = self.getCurrentMainPane()
-        #m.listView.selectionModel().select()
-        self._not_implemented_yet()
+        m = self.getCurrentMainPane()
+
+        m.listView.selectAll()
+        m.treeView.selectAll()
 
     #----------------------------------------------------------------------
     def _callbackDoubleClickOnMainPaneItem(self, modelIndex_NotUsed):
@@ -3998,6 +4569,17 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         # TODO: Re-enable tabs once known bugs related to tabs are resolved
         self.actionOpenInNewTab.setEnabled(False)
+        # TODO: Re-enable "Open in New Window" once known bugs related to it
+        # are resolved
+        self.actionOpenInNewWindow.setEnabled(False)
+
+        source_filepaths = [item.sourceFilepath
+                            for item in self.selectedItemList
+                            if item.sourceFilepath]
+        if source_filepaths != []:
+            self.actionEditTxt.setEnabled(True)
+        else:
+            self.actionEditTxt.setEnabled(False)
 
         sender = self.sender()
         #print sender.title()
@@ -4021,6 +4603,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                                        'MultipleExecutableSelection'):
                     sender.addSeparator()
                     sender.addAction(self.actionRun)
+                    sender.addSeparator()
+                    sender.addAction(self.actionEditTxt)
                 elif selectionType in ('SingleTxtSelection',
                                        'MultipleTxtSelection'):
                     sender.addSeparator()
@@ -4070,6 +4654,12 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                     sender.addSeparator()
                     sender.addAction(self.actionDelete)
 
+                sender.addSeparator()
+                sender.addAction(self.actionAliases)
+
+                sender.addSeparator()
+                sender.addAction(self.actionStartupPref)
+
             elif sender == self.menuView:
 
                 sender.addAction(self.actionToggleSidePaneVisibility)
@@ -4115,6 +4705,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             elif selectionType in ('SingleExeSelection',
                                    'SinglePyModuleSelection'):
                 self.contextMenu.addAction(self.actionRun)
+                self.contextMenu.addSeparator()
+                self.contextMenu.addAction(self.actionEditTxt)
                 self.contextMenu.setDefaultAction(self.actionRun)
             elif selectionType in ('SingleTxtSelection'):
                 self.contextMenu.addAction(self.actionEditTxt)
@@ -4186,6 +4778,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                                    'MultipleExecutableSelection'):
 
                 self.contextMenu.addAction(self.actionRun)
+                self.contextMenu.addSeparator()
+                self.contextMenu.addAction(self.actionEditTxt)
 
                 self.add_basic_item_context_menus(m)
 
@@ -4256,6 +4850,36 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         self.emit(SIGNAL('printRunningSubprocs'))
 
+    #----------------------------------------------------------------------
+    def show_running_subprocs(self):
+        """"""
+
+        self.emit(SIGNAL('sigUpdateRunningSubprocs'))
+
+        nProc = len(self.running_subproc_list)
+
+        if nProc != 0:
+            infoText     = '# PID # :: # Path in Launcher #\n\n'
+            detailedText = ('# PID # :: # Path in Launcher # :: '
+                            '# Command Expression #\n\n')
+            for subp_dict in self.running_subproc_list:
+                infoText += 'PID {0:d} :: {1:s}\n'.format(subp_dict['p'].pid,
+                                                          subp_dict['path'])
+                detailedText += \
+                    'PID {0:d} :: {1:s} ::\n    {2:s}\n'.format(
+                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd'])
+
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle('Currently Running Subprocesses')
+        msgBox.setIcon(QMessageBox.Information)
+
+        if nProc == 0:
+            msgBox.setText('There is currently no running subprocess.')
+        else:
+            msgBox.setInformativeText(infoText)
+            msgBox.setDetailedText(detailedText)
+
+        msgBox.exec_()
 
 ########################################################################
 class LauncherApp(QObject):
@@ -4271,8 +4895,10 @@ class LauncherApp(QObject):
         self.subprocs = []
 
         self._initModel()
+        model_last_updated_timestamp = time.time()
 
         self._initView(initRootPath)
+        self.view.model_last_updated_timestamp = model_last_updated_timestamp
 
         self.connect(self.view, SIGNAL('sigExeRunRequested'),
                      self.launchExe)
@@ -4284,24 +4910,20 @@ class LauncherApp(QObject):
                      self.view.openPropertiesDialog)
         self.connect(self.view, SIGNAL('printRunningSubprocs'),
                      self.print_running_subprocs)
-
-    #----------------------------------------------------------------------
-    def _shutdown(self):
-        """
-        TODO: Gracefully terminate all the running subprocesses
-        """
-
-
-
+        self.connect(self.view, SIGNAL('sigUpdateRunningSubprocs'),
+                     self.update_running_subprocs)
+        self.connect(self.view, SIGNAL('sigMainWindowBeingClosed'),
+                     self._shutdown_subprocs)
 
     #----------------------------------------------------------------------
     def _initModel(self):
         """ """
 
-        self.model = LauncherModel() # Used for TreeView on side pane for which sorting is disabled
+        self.model = LauncherModel()
+        # Used for TreeView on side pane for which sorting is disabled
 
-        self.model.updatePathLookupLists() # Do not pass any argument in order to refresh entire path list
-
+        self.model.updatePathLookupLists()
+        # Do not pass any argument in order to refresh entire path list
 
     #----------------------------------------------------------------------
     def _initView(self, initRootPath):
@@ -4310,7 +4932,7 @@ class LauncherApp(QObject):
         if not initRootPath:
             initRootPath = self.model.pathList[0]
 
-        self.view = LauncherView(self.model, initRootPath)
+        self.view = LauncherView(self.model, initRootPath, self.subprocs)
 
     #----------------------------------------------------------------------
     def launchExe(self, item_path, appCommand, workingDir):
@@ -4319,6 +4941,7 @@ class LauncherApp(QObject):
         if workingDir in ('', 'N/A'):
             workingDir = os.getcwd()
         else:
+            workingDir = self.model.subs_aliases(workingDir)
             workingDir = _subs_tilde_with_home(workingDir)
 
         try:
@@ -4328,9 +4951,9 @@ class LauncherApp(QObject):
             self.view.statusBar().showMessage(message)
             print message
             self.view.repaint()
-            subs_cmd = _subs_tilde_with_home(command_expression)
-            p = Popen(subs_cmd, shell=True, stdin=PIPE,
-                      cwd=workingDir)
+            subs_cmd = self.model.subs_aliases(command_expression)
+            subs_cmd = _subs_tilde_with_home(subs_cmd)
+            p = Popen(subs_cmd, shell=True, stdin=PIPE, cwd=workingDir)
             print '** PID = {0:d}'.format(p.pid)
             print ' '
             message = ('# Launch sequence for "{0:s}" has been completed.'.
@@ -4373,28 +4996,32 @@ class LauncherApp(QObject):
         if filepath == '':
             return
 
+        filepath = self.model.subs_aliases(filepath)
         filepath = _subs_tilde_with_home(filepath)
 
+        editor = self.model.subs_aliases(editor)
+        editor = _subs_tilde_with_home(editor)
+
         try:
-            if not editor.startswith('$'):
+            if not editor.startswith('&'):
                 cmd = editor.split()[0]
                 if self.which(cmd) != '':
                     cmd = ' '.join([editor, filepath])
                 else:
                     raise ValueError('Command not found: {0:s}'.format(cmd))
-            elif editor in ('$nano', '$vi'):
+            elif editor in ('&nano', '&vi'):
                 cmd = editor[1:]
                 if self.which(cmd) != '':
                     cmd = 'gnome-terminal -e "{0:s} {1:s}"'.format(editor[1:],
                                                                    filepath)
                 else:
                     raise ValueError('Command not found: {0:s}'.format(cmd))
-            elif editor == '$matlab':
+            elif editor == '&matlab':
                 if self.which('matlabl') != '':
                     cmd = 'matlab -r "edit {0:s}"'.format(filepath)
                 else:
                     raise ValueError('Command not found: matlab')
-            elif editor.startswith('$wing'):
+            elif editor.startswith('&wing'):
                 if editor.endswith('_new_window'):
                     new_window_flag = '--new'
                 else:
@@ -4466,6 +5093,7 @@ class LauncherApp(QObject):
         if workingDir in ('', 'N/A'):
             pass
         else:
+            workingDir = self.model.subs_aliases(workingDir)
             workingDir = _subs_tilde_with_home(workingDir)
             os.chdir(workingDir)
             print 'Changed working directory to {0:s}'.format(workingDir)
@@ -4487,7 +5115,7 @@ class LauncherApp(QObject):
             print message
             msgBox = QMessageBox()
             msgBox.setText(message)
-            msgBox.setInformativeText( str(errorMessage) )
+            #msgBox.setInformativeText( str(e) )
             msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
         except:
@@ -4505,7 +5133,21 @@ class LauncherApp(QObject):
                 print message
                 self.view.repaint()
                 if args not in ('', 'N/A'):
-                    self.appList.append(module.make(*args.split()))
+                    if ('"' in args) and (args.count('"') % 2 == 0):
+                        arg_list = [a.strip() for a in args.split('"') if a]
+                    elif ("'" in args) and (args.count("'") % 2 == 0):
+                        arg_list = [a.strip() for a in args.split("'") if a]
+                    else:
+                        arg_list = args.split()
+
+                    arg_list = [True if a in ('True', 'true') else a
+                                for a in arg_list]
+                    arg_list = [False if a in ('False', 'false') else a
+                                for a in arg_list]
+
+                    print 'Arguments ='
+                    print arg_list
+                    self.appList.append(module.make(*arg_list))
                 else:
                     self.appList.append(module.make())
                 message = module_name + ' successfully launched.'
@@ -4525,26 +5167,120 @@ class LauncherApp(QObject):
                 msgBox.exec_()
 
     #----------------------------------------------------------------------
-    def print_running_subprocs(self):
+    def update_running_subprocs(self):
         """"""
-
-        print '### Currently Running Subprocesses ###'
-        print '(PID) : (Path in Launcher) : (Command Expression)'
 
         finished_subp_inds = []
         for i, subp_dict in enumerate(self.subprocs):
             p = subp_dict['p']
-            if p.poll() is None:
-                print '{0:d} : {1:s} : {2:s}'.format(
-                    p.pid, subp_dict['path'], subp_dict['cmd'])
-            else:
+            if p.poll() is not None:
                 finished_subp_inds.append(i)
 
         for ind in finished_subp_inds[::-1]:
             self.subprocs.pop(ind)
 
+    #----------------------------------------------------------------------
+    def print_running_subprocs(self):
+        """"""
+
+        self.update_running_subprocs()
+
+        print ' '
+        print '### Currently Running Subprocesses ###'
+        print '(PID) : (Path in Launcher) : (Command Expression)'
+
         if len(self.subprocs) == 0:
             print '* There is currently no running subprocess.'
+        else:
+            for subp_dict in self.subprocs:
+                print '{0:d} : {1:s} : {2:s}'.format(
+                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd'])
+
+    #----------------------------------------------------------------------
+    def _shutdown_subprocs(self):
+        """
+        Gracefully terminate all the running subprocesses, if a user wants
+        to. If a graceful termination fails, it will try to force kill it.
+        """
+
+        self.update_running_subprocs()
+
+        for subp_dict in self.subprocs:
+            p = subp_dict['p']
+            self.kill_proc_tree(p, item_path=subp_dict['path'])
+
+    #----------------------------------------------------------------------
+    def kill_proc_tree(self, parent_Popen_obj_or_pid, item_path='', ps_cmd=''):
+        """"""
+
+        if isinstance(parent_Popen_obj_or_pid, int):
+            parent_Popen_obj = None
+            parent_pid = parent_Popen_obj_or_pid
+        elif isinstance(parent_Popen_obj_or_pid, Popen):
+            parent_Popen_obj = parent_Popen_obj_or_pid
+            parent_pid = parent_Popen_obj.pid
+
+
+        # Check if this process has child processes.
+        # If it does, first try to terminate the child processes.
+        # Do this recursively.
+        cmd = 'ps -eo "%U %p %P %c" | grep {0:s} | grep {1:d}'.format(
+            self.getusername(), parent_pid)
+        pp = Popen(cmd, shell=True, stdout=PIPE)
+        out, err = pp.communicate()
+        if err:
+            print cmd
+            print 'ERROR: {0:s}'.format(err)
+        else:
+            lines = out.splitlines()
+            split_lines = [line.split()[1:] for line in lines]
+            childprocs = [(int(split_line[0]), ' '.join(split_line[2:]))
+                          for split_line in split_lines
+                          if split_line[1] == str(parent_pid)]
+            for subpid, subcmd in childprocs:
+                self.kill_proc_tree(subpid, ps_cmd=subcmd)
+
+        # Finally try to terminate this process gracefully
+        if parent_Popen_obj is not None:
+            parent_Popen_obj.terminate()
+        else:
+            os.kill(parent_pid, SIGTERM)
+
+        # Check if the process has been really terminated.
+        # If not, force kill the process.
+        if item_path:
+            process_tag = 'proc (PID={0:d}) "{1:s}"'.format(parent_pid,
+                                                            item_path)
+        elif ps_cmd:
+            process_tag = 'child proc (PID={0:d}) <{1:s}>'.format(parent_pid,
+                                                                  ps_cmd)
+        else:
+            process_tag = 'proc (PID={0:d})'.format(parent_pid)
+        if parent_Popen_obj is not None:
+            if parent_Popen_obj.poll() is not None:
+                parent_Popen_obj.kill()
+                print 'Force killed {0:s}'.format(process_tag)
+            else:
+                print 'Gracefully terminated {0:s}'.format(process_tag)
+        else:
+            try:
+                os.kill(parent_pid, 0)
+                os.kill(parent_pid, SIGKILL)
+                print 'Force killed {0:s}'.format(process_tag)
+            except OSError, e:
+                print 'Gracefully terminated {0:s}'.format(process_tag)
+
+    #----------------------------------------------------------------------
+    def getusername(self):
+        """"""
+
+        p = Popen('whoami',stdout=PIPE,stderr=PIPE)
+        username, error = p.communicate()
+
+        if error:
+            raise OSError('Error for whoami: '+error)
+        else:
+            return username.strip()
 
 #----------------------------------------------------------------------
 def _subs_tilde_with_home(string):
@@ -4557,7 +5293,16 @@ def _subs_tilde_with_home(string):
     return string
 
 #----------------------------------------------------------------------
-def make(initRootPath=''):
+def _xmltodict_subs_None_w_emptyStr(path, key, value):
+    """"""
+
+    if value is None:
+        return (key, '')
+    else:
+        return (key, value)
+
+#----------------------------------------------------------------------
+def make(initRootPath='', new_window=False):
     """"""
 
     # If the platform is other than a POSIX system, then convert
@@ -4567,8 +5312,15 @@ def make(initRootPath=''):
 
     global APP
 
-    APP = LauncherApp(initRootPath)
-    APP.view.show()
+    if new_window:
+        print 'Starting a launcher in a new window'
+
+        new_app = LauncherApp(initRootPath)
+        new_app.view.show()
+
+    else:
+        APP = LauncherApp(initRootPath)
+        APP.view.show()
 
     return APP
 
@@ -4606,7 +5358,7 @@ def restartLauncher(imported_xml_filepath):
     APP.connect(APP.view, SIGNAL('sigRestartLauncher'), restartLauncher)
 
 #----------------------------------------------------------------------
-def main(args = None):
+def main():
     """ """
 
     using_cothread = isCothreadUsed()
@@ -4621,17 +5373,23 @@ def main(args = None):
         #cothread.iqt(use_timer = True)
         qapp = cothread.iqt()
     else:
-        qapp = QApplication(args)
-
-    font = QFont()
-    font.setPointSize(16)
-    qapp.setFont(font)
+        qapp = QApplication(sys.argv)
 
     global APP
 
-    initRootPath = SEPARATOR + 'root'
+    #print sys.argv
+    if len(sys.argv) == 2:
+        initRootPath = sys.argv[1]
+        print 'Initial path set to {0:s}'.format(initRootPath)
+    else:
+        initRootPath = SEPARATOR + 'root'
+
     APP = LauncherApp(initRootPath)
     APP.view.show()
+
+    font = QFont()
+    font.setPointSize(APP.view.app_wide_font_size)
+    qapp.setFont(font)
 
     # Check if there is a temporarily saved user file from an
     # ungracefully terminated previous session. If found, ask a user if he/she
@@ -4662,5 +5420,5 @@ def main(args = None):
 
 #----------------------------------------------------------------------
 if __name__ == "__main__" :
-    main(sys.argv)
+    main()
 

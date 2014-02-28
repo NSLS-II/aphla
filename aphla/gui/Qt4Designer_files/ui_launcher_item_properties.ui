@@ -260,17 +260,17 @@
          </item>
          <item>
           <property name="text">
-           <string>$wing_new_window</string>
+           <string>&amp;wing_new_window</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>$wing</string>
+           <string>&amp;wing</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>$nano</string>
+           <string>&amp;nano</string>
           </property>
          </item>
          <item>
@@ -280,12 +280,12 @@
          </item>
          <item>
           <property name="text">
-           <string>$vi</string>
+           <string>&amp;vi</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>$matlab</string>
+           <string>&amp;matlab</string>
           </property>
          </item>
         </widget>
@@ -515,12 +515,12 @@
          </property>
          <item>
           <property name="text">
-           <string>$wing_new_window</string>
+           <string>&amp;wing_new_window</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>$wing</string>
+           <string>&amp;wing</string>
           </property>
          </item>
          <item>
@@ -530,7 +530,7 @@
          </item>
          <item>
           <property name="text">
-           <string>$nano</string>
+           <string>&amp;nano</string>
           </property>
          </item>
          <item>
@@ -540,12 +540,12 @@
          </item>
          <item>
           <property name="text">
-           <string>$vi</string>
+           <string>&amp;vi</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>$matlab</string>
+           <string>&amp;matlab</string>
           </property>
          </item>
         </widget>
@@ -750,17 +750,17 @@
          </item>
          <item>
           <property name="text">
-           <string>$wing_new_window</string>
+           <string>&amp;wing_new_window</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>$wing</string>
+           <string>&amp;wing</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>$nano</string>
+           <string>&amp;nano</string>
           </property>
          </item>
          <item>
@@ -770,12 +770,12 @@
          </item>
          <item>
           <property name="text">
-           <string>$vi</string>
+           <string>&amp;vi</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>$matlab</string>
+           <string>&amp;matlab</string>
           </property>
          </item>
         </widget>

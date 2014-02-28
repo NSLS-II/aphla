@@ -14,10 +14,10 @@ def has(resname):
     """
     check if resource exists.
 
-    ${HOME}/.hla will be checked first, then the installed global settings.
+    ${HOME}/.aphla will be checked first, then the installed global settings.
     """
     # check HOME directory first
-    if os.path.exists(os.path.join(os.getenv("HOME"), ".hla", resname)):
+    if os.path.exists(os.path.join(os.getenv("HOME"), ".aphla", resname)):
         return True
     else:
         return resource_exists(__name__, resname)
@@ -26,10 +26,10 @@ def getResource(resname, loc = None):
     """
     returns the true filename for resource
 
-    check ${HOME}/.hla first, then the installed global settings.
+    check ${HOME}/.aphla first, then the installed global settings.
     """
     # check the HOME for personal config file
-    prv_filename = os.path.join(os.getenv("HOME"), ".hla", resname)
+    prv_filename = os.path.join(os.getenv("HOME"), ".aphla", resname)
     if os.path.exists(prv_filename):
         return prv_filename
     elif loc and resource_exists(loc, resname):
@@ -42,10 +42,10 @@ def filename(resname):
     """
     returns the true filename for resource
 
-    check ${HOME}/.hla first, then the installed global settings.
+    check ${HOME}/.aphla first, then the installed global settings.
     """
     # check the HOME for personal config file
-    prv_filename = os.path.join(os.getenv("HOME"), ".hla", resname)
+    prv_filename = os.path.join(os.getenv("HOME"), ".aphla", resname)
     if os.path.exists(prv_filename):
         return prv_filename
     else:
@@ -56,7 +56,7 @@ def inHome(resname):
     """
     check if resource is in user's HOME directory
     """
-    prv_filename = os.path.join(os.getenv("HOME"), ".hla", resname)
+    prv_filename = os.path.join(os.getenv("HOME"), ".aphla", resname)
     if os.path.exists(prv_filename): 
         return True
     else: 
