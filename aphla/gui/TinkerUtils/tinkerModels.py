@@ -19,7 +19,7 @@ from cothread.catools import caget, caput, FORMAT_TIME
 import aphla as ap
 
 import config
-from . import SmartSizedMessageBox
+from . import (SmartSizedMessageBox, datestr, datestr_ns)
 from aphla.gui.utils.addr import (getIPs, getMACs)
 import tinkerdb
 
