@@ -5,9 +5,11 @@ sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
 import sys, os
+import os.path as osp
 import h5py
 import json
 import time
+from copy import deepcopy
 
 from PyQt4.QtCore import (Qt, SIGNAL, QObject, QSettings, QSize)
 from PyQt4.QtGui import (
@@ -25,13 +27,146 @@ from tinkerModels import (ConfigAbstractModel, ConfigTableModel,
 from tinkerdb import (TinkerMainDatabase, unitsys_id_raw, pv_id_NonSpecified)
 from dbviews import ConfigDBViewWidget
 from ui_tinkerConfigSetupDialog import Ui_Dialog
+from ui_tinkerConfigSetupPref import Ui_Dialog as Ui_PrefDialog
 from aphla.gui import channelexplorer
 from aphla.gui.utils.tictoc import tic, toc
+from aphla.gui.utils.orderselector import ColumnsDialog
 
 FILE_FILTER_DICT = {'Text File': 'Text files (*.txt)',
                     'HDF5 File': 'HDF5 files (*.h5 *.hdf5)',
                     'JSON File': 'JSON files (*.json)',
                     }
+
+HOME_PATH      = osp.expanduser('~')
+APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_CONF_DIR):
+    os.makedirs(APHLA_CONF_DIR)
+
+PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'aptinker_startup_pref.json')
+
+########################################################################
+class PreferencesEditor(QDialog, Ui_PrefDialog):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, default_pref):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowTitle('Startup Preferences')
+
+        self.default_pref = default_pref
+
+        (self.all_col_keys, self.all_col_names) = map(
+            list,
+            config.COL_DEF.getColumnDataFromTable(
+                'column_table',
+                column_name_list=['column_key', 'short_descrip_name'],
+                condition_str='only_for_snapshot=0')
+        )
+
+        self.load_pref_json()
+
+        self.connect(self.pushButton_restore_default, SIGNAL('clicked()'),
+                     self.restore_default_pref)
+        self.connect(self.pushButton_edit_visible_columns, SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+
+    #----------------------------------------------------------------------
+    def load_pref_json(self):
+        """"""
+
+        if osp.exists(PREF_JSON_FILEPATH):
+            with open(PREF_JSON_FILEPATH, 'r') as f:
+                self.pref = json.load(f)
+        else:
+            # Use default startup preferences
+            self.pref = deepcopy(self.default_pref)
+
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def save_pref_json(self):
+        """"""
+
+        with open(PREF_JSON_FILEPATH, 'w') as f:
+            json.dump(self.pref, f, indent=3, sort_keys=True,
+                      separators=(',', ': '))
+
+    #----------------------------------------------------------------------
+    def restore_default_pref(self):
+        """"""
+
+        self.pref = deepcopy(self.default_pref)
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def update_view(self):
+        """"""
+
+        self.update_column_list_only()
+
+    #----------------------------------------------------------------------
+    def update_column_list_only(self):
+        """"""
+
+        self.listWidget_visible_columns.clear()
+        self.listWidget_visible_columns.addItems(
+            self.convert_col_keys_to_names(self.pref['vis_col_key_list'])
+        )
+
+    #----------------------------------------------------------------------
+    def convert_col_keys_to_names(self, keys):
+        """"""
+
+        return [self.all_col_names[self.all_col_keys.index(k)] for k in keys]
+
+    #----------------------------------------------------------------------
+    def convert_col_names_to_keys(self, names):
+        """"""
+
+        return [self.all_col_keys[self.all_col_names.index(n)] for n in names]
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        all_column_name_list = self.all_col_names[:]
+        visible_column_name_list = self.convert_col_keys_to_names(
+            self.pref['vis_col_key_list'])
+        permanently_visible_column_name_list = \
+            [self.all_col_names[self.all_col_keys.index('group_name')]]
+
+        dialog = ColumnsDialog(all_column_name_list,
+                               visible_column_name_list,
+                               permanently_visible_column_name_list,
+                               parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.pref['vis_col_key_list'] = self.convert_col_names_to_keys(
+                dialog.output)
+            self.update_column_list_only()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        # self.pref['vis_col_key_list'] is already updated whenever the list is
+        # modified by column dialog. So, there is no need to update here.
+
+        self.save_pref_json()
+
+        super(PreferencesEditor, self).accept() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(PreferencesEditor, self).reject() # will hide the dialog
 
 ########################################################################
 class Settings():
@@ -44,7 +179,6 @@ class Settings():
         self._settings = QSettings('APHLA', 'TinkerConfigSetupDialog')
 
         self.loadViewSizeSettings()
-        self.loadMiscSettings()
 
     #----------------------------------------------------------------------
     def loadViewSizeSettings(self):
@@ -69,23 +203,6 @@ class Settings():
         self._settings.endGroup()
 
     #----------------------------------------------------------------------
-    def loadMiscSettings(self):
-        """"""
-
-        self._settings.beginGroup('misc')
-
-        self.visible_col_key_list = self._settings.value('visible_col_key_list')
-        if self.visible_col_key_list is None:
-            self.visible_col_key_list = \
-                config.DEF_VIS_COL_KEYS['config_setup'][:]
-
-        self.last_directory_path = self._settings.value('last_directory_path')
-        if self.last_directory_path is None:
-            self.last_directory_path = os.getcwd()
-
-        self._settings.endGroup()
-
-    #----------------------------------------------------------------------
     def saveViewSizeSettings(self):
         """"""
 
@@ -96,19 +213,6 @@ class Settings():
                                 self._splitter_left_right_sizes)
         self._settings.setValue('splitter_top_bottom_sizes',
                                 self._splitter_top_bottom_sizes)
-
-        self._settings.endGroup()
-
-    #----------------------------------------------------------------------
-    def saveMiscSettings(self):
-        """"""
-
-        self._settings.beginGroup('misc')
-
-        self._settings.setValue('visible_col_key_list',
-                                self.visible_col_key_list)
-        self._settings.setValue('last_directory_path',
-                                self.last_directory_path)
 
         self._settings.endGroup()
 
@@ -270,6 +374,27 @@ class View(QDialog, Ui_Dialog):
 
         QDialog.__init__(self, parent=parentWindow)
 
+        # Load Startup Preferences
+        self.default_pref = dict(
+            vis_col_key_list=config.DEF_VIS_COL_KEYS['config_setup'][:])
+        if osp.exists(PREF_JSON_FILEPATH):
+            with open(PREF_JSON_FILEPATH, 'r') as f:
+                pref = json.load(f)
+        else:
+            pref = self.default_pref
+
+        (col_keys, col_names) = config.COL_DEF.getColumnDataFromTable(
+            'column_table',
+            column_name_list=['column_key','short_descrip_name'],
+            condition_str='column_key in ({0:s})'.format(
+                ','.join(['"{0:s}"'.format(k)
+                          for k in pref['vis_col_key_list']]
+                         )
+            )
+        )
+        self.vis_col_name_list = [col_names[col_keys.index(k)]
+                                  for k in pref['vis_col_key_list']]
+
         self.setupUi(self)
 
         self.widget_configDBView.deleteLater()
@@ -341,6 +466,19 @@ class View(QDialog, Ui_Dialog):
                      self._groupChannels)
         self.connect(self.actionUngroupChannels, SIGNAL('triggered()'),
                      self._ungroupChannels)
+
+        self.connect(self.pushButton_preferences, SIGNAL('clicked(bool)'),
+                     self._launchPrefDialog)
+
+        self.configDBView.on_column_selection_change(
+            self.vis_col_name_list, force_visibility_update=True)
+
+    #----------------------------------------------------------------------
+    def _launchPrefDialog(self, checked):
+        """"""
+
+        dialog = PreferencesEditor(self.default_pref)
+        dialog.exec_()
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):

@@ -22,7 +22,7 @@ DEF_VIS_COL_KEYS = {
         'pvsp',
         'pvrb',
         'elem_name',
-        'field_name',
+        'field',
         'weight',
         ],
     'snapshot_view': [
@@ -30,7 +30,7 @@ DEF_VIS_COL_KEYS = {
         'pvsp',
         'pvrb',
         'elem_name',
-        'field_name',
+        'field',
         'weight',
         'step_size',
         'cur_RB',
