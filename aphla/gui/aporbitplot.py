@@ -492,7 +492,7 @@ class ApCaPlot(Qwt.QwtPlot):
 
         m_autoscale = QAction("Auto Scale", self)
         m_autoscale.setCheckable(True)
-        m_autoscale.setChecked(False)#self.axisAutoScale(Qwt.QwtPlot.yLeft))
+        m_autoscale.setChecked(self.axisAutoScale(Qwt.QwtPlot.yLeft))
         self.connect(m_autoscale, SIGNAL("toggled(bool)"), self._setAutoScale)
         cmenu.addAction(m_autoscale)
 

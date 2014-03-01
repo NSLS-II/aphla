@@ -2999,6 +2999,44 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                              format(selectionType))
 
     #----------------------------------------------------------------------
+    def openSourceFileLocation(self):
+        """"""
+
+        selectionType = self.getSelectionType()
+
+        if selectionType in ('SingleTxtSelection',
+                             'MultipleTxtSelection',
+                             'SingleExeSelection',
+                             'SinglePyModuleSelection',
+                             'MultipleExecutableSelection'):
+            for item in self.selectedItemList:
+                in_terminal = False
+                self.emit(SIGNAL('sigOpenSrcFileLocRequested'),
+                          item.path, item.sourceFilepath, in_terminal)
+        else:
+            raise ValueError('Unexpected selectionType: {0:s}'.
+                             format(selectionType))
+
+    #----------------------------------------------------------------------
+    def openSourceFileLocationInTerm(self):
+        """"""
+
+        selectionType = self.getSelectionType()
+
+        if selectionType in ('SingleTxtSelection',
+                             'MultipleTxtSelection',
+                             'SingleExeSelection',
+                             'SinglePyModuleSelection',
+                             'MultipleExecutableSelection'):
+            for item in self.selectedItemList:
+                in_terminal = True
+                self.emit(SIGNAL('sigOpenSrcFileLocRequested'),
+                          item.path, item.sourceFilepath, in_terminal)
+        else:
+            raise ValueError('Unexpected selectionType: {0:s}'.
+                             format(selectionType))
+
+    #----------------------------------------------------------------------
     def openPage(self):
         """"""
 
@@ -3172,6 +3210,16 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         self.actionEditTxt = QAction(QIcon(), 'Edit', self)
         self.connect(self.actionEditTxt, SIGNAL('triggered()'),
                      self.editTxtFile)
+
+        self.actionOpenSourceFileLocation = QAction(
+            QIcon(), 'Open source file location', self)
+        self.connect(self.actionOpenSourceFileLocation, SIGNAL('triggered()'),
+                     self.openSourceFileLocation)
+
+        self.actionOpenSourceFileLocationInTerm = QAction(
+            QIcon(), 'Open source file location in new terminal', self)
+        self.connect(self.actionOpenSourceFileLocationInTerm,
+                     SIGNAL('triggered()'), self.openSourceFileLocationInTerm)
 
         self.actionCut = QAction(QIcon(), 'Cut', self)
         self.actionCut.setShortcut(
@@ -3399,7 +3447,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
     def onColumnSelectionChange(self, new_vis_col_full_names,
                                 force_visibility_update=False):
         """"""
-
+        
         if (not force_visibility_update) and \
            (new_vis_col_full_names == self.visible_column_full_name_list):
             return
@@ -4228,6 +4276,15 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 m.searchModel.index(0,0) )
             m.listView.setRootIndex(proxyModelIndex)
             m.treeView.setRootIndex(proxyModelIndex)
+            
+            # Bug fix for showing all columns (not only the visible columns)
+            # when typing a keyword with no match and re-typing a keyword
+            # with some match in Search mode.
+            header = m.treeView.header()
+            if len(self.visible_column_full_name_list) != header.count():
+                self.onColumnSelectionChange(
+                    self.visible_column_full_name_list,
+                    force_visibility_update=True)
 
 
         self.updatePath()
@@ -4578,8 +4635,12 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                             if item.sourceFilepath]
         if source_filepaths != []:
             self.actionEditTxt.setEnabled(True)
+            self.actionOpenSourceFileLocation.setEnabled(True)
+            self.actionOpenSourceFileLocationInTerm.setEnabled(True)
         else:
             self.actionEditTxt.setEnabled(False)
+            self.actionOpenSourceFileLocation.setEnabled(False)
+            self.actionOpenSourceFileLocationInTerm.setEnabled(False)
 
         sender = self.sender()
         #print sender.title()
@@ -4605,10 +4666,16 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                     sender.addAction(self.actionRun)
                     sender.addSeparator()
                     sender.addAction(self.actionEditTxt)
+                    sender.addSeparator()
+                    sender.addAction(self.actionOpenSourceFileLocation)
+                    sender.addAction(self.actionOpenSourceFileLocationInTerm)
                 elif selectionType in ('SingleTxtSelection',
                                        'MultipleTxtSelection'):
                     sender.addSeparator()
                     sender.addAction(self.actionEditTxt)
+                    sender.addSeparator()
+                    sender.addAction(self.actionOpenSourceFileLocation)
+                    sender.addAction(self.actionOpenSourceFileLocationInTerm)
                 elif selectionType in ('SingleInfoSelection'):
                     pass
                 else:
@@ -4707,9 +4774,15 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 self.contextMenu.addAction(self.actionRun)
                 self.contextMenu.addSeparator()
                 self.contextMenu.addAction(self.actionEditTxt)
+                sender.addSeparator()
+                sender.addAction(self.actionOpenSourceFileLocation)
+                sender.addAction(self.actionOpenSourceFileLocationInTerm)
                 self.contextMenu.setDefaultAction(self.actionRun)
             elif selectionType in ('SingleTxtSelection'):
                 self.contextMenu.addAction(self.actionEditTxt)
+                sender.addSeparator()
+                sender.addAction(self.actionOpenSourceFileLocation)
+                sender.addAction(self.actionOpenSourceFileLocationInTerm)
                 self.contextMenu.setDefaultAction(self.actionEditTxt)
             elif selectionType in ('SingleInfoSelection'):
                 self.contextMenu.setDefaultAction(self.actionProperties)
@@ -4780,6 +4853,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                 self.contextMenu.addAction(self.actionRun)
                 self.contextMenu.addSeparator()
                 self.contextMenu.addAction(self.actionEditTxt)
+                self.contextMenu.addSeparator()
+                self.contextMenu.addAction(self.actionOpenSourceFileLocation)
+                self.contextMenu.addAction(self.actionOpenSourceFileLocationInTerm)
 
                 self.add_basic_item_context_menus(m)
 
@@ -4794,6 +4870,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
                                    'MultipleTxtSelection'):
 
                 self.contextMenu.addAction(self.actionEditTxt)
+                self.contextMenu.addSeparator()
+                self.contextMenu.addAction(self.actionOpenSourceFileLocation)
+                self.contextMenu.addAction(self.actionOpenSourceFileLocationInTerm)
 
                 self.add_basic_item_context_menus(m)
 
@@ -4906,6 +4985,10 @@ class LauncherApp(QObject):
                      self.launchPyModule)
         self.connect(self.view, SIGNAL('sigTxtOpenRequested'),
                      self.openTxtFile)
+        self.connect(self.view, SIGNAL('sigOpenSrcFileLocRequested'),
+                     self.openSourceFileLocation)
+        self.connect(self.view, SIGNAL('sigOpenSrcFileLocInTermRequested'),
+                     self.openSourceFileLocation)
         self.connect(self.view, SIGNAL('sigPropertiesOpenRequested'),
                      self.view.openPropertiesDialog)
         self.connect(self.view, SIGNAL('printRunningSubprocs'),
@@ -5009,6 +5092,8 @@ class LauncherApp(QObject):
                     cmd = ' '.join([editor, filepath])
                 else:
                     raise ValueError('Command not found: {0:s}'.format(cmd))
+            elif editor == '&default':
+                cmd = 'xdg-open {0:s}'.format(filepath)
             elif editor in ('&nano', '&vi'):
                 cmd = editor[1:]
                 if self.which(cmd) != '':
@@ -5064,6 +5149,60 @@ class LauncherApp(QObject):
             msgBox = QMessageBox()
             message = ('Opening "{0:s}" with the editor "{1:s}" has failed.'.
                        format(filepath, editor))
+            msgBox.setText(message)
+            ei = sys.exc_info()
+            err_info_str = ei[1].__repr__()
+            err_info_str += ('\nError occurred at aplauncher.py on Line '
+                             '{0:d}'.format(ei[-1].tb_lineno))
+            msgBox.setInformativeText(err_info_str)
+            print '#', message
+            print err_info_str
+            msgBox.setIcon(QMessageBox.Critical)
+            msgBox.exec_()
+
+    #----------------------------------------------------------------------
+    def openSourceFileLocation(self, item_path, filepath, in_terminal):
+        """"""
+
+        if filepath == '':
+            return
+
+        filepath = self.model.subs_aliases(filepath)
+        filepath = _subs_tilde_with_home(filepath)
+
+        folderpath = osp.dirname(filepath)
+
+        if not in_terminal:
+            cmd = 'xdg-open {0:s}'.format(folderpath)
+            wd = os.getcwd()
+            sub_msg = 'source file location'
+        else:
+            cmd = ('gnome-terminal --disable-factory')
+            wd = folderpath
+            sub_msg = 'source file location in new terminal'
+
+        try:
+
+            message = ('### Trying to open {0:s} "{1:s}"...'.
+                       format(sub_msg, filepath))
+            self.view.statusBar().showMessage(message)
+            print message
+            self.view.repaint()
+            p = Popen(cmd, shell=True, stdin=PIPE, cwd=wd)
+            print '** PID = {0:d}'.format(p.pid)
+            print ' '
+            message = ('# Launch sequence for opening {0:s} "{1:s}" has been completed.'.
+                       format(sub_msg, filepath))
+            self.view.statusBar().showMessage(message)
+            print ' '
+            print message
+            self.subprocs.append(dict(p=p, path=item_path, cmd=cmd))
+
+
+        except:
+            msgBox = QMessageBox()
+            message = ('Opening {0:s} "{1:s}" has failed.'.
+                       format(sub_msg, filepath))
             msgBox.setText(message)
             ei = sys.exc_info()
             err_info_str = ei[1].__repr__()
