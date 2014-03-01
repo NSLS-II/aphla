@@ -14,7 +14,7 @@ import itertools
 import tempfile
 
 from . import machines
-from catools import caRmCorrect 
+from catools import caRmCorrect, measCaRmCol
 from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
     getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
     getLocations)
@@ -22,7 +22,7 @@ from respmat import OrbitRespMat
 import logging
 
 __all__ = [ 'calcLifetime', 'getLifetime',  'measOrbitRm',
-    'correctOrbit', 'setLocalBump',
+    'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
     'stripView'
 ]
@@ -676,7 +676,25 @@ def measTuneRm(quad, output, **kwargs):
     """
     measure the tune response matrix
     """
-    
+    qls = getElements(quad)
+    qpvs, names = [], []
+    for i,q in enumerate(qls):
+        pv = q.pv(field="b1", handle="setpoint")
+        if not pv: continue
+        qpvs.append(pv[0])
+        names.append(q.name)
+    tune = getElements("tune")[0]
+    nupvs = [tune.pv(field="x", handle="readback")[0],
+             tune.pv(field="y", handle="readback")[0]]
+    print(qpvs, nupvs)
+    m = np.zeros((len(nupvs), len(qpvs)), 'd')
+    for i,pv in enumerate(qpvs):
+        mc, dxlst, rawdat = measCaRmCol(pv, nupvs, **kwargs)
+        m[:,i] = mc
+        time.sleep(kwargs.get("wait", 1.5))
+    return nupvs, qpvs, m
+
+
 def measChromRm(sextlst):
     """
     measure chromaticity response matrix for sextupoles
