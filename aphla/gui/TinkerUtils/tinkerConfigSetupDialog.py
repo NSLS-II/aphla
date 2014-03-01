@@ -23,6 +23,7 @@ import config
 from tinkerModels import (ConfigAbstractModel, ConfigTableModel,
                           ConfigTreeModel)
 from tinkerdb import (TinkerMainDatabase, unitsys_id_raw, pv_id_NonSpecified)
+from dbviews import ConfigDBViewWidget
 from ui_tinkerConfigSetupDialog import Ui_Dialog
 from aphla.gui import channelexplorer
 from aphla.gui.utils.tictoc import tic, toc
@@ -271,20 +272,19 @@ class View(QDialog, Ui_Dialog):
 
         self.setupUi(self)
 
+        self.widget_configDBView.deleteLater()
+        self.configDBView = ConfigDBViewWidget(self.layoutWidget,
+                                               self.gridLayout_configDBView)
+
+        self.tableView = self.configDBView.tableView
+        self.treeView  = self.configDBView.treeView
+
         self.msg = None
 
         self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
         self.setModal(isModal)
 
         self.settings = settings
-
-        self.comboBox_view.setEditable(False)
-        self.group_based_view_index = \
-            self.comboBox_view.findText('Group-based View')
-        self.channel_based_view_index = \
-            self.comboBox_view.findText('Channel-based View')
-        self.comboBox_view.setCurrentIndex(self.channel_based_view_index)
-        self.on_view_base_change(self.channel_based_view_index)
 
         self.model = model
 
@@ -368,20 +368,6 @@ class View(QDialog, Ui_Dialog):
         super(View, self).reject() # will close the dialog
 
     #----------------------------------------------------------------------
-    def on_view_base_change(self, current_comboBox_index):
-        """"""
-
-        if current_comboBox_index == self.group_based_view_index:
-            page_obj = self.page_tree
-        elif current_comboBox_index == self.channel_based_view_index:
-            page_obj = self.page_table
-        else:
-            raise ValueError('Unexpected current ComboBox index: {0:d}'.
-                             format(current_comboBox_index))
-
-        self.stackedWidget.setCurrentWidget(page_obj)
-
-    #----------------------------------------------------------------------
     def _expandAll_and_resizeColumn(self):
         """"""
 
@@ -428,10 +414,6 @@ class App(QObject):
                      self._importConfigData)
         self.connect(self.view.pushButton_export,
                      SIGNAL('clicked()'), self._exportConfigData)
-
-        self.connect(self.view.comboBox_view,
-                     SIGNAL('currentIndexChanged(int)'),
-                     self.view.on_view_base_change)
 
     #----------------------------------------------------------------------
     def _initModel(self):

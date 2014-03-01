@@ -23,82 +23,12 @@
       <number>9</number>
      </property>
      <widget class="QWidget" name="layoutWidget">
-      <layout class="QGridLayout" name="gridLayout_6">
+      <layout class="QGridLayout" name="gridLayout_configDBView">
        <item row="0" column="0" rowspan="2">
-        <widget class="QWidget" name="widget" native="true">
+        <widget class="QWidget" name="widget_configDBView" native="true">
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="0" column="0">
-           <layout class="QVBoxLayout" name="verticalLayout_2">
-            <item>
-             <widget class="QStackedWidget" name="stackedWidget">
-              <property name="currentIndex">
-               <number>1</number>
-              </property>
-              <widget class="QWidget" name="page_tree">
-               <layout class="QGridLayout" name="gridLayout_2">
-                <item row="0" column="0">
-                 <widget class="QTreeView" name="treeView"/>
-                </item>
-               </layout>
-              </widget>
-              <widget class="QWidget" name="page_table">
-               <layout class="QGridLayout" name="gridLayout">
-                <item row="0" column="0">
-                 <widget class="QTableView" name="tableView"/>
-                </item>
-               </layout>
-              </widget>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout">
-              <item>
-               <spacer name="horizontalSpacer_2">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QComboBox" name="comboBox_view">
-                <item>
-                 <property name="text">
-                  <string>Group-based View</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Channel-based View</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_columns">
-                <property name="text">
-                 <string>Columns</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_sortable">
-                <property name="text">
-                 <string>Sortable</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
+           <layout class="QVBoxLayout" name="verticalLayout_2"/>
           </item>
          </layout>
         </widget>
