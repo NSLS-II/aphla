@@ -33,7 +33,8 @@ from PyQt4.QtGui import (
 )
 
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
-from TinkerUtils import (config, tinkerConfigSetupDialog, tinkerModels)
+from TinkerUtils import (config, tinkerConfigSetupDialog, tinkerModels,
+                         datestr, datestr_ns)
 from TinkerUtils.tinkerModels import (
     ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
@@ -642,7 +643,7 @@ class TinkerDockWidget(QDockWidget):
         self.lineEdit_config_username.setText(self.config_abstract.userinfo[0])
         #
         if self.config_abstract.config_ctime is not None:
-            timestamp_text = config.datestr(self.config_abstract.config_ctime)
+            timestamp_text = datestr(self.config_abstract.config_ctime)
         else:
             timestamp_text = 'This config has not been saved yet.'
         self.lineEdit_config_timestamp.setText(timestamp_text)
@@ -653,7 +654,7 @@ class TinkerDockWidget(QDockWidget):
         self.lineEdit_snapshot_username.setText(self.ss_abstract.userinfo[0])
         #
         if self.ss_abstract.ss_ctime is not None:
-            timestamp_text = config.datestr(self.ss_abstract.ss_ctime)
+            timestamp_text = datestr(self.ss_abstract.ss_ctime)
         else:
             timestamp_text = 'This snapshot has not been saved yet.'
         self.lineEdit_snapshot_timestamp.setText(timestamp_text)

@@ -33,45 +33,6 @@ FILE_FILTER_DICT = {'Text File': 'Text files (*.txt)',
                     }
 
 ########################################################################
-class SmartSizedMessageBox(QMessageBox):
-    """
-    Taken from the answer by Paul Etherton at
-
-    http://stackoverflow.com/questions/2655354/how-to-allow-resizing-of-qmessagebox-in-pyqt4
-    """
-
-    #----------------------------------------------------------------------
-    def __init__(self, *args, **kwargs):
-        """Constructor"""
-
-        super(SmartSizedMessageBox, self).__init__(*args, **kwargs)
-
-    #----------------------------------------------------------------------
-    def resizeEvent(self, event):
-        """
-        We only need to extend resizeEvent, not every event.
-        """
-
-        result = super(SmartSizedMessageBox, self).resizeEvent(event)
-
-        f = QFont('Monospace')
-        f.setPointSize(14)
-        f.setStyleHint(QFont.TypeWriter)
-
-        details_box = self.findChild(QTextEdit)
-        details_box.setFont(f)
-        fm = details_box.fontMetrics()
-        text = details_box.property('plainText')
-        lines = text.split('\n')
-        rect = fm.boundingRect(lines[0])
-        width  = int(rect.width()*1.5)
-        height = int(rect.height()*len(lines)*1.5)
-        if details_box is not None:
-            details_box.setFixedSize(QSize(width, height))
-
-        return result
-
-########################################################################
 class Settings():
     """"""
 

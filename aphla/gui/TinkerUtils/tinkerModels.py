@@ -19,6 +19,7 @@ from cothread.catools import caget, caput, FORMAT_TIME
 import aphla as ap
 
 import config
+from . import SmartSizedMessageBox
 from aphla.gui.utils.addr import (getIPs, getMACs)
 import tinkerdb
 
@@ -1136,7 +1137,7 @@ class SnapshotTableModel(QAbstractTableModel):
                 # before "if isinstance(value, tuple)", as the value for this
                 # case is a tuple.
                 try:
-                    return config.datestr_ns(value)
+                    return datestr_ns(value)
                 except:
                     return 'None'
             elif isinstance(value, (list, tuple, set, np.ndarray)):
@@ -1146,7 +1147,7 @@ class SnapshotTableModel(QAbstractTableModel):
                     return '{{{:s}}}'.format(str_format).format(value)
                 elif str_format == 'timestamp':
                     try:
-                        return config.datestr(value)
+                        return datestr(value)
                     except:
                         return 'None'
                 else:
