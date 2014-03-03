@@ -398,6 +398,12 @@ class OrbitPlotMainWindow(QMainWindow):
         viewToolBar1.addAction(
             QIcon(":/new_cor.png"), "Correctors",
             partial(self.newElementPlots, "COR", "x,y"))
+        viewToolBar1.addAction(
+            QIcon(":/new_quad.png"), "Quadrupoles",
+            partial(self.newElementPlots, "QUAD", "b1"))
+        viewToolBar1.addAction(
+            QIcon(":/new_sext.png"), "Sextupoles",
+            partial(self.newElementPlots, "SEXT", "b2"))
         #viewToolBar.addAction(viewErrorBarAction)
         #viewToolBar.addAction(QWhatsThis.createAction(self))
 
