@@ -151,6 +151,7 @@ from Qt4Designer_files.ui_launcher_pref import Ui_Dialog as Ui_Dialog_pref
 import aphla as ap
 from aphla.gui.utils.orderselector import ColumnsDialog
 from aphla.gui.utils import xmltodict
+from aphla.gui.utils.hlsqlite import SQLiteDatabase, Column
 
 HOME_PATH      = osp.expanduser('~')
 APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
@@ -166,7 +167,9 @@ GROUP_XML_FILEPATH     = osp.join(APHLA_APSCRIPTS_DIR, GROUP_XML_FILENAME)
 USER_XML_FILEPATH      = osp.join(APHLA_CONF_DIR     , USER_XML_FILENAME)
 USER_TEMP_XML_FILEPATH = osp.join(APHLA_CONF_DIR     , USER_TEMP_XML_FILENAME)
 
-PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'launcher_startup_pref.json')
+PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'aplauncher_startup_pref.json')
+
+CSS_WORKSPACE_DB_FILEPATH = osp.join(APHLA_CONF_DIR, 'aplauncher_css_ws.sqlite')
 
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
@@ -300,6 +303,16 @@ class LauncherModel(QStandardItemModel):
         self.search_index_help_list = []
         self.update_search_index()
 
+        if osp.exists(CSS_WORKSPACE_DB_FILEPATH):
+            self.css_workspace_db = SQLiteDatabase(CSS_WORKSPACE_DB_FILEPATH)
+        else:
+            self.css_workspace_db = SQLiteDatabase(
+                            CSS_WORKSPACE_DB_FILEPATH, create_folder=True)
+            column_def = [
+                Column('workspace_id', 'INTEGER', primary_key=True),
+                Column('pid', 'INTEGER', allow_null=False)]
+            self.css_workspace_db.createTable('workspace_table', column_def)
+
     #----------------------------------------------------------------------
     def _validate_aliases(self, temp_aliases):
         """
@@ -352,6 +365,40 @@ class LauncherModel(QStandardItemModel):
                 matched_alias = self.aliases[matched_alias_ind]
                 splitted_text_after_subs[i] = s.replace(
                     matched_alias['key'], matched_alias['value'])
+
+            if splitted_text_after_subs[i] == '&run-css':
+
+                self.emit(SIGNAL('sigUpdateCSSWorkspaceDB'))
+
+                table_name = 'workspace_table'
+                unused_workspace_ids = map(
+                    list,
+                    self.css_workspace_db.getColumnDataFromTable(
+                        table_name, order_by_str='workspace_id',
+                        column_name_list=['workspace_id'],
+                        condition_str='pid=-1'))
+
+                if unused_workspace_ids == []:
+                    self.css_workspace_db.insertRows(table_name, [(-1,)])
+                    unused_workspace_ids = map(
+                        list,
+                        self.css_workspace_db.getColumnDataFromTable(
+                            table_name, order_by_str='workspace_id',
+                            column_name_list=['workspace_id'],
+                            condition_str='pid=-1'))
+
+                new_id = unused_workspace_ids[0][0]
+                workspace_path = osp.join(
+                    APHLA_CONF_DIR, 'css_workspaces', str(new_id))
+                if not osp.exists(workspace_path):
+                    if not osp.exists(osp.join(APHLA_CONF_DIR,
+                                               'css_workspaces')):
+                        os.makedirs(osp.join(APHLA_CONF_DIR, 'css_workspaces'))
+                    else:
+                        os.makedirs(workspace_path)
+                splitted_text_after_subs[i] = \
+                    splitted_text_after_subs[i].replace(
+                        '&run-css', 'run-css -w {0:s}'.format(workspace_path))
 
         return ' '.join(splitted_text_after_subs)
 
@@ -4998,6 +5045,33 @@ class LauncherApp(QObject):
         self.connect(self.view, SIGNAL('sigMainWindowBeingClosed'),
                      self._shutdown_subprocs)
 
+        self.connect(self.model, SIGNAL('sigUpdateCSSWorkspaceDB'),
+                     self.update_CSS_workspace_DB)
+
+    #----------------------------------------------------------------------
+    def update_CSS_workspace_DB(self):
+        """"""
+
+        self.update_running_subprocs()
+
+        running_pid_list = [d['p'].pid for d in self.subprocs]
+
+        DB_pid_list = map(
+            list, self.model.css_workspace_db.getColumnDataFromTable(
+                'workspace_table', column_name_list=['pid'],
+                condition_str='pid != -1')
+        )
+
+        if DB_pid_list != []:
+
+            DB_pid_list = DB_pid_list[0]
+
+            for db_pid in DB_pid_list:
+                if db_pid not in running_pid_list:
+                    self.model.css_workspace_db.changeValues(
+                        'workspace_table', 'pid', '-1',
+                        condition_str='pid == {0:d}'.format(db_pid))
+
     #----------------------------------------------------------------------
     def _initModel(self):
         """ """
@@ -5046,6 +5120,14 @@ class LauncherApp(QObject):
             print message
             self.subprocs.append(dict(p=p, path=item_path,
                                       cmd=command_expression))
+            if subs_cmd.startswith('run-css '):
+                m = re.search(r'-w\s+{0:s}/css_workspaces/(\d)'.format(
+                    APHLA_CONF_DIR.replace('.', r'\.')), subs_cmd)
+                workspace_id_str = m.group(1)
+                self.model.css_workspace_db.changeValues(
+                    'workspace_table', 'pid', '{0:d}'.format(p.pid),
+                    condition_str='workspace_id={0:s}'.format(workspace_id_str),
+                )
         except:
             msgBox = QMessageBox()
             message = ('Launching ' + '"'+command_expression+'"' +
