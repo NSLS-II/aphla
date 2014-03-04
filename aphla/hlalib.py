@@ -54,7 +54,7 @@ def getOutputDir():
     return machines._lat.OUTPUT_DIR
 
 # current
-def getCurrent(name='dcct', field='value', unitsys=None):
+def getCurrent(name='dcct', field='I', unitsys=None):
     """Get the current from the first DCCT element
 
     :param str name: the name of DCCT, default 'dcct'
@@ -538,7 +538,7 @@ def getDistance(elem1, elem2, absolute=True):
 
 #
 #
-def getPhase(group, **kwargs):
+def getPhi(group, **kwargs):
     """
     get the phase from stored data
 
@@ -550,6 +550,11 @@ def getPhase(group, **kwargs):
     if kwargs.get('spos', False): col.append('s')
     
     return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
+
+def getPhase(group, **kwargs):
+    """see :func:`getPhi`"""
+    return getPhi(group, **kwargs)
+
 ##
 def getAlpha(group, **kwargs):
     """

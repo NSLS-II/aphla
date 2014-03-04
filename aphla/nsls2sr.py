@@ -333,3 +333,25 @@ def getSrBpmData(**kwargs):
     else:
         return data
 
+def plotChromaticity(f, nu, chrom):
+    """
+    see measChromaticity
+    """
+    df = f - np.mean(f)
+    p, resi, rank, sing, rcond = np.polyfit(df, nu, deg=2, full=True)
+    t = np.linspace(1.1*df[0], 1.1*df[-1], 100)
+    plt.clf()
+    plt.plot(f - f0, nu[:,0] - nu0[0], '-rx')
+    plt.plot(f - f0, nu[:,1] - nu0[1], '-go')
+    plt.plot(t, t*t*p[-3,0]+t*p[-2,0] + p[-1,0], '--r',
+             label="H: %.1fx^2%+.2fx%+.1f" % (p[-3,0], p[-2,0], p[-1,0]))
+    plt.plot(t, t*t*p[-3,1]+t*p[-2,1] + p[-1,1], '--g',
+             label="V: %.1fx^2%+.2fx%+.1f" % (p[-3,1], p[-2,1], p[-1,1]))
+    plt.text(min(df), min(dnu[:,0]),
+             r"$\eta=%.3e,\quad C_x=%.2f,\quad C_y=%.2f$" %\
+             (eta, chrom[0], chrom[1]))
+    
+    plt.legend(loc='upper right')
+    plt.xlabel("$f-f_0$ [MHz]")
+    plt.ylabel(r"$\nu-\nu_0$")
+    plt.savefig('measchrom.png')

@@ -213,11 +213,20 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1), maxtrial=20):
 
 def measCaRmCol(kker, resp, **kwargs):
     """
-    measure the response matrix column between PVs
+    measure the response matrix column between PVs: dresp/dkker.
+    kker - PV for variable
+    resp - PV list for response due to change of kker
+
+    Optional:
     wait - default 1.5 seconds
     timeout - default 5 sec, EPICS CA timeout
     npoints - default 5, observation per kick
     verbose - default 0
+
+    returns m, dxlst, raw_data
+    m - the response matrix column where m_i=dresp_i/dkker
+    dxlst - the trial setpoint of dkker
+    raw_data - (len(resp), len(dxlst), len(npoints))
     """
 
     wait = kwargs.get("wait", 1.5)
@@ -227,6 +236,9 @@ def measCaRmCol(kker, resp, **kwargs):
 
     n0 = len(resp)
     dxlst, x0 = [], caget(kker, timeout=timeout)
+    if not x0.ok:
+        raise RuntimeError("can not get data from %s" % kker)
+
     if "dxlst" in kwargs:
         dxlst = kwargs.get("dxlst")
     elif "xlst" in kwargs:
@@ -238,7 +250,8 @@ def measCaRmCol(kker, resp, **kwargs):
     else:
         raise RuntimeError("need input for at least of the parameters: "
                            "dxlst, xlst, dxmax")
-    
+    if verbose > 0:
+        print "dx:", dxlst
     n1 = len(dxlst)
     m = np.zeros(n0, 'd')
     raw_data = np.zeros((n0, n1, npt), 'd')
@@ -254,6 +267,8 @@ def measCaRmCol(kker, resp, **kwargs):
     for i in range(n0):
         p = np.polyfit(dxlst, np.average(raw_data[i,:,:], axis=1), 2)
         m[i] = p[1]
+    if verbose > 0:
+        print "dy/dx:", m
     return m, dxlst, raw_data
 
 
