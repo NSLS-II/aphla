@@ -28,7 +28,8 @@ import matplotlib.pylab as plt
 def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
-    Adc, Tbt and Fa waveforms.
+    Adc, Tbt and Fa waveforms. The Wfm size is set to 1,000,000 for ADC,
+    100,000 for Tbt and 9,000 for Fa.
     """
     elems = [e for e in getElements(name) if e.pv(field="x")]
     pvprefs = [bpm.pv(field="x")[0].replace("Pos:X-I", "") for bpm in elems]

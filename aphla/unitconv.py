@@ -75,7 +75,6 @@ class UcPoly(UcAbstract):
             raise RuntimeError("can not inverse polynomial order > 2 "
                                "for (%s -> %s)" % self.direction)
 
-
     def eval(self, x, inv = False):
         if x is None: return None
 
@@ -189,10 +188,14 @@ def loadUnitConversionH5(lat, h5file, group):
         usrc = v.attrs.get('src_unit', '')
         udst = v.attrs.get('dst_unit', '')
 
+        # the calibration factor
+        yfac = v.attrs.get('calib_factor', 1.0)
         if v.attrs['_class_'] == 'polynomial':
-            uc = UcPoly(usrc, udst, list(v))
+            a = [yfac**i for i in range(len(v))]
+            a.reverse() # in place
+            uc = UcPoly(usrc, udst, a)
         elif v.attrs['_class_'] == 'interpolation':
-            uc = UcInterp1(usrc, udst, v[:,0], v[:,1])
+            uc = UcInterp1(usrc, udst, list(v[:,0]), list(v[:,1]*yfac))
         else:
             raise RuntimeError("unknow unit converter")
 
@@ -221,6 +224,8 @@ def loadUnitConversionH5(lat, h5file, group):
 
         _logger.info("unitconversion data for elems={0}, fams={1}".format(elems, fams))
         _logger.info("unitconversion will be updated for {0}".format([e.name for e in eobjs]))
+        _logger.info("used calibration factor {0}".format(yfac))
+
         for eobj in eobjs:
             if fld not in eobj.fields():
                 realfld = v.attrs.get('rawfield', None)
