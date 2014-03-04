@@ -52,7 +52,7 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         SQLiteDatabase.__init__(self, filepath=config.MAIN_DB_FILEPATH,
                                 create_folder=False)
-        
+
         if self.getTableNames() == []:
             self._initTables()
 
@@ -1472,15 +1472,18 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         new_matched_config_ids = self.get_config_ids(*list_of_tuples[0])
 
-        config_id = np.setxor1d(old_matched_config_ids, new_matched_config_ids,
-                                assume_unique=True)
-        if config_id.size == 1:
-            config_id = int(config_id[0]) # Need to convert to Python int object
-            # as trying to insert NumPy int object will fail with
-            # sqlite3.InterfaceError: Error binding parameter 0 - probably
-            # unsupported type.
+        if old_matched_config_ids is None:
+            config_id = new_matched_config_ids[0]
         else:
-            raise ValueError('Multiple matching config_id has been found.')
+            config_id = np.setxor1d(old_matched_config_ids, new_matched_config_ids,
+                                    assume_unique=True)
+            if config_id.size == 1:
+                config_id = int(config_id[0]) # Need to convert to Python int object
+                # as trying to insert NumPy int object will fail with
+                # sqlite3.InterfaceError: Error binding parameter 0 - probably
+                # unsupported type.
+            else:
+                raise ValueError('Multiple matching config_id has been found.')
 
         table_name = 'config_table'
 
