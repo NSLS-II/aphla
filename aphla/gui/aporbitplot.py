@@ -464,10 +464,11 @@ class ApCaPlot(Qwt.QwtPlot):
         return bd
 
     def resetPlot(self, ax = Qwt.QwtPlot.yLeft):
-        bd = self.curvesBound()
-        if not bd.isValid(): return
-        self.setAxisScale(ax, bd.bottom(), bd.top())
-        self.setAxisScale(Qwt.QwtPlot.xBottom, bd.left(), bd.right())
+        #bd = self.curvesBound()
+        #if not bd.isValid(): return
+        #self.setAxisScale(ax, bd.bottom(), bd.top())
+        #self.setAxisScale(Qwt.QwtPlot.xBottom, bd.left(), bd.right())
+        pass
 
 
     def contextMenuEvent(self, e):

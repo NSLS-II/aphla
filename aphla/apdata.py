@@ -436,6 +436,9 @@ class OrmData:
             rowidx = rowidx + extrarow
             colidx = colidx + extracol
 
+        if self.m is None:
+            raise RuntimeError("No ORM data is defined")
+
         m = np.take(np.take(self.m, rowidx, axis=0), colidx, axis=1)
         brec = [(self.bpm[i][0], self.bpm[i][2]) for i in rowidx]
         trec = [(self.trim[i][0], self.trim[i][2]) for i in colidx]
