@@ -2934,12 +2934,26 @@ class ChannelExplorerApp(QObject):
         if machine_name is None:
             machine_name = self.settings.machine_name
 
-        if machine_name not in ap.machines.machines():
-            machine_name = 'nsls2'
+        try:
+            if machine_name not in ap.machines.machines():
+                machine_name = 'nsls2'
 
-        print 'Machine Name = {0:s}'.format(machine_name)
-        initMachine(machine_name, use_cached_lattice=use_cached_lattice)
-
+            print 'Machine Name = {0:s}'.format(machine_name)
+            initMachine(machine_name, use_cached_lattice=use_cached_lattice)
+            success = True
+        except:
+            print 'Failed to load {0:s}'.format(machine_name)
+            success = False
+            
+        if not success:
+            for machine_name in ap.machines.machines():
+                try:
+                    print 'Machine Name = {0:s}'.format(machine_name)
+                    initMachine(machine_name, use_cached_lattice=use_cached_lattice)
+                    break
+                except:
+                    print 'Failed to load {0:s}'.format(machine_name)
+                
         self.settings.machine_name = machine_name
 
         if lattice_name is None:

@@ -52,6 +52,9 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         SQLiteDatabase.__init__(self, filepath=config.MAIN_DB_FILEPATH,
                                 create_folder=False)
+        
+        if self.getTableNames() == []:
+            self._initTables()
 
     #----------------------------------------------------------------------
     def _initTables(self):
@@ -77,7 +80,7 @@ class TinkerMainDatabase(SQLiteDatabase):
         ]
         self.createTable(table_name, column_def)
         #self.insertRows(table_name, [(m,) for m in ap.machines.machines()])
-        self.insertRows(table_name, [('nsls2',)])
+        self.insertRows(table_name, [(config.HLA_MACHINE,)])
 
         table_name = 'lattice_name_table'
         column_def = [
@@ -92,14 +95,14 @@ class TinkerMainDatabase(SQLiteDatabase):
                 #all_lattice_names.extend(ap.machines.lattices())
             #except:
                 #pass
-        ap.machines.load('nsls2')
+        ap.machines.load(config.HLA_MACHINE)
         all_lattice_names.extend(ap.machines.lattices())
         all_lattice_names = list(set(all_lattice_names))
         self.insertRows(table_name, [(n,) for n in all_lattice_names])
 
         all_elems = []
         all_elem_tuples = []
-        machine = 'nsls2'
+        machine = config.HLA_MACHINE
         for lat in ap.machines.lattices():
             ap.machines.use(lat)
             all_elems.extend(ap.getElements('*'))
@@ -163,7 +166,7 @@ class TinkerMainDatabase(SQLiteDatabase):
         all_pvsps = list(set(sum(all_pvsps, [])))
         all_pvrbs = list(set(sum(all_pvrbs, [])))
         cainfos = catools.connect(all_pvsps+all_pvrbs, cainfo=True, throw=False)
-        all_pv_data_type_ids = [ci.datatype if ci.ok else len(CA_DATATYPES)-1
+        all_pv_data_type_ids = [ci.datatype+1 if ci.ok else len(CA_DATATYPES)
                                 for ci in cainfos]
         all_pv_array_sizes = [ci.count if ci.ok else 0 for ci in cainfos]
         all_pvs = [(pv, False, array_size, data_type_id)
@@ -336,7 +339,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                                  'pv_data_type_table', 'pv_data_type_id'),
         ]
         self.createTable(table_name, column_def)
-        list_of_tuples = [('', -1, 0, len(CA_DATATYPES)-1)]
+        list_of_tuples = [('', -1, 0, len(CA_DATATYPES))]
         list_of_tuples += [
             (p, readonly, array_size, data_type_id)
             for (p, readonly, array_size, data_type_id) in all_pvs]
@@ -1293,15 +1296,15 @@ class TinkerMainDatabase(SQLiteDatabase):
         cainfo = catools.connect(pv_str, cainfo=True, throw=False)
         if cainfo.ok:
             array_size      = cainfo.count
-            pv_data_type_id = cainfo.datatype
+            pv_data_type_id = cainfo.datatype + 1
         else:
             return -1
 
-        if CA_DATATYPES[pv_data_type_id] not in CA_DATATYPES_TINKERABLE:
+        if CA_DATATYPES[pv_data_type_id-1] not in CA_DATATYPES_TINKERABLE:
             msg = QMessageBox()
             msg.setText(('The following PV cannot be used in aptinker due to '
                          'its data type being {0:s}.'.format(
-                             CA_DATATYPES[pv_data_type_id])))
+                             CA_DATATYPES[pv_data_type_id-1])))
             msg.setInformativeText(pv_str)
             msg.exec_()
             return -2
@@ -1562,6 +1565,9 @@ class SnapshotDatabase(SQLiteDatabase):
 
         SQLiteDatabase.__init__(self, filepath=filepath, create_folder=False)
 
+        if self.getTableNames() == []:
+            self._initTables()
+
     #----------------------------------------------------------------------
     def _initTables(self):
         """"""
@@ -1598,6 +1604,9 @@ class SessionDatabase(SnapshotDatabase):
         """Constructor"""
 
         SnapshotDatabase.__init__(self, filepath)
+
+        if self.getTableNames() == []:
+            self._initTables()
 
     #----------------------------------------------------------------------
     def _initTables(self):

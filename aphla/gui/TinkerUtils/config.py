@@ -16,6 +16,7 @@ COL_DEF = SQLiteDatabase(filepath=COLUMN_DEFINITION_DB_FILEPATH,
 MAIN_DB_FILEPATH = osp.join(DB_FOLDERPATH, 'test_tinker.sqlite')
 #CONFIG_DB_FILEPATH = '/epics/op/apps/apscripts/db/aptinker_configs.db'
 
+
 DEF_VIS_COL_KEYS = {
     'config_setup': [
         'group_name',

@@ -864,7 +864,12 @@ def main():
             use_cached_lattice = False
 
     if ap.machines._lat is None:
-        ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
+        try:
+            ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
+        except RuntimeError as e:
+            # TODO: remove this error handling
+            config.HLA_MACHINE = 'nsls2v2'
+            ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
 
     # If Qt is to be used (for any GUI) then the cothread library needs to
     # be informed, before any work is done with Qt. Without this line
