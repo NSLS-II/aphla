@@ -560,6 +560,7 @@ def measTuneRespMat(quads, **kwargs):
     ctrlflds = kwargs.get("quadfield", 'b1')
     delay   = kwargs.get("delay", 3)
 
+    m = [[], []]
     t_start = time.time()
     for i,q in enumerate(getElements(quads)):
         if ctrlflds not in q.fields(): continue
@@ -579,7 +580,8 @@ def measTuneRespMat(quads, **kwargs):
             p, residuals, rank, singular_values, rcond = np.polyfit(
                 b1l, tunes[:,i], 1, full=True)
             print q.name, q.b1, plane, tunes[0,i], tunes[-1,i], p[0], p[1]
+            m[i].append(p[0])
 
     t_end = time.time()
     print "-- Time cost: %.2f min" % ((t_end - t_start)/60.0)
-
+    return m
