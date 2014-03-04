@@ -11,10 +11,12 @@ import json
 import time
 from copy import deepcopy
 
-from PyQt4.QtCore import (Qt, SIGNAL, QObject, QSettings, QSize)
+from PyQt4.QtCore import (Qt, SIGNAL, QObject, QSettings, QSize, QMetaObject,
+                          Q_ARG)
 from PyQt4.QtGui import (
     QApplication, QDialog, QSortFilterProxyModel, QAbstractItemView, QAction,
-    QIcon, QFileDialog, QMessageBox, QInputDialog, QMenu, QTextEdit, QFont
+    QIcon, QFileDialog, QMessageBox, QInputDialog, QMenu, QTextEdit, QFont,
+    QItemSelectionModel
 )
 
 import cothread
@@ -426,6 +428,7 @@ class View(QDialog, Ui_Dialog):
 
         t = self.tableView
         t.setModel(self.table_proxyModel)
+        t.setSelectionModel(QItemSelectionModel(self.table_proxyModel))
         t.setCornerButtonEnabled(True)
         t.setShowGrid(True)
         t.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -470,8 +473,72 @@ class View(QDialog, Ui_Dialog):
         self.connect(self.pushButton_preferences, SIGNAL('clicked(bool)'),
                      self._launchPrefDialog)
 
+        self.connect(
+            self.tableView,
+            SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+            self.on_table_data_change)
+
         self.configDBView.on_column_selection_change(
             self.vis_col_name_list, force_visibility_update=True)
+
+        self.connect(self.lineEdit_ref_step_size, SIGNAL('editingFinished()'),
+                     self.update_ref_step_size)
+        self.connect(self.checkBox_synced_group_weight,
+                     SIGNAL('stateChanged(int)'),
+                     self.update_synced_group_weight)
+
+    #----------------------------------------------------------------------
+    def update_synced_group_weight(self, state):
+        """"""
+
+        if state == Qt.Checked:
+            self.model.abstract.synced_group_weight = True
+        else:
+            self.model.abstract.synced_group_weight = False
+
+    #----------------------------------------------------------------------
+    def update_ref_step_size(self):
+        """"""
+
+        try:
+            new_ref_step_size = float(self.lineEdit_ref_step_size.text())
+        except:
+            new_ref_step_size = float('nan')
+            self.lineEdit_ref_step_size.setText('nan')
+
+        self.model.abstract.ref_step_size = new_ref_step_size
+
+        self.model.table.on_ref_step_size_change()
+
+    ##----------------------------------------------------------------------
+    #def relayDataChangedSignal(self, proxyTopLeftIndex, proxyBottomRightIndex):
+        #""""""
+
+        #proxyModel = self.tableView.model()
+
+        #QMetaObject.invokeMethod(
+            #self.tableView, 'dataChanged', Qt.QueuedConnection,
+            #Q_ARG(QModelIndex, proxyModel.mapFromSource(proxyTopLeftIndex)),
+            #Q_ARG(QModelIndex, proxyModel.mapFromSource(proxyBottomRightIndex)))
+
+    #----------------------------------------------------------------------
+    def on_table_data_change(self, proxyTopLeftIndex, proxyBottomRightIndex):
+        """"""
+
+        proxyModel = self.tableView.model()
+
+        proxy_row_i = proxyTopLeftIndex.row()
+        proxy_row_f = proxyBottomRightIndex.row()
+        proxy_col_i = proxyTopLeftIndex.column()
+        proxy_col_f = proxyBottomRightIndex.column()
+
+
+
+        topLeft     = proxyModel.mapToSource(proxyTopLeftIndex)
+        bottomRight = proxyModel.mapToSource(proxyBottomRightIndex)
+
+        #if
+
 
     #----------------------------------------------------------------------
     def _launchPrefDialog(self, checked):
