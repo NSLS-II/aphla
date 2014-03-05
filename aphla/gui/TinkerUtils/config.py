@@ -30,12 +30,14 @@ DEF_VIS_COL_KEYS = {
         'group_name',
         'pvsp',
         'pvrb',
-        'elem_name',
-        'field',
+        'channel_name',
         'weight',
         'step_size',
         'cur_RB',
+        'cur_RB_ioc_ts',
         'cur_SP',
+        'cur_SP_ioc_ts',
+        'cur_SentSP'
     ],
 }
 

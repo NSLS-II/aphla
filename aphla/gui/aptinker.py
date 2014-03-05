@@ -15,7 +15,10 @@ sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
 import sys, os
+import os.path as osp
 import numpy as np
+from copy import deepcopy
+import json
 
 import cothread
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
@@ -29,10 +32,12 @@ from PyQt4.QtGui import (
     QSortFilterProxyModel, QGridLayout, QSplitter, QTreeView, QTableView,
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
-    QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon
+    QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont
 )
 
+import aphla as ap
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
+from TinkerUtils.ui_aptinker_pref import Ui_Dialog as Ui_Dialog_Pref
 from TinkerUtils import (config, tinkerConfigSetupDialog, tinkerModels,
                          datestr, datestr_ns)
 from TinkerUtils.tinkerModels import (
@@ -41,8 +46,203 @@ from TinkerUtils.tinkerModels import (
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
 from TinkerUtils.dbviews import SnapshotDBViewWidget
 import utils.gui_icons
+from aphla.gui.utils.orderselector import ColumnsDialog
 
-import aphla as ap
+HOME_PATH      = osp.expanduser('~')
+APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_CONF_DIR):
+    os.makedirs(APHLA_CONF_DIR)
+
+PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'aptinker_startup_pref.json')
+
+#----------------------------------------------------------------------
+def get_preferences(default=False):
+    """"""
+
+    if (not default) and osp.exists(PREF_JSON_FILEPATH):
+        with open(PREF_JSON_FILEPATH, 'r') as f:
+            pref = json.load(f)
+    else:
+        # Use default startup preferences
+        pref = dict(
+            font_size=16,
+            vis_col_keys=config.DEF_VIS_COL_KEYS['snapshot_view'],
+            view_mode='Channel-based View',
+            caget_timeout=3.0, caput_timeout=3.0,
+            auto_caget_periodic_checked=False,
+            auto_caget_periodic_interval=5.0,
+            auto_caget_after_caput_checked=True,
+            auto_caget_after_caput_delay=1.0
+        )
+
+    return pref
+
+########################################################################
+class PreferencesEditor(QDialog, Ui_Dialog_Pref):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowTitle('Startup Preferences')
+
+        self.default_pref = get_preferences(default=True)
+
+        (self.all_col_keys, self.all_col_names) = \
+            map(list, config.COL_DEF.getColumnDataFromTable(
+                'column_table',
+                column_name_list=['column_key', 'short_descrip_name'])
+                )
+
+        self.load_pref_json()
+
+        self.connect(self.pushButton_restore_default, SIGNAL('clicked()'),
+                     self.restore_default_pref)
+        self.connect(self.pushButton_edit_visible_columns, SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+
+        self.connect(self.lineEdit_caget_timeout, SIGNAL('editingFinished()'),
+                     self.validate_time_duration)
+        self.connect(self.lineEdit_caput_timeout, SIGNAL('editingFinished()'),
+                     self.validate_time_duration)
+        self.connect(self.lineEdit_auto_caget_periodic,
+                     SIGNAL('editingFinished()'),
+                     self.validate_time_duration)
+        self.connect(self.lineEdit_auto_caget_after_caput,
+                     SIGNAL('editingFinished()'),
+                     self.validate_time_duration)
+
+    #----------------------------------------------------------------------
+    def validate_time_duration(self):
+        """"""
+
+        sender = self.sender()
+
+        try:
+            float(sender.text())
+        except:
+            sender.setText('nan')
+
+    #----------------------------------------------------------------------
+    def load_pref_json(self):
+        """"""
+
+        self.pref = get_preferences()
+
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def save_pref_json(self):
+        """"""
+
+        with open(PREF_JSON_FILEPATH, 'w') as f:
+            json.dump(self.pref, f, indent=3, sort_keys=True,
+                      separators=(',', ': '))
+
+    #----------------------------------------------------------------------
+    def restore_default_pref(self):
+        """"""
+
+        self.pref = deepcopy(self.default_pref)
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def update_view(self):
+        """"""
+
+        index = self.comboBox_font_size.findText(str(self.pref['font_size']),
+                                                 Qt.MatchExactly)
+        self.comboBox_font_size.setCurrentIndex(index)
+
+        self.update_column_list_only()
+
+        index = self.comboBox_view_mode.findText(self.pref['view_mode'],
+                                                 Qt.MatchExactly)
+        self.comboBox_view_mode.setCurrentIndex(index)
+
+        self.lineEdit_caget_timeout.setText(str(self.pref['caget_timeout']))
+        self.lineEdit_caput_timeout.setText(str(self.pref['caput_timeout']))
+
+        self.checkBox_auto_caget_periodic.setChecked(
+            self.pref['auto_caget_periodic_checked'])
+        self.lineEdit_auto_caget_periodic.setText(
+            str(self.pref['auto_caget_periodic_interval']))
+
+        self.checkBox_auto_caget_after_caput.setChecked(
+            self.pref['auto_caget_after_caput_checked'])
+        self.lineEdit_auto_caget_after_caput.setText(
+            str(self.pref['auto_caget_after_caput_delay']))
+
+    #----------------------------------------------------------------------
+    def update_column_list_only(self):
+        """"""
+
+        self.listWidget_visible_columns.clear()
+
+        vis_col_names = [self.all_col_names[self.all_col_keys.index(k)]
+                         for k in self.pref['vis_col_keys']]
+
+        self.listWidget_visible_columns.addItems(vis_col_names)
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        visible_col_names = [self.all_col_names[self.all_col_keys.index(k)]
+                             for k in self.pref['vis_col_keys']]
+        permanently_visible_col_keys = ['group_name']
+        permanently_visible_col_names = [
+            self.all_col_names[self.all_col_keys.index(k)]
+            for k in permanently_visible_col_keys]
+
+        dialog = ColumnsDialog(self.all_col_names, visible_col_names,
+                               permanently_visible_col_names, parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.pref['vis_col_keys'] = [
+                self.all_col_keys[self.all_col_names.index(col_name)]
+                for col_name in dialog.output]
+            self.update_column_list_only()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        self.pref['font_size'] = int(self.comboBox_font_size.currentText())
+
+        # self.pref['vis_col_keys'] is already updated whenever the list is
+        # modified by column dialog. So, there is no need to update here.
+
+        self.pref['view_mode'] = self.comboBox_view_mode.currentText()
+
+        self.pref['caget_timeout'] = float(self.lineEdit_caget_timeout.text())
+        self.pref['caput_timeout'] = float(self.lineEdit_caput_timeout.text())
+
+        self.pref['auto_caget_periodic_checked'] = \
+            self.checkBox_auto_caget_periodic.isChecked()
+        self.pref['auto_caget_periodic_interval'] = \
+            float(self.lineEdit_auto_caget_periodic.text())
+
+        self.pref['auto_caget_after_caput_checked'] = \
+            self.checkBox_auto_caget_after_caput.isChecked()
+        self.pref['auto_caget_after_caput_delay'] = \
+            float(self.lineEdit_auto_caget_after_caput.text())
+
+        self.save_pref_json()
+
+        super(PreferencesEditor, self).accept() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(PreferencesEditor, self).reject() # will hide the dialog
 
 ########################################################################
 class TitleRenameLineEdit(QLineEdit):
@@ -209,7 +409,6 @@ class CustomDockWidgetTitleBar(QWidget):
                      self.closeDockWidget)
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-
 
         hbox = QHBoxLayout(self)
         #
@@ -391,6 +590,14 @@ class TinkerDockWidget(QDockWidget):
         #horizHeader.setMovable(False)
         #self._expandAll_and_resizeColumn()
 
+        pref = get_preferences()
+        vis_col_names = [
+            self.ss_abstract.all_col_names[
+                self.ss_abstract.all_col_keys.index(k)]
+            for k in pref['vis_col_keys']]
+        self.ssDBView.on_column_selection_change(vis_col_names,
+                                                 force_visibility_update=True)
+
         self.customTitleBar = CustomDockWidgetTitleBar(self)
         self.setTitleBarWidget(self.customTitleBar)
         self.connect(self.customTitleBar, SIGNAL('customDockTitleChanged'),
@@ -520,12 +727,12 @@ class TinkerDockWidget(QDockWidget):
         self.splitter = QSplitter(dockWidgetContents)
         self.splitter.setOrientation(Qt.Vertical)
         #
-        self.ss_db_view = SnapshotDBViewWidget(self.splitter)
-        self.stackedWidget = self.ss_db_view.stackedWidget
-        self.page_tree  = self.ss_db_view.page_tree
-        self.page_table = self.ss_db_view.page_table
-        self.treeView  = self.ss_db_view.treeView
-        self.tableView = self.ss_db_view.tableView
+        self.ssDBView = SnapshotDBViewWidget(self.splitter)
+        self.stackedWidget = self.ssDBView.stackedWidget
+        self.page_tree  = self.ssDBView.page_tree
+        self.page_table = self.ssDBView.page_table
+        self.treeView  = self.ssDBView.treeView
+        self.tableView = self.ssDBView.tableView
         ##
         #self.page_tree = QWidget()
         #gridLayout = QGridLayout(self.page_tree)
@@ -613,6 +820,10 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_2.addItem(spacerItem_2)
         verticalLayout_1.addLayout(horizontalLayout_2)
         self.tabWidget_mode.addTab(self.tab_step_mode,'Step Mode')
+
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Minimum,
+                                 QSizePolicy.Expanding)
+        verticalLayout_1.addItem(spacerItem)
 
         ## Ramp Mode Tab
         self.tab_ramp_mode = QWidget()
@@ -820,19 +1031,6 @@ class TinkerDockWidget(QDockWidget):
         #
         self.textEdit_snapshot_description.setText(self.ss_abstract.description)
 
-
-########################################################################
-class TinkerModel(QObject):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-
-        QObject.__init__(self)
-
-        self.model_list = []
-
 ########################################################################
 class TinkerView(QMainWindow, Ui_MainWindow):
     """"""
@@ -867,6 +1065,15 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
                      self.load_config_test)
+        self.connect(self.actionPreferences, SIGNAL('triggered()'),
+                     self.launchPrefEditor)
+
+    #----------------------------------------------------------------------
+    def launchPrefEditor(self):
+        """"""
+
+        dialog = PreferencesEditor()
+        dialog.exec_()
 
     #----------------------------------------------------------------------
     def load_config_test(self):
@@ -1033,7 +1240,12 @@ def main():
     # If Qt is to be used (for any GUI) then the cothread library needs to
     # be informed, before any work is done with Qt. Without this line
     # below, the GUI window will not show up and freeze the program.
-    cothread.iqt()
+    qapp = cothread.iqt()
+
+    pref = get_preferences()
+    font = QFont()
+    font.setPointSize(pref['font_size'])
+    qapp.setFont(font)
 
     app = make(use_cached_lattice=use_cached_lattice)
 

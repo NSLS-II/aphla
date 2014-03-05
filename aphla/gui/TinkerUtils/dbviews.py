@@ -357,8 +357,48 @@ class SnapshotDBViewWidget(QWidget):
 
         QWidget.__init__(self, parentWidget)
 
+        self._initUI()
+
+        self.comboBox_view.setEditable(False)
+        self.group_based_view_index = \
+            self.comboBox_view.findText('Group-based View')
+        self.channel_based_view_index = \
+            self.comboBox_view.findText('Channel-based View')
+        self.comboBox_view.setCurrentIndex(self.channel_based_view_index)
+        self.on_view_base_change(self.channel_based_view_index)
+
+        (column_ids, self.all_col_keys, self.all_col_names, user_editable,
+         self.str_format) = \
+            map(list,
+                config.COL_DEF.getColumnDataFromTable(
+                    'column_table',
+                    column_name_list=['column_id', 'column_key',
+                                      'short_descrip_name',
+                                      'user_editable_in_snapshot',
+                                      'str_format'])
+                )
+        self.vis_col_name_list = self.all_col_names[:]
+
+        self.user_editable_col_ids = [c-1 for c, u in
+                                      zip(column_ids, user_editable)
+                                      if u == 1]
+
+        self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
+
+        self.contextMenu = QMenu()
+
+        self.connect(self.comboBox_view, SIGNAL('currentIndexChanged(int)'),
+                     self.on_view_base_change)
+        self.connect(self.checkBox_sortable, SIGNAL('stateChanged(int)'),
+                     self.on_sortable_state_changed)
+        self.connect(self.pushButton_columns, SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+
+    #----------------------------------------------------------------------
+    def _initUI(self):
+        """"""
+
         self.stackedWidget = QStackedWidget(self)
-        #QStackedWidget.__init__(self, parentWidget)
 
         self.page_tree = QWidget()
         gridLayout = QGridLayout(self.page_tree)
@@ -395,3 +435,76 @@ class SnapshotDBViewWidget(QWidget):
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.addWidget(self.stackedWidget)
         self.verticalLayout.addLayout(self.horizontalLayout)
+
+    #----------------------------------------------------------------------
+    def on_view_base_change(self, current_comboBox_index):
+        """"""
+
+        if current_comboBox_index == self.group_based_view_index:
+            page_obj = self.page_tree
+        elif current_comboBox_index == self.channel_based_view_index:
+            page_obj = self.page_table
+        else:
+            raise ValueError('Unexpected current ComboBox index: {0:d}'.
+                             format(current_comboBox_index))
+
+        self.stackedWidget.setCurrentWidget(page_obj)
+
+    #----------------------------------------------------------------------
+    def on_sortable_state_changed(self, state):
+        """"""
+
+        if state == Qt.Checked:
+            checked = True
+        else:
+            checked = False
+
+        self.tableView.setSortingEnabled(checked)
+
+    #----------------------------------------------------------------------
+    def on_column_selection_change(self, new_vis_col_names,
+                                   force_visibility_update=False):
+        """"""
+
+        if (not force_visibility_update) and \
+           (new_vis_col_names == self.vis_col_name_list):
+            return
+
+        new_vis_col_logical_indexes = [
+            self.all_col_names.index(name)
+            for name in new_vis_col_names]
+
+        header = self.tableView.horizontalHeader()
+        #header = self.treeView.header()
+
+        for (i, col_logical_ind) in enumerate(new_vis_col_logical_indexes):
+            new_visual_ind = i
+            current_visual_ind = header.visualIndex(col_logical_ind)
+            header.moveSection(current_visual_ind, new_visual_ind)
+
+        for i in range(len(self.all_col_names)):
+            if i not in new_vis_col_logical_indexes:
+                header.hideSection(i)
+            else:
+                header.showSection(i)
+
+        self.vis_col_name_list = new_vis_col_names[:]
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        all_column_name_list = self.all_col_names[:]
+        visible_column_name_list = self.vis_col_name_list[:]
+        permanently_visible_column_name_list = \
+            [self.all_col_names[self.all_col_keys.index('group_name')]]
+
+        dialog = ColumnsDialog(all_column_name_list,
+                               visible_column_name_list,
+                               permanently_visible_column_name_list,
+                               parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.on_column_selection_change(dialog.output[:],
+                                            force_visibility_update=False)
