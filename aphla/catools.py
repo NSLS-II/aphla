@@ -14,7 +14,7 @@ caget will have noises and caput will do nothing.
 
 __all__ = [
     'caget', 'caput', 'caputwait', 'caRmCorrect', 
-    'readPvs',
+    'readPvs', 'measCaRmCol',
     'Timedout', 'CA_OFFLINE', 'FORMAT_TIME'
 ]
 
@@ -220,7 +220,7 @@ def measCaRmCol(kker, resp, **kwargs):
     Optional:
     wait - default 1.5 seconds
     timeout - default 5 sec, EPICS CA timeout
-    npoints - default 5, observation per kick
+    sample - default 5, observation per kick
     verbose - default 0
 
     returns m, dxlst, raw_data
@@ -232,7 +232,7 @@ def measCaRmCol(kker, resp, **kwargs):
     wait = kwargs.get("wait", 1.5)
     timeout = kwargs.get("timeout", 5)
     verbose = kwargs.get("verbose", 0)
-    npt     = kwargs.get("npoints", 5)
+    sample     = kwargs.get("sample", 5)
 
     n0 = len(resp)
     dxlst, x0 = [], caget(kker, timeout=timeout)
@@ -254,11 +254,11 @@ def measCaRmCol(kker, resp, **kwargs):
         print "dx:", dxlst
     n1 = len(dxlst)
     m = np.zeros(n0, 'd')
-    raw_data = np.zeros((n0, n1, npt), 'd')
+    raw_data = np.zeros((n0, n1, sample), 'd')
     for i,dx in enumerate(dxlst):
         caput(kker, x0 + dx)
         time.sleep(wait)
-        for j in range(npt):
+        for j in range(sample):
             raw_data[:,i,j] = caget(resp, timeout=timeout)
             time.sleep(wait)
     caput(kker, x0)
