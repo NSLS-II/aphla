@@ -348,6 +348,9 @@ class TinkerDockWidget(QDockWidget):
         self.ss_abstract = SnapshotAbstractModel(config_abstract_model)
         self.ss_table = SnapshotTableModel(self.ss_abstract)
 
+        self.lineEdit_auto_caget_after_caput_delay.setText(
+            str(self.ss_abstract.auto_caget_delay_after_caput))
+
         self._settings = QSettings('APHLA', 'Tinker')
 
         self.loadViewSizeSettings()
@@ -538,9 +541,9 @@ class TinkerDockWidget(QDockWidget):
 
         button_size = QSize(32,32)
 
-        ## Step Mode Tab
         self.tabWidget_mode = QTabWidget(self.splitter)
-        #
+
+        ## Step Mode Tab
         self.tab_step_mode = QWidget()
         verticalLayout_1 = QVBoxLayout(self.tab_step_mode)
         horizontalLayout_1 = QHBoxLayout()
@@ -581,7 +584,8 @@ class TinkerDockWidget(QDockWidget):
         self.lineEdit_mult_factor = QLineEdit(self.tab_step_mode)
         self.lineEdit_mult_factor.setText('1.0')
         horizontalLayout_1.addWidget(self.lineEdit_mult_factor)
-        spacerItem_1 = QSpacerItem(40,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacerItem_1 = QSpacerItem(40,20,QSizePolicy.Expanding,
+                                   QSizePolicy.Minimum)
         horizontalLayout_1.addItem(spacerItem_1)
         verticalLayout_1.addLayout(horizontalLayout_1)
 
@@ -596,17 +600,21 @@ class TinkerDockWidget(QDockWidget):
         self.lineEdit_auto_update_interval = QLineEdit(self.tab_step_mode)
         horizontalLayout_2.addWidget(self.lineEdit_auto_update_interval)
         self.checkBox_auto_caget_after_caput = QCheckBox(self.tab_step_mode)
-        self.checkBox_auto_caget_after_caput.setText('Auto caget after caput: Delay [s]')
+        self.checkBox_auto_caget_after_caput.setText(
+            'Auto caget after caput: Delay [s]')
+        self.checkBox_auto_caget_after_caput.setChecked(True)
         horizontalLayout_2.addWidget(self.checkBox_auto_caget_after_caput)
-        self.lineEdit_auto_caget_after_caput_delay = QLineEdit(self.tab_step_mode)
+        self.lineEdit_auto_caget_after_caput_delay = QLineEdit(
+            self.tab_step_mode)
+        self.lineEdit_auto_caget_after_caput_delay.setText('1.0')
         horizontalLayout_2.addWidget(self.lineEdit_auto_caget_after_caput_delay)
-        spacerItem_2 = QSpacerItem(40,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem_2 = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                   QSizePolicy.Minimum)
         horizontalLayout_2.addItem(spacerItem_2)
         verticalLayout_1.addLayout(horizontalLayout_2)
+        self.tabWidget_mode.addTab(self.tab_step_mode,'Step Mode')
 
         ## Ramp Mode Tab
-        self.tabWidget_mode.addTab(self.tab_step_mode,'Step Mode')
-        #
         self.tab_ramp_mode = QWidget()
         horizontalLayout_10 = QHBoxLayout(self.tab_ramp_mode)
         verticalLayout_tab_ramp_1 = QVBoxLayout()
@@ -618,11 +626,13 @@ class TinkerDockWidget(QDockWidget):
         self.comboBox_setpoint_copy_source.addItem('Current')
         self.comboBox_setpoint_copy_source.addItem('Initial')
         self.comboBox_setpoint_copy_source.addItem('Snapshot')
-        horizontalLayout_tab_ramp_2.addWidget(self.comboBox_setpoint_copy_source)
+        horizontalLayout_tab_ramp_2.addWidget(
+            self.comboBox_setpoint_copy_source)
         label_tab_ramp_3 = QLabel(self.tab_ramp_mode)
         label_tab_ramp_3.setText('setpoints into target setpoints')
         horizontalLayout_tab_ramp_2.addWidget(label_tab_ramp_3)
-        spacerItem = QSpacerItem(40,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
         horizontalLayout_tab_ramp_2.addItem(spacerItem)
         verticalLayout_tab_ramp_1.addLayout(horizontalLayout_tab_ramp_2)
         horizontalLayout_tab_ramp_1 = QHBoxLayout()
@@ -635,7 +645,8 @@ class TinkerDockWidget(QDockWidget):
         label_tab_ramp_2.setText('Wait after Each Step [s]:')
         horizontalLayout_tab_ramp_1.addWidget(label_tab_ramp_2)
         self.lineEdit_wait_after_each_step = QLineEdit(self.tab_ramp_mode)
-        horizontalLayout_tab_ramp_1.addWidget(self.lineEdit_wait_after_each_step)
+        horizontalLayout_tab_ramp_1.addWidget(
+            self.lineEdit_wait_after_each_step)
         verticalLayout_tab_ramp_1.addLayout(horizontalLayout_tab_ramp_1)
         horizontalLayout_10.addLayout(verticalLayout_tab_ramp_1)
         self.pushButton_start = QPushButton(self.tab_ramp_mode)
@@ -647,7 +658,8 @@ class TinkerDockWidget(QDockWidget):
         self.pushButton_revert = QPushButton(self.tab_ramp_mode)
         self.pushButton_revert.setText('Revert')
         horizontalLayout_10.addWidget(self.pushButton_revert)
-        spacerItem = QSpacerItem(137,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem = QSpacerItem(137, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
         horizontalLayout_10.addItem(spacerItem)
         self.tabWidget_mode.addTab(self.tab_ramp_mode,'Ramp Mode')
 
@@ -667,7 +679,8 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_21.addWidget(label)
         self.lineEdit_config_timestamp = QLineEdit(self.tab_config_metadata)
         horizontalLayout_21.addWidget(self.lineEdit_config_timestamp)
-        spacerItem_5 = QSpacerItem(40,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacerItem_5 = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                   QSizePolicy.Minimum)
         horizontalLayout_21.addItem(spacerItem_5)
         verticalLayout_21.addLayout(horizontalLayout_21)
         horizontalLayout_22 = QHBoxLayout()
@@ -675,13 +688,15 @@ class TinkerDockWidget(QDockWidget):
         label = QLabel(self.tab_config_metadata)
         label.setText('Description')
         verticalLayout_22.addWidget(label)
-        spacerItem_6 = QSpacerItem(20,40,QSizePolicy.Minimum,QSizePolicy.Expanding)
+        spacerItem_6 = QSpacerItem(20, 40, QSizePolicy.Minimum,
+                                   QSizePolicy.Expanding)
         verticalLayout_22.addItem(spacerItem_6)
         horizontalLayout_22.addLayout(verticalLayout_22)
         self.textEdit_config_description = QTextEdit(self.tab_config_metadata)
         horizontalLayout_22.addWidget(self.textEdit_config_description)
         verticalLayout_21.addLayout(horizontalLayout_22)
-        self.tabWidget_metadata.addTab(self.tab_config_metadata,'Config Metadata')
+        self.tabWidget_metadata.addTab(self.tab_config_metadata,
+                                       'Config Metadata')
         #
         self.tab_snapshot_metadata = QWidget()
         verticalLayout_31 = QVBoxLayout(self.tab_snapshot_metadata)
@@ -696,7 +711,8 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_31.addWidget(label)
         self.lineEdit_snapshot_timestamp = QLineEdit(self.tab_snapshot_metadata)
         horizontalLayout_31.addWidget(self.lineEdit_snapshot_timestamp)
-        spacerItem_7 = QSpacerItem(40,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacerItem_7 = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                   QSizePolicy.Minimum)
         horizontalLayout_31.addItem(spacerItem_7)
         verticalLayout_31.addLayout(horizontalLayout_31)
         horizontalLayout_32 = QHBoxLayout()
@@ -704,13 +720,16 @@ class TinkerDockWidget(QDockWidget):
         label = QLabel(self.tab_snapshot_metadata)
         label.setText('Description')
         verticalLayout_32.addWidget(label)
-        spacerItem_8 = QSpacerItem(20,40,QSizePolicy.Minimum,QSizePolicy.Expanding)
+        spacerItem_8 = QSpacerItem(20, 40, QSizePolicy.Minimum,
+                                   QSizePolicy.Expanding)
         verticalLayout_32.addItem(spacerItem_8)
         horizontalLayout_32.addLayout(verticalLayout_32)
-        self.textEdit_snapshot_description = QTextEdit(self.tab_snapshot_metadata)
+        self.textEdit_snapshot_description = QTextEdit(
+            self.tab_snapshot_metadata)
         horizontalLayout_32.addWidget(self.textEdit_snapshot_description)
         verticalLayout_31.addLayout(horizontalLayout_32)
-        self.tabWidget_metadata.addTab(self.tab_snapshot_metadata,'Snapshot Metadata')
+        self.tabWidget_metadata.addTab(self.tab_snapshot_metadata,
+                                       'Snapshot Metadata')
 
         top_gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
         self.setWidget(dockWidgetContents)

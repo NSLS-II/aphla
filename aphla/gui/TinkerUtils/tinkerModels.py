@@ -912,7 +912,7 @@ class SnapshotAbstractModel(QObject):
         self.caget_timeout = 3.0 # [s]
         self.caput_timeout = 3.0 # [s]
 
-        self.auto_caget_delay_after_caput = np.nan # [s]
+        self.auto_caget_delay_after_caput = 1.0 # [s]
 
         self._config_abstract = config_abstract_model
         self._config_table = ConfigTableModel(
