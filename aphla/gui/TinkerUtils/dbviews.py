@@ -346,3 +346,26 @@ class ConfigDBViewWidget(QWidget):
         if dialog.output is not None:
             self.on_column_selection_change(dialog.output[:],
                                             force_visibility_update=False)
+
+########################################################################
+class SnapshotDBViewWidget(QStackedWidget):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, parentWidget):
+        """Constructor"""
+
+        QStackedWidget.__init__(self, parentWidget)
+
+        self.page_tree = QWidget()
+        gridLayout = QGridLayout(self.page_tree)
+        self.treeView = QTreeView(self.page_tree)
+        gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
+        self.addWidget(self.page_tree)
+        #
+        self.page_table = QWidget()
+        gridLayout = QGridLayout(self.page_table)
+        self.tableView = QTableView(self.page_table)
+        gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
+        self.addWidget(self.page_table)
+

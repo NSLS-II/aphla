@@ -506,9 +506,7 @@ class View(QDialog, Ui_Dialog):
             new_ref_step_size = float('nan')
             self.lineEdit_ref_step_size.setText('nan')
 
-        self.model.abstract.ref_step_size = new_ref_step_size
-
-        self.model.table.on_ref_step_size_change()
+        self.model.table.on_ref_step_size_change(new_ref_step_size)
 
     ##----------------------------------------------------------------------
     #def relayDataChangedSignal(self, proxyTopLeftIndex, proxyBottomRightIndex):

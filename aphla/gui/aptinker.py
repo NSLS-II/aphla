@@ -29,7 +29,7 @@ from PyQt4.QtGui import (
     QSortFilterProxyModel, QGridLayout, QSplitter, QTreeView, QTableView,
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
-    QAbstractItemView, QToolButton, QStyle, QMessageBox
+    QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon
 )
 
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
@@ -39,6 +39,7 @@ from TinkerUtils.tinkerModels import (
     ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
+from TinkerUtils.dbviews import SnapshotDBViewWidget
 
 import aphla as ap
 import aphla.gui.utils.gui_icons
@@ -394,11 +395,86 @@ class TinkerDockWidget(QDockWidget):
 
         self.connect(self.pushButton_update, SIGNAL('clicked()'),
                      self.ss_abstract.update_pv_vals)
+        self.connect(self.lineEdit_ref_step_size, SIGNAL('editingFinished()'),
+                     self.update_ref_step_size)
 
         self.connect(
             self.ss_table,
             SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
             self.relayDataChangedSignal)
+        self.connect(self.checkBox_synced_group_weight,
+                     SIGNAL('stateChanged(int)'),
+                     self.update_synced_group_weight)
+
+        self.connect(self.checkBox_auto_caget_after_caput,
+                     SIGNAL('stateChanged(int)'),
+                     self.update_auto_caget_delay_after_caput)
+        self.connect(self.lineEdit_auto_caget_after_caput_delay,
+                     SIGNAL('editingFinished()'),
+                     self.update_auto_caget_delay_after_caput)
+
+        self.connect(self.pushButton_step_up, SIGNAL('clicked()'),
+                     self.ss_abstract.step_up)
+        self.connect(self.pushButton_step_down, SIGNAL('clicked()'),
+                     self.ss_abstract.step_down)
+
+    #----------------------------------------------------------------------
+    def update_auto_caget_delay_after_caput(self, state=None):
+        """"""
+
+        if self.sender() == self.checkBox_auto_caget_after_caput:
+            if state == Qt.Checked:
+                try:
+                    auto_caget_delay_after_caput = float(
+                        self.lineEdit_auto_caget_after_caput_delay.text())
+                except:
+                    auto_caget_delay_after_caput = np.nan
+                    self.lineEdit_auto_caget_after_caput_delay.setText('nan')
+            else:
+                auto_caget_delay_after_caput = np.nan
+
+        elif self.sender() == self.lineEdit_auto_caget_after_caput_delay:
+            if self.checkBox_auto_caget_after_caput.isChecked():
+                try:
+                    auto_caget_delay_after_caput = float(
+                        self.lineEdit_auto_caget_after_caput_delay.text())
+                except:
+                    auto_caget_delay_after_caput = np.nan
+                    self.lineEdit_auto_caget_after_caput_delay.setText('nan')
+            else:
+                auto_caget_delay_after_caput = np.nan
+
+        else:
+            raise ValueError('Unexpected sender: {0:s}'.format(
+                self.sender().__repr__()))
+
+        self.ss_abstract.auto_caget_delay_after_caput = \
+            auto_caget_delay_after_caput
+
+    #----------------------------------------------------------------------
+    def update_synced_group_weight(self, state):
+        """"""
+
+        if state == Qt.Checked:
+            self.config_abstract.synced_group_weight = True
+            self.ss_abstract.synced_group_weight     = True
+        else:
+            self.config_abstract.synced_group_weight = False
+            self.ss_abstract.synced_group_weight     = False
+
+    #----------------------------------------------------------------------
+    def update_ref_step_size(self):
+        """"""
+
+        try:
+            new_ref_step_size = float(self.lineEdit_ref_step_size.text())
+        except:
+            new_ref_step_size = float('nan')
+            self.lineEdit_ref_step_size.setText('nan')
+
+        self.ss_abstract._config_table.on_ref_step_size_change(
+            new_ref_step_size)
+        self.ss_table.on_ref_step_size_change(new_ref_step_size)
 
     #----------------------------------------------------------------------
     def relayDataChangedSignal(self, proxyTopLeftIndex, proxyBottomRightIndex):
@@ -423,48 +499,88 @@ class TinkerDockWidget(QDockWidget):
         self.splitter = QSplitter(dockWidgetContents)
         self.splitter.setOrientation(Qt.Vertical)
         #
-        self.stackedWidget = QStackedWidget(self.splitter)
-        #
-        self.page_tree = QWidget()
-        gridLayout = QGridLayout(self.page_tree)
-        self.treeView = QTreeView(self.page_tree)
-        gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
-        self.stackedWidget.addWidget(self.page_tree)
-        #
-        self.page_table = QWidget()
-        gridLayout = QGridLayout(self.page_table)
-        self.tableView = QTableView(self.page_table)
-        gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
-        self.stackedWidget.addWidget(self.page_table)
-
+        self.stackedWidget = SnapshotDBViewWidget(self.splitter)
+        self.page_tree  = self.stackedWidget.page_tree
+        self.page_table = self.stackedWidget.page_table
+        self.treeView  = self.stackedWidget.treeView
+        self.tableView = self.stackedWidget.tableView
+        #self.stackedWidget = QStackedWidget(self.splitter)
         ##
+        #self.page_tree = QWidget()
+        #gridLayout = QGridLayout(self.page_tree)
+        #self.treeView = QTreeView(self.page_tree)
+        #gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
+        #self.stackedWidget.addWidget(self.page_tree)
+        ##
+        #self.page_table = QWidget()
+        #gridLayout = QGridLayout(self.page_table)
+        #self.tableView = QTableView(self.page_table)
+        #gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
+        #self.stackedWidget.addWidget(self.page_table)
+
+        ## Step Mode Tab
         self.tabWidget_mode = QTabWidget(self.splitter)
         #
         self.tab_step_mode = QWidget()
         verticalLayout_1 = QVBoxLayout(self.tab_step_mode)
         horizontalLayout_1 = QHBoxLayout()
         self.pushButton_step_up = QPushButton(self.tab_step_mode)
-        self.pushButton_step_up.setText('Up')
+        self.pushButton_step_up.setToolTip('Step Up')
+        self.pushButton_step_up.setIcon(QIcon(':/up_arrow.png'))
         horizontalLayout_1.addWidget(self.pushButton_step_up)
         self.pushButton_step_down = QPushButton(self.tab_step_mode)
-        self.pushButton_step_down.setText('Down')
+        self.pushButton_step_down.setToolTip('Step Down')
+        self.pushButton_step_down.setIcon(QIcon(':/down_arrow.png'))
         horizontalLayout_1.addWidget(self.pushButton_step_down)
+        label_tab_step_1 = QLabel(self.tab_step_mode)
+        label_tab_step_1.setText('Ref. Step Size:')
+        horizontalLayout_1.addWidget(label_tab_step_1)
+        self.lineEdit_ref_step_size = QLineEdit(self.tab_step_mode)
+        self.lineEdit_ref_step_size.setText('1.0')
+        horizontalLayout_1.addWidget(self.lineEdit_ref_step_size)
+        self.checkBox_synced_group_weight = QCheckBox(self.tab_step_mode)
+        self.checkBox_synced_group_weight.setText('Sync Group Weight')
+        self.checkBox_synced_group_weight.setChecked(True)
+        horizontalLayout_1.addWidget(self.checkBox_synced_group_weight)
+
+        self.pushButton_multiply = QPushButton(self.tab_step_mode)
+        self.pushButton_multiply.setText('Multiply')
+        self.pushButton_multiply.setToolTip('Multiply Setpoints')
+        horizontalLayout_1.addWidget(self.pushButton_multiply)
+        self.pushButton_divide = QPushButton(self.tab_step_mode)
+        self.pushButton_divide.setText('Divide')
+        self.pushButton_divide.setToolTip('Divide Setpoints')
+        horizontalLayout_1.addWidget(self.pushButton_divide)
+        label_tab_step_2 = QLabel(self.tab_step_mode)
+        label_tab_step_2.setText('Multiplication Factor:')
+        horizontalLayout_1.addWidget(label_tab_step_2)
+        self.lineEdit_mult_factor = QLineEdit(self.tab_step_mode)
+        self.lineEdit_mult_factor.setText('1.0')
+        horizontalLayout_1.addWidget(self.lineEdit_mult_factor)
         spacerItem_1 = QSpacerItem(40,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
         horizontalLayout_1.addItem(spacerItem_1)
         verticalLayout_1.addLayout(horizontalLayout_1)
+
         horizontalLayout_2 = QHBoxLayout()
         self.pushButton_update = QPushButton(self.tab_step_mode)
         self.pushButton_update.setText('Update')
+        self.pushButton_update.setToolTip('Update PV Values')
         horizontalLayout_2.addWidget(self.pushButton_update)
-        self.checkBox_auto = QCheckBox(self.tab_step_mode)
-        self.checkBox_auto.setMinimumSize(QSize(141,0))
-        self.checkBox_auto.setText('Auto: Interval [s]')
-        horizontalLayout_2.addWidget(self.checkBox_auto)
+        self.checkBox_auto_update = QCheckBox(self.tab_step_mode)
+        self.checkBox_auto_update.setText('Auto Update: Interval [s]')
+        horizontalLayout_2.addWidget(self.checkBox_auto_update)
         self.lineEdit_auto_update_interval = QLineEdit(self.tab_step_mode)
         horizontalLayout_2.addWidget(self.lineEdit_auto_update_interval)
+        self.checkBox_auto_caget_after_caput = QCheckBox(self.tab_step_mode)
+        self.checkBox_auto_caget_after_caput.setText('Auto caget after caput: Delay [s]')
+        horizontalLayout_2.addWidget(self.checkBox_auto_caget_after_caput)
+        self.lineEdit_auto_caget_after_caput_delay = QLineEdit(self.tab_step_mode)
+        horizontalLayout_2.addWidget(self.lineEdit_auto_caget_after_caput_delay)
         spacerItem_2 = QSpacerItem(40,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
         horizontalLayout_2.addItem(spacerItem_2)
         verticalLayout_1.addLayout(horizontalLayout_2)
+
+        ## Ramp Mode Tab
         self.tabWidget_mode.addTab(self.tab_step_mode,'Step Mode')
         #
         self.tab_ramp_mode = QWidget()
@@ -715,7 +831,7 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         db = TinkerMainDatabase()
 
-        config_id = 10 # same array size
+        config_id = 2 # same array size
 
         c_abs = ConfigAbstractModel()
 
