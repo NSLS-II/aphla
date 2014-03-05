@@ -933,6 +933,7 @@ class SnapshotAbstractModel(QObject):
         self.masar_id             = None
         self.ref_step_size        = self._config_abstract.ref_step_size
         self.synced_group_weight  = True
+        self.mult_factor          = 1.0
         self.caget_sent_ts_second = None
         self.caput_sent_ts_second = None
         self.filepath             = ''
@@ -1154,7 +1155,7 @@ class SnapshotAbstractModel(QObject):
                 condition_str='ss_id={0:d}'.format(self.ss_id))[0][0]
 
     #----------------------------------------------------------------------
-    def step_up(self, positive=True):
+    def update_caput_raws(self):
         """"""
 
         if self.caput_not_yet:
@@ -1169,10 +1170,9 @@ class SnapshotAbstractModel(QObject):
                 for i in nan_inds:
                     self.caput_raws[i] = self.caget_raws[indexes[i]]
 
-        if positive:
-            self.caput_raws += self.step_size_array
-        else:
-            self.caput_raws -= self.step_size_array
+    #----------------------------------------------------------------------
+    def invoke_caput(self):
+        """"""
 
         caput_raws = [r for r in self.caput_raws if not np.isnan(r)]
 
@@ -1183,12 +1183,6 @@ class SnapshotAbstractModel(QObject):
                              if i not in disabled_row_inds]
         caput_pv_map_list = [m for i, m in enumerate(self.caput_pv_map_list)
                              if i not in disabled_row_inds]
-
-        #self.maps['cur_SentSP'] = [
-            #(row, i) for i, (row, col) in enumerate(caput_pv_map_list)
-            #if (col == self.col_ids['cur_SentSP']) and
-            #(row not in disabled_row_inds)]
-        #self.maps['cur_SentSP_ts'] = deepcopy(self.maps['cur_SentSP'])
 
         self.caput_sent_ts_second = time.time()
         caput(caput_pv_str_list, caput_raws, throw=False,
@@ -1201,10 +1195,77 @@ class SnapshotAbstractModel(QObject):
             self.emit(SIGNAL('pvValuesUpdatedInSSAbstract'))
 
     #----------------------------------------------------------------------
+    def step_up(self, positive=True):
+        """"""
+
+        self.update_caput_raws()
+
+        if positive:
+            self.caput_raws += self.step_size_array
+        else:
+            self.caput_raws -= self.step_size_array
+
+        self.invoke_caput()
+
+    #----------------------------------------------------------------------
     def step_down(self):
         """"""
 
         self.step_up(positive=False)
+
+    #----------------------------------------------------------------------
+    def multiply(self, positive=True):
+        """"""
+
+        self.update_caput_raws()
+
+        if positive:
+            if self.mult_factor > 2.0:
+                msg = QMessageBox()
+                msg.addButton(QMessageBox.Yes)
+                msg.addButton(QMessageBox.No)
+                msg.setDefaultButton(QMessageBox.No)
+                msg.setEscapeButton(QMessageBox.No)
+                msg.setText(('Setpoints will be more than doubled. '
+                             'Do you really want to proceed?'))
+                msg.setIcon(QMessageBox.Question)
+                msg.setWindowTitle('Large Setpoint Changes')
+                choice = msg.exec_()
+                if choice == QMessageBox.No:
+                    return
+
+            self.caput_raws *= self.mult_factor
+        else:
+            if self.mult_factor != 0.0:
+                if self.mult_factor < 0.5:
+                    msg = QMessageBox()
+                    msg.addButton(QMessageBox.Yes)
+                    msg.addButton(QMessageBox.No)
+                    msg.setDefaultButton(QMessageBox.No)
+                    msg.setEscapeButton(QMessageBox.No)
+                    msg.setText(('Setpoints will be more than doubled. '
+                                 'Do you really want to proceed?'))
+                    msg.setIcon(QMessageBox.Question)
+                    msg.setWindowTitle('Large Setpoint Changes')
+                    choice = msg.exec_()
+                    if choice == QMessageBox.No:
+                        return
+
+                self.caput_raws /= self.mult_factor
+            else:
+                msg = QMessageBox()
+                msg.setText('Setpoints cannot be divided by 0.')
+                msg.setIcon(QMessageBox.Warning)
+                msg.exec_()
+                return
+
+        self.invoke_caput()
+
+    #----------------------------------------------------------------------
+    def divide(self):
+        """"""
+
+        self.multiply(positive=False)
 
 ########################################################################
 class SnapshotTableModel(QAbstractTableModel):

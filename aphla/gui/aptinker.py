@@ -397,6 +397,8 @@ class TinkerDockWidget(QDockWidget):
                      self.ss_abstract.update_pv_vals)
         self.connect(self.lineEdit_ref_step_size, SIGNAL('editingFinished()'),
                      self.update_ref_step_size)
+        self.connect(self.lineEdit_mult_factor, SIGNAL('editingFinished()'),
+                     self.update_mult_factor)
 
         self.connect(
             self.ss_table,
@@ -417,6 +419,10 @@ class TinkerDockWidget(QDockWidget):
                      self.ss_abstract.step_up)
         self.connect(self.pushButton_step_down, SIGNAL('clicked()'),
                      self.ss_abstract.step_down)
+        self.connect(self.pushButton_multiply, SIGNAL('clicked()'),
+                     self.ss_abstract.multiply)
+        self.connect(self.pushButton_divide, SIGNAL('clicked()'),
+                     self.ss_abstract.divide)
 
     #----------------------------------------------------------------------
     def update_auto_caget_delay_after_caput(self, state=None):
@@ -475,6 +481,18 @@ class TinkerDockWidget(QDockWidget):
         self.ss_abstract._config_table.on_ref_step_size_change(
             new_ref_step_size)
         self.ss_table.on_ref_step_size_change(new_ref_step_size)
+
+    #----------------------------------------------------------------------
+    def update_mult_factor(self):
+        """"""
+
+        try:
+            new_mult_factor = float(self.lineEdit_mult_factor.text())
+        except:
+            new_mult_factor = float('nan')
+            self.lineEdit_mult_factor.setText('nan')
+
+        self.ss_abstract.mult_factor = new_mult_factor
 
     #----------------------------------------------------------------------
     def relayDataChangedSignal(self, proxyTopLeftIndex, proxyBottomRightIndex):
