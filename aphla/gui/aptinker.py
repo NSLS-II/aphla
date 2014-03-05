@@ -40,9 +40,9 @@ from TinkerUtils.tinkerModels import (
     SnapshotAbstractModel, SnapshotTableModel)
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
 from TinkerUtils.dbviews import SnapshotDBViewWidget
+import utils.gui_icons
 
 import aphla as ap
-import aphla.gui.utils.gui_icons
 
 ########################################################################
 class TitleRenameLineEdit(QLineEdit):
@@ -520,12 +520,12 @@ class TinkerDockWidget(QDockWidget):
         self.splitter = QSplitter(dockWidgetContents)
         self.splitter.setOrientation(Qt.Vertical)
         #
-        self.stackedWidget = SnapshotDBViewWidget(self.splitter)
-        self.page_tree  = self.stackedWidget.page_tree
-        self.page_table = self.stackedWidget.page_table
-        self.treeView  = self.stackedWidget.treeView
-        self.tableView = self.stackedWidget.tableView
-        #self.stackedWidget = QStackedWidget(self.splitter)
+        self.ss_db_view = SnapshotDBViewWidget(self.splitter)
+        self.stackedWidget = self.ss_db_view.stackedWidget
+        self.page_tree  = self.ss_db_view.page_tree
+        self.page_table = self.ss_db_view.page_table
+        self.treeView  = self.ss_db_view.treeView
+        self.tableView = self.ss_db_view.tableView
         ##
         #self.page_tree = QWidget()
         #gridLayout = QGridLayout(self.page_tree)

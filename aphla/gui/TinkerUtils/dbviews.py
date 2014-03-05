@@ -348,24 +348,50 @@ class ConfigDBViewWidget(QWidget):
                                             force_visibility_update=False)
 
 ########################################################################
-class SnapshotDBViewWidget(QStackedWidget):
+class SnapshotDBViewWidget(QWidget):
     """"""
 
     #----------------------------------------------------------------------
     def __init__(self, parentWidget):
         """Constructor"""
 
-        QStackedWidget.__init__(self, parentWidget)
+        QWidget.__init__(self, parentWidget)
+
+        self.stackedWidget = QStackedWidget(self)
+        #QStackedWidget.__init__(self, parentWidget)
 
         self.page_tree = QWidget()
         gridLayout = QGridLayout(self.page_tree)
         self.treeView = QTreeView(self.page_tree)
         gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
-        self.addWidget(self.page_tree)
+        self.stackedWidget.addWidget(self.page_tree)
         #
         self.page_table = QWidget()
         gridLayout = QGridLayout(self.page_table)
         self.tableView = QTableView(self.page_table)
         gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
-        self.addWidget(self.page_table)
+        self.stackedWidget.addWidget(self.page_table)
 
+        self.horizontalLayout = QHBoxLayout()
+        spacerItem = QSpacerItem(40, 20,
+                                 QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+
+        self.comboBox_view = QComboBox(self)
+        self.comboBox_view.addItem('Group-based View')
+        self.comboBox_view.addItem('Channel-based View')
+        self.comboBox_view.setCurrentIndex(1)
+        self.horizontalLayout.addWidget(self.comboBox_view)
+
+        self.pushButton_columns = QPushButton(self)
+        self.pushButton_columns.setText('Columns')
+        self.horizontalLayout.addWidget(self.pushButton_columns)
+
+        self.checkBox_sortable = QCheckBox(self)
+        self.checkBox_sortable.setText('Sortable')
+        self.checkBox_sortable.setChecked(False)
+        self.horizontalLayout.addWidget(self.checkBox_sortable)
+
+        self.verticalLayout = QVBoxLayout(self)
+        self.verticalLayout.addWidget(self.stackedWidget)
+        self.verticalLayout.addLayout(self.horizontalLayout)
