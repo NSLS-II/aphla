@@ -38,13 +38,14 @@ from PyQt4.QtGui import (
 import aphla as ap
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
 from TinkerUtils.ui_aptinker_pref import Ui_Dialog as Ui_Dialog_Pref
+from TinkerUtils.ui_tinkerConfigDBSelector import Ui_Dialog as Ui_Dialog_ConfigDB
 from TinkerUtils import (config, tinkerConfigSetupDialog, tinkerModels,
                          datestr, datestr_ns)
 from TinkerUtils.tinkerModels import (
     ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
-from TinkerUtils.dbviews import SnapshotDBViewWidget
+from TinkerUtils.dbviews import (ConfigDBViewWidget, SnapshotDBViewWidget)
 import utils.gui_icons
 from aphla.gui.utils.orderselector import ColumnsDialog
 
@@ -76,6 +77,24 @@ def get_preferences(default=False):
         )
 
     return pref
+
+########################################################################
+class ConfigDBSelector(QDialog, Ui_Dialog_ConfigDB):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowTitle('Select Configuration from Database')
+
+        gridLayout = QGridLayout(self.groupBox_selected_conf)
+        self.configDBView = ConfigDBViewWidget(self.groupBox_selected_conf,
+                                               gridLayout)
 
 ########################################################################
 class PreferencesEditor(QDialog, Ui_Dialog_Pref):
@@ -1063,10 +1082,19 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
 
+        #self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
+                     #self.load_config_test)
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
-                     self.load_config_test)
+                     self.launchConfigDBSelector)
         self.connect(self.actionPreferences, SIGNAL('triggered()'),
                      self.launchPrefEditor)
+
+    #----------------------------------------------------------------------
+    def launchConfigDBSelector(self):
+        """"""
+
+        dialog = ConfigDBSelector()
+        dialog.exec_()
 
     #----------------------------------------------------------------------
     def launchPrefEditor(self):
