@@ -192,8 +192,8 @@ def loadUnitConversionH5(lat, h5file, group):
         yfac = v.attrs.get('calib_factor', 1.0)
         if v.attrs['_class_'] == 'polynomial':
             a = [yfac**i for i in range(len(v))]
-            a.reverse() # in place
-            uc = UcPoly(usrc, udst, a)
+            newp = [v[i]*c for i,c in enumerate(a.reverse())] # in place
+            uc = UcPoly(usrc, udst, newp)
         elif v.attrs['_class_'] == 'interpolation':
             uc = UcInterp1(usrc, udst, list(v[:,0]), list(v[:,1]*yfac))
         else:
