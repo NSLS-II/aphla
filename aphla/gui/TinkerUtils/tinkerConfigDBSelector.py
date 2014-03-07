@@ -23,15 +23,15 @@ from tinkerModels import (ConfigMetaTableModel, ConfigAbstractModel,
 from dbviews import (ConfigDBViewWidget, ConfigMetaDBViewWidget)
 from ui_tinkerConfigDBSelector import Ui_Dialog
 
-HOME_PATH      = osp.expanduser('~')
-APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
-if not osp.exists(APHLA_CONF_DIR):
-    os.makedirs(APHLA_CONF_DIR)
+HOME_PATH             = osp.expanduser('~')
+APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_USER_CONFIG_DIR):
+    os.makedirs(APHLA_USER_CONFIG_DIR)
 
 PREF_CONFIG_META_JSON_FILEPATH = osp.join(
-    APHLA_CONF_DIR, 'aptinker_ConfigDBSelector_ConfigMeta_pref.json')
+    APHLA_USER_CONFIG_DIR, 'aptinker_ConfigDBSelector_ConfigMeta_pref.json')
 PREF_CONFIG_JSON_FILEPATH = osp.join(
-    APHLA_CONF_DIR, 'aptinker_ConfigDBSelector_Config_pref.json')
+    APHLA_USER_CONFIG_DIR, 'aptinker_ConfigDBSelector_Config_pref.json')
 
 ########################################################################
 class ConfigDBSelector(QDialog, Ui_Dialog):
