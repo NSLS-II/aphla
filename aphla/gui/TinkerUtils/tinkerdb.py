@@ -970,6 +970,88 @@ class TinkerMainDatabase(SQLiteDatabase):
         )
 
     #----------------------------------------------------------------------
+    def create_temp_config_meta_table_text_view(self):
+        """"""
+
+        self.createTempView(
+            '[config_meta_table text view]',
+            '''config_meta_table cmt
+            LEFT JOIN user_table ut ON cmt.config_user_id = ut.user_id
+            ''',
+               column_name_list=[
+                   'cmt.config_id',
+                   'cmt.config_name',
+                   'cmt.config_description',
+                   'ut.username',
+                   'cmt.config_masar_id',
+                   'cmt.config_ref_step_size',
+                   'cmt.config_synced_group_weight',
+                   'cmt.config_ctime',
+               ]
+        )
+
+    #----------------------------------------------------------------------
+    def create_temp_config_table_text_view(self):
+        """"""
+
+        if '[channel_table text view]' not in \
+           self.getViewNames(square_brackets=True):
+            self.create_temp_channel_table_text_view()
+        if '[aphla channel prop text view]' not in \
+           self.getViewNames(square_brackets=True):
+            self.create_temp_aphla_channel_prop_text_view()
+        if '[unitconv_table text view]' not in \
+           self.getViewNames(square_brackets=True):
+            self.create_temp_unitconv_table_text_view()
+
+        self.createTempView(
+            '[config_table text view]',
+            '''config_table ct
+            LEFT JOIN group_name_table gnt ON ct.group_name_id = gnt.group_name_id
+            LEFT JOIN [channel_table text view] cht ON ct.channel_id = cht.channel_id
+            LEFT JOIN [aphla channel prop text view] at ON cht.aphla_ch_id = at.aphla_ch_id
+            LEFT JOIN [unitconv_table text view] ut1 ON cht.unitconv_toraw_id = ut1.unitconv_id
+            LEFT JOIN [unitconv_table text view] ut2 ON cht.unitconv_fromraw_id = ut2.unitconv_id
+            ''',
+               column_name_list=[
+                   'ct.config_row_id',
+                   'ct.config_id',
+                   'gnt.group_name',
+                   'cht.channel_name',
+                   'cht.pvsp',
+                   'cht.pvrb',
+                   'cht.pvsp_array_size',
+                   'cht.pvrb_array_size',
+                   'ct.config_weight AS weight',
+                   'at.field',
+                   'at.machine_name',
+                   'at.lattice_name',
+                   'at.elem_name',
+                   'at.elem_family',
+                   'at.elem_cell',
+                   'at.elem_devname',
+                   'at.elem_efflen',
+                   'at.elem_physlen',
+                   'at.elem_fields',
+                   'at.elem_girder',
+                   'at.elem_group',
+                   'at.elem_sb',
+                   'at.elem_se',
+                   'at.elem_sequence',
+                   'at.elem_symmetry',
+                   'at.elem_pvs',
+                   'cht.unitsys',
+                   'ut1.unticonv_type',
+                   'ut1.src_unitsymb AS unitsymb',
+                   'ut1.dst_unitsymb AS unitsymb_raw',
+                   'ut1.conv_data.txt AS unitconv_data_toraw',
+                   'ut2.conv_data.txt AS unitconv_data_fromraw',
+                   'ut1.inv AS unitconv_inv_toraw',
+                   'ut2.inv AS unitconv_inv_fromraw',
+               ]
+        )
+
+    #----------------------------------------------------------------------
     def create_temp_aphla_channel_prop_text_view(self):
         """"""
 
