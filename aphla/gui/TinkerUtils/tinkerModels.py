@@ -83,6 +83,124 @@ def get_contiguous_col_ind_pairs(col_inds):
     return contig_tuple_list
 
 ########################################################################
+class ConfigMetaTableModel(QAbstractTableModel):
+
+    #----------------------------------------------------------------------
+    def __init__(self, search_result_dict, all_col_keys):
+        """Constructor"""
+
+        QAbstractTableModel.__init__(self)
+
+        self.search_result    = search_result_dict
+        self.all_col_keys     = all_col_keys
+        self.col_keys_wo_desc = all_col_keys[:]
+        self.col_keys_wo_desc.remove('config_description')
+
+        self.col_names_wo_desc = [
+            'Config.ID', 'Config.Name', 'Username', 'MASAR ID', 'Ref.StepSize',
+            'Synced.GroupWeight', 'Time Created']
+
+        self.nRows = len(self.search_result[self.col_keys_wo_desc[0]])
+        self.nCols = len(self.col_keys_wo_desc)
+
+        self.str_formats = [':s']*self.nCols
+        for i, k in enumerate(self.col_keys_wo_desc):
+            if k.endswith('_id') or (k == 'config_synced_group_weight'):
+                self.str_formats[i] = ':d'
+            elif k == 'config_ref_step_size':
+                self.str_formats[i] = ':.6g'
+            elif k == 'config_ctime':
+                self.str_formats[i] = 'timestamp'
+
+    #----------------------------------------------------------------------
+    def repaint(self):
+        """"""
+
+        self.nRows = len(self.search_result[self.col_keys_wo_desc[0]])
+        self.reset() # Inititate repaint
+
+    #----------------------------------------------------------------------
+    def rowCount(self, parent=QModelIndex()):
+        """"""
+
+        return self.nRows
+
+    #----------------------------------------------------------------------
+    def columnCount(self, parent=QModelIndex()):
+        """"""
+
+        return self.nCols
+
+    #----------------------------------------------------------------------
+    def data(self, index, role=Qt.DisplayRole):
+        """"""
+
+        row = index.row()
+        col = index.column()
+
+        col_key    = self.col_keys_wo_desc[col]
+        str_format = self.str_formats[col]
+
+        if ( not index.isValid() ) or \
+           ( not (0 <= row < self.rowCount()) ):
+            return None
+
+        if role in (Qt.DisplayRole,):
+
+            col_list = self.search_result[col_key]
+            if len(col_list) != 0: value = col_list[row]
+            else                 : return 'N/A'
+
+            if value is None:
+                return 'None'
+            elif value is '':
+                return "''"
+            elif isinstance(value, (list, tuple, set, np.ndarray)):
+                return str(value)
+            elif str_format == 'timestamp':
+                return datestr(value)
+            else:
+                return '{{{:s}}}'.format(str_format).format(value)
+        else:
+            return None
+
+    #----------------------------------------------------------------------
+    def setData(self, index, value, role=Qt.EditRole):
+        """"""
+
+        return False # No item should be editable
+
+    #----------------------------------------------------------------------
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        """"""
+
+        if role == Qt.TextAlignmentRole:
+            if orientation == Qt.Horizontal:
+                return int(Qt.AlignLeft|Qt.AlignVCenter)
+            else:
+                return int(Qt.AlignRight|Qt.AlignVCenter)
+
+        elif role != Qt.DisplayRole:
+            return None
+
+        elif orientation == Qt.Horizontal:
+            # Horizontal Header display name requested
+            return self.col_names_wo_desc[section]
+
+        else: # Vertical Header display name requested
+            return int(section+1) # row number
+
+    #----------------------------------------------------------------------
+    def flags(self, index):
+        """"""
+
+        default_flags = QAbstractTableModel.flags(self, index) # non-editable
+
+        if not index.isValid(): return default_flags
+
+        return default_flags # non-editable
+
+########################################################################
 class ConfigAbstractModel(QObject):
     """"""
 
@@ -284,13 +402,12 @@ class ConfigAbstractModel(QObject):
         else:
             raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
 
-
 ########################################################################
 class ConfigTableModel(QAbstractTableModel):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, abstract_model=None):
+    def __init__(self, abstract_model=None, readonly=False):
         """Constructor"""
 
         QAbstractTableModel.__init__(self)
@@ -299,6 +416,8 @@ class ConfigTableModel(QAbstractTableModel):
             self.abstract = ConfigAbstractModel()
         else:
             self.abstract = abstract_model
+
+        self.readonly = readonly
 
         # Short-hand notation
         self.db = self.abstract.db
@@ -667,6 +786,8 @@ class ConfigTableModel(QAbstractTableModel):
         """"""
 
         default_flags = QAbstractTableModel.flags(self, index) # non-editable
+
+        if self.readonly: return default_flags
 
         if not index.isValid(): return default_flags
 
@@ -1121,6 +1242,8 @@ class SnapshotAbstractModel(QObject):
         ca_raws = caget(self.caget_pv_str_list, format=FORMAT_TIME,
                         throw=False, timeout=self.caget_timeout)
 
+        tEnd_caget = time.time()
+
         self.caget_raws = np.array(
             [r if r.ok else (np.nan if size == 1 else np.ones(size)*np.nan)
              for r, size in zip(ca_raws, self.caget_pv_size_list)], dtype=object)
@@ -1137,6 +1260,14 @@ class SnapshotAbstractModel(QObject):
             count=self.n_caget_pvs)
 
         self.emit(SIGNAL('pvValuesUpdatedInSSAbstract'))
+
+        tEnd_visual = time.time()
+
+
+        print '# caget update only took {:.6f} seconds'.format(
+            tEnd_caget - self.caget_sent_ts_second)
+        print '# caget & visual update took {:.6f} seconds'.format(
+            tEnd_visual - self.caget_sent_ts_second)
 
     #----------------------------------------------------------------------
     def update_init_pv_vals(self):
