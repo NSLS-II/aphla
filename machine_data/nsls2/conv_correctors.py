@@ -221,35 +221,70 @@ def process_matched(fname, pat="q*", latpar = "comm-ring-par.txt"):
     h5f.close()
 
 if __name__ == "__main__":
-    # 150 CORS
-    cors = {"CH2*":    ("CRR-1560-", 15),
-            "CM1G4*A": ("CRR-1000-", 15), # inside SQ
-            "CL2*":    ("CRR-1000-", 30),
-            "CL1*":    ("CRR-1000-", 30), 
-            "CM1G4*B": ("CRR-1560-", 30),
-            "CH1G2*A": ("CRR-1000-", 15), # inside SQ
+    dat = {
+        "SR-MG-CRR-1000": [],
+        "SR-MG-CRR-1001": [],
+        "SR-MG-CRR-1560": [],
     }
-    dat = {}
     fname = "matched_magnets.txt"
     for i,line in enumerate(open(fname, 'r').readlines()):
         # searching over matched (element, measurement data)
         mag, c, fxls = line.split()
-        if mag[:2] not in ["CL", "CH", "CM"]: continue
-        for k,v in cors.items():
-            if not fnmatch(mag, k): continue
-            sn, subdev, r, vhup, vhdn = read_magnet_curve(
-                fxls, "Hor Field Dipole")
-            sn, subdev, r, vvup, vvdn = read_magnet_curve(
-                fxls, "Vert Field Dipole")
-            mtp = cors[k][0]
-            dat.setdefault(mtp, [])
-            # Current and rad/Amp
-            dat[mtp].append((vhup[:,0], vhup[:,2]/(3.3357*3.0)/vhup[:,0],
-                             vvup[:,0], vvup[:,2]/(3.3357*3.0)/vvup[:,0]))
-    for k,v in cors.items():
-        dIh = np.average([r[1] for r in dat[v[0]]])
-        dIhvar1 = np.std([r[1] for r in dat[v[0]]])
-        dIv = np.average([r[3] for r in dat[v[0]]])
-        dIvvar1 = np.std([r[3] for r in dat[v[0]]])
-        print "%10s H" % k, v[0], dIh, dIhvar1
-        print "%10s V" % k, v[0], dIv, dIvvar1
+        if mag[:2] not in ["CL", "CH", "CM", "SQ"]: continue
+        sn, subdev, r, vhup, vhdn = read_magnet_curve(
+            fxls, "Hor Field Dipole")
+        sn, subdev, r, vvup, vvdn = read_magnet_curve(
+            fxls, "Vert Field Dipole")
+        #print mag, sn, fxls
+        dat[str(sn)].append((vhup[:,0], vhup[:,2]/(3.3357*3.0)/vhup[:,0],
+                        vvup[:,0], vvup[:,2]/(3.3357*3.0)/vvup[:,0]))
+
+    sk2cor = {}
+    for i,line in enumerate(open("corr_skew_pair.txt", 'r').readlines()):
+        sk, c = line.split()
+        sk2cor[sk.strip().lower()] = c.strip().lower()
+    print sk2cor
+    sn2cor = {}
+    for i,line in enumerate(open("corr_magnet_sn.txt", 'r').readlines()):
+        sn, mag, cg = line.split()
+        name = mag[:-6] + cg[-2:] + cg[:-2] + mag[-1]
+        sn = "SR-MG-" + sn
+        name = name.lower()
+        sn2cor.setdefault(sn, [])
+        if name in sk2cor:
+            name = sk2cor[name]
+        sn2cor[sn].append(name.lower())
+    print sn2cor
+    f = h5py.File("cor_unitconf.hdf5", "w")
+    g = f.create_group("UnitConversion")
+    for k,v in dat.items():
+        dIh = np.average([r[1] for r in v])
+        dIhvar1 = np.std([r[1] for r in v])
+        dIv = np.average([r[3] for r in v])
+        dIvvar1 = np.std([r[3] for r in v])
+        g[k + "_H"] = [dIh*1000.0, 0.0]
+        print "%10s H" % k, dIh, dIhvar1, len(sn2cor[k])
+        ds = g[k + "_H"]
+        ds.attrs["_class_"] = "polynomial"
+        ds.attrs["calib_factor"] = 0.9988
+        ds.attrs["dst_unit"] = "mrad"
+        ds.attrs["dst_unit_sys"] = "phy"
+        ds.attrs["field"] = "x"
+        ds.attrs["elements"] = sn2cor[k]
+        ds.attrs["invertible"] = 1
+        ds.attrs["src_unit"] = "A"
+        ds.attrs["src_unit_sys"] = ""
+        g[k + "_V"] = [dIv*1000.0, 0.0]
+        print "%10s V" % k, dIv, dIvvar1
+        ds = g[k + "_V"]
+        ds.attrs["_class_"] = "polynomial"
+        ds.attrs["calib_factor"] = 0.9988
+        ds.attrs["dst_unit"] = "mrad"
+        ds.attrs["dst_unit_sys"] = "phy"
+        ds.attrs["field"] = "x"
+        ds.attrs["elements"] = sn2cor[k]
+        ds.attrs["invertible"] = 1
+        ds.attrs["src_unit"] = "A"
+        ds.attrs["src_unit_sys"] = ""
+    f.close()
+    
