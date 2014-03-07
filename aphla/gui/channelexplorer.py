@@ -2486,10 +2486,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         horizHeader.setStretchLastSection(False)
         #
         t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True)
-        #
-        # Emit a signal requesting relevant signals to be connected to the
-        # newly created model
-        self.emit(SIGNAL('connectNewFilterTableModel'), t.model())
 
         ## Related Simple Filter
         f = self.model.filters_simple[0]
@@ -2944,7 +2940,7 @@ class ChannelExplorerApp(QObject):
         except:
             print 'Failed to load {0:s}'.format(machine_name)
             success = False
-            
+
         if not success:
             for machine_name in ap.machines.machines():
                 try:
@@ -2953,7 +2949,7 @@ class ChannelExplorerApp(QObject):
                     break
                 except:
                     print 'Failed to load {0:s}'.format(machine_name)
-                
+
         self.settings.machine_name = machine_name
 
         if lattice_name is None:
@@ -3015,9 +3011,8 @@ class ChannelExplorerApp(QObject):
                      SIGNAL('editTextChanged(const QString &)'),
                      self.view.on_filter_value_change)
 
-        self.connect(self.view,
-                     SIGNAL('connectNewFilterTableModel'),
-                     self._connect_signals_to_FilterTableModel)
+        self._connect_signals_to_FilterTableModel(
+            self.view.tableView_filter.model())
 
         self.connect(self.view.pushButton_search, SIGNAL('clicked()'),
                      self.model.search)
