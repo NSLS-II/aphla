@@ -15,7 +15,10 @@ sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
 import sys, os
+import os.path as osp
 import numpy as np
+from copy import deepcopy
+import json
 
 import cothread
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
@@ -29,19 +32,236 @@ from PyQt4.QtGui import (
     QSortFilterProxyModel, QGridLayout, QSplitter, QTreeView, QTableView,
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
-    QAbstractItemView, QToolButton, QStyle, QMessageBox
+    QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont
 )
 
+import aphla as ap
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
+from TinkerUtils.ui_aptinker_pref import Ui_Dialog as Ui_Dialog_Pref
+from TinkerUtils.ui_tinkerConfigDBSelector import Ui_Dialog as Ui_Dialog_ConfigDB
 from TinkerUtils import (config, tinkerConfigSetupDialog, tinkerModels,
                          datestr, datestr_ns)
 from TinkerUtils.tinkerModels import (
     ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
+from TinkerUtils.dbviews import (ConfigDBViewWidget, SnapshotDBViewWidget)
+import utils.gui_icons
+from aphla.gui.utils.orderselector import ColumnsDialog
 
-import aphla as ap
-import aphla.gui.utils.gui_icons
+HOME_PATH      = osp.expanduser('~')
+APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_CONF_DIR):
+    os.makedirs(APHLA_CONF_DIR)
+
+PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'aptinker_startup_pref.json')
+
+#----------------------------------------------------------------------
+def get_preferences(default=False):
+    """"""
+
+    if (not default) and osp.exists(PREF_JSON_FILEPATH):
+        with open(PREF_JSON_FILEPATH, 'r') as f:
+            pref = json.load(f)
+    else:
+        # Use default startup preferences
+        pref = dict(
+            font_size=16,
+            vis_col_keys=config.DEF_VIS_COL_KEYS['snapshot_view'],
+            view_mode='Channel-based View',
+            caget_timeout=3.0, caput_timeout=3.0,
+            auto_caget_periodic_checked=False,
+            auto_caget_periodic_interval=5.0,
+            auto_caget_after_caput_checked=True,
+            auto_caget_after_caput_delay=1.0
+        )
+
+    return pref
+
+########################################################################
+class ConfigDBSelector(QDialog, Ui_Dialog_ConfigDB):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowTitle('Select Configuration from Database')
+
+        gridLayout = QGridLayout(self.groupBox_selected_conf)
+        self.configDBView = ConfigDBViewWidget(self.groupBox_selected_conf,
+                                               gridLayout)
+
+########################################################################
+class PreferencesEditor(QDialog, Ui_Dialog_Pref):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowTitle('Startup Preferences')
+
+        self.default_pref = get_preferences(default=True)
+
+        (self.all_col_keys, self.all_col_names) = \
+            map(list, config.COL_DEF.getColumnDataFromTable(
+                'column_table',
+                column_name_list=['column_key', 'short_descrip_name'])
+                )
+
+        self.load_pref_json()
+
+        self.connect(self.pushButton_restore_default, SIGNAL('clicked()'),
+                     self.restore_default_pref)
+        self.connect(self.pushButton_edit_visible_columns, SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+
+        self.connect(self.lineEdit_caget_timeout, SIGNAL('editingFinished()'),
+                     self.validate_time_duration)
+        self.connect(self.lineEdit_caput_timeout, SIGNAL('editingFinished()'),
+                     self.validate_time_duration)
+        self.connect(self.lineEdit_auto_caget_periodic,
+                     SIGNAL('editingFinished()'),
+                     self.validate_time_duration)
+        self.connect(self.lineEdit_auto_caget_after_caput,
+                     SIGNAL('editingFinished()'),
+                     self.validate_time_duration)
+
+    #----------------------------------------------------------------------
+    def validate_time_duration(self):
+        """"""
+
+        sender = self.sender()
+
+        try:
+            float(sender.text())
+        except:
+            sender.setText('nan')
+
+    #----------------------------------------------------------------------
+    def load_pref_json(self):
+        """"""
+
+        self.pref = get_preferences()
+
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def save_pref_json(self):
+        """"""
+
+        with open(PREF_JSON_FILEPATH, 'w') as f:
+            json.dump(self.pref, f, indent=3, sort_keys=True,
+                      separators=(',', ': '))
+
+    #----------------------------------------------------------------------
+    def restore_default_pref(self):
+        """"""
+
+        self.pref = deepcopy(self.default_pref)
+        self.update_view()
+
+    #----------------------------------------------------------------------
+    def update_view(self):
+        """"""
+
+        index = self.comboBox_font_size.findText(str(self.pref['font_size']),
+                                                 Qt.MatchExactly)
+        self.comboBox_font_size.setCurrentIndex(index)
+
+        self.update_column_list_only()
+
+        index = self.comboBox_view_mode.findText(self.pref['view_mode'],
+                                                 Qt.MatchExactly)
+        self.comboBox_view_mode.setCurrentIndex(index)
+
+        self.lineEdit_caget_timeout.setText(str(self.pref['caget_timeout']))
+        self.lineEdit_caput_timeout.setText(str(self.pref['caput_timeout']))
+
+        self.checkBox_auto_caget_periodic.setChecked(
+            self.pref['auto_caget_periodic_checked'])
+        self.lineEdit_auto_caget_periodic.setText(
+            str(self.pref['auto_caget_periodic_interval']))
+
+        self.checkBox_auto_caget_after_caput.setChecked(
+            self.pref['auto_caget_after_caput_checked'])
+        self.lineEdit_auto_caget_after_caput.setText(
+            str(self.pref['auto_caget_after_caput_delay']))
+
+    #----------------------------------------------------------------------
+    def update_column_list_only(self):
+        """"""
+
+        self.listWidget_visible_columns.clear()
+
+        vis_col_names = [self.all_col_names[self.all_col_keys.index(k)]
+                         for k in self.pref['vis_col_keys']]
+
+        self.listWidget_visible_columns.addItems(vis_col_names)
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        visible_col_names = [self.all_col_names[self.all_col_keys.index(k)]
+                             for k in self.pref['vis_col_keys']]
+        permanently_visible_col_keys = ['group_name']
+        permanently_visible_col_names = [
+            self.all_col_names[self.all_col_keys.index(k)]
+            for k in permanently_visible_col_keys]
+
+        dialog = ColumnsDialog(self.all_col_names, visible_col_names,
+                               permanently_visible_col_names, parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.pref['vis_col_keys'] = [
+                self.all_col_keys[self.all_col_names.index(col_name)]
+                for col_name in dialog.output]
+            self.update_column_list_only()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        self.pref['font_size'] = int(self.comboBox_font_size.currentText())
+
+        # self.pref['vis_col_keys'] is already updated whenever the list is
+        # modified by column dialog. So, there is no need to update here.
+
+        self.pref['view_mode'] = self.comboBox_view_mode.currentText()
+
+        self.pref['caget_timeout'] = float(self.lineEdit_caget_timeout.text())
+        self.pref['caput_timeout'] = float(self.lineEdit_caput_timeout.text())
+
+        self.pref['auto_caget_periodic_checked'] = \
+            self.checkBox_auto_caget_periodic.isChecked()
+        self.pref['auto_caget_periodic_interval'] = \
+            float(self.lineEdit_auto_caget_periodic.text())
+
+        self.pref['auto_caget_after_caput_checked'] = \
+            self.checkBox_auto_caget_after_caput.isChecked()
+        self.pref['auto_caget_after_caput_delay'] = \
+            float(self.lineEdit_auto_caget_after_caput.text())
+
+        self.save_pref_json()
+
+        super(PreferencesEditor, self).accept() # will hide the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(PreferencesEditor, self).reject() # will hide the dialog
 
 ########################################################################
 class TitleRenameLineEdit(QLineEdit):
@@ -209,7 +429,6 @@ class CustomDockWidgetTitleBar(QWidget):
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-
         hbox = QHBoxLayout(self)
         #
         hbox.addWidget(self.title)
@@ -347,6 +566,9 @@ class TinkerDockWidget(QDockWidget):
         self.ss_abstract = SnapshotAbstractModel(config_abstract_model)
         self.ss_table = SnapshotTableModel(self.ss_abstract)
 
+        self.lineEdit_auto_caget_after_caput_delay.setText(
+            str(self.ss_abstract.auto_caget_delay_after_caput))
+
         self._settings = QSettings('APHLA', 'Tinker')
 
         self.loadViewSizeSettings()
@@ -387,6 +609,14 @@ class TinkerDockWidget(QDockWidget):
         #horizHeader.setMovable(False)
         #self._expandAll_and_resizeColumn()
 
+        pref = get_preferences()
+        vis_col_names = [
+            self.ss_abstract.all_col_names[
+                self.ss_abstract.all_col_keys.index(k)]
+            for k in pref['vis_col_keys']]
+        self.ssDBView.on_column_selection_change(vis_col_names,
+                                                 force_visibility_update=True)
+
         self.customTitleBar = CustomDockWidgetTitleBar(self)
         self.setTitleBarWidget(self.customTitleBar)
         self.connect(self.customTitleBar, SIGNAL('customDockTitleChanged'),
@@ -394,11 +624,104 @@ class TinkerDockWidget(QDockWidget):
 
         self.connect(self.pushButton_update, SIGNAL('clicked()'),
                      self.ss_abstract.update_pv_vals)
+        self.connect(self.lineEdit_ref_step_size, SIGNAL('editingFinished()'),
+                     self.update_ref_step_size)
+        self.connect(self.lineEdit_mult_factor, SIGNAL('editingFinished()'),
+                     self.update_mult_factor)
 
         self.connect(
             self.ss_table,
             SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
             self.relayDataChangedSignal)
+        self.connect(self.checkBox_synced_group_weight,
+                     SIGNAL('stateChanged(int)'),
+                     self.update_synced_group_weight)
+
+        self.connect(self.checkBox_auto_caget_after_caput,
+                     SIGNAL('stateChanged(int)'),
+                     self.update_auto_caget_delay_after_caput)
+        self.connect(self.lineEdit_auto_caget_after_caput_delay,
+                     SIGNAL('editingFinished()'),
+                     self.update_auto_caget_delay_after_caput)
+
+        self.connect(self.pushButton_step_up, SIGNAL('clicked()'),
+                     self.ss_abstract.step_up)
+        self.connect(self.pushButton_step_down, SIGNAL('clicked()'),
+                     self.ss_abstract.step_down)
+        self.connect(self.pushButton_multiply, SIGNAL('clicked()'),
+                     self.ss_abstract.multiply)
+        self.connect(self.pushButton_divide, SIGNAL('clicked()'),
+                     self.ss_abstract.divide)
+
+    #----------------------------------------------------------------------
+    def update_auto_caget_delay_after_caput(self, state=None):
+        """"""
+
+        if self.sender() == self.checkBox_auto_caget_after_caput:
+            if state == Qt.Checked:
+                try:
+                    auto_caget_delay_after_caput = float(
+                        self.lineEdit_auto_caget_after_caput_delay.text())
+                except:
+                    auto_caget_delay_after_caput = np.nan
+                    self.lineEdit_auto_caget_after_caput_delay.setText('nan')
+            else:
+                auto_caget_delay_after_caput = np.nan
+
+        elif self.sender() == self.lineEdit_auto_caget_after_caput_delay:
+            if self.checkBox_auto_caget_after_caput.isChecked():
+                try:
+                    auto_caget_delay_after_caput = float(
+                        self.lineEdit_auto_caget_after_caput_delay.text())
+                except:
+                    auto_caget_delay_after_caput = np.nan
+                    self.lineEdit_auto_caget_after_caput_delay.setText('nan')
+            else:
+                auto_caget_delay_after_caput = np.nan
+
+        else:
+            raise ValueError('Unexpected sender: {0:s}'.format(
+                self.sender().__repr__()))
+
+        self.ss_abstract.auto_caget_delay_after_caput = \
+            auto_caget_delay_after_caput
+
+    #----------------------------------------------------------------------
+    def update_synced_group_weight(self, state):
+        """"""
+
+        if state == Qt.Checked:
+            self.config_abstract.synced_group_weight = True
+            self.ss_abstract.synced_group_weight     = True
+        else:
+            self.config_abstract.synced_group_weight = False
+            self.ss_abstract.synced_group_weight     = False
+
+    #----------------------------------------------------------------------
+    def update_ref_step_size(self):
+        """"""
+
+        try:
+            new_ref_step_size = float(self.lineEdit_ref_step_size.text())
+        except:
+            new_ref_step_size = float('nan')
+            self.lineEdit_ref_step_size.setText('nan')
+
+        self.ss_abstract._config_table.on_ref_step_size_change(
+            new_ref_step_size)
+        self.ss_table.on_ref_step_size_change(new_ref_step_size)
+
+    #----------------------------------------------------------------------
+    def update_mult_factor(self):
+        """"""
+
+        try:
+            new_mult_factor = float(self.lineEdit_mult_factor.text())
+        except:
+            new_mult_factor = float('nan')
+            self.lineEdit_mult_factor.setText('nan')
+
+        self.ss_abstract.mult_factor = new_mult_factor
 
     #----------------------------------------------------------------------
     def relayDataChangedSignal(self, proxyTopLeftIndex, proxyBottomRightIndex):
@@ -423,50 +746,105 @@ class TinkerDockWidget(QDockWidget):
         self.splitter = QSplitter(dockWidgetContents)
         self.splitter.setOrientation(Qt.Vertical)
         #
-        self.stackedWidget = QStackedWidget(self.splitter)
-        #
-        self.page_tree = QWidget()
-        gridLayout = QGridLayout(self.page_tree)
-        self.treeView = QTreeView(self.page_tree)
-        gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
-        self.stackedWidget.addWidget(self.page_tree)
-        #
-        self.page_table = QWidget()
-        gridLayout = QGridLayout(self.page_table)
-        self.tableView = QTableView(self.page_table)
-        gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
-        self.stackedWidget.addWidget(self.page_table)
-
+        self.ssDBView = SnapshotDBViewWidget(self.splitter)
+        self.stackedWidget = self.ssDBView.stackedWidget
+        self.page_tree  = self.ssDBView.page_tree
+        self.page_table = self.ssDBView.page_table
+        self.treeView  = self.ssDBView.treeView
+        self.tableView = self.ssDBView.tableView
         ##
+        #self.page_tree = QWidget()
+        #gridLayout = QGridLayout(self.page_tree)
+        #self.treeView = QTreeView(self.page_tree)
+        #gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
+        #self.stackedWidget.addWidget(self.page_tree)
+        ##
+        #self.page_table = QWidget()
+        #gridLayout = QGridLayout(self.page_table)
+        #self.tableView = QTableView(self.page_table)
+        #gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
+        #self.stackedWidget.addWidget(self.page_table)
+
+        button_size = QSize(32,32)
+
         self.tabWidget_mode = QTabWidget(self.splitter)
-        #
+
+        ## Step Mode Tab
         self.tab_step_mode = QWidget()
         verticalLayout_1 = QVBoxLayout(self.tab_step_mode)
         horizontalLayout_1 = QHBoxLayout()
         self.pushButton_step_up = QPushButton(self.tab_step_mode)
-        self.pushButton_step_up.setText('Up')
+        self.pushButton_step_up.setToolTip('Step Up Setpoints')
+        self.pushButton_step_up.setIcon(QIcon(':/plus48.png'))
+        self.pushButton_step_up.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_step_up)
         self.pushButton_step_down = QPushButton(self.tab_step_mode)
-        self.pushButton_step_down.setText('Down')
+        self.pushButton_step_down.setToolTip('Step Down Setpoints')
+        self.pushButton_step_down.setIcon(QIcon(':/minus48.png'))
+        self.pushButton_step_down.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_step_down)
-        spacerItem_1 = QSpacerItem(40,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        label_tab_step_1 = QLabel(self.tab_step_mode)
+        label_tab_step_1.setText('Ref. Step Size:')
+        horizontalLayout_1.addWidget(label_tab_step_1)
+        self.lineEdit_ref_step_size = QLineEdit(self.tab_step_mode)
+        self.lineEdit_ref_step_size.setText('1.0')
+        horizontalLayout_1.addWidget(self.lineEdit_ref_step_size)
+        self.checkBox_synced_group_weight = QCheckBox(self.tab_step_mode)
+        self.checkBox_synced_group_weight.setText('Sync Group Weight')
+        self.checkBox_synced_group_weight.setChecked(True)
+        horizontalLayout_1.addWidget(self.checkBox_synced_group_weight)
+
+        self.pushButton_multiply = QPushButton(self.tab_step_mode)
+        self.pushButton_multiply.setToolTip('Multiply Setpoints')
+        self.pushButton_multiply.setIcon(QIcon(':/multiply48.png'))
+        self.pushButton_multiply.setIconSize(button_size)
+        horizontalLayout_1.addWidget(self.pushButton_multiply)
+        self.pushButton_divide = QPushButton(self.tab_step_mode)
+        self.pushButton_divide.setToolTip('Divide Setpoints')
+        self.pushButton_divide.setIcon(QIcon(':/divide48.png'))
+        self.pushButton_divide.setIconSize(button_size)
+        horizontalLayout_1.addWidget(self.pushButton_divide)
+        label_tab_step_2 = QLabel(self.tab_step_mode)
+        label_tab_step_2.setText('Multiplication Factor:')
+        horizontalLayout_1.addWidget(label_tab_step_2)
+        self.lineEdit_mult_factor = QLineEdit(self.tab_step_mode)
+        self.lineEdit_mult_factor.setText('1.0')
+        horizontalLayout_1.addWidget(self.lineEdit_mult_factor)
+        spacerItem_1 = QSpacerItem(40,20,QSizePolicy.Expanding,
+                                   QSizePolicy.Minimum)
         horizontalLayout_1.addItem(spacerItem_1)
         verticalLayout_1.addLayout(horizontalLayout_1)
+
         horizontalLayout_2 = QHBoxLayout()
         self.pushButton_update = QPushButton(self.tab_step_mode)
         self.pushButton_update.setText('Update')
+        self.pushButton_update.setToolTip('Update PV Values')
         horizontalLayout_2.addWidget(self.pushButton_update)
-        self.checkBox_auto = QCheckBox(self.tab_step_mode)
-        self.checkBox_auto.setMinimumSize(QSize(141,0))
-        self.checkBox_auto.setText('Auto: Interval [s]')
-        horizontalLayout_2.addWidget(self.checkBox_auto)
+        self.checkBox_auto_update = QCheckBox(self.tab_step_mode)
+        self.checkBox_auto_update.setText('Auto Update: Interval [s]')
+        horizontalLayout_2.addWidget(self.checkBox_auto_update)
         self.lineEdit_auto_update_interval = QLineEdit(self.tab_step_mode)
         horizontalLayout_2.addWidget(self.lineEdit_auto_update_interval)
-        spacerItem_2 = QSpacerItem(40,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.checkBox_auto_caget_after_caput = QCheckBox(self.tab_step_mode)
+        self.checkBox_auto_caget_after_caput.setText(
+            'Auto caget after caput: Delay [s]')
+        self.checkBox_auto_caget_after_caput.setChecked(True)
+        horizontalLayout_2.addWidget(self.checkBox_auto_caget_after_caput)
+        self.lineEdit_auto_caget_after_caput_delay = QLineEdit(
+            self.tab_step_mode)
+        self.lineEdit_auto_caget_after_caput_delay.setText('1.0')
+        horizontalLayout_2.addWidget(self.lineEdit_auto_caget_after_caput_delay)
+        spacerItem_2 = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                   QSizePolicy.Minimum)
         horizontalLayout_2.addItem(spacerItem_2)
         verticalLayout_1.addLayout(horizontalLayout_2)
         self.tabWidget_mode.addTab(self.tab_step_mode,'Step Mode')
-        #
+
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Minimum,
+                                 QSizePolicy.Expanding)
+        verticalLayout_1.addItem(spacerItem)
+
+        ## Ramp Mode Tab
         self.tab_ramp_mode = QWidget()
         horizontalLayout_10 = QHBoxLayout(self.tab_ramp_mode)
         verticalLayout_tab_ramp_1 = QVBoxLayout()
@@ -478,11 +856,13 @@ class TinkerDockWidget(QDockWidget):
         self.comboBox_setpoint_copy_source.addItem('Current')
         self.comboBox_setpoint_copy_source.addItem('Initial')
         self.comboBox_setpoint_copy_source.addItem('Snapshot')
-        horizontalLayout_tab_ramp_2.addWidget(self.comboBox_setpoint_copy_source)
+        horizontalLayout_tab_ramp_2.addWidget(
+            self.comboBox_setpoint_copy_source)
         label_tab_ramp_3 = QLabel(self.tab_ramp_mode)
         label_tab_ramp_3.setText('setpoints into target setpoints')
         horizontalLayout_tab_ramp_2.addWidget(label_tab_ramp_3)
-        spacerItem = QSpacerItem(40,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
         horizontalLayout_tab_ramp_2.addItem(spacerItem)
         verticalLayout_tab_ramp_1.addLayout(horizontalLayout_tab_ramp_2)
         horizontalLayout_tab_ramp_1 = QHBoxLayout()
@@ -495,7 +875,8 @@ class TinkerDockWidget(QDockWidget):
         label_tab_ramp_2.setText('Wait after Each Step [s]:')
         horizontalLayout_tab_ramp_1.addWidget(label_tab_ramp_2)
         self.lineEdit_wait_after_each_step = QLineEdit(self.tab_ramp_mode)
-        horizontalLayout_tab_ramp_1.addWidget(self.lineEdit_wait_after_each_step)
+        horizontalLayout_tab_ramp_1.addWidget(
+            self.lineEdit_wait_after_each_step)
         verticalLayout_tab_ramp_1.addLayout(horizontalLayout_tab_ramp_1)
         horizontalLayout_10.addLayout(verticalLayout_tab_ramp_1)
         self.pushButton_start = QPushButton(self.tab_ramp_mode)
@@ -507,7 +888,8 @@ class TinkerDockWidget(QDockWidget):
         self.pushButton_revert = QPushButton(self.tab_ramp_mode)
         self.pushButton_revert.setText('Revert')
         horizontalLayout_10.addWidget(self.pushButton_revert)
-        spacerItem = QSpacerItem(137,20,QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem = QSpacerItem(137, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
         horizontalLayout_10.addItem(spacerItem)
         self.tabWidget_mode.addTab(self.tab_ramp_mode,'Ramp Mode')
 
@@ -527,7 +909,8 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_21.addWidget(label)
         self.lineEdit_config_timestamp = QLineEdit(self.tab_config_metadata)
         horizontalLayout_21.addWidget(self.lineEdit_config_timestamp)
-        spacerItem_5 = QSpacerItem(40,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacerItem_5 = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                   QSizePolicy.Minimum)
         horizontalLayout_21.addItem(spacerItem_5)
         verticalLayout_21.addLayout(horizontalLayout_21)
         horizontalLayout_22 = QHBoxLayout()
@@ -535,13 +918,15 @@ class TinkerDockWidget(QDockWidget):
         label = QLabel(self.tab_config_metadata)
         label.setText('Description')
         verticalLayout_22.addWidget(label)
-        spacerItem_6 = QSpacerItem(20,40,QSizePolicy.Minimum,QSizePolicy.Expanding)
+        spacerItem_6 = QSpacerItem(20, 40, QSizePolicy.Minimum,
+                                   QSizePolicy.Expanding)
         verticalLayout_22.addItem(spacerItem_6)
         horizontalLayout_22.addLayout(verticalLayout_22)
         self.textEdit_config_description = QTextEdit(self.tab_config_metadata)
         horizontalLayout_22.addWidget(self.textEdit_config_description)
         verticalLayout_21.addLayout(horizontalLayout_22)
-        self.tabWidget_metadata.addTab(self.tab_config_metadata,'Config Metadata')
+        self.tabWidget_metadata.addTab(self.tab_config_metadata,
+                                       'Config Metadata')
         #
         self.tab_snapshot_metadata = QWidget()
         verticalLayout_31 = QVBoxLayout(self.tab_snapshot_metadata)
@@ -556,7 +941,8 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_31.addWidget(label)
         self.lineEdit_snapshot_timestamp = QLineEdit(self.tab_snapshot_metadata)
         horizontalLayout_31.addWidget(self.lineEdit_snapshot_timestamp)
-        spacerItem_7 = QSpacerItem(40,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
+        spacerItem_7 = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                   QSizePolicy.Minimum)
         horizontalLayout_31.addItem(spacerItem_7)
         verticalLayout_31.addLayout(horizontalLayout_31)
         horizontalLayout_32 = QHBoxLayout()
@@ -564,13 +950,16 @@ class TinkerDockWidget(QDockWidget):
         label = QLabel(self.tab_snapshot_metadata)
         label.setText('Description')
         verticalLayout_32.addWidget(label)
-        spacerItem_8 = QSpacerItem(20,40,QSizePolicy.Minimum,QSizePolicy.Expanding)
+        spacerItem_8 = QSpacerItem(20, 40, QSizePolicy.Minimum,
+                                   QSizePolicy.Expanding)
         verticalLayout_32.addItem(spacerItem_8)
         horizontalLayout_32.addLayout(verticalLayout_32)
-        self.textEdit_snapshot_description = QTextEdit(self.tab_snapshot_metadata)
+        self.textEdit_snapshot_description = QTextEdit(
+            self.tab_snapshot_metadata)
         horizontalLayout_32.addWidget(self.textEdit_snapshot_description)
         verticalLayout_31.addLayout(horizontalLayout_32)
-        self.tabWidget_metadata.addTab(self.tab_snapshot_metadata,'Snapshot Metadata')
+        self.tabWidget_metadata.addTab(self.tab_snapshot_metadata,
+                                       'Snapshot Metadata')
 
         top_gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
         self.setWidget(dockWidgetContents)
@@ -661,19 +1050,6 @@ class TinkerDockWidget(QDockWidget):
         #
         self.textEdit_snapshot_description.setText(self.ss_abstract.description)
 
-
-########################################################################
-class TinkerModel(QObject):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-
-        QObject.__init__(self)
-
-        self.model_list = []
-
 ########################################################################
 class TinkerView(QMainWindow, Ui_MainWindow):
     """"""
@@ -706,8 +1082,26 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
 
+        #self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
+                     #self.load_config_test)
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
-                     self.load_config_test)
+                     self.launchConfigDBSelector)
+        self.connect(self.actionPreferences, SIGNAL('triggered()'),
+                     self.launchPrefEditor)
+
+    #----------------------------------------------------------------------
+    def launchConfigDBSelector(self):
+        """"""
+
+        dialog = ConfigDBSelector()
+        dialog.exec_()
+
+    #----------------------------------------------------------------------
+    def launchPrefEditor(self):
+        """"""
+
+        dialog = PreferencesEditor()
+        dialog.exec_()
 
     #----------------------------------------------------------------------
     def load_config_test(self):
@@ -715,7 +1109,7 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         db = TinkerMainDatabase()
 
-        config_id = 10 # same array size
+        config_id = 2 # same array size
 
         c_abs = ConfigAbstractModel()
 
@@ -864,12 +1258,22 @@ def main():
             use_cached_lattice = False
 
     if ap.machines._lat is None:
-        ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
+        try:
+            ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
+        except RuntimeError as e:
+            # TODO: remove this error handling
+            config.HLA_MACHINE = 'nsls2v2'
+            ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
 
     # If Qt is to be used (for any GUI) then the cothread library needs to
     # be informed, before any work is done with Qt. Without this line
     # below, the GUI window will not show up and freeze the program.
-    cothread.iqt()
+    qapp = cothread.iqt()
+
+    pref = get_preferences()
+    font = QFont()
+    font.setPointSize(pref['font_size'])
+    qapp.setFont(font)
 
     app = make(use_cached_lattice=use_cached_lattice)
 

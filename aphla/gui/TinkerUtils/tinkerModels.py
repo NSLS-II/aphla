@@ -6,6 +6,7 @@ sip.setapi('QVariant', 2)
 
 import sys, os
 import numpy as np
+import time
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from copy import deepcopy
@@ -14,6 +15,7 @@ from PyQt4.QtCore import (QObject, Qt, SIGNAL, QAbstractItemModel,
                           QAbstractTableModel, QModelIndex)
 from PyQt4.QtGui import (QMessageBox)
 
+from cothread import Sleep
 from cothread.catools import caget, caput, FORMAT_TIME
 
 import aphla as ap
@@ -117,9 +119,9 @@ class ConfigAbstractModel(QObject):
                                       [True if u == 1 else False
                                        for u in user_editable_list]))
 
-        self.group_name_ids    = []
-        self.channel_ids       = []
-        self.weights           = []
+        self.group_name_ids = []
+        self.channel_ids    = []
+        self.weights        = []
 
         self.pvsp_ids = []
 
@@ -222,6 +224,66 @@ class ConfigAbstractModel(QObject):
                 'config_meta_table', column_name_list=['config_ctime'],
                 condition_str='config_id={0:d}'.format(self.config_id))[0][0]
 
+    #----------------------------------------------------------------------
+    def modify_data(self, new_val, col_ind, row_inds):
+        """"""
+
+        col_key = self.all_col_keys[col_ind]
+
+        if self.synced_group_weight:
+            group_ids = set(self.group_name_ids[r] for r in row_inds)
+
+        if col_key == 'weight':
+            if self.synced_group_weight:
+                synced_row_inds = []
+                for gi in group_ids:
+                    synced_row_inds.extend([
+                        r for r, i in enumerate(self.group_name_ids)
+                        if (i == gid)])
+                row_inds = set(row_inds + synced_row_inds)
+
+            for r in row_inds:
+                self.weights[r] = new_val
+        elif col_key == 'step_size':
+            if (self.ref_step_size == 0.0) or (np.isnan(self.ref_step_size)):
+                raise ValueError('You should not be able to reach here.')
+            else:
+                if self.synced_group_weight:
+                    synced_row_inds = []
+                    for gi in group_ids:
+                        synced_row_inds.extend([
+                            r for r, i in enumerate(self.group_name_ids)
+                            if (i == gid)])
+                    row_inds = set(row_inds + synced_row_inds)
+
+                for r in row_inds:
+                    self.weights[r] = new_val / self.ref_step_size
+        elif col_key == 'unitsys':
+            raise NotImplementedError(col_key)
+        elif col_key == 'group_name':
+            group_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'group_name_table', 'group_name_id', 'group_name', new_val,
+                append_new=True)
+            for r in row_inds:
+                self.group_name_ids[r] = group_name_id
+
+            if self.synced_group_weight:
+                sample_weight = self.weights[row_inds[0]]
+                synced_row_inds = [
+                    r for r, i in enumerate(self.group_name_ids)
+                    if (i == group_name_id)]
+                for r in synced_row_inds:
+                    self.weights[r] = sample_weight
+
+        elif col_key == 'channel_name':
+            raise NotImplementedError(col_key)
+        elif col_key == 'pvsp':
+            raise NotImplementedError(col_key)
+        elif col_key == 'pvrb':
+            raise NotImplementedError(col_key)
+        else:
+            raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
+
 
 ########################################################################
 class ConfigTableModel(QAbstractTableModel):
@@ -252,9 +314,103 @@ class ConfigTableModel(QAbstractTableModel):
         for k in self.abstract.all_col_keys:
             self.d[k] = []
 
+        self.connect(
+            self,
+            SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+            self.propagate_change_to_abstract)
+
+    #----------------------------------------------------------------------
+    def propagate_change_to_abstract(self, topLeftIndex, bottomRightIndex):
+        """"""
+
+        col_left_index  = topLeftIndex.column()
+        col_right_index = bottomRightIndex.column()
+        row_top_index    = topLeftIndex.row()
+        row_bottom_index = bottomRightIndex.row()
+
+        if not ((col_left_index == col_right_index) and
+                (row_top_index == row_bottom_index)):
+            return
+
+        index = topLeftIndex
+        row_ind = row_top_index
+        col_ind = col_left_index
+        col_key = self.abstract.all_col_keys[col_ind]
+
+        if self.abstract.synced_group_weight:
+            gid = self.abstract.group_name_ids[row_ind]
+            synced_row_inds = [
+                r for r, i in enumerate(self.abstract.group_name_ids)
+                if (i == gid) and (r != row_ind)]
+
+        if col_key == 'weight':
+            self.abstract.weights[row_ind] = float(self.data(index))
+            if self.abstract.synced_group_weight:
+                new_weight = float(self.data(index))
+                for r in synced_row_inds:
+                    self.abstract.weights[r] = new_weight
+
+        elif col_key == 'step_size':
+            if (self.abstract.ref_step_size == 0.0) or \
+               (np.isnan(self.abstract.ref_step_size)):
+                raise ValueError('You should not be able to reach here.')
+            else:
+                self.abstract.weights[row_ind] = \
+                    float(self.data(index)) / self.abstract.ref_step_size
+                if self.abstract.synced_group_weight:
+                    new_weight = float(self.data(index)) / \
+                        self.abstract.ref_step_size
+                    for r in synced_row_inds:
+                        self.abstract.weights[r] = new_weight
+
+        elif col_key == 'group_name':
+            new_group_name = self.data(index)
+            new_group_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'group_name_table', 'group_name_id', 'group_name',
+                new_group_name, append_new=True)
+            self.abstract.group_name_ids[row_ind] = new_group_name_id
+            if self.abstract.synced_group_weight:
+                synced_row_inds = [
+                    r for r, i in enumerate(self.abstract.group_name_ids)
+                    if (i == new_group_name_id) and (r != row_ind)]
+                if synced_row_inds != []:
+                    self.abstract.weights[row_ind] = \
+                        self.abstract.weights[synced_row_inds[0]]
+        else:
+            return
+
+        self.updateModel()
+        self.repaint()
+
+    #----------------------------------------------------------------------
+    def on_ref_step_size_change(self, new_ref_step_size):
+        """"""
+
+        self.abstract.ref_step_size = new_ref_step_size
+
+        self.d['step_size'] = \
+            np.array(self.d['weight']) * self.abstract.ref_step_size
+
+        self.updateModel()
+
+        self.repaint()
+
+    #----------------------------------------------------------------------
+    def modifyAbstractModel(self, new_val, col_ind, row_inds):
+        """"""
+
+        self.abstract.modify_data(new_val, col_ind, row_inds)
+
+        self.updateModel()
+
+        self.repaint()
+
     #----------------------------------------------------------------------
     def updateModel(self):
         """"""
+
+        if self.abstract.channel_ids == []:
+            return
 
         unique_group_name_ids, unique_group_names = \
             self.db.getColumnDataFromTable(
@@ -467,12 +623,15 @@ class ConfigTableModel(QAbstractTableModel):
         else:
             L = self.d[col_key]
 
-            if str_format == ':s':
+            if (str_format is None) or (str_format == ':s'):
                 L[row] = value
             elif str_format.endswith('g'):
                 if value == '':
                     return False
-                L[row] = float(value)
+                try:
+                    L[row] = float(value)
+                except:
+                    L[row] = float('nan')
             else:
                 raise ValueError('Unexpected str_format: {:s}'.
                                  format(str_format))
@@ -513,11 +672,16 @@ class ConfigTableModel(QAbstractTableModel):
 
         col_key = self.abstract.all_col_keys[index.column()]
         if self.abstract.user_editable[col_key]:
-            self.d[col_key] = list(self.d[col_key])
-            # ^ self.d[col_key] may be a tuple. In this case, this column will
-            # not be editable. So, it is made sure that self.d[col_key] is a
-            # list here.
-            return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
+            if (col_key == 'step_size') and \
+               ((self.abstract.ref_step_size == 0.0) or \
+                np.isnan(self.abstract.ref_step_size)):
+                return default_flags
+            else:
+                self.d[col_key] = list(self.d[col_key])
+                # ^ self.d[col_key] may be a tuple. In this case, this column will
+                # not be editable. So, it is made sure that self.d[col_key] is a
+                # list here.
+                return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
         else:
             return default_flags # non-editable
 
@@ -746,6 +910,9 @@ class SnapshotAbstractModel(QObject):
         QObject.__init__(self)
 
         self.caget_timeout = 3.0 # [s]
+        self.caput_timeout = 3.0 # [s]
+
+        self.auto_caget_delay_after_caput = 1.0 # [s]
 
         self._config_abstract = config_abstract_model
         self._config_table = ConfigTableModel(
@@ -766,7 +933,9 @@ class SnapshotAbstractModel(QObject):
         self.masar_id             = None
         self.ref_step_size        = self._config_abstract.ref_step_size
         self.synced_group_weight  = True
+        self.mult_factor          = 1.0
         self.caget_sent_ts_second = None
+        self.caput_sent_ts_second = None
         self.filepath             = ''
         self.ss_ctime             = None
 
@@ -938,6 +1107,8 @@ class SnapshotAbstractModel(QObject):
         self.caput_raws  = np.ones(self.n_caput_pvs)*np.nan
         self.caput_convs = np.ones(self.n_caput_pvs)*np.nan
 
+        self.caput_not_yet = True
+
         self.update_pv_vals()
 
         self.update_init_pv_vals()
@@ -946,6 +1117,7 @@ class SnapshotAbstractModel(QObject):
     def update_pv_vals(self):
         """"""
 
+        self.caget_sent_ts_second = time.time()
         ca_raws = caget(self.caget_pv_str_list, format=FORMAT_TIME,
                         throw=False, timeout=self.caget_timeout)
 
@@ -982,6 +1154,118 @@ class SnapshotAbstractModel(QObject):
                 'snapshot_meta_table', column_name_list=['ss_ctime'],
                 condition_str='ss_id={0:d}'.format(self.ss_id))[0][0]
 
+    #----------------------------------------------------------------------
+    def update_caput_raws(self):
+        """"""
+
+        if self.caput_not_yet:
+            rows, indexes = map(list, zip(*self.maps['cur_SP']))
+            self.caput_raws = self.caget_raws[indexes]
+            self.caput_not_yet = False
+        else:
+            nan_inds = [i for i, r in enumerate(self.caput_raws)
+                        if np.any(np.isnan(r))]
+            if nan_inds != []:
+                rows, indexes = map(list, zip(*self.maps['cur_SP']))
+                for i in nan_inds:
+                    self.caput_raws[i] = self.caget_raws[indexes[i]]
+
+    #----------------------------------------------------------------------
+    def invoke_caput(self):
+        """"""
+
+        caput_raws = [r for r in self.caput_raws if not np.isnan(r)]
+
+        disabled_row_inds = [i for i, r in enumerate(self.caput_raws)
+                             if np.isnan(r)]
+
+        caput_pv_str_list = [pv for i, pv in enumerate(self.caput_pv_str_list)
+                             if i not in disabled_row_inds]
+        caput_pv_map_list = [m for i, m in enumerate(self.caput_pv_map_list)
+                             if i not in disabled_row_inds]
+
+        self.caput_sent_ts_second = time.time()
+        caput(caput_pv_str_list, caput_raws, throw=False,
+              timeout=self.caput_timeout)
+
+        if not np.isnan(self.auto_caget_delay_after_caput):
+            Sleep(self.auto_caget_delay_after_caput)
+            self.update_pv_vals()
+        else:
+            self.emit(SIGNAL('pvValuesUpdatedInSSAbstract'))
+
+    #----------------------------------------------------------------------
+    def step_up(self, positive=True):
+        """"""
+
+        self.update_caput_raws()
+
+        if positive:
+            self.caput_raws += self.step_size_array
+        else:
+            self.caput_raws -= self.step_size_array
+
+        self.invoke_caput()
+
+    #----------------------------------------------------------------------
+    def step_down(self):
+        """"""
+
+        self.step_up(positive=False)
+
+    #----------------------------------------------------------------------
+    def multiply(self, positive=True):
+        """"""
+
+        self.update_caput_raws()
+
+        if positive:
+            if self.mult_factor > 2.0:
+                msg = QMessageBox()
+                msg.addButton(QMessageBox.Yes)
+                msg.addButton(QMessageBox.No)
+                msg.setDefaultButton(QMessageBox.No)
+                msg.setEscapeButton(QMessageBox.No)
+                msg.setText(('Setpoints will be more than doubled. '
+                             'Do you really want to proceed?'))
+                msg.setIcon(QMessageBox.Question)
+                msg.setWindowTitle('Large Setpoint Changes')
+                choice = msg.exec_()
+                if choice == QMessageBox.No:
+                    return
+
+            self.caput_raws *= self.mult_factor
+        else:
+            if self.mult_factor != 0.0:
+                if self.mult_factor < 0.5:
+                    msg = QMessageBox()
+                    msg.addButton(QMessageBox.Yes)
+                    msg.addButton(QMessageBox.No)
+                    msg.setDefaultButton(QMessageBox.No)
+                    msg.setEscapeButton(QMessageBox.No)
+                    msg.setText(('Setpoints will be more than doubled. '
+                                 'Do you really want to proceed?'))
+                    msg.setIcon(QMessageBox.Question)
+                    msg.setWindowTitle('Large Setpoint Changes')
+                    choice = msg.exec_()
+                    if choice == QMessageBox.No:
+                        return
+
+                self.caput_raws /= self.mult_factor
+            else:
+                msg = QMessageBox()
+                msg.setText('Setpoints cannot be divided by 0.')
+                msg.setIcon(QMessageBox.Warning)
+                msg.exec_()
+                return
+
+        self.invoke_caput()
+
+    #----------------------------------------------------------------------
+    def divide(self):
+        """"""
+
+        self.multiply(positive=False)
 
 ########################################################################
 class SnapshotTableModel(QAbstractTableModel):
@@ -1033,6 +1317,84 @@ class SnapshotTableModel(QAbstractTableModel):
         self.connect(self.abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
                      self.update_visible_dynamic_columns)
 
+        self.connect(
+            self,
+            SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+            self.propagate_change_to_abstract)
+
+    #----------------------------------------------------------------------
+    def propagate_change_to_abstract(self, topLeftIndex, bottomRightIndex):
+        """"""
+
+        col_left_index  = topLeftIndex.column()
+        col_right_index = bottomRightIndex.column()
+        row_top_index    = topLeftIndex.row()
+        row_bottom_index = bottomRightIndex.row()
+
+        if not ((col_left_index == col_right_index) and
+                (row_top_index == row_bottom_index)):
+            return
+
+        index = topLeftIndex
+        row_ind = row_top_index
+        col_ind = col_left_index
+        col_key = self.abstract.all_col_keys[col_ind]
+
+        if self.abstract.synced_group_weight:
+            gid = self._config_abstract.group_name_ids[row_ind]
+            synced_row_inds = [
+                r for r, i in enumerate(self._config_abstract.group_name_ids)
+                if (i == gid) and (r != row_ind)]
+
+        if col_key == 'weight':
+            new_weight = float(self.data(index))
+            self._config_abstract.weights[row_ind] = new_weight
+            self.abstract.weight_array[row_ind]    = new_weight
+            if self.abstract.synced_group_weight:
+                for r in synced_row_inds:
+                    self._config_abstract.weights[r] = new_weight
+                    self.abstract.weight_array[r]    = new_weight
+
+        elif col_key == 'step_size':
+            if (self.abstract.ref_step_size == 0.0) or \
+               (np.isnan(self.abstract.ref_step_size)):
+                raise ValueError('You should not be able to reach here.')
+            else:
+                new_weight = \
+                    float(self.data(index)) / self.abstract.ref_step_size
+                self._config_abstract.weights[row_ind] = new_weight
+                self.abstract.weight_array[row_ind]    = new_weight
+                if self.abstract.synced_group_weight:
+                    for r in synced_row_inds:
+                        self._config_abstract.weights[r] = new_weight
+                        self.abstract.weight_array[r]    = new_weight
+
+        else:
+            return
+
+        self.d['weight']    = self.abstract.weight_array
+        self.d['step_size'] = self.abstract.ref_step_size * self.d['weight']
+        self.abstract.step_size_array = self.d['step_size']
+
+        self.repaint()
+
+    #----------------------------------------------------------------------
+    def on_ref_step_size_change(self, new_ref_step_size):
+        """"""
+
+        self.abstract.ref_step_size = new_ref_step_size
+
+        self.d['step_size'] = \
+            np.array(self.d['weight']) * self.abstract.ref_step_size
+        self.abstract.step_size_array = self.d['step_size']
+
+        step_size_col_ind = self.abstract.all_col_keys.index('step_size')
+        topLeftIndex     = self.index(0, step_size_col_ind)
+        bottomRightIndex = self.index(self.rowCount()-1, step_size_col_ind)
+        self.emit(
+            SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+            topLeftIndex, bottomRightIndex)
+
     #----------------------------------------------------------------------
     def update_visible_dynamic_columns(self):
         """"""
@@ -1066,7 +1428,7 @@ class SnapshotTableModel(QAbstractTableModel):
         elif col_key in ('cur_SentSP'):
             self.d[col_key][rows] = self.abstract.caput_raws[indexes]
         elif col_key in ('cur_SentSP_ts'):
-            self.d[col_key][rows] = self.abstract.caget_sent_ts_second
+            self.d[col_key][rows] = self.abstract.caput_sent_ts_second
         elif col_key in ('cur_SP_ioc_ts', 'cur_RB_ioc_ts'):
             self.d[col_key][rows] = self.abstract.caget_ioc_ts_tuples[indexes]
         else:
@@ -1174,12 +1536,15 @@ class SnapshotTableModel(QAbstractTableModel):
         else:
             L = self.d[col_key]
 
-            if str_format == ':s':
+            if (str_format is None) or (str_format == ':s'):
                 L[row] = value
             elif str_format.endswith('g'):
                 if value == '':
                     return False
-                L[row] = float(value)
+                try:
+                    L[row] = float(value)
+                except:
+                    L[row] = float('nan')
             else:
                 raise ValueError('Unexpected str_format: {:s}'.
                                  format(str_format))
@@ -1220,11 +1585,16 @@ class SnapshotTableModel(QAbstractTableModel):
 
         col_key = self.abstract.all_col_keys[index.column()]
         if self.abstract.user_editable[col_key]:
-            self.d[col_key] = np.array(self.d[col_key])
-            # ^ self.d[col_key] may be a tuple. In this case, this column will
-            # not be editable. So, it is made sure that self.d[col_key] is a
-            # modifiable numpy array here.
-            return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
+            if (col_key == 'step_size') and \
+               ((self.abstract.ref_step_size == 0.0) or \
+                np.isnan(self.abstract.ref_step_size)):
+                return default_flags
+            else:
+                self.d[col_key] = np.array(self.d[col_key])
+                # ^ self.d[col_key] may be a tuple. In this case, this column will
+                # not be editable. So, it is made sure that self.d[col_key] is a
+                # modifiable numpy array here.
+                return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
         else:
             return default_flags # non-editable
 
