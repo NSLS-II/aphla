@@ -2717,10 +2717,15 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def selectedRowIndList(self):
         """"""
 
-        qProxyModelIndexList = self.tableView_matched.selectedIndexes()
-        row_ind_list = sorted(set([q.row() for q in qProxyModelIndexList]))
+        proxyModelIndexList = self.tableView_matched.selectedIndexes()
+        proxyModel = self.tableView_matched.model()
+        src_row_ind_list = [proxyModel.mapToSource(pInd).row()
+                            for pInd in proxyModelIndexList]
+        indexes = np.unique(src_row_ind_list, return_index=True)[1]
+        unique_unsorted_src_row_ind_list = [
+            src_row_ind_list[i] for i in sorted(indexes)]
 
-        return row_ind_list
+        return unique_unsorted_src_row_ind_list
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
