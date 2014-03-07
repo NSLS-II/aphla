@@ -24,11 +24,24 @@ from hlalib import getElements
 
 import matplotlib.pylab as plt
 
+def _maxTimeSpan(timestamps):
+    # take out the part beyond microsecond (nano second + ' EST')
+    dtl = [ datetime.strptime(s[:-7], "%Y-%m-%d %H:%M:%S.%f")
+            for s in timestamps ]
+    if len(dtl) <= 1: return 0
+    delta1 = [(t - dtl[0]).total_seconds() for t in dtl]
+    # the nano second part
+    delta2 = [float(s[-7:-4]) for s in timestamps]
+    delta = [delta1[i] + (delta2[i] - delta2[0])*1e-9
+             for i in range(len(timestamps))]
+    return max(delta) - min(delta)
+
 
 def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
-    Adc, Tbt and Fa waveforms.
+    Adc, Tbt and Fa waveforms. The Wfm size is set to 1,000,000 for ADC,
+    100,000 for Tbt and 9,000 for Fa.
     """
     elems = [e for e in getElements(name) if e.pv(field="x")]
     pvprefs = [bpm.pv(field="x")[0].replace("Pos:X-I", "") for bpm in elems]
@@ -200,16 +213,17 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
         print "NSec", tsns
 
     # redundent check
-    ddrts0 = caget(pv_ddrts)
+    #ddrts0 = caget(pv_ddrts)
+    ddrts0 = [datetime.fromtimestamp(v).strftime("%m/%d/%Y,%H:%M:%S") +
+              ".%09d" % tsns[i] for i,v in enumerate(tss_r)]
     ddroffset = caget(pv_ddroffset, timeout=tc)
     data = (caget(pv_x, count=count), caget(pv_y, count=count),
             caget(pv_S, count=count))
     #
-    data = np.array(data, 'd')
-
     # set 0 - internal trig, 1 - external trig
     #caput(pv_trig, 1, wait=True)
-
+    
+    #return data[0], data[1], data[2], ddrts0, ddroffset, ts
     return data[0], data[1], data[2], ddrts0, ddroffset
 
 
@@ -229,7 +243,7 @@ def _saveSrBpmData(fname, waveform, data, **kwargs):
     grp["%s_sum" % waveform]    = data[3]
     grp["%s_ts" % waveform]     = data[4]
     grp["%s_offset" % waveform] = data[5]
-    grp.attrs["timespan"] = _maxTimeSpan(data[4])
+    #grp.attrs["timespan"] = _maxTimeSpan(data[4])
 
     if dcct_data:
         for i,d in enumerate(dcct_data):
@@ -239,13 +253,13 @@ def _saveSrBpmData(fname, waveform, data, **kwargs):
 
     if pvpref is not None:
         pvs = [ p + "DDR:WfmSel-SP" for p in pvpref]
-        grp["wfm_type"] = caget(pvs)
-        pvs = [ p + "ddrAdcWfEnable" for p in pvpref]
-        grp["wfm_Adc_enabled"] = caget(pvs)
-        pvs = [ p + "ddrTbtWfEnable" for p in pvpref]
-        grp["wfm_Tbt_enabled"] = caget(pvs)
-        pvs = [ p + "ddrFaWfEnable" for p in pvpref]
-        grp["wfm_Fa_enabled"] = caget(pvs)
+        grp["wfm_type"] = np.array(caget(pvs), 'i')
+        #pvs = [ p + "ddrAdcWfEnable" for p in pvpref]
+        #grp["wfm_Adc_enabled"] = np.array(caget(pvs), 'i')
+        #pvs = [ p + "ddrTbtWfEnable" for p in pvpref]
+        #grp["wfm_Tbt_enabled"] = np.array(caget(pvs), 'i')
+        #pvs = [ p + "ddrFaWfEnable" for p in pvpref]
+        #grp["wfm_Fa_enabled"] = np.array(caget(pvs), 'i')
 
     h5f.close()
 
@@ -266,6 +280,7 @@ def getSrBpmData(**kwargs):
     name     = kwargs.pop("name", "BPM")
     count    = kwargs.get("count", 0)
     #timeout  = kwargs.get("timeout", 6)
+    output   = kwargs.get("output", None)
 
     lat = machines.getLattice()
     if lat.name != "SR":
@@ -281,6 +296,7 @@ def getSrBpmData(**kwargs):
     names = [bpm.name for bpm in elems]
 
     if trig_src == 0 and waveform in ["Tbt", "Fa"]:
+        # internal trig
         ret = _srBpmTrigData(pvpref, waveform, **kwargs)
         x, y, Is, ts, offset = ret
     else:
@@ -296,41 +312,48 @@ def getSrBpmData(**kwargs):
             pv_offset = [pv + "ddrFaOffset" for pv in pvpref]
 
         pv_ts = [pv + "TS:DdrTrigDate-I" for pv in pvpref]
-        x  = np.array(caget(pv_x, count=count), 'd')
-        y  = np.array(caget(pv_y, count=count), 'd') 
-        Is = np.array(caget(pv_S, count=count), 'd')
-        ts = caget(pv_ts)
-        offset = caget(pv_offset)
-
+        x  = caget(pv_x, count=count)
+        y  = caget(pv_y, count=count)
+        Is = caget(pv_S, count=count)
+        ts  = np.array(caget(pv_ts))
+        offset = np.array(caget(pv_offset), 'i')
+    # in case they have difference size
+    d = []
+    for v in [x, y, Is]:
+        nx = max([len(r) for r in v])
+        rec = np.zeros((len(v), nx), 'd')
+        for i in range(len(v)):
+            rec[i,:len(v[i])] = v[i]
+        d.append(rec)
+    x, y, Is = d
     # get dcct
     #dcct2 = caget(pv_dcct, count=1000)
     #t1 = datetime.now()
 
     data = (names, x, y, Is, ts, offset)
 
-    if kwargs.get("output", None):
-        # default output dir and file
-        output_file = kwargs["output"]
-        if output_file is True:
-            # use the default file name
-            output_dir = os.path.join(machines.getOutputDir(),
-                                      t0.strftime("%Y_%m"),
-                                      "bpm")
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            fopt = "bpm_%s_%d_" % (waveform, trig_src) + \
-                t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
-            output_file = os.path.join(output_dir, fopt)
+    if not output: return data
+    
+    if output is True:
+        # use the default file name
+        output_dir = os.path.join(machines.getOutputDir(),
+                                  t0.strftime("%Y_%m"),
+                                  "bpm")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        fopt = "bpm_%s_%d_" % (waveform, trig_src) + \
+            t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
+        output = os.path.join(output_dir, fopt)
 
-        # save the data
-        _saveBrBpmData(output_file, waveform, data,
-                       h5group=kwargs.get("h5group", "/"),
-                       #dcct_data = (dcct1, dcct2),
-                       ts = (t0, t1),
-                       pvpref = pvpref)
-        return data, output_file
-    else:
-        return data
+    t1 = datetime.now()
+    # save the data
+    _saveSrBpmData(output, waveform, data,
+                   h5group=kwargs.get("h5group", "/"),
+                   #dcct_data = (dcct1, dcct2),
+                   ts = (t0, t1),
+                   pvpref = pvpref)
+    return data, output
+
 
 def plotChromaticity(f, nu, chrom):
     """

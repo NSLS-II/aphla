@@ -394,7 +394,7 @@ class CaAction:
             if len(self.pvrb) == 1: 
                 return self._unit_conv(rawret[0], None, unitsys)
             else: 
-                return [ self._unit_conv(v, None, unitsys)  for v in rawret ]
+                return self._unit_conv(rawret, None, unitsys)
         else: return None
 
     def getGolden(self, unitsys = None):
@@ -427,7 +427,10 @@ class CaAction:
                 if self.pvlim[i] is None:
                     self.pvlim[i] = (rawret[i].lower_ctrl_limit,
                                      rawret[i].upper_ctrl_limit)
-            return self._unit_conv(rawret, None, unitsys)
+            if len(self.pvsp) == 1:
+                return self._unit_conv(rawret[0], None, unitsys)
+            else:
+                return self._unit_conv(rawret, None, unitsys)
         else: 
             #raise ValueError("no setpoint PVs")
             return None

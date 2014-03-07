@@ -24,5 +24,9 @@
     <file alias="matlab_mfile.png">images/m-007.png</file>
     <file alias="info_item.png">images/onebit_38.png</file>
     <file alias="txt_item.png">images/onebit_39.png</file>
+    <file alias="plus48.png">images/plus_48.png</file>
+    <file alias="minus48.png">images/minus_48.png</file>
+    <file alias="multiply48.png">images/multiply_48.png</file>
+    <file alias="divide48.png">images/divide_48.png</file>
 </qresource>
 </RCC>

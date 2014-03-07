@@ -71,6 +71,7 @@ class RmCol:
         points = self.points
         if dklst is not None:
             points = len(dklst)
+            print "Using external dklst:", dklst
         else:
             dklst = np.linspace(-self.maxdk, self.maxdk, points)
 
@@ -85,6 +86,7 @@ class RmCol:
 
         kstrength = np.ones(points+2, 'd') * kx0
         kstrength[1:-1] = [dklst[i] + kx0 for i in range(points)]
+        print "Kicker sp:", kstrength
         for i,kx in enumerate(kstrength[1:]):
             v0 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
             self.kicker.put(kfield, kx, unitsys=self.unit)
@@ -156,7 +158,7 @@ class OrbitRespMat:
         self._mask = None #np.zeros((nbpmpv, ntrimpv), 'i')
         self._rawkick = None #np.zeros((ntrimpv, npts+2), 'd')
         self.m = None # np.zeros((nbpmpv, ntrimpv), 'd')
-        self.unit = 'raw'
+        self.unit = None # raw unit
         
     def save(self, filename, fmt = ''):
         """
@@ -190,7 +192,7 @@ class OrbitRespMat:
         """
         output  = kwargs.get("output", "orm.hdf5")
         verbose = kwargs.get("verbose", 1)
-        maxdk   = kwargs.get("maxdk", 1e-4)
+        maxdk   = kwargs.get("maxdk", 1e-2)
         rflds = kwargs.get("bpmfields", ['x', 'y'])
         trimflds = kwargs.get("trimfields", ['x', 'y'])
 
@@ -221,7 +223,7 @@ class OrbitRespMat:
                     i, len(trimsets), rflds, kicker.name, kfld)
 
             # measure one column of RM
-            ormline.measure(rflds, kfld, unitsys=self.unit, verbose=verbose)
+            ormline.measure(rflds, kfld, unitsys=self.unit, **kwargs)
             rawobt.append(ormline.rawresp)
             rawm.append(ormline.m)
             rawkick.append(ormline.rawkick)
@@ -543,3 +545,5 @@ class OrbitRespMat:
         return s
 
 
+    m = [[], []]
+            m[i].append(p[0])
