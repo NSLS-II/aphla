@@ -84,7 +84,8 @@ def measBeta(elem, dqk1 = 0.01, full = False, num_points = 3, verbose=0):
         k1[i,:], nu[i,:,:] = _measBetaQuad(q, **kwargs)
         if verbose:
             print(i, q.name, q.k1, end=" ")
-        p, res, rank, sv, rcond = np.polyfit(k1[i,:], nu[i,:,:], deg=1, full=True)
+        p, res, rank, sv, rcond = np.polyfit(
+            k1[i,:], nu[i,:,:], deg=1, full=True)
         # p[0,k] is the highest power for dataset k
         beta[i,:2] = p[0,:]*4*np.pi/q.length
         # reverse the k1 for vertical direction

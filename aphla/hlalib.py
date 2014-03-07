@@ -1167,3 +1167,24 @@ def saveLattice(output, **kwargs):
             t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
 
     savePvs(output, pvs, group=lat.name)
+
+
+def outputFileName(group, subgroup, create_path = True):
+    """generate the system default output data file name
+
+    'Lattice/Year_Month/group/subgroup_Year_Month_Day_HourMinSec.hdf5'
+    """
+    # use the default file name
+    t0 = datetime.now()
+    output_dir = os.path.join(machines.getOutputDir(),
+                              t0.strftime("%Y_%m"),
+                              group)
+    if not os.path.exists(output_dir):
+        if create_path:
+            os.makedirs(output_dir)
+        else:
+            raise RuntimeError("{0} does not exist".format(output_dir))
+
+    fopt = subgroup + t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
+    return os.path.join(output_dir, fopt)
+

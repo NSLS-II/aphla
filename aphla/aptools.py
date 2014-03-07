@@ -12,6 +12,7 @@ import numpy as np
 import time, datetime, sys, os
 import itertools
 import tempfile
+import h5py
 
 from . import machines
 from catools import caRmCorrect, measCaRmCol
@@ -82,7 +83,7 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
     return lft_hour
 
 
-def setLocalBump(bpm, trim, ref, **kwargs):
+def setLocalBump(bpmrec, correc, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
@@ -117,65 +118,53 @@ def setLocalBump(bpm, trim, ref, **kwargs):
     
     """
 
-    ormdata = kwargs.pop('ormdata', None)
+    ormdata = kwargs.pop('ormdata', machines._lat.ormdata)
     repeat = kwargs.pop('repeat', 1)
-    dead   = kwargs.pop('dead', [])
+    fullm = kwargs.pop("fullm", True)
 
-    if ormdata is None: ormdata = machines._lat.ormdata
-    
     if ormdata is None:
         raise RuntimeError("No Orbit Response Matrix available for '%s'" %
             machines._lat.name)
+    if fullm:
+        # use the full available matrix
+        bpmr = ormdata.getBpm()
+        corr = ormdata.getCor()
+        m = ormdata.m
+        obtref = [None] * len(m)
+        for i,(b,fld) in enumerate(bpmr):
+            if (b,fld) not in bpmrec: continue
+            k = bpmrec.index((b, fld))
+            obtref[i] = ref[k]
+    else:
+        # use the sub common set
+        bpmr = [r for r in ormdata.bpm if r in bpmrec]
+        corr = [r for r in ormdata.cor if r in correc]
+        m = np.zeros((len(bpmr), len(corr)), 'd')
+        obtref = [None] * len(bpmr)
+        for i,br in enumerate(bpmr):
+            k = bpmrec.index(br)
+            obtref[i] = ref[k]
+            for j,cr in enumerate(corr):
+                m[i,j] = ormdata.get(br, cr)
 
-    # get the matrix and (bpm, field), (trim, field) list as OrmData required
-    bpmrec = _zip_element_field(bpm, ['x', 'y'],
-                                choices=ormdata.getBpmNames())
-    trimrec = _zip_element_field(trim, ['x', 'y'],
-                                 choices=ormdata.getTrimNames())
+    for i,(name,field) in enumerate(bpmr):
+        if obtref[i] is not None: continue
+        obtref[i] = getExactElement(name).get(field, unitsys=None)
 
-    m, bpmrec, trimrec = ormdata.getMatrix(bpmrec, trimrec, full=True,
-                                           ignore = dead)
-
-    bpmref = []
-    for name,field in bpmrec:
-        try:
-            # find the index of first matching BPM
-            i = (i for i,b in enumerate(bpm) if b.name == name).next()
-        except:
-            v0 = getExactElement(name).get(field, unitsys=None)
-            u1 = getExactElement(name).getUnit(field, unitsys=None)
-        else:
-            if field == 'x': 
-                # v0 [m], u1 is lower level unit (EPICS)
-                v0, u1 = ref[i][0], bpm[i].getUnit('x', unitsys=None)
-                if ref[i][0] is None: v0 = bpm[i].x
-            elif field == 'y': 
-                v0, u1 = ref[i][1], bpm[i].getUnit('y', unitsys=None)
-                if ref[i][1] is None: v0 = bpm[i].y
-            else:
-                raise RuntimeError("unknow field %s" % field)
-
-        if u1 == 'm' or u1 == '': v = v0
-        elif u1 == 'mm': v = 1000.0*v0
-        elif u1 == 'um': v = 1.0e6*v0
-        else: raise RuntimeError("unknow unit '%s'" % u1)
-
-        bpmref.append(v)
-
-    bpmpvs = [getExactElement(b).pv(field=f)[0] for b,f in bpmrec]
-    trimpvs = [getExactElement(t).pv(field=f, handle='setpoint')[0] 
-               for t,f in trimrec]
+    bpmpvs = [getExactElement(b).pv(field=f)[0] for b,f in bpmr]
+    corpvs = [getExactElement(t).pv(field=f, handle='setpoint')[0] 
+               for t,f in corr]
 
     # correct orbit using default ORM (from current lattice)
     for i in range(repeat):
         #for k,b in enumerate(bpmpvs):
         #    if bpmref[k] != 0.0: print(k, bpmlst[k], b, bpmref[k])
-        ret = caRmCorrect(bpmpvs, trimpvs, m, ref=np.array(bpmref), **kwargs)
+        ret = caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref), **kwargs)
         if ret[0] != 0: return ret
 
     return (0, None)
 
-def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
+def correctOrbit(bpm = 'BPM', cor = 'COR', **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
@@ -183,7 +172,7 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     -----------
     bpmlst : list of BPM objects, default all 'BPM'
     trimlst : list of Trim objects, default all 'COR'
-    plane : optional, [ 'HV' | 'H' | 'V' ], default 'HV'
+    plane : optional, [ 'XY' | 'X' | 'Y' ], default 'XY'
     rcond : optional, cutting ratio for singular values, default 1e-4.
     scale : optional, scaling corrector strength, default 0.68
     repeat : optional, integer, default 1. numbers of correction 
@@ -203,26 +192,26 @@ def correctOrbit(bpmlst = None, trimlst = None, **kwargs):
     >>> correctOrbit(bpms, trims) 
     """
 
-    plane = kwargs.pop('plane', 'HV')
+    plane = kwargs.pop('plane', 'XY').lower()
 
     # using rcond 1e-4 if not provided.
     kwargs.setdefault('rcond', 1e-4)
     kwargs.setdefault('scale', 0.68)
 
-    # an orbit based these bpm
-    if bpmlst is None:
-        bpmlst = [e for e in getElements('BPM') if e.isEnabled()]
+    bpmlst = [e for e in getElements(bpm) if e.isEnabled()]
+    corlst = [e for e in getElements(cor) if e.isEnabled()]
 
-    N = len(bpmlst)
-    if plane == 'H': ref = zip([0.0] * N, [None] * N)
-    elif plane == 'V': ref = zip([None] * N, [0.0] * N)
-    else: ref = zip([0.0]*N, [0.0]*N)
-    
-    # pv for trim
-    if trimlst is None:
-        trimlst = [e for e in getElements('COR') if e.isEnabled()]
+    bpmr, corr, ref = [], [], []
+    for fld in ["x", "y"]:
+        for bpm in bpmlst:
+            if fld in bpm.fields() and fld in plane:
+                bpmr.append((bpm.name, fld))
+                ref.append(0.0)
+        for cor in corlst:
+            if fld in cor.fields() and fld in plane:
+                corr.append((cor.name, fld))
 
-    setLocalBump(bpmlst, trimlst, ref, **kwargs)
+    setLocalBump(bpmr, corr, ref, **kwargs)
 
 def _random_kick(plane = 'V', amp=1e-9, verbose = 0):
     """
@@ -672,27 +661,60 @@ def _checkOrbitRmData(od):
         
     return vbpm, vtrim
 
-def measTuneRm(quad, output, **kwargs):
+def measTuneRm(quad, **kwargs):
     """
     measure the tune response matrix
     """
+    output = kwargs.pop("output", None)
+    if output is True:
+        output = outputFileName("respm", "tunerm")
+
     qls = getElements(quad)
-    qpvs, names = [], []
+    _logger.info("Tune RM: {0}".format([q.name for q in qls]))
+    quads = []
     for i,q in enumerate(qls):
         pv = q.pv(field="b1", handle="setpoint")
         if not pv: continue
-        qpvs.append(pv[0])
-        names.append(q.name)
-    tune = getElements("tune")[0]
-    nupvs = [tune.pv(field="x", handle="readback")[0],
-             tune.pv(field="y", handle="readback")[0]]
-    print(qpvs, nupvs)
-    m = np.zeros((len(nupvs), len(qpvs)), 'd')
-    for i,pv in enumerate(qpvs):
+        assert len(pv) == 1, "More than 1 pv found for {0}".format(q.name)
+        quads.append((q.name, "b1", pv[0]))
+    tune = getElements("tune")
+    if not tune:
+        raise RuntimeError("Can not find tune element")
+    assert "x" in tune[0].fields(), "Can not find tune x"
+    assert "y" in tune[0].fields(), "Can not find tune y"
+
+    nupvs = [tune[0].pv(field="x", handle="readback")[0],
+             tune[0].pv(field="y", handle="readback")[0]]
+    m = np.zeros((2, len(quads)), 'd')
+
+    for i,(name,fld,pv) in enumerate(quads):
         mc, dxlst, rawdat = measCaRmCol(pv, nupvs, **kwargs)
         m[:,i] = mc
         time.sleep(kwargs.get("wait", 1.5))
-    return nupvs, qpvs, m
+        if output:
+            f = h5py.File(output)
+            if pv in f:
+                del f[pv]
+            g = f.create_group(pv)
+            g["m"] = m[:,i]
+            g["m"].attrs["quad_name"] = name
+            g["m"].attrs["quad_field"] = fld
+            g["m"].attrs["quad_pv"] = pv
+            g["tunes"] = rawdat
+            g["tunes"].attrs["pv"] = nupvs
+            g["dx"] = dxlst
+            f.close()
+    if output:
+        f = h5py.File(output)
+        if "m" in f:
+            del f["m"]
+        f["m"] = m
+        f["m"].attrs["quad_name"]  = [r[0] for r in quads]
+        f["m"].attrs["quad_field"] = [r[1] for r in quads]
+        f["m"].attrs["quad_pv"]    = [r[2] for r in quads]
+        f.close()
+
+    return m
 
 
 def measChromRm(sextlst):
@@ -706,26 +728,70 @@ def measChromRm(sextlst):
     raise NotImplementedError()
 
 #
-def measOrbitRm(bpm, trim, output, **kwargs):
+def measOrbitRm(bpm, cor, **kwargs):
     """
     Measure the orbit response matrix
 
-    :param list bpm: list of bpm names
-    :param list trim: list of trim names
+    :param list bpm: list of bpm names, name pattern
+    :param list trim: list of trim names, name pattern
     :param str output: output filename
     :param float minwait: waiting seconds before each orbit measurement.
 
     seealso :class:`~aphla.respmat.OrbitRespMat`, 
     :func:`~aphla.respmat.OrbitRespMat.measure`
     """
+    output  = kwargs.pop("output", None)
+    if output is True:
+        output = outputFileName("respm", "orm")
 
-    _logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(trim)))
-    orm = OrbitRespMat(bpm, trim)
-    orm.minwait = kwargs.get('minwait', 3)
+    _logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(cor)))
+    bpms, cors = [], []
+    # if it is EPICS
+    for fld in ["x", "y"]:
+        for e in getElements(bpm):
+            if fld not in e.fields(): continue
+            for pv in e.pv(field=fld, handle="readback"):
+                bpms.append((e.name, fld, pv))
+        for e in getElements(cor):
+            if fld not in e.fields(): continue
+            for pv in e.pv(field=fld, handle="setpoint"):
+                cors.append((e.name, fld, pv))
+    # measure the column
+    m = np.zeros((len(bpms), len(cors)), 'd')
+    pv_bpm = [r[2] for r in bpms] # the response
+    pv_cor = [r[2] for r in cors] # the corrector
+    for i,(name, fld, pv) in enumerate(cors):
+        m[:,i], dx, dat = measCaRmCol(pv, pv_bpm, **kwargs)
+        if output:
+            f = h5py.File(output)
+            if pv in f:
+                del f[pv]
+            g = f.create_group(pv)
+            g["m"] = m[:,i]
+            g["m"].attrs["cor_name"] = name
+            g["m"].attrs["cor_field"] = fld
+            g["m"].attrs["cor_pv"] = pv
+            g["m"].attrs["bpm_pv"] = pv_bpm
+            g["m"].attrs["bpm_name"] = [r[0] for r in bpms]
+            g["m"].attrs["bpm_field"] = [r[1] for r in bpms]
+            g["orbit"] = dat
+            g["orbit"].attrs["pv"] = pv_bpm
+            g["dx"] = dx
+            f.close()
+    if output:
+        f = h5py.File(output)
+        if "m" in f:
+            del f["m"]
+        f["m"] = m
+        f["m"].attrs["cor_name"]  = [r[0] for r in cors]
+        f["m"].attrs["cor_field"] = [r[1] for r in cors]
+        f["m"].attrs["cor_pv"]    = pv_cor
+        f["m"].attrs["bpm_name"]  = [r[0] for r in bpms]
+        f["m"].attrs["bpm_field"] = [r[1] for r in bpms]
+        f["m"].attrs["bpm_pv"]    = pv_bpm
+        f.close()
 
-    orm.measure(output = output, **kwargs)
-
-    return orm
+    return m
 
 
 def getSubOrm(bpm, trim, flags = 'XX'):
