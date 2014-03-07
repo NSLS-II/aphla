@@ -8,6 +8,7 @@ TWISS Measurement
 :license:
 
 """
+from __future__ import print_function
 
 import os
 from os.path import join
@@ -67,8 +68,8 @@ def measBeta(elem, dqk1 = 0.01, full = False, num_points = 3, verbose=0):
     if elems is None:
         raise ValueError("can not find element '%s'" % elem)
     if verbose:
-        print "# fitting %d quadrupoles:" % len(elems)
-        print "# " + ' '.join([q.name for q in elems])
+        print("# fitting %d quadrupoles:" % len(elems))
+        print("# " + ' '.join([q.name for q in elems]))
         
 
     kwargs = {'dqk1': dqk1, 'num_points': num_points, 'verbose': verbose}
@@ -82,18 +83,19 @@ def measBeta(elem, dqk1 = 0.01, full = False, num_points = 3, verbose=0):
         # is an element
         k1[i,:], nu[i,:,:] = _measBetaQuad(q, **kwargs)
         if verbose:
-            print i, q.name, q.k1, 
-        p, res, rank, sv, rcond = np.polyfit(k1[i,:], nu[i,:,:], deg=1, full=True)
+            print(i, q.name, q.k1, end=" ")
+        p, res, rank, sv, rcond = np.polyfit(
+            k1[i,:], nu[i,:,:], deg=1, full=True)
         # p[0,k] is the highest power for dataset k
         beta[i,:2] = p[0,:]*4*np.pi/q.length
         # reverse the k1 for vertical direction
         beta[i,1] = -beta[i,1]
-        print q.sb, q.name, beta[i,0], beta[i,1], p[0,:]
+        print(q.sb, q.name, beta[i,0], beta[i,1], p[0,:])
 
     if full: return beta, k1, nu
     else: return beta
 
-def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
+def measDispersion(elem, dfreq = 1e-6, alphac = 3.6261976841792413e-04,
                    gamma = 5.870841487279844e3, num_points = 5,
                    full = False, verbose = 0):
     """measure dispersion at BPMs
@@ -101,7 +103,7 @@ def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
     Parameters
     -----------
     elem : BPM name, list or pattern
-    df : float. frequency change MHz
+    dfreq : float. frequency change (check the unit)
     alphac : float. momentum compaction factor.
     gamma : float. beam energy.
     num_points : int. points to fit line
@@ -139,7 +141,7 @@ def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
         v0 = getOrbit()
         setRfFrequency(f0 + df)
         if verbose > 0:
-            print i, "df=", df, " f=", f0
+            print(i, "df=", df, " f=", f0)
         waitStableOrbit(v0)
         
         # repeat the put/get in case simulator did not response latest results
@@ -148,7 +150,6 @@ def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
 
         cod[i,:nbpm] = obt[:,0] - obt0[:,0]
         cod[i,nbpm:] = obt[:,1] - obt0[:,1]
-
 
     # restore
     setRfFrequency(f0)
@@ -163,52 +164,58 @@ def measDispersion(elem, dfreq = 1e-3, alphac = 3.6261976841792413e-04,
     ret[:,2] = s
     if verbose > 0:
         for i,bpm in enumerate(bpmobj):
-            print i, bpm.name, bpm.sb, ret[i,0], ret[i,1] 
+            print(i, bpm.name, bpm.sb, ret[i,0], ret[i,1])
     return ret
 
 
-def measChromaticity(gamma = 3.0e5/.511, alphac = 3.6261976841792413e-04):
+def measChromaticity(**kwargs):
     """Measure the chromaticity
 
     Parameters
     -----------
+    dfmax - max RF frequency change (within plus/minus), 1e-6
+    gamma - beam, 3.0/0.511e-3
+    alphac - momentum compaction factor, 3.62619e-4
+    wait - 1.5 second
+
+    returns f, nu, chrom
+    f - RF frequency setpoint
+    nu - tunes 
+    chrom - result chromaticities 
     """
+    dfreq  = kwargs.get("dfmax", 1e-6)
+    gamma  = kwargs.get("gamma", 3.0e3/.511)
+    alphac = kwargs.get("alphac", 3.6261976841792413e-04)
+    wait   = kwargs.get("wait", 1.5)
+    npt    = kwargs.get("npoints", 6)
+    verbose = kwargs.get("verbose", 0)
+
     eta = alphac - 1/gamma/gamma
 
     f0 = getRfFrequency()
     nu0 = getTunes()
-    _logger.info("RF freq=%s, tune=%s" % (str(f0), str(nu0)))
+    _logger.info("Initial RF freq=%s, tunes=%s" % (str(f0), str(nu0)))
 
-    f = np.linspace(f0 - 1e-3, f0 + 1e-3, 6)
+    f = np.linspace(f0 - dfmax, f0 + dfmax, npt)
     nu = np.zeros((len(f), 2), 'd')
-    for i,f1 in enumerate(f): 
+    for i,f1 in enumerate(f):
+        if verbose > 0:
+            print("freq= ", f1, end=" ")
         putRfFrequency(f1)
-        time.sleep(6)
+        time.sleep(wait)
         nu[i,:] = getTunes()
+        if verbose > 0:
+            print("tunes:", nu[i,0], nu[i,1])
+
+    putRfFrequency(f0)
 
     df = f - f0
     dnu = nu - np.array(nu0)
     p, resi, rank, sing, rcond = np.polyfit(df, dnu, deg=2, full=True)
-    print("Coef:", p)
-    print("Resi:", resi)
     chrom = p[-2,:] * (-f0*eta)
-    print("Chromx:", chrom)
-    
-    t = np.linspace(1.1*df[0], 1.1*df[-1], 100)
-    plt.clf()
-    plt.plot(f - f0, nu[:,0] - nu0[0], '-rx')
-    plt.plot(f - f0, nu[:,1] - nu0[1], '-go')
-    plt.plot(t, t*t*p[-3,0]+t*p[-2,0] + p[-1,0], '--r',
-             label="H: %.1fx^2%+.2fx%+.1f" % (p[-3,0], p[-2,0], p[-1,0]))
-    plt.plot(t, t*t*p[-3,1]+t*p[-2,1] + p[-1,1], '--g',
-             label="V: %.1fx^2%+.2fx%+.1f" % (p[-3,1], p[-2,1], p[-1,1]))
-    plt.text(min(df), min(dnu[:,0]),
-             r"$\eta=%.3e,\quad C_x=%.2f,\quad C_y=%.2f$" %\
-             (eta, chrom[0], chrom[1]))
-    
-    plt.legend(loc='upper right')
-    plt.xlabel("$f-f_0$ [MHz]")
-    plt.ylabel(r"$\nu-\nu_0$")
-    plt.savefig('measchrom.png')
-    putRfFrequency(f0)
-    pass
+    if verbose > 0:
+        print("Coef:", p)
+        print("Resi:", resi)
+        print("Chrom:", chrom)
+    return f, nu, chrom
+

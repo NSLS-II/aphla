@@ -71,6 +71,7 @@ class RmCol:
         points = self.points
         if dklst is not None:
             points = len(dklst)
+            print "Using external dklst:", dklst
         else:
             dklst = np.linspace(-self.maxdk, self.maxdk, points)
 
@@ -85,6 +86,7 @@ class RmCol:
 
         kstrength = np.ones(points+2, 'd') * kx0
         kstrength[1:-1] = [dklst[i] + kx0 for i in range(points)]
+        print "Kicker sp:", kstrength
         for i,kx in enumerate(kstrength[1:]):
             v0 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
             self.kicker.put(kfield, kx, unitsys=self.unit)
@@ -156,7 +158,7 @@ class OrbitRespMat:
         self._mask = None #np.zeros((nbpmpv, ntrimpv), 'i')
         self._rawkick = None #np.zeros((ntrimpv, npts+2), 'd')
         self.m = None # np.zeros((nbpmpv, ntrimpv), 'd')
-        self.unit = 'raw'
+        self.unit = None # raw unit
         
     def save(self, filename, fmt = ''):
         """
@@ -190,7 +192,7 @@ class OrbitRespMat:
         """
         output  = kwargs.get("output", "orm.hdf5")
         verbose = kwargs.get("verbose", 1)
-        maxdk   = kwargs.get("maxdk", 1e-4)
+        maxdk   = kwargs.get("maxdk", 1e-2)
         rflds = kwargs.get("bpmfields", ['x', 'y'])
         trimflds = kwargs.get("trimfields", ['x', 'y'])
 
@@ -221,7 +223,7 @@ class OrbitRespMat:
                     i, len(trimsets), rflds, kicker.name, kfld)
 
             # measure one column of RM
-            ormline.measure(rflds, kfld, unitsys=self.unit, verbose=verbose)
+            ormline.measure(rflds, kfld, unitsys=self.unit, **kwargs)
             rawobt.append(ormline.rawresp)
             rawm.append(ormline.m)
             rawkick.append(ormline.rawkick)
@@ -543,41 +545,5 @@ class OrbitRespMat:
         return s
 
 
-#
-def measTuneRespMat(quads, **kwargs):
-    """
-    Measure the Tune Response Matrix, coupled terms or not.
-
-    :param output:
-    :param verbose:
-    :param dkick:
-    """
-    output  = kwargs.get("output", "tunerm.hdf5")
-    verbose = kwargs.get("verbose", 1)
-    maxdk   = kwargs.get("maxdk", 1e-2)
-    ctrlflds = kwargs.get("quadfield", 'b1')
-    delay   = kwargs.get("delay", 3)
-
-    t_start = time.time()
-    for i,q in enumerate(getElements(quads)):
-        if ctrlflds not in q.fields(): continue
-        b1 = q.b1
-        b1l = np.linspace(-maxdk, maxdk, 4)
-        tunes = np.zeros((len(b1l), 2), 'd')
-        nux0, nuy0 = getTunes()
-        for i,db1 in enumerate(b1l):
-            q.b1 = b1 + db1
-            time.sleep(delay)
-            nux, nuy = getTunes()
-            tunes[i,:] = (nux - nux0, nuy - nuy0)
-        
-        q.b1 = b1
-        for i,plane in enumerate(["x", "y"]):
-            # p is in nature order
-            p, residuals, rank, singular_values, rcond = np.polyfit(
-                b1l, tunes[:,i], 1, full=True)
-            print q.name, q.b1, plane, tunes[0,i], tunes[-1,i], p[0], p[1]
-
-    t_end = time.time()
-    print "-- Time cost: %.2f min" % ((t_end - t_start)/60.0)
-
+    m = [[], []]
+            m[i].append(p[0])

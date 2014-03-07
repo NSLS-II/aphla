@@ -464,10 +464,11 @@ class ApCaPlot(Qwt.QwtPlot):
         return bd
 
     def resetPlot(self, ax = Qwt.QwtPlot.yLeft):
-        bd = self.curvesBound()
-        if not bd.isValid(): return
-        self.setAxisScale(ax, bd.bottom(), bd.top())
-        self.setAxisScale(Qwt.QwtPlot.xBottom, bd.left(), bd.right())
+        #bd = self.curvesBound()
+        #if not bd.isValid(): return
+        #self.setAxisScale(ax, bd.bottom(), bd.top())
+        #self.setAxisScale(Qwt.QwtPlot.xBottom, bd.left(), bd.right())
+        pass
 
 
     def contextMenuEvent(self, e):
@@ -544,6 +545,7 @@ class ApCaPlot(Qwt.QwtPlot):
 
     def _setAutoScale(self, on):
         if on:
+            print "Enable autoscale"
             self.zoomer1.reset()
             self.zoomer1.setEnabled(False)
             self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
@@ -552,6 +554,7 @@ class ApCaPlot(Qwt.QwtPlot):
             self.zoomer1.setEnabled(True)
             asd = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
             #print asd.lowerBound(), asd.upperBound()
+            print "Disable autoscale"
             self.setAxisScale(Qwt.QwtPlot.yLeft, asd.lowerBound(),
                               asd.upperBound())
             # has to replot before base
@@ -799,7 +802,10 @@ class ApCaWaveformPlot(ApCaPlot):
         for pv in pvs:
             self._cadata.addHook(pv, self._ca_update)
         self._cadata.addPv(pvs)
-        print "range:", self._cadata.getRange()
+        ymin, ymax = self._cadata.getRange()
+        self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+        self.zoomer1.setZoomBase(True)
+        self._cadata.start()
 
     def _ca_update(self, val, idx = None):
         if self._hold: return
@@ -952,6 +958,7 @@ class ApCaArrayPlot(ApCaPlot):
         self._cadata.addPv(self._pvs.keys())
         ymin, ymax = self._cadata.getRange()
         self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+        self.zoomer1.setZoomBase(True)
         self._cadata.start()
 
     def _ca_update(self, val, idx = None):

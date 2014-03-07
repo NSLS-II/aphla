@@ -3,6 +3,8 @@
 <file alias="file_quit.png">./images/file_quit.png</file>
 <file alias="new_bpm.png">./images/new_bpm.png</file>
 <file alias="new_cor.png">./images/new_cor.png</file>
+<file alias="new_quad.png">./images/new_quad.png</file>
+<file alias="new_sext.png">./images/new_sext.png</file>
 <file alias="view_livedata.png">./images/view_livedata.png</file>
 <file alias="view_singleshot.png">./images/view_singleshot.png</file>
 <file alias="view_errorbar.png">./images/view_errorbar.png</file>

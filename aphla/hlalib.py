@@ -54,7 +54,7 @@ def getOutputDir():
     return machines._lat.OUTPUT_DIR
 
 # current
-def getCurrent(name='dcct', field='value', unitsys=None):
+def getCurrent(name='dcct', field='I', unitsys=None):
     """Get the current from the first DCCT element
 
     :param str name: the name of DCCT, default 'dcct'
@@ -538,7 +538,7 @@ def getDistance(elem1, elem2, absolute=True):
 
 #
 #
-def getPhase(group, **kwargs):
+def getPhi(group, **kwargs):
     """
     get the phase from stored data
 
@@ -550,6 +550,11 @@ def getPhase(group, **kwargs):
     if kwargs.get('spos', False): col.append('s')
     
     return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
+
+def getPhase(group, **kwargs):
+    """see :func:`getPhi`"""
+    return getPhi(group, **kwargs)
+
 ##
 def getAlpha(group, **kwargs):
     """
@@ -1162,3 +1167,24 @@ def saveLattice(output, **kwargs):
             t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
 
     savePvs(output, pvs, group=lat.name)
+
+
+def outputFileName(group, subgroup, create_path = True):
+    """generate the system default output data file name
+
+    'Lattice/Year_Month/group/subgroup_Year_Month_Day_HourMinSec.hdf5'
+    """
+    # use the default file name
+    t0 = datetime.now()
+    output_dir = os.path.join(machines.getOutputDir(),
+                              t0.strftime("%Y_%m"),
+                              group)
+    if not os.path.exists(output_dir):
+        if create_path:
+            os.makedirs(output_dir)
+        else:
+            raise RuntimeError("{0} does not exist".format(output_dir))
+
+    fopt = subgroup + t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
+    return os.path.join(output_dir, fopt)
+
