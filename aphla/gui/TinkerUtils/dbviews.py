@@ -92,9 +92,9 @@ class ConfigMetaDBViewWidget(QWidget):
         verticalLayout.addWidget(self.layoutWidget_3)
         horizontalLayout = QHBoxLayout(self.layoutWidget_3)
         horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        spacerItem2 = QSpacerItem(20, 40, QSizePolicy.Expanding,
-                                          QSizePolicy.Minimum)
-        horizontalLayout.addItem(spacerItem2)
+        spacerItem = QSpacerItem(20, 40, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        horizontalLayout.addItem(spacerItem)
         self.pushButton_columns = QPushButton(self)
         self.pushButton_columns.setText('Columns')
         self.pushButton_columns.setMaximumWidth(200)
@@ -109,6 +109,9 @@ class ConfigMetaDBViewWidget(QWidget):
         self.label_2 = QLabel(self)
         self.label_2.setText('Description')
         gridLayout.addWidget(self.label_2, 0, 0, 1, 1)
+        spacerItem2 = QSpacerItem(20, 40, QSizePolicy.Minimum,
+                                  QSizePolicy.Expanding)
+        gridLayout.addItem(spacerItem2, 1, 0, 1, 1)
         self.textEdit_description = QTextEdit(self)
         self.textEdit_description.setReadOnly(True)
         gridLayout.addWidget(self.textEdit_description, 0, 1, 2, 1)
