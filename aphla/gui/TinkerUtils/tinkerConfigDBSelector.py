@@ -1,3 +1,7 @@
+import sip
+sip.setapi('QString', 2)
+sip.setapi('QVariant', 2)
+
 import os, sys
 import os.path as osp
 import numpy as np
@@ -289,13 +293,13 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             self.comboBox_config_id_2.currentText().strip()
         if (config_id_1_text != '') and (config_id_1_operator != ''):
             self.search_params['config_id_1'] = (
-                'config_id {0:s} {1:d}'.format(config_id_1_operator,
+                'config_id {0:s} {1:s}'.format(config_id_1_operator,
                                                config_id_1_text))
         else:
             self.search_params['config_id_1'] = ''
         if (config_id_2_text != '') and (config_id_2_operator != ''):
             self.search_params['config_id_2'] = (
-                'config_id {0:s} {1:d}'.format(config_id_2_operator,
+                'config_id {0:s} {1:s}'.format(config_id_2_operator,
                                                config_id_2_text))
         else:
             self.search_params['config_id_2'] = ''
@@ -312,15 +316,15 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             self.comboBox_masar_id_1.currentText().strip()
         masar_id_2_operator = \
             self.comboBox_masar_id_2.currentText().strip()
-        if (masar_id_1_text != '') and (masar_1_operator != ''):
+        if (masar_id_1_text != '') and (masar_id_1_operator != ''):
             self.search_params['masar_id_1'] = (
-                'config_masar_id {0:s} {1:d}'.format(masar_id_1_operator,
+                'config_masar_id {0:s} {1:s}'.format(masar_id_1_operator,
                                                      masar_id_1_text))
         else:
             self.search_params['masar_id_1'] = ''
         if (masar_id_2_text != '') and (masar_id_2_operator != ''):
             self.search_params['masar_id_2'] = (
-                'config_masar_id {0:s} {1:d}'.format(masar_id_2_operator,
+                'config_masar_id {0:s} {1:s}'.format(masar_id_2_operator,
                                                      masar_id_2_text))
         else:
             self.search_params['masar_id_2'] = ''
@@ -341,13 +345,13 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             self.comboBox_ref_step_size_2.currentText().strip()
         if (ref_step_size_1_text != '') and (ref_step_size_1_operator != ''):
             self.search_params['ref_step_size_1'] = (
-                'config_ref_step_size {0:s} {1:d}'.format(
+                'config_ref_step_size {0:s} {1:s}'.format(
                     ref_step_size_1_operator, ref_step_size_1_text))
         else:
             self.search_params['ref_step_size_1'] = ''
         if (ref_step_size_2_text != '') and (ref_step_size_2_operator != ''):
             self.search_params['ref_step_size_2'] = (
-                'config_ref_step_size {0:s} {1:d}'.format(
+                'config_ref_step_size {0:s} {1:s}'.format(
                     ref_step_size_2_operator, ref_step_size_2_text))
         else:
             self.search_params['ref_step_size_2'] = ''
@@ -451,7 +455,10 @@ def main():
     # below, the GUI window will not show up and freeze the program.
     cothread.iqt()
 
-    app = make(isModal=False, parentWindow=None)
+    dialog = make(isModal=False, parentWindow=None)
 
     cothread.WaitForQuit()
-    print app.model.output
+    print dialog.config_model.abstract.channel_ids
+
+if __name__ == '__main__':
+    main()
