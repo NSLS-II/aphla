@@ -293,7 +293,8 @@ class TwissData:
         get twiss at a location `s`. Linear interpolation.
         """
         if s < self._twtable[0,0] or s > self._twtable[-1,0]:
-            return None
+            raise ValueError("s={} is outside of range ({}, {})".format(
+                    s, self._twtable[0,0], self._twtable[-1,0]))
         dat = []
         for i in range(1, len(self._twtable)):
             if self._twtable[i,0] < s: continue
@@ -324,6 +325,9 @@ class TwissData:
         ---------
         >>> getTwiss(['E1', 'E2'], col=('s', 'betax', 'betay'))
 
+        Note: this matches the line of twiss data record for name and twiss
+        data. Depend on the initial configured data, most likely the data is
+        at the end of element. Use :func:`at`
         """
         if not col: return None
         clean = kwargs.get('clean', False)
@@ -331,19 +335,20 @@ class TwissData:
         # check if element is valid
         ret = []
         for e in elemlst:
-            if e not in self.element:
-                raise RuntimeError("element '{0}' is not in twiss "
-                                   "data: {1}".format(e, self.element))
-            i = self.element.index(e)
+            try:
+                i = self.element.index(e)
+            except:
+                raise ValueError("element '{0}' is not in twiss "
+                                 "data: {1}".format(e, self.element))
             dat = []
             for c in col:
                 if c in self._cols:
                     j = self._cols.index(c)
                     dat.append(self._twtable[i,j])
                 else:
-                    raise RuntimeError("column '%s' is not in twiss data" % c)
+                    raise ValueError("column '%s' is not in twiss data" % c)
             ret.append(dat)
-            
+
         return np.array(ret, 'd')
 
 
