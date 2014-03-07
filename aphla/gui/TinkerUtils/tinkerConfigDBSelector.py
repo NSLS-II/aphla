@@ -4,7 +4,7 @@ import numpy as np
 import json
 
 from PyQt4.QtCore import (
-    QObject, SIGNAL, QSettings, QRect
+    Qt, QObject, SIGNAL, QSettings, QRect
 )
 from PyQt4.QtGui import (
     QSortFilterProxyModel, QMessageBox, QIcon, QDialog, QIntValidator,
@@ -41,6 +41,7 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
 
         self.setupUi(self)
 
+        self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
         self.setWindowTitle('Select Configuration from Database')
 
         # Load Startup Preferences for Config Table

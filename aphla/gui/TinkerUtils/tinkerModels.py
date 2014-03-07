@@ -1239,6 +1239,7 @@ class SnapshotAbstractModel(QObject):
         """"""
 
         self.caget_sent_ts_second = time.time()
+
         ca_raws = caget(self.caget_pv_str_list, format=FORMAT_TIME,
                         throw=False, timeout=self.caget_timeout)
 
