@@ -32,6 +32,7 @@ class UcAbstract(object):
         self.srcunit = None
         self.dstunit = None
         self.polarity = 1
+        self.invertible = 0
 
     def __str__(self):
         src, dst = self.direction[0], self.direction[1]
@@ -43,10 +44,15 @@ class UcAbstract(object):
         return self.polarity*x
 
 class UcPoly(UcAbstract):
-    """a polynomial unit conversion"""
+    """
+    a polynomial unit conversion. It is invertible if order=1.
+
+    """
     def __init__(self, src, dst, coef):
         super(UcPoly, self).__init__(src, dst)
         self.p = np.poly1d(coef)
+        if len(coef) == 2:
+            self.invertible = 1
 
     def __str__(self):
         src, dst = self.direction[0], self.direction[1]
@@ -102,11 +108,11 @@ class UcInterp1(UcAbstract):
             self._xp_r = [v for v in self.fp]
             self._fp_r = [v for v in self.xp]
         elif np.all(np.diff(self.fp) < 0):
-            self.invertivle = 1
+            self.invertible = 1
             self._xp_r = [v for v in reversed(self.fp)]
             self._fp_r = [v for v in reversed(self.xp)]
         else:
-            self.invertivle = 0
+            self.invertible = 0
 
     def _inv_eval(self, x):
         if x is None: return None
@@ -192,7 +198,8 @@ def loadUnitConversionH5(lat, h5file, group):
         yfac = v.attrs.get('calib_factor', 1.0)
         if v.attrs['_class_'] == 'polynomial':
             a = [yfac**i for i in range(len(v))]
-            newp = [v[i]*c for i,c in enumerate(a.reverse())] # in place
+            a.reverse() # in place
+            newp = [v[i]*c for i,c in enumerate(a)]
             uc = UcPoly(usrc, udst, newp)
         elif v.attrs['_class_'] == 'interpolation':
             uc = UcInterp1(usrc, udst, list(v[:,0]), list(v[:,1]*yfac))
