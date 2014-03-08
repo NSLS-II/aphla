@@ -367,47 +367,193 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         else:
             self.search_params['synced_group_weight'] = ''
 
-        condition_str = ''
-        for _, v in self.search_params.iteritems():
-            if v:
-                if condition_str != '':
-                    condition_str += ' AND '
-                condition_str += '({0:s})'.format(v)
-        out = self.db.getColumnDataFromTable(
-            '[config_meta_table text view]',
-            column_name_list=self.config_meta_all_col_keys,
-            condition_str=condition_str, order_by_str='config_id')
-        if out != []:
-            for k, v in zip(self.config_meta_all_col_keys, out):
-                self.search_result[k] = list(v)
+        config_name_text = self.lineEdit_config_name.text().strip()
+        if config_name_text != '':
+            cond_str = self.get_MATCH_condition_str(config_name_text.lower())
+            self.search_params['config_name'] = \
+                self.get_config_ids_with_MATCH(cond_str, 'config_name')
         else:
+            self.search_params['config_name'] = []
+
+        config_desc_text = self.lineEdit_config_description.text().strip()
+        if config_desc_text != '':
+            cond_str = self.get_MATCH_condition_str(config_desc_text.lower())
+            self.search_params['config_description'] = \
+                self.get_config_ids_with_MATCH(cond_str, 'config_description')
+        else:
+            self.search_params['config_description'] = []
+
+        username_text = self.lineEdit_username.text().strip()
+        if username_text != '':
+            self.search_params['username'] = \
+                self.get_GLOB_condition_str(username_text, 'username')
+        else:
+            self.search_params['username'] = ''
+
+        if (self.search_params['config_name'] is None) or \
+           (self.search_params['config_description'] is None):
             for k in self.config_meta_all_col_keys:
                 self.search_result[k] = []
+        else:
+            condition_str = ''
+            for k, v in self.search_params.iteritems():
+                if k in ('config_name', 'config_description'):
+                    if v:
+                        if condition_str != '':
+                            condition_str += ' AND '
+                        condition_str += '(config_id IN ({0:s}))'.format(
+                            ','.join([str(i) for i in v]))
+                else:
+                    if v:
+                        if condition_str != '':
+                            condition_str += ' AND '
+                        condition_str += '({0:s})'.format(v)
+            out = self.db.getColumnDataFromTable(
+                '[config_meta_table text view]',
+                column_name_list=self.config_meta_all_col_keys,
+                condition_str=condition_str, order_by_str='config_id')
+            if out != []:
+                for k, v in zip(self.config_meta_all_col_keys, out):
+                    self.search_result[k] = list(v)
+            else:
+                for k in self.config_meta_all_col_keys:
+                    self.search_result[k] = []
 
         self.tableModel_config_meta.repaint()
+
+        self.on_selection_change(None, None)
+
+    #----------------------------------------------------------------------
+    def convert_GLOB_to_LIKE_wildcards(self, char):
+        """"""
+
+        if char == '*':
+            return '%'
+        elif char == '?':
+            return '_'
+        else:
+            raise ValueError('Unexpected char: {0:s}'.format(char))
+
+    #----------------------------------------------------------------------
+    def get_LIKE_condition_str(self, glob_pattern, column_name):
+        """"""
+
+        backslahs_inds = [i for i, c in enumerate(glob_pattern) if c == '\\']
+        like_pattern = ''.join(
+            [self.convert_GLOB_to_LIKE_wildcards(c)
+             if (c in ('*','?')) and (i-1 not in backslahs_inds) else c
+             for i, c in enumerate(glob_pattern)])
+        cond_str = '({0:s} LIKE "{1:s}" ESCAPE "\\")'.format(column_name,
+                                                             like_pattern)
+
+        return cond_str
+
+    #----------------------------------------------------------------------
+    def get_GLOB_condition_str(self, glob_pattern, column_name):
+        """
+        ESCAPE command is not implemented for GLOB by SQLite, even though the
+        syntax diagram says it is.
+
+        The workaround for escaping glob special characters is provided here.
+        """
+
+        glob_pattern = glob_pattern.replace(r'\*', '[*]')
+        glob_pattern = glob_pattern.replace(r'\?', '[?]')
+        glob_pattern = glob_pattern.replace(r'\[', '[[]')
+        glob_pattern = glob_pattern.replace(r'\]', '[]]')
+
+        cond_str = '({0:s} GLOB "{1:s}")'.format(column_name, glob_pattern)
+
+        return cond_str
+
+    #----------------------------------------------------------------------
+    def get_MATCH_condition_str(self, full_search_string):
+        """
+        Full-text searching provided by MATCH only works for FTS4 virtual table
+        """
+
+        full_search_string = full_search_string.replace(r'\*', '[*]')
+        full_search_string = full_search_string.replace(r'\?', '[?]')
+        full_search_string = full_search_string.replace(r'\[', '[[]')
+        full_search_string = full_search_string.replace(r'\]', '[]]')
+
+        quote_found = ''
+        quote_inds = []
+        non_quote_inds = []
+        for i, c in enumerate(full_search_string):
+            if c in ("'", '"'):
+                if quote_found == '':
+                    quote_found = c
+                    quote_inds.append(i)
+                elif quote_found == c:
+                    quote_inds.append(i)
+                    quote_found = ''
+                else:
+                    non_quote_inds.append(i)
+
+        if quote_found != '':
+            non_quote_inds.append(quote_inds.pop())
+            non_quote_inds.sort()
+
+        tokens = []
+        for i in range(len(quote_inds))[::-2]:
+            ini = quote_inds[i-1]
+            end = quote_inds[i]
+            tokens.append(full_search_string[(ini+1):end])
+            full_search_string = full_search_string[:ini] + \
+                full_search_string[(end+1):]
+        tokens += full_search_string.split()
+
+        cond_str = ' '.join(['"{0:s}"'.format(t.replace("'", "''")) if ' ' in t
+                             else t.replace("'", "''") for t in tokens])
+
+        return cond_str
+
+    #----------------------------------------------------------------------
+    def get_config_ids_with_MATCH(self, MATCH_cond_str, column_name):
+        """"""
+
+        fts_condition_str = "{0:s} MATCH '{1:s}'".format(
+            column_name, MATCH_cond_str)
+
+        matched_rowids = self.db.getColumnDataFromTable(
+            'config_meta_text_search_table', column_name_list=['rowid'],
+            condition_str=fts_condition_str)
+        if matched_rowids != []:
+            matched_config_ids = list(matched_rowids[0])
+        else:
+            matched_config_ids = None
+
+        return matched_config_ids
 
     #----------------------------------------------------------------------
     def on_selection_change(self, current_index, previous_index):
         """"""
 
-        row = current_index.row()
-
-        description = self.search_result['config_description'][row]
-
-        self.textEdit_description.setText(description)
-
         a = self.config_model.abstract
-        a.ref_step_size = self.search_result['config_ref_step_size'][row]
-        out = self.db.getColumnDataFromTable(
-            'config_table',
-            column_name_list=['group_name_id', 'channel_id', 'config_weight'],
-            condition_str='config_id={0:d}'.format(
-                self.search_result['config_id'][row]))
 
-        if out != []:
-            (a.group_name_ids, a.channel_ids, a.weights) = map(list, out)
-        else:
+        if current_index is None:
+            self.textEdit_description.setText('')
+            a.ref_step_size = np.nan
             (a.group_name_ids, a.channel_ids, a.weights) = [], [], []
+        else:
+            row = current_index.row()
+
+            description = self.search_result['config_description'][row]
+
+            self.textEdit_description.setText(description)
+
+            a.ref_step_size = self.search_result['config_ref_step_size'][row]
+            out = self.db.getColumnDataFromTable(
+                'config_table',
+                column_name_list=['group_name_id', 'channel_id', 'config_weight'],
+                condition_str='config_id={0:d}'.format(
+                    self.search_result['config_id'][row]))
+
+            if out != []:
+                (a.group_name_ids, a.channel_ids, a.weights) = map(list, out)
+            else:
+                (a.group_name_ids, a.channel_ids, a.weights) = [], [], []
 
         self.config_model.table.updateModel()
         self.config_model.table.repaint()
