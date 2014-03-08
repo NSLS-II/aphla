@@ -402,6 +402,38 @@ class SQLiteDatabase():
             self.cur.execute(sql_cmd, binding_tuple)
 
     #----------------------------------------------------------------------
+    def createFTS4VirtualTable(self, table_name, column_definition_list,
+                               tokenizer_str=''):
+        """"""
+
+        self.dropTable(table_name)
+
+        sql_cmd = 'CREATE VIRTUAL TABLE ' + table_name + ' using fts4 ('
+
+        for col in column_definition_list:
+            if isinstance(col, Column):
+                sql_cmd += col.name
+            else:
+                raise ValueError('Unexpected column class: '+type(col))
+
+            sql_cmd += ', '
+
+        if tokenizer_str:
+            sql_cmd += 'tokenize={0:s})'.format(tokenizer_str)
+        else:
+            sql_cmd = sql_cmd[:-2] + ')'
+
+        try:
+            if DEBUG:
+                print sql_cmd
+
+            with self.con:
+                self.cur.execute(sql_cmd)
+        except:
+            traceback.print_exc()
+            print 'SQL cmd:', sql_cmd
+
+    #----------------------------------------------------------------------
     def createTable(self, table_name, column_definition_list):
         """"""
 
@@ -643,3 +675,20 @@ class SQLiteDatabase():
 
         self.cur.execute('PRAGMA foreign_keys = '+state)
         self.con.commit()
+
+    #----------------------------------------------------------------------
+    def lockDatabase(self):
+        """"""
+
+        self.cur.execute('PRAGMA locking_mode = EXCLUSIVE')
+        self.cur.execute('BEGIN EXCLUSIVE')
+        self.con.commit()
+
+    #----------------------------------------------------------------------
+    def unlockDatabase(self):
+        """"""
+
+        self.cur.execute('PRAGMA locking_mode = NORMAL')
+        self.con.commit()
+
+        self.getTableNames()
