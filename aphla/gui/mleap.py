@@ -830,7 +830,7 @@ def main(par=None):
     app.processEvents()
 
     
-    mlist = os.environ.get('HLA_MACHINES', '').split(";")
+    mlist = os.environ.get('APHLA_MACHINES', '').split(";")
     if not mlist: mlist = aphla.machines.machines()
     machs, infos = [], []
     for m in mlist:
