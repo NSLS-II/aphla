@@ -639,6 +639,28 @@ class TinkerDockWidget(QDockWidget):
         self.connect(self.pushButton_divide, SIGNAL('clicked()'),
                      self.ss_abstract.divide)
 
+        self.connect(self.lineEdit_caget_timeout, SIGNAL('editingFinished()'),
+                     self.validate_timeout)
+        self.connect(self.lineEdit_caput_timeout, SIGNAL('editingFinished()'),
+                     self.validate_timeout)
+
+    #----------------------------------------------------------------------
+    def validate_timeout(self):
+        """"""
+
+        sender = self.sender()
+
+        try:
+            timeout = float(sender.text())
+        except:
+            sender.setText('nan')
+            timeout = None
+
+        if sender == self.lineEdit_caget_timeout:
+            self.ss_abstract.caget_timeout = timeout
+        else:
+            self.ss_abstract.caput_timeout = timeout
+
     #----------------------------------------------------------------------
     def closeEvent(self, event):
         """"""
@@ -886,6 +908,36 @@ class TinkerDockWidget(QDockWidget):
                                  QSizePolicy.Minimum)
         horizontalLayout_10.addItem(spacerItem)
         self.tabWidget_mode.addTab(self.tab_target_mode,'Target Mode')
+
+        ## Timeout Tab
+        default_pref = get_preferences(default=True)
+        self.tab_timeout = QWidget()
+        horizontalLayout = QHBoxLayout()
+        label = QLabel('caget [seconds]')
+        horizontalLayout.addWidget(label)
+        self.lineEdit_caget_timeout = QLineEdit(self.tab_timeout)
+        self.lineEdit_caget_timeout.setText(str(default_pref['caget_timeout']))
+        self.lineEdit_caget_timeout.setToolTip(
+            'If nan, no timeout will occur. If 0, it will timeout immediately.')
+        horizontalLayout.addWidget(self.lineEdit_caget_timeout)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        horizontalLayout.addItem(spacerItem)
+        horizontalLayout_2 = QHBoxLayout()
+        label = QLabel('caput [seconds]')
+        horizontalLayout_2.addWidget(label)
+        self.lineEdit_caput_timeout = QLineEdit(self.tab_timeout)
+        self.lineEdit_caput_timeout.setText(str(default_pref['caput_timeout']))
+        self.lineEdit_caput_timeout.setToolTip(
+            'If nan, no timeout will occur. If 0, it will timeout immediately.')
+        horizontalLayout_2.addWidget(self.lineEdit_caput_timeout)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        horizontalLayout_2.addItem(spacerItem)
+        verticalLayout = QVBoxLayout(self.tab_timeout)
+        verticalLayout.addLayout(horizontalLayout)
+        verticalLayout.addLayout(horizontalLayout_2)
+        self.tabWidget_mode.addTab(self.tab_timeout, 'CA Timeout')
 
         self.tabWidget_metadata = QTabWidget(self.splitter)
         #
