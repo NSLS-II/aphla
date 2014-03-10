@@ -1117,6 +1117,13 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.setCentralWidget(self.centralwidget)
         self.centralWidget().hide()
 
+        self.menuWindow.addAction('Tabify', self.tabifyWindows)
+        self.menuWindow.addAction('Tile Horizontally',
+                                  self.tileWindowsHorizontally)
+        self.menuWindow.addAction('Tile Vertically',
+                                  self.tileWindowsVertically)
+        self.menuWindow.addSeparator()
+
         self.setDockNestingEnabled(True)
 
         tab_position = QTabWidget.South
@@ -1141,6 +1148,35 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                      self.launchConfigDBSelector)
         self.connect(self.actionPreferences, SIGNAL('triggered()'),
                      self.launchPrefEditor)
+
+    #----------------------------------------------------------------------
+    def tabifyWindows(self):
+        """"""
+
+        for i, w in enumerate(self.dockWidgetList):
+            w.setFloating(False) # Dock the new dockwidget
+            if i >= 1:
+                self.tabifyDockWidget(self.dockWidgetList[i-1], w)
+
+    #----------------------------------------------------------------------
+    def tileWindowsHorizontally(self):
+        """"""
+
+        for i, w in enumerate(self.dockWidgetList):
+            if np.mod(i,2) == 0:
+                self.addDockWidget(Qt.LeftDockWidgetArea, w)
+            else:
+                self.addDockWidget(Qt.RightDockWidgetArea, w)
+
+    #----------------------------------------------------------------------
+    def tileWindowsVertically(self):
+        """"""
+
+        for i, w in enumerate(self.dockWidgetList):
+            if np.mod(i,2) == 0:
+                self.addDockWidget(Qt.TopDockWidgetArea, w)
+            else:
+                self.addDockWidget(Qt.BottomDockWidgetArea, w)
 
     #----------------------------------------------------------------------
     def launchConfigDBSelector(self):
@@ -1244,6 +1280,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         #dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_tree)
 
         dockWidget.updateMetaDataTab()
+
+        self.menuWindow.addAction(dockWidget.toggleViewAction())
 
 ########################################################################
 class TinkerApp(QObject):
