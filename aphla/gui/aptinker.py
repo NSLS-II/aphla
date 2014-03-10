@@ -640,6 +640,14 @@ class TinkerDockWidget(QDockWidget):
                      self.ss_abstract.divide)
 
     #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+
+        self.emit(SIGNAL('dockAboutTobeClosed'))
+
+        event.accept()
+
+    #----------------------------------------------------------------------
     def update_auto_caget_delay_after_caput(self, state=None):
         """"""
 
@@ -1282,6 +1290,19 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         dockWidget.updateMetaDataTab()
 
         self.menuWindow.addAction(dockWidget.toggleViewAction())
+
+        self.connect(dockWidget, SIGNAL('dockAboutTobeClosed'),
+                     self.onDockWidgetClose)
+
+    #----------------------------------------------------------------------
+    def onDockWidgetClose(self):
+        """"""
+
+        dockWidget = self.sender()
+
+        self.dockWidgetList.remove(dockWidget)
+
+        self.menuWindow.removeAction(dockWidget.toggleViewAction())
 
 ########################################################################
 class TinkerApp(QObject):
