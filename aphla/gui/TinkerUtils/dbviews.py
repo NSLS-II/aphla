@@ -560,20 +560,28 @@ class SnapshotDBViewWidget(QWidget):
         """"""
 
         self.stackedWidget = QStackedWidget(self)
+        self.stackedWidget.setContentsMargins(0, 0, 0, 0)
 
         self.page_tree = QWidget()
-        gridLayout = QGridLayout(self.page_tree)
+        self.page_tree.setContentsMargins(0, 0, 0, 0)
+        vLayout = QVBoxLayout(self.page_tree)
+        vLayout.setContentsMargins(0, 0, 0, 0)
         self.treeView = QTreeView(self.page_tree)
-        gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
+        self.treeView.setContentsMargins(0, 0, 0, 0)
+        vLayout.addWidget(self.treeView)
         self.stackedWidget.addWidget(self.page_tree)
         #
         self.page_table = QWidget()
-        gridLayout = QGridLayout(self.page_table)
+        self.page_table.setContentsMargins(0, 0, 0, 0)
+        vLayout = QVBoxLayout(self.page_table)
+        vLayout.setContentsMargins(0, 0, 0, 0)
         self.tableView = QTableView(self.page_table)
-        gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
+        self.tableView.setContentsMargins(0, 0, 0, 0)
+        vLayout.addWidget(self.tableView)
         self.stackedWidget.addWidget(self.page_table)
 
         self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         spacerItem = QSpacerItem(40, 20,
                                  QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
@@ -594,6 +602,7 @@ class SnapshotDBViewWidget(QWidget):
         self.horizontalLayout.addWidget(self.checkBox_sortable)
 
         self.verticalLayout = QVBoxLayout(self)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.addWidget(self.stackedWidget)
         self.verticalLayout.addLayout(self.horizontalLayout)
 

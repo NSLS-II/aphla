@@ -603,6 +603,10 @@ class TinkerDockWidget(QDockWidget):
         self.ssDBView.on_column_selection_change(vis_col_names,
                                                  force_visibility_update=True)
 
+        self.last_caget_sent_ts_lineEdits_updated = False
+        self.last_caput_sent_ts_lineEdits_updated = False
+        self.update_last_ca_sent_ts()
+
         self.customTitleBar = CustomDockWidgetTitleBar(self)
         self.setTitleBarWidget(self.customTitleBar)
         self.connect(self.customTitleBar, SIGNAL('customDockTitleChanged'),
@@ -643,6 +647,36 @@ class TinkerDockWidget(QDockWidget):
                      self.validate_timeout)
         self.connect(self.lineEdit_caput_timeout, SIGNAL('editingFinished()'),
                      self.validate_timeout)
+
+        self.connect(self.ss_abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
+                     self.update_last_ca_sent_ts)
+
+    #----------------------------------------------------------------------
+    def update_last_ca_sent_ts(self):
+        """"""
+
+        if self.ss_abstract.caget_sent_ts_second is not None:
+            self.lineEdit_caget_sent_ts_second_step.setText(datestr(
+                self.ss_abstract.caget_sent_ts_second))
+            self.lineEdit_caget_sent_ts_second_target.setText(datestr(
+                self.ss_abstract.caget_sent_ts_second))
+            if not self.last_caget_sent_ts_lineEdits_updated:
+                self.resizeLineEditToContents(
+                    self.lineEdit_caget_sent_ts_second_step)
+                self.resizeLineEditToContents(
+                    self.lineEdit_caget_sent_ts_second_target)
+                self.last_caget_sent_ts_lineEdits_updated = True
+        if self.ss_abstract.caput_sent_ts_second is not None:
+            self.lineEdit_caput_sent_ts_second_step.setText(datestr(
+                self.ss_abstract.caput_sent_ts_second))
+            self.lineEdit_caput_sent_ts_second_target.setText(datestr(
+                self.ss_abstract.caput_sent_ts_second))
+            if not self.last_caput_sent_ts_lineEdits_updated:
+                self.resizeLineEditToContents(
+                    self.lineEdit_caput_sent_ts_second_step)
+                self.resizeLineEditToContents(
+                    self.lineEdit_caput_sent_ts_second_target)
+                self.last_caput_sent_ts_lineEdits_updated = True
 
     #----------------------------------------------------------------------
     def validate_timeout(self):
@@ -757,6 +791,7 @@ class TinkerDockWidget(QDockWidget):
         QDockWidget.__init__(self, parent)
 
         dockWidgetContents = QWidget()
+        dockWidgetContents.setContentsMargins(0, 0, 0, 0)
         top_gridLayout = QGridLayout(dockWidgetContents)
         #
         self.splitter = QSplitter(dockWidgetContents)
@@ -831,6 +866,26 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_1.addItem(spacerItem_1)
         verticalLayout_1.addLayout(horizontalLayout_1)
 
+        hLayout = QHBoxLayout()
+        label = QLabel(self.tab_step_mode)
+        label.setText('Last caget sent on')
+        hLayout.addWidget(label)
+        self.lineEdit_caget_sent_ts_second_step = QLineEdit(self.tab_step_mode)
+        self.lineEdit_caget_sent_ts_second_step.setText('Not sent yet')
+        self.lineEdit_caget_sent_ts_second_step.setReadOnly(True)
+        hLayout.addWidget(self.lineEdit_caget_sent_ts_second_step)
+        label = QLabel(self.tab_step_mode)
+        label.setText('Last caput sent on')
+        hLayout.addWidget(label)
+        self.lineEdit_caput_sent_ts_second_step = QLineEdit(self.tab_step_mode)
+        self.lineEdit_caput_sent_ts_second_step.setText('Not sent yet')
+        self.lineEdit_caput_sent_ts_second_step.setReadOnly(True)
+        hLayout.addWidget(self.lineEdit_caput_sent_ts_second_step)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        hLayout.addItem(spacerItem)
+        verticalLayout_1.addLayout(hLayout)
+
         horizontalLayout_2 = QHBoxLayout()
         self.pushButton_update = QPushButton(self.tab_step_mode)
         self.pushButton_update.setText('Update')
@@ -862,51 +917,75 @@ class TinkerDockWidget(QDockWidget):
 
         ## Target Mode Tab
         self.tab_target_mode = QWidget()
-        horizontalLayout_10 = QHBoxLayout(self.tab_target_mode)
-        verticalLayout_tab_target_1 = QVBoxLayout()
-        horizontalLayout_tab_target_2 = QHBoxLayout()
+
+        vLayout = QVBoxLayout(self.tab_target_mode)
+
+        hLayout = QHBoxLayout()
         self.pushButton_copy = QPushButton(self.tab_target_mode)
         self.pushButton_copy.setText('Copy')
-        horizontalLayout_tab_target_2.addWidget(self.pushButton_copy)
+        hLayout.addWidget(self.pushButton_copy)
         self.comboBox_setpoint_copy_source = QComboBox(self.tab_target_mode)
         self.comboBox_setpoint_copy_source.addItem('Current')
         self.comboBox_setpoint_copy_source.addItem('Initial')
         self.comboBox_setpoint_copy_source.addItem('Snapshot')
-        horizontalLayout_tab_target_2.addWidget(
-            self.comboBox_setpoint_copy_source)
-        label_tab_target_3 = QLabel(self.tab_target_mode)
-        label_tab_target_3.setText('setpoints into target setpoints')
-        horizontalLayout_tab_target_2.addWidget(label_tab_target_3)
+        hLayout.addWidget(self.comboBox_setpoint_copy_source)
+        label = QLabel(self.tab_target_mode)
+        label.setText('setpoints into Target Setpoints Column')
+        hLayout.addWidget(label)
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
                                  QSizePolicy.Minimum)
-        horizontalLayout_tab_target_2.addItem(spacerItem)
-        verticalLayout_tab_target_1.addLayout(horizontalLayout_tab_target_2)
-        horizontalLayout_tab_target_1 = QHBoxLayout()
-        label_tab_target_1 = QLabel(self.tab_target_mode)
-        label_tab_target_1.setText('Number of Steps:')
-        horizontalLayout_tab_target_1.addWidget(label_tab_target_1)
-        self.lineEdit_nSteps = QLineEdit(self.tab_target_mode)
-        horizontalLayout_tab_target_1.addWidget(self.lineEdit_nSteps)
-        label_tab_target_2 = QLabel(self.tab_target_mode)
-        label_tab_target_2.setText('Wait after Each Step [s]:')
-        horizontalLayout_tab_target_1.addWidget(label_tab_target_2)
-        self.lineEdit_wait_after_each_step = QLineEdit(self.tab_target_mode)
-        horizontalLayout_tab_target_1.addWidget(
-            self.lineEdit_wait_after_each_step)
-        verticalLayout_tab_target_1.addLayout(horizontalLayout_tab_target_1)
-        horizontalLayout_10.addLayout(verticalLayout_tab_target_1)
+        hLayout.addItem(spacerItem)
+        vLayout.addLayout(hLayout)
+
+        hLayout_1 = QHBoxLayout()
         self.pushButton_start = QPushButton(self.tab_target_mode)
         self.pushButton_start.setText('Start')
-        horizontalLayout_10.addWidget(self.pushButton_start)
+        hLayout_1.addWidget(self.pushButton_start)
         self.pushButton_stop = QPushButton(self.tab_target_mode)
         self.pushButton_stop.setText('Stop')
-        horizontalLayout_10.addWidget(self.pushButton_stop)
+        hLayout_1.addWidget(self.pushButton_stop)
         self.pushButton_revert = QPushButton(self.tab_target_mode)
         self.pushButton_revert.setText('Revert')
-        horizontalLayout_10.addWidget(self.pushButton_revert)
-        spacerItem = QSpacerItem(137, 20, QSizePolicy.Expanding,
+        hLayout_1.addWidget(self.pushButton_revert)
+        label_tab_target_1 = QLabel(self.tab_target_mode)
+        label_tab_target_1.setText('Number of Steps:')
+        hLayout_1.addWidget(label_tab_target_1)
+        self.lineEdit_nSteps = QLineEdit(self.tab_target_mode)
+        hLayout_1.addWidget(self.lineEdit_nSteps)
+        label_tab_target_2 = QLabel(self.tab_target_mode)
+        label_tab_target_2.setText('Wait after Each Step [s]:')
+        hLayout_1.addWidget(label_tab_target_2)
+        self.lineEdit_wait_after_each_step = QLineEdit(self.tab_target_mode)
+        hLayout_1.addWidget(self.lineEdit_wait_after_each_step)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
                                  QSizePolicy.Minimum)
-        horizontalLayout_10.addItem(spacerItem)
+        hLayout_1.addItem(spacerItem)
+        vLayout.addLayout(hLayout_1)
+
+        hLayout_2 = QHBoxLayout()
+        label = QLabel(self.tab_step_mode)
+        label.setText('Last caget sent on')
+        hLayout_2.addWidget(label)
+        self.lineEdit_caget_sent_ts_second_target = QLineEdit(self.tab_step_mode)
+        self.lineEdit_caget_sent_ts_second_target.setText('Not sent yet')
+        self.lineEdit_caget_sent_ts_second_target.setReadOnly(True)
+        hLayout_2.addWidget(self.lineEdit_caget_sent_ts_second_target)
+        label = QLabel(self.tab_step_mode)
+        label.setText('Last caput sent on')
+        hLayout_2.addWidget(label)
+        self.lineEdit_caput_sent_ts_second_target = QLineEdit(self.tab_step_mode)
+        self.lineEdit_caput_sent_ts_second_target.setText('Not sent yet')
+        self.lineEdit_caput_sent_ts_second_target.setReadOnly(True)
+        hLayout_2.addWidget(self.lineEdit_caput_sent_ts_second_target)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        hLayout_2.addItem(spacerItem)
+        vLayout.addLayout(hLayout_2)
+
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Minimum,
+                                 QSizePolicy.Expanding)
+        vLayout.addItem(spacerItem)
+
         self.tabWidget_mode.addTab(self.tab_target_mode,'Target Mode')
 
         ## Timeout Tab
@@ -934,9 +1013,12 @@ class TinkerDockWidget(QDockWidget):
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
                                  QSizePolicy.Minimum)
         horizontalLayout_2.addItem(spacerItem)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Minimum,
+                                         QSizePolicy.Expanding)
         verticalLayout = QVBoxLayout(self.tab_timeout)
         verticalLayout.addLayout(horizontalLayout)
         verticalLayout.addLayout(horizontalLayout_2)
+        verticalLayout.addItem(spacerItem)
         self.tabWidget_mode.addTab(self.tab_timeout, 'CA Timeout')
 
         self.tabWidget_metadata = QTabWidget(self.splitter)
