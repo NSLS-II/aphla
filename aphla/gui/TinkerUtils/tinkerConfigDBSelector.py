@@ -567,9 +567,12 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         else:
             row = current_index.row()
 
-            description = self.search_result['config_description'][row]
+            a.config_id    = self.search_result['config_id'][row]
+            a.name         = self.search_result['config_name'][row]
+            a.description  = self.search_result['config_description'][row]
+            a.config_ctime = self.search_result['config_ctime'][row]
 
-            self.textEdit_description.setText(description)
+            self.textEdit_description.setText(a.description)
 
             a.ref_step_size = self.search_result['config_ref_step_size'][row]
             out = self.db.getColumnDataFromTable(
