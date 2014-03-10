@@ -6,9 +6,10 @@ import os, sys
 import os.path as osp
 import numpy as np
 import json
+import time
 
 from PyQt4.QtCore import (
-    Qt, QObject, SIGNAL, QSettings, QRect
+    Qt, QObject, SIGNAL, QSettings, QRect, QDateTime
 )
 from PyQt4.QtGui import (
     QSortFilterProxyModel, QMessageBox, QIcon, QDialog, QIntValidator,
@@ -82,6 +83,16 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         self.loadViewSettings()
 
         self.pushButton_search.setIcon(QIcon(':/search.png'))
+
+        all_ctime_operators = [self.comboBox_time_created_1.itemText(i)
+                               for i in range(
+                                   self.comboBox_time_created_1.count())]
+        self.comboBox_time_created_1.setCurrentIndex(
+            all_ctime_operators.index(''))
+        self.dateTimeEdit_time_created_1.setDateTime(
+            QDateTime.currentDateTime())
+        self.dateTimeEdit_time_created_2.setDateTime(
+            QDateTime.currentDateTime())
 
         self.search_params = dict(
             config_id_1='', config_id_2='',
@@ -389,6 +400,23 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
                 self.get_GLOB_condition_str(username_text, 'username')
         else:
             self.search_params['username'] = ''
+
+        ctime_1_operator = self.comboBox_time_created_1.currentText().strip()
+        if ctime_1_operator != '':
+            ctime_epoch_1 = self.dateTimeEdit_time_created_1.dateTime()
+            ctime_epoch_1 = time.mktime(ctime_epoch_1.toPyDateTime().timetuple())
+            self.search_params['ctime_1'] = (
+                'config_ctime {0:s} {1:.3f}'.format(ctime_1_operator, ctime_epoch_1))
+        else:
+            self.search_params['ctime_1'] = ''
+        ctime_2_operator = self.comboBox_time_created_2.currentText().strip()
+        if ctime_2_operator != '':
+            ctime_epoch_2 = self.dateTimeEdit_time_created_2.dateTime()
+            ctime_epoch_2 = time.mktime(ctime_epoch_2.toPyDateTime().timetuple())
+            self.search_params['ctime_2'] = (
+                'config_ctime {0:s} {1:.3f}'.format(ctime_2_operator, ctime_epoch_2))
+        else:
+            self.search_params['ctime_2'] = ''
 
         if (self.search_params['config_name'] is None) or \
            (self.search_params['config_description'] is None):
