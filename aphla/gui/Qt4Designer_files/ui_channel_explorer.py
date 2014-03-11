@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_channel_explorer.ui'
 #
-# Created: Tue Jan 29 21:15:33 2013
+# Created: Fri Mar  7 13:18:27 2014
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -230,7 +230,7 @@ class Ui_Dialog(object):
         self.label_nMatched_nSelected.setMaximumSize(QtCore.QSize(16777215, 16))
         self.label_nMatched_nSelected.setObjectName(_fromUtf8("label_nMatched_nSelected"))
         self.horizontalLayout_6.addWidget(self.label_nMatched_nSelected)
-        spacerItem4 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        spacerItem4 = QtGui.QSpacerItem(18, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_6.addItem(spacerItem4)
         self.pushButton_columns = QtGui.QPushButton(self.layoutWidget1)
         self.pushButton_columns.setObjectName(_fromUtf8("pushButton_columns"))
@@ -238,6 +238,9 @@ class Ui_Dialog(object):
         self.checkBox_matched_table_column_sorting = QtGui.QCheckBox(self.layoutWidget1)
         self.checkBox_matched_table_column_sorting.setObjectName(_fromUtf8("checkBox_matched_table_column_sorting"))
         self.horizontalLayout_6.addWidget(self.checkBox_matched_table_column_sorting)
+        self.checkBox_matched_table_select_rows = QtGui.QCheckBox(self.layoutWidget1)
+        self.checkBox_matched_table_select_rows.setObjectName(_fromUtf8("checkBox_matched_table_select_rows"))
+        self.horizontalLayout_6.addWidget(self.checkBox_matched_table_select_rows)
         self.verticalLayout_3.addLayout(self.horizontalLayout_6)
         self.tableView_matched = QtGui.QTableView(self.layoutWidget1)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
@@ -313,7 +316,8 @@ class Ui_Dialog(object):
         self.label_6.setText(QtGui.QApplication.translate("Dialog", "Value", None, QtGui.QApplication.UnicodeUTF8))
         self.label_nMatched_nSelected.setText(QtGui.QApplication.translate("Dialog", "Matched Objects (0 matched, 0 selected)", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_columns.setText(QtGui.QApplication.translate("Dialog", "Columns", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBox_matched_table_column_sorting.setText(QtGui.QApplication.translate("Dialog", "column sorting", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBox_matched_table_column_sorting.setText(QtGui.QApplication.translate("Dialog", "Sortable", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBox_matched_table_select_rows.setText(QtGui.QApplication.translate("Dialog", "Select Rows", None, QtGui.QApplication.UnicodeUTF8))
         self.label__choice_list.setText(QtGui.QApplication.translate("Dialog", "Choice List", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_startup_settings.setText(QtGui.QApplication.translate("Dialog", "Startup Settings", None, QtGui.QApplication.UnicodeUTF8))
 

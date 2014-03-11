@@ -39,12 +39,12 @@ FILE_FILTER_DICT = {'Text File': 'Text files (*.txt)',
                     'JSON File': 'JSON files (*.json)',
                     }
 
-HOME_PATH      = osp.expanduser('~')
-APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
-if not osp.exists(APHLA_CONF_DIR):
-    os.makedirs(APHLA_CONF_DIR)
+HOME_PATH             = osp.expanduser('~')
+APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_USER_CONFIG_DIR):
+    os.makedirs(APHLA_USER_CONFIG_DIR)
 
-PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR,
+PREF_JSON_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
                               'aptinker_ConfigSetupDialog_startup_pref.json')
 
 ########################################################################

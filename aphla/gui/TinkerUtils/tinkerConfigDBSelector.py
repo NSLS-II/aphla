@@ -1,10 +1,15 @@
+import sip
+sip.setapi('QString', 2)
+sip.setapi('QVariant', 2)
+
 import os, sys
 import os.path as osp
 import numpy as np
 import json
+import time
 
 from PyQt4.QtCore import (
-    QObject, SIGNAL, QSettings, QRect
+    Qt, QObject, SIGNAL, QSettings, QRect, QDateTime
 )
 from PyQt4.QtGui import (
     QSortFilterProxyModel, QMessageBox, QIcon, QDialog, QIntValidator,
@@ -19,15 +24,15 @@ from tinkerModels import (ConfigMetaTableModel, ConfigAbstractModel,
 from dbviews import (ConfigDBViewWidget, ConfigMetaDBViewWidget)
 from ui_tinkerConfigDBSelector import Ui_Dialog
 
-HOME_PATH      = osp.expanduser('~')
-APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
-if not osp.exists(APHLA_CONF_DIR):
-    os.makedirs(APHLA_CONF_DIR)
+HOME_PATH             = osp.expanduser('~')
+APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_USER_CONFIG_DIR):
+    os.makedirs(APHLA_USER_CONFIG_DIR)
 
 PREF_CONFIG_META_JSON_FILEPATH = osp.join(
-    APHLA_CONF_DIR, 'aptinker_ConfigDBSelector_ConfigMeta_pref.json')
+    APHLA_USER_CONFIG_DIR, 'aptinker_ConfigDBSelector_ConfigMeta_pref.json')
 PREF_CONFIG_JSON_FILEPATH = osp.join(
-    APHLA_CONF_DIR, 'aptinker_ConfigDBSelector_Config_pref.json')
+    APHLA_USER_CONFIG_DIR, 'aptinker_ConfigDBSelector_Config_pref.json')
 
 ########################################################################
 class ConfigDBSelector(QDialog, Ui_Dialog):
@@ -41,6 +46,7 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
 
         self.setupUi(self)
 
+        self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
         self.setWindowTitle('Select Configuration from Database')
 
         # Load Startup Preferences for Config Table
@@ -77,6 +83,16 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         self.loadViewSettings()
 
         self.pushButton_search.setIcon(QIcon(':/search.png'))
+
+        all_ctime_operators = [self.comboBox_time_created_1.itemText(i)
+                               for i in range(
+                                   self.comboBox_time_created_1.count())]
+        self.comboBox_time_created_1.setCurrentIndex(
+            all_ctime_operators.index(''))
+        self.dateTimeEdit_time_created_1.setDateTime(
+            QDateTime.currentDateTime())
+        self.dateTimeEdit_time_created_2.setDateTime(
+            QDateTime.currentDateTime())
 
         self.search_params = dict(
             config_id_1='', config_id_2='',
@@ -288,13 +304,13 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             self.comboBox_config_id_2.currentText().strip()
         if (config_id_1_text != '') and (config_id_1_operator != ''):
             self.search_params['config_id_1'] = (
-                'config_id {0:s} {1:d}'.format(config_id_1_operator,
+                'config_id {0:s} {1:s}'.format(config_id_1_operator,
                                                config_id_1_text))
         else:
             self.search_params['config_id_1'] = ''
         if (config_id_2_text != '') and (config_id_2_operator != ''):
             self.search_params['config_id_2'] = (
-                'config_id {0:s} {1:d}'.format(config_id_2_operator,
+                'config_id {0:s} {1:s}'.format(config_id_2_operator,
                                                config_id_2_text))
         else:
             self.search_params['config_id_2'] = ''
@@ -311,15 +327,15 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             self.comboBox_masar_id_1.currentText().strip()
         masar_id_2_operator = \
             self.comboBox_masar_id_2.currentText().strip()
-        if (masar_id_1_text != '') and (masar_1_operator != ''):
+        if (masar_id_1_text != '') and (masar_id_1_operator != ''):
             self.search_params['masar_id_1'] = (
-                'config_masar_id {0:s} {1:d}'.format(masar_id_1_operator,
+                'config_masar_id {0:s} {1:s}'.format(masar_id_1_operator,
                                                      masar_id_1_text))
         else:
             self.search_params['masar_id_1'] = ''
         if (masar_id_2_text != '') and (masar_id_2_operator != ''):
             self.search_params['masar_id_2'] = (
-                'config_masar_id {0:s} {1:d}'.format(masar_id_2_operator,
+                'config_masar_id {0:s} {1:s}'.format(masar_id_2_operator,
                                                      masar_id_2_text))
         else:
             self.search_params['masar_id_2'] = ''
@@ -340,13 +356,13 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             self.comboBox_ref_step_size_2.currentText().strip()
         if (ref_step_size_1_text != '') and (ref_step_size_1_operator != ''):
             self.search_params['ref_step_size_1'] = (
-                'config_ref_step_size {0:s} {1:d}'.format(
+                'config_ref_step_size {0:s} {1:s}'.format(
                     ref_step_size_1_operator, ref_step_size_1_text))
         else:
             self.search_params['ref_step_size_1'] = ''
         if (ref_step_size_2_text != '') and (ref_step_size_2_operator != ''):
             self.search_params['ref_step_size_2'] = (
-                'config_ref_step_size {0:s} {1:d}'.format(
+                'config_ref_step_size {0:s} {1:s}'.format(
                     ref_step_size_2_operator, ref_step_size_2_text))
         else:
             self.search_params['ref_step_size_2'] = ''
@@ -362,47 +378,213 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         else:
             self.search_params['synced_group_weight'] = ''
 
-        condition_str = ''
-        for _, v in self.search_params.iteritems():
-            if v:
-                if condition_str != '':
-                    condition_str += ' AND '
-                condition_str += '({0:s})'.format(v)
-        out = self.db.getColumnDataFromTable(
-            '[config_meta_table text view]',
-            column_name_list=self.config_meta_all_col_keys,
-            condition_str=condition_str, order_by_str='config_id')
-        if out != []:
-            for k, v in zip(self.config_meta_all_col_keys, out):
-                self.search_result[k] = list(v)
+        config_name_text = self.lineEdit_config_name.text().strip()
+        if config_name_text != '':
+            cond_str = self.get_MATCH_condition_str(config_name_text.lower())
+            self.search_params['config_name'] = \
+                self.get_config_ids_with_MATCH(cond_str, 'config_name')
         else:
+            self.search_params['config_name'] = []
+
+        config_desc_text = self.lineEdit_config_description.text().strip()
+        if config_desc_text != '':
+            cond_str = self.get_MATCH_condition_str(config_desc_text.lower())
+            self.search_params['config_description'] = \
+                self.get_config_ids_with_MATCH(cond_str, 'config_description')
+        else:
+            self.search_params['config_description'] = []
+
+        username_text = self.lineEdit_username.text().strip()
+        if username_text != '':
+            self.search_params['username'] = \
+                self.get_GLOB_condition_str(username_text, 'username')
+        else:
+            self.search_params['username'] = ''
+
+        ctime_1_operator = self.comboBox_time_created_1.currentText().strip()
+        if ctime_1_operator != '':
+            ctime_epoch_1 = self.dateTimeEdit_time_created_1.dateTime()
+            ctime_epoch_1 = time.mktime(ctime_epoch_1.toPyDateTime().timetuple())
+            self.search_params['ctime_1'] = (
+                'config_ctime {0:s} {1:.3f}'.format(ctime_1_operator, ctime_epoch_1))
+        else:
+            self.search_params['ctime_1'] = ''
+        ctime_2_operator = self.comboBox_time_created_2.currentText().strip()
+        if ctime_2_operator != '':
+            ctime_epoch_2 = self.dateTimeEdit_time_created_2.dateTime()
+            ctime_epoch_2 = time.mktime(ctime_epoch_2.toPyDateTime().timetuple())
+            self.search_params['ctime_2'] = (
+                'config_ctime {0:s} {1:.3f}'.format(ctime_2_operator, ctime_epoch_2))
+        else:
+            self.search_params['ctime_2'] = ''
+
+        if (self.search_params['config_name'] is None) or \
+           (self.search_params['config_description'] is None):
             for k in self.config_meta_all_col_keys:
                 self.search_result[k] = []
+        else:
+            condition_str = ''
+            for k, v in self.search_params.iteritems():
+                if k in ('config_name', 'config_description'):
+                    if v:
+                        if condition_str != '':
+                            condition_str += ' AND '
+                        condition_str += '(config_id IN ({0:s}))'.format(
+                            ','.join([str(i) for i in v]))
+                else:
+                    if v:
+                        if condition_str != '':
+                            condition_str += ' AND '
+                        condition_str += '({0:s})'.format(v)
+            out = self.db.getColumnDataFromTable(
+                '[config_meta_table text view]',
+                column_name_list=self.config_meta_all_col_keys,
+                condition_str=condition_str, order_by_str='config_id')
+            if out != []:
+                for k, v in zip(self.config_meta_all_col_keys, out):
+                    self.search_result[k] = list(v)
+            else:
+                for k in self.config_meta_all_col_keys:
+                    self.search_result[k] = []
 
         self.tableModel_config_meta.repaint()
+
+        self.on_selection_change(None, None)
+
+    #----------------------------------------------------------------------
+    def convert_GLOB_to_LIKE_wildcards(self, char):
+        """"""
+
+        if char == '*':
+            return '%'
+        elif char == '?':
+            return '_'
+        else:
+            raise ValueError('Unexpected char: {0:s}'.format(char))
+
+    #----------------------------------------------------------------------
+    def get_LIKE_condition_str(self, glob_pattern, column_name):
+        """"""
+
+        backslahs_inds = [i for i, c in enumerate(glob_pattern) if c == '\\']
+        like_pattern = ''.join(
+            [self.convert_GLOB_to_LIKE_wildcards(c)
+             if (c in ('*','?')) and (i-1 not in backslahs_inds) else c
+             for i, c in enumerate(glob_pattern)])
+        cond_str = '({0:s} LIKE "{1:s}" ESCAPE "\\")'.format(column_name,
+                                                             like_pattern)
+
+        return cond_str
+
+    #----------------------------------------------------------------------
+    def get_GLOB_condition_str(self, glob_pattern, column_name):
+        """
+        ESCAPE command is not implemented for GLOB by SQLite, even though the
+        syntax diagram says it is.
+
+        The workaround for escaping glob special characters is provided here.
+        """
+
+        glob_pattern = glob_pattern.replace(r'\*', '[*]')
+        glob_pattern = glob_pattern.replace(r'\?', '[?]')
+        glob_pattern = glob_pattern.replace(r'\[', '[[]')
+        glob_pattern = glob_pattern.replace(r'\]', '[]]')
+
+        cond_str = '({0:s} GLOB "{1:s}")'.format(column_name, glob_pattern)
+
+        return cond_str
+
+    #----------------------------------------------------------------------
+    def get_MATCH_condition_str(self, full_search_string):
+        """
+        Full-text searching provided by MATCH only works for FTS4 virtual table
+        """
+
+        full_search_string = full_search_string.replace(r'\*', '[*]')
+        full_search_string = full_search_string.replace(r'\?', '[?]')
+        full_search_string = full_search_string.replace(r'\[', '[[]')
+        full_search_string = full_search_string.replace(r'\]', '[]]')
+
+        quote_found = ''
+        quote_inds = []
+        non_quote_inds = []
+        for i, c in enumerate(full_search_string):
+            if c in ("'", '"'):
+                if quote_found == '':
+                    quote_found = c
+                    quote_inds.append(i)
+                elif quote_found == c:
+                    quote_inds.append(i)
+                    quote_found = ''
+                else:
+                    non_quote_inds.append(i)
+
+        if quote_found != '':
+            non_quote_inds.append(quote_inds.pop())
+            non_quote_inds.sort()
+
+        tokens = []
+        for i in range(len(quote_inds))[::-2]:
+            ini = quote_inds[i-1]
+            end = quote_inds[i]
+            tokens.append(full_search_string[(ini+1):end])
+            full_search_string = full_search_string[:ini] + \
+                full_search_string[(end+1):]
+        tokens += full_search_string.split()
+
+        cond_str = ' '.join(['"{0:s}"'.format(t.replace("'", "''")) if ' ' in t
+                             else t.replace("'", "''") for t in tokens])
+
+        return cond_str
+
+    #----------------------------------------------------------------------
+    def get_config_ids_with_MATCH(self, MATCH_cond_str, column_name):
+        """"""
+
+        fts_condition_str = "{0:s} MATCH '{1:s}'".format(
+            column_name, MATCH_cond_str)
+
+        matched_rowids = self.db.getColumnDataFromTable(
+            'config_meta_text_search_table', column_name_list=['rowid'],
+            condition_str=fts_condition_str)
+        if matched_rowids != []:
+            matched_config_ids = list(matched_rowids[0])
+        else:
+            matched_config_ids = None
+
+        return matched_config_ids
 
     #----------------------------------------------------------------------
     def on_selection_change(self, current_index, previous_index):
         """"""
 
-        row = current_index.row()
-
-        description = self.search_result['config_description'][row]
-
-        self.textEdit_description.setText(description)
-
         a = self.config_model.abstract
-        a.ref_step_size = self.search_result['config_ref_step_size'][row]
-        out = self.db.getColumnDataFromTable(
-            'config_table',
-            column_name_list=['group_name_id', 'channel_id', 'config_weight'],
-            condition_str='config_id={0:d}'.format(
-                self.search_result['config_id'][row]))
 
-        if out != []:
-            (a.group_name_ids, a.channel_ids, a.weights) = map(list, out)
-        else:
+        if current_index is None:
+            self.textEdit_description.setText('')
+            a.ref_step_size = np.nan
             (a.group_name_ids, a.channel_ids, a.weights) = [], [], []
+        else:
+            row = current_index.row()
+
+            a.config_id    = self.search_result['config_id'][row]
+            a.name         = self.search_result['config_name'][row]
+            a.description  = self.search_result['config_description'][row]
+            a.config_ctime = self.search_result['config_ctime'][row]
+
+            self.textEdit_description.setText(a.description)
+
+            a.ref_step_size = self.search_result['config_ref_step_size'][row]
+            out = self.db.getColumnDataFromTable(
+                'config_table',
+                column_name_list=['group_name_id', 'channel_id', 'config_weight'],
+                condition_str='config_id={0:d}'.format(
+                    self.search_result['config_id'][row]))
+
+            if out != []:
+                (a.group_name_ids, a.channel_ids, a.weights) = map(list, out)
+            else:
+                (a.group_name_ids, a.channel_ids, a.weights) = [], [], []
 
         self.config_model.table.updateModel()
         self.config_model.table.repaint()
@@ -450,7 +632,10 @@ def main():
     # below, the GUI window will not show up and freeze the program.
     cothread.iqt()
 
-    app = make(isModal=False, parentWindow=None)
+    dialog = make(isModal=False, parentWindow=None)
 
     cothread.WaitForQuit()
-    print app.model.output
+    print dialog.config_model.abstract.channel_ids
+
+if __name__ == '__main__':
+    main()
