@@ -544,6 +544,3 @@ class OrbitRespMat:
              np.sum(self._mask), len(self.trim)*len(self.bpm))
         return s
 
-
-    m = [[], []]
-            m[i].append(p[0])

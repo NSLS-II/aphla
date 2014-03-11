@@ -262,21 +262,22 @@ if __name__ == "__main__":
         dIhvar1 = np.std([r[1] for r in v])
         dIv = np.average([r[3] for r in v])
         dIvvar1 = np.std([r[3] for r in v])
-        g[k + "_H"] = [dIh*1000.0, 0.0]
-        print "%10s H" % k, dIh, dIhvar1, len(sn2cor[k])
-        ds = g[k + "_H"]
+        # swap sign and x,y
+        g[k + "_V"] = [-dIh*1000.0, 0.0]
+        print "%10s V" % k, dIh, dIhvar1, len(sn2cor[k])
+        ds = g[k + "_V"]
         ds.attrs["_class_"] = "polynomial"
         ds.attrs["calib_factor"] = 0.9988
         ds.attrs["dst_unit"] = "mrad"
         ds.attrs["dst_unit_sys"] = "phy"
-        ds.attrs["field"] = "x"
+        ds.attrs["field"] = "y"
         ds.attrs["elements"] = sn2cor[k]
         ds.attrs["invertible"] = 1
         ds.attrs["src_unit"] = "A"
         ds.attrs["src_unit_sys"] = ""
-        g[k + "_V"] = [dIv*1000.0, 0.0]
-        print "%10s V" % k, dIv, dIvvar1
-        ds = g[k + "_V"]
+        g[k + "_H"] = [-dIv*1000.0, 0.0]
+        print "%10s H" % k, dIv, dIvvar1
+        ds = g[k + "_H"]
         ds.attrs["_class_"] = "polynomial"
         ds.attrs["calib_factor"] = 0.9988
         ds.attrs["dst_unit"] = "mrad"
