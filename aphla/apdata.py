@@ -10,6 +10,7 @@ __all__ = ['OrmData', 'TwissData', 'saveSnapshotH5']
 
 import os
 from os.path import splitext
+from fnmatch import fnmatch
 import numpy as np
 import shelve
 import h5py
@@ -309,8 +310,46 @@ class TwissData:
                     dat.append(None)
             break
         return dat
-            
-    def get(self, elemlst, col, **kwargs):
+
+    def get(self, names, col, **kwargs):
+        """get a list of twiss functions when given a name pattern or a list of
+        element names.
+        
+        Parameters
+        -----------
+        names : list, str 
+            name pattern or list of elements.
+        col : list. 
+            columns can be 's', 'betax', 'betay', 'alphax', 'alphay', 'phix',
+            'phiy', 'etax', 'etaxp', 'etay', 'etayp'. 
+
+        Examples
+        ---------
+        >>> getTwiss(['E1', 'E2'], col=('s', 'betax', 'betay'))
+
+        Note: this matches the line of twiss data record for name and twiss
+        data. Depend on the initial configured data, most likely the data is
+        at the end of element. Use :func:`at`
+        """
+        elemlst = names
+        if isinstance(names, str):
+            ret = []
+            for i,e in enumerate(self.element):
+                if not fnmatch(e, names): continue
+                dat = []
+                for c in col:
+                    if c in self._cols:
+                        j = self._cols.index(c)
+                        dat.append(self._twtable[i,j])
+                    else:
+                        raise ValueError("column '%s' is not in twiss data" % c)
+                ret.append(dat)
+            return np.array(ret, 'd')
+
+        return self._get_elems(elemlst, col, **kwargs)
+
+        
+    def _get_elems(self, elemlst, col, **kwargs):
         """get a list of twiss functions when given a list of element names.
         
         Parameters

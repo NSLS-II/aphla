@@ -217,8 +217,8 @@ class OrbitCorrGeneral(QtGui.QWidget):
     def _update_current_orbit(self):
         pvx = [bpm.pv(field="x", handle="readback")[0] for bpm in self.bpms]
         pvy = [bpm.pv(field="y", handle="readback")[0] for bpm in self.bpms]
-        self.x0 = [float(v) for v in catools.caget(pvx)]
-        self.y0 = [float(v) for v in catools.caget(pvy)]
+        self.x0 = [float(v) if v.ok else np.nan for v in catools.caget(pvx)]
+        self.y0 = [float(v) if v.ok else np.nan for v in catools.caget(pvy)]
 
     def resetBumps(self):
         jx0, jy0 = 5, 6
@@ -1411,7 +1411,7 @@ class OrbitCorrDlg(QDialog):
                for c in getElements("VCOR") if c in corls]
         s = [c.sb for c in corls]
         self.cor_plot = ApCaArrayPlot([pvx, pvy], x = [s, s],
-                                      labels=["HCOR", "VCOR"])
+                                      labels=["HCOR Sp", "VCOR Sp"])
         #magprof = aphla.getBeamlineProfile()
         self.cor_plot.setMagnetProfile(magprof)
         self.cor_plot.setContentsMargins(12, 10, 10, 10)
@@ -1419,7 +1419,10 @@ class OrbitCorrDlg(QDialog):
         #self.cor_plot.setMaximumHeight(250)
 
         # add twiss plots
-        self._twiss = getTwiss("[pqs]*", ["s", "betax", "betay", "etax"])
+        self._twiss = getTwiss("*", ["s", "betax", "betay", "etax"])
+        #for i in range(len(self._twiss)):
+        #    print i, self._twiss[i,0], self._twiss[i,1]
+
         self.tw_plot = ApCaPlot()
         cbetax = Qwt.QwtPlotCurve()
         pen = cbetax.pen()
