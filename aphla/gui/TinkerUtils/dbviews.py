@@ -1,13 +1,14 @@
 import numpy as np
 
 from PyQt4.QtCore import (
-    Qt, SIGNAL, QSize, QSettings
+    Qt, SIGNAL, QSize, QSettings, QPoint, QEvent, QRect
 )
 from PyQt4.QtGui import (
     QWidget, QGridLayout, QSplitter, QTreeView, QTableView,
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget, QMessageBox,
     QMenu, QItemSelectionModel, QInputDialog, QAction, QIcon, QAbstractItemView,
+    QStyledItemDelegate, QStyleOptionButton, QStyle
 )
 
 import config
@@ -678,3 +679,185 @@ class SnapshotDBViewWidget(QWidget):
         if dialog.output is not None:
             self.on_column_selection_change(dialog.output[:],
                                             force_visibility_update=False)
+
+########################################################################
+class SnapshotDBTableViewItemDelegate(QStyledItemDelegate):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, view, snapshot_table_model, parent=None):
+        """Constructor"""
+
+        QStyledItemDelegate.__init__(self, parent)
+
+        self.view = view
+
+        self.ss_table        = snapshot_table_model
+        self.ss_abstract     = self.ss_table.abstract
+        self.config_abstract = self.ss_abstract._config_abstract
+
+    #----------------------------------------------------------------------
+    def getCheckBoxRect(self, option):
+        """"""
+
+        opt = QStyleOptionButton()
+        style = self.view.style()
+        checkbox_rect = style.subElementRect(QStyle.SE_CheckBoxIndicator, opt)
+
+        checkbox_point = QPoint( option.rect.x() +
+                                 option.rect.width() / 2 -
+                                 checkbox_rect.width() / 2,
+                                 option.rect.y() +
+                                 option.rect.height() / 2 -
+                                 checkbox_rect.height() / 2 )
+
+        return QRect(checkbox_point, checkbox_rect.size())
+
+    #----------------------------------------------------------------------
+    def paint(self, painter, option, index):
+        """"""
+
+        QStyledItemDelegate.paint(self, painter, option, index) # Need to
+        # call the standard paint() in order to keep the color change when
+        # selected.
+
+        row = index.row()
+        col = index.column()
+
+        col_key    = self.ss_abstract.all_col_keys[col]
+        str_format = self.ss_abstract.all_str_formats[col]
+
+        '''
+        Somehow after upgrading to Debian 7 or on Ubuntu 12.04, the creation
+        of QStylePainter object with
+
+        > stylePainter = QStylePainter(painter.device(), self.view)
+
+        results in Segmentation Fault, right before paintEvent by
+        QTableView associated with this delegate is finished.
+
+        Creation of QStylePainter object with
+
+        > stylePainter = QStylePainter(self.view)
+
+        does not result in Seg. Fault., but it does not render the view
+        correctly.
+
+        The solution to the problem is to use QStyle.drawControl &
+        QStyle.drawComplexControl, instead of the corresponding functions
+        of QStylePainter.
+
+        As a result QStylePainter.save() & QStylePainter.restore() have been
+        commented out.
+        '''
+        style = self.view.style()
+
+        if col_key == 'caput_enabled':
+
+            value = index.model().data(index, role=Qt.UserRole)
+
+            checked = value
+
+            opt = QStyleOptionButton()
+
+            if int(index.flags() & Qt.ItemIsEditable) > 0:
+                opt.state |= QStyle.State_Enabled
+            else:
+                opt.state |= QStyle.State_ReadOnly
+
+            if checked:
+                opt.state |= QStyle.State_On
+            else:
+                opt.state |= QStyle.State_Off
+
+            # Centering of Checkbox
+            opt.rect = self.getCheckBoxRect(option)
+
+            style.drawControl(QStyle.CE_CheckBox, opt, painter, self.view)
+
+    #----------------------------------------------------------------------
+    def setModelData(self, editor, model, index):
+        """"""
+
+        col = index.column()
+        col_key = self.ss_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled': # editor = QCheckbox
+            old_value = model.data(index, Qt.UserRole)
+
+            # Change the check state to opposite if editable
+            if int(index.flags() & Qt.ItemIsEditable) > 0:
+                checked = not old_value
+                if checked:
+                    checked_value = 1
+                else:
+                    checked_value = 0
+                model.setData(index, checked_value, role=Qt.EditRole)
+        else:
+            QStyledItemDelegate.setModelData(self, editor, model, index)
+
+    #----------------------------------------------------------------------
+    def editorEvent(self, event, model, option, index):
+        """"""
+
+        col = index.column()
+        col_key = self.ss_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+
+            if not ( int(index.flags() & Qt.ItemIsEditable) > 0 ):
+                return False
+
+            # Do not change the checkbox state
+            if event.type() == QEvent.MouseButtonRelease or \
+               event.type() == QEvent.MouseButtonDblClick:
+                if event.button() != Qt.LeftButton or \
+                   not self.getCheckBoxRect(option).contains(event.pos()):
+                    return False
+                if event.type() == QEvent.MouseButtonDblClick:
+                    return True
+            elif event.type() == QEvent.KeyPress:
+                if (event.key() != Qt.Key_Space) and \
+                   (event.key() != Qt.Key_Select):
+                    return False
+            else:
+                return False
+
+            # Change the checkbox state
+            self.setModelData(None, model, index)
+            return True
+
+        else:
+            return QStyledItemDelegate.editorEvent(self, event, model, option,
+                                                   index)
+
+    #----------------------------------------------------------------------
+    def createEditor(self, parent, option, index):
+        """"""
+
+        col = index.column()
+        col_key = self.ss_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+            # Must be None, otherwise an editor is created if a user clicks
+            # this cell
+            return None
+        else:
+            return QStyledItemDelegate.createEditor(self, parent, option, index)
+
+    #----------------------------------------------------------------------
+    def setEditorData(self, editor, index):
+        """"""
+
+        value = index.model().data(index, Qt.DisplayRole)
+
+        col = index.column()
+        col_key = self.ss_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+            checked = value
+            editor.setChecked(checked)
+
+            editor.close()
+        else:
+            QStyledItemDelegate.setEditorData(self, editor, index)

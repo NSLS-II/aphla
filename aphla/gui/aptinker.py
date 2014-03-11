@@ -47,8 +47,9 @@ from TinkerUtils.tinkerModels import (
     ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
-from TinkerUtils.dbviews import (ConfigDBViewWidget, SnapshotDBViewWidget,
-                                 ConfigMetaDBViewWidget)
+from TinkerUtils.dbviews import (
+    ConfigDBViewWidget, SnapshotDBViewWidget, ConfigMetaDBViewWidget,
+    SnapshotDBTableViewItemDelegate)
 import utils.gui_icons
 from aphla.gui.utils.orderselector import ColumnsDialog
 
@@ -545,12 +546,12 @@ class TinkerDockWidget(QDockWidget):
 
         isinstance(config_abstract_model, ConfigAbstractModel)
 
-        self._initUI(parent)
-
         self.config_abstract = config_abstract_model
 
         self.ss_abstract = SnapshotAbstractModel(config_abstract_model)
         self.ss_table = SnapshotTableModel(self.ss_abstract)
+
+        self._initUI(parent)
 
         self.lineEdit_auto_caget_after_caput_delay.setText(
             str(self.ss_abstract.auto_caget_delay_after_caput))
@@ -815,6 +816,11 @@ class TinkerDockWidget(QDockWidget):
         #self.tableView = QTableView(self.page_table)
         #gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
         #self.stackedWidget.addWidget(self.page_table)
+
+        self.tableView.setItemDelegate(SnapshotDBTableViewItemDelegate(
+            self.tableView, self.ss_table, parent))
+        self.tableView.setEditTriggers(QAbstractItemView.CurrentChanged |
+                                       QAbstractItemView.SelectedClicked)
 
         button_size = QSize(32,32)
 

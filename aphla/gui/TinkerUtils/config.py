@@ -33,6 +33,7 @@ DEF_VIS_COL_KEYS = {
         'channel_name',
         'weight',
         'step_size',
+        'caput_enabled',
         'cur_RB',
         'cur_RB_ioc_ts',
         'cur_SP',
