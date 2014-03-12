@@ -356,8 +356,8 @@ class CorrectorViewer(QtGui.QWidget):
 
         #self.elemlst.setSelectionMode(QAbstractItemView.MultiSelection)
         columns = ['Corrector', 's', 'Alpha', 'Beta',
-                   'Phi', "dPhi", "Initial Kick", "dKick",
-                   "Final Kick (set)", "Final Kick (read)"]
+                   'Phi', "dPhi", "Initial Bump", "dBump",
+                   "Final Sp", "Final Rb"]
         self.table4 = QTableWidget(0, len(columns))
         #self.table4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         hdview = QHeaderView(Qt.Horizontal)
@@ -419,7 +419,7 @@ class CorrectorViewer(QtGui.QWidget):
             if j > 0: it.setTextAlignment(
                 Qt.AlignRight | Qt.AlignVCenter)
             header = self.table4.horizontalHeaderItem(j)
-            if header.text() != "dKick":
+            if header.text() != "dBump":
                 it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             else:
                 it.setData(Qt.DisplayRole, "0")
@@ -491,10 +491,10 @@ class CorrectorViewer(QtGui.QWidget):
     def resetCalculations(self):
         for j in range(self.table4.columnCount()):
             header = self.table4.horizontalHeaderItem(j)
-            if header.text().contains("Kick"):
-                for i in range(self.table4.rowCount()):
-                    self.table4.item(i,j).setData(Qt.DisplayRole, "")
-                    self.table4.item(i,j).setData(Qt.UserRole, 0.0)
+            if header.text() not in ["dBump"]: continue
+            for i in range(self.table4.rowCount()):
+                self.table4.item(i,j).setData(Qt.DisplayRole, "")
+                self.table4.item(i,j).setData(Qt.UserRole, 0.0)
         
     def updateCorReadings(self, irow = None, col = 0):
         rows = range(self.table4.rowCount())
@@ -503,9 +503,9 @@ class CorrectorViewer(QtGui.QWidget):
         jcol = -1
         for j in range(self.table4.columnCount()):
             header = self.table4.horizontalHeaderItem(j)
-            if header.text() == "Initial Kick" and col == 0:
+            if header.text() == "Initial Bump" and col == 0:
                 jcol = j
-            elif header.text() == "Final Kick (read)" and col == 1:
+            elif header.text() == "Final Rb" and col == 1:
                 jcol = j
         if jcol < 0: return
         for i in range(self.table4.rowCount()):
@@ -523,7 +523,7 @@ class CorrectorViewer(QtGui.QWidget):
         nrow = min(self.table4.rowCount(), len(dkick))
         for j in range(self.table4.columnCount()):
             header = self.table4.horizontalHeaderItem(j)
-            if header.text() != "dKick": continue
+            if header.text() != "dBump": continue
             for i in range(nrow):
                 it = self.table4.item(i, j)
                 if dkick[i] is None:
@@ -544,7 +544,7 @@ class CorrectorViewer(QtGui.QWidget):
         nrow = self.table4.rowCount()
         for j in range(self.table4.columnCount()):
             header = self.table4.horizontalHeaderItem(j)
-            if header.text() != "dKick": continue
+            if header.text() != "dBump": continue
             for i in range(nrow):
                 # assuming dkick and set are j and j+1 column
                 it = self.table4.item(i, j)
@@ -651,7 +651,7 @@ class Bump3XCor(BumpNCor):
 
         fmbox = QtGui.QFormLayout()
         fmbox.addRow("Indep. Cor", self.xcor)
-        fmbox.addRow("dKick", self.dxi)
+        fmbox.addRow("dCor (raw)", self.dxi)
         #fmbox.addRow("location", self.loc)
 
         vbox1 = QtGui.QVBoxLayout()
@@ -737,6 +737,14 @@ class Bump3XSrc(BumpNCor):
         vbox1 = QtGui.QVBoxLayout()
         vbox1.addWidget(self.grpPlane)
         vbox1.addLayout(fmbox)
+        lbl = QtGui.QLabel(
+            """<font color="red">WARNING:</font>The unit of dX(dY) is not """
+            """calibrated, please take a look at the calculated current """
+            """change before applying them""")
+        lbl.setFixedWidth(300)
+        lbl.setWordWrap(True)
+        vbox1.addWidget(lbl)
+
         vbox1.addLayout(self.gboxBtn)
         
         hbox1 = QtGui.QHBoxLayout()
@@ -905,6 +913,13 @@ class Bump4XSrc(BumpNCor):
         vbox1 = QtGui.QVBoxLayout()
         vbox1.addWidget(self.grpPlane)
         vbox1.addLayout(fmbox)
+        lbl = QtGui.QLabel(
+            """<font color="red">WARNING:</font>The unit of dX and dTheta """
+            """are not calibrated, please take a look at the calculated """
+            """current change before applying them""")
+        lbl.setFixedWidth(300)
+        lbl.setWordWrap(True)
+        vbox1.addWidget(lbl)
 
         vbox1.addStretch()
         vbox1.addLayout(self.gboxBtn)
@@ -1044,7 +1059,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
                 it = QTableWidgetItem()
                 if j > 0: it.setTextAlignment(
                     Qt.AlignRight | Qt.AlignVCenter)
-                if columns[j] != "dKick":
+                if columns[j] != "dBump":
                     it.setFlags(it.flags() & (~Qt.ItemIsEditable))
                 self.table4.setItem(i, j, it)
         #self.table4.resizeColumnsToContents()
@@ -1392,7 +1407,8 @@ class OrbitCorrDlg(QDialog):
         self.bpm_plot._cheat[1].attach(self.bpm_plot)
         self.bpm_plot._set_symbol(self.bpm_plot._cheat[0],
                                   Qwt.QwtSymbol.Triangle, dsize=2)
-        self.bpm_plot._set_symbol(self.bpm_plot._cheat[1], Qwt.QwtSymbol.Diamond, dsize=2)
+        self.bpm_plot._set_symbol(self.bpm_plot._cheat[1],
+                                  Qwt.QwtSymbol.Diamond, dsize=2)
         self.bpm_plot.showCurve(self.bpm_plot._cheat[0], False)
         self.bpm_plot.showCurve(self.bpm_plot._cheat[1], False)
 
@@ -1480,7 +1496,7 @@ class OrbitCorrDlg(QDialog):
         tabs.addTab(tab_bump3xcor, "3 Cors. dI")
         tabs.addTab(tab_bump3xsrc, "3 Cors. dX")
         tabs.addTab(tab_bump4xcor, "4 Cors. dI")
-        tabs.addTab(tab_bump4xsrc, "4 Cors. dX")
+        tabs.addTab(tab_bump4xsrc, "4 Cors. dX dTheta")
         layout.addWidget(tabs, 3)
 
         self.connect(tab_bump3xcor, SIGNAL("zoomInCorrectors(PyQt_PyObject)"),

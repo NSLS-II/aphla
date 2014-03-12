@@ -746,7 +746,7 @@ def getTune(source='machine', plane = 'h'):
     else:
         raise ValueError("plane must be either h or v")
 
-def getFftTune(plane = 'hv', mode = ''):
+def _getFftTune(plane = 'hv', mode = ''):
     """get tune from FFT
 
     .. warning::
@@ -927,7 +927,17 @@ def getOrbit(pat = '', spos = False):
     if not spos: return obt[:,:2]
     else: return obt
 
-def getTbtOrbit(**kwargs):
+
+def getOrbitResponseMatrix():
+    """
+    returns m, list of (bpmname, field) and list of (corname, field). field is
+    'x' or 'y'
+    """
+    orm = machines._lat.ormdata
+    return orm.m, orm.bpm, orm.cor
+
+
+def _getTbtOrbit(**kwargs):
     """
     return turn-by-turn BPM data.
 
@@ -937,7 +947,7 @@ def getTbtOrbit(**kwargs):
     pref = 'LTB:BI{BPM:1}' + 'TBT-'
     return caget(pref + field)
     
-def getFastOrbit(**kwargs):
+def _getFastOrbit(**kwargs):
     """
     return fast 10kHz turn-by-turn BPM data.
 
@@ -1187,4 +1197,41 @@ def outputFileName(group, subgroup, create_path = True):
 
     fopt = subgroup + t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
     return os.path.join(output_dir, fopt)
+
+
+def calcTuneRm(quad, **kwargs):
+    """
+    calculate tune respose matrix
+
+    quad - quadrupoles. same input as getElements.
+    unitsys - unit system for generated Rm. 'phy' or None.
+    setpoint - default None, or a list of ("b1", raw_value, dval).
+
+    In physics unit, dnu/dkl = beta/4pi. When asking for raw unit (in A), we
+    need to have a setpoint for Quad and convert the unit dkl/dI to get
+    dnu/dI.  We calculate dkl/dI by converting I0=raw_value and
+    I1=raw_value+dval to kl0 and kl1, dkl/dI = (kl1-kl0)/(I1-I0).
+    """
+    unitsys = kwargs.get("unitsys", None)
+    sp = kwargs.get("setpoint", None)
+
+    qls = getElements(quad)
+    bta = machines._lat._twiss.get([q.name for q in qls], ["betax", "betay"])
+    m = np.zeros((len(qls), 2), 'd')
+    for i,q in enumerate(qls):
+        # need to check if focusing or defocusing
+        try:
+            k1l = q.get("b1", handle="golden", unitsys="phy")
+        except:
+            raise RuntimeError(
+                "can not determin defocusing/focusing for {}".format(q.name))
+        fac = 1.0 if k1l > 0.0 else -1.0
+        if unitsys is None:
+            fld, I0, dI = sp[i]
+            k1l0 = q.convertUnit("b1", I0, None, "phy")
+            k1l1 = q.convertUnit("b1", I0+dI, None, "phy")
+            fac = fac * (k1l1 - k1l0)/dI
+        m[i,0] =  bta[i,0]/4.0/np.pi * fac
+        m[i,1] = -bta[i,1]/4.0/np.pi * fac
+
 

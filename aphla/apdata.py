@@ -45,9 +45,9 @@ class OrmData:
         self.cor = []
 
         # optional PV info, EPICS only
-        self._bpmpv = None
-        self._corpvrb = None
-        self._corpvsp = None
+        self.bpm_pv = None
+        self.cor_pvrb = None
+        self.cor_pv = None
 
         # 3d raw data
         self._mask = None
@@ -82,6 +82,13 @@ class OrmData:
         name, spos, plane = zip(*self.trim)
         dst.attrs["cor_name"] = name
         dst.attrs["cor_field"] = plane
+        if self.bpm_pv:
+            dst.attrs["bpm_pv"] = self.bpm_pv
+        if self.cor_pv:
+            dst.attrs["cor_pv"] = self.cor_pv
+        if self.cor_pvrb:
+            dst.attrs["cor_pvrb"] = self.cor_pvrb
+            
         f.close()
 
     def _load_hdf5(self, filename, group = "OrbitResponseMatrix"):
@@ -97,7 +104,7 @@ class OrmData:
         self.bpm = zip(g["m"].attrs["bpm_name"], g["m"].attrs["bpm_field"])
         self.bpm_pv = g["m"].attrs.get("bpm_pv", None)
         self.cor = zip(g["m"].attrs["cor_name"], g["m"].attrs["cor_field"])
-        self.cor_pvsp = g["m"].attrs.get("cor_pv", None)
+        self.cor_pv = g["m"].attrs.get("cor_pv", None)
         self.cor_pvrb = None
         nbpm, ncor = len(self.bpm), len(self.cor)
         self.m = np.zeros((nbpm, ncor), 'd')
@@ -119,14 +126,6 @@ class OrmData:
         fmt = kwargs.pop("format", None)
         if fmt == 'HDF5' or filename.endswith(".hdf5"):
             self._save_hdf5(filename, **kwargs)
-        elif fmt == 'shelve' or filename.endswith(".pkl"):
-            f = shelve.open(filename, 'c')
-            f['orm.m'] = self.m
-            f['orm.bpm'] = self.bpm
-            f['orm.trim'] = self.trim
-            f['orm._rawdata_.raworbit'] = self._raworbit
-            f['orm._rawdata_.rawkick']   = self._rawkick
-            f['orm._rawdata_.mask']      = self._mask
         else:
             raise ValueError("not supported file format: %s" % format)
 
@@ -140,14 +139,6 @@ class OrmData:
         fmt = kwargs.get("format", None)
         if fmt == 'HDF5' or filename.endswith(".hdf5"):
             self._load_hdf5(filename, **kwargs)
-        elif fmt == 'shelve' or filename.endswith(".pkl"):
-            f = shelve.open(filename, 'r')
-            self.bpm = f["orm.bpm"]
-            self.trim = f["orm.trim"]
-            self.m = f["orm.m"]
-            self._raworbit = f["orm._rawdata_.raworbit"]
-            self._rawkick  = f["orm._rawdata_.rawkick"]
-            self._mask     = f["orm._rawdata_.mask"]
         else:
             raise ValueError("format %s is not supported" % format)
 
