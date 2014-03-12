@@ -21,7 +21,10 @@ from cothread.catools import caget, caput, FORMAT_TIME
 import aphla as ap
 
 import config
-from . import (SmartSizedMessageBox, datestr, datestr_ns)
+try:
+    from . import (SmartSizedMessageBox, datestr, datestr_ns)
+except:
+    from aphla.gui.TinkerUtils import (SmartSizedMessageBox, datestr, datestr_ns)
 from aphla.gui.utils.addr import (getIPs, getMACs)
 import tinkerdb
 
@@ -81,6 +84,124 @@ def get_contiguous_col_ind_pairs(col_inds):
     contig_tuple_list.append((left_col, c))
 
     return contig_tuple_list
+
+########################################################################
+class ConfigMetaTableModel(QAbstractTableModel):
+
+    #----------------------------------------------------------------------
+    def __init__(self, search_result_dict, all_col_keys):
+        """Constructor"""
+
+        QAbstractTableModel.__init__(self)
+
+        self.search_result    = search_result_dict
+        self.all_col_keys     = all_col_keys
+        self.col_keys_wo_desc = all_col_keys[:]
+        self.col_keys_wo_desc.remove('config_description')
+
+        self.col_names_wo_desc = [
+            'Config.ID', 'Config.Name', 'Username', 'MASAR ID', 'Ref.StepSize',
+            'Synced.GroupWeight', 'Time Created']
+
+        self.nRows = len(self.search_result[self.col_keys_wo_desc[0]])
+        self.nCols = len(self.col_keys_wo_desc)
+
+        self.str_formats = [':s']*self.nCols
+        for i, k in enumerate(self.col_keys_wo_desc):
+            if k.endswith('_id') or (k == 'config_synced_group_weight'):
+                self.str_formats[i] = ':d'
+            elif k == 'config_ref_step_size':
+                self.str_formats[i] = ':.6g'
+            elif k == 'config_ctime':
+                self.str_formats[i] = 'timestamp'
+
+    #----------------------------------------------------------------------
+    def repaint(self):
+        """"""
+
+        self.nRows = len(self.search_result[self.col_keys_wo_desc[0]])
+        self.reset() # Inititate repaint
+
+    #----------------------------------------------------------------------
+    def rowCount(self, parent=QModelIndex()):
+        """"""
+
+        return self.nRows
+
+    #----------------------------------------------------------------------
+    def columnCount(self, parent=QModelIndex()):
+        """"""
+
+        return self.nCols
+
+    #----------------------------------------------------------------------
+    def data(self, index, role=Qt.DisplayRole):
+        """"""
+
+        row = index.row()
+        col = index.column()
+
+        col_key    = self.col_keys_wo_desc[col]
+        str_format = self.str_formats[col]
+
+        if ( not index.isValid() ) or \
+           ( not (0 <= row < self.rowCount()) ):
+            return None
+
+        if role in (Qt.DisplayRole,):
+
+            col_list = self.search_result[col_key]
+            if len(col_list) != 0: value = col_list[row]
+            else                 : return 'N/A'
+
+            if value is None:
+                return 'None'
+            elif value is '':
+                return "''"
+            elif isinstance(value, (list, tuple, set, np.ndarray)):
+                return str(value)
+            elif str_format == 'timestamp':
+                return datestr(value)
+            else:
+                return '{{{:s}}}'.format(str_format).format(value)
+        else:
+            return None
+
+    #----------------------------------------------------------------------
+    def setData(self, index, value, role=Qt.EditRole):
+        """"""
+
+        return False # No item should be editable
+
+    #----------------------------------------------------------------------
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        """"""
+
+        if role == Qt.TextAlignmentRole:
+            if orientation == Qt.Horizontal:
+                return int(Qt.AlignLeft|Qt.AlignVCenter)
+            else:
+                return int(Qt.AlignRight|Qt.AlignVCenter)
+
+        elif role != Qt.DisplayRole:
+            return None
+
+        elif orientation == Qt.Horizontal:
+            # Horizontal Header display name requested
+            return self.col_names_wo_desc[section]
+
+        else: # Vertical Header display name requested
+            return int(section+1) # row number
+
+    #----------------------------------------------------------------------
+    def flags(self, index):
+        """"""
+
+        default_flags = QAbstractTableModel.flags(self, index) # non-editable
+
+        if not index.isValid(): return default_flags
+
+        return default_flags # non-editable
 
 ########################################################################
 class ConfigAbstractModel(QObject):
@@ -284,13 +405,12 @@ class ConfigAbstractModel(QObject):
         else:
             raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
 
-
 ########################################################################
 class ConfigTableModel(QAbstractTableModel):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, abstract_model=None):
+    def __init__(self, abstract_model=None, readonly=False):
         """Constructor"""
 
         QAbstractTableModel.__init__(self)
@@ -299,6 +419,8 @@ class ConfigTableModel(QAbstractTableModel):
             self.abstract = ConfigAbstractModel()
         else:
             self.abstract = abstract_model
+
+        self.readonly = readonly
 
         # Short-hand notation
         self.db = self.abstract.db
@@ -668,6 +790,8 @@ class ConfigTableModel(QAbstractTableModel):
 
         default_flags = QAbstractTableModel.flags(self, index) # non-editable
 
+        if self.readonly: return default_flags
+
         if not index.isValid(): return default_flags
 
         col_key = self.abstract.all_col_keys[index.column()]
@@ -903,7 +1027,36 @@ class SnapshotAbstractModel(QObject):
 
     #----------------------------------------------------------------------
     def __init__(self, config_abstract_model):
-        """Constructor"""
+        """Constructor
+
+        Size List:
+            self.nRows:
+                self._config_abstract.channel_ids
+                self.weight_array
+                self.step_size_array
+                self.caput_enabled_rows
+
+            self.n_caget_pvs:
+                self.caget_raws
+                self.caget_convs
+                self.caget_ioc_ts_tuples
+                self.caget_pv_str_list
+                self.caget_pv_map_list
+                self.caget_pv_size_list
+
+            self.n_caput_pvs:
+                self.caput_raws
+                self.caput_convs
+                self.caput_pv_str_list
+                self.caput_pv_map_list
+                self.caput_pv_size_list
+                self.caput_enabled_indexes
+
+        self.maps[column_key] = [({row index in GUI Table},
+                                  {corresponding index in caget_pv_map_list
+                                                       or caput_pv_map_list})]
+                                for the column specified with column_key
+        """
 
         isinstance(config_abstract_model, ConfigAbstractModel)
 
@@ -939,8 +1092,9 @@ class SnapshotAbstractModel(QObject):
         self.filepath             = ''
         self.ss_ctime             = None
 
-        self.weight_array    = _ct.d['weight']
-        self.step_size_array = self.ref_step_size * self.weight_array
+        self.weight_array        = _ct.d['weight']
+        self.step_size_array     = self.ref_step_size * self.weight_array
+        self.caput_enabled_rows  = np.array([True]*self.nRows)
 
         self.db = tinkerdb.TinkerMainDatabase()
 
@@ -1091,7 +1245,6 @@ class SnapshotAbstractModel(QObject):
             if col == self.col_ids['cur_SentSP']]
         self.maps['cur_SP_ioc_ts'] = deepcopy(self.maps['cur_SP'])
         self.maps['cur_RB_ioc_ts'] = deepcopy(self.maps['cur_RB'])
-        self.maps['cur_SentSP_ts'] = deepcopy(self.maps['cur_SentSP'])
         self.maps['ini_SP']        = deepcopy(self.maps['cur_SP'])
         self.maps['ini_SP_ioc_ts'] = deepcopy(self.maps['cur_SP'])
         self.maps['ini_RB']        = deepcopy(self.maps['cur_RB'])
@@ -1114,12 +1267,23 @@ class SnapshotAbstractModel(QObject):
         self.update_init_pv_vals()
 
     #----------------------------------------------------------------------
+    def update_caput_enabled_indexes(self):
+        """"""
+
+        self.caput_enabled_indexes = np.array([True]*self.n_caput_pvs)
+        for row, index in self.maps['cur_SP']:
+            self.caput_enabled_indexes[index] = self.caput_enabled_rows[row]
+
+    #----------------------------------------------------------------------
     def update_pv_vals(self):
         """"""
 
         self.caget_sent_ts_second = time.time()
+
         ca_raws = caget(self.caget_pv_str_list, format=FORMAT_TIME,
                         throw=False, timeout=self.caget_timeout)
+
+        tEnd_caget = time.time()
 
         self.caget_raws = np.array(
             [r if r.ok else (np.nan if size == 1 else np.ones(size)*np.nan)
@@ -1137,6 +1301,14 @@ class SnapshotAbstractModel(QObject):
             count=self.n_caget_pvs)
 
         self.emit(SIGNAL('pvValuesUpdatedInSSAbstract'))
+
+        tEnd_visual = time.time()
+
+
+        print '# caget update only took {:.6f} seconds'.format(
+            tEnd_caget - self.caget_sent_ts_second)
+        print '# caget & visual update took {:.6f} seconds'.format(
+            tEnd_visual - self.caget_sent_ts_second)
 
     #----------------------------------------------------------------------
     def update_init_pv_vals(self):
@@ -1174,15 +1346,22 @@ class SnapshotAbstractModel(QObject):
     def invoke_caput(self):
         """"""
 
-        caput_raws = [r for r in self.caput_raws if not np.isnan(r)]
-
-        disabled_row_inds = [i for i, r in enumerate(self.caput_raws)
-                             if np.isnan(r)]
-
-        caput_pv_str_list = [pv for i, pv in enumerate(self.caput_pv_str_list)
-                             if i not in disabled_row_inds]
-        caput_pv_map_list = [m for i, m in enumerate(self.caput_pv_map_list)
-                             if i not in disabled_row_inds]
+        out = [(i, r) for i, (r, enabled)
+               in enumerate(zip(self.caput_raws, self.caput_enabled_indexes))
+               if enabled and (not np.isnan(r))]
+        if out != []:
+            enabled_indexes, caput_raws = map(list, zip(*out))
+            caput_pv_str_list = [pv for i, pv
+                                 in enumerate(self.caput_pv_str_list)
+                                 if i in enabled_indexes]
+            caput_pv_map_list = [m for i, m in enumerate(self.caput_pv_map_list)
+                                 if i in enabled_indexes]
+        else:
+            msg = QMessageBox()
+            msg.setText(('All writeable PVs are disabled. '
+                         'No caput will be performed.'))
+            msg.exec_()
+            return
 
         self.caput_sent_ts_second = time.time()
         caput(caput_pv_str_list, caput_raws, throw=False,
@@ -1200,10 +1379,14 @@ class SnapshotAbstractModel(QObject):
 
         self.update_caput_raws()
 
+        self.update_caput_enabled_indexes()
+
         if positive:
-            self.caput_raws += self.step_size_array
+            self.caput_raws[self.caput_enabled_indexes] += \
+                self.step_size_array[self.caput_enabled_rows]
         else:
-            self.caput_raws -= self.step_size_array
+            self.caput_raws[self.caput_enabled_indexes] -= \
+                self.step_size_array[self.caput_enabled_rows]
 
         self.invoke_caput()
 
@@ -1218,6 +1401,8 @@ class SnapshotAbstractModel(QObject):
         """"""
 
         self.update_caput_raws()
+
+        self.update_caput_enabled_indexes()
 
         if positive:
             if self.mult_factor > 2.0:
@@ -1234,7 +1419,7 @@ class SnapshotAbstractModel(QObject):
                 if choice == QMessageBox.No:
                     return
 
-            self.caput_raws *= self.mult_factor
+            self.caput_raws[self.caput_enabled_indexes] *= self.mult_factor
         else:
             if self.mult_factor != 0.0:
                 if self.mult_factor < 0.5:
@@ -1251,7 +1436,7 @@ class SnapshotAbstractModel(QObject):
                     if choice == QMessageBox.No:
                         return
 
-                self.caput_raws /= self.mult_factor
+                self.caput_raws[self.caput_enabled_indexes] /= self.mult_factor
             else:
                 msg = QMessageBox()
                 msg.setText('Setpoints cannot be divided by 0.')
@@ -1304,13 +1489,14 @@ class SnapshotTableModel(QAbstractTableModel):
         for k in self.abstract.ss_only_col_keys:
             self.d[k] = np.ones(self.abstract.nRows, dtype=object)*np.nan
 
+        self.d['caput_enabled'] = self.abstract.caput_enabled_rows
+
         # Update static column data
         self.update_init_pv_column_data()
 
         # Update dynamic column data
         self.visible_dynamic_col_keys = [
-            'cur_RB', 'cur_SP', 'cur_SentSP',
-            'cur_SentSP_ts', 'cur_SP_ioc_ts', 'cur_RB_ioc_ts']
+            'cur_RB', 'cur_SP', 'cur_SentSP', 'cur_SP_ioc_ts', 'cur_RB_ioc_ts']
 
         self.update_visible_dynamic_columns()
 
@@ -1334,6 +1520,9 @@ class SnapshotTableModel(QAbstractTableModel):
         if not ((col_left_index == col_right_index) and
                 (row_top_index == row_bottom_index)):
             return
+        elif (col_left_index == col_right_index) and \
+             self.abstract.all_col_keys[col_left_index] == 'caput_enabled':
+            row_inds = range(row_top_index, row_bottom_index+1)
 
         index = topLeftIndex
         row_ind = row_top_index
@@ -1368,6 +1557,14 @@ class SnapshotTableModel(QAbstractTableModel):
                     for r in synced_row_inds:
                         self._config_abstract.weights[r] = new_weight
                         self.abstract.weight_array[r]    = new_weight
+
+        elif col_key == 'caput_enabled':
+
+            for r in row_inds:
+                self.abstract.caput_enabled_rows[r] = \
+                    self.data(self.index(r, col_ind), role=Qt.UserRole)
+
+            return
 
         else:
             return
@@ -1427,8 +1624,6 @@ class SnapshotTableModel(QAbstractTableModel):
             self.d[col_key][rows] = self.abstract.caget_raws[indexes]
         elif col_key in ('cur_SentSP'):
             self.d[col_key][rows] = self.abstract.caput_raws[indexes]
-        elif col_key in ('cur_SentSP_ts'):
-            self.d[col_key][rows] = self.abstract.caput_sent_ts_second
         elif col_key in ('cur_SP_ioc_ts', 'cur_RB_ioc_ts'):
             self.d[col_key][rows] = self.abstract.caget_ioc_ts_tuples[indexes]
         else:
@@ -1483,7 +1678,7 @@ class SnapshotTableModel(QAbstractTableModel):
            ( not (0 <= row < self.rowCount()) ):
             return None
 
-        if role in (Qt.DisplayRole, Qt.EditRole):
+        if (str_format != 'checkbox') and (role in (Qt.DisplayRole, Qt.EditRole)):
             # ^ Need "EditRole". Otherwise, existing text will disappear
             # when trying to edit.
 
@@ -1505,15 +1700,20 @@ class SnapshotTableModel(QAbstractTableModel):
             elif isinstance(value, (list, tuple, set, np.ndarray)):
                 return str(value)
             else:
-                if str_format != 'timestamp':
-                    return '{{{:s}}}'.format(str_format).format(value)
-                elif str_format == 'timestamp':
-                    try:
-                        return datestr(value)
-                    except:
-                        return 'None'
+                return '{{{:s}}}'.format(str_format).format(value)
+
+        if str_format == 'checkbox':
+
+            col_list = self.d[col_key]
+            value = col_list[row]
+
+            if role == Qt.DisplayRole:
+                return None
+            elif role in (Qt.EditRole, Qt.UserRole):
+                if value == 1:
+                    return True
                 else:
-                    return 'None'
+                    return False
 
         else:
             return None
@@ -1536,7 +1736,7 @@ class SnapshotTableModel(QAbstractTableModel):
         else:
             L = self.d[col_key]
 
-            if (str_format is None) or (str_format == ':s'):
+            if (str_format is None) or (str_format in (':s', 'checkbox')):
                 L[row] = value
             elif str_format.endswith('g'):
                 if value == '':

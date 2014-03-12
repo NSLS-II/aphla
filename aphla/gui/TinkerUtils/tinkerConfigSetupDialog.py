@@ -39,12 +39,13 @@ FILE_FILTER_DICT = {'Text File': 'Text files (*.txt)',
                     'JSON File': 'JSON files (*.json)',
                     }
 
-HOME_PATH      = osp.expanduser('~')
-APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
-if not osp.exists(APHLA_CONF_DIR):
-    os.makedirs(APHLA_CONF_DIR)
+HOME_PATH             = osp.expanduser('~')
+APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_USER_CONFIG_DIR):
+    os.makedirs(APHLA_USER_CONFIG_DIR)
 
-PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'aptinker_startup_pref.json')
+PREF_JSON_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
+                              'aptinker_ConfigSetupDialog_startup_pref.json')
 
 ########################################################################
 class PreferencesEditor(QDialog, Ui_PrefDialog):
@@ -427,14 +428,18 @@ class View(QDialog, Ui_Dialog):
         #self.tree_proxyModel.setDynamicSortFilter(False)
 
         t = self.tableView
+        # Model setup
         t.setModel(self.table_proxyModel)
+        # Selection setup
         t.setSelectionModel(QItemSelectionModel(self.table_proxyModel))
-        t.setCornerButtonEnabled(True)
-        t.setShowGrid(True)
         t.setSelectionMode(QAbstractItemView.ExtendedSelection)
         t.setSelectionBehavior(QAbstractItemView.SelectItems)
+        # View setup
+        t.setCornerButtonEnabled(True)
+        t.setShowGrid(True)
         t.setAlternatingRowColors(True)
         t.setSortingEnabled(False)
+        # Header setup
         horizHeader = t.horizontalHeader()
         horizHeader.setSortIndicatorShown(False)
         horizHeader.setStretchLastSection(False)

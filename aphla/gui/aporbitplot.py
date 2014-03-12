@@ -80,6 +80,40 @@ PEN_STYLES = [("Solid Line", Qt.SolidLine),
               ("Dash-Dotted Line", Qt.DashDotLine),
               ("Dash-Dot-Dotted Line", Qt.DashDotDotLine)]
 
+class ApCaPlotScaleDlg(QtGui.QDialog):
+    def __init__(self, parent = None):
+        super(QtGui.QDialog, self).__init__(parent)
+        grd = QtGui.QGridLayout()
+        grd.addWidget(QtGui.QLabel("X min/max:"), 0, 0)
+        grd.addWidget(QtGui.QLabel("Y min/max:"), 1, 0)
+        self.x0 = QtGui.QLineEdit()
+        self.x1 = QtGui.QLineEdit()
+        self.y0 = QtGui.QLineEdit()
+        self.y1 = QtGui.QLineEdit()
+        grd.addWidget(self.x0, 0, 1)
+        grd.addWidget(self.x1, 0, 2)
+        grd.addWidget(self.y0, 1, 1)
+        grd.addWidget(self.y1, 1, 2)
+        buttonBox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok|
+                                           QtGui.QDialogButtonBox.Cancel)
+        grd.addWidget(buttonBox, 2, 2)
+        self.setLayout(grd)
+
+        self.connect(buttonBox, SIGNAL("accepted()"), self.accept)
+        self.connect(buttonBox, SIGNAL("rejected()"), self.reject)
+
+    def xlim(self):
+        try:
+            return (float(self.x0.text()), float(self.x1.text()))
+        except:
+            return None
+
+    def ylim(self):
+        try:
+            return (float(self.y0.text()), float(self.y1.text()))
+        except:
+            return None
+    
 
 class MagnetPicker(Qwt.QwtPlotPicker):
     """
@@ -365,6 +399,17 @@ class ApCaPlot(Qwt.QwtPlot):
                      self.showCurve)
 
 
+    def setScale(self):
+        dlg = ApCaPlotScaleDlg(self)
+        if dlg.exec_():
+            xr = dlg.xlim()
+            if xr is not None:
+                self.setAxisScale(Qwt.QwtPlot.xBottom, xr[0], xr[1])
+            yr = dlg.ylim()
+            if yr is not None:
+                self.setAxisScale(Qwt.QwtPlot.yLeft, yr[0], yr[1])
+            self.pullCaData()
+
     def setMarkers(self, mks, on = True):
         self.clearMarkers()
         if not mks: return
@@ -498,6 +543,9 @@ class ApCaPlot(Qwt.QwtPlot):
         cmenu.addAction(m_autoscale)
 
         cmenu.addSeparator()
+        cmenu.addAction("Scale ...", self.setScale)
+
+        cmenu.addSeparator()
         cmenu.addAction("Zoom in X", partial(self.scaleX, factor=0.7),
                         QtGui.QKeySequence.ZoomIn)
         cmenu.addAction("Zoom out X", partial(self.scaleX, factor=1.4),
@@ -597,7 +645,7 @@ class ApCaPlot(Qwt.QwtPlot):
             bound = self.curvesBound()
             w = bound.width()
             h = bound.height()
-        
+
             #bound.adjust(0.0, -h*.1, 0.0, h*.1)
             ymin = bound.top() - h*.05
             ymax = bound.bottom() + h*.03

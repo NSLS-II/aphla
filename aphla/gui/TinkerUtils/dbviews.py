@@ -1,17 +1,19 @@
 import numpy as np
 
 from PyQt4.QtCore import (
-    Qt, SIGNAL, QSize, QSettings
+    Qt, SIGNAL, QSize, QSettings, QPoint, QEvent, QRect
 )
 from PyQt4.QtGui import (
     QWidget, QGridLayout, QSplitter, QTreeView, QTableView,
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget, QMessageBox,
     QMenu, QItemSelectionModel, QInputDialog, QAction, QIcon, QAbstractItemView,
+    QStyledItemDelegate, QStyleOptionButton, QStyle
 )
 
 import config
 from aphla.gui.utils.orderselector import ColumnsDialog
+from aphla.gui.TinkerUtils.tinkerdb import TinkerMainDatabase
 
 ########################################################################
 class CustomTableView(QTableView):
@@ -37,17 +39,168 @@ class CustomTableView(QTableView):
 
         return super(QTableView, self).edit(modelIndex, trigger, event)
 
+########################################################################
+class ConfigMetaDBViewWidget(QWidget):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, parentWidget):
+        """Constructor"""
+
+        QWidget.__init__(self, parentWidget)
+
+        self._initUI(parentWidget)
+
+        self.db = TinkerMainDatabase()
+        self.db.create_temp_config_meta_table_text_view()
+        self.all_col_keys = \
+            self.db.getColumnNames('[config_meta_table text view]')
+        self.col_keys_wo_desc = self.all_col_keys[:]
+        self.col_keys_wo_desc.remove('config_description')
+
+        self.col_names_wo_desc = [
+            'Config.ID', 'Config.Name', 'Username', 'MASAR ID', 'Ref.StepSize',
+            'Synced.GroupWeight', 'Time Created']
+
+        self.vis_col_name_list = self.col_names_wo_desc[:]
+
+        self.connect(self.checkBox_sortable, SIGNAL('stateChanged(int)'),
+                     self.on_sortable_state_changed)
+        self.connect(self.pushButton_columns, SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+
+    #----------------------------------------------------------------------
+    def _initUI(self, parentWidget):
+        """"""
+
+        verticalLayout_2 = QVBoxLayout(parentWidget)
+        verticalLayout_2.setContentsMargins(0, 0, 0, 0) # zero margin
+
+        self.splitter = QSplitter(parentWidget)
+        self.splitter.setContentsMargins(0, 0, 0, 0) # zero margin
+        self.splitter.setOrientation(Qt.Vertical)
+        self.splitter.setHandleWidth(9)
+
+        verticalLayout_2.addWidget(self.splitter)
+
+        self.layoutWidget_2 = QWidget(self.splitter)
+        verticalLayout = QVBoxLayout(self.layoutWidget_2)
+        verticalLayout.setContentsMargins(-1, 0, -1, 0)
+        self.tableView = QTableView(self)
+        verticalLayout.addWidget(self.tableView)
+
+        self.layoutWidget_3 = QWidget(self.layoutWidget_2)
+        verticalLayout.addWidget(self.layoutWidget_3)
+        horizontalLayout = QHBoxLayout(self.layoutWidget_3)
+        horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        spacerItem = QSpacerItem(20, 40, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        horizontalLayout.addItem(spacerItem)
+        self.pushButton_columns = QPushButton(self)
+        self.pushButton_columns.setText('Columns')
+        self.pushButton_columns.setMaximumWidth(200)
+        horizontalLayout.addWidget(self.pushButton_columns)
+        self.checkBox_sortable = QCheckBox(self)
+        self.checkBox_sortable.setText('Sortable')
+        self.checkBox_sortable.setChecked(False)
+        horizontalLayout.addWidget(self.checkBox_sortable)
+
+        self.layoutWidget = QWidget(self.splitter)
+        gridLayout = QGridLayout(self.layoutWidget)
+        self.label_2 = QLabel(self)
+        self.label_2.setText('Description')
+        gridLayout.addWidget(self.label_2, 0, 0, 1, 1)
+        spacerItem2 = QSpacerItem(20, 40, QSizePolicy.Minimum,
+                                  QSizePolicy.Expanding)
+        gridLayout.addItem(spacerItem2, 1, 0, 1, 1)
+        self.textEdit_description = QTextEdit(self)
+        self.textEdit_description.setReadOnly(True)
+        gridLayout.addWidget(self.textEdit_description, 0, 1, 2, 1)
+
+        tbV = self.tableView
+        tbV.setSelectionMode(QAbstractItemView.SingleSelection)
+        tbV.setSelectionBehavior(QAbstractItemView.SelectRows)
+        tbV.setCornerButtonEnabled(True)
+        tbV.setShowGrid(True)
+        tbV.setAlternatingRowColors(True)
+        tbV.setSortingEnabled(False)
+        horizHeader = tbV.horizontalHeader()
+        horizHeader.setSortIndicatorShown(False)
+        horizHeader.setStretchLastSection(False)
+        horizHeader.setMovable(False)
+
+    #----------------------------------------------------------------------
+    def on_sortable_state_changed(self, state):
+        """"""
+
+        if state == Qt.Checked:
+            checked = True
+        else:
+            checked = False
+
+        self.tableView.setSortingEnabled(checked)
+
+    #----------------------------------------------------------------------
+    def on_column_selection_change(self, new_vis_col_names,
+                                   force_visibility_update=False):
+        """"""
+
+        if (not force_visibility_update) and \
+           (new_vis_col_names == self.vis_col_name_list):
+            return
+
+        new_vis_col_logical_indexes = [
+            self.col_names_wo_desc.index(name)
+            for name in new_vis_col_names]
+
+        header = self.tableView.horizontalHeader()
+        #header = self.treeView.header()
+
+        for (i, col_logical_ind) in enumerate(new_vis_col_logical_indexes):
+            new_visual_ind = i
+            current_visual_ind = header.visualIndex(col_logical_ind)
+            header.moveSection(current_visual_ind, new_visual_ind)
+
+        for i in range(len(self.col_names_wo_desc)):
+            if i not in new_vis_col_logical_indexes:
+                header.hideSection(i)
+            else:
+                header.showSection(i)
+
+        self.vis_col_name_list = new_vis_col_names[:]
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        all_column_name_list = self.col_names_wo_desc[:]
+        visible_column_name_list = self.vis_col_name_list[:]
+        permanently_visible_column_name_list = []
+
+        dialog = ColumnsDialog(all_column_name_list,
+                               visible_column_name_list,
+                               permanently_visible_column_name_list,
+                               parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.on_column_selection_change(dialog.output[:],
+                                            force_visibility_update=False)
 
 ########################################################################
 class ConfigDBViewWidget(QWidget):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, parentLayoutWidget, parentGridLayout):
+    def __init__(self, parentWidget, parentGridLayout=None):
         """Constructor"""
 
-        QWidget.__init__(self, parentLayoutWidget)
+        QWidget.__init__(self, parentWidget)
 
+        if parentGridLayout is None:
+            parentGridLayout = QGridLayout(parentWidget)
+            parentGridLayout.addWidget(self)
+        parentGridLayout.setContentsMargins(0, 0, 0, -1)
         self._initUI(parentGridLayout)
 
         self.comboBox_view.setEditable(False)
@@ -75,7 +228,16 @@ class ConfigDBViewWidget(QWidget):
                                       zip(column_ids, user_editable)
                                       if u == 1]
 
-        self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
+        t = self.tableView
+        t.setCornerButtonEnabled(True)
+        t.setShowGrid(True)
+        t.setContextMenuPolicy(Qt.CustomContextMenu)
+        t.setAlternatingRowColors(True)
+        t.setSortingEnabled(False)
+        horizHeader = t.horizontalHeader()
+        horizHeader.setSortIndicatorShown(False)
+        horizHeader.setStretchLastSection(False)
+        horizHeader.setMovable(False)
 
         self.contextMenu = QMenu()
 
@@ -399,20 +561,28 @@ class SnapshotDBViewWidget(QWidget):
         """"""
 
         self.stackedWidget = QStackedWidget(self)
+        self.stackedWidget.setContentsMargins(0, 0, 0, 0)
 
         self.page_tree = QWidget()
-        gridLayout = QGridLayout(self.page_tree)
+        self.page_tree.setContentsMargins(0, 0, 0, 0)
+        vLayout = QVBoxLayout(self.page_tree)
+        vLayout.setContentsMargins(0, 0, 0, 0)
         self.treeView = QTreeView(self.page_tree)
-        gridLayout.addWidget(self.treeView, 0, 0, 1, 1)
+        self.treeView.setContentsMargins(0, 0, 0, 0)
+        vLayout.addWidget(self.treeView)
         self.stackedWidget.addWidget(self.page_tree)
         #
         self.page_table = QWidget()
-        gridLayout = QGridLayout(self.page_table)
+        self.page_table.setContentsMargins(0, 0, 0, 0)
+        vLayout = QVBoxLayout(self.page_table)
+        vLayout.setContentsMargins(0, 0, 0, 0)
         self.tableView = QTableView(self.page_table)
-        gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
+        self.tableView.setContentsMargins(0, 0, 0, 0)
+        vLayout.addWidget(self.tableView)
         self.stackedWidget.addWidget(self.page_table)
 
         self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         spacerItem = QSpacerItem(40, 20,
                                  QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
@@ -433,6 +603,7 @@ class SnapshotDBViewWidget(QWidget):
         self.horizontalLayout.addWidget(self.checkBox_sortable)
 
         self.verticalLayout = QVBoxLayout(self)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.addWidget(self.stackedWidget)
         self.verticalLayout.addLayout(self.horizontalLayout)
 
@@ -508,3 +679,185 @@ class SnapshotDBViewWidget(QWidget):
         if dialog.output is not None:
             self.on_column_selection_change(dialog.output[:],
                                             force_visibility_update=False)
+
+########################################################################
+class SnapshotDBTableViewItemDelegate(QStyledItemDelegate):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, view, snapshot_table_model, parent=None):
+        """Constructor"""
+
+        QStyledItemDelegate.__init__(self, parent)
+
+        self.view = view
+
+        self.ss_table        = snapshot_table_model
+        self.ss_abstract     = self.ss_table.abstract
+        self.config_abstract = self.ss_abstract._config_abstract
+
+    #----------------------------------------------------------------------
+    def getCheckBoxRect(self, option):
+        """"""
+
+        opt = QStyleOptionButton()
+        style = self.view.style()
+        checkbox_rect = style.subElementRect(QStyle.SE_CheckBoxIndicator, opt)
+
+        checkbox_point = QPoint( option.rect.x() +
+                                 option.rect.width() / 2 -
+                                 checkbox_rect.width() / 2,
+                                 option.rect.y() +
+                                 option.rect.height() / 2 -
+                                 checkbox_rect.height() / 2 )
+
+        return QRect(checkbox_point, checkbox_rect.size())
+
+    #----------------------------------------------------------------------
+    def paint(self, painter, option, index):
+        """"""
+
+        QStyledItemDelegate.paint(self, painter, option, index) # Need to
+        # call the standard paint() in order to keep the color change when
+        # selected.
+
+        row = index.row()
+        col = index.column()
+
+        col_key    = self.ss_abstract.all_col_keys[col]
+        str_format = self.ss_abstract.all_str_formats[col]
+
+        '''
+        Somehow after upgrading to Debian 7 or on Ubuntu 12.04, the creation
+        of QStylePainter object with
+
+        > stylePainter = QStylePainter(painter.device(), self.view)
+
+        results in Segmentation Fault, right before paintEvent by
+        QTableView associated with this delegate is finished.
+
+        Creation of QStylePainter object with
+
+        > stylePainter = QStylePainter(self.view)
+
+        does not result in Seg. Fault., but it does not render the view
+        correctly.
+
+        The solution to the problem is to use QStyle.drawControl &
+        QStyle.drawComplexControl, instead of the corresponding functions
+        of QStylePainter.
+
+        As a result QStylePainter.save() & QStylePainter.restore() have been
+        commented out.
+        '''
+        style = self.view.style()
+
+        if col_key == 'caput_enabled':
+
+            value = index.model().data(index, role=Qt.UserRole)
+
+            checked = value
+
+            opt = QStyleOptionButton()
+
+            if int(index.flags() & Qt.ItemIsEditable) > 0:
+                opt.state |= QStyle.State_Enabled
+            else:
+                opt.state |= QStyle.State_ReadOnly
+
+            if checked:
+                opt.state |= QStyle.State_On
+            else:
+                opt.state |= QStyle.State_Off
+
+            # Centering of Checkbox
+            opt.rect = self.getCheckBoxRect(option)
+
+            style.drawControl(QStyle.CE_CheckBox, opt, painter, self.view)
+
+    #----------------------------------------------------------------------
+    def setModelData(self, editor, model, index):
+        """"""
+
+        col = index.column()
+        col_key = self.ss_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled': # editor = QCheckbox
+            old_value = model.data(index, Qt.UserRole)
+
+            # Change the check state to opposite if editable
+            if int(index.flags() & Qt.ItemIsEditable) > 0:
+                checked = not old_value
+                if checked:
+                    checked_value = 1
+                else:
+                    checked_value = 0
+                model.setData(index, checked_value, role=Qt.EditRole)
+        else:
+            QStyledItemDelegate.setModelData(self, editor, model, index)
+
+    #----------------------------------------------------------------------
+    def editorEvent(self, event, model, option, index):
+        """"""
+
+        col = index.column()
+        col_key = self.ss_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+
+            if not ( int(index.flags() & Qt.ItemIsEditable) > 0 ):
+                return False
+
+            # Do not change the checkbox state
+            if event.type() == QEvent.MouseButtonRelease or \
+               event.type() == QEvent.MouseButtonDblClick:
+                if event.button() != Qt.LeftButton or \
+                   not self.getCheckBoxRect(option).contains(event.pos()):
+                    return False
+                if event.type() == QEvent.MouseButtonDblClick:
+                    return True
+            elif event.type() == QEvent.KeyPress:
+                if (event.key() != Qt.Key_Space) and \
+                   (event.key() != Qt.Key_Select):
+                    return False
+            else:
+                return False
+
+            # Change the checkbox state
+            self.setModelData(None, model, index)
+            return True
+
+        else:
+            return QStyledItemDelegate.editorEvent(self, event, model, option,
+                                                   index)
+
+    #----------------------------------------------------------------------
+    def createEditor(self, parent, option, index):
+        """"""
+
+        col = index.column()
+        col_key = self.ss_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+            # Must be None, otherwise an editor is created if a user clicks
+            # this cell
+            return None
+        else:
+            return QStyledItemDelegate.createEditor(self, parent, option, index)
+
+    #----------------------------------------------------------------------
+    def setEditorData(self, editor, index):
+        """"""
+
+        value = index.model().data(index, Qt.DisplayRole)
+
+        col = index.column()
+        col_key = self.ss_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+            checked = value
+            editor.setChecked(checked)
+
+            editor.close()
+        else:
+            QStyledItemDelegate.setEditorData(self, editor, index)

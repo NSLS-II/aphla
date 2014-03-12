@@ -838,10 +838,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         table_name = 'config_meta_table'
         column_def = [
             Column('config_id', 'INTEGER', primary_key=True),
-            Column('config_name', 'TEXT', allow_default=True,
-                   default_value='""'),
-            Column('config_description', 'TEXT', allow_default=True,
-                   default_value='""'),
             Column('config_user_id', 'INTEGER', allow_null=False),
             Column('config_masar_id', 'INTEGER', allow_null=True),
             Column('config_ref_step_size', 'REAL', allow_null=False),
@@ -852,6 +848,16 @@ class TinkerMainDatabase(SQLiteDatabase):
                                  'user_table', 'user_id'),
         ]
         self.createTable(table_name, column_def)
+
+        table_name = 'config_meta_text_search_table'
+        # "rowid" (hidden) = "config_id" in "config_meta_table"
+        column_def = [
+            Column('config_name', 'TEXT', allow_default=True,
+                   default_value='""'),
+            Column('config_description', 'TEXT', allow_default=True,
+                   default_value='""'),
+        ]
+        self.createFTS4VirtualTable(table_name, column_def, tokenizer_str='')
 
         table_name = 'config_table'
         column_def = [
@@ -881,10 +887,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         column_def = [
             Column('ss_id', 'INTEGER', primary_key=True),
             Column('config_id', 'INTEGER', allow_null=False),
-            Column('ss_name', 'TEXT', allow_default=True,
-                   default_value='""'),
-            Column('ss_description', 'TEXT', allow_default=True,
-                   default_value='""'),
             Column('ss_user_id', 'INTEGER', allow_null=False),
             Column('ss_masar_id', 'INTEGER', allow_null=True),
             Column('ss_ref_step_size', 'REAL', allow_null=False),
@@ -900,6 +902,16 @@ class TinkerMainDatabase(SQLiteDatabase):
                                  'user_table', 'user_id'),
         ]
         self.createTable(table_name, column_def)
+
+        table_name = 'snapshot_meta_text_search_table'
+        # "rowid" (hidden) = "ss_id" in "snapshot_meta_table"
+        column_def = [
+            Column('ss_name', 'TEXT', allow_default=True, default_value='""'),
+            Column('ss_description', 'TEXT', allow_default=True,
+                   default_value='""'),
+        ]
+        self.createFTS4VirtualTable(table_name, column_def, tokenizer_str='')
+
 
     #----------------------------------------------------------------------
     def _initSessionTables(self):
@@ -966,6 +978,110 @@ class TinkerMainDatabase(SQLiteDatabase):
                    'ct.unitconv_toraw_id',
                    'ct.unitconv_fromraw_id',
                    'cnt.channel_name'
+               ]
+        )
+
+    #----------------------------------------------------------------------
+    def create_temp_config_meta_full_table_view(self):
+        """"""
+
+        self.createTempView(
+            '[config_meta_table full view]',
+            '''config_meta_table cmt
+            LEFT JOIN config_meta_text_search_table cmtst ON cmt.config_id = cmtst.rowid
+            ''',
+               column_name_list=[
+                   'cmt.config_id',
+                   'cmtst.config_name',
+                   'cmtst.config_description',
+                   'cmt.config_user_id',
+                   'cmt.config_masar_id',
+                   'cmt.config_ref_step_size',
+                   'cmt.config_synced_group_weight',
+                   'cmt.config_ctime',
+               ]
+        )
+
+    #----------------------------------------------------------------------
+    def create_temp_config_meta_table_text_view(self):
+        """"""
+
+        self.createTempView(
+            '[config_meta_table text view]',
+            '''config_meta_table cmt
+            LEFT JOIN config_meta_text_search_table cmtst ON cmt.config_id = cmtst.rowid
+            LEFT JOIN user_table ut ON cmt.config_user_id = ut.user_id
+            ''',
+               column_name_list=[
+                   'cmt.config_id',
+                   'cmtst.config_name',
+                   'cmtst.config_description',
+                   'ut.username',
+                   'cmt.config_masar_id',
+                   'cmt.config_ref_step_size',
+                   'cmt.config_synced_group_weight',
+                   'cmt.config_ctime',
+               ]
+        )
+
+    #----------------------------------------------------------------------
+    def create_temp_config_table_text_view(self):
+        """"""
+
+        if '[channel_table text view]' not in \
+           self.getViewNames(square_brackets=True):
+            self.create_temp_channel_table_text_view()
+        if '[aphla channel prop text view]' not in \
+           self.getViewNames(square_brackets=True):
+            self.create_temp_aphla_channel_prop_text_view()
+        if '[unitconv_table text view]' not in \
+           self.getViewNames(square_brackets=True):
+            self.create_temp_unitconv_table_text_view()
+
+        self.createTempView(
+            '[config_table text view]',
+            '''config_table ct
+            LEFT JOIN group_name_table gnt ON ct.group_name_id = gnt.group_name_id
+            LEFT JOIN [channel_table text view] cht ON ct.channel_id = cht.channel_id
+            LEFT JOIN [aphla channel prop text view] at ON cht.aphla_ch_id = at.aphla_ch_id
+            LEFT JOIN [unitconv_table text view] ut1 ON cht.unitconv_toraw_id = ut1.unitconv_id
+            LEFT JOIN [unitconv_table text view] ut2 ON cht.unitconv_fromraw_id = ut2.unitconv_id
+            ''',
+               column_name_list=[
+                   'ct.config_row_id',
+                   'ct.config_id',
+                   'gnt.group_name',
+                   'cht.channel_name',
+                   'cht.pvsp',
+                   'cht.pvrb',
+                   'cht.pvsp_array_size',
+                   'cht.pvrb_array_size',
+                   'ct.config_weight AS weight',
+                   'at.field',
+                   'at.machine_name',
+                   'at.lattice_name',
+                   'at.elem_name',
+                   'at.elem_family',
+                   'at.elem_cell',
+                   'at.elem_devname',
+                   'at.elem_efflen',
+                   'at.elem_physlen',
+                   'at.elem_fields',
+                   'at.elem_girder',
+                   'at.elem_group',
+                   'at.elem_sb',
+                   'at.elem_se',
+                   'at.elem_sequence',
+                   'at.elem_symmetry',
+                   'at.elem_pvs',
+                   'cht.unitsys',
+                   'ut1.unticonv_type',
+                   'ut1.src_unitsymb AS unitsymb',
+                   'ut1.dst_unitsymb AS unitsymb_raw',
+                   'ut1.conv_data.txt AS unitconv_data_toraw',
+                   'ut2.conv_data.txt AS unitconv_data_fromraw',
+                   'ut1.inv AS unitconv_inv_toraw',
+                   'ut2.inv AS unitconv_inv_fromraw',
                ]
         )
 
@@ -1454,36 +1570,40 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         a = config_abstract_model
 
-        table_name = 'config_meta_table'
+        table_name_meta            = 'config_meta_table'
+        table_name_meta_text_seach = 'config_meta_text_search_table'
 
-        list_of_tuples = [(a.name, a.description,
-                           self.get_user_id(a.userinfo, append_new=True),
-                           a.masar_id, a.ref_step_size, a.synced_group_weight)]
+        meta_text_search_list_of_tuples = [(a.name, a.description)]
+        meta_list_of_tuples = [
+            (self.get_user_id(a.userinfo, append_new=True),
+             a.masar_id, a.ref_step_size, a.synced_group_weight)]
 
-        nCol = len(self.getColumnNames(table_name))
+        nCol = len(self.getColumnNames(table_name_meta))
 
-        old_matched_config_ids = self.get_config_ids(*list_of_tuples[0])
+        self.lockDatabase()
 
-        self.insertRows(table_name, list_of_tuples,
+        maxID_meta = self.getMaxInColumn(table_name_meta, 'config_id')
+        maxID_meta_text_search = self.getMaxInColumn(
+            table_name_meta_text_seach, 'rowid')
+        if maxID_meta != maxID_meta_text_search:
+            print '# Maximum config_id in "config_meta_table" and maximum '
+            print '# row_id in "config_meta_text_search_table" no longer agree.'
+            raise IOError('TinkerMainDatabase data integrity lost.')
+        else:
+            if maxID_meta is not None:
+                config_id = maxID_meta + 1
+            else:
+                config_id = 1
+
+        self.insertRows(table_name_meta, meta_list_of_tuples,
                         bind_replacement_list_of_tuples=[
                             (nCol-1,
                              self.getCurrentEpochTimestampSQLiteFuncStr(
                                  data_type='float'))])
+        self.insertRows(table_name_meta_text_seach,
+                        meta_text_search_list_of_tuples)
 
-        new_matched_config_ids = self.get_config_ids(*list_of_tuples[0])
-
-        if old_matched_config_ids is None:
-            config_id = new_matched_config_ids[0]
-        else:
-            config_id = np.setxor1d(old_matched_config_ids, new_matched_config_ids,
-                                    assume_unique=True)
-            if config_id.size == 1:
-                config_id = int(config_id[0]) # Need to convert to Python int object
-                # as trying to insert NumPy int object will fail with
-                # sqlite3.InterfaceError: Error binding parameter 0 - probably
-                # unsupported type.
-            else:
-                raise ValueError('Multiple matching config_id has been found.')
+        self.unlockDatabase()
 
         table_name = 'config_table'
 
@@ -1527,7 +1647,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                        config_synced_group_weight):
         """"""
 
-        table_name = 'config_meta_table'
+        table_name = '[config_meta_table full view]'
+        if table_name not in self.getViewNames(square_brackets=True):
+            self.create_temp_config_meta_full_table_view()
 
         if config_masar_id is None:
             config_masar_id_condition_str = '(config_masar_id is null)'

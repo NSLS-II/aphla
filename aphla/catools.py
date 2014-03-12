@@ -285,7 +285,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
     rcond : the rcond for cutting singular values. 
     check : stop if the orbit gets worse.
     wait : waiting (seconds) before check.
-    bc: str. bounds checking. 'exception', 'ignore', 'abort', 'boundary', None
+    bc: str. bounds checking. 'ignore', 'abort', 'boundary', None
     kkerlim: (ncor, 2) array. The limits for controllers
 
     Returns
@@ -306,12 +306,6 @@ def caRmCorrect(resp, kker, m, **kwarg):
     _logger.info("nkk={0}, nresp={1}, scale={2}, rcond={3}, wait={4}".format(
             len(kker), len(resp), scale, rcond, wait))
 
-    if lim is None:
-        lim = np.zeros((len(kker), 2), 'd')
-        for i,pv in enumerate(kker):
-            v = caget(pv, timeout=2, format=ct.FORMAT_CTRL)
-            lim[i,:] = (v.lower_ctrl_limit, v.upper_ctrl_limit)
-
     v0 = np.array(caget(resp), 'd')
     if ref is not None: v0 = v0 - ref
     
@@ -326,45 +320,32 @@ def caRmCorrect(resp, kker, m, **kwarg):
     k1 = k0 + dk*scale
 
     kkerin, k1in = [], []
-    # bounds checking
-    for i in range(len(kker)):
-        # force setting, rely on the lower level rules.
-        if bc is None or bc == 'force':
-            kkerin.append(kker[i])
-            k1in.append(k1[i])
-            continue
-
-        if k1[i] < lim[i,0]:
-            msg = "{0} value {1} exceeds lower boundary {2}".format(
-                    kker[i], k1[i], lim[i,0])
+    if not lim:
+        kkerin = [pv for pv in kker]
+        k1in   = [val for val in k1]
+    elif bc == "ignore":
+        # ignore the invalid value
+        kkerin, k1in = zip(*[(kker[i], k1in[i]) for i,v in enumerate(k1)
+                             if lim[i][0] < k1[i] < lim[i][1]])
+    elif bc == "abort":
+        if any([k1[i] < lim[i][0] or k1[i] > lim[i][1]
+                for i in range(len(k1))]):
+            msg = "New settings will be beyond the boundary, Abort."
             _logger.warn(msg)
-            if bc == 'abort':
-                return (1, msg)
-            elif bc == 'exception':
-                raise ValueError(msg)
-            elif bc == 'boundary':
-                kkerin.append(kker[i])
-                k1in.append(lim[i,0])
-            elif bc == 'ignore':
-                continue
-            # end of lower bc 
-        elif k1[i] > lim[i,1]:
-            msg = "{0} value {1} exceeds upper boundary {2}".format(
-                    kker[i], k1[i], lim[i,1])
-            _logger.warn(msg)
-            if bc == 'abort':
-                return (1, msg)
-            elif bc == 'exception':
-                raise ValueError(msg)
-            elif bc == 'boundary':
-                kkerin.append(kker[i])
-                k1in.append(lim[i,1])
-            elif bc == 'ignore':
-                continue
-            # end of lower bc 
-        else:
-            kkerin.append(kker[i])
-            k1in.append(k1[i])
+            return (1, msg)
+    elif bc == "autoscale":
+        alim = np.array(lim, 'd')
+        kbd0 = min([v for v in (alim[:,1] - k0)/dk if v > 0.0])
+        kbd1 = min([v for v in (alim[:,0] - k0)/dk if v > 0.0])
+        ksc = min([kbd0, kbd1, scale])
+        _logger.info("autoscale the set point with factor {0}({1})".format(
+                ksc, scale))
+        k1in = [val for val in k0 + dk*ksc]
+    elif bc is None:
+        kkerin = [pv for pv in kker]
+        k1in   = [val for val in k1]        
+    else:
+        raise RuntimeError("boundary values set but no method")
 
     # the real setting
     caput(kkerin, k1in)

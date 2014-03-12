@@ -54,8 +54,8 @@ HLA_VSEXT  = 'HLA:VSEXT'
 # HOME = os.environ['HOME'] will NOT work on Windows,
 # unless %HOME% is set on Windows, which is not the case by default.
 _home_hla = os.path.join(os.path.expanduser('~'), '.aphla')
-HLA_CONFIG_DIR = os.environ.get("HLA_CONFIG_DIR", _home_hla)
-HLA_DEBUG      = int(os.environ.get('HLA_DEBUG', 0))
+HLA_CONFIG_DIR = os.environ.get("APHLA_CONFIG_DIR", _home_hla)
+HLA_DEBUG      = int(os.environ.get('APHLA_DEBUG', 0))
 
 # the properties used for initializing Element are different than
 # ChannelFinderAgent (CFS or SQlite). This needs a re-map.
@@ -131,7 +131,7 @@ def _findMachinePath(machine):
     if os.path.isabs(machine) and os.path.isdir(machine):
         mname = os.path.basename(os.path.realpath(machine))
         return machine, mname
-    # try "machine" in HLA_CONFIG_DIR and ~/.aphla/ (default)
+    # try "machine" in APHLA_CONFIG_DIR and ~/.aphla/ (default)
     _logger.debug("trying path '%s' '%s'" % (HLA_CONFIG_DIR, machine))
     home_machine = os.path.join(HLA_CONFIG_DIR, machine)
     if os.path.isdir(home_machine):
@@ -352,11 +352,11 @@ def saveChannelFinderDb(dst, url = None):
 
     Parameters
     -----------
-    url : str. channel finder URL, default use environment *HLA_CFS_URL*
+    url : str. channel finder URL, default use environment *APHLA_CFS_URL*
     dst : str. destination db filename. 
     """
     cfa = ChannelFinderAgent()
-    if url is None: url = os.environ.get('HLA_CFS_URL', None)
+    if url is None: url = os.environ.get('APHLA_CFS_URL', None)
     if url is None: 
         raise RuntimeError("no URL defined for downloading")
     cfa.downloadCfs(url, property=[
@@ -392,7 +392,7 @@ def findCfaConfig(srcname, machine, submachines):
 
     - `${HLA_ROOT}/machine.csv`
     - `${HLA_ROOT}/machine.sqlite`
-    - channel finder in ${HLA_CFS_URL} with tags `aphla.sys.submachine`
+    - channel finder in ${APHLA_CFS_URL} with tags `aphla.sys.submachine`
     - `machine.csv` with aphla package.
     - `machine.sqlite` with aphla package.
 
@@ -418,7 +418,7 @@ def findCfaConfig(srcname, machine, submachines):
     # if only filename provided, searching known directories in order.
     # matching HLA_ROOT -> CF -> Package
     homesrc = os.path.join(HLA_ROOT, srcname)
-    HLA_CFS_URL = os.environ.get('HLA_CFS_URL', None)
+    HLA_CFS_URL = os.environ.get('APHLA_CFS_URL', None)
 
     if os.path.exists(homesrc + '.csv'):
         msg = "Creating lattice from '%s.csv'" % homesrc
@@ -428,7 +428,7 @@ def findCfaConfig(srcname, machine, submachines):
         msg = "Creating lattice from '%s.sqlite'" % homesrc
         _logger.info(msg)
         cfa.importSqlite(homesrc + '.sqlite')
-    elif os.environ.get('HLA_CFS_URL', None):
+    elif os.environ.get('APHLA_CFS_URL', None):
         msg = "Creating lattice from channel finder '%s'" % HLA_CFS_URL
         _logger.info(msg)
         #cfa.downloadCfs(HLA_CFS_URL, property=[
@@ -544,19 +544,18 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
     return lat
 
 
-def setGoldenLattice(lat, h5fname, grp = "golden"):
+def setGoldenLattice(lat, h5fname, grp = "Golden"):
     import h5py
     f = h5py.File(h5fname, 'r')
     if grp not in f:
         _logger.warn("no '%s' in '%s'. Ignore" % (grp, h5fname))
         return
     g = f[grp]
-    unitsys = g['value'].attrs['unitsys']
-    if unitsys == '': unitsys = None
-    for i,elemname in enumerate(g['element']):
-        elem = lat.getElementList(elemname)
-        if not elem: continue
-        elem[0].setGolden(g['field'][i], g['value'][i], unitsys=unitsys)
+    for elem in lat.getElementList(g.keys()):
+        g1 = g[elem.name]
+        for fld in g1.keys():
+            ds = g1[fld]
+            elem.setGolden(fld, ds, unitsys=ds.attrs.get("unitsys", None))
     # the waveform ... ignored now
 
 

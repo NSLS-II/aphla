@@ -44,7 +44,6 @@ class Column():
 
         self.default_value = default_value
 
-
 ########################################################################
 class ForeignKeyConstraint():
     """"""
@@ -88,8 +87,6 @@ class UniqueTableConstraint():
 
         self.column_name_list = column_name_list
 
-
-
 ########################################################################
 class SQLiteDatabase():
     """"""
@@ -115,10 +112,6 @@ class SQLiteDatabase():
                 return
 
         self.cur = self.con.cursor()
-
-        # for WingIDE real-time assistance
-        isinstance(self.con, sqlite3.Connection)
-        isinstance(self.cur, sqlite3.Cursor)
 
     #----------------------------------------------------------------------
     def close(self):
@@ -264,7 +257,6 @@ class SQLiteDatabase():
         column_name_list = [d['column_name'] for d in table_info_dict_list]
         return column_name_list
 
-
     #----------------------------------------------------------------------
     def getTableInfo(self, table_name):
         """"""
@@ -279,9 +271,6 @@ class SQLiteDatabase():
         #   t[3] = 1 if NOT NULL is specified
         #   t[4] = default value (Unicode)
         #   t[5] = 1 if integer primary key, 0 otherwise
-
-        #if DEBUG:
-            #pprint(table_info_tuple)
 
         table_info_dict_list = []
         for tup in table_info_tuple:
@@ -318,7 +307,9 @@ class SQLiteDatabase():
     #----------------------------------------------------------------------
     def getMaxInColumn(self, table_name, column_name,
                        condition_str='', order_by_str=''):
-        """"""
+        """
+        Returns None where there is no row.
+        """
 
         sql_cmd = self.createSelectSQLStatement(table_name,
             column_name_list=['max('+column_name+')'],
@@ -333,12 +324,6 @@ class SQLiteDatabase():
     #----------------------------------------------------------------------
     def getAllColumnDataFromTable(self, table_name):
         """"""
-
-        #self.cur.execute('SELECT * FROM ' + table_name)
-
-        #all_rows = self.cur.fetchall()
-
-        #return zip(*all_rows)
 
         return self.getColumnDataFromTable(table_name, column_name_list=None,
                                            condition_str='', order_by_str='',
@@ -355,7 +340,6 @@ class SQLiteDatabase():
         Return a list of column data (tuples).
 
         binding_tuple will be inserted into '?' appearing in the SQL command
-
         """
 
         sql_cmd = self.createSelectSQLStatement(table_name, column_name_list,
@@ -366,9 +350,6 @@ class SQLiteDatabase():
         if binding_tuple is not None:
             self.cur.execute(sql_cmd, binding_tuple)
             z = self.cur.fetchall()
-            #z = []
-            #for row in self.cur:
-                #z.append(row)
 
         elif binding_list_of_tuples is not None:
             zall = []
@@ -400,6 +381,38 @@ class SQLiteDatabase():
             self.cur.execute(sql_cmd)
         else:
             self.cur.execute(sql_cmd, binding_tuple)
+
+    #----------------------------------------------------------------------
+    def createFTS4VirtualTable(self, table_name, column_definition_list,
+                               tokenizer_str=''):
+        """"""
+
+        self.dropTable(table_name)
+
+        sql_cmd = 'CREATE VIRTUAL TABLE ' + table_name + ' using fts4 ('
+
+        for col in column_definition_list:
+            if isinstance(col, Column):
+                sql_cmd += col.name
+            else:
+                raise ValueError('Unexpected column class: '+type(col))
+
+            sql_cmd += ', '
+
+        if tokenizer_str:
+            sql_cmd += 'tokenize={0:s})'.format(tokenizer_str)
+        else:
+            sql_cmd = sql_cmd[:-2] + ')'
+
+        try:
+            if DEBUG:
+                print sql_cmd
+
+            with self.con:
+                self.cur.execute(sql_cmd)
+        except:
+            traceback.print_exc()
+            print 'SQL cmd:', sql_cmd
 
     #----------------------------------------------------------------------
     def createTable(self, table_name, column_definition_list):
@@ -488,7 +501,6 @@ class SQLiteDatabase():
         with self.con:
             self.cur.execute('DROP VIEW IF EXISTS '+view_name)
 
-
     #----------------------------------------------------------------------
     def insertTable(self, table_name, foreign_database_name, foreign_table_name,
                     local_column_name_list=None, foreign_column_name_list=None,
@@ -501,20 +513,14 @@ class SQLiteDatabase():
         else:
             local_column_name_str = '(' + ','.join(local_column_name_list) + ')'
 
-        #if foreign_column_name_list is None:
-            #foreign_column_name_list = ['*']
-        #foreign_column_name_str = ','.join(foreign_column_name_list)
-
         select_sql_cmd = self.createSelectSQLStatement(
             foreign_database_name + '.' + foreign_table_name,
             column_name_list=foreign_column_name_list,
             condition_str=condition_str, order_by_str=order_by_str
         )
 
-        sql_cmd = 'INSERT INTO ' + table_name + local_column_name_str + ' ' + select_sql_cmd
-        #sql_cmd = 'INSERT INTO ' + table_name + local_column_name_str + \
-            #' SELECT ' + foreign_column_name_str + ' FROM ' + \
-            #foreign_database_name + '.' + foreign_table_name
+        sql_cmd = ('INSERT INTO ' + table_name + local_column_name_str + ' ' +
+                   select_sql_cmd)
 
         if binding_tuple is None:
             self.cur.execute(sql_cmd)
@@ -631,7 +637,6 @@ class SQLiteDatabase():
         else:
             return True
 
-
     #----------------------------------------------------------------------
     def setForeignKeysEnabled(self, TF):
         """"""
@@ -643,3 +648,20 @@ class SQLiteDatabase():
 
         self.cur.execute('PRAGMA foreign_keys = '+state)
         self.con.commit()
+
+    #----------------------------------------------------------------------
+    def lockDatabase(self):
+        """"""
+
+        self.cur.execute('PRAGMA locking_mode = EXCLUSIVE')
+        self.cur.execute('BEGIN EXCLUSIVE')
+        self.con.commit()
+
+    #----------------------------------------------------------------------
+    def unlockDatabase(self):
+        """"""
+
+        self.cur.execute('PRAGMA locking_mode = NORMAL')
+        self.con.commit()
+
+        self.getTableNames()
