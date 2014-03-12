@@ -93,7 +93,7 @@ setup(
             'aplauncher = aphla.gui.aplauncher:main',
             'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',
             'apchx = aphla.gui.channelexplorer:main',
-            'aptinker = aphla.gui.aplattuner:main'
+            'aptinker = aphla.gui.aptinker:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",
