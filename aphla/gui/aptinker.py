@@ -1506,10 +1506,22 @@ def main():
     if ap.machines._lat is None:
         try:
             ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
-        except RuntimeError as e:
-            # TODO: remove this error handling
-            config.HLA_MACHINE = 'nsls2v2'
-            ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
+            success = True
+            print 'Successfully loaded {0}'.format(config.HLA_MACHINE)
+        except:
+            print 'Failed to load {0}'.format(config.HLA_MACHINE)
+            success = False
+
+        if not success:
+            for machine_name in ap.machines.machines():
+                if machine_name != config.HLA_MACHINE:
+                    try:
+                        ap.machines.load(machine_name,
+                                         use_cache=use_cached_lattice)
+                        print 'Successfully loaded {0}'.format(machine_name)
+                        break
+                    except:
+                        print 'Failed to load {0}'.format(machine_name)
 
     # If Qt is to be used (for any GUI) then the cothread library needs to
     # be informed, before any work is done with Qt. Without this line
