@@ -788,12 +788,20 @@ class App(QObject):
     def _launchChannelExplorer(self):
         """"""
 
+        if not self.use_cached_lattice:
+            save_cache = True
+        else:
+            save_cache = False
+
         result = channelexplorer.make(
             modal=True, init_object_type='channel',
             can_modify_object_type=False,
             output_type=channelexplorer.TYPE_OBJECT,
             caller='aptinker', use_cached_lattice=self.use_cached_lattice,
-            debug=False)
+            save_lattice_to_cache=save_cache, debug=False)
+
+        self.use_cached_lattice = True # Use cache from 2nd time on to reduce
+        # loading time.
 
         selected_channels = result['dialog_result']
 
