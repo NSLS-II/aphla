@@ -268,10 +268,12 @@ class ConfigAbstractModel(QObject):
 
         dup_pvsp_names = self.check_duplicate_pvsp()
         if dup_pvsp_names != []:
+            dup_pvsp_names.sort()
             msg = QMessageBox()
             msg.setText(
                 'Duplicate setpoint PVs are NOT allowed in aptinker config.')
-            msg.setInformativeText('\n'.join(dup_pvsp_names))
+            msg.setDetailedText('\n'.join(['Duplicate Setpoint PVs:']+
+                                          dup_pvsp_names))
             msg.exec_()
             return False
 
