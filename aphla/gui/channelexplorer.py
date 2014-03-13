@@ -274,6 +274,10 @@ class Filter():
                     except: # For DIPOLE, there is no field specified
                         x = element.pv()[:]
 
+            elif field == '':
+
+                x = ''
+
             elif propertyName == 'golden':
 
                 x = element._field[field].golden[0]
