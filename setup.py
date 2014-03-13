@@ -73,6 +73,7 @@ setup(
     version = VERSION,
     packages = find_packages(exclude=['tests']),
     include_package_data = True,
+    package_data = {'aphla.gui.TinkerUtils': ['tinker_columns.sqlite']},
     #package_data = {
     #    # any these files
     #    'aphla.gui': ['data/*'],

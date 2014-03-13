@@ -37,6 +37,8 @@ from PyQt4.QtGui import (
 )
 
 import aphla as ap
+import utils.gui_icons
+from aphla.gui.utils.orderselector import ColumnsDialog
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
 from TinkerUtils.ui_aptinker_pref import Ui_Dialog as Ui_Dialog_Pref
 from TinkerUtils import (config, tinkerModels,
@@ -46,12 +48,11 @@ from TinkerUtils.tinkerModels import (
     ConfigMetaTableModel,
     ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
-from TinkerUtils.tinkerdb import (TinkerMainDatabase)
+from TinkerUtils.tinkerdb import (TinkerMainDatabase, SnapshotDatabase,
+                                  SessionDatabase)
 from TinkerUtils.dbviews import (
     ConfigDBViewWidget, SnapshotDBViewWidget, ConfigMetaDBViewWidget,
     SnapshotDBTableViewItemDelegate)
-import utils.gui_icons
-from aphla.gui.utils.orderselector import ColumnsDialog
 
 HOME_PATH             = osp.expanduser('~')
 APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
@@ -60,6 +61,11 @@ if not osp.exists(APHLA_USER_CONFIG_DIR):
 
 PREF_JSON_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
                               'aptinker_startup_pref.json')
+
+# Check existence of DB files. Initialize DB file, if not.
+_ = TinkerMainDatabase(); _.close()
+_ = SnapshotDatabase()  ; _.close()
+_ = SessionDatabase()   ; _.close()
 
 #----------------------------------------------------------------------
 def get_preferences(default=False):

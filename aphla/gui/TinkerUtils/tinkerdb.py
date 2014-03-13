@@ -1,9 +1,5 @@
-#! /usr/bin/env python
-import sip
-sip.setapi('QString', 2)
-sip.setapi('QVariant', 2)
-
 import sys, os
+import os.path as osp
 import numpy as np
 from time import time, strftime, localtime, sleep
 import h5py
@@ -54,11 +50,16 @@ class TinkerMainDatabase(SQLiteDatabase):
                                 create_folder=False)
 
         if self.getTableNames() == []:
+            print 'aptinker Main database file not found.'
+            print 'Creating and initializing the Main database...'
             self._initTables()
+            print 'Done'
 
     #----------------------------------------------------------------------
     def _initTables(self):
         """"""
+
+        self.setForeignKeysEnabled(False)
 
         self.dropAllTables()
 
@@ -1685,17 +1686,22 @@ class SnapshotDatabase(SQLiteDatabase):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, filepath):
+    def __init__(self, filepath=config.SS_DB_FILEPATH):
         """Constructor"""
 
         SQLiteDatabase.__init__(self, filepath=filepath, create_folder=False)
 
         if self.getTableNames() == []:
+            print 'aptinker Snapshot database file not found.'
+            print 'Creating and initializing the Snapshot database...'
             self._initTables()
+            print 'Done'
 
     #----------------------------------------------------------------------
     def _initTables(self):
         """"""
+
+        self.setForeignKeysEnabled(False)
 
         self.dropAllTables()
 
@@ -1725,17 +1731,22 @@ class SessionDatabase(SnapshotDatabase):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, filepath):
+    def __init__(self):
         """Constructor"""
 
-        SnapshotDatabase.__init__(self, filepath)
+        SnapshotDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH)
 
         if self.getTableNames() == []:
+            print 'aptinker Session database file not found.'
+            print 'Creating and initializing the Session database...'
             self._initTables()
+            print 'Done'
 
     #----------------------------------------------------------------------
     def _initTables(self):
         """"""
+
+        self.setForeignKeysEnabled(False)
 
         self.dropAllTables()
 
