@@ -29,8 +29,8 @@ class UcAbstract(object):
     """
     def __init__(self, src, dst):
         self.direction = (src, dst)
-        self.srcunit = None
-        self.dstunit = None
+        self.srcunit = src
+        self.dstunit = dst
         self.polarity = 1
         self.invertible = 0
 
@@ -229,8 +229,11 @@ def loadUnitConversionH5(lat, h5file, group):
                     k, fam))
             eobjs += egrps
 
-        _logger.info("unitconversion data for elems={0}, fams={1}".format(elems, fams))
-        _logger.info("unitconversion will be updated for {0}".format([e.name for e in eobjs]))
+        _logger.info("unitconversion data {0}[{1}] -> {2}[{3}] for elems={4}, "
+                     "fams={5}".format(
+                usrcsys, usrc, udstsys, udst, elems, fams))
+        _logger.info("unitconversion will be updated for {0}".format(
+                [e.name for e in eobjs]))
         _logger.info("used calibration factor {0}".format(yfac))
 
         for eobj in eobjs:
@@ -244,8 +247,8 @@ def loadUnitConversionH5(lat, h5file, group):
                     eobj.addAliasField(fld, realfld)
 
             _logger.info("adding unit conversion for {0}.{1}, "
-                         "from {2} to {3}".format(
-                    eobj.name, fld, usrcsys, udstsys))
+                         "from {2}[{3}] to {4}[{5}]".format(
+                    eobj.name, fld, usrcsys, usrc, udstsys, udst))
             eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
 
 def loadUnitConversionIni(lat, fname):
