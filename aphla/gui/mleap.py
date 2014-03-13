@@ -213,6 +213,9 @@ class OrbitPlotMainWindow(QMainWindow):
                 self.newElementPlots, "VCOR", "y"))
 
         self.openMenu.addSeparator()
+        self.openMenu.addAction("Open ORM", self.loadOrm)
+
+        self.openMenu.addSeparator()        
         self.openMenu.addAction("Save Lattice ...", self.saveSnapshot)
 
         fileQuitAction = QAction(QIcon(":/file_quit.png"), "&Quit", self)
@@ -522,6 +525,27 @@ class OrbitPlotMainWindow(QMainWindow):
         #    self.elemeditor.setEnabled(False)
         pass
 
+    def loadOrm(self):
+        fileName = QtGui.QFileDialog.getOpenFileName(
+            self, "Open Orbit Response Matrix",
+            "",
+            "ORM Files (*.h5 *.hdf5);;Text File (*.txt);;All Files(*)")
+        fileName = str(fileName)
+        try:
+            m = np.loadtxt(fileName)
+        except:
+            QMessageBox.critical(self, "Abort", "Invalid matrix data")
+            return
+        mach, lat = self.getCurrentMachLattice()
+        # assuming we already have the PV, name, field but just want to
+        # replace the matrix elements.
+        assert np.shape(m) == np.shape(lat.ormdata.m)
+        nx, ny = np.shape(lat.ormdata.m)
+        for i in range(nx):
+            for j in range(ny):
+                lat.ormdata.m[i,j] = m[i,j]
+
+
     def saveSnapshot(self):
         latdict = dict([(k,v[0]) for k,v in self._mach.items()])
         mach, lat = self.getCurrentMachLattice()
@@ -830,7 +854,7 @@ def main(par=None):
     app.processEvents()
 
     
-    mlist = os.environ.get('HLA_MACHINES', '').split(";")
+    mlist = os.environ.get('APHLA_MACHINES', '').split(";")
     if not mlist: mlist = aphla.machines.machines()
     machs, infos = [], []
     for m in mlist:

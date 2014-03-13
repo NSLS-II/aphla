@@ -10,6 +10,7 @@ __all__ = ['OrmData', 'TwissData', 'saveSnapshotH5']
 
 import os
 from os.path import splitext
+from fnmatch import fnmatch
 import numpy as np
 import shelve
 import h5py
@@ -44,9 +45,9 @@ class OrmData:
         self.cor = []
 
         # optional PV info, EPICS only
-        self._bpmpv = None
-        self._corpvrb = None
-        self._corpvsp = None
+        self.bpm_pv = None
+        self.cor_pvrb = None
+        self.cor_pv = None
 
         # 3d raw data
         self._mask = None
@@ -81,6 +82,13 @@ class OrmData:
         name, spos, plane = zip(*self.trim)
         dst.attrs["cor_name"] = name
         dst.attrs["cor_field"] = plane
+        if self.bpm_pv:
+            dst.attrs["bpm_pv"] = self.bpm_pv
+        if self.cor_pv:
+            dst.attrs["cor_pv"] = self.cor_pv
+        if self.cor_pvrb:
+            dst.attrs["cor_pvrb"] = self.cor_pvrb
+            
         f.close()
 
     def _load_hdf5(self, filename, group = "OrbitResponseMatrix"):
@@ -96,7 +104,7 @@ class OrmData:
         self.bpm = zip(g["m"].attrs["bpm_name"], g["m"].attrs["bpm_field"])
         self.bpm_pv = g["m"].attrs.get("bpm_pv", None)
         self.cor = zip(g["m"].attrs["cor_name"], g["m"].attrs["cor_field"])
-        self.cor_pvsp = g["m"].attrs.get("cor_pv", None)
+        self.cor_pv = g["m"].attrs.get("cor_pv", None)
         self.cor_pvrb = None
         nbpm, ncor = len(self.bpm), len(self.cor)
         self.m = np.zeros((nbpm, ncor), 'd')
@@ -118,14 +126,6 @@ class OrmData:
         fmt = kwargs.pop("format", None)
         if fmt == 'HDF5' or filename.endswith(".hdf5"):
             self._save_hdf5(filename, **kwargs)
-        elif fmt == 'shelve' or filename.endswith(".pkl"):
-            f = shelve.open(filename, 'c')
-            f['orm.m'] = self.m
-            f['orm.bpm'] = self.bpm
-            f['orm.trim'] = self.trim
-            f['orm._rawdata_.raworbit'] = self._raworbit
-            f['orm._rawdata_.rawkick']   = self._rawkick
-            f['orm._rawdata_.mask']      = self._mask
         else:
             raise ValueError("not supported file format: %s" % format)
 
@@ -139,14 +139,6 @@ class OrmData:
         fmt = kwargs.get("format", None)
         if fmt == 'HDF5' or filename.endswith(".hdf5"):
             self._load_hdf5(filename, **kwargs)
-        elif fmt == 'shelve' or filename.endswith(".pkl"):
-            f = shelve.open(filename, 'r')
-            self.bpm = f["orm.bpm"]
-            self.trim = f["orm.trim"]
-            self.m = f["orm.m"]
-            self._raworbit = f["orm._rawdata_.raworbit"]
-            self._rawkick  = f["orm._rawdata_.rawkick"]
-            self._mask     = f["orm._rawdata_.mask"]
         else:
             raise ValueError("format %s is not supported" % format)
 
@@ -309,8 +301,46 @@ class TwissData:
                     dat.append(None)
             break
         return dat
-            
-    def get(self, elemlst, col, **kwargs):
+
+    def get(self, names, col, **kwargs):
+        """get a list of twiss functions when given a name pattern or a list of
+        element names.
+        
+        Parameters
+        -----------
+        names : list, str 
+            name pattern or list of elements.
+        col : list. 
+            columns can be 's', 'betax', 'betay', 'alphax', 'alphay', 'phix',
+            'phiy', 'etax', 'etaxp', 'etay', 'etayp'. 
+
+        Examples
+        ---------
+        >>> getTwiss(['E1', 'E2'], col=('s', 'betax', 'betay'))
+
+        Note: this matches the line of twiss data record for name and twiss
+        data. Depend on the initial configured data, most likely the data is
+        at the end of element. Use :func:`at`
+        """
+        elemlst = names
+        if isinstance(names, str):
+            ret = []
+            for i,e in enumerate(self.element):
+                if not fnmatch(e, names): continue
+                dat = []
+                for c in col:
+                    if c in self._cols:
+                        j = self._cols.index(c)
+                        dat.append(self._twtable[i,j])
+                    else:
+                        raise ValueError("column '%s' is not in twiss data" % c)
+                ret.append(dat)
+            return np.array(ret, 'd')
+
+        return self._get_elems(elemlst, col, **kwargs)
+
+        
+    def _get_elems(self, elemlst, col, **kwargs):
         """get a list of twiss functions when given a list of element names.
         
         Parameters

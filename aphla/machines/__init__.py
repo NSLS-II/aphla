@@ -544,19 +544,18 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
     return lat
 
 
-def setGoldenLattice(lat, h5fname, grp = "golden"):
+def setGoldenLattice(lat, h5fname, grp = "Golden"):
     import h5py
     f = h5py.File(h5fname, 'r')
     if grp not in f:
         _logger.warn("no '%s' in '%s'. Ignore" % (grp, h5fname))
         return
     g = f[grp]
-    unitsys = g['value'].attrs['unitsys']
-    if unitsys == '': unitsys = None
-    for i,elemname in enumerate(g['element']):
-        elem = lat.getElementList(elemname)
-        if not elem: continue
-        elem[0].setGolden(g['field'][i], g['value'][i], unitsys=unitsys)
+    for elem in lat.getElementList(g.keys()):
+        g1 = g[elem.name]
+        for fld in g1.keys():
+            ds = g1[fld]
+            elem.setGolden(fld, ds, unitsys=ds.attrs.get("unitsys", None))
     # the waveform ... ignored now
 
 
