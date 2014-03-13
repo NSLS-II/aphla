@@ -1246,7 +1246,9 @@ class TinkerMainDatabase(SQLiteDatabase):
         elif isinstance(comparison_value, int):
             str_format = '{0:s}={1:d}'
         elif isinstance(comparison_value, float):
-            str_format = '{{0:s}}="{{1:.{0:d}f}}"'.format(LENGTH_METER_PRECISION)
+            conv_format = '{{0:.{0:d}f}}'.format(LENGTH_METER_PRECISION)
+            comparison_value = conv_format.format(comparison_value)
+            str_format = '{0:s}="{1:s}"'
         elif isinstance(comparison_value, type(None)):
             comparison_value = ''
             str_format = '{0:s}="{1:s}"'
