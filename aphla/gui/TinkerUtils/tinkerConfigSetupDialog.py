@@ -797,9 +797,8 @@ class App(QObject):
 
         selected_channels = result['dialog_result']
 
-        if selected_channels != {}:
-            selected_channels, channelGroupInfo = \
-                self._askChannelGroupNameAndWeight(selected_channels)
+        if selected_channels['selection'] != []:
+            channelGroupInfo = self._askChannelGroupNameAndWeight()
             self.model.importNewChannelsFromSelector(selected_channels,
                                                      channelGroupInfo)
 
@@ -809,7 +808,7 @@ class App(QObject):
 
 
     #----------------------------------------------------------------------
-    def _askChannelGroupNameAndWeight(self, selected_channels):
+    def _askChannelGroupNameAndWeight(self):
         """"""
 
         prompt_text = ('Do you want to group the selected channels together?\n' +
@@ -839,7 +838,7 @@ class App(QObject):
         else:
             channelGroupInfo = {}
 
-        return selected_channels, channelGroupInfo
+        return channelGroupInfo
 
 
 #----------------------------------------------------------------------
