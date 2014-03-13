@@ -5126,7 +5126,19 @@ class LauncherApp(QObject):
             if subs_cmd.startswith('run-css '):
                 m = re.search(r'-w\s+{0:s}/css_workspaces/(\d)'.format(
                     APHLA_USER_CONFIG_DIR.replace('.', r'\.')), subs_cmd)
-                workspace_id_str = m.group(1)
+                if m is not None:
+                    workspace_id_str = m.group(1)
+                else:
+                    currently_used_workspace_ids = \
+                        self.model.css_workspace_db.getColumnDataFromTable(
+                            'workspace_table',
+                            column_name_list=['workspace_id'],
+                            condition_str='pid != -1')
+                    if currently_used_workspace_ids == []:
+                        workspace_id_str = '1'
+                    else:
+                        workspace_id_str = str(
+                            max(currently_used_workspace_ids[0])+1)
                 self.model.css_workspace_db.changeValues(
                     'workspace_table', 'pid', '{0:d}'.format(p.pid),
                     condition_str='workspace_id={0:s}'.format(workspace_id_str),
