@@ -1412,7 +1412,10 @@ class TinkerMainDatabase(SQLiteDatabase):
         if pv_str == '':
             return 1 # pv_id for non-specified PV is 1.
 
-        cainfo = catools.connect(pv_str, cainfo=True, throw=False)
+        cainfo = catools.connect(str(pv_str), cainfo=True, throw=False)
+        # ^ Need to make sure `pv_str` is type "str", not "unitcode".
+        # Otherwise, catools.connect() will divide the unicode into a list of
+        # each character.
         if cainfo.ok:
             array_size      = cainfo.count
             pv_data_type_id = cainfo.datatype + 1
@@ -1526,7 +1529,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                 ('pvsp_id={0:d} and pvrb_id={1:d} and '
                  'unitsys_id={2:d} and unitconv_toraw_id={3:d} '
                  'and unitconv_fromraw_id={4:d} and '
-                 'channel_name_id={5:d} and aphla_ch_id={6:d}').
+                 'channel_name_id={5:d}').
                 format(pvsp_id, pvrb_id, unitsys_id,
                        unitconv_toraw_id, unitconv_fromraw_id,
                        channel_name_id)

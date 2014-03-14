@@ -600,7 +600,8 @@ class ConfigTableModel(QAbstractTableModel):
         # can be sortable
         float_keys = ['elem_efflen', 'elem_physlen', 'elem_sb', 'elem_se']
         for k in float_keys:
-            self.d[k] = [float(x) for x in self.d[k]]
+            self.d[k] = [float(x) if x is not None else np.nan
+                         for x in self.d[k]]
 
         if '[unitconv_table text view]' not in self.db.getViewNames():
             self.db.create_temp_unitconv_table_text_view()
