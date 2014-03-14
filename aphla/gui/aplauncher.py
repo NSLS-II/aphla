@@ -153,23 +153,25 @@ from aphla.gui.utils.orderselector import ColumnsDialog
 from aphla.gui.utils import xmltodict
 from aphla.gui.utils.hlsqlite import SQLiteDatabase, Column
 
-HOME_PATH      = osp.expanduser('~')
-APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
-if not osp.exists(APHLA_CONF_DIR):
-    os.makedirs(APHLA_CONF_DIR)
+HOME_PATH             = osp.expanduser('~')
+APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_USER_CONFIG_DIR):
+    os.makedirs(APHLA_USER_CONFIG_DIR)
 APHLA_APSCRIPTS_DIR = os.getenv('APHLA_APSCRIPTS_DIR',
                                 '/epics/op/apps/apscripts')
 
 GROUP_XML_FILENAME     = 'aplauncher_group_hierarchy.xml'
 USER_XML_FILENAME      = 'aplauncher_user_hierarchy.xml'
 USER_TEMP_XML_FILENAME = USER_XML_FILENAME + '.temp'
-GROUP_XML_FILEPATH     = osp.join(APHLA_APSCRIPTS_DIR, GROUP_XML_FILENAME)
-USER_XML_FILEPATH      = osp.join(APHLA_CONF_DIR     , USER_XML_FILENAME)
-USER_TEMP_XML_FILEPATH = osp.join(APHLA_CONF_DIR     , USER_TEMP_XML_FILENAME)
+GROUP_XML_FILEPATH     = osp.join(APHLA_APSCRIPTS_DIR  , GROUP_XML_FILENAME)
+USER_XML_FILEPATH      = osp.join(APHLA_USER_CONFIG_DIR, USER_XML_FILENAME)
+USER_TEMP_XML_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR, USER_TEMP_XML_FILENAME)
 
-PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'aplauncher_startup_pref.json')
+PREF_JSON_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
+                              'aplauncher_startup_pref.json')
 
-CSS_WORKSPACE_DB_FILEPATH = osp.join(APHLA_CONF_DIR, 'aplauncher_css_ws.sqlite')
+CSS_WORKSPACE_DB_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
+                                     'aplauncher_css_ws.sqlite')
 
 ## TODO ##
 # *) Highlight the search matching portion of texts in QTreeView and QListView
@@ -389,11 +391,12 @@ class LauncherModel(QStandardItemModel):
 
                 new_id = unused_workspace_ids[0][0]
                 workspace_path = osp.join(
-                    APHLA_CONF_DIR, 'css_workspaces', str(new_id))
+                    APHLA_USER_CONFIG_DIR, 'css_workspaces', str(new_id))
                 if not osp.exists(workspace_path):
-                    if not osp.exists(osp.join(APHLA_CONF_DIR,
+                    if not osp.exists(osp.join(APHLA_USER_CONFIG_DIR,
                                                'css_workspaces')):
-                        os.makedirs(osp.join(APHLA_CONF_DIR, 'css_workspaces'))
+                        os.makedirs(osp.join(APHLA_USER_CONFIG_DIR,
+                                             'css_workspaces'))
                     else:
                         os.makedirs(workspace_path)
                 splitted_text_after_subs[i] = \
@@ -5122,7 +5125,7 @@ class LauncherApp(QObject):
                                       cmd=command_expression))
             if subs_cmd.startswith('run-css '):
                 m = re.search(r'-w\s+{0:s}/css_workspaces/(\d)'.format(
-                    APHLA_CONF_DIR.replace('.', r'\.')), subs_cmd)
+                    APHLA_USER_CONFIG_DIR.replace('.', r'\.')), subs_cmd)
                 workspace_id_str = m.group(1)
                 self.model.css_workspace_db.changeValues(
                     'workspace_table', 'pid', '{0:d}'.format(p.pid),

@@ -32,29 +32,34 @@ from PyQt4.QtGui import (
     QSortFilterProxyModel, QGridLayout, QSplitter, QTreeView, QTableView,
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
-    QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont
+    QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont,
+    QIntValidator, QItemSelectionModel
 )
 
 import aphla as ap
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
 from TinkerUtils.ui_aptinker_pref import Ui_Dialog as Ui_Dialog_Pref
-from TinkerUtils.ui_tinkerConfigDBSelector import Ui_Dialog as Ui_Dialog_ConfigDB
-from TinkerUtils import (config, tinkerConfigSetupDialog, tinkerModels,
+from TinkerUtils import (config, tinkerModels,
+                         tinkerConfigSetupDialog, tinkerConfigDBSelector,
                          datestr, datestr_ns)
 from TinkerUtils.tinkerModels import (
+    ConfigMetaTableModel,
     ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
-from TinkerUtils.dbviews import (ConfigDBViewWidget, SnapshotDBViewWidget)
+from TinkerUtils.dbviews import (
+    ConfigDBViewWidget, SnapshotDBViewWidget, ConfigMetaDBViewWidget,
+    SnapshotDBTableViewItemDelegate)
 import utils.gui_icons
 from aphla.gui.utils.orderselector import ColumnsDialog
 
-HOME_PATH      = osp.expanduser('~')
-APHLA_CONF_DIR = osp.join(HOME_PATH, '.aphla')
-if not osp.exists(APHLA_CONF_DIR):
-    os.makedirs(APHLA_CONF_DIR)
+HOME_PATH             = osp.expanduser('~')
+APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
+if not osp.exists(APHLA_USER_CONFIG_DIR):
+    os.makedirs(APHLA_USER_CONFIG_DIR)
 
-PREF_JSON_FILEPATH = osp.join(APHLA_CONF_DIR, 'aptinker_startup_pref.json')
+PREF_JSON_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
+                              'aptinker_startup_pref.json')
 
 #----------------------------------------------------------------------
 def get_preferences(default=False):
@@ -77,24 +82,6 @@ def get_preferences(default=False):
         )
 
     return pref
-
-########################################################################
-class ConfigDBSelector(QDialog, Ui_Dialog_ConfigDB):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-
-        QDialog.__init__(self)
-
-        self.setupUi(self)
-
-        self.setWindowTitle('Select Configuration from Database')
-
-        gridLayout = QGridLayout(self.groupBox_selected_conf)
-        self.configDBView = ConfigDBViewWidget(self.groupBox_selected_conf,
-                                               gridLayout)
 
 ########################################################################
 class PreferencesEditor(QDialog, Ui_Dialog_Pref):
@@ -559,12 +546,12 @@ class TinkerDockWidget(QDockWidget):
 
         isinstance(config_abstract_model, ConfigAbstractModel)
 
-        self._initUI(parent)
-
         self.config_abstract = config_abstract_model
 
         self.ss_abstract = SnapshotAbstractModel(config_abstract_model)
         self.ss_table = SnapshotTableModel(self.ss_abstract)
+
+        self._initUI(parent)
 
         self.lineEdit_auto_caget_after_caput_delay.setText(
             str(self.ss_abstract.auto_caget_delay_after_caput))
@@ -617,6 +604,10 @@ class TinkerDockWidget(QDockWidget):
         self.ssDBView.on_column_selection_change(vis_col_names,
                                                  force_visibility_update=True)
 
+        self.last_caget_sent_ts_lineEdits_updated = False
+        self.last_caput_sent_ts_lineEdits_updated = False
+        self.update_last_ca_sent_ts()
+
         self.customTitleBar = CustomDockWidgetTitleBar(self)
         self.setTitleBarWidget(self.customTitleBar)
         self.connect(self.customTitleBar, SIGNAL('customDockTitleChanged'),
@@ -652,6 +643,66 @@ class TinkerDockWidget(QDockWidget):
                      self.ss_abstract.multiply)
         self.connect(self.pushButton_divide, SIGNAL('clicked()'),
                      self.ss_abstract.divide)
+
+        self.connect(self.lineEdit_caget_timeout, SIGNAL('editingFinished()'),
+                     self.validate_timeout)
+        self.connect(self.lineEdit_caput_timeout, SIGNAL('editingFinished()'),
+                     self.validate_timeout)
+
+        self.connect(self.ss_abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
+                     self.update_last_ca_sent_ts)
+
+    #----------------------------------------------------------------------
+    def update_last_ca_sent_ts(self):
+        """"""
+
+        if self.ss_abstract.caget_sent_ts_second is not None:
+            self.lineEdit_caget_sent_ts_second_step.setText(datestr(
+                self.ss_abstract.caget_sent_ts_second))
+            self.lineEdit_caget_sent_ts_second_target.setText(datestr(
+                self.ss_abstract.caget_sent_ts_second))
+            if not self.last_caget_sent_ts_lineEdits_updated:
+                self.resizeLineEditToContents(
+                    self.lineEdit_caget_sent_ts_second_step)
+                self.resizeLineEditToContents(
+                    self.lineEdit_caget_sent_ts_second_target)
+                self.last_caget_sent_ts_lineEdits_updated = True
+        if self.ss_abstract.caput_sent_ts_second is not None:
+            self.lineEdit_caput_sent_ts_second_step.setText(datestr(
+                self.ss_abstract.caput_sent_ts_second))
+            self.lineEdit_caput_sent_ts_second_target.setText(datestr(
+                self.ss_abstract.caput_sent_ts_second))
+            if not self.last_caput_sent_ts_lineEdits_updated:
+                self.resizeLineEditToContents(
+                    self.lineEdit_caput_sent_ts_second_step)
+                self.resizeLineEditToContents(
+                    self.lineEdit_caput_sent_ts_second_target)
+                self.last_caput_sent_ts_lineEdits_updated = True
+
+    #----------------------------------------------------------------------
+    def validate_timeout(self):
+        """"""
+
+        sender = self.sender()
+
+        try:
+            timeout = float(sender.text())
+        except:
+            sender.setText('nan')
+            timeout = None
+
+        if sender == self.lineEdit_caget_timeout:
+            self.ss_abstract.caget_timeout = timeout
+        else:
+            self.ss_abstract.caput_timeout = timeout
+
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+
+        self.emit(SIGNAL('dockAboutTobeClosed'))
+
+        event.accept()
 
     #----------------------------------------------------------------------
     def update_auto_caget_delay_after_caput(self, state=None):
@@ -741,6 +792,7 @@ class TinkerDockWidget(QDockWidget):
         QDockWidget.__init__(self, parent)
 
         dockWidgetContents = QWidget()
+        dockWidgetContents.setContentsMargins(0, 0, 0, 0)
         top_gridLayout = QGridLayout(dockWidgetContents)
         #
         self.splitter = QSplitter(dockWidgetContents)
@@ -764,6 +816,11 @@ class TinkerDockWidget(QDockWidget):
         #self.tableView = QTableView(self.page_table)
         #gridLayout.addWidget(self.tableView, 0, 0, 1, 1)
         #self.stackedWidget.addWidget(self.page_table)
+
+        self.tableView.setItemDelegate(SnapshotDBTableViewItemDelegate(
+            self.tableView, self.ss_table, parent))
+        self.tableView.setEditTriggers(QAbstractItemView.CurrentChanged |
+                                       QAbstractItemView.SelectedClicked)
 
         button_size = QSize(32,32)
 
@@ -815,6 +872,26 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_1.addItem(spacerItem_1)
         verticalLayout_1.addLayout(horizontalLayout_1)
 
+        hLayout = QHBoxLayout()
+        label = QLabel(self.tab_step_mode)
+        label.setText('Last caget sent on')
+        hLayout.addWidget(label)
+        self.lineEdit_caget_sent_ts_second_step = QLineEdit(self.tab_step_mode)
+        self.lineEdit_caget_sent_ts_second_step.setText('Not sent yet')
+        self.lineEdit_caget_sent_ts_second_step.setReadOnly(True)
+        hLayout.addWidget(self.lineEdit_caget_sent_ts_second_step)
+        label = QLabel(self.tab_step_mode)
+        label.setText('Last caput sent on')
+        hLayout.addWidget(label)
+        self.lineEdit_caput_sent_ts_second_step = QLineEdit(self.tab_step_mode)
+        self.lineEdit_caput_sent_ts_second_step.setText('Not sent yet')
+        self.lineEdit_caput_sent_ts_second_step.setReadOnly(True)
+        hLayout.addWidget(self.lineEdit_caput_sent_ts_second_step)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        hLayout.addItem(spacerItem)
+        verticalLayout_1.addLayout(hLayout)
+
         horizontalLayout_2 = QHBoxLayout()
         self.pushButton_update = QPushButton(self.tab_step_mode)
         self.pushButton_update.setText('Update')
@@ -844,70 +921,141 @@ class TinkerDockWidget(QDockWidget):
                                  QSizePolicy.Expanding)
         verticalLayout_1.addItem(spacerItem)
 
-        ## Ramp Mode Tab
-        self.tab_ramp_mode = QWidget()
-        horizontalLayout_10 = QHBoxLayout(self.tab_ramp_mode)
-        verticalLayout_tab_ramp_1 = QVBoxLayout()
-        horizontalLayout_tab_ramp_2 = QHBoxLayout()
-        self.pushButton_copy = QPushButton(self.tab_ramp_mode)
+        ## Target Mode Tab
+        self.tab_target_mode = QWidget()
+
+        vLayout = QVBoxLayout(self.tab_target_mode)
+
+        hLayout = QHBoxLayout()
+        self.pushButton_copy = QPushButton(self.tab_target_mode)
         self.pushButton_copy.setText('Copy')
-        horizontalLayout_tab_ramp_2.addWidget(self.pushButton_copy)
-        self.comboBox_setpoint_copy_source = QComboBox(self.tab_ramp_mode)
+        hLayout.addWidget(self.pushButton_copy)
+        self.comboBox_setpoint_copy_source = QComboBox(self.tab_target_mode)
         self.comboBox_setpoint_copy_source.addItem('Current')
         self.comboBox_setpoint_copy_source.addItem('Initial')
         self.comboBox_setpoint_copy_source.addItem('Snapshot')
-        horizontalLayout_tab_ramp_2.addWidget(
-            self.comboBox_setpoint_copy_source)
-        label_tab_ramp_3 = QLabel(self.tab_ramp_mode)
-        label_tab_ramp_3.setText('setpoints into target setpoints')
-        horizontalLayout_tab_ramp_2.addWidget(label_tab_ramp_3)
+        hLayout.addWidget(self.comboBox_setpoint_copy_source)
+        label = QLabel(self.tab_target_mode)
+        label.setText('setpoints into Target Setpoints Column')
+        hLayout.addWidget(label)
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
                                  QSizePolicy.Minimum)
-        horizontalLayout_tab_ramp_2.addItem(spacerItem)
-        verticalLayout_tab_ramp_1.addLayout(horizontalLayout_tab_ramp_2)
-        horizontalLayout_tab_ramp_1 = QHBoxLayout()
-        label_tab_ramp_1 = QLabel(self.tab_ramp_mode)
-        label_tab_ramp_1.setText('Number of Steps:')
-        horizontalLayout_tab_ramp_1.addWidget(label_tab_ramp_1)
-        self.lineEdit_nSteps = QLineEdit(self.tab_ramp_mode)
-        horizontalLayout_tab_ramp_1.addWidget(self.lineEdit_nSteps)
-        label_tab_ramp_2 = QLabel(self.tab_ramp_mode)
-        label_tab_ramp_2.setText('Wait after Each Step [s]:')
-        horizontalLayout_tab_ramp_1.addWidget(label_tab_ramp_2)
-        self.lineEdit_wait_after_each_step = QLineEdit(self.tab_ramp_mode)
-        horizontalLayout_tab_ramp_1.addWidget(
-            self.lineEdit_wait_after_each_step)
-        verticalLayout_tab_ramp_1.addLayout(horizontalLayout_tab_ramp_1)
-        horizontalLayout_10.addLayout(verticalLayout_tab_ramp_1)
-        self.pushButton_start = QPushButton(self.tab_ramp_mode)
-        self.pushButton_start.setText('Start')
-        horizontalLayout_10.addWidget(self.pushButton_start)
-        self.pushButton_stop = QPushButton(self.tab_ramp_mode)
-        self.pushButton_stop.setText('Stop')
-        horizontalLayout_10.addWidget(self.pushButton_stop)
-        self.pushButton_revert = QPushButton(self.tab_ramp_mode)
-        self.pushButton_revert.setText('Revert')
-        horizontalLayout_10.addWidget(self.pushButton_revert)
-        spacerItem = QSpacerItem(137, 20, QSizePolicy.Expanding,
-                                 QSizePolicy.Minimum)
-        horizontalLayout_10.addItem(spacerItem)
-        self.tabWidget_mode.addTab(self.tab_ramp_mode,'Ramp Mode')
+        hLayout.addItem(spacerItem)
+        vLayout.addLayout(hLayout)
 
-        ##
+        hLayout_1 = QHBoxLayout()
+        self.pushButton_start = QPushButton(self.tab_target_mode)
+        self.pushButton_start.setText('Start')
+        hLayout_1.addWidget(self.pushButton_start)
+        self.pushButton_stop = QPushButton(self.tab_target_mode)
+        self.pushButton_stop.setText('Stop')
+        hLayout_1.addWidget(self.pushButton_stop)
+        self.pushButton_revert = QPushButton(self.tab_target_mode)
+        self.pushButton_revert.setText('Revert')
+        hLayout_1.addWidget(self.pushButton_revert)
+        label_tab_target_1 = QLabel(self.tab_target_mode)
+        label_tab_target_1.setText('Number of Steps:')
+        hLayout_1.addWidget(label_tab_target_1)
+        self.lineEdit_nSteps = QLineEdit(self.tab_target_mode)
+        hLayout_1.addWidget(self.lineEdit_nSteps)
+        label_tab_target_2 = QLabel(self.tab_target_mode)
+        label_tab_target_2.setText('Wait after Each Step [s]:')
+        hLayout_1.addWidget(label_tab_target_2)
+        self.lineEdit_wait_after_each_step = QLineEdit(self.tab_target_mode)
+        hLayout_1.addWidget(self.lineEdit_wait_after_each_step)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        hLayout_1.addItem(spacerItem)
+        vLayout.addLayout(hLayout_1)
+
+        hLayout_2 = QHBoxLayout()
+        label = QLabel(self.tab_step_mode)
+        label.setText('Last caget sent on')
+        hLayout_2.addWidget(label)
+        self.lineEdit_caget_sent_ts_second_target = QLineEdit(self.tab_step_mode)
+        self.lineEdit_caget_sent_ts_second_target.setText('Not sent yet')
+        self.lineEdit_caget_sent_ts_second_target.setReadOnly(True)
+        hLayout_2.addWidget(self.lineEdit_caget_sent_ts_second_target)
+        label = QLabel(self.tab_step_mode)
+        label.setText('Last caput sent on')
+        hLayout_2.addWidget(label)
+        self.lineEdit_caput_sent_ts_second_target = QLineEdit(self.tab_step_mode)
+        self.lineEdit_caput_sent_ts_second_target.setText('Not sent yet')
+        self.lineEdit_caput_sent_ts_second_target.setReadOnly(True)
+        hLayout_2.addWidget(self.lineEdit_caput_sent_ts_second_target)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        hLayout_2.addItem(spacerItem)
+        vLayout.addLayout(hLayout_2)
+
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Minimum,
+                                 QSizePolicy.Expanding)
+        vLayout.addItem(spacerItem)
+
+        self.tabWidget_mode.addTab(self.tab_target_mode,'Target Mode')
+
+        ## Timeout Tab
+        default_pref = get_preferences(default=True)
+        self.tab_timeout = QWidget()
+        horizontalLayout = QHBoxLayout()
+        label = QLabel('caget [seconds]')
+        horizontalLayout.addWidget(label)
+        self.lineEdit_caget_timeout = QLineEdit(self.tab_timeout)
+        self.lineEdit_caget_timeout.setText(str(default_pref['caget_timeout']))
+        self.lineEdit_caget_timeout.setToolTip(
+            'If nan, no timeout will occur. If 0, it will timeout immediately.')
+        horizontalLayout.addWidget(self.lineEdit_caget_timeout)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        horizontalLayout.addItem(spacerItem)
+        horizontalLayout_2 = QHBoxLayout()
+        label = QLabel('caput [seconds]')
+        horizontalLayout_2.addWidget(label)
+        self.lineEdit_caput_timeout = QLineEdit(self.tab_timeout)
+        self.lineEdit_caput_timeout.setText(str(default_pref['caput_timeout']))
+        self.lineEdit_caput_timeout.setToolTip(
+            'If nan, no timeout will occur. If 0, it will timeout immediately.')
+        horizontalLayout_2.addWidget(self.lineEdit_caput_timeout)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        horizontalLayout_2.addItem(spacerItem)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Minimum,
+                                         QSizePolicy.Expanding)
+        verticalLayout = QVBoxLayout(self.tab_timeout)
+        verticalLayout.addLayout(horizontalLayout)
+        verticalLayout.addLayout(horizontalLayout_2)
+        verticalLayout.addItem(spacerItem)
+        self.tabWidget_mode.addTab(self.tab_timeout, 'CA Timeout')
+
         self.tabWidget_metadata = QTabWidget(self.splitter)
         #
+        ## Config Metadata Tab
         self.tab_config_metadata = QWidget()
         verticalLayout_21 = QVBoxLayout(self.tab_config_metadata)
         horizontalLayout_21 = QHBoxLayout()
         label = QLabel(self.tab_config_metadata)
+        label.setText('ID')
+        horizontalLayout_21.addWidget(label)
+        self.lineEdit_config_id = QLineEdit(self.tab_config_metadata)
+        self.lineEdit_config_id.setReadOnly(True)
+        horizontalLayout_21.addWidget(self.lineEdit_config_id)
+        label = QLabel(self.tab_config_metadata)
+        label.setText('Config Name')
+        horizontalLayout_21.addWidget(label)
+        self.lineEdit_config_name = QLineEdit(self.tab_config_metadata)
+        self.lineEdit_config_name.setReadOnly(True)
+        horizontalLayout_21.addWidget(self.lineEdit_config_name)
+        label = QLabel(self.tab_config_metadata)
         label.setText('Created by')
         horizontalLayout_21.addWidget(label)
         self.lineEdit_config_username = QLineEdit(self.tab_config_metadata)
+        self.lineEdit_config_username.setReadOnly(True)
         horizontalLayout_21.addWidget(self.lineEdit_config_username)
         label = QLabel(self.tab_config_metadata)
         label.setText('Created on')
         horizontalLayout_21.addWidget(label)
         self.lineEdit_config_timestamp = QLineEdit(self.tab_config_metadata)
+        self.lineEdit_config_timestamp.setReadOnly(True)
         horizontalLayout_21.addWidget(self.lineEdit_config_timestamp)
         spacerItem_5 = QSpacerItem(40, 20, QSizePolicy.Expanding,
                                    QSizePolicy.Minimum)
@@ -923,23 +1071,39 @@ class TinkerDockWidget(QDockWidget):
         verticalLayout_22.addItem(spacerItem_6)
         horizontalLayout_22.addLayout(verticalLayout_22)
         self.textEdit_config_description = QTextEdit(self.tab_config_metadata)
+        self.textEdit_config_description.setReadOnly(True)
         horizontalLayout_22.addWidget(self.textEdit_config_description)
         verticalLayout_21.addLayout(horizontalLayout_22)
         self.tabWidget_metadata.addTab(self.tab_config_metadata,
                                        'Config Metadata')
         #
+        ## Snapshot Metadata Tab
         self.tab_snapshot_metadata = QWidget()
         verticalLayout_31 = QVBoxLayout(self.tab_snapshot_metadata)
         horizontalLayout_31 = QHBoxLayout()
         label = QLabel(self.tab_snapshot_metadata)
+        label.setText('ID')
+        horizontalLayout_31.addWidget(label)
+        self.lineEdit_ss_id = QLineEdit(self.tab_snapshot_metadata)
+        self.lineEdit_ss_id.setReadOnly(True)
+        horizontalLayout_31.addWidget(self.lineEdit_ss_id)
+        label = QLabel(self.tab_snapshot_metadata)
+        label.setText('Snapshot Name')
+        horizontalLayout_31.addWidget(label)
+        self.lineEdit_ss_name = QLineEdit(self.tab_snapshot_metadata)
+        self.lineEdit_ss_name.setReadOnly(True)
+        horizontalLayout_31.addWidget(self.lineEdit_ss_name)
+        label = QLabel(self.tab_snapshot_metadata)
         label.setText('Created by')
         horizontalLayout_31.addWidget(label)
         self.lineEdit_snapshot_username = QLineEdit(self.tab_snapshot_metadata)
+        self.lineEdit_snapshot_username.setReadOnly(True)
         horizontalLayout_31.addWidget(self.lineEdit_snapshot_username)
         label = QLabel(self.tab_snapshot_metadata)
         label.setText('Created on')
         horizontalLayout_31.addWidget(label)
         self.lineEdit_snapshot_timestamp = QLineEdit(self.tab_snapshot_metadata)
+        self.lineEdit_snapshot_timestamp.setReadOnly(True)
         horizontalLayout_31.addWidget(self.lineEdit_snapshot_timestamp)
         spacerItem_7 = QSpacerItem(40, 20, QSizePolicy.Expanding,
                                    QSizePolicy.Minimum)
@@ -956,6 +1120,7 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_32.addLayout(verticalLayout_32)
         self.textEdit_snapshot_description = QTextEdit(
             self.tab_snapshot_metadata)
+        self.textEdit_snapshot_description.setReadOnly(True)
         horizontalLayout_32.addWidget(self.textEdit_snapshot_description)
         verticalLayout_31.addLayout(horizontalLayout_32)
         self.tabWidget_metadata.addTab(self.tab_snapshot_metadata,
@@ -1029,26 +1194,59 @@ class TinkerDockWidget(QDockWidget):
         """"""
 
         ## Update config tab
+        if self.config_abstract.config_id is not None:
+            config_id_text = str(self.config_abstract.config_id)
+        else:
+            config_id_text = 'Not saved yet'
+        self.lineEdit_config_id.setText(config_id_text)
+        self.resizeLineEditToContents(self.lineEdit_config_id)
+        #
+        self.lineEdit_config_name.setText(self.config_abstract.name)
+        self.resizeLineEditToContents(self.lineEdit_config_name)
+        #
         self.lineEdit_config_username.setText(self.config_abstract.userinfo[0])
+        self.resizeLineEditToContents(self.lineEdit_config_username)
         #
         if self.config_abstract.config_ctime is not None:
             timestamp_text = datestr(self.config_abstract.config_ctime)
         else:
-            timestamp_text = 'This config has not been saved yet.'
+            timestamp_text = 'Not saved yet'
         self.lineEdit_config_timestamp.setText(timestamp_text)
+        self.resizeLineEditToContents(self.lineEdit_config_timestamp)
         #
         self.textEdit_config_description.setText(self.config_abstract.description)
 
         ## Update snapshot tab
+        if self.ss_abstract.ss_id is not None:
+            ss_id_text = str(self.ss_abstract.ss_id)
+        else:
+            ss_id_text = 'Not saved yet'
+        self.lineEdit_ss_id.setText(ss_id_text)
+        self.resizeLineEditToContents(self.lineEdit_ss_id)
+        #
+        self.lineEdit_ss_name.setText(self.ss_abstract.name)
+        self.resizeLineEditToContents(self.lineEdit_ss_name)
+        #
         self.lineEdit_snapshot_username.setText(self.ss_abstract.userinfo[0])
+        self.resizeLineEditToContents(self.lineEdit_snapshot_username)
         #
         if self.ss_abstract.ss_ctime is not None:
             timestamp_text = datestr(self.ss_abstract.ss_ctime)
         else:
-            timestamp_text = 'This snapshot has not been saved yet.'
+            timestamp_text = 'Not saved yet'
         self.lineEdit_snapshot_timestamp.setText(timestamp_text)
+        self.resizeLineEditToContents(self.lineEdit_snapshot_timestamp)
         #
         self.textEdit_snapshot_description.setText(self.ss_abstract.description)
+
+    #----------------------------------------------------------------------
+    def resizeLineEditToContents(self, lineEdit):
+        """"""
+
+        text = lineEdit.text()
+        fm = lineEdit.fontMetrics()
+        width = fm.boundingRect('x'*len(text)).width()
+        lineEdit.setMinimumWidth(max([width, 50]))
 
 ########################################################################
 class TinkerView(QMainWindow, Ui_MainWindow):
@@ -1067,6 +1265,13 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.setCentralWidget(self.centralwidget)
         self.centralWidget().hide()
 
+        self.menuWindow.addAction('Tabify', self.tabifyWindows)
+        self.menuWindow.addAction('Tile Horizontally',
+                                  self.tileWindowsHorizontally)
+        self.menuWindow.addAction('Tile Vertically',
+                                  self.tileWindowsVertically)
+        self.menuWindow.addSeparator()
+
         self.setDockNestingEnabled(True)
 
         tab_position = QTabWidget.South
@@ -1077,6 +1282,9 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         self.dockWidgetList = []
         self.next_dockWidget_index = 1
+
+        self.menuLoad.actions()[0].setText('Configuration...')
+        self.menuLoad.actions()[1].setText('Snapshot...')
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'),
@@ -1090,11 +1298,44 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                      self.launchPrefEditor)
 
     #----------------------------------------------------------------------
+    def tabifyWindows(self):
+        """"""
+
+        for i, w in enumerate(self.dockWidgetList):
+            w.setFloating(False) # Dock the new dockwidget
+            if i >= 1:
+                self.tabifyDockWidget(self.dockWidgetList[i-1], w)
+
+    #----------------------------------------------------------------------
+    def tileWindowsHorizontally(self):
+        """"""
+
+        for i, w in enumerate(self.dockWidgetList):
+            if np.mod(i,2) == 0:
+                self.addDockWidget(Qt.LeftDockWidgetArea, w)
+            else:
+                self.addDockWidget(Qt.RightDockWidgetArea, w)
+
+    #----------------------------------------------------------------------
+    def tileWindowsVertically(self):
+        """"""
+
+        for i, w in enumerate(self.dockWidgetList):
+            if np.mod(i,2) == 0:
+                self.addDockWidget(Qt.TopDockWidgetArea, w)
+            else:
+                self.addDockWidget(Qt.BottomDockWidgetArea, w)
+
+    #----------------------------------------------------------------------
     def launchConfigDBSelector(self):
         """"""
 
-        dialog = ConfigDBSelector()
-        dialog.exec_()
+        result = tinkerConfigDBSelector.make(isModal=True, parentWindow=self)
+
+        config_abstract_model = result.config_model.abstract
+
+        if config_abstract_model.channel_ids != []:
+            self.createDockWidget(config_abstract_model)
 
     #----------------------------------------------------------------------
     def launchPrefEditor(self):
@@ -1159,13 +1400,6 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         dockWidget = TinkerDockWidget(config_abstract_model, self)
         self.addDockWidget(Qt.DockWidgetArea(1), dockWidget)
 
-        dockWidget.lineEdit_config_username.setReadOnly(True)
-        dockWidget.lineEdit_config_timestamp.setReadOnly(True)
-        dockWidget.textEdit_config_description.setReadOnly(True)
-        dockWidget.lineEdit_snapshot_username.setReadOnly(True)
-        dockWidget.lineEdit_snapshot_timestamp.setReadOnly(True)
-        dockWidget.textEdit_snapshot_description.setReadOnly(True)
-
         self.dockWidgetList.append(dockWidget)
         dockWidget.setObjectName('dock{0:d}'.format(self.next_dockWidget_index))
 
@@ -1186,17 +1420,29 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         dockWidget.setFloating(False) # Dock the new dockwidget by default
         if len(self.dockWidgetList) >= 2:
             self.tabifyDockWidget(self.dockWidgetList[-2], dockWidget)
-        #dockWidget.raise_()
+        dockWidget.setVisible(True) # Need this line before raise_(). Otherwise,
+        # raise_() will not bring the dockwidget to the front.
+        dockWidget.raise_()
 
         dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_table)
         #dockWidget.stackedWidget.setCurrentWidget(dockWidget.page_tree)
 
         dockWidget.updateMetaDataTab()
 
-        #self.updateMetadataTab(dockWidget, base_model, page='config')
-        #if base_model.isSnapshot():
-            #self.updateMetadataTab(dockWidget, base_model, page='snapshot')
+        self.menuWindow.addAction(dockWidget.toggleViewAction())
 
+        self.connect(dockWidget, SIGNAL('dockAboutTobeClosed'),
+                     self.onDockWidgetClose)
+
+    #----------------------------------------------------------------------
+    def onDockWidgetClose(self):
+        """"""
+
+        dockWidget = self.sender()
+
+        self.dockWidgetList.remove(dockWidget)
+
+        self.menuWindow.removeAction(dockWidget.toggleViewAction())
 
 ########################################################################
 class TinkerApp(QObject):

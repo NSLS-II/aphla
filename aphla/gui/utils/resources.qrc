@@ -28,5 +28,7 @@
     <file alias="minus48.png">images/minus_48.png</file>
     <file alias="multiply48.png">images/multiply_48.png</file>
     <file alias="divide48.png">images/divide_48.png</file>
+    <file alias="refresh.png">images/refresh.png</file>
+    <file alias="search.png">images/search.png</file>
 </qresource>
 </RCC>

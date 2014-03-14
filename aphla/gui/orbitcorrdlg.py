@@ -81,6 +81,9 @@ class ElementSelectDlg(QDialog):
                 self.result.pop(name)
 
 class OrbitCorrGeneral(QtGui.QWidget):
+    """
+    A general orbit correction or local bump panel.
+    """
     def __init__(self, bpms, cors, parent = None):
         super(OrbitCorrGeneral, self).__init__(parent)
 
@@ -106,9 +109,12 @@ class OrbitCorrGeneral(QtGui.QWidget):
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             #it.setMinimumWidth(80)
             self.table.setItem(i, 1, it)
-            self.table.setItem(i, 2, QTableWidgetItem("%.4f" % self._twiss[i,1]))
-            self.table.setItem(i, 3, QTableWidgetItem("%.4f" % self._twiss[i,2]))
-            self.table.setItem(i, 4, QTableWidgetItem("%.4f" % self._twiss[i,3]))
+            self.table.setItem(i, 2,
+                               QTableWidgetItem("%.4f" % self._twiss[i,1]))
+            self.table.setItem(i, 3,
+                               QTableWidgetItem("%.4f" % self._twiss[i,2]))
+            self.table.setItem(i, 4,
+                               QTableWidgetItem("%.4f" % self._twiss[i,3]))
 
             for j in range(5, 9):
                 it = QTableWidgetItem(str(0.0))
@@ -217,8 +223,8 @@ class OrbitCorrGeneral(QtGui.QWidget):
     def _update_current_orbit(self):
         pvx = [bpm.pv(field="x", handle="readback")[0] for bpm in self.bpms]
         pvy = [bpm.pv(field="y", handle="readback")[0] for bpm in self.bpms]
-        self.x0 = [float(v) for v in catools.caget(pvx)]
-        self.y0 = [float(v) for v in catools.caget(pvy)]
+        self.x0 = [float(v) if v.ok else np.nan for v in catools.caget(pvx)]
+        self.y0 = [float(v) if v.ok else np.nan for v in catools.caget(pvy)]
 
     def resetBumps(self):
         jx0, jy0 = 5, 6
@@ -298,6 +304,9 @@ class OrbitCorrGeneral(QtGui.QWidget):
 
 
 class CorrectorViewer(QtGui.QWidget):
+    """
+    List all corrector and select part to lower table
+    """
     def __init__(self, cors, parent=None, nmax=4):
         super(CorrectorViewer, self).__init__(parent)
         self._nmax  = nmax
@@ -356,8 +365,8 @@ class CorrectorViewer(QtGui.QWidget):
 
         #self.elemlst.setSelectionMode(QAbstractItemView.MultiSelection)
         columns = ['Corrector', 's', 'Alpha', 'Beta',
-                   'Phi', "dPhi", "Initial Kick", "dKick",
-                   "Final Kick (set)", "Final Kick (read)"]
+                   'Phi', "dPhi", "Initial Bump", "dBump",
+                   "Final Sp", "Final Rb"]
         self.table4 = QTableWidget(0, len(columns))
         #self.table4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         hdview = QHeaderView(Qt.Horizontal)
@@ -419,7 +428,7 @@ class CorrectorViewer(QtGui.QWidget):
             if j > 0: it.setTextAlignment(
                 Qt.AlignRight | Qt.AlignVCenter)
             header = self.table4.horizontalHeaderItem(j)
-            if header.text() != "dKick":
+            if header.text() != "dBump":
                 it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             else:
                 it.setData(Qt.DisplayRole, "0")
@@ -446,6 +455,7 @@ class CorrectorViewer(QtGui.QWidget):
         elif plane == "Y":
             jl = [self._header[h] for h in ["Alpha Y", "Beta Y", "Phi Y"]]
             nu = self._tunes[1]
+        # if rows provided use it, otherwise use all
         row_list = range(self.table4.rowCount()) if rows is None else rows
         for i in row_list:
             elemname = self.table4.item(i,0).data(Qt.DisplayRole).toString()
@@ -491,10 +501,10 @@ class CorrectorViewer(QtGui.QWidget):
     def resetCalculations(self):
         for j in range(self.table4.columnCount()):
             header = self.table4.horizontalHeaderItem(j)
-            if header.text().contains("Kick"):
-                for i in range(self.table4.rowCount()):
-                    self.table4.item(i,j).setData(Qt.DisplayRole, "")
-                    self.table4.item(i,j).setData(Qt.UserRole, 0.0)
+            if header.text() not in ["dBump"]: continue
+            for i in range(self.table4.rowCount()):
+                self.table4.item(i,j).setData(Qt.DisplayRole, "")
+                self.table4.item(i,j).setData(Qt.UserRole, 0.0)
         
     def updateCorReadings(self, irow = None, col = 0):
         rows = range(self.table4.rowCount())
@@ -503,9 +513,9 @@ class CorrectorViewer(QtGui.QWidget):
         jcol = -1
         for j in range(self.table4.columnCount()):
             header = self.table4.horizontalHeaderItem(j)
-            if header.text() == "Initial Kick" and col == 0:
+            if header.text() == "Initial Bump" and col == 0:
                 jcol = j
-            elif header.text() == "Final Kick (read)" and col == 1:
+            elif header.text() == "Final Rb" and col == 1:
                 jcol = j
         if jcol < 0: return
         for i in range(self.table4.rowCount()):
@@ -523,7 +533,7 @@ class CorrectorViewer(QtGui.QWidget):
         nrow = min(self.table4.rowCount(), len(dkick))
         for j in range(self.table4.columnCount()):
             header = self.table4.horizontalHeaderItem(j)
-            if header.text() != "dKick": continue
+            if header.text() != "dBump": continue
             for i in range(nrow):
                 it = self.table4.item(i, j)
                 if dkick[i] is None:
@@ -544,7 +554,7 @@ class CorrectorViewer(QtGui.QWidget):
         nrow = self.table4.rowCount()
         for j in range(self.table4.columnCount()):
             header = self.table4.horizontalHeaderItem(j)
-            if header.text() != "dKick": continue
+            if header.text() != "dBump": continue
             for i in range(nrow):
                 # assuming dkick and set are j and j+1 column
                 it = self.table4.item(i, j)
@@ -651,7 +661,7 @@ class Bump3XCor(BumpNCor):
 
         fmbox = QtGui.QFormLayout()
         fmbox.addRow("Indep. Cor", self.xcor)
-        fmbox.addRow("dKick", self.dxi)
+        fmbox.addRow("dCor (raw)", self.dxi)
         #fmbox.addRow("location", self.loc)
 
         vbox1 = QtGui.QVBoxLayout()
@@ -737,6 +747,14 @@ class Bump3XSrc(BumpNCor):
         vbox1 = QtGui.QVBoxLayout()
         vbox1.addWidget(self.grpPlane)
         vbox1.addLayout(fmbox)
+        lbl = QtGui.QLabel(
+            """<font color="red">WARNING:</font>The unit of dX(dY) is not """
+            """calibrated, please take a look at the calculated current """
+            """change before applying them""")
+        lbl.setFixedWidth(300)
+        lbl.setWordWrap(True)
+        vbox1.addWidget(lbl)
+
         vbox1.addLayout(self.gboxBtn)
         
         hbox1 = QtGui.QHBoxLayout()
@@ -905,6 +923,13 @@ class Bump4XSrc(BumpNCor):
         vbox1 = QtGui.QVBoxLayout()
         vbox1.addWidget(self.grpPlane)
         vbox1.addLayout(fmbox)
+        lbl = QtGui.QLabel(
+            """<font color="red">WARNING:</font>The unit of dX and dTheta """
+            """are not calibrated, please take a look at the calculated """
+            """current change before applying them""")
+        lbl.setFixedWidth(300)
+        lbl.setWordWrap(True)
+        vbox1.addWidget(lbl)
 
         vbox1.addStretch()
         vbox1.addLayout(self.gboxBtn)
@@ -1044,7 +1069,7 @@ class OrbitCorrNBumps(QtGui.QWidget):
                 it = QTableWidgetItem()
                 if j > 0: it.setTextAlignment(
                     Qt.AlignRight | Qt.AlignVCenter)
-                if columns[j] != "dKick":
+                if columns[j] != "dBump":
                     it.setFlags(it.flags() & (~Qt.ItemIsEditable))
                 self.table4.setItem(i, j, it)
         #self.table4.resizeColumnsToContents()
@@ -1392,7 +1417,8 @@ class OrbitCorrDlg(QDialog):
         self.bpm_plot._cheat[1].attach(self.bpm_plot)
         self.bpm_plot._set_symbol(self.bpm_plot._cheat[0],
                                   Qwt.QwtSymbol.Triangle, dsize=2)
-        self.bpm_plot._set_symbol(self.bpm_plot._cheat[1], Qwt.QwtSymbol.Diamond, dsize=2)
+        self.bpm_plot._set_symbol(self.bpm_plot._cheat[1],
+                                  Qwt.QwtSymbol.Diamond, dsize=2)
         self.bpm_plot.showCurve(self.bpm_plot._cheat[0], False)
         self.bpm_plot.showCurve(self.bpm_plot._cheat[1], False)
 
@@ -1411,7 +1437,7 @@ class OrbitCorrDlg(QDialog):
                for c in getElements("VCOR") if c in corls]
         s = [c.sb for c in corls]
         self.cor_plot = ApCaArrayPlot([pvx, pvy], x = [s, s],
-                                      labels=["HCOR", "VCOR"])
+                                      labels=["HCOR Sp", "VCOR Sp"])
         #magprof = aphla.getBeamlineProfile()
         self.cor_plot.setMagnetProfile(magprof)
         self.cor_plot.setContentsMargins(12, 10, 10, 10)
@@ -1419,7 +1445,10 @@ class OrbitCorrDlg(QDialog):
         #self.cor_plot.setMaximumHeight(250)
 
         # add twiss plots
-        self._twiss = getTwiss("[pqs]*", ["s", "betax", "betay", "etax"])
+        self._twiss = getTwiss("*", ["s", "betax", "betay", "etax"])
+        #for i in range(len(self._twiss)):
+        #    print i, self._twiss[i,0], self._twiss[i,1]
+
         self.tw_plot = ApCaPlot()
         cbetax = Qwt.QwtPlotCurve()
         pen = cbetax.pen()
@@ -1477,7 +1506,7 @@ class OrbitCorrDlg(QDialog):
         tabs.addTab(tab_bump3xcor, "3 Cors. dI")
         tabs.addTab(tab_bump3xsrc, "3 Cors. dX")
         tabs.addTab(tab_bump4xcor, "4 Cors. dI")
-        tabs.addTab(tab_bump4xsrc, "4 Cors. dX")
+        tabs.addTab(tab_bump4xsrc, "4 Cors. dX dTheta")
         layout.addWidget(tabs, 3)
 
         self.connect(tab_bump3xcor, SIGNAL("zoomInCorrectors(PyQt_PyObject)"),

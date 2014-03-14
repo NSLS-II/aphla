@@ -1293,6 +1293,7 @@ class ChannelExplorerModel(QObject):
 
         self.is_case_sensitive = self.settings.is_case_sensitive
         self.is_column_sorting = self.settings.is_column_sorting
+        self.is_select_rows    = self.settings.is_select_rows
 
         self.col_name_list = [ELEM_PROPERTIES[name][ENUM_ELEM_SHORT_DESCRIP_NAME]
                               for name in PROP_KEY_LIST]
@@ -1952,6 +1953,9 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         #
         self.checkBox_matched_table_column_sorting.setChecked(
             self.settings.is_column_sorting)
+        #
+        self.checkBox_matched_table_select_rows.setChecked(
+            self.settings.is_select_rows)
 
         # Apply view size settings
         self.loadViewSizeSettings()
@@ -2486,10 +2490,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         horizHeader.setStretchLastSection(False)
         #
         t.setVisible(False); t.resizeColumnsToContents(); t.setVisible(True)
-        #
-        # Emit a signal requesting relevant signals to be connected to the
-        # newly created model
-        self.emit(SIGNAL('connectNewFilterTableModel'), t.model())
 
         ## Related Simple Filter
         f = self.model.filters_simple[0]
@@ -2533,7 +2533,10 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         t.setCornerButtonEnabled(True)
         t.setShowGrid(True)
         t.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        t.setSelectionBehavior(QAbstractItemView.SelectItems)
+        if self.model.is_select_rows:
+            self.on_matched_table_selection_behavior_change(QtCore.Qt.Checked)
+        else:
+            self.on_matched_table_selection_behavior_change(QtCore.Qt.Unchecked)
         t.setAlternatingRowColors(True)
         horizHeader = t.horizontalHeader()
         horizHeader.setSortIndicatorShown(True)
@@ -2558,7 +2561,6 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         self.connect(self.proxyItemSelModel_matched,
                      SIGNAL('selectionChanged(const QItemSelection &, const QItemSelection &)'),
                      self.update_matched_and_selected_numbers)
-
 
     #----------------------------------------------------------------------
     def get_visible_column_order(self):
@@ -2596,6 +2598,20 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             print 'view.update_tables (after readyForChoiceListUpdate):', toc(tStart)
 
     #----------------------------------------------------------------------
+    def on_matched_table_selection_behavior_change(self, check_state_int):
+        """"""
+
+        if check_state_int == QtCore.Qt.Unchecked:
+            self.tableView_matched.setSelectionBehavior(
+                QAbstractItemView.SelectItems)
+        elif check_state_int == QtCore.Qt.Checked:
+            self.tableView_matched.setSelectionBehavior(
+                QAbstractItemView.SelectRows)
+        else:
+            raise ValueError(('Partially checked state is NOT expected for '
+                              'select rows checkbox.'))
+
+    #----------------------------------------------------------------------
     def setMatchedTableColumnSortingEnabled(self, check_state_int):
         """"""
 
@@ -2604,7 +2620,8 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         elif check_state_int == QtCore.Qt.Checked:
             self.tableView_matched.setSortingEnabled(True)
         else:
-            raise ValueError('Partially checked state is NOT expected for column sorting checkbox.')
+            raise ValueError(('Partially checked state is NOT expected for '
+                              'column sorting checkbox.'))
 
     #----------------------------------------------------------------------
     def update_matched_and_selected_numbers(self, selected=None, deselected=None):
@@ -2721,10 +2738,15 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def selectedRowIndList(self):
         """"""
 
-        qProxyModelIndexList = self.tableView_matched.selectedIndexes()
-        row_ind_list = sorted(set([q.row() for q in qProxyModelIndexList]))
+        proxyModelIndexList = self.tableView_matched.selectedIndexes()
+        proxyModel = self.tableView_matched.model()
+        src_row_ind_list = [proxyModel.mapToSource(pInd).row()
+                            for pInd in proxyModelIndexList]
+        indexes = np.unique(src_row_ind_list, return_index=True)[1]
+        unique_unsorted_src_row_ind_list = [
+            src_row_ind_list[i] for i in sorted(indexes)]
 
-        return row_ind_list
+        return unique_unsorted_src_row_ind_list
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
@@ -2810,7 +2832,6 @@ class ChannelExplorerAppSettings():
         self.__settings.endGroup()
         self.__settings.endGroup()
 
-
     #----------------------------------------------------------------------
     def loadMiscellaneousSettings(self):
         """"""
@@ -2851,6 +2872,17 @@ class ChannelExplorerAppSettings():
             else:
                 raise ValueError('Unexpected is_column_sorting: '+is_column_sorting)
 
+        is_select_rows = self.__settings.value('is_select_rows')
+        if is_select_rows is None:
+            self.is_select_rows = True
+        else:
+            if is_select_rows == 'true':
+                self.is_select_rows = True
+            elif is_select_rows == 'false':
+                self.is_select_rows = False
+            else:
+                raise ValueError('Unexpected is_select_rows: '+is_select_rows)
+
         default_visible_prop_key_list = \
             self.__settings.value('default_visible_prop_key_list')
         if default_visible_prop_key_list is None:
@@ -2884,7 +2916,7 @@ class ChannelExplorerAppSettings():
         self.__settings.beginGroup('miscellaneous')
 
         attr_list = ['machine_name','lattice_name','filter_mode',
-                     'is_case_sensitive','is_column_sorting',
+                     'is_case_sensitive','is_column_sorting','is_select_rows',
                      'default_visible_prop_key_list']
         for attr in attr_list:
             self.__settings.setValue(attr,getattr(self,attr))
@@ -2944,7 +2976,7 @@ class ChannelExplorerApp(QObject):
         except:
             print 'Failed to load {0:s}'.format(machine_name)
             success = False
-            
+
         if not success:
             for machine_name in ap.machines.machines():
                 try:
@@ -2953,7 +2985,7 @@ class ChannelExplorerApp(QObject):
                     break
                 except:
                     print 'Failed to load {0:s}'.format(machine_name)
-                
+
         self.settings.machine_name = machine_name
 
         if lattice_name is None:
@@ -3015,9 +3047,8 @@ class ChannelExplorerApp(QObject):
                      SIGNAL('editTextChanged(const QString &)'),
                      self.view.on_filter_value_change)
 
-        self.connect(self.view,
-                     SIGNAL('connectNewFilterTableModel'),
-                     self._connect_signals_to_FilterTableModel)
+        self._connect_signals_to_FilterTableModel(
+            self.view.tableView_filter.model())
 
         self.connect(self.view.pushButton_search, SIGNAL('clicked()'),
                      self.model.search)
@@ -3049,6 +3080,9 @@ class ChannelExplorerApp(QObject):
         self.connect(self.view.checkBox_matched_table_column_sorting,
                      SIGNAL('stateChanged(int)'),
                      self.view.setMatchedTableColumnSortingEnabled)
+        self.connect(self.view.checkBox_matched_table_select_rows,
+                     SIGNAL('stateChanged(int)'),
+                     self.view.on_matched_table_selection_behavior_change)
 
         self.connect(self.view.comboBox_machine,
                      SIGNAL('currentIndexChanged(const QString &)'),
@@ -3199,6 +3233,8 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
                                       'display': ['sensitive','insensitive']}
         self.column_sorting_dict = {'value': [True,False],
                                     'display': ['Enabled','Disabled']}
+        self.select_rows_dict = {'value': [False,True],
+                                 'display': ['Items','Rows']}
         self.machine_list = sorted(ap.machines.machines())
 
         self.comboBox_machine.clear()
@@ -3297,6 +3333,9 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
         matched_ind = self.column_sorting_dict['value'].index(self.settings.is_column_sorting)
         self.comboBox_column_sorting.setCurrentIndex(matched_ind)
         #
+        matched_ind = self.select_rows_dict['value'].index(self.settings.is_select_rows)
+        self.comboBox_select_rows.setCurrentIndex(matched_ind)
+        #
         matched_ind = self.machine_list.index(self.settings.machine_name)
         self.comboBox_machine.setCurrentIndex(matched_ind)
         #
@@ -3357,6 +3396,10 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
         display_text = self.comboBox_column_sorting.currentText()
         self.settings.is_column_sorting = self.column_sorting_dict['value'][
             self.column_sorting_dict['display'].index(display_text)]
+        #
+        display_text = self.comboBox_select_rows.currentText()
+        self.settings.is_select_rows = self.select_rows_dict['value'][
+            self.select_rows_dict['display'].index(display_text)]
         #
         self.settings.machine_name = self.comboBox_machine.currentText()
         #
@@ -3422,9 +3465,10 @@ def make(modal = True, parentWindow = None,
                              caller, debug=debug)
     view = app.view
 
-    if app.modal :
+    if app.modal:
         view.exec_()
 
+        output = dict(machine='', lattice='', selection=[])
         if view.result() == QDialog.Accepted:
             if output_type == TYPE_OBJECT:
                 output = {'machine': ap.machines._lat.machine,
@@ -3441,14 +3485,10 @@ def make(modal = True, parentWindow = None,
                               'lattice': ap.machines._lat.name,
                               'selection': [(e[0].name,e[1]) for e
                                             in app.model.selectedObjects]}
-            else:
-                output = {}
-        else:
-            output = {}
 
         result = {'app': app,
                   'dialog_result': output}
-    else : # non-modal
+    else: # non-modal
         view.show()
         result = {'app': app}
 
