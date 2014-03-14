@@ -23,6 +23,7 @@ import os.path as osp
 import errno
 from signal import SIGTERM, SIGKILL
 import time
+import numpy as np
 import posixpath
 from copy import copy, deepcopy
 import types
@@ -361,9 +362,16 @@ class LauncherModel(QStandardItemModel):
         splitted_text_after_subs = splitted_text[:]
         for i, s in enumerate(splitted_text):
             matched_alias_ind = [j for j, a in enumerate(aliases)
-                                 if s.startswith(a)]
+                                 if (a in s) and s[s.find(a)-1] != '\\']
             if matched_alias_ind != []:
-                matched_alias_ind = matched_alias_ind[0]
+
+                if len(matched_alias_ind) == 1:
+                    matched_alias_ind = matched_alias_ind[0]
+                else:
+                    alias_lens = [len(aliases[alias_ind])
+                                  for alias_ind in matched_alias_ind]
+                    matched_alias_ind = matched_alias_ind[np.argmax(alias_lens)]
+
                 matched_alias = self.aliases[matched_alias_ind]
                 splitted_text_after_subs[i] = s.replace(
                     matched_alias['key'], matched_alias['value'])
@@ -1051,6 +1059,7 @@ class AliasEditor(QDialog, Ui_Dialog_alias):
         self.setupUi(self)
 
         self.setWindowTitle('Aliases')
+        self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
 
         self.pushButton_plus.setIcon(QIcon(':/plus.png'))
         self.pushButton_plus.setIconSize(QSize(40,40))
@@ -5198,9 +5207,14 @@ class LauncherApp(QObject):
                                                                    filepath)
                 else:
                     raise ValueError('Command not found: {0:s}'.format(cmd))
-            elif editor == '&matlab':
-                if self.which('matlabl') != '':
+            elif editor == '&matlab_no_desktop':
+                if self.which('matlab') != '':
                     cmd = 'matlab -r "edit {0:s}"'.format(filepath)
+                else:
+                    raise ValueError('Command not found: matlab')
+            elif editor == '&matlab':
+                if self.which('matlab') != '':
+                    cmd = 'matlab -desktop -r "edit {0:s}"'.format(filepath)
                 else:
                     raise ValueError('Command not found: matlab')
             elif editor.startswith('&wing'):
