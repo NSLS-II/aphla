@@ -274,6 +274,10 @@ class Filter():
                     except: # For DIPOLE, there is no field specified
                         x = element.pv()[:]
 
+            elif field == '':
+
+                x = ''
+
             elif propertyName == 'golden':
 
                 x = element._field[field].golden[0]
@@ -2952,8 +2956,8 @@ class ChannelExplorerApp(QObject):
     def __init__(self, modal = True, parentWindow = None,
                  init_object_type = 'element', can_modify_object_type = True,
                  machine_name = None, lattice_name = None,
-                 use_cached_lattice = False, caller = None,
-                 debug = False):
+                 use_cached_lattice = False, save_lattice_to_cache = False,
+                 caller = None, debug = False):
         """Constructor"""
 
         QObject.__init__(self)
@@ -2971,7 +2975,8 @@ class ChannelExplorerApp(QObject):
                 machine_name = 'nsls2'
 
             print 'Machine Name = {0:s}'.format(machine_name)
-            initMachine(machine_name, use_cached_lattice=use_cached_lattice)
+            initMachine(machine_name, use_cached_lattice=use_cached_lattice,
+                        save_lattice_to_cache=save_lattice_to_cache)
             success = True
         except:
             print 'Failed to load {0:s}'.format(machine_name)
@@ -3437,7 +3442,8 @@ def lower(none_or_str_or_unicode_string):
         return str(none_or_str_or_unicode_string).lower()
 
 #----------------------------------------------------------------------
-def initMachine(machine_name, use_cached_lattice=False):
+def initMachine(machine_name, use_cached_lattice=False,
+                save_lattice_to_cache=False):
     """"""
 
     if ap.machines._lat:
@@ -3448,13 +3454,15 @@ def initMachine(machine_name, use_cached_lattice=False):
 
     print 'Initializing lattices...'
     tStart = tic()
-    ap.machines.load(machine_init_folder_name, use_cache=use_cached_lattice)
+    ap.machines.load(machine_init_folder_name, use_cache=use_cached_lattice,
+                     save_cache=save_lattice_to_cache)
     print 'Initialization took', toc(tStart), 'seconds.'
 
 #----------------------------------------------------------------------
 def make(modal = True, parentWindow = None,
          init_object_type = 'element', can_modify_object_type = True,
          output_type = TYPE_OBJECT, use_cached_lattice = False,
+         save_lattice_to_cache = False,
          machine_name = None, lattice_name = None,
          caller = None, debug = False):
     """ """
@@ -3462,7 +3470,7 @@ def make(modal = True, parentWindow = None,
     app = ChannelExplorerApp(modal, parentWindow,
                              init_object_type, can_modify_object_type,
                              machine_name, lattice_name, use_cached_lattice,
-                             caller, debug=debug)
+                             save_lattice_to_cache, caller, debug=debug)
     view = app.view
 
     if app.modal:

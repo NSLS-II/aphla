@@ -1,21 +1,28 @@
 import os
 import os.path as osp
 
-from tinkerdb import SQLiteDatabase
+from aphla.gui.utils.hlsqlite import SQLiteDatabase
 
 HOME = osp.expanduser('~')
 HLA_MACHINE = os.environ.get('HLA_MACHINE', 'nsls2')
 
-DB_FOLDERPATH = '/home/yhidaka/hg_repos/hla/aphla/gui/TinkerUtils'
+HOME_PATH             = osp.expanduser('~')
+APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
 
-COLUMN_DEFINITION_DB_FILEPATH = osp.join(DB_FOLDERPATH,
+DB_FOLDERPATH = os.environ.get('APHLA_TINKER_DB_DIR',
+                               osp.join(APHLA_USER_CONFIG_DIR, 'aptinker_db'))
+#DB_FOLDERPATH = '/epics/op/apps/apscripts/aptinker_db/'
+if not osp.exists(DB_FOLDERPATH):
+    os.makedirs(DB_FOLDERPATH)
+MAIN_DB_FILEPATH    = osp.join(DB_FOLDERPATH, 'aptinker_main.sqlite')
+SS_DB_FILEPATH      = osp.join(DB_FOLDERPATH, 'aptinker_snapshot.sqlite')
+SESSION_DB_FILEPATH = osp.join(DB_FOLDERPATH, 'aptinker_session.sqlite')
+
+THIS_FOLDERPATH = osp.dirname(osp.abspath(__file__))
+COLUMN_DEFINITION_DB_FILEPATH = osp.join(THIS_FOLDERPATH,
                                          'tinker_columns.sqlite')
 COL_DEF = SQLiteDatabase(filepath=COLUMN_DEFINITION_DB_FILEPATH,
                          create_folder=False)
-
-MAIN_DB_FILEPATH = osp.join(DB_FOLDERPATH, 'test_tinker.sqlite')
-#CONFIG_DB_FILEPATH = '/epics/op/apps/apscripts/db/aptinker_configs.db'
-
 
 DEF_VIS_COL_KEYS = {
     'config_setup': [

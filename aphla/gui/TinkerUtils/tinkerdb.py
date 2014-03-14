@@ -1,9 +1,5 @@
-#! /usr/bin/env python
-import sip
-sip.setapi('QString', 2)
-sip.setapi('QVariant', 2)
-
 import sys, os
+import os.path as osp
 import numpy as np
 from time import time, strftime, localtime, sleep
 import h5py
@@ -54,11 +50,16 @@ class TinkerMainDatabase(SQLiteDatabase):
                                 create_folder=False)
 
         if self.getTableNames() == []:
+            print 'aptinker Main database file not found.'
+            print 'Creating and initializing the Main database...'
             self._initTables()
+            print 'Done'
 
     #----------------------------------------------------------------------
     def _initTables(self):
         """"""
+
+        self.setForeignKeysEnabled(False)
 
         self.dropAllTables()
 
@@ -1245,7 +1246,9 @@ class TinkerMainDatabase(SQLiteDatabase):
         elif isinstance(comparison_value, int):
             str_format = '{0:s}={1:d}'
         elif isinstance(comparison_value, float):
-            str_format = '{{0:s}}="{{1:.{0:d}f}}"'.format(LENGTH_METER_PRECISION)
+            conv_format = '{{0:.{0:d}f}}'.format(LENGTH_METER_PRECISION)
+            comparison_value = conv_format.format(comparison_value)
+            str_format = '{0:s}="{1:s}"'
         elif isinstance(comparison_value, type(None)):
             comparison_value = ''
             str_format = '{0:s}="{1:s}"'
@@ -1409,7 +1412,10 @@ class TinkerMainDatabase(SQLiteDatabase):
         if pv_str == '':
             return 1 # pv_id for non-specified PV is 1.
 
-        cainfo = catools.connect(pv_str, cainfo=True, throw=False)
+        cainfo = catools.connect(str(pv_str), cainfo=True, throw=False)
+        # ^ Need to make sure `pv_str` is type "str", not "unitcode".
+        # Otherwise, catools.connect() will divide the unicode into a list of
+        # each character.
         if cainfo.ok:
             array_size      = cainfo.count
             pv_data_type_id = cainfo.datatype + 1
@@ -1523,7 +1529,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                 ('pvsp_id={0:d} and pvrb_id={1:d} and '
                  'unitsys_id={2:d} and unitconv_toraw_id={3:d} '
                  'and unitconv_fromraw_id={4:d} and '
-                 'channel_name_id={5:d} and aphla_ch_id={6:d}').
+                 'channel_name_id={5:d}').
                 format(pvsp_id, pvrb_id, unitsys_id,
                        unitconv_toraw_id, unitconv_fromraw_id,
                        channel_name_id)
@@ -1685,17 +1691,22 @@ class SnapshotDatabase(SQLiteDatabase):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, filepath):
+    def __init__(self, filepath=config.SS_DB_FILEPATH):
         """Constructor"""
 
         SQLiteDatabase.__init__(self, filepath=filepath, create_folder=False)
 
         if self.getTableNames() == []:
+            print 'aptinker Snapshot database file not found.'
+            print 'Creating and initializing the Snapshot database...'
             self._initTables()
+            print 'Done'
 
     #----------------------------------------------------------------------
     def _initTables(self):
         """"""
+
+        self.setForeignKeysEnabled(False)
 
         self.dropAllTables()
 
@@ -1725,17 +1736,22 @@ class SessionDatabase(SnapshotDatabase):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, filepath):
+    def __init__(self):
         """Constructor"""
 
-        SnapshotDatabase.__init__(self, filepath)
+        SnapshotDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH)
 
         if self.getTableNames() == []:
+            print 'aptinker Session database file not found.'
+            print 'Creating and initializing the Session database...'
             self._initTables()
+            print 'Done'
 
     #----------------------------------------------------------------------
     def _initTables(self):
         """"""
+
+        self.setForeignKeysEnabled(False)
 
         self.dropAllTables()
 

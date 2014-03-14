@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_launcher_item_properties.ui'
 #
-# Created: Fri Feb 28 12:54:31 2014
+# Created: Fri Mar 14 16:35:45 2014
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -139,6 +139,7 @@ class Ui_Dialog(object):
         self.comboBox_txt_editor.addItem(_fromUtf8(""))
         self.comboBox_txt_editor.addItem(_fromUtf8(""))
         self.comboBox_txt_editor.addItem(_fromUtf8(""))
+        self.comboBox_txt_editor.addItem(_fromUtf8(""))
         self.gridLayout_13.addWidget(self.comboBox_txt_editor, 1, 1, 1, 2)
         self.verticalLayout_2 = QtGui.QVBoxLayout()
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
@@ -259,6 +260,7 @@ class Ui_Dialog(object):
         self.comboBox_py_editor.addItem(_fromUtf8(""))
         self.comboBox_py_editor.addItem(_fromUtf8(""))
         self.comboBox_py_editor.addItem(_fromUtf8(""))
+        self.comboBox_py_editor.addItem(_fromUtf8(""))
         self.gridLayout_10.addWidget(self.comboBox_py_editor, 3, 1, 1, 2)
         self.splitter_py = QtGui.QSplitter(self.page_pymod)
         self.splitter_py.setOrientation(QtCore.Qt.Vertical)
@@ -367,6 +369,7 @@ class Ui_Dialog(object):
         self.comboBox_exe_editor.addItem(_fromUtf8(""))
         self.comboBox_exe_editor.addItem(_fromUtf8(""))
         self.comboBox_exe_editor.addItem(_fromUtf8(""))
+        self.comboBox_exe_editor.addItem(_fromUtf8(""))
         self.gridLayout_7.addWidget(self.comboBox_exe_editor, 3, 1, 1, 2)
         self.verticalLayout_5 = QtGui.QVBoxLayout()
         self.verticalLayout_5.setObjectName(_fromUtf8("verticalLayout_5"))
@@ -439,7 +442,7 @@ class Ui_Dialog(object):
 
         self.retranslateUi(Dialog)
         self.stackedWidget_2.setCurrentIndex(0)
-        self.stackedWidget.setCurrentIndex(1)
+        self.stackedWidget.setCurrentIndex(0)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -467,6 +470,7 @@ class Ui_Dialog(object):
         self.comboBox_txt_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "emacs", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_txt_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "&vi", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_txt_editor.setItemText(7, QtGui.QApplication.translate("Dialog", "&matlab", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_txt_editor.setItemText(8, QtGui.QApplication.translate("Dialog", "&matlab_no_desktop", None, QtGui.QApplication.UnicodeUTF8))
         self.label_12.setText(QtGui.QApplication.translate("Dialog", "Help Header", None, QtGui.QApplication.UnicodeUTF8))
         self.label_25.setText(QtGui.QApplication.translate("Dialog", "Type", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_txt_helpHeaderType.setItemText(0, QtGui.QApplication.translate("Dialog", "python", None, QtGui.QApplication.UnicodeUTF8))
@@ -490,6 +494,7 @@ class Ui_Dialog(object):
         self.comboBox_py_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "emacs", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_py_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "&vi", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_py_editor.setItemText(7, QtGui.QApplication.translate("Dialog", "&matlab", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_py_editor.setItemText(8, QtGui.QApplication.translate("Dialog", "&matlab_no_desktop", None, QtGui.QApplication.UnicodeUTF8))
         self.label_32.setText(QtGui.QApplication.translate("Dialog", "Help in", None, QtGui.QApplication.UnicodeUTF8))
         self.label_33.setText(QtGui.QApplication.translate("Dialog", "Source File      ", None, QtGui.QApplication.UnicodeUTF8))
         self.label_18.setText(QtGui.QApplication.translate("Dialog", "Description     ", None, QtGui.QApplication.UnicodeUTF8))
@@ -509,6 +514,7 @@ class Ui_Dialog(object):
         self.comboBox_exe_editor.setItemText(5, QtGui.QApplication.translate("Dialog", "emacs", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_exe_editor.setItemText(6, QtGui.QApplication.translate("Dialog", "&vi", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_exe_editor.setItemText(7, QtGui.QApplication.translate("Dialog", "&matlab", None, QtGui.QApplication.UnicodeUTF8))
+        self.comboBox_exe_editor.setItemText(8, QtGui.QApplication.translate("Dialog", "&matlab_no_desktop", None, QtGui.QApplication.UnicodeUTF8))
         self.label_23.setText(QtGui.QApplication.translate("Dialog", "Help Header", None, QtGui.QApplication.UnicodeUTF8))
         self.label_28.setText(QtGui.QApplication.translate("Dialog", "Type", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_exe_helpHeaderType.setItemText(0, QtGui.QApplication.translate("Dialog", "python", None, QtGui.QApplication.UnicodeUTF8))
