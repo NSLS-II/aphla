@@ -81,6 +81,9 @@ class ElementSelectDlg(QDialog):
                 self.result.pop(name)
 
 class OrbitCorrGeneral(QtGui.QWidget):
+    """
+    A general orbit correction or local bump panel.
+    """
     def __init__(self, bpms, cors, parent = None):
         super(OrbitCorrGeneral, self).__init__(parent)
 
@@ -106,9 +109,12 @@ class OrbitCorrGeneral(QtGui.QWidget):
             it.setFlags(it.flags() & (~Qt.ItemIsEditable))
             #it.setMinimumWidth(80)
             self.table.setItem(i, 1, it)
-            self.table.setItem(i, 2, QTableWidgetItem("%.4f" % self._twiss[i,1]))
-            self.table.setItem(i, 3, QTableWidgetItem("%.4f" % self._twiss[i,2]))
-            self.table.setItem(i, 4, QTableWidgetItem("%.4f" % self._twiss[i,3]))
+            self.table.setItem(i, 2,
+                               QTableWidgetItem("%.4f" % self._twiss[i,1]))
+            self.table.setItem(i, 3,
+                               QTableWidgetItem("%.4f" % self._twiss[i,2]))
+            self.table.setItem(i, 4,
+                               QTableWidgetItem("%.4f" % self._twiss[i,3]))
 
             for j in range(5, 9):
                 it = QTableWidgetItem(str(0.0))
@@ -298,6 +304,9 @@ class OrbitCorrGeneral(QtGui.QWidget):
 
 
 class CorrectorViewer(QtGui.QWidget):
+    """
+    List all corrector and select part to lower table
+    """
     def __init__(self, cors, parent=None, nmax=4):
         super(CorrectorViewer, self).__init__(parent)
         self._nmax  = nmax
@@ -446,6 +455,7 @@ class CorrectorViewer(QtGui.QWidget):
         elif plane == "Y":
             jl = [self._header[h] for h in ["Alpha Y", "Beta Y", "Phi Y"]]
             nu = self._tunes[1]
+        # if rows provided use it, otherwise use all
         row_list = range(self.table4.rowCount()) if rows is None else rows
         for i in row_list:
             elemname = self.table4.item(i,0).data(Qt.DisplayRole).toString()
