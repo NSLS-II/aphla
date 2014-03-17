@@ -1077,7 +1077,8 @@ class SnapshotAbstractModel(QObject):
 
             self.n_caget_pvs:
                 self.caget_raws
-                self.caget_convs
+                self.caget_convs # unit-converted caget data
+                self.caget_unitconvs # unit conversion objects for caput
                 self.caget_ioc_ts_tuples
                 self.caget_pv_str_list
                 self.caget_pv_map_list
@@ -1085,7 +1086,8 @@ class SnapshotAbstractModel(QObject):
 
             self.n_caput_pvs:
                 self.caput_raws
-                self.caput_convs
+                self.caput_convs # unit-converted caput data
+                self.caput_unitconvs # unit conversion objects for caput
                 self.caput_pv_str_list
                 self.caput_pv_map_list
                 self.caput_pv_size_list
@@ -1291,6 +1293,8 @@ class SnapshotAbstractModel(QObject):
         self.maps['ini_SP_ioc_ts'] = deepcopy(self.maps['cur_SP'])
         self.maps['ini_RB']        = deepcopy(self.maps['cur_RB'])
         self.maps['ini_RB_ioc_ts'] = deepcopy(self.maps['cur_RB'])
+        self.maps['ini_ConvSP']    = deepcopy(self.maps['ini_SP'])
+        self.maps['ini_ConvRB']    = deepcopy(self.maps['ini_RB'])
 
         self.n_caget_pvs = len(self.caget_pv_str_list)
         self.n_caput_pvs = len(self.caput_pv_str_list)
@@ -1793,13 +1797,19 @@ class SnapshotTableModel(QAbstractTableModel):
     def update_init_pv_column_data(self):
         """"""
 
-        ini_val_col_keys = ['ini_SP'       , 'ini_RB'       ]
-        ini_ts_col_keys  = ['ini_SP_ioc_ts', 'ini_RB_ioc_ts']
+        ini_val_col_keys      = ['ini_SP'       , 'ini_RB'       ]
+        ini_conv_val_col_keys = ['ini_ConvSP'   , 'ini_ConvRB'   ]
+        ini_ts_col_keys       = ['ini_SP_ioc_ts', 'ini_RB_ioc_ts']
 
         for col_key in ini_val_col_keys:
             if self.abstract.maps[col_key] != []:
                 rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
                 self.d[col_key][rows] = self.abstract.caget_raws[indexes]
+
+        for col_key in ini_conv_val_col_keys:
+            if self.abstract.maps[col_key] != []:
+                rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
+                self.d[col_key][rows] = self.abstract.caget_convs[indexes]
 
         for col_key in ini_ts_col_keys:
             if self.abstract.maps[col_key] != []:
