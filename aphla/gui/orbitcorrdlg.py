@@ -626,7 +626,7 @@ class BumpNCor(QtGui.QWidget):
                      self.corview.applyKick)
         self.connect(btnZoomin, SIGNAL("clicked()"),
                      self._zoom_in)
-        
+
     def clear(self):
         self.corview.clear()
 
