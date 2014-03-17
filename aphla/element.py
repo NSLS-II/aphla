@@ -473,13 +473,6 @@ class CaAction:
             elif bc == 'ignore':
                 return       
 
-        #print self.pvsp, rawval
-        retlst = caput(self.pvsp, rawval, wait=True)
-        for i,ret in enumerate(retlst):
-            if ret.ok: continue
-            raise RuntimeError("Failed at setting {0} to {1}".format(
-                    self.pvsp[i], rawval[i]))
-
         if self.trace: 
             if isinstance(val, (list, tuple)):
                 self.sp.append(rawval[:])
@@ -492,6 +485,14 @@ class CaAction:
             if len(self.sp) > self.trace_limit: 
                 # keep the first for reset
                 self.sp.pop(1)
+
+        #print self.pvsp, rawval
+        retlst = caput(self.pvsp, rawval, wait=True)
+        for i,ret in enumerate(retlst):
+            if ret.ok: continue
+            raise RuntimeError("Failed at setting {0} to {1}".format(
+                    self.pvsp[i], rawval[i]))
+
         return retlst
 
     def setReadbackPv(self, pv, idx = None):
@@ -1168,6 +1169,7 @@ class CaElement(AbstractElement):
         if not self._field[fieldname].trace:
             self._field[fieldname].trace = True
             self._field[fieldname].sp = []
+            self._field[fieldname].mark('setpoint')
 
     def disableTrace(self, fieldname):
         if self._field[fieldname].trace:        
