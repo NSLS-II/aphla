@@ -382,7 +382,12 @@ class ConfigAbstractModel(QObject):
                 for r in row_inds:
                     self.weights[r] = new_val / self.ref_step_size
         elif col_key == 'unitsys':
-            raise NotImplementedError(col_key)
+            new_unitsys_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsys_table', 'unitsys_id', 'unitsys', new_val,
+                append_new=True)
+            for r in row_inds:
+                self.on_unitsys_change(r, new_unitsys_id)
+
         elif col_key == 'group_name':
             group_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
                 'group_name_table', 'group_name_id', 'group_name', new_val,
@@ -406,6 +411,29 @@ class ConfigAbstractModel(QObject):
             raise NotImplementedError(col_key)
         else:
             raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
+
+    #----------------------------------------------------------------------
+    def on_unitsys_change(self, row_ind, new_unitsys_id):
+        """"""
+
+        current_channel_id = self.channel_ids[row_ind]
+
+        ((pvsp_id,), (pvrb_id,), (channel_name_id,), (unitsys_id,),
+         (unitconv_toraw_id,), (unitconv_fromraw_id,),
+         (aphla_ch_id,)) = self.db.getColumnDataFromTable(
+            'channel_table',
+            column_name_list=[
+                'pvsp_id', 'pvrb_id', 'channel_name_id', 'unitsys_id',
+                'unitconv_toraw_id', 'unitconv_fromraw_id',
+                'aphla_ch_id'],
+            condition_str='channel_id={0:d}'.format(current_channel_id))
+
+        new_channel_id = self.db.get_channel_id(
+            pvsp_id, pvrb_id, new_unitsys_id, channel_name_id,
+            unitconv_toraw_id, unitconv_fromraw_id,
+            aphla_ch_id=aphla_ch_id, append_new=True)
+
+        self.channel_ids[row_ind] = new_channel_id
 
 ########################################################################
 class ConfigTableModel(QAbstractTableModel):
@@ -500,6 +528,14 @@ class ConfigTableModel(QAbstractTableModel):
                 if synced_row_inds != []:
                     self.abstract.weights[row_ind] = \
                         self.abstract.weights[synced_row_inds[0]]
+
+        elif col_key == 'unitsys':
+            new_unitsys = self.data(index)
+            new_unitsys_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsys_table', 'unitsys_id', 'unitsys', new_unitsys,
+                append_new=True)
+            self.abstract.on_unitsys_change(row_ind, new_unitsys_id)
+
         else:
             return
 
@@ -1248,6 +1284,9 @@ class SnapshotAbstractModel(QObject):
             if col == self.col_ids['cur_SentSP']]
         self.maps['cur_SP_ioc_ts'] = deepcopy(self.maps['cur_SP'])
         self.maps['cur_RB_ioc_ts'] = deepcopy(self.maps['cur_RB'])
+        self.maps['cur_ConvSP']    = deepcopy(self.maps['cur_SP'])
+        self.maps['cur_ConvRB']    = deepcopy(self.maps['cur_RB'])
+        self.maps['cur_ConvSentSP']= deepcopy(self.maps['cur_SentSP'])
         self.maps['ini_SP']        = deepcopy(self.maps['cur_SP'])
         self.maps['ini_SP_ioc_ts'] = deepcopy(self.maps['cur_SP'])
         self.maps['ini_RB']        = deepcopy(self.maps['cur_RB'])
@@ -1265,9 +1304,108 @@ class SnapshotAbstractModel(QObject):
 
         self.caput_not_yet = True
 
+        self.init_unitconv()
+
         self.update_pv_vals()
 
         self.update_init_pv_vals()
+
+    #----------------------------------------------------------------------
+    def init_unitconv(self):
+        """"""
+
+        channel_ids = self._config_abstract.channel_ids[:]
+
+        unitconv_toraw_ids, unitconv_fromraw_ids = \
+            self.db.getMatchedColumnDataFromTable(
+                'channel_table', 'channel_id', channel_ids, ':d',
+                column_name_return_list=['unitconv_toraw_id',
+                                         'unitconv_fromraw_id'])
+
+        if '[unitconv_table text view]' \
+           not in self.db.getViewNames(square_brackets=True):
+            self.db.create_temp_unitconv_table_text_view()
+
+        ## Initialize unit conversion data for caget
+
+        caget_conv_types, caget_conv_data_txts, caget_conv_invs = \
+            self.db.getMatchedColumnDataFromTable(
+                '[unitconv_table text view]', 'unitconv_id',
+                unitconv_fromraw_ids, ':d',
+                column_name_return_list=['unitconv_type', 'conv_data_txt',
+                                         'inv'])
+
+        self.caget_unitconvs = [None]*self.n_caget_pvs
+
+        rb_map_row_list = [x[0] for x in self.maps['cur_RB']]
+        sp_map_row_list = [x[0] for x in self.maps['cur_SP']]
+        for row, (conv_type, conv_txt, conv_inv) in enumerate(zip(
+            caget_conv_types, caget_conv_data_txts, caget_conv_invs)):
+            matched_indexes = []
+            if row in rb_map_row_list:
+                matched_indexes.append(
+                    self.maps['cur_RB'][rb_map_row_list.index(row)][1])
+            if row in sp_map_row_list:
+                matched_indexes.append(
+                    self.maps['cur_SP'][sp_map_row_list.index(row)][1])
+
+            if conv_type == 'NoConversion':
+                pass
+            elif (conv_type == 'poly') and (conv_inv == 0):
+                polarity = 1.0
+                coeffs = [float(s) for s in conv_txt.split(',')]
+                for i in matched_indexes:
+                    self.caget_unitconvs[i] = np.poly1d(coeffs)*polarity
+            elif (conv_type == 'poly') and (conv_inv == 1):
+                polarity = 1.0
+                a, b = [float(s) for s in conv_txt.split(',')]
+                ar, br = polarity/a, -b/a
+                for i in matched_indexes:
+                    self.caget_unitconvs[i] = np.poly1d([ar, br])
+            elif (conv_type == 'interp1'):
+                raise NotImplementedError('interp1 type not implemented yet')
+            else:
+                raise ValueError('Unexpected unit conversion type: {0}'.format(
+                    conv_type))
+
+        ## Initialize unit conversion data for caput
+
+        caput_conv_types, caput_conv_data_txts, caput_conv_invs = \
+            self.db.getMatchedColumnDataFromTable(
+                '[unitconv_table text view]', 'unitconv_id',
+                unitconv_toraw_ids, ':d',
+                column_name_return_list=['unitconv_type', 'conv_data_txt',
+                                         'inv'])
+
+        self.caput_unitconvs = [None]*self.n_caput_pvs
+
+        sp_map_row_list = [x[0] for x in self.maps['cur_SentSP']]
+        for row, (conv_type, conv_txt, conv_inv) in enumerate(zip(
+            caput_conv_types, caput_conv_data_txts, caput_conv_invs)):
+
+            if row in sp_map_row_list:
+                i = self.maps['cur_SentSP'][sp_map_row_list.index(row)][1]
+            else:
+                i = None
+
+            if conv_type == 'NoConversion':
+                pass
+            elif (conv_type == 'poly') and (conv_inv == 0):
+                polarity = 1.0
+                coeffs = [float(s) for s in conv_txt.split(',')]
+                if i is not None:
+                    self.caput_unitconvs[i] = np.poly1d(coeffs)*polarity
+            elif (conv_type == 'poly') and (conv_inv == 1):
+                polarity = 1.0
+                a, b = [float(s) for s in conv_txt.split(',')]
+                ar, br = polarity/a, -b/a
+                if i is not None:
+                    self.caput_unitconvs[i] = np.poly1d([ar, br])
+            elif (conv_type == 'interp1'):
+                raise NotImplementedError('interp1 type not implemented yet')
+            else:
+                raise ValueError('Unexpected unit conversion type: {0}'.format(
+                    conv_type))
 
     #----------------------------------------------------------------------
     def update_caput_enabled_indexes(self):
@@ -1290,13 +1428,22 @@ class SnapshotAbstractModel(QObject):
 
         self.caget_raws = np.array(
             [r if r.ok else (np.nan if size == 1 else np.ones(size)*np.nan)
-             for r, size in zip(ca_raws, self.caget_pv_size_list)], dtype=object)
+             for r, size in zip(ca_raws, self.caget_pv_size_list)],
+            dtype=object)
+        self.caget_convs = np.array(
+            [uc(r) if uc is not None else r for r, uc
+             in zip(self.caget_raws, self.caget_unitconvs)], dtype=object)
+
         if self.caget_raws.ndim != 1:
             nRow, nCol = self.caget_raws.shape
             temp = np.zeros(nRow, dtype=object)
             for i in range(nRow):
                 temp[i] = self.caget_raws[i,:]
             self.caget_raws = temp
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = self.caget_convs[i,:]
+            self.caget_convs[i,:]
 
         self.caget_ioc_ts_tuples = np.fromiter(
             (r.raw_stamp if r.ok else (-1,-1) for r in ca_raws),
@@ -1305,13 +1452,12 @@ class SnapshotAbstractModel(QObject):
 
         self.emit(SIGNAL('pvValuesUpdatedInSSAbstract'))
 
-        tEnd_visual = time.time()
-
+        tEnd_model_view = time.time()
 
         print '# caget update only took {:.6f} seconds'.format(
             tEnd_caget - self.caget_sent_ts_second)
-        print '# caget & visual update took {:.6f} seconds'.format(
-            tEnd_visual - self.caget_sent_ts_second)
+        print '# caget & model/view update took {:.6f} seconds'.format(
+            tEnd_model_view - self.caget_sent_ts_second)
 
     #----------------------------------------------------------------------
     def update_init_pv_vals(self):
@@ -1330,12 +1476,15 @@ class SnapshotAbstractModel(QObject):
                 condition_str='ss_id={0:d}'.format(self.ss_id))[0][0]
 
     #----------------------------------------------------------------------
-    def update_caput_raws(self):
+    def update_caput_vectors(self):
         """"""
 
         if self.caput_not_yet:
             rows, indexes = map(list, zip(*self.maps['cur_SP']))
             self.caput_raws = self.caget_raws[indexes]
+            self.caput_convs = np.array(
+                [uc(r) if uc is not None else r for r, uc
+                 in zip(self.caput_raws, self.caput_unitconvs)])[indexes]
             self.caput_not_yet = False
         else:
             nan_inds = [i for i, r in enumerate(self.caput_raws)
@@ -1344,6 +1493,9 @@ class SnapshotAbstractModel(QObject):
                 rows, indexes = map(list, zip(*self.maps['cur_SP']))
                 for i in nan_inds:
                     self.caput_raws[i] = self.caget_raws[indexes[i]]
+                    r  = self.caput_raws[i]
+                    uc = self.caput_unitconvs[i]
+                    self.caput_convs[i] = uc(r) if uc is not None else r
 
     #----------------------------------------------------------------------
     def invoke_caput(self):
@@ -1380,7 +1532,7 @@ class SnapshotAbstractModel(QObject):
     def step_up(self, positive=True):
         """"""
 
-        self.update_caput_raws()
+        self.update_caput_vectors()
 
         self.update_caput_enabled_indexes()
 
@@ -1403,7 +1555,7 @@ class SnapshotAbstractModel(QObject):
     def multiply(self, positive=True):
         """"""
 
-        self.update_caput_raws()
+        self.update_caput_vectors()
 
         self.update_caput_enabled_indexes()
 
@@ -1499,7 +1651,8 @@ class SnapshotTableModel(QAbstractTableModel):
 
         # Update dynamic column data
         self.visible_dynamic_col_keys = [
-            'cur_RB', 'cur_SP', 'cur_SentSP', 'cur_SP_ioc_ts', 'cur_RB_ioc_ts']
+            'cur_RB', 'cur_SP', 'cur_SentSP', 'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
+            'cur_ConvSP', 'cur_ConvRB', 'cur_ConvSentSP']
 
         self.update_visible_dynamic_columns()
 
@@ -1629,6 +1782,10 @@ class SnapshotTableModel(QAbstractTableModel):
             self.d[col_key][rows] = self.abstract.caput_raws[indexes]
         elif col_key in ('cur_SP_ioc_ts', 'cur_RB_ioc_ts'):
             self.d[col_key][rows] = self.abstract.caget_ioc_ts_tuples[indexes]
+        elif col_key in ('cur_ConvSP', 'cur_ConvRB'):
+            self.d[col_key][rows] = self.abstract.caget_convs[indexes]
+        elif col_key in ('cur_ConvSentSP'):
+            self.d[col_key][rows] = self.abstract.caput_convs[indexes]
         else:
             raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
 

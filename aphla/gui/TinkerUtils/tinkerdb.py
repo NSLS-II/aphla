@@ -637,9 +637,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                           self.getCurrentEpochTimestampSQLiteFuncStr(
                               data_type='float'))])
 
-        NoConversion_unitconv_id = self.getColumnDataFromTable(
-            'unitconv_table', column_name_list=['unitconv_id'],
-            condition_str='conv_data_txt=""')[0][0]
+        #NoConversion_unitconv_id = self.getColumnDataFromTable(
+            #'unitconv_table', column_name_list=['unitconv_id'],
+            #condition_str='conv_data_txt=""')[0][0]
         #unitsys_id_None = self.getColumnDataFromTable(
             #'unitsys_table', column_name_list=['unitsys_id'],
             #condition_str='unitsys=""')[0][0]
@@ -1137,32 +1137,62 @@ class TinkerMainDatabase(SQLiteDatabase):
         )
 
     #----------------------------------------------------------------------
-    def get_unitconv_id(self, unitconv, src_unitsys_id, dst_unitsys_id,
-                        src_unitsymb, dst_unitsymb, inv, append_new=True):
-        """"""
-
-        if src_unitsymb is None: src_unitsymb = ''
-        if dst_unitsymb is None: dst_unitsymb = ''
+    def get_unitconv_id(
+        self, unitconv, src_unitsys_id=None, dst_unitsys_id=None,
+        src_unitsymb=None, dst_unitsymb=None, inv=None, append_new=True):
+        """
+        If `unitconv` is either UcPoly or UcInterp1 object, then
+        `src_unitsys_id`, `dst_unitsys_id`, `src_unitsymb`, `dst_unitsymb`,
+        and `inv` are all required. If `unitconv` is a dict (coming from a
+        JSON file), then these arguments will be ignored, even if given,
+        as the dict contains all the necessary information.
+        """
 
         uc = unitconv
 
         if isinstance(uc, ap.unitconv.UcPoly):
             unitconv_type = 'poly'
             conv_data_txt = ','.join(
-                [UNITCONV_DATA_FORMAT.format(c)
-                 for c in uc.p.coeffs])
+                [UNITCONV_DATA_FORMAT.format(c) for c in uc.p.coeffs])
         elif isinstance(uc, ap.unitconv.UcInterp1):
             unitconv_type = 'interp1'
             conv_data_txt = ','.join(
-                [UNITCONV_DATA_FORMAT.format(x)
-                 for x in uc.xp])
+                [UNITCONV_DATA_FORMAT.format(x) for x in uc.xp])
             conv_data_txt += ';'
             conv_data_txt += ','.join(
-                [UNITCONV_DATA_FORMAT.format(x)
-                 for x in uc.fp])
+                [UNITCONV_DATA_FORMAT.format(x) for x in uc.fp])
+        elif isinstance(uc, dict):
+            unitconv_type = uc['type']
+            src_unitsymb = uc['src_unitsymb']
+            dst_unitsymb = uc['dst_unitsymb']
+            inv = uc['inv']
+            src_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsys_table', 'unitsys_id', 'unitsys', uc['src_unitsys'],
+                append_new=True)
+            dst_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsys_table', 'unitsys_id', 'unitsys', uc['dst_unitsys'],
+                append_new=True)
+            if unitconv_type == 'poly':
+                conv_data_txt = ','.join(
+                    [UNITCONV_DATA_FORMAT.format(c) for c in uc['conv_data']])
+            elif unitconv_type == 'interp1':
+                conv_data_txt = ','.join(
+                    [UNITCONV_DATA_FORMAT.format(x)
+                     for x in uc['conv_data']['xp']])
+                conv_data_txt += ';'
+                conv_data_txt += ','.join(
+                    [UNITCONV_DATA_FORMAT.format(x)
+                     for x in uc['conv_data']['fp']])
+            else:
+                raise ValueError('Unexpected unitconv type: {0:s}'.format(
+                    unitconv_type))
+
         else:
             raise ValueError('Unexpected unitconv type: {0:s}'.
                              format(uc.__repr__()))
+
+        if src_unitsymb is None: src_unitsymb = ''
+        if dst_unitsymb is None: dst_unitsymb = ''
 
         if '[unitconv_table text view]' not in self.getViewNames():
             self.create_temp_unitconv_table_text_view()
@@ -1561,7 +1591,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                 print list_of_tuples
                 return self.get_channel_id(
                     pvsp_id, pvrb_id, unitsys_id, channel_name_id,
-                    unitconv_fromraw_id, unitconv_fromraw_id,
+                    unitconv_toraw_id, unitconv_fromraw_id,
                     aphla_ch_id=aphla_ch_id, append_new=False)
             else:
                 return None

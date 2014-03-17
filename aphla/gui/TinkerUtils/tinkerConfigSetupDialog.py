@@ -264,29 +264,126 @@ class Model(QObject):
         self.output = None
 
     #----------------------------------------------------------------------
-    def get_channel_ids(self, pvsp_list, pvrb_list, channel_name_list):
-        """"""
+    def get_channel_ids(
+        self, pvsp_list, pvrb_list, channel_name_list,
+        unitsys_list=None, unitconv_key_list=None, unitconv_dict=None,
+        aphla_channel_name_list=None, machine_name=''):
+        """
+        If `unitsys_list` is not None, either `unitconv_key_list` (for
+        non-APHLA channels) or `aphla_channel_name_list` (for APHLA channels)
+        must be also provided.
 
-        unitsys_id = unitsys_id_raw # no unit conversion by default
-        NoConversion_unitconv_id = self.db.getColumnDataFromTable(
-                    'unitconv_table', column_name_list=['unitconv_id'],
-                    condition_str='conv_data_txt=""')[0][0]
+        If `unitconv_key_list` is provided, `unitconv_dict` must be also
+        provided.
+
+        If `aphla_channel_name_list` is provided, `machine_name` must be also
+        provided.
+
+        If both `unitconv_key` and `aphla_channel_name` are provided for
+        a channel, `unitconv_key` will override `aphla_channel_name`.
+        """
+
+        msg = QMessageBox()
+
+        NoSymb_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+            'unitsymb_table', 'unitsymb_id', 'unitsymb', '', append_new=True)
+        NoConv_NoSymb_unitconv_id = self.db.getColumnDataFromTable(
+            'unitconv_table', column_name_list=['unitconv_id'],
+            condition_str=('conv_data_txt="" AND src_unitsys_id={0:d} '
+                           'AND dst_unitsys_id={0:d}').format(NoSymb_id))[0][0]
+
+        n_channels = len(pvsp_list)
+
+        if unitsys_list is None:
+            # No unit conversion w/o unit symbol by default
+            unitsys_id_list = [unitsys_id_raw]*n_channels
+            unitconv_toraw_id_list   = [NoConv_NoSymb_unitconv_id]*n_channels
+            unitconv_fromraw_id_list = [NoConv_NoSymb_unitconv_id]*n_channels
+        else:
+            unitsys_list = [s if s is not None else '' for s in unitsys_list]
+
+            unitsys_id_list = [
+                self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                    'unitsys_table', 'unitsys_id', 'unitsys', v, append_new=True)
+                for v in unitsys_list]
+
+            unitconv_toraw_id_list   = [None]*n_channels
+            unitconv_fromraw_id_list = [None]*n_channels
+
+            if aphla_channel_name_list is not None:
+                if machine_name in (None, ''):
+                    msg.setText(('If `aphla_channel_name_list` is specified, '
+                                 '`machine_name` must be also specified.'))
+                    msg.exec_()
+                    return
+                else:
+                    for i, ap_ch_name in enumerate(aphla_channel_name_list):
+                        if ap_ch_name in ('', None):
+                            pass
+                        else:
+                            raise NotImplementedError()
+
+            # If both `unitconv_key` and `aphla_channel_name` are provided for
+            # a channel, `unitconv_key` will override `aphla_channel_name`
+            # unit conversion data here.
+            if unitconv_key_list is not None:
+                if unitconv_dict is None:
+                    msg.setText(('If `unitconv_key_list` is specified, '
+                                 '`unitconv_dict` must be also specified.'))
+                    msg.exec_()
+                    return
+                else:
+                    for _, v in unitconv_dict.iteritems():
+                        for dd in v:
+                            if dd['src_unitsys'] is None: dd['src_unitsys'] = ''
+                            if dd['dst_unitsys'] is None: dd['dst_unitsys'] = ''
+
+                    for i, (key, unitsys) in enumerate(zip(
+                        unitconv_key_list, unitsys_list)):
+                        if key in ('', None):
+                            pass
+                        elif unitconv_dict.has_key(key):
+                            uc_list = unitconv_dict[key]
+                            for uc in uc_list:
+                                if (uc['src_unitsys'] == '') and \
+                                   (uc['dst_unitsys'] == unitsys):
+                                    break
+                            unitconv_fromraw_id_list[i] = \
+                                self.db.get_unitconv_id(
+                                    uc, src_unitsys_id=None,
+                                    dst_unitsys_id=None, src_unitsymb=None,
+                                    dst_unitsymb=None, inv=None, append_new=True)
+                            for uc in uc_list:
+                                if (uc['src_unitsys'] == unitsys) and \
+                                   (uc['dst_unitsys'] == ''):
+                                    break
+                            unitconv_toraw_id_list[i] = \
+                                self.db.get_unitconv_id(
+                                    uc, src_unitsys_id=None,
+                                    dst_unitsys_id=None, src_unitsymb=None,
+                                    dst_unitsymb=None, inv=None, append_new=True)
+                        else:
+                            msg.setText('Key not found in `unitconv_dict`: {0}'.
+                                        format(key))
+                            msg.exec_()
+                            return
 
         channel_ids = []
 
-        for pvsp, pvrb, ch_name in zip(pvsp_list, pvrb_list, channel_name_list):
+        for (pvsp, pvrb, ch_name, unitsys_id, unitconv_toraw_id,
+             unitconv_fromraw_id) in zip(
+                 pvsp_list, pvrb_list, channel_name_list, unitsys_id_list,
+                 unitconv_toraw_id_list, unitconv_fromraw_id_list):
 
             if pvsp == '': readonly = -1
             else         : readonly = 0
             pvsp_id = self.db.get_pv_id(pvsp, readonly, append_new=True)
             if pvsp_id is None:
-                msg = QMessageBox()
                 msg.setText('ID for the following PV could not be found:')
                 msg.setInformativeText('"{0:s}"'.format(pvsp))
                 msg.exec_()
                 return
             elif pvsp_id == -1:
-                msg = QMessageBox()
                 msg.setText('The following PV could not be connected:')
                 msg.setInformativeText('"{0:s}"'.format(pvsp))
                 msg.exec_()
@@ -298,13 +395,11 @@ class Model(QObject):
             else         : readonly = 1
             pvrb_id = self.db.get_pv_id(pvrb, readonly, append_new=True)
             if pvrb_id is None:
-                msg = QMessageBox()
                 msg.setText('ID for the following PV could not be found:')
                 msg.setInformativeText('"{0:s}"'.format(pvrb))
                 msg.exec_()
                 return
             elif pvrb_id == -1:
-                msg = QMessageBox()
                 msg.setText('The following PV could not be connected:')
                 msg.setInformativeText('"{0:s}"'.format(pvrb))
                 msg.exec_()
@@ -318,7 +413,7 @@ class Model(QObject):
 
             channel_id = self.db.get_channel_id(
                 pvsp_id, pvrb_id, unitsys_id, channel_name_id,
-                NoConversion_unitconv_id, NoConversion_unitconv_id,
+                unitconv_toraw_id, unitconv_fromraw_id,
                 aphla_ch_id=None, append_new=True)
 
             channel_ids.append(channel_id)
@@ -346,8 +441,58 @@ class Model(QObject):
                 group_name, append_new=True)
             for group_name in d['group_name']]
 
-        channel_ids = self.get_channel_ids(d['pvsp'], d['pvrb'],
-                                           d['channel_name'])
+        if not d.has_key('unitsys'):
+            channel_ids = self.get_channel_ids(d['pvsp'], d['pvrb'],
+                                               d['channel_name'])
+        else:
+            if (not d.has_key('unitconv_key')) and \
+               (not d.has_key('aphla_channel_name')):
+                msg = QMessageBox()
+                msg.setText(
+                    ('If `column_names` include "unitsys", `column_names` '
+                     'must also include either "unitconv_key" or '
+                     '"aphla_channel_name" in your JSON config file.'))
+                msg.exec_()
+                return
+
+            if d.has_key('unitconv_key'):
+                unitconv_key_list = d['unitconv_key']
+                if json_dict.has_key('unitconv_dict'):
+                    unitconv_dict = json_dict['unitconv_dict']
+                else:
+                    msg = QMessageBox()
+                    msg.setText(
+                        ('If `column_names` include "unitconv_key", you '
+                         'must also specify `unitconv_dict` in your JSON config '
+                         'file.'))
+                    msg.exec_()
+                    return
+            else:
+                unitconv_key_list = None
+                unitconv_dict     = None
+
+            if d.has_key('aphla_channel_name'):
+                aphla_channel_name_list = d['aphla_channel_name']
+                if json_dict.has_key('machine_name'):
+                    machine_name = json_dict['machine_name']
+                else:
+                    msg = QMessageBox()
+                    msg.setText(
+                        ('If `column_names` include "aphla_channel_name", you '
+                         'must also specify `machine_name` in your JSON config '
+                         'file.'))
+                    msg.exec_()
+                    return
+            else:
+                aphla_channel_name_list = None
+                machine_name            = None
+
+            channel_ids = self.get_channel_ids(
+                d['pvsp'], d['pvrb'], d['channel_name'],
+                unitsys_list=d['unitsys'], unitconv_key_list=unitconv_key_list,
+                unitconv_dict=unitconv_dict,
+                aphla_channel_name_list=aphla_channel_name_list,
+                machine_name=machine_name)
 
         self.abstract.group_name_ids.extend(group_name_ids)
         self.abstract.channel_ids.extend(channel_ids)
@@ -372,9 +517,13 @@ class Model(QObject):
             append_new=True)
 
         unitsys_id = unitsys_id_raw # no unit conversion by default
-        NoConversion_unitconv_id = self.db.getColumnDataFromTable(
-                    'unitconv_table', column_name_list=['unitconv_id'],
-                    condition_str='conv_data_txt=""')[0][0]
+
+        NoSymb_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+            'unitsymb_table', 'unitsymb_id', 'unitsymb', '', append_new=True)
+        NoConv_NoSymb_unitconv_id = self.db.getColumnDataFromTable(
+            'unitconv_table', column_name_list=['unitconv_id'],
+            condition_str=('conv_data_txt="" AND src_unitsys_id={0:d} '
+                           'AND dst_unitsys_id={0:d}').format(NoSymb_id))[0][0]
 
         channel_ids   = []
         channel_names = []
@@ -439,7 +588,7 @@ class Model(QObject):
                 channel_name, append_new=True)
             channel_id = self.db.get_channel_id(
                 pvsp_id, pvrb_id, unitsys_id, channel_name_id,
-                NoConversion_unitconv_id, NoConversion_unitconv_id,
+                NoConv_NoSymb_unitconv_id, NoConv_NoSymb_unitconv_id,
                 aphla_ch_id=aphla_ch_id, append_new=True)
             if channel_id is None:
                 msg = QMessageBox()
