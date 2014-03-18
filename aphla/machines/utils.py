@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import sqlite3
+import subprocess
 from .. import apdata
 from ..apdata import createLatticePvDb
 from ..chanfinder import ChannelFinderAgent
@@ -265,21 +266,9 @@ def convVirtAccPvs(fdst, fsrc, sep = ",", grpname=False):
                 elemtype, elemfield))
     f.close()
 
-def createSqliteDb(fdb, felem, fpv, **kwarg):
-    """
-    felem and fpv are comma separated text file
-
-    name_index: postfix with the index.
-    """
-    createLatticePvDb(fdb, None)
+def _insert_elements(fdb, felem, **kwargs):
     #name, idx, tp, s0, L, s1, c, g, s, grp = elem
     elems = [v.strip().split(",") for v in open(felem, 'r').readlines()]
-    #pv, handle, elemname, elemidx0, elemtype, elemfield
-    pvs = [v.strip().split(",") for v in open(fpv, 'r').readlines()]
-
-    latname    = kwarg.get("latname", "SR")
-    name_index = kwarg.get("name_index", False)
-
     conn = sqlite3.connect(fdb)
     # save byte string instead of the default unicode
     conn.text_factory = str
@@ -295,24 +284,15 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
     msg = "[%s] new 'elements' table" % (__name__,)
     c.execute("""insert into info(timestamp,name,value)
                  values (datetime('now'), "log", ? )""", (msg,))
-    systag = "aphla.sys.%s" % latname
-    c.executemany("""INSERT into pvs """
-                  """(pv,elemName,elemHandle,elemField,tags) """
-                  """values (?,?,?,?,?)""",
-                  [(pv,ename,hdl,fld,systag) 
-                   for (pv,hdl,ename,eidx,etp,fld) in pvs])
     conn.commit()
-    msg = "[%s] new 'pvs' table" % (__name__,)
-    c.execute("""insert into info(timestamp,name,value)
-                 values (datetime('now'), "log", ? )""", (msg,))
-    conn.commit()
+
     #
     names = [e[0] for e in elems]
     vrec = {
         "twiss": ["twiss", -100, "TWISS", 0.0, 0.0, "", "", "", ""],
         "dcct": ["dcct", -200, "DCCT", 0.0, 0.0, "", "", "", ""],
         "rfcavity": ["rfcavity", -300, "RFCAVITY", 0.0, 0.0, "", "", "", ""], }
-    velems = kwarg.get("virtual_elems", vrec.keys())
+    velems = kwargs.get("virtual_elems", vrec.keys())
     if velems:
         for k,v in vrec.items():
             if k in names: continue
@@ -323,9 +303,83 @@ def createSqliteDb(fdb, felem, fpv, **kwarg):
                       """VALUES (?,?,?,?,?,?,?,?,?)""", v)
             names.append(k)
         conn.commit()
-
     conn.close()
 
+def _insert_pvs(fdb, fpv, **kwargs):
+    latname    = kwargs.get("latname", "SR")
+    systag = "aphla.sys.%s" % latname
+    #pv, handle, elemname, elemidx0, elemtype, elemfield
+    pvs = [v.strip().split(",") for v in open(fpv, 'r').readlines()]
+    conn = sqlite3.connect(fdb)
+    c = conn.cursor()
+    c.executemany("""INSERT into pvs """
+                  """(pv,elemName,elemHandle,elemField,tags) """
+                  """values (?,?,?,?,?)""",
+                  [(pv,ename,hdl,fld,systag) 
+                   for (pv,hdl,ename,eidx,etp,fld) in pvs])
+    conn.commit()
+    msg = "[%s] updated 'pvs' table" % (__name__,)
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ? )""", (msg,))
+    conn.commit()
+    conn.close()
+
+
+def updateSqliteElements(fdb, elems, **kwarg):
+    """
+    insert or replace the elements table with text file
+    """
+    conn = sqlite3.connect(fdb)
+    # save byte string instead of the default unicode
+    conn.text_factory = str
+    c = conn.cursor()
+    # ph1g2c30a,800,BPM,4.935,0.0,4.935,C30,G2,A,PH1
+    dat = [(r[0],r[1],r[2],r[4],r[5],r[6],r[7],r[8],r[9])
+           for r in elems]
+    c.executemany("""INSERT OR REPLACE INTO elements """
+              """(elemName,elemIndex,elemType,elemLength,elemPosition,"""
+              """cell,girder,symmetry,elemGroups) values """
+              """(?,?,?,?,?,?,?,?,?)""", dat)
+    conn.commit()
+    conn.close()
+
+
+def updateSqlitePvs(fdb, pvs, **kwarg):
+    """
+    insert or replace the pvs table with a text file.
+    """
+    systag = "aphla.sys.%s" % (kwarg.get("latname", ""),)
+    conn = sqlite3.connect(fdb)
+    # save byte string instead of the default unicode
+    conn.text_factory = str
+    c = conn.cursor()
+    # SR:C01-MG{PS:CH2B}I:Sp1-SP,put,ch2g6c01b,16100,COR,x
+    dat = [(r[0],r[1],r[2],r[5],systag) for r in pvs]
+    c.executemany("""INSERT OR REPLACE INTO pvs """
+                  """(pv,elemHandle,elemName,elemField,tags) """
+                  """values (?,?,?,?,?)""", dat)
+    conn.commit()
+    conn.close()
+
+
+def createSqliteDb(fdb, felem, fpv, **kwargs):
+    """
+    felem and fpv are comma separated text file
+
+    name_index: postfix with the index.
+    """
+    createLatticePvDb(fdb, None)
+
+    _insert_elements(fdb, felem, **kwargs)
+    _insert_pvs(fdb, fpv, **kwargs)
+
+    conn = sqlite3.connect(fdb)
+    msg = "[%s] inserted into 'elements' and 'pvs' tables" % (__name__,)
+    c = conn.cursor()
+    c.execute("""insert into info(timestamp,name,value)
+                 values (datetime('now'), "log", ? )""", (msg,))
+    conn.commit()
+    conn.close()
 
 
 def _saveSqliteDb(cfa, fname, sep=";"):
@@ -380,6 +434,7 @@ def _saveSqliteDb(cfa, fname, sep=";"):
     conn.commit()
     conn.close()
 
+
 def convCfsToSqlite(url, prefix = '', ignore = []):
     """
     url - channel finder server URL
@@ -416,3 +471,68 @@ def convCsvToSqlite(fdb, tag, *fcsvlst, **kwargs):
             cflst.append(r)
         apdata._updateLatticePvDb(fdb, cflst, **kwargs)
 
+
+def _read_elegant_twi(fname, i0=100):
+    """
+    read the elegant twiss file, return dict of {"ElementName": [...], ...}
+
+    if the element appears more than once, rename it to 'name:1', 'name:2', ...
+
+    KICKER: COR
+    VKICK: VCOR
+    HKICK: HCOR
+    MONI: BPM
+    CSBEND: BEND
+    """
+    cols = ["ElementName", "ElementType", "ElementOccurence", "s",
+            "betax", "betay", "alphax", "alphay",
+            "etax", "etaxp", "psix", "psiy"]
+    twi = {}
+    for c in cols:
+        cmd = ["sddsprintout", "-noLabels", "-noTitle",
+               "-col=%s" % c, fname]
+        out = subprocess.check_output(cmd)
+        twi.setdefault(c, [])
+        for line in out.split():
+            twi[c].append(line.strip())
+
+    # convert element type to aphla family
+    map_ele_type = {"KICKER" : "COR",
+                    "VKICK"  : "VCOR",
+                    "HKICK"  : "HCOR",
+                    "CSBEND" : "BEND",
+                    "MONI"   : "BPM"}
+
+    elems = []
+    n = min([len(v) for k,v in twi.items()])
+    for i in range(1, n):
+        tp0 = twi["ElementType"][i]
+        # skip elements
+        if tp0 in ["DRIF"]: continue
+        idx = i0 + i * 100
+        tp = map_ele_type.get(tp0, tp0)
+        name = twi["ElementName"][i].lower()
+        sb = twi["s"][i-1]
+        se = twi["s"][i]
+        if int(twi["ElementOccurence"][i]) > 1:
+            print "Duplicate element name '%s'(%s) at se= %s" % (
+                name, twi["ElementOccurence"][i], se) 
+            name = "%s:%s" % (name, twi["ElementOccurence"][i])
+        L = float(se) - float(sb)
+        cell, girder, sym, grp = "", "", "", ""
+        elems.append([name, "%d" % idx, tp,
+                      sb, "%.6f" % L, se, cell, girder, sym, grp])
+    return elems
+
+def convElegantToSqlite(fdb, ftwi, **kwargs):
+    createLatticePvDb(fdb)
+    elems = _read_elegant_twi(ftwi)
+    f = open("tmp.txt", 'w')
+    for r in elems:
+        f.write(",".join(r) + "\n")
+    f.close()
+    _insert_elements(fdb, "tmp.txt", **kwargs)
+    fpv = kwargs.pop("fpv", None)
+    if fpv is not None:
+        _insert_pvs(fdb, fpv, **kwargs)
+ 

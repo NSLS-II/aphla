@@ -12,7 +12,7 @@ import time
 from copy import deepcopy
 
 from PyQt4.QtCore import (Qt, SIGNAL, QObject, QSettings, QSize, QMetaObject,
-                          Q_ARG)
+                          Q_ARG, QRect)
 from PyQt4.QtGui import (
     QApplication, QDialog, QSortFilterProxyModel, QAbstractItemView, QAction,
     QIcon, QFileDialog, QMessageBox, QInputDialog, QMenu, QTextEdit, QFont,
@@ -34,9 +34,9 @@ from aphla.gui import channelexplorer
 from aphla.gui.utils.tictoc import tic, toc
 from aphla.gui.utils.orderselector import ColumnsDialog
 
-FILE_FILTER_DICT = {'Text File': 'Text files (*.txt)',
+FILE_FILTER_DICT = {'Text File': 'Tinker configuration text files (*.txt)',
                     'HDF5 File': 'HDF5 files (*.h5 *.hdf5)',
-                    'JSON File': 'JSON files (*.json)',
+                    'JSON File': 'Tinker configuration JSON files (*.json)',
                     }
 
 HOME_PATH             = osp.expanduser('~')
@@ -181,41 +181,67 @@ class Settings():
 
         self._settings = QSettings('APHLA', 'TinkerConfigSetupDialog')
 
-        self.loadViewSizeSettings()
+        self.loadMiscSettings()
 
     #----------------------------------------------------------------------
-    def loadViewSizeSettings(self):
+    def loadViewSizeSettings(self, view):
         """"""
 
         self._settings.beginGroup('viewSize')
 
         self._position = self._settings.value('position')
+        if self._position is None:
+            sizeHint = view.sizeHint()
+            self._position = QRect(0, 0, sizeHint.width(), sizeHint.height())
+        view.setGeometry(self._position)
 
-        self._splitter_left_right_sizes = \
-            self._settings.value('splitter_left_right_sizes')
-        if self._splitter_left_right_sizes is not None:
-            self._splitter_left_right_sizes = [
-                int(s) for s in  self._splitter_left_right_sizes]
-
-        self._splitter_top_bottom_sizes = \
-            self._settings.value('splitter_top_bottom_sizes')
-        if self._splitter_top_bottom_sizes is not None:
-            self._splitter_top_bottom_sizes = [
-                int(s) for s in self._splitter_top_bottom_sizes]
+        isinstance(view, View)
+        self._splitter_top_bottom_sizes = self._settings.value(
+            'splitter_top_bottom_sizes')
+        if self._splitter_top_bottom_sizes is None:
+            half_height = int(view.height()/2.0)
+            self._splitter_top_bottom_sizes = [half_height, half_height]
+        if not isinstance(self._splitter_top_bottom_sizes[0], int):
+            self._splitter_top_bottom_sizes = [int(s) for s in
+                                               self._splitter_top_bottom_sizes]
+        view.splitter.setSizes(self._splitter_top_bottom_sizes)
 
         self._settings.endGroup()
 
     #----------------------------------------------------------------------
-    def saveViewSizeSettings(self):
+    def saveViewSizeSettings(self, view):
         """"""
 
         self._settings.beginGroup('viewSize')
 
+        self._position = view.geometry()
         self._settings.setValue('position', self._position)
-        self._settings.setValue('splitter_left_right_sizes',
-                                self._splitter_left_right_sizes)
+
+        self._splitter_top_bottom_sizes = view.splitter.sizes()
         self._settings.setValue('splitter_top_bottom_sizes',
                                 self._splitter_top_bottom_sizes)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def loadMiscSettings(self):
+        """"""
+
+        self._settings.beginGroup('fileSystem')
+
+        self._last_directory_path = self._settings.value('last_directory_path')
+        if self._last_directory_path is None:
+            self._last_directory_path = os.getcwd()
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveMiscSettings(self):
+        """"""
+
+        self._settings.beginGroup('fileSystem')
+
+        self._settings.setValue('last_directory_path', self._last_directory_path)
 
         self._settings.endGroup()
 
@@ -236,6 +262,99 @@ class Model(QObject):
         self.db = self.abstract.db
 
         self.output = None
+
+    #----------------------------------------------------------------------
+    def get_channel_ids(self, pvsp_list, pvrb_list, channel_name_list):
+        """"""
+
+        unitsys_id = unitsys_id_raw # no unit conversion by default
+        NoConversion_unitconv_id = self.db.getColumnDataFromTable(
+                    'unitconv_table', column_name_list=['unitconv_id'],
+                    condition_str='conv_data_txt=""')[0][0]
+
+        channel_ids = []
+
+        for pvsp, pvrb, ch_name in zip(pvsp_list, pvrb_list, channel_name_list):
+
+            if pvsp == '': readonly = -1
+            else         : readonly = 0
+            pvsp_id = self.db.get_pv_id(pvsp, readonly, append_new=True)
+            if pvsp_id is None:
+                msg = QMessageBox()
+                msg.setText('ID for the following PV could not be found:')
+                msg.setInformativeText('"{0:s}"'.format(pvsp))
+                msg.exec_()
+                return
+            elif pvsp_id == -1:
+                msg = QMessageBox()
+                msg.setText('The following PV could not be connected:')
+                msg.setInformativeText('"{0:s}"'.format(pvsp))
+                msg.exec_()
+                return
+            elif pvsp_id == -2:
+                return # Error message box is launched in get_pv_id()
+
+            if pvrb == '': readonly = -1
+            else         : readonly = 1
+            pvrb_id = self.db.get_pv_id(pvrb, readonly, append_new=True)
+            if pvrb_id is None:
+                msg = QMessageBox()
+                msg.setText('ID for the following PV could not be found:')
+                msg.setInformativeText('"{0:s}"'.format(pvrb))
+                msg.exec_()
+                return
+            elif pvrb_id == -1:
+                msg = QMessageBox()
+                msg.setText('The following PV could not be connected:')
+                msg.setInformativeText('"{0:s}"'.format(pvrb))
+                msg.exec_()
+                return
+            elif pvrb_id == -2:
+                return # Error message box is launched in get_pv_id()
+
+            channel_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'channel_name_table', 'channel_name_id', 'channel_name',
+                ch_name, append_new=True)
+
+            channel_id = self.db.get_channel_id(
+                pvsp_id, pvrb_id, unitsys_id, channel_name_id,
+                NoConversion_unitconv_id, NoConversion_unitconv_id,
+                aphla_ch_id=None, append_new=True)
+
+            channel_ids.append(channel_id)
+
+        return channel_ids
+
+    #----------------------------------------------------------------------
+    def importNewChannelsFromJSONFile(self, json_dict):
+        """"""
+
+        d = {}
+        for i, k in enumerate(json_dict['column_names']):
+            if isinstance(json_dict['channels'][0][i], unicode):
+                # It is critical to convert "unicode" to "str" for catools
+                # functions, as if the PV strings are not type "str", the
+                # functions will assume the PV name to be a list of PVs
+                # with each character as a PV name.
+                d[k] = [str(c[i]) for c in json_dict['channels']]
+            else:
+                d[k] = [c[i] for c in json_dict['channels']]
+
+        group_name_ids = [
+            self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'group_name_table', 'group_name_id', 'group_name',
+                group_name, append_new=True)
+            for group_name in d['group_name']]
+
+        channel_ids = self.get_channel_ids(d['pvsp'], d['pvrb'],
+                                           d['channel_name'])
+
+        self.abstract.group_name_ids.extend(group_name_ids)
+        self.abstract.channel_ids.extend(channel_ids)
+        self.abstract.weights.extend(d['config_weight'])
+
+        self.table.updateModel()
+        self.table.repaint()
 
     #----------------------------------------------------------------------
     def importNewChannelsFromSelector(self, selection_dict, channel_group_info):
@@ -413,6 +532,7 @@ class View(QDialog, Ui_Dialog):
         self.setModal(isModal)
 
         self.settings = settings
+        self.settings.loadViewSizeSettings(self)
 
         self.model = model
 
@@ -542,6 +662,12 @@ class View(QDialog, Ui_Dialog):
 
         #if
 
+    #----------------------------------------------------------------------
+    def saveQSettings(self):
+        """"""
+
+        self.settings.saveViewSizeSettings(self)
+        self.settings.saveMiscSettings()
 
     #----------------------------------------------------------------------
     def _launchPrefDialog(self, checked):
@@ -554,6 +680,8 @@ class View(QDialog, Ui_Dialog):
     def closeEvent(self, event):
         """"""
 
+        self.saveQSettings()
+
         self.model.abstract.channel_ids = []
 
         event.accept()
@@ -561,6 +689,8 @@ class View(QDialog, Ui_Dialog):
     #----------------------------------------------------------------------
     def accept(self):
         """"""
+
+        self.saveQSettings()
 
         if not self.model.abstract.isDataValid():
             return
@@ -570,6 +700,8 @@ class View(QDialog, Ui_Dialog):
     #----------------------------------------------------------------------
     def reject(self):
         """"""
+
+        self.saveQSettings()
 
         self.model.abstract.channel_ids = []
 
@@ -650,7 +782,7 @@ class App(QObject):
         elif import_type == 'Database':
             a = self.model.abstract
 
-            a.db.getColumnDataFromTable()
+            #a.db.getColumnDataFromTable()
 
             a.name = self.view.lineEdit_config_name.text()
             a.description = self.view.textEdit.toPlainText()
@@ -671,26 +803,28 @@ class App(QObject):
                 self.view.checkBox_synced_group_weight.isChecked()
 
         else:
-            msg.setText('This export_type is not implemented yet: {:s}'.
-                        format(export_type))
-            msg.setIcon(QMessageBox.Critical)
-            msg.exec_()
-            return
 
-            #all_files_filter_str = 'All files (*)'
-            #caption = 'Load Tuner Configuration from {0:s}'.format(import_type)
-            #filter_str = ';;'.join([FILE_FILTER_DICT[import_type],
-                                    #all_files_filter_str])
-            #filepath = QFileDialog.getOpenFileName(
-                #caption=caption, directory=self.settings.last_directory_path,
-                #filter=filter_str)
+            all_files_filter_str = 'All files (*)'
+            caption = 'Load `aptinker` configuration file from {0:s}'.format(
+                import_type)
+            filter_str = ';;'.join([FILE_FILTER_DICT[import_type],
+                                    all_files_filter_str])
+            filepath = QFileDialog.getOpenFileName(
+                caption=caption, directory=self.settings._last_directory_path,
+                filter=filter_str)
 
-            #if not filepath:
-                #return
+            if not filepath:
+                return
 
-            #self.settings.last_directory_path = os.path.dirname(filepath)
+            self.settings._last_directory_path = osp.dirname(filepath)
 
-            #if import_type == 'Text File':
+            if import_type == 'Text File':
+
+                msg.setText('This export_type is not implemented yet: {:s}'.
+                            format(export_type))
+                msg.setIcon(QMessageBox.Critical)
+                msg.exec_()
+                return
 
                 #m = TunerTextFileManager(load=True, filepath=filepath)
                 #m.exec_()
@@ -704,17 +838,21 @@ class App(QObject):
                 #else:
                     #return
 
-            #elif import_type == 'HDF5 File':
-                #raise NotImplementedError(import_type)
+            elif import_type == 'HDF5 File':
+                msg.setText('This export_type is not implemented yet: {:s}'.
+                            format(export_type))
+                msg.setIcon(QMessageBox.Critical)
+                msg.exec_()
+                return
 
-            #elif import_type == 'JSON File':
-                #with open(filepath, 'r') as f:
-                    #data = json.load(f)
+            elif import_type == 'JSON File':
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
 
-                #if data is not None:
-                    #self.model.importNewChannelsFromJSONFile(data)
-                #else:
-                    #return
+                if data is not None:
+                    self.model.importNewChannelsFromJSONFile(data)
+                else:
+                    return
 
     #----------------------------------------------------------------------
     def _exportConfigData(self):
@@ -788,18 +926,25 @@ class App(QObject):
     def _launchChannelExplorer(self):
         """"""
 
+        if not self.use_cached_lattice:
+            save_cache = True
+        else:
+            save_cache = False
+
         result = channelexplorer.make(
             modal=True, init_object_type='channel',
             can_modify_object_type=False,
             output_type=channelexplorer.TYPE_OBJECT,
             caller='aptinker', use_cached_lattice=self.use_cached_lattice,
-            debug=False)
+            save_lattice_to_cache=save_cache, debug=False)
+
+        self.use_cached_lattice = True # Use cache from 2nd time on to reduce
+        # loading time.
 
         selected_channels = result['dialog_result']
 
-        if selected_channels != {}:
-            selected_channels, channelGroupInfo = \
-                self._askChannelGroupNameAndWeight(selected_channels)
+        if selected_channels['selection'] != []:
+            channelGroupInfo = self._askChannelGroupNameAndWeight()
             self.model.importNewChannelsFromSelector(selected_channels,
                                                      channelGroupInfo)
 
@@ -809,7 +954,7 @@ class App(QObject):
 
 
     #----------------------------------------------------------------------
-    def _askChannelGroupNameAndWeight(self, selected_channels):
+    def _askChannelGroupNameAndWeight(self):
         """"""
 
         prompt_text = ('Do you want to group the selected channels together?\n' +
@@ -839,7 +984,7 @@ class App(QObject):
         else:
             channelGroupInfo = {}
 
-        return selected_channels, channelGroupInfo
+        return channelGroupInfo
 
 
 #----------------------------------------------------------------------

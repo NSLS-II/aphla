@@ -4,7 +4,7 @@ import subprocess
 
 MAJOR = 0
 MINOR = 8
-MICRO = 13
+MICRO = 14
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
@@ -73,6 +73,7 @@ setup(
     version = VERSION,
     packages = find_packages(exclude=['tests']),
     include_package_data = True,
+    package_data = {'aphla.gui.TinkerUtils': ['tinker_columns.sqlite']},
     #package_data = {
     #    # any these files
     #    'aphla.gui': ['data/*'],
@@ -93,7 +94,7 @@ setup(
             'aplauncher = aphla.gui.aplauncher:main',
             'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',
             'apchx = aphla.gui.channelexplorer:main',
-            'aptinker = aphla.gui.aplattuner:main'
+            'aptinker = aphla.gui.aptinker:main'
             ]
         },
     description = "Accelerator control and experiment toolkit",

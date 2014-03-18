@@ -268,10 +268,12 @@ class ConfigAbstractModel(QObject):
 
         dup_pvsp_names = self.check_duplicate_pvsp()
         if dup_pvsp_names != []:
+            dup_pvsp_names.sort()
             msg = QMessageBox()
             msg.setText(
                 'Duplicate setpoint PVs are NOT allowed in aptinker config.')
-            msg.setInformativeText('\n'.join(dup_pvsp_names))
+            msg.setDetailedText('\n'.join(['Duplicate Setpoint PVs:']+
+                                          dup_pvsp_names))
             msg.exec_()
             return False
 
@@ -598,7 +600,8 @@ class ConfigTableModel(QAbstractTableModel):
         # can be sortable
         float_keys = ['elem_efflen', 'elem_physlen', 'elem_sb', 'elem_se']
         for k in float_keys:
-            self.d[k] = [float(x) for x in self.d[k]]
+            self.d[k] = [float(x) if x is not None else np.nan
+                         for x in self.d[k]]
 
         if '[unitconv_table text view]' not in self.db.getViewNames():
             self.db.create_temp_unitconv_table_text_view()

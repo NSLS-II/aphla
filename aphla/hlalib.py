@@ -571,22 +571,23 @@ def getAlpha(group, **kwargs):
 #
 #
 def getBeta(group, **kwargs):
-    """
-    get the beta function from stored data.
+    """get the beta function of *group* from stored data.
     
-    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
-
     Parameters
     -----------
     src : str.
-        'database' from database, 'VA' from 'twiss' element of virtual accelerator
+        'database' from database, 'VA' from 'virtualacc' element of virtual accelerator
 
     Examples
     ---------
     >>> getBeta('q*', spos = False)
 
+    getElements is called with *group* to get a list of elements. Then
+    searching for data. It is different from
+    `getTwiss(names, ["betax", "betay"])`.
+
     """
-    src = kwargs.pop("src", 'database')
+    src = kwargs.pop("source", 'database')
 
     elem = getElements(group)
     col = ['betax', 'betay']
@@ -599,7 +600,9 @@ def getBeta(group, **kwargs):
         return machines._lat._twiss.get([e.name for e in elem], 
                                         col=col, **kwargs)
     elif src == 'VA':
-        twiss = getElements('twiss')[0]
+        vas = getElements('VA')
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
         idx = [e.index for e in elem]
         s, bx, by = twiss.s, twiss.betax, twiss.betay
         if 's' in col:
@@ -633,12 +636,9 @@ def getEta(group, **kwargs):
         'database' from database; 'VA' from virtual accelerator where a 'twiss'
         element must exist.
 
-    similar to :func:`getBeta`, it calls :func:`~aphla.apdata.TwissData.get`
-    of the current twiss data.
-
     Examples
     --------
-    >>> getEta('P*', spos = True, source = 'database')
+    >>> getEta('p*', spos = True, source = 'database')
     >>> getEta('BPM')
     >>> getEta(['BPM1', 'BPM2'])
 
@@ -657,7 +657,10 @@ def getEta(group, **kwargs):
         return machines._lat._twiss.get([e.name for e in elem], 
                                         col=col, **kwargs)
     elif src == 'VA':
-        twiss = getElements('twiss')[0]
+        vas = getElements('VA')
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+
         idx = [e.index for e in elem]
         if 's' in col:
             ret = np.zeros((len(elem), 3), 'd')
@@ -690,8 +693,16 @@ def getTwiss(names, columns, **kwargs):
             logger.error("ERROR: no twiss data loaded")
             return None
         return machines._lat._twiss.get(names, col=col)
-    else:
-        return None
+    elif src == "VA":
+        vas = getElements('VA')
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+        d = { "s": twiss.s, "name": twiss.name,
+              "betax": twiss.betax, "betay": twiss.betay,
+              "alphax": twiss.alphax, "alphay": twiss.aphlay,
+              "phix": twiss.phix, "phiy": twiss.phiy,
+              "etax": twiss.etax}
+        return [d.get(c, None) for c in columns]
 
 def getTwissAt(s, columns, **kwargs):
     """
@@ -707,21 +718,25 @@ def getTwissAt(s, columns, **kwargs):
     else:
         return [None] * len(columns)
     
-def getChromaticity(source='machine'):
+
+def getChromaticity(source='database'):
     """
     get chromaticity **Not Implemented Yet**
     """
-    if source == 'machine':
-        raise NotImplementedError()
-    elif source == 'model':
-        raise NotImplementedError()
-    elif source == 'database':
-        raise NotImplementedError()
-    return None
+    if source == 'database':
+        return machines._lat.getChromaticities()
+    elif source == "VA":
+        vas = getElements('VA')
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+        return twiss.chromx, twiss.chromy        
+    else:
+        raise ValueError("Unknown source: '%s'" % source)
+
 
 def getTunes(source='machine'):
     """
-    get tunes from ['machine', 'database']
+    get tunes from ['machine', 'database', "VA"]
     """
     if source == 'machine':
         # return only the first matched element
@@ -731,6 +746,14 @@ def getTunes(source='machine'):
         return nu[0].x, nu[0].y
     elif source == 'database':
         return machines._lat.getTunes()
+    elif source == "VA":
+        vas = getElements('VA')
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+        return twiss.nux, twiss.nuy
+    else:
+        raise ValueError("Unknow source: '%s'" % source)
+
 
 def getTune(source='machine', plane = 'h'):
     """get one of the tune, 'h' or 'v'
@@ -745,6 +768,7 @@ def getTune(source='machine', plane = 'h'):
     elif plane == 'v': return nuy
     else:
         raise ValueError("plane must be either h or v")
+
 
 def _getFftTune(plane = 'hv', mode = ''):
     """get tune from FFT
