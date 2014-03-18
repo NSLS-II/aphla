@@ -9,7 +9,7 @@ import json
 import time
 
 from PyQt4.QtCore import (
-    Qt, QObject, SIGNAL, QSettings, QRect, QDateTime
+    Qt, QObject, SIGNAL, QSettings, QRect, QDateTime, QMetaObject
 )
 from PyQt4.QtGui import (
     QSortFilterProxyModel, QMessageBox, QIcon, QDialog, QIntValidator,
@@ -22,6 +22,7 @@ import config
 from tinkerModels import (ConfigMetaTableModel, ConfigAbstractModel,
                           ConfigTableModel)
 from dbviews import (ConfigDBViewWidget, ConfigMetaDBViewWidget)
+from tinkerdb import TinkerMainDatabase
 from ui_tinkerConfigDBSelector import Ui_Dialog
 
 HOME_PATH             = osp.expanduser('~')
@@ -630,6 +631,22 @@ class ConfigModel(QObject):
         self.output = None
 
 #----------------------------------------------------------------------
+def exportAllConfigsToFiles():
+    """"""
+
+    db = TinkerMainDatabase()
+
+    max_config_id = db.getMaxInColumn('config_meta_table', 'config_id')
+
+    if '[config_meta_table text view]' \
+       not in db.getViewNames():
+        db.create_temp_config_meta_table_text_view()
+
+    for config_id in range(1, max_config_id+1):
+        config_abs = ConfigAbstractModel()
+        config_abs.exportToFile(config_id, qsettings=None, auto=True)
+
+#----------------------------------------------------------------------
 def make(isModal=True, parentWindow=None, aptinkerQSettings=None):
     """"""
 
@@ -660,4 +677,6 @@ def main():
     print dialog.config_model.abstract.channel_ids
 
 if __name__ == '__main__':
-    main()
+    #main()
+
+    exportAllConfigsToFiles()

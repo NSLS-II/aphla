@@ -1184,6 +1184,8 @@ class TinkerMainDatabase(SQLiteDatabase):
                 conv_data_txt += ','.join(
                     [UNITCONV_DATA_FORMAT.format(x)
                      for x in uc['conv_data']['fp']])
+            elif unitconv_type == 'NoConversion':
+                conv_data_txt = ''
             else:
                 raise ValueError('Unexpected unitconv type: {0:s}'.format(
                     unitconv_type))

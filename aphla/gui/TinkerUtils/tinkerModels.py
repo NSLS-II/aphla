@@ -249,23 +249,26 @@ class ConfigAbstractModel(QObject):
         self.pvsp_ids = []
 
     #----------------------------------------------------------------------
-    def exportToFile(self, config_id, qsettings=None):
+    def exportToFile(self, config_id, qsettings=None, auto=False):
         """"""
 
-        if qsettings:
-            last_directory_path = qsettings.last_directory_path
+        if auto:
+            save_filepath = 'config_{0:d}.json'.format(config_id)
         else:
-            last_directory_path = ''
-        caption = 'Export configuration to a file'
-        selected_filter_str = ('JSON files (*.json)')
-        filter_str = ';;'.join([selected_filter_str, 'All files (*)'])
-        save_filepath = QFileDialog.getSaveFileName(
-            caption=caption, directory=last_directory_path, filter=filter_str)
+            if qsettings:
+                last_directory_path = qsettings.last_directory_path
+            else:
+                last_directory_path = ''
+            caption = 'Export configuration to a file'
+            selected_filter_str = ('JSON files (*.json)')
+            filter_str = ';;'.join([selected_filter_str, 'All files (*)'])
+            save_filepath = QFileDialog.getSaveFileName(
+                caption=caption, directory=last_directory_path, filter=filter_str)
 
-        if not save_filepath:
-            return
+            if not save_filepath:
+                return
 
-        qsettings.last_directory_path = osp.dirname(save_filepath)
+            qsettings.last_directory_path = osp.dirname(save_filepath)
 
         d = {}
 
@@ -315,12 +318,12 @@ class ConfigAbstractModel(QObject):
                      src_unitsymb=unitsymb_raw, dst_unitsymb=unitsymb,
                      inv=unitconv_inv_fromraw,
                      conv_data=[float(s) for s
-                                in unitconv_data_fromraw.split(',')]),
+                                in unitconv_data_fromraw.split(',') if s]),
                 dict(type=unitconv_type, src_unitsys=unitsys, dst_unitsys=None,
                      src_unitsymb=unitsymb, dst_unitsymb=unitsymb_raw,
                      inv=unitconv_inv_toraw,
                      conv_data=[float(s) for s
-                                in unitconv_data_toraw.split(',')])]
+                                in unitconv_data_toraw.split(',') if s])]
 
             if machine_name is not None:
                 aphla_channel_name = '.'.join([machine_name, lattice_name,
