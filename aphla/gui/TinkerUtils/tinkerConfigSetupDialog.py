@@ -68,7 +68,7 @@ class PreferencesEditor(QDialog, Ui_PrefDialog):
             config.COL_DEF.getColumnDataFromTable(
                 'column_table',
                 column_name_list=['column_key', 'short_descrip_name'],
-                condition_str='only_for_snapshot=0')
+                condition_str='only_for_ss=0')
         )
 
         self.load_pref_json()
