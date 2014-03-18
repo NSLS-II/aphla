@@ -324,6 +324,44 @@ def _insert_pvs(fdb, fpv, **kwargs):
     conn.commit()
     conn.close()
 
+
+def updateSqliteElements(fdb, elems, **kwarg):
+    """
+    insert or replace the elements table with text file
+    """
+    conn = sqlite3.connect(fdb)
+    # save byte string instead of the default unicode
+    conn.text_factory = str
+    c = conn.cursor()
+    # ph1g2c30a,800,BPM,4.935,0.0,4.935,C30,G2,A,PH1
+    dat = [(r[0],r[1],r[2],r[4],r[5],r[6],r[7],r[8],r[9])
+           for r in elems]
+    c.executemany("""INSERT OR REPLACE INTO elements """
+              """(elemName,elemIndex,elemType,elemLength,elemPosition,"""
+              """cell,girder,symmetry,elemGroups) values """
+              """(?,?,?,?,?,?,?,?,?)""", dat)
+    conn.commit()
+    conn.close()
+
+
+def updateSqlitePvs(fdb, pvs, **kwarg):
+    """
+    insert or replace the pvs table with a text file.
+    """
+    systag = "aphla.sys.%s" % (kwarg.get("latname", ""),)
+    conn = sqlite3.connect(fdb)
+    # save byte string instead of the default unicode
+    conn.text_factory = str
+    c = conn.cursor()
+    # SR:C01-MG{PS:CH2B}I:Sp1-SP,put,ch2g6c01b,16100,COR,x
+    dat = [(r[0],r[1],r[2],r[5],systag) for r in pvs]
+    c.executemany("""INSERT OR REPLACE INTO pvs """
+                  """(pv,elemHandle,elemName,elemField,tags) """
+                  """values (?,?,?,?,?)""", dat)
+    conn.commit()
+    conn.close()
+
+
 def createSqliteDb(fdb, felem, fpv, **kwargs):
     """
     felem and fpv are comma separated text file
@@ -342,7 +380,6 @@ def createSqliteDb(fdb, felem, fpv, **kwargs):
                  values (datetime('now'), "log", ? )""", (msg,))
     conn.commit()
     conn.close()
-
 
 
 def _saveSqliteDb(cfa, fname, sep=";"):
@@ -397,6 +434,7 @@ def _saveSqliteDb(cfa, fname, sep=";"):
     conn.commit()
     conn.close()
 
+
 def convCfsToSqlite(url, prefix = '', ignore = []):
     """
     url - channel finder server URL
@@ -439,6 +477,12 @@ def _read_elegant_twi(fname, i0=100):
     read the elegant twiss file, return dict of {"ElementName": [...], ...}
 
     if the element appears more than once, rename it to 'name:1', 'name:2', ...
+
+    KICKER: COR
+    VKICK: VCOR
+    HKICK: HCOR
+    MONI: BPM
+    CSBEND: BEND
     """
     cols = ["ElementName", "ElementType", "ElementOccurence", "s",
             "betax", "betay", "alphax", "alphay",
@@ -454,7 +498,10 @@ def _read_elegant_twi(fname, i0=100):
 
     # convert element type to aphla family
     map_ele_type = {"KICKER" : "COR",
-                    "CSBEND" : "BEND"}
+                    "VKICK"  : "VCOR",
+                    "HKICK"  : "HCOR",
+                    "CSBEND" : "BEND",
+                    "MONI"   : "BPM"}
 
     elems = []
     n = min([len(v) for k,v in twi.items()])
