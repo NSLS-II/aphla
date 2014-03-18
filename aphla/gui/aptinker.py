@@ -659,6 +659,11 @@ class TinkerDockWidget(QDockWidget):
         self.connect(self.ss_abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
                      self.update_last_ca_sent_ts)
 
+        self.connect(self.ssDBView, SIGNAL('ssDBViewVisibleColumnsChagned'),
+                     self.ss_abstract.on_visible_column_change)
+        self.connect(self.ssDBView, SIGNAL('ssDBViewVisibleColumnsChagned'),
+                     self.ss_table.on_visible_column_change)
+
     #----------------------------------------------------------------------
     def update_last_ca_sent_ts(self):
         """"""

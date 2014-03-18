@@ -1623,6 +1623,15 @@ class SnapshotAbstractModel(QObject):
 
         self.multiply(positive=False)
 
+    #----------------------------------------------------------------------
+    def on_visible_column_change(self, visible_col_name_list):
+        """"""
+
+        self.visible_col_keys = [
+            self.all_col_keys[self.all_col_names.index(name)]
+            for name in visible_col_name_list
+        ]
+
 ########################################################################
 class SnapshotTableModel(QAbstractTableModel):
     """"""
@@ -1666,9 +1675,6 @@ class SnapshotTableModel(QAbstractTableModel):
             k for k in self.abstract.dynamic_col_keys
             if (k in self.abstract.visible_col_keys) and
             (k not in ('weight', 'step_size', 'caput_enabled'))]
-        #self.visible_dynamic_col_keys = [
-            #'cur_RB', 'cur_SP', 'cur_SentSP', 'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
-            #'cur_ConvSP', 'cur_ConvRB', 'cur_ConvSentSP']
 
         self.update_visible_dynamic_columns()
 
@@ -1679,6 +1685,18 @@ class SnapshotTableModel(QAbstractTableModel):
             self,
             SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
             self.propagate_change_to_abstract)
+
+    #----------------------------------------------------------------------
+    def on_visible_column_change(self):
+        """"""
+
+        self.visible_dynamic_col_keys = [
+            k for k in self.abstract.dynamic_col_keys
+            if (k in self.abstract.visible_col_keys) and
+            (k not in ('weight', 'step_size', 'caput_enabled'))
+        ]
+
+        self.update_visible_dynamic_columns()
 
     #----------------------------------------------------------------------
     def propagate_change_to_abstract(self, topLeftIndex, bottomRightIndex):

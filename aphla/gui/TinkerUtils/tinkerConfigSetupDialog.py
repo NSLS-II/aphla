@@ -195,7 +195,6 @@ class Settings():
             self._position = QRect(0, 0, sizeHint.width(), sizeHint.height())
         view.setGeometry(self._position)
 
-        isinstance(view, View)
         self._splitter_top_bottom_sizes = self._settings.value(
             'splitter_top_bottom_sizes')
         if self._splitter_top_bottom_sizes is None:

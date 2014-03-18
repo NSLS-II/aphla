@@ -661,6 +661,9 @@ class SnapshotDBViewWidget(QWidget):
 
         self.vis_col_name_list = new_vis_col_names[:]
 
+        self.emit(SIGNAL('ssDBViewVisibleColumnsChagned'),
+                  self.vis_col_name_list)
+
     #----------------------------------------------------------------------
     def launchColumnsDialog(self):
         """"""
