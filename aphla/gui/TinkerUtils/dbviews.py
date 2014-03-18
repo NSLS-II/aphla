@@ -68,6 +68,8 @@ class ConfigMetaDBViewWidget(QWidget):
                      self.on_sortable_state_changed)
         self.connect(self.pushButton_columns, SIGNAL('clicked()'),
                      self.launchColumnsDialog)
+        self.connect(self.pushButton_export, SIGNAL('clicked()'),
+                     self.exportConfigToFile)
 
     #----------------------------------------------------------------------
     def _initUI(self, parentWidget):
@@ -93,6 +95,10 @@ class ConfigMetaDBViewWidget(QWidget):
         verticalLayout.addWidget(self.layoutWidget_3)
         horizontalLayout = QHBoxLayout(self.layoutWidget_3)
         horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.pushButton_export = QPushButton(self)
+        self.pushButton_export.setText('Export...')
+        self.pushButton_export.setMaximumWidth(200)
+        horizontalLayout.addWidget(self.pushButton_export)
         spacerItem = QSpacerItem(20, 40, QSizePolicy.Expanding,
                                  QSizePolicy.Minimum)
         horizontalLayout.addItem(spacerItem)
@@ -186,6 +192,12 @@ class ConfigMetaDBViewWidget(QWidget):
         if dialog.output is not None:
             self.on_column_selection_change(dialog.output[:],
                                             force_visibility_update=False)
+
+    #----------------------------------------------------------------------
+    def exportConfigToFile(self):
+        """"""
+
+        self.emit(SIGNAL('exportConfigToFile'))
 
 ########################################################################
 class ConfigDBViewWidget(QWidget):

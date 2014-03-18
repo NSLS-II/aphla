@@ -266,16 +266,13 @@ class Model(QObject):
     def get_channel_ids(
         self, pvsp_list, pvrb_list, channel_name_list,
         unitsys_list=None, unitconv_key_list=None, unitconv_dict=None,
-        aphla_channel_name_list=None, machine_name=''):
+        aphla_channel_name_list=None):
         """
         If `unitsys_list` is not None, either `unitconv_key_list` (for
         non-APHLA channels) or `aphla_channel_name_list` (for APHLA channels)
         must be also provided.
 
         If `unitconv_key_list` is provided, `unitconv_dict` must be also
-        provided.
-
-        If `aphla_channel_name_list` is provided, `machine_name` must be also
         provided.
 
         If both `unitconv_key` and `aphla_channel_name` are provided for
@@ -310,17 +307,11 @@ class Model(QObject):
             unitconv_fromraw_id_list = [None]*n_channels
 
             if aphla_channel_name_list is not None:
-                if machine_name in (None, ''):
-                    msg.setText(('If `aphla_channel_name_list` is specified, '
-                                 '`machine_name` must be also specified.'))
-                    msg.exec_()
-                    return
-                else:
-                    for i, ap_ch_name in enumerate(aphla_channel_name_list):
-                        if ap_ch_name in ('', None):
-                            pass
-                        else:
-                            raise NotImplementedError()
+                for i, ap_ch_name in enumerate(aphla_channel_name_list):
+                    if ap_ch_name in ('', None):
+                        pass
+                    else:
+                        raise NotImplementedError()
 
             # If both `unitconv_key` and `aphla_channel_name` are provided for
             # a channel, `unitconv_key` will override `aphla_channel_name`
@@ -472,26 +463,14 @@ class Model(QObject):
 
             if d.has_key('aphla_channel_name'):
                 aphla_channel_name_list = d['aphla_channel_name']
-                if json_dict.has_key('machine_name'):
-                    machine_name = json_dict['machine_name']
-                else:
-                    msg = QMessageBox()
-                    msg.setText(
-                        ('If `column_names` include "aphla_channel_name", you '
-                         'must also specify `machine_name` in your JSON config '
-                         'file.'))
-                    msg.exec_()
-                    return
             else:
                 aphla_channel_name_list = None
-                machine_name            = None
 
             channel_ids = self.get_channel_ids(
                 d['pvsp'], d['pvrb'], d['channel_name'],
                 unitsys_list=d['unitsys'], unitconv_key_list=unitconv_key_list,
                 unitconv_dict=unitconv_dict,
-                aphla_channel_name_list=aphla_channel_name_list,
-                machine_name=machine_name)
+                aphla_channel_name_list=aphla_channel_name_list)
 
         self.abstract.group_name_ids.extend(group_name_ids)
         self.abstract.channel_ids.extend(channel_ids)

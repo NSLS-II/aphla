@@ -39,7 +39,7 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, aptinkerQSettings=None):
         """Constructor"""
 
         QDialog.__init__(self, parent=parent)
@@ -81,6 +81,8 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
 
         self.settings = QSettings('APHLA', 'TinkerConfigDBSelector')
         self.loadViewSettings()
+
+        self._aptinkerQSettings = aptinkerQSettings
 
         self.pushButton_search.setIcon(QIcon(':/search.png'))
 
@@ -179,6 +181,25 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
                 'currentRowChanged(const QModelIndex &, const QModelIndex &)'),
             self.on_selection_change
         )
+
+        self.connect(self.configMetaDBViewWidget, SIGNAL('exportConfigToFile'),
+                     self.exportConfigToFile)
+
+    #----------------------------------------------------------------------
+    def exportConfigToFile(self):
+        """"""
+
+        inds = self.selectionModel.selectedRows()
+
+        if inds != []:
+            row = inds[0].row()
+            self.config_model.abstract.exportToFile(
+                self.search_result['config_id'][row], self._aptinkerQSettings)
+        else:
+            msg = QMessageBox()
+            msg.setText('You must select a configuration to be exported.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
@@ -609,10 +630,11 @@ class ConfigModel(QObject):
         self.output = None
 
 #----------------------------------------------------------------------
-def make(isModal=True, parentWindow=None):
+def make(isModal=True, parentWindow=None, aptinkerQSettings=None):
     """"""
 
-    dialog = ConfigDBSelector(parent=parentWindow)
+    dialog = ConfigDBSelector(parent=parentWindow,
+                              aptinkerQSettings=aptinkerQSettings)
 
     if isModal:
         dialog.exec_()

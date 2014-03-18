@@ -5,8 +5,6 @@
   "config_ref_step_size": 1.0,
   "config_synced_group_weight": true,
 
-  "machine_name": "nsls2",
-
   "column_names": ["group_name", "channel_name", "config_weight", "pvsp", "pvrb",
                    "unitconv_key", "aphla_channel_name", "unitsys"],
 

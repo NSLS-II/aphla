@@ -1377,6 +1377,11 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                 db.create_temp_config_meta_table_text_view()
 
             for config_id in open_config_ids:
+                if config_id is None:
+                    continue
+                else:
+                    config_id = int(config_id)
+
                 print 'Loading Configuration (ID={0:d})...'.format(config_id)
                 m = ConfigAbstractModel()
 
@@ -1408,6 +1413,15 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         self._settings.endGroup()
 
+        self._settings.beginGroup('fileSystem')
+
+        self._settings.last_directory_path = \
+            self._settings.value('last_directory_path')
+        if self._settings.last_directory_path is None:
+            self._settings.last_directory_path = ''
+
+        self._settings.endGroup()
+
     #----------------------------------------------------------------------
     def saveMiscSettings(self):
         """"""
@@ -1424,6 +1438,13 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         if w is not None:
             w.saveViewSizeSettings()
             w.saveMiscSettings()
+
+        self._settings.endGroup()
+
+        self._settings.beginGroup('fileSystem')
+
+        self._settings.setValue('last_directory_path',
+                                self._settings.last_directory_path)
 
         self._settings.endGroup()
 
@@ -1460,7 +1481,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
     def launchConfigDBSelector(self):
         """"""
 
-        result = tinkerConfigDBSelector.make(isModal=True, parentWindow=self)
+        result = tinkerConfigDBSelector.make(isModal=True, parentWindow=self,
+                                             aptinkerQSettings=self._settings)
 
         config_abstract_model = result.config_model.abstract
 

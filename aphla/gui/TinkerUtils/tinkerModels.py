@@ -5,15 +5,17 @@ sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
 import sys, os
+import os.path as osp
 import numpy as np
 import time
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from copy import deepcopy
+import json
 
 from PyQt4.QtCore import (QObject, Qt, SIGNAL, QAbstractItemModel,
                           QAbstractTableModel, QModelIndex)
-from PyQt4.QtGui import (QMessageBox)
+from PyQt4.QtGui import (QMessageBox, QFileDialog)
 
 from cothread import Sleep
 from cothread.catools import caget, caput, FORMAT_TIME
@@ -245,6 +247,116 @@ class ConfigAbstractModel(QObject):
         self.weights        = []
 
         self.pvsp_ids = []
+
+    #----------------------------------------------------------------------
+    def exportToFile(self, config_id, qsettings=None):
+        """"""
+
+        if qsettings:
+            last_directory_path = qsettings.last_directory_path
+        else:
+            last_directory_path = ''
+        caption = 'Export configuration to a file'
+        selected_filter_str = ('JSON files (*.json)')
+        filter_str = ';;'.join([selected_filter_str, 'All files (*)'])
+        save_filepath = QFileDialog.getSaveFileName(
+            caption=caption, directory=last_directory_path, filter=filter_str)
+
+        if not save_filepath:
+            return
+
+        qsettings.last_directory_path = osp.dirname(save_filepath)
+
+        d = {}
+
+        d['config_id'] =  config_id
+
+        if '[config_meta_table text view]' \
+           not in self.db.getViewNames(square_brackets=True):
+            self.db.create_temp_config_meta_table_text_view()
+
+        ((d['config_name'],), (d['config_description'],), (d['username'],),
+         (d['config_masar_id'],), (d['config_ref_step_size'],),
+         (d['config_synced_group_weight'],), (config_ctime,)) = \
+            self.db.getColumnDataFromTable(
+                '[config_meta_table text view]',
+                column_name_list=['config_name', 'config_description', 'username',
+                                  'config_masar_id', 'config_ref_step_size',
+                                  'config_synced_group_weight', 'config_ctime'],
+                condition_str='config_id={0:d}'.format(config_id))
+
+        d['config_ctime'] = datestr(config_ctime)
+
+        if '[config_table text view]' \
+           not in self.db.getViewNames(square_brackets=True):
+            self.db.create_temp_config_table_text_view()
+
+        out = self.db.getColumnDataFromTable(
+            '[config_table text view]',
+            column_name_list=[
+                'group_name', 'channel_name', 'weight', 'pvsp', 'pvrb',
+                'machine_name', 'lattice_name', 'elem_name', 'field', # related to APHLA channel
+                'unitsys', 'unitconv_type', 'unitsymb',
+                'unitsymb_raw', 'unitconv_data_toraw', 'unitconv_data_fromraw',
+                'unitconv_inv_toraw', 'unitconv_inv_fromraw'], # 'caput_enabled'
+            condition_str='config_id={0:d}'.format(config_id))
+
+        unitconv_dict = {}
+        d['channels'] = []
+        for i, (group_name, channel_name, weight, pvsp, pvrb,
+                machine_name, lattice_name, elem_name, field,
+                unitsys, unitconv_type, unitsymb, unitsymb_raw,
+                unitconv_data_toraw, unitconv_data_fromraw, unitconv_inv_toraw,
+                unitconv_inv_fromraw) in enumerate(zip(*out)):
+
+            unitconv_key = 'ch{0:d}'.format(i)
+            unitconv_dict[unitconv_key] = [
+                dict(type=unitconv_type, src_unitsys=None, dst_unitsys=unitsys,
+                     src_unitsymb=unitsymb_raw, dst_unitsymb=unitsymb,
+                     inv=unitconv_inv_fromraw,
+                     conv_data=[float(s) for s
+                                in unitconv_data_fromraw.split(',')]),
+                dict(type=unitconv_type, src_unitsys=unitsys, dst_unitsys=None,
+                     src_unitsymb=unitsymb, dst_unitsymb=unitsymb_raw,
+                     inv=unitconv_inv_toraw,
+                     conv_data=[float(s) for s
+                                in unitconv_data_toraw.split(',')])]
+
+            if machine_name is not None:
+                aphla_channel_name = '.'.join([machine_name, lattice_name,
+                                               elem_name, field])
+            else:
+                aphla_channel_name = None
+
+            d['channels'].append([group_name, channel_name, weight, pvsp, pvrb,
+                                  aphla_channel_name, unitsys, unitconv_key])
+
+        # Only keep unique elements in unitconv_dict
+        key_inds_for_unique_elements = []
+        keys_to_be_checked = unitconv_dict.keys()[::-1]
+        while keys_to_be_checked != []:
+            k = keys_to_be_checked.pop()
+            temp_keys = [k]
+            for kk in keys_to_be_checked:
+                if unitconv_dict[k] == unitconv_dict[kk]:
+                    temp_keys.append(kk)
+            for kk in temp_keys[1:]:
+                keys_to_be_checked.remove(kk)
+                del unitconv_dict[kk]
+            key_inds_for_unique_elements.append([int(k[2:]) for k in temp_keys])
+        for key_inds in key_inds_for_unique_elements:
+            k = 'ch{0:d}'.format(key_inds[0])
+            for ind in key_inds[1:]:
+                d['channels'][ind][-1] = k
+        #
+        d['unitconv_dict'] = unitconv_dict
+
+        d['column_names'] = [
+            'group_name', 'channel_name', 'config_weight', 'pvsp', 'pvrb',
+            'aphla_channel_name', 'unitsys', 'unitconv_key']
+
+        with open(save_filepath, 'w') as f:
+            json.dump(d, f, indent=2, sort_keys=True, separators=(',', ': '))
 
     #----------------------------------------------------------------------
     def isDataValid(self):
