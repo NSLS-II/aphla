@@ -355,8 +355,12 @@ class ConfigAbstractModel(QObject):
             'group_name', 'channel_name', 'config_weight', 'pvsp', 'pvrb',
             'aphla_channel_name', 'unitsys', 'unitconv_key']
 
+        orig_float_repr = json.encoder.FLOAT_REPR
+        json.encoder.FLOAT_REPR = lambda f: (
+            '%{0}'.format(tinkerdb.UNITCONV_DATA_PRECISION) % f)
         with open(save_filepath, 'w') as f:
             json.dump(d, f, indent=2, sort_keys=True, separators=(',', ': '))
+        json.encoder.FLOAT_REPR = orig_float_repr
 
     #----------------------------------------------------------------------
     def isDataValid(self):
