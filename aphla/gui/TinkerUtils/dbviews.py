@@ -220,7 +220,7 @@ class ConfigDBViewWidget(QWidget):
                                       'short_descrip_name',
                                       'user_editable_in_conf_setup',
                                       'str_format'],
-                    condition_str='only_for_snapshot=0')
+                    condition_str='only_for_ss=0')
                 )
         self.vis_col_name_list = self.all_col_names[:]
 
@@ -536,7 +536,7 @@ class SnapshotDBViewWidget(QWidget):
                     'column_table',
                     column_name_list=['column_id', 'column_key',
                                       'short_descrip_name',
-                                      'user_editable_in_snapshot',
+                                      'user_editable_in_ss',
                                       'str_format'])
                 )
         self.vis_col_name_list = self.all_col_names[:]

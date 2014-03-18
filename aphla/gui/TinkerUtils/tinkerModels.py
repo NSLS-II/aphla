@@ -229,7 +229,7 @@ class ConfigAbstractModel(QObject):
              'column_table',
              column_name_list=['column_key', 'short_descrip_name',
                                'str_format', 'user_editable_in_conf_setup'],
-             condition_str='only_for_snapshot=0')
+             condition_str='only_for_ss=0')
 
         self.all_str_formats = [f if f is not None else ':s'
                                 for f in self.all_str_formats]
@@ -1065,7 +1065,7 @@ class SnapshotAbstractModel(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, config_abstract_model):
+    def __init__(self, config_abstract_model, vis_col_key_list):
         """Constructor
 
         Size List:
@@ -1140,23 +1140,29 @@ class SnapshotAbstractModel(QObject):
         self.db = tinkerdb.TinkerMainDatabase()
 
         (self.all_col_keys, self.all_col_names, self.all_str_formats,
-         user_editable_list) = config.COL_DEF.getColumnDataFromTable(
-             'column_table',
-             column_name_list=['column_key', 'short_descrip_name',
-                               'str_format', 'user_editable_in_snapshot'])
+         user_editable_list, static_in_ss_list) = \
+            config.COL_DEF.getColumnDataFromTable(
+                'column_table',
+                column_name_list=['column_key', 'short_descrip_name',
+                                  'str_format', 'user_editable_in_ss',
+                                  'static_in_ss'])
 
         self.all_str_formats = [f if f is not None else ':s'
                                 for f in self.all_str_formats]
 
-        self.visible_col_keys = self.all_col_keys[:]
+        self.visible_col_keys = vis_col_key_list[:]
 
         self.user_editable = dict(zip(self.all_col_keys,
                                       [True if u == 1 else False
                                        for u in user_editable_list]))
 
+        self.dynamic_col_keys = [
+            k for k, static in zip(self.all_col_keys, static_in_ss_list)
+            if not static]
+
         self.ss_only_col_keys = config.COL_DEF.getColumnDataFromTable(
             'column_table', column_name_list=['column_key'],
-            condition_str='only_for_snapshot==1')[0]
+            condition_str='only_for_ss==1')[0]
 
         self.col_ids = {}
         for k in self.ss_only_col_keys:
@@ -1295,6 +1301,12 @@ class SnapshotAbstractModel(QObject):
         self.maps['ini_RB_ioc_ts'] = deepcopy(self.maps['cur_RB'])
         self.maps['ini_ConvSP']    = deepcopy(self.maps['ini_SP'])
         self.maps['ini_ConvRB']    = deepcopy(self.maps['ini_RB'])
+
+        self.rb_sp_same_size_rows = []
+        for i, (sp_size, rb_size) in enumerate(zip(
+            _ct.d['pvsp_array_size'], _ct.d['pvrb_array_size'])):
+            if sp_size == rb_size:
+                self.rb_sp_same_size_rows.append(i)
 
         self.n_caget_pvs = len(self.caget_pv_str_list)
         self.n_caput_pvs = len(self.caput_pv_str_list)
@@ -1634,10 +1646,6 @@ class SnapshotTableModel(QAbstractTableModel):
         if '[unitconv_table text view]' not in self.db.getViewNames():
             self.db.create_temp_unitconv_table_text_view()
 
-        self.static_col_keys = config.COL_DEF.getColumnDataFromTable(
-            'column_table', column_name_list=['column_key'],
-            condition_str='static_in_snapshot=1')[0]
-
         self.d = OrderedDict()
         for k in self.abstract.all_col_keys:
             self.d[k] = []
@@ -1655,8 +1663,12 @@ class SnapshotTableModel(QAbstractTableModel):
 
         # Update dynamic column data
         self.visible_dynamic_col_keys = [
-            'cur_RB', 'cur_SP', 'cur_SentSP', 'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
-            'cur_ConvSP', 'cur_ConvRB', 'cur_ConvSentSP']
+            k for k in self.abstract.dynamic_col_keys
+            if (k in self.abstract.visible_col_keys) and
+            (k not in ('weight', 'step_size', 'caput_enabled'))]
+        #self.visible_dynamic_col_keys = [
+            #'cur_RB', 'cur_SP', 'cur_SentSP', 'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
+            #'cur_ConvSP', 'cur_ConvRB', 'cur_ConvSentSP']
 
         self.update_visible_dynamic_columns()
 
@@ -1775,23 +1787,54 @@ class SnapshotTableModel(QAbstractTableModel):
     def update_column_data(self, col_key):
         """"""
 
-        if self.abstract.maps[col_key] == []:
-            return
+        if col_key in ('cur_SP', 'cur_RB', 'cur_SentSP',
+                       'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
+                       'cur_ConvSP', 'cur_ConvRB', 'cur_ConvSentSP'):
 
-        rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
+            rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
 
-        if col_key in ('cur_SP', 'cur_RB'):
-            self.d[col_key][rows] = self.abstract.caget_raws[indexes]
-        elif col_key in ('cur_SentSP'):
-            self.d[col_key][rows] = self.abstract.caput_raws[indexes]
-        elif col_key in ('cur_SP_ioc_ts', 'cur_RB_ioc_ts'):
-            self.d[col_key][rows] = self.abstract.caget_ioc_ts_tuples[indexes]
-        elif col_key in ('cur_ConvSP', 'cur_ConvRB'):
-            self.d[col_key][rows] = self.abstract.caget_convs[indexes]
-        elif col_key in ('cur_ConvSentSP'):
-            self.d[col_key][rows] = self.abstract.caput_convs[indexes]
+            if col_key in ('cur_SP', 'cur_RB'):
+                self.d[col_key][rows] = self.abstract.caget_raws[indexes]
+            elif col_key in ('cur_SentSP'):
+                self.d[col_key][rows] = self.abstract.caput_raws[indexes]
+            elif col_key in ('cur_SP_ioc_ts', 'cur_RB_ioc_ts'):
+                self.d[col_key][rows] = self.abstract.caget_ioc_ts_tuples[indexes]
+            elif col_key in ('cur_ConvSP', 'cur_ConvRB'):
+                self.d[col_key][rows] = self.abstract.caget_convs[indexes]
+            elif col_key in ('cur_ConvSentSP'):
+                self.d[col_key][rows] = self.abstract.caput_convs[indexes]
+
+        elif col_key == 'D_cur_SP_ini_SP':
+            self.d[col_key] = self.d['cur_SP'] - self.d['ini_SP']
+        elif col_key == 'D_cur_ConvSP_ini_ConvSP':
+            self.d[col_key] = self.d['cur_ConvSP'] - self.d['ini_ConvSP']
+        elif col_key == 'D_cur_RB_ini_RB':
+            self.d[col_key] = self.d['cur_RB'] - self.d['ini_RB']
+        elif col_key == 'D_cur_ConvRB_ini_ConvRB':
+            self.d[col_key] = self.d['cur_ConvRB'] - self.d['ini_ConvRB']
+        elif col_key == 'D_cur_RB_cur_SP':
+            rows = self.abstract.rb_sp_same_size_rows
+            self.d[col_key][rows] = \
+                self.d['cur_RB'][rows] - self.d['cur_SP'][rows]
+        elif col_key == 'D_cur_ConvRB_cur_ConvSP':
+            rows = self.abstract.rb_sp_same_size_rows
+            self.d[col_key][rows] = \
+                self.d['cur_ConvRB'][rows] - self.d['cur_ConvSP'][rows]
+        elif col_key == 'D_cur_RB_cur_SentSP':
+            rows = self.abstract.rb_sp_same_size_rows
+            self.d[col_key][rows] = \
+                self.d['cur_RB'][rows] - self.d['cur_SentSP'][rows]
+        elif col_key == 'D_cur_ConvRB_cur_ConvSentSP':
+            rows = self.abstract.rb_sp_same_size_rows
+            self.d[col_key][rows] = \
+                self.d['cur_ConvRB'][rows] - self.d['cur_ConvSentSP'][rows]
+        elif col_key == 'D_tar_SP_cur_SP':
+            pass
+        elif col_key == 'D_tar_ConvSP_cur_ConvSP':
+            pass
         else:
-            raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
+            #raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
+            self.d[col_key] = np.ones((self.abstract.nRows,))*np.nan
 
     #----------------------------------------------------------------------
     def update_init_pv_column_data(self):

@@ -554,7 +554,9 @@ class TinkerDockWidget(QDockWidget):
 
         self.config_abstract = config_abstract_model
 
-        self.ss_abstract = SnapshotAbstractModel(config_abstract_model)
+        pref = get_preferences()
+        self.ss_abstract = SnapshotAbstractModel(config_abstract_model,
+                                                 pref['vis_col_keys'])
         self.ss_table = SnapshotTableModel(self.ss_abstract)
 
         self._initUI(parent)
@@ -562,7 +564,7 @@ class TinkerDockWidget(QDockWidget):
         self.lineEdit_auto_caget_after_caput_delay.setText(
             str(self.ss_abstract.auto_caget_delay_after_caput))
 
-        self._settings = QSettings('APHLA', 'Tinker')
+        self._settings = QSettings('APHLA', 'TinkerDockWidget')
 
         self.loadViewSizeSettings()
         self.loadMiscSettings()
@@ -602,11 +604,10 @@ class TinkerDockWidget(QDockWidget):
         #horizHeader.setMovable(False)
         #self._expandAll_and_resizeColumn()
 
-        pref = get_preferences()
         vis_col_names = [
             self.ss_abstract.all_col_names[
                 self.ss_abstract.all_col_keys.index(k)]
-            for k in pref['vis_col_keys']]
+            for k in self.ss_abstract.visible_col_keys]
         self.ssDBView.on_column_selection_change(vis_col_names,
                                                  force_visibility_update=True)
 
@@ -705,6 +706,9 @@ class TinkerDockWidget(QDockWidget):
     #----------------------------------------------------------------------
     def closeEvent(self, event):
         """"""
+
+        self.saveViewSizeSettings()
+        self.saveMiscSettings()
 
         self.emit(SIGNAL('dockAboutTobeClosed'))
 
@@ -1141,6 +1145,18 @@ class TinkerDockWidget(QDockWidget):
         self._settings.beginGroup('viewSize')
 
         self._position = self._settings.value('position')
+        if self._position is None:
+            sizeHint = self.sizeHint()
+            self._position = QRect(0, 0, sizeHint.width(), sizeHint.height())
+        self.setGeometry(self._position)
+
+        self._splitter_sizes = self._settings.value('splitter_sizes')
+        if self._splitter_sizes is None:
+            third_height = int(self.height()/3.0)
+            self._splitter_sizes = [third_height]*3
+        if not isinstance(self._splitter_sizes[0], int):
+            self._splitter_sizes = [int(s) for s in self._splitter_sizes]
+        self.splitter.setSizes(self._splitter_sizes)
 
         self._settings.endGroup()
 
@@ -1149,7 +1165,11 @@ class TinkerDockWidget(QDockWidget):
 
         self._settings.beginGroup('viewSize')
 
+        self._position = self.geometry()
         self._settings.setValue('position', self._position)
+
+        self._splitter_sizes = self.splitter.sizes()
+        self._settings.setValue('splitter_sizes', self._splitter_sizes)
 
         self._settings.endGroup()
 
@@ -1169,9 +1189,6 @@ class TinkerDockWidget(QDockWidget):
     def saveMiscSettings(self):
 
         self._settings.beginGroup('misc')
-
-        self._settings.setValue('visible_col_key_list',
-                                self.visible_col_key_list)
 
         self._settings.endGroup()
 
@@ -1296,12 +1313,114 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
 
+        self._settings = QSettings('APHLA', 'Tinker')
+        self.loadViewSizeSettings()
+        self.loadMiscSettings()
+
         #self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
                      #self.load_config_test)
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
                      self.launchConfigDBSelector)
         self.connect(self.actionPreferences, SIGNAL('triggered()'),
                      self.launchPrefEditor)
+
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+
+        self.saveViewSizeSettings()
+        self.saveMiscSettings()
+
+        event.accept()
+
+    #----------------------------------------------------------------------
+    def loadViewSizeSettings(self):
+        """"""
+
+        self._settings.beginGroup('viewSize')
+
+        self._position = self._settings.value('position')
+        if self._position is None:
+            sizeHint = self.sizeHint()
+            self._position = QRect(0, 0, sizeHint.width(), sizeHint.height())
+        self.setGeometry(self._position)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveViewSizeSettings(self):
+        """"""
+
+        self._settings.beginGroup('viewSize')
+
+        self._position = self.geometry()
+        self._settings.setValue('position', self._position)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def loadMiscSettings(self):
+        """"""
+
+        self._settings.beginGroup('misc')
+
+        open_config_ids = self._settings.value('open_config_ids')
+        if open_config_ids is not None:
+            db = TinkerMainDatabase()
+            if '[config_meta_table text view]' \
+               not in db.getViewNames(square_brackets=True):
+                db.create_temp_config_meta_table_text_view()
+
+            for config_id in open_config_ids:
+                print 'Loading Configuration (ID={0:d})...'.format(config_id)
+                m = ConfigAbstractModel()
+
+                m.config_id = config_id
+
+                ((m.name,), (m.description,), (m.masar_id,), (m.ref_step_size,),
+                 (synced_group_weight,), (m.config_ctime,)) = \
+                    db.getColumnDataFromTable(
+                        '[config_meta_table text view]',
+                        column_name_list=[
+                            'config_name', 'config_description',
+                            'config_masar_id', 'config_ref_step_size',
+                            'config_synced_group_weight', 'config_ctime'],
+                        condition_str='config_id={0:d}'.format(config_id))
+                if synced_group_weight: m.synced_group_weight = True
+                else                  : m.synced_group_weight = False
+
+                out = db.getColumnDataFromTable(
+                    'config_table',
+                    column_name_list=['group_name_id', 'channel_id',
+                                      'config_weight'],
+                    condition_str='config_id={0:d}'.format(config_id))
+                (m.group_name_ids, m.channel_ids, m.weights) = map(list, out)
+
+                if m.channel_ids != []:
+                    self.createDockWidget(m)
+
+                print 'Configuration loading finished.'
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveMiscSettings(self):
+        """"""
+
+        self._settings.beginGroup('misc')
+
+        open_config_ids = []
+        w = None
+        for w in self.dockWidgetList:
+            open_config_ids.append(w.config_abstract.config_id)
+        self._settings.setValue('open_config_ids', open_config_ids)
+
+        # Save settings of the last dock widget, if exists
+        if w is not None:
+            w.saveViewSizeSettings()
+            w.saveMiscSettings()
+
+        self._settings.endGroup()
 
     #----------------------------------------------------------------------
     def tabifyWindows(self):
