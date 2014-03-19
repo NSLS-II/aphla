@@ -844,15 +844,15 @@ class ApCaWaveformPlot(ApCaPlot):
         #self.curve2 = Qwt.QwtPlotCurve()
 
         #self.setMinimumSize(300, 100)
-
+        print "PV:", pvs
         #self.connect(self, SIGNAL("doubleClicked
         self.count = 0
         self._cadata = CaDataMonitor()
         for pv in pvs:
             self._cadata.addHook(pv, self._ca_update)
         self._cadata.addPv(pvs)
-        ymin, ymax = self._cadata.getRange()
-        self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+        #ymin, ymax = self._cadata.getRange()
+        #self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
         self.zoomer1.setZoomBase(True)
         self._cadata.start()
 
@@ -861,14 +861,16 @@ class ApCaWaveformPlot(ApCaPlot):
         if not self.live: return
 
         self.count += 1
-        c = self.curves[idx]
+        for ipv,pv in enumerate(self._pvs):
+            if pv != val.name: continue
+            c = self.curves[ipv]
 
-        if self._ref[idx] is not None and self.drift:
-            vref = self._ref[idx]
-            y = [val[i] - yi for i,yi in enumerate(vref)]
-            c.setData(range(len(val)), y)
-        else:
-            c.setData(range(len(val)), val)
+            if self._ref[ipv] is not None and self.drift:
+                vref = self._ref[ipv]
+                y = [val[i] - yi for i,yi in enumerate(vref)]
+                c.setData(range(len(val)), y)
+            else:
+                c.setData(range(len(val)), val)
         self.replot()
         if self.count == 1: self.zoomer1.setZoomBase(False)
 
@@ -1160,8 +1162,18 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.err_only  = False
         self.live = True
         pvs = kw.pop("pvs", [])
-        #self.aplot = ApCaWaveformPlot(pvs)
-        self.aplot = ApCaArrayPlot(pvs, **kw)
+        dtype = kw.get("dtype", "Array")
+        magprof = kw.get("magprof", None)
+        if dtype == "Array":
+            self.aplot = ApCaArrayPlot(pvs, **kw)
+            if magprof:
+                self.aplot.setMagnetProfile(magprof)
+        elif dtype == "Waveform":
+            pvs = reduce(lambda x,y: x+y, pvs)
+            self.aplot = ApCaWaveformPlot(pvs, **kw)
+        elif dtype == "Time Series":
+            self.aplot = ApCaTimeSeriesPlot(pvs, **kw)
+        print "dtype=", dtype
         #self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
         #             self.elementSelected)
         self.setWidget(self.aplot)
