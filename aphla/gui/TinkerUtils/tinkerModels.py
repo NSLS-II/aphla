@@ -298,31 +298,32 @@ class ConfigAbstractModel(QObject):
         out = self.db.getColumnDataFromTable(
             '[config_table text view]',
             column_name_list=[
-                'group_name', 'channel_name', 'weight', 'pvsp', 'pvrb',
+                'group_name', 'channel_name', 'weight', 'caput_enabled',
+                'pvsp', 'pvrb',
                 'machine_name', 'lattice_name', 'elem_name', 'field', # related to APHLA channel
-                'unitsys', 'unitconv_type', 'unitsymb',
+                'unitsys', 'unitconv_type', 'polarity', 'unitsymb',
                 'unitsymb_raw', 'unitconv_data_toraw', 'unitconv_data_fromraw',
-                'unitconv_inv_toraw', 'unitconv_inv_fromraw'], # 'caput_enabled'
+                'unitconv_inv_toraw', 'unitconv_inv_fromraw'],
             condition_str='config_id={0:d}'.format(config_id))
 
         unitconv_dict = {}
         d['channels'] = []
-        for i, (group_name, channel_name, weight, pvsp, pvrb,
+        for i, (group_name, channel_name, weight, caput_enabled, pvsp, pvrb,
                 machine_name, lattice_name, elem_name, field,
-                unitsys, unitconv_type, unitsymb, unitsymb_raw,
+                unitsys, unitconv_type, polarity, unitsymb, unitsymb_raw,
                 unitconv_data_toraw, unitconv_data_fromraw, unitconv_inv_toraw,
                 unitconv_inv_fromraw) in enumerate(zip(*out)):
 
             unitconv_key = 'ch{0:d}'.format(i)
             unitconv_dict[unitconv_key] = [
-                dict(type=unitconv_type, src_unitsys=None, dst_unitsys=unitsys,
-                     src_unitsymb=unitsymb_raw, dst_unitsymb=unitsymb,
-                     inv=unitconv_inv_fromraw,
+                dict(type=unitconv_type, polarity=polarity, src_unitsys=None,
+                     dst_unitsys=unitsys, src_unitsymb=unitsymb_raw,
+                     dst_unitsymb=unitsymb, inv=unitconv_inv_fromraw,
                      conv_data=[float(s) for s
                                 in unitconv_data_fromraw.split(',') if s]),
-                dict(type=unitconv_type, src_unitsys=unitsys, dst_unitsys=None,
-                     src_unitsymb=unitsymb, dst_unitsymb=unitsymb_raw,
-                     inv=unitconv_inv_toraw,
+                dict(type=unitconv_type, polarity=polarity, src_unitsys=unitsys,
+                     dst_unitsys=None, src_unitsymb=unitsymb,
+                     dst_unitsymb=unitsymb_raw, inv=unitconv_inv_toraw,
                      conv_data=[float(s) for s
                                 in unitconv_data_toraw.split(',') if s])]
 
@@ -332,8 +333,9 @@ class ConfigAbstractModel(QObject):
             else:
                 aphla_channel_name = None
 
-            d['channels'].append([group_name, channel_name, weight, pvsp, pvrb,
-                                  aphla_channel_name, unitsys, unitconv_key])
+            d['channels'].append([group_name, channel_name, weight,
+                                  caput_enabled, pvsp, pvrb, aphla_channel_name,
+                                  unitsys, unitconv_key])
 
         # Only keep unique elements in unitconv_dict
         key_inds_for_unique_elements = []
@@ -356,8 +358,9 @@ class ConfigAbstractModel(QObject):
         d['unitconv_dict'] = unitconv_dict
 
         d['column_names'] = [
-            'group_name', 'channel_name', 'config_weight', 'pvsp', 'pvrb',
-            'aphla_channel_name', 'unitsys', 'unitconv_key']
+            'group_name', 'channel_name', 'config_weight',
+            'config_caput_enabled', 'pvsp', 'pvrb', 'aphla_channel_name',
+            'unitsys', 'unitconv_key']
 
         orig_float_repr = json.encoder.FLOAT_REPR
         json.encoder.FLOAT_REPR = lambda f: (
@@ -365,6 +368,8 @@ class ConfigAbstractModel(QObject):
         with open(save_filepath, 'w') as f:
             json.dump(d, f, indent=2, sort_keys=True, separators=(',', ': '))
         json.encoder.FLOAT_REPR = orig_float_repr
+
+        return save_filepath
 
     #----------------------------------------------------------------------
     def isDataValid(self):
@@ -780,6 +785,7 @@ class ConfigTableModel(QAbstractTableModel):
         unitsymb_list              = []
         unitsymb_raw_list          = []
         unitconv_type_list         = []
+        polarity_list              = []
         conv_data_txt_fromraw_list = []
         conv_data_txt_toraw_list   = []
         unitconv_inv_toraw_list    = []
@@ -787,18 +793,19 @@ class ConfigTableModel(QAbstractTableModel):
         for unitconv_toraw_id, unitconv_fromraw_id \
             in zip(unitconv_toraw_ids, unitconv_fromraw_ids):
             (unitsymb,), (unitsymb_raw,), (unitconv_type,), \
-                (conv_data_txt,), (inv,) = \
+                (conv_data_txt,), (inv,), (polarity,)= \
                 self.db.getColumnDataFromTable(
                     '[unitconv_table text view]',
                     column_name_list=['dst_unitsymb', 'src_unitsymb',
                                       'unitconv_type', 'conv_data_txt',
-                                      'inv'],
+                                      'inv', 'polarity'],
                     condition_str=('unitconv_id={0:d}'.
                                    format(unitconv_fromraw_id)))
 
             unitsymb_list.append(unitsymb)
             unitsymb_raw_list.append(unitsymb_raw)
             unitconv_type_list.append(unitconv_type)
+            polarity_list.append(polarity)
 
             conv_data_txt_fromraw_list.append(conv_data_txt)
             if inv == 0: inv = 'False'
@@ -819,6 +826,7 @@ class ConfigTableModel(QAbstractTableModel):
         self.d['unitsymb']              = unitsymb_list
         self.d['unitsymb_raw']          = unitsymb_raw_list
         self.d['unitconv_type']         = unitconv_type_list
+        self.d['unitconv_polarity']     = polarity_list
         self.d['unitconv_data_toraw']   = conv_data_txt_toraw_list
         self.d['unitconv_inv_toraw']    = unitconv_inv_toraw_list
         self.d['unitconv_data_fromraw'] = conv_data_txt_fromraw_list

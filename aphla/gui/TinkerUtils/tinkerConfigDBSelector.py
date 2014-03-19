@@ -194,14 +194,21 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
     def exportConfigToFile(self):
         """"""
 
+        msg = QMessageBox()
+
         inds = self.selectionModel.selectedRows()
 
         if inds != []:
             row = inds[0].row()
-            self.config_model.abstract.exportToFile(
-                self.search_result['config_id'][row], self._aptinkerQSettings)
+            config_id = self.search_result['config_id'][row]
+            saved_filepath = self.config_model.abstract.exportToFile(
+                config_id, self._aptinkerQSettings)
+            if saved_filepath:
+                msg.setText(
+                    'Successfully exported config (ID={0:d}) to the file "{1}".'.
+                    format(config_id, saved_filepath))
+                msg.exec_()
         else:
-            msg = QMessageBox()
             msg.setText('You must select a configuration to be exported.')
             msg.setIcon(QMessageBox.Critical)
             msg.exec_()

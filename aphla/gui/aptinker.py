@@ -1409,7 +1409,7 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                 out = db.getColumnDataFromTable(
                     'config_table',
                     column_name_list=['group_name_id', 'channel_id',
-                                      'config_weight'],
+                                      'config_weight', 'config_caput_enabled'],
                     condition_str='config_id={0:d}'.format(config_id))
                 (m.group_name_ids, m.channel_ids, m.weights,
                  m.caput_enabled_rows) = map(list, out)

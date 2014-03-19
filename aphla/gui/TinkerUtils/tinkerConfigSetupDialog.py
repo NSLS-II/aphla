@@ -281,12 +281,12 @@ class Model(QObject):
 
         msg = QMessageBox()
 
-        NoSymb_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
-            'unitsymb_table', 'unitsymb_id', 'unitsymb', '', append_new=True)
-        NoConv_NoSymb_unitconv_id = self.db.getColumnDataFromTable(
-            'unitconv_table', column_name_list=['unitconv_id'],
-            condition_str=('conv_data_txt="" AND src_unitsys_id={0:d} '
-                           'AND dst_unitsys_id={0:d}').format(NoSymb_id))[0][0]
+        #NoSymb_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+            #'unitsymb_table', 'unitsymb_id', 'unitsymb', '', append_new=True)
+        #NoConv_NoSymb_unitconv_id = self.db.getColumnDataFromTable(
+            #'unitconv_table', column_name_list=['unitconv_id'],
+            #condition_str=('conv_data_txt="" AND src_unitsys_id={0:d} '
+                           #'AND dst_unitsys_id={0:d}').format(NoSymb_id))[0][0]
 
         n_channels = len(pvsp_list)
 
