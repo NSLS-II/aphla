@@ -1387,15 +1387,22 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
                 m.config_id = config_id
 
+                out = db.getColumnDataFromTable(
+                    '[config_meta_table text view]',
+                    column_name_list=[
+                        'config_name', 'config_description', 'config_masar_id',
+                        'config_ref_step_size', 'config_synced_group_weight',
+                        'config_ctime'],
+                    condition_str='config_id={0:d}'.format(config_id))
+
+                if out == []:
+                    print 'config_id of {0:d} could not be found.'.format(
+                        config_id)
+                    continue
+
                 ((m.name,), (m.description,), (m.masar_id,), (m.ref_step_size,),
-                 (synced_group_weight,), (m.config_ctime,)) = \
-                    db.getColumnDataFromTable(
-                        '[config_meta_table text view]',
-                        column_name_list=[
-                            'config_name', 'config_description',
-                            'config_masar_id', 'config_ref_step_size',
-                            'config_synced_group_weight', 'config_ctime'],
-                        condition_str='config_id={0:d}'.format(config_id))
+                 (synced_group_weight,), (m.config_ctime,)) = out
+
                 if synced_group_weight: m.synced_group_weight = True
                 else                  : m.synced_group_weight = False
 

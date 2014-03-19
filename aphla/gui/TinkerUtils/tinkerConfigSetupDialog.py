@@ -582,14 +582,8 @@ class Model(QObject):
             'lattice_name_table', 'lattice_name_id', 'lattice_name', lattice,
             append_new=True)
 
-        unitsys_id = unitsys_id_raw # no unit conversion by default
-
-        NoSymb_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
-            'unitsymb_table', 'unitsymb_id', 'unitsymb', '', append_new=True)
-        NoConv_NoSymb_unitconv_id = self.db.getColumnDataFromTable(
-            'unitconv_table', column_name_list=['unitconv_id'],
-            condition_str=('conv_data_txt="" AND src_unitsys_id={0:d} '
-                           'AND dst_unitsys_id={0:d}').format(NoSymb_id))[0][0]
+        unitsys_id_phy = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+            'unitsys_table', 'unitsys_id', 'unitsys', 'phy', append_new=True)
 
         channel_ids   = []
         channel_names = []
@@ -652,9 +646,31 @@ class Model(QObject):
             channel_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
                 'channel_name_table', 'channel_name_id', 'channel_name',
                 channel_name, append_new=True)
+
+            uc_dict = elem._field[field].unitconv
+            available_unitsys_list = elem.getUnitSystems(field)
+            if 'phy' in available_unitsys_list:
+                unitsys_id = unitsys_id_phy
+                unitconv_toraw_id, unitconv_fromraw_id = \
+                    self.db.get_unitconv_toraw_fromraw_ids(
+                        uc_dict, dst_unitsys='phy',
+                        dst_unitsys_id=unitsys_id_phy,
+                        src_unitsymb=elem.getUnit(field, unitsys=None),
+                        dst_unitsymb=elem.getUnit(field, unitsys='phy'),
+                        append_new=True)
+            else:
+                unitsys_id = unitsys_id_raw # no unit conversion
+                unitconv_toraw_id, unitconv_fromraw_id = \
+                    self.db.get_unitconv_toraw_fromraw_ids(
+                        uc_dict, dst_unitsys=None,
+                        dst_unitsys_id=unitsys_id_raw,
+                        src_unitsymb=elem.getUnit(field, unitsys=None),
+                        dst_unitsymb=elem.getUnit(field, unitsys=None),
+                        append_new=True)
+
             channel_id = self.db.get_channel_id(
                 pvsp_id, pvrb_id, unitsys_id, channel_name_id,
-                NoConv_NoSymb_unitconv_id, NoConv_NoSymb_unitconv_id,
+                unitconv_toraw_id, unitconv_fromraw_id,
                 aphla_ch_id=aphla_ch_id, append_new=True)
             if channel_id is None:
                 msg = QMessageBox()

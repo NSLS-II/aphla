@@ -415,21 +415,22 @@ class TinkerMainDatabase(SQLiteDatabase):
             for f, unitsys in d.iteritems():
                 if len(unitsys) == 1:
                     inv = 0
+                    polarity = +1
                     if unitsys[0] is not None:
                         raise ValueError('When there is only 1 unit system, it should be None.')
                     unitconv_type = 'NoConversion'
                     src_unitsys = None
                     dst_unitsys = None
-                    src_unitsymb = dst_unitsymb = e.getUnit(f, unitsys=unitsys[0])
+                    src_unitsymb = dst_unitsymb = e.getUnit(f, unitsys=None)
                     conv_data_txt = ''
 
                     if src_unitsys is None: src_unitsys = ''
                     if dst_unitsys is None: dst_unitsys = ''
                     if src_unitsymb is None: src_unitsymb = ''
                     if dst_unitsymb is None: dst_unitsymb = ''
-                    unitconv_list.append((unitconv_type, src_unitsys, dst_unitsys,
-                                          src_unitsymb, dst_unitsymb, inv,
-                                          conv_data_txt))
+                    unitconv_list.append(
+                        (unitconv_type, src_unitsys, dst_unitsys, src_unitsymb,
+                         dst_unitsymb, inv, polarity, conv_data_txt))
                 else:
                     for k, v in e._field[f].unitconv.iteritems():
                         inv = 0
@@ -442,11 +443,13 @@ class TinkerMainDatabase(SQLiteDatabase):
                         dst_unitsymb = e.getUnit(f, unitsys=dst_unitsys)
                         if isinstance(v, ap.unitconv.UcPoly):
                             unitconv_type = 'poly'
+                            polarity = int(v.polarity)
                             conv_data_txt = ','.join(
                                 [UNITCONV_DATA_FORMAT.format(c)
                                  for c in v.p.coeffs])
                         elif isinstance(v, ap.unitconv.UcInterp1):
                             unitconv_type = 'interp1'
+                            polarity = int(v.polarity)
                             conv_data_txt = ','.join(
                                 [UNITCONV_DATA_FORMAT.format(x)
                                  for x in v.xp])
@@ -462,9 +465,10 @@ class TinkerMainDatabase(SQLiteDatabase):
                         if dst_unitsys is None: dst_unitsys = ''
                         if src_unitsymb is None: src_unitsymb = ''
                         if dst_unitsymb is None: dst_unitsymb = ''
-                        unitconv_list.append((unitconv_type, src_unitsys, dst_unitsys,
-                                              src_unitsymb, dst_unitsymb, inv,
-                                              conv_data_txt))
+                        unitconv_list.append(
+                            (unitconv_type, src_unitsys, dst_unitsys,
+                             src_unitsymb, dst_unitsymb, inv, polarity,
+                             conv_data_txt))
 
                         if hasattr(v, 'invertible') and v.invertible:
                             inv = 1
@@ -473,13 +477,13 @@ class TinkerMainDatabase(SQLiteDatabase):
 
                             unitconv_list.append(
                                 (unitconv_type, src_unitsys, dst_unitsys,
-                                 src_unitsymb, dst_unitsymb, inv,
+                                 src_unitsymb, dst_unitsymb, inv, polarity,
                                  conv_data_txt))
 
         unitconv_list = list(set(unitconv_list))
         unitconv_list_of_tuples = []
         for unitconv_type, src_unitsys, dst_unitsys, src_unitsymb, \
-            dst_unitsymb, inv, conv_data_txt in unitconv_list:
+            dst_unitsymb, inv, polarity, conv_data_txt in unitconv_list:
             unitconv_type_id = self.getColumnDataFromTable(
                 'unitconv_type_table', column_name_list=['unitconv_type_id'],
                 condition_str='unitconv_type="{0:s}"'.format(unitconv_type))[0][0]
@@ -497,7 +501,8 @@ class TinkerMainDatabase(SQLiteDatabase):
                 condition_str='unitsymb="{0:s}"'.format(dst_unitsymb))[0][0]
             unitconv_list_of_tuples.append(
                 (unitconv_type_id, src_unitsys_id, dst_unitsys_id,
-                 src_unitsymb_id, dst_unitsymb_id, inv, conv_data_txt))
+                 src_unitsymb_id, dst_unitsymb_id, inv, polarity,
+                 conv_data_txt))
 
         table_name = 'unitconv_table'
         column_def = [
@@ -508,6 +513,7 @@ class TinkerMainDatabase(SQLiteDatabase):
             Column('src_unitsymb_id', 'INTEGER', allow_null=False),
             Column('dst_unitsymb_id', 'INTEGER', allow_null=False),
             Column('inv', 'INTEGER', allow_null=False),
+            Column('polarity', 'INTEGER', allow_null=False), # +1 or -1
             Column('conv_data_txt', 'TEXT', allow_null=False),
             Column('unitconv_ctime', 'REAL', allow_null=False),
             ForeignKeyConstraint(self,
@@ -869,6 +875,8 @@ class TinkerMainDatabase(SQLiteDatabase):
             Column('channel_id', 'INTEGER', allow_null=False),
             Column('config_weight', 'REAL', allow_default=True,
                    default_value='NaN'),
+            Column('config_caput_enabled', 'INTEGER', allow_null=False,
+                   allow_default=True, default_value=1),
             ForeignKeyConstraint(self,
                                  'fk_config_id', 'config_id',
                                  'config_meta_table', 'config_id'),
@@ -955,6 +963,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                 'u2.unitsymb AS src_unitsymb',
                 'u3.unitsymb AS dst_unitsymb',
                 'uc.inv',
+                'uc.polarity',
                 ])
 
     #----------------------------------------------------------------------
@@ -1138,35 +1147,107 @@ class TinkerMainDatabase(SQLiteDatabase):
         )
 
     #----------------------------------------------------------------------
+    def get_unitconv_toraw_fromraw_ids(
+        self, unitconv_dict, dst_unitsys=None, dst_unitsys_id=None,
+        src_unitsymb=None, dst_unitsymb=None, append_new=True):
+        """"""
+
+        uc_d_keys = unitconv_dict.keys()
+
+        if isinstance(uc_d_keys[0], (str, unicode)):
+            pass
+        elif uc_d_keys == []: # From aphla element
+            unitconv_fromraw_id = self.get_unitconv_id(
+                uc, src_unitsys_id=unitsys_id_raw,
+                dst_unitsys_id=unitsys_id_raw, src_unitsymb=src_unitsymb,
+                dst_unitsymb=src_unitsymb, inv=0, append_new=append_new)
+        else: # From aphla element
+            inv = 0
+            if unitconv_dict.has_key((None, dst_unitsys)):
+                uc = unitconv_dict[(None, dst_unitsys)]
+            elif unitconv_dict.has_key((dst_unitsys, None)):
+                uc = unitconv_dict[(dst_unitsys, None)]
+                if uc.invertible:
+                    inv = 1
+                else:
+                    uc = None
+            else:
+                uc = None
+
+            if uc is None:
+                raise ValueError('No unit conversion available')
+
+            if dst_unitsys_id is None:
+                dst_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                    'unitsys_table', 'unitsys_id', 'unitsys', dst_unitsys,
+                    append_new=append_new)
+
+            unitconv_fromraw_id = self.get_unitconv_id(
+                uc, src_unitsys_id=unitsys_id_raw,
+                dst_unitsys_id=dst_unitsys_id, src_unitsymb=src_unitsymb,
+                dst_unitsymb=dst_unitsymb, inv=inv, append_new=append_new)
+
+            inv = 0
+            if unitconv_dict.has_key((dst_unitsys, None)):
+                uc = unitconv_dict[(dst_unitsys, None)]
+            elif unitconv_dict.has_key((None, dst_unitsys)):
+                uc = unitconv_dict[(None, dst_unitsys)]
+                if uc.invertible:
+                    inv = 1
+                else:
+                    uc = None
+            else:
+                uc = None
+
+            if uc is None:
+                raise ValueError('No unit conversion available')
+
+            unitconv_toraw_id = self.get_unitconv_id(
+                uc, src_unitsys_id=dst_unitsys_id,
+                dst_unitsys_id=unitsys_id_raw, src_unitsymb=dst_unitsymb,
+                dst_unitsymb=src_unitsymb, inv=inv, append_new=append_new)
+
+        return unitconv_toraw_id, unitconv_fromraw_id
+
+    #----------------------------------------------------------------------
     def get_unitconv_id(
         self, unitconv, src_unitsys_id=None, dst_unitsys_id=None,
         src_unitsymb=None, dst_unitsymb=None, inv=None, append_new=True):
         """
         If `unitconv` is either UcPoly or UcInterp1 object, then
         `src_unitsys_id`, `dst_unitsys_id`, `src_unitsymb`, `dst_unitsymb`,
-        and `inv` are all required. If `unitconv` is a dict (coming from a
-        JSON file), then these arguments will be ignored, even if given,
-        as the dict contains all the necessary information.
+        and `inv` are all required. If `unitconv` is a dict
+        (coming from a JSON file), then these arguments will be ignored,
+        even if given, as the dict contains all the necessary information.
         """
 
         uc = unitconv
 
         if isinstance(uc, ap.unitconv.UcPoly):
             unitconv_type = 'poly'
+            polarity = uc.polarity
             conv_data_txt = ','.join(
                 [UNITCONV_DATA_FORMAT.format(c) for c in uc.p.coeffs])
         elif isinstance(uc, ap.unitconv.UcInterp1):
             unitconv_type = 'interp1'
+            polarity = uc.polarity
             conv_data_txt = ','.join(
                 [UNITCONV_DATA_FORMAT.format(x) for x in uc.xp])
             conv_data_txt += ';'
             conv_data_txt += ','.join(
                 [UNITCONV_DATA_FORMAT.format(x) for x in uc.fp])
+        elif uc == {}:
+            unitconv_type = 'NoConversion'
+            src_unitsys_id = dst_unitsys_id = unitsys_id_raw
+            conv_data_txt = src_unitsymb = dst_unitsymb = ''
+            inv = 0
+            polarity = +1
         elif isinstance(uc, dict):
             unitconv_type = uc['type']
             src_unitsymb = uc['src_unitsymb']
             dst_unitsymb = uc['dst_unitsymb']
-            inv = uc['inv']
+            inv          = uc['inv']
+            polarity     = uc['polarity']
             src_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
                 'unitsys_table', 'unitsys_id', 'unitsys', uc['src_unitsys'],
                 append_new=True)
@@ -1210,9 +1291,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                 'conv_data_txt="{3:s}" and '
                 'src_unitsymb="{4:s}" and '
                 'dst_unitsymb="{5:s}" and '
-                'inv={6:d}').format(
+                'inv={6:d} and polarity={7:d}').format(
                     unitconv_type, src_unitsys_id, dst_unitsys_id,
-                    conv_data_txt, src_unitsymb, dst_unitsymb, inv
+                    conv_data_txt, src_unitsymb, dst_unitsymb, inv, polarity
                 )
         )
 
@@ -1231,7 +1312,8 @@ class TinkerMainDatabase(SQLiteDatabase):
                 nCol = len(self.getColumnNames(table_name))
                 list_of_tuples = [
                     (unitconv_type_id, src_unitsys_id, dst_unitsys_id,
-                     src_unitsymb_id, dst_unitsymb_id, inv, conv_data_txt)]
+                     src_unitsymb_id, dst_unitsymb_id, inv, polarity,
+                     conv_data_txt)]
                 self.insertRows(table_name, list_of_tuples,
                                 bind_replacement_list_of_tuples=[
                                 (nCol-1,
@@ -1750,6 +1832,8 @@ class SnapshotDatabase(SQLiteDatabase):
             Column('channel_id', 'INTEGER', allow_null=False),
             Column('ss_weight', 'REAL', allow_default=True,
                    default_value='NaN'),
+            Column('ss_caput_enabled', 'INTEGER', allow_null=False,
+                   allow_default=True, default_value=1),
             Column('pvsp_raw_scalar', 'REAL', allow_null=True),
             Column('pvsp_raw_array', 'BLOB', allow_null=True),
             Column('pvsp_sent_raw_scalar', 'REAL', allow_null=True),
@@ -1804,8 +1888,8 @@ if __name__ == '__main__':
     db = TinkerMainDatabase()
     db._initTables()
 
-    db_ss = SnapshotDatabase('test_snapshot.sqlite')
+    db_ss = SnapshotDatabase()
     db_ss._initTables()
 
-    db_session = SessionDatabase('test_session.sqlite')
+    db_session = SessionDatabase()
     db_session._initTables()
