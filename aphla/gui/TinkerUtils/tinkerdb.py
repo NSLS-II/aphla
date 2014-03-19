@@ -145,10 +145,6 @@ class TinkerMainDatabase(SQLiteDatabase):
                                 else '' for e in all_elems))
         all_unitsystems = list(set(
             sum([sum(e.getUnitSystems().values(), []) for e in all_elems], [])))
-        # TODO: remove this extra list comprehension once the wrong unitsys is fixed
-        all_unitsystems = [s if s != 'phy # raw is optional' else 'phy'
-                           for s in all_unitsystems]
-        all_unitsystems = list(set(all_unitsystems))
 
         all_unitsymbs = []
         all_pvsps = []
@@ -435,10 +431,6 @@ class TinkerMainDatabase(SQLiteDatabase):
                     for k, v in e._field[f].unitconv.iteritems():
                         inv = 0
                         src_unitsys, dst_unitsys = k
-                        # TODO: remove this if clause once the wrong unitsys
-                        # is fixed
-                        if 'phy # raw is optional' == src_unitsys:
-                            src_unitsys = 'phy'
                         src_unitsymb = e.getUnit(f, unitsys=src_unitsys)
                         dst_unitsymb = e.getUnit(f, unitsys=dst_unitsys)
                         if isinstance(v, ap.unitconv.UcPoly):
@@ -685,84 +677,6 @@ class TinkerMainDatabase(SQLiteDatabase):
                     condition_str='field="{0:s}"'.format(f))[0][0]
 
                 all_aphla_ch_list_of_tuples.append((elem_prop_id, field_id))
-
-                #unitsystems = e.getUnitSystems(field=f)
-                ## TODO: remove this section once the wrong unitsys is fixed
-                #if 'phy # raw is optional' in unitsystems:
-                    #unitsystems = [None, 'phy']
-                #if unitsystems == [None]:
-                    #src_unitsys_id = unitsys_id_None
-                    #dst_unitsys_id = unitsys_id_None
-                    #unitconv_id = NoConversion_unitconv_id
-                    #all_aphla_ch_list_of_tuples.append(
-                        #(elem_prop_id, field_id, src_unitsys_id,
-                         #dst_unitsys_id, unitconv_id))
-
-                #elif set(unitsystems) == set([None, 'phy']):
-
-                    #src_unitsys_id = unitsys_id_None
-                    #dst_unitsys_id = unitsys_id_phy
-                    #src_unitsymb = e.getUnit(f, unitsys=None)
-                    #dst_unitsymb = e.getUnit(f, unitsys='phy')
-                    #if src_unitsymb is None: src_unitsymb = ''
-                    #if dst_unitsymb is None: dst_unitsymb = ''
-
-                    #if e._field[f].unitconv.has_key((None, 'phy')):
-                        #uc = e._field[f].unitconv[(None, 'phy')]
-                        #inv = 0
-                    #elif e._field[f].unitconv.has_key(('phy', None)):
-                        #uc = e._field[f].unitconv[('phy', None)]
-                        #if hasattr(uc, 'invertible') and uc.invertible:
-                            #inv = 1
-                        #else:
-                            #uc = None
-                    #else:
-                        #uc = None
-
-                    #if uc is not None:
-                        #unitconv_id = self.get_unitconv_id(
-                            #uc, src_unitsys_id, dst_unitsys_id,
-                            #src_unitsymb, dst_unitsymb, inv, append_new=True)
-
-                        #all_aphla_ch_list_of_tuples.append(
-                            #(elem_prop_id, field_id, src_unitsys_id,
-                             #dst_unitsys_id, unitconv_id))
-
-
-                    #src_unitsys_id = unitsys_id_phy
-                    #dst_unitsys_id = unitsys_id_None
-                    #src_unitsymb = e.getUnit(f, unitsys='phy')
-                    #dst_unitsymb = e.getUnit(f, unitsys=None)
-                    #if src_unitsymb is None: src_unitsymb = ''
-                    #if dst_unitsymb is None: dst_unitsymb = ''
-
-                    #if e._field[f].unitconv.has_key(('phy', None)):
-                        #uc = e._field[f].unitconv[('phy', None)]
-                        #inv = 0
-                    ## TODO: remove this extra elif once the wrong unitsys is fixed
-                    #elif e._field[f].unitconv.has_key(('phy # raw is optional',None)):
-                        #uc = e._field[f].unitconv[('phy # raw is optional', None)]
-                        #inv = 0
-                    #elif e._field[f].unitconv.has_key((None, 'phy')):
-                        #uc = e._field[f].unitconv[(None, 'phy')]
-                        #if hasattr(uc, 'invertible') and uc.invertible:
-                            #inv = 1
-                        #else:
-                            #uc = None
-
-                    #if uc is not None:
-                        #unitconv_id = self.get_unitconv_id(
-                            #uc, src_unitsys_id, dst_unitsys_id,
-                            #src_unitsymb, dst_unitsymb, inv, append_new=True)
-
-                        #all_aphla_ch_list_of_tuples.append(
-                            #(elem_prop_id, field_id, src_unitsys_id,
-                             #dst_unitsys_id, unitconv_id))
-
-                #else:
-                    #raise ValueError('Unexpected unitsystems: {0:s}'.
-                                     #format(unitsystems.__repr__()))
-
 
         table_name = 'aphla_channel_table'
         column_def = [
