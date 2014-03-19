@@ -772,8 +772,8 @@ class TinkerMainDatabase(SQLiteDatabase):
         self.createTable(table_name, column_def)
 
         table_name = 'config_meta_text_search_table'
-        # "rowid" (hidden) = "config_id" in "config_meta_table"
         column_def = [
+            Column('config_id', 'INTEGER', allow_null=False, unique=True),
             Column('config_name', 'TEXT', allow_default=True,
                    default_value='""'),
             Column('config_description', 'TEXT', allow_default=True,
@@ -783,7 +783,6 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         table_name = 'config_table'
         column_def = [
-            Column('config_row_id', 'INTEGER', primary_key=True),
             Column('config_id', 'INTEGER', allow_null=False),
             Column('group_name_id', 'INTEGER', allow_null=False),
             Column('channel_id', 'INTEGER', allow_null=False),
@@ -828,14 +827,13 @@ class TinkerMainDatabase(SQLiteDatabase):
         self.createTable(table_name, column_def)
 
         table_name = 'snapshot_meta_text_search_table'
-        # "rowid" (hidden) = "ss_id" in "snapshot_meta_table"
         column_def = [
+            Column('ss_id', 'INTEGER', allow_null=False, unique=True),
             Column('ss_name', 'TEXT', allow_default=True, default_value='""'),
             Column('ss_description', 'TEXT', allow_default=True,
                    default_value='""'),
         ]
         self.createFTS4VirtualTable(table_name, column_def, tokenizer_str='')
-
 
     #----------------------------------------------------------------------
     def _initSessionTables(self):
@@ -845,10 +843,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         column_def = [
             Column('session_id', 'INTEGER', primary_key=True),
             Column('config_id', 'INTEGER', allow_null=False),
-            Column('session_name', 'TEXT', allow_default=True,
-                   default_value='""'),
-            Column('session_description', 'TEXT', allow_default=True,
-                   default_value='""'),
             Column('session_user_id', 'INTEGER', allow_null=False),
             Column('session_masar_id', 'INTEGER', allow_null=True),
             Column('session_filepath', 'TEXT', allow_null=False),
@@ -856,6 +850,16 @@ class TinkerMainDatabase(SQLiteDatabase):
             Column('session_ctime', 'REAL', allow_null=False),
         ]
         self.createTable(table_name, column_def)
+
+        table_name = 'session_meta_text_search_table'
+        column_def = [
+            Column('session_id', 'INTEGER', allow_null=False, unique=True),
+            Column('session_name', 'TEXT', allow_default=True,
+                   default_value='""'),
+            Column('session_description', 'TEXT', allow_default=True,
+                   default_value='""'),
+        ]
+        self.createFTS4VirtualTable(table_name, column_def, tokenizer_str='')
 
     #----------------------------------------------------------------------
     def create_temp_unitconv_table_text_view(self):
@@ -913,7 +917,7 @@ class TinkerMainDatabase(SQLiteDatabase):
         self.createTempView(
             '[config_meta_table full view]',
             '''config_meta_table cmt
-            LEFT JOIN config_meta_text_search_table cmtst ON cmt.config_id = cmtst.rowid
+            LEFT JOIN config_meta_text_search_table cmtst ON cmt.config_id = cmtst.config_id
             ''',
                column_name_list=[
                    'cmt.config_id',
@@ -934,7 +938,7 @@ class TinkerMainDatabase(SQLiteDatabase):
         self.createTempView(
             '[config_meta_table text view]',
             '''config_meta_table cmt
-            LEFT JOIN config_meta_text_search_table cmtst ON cmt.config_id = cmtst.rowid
+            LEFT JOIN config_meta_text_search_table cmtst ON cmt.config_id = cmtst.config_id
             LEFT JOIN user_table ut ON cmt.config_user_id = ut.user_id
             ''',
                column_name_list=[
@@ -973,7 +977,7 @@ class TinkerMainDatabase(SQLiteDatabase):
             LEFT JOIN [unitconv_table text view] ut2 ON cht.unitconv_fromraw_id = ut2.unitconv_id
             ''',
                column_name_list=[
-                   'ct.config_row_id',
+                   'ct.rowid',
                    'ct.config_id',
                    'gnt.group_name',
                    'cht.channel_name',
@@ -1608,7 +1612,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         table_name_meta            = 'config_meta_table'
         table_name_meta_text_seach = 'config_meta_text_search_table'
 
-        meta_text_search_list_of_tuples = [(a.name, a.description)]
         meta_list_of_tuples = [
             (self.get_user_id(a.userinfo, append_new=True),
              a.masar_id, a.ref_step_size, a.synced_group_weight)]
@@ -1618,23 +1621,19 @@ class TinkerMainDatabase(SQLiteDatabase):
         self.lockDatabase()
 
         maxID_meta = self.getMaxInColumn(table_name_meta, 'config_id')
-        maxID_meta_text_search = self.getMaxInColumn(
-            table_name_meta_text_seach, 'rowid')
-        if maxID_meta != maxID_meta_text_search:
-            print '# Maximum config_id in "config_meta_table" and maximum '
-            print '# row_id in "config_meta_text_search_table" no longer agree.'
-            raise IOError('TinkerMainDatabase data integrity lost.')
+        if maxID_meta is not None:
+            config_id = maxID_meta + 1
         else:
-            if maxID_meta is not None:
-                config_id = maxID_meta + 1
-            else:
-                config_id = 1
+            config_id = 1
+
+        meta_text_search_list_of_tuples = [(config_id, a.name, a.description)]
 
         self.insertRows(table_name_meta, meta_list_of_tuples,
                         bind_replacement_list_of_tuples=[
                             (nCol-1,
                              self.getCurrentEpochTimestampSQLiteFuncStr(
                                  data_type='float'))])
+
         self.insertRows(table_name_meta_text_seach,
                         meta_text_search_list_of_tuples)
 
@@ -1642,9 +1641,10 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         table_name = 'config_table'
 
-        list_of_tuples = [(config_id, gn_id, ch_id, w)
-                          for gn_id, ch_id, w
-                          in zip(a.group_name_ids, a.channel_ids, a.weights)]
+        list_of_tuples = [(config_id, gn_id, ch_id, w, caput_enabled)
+                          for gn_id, ch_id, w, caput_enabled
+                          in zip(a.group_name_ids, a.channel_ids, a.weights,
+                                 a.caput_enabled_rows)]
         self.insertRows(table_name, list_of_tuples)
 
         return config_id
@@ -1741,7 +1741,6 @@ class SnapshotDatabase(SQLiteDatabase):
 
         table_name = 'snapshot_table'
         column_def = [
-            Column('ss_row_id', 'INTEGER', primary_key=True),
             Column('ss_id', 'INTEGER', allow_null=False),
             Column('channel_id', 'INTEGER', allow_null=False),
             Column('ss_weight', 'REAL', allow_default=True,

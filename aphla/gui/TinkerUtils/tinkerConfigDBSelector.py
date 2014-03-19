@@ -21,7 +21,8 @@ import cothread
 import config
 from tinkerModels import (ConfigMetaTableModel, ConfigAbstractModel,
                           ConfigTableModel)
-from dbviews import (ConfigDBViewWidget, ConfigMetaDBViewWidget)
+from dbviews import (ConfigDBViewWidget, ConfigMetaDBViewWidget,
+                     ConfigDBTableViewItemDelegate)
 from tinkerdb import TinkerMainDatabase
 from ui_tinkerConfigDBSelector import Ui_Dialog
 
@@ -123,6 +124,9 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         proxyModel.setDynamicSortFilter(False)
         tbV = self.tableView_config
         tbV.setModel(proxyModel)
+
+        tbV.setItemDelegate(ConfigDBTableViewItemDelegate(
+            tbV, self.tableModel_config, tbV.parent()))
 
         self.db = self.config_model.db
         self.db.create_temp_config_meta_table_text_view()
@@ -567,7 +571,7 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             column_name, MATCH_cond_str)
 
         matched_rowids = self.db.getColumnDataFromTable(
-            'config_meta_text_search_table', column_name_list=['rowid'],
+            'config_meta_text_search_table', column_name_list=['config_id'],
             condition_str=fts_condition_str)
         if matched_rowids != []:
             matched_config_ids = list(matched_rowids[0])
@@ -585,7 +589,8 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         if current_index is None:
             self.textEdit_description.setText('')
             a.ref_step_size = np.nan
-            (a.group_name_ids, a.channel_ids, a.weights) = [], [], []
+            (a.group_name_ids, a.channel_ids, a.weights,
+             a.caput_enabled_rows) = [], [], [], []
         else:
             row = current_index.row()
 
@@ -599,14 +604,17 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             a.ref_step_size = self.search_result['config_ref_step_size'][row]
             out = self.db.getColumnDataFromTable(
                 'config_table',
-                column_name_list=['group_name_id', 'channel_id', 'config_weight'],
+                column_name_list=['group_name_id', 'channel_id',
+                                  'config_weight', 'config_caput_enabled'],
                 condition_str='config_id={0:d}'.format(
                     self.search_result['config_id'][row]))
 
             if out != []:
-                (a.group_name_ids, a.channel_ids, a.weights) = map(list, out)
+                (a.group_name_ids, a.channel_ids, a.weights,
+                 a.caput_enabled_rows) = map(list, out)
             else:
-                (a.group_name_ids, a.channel_ids, a.weights) = [], [], []
+                (a.group_name_ids, a.channel_ids, a.weights,
+                 a.caput_enabled_rows) = [], [], [], []
 
         self.config_model.table.updateModel()
         self.config_model.table.repaint()

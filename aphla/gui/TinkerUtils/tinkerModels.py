@@ -242,9 +242,10 @@ class ConfigAbstractModel(QObject):
                                       [True if u == 1 else False
                                        for u in user_editable_list]))
 
-        self.group_name_ids = []
-        self.channel_ids    = []
-        self.weights        = []
+        self.group_name_ids     = []
+        self.channel_ids        = []
+        self.weights            = []
+        self.caput_enabled_rows = []
 
         self.pvsp_ids = []
 
@@ -528,6 +529,10 @@ class ConfigAbstractModel(QObject):
             raise NotImplementedError(col_key)
         elif col_key == 'pvrb':
             raise NotImplementedError(col_key)
+
+        elif col_key == 'caput_enabled':
+            for r in row_inds:
+                self.caput_enabled_rows[r] = new_val
         else:
             raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
 
@@ -599,8 +604,13 @@ class ConfigTableModel(QAbstractTableModel):
         row_top_index    = topLeftIndex.row()
         row_bottom_index = bottomRightIndex.row()
 
-        if not ((col_left_index == col_right_index) and
-                (row_top_index == row_bottom_index)):
+        if ((col_left_index == col_right_index) and
+            (self.abstract.all_col_keys[col_left_index] == 'caput_enabled')):
+            row_inds = range(row_top_index, row_bottom_index+1)
+        elif ((col_left_index == col_right_index) and
+              (row_top_index == row_bottom_index)):
+            pass
+        else:
             return
 
         index = topLeftIndex
@@ -654,6 +664,12 @@ class ConfigTableModel(QAbstractTableModel):
                 'unitsys_table', 'unitsys_id', 'unitsys', new_unitsys,
                 append_new=True)
             self.abstract.on_unitsys_change(row_ind, new_unitsys_id)
+
+        elif col_key == 'caput_enabled':
+
+            for r in row_inds:
+                self.abstract.caput_enabled_rows[r] = \
+                    self.data(self.index(r, col_ind), role=Qt.UserRole)
 
         else:
             return
@@ -811,6 +827,8 @@ class ConfigTableModel(QAbstractTableModel):
         self.d['weight'] = np.array(self.abstract.weights)
         self.d['step_size'] = self.abstract.ref_step_size * self.d['weight']
 
+        self.d['caput_enabled'] = np.array(self.abstract.caput_enabled_rows)
+
     #----------------------------------------------------------------------
     def repaint(self):
         """"""
@@ -839,15 +857,16 @@ class ConfigTableModel(QAbstractTableModel):
         col_key    = self.abstract.all_col_keys[col]
         str_format = self.abstract.all_str_formats[col]
 
+        col_list = self.d[col_key]
+
         if ( not index.isValid() ) or \
            ( not (0 <= row < self.rowCount()) ):
             return None
 
-        if role in (Qt.DisplayRole, Qt.EditRole):
+        if (str_format != 'checkbox') and (role in (Qt.DisplayRole, Qt.EditRole)):
             # ^ Need "EditRole". Otherwise, existing text will disappear
             # when trying to edit.
 
-            col_list = self.d[col_key]
             if len(col_list) != 0: value = col_list[row]
             else                 : return 'N/A'
 
@@ -859,6 +878,18 @@ class ConfigTableModel(QAbstractTableModel):
                 return str(value)
             else:
                 return '{{{:s}}}'.format(str_format).format(value)
+
+        elif str_format == 'checkbox':
+
+            value = col_list[row]
+
+            if role == Qt.DisplayRole:
+                return None
+            elif role in (Qt.EditRole, Qt.UserRole):
+                if value == 1:
+                    return True
+                else:
+                    return False
 
         else:
             return None
@@ -903,7 +934,7 @@ class ConfigTableModel(QAbstractTableModel):
         else:
             L = self.d[col_key]
 
-            if (str_format is None) or (str_format == ':s'):
+            if (str_format is None) or (str_format in (':s', 'checkbox')):
                 L[row] = value
             elif str_format.endswith('g'):
                 if value == '':
@@ -1254,7 +1285,7 @@ class SnapshotAbstractModel(QObject):
 
         self.weight_array        = _ct.d['weight']
         self.step_size_array     = self.ref_step_size * self.weight_array
-        self.caput_enabled_rows  = np.array([True]*self.nRows)
+        self.caput_enabled_rows  = _ct.d['caput_enabled']
 
         self.db = tinkerdb.TinkerMainDatabase()
 
@@ -1826,12 +1857,14 @@ class SnapshotTableModel(QAbstractTableModel):
         row_top_index    = topLeftIndex.row()
         row_bottom_index = bottomRightIndex.row()
 
-        if not ((col_left_index == col_right_index) and
-                (row_top_index == row_bottom_index)):
-            return
-        elif (col_left_index == col_right_index) and \
-             self.abstract.all_col_keys[col_left_index] == 'caput_enabled':
+        if ((col_left_index == col_right_index) and
+            (self.abstract.all_col_keys[col_left_index] == 'caput_enabled')):
             row_inds = range(row_top_index, row_bottom_index+1)
+        elif ((col_left_index == col_right_index) and
+              (row_top_index == row_bottom_index)):
+            pass
+        else:
+            return
 
         index = topLeftIndex
         row_ind = row_top_index
@@ -2024,6 +2057,8 @@ class SnapshotTableModel(QAbstractTableModel):
         col_key    = self.abstract.all_col_keys[col]
         str_format = self.abstract.all_str_formats[col]
 
+        col_list = self.d[col_key]
+
         if ( not index.isValid() ) or \
            ( not (0 <= row < self.rowCount()) ):
             return None
@@ -2032,7 +2067,6 @@ class SnapshotTableModel(QAbstractTableModel):
             # ^ Need "EditRole". Otherwise, existing text will disappear
             # when trying to edit.
 
-            col_list = self.d[col_key]
             if len(col_list) != 0: value = col_list[row]
             else                 : return 'N/A'
 
@@ -2052,9 +2086,8 @@ class SnapshotTableModel(QAbstractTableModel):
             else:
                 return '{{{:s}}}'.format(str_format).format(value)
 
-        if str_format == 'checkbox':
+        elif str_format == 'checkbox':
 
-            col_list = self.d[col_key]
             value = col_list[row]
 
             if role == Qt.DisplayRole:

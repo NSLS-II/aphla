@@ -52,7 +52,7 @@ from TinkerUtils.tinkerdb import (TinkerMainDatabase, SnapshotDatabase,
                                   SessionDatabase)
 from TinkerUtils.dbviews import (
     ConfigDBViewWidget, SnapshotDBViewWidget, ConfigMetaDBViewWidget,
-    SnapshotDBTableViewItemDelegate)
+    ConfigDBTableViewItemDelegate, SnapshotDBTableViewItemDelegate)
 
 HOME_PATH             = osp.expanduser('~')
 APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
@@ -1411,7 +1411,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                     column_name_list=['group_name_id', 'channel_id',
                                       'config_weight'],
                     condition_str='config_id={0:d}'.format(config_id))
-                (m.group_name_ids, m.channel_ids, m.weights) = map(list, out)
+                (m.group_name_ids, m.channel_ids, m.weights,
+                 m.caput_enabled_rows) = map(list, out)
 
                 if m.channel_ids != []:
                     self.createDockWidget(m)
@@ -1530,8 +1531,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         (_, c_abs.group_name_ids, c_abs.channel_ids,
          c_abs.weights) = map(list, db.getColumnDataFromTable(
-             'config_table', order_by_str='config_row_id',
-             column_name_list=['config_row_id', 'group_name_id', 'channel_id',
+             'config_table', order_by_str='rowid', # "rowid" is hidden
+             column_name_list=['rowid', 'group_name_id', 'channel_id',
                                'config_weight'],
              condition_str='config_id={0:d}'.format(config_id)))
 

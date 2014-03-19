@@ -27,7 +27,7 @@ import config
 from tinkerModels import (ConfigAbstractModel, ConfigTableModel,
                           ConfigTreeModel)
 from tinkerdb import (TinkerMainDatabase, unitsys_id_raw, pv_id_NonSpecified)
-from dbviews import ConfigDBViewWidget
+from dbviews import (ConfigDBViewWidget, ConfigDBTableViewItemDelegate)
 from ui_tinkerConfigSetupDialog import Ui_Dialog
 from ui_tinkerConfigSetupPref import Ui_Dialog as Ui_PrefDialog
 from aphla.gui import channelexplorer
@@ -502,6 +502,24 @@ class Model(QObject):
     def importNewChannelsFromJSONFile(self, json_dict):
         """"""
 
+        required_json_dict_keys = ['channels']
+        for k in required_json_dict_keys:
+            if k not in json_dict:
+                msg = QMessageBox()
+                msg.setText('JSON config file must contain the key "{0}"'.
+                            format(k))
+                msg.exec_()
+                return
+
+        required_column_names = ['pvsp', 'pvrb', 'channel_name']
+        for k in required_column_names:
+            if k not in json_dict['column_names']:
+                msg = QMessageBox()
+                msg.setText(('"{0}" must be in "column_names" element '
+                             'in JSON config file').format(k))
+                msg.exec_()
+                return
+
         d = {}
         for i, k in enumerate(json_dict['column_names']):
             if isinstance(json_dict['channels'][0][i], unicode):
@@ -562,7 +580,15 @@ class Model(QObject):
 
         self.abstract.group_name_ids.extend(group_name_ids)
         self.abstract.channel_ids.extend(channel_ids)
-        self.abstract.weights.extend(d['config_weight'])
+        n_channels = len(channel_ids)
+        if d.has_key('config_weight'):
+            self.abstract.weights.extend(d['config_weight'])
+        else:
+            self.abstract.weights.extend(np.array([1.0]*n_channels))
+        if d.has_key('config_caput_enabled'):
+            self.abstract.caput_enabled_rows.extend(d['config_caput_enabled'])
+        else:
+            self.abstract.caput_enabled_rows.extend(np.array([True]*n_channels))
 
         self.table.updateModel()
         self.table.repaint()
@@ -713,6 +739,7 @@ class Model(QObject):
         self.abstract.group_name_ids.extend(group_name_ids)
         self.abstract.channel_ids.extend(channel_ids)
         self.abstract.weights.extend(weights)
+        self.abstract.caput_enabled_rows.extend([True]*n_channels)
 
         self.table.updateModel()
         self.table.repaint()
@@ -766,6 +793,11 @@ class View(QDialog, Ui_Dialog):
         self.settings.loadViewSizeSettings(self)
 
         self.model = model
+
+        self.tableView.setItemDelegate(ConfigDBTableViewItemDelegate(
+            self.tableView, self.model.table, self.tableView.parent()))
+        self.tableView.setEditTriggers(QAbstractItemView.CurrentChanged |
+                                       QAbstractItemView.SelectedClicked)
 
         self.lineEdit_ref_step_size.setText(
             str(self.model.abstract.ref_step_size))
