@@ -305,13 +305,100 @@ class Model(QObject):
 
             unitconv_toraw_id_list   = [None]*n_channels
             unitconv_fromraw_id_list = [None]*n_channels
+            aphla_ch_id_list         = [None]*n_channels
 
             if aphla_channel_name_list is not None:
-                for i, ap_ch_name in enumerate(aphla_channel_name_list):
+                for i, (ap_ch_name, unitsys, unitsys_id) in enumerate(zip(
+                    aphla_channel_name_list, unitsys_list, unitsys_id_list)):
                     if ap_ch_name in ('', None):
                         pass
                     else:
-                        raise NotImplementedError()
+                        machine_name, lattice_name, elem_name, field = \
+                            ap_ch_name.split('.')
+                        if machine_name not in get_loaded_ap_machines():
+                            ap.machines.load(machine_name)
+                        ap.machines.use(lattice_name)
+                        aphla_elem = ap.getElements(elem_name)[0]
+                        uc_dict = aphla_elem._field[field].unitconv
+
+                        machine_name_id = \
+                            self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                                'machine_name_table',
+                                'machine_name_id', 'machine_name',
+                                machine_name, append_new=True)
+                        lattice_name_id = \
+                            self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                                'lattice_name_table', 'lattice_name_id',
+                                'lattice_name', lattice_name, append_new=True)
+                        elem_prop_id = self.db.get_elem_prop_id(
+                            machine_name_id, lattice_name_id, aphla_elem,
+                            append_new=True)
+                        field_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                            'field_table', 'field_id', 'field', field,
+                            append_new=True)
+                        aphla_ch_id = self.db.get_aphla_ch_id(
+                            elem_prop_id, field_id, append_new=True)
+                        aphla_ch_id_list[i] = aphla_ch_id
+
+                        src_unitsymb = aphla_elem.getUnit(field, unitsys=None)
+                        dst_unitsymb = aphla_elem.getUnit(
+                            field, unitsys=(unitsys if unitsys else None))
+
+                        if unitsys == '':
+                            uc = dict(type='NoConversion', src_unitsys='',
+                                      dst_unitsys='', src_unitsymb=src_unitsymb,
+                                      dst_unitsymb=dst_unitsymb, inv=0,
+                                      conv_data='')
+
+                            uc_id = self.db.get_unitconv_id(
+                                uc, src_unitsys_id=None, dst_unitsys_id=None,
+                                src_unitsymb=None, dst_unitsymb=None, inv=None,
+                                append_new=True)
+
+                            unitconv_fromraw_id_list[i] = uc_id
+                            unitconv_toraw_id_list[i]   = uc_id
+
+                            continue
+
+                        inv = 0
+                        if uc_dict.has_key((None, unitsys)):
+                            uc = uc_dict[(None, unitsys)]
+                        elif uc_dict.has_key((unitsys, None)):
+                            uc = uc_dict[(unitsys, None)]
+                            if uc.invertible:
+                                inv = 1
+                            else:
+                                uc = None
+                        else:
+                            uc = None
+
+                        unitconv_fromraw_id_list[i] = self.db.get_unitconv_id(
+                            uc, src_unitsys_id=unitsys_id_raw,
+                            dst_unitsys_id=unitsys_id,
+                            src_unitsymb=src_unitsymb,
+                            dst_unitsymb=dst_unitsymb, inv=inv,
+                            append_new=True)
+
+                        src_unitsymb, dst_unitsymb = dst_unitsymb, src_unitsymb
+
+                        inv = 0
+                        if uc_dict.has_key((unitsys, None)):
+                            uc = uc_dict[(unitsys, None)]
+                        elif uc_dict.has_key((None, unitsys)):
+                            uc = uc_dict[(None, unitsys)]
+                            if uc.invertible:
+                                inv = 1
+                            else:
+                                uc = None
+                        else:
+                            uc = None
+
+                        unitconv_toraw_id_list[i] = self.db.get_unitconv_id(
+                            uc, src_unitsys_id=unitsys_id,
+                            dst_unitsys_id=unitsys_id_raw,
+                            src_unitsymb=src_unitsymb,
+                            dst_unitsymb=dst_unitsymb, inv=inv,
+                            append_new=True)
 
             # If both `unitconv_key` and `aphla_channel_name` are provided for
             # a channel, `unitconv_key` will override `aphla_channel_name`
@@ -361,9 +448,10 @@ class Model(QObject):
         channel_ids = []
 
         for (pvsp, pvrb, ch_name, unitsys_id, unitconv_toraw_id,
-             unitconv_fromraw_id) in zip(
+             unitconv_fromraw_id, aphla_ch_id) in zip(
                  pvsp_list, pvrb_list, channel_name_list, unitsys_id_list,
-                 unitconv_toraw_id_list, unitconv_fromraw_id_list):
+                 unitconv_toraw_id_list, unitconv_fromraw_id_list,
+                 aphla_ch_id_list):
 
             if pvsp == '': readonly = -1
             else         : readonly = 0
@@ -404,7 +492,7 @@ class Model(QObject):
             channel_id = self.db.get_channel_id(
                 pvsp_id, pvrb_id, unitsys_id, channel_name_id,
                 unitconv_toraw_id, unitconv_fromraw_id,
-                aphla_ch_id=None, append_new=True)
+                aphla_ch_id=aphla_ch_id, append_new=True)
 
             channel_ids.append(channel_id)
 
@@ -1113,6 +1201,12 @@ class App(QObject):
 
         return channelGroupInfo
 
+#----------------------------------------------------------------------
+def get_loaded_ap_machines():
+    """"""
+
+    return list(set([ap.machines.getLattice(latname).machine
+                     for latname in ap.machines.lattices()]))
 
 #----------------------------------------------------------------------
 def make(isModal=True, parentWindow=None, use_cached_lattice=False):
