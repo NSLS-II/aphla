@@ -846,12 +846,18 @@ class TinkerDockWidget(QDockWidget):
         verticalLayout_1 = QVBoxLayout(self.tab_step_mode)
         horizontalLayout_1 = QHBoxLayout()
         self.pushButton_step_up = QPushButton(self.tab_step_mode)
-        self.pushButton_step_up.setToolTip('Step Up Setpoints')
+        self.pushButton_step_up.setToolTip(
+            'Step Up Setpoints (not applicable to setpoint PVs whose\n'
+            '"StepSize" or "Cur.SP" values are "nan", or whose "caput ON"\n'
+            'are unchecked)')
         self.pushButton_step_up.setIcon(QIcon(':/plus48.png'))
         self.pushButton_step_up.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_step_up)
         self.pushButton_step_down = QPushButton(self.tab_step_mode)
-        self.pushButton_step_down.setToolTip('Step Down Setpoints')
+        self.pushButton_step_down.setToolTip(
+            'Step Down Setpoints (not applicable to setpoint PVs whose\n'
+            '"StepSize" or "Cur.SP" values are "nan", or whose "caput ON"\n'
+            'are unchecked)')
         self.pushButton_step_down.setIcon(QIcon(':/minus48.png'))
         self.pushButton_step_down.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_step_down)
@@ -867,12 +873,16 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_1.addWidget(self.checkBox_synced_group_weight)
 
         self.pushButton_multiply = QPushButton(self.tab_step_mode)
-        self.pushButton_multiply.setToolTip('Multiply Setpoints')
+        self.pushButton_multiply.setToolTip(
+            'Multiply Setpoints (not applicable to setpoint PVs whose\n'
+            '"Cur.SP" values are "nan", or whose "caput ON" are unchecked)')
         self.pushButton_multiply.setIcon(QIcon(':/multiply48.png'))
         self.pushButton_multiply.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_multiply)
         self.pushButton_divide = QPushButton(self.tab_step_mode)
-        self.pushButton_divide.setToolTip('Divide Setpoints')
+        self.pushButton_divide.setToolTip(
+            'Divide Setpoints (not applicable to setpoint PVs whose\n'
+            '"Cur.SP" values are "nan", or whose "caput ON" are unchecked)')
         self.pushButton_divide.setIcon(QIcon(':/divide48.png'))
         self.pushButton_divide.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_divide)

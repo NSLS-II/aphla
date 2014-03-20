@@ -603,13 +603,8 @@ class SQLiteDatabase():
 
         sql_cmd += placeholder_str
 
-        try:
-            with self.con:
-                self.cur.executemany(sql_cmd, list_of_tuples)
-        except sqlite3.IntegrityError as e:
-            raise e
-        except:
-            traceback.print_exc()
+        with self.con:
+            self.cur.executemany(sql_cmd, list_of_tuples)
 
     #----------------------------------------------------------------------
     def deleteRows(self, table_name, condition_str='',

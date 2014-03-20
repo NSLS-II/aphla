@@ -1070,18 +1070,18 @@ class TinkerMainDatabase(SQLiteDatabase):
     def get_unitconv_toraw_fromraw_ids(
         self, unitconv_dict, dst_unitsys=None, dst_unitsys_id=None,
         src_unitsymb=None, dst_unitsymb=None, append_new=True):
-        """"""
+        """
+        This function is to be used only for APHLA elements
+        """
 
         uc_d_keys = unitconv_dict.keys()
 
-        if isinstance(uc_d_keys[0], (str, unicode)):
-            pass
-        elif uc_d_keys == []: # From aphla element
-            unitconv_fromraw_id = self.get_unitconv_id(
-                uc, src_unitsys_id=unitsys_id_raw,
+        if uc_d_keys == []:
+            unitconv_fromraw_id = unitconv_toraw_id = self.get_unitconv_id(
+                unitconv_dict, src_unitsys_id=unitsys_id_raw,
                 dst_unitsys_id=unitsys_id_raw, src_unitsymb=src_unitsymb,
                 dst_unitsymb=src_unitsymb, inv=0, append_new=append_new)
-        else: # From aphla element
+        else:
             inv = 0
             if unitconv_dict.has_key((None, dst_unitsys)):
                 uc = unitconv_dict[(None, dst_unitsys)]
@@ -1643,7 +1643,7 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         table_name = 'config_table'
 
-        list_of_tuples = [(config_id, gn_id, ch_id, w, caput_enabled)
+        list_of_tuples = [(config_id, gn_id, ch_id, w, bool(caput_enabled))
                           for gn_id, ch_id, w, caput_enabled
                           in zip(a.group_name_ids, a.channel_ids, a.weights,
                                  a.caput_enabled_rows)]

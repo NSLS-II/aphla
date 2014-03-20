@@ -7,6 +7,7 @@ sip.setapi('QVariant', 2)
 import sys, os
 import os.path as osp
 import h5py
+import numpy as np
 import json
 import time
 from copy import deepcopy
@@ -345,18 +346,11 @@ class Model(QObject):
                             field, unitsys=(unitsys if unitsys else None))
 
                         if unitsys == '':
-                            uc = dict(type='NoConversion', src_unitsys='',
-                                      dst_unitsys='', src_unitsymb=src_unitsymb,
-                                      dst_unitsymb=dst_unitsymb, inv=0,
-                                      conv_data='')
-
-                            uc_id = self.db.get_unitconv_id(
-                                uc, src_unitsys_id=None, dst_unitsys_id=None,
-                                src_unitsymb=None, dst_unitsymb=None, inv=None,
-                                append_new=True)
-
-                            unitconv_fromraw_id_list[i] = uc_id
-                            unitconv_toraw_id_list[i]   = uc_id
+                            (unitconv_toraw_id_list[i],
+                             unitconv_fromraw_id_list[i]) = \
+                                self.db.get_unitconv_toraw_fromraw_ids(
+                                    {}, src_unitsymb=src_unitsymb,
+                                    append_new=True)
 
                             continue
 
