@@ -70,6 +70,8 @@ class ConfigMetaDBViewWidget(QWidget):
                      self.launchColumnsDialog)
         self.connect(self.pushButton_export, SIGNAL('clicked()'),
                      self.exportConfigToFile)
+        self.connect(self.pushButton_edit_config_name_desc, SIGNAL('clicked()'),
+                     self.editConfigNameOrDescription)
 
     #----------------------------------------------------------------------
     def _initUI(self, parentWidget):
@@ -119,9 +121,13 @@ class ConfigMetaDBViewWidget(QWidget):
         spacerItem2 = QSpacerItem(20, 40, QSizePolicy.Minimum,
                                   QSizePolicy.Expanding)
         gridLayout.addItem(spacerItem2, 1, 0, 1, 1)
+        self.pushButton_edit_config_name_desc = QPushButton(self)
+        self.pushButton_edit_config_name_desc.setText('Edit...')
+        gridLayout.addWidget(self.pushButton_edit_config_name_desc,
+                             2, 0, 1, 1)
         self.textEdit_description = QTextEdit(self)
         self.textEdit_description.setReadOnly(True)
-        gridLayout.addWidget(self.textEdit_description, 0, 1, 2, 1)
+        gridLayout.addWidget(self.textEdit_description, 0, 1, 3, 1)
 
         tbV = self.tableView
         tbV.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -198,6 +204,12 @@ class ConfigMetaDBViewWidget(QWidget):
         """"""
 
         self.emit(SIGNAL('exportConfigToFile'))
+
+    #----------------------------------------------------------------------
+    def editConfigNameOrDescription(self):
+        """"""
+
+        self.emit(SIGNAL('editConfigNameOrDescription'))
 
 ########################################################################
 class ConfigDBViewWidget(QWidget):
