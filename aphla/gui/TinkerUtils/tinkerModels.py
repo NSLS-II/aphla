@@ -326,6 +326,8 @@ class ConfigAbstractModel(QObject):
                 xp_txt, fp_txt = unitconv_data_toraw.split(';')
                 conv_data_toraw   = {'xp': [float(s) for s in xp_txt.split(',')],
                                      'fp': [float(s) for s in fp_txt.split(',')]}
+            elif unitconv_type == 'NoConversion':
+                conv_data_fromraw = conv_data_toraw = ''
             else:
                 raise ValueError('Unexpected unitconv_type: {0}'.format(
                     unitconv_type))
