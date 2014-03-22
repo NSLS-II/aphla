@@ -13,7 +13,7 @@ import time
 from copy import deepcopy
 
 from PyQt4.QtCore import (Qt, SIGNAL, QObject, QSettings, QSize, QMetaObject,
-                          Q_ARG, QRect)
+                          Q_ARG, QRect, QModelIndex)
 from PyQt4.QtGui import (
     QApplication, QDialog, QSortFilterProxyModel, QAbstractItemView, QAction,
     QIcon, QFileDialog, QMessageBox, QInputDialog, QMenu, QTextEdit, QFont,
@@ -25,6 +25,10 @@ import cothread
 import aphla as ap
 
 import config
+try:
+    from . import (tinkerConfigDBSelector)
+except:
+    from aphla.gui.TinkerUtils import (tinkerConfigDBSelector)
 from tinkerModels import (ConfigAbstractModel, ConfigTableModel,
                           ConfigTreeModel)
 from tinkerdb import (TinkerMainDatabase, unitsys_id_raw, pv_id_NonSpecified)
@@ -35,10 +39,8 @@ from aphla.gui import channelexplorer
 from aphla.gui.utils.tictoc import tic, toc
 from aphla.gui.utils.orderselector import ColumnsDialog
 
-FILE_FILTER_DICT = {'Text File': 'Tinker configuration text files (*.txt)',
-                    'HDF5 File': 'HDF5 files (*.h5 *.hdf5)',
-                    'JSON File': 'Tinker configuration JSON files (*.json)',
-                    }
+FILE_FILTER_DICT = {'JSON File': 'Tinker configuration JSON files (*.json)',
+                    'All Files': 'All files (*)'}
 
 HOME_PATH             = osp.expanduser('~')
 APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
@@ -484,6 +486,20 @@ class Model(QObject):
             channel_ids.append(channel_id)
 
         return channel_ids
+
+    #----------------------------------------------------------------------
+    def importNewChannelsFromDB(self, config_abstract_model):
+        """"""
+
+        a = config_abstract_model
+
+        self.abstract.group_name_ids.extend(a.group_name_ids)
+        self.abstract.channel_ids.extend(a.channel_ids)
+        self.abstract.weights.extend(a.weights)
+        self.abstract.caput_enabled_rows.extend(a.caput_enabled_rows)
+
+        self.table.updateModel()
+        self.table.repaint()
 
     #----------------------------------------------------------------------
     def importNewChannelsFromJSONFile(self, json_dict):
@@ -982,13 +998,28 @@ class View(QDialog, Ui_Dialog):
 
         self.popMenu.exec_(self.treeView.mapToGlobal(point))
 
+    #----------------------------------------------------------------------
+    def removeRows(self):
+        """"""
+
+        proxyModel = self.tableView.model()
+        sourceModel = proxyModel.sourceModel()
+        selModel = self.tableView.selectionModel()
+
+        selProxyInds = selModel.selectedIndexes()
+        selSourceInds = [proxyModel.mapToSource(pi) for pi in selProxyInds]
+        selRows = set([i.row() for i in selSourceInds])
+
+        for row in sorted(selRows)[::-1]:
+            sourceModel.removeRow(row)
 
 ########################################################################
 class App(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, isModal, parentWindow, use_cached_lattice=False):
+    def __init__(self, isModal, parentWindow, use_cached_lattice=False,
+                 aptinkerQSettings=None):
         """Constructor"""
 
         QObject.__init__(self)
@@ -996,12 +1027,15 @@ class App(QObject):
         self.use_cached_lattice = use_cached_lattice
 
         self.settings = Settings()
+        self._aptinkerQSettings = aptinkerQSettings
 
         self._initModel()
         self._initView(isModal, parentWindow)
 
-        self.connect(self.view.pushButton_import, SIGNAL('clicked()'),
+        self.connect(self.view.pushButton_addRows, SIGNAL('clicked()'),
                      self._importConfigData)
+        self.connect(self.view.pushButton_removeRows, SIGNAL('clicked()'),
+                     self.view.removeRows)
         self.connect(self.view.pushButton_export,
                      SIGNAL('clicked()'), self._exportConfigData)
 
@@ -1022,43 +1056,39 @@ class App(QObject):
     def _importConfigData(self):
         """"""
 
+        title = 'Import Type'
+        prompt = 'Import from:'
+        result = QInputDialog.getItem(
+            self.view, title, prompt,
+            ['Channel Explorer (apchx)', 'Database', 'JSON File'],
+            current=0, editable=False)
+
+        if not result[1]:
+            return
+
+        import_type = result[0]
+
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
 
-        import_type = self.view.comboBox_import.currentText()
+        if import_type == 'Channel Explorer (apchx)':
 
-        if import_type == 'Channel Explorer':
             self._launchChannelExplorer()
+
         elif import_type == 'Database':
-            a = self.model.abstract
 
-            #a.db.getColumnDataFromTable()
+            result = tinkerConfigDBSelector.make(
+                isModal=True, parentWindow=self.view,
+                aptinkerQSettings=self._aptinkerQSettings)
 
-            a.name = self.view.lineEdit_config_name.text()
-            a.description = self.view.textEdit.toPlainText()
-            ref_step_size_str = self.view.lineEdit_ref_step_size.text()
-            try:
-                a.ref_step_size = float(ref_step_size_str)
-            except:
-                msg.setText(
-                    ('Invalid float representation string for reference step '
-                     'size: {:s}').format(ref_step_size_str))
-                msg.setIcon(QMessageBox.Critical)
-            masar_id_str = self.view.lineEdit_masar_id.text()
-            try:
-                a.masar_id = int(masar_id_str)
-            except:
-                a.masar_id = None
-            a.synced_group_weight = \
-                self.view.checkBox_synced_group_weight.isChecked()
+            self.model.importNewChannelsFromDB(result.config_model.abstract)
 
         else:
 
-            all_files_filter_str = 'All files (*)'
             caption = 'Load `aptinker` configuration file from {0:s}'.format(
                 import_type)
             filter_str = ';;'.join([FILE_FILTER_DICT[import_type],
-                                    all_files_filter_str])
+                                    FILE_FILTER_DICT['All Files']])
             filepath = QFileDialog.getOpenFileName(
                 caption=caption, directory=self.settings._last_directory_path,
                 filter=filter_str)
@@ -1068,34 +1098,7 @@ class App(QObject):
 
             self.settings._last_directory_path = osp.dirname(filepath)
 
-            if import_type == 'Text File':
-
-                msg.setText('This export_type is not implemented yet: {:s}'.
-                            format(export_type))
-                msg.setIcon(QMessageBox.Critical)
-                msg.exec_()
-                return
-
-                #m = TunerTextFileManager(load=True, filepath=filepath)
-                #m.exec_()
-                #if m.selection is not None:
-                    #data = m.loadConfigTextFile()
-                #else:
-                    #return
-
-                #if data is not None:
-                    #self.model.importNewChannelsFromTextFile(data)
-                #else:
-                    #return
-
-            elif import_type == 'HDF5 File':
-                msg.setText('This export_type is not implemented yet: {:s}'.
-                            format(export_type))
-                msg.setIcon(QMessageBox.Critical)
-                msg.exec_()
-                return
-
-            elif import_type == 'JSON File':
+            if import_type == 'JSON File':
                 with open(filepath, 'r') as f:
                     data = json.load(f)
 
@@ -1103,6 +1106,9 @@ class App(QObject):
                     self.model.importNewChannelsFromJSONFile(data)
                 else:
                     return
+            else:
+                raise ValueError('Unsupported file import type: {0}'.format(
+                    import_type))
 
     #----------------------------------------------------------------------
     def _exportConfigData(self):
@@ -1134,42 +1140,8 @@ class App(QObject):
         a.synced_group_weight = \
             self.view.checkBox_synced_group_weight.isChecked()
 
-        export_type = self.view.comboBox_export.currentText()
-
-        if export_type == 'Database':
-            a.config_id = a.db.saveConfig(a)
-            msg.setText('Config successfully saved to database.')
-        else:
-            msg.setText('This export_type is not implemented yet: {:s}'.
-                        format(export_type))
-
-            #all_files_filter_str = 'All files (*)'
-            #caption = 'Save Tuner Configuration to {0:s}'.format(export_type)
-            #filter_str = ';;'.join([FILE_FILTER_DICT[export_type],
-                                    #all_files_filter_str])
-            #save_filepath = QFileDialog.getSaveFileName(
-                #caption=caption, directory=self.starting_directory_path,
-                #filter=filter_str)
-            #if not save_filepath:
-                #return
-
-            #self.starting_directory_path = os.path.dirname(save_filepath)
-
-            #if export_type == 'Text File':
-                #m = TunerTextFileManager(load=False, filepath=save_filepath)
-                #m.exec_()
-
-                #data = self.model.getConfigDataForTextFile(m.selection)
-
-                #m.saveConfigTextFile(data)
-            #elif export_type == 'JSON File':
-                #self.model.saveConfigToJSON(save_filepath)
-            #elif export_type == 'HDF5 File':
-                #self.model.saveConfigToHDF5(save_filepath)
-
-            #msgBox.setText('Config successfully saved to {0:s}: {1:s}.'.
-                           #format(export_type, save_filepath))
-
+        a.config_id = a.db.saveConfig(a)
+        msg.setText('Config successfully saved to database.')
         msg.exec_()
 
     #----------------------------------------------------------------------
@@ -1197,11 +1169,6 @@ class App(QObject):
             channelGroupInfo = self._askChannelGroupNameAndWeight()
             self.model.importNewChannelsFromSelector(selected_channels,
                                                      channelGroupInfo)
-
-    #----------------------------------------------------------------------
-    def _launchConfigDBSelector(self):
-        """"""
-
 
     #----------------------------------------------------------------------
     def _askChannelGroupNameAndWeight(self):
@@ -1244,10 +1211,12 @@ def get_loaded_ap_machines():
                      for latname in ap.machines.lattices()]))
 
 #----------------------------------------------------------------------
-def make(isModal=True, parentWindow=None, use_cached_lattice=False):
+def make(isModal=True, parentWindow=None, use_cached_lattice=False,
+         aptinkerQSettings=None):
     """"""
 
-    app = App(isModal, parentWindow, use_cached_lattice=use_cached_lattice)
+    app = App(isModal, parentWindow, use_cached_lattice=use_cached_lattice,
+              aptinkerQSettings=aptinkerQSettings)
 
     if isModal:
         app.view.exec_()

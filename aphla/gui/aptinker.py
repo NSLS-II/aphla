@@ -1643,7 +1643,8 @@ class TinkerApp(QObject):
 
         result = tinkerConfigSetupDialog.make(
             isModal=True, parentWindow=self.view,
-            use_cached_lattice=self.use_cached_lattice)
+            use_cached_lattice=self.use_cached_lattice,
+            aptinkerQSettings=self.view._settings)
 
         config_abstract_model = result.model.abstract
 

@@ -273,7 +273,7 @@ class ConfigAbstractModel(QObject):
 
         d = {}
 
-        d['config_id'] =  config_id
+        d['config_id'] = config_id
 
         if '[config_meta_table text view]' \
            not in self.db.getViewNames(square_brackets=True):
@@ -390,6 +390,12 @@ class ConfigAbstractModel(QObject):
     #----------------------------------------------------------------------
     def isDataValid(self):
         """"""
+
+        if self.channel_ids == []:
+            msg = QMessageBox()
+            msg.setText('No channels specified.')
+            msg.exec_()
+            return False
 
         dup_ch_info_list = self.check_duplicate_channel_ids()
         if dup_ch_info_list != []:
@@ -1021,6 +1027,43 @@ class ConfigTableModel(QAbstractTableModel):
                 return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
         else:
             return default_flags # non-editable
+
+    #----------------------------------------------------------------------
+    def removeRows(self, row, count, parent=QModelIndex()):
+        """"""
+
+        row_list = [row+i for i in range(count)]
+
+        self.blockSignals(True)
+
+        try:
+            for r in row_list[::-1]:
+                self.beginRemoveRows(parent, r, r)
+            self.endRemoveRows()
+            self.blockSignals(False)
+        except:
+            self.blockSignals(False)
+            return False
+
+        np_array_keys = [k for k, v in self.d.iteritems()
+                         if isinstance(v, np.ndarray)]
+
+        for r in row_list[::-1]:
+            self.abstract.group_name_ids.pop(r)
+            self.abstract.channel_ids.pop(r)
+            self.abstract.weights.pop(r)
+            self.abstract.caput_enabled_rows.pop(r)
+
+            for k, v in self.d.iteritems():
+                if k not in np_array_keys:
+                    v.pop(r)
+
+        for k in np_array_keys:
+            self.d[k] = np.delete(self.d[k], row_list, axis=0)
+
+        self.repaint()
+
+        return True
 
 ########################################################################
 class TreeItem(object):
