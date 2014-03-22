@@ -1178,6 +1178,19 @@ class TinkerMainDatabase(SQLiteDatabase):
                 conv_data_txt = ','.join(
                     [UNITCONV_DATA_FORMAT.format(c) for c in uc['conv_data']])
             elif unitconv_type == 'interp1':
+                if not np.all(np.diff(uc['conv_data']['xp']) > 0.0):
+                    print 'Error for unit conversion definition: '
+                    print uc
+                    raise ValueError('Monotonically increasing x array needed '
+                                     'for interpolation')
+                if (inv == 1) and \
+                   (not np.all(np.diff(uc['conv_data']['fp']) > 0.0)) and \
+                   (not np.all(np.diff(uc['conv_data']['fp']) < 0.0)):
+                    print 'Error for unit conversion definition: '
+                    print uc
+                    raise ValueError(
+                        'y array must be monotonically increasing or decreasing '
+                        'for the interpolation to be invertible.')
                 conv_data_txt = ','.join(
                     [UNITCONV_DATA_FORMAT.format(x)
                      for x in uc['conv_data']['xp']])

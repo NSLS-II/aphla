@@ -314,18 +314,32 @@ class ConfigAbstractModel(QObject):
                 unitconv_data_toraw, unitconv_data_fromraw, unitconv_inv_toraw,
                 unitconv_inv_fromraw) in enumerate(zip(*out)):
 
+            if unitconv_type == 'poly':
+                conv_data_fromraw = [float(s) for s
+                                     in unitconv_data_fromraw.split(',') if s]
+                conv_data_toraw   = [float(s) for s
+                                     in unitconv_data_toraw.split(',') if s]
+            elif unitconv_type == 'interp1':
+                xp_txt, fp_txt = unitconv_data_fromraw.split(';')
+                conv_data_fromraw = {'xp': [float(s) for s in xp_txt.split(',')],
+                                     'fp': [float(s) for s in fp_txt.split(',')]}
+                xp_txt, fp_txt = unitconv_data_toraw.split(';')
+                conv_data_toraw   = {'xp': [float(s) for s in xp_txt.split(',')],
+                                     'fp': [float(s) for s in fp_txt.split(',')]}
+            else:
+                raise ValueError('Unexpected unitconv_type: {0}'.format(
+                    unitconv_type))
+
             unitconv_key = 'ch{0:d}'.format(i)
             unitconv_dict[unitconv_key] = [
                 dict(type=unitconv_type, polarity=polarity, src_unitsys=None,
                      dst_unitsys=unitsys, src_unitsymb=unitsymb_raw,
                      dst_unitsymb=unitsymb, inv=unitconv_inv_fromraw,
-                     conv_data=[float(s) for s
-                                in unitconv_data_fromraw.split(',') if s]),
+                     conv_data=conv_data_fromraw),
                 dict(type=unitconv_type, polarity=polarity, src_unitsys=unitsys,
                      dst_unitsys=None, src_unitsymb=unitsymb,
                      dst_unitsymb=unitsymb_raw, inv=unitconv_inv_toraw,
-                     conv_data=[float(s) for s
-                                in unitconv_data_toraw.split(',') if s])]
+                     conv_data=conv_data_toraw)]
 
             if machine_name is not None:
                 aphla_channel_name = '.'.join([machine_name, lattice_name,
@@ -1485,6 +1499,47 @@ class SnapshotAbstractModel(QObject):
         self.update_init_pv_vals()
 
     #----------------------------------------------------------------------
+    def get_unitconv_callable(self, conv_type, conv_inv, polarity, conv_txt):
+        """"""
+
+        if conv_type == 'NoConversion':
+            return lambda val: val
+        elif (conv_type == 'poly') and (conv_inv == 0):
+            coeffs = [float(s) for s in conv_txt.split(',')]
+            return np.poly1d(coeffs)*polarity
+        elif (conv_type == 'poly') and (conv_inv == 1):
+            a, b = [float(s) for s in conv_txt.split(',')]
+            ar, br = polarity/a, -b/a
+            return np.poly1d([ar, br])
+        elif (conv_type == 'interp1') and (conv_inv == 0):
+            xp_txt, fp_txt = conv_txt.split(';')
+            xp = [float(s) for s in xp_txt.split(',')]
+            fp = [float(s) for s in fp_txt.split(',')]
+            # `xp` is assumed to be monotonically increasing. Otherwise,
+            # interpolation will make no sense.
+            return lambda x: polarity*np.interp(x, xp, fp,
+                                                left=np.nan, right=np.nan)
+        elif (conv_type == 'interp1') and (conv_inv == 1):
+            xp_txt, fp_txt = conv_txt.split(';')
+            xp = [float(s) for s in xp_txt.split(',')]
+            fp = [float(s) for s in fp_txt.split(',')]
+            # `xp` is assumed to be monotonically increasing. Otherwise,
+            # interpolation will make no sense.
+            # `fp` is assumed to be monotonically increasing or decreasing.
+            # Otherwise, this interpolation definition is not invertible.
+            if np.all(np.diff(fp) > 0.0):
+                xp_inv = fp
+                fp_inv = xp
+            elif np.all(np.diff(fp) < 0.0):
+                xp_inv = np.flipud(fp)
+                fp_inv = np.flipud(xp)
+            return lambda x: polarity*np.interp(x, xp_inv, fp_inv,
+                                                left=np.nan, right=np.nan)
+        else:
+            raise ValueError('Unexpected unit conversion type: {0}'.format(
+                conv_type))
+
+    #----------------------------------------------------------------------
     def init_unitconv(self):
         """"""
 
@@ -1502,84 +1557,53 @@ class SnapshotAbstractModel(QObject):
 
         ## Initialize unit conversion data for caget
 
-        caget_conv_types, caget_conv_data_txts, caget_conv_invs = \
-            self.db.getMatchedColumnDataFromTable(
-                '[unitconv_table text view]', 'unitconv_id',
-                unitconv_fromraw_ids, ':d',
-                column_name_return_list=['unitconv_type', 'conv_data_txt',
-                                         'inv'])
+        (caget_conv_types, caget_conv_data_txts, caget_conv_invs,
+         caget_polarities) = self.db.getMatchedColumnDataFromTable(
+             '[unitconv_table text view]', 'unitconv_id',
+             unitconv_fromraw_ids, ':d',
+             column_name_return_list=['unitconv_type', 'conv_data_txt',
+                                      'inv', 'polarity'])
 
         self.caget_unitconvs = [None]*self.n_caget_pvs
 
         rb_map_row_list = [x[0] for x in self.maps['cur_RB']]
         sp_map_row_list = [x[0] for x in self.maps['cur_SP']]
-        for row, (conv_type, conv_txt, conv_inv) in enumerate(zip(
-            caget_conv_types, caget_conv_data_txts, caget_conv_invs)):
-            matched_indexes = []
-            if row in rb_map_row_list:
-                matched_indexes.append(
-                    self.maps['cur_RB'][rb_map_row_list.index(row)][1])
-            if row in sp_map_row_list:
-                matched_indexes.append(
-                    self.maps['cur_SP'][sp_map_row_list.index(row)][1])
+        for row, (conv_type, conv_txt, conv_inv, polarity) in enumerate(zip(
+            caget_conv_types, caget_conv_data_txts, caget_conv_invs,
+            caget_polarities)):
 
-            if conv_type == 'NoConversion':
-                pass
-            elif (conv_type == 'poly') and (conv_inv == 0):
-                polarity = 1.0
-                coeffs = [float(s) for s in conv_txt.split(',')]
-                for i in matched_indexes:
-                    self.caget_unitconvs[i] = np.poly1d(coeffs)*polarity
-            elif (conv_type == 'poly') and (conv_inv == 1):
-                polarity = 1.0
-                a, b = [float(s) for s in conv_txt.split(',')]
-                ar, br = polarity/a, -b/a
-                for i in matched_indexes:
-                    self.caget_unitconvs[i] = np.poly1d([ar, br])
-            elif (conv_type == 'interp1'):
-                raise NotImplementedError('interp1 type not implemented yet')
-            else:
-                raise ValueError('Unexpected unit conversion type: {0}'.format(
-                    conv_type))
+            uc_callable = self.get_unitconv_callable(
+                conv_type, conv_inv, polarity, conv_txt)
+
+            if row in rb_map_row_list:
+                i = self.maps['cur_RB'][rb_map_row_list.index(row)][1]
+                self.caget_unitconvs[i] = uc_callable
+            if row in sp_map_row_list:
+                i = self.maps['cur_SP'][sp_map_row_list.index(row)][1]
+                self.caget_unitconvs[i] = uc_callable
 
         ## Initialize unit conversion data for caput
 
-        caput_conv_types, caput_conv_data_txts, caput_conv_invs = \
-            self.db.getMatchedColumnDataFromTable(
-                '[unitconv_table text view]', 'unitconv_id',
-                unitconv_toraw_ids, ':d',
-                column_name_return_list=['unitconv_type', 'conv_data_txt',
-                                         'inv'])
+        (caput_conv_types, caput_conv_data_txts, caput_conv_invs,
+         caput_polarities) = self.db.getMatchedColumnDataFromTable(
+             '[unitconv_table text view]', 'unitconv_id',
+             unitconv_toraw_ids, ':d',
+             column_name_return_list=['unitconv_type', 'conv_data_txt',
+                                      'inv', 'polarity'])
 
         self.caput_unitconvs = [None]*self.n_caput_pvs
 
         sp_map_row_list = [x[0] for x in self.maps['cur_SentSP']]
-        for row, (conv_type, conv_txt, conv_inv) in enumerate(zip(
-            caput_conv_types, caput_conv_data_txts, caput_conv_invs)):
+        for row, (conv_type, conv_txt, conv_inv, polarity) in enumerate(zip(
+            caput_conv_types, caput_conv_data_txts, caput_conv_invs,
+            caput_polarities)):
+
+            uc_callable = self.get_unitconv_callable(
+                conv_type, conv_inv, polarity, conv_txt)
 
             if row in sp_map_row_list:
                 i = self.maps['cur_SentSP'][sp_map_row_list.index(row)][1]
-            else:
-                i = None
-
-            if conv_type == 'NoConversion':
-                pass
-            elif (conv_type == 'poly') and (conv_inv == 0):
-                polarity = 1.0
-                coeffs = [float(s) for s in conv_txt.split(',')]
-                if i is not None:
-                    self.caput_unitconvs[i] = np.poly1d(coeffs)*polarity
-            elif (conv_type == 'poly') and (conv_inv == 1):
-                polarity = 1.0
-                a, b = [float(s) for s in conv_txt.split(',')]
-                ar, br = polarity/a, -b/a
-                if i is not None:
-                    self.caput_unitconvs[i] = np.poly1d([ar, br])
-            elif (conv_type == 'interp1'):
-                raise NotImplementedError('interp1 type not implemented yet')
-            else:
-                raise ValueError('Unexpected unit conversion type: {0}'.format(
-                    conv_type))
+                self.caput_unitconvs[i] = uc_callable
 
     #----------------------------------------------------------------------
     def update_caput_enabled_indexes(self):
