@@ -1332,8 +1332,6 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.loadViewSizeSettings()
         self.loadMiscSettings()
 
-        #self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
-                     #self.load_config_test)
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
                      self.launchConfigDBSelector)
         self.connect(self.actionPreferences, SIGNAL('triggered()'),
@@ -1513,41 +1511,6 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         dialog = PreferencesEditor()
         dialog.exec_()
-
-    #----------------------------------------------------------------------
-    def load_config_test(self):
-        """"""
-
-        db = TinkerMainDatabase()
-
-        config_id = 2 # same array size
-
-        c_abs = ConfigAbstractModel()
-
-        (c_abs.name,), (c_abs.description,), (user_id,), (c_abs.masar_id,), \
-            (c_abs.ref_step_size,), (c_abs.synced_group_weight,), \
-            (c_abs.config_ctime,) = db.getColumnDataFromTable(
-                'config_meta_table',
-                column_name_list=['config_name', 'config_description',
-                                  'config_user_id', 'config_masar_id',
-                                  'config_ref_step_size',
-                                  'config_synced_group_weight', 'config_ctime'],
-                condition_str='config_id={0:d}'.format(config_id))
-
-        c_abs.userinfo = zip(*db.getColumnDataFromTable(
-            'user_table',
-            column_name_list=['username', 'hostname', 'ip_str', 'mac_str'],
-            condition_str='user_id={0:d}'.format(user_id)))[0]
-
-        (_, c_abs.group_name_ids, c_abs.channel_ids,
-         c_abs.weights) = map(list, db.getColumnDataFromTable(
-             'config_table', order_by_str='rowid', # "rowid" is hidden
-             column_name_list=['rowid', 'group_name_id', 'channel_id',
-                               'config_weight'],
-             condition_str='config_id={0:d}'.format(config_id)))
-
-        if c_abs.channel_ids != []:
-            self.createDockWidget(c_abs)
 
     #----------------------------------------------------------------------
     def openContextMenu(self):
