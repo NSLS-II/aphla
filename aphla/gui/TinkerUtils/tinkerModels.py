@@ -551,15 +551,99 @@ class ConfigAbstractModel(QObject):
                     self.weights[r] = sample_weight
 
         elif col_key == 'channel_name':
-            raise NotImplementedError(col_key)
+
+            new_channel_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'channel_name_table', 'channel_name_id', 'channel_name',
+                new_val, append_new=True)
+
+            for r in row_inds:
+                current_channel_id = self.channel_ids[r]
+
+                ((pvsp_id,), (pvrb_id,), (channel_name_id,), (unitsys_id,),
+                 (unitconv_toraw_id,), (unitconv_fromraw_id,),
+                 (aphla_ch_id,)) = self.db.getColumnDataFromTable(
+                     'channel_table',
+                     column_name_list=[
+                         'pvsp_id', 'pvrb_id', 'channel_name_id', 'unitsys_id',
+                         'unitconv_toraw_id', 'unitconv_fromraw_id',
+                         'aphla_ch_id'],
+                     condition_str='channel_id={0:d}'.format(current_channel_id))
+
+                new_channel_id = self.db.get_channel_id(
+                    pvsp_id, pvrb_id, unitsys_id, new_channel_name_id,
+                    unitconv_toraw_id, unitconv_fromraw_id,
+                    aphla_ch_id=aphla_ch_id, append_new=True)
+
+                self.channel_ids[r] = new_channel_id
+
         elif col_key == 'pvsp':
-            raise NotImplementedError(col_key)
+
+            if len(row_inds) != 1:
+                raise ValueError('No duplicate setpoint PVs allowed.')
+            else:
+                r = row_inds[0]
+
+            readonly = False
+            new_pvsp_id = self.db.get_pv_id(new_val, readonly, append_new=True)
+
+            if new_pvsp_id in (-1, -2):
+                # Non-exising or disconnected PV for -1
+                # Unacceptable PV data type for -2
+                return
+
+            current_channel_id = self.channel_ids[r]
+
+            ((pvsp_id,), (pvrb_id,), (channel_name_id,), (unitsys_id,),
+             (unitconv_toraw_id,), (unitconv_fromraw_id,),
+             (aphla_ch_id,)) = self.db.getColumnDataFromTable(
+                 'channel_table',
+                 column_name_list=[
+                     'pvsp_id', 'pvrb_id', 'channel_name_id', 'unitsys_id',
+                     'unitconv_toraw_id', 'unitconv_fromraw_id',
+                     'aphla_ch_id'],
+                 condition_str='channel_id={0:d}'.format(current_channel_id))
+
+            new_channel_id = self.db.get_channel_id(
+                new_pvsp_id, pvrb_id, unitsys_id, channel_name_id,
+                unitconv_toraw_id, unitconv_fromraw_id,
+                aphla_ch_id=aphla_ch_id, append_new=True)
+
+            self.channel_ids[r] = new_channel_id
+
         elif col_key == 'pvrb':
-            raise NotImplementedError(col_key)
+
+            readonly = True
+            new_pvrb_id = self.db.get_pv_id(new_val, readonly, append_new=True)
+
+            if new_pvrb_id in (-1, -2):
+                # Non-exising or disconnected PV for -1
+                # Unacceptable PV data type for -2
+                return
+
+            for r in row_inds:
+                current_channel_id = self.channel_ids[r]
+
+                ((pvsp_id,), (pvrb_id,), (channel_name_id,), (unitsys_id,),
+                 (unitconv_toraw_id,), (unitconv_fromraw_id,),
+                 (aphla_ch_id,)) = self.db.getColumnDataFromTable(
+                     'channel_table',
+                     column_name_list=[
+                         'pvsp_id', 'pvrb_id', 'channel_name_id', 'unitsys_id',
+                         'unitconv_toraw_id', 'unitconv_fromraw_id',
+                         'aphla_ch_id'],
+                     condition_str='channel_id={0:d}'.format(current_channel_id))
+
+                new_channel_id = self.db.get_channel_id(
+                    pvsp_id, new_pvrb_id, unitsys_id, channel_name_id,
+                    unitconv_toraw_id, unitconv_fromraw_id,
+                    aphla_ch_id=aphla_ch_id, append_new=True)
+
+                self.channel_ids[r] = new_channel_id
 
         elif col_key == 'caput_enabled':
             for r in row_inds:
                 self.caput_enabled_rows[r] = new_val
+
         else:
             raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
 
@@ -634,6 +718,8 @@ class ConfigTableModel(QAbstractTableModel):
         if ((col_left_index == col_right_index) and
             (self.abstract.all_col_keys[col_left_index] == 'caput_enabled')):
             row_inds = range(row_top_index, row_bottom_index+1)
+            if len(row_inds) >= 2:
+                raise ValueError('Unexpected number of rows')
         elif ((col_left_index == col_right_index) and
               (row_top_index == row_bottom_index)):
             pass
@@ -645,7 +731,8 @@ class ConfigTableModel(QAbstractTableModel):
         col_ind = col_left_index
         col_key = self.abstract.all_col_keys[col_ind]
 
-        if self.abstract.synced_group_weight:
+        if self.abstract.synced_group_weight and \
+           (col_key in ('weight', 'step_size', 'group_name')):
             gid = self.abstract.group_name_ids[row_ind]
             synced_row_inds = [
                 r for r, i in enumerate(self.abstract.group_name_ids)
@@ -693,13 +780,15 @@ class ConfigTableModel(QAbstractTableModel):
             self.abstract.on_unitsys_change(row_ind, new_unitsys_id)
 
         elif col_key == 'caput_enabled':
+            new_val = self.data(self.index(row_ind, col_ind), role=Qt.UserRole)
+            self.abstract.modify_data(new_val, col_ind, [row_ind])
 
-            for r in row_inds:
-                self.abstract.caput_enabled_rows[r] = \
-                    self.data(self.index(r, col_ind), role=Qt.UserRole)
+        elif col_key in ('channel_name', 'pvsp', 'pvrb'):
+            new_val = self.data(self.index(row_ind, col_ind))
+            self.abstract.modify_data(new_val, col_ind, [row_ind])
 
         else:
-            return
+            raise ValueError('Unexpected col_key: {0}'.format(col_key))
 
         self.updateModel()
         self.repaint()
@@ -940,7 +1029,7 @@ class ConfigTableModel(QAbstractTableModel):
             return False
 
         elif (col_key in ('channel_name', 'pvsp', 'pvrb')) and \
-             (self.d['elem_name'][row] != '') and \
+             (self.d['elem_name'][row] is not None) and \
              (value != self.d[col_key][row]):
 
             msg = QMessageBox()

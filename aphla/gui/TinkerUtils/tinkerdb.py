@@ -1461,13 +1461,18 @@ class TinkerMainDatabase(SQLiteDatabase):
             return 1 # pv_id for non-specified PV is 1.
 
         cainfo = catools.connect(str(pv_str), cainfo=True, throw=False)
-        # ^ Need to make sure `pv_str` is type "str", not "unitcode".
+        # ^ Need to make sure `pv_str` is type "str", not "unicode".
         # Otherwise, catools.connect() will divide the unicode into a list of
         # each character.
         if cainfo.ok:
             array_size      = cainfo.count
             pv_data_type_id = cainfo.datatype + 1
         else:
+            msg = QMessageBox()
+            msg.setText('Non-existing or disconnected PV.')
+            msg.setInformativeText(pv_str)
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
             return -1
 
         if CA_DATATYPES[pv_data_type_id-1] not in CA_DATATYPES_TINKERABLE:
@@ -1476,6 +1481,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                          'its data type being {0:s}.'.format(
                              CA_DATATYPES[pv_data_type_id-1])))
             msg.setInformativeText(pv_str)
+            msg.setIcon(QMessageBox.Critical)
             msg.exec_()
             return -2
 

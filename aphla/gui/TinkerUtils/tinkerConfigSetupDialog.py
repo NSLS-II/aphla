@@ -799,8 +799,7 @@ class View(QDialog, Ui_Dialog):
 
         self.tableView.setItemDelegate(ConfigDBTableViewItemDelegate(
             self.tableView, self.model.table, self.tableView.parent()))
-        self.tableView.setEditTriggers(QAbstractItemView.CurrentChanged |
-                                       QAbstractItemView.SelectedClicked)
+        self.tableView.setEditTriggers(QAbstractItemView.SelectedClicked)
 
         self.lineEdit_ref_step_size.setText(
             str(self.model.abstract.ref_step_size))

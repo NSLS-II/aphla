@@ -396,30 +396,64 @@ class ConfigDBViewWidget(QWidget):
                 col_ind = source_cols[0]
 
             if col_ind in self.user_editable_col_ids:
-                current_vals = [source_model.data(i) for i in source_index_list]
+                str_format = self.str_format[col_ind]
+
+                if str_format != 'checkbox':
+                    current_vals = [source_model.data(i, Qt.DisplayRole)
+                                    for i in source_index_list]
+                else:
+                    current_vals = [source_model.data(i, Qt.UserRole)
+                                    for i in source_index_list]
 
                 if len(set(current_vals)) == 1:
                     current_val = current_vals[0]
                 else:
                     current_val = None
 
-                str_format = self.str_format[
-                    self.user_editable_col_ids.index(col_ind)]
                 if str_format is None:
                     data_type = 'string'
                 elif str_format.endswith(('g', 'e')):
                     data_type = 'float'
                     if current_val is not None:
                         current_val = float(current_val)
+                elif str_format == 'checkbox':
+                    data_type = 'bool'
                 else:
                     raise ValueError('Unexpected str_format: {0:s}'.
                                      format(str_format))
 
+                col_key = source_model.abstract.all_col_keys[col_ind]
+                row_inds = [i.row() for i in source_index_list]
+
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+
+                if col_key in ['channel_name', 'pvsp', 'pvrb']:
+                    for row in row_inds:
+                        if (source_model.d['elem_name'][row] is not None):
+                            msg.setText(
+                                'This property cannot be changed as it is defined by '
+                                'the linked aphla element object.')
+                            msg.exec_()
+                            return
+
+                if col_key == 'pvsp':
+                    if len(row_inds) != 1:
+                        msg.setText('It is not allowed to set multiple '
+                                    'setpoint PVs to the same value.')
+                        msg.exec_()
+                        return
+
                 new_val = self.get_new_value(self.tableView, data_type,
                                              current_val)
 
+                if col_key == 'group_name':
+                    if new_val == '':
+                        msg.setText('Group name cannot be empty.')
+                        msg.exec_()
+                        return
+
                 if new_val is not None:
-                    row_inds = [i.row() for i in source_index_list]
                     source_model.modifyAbstractModel(new_val, col_ind, row_inds)
 
         else:
@@ -455,6 +489,22 @@ class ConfigDBViewWidget(QWidget):
                 return result[0]
             else: # If Cancel was pressed
                 return None
+
+        elif data_type == 'bool':
+
+            prompt_text = ('Select a new bool value:')
+            result = QInputDialog.getItem(
+                parent, 'New Bool', prompt_text, ['True', 'False'],
+                editable=False)
+
+            if result[1]: # If OK was pressed
+                if result[0] == 'True':
+                    return True
+                else:
+                    return False
+            else: # If Cancel was pressed
+                return None
+
         else:
             raise ValueError('Unexpected current_data type: {0:s}'.format(
                 type(current_data)))
