@@ -33,7 +33,7 @@ from PyQt4.QtGui import (
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
     QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont,
-    QIntValidator, QItemSelectionModel
+    QIntValidator, QItemSelectionModel, QMenu, QAction
 )
 
 import aphla as ap
@@ -715,7 +715,7 @@ class TinkerDockWidget(QDockWidget):
         self.saveViewSizeSettings()
         self.saveMiscSettings()
 
-        self.emit(SIGNAL('dockAboutTobeClosed'))
+        self.emit(SIGNAL('dockAboutTobeClosed'), self.sender())
 
         event.accept()
 
@@ -1568,14 +1568,20 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                      self.onDockWidgetClose)
 
     #----------------------------------------------------------------------
-    def onDockWidgetClose(self):
+    def onDockWidgetClose(self, close_signal_sender):
         """"""
 
-        dockWidget = self.sender()
+        # If the "close" signal was sent from toggleViewAction(), then
+        # the dockWidget should be simply hidden, not removed.
+        #
+        # On the other hand, if the "close" signal was sent from QToolButton,
+        # then the user wanted to actually close the dockWidget. So, it must
+        # be removed.
+        if isinstance(close_signal_sender, QToolButton):
+            dockWidget = self.sender()
+            self.dockWidgetList.remove(dockWidget)
+            self.menuWindow.removeAction(dockWidget.toggleViewAction())
 
-        self.dockWidgetList.remove(dockWidget)
-
-        self.menuWindow.removeAction(dockWidget.toggleViewAction())
 
 ########################################################################
 class TinkerApp(QObject):
