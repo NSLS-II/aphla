@@ -1337,13 +1337,13 @@ class SnapshotAbstractModel(QObject):
         self.nRows = len(_ca.channel_ids)
 
         self.ss_id                = None
-        self.config_id            = None
+        self.config_id            = _ca.config_id
         self.name                 = ''
         self.description          = ''
         self.userinfo             = getuserinfo()
-        self.masar_id             = None
-        self.ref_step_size        = self._config_abstract.ref_step_size
-        self.synced_group_weight  = True
+        self.masar_id             = _ca.masar_id
+        self.ref_step_size        = _ca.ref_step_size
+        self.synced_group_weight  = _ca.synced_group_weight
         self.mult_factor          = 1.0
         self.caget_sent_ts_second = None
         self.caput_sent_ts_second = None

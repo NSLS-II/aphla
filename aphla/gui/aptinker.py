@@ -33,7 +33,7 @@ from PyQt4.QtGui import (
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
     QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont,
-    QIntValidator, QItemSelectionModel, QMenu, QAction
+    QIntValidator, QItemSelectionModel, QMenu, QAction, QInputDialog
 )
 
 import aphla as ap
@@ -41,6 +41,7 @@ import utils.gui_icons
 from aphla.gui.utils.orderselector import ColumnsDialog
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
 from TinkerUtils.ui_aptinker_pref import Ui_Dialog as Ui_Dialog_Pref
+from TinkerUtils.ui_configSaveDialog import Ui_Dialog as Ui_Dialog_ConfSave
 from TinkerUtils import (config, tinkerModels,
                          tinkerConfigSetupDialog, tinkerConfigDBSelector,
                          datestr, datestr_ns)
@@ -88,6 +89,43 @@ def get_preferences(default=False):
         )
 
     return pref
+
+########################################################################
+class ConfigSaveDialog(QDialog, Ui_Dialog_ConfSave):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, config_title):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
+        self.setWindowTitle('Save Configuration')
+
+        self.lineEdit_name.setText(config_title)
+        self.plainTextEdit_description.setReadOnly(False)
+
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+
+        event.accept()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        super(ConfigSaveDialog, self).accept() # will close the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(ConfigSaveDialog, self).reject() # will close the dialog
+
 
 ########################################################################
 class PreferencesEditor(QDialog, Ui_Dialog_Pref):
@@ -563,6 +601,10 @@ class TinkerDockWidget(QDockWidget):
 
         self.lineEdit_auto_caget_after_caput_delay.setText(
             str(self.ss_abstract.auto_caget_delay_after_caput))
+        self.lineEdit_ref_step_size.setText('{0:.8g}'.format(
+            self.ss_abstract.ref_step_size))
+        self.checkBox_synced_group_weight.setChecked(
+            self.ss_abstract.synced_group_weight)
 
         self._settings = QSettings('APHLA', 'TinkerDockWidget')
 
@@ -663,6 +705,20 @@ class TinkerDockWidget(QDockWidget):
                      self.ss_abstract.on_visible_column_change)
         self.connect(self.ssDBView, SIGNAL('ssDBViewVisibleColumnsChagned'),
                      self.ss_table.on_visible_column_change)
+
+        self.visible = False
+        self.connect(self, SIGNAL('visibilityChanged(bool)'),
+                     self.updateVisibility)
+
+    #----------------------------------------------------------------------
+    def updateVisibility(self, visible):
+        """
+        If floating, the dockWidget will be "visible".
+
+        If tabified, only the top dockWidget will be "visible".
+        """
+
+        self.visible = visible
 
     #----------------------------------------------------------------------
     def update_last_ca_sent_ts(self):
@@ -1321,9 +1377,6 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.dockWidgetList = []
         self.next_dockWidget_index = 1
 
-        self.menuLoad.actions()[0].setText('Configuration...')
-        self.menuLoad.actions()[1].setText('Snapshot...')
-
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
@@ -1334,6 +1387,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
                      self.launchConfigDBSelector)
+        self.connect(self.actionSaveConfig, SIGNAL('triggered()'),
+                     self.saveConfig)
         self.connect(self.actionPreferences, SIGNAL('triggered()'),
                      self.launchPrefEditor)
 
@@ -1494,6 +1549,62 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                 self.addDockWidget(Qt.BottomDockWidgetArea, w)
 
     #----------------------------------------------------------------------
+    def saveConfig(self):
+        """"""
+
+        visible_dockWidget_list = [w for w in self.dockWidgetList if w.visible]
+
+        if visible_dockWidget_list == []:
+            msg = QMessageBox()
+            msg.setText('No configuration is loaded.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if len(visible_dockWidget_list) >= 2:
+            visible_dockWidget_tites = [w.windowTitle()
+                                        for w in visible_dockWidget_list]
+
+            title = 'Select configuration to save'
+            prompt = 'Configuration Window Title:'
+            result = QInputDialog.getItem(
+                self, title, prompt, visible_dockWidget_tites, editable=False)
+
+            if not result[1]:
+                return
+
+            config_title = result[0]
+
+            w = visible_dockWidget_list[
+                visible_dockWidget_tites.index(config_title)]
+        else:
+            w = visible_dockWidget_list[0]
+            config_title = w.windowTitle()
+
+        dialog = ConfigSaveDialog(config_title)
+        dialog.exec_()
+
+        if dialog.result() == QDialog.Accepted:
+
+            _sa = w.ss_abstract
+            _ca = w.ss_abstract._config_abstract
+
+            _ca.name = dialog.lineEdit_name.text().strip()
+            _ca.description = dialog.plainTextEdit_description.property(
+                'plainText')
+            _ca.ref_step_size = _sa.ref_step_size
+            _ca.masar_id = _sa.masar_id
+            _ca.synced_group_weight = _sa.synced_group_weight
+
+            _ca.weights            = _sa.weight_array.tolist()
+            _ca.caput_enabled_rows = _sa.caput_enabled_rows.tolist()
+
+            _ca.config_id = _ca.db.saveConfig(_ca)
+            msg = QMessageBox()
+            msg.setText('Config successfully saved to database.')
+            msg.exec_()
+
+    #----------------------------------------------------------------------
     def launchConfigDBSelector(self):
         """"""
 
@@ -1597,7 +1708,7 @@ class TinkerApp(QObject):
 
         self._initView()
 
-        self.connect(self.view.actionNewConfig,SIGNAL('triggered(bool)'),
+        self.connect(self.view.actionNewConfig, SIGNAL('triggered(bool)'),
                      self.openNewConfigSetupDialog)
 
     #----------------------------------------------------------------------
