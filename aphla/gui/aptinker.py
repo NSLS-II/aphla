@@ -33,7 +33,7 @@ from PyQt4.QtGui import (
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
     QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont,
-    QIntValidator, QItemSelectionModel
+    QIntValidator, QItemSelectionModel, QMenu, QAction, QInputDialog
 )
 
 import aphla as ap
@@ -41,6 +41,7 @@ import utils.gui_icons
 from aphla.gui.utils.orderselector import ColumnsDialog
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
 from TinkerUtils.ui_aptinker_pref import Ui_Dialog as Ui_Dialog_Pref
+from TinkerUtils.ui_configSaveDialog import Ui_Dialog as Ui_Dialog_ConfSave
 from TinkerUtils import (config, tinkerModels,
                          tinkerConfigSetupDialog, tinkerConfigDBSelector,
                          datestr, datestr_ns)
@@ -52,7 +53,7 @@ from TinkerUtils.tinkerdb import (TinkerMainDatabase, SnapshotDatabase,
                                   SessionDatabase)
 from TinkerUtils.dbviews import (
     ConfigDBViewWidget, SnapshotDBViewWidget, ConfigMetaDBViewWidget,
-    SnapshotDBTableViewItemDelegate)
+    ConfigDBTableViewItemDelegate, SnapshotDBTableViewItemDelegate)
 
 HOME_PATH             = osp.expanduser('~')
 APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
@@ -88,6 +89,43 @@ def get_preferences(default=False):
         )
 
     return pref
+
+########################################################################
+class ConfigSaveDialog(QDialog, Ui_Dialog_ConfSave):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, config_title):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
+        self.setWindowTitle('Save Configuration')
+
+        self.lineEdit_name.setText(config_title)
+        self.plainTextEdit_description.setReadOnly(False)
+
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+
+        event.accept()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        super(ConfigSaveDialog, self).accept() # will close the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(ConfigSaveDialog, self).reject() # will close the dialog
+
 
 ########################################################################
 class PreferencesEditor(QDialog, Ui_Dialog_Pref):
@@ -554,15 +592,21 @@ class TinkerDockWidget(QDockWidget):
 
         self.config_abstract = config_abstract_model
 
-        self.ss_abstract = SnapshotAbstractModel(config_abstract_model)
+        pref = get_preferences()
+        self.ss_abstract = SnapshotAbstractModel(config_abstract_model,
+                                                 pref['vis_col_keys'])
         self.ss_table = SnapshotTableModel(self.ss_abstract)
 
         self._initUI(parent)
 
         self.lineEdit_auto_caget_after_caput_delay.setText(
             str(self.ss_abstract.auto_caget_delay_after_caput))
+        self.lineEdit_ref_step_size.setText('{0:.8g}'.format(
+            self.ss_abstract.ref_step_size))
+        self.checkBox_synced_group_weight.setChecked(
+            self.ss_abstract.synced_group_weight)
 
-        self._settings = QSettings('APHLA', 'Tinker')
+        self._settings = QSettings('APHLA', 'TinkerDockWidget')
 
         self.loadViewSizeSettings()
         self.loadMiscSettings()
@@ -602,11 +646,10 @@ class TinkerDockWidget(QDockWidget):
         #horizHeader.setMovable(False)
         #self._expandAll_and_resizeColumn()
 
-        pref = get_preferences()
         vis_col_names = [
             self.ss_abstract.all_col_names[
                 self.ss_abstract.all_col_keys.index(k)]
-            for k in pref['vis_col_keys']]
+            for k in self.ss_abstract.visible_col_keys]
         self.ssDBView.on_column_selection_change(vis_col_names,
                                                  force_visibility_update=True)
 
@@ -658,6 +701,25 @@ class TinkerDockWidget(QDockWidget):
         self.connect(self.ss_abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
                      self.update_last_ca_sent_ts)
 
+        self.connect(self.ssDBView, SIGNAL('ssDBViewVisibleColumnsChagned'),
+                     self.ss_abstract.on_visible_column_change)
+        self.connect(self.ssDBView, SIGNAL('ssDBViewVisibleColumnsChagned'),
+                     self.ss_table.on_visible_column_change)
+
+        self.visible = False
+        self.connect(self, SIGNAL('visibilityChanged(bool)'),
+                     self.updateVisibility)
+
+    #----------------------------------------------------------------------
+    def updateVisibility(self, visible):
+        """
+        If floating, the dockWidget will be "visible".
+
+        If tabified, only the top dockWidget will be "visible".
+        """
+
+        self.visible = visible
+
     #----------------------------------------------------------------------
     def update_last_ca_sent_ts(self):
         """"""
@@ -706,7 +768,10 @@ class TinkerDockWidget(QDockWidget):
     def closeEvent(self, event):
         """"""
 
-        self.emit(SIGNAL('dockAboutTobeClosed'))
+        self.saveViewSizeSettings()
+        self.saveMiscSettings()
+
+        self.emit(SIGNAL('dockAboutTobeClosed'), self.sender())
 
         event.accept()
 
@@ -837,12 +902,18 @@ class TinkerDockWidget(QDockWidget):
         verticalLayout_1 = QVBoxLayout(self.tab_step_mode)
         horizontalLayout_1 = QHBoxLayout()
         self.pushButton_step_up = QPushButton(self.tab_step_mode)
-        self.pushButton_step_up.setToolTip('Step Up Setpoints')
+        self.pushButton_step_up.setToolTip(
+            'Step Up Setpoints (not applicable to setpoint PVs whose\n'
+            '"StepSize" or "Cur.SP" values are "nan", or whose "caput ON"\n'
+            'are unchecked)')
         self.pushButton_step_up.setIcon(QIcon(':/plus48.png'))
         self.pushButton_step_up.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_step_up)
         self.pushButton_step_down = QPushButton(self.tab_step_mode)
-        self.pushButton_step_down.setToolTip('Step Down Setpoints')
+        self.pushButton_step_down.setToolTip(
+            'Step Down Setpoints (not applicable to setpoint PVs whose\n'
+            '"StepSize" or "Cur.SP" values are "nan", or whose "caput ON"\n'
+            'are unchecked)')
         self.pushButton_step_down.setIcon(QIcon(':/minus48.png'))
         self.pushButton_step_down.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_step_down)
@@ -858,12 +929,16 @@ class TinkerDockWidget(QDockWidget):
         horizontalLayout_1.addWidget(self.checkBox_synced_group_weight)
 
         self.pushButton_multiply = QPushButton(self.tab_step_mode)
-        self.pushButton_multiply.setToolTip('Multiply Setpoints')
+        self.pushButton_multiply.setToolTip(
+            'Multiply Setpoints (not applicable to setpoint PVs whose\n'
+            '"Cur.SP" values are "nan", or whose "caput ON" are unchecked)')
         self.pushButton_multiply.setIcon(QIcon(':/multiply48.png'))
         self.pushButton_multiply.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_multiply)
         self.pushButton_divide = QPushButton(self.tab_step_mode)
-        self.pushButton_divide.setToolTip('Divide Setpoints')
+        self.pushButton_divide.setToolTip(
+            'Divide Setpoints (not applicable to setpoint PVs whose\n'
+            '"Cur.SP" values are "nan", or whose "caput ON" are unchecked)')
         self.pushButton_divide.setIcon(QIcon(':/divide48.png'))
         self.pushButton_divide.setIconSize(button_size)
         horizontalLayout_1.addWidget(self.pushButton_divide)
@@ -1141,6 +1216,18 @@ class TinkerDockWidget(QDockWidget):
         self._settings.beginGroup('viewSize')
 
         self._position = self._settings.value('position')
+        if self._position is None:
+            sizeHint = self.sizeHint()
+            self._position = QRect(0, 0, sizeHint.width(), sizeHint.height())
+        self.setGeometry(self._position)
+
+        self._splitter_sizes = self._settings.value('splitter_sizes')
+        if self._splitter_sizes is None:
+            third_height = int(self.height()/3.0)
+            self._splitter_sizes = [third_height]*3
+        if not isinstance(self._splitter_sizes[0], int):
+            self._splitter_sizes = [int(s) for s in self._splitter_sizes]
+        self.splitter.setSizes(self._splitter_sizes)
 
         self._settings.endGroup()
 
@@ -1149,7 +1236,11 @@ class TinkerDockWidget(QDockWidget):
 
         self._settings.beginGroup('viewSize')
 
+        self._position = self.geometry()
         self._settings.setValue('position', self._position)
+
+        self._splitter_sizes = self.splitter.sizes()
+        self._settings.setValue('splitter_sizes', self._splitter_sizes)
 
         self._settings.endGroup()
 
@@ -1169,9 +1260,6 @@ class TinkerDockWidget(QDockWidget):
     def saveMiscSettings(self):
 
         self._settings.beginGroup('misc')
-
-        self._settings.setValue('visible_col_key_list',
-                                self.visible_col_key_list)
 
         self._settings.endGroup()
 
@@ -1289,19 +1377,147 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.dockWidgetList = []
         self.next_dockWidget_index = 1
 
-        self.menuLoad.actions()[0].setText('Configuration...')
-        self.menuLoad.actions()[1].setText('Snapshot...')
-
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.connect(self, SIGNAL('customContextMenuRequested(const QPoint &)'),
                      self.openContextMenu)
 
-        #self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
-                     #self.load_config_test)
+        self._settings = QSettings('APHLA', 'Tinker')
+        self.loadViewSizeSettings()
+        self.loadMiscSettings()
+
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
                      self.launchConfigDBSelector)
+        self.connect(self.actionSaveConfig, SIGNAL('triggered()'),
+                     self.saveConfig)
         self.connect(self.actionPreferences, SIGNAL('triggered()'),
                      self.launchPrefEditor)
+
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+
+        self.saveViewSizeSettings()
+        self.saveMiscSettings()
+
+        event.accept()
+
+    #----------------------------------------------------------------------
+    def loadViewSizeSettings(self):
+        """"""
+
+        self._settings.beginGroup('viewSize')
+
+        self._position = self._settings.value('position')
+        if self._position is None:
+            sizeHint = self.sizeHint()
+            self._position = QRect(0, 0, sizeHint.width(), sizeHint.height())
+        self.setGeometry(self._position)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveViewSizeSettings(self):
+        """"""
+
+        self._settings.beginGroup('viewSize')
+
+        self._position = self.geometry()
+        self._settings.setValue('position', self._position)
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def loadMiscSettings(self):
+        """"""
+
+        self._settings.beginGroup('misc')
+
+        open_config_ids = self._settings.value('open_config_ids')
+        if open_config_ids is not None:
+            db = TinkerMainDatabase()
+            if '[config_meta_table text view]' \
+               not in db.getViewNames(square_brackets=True):
+                db.create_temp_config_meta_table_text_view()
+
+            for config_id in open_config_ids:
+                if config_id is None:
+                    continue
+                else:
+                    config_id = int(config_id)
+
+                print 'Loading Configuration (ID={0:d})...'.format(config_id)
+                m = ConfigAbstractModel()
+
+                m.config_id = config_id
+
+                out = db.getColumnDataFromTable(
+                    '[config_meta_table text view]',
+                    column_name_list=[
+                        'config_name', 'config_description', 'config_masar_id',
+                        'config_ref_step_size', 'config_synced_group_weight',
+                        'config_ctime'],
+                    condition_str='config_id={0:d}'.format(config_id))
+
+                if out == []:
+                    print 'config_id of {0:d} could not be found.'.format(
+                        config_id)
+                    continue
+
+                ((m.name,), (m.description,), (m.masar_id,), (m.ref_step_size,),
+                 (synced_group_weight,), (m.config_ctime,)) = out
+
+                if synced_group_weight: m.synced_group_weight = True
+                else                  : m.synced_group_weight = False
+
+                out = db.getColumnDataFromTable(
+                    'config_table',
+                    column_name_list=['group_name_id', 'channel_id',
+                                      'config_weight', 'config_caput_enabled'],
+                    condition_str='config_id={0:d}'.format(config_id))
+                (m.group_name_ids, m.channel_ids, m.weights,
+                 m.caput_enabled_rows) = map(list, out)
+
+                if m.channel_ids != []:
+                    self.createDockWidget(m)
+
+                print 'Configuration loading finished.'
+
+        self._settings.endGroup()
+
+        self._settings.beginGroup('fileSystem')
+
+        self._settings.last_directory_path = \
+            self._settings.value('last_directory_path')
+        if self._settings.last_directory_path is None:
+            self._settings.last_directory_path = ''
+
+        self._settings.endGroup()
+
+    #----------------------------------------------------------------------
+    def saveMiscSettings(self):
+        """"""
+
+        self._settings.beginGroup('misc')
+
+        open_config_ids = []
+        w = None
+        for w in self.dockWidgetList:
+            open_config_ids.append(w.config_abstract.config_id)
+        self._settings.setValue('open_config_ids', open_config_ids)
+
+        # Save settings of the last dock widget, if exists
+        if w is not None:
+            w.saveViewSizeSettings()
+            w.saveMiscSettings()
+
+        self._settings.endGroup()
+
+        self._settings.beginGroup('fileSystem')
+
+        self._settings.setValue('last_directory_path',
+                                self._settings.last_directory_path)
+
+        self._settings.endGroup()
 
     #----------------------------------------------------------------------
     def tabifyWindows(self):
@@ -1333,10 +1549,67 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                 self.addDockWidget(Qt.BottomDockWidgetArea, w)
 
     #----------------------------------------------------------------------
+    def saveConfig(self):
+        """"""
+
+        visible_dockWidget_list = [w for w in self.dockWidgetList if w.visible]
+
+        if visible_dockWidget_list == []:
+            msg = QMessageBox()
+            msg.setText('No configuration is loaded.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if len(visible_dockWidget_list) >= 2:
+            visible_dockWidget_tites = [w.windowTitle()
+                                        for w in visible_dockWidget_list]
+
+            title = 'Select configuration to save'
+            prompt = 'Configuration Window Title:'
+            result = QInputDialog.getItem(
+                self, title, prompt, visible_dockWidget_tites, editable=False)
+
+            if not result[1]:
+                return
+
+            config_title = result[0]
+
+            w = visible_dockWidget_list[
+                visible_dockWidget_tites.index(config_title)]
+        else:
+            w = visible_dockWidget_list[0]
+            config_title = w.windowTitle()
+
+        dialog = ConfigSaveDialog(config_title)
+        dialog.exec_()
+
+        if dialog.result() == QDialog.Accepted:
+
+            _sa = w.ss_abstract
+            _ca = w.ss_abstract._config_abstract
+
+            _ca.name = dialog.lineEdit_name.text().strip()
+            _ca.description = dialog.plainTextEdit_description.property(
+                'plainText')
+            _ca.ref_step_size = _sa.ref_step_size
+            _ca.masar_id = _sa.masar_id
+            _ca.synced_group_weight = _sa.synced_group_weight
+
+            _ca.weights            = _sa.weight_array.tolist()
+            _ca.caput_enabled_rows = _sa.caput_enabled_rows.tolist()
+
+            _ca.config_id = _ca.db.saveConfig(_ca)
+            msg = QMessageBox()
+            msg.setText('Config successfully saved to database.')
+            msg.exec_()
+
+    #----------------------------------------------------------------------
     def launchConfigDBSelector(self):
         """"""
 
-        result = tinkerConfigDBSelector.make(isModal=True, parentWindow=self)
+        result = tinkerConfigDBSelector.make(isModal=True, parentWindow=self,
+                                             aptinkerQSettings=self._settings)
 
         config_abstract_model = result.config_model.abstract
 
@@ -1349,41 +1622,6 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         dialog = PreferencesEditor()
         dialog.exec_()
-
-    #----------------------------------------------------------------------
-    def load_config_test(self):
-        """"""
-
-        db = TinkerMainDatabase()
-
-        config_id = 2 # same array size
-
-        c_abs = ConfigAbstractModel()
-
-        (c_abs.name,), (c_abs.description,), (user_id,), (c_abs.masar_id,), \
-            (c_abs.ref_step_size,), (c_abs.synced_group_weight,), \
-            (c_abs.config_ctime,) = db.getColumnDataFromTable(
-                'config_meta_table',
-                column_name_list=['config_name', 'config_description',
-                                  'config_user_id', 'config_masar_id',
-                                  'config_ref_step_size',
-                                  'config_synced_group_weight', 'config_ctime'],
-                condition_str='config_id={0:d}'.format(config_id))
-
-        c_abs.userinfo = zip(*db.getColumnDataFromTable(
-            'user_table',
-            column_name_list=['username', 'hostname', 'ip_str', 'mac_str'],
-            condition_str='user_id={0:d}'.format(user_id)))[0]
-
-        (_, c_abs.group_name_ids, c_abs.channel_ids,
-         c_abs.weights) = map(list, db.getColumnDataFromTable(
-             'config_table', order_by_str='config_row_id',
-             column_name_list=['config_row_id', 'group_name_id', 'channel_id',
-                               'config_weight'],
-             condition_str='config_id={0:d}'.format(config_id)))
-
-        if c_abs.channel_ids != []:
-            self.createDockWidget(c_abs)
 
     #----------------------------------------------------------------------
     def openContextMenu(self):
@@ -1441,14 +1679,20 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                      self.onDockWidgetClose)
 
     #----------------------------------------------------------------------
-    def onDockWidgetClose(self):
+    def onDockWidgetClose(self, close_signal_sender):
         """"""
 
-        dockWidget = self.sender()
+        # If the "close" signal was sent from toggleViewAction(), then
+        # the dockWidget should be simply hidden, not removed.
+        #
+        # On the other hand, if the "close" signal was sent from QToolButton,
+        # then the user wanted to actually close the dockWidget. So, it must
+        # be removed.
+        if isinstance(close_signal_sender, QToolButton):
+            dockWidget = self.sender()
+            self.dockWidgetList.remove(dockWidget)
+            self.menuWindow.removeAction(dockWidget.toggleViewAction())
 
-        self.dockWidgetList.remove(dockWidget)
-
-        self.menuWindow.removeAction(dockWidget.toggleViewAction())
 
 ########################################################################
 class TinkerApp(QObject):
@@ -1464,7 +1708,7 @@ class TinkerApp(QObject):
 
         self._initView()
 
-        self.connect(self.view.actionNewConfig,SIGNAL('triggered(bool)'),
+        self.connect(self.view.actionNewConfig, SIGNAL('triggered(bool)'),
                      self.openNewConfigSetupDialog)
 
     #----------------------------------------------------------------------
@@ -1479,7 +1723,8 @@ class TinkerApp(QObject):
 
         result = tinkerConfigSetupDialog.make(
             isModal=True, parentWindow=self.view,
-            use_cached_lattice=self.use_cached_lattice)
+            use_cached_lattice=self.use_cached_lattice,
+            aptinkerQSettings=self.view._settings)
 
         config_abstract_model = result.model.abstract
 

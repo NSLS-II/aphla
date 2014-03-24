@@ -68,6 +68,10 @@ class ConfigMetaDBViewWidget(QWidget):
                      self.on_sortable_state_changed)
         self.connect(self.pushButton_columns, SIGNAL('clicked()'),
                      self.launchColumnsDialog)
+        self.connect(self.pushButton_export, SIGNAL('clicked()'),
+                     self.exportConfigToFile)
+        self.connect(self.pushButton_edit_config_name_desc, SIGNAL('clicked()'),
+                     self.editConfigNameOrDescription)
 
     #----------------------------------------------------------------------
     def _initUI(self, parentWidget):
@@ -93,6 +97,10 @@ class ConfigMetaDBViewWidget(QWidget):
         verticalLayout.addWidget(self.layoutWidget_3)
         horizontalLayout = QHBoxLayout(self.layoutWidget_3)
         horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.pushButton_export = QPushButton(self)
+        self.pushButton_export.setText('Export...')
+        self.pushButton_export.setMaximumWidth(200)
+        horizontalLayout.addWidget(self.pushButton_export)
         spacerItem = QSpacerItem(20, 40, QSizePolicy.Expanding,
                                  QSizePolicy.Minimum)
         horizontalLayout.addItem(spacerItem)
@@ -113,9 +121,13 @@ class ConfigMetaDBViewWidget(QWidget):
         spacerItem2 = QSpacerItem(20, 40, QSizePolicy.Minimum,
                                   QSizePolicy.Expanding)
         gridLayout.addItem(spacerItem2, 1, 0, 1, 1)
+        self.pushButton_edit_config_name_desc = QPushButton(self)
+        self.pushButton_edit_config_name_desc.setText('Edit...')
+        gridLayout.addWidget(self.pushButton_edit_config_name_desc,
+                             2, 0, 1, 1)
         self.textEdit_description = QTextEdit(self)
         self.textEdit_description.setReadOnly(True)
-        gridLayout.addWidget(self.textEdit_description, 0, 1, 2, 1)
+        gridLayout.addWidget(self.textEdit_description, 0, 1, 3, 1)
 
         tbV = self.tableView
         tbV.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -187,6 +199,18 @@ class ConfigMetaDBViewWidget(QWidget):
             self.on_column_selection_change(dialog.output[:],
                                             force_visibility_update=False)
 
+    #----------------------------------------------------------------------
+    def exportConfigToFile(self):
+        """"""
+
+        self.emit(SIGNAL('exportConfigToFile'))
+
+    #----------------------------------------------------------------------
+    def editConfigNameOrDescription(self):
+        """"""
+
+        self.emit(SIGNAL('editConfigNameOrDescription'))
+
 ########################################################################
 class ConfigDBViewWidget(QWidget):
     """"""
@@ -220,7 +244,7 @@ class ConfigDBViewWidget(QWidget):
                                       'short_descrip_name',
                                       'user_editable_in_conf_setup',
                                       'str_format'],
-                    condition_str='only_for_snapshot=0')
+                    condition_str='only_for_ss=0')
                 )
         self.vis_col_name_list = self.all_col_names[:]
 
@@ -372,30 +396,64 @@ class ConfigDBViewWidget(QWidget):
                 col_ind = source_cols[0]
 
             if col_ind in self.user_editable_col_ids:
-                current_vals = [source_model.data(i) for i in source_index_list]
+                str_format = self.str_format[col_ind]
+
+                if str_format != 'checkbox':
+                    current_vals = [source_model.data(i, Qt.DisplayRole)
+                                    for i in source_index_list]
+                else:
+                    current_vals = [source_model.data(i, Qt.UserRole)
+                                    for i in source_index_list]
 
                 if len(set(current_vals)) == 1:
                     current_val = current_vals[0]
                 else:
                     current_val = None
 
-                str_format = self.str_format[
-                    self.user_editable_col_ids.index(col_ind)]
                 if str_format is None:
                     data_type = 'string'
                 elif str_format.endswith(('g', 'e')):
                     data_type = 'float'
                     if current_val is not None:
                         current_val = float(current_val)
+                elif str_format == 'checkbox':
+                    data_type = 'bool'
                 else:
                     raise ValueError('Unexpected str_format: {0:s}'.
                                      format(str_format))
 
+                col_key = source_model.abstract.all_col_keys[col_ind]
+                row_inds = [i.row() for i in source_index_list]
+
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+
+                if col_key in ['channel_name', 'pvsp', 'pvrb']:
+                    for row in row_inds:
+                        if (source_model.d['elem_name'][row] is not None):
+                            msg.setText(
+                                'This property cannot be changed as it is defined by '
+                                'the linked aphla element object.')
+                            msg.exec_()
+                            return
+
+                if col_key == 'pvsp':
+                    if len(row_inds) != 1:
+                        msg.setText('It is not allowed to set multiple '
+                                    'setpoint PVs to the same value.')
+                        msg.exec_()
+                        return
+
                 new_val = self.get_new_value(self.tableView, data_type,
                                              current_val)
 
+                if col_key == 'group_name':
+                    if new_val == '':
+                        msg.setText('Group name cannot be empty.')
+                        msg.exec_()
+                        return
+
                 if new_val is not None:
-                    row_inds = [i.row() for i in source_index_list]
                     source_model.modifyAbstractModel(new_val, col_ind, row_inds)
 
         else:
@@ -431,6 +489,22 @@ class ConfigDBViewWidget(QWidget):
                 return result[0]
             else: # If Cancel was pressed
                 return None
+
+        elif data_type == 'bool':
+
+            prompt_text = ('Select a new bool value:')
+            result = QInputDialog.getItem(
+                parent, 'New Bool', prompt_text, ['True', 'False'],
+                editable=False)
+
+            if result[1]: # If OK was pressed
+                if result[0] == 'True':
+                    return True
+                else:
+                    return False
+            else: # If Cancel was pressed
+                return None
+
         else:
             raise ValueError('Unexpected current_data type: {0:s}'.format(
                 type(current_data)))
@@ -536,7 +610,7 @@ class SnapshotDBViewWidget(QWidget):
                     'column_table',
                     column_name_list=['column_id', 'column_key',
                                       'short_descrip_name',
-                                      'user_editable_in_snapshot',
+                                      'user_editable_in_ss',
                                       'str_format'])
                 )
         self.vis_col_name_list = self.all_col_names[:]
@@ -661,6 +735,9 @@ class SnapshotDBViewWidget(QWidget):
 
         self.vis_col_name_list = new_vis_col_names[:]
 
+        self.emit(SIGNAL('ssDBViewVisibleColumnsChagned'),
+                  self.vis_col_name_list)
+
     #----------------------------------------------------------------------
     def launchColumnsDialog(self):
         """"""
@@ -681,6 +758,187 @@ class SnapshotDBViewWidget(QWidget):
                                             force_visibility_update=False)
 
 ########################################################################
+class ConfigDBTableViewItemDelegate(QStyledItemDelegate):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, view, config_table_model, parent=None):
+        """Constructor"""
+
+        QStyledItemDelegate.__init__(self, parent)
+
+        self.view = view
+
+        self.config_table    = config_table_model
+        self.config_abstract = self.config_table.abstract
+
+    #----------------------------------------------------------------------
+    def getCheckBoxRect(self, option):
+        """"""
+
+        opt = QStyleOptionButton()
+        style = self.view.style()
+        checkbox_rect = style.subElementRect(QStyle.SE_CheckBoxIndicator, opt)
+
+        checkbox_point = QPoint( option.rect.x() +
+                                 option.rect.width() / 2 -
+                                 checkbox_rect.width() / 2,
+                                 option.rect.y() +
+                                 option.rect.height() / 2 -
+                                 checkbox_rect.height() / 2 )
+
+        return QRect(checkbox_point, checkbox_rect.size())
+
+    #----------------------------------------------------------------------
+    def paint(self, painter, option, index):
+        """"""
+
+        QStyledItemDelegate.paint(self, painter, option, index) # Need to
+        # call the standard paint() in order to keep the color change when
+        # selected.
+
+        row = index.row()
+        col = index.column()
+
+        col_key    = self.config_abstract.all_col_keys[col]
+        str_format = self.config_abstract.all_str_formats[col]
+
+        '''
+        Somehow after upgrading to Debian 7 or on Ubuntu 12.04, the creation
+        of QStylePainter object with
+
+        > stylePainter = QStylePainter(painter.device(), self.view)
+
+        results in Segmentation Fault, right before paintEvent by
+        QTableView associated with this delegate is finished.
+
+        Creation of QStylePainter object with
+
+        > stylePainter = QStylePainter(self.view)
+
+        does not result in Seg. Fault., but it does not render the view
+        correctly.
+
+        The solution to the problem is to use QStyle.drawControl &
+        QStyle.drawComplexControl, instead of the corresponding functions
+        of QStylePainter.
+
+        As a result QStylePainter.save() & QStylePainter.restore() have been
+        commented out.
+        '''
+        style = self.view.style()
+
+        if col_key == 'caput_enabled':
+
+            value = index.model().data(index, role=Qt.UserRole)
+
+            checked = value
+
+            opt = QStyleOptionButton()
+
+            if int(index.flags() & Qt.ItemIsEditable) > 0:
+                opt.state |= QStyle.State_Enabled
+            else:
+                opt.state |= QStyle.State_ReadOnly
+
+            if checked:
+                opt.state |= QStyle.State_On
+            else:
+                opt.state |= QStyle.State_Off
+
+            # Centering of Checkbox
+            opt.rect = self.getCheckBoxRect(option)
+
+            style.drawControl(QStyle.CE_CheckBox, opt, painter, self.view)
+
+    #----------------------------------------------------------------------
+    def setModelData(self, editor, model, index):
+        """"""
+
+        col = index.column()
+        col_key = self.config_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled': # editor = QCheckbox
+            old_value = model.data(index, Qt.UserRole)
+
+            # Change the check state to opposite if editable
+            if int(index.flags() & Qt.ItemIsEditable) > 0:
+                checked = not old_value
+                if checked:
+                    checked_value = 1
+                else:
+                    checked_value = 0
+                model.setData(index, checked_value, role=Qt.EditRole)
+        else:
+            QStyledItemDelegate.setModelData(self, editor, model, index)
+
+    #----------------------------------------------------------------------
+    def editorEvent(self, event, model, option, index):
+        """"""
+
+        col = index.column()
+        col_key = self.config_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+
+            if not ( int(index.flags() & Qt.ItemIsEditable) > 0 ):
+                return False
+
+            # Do not change the checkbox state
+            if event.type() == QEvent.MouseButtonRelease or \
+               event.type() == QEvent.MouseButtonDblClick:
+                if event.button() != Qt.LeftButton or \
+                   not self.getCheckBoxRect(option).contains(event.pos()):
+                    return False
+                if event.type() == QEvent.MouseButtonDblClick:
+                    return True
+            elif event.type() == QEvent.KeyPress:
+                if (event.key() != Qt.Key_Space) and \
+                   (event.key() != Qt.Key_Select):
+                    return False
+            else:
+                return False
+
+            # Change the checkbox state
+            self.setModelData(None, model, index)
+            return True
+
+        else:
+            return QStyledItemDelegate.editorEvent(self, event, model, option,
+                                                   index)
+
+    #----------------------------------------------------------------------
+    def createEditor(self, parent, option, index):
+        """"""
+
+        col = index.column()
+        col_key = self.config_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+            # Must be None, otherwise an editor is created if a user clicks
+            # this cell
+            return None
+        else:
+            return QStyledItemDelegate.createEditor(self, parent, option, index)
+
+    #----------------------------------------------------------------------
+    def setEditorData(self, editor, index):
+        """"""
+
+        value = index.model().data(index, Qt.DisplayRole)
+
+        col = index.column()
+        col_key = self.config_abstract.all_col_keys[col]
+
+        if col_key == 'caput_enabled':
+            checked = value
+            editor.setChecked(checked)
+
+            editor.close()
+        else:
+            QStyledItemDelegate.setEditorData(self, editor, index)
+
+########################################################################
 class SnapshotDBTableViewItemDelegate(QStyledItemDelegate):
     """"""
 
@@ -694,7 +952,6 @@ class SnapshotDBTableViewItemDelegate(QStyledItemDelegate):
 
         self.ss_table        = snapshot_table_model
         self.ss_abstract     = self.ss_table.abstract
-        self.config_abstract = self.ss_abstract._config_abstract
 
     #----------------------------------------------------------------------
     def getCheckBoxRect(self, option):

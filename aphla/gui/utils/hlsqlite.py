@@ -367,6 +367,43 @@ class SQLiteDatabase():
         return zip(*z)
 
     #----------------------------------------------------------------------
+    def getMatchedColumnDataFromTable(
+        self, table_name, matched_column_name, matching_val_list,
+        matching_format, column_name_return_list=None):
+        """
+        """
+
+        if column_name_return_list is None:
+            column_name_return_list = self.getColumnNames(table_name)
+
+        col_name_list = [matched_column_name] + column_name_return_list
+
+        comp_val_str_list = ['"{0}"'.format(v if v is not None else '')
+                             if matching_format.endswith('s')
+                             else ('{0'+matching_format+'}').format(v)
+                             for v in matching_val_list]
+
+        unique_out = self.getColumnDataFromTable(
+            table_name, column_name_list=col_name_list,
+            condition_str='{0} IN ({1})'.format(
+                matched_column_name, ','.join(set(comp_val_str_list))))
+
+        if unique_out == []:
+            return None
+
+        unique_matched_item_list = list(unique_out[0])
+
+        mapping = [unique_matched_item_list.index(v)
+                   if v in unique_matched_item_list else None
+                   for v in matching_val_list]
+
+        out = []
+        for uo in unique_out[1:]:
+            out.append([uo[i] if i is not None else None for i in mapping])
+
+        return out
+
+    #----------------------------------------------------------------------
     def createTempView(self, view_name, table_name, column_name_list=None,
                        condition_str='', order_by_str='',
                        binding_tuple=None):
@@ -566,13 +603,8 @@ class SQLiteDatabase():
 
         sql_cmd += placeholder_str
 
-        try:
-            with self.con:
-                self.cur.executemany(sql_cmd, list_of_tuples)
-        except sqlite3.IntegrityError as e:
-            raise e
-        except:
-            traceback.print_exc()
+        with self.con:
+            self.cur.executemany(sql_cmd, list_of_tuples)
 
     #----------------------------------------------------------------------
     def deleteRows(self, table_name, condition_str='',
