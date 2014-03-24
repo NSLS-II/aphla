@@ -535,139 +535,8 @@ def getDistance(elem1, elem2, absolute=True):
     if absolute: return abs(ds)
     else: return ds
 
-
 #
 #
-def getPhi(group, **kwargs):
-    """
-    get the phase from stored data
-
-    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
-    """
-    if not machines._lat._twiss: return None
-    elem = getElements(group)
-    col = ['phix', 'phiy']
-    if kwargs.get('spos', False): col.append('s')
-    
-    return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
-
-def getPhase(group, **kwargs):
-    """see :func:`getPhi`"""
-    return getPhi(group, **kwargs)
-
-##
-def getAlpha(group, **kwargs):
-    """
-    get the phase from stored data
-
-    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
-    """
-    if not machines._lat._twiss: return None
-    elem = getElements(group)
-    col = ['alphax', 'alphay']
-    if kwargs.get('spos', False): col.append('s')
-    
-    return machines._lat._twiss.get([e.name for e in elem], col=col, **kwargs)
-#
-#
-def getBeta(group, **kwargs):
-    """
-    get the beta function from stored data.
-    
-    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
-
-    Parameters
-    -----------
-    src : str.
-        'database' from database, 'VA' from 'twiss' element of virtual accelerator
-
-    Examples
-    ---------
-    >>> getBeta('q*', spos = False)
-
-    """
-    src = kwargs.pop("src", 'database')
-
-    elem = getElements(group)
-    col = ['betax', 'betay']
-    if kwargs.get('spos', False): col.append('s')
-
-    if src == 'database':
-        if not machines._lat._twiss:
-            logger.error("ERROR: No twiss data loaeded")
-            return None
-        return machines._lat._twiss.get([e.name for e in elem], 
-                                        col=col, **kwargs)
-    elif src == 'VA':
-        twiss = getElements('twiss')[0]
-        idx = [e.index for e in elem]
-        s, bx, by = twiss.s, twiss.betax, twiss.betay
-        if 's' in col:
-            ret = np.zeros((len(elem), 3), 'd')
-            for i,e in enumerate(elem):
-                j = np.argmin(np.abs(s - e.se))
-                ret[i,:] = (bx[j], by[j], s[j])
-        else:
-            ret = np.zeros((len(elem), 2), 'd')
-            for i,e in enumerate(elem):
-                j = np.argmin(np.abs(s - e.se))
-                ret[i,:] = (bx[j], by[j])
-        if kwargs.get('names', False):
-            return ret, [e.name for e in elem]
-        else: return ret
-
-def getDispersion(group, **kwargs):
-    """
-    get the dispersion
-
-    this calls :func:`~aphla.hlalib.getEta`.
-    """
-    return getEta(group, **kwargs)
-
-def getEta(group, **kwargs):
-    """get the dispersion from stored data
-
-    Parameters
-    -----------
-    source : str. 
-        'database' from database; 'VA' from virtual accelerator where a 'twiss'
-        element must exist.
-
-    similar to :func:`getBeta`, it calls :func:`~aphla.apdata.TwissData.get`
-    of the current twiss data.
-
-    Examples
-    --------
-    >>> getEta('P*', spos = True, source = 'database')
-    >>> getEta('BPM')
-    >>> getEta(['BPM1', 'BPM2'])
-
-    """
-
-    src = kwargs.pop("source", 'database')
-
-    elem = getElements(group)
-    col = ['etax', 'etay']
-    if kwargs.get('spos', False): col.append('s')
-
-    if src == 'database':
-        if not machines._lat._twiss:
-            logger.error("ERROR: No twiss data loaeded")
-            return None
-        return machines._lat._twiss.get([e.name for e in elem], 
-                                        col=col, **kwargs)
-    elif src == 'VA':
-        twiss = getElements('twiss')[0]
-        idx = [e.index for e in elem]
-        if 's' in col:
-            ret = np.zeros((len(elem), 3), 'd')
-            ret[:,-1] = np.take(twiss.s, idx)
-        else:
-            ret = np.zeros((len(elem), 2), 'd')
-        ret[:,0] = np.take(twiss.etax, idx)
-        ret[:,1] = np.take(twiss.etay, idx)
-        return ret
-
 def getTwiss(names, columns, **kwargs):
     """
     get the twiss data
@@ -693,6 +562,7 @@ def getTwiss(names, columns, **kwargs):
     else:
         return None
 
+
 def getTwissAt(s, columns, **kwargs):
     """
     similar to getTwiss, but at specific location
@@ -706,22 +576,101 @@ def getTwissAt(s, columns, **kwargs):
         return machines._lat._twiss.at(s, col=col)
     else:
         return [None] * len(columns)
-    
-def getChromaticity(source='machine'):
-    """
-    get chromaticity **Not Implemented Yet**
-    """
-    if source == 'machine':
-        raise NotImplementedError()
-    elif source == 'model':
-        raise NotImplementedError()
-    elif source == 'database':
-        raise NotImplementedError()
-    return None
 
-def getTunes(source='machine'):
+    
+def getPhi(group, **kwargs):
     """
-    get tunes from ['machine', 'database']
+    get the phase from stored data
+
+    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
+    """
+    col = ['phix', 'phiy']
+    if kwargs.pop('spos', False): col.append('s')
+    return getTwiss(group, col=col, **kwargs)
+
+
+def getPhase(group, **kwargs):
+    """see :func:`getPhi`"""
+    return getPhi(group, **kwargs)
+
+##
+def getAlpha(group, **kwargs):
+    """
+    get the phase from stored data
+
+    this calls :func:`~aphla.apdata.TwissData.get` of the current twiss data.
+    """
+    col = ['alphax', 'alphay']
+    if kwargs.pop('spos', False): col.append('s')
+    return getTwiss(group, col, **kwargs)
+#
+#
+def getBeta(group, **kwargs):
+    """get the beta function of *group* from stored data.
+    
+    Parameters
+    -----------
+    src : str.
+        'database' from database, 'VA' from 'virtualacc' element of virtual accelerator
+
+    Examples
+    ---------
+    >>> getBeta('q*', spos = False)
+
+    """
+    col = ['betax', 'betay']
+    if kwargs.pop('spos', False): col.append('s')
+    return getTwiss(group, col, **kwargs)
+
+
+def getDispersion(group, **kwargs):
+    """
+    get the dispersion
+
+    this calls :func:`~aphla.hlalib.getEta`.
+    """
+    return getEta(group, **kwargs)
+
+
+def getEta(group, **kwargs):
+    """get the dispersion from stored data
+
+    Parameters
+    -----------
+    source : str. 
+        'database' from database; 'VA' from virtual accelerator where a 'twiss'
+        element must exist.
+
+    Examples
+    --------
+    >>> getEta('p*', spos = True, source = 'database')
+    >>> getEta(['BPM1', 'BPM2'])
+
+    """
+
+    col = ['etax', 'etay']
+    if kwargs.pop('spos', False): col.append('s')
+    return getTwiss(group, col, **kwargs)
+
+
+def getChromaticity(source='database'):
+    """
+    get chromaticity from ["database"]
+    """
+    if source == 'database':
+        return machines._lat.getChromaticities()
+    elif source == "VA":
+        vas = getElements('VA')
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+        return twiss.chromx, twiss.chromy        
+    else:
+        raise ValueError("Unknown source: '%s'" % source)
+
+
+def getTunes(source='machine', **kwargs):
+    """
+    get tunes from ['machine', 'database', "VA"]
     """
     if source == 'machine':
         # return only the first matched element
@@ -731,6 +680,14 @@ def getTunes(source='machine'):
         return nu[0].x, nu[0].y
     elif source == 'database':
         return machines._lat.getTunes()
+    elif source == "VA":
+        vas = getElements('VA')
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+        return twiss.nux, twiss.nuy
+    else:
+        raise ValueError("Unknow source: '%s'" % source)
+
 
 def getTune(source='machine', plane = 'h'):
     """get one of the tune, 'h' or 'v'
@@ -746,6 +703,7 @@ def getTune(source='machine', plane = 'h'):
     else:
         raise ValueError("plane must be either h or v")
 
+
 def _getFftTune(plane = 'hv', mode = ''):
     """get tune from FFT
 
@@ -756,54 +714,6 @@ def _getFftTune(plane = 'hv', mode = ''):
     raise NotImplementedError()
     return None
 
-#def savePhase(mode, phase, info):
-#    """
-#    Not implemented yet
-#    """
-#    raise NotImplementedError()
-#    return None
-#
-#def saveBeta(mode, phase, info):
-#    """
-#    Not implemented yet
-#    """
-#    raise NotImplementedError()
-#    return None
-#
-#def saveDispersion(mode, phase, info):
-#    """
-#    Not implemented yet
-#    """
-#    raise NotImplementedError()
-#    return None
-#
-#def saveTune(mode, phase, info):
-#    """
-#    Not implemented yet
-#    """
-#    raise NotImplementedError()
-#    return None
-#
-#def saveTuneRm(mode, phase, info):
-#    """
-#    Not implemented yet
-#    """
-#    raise NotImplementedError()
-#    return None
-#
-#def saveChromaticity(mode, phase, info):
-#    """
-#    Not implemented yet
-#    """
-#    raise NotImplementedError()
-#    return None
-#
-#def saveChromaticityRm(mode, phase, info):
-#    """
-#    Not implemented yet
-#    """
-#    raise NotImplementedError()
-#    return None
 
 def getChromaticityRm(mode, phase, info):
     """
@@ -812,49 +722,12 @@ def getChromaticityRm(mode, phase, info):
     raise NotImplementedError()
     return None, None
 
+
 def getTuneRm(mode):
     """
-    Not implemented yet
+    Not implemented yet, see `measTuneRm`
     """
     raise NotImplementedError()
-
-def getCurrentMode(self):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def getModes(self):
-    """
-    Not implemented yet
-    """
-    raise NotImplementedError()
-    return None
-
-def saveMode(self, mode, dest):
-    """
-    Save current states to a new mode
-    Not implemented yet
-    """
-    raise NotImplementedError()
-
-
-def _removeLatticeMode(mode):
-    raise NotImplementedError()
-    #import os
-    #cfg = cfg_pkl = os.path.join(hlaroot, "machine", root["nsls2"], 'hla.pkl')
-    #f = shelve.open(cfg, 'c')
-    #modes = []
-    ##del f['lat.twiss']
-    ##for k in f.keys(): print k
-    #for k in f.keys():
-    #    if re.match(r'lat\.\w+\.mode', k): print "mode:", k[4:-5]
-    #if not mode:
-    #    pref = "lat."
-    #else:
-    #    pref = 'lat.%s.' % mode
-    #f.close()
 
 
 def getBpms():
@@ -865,6 +738,7 @@ def getBpms():
     lattice and take a "union".
     """
     return machines._lat.getGroupMembers('BPM', op='union')
+
 
 def getQuads():
     """

@@ -192,6 +192,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         elemlst = ap.getElements(elements)
         msgbox, msg = QMessageBox(), ""
         for elem in elemlst:
+            if not elem.name: continue
             msg += "<strong>%s:</strong><br>" % elem.name
             for v in elem.fields():
                 msg += "  %s: %s<br>" % (v, str(elem.get(v, unitsys=None)))

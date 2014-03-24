@@ -396,38 +396,6 @@ def output_pvs(fname, pvs):
 
 
 
-def _update_sqlite_elements(fdb, elems, **kwarg):
-    conn = sqlite3.connect(fdb)
-    # save byte string instead of the default unicode
-    conn.text_factory = str
-    c = conn.cursor()
-    # ph1g2c30a,800,BPM,4.935,0.0,4.935,C30,G2,A,PH1
-    dat = [(r[0],r[1],r[2],r[4],r[5],r[6],r[7],r[8],r[9])
-           for r in elems]
-    c.executemany("""INSERT OR REPLACE INTO elements """
-              """(elemName,elemIndex,elemType,elemLength,elemPosition,"""
-              """cell,girder,symmetry,elemGroups) values """
-              """(?,?,?,?,?,?,?,?,?)""", dat)
-    conn.commit()
-    conn.close()
-    pass
-
-def _update_sqlite_pvs(fdb, pvs, **kwarg):
-    systag = "aphla.sys.%s" % (kwarg.get("latname", ""),)
-    conn = sqlite3.connect(fdb)
-    # save byte string instead of the default unicode
-    conn.text_factory = str
-    c = conn.cursor()
-    # SR:C01-MG{PS:CH2B}I:Sp1-SP,put,ch2g6c01b,16100,COR,x
-    dat = [(r[0],r[1],r[2],r[5],systag) for r in pvs]
-    c.executemany("""INSERT OR REPLACE INTO pvs """
-                  """(pv,elemHandle,elemName,elemField,tags) """
-                  """values (?,?,?,?,?)""", dat)
-    conn.commit()
-    conn.close()
-    pass
-
-
 def updateSqliteDb(fdb, **kwarg):
     if kwarg.get("felem", None):
         felem = kwarg.pop("felem")
