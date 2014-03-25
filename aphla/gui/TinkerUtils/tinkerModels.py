@@ -19,6 +19,7 @@ from PyQt4.QtGui import (QMessageBox, QFileDialog)
 
 from cothread import Sleep
 from cothread.catools import caget, caput, FORMAT_TIME
+import cothread.catools as catools
 
 import aphla as ap
 
@@ -1384,7 +1385,7 @@ class SnapshotAbstractModel(QObject):
             self.n_caget_pvs:
                 self.caget_raws
                 self.caget_convs # unit-converted caget data
-                self.caget_unitconvs # unit conversion objects for caput
+                self.caget_unitconvs # from-raw unit conversion objects for caput
                 self.caget_ioc_ts_tuples
                 self.caget_pv_str_list
                 self.caget_pv_map_list
@@ -1392,8 +1393,9 @@ class SnapshotAbstractModel(QObject):
 
             self.n_caput_pvs:
                 self.caput_raws
-                self.caput_convs # unit-converted caput data
-                self.caput_unitconvs # unit conversion objects for caput
+                self.caput_convs # unit-converted sent caput data
+                self.caput_fromraw_unitconvs # from-raw unit conversion objects for caput
+                self.caput_toraw_unitconvs # to-raw unit conversion objects for caput
                 self.caput_pv_str_list
                 self.caput_pv_map_list
                 self.caput_pv_size_list
@@ -1617,12 +1619,12 @@ class SnapshotAbstractModel(QObject):
         self.n_caget_pvs = len(self.caget_pv_str_list)
         self.n_caput_pvs = len(self.caput_pv_str_list)
 
-        self.caget_raws  = np.ones(self.n_caget_pvs)*np.nan
-        self.caget_convs = np.ones(self.n_caget_pvs)*np.nan
+        self.caget_raws  = np.ones(self.n_caget_pvs, dtype=object)*np.nan
+        self.caget_convs = np.ones(self.n_caget_pvs, dtype=object)*np.nan
         self.caget_ioc_ts_tuples = np.array([(None,None)]*self.n_caget_pvs)
 
-        self.caput_raws  = np.ones(self.n_caput_pvs)*np.nan
-        self.caput_convs = np.ones(self.n_caput_pvs)*np.nan
+        self.caput_raws  = np.ones(self.n_caput_pvs, dtype=object)*np.nan
+        self.caput_convs = np.ones(self.n_caput_pvs, dtype=object)*np.nan
 
         self.caput_not_yet = True
 
@@ -1647,16 +1649,16 @@ class SnapshotAbstractModel(QObject):
             return np.poly1d([ar, br])
         elif (conv_type == 'interp1') and (conv_inv == 0):
             xp_txt, fp_txt = conv_txt.split(';')
-            xp = [float(s) for s in xp_txt.split(',')]
-            fp = [float(s) for s in fp_txt.split(',')]
+            xp = [float(s)          for s in xp_txt.split(',')]
+            fp = [float(s)*polarity for s in fp_txt.split(',')]
             # `xp` is assumed to be monotonically increasing. Otherwise,
             # interpolation will make no sense.
-            return lambda x: polarity*np.interp(x, xp, fp,
-                                                left=np.nan, right=np.nan)
+            return lambda x: np.interp(x, xp, fp,
+                                       left=np.nan, right=np.nan)
         elif (conv_type == 'interp1') and (conv_inv == 1):
             xp_txt, fp_txt = conv_txt.split(';')
-            xp = [float(s) for s in xp_txt.split(',')]
-            fp = [float(s) for s in fp_txt.split(',')]
+            xp = [float(s)          for s in xp_txt.split(',')]
+            fp = [float(s)*polarity for s in fp_txt.split(',')]
             # `xp` is assumed to be monotonically increasing. Otherwise,
             # interpolation will make no sense.
             # `fp` is assumed to be monotonically increasing or decreasing.
@@ -1667,8 +1669,8 @@ class SnapshotAbstractModel(QObject):
             elif np.all(np.diff(fp) < 0.0):
                 xp_inv = np.flipud(fp)
                 fp_inv = np.flipud(xp)
-            return lambda x: polarity*np.interp(x, xp_inv, fp_inv,
-                                                left=np.nan, right=np.nan)
+            return lambda x: np.interp(x, xp_inv, fp_inv,
+                                       left=np.nan, right=np.nan)
         else:
             raise ValueError('Unexpected unit conversion type: {0}'.format(
                 conv_type))
@@ -1691,8 +1693,8 @@ class SnapshotAbstractModel(QObject):
 
         ## Initialize unit conversion data for caget
 
-        (caget_conv_types, caget_conv_data_txts, caget_conv_invs,
-         caget_polarities) = self.db.getMatchedColumnDataFromTable(
+        (fromraw_conv_types, fromraw_conv_data_txts, fromraw_conv_invs,
+         fromraw_polarities) = self.db.getMatchedColumnDataFromTable(
              '[unitconv_table text view]', 'unitconv_id',
              unitconv_fromraw_ids, ':d',
              column_name_return_list=['unitconv_type', 'conv_data_txt',
@@ -1703,8 +1705,8 @@ class SnapshotAbstractModel(QObject):
         rb_map_row_list = [x[0] for x in self.maps['cur_RB']]
         sp_map_row_list = [x[0] for x in self.maps['cur_SP']]
         for row, (conv_type, conv_txt, conv_inv, polarity) in enumerate(zip(
-            caget_conv_types, caget_conv_data_txts, caget_conv_invs,
-            caget_polarities)):
+            fromraw_conv_types, fromraw_conv_data_txts, fromraw_conv_invs,
+            fromraw_polarities)):
 
             uc_callable = self.get_unitconv_callable(
                 conv_type, conv_inv, polarity, conv_txt)
@@ -1718,33 +1720,48 @@ class SnapshotAbstractModel(QObject):
 
         ## Initialize unit conversion data for caput
 
-        (caput_conv_types, caput_conv_data_txts, caput_conv_invs,
-         caput_polarities) = self.db.getMatchedColumnDataFromTable(
+        (toraw_conv_types, toraw_conv_data_txts, toraw_conv_invs,
+         toraw_polarities) = self.db.getMatchedColumnDataFromTable(
              '[unitconv_table text view]', 'unitconv_id',
              unitconv_toraw_ids, ':d',
              column_name_return_list=['unitconv_type', 'conv_data_txt',
                                       'inv', 'polarity'])
 
-        self.caput_unitconvs = [None]*self.n_caput_pvs
+        self.caput_toraw_unitconvs   = [None]*self.n_caput_pvs
+        self.caput_fromraw_unitconvs = [None]*self.n_caput_pvs
 
         sp_map_row_list = [x[0] for x in self.maps['cur_SentSP']]
+
+        # First get unit conversion to-raw
         for row, (conv_type, conv_txt, conv_inv, polarity) in enumerate(zip(
-            caput_conv_types, caput_conv_data_txts, caput_conv_invs,
-            caput_polarities)):
+            toraw_conv_types, toraw_conv_data_txts, toraw_conv_invs,
+            toraw_polarities)):
 
             uc_callable = self.get_unitconv_callable(
                 conv_type, conv_inv, polarity, conv_txt)
 
             if row in sp_map_row_list:
                 i = self.maps['cur_SentSP'][sp_map_row_list.index(row)][1]
-                self.caput_unitconvs[i] = uc_callable
+                self.caput_toraw_unitconvs[i] = uc_callable
+
+        # Then get unit conversion from-raw
+        for row, (conv_type, conv_txt, conv_inv, polarity) in enumerate(zip(
+            fromraw_conv_types, fromraw_conv_data_txts, fromraw_conv_invs,
+            fromraw_polarities)):
+
+            uc_callable = self.get_unitconv_callable(
+                conv_type, conv_inv, polarity, conv_txt)
+
+            if row in sp_map_row_list:
+                i = self.maps['cur_SentSP'][sp_map_row_list.index(row)][1]
+                self.caput_fromraw_unitconvs[i] = uc_callable
 
     #----------------------------------------------------------------------
     def update_caput_enabled_indexes(self):
         """"""
 
         self.caput_enabled_indexes = np.array([True]*self.n_caput_pvs)
-        for row, index in self.maps['cur_SP']:
+        for row, index in self.maps['cur_SentSP']:
             self.caput_enabled_indexes[index] = self.caput_enabled_rows[row]
 
     #----------------------------------------------------------------------
@@ -1808,26 +1825,50 @@ class SnapshotAbstractModel(QObject):
                 condition_str='ss_id={0:d}'.format(self.ss_id))[0][0]
 
     #----------------------------------------------------------------------
-    def update_caput_vectors(self):
+    def update_NaNs_in_caput_raws(self):
         """"""
 
+        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+        index_map_get2put = [indexes_caput[rows_caput.index(r)]
+                             for r in rows_caget]
+        index_map_put2get = [indexes_caget[rows_caget.index(r)]
+                             for r in rows_caput]
+
         if self.caput_not_yet:
-            rows, indexes = map(list, zip(*self.maps['cur_SP']))
-            self.caput_raws = self.caget_raws[indexes]
+            self.caput_raws[index_map_get2put] = self.caget_raws[indexes_caget]
             self.caput_convs = np.array(
                 [uc(r) if uc is not None else r for r, uc
-                 in zip(self.caput_raws, self.caput_unitconvs)])[indexes]
+                 in zip(self.caput_raws,
+                        self.caput_fromraw_unitconvs)],
+                dtype=object)
             self.caput_not_yet = False
         else:
-            nan_inds = [i for i, r in enumerate(self.caput_raws)
-                        if np.any(np.isnan(r))]
+            nan_inds = [i for i, r, in enumerate(self.caput_raws)
+                        if np.any(np.isnan(
+                            r if not isinstance(r, catools.dbr.ca_array)
+                            else r.__array__().astype(float)))]
             if nan_inds != []:
-                rows, indexes = map(list, zip(*self.maps['cur_SP']))
                 for i in nan_inds:
-                    self.caput_raws[i] = self.caget_raws[indexes[i]]
+                    self.caput_raws[i] = self.caget_raws[index_map_put2get[i]]
                     r  = self.caput_raws[i]
-                    uc = self.caput_unitconvs[i]
+                    uc = self.caput_fromraw_unitconvs[i]
                     self.caput_convs[i] = uc(r) if uc is not None else r
+
+        self.caput_convs = self.convert_caput_raws(
+            self.caput_raws, self.caput_fromraw_unitconvs)
+
+    #----------------------------------------------------------------------
+    def convert_caput_raws(self, caput_raws, caput_fromraw_unitconv_list):
+        """"""
+
+        caput_raws = [r if not isinstance(r, catools.dbr.ca_array)
+                      else r.__array__().astype(float) for r in caput_raws]
+
+        return np.array(
+            [uc(r) if uc is not None else r for r, uc
+             in zip(caput_raws, caput_fromraw_unitconv_list)],
+            dtype=object)
 
     #----------------------------------------------------------------------
     def invoke_caput(self):
@@ -1835,7 +1876,9 @@ class SnapshotAbstractModel(QObject):
 
         out = [(i, r) for i, (r, enabled)
                in enumerate(zip(self.caput_raws, self.caput_enabled_indexes))
-               if enabled and (not np.isnan(r))]
+               if enabled and (not np.any(np.isnan(
+                   r if not isinstance(r, catools.dbr.ca_array)
+                   else r.__array__().astype(float))))]
         if out != []:
             enabled_indexes, caput_raws = map(list, zip(*out))
             caput_pv_str_list = [pv for i, pv
@@ -1854,6 +1897,11 @@ class SnapshotAbstractModel(QObject):
         caput(caput_pv_str_list, caput_raws, throw=False,
               timeout=self.caput_timeout)
 
+        # Update unit-converted SentSP
+        self.caput_convs[enabled_indexes] = self.convert_caput_raws(
+            caput_raws, [self.caput_fromraw_unitconvs[i]
+                         for i in enabled_indexes])
+
         if not np.isnan(self.auto_caget_delay_after_caput):
             Sleep(self.auto_caget_delay_after_caput)
             self.update_pv_vals()
@@ -1864,16 +1912,73 @@ class SnapshotAbstractModel(QObject):
     def step_up(self, positive=True):
         """"""
 
-        self.update_caput_vectors()
+        self.update_NaNs_in_caput_raws()
 
         self.update_caput_enabled_indexes()
 
+        uc_list = list(
+            np.array(self.caput_toraw_unitconvs,
+                     dtype=object)[self.caput_enabled_indexes])
+
+        current_caput_raws = self.caput_raws[self.caput_enabled_indexes]
+        current_caput_raws = np.array(
+            [o if not isinstance(o, catools.dbr.ca_array) else o.__array__()
+             for o in current_caput_raws],
+            dtype=object)
+        current_caput_convs = self.caput_convs[self.caput_enabled_indexes]
+
+        enabled = self.caput_enabled_rows.astype(bool)
+        converted_step_size_array = self.step_size_array[enabled]
+        # Now need to resort `converted_step_size_array`
+        enabled_rows = np.where(enabled)[0]
+        rows, indexes = map(list, zip(*self.maps['cur_SentSP']))
+        enabled_indexes = [rows.index(r) for r in enabled_rows]
+        converted_step_size_array = converted_step_size_array[
+            np.argsort(enabled_indexes)]
+
         if positive:
-            self.caput_raws[self.caput_enabled_indexes] += \
-                self.step_size_array[self.caput_enabled_rows]
+            new_caput_convs = current_caput_convs + converted_step_size_array
         else:
-            self.caput_raws[self.caput_enabled_indexes] -= \
-                self.step_size_array[self.caput_enabled_rows]
+            new_caput_convs = current_caput_convs - converted_step_size_array
+        new_caput_raws = np.array(
+            [uc(caput_conv) if uc is not None else caput_conv
+             for (caput_conv, uc) in zip(new_caput_convs, uc_list)],
+            dtype=object)
+        if new_caput_raws.ndim != 1:
+            nRow, nCol = new_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = new_caput_raws[i,:]
+            new_caput_raws = temp
+        if current_caput_raws.ndim != 1:
+            nRow, nCol = current_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = current_caput_raws[i,:]
+            current_caput_raws = temp
+
+        new_caput_raws_nan_inds = np.array(
+            [True if np.any(np.isnan(r)) else False for r in new_caput_raws])
+        if np.any(new_caput_raws_nan_inds):
+            enabled_indexes = np.where(self.caput_enabled_indexes)[0]
+            invalid_change_indexes = enabled_indexes[new_caput_raws_nan_inds]
+            rows, indexes = map(list, zip(*self.maps['cur_SentSP']))
+            invalid_row_strings = [str(rows[indexes.index(i)]+1) # 1-indexed
+                                   for i in invalid_change_indexes]
+            msg = QMessageBox()
+            msg.setWindowTitle('Aborting Step Change')
+            msg.setText('One or more of the desired changes will result in unit '
+                        'conversion failure. Most likely cause is due to '
+                        'out of interpolation range. Try reducing the change.')
+            msg.setInformativeText('The following rows will be invalid: {0}'.
+                                   format(', '.join(invalid_row_strings)))
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        raw_step_size_array = new_caput_raws - current_caput_raws
+
+        self.caput_raws[self.caput_enabled_indexes] += raw_step_size_array
 
         self.invoke_caput()
 
@@ -1887,9 +1992,15 @@ class SnapshotAbstractModel(QObject):
     def multiply(self, positive=True):
         """"""
 
-        self.update_caput_vectors()
+        self.update_NaNs_in_caput_raws()
 
         self.update_caput_enabled_indexes()
+
+        uc_list = list(
+            np.array(self.caput_toraw_unitconvs,
+                     dtype=object)[self.caput_enabled_indexes])
+
+        current_caput_convs = self.caput_convs[self.caput_enabled_indexes]
 
         if positive:
             if self.mult_factor > 2.0:
@@ -1906,7 +2017,8 @@ class SnapshotAbstractModel(QObject):
                 if choice == QMessageBox.No:
                     return
 
-            self.caput_raws[self.caput_enabled_indexes] *= self.mult_factor
+            mult_factor = self.mult_factor
+
         else:
             if self.mult_factor != 0.0:
                 if self.mult_factor < 0.5:
@@ -1923,13 +2035,23 @@ class SnapshotAbstractModel(QObject):
                     if choice == QMessageBox.No:
                         return
 
-                self.caput_raws[self.caput_enabled_indexes] /= self.mult_factor
+                mult_factor = 1.0/self.mult_factor
+
             else:
                 msg = QMessageBox()
                 msg.setText('Setpoints cannot be divided by 0.')
                 msg.setIcon(QMessageBox.Warning)
                 msg.exec_()
                 return
+
+        new_caput_convs = current_caput_convs * mult_factor
+
+        new_caput_raws = np.array(
+            [uc(caput_conv) if uc is not None else caput_conv
+             for (caput_conv, uc) in zip(new_caput_convs, uc_list)],
+            dtype=object)
+
+        self.caput_raws[self.caput_enabled_indexes] = new_caput_raws
 
         self.invoke_caput()
 
@@ -2169,7 +2291,6 @@ class SnapshotTableModel(QAbstractTableModel):
         elif col_key == 'D_tar_ConvSP_cur_ConvSP':
             pass
         else:
-            #raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
             self.d[col_key] = np.ones((self.abstract.nRows,))*np.nan
 
     #----------------------------------------------------------------------
@@ -2346,8 +2467,3 @@ class SnapshotTableModel(QAbstractTableModel):
                 return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
         else:
             return default_flags # non-editable
-
-
-
-
-
