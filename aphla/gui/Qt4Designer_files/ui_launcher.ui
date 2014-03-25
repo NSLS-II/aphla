@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>APHLA Launcer</string>
+   <string>APHLA Launcher</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_5">
@@ -167,7 +167,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>15</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
