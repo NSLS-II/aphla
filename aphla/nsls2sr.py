@@ -22,7 +22,6 @@ import machines
 from catools import caget, caput
 from hlalib import getElements
 
-import matplotlib.pylab as plt
 
 def _maxTimeSpan(timestamps):
     # take out the part beyond microsecond (nano second + ' EST')
@@ -359,6 +358,8 @@ def plotChromaticity(f, nu, chrom):
     """
     see measChromaticity
     """
+    import matplotlib.pylab as plt
+
     df = f - np.mean(f)
     p, resi, rank, sing, rcond = np.polyfit(df, nu, deg=2, full=True)
     t = np.linspace(1.1*df[0], 1.1*df[-1], 100)

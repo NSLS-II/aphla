@@ -559,6 +559,21 @@ def getTwiss(names, columns, **kwargs):
             logger.error("ERROR: no twiss data loaded")
             return None
         return machines._lat._twiss.get(names, col=col)
+    elif src == "VA":
+        vas = getElements("VA")
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+        if isinstance(names, (str, unicode)):
+            namelst = [i for i,s in enumerate(twiss.names) if fnmatch(s, names)]
+        elif isinstance(names, (list, tuple)):
+            namelst = [i for i,s in enumerate(twiss.names) if s in names]
+        else:
+            raise ValueError("names must be string or list of element names")
+        dat = np.zeros((len(namelst), len(columns)), 'd')
+        for i,c in enumerate(columns):
+            d = twiss.get(c, unitsys=None)
+            dat[:,i] = [d[j] for j in namelst]
+        return dat
     else:
         return None
 

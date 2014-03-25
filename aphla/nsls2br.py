@@ -20,7 +20,6 @@ import machines
 from catools import caget, caput
 from hlalib import getElements
 
-import matplotlib.pylab as plt
 
     
 def _brBpmScrub(**kwargs):
@@ -350,6 +349,7 @@ def getBrBpmData(**kwargs):
 
 
 def plotBrRmData(fname, group, **kwargs):
+    import matplotlib.pylab as plt
     output = kwargs.get("output", "images/br_orm")
     i0 = kwargs.get("i0", 5)
     i1 = kwargs.get("i1", -1)
@@ -397,6 +397,8 @@ def calcBrRmCol(fname, group, **kwargs):
     plot - whether plot or not
     faslice - slice range of FA waveform data
     """
+    import matplotlib.pylab as plt
+
     nbpm = kwargs.get("nbpm", 36)
     plot = kwargs.get("plot", False)
     wfmslice = kwargs.get("wfmslice", (10,100))
