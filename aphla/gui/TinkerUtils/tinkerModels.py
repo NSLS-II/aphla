@@ -1916,9 +1916,14 @@ class SnapshotAbstractModel(QObject):
 
         self.update_caput_enabled_indexes()
 
-        uc_list = list(
-            np.array(self.caput_toraw_unitconvs,
-                     dtype=object)[self.caput_enabled_indexes])
+        #uc_list = list(
+            #np.array(self.caput_toraw_unitconvs,
+                     #dtype=object)[self.caput_enabled_indexes])
+        #
+        # TODO: Need to test the following block against real machine
+        uc_list = [uc for uc, enabled in zip(self.caput_toraw_unitconvs,
+                                             self.caput_enabled_indexes)
+                   if enabled]
 
         current_caput_raws = self.caput_raws[self.caput_enabled_indexes]
         current_caput_raws = np.array(
@@ -1996,9 +2001,14 @@ class SnapshotAbstractModel(QObject):
 
         self.update_caput_enabled_indexes()
 
-        uc_list = list(
-            np.array(self.caput_toraw_unitconvs,
-                     dtype=object)[self.caput_enabled_indexes])
+        #uc_list = list(
+            #np.array(self.caput_toraw_unitconvs,
+                     #dtype=object)[self.caput_enabled_indexes])
+        #
+        # TODO: Need to test the following block against real machine
+        uc_list = [uc for uc, enabled in zip(self.caput_toraw_unitconvs,
+                                             self.caput_enabled_indexes)
+                   if enabled]
 
         current_caput_convs = self.caput_convs[self.caput_enabled_indexes]
 
