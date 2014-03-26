@@ -28,6 +28,14 @@
 <file alias="control_corrorbit.png">./images/control_corrorbit.png</file>
 <file alias="control_orbitcor.png">./images/control_orbitcor.png</file>
 <file alias="control_localbump.png">./images/control_localbump.png</file>
+<file alias="control_up1.png">./images/control_up1.png</file>
+<file alias="control_dn1.png">./images/control_dn1.png</file>
+<file alias="control_up2.png">./images/control_up2.png</file>
+<file alias="control_dn2.png">./images/control_dn2.png</file>
+<file alias="control_up5.png">./images/control_up5.png</file>
+<file alias="control_dn5.png">./images/control_dn5.png</file>
+<file alias="control_x1.png">./images/control_x1.png</file>
+<file alias="control_x1r.png">./images/control_x1r.png</file>
 <file alias="splash_screen_1.png">./images/python-logo-master-v3-TM.png</file>
 <file alias="mainwin_1.png">./images/screenflow-icon.png</file>
 <file alias="mainwin_2.png">./images/python-powered-h-140x182.png</file>

@@ -37,6 +37,8 @@ from functools import partial
 import qrangeslider
 from datetime import datetime
 
+import mleapresources
+
 import aphla
 
 C_ELEM, C_FIELD, C_VAL_SP, C_VAL_RB = range(4)
@@ -87,6 +89,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 self._pvidx.setdefault(pv, [])
                 self._pvidx[pv].append((i,C_VAL_RB,j))
 
+            # one data record, pvs are all list
             rec = [elem, fld, [None] * len(pvsp), [None] * len(pvrb)]
             for j,s in enumerate(self._unitsys):
                 rec.append([None] * len(pvrb))
@@ -108,6 +111,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         self._cadata.addPv(self._pvidx.keys())
 
         self.endResetModel()
+        self._cadata.start()
 
     def _ca_update(self, val, idx = None):
         #print val.name, val
@@ -157,21 +161,20 @@ class ElementPropertyTableModel(QAbstractTableModel):
                   idx0, idx1)
         #QtGui.qApp.processEvents()
 
-    def _cell_to_qv(self, i, j):
-        # assume it is a cadata
-        if len(self._data[i][j]) == 0:
+    def _cadata_to_qv(self, vals):
+        """
+        this is cadata, it is a list even for scalar
+        """
+        # assume it is a cadata, must be a list
+        if len(vals) == 0:
             return QVariant()
-        elif len(self._data[i][j]) > 1:
+        elif len(vals) > 1:
             return QVariant("...")
 
         # size 1
-        val = self._data[i][j][0]
+        val = vals[0]
         if val is None:
-            if j > C_VAL_RB:
-                # no such physics unit
-                return QVariant()
-            else:
-                return QVariant(QString("Disconnected"))
+            return QVariant()
         elif isinstance(val, (float, np.float32)):
             return QVariant(float(val))
         elif isinstance(val, str):
@@ -207,7 +210,12 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 return QVariant(QString(elem.name))
             elif col == C_FIELD:
                 return QVariant(QString(fld))
-            return self._cell_to_qv(r, col)
+            elif col == C_VAL_SP or col == C_VAL_RB:
+                return self._cadata_to_qv(self._data[r][col])
+            # other unit system
+            unitsys = self._unitsys[col - C_VAL_RB - 1]
+            vals = elem.convertUnit(fld, self._data[r][C_VAL_RB], None, unitsys)
+            return self._cadata_to_qv(vals)
         #elif role == Qt.EditRole:
         #    if col == C_FIELD: 
         #        raise RuntimeError("what is this ?")
@@ -231,8 +239,10 @@ class ElementPropertyTableModel(QAbstractTableModel):
             elif col == C_VAL_RB:
                 pv = elem.pv(field=fld, handle="readback")
                 return QVariant(", ".join(pv))
-            #elif col > C_VAL_RB:
-            #    return QVariant(self._unitsymb[col-C_VAL_RB][r])
+            elif col > C_VAL_RB:
+                unitsys = self._unitsys[col - C_VAL_RB - 1]
+                #print "Checking the unit:", unitsys, elem.getUnit(fld, unitsys)
+                return QVariant(str(elem.getUnit(fld, unitsys)))
         elif role == Qt.ForegroundRole:
             #if idx == 0: return QColor(Qt.darkGray)
             #if r in self._inactive and self.isHeadIndex(r):
@@ -386,6 +396,7 @@ class ElementEditor(QtGui.QDialog):
 
         self._active_elem = None
         self._active_idx  = None
+        self._active_sp   = None
 
         self.lblInfo = QLabel()
 
@@ -394,8 +405,6 @@ class ElementEditor(QtGui.QDialog):
         self.lblNameField  = QLabel()
         self.ledStep  = QLineEdit(".1")
         self.ledStep.setValidator(QtGui.QDoubleValidator())
-        self.connect(self.ledStep, SIGNAL("editingFinished()"),
-                     self.setSpStepsize)
         self.spb1 = QtGui.QDoubleSpinBox()
         self.spb2 = QtGui.QDoubleSpinBox()
         self.spb5 = QtGui.QDoubleSpinBox()
@@ -417,17 +426,63 @@ class ElementEditor(QtGui.QDialog):
         self.valMeter.setEnabled(False)
         self.ledSet = QLineEdit("")
         self.ledSet.setValidator(QtGui.QDoubleValidator())
-        self.connect(self.ledSet, SIGNAL("editingFinished()"),
+        self.connect(self.ledSet, SIGNAL("returnPressed()"),
                      self.setDirectValue)
         fmbox2.addRow("Name:", self.lblNameField)
         #fmbox2.addRow("Range", self.valMeter)
         fmbox2.addRow("Range:", self.lblRange)
-        fmbox2.addRow("PV:", self.lblPv)
-        fmbox2.addRow("Set:", self.ledSet)
-        fmbox2.addRow("Stepsize:", self.ledStep)
-        fmbox2.addRow("Step x1:", self.spb1)
-        fmbox2.addRow("Step x2:", self.spb2)
-        fmbox2.addRow("Step x5:", self.spb5)
+        fmbox2.addRow("PV Name:", self.lblPv)
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(self.ledSet)
+        btnSet = QtGui.QPushButton("Set")
+        self.connect(btnSet, SIGNAL("clicked()"), self.setDirectValue)
+        hbox.addWidget(btnSet)
+        fmbox2.addRow("Set New Value:", hbox)
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(self.ledStep)
+        #
+        btnu1 = QtGui.QPushButton()
+        btnu1.setIcon(QtGui.QIcon(":/control_up1.png"))
+        btnu1.setIconSize(QtCore.QSize(24, 24))
+        self.connect(btnu1, SIGNAL("clicked()"),
+                     partial(self.stepActiveCell, 1.0))
+        hbox.addWidget(btnu1)
+        btnd1 = QtGui.QPushButton()
+        btnd1.setIcon(QtGui.QIcon(":/control_dn1.png"))
+        btnd1.setIconSize(QtCore.QSize(24, 24))
+        self.connect(btnd1, SIGNAL("clicked()"),
+                     partial(self.stepActiveCell, -1.0))
+        hbox.addWidget(btnd1)
+        btnu5 = QtGui.QPushButton()
+        btnu5.setIcon(QtGui.QIcon(":/control_up5.png"))
+        btnu5.setIconSize(QtCore.QSize(24, 24))
+        self.connect(btnu5, SIGNAL("clicked()"),
+                     partial(self.stepActiveCell, 5.0))
+        hbox.addWidget(btnu5)
+        btnd5 = QtGui.QPushButton()
+        btnd5.setIcon(QtGui.QIcon(":/control_dn5.png"))
+        btnd5.setIconSize(QtCore.QSize(24, 24))
+        self.connect(btnd5, SIGNAL("clicked()"),
+                     partial(self.stepActiveCell, -5.0))
+        hbox.addWidget(btnd5)
+        fmbox2.addRow("Step Up/Down:", hbox)
+
+        hbox = QtGui.QHBoxLayout()
+        self.ledMult = QtGui.QLineEdit("1.0")
+        hbox.addWidget(self.ledMult)
+        btnx1 = QtGui.QPushButton()
+        btnx1.setIcon(QtGui.QIcon(":/control_x1.png"))
+        btnx1.setIconSize(QtCore.QSize(24, 24))
+        self.connect(btnx1, SIGNAL("clicked()"), self.scaleActiveCell)
+        hbox.addWidget(btnx1)
+        btnx1 = QtGui.QPushButton()
+        btnx1.setIcon(QtGui.QIcon(":/control_x1r.png"))
+        btnx1.setIconSize(QtCore.QSize(24, 24))
+        self.connect(btnx1, SIGNAL("clicked()"),
+                     partial(self.scaleActiveCell, True))
+        hbox.addWidget(btnx1)
+        fmbox2.addRow("Multiply/Divide:", hbox)
+
         fmbox2.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         fmbox2.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
         self.gpCellEditor.setLayout(fmbox2)
@@ -448,7 +503,7 @@ class ElementEditor(QtGui.QDialog):
         self.tableview.setModel(self.model)
         #self.tableview.setItemDelegate(self.delegate)
         #self.tableview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tableview.setWhatsThis("double click cell to enter editing mode")
+        #self.tableview.setWhatsThis("double click cell to enter editing mode")
         #fmbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         #self.model.loadElements(aphla.getElements("*")[:10])
 
@@ -475,10 +530,22 @@ class ElementEditor(QtGui.QDialog):
         self.setWindowFlags(Qt.Window)
         #self.timerId = self.startTimer(1000)
 
+    def stepActiveCell(self, nstep = 0):
+        if self._active_sp is None: return
+        dval = float(self.ledStep.text()) * nstep
+        elem, fld = self._active_elem
+        val = elem.get(fld, handle="setpoint", unitsys=None)
+        self.setActiveCell(val + dval)
 
     def setDirectValue(self):
         val = float(self.ledSet.text())
-        self.spb1.setValue(val)
+        self.setActiveCell(val)
+
+    def scaleActiveCell(self, inv = False):
+        if self._active_sp is None: return
+        fac = float(self.ledMult.text())
+        if inv: fac = 1.0/fac
+        self.setActiveCell(val * fac)
 
     #def timerEvent(self, e):
     #    if self.model.rowCount() < 1: return
@@ -522,7 +589,6 @@ class ElementEditor(QtGui.QDialog):
         if self._active_elem is None:
             __logger.warn("no active element selected")
             return
-        self.ledSet.setText("{0}".format(val))
         elem, fld = self._active_elem
         #print elem, fld, elem.get(fld, handle="setpoint", unitsys=None)
         elem.put(fld, val, unitsys=None)
@@ -532,12 +598,6 @@ class ElementEditor(QtGui.QDialog):
 
         self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                         idx0, idx1)
-
-    def setSpStepsize(self):
-        stp = float(self.ledStep.text())
-        self.spb1.setSingleStep(stp)
-        self.spb2.setSingleStep(2.0*stp)
-        self.spb5.setSingleStep(5.0*stp)
 
     def editingCell(self, idx):
         r,c = idx.row(), idx.column()
@@ -556,6 +616,7 @@ class ElementEditor(QtGui.QDialog):
         if not succ:
             print "can not convert value {0} for {1}.{2}".format(
                 self.model.data(idx), elem, fld)
+        self._active_sp = val
         #print "{0}, {1}".format(elem, fld), val
         if elem.boundary(fld) is None:
             elem.updateBoundary(field=fld)
@@ -670,7 +731,7 @@ class ElementEditor(QtGui.QDialog):
 # test purpose
 if __name__ == "__main__":
     import aphla as ap
-    ap.machines.load("nsls2")
+    ap.machines.load("nsls2", "SR")
     elems = []
     for bpm in ap.getElements("COR"):
         elems.append((bpm, 'x'))

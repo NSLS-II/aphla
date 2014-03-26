@@ -18,7 +18,7 @@ from aphla.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
 import mleapresources
 from elempickdlg import ElementPickDlg
 #from orbitconfdlg import OrbitPlotConfig
-from aporbitplot import ApMdiSubPlot, ApSvdPlot
+from aporbitplot import ApMdiSubPlot, ApSvdPlot, ApCaTunesPlot
 from aporbitdata import ApVirtualElemData, ManagedPvData
 from aporbitphy import *
 from elemeditor import ElementEditor
@@ -205,6 +205,7 @@ class OrbitPlotMainWindow(QMainWindow):
         #             self.updateMachMenu)
         self.openMenu = self.menuBar().addMenu("&Open")
         self.openMenu.addAction("New Plot ...", self.openNewPlot)
+        self.openMenu.addAction("New Tune Plot", self.openTunePlot)
         self.openMenu.addAction("New BPM Plot", partial(
                 self.newElementPlots, "BPM", "x,y"))
         self.openMenu.addAction("New HCOR Plot", partial(
@@ -600,6 +601,37 @@ class OrbitPlotMainWindow(QMainWindow):
         #self.logger.info("initialized")
         #lv.loadLatSnapshotH5()
         lv.exec_()
+
+    def openTunePlot(self):
+        mach, lat = self.getCurrentMachLattice()
+        nu = lat.getElementList('tune')
+        pvs = [(e.pv(field="x", handle="readback")[0],
+                e.pv(field="y", handle="readback")[0])
+               for e in nu]
+        labels = [e.name for e in nu]
+        twiss = lat.getElementList("VA")
+        pvs.extend([(e.pv(field="nux", handle="readback")[0],
+                     e.pv(field="nuy", handle="readback")[0])
+                    for e in twiss])
+        labels.extend([e.name for e in twiss])
+
+        p = ApMdiSubPlot(pvs=pvs, labels=labels, dtype = "Tunes")
+        #QObject.installEventFilter(p.aplot)
+        #p.data = ManagedPvData(pvm, s, pvs, element=elemnames,
+        #                       label="{0}.{1}".format(elem,field))
+        p.setAttribute(Qt.WA_DeleteOnClose)
+        p.setWindowTitle("[%s.%s] Tunes" % (mach, lat.name))
+        self.connect(p, SIGNAL("elementSelected(PyQt_PyObject)"), 
+                     self.elementSelected)
+        self.connect(p, SIGNAL("destroyed()"), self.subPlotDestroyed)
+        #p.updatePlot()
+        # set the zoom stack
+        #p.aplot.setErrorBar(self.error_bar)
+        #p.wid.autoScaleXY()
+        #p.aplot.replot()
+        self.mdiarea.addSubWindow(p)
+        #print "Show"
+        p.show()
 
     def openNewPlot(self):
         mach, lat = self.getCurrentMachLattice()
