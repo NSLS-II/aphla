@@ -1155,6 +1155,191 @@ class ApCaArrayPlot(ApCaPlot):
         e.accept()
 
 
+class ApCaTunesPlot(ApCaPlot):
+    def __init__(self, pvs, **kwargs):
+        """initialization
+        
+        Parameters
+        -----------
+        pvs: two tunes PV
+        parent : None
+        labels : None
+        """
+        parent = kwargs.pop("parent", None)
+        super(ApCaTunesPlot, self).__init__(parent)
+        self.labels = kwargs.get("labels", None)
+
+        self.setCanvasBackground(Qt.white)
+        #self.setAxisAutoScale(Qwt.QwtPlot.yLeft, False)
+        self.setAutoReplot(False)
+
+        self.plotLayout().setAlignCanvasToScales(True)
+        self.setMinimumSize(400, 400)
+
+        self._ref = []
+        self._pvs = []
+        for i,pvl in enumerate(pvs):
+            name, color = COLORS[i%len(COLORS)]
+            #c = Qwt.QwtPlotCurve()
+            c = Qwt.QwtPlotCurve()
+            c.setPen(QPen(color))
+
+            if self.labels is None or not self.labels[i]:
+                c.setTitle("[%s,%s]" % (pvl[0], pvl[1]))
+            else:
+                c.setTitle(self.labels[i])
+            c.setStyle(Qwt.QwtPlotCurve.NoCurve)
+            c.setSymbol(Qwt.QwtSymbol(Qwt.QwtSymbol.Triangle,
+                                      QBrush(Qt.blue),
+                                      QPen(Qt.red, 1),
+                                      QSize(10, 10)))
+            c.attach(self)
+            self.curves.append(c)
+            self._pvs.append(pvl)
+            self._ref.append(None)
+
+        for c in self.curves:
+            self.showCurve(c, True)
+
+        #self.showCurve(self.curve2, True)
+
+        self._cadata = CaDataMonitor(wait=0.6)
+        allpvs = []
+        for i,pvl in enumerate(self._pvs):
+            allpvs.extend(pvl)
+        allpvs = list(set(allpvs))
+        print allpvs
+        for pv in allpvs:
+            self._cadata.addHook(pv, self._ca_update)
+        self._cadata.addPv(allpvs)
+        #ymin, ymax = self._cadata.getRange()
+        #ymin, ymax = 0.0, 0.5
+        #self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+        self.zoomer1.setZoomBase(True)
+        self._cadata.start()
+
+    def _ca_update(self, val, idx = None):
+        if self._hold: return
+        if not self.live: return
+        for i,pvl in enumerate(self._pvs):
+            if val is not None and val.name not in pvl: continue
+            c = self.curves[i]
+            xl = [v for v in self._cadata.data.get(pvl[0], [])]
+            yl = [v for v in self._cadata.data.get(pvl[1], [])]
+            if len(xl) == 0 or len(yl) == 0: continue
+            if len(xl) < len(yl):
+                xl.append(xl[-1])
+            elif len(xl) > len(yl):
+                yl.append(yl[-1])
+            if self._ref[i] is not None and self.drift:
+                xl = [x - self._ref[i][0] for x in xl]
+                yl = [y - self._ref[i][1] for y in yl]
+            c.setData(yl, xl)
+
+        self.replot()
+        #QtGui.qApp.processEvents()
+
+    def pullCaData(self):
+        if not self._cadata: return
+        self._cadata.pull()
+        self._ca_update(None, None)
+
+    def saveAsReference(self):
+        self._hold = True
+        for i,c in enumerate(self.curves):
+            xi, yi, ei = c.data()
+            self._ref[i] = yi
+        self._hold = False
+
+    def elementDoubleClicked(self, elem):
+        #print "element selected:", elem
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
+    
+    def alignScales(self):
+        # raise RuntimeError("ERROR")
+        return
+        self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)
+        self.canvas().setLineWidth(1)
+        for i in range(Qwt.QwtPlot.axisCnt):
+            scaleWidget = self.axisWidget(i)
+            if scaleWidget:
+                scaleWidget.setMargin(0)
+            scaleDraw = self.axisScaleDraw(i)
+            if scaleDraw:
+                scaleDraw.enableComponent(
+                    Qwt.QwtAbstractScaleDraw.Backbone, False)
+
+    def setErrorBar(self, on):
+        self.curves1[0].errorOnTop = on
+
+    def moveCurves(self, ax, fraction = 0.80):
+        scalediv = self.axisScaleDiv(ax)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        sl1, sr1 = sl + (sr-sl)*fraction, sr + (sr-sl)*fraction
+        self.setAxisScale(ax, sl1, sr1)
+
+    def scaleXBottom(self, factor = None):
+        scalediv = self.axisScaleDiv(Qwt.QwtPlot.xBottom)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dx = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.xBottom, sl - dx, sr + dx)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            xmin = bound.left()
+            xmax = bound.right()
+            if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            #if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        #self.replot()
+        
+    def scaleYLeft(self, factor = None):
+        scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dy = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
+        
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            ymin = bound.top() - h*.05
+            ymax = bound.bottom() + h*.03
+            xmin = bound.left()
+            xmax = bound.right()
+            #if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        #self.replot()
+
+    def setColor(self, c):
+        symb = self.curve1.symbol()
+        pen = symb.pen()
+        pen.setColor(c)
+        symb.setPen(pen)
+        br = symb.brush()
+        br.setColor(c)
+        symb.setBrush(br)
+        self.curves1[0].setSymbol(symb)
+
+        pen = self.curves1[0].pen()
+        pen.setColor(c)
+        self.curves1[0].setPen(pen)
+
+    def closeEvent(self, e):
+        self._cadata.close()
+        e.accept()
+
+
 class ApMdiSubPlot(QMdiSubWindow):
     def __init__(self, parent = None, **kw):
         super(ApMdiSubPlot, self).__init__(parent)
@@ -1480,7 +1665,9 @@ if __name__ == "__main__":
     #                    'V:2-SR:C29-BI:G4{PM1:3606}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH2:3630}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH1:3645}SA:X',)])
-    p = ApCaArrayPlot(pvs)
+    #p = ApCaArrayPlot(pvs)
+    pvs = [ ('V:2-SR-BI{TUNE}X-I', 'V:2-SR-BI{TUNE}Y-I') ]
+    p = ApCaTunesPlot(pvs)
     import time
     #pvs = ['V:2-SR:C29-BI:G2{PL1:3551}SA:X',
     #       'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
