@@ -8,10 +8,10 @@ HLA_MACHINE = os.environ.get('HLA_MACHINE', 'nsls2')
 
 HOME_PATH             = osp.expanduser('~')
 APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
+APHLA_APSCRIPTS_DIR   = os.environ.get('APHLA_APSCRIPTS_DIR',
+                                       APHLA_USER_CONFIG_DIR)
 
-DB_FOLDERPATH = os.environ.get('APHLA_TINKER_DB_DIR',
-                               osp.join(APHLA_USER_CONFIG_DIR, 'aptinker_db'))
-#DB_FOLDERPATH = '/epics/op/apps/apscripts/aptinker_db/'
+DB_FOLDERPATH = osp.join(APHLA_APSCRIPTS_DIR, 'aptinker_db')
 if not osp.exists(DB_FOLDERPATH):
     os.makedirs(DB_FOLDERPATH)
 MAIN_DB_FILEPATH    = osp.join(DB_FOLDERPATH, 'aptinker_main.sqlite')
