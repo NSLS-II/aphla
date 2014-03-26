@@ -5,12 +5,42 @@ High-Level Interface to SQLite
 import os
 import sqlite3
 from time import time, sleep
+import zlib
+import cPickle
 import traceback
 from pprint import pprint
 
 MEMORY = ':memory:'
 
 DEBUG = False
+
+#----------------------------------------------------------------------
+def blobdumps(py_obj, cPickle_protocol=2, compression_level=7):
+    """
+    Pickle any Python object, and compress the pickled object.
+
+    Returns a binary string.
+
+    `compression_level`: Between 1 and 9
+        The higher the level is, the more compressed the object will be.
+    """
+
+    return zlib.compress(cPickle.dumps(py_obj, cPickle_protocol),
+                         compression_level).decode('latin1')
+
+#----------------------------------------------------------------------
+def blobloads(blob):
+    """
+    Inverse of blobdumps().
+
+    Decompress the pickled object, and unpickle the uncompressed object.
+
+    Returns a Python object.
+    """
+
+    return cPickle.loads(zlib.decompress(blob.encode('latin1')))
+    # No need to specify cPickle protocol, as it will be automatically
+    # determined.
 
 ########################################################################
 class Column():

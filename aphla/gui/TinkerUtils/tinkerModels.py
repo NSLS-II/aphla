@@ -905,11 +905,11 @@ class ConfigTableModel(QAbstractTableModel):
         for unitconv_toraw_id, unitconv_fromraw_id \
             in zip(unitconv_toraw_ids, unitconv_fromraw_ids):
             (unitsymb,), (unitsymb_raw,), (unitconv_type,), \
-                (conv_data_txt,), (inv,), (polarity,)= \
+                (unitconv_blob,), (inv,), (polarity,)= \
                 self.db.getColumnDataFromTable(
                     '[unitconv_table text view]',
                     column_name_list=['dst_unitsymb', 'src_unitsymb',
-                                      'unitconv_type', 'conv_data_txt',
+                                      'unitconv_type', 'unitconv_blob',
                                       'inv', 'polarity'],
                     condition_str=('unitconv_id={0:d}'.
                                    format(unitconv_fromraw_id)))
@@ -919,17 +919,19 @@ class ConfigTableModel(QAbstractTableModel):
             unitconv_type_list.append(unitconv_type)
             polarity_list.append(polarity)
 
+            conv_data_txt = str(tinkerdb.blobloads(unitconv_blob))
             conv_data_txt_fromraw_list.append(conv_data_txt)
             if inv == 0: inv = 'False'
             else       : inv = 'True'
             unitconv_inv_fromraw_list.append(inv)
 
-            (conv_data_txt,), (inv,) = self.db.getColumnDataFromTable(
+            (unitconv_blob,), (inv,) = self.db.getColumnDataFromTable(
                 '[unitconv_table text view]',
-                column_name_list=['conv_data_txt', 'inv'],
+                column_name_list=['unitconv_blob', 'inv'],
                 condition_str=('unitconv_id={0:d}'.
                                format(unitconv_toraw_id)))
 
+            conv_data_txt = str(tinkerdb.blobloads(unitconv_blob))
             conv_data_txt_toraw_list.append(conv_data_txt)
             if inv == 0: inv = 'False'
             else       : inv = 'True'
@@ -1635,30 +1637,28 @@ class SnapshotAbstractModel(QObject):
         self.update_init_pv_vals()
 
     #----------------------------------------------------------------------
-    def get_unitconv_callable(self, conv_type, conv_inv, polarity, conv_txt):
+    def get_unitconv_callable(self, conv_type, conv_inv, polarity, conv_data):
         """"""
 
         if conv_type == 'NoConversion':
             return lambda val: val
         elif (conv_type == 'poly') and (conv_inv == 0):
-            coeffs = [float(s) for s in conv_txt.split(',')]
+            coeffs = list(conv_data)
             return np.poly1d(coeffs)*polarity
         elif (conv_type == 'poly') and (conv_inv == 1):
-            a, b = [float(s) for s in conv_txt.split(',')]
+            a, b = conv_data
             ar, br = polarity/a, -b/a
             return np.poly1d([ar, br])
         elif (conv_type == 'interp1') and (conv_inv == 0):
-            xp_txt, fp_txt = conv_txt.split(';')
-            xp = [float(s)          for s in xp_txt.split(',')]
-            fp = [float(s)*polarity for s in fp_txt.split(',')]
+            xp = list(conv_data[0])
+            fp = list(conv_data[1])
             # `xp` is assumed to be monotonically increasing. Otherwise,
             # interpolation will make no sense.
             return lambda x: np.interp(x, xp, fp,
                                        left=np.nan, right=np.nan)
         elif (conv_type == 'interp1') and (conv_inv == 1):
-            xp_txt, fp_txt = conv_txt.split(';')
-            xp = [float(s)          for s in xp_txt.split(',')]
-            fp = [float(s)*polarity for s in fp_txt.split(',')]
+            xp = list(conv_data[0])
+            fp = list(conv_data[1])
             # `xp` is assumed to be monotonically increasing. Otherwise,
             # interpolation will make no sense.
             # `fp` is assumed to be monotonically increasing or decreasing.
@@ -1693,23 +1693,26 @@ class SnapshotAbstractModel(QObject):
 
         ## Initialize unit conversion data for caget
 
-        (fromraw_conv_types, fromraw_conv_data_txts, fromraw_conv_invs,
+        (fromraw_conv_types, fromraw_unitconv_blobs, fromraw_conv_invs,
          fromraw_polarities) = self.db.getMatchedColumnDataFromTable(
              '[unitconv_table text view]', 'unitconv_id',
              unitconv_fromraw_ids, ':d',
-             column_name_return_list=['unitconv_type', 'conv_data_txt',
+             column_name_return_list=['unitconv_type', 'unitconv_blob',
                                       'inv', 'polarity'])
+
+        fromraw_conv_data = [tinkerdb.blobloads(blob)
+                             for blob in fromraw_unitconv_blobs]
 
         self.caget_unitconvs = [None]*self.n_caget_pvs
 
         rb_map_row_list = [x[0] for x in self.maps['cur_RB']]
         sp_map_row_list = [x[0] for x in self.maps['cur_SP']]
-        for row, (conv_type, conv_txt, conv_inv, polarity) in enumerate(zip(
-            fromraw_conv_types, fromraw_conv_data_txts, fromraw_conv_invs,
+        for row, (conv_type, conv_data, conv_inv, polarity) in enumerate(zip(
+            fromraw_conv_types, fromraw_conv_data, fromraw_conv_invs,
             fromraw_polarities)):
 
             uc_callable = self.get_unitconv_callable(
-                conv_type, conv_inv, polarity, conv_txt)
+                conv_type, conv_inv, polarity, conv_data)
 
             if row in rb_map_row_list:
                 i = self.maps['cur_RB'][rb_map_row_list.index(row)][1]
@@ -1720,12 +1723,15 @@ class SnapshotAbstractModel(QObject):
 
         ## Initialize unit conversion data for caput
 
-        (toraw_conv_types, toraw_conv_data_txts, toraw_conv_invs,
+        (toraw_conv_types, toraw_unitconv_blobs, toraw_conv_invs,
          toraw_polarities) = self.db.getMatchedColumnDataFromTable(
              '[unitconv_table text view]', 'unitconv_id',
              unitconv_toraw_ids, ':d',
-             column_name_return_list=['unitconv_type', 'conv_data_txt',
+             column_name_return_list=['unitconv_type', 'unitconv_blob',
                                       'inv', 'polarity'])
+
+        toraw_conv_data = [tinkerdb.blobloads(blob)
+                           for blob in toraw_unitconv_blobs]
 
         self.caput_toraw_unitconvs   = [None]*self.n_caput_pvs
         self.caput_fromraw_unitconvs = [None]*self.n_caput_pvs
@@ -1733,24 +1739,24 @@ class SnapshotAbstractModel(QObject):
         sp_map_row_list = [x[0] for x in self.maps['cur_SentSP']]
 
         # First get unit conversion to-raw
-        for row, (conv_type, conv_txt, conv_inv, polarity) in enumerate(zip(
-            toraw_conv_types, toraw_conv_data_txts, toraw_conv_invs,
+        for row, (conv_type, conv_data, conv_inv, polarity) in enumerate(zip(
+            toraw_conv_types, toraw_conv_data, toraw_conv_invs,
             toraw_polarities)):
 
             uc_callable = self.get_unitconv_callable(
-                conv_type, conv_inv, polarity, conv_txt)
+                conv_type, conv_inv, polarity, conv_data)
 
             if row in sp_map_row_list:
                 i = self.maps['cur_SentSP'][sp_map_row_list.index(row)][1]
                 self.caput_toraw_unitconvs[i] = uc_callable
 
         # Then get unit conversion from-raw
-        for row, (conv_type, conv_txt, conv_inv, polarity) in enumerate(zip(
-            fromraw_conv_types, fromraw_conv_data_txts, fromraw_conv_invs,
+        for row, (conv_type, conv_data, conv_inv, polarity) in enumerate(zip(
+            fromraw_conv_types, fromraw_conv_data, fromraw_conv_invs,
             fromraw_polarities)):
 
             uc_callable = self.get_unitconv_callable(
-                conv_type, conv_inv, polarity, conv_txt)
+                conv_type, conv_inv, polarity, conv_data)
 
             if row in sp_map_row_list:
                 i = self.maps['cur_SentSP'][sp_map_row_list.index(row)][1]

@@ -13,13 +13,12 @@ from cothread import catools
 import aphla as ap
 from aphla.gui.utils.hlsqlite import (
     MEMORY, SQLiteDatabase, Column, ForeignKeyConstraint,
-    PrimaryKeyTableConstraint, UniqueTableConstraint)
+    PrimaryKeyTableConstraint, UniqueTableConstraint, blobdumps, blobloads)
 import config
 
 DEBUG_ConfigDatabase = True
 
 UNITCONV_DATA_PRECISION = '.16e'
-UNITCONV_DATA_FORMAT = '{{0:{0:s}}}'.format(UNITCONV_DATA_PRECISION)
 LENGTH_METER_PRECISION = 9
 LENGTH_METER_FORMAT = '{{0:.{0:d}f}}'.format(LENGTH_METER_PRECISION)
 
@@ -405,7 +404,8 @@ class TinkerMainDatabase(SQLiteDatabase):
         self.createTable(table_name, column_def)
         self.insertRows(table_name, [(t,) for t in unitconv_types])
 
-        unitconv_list = []
+        unitconv_list  = []
+        conv_data_list = []
         for e in all_elems:
             d = e.getUnitSystems()
             for f, unitsys in d.iteritems():
@@ -415,10 +415,10 @@ class TinkerMainDatabase(SQLiteDatabase):
                     if unitsys[0] is not None:
                         raise ValueError('When there is only 1 unit system, it should be None.')
                     unitconv_type = 'NoConversion'
-                    src_unitsys = None
-                    dst_unitsys = None
-                    src_unitsymb = dst_unitsymb = e.getUnit(f, unitsys=None)
-                    conv_data_txt = ''
+                    src_unitsys   = None
+                    dst_unitsys   = None
+                    src_unitsymb  = dst_unitsymb = e.getUnit(f, unitsys=None)
+                    conv_data     = None
 
                     if src_unitsys is None: src_unitsys = ''
                     if dst_unitsys is None: dst_unitsys = ''
@@ -426,7 +426,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                     if dst_unitsymb is None: dst_unitsymb = ''
                     unitconv_list.append(
                         (unitconv_type, src_unitsys, dst_unitsys, src_unitsymb,
-                         dst_unitsymb, inv, polarity, conv_data_txt))
+                         dst_unitsymb, inv, polarity, conv_data))
+                    conv_data_list.append(conv_data)
+
                 else:
                     for k, v in e._field[f].unitconv.iteritems():
                         inv = 0
@@ -436,19 +438,11 @@ class TinkerMainDatabase(SQLiteDatabase):
                         if isinstance(v, ap.unitconv.UcPoly):
                             unitconv_type = 'poly'
                             polarity = int(v.polarity)
-                            conv_data_txt = ','.join(
-                                [UNITCONV_DATA_FORMAT.format(c)
-                                 for c in v.p.coeffs])
+                            conv_data = tuple(v.p.coeffs)
                         elif isinstance(v, ap.unitconv.UcInterp1):
                             unitconv_type = 'interp1'
                             polarity = int(v.polarity)
-                            conv_data_txt = ','.join(
-                                [UNITCONV_DATA_FORMAT.format(x)
-                                 for x in v.xp])
-                            conv_data_txt += ';'
-                            conv_data_txt += ','.join(
-                                [UNITCONV_DATA_FORMAT.format(x)
-                                 for x in v.fp])
+                            conv_data = tuple([tuple(v.xp), tuple(v.fp)])
                         else:
                             raise ValueError('Unexpected unitconv type: {0:s}'.
                                              format(v.__repr__()))
@@ -460,7 +454,8 @@ class TinkerMainDatabase(SQLiteDatabase):
                         unitconv_list.append(
                             (unitconv_type, src_unitsys, dst_unitsys,
                              src_unitsymb, dst_unitsymb, inv, polarity,
-                             conv_data_txt))
+                             conv_data))
+                        conv_data_list.append(conv_data)
 
                         if hasattr(v, 'invertible') and v.invertible:
                             inv = 1
@@ -470,31 +465,44 @@ class TinkerMainDatabase(SQLiteDatabase):
                             unitconv_list.append(
                                 (unitconv_type, src_unitsys, dst_unitsys,
                                  src_unitsymb, dst_unitsymb, inv, polarity,
-                                 conv_data_txt))
+                                 conv_data))
+
+        conv_data_list_of_tuples = [
+            (blobdumps(data),) for data in set(conv_data_list)]
+        table_name = 'unitconv_blob_table'
+        column_def = [
+            Column('unitconv_blob_id', 'INTEGER', primary_key=True),
+            Column('unitconv_blob', 'BLOB', allow_null=False),
+        ]
+        self.createTable(table_name, column_def)
+        self.insertRows(table_name, conv_data_list_of_tuples)
 
         unitconv_list = list(set(unitconv_list))
         unitconv_list_of_tuples = []
         for unitconv_type, src_unitsys, dst_unitsys, src_unitsymb, \
-            dst_unitsymb, inv, polarity, conv_data_txt in unitconv_list:
-            unitconv_type_id = self.getColumnDataFromTable(
-                'unitconv_type_table', column_name_list=['unitconv_type_id'],
-                condition_str='unitconv_type="{0:s}"'.format(unitconv_type))[0][0]
-            src_unitsys_id = self.getColumnDataFromTable(
-                'unitsys_table', column_name_list=['unitsys_id'],
-                condition_str='unitsys="{0:s}"'.format(src_unitsys))[0][0]
-            dst_unitsys_id = self.getColumnDataFromTable(
-                'unitsys_table', column_name_list=['unitsys_id'],
-                condition_str='unitsys="{0:s}"'.format(dst_unitsys))[0][0]
-            src_unitsymb_id = self.getColumnDataFromTable(
-                'unitsymb_table', column_name_list=['unitsymb_id'],
-                condition_str='unitsymb="{0:s}"'.format(src_unitsymb))[0][0]
-            dst_unitsymb_id = self.getColumnDataFromTable(
-                'unitsymb_table', column_name_list=['unitsymb_id'],
-                condition_str='unitsymb="{0:s}"'.format(dst_unitsymb))[0][0]
+            dst_unitsymb, inv, polarity, conv_data in unitconv_list:
+            unitconv_type_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitconv_type_table', 'unitconv_type_id', 'unitconv_type',
+                unitconv_type, append_new=True)
+            src_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsys_table', 'unitsys_id', 'unitsys', src_unitsys,
+                append_new=True)
+            dst_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsys_table', 'unitsys_id', 'unitsys', dst_unitsys,
+                append_new=True)
+            src_unitsymb_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsymb_table', 'unitsymb_id', 'unitsymb', src_unitsymb,
+                append_new=True)
+            dst_unitsymb_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsymb_table', 'unitsymb_id', 'unitsymb', dst_unitsymb,
+                append_new=True)
+            unitconv_blob_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitconv_blob_table', 'unitconv_blob_id', 'unitconv_blob',
+                blobdumps(conv_data), blob=True, append_new=True)
             unitconv_list_of_tuples.append(
                 (unitconv_type_id, src_unitsys_id, dst_unitsys_id,
                  src_unitsymb_id, dst_unitsymb_id, inv, polarity,
-                 conv_data_txt))
+                 unitconv_blob_id))
 
         table_name = 'unitconv_table'
         column_def = [
@@ -506,7 +514,7 @@ class TinkerMainDatabase(SQLiteDatabase):
             Column('dst_unitsymb_id', 'INTEGER', allow_null=False),
             Column('inv', 'INTEGER', allow_null=False),
             Column('polarity', 'INTEGER', allow_null=False), # +1 or -1
-            Column('conv_data_txt', 'TEXT', allow_null=False),
+            Column('unitconv_blob_id', 'INTEGER', allow_null=False),
             Column('unitconv_ctime', 'REAL', allow_null=False),
             ForeignKeyConstraint(self,
                                  'fk_unitconv_type_id', 'unitconv_type_id',
@@ -523,6 +531,9 @@ class TinkerMainDatabase(SQLiteDatabase):
             ForeignKeyConstraint(self,
                                  'fk_dst_unitsymb_id', 'dst_unitsymb_id',
                                  'unitsymb_table', 'unitsymb_id'),
+            ForeignKeyConstraint(self,
+                                 'fk_unitconv_blob_id', 'unitconv_blob_id',
+                                 'unitconv_blob_table', 'unitconv_blob_id'),
         ]
         self.createTable(table_name, column_def)
         self.insertRows(table_name, list_of_tuples=unitconv_list_of_tuples,
@@ -628,26 +639,14 @@ class TinkerMainDatabase(SQLiteDatabase):
                        for k in keys]
         self.createTable(table_name, column_def)
         nCol = len(self.getColumnNames(table_name))
-        #all_elem_prop_list_of_tuples = [(0,)*(nCol-2)] + \
-            #all_elem_prop_list_of_tuples
         self.insertRows(table_name, list_of_tuples=all_elem_prop_list_of_tuples,
                         bind_replacement_list_of_tuples=
                         [(nCol-1,
                           self.getCurrentEpochTimestampSQLiteFuncStr(
                               data_type='float'))])
 
-        #NoConversion_unitconv_id = self.getColumnDataFromTable(
-            #'unitconv_table', column_name_list=['unitconv_id'],
-            #condition_str='conv_data_txt=""')[0][0]
-        #unitsys_id_None = self.getColumnDataFromTable(
-            #'unitsys_table', column_name_list=['unitsys_id'],
-            #condition_str='unitsys=""')[0][0]
-        #unitsys_id_phy = self.getColumnDataFromTable(
-            #'unitsys_table', column_name_list=['unitsys_id'],
-            #condition_str='unitsys="phy"')[0][0]
-        self.create_temp_unitconv_table_text_view()
-        #all_aphla_ch_list_of_tuples = [(0, 0)] # (0,0) when aphla_channel is
-        ## NOT specified.
+        if '[unitconv_table text view]' not in self.getViewNames():
+            self.create_temp_unitconv_table_text_view()
         all_aphla_ch_list_of_tuples = []
         for machine, lat, e in all_elem_tuples:
             machine_id = self.getColumnDataFromTable(
@@ -871,13 +870,14 @@ class TinkerMainDatabase(SQLiteDatabase):
             LEFT JOIN unitconv_type_table u1 ON uc.unitconv_type_id = u1.unitconv_type_id
             LEFT JOIN unitsymb_table u2 ON uc.src_unitsymb_id = u2.unitsymb_id
             LEFT JOIN unitsymb_table u3 ON uc.dst_unitsymb_id = u3.unitsymb_id
+            LEFT JOIN unitconv_blob_table ub ON uc.unitconv_blob_id = ub.unitconv_blob_id
             ''' ,
             column_name_list=[
                 'uc.unitconv_id',
                 'u1.unitconv_type AS unitconv_type',
                 'uc.src_unitsys_id',
                 'uc.dst_unitsys_id',
-                'uc.conv_data_txt',
+                'ub.unitconv_blob',
                 'u2.unitsymb AS src_unitsymb',
                 'u3.unitsymb AS dst_unitsymb',
                 'uc.inv',
@@ -1009,8 +1009,8 @@ class TinkerMainDatabase(SQLiteDatabase):
                    'ut1.polarity',
                    'ut1.src_unitsymb AS unitsymb',
                    'ut1.dst_unitsymb AS unitsymb_raw',
-                   'ut1.conv_data_txt AS unitconv_data_toraw',
-                   'ut2.conv_data_txt AS unitconv_data_fromraw',
+                   'ut1.unitconv_blob AS unitconv_blob_toraw',
+                   'ut2.unitconv_blob AS unitconv_blob_fromraw',
                    'ut1.inv AS unitconv_inv_toraw',
                    'ut2.inv AS unitconv_inv_fromraw',
                ]
@@ -1146,20 +1146,16 @@ class TinkerMainDatabase(SQLiteDatabase):
         if isinstance(uc, ap.unitconv.UcPoly):
             unitconv_type = 'poly'
             polarity = uc.polarity
-            conv_data_txt = ','.join(
-                [UNITCONV_DATA_FORMAT.format(c) for c in uc.p.coeffs])
+            conv_data = tuple(uc.p.coeffs)
         elif isinstance(uc, ap.unitconv.UcInterp1):
             unitconv_type = 'interp1'
             polarity = uc.polarity
-            conv_data_txt = ','.join(
-                [UNITCONV_DATA_FORMAT.format(x) for x in uc.xp])
-            conv_data_txt += ';'
-            conv_data_txt += ','.join(
-                [UNITCONV_DATA_FORMAT.format(x) for x in uc.fp])
+            conv_data = tuple([tuple(uc.xp), tuple(uc.fp)])
         elif uc == {}:
             unitconv_type = 'NoConversion'
             src_unitsys_id = dst_unitsys_id = unitsys_id_raw
-            conv_data_txt = src_unitsymb = dst_unitsymb = ''
+            src_unitsymb = dst_unitsymb = ''
+            conv_data = None
             inv = 0
             polarity = +1
         elif isinstance(uc, dict):
@@ -1175,8 +1171,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                 'unitsys_table', 'unitsys_id', 'unitsys', uc['dst_unitsys'],
                 append_new=True)
             if unitconv_type == 'poly':
-                conv_data_txt = ','.join(
-                    [UNITCONV_DATA_FORMAT.format(c) for c in uc['conv_data']])
+                conv_data = tuple(uc['conv_data'])
             elif unitconv_type == 'interp1':
                 if not np.all(np.diff(uc['conv_data']['xp']) > 0.0):
                     print 'Error for unit conversion definition: '
@@ -1191,15 +1186,10 @@ class TinkerMainDatabase(SQLiteDatabase):
                     raise ValueError(
                         'y array must be monotonically increasing or decreasing '
                         'for the interpolation to be invertible.')
-                conv_data_txt = ','.join(
-                    [UNITCONV_DATA_FORMAT.format(x)
-                     for x in uc['conv_data']['xp']])
-                conv_data_txt += ';'
-                conv_data_txt += ','.join(
-                    [UNITCONV_DATA_FORMAT.format(x)
-                     for x in uc['conv_data']['fp']])
+                conv_data = tuple([tuple(uc['conv_data']['xp']),
+                                   tuple(uc['conv_data']['fp'])])
             elif unitconv_type == 'NoConversion':
-                conv_data_txt = ''
+                conv_data = None
             else:
                 raise ValueError('Unexpected unitconv type: {0:s}'.format(
                     unitconv_type))
@@ -1221,18 +1211,21 @@ class TinkerMainDatabase(SQLiteDatabase):
                 'unitconv_type="{0:s}" and '
                 'src_unitsys_id="{1:d}" and '
                 'dst_unitsys_id="{2:d}" and '
-                'conv_data_txt="{3:s}" and '
-                'src_unitsymb="{4:s}" and '
-                'dst_unitsymb="{5:s}" and '
-                'inv={6:d} and polarity={7:d}').format(
+                'unitconv_blob=? and '
+                'src_unitsymb="{3:s}" and '
+                'dst_unitsymb="{4:s}" and '
+                'inv={5:d} and polarity={6:d}').format(
                     unitconv_type, src_unitsys_id, dst_unitsys_id,
-                    conv_data_txt, src_unitsymb, dst_unitsymb, inv, polarity
-                )
+                    src_unitsymb, dst_unitsymb, inv, polarity
+                ),
+            binding_tuple=(blobdumps(conv_data),)
         )
 
         if unitconv_id == []:
             if append_new:
-                table_name = 'unitconv_table'
+                unitconv_blob_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                    'unitconv_blob_table', 'unitconv_blob_id', 'unitconv_blob',
+                    blobdumps(conv_data), blob=True, append_new=True)
                 unitconv_type_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
                     'unitconv_type_table', 'unitconv_type_id', 'unitconv_type',
                     unitconv_type, append_new=True)
@@ -1242,11 +1235,12 @@ class TinkerMainDatabase(SQLiteDatabase):
                 dst_unitsymb_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
                     'unitsymb_table', 'unitsymb_id', 'unitsymb', dst_unitsymb,
                     append_new=True)
+                table_name = 'unitconv_table'
                 nCol = len(self.getColumnNames(table_name))
                 list_of_tuples = [
                     (unitconv_type_id, src_unitsys_id, dst_unitsys_id,
                      src_unitsymb_id, dst_unitsymb_id, inv, polarity,
-                     conv_data_txt)]
+                     unitconv_blob_id)]
                 self.insertRows(table_name, list_of_tuples,
                                 bind_replacement_list_of_tuples=[
                                 (nCol-1,
@@ -1268,7 +1262,7 @@ class TinkerMainDatabase(SQLiteDatabase):
     #----------------------------------------------------------------------
     def getMatchingPrimaryKeyIdFrom2ColTable(
         self, table_name, primary_col_name, comparison_col_name,
-        comparison_value, append_new=True):
+        comparison_value, blob=False, append_new=True):
         """
         This function will get a unique ID in `primary_col_name` that matches
         the given `comparison_value` for the column `comparison_col_name` from
@@ -1289,41 +1283,51 @@ class TinkerMainDatabase(SQLiteDatabase):
             raise ValueError('The table must consist of columns with '
                              'primary_col_name and comparison_col_name. ')
 
-        if isinstance(comparison_value, (str, unicode)):
-            str_format = '{0:s}="{1:s}"'
-        elif isinstance(comparison_value, int):
-            str_format = '{0:s}={1:d}'
-        elif isinstance(comparison_value, float):
-            conv_format = '{{0:.{0:d}f}}'.format(LENGTH_METER_PRECISION)
-            comparison_value = conv_format.format(comparison_value)
-            str_format = '{0:s}="{1:s}"'
-        elif isinstance(comparison_value, type(None)):
-            comparison_value = ''
-            str_format = '{0:s}="{1:s}"'
-        elif callable(comparison_value):
-            comparison_value = comparison_value().__repr__()
-            str_format = '{0:s}="{1:s}"'
-        elif isinstance(comparison_value, (list, tuple, set)):
-            comparison_value = comparison_value.__repr__()
-            str_format = '{0:s}="{1:s}"'
-        else:
-            raise ValueError('Unexpected comparison_value type: {0:s}'.
-                             format(type(comparison_value)))
+        if not blob:
+            if isinstance(comparison_value, (str, unicode)):
+                str_format = '{0:s}="{1:s}"'
+            elif isinstance(comparison_value, int):
+                str_format = '{0:s}={1:d}'
+            elif isinstance(comparison_value, float):
+                conv_format = '{{0:.{0:d}f}}'.format(LENGTH_METER_PRECISION)
+                comparison_value = conv_format.format(comparison_value)
+                str_format = '{0:s}="{1:s}"'
+            elif isinstance(comparison_value, type(None)):
+                comparison_value = ''
+                str_format = '{0:s}="{1:s}"'
+            elif callable(comparison_value):
+                comparison_value = comparison_value().__repr__()
+                str_format = '{0:s}="{1:s}"'
+            elif isinstance(comparison_value, (list, tuple, set)):
+                comparison_value = comparison_value.__repr__()
+                str_format = '{0:s}="{1:s}"'
+            else:
+                raise ValueError('Unexpected comparison_value type: {0:s}'.
+                                 format(type(comparison_value)))
 
-        unique_id = self.getColumnDataFromTable(
-            table_name, column_name_list=[primary_col_name],
-            condition_str=str_format.format(comparison_col_name,
-                                            comparison_value))
+            unique_id = self.getColumnDataFromTable(
+                table_name, column_name_list=[primary_col_name],
+                condition_str=str_format.format(comparison_col_name,
+                                                comparison_value))
+        else:
+            unique_id = self.getColumnDataFromTable(
+                table_name, column_name_list=[primary_col_name],
+                condition_str='{0}=?'.format(comparison_col_name),
+                binding_tuple=(comparison_value,))
 
         if unique_id == []:
             if append_new:
                 self.insertRows(table_name, [(comparison_value,)])
-                print 'Added a new row with', comparison_value, \
+                if not blob:
+                    comparison_value_repr = comparison_value
+                else:
+                    comparison_value_repr = blobloads(comparison_value)
+                print 'Added a new row with', comparison_value_repr, \
                       ('for Column "{0:s}" in Table "{1:s}"'.
                        format(comparison_col_name, table_name))
                 return self.getMatchingPrimaryKeyIdFrom2ColTable(
                     table_name, primary_col_name, comparison_col_name,
-                    comparison_value, append_new=False)
+                    comparison_value, blob=blob, append_new=False)
             else:
                 return None
         elif len(unique_id[0]) == 1:
@@ -1741,16 +1745,18 @@ class SnapshotDatabase(SQLiteDatabase):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, filepath=config.SS_DB_FILEPATH):
+    def __init__(self, filepath=config.SS_DB_FILEPATH, suppress_print=False):
         """Constructor"""
 
         SQLiteDatabase.__init__(self, filepath=filepath, create_folder=False)
 
         if self.getTableNames() == []:
-            print 'aptinker Snapshot database file not found.'
-            print 'Creating and initializing the Snapshot database...'
+            if not suppress_print:
+                print 'aptinker Snapshot database file not found.'
+                print 'Creating and initializing the Snapshot database...'
             self._initTables()
-            print 'Done'
+            if not suppress_print:
+                print 'Done'
 
     #----------------------------------------------------------------------
     def _initTables(self):
@@ -1790,11 +1796,13 @@ class SessionDatabase(SnapshotDatabase):
     def __init__(self):
         """Constructor"""
 
-        SnapshotDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH)
+        SQLiteDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH)
 
         if self.getTableNames() == []:
             print 'aptinker Session database file not found.'
             print 'Creating and initializing the Session database...'
+            SnapshotDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH,
+                                      suppress_print=True)
             self._initTables()
             print 'Done'
 
