@@ -41,11 +41,11 @@ DEF_VIS_COL_KEYS = {
         'weight',
         'step_size',
         'caput_enabled',
-        'cur_RB',
-        'cur_RB_ioc_ts',
-        'cur_SP',
-        'cur_SP_ioc_ts',
-        'cur_SentSP'
+        'cur_ConvSP',
+        'cur_ConvRB',
+        'unitsymb',
+        'D_cur_ConvRB_cur_ConvSP',
+        'ini_ConvSP'
     ],
 }
 

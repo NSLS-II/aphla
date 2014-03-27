@@ -679,7 +679,7 @@ class SnapshotDBViewWidget(QWidget):
         self.horizontalLayout.addItem(spacerItem)
 
         self.pushButton_restore_init = QPushButton(self)
-        self.pushButton_restore_init.setText('Restore Ini.SP (Need Test!)')
+        self.pushButton_restore_init.setText('Restore Ini.SP')
         self.horizontalLayout.addWidget(self.pushButton_restore_init)
 
         spacerItem = QSpacerItem(40, 20,
