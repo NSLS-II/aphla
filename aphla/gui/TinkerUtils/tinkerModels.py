@@ -1654,8 +1654,8 @@ class SnapshotAbstractModel(QObject):
             fp = list(conv_data[1])
             # `xp` is assumed to be monotonically increasing. Otherwise,
             # interpolation will make no sense.
-            return lambda x: np.interp(x, xp, fp,
-                                       left=np.nan, right=np.nan)
+            return lambda x: polarity*np.interp(x, xp, fp,
+                                                left=np.nan, right=np.nan)
         elif (conv_type == 'interp1') and (conv_inv == 1):
             xp = list(conv_data[0])
             fp = list(conv_data[1])
@@ -1669,7 +1669,7 @@ class SnapshotAbstractModel(QObject):
             elif np.all(np.diff(fp) < 0.0):
                 xp_inv = np.flipud(fp)
                 fp_inv = np.flipud(xp)
-            return lambda x: np.interp(x, xp_inv, fp_inv,
+            return lambda x: np.interp(polarity*x, xp_inv, fp_inv,
                                        left=np.nan, right=np.nan)
         else:
             raise ValueError('Unexpected unit conversion type: {0}'.format(
