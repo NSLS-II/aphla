@@ -64,9 +64,10 @@ PREF_JSON_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
                               'aptinker_startup_pref.json')
 
 # Check existence of DB files. Initialize DB file, if not.
-_ = TinkerMainDatabase(); _.close()
-_ = SnapshotDatabase()  ; _.close()
-_ = SessionDatabase()   ; _.close()
+# Need `vacuum` option to be False. Otherwise, this section could take long.
+_ = TinkerMainDatabase(); _.close(vacuum=False)
+_ = SnapshotDatabase()  ; _.close(vacuum=False)
+_ = SessionDatabase()   ; _.close(vacuum=False)
 
 #----------------------------------------------------------------------
 def get_preferences(default=False):
