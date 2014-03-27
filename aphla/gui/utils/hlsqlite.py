@@ -144,11 +144,12 @@ class SQLiteDatabase():
         self.cur = self.con.cursor()
 
     #----------------------------------------------------------------------
-    def close(self):
+    def close(self, vacuum=True):
         """"""
 
-        with self.con:
-            self.cur.execute('VACUUM')
+        if vacuum:
+            with self.con:
+                self.cur.execute('VACUUM')
 
         self.con.close()
 

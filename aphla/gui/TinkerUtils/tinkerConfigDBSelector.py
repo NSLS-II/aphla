@@ -765,6 +765,8 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
                 (a.group_name_ids, a.channel_ids, a.weights,
                  a.caput_enabled_rows) = [], [], [], []
 
+            a.weights = [w if w is not None else np.nan for w in a.weights]
+
         self.config_model.table.updateModel()
         self.config_model.table.repaint()
 

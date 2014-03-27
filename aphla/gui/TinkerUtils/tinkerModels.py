@@ -1654,8 +1654,8 @@ class SnapshotAbstractModel(QObject):
             fp = list(conv_data[1])
             # `xp` is assumed to be monotonically increasing. Otherwise,
             # interpolation will make no sense.
-            return lambda x: np.interp(x, xp, fp,
-                                       left=np.nan, right=np.nan)
+            return lambda x: polarity*np.interp(x, xp, fp,
+                                                left=np.nan, right=np.nan)
         elif (conv_type == 'interp1') and (conv_inv == 1):
             xp = list(conv_data[0])
             fp = list(conv_data[1])
@@ -1669,7 +1669,7 @@ class SnapshotAbstractModel(QObject):
             elif np.all(np.diff(fp) < 0.0):
                 xp_inv = np.flipud(fp)
                 fp_inv = np.flipud(xp)
-            return lambda x: np.interp(x, xp_inv, fp_inv,
+            return lambda x: np.interp(polarity*x, xp_inv, fp_inv,
                                        left=np.nan, right=np.nan)
         else:
             raise ValueError('Unexpected unit conversion type: {0}'.format(
@@ -1815,11 +1815,39 @@ class SnapshotAbstractModel(QObject):
             tEnd_model_view - self.caget_sent_ts_second)
 
     #----------------------------------------------------------------------
+    def get_index_map_get2put(self):
+        """"""
+
+        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+        index_map_get2put = [indexes_caput[rows_caput.index(r)]
+                             for r in rows_caget]
+
+        return index_map_get2put, indexes_caget
+
+    #----------------------------------------------------------------------
+    def get_index_map_put2get(self):
+        """"""
+
+        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+
+        index_map_put2get = [indexes_caget[rows_caget.index(r)]
+                             for r in rows_caput]
+
+        return index_map_put2get, indexes_caput
+
+    #----------------------------------------------------------------------
     def update_init_pv_vals(self):
         """"""
 
         self.caget_ini_raws  = np.copy(self.caget_raws)
         self.caget_ini_convs = np.copy(self.caget_raws)
+
+        self.caput_ini_raws = np.copy(self.caput_raws)
+        index_map_get2put, indexes_caget = self.get_index_map_get2put()
+        self.caput_ini_raws[index_map_get2put] = \
+            self.caget_ini_raws[indexes_caget]
 
     #----------------------------------------------------------------------
     def update_ss_ctime(self):
@@ -1834,12 +1862,15 @@ class SnapshotAbstractModel(QObject):
     def update_NaNs_in_caput_raws(self):
         """"""
 
-        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
-        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
-        index_map_get2put = [indexes_caput[rows_caput.index(r)]
-                             for r in rows_caget]
-        index_map_put2get = [indexes_caget[rows_caget.index(r)]
-                             for r in rows_caput]
+        #rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        #rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+        #index_map_get2put = [indexes_caput[rows_caput.index(r)]
+                             #for r in rows_caget]
+        #index_map_put2get = [indexes_caget[rows_caget.index(r)]
+                             #for r in rows_caput]
+
+        index_map_get2put, indexes_caget = self.get_index_map_get2put()
+        index_map_put2get, indexes_caput = self.get_index_map_put2get()
 
         if self.caput_not_yet:
             self.caput_raws[index_map_get2put] = self.caget_raws[indexes_caget]
@@ -1940,7 +1971,7 @@ class SnapshotAbstractModel(QObject):
 
         enabled = self.caput_enabled_rows.astype(bool)
         converted_step_size_array = self.step_size_array[enabled]
-        # Now need to resort `converted_step_size_array`
+        # Now need to re-sort `converted_step_size_array`
         enabled_rows = np.where(enabled)[0]
         rows, indexes = map(list, zip(*self.maps['cur_SentSP']))
         enabled_indexes = [rows.index(r) for r in enabled_rows]
@@ -2086,6 +2117,56 @@ class SnapshotAbstractModel(QObject):
             for name in visible_col_name_list
         ]
 
+    #----------------------------------------------------------------------
+    def restore_IniSP(self, n_steps, wait_time):
+        """"""
+
+        self.update_NaNs_in_caput_raws()
+
+        self.update_caput_enabled_indexes()
+
+        current_caput_raws = self.caput_raws[self.caput_enabled_indexes]
+        current_caput_raws = np.array(
+            [o if not isinstance(o, catools.dbr.ca_array) else o.__array__()
+             for o in current_caput_raws],
+            dtype=object)
+        if current_caput_raws.ndim != 1:
+            nRow, nCol = current_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = current_caput_raws[i,:]
+            current_caput_raws = temp
+
+        ini_caput_raws = self.caput_ini_raws[self.caput_enabled_indexes]
+        ini_caput_raws = np.array(
+            [o if not isinstance(o, catools.dbr.ca_array) else o.__array__()
+             for o in ini_caput_raws],
+            dtype=object)
+        if ini_caput_raws.ndim != 1:
+            nRow, nCol = ini_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = ini_caput_raws[i,:]
+            ini_caput_raws = temp
+
+        raw_step_size_array = (current_caput_raws - ini_caput_raws) / n_steps
+
+        # Disable temporarily auto caget update, if enabled
+        orig_auto_caget_delay_after_caput = self.auto_caget_delay_after_caput
+        self.auto_caget_delay_after_caput = np.nan
+
+        for i in range(n_steps):
+
+            self.caput_raws[self.caput_enabled_indexes] -= raw_step_size_array
+
+            self.invoke_caput()
+
+            Sleep(wait_time)
+            self.update_pv_vals()
+
+        # Restore auto caget update
+        self.auto_caget_delay_after_caput = orig_auto_caget_delay_after_caput
+
 ########################################################################
 class SnapshotTableModel(QAbstractTableModel):
     """"""
@@ -2141,6 +2222,70 @@ class SnapshotTableModel(QAbstractTableModel):
             self.propagate_change_to_abstract)
 
     #----------------------------------------------------------------------
+    def load_column_from_file(self, filepath, selected_col_key):
+        """"""
+
+        msg = QMessageBox()
+
+        try:
+            col_data = np.loadtxt(filepath, comments='#')
+        except:
+            msg.setText('Invalid file. Failed to load column data from the file.')
+            msg.setInformativeText(sys.exc_value.__repr__())
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if col_data.ndim != 1:
+            msg.setText('Text file must contain only one column of data.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        nRows = self.d[selected_col_key].size
+        if col_data.size != nRows:
+            msg.setText('Number of rows ({0:d}) in the file does not match '
+                        'with number of rows ({1:d}) in the table.'.
+                        format(col_data.size, nRows))
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if selected_col_key == 'caput_enabled':
+            not_0_or_1_inds = [i for i, v in enumerate(col_data)
+                               if v not in (0, 1)]
+            if not_0_or_1_inds != []:
+                msg.setText('For "caput_ON" column, column data must be an '
+                            'array of either 0 & 1.')
+                msg.setIcon(QMessageBox.Critical)
+                msg.exec_()
+                return
+
+        try:
+            self.d[selected_col_key] = col_data
+
+            col_ind = self.abstract.all_col_keys.index(selected_col_key)
+
+            topLeftIndex     = self.index(0      , col_ind)
+            bottomRightIndex = self.index(nRows-1, col_ind)
+
+            # Need to uncheck "Synced Group Weight" temporarily
+            orig_synced_group_weight_state = self.abstract.synced_group_weight
+            self.abstract.synced_group_weight = False
+            #
+            self.emit(
+                SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                topLeftIndex, bottomRightIndex)
+            # Restore original state of "Synced Group Weight"
+            self.abstract.synced_group_weight = orig_synced_group_weight_state
+        except:
+            msg.setText('Failed to load column data from the file.')
+            msg.setInformativeText(sys.exc_value.__repr__())
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+    #----------------------------------------------------------------------
     def on_visible_column_change(self):
         """"""
 
@@ -2161,42 +2306,33 @@ class SnapshotTableModel(QAbstractTableModel):
         row_top_index    = topLeftIndex.row()
         row_bottom_index = bottomRightIndex.row()
 
-        if ((col_left_index == col_right_index) and
-            (self.abstract.all_col_keys[col_left_index] == 'caput_enabled')):
+        if (col_left_index == col_right_index):
+            col_ind = col_left_index
+            col_key = self.abstract.all_col_keys[col_ind]
             row_inds = range(row_top_index, row_bottom_index+1)
-        elif ((col_left_index == col_right_index) and
-              (row_top_index == row_bottom_index)):
-            pass
         else:
             return
 
-        index = topLeftIndex
-        row_ind = row_top_index
-        col_ind = col_left_index
-        col_key = self.abstract.all_col_keys[col_ind]
+        if col_key == 'caput_enabled':
 
-        if self.abstract.synced_group_weight:
-            gid = self._config_abstract.group_name_ids[row_ind]
-            synced_row_inds = [
-                r for r, i in enumerate(self._config_abstract.group_name_ids)
-                if (i == gid) and (r != row_ind)]
+            for r in row_inds:
+                self.abstract.caput_enabled_rows[r] = \
+                    self.data(self.index(r, col_ind), role=Qt.UserRole)
+            return
 
-        if col_key == 'weight':
-            new_weight = float(self.data(index))
-            self._config_abstract.weights[row_ind] = new_weight
-            self.abstract.weight_array[row_ind]    = new_weight
+        if len(row_inds) == 1:
+
+            index = topLeftIndex
+            row_ind = row_top_index
+
             if self.abstract.synced_group_weight:
-                for r in synced_row_inds:
-                    self._config_abstract.weights[r] = new_weight
-                    self.abstract.weight_array[r]    = new_weight
+                gid = self._config_abstract.group_name_ids[row_ind]
+                synced_row_inds = [
+                    r for r, i in enumerate(self._config_abstract.group_name_ids)
+                    if (i == gid) and (r != row_ind)]
 
-        elif col_key == 'step_size':
-            if (self.abstract.ref_step_size == 0.0) or \
-               (np.isnan(self.abstract.ref_step_size)):
-                raise ValueError('You should not be able to reach here.')
-            else:
-                new_weight = \
-                    float(self.data(index)) / self.abstract.ref_step_size
+            if col_key == 'weight':
+                new_weight = float(self.data(index))
                 self._config_abstract.weights[row_ind] = new_weight
                 self.abstract.weight_array[row_ind]    = new_weight
                 if self.abstract.synced_group_weight:
@@ -2204,16 +2340,45 @@ class SnapshotTableModel(QAbstractTableModel):
                         self._config_abstract.weights[r] = new_weight
                         self.abstract.weight_array[r]    = new_weight
 
-        elif col_key == 'caput_enabled':
-
-            for r in row_inds:
-                self.abstract.caput_enabled_rows[r] = \
-                    self.data(self.index(r, col_ind), role=Qt.UserRole)
-
-            return
-
+            elif col_key == 'step_size':
+                if (self.abstract.ref_step_size == 0.0) or \
+                   (np.isnan(self.abstract.ref_step_size)):
+                    raise ValueError('You should not be able to reach here.')
+                else:
+                    new_weight = \
+                        float(self.data(index)) / self.abstract.ref_step_size
+                    self._config_abstract.weights[row_ind] = new_weight
+                    self.abstract.weight_array[row_ind]    = new_weight
+                    if self.abstract.synced_group_weight:
+                        for r in synced_row_inds:
+                            self._config_abstract.weights[r] = new_weight
+                            self.abstract.weight_array[r]    = new_weight
+            elif col_key in ('tar_SP', 'tar_ConvSP'):
+                print 'WARNING: tar_SP & tar_ConvSP are not implemented yet in'
+                print 'tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract'
+            else:
+                return
         else:
-            return
+
+            if col_key == 'weight':
+                self._config_abstract.weights = [
+                    float(self.data(self.index(row_ind, col_ind)))
+                    for row_ind in row_inds]
+                self.abstract.weight_array = np.array(
+                    self._config_abstract.weights[:])
+            elif col_key == 'step_size':
+                new_step_size_array = np.array([
+                    float(self.data(self.index(row_ind, col_ind)))
+                    for row_ind in row_inds])
+                new_weight_array = \
+                    new_step_size_array / self.abstract.ref_step_size
+                self._config_abstract.weights = new_weight_array.tolist()
+                self.abstract.weight_array = new_weight_array
+            elif col_key in ('tar_SP', 'tar_ConvSP'):
+                print 'WARNING: tar_SP & tar_ConvSP are not implemented yet in'
+                print 'tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract'
+            else:
+                return
 
         self.d['weight']    = self.abstract.weight_array
         self.d['step_size'] = self.abstract.ref_step_size * self.d['weight']
@@ -2483,3 +2648,25 @@ class SnapshotTableModel(QAbstractTableModel):
                 return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
         else:
             return default_flags # non-editable
+
+    #----------------------------------------------------------------------
+    def restore_IniSP(self, n_steps, wait_time):
+        """
+        """
+
+        msg = QMessageBox()
+        msg.addButton(QMessageBox.Yes)
+        msg.addButton(QMessageBox.No)
+        msg.setDefaultButton(QMessageBox.No)
+        msg.setEscapeButton(QMessageBox.No)
+        msg.setIcon(QMessageBox.Question)
+        msg.setText('Only setpoint PVs whose "caput ON" is checked '
+                    'will be restored:\n\n'
+                    'Would you like to proceed for restoration?')
+        msg.setWindowTitle('Final Confirmation for Restoration')
+        choice = msg.exec_()
+        if choice == QMessageBox.No:
+            return
+
+        self.abstract.restore_IniSP(n_steps, wait_time)
+

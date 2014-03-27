@@ -33,7 +33,8 @@ from PyQt4.QtGui import (
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
     QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont,
-    QIntValidator, QItemSelectionModel, QMenu, QAction, QInputDialog
+    QIntValidator, QItemSelectionModel, QMenu, QAction, QInputDialog,
+    QFileDialog
 )
 
 import aphla as ap
@@ -64,9 +65,10 @@ PREF_JSON_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
                               'aptinker_startup_pref.json')
 
 # Check existence of DB files. Initialize DB file, if not.
-_ = TinkerMainDatabase(); _.close()
-_ = SnapshotDatabase()  ; _.close()
-_ = SessionDatabase()   ; _.close()
+# Need `vacuum` option to be False. Otherwise, this section could take long.
+_ = TinkerMainDatabase(); _.close(vacuum=False)
+_ = SnapshotDatabase()  ; _.close(vacuum=False)
+_ = SessionDatabase()   ; _.close(vacuum=False)
 
 #----------------------------------------------------------------------
 def get_preferences(default=False):
@@ -588,6 +590,8 @@ class TinkerDockWidget(QDockWidget):
     def __init__(self, config_abstract_model, parent):
         """Constructor"""
 
+        self._main_settings = parent._settings
+
         isinstance(config_abstract_model, ConfigAbstractModel)
 
         self.config_abstract = config_abstract_model
@@ -598,6 +602,13 @@ class TinkerDockWidget(QDockWidget):
         self.ss_table = SnapshotTableModel(self.ss_abstract)
 
         self._initUI(parent)
+
+        for col_key, editable in self.ss_abstract.user_editable.iteritems():
+            if editable:
+                self.ssDBView.comboBox_column_name.addItem(
+                    self.ss_abstract.all_col_names[
+                        self.ss_abstract.all_col_keys.index(col_key)])
+        self.ssDBView.comboBox_column_name.setCurrentIndex(0)
 
         self.lineEdit_auto_caget_after_caput_delay.setText(
             str(self.ss_abstract.auto_caget_delay_after_caput))
@@ -697,6 +708,12 @@ class TinkerDockWidget(QDockWidget):
                      self.validate_timeout)
         self.connect(self.lineEdit_caput_timeout, SIGNAL('editingFinished()'),
                      self.validate_timeout)
+
+        self.connect(self.ssDBView.pushButton_load_column_from_file,
+                     SIGNAL('clicked()'), self.load_column_from_file)
+
+        self.connect(self.ssDBView.pushButton_restore_init,
+                     SIGNAL('clicked()'), self.restore_IniSP)
 
         self.connect(self.ss_abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
                      self.update_last_ca_sent_ts)
@@ -890,8 +907,7 @@ class TinkerDockWidget(QDockWidget):
 
         self.tableView.setItemDelegate(SnapshotDBTableViewItemDelegate(
             self.tableView, self.ss_table, parent))
-        self.tableView.setEditTriggers(QAbstractItemView.CurrentChanged |
-                                       QAbstractItemView.SelectedClicked)
+        self.tableView.setEditTriggers(QAbstractItemView.SelectedClicked)
 
         button_size = QSize(32,32)
 
@@ -1342,6 +1358,56 @@ class TinkerDockWidget(QDockWidget):
         width = fm.boundingRect('x'*len(text)).width()
         lineEdit.setMinimumWidth(max([width, 50]))
 
+    #----------------------------------------------------------------------
+    def load_column_from_file(self):
+        """"""
+
+        last_directory_path = self._main_settings.last_directory_path
+        caption = 'Load single-column data from a file'
+        selected_filter_str = ('Single-Column Text files (*.txt)')
+        filter_str = ';;'.join([selected_filter_str, 'All files (*)'])
+        filepath = QFileDialog.getOpenFileName(
+            caption=caption, directory=last_directory_path, filter=filter_str)
+
+        if not filepath:
+            return
+        else:
+            self._main_settings.last_directory_path = osp.dirname(filepath)
+
+        selected_col_key = self.ss_abstract.all_col_keys[
+            self.ss_abstract.all_col_names.index(
+                self.ssDBView.comboBox_column_name.currentText())]
+
+        self.ss_table.load_column_from_file(filepath, selected_col_key)
+
+    #----------------------------------------------------------------------
+    def restore_IniSP(self):
+        """"""
+
+        title = 'Restore Machine to Initial Setpoints'
+        prompt_text = ('Are you sure you want to restore the machine to '
+                       'initial setpoints?\n\n'
+                       'If so, enter the number of steps into which this '
+                       'restoration action should be divided, and hit OK.\n\n'
+                       'Number of Steps:')
+        default_val = 1
+        result = QInputDialog.getInt(self, title, prompt_text, default_val,
+                                     min=1, max=100, step=1)
+
+        if result[1]: # If OK was pressed
+            n_steps = result[0]
+            default_val = 3 # [sec]
+            prompt_text = 'Wait Time at Each Step [seconds]:'
+            result = QInputDialog.getInt(
+                self, title, prompt_text, default_val, min=0, max=3600, step=1)
+            if result[1]: # If OK was pressed
+                wait_time = float(result[0])
+                self.ss_table.restore_IniSP(n_steps, wait_time)
+            else: # If Cancel was pressed
+                return
+        else: # If Cancel was pressed
+            return
+
 ########################################################################
 class TinkerView(QMainWindow, Ui_MainWindow):
     """"""
@@ -1756,6 +1822,7 @@ def main():
 
     if ap.machines._lat is None:
         try:
+            print 'Trying to load machine "{0}"...'.format(config.HLA_MACHINE)
             ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
             success = True
             print 'Successfully loaded {0}'.format(config.HLA_MACHINE)
@@ -1767,6 +1834,7 @@ def main():
             for machine_name in ap.machines.machines():
                 if machine_name != config.HLA_MACHINE:
                     try:
+                        print 'Trying to load machine "{0}"...'.format(machine_name)
                         ap.machines.load(machine_name,
                                          use_cache=use_cached_lattice)
                         print 'Successfully loaded {0}'.format(machine_name)
