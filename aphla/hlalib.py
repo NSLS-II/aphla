@@ -559,6 +559,21 @@ def getTwiss(names, columns, **kwargs):
             logger.error("ERROR: no twiss data loaded")
             return None
         return machines._lat._twiss.get(names, col=col)
+    elif src == "VA":
+        vas = getElements("VA")
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+        if isinstance(names, (str, unicode)):
+            namelst = [i for i,s in enumerate(twiss.names) if fnmatch(s, names)]
+        elif isinstance(names, (list, tuple)):
+            namelst = [i for i,s in enumerate(twiss.names) if s in names]
+        else:
+            raise ValueError("names must be string or list of element names")
+        dat = np.zeros((len(namelst), len(columns)), 'd')
+        for i,c in enumerate(columns):
+            d = twiss.get(c, unitsys=None)
+            dat[:,i] = [d[j] for j in namelst]
+        return dat
     else:
         return None
 
@@ -830,7 +845,6 @@ def _getFastOrbit(**kwargs):
     field = kwargs.get('field', 'X')
     pref = 'LTB:BI{BPM:1}' + 'FA-'
     return caget(pref + field)
-    
 
 
 def _reset_bpm_offset():
@@ -841,6 +855,7 @@ def _reset_bpm_offset():
         pvs.extend(b.pv(tags=['aphla.offset', 'aphla.eput']))
     if pvs: caput(pvs, 0.0)
     logger.info("Reset the bpm offset")
+
 
 def _reset_quad():
     #raise RuntimeError("does not work for SR above V1SR")
@@ -1078,7 +1093,6 @@ def calcTuneRm(quad, **kwargs):
     calculate tune respose matrix
 
     quad - quadrupoles. same input as getElements.
-    unitsys - unit system for generated Rm. 'phy' or None.
     setpoint - default None, or a list of ("b1", raw_value, dval).
 
     In physics unit, dnu/dkl = beta/4pi. When asking for raw unit (in A), we
@@ -1090,22 +1104,28 @@ def calcTuneRm(quad, **kwargs):
     sp = kwargs.get("setpoint", None)
 
     qls = getElements(quad)
-    bta = machines._lat._twiss.get([q.name for q in qls], ["betax", "betay"])
-    m = np.zeros((len(qls), 2), 'd')
+    bta = np.zeros((len(qls), 2), 'd')
+    m = np.zeros((2, len(qls)), 'd')
     for i,q in enumerate(qls):
+        # use beta at the center of quad
+        bta[i,:] = getTwissAt((q.sb + q.se)/2.0, ["betax", "betay"])
         # need to check if focusing or defocusing
         try:
             k1l = q.get("b1", handle="golden", unitsys="phy")
         except:
             raise RuntimeError(
                 "can not determin defocusing/focusing for {}".format(q.name))
-        fac = 1.0 if k1l > 0.0 else -1.0
-        if unitsys is None:
+        if sp is None:
+            fld = "b1"
+            I0 = q.convertUnit(fld, k1l, "phy", None)
+            dk1l = 0.01 * k1l
+            dI = q.convertUnit(fld, k1l+dk1l, "phy", None) - I0
+        else:
             fld, I0, dI = sp[i]
-            k1l0 = q.convertUnit("b1", I0, None, "phy")
-            k1l1 = q.convertUnit("b1", I0+dI, None, "phy")
-            fac = fac * (k1l1 - k1l0)/dI
-        m[i,0] =  bta[i,0]/4.0/np.pi * fac
-        m[i,1] = -bta[i,1]/4.0/np.pi * fac
-
+            dk1l = q.convertUnit("b1", I0+dI, None, "phy") - \
+                q.convertUnit("b1", I0, None, "phy")
+        fac = dk1l/dI
+        m[0,i] =  bta[i,0]/4.0/np.pi * fac
+        m[1,i] = -bta[i,1]/4.0/np.pi * fac
+    return m
 

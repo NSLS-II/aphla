@@ -80,6 +80,44 @@ PEN_STYLES = [("Solid Line", Qt.SolidLine),
               ("Dash-Dotted Line", Qt.DashDotLine),
               ("Dash-Dot-Dotted Line", Qt.DashDotDotLine)]
 
+_L2 = [[[0.0, 1.0], [0.5, 0.5], (0, 2, 1), '2y=1'],
+       [[0.5, 0.5], [0.0, 1.0], (2, 0, 1), '2x=1'],
+       [[1.0, 0.0], [0.0, 1.0], (1, 1, 1), 'x+y=1'],
+       [[0.0, 1.0], [0.0, 1.0], (1, -1, 0), 'x-y=0']]
+_L3 = [[[0.0, 1.0], [0.3333333333333333, 0.3333333333333333], (0, 3, 1), '3y=1'],
+       [[0.0, 1.0], [0.6666666666666666, 0.6666666666666666], (0, 3, 2), '3y=2'],
+       [[0.3333333333333333, 0.3333333333333333], [0.0, 1.0], (3, 0, 1), '3x=1'],
+       [[0.6666666666666666, 0.6666666666666666], [0.0, 1.0], (3, 0, 2), '3x=2'],
+       [[1.0, 0.0], [0.0, 0.5], (1, 2, 1), 'x+2y=1'],
+       [[0.0, 1.0], [1.0, 0.5], (1, 2, 2), 'x+2y=2'],
+       [[1.0, 0.0], [1.0, 0.5], (1, -2, -1), 'x-2y=-1'],
+       [[0.0, 1.0], [0.0, 0.5], (1, -2, 0), 'x-2y=0'],
+       [[0.5, 0.0], [0.0, 1.0], (2, 1, 1), '2x+y=1'],
+       [[1.0, 0.5], [0.0, 1.0], (2, 1, 2), '2x+y=2'],
+       [[0.0, 0.5], [0.0, 1.0], (2, -1, 0), '2x-y=0'],
+       [[0.5, 1.0], [0.0, 1.0], (2, -1, 1), '2x-y=1']]
+_L4 = [[[0.0, 1.0], [0.25, 0.25], (0, 4, 1), '4y=1'],
+       [[0.0, 1.0], [0.75, 0.75], (0, 4, 3), '4y=3'],
+       [[0.25, 0.25], [0.0, 1.0], (4, 0, 1), '4x=1'],
+       [[0.75, 0.75], [0.0, 1.0], (4, 0, 3), '4x=3'],
+       [[1.0, 0.0], [0.0, 0.3333333333333333], (1, 3, 1), 'x+3y=1'],
+       [[0.0, 1.0], [0.6666666666666666, 0.3333333333333333], (1, 3, 2), 'x+3y=2'],
+       [[0.0, 1.0], [1.0, 0.6666666666666666], (1, 3, 3), 'x+3y=3'],
+       [[1.0, 0.0], [1.0, 0.6666666666666666], (1, -3, -2), 'x-3y=-2'],
+       [[0.0, 1.0], [0.3333333333333333, 0.6666666666666666], (1, -3, -1), 'x-3y=-1'],
+       [[0.0, 1.0], [0.0, 0.3333333333333333], (1, -3, 0), 'x-3y=0'],
+       [[0.5, 0.0], [0.0, 0.5], (2, 2, 1), '2x+2y=1'],
+       [[0.5, 1.0], [1.0, 0.5], (2, 2, 3), '2x+2y=3'],
+       [[0.5, 0.0], [1.0, 0.5], (2, -2, -1), '2x-2y=-1'],
+       [[0.5, 1.0], [0.0, 0.5], (2, -2, 1), '2x-2y=1'],
+       [[0.3333333333333333, 0.0], [0.0, 1.0], (3, 1, 1), '3x+y=1'],
+       [[0.6666666666666666, 0.3333333333333333], [0.0, 1.0], (3, 1, 2), '3x+y=2'],
+       [[1.0, 0.6666666666666666], [0.0, 1.0], (3, 1, 3), '3x+y=3'],
+       [[0.0, 0.3333333333333333], [0.0, 1.0], (3, -1, 0), '3x-y=0'],
+       [[0.3333333333333333, 0.6666666666666666], [0.0, 1.0], (3, -1, 1), '3x-y=1'], 
+       [[0.6666666666666666, 1.0], [0.0, 1.0], (3, -1, 2), '3x-y=2']]
+
+
 class ApCaPlotScaleDlg(QtGui.QDialog):
     def __init__(self, parent = None):
         super(QtGui.QDialog, self).__init__(parent)
@@ -740,6 +778,7 @@ class ApCaPlot(Qwt.QwtPlot):
                 self._set_line(c, color=color)
         self.replot()
 
+
 class ApCaTimeSeriesPlot(ApCaPlot):
     def __init__(self, pvs, parent = None, **kw):
         super(ApCaTimeSeriesPlot, self).__init__(parent)
@@ -844,15 +883,15 @@ class ApCaWaveformPlot(ApCaPlot):
         #self.curve2 = Qwt.QwtPlotCurve()
 
         #self.setMinimumSize(300, 100)
-
+        print "PV:", pvs
         #self.connect(self, SIGNAL("doubleClicked
         self.count = 0
         self._cadata = CaDataMonitor()
         for pv in pvs:
             self._cadata.addHook(pv, self._ca_update)
         self._cadata.addPv(pvs)
-        ymin, ymax = self._cadata.getRange()
-        self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+        #ymin, ymax = self._cadata.getRange()
+        #self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
         self.zoomer1.setZoomBase(True)
         self._cadata.start()
 
@@ -861,14 +900,16 @@ class ApCaWaveformPlot(ApCaPlot):
         if not self.live: return
 
         self.count += 1
-        c = self.curves[idx]
+        for ipv,pv in enumerate(self._pvs):
+            if pv != val.name: continue
+            c = self.curves[ipv]
 
-        if self._ref[idx] is not None and self.drift:
-            vref = self._ref[idx]
-            y = [val[i] - yi for i,yi in enumerate(vref)]
-            c.setData(range(len(val)), y)
-        else:
-            c.setData(range(len(val)), val)
+            if self._ref[ipv] is not None and self.drift:
+                vref = self._ref[ipv]
+                y = [val[i] - yi for i,yi in enumerate(vref)]
+                c.setData(range(len(val)), y)
+            else:
+                c.setData(range(len(val)), val)
         self.replot()
         if self.count == 1: self.zoomer1.setZoomBase(False)
 
@@ -1153,6 +1194,246 @@ class ApCaArrayPlot(ApCaPlot):
         e.accept()
 
 
+class ApCaTunesPlot(ApCaPlot):
+    def __init__(self, pvs, **kwargs):
+        """initialization
+        
+        Parameters
+        -----------
+        pvs: two tunes PV
+        parent : None
+        labels : None
+        """
+        parent = kwargs.pop("parent", None)
+        super(ApCaTunesPlot, self).__init__(parent)
+        self.labels = kwargs.get("labels", None)
+
+        self.setCanvasBackground(Qt.white)
+        #self.setAxisAutoScale(Qwt.QwtPlot.yLeft, False)
+        self.setAutoReplot(False)
+
+        self.plotLayout().setAlignCanvasToScales(True)
+        self.setMinimumSize(600, 400)
+
+        _COLORS = [Qt.blue, Qt.green, Qt.cyan, Qt.magenta, Qt.yellow]
+        _SYMBOLS = [Qwt.QwtSymbol.Ellipse,
+                    Qwt.QwtSymbol.Rect,
+                    Qwt.QwtSymbol.Diamond,
+                    Qwt.QwtSymbol.Triangle,
+                    Qwt.QwtSymbol.Star1,
+                    Qwt.QwtSymbol.Star2,
+                    Qwt.QwtSymbol.Hexagon]
+
+        self._pvs = reduce(lambda x,y: x+y, pvs)
+        self._vals, self._ref = [], []
+        self._mks = []
+        for i,pvl in enumerate(pvs):
+            if len(pvl) != 2:
+                raise ValueError("needs exact 2 PVs for each point")
+            color = _COLORS[i%len(_COLORS)]
+            #c = Qwt.QwtPlotCurve()
+            c = Qwt.QwtPlotCurve()
+            c.setPen(QPen(color))
+
+            if self.labels is None or not self.labels[i]:
+                c.setTitle("[%s,%s]" % (pvl[0], pvl[1]))
+            else:
+                c.setTitle(self.labels[i])
+            c.setStyle(Qwt.QwtPlotCurve.NoCurve)
+            symb = _SYMBOLS[i % len(_SYMBOLS)]
+            c.setSymbol(Qwt.QwtSymbol(symb,
+                                      QBrush(color),
+                                      QPen(color, 1),
+                                      QSize(10, 10)))
+            c.attach(self)
+
+            mk1 = Qwt.QwtPlotMarker()
+            mk1.setSymbol(Qwt.QwtSymbol(
+                    Qwt.QwtSymbol.Star1,
+                    QBrush(Qt.red),
+                    QPen(Qt.red, 1),
+                    QSize(16, 16)))
+
+            #.setValue(r[1], 0)
+            mk1.attach(self)
+            self._mks.append(mk1)
+            #    mk1.setLabel(Qwt.QwtText(r[0]))
+            #    mk1.setLabelAlignment(Qt.AlignTop)
+            #    #mk1.setLabelAlignment(Qt.AlignBottom)
+            #    mk1.setAxis(Qwt.QwtPlot.xBottom, Qwt.QwtPlot.yRight)
+
+            self.curves.append(c)
+            self._vals.extend([deque([], 20), deque([], 20)])
+            self._ref.extend([0.0, 0.0])
+
+        for c in self.curves:
+            self.showCurve(c, True)
+
+        #self.showCurve(self.curve2, True)
+        self._rlines = []
+        for L,styl in [(_L2, Qt.SolidLine),
+                       (_L3, Qt.DashLine),
+                       (_L4, Qt.DotLine)]:
+            for x,y,coef,lbl in L:
+                c = Qwt.QwtPlotCurve()
+                pen = QPen(Qt.black)
+                pen.setStyle(styl)
+                c.setPen(pen)
+                c.setData(x, y)
+                c.attach(self)
+                c.setTitle(lbl)
+                #self.showCurve(c, True)
+                c.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
+                self._rlines.append(c)
+
+        self.zoomer1.setZoomBase(True)
+        self._timerId = self.startTimer(2000)
+
+    def timerEvent(self, e):
+        if self._hold: return
+        if not self.live: return
+        self.updateData()
+        for i in range(0, len(self._vals), 2):
+            c = self.curves[i // 2]
+            if self.drift:
+                xl = [x - self._ref[i] for x in self._vals[i]]
+                yl = [y - self._ref[i+1] for y in self._vals[i+1]]
+            else:
+                xl = list(self._vals[i])
+                yl = list(self._vals[i+1])
+            c.setData(xl, yl)
+            self._mks[i//2].detach()
+            self._mks[i//2].setValue(xl[-1], yl[-1])
+            #self._mks[i//2].setLabel(Qwt.QwtText("A"))
+            self._mks[i//2].attach(self)
+        if self.drift:
+            for c in self._rlines:
+                c.setVisible(False)
+        else:
+            for c in self._rlines:
+                c.setVisible(True)
+
+        self.replot()
+        #QtGui.qApp.processEvents()
+
+    def updateData(self):
+        #self._t.append(float(datetime.now().strftime("%s")))
+        d = caget(self._pvs, timeout=0.8)
+        if all([len(self._vals[i]) and self._vals[i][-1] == d[i] 
+                for i in range(len(d))]):
+            return
+
+        for i,v in enumerate(d):
+            self._vals[i].append(v - np.floor(v) if v.ok else np.nan)
+
+    def showCurve(self, c, on):
+        c.setVisible(on)
+        w = self.legend().find(c)
+        if w and w.inherits("QwtLegendItem"):
+            w.setChecked(on)
+
+        try:
+            i = self.curves.index(c)
+            self._mks[i].setVisible(on)
+        except:
+            pass
+        #if any([c.isVisible() for c in self.curves])
+        self.replot()
+
+    def saveAsReference(self):
+        self._hold = True
+        for i,d in enumerate(self._vals):
+            self._ref[i] = d[-1]
+        self._hold = False
+
+    def elementDoubleClicked(self, elem):
+        #print "element selected:", elem
+        self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
+    
+    def alignScales(self):
+        # raise RuntimeError("ERROR")
+        return
+        self.canvas().setFrameStyle(QFrame.Box | QFrame.Plain)
+        self.canvas().setLineWidth(1)
+        for i in range(Qwt.QwtPlot.axisCnt):
+            scaleWidget = self.axisWidget(i)
+            if scaleWidget:
+                scaleWidget.setMargin(0)
+            scaleDraw = self.axisScaleDraw(i)
+            if scaleDraw:
+                scaleDraw.enableComponent(
+                    Qwt.QwtAbstractScaleDraw.Backbone, False)
+
+    def setErrorBar(self, on):
+        self.curves1[0].errorOnTop = on
+
+    def moveCurves(self, ax, fraction = 0.80):
+        scalediv = self.axisScaleDiv(ax)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        sl1, sr1 = sl + (sr-sl)*fraction, sr + (sr-sl)*fraction
+        self.setAxisScale(ax, sl1, sr1)
+
+    def scaleXBottom(self, factor = None):
+        scalediv = self.axisScaleDiv(Qwt.QwtPlot.xBottom)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dx = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.xBottom, sl - dx, sr + dx)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            xmin = bound.left()
+            xmax = bound.right()
+            if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            #if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        #self.replot()
+        
+    def scaleYLeft(self, factor = None):
+        scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
+        sr, sl = scalediv.upperBound(), scalediv.lowerBound()
+        if factor is not None:
+            dy = (sr - sl)*(factor-1.0)/2
+            #print "bound:",scalediv.lowerBound(), scalediv.upperBound()
+            self.setAxisScale(Qwt.QwtPlot.yLeft, sl - dy, sr + dy)
+        else:
+            bound = self.curvesBound()
+            w = bound.width()
+            h = bound.height()
+        
+            #bound.adjust(0.0, -h*.1, 0.0, h*.1)
+            ymin = bound.top() - h*.05
+            ymax = bound.bottom() + h*.03
+            xmin = bound.left()
+            xmax = bound.right()
+            #if w > 0.0: self.setAxisScale(Qwt.QwtPlot.xBottom, xmin, xmax)
+            if h > 0.0: self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
+
+        # leave replot to the caller
+        #self.replot()
+
+    def setColor(self, c):
+        symb = self.curve1.symbol()
+        pen = symb.pen()
+        pen.setColor(c)
+        symb.setPen(pen)
+        br = symb.brush()
+        br.setColor(c)
+        symb.setBrush(br)
+        self.curves1[0].setSymbol(symb)
+
+        pen = self.curves1[0].pen()
+        pen.setColor(c)
+        self.curves1[0].setPen(pen)
+
+    def closeEvent(self, e):
+        e.accept()
+
+
 class ApMdiSubPlot(QMdiSubWindow):
     def __init__(self, parent = None, **kw):
         super(ApMdiSubPlot, self).__init__(parent)
@@ -1160,8 +1441,20 @@ class ApMdiSubPlot(QMdiSubWindow):
         self.err_only  = False
         self.live = True
         pvs = kw.pop("pvs", [])
-        #self.aplot = ApCaWaveformPlot(pvs)
-        self.aplot = ApCaArrayPlot(pvs, **kw)
+        dtype = kw.get("dtype", "Array")
+        magprof = kw.get("magprof", None)
+        if dtype == "Array":
+            self.aplot = ApCaArrayPlot(pvs, **kw)
+            if magprof:
+                self.aplot.setMagnetProfile(magprof)
+        elif dtype == "Waveform":
+            pvs = reduce(lambda x,y: x+y, pvs)
+            self.aplot = ApCaWaveformPlot(pvs, **kw)
+        elif dtype == "Time Series":
+            self.aplot = ApCaTimeSeriesPlot(pvs, **kw)
+        elif dtype == "Tunes":
+            self.aplot = ApCaTunesPlot(pvs, **kw)
+        #print "dtype=", dtype
         #self.connect(self.aplot, SIGNAL("elementSelected(PyQt_PyObject)"),
         #             self.elementSelected)
         self.setWidget(self.aplot)
@@ -1468,7 +1761,11 @@ if __name__ == "__main__":
     #                    'V:2-SR:C29-BI:G4{PM1:3606}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH2:3630}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH1:3645}SA:X',)])
-    p = ApCaArrayPlot(pvs)
+    #p = ApCaArrayPlot(pvs)
+    #pvs = [ ('SR:C23-BI{BPM:9}Pos:X-I', 'SR:C23-BI{BPM:9}Pos:Y-I') ]
+    pvs = [('SR:C16-BI{TuneNA}Freq:Vx-I', 'SR:C16-BI{TuneNA}Freq:Vy-I'),
+           ('SR-BI{TUNE:LIVE4RB}X-I', 'SR-BI{TUNE:LIVE4RB}Y-I')]
+    p = ApCaTunesPlot(pvs, labels=["Tunes", "VA Tunes RB"])
     import time
     #pvs = ['V:2-SR:C29-BI:G2{PL1:3551}SA:X',
     #       'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
