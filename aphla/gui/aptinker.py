@@ -904,8 +904,7 @@ class TinkerDockWidget(QDockWidget):
 
         self.tableView.setItemDelegate(SnapshotDBTableViewItemDelegate(
             self.tableView, self.ss_table, parent))
-        self.tableView.setEditTriggers(QAbstractItemView.CurrentChanged |
-                                       QAbstractItemView.SelectedClicked)
+        self.tableView.setEditTriggers(QAbstractItemView.SelectedClicked)
 
         button_size = QSize(32,32)
 
@@ -1792,6 +1791,7 @@ def main():
 
     if ap.machines._lat is None:
         try:
+            print 'Trying to load machine "{0}"...'.format(config.HLA_MACHINE)
             ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
             success = True
             print 'Successfully loaded {0}'.format(config.HLA_MACHINE)
@@ -1803,6 +1803,7 @@ def main():
             for machine_name in ap.machines.machines():
                 if machine_name != config.HLA_MACHINE:
                     try:
+                        print 'Trying to load machine "{0}"...'.format(machine_name)
                         ap.machines.load(machine_name,
                                          use_cache=use_cached_lattice)
                         print 'Successfully loaded {0}'.format(machine_name)
