@@ -33,7 +33,8 @@ from PyQt4.QtGui import (
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget,
     QAbstractItemView, QToolButton, QStyle, QMessageBox, QIcon, QDialog, QFont,
-    QIntValidator, QItemSelectionModel, QMenu, QAction, QInputDialog
+    QIntValidator, QItemSelectionModel, QMenu, QAction, QInputDialog,
+    QFileDialog
 )
 
 import aphla as ap
@@ -589,6 +590,8 @@ class TinkerDockWidget(QDockWidget):
     def __init__(self, config_abstract_model, parent):
         """Constructor"""
 
+        self._main_settings = parent._settings
+
         isinstance(config_abstract_model, ConfigAbstractModel)
 
         self.config_abstract = config_abstract_model
@@ -599,6 +602,13 @@ class TinkerDockWidget(QDockWidget):
         self.ss_table = SnapshotTableModel(self.ss_abstract)
 
         self._initUI(parent)
+
+        for col_key, editable in self.ss_abstract.user_editable.iteritems():
+            if editable:
+                self.ssDBView.comboBox_column_name.addItem(
+                    self.ss_abstract.all_col_names[
+                        self.ss_abstract.all_col_keys.index(col_key)])
+        self.ssDBView.comboBox_column_name.setCurrentIndex(0)
 
         self.lineEdit_auto_caget_after_caput_delay.setText(
             str(self.ss_abstract.auto_caget_delay_after_caput))
@@ -698,6 +708,9 @@ class TinkerDockWidget(QDockWidget):
                      self.validate_timeout)
         self.connect(self.lineEdit_caput_timeout, SIGNAL('editingFinished()'),
                      self.validate_timeout)
+
+        self.connect(self.ssDBView.pushButton_load_column_from_file,
+                     SIGNAL('clicked()'), self.load_column_from_file)
 
         self.connect(self.ss_abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
                      self.update_last_ca_sent_ts)
@@ -1342,6 +1355,28 @@ class TinkerDockWidget(QDockWidget):
         fm = lineEdit.fontMetrics()
         width = fm.boundingRect('x'*len(text)).width()
         lineEdit.setMinimumWidth(max([width, 50]))
+
+    #----------------------------------------------------------------------
+    def load_column_from_file(self):
+        """"""
+
+        last_directory_path = self._main_settings.last_directory_path
+        caption = 'Load single-column data from a file'
+        selected_filter_str = ('Single-Column Text files (*.txt)')
+        filter_str = ';;'.join([selected_filter_str, 'All files (*)'])
+        filepath = QFileDialog.getOpenFileName(
+            caption=caption, directory=last_directory_path, filter=filter_str)
+
+        if not filepath:
+            return
+        else:
+            self._main_settings.last_directory_path = osp.dirname(filepath)
+
+        selected_col_key = self.ss_abstract.all_col_keys[
+            self.ss_abstract.all_col_names.index(
+                self.ssDBView.comboBox_column_name.currentText())]
+
+        self.ss_table.load_column_from_file(filepath, selected_col_key)
 
 ########################################################################
 class TinkerView(QMainWindow, Ui_MainWindow):

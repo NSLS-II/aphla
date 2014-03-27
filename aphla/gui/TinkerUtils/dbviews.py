@@ -657,6 +657,18 @@ class SnapshotDBViewWidget(QWidget):
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.pushButton_load_column_from_file = QPushButton(self)
+        self.pushButton_load_column_from_file.setText('Load from File')
+        self.horizontalLayout.addWidget(self.pushButton_load_column_from_file)
+
+        label = QLabel(self)
+        label.setText('into')
+        self.horizontalLayout.addWidget(label)
+
+        self.comboBox_column_name = QComboBox(self)
+        self.horizontalLayout.addWidget(self.comboBox_column_name)
+
         spacerItem = QSpacerItem(40, 20,
                                  QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)

@@ -2141,6 +2141,70 @@ class SnapshotTableModel(QAbstractTableModel):
             self.propagate_change_to_abstract)
 
     #----------------------------------------------------------------------
+    def load_column_from_file(self, filepath, selected_col_key):
+        """"""
+
+        msg = QMessageBox()
+
+        try:
+            col_data = np.loadtxt(filepath, comments='#')
+        except:
+            msg.setText('Invalid file. Failed to load column data from the file.')
+            msg.setInformativeText(sys.exc_value.__repr__())
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if col_data.ndim != 1:
+            msg.setText('Text file must contain only one column of data.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        nRows = self.d[selected_col_key].size
+        if col_data.size != nRows:
+            msg.setText('Number of rows ({0:d}) in the file does not match '
+                        'with number of rows ({1:d}) in the table.'.
+                        format(col_data.size, nRows))
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if selected_col_key == 'caput_enabled':
+            not_0_or_1_inds = [i for i, v in enumerate(col_data)
+                               if v not in (0, 1)]
+            if not_0_or_1_inds != []:
+                msg.setText('For "caput_ON" column, column data must be an '
+                            'array of either 0 & 1.')
+                msg.setIcon(QMessageBox.Critical)
+                msg.exec_()
+                return
+
+        try:
+            self.d[selected_col_key] = col_data
+
+            col_ind = self.abstract.all_col_keys.index(selected_col_key)
+
+            topLeftIndex     = self.index(0      , col_ind)
+            bottomRightIndex = self.index(nRows-1, col_ind)
+
+            # Need to uncheck "Synced Group Weight" temporarily
+            orig_synced_group_weight_state = self.abstract.synced_group_weight
+            self.abstract.synced_group_weight = False
+            #
+            self.emit(
+                SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                topLeftIndex, bottomRightIndex)
+            # Restore original state of "Synced Group Weight"
+            self.abstract.synced_group_weight = orig_synced_group_weight_state
+        except:
+            msg.setText('Failed to load column data from the file.')
+            msg.setInformativeText(sys.exc_value.__repr__())
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+    #----------------------------------------------------------------------
     def on_visible_column_change(self):
         """"""
 
@@ -2161,42 +2225,33 @@ class SnapshotTableModel(QAbstractTableModel):
         row_top_index    = topLeftIndex.row()
         row_bottom_index = bottomRightIndex.row()
 
-        if ((col_left_index == col_right_index) and
-            (self.abstract.all_col_keys[col_left_index] == 'caput_enabled')):
+        if (col_left_index == col_right_index):
+            col_ind = col_left_index
+            col_key = self.abstract.all_col_keys[col_ind]
             row_inds = range(row_top_index, row_bottom_index+1)
-        elif ((col_left_index == col_right_index) and
-              (row_top_index == row_bottom_index)):
-            pass
         else:
             return
 
-        index = topLeftIndex
-        row_ind = row_top_index
-        col_ind = col_left_index
-        col_key = self.abstract.all_col_keys[col_ind]
+        if col_key == 'caput_enabled':
 
-        if self.abstract.synced_group_weight:
-            gid = self._config_abstract.group_name_ids[row_ind]
-            synced_row_inds = [
-                r for r, i in enumerate(self._config_abstract.group_name_ids)
-                if (i == gid) and (r != row_ind)]
+            for r in row_inds:
+                self.abstract.caput_enabled_rows[r] = \
+                    self.data(self.index(r, col_ind), role=Qt.UserRole)
+            return
 
-        if col_key == 'weight':
-            new_weight = float(self.data(index))
-            self._config_abstract.weights[row_ind] = new_weight
-            self.abstract.weight_array[row_ind]    = new_weight
+        if len(row_inds) == 1:
+
+            index = topLeftIndex
+            row_ind = row_top_index
+
             if self.abstract.synced_group_weight:
-                for r in synced_row_inds:
-                    self._config_abstract.weights[r] = new_weight
-                    self.abstract.weight_array[r]    = new_weight
+                gid = self._config_abstract.group_name_ids[row_ind]
+                synced_row_inds = [
+                    r for r, i in enumerate(self._config_abstract.group_name_ids)
+                    if (i == gid) and (r != row_ind)]
 
-        elif col_key == 'step_size':
-            if (self.abstract.ref_step_size == 0.0) or \
-               (np.isnan(self.abstract.ref_step_size)):
-                raise ValueError('You should not be able to reach here.')
-            else:
-                new_weight = \
-                    float(self.data(index)) / self.abstract.ref_step_size
+            if col_key == 'weight':
+                new_weight = float(self.data(index))
                 self._config_abstract.weights[row_ind] = new_weight
                 self.abstract.weight_array[row_ind]    = new_weight
                 if self.abstract.synced_group_weight:
@@ -2204,16 +2259,45 @@ class SnapshotTableModel(QAbstractTableModel):
                         self._config_abstract.weights[r] = new_weight
                         self.abstract.weight_array[r]    = new_weight
 
-        elif col_key == 'caput_enabled':
-
-            for r in row_inds:
-                self.abstract.caput_enabled_rows[r] = \
-                    self.data(self.index(r, col_ind), role=Qt.UserRole)
-
-            return
-
+            elif col_key == 'step_size':
+                if (self.abstract.ref_step_size == 0.0) or \
+                   (np.isnan(self.abstract.ref_step_size)):
+                    raise ValueError('You should not be able to reach here.')
+                else:
+                    new_weight = \
+                        float(self.data(index)) / self.abstract.ref_step_size
+                    self._config_abstract.weights[row_ind] = new_weight
+                    self.abstract.weight_array[row_ind]    = new_weight
+                    if self.abstract.synced_group_weight:
+                        for r in synced_row_inds:
+                            self._config_abstract.weights[r] = new_weight
+                            self.abstract.weight_array[r]    = new_weight
+            elif col_key in ('tar_SP', 'tar_ConvSP'):
+                print 'WARNING: tar_SP & tar_ConvSP are not implemented yet in'
+                print 'tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract'
+            else:
+                return
         else:
-            return
+
+            if col_key == 'weight':
+                self._config_abstract.weights = [
+                    float(self.data(self.index(row_ind, col_ind)))
+                    for row_ind in row_inds]
+                self.abstract.weight_array = np.array(
+                    self._config_abstract.weights[:])
+            elif col_key == 'step_size':
+                new_step_size_array = np.array([
+                    float(self.data(self.index(row_ind, col_ind)))
+                    for row_ind in row_inds])
+                new_weight_array = \
+                    new_step_size_array / self.abstract.ref_step_size
+                self._config_abstract.weights = new_weight_array.tolist()
+                self.abstract.weight_array = new_weight_array
+            elif col_key in ('tar_SP', 'tar_ConvSP'):
+                print 'WARNING: tar_SP & tar_ConvSP are not implemented yet in'
+                print 'tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract'
+            else:
+                return
 
         self.d['weight']    = self.abstract.weight_array
         self.d['step_size'] = self.abstract.ref_step_size * self.d['weight']
