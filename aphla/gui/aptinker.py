@@ -712,6 +712,9 @@ class TinkerDockWidget(QDockWidget):
         self.connect(self.ssDBView.pushButton_load_column_from_file,
                      SIGNAL('clicked()'), self.load_column_from_file)
 
+        self.connect(self.ssDBView.pushButton_restore_init,
+                     SIGNAL('clicked()'), self.restore_IniSP)
+
         self.connect(self.ss_abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
                      self.update_last_ca_sent_ts)
 
@@ -1376,6 +1379,26 @@ class TinkerDockWidget(QDockWidget):
                 self.ssDBView.comboBox_column_name.currentText())]
 
         self.ss_table.load_column_from_file(filepath, selected_col_key)
+
+    #----------------------------------------------------------------------
+    def restore_IniSP(self):
+        """"""
+
+        title = 'Restore Machine to Initial Setpoints'
+        prompt_text = ('Are you sure you want to restore the machine to '
+                       'initial setpoints?\n\n'
+                       'If so, enter the number of steps into which this '
+                       'restoration action should be divided, and hit OK.\n\n'
+                       'Number of Steps:')
+        default_val = 1
+        result = QInputDialog.getInt(self, title, prompt_text, default_val,
+                                     min=1, max=100, step=1)
+
+        if result[1]: # If OK was pressed
+            n_steps = result[0]
+            self.ss_table.restore_IniSP(n_steps)
+        else: # If Cancel was pressed
+            return
 
 ########################################################################
 class TinkerView(QMainWindow, Ui_MainWindow):

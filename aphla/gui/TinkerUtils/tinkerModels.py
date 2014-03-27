@@ -1815,11 +1815,39 @@ class SnapshotAbstractModel(QObject):
             tEnd_model_view - self.caget_sent_ts_second)
 
     #----------------------------------------------------------------------
+    def get_index_map_get2put(self):
+        """"""
+
+        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+        index_map_get2put = [indexes_caput[rows_caput.index(r)]
+                             for r in rows_caget]
+
+        return index_map_get2put, indexes_caget
+
+    #----------------------------------------------------------------------
+    def get_index_map_put2get(self):
+        """"""
+
+        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+
+        index_map_put2get = [indexes_caget[rows_caget.index(r)]
+                             for r in rows_caput]
+
+        return index_map_put2get, indexes_caput
+
+    #----------------------------------------------------------------------
     def update_init_pv_vals(self):
         """"""
 
         self.caget_ini_raws  = np.copy(self.caget_raws)
         self.caget_ini_convs = np.copy(self.caget_raws)
+
+        self.caput_ini_raws = np.copy(self.caput_raws)
+        index_map_get2put, indexes_caget = self.get_index_map_get2put()
+        self.caput_ini_raws[index_map_get2put] = \
+            self.caget_ini_raws[indexes_caget]
 
     #----------------------------------------------------------------------
     def update_ss_ctime(self):
@@ -1834,12 +1862,15 @@ class SnapshotAbstractModel(QObject):
     def update_NaNs_in_caput_raws(self):
         """"""
 
-        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
-        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
-        index_map_get2put = [indexes_caput[rows_caput.index(r)]
-                             for r in rows_caget]
-        index_map_put2get = [indexes_caget[rows_caget.index(r)]
-                             for r in rows_caput]
+        #rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        #rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+        #index_map_get2put = [indexes_caput[rows_caput.index(r)]
+                             #for r in rows_caget]
+        #index_map_put2get = [indexes_caget[rows_caget.index(r)]
+                             #for r in rows_caput]
+
+        index_map_get2put, indexes_caget = self.get_index_map_get2put()
+        index_map_put2get, indexes_caput = self.get_index_map_put2get()
 
         if self.caput_not_yet:
             self.caput_raws[index_map_get2put] = self.caget_raws[indexes_caget]
@@ -1940,7 +1971,7 @@ class SnapshotAbstractModel(QObject):
 
         enabled = self.caput_enabled_rows.astype(bool)
         converted_step_size_array = self.step_size_array[enabled]
-        # Now need to resort `converted_step_size_array`
+        # Now need to re-sort `converted_step_size_array`
         enabled_rows = np.where(enabled)[0]
         rows, indexes = map(list, zip(*self.maps['cur_SentSP']))
         enabled_indexes = [rows.index(r) for r in enabled_rows]
@@ -2085,6 +2116,46 @@ class SnapshotAbstractModel(QObject):
             self.all_col_keys[self.all_col_names.index(name)]
             for name in visible_col_name_list
         ]
+
+    #----------------------------------------------------------------------
+    def restore_IniSP(self, n_steps):
+        """"""
+
+        self.update_NaNs_in_caput_raws()
+
+        self.update_caput_enabled_indexes()
+
+        current_caput_raws = self.caput_raws[self.caput_enabled_indexes]
+        current_caput_raws = np.array(
+            [o if not isinstance(o, catools.dbr.ca_array) else o.__array__()
+             for o in current_caput_raws],
+            dtype=object)
+        if current_caput_raws.ndim != 1:
+            nRow, nCol = current_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = current_caput_raws[i,:]
+            current_caput_raws = temp
+
+        ini_caput_raws = self.caput_ini_raws[self.caput_enabled_indexes]
+        ini_caput_raws = np.array(
+            [o if not isinstance(o, catools.dbr.ca_array) else o.__array__()
+             for o in ini_caput_raws],
+            dtype=object)
+        if ini_caput_raws.ndim != 1:
+            nRow, nCol = ini_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = ini_caput_raws[i,:]
+            ini_caput_raws = temp
+
+        raw_step_size_array = (current_caput_raws - ini_caput_raws) / n_steps
+
+        for i in range(n_steps):
+
+            self.caput_raws[self.caput_enabled_indexes] -= raw_step_size_array
+
+            self.invoke_caput()
 
 ########################################################################
 class SnapshotTableModel(QAbstractTableModel):
@@ -2567,3 +2638,27 @@ class SnapshotTableModel(QAbstractTableModel):
                 return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
         else:
             return default_flags # non-editable
+
+    #----------------------------------------------------------------------
+    def restore_IniSP(self, n_steps):
+        """
+        """
+
+        msg = QMessageBox()
+        msg.addButton(QMessageBox.Yes)
+        msg.addButton(QMessageBox.No)
+        msg.setDefaultButton(QMessageBox.No)
+        msg.setEscapeButton(QMessageBox.No)
+        msg.setIcon(QMessageBox.Question)
+        msg.setText('Only setpoint PVs that satisfy the following conditions '
+                    'will be restored:\n\n'
+                    ' (1) "caput ON" is checked, AND'
+                    ' (2) "StepSize" does NOT show `nan`\n\n'
+                    'Would you like to proceed for restoration?')
+        msg.setWindowTitle('Final Confirmation for Restoration')
+        choice = msg.exec_()
+        if choice == QMessageBox.No:
+            return
+
+        self.abstract.restore_IniSP(n_steps)
+

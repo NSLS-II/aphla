@@ -678,6 +678,14 @@ class SnapshotDBViewWidget(QWidget):
                                  QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
 
+        self.pushButton_restore_init = QPushButton(self)
+        self.pushButton_restore_init.setText('Restore Ini.SP (Need Test!)')
+        self.horizontalLayout.addWidget(self.pushButton_restore_init)
+
+        spacerItem = QSpacerItem(40, 20,
+                                 QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+
         self.comboBox_view = QComboBox(self)
         self.comboBox_view.addItem('Group-based View')
         self.comboBox_view.addItem('Channel-based View')
