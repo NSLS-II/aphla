@@ -1396,7 +1396,15 @@ class TinkerDockWidget(QDockWidget):
 
         if result[1]: # If OK was pressed
             n_steps = result[0]
-            self.ss_table.restore_IniSP(n_steps)
+            default_val = 3 # [sec]
+            prompt_text = 'Wait Time at Each Step [seconds]:'
+            result = QInputDialog.getInt(
+                self, title, prompt_text, default_val, min=0, max=3600, step=1)
+            if result[1]: # If OK was pressed
+                wait_time = float(result[0])
+                self.ss_table.restore_IniSP(n_steps, wait_time)
+            else: # If Cancel was pressed
+                return
         else: # If Cancel was pressed
             return
 

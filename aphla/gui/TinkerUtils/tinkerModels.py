@@ -2118,7 +2118,7 @@ class SnapshotAbstractModel(QObject):
         ]
 
     #----------------------------------------------------------------------
-    def restore_IniSP(self, n_steps):
+    def restore_IniSP(self, n_steps, wait_time):
         """"""
 
         self.update_NaNs_in_caput_raws()
@@ -2151,11 +2151,21 @@ class SnapshotAbstractModel(QObject):
 
         raw_step_size_array = (current_caput_raws - ini_caput_raws) / n_steps
 
+        # Disable temporarily auto caget update, if enabled
+        orig_auto_caget_delay_after_caput = self.auto_caget_delay_after_caput
+        self.auto_caget_delay_after_caput = np.nan
+
         for i in range(n_steps):
 
             self.caput_raws[self.caput_enabled_indexes] -= raw_step_size_array
 
             self.invoke_caput()
+
+            Sleep(wait_time)
+            self.update_pv_vals()
+
+        # Restore auto caget update
+        self.auto_caget_delay_after_caput = orig_auto_caget_delay_after_caput
 
 ########################################################################
 class SnapshotTableModel(QAbstractTableModel):
@@ -2640,7 +2650,7 @@ class SnapshotTableModel(QAbstractTableModel):
             return default_flags # non-editable
 
     #----------------------------------------------------------------------
-    def restore_IniSP(self, n_steps):
+    def restore_IniSP(self, n_steps, wait_time):
         """
         """
 
@@ -2650,15 +2660,13 @@ class SnapshotTableModel(QAbstractTableModel):
         msg.setDefaultButton(QMessageBox.No)
         msg.setEscapeButton(QMessageBox.No)
         msg.setIcon(QMessageBox.Question)
-        msg.setText('Only setpoint PVs that satisfy the following conditions '
+        msg.setText('Only setpoint PVs whose "caput ON" is checked '
                     'will be restored:\n\n'
-                    ' (1) "caput ON" is checked, AND'
-                    ' (2) "StepSize" does NOT show `nan`\n\n'
                     'Would you like to proceed for restoration?')
         msg.setWindowTitle('Final Confirmation for Restoration')
         choice = msg.exec_()
         if choice == QMessageBox.No:
             return
 
-        self.abstract.restore_IniSP(n_steps)
+        self.abstract.restore_IniSP(n_steps, wait_time)
 
