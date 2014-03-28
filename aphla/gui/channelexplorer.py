@@ -537,15 +537,12 @@ class FilterTableModel(QAbstractTableModel):
             if col_handle != 'selected':
                 setattr(self._filter_list[row], col_handle, value)
             else:
-                current_selected_row_ind = self.getSelectedRowInd()
-                setattr(self._filter_list[current_selected_row_ind], col_handle, False)
-                setattr(self._filter_list[row], col_handle, True)
+                setattr(self._filter_list[row], col_handle, value)
 
             self.emit(
                 SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                 index, index)
             return True
-
 
     #----------------------------------------------------------------------
     def propagateFilterNameChange(self, old_filter_name, new_filter_name):
@@ -725,12 +722,18 @@ class FilterTableModel(QAbstractTableModel):
         Insert a Filter object after row_ind
         """
 
+        col_ind_selected = FILTER_TABLE_COLUMN_HANDLE_LIST.index('selected')
+
+        old_selected_row_ind = self.getSelectedRowInd()
+        old_selected_modelindex = self.index(old_selected_row_ind,
+                                             col_ind_selected)
+        self.setData(old_selected_modelindex, False)
+
         parent = QModelIndex()
         first_row_ind_inserted = last_row_ind_inserted = row_ind + 1
         self.beginInsertRows(parent, first_row_ind_inserted, last_row_ind_inserted)
 
         self._filter_list.insert(first_row_ind_inserted, new_filter_obj)
-        col_ind_selected = FILTER_TABLE_COLUMN_HANDLE_LIST.index('selected')
         inserted_modelIndex = self.index(first_row_ind_inserted,
                                          col_ind_selected)
         self.setData(inserted_modelIndex, True)

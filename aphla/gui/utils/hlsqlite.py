@@ -5,12 +5,42 @@ High-Level Interface to SQLite
 import os
 import sqlite3
 from time import time, sleep
+import zlib
+import cPickle
 import traceback
 from pprint import pprint
 
 MEMORY = ':memory:'
 
 DEBUG = False
+
+#----------------------------------------------------------------------
+def blobdumps(py_obj, cPickle_protocol=2, compression_level=7):
+    """
+    Pickle any Python object, and compress the pickled object.
+
+    Returns a binary string.
+
+    `compression_level`: Between 1 and 9
+        The higher the level is, the more compressed the object will be.
+    """
+
+    return zlib.compress(cPickle.dumps(py_obj, cPickle_protocol),
+                         compression_level).decode('latin1')
+
+#----------------------------------------------------------------------
+def blobloads(blob):
+    """
+    Inverse of blobdumps().
+
+    Decompress the pickled object, and unpickle the uncompressed object.
+
+    Returns a Python object.
+    """
+
+    return cPickle.loads(zlib.decompress(blob.encode('latin1')))
+    # No need to specify cPickle protocol, as it will be automatically
+    # determined.
 
 ########################################################################
 class Column():
@@ -114,11 +144,12 @@ class SQLiteDatabase():
         self.cur = self.con.cursor()
 
     #----------------------------------------------------------------------
-    def close(self):
+    def close(self, vacuum=True):
         """"""
 
-        with self.con:
-            self.cur.execute('VACUUM')
+        if vacuum:
+            with self.con:
+                self.cur.execute('VACUUM')
 
         self.con.close()
 
@@ -367,6 +398,43 @@ class SQLiteDatabase():
         return zip(*z)
 
     #----------------------------------------------------------------------
+    def getMatchedColumnDataFromTable(
+        self, table_name, matched_column_name, matching_val_list,
+        matching_format, column_name_return_list=None):
+        """
+        """
+
+        if column_name_return_list is None:
+            column_name_return_list = self.getColumnNames(table_name)
+
+        col_name_list = [matched_column_name] + column_name_return_list
+
+        comp_val_str_list = ['"{0}"'.format(v if v is not None else '')
+                             if matching_format.endswith('s')
+                             else ('{0'+matching_format+'}').format(v)
+                             for v in matching_val_list]
+
+        unique_out = self.getColumnDataFromTable(
+            table_name, column_name_list=col_name_list,
+            condition_str='{0} IN ({1})'.format(
+                matched_column_name, ','.join(set(comp_val_str_list))))
+
+        if unique_out == []:
+            return None
+
+        unique_matched_item_list = list(unique_out[0])
+
+        mapping = [unique_matched_item_list.index(v)
+                   if v in unique_matched_item_list else None
+                   for v in matching_val_list]
+
+        out = []
+        for uo in unique_out[1:]:
+            out.append([uo[i] if i is not None else None for i in mapping])
+
+        return out
+
+    #----------------------------------------------------------------------
     def createTempView(self, view_name, table_name, column_name_list=None,
                        condition_str='', order_by_str='',
                        binding_tuple=None):
@@ -566,13 +634,8 @@ class SQLiteDatabase():
 
         sql_cmd += placeholder_str
 
-        try:
-            with self.con:
-                self.cur.executemany(sql_cmd, list_of_tuples)
-        except sqlite3.IntegrityError as e:
-            raise e
-        except:
-            traceback.print_exc()
+        with self.con:
+            self.cur.executemany(sql_cmd, list_of_tuples)
 
     #----------------------------------------------------------------------
     def deleteRows(self, table_name, condition_str='',

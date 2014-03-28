@@ -13,7 +13,7 @@ import time
 import os
 from fnmatch import fnmatch
 from datetime import datetime
-from catools import caget, caput, CA_OFFLINE, savePvs
+from catools import caget, caput, CA_OFFLINE, savePvData
 import machines
 import element
 import itertools
@@ -559,6 +559,21 @@ def getTwiss(names, columns, **kwargs):
             logger.error("ERROR: no twiss data loaded")
             return None
         return machines._lat._twiss.get(names, col=col)
+    elif src == "VA":
+        vas = getElements("VA")
+        if not vas: return None
+        twiss = vas[kwargs.get("iva", 0)]
+        if isinstance(names, (str, unicode)):
+            namelst = [i for i,s in enumerate(twiss.names) if fnmatch(s, names)]
+        elif isinstance(names, (list, tuple)):
+            namelst = [i for i,s in enumerate(twiss.names) if s in names]
+        else:
+            raise ValueError("names must be string or list of element names")
+        dat = np.zeros((len(namelst), len(columns)), 'd')
+        for i,c in enumerate(columns):
+            d = twiss.get(c, unitsys=None)
+            dat[:,i] = [d[j] for j in namelst]
+        return dat
     else:
         return None
 
@@ -1032,11 +1047,19 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
     
 
 
-def saveLattice(output, **kwargs):
+def saveLattice(**kwargs):
+    """
+    save lattice info to a HDF5 file.
+
+    - output, output file name. If it is None, save to the default place with default filename.
+    - lattice, default the current active lattice
+
+    returns the output file name.
+    """
     # save the lattice
-    lat = kwargs.get("lattice", None)
-    if lat is None:
-        lat = machines._lat
+    output = kwargs.get("output", None)
+    lat = kwargs.get("lattice", machines._lat)
+    verbose = kwargs.get("verbose", 0)
 
     if lat.arpvs is not None:
         pvs = [s.strip() for s in open(lat.arpvs, 'r').readlines()]
@@ -1045,29 +1068,39 @@ def saveLattice(output, **kwargs):
                      [e.pv() for e in lat.getElementList("*", virtual=False)])
 
     if output is None:
-        t0 = datetime.now()
-        output = os.path.join(
-            lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
-            t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
-
-    savePvs(output, pvs, group=lat.name)
+        #t0 = datetime.now()
+        #output = os.path.join(
+        #    lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
+        #    t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
+        output = outputFileName("snapshot", "")
+    nlive, nead = savePvData(output, pvs, group=lat.name)
+    if verbose > 0:
+        print "PV dead: %d, live: %d" % (nlive, ndead)
+    return output
 
 
 def outputFileName(group, subgroup, create_path = True):
     """generate the system default output data file name
 
     'Lattice/Year_Month/group/subgroup_Year_Month_Day_HourMinSec.hdf5'
+    e.g. 'SR/2014_03/bpm/bpm_Fa_0_2014_03_04_145020.hdf5'
+
+    if new directory is created, with permission "rwxrwxr-x"
     """
     # use the default file name
+    import stat
     t0 = datetime.now()
-    output_dir = os.path.join(machines.getOutputDir(),
-                              t0.strftime("%Y_%m"),
-                              group)
-    if not os.path.exists(output_dir):
-        if create_path:
-            os.makedirs(output_dir)
-        else:
-            raise RuntimeError("{0} does not exist".format(output_dir))
+    output_dir = ""
+    for subdir in [machines.getOutputDir(), t0.strftime("%Y_%m"), group]:
+        output_dir = os.path.join(output_dir, subdir)
+        if not os.path.exists(output_dir):
+            if create_path:
+                logger.info("creating new directory: {0}".format(output_dir))
+                os.mkdir(output_dir)
+                os.chmod(output_dir, stat.S_ISGID | stat.S_IRWXU | stat.S_IRWXG | \
+                         stat.S_IROTH | stat.S_IXOTH)
+            else:
+                raise RuntimeError("{0} does not exist".format(output_dir))
 
     fopt = subgroup + t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
     return os.path.join(output_dir, fopt)

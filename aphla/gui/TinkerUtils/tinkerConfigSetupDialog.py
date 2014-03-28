@@ -7,12 +7,13 @@ sip.setapi('QVariant', 2)
 import sys, os
 import os.path as osp
 import h5py
+import numpy as np
 import json
 import time
 from copy import deepcopy
 
 from PyQt4.QtCore import (Qt, SIGNAL, QObject, QSettings, QSize, QMetaObject,
-                          Q_ARG, QRect)
+                          Q_ARG, QRect, QModelIndex)
 from PyQt4.QtGui import (
     QApplication, QDialog, QSortFilterProxyModel, QAbstractItemView, QAction,
     QIcon, QFileDialog, QMessageBox, QInputDialog, QMenu, QTextEdit, QFont,
@@ -24,20 +25,22 @@ import cothread
 import aphla as ap
 
 import config
+try:
+    from . import (tinkerConfigDBSelector)
+except:
+    from aphla.gui.TinkerUtils import (tinkerConfigDBSelector)
 from tinkerModels import (ConfigAbstractModel, ConfigTableModel,
                           ConfigTreeModel)
 from tinkerdb import (TinkerMainDatabase, unitsys_id_raw, pv_id_NonSpecified)
-from dbviews import ConfigDBViewWidget
+from dbviews import (ConfigDBViewWidget, ConfigDBTableViewItemDelegate)
 from ui_tinkerConfigSetupDialog import Ui_Dialog
 from ui_tinkerConfigSetupPref import Ui_Dialog as Ui_PrefDialog
 from aphla.gui import channelexplorer
 from aphla.gui.utils.tictoc import tic, toc
 from aphla.gui.utils.orderselector import ColumnsDialog
 
-FILE_FILTER_DICT = {'Text File': 'Tinker configuration text files (*.txt)',
-                    'HDF5 File': 'HDF5 files (*.h5 *.hdf5)',
-                    'JSON File': 'Tinker configuration JSON files (*.json)',
-                    }
+FILE_FILTER_DICT = {'JSON File': 'Tinker configuration JSON files (*.json)',
+                    'All Files': 'All files (*)'}
 
 HOME_PATH             = osp.expanduser('~')
 APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
@@ -68,7 +71,7 @@ class PreferencesEditor(QDialog, Ui_PrefDialog):
             config.COL_DEF.getColumnDataFromTable(
                 'column_table',
                 column_name_list=['column_key', 'short_descrip_name'],
-                condition_str='only_for_snapshot=0')
+                condition_str='only_for_ss=0')
         )
 
         self.load_pref_json()
@@ -195,7 +198,6 @@ class Settings():
             self._position = QRect(0, 0, sizeHint.width(), sizeHint.height())
         view.setGeometry(self._position)
 
-        isinstance(view, View)
         self._splitter_top_bottom_sizes = self._settings.value(
             'splitter_top_bottom_sizes')
         if self._splitter_top_bottom_sizes is None:
@@ -264,29 +266,191 @@ class Model(QObject):
         self.output = None
 
     #----------------------------------------------------------------------
-    def get_channel_ids(self, pvsp_list, pvrb_list, channel_name_list):
-        """"""
+    def get_channel_ids(
+        self, pvsp_list, pvrb_list, channel_name_list,
+        unitsys_list=None, unitconv_key_list=None, unitconv_dict=None,
+        aphla_channel_name_list=None):
+        """
+        If `unitsys_list` is not None, either `unitconv_key_list` (for
+        non-APHLA channels) or `aphla_channel_name_list` (for APHLA channels)
+        must be also provided.
 
-        unitsys_id = unitsys_id_raw # no unit conversion by default
-        NoConversion_unitconv_id = self.db.getColumnDataFromTable(
-                    'unitconv_table', column_name_list=['unitconv_id'],
-                    condition_str='conv_data_txt=""')[0][0]
+        If `unitconv_key_list` is provided, `unitconv_dict` must be also
+        provided.
+
+        If both `unitconv_key` and `aphla_channel_name` are provided for
+        a channel, `unitconv_key` will override `aphla_channel_name`.
+        """
+
+        msg = QMessageBox()
+
+        n_channels = len(pvsp_list)
+
+        if unitsys_list is None:
+            # No unit conversion w/o unit symbol by default
+            unitsys_id_list = [unitsys_id_raw]*n_channels
+            unitconv_toraw_id_list   = [NoConv_NoSymb_unitconv_id]*n_channels
+            unitconv_fromraw_id_list = [NoConv_NoSymb_unitconv_id]*n_channels
+        else:
+            unitsys_list = [s if s is not None else '' for s in unitsys_list]
+
+            unitsys_id_list = [
+                self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                    'unitsys_table', 'unitsys_id', 'unitsys', v, append_new=True)
+                for v in unitsys_list]
+
+            unitconv_toraw_id_list   = [None]*n_channels
+            unitconv_fromraw_id_list = [None]*n_channels
+            aphla_ch_id_list         = [None]*n_channels
+
+            if aphla_channel_name_list is not None:
+                for i, (ap_ch_name, unitsys, unitsys_id) in enumerate(zip(
+                    aphla_channel_name_list, unitsys_list, unitsys_id_list)):
+                    if ap_ch_name in ('', None):
+                        pass
+                    else:
+                        machine_name, lattice_name, elem_name, field = \
+                            ap_ch_name.split('.')
+                        if machine_name not in get_loaded_ap_machines():
+                            ap.machines.load(machine_name)
+                        ap.machines.use(lattice_name)
+                        aphla_elem = ap.getElements(elem_name)[0]
+                        uc_dict = aphla_elem._field[field].unitconv
+
+                        machine_name_id = \
+                            self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                                'machine_name_table',
+                                'machine_name_id', 'machine_name',
+                                machine_name, append_new=True)
+                        lattice_name_id = \
+                            self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                                'lattice_name_table', 'lattice_name_id',
+                                'lattice_name', lattice_name, append_new=True)
+                        elem_prop_id = self.db.get_elem_prop_id(
+                            machine_name_id, lattice_name_id, aphla_elem,
+                            append_new=True)
+                        field_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                            'field_table', 'field_id', 'field', field,
+                            append_new=True)
+                        aphla_ch_id = self.db.get_aphla_ch_id(
+                            elem_prop_id, field_id, append_new=True)
+                        aphla_ch_id_list[i] = aphla_ch_id
+
+                        src_unitsymb = aphla_elem.getUnit(field, unitsys=None)
+                        dst_unitsymb = aphla_elem.getUnit(
+                            field, unitsys=(unitsys if unitsys else None))
+
+                        if unitsys == '':
+                            (unitconv_toraw_id_list[i],
+                             unitconv_fromraw_id_list[i]) = \
+                                self.db.get_unitconv_toraw_fromraw_ids(
+                                    {}, src_unitsymb=src_unitsymb,
+                                    append_new=True)
+
+                            continue
+
+                        inv = 0
+                        if uc_dict.has_key((None, unitsys)):
+                            uc = uc_dict[(None, unitsys)]
+                        elif uc_dict.has_key((unitsys, None)):
+                            uc = uc_dict[(unitsys, None)]
+                            if uc.invertible:
+                                inv = 1
+                            else:
+                                uc = None
+                        else:
+                            uc = None
+
+                        unitconv_fromraw_id_list[i] = self.db.get_unitconv_id(
+                            uc, src_unitsys_id=unitsys_id_raw,
+                            dst_unitsys_id=unitsys_id,
+                            src_unitsymb=src_unitsymb,
+                            dst_unitsymb=dst_unitsymb, inv=inv,
+                            append_new=True)
+
+                        src_unitsymb, dst_unitsymb = dst_unitsymb, src_unitsymb
+
+                        inv = 0
+                        if uc_dict.has_key((unitsys, None)):
+                            uc = uc_dict[(unitsys, None)]
+                        elif uc_dict.has_key((None, unitsys)):
+                            uc = uc_dict[(None, unitsys)]
+                            if uc.invertible:
+                                inv = 1
+                            else:
+                                uc = None
+                        else:
+                            uc = None
+
+                        unitconv_toraw_id_list[i] = self.db.get_unitconv_id(
+                            uc, src_unitsys_id=unitsys_id,
+                            dst_unitsys_id=unitsys_id_raw,
+                            src_unitsymb=src_unitsymb,
+                            dst_unitsymb=dst_unitsymb, inv=inv,
+                            append_new=True)
+
+            # If both `unitconv_key` and `aphla_channel_name` are provided for
+            # a channel, `unitconv_key` will override `aphla_channel_name`
+            # unit conversion data here.
+            if unitconv_key_list is not None:
+                if unitconv_dict is None:
+                    msg.setText(('If `unitconv_key_list` is specified, '
+                                 '`unitconv_dict` must be also specified.'))
+                    msg.exec_()
+                    return
+                else:
+                    for _, v in unitconv_dict.iteritems():
+                        for dd in v:
+                            if dd['src_unitsys'] is None: dd['src_unitsys'] = ''
+                            if dd['dst_unitsys'] is None: dd['dst_unitsys'] = ''
+
+                    for i, (key, unitsys) in enumerate(zip(
+                        unitconv_key_list, unitsys_list)):
+                        if key in ('', None):
+                            pass
+                        elif unitconv_dict.has_key(key):
+                            uc_list = unitconv_dict[key]
+                            for uc in uc_list:
+                                if (uc['src_unitsys'] == '') and \
+                                   (uc['dst_unitsys'] == unitsys):
+                                    break
+                            unitconv_fromraw_id_list[i] = \
+                                self.db.get_unitconv_id(
+                                    uc, src_unitsys_id=None,
+                                    dst_unitsys_id=None, src_unitsymb=None,
+                                    dst_unitsymb=None, inv=None, append_new=True)
+                            for uc in uc_list:
+                                if (uc['src_unitsys'] == unitsys) and \
+                                   (uc['dst_unitsys'] == ''):
+                                    break
+                            unitconv_toraw_id_list[i] = \
+                                self.db.get_unitconv_id(
+                                    uc, src_unitsys_id=None,
+                                    dst_unitsys_id=None, src_unitsymb=None,
+                                    dst_unitsymb=None, inv=None, append_new=True)
+                        else:
+                            msg.setText('Key not found in `unitconv_dict`: {0}'.
+                                        format(key))
+                            msg.exec_()
+                            return
 
         channel_ids = []
 
-        for pvsp, pvrb, ch_name in zip(pvsp_list, pvrb_list, channel_name_list):
+        for (pvsp, pvrb, ch_name, unitsys_id, unitconv_toraw_id,
+             unitconv_fromraw_id, aphla_ch_id) in zip(
+                 pvsp_list, pvrb_list, channel_name_list, unitsys_id_list,
+                 unitconv_toraw_id_list, unitconv_fromraw_id_list,
+                 aphla_ch_id_list):
 
             if pvsp == '': readonly = -1
             else         : readonly = 0
             pvsp_id = self.db.get_pv_id(pvsp, readonly, append_new=True)
             if pvsp_id is None:
-                msg = QMessageBox()
                 msg.setText('ID for the following PV could not be found:')
                 msg.setInformativeText('"{0:s}"'.format(pvsp))
                 msg.exec_()
                 return
             elif pvsp_id == -1:
-                msg = QMessageBox()
                 msg.setText('The following PV could not be connected:')
                 msg.setInformativeText('"{0:s}"'.format(pvsp))
                 msg.exec_()
@@ -298,13 +462,11 @@ class Model(QObject):
             else         : readonly = 1
             pvrb_id = self.db.get_pv_id(pvrb, readonly, append_new=True)
             if pvrb_id is None:
-                msg = QMessageBox()
                 msg.setText('ID for the following PV could not be found:')
                 msg.setInformativeText('"{0:s}"'.format(pvrb))
                 msg.exec_()
                 return
             elif pvrb_id == -1:
-                msg = QMessageBox()
                 msg.setText('The following PV could not be connected:')
                 msg.setInformativeText('"{0:s}"'.format(pvrb))
                 msg.exec_()
@@ -318,16 +480,48 @@ class Model(QObject):
 
             channel_id = self.db.get_channel_id(
                 pvsp_id, pvrb_id, unitsys_id, channel_name_id,
-                NoConversion_unitconv_id, NoConversion_unitconv_id,
-                aphla_ch_id=None, append_new=True)
+                unitconv_toraw_id, unitconv_fromraw_id,
+                aphla_ch_id=aphla_ch_id, append_new=True)
 
             channel_ids.append(channel_id)
 
         return channel_ids
 
     #----------------------------------------------------------------------
+    def importNewChannelsFromDB(self, config_abstract_model):
+        """"""
+
+        a = config_abstract_model
+
+        self.abstract.group_name_ids.extend(a.group_name_ids)
+        self.abstract.channel_ids.extend(a.channel_ids)
+        self.abstract.weights.extend(a.weights)
+        self.abstract.caput_enabled_rows.extend(a.caput_enabled_rows)
+
+        self.table.updateModel()
+        self.table.repaint()
+
+    #----------------------------------------------------------------------
     def importNewChannelsFromJSONFile(self, json_dict):
         """"""
+
+        required_json_dict_keys = ['channels']
+        for k in required_json_dict_keys:
+            if k not in json_dict:
+                msg = QMessageBox()
+                msg.setText('JSON config file must contain the key "{0}"'.
+                            format(k))
+                msg.exec_()
+                return
+
+        required_column_names = ['pvsp', 'pvrb', 'channel_name']
+        for k in required_column_names:
+            if k not in json_dict['column_names']:
+                msg = QMessageBox()
+                msg.setText(('"{0}" must be in "column_names" element '
+                             'in JSON config file').format(k))
+                msg.exec_()
+                return
 
         d = {}
         for i, k in enumerate(json_dict['column_names']):
@@ -346,12 +540,58 @@ class Model(QObject):
                 group_name, append_new=True)
             for group_name in d['group_name']]
 
-        channel_ids = self.get_channel_ids(d['pvsp'], d['pvrb'],
-                                           d['channel_name'])
+        if not d.has_key('unitsys'):
+            channel_ids = self.get_channel_ids(d['pvsp'], d['pvrb'],
+                                               d['channel_name'])
+        else:
+            if (not d.has_key('unitconv_key')) and \
+               (not d.has_key('aphla_channel_name')):
+                msg = QMessageBox()
+                msg.setText(
+                    ('If `column_names` include "unitsys", `column_names` '
+                     'must also include either "unitconv_key" or '
+                     '"aphla_channel_name" in your JSON config file.'))
+                msg.exec_()
+                return
+
+            if d.has_key('unitconv_key'):
+                unitconv_key_list = d['unitconv_key']
+                if json_dict.has_key('unitconv_dict'):
+                    unitconv_dict = json_dict['unitconv_dict']
+                else:
+                    msg = QMessageBox()
+                    msg.setText(
+                        ('If `column_names` include "unitconv_key", you '
+                         'must also specify `unitconv_dict` in your JSON config '
+                         'file.'))
+                    msg.exec_()
+                    return
+            else:
+                unitconv_key_list = None
+                unitconv_dict     = None
+
+            if d.has_key('aphla_channel_name'):
+                aphla_channel_name_list = d['aphla_channel_name']
+            else:
+                aphla_channel_name_list = None
+
+            channel_ids = self.get_channel_ids(
+                d['pvsp'], d['pvrb'], d['channel_name'],
+                unitsys_list=d['unitsys'], unitconv_key_list=unitconv_key_list,
+                unitconv_dict=unitconv_dict,
+                aphla_channel_name_list=aphla_channel_name_list)
 
         self.abstract.group_name_ids.extend(group_name_ids)
         self.abstract.channel_ids.extend(channel_ids)
-        self.abstract.weights.extend(d['config_weight'])
+        n_channels = len(channel_ids)
+        if d.has_key('config_weight'):
+            self.abstract.weights.extend(d['config_weight'])
+        else:
+            self.abstract.weights.extend(np.array([1.0]*n_channels))
+        if d.has_key('config_caput_enabled'):
+            self.abstract.caput_enabled_rows.extend(d['config_caput_enabled'])
+        else:
+            self.abstract.caput_enabled_rows.extend(np.array([True]*n_channels))
 
         self.table.updateModel()
         self.table.repaint()
@@ -371,10 +611,8 @@ class Model(QObject):
             'lattice_name_table', 'lattice_name_id', 'lattice_name', lattice,
             append_new=True)
 
-        unitsys_id = unitsys_id_raw # no unit conversion by default
-        NoConversion_unitconv_id = self.db.getColumnDataFromTable(
-                    'unitconv_table', column_name_list=['unitconv_id'],
-                    condition_str='conv_data_txt=""')[0][0]
+        unitsys_id_phy = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+            'unitsys_table', 'unitsys_id', 'unitsys', 'phy', append_new=True)
 
         channel_ids   = []
         channel_names = []
@@ -437,9 +675,31 @@ class Model(QObject):
             channel_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
                 'channel_name_table', 'channel_name_id', 'channel_name',
                 channel_name, append_new=True)
+
+            uc_dict = elem._field[field].unitconv
+            available_unitsys_list = elem.getUnitSystems(field)
+            if 'phy' in available_unitsys_list:
+                unitsys_id = unitsys_id_phy
+                unitconv_toraw_id, unitconv_fromraw_id = \
+                    self.db.get_unitconv_toraw_fromraw_ids(
+                        uc_dict, dst_unitsys='phy',
+                        dst_unitsys_id=unitsys_id_phy,
+                        src_unitsymb=elem.getUnit(field, unitsys=None),
+                        dst_unitsymb=elem.getUnit(field, unitsys='phy'),
+                        append_new=True)
+            else:
+                unitsys_id = unitsys_id_raw # no unit conversion
+                unitconv_toraw_id, unitconv_fromraw_id = \
+                    self.db.get_unitconv_toraw_fromraw_ids(
+                        uc_dict, dst_unitsys=None,
+                        dst_unitsys_id=unitsys_id_raw,
+                        src_unitsymb=elem.getUnit(field, unitsys=None),
+                        dst_unitsymb=elem.getUnit(field, unitsys=None),
+                        append_new=True)
+
             channel_id = self.db.get_channel_id(
                 pvsp_id, pvrb_id, unitsys_id, channel_name_id,
-                NoConversion_unitconv_id, NoConversion_unitconv_id,
+                unitconv_toraw_id, unitconv_fromraw_id,
                 aphla_ch_id=aphla_ch_id, append_new=True)
             if channel_id is None:
                 msg = QMessageBox()
@@ -482,6 +742,7 @@ class Model(QObject):
         self.abstract.group_name_ids.extend(group_name_ids)
         self.abstract.channel_ids.extend(channel_ids)
         self.abstract.weights.extend(weights)
+        self.abstract.caput_enabled_rows.extend([True]*n_channels)
 
         self.table.updateModel()
         self.table.repaint()
@@ -535,6 +796,10 @@ class View(QDialog, Ui_Dialog):
         self.settings.loadViewSizeSettings(self)
 
         self.model = model
+
+        self.tableView.setItemDelegate(ConfigDBTableViewItemDelegate(
+            self.tableView, self.model.table, self.tableView.parent()))
+        self.tableView.setEditTriggers(QAbstractItemView.SelectedClicked)
 
         self.lineEdit_ref_step_size.setText(
             str(self.model.abstract.ref_step_size))
@@ -732,13 +997,28 @@ class View(QDialog, Ui_Dialog):
 
         self.popMenu.exec_(self.treeView.mapToGlobal(point))
 
+    #----------------------------------------------------------------------
+    def removeRows(self):
+        """"""
+
+        proxyModel = self.tableView.model()
+        sourceModel = proxyModel.sourceModel()
+        selModel = self.tableView.selectionModel()
+
+        selProxyInds = selModel.selectedIndexes()
+        selSourceInds = [proxyModel.mapToSource(pi) for pi in selProxyInds]
+        selRows = set([i.row() for i in selSourceInds])
+
+        for row in sorted(selRows)[::-1]:
+            sourceModel.removeRow(row)
 
 ########################################################################
 class App(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, isModal, parentWindow, use_cached_lattice=False):
+    def __init__(self, isModal, parentWindow, use_cached_lattice=False,
+                 aptinkerQSettings=None):
         """Constructor"""
 
         QObject.__init__(self)
@@ -746,12 +1026,15 @@ class App(QObject):
         self.use_cached_lattice = use_cached_lattice
 
         self.settings = Settings()
+        self._aptinkerQSettings = aptinkerQSettings
 
         self._initModel()
         self._initView(isModal, parentWindow)
 
-        self.connect(self.view.pushButton_import, SIGNAL('clicked()'),
+        self.connect(self.view.pushButton_addRows, SIGNAL('clicked()'),
                      self._importConfigData)
+        self.connect(self.view.pushButton_removeRows, SIGNAL('clicked()'),
+                     self.view.removeRows)
         self.connect(self.view.pushButton_export,
                      SIGNAL('clicked()'), self._exportConfigData)
 
@@ -772,43 +1055,39 @@ class App(QObject):
     def _importConfigData(self):
         """"""
 
+        title = 'Import Type'
+        prompt = 'Import from:'
+        result = QInputDialog.getItem(
+            self.view, title, prompt,
+            ['Channel Explorer (apchx)', 'Database', 'JSON File'],
+            current=0, editable=False)
+
+        if not result[1]:
+            return
+
+        import_type = result[0]
+
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
 
-        import_type = self.view.comboBox_import.currentText()
+        if import_type == 'Channel Explorer (apchx)':
 
-        if import_type == 'Channel Explorer':
             self._launchChannelExplorer()
+
         elif import_type == 'Database':
-            a = self.model.abstract
 
-            #a.db.getColumnDataFromTable()
+            result = tinkerConfigDBSelector.make(
+                isModal=True, parentWindow=self.view,
+                aptinkerQSettings=self._aptinkerQSettings)
 
-            a.name = self.view.lineEdit_config_name.text()
-            a.description = self.view.textEdit.toPlainText()
-            ref_step_size_str = self.view.lineEdit_ref_step_size.text()
-            try:
-                a.ref_step_size = float(ref_step_size_str)
-            except:
-                msg.setText(
-                    ('Invalid float representation string for reference step '
-                     'size: {:s}').format(ref_step_size_str))
-                msg.setIcon(QMessageBox.Critical)
-            masar_id_str = self.view.lineEdit_masar_id.text()
-            try:
-                a.masar_id = int(masar_id_str)
-            except:
-                a.masar_id = None
-            a.synced_group_weight = \
-                self.view.checkBox_synced_group_weight.isChecked()
+            self.model.importNewChannelsFromDB(result.config_model.abstract)
 
         else:
 
-            all_files_filter_str = 'All files (*)'
             caption = 'Load `aptinker` configuration file from {0:s}'.format(
                 import_type)
             filter_str = ';;'.join([FILE_FILTER_DICT[import_type],
-                                    all_files_filter_str])
+                                    FILE_FILTER_DICT['All Files']])
             filepath = QFileDialog.getOpenFileName(
                 caption=caption, directory=self.settings._last_directory_path,
                 filter=filter_str)
@@ -818,34 +1097,7 @@ class App(QObject):
 
             self.settings._last_directory_path = osp.dirname(filepath)
 
-            if import_type == 'Text File':
-
-                msg.setText('This export_type is not implemented yet: {:s}'.
-                            format(export_type))
-                msg.setIcon(QMessageBox.Critical)
-                msg.exec_()
-                return
-
-                #m = TunerTextFileManager(load=True, filepath=filepath)
-                #m.exec_()
-                #if m.selection is not None:
-                    #data = m.loadConfigTextFile()
-                #else:
-                    #return
-
-                #if data is not None:
-                    #self.model.importNewChannelsFromTextFile(data)
-                #else:
-                    #return
-
-            elif import_type == 'HDF5 File':
-                msg.setText('This export_type is not implemented yet: {:s}'.
-                            format(export_type))
-                msg.setIcon(QMessageBox.Critical)
-                msg.exec_()
-                return
-
-            elif import_type == 'JSON File':
+            if import_type == 'JSON File':
                 with open(filepath, 'r') as f:
                     data = json.load(f)
 
@@ -853,6 +1105,9 @@ class App(QObject):
                     self.model.importNewChannelsFromJSONFile(data)
                 else:
                     return
+            else:
+                raise ValueError('Unsupported file import type: {0}'.format(
+                    import_type))
 
     #----------------------------------------------------------------------
     def _exportConfigData(self):
@@ -884,42 +1139,8 @@ class App(QObject):
         a.synced_group_weight = \
             self.view.checkBox_synced_group_weight.isChecked()
 
-        export_type = self.view.comboBox_export.currentText()
-
-        if export_type == 'Database':
-            a.config_id = a.db.saveConfig(a)
-            msg.setText('Config successfully saved to database.')
-        else:
-            msg.setText('This export_type is not implemented yet: {:s}'.
-                        format(export_type))
-
-            #all_files_filter_str = 'All files (*)'
-            #caption = 'Save Tuner Configuration to {0:s}'.format(export_type)
-            #filter_str = ';;'.join([FILE_FILTER_DICT[export_type],
-                                    #all_files_filter_str])
-            #save_filepath = QFileDialog.getSaveFileName(
-                #caption=caption, directory=self.starting_directory_path,
-                #filter=filter_str)
-            #if not save_filepath:
-                #return
-
-            #self.starting_directory_path = os.path.dirname(save_filepath)
-
-            #if export_type == 'Text File':
-                #m = TunerTextFileManager(load=False, filepath=save_filepath)
-                #m.exec_()
-
-                #data = self.model.getConfigDataForTextFile(m.selection)
-
-                #m.saveConfigTextFile(data)
-            #elif export_type == 'JSON File':
-                #self.model.saveConfigToJSON(save_filepath)
-            #elif export_type == 'HDF5 File':
-                #self.model.saveConfigToHDF5(save_filepath)
-
-            #msgBox.setText('Config successfully saved to {0:s}: {1:s}.'.
-                           #format(export_type, save_filepath))
-
+        a.config_id = a.db.saveConfig(a)
+        msg.setText('Config successfully saved to database.')
         msg.exec_()
 
     #----------------------------------------------------------------------
@@ -947,11 +1168,6 @@ class App(QObject):
             channelGroupInfo = self._askChannelGroupNameAndWeight()
             self.model.importNewChannelsFromSelector(selected_channels,
                                                      channelGroupInfo)
-
-    #----------------------------------------------------------------------
-    def _launchConfigDBSelector(self):
-        """"""
-
 
     #----------------------------------------------------------------------
     def _askChannelGroupNameAndWeight(self):
@@ -986,12 +1202,20 @@ class App(QObject):
 
         return channelGroupInfo
 
-
 #----------------------------------------------------------------------
-def make(isModal=True, parentWindow=None, use_cached_lattice=False):
+def get_loaded_ap_machines():
     """"""
 
-    app = App(isModal, parentWindow, use_cached_lattice=use_cached_lattice)
+    return list(set([ap.machines.getLattice(latname).machine
+                     for latname in ap.machines.lattices()]))
+
+#----------------------------------------------------------------------
+def make(isModal=True, parentWindow=None, use_cached_lattice=False,
+         aptinkerQSettings=None):
+    """"""
+
+    app = App(isModal, parentWindow, use_cached_lattice=use_cached_lattice,
+              aptinkerQSettings=aptinkerQSettings)
 
     if isModal:
         app.view.exec_()

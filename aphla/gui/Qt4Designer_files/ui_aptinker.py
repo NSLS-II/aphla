@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_lattice_tuner_for_reference.ui'
+# Form implementation generated from reading ui file 'ui_aptinker.ui'
 #
-# Created: Tue Jan 28 16:35:46 2014
-#      by: PyQt4 UI code generator 4.9.1
+# Created: Sat Mar 22 20:25:31 2014
+#      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -219,6 +219,8 @@ class Ui_MainWindow(object):
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
         self.menuLoad = QtGui.QMenu(self.menuFile)
         self.menuLoad.setObjectName(_fromUtf8("menuLoad"))
+        self.menuSave = QtGui.QMenu(self.menuFile)
+        self.menuSave.setObjectName(_fromUtf8("menuSave"))
         self.menuWindow = QtGui.QMenu(self.menubar)
         self.menuWindow.setObjectName(_fromUtf8("menuWindow"))
         MainWindow.setMenuBar(self.menubar)
@@ -236,8 +238,6 @@ class Ui_MainWindow(object):
         self.actionSaveConfigFile.setObjectName(_fromUtf8("actionSaveConfigFile"))
         self.actionSaveSnapshotFile = QtGui.QAction(MainWindow)
         self.actionSaveSnapshotFile.setObjectName(_fromUtf8("actionSaveSnapshotFile"))
-        self.actionPreferences = QtGui.QAction(MainWindow)
-        self.actionPreferences.setObjectName(_fromUtf8("actionPreferences"))
         self.actionTest = QtGui.QAction(MainWindow)
         self.actionTest.setObjectName(_fromUtf8("actionTest"))
         self.actionLoadConfig = QtGui.QAction(MainWindow)
@@ -260,11 +260,20 @@ class Ui_MainWindow(object):
         self.actionUser_defined_config_columns.setObjectName(_fromUtf8("actionUser_defined_config_columns"))
         self.actionUser_defined_snapshot_columns = QtGui.QAction(MainWindow)
         self.actionUser_defined_snapshot_columns.setObjectName(_fromUtf8("actionUser_defined_snapshot_columns"))
+        self.actionPreferences = QtGui.QAction(MainWindow)
+        self.actionPreferences.setObjectName(_fromUtf8("actionPreferences"))
+        self.actionSaveConfig = QtGui.QAction(MainWindow)
+        self.actionSaveConfig.setObjectName(_fromUtf8("actionSaveConfig"))
+        self.actionSaveSnapshot = QtGui.QAction(MainWindow)
+        self.actionSaveSnapshot.setObjectName(_fromUtf8("actionSaveSnapshot"))
         self.menuLoad.addAction(self.actionLoadConfig)
         self.menuLoad.addAction(self.actionLoadSnapshot)
+        self.menuSave.addAction(self.actionSaveConfig)
+        self.menuSave.addAction(self.actionSaveSnapshot)
         self.menuFile.addAction(self.actionNewConfig)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.menuLoad.menuAction())
+        self.menuFile.addAction(self.menuSave.menuAction())
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionPreferences)
         self.menubar.addAction(self.menuFile.menuAction())
@@ -304,6 +313,7 @@ class Ui_MainWindow(object):
         self.tabWidget_metadata.setTabText(self.tabWidget_metadata.indexOf(self.tab_snapshot_metadata), QtGui.QApplication.translate("MainWindow", "Snapshot Metadata", None, QtGui.QApplication.UnicodeUTF8))
         self.menuFile.setTitle(QtGui.QApplication.translate("MainWindow", "&File", None, QtGui.QApplication.UnicodeUTF8))
         self.menuLoad.setTitle(QtGui.QApplication.translate("MainWindow", "Load", None, QtGui.QApplication.UnicodeUTF8))
+        self.menuSave.setTitle(QtGui.QApplication.translate("MainWindow", "Save", None, QtGui.QApplication.UnicodeUTF8))
         self.menuWindow.setTitle(QtGui.QApplication.translate("MainWindow", "Window", None, QtGui.QApplication.UnicodeUTF8))
         self.actionNewConfig.setText(QtGui.QApplication.translate("MainWindow", "&New Config...", None, QtGui.QApplication.UnicodeUTF8))
         self.actionNewConfig.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+N", None, QtGui.QApplication.UnicodeUTF8))
@@ -313,10 +323,9 @@ class Ui_MainWindow(object):
         self.actionLoadSnapshotFileInCurrentTab.setText(QtGui.QApplication.translate("MainWindow", "Snapshot file...", None, QtGui.QApplication.UnicodeUTF8))
         self.actionSaveConfigFile.setText(QtGui.QApplication.translate("MainWindow", "Config to file...", None, QtGui.QApplication.UnicodeUTF8))
         self.actionSaveSnapshotFile.setText(QtGui.QApplication.translate("MainWindow", "Snapshot to file...", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionPreferences.setText(QtGui.QApplication.translate("MainWindow", "Preferences...", None, QtGui.QApplication.UnicodeUTF8))
         self.actionTest.setText(QtGui.QApplication.translate("MainWindow", "Load Snapshot File...", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionLoadConfig.setText(QtGui.QApplication.translate("MainWindow", "config...", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionLoadSnapshot.setText(QtGui.QApplication.translate("MainWindow", "snapshot...", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionLoadConfig.setText(QtGui.QApplication.translate("MainWindow", "Configuration...", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionLoadSnapshot.setText(QtGui.QApplication.translate("MainWindow", "Snapshot...", None, QtGui.QApplication.UnicodeUTF8))
         self.actionViewGroupeBased.setText(QtGui.QApplication.translate("MainWindow", "&Groupe-based", None, QtGui.QApplication.UnicodeUTF8))
         self.actionViewChannelBased.setText(QtGui.QApplication.translate("MainWindow", "&Channel-based", None, QtGui.QApplication.UnicodeUTF8))
         self.actionConfig_Metadata.setText(QtGui.QApplication.translate("MainWindow", "Config Metadata", None, QtGui.QApplication.UnicodeUTF8))
@@ -325,4 +334,7 @@ class Ui_MainWindow(object):
         self.actionDefault_snapshot_columns.setText(QtGui.QApplication.translate("MainWindow", "Default snapshot columns", None, QtGui.QApplication.UnicodeUTF8))
         self.actionUser_defined_config_columns.setText(QtGui.QApplication.translate("MainWindow", "User-defined config columns", None, QtGui.QApplication.UnicodeUTF8))
         self.actionUser_defined_snapshot_columns.setText(QtGui.QApplication.translate("MainWindow", "User-defined snapshot columns", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionPreferences.setText(QtGui.QApplication.translate("MainWindow", "Preferences...", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionSaveConfig.setText(QtGui.QApplication.translate("MainWindow", "Configuration...", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionSaveSnapshot.setText(QtGui.QApplication.translate("MainWindow", "Snapshot...", None, QtGui.QApplication.UnicodeUTF8))
 

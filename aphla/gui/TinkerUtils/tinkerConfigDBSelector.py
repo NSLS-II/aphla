@@ -9,20 +9,27 @@ import json
 import time
 
 from PyQt4.QtCore import (
-    Qt, QObject, SIGNAL, QSettings, QRect, QDateTime
+    Qt, QObject, SIGNAL, QSettings, QRect, QDateTime, QMetaObject
 )
 from PyQt4.QtGui import (
     QSortFilterProxyModel, QMessageBox, QIcon, QDialog, QIntValidator,
-    QItemSelectionModel
+    QItemSelectionModel, QInputDialog, QSplitter
 )
 
 import cothread
 
 import config
+try:
+    from . import (datestr)
+except:
+    from aphla.gui.TinkerUtils import (datestr)
 from tinkerModels import (ConfigMetaTableModel, ConfigAbstractModel,
-                          ConfigTableModel)
-from dbviews import (ConfigDBViewWidget, ConfigMetaDBViewWidget)
+                          ConfigTableModel, getusername)
+from dbviews import (ConfigDBViewWidget, ConfigMetaDBViewWidget,
+                     ConfigDBTableViewItemDelegate)
+from tinkerdb import TinkerMainDatabase
 from ui_tinkerConfigDBSelector import Ui_Dialog
+from ui_configDescriptionEditor import Ui_Dialog as Ui_Dialog_confDescEdit
 
 HOME_PATH             = osp.expanduser('~')
 APHLA_USER_CONFIG_DIR = osp.join(HOME_PATH, '.aphla')
@@ -35,11 +42,50 @@ PREF_CONFIG_JSON_FILEPATH = osp.join(
     APHLA_USER_CONFIG_DIR, 'aptinker_ConfigDBSelector_Config_pref.json')
 
 ########################################################################
+class ConfigDescriptionEditor(QDialog, Ui_Dialog_confDescEdit):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, current_description, parent=None):
+        """Constructor"""
+
+        QDialog.__init__(self, parent=parent)
+
+        self.setupUi(self)
+
+        self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
+        self.setWindowTitle('Append new description')
+
+        self.plainTextEdit_current.setProperty('plainText',
+                                               current_description)
+        self.plainTextEdit_current.setReadOnly(True)
+
+        self.plainTextEdit_new.setReadOnly(False)
+
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+
+        event.accept()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        super(ConfigDescriptionEditor, self).accept() # will close the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(ConfigDescriptionEditor, self).reject() # will close the dialog
+
+########################################################################
 class ConfigDBSelector(QDialog, Ui_Dialog):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, aptinkerQSettings=None):
         """Constructor"""
 
         QDialog.__init__(self, parent=parent)
@@ -82,6 +128,8 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         self.settings = QSettings('APHLA', 'TinkerConfigDBSelector')
         self.loadViewSettings()
 
+        self._aptinkerQSettings = aptinkerQSettings
+
         self.pushButton_search.setIcon(QIcon(':/search.png'))
 
         all_ctime_operators = [self.comboBox_time_created_1.itemText(i)
@@ -120,6 +168,9 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         proxyModel.setDynamicSortFilter(False)
         tbV = self.tableView_config
         tbV.setModel(proxyModel)
+
+        tbV.setItemDelegate(ConfigDBTableViewItemDelegate(
+            tbV, self.tableModel_config, tbV.parent()))
 
         self.db = self.config_model.db
         self.db.create_temp_config_meta_table_text_view()
@@ -179,6 +230,130 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
                 'currentRowChanged(const QModelIndex &, const QModelIndex &)'),
             self.on_selection_change
         )
+
+        self.connect(self.configMetaDBViewWidget, SIGNAL('exportConfigToFile'),
+                     self.exportConfigToFile)
+        self.connect(self.configMetaDBViewWidget,
+                     SIGNAL('editConfigNameOrDescription'),
+                     self.editConfigNameOrDescription)
+
+    #----------------------------------------------------------------------
+    def exportConfigToFile(self):
+        """"""
+
+        msg = QMessageBox()
+
+        inds = self.selectionModel.selectedRows()
+
+        if inds != []:
+            row = inds[0].row()
+            config_id = self.search_result['config_id'][row]
+            saved_filepath = self.config_model.abstract.exportToFile(
+                config_id, self._aptinkerQSettings)
+            if saved_filepath:
+                msg.setText(
+                    'Successfully exported config (ID={0:d}) to the file "{1}".'.
+                    format(config_id, saved_filepath))
+                msg.exec_()
+        else:
+            msg.setText('You must select a configuration to be exported.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+
+    #----------------------------------------------------------------------
+    def editConfigNameOrDescription(self):
+        """"""
+
+        msg = QMessageBox()
+
+        inds = self.selectionModel.selectedRows()
+
+        if inds != []:
+            row = inds[0].row()
+            config_id = self.search_result['config_id'][row]
+
+            title = 'Edit Config Name or Description'
+            prompt = 'Property to Edit:'
+            result = QInputDialog.getItem(
+                self, title, prompt, ['Name', 'Description'], current=1,
+                editable=False)
+
+            if result[1]:
+                table_name = 'config_meta_text_search_table'
+                if result[0] == 'Name':
+                    current_name, current_desc = self.db.getColumnDataFromTable(
+                        table_name, column_name_list=['config_name',
+                                                      'config_description'],
+                        condition_str='config_id={0:d}'.format(config_id))
+                    current_name = current_name[0]
+                    current_desc = current_desc[0]
+
+                    title = 'Edit Config Name'
+                    prompt = 'Enter a new name:'
+                    result = QInputDialog.getText(self, title, prompt,
+                                                  text=current_name)
+
+                    if result[1]:
+                        new_name = result[0]
+
+                        mod_time_str = datestr(time.time())
+                        new_desc = current_desc + (
+                            ('\n### Modified by "{0}" on {1}###\n  Config Name '
+                             'changed from "{2}" to "{3}"\n').format(
+                                 getusername(), mod_time_str, current_name,
+                                 new_name))
+
+                        self.db.changeValues(
+                            table_name, 'config_name',
+                            '"{0}"'.format(new_name.replace('"', '""')),
+                            condition_str='config_id={0:d}'.format(config_id))
+                        self.db.changeValues(
+                            table_name, 'config_description',
+                            '"{0}"'.format(new_desc.replace('"', '""')),
+                            condition_str='config_id={0:d}'.format(config_id))
+
+                        # Update Config Meta DB Table
+                        row = self.search_result['config_id'].index(config_id)
+                        self.search_result['config_name'][row] = new_name
+                        self.search_result['config_description'][row] = new_desc
+                        self.tableModel_config_meta.repaint()
+                        self.on_selection_change(None, None)
+
+                else:
+                    current_desc, = self.db.getColumnDataFromTable(
+                        table_name, column_name_list=['config_description'],
+                        condition_str='config_id={0:d}'.format(config_id))
+                    current_desc = current_desc[0]
+
+                    dialog = ConfigDescriptionEditor(current_desc, parent=self)
+                    dialog.exec_()
+
+                    if dialog.result() == QDialog.Accepted:
+                        mod_time_str = datestr(time.time())
+                        temp_new_desc = dialog.plainTextEdit_new.property(
+                            'plainText')
+
+                        new_desc = current_desc + (
+                            ('\n### Modified by "{0}" on {1}###\n{2}\n'.format(
+                            getusername(), mod_time_str, temp_new_desc))
+                        )
+
+                        self.db.changeValues(
+                            table_name, 'config_description',
+                            '"{0}"'.format(new_desc.replace('"', '""')),
+                            condition_str='config_id={0:d}'.format(config_id))
+
+                        # Update Config Meta DB Table
+                        row = self.search_result['config_id'].index(config_id)
+                        self.search_result['config_description'][row] = new_desc
+                        self.tableModel_config_meta.repaint()
+                        self.on_selection_change(None, None)
+
+        else:
+            msg.setText('You must select a configuration whose name or '
+                        'description to be edited.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
@@ -545,7 +720,7 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             column_name, MATCH_cond_str)
 
         matched_rowids = self.db.getColumnDataFromTable(
-            'config_meta_text_search_table', column_name_list=['rowid'],
+            'config_meta_text_search_table', column_name_list=['config_id'],
             condition_str=fts_condition_str)
         if matched_rowids != []:
             matched_config_ids = list(matched_rowids[0])
@@ -563,7 +738,8 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         if current_index is None:
             self.textEdit_description.setText('')
             a.ref_step_size = np.nan
-            (a.group_name_ids, a.channel_ids, a.weights) = [], [], []
+            (a.group_name_ids, a.channel_ids, a.weights,
+             a.caput_enabled_rows) = [], [], [], []
         else:
             row = current_index.row()
 
@@ -577,14 +753,19 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
             a.ref_step_size = self.search_result['config_ref_step_size'][row]
             out = self.db.getColumnDataFromTable(
                 'config_table',
-                column_name_list=['group_name_id', 'channel_id', 'config_weight'],
+                column_name_list=['group_name_id', 'channel_id',
+                                  'config_weight', 'config_caput_enabled'],
                 condition_str='config_id={0:d}'.format(
                     self.search_result['config_id'][row]))
 
             if out != []:
-                (a.group_name_ids, a.channel_ids, a.weights) = map(list, out)
+                (a.group_name_ids, a.channel_ids, a.weights,
+                 a.caput_enabled_rows) = map(list, out)
             else:
-                (a.group_name_ids, a.channel_ids, a.weights) = [], [], []
+                (a.group_name_ids, a.channel_ids, a.weights,
+                 a.caput_enabled_rows) = [], [], [], []
+
+            a.weights = [w if w is not None else np.nan for w in a.weights]
 
         self.config_model.table.updateModel()
         self.config_model.table.repaint()
@@ -609,10 +790,27 @@ class ConfigModel(QObject):
         self.output = None
 
 #----------------------------------------------------------------------
-def make(isModal=True, parentWindow=None):
+def exportAllConfigsToFiles():
     """"""
 
-    dialog = ConfigDBSelector(parent=parentWindow)
+    db = TinkerMainDatabase()
+
+    max_config_id = db.getMaxInColumn('config_meta_table', 'config_id')
+
+    if '[config_meta_table text view]' \
+       not in db.getViewNames():
+        db.create_temp_config_meta_table_text_view()
+
+    for config_id in range(1, max_config_id+1):
+        config_abs = ConfigAbstractModel()
+        config_abs.exportToFile(config_id, qsettings=None, auto=True)
+
+#----------------------------------------------------------------------
+def make(isModal=True, parentWindow=None, aptinkerQSettings=None):
+    """"""
+
+    dialog = ConfigDBSelector(parent=parentWindow,
+                              aptinkerQSettings=aptinkerQSettings)
 
     if isModal:
         dialog.exec_()
@@ -638,4 +836,6 @@ def main():
     print dialog.config_model.abstract.channel_ids
 
 if __name__ == '__main__':
-    main()
+    #main()
+
+    exportAllConfigsToFiles()

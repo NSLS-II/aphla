@@ -5,18 +5,21 @@ sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
 import sys, os
+import os.path as osp
 import numpy as np
 import time
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from copy import deepcopy
+import json
 
 from PyQt4.QtCore import (QObject, Qt, SIGNAL, QAbstractItemModel,
                           QAbstractTableModel, QModelIndex)
-from PyQt4.QtGui import (QMessageBox)
+from PyQt4.QtGui import (QMessageBox, QFileDialog)
 
 from cothread import Sleep
 from cothread.catools import caget, caput, FORMAT_TIME
+import cothread.catools as catools
 
 import aphla as ap
 
@@ -229,7 +232,7 @@ class ConfigAbstractModel(QObject):
              'column_table',
              column_name_list=['column_key', 'short_descrip_name',
                                'str_format', 'user_editable_in_conf_setup'],
-             condition_str='only_for_snapshot=0')
+             condition_str='only_for_ss=0')
 
         self.all_str_formats = [f if f is not None else ':s'
                                 for f in self.all_str_formats]
@@ -240,15 +243,160 @@ class ConfigAbstractModel(QObject):
                                       [True if u == 1 else False
                                        for u in user_editable_list]))
 
-        self.group_name_ids = []
-        self.channel_ids    = []
-        self.weights        = []
+        self.group_name_ids     = []
+        self.channel_ids        = []
+        self.weights            = []
+        self.caput_enabled_rows = []
 
         self.pvsp_ids = []
 
     #----------------------------------------------------------------------
+    def exportToFile(self, config_id, qsettings=None, auto=False):
+        """"""
+
+        if auto:
+            save_filepath = 'config_{0:d}.json'.format(config_id)
+        else:
+            if qsettings:
+                last_directory_path = qsettings.last_directory_path
+            else:
+                last_directory_path = ''
+            caption = 'Export configuration to a file'
+            selected_filter_str = ('JSON files (*.json)')
+            filter_str = ';;'.join([selected_filter_str, 'All files (*)'])
+            save_filepath = QFileDialog.getSaveFileName(
+                caption=caption, directory=last_directory_path, filter=filter_str)
+
+            if not save_filepath:
+                return
+
+            qsettings.last_directory_path = osp.dirname(save_filepath)
+
+        d = {}
+
+        d['config_id'] = config_id
+
+        if '[config_meta_table text view]' \
+           not in self.db.getViewNames(square_brackets=True):
+            self.db.create_temp_config_meta_table_text_view()
+
+        ((d['config_name'],), (d['config_description'],), (d['username'],),
+         (d['config_masar_id'],), (d['config_ref_step_size'],),
+         (d['config_synced_group_weight'],), (config_ctime,)) = \
+            self.db.getColumnDataFromTable(
+                '[config_meta_table text view]',
+                column_name_list=['config_name', 'config_description', 'username',
+                                  'config_masar_id', 'config_ref_step_size',
+                                  'config_synced_group_weight', 'config_ctime'],
+                condition_str='config_id={0:d}'.format(config_id))
+
+        d['config_ctime'] = datestr(config_ctime)
+
+        if '[config_table text view]' \
+           not in self.db.getViewNames(square_brackets=True):
+            self.db.create_temp_config_table_text_view()
+
+        out = self.db.getColumnDataFromTable(
+            '[config_table text view]',
+            column_name_list=[
+                'group_name', 'channel_name', 'weight', 'caput_enabled',
+                'pvsp', 'pvrb',
+                'machine_name', 'lattice_name', 'elem_name', 'field', # related to APHLA channel
+                'unitsys', 'unitconv_type', 'polarity', 'unitsymb',
+                'unitsymb_raw', 'unitconv_data_toraw', 'unitconv_data_fromraw',
+                'unitconv_inv_toraw', 'unitconv_inv_fromraw'],
+            condition_str='config_id={0:d}'.format(config_id))
+
+        unitconv_dict = {}
+        d['channels'] = []
+        for i, (group_name, channel_name, weight, caput_enabled, pvsp, pvrb,
+                machine_name, lattice_name, elem_name, field,
+                unitsys, unitconv_type, polarity, unitsymb, unitsymb_raw,
+                unitconv_data_toraw, unitconv_data_fromraw, unitconv_inv_toraw,
+                unitconv_inv_fromraw) in enumerate(zip(*out)):
+
+            if unitconv_type == 'poly':
+                conv_data_fromraw = [float(s) for s
+                                     in unitconv_data_fromraw.split(',') if s]
+                conv_data_toraw   = [float(s) for s
+                                     in unitconv_data_toraw.split(',') if s]
+            elif unitconv_type == 'interp1':
+                xp_txt, fp_txt = unitconv_data_fromraw.split(';')
+                conv_data_fromraw = {'xp': [float(s) for s in xp_txt.split(',')],
+                                     'fp': [float(s) for s in fp_txt.split(',')]}
+                xp_txt, fp_txt = unitconv_data_toraw.split(';')
+                conv_data_toraw   = {'xp': [float(s) for s in xp_txt.split(',')],
+                                     'fp': [float(s) for s in fp_txt.split(',')]}
+            elif unitconv_type == 'NoConversion':
+                conv_data_fromraw = conv_data_toraw = ''
+            else:
+                raise ValueError('Unexpected unitconv_type: {0}'.format(
+                    unitconv_type))
+
+            unitconv_key = 'ch{0:d}'.format(i)
+            unitconv_dict[unitconv_key] = [
+                dict(type=unitconv_type, polarity=polarity, src_unitsys=None,
+                     dst_unitsys=unitsys, src_unitsymb=unitsymb_raw,
+                     dst_unitsymb=unitsymb, inv=unitconv_inv_fromraw,
+                     conv_data=conv_data_fromraw),
+                dict(type=unitconv_type, polarity=polarity, src_unitsys=unitsys,
+                     dst_unitsys=None, src_unitsymb=unitsymb,
+                     dst_unitsymb=unitsymb_raw, inv=unitconv_inv_toraw,
+                     conv_data=conv_data_toraw)]
+
+            if machine_name is not None:
+                aphla_channel_name = '.'.join([machine_name, lattice_name,
+                                               elem_name, field])
+            else:
+                aphla_channel_name = None
+
+            d['channels'].append([group_name, channel_name, weight,
+                                  caput_enabled, pvsp, pvrb, aphla_channel_name,
+                                  unitsys, unitconv_key])
+
+        # Only keep unique elements in unitconv_dict
+        key_inds_for_unique_elements = []
+        keys_to_be_checked = unitconv_dict.keys()[::-1]
+        while keys_to_be_checked != []:
+            k = keys_to_be_checked.pop()
+            temp_keys = [k]
+            for kk in keys_to_be_checked:
+                if unitconv_dict[k] == unitconv_dict[kk]:
+                    temp_keys.append(kk)
+            for kk in temp_keys[1:]:
+                keys_to_be_checked.remove(kk)
+                del unitconv_dict[kk]
+            key_inds_for_unique_elements.append([int(k[2:]) for k in temp_keys])
+        for key_inds in key_inds_for_unique_elements:
+            k = 'ch{0:d}'.format(key_inds[0])
+            for ind in key_inds[1:]:
+                d['channels'][ind][-1] = k
+        #
+        d['unitconv_dict'] = unitconv_dict
+
+        d['column_names'] = [
+            'group_name', 'channel_name', 'config_weight',
+            'config_caput_enabled', 'pvsp', 'pvrb', 'aphla_channel_name',
+            'unitsys', 'unitconv_key']
+
+        orig_float_repr = json.encoder.FLOAT_REPR
+        json.encoder.FLOAT_REPR = lambda f: (
+            '%{0}'.format(tinkerdb.UNITCONV_DATA_PRECISION) % f)
+        with open(save_filepath, 'w') as f:
+            json.dump(d, f, indent=2, sort_keys=True, separators=(',', ': '))
+        json.encoder.FLOAT_REPR = orig_float_repr
+
+        return save_filepath
+
+    #----------------------------------------------------------------------
     def isDataValid(self):
         """"""
+
+        if self.channel_ids == []:
+            msg = QMessageBox()
+            msg.setText('No channels specified.')
+            msg.exec_()
+            return False
 
         dup_ch_info_list = self.check_duplicate_channel_ids()
         if dup_ch_info_list != []:
@@ -382,7 +530,12 @@ class ConfigAbstractModel(QObject):
                 for r in row_inds:
                     self.weights[r] = new_val / self.ref_step_size
         elif col_key == 'unitsys':
-            raise NotImplementedError(col_key)
+            new_unitsys_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsys_table', 'unitsys_id', 'unitsys', new_val,
+                append_new=True)
+            for r in row_inds:
+                self.on_unitsys_change(r, new_unitsys_id)
+
         elif col_key == 'group_name':
             group_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
                 'group_name_table', 'group_name_id', 'group_name', new_val,
@@ -399,13 +552,124 @@ class ConfigAbstractModel(QObject):
                     self.weights[r] = sample_weight
 
         elif col_key == 'channel_name':
-            raise NotImplementedError(col_key)
+
+            new_channel_name_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'channel_name_table', 'channel_name_id', 'channel_name',
+                new_val, append_new=True)
+
+            for r in row_inds:
+                current_channel_id = self.channel_ids[r]
+
+                ((pvsp_id,), (pvrb_id,), (channel_name_id,), (unitsys_id,),
+                 (unitconv_toraw_id,), (unitconv_fromraw_id,),
+                 (aphla_ch_id,)) = self.db.getColumnDataFromTable(
+                     'channel_table',
+                     column_name_list=[
+                         'pvsp_id', 'pvrb_id', 'channel_name_id', 'unitsys_id',
+                         'unitconv_toraw_id', 'unitconv_fromraw_id',
+                         'aphla_ch_id'],
+                     condition_str='channel_id={0:d}'.format(current_channel_id))
+
+                new_channel_id = self.db.get_channel_id(
+                    pvsp_id, pvrb_id, unitsys_id, new_channel_name_id,
+                    unitconv_toraw_id, unitconv_fromraw_id,
+                    aphla_ch_id=aphla_ch_id, append_new=True)
+
+                self.channel_ids[r] = new_channel_id
+
         elif col_key == 'pvsp':
-            raise NotImplementedError(col_key)
+
+            if len(row_inds) != 1:
+                raise ValueError('No duplicate setpoint PVs allowed.')
+            else:
+                r = row_inds[0]
+
+            readonly = False
+            new_pvsp_id = self.db.get_pv_id(new_val, readonly, append_new=True)
+
+            if new_pvsp_id in (-1, -2):
+                # Non-exising or disconnected PV for -1
+                # Unacceptable PV data type for -2
+                return
+
+            current_channel_id = self.channel_ids[r]
+
+            ((pvsp_id,), (pvrb_id,), (channel_name_id,), (unitsys_id,),
+             (unitconv_toraw_id,), (unitconv_fromraw_id,),
+             (aphla_ch_id,)) = self.db.getColumnDataFromTable(
+                 'channel_table',
+                 column_name_list=[
+                     'pvsp_id', 'pvrb_id', 'channel_name_id', 'unitsys_id',
+                     'unitconv_toraw_id', 'unitconv_fromraw_id',
+                     'aphla_ch_id'],
+                 condition_str='channel_id={0:d}'.format(current_channel_id))
+
+            new_channel_id = self.db.get_channel_id(
+                new_pvsp_id, pvrb_id, unitsys_id, channel_name_id,
+                unitconv_toraw_id, unitconv_fromraw_id,
+                aphla_ch_id=aphla_ch_id, append_new=True)
+
+            self.channel_ids[r] = new_channel_id
+
         elif col_key == 'pvrb':
-            raise NotImplementedError(col_key)
+
+            readonly = True
+            new_pvrb_id = self.db.get_pv_id(new_val, readonly, append_new=True)
+
+            if new_pvrb_id in (-1, -2):
+                # Non-exising or disconnected PV for -1
+                # Unacceptable PV data type for -2
+                return
+
+            for r in row_inds:
+                current_channel_id = self.channel_ids[r]
+
+                ((pvsp_id,), (pvrb_id,), (channel_name_id,), (unitsys_id,),
+                 (unitconv_toraw_id,), (unitconv_fromraw_id,),
+                 (aphla_ch_id,)) = self.db.getColumnDataFromTable(
+                     'channel_table',
+                     column_name_list=[
+                         'pvsp_id', 'pvrb_id', 'channel_name_id', 'unitsys_id',
+                         'unitconv_toraw_id', 'unitconv_fromraw_id',
+                         'aphla_ch_id'],
+                     condition_str='channel_id={0:d}'.format(current_channel_id))
+
+                new_channel_id = self.db.get_channel_id(
+                    pvsp_id, new_pvrb_id, unitsys_id, channel_name_id,
+                    unitconv_toraw_id, unitconv_fromraw_id,
+                    aphla_ch_id=aphla_ch_id, append_new=True)
+
+                self.channel_ids[r] = new_channel_id
+
+        elif col_key == 'caput_enabled':
+            for r in row_inds:
+                self.caput_enabled_rows[r] = new_val
+
         else:
             raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
+
+    #----------------------------------------------------------------------
+    def on_unitsys_change(self, row_ind, new_unitsys_id):
+        """"""
+
+        current_channel_id = self.channel_ids[row_ind]
+
+        ((pvsp_id,), (pvrb_id,), (channel_name_id,), (unitsys_id,),
+         (unitconv_toraw_id,), (unitconv_fromraw_id,),
+         (aphla_ch_id,)) = self.db.getColumnDataFromTable(
+            'channel_table',
+            column_name_list=[
+                'pvsp_id', 'pvrb_id', 'channel_name_id', 'unitsys_id',
+                'unitconv_toraw_id', 'unitconv_fromraw_id',
+                'aphla_ch_id'],
+            condition_str='channel_id={0:d}'.format(current_channel_id))
+
+        new_channel_id = self.db.get_channel_id(
+            pvsp_id, pvrb_id, new_unitsys_id, channel_name_id,
+            unitconv_toraw_id, unitconv_fromraw_id,
+            aphla_ch_id=aphla_ch_id, append_new=True)
+
+        self.channel_ids[row_ind] = new_channel_id
 
 ########################################################################
 class ConfigTableModel(QAbstractTableModel):
@@ -452,8 +716,15 @@ class ConfigTableModel(QAbstractTableModel):
         row_top_index    = topLeftIndex.row()
         row_bottom_index = bottomRightIndex.row()
 
-        if not ((col_left_index == col_right_index) and
-                (row_top_index == row_bottom_index)):
+        if ((col_left_index == col_right_index) and
+            (self.abstract.all_col_keys[col_left_index] == 'caput_enabled')):
+            row_inds = range(row_top_index, row_bottom_index+1)
+            if len(row_inds) >= 2:
+                raise ValueError('Unexpected number of rows')
+        elif ((col_left_index == col_right_index) and
+              (row_top_index == row_bottom_index)):
+            pass
+        else:
             return
 
         index = topLeftIndex
@@ -461,7 +732,8 @@ class ConfigTableModel(QAbstractTableModel):
         col_ind = col_left_index
         col_key = self.abstract.all_col_keys[col_ind]
 
-        if self.abstract.synced_group_weight:
+        if self.abstract.synced_group_weight and \
+           (col_key in ('weight', 'step_size', 'group_name')):
             gid = self.abstract.group_name_ids[row_ind]
             synced_row_inds = [
                 r for r, i in enumerate(self.abstract.group_name_ids)
@@ -500,8 +772,24 @@ class ConfigTableModel(QAbstractTableModel):
                 if synced_row_inds != []:
                     self.abstract.weights[row_ind] = \
                         self.abstract.weights[synced_row_inds[0]]
+
+        elif col_key == 'unitsys':
+            new_unitsys = self.data(index)
+            new_unitsys_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                'unitsys_table', 'unitsys_id', 'unitsys', new_unitsys,
+                append_new=True)
+            self.abstract.on_unitsys_change(row_ind, new_unitsys_id)
+
+        elif col_key == 'caput_enabled':
+            new_val = self.data(self.index(row_ind, col_ind), role=Qt.UserRole)
+            self.abstract.modify_data(new_val, col_ind, [row_ind])
+
+        elif col_key in ('channel_name', 'pvsp', 'pvrb'):
+            new_val = self.data(self.index(row_ind, col_ind))
+            self.abstract.modify_data(new_val, col_ind, [row_ind])
+
         else:
-            return
+            raise ValueError('Unexpected col_key: {0}'.format(col_key))
 
         self.updateModel()
         self.repaint()
@@ -609,6 +897,7 @@ class ConfigTableModel(QAbstractTableModel):
         unitsymb_list              = []
         unitsymb_raw_list          = []
         unitconv_type_list         = []
+        polarity_list              = []
         conv_data_txt_fromraw_list = []
         conv_data_txt_toraw_list   = []
         unitconv_inv_toraw_list    = []
@@ -616,30 +905,33 @@ class ConfigTableModel(QAbstractTableModel):
         for unitconv_toraw_id, unitconv_fromraw_id \
             in zip(unitconv_toraw_ids, unitconv_fromraw_ids):
             (unitsymb,), (unitsymb_raw,), (unitconv_type,), \
-                (conv_data_txt,), (inv,) = \
+                (unitconv_blob,), (inv,), (polarity,)= \
                 self.db.getColumnDataFromTable(
                     '[unitconv_table text view]',
                     column_name_list=['dst_unitsymb', 'src_unitsymb',
-                                      'unitconv_type', 'conv_data_txt',
-                                      'inv'],
+                                      'unitconv_type', 'unitconv_blob',
+                                      'inv', 'polarity'],
                     condition_str=('unitconv_id={0:d}'.
                                    format(unitconv_fromraw_id)))
 
             unitsymb_list.append(unitsymb)
             unitsymb_raw_list.append(unitsymb_raw)
             unitconv_type_list.append(unitconv_type)
+            polarity_list.append(polarity)
 
+            conv_data_txt = str(tinkerdb.blobloads(unitconv_blob))
             conv_data_txt_fromraw_list.append(conv_data_txt)
             if inv == 0: inv = 'False'
             else       : inv = 'True'
             unitconv_inv_fromraw_list.append(inv)
 
-            (conv_data_txt,), (inv,) = self.db.getColumnDataFromTable(
+            (unitconv_blob,), (inv,) = self.db.getColumnDataFromTable(
                 '[unitconv_table text view]',
-                column_name_list=['conv_data_txt', 'inv'],
+                column_name_list=['unitconv_blob', 'inv'],
                 condition_str=('unitconv_id={0:d}'.
                                format(unitconv_toraw_id)))
 
+            conv_data_txt = str(tinkerdb.blobloads(unitconv_blob))
             conv_data_txt_toraw_list.append(conv_data_txt)
             if inv == 0: inv = 'False'
             else       : inv = 'True'
@@ -648,6 +940,7 @@ class ConfigTableModel(QAbstractTableModel):
         self.d['unitsymb']              = unitsymb_list
         self.d['unitsymb_raw']          = unitsymb_raw_list
         self.d['unitconv_type']         = unitconv_type_list
+        self.d['unitconv_polarity']     = polarity_list
         self.d['unitconv_data_toraw']   = conv_data_txt_toraw_list
         self.d['unitconv_inv_toraw']    = unitconv_inv_toraw_list
         self.d['unitconv_data_fromraw'] = conv_data_txt_fromraw_list
@@ -655,6 +948,8 @@ class ConfigTableModel(QAbstractTableModel):
 
         self.d['weight'] = np.array(self.abstract.weights)
         self.d['step_size'] = self.abstract.ref_step_size * self.d['weight']
+
+        self.d['caput_enabled'] = np.array(self.abstract.caput_enabled_rows)
 
     #----------------------------------------------------------------------
     def repaint(self):
@@ -684,15 +979,16 @@ class ConfigTableModel(QAbstractTableModel):
         col_key    = self.abstract.all_col_keys[col]
         str_format = self.abstract.all_str_formats[col]
 
+        col_list = self.d[col_key]
+
         if ( not index.isValid() ) or \
            ( not (0 <= row < self.rowCount()) ):
             return None
 
-        if role in (Qt.DisplayRole, Qt.EditRole):
+        if (str_format != 'checkbox') and (role in (Qt.DisplayRole, Qt.EditRole)):
             # ^ Need "EditRole". Otherwise, existing text will disappear
             # when trying to edit.
 
-            col_list = self.d[col_key]
             if len(col_list) != 0: value = col_list[row]
             else                 : return 'N/A'
 
@@ -704,6 +1000,18 @@ class ConfigTableModel(QAbstractTableModel):
                 return str(value)
             else:
                 return '{{{:s}}}'.format(str_format).format(value)
+
+        elif str_format == 'checkbox':
+
+            value = col_list[row]
+
+            if role == Qt.DisplayRole:
+                return None
+            elif role in (Qt.EditRole, Qt.UserRole):
+                if value == 1:
+                    return True
+                else:
+                    return False
 
         else:
             return None
@@ -724,7 +1032,7 @@ class ConfigTableModel(QAbstractTableModel):
             return False
 
         elif (col_key in ('channel_name', 'pvsp', 'pvrb')) and \
-             (self.d['elem_name'][row] != '') and \
+             (self.d['elem_name'][row] is not None) and \
              (value != self.d[col_key][row]):
 
             msg = QMessageBox()
@@ -748,7 +1056,7 @@ class ConfigTableModel(QAbstractTableModel):
         else:
             L = self.d[col_key]
 
-            if (str_format is None) or (str_format == ':s'):
+            if (str_format is None) or (str_format in (':s', 'checkbox')):
                 L[row] = value
             elif str_format.endswith('g'):
                 if value == '':
@@ -811,6 +1119,43 @@ class ConfigTableModel(QAbstractTableModel):
                 return Qt.ItemFlags(default_flags | Qt.ItemIsEditable) # editable
         else:
             return default_flags # non-editable
+
+    #----------------------------------------------------------------------
+    def removeRows(self, row, count, parent=QModelIndex()):
+        """"""
+
+        row_list = [row+i for i in range(count)]
+
+        self.blockSignals(True)
+
+        try:
+            for r in row_list[::-1]:
+                self.beginRemoveRows(parent, r, r)
+            self.endRemoveRows()
+            self.blockSignals(False)
+        except:
+            self.blockSignals(False)
+            return False
+
+        np_array_keys = [k for k, v in self.d.iteritems()
+                         if isinstance(v, np.ndarray)]
+
+        for r in row_list[::-1]:
+            self.abstract.group_name_ids.pop(r)
+            self.abstract.channel_ids.pop(r)
+            self.abstract.weights.pop(r)
+            self.abstract.caput_enabled_rows.pop(r)
+
+            for k, v in self.d.iteritems():
+                if k not in np_array_keys:
+                    v.pop(r)
+
+        for k in np_array_keys:
+            self.d[k] = np.delete(self.d[k], row_list, axis=0)
+
+        self.repaint()
+
+        return True
 
 ########################################################################
 class TreeItem(object):
@@ -1029,7 +1374,7 @@ class SnapshotAbstractModel(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, config_abstract_model):
+    def __init__(self, config_abstract_model, vis_col_key_list):
         """Constructor
 
         Size List:
@@ -1041,7 +1386,8 @@ class SnapshotAbstractModel(QObject):
 
             self.n_caget_pvs:
                 self.caget_raws
-                self.caget_convs
+                self.caget_convs # unit-converted caget data
+                self.caget_unitconvs # from-raw unit conversion objects for caput
                 self.caget_ioc_ts_tuples
                 self.caget_pv_str_list
                 self.caget_pv_map_list
@@ -1049,7 +1395,9 @@ class SnapshotAbstractModel(QObject):
 
             self.n_caput_pvs:
                 self.caput_raws
-                self.caput_convs
+                self.caput_convs # unit-converted sent caput data
+                self.caput_fromraw_unitconvs # from-raw unit conversion objects for caput
+                self.caput_toraw_unitconvs # to-raw unit conversion objects for caput
                 self.caput_pv_str_list
                 self.caput_pv_map_list
                 self.caput_pv_size_list
@@ -1082,13 +1430,13 @@ class SnapshotAbstractModel(QObject):
         self.nRows = len(_ca.channel_ids)
 
         self.ss_id                = None
-        self.config_id            = None
+        self.config_id            = _ca.config_id
         self.name                 = ''
         self.description          = ''
         self.userinfo             = getuserinfo()
-        self.masar_id             = None
-        self.ref_step_size        = self._config_abstract.ref_step_size
-        self.synced_group_weight  = True
+        self.masar_id             = _ca.masar_id
+        self.ref_step_size        = _ca.ref_step_size
+        self.synced_group_weight  = _ca.synced_group_weight
         self.mult_factor          = 1.0
         self.caget_sent_ts_second = None
         self.caput_sent_ts_second = None
@@ -1097,28 +1445,34 @@ class SnapshotAbstractModel(QObject):
 
         self.weight_array        = _ct.d['weight']
         self.step_size_array     = self.ref_step_size * self.weight_array
-        self.caput_enabled_rows  = np.array([True]*self.nRows)
+        self.caput_enabled_rows  = _ct.d['caput_enabled']
 
         self.db = tinkerdb.TinkerMainDatabase()
 
         (self.all_col_keys, self.all_col_names, self.all_str_formats,
-         user_editable_list) = config.COL_DEF.getColumnDataFromTable(
-             'column_table',
-             column_name_list=['column_key', 'short_descrip_name',
-                               'str_format', 'user_editable_in_snapshot'])
+         user_editable_list, static_in_ss_list) = \
+            config.COL_DEF.getColumnDataFromTable(
+                'column_table',
+                column_name_list=['column_key', 'short_descrip_name',
+                                  'str_format', 'user_editable_in_ss',
+                                  'static_in_ss'])
 
         self.all_str_formats = [f if f is not None else ':s'
                                 for f in self.all_str_formats]
 
-        self.visible_col_keys = self.all_col_keys[:]
+        self.visible_col_keys = vis_col_key_list[:]
 
         self.user_editable = dict(zip(self.all_col_keys,
                                       [True if u == 1 else False
                                        for u in user_editable_list]))
 
+        self.dynamic_col_keys = [
+            k for k, static in zip(self.all_col_keys, static_in_ss_list)
+            if not static]
+
         self.ss_only_col_keys = config.COL_DEF.getColumnDataFromTable(
             'column_table', column_name_list=['column_key'],
-            condition_str='only_for_snapshot==1')[0]
+            condition_str='only_for_ss==1')[0]
 
         self.col_ids = {}
         for k in self.ss_only_col_keys:
@@ -1248,33 +1602,172 @@ class SnapshotAbstractModel(QObject):
             if col == self.col_ids['cur_SentSP']]
         self.maps['cur_SP_ioc_ts'] = deepcopy(self.maps['cur_SP'])
         self.maps['cur_RB_ioc_ts'] = deepcopy(self.maps['cur_RB'])
+        self.maps['cur_ConvSP']    = deepcopy(self.maps['cur_SP'])
+        self.maps['cur_ConvRB']    = deepcopy(self.maps['cur_RB'])
+        self.maps['cur_ConvSentSP']= deepcopy(self.maps['cur_SentSP'])
         self.maps['ini_SP']        = deepcopy(self.maps['cur_SP'])
         self.maps['ini_SP_ioc_ts'] = deepcopy(self.maps['cur_SP'])
         self.maps['ini_RB']        = deepcopy(self.maps['cur_RB'])
         self.maps['ini_RB_ioc_ts'] = deepcopy(self.maps['cur_RB'])
+        self.maps['ini_ConvSP']    = deepcopy(self.maps['ini_SP'])
+        self.maps['ini_ConvRB']    = deepcopy(self.maps['ini_RB'])
+
+        self.rb_sp_same_size_rows = []
+        for i, (sp_size, rb_size) in enumerate(zip(
+            _ct.d['pvsp_array_size'], _ct.d['pvrb_array_size'])):
+            if sp_size == rb_size:
+                self.rb_sp_same_size_rows.append(i)
 
         self.n_caget_pvs = len(self.caget_pv_str_list)
         self.n_caput_pvs = len(self.caput_pv_str_list)
 
-        self.caget_raws  = np.ones(self.n_caget_pvs)*np.nan
-        self.caget_convs = np.ones(self.n_caget_pvs)*np.nan
+        self.caget_raws  = np.ones(self.n_caget_pvs, dtype=object)*np.nan
+        self.caget_convs = np.ones(self.n_caget_pvs, dtype=object)*np.nan
         self.caget_ioc_ts_tuples = np.array([(None,None)]*self.n_caget_pvs)
 
-        self.caput_raws  = np.ones(self.n_caput_pvs)*np.nan
-        self.caput_convs = np.ones(self.n_caput_pvs)*np.nan
+        self.caput_raws  = np.ones(self.n_caput_pvs, dtype=object)*np.nan
+        self.caput_convs = np.ones(self.n_caput_pvs, dtype=object)*np.nan
 
         self.caput_not_yet = True
+
+        self.init_unitconv()
 
         self.update_pv_vals()
 
         self.update_init_pv_vals()
 
     #----------------------------------------------------------------------
+    def get_unitconv_callable(self, conv_type, conv_inv, polarity, conv_data):
+        """"""
+
+        if conv_type == 'NoConversion':
+            return lambda val: val
+        elif (conv_type == 'poly') and (conv_inv == 0):
+            coeffs = list(conv_data)
+            return np.poly1d(coeffs)*polarity
+        elif (conv_type == 'poly') and (conv_inv == 1):
+            a, b = conv_data
+            ar, br = polarity/a, -b/a
+            return np.poly1d([ar, br])
+        elif (conv_type == 'interp1') and (conv_inv == 0):
+            xp = list(conv_data[0])
+            fp = list(conv_data[1])
+            # `xp` is assumed to be monotonically increasing. Otherwise,
+            # interpolation will make no sense.
+            return lambda x: polarity*np.interp(x, xp, fp,
+                                                left=np.nan, right=np.nan)
+        elif (conv_type == 'interp1') and (conv_inv == 1):
+            xp = list(conv_data[0])
+            fp = list(conv_data[1])
+            # `xp` is assumed to be monotonically increasing. Otherwise,
+            # interpolation will make no sense.
+            # `fp` is assumed to be monotonically increasing or decreasing.
+            # Otherwise, this interpolation definition is not invertible.
+            if np.all(np.diff(fp) > 0.0):
+                xp_inv = fp
+                fp_inv = xp
+            elif np.all(np.diff(fp) < 0.0):
+                xp_inv = np.flipud(fp)
+                fp_inv = np.flipud(xp)
+            return lambda x: np.interp(polarity*x, xp_inv, fp_inv,
+                                       left=np.nan, right=np.nan)
+        else:
+            raise ValueError('Unexpected unit conversion type: {0}'.format(
+                conv_type))
+
+    #----------------------------------------------------------------------
+    def init_unitconv(self):
+        """"""
+
+        channel_ids = self._config_abstract.channel_ids[:]
+
+        unitconv_toraw_ids, unitconv_fromraw_ids = \
+            self.db.getMatchedColumnDataFromTable(
+                'channel_table', 'channel_id', channel_ids, ':d',
+                column_name_return_list=['unitconv_toraw_id',
+                                         'unitconv_fromraw_id'])
+
+        if '[unitconv_table text view]' \
+           not in self.db.getViewNames(square_brackets=True):
+            self.db.create_temp_unitconv_table_text_view()
+
+        ## Initialize unit conversion data for caget
+
+        (fromraw_conv_types, fromraw_unitconv_blobs, fromraw_conv_invs,
+         fromraw_polarities) = self.db.getMatchedColumnDataFromTable(
+             '[unitconv_table text view]', 'unitconv_id',
+             unitconv_fromraw_ids, ':d',
+             column_name_return_list=['unitconv_type', 'unitconv_blob',
+                                      'inv', 'polarity'])
+
+        fromraw_conv_data = [tinkerdb.blobloads(blob)
+                             for blob in fromraw_unitconv_blobs]
+
+        self.caget_unitconvs = [None]*self.n_caget_pvs
+
+        rb_map_row_list = [x[0] for x in self.maps['cur_RB']]
+        sp_map_row_list = [x[0] for x in self.maps['cur_SP']]
+        for row, (conv_type, conv_data, conv_inv, polarity) in enumerate(zip(
+            fromraw_conv_types, fromraw_conv_data, fromraw_conv_invs,
+            fromraw_polarities)):
+
+            uc_callable = self.get_unitconv_callable(
+                conv_type, conv_inv, polarity, conv_data)
+
+            if row in rb_map_row_list:
+                i = self.maps['cur_RB'][rb_map_row_list.index(row)][1]
+                self.caget_unitconvs[i] = uc_callable
+            if row in sp_map_row_list:
+                i = self.maps['cur_SP'][sp_map_row_list.index(row)][1]
+                self.caget_unitconvs[i] = uc_callable
+
+        ## Initialize unit conversion data for caput
+
+        (toraw_conv_types, toraw_unitconv_blobs, toraw_conv_invs,
+         toraw_polarities) = self.db.getMatchedColumnDataFromTable(
+             '[unitconv_table text view]', 'unitconv_id',
+             unitconv_toraw_ids, ':d',
+             column_name_return_list=['unitconv_type', 'unitconv_blob',
+                                      'inv', 'polarity'])
+
+        toraw_conv_data = [tinkerdb.blobloads(blob)
+                           for blob in toraw_unitconv_blobs]
+
+        self.caput_toraw_unitconvs   = [None]*self.n_caput_pvs
+        self.caput_fromraw_unitconvs = [None]*self.n_caput_pvs
+
+        sp_map_row_list = [x[0] for x in self.maps['cur_SentSP']]
+
+        # First get unit conversion to-raw
+        for row, (conv_type, conv_data, conv_inv, polarity) in enumerate(zip(
+            toraw_conv_types, toraw_conv_data, toraw_conv_invs,
+            toraw_polarities)):
+
+            uc_callable = self.get_unitconv_callable(
+                conv_type, conv_inv, polarity, conv_data)
+
+            if row in sp_map_row_list:
+                i = self.maps['cur_SentSP'][sp_map_row_list.index(row)][1]
+                self.caput_toraw_unitconvs[i] = uc_callable
+
+        # Then get unit conversion from-raw
+        for row, (conv_type, conv_data, conv_inv, polarity) in enumerate(zip(
+            fromraw_conv_types, fromraw_conv_data, fromraw_conv_invs,
+            fromraw_polarities)):
+
+            uc_callable = self.get_unitconv_callable(
+                conv_type, conv_inv, polarity, conv_data)
+
+            if row in sp_map_row_list:
+                i = self.maps['cur_SentSP'][sp_map_row_list.index(row)][1]
+                self.caput_fromraw_unitconvs[i] = uc_callable
+
+    #----------------------------------------------------------------------
     def update_caput_enabled_indexes(self):
         """"""
 
         self.caput_enabled_indexes = np.array([True]*self.n_caput_pvs)
-        for row, index in self.maps['cur_SP']:
+        for row, index in self.maps['cur_SentSP']:
             self.caput_enabled_indexes[index] = self.caput_enabled_rows[row]
 
     #----------------------------------------------------------------------
@@ -1290,13 +1783,22 @@ class SnapshotAbstractModel(QObject):
 
         self.caget_raws = np.array(
             [r if r.ok else (np.nan if size == 1 else np.ones(size)*np.nan)
-             for r, size in zip(ca_raws, self.caget_pv_size_list)], dtype=object)
+             for r, size in zip(ca_raws, self.caget_pv_size_list)],
+            dtype=object)
+        self.caget_convs = np.array(
+            [uc(r) if uc is not None else r for r, uc
+             in zip(self.caget_raws, self.caget_unitconvs)], dtype=object)
+
         if self.caget_raws.ndim != 1:
             nRow, nCol = self.caget_raws.shape
             temp = np.zeros(nRow, dtype=object)
             for i in range(nRow):
                 temp[i] = self.caget_raws[i,:]
             self.caget_raws = temp
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = self.caget_convs[i,:]
+            self.caget_convs[i,:]
 
         self.caget_ioc_ts_tuples = np.fromiter(
             (r.raw_stamp if r.ok else (-1,-1) for r in ca_raws),
@@ -1305,13 +1807,35 @@ class SnapshotAbstractModel(QObject):
 
         self.emit(SIGNAL('pvValuesUpdatedInSSAbstract'))
 
-        tEnd_visual = time.time()
-
+        tEnd_model_view = time.time()
 
         print '# caget update only took {:.6f} seconds'.format(
             tEnd_caget - self.caget_sent_ts_second)
-        print '# caget & visual update took {:.6f} seconds'.format(
-            tEnd_visual - self.caget_sent_ts_second)
+        print '# caget & model/view update took {:.6f} seconds'.format(
+            tEnd_model_view - self.caget_sent_ts_second)
+
+    #----------------------------------------------------------------------
+    def get_index_map_get2put(self):
+        """"""
+
+        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+        index_map_get2put = [indexes_caput[rows_caput.index(r)]
+                             for r in rows_caget]
+
+        return index_map_get2put, indexes_caget
+
+    #----------------------------------------------------------------------
+    def get_index_map_put2get(self):
+        """"""
+
+        rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+
+        index_map_put2get = [indexes_caget[rows_caget.index(r)]
+                             for r in rows_caput]
+
+        return index_map_put2get, indexes_caput
 
     #----------------------------------------------------------------------
     def update_init_pv_vals(self):
@@ -1319,6 +1843,11 @@ class SnapshotAbstractModel(QObject):
 
         self.caget_ini_raws  = np.copy(self.caget_raws)
         self.caget_ini_convs = np.copy(self.caget_raws)
+
+        self.caput_ini_raws = np.copy(self.caput_raws)
+        index_map_get2put, indexes_caget = self.get_index_map_get2put()
+        self.caput_ini_raws[index_map_get2put] = \
+            self.caget_ini_raws[indexes_caget]
 
     #----------------------------------------------------------------------
     def update_ss_ctime(self):
@@ -1330,20 +1859,53 @@ class SnapshotAbstractModel(QObject):
                 condition_str='ss_id={0:d}'.format(self.ss_id))[0][0]
 
     #----------------------------------------------------------------------
-    def update_caput_raws(self):
+    def update_NaNs_in_caput_raws(self):
         """"""
 
+        #rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
+        #rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
+        #index_map_get2put = [indexes_caput[rows_caput.index(r)]
+                             #for r in rows_caget]
+        #index_map_put2get = [indexes_caget[rows_caget.index(r)]
+                             #for r in rows_caput]
+
+        index_map_get2put, indexes_caget = self.get_index_map_get2put()
+        index_map_put2get, indexes_caput = self.get_index_map_put2get()
+
         if self.caput_not_yet:
-            rows, indexes = map(list, zip(*self.maps['cur_SP']))
-            self.caput_raws = self.caget_raws[indexes]
+            self.caput_raws[index_map_get2put] = self.caget_raws[indexes_caget]
+            self.caput_convs = np.array(
+                [uc(r) if uc is not None else r for r, uc
+                 in zip(self.caput_raws,
+                        self.caput_fromraw_unitconvs)],
+                dtype=object)
             self.caput_not_yet = False
         else:
-            nan_inds = [i for i, r in enumerate(self.caput_raws)
-                        if np.any(np.isnan(r))]
+            nan_inds = [i for i, r, in enumerate(self.caput_raws)
+                        if np.any(np.isnan(
+                            r if not isinstance(r, catools.dbr.ca_array)
+                            else r.__array__().astype(float)))]
             if nan_inds != []:
-                rows, indexes = map(list, zip(*self.maps['cur_SP']))
                 for i in nan_inds:
-                    self.caput_raws[i] = self.caget_raws[indexes[i]]
+                    self.caput_raws[i] = self.caget_raws[index_map_put2get[i]]
+                    r  = self.caput_raws[i]
+                    uc = self.caput_fromraw_unitconvs[i]
+                    self.caput_convs[i] = uc(r) if uc is not None else r
+
+        self.caput_convs = self.convert_caput_raws(
+            self.caput_raws, self.caput_fromraw_unitconvs)
+
+    #----------------------------------------------------------------------
+    def convert_caput_raws(self, caput_raws, caput_fromraw_unitconv_list):
+        """"""
+
+        caput_raws = [r if not isinstance(r, catools.dbr.ca_array)
+                      else r.__array__().astype(float) for r in caput_raws]
+
+        return np.array(
+            [uc(r) if uc is not None else r for r, uc
+             in zip(caput_raws, caput_fromraw_unitconv_list)],
+            dtype=object)
 
     #----------------------------------------------------------------------
     def invoke_caput(self):
@@ -1351,7 +1913,9 @@ class SnapshotAbstractModel(QObject):
 
         out = [(i, r) for i, (r, enabled)
                in enumerate(zip(self.caput_raws, self.caput_enabled_indexes))
-               if enabled and (not np.isnan(r))]
+               if enabled and (not np.any(np.isnan(
+                   r if not isinstance(r, catools.dbr.ca_array)
+                   else r.__array__().astype(float))))]
         if out != []:
             enabled_indexes, caput_raws = map(list, zip(*out))
             caput_pv_str_list = [pv for i, pv
@@ -1370,6 +1934,11 @@ class SnapshotAbstractModel(QObject):
         caput(caput_pv_str_list, caput_raws, throw=False,
               timeout=self.caput_timeout)
 
+        # Update unit-converted SentSP
+        self.caput_convs[enabled_indexes] = self.convert_caput_raws(
+            caput_raws, [self.caput_fromraw_unitconvs[i]
+                         for i in enabled_indexes])
+
         if not np.isnan(self.auto_caget_delay_after_caput):
             Sleep(self.auto_caget_delay_after_caput)
             self.update_pv_vals()
@@ -1380,16 +1949,78 @@ class SnapshotAbstractModel(QObject):
     def step_up(self, positive=True):
         """"""
 
-        self.update_caput_raws()
+        self.update_NaNs_in_caput_raws()
 
         self.update_caput_enabled_indexes()
 
+        #uc_list = list(
+            #np.array(self.caput_toraw_unitconvs,
+                     #dtype=object)[self.caput_enabled_indexes])
+        #
+        # TODO: Need to test the following block against real machine
+        uc_list = [uc for uc, enabled in zip(self.caput_toraw_unitconvs,
+                                             self.caput_enabled_indexes)
+                   if enabled]
+
+        current_caput_raws = self.caput_raws[self.caput_enabled_indexes]
+        current_caput_raws = np.array(
+            [o if not isinstance(o, catools.dbr.ca_array) else o.__array__()
+             for o in current_caput_raws],
+            dtype=object)
+        current_caput_convs = self.caput_convs[self.caput_enabled_indexes]
+
+        enabled = self.caput_enabled_rows.astype(bool)
+        converted_step_size_array = self.step_size_array[enabled]
+        # Now need to re-sort `converted_step_size_array`
+        enabled_rows = np.where(enabled)[0]
+        rows, indexes = map(list, zip(*self.maps['cur_SentSP']))
+        enabled_indexes = [rows.index(r) for r in enabled_rows]
+        converted_step_size_array = converted_step_size_array[
+            np.argsort(enabled_indexes)]
+
         if positive:
-            self.caput_raws[self.caput_enabled_indexes] += \
-                self.step_size_array[self.caput_enabled_rows]
+            new_caput_convs = current_caput_convs + converted_step_size_array
         else:
-            self.caput_raws[self.caput_enabled_indexes] -= \
-                self.step_size_array[self.caput_enabled_rows]
+            new_caput_convs = current_caput_convs - converted_step_size_array
+        new_caput_raws = np.array(
+            [uc(caput_conv) if uc is not None else caput_conv
+             for (caput_conv, uc) in zip(new_caput_convs, uc_list)],
+            dtype=object)
+        if new_caput_raws.ndim != 1:
+            nRow, nCol = new_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = new_caput_raws[i,:]
+            new_caput_raws = temp
+        if current_caput_raws.ndim != 1:
+            nRow, nCol = current_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = current_caput_raws[i,:]
+            current_caput_raws = temp
+
+        new_caput_raws_nan_inds = np.array(
+            [True if np.any(np.isnan(r)) else False for r in new_caput_raws])
+        if np.any(new_caput_raws_nan_inds):
+            enabled_indexes = np.where(self.caput_enabled_indexes)[0]
+            invalid_change_indexes = enabled_indexes[new_caput_raws_nan_inds]
+            rows, indexes = map(list, zip(*self.maps['cur_SentSP']))
+            invalid_row_strings = [str(rows[indexes.index(i)]+1) # 1-indexed
+                                   for i in invalid_change_indexes]
+            msg = QMessageBox()
+            msg.setWindowTitle('Aborting Step Change')
+            msg.setText('One or more of the desired changes will result in unit '
+                        'conversion failure. Most likely cause is due to '
+                        'out of interpolation range. Try reducing the change.')
+            msg.setInformativeText('The following rows will be invalid: {0}'.
+                                   format(', '.join(invalid_row_strings)))
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        raw_step_size_array = new_caput_raws - current_caput_raws
+
+        self.caput_raws[self.caput_enabled_indexes] += raw_step_size_array
 
         self.invoke_caput()
 
@@ -1403,9 +2034,20 @@ class SnapshotAbstractModel(QObject):
     def multiply(self, positive=True):
         """"""
 
-        self.update_caput_raws()
+        self.update_NaNs_in_caput_raws()
 
         self.update_caput_enabled_indexes()
+
+        #uc_list = list(
+            #np.array(self.caput_toraw_unitconvs,
+                     #dtype=object)[self.caput_enabled_indexes])
+        #
+        # TODO: Need to test the following block against real machine
+        uc_list = [uc for uc, enabled in zip(self.caput_toraw_unitconvs,
+                                             self.caput_enabled_indexes)
+                   if enabled]
+
+        current_caput_convs = self.caput_convs[self.caput_enabled_indexes]
 
         if positive:
             if self.mult_factor > 2.0:
@@ -1422,7 +2064,8 @@ class SnapshotAbstractModel(QObject):
                 if choice == QMessageBox.No:
                     return
 
-            self.caput_raws[self.caput_enabled_indexes] *= self.mult_factor
+            mult_factor = self.mult_factor
+
         else:
             if self.mult_factor != 0.0:
                 if self.mult_factor < 0.5:
@@ -1439,13 +2082,23 @@ class SnapshotAbstractModel(QObject):
                     if choice == QMessageBox.No:
                         return
 
-                self.caput_raws[self.caput_enabled_indexes] /= self.mult_factor
+                mult_factor = 1.0/self.mult_factor
+
             else:
                 msg = QMessageBox()
                 msg.setText('Setpoints cannot be divided by 0.')
                 msg.setIcon(QMessageBox.Warning)
                 msg.exec_()
                 return
+
+        new_caput_convs = current_caput_convs * mult_factor
+
+        new_caput_raws = np.array(
+            [uc(caput_conv) if uc is not None else caput_conv
+             for (caput_conv, uc) in zip(new_caput_convs, uc_list)],
+            dtype=object)
+
+        self.caput_raws[self.caput_enabled_indexes] = new_caput_raws
 
         self.invoke_caput()
 
@@ -1454,6 +2107,65 @@ class SnapshotAbstractModel(QObject):
         """"""
 
         self.multiply(positive=False)
+
+    #----------------------------------------------------------------------
+    def on_visible_column_change(self, visible_col_name_list):
+        """"""
+
+        self.visible_col_keys = [
+            self.all_col_keys[self.all_col_names.index(name)]
+            for name in visible_col_name_list
+        ]
+
+    #----------------------------------------------------------------------
+    def restore_IniSP(self, n_steps, wait_time):
+        """"""
+
+        self.update_NaNs_in_caput_raws()
+
+        self.update_caput_enabled_indexes()
+
+        current_caput_raws = self.caput_raws[self.caput_enabled_indexes]
+        current_caput_raws = np.array(
+            [o if not isinstance(o, catools.dbr.ca_array) else o.__array__()
+             for o in current_caput_raws],
+            dtype=object)
+        if current_caput_raws.ndim != 1:
+            nRow, nCol = current_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = current_caput_raws[i,:]
+            current_caput_raws = temp
+
+        ini_caput_raws = self.caput_ini_raws[self.caput_enabled_indexes]
+        ini_caput_raws = np.array(
+            [o if not isinstance(o, catools.dbr.ca_array) else o.__array__()
+             for o in ini_caput_raws],
+            dtype=object)
+        if ini_caput_raws.ndim != 1:
+            nRow, nCol = ini_caput_raws.shape
+            temp = np.zeros(nRow, dtype=object)
+            for i in range(nRow):
+                temp[i] = ini_caput_raws[i,:]
+            ini_caput_raws = temp
+
+        raw_step_size_array = (current_caput_raws - ini_caput_raws) / n_steps
+
+        # Disable temporarily auto caget update, if enabled
+        orig_auto_caget_delay_after_caput = self.auto_caget_delay_after_caput
+        self.auto_caget_delay_after_caput = np.nan
+
+        for i in range(n_steps):
+
+            self.caput_raws[self.caput_enabled_indexes] -= raw_step_size_array
+
+            self.invoke_caput()
+
+            Sleep(wait_time)
+            self.update_pv_vals()
+
+        # Restore auto caget update
+        self.auto_caget_delay_after_caput = orig_auto_caget_delay_after_caput
 
 ########################################################################
 class SnapshotTableModel(QAbstractTableModel):
@@ -1478,10 +2190,6 @@ class SnapshotTableModel(QAbstractTableModel):
         if '[unitconv_table text view]' not in self.db.getViewNames():
             self.db.create_temp_unitconv_table_text_view()
 
-        self.static_col_keys = config.COL_DEF.getColumnDataFromTable(
-            'column_table', column_name_list=['column_key'],
-            condition_str='static_in_snapshot=1')[0]
-
         self.d = OrderedDict()
         for k in self.abstract.all_col_keys:
             self.d[k] = []
@@ -1499,7 +2207,9 @@ class SnapshotTableModel(QAbstractTableModel):
 
         # Update dynamic column data
         self.visible_dynamic_col_keys = [
-            'cur_RB', 'cur_SP', 'cur_SentSP', 'cur_SP_ioc_ts', 'cur_RB_ioc_ts']
+            k for k in self.abstract.dynamic_col_keys
+            if (k in self.abstract.visible_col_keys) and
+            (k not in ('weight', 'step_size', 'caput_enabled'))]
 
         self.update_visible_dynamic_columns()
 
@@ -1512,6 +2222,82 @@ class SnapshotTableModel(QAbstractTableModel):
             self.propagate_change_to_abstract)
 
     #----------------------------------------------------------------------
+    def load_column_from_file(self, filepath, selected_col_key):
+        """"""
+
+        msg = QMessageBox()
+
+        try:
+            col_data = np.loadtxt(filepath, comments='#')
+        except:
+            msg.setText('Invalid file. Failed to load column data from the file.')
+            msg.setInformativeText(sys.exc_value.__repr__())
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if col_data.ndim != 1:
+            msg.setText('Text file must contain only one column of data.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        nRows = self.d[selected_col_key].size
+        if col_data.size != nRows:
+            msg.setText('Number of rows ({0:d}) in the file does not match '
+                        'with number of rows ({1:d}) in the table.'.
+                        format(col_data.size, nRows))
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if selected_col_key == 'caput_enabled':
+            not_0_or_1_inds = [i for i, v in enumerate(col_data)
+                               if v not in (0, 1)]
+            if not_0_or_1_inds != []:
+                msg.setText('For "caput_ON" column, column data must be an '
+                            'array of either 0 & 1.')
+                msg.setIcon(QMessageBox.Critical)
+                msg.exec_()
+                return
+
+        try:
+            self.d[selected_col_key] = col_data
+
+            col_ind = self.abstract.all_col_keys.index(selected_col_key)
+
+            topLeftIndex     = self.index(0      , col_ind)
+            bottomRightIndex = self.index(nRows-1, col_ind)
+
+            # Need to uncheck "Synced Group Weight" temporarily
+            orig_synced_group_weight_state = self.abstract.synced_group_weight
+            self.abstract.synced_group_weight = False
+            #
+            self.emit(
+                SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                topLeftIndex, bottomRightIndex)
+            # Restore original state of "Synced Group Weight"
+            self.abstract.synced_group_weight = orig_synced_group_weight_state
+        except:
+            msg.setText('Failed to load column data from the file.')
+            msg.setInformativeText(sys.exc_value.__repr__())
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+    #----------------------------------------------------------------------
+    def on_visible_column_change(self):
+        """"""
+
+        self.visible_dynamic_col_keys = [
+            k for k in self.abstract.dynamic_col_keys
+            if (k in self.abstract.visible_col_keys) and
+            (k not in ('weight', 'step_size', 'caput_enabled'))
+        ]
+
+        self.update_visible_dynamic_columns()
+
+    #----------------------------------------------------------------------
     def propagate_change_to_abstract(self, topLeftIndex, bottomRightIndex):
         """"""
 
@@ -1520,40 +2306,33 @@ class SnapshotTableModel(QAbstractTableModel):
         row_top_index    = topLeftIndex.row()
         row_bottom_index = bottomRightIndex.row()
 
-        if not ((col_left_index == col_right_index) and
-                (row_top_index == row_bottom_index)):
-            return
-        elif (col_left_index == col_right_index) and \
-             self.abstract.all_col_keys[col_left_index] == 'caput_enabled':
+        if (col_left_index == col_right_index):
+            col_ind = col_left_index
+            col_key = self.abstract.all_col_keys[col_ind]
             row_inds = range(row_top_index, row_bottom_index+1)
+        else:
+            return
 
-        index = topLeftIndex
-        row_ind = row_top_index
-        col_ind = col_left_index
-        col_key = self.abstract.all_col_keys[col_ind]
+        if col_key == 'caput_enabled':
 
-        if self.abstract.synced_group_weight:
-            gid = self._config_abstract.group_name_ids[row_ind]
-            synced_row_inds = [
-                r for r, i in enumerate(self._config_abstract.group_name_ids)
-                if (i == gid) and (r != row_ind)]
+            for r in row_inds:
+                self.abstract.caput_enabled_rows[r] = \
+                    self.data(self.index(r, col_ind), role=Qt.UserRole)
+            return
 
-        if col_key == 'weight':
-            new_weight = float(self.data(index))
-            self._config_abstract.weights[row_ind] = new_weight
-            self.abstract.weight_array[row_ind]    = new_weight
+        if len(row_inds) == 1:
+
+            index = topLeftIndex
+            row_ind = row_top_index
+
             if self.abstract.synced_group_weight:
-                for r in synced_row_inds:
-                    self._config_abstract.weights[r] = new_weight
-                    self.abstract.weight_array[r]    = new_weight
+                gid = self._config_abstract.group_name_ids[row_ind]
+                synced_row_inds = [
+                    r for r, i in enumerate(self._config_abstract.group_name_ids)
+                    if (i == gid) and (r != row_ind)]
 
-        elif col_key == 'step_size':
-            if (self.abstract.ref_step_size == 0.0) or \
-               (np.isnan(self.abstract.ref_step_size)):
-                raise ValueError('You should not be able to reach here.')
-            else:
-                new_weight = \
-                    float(self.data(index)) / self.abstract.ref_step_size
+            if col_key == 'weight':
+                new_weight = float(self.data(index))
                 self._config_abstract.weights[row_ind] = new_weight
                 self.abstract.weight_array[row_ind]    = new_weight
                 if self.abstract.synced_group_weight:
@@ -1561,16 +2340,45 @@ class SnapshotTableModel(QAbstractTableModel):
                         self._config_abstract.weights[r] = new_weight
                         self.abstract.weight_array[r]    = new_weight
 
-        elif col_key == 'caput_enabled':
-
-            for r in row_inds:
-                self.abstract.caput_enabled_rows[r] = \
-                    self.data(self.index(r, col_ind), role=Qt.UserRole)
-
-            return
-
+            elif col_key == 'step_size':
+                if (self.abstract.ref_step_size == 0.0) or \
+                   (np.isnan(self.abstract.ref_step_size)):
+                    raise ValueError('You should not be able to reach here.')
+                else:
+                    new_weight = \
+                        float(self.data(index)) / self.abstract.ref_step_size
+                    self._config_abstract.weights[row_ind] = new_weight
+                    self.abstract.weight_array[row_ind]    = new_weight
+                    if self.abstract.synced_group_weight:
+                        for r in synced_row_inds:
+                            self._config_abstract.weights[r] = new_weight
+                            self.abstract.weight_array[r]    = new_weight
+            elif col_key in ('tar_SP', 'tar_ConvSP'):
+                print 'WARNING: tar_SP & tar_ConvSP are not implemented yet in'
+                print 'tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract'
+            else:
+                return
         else:
-            return
+
+            if col_key == 'weight':
+                self._config_abstract.weights = [
+                    float(self.data(self.index(row_ind, col_ind)))
+                    for row_ind in row_inds]
+                self.abstract.weight_array = np.array(
+                    self._config_abstract.weights[:])
+            elif col_key == 'step_size':
+                new_step_size_array = np.array([
+                    float(self.data(self.index(row_ind, col_ind)))
+                    for row_ind in row_inds])
+                new_weight_array = \
+                    new_step_size_array / self.abstract.ref_step_size
+                self._config_abstract.weights = new_weight_array.tolist()
+                self.abstract.weight_array = new_weight_array
+            elif col_key in ('tar_SP', 'tar_ConvSP'):
+                print 'WARNING: tar_SP & tar_ConvSP are not implemented yet in'
+                print 'tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract'
+            else:
+                return
 
         self.d['weight']    = self.abstract.weight_array
         self.d['step_size'] = self.abstract.ref_step_size * self.d['weight']
@@ -1618,31 +2426,71 @@ class SnapshotTableModel(QAbstractTableModel):
     def update_column_data(self, col_key):
         """"""
 
-        if self.abstract.maps[col_key] == []:
-            return
+        if col_key in ('cur_SP', 'cur_RB', 'cur_SentSP',
+                       'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
+                       'cur_ConvSP', 'cur_ConvRB', 'cur_ConvSentSP'):
 
-        rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
+            rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
 
-        if col_key in ('cur_SP', 'cur_RB'):
-            self.d[col_key][rows] = self.abstract.caget_raws[indexes]
-        elif col_key in ('cur_SentSP'):
-            self.d[col_key][rows] = self.abstract.caput_raws[indexes]
-        elif col_key in ('cur_SP_ioc_ts', 'cur_RB_ioc_ts'):
-            self.d[col_key][rows] = self.abstract.caget_ioc_ts_tuples[indexes]
+            if col_key in ('cur_SP', 'cur_RB'):
+                self.d[col_key][rows] = self.abstract.caget_raws[indexes]
+            elif col_key in ('cur_SentSP'):
+                self.d[col_key][rows] = self.abstract.caput_raws[indexes]
+            elif col_key in ('cur_SP_ioc_ts', 'cur_RB_ioc_ts'):
+                self.d[col_key][rows] = self.abstract.caget_ioc_ts_tuples[indexes]
+            elif col_key in ('cur_ConvSP', 'cur_ConvRB'):
+                self.d[col_key][rows] = self.abstract.caget_convs[indexes]
+            elif col_key in ('cur_ConvSentSP'):
+                self.d[col_key][rows] = self.abstract.caput_convs[indexes]
+
+        elif col_key == 'D_cur_SP_ini_SP':
+            self.d[col_key] = self.d['cur_SP'] - self.d['ini_SP']
+        elif col_key == 'D_cur_ConvSP_ini_ConvSP':
+            self.d[col_key] = self.d['cur_ConvSP'] - self.d['ini_ConvSP']
+        elif col_key == 'D_cur_RB_ini_RB':
+            self.d[col_key] = self.d['cur_RB'] - self.d['ini_RB']
+        elif col_key == 'D_cur_ConvRB_ini_ConvRB':
+            self.d[col_key] = self.d['cur_ConvRB'] - self.d['ini_ConvRB']
+        elif col_key == 'D_cur_RB_cur_SP':
+            rows = self.abstract.rb_sp_same_size_rows
+            self.d[col_key][rows] = \
+                self.d['cur_RB'][rows] - self.d['cur_SP'][rows]
+        elif col_key == 'D_cur_ConvRB_cur_ConvSP':
+            rows = self.abstract.rb_sp_same_size_rows
+            self.d[col_key][rows] = \
+                self.d['cur_ConvRB'][rows] - self.d['cur_ConvSP'][rows]
+        elif col_key == 'D_cur_RB_cur_SentSP':
+            rows = self.abstract.rb_sp_same_size_rows
+            self.d[col_key][rows] = \
+                self.d['cur_RB'][rows] - self.d['cur_SentSP'][rows]
+        elif col_key == 'D_cur_ConvRB_cur_ConvSentSP':
+            rows = self.abstract.rb_sp_same_size_rows
+            self.d[col_key][rows] = \
+                self.d['cur_ConvRB'][rows] - self.d['cur_ConvSentSP'][rows]
+        elif col_key == 'D_tar_SP_cur_SP':
+            pass
+        elif col_key == 'D_tar_ConvSP_cur_ConvSP':
+            pass
         else:
-            raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
+            self.d[col_key] = np.ones((self.abstract.nRows,))*np.nan
 
     #----------------------------------------------------------------------
     def update_init_pv_column_data(self):
         """"""
 
-        ini_val_col_keys = ['ini_SP'       , 'ini_RB'       ]
-        ini_ts_col_keys  = ['ini_SP_ioc_ts', 'ini_RB_ioc_ts']
+        ini_val_col_keys      = ['ini_SP'       , 'ini_RB'       ]
+        ini_conv_val_col_keys = ['ini_ConvSP'   , 'ini_ConvRB'   ]
+        ini_ts_col_keys       = ['ini_SP_ioc_ts', 'ini_RB_ioc_ts']
 
         for col_key in ini_val_col_keys:
             if self.abstract.maps[col_key] != []:
                 rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
                 self.d[col_key][rows] = self.abstract.caget_raws[indexes]
+
+        for col_key in ini_conv_val_col_keys:
+            if self.abstract.maps[col_key] != []:
+                rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
+                self.d[col_key][rows] = self.abstract.caget_convs[indexes]
 
         for col_key in ini_ts_col_keys:
             if self.abstract.maps[col_key] != []:
@@ -1677,6 +2525,8 @@ class SnapshotTableModel(QAbstractTableModel):
         col_key    = self.abstract.all_col_keys[col]
         str_format = self.abstract.all_str_formats[col]
 
+        col_list = self.d[col_key]
+
         if ( not index.isValid() ) or \
            ( not (0 <= row < self.rowCount()) ):
             return None
@@ -1685,7 +2535,6 @@ class SnapshotTableModel(QAbstractTableModel):
             # ^ Need "EditRole". Otherwise, existing text will disappear
             # when trying to edit.
 
-            col_list = self.d[col_key]
             if len(col_list) != 0: value = col_list[row]
             else                 : return 'N/A'
 
@@ -1705,9 +2554,8 @@ class SnapshotTableModel(QAbstractTableModel):
             else:
                 return '{{{:s}}}'.format(str_format).format(value)
 
-        if str_format == 'checkbox':
+        elif str_format == 'checkbox':
 
-            col_list = self.d[col_key]
             value = col_list[row]
 
             if role == Qt.DisplayRole:
@@ -1801,7 +2649,24 @@ class SnapshotTableModel(QAbstractTableModel):
         else:
             return default_flags # non-editable
 
+    #----------------------------------------------------------------------
+    def restore_IniSP(self, n_steps, wait_time):
+        """
+        """
 
+        msg = QMessageBox()
+        msg.addButton(QMessageBox.Yes)
+        msg.addButton(QMessageBox.No)
+        msg.setDefaultButton(QMessageBox.No)
+        msg.setEscapeButton(QMessageBox.No)
+        msg.setIcon(QMessageBox.Question)
+        msg.setText('Only setpoint PVs whose "caput ON" is checked '
+                    'will be restored:\n\n'
+                    'Would you like to proceed for restoration?')
+        msg.setWindowTitle('Final Confirmation for Restoration')
+        choice = msg.exec_()
+        if choice == QMessageBox.No:
+            return
 
-
+        self.abstract.restore_IniSP(n_steps, wait_time)
 

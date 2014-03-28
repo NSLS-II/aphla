@@ -81,6 +81,8 @@ def calcPhaseAdvance(xtbt, **kwargs):
     calculate the phase advance from turn-by-turn data
     
     xtbt - turn by turn data (nbpm, nturns)
+
+    Note: This is not the Castro method where tune is needed, from DFT or elsewhere.
     """
     nbpm, N = np.shape(xtbt)
     phi = np.zeros(nbpm, 'd')
