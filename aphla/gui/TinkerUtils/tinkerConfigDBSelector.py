@@ -369,7 +369,12 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
     def accept(self):
         """"""
 
-        if not self.config_model.abstract.isDataValid():
+        a = self.config_model.abstract
+
+        if not a.isDataValid():
+            return
+
+        if not a.check_aphla_unitconv_updates():
             return
 
         self.saveViewSettings()

@@ -868,6 +868,8 @@ class TinkerMainDatabase(SQLiteDatabase):
             '[unitconv_table text view]',
             '''unitconv_table uc
             LEFT JOIN unitconv_type_table u1 ON uc.unitconv_type_id = u1.unitconv_type_id
+            LEFT JOIN unitsys_table us1 ON us1.unitsys_id = uc.src_unitsys_id
+            LEFT JOIN unitsys_table us2 ON us2.unitsys_id = uc.dst_unitsys_id
             LEFT JOIN unitsymb_table u2 ON uc.src_unitsymb_id = u2.unitsymb_id
             LEFT JOIN unitsymb_table u3 ON uc.dst_unitsymb_id = u3.unitsymb_id
             LEFT JOIN unitconv_blob_table ub ON uc.unitconv_blob_id = ub.unitconv_blob_id
@@ -877,6 +879,8 @@ class TinkerMainDatabase(SQLiteDatabase):
                 'u1.unitconv_type AS unitconv_type',
                 'uc.src_unitsys_id',
                 'uc.dst_unitsys_id',
+                'us1.unitsys AS src_unitsys',
+                'us2.unitsys AS dst_unitsys',
                 'ub.unitconv_blob',
                 'u2.unitsymb AS src_unitsymb',
                 'u3.unitsymb AS dst_unitsymb',
@@ -1082,50 +1086,61 @@ class TinkerMainDatabase(SQLiteDatabase):
                 dst_unitsys_id=unitsys_id_raw, src_unitsymb=src_unitsymb,
                 dst_unitsymb=src_unitsymb, inv=0, append_new=append_new)
         else:
-            inv = 0
-            if unitconv_dict.has_key((None, dst_unitsys)):
-                uc = unitconv_dict[(None, dst_unitsys)]
-            elif unitconv_dict.has_key((dst_unitsys, None)):
-                uc = unitconv_dict[(dst_unitsys, None)]
-                if uc.invertible:
-                    inv = 1
+
+            if (dst_unitsys is None) or (dst_unitsys == ''):
+                unitconv_fromraw_id = self.get_unitconv_id(
+                    {}, src_unitsys_id=unitsys_id_raw,
+                    dst_unitsys_id=unitsys_id_raw, src_unitsymb=src_unitsymb,
+                    dst_unitsymb=dst_unitsymb, inv=0, append_new=append_new)
+                unitconv_toraw_id = self.get_unitconv_id(
+                    {}, src_unitsys_id=unitsys_id_raw,
+                    dst_unitsys_id=unitsys_id_raw, src_unitsymb=dst_unitsymb,
+                    dst_unitsymb=src_unitsymb, inv=0, append_new=append_new)
+            else:
+                inv = 0
+                if unitconv_dict.has_key((None, dst_unitsys)):
+                    uc = unitconv_dict[(None, dst_unitsys)]
+                elif unitconv_dict.has_key((dst_unitsys, None)):
+                    uc = unitconv_dict[(dst_unitsys, None)]
+                    if uc.invertible:
+                        inv = 1
+                    else:
+                        uc = None
                 else:
                     uc = None
-            else:
-                uc = None
 
-            if uc is None:
-                raise ValueError('No unit conversion available')
+                if uc is None:
+                    raise ValueError('No unit conversion available')
 
-            if dst_unitsys_id is None:
-                dst_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
-                    'unitsys_table', 'unitsys_id', 'unitsys', dst_unitsys,
-                    append_new=append_new)
+                if dst_unitsys_id is None:
+                    dst_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                        'unitsys_table', 'unitsys_id', 'unitsys', dst_unitsys,
+                        append_new=append_new)
 
-            unitconv_fromraw_id = self.get_unitconv_id(
-                uc, src_unitsys_id=unitsys_id_raw,
-                dst_unitsys_id=dst_unitsys_id, src_unitsymb=src_unitsymb,
-                dst_unitsymb=dst_unitsymb, inv=inv, append_new=append_new)
+                unitconv_fromraw_id = self.get_unitconv_id(
+                    uc, src_unitsys_id=unitsys_id_raw,
+                    dst_unitsys_id=dst_unitsys_id, src_unitsymb=src_unitsymb,
+                    dst_unitsymb=dst_unitsymb, inv=inv, append_new=append_new)
 
-            inv = 0
-            if unitconv_dict.has_key((dst_unitsys, None)):
-                uc = unitconv_dict[(dst_unitsys, None)]
-            elif unitconv_dict.has_key((None, dst_unitsys)):
-                uc = unitconv_dict[(None, dst_unitsys)]
-                if uc.invertible:
-                    inv = 1
+                inv = 0
+                if unitconv_dict.has_key((dst_unitsys, None)):
+                    uc = unitconv_dict[(dst_unitsys, None)]
+                elif unitconv_dict.has_key((None, dst_unitsys)):
+                    uc = unitconv_dict[(None, dst_unitsys)]
+                    if uc.invertible:
+                        inv = 1
+                    else:
+                        uc = None
                 else:
                     uc = None
-            else:
-                uc = None
 
-            if uc is None:
-                raise ValueError('No unit conversion available')
+                if uc is None:
+                    raise ValueError('No unit conversion available')
 
-            unitconv_toraw_id = self.get_unitconv_id(
-                uc, src_unitsys_id=dst_unitsys_id,
-                dst_unitsys_id=unitsys_id_raw, src_unitsymb=dst_unitsymb,
-                dst_unitsymb=src_unitsymb, inv=inv, append_new=append_new)
+                unitconv_toraw_id = self.get_unitconv_id(
+                    uc, src_unitsys_id=dst_unitsys_id,
+                    dst_unitsys_id=unitsys_id_raw, src_unitsymb=dst_unitsymb,
+                    dst_unitsymb=src_unitsymb, inv=inv, append_new=append_new)
 
         return unitconv_toraw_id, unitconv_fromraw_id
 
@@ -1154,7 +1169,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         elif uc == {}:
             unitconv_type = 'NoConversion'
             src_unitsys_id = dst_unitsys_id = unitsys_id_raw
-            src_unitsymb = dst_unitsymb = ''
             conv_data = None
             inv = 0
             polarity = +1

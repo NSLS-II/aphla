@@ -428,6 +428,115 @@ class ConfigAbstractModel(QObject):
         return True
 
     #----------------------------------------------------------------------
+    def check_aphla_unitconv_updates(self):
+        """
+        Return True if it is ready to proceed for loading this config.
+        Return False otherwise.
+        """
+
+        uc_changes = self.get_aphla_unitconv_data_changes()
+        if uc_changes != []:
+            msg = QMessageBox()
+            msg.setText('Unit conversion data associated with APHLA elements '
+                        'have changed compared to the data when this '
+                        'configuration was saved.\n\nDo you want to save a new '
+                        'configuration with the latest unit conversion data '
+                        'and load this newly saved configuration?\n\nIf No is '
+                        'selected, then it will load the configuration with the '
+                        'old unit conversion.\n\nIf Cancel is selected, '
+                        'configuration loading will be cancelled.')
+            msg.addButton(QMessageBox.Yes)
+            msg.addButton(QMessageBox,No)
+            msg.addButton(QMessageBox.Cancel)
+            msg.setDefaultButton(QMessageBox.Yes)
+            msg.setEscapeButton(QMessageBox.Cancel)
+            msg.setIcon(QMessageBox.Question)
+            choice = msg.exec_()
+            if choice == QMessageBox.Cancel:
+                return False
+            elif choice == QMessageBox.No:
+                # Load the config as is (i.e., using old unit conversion)
+                pass
+            else:
+                # get_aphla_unitconv_data_changes() should have already added
+                # the new unit conversions to unitconv_table. So, it's just
+                # a matter of replacing old channel_id's with new channel_id's
+                (pvsp_ids, pvrb_ids, unitsys_ids, channel_name_ids,
+                 aphla_ch_ids) = self.db.getMatchedColumnDataFromTable(
+                     'channel_table', 'channel_id',
+                     [self.channel_ids[row] for row, _, _ in uc_changes], ':d',
+                     column_name_return_list=['pvsp_id', 'pvrb_id', 'unitsys_id',
+                                              'channel_name_id', 'aphla_ch_id'])
+                for (pvsp_id, pvrb_id, unitsys_id, channel_name_id, aphla_ch_id,
+                     (row, new_uc_toraw_id, new_uc_fromraw_id)) in \
+                    zip(pvsp_ids, pvrb_ids, unitsys_ids, channel_name_ids,
+                        aphla_ch_ids, uc_changes):
+
+                    new_channel_id, = self.db.get_channel_id(
+                        pvsp_id, pvrb_id, unitsys_id, channel_name_id,
+                        new_uc_toraw_id, new_uc_fromraw_id,
+                        aphla_ch_id=aphla_ch_id, append_new=True)
+
+                    self.channel_ids[row] = new_channel_id
+
+                self.db.saveConfig(self)
+
+        return True
+
+    #----------------------------------------------------------------------
+    def get_aphla_unitconv_data_changes(self):
+        """"""
+
+        unitconv_changes = []
+
+        table_name = '[aphla channel prop text view]'
+        if table_name not in self.db.getViewNames(square_brackets=True):
+            self.db.create_temp_aphla_channel_prop_text_view()
+        elem_names, fields = self.db.getMatchedColumnDataFromTable(
+            table_name, 'channel_id', self.channel_ids, ':d',
+            column_name_return_list=['elem_name', 'field'])
+        elems = ap.getElements(elem_names)
+
+        old_unitconv_fromraw_ids, old_unitconv_toraw_ids = \
+            self.db.getMatchedColumnDataFromTable(
+                'channel_table', 'channel_id', self.channel_ids, ':d',
+                column_name_return_list=['unitconv_fromraw_id',
+                                         'unitconv_toraw_id'])
+
+        table_name = '[unitconv_table text view]'
+        if table_name not in self.db.getViewNames(square_brackets=True):
+            self.db.create_temp_unitconv_table_text_view()
+        dst_unitsyses, dst_unitsys_ids, src_unitsymbs, dst_unitsymbs = \
+            self.db.getMatchedColumnDataFromTable(
+                table_name, 'unitconv_id', old_unitconv_fromraw_ids, ':d',
+                column_name_return_list=['dst_unitsys', 'dst_unitsys_id',
+                                         'src_unitsymb', 'dst_unitsymb'])
+
+        for i, (elem, field, old_unitconv_fromraw_id, old_unitconv_toraw_id,
+                dst_unitsys, dst_unitsys_id, src_unitsymb, dst_unitsymb) in \
+            enumerate(zip(elems, fields, old_unitconv_fromraw_ids,
+                          old_unitconv_toraw_ids, dst_unitsyses,
+                          dst_unitsys_ids, src_unitsymbs, dst_unitsymbs)):
+
+            if elem is None:
+                continue
+
+            uc_dict = elem._field[field].unitconv
+
+            latest_unitconv_toraw_id, latest_unitconv_fromraw_id = \
+                self.db.get_unitconv_toraw_fromraw_ids(
+                    uc_dict, dst_unitsys=dst_unitsys,
+                    dst_unitsys_id=dst_unitsys_id, src_unitsymb=src_unitsymb,
+                    dst_unitsymb=dst_unitsymb, append_new=True)
+
+            if (old_unitconv_fromraw_id != latest_unitconv_fromraw_id) or \
+               (old_unitconv_toraw_id != latest_unitconv_toraw_id):
+                unitconv_changes.append([i, latest_unitconv_toraw_id,
+                                         latest_unitconv_fromraw_id])
+
+        return unitconv_changes
+
+    #----------------------------------------------------------------------
     def check_duplicate_channel_ids(self):
         """
         Duplicate channels are not allowed in aptinker.

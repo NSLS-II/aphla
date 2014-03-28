@@ -1544,9 +1544,12 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                  m.caput_enabled_rows) = map(list, out)
 
                 if m.channel_ids != []:
-                    self.createDockWidget(m)
+                    if m.check_aphla_unitconv_updates():
+                        self.createDockWidget(m)
+                    else:
+                        print 'Aborting configuration loading.'
 
-                print 'Configuration loading finished.'
+                print 'Configuration loading process finished.'
 
         self._settings.endGroup()
 
