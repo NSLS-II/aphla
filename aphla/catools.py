@@ -21,6 +21,7 @@ __all__ = [
 import sys, time, os
 import cothread
 import cothread.catools as ct
+from datetime import datetime
 from cothread import Timedout
 from cothread.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
 import random
@@ -222,6 +223,10 @@ def measCaRmCol(kker, resp, **kwargs):
     timeout - default 5 sec, EPICS CA timeout
     sample - default 5, observation per kick
     verbose - default 0
+    output - output h5 file name
+    dxlst - list of delta kick
+    xlist - list of new kick
+    dxmax - the range of kick [-dxmax, dxmax]
 
     returns m, dxlst, raw_data
     m - the response matrix column where m_i=dresp_i/dkker
@@ -229,11 +234,12 @@ def measCaRmCol(kker, resp, **kwargs):
     raw_data - (len(resp), len(dxlst), len(npoints))
     """
 
-    wait = kwargs.get("wait", 1.5)
+    wait    = kwargs.get("wait", 1.5)
     timeout = kwargs.get("timeout", 5)
     verbose = kwargs.get("verbose", 0)
-    sample     = kwargs.get("sample", 5)
+    sample  = kwargs.get("sample", 5)
 
+    t0 = datetime.now()
     n0 = len(resp)
     dxlst, x0 = [], caget(kker, timeout=timeout)
     if not x0.ok:
@@ -254,22 +260,44 @@ def measCaRmCol(kker, resp, **kwargs):
         print "dx:", dxlst
     n1 = len(dxlst)
     m = np.zeros(n0, 'd')
-    raw_data = np.zeros((n0, n1, sample), 'd')
+    raw_data = np.zeros((n1, n0, sample), 'd')
     for i,dx in enumerate(dxlst):
         caput(kker, x0 + dx)
         time.sleep(wait)
         for j in range(sample):
-            raw_data[:,i,j] = caget(resp, timeout=timeout)
+            raw_data[i,:,j] = caget(resp, timeout=timeout)
             time.sleep(wait)
     caput(kker, x0)
 
     # return raw_data
     for i in range(n0):
-        p = np.polyfit(dxlst, np.average(raw_data[i,:,:], axis=1), 2)
+        p = np.polyfit(dxlst, np.average(raw_data[:,i,:], axis=1), 2)
         m[i] = p[1]
     if verbose > 0:
         print "dy/dx:", m
-    return m, dxlst, raw_data
+    t1 = datetime.now()
+    output = kwargs.get("output", None)
+    if not output:
+        return m, dxlst, raw_data
+    try:
+        import h5py
+        f = h5py.File(output)
+        g = f.create_group(kker)
+        g["resp"]     = resp
+        g["dxlst"]    = dxlst
+        g["raw_data"] = raw_data
+        g["rmcol"]    = m
+        g.attrs["sample"] = sample
+        g.attrs["wait"] = wait
+        g.attrs["timeout"] = timeout
+        g.attrs["rm_t0"] = t0.strftime("%Y_%m_%d_%H:%M:%S.%f")
+        g.attrs["rm_t1"] = t1.strftime("%Y_%m_%d_%H:%M:%S.%f")
+        f.close()
+    except:
+        print "ERROR: can not create output file '%s'" % output
+        raise
+        return m, dxlst, raw_data
+    return m, dxlst, raw_data, output
 
 
 def caRmCorrect(resp, kker, m, **kwarg):
@@ -397,10 +425,20 @@ def readPvs(pvs, **kwargs):
     return [tmp[pv] for pv in pvs]
 
 
-def savePvs(fname, pvs, **kwargs):
+def savePvData(fname, pvs, **kwargs):
+    """
+    save pv data
+    
+    - group, default "/"
+    - mode, default 'a' (append)
+    - ignore, list of pvs to ignore
+    - timeout, CA timeout, default 10 seconds.
+    - extrapvs, a list of extra pvs. default []
 
+    status, datetime and timestamp are recorded.
+    """
     group  = kwargs.get("group", '/')
-    mode   = kwargs.get("mode", 'a')
+    mode   = kwargs.pop("mode", 'a')
     ignore = kwargs.get("ignore", [])
     timeout = kwargs.get("timeout", 10)
 
@@ -410,15 +448,19 @@ def savePvs(fname, pvs, **kwargs):
 
     allpvs = list(set(pvs + kwargs.get("extrapvs", [])))
     alldat = caget(allpvs, format=FORMAT_TIME, timeout=timeout)
+    ndead, nlive = 0, 0
     for i,pv in enumerate(allpvs):
         dat = alldat[i]
         if not dat.ok:
             grp[pv] = ""
             grp[pv].attrs["ok"] = False
+            ndead = ndead + 1
         else:
             grp[pv] = dat
             grp[pv].attrs["ok"] = True
             grp[pv].attrs["datetime"] = str(dat.datetime)
             grp[pv].attrs["timestamp"] = dat.timestamp
+            nlive = nlive + 1
     h5f.close()
+    return nlive, ndead
 
