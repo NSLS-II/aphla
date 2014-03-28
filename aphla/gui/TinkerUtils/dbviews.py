@@ -4,16 +4,17 @@ from PyQt4.QtCore import (
     Qt, SIGNAL, QSize, QSettings, QPoint, QEvent, QRect
 )
 from PyQt4.QtGui import (
-    QWidget, QGridLayout, QSplitter, QTreeView, QTableView,
+    qApp, QWidget, QGridLayout, QSplitter, QTreeView, QTableView,
     QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QCheckBox, QLineEdit,
     QSizePolicy, QComboBox, QLabel, QTextEdit, QStackedWidget, QMessageBox,
     QMenu, QItemSelectionModel, QInputDialog, QAction, QIcon, QAbstractItemView,
-    QStyledItemDelegate, QStyleOptionButton, QStyle
+    QStyledItemDelegate, QStyleOptionButton, QStyle, QKeySequence
 )
 
 import config
 from aphla.gui.utils.orderselector import ColumnsDialog
 from aphla.gui.TinkerUtils.tinkerdb import TinkerMainDatabase
+from aphla.gui.utils.formattext import tab_delimited_unformatted_lines
 
 ########################################################################
 class CustomTableView(QTableView):
@@ -619,9 +620,9 @@ class SnapshotDBViewWidget(QWidget):
                                       zip(column_ids, user_editable)
                                       if u == 1]
 
-        self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
+        self._initContextMenuItems()
 
-        self.contextMenu = QMenu()
+        self.clipboard = np.array([])
 
         self.connect(self.comboBox_view, SIGNAL('currentIndexChanged(int)'),
                      self.on_view_base_change)
@@ -629,6 +630,10 @@ class SnapshotDBViewWidget(QWidget):
                      self.on_sortable_state_changed)
         self.connect(self.pushButton_columns, SIGNAL('clicked()'),
                      self.launchColumnsDialog)
+
+        self.connect(self.tableView,
+                     SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     self.openContextMenu)
 
     #----------------------------------------------------------------------
     def _initUI(self):
@@ -657,6 +662,26 @@ class SnapshotDBViewWidget(QWidget):
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.pushButton_load_column_from_file = QPushButton(self)
+        self.pushButton_load_column_from_file.setText('Load from File')
+        self.horizontalLayout.addWidget(self.pushButton_load_column_from_file)
+
+        label = QLabel(self)
+        label.setText('into')
+        self.horizontalLayout.addWidget(label)
+
+        self.comboBox_column_name = QComboBox(self)
+        self.horizontalLayout.addWidget(self.comboBox_column_name)
+
+        spacerItem = QSpacerItem(40, 20,
+                                 QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+
+        self.pushButton_restore_init = QPushButton(self)
+        self.pushButton_restore_init.setText('Restore Ini.SP')
+        self.horizontalLayout.addWidget(self.pushButton_restore_init)
+
         spacerItem = QSpacerItem(40, 20,
                                  QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
@@ -756,6 +781,79 @@ class SnapshotDBViewWidget(QWidget):
         if dialog.output is not None:
             self.on_column_selection_change(dialog.output[:],
                                             force_visibility_update=False)
+
+    #----------------------------------------------------------------------
+    def _initContextMenuItems(self):
+        """"""
+
+        self.actionCopySelectedItemTexts = QAction(
+            QIcon(), 'Copy texts of selected item(s)', self.tableView)
+
+        self.actionCopySelectedItemTexts.setShortcut(
+            QKeySequence(Qt.ControlModifier + Qt.Key_C))
+
+        self.addAction(self.actionCopySelectedItemTexts)
+
+        self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
+
+        self.contextMenu = QMenu()
+        self.contextMenu.addAction(self.actionCopySelectedItemTexts)
+
+        self.connect(self.actionCopySelectedItemTexts, SIGNAL('triggered()'),
+                     self.copySelectedItemsTexts)
+
+    #----------------------------------------------------------------------
+    def openContextMenu(self, qpoint):
+        """"""
+
+        sender = self.sender()
+
+        globalClickPos = sender.mapToGlobal(qpoint)
+
+        self.contextMenu.exec_(globalClickPos)
+
+    #----------------------------------------------------------------------
+    def copySelectedItemsTexts(self):
+        """"""
+
+        proxyItemSelectionModel = self.tableView.selectionModel()
+        proxyItemSelection = proxyItemSelectionModel.selection()
+
+        proxyMod = self.tableView.model()
+
+        proxyItemSelectionCount = proxyItemSelection.count()
+        if proxyItemSelectionCount == 0:
+            return
+        else:
+            h = self.tableView.horizontalHeader()
+            v = self.tableView.verticalHeader()
+            all_inds = []
+            all_rows = []
+            all_cols = []
+            for sel in proxyItemSelection:
+                z = [( ind, v.visualIndex(ind.row()),
+                       h.visualIndex(ind.column()) )
+                     for ind in sel.indexes()
+                     if not h.isSectionHidden(ind.column())]
+                inds, rows, cols = zip(*z)
+                all_inds.extend(inds)
+                all_rows.extend(rows)
+                all_cols.extend(cols)
+            nRows = max(all_rows) - min(all_rows) + 1
+            nCols = max(all_cols) - min(all_cols) + 1
+            min_row = min(all_rows)
+            min_col = min(all_cols)
+            all_rows = [row - min_row for row in all_rows]
+            all_cols = [col - min_col for col in all_cols]
+            self.clipboard = np.empty((nRows,nCols),dtype=np.object)
+            self.clipboard.fill('')
+            for (ind,row,col) in zip(all_inds,all_rows,all_cols):
+                self.clipboard[row,col] = str( proxyMod.data(ind) )
+
+            formatted_line_list = tab_delimited_unformatted_lines(self.clipboard)
+
+            system_clipboard = qApp.clipboard()
+            system_clipboard.setText('\n'.join(formatted_line_list))
 
 ########################################################################
 class ConfigDBTableViewItemDelegate(QStyledItemDelegate):
