@@ -229,57 +229,44 @@ def getExactElement(elemname):
     return machines._lat._find_exact_element(name=elemname)
 
 def eget(elem, fields = None, **kwargs):
-    """get elements field values
+    raise RuntimeError("deprecated! please revise it to `fget(elem,field)`")
+
+def fget(elem, field, **kwargs):
+    """get elements field values for a family
 
     Parameters
     -----------
     elem : str, list. element name, name list, pattern or object list
     fields : str, list. field name or name list
-    header : bool. optional(False), whether returns the (name, field) list. 
- 
+    handle : str, optional, default "readback"
+    unitsys : str, optional, default None, unit system, 
     Examples
     ---------
     >>> eget('DCCT', 'value')
     >>> eget('BPM', 'x')
-    >>> val, head = eget('p*c30*', ['x', 'y'], header=True)
+    >>> eget('p*c30*', 'x')
 
     >>> bpm = getElements('p*c30*')
-    >>> eget(bpm, ['x', 'y'], header=True)
-
-    Notes
-    -------
-    The optional parameters are unit. see :func:`~aphla.element.CaElement.get`
-
-    It calls :func:`getElements` to obtain a list of elements, then call
-    :func:`~aphla.element.CaElement.get` for each field. This could be a
-    slow process when the element list is large.
-
-    The return value is a list with same size as element list. When more than
-    one field is provided, the return value is a 2D list. 
-
-    When header is True, a list of (element name, field) which has same shape
-    as return value is also returned.
-
+    >>> eget(bpm, 'x', handle="setpoint", unitsys = None)
     """
 
-    header = kwargs.pop('header', False)
+    handle = kwargs.pop('handle', "readback")
+    unitsys = kwargs.pop("unitsys", None)
 
     elst = getElements(elem)
     if not elst: return None
 
-    v = [e.get(fields, **kwargs) for e in elst]
-    if not header: return v
+    v = [e.pv(field=field, handle=handle) for e in elst]
+    assert len(set([len(pvl) for pvl in v])) <= 1, \
+        "Must be exact one pv for each field"
+    pvl = reduce(lambda x,y: x + y, v)
 
-    h = []
-    if isinstance(fields, (str, unicode)):
-        h = [(e.name, fields) for e in elst]
-    elif isinstance(fields, (list, tuple)):
-        h = [None] * len(v)
-        for i,e in enumerate(elst):
-            fld = [f if f in e.fields() else None for f in fields]
-            h[i] = [(e.name, f) for f in fld] 
-        # h,v should have same dimension
-    return v, h
+    dat = caget(pvl, **kwargs)
+    if unitsys is None: return dat
+
+    ret = [e.convertUnit(field, dat[i], None, unitsys)
+               for i,e in enumerate(elst)]
+    return ret
 
         
 def getPvList(elem, field, handle = 'readback', **kwargs):
