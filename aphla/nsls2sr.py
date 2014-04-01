@@ -43,7 +43,7 @@ def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0):
     100,000 for Tbt and 9,000 for Fa.
     """
     elems = [e for e in getElements(name) if e.pv(field="x")]
-    pvprefs = [bpm.pv(field="x")[0].replace("Pos:X-I", "") for bpm in elems]
+    pvprefs = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "") for bpm in elems]
 
     if verbose:
         print "resetting {0} BPMS: {1}".format(len(elems), elems)
@@ -291,7 +291,8 @@ def getSrBpmData(**kwargs):
     #dcct1 = caget(pv_dcct, count=1000)
 
     elems = [e for e in getElements(name) if e.pv(field="x")]
-    pvpref = [bpm.pv(field="x")[0].replace("Pos:X-I", "") for bpm in elems]
+    pvpref = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "")
+              for bpm in elems]
     names = [bpm.name for bpm in elems]
 
     if trig_src == 0 and waveform in ["Tbt", "Fa"]:
