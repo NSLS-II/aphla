@@ -18,7 +18,7 @@ from PyQt4.QtCore import (QObject, Qt, SIGNAL, QAbstractItemModel,
 from PyQt4.QtGui import (QMessageBox, QFileDialog)
 
 from cothread import Sleep
-from cothread.catools import caget, caput, FORMAT_TIME
+from cothread.catools import caget, caput, FORMAT_TIME, FORMAT_CTRL
 import cothread.catools as catools
 
 import aphla as ap
@@ -1745,6 +1745,8 @@ class SnapshotAbstractModel(QObject):
 
         self.update_init_pv_vals()
 
+        self.get_lo_hi_lims()
+
     #----------------------------------------------------------------------
     def get_unitconv_callable(self, conv_type, conv_inv, polarity, conv_data):
         """"""
@@ -1880,6 +1882,23 @@ class SnapshotAbstractModel(QObject):
             self.caput_enabled_indexes[index] = self.caput_enabled_rows[row]
 
     #----------------------------------------------------------------------
+    def get_lo_hi_lims(self):
+        """"""
+
+        ca_ctrls = caget(self.caput_pv_str_list, format=FORMAT_CTRL,
+                         throw=False, timeout=self.caget_timeout)
+
+        self.lo_lims_raw = np.array([c.lower_ctrl_limit for c in ca_ctrls])
+        self.hi_lims_raw = np.array([c.upper_ctrl_limit for c in ca_ctrls])
+
+        self.lo_lims_conv = np.array(
+            [uc(r) if uc is not None else r for r, uc
+             in zip(self.lo_lims_raw, self.caput_fromraw_unitconvs)])
+        self.hi_lims_conv = np.array(
+            [uc(r) if uc is not None else r for r, uc
+             in zip(self.hi_lims_raw, self.caput_fromraw_unitconvs)])
+
+    #----------------------------------------------------------------------
     def update_pv_vals(self):
         """"""
 
@@ -1970,13 +1989,6 @@ class SnapshotAbstractModel(QObject):
     #----------------------------------------------------------------------
     def update_NaNs_in_caput_raws(self):
         """"""
-
-        #rows_caget, indexes_caget = map(list, zip(*self.maps['cur_SP']))
-        #rows_caput, indexes_caput = map(list, zip(*self.maps['cur_SentSP']))
-        #index_map_get2put = [indexes_caput[rows_caput.index(r)]
-                             #for r in rows_caget]
-        #index_map_put2get = [indexes_caget[rows_caget.index(r)]
-                             #for r in rows_caput]
 
         index_map_get2put, indexes_caget = self.get_index_map_get2put()
         index_map_put2get, indexes_caput = self.get_index_map_put2get()
@@ -2313,6 +2325,7 @@ class SnapshotTableModel(QAbstractTableModel):
 
         # Update static column data
         self.update_init_pv_column_data()
+        self.update_limits_columns()
 
         # Update dynamic column data
         self.visible_dynamic_col_keys = [
@@ -2576,6 +2589,10 @@ class SnapshotTableModel(QAbstractTableModel):
             rows = self.abstract.rb_sp_same_size_rows
             self.d[col_key][rows] = \
                 self.d['cur_ConvRB'][rows] - self.d['cur_ConvSentSP'][rows]
+        elif col_key == 'D_cur_SP_cur_SentSP':
+            self.d[col_key] = self.d['cur_SP'] - self.d['cur_SentSP']
+        elif col_key == 'D_cur_ConvSP_cur_ConvSentSP':
+            self.d[col_key] = self.d['cur_ConvSP'] - self.d['cur_ConvSentSP']
         elif col_key == 'D_tar_SP_cur_SP':
             pass
         elif col_key == 'D_tar_ConvSP_cur_ConvSP':
@@ -2605,6 +2622,18 @@ class SnapshotTableModel(QAbstractTableModel):
             if self.abstract.maps[col_key] != []:
                 rows, indexes = map(list, zip(*self.abstract.maps[col_key]))
                 self.d[col_key][rows] = self.abstract.caget_ioc_ts_tuples[indexes]
+
+    #----------------------------------------------------------------------
+    def update_limits_columns(self):
+        """"""
+
+        rows, indexes = map(list, zip(*self.abstract.maps['cur_SentSP']))
+
+        self.d['lo_lim'][rows] = self.abstract.lo_lims_raw[indexes]
+        self.d['hi_lim'][rows] = self.abstract.hi_lims_raw[indexes]
+
+        self.d['lo_lim_conv'][rows] = self.abstract.lo_lims_conv[indexes]
+        self.d['hi_lim_conv'][rows] = self.abstract.hi_lims_conv[indexes]
 
     #----------------------------------------------------------------------
     def repaint(self):
