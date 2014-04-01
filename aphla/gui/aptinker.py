@@ -727,6 +727,36 @@ class TinkerDockWidget(QDockWidget):
         self.connect(self, SIGNAL('visibilityChanged(bool)'),
                      self.updateVisibility)
 
+        self.checkBox_auto_update.setToolTip(
+            '''Start auto-update when the box is checked and a valid float
+is specfied. If it does not start, try toggling the check states.''')
+        self.auto_updater = None
+        self.connect(self.checkBox_auto_update, SIGNAL('stateChanged(int)'),
+                     self.toggle_auto_updater)
+
+    #----------------------------------------------------------------------
+    def toggle_auto_updater(self, state):
+        """"""
+
+        if state != Qt.Checked:
+            if self.auto_updater is not None:
+                # Stop the timer
+                self.auto_updater.reset(None)
+            return
+
+        try:
+            period = float(self.lineEdit_auto_update_interval.text()) # [s]
+        except:
+            # Invalid period specified. Do not start auto-updater.
+            return
+
+        if self.auto_updater is None:
+            self.auto_updater = cothread.Timer(
+                period, self.ss_abstract.update_pv_vals,
+                retrigger=True, reuse=True)
+        else:
+            self.auto_updater.reset(period, retrigger=True)
+
     #----------------------------------------------------------------------
     def updateVisibility(self, visible):
         """
@@ -1762,6 +1792,9 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             self.dockWidgetList.remove(dockWidget)
             self.menuWindow.removeAction(dockWidget.toggleViewAction())
 
+            # Shut down the timer to avoid memory leak
+            if dockWidget.auto_updater is not None:
+                dockWidget.auto_updater.cancel()
 
 ########################################################################
 class TinkerApp(QObject):
