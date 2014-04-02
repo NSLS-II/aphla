@@ -261,9 +261,156 @@ class Model(QObject):
         self.table    = ConfigTableModel(abstract_model=self.abstract)
         #self.tree     = ConfigTreeModel()
 
+        self.view = None
+
         self.db = self.abstract.db
 
         self.output = None
+
+    #----------------------------------------------------------------------
+    def process_aphla_unitconv(self, aphla_channel_name_list, unitsys_list,
+                               unitsys_id_list, unitconv_toraw_id_list,
+                               unitconv_fromraw_id_list, aphla_ch_id_list):
+        """"""
+
+        for i, (ap_ch_name, unitsys, unitsys_id) in enumerate(zip(
+            aphla_channel_name_list, unitsys_list, unitsys_id_list)):
+            if ap_ch_name in ('', None):
+                pass
+            else:
+                machine_name, lattice_name, elem_name, field = \
+                    ap_ch_name.split('.')
+                if machine_name not in get_loaded_ap_machines():
+                    ap.machines.load(machine_name)
+                ap.machines.use(lattice_name)
+                aphla_elem = ap.getElements(elem_name)[0]
+                uc_dict = aphla_elem._field[field].unitconv
+
+                machine_name_id = \
+                    self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                        'machine_name_table',
+                        'machine_name_id', 'machine_name',
+                        machine_name, append_new=True)
+                lattice_name_id = \
+                    self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                        'lattice_name_table', 'lattice_name_id',
+                        'lattice_name', lattice_name, append_new=True)
+                elem_prop_id = self.db.get_elem_prop_id(
+                    machine_name_id, lattice_name_id, aphla_elem,
+                    append_new=True)
+                field_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
+                    'field_table', 'field_id', 'field', field,
+                    append_new=True)
+                aphla_ch_id = self.db.get_aphla_ch_id(
+                    elem_prop_id, field_id, append_new=True)
+                aphla_ch_id_list[i] = aphla_ch_id
+
+                src_unitsymb = aphla_elem.getUnit(field, unitsys=None)
+                dst_unitsymb = aphla_elem.getUnit(
+                    field, unitsys=(unitsys if unitsys else None))
+
+                if unitsys == '':
+                    (unitconv_toraw_id_list[i],
+                     unitconv_fromraw_id_list[i]) = \
+                        self.db.get_unitconv_toraw_fromraw_ids(
+                            {}, src_unitsymb=src_unitsymb,
+                            append_new=True)
+
+                    continue
+
+                inv = 0
+                if uc_dict.has_key((None, unitsys)):
+                    uc = uc_dict[(None, unitsys)]
+                elif uc_dict.has_key((unitsys, None)):
+                    uc = uc_dict[(unitsys, None)]
+                    if uc.invertible:
+                        inv = 1
+                    else:
+                        uc = None
+                else:
+                    uc = None
+
+                unitconv_fromraw_id_list[i] = self.db.get_unitconv_id(
+                    uc, src_unitsys_id=unitsys_id_raw,
+                    dst_unitsys_id=unitsys_id,
+                    src_unitsymb=src_unitsymb,
+                    dst_unitsymb=dst_unitsymb, inv=inv,
+                    append_new=True)
+
+                src_unitsymb, dst_unitsymb = dst_unitsymb, src_unitsymb
+
+                inv = 0
+                if uc_dict.has_key((unitsys, None)):
+                    uc = uc_dict[(unitsys, None)]
+                elif uc_dict.has_key((None, unitsys)):
+                    uc = uc_dict[(None, unitsys)]
+                    if uc.invertible:
+                        inv = 1
+                    else:
+                        uc = None
+                else:
+                    uc = None
+
+                unitconv_toraw_id_list[i] = self.db.get_unitconv_id(
+                    uc, src_unitsys_id=unitsys_id,
+                    dst_unitsys_id=unitsys_id_raw,
+                    src_unitsymb=src_unitsymb,
+                    dst_unitsymb=dst_unitsymb, inv=inv,
+                    append_new=True)
+
+        return (unitconv_toraw_id_list, unitconv_fromraw_id_list,
+                aphla_ch_id_list)
+
+    #----------------------------------------------------------------------
+    def process_json_unitconv(
+        self, unitconv_dict, unitsys_list, unitconv_key_list,
+        unitconv_toraw_id_list, unitconv_fromraw_id_list):
+        """"""
+
+        msg = QMessageBox()
+
+        if unitconv_dict is None:
+            msg.setText(('If `unitconv_key_list` is specified, '
+                         '`unitconv_dict` must be also specified.'))
+            msg.exec_()
+            return None
+        else:
+            for _, v in unitconv_dict.iteritems():
+                for dd in v:
+                    if dd['src_unitsys'] is None: dd['src_unitsys'] = ''
+                    if dd['dst_unitsys'] is None: dd['dst_unitsys'] = ''
+
+            for i, (key, unitsys) in enumerate(zip(
+                unitconv_key_list, unitsys_list)):
+                if key in ('', None):
+                    pass
+                elif unitconv_dict.has_key(key):
+                    uc_list = unitconv_dict[key]
+                    for uc in uc_list:
+                        if (uc['src_unitsys'] == '') and \
+                           (uc['dst_unitsys'] == unitsys):
+                            break
+                    unitconv_fromraw_id_list[i] = \
+                        self.db.get_unitconv_id(
+                            uc, src_unitsys_id=None,
+                            dst_unitsys_id=None, src_unitsymb=None,
+                            dst_unitsymb=None, inv=None, append_new=True)
+                    for uc in uc_list:
+                        if (uc['src_unitsys'] == unitsys) and \
+                           (uc['dst_unitsys'] == ''):
+                            break
+                    unitconv_toraw_id_list[i] = \
+                        self.db.get_unitconv_id(
+                            uc, src_unitsys_id=None,
+                            dst_unitsys_id=None, src_unitsymb=None,
+                            dst_unitsymb=None, inv=None, append_new=True)
+                else:
+                    msg.setText('Key not found in `unitconv_dict`: {0}'.
+                                format(key))
+                    msg.exec_()
+                    return None
+
+        return (unitconv_toraw_id_list, unitconv_fromraw_id_list)
 
     #----------------------------------------------------------------------
     def get_channel_ids(
@@ -279,16 +426,16 @@ class Model(QObject):
         provided.
 
         If both `unitconv_key` and `aphla_channel_name` are provided for
-        a channel, `unitconv_key` will override `aphla_channel_name`.
+        a channel, a user will be prompted to answer whether `unitconv_key`
+        or `aphla_channel_name` should be used as unit conversion data.
         """
-
-        msg = QMessageBox()
 
         n_channels = len(pvsp_list)
 
         if unitsys_list is None:
             # No unit conversion w/o unit symbol by default
             unitsys_id_list = [unitsys_id_raw]*n_channels
+            NoConv_NoSymb_unitconv_id = self.db.get_unitconv_id({})
             unitconv_toraw_id_list   = [NoConv_NoSymb_unitconv_id]*n_channels
             unitconv_fromraw_id_list = [NoConv_NoSymb_unitconv_id]*n_channels
         else:
@@ -303,138 +450,82 @@ class Model(QObject):
             unitconv_fromraw_id_list = [None]*n_channels
             aphla_ch_id_list         = [None]*n_channels
 
-            if aphla_channel_name_list is not None:
-                for i, (ap_ch_name, unitsys, unitsys_id) in enumerate(zip(
-                    aphla_channel_name_list, unitsys_list, unitsys_id_list)):
-                    if ap_ch_name in ('', None):
-                        pass
-                    else:
-                        machine_name, lattice_name, elem_name, field = \
-                            ap_ch_name.split('.')
-                        if machine_name not in get_loaded_ap_machines():
-                            ap.machines.load(machine_name)
-                        ap.machines.use(lattice_name)
-                        aphla_elem = ap.getElements(elem_name)[0]
-                        uc_dict = aphla_elem._field[field].unitconv
+            data_source_aphla = 'APHLA Channel Data'
+            data_source_json  = 'JSON File Being Loaded'
+            if (aphla_channel_name_list is not None) and \
+               (unitconv_key_list is not None):
+                double_uc_definitions = [
+                    (ap_ch_name, uc_key) for ap_ch_name, uc_key
+                    in zip(aphla_channel_name_list, unitconv_key_list)
+                    if (ap_ch_name not in (None, '')) and
+                    (uc_key not in (None, ''))]
+                if double_uc_definitions != []:
+                    print '### Unit-Conversion Definitions specified for both'
+                    print 'by APHLA elements and JSON unit-conversion dict'
+                    print 'for the following:'
+                    print double_uc_definitions
+                    title = 'Source of Unit Conversion Data'
+                    prompt = ('For some channels, unit conversion definitions\n'
+                              'are available both from APHLA channel data and\n'
+                              'from the JSON file currently being loaded.\n\n'
+                              'Which data source from which you want to\n'
+                              'retrieve unit conversion data:')
+                    result = QInputDialog.getItem(
+                        self.view, title, prompt,
+                        [data_source_aphla, data_source_json], editable=False)
 
-                        machine_name_id = \
-                            self.db.getMatchingPrimaryKeyIdFrom2ColTable(
-                                'machine_name_table',
-                                'machine_name_id', 'machine_name',
-                                machine_name, append_new=True)
-                        lattice_name_id = \
-                            self.db.getMatchingPrimaryKeyIdFrom2ColTable(
-                                'lattice_name_table', 'lattice_name_id',
-                                'lattice_name', lattice_name, append_new=True)
-                        elem_prop_id = self.db.get_elem_prop_id(
-                            machine_name_id, lattice_name_id, aphla_elem,
-                            append_new=True)
-                        field_id = self.db.getMatchingPrimaryKeyIdFrom2ColTable(
-                            'field_table', 'field_id', 'field', field,
-                            append_new=True)
-                        aphla_ch_id = self.db.get_aphla_ch_id(
-                            elem_prop_id, field_id, append_new=True)
-                        aphla_ch_id_list[i] = aphla_ch_id
+                    if not result[1]:
+                        return
 
-                        src_unitsymb = aphla_elem.getUnit(field, unitsys=None)
-                        dst_unitsymb = aphla_elem.getUnit(
-                            field, unitsys=(unitsys if unitsys else None))
-
-                        if unitsys == '':
-                            (unitconv_toraw_id_list[i],
-                             unitconv_fromraw_id_list[i]) = \
-                                self.db.get_unitconv_toraw_fromraw_ids(
-                                    {}, src_unitsymb=src_unitsymb,
-                                    append_new=True)
-
-                            continue
-
-                        inv = 0
-                        if uc_dict.has_key((None, unitsys)):
-                            uc = uc_dict[(None, unitsys)]
-                        elif uc_dict.has_key((unitsys, None)):
-                            uc = uc_dict[(unitsys, None)]
-                            if uc.invertible:
-                                inv = 1
-                            else:
-                                uc = None
-                        else:
-                            uc = None
-
-                        unitconv_fromraw_id_list[i] = self.db.get_unitconv_id(
-                            uc, src_unitsys_id=unitsys_id_raw,
-                            dst_unitsys_id=unitsys_id,
-                            src_unitsymb=src_unitsymb,
-                            dst_unitsymb=dst_unitsymb, inv=inv,
-                            append_new=True)
-
-                        src_unitsymb, dst_unitsymb = dst_unitsymb, src_unitsymb
-
-                        inv = 0
-                        if uc_dict.has_key((unitsys, None)):
-                            uc = uc_dict[(unitsys, None)]
-                        elif uc_dict.has_key((None, unitsys)):
-                            uc = uc_dict[(None, unitsys)]
-                            if uc.invertible:
-                                inv = 1
-                            else:
-                                uc = None
-                        else:
-                            uc = None
-
-                        unitconv_toraw_id_list[i] = self.db.get_unitconv_id(
-                            uc, src_unitsys_id=unitsys_id,
-                            dst_unitsys_id=unitsys_id_raw,
-                            src_unitsymb=src_unitsymb,
-                            dst_unitsymb=dst_unitsymb, inv=inv,
-                            append_new=True)
-
-            # If both `unitconv_key` and `aphla_channel_name` are provided for
-            # a channel, `unitconv_key` will override `aphla_channel_name`
-            # unit conversion data here.
-            if unitconv_key_list is not None:
-                if unitconv_dict is None:
-                    msg.setText(('If `unitconv_key_list` is specified, '
-                                 '`unitconv_dict` must be also specified.'))
-                    msg.exec_()
-                    return
+                    uc_priority_data_source = result[0]
                 else:
-                    for _, v in unitconv_dict.iteritems():
-                        for dd in v:
-                            if dd['src_unitsys'] is None: dd['src_unitsys'] = ''
-                            if dd['dst_unitsys'] is None: dd['dst_unitsys'] = ''
+                    uc_priority_data_source = data_source_aphla
+            elif (aphla_channel_name_list is not None):
+                uc_priority_data_source = data_source_aphla
+            elif (unitconv_key_list is not None):
+                uc_priority_data_source = data_source_json
+            else:
+                uc_priority_data_source = None
 
-                    for i, (key, unitsys) in enumerate(zip(
-                        unitconv_key_list, unitsys_list)):
-                        if key in ('', None):
-                            pass
-                        elif unitconv_dict.has_key(key):
-                            uc_list = unitconv_dict[key]
-                            for uc in uc_list:
-                                if (uc['src_unitsys'] == '') and \
-                                   (uc['dst_unitsys'] == unitsys):
-                                    break
-                            unitconv_fromraw_id_list[i] = \
-                                self.db.get_unitconv_id(
-                                    uc, src_unitsys_id=None,
-                                    dst_unitsys_id=None, src_unitsymb=None,
-                                    dst_unitsymb=None, inv=None, append_new=True)
-                            for uc in uc_list:
-                                if (uc['src_unitsys'] == unitsys) and \
-                                   (uc['dst_unitsys'] == ''):
-                                    break
-                            unitconv_toraw_id_list[i] = \
-                                self.db.get_unitconv_id(
-                                    uc, src_unitsys_id=None,
-                                    dst_unitsys_id=None, src_unitsymb=None,
-                                    dst_unitsymb=None, inv=None, append_new=True)
-                        else:
-                            msg.setText('Key not found in `unitconv_dict`: {0}'.
-                                        format(key))
-                            msg.exec_()
-                            return
+            if uc_priority_data_source == data_source_aphla:
+
+                if unitconv_key_list is not None:
+                    result = self.process_json_unitconv(
+                        unitconv_dict, unitsys_list, unitconv_key_list,
+                        unitconv_toraw_id_list, unitconv_fromraw_id_list)
+                    if result is None:
+                        return
+                    else:
+                        unitconv_toraw_id_list, unitconv_fromraw_id_list = result
+
+                if aphla_channel_name_list is not None:
+                    (unitconv_toraw_id_list, unitconv_fromraw_id_list,
+                     aphla_ch_id_list) = self.process_aphla_unitconv(
+                         aphla_channel_name_list, unitsys_list, unitsys_id_list,
+                         unitconv_toraw_id_list, unitconv_fromraw_id_list,
+                         aphla_ch_id_list)
+
+            elif uc_priority_data_source == data_source_json:
+
+                if aphla_channel_name_list is not None:
+                    (unitconv_toraw_id_list, unitconv_fromraw_id_list,
+                     aphla_ch_id_list) = self.process_aphla_unitconv(
+                         aphla_channel_name_list, unitsys_list, unitsys_id_list,
+                         unitconv_toraw_id_list, unitconv_fromraw_id_list,
+                         aphla_ch_id_list)
+
+                if unitconv_key_list is not None:
+                    result = self.process_json_unitconv(
+                        unitconv_dict, unitsys_list, unitconv_key_list,
+                        unitconv_toraw_id_list, unitconv_fromraw_id_list)
+                    if result is None:
+                        return
+                    else:
+                        unitconv_toraw_id_list, unitconv_fromraw_id_list = result
 
         channel_ids = []
+
+        msg = QMessageBox()
 
         for (pvsp, pvrb, ch_name, unitsys_id, unitconv_toraw_id,
              unitconv_fromraw_id, aphla_ch_id) in zip(
@@ -580,6 +671,9 @@ class Model(QObject):
                 unitsys_list=d['unitsys'], unitconv_key_list=unitconv_key_list,
                 unitconv_dict=unitconv_dict,
                 aphla_channel_name_list=aphla_channel_name_list)
+
+        if channel_ids is None:
+            return
 
         self.abstract.group_name_ids.extend(group_name_ids)
         self.abstract.channel_ids.extend(channel_ids)
@@ -796,6 +890,7 @@ class View(QDialog, Ui_Dialog):
         self.settings.loadViewSizeSettings(self)
 
         self.model = model
+        self.model.view = self
 
         self.tableView.setItemDelegate(ConfigDBTableViewItemDelegate(
             self.tableView, self.model.table, self.tableView.parent()))

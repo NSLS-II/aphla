@@ -303,7 +303,7 @@ class ConfigAbstractModel(QObject):
                 'pvsp', 'pvrb',
                 'machine_name', 'lattice_name', 'elem_name', 'field', # related to APHLA channel
                 'unitsys', 'unitconv_type', 'polarity', 'unitsymb',
-                'unitsymb_raw', 'unitconv_data_toraw', 'unitconv_data_fromraw',
+                'unitsymb_raw', 'unitconv_blob_toraw', 'unitconv_blob_fromraw',
                 'unitconv_inv_toraw', 'unitconv_inv_fromraw'],
             condition_str='config_id={0:d}'.format(config_id))
 
@@ -312,23 +312,14 @@ class ConfigAbstractModel(QObject):
         for i, (group_name, channel_name, weight, caput_enabled, pvsp, pvrb,
                 machine_name, lattice_name, elem_name, field,
                 unitsys, unitconv_type, polarity, unitsymb, unitsymb_raw,
-                unitconv_data_toraw, unitconv_data_fromraw, unitconv_inv_toraw,
+                unitconv_blob_toraw, unitconv_blob_fromraw, unitconv_inv_toraw,
                 unitconv_inv_fromraw) in enumerate(zip(*out)):
 
-            if unitconv_type == 'poly':
-                conv_data_fromraw = [float(s) for s
-                                     in unitconv_data_fromraw.split(',') if s]
-                conv_data_toraw   = [float(s) for s
-                                     in unitconv_data_toraw.split(',') if s]
-            elif unitconv_type == 'interp1':
-                xp_txt, fp_txt = unitconv_data_fromraw.split(';')
-                conv_data_fromraw = {'xp': [float(s) for s in xp_txt.split(',')],
-                                     'fp': [float(s) for s in fp_txt.split(',')]}
-                xp_txt, fp_txt = unitconv_data_toraw.split(';')
-                conv_data_toraw   = {'xp': [float(s) for s in xp_txt.split(',')],
-                                     'fp': [float(s) for s in fp_txt.split(',')]}
+            if unitconv_type in ('poly', 'interp1'):
+                conv_data_fromraw = tinkerdb.blobloads(unitconv_blob_fromraw)
+                conv_data_toraw   = tinkerdb.blobloads(unitconv_blob_toraw)
             elif unitconv_type == 'NoConversion':
-                conv_data_fromraw = conv_data_toraw = ''
+                conv_data_fromraw = conv_data_toraw = None
             else:
                 raise ValueError('Unexpected unitconv_type: {0}'.format(
                     unitconv_type))
@@ -1055,7 +1046,8 @@ class ConfigTableModel(QAbstractTableModel):
         self.d['unitconv_data_fromraw'] = conv_data_txt_fromraw_list
         self.d['unitconv_inv_fromraw']  = unitconv_inv_fromraw_list
 
-        self.d['weight'] = np.array(self.abstract.weights)
+        self.d['weight'] = np.array([w if w is not None else np.nan
+                                     for w in self.abstract.weights])
         self.d['step_size'] = self.abstract.ref_step_size * self.d['weight']
 
         self.d['caput_enabled'] = np.array(self.abstract.caput_enabled_rows)
@@ -1483,7 +1475,8 @@ class SnapshotAbstractModel(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, config_abstract_model, vis_col_key_list):
+    def __init__(self, config_abstract_model, vis_col_key_list,
+                 ss_db_filepath=''):
         """Constructor
 
         Size List:
@@ -1556,7 +1549,7 @@ class SnapshotAbstractModel(QObject):
         self.step_size_array     = self.ref_step_size * self.weight_array
         self.caput_enabled_rows  = _ct.d['caput_enabled']
 
-        self.db = tinkerdb.TinkerMainDatabase()
+        self.db = _ca.db
 
         (self.all_col_keys, self.all_col_names, self.all_str_formats,
          user_editable_list, static_in_ss_list) = \
@@ -1888,8 +1881,12 @@ class SnapshotAbstractModel(QObject):
         ca_ctrls = caget(self.caput_pv_str_list, format=FORMAT_CTRL,
                          throw=False, timeout=self.caget_timeout)
 
-        self.lo_lims_raw = np.array([c.lower_ctrl_limit for c in ca_ctrls])
-        self.hi_lims_raw = np.array([c.upper_ctrl_limit for c in ca_ctrls])
+        self.lo_lims_raw = np.array([
+            c.lower_ctrl_limit if hasattr(c, 'lower_ctrl_limit') else np.nan
+            for c in ca_ctrls])
+        self.hi_lims_raw = np.array([
+            c.upper_ctrl_limit if hasattr(c, 'upper_ctrl_limit') else np.nan
+            for c in ca_ctrls])
 
         self.lo_lims_conv = np.array(
             [uc(r) if uc is not None else r for r, uc

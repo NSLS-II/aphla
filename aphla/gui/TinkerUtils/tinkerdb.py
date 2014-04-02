@@ -1,8 +1,10 @@
 import sys, os
 import os.path as osp
+import stat
 import numpy as np
 from time import time, strftime, localtime, sleep
 import h5py
+h5zip = 'gzip'
 import sqlite3
 
 from PyQt4.QtCore import (SIGNAL, Qt)
@@ -15,6 +17,11 @@ from aphla.gui.utils.hlsqlite import (
     MEMORY, SQLiteDatabase, Column, ForeignKeyConstraint,
     PrimaryKeyTableConstraint, UniqueTableConstraint, blobdumps, blobloads)
 import config
+try:
+    from . import (date_month_folder_str, date_snapshot_filename_str)
+except:
+    from aphla.gui.TinkerUtils import (date_month_folder_str,
+                                       date_snapshot_filename_str)
 
 DEBUG_ConfigDatabase = True
 
@@ -50,6 +57,13 @@ class TinkerMainDatabase(SQLiteDatabase):
                                 create_folder=False)
 
         if self.getTableNames() == []:
+            filepath = self.filepath
+            self.close(vacuum=False)
+            st = os.stat(filepath)
+            # Add write permission to group
+            os.chmod(filepath, st.st_mode | stat.S_IWGRP)
+            SQLiteDatabase.__init__(self, filepath=filepath,
+                                    create_folder=False)
             print 'aptinker Main database file not found.'
             print 'Creating and initializing the Main database...'
             self._initTables()
@@ -68,7 +82,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         self._initChannelTables()
         self._initConfigTables()
         self._initSnapshotTables()
-        self._initSessionTables()
 
     #----------------------------------------------------------------------
     def _initChannelTables(self):
@@ -175,6 +188,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                    zip(all_pvrbs, all_pv_array_sizes[len(all_pvsps):],
                        all_pv_data_type_ids[len(all_pvsps):], )]
         # ^ 2nd element := Read-only
+        all_pvs = list(set(all_pvs)) # Remove duplicates
 
         table_name = 'elem_name_table'
         column_def = [
@@ -324,7 +338,7 @@ class TinkerMainDatabase(SQLiteDatabase):
         table_name = 'pv_table'
         column_def = [
             Column('pv_id', 'INTEGER', primary_key=True),
-            Column('pv', 'TEXT', allow_null=False, unique=True),
+            Column('pv', 'TEXT', allow_null=False),
             # ^ Virtual PV names start with '@'
             Column('readonly', 'INTEGER', allow_null=False),
             # ^ 1: read-only PV, 0: writeable PV, -1: no PV
@@ -814,7 +828,7 @@ class TinkerMainDatabase(SQLiteDatabase):
             Column('ss_ref_step_size', 'REAL', allow_null=False),
             Column('ss_synced_group_weight', 'INTEGER', allow_null=False),
             Column('caget_sent_ts_second', 'REAL', allow_null=False),
-            Column('ss_filepath', 'TEXT', allow_null=False),
+            Column('caput_sent_ts_second', 'REAL', allow_null=True),
             Column('ss_ctime', 'REAL', allow_null=False),
             ForeignKeyConstraint(self,
                                  'fk_config_id', 'config_id',
@@ -830,32 +844,6 @@ class TinkerMainDatabase(SQLiteDatabase):
             Column('ss_id', 'INTEGER', allow_null=False, unique=True),
             Column('ss_name', 'TEXT', allow_default=True, default_value='""'),
             Column('ss_description', 'TEXT', allow_default=True,
-                   default_value='""'),
-        ]
-        self.createFTS4VirtualTable(table_name, column_def, tokenizer_str='')
-
-    #----------------------------------------------------------------------
-    def _initSessionTables(self):
-        """"""
-
-        table_name = 'session_meta_table'
-        column_def = [
-            Column('session_id', 'INTEGER', primary_key=True),
-            Column('config_id', 'INTEGER', allow_null=False),
-            Column('session_user_id', 'INTEGER', allow_null=False),
-            Column('session_masar_id', 'INTEGER', allow_null=True),
-            Column('session_filepath', 'TEXT', allow_null=False),
-            # ^ e.g., username_2014-02-04T12-12-12.123-session.sqlite
-            Column('session_ctime', 'REAL', allow_null=False),
-        ]
-        self.createTable(table_name, column_def)
-
-        table_name = 'session_meta_text_search_table'
-        column_def = [
-            Column('session_id', 'INTEGER', allow_null=False, unique=True),
-            Column('session_name', 'TEXT', allow_default=True,
-                   default_value='""'),
-            Column('session_description', 'TEXT', allow_default=True,
                    default_value='""'),
         ]
         self.createFTS4VirtualTable(table_name, column_def, tokenizer_str='')
@@ -1151,9 +1139,11 @@ class TinkerMainDatabase(SQLiteDatabase):
         """
         If `unitconv` is either UcPoly or UcInterp1 object, then
         `src_unitsys_id`, `dst_unitsys_id`, `src_unitsymb`, `dst_unitsymb`,
-        and `inv` are all required. If `unitconv` is a dict
-        (coming from a JSON file), then these arguments will be ignored,
-        even if given, as the dict contains all the necessary information.
+        and `inv` are all required.
+
+        If `unitconv` is a dict (coming from a JSON file), then these arguments
+        will be ignored, even if given, as the dict contains all the necessary
+        information.
         """
 
         uc = unitconv
@@ -1187,21 +1177,21 @@ class TinkerMainDatabase(SQLiteDatabase):
             if unitconv_type == 'poly':
                 conv_data = tuple(uc['conv_data'])
             elif unitconv_type == 'interp1':
-                if not np.all(np.diff(uc['conv_data']['xp']) > 0.0):
+                xp, fp = uc['conv_data']
+                if not np.all(np.diff(xp) > 0.0):
                     print 'Error for unit conversion definition: '
                     print uc
                     raise ValueError('Monotonically increasing x array needed '
                                      'for interpolation')
                 if (inv == 1) and \
-                   (not np.all(np.diff(uc['conv_data']['fp']) > 0.0)) and \
-                   (not np.all(np.diff(uc['conv_data']['fp']) < 0.0)):
+                   (not np.all(np.diff(fp) > 0.0)) and \
+                   (not np.all(np.diff(fp) < 0.0)):
                     print 'Error for unit conversion definition: '
                     print uc
                     raise ValueError(
                         'y array must be monotonically increasing or decreasing '
                         'for the interpolation to be invertible.')
-                conv_data = tuple([tuple(uc['conv_data']['xp']),
-                                   tuple(uc['conv_data']['fp'])])
+                conv_data = tuple([tuple(xp), tuple(fp)])
             elif unitconv_type == 'NoConversion':
                 conv_data = None
             else:
@@ -1643,6 +1633,110 @@ class TinkerMainDatabase(SQLiteDatabase):
             raise ValueError("Duplicate ID's have been found")
 
     #----------------------------------------------------------------------
+    def saveSnapshot(self, snapshot_abstract_model):
+        """"""
+
+        a = snapshot_abstract_model
+
+        table_name_meta             = 'snapshot_meta_table'
+        table_name_meta_text_search = 'snapshot_meta_text_search_table'
+
+        meta_list_of_tuples = [
+            (a.config_id, self.get_user_id(a.userinfo, append_new=True),
+             a.masar_id, a.ref_step_size, a.synced_group_weight,
+             a.caget_sent_ts_second, a.caput_sent_ts_second)]
+
+        nCol = len(self.getColumnNames(table_name_meta))
+
+        self.lockDatabase()
+
+        maxID_meta = self.getMaxInColumn(table_name_meta, 'ss_id')
+        if maxID_meta is not None:
+            ss_id = maxID_meta + 1
+        else:
+            ss_id = 1
+
+        meta_text_search_list_of_tuples = [(ss_id, a.name, a.description)]
+
+        self.insertRows(table_name_meta, meta_list_of_tuples,
+                        bind_replacement_list_of_tuples=[
+                            (nCol-1,
+                             self.getCurrentEpochTimestampSQLiteFuncStr(
+                                 data_type='float'))])
+
+        self.insertRows(table_name_meta_text_search,
+                        meta_text_search_list_of_tuples)
+
+        self.unlockDatabase()
+
+        ss_ctime = self.getColumnDataFromTable(
+            'snapshot_meta_table', column_name_list=['ss_ctime'],
+            condition_str='ss_id={0:d}'.format(ss_id))[0][0]
+
+        ss_folderpath = osp.join(config.SNAPSHOT_FOLDERPATH,
+                                 date_month_folder_str(ss_ctime))
+        if not osp.exists(ss_folderpath):
+            os.makedirs(ss_folderpath, mode=0764)
+            # ^ make the folder also writable by group
+
+        ss_filepath = osp.join(
+            ss_folderpath, date_snapshot_filename_str(ss_ctime, a.userinfo[0]))
+
+        _ca = a._config_abstract
+
+        f = h5py.File(ss_filepath, 'w')
+
+        weights = np.array(_ca.weights)
+        f.create_dataset('weights', shape=weights.shape, data=weights,
+                         compression=h5zip)
+
+        caput_enabled_rows = np.array(_ca.caput_enabled_rows, dtype=np.bool)
+        f.create_dataset('caput_enabled_rows', shape=caput_enabled_rows.shape,
+                         data=caput_enabled_rows, compression=h5zip)
+
+        # Save "caput_raws"
+        caput_raws_sizes = [
+            1 if not isinstance(r, catools.dbr.ca_array) else r.size
+            for r in a.caput_raws]
+        caput_raws_scalars = [
+            r for r, size in zip(a.caput_raws, caput_raws_sizes) if size == 1]
+        caput_raws_arrays = [
+            r.__array__() for r, size in zip(a.caput_raws, caput_raws_sizes)
+            if size != 1]
+        f.create_dataset('caput_raws_scalars', shape=(len(caput_raws_scalars),),
+                         data=caput_raws_scalars, compression=h5zip)
+        if caput_raws_arrays != []:
+            f.create_group('caput_raws_arrays')
+            g = f['caput_raws_arrays']
+            for j, array in enumerate(caput_raws_arrays):
+                g.create_dataset(str(j), shape=array.shape, data=array,
+                                 compression=h5zip)
+
+        # Save "caget_raws"
+        caget_raws_sizes = [
+            1 if not isinstance(r, catools.dbr.ca_array) else r.size
+            for r in a.caget_raws]
+        caget_raws_scalars = [
+            r for r, size in zip(a.caget_raws, caget_raws_sizes) if size == 1]
+        caget_raws_arrays = [
+            r.__array__() for r, size in zip(a.caget_raws, caget_raws_sizes)
+            if size != 1]
+        f.create_dataset('caget_raws_scalars', shape=(len(caget_raws_scalars),),
+                         data=caget_raws_scalars, compression=h5zip)
+        if caget_raws_arrays != []:
+            f.create_group('caget_raws_arrays')
+            g = f['caget_raws_arrays']
+            for j, array in enumerate(caget_raws_arrays):
+                g.create_dataset(str(j), shape=array.shape, data=array,
+                                 compression=h5zip)
+
+        f.create_dataset('caget_ioc_ts_tuples',
+                         shape=a.caget_ioc_ts_tuples.shape,
+                         data=a.caget_ioc_ts_tuples, compression=h5zip)
+
+        f.close()
+
+    #----------------------------------------------------------------------
     def saveConfig(self, config_abstract_model):
         """"""
 
@@ -1753,99 +1847,5 @@ class TinkerMainDatabase(SQLiteDatabase):
         else:
             return config_ids[0]
 
-
-########################################################################
-class SnapshotDatabase(SQLiteDatabase):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, filepath=config.SS_DB_FILEPATH, suppress_print=False):
-        """Constructor"""
-
-        SQLiteDatabase.__init__(self, filepath=filepath, create_folder=False)
-
-        if self.getTableNames() == []:
-            if not suppress_print:
-                print 'aptinker Snapshot database file not found.'
-                print 'Creating and initializing the Snapshot database...'
-            self._initTables()
-            if not suppress_print:
-                print 'Done'
-
-    #----------------------------------------------------------------------
-    def _initTables(self):
-        """"""
-
-        self.setForeignKeysEnabled(False)
-
-        self.dropAllTables()
-
-        table_name = 'snapshot_table'
-        column_def = [
-            Column('ss_id', 'INTEGER', allow_null=False),
-            Column('channel_id', 'INTEGER', allow_null=False),
-            Column('ss_weight', 'REAL', allow_default=True,
-                   default_value='NaN'),
-            Column('ss_caput_enabled', 'INTEGER', allow_null=False,
-                   allow_default=True, default_value=1),
-            Column('pvsp_raw_scalar', 'REAL', allow_null=True),
-            Column('pvsp_raw_array', 'BLOB', allow_null=True),
-            Column('pvsp_sent_raw_scalar', 'REAL', allow_null=True),
-            Column('pvsp_sent_raw_array', 'BLOB', allow_null=True),
-            Column('pvsp_sent_ts_second', 'REAL', allow_null=True),
-            Column('pvrb_raw_scalar', 'REAL', allow_null=True),
-            Column('pvrb_raw_array', 'BLOB', allow_null=True),
-            Column('pvsp_ioc_ts_second'    , 'INTEGER', allow_null=True),
-            Column('pvsp_ioc_ts_nanosecond', 'INTEGER', allow_null=True),
-            Column('pvrb_ioc_ts_second'    , 'INTEGER', allow_null=True),
-            Column('pvrb_ioc_ts_nanosecond', 'INTEGER', allow_null=True),
-        ]
-        self.createTable(table_name, column_def)
-
-########################################################################
-class SessionDatabase(SnapshotDatabase):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-
-        SQLiteDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH)
-
-        if self.getTableNames() == []:
-            print 'aptinker Session database file not found.'
-            print 'Creating and initializing the Session database...'
-            SnapshotDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH,
-                                      suppress_print=True)
-            self._initTables()
-            print 'Done'
-
-    #----------------------------------------------------------------------
-    def _initTables(self):
-        """"""
-
-        self.setForeignKeysEnabled(False)
-
-        self.dropAllTables()
-
-        SnapshotDatabase._initTables(self) # Create "snapshot_table"
-
-        table_name = 'meta_table'
-        column_def = [
-            Column('ss_id', 'INTEGER', primary_key=True),
-            Column('ss_ref_step_size', 'REAL', allow_null=False),
-            Column('ss_synced_group_weight', 'INTEGER', allow_null=False),
-            Column('caget_sent_ts_second', 'REAL', allow_null=False),
-            Column('ss_ctime', 'REAL', allow_null=False),
-        ]
-        self.createTable(table_name, column_def)
-
 if __name__ == '__main__':
     db = TinkerMainDatabase()
-    db._initTables()
-
-    db_ss = SnapshotDatabase()
-    db_ss._initTables()
-
-    db_session = SessionDatabase()
-    db_session._initTables()

@@ -50,8 +50,7 @@ from TinkerUtils.tinkerModels import (
     ConfigMetaTableModel,
     ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
-from TinkerUtils.tinkerdb import (TinkerMainDatabase, SnapshotDatabase,
-                                  SessionDatabase)
+from TinkerUtils.tinkerdb import (TinkerMainDatabase)
 from TinkerUtils.dbviews import (
     ConfigDBViewWidget, SnapshotDBViewWidget, ConfigMetaDBViewWidget,
     ConfigDBTableViewItemDelegate, SnapshotDBTableViewItemDelegate)
@@ -67,8 +66,6 @@ PREF_JSON_FILEPATH = osp.join(APHLA_USER_CONFIG_DIR,
 # Check existence of DB files. Initialize DB file, if not.
 # Need `vacuum` option to be False. Otherwise, this section could take long.
 _ = TinkerMainDatabase(); _.close(vacuum=False)
-_ = SnapshotDatabase()  ; _.close(vacuum=False)
-_ = SessionDatabase()   ; _.close(vacuum=False)
 
 #----------------------------------------------------------------------
 def get_preferences(default=False):
@@ -109,6 +106,7 @@ class ConfigSaveDialog(QDialog, Ui_Dialog_ConfSave):
 
         self.lineEdit_name.setText(config_title)
         self.plainTextEdit_description.setReadOnly(False)
+        self.lineEdit_masar_id.setText('')
 
     #----------------------------------------------------------------------
     def closeEvent(self, event):
@@ -128,6 +126,42 @@ class ConfigSaveDialog(QDialog, Ui_Dialog_ConfSave):
 
         super(ConfigSaveDialog, self).reject() # will close the dialog
 
+########################################################################
+class SnapshotSaveDialog(QDialog, Ui_Dialog_ConfSave):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+
+        QDialog.__init__(self)
+
+        self.setupUi(self)
+
+        self.setWindowFlags(Qt.Window) # To add Maximize & Minimize buttons
+        self.setWindowTitle('Save Snapshot')
+
+        self.lineEdit_name.setText('')
+        self.plainTextEdit_description.setReadOnly(False)
+        self.lineEdit_masar_id.setText('')
+
+    #----------------------------------------------------------------------
+    def closeEvent(self, event):
+        """"""
+
+        event.accept()
+
+    #----------------------------------------------------------------------
+    def accept(self):
+        """"""
+
+        super(SnapshotSaveDialog, self).accept() # will close the dialog
+
+    #----------------------------------------------------------------------
+    def reject(self):
+        """"""
+
+        super(SnapshotSaveDialog, self).reject() # will close the dialog
 
 ########################################################################
 class PreferencesEditor(QDialog, Ui_Dialog_Pref):
@@ -1485,6 +1519,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                      self.launchConfigDBSelector)
         self.connect(self.actionSaveConfig, SIGNAL('triggered()'),
                      self.saveConfig)
+        self.connect(self.actionSaveSnapshot, SIGNAL('triggered()'),
+                     self.saveSnapshot)
         self.connect(self.actionPreferences, SIGNAL('triggered()'),
                      self.launchPrefEditor)
 
@@ -1530,56 +1566,9 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         open_config_ids = self._settings.value('open_config_ids')
         if open_config_ids is not None:
-            db = TinkerMainDatabase()
-            if '[config_meta_table text view]' \
-               not in db.getViewNames(square_brackets=True):
-                db.create_temp_config_meta_table_text_view()
-
-            for config_id in open_config_ids:
-                if config_id is None:
-                    continue
-                else:
-                    config_id = int(config_id)
-
-                print 'Loading Configuration (ID={0:d})...'.format(config_id)
-                m = ConfigAbstractModel()
-
-                m.config_id = config_id
-
-                out = db.getColumnDataFromTable(
-                    '[config_meta_table text view]',
-                    column_name_list=[
-                        'config_name', 'config_description', 'config_masar_id',
-                        'config_ref_step_size', 'config_synced_group_weight',
-                        'config_ctime'],
-                    condition_str='config_id={0:d}'.format(config_id))
-
-                if out == []:
-                    print 'config_id of {0:d} could not be found.'.format(
-                        config_id)
-                    continue
-
-                ((m.name,), (m.description,), (m.masar_id,), (m.ref_step_size,),
-                 (synced_group_weight,), (m.config_ctime,)) = out
-
-                if synced_group_weight: m.synced_group_weight = True
-                else                  : m.synced_group_weight = False
-
-                out = db.getColumnDataFromTable(
-                    'config_table',
-                    column_name_list=['group_name_id', 'channel_id',
-                                      'config_weight', 'config_caput_enabled'],
-                    condition_str='config_id={0:d}'.format(config_id))
-                (m.group_name_ids, m.channel_ids, m.weights,
-                 m.caput_enabled_rows) = map(list, out)
-
-                if m.channel_ids != []:
-                    if m.check_aphla_unitconv_updates():
-                        self.createDockWidget(m)
-                    else:
-                        print 'Aborting configuration loading.'
-
-                print 'Configuration loading process finished.'
+            open_config_ids = [int(s) if s is not None else None
+                               for s in open_config_ids]
+            self.loadConfigFromConfigIDs(open_config_ids)
 
         self._settings.endGroup()
 
@@ -1648,6 +1637,87 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                 self.addDockWidget(Qt.BottomDockWidgetArea, w)
 
     #----------------------------------------------------------------------
+    def saveSnapshot(self):
+        """"""
+
+        visible_dockWidget_list = [w for w in self.dockWidgetList if w.visible]
+
+        if visible_dockWidget_list == []:
+            msg = QMessageBox()
+            msg.setText('No configuration is loaded.')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
+        if len(visible_dockWidget_list) >= 2:
+            visible_dockWidget_titles = [w.windowTitle()
+                                         for w in visible_dockWidget_list]
+
+            title = 'Select configuration for which a snapshot is to be saved'
+            prompt = 'Configuration Window Title:'
+            result = QInputDialog.getItem(
+                self, title, prompt, visible_dockWidget_titles, editable=False)
+
+            if not result[1]:
+                return
+
+            config_title = result[0]
+
+            w = visible_dockWidget_list[
+                visible_dockWidget_titles.index(config_title)]
+        else:
+            w = visible_dockWidget_list[0]
+            config_title = w.windowTitle()
+
+        if w.config_abstract.config_id is None:
+            msg = QMessageBox()
+            msg.setText('The selected configuration has not been saved to '
+                        'the database yet. Do you want to save the '
+                        'configuration now?')
+            msg.setInformativeText(
+                'Before you can save a snapshot for a configuration, '
+                'the configuration must be saved to the database.')
+            msg.addButton(QMessageBox.Yes)
+            msg.addButton(QMessageBox.No)
+            msg.setDefaultButton(QMessageBox.No)
+            msg.setEscapeButton(QMessageBox.No)
+            msg.setIcon(QMessageBox.Question)
+            choice = msg.exec_()
+            if choice == QMessageBox.No:
+                return
+
+            newly_created_dockWidget = self.saveConfig()
+            w = newly_created_dockWidget
+
+        dialog = SnapshotSaveDialog()
+        dialog.exec_()
+
+        if dialog.result() == QDialog.Accepted:
+
+            _sa = w.ss_abstract
+            _ca = _sa._config_abstract
+
+            isinstance(_sa, SnapshotAbstractModel)
+
+            _sa.name = dialog.lineEdit_name.text().strip()
+            _sa.description = dialog.plainTextEdit_description.property(
+                'plainText')
+            try:
+                _sa.masar_id = int(dialog.lineEdit_masar_id.text())
+            except:
+                _sa.masar_id = None
+            # The following are already up to date:
+            #    _sa.config_id, _sa.ref_step_size, _sa.synced_group_weight,
+            #    _sa.caget_sent_ts_second
+
+            _sa.ss_id = _sa.db.saveSnapshot(_sa)
+            msg = QMessageBox()
+            msg.setText('Snapshot successfully saved to database.')
+            msg.exec_()
+
+            # TODO: Update snapshot tab on the dock widget
+
+    #----------------------------------------------------------------------
     def saveConfig(self):
         """"""
 
@@ -1661,13 +1731,13 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             return
 
         if len(visible_dockWidget_list) >= 2:
-            visible_dockWidget_tites = [w.windowTitle()
-                                        for w in visible_dockWidget_list]
+            visible_dockWidget_titles = [w.windowTitle()
+                                         for w in visible_dockWidget_list]
 
             title = 'Select configuration to save'
             prompt = 'Configuration Window Title:'
             result = QInputDialog.getItem(
-                self, title, prompt, visible_dockWidget_tites, editable=False)
+                self, title, prompt, visible_dockWidget_titles, editable=False)
 
             if not result[1]:
                 return
@@ -1675,7 +1745,7 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             config_title = result[0]
 
             w = visible_dockWidget_list[
-                visible_dockWidget_tites.index(config_title)]
+                visible_dockWidget_titles.index(config_title)]
         else:
             w = visible_dockWidget_list[0]
             config_title = w.windowTitle()
@@ -1691,8 +1761,11 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             _ca.name = dialog.lineEdit_name.text().strip()
             _ca.description = dialog.plainTextEdit_description.property(
                 'plainText')
+            try:
+                _ca.masar_id = int(dialog.lineEdit_masar_id.text())
+            except:
+                _ca.masar_id = None
             _ca.ref_step_size = _sa.ref_step_size
-            _ca.masar_id = _sa.masar_id
             _ca.synced_group_weight = _sa.synced_group_weight
 
             _ca.weights            = _sa.weight_array.tolist()
@@ -1701,7 +1774,15 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             _ca.config_id = _ca.db.saveConfig(_ca)
             msg = QMessageBox()
             msg.setText('Config successfully saved to database.')
+            msg.setInformativeText('It will now reload this saved configuration.')
             msg.exec_()
+
+            # TODO: Instead of reloading the config, just update the
+            # config meta tab info only. Make sure to update _sa.config_id.
+            w.close()
+            new_dockWidget, = self.loadConfigFromConfigIDs(_ca.config_id)
+
+            return new_dockWidget
 
     #----------------------------------------------------------------------
     def launchConfigDBSelector(self):
@@ -1777,6 +1858,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self.connect(dockWidget, SIGNAL('dockAboutTobeClosed'),
                      self.onDockWidgetClose)
 
+        return dockWidget
+
     #----------------------------------------------------------------------
     def onDockWidgetClose(self, close_signal_sender):
         """"""
@@ -1795,6 +1878,68 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             # Shut down the timer to avoid memory leak
             if dockWidget.auto_updater is not None:
                 dockWidget.auto_updater.cancel()
+
+    #----------------------------------------------------------------------
+    def loadConfigFromConfigIDs(self, config_ids):
+        """"""
+
+        db = TinkerMainDatabase()
+
+        if '[config_meta_table text view]' \
+           not in db.getViewNames(square_brackets=True):
+            db.create_temp_config_meta_table_text_view()
+
+        if isinstance(config_ids, int):
+            config_ids = [config_ids]
+
+        newly_created_dockwidgets = []
+        for config_id in config_ids:
+            if config_id is None:
+                continue
+
+            print 'Loading Configuration (ID={0:d})...'.format(config_id)
+            m = ConfigAbstractModel()
+
+            m.config_id = config_id
+
+            out = db.getColumnDataFromTable(
+                '[config_meta_table text view]',
+                column_name_list=[
+                    'config_name', 'config_description', 'config_masar_id',
+                    'config_ref_step_size', 'config_synced_group_weight',
+                    'config_ctime'],
+                condition_str='config_id={0:d}'.format(config_id))
+
+            if out == []:
+                print 'config_id of {0:d} could not be found.'.format(
+                    config_id)
+                continue
+
+            ((m.name,), (m.description,), (m.masar_id,), (m.ref_step_size,),
+             (synced_group_weight,), (m.config_ctime,)) = out
+
+            if synced_group_weight: m.synced_group_weight = True
+            else                  : m.synced_group_weight = False
+
+            out = db.getColumnDataFromTable(
+                'config_table',
+                column_name_list=['group_name_id', 'channel_id',
+                                  'config_weight', 'config_caput_enabled'],
+                condition_str='config_id={0:d}'.format(config_id))
+            (m.group_name_ids, m.channel_ids, m.weights,
+             m.caput_enabled_rows) = map(list, out)
+
+            if m.channel_ids != []:
+                if m.check_aphla_unitconv_updates():
+                    newly_created_dockwidgets.append(self.createDockWidget(m))
+                else:
+                    print 'Aborting configuration loading.'
+
+            print 'Configuration loading process finished.'
+
+        db.close(vacuum=False)
+
+        return newly_created_dockwidgets
 
 ########################################################################
 class TinkerApp(QObject):
