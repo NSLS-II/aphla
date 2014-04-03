@@ -47,8 +47,8 @@ from TinkerUtils import (config, tinkerModels,
                          tinkerConfigSetupDialog, tinkerConfigDBSelector,
                          datestr, datestr_ns)
 from TinkerUtils.tinkerModels import (
-    ConfigMetaTableModel,
-    ConfigAbstractModel, ConfigTableModel,
+    getuserinfo,
+    ConfigMetaTableModel, ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
 from TinkerUtils.dbviews import (
@@ -1686,8 +1686,10 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             if choice == QMessageBox.No:
                 return
 
-            newly_created_dockWidget = self.saveConfig()
-            w = newly_created_dockWidget
+            w = self.saveConfig(w)
+
+            if w is None:
+                return
 
         dialog = SnapshotSaveDialog()
         dialog.exec_()
@@ -1696,8 +1698,6 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
             _sa = w.ss_abstract
             _ca = _sa._config_abstract
-
-            isinstance(_sa, SnapshotAbstractModel)
 
             _sa.name = dialog.lineEdit_name.text().strip()
             _sa.description = dialog.plainTextEdit_description.property(
@@ -1710,44 +1710,55 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             #    _sa.config_id, _sa.ref_step_size, _sa.synced_group_weight,
             #    _sa.caget_sent_ts_second
 
-            _sa.ss_id = _sa.db.saveSnapshot(_sa)
+            _sa.userinfo = getuserinfo()
+            _sa.db.saveSnapshot(_sa)
             msg = QMessageBox()
             msg.setText('Snapshot successfully saved to database.')
             msg.exec_()
 
-            # TODO: Update snapshot tab on the dock widget
+            # Update snapshot tab on the dock widget
+            w.lineEdit_ss_id.setText('{0:d}'.format(_sa.ss_id))
+            w.lineEdit_ss_name.setText(_sa.name)
+            w.textEdit_snapshot_description.setProperty('plainText',
+                                                        _sa.description)
+            w.lineEdit_snapshot_username.setText(_sa.userinfo[0])
+            w.lineEdit_snapshot_timestamp.setText(datestr(_sa.ss_ctime))
 
     #----------------------------------------------------------------------
-    def saveConfig(self):
+    def saveConfig(self, selected_dock_widget=None):
         """"""
 
-        visible_dockWidget_list = [w for w in self.dockWidgetList if w.visible]
+        if selected_dock_widget is None:
+            visible_dockWidget_list = [w for w in self.dockWidgetList if w.visible]
 
-        if visible_dockWidget_list == []:
-            msg = QMessageBox()
-            msg.setText('No configuration is loaded.')
-            msg.setIcon(QMessageBox.Critical)
-            msg.exec_()
-            return
-
-        if len(visible_dockWidget_list) >= 2:
-            visible_dockWidget_titles = [w.windowTitle()
-                                         for w in visible_dockWidget_list]
-
-            title = 'Select configuration to save'
-            prompt = 'Configuration Window Title:'
-            result = QInputDialog.getItem(
-                self, title, prompt, visible_dockWidget_titles, editable=False)
-
-            if not result[1]:
+            if visible_dockWidget_list == []:
+                msg = QMessageBox()
+                msg.setText('No configuration is loaded.')
+                msg.setIcon(QMessageBox.Critical)
+                msg.exec_()
                 return
 
-            config_title = result[0]
+            if len(visible_dockWidget_list) >= 2:
+                visible_dockWidget_titles = [w.windowTitle()
+                                             for w in visible_dockWidget_list]
 
-            w = visible_dockWidget_list[
-                visible_dockWidget_titles.index(config_title)]
+                title = 'Select configuration to save'
+                prompt = 'Configuration Window Title:'
+                result = QInputDialog.getItem(
+                    self, title, prompt, visible_dockWidget_titles, editable=False)
+
+                if not result[1]:
+                    return
+
+                config_title = result[0]
+
+                w = visible_dockWidget_list[
+                    visible_dockWidget_titles.index(config_title)]
+            else:
+                w = visible_dockWidget_list[0]
+                config_title = w.windowTitle()
         else:
-            w = visible_dockWidget_list[0]
+            w = selected_dock_widget
             config_title = w.windowTitle()
 
         dialog = ConfigSaveDialog(config_title)
@@ -1771,18 +1782,23 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             _ca.weights            = _sa.weight_array.tolist()
             _ca.caput_enabled_rows = _sa.caput_enabled_rows.tolist()
 
-            _ca.config_id = _ca.db.saveConfig(_ca)
+            _ca.userinfo = getuserinfo()
+            _ca.db.saveConfig(_ca)
             msg = QMessageBox()
             msg.setText('Config successfully saved to database.')
-            msg.setInformativeText('It will now reload this saved configuration.')
             msg.exec_()
 
-            # TODO: Instead of reloading the config, just update the
-            # config meta tab info only. Make sure to update _sa.config_id.
-            w.close()
-            new_dockWidget, = self.loadConfigFromConfigIDs(_ca.config_id)
+            _sa.config_id = _ca.config_id
 
-            return new_dockWidget
+            # Update config tab on the dock widget
+            w.lineEdit_config_id.setText('{0:d}'.format(_ca.config_id))
+            w.lineEdit_config_name.setText(_ca.name)
+            w.textEdit_config_description.setProperty('plainText',
+                                                      _ca.description)
+            w.lineEdit_config_username.setText(_ca.userinfo[0])
+            w.lineEdit_config_timestamp.setText(datestr(_ca.config_ctime))
+
+            return w
 
     #----------------------------------------------------------------------
     def launchConfigDBSelector(self):

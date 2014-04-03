@@ -1673,6 +1673,9 @@ class TinkerMainDatabase(SQLiteDatabase):
             'snapshot_meta_table', column_name_list=['ss_ctime'],
             condition_str='ss_id={0:d}'.format(ss_id))[0][0]
 
+        a.ss_id = ss_id
+        a.ss_ctime = ss_ctime
+
         ss_folderpath = osp.join(config.SNAPSHOT_FOLDERPATH,
                                  date_month_folder_str(ss_ctime))
         if not osp.exists(ss_folderpath):
@@ -1772,6 +1775,13 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         self.unlockDatabase()
 
+        config_ctime = self.getColumnDataFromTable(
+            'config_meta_table', column_name_list=['config_ctime'],
+        condition_str='config_id={0:d}'.format(config_id))[0][0]
+
+        a.config_id = config_id
+        a.config_ctime = config_ctime
+
         table_name = 'config_table'
 
         list_of_tuples = [(config_id, gn_id, ch_id, w, bool(caput_enabled))
@@ -1779,8 +1789,6 @@ class TinkerMainDatabase(SQLiteDatabase):
                           in zip(a.group_name_ids, a.channel_ids, a.weights,
                                  a.caput_enabled_rows)]
         self.insertRows(table_name, list_of_tuples)
-
-        return config_id
 
     #----------------------------------------------------------------------
     def get_user_id(self, userinfo_tuple, append_new=True):

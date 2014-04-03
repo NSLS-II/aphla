@@ -1542,7 +1542,6 @@ class SnapshotAbstractModel(QObject):
         self.mult_factor          = 1.0
         self.caget_sent_ts_second = None
         self.caput_sent_ts_second = None
-        self.filepath             = ''
         self.ss_ctime             = None
 
         self.weight_array        = _ct.d['weight']
