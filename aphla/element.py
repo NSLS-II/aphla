@@ -769,11 +769,12 @@ class CaElement(AbstractElement):
         #AbstractElement.__init__(self, **kwargs)
         self.__dict__['_field'] = {}
         self.__dict__['_golden'] = {}  # the golden values for fields.
-        self.__dict__['_pvtags'] = {}
+        self.__dict__['_pvtags'] = { '_archive': [] }
         self.__dict__['virtual'] = kwargs.get('virtual', 0)
         self.__dict__['trace'] = kwargs.get('trace', False)
         # the linked element, alias
         self.__dict__['alias'] = []
+
         # update all element properties
         super(CaElement, self).__init__(**kwargs)
         

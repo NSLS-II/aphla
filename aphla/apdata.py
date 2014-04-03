@@ -720,6 +720,7 @@ def createLatticePvDb(dbfname, csv2fname = None):
                   hlaLow    REAL,
                   hlaStep   REAL,
                   hlaValRef REAL,
+                  archive INT DEFAULT 0,
                   UNIQUE (pv,elemName,elemField) ON CONFLICT REPLACE,
                   FOREIGN KEY(elemName) REFERENCES elements(elemName))""")
     conn.commit()
