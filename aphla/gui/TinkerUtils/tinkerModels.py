@@ -2329,6 +2329,11 @@ class SnapshotTableModel(QAbstractTableModel):
             if (k in self.abstract.visible_col_keys) and
             (k not in ('weight', 'step_size', 'caput_enabled'))]
 
+        self.non_visible_required_col_keys = [
+            'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
+            # ^ always needed for ss_cur_SP_ioc_ts & ss_cur_RB_ioc_ts
+        ]
+
         self.update_visible_dynamic_columns()
 
         self.connect(self.abstract, SIGNAL('pvValuesUpdatedInSSAbstract'),
@@ -2525,6 +2530,9 @@ class SnapshotTableModel(QAbstractTableModel):
     def update_visible_dynamic_columns(self):
         """"""
 
+        for k in self.non_visible_required_col_keys:
+            self.update_column_data(k)
+
         for k in self.visible_dynamic_col_keys:
             self.update_column_data(k)
 
@@ -2593,6 +2601,10 @@ class SnapshotTableModel(QAbstractTableModel):
             pass
         elif col_key == 'D_tar_ConvSP_cur_ConvSP':
             pass
+        elif col_key.startswith('ss_'):
+            # These snapshot columns will be updated ONLY when a snapshot is
+            # being saved, so they should NOT be updated here. Just pass.
+            pass
         else:
             self.d[col_key] = np.ones((self.abstract.nRows,))*np.nan
 
@@ -2630,6 +2642,36 @@ class SnapshotTableModel(QAbstractTableModel):
 
         self.d['lo_lim_conv'][rows] = self.abstract.lo_lims_conv[indexes]
         self.d['hi_lim_conv'][rows] = self.abstract.hi_lims_conv[indexes]
+
+    #----------------------------------------------------------------------
+    def update_snapshot_columns(self, from_DB):
+        """"""
+
+        key_list = ['SentSP', 'ConvSentSP', 'SP', 'SP_ioc_ts', 'ConvSP',
+                    'RB', 'RB_ioc_ts', 'ConvRB']
+        ss_key_list = ['ss_'+k for k in key_list]
+
+        if not from_DB:
+            for k in key_list:
+                self.d['ss_'+k] = self.d['cur_'+k]
+        else:
+            #self.abstract.ss_id
+            raise NotImplementedError()
+
+        modified_col_inds = [
+            self.abstract.all_col_keys.index(k) for k in ss_key_list]
+        if modified_col_inds == []:
+            return
+
+        contig_modified_col_ind_pairs = get_contiguous_col_ind_pairs(
+            modified_col_inds)
+
+        for (leftCol, rightCol) in contig_modified_col_ind_pairs:
+            topLeftIndex = self.index(0, leftCol)
+            bottomRightIndex = self.index(self.abstract.nRows, rightCol)
+            self.emit(
+                SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                topLeftIndex, bottomRightIndex)
 
     #----------------------------------------------------------------------
     def repaint(self):

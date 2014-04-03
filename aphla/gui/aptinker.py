@@ -1716,6 +1716,10 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             msg.setText('Snapshot successfully saved to database.')
             msg.exec_()
 
+            # Update snapshot-related columns
+            from_DB = False
+            w.ss_table.update_snapshot_columns(from_DB)
+
             # Update snapshot tab on the dock widget
             w.lineEdit_ss_id.setText('{0:d}'.format(_sa.ss_id))
             w.lineEdit_ss_name.setText(_sa.name)
