@@ -306,7 +306,7 @@ class CaAction:
             else: return True
         elif isinstance(v, (list, tuple)):
             for vi in v:
-                if not self._all_within_range(vi, low, high): return False
+                if not self._all_within_range(vi, lowhigh): return False
             return True
         else:
             raise RuntimeError("unknow data type '{0}:{1}'".format(v, type(v)))
@@ -471,7 +471,7 @@ class CaAction:
                                  format(self.pvsp[i], lowhigh, rawval[i]))
                 #rawval[i] = bc_val
             elif bc == 'ignore':
-                return       
+                pass       
 
         if self.trace: 
             if isinstance(val, (list, tuple)):
@@ -486,7 +486,6 @@ class CaAction:
                 # keep the first for reset
                 self.sp.pop(1)
 
-        #print self.pvsp, rawval
         retlst = caput(self.pvsp, rawval, wait=True)
         for i,ret in enumerate(retlst):
             if ret.ok: continue
