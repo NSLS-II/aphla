@@ -218,12 +218,14 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
     ddroffset = caget(pv_ddroffset, timeout=tc)
     data = (caget(pv_x, count=count), caget(pv_y, count=count),
             caget(pv_S, count=count))
+    xbbaofst = caget(pv_bbaxoff, timeout=tc)
+    ybbaofst = caget(pv_bbayoff, timeout=tc)
     #
     # set 0 - internal trig, 1 - external trig
     #caput(pv_trig, 1, wait=True)
     
     #return data[0], data[1], data[2], ddrts0, ddroffset, ts
-    return data[0], data[1], data[2], ddrts0, ddroffset
+    return data[0], data[1], data[2], ddrts0, ddroffset, xbbaofst, ybbaofst
 
 
 def _saveSrBpmData(fname, waveform, data, **kwargs):
@@ -242,6 +244,12 @@ def _saveSrBpmData(fname, waveform, data, **kwargs):
     grp["%s_sum" % waveform]    = data[3]
     grp["%s_ts" % waveform]     = data[4]
     grp["%s_offset" % waveform] = data[5]
+
+    if "xbbaoffset" in kwargs:
+        grp["bba_x_offset"] = kwargs["xbbaoffset"]
+    if "ybbaoffset" in kwargs:
+        grp["bba_y_offset"] = kwargs["ybbaoffset"]
+
     #grp.attrs["timespan"] = _maxTimeSpan(data[4])
 
     if dcct_data:
@@ -298,7 +306,7 @@ def getSrBpmData(**kwargs):
     if trig_src == 0 and waveform in ["Tbt", "Fa"]:
         # internal trig
         ret = _srBpmTrigData(pvpref, waveform, **kwargs)
-        x, y, Is, ts, offset = ret
+        x, y, Is, ts, offset, xbbaofst, ybbaofst = ret
     else:
         if waveform == "Tbt":
             pv_x = [pv + "TBT-X" for pv in pvpref]
@@ -312,11 +320,15 @@ def getSrBpmData(**kwargs):
             pv_offset = [pv + "ddrFaOffset" for pv in pvpref]
 
         pv_ts = [pv + "TS:DdrTrigDate-I" for pv in pvpref]
+        pv_bbaxoff = [ pv + "BbaXOff-SP" for pv in pvpref]
+        pv_bbayoff = [ pv + "BbaYOff-SP" for pv in pvpref]
         x  = caget(pv_x, count=count)
         y  = caget(pv_y, count=count)
         Is = caget(pv_S, count=count)
         ts  = np.array(caget(pv_ts))
         offset = np.array(caget(pv_offset), 'i')
+        xbbaofst = np.array(caget(pv_bbaxoff))
+        ybbaofst = np.array(caget(pv_bbayoff))
     # in case they have difference size
     d = []
     for v in [x, y, Is]:
@@ -350,6 +362,8 @@ def getSrBpmData(**kwargs):
     _saveSrBpmData(output, waveform, data,
                    h5group=kwargs.get("h5group", "/"),
                    #dcct_data = (dcct1, dcct2),
+                   xbbaoffset = xbbaofst,
+                   ybbaoffset = ybbaofst,
                    ts = (t0, t1),
                    pvpref = pvpref)
     return data, output
