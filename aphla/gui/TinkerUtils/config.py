@@ -48,5 +48,15 @@ DEF_VIS_COL_KEYS = {
         'D_cur_ConvRB_cur_ConvSP',
         'ini_ConvSP'
     ],
+    'snapshot_DB': [
+        'group_name',
+        'pvsp',
+        'pvrb',
+        'channel_name',
+        'ss_ConvSP',
+        'ss_ConvSentSP',
+        'ss_ConvRB',
+        'unitsymb'
+    ],
 }
 

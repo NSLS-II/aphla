@@ -43,12 +43,12 @@ from aphla.gui.utils.orderselector import ColumnsDialog
 from Qt4Designer_files.ui_aptinker import Ui_MainWindow
 from TinkerUtils.ui_aptinker_pref import Ui_Dialog as Ui_Dialog_Pref
 from TinkerUtils.ui_configSaveDialog import Ui_Dialog as Ui_Dialog_ConfSave
-from TinkerUtils import (config, tinkerModels,
+from TinkerUtils import (config, tinkerModels, datestr, datestr_ns,
                          tinkerConfigSetupDialog, tinkerConfigDBSelector,
-                         datestr, datestr_ns)
+                         tinkerSnapshotDBSelector)
 from TinkerUtils.tinkerModels import (
     getuserinfo,
-    ConfigMetaTableModel, ConfigAbstractModel, ConfigTableModel,
+    ConfigAbstractModel, ConfigTableModel,
     SnapshotAbstractModel, SnapshotTableModel)
 from TinkerUtils.tinkerdb import (TinkerMainDatabase)
 from TinkerUtils.dbviews import (
@@ -621,19 +621,35 @@ class TinkerDockWidget(QDockWidget):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, config_abstract_model, parent):
+    def __init__(self, config_abstract_model, parent, ss_abstract=None):
         """Constructor"""
 
         self._main_settings = parent._settings
 
         isinstance(config_abstract_model, ConfigAbstractModel)
+        isinstance(ss_abstract, SnapshotAbstractModel)
 
         self.config_abstract = config_abstract_model
 
         pref = get_preferences()
         self.ss_abstract = SnapshotAbstractModel(config_abstract_model,
                                                  pref['vis_col_keys'])
+        if ss_abstract is not None:
+            _sa = self.ss_abstract
+            _sa.ss_id         = ss_abstract.ss_id
+            _sa.name          = ss_abstract.name
+            _sa.description   = ss_abstract.description
+            _sa.ss_ctime      = ss_abstract.ss_ctime
+            _sa.ref_step_size = ss_abstract.ref_step_size
+            _sa.synced_group_weight = ss_abstract.synced_group_weight
+
+            _sa.visible_col_keys = pref['vis_col_keys']
+
         self.ss_table = SnapshotTableModel(self.ss_abstract)
+        if ss_abstract is not None:
+            from_DB = True
+            self.ss_table.update_snapshot_columns(from_DB)
+
 
         self._initUI(parent)
 
@@ -1517,6 +1533,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
                      self.launchConfigDBSelector)
+        self.connect(self.actionLoadSnapshot, SIGNAL('triggered()'),
+                     self.launchSnapshotDBSelector)
         self.connect(self.actionSaveConfig, SIGNAL('triggered()'),
                      self.saveConfig)
         self.connect(self.actionSaveSnapshot, SIGNAL('triggered()'),
@@ -1817,6 +1835,20 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             self.createDockWidget(config_abstract_model)
 
     #----------------------------------------------------------------------
+    def launchSnapshotDBSelector(self):
+        """"""
+
+        result = tinkerSnapshotDBSelector.make(isModal=True, parentWindow=self,
+                                               aptinkerQSettings=self._settings)
+
+        ss_abstract_model = result.ss_model.abstract
+        config_abstract_model = ss_abstract_model._config_abstract
+
+        if config_abstract_model.channel_ids != []:
+            self.createDockWidget(config_abstract_model,
+                                  ss_abstract=ss_abstract_model)
+
+    #----------------------------------------------------------------------
     def launchPrefEditor(self):
         """"""
 
@@ -1836,12 +1868,13 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         pass
 
     #----------------------------------------------------------------------
-    def createDockWidget(self, config_abstract_model):
+    def createDockWidget(self, config_abstract_model, ss_abstract=None):
         """"""
 
         isinstance(config_abstract_model, ConfigAbstractModel)
 
-        dockWidget = TinkerDockWidget(config_abstract_model, self)
+        dockWidget = TinkerDockWidget(config_abstract_model, self,
+                                      ss_abstract=ss_abstract)
         self.addDockWidget(Qt.DockWidgetArea(1), dockWidget)
 
         self.dockWidgetList.append(dockWidget)

@@ -23,7 +23,7 @@ try:
     from . import (datestr)
 except:
     from aphla.gui.TinkerUtils import (datestr)
-from tinkerModels import (ConfigMetaTableModel, ConfigAbstractModel,
+from tinkerModels import (MetaTableModel, ConfigAbstractModel,
                           ConfigTableModel, getusername)
 from dbviews import (ConfigDBViewWidget, ConfigMetaDBViewWidget,
                      ConfigDBTableViewItemDelegate)
@@ -132,9 +132,9 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
 
         self.pushButton_search.setIcon(QIcon(':/search.png'))
 
-        all_ctime_operators = [self.comboBox_time_created_1.itemText(i)
-                               for i in range(
-                                   self.comboBox_time_created_1.count())]
+        all_ctime_operators = [
+            self.comboBox_time_created_1.itemText(i)
+            for i in range(self.comboBox_time_created_1.count())]
         self.comboBox_time_created_1.setCurrentIndex(
             all_ctime_operators.index(''))
         self.dateTimeEdit_time_created_1.setDateTime(
@@ -168,20 +168,20 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         proxyModel.setDynamicSortFilter(False)
         tbV = self.tableView_config
         tbV.setModel(proxyModel)
-
         tbV.setItemDelegate(ConfigDBTableViewItemDelegate(
             tbV, self.tableModel_config, tbV.parent()))
 
         self.db = self.config_model.db
-        self.db.create_temp_config_meta_table_text_view()
+        if '[config_meta_table text view]' not in self.db.getViewNames(
+            square_brackets=True):
+            self.db.create_temp_config_meta_table_text_view()
 
         # Set up Config Meta Table
-        self.config_meta_all_col_keys = \
-            self.db.getColumnNames('[config_meta_table text view]')
+        self.config_meta_all_col_keys = self.configMetaDBViewWidget.all_col_keys
         self.search_result = {k: [] for k in self.config_meta_all_col_keys}
 
-        self.tableModel_config_meta = ConfigMetaTableModel(
-            self.search_result, self.config_meta_all_col_keys)
+        self.tableModel_config_meta = MetaTableModel(
+            self.search_result, self.configMetaDBViewWidget)
         proxyModel = QSortFilterProxyModel()
         proxyModel.setSourceModel(self.tableModel_config_meta)
         proxyModel.setDynamicSortFilter(False)
@@ -560,24 +560,24 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
 
         config_name_text = self.lineEdit_config_name.text().strip()
         if config_name_text != '':
-            cond_str = self.get_MATCH_condition_str(config_name_text.lower())
+            cond_str = self.db.get_MATCH_condition_str(config_name_text.lower())
             self.search_params['config_name'] = \
-                self.get_config_ids_with_MATCH(cond_str, 'config_name')
+                self.db.get_config_ids_with_MATCH(cond_str, 'config_name')
         else:
             self.search_params['config_name'] = []
 
         config_desc_text = self.lineEdit_config_description.text().strip()
         if config_desc_text != '':
-            cond_str = self.get_MATCH_condition_str(config_desc_text.lower())
+            cond_str = self.db.get_MATCH_condition_str(config_desc_text.lower())
             self.search_params['config_description'] = \
-                self.get_config_ids_with_MATCH(cond_str, 'config_description')
+                self.db.get_config_ids_with_MATCH(cond_str, 'config_description')
         else:
             self.search_params['config_description'] = []
 
         username_text = self.lineEdit_username.text().strip()
         if username_text != '':
             self.search_params['username'] = \
-                self.get_GLOB_condition_str(username_text, 'username')
+                self.db.get_GLOB_condition_str(username_text, 'username')
         else:
             self.search_params['username'] = ''
 
@@ -657,84 +657,6 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
         return cond_str
 
     #----------------------------------------------------------------------
-    def get_GLOB_condition_str(self, glob_pattern, column_name):
-        """
-        ESCAPE command is not implemented for GLOB by SQLite, even though the
-        syntax diagram says it is.
-
-        The workaround for escaping glob special characters is provided here.
-        """
-
-        glob_pattern = glob_pattern.replace(r'\*', '[*]')
-        glob_pattern = glob_pattern.replace(r'\?', '[?]')
-        glob_pattern = glob_pattern.replace(r'\[', '[[]')
-        glob_pattern = glob_pattern.replace(r'\]', '[]]')
-
-        cond_str = '({0:s} GLOB "{1:s}")'.format(column_name, glob_pattern)
-
-        return cond_str
-
-    #----------------------------------------------------------------------
-    def get_MATCH_condition_str(self, full_search_string):
-        """
-        Full-text searching provided by MATCH only works for FTS4 virtual table
-        """
-
-        full_search_string = full_search_string.replace(r'\*', '[*]')
-        full_search_string = full_search_string.replace(r'\?', '[?]')
-        full_search_string = full_search_string.replace(r'\[', '[[]')
-        full_search_string = full_search_string.replace(r'\]', '[]]')
-
-        quote_found = ''
-        quote_inds = []
-        non_quote_inds = []
-        for i, c in enumerate(full_search_string):
-            if c in ("'", '"'):
-                if quote_found == '':
-                    quote_found = c
-                    quote_inds.append(i)
-                elif quote_found == c:
-                    quote_inds.append(i)
-                    quote_found = ''
-                else:
-                    non_quote_inds.append(i)
-
-        if quote_found != '':
-            non_quote_inds.append(quote_inds.pop())
-            non_quote_inds.sort()
-
-        tokens = []
-        for i in range(len(quote_inds))[::-2]:
-            ini = quote_inds[i-1]
-            end = quote_inds[i]
-            tokens.append(full_search_string[(ini+1):end])
-            full_search_string = full_search_string[:ini] + \
-                full_search_string[(end+1):]
-        tokens += full_search_string.split()
-
-        cond_str = ' '.join(['"{0:s}"'.format(t.replace("'", "''")) if ' ' in t
-                             else t.replace("'", "''") for t in tokens])
-
-        return cond_str
-
-    #----------------------------------------------------------------------
-    def get_config_ids_with_MATCH(self, MATCH_cond_str, column_name):
-        """"""
-
-        fts_condition_str = "{0:s} MATCH '{1:s}'".format(
-            column_name, MATCH_cond_str)
-
-        matched_rowids = self.db.getColumnDataFromTable(
-            'config_meta_text_search_table', column_name_list=['config_id'],
-            condition_str=fts_condition_str)
-        if matched_rowids != []:
-            matched_config_ids = list(matched_rowids[0])
-        else:
-            matched_config_ids = None
-
-        return matched_config_ids
-
-    #----------------------------------------------------------------------
     def on_selection_change(self, current_index, previous_index):
         """"""
 
@@ -791,8 +713,6 @@ class ConfigModel(QObject):
         #self.tree     = ConfigTreeModel()
 
         self.db = self.abstract.db
-
-        self.output = None
 
 #----------------------------------------------------------------------
 def exportAllConfigsToFiles():

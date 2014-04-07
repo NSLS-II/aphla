@@ -12,6 +12,7 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict
 from copy import deepcopy
 import json
+import h5py
 
 from PyQt4.QtCore import (QObject, Qt, SIGNAL, QAbstractItemModel,
                           QAbstractTableModel, QModelIndex)
@@ -25,9 +26,12 @@ import aphla as ap
 
 import config
 try:
-    from . import (SmartSizedMessageBox, datestr, datestr_ns)
+    from . import (SmartSizedMessageBox, datestr, datestr_ns,
+                   date_month_folder_str, date_snapshot_filename_str)
 except:
-    from aphla.gui.TinkerUtils import (SmartSizedMessageBox, datestr, datestr_ns)
+    from aphla.gui.TinkerUtils import (
+        SmartSizedMessageBox, datestr, datestr_ns, date_month_folder_str,
+        date_snapshot_filename_str)
 from aphla.gui.utils.addr import (getIPs, getMACs)
 import tinkerdb
 
@@ -89,33 +93,29 @@ def get_contiguous_col_ind_pairs(col_inds):
     return contig_tuple_list
 
 ########################################################################
-class ConfigMetaTableModel(QAbstractTableModel):
+class MetaTableModel(QAbstractTableModel):
 
     #----------------------------------------------------------------------
-    def __init__(self, search_result_dict, all_col_keys):
+    def __init__(self, search_result_dict, metaDBViewWidget):
         """Constructor"""
 
         QAbstractTableModel.__init__(self)
 
-        self.search_result    = search_result_dict
-        self.all_col_keys     = all_col_keys
-        self.col_keys_wo_desc = all_col_keys[:]
-        self.col_keys_wo_desc.remove('config_description')
-
-        self.col_names_wo_desc = [
-            'Config.ID', 'Config.Name', 'Username', 'MASAR ID', 'Ref.StepSize',
-            'Synced.GroupWeight', 'Time Created']
+        self.search_result     = search_result_dict
+        self.all_col_keys      = metaDBViewWidget.all_col_keys[:]
+        self.col_keys_wo_desc  = metaDBViewWidget.col_keys_wo_desc[:]
+        self.col_names_wo_desc = metaDBViewWidget.col_names_wo_desc[:]
 
         self.nRows = len(self.search_result[self.col_keys_wo_desc[0]])
         self.nCols = len(self.col_keys_wo_desc)
 
         self.str_formats = [':s']*self.nCols
         for i, k in enumerate(self.col_keys_wo_desc):
-            if k.endswith('_id') or (k == 'config_synced_group_weight'):
+            if k.endswith('_id') or k.endswith('_synced_group_weight'):
                 self.str_formats[i] = ':d'
-            elif k == 'config_ref_step_size':
+            elif k.endswith('_ref_step_size'):
                 self.str_formats[i] = ':.6g'
-            elif k == 'config_ctime':
+            elif k.endswith('_ctime'):
                 self.str_formats[i] = 'timestamp'
 
     #----------------------------------------------------------------------
@@ -1476,7 +1476,7 @@ class SnapshotAbstractModel(QObject):
 
     #----------------------------------------------------------------------
     def __init__(self, config_abstract_model, vis_col_key_list,
-                 ss_db_filepath=''):
+                 DB_view=False):
         """Constructor
 
         Size List:
@@ -1515,6 +1515,8 @@ class SnapshotAbstractModel(QObject):
 
         QObject.__init__(self)
 
+        self.DB_view = DB_view
+
         self.caget_timeout = 3.0 # [s]
         self.caput_timeout = 3.0 # [s]
 
@@ -1544,7 +1546,7 @@ class SnapshotAbstractModel(QObject):
         self.caput_sent_ts_second = None
         self.ss_ctime             = None
 
-        self.weight_array        = _ct.d['weight']
+        self.weight_array        = np.array(_ct.d['weight'])
         self.step_size_array     = self.ref_step_size * self.weight_array
         self.caput_enabled_rows  = _ct.d['caput_enabled']
 
@@ -1580,6 +1582,47 @@ class SnapshotAbstractModel(QObject):
             self.col_ids[k] = self.all_col_keys.index(k)
 
         # Compile caget list
+        self.update_caget_list()
+
+        # Compile caput list
+        self.update_caput_list()
+
+        self.update_rb_sp_same_size_rows_list()
+
+        # Dict whose item contains a list of 2-element tuple.
+        # The 2-element tuple consists of the row index in the GUI table
+        # and the list index of flattened pv list that correspond to the row
+        self.maps = {}
+        self.update_maps()
+
+        self.caput_not_yet = True
+
+        if not self.DB_view:
+            self.init_unitconv()
+
+            self.update_pv_vals()
+
+            self.update_init_pv_vals()
+
+            self.get_lo_hi_lims()
+
+    #----------------------------------------------------------------------
+    def update_rb_sp_same_size_rows_list(self):
+        """"""
+
+        _ct = self._config_table
+
+        self.rb_sp_same_size_rows = []
+        for i, (sp_size, rb_size) in enumerate(zip(
+            _ct.d['pvsp_array_size'], _ct.d['pvrb_array_size'])):
+            if sp_size == rb_size:
+                self.rb_sp_same_size_rows.append(i)
+
+    #----------------------------------------------------------------------
+    def update_caget_list(self):
+        """"""
+
+        _ct = self._config_table
 
         outs = zip(*[((i, self.col_ids['cur_SP']), pvsp, array_size)
                      for i, (pvsp, array_size)
@@ -1648,7 +1691,17 @@ class SnapshotAbstractModel(QObject):
              #else ('data'+str(i), (np.float64, size))
              #for i, size in enumerate(self.caget_pv_size_list)])
 
-        # Compile caput list
+        self.n_caget_pvs = len(self.caget_pv_str_list)
+
+        self.caget_raws  = np.ones(self.n_caget_pvs, dtype=object)*np.nan
+        self.caget_convs = np.ones(self.n_caget_pvs, dtype=object)*np.nan
+        self.caget_ioc_ts_tuples = np.array([(None,None)]*self.n_caget_pvs)
+
+    #----------------------------------------------------------------------
+    def update_caput_list(self):
+        """"""
+
+        _ct = self._config_table
 
         outs = zip(*[((i, self.col_ids['cur_SentSP']), pvsp, array_size)
                      for i, (pvsp, array_size)
@@ -1688,10 +1741,20 @@ class SnapshotAbstractModel(QObject):
              #else ('data'+str(i), (np.float64, size))
              #for i, size in enumerate(self.caput_pv_size_list)])
 
-        # Dict whose item contains a list of 2-element tuple.
-        # The 2-element tuple consists of the row index in the GUI table
-        # and the list index of flattened pv list that correspond to the row
-        self.maps = {}
+        self.n_caput_pvs = len(self.caput_pv_str_list)
+
+        self.caput_raws  = np.ones(self.n_caput_pvs, dtype=object)*np.nan
+        self.caput_convs = np.ones(self.n_caput_pvs, dtype=object)*np.nan
+
+    #----------------------------------------------------------------------
+    def update_maps(self):
+        """
+        self.maps: Dict whose item contains a list of 2-element tuple.
+
+        The 2-element tuple consists of the row index in the GUI table
+        and the list index of flattened pv list that correspond to the row.
+        """
+
         self.maps['cur_SP'] = [
             (row, i) for i, (row, col) in enumerate(self.caget_pv_map_list)
             if col == self.col_ids['cur_SP']]
@@ -1712,32 +1775,6 @@ class SnapshotAbstractModel(QObject):
         self.maps['ini_RB_ioc_ts'] = deepcopy(self.maps['cur_RB'])
         self.maps['ini_ConvSP']    = deepcopy(self.maps['ini_SP'])
         self.maps['ini_ConvRB']    = deepcopy(self.maps['ini_RB'])
-
-        self.rb_sp_same_size_rows = []
-        for i, (sp_size, rb_size) in enumerate(zip(
-            _ct.d['pvsp_array_size'], _ct.d['pvrb_array_size'])):
-            if sp_size == rb_size:
-                self.rb_sp_same_size_rows.append(i)
-
-        self.n_caget_pvs = len(self.caget_pv_str_list)
-        self.n_caput_pvs = len(self.caput_pv_str_list)
-
-        self.caget_raws  = np.ones(self.n_caget_pvs, dtype=object)*np.nan
-        self.caget_convs = np.ones(self.n_caget_pvs, dtype=object)*np.nan
-        self.caget_ioc_ts_tuples = np.array([(None,None)]*self.n_caget_pvs)
-
-        self.caput_raws  = np.ones(self.n_caput_pvs, dtype=object)*np.nan
-        self.caput_convs = np.ones(self.n_caput_pvs, dtype=object)*np.nan
-
-        self.caput_not_yet = True
-
-        self.init_unitconv()
-
-        self.update_pv_vals()
-
-        self.update_init_pv_vals()
-
-        self.get_lo_hi_lims()
 
     #----------------------------------------------------------------------
     def get_unitconv_callable(self, conv_type, conv_inv, polarity, conv_data):
@@ -2289,7 +2326,7 @@ class SnapshotTableModel(QAbstractTableModel):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, snapshot_abstract_model):
+    def __init__(self, snapshot_abstract_model, DB_view=False):
         """Constructor"""
 
         isinstance(snapshot_abstract_model, SnapshotAbstractModel)
@@ -2297,6 +2334,12 @@ class SnapshotTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self)
 
         self.abstract = snapshot_abstract_model
+
+        self.DB_view = DB_view
+        if self.DB_view:
+            self.readonly = True
+        else:
+            self.readonly = False
 
         self._config_abstract = self.abstract._config_abstract
         self._config_table    = self.abstract._config_table
@@ -2311,28 +2354,32 @@ class SnapshotTableModel(QAbstractTableModel):
         for k in self.abstract.all_col_keys:
             self.d[k] = []
 
-        for k, v in self._config_table.d.iteritems():
-            self.d[k] = v
+        self._init_d()
 
-        for k in self.abstract.ss_only_col_keys:
-            self.d[k] = np.ones(self.abstract.nRows, dtype=object)*np.nan
+        if not self.DB_view:
+            # Update static column data
+            self.update_init_pv_column_data()
+            self.update_limits_columns()
 
-        self.d['caput_enabled'] = self.abstract.caput_enabled_rows
+            # Update dynamic column data
+            self.visible_dynamic_col_keys = [
+                k for k in self.abstract.dynamic_col_keys
+                if (k in self.abstract.visible_col_keys) and
+                (k not in ('weight', 'step_size', 'caput_enabled'))]
 
-        # Update static column data
-        self.update_init_pv_column_data()
-        self.update_limits_columns()
+            self.non_visible_required_col_keys = [
+                'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
+                # ^ always needed for ss_cur_SP_ioc_ts & ss_cur_RB_ioc_ts
+            ]
 
-        # Update dynamic column data
-        self.visible_dynamic_col_keys = [
-            k for k in self.abstract.dynamic_col_keys
-            if (k in self.abstract.visible_col_keys) and
-            (k not in ('weight', 'step_size', 'caput_enabled'))]
+        else:
+            # Update dynamic column data
+            self.visible_dynamic_col_keys = [
+                k for k in self.abstract.all_col_keys
+                if (k in self.abstract.visible_col_keys) and
+                k.startswith('ss_')]
 
-        self.non_visible_required_col_keys = [
-            'cur_SP_ioc_ts', 'cur_RB_ioc_ts',
-            # ^ always needed for ss_cur_SP_ioc_ts & ss_cur_RB_ioc_ts
-        ]
+            self.non_visible_required_col_keys = []
 
         self.update_visible_dynamic_columns()
 
@@ -2343,6 +2390,18 @@ class SnapshotTableModel(QAbstractTableModel):
             self,
             SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
             self.propagate_change_to_abstract)
+
+    #----------------------------------------------------------------------
+    def _init_d(self):
+        """"""
+
+        for k, v in self._config_table.d.iteritems():
+            self.d[k] = v
+
+        for k in self.abstract.ss_only_col_keys:
+            self.d[k] = np.ones(self.abstract.nRows, dtype=object)*np.nan
+
+        self.d['caput_enabled'] = self.abstract.caput_enabled_rows
 
     #----------------------------------------------------------------------
     def load_column_from_file(self, filepath, selected_col_key):
@@ -2447,6 +2506,9 @@ class SnapshotTableModel(QAbstractTableModel):
 
             index = topLeftIndex
             row_ind = row_top_index
+
+            if row_ind == -1:
+                return
 
             if self.abstract.synced_group_weight:
                 gid = self._config_abstract.group_name_ids[row_ind]
@@ -2647,6 +2709,8 @@ class SnapshotTableModel(QAbstractTableModel):
     def update_snapshot_columns(self, from_DB):
         """"""
 
+        a = self.abstract
+
         key_list = ['SentSP', 'ConvSentSP', 'SP', 'SP_ioc_ts', 'ConvSP',
                     'RB', 'RB_ioc_ts', 'ConvRB']
         ss_key_list = ['ss_'+k for k in key_list]
@@ -2655,11 +2719,72 @@ class SnapshotTableModel(QAbstractTableModel):
             for k in key_list:
                 self.d['ss_'+k] = self.d['cur_'+k]
         else:
-            #self.abstract.ss_id
-            raise NotImplementedError()
+            if a.ss_id is not None:
+                if '[ss_meta_table text view]' not in self.db.getViewNames(
+                    square_brackets=True):
+                    self.db.create_temp_ss_meta_table_text_view()
+                ss_username = self.db.getColumnDataFromTable(
+                    '[ss_meta_table text view]',
+                    column_name_list=['ss_username'],
+                    condition_str='ss_id={0:d}'.format(a.ss_id))[0][0]
+
+                hdf5filepath = osp.join(
+                    config.SNAPSHOT_FOLDERPATH,
+                    date_month_folder_str(a.ss_ctime),
+                    date_snapshot_filename_str(a.ss_ctime, ss_username))
+
+                try:
+                    f = h5py.File(hdf5filepath, 'r')
+                except:
+                    msg = QMessageBox()
+                    msg.setText(('Data file "{0}" for Snapshot ID #{1:d} could '
+                                 'not be found.').format(hdf5filepath, a.ss_id))
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.exec_()
+                    return
+
+                self.d['weight'] = f['weights'].value
+                self.d['caput_enabled'] = f['caput_enabled_rows'].value
+
+                caget_ioc_ts_tuples = f['caget_ioc_ts_tuples'].value
+
+                caget_raws_arrays = []
+                if 'caget_raws_arrays' in f:
+                    for k, v in f['caget_raws_arrays'].iteritems():
+                        caget_raws_arrays.append(v.value)
+                caget_raws = np.array(
+                    f['caget_raws_scalars'].value.tolist() + caget_raws_arrays,
+                    dtype=object)
+                caget_convs = np.array(
+                    [uc(r) if uc is not None else r for r, uc
+                     in zip(caget_raws, self.abstract.caget_unitconvs)],
+                    dtype=object)
+                rows, indexes = map(list, zip(*self.abstract.maps['cur_SP']))
+                self.d['ss_SP'][rows]     = caget_raws[indexes]
+                self.d['ss_ConvSP'][rows] = caget_convs[indexes]
+                self.d['ss_SP_ioc_ts'][rows] = caget_ioc_ts_tuples[indexes]
+                rows, indexes = map(list, zip(*self.abstract.maps['cur_RB']))
+                self.d['ss_RB'][rows]     = caget_raws[indexes]
+                self.d['ss_ConvRB'][rows] = caget_convs[indexes]
+                self.d['ss_RB_ioc_ts'][rows] = caget_ioc_ts_tuples[indexes]
+
+                caput_raws_arrays = []
+                if 'caput_raws_arrays' in f:
+                    for k, v in f['caput_raws_arrays'].iteritems():
+                        caput_raws_arrays.append(v.value)
+                caput_raws = np.array(
+                    f['caput_raws_scalars'].value.tolist() + caput_raws_arrays,
+                    dtype=object)
+                caput_convs = self.abstract.convert_caput_raws(
+                    caput_raws, self.abstract.caput_fromraw_unitconvs)
+                rows, indexes = map(list, zip(*self.abstract.maps['cur_SentSP']))
+                self.d['ss_SentSP'][rows]     = caput_raws[indexes]
+                self.d['ss_ConvSentSP'][rows] = caput_convs[indexes]
+
+                f.close()
 
         modified_col_inds = [
-            self.abstract.all_col_keys.index(k) for k in ss_key_list]
+            a.all_col_keys.index(k) for k in ss_key_list]
         if modified_col_inds == []:
             return
 
@@ -2668,7 +2793,7 @@ class SnapshotTableModel(QAbstractTableModel):
 
         for (leftCol, rightCol) in contig_modified_col_ind_pairs:
             topLeftIndex = self.index(0, leftCol)
-            bottomRightIndex = self.index(self.abstract.nRows, rightCol)
+            bottomRightIndex = self.index(a.nRows, rightCol)
             self.emit(
                 SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                 topLeftIndex, bottomRightIndex)
@@ -2807,6 +2932,8 @@ class SnapshotTableModel(QAbstractTableModel):
         """"""
 
         default_flags = QAbstractTableModel.flags(self, index) # non-editable
+
+        if self.readonly: return default_flags
 
         if not index.isValid(): return default_flags
 

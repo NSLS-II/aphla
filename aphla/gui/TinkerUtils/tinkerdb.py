@@ -946,6 +946,41 @@ class TinkerMainDatabase(SQLiteDatabase):
         )
 
     #----------------------------------------------------------------------
+    def create_temp_ss_meta_table_text_view(self):
+        """"""
+
+        if '[config_meta_table text view]' not in self.getViewNames(
+            square_brackets=True):
+            self.create_temp_config_meta_table_text_view()
+
+        self.createTempView(
+            '[ss_meta_table text view]',
+            '''snapshot_meta_table smt
+            LEFT JOIN snapshot_meta_text_search_table smtst ON smt.ss_id = smtst.ss_id
+            LEFT JOIN user_table ut ON smt.ss_user_id = ut.user_id
+            LEFT JOIN [config_meta_table text view] cmt ON cmt.config_id = smt.config_id
+            ''',
+               column_name_list=[
+                   'smt.ss_id',
+                   'smtst.ss_name',
+                   'smtst.ss_description',
+                   'ut.username AS ss_username',
+                   'smt.ss_masar_id',
+                   'smt.ss_ref_step_size',
+                   'smt.ss_synced_group_weight',
+                   'smt.ss_ctime',
+                   'cmt.config_id',
+                   'cmt.config_name',
+                   'cmt.config_description',
+                   'cmt.username AS config_username',
+                   'cmt.config_masar_id',
+                   'cmt.config_ref_step_size',
+                   'cmt.config_synced_group_weight',
+                   'cmt.config_ctime',
+               ]
+        )
+
+    #----------------------------------------------------------------------
     def create_temp_config_table_text_view(self):
         """"""
 
@@ -1854,6 +1889,101 @@ class TinkerMainDatabase(SQLiteDatabase):
             return None
         else:
             return config_ids[0]
+
+    #----------------------------------------------------------------------
+    def get_GLOB_condition_str(self, glob_pattern, column_name):
+        """
+        ESCAPE command is not implemented for GLOB by SQLite, even though the
+        syntax diagram says it is.
+
+        The workaround for escaping glob special characters is provided here.
+        """
+
+        glob_pattern = glob_pattern.replace(r'\*', '[*]')
+        glob_pattern = glob_pattern.replace(r'\?', '[?]')
+        glob_pattern = glob_pattern.replace(r'\[', '[[]')
+        glob_pattern = glob_pattern.replace(r'\]', '[]]')
+
+        cond_str = '({0:s} GLOB "{1:s}")'.format(column_name, glob_pattern)
+
+        return cond_str
+
+    #----------------------------------------------------------------------
+    def get_MATCH_condition_str(self, full_search_string):
+        """
+        Full-text searching provided by MATCH only works for FTS4 virtual table
+        """
+
+        full_search_string = full_search_string.replace(r'\*', '[*]')
+        full_search_string = full_search_string.replace(r'\?', '[?]')
+        full_search_string = full_search_string.replace(r'\[', '[[]')
+        full_search_string = full_search_string.replace(r'\]', '[]]')
+
+        quote_found = ''
+        quote_inds = []
+        non_quote_inds = []
+        for i, c in enumerate(full_search_string):
+            if c in ("'", '"'):
+                if quote_found == '':
+                    quote_found = c
+                    quote_inds.append(i)
+                elif quote_found == c:
+                    quote_inds.append(i)
+                    quote_found = ''
+                else:
+                    non_quote_inds.append(i)
+
+        if quote_found != '':
+            non_quote_inds.append(quote_inds.pop())
+            non_quote_inds.sort()
+
+        tokens = []
+        for i in range(len(quote_inds))[::-2]:
+            ini = quote_inds[i-1]
+            end = quote_inds[i]
+            tokens.append(full_search_string[(ini+1):end])
+            full_search_string = full_search_string[:ini] + \
+                full_search_string[(end+1):]
+        tokens += full_search_string.split()
+
+        cond_str = ' '.join(['"{0:s}"'.format(t.replace("'", "''")) if ' ' in t
+                             else t.replace("'", "''") for t in tokens])
+
+        return cond_str
+
+    #----------------------------------------------------------------------
+    def get_config_ids_with_MATCH(self, MATCH_cond_str, column_name):
+        """"""
+
+        fts_condition_str = "{0:s} MATCH '{1:s}'".format(
+            column_name, MATCH_cond_str)
+
+        matched_rowids = self.getColumnDataFromTable(
+            'config_meta_text_search_table', column_name_list=['config_id'],
+            condition_str=fts_condition_str)
+        if matched_rowids != []:
+            matched_config_ids = list(matched_rowids[0])
+        else:
+            matched_config_ids = None
+
+        return matched_config_ids
+
+    #----------------------------------------------------------------------
+    def get_ss_ids_with_MATCH(self, MATCH_cond_str, column_name):
+        """"""
+
+        fts_condition_str = "{0:s} MATCH '{1:s}'".format(
+            column_name, MATCH_cond_str)
+
+        matched_rowids = self.getColumnDataFromTable(
+            'snapshot_meta_text_search_table', column_name_list=['ss_id'],
+            condition_str=fts_condition_str)
+        if matched_rowids != []:
+            matched_ss_ids = list(matched_rowids[0])
+        else:
+            matched_ss_ids = None
+
+        return matched_ss_ids
 
 if __name__ == '__main__':
     db = TinkerMainDatabase()
