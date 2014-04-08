@@ -18,7 +18,7 @@ from . import machines
 from catools import caRmCorrect, measCaRmCol
 from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
     getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
-    getLocations)
+    getLocations, outputFileName)
 from respmat import OrbitRespMat
 import logging
 
@@ -164,7 +164,7 @@ def setLocalBump(bpmrec, correc, ref, **kwargs):
 
     return (0, None)
 
-def correctOrbit(bpm = 'BPM', cor = 'COR', **kwargs):
+def correctOrbit(bpm, cor, **kwargs):
     """
     correct the orbit with given BPMs and Trims
 
@@ -201,6 +201,8 @@ def correctOrbit(bpm = 'BPM', cor = 'COR', **kwargs):
     bpmlst = [e for e in getElements(bpm) if e.isEnabled()]
     corlst = [e for e in getElements(cor) if e.isEnabled()]
 
+    if kwargs.get("verbose", 0) > 0:
+        print("Using: %d bpms, %d cors" % (len(bpmlst), len(corlst)))
     bpmr, corr, ref = [], [], []
     for fld in ["x", "y"]:
         for bpm in bpmlst:
@@ -211,6 +213,9 @@ def correctOrbit(bpm = 'BPM', cor = 'COR', **kwargs):
             if fld in cor.fields() and fld in plane:
                 corr.append((cor.name, fld))
 
+    if kwargs.get("verbose", 0) > 0:
+        print("Using: %d bpms, %d cors" % (len(bpmr), len(corr)))
+    kwargs["fullm"] = False
     setLocalBump(bpmr, corr, ref, **kwargs)
 
 def _random_kick(plane = 'V', amp=1e-9, verbose = 0):
@@ -740,7 +745,9 @@ def measOrbitRm(bpm, cor, **kwargs):
     seealso :class:`~aphla.respmat.OrbitRespMat`, 
     :func:`~aphla.respmat.OrbitRespMat.measure`
     """
+    verbose = kwargs.pop("verbose", 0)
     output  = kwargs.pop("output", None)
+
     if output is True:
         output = outputFileName("respm", "orm")
 
@@ -760,8 +767,12 @@ def measOrbitRm(bpm, cor, **kwargs):
     m = np.zeros((len(bpms), len(cors)), 'd')
     pv_bpm = [r[2] for r in bpms] # the response
     pv_cor = [r[2] for r in cors] # the corrector
+    if verbose > 0: kwargs["verbose"] = verbose - 1
     for i,(name, fld, pv) in enumerate(cors):
-        m[:,i], dx, dat = measCaRmCol(pv, pv_bpm, **kwargs)
+        if verbose:
+            print("%d/%d" % (i,len(cors)), name, np.min(m[:,i]), np.max(m[:,i]))
+        # save each column
+        m[:,i], dx, dat, opt = measCaRmCol(pv, pv_bpm, **kwargs)
         if output:
             f = h5py.File(output)
             if pv in f:
@@ -778,7 +789,9 @@ def measOrbitRm(bpm, cor, **kwargs):
             g["orbit"].attrs["pv"] = pv_bpm
             g["dx"] = dx
             f.close()
+
     if output:
+        # save the overall matrix
         f = h5py.File(output)
         if "m" in f:
             del f["m"]
@@ -791,7 +804,7 @@ def measOrbitRm(bpm, cor, **kwargs):
         f["m"].attrs["bpm_pv"]    = pv_bpm
         f.close()
 
-    return m
+    return m, output
 
 
 def getSubOrm(bpm, trim, flags = 'XX'):

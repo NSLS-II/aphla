@@ -30,7 +30,7 @@ class CaDataMonitor(QtCore.QObject):
         self.samples     = kwargs.get("samples", 10)
         #self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
-        self.timeout     = kwargs.get("timeout", 3)
+        self.timeout     = kwargs.get("timeout", 5)
         self._min_dt     = kwargs.get("wait", 0.7)
         self.data = {}
         self.hook = {}
@@ -97,7 +97,7 @@ class CaDataMonitor(QtCore.QObject):
             self._t0 = datetime.now()
 
     def pull(self):
-        vals = caget(self.data.keys())
+        vals = caget(self.data.keys(), timeout=self.timeout)
         for v in vals:
             if not v.ok: continue
             self.data[v.name].append(v)

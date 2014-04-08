@@ -223,6 +223,8 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
     #
     # set 0 - internal trig, 1 - external trig
     #caput(pv_trig, 1, wait=True)
+    caput(pv_wfmsel, wfsel0, wait=True, timeout=tc)
+    caput(pv_trig, trig0, wait=True, timeout=tc)
     
     #return data[0], data[1], data[2], ddrts0, ddroffset, ts
     return data[0], data[1], data[2], ddrts0, ddroffset, xbbaofst, ybbaofst
