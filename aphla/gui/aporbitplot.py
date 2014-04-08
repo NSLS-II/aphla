@@ -230,7 +230,8 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         elemlst = ap.getElements(elements)
         msgbox, msg = QMessageBox(), ""
         for elem in elemlst:
-            if not elem.name: continue
+            if not elem or not elem.name: continue
+            if not elem.fields(): continue
             msg += "<strong>%s:</strong><br>" % elem.name
             for v in elem.fields():
                 msg += "  %s: %s<br>" % (v, str(elem.get(v, unitsys=None)))
@@ -715,6 +716,7 @@ class ApCaPlot(Qwt.QwtPlot):
         if dsize is not None:
             sz = symb.size() + QtCore.QSize(dsize, dsize)
             symb.setSize(sz)
+            #print "New size:", sz.width(), sz.height()
         c.setSymbol(symb)
 
     def _set_line(self, c, ls = None, dwidth = None, color = None):

@@ -116,11 +116,9 @@ class UcInterp1(UcAbstract):
 
     def _inv_eval(self, x):
         if x is None: return None
-        elif x/self.polarity < self._xp_r[0]: return None
-        elif x/self.polarity > self._xp_r[-1]: return None
-        else:
-            # interp returns boundary if x is outside of fp
-            return np.interp(self.polarity*x, self._xp_r, self._fp_r)
+        # interp returns boundary if x is outside of fp
+        return np.interp(self.polarity*x, self._xp_r, self._fp_r,
+                         left=-np.inf, right=np.inf)
 
     def eval(self, x, inv = False):
         if inv:
@@ -129,11 +127,9 @@ class UcInterp1(UcAbstract):
                 return self._inv_eval(x)
         # 
         if x is None: return None
-        elif x < min(self.xp[0], self.xp[-1]): return None
-        elif x > max(self.xp[0], self.xp[-1]): return None
-        else:
-            # interp returns boundary if x is outside of xp
-            return self.polarity*np.interp(x, self.xp, self.fp)
+        # interp returns boundary if x is outside of xp
+        return self.polarity*np.interp(x, self.xp, self.fp,
+                                       left=-np.inf, right=np.inf)
 
 class _UcInterpN(UcAbstract):
     """n-D linear interpolation"""

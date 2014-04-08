@@ -453,8 +453,10 @@ class OrbitPlotMainWindow(QMainWindow):
                 .arg(QtCore.PYQT_VERSION_STR).arg(platform.system())))
 
     def showElementEditor(self):
-        ed = ElementEditor(parent=self)
+        mach, lat = self.getCurrentMachLattice()
+        ed = ElementEditor(lat, parent=self)
         ed.setWindowFlags(Qt.Window)
+        ed.setAttribute(Qt.WA_DeleteOnClose)
         ed.show()
 
     def getCurrentMachLattice(self, cadata = False):

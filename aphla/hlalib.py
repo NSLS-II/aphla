@@ -13,7 +13,7 @@ import time
 import os
 from fnmatch import fnmatch
 from datetime import datetime
-from catools import caget, caput, CA_OFFLINE, savePvs
+from catools import caget, caput, CA_OFFLINE, savePvData
 import machines
 import element
 import itertools
@@ -229,57 +229,44 @@ def getExactElement(elemname):
     return machines._lat._find_exact_element(name=elemname)
 
 def eget(elem, fields = None, **kwargs):
-    """get elements field values
+    raise RuntimeError("deprecated! please revise it to `fget(elem,field)`")
+
+def fget(elem, field, **kwargs):
+    """get elements field values for a family
 
     Parameters
     -----------
     elem : str, list. element name, name list, pattern or object list
     fields : str, list. field name or name list
-    header : bool. optional(False), whether returns the (name, field) list. 
- 
+    handle : str, optional, default "readback"
+    unitsys : str, optional, default None, unit system, 
     Examples
     ---------
     >>> eget('DCCT', 'value')
     >>> eget('BPM', 'x')
-    >>> val, head = eget('p*c30*', ['x', 'y'], header=True)
+    >>> eget('p*c30*', 'x')
 
     >>> bpm = getElements('p*c30*')
-    >>> eget(bpm, ['x', 'y'], header=True)
-
-    Notes
-    -------
-    The optional parameters are unit. see :func:`~aphla.element.CaElement.get`
-
-    It calls :func:`getElements` to obtain a list of elements, then call
-    :func:`~aphla.element.CaElement.get` for each field. This could be a
-    slow process when the element list is large.
-
-    The return value is a list with same size as element list. When more than
-    one field is provided, the return value is a 2D list. 
-
-    When header is True, a list of (element name, field) which has same shape
-    as return value is also returned.
-
+    >>> eget(bpm, 'x', handle="setpoint", unitsys = None)
     """
 
-    header = kwargs.pop('header', False)
+    handle = kwargs.pop('handle', "readback")
+    unitsys = kwargs.pop("unitsys", None)
 
     elst = getElements(elem)
     if not elst: return None
 
-    v = [e.get(fields, **kwargs) for e in elst]
-    if not header: return v
+    v = [e.pv(field=field, handle=handle) for e in elst]
+    assert len(set([len(pvl) for pvl in v])) <= 1, \
+        "Must be exact one pv for each field"
+    pvl = reduce(lambda x,y: x + y, v)
 
-    h = []
-    if isinstance(fields, (str, unicode)):
-        h = [(e.name, fields) for e in elst]
-    elif isinstance(fields, (list, tuple)):
-        h = [None] * len(v)
-        for i,e in enumerate(elst):
-            fld = [f if f in e.fields() else None for f in fields]
-            h[i] = [(e.name, f) for f in fld] 
-        # h,v should have same dimension
-    return v, h
+    dat = caget(pvl, **kwargs)
+    if unitsys is None: return dat
+
+    ret = [e.convertUnit(field, dat[i], None, unitsys)
+               for i,e in enumerate(elst)]
+    return ret
 
         
 def getPvList(elem, field, handle = 'readback', **kwargs):
@@ -1047,42 +1034,83 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
     
 
 
-def saveLattice(output, **kwargs):
-    # save the lattice
-    lat = kwargs.get("lattice", None)
-    if lat is None:
-        lat = machines._lat
+def saveLattice(**kwargs):
+    """
+    save lattice info to a HDF5 file.
 
-    if lat.arpvs is not None:
+    - output, output file name. If it is True, save to the default place with default filename.
+    - lattice, default the current active lattice
+    - subgroup, default "", used for output file name
+    - elements, default "*"
+
+    returns the output file name.
+    """
+    # save the lattice
+    output = kwargs.get("output", False)
+    lat = kwargs.get("lattice", machines._lat)
+    verbose = kwargs.get("verbose", 0)
+
+    if kwargs.has_key("elements"):
+        pvs = []
+        for el in kwargs["elements"]:
+            pvs.extend(
+                reduce(lambda a,b: a+b,
+                       [e.pv() for e in lat.getElementList(el, virtual=False)]))
+    elif lat.arpvs is not None:
         pvs = [s.strip() for s in open(lat.arpvs, 'r').readlines()]
     else:
         pvs = reduce(lambda a,b: a+b,
                      [e.pv() for e in lat.getElementList("*", virtual=False)])
 
-    if output is None:
-        t0 = datetime.now()
-        output = os.path.join(
-            lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
-            t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
+    if output is True:
+        #t0 = datetime.now()
+        #output = os.path.join(
+        #    lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
+        #    t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
+        output = outputFileName("snapshot", kwargs.get("subgroup",""))
+    nlive, nead = savePvData(output, pvs, group=lat.name)
+    if verbose > 0:
+        print "PV dead: %d, live: %d" % (nlive, ndead)
+    return output
 
-    savePvs(output, pvs, group=lat.name)
+
+def putLattice(fname, **kwargs):
+    """
+    put saved lattice to real machine.
+
+    - group: hdf5 group, default the current lattice name
+    """
+    # save the lattice
+    group = kwargs.get("group", machines._lat.name)
+    import h5py
+    h5f = h5py.File(fname, 'r')
+    grp = h5f[group]
+    for k,v in grp.items():
+        caput(k, v)
 
 
 def outputFileName(group, subgroup, create_path = True):
     """generate the system default output data file name
 
     'Lattice/Year_Month/group/subgroup_Year_Month_Day_HourMinSec.hdf5'
+    e.g. 'SR/2014_03/bpm/bpm_Fa_0_2014_03_04_145020.hdf5'
+
+    if new directory is created, with permission "rwxrwxr-x"
     """
     # use the default file name
+    import stat
     t0 = datetime.now()
-    output_dir = os.path.join(machines.getOutputDir(),
-                              t0.strftime("%Y_%m"),
-                              group)
-    if not os.path.exists(output_dir):
-        if create_path:
-            os.makedirs(output_dir)
-        else:
-            raise RuntimeError("{0} does not exist".format(output_dir))
+    output_dir = ""
+    for subdir in [machines.getOutputDir(), t0.strftime("%Y_%m"), group]:
+        output_dir = os.path.join(output_dir, subdir)
+        if not os.path.exists(output_dir):
+            if create_path:
+                logger.info("creating new directory: {0}".format(output_dir))
+                os.mkdir(output_dir)
+                os.chmod(output_dir, stat.S_ISGID | stat.S_IRWXU | stat.S_IRWXG | \
+                         stat.S_IROTH | stat.S_IXOTH)
+            else:
+                raise RuntimeError("{0} does not exist".format(output_dir))
 
     fopt = subgroup + t0.strftime("%Y_%m_%d_%H%M%S.hdf5")
     return os.path.join(output_dir, fopt)

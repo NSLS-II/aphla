@@ -214,8 +214,12 @@ class ElementPropertyTableModel(QAbstractTableModel):
                 return self._cadata_to_qv(self._data[r][col])
             # other unit system
             unitsys = self._unitsys[col - C_VAL_RB - 1]
-            vals = elem.convertUnit(fld, self._data[r][C_VAL_RB], None, unitsys)
-            return self._cadata_to_qv(vals)
+            try:
+                vals = elem.convertUnit(fld, self._data[r][C_VAL_RB],
+                                        None, unitsys)
+                return self._cadata_to_qv(vals)
+            except:
+                return QVariant()
         #elif role == Qt.EditRole:
         #    if col == C_FIELD: 
         #        raise RuntimeError("what is this ?")
@@ -361,10 +365,12 @@ class ElementPropertyView(QTableView):
         cmenu.exec_(e.globalPos())
 
 class ElementEditor(QtGui.QDialog):
-    def __init__(self, parent = None):
+    def __init__(self, lat, parent = None):
         super(ElementEditor, self).__init__(parent)
         #self.cadata = cadata
         #self.model = None
+        self._lat = lat
+
         fmbox = QFormLayout()
 
         self.elemName = QLineEdit()
@@ -562,7 +568,7 @@ class ElementEditor(QtGui.QDialog):
         fam = str(self.elemName.text())
         fld = str(self.elemField.text())
         elems = []
-        for e in aphla.getElements(fam):
+        for e in self._lat.getElementList(fam):
             for f in e.fields():
                 if not fnmatch(f, fld): continue
                 elems.append((e, f))
