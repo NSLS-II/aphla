@@ -452,6 +452,8 @@ def savePvData(fname, pvs, **kwargs):
     import h5py
     h5f = h5py.File(fname, mode)
     grp = h5f.require_group(group)
+    if kwargs.get("notes", ""):
+        grp.attrs["notes"] = kwargs["notes"]
 
     allpvs = list(set(pvs + kwargs.get("extrapvs", [])))
     alldat = caget(allpvs, format=FORMAT_TIME, timeout=timeout)

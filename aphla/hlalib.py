@@ -1042,8 +1042,13 @@ def saveLattice(**kwargs):
     - lattice, default the current active lattice
     - subgroup, default "", used for output file name
     - elements, default "*"
+    - notes, default ""
 
     returns the output file name.
+
+    ::
+        saveLattice(output=True, elements=["BEND", "COR", "QUAD", "SEXT"], notes="Good one")
+
     """
     # save the lattice
     output = kwargs.get("output", False)
@@ -1068,7 +1073,8 @@ def saveLattice(**kwargs):
         #    lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
         #    t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
         output = outputFileName("snapshot", kwargs.get("subgroup",""))
-    nlive, nead = savePvData(output, pvs, group=lat.name)
+    nlive, nead = savePvData(output, pvs, group=lat.name,
+                             notes=kwargs.get("notes", ""))
     if verbose > 0:
         print "PV dead: %d, live: %d" % (nlive, ndead)
     return output
