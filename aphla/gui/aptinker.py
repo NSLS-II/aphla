@@ -19,13 +19,15 @@ import os.path as osp
 import numpy as np
 from copy import deepcopy
 import json
+from subprocess import Popen, PIPE
+import argparse
 
 import cothread
 from cothread.catools import caget, caput, camonitor, FORMAT_TIME
 
 from PyQt4.QtCore import (
     Qt, QObject, SIGNAL, QSize, QSettings, QRect, QMetaObject, QModelIndex,
-    Q_ARG
+    Q_ARG, Q_CLASSINFO, pyqtSlot
 )
 from PyQt4.QtGui import (
     QApplication, QMainWindow, QDockWidget, QWidget, QTabWidget,
@@ -36,6 +38,9 @@ from PyQt4.QtGui import (
     QIntValidator, QItemSelectionModel, QMenu, QAction, QInputDialog,
     QFileDialog
 )
+from PyQt4.QtDBus import (
+    QDBusConnection, QDBusInterface, QDBusReply, QDBusAbstractInterface,
+    QDBusAbstractAdaptor)
 
 import aphla as ap
 import utils.gui_icons
@@ -88,6 +93,33 @@ def get_preferences(default=False):
         )
 
     return pref
+
+#----------------------------------------------------------------------
+def get_running_aptinker_pids():
+    """"""
+
+    p1 = Popen(['ps'], stdout=PIPE, stderr=PIPE)
+    p2 = Popen(['grep', 'aptinker'], stdin=p1.stdout, stdout=PIPE,
+               stderr=PIPE)
+    out, err = p2.communicate()
+
+    if err:
+        print 'ERROR:'
+        print err
+        return None
+
+    if out == '':
+        return None
+    else:
+        pids = [int(line.split()[0]) for line in out.splitlines()]
+
+        this_pid = os.getpid()
+        if this_pid in pids:
+            pids.remove(this_pid)
+            if pids == []:
+                pids = None
+
+        return pids
 
 ########################################################################
 class ConfigSaveDialog(QDialog, Ui_Dialog_ConfSave):
@@ -1493,7 +1525,7 @@ class TinkerView(QMainWindow, Ui_MainWindow):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, config_id_to_open=None):
         """Constructor"""
 
         QMainWindow.__init__(self)
@@ -1529,7 +1561,11 @@ class TinkerView(QMainWindow, Ui_MainWindow):
 
         self._settings = QSettings('APHLA', 'Tinker')
         self.loadViewSizeSettings()
-        self.loadMiscSettings()
+        if not config_id_to_open:
+            self.loadMiscSettings(load_last_open_configs=True)
+        else:
+            self.loadConfigFromConfigIDs([config_id_to_open])
+            self.loadMiscSettings(load_last_open_configs=False)
 
         self.connect(self.actionLoadConfig, SIGNAL('triggered()'),
                      self.launchConfigDBSelector)
@@ -1577,18 +1613,19 @@ class TinkerView(QMainWindow, Ui_MainWindow):
         self._settings.endGroup()
 
     #----------------------------------------------------------------------
-    def loadMiscSettings(self):
+    def loadMiscSettings(self, load_last_open_configs=True):
         """"""
 
-        self._settings.beginGroup('misc')
+        if load_last_open_configs:
+            self._settings.beginGroup('misc')
 
-        open_config_ids = self._settings.value('open_config_ids')
-        if open_config_ids is not None:
-            open_config_ids = [int(s) if s is not None else None
-                               for s in open_config_ids]
-            self.loadConfigFromConfigIDs(open_config_ids)
+            open_config_ids = self._settings.value('open_config_ids')
+            if open_config_ids is not None:
+                open_config_ids = [int(s) if s is not None else None
+                                   for s in open_config_ids]
+                self.loadConfigFromConfigIDs(open_config_ids)
 
-        self._settings.endGroup()
+            self._settings.endGroup()
 
         self._settings.beginGroup('fileSystem')
 
@@ -1999,23 +2036,23 @@ class TinkerApp(QObject):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, use_cached_lattice=False):
+    def __init__(self, use_cached_lattice=False, config_id_to_open=None):
         """Constructor"""
 
         QObject.__init__(self)
 
         self.use_cached_lattice = use_cached_lattice
 
-        self._initView()
+        self._initView(config_id_to_open=config_id_to_open)
 
         self.connect(self.view.actionNewConfig, SIGNAL('triggered(bool)'),
                      self.openNewConfigSetupDialog)
 
     #----------------------------------------------------------------------
-    def _initView(self):
+    def _initView(self, config_id_to_open=None):
         """"""
 
-        self.view = TinkerView()
+        self.view = TinkerView(config_id_to_open=config_id_to_open)
 
     #----------------------------------------------------------------------
     def openNewConfigSetupDialog(self, _):
@@ -2031,11 +2068,56 @@ class TinkerApp(QObject):
         if config_abstract_model.channel_ids != []:
             self.view.createDockWidget(config_abstract_model)
 
-#----------------------------------------------------------------------
-def make(use_cached_lattice=False):
+########################################################################
+class DBusInterface(QDBusAbstractInterface):
     """"""
 
-    app = TinkerApp(use_cached_lattice=use_cached_lattice)
+    #----------------------------------------------------------------------
+    def __init__(self, service, path, connection, parent=None):
+        """Constructor"""
+
+        super(DBusInterface, self).__init__(
+            service, path, 'org.aphla.aptinker.Interface',
+            connection, parent)
+
+    #----------------------------------------------------------------------
+    def loadConfigFromConfigID(self, config_id):
+        """"""
+
+        self.asyncCall('loadConfigFromConfigID', config_id)
+
+########################################################################
+class DBusInterfaceAdaptor(QDBusAbstractAdaptor):
+    """"""
+
+    Q_CLASSINFO('D-Bus Interface', 'org.aphla.aptinker.Interface')
+    Q_CLASSINFO('D-Bus Introspection', ''
+            ' <interface name="org.aphla.aptinker.Interface">\n'
+            ' <method name="loadConfigFromConfigID"/>\n'
+            ' </interface>\n'
+            '')
+
+    #----------------------------------------------------------------------
+    def __init__(self, parent):
+        """Constructor"""
+
+        super(DBusInterfaceAdaptor, self).__init__(parent)
+
+        self.setAutoRelaySignals(True)
+
+    #----------------------------------------------------------------------
+    @pyqtSlot(int)
+    def loadConfigFromConfigID(self, config_id):
+        """"""
+
+        self.parent().loadConfigFromConfigIDs([config_id])
+
+#----------------------------------------------------------------------
+def make(use_cached_lattice=False, config_id_to_open=None):
+    """"""
+
+    app = TinkerApp(use_cached_lattice=use_cached_lattice,
+                    config_id_to_open=config_id_to_open)
     app.view.show()
 
     return app
@@ -2044,20 +2126,33 @@ def make(use_cached_lattice=False):
 def main():
     """"""
 
-    args = sys.argv
+    # If Qt is to be used (for any GUI) then the cothread library needs to
+    # be informed, before any work is done with Qt. Without this line
+    # below, the GUI window will not show up and freeze the program.
+    qapp = cothread.iqt()
 
-    if len(args) == 1:
-        use_cached_lattice = False
-    elif len(args) == 2:
-        if args[1] == '--use-cache':
-            use_cached_lattice = True
-        else:
-            use_cached_lattice = False
+    parser = argparse.ArgumentParser(
+        description='APTINKER (Pre-Tune)', add_help=True)
+    parser.add_argument('--use-cache', '-u', action='store_true',
+                        help=('Use cached APHLA machine information for '
+                              'faster loading'))
+    parser.add_argument('--config-id', '--conf-id', '-c', type=int,
+                        help=('APTINKER configuration ID to load'))
+    args = parser.parse_args()
+
+    if args.config_id is not None:
+        pids = get_running_aptinker_pids()
+        if pids is not None:
+            interface = DBusInterface(
+                'org.aphla.aptinker', '/TinkerView',
+                QDBusConnection.sessionBus(), parent=None)
+            interface.loadConfigFromConfigID(args.config_id)
+            return
 
     if ap.machines._lat is None:
         try:
             print 'Trying to load machine "{0}"...'.format(config.HLA_MACHINE)
-            ap.machines.load(config.HLA_MACHINE, use_cache=use_cached_lattice)
+            ap.machines.load(config.HLA_MACHINE, use_cache=args.use_cache)
             success = True
             print 'Successfully loaded {0}'.format(config.HLA_MACHINE)
         except:
@@ -2068,25 +2163,27 @@ def main():
             for machine_name in ap.machines.machines():
                 if machine_name != config.HLA_MACHINE:
                     try:
-                        print 'Trying to load machine "{0}"...'.format(machine_name)
+                        print 'Trying to load machine "{0}"...'.format(
+                            machine_name)
                         ap.machines.load(machine_name,
-                                         use_cache=use_cached_lattice)
+                                         use_cache=args.use_cache)
                         print 'Successfully loaded {0}'.format(machine_name)
                         break
                     except:
                         print 'Failed to load {0}'.format(machine_name)
-
-    # If Qt is to be used (for any GUI) then the cothread library needs to
-    # be informed, before any work is done with Qt. Without this line
-    # below, the GUI window will not show up and freeze the program.
-    qapp = cothread.iqt()
 
     pref = get_preferences()
     font = QFont()
     font.setPointSize(pref['font_size'])
     qapp.setFont(font)
 
-    app = make(use_cached_lattice=use_cached_lattice)
+    app = make(use_cached_lattice=args.use_cache,
+               config_id_to_open=args.config_id)
+
+    adaptor = DBusInterfaceAdaptor(app.view)
+    connection = QDBusConnection.sessionBus()
+    connection.registerObject('/TinkerView', app.view)
+    connection.registerService('org.aphla.aptinker')
 
     cothread.WaitForQuit()
 
