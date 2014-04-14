@@ -1158,7 +1158,12 @@ def calcTuneRm(quad, **kwargs):
             fld, I0, dI = sp[i]
             dk1l = q.convertUnit("b1", I0+dI, None, "phy") - \
                 q.convertUnit("b1", I0, None, "phy")
-        fac = dk1l/dI
+        if unitsys is None:
+            fac = dk1l/dI
+        elif unitsys == "phy":
+            fac = 1.0
+        else:
+            raise RuntimeError("Unknow unitsys={0}".format(unitsys))
         m[0,i] =  bta[i,0]/4.0/np.pi * fac
         m[1,i] = -bta[i,1]/4.0/np.pi * fac
     return m

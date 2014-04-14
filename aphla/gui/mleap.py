@@ -109,8 +109,9 @@ class OrbitPlotMainWindow(QMainWindow):
         for m,(lats,lat0,pvm) in self._mach.items():
             self.logger.info("machine '%s' initialized: [%s]" % (
                 m, ", ".join([lat.name for k,lat in lats.items()])))
-            for pv in pvm.dead():
-                self.logger.warn("'{0}' is disconnected.".format(pv))
+            if pvm:
+                for pv in pvm.dead():
+                    self.logger.warn("'{0}' is disconnected.".format(pv))
         ## DCCT current plot
         #self.dcct = DcctCurrentPlot()
         #self.dcct.setMinimumHeight(100)
@@ -194,6 +195,7 @@ class OrbitPlotMainWindow(QMainWindow):
 
     def closeEvent(self, event):
         self.physics.close()
+        self.mdiarea.closeAllSubWindows()
         event.accept()
 
     def createMenuToolBar(self):
@@ -495,6 +497,7 @@ class OrbitPlotMainWindow(QMainWindow):
         p = ApMdiSubPlot(pvs=pvs, x = x, 
                          labels=["%s.%s" % (elem,fld) for fld in field_list],
                          magprof = lat.getBeamlineProfile(),
+                         iqt = self.iqtApp,
                          **kw)
         #QObject.installEventFilter(p.aplot)
         #p.data = ManagedPvData(pvm, s, pvs, element=elemnames,
@@ -884,24 +887,31 @@ def main(par=None):
     splash = QtGui.QSplashScreen(splash_px, Qt.WindowStaysOnTopHint)
     splash.setMask(splash_px.mask())
     splash.setWindowFlags(Qt.SplashScreen)
+    #splash.setWindowFlags(Qt.WindowStaysOnTopHint)
     rect = app.desktop().availableGeometry()
     splash.move((rect.width() - splash_px.width()) / 2,
                 (rect.height() - splash_px.height()) / 2)
+    
+    mlist = os.environ.get('APHLA_MACHINES', '').split(";")
+    splash.showMessage("Initializing {0}".format(mlist),
+                       Qt.AlignRight | Qt.AlignBottom)
     splash.show()
     #splash.raise_()
     app.processEvents()
+    time.sleep(0.1)
+    app.processEvents()
 
-    
-    mlist = os.environ.get('APHLA_MACHINES', '').split(";")
     if not mlist: mlist = aphla.machines.machines()
     machs, infos = [], []
     for m in mlist:
         splash.showMessage("Initializing {0}".format(m),
                            Qt.AlignRight | Qt.AlignBottom)
+        app.processEvents()
         lat0, latdict = aphla.machines.load(m, return_lattices=True)
         infos.append("%s initialized" % m)
         splash.showMessage("Connecting to {0}".format(m),
                            Qt.AlignRight | Qt.AlignBottom)
+        app.processEvents()
         pvs = set()
         for latname, latobj in latdict.items():
             splash.showMessage("checking {0}.{1}".format(m, latname),
@@ -912,12 +922,13 @@ def main(par=None):
 
 
         # pv manager 
-        pvm = CaDataMonitor(timeout=5)
-        pvm.addPv(pvs)
-        machs.append((m, latdict, lat0, pvm))
+        #pvm = CaDataMonitor(timeout=5)
+        #pvm.addPv(pvs)
+        machs.append((m, latdict, lat0, None))
 
-        infos.append("%d out of %d PVs are alive" % (
-            pvm.activeCount(), len(pvm)))
+        #infos.append("%d out of %d PVs are alive" % (
+        #    pvm.activeCount(), len(pvm)))
+        infos.append("pvm is disabled")
     
     splash.showMessage("Using {0} as default machine".format(m),
                        Qt.AlignRight | Qt.AlignBottom)

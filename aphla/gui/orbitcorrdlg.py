@@ -1410,18 +1410,17 @@ class OrbitCorrDlg(QDialog):
         #self.yc.setData(s, self.y0)
         self.bpm_plot.showCurve(self.yc, True)
 
-        self.bpm_plot._cheat = [Qwt.QwtPlotCurve(), Qwt.QwtPlotCurve()]
-        self.bpm_plot._cheat[0].setTitle("_CHEAT_ X")
-        self.bpm_plot._cheat[1].setTitle("_CHEAT_ Y")
-        self.bpm_plot._cheat[0].attach(self.bpm_plot)
-        self.bpm_plot._cheat[1].attach(self.bpm_plot)
-        self.bpm_plot._set_symbol(self.bpm_plot._cheat[0],
-                                  Qwt.QwtSymbol.Triangle, dsize=2)
-        self.bpm_plot._set_symbol(self.bpm_plot._cheat[1],
-                                  Qwt.QwtSymbol.Diamond, dsize=2)
-        self.bpm_plot.showCurve(self.bpm_plot._cheat[0], False)
-        self.bpm_plot.showCurve(self.bpm_plot._cheat[1], False)
-
+        #self.bpm_plot._cheat = [Qwt.QwtPlotCurve(), Qwt.QwtPlotCurve()]
+        #self.bpm_plot._cheat[0].setTitle("_CHEAT_ X")
+        #self.bpm_plot._cheat[1].setTitle("_CHEAT_ Y")
+        #self.bpm_plot._cheat[0].attach(self.bpm_plot)
+        #self.bpm_plot._cheat[1].attach(self.bpm_plot)
+        #self.bpm_plot._set_symbol(self.bpm_plot._cheat[0],
+        #                          Qwt.QwtSymbol.Triangle, dsize=2)
+        #self.bpm_plot._set_symbol(self.bpm_plot._cheat[1],
+        #                          Qwt.QwtSymbol.Diamond, dsize=2)
+        #self.bpm_plot.showCurve(self.bpm_plot._cheat[0], False)
+        #self.bpm_plot.showCurve(self.bpm_plot._cheat[1], False)
         self.bpm_plot.setContentsMargins(12, 10, 10, 10)
 
         # add corrector plots
@@ -1443,6 +1442,7 @@ class OrbitCorrDlg(QDialog):
         self.cor_plot.setContentsMargins(12, 10, 10, 10)
         #self.cor_plot.setMinimumHeight(200)
         #self.cor_plot.setMaximumHeight(250)
+        #print s, pvx
 
         # add twiss plots
         self._twiss = getTwiss("*", ["s", "betax", "betay", "etax"])
@@ -1479,7 +1479,7 @@ class OrbitCorrDlg(QDialog):
         tabs = QtGui.QTabWidget()
         tabs.addTab(self.bpm_plot, "Orbit")
         tabs.addTab(self.cor_plot, "Correctors")
-        tabs.addTab(self.tw_plot, "Twiss")
+        tabs.addTab(self.tw_plot, "Twiss (Design)")
         tabs.setMinimumHeight(200)
         tabs.setMaximumHeight(280)
 
@@ -1534,12 +1534,12 @@ class OrbitCorrDlg(QDialog):
         #layout.addWidget(hln)
 
         # the cheat button
-        hbox = QHBoxLayout()
-        hbox.addStretch()
-        btn = QPushButton("__CHEAT__")
-        self.connect(btn, SIGNAL("clicked()"), self._cheat)
-        hbox.addWidget(btn)
-        layout.addLayout(hbox)
+        #hbox = QHBoxLayout()
+        #hbox.addStretch()
+        #btn = QPushButton("__CHEAT__")
+        #self.connect(btn, SIGNAL("clicked()"), self._cheat)
+        #hbox.addWidget(btn)
+        #layout.addLayout(hbox)
 
         self.setLayout(layout)
         #self.update_orbit = update_orbit
@@ -1547,6 +1547,7 @@ class OrbitCorrDlg(QDialog):
         #self._y0 = tuple(y)  # save for reset
         #self.val = [s, x, y]
         self.setMinimumWidth(1000)
+        self.setWindowFlags(Qt.Window)
         # draw the target orbit
         #self.bpm_plots[0].plotCurve2(self.val[1], self.val[0])
         #self.bpm_plots[1].plotCurve2(self.val[2], self.val[0])
@@ -1624,7 +1625,8 @@ class OrbitCorrDlg(QDialog):
 
 if __name__ == "__main__":
     import aphla as ap
-    ap.machines.load("nsls2v2")
+    #ap.machines.load("nsls2v2")
+    ap.machines.load("nsls2")
     bpms = ap.getElements("BPM")
     cors = ap.getElements("COR")
     bpms[1].setEnabled(False)
@@ -1638,6 +1640,7 @@ if __name__ == "__main__":
     #form = Bump3XSrc(cors)
     form.resize(1000, 400)
     form.setWindowTitle("Create Local Bump")
+    form.setWindowFlags(Qt.Window)
     form.show()
     #form.reloadElements("*")
     #app.exec_()
