@@ -31,7 +31,7 @@ class CaDataMonitor(QtCore.QObject):
         #self.simulation  = kwargs.get('simulation', False)
         self.val_default = kwargs.get("default", np.nan)
         self.timeout     = kwargs.get("timeout", 5)
-        self._min_dt     = kwargs.get("wait", 0.7)
+        self._min_dt     = kwargs.get("wait", 1.2)
         self.data = {}
         self.hook = {}
         self._monitors = {}
@@ -74,6 +74,10 @@ class CaDataMonitor(QtCore.QObject):
                     self._wfsize[pv] = None
                 for fhk in self.hook.get(pv, []):
                     fhk(d[i], None)
+        d1 = caget(self.data.keys(), timeout = self.timeout, **kw_cm)
+        for i,v in enumerate(d1):
+            self.data[v.name].append(v)
+            #print i, v.name, v.timestamp
 
     def addHook(self, pv, f):
         self.hook.setdefault(pv, [])
@@ -88,13 +92,20 @@ class CaDataMonitor(QtCore.QObject):
         if not self._live: return
         if not val.ok: return
         pv = val.name
-        if pv in self.data: self.data[pv].append(val)
-        # call callback if long enough
-        dt = datetime.now() - self._t0
-        if dt.total_seconds() > self._min_dt:
-            for f in self.hook.get(pv, []):
-                f(val, idx)
-            self._t0 = datetime.now()
+        # this is update, assuming pv is already there
+        #sec, nsec = val.raw_stamp
+        #sec0, nsec0 = self.data[pv][-1].raw_stamp
+        t_s1 = val.timestamp
+        #if len(self.data[pv]) > 1:
+        #    # initial has no timestamp
+        t_s0 = self.data[pv][-1].timestamp
+        if t_s1 > t_s0 and t_s1 - t_s0 < self._min_dt:
+            #print "Too close: dt= {0} < {1}".format(
+            #    t_s1 - t_s0, self._min_dt)
+            return
+        self.data[pv].append(val)
+        for f in self.hook.get(pv, []):
+            f(val, idx)
 
     def pull(self):
         vals = caget(self.data.keys(), timeout=self.timeout)

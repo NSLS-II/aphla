@@ -182,7 +182,7 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         #self.elementSelected = pyqtSignal(list)
 
     def activate_element(self, p):
-        print p
+        print "Active element:", p
 
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
         if se < sb: 
@@ -380,13 +380,15 @@ class ApErrBarCurve(Qwt.QwtPlotCurve):
 
 
 class ApCaPlot(Qwt.QwtPlot):
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, iqt = None):
         super(Qwt.QwtPlot, self).__init__(parent)
         self.drift = False
         self.live = True
         self.curves = []
+        self.magprof = None  # magnet profile
         self._hold = False
         self._cadata = None
+        self._iqt = iqt
 
         grid = Qwt.QwtPlotGrid()
         grid.attach(self)
@@ -633,7 +635,7 @@ class ApCaPlot(Qwt.QwtPlot):
 
     def _setAutoScale(self, on):
         if on:
-            print "Enable autoscale"
+            #print "Enable autoscale"
             self.zoomer1.reset()
             self.zoomer1.setEnabled(False)
             self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
@@ -642,7 +644,7 @@ class ApCaPlot(Qwt.QwtPlot):
             self.zoomer1.setEnabled(True)
             asd = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
             #print asd.lowerBound(), asd.upperBound()
-            print "Disable autoscale"
+            #print "Disable autoscale"
             self.setAxisScale(Qwt.QwtPlot.yLeft, asd.lowerBound(),
                               asd.upperBound())
             # has to replot before base
@@ -698,8 +700,8 @@ class ApCaPlot(Qwt.QwtPlot):
         self.replot()
 
     def zoomed(self, r):
-        print "L/R:", r.left(), r.right()
-        print "T/B:", r.top(), r.bottom()
+        #print "L/R:", r.left(), r.right()
+        #print "T/B:", r.top(), r.bottom()
         pass
 
     def pullCaData(self):
@@ -885,7 +887,7 @@ class ApCaWaveformPlot(ApCaPlot):
         #self.curve2 = Qwt.QwtPlotCurve()
 
         #self.setMinimumSize(300, 100)
-        print "PV:", pvs
+        #print "PV:", pvs
         #self.connect(self, SIGNAL("doubleClicked
         self.count = 0
         self._cadata = CaDataMonitor()
@@ -969,7 +971,6 @@ class ApCaWaveformPlot(ApCaPlot):
         sl1, sr1 = sl + (sr-sl)*fraction, sr + (sr-sl)*fraction
         self.setAxisScale(ax, sl1, sr1)
 
-
     def setColor(self, c):
         symb = self.curve1.symbol()
         pen = symb.pen()
@@ -997,7 +998,7 @@ class ApCaArrayPlot(ApCaPlot):
         title : 
         """
         parent = kwargs.pop("parent", None)
-        super(ApCaArrayPlot, self).__init__(parent)
+        super(ApCaArrayPlot, self).__init__(parent, kwargs.get("iqt", None))
         self.labels = kwargs.get("labels", None)
 
         self.setCanvasBackground(Qt.white)
@@ -1043,38 +1044,26 @@ class ApCaArrayPlot(ApCaPlot):
 
         self.showCurve(self.curve2, True)
 
-        self._cadata = CaDataMonitor(wait=0.6)
-        for pv in self._pvs.keys():
-            #self._cadata.addHook(pv, self._ca_update)
-            self._cadata.addHook(pv, self._ca_update_all)
+        self._cadata = CaDataMonitor(wait=1.6)
+        #for pv in self._pvs.keys():
+        #    #self._cadata.addHook(pv, self._ca_update)
+        #    self._cadata.addHook(pv, self._ca_update_all)
         self._cadata.addPv(self._pvs.keys())
         ymin, ymax = self._cadata.getRange()
         self.setAxisScale(Qwt.QwtPlot.yLeft, ymin, ymax)
         self.zoomer1.setZoomBase(True)
+        self._t0 = 0.0
         self._cadata.start()
-
-    def _ca_update(self, val, idx = None):
+        self._timerId = self.startTimer(1500)
+        
+    def timerEvent(self, e):
         if self._hold: return
         if not self.live: return
-        #print "Updating %s: " % val.name, self._pvs[val.name], val
-        for i,j in self._pvs.get(val.name, []):
-            self._count[i][j] += 1
-            self._y[i][j] = val
-            c = self.curves[i]
-            x, y, e1 = c.data()
-            if self._ref[i] is not None and self.drift:
-                y = [self._y[i][k] - self._ref[i][k]
-                     for k in range(len(self._y[i]))]
-            else:
-                y = self._y[i]
-            c.setData(y, x, e1)
-
-        self.replot()
-        #QtGui.qApp.processEvents()
-
-    def _ca_update_all(self, val, idx = None):
-        if self._hold: return
-        if not self.live: return
+        try:
+            t1 = val.timestamp
+            if t1 - t0 < 0.6: return
+        except:
+            pass
         for pv in self._pvs.keys():
             v1 = self._cadata.get(pv)
             #print "Updating %s: " % pv, v1
@@ -1094,6 +1083,60 @@ class ApCaArrayPlot(ApCaPlot):
         if any([c.isVisible() for c in self.curves]):
             self.replot()
         #QtGui.qApp.processEvents()
+        #if self._iqt:
+        #    #print "Process events:", val.name, idx
+        #    self._iqt.processEvents()
+
+
+    def _ca_update(self, val, idx = None):
+        if self._hold: return
+        if not self.live: return
+        #print "Updating %s: " % val.name, self._pvs[val.name], val
+        for i,j in self._pvs.get(val.name, []):
+            self._count[i][j] += 1
+            self._y[i][j] = val
+            c = self.curves[i]
+            x, y, e1 = c.data()
+            if self._ref[i] is not None and self.drift:
+                y = [self._y[i][k] - self._ref[i][k]
+                     for k in range(len(self._y[i]))]
+            else:
+                y = self._y[i]
+            c.setData(y, x, e1)
+
+        self.replot()
+        if self._iqt: self._iqt.processEvents()
+
+    def _ca_update_all(self, val, idx = None):
+        if self._hold: return
+        if not self.live: return
+        try:
+            t1 = val.timestamp
+            if t1 - t0 < 0.6: return
+        except:
+            pass
+        for pv in self._pvs.keys():
+            v1 = self._cadata.get(pv)
+            #print "Updating %s: " % pv, v1
+            for i,j in self._pvs.get(pv, []):
+                self._count[i][j] += 1
+                self._y[i][j] = v1
+
+        for i, c in enumerate(self.curves):
+            x, y, e1 = c.data()
+            if self._ref[i] is not None and self.drift:
+                y = [self._y[i][k] - self._ref[i][k]
+                     for k in range(len(self._y[i]))]
+            else:
+                y = self._y[i]
+            c.setData(y, x, e1)
+
+        if any([c.isVisible() for c in self.curves]):
+            self.replot()
+        #QtGui.qApp.processEvents()
+        if self._iqt:
+            #print "Process events:", val.name, idx
+            self._iqt.processEvents()
 
     def pullCaData(self):
         if not self._cadata: return
@@ -1763,11 +1806,11 @@ if __name__ == "__main__":
     #                    'V:2-SR:C29-BI:G4{PM1:3606}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH2:3630}SA:X',
     #                    'V:2-SR:C29-BI:G6{PH1:3645}SA:X',)])
-    #p = ApCaArrayPlot(pvs)
+    p = ApCaArrayPlot(pvs)
     #pvs = [ ('SR:C23-BI{BPM:9}Pos:X-I', 'SR:C23-BI{BPM:9}Pos:Y-I') ]
-    pvs = [('SR:C16-BI{TuneNA}Freq:Vx-I', 'SR:C16-BI{TuneNA}Freq:Vy-I'),
-           ('SR-BI{TUNE:LIVE4RB}X-I', 'SR-BI{TUNE:LIVE4RB}Y-I')]
-    p = ApCaTunesPlot(pvs, labels=["Tunes", "VA Tunes RB"])
+    #pvs = [('SR:C16-BI{TuneNA}Freq:Vx-I', 'SR:C16-BI{TuneNA}Freq:Vy-I'),
+    #       ('SR-BI{TUNE:LIVE4RB}X-I', 'SR-BI{TUNE:LIVE4RB}Y-I')]
+    #p = ApCaTunesPlot(pvs, labels=["Tunes", "VA Tunes RB"])
     import time
     #pvs = ['V:2-SR:C29-BI:G2{PL1:3551}SA:X',
     #       'V:2-SR:C29-BI:G2{PL2:3571}SA:X',
