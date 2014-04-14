@@ -3,12 +3,16 @@ High-Level Interface to SQLite
 '''
 
 import os
-import sqlite3
+import sqlite3 # command-line SQLite3 does NOT need to be installed to use
+# this Python module
 from time import time, sleep
 import zlib
 import cPickle
 import traceback
 from pprint import pprint
+from collections import namedtuple
+
+__version__ = '1.0.0'
 
 MEMORY = ':memory:'
 
@@ -144,7 +148,7 @@ class SQLiteDatabase():
         self.cur = self.con.cursor()
 
     #----------------------------------------------------------------------
-    def close(self, vacuum=True):
+    def close(self, vacuum=False):
         """"""
 
         if vacuum:
@@ -360,6 +364,27 @@ class SQLiteDatabase():
                                            condition_str='', order_by_str='',
                                            binding_tuple=None,
                                            print_cmd=False)
+
+    #----------------------------------------------------------------------
+    def pprintColumnDataFromTable(self, table_name, column_name_list=None,
+                                  condition_str='', order_by_str='',
+                                  binding_tuple=None,
+                                  binding_list_of_tuples=None,
+                                  print_cmd=False):
+        """"""
+
+        list_of_columns = self.getColumnDataFromTable(
+            table_name, column_name_list=column_name_list, condition_str=condition_str,
+            order_by_str=order_by_str, binding_tuple=binding_tuple,
+            binding_list_of_tuples=binding_list_of_tuples, print_cmd=print_cmd)
+
+        list_of_rows = zip(*list_of_columns)
+
+        if column_name_list is None:
+            column_name_list = self.getColumnNames(table_name)
+
+        self.pprinttable(list_of_rows, column_name_list=column_name_list,
+                         force_table_view=True)
 
     #----------------------------------------------------------------------
     def getColumnDataFromTable(self, table_name, column_name_list=None,
@@ -728,3 +753,62 @@ class SQLiteDatabase():
         self.con.commit()
 
         self.getTableNames()
+
+    #----------------------------------------------------------------------
+    @staticmethod
+    def pprinttable(list_of_rows, column_name_list=None, force_table_view=True):
+        """
+        Pretty-printing ASCII tables
+
+        Given a list of rows such as [(1,2), (3,4)] and column name
+        list such as ['Index 1', 'Index 2'], this function will print the following:
+
+        Index 1 | Index 2
+        --------+--------
+              1 |       2
+              3 |       4
+
+        Copied from an answer at
+        http://stackoverflow.com/questions/5909873/python-pretty-printing-ascii-tables
+
+        with my bug fix and additional optional argument.
+        """
+
+        n_rows = len(list_of_rows)
+        n_cols = len(list_of_rows[0])
+
+        if column_name_list is None:
+            column_name_list = ['Column {0:d}'.format(i+1) for i in range(n_rows)]
+        if len(column_name_list) != n_cols:
+            raise ValueError('Length of "column_name_list" must agree with the number of columns in "list_of_rows".')
+
+        Row = namedtuple('Row', column_name_list)
+        rows = map(Row._make, list_of_rows)
+
+        if (len(rows) > 1) or force_table_view:
+            headers = rows[0]._fields
+            lens = []
+            for i in range(len(rows[0])):
+                lens.append(len(str(
+                    max([x[i] for x in rows] + [headers[i]],key=lambda x:len(str(x)))
+                )))
+            formats = []
+            hformats = []
+            for i in range(len(rows[0])):
+                if isinstance(rows[0][i], int):
+                    formats.append("%%%dd" % lens[i])
+                else:
+                    formats.append("%%-%ds" % lens[i])
+                hformats.append("%%-%ds" % lens[i])
+            pattern = " | ".join(formats)
+            hpattern = " | ".join(hformats)
+            separator = "-+-".join(['-' * n for n in lens])
+            print hpattern % tuple(headers)
+            print separator
+            for line in rows:
+                print pattern % tuple(line)
+        elif len(rows) == 1:
+            row = rows[0]
+            hwidth = len(max(row._fields,key=lambda x: len(x)))
+            for i in range(len(row)):
+                print "%*s = %s" % (hwidth,row._fields[i],row[i])

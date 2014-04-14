@@ -306,7 +306,7 @@ class CaAction:
             else: return True
         elif isinstance(v, (list, tuple)):
             for vi in v:
-                if not self._all_within_range(vi, low, high): return False
+                if not self._all_within_range(vi, lowhigh): return False
             return True
         else:
             raise RuntimeError("unknow data type '{0}:{1}'".format(v, type(v)))
@@ -471,7 +471,7 @@ class CaAction:
                                  format(self.pvsp[i], lowhigh, rawval[i]))
                 #rawval[i] = bc_val
             elif bc == 'ignore':
-                return       
+                pass       
 
         if self.trace: 
             if isinstance(val, (list, tuple)):
@@ -486,7 +486,6 @@ class CaAction:
                 # keep the first for reset
                 self.sp.pop(1)
 
-        #print self.pvsp, rawval
         retlst = caput(self.pvsp, rawval, wait=True)
         for i,ret in enumerate(retlst):
             if ret.ok: continue
@@ -769,11 +768,12 @@ class CaElement(AbstractElement):
         #AbstractElement.__init__(self, **kwargs)
         self.__dict__['_field'] = {}
         self.__dict__['_golden'] = {}  # the golden values for fields.
-        self.__dict__['_pvtags'] = {}
+        self.__dict__['_pvtags'] = { '_archive': [] }
         self.__dict__['virtual'] = kwargs.get('virtual', 0)
         self.__dict__['trace'] = kwargs.get('trace', False)
         # the linked element, alias
         self.__dict__['alias'] = []
+
         # update all element properties
         super(CaElement, self).__init__(**kwargs)
         

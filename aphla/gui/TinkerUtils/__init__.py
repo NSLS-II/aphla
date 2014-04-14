@@ -34,6 +34,24 @@ def datestr_ns(ioc_raw_timestamp_tuple):
 
     return str_upto_seconds + '{:d}'.format(nanoseconds)
 
+#----------------------------------------------------------------------
+def date_month_folder_str(time_in_seconds_from_Epoch):
+    """"""
+
+    time_format = '%Y-%m'
+    return strftime(time_format, localtime(time_in_seconds_from_Epoch))
+
+#----------------------------------------------------------------------
+def date_snapshot_filename_str(time_in_seconds_from_Epoch, username):
+    """"""
+
+    frac_sec = time_in_seconds_from_Epoch - np.floor(time_in_seconds_from_Epoch)
+    time_format = '%Y-%m-%d-%H-%M-%S.' + '{0:.6f}'.format(frac_sec)[2:]
+
+    time_str = strftime(time_format, localtime(time_in_seconds_from_Epoch))
+
+    return '{0}_{1}.h5'.format(username, time_str)
+
 ########################################################################
 class SmartSizedMessageBox(QMessageBox):
     """

@@ -271,14 +271,15 @@ def measCaRmCol(kker, resp, **kwargs):
 
     # return raw_data
     for i in range(n0):
-        p = np.polyfit(dxlst, np.average(raw_data[:,i,:], axis=1), 2)
+        p, resi, rank, sv, rcond = np.polyfit(
+            dxlst, np.average(raw_data[:,i,:], axis=1), 2, full=True)
         m[i] = p[1]
     if verbose > 0:
         print "dy/dx:", m
     t1 = datetime.now()
     output = kwargs.get("output", None)
     if not output:
-        return m, dxlst, raw_data
+        return m, dxlst, raw_data, None
     try:
         import h5py
         f = h5py.File(output)
@@ -311,6 +312,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
     scale : scaling factor applied to the calculated kker
     ref : the targeting value of resp PVs
     rcond : the rcond for cutting singular values. 
+    nsv: use how many singular values, overwrite the option of rcond
     check : stop if the orbit gets worse.
     wait : waiting (seconds) before check.
     bc: str. bounds checking. 'ignore', 'abort', 'boundary', None
@@ -322,14 +324,16 @@ def caRmCorrect(resp, kker, m, **kwarg):
     msg : error message or None
 
     """
-    scale = kwarg.get('scale', 0.68)
-    ref   = kwarg.get('ref', None)
-    check = kwarg.get('check', True)
-    wait  = kwarg.get('wait', 6)
-    rcond = kwarg.get('rcond', 1e-3)
-    verb  = kwarg.get('verbose', 0)
-    lim   = kwarg.get('kkerlim', None)
-    bc    = kwarg.get('bc', None)
+    scale  = kwarg.get('scale', 0.68)
+    ref    = kwarg.get('ref', None)
+    check  = kwarg.get('check', True)
+    wait   = kwarg.get('wait', 6)
+    rcond  = kwarg.get('rcond', 1e-3)
+    verbose = kwarg.get('verbose', 0)
+    lim    = kwarg.get('kkerlim', None)
+    bc     = kwarg.get('bc', None)
+    dImax  = kwarg.get('dImax', None)
+    dryrun = kwarg.get('dryrun', False)
 
     _logger.info("nkk={0}, nresp={1}, scale={2}, rcond={3}, wait={4}".format(
             len(kker), len(resp), scale, rcond, wait))
@@ -339,7 +343,10 @@ def caRmCorrect(resp, kker, m, **kwarg):
     
     # the initial norm
     norm0 = np.linalg.norm(v0)
-
+    U, s, V = np.linalg.svd(m)
+    if kwarg.get("nsv", None):
+        assert kwarg["nsv"] <= len(s), "maxium singular values: %d" % len(s)
+        rcond = s[kwarg["nsv"]-1] / s[0]
     # solve for m*dk + (v0 - ref) = 0
     dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0, rcond = rcond)
 
@@ -348,20 +355,15 @@ def caRmCorrect(resp, kker, m, **kwarg):
     k1 = k0 + dk*scale
 
     kkerin, k1in = [], []
-    if not lim:
+    if dImax is not None:
+        im = np.argmax(np.abs(dk))
+        dk = dk/np.abs(dk[im]) * dImax
+        kkerin = [pv for pv in kker]
+        k1in = k0 + dk
+    elif not lim:
         kkerin = [pv for pv in kker]
         k1in   = [val for val in k1]
-    elif bc == "ignore":
-        # ignore the invalid value
-        kkerin, k1in = zip(*[(kker[i], k1in[i]) for i,v in enumerate(k1)
-                             if lim[i][0] < k1[i] < lim[i][1]])
-    elif bc == "abort":
-        if any([k1[i] < lim[i][0] or k1[i] > lim[i][1]
-                for i in range(len(k1))]):
-            msg = "New settings will be beyond the boundary, Abort."
-            _logger.warn(msg)
-            return (1, msg)
-    elif bc == "autoscale":
+    elif np.shape(lim) == (len(dk), 2):
         alim = np.array(lim, 'd')
         kbd0 = min([v for v in (alim[:,1] - k0)/dk if v > 0.0])
         kbd1 = min([v for v in (alim[:,0] - k0)/dk if v > 0.0])
@@ -369,14 +371,19 @@ def caRmCorrect(resp, kker, m, **kwarg):
         _logger.info("autoscale the set point with factor {0}({1})".format(
                 ksc, scale))
         k1in = [val for val in k0 + dk*ksc]
-    elif bc is None:
-        kkerin = [pv for pv in kker]
-        k1in   = [val for val in k1]        
     else:
         raise RuntimeError("boundary values set but no method")
 
+    if verbose > 0:
+        for i,pv in enumerate(kkerin):
+            print i, pv, k1in[i], k1in[i] - k0[i]
+        
     # the real setting
-    caput(kkerin, k1in)
+    if dryrun:
+        return (0, "setting {0} cors, min= {1} max= {2}".format(
+                len(kkerin), np.min(k1in), np.max(k1in)))
+    else:
+        caput(kkerin, k1in)
 
     # wait and check
     if check == True:
@@ -387,7 +394,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
         norm2 = np.linalg.norm(v1)
         msg = "Euclidian norm: pred./realized", norm1/norm0, norm2/norm0
         _logger.info(msg)
-        if verb > 0:
+        if verbose > 0:
             print(msg)
         if norm2 > norm0:
             msg = "Failed to reduce orbit distortion, restoring..." 

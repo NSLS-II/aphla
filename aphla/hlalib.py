@@ -1038,32 +1038,55 @@ def saveLattice(**kwargs):
     """
     save lattice info to a HDF5 file.
 
-    - output, output file name. If it is None, save to the default place with default filename.
+    - output, output file name. If it is True, save to the default place with default filename.
     - lattice, default the current active lattice
+    - subgroup, default "", used for output file name
+    - elements, default "*"
 
     returns the output file name.
     """
     # save the lattice
-    output = kwargs.get("output", None)
+    output = kwargs.get("output", False)
     lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
 
-    if lat.arpvs is not None:
+    if kwargs.has_key("elements"):
+        pvs = []
+        for el in kwargs["elements"]:
+            pvs.extend(
+                reduce(lambda a,b: a+b,
+                       [e.pv() for e in lat.getElementList(el, virtual=False)]))
+    elif lat.arpvs is not None:
         pvs = [s.strip() for s in open(lat.arpvs, 'r').readlines()]
     else:
         pvs = reduce(lambda a,b: a+b,
                      [e.pv() for e in lat.getElementList("*", virtual=False)])
 
-    if output is None:
+    if output is True:
         #t0 = datetime.now()
         #output = os.path.join(
         #    lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
         #    t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
-        output = outputFileName("snapshot", "")
+        output = outputFileName("snapshot", kwargs.get("subgroup",""))
     nlive, nead = savePvData(output, pvs, group=lat.name)
     if verbose > 0:
         print "PV dead: %d, live: %d" % (nlive, ndead)
     return output
+
+
+def putLattice(fname, **kwargs):
+    """
+    put saved lattice to real machine.
+
+    - group: hdf5 group, default the current lattice name
+    """
+    # save the lattice
+    group = kwargs.get("group", machines._lat.name)
+    import h5py
+    h5f = h5py.File(fname, 'r')
+    grp = h5f[group]
+    for k,v in grp.items():
+        caput(k, v)
 
 
 def outputFileName(group, subgroup, create_path = True):

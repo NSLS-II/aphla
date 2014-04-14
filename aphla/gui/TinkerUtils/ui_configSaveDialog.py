@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_configSaveDialog.ui'
 #
-# Created: Sat Mar 22 21:47:15 2014
+# Created: Wed Apr  2 10:27:09 2014
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -18,8 +18,8 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName(_fromUtf8("Dialog"))
         Dialog.resize(639, 540)
-        self.verticalLayout = QtGui.QVBoxLayout(Dialog)
-        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.gridLayout_2 = QtGui.QGridLayout(Dialog)
+        self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
         self.gridLayout = QtGui.QGridLayout()
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.label = QtGui.QLabel(Dialog)
@@ -36,12 +36,18 @@ class Ui_Dialog(object):
         self.gridLayout.addWidget(self.plainTextEdit_description, 1, 1, 2, 1)
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout.addItem(spacerItem, 2, 0, 1, 1)
-        self.verticalLayout.addLayout(self.gridLayout)
+        self.label_3 = QtGui.QLabel(Dialog)
+        self.label_3.setObjectName(_fromUtf8("label_3"))
+        self.gridLayout.addWidget(self.label_3, 3, 0, 1, 1)
+        self.lineEdit_masar_id = QtGui.QLineEdit(Dialog)
+        self.lineEdit_masar_id.setObjectName(_fromUtf8("lineEdit_masar_id"))
+        self.gridLayout.addWidget(self.lineEdit_masar_id, 3, 1, 1, 1)
+        self.gridLayout_2.addLayout(self.gridLayout, 0, 0, 1, 1)
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-        self.verticalLayout.addWidget(self.buttonBox)
+        self.gridLayout_2.addWidget(self.buttonBox, 1, 0, 1, 1)
 
         self.retranslateUi(Dialog)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), Dialog.accept)
@@ -52,4 +58,5 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Save Configuration File", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("Dialog", "Name", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("Dialog", "Description", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("Dialog", "MASAR ID", None, QtGui.QApplication.UnicodeUTF8))
 

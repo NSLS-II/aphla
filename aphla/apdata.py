@@ -194,7 +194,7 @@ class OrmData:
         """
         for i,b in enumerate(self.bpm):
             if b[0] == elem and b[1] == field: return i
-        for i,t in enumerate(self.trim):
+        for i,t in enumerate(self.cor):
             if t[0] == elem and t[1] == field: return i
             
         raise ValueError("(%s,%s) are not in this ORM data" % (elem, field))
@@ -211,7 +211,7 @@ class OrmData:
         i = self.index(bpmr[0], bpmr[1])
         j = self.index(corr[0], corr[1])
 
-        if self._mask[i,j]: return None
+        if self._mask and self._mask[i,j]: return None
         return self.m[i, j]
 
     def update(self, bpmr, corr, val):
@@ -720,6 +720,7 @@ def createLatticePvDb(dbfname, csv2fname = None):
                   hlaLow    REAL,
                   hlaStep   REAL,
                   hlaValRef REAL,
+                  archive INT DEFAULT 0,
                   UNIQUE (pv,elemName,elemField) ON CONFLICT REPLACE,
                   FOREIGN KEY(elemName) REFERENCES elements(elemName))""")
     conn.commit()

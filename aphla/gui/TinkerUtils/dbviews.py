@@ -53,7 +53,9 @@ class ConfigMetaDBViewWidget(QWidget):
         self._initUI(parentWidget)
 
         self.db = TinkerMainDatabase()
-        self.db.create_temp_config_meta_table_text_view()
+        if '[config_meta_table text view]' not in self.db.getViewNames(
+            square_brackets=True):
+            self.db.create_temp_config_meta_table_text_view()
         self.all_col_keys = \
             self.db.getColumnNames('[config_meta_table text view]')
         self.col_keys_wo_desc = self.all_col_keys[:]
@@ -585,7 +587,7 @@ class ConfigDBViewWidget(QWidget):
                                             force_visibility_update=False)
 
 ########################################################################
-class SnapshotDBViewWidget(QWidget):
+class SnapshotMetaDBViewWidget(QWidget):
     """"""
 
     #----------------------------------------------------------------------
@@ -594,7 +596,187 @@ class SnapshotDBViewWidget(QWidget):
 
         QWidget.__init__(self, parentWidget)
 
-        self._initUI()
+        self._initUI(parentWidget)
+
+        self.db = TinkerMainDatabase()
+        if '[ss_meta_table text view]' not in self.db.getViewNames(
+            square_brackets=True):
+            self.db.create_temp_ss_meta_table_text_view()
+        self.all_col_keys = \
+            self.db.getColumnNames('[ss_meta_table text view]')
+        self.col_keys_wo_desc = self.all_col_keys[:]
+        self.col_keys_wo_desc.remove('ss_description')
+        self.col_keys_wo_desc.remove('config_description')
+
+        self.col_names_wo_desc = [
+            'SS ID', 'SS Name', 'SS. Username',  'SS MASAR ID', 'SS Ref.StepSize',
+            'SS Synced.GroupWeight', 'SS Time Created',
+            'Config.ID', 'Config.Name', 'Conf.Username', 'Conf. MASAR ID',
+            'Conf.Ref.StepSize', 'Conf.Synced.GroupWeight',
+            'Conf. Time Created']
+
+        self.vis_col_name_list = self.col_names_wo_desc[:]
+
+        self.connect(self.checkBox_sortable, SIGNAL('stateChanged(int)'),
+                     self.on_sortable_state_changed)
+        self.connect(self.pushButton_columns, SIGNAL('clicked()'),
+                     self.launchColumnsDialog)
+        self.connect(self.pushButton_export, SIGNAL('clicked()'),
+                     self.exportSnapshotToFile)
+        self.connect(self.pushButton_edit_config_name_desc, SIGNAL('clicked()'),
+                     self.editSnapshotNameOrDescription)
+
+    #----------------------------------------------------------------------
+    def _initUI(self, parentWidget):
+        """"""
+
+        verticalLayout_2 = QVBoxLayout(parentWidget)
+        verticalLayout_2.setContentsMargins(0, 0, 0, 0) # zero margin
+
+        self.splitter = QSplitter(parentWidget)
+        self.splitter.setContentsMargins(0, 0, 0, 0) # zero margin
+        self.splitter.setOrientation(Qt.Vertical)
+        self.splitter.setHandleWidth(9)
+
+        verticalLayout_2.addWidget(self.splitter)
+
+        self.layoutWidget_2 = QWidget(self.splitter)
+        verticalLayout = QVBoxLayout(self.layoutWidget_2)
+        verticalLayout.setContentsMargins(-1, 0, -1, 0)
+        self.tableView = QTableView(self)
+        verticalLayout.addWidget(self.tableView)
+
+        self.layoutWidget_3 = QWidget(self.layoutWidget_2)
+        verticalLayout.addWidget(self.layoutWidget_3)
+        horizontalLayout = QHBoxLayout(self.layoutWidget_3)
+        horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.pushButton_export = QPushButton(self)
+        self.pushButton_export.setText('Export...')
+        self.pushButton_export.setMaximumWidth(200)
+        horizontalLayout.addWidget(self.pushButton_export)
+        spacerItem = QSpacerItem(20, 40, QSizePolicy.Expanding,
+                                 QSizePolicy.Minimum)
+        horizontalLayout.addItem(spacerItem)
+        self.pushButton_columns = QPushButton(self)
+        self.pushButton_columns.setText('Columns')
+        self.pushButton_columns.setMaximumWidth(200)
+        horizontalLayout.addWidget(self.pushButton_columns)
+        self.checkBox_sortable = QCheckBox(self)
+        self.checkBox_sortable.setText('Sortable')
+        self.checkBox_sortable.setChecked(False)
+        horizontalLayout.addWidget(self.checkBox_sortable)
+
+        self.layoutWidget = QWidget(self.splitter)
+        gridLayout = QGridLayout(self.layoutWidget)
+        self.label_2 = QLabel(self)
+        self.label_2.setText('Description')
+        gridLayout.addWidget(self.label_2, 0, 0, 1, 1)
+        spacerItem2 = QSpacerItem(20, 40, QSizePolicy.Minimum,
+                                  QSizePolicy.Expanding)
+        gridLayout.addItem(spacerItem2, 1, 0, 1, 1)
+        self.pushButton_edit_config_name_desc = QPushButton(self)
+        self.pushButton_edit_config_name_desc.setText('Edit...')
+        gridLayout.addWidget(self.pushButton_edit_config_name_desc,
+                             2, 0, 1, 1)
+        self.textEdit_description = QTextEdit(self)
+        self.textEdit_description.setReadOnly(True)
+        gridLayout.addWidget(self.textEdit_description, 0, 1, 3, 1)
+
+        tbV = self.tableView
+        tbV.setSelectionMode(QAbstractItemView.SingleSelection)
+        tbV.setSelectionBehavior(QAbstractItemView.SelectRows)
+        tbV.setCornerButtonEnabled(True)
+        tbV.setShowGrid(True)
+        tbV.setAlternatingRowColors(True)
+        tbV.setSortingEnabled(False)
+        horizHeader = tbV.horizontalHeader()
+        horizHeader.setSortIndicatorShown(False)
+        horizHeader.setStretchLastSection(False)
+        horizHeader.setMovable(False)
+
+    #----------------------------------------------------------------------
+    def on_sortable_state_changed(self, state):
+        """"""
+
+        if state == Qt.Checked:
+            checked = True
+        else:
+            checked = False
+
+        self.tableView.setSortingEnabled(checked)
+
+    #----------------------------------------------------------------------
+    def on_column_selection_change(self, new_vis_col_names,
+                                   force_visibility_update=False):
+        """"""
+
+        if (not force_visibility_update) and \
+           (new_vis_col_names == self.vis_col_name_list):
+            return
+
+        new_vis_col_logical_indexes = [
+            self.col_names_wo_desc.index(name)
+            for name in new_vis_col_names]
+
+        header = self.tableView.horizontalHeader()
+        #header = self.treeView.header()
+
+        for (i, col_logical_ind) in enumerate(new_vis_col_logical_indexes):
+            new_visual_ind = i
+            current_visual_ind = header.visualIndex(col_logical_ind)
+            header.moveSection(current_visual_ind, new_visual_ind)
+
+        for i in range(len(self.col_names_wo_desc)):
+            if i not in new_vis_col_logical_indexes:
+                header.hideSection(i)
+            else:
+                header.showSection(i)
+
+        self.vis_col_name_list = new_vis_col_names[:]
+
+    #----------------------------------------------------------------------
+    def launchColumnsDialog(self):
+        """"""
+
+        all_column_name_list = self.col_names_wo_desc[:]
+        visible_column_name_list = self.vis_col_name_list[:]
+        permanently_visible_column_name_list = []
+
+        dialog = ColumnsDialog(all_column_name_list,
+                               visible_column_name_list,
+                               permanently_visible_column_name_list,
+                               parentWindow=self)
+        dialog.exec_()
+
+        if dialog.output is not None:
+            self.on_column_selection_change(dialog.output[:],
+                                            force_visibility_update=False)
+
+    #----------------------------------------------------------------------
+    def exportSnapshotToFile(self):
+        """"""
+
+        self.emit(SIGNAL('exportSnapshotToFile'))
+
+    #----------------------------------------------------------------------
+    def editSnapshotNameOrDescription(self):
+        """"""
+
+        self.emit(SIGNAL('editSnapshotNameOrDescription'))
+
+########################################################################
+class SnapshotDBViewWidget(QWidget):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, parentWidget, DB_selector=False):
+        """Constructor"""
+
+        QWidget.__init__(self, parentWidget)
+
+        self.DB_selector = DB_selector
+
+        self._initUI(parentWidget)
 
         self.comboBox_view.setEditable(False)
         self.group_based_view_index = \
@@ -636,7 +818,7 @@ class SnapshotDBViewWidget(QWidget):
                      self.openContextMenu)
 
     #----------------------------------------------------------------------
-    def _initUI(self):
+    def _initUI(self, parentWidget):
         """"""
 
         self.stackedWidget = QStackedWidget(self)
@@ -663,28 +845,29 @@ class SnapshotDBViewWidget(QWidget):
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.pushButton_load_column_from_file = QPushButton(self)
-        self.pushButton_load_column_from_file.setText('Load from File')
-        self.horizontalLayout.addWidget(self.pushButton_load_column_from_file)
+        if not self.DB_selector:
+            self.pushButton_load_column_from_file = QPushButton(self)
+            self.pushButton_load_column_from_file.setText('Load from File')
+            self.horizontalLayout.addWidget(self.pushButton_load_column_from_file)
 
-        label = QLabel(self)
-        label.setText('into')
-        self.horizontalLayout.addWidget(label)
+            label = QLabel(self)
+            label.setText('into')
+            self.horizontalLayout.addWidget(label)
 
-        self.comboBox_column_name = QComboBox(self)
-        self.horizontalLayout.addWidget(self.comboBox_column_name)
+            self.comboBox_column_name = QComboBox(self)
+            self.horizontalLayout.addWidget(self.comboBox_column_name)
 
-        spacerItem = QSpacerItem(40, 20,
-                                 QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
+            spacerItem = QSpacerItem(40, 20,
+                                     QSizePolicy.Expanding, QSizePolicy.Minimum)
+            self.horizontalLayout.addItem(spacerItem)
 
-        self.pushButton_restore_init = QPushButton(self)
-        self.pushButton_restore_init.setText('Restore Ini.SP')
-        self.horizontalLayout.addWidget(self.pushButton_restore_init)
+            self.pushButton_restore_init = QPushButton(self)
+            self.pushButton_restore_init.setText('Restore Ini.SP')
+            self.horizontalLayout.addWidget(self.pushButton_restore_init)
 
-        spacerItem = QSpacerItem(40, 20,
-                                 QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
+            spacerItem = QSpacerItem(40, 20,
+                                     QSizePolicy.Expanding, QSizePolicy.Minimum)
+            self.horizontalLayout.addItem(spacerItem)
 
         self.comboBox_view = QComboBox(self)
         self.comboBox_view.addItem('Group-based View')
@@ -705,6 +888,12 @@ class SnapshotDBViewWidget(QWidget):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.addWidget(self.stackedWidget)
         self.verticalLayout.addLayout(self.horizontalLayout)
+
+        if self.DB_selector:
+            parentGridLayout = QGridLayout(parentWidget)
+            parentGridLayout.addWidget(self)
+            parentGridLayout.setContentsMargins(0, 0, 0, -1)
+            parentGridLayout.addWidget(self, 0, 0, 2, 1)
 
     #----------------------------------------------------------------------
     def on_view_base_change(self, current_comboBox_index):

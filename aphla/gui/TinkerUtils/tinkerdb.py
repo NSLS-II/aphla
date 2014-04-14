@@ -1,8 +1,10 @@
 import sys, os
 import os.path as osp
+import stat
 import numpy as np
 from time import time, strftime, localtime, sleep
 import h5py
+h5zip = 'gzip'
 import sqlite3
 
 from PyQt4.QtCore import (SIGNAL, Qt)
@@ -15,6 +17,11 @@ from aphla.gui.utils.hlsqlite import (
     MEMORY, SQLiteDatabase, Column, ForeignKeyConstraint,
     PrimaryKeyTableConstraint, UniqueTableConstraint, blobdumps, blobloads)
 import config
+try:
+    from . import (date_month_folder_str, date_snapshot_filename_str)
+except:
+    from aphla.gui.TinkerUtils import (date_month_folder_str,
+                                       date_snapshot_filename_str)
 
 DEBUG_ConfigDatabase = True
 
@@ -50,6 +57,13 @@ class TinkerMainDatabase(SQLiteDatabase):
                                 create_folder=False)
 
         if self.getTableNames() == []:
+            filepath = self.filepath
+            self.close(vacuum=False)
+            st = os.stat(filepath)
+            # Add write permission to group
+            os.chmod(filepath, st.st_mode | stat.S_IWGRP)
+            SQLiteDatabase.__init__(self, filepath=filepath,
+                                    create_folder=False)
             print 'aptinker Main database file not found.'
             print 'Creating and initializing the Main database...'
             self._initTables()
@@ -68,7 +82,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         self._initChannelTables()
         self._initConfigTables()
         self._initSnapshotTables()
-        self._initSessionTables()
 
     #----------------------------------------------------------------------
     def _initChannelTables(self):
@@ -175,6 +188,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                    zip(all_pvrbs, all_pv_array_sizes[len(all_pvsps):],
                        all_pv_data_type_ids[len(all_pvsps):], )]
         # ^ 2nd element := Read-only
+        all_pvs = list(set(all_pvs)) # Remove duplicates
 
         table_name = 'elem_name_table'
         column_def = [
@@ -324,7 +338,7 @@ class TinkerMainDatabase(SQLiteDatabase):
         table_name = 'pv_table'
         column_def = [
             Column('pv_id', 'INTEGER', primary_key=True),
-            Column('pv', 'TEXT', allow_null=False, unique=True),
+            Column('pv', 'TEXT', allow_null=False),
             # ^ Virtual PV names start with '@'
             Column('readonly', 'INTEGER', allow_null=False),
             # ^ 1: read-only PV, 0: writeable PV, -1: no PV
@@ -814,7 +828,7 @@ class TinkerMainDatabase(SQLiteDatabase):
             Column('ss_ref_step_size', 'REAL', allow_null=False),
             Column('ss_synced_group_weight', 'INTEGER', allow_null=False),
             Column('caget_sent_ts_second', 'REAL', allow_null=False),
-            Column('ss_filepath', 'TEXT', allow_null=False),
+            Column('caput_sent_ts_second', 'REAL', allow_null=True),
             Column('ss_ctime', 'REAL', allow_null=False),
             ForeignKeyConstraint(self,
                                  'fk_config_id', 'config_id',
@@ -835,32 +849,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         self.createFTS4VirtualTable(table_name, column_def, tokenizer_str='')
 
     #----------------------------------------------------------------------
-    def _initSessionTables(self):
-        """"""
-
-        table_name = 'session_meta_table'
-        column_def = [
-            Column('session_id', 'INTEGER', primary_key=True),
-            Column('config_id', 'INTEGER', allow_null=False),
-            Column('session_user_id', 'INTEGER', allow_null=False),
-            Column('session_masar_id', 'INTEGER', allow_null=True),
-            Column('session_filepath', 'TEXT', allow_null=False),
-            # ^ e.g., username_2014-02-04T12-12-12.123-session.sqlite
-            Column('session_ctime', 'REAL', allow_null=False),
-        ]
-        self.createTable(table_name, column_def)
-
-        table_name = 'session_meta_text_search_table'
-        column_def = [
-            Column('session_id', 'INTEGER', allow_null=False, unique=True),
-            Column('session_name', 'TEXT', allow_default=True,
-                   default_value='""'),
-            Column('session_description', 'TEXT', allow_default=True,
-                   default_value='""'),
-        ]
-        self.createFTS4VirtualTable(table_name, column_def, tokenizer_str='')
-
-    #----------------------------------------------------------------------
     def create_temp_unitconv_table_text_view(self):
         """"""
 
@@ -868,6 +856,8 @@ class TinkerMainDatabase(SQLiteDatabase):
             '[unitconv_table text view]',
             '''unitconv_table uc
             LEFT JOIN unitconv_type_table u1 ON uc.unitconv_type_id = u1.unitconv_type_id
+            LEFT JOIN unitsys_table us1 ON us1.unitsys_id = uc.src_unitsys_id
+            LEFT JOIN unitsys_table us2 ON us2.unitsys_id = uc.dst_unitsys_id
             LEFT JOIN unitsymb_table u2 ON uc.src_unitsymb_id = u2.unitsymb_id
             LEFT JOIN unitsymb_table u3 ON uc.dst_unitsymb_id = u3.unitsymb_id
             LEFT JOIN unitconv_blob_table ub ON uc.unitconv_blob_id = ub.unitconv_blob_id
@@ -877,6 +867,8 @@ class TinkerMainDatabase(SQLiteDatabase):
                 'u1.unitconv_type AS unitconv_type',
                 'uc.src_unitsys_id',
                 'uc.dst_unitsys_id',
+                'us1.unitsys AS src_unitsys',
+                'us2.unitsys AS dst_unitsys',
                 'ub.unitconv_blob',
                 'u2.unitsymb AS src_unitsymb',
                 'u3.unitsymb AS dst_unitsymb',
@@ -946,6 +938,41 @@ class TinkerMainDatabase(SQLiteDatabase):
                    'cmtst.config_name',
                    'cmtst.config_description',
                    'ut.username',
+                   'cmt.config_masar_id',
+                   'cmt.config_ref_step_size',
+                   'cmt.config_synced_group_weight',
+                   'cmt.config_ctime',
+               ]
+        )
+
+    #----------------------------------------------------------------------
+    def create_temp_ss_meta_table_text_view(self):
+        """"""
+
+        if '[config_meta_table text view]' not in self.getViewNames(
+            square_brackets=True):
+            self.create_temp_config_meta_table_text_view()
+
+        self.createTempView(
+            '[ss_meta_table text view]',
+            '''snapshot_meta_table smt
+            LEFT JOIN snapshot_meta_text_search_table smtst ON smt.ss_id = smtst.ss_id
+            LEFT JOIN user_table ut ON smt.ss_user_id = ut.user_id
+            LEFT JOIN [config_meta_table text view] cmt ON cmt.config_id = smt.config_id
+            ''',
+               column_name_list=[
+                   'smt.ss_id',
+                   'smtst.ss_name',
+                   'smtst.ss_description',
+                   'ut.username AS ss_username',
+                   'smt.ss_masar_id',
+                   'smt.ss_ref_step_size',
+                   'smt.ss_synced_group_weight',
+                   'smt.ss_ctime',
+                   'cmt.config_id',
+                   'cmt.config_name',
+                   'cmt.config_description',
+                   'cmt.username AS config_username',
                    'cmt.config_masar_id',
                    'cmt.config_ref_step_size',
                    'cmt.config_synced_group_weight',
@@ -1082,50 +1109,61 @@ class TinkerMainDatabase(SQLiteDatabase):
                 dst_unitsys_id=unitsys_id_raw, src_unitsymb=src_unitsymb,
                 dst_unitsymb=src_unitsymb, inv=0, append_new=append_new)
         else:
-            inv = 0
-            if unitconv_dict.has_key((None, dst_unitsys)):
-                uc = unitconv_dict[(None, dst_unitsys)]
-            elif unitconv_dict.has_key((dst_unitsys, None)):
-                uc = unitconv_dict[(dst_unitsys, None)]
-                if uc.invertible:
-                    inv = 1
+
+            if (dst_unitsys is None) or (dst_unitsys == ''):
+                unitconv_fromraw_id = self.get_unitconv_id(
+                    {}, src_unitsys_id=unitsys_id_raw,
+                    dst_unitsys_id=unitsys_id_raw, src_unitsymb=src_unitsymb,
+                    dst_unitsymb=dst_unitsymb, inv=0, append_new=append_new)
+                unitconv_toraw_id = self.get_unitconv_id(
+                    {}, src_unitsys_id=unitsys_id_raw,
+                    dst_unitsys_id=unitsys_id_raw, src_unitsymb=dst_unitsymb,
+                    dst_unitsymb=src_unitsymb, inv=0, append_new=append_new)
+            else:
+                inv = 0
+                if unitconv_dict.has_key((None, dst_unitsys)):
+                    uc = unitconv_dict[(None, dst_unitsys)]
+                elif unitconv_dict.has_key((dst_unitsys, None)):
+                    uc = unitconv_dict[(dst_unitsys, None)]
+                    if uc.invertible:
+                        inv = 1
+                    else:
+                        uc = None
                 else:
                     uc = None
-            else:
-                uc = None
 
-            if uc is None:
-                raise ValueError('No unit conversion available')
+                if uc is None:
+                    raise ValueError('No unit conversion available')
 
-            if dst_unitsys_id is None:
-                dst_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
-                    'unitsys_table', 'unitsys_id', 'unitsys', dst_unitsys,
-                    append_new=append_new)
+                if dst_unitsys_id is None:
+                    dst_unitsys_id = self.getMatchingPrimaryKeyIdFrom2ColTable(
+                        'unitsys_table', 'unitsys_id', 'unitsys', dst_unitsys,
+                        append_new=append_new)
 
-            unitconv_fromraw_id = self.get_unitconv_id(
-                uc, src_unitsys_id=unitsys_id_raw,
-                dst_unitsys_id=dst_unitsys_id, src_unitsymb=src_unitsymb,
-                dst_unitsymb=dst_unitsymb, inv=inv, append_new=append_new)
+                unitconv_fromraw_id = self.get_unitconv_id(
+                    uc, src_unitsys_id=unitsys_id_raw,
+                    dst_unitsys_id=dst_unitsys_id, src_unitsymb=src_unitsymb,
+                    dst_unitsymb=dst_unitsymb, inv=inv, append_new=append_new)
 
-            inv = 0
-            if unitconv_dict.has_key((dst_unitsys, None)):
-                uc = unitconv_dict[(dst_unitsys, None)]
-            elif unitconv_dict.has_key((None, dst_unitsys)):
-                uc = unitconv_dict[(None, dst_unitsys)]
-                if uc.invertible:
-                    inv = 1
+                inv = 0
+                if unitconv_dict.has_key((dst_unitsys, None)):
+                    uc = unitconv_dict[(dst_unitsys, None)]
+                elif unitconv_dict.has_key((None, dst_unitsys)):
+                    uc = unitconv_dict[(None, dst_unitsys)]
+                    if uc.invertible:
+                        inv = 1
+                    else:
+                        uc = None
                 else:
                     uc = None
-            else:
-                uc = None
 
-            if uc is None:
-                raise ValueError('No unit conversion available')
+                if uc is None:
+                    raise ValueError('No unit conversion available')
 
-            unitconv_toraw_id = self.get_unitconv_id(
-                uc, src_unitsys_id=dst_unitsys_id,
-                dst_unitsys_id=unitsys_id_raw, src_unitsymb=dst_unitsymb,
-                dst_unitsymb=src_unitsymb, inv=inv, append_new=append_new)
+                unitconv_toraw_id = self.get_unitconv_id(
+                    uc, src_unitsys_id=dst_unitsys_id,
+                    dst_unitsys_id=unitsys_id_raw, src_unitsymb=dst_unitsymb,
+                    dst_unitsymb=src_unitsymb, inv=inv, append_new=append_new)
 
         return unitconv_toraw_id, unitconv_fromraw_id
 
@@ -1136,9 +1174,11 @@ class TinkerMainDatabase(SQLiteDatabase):
         """
         If `unitconv` is either UcPoly or UcInterp1 object, then
         `src_unitsys_id`, `dst_unitsys_id`, `src_unitsymb`, `dst_unitsymb`,
-        and `inv` are all required. If `unitconv` is a dict
-        (coming from a JSON file), then these arguments will be ignored,
-        even if given, as the dict contains all the necessary information.
+        and `inv` are all required.
+
+        If `unitconv` is a dict (coming from a JSON file), then these arguments
+        will be ignored, even if given, as the dict contains all the necessary
+        information.
         """
 
         uc = unitconv
@@ -1154,7 +1194,6 @@ class TinkerMainDatabase(SQLiteDatabase):
         elif uc == {}:
             unitconv_type = 'NoConversion'
             src_unitsys_id = dst_unitsys_id = unitsys_id_raw
-            src_unitsymb = dst_unitsymb = ''
             conv_data = None
             inv = 0
             polarity = +1
@@ -1173,21 +1212,21 @@ class TinkerMainDatabase(SQLiteDatabase):
             if unitconv_type == 'poly':
                 conv_data = tuple(uc['conv_data'])
             elif unitconv_type == 'interp1':
-                if not np.all(np.diff(uc['conv_data']['xp']) > 0.0):
+                xp, fp = uc['conv_data']
+                if not np.all(np.diff(xp) > 0.0):
                     print 'Error for unit conversion definition: '
                     print uc
                     raise ValueError('Monotonically increasing x array needed '
                                      'for interpolation')
                 if (inv == 1) and \
-                   (not np.all(np.diff(uc['conv_data']['fp']) > 0.0)) and \
-                   (not np.all(np.diff(uc['conv_data']['fp']) < 0.0)):
+                   (not np.all(np.diff(fp) > 0.0)) and \
+                   (not np.all(np.diff(fp) < 0.0)):
                     print 'Error for unit conversion definition: '
                     print uc
                     raise ValueError(
                         'y array must be monotonically increasing or decreasing '
                         'for the interpolation to be invertible.')
-                conv_data = tuple([tuple(uc['conv_data']['xp']),
-                                   tuple(uc['conv_data']['fp'])])
+                conv_data = tuple([tuple(xp), tuple(fp)])
             elif unitconv_type == 'NoConversion':
                 conv_data = None
             else:
@@ -1629,6 +1668,113 @@ class TinkerMainDatabase(SQLiteDatabase):
             raise ValueError("Duplicate ID's have been found")
 
     #----------------------------------------------------------------------
+    def saveSnapshot(self, snapshot_abstract_model):
+        """"""
+
+        a = snapshot_abstract_model
+
+        table_name_meta             = 'snapshot_meta_table'
+        table_name_meta_text_search = 'snapshot_meta_text_search_table'
+
+        meta_list_of_tuples = [
+            (a.config_id, self.get_user_id(a.userinfo, append_new=True),
+             a.masar_id, a.ref_step_size, a.synced_group_weight,
+             a.caget_sent_ts_second, a.caput_sent_ts_second)]
+
+        nCol = len(self.getColumnNames(table_name_meta))
+
+        self.lockDatabase()
+
+        maxID_meta = self.getMaxInColumn(table_name_meta, 'ss_id')
+        if maxID_meta is not None:
+            ss_id = maxID_meta + 1
+        else:
+            ss_id = 1
+
+        meta_text_search_list_of_tuples = [(ss_id, a.name, a.description)]
+
+        self.insertRows(table_name_meta, meta_list_of_tuples,
+                        bind_replacement_list_of_tuples=[
+                            (nCol-1,
+                             self.getCurrentEpochTimestampSQLiteFuncStr(
+                                 data_type='float'))])
+
+        self.insertRows(table_name_meta_text_search,
+                        meta_text_search_list_of_tuples)
+
+        self.unlockDatabase()
+
+        ss_ctime = self.getColumnDataFromTable(
+            'snapshot_meta_table', column_name_list=['ss_ctime'],
+            condition_str='ss_id={0:d}'.format(ss_id))[0][0]
+
+        a.ss_id = ss_id
+        a.ss_ctime = ss_ctime
+
+        ss_folderpath = osp.join(config.SNAPSHOT_FOLDERPATH,
+                                 date_month_folder_str(ss_ctime))
+        if not osp.exists(ss_folderpath):
+            os.makedirs(ss_folderpath, mode=0764)
+            # ^ make the folder also writable by group
+
+        ss_filepath = osp.join(
+            ss_folderpath, date_snapshot_filename_str(ss_ctime, a.userinfo[0]))
+
+        _ca = a._config_abstract
+
+        f = h5py.File(ss_filepath, 'w')
+
+        weights = np.array(_ca.weights)
+        f.create_dataset('weights', shape=weights.shape, data=weights,
+                         compression=h5zip)
+
+        caput_enabled_rows = np.array(_ca.caput_enabled_rows, dtype=np.bool)
+        f.create_dataset('caput_enabled_rows', shape=caput_enabled_rows.shape,
+                         data=caput_enabled_rows, compression=h5zip)
+
+        # Save "caput_raws"
+        caput_raws_sizes = [
+            1 if not isinstance(r, catools.dbr.ca_array) else r.size
+            for r in a.caput_raws]
+        caput_raws_scalars = [
+            r for r, size in zip(a.caput_raws, caput_raws_sizes) if size == 1]
+        caput_raws_arrays = [
+            r.__array__() for r, size in zip(a.caput_raws, caput_raws_sizes)
+            if size != 1]
+        f.create_dataset('caput_raws_scalars', shape=(len(caput_raws_scalars),),
+                         data=caput_raws_scalars, compression=h5zip)
+        if caput_raws_arrays != []:
+            f.create_group('caput_raws_arrays')
+            g = f['caput_raws_arrays']
+            for j, array in enumerate(caput_raws_arrays):
+                g.create_dataset(str(j), shape=array.shape, data=array,
+                                 compression=h5zip)
+
+        # Save "caget_raws"
+        caget_raws_sizes = [
+            1 if not isinstance(r, catools.dbr.ca_array) else r.size
+            for r in a.caget_raws]
+        caget_raws_scalars = [
+            r for r, size in zip(a.caget_raws, caget_raws_sizes) if size == 1]
+        caget_raws_arrays = [
+            r.__array__() for r, size in zip(a.caget_raws, caget_raws_sizes)
+            if size != 1]
+        f.create_dataset('caget_raws_scalars', shape=(len(caget_raws_scalars),),
+                         data=caget_raws_scalars, compression=h5zip)
+        if caget_raws_arrays != []:
+            f.create_group('caget_raws_arrays')
+            g = f['caget_raws_arrays']
+            for j, array in enumerate(caget_raws_arrays):
+                g.create_dataset(str(j), shape=array.shape, data=array,
+                                 compression=h5zip)
+
+        f.create_dataset('caget_ioc_ts_tuples',
+                         shape=a.caget_ioc_ts_tuples.shape,
+                         data=a.caget_ioc_ts_tuples, compression=h5zip)
+
+        f.close()
+
+    #----------------------------------------------------------------------
     def saveConfig(self, config_abstract_model):
         """"""
 
@@ -1664,6 +1810,13 @@ class TinkerMainDatabase(SQLiteDatabase):
 
         self.unlockDatabase()
 
+        config_ctime = self.getColumnDataFromTable(
+            'config_meta_table', column_name_list=['config_ctime'],
+        condition_str='config_id={0:d}'.format(config_id))[0][0]
+
+        a.config_id = config_id
+        a.config_ctime = config_ctime
+
         table_name = 'config_table'
 
         list_of_tuples = [(config_id, gn_id, ch_id, w, bool(caput_enabled))
@@ -1671,8 +1824,6 @@ class TinkerMainDatabase(SQLiteDatabase):
                           in zip(a.group_name_ids, a.channel_ids, a.weights,
                                  a.caput_enabled_rows)]
         self.insertRows(table_name, list_of_tuples)
-
-        return config_id
 
     #----------------------------------------------------------------------
     def get_user_id(self, userinfo_tuple, append_new=True):
@@ -1739,99 +1890,100 @@ class TinkerMainDatabase(SQLiteDatabase):
         else:
             return config_ids[0]
 
+    #----------------------------------------------------------------------
+    def get_GLOB_condition_str(self, glob_pattern, column_name):
+        """
+        ESCAPE command is not implemented for GLOB by SQLite, even though the
+        syntax diagram says it is.
 
-########################################################################
-class SnapshotDatabase(SQLiteDatabase):
-    """"""
+        The workaround for escaping glob special characters is provided here.
+        """
+
+        glob_pattern = glob_pattern.replace(r'\*', '[*]')
+        glob_pattern = glob_pattern.replace(r'\?', '[?]')
+        glob_pattern = glob_pattern.replace(r'\[', '[[]')
+        glob_pattern = glob_pattern.replace(r'\]', '[]]')
+
+        cond_str = '({0:s} GLOB "{1:s}")'.format(column_name, glob_pattern)
+
+        return cond_str
 
     #----------------------------------------------------------------------
-    def __init__(self, filepath=config.SS_DB_FILEPATH, suppress_print=False):
-        """Constructor"""
+    def get_MATCH_condition_str(self, full_search_string):
+        """
+        Full-text searching provided by MATCH only works for FTS4 virtual table
+        """
 
-        SQLiteDatabase.__init__(self, filepath=filepath, create_folder=False)
+        full_search_string = full_search_string.replace(r'\*', '[*]')
+        full_search_string = full_search_string.replace(r'\?', '[?]')
+        full_search_string = full_search_string.replace(r'\[', '[[]')
+        full_search_string = full_search_string.replace(r'\]', '[]]')
 
-        if self.getTableNames() == []:
-            if not suppress_print:
-                print 'aptinker Snapshot database file not found.'
-                print 'Creating and initializing the Snapshot database...'
-            self._initTables()
-            if not suppress_print:
-                print 'Done'
+        quote_found = ''
+        quote_inds = []
+        non_quote_inds = []
+        for i, c in enumerate(full_search_string):
+            if c in ("'", '"'):
+                if quote_found == '':
+                    quote_found = c
+                    quote_inds.append(i)
+                elif quote_found == c:
+                    quote_inds.append(i)
+                    quote_found = ''
+                else:
+                    non_quote_inds.append(i)
+
+        if quote_found != '':
+            non_quote_inds.append(quote_inds.pop())
+            non_quote_inds.sort()
+
+        tokens = []
+        for i in range(len(quote_inds))[::-2]:
+            ini = quote_inds[i-1]
+            end = quote_inds[i]
+            tokens.append(full_search_string[(ini+1):end])
+            full_search_string = full_search_string[:ini] + \
+                full_search_string[(end+1):]
+        tokens += full_search_string.split()
+
+        cond_str = ' '.join(['"{0:s}"'.format(t.replace("'", "''")) if ' ' in t
+                             else t.replace("'", "''") for t in tokens])
+
+        return cond_str
 
     #----------------------------------------------------------------------
-    def _initTables(self):
+    def get_config_ids_with_MATCH(self, MATCH_cond_str, column_name):
         """"""
 
-        self.setForeignKeysEnabled(False)
+        fts_condition_str = "{0:s} MATCH '{1:s}'".format(
+            column_name, MATCH_cond_str)
 
-        self.dropAllTables()
+        matched_rowids = self.getColumnDataFromTable(
+            'config_meta_text_search_table', column_name_list=['config_id'],
+            condition_str=fts_condition_str)
+        if matched_rowids != []:
+            matched_config_ids = list(matched_rowids[0])
+        else:
+            matched_config_ids = None
 
-        table_name = 'snapshot_table'
-        column_def = [
-            Column('ss_id', 'INTEGER', allow_null=False),
-            Column('channel_id', 'INTEGER', allow_null=False),
-            Column('ss_weight', 'REAL', allow_default=True,
-                   default_value='NaN'),
-            Column('ss_caput_enabled', 'INTEGER', allow_null=False,
-                   allow_default=True, default_value=1),
-            Column('pvsp_raw_scalar', 'REAL', allow_null=True),
-            Column('pvsp_raw_array', 'BLOB', allow_null=True),
-            Column('pvsp_sent_raw_scalar', 'REAL', allow_null=True),
-            Column('pvsp_sent_raw_array', 'BLOB', allow_null=True),
-            Column('pvsp_sent_ts_second', 'REAL', allow_null=True),
-            Column('pvrb_raw_scalar', 'REAL', allow_null=True),
-            Column('pvrb_raw_array', 'BLOB', allow_null=True),
-            Column('pvsp_ioc_ts_second'    , 'INTEGER', allow_null=True),
-            Column('pvsp_ioc_ts_nanosecond', 'INTEGER', allow_null=True),
-            Column('pvrb_ioc_ts_second'    , 'INTEGER', allow_null=True),
-            Column('pvrb_ioc_ts_nanosecond', 'INTEGER', allow_null=True),
-        ]
-        self.createTable(table_name, column_def)
-
-########################################################################
-class SessionDatabase(SnapshotDatabase):
-    """"""
+        return matched_config_ids
 
     #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-
-        SQLiteDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH)
-
-        if self.getTableNames() == []:
-            print 'aptinker Session database file not found.'
-            print 'Creating and initializing the Session database...'
-            SnapshotDatabase.__init__(self, filepath=config.SESSION_DB_FILEPATH,
-                                      suppress_print=True)
-            self._initTables()
-            print 'Done'
-
-    #----------------------------------------------------------------------
-    def _initTables(self):
+    def get_ss_ids_with_MATCH(self, MATCH_cond_str, column_name):
         """"""
 
-        self.setForeignKeysEnabled(False)
+        fts_condition_str = "{0:s} MATCH '{1:s}'".format(
+            column_name, MATCH_cond_str)
 
-        self.dropAllTables()
+        matched_rowids = self.getColumnDataFromTable(
+            'snapshot_meta_text_search_table', column_name_list=['ss_id'],
+            condition_str=fts_condition_str)
+        if matched_rowids != []:
+            matched_ss_ids = list(matched_rowids[0])
+        else:
+            matched_ss_ids = None
 
-        SnapshotDatabase._initTables(self) # Create "snapshot_table"
-
-        table_name = 'meta_table'
-        column_def = [
-            Column('ss_id', 'INTEGER', primary_key=True),
-            Column('ss_ref_step_size', 'REAL', allow_null=False),
-            Column('ss_synced_group_weight', 'INTEGER', allow_null=False),
-            Column('caget_sent_ts_second', 'REAL', allow_null=False),
-            Column('ss_ctime', 'REAL', allow_null=False),
-        ]
-        self.createTable(table_name, column_def)
+        return matched_ss_ids
 
 if __name__ == '__main__':
     db = TinkerMainDatabase()
-    db._initTables()
-
-    db_ss = SnapshotDatabase()
-    db_ss._initTables()
-
-    db_session = SessionDatabase()
-    db_session._initTables()
