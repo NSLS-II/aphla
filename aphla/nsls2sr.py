@@ -19,8 +19,8 @@ import re
 import warnings
 
 import machines
-from catools import caget, caput
-from hlalib import getElements
+from catools import caget, caput, savePvData
+from hlalib import getElements, outputFileName
 
 
 def _maxTimeSpan(timestamps):
@@ -48,44 +48,43 @@ def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0):
     if verbose:
         print "resetting {0} BPMS: {1}".format(len(elems), elems)
 
-    for i,pvx in enumerate(pvprefs):
-        pvs = [ pvx + "Trig:TrigSrc-SP" for pvx in pvprefs]
-        caput(pvs, 1, wait=True)
-        # 0 - Adc, 1 - Tbt, 2 - Fa
-        pvs = [ pvx + "DDR:WfmSel-SP" for pvx in pvprefs]
-        caput(pvs, wfmsel, wait=True)
+    pvs = [ pvx + "Trig:TrigSrc-SP" for pvx in pvprefs ]
+    caput(pvs, [1] * len(pvs), wait=True)
+    # 0 - Adc, 1 - Tbt, 2 - Fa
+    pvs = [ pvx + "DDR:WfmSel-SP" for pvx in pvprefs]
+    caput(pvs, [wfmsel] * len(pvs), wait=True)
 
-        # enable all three waveforms
-        #pvs = [ pvx + "ddrAdcWfEnable" for pvx in pvprefs]
-        #caput(pvs, 1, wait=True)
-        #pvs = [ pvx + "ddrTbtWfEnable" for pvx in pvprefs]
-        #caput(pvs, 1, wait=True)
-        #pvs = [  pvx + "ddrFaWfEnable" for pvx in pvprefs]
-        #caput(pvs, 1, wait=True)
-        #
-        pvs = [ pvx + "ddrAdcOffset" for pvx in pvprefs]
-        caput(pvs, 0, wait=True)
-        pvs = [ pvx + "ddrTbtOffset" for pvx in pvprefs]
-        caput(pvs, 0, wait=True)
-        pvs = [  pvx + "ddrFaOffset" for pvx in pvprefs]
-        caput(pvs, 0, wait=True)
-        #
-        pvs = [ pvx + "Burst:AdcEnableLen-SP" for pvx in pvprefs]
-        caput(pvs, [1000000] * len(pvs), wait=True)
-        pvs = [ pvx + "Burst:TbtEnableLen-SP" for pvx in pvprefs]
-        caput(pvs,  [100000] * len(pvs), wait=True)
-        pvs = [ pvx + "Burst:FaEnableLen-SP" for pvx in pvprefs]
-        caput(pvs,    [9000] * len(pvs), wait=True)
-        #
-        pvs = [ pvx + "ERec:AdcEnableLen-SP" for pvx in pvprefs]
-        if verbose: print pvs
-        caput(pvs, [100000] * len(pvs), wait=True)
-        pvs = [ pvx + "ERec:TbtEnableLen-SP" for pvx in pvprefs]
-        if verbose: print pvs
-        caput(pvs, [100000] * len(pvs), wait=True)
-        pvs = [ pvx + "ERec:FaEnableLen-SP" for pvx in pvprefs]
-        if verbose: print pvs
-        caput(pvs,   [9000] * len(pvs), wait=True)
+    # enable all three waveforms
+    #pvs = [ pvx + "ddrAdcWfEnable" for pvx in pvprefs]
+    #caput(pvs, 1, wait=True)
+    #pvs = [ pvx + "ddrTbtWfEnable" for pvx in pvprefs]
+    #caput(pvs, 1, wait=True)
+    #pvs = [  pvx + "ddrFaWfEnable" for pvx in pvprefs]
+    #caput(pvs, 1, wait=True)
+    #
+    pvs = [ pvx + "ddrAdcOffset" for pvx in pvprefs]
+    caput(pvs, [0] * len(pvs), wait=True)
+    pvs = [ pvx + "ddrTbtOffset" for pvx in pvprefs]
+    caput(pvs, [0] * len(pvs), wait=True)
+    pvs = [  pvx + "ddrFaOffset" for pvx in pvprefs]
+    caput(pvs, [0] * len(pvs), wait=True)
+    #
+    pvs = [ pvx + "Burst:AdcEnableLen-SP" for pvx in pvprefs]
+    caput(pvs, [1000000] * len(pvs), wait=True)
+    pvs = [ pvx + "Burst:TbtEnableLen-SP" for pvx in pvprefs]
+    caput(pvs,  [100000] * len(pvs), wait=True)
+    pvs = [ pvx + "Burst:FaEnableLen-SP" for pvx in pvprefs]
+    caput(pvs,    [9000] * len(pvs), wait=True)
+    #
+    pvs = [ pvx + "ERec:AdcEnableLen-SP" for pvx in pvprefs]
+    #if verbose: print pvs
+    caput(pvs, [100000] * len(pvs), wait=True)
+    pvs = [ pvx + "ERec:TbtEnableLen-SP" for pvx in pvprefs]
+    #if verbose: print pvs
+    caput(pvs, [100000] * len(pvs), wait=True)
+    pvs = [ pvx + "ERec:FaEnableLen-SP" for pvx in pvprefs]
+    #if verbose: print pvs
+    caput(pvs,   [9000] * len(pvs), wait=True)
     
     
 def _srBpmTrigData(pvprefs, waveform, **kwargs):
@@ -369,6 +368,75 @@ def getSrBpmData(**kwargs):
                    ts = (t0, t1),
                    pvpref = pvpref)
     return data, output
+
+
+def saveLattice(**kwargs):
+    """
+    save lattice info to a HDF5 file.
+
+    - lattice, default the current active lattice
+    - subgroup, default "", used for output file name
+    - elements, default "*"
+    - notes, default ""
+    - unitsys, default "phy", 
+
+    returns the output file name.
+
+    ::
+        saveLattice(output=True, elements=["BEND", "COR", "QUAD", "SEXT"], notes="Good one")
+
+    """
+    # save the lattice
+    output = outputFileName("snapshot", kwargs.get("subgroup",""))
+    lat = kwargs.get("lattice", machines._lat)
+    verbose = kwargs.get("verbose", 0)
+    unitsys = kwargs.get("unitsys", "phy")
+
+    pvs = []
+    elemflds = [("BEND", ("b0", "db0")),
+                ("QUAD", ("b1",)),
+                ("SEXT", ("b2",)),
+                ("COR", ("x", "y")),
+                ("BPM", ("x", "y")),
+                ("RFCAVITY", ("f",)),
+                ("DCCT", ("I", 'tau', "Iavg"))]
+    for elfam,flds in elemflds:
+        el = lat.getElementList(elfam, virtual=False)
+        for fld in flds:
+            pvs.extend(
+                reduce(lambda a,b: a+b, [e.pv(field=fld) for e in el]))
+    for icell,ibpms in [(3, [7, 8]),
+                        (5, [7, 8, 9]),
+                        (8, [7, 8]),
+                        (10,[7, 8]),
+                        (11,[7,8]),
+                        (18,[7,8]),
+                        (23,[7,8,9]),
+                        (28,[7,8]),
+                        (30,[7,8,9,10])]:
+        for i in ibpms:
+            pvs.append("SR:C%02d-BI{BPM:%d}Pos:X-Calc" % (icell,i))
+            pvs.append("SR:C%02d-BI{BPM:%d}Pos:Y-Calc" % (icell,i))
+
+    nlive, nead = savePvData(output, pvs, group=lat.name,
+                             notes=kwargs.get("notes", ""))
+    if verbose > 0:
+        print "PV dead: %d, live: %d" % (nlive, ndead)
+    h5f = h5py.File(output)
+    h5g = h5f[lat.name]
+    for elfam,flds in elemflds:
+        for e in lat.getElementList(elfam, virtual=False):
+            for fld in flds:
+                if not e.convertible(fld, None, unitsys): continue
+                uname = e.getUnit(fld, unitsys=unitsys)
+                for pv in e.pv(field=fld):
+                    d0 = h5g[pv].value
+                    d1 = e.convertUnit(fld, d0, None, unitsys)
+                    s = "%s.%s.%s[%s]" % (e.name, fld, unitsys, uname)
+                    h5g[pv].attrs[s] = d1
+    h5f.close()
+    
+    return output
 
 
 def plotChromaticity(f, nu, chrom):

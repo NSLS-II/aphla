@@ -769,15 +769,16 @@ def measOrbitRm(bpm, cor, **kwargs):
     pv_cor = [r[2] for r in cors] # the corrector
     if verbose > 0: kwargs["verbose"] = verbose - 1
     for i,(name, fld, pv) in enumerate(cors):
-        if verbose:
-            print("%d/%d" % (i,len(cors)), name, np.min(m[:,i]), np.max(m[:,i]))
         # save each column
         m[:,i], dx, dat, opt = measCaRmCol(pv, pv_bpm, **kwargs)
+        if verbose:
+            print("%d/%d" % (i,len(cors)), name, np.min(m[:,i]), np.max(m[:,i]))
         if output:
             f = h5py.File(output)
-            if pv in f:
-                del f[pv]
-            g = f.create_group(pv)
+            g0 = f.require_group("OrbitResponseMatrix")
+            if pv in g0:
+                del g0[pv]
+            g = g0.create_group(pv)
             g["m"] = m[:,i]
             g["m"].attrs["cor_name"] = name
             g["m"].attrs["cor_field"] = fld
@@ -793,15 +794,16 @@ def measOrbitRm(bpm, cor, **kwargs):
     if output:
         # save the overall matrix
         f = h5py.File(output)
-        if "m" in f:
-            del f["m"]
-        f["m"] = m
-        f["m"].attrs["cor_name"]  = [r[0] for r in cors]
-        f["m"].attrs["cor_field"] = [r[1] for r in cors]
-        f["m"].attrs["cor_pv"]    = pv_cor
-        f["m"].attrs["bpm_name"]  = [r[0] for r in bpms]
-        f["m"].attrs["bpm_field"] = [r[1] for r in bpms]
-        f["m"].attrs["bpm_pv"]    = pv_bpm
+        g = f.require_group("OrbitResponseMatrix")
+        if "m" in g:
+            del g["m"]
+        g["m"] = m
+        g["m"].attrs["cor_name"]  = [r[0] for r in cors]
+        g["m"].attrs["cor_field"] = [r[1] for r in cors]
+        g["m"].attrs["cor_pv"]    = pv_cor
+        g["m"].attrs["bpm_name"]  = [r[0] for r in bpms]
+        g["m"].attrs["bpm_field"] = [r[1] for r in bpms]
+        g["m"].attrs["bpm_pv"]    = pv_bpm
         f.close()
 
     return m, output
