@@ -1914,6 +1914,13 @@ class TinkerMainDatabase(SQLiteDatabase):
         Full-text searching provided by MATCH only works for FTS4 virtual table
         """
 
+        if full_search_string.startswith('-'):
+            msg = QMessageBox()
+            msg.setText('First search string cannot start with "-" (minus).')
+            msg.setIcon(QMessageBox.Critical)
+            msg.exec_()
+            return
+
         full_search_string = full_search_string.replace(r'\*', '[*]')
         full_search_string = full_search_string.replace(r'\?', '[?]')
         full_search_string = full_search_string.replace(r'\[', '[[]')
