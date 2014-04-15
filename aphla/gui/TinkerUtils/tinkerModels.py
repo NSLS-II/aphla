@@ -607,7 +607,7 @@ class ConfigAbstractModel(QObject):
         if col_key == 'weight':
             if self.synced_group_weight:
                 synced_row_inds = []
-                for gi in group_ids:
+                for gid in group_ids:
                     synced_row_inds.extend([
                         r for r, i in enumerate(self.group_name_ids)
                         if (i == gid)])
@@ -621,7 +621,7 @@ class ConfigAbstractModel(QObject):
             else:
                 if self.synced_group_weight:
                     synced_row_inds = []
-                    for gi in group_ids:
+                    for gid in group_ids:
                         synced_row_inds.extend([
                             r for r, i in enumerate(self.group_name_ids)
                             if (i == gid)])
@@ -2020,6 +2020,51 @@ class SnapshotAbstractModel(QObject):
                 condition_str='ss_id={0:d}'.format(self.ss_id))[0][0]
 
     #----------------------------------------------------------------------
+    def modify_data(self, new_val, col_ind, row_inds):
+        """"""
+
+        col_key = self.all_col_keys[col_ind]
+
+        _ca = self._config_abstract
+
+        if self.synced_group_weight:
+            group_ids = set(_ca.group_name_ids[r] for r in row_inds)
+
+        if col_key == 'weight':
+            if self.synced_group_weight:
+                synced_row_inds = []
+                for gid in group_ids:
+                    synced_row_inds.extend([
+                        r for r, i in enumerate(_ca.group_name_ids)
+                        if (i == gid)])
+                row_inds = set(row_inds + synced_row_inds)
+
+            for r in row_inds:
+                self.weight_array[r] = new_val
+
+        elif col_key == 'step_size':
+            if (self.ref_step_size == 0.0) or (np.isnan(self.ref_step_size)):
+                raise ValueError('You should not be able to reach here.')
+            else:
+                if self.synced_group_weight:
+                    synced_row_inds = []
+                    for gid in group_ids:
+                        synced_row_inds.extend([
+                            r for r, i in enumerate(_ca.group_name_ids)
+                            if (i == gid)])
+                    row_inds = set(row_inds + synced_row_inds)
+
+                for r in row_inds:
+                    self.weight_array[r] = new_val / self.ref_step_size
+
+        elif col_key == 'caput_enabled':
+            for r in row_inds:
+                self.caput_enabled_rows[r] = new_val
+
+        else:
+            raise ValueError('Unexpected col_key: {0:s}'.format(col_key))
+
+    #----------------------------------------------------------------------
     def update_NaNs_in_caput_raws(self):
         """"""
 
@@ -2587,6 +2632,28 @@ class SnapshotTableModel(QAbstractTableModel):
         self.emit(
             SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
             topLeftIndex, bottomRightIndex)
+
+    #----------------------------------------------------------------------
+    def modifyAbstractModel(self, new_val, col_ind, row_inds):
+        """"""
+
+        self.abstract.modify_data(new_val, col_ind, row_inds)
+
+        self.updateUserEdits(col_ind)
+
+        self.repaint()
+
+    #----------------------------------------------------------------------
+    def updateUserEdits(self, col_ind):
+        """"""
+
+        col_key = self.abstract.all_col_keys[col_ind]
+
+        if col_key in ('weight', 'step_size'):
+            self.d['weight'] = self.abstract.weight_array[:]
+            self.d['step_size'] = self.abstract.ref_step_size * self.d['weight']
+        elif col_key == 'caput_enabled':
+            self.d[col_key] = self.abstract.caput_enabled_rows[:]
 
     #----------------------------------------------------------------------
     def update_visible_dynamic_columns(self):
