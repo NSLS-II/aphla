@@ -70,14 +70,14 @@ def getCurrent(name='dcct', field='I', unitsys=None):
     else: return None
 
 # rf
-def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None):
+def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None, handle="readback"):
     """
     Get the frequency from the first 'RFCAVITY' element.
 
     seealso :func:`eget`, :func:`getRfVoltage`, :func:`putRfFrequency`
     """
     _rf = getElements(name)
-    if _rf: return _rf[0].get(field, unitsys=unitsys)
+    if _rf: return _rf[0].get(field, unitsys=unitsys, handle=handle)
     else: return None
 
 
