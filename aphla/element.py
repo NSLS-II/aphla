@@ -811,7 +811,7 @@ class CaElement(AbstractElement):
         """
         tagset = set(tags)
         return [pv for pv,ts in self._pvtags.iteritems()
-                   if tagset.issubset(ts)]
+                   if tagset.issubset(ts) and ts]
 
     def _pv_fields(self, fields):
         """
