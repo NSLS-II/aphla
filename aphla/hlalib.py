@@ -1055,17 +1055,21 @@ def saveLattice(**kwargs):
     lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
 
+    pvspl = []
     if kwargs.has_key("elements"):
         pvs = []
         for el in kwargs["elements"]:
-            pvs.extend(
-                reduce(lambda a,b: a+b,
-                       [e.pv() for e in lat.getElementList(el, virtual=False)]))
+            elems = lat.getElementList(el, virtual=False)
+            pvs.extend(reduce(lambda a,b: a+b, [e.pv() for e in elems]))
+            pvspl.extend(reduce(lambda a,b: a+b, 
+                                [e.pv(handle="setpoint") for e in elems]))
     elif lat.arpvs is not None:
         pvs = [s.strip() for s in open(lat.arpvs, 'r').readlines()]
     else:
-        pvs = reduce(lambda a,b: a+b,
-                     [e.pv() for e in lat.getElementList("*", virtual=False)])
+        elems = lat.getElementList("*", virtual=False)
+        pvs = reduce(lambda a,b: a+b, [e.pv() for e in elems])
+        pvspl = reduce(lambda a,b: a+b, 
+                       [e.pv(handle="setpoint") for e in elems])
 
     if output is True:
         #t0 = datetime.now()
@@ -1073,7 +1077,7 @@ def saveLattice(**kwargs):
         #    lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
         #    t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
         output = outputFileName("snapshot", kwargs.get("subgroup",""))
-    nlive, nead = savePvData(output, pvs, group=lat.name,
+    nlive, nead = savePvData(output, pvs, group=lat.name, pvsp = pvspl,
                              notes=kwargs.get("notes", ""))
     if verbose > 0:
         print "PV dead: %d, live: %d" % (nlive, ndead)

@@ -383,7 +383,7 @@ def saveLattice(**kwargs):
     returns the output file name.
 
     ::
-        saveLattice(output=True, elements=["BEND", "COR", "QUAD", "SEXT"], notes="Good one")
+        saveLattice(elements=["BEND", "COR", "QUAD", "SEXT"], notes="Good one")
 
     """
     # save the lattice
@@ -397,28 +397,23 @@ def saveLattice(**kwargs):
                 ("QUAD", ("b1",)),
                 ("SEXT", ("b2",)),
                 ("COR", ("x", "y")),
-                ("BPM", ("x", "y")),
+                ("BPM", ("x", "y", "xbba", "ybba",
+                         "xref0", "xref1", "yref0", "yref1")),
+                ("UBPM", ("x", "y", "xbba", "ybba",
+                         "xref0", "xref1", "yref0", "yref1")),                
                 ("RFCAVITY", ("f",)),
                 ("DCCT", ("I", 'tau', "Iavg"))]
+    pvspl = []
     for elfam,flds in elemflds:
         el = lat.getElementList(elfam, virtual=False)
         for fld in flds:
             pvs.extend(
                 reduce(lambda a,b: a+b, [e.pv(field=fld) for e in el]))
-    for icell,ibpms in [(3, [7, 8]),
-                        (5, [7, 8, 9]),
-                        (8, [7, 8]),
-                        (10,[7, 8]),
-                        (11,[7,8]),
-                        (18,[7,8]),
-                        (23,[7,8,9]),
-                        (28,[7,8]),
-                        (30,[7,8,9,10])]:
-        for i in ibpms:
-            pvs.append("SR:C%02d-BI{BPM:%d}Pos:X-Calc" % (icell,i))
-            pvs.append("SR:C%02d-BI{BPM:%d}Pos:Y-Calc" % (icell,i))
+            pvspl.extend(
+                reduce(lambda a,b: a+b,
+                       [e.pv(field=fld, handle="setpoint") for e in el]))
 
-    nlive, nead = savePvData(output, pvs, group=lat.name,
+    nlive, nead = savePvData(output, pvs, group=lat.name, pvsp = pvspl,
                              notes=kwargs.get("notes", ""))
     if verbose > 0:
         print "PV dead: %d, live: %d" % (nlive, ndead)

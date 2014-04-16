@@ -470,6 +470,8 @@ def savePvData(fname, pvs, **kwargs):
             grp[pv].attrs["datetime"] = str(dat.datetime)
             grp[pv].attrs["timestamp"] = dat.timestamp
             nlive = nlive + 1
+    for pv in kwargs.get("pvsp", []):
+        grp[pv].attrs["setpoint"] = 1
     h5f.close()
     return nlive, ndead
 
