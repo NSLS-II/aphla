@@ -1230,7 +1230,9 @@ def compareLattice(*argv, **kwargs):
     i = 0
     for pv,vals in dat.items():
         i = i + 1
-        if all([v == vals[0] for v in vals[1:]]):
+        if len(vals) < nset:
+            diff.append([pv, vals])
+        elif all([v == vals[0] for v in vals[1:]]):
             same.append([pv, vals])
             continue
         else:
