@@ -1095,9 +1095,12 @@ def putLattice(fname, **kwargs):
     import h5py
     h5f = h5py.File(fname, 'r')
     grp = h5f[group]
+    pv, dat = [], []
     for k,v in grp.items():
-        caput(k, v)
-
+        #caput(k, v)
+        pv.append(k)
+        dat.append(v)
+    caput(pv, dat)
 
 def outputFileName(group, subgroup, create_path = True):
     """generate the system default output data file name
@@ -1172,3 +1175,65 @@ def calcTuneRm(quad, **kwargs):
         m[1,i] = -bta[i,1]/4.0/np.pi * fac
     return m
 
+
+def compareLattice(*argv, **kwargs):
+    """
+    - withlive, False
+    - group, HDF5 file group, default lattice name
+    - sponly, True, compare only the setpoint PVs
+    - elements, None, or a list of family names ["QUAD"]
+
+    returns same and diff. Each is a list of (pv, values).
+
+    >>> same, diff = compareLattice("file1.hdf5", elements=["QUAD"])
+    >>> sm, df = compareLattice("file1.hdf5", elements=["COR", "BPM", "UBPM"])
+    >>> sm, df = compareLattice("file1.hdf5", sponly=True)
+    """
+    group = kwargs.get("group", machines._lat.name)
+    sponly = kwargs.get("sponly", False)
+    elements = kwargs.get("elements", None)
+    # filter the PVs
+    if elements is not None:
+        pvlst = []
+        for fam in elements:
+            for e in machines._lat.getElementList(fam):
+                pvlst.extend(e.pv())
+    else:
+        pvlst = None
+
+    dat = {}
+    nset = len(argv)
+    import h5py
+    for i,fname in enumerate(argv):
+        h5f = h5py.File(fname, 'r')
+        g = h5f[group]
+        for pv,val in g.items():
+            if pvlst is not None and pv not in pvlst:
+                continue
+            if sponly and val.attrs.get("setpoint", 0) != 1:
+                continue
+            dat.setdefault(pv, [])
+            if g[pv].dtype in ['float64']:
+                dat[pv].append(float(val.value))
+            else:
+                raise RuntimeError("unknown {0} data type: {0}".format(
+                        pv, g[pv].dtype))
+        h5f.close()
+    if len(dat) > 0 and kwargs.get("withlive", False):
+        pvs = dat.keys()
+        vals = caget(pvs)
+        for i,pv in enumerate(pvs):
+            dat[pv].insert(0, vals[i])
+        nset = nset + 1
+
+    same, diff = [], []
+    i = 0
+    for pv,vals in dat.items():
+        i = i + 1
+        if all([v == vals[0] for v in vals[1:]]):
+            same.append([pv, vals])
+            continue
+        else:
+            diff.append([pv, vals])
+        #print i, pv, vals
+    return same, diff
