@@ -1034,7 +1034,7 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
     
 
 
-def saveLattice(**kwargs):
+def saveLattice(output, lat, elemflds, notes, **kwargs):
     """
     save lattice info to a HDF5 file.
 
@@ -1047,60 +1047,42 @@ def saveLattice(**kwargs):
     returns the output file name.
 
     ::
-        saveLattice(output=True, elements=["BEND", "COR", "QUAD", "SEXT"], notes="Good one")
+        saveLattice("snapshot.hdf5", lat, [("COR", ("x", "y")), ("QUAD", ("b1",))], "Good one")
 
     """
     # save the lattice
-    output = kwargs.get("output", False)
-    lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
 
-    pvspl = []
-    if kwargs.has_key("elements"):
-        pvs = []
-        for el in kwargs["elements"]:
-            elems = lat.getElementList(el, virtual=False)
-            pvs.extend(reduce(lambda a,b: a+b, [e.pv() for e in elems]))
-            pvspl.extend(reduce(lambda a,b: a+b, 
-                                [e.pv(handle="setpoint") for e in elems]))
-    elif lat.arpvs is not None:
-        pvs = [s.strip() for s in open(lat.arpvs, 'r').readlines()]
-    else:
-        elems = lat.getElementList("*", virtual=False)
-        pvs = reduce(lambda a,b: a+b, [e.pv() for e in elems])
-        pvspl = reduce(lambda a,b: a+b, 
-                       [e.pv(handle="setpoint") for e in elems])
+    pvs, pvspl = [], []
+    for elfam,flds in elemflds:
+        el = lat.getElementList(elfam, virtual=False)
+        for fld in flds:
+            pvs.extend(
+                reduce(lambda a,b: a+b, [e.pv(field=fld) for e in el]))
+            pvspl.extend(
+                reduce(lambda a,b: a+b,
+                       [e.pv(field=fld, handle="setpoint") for e in el]))
 
-    if output is True:
-        #t0 = datetime.now()
-        #output = os.path.join(
-        #    lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
-        #    t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
-        output = outputFileName("snapshot", kwargs.get("subgroup",""))
-    nlive, nead = savePvData(output, pvs, group=lat.name, pvsp = pvspl,
-                             notes=kwargs.get("notes", ""))
+    if lat.arpvs is not None:
+        for s in open(lat.arpvs, 'r').readlines():
+            pv = s.strip()
+            if pv in pvs: continue
+            pvs.append(pv)
+
+    nlive, ndead = savePvData(output, pvs, group=lat.name, notes=notes)
+
+    # add the setpoint 
+    import h5py
+    h5f = h5py.File(output)
+    grp = h5f[lat.name]
+    for pv in kwargs.get("pvsp", []):
+        grp[pv].attrs["setpoint"] = 1
+    h5f.close()
+
     if verbose > 0:
         print "PV dead: %d, live: %d" % (nlive, ndead)
-    return output
+    return nlive, ndead
 
-
-def putLattice(fname, **kwargs):
-    """
-    put saved lattice to real machine.
-
-    - group: hdf5 group, default the current lattice name
-    """
-    # save the lattice
-    group = kwargs.get("group", machines._lat.name)
-    import h5py
-    h5f = h5py.File(fname, 'r')
-    grp = h5f[group]
-    pv, dat = [], []
-    for k,v in grp.items():
-        #caput(k, v)
-        pv.append(k)
-        dat.append(v)
-    caput(pv, dat)
 
 def outputFileName(group, subgroup, create_path = True):
     """generate the system default output data file name
