@@ -20,7 +20,7 @@ import warnings
 
 import machines
 from catools import caget, caput, savePvData
-from catools import putLattice as _putLattice
+from catools import putPvData
 from hlalib import getElements, outputFileName
 from hlalib import saveLattice as _saveLattice
 
@@ -406,9 +406,9 @@ def saveLattice(**kwargs):
                 ("SEXT", ("b2",)),
                 ("COR", ("x", "y")),
                 ("BPM", ("x", "y", "x0", "y0", "xbba", "ybba",
-                         "xref0", "xref1", "yref0", "yref1")),
+                         "xref0", "xref1", "yref0", "yref1", "ampl")),
                 ("UBPM", ("x", "y", "x0", "y0", "xbba", "ybba",
-                         "xref0", "xref1", "yref0", "yref1")),                
+                         "xref0", "xref1", "yref0", "yref1", "ampl")),
                 ("RFCAVITY", ("f", "v", "phi")),
                 ("DCCT", ("I", 'tau', "Iavg"))]
 
@@ -432,7 +432,7 @@ def saveLattice(**kwargs):
     return output
 
 def putLattice(fname, **kwargs):
-    _putLattice(fname, machines._lat.name, **kwargs)
+    putPvData(fname, machines._lat.name, **kwargs)
 
 
 def plotChromaticity(f, nu, chrom):
