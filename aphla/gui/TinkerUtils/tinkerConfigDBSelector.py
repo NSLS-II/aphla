@@ -560,17 +560,39 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
 
         config_name_text = self.lineEdit_config_name.text().strip()
         if config_name_text != '':
-            cond_str = self.db.get_MATCH_condition_str(config_name_text.lower())
-            self.search_params['config_name'] = \
-                self.db.get_config_ids_with_MATCH(cond_str, 'config_name')
+            cond_str = self.db.get_MATCH_condition_str(config_name_text)
+            if cond_str is not None:
+                try:
+                    self.search_params['config_name'] = \
+                        self.db.get_config_ids_with_MATCH(cond_str, 'config_name')
+                except:
+                    msg = QMessageBox()
+                    msg.setText('Invalid search strings for "Config Name"')
+                    msg.setInformativeText(sys.exc_info()[1].__repr__())
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.exec_()
+                    return
+            else:
+                return
         else:
             self.search_params['config_name'] = []
 
         config_desc_text = self.lineEdit_config_description.text().strip()
         if config_desc_text != '':
-            cond_str = self.db.get_MATCH_condition_str(config_desc_text.lower())
-            self.search_params['config_description'] = \
-                self.db.get_config_ids_with_MATCH(cond_str, 'config_description')
+            cond_str = self.db.get_MATCH_condition_str(config_desc_text)
+            if cond_str is not None:
+                try:
+                    self.search_params['config_description'] = \
+                        self.db.get_config_ids_with_MATCH(cond_str, 'config_description')
+                except:
+                    msg = QMessageBox()
+                    msg.setText('Invalid search strings for "Config Description"')
+                    msg.setInformativeText(sys.exc_info()[1].__repr__())
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.exec_()
+                    return
+            else:
+                return
         else:
             self.search_params['config_description'] = []
 
@@ -621,8 +643,17 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
                 column_name_list=self.config_meta_all_col_keys,
                 condition_str=condition_str, order_by_str='config_id')
             if out != []:
+                if self.checkBox_hide_NG.isChecked():
+                    config_name_col_ind = self.config_meta_all_col_keys.index(
+                        'config_name')
+                    valid_indexes = [
+                        i for i, name in enumerate(out[config_name_col_ind])
+                        if '$NG$' not in name]
+                else:
+                    valid_indexes = range(len(out[0]))
                 for k, v in zip(self.config_meta_all_col_keys, out):
-                    self.search_result[k] = list(v)
+                    self.search_result[k] = [x for i, x in enumerate(v)
+                                             if i in valid_indexes]
             else:
                 for k in self.config_meta_all_col_keys:
                     self.search_result[k] = []

@@ -45,14 +45,14 @@ class BbaBowtie:
     >>> 'par = {'bpm':
 
     """
-    def __init__(self, **kwargs):
+    def __init__(self, bpm, quad, cor, **kwargs):
         """
         Read config from a big table, link quadrupole, bpm and correctors
         """
         # bpm,trim,quad triplet
-        self._b, self._bf = kwargs.get("bpm",  [None]*2)
-        self._q, self._qf = kwargs.get("quad", [None]*2)
-        self._c, self._cf = kwargs.get("cor",  [None]*2)
+        self._b, self._bf = bpm
+        self._q, self._qf = quad
+        self._c, self._cf = cor
 
         self.quad_dkick = kwargs.get("quad_dkick", 0.0)
         self.cor_dkicks  = kwargs.get('cor_dkicks', [])
@@ -69,20 +69,13 @@ class BbaBowtie:
         self.x_intercept = None
         # do not extend for the intersection with x-axis.
         #self.line_segment_only = False  
-        self.orbit_diffstd = 1e-6
-        self.minwait = 6
-
-    def setInput(self, bpm, quad, cor, quad_dkick, cor_dkicks):
-        """ignore if input is None"""
-        if bpm is not None: self._b, self._bf = bpm
-        if quad is not None: self._q, self._qf = quad
-        if cor is not None: self._c, self._cf = cor
-        if quad_dkick is not None: self.quad_dkick = quad_dkick
-        if cor_dkicks is not None: self.cor_dkicks = cor_dkicks
+        self.wait = kwargs.get("wait", 2)
 
     def _get_orbit(self):
-        if self._bf == 'x': return getOrbit()[:,0]
-        if self._bf == 'y': return getOrbit()[:,1]
+        if self._bf == 'x':
+            return getOrbit()[:,0]
+        elif self._bf == 'y':
+            return getOrbit()[:,1]
         return None
 
     def _filterLines(self, x, y, p_slope = 0.8, p_xintercept=0.9,
@@ -94,11 +87,14 @@ class BbaBowtie:
         - residual is too large, keep only the smaller p_residual*100 percent.
         """
         m, n = np.shape(y)
+        assert len(x) == m, "different size of x, y ({0} != {1})".format(len(x), m)
+        print "fitting x:", x
+        print "fitting y:", y
         # p[-1] is constant, p[-2] is slope
         p, res, rank, sigv, rcond = np.polyfit(x, y, 1, full=True)
-        #print "slope:", p[-2]
-        #print "constant:", p[-1]
-        #print "xintercept:", -p[-1]/p[-2]
+        print "slope:", p[-2]
+        print "constant:", p[-1]
+        print "xintercept:", -p[-1]/p[-2]
         # keep the larger slope center part
         i1 = int(n*(1.0-p_slope))
         kept1 = np.argsort(np.abs(p[-2,:]))[i1:]
@@ -139,121 +135,55 @@ class BbaBowtie:
         - if dkick is set, kick will be renewed.
         - if dqk1 is set, qk1 will be renewed.
         """
-        # guihook QApplication::processEvents
-        guihook = kwargs.get("guihook", None)
-        # progress bar widget
-        pbar = kwargs.get("progress", None)
-
         #print __file__, "measuring bba"
         verbose = kwargs.get('verbose', 0)
 
         # record the initial values
         self._vb0 = self._b.get(self._bf, unitsys=None)
-        qk0 = self._q.get(self._qf, unitsys=None)
-        xp0 = self._c.get(self._cf, unitsys=None)
-        #print "getting {0} {1}".format(qk0, xp0)
-        self._vq0 = qk0
-        self._vc0 = xp0
-        if pbar: pbar.setValue(5)
+        self._vq0 = self._q.get(self._qf, unitsys=None)
+        self._vc0 = self._c.get(self._cf, unitsys=None)
+        if verbose > 0:
+            print "getting q={0}  c={1}".format(self._vq0, self._vc0)
 
         # ignore kick list if dkick is provided.
-        self.cor_kick = [xp0 + dk for dk in self.cor_dkicks]
-
+        self.cor_kick = [self._vc0 + dk for dk in self.cor_dkicks]
+        if not self.cor_kick:
+            _logger.warn("no cor setpoints specified")
+            return
+        if verbose > 0:
+            print "cor setpoints: {0}".format(self.cor_kick)
         obt00 = self._get_orbit()
         #print "obtshape:", np.shape(obt00)
-        self.orbit = np.zeros((2, 1+len(self.cor_dkicks), len(obt00)), 'd')
+        self.orbit = np.zeros((len(obt00), 1+2*len(self.cor_kick)), 'd')
         # one more for original orbit
         ##
         ## initial orbit-quad
-        obtref = getOrbit()
-        # change quad
-        self._q.put(self._qf, qk0 + self.quad_dkick, unitsys=None)
-
-        if guihook is not None: guihook()
-        if pbar: pbar.setValue(10)
-
-        timeout, log = waitStableOrbit(
-            obtref, diffstd_list=True, verbose=verbose, 
-            diffstd=self.orbit_diffstd, minwait=self.minwait)
-        obt01 = self._get_orbit()
-        #print "   reading orbit", np.shape(obt01)
-        # orbit before and after quad inc
-        self.orbit[0, 0, :] = obt00[:]
-        self.orbit[1, 0, :] = obt01[:]
-
-        #print "step down quad"
-        #print "-- reset quad:", self._q.name
-        if guihook is not None: guihook()
-        if pbar: pbar.setValue(20)
-
-        obtref = getOrbit()
-        self._q.put(self._qf, qk0, unitsys=None)
-        timeout, log = waitStableOrbit(
-            obtref,
-            diffstd=self.orbit_diffstd, verbose=verbose, 
-            diffstd_list=True, minwait=self.minwait)
-
-        #print "   reading orbit", np.shape(getOrbit())
-        obt02 = self._get_orbit()
-        if guihook is not None: guihook()
-
-        # initial qk
-        for j,dxp in enumerate(self.cor_kick):
-            obt = self._get_orbit()     # for checking orbit changed
-            #print "setting cor:", self._c.name, j, dxp
-            obtref = getOrbit()
-            self._c.put(self._cf, dxp, unitsys=None)
-            timeout, log = waitStableOrbit(
-                obtref,
-                diffstd=self.orbit_diffstd, minwait = self.minwait,
-                diffstd_list=True, verbose=verbose)
-            #print "   reading orbit", getOrbit()
-            obt1 = self._get_orbit()
-            self.orbit[0, j+1,:] = obt1
-            if guihook is not None: guihook()
-            if pbar: pbar.setValue(20 + int(j*30.0/len(self.cor_kick)))
-
-        # adjust qk
-        obt = self._get_orbit()
-        #print "reset cor, inc quad"
-        #caput(self.trim_pvsp, xp0)
-        #caput(self.quad_pvsp, qk0 + self.dqk1)
-        obtref = getOrbit()
-        self._c.put(self._cf, xp0, unitsys=None)
-        self._q.put(self._qf, qk0 + self.quad_dkick, unitsys=None)
-        timeout, log = waitStableOrbit(
-            obtref, diffstd=self.orbit_diffstd, minwait = self.minwait,
-            diffstd_list= True, verbose=verbose)
-        if pbar: pbar.setValue(60)
-
-        #print "  get orbit", np.shape(getOrbit())
-        obt = self._get_orbit()
-        for j,dxp in enumerate(self.cor_kick):
-            if guihook is not None: guihook()
-            #print "setting trim:", self._c.name, j, dxp
-            #caput(self.trim_pvsp, dxp)
-            obtref = getOrbit()
-            self._c.put(self._cf, dxp, unitsys=None)
-            timeout, log = waitStableOrbit(
-                obtref, diffstd=self.orbit_diffstd, minwait = self.minwait,
-                diffstd_list=True, verbose=verbose)
-            #print "  reading orbit", getOrbit()
-            obt = self._get_orbit()
-            self.orbit[1, j+1, :] = obt
-            if pbar: pbar.setValue(60 + int(j*30.0/len(self.cor_kick)))
+        for i,dqk in enumerate([0.0, self.quad_dkick]):
+            # change quad
+            self._q.put(self._qf, self._vq0 + dqk, unitsys=None)
+            if verbose > 0:
+                print "setting {0}.{1} to {2} (delta={3})".format(
+                self._q.name, self._qf, self._vq0 + dqk, self.quad_dkick)
+                
+            for j,dck in enumerate(self.cor_kick):
+                self._c.put(self._cf, dck, unitsys=None)
+                time.sleep(self.wait)
+                k = i * len(self.cor_kick) + j
+                self.orbit[:,k] = self._get_orbit()
 
         # reset qk
-        #print "reset quad and trim"
+        if verbose > 0:
+            print "reset quad and trim"
         #caput(self.quad_pvsp, qk0)
         #caput(self.trim_pvsp, xp0)
-        self._q.put(self._qf, qk0, unitsys=None)
-        self._c.put(self._cf, xp0, unitsys=None)
+        self._q.put(self._qf, self._vq0, unitsys=None)
+        self._c.put(self._cf, self._vc0, unitsys=None)
+        time.sleep(self.wait)
+        self.orbit[:,-1] = self._get_orbit()
         _logger.info("measurement done: " \
                      "q={0}, dq={1}, b={2}, c={3}, dc={4}".format(
                          self._q.name, self.quad_dkick,
                          self._b.name, self._c.name, self.cor_dkicks))
-
-        if pbar: pbar.setValue(100)
 
 
     def align(self, **kwargs):
@@ -267,15 +197,15 @@ class BbaBowtie:
         #print __file__, "BBA align", caget('V:2-SR:C30-BI:G2{PH1:11}SA:X')
         self._measure(**kwargs)
         self._analyze()
+        if not self.cor_fitted:
+            _logger.warn("no cor fitted. abort.")
+            return
         # 
-        obtref = getOrbit()
         # change quad
         self._c.put(self._cf, self.cor_fitted, unitsys=None)
-        timeout, log = waitStableOrbit(
-            obtref, diffstd_list=True, verbose=kwargs.get('verbose', 0), 
-            diffstd=self.orbit_diffstd, minwait=self.minwait)
-        obt01 = self._get_orbit()
+        time.sleep(self.wait)
         self.bpm_fitted = self._b.get(self._bf, unitsys = None)
+        # use new values ? or the original one
         self._c.put(self._cf, self._vc0, unitsys=None)
 
 
@@ -295,7 +225,12 @@ class BbaBowtie:
         #self.orbit = np.zeros((2, nkick+1, nbpm), 'd')
         #print np.shape(dobt), np.shape(x), np.shape(self.orbit)
         #self.orbit[1,1:,:] = dobt[:, :]
-        dobt = self.orbit[1,1:,:] - self.orbit[0,1:,:]
+        if not self.cor_kick:
+            _logger.warn("no cor setpoint to analyze")
+            return
+        print self.cor_kick
+        n = len(self.cor_kick)
+        dobt = np.transpose(self.orbit[:,n:2*n] - self.orbit[:,:n])
         kick = self._filterLines(self.cor_kick, dobt)
  
 
@@ -385,10 +320,25 @@ class BbaBowtie:
         """
         #return self._quadcenter[:]
         pass
-    
-if __name__ == "__main__":
-    #print "Tune X:", caget('SR:C00-Glb:G00<TUNE:00>RB:X')
-    #print "Tune Y:", caget('SR:C00-Glb:G00<TUNE:00>RB:Y')
-    #align()
-    pass
 
+    def save(self, output, group = "BeamBasedAlignment"):
+        """
+        save the result to HDF5 file
+        """
+        import h5py
+        h5f = h5py.File(output)
+        pgrp = h5f.require_group(group)
+        grpname = "{0}.{1}-{2}.{3}-{4}.{5}".format(
+            self._b.name, self._bf,
+            self._q.name, self._qf,
+            self._c.name, self._cf)
+                                                   
+        grp = pgrp.require_group(grpname)
+        grp["orbit"] = self.orbit
+        grp['keep']  = self.mask
+        grp['cor_fitted'] = self.cor_fitted
+        grp['cor_kick']   = self.cor_kick
+        grp['cor_dkicks'] = self.cor_dkicks
+        grp['quad_dkick'] = self.quad_dkick
+        grp["slope"] = self.slope
+        grp["x_intercept"] = self.x_intercept

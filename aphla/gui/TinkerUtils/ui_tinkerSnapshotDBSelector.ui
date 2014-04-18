@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Import Tinker Configuration from Database</string>
   </property>
+  <property name="toolTip">
+   <string>Exclude snapshots marked as &quot;No Good&quot; ($NG$ in Snapshot Name)</string>
+  </property>
   <layout class="QGridLayout" name="gridLayout_3">
    <item row="1" column="1">
     <spacer name="horizontalSpacer">
@@ -54,6 +57,9 @@
        <enum>Qt::Vertical</enum>
       </property>
       <widget class="QGroupBox" name="groupBox_search_params">
+       <property name="toolTip">
+        <string>Exclude snapshots marked as &quot;No Good&quot; ($NG$ in Snapshot Name)</string>
+       </property>
        <property name="title">
         <string>Search Parameters</string>
        </property>
@@ -143,7 +149,7 @@
           </item>
          </widget>
         </item>
-        <item row="0" column="5" colspan="2">
+        <item row="0" column="5" colspan="3">
          <widget class="QLineEdit" name="lineEdit_ss_id_2"/>
         </item>
         <item row="1" column="0">
@@ -231,7 +237,7 @@
           </item>
          </widget>
         </item>
-        <item row="1" column="5" colspan="2">
+        <item row="1" column="5" colspan="3">
          <widget class="QLineEdit" name="lineEdit_config_id_2"/>
         </item>
         <item row="2" column="0">
@@ -312,7 +318,7 @@
           </item>
          </widget>
         </item>
-        <item row="2" column="5" colspan="2">
+        <item row="2" column="5" colspan="3">
          <widget class="QLineEdit" name="lineEdit_ref_step_size_2"/>
         </item>
         <item row="3" column="0">
@@ -322,7 +328,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1" colspan="6">
+        <item row="3" column="1" colspan="7">
          <widget class="QLineEdit" name="lineEdit_ss_name"/>
         </item>
         <item row="4" column="0">
@@ -332,7 +338,7 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="1" colspan="6">
+        <item row="4" column="1" colspan="7">
          <widget class="QLineEdit" name="lineEdit_ss_description"/>
         </item>
         <item row="5" column="0">
@@ -342,7 +348,7 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="1" colspan="6">
+        <item row="5" column="1" colspan="7">
          <widget class="QLineEdit" name="lineEdit_username"/>
         </item>
         <item row="6" column="0">
@@ -437,7 +443,7 @@
           </item>
          </widget>
         </item>
-        <item row="6" column="5" colspan="2">
+        <item row="6" column="5" colspan="3">
          <widget class="QDateTimeEdit" name="dateTimeEdit_time_created_2">
           <property name="displayFormat">
            <string>yyyy-MM-dd HH:mm:ss</string>
@@ -532,7 +538,7 @@
           </item>
          </widget>
         </item>
-        <item row="7" column="5" colspan="2">
+        <item row="7" column="5" colspan="3">
          <widget class="QLineEdit" name="lineEdit_masar_id_2"/>
         </item>
         <item row="8" column="0">
@@ -596,6 +602,19 @@
          </spacer>
         </item>
         <item row="8" column="6">
+         <widget class="QCheckBox" name="checkBox_hide_NG">
+          <property name="toolTip">
+           <string>Exclude snapshots marked as &quot;No Good&quot; ($NG$ in Snapshot Name)</string>
+          </property>
+          <property name="text">
+           <string>Hide $NG$</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="7">
          <widget class="QPushButton" name="pushButton_search">
           <property name="text">
            <string>Search</string>

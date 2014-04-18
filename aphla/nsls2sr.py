@@ -20,8 +20,9 @@ import warnings
 
 import machines
 from catools import caget, caput, savePvData
+from catools import putPvData
 from hlalib import getElements, outputFileName
-
+from hlalib import saveLattice as _saveLattice
 
 def _maxTimeSpan(timestamps):
     # take out the part beyond microsecond (nano second + ' EST')
@@ -372,7 +373,7 @@ def getSrBpmData(**kwargs):
 
 def saveLattice(**kwargs):
     """
-    save lattice info to a HDF5 file.
+    save the current lattice info to a HDF5 file.
 
     - lattice, default the current active lattice
     - subgroup, default "", used for output file name
@@ -382,46 +383,37 @@ def saveLattice(**kwargs):
 
     returns the output file name.
 
-    ::
-        saveLattice(output=True, elements=["BEND", "COR", "QUAD", "SEXT"], notes="Good one")
+    Saved data with unitsys=None and "phy":
 
+    - Magnet: BEND: b0, db0; QUAD: b1; SEXT: b2; COR: x, y;
+    - BPM: x, x0, xbba, xref0, xref1 (same for y)
+    - UBPM: user bpms, same as BPM
+    - RFCAVITY: f
+    - DCCT: I, tau, Iavg
+
+    ::
+        saveLattice(notes="Good one")
     """
     # save the lattice
     output = outputFileName("snapshot", kwargs.get("subgroup",""))
     lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
     unitsys = kwargs.get("unitsys", "phy")
+    notes = kwargs.pop("notes", "")
 
-    pvs = []
     elemflds = [("BEND", ("b0", "db0")),
                 ("QUAD", ("b1",)),
                 ("SEXT", ("b2",)),
                 ("COR", ("x", "y")),
-                ("BPM", ("x", "y")),
-                ("RFCAVITY", ("f",)),
+                ("BPM", ("x", "y", "x0", "y0", "xbba", "ybba",
+                         "xref0", "xref1", "yref0", "yref1", "ampl")),
+                ("UBPM", ("x", "y", "x0", "y0", "xbba", "ybba",
+                         "xref0", "xref1", "yref0", "yref1", "ampl")),
+                ("RFCAVITY", ("f", "v", "phi")),
                 ("DCCT", ("I", 'tau', "Iavg"))]
-    for elfam,flds in elemflds:
-        el = lat.getElementList(elfam, virtual=False)
-        for fld in flds:
-            pvs.extend(
-                reduce(lambda a,b: a+b, [e.pv(field=fld) for e in el]))
-    for icell,ibpms in [(3, [7, 8]),
-                        (5, [7, 8, 9]),
-                        (8, [7, 8]),
-                        (10,[7, 8]),
-                        (11,[7,8]),
-                        (18,[7,8]),
-                        (23,[7,8,9]),
-                        (28,[7,8]),
-                        (30,[7,8,9,10])]:
-        for i in ibpms:
-            pvs.append("SR:C%02d-BI{BPM:%d}Pos:X-Calc" % (icell,i))
-            pvs.append("SR:C%02d-BI{BPM:%d}Pos:Y-Calc" % (icell,i))
+    nlive, ndead = _saveLattice(
+        output, lat, elemflds, notes, **kwargs)
 
-    nlive, nead = savePvData(output, pvs, group=lat.name,
-                             notes=kwargs.get("notes", ""))
-    if verbose > 0:
-        print "PV dead: %d, live: %d" % (nlive, ndead)
     h5f = h5py.File(output)
     h5g = h5f[lat.name]
     for elfam,flds in elemflds:
@@ -437,6 +429,10 @@ def saveLattice(**kwargs):
     h5f.close()
     
     return output
+
+
+def putLattice(fname, **kwargs):
+    putPvData(fname, machines._lat.name, **kwargs)
 
 
 def plotChromaticity(f, nu, chrom):

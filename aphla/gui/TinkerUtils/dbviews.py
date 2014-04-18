@@ -258,7 +258,6 @@ class ConfigDBViewWidget(QWidget):
         t = self.tableView
         t.setCornerButtonEnabled(True)
         t.setShowGrid(True)
-        t.setContextMenuPolicy(Qt.CustomContextMenu)
         t.setAlternatingRowColors(True)
         t.setSortingEnabled(False)
         horizHeader = t.horizontalHeader()
@@ -266,7 +265,7 @@ class ConfigDBViewWidget(QWidget):
         horizHeader.setStretchLastSection(False)
         horizHeader.setMovable(False)
 
-        self.contextMenu = QMenu()
+        self._initContextMenuItems()
 
         self.connect(self.comboBox_view, SIGNAL('currentIndexChanged(int)'),
                      self.on_view_base_change)
@@ -275,15 +274,22 @@ class ConfigDBViewWidget(QWidget):
         self.connect(self.pushButton_columns, SIGNAL('clicked()'),
                      self.launchColumnsDialog)
 
+    #----------------------------------------------------------------------
+    def _initContextMenuItems(self):
+        """"""
+
+        self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.connect(self.tableView,
+                     SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     self.openContextMenu)
+
+        self.contextMenu = QMenu()
+
         self.actionModifyTableValues = QAction(QIcon(), 'Modify values...',
                                                self.tableView)
         self.addAction(self.actionModifyTableValues)
         self.connect(self.actionModifyTableValues, SIGNAL('triggered()'),
                      self.modify_values)
-
-        self.connect(self.tableView,
-                     SIGNAL('customContextMenuRequested(const QPoint &)'),
-                     self.openContextMenu)
 
     #----------------------------------------------------------------------
     def _initUI(self, parentGridLayout):
@@ -813,10 +819,6 @@ class SnapshotDBViewWidget(QWidget):
         self.connect(self.pushButton_columns, SIGNAL('clicked()'),
                      self.launchColumnsDialog)
 
-        self.connect(self.tableView,
-                     SIGNAL('customContextMenuRequested(const QPoint &)'),
-                     self.openContextMenu)
-
     #----------------------------------------------------------------------
     def _initUI(self, parentWidget):
         """"""
@@ -975,31 +977,195 @@ class SnapshotDBViewWidget(QWidget):
     def _initContextMenuItems(self):
         """"""
 
-        self.actionCopySelectedItemTexts = QAction(
-            QIcon(), 'Copy texts of selected item(s)', self.tableView)
-
-        self.actionCopySelectedItemTexts.setShortcut(
-            QKeySequence(Qt.ControlModifier + Qt.Key_C))
-
-        self.addAction(self.actionCopySelectedItemTexts)
-
         self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.connect(self.tableView,
+                     SIGNAL('customContextMenuRequested(const QPoint &)'),
+                     self.openContextMenu)
 
         self.contextMenu = QMenu()
-        self.contextMenu.addAction(self.actionCopySelectedItemTexts)
 
+        self.actionCopySelectedItemTexts = QAction(
+            QIcon(), 'Copy texts of selected item(s)', self.tableView)
+        self.actionCopySelectedItemTexts.setShortcut(
+            QKeySequence(Qt.ControlModifier + Qt.Key_C))
+        self.addAction(self.actionCopySelectedItemTexts)
         self.connect(self.actionCopySelectedItemTexts, SIGNAL('triggered()'),
                      self.copySelectedItemsTexts)
+
+        self.actionModifyTableValues = QAction(
+            QIcon(), 'Modify values...', self.tableView)
+        self.addAction(self.actionModifyTableValues)
+        self.connect(self.actionModifyTableValues, SIGNAL('triggered()'),
+                     self.modify_values)
+
+    #----------------------------------------------------------------------
+    def updateMenuItems(self):
+        """"""
+
+        sender = self.sender()
+
+        if sender == self.tableView:
+
+            sm = self.tableView.selectionModel()
+            proxy_index_list = sm.selectedIndexes()
+
+            self.contextMenu.clear()
+
+            self.contextMenu.addAction(self.actionCopySelectedItemTexts)
+
+            cols = [i.column() for i in proxy_index_list]
+            if len(set(cols)) != 1:
+                return
+            else:
+                proxy_ind = proxy_index_list[0]
+                proxy_model = self.tableView.model()
+                source_model = proxy_model.sourceModel()
+                source_ind = proxy_model.mapToSource(proxy_ind)
+                source_col_ind = source_ind.column()
+
+            if source_col_ind not in self.user_editable_col_ids:
+                return
+
+            if (self.all_col_keys[source_col_ind] == 'step_size') and \
+               ((source_model.abstract.ref_step_size == 0.0) or
+                np.isnan(source_model.abstract.ref_step_size)):
+                msg = QMessageBox()
+                msg.setText(('To change step size values directly, you must '
+                             'have non-zero or non-nan reference step size.'))
+                msg.exec_()
+                return
+
+            self.contextMenu.addSeparator()
+            self.contextMenu.addAction(self.actionModifyTableValues)
+
+        else:
+            raise NotImplementedError('')
 
     #----------------------------------------------------------------------
     def openContextMenu(self, qpoint):
         """"""
 
+        self.updateMenuItems()
+
+        if self.contextMenu.actions() != []:
+            sender = self.sender()
+
+            globalClickPos = sender.mapToGlobal(qpoint)
+
+            self.contextMenu.exec_(globalClickPos)
+
+    #----------------------------------------------------------------------
+    def modify_values(self):
+        """"""
+
         sender = self.sender()
 
-        globalClickPos = sender.mapToGlobal(qpoint)
+        if sender.parent() == self.tableView:
 
-        self.contextMenu.exec_(globalClickPos)
+            sm = self.tableView.selectionModel()
+            proxy_index_list = sm.selectedIndexes()
+            proxy_model = self.tableView.model()
+            source_model = proxy_model.sourceModel()
+
+            source_index_list = [proxy_model.mapToSource(pi)
+                                 for pi in proxy_index_list]
+            source_cols = [i.column() for i in source_index_list]
+            if len(set(source_cols)) != 1:
+                return
+            else:
+                col_ind = source_cols[0]
+
+            if col_ind in self.user_editable_col_ids:
+                str_format = self.str_format[col_ind]
+
+                if str_format != 'checkbox':
+                    current_vals = [source_model.data(i, Qt.DisplayRole)
+                                    for i in source_index_list]
+                else:
+                    current_vals = [source_model.data(i, Qt.UserRole)
+                                    for i in source_index_list]
+
+                if len(set(current_vals)) == 1:
+                    current_val = current_vals[0]
+                else:
+                    current_val = None
+
+                if str_format is None:
+                    data_type = 'string'
+                elif str_format.endswith(('g', 'e')):
+                    data_type = 'float'
+                    if current_val is not None:
+                        current_val = float(current_val)
+                elif str_format == 'checkbox':
+                    data_type = 'bool'
+                else:
+                    raise ValueError('Unexpected str_format: {0:s}'.
+                                     format(str_format))
+
+                col_key = source_model.abstract.all_col_keys[col_ind]
+                row_inds = [i.row() for i in source_index_list]
+
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+
+                new_val = self.get_new_value(self.tableView, data_type,
+                                             current_val)
+
+                if new_val is not None:
+                    source_model.modifyAbstractModel(new_val, col_ind, row_inds)
+
+        else:
+            raise NotImplementedError()
+
+    #----------------------------------------------------------------------
+    def get_new_value(self, parent, data_type, current_data):
+        """"""
+
+        if data_type == 'string':
+            if current_data is None:
+                current_data = ''
+
+            prompt_text = ('Enter a new string')
+            result = QInputDialog.getText(parent, 'New String', prompt_text,
+                                          text=current_data)
+
+            if result[1]: # If OK was pressed
+                return str(result[0]).strip(' \t\n\r')
+            else: # If Cancel was pressed
+                return None
+
+        elif data_type == 'float':
+            if current_data is None:
+                current_data = 0.0
+
+            prompt_text = ('Enter a new float value:')
+            result = QInputDialog.getDouble(
+                parent, 'New Float', prompt_text, value=current_data,
+                decimals=8)
+
+            if result[1]: # If OK was pressed
+                return result[0]
+            else: # If Cancel was pressed
+                return None
+
+        elif data_type == 'bool':
+
+            prompt_text = ('Select a new bool value:')
+            result = QInputDialog.getItem(
+                parent, 'New Bool', prompt_text, ['True', 'False'],
+                editable=False)
+
+            if result[1]: # If OK was pressed
+                if result[0] == 'True':
+                    return True
+                else:
+                    return False
+            else: # If Cancel was pressed
+                return None
+
+        else:
+            raise ValueError('Unexpected current_data type: {0:s}'.format(
+                type(current_data)))
 
     #----------------------------------------------------------------------
     def copySelectedItemsTexts(self):

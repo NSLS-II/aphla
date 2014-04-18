@@ -70,14 +70,14 @@ def getCurrent(name='dcct', field='I', unitsys=None):
     else: return None
 
 # rf
-def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None):
+def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None, handle="readback"):
     """
     Get the frequency from the first 'RFCAVITY' element.
 
     seealso :func:`eget`, :func:`getRfVoltage`, :func:`putRfFrequency`
     """
     _rf = getElements(name)
-    if _rf: return _rf[0].get(field, unitsys=unitsys)
+    if _rf: return _rf[0].get(field, unitsys=unitsys, handle=handle)
     else: return None
 
 
@@ -1034,7 +1034,7 @@ def waitStable(elemlst, fields, maxstd, **kwargs):
     
 
 
-def saveLattice(**kwargs):
+def saveLattice(output, lat, elemflds, notes, **kwargs):
     """
     save lattice info to a HDF5 file.
 
@@ -1047,52 +1047,40 @@ def saveLattice(**kwargs):
     returns the output file name.
 
     ::
-        saveLattice(output=True, elements=["BEND", "COR", "QUAD", "SEXT"], notes="Good one")
-
+        saveLattice("snapshot.hdf5", lat, [("COR", ("x", "y")), ("QUAD", ("b1",))], "Good one")
     """
     # save the lattice
-    output = kwargs.get("output", False)
-    lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
 
-    if kwargs.has_key("elements"):
-        pvs = []
-        for el in kwargs["elements"]:
+    pvs, pvspl = [], []
+    for elfam,flds in elemflds:
+        el = lat.getElementList(elfam, virtual=False)
+        for fld in flds:
             pvs.extend(
+                reduce(lambda a,b: a+b, [e.pv(field=fld) for e in el]))
+            pvspl.extend(
                 reduce(lambda a,b: a+b,
-                       [e.pv() for e in lat.getElementList(el, virtual=False)]))
-    elif lat.arpvs is not None:
-        pvs = [s.strip() for s in open(lat.arpvs, 'r').readlines()]
-    else:
-        pvs = reduce(lambda a,b: a+b,
-                     [e.pv() for e in lat.getElementList("*", virtual=False)])
+                       [e.pv(field=fld, handle="setpoint") for e in el]))
 
-    if output is True:
-        #t0 = datetime.now()
-        #output = os.path.join(
-        #    lat.OUTPUT_DIR, t0.strftime("%Y_%m"),
-        #    t0.strftime("snapshot_%d_%H%M%S_") + "_%s.hdf5" % lat.name)
-        output = outputFileName("snapshot", kwargs.get("subgroup",""))
-    nlive, nead = savePvData(output, pvs, group=lat.name,
-                             notes=kwargs.get("notes", ""))
+    if lat.arpvs is not None:
+        for s in open(lat.arpvs, 'r').readlines():
+            pv = s.strip()
+            if pv in pvs: continue
+            pvs.append(pv)
+
+    nlive, ndead = savePvData(output, pvs, group=lat.name, notes=notes)
+
+    # add the setpoint 
+    import h5py
+    h5f = h5py.File(output)
+    grp = h5f[lat.name]
+    for pv in kwargs.get("pvsp", []):
+        grp[pv].attrs["setpoint"] = 1
+    h5f.close()
+
     if verbose > 0:
         print "PV dead: %d, live: %d" % (nlive, ndead)
-    return output
-
-
-def putLattice(fname, **kwargs):
-    """
-    put saved lattice to real machine.
-
-    - group: hdf5 group, default the current lattice name
-    """
-    # save the lattice
-    group = kwargs.get("group", machines._lat.name)
-    import h5py
-    h5f = h5py.File(fname, 'r')
-    grp = h5f[group]
-    for k,v in grp.items():
-        caput(k, v)
+    return nlive, ndead
 
 
 def outputFileName(group, subgroup, create_path = True):
@@ -1168,3 +1156,67 @@ def calcTuneRm(quad, **kwargs):
         m[1,i] = -bta[i,1]/4.0/np.pi * fac
     return m
 
+
+def compareLattice(*argv, **kwargs):
+    """
+    - withlive, False
+    - group, HDF5 file group, default lattice name
+    - sponly, True, compare only the setpoint PVs
+    - elements, None, or a list of family names ["QUAD"]
+
+    returns same and diff. Each is a list of (pv, values).
+
+    >>> same, diff = compareLattice("file1.hdf5", elements=["QUAD"])
+    >>> sm, df = compareLattice("file1.hdf5", elements=["COR", "BPM", "UBPM"])
+    >>> sm, df = compareLattice("file1.hdf5", sponly=True)
+    """
+    group = kwargs.get("group", machines._lat.name)
+    sponly = kwargs.get("sponly", False)
+    elements = kwargs.get("elements", None)
+    # filter the PVs
+    if elements is not None:
+        pvlst = []
+        for fam in elements:
+            for e in machines._lat.getElementList(fam):
+                pvlst.extend(e.pv())
+    else:
+        pvlst = None
+
+    dat = {}
+    nset = len(argv)
+    import h5py
+    for i,fname in enumerate(argv):
+        h5f = h5py.File(fname, 'r')
+        g = h5f[group]
+        for pv,val in g.items():
+            if pvlst is not None and pv not in pvlst:
+                continue
+            if sponly and val.attrs.get("setpoint", 0) != 1:
+                continue
+            dat.setdefault(pv, [])
+            if g[pv].dtype in ['float64']:
+                dat[pv].append(float(val.value))
+            else:
+                raise RuntimeError("unknown {0} data type: {0}".format(
+                        pv, g[pv].dtype))
+        h5f.close()
+    if len(dat) > 0 and kwargs.get("withlive", False):
+        pvs = dat.keys()
+        vals = caget(pvs)
+        for i,pv in enumerate(pvs):
+            dat[pv].insert(0, vals[i])
+        nset = nset + 1
+
+    same, diff = [], []
+    i = 0
+    for pv,vals in dat.items():
+        i = i + 1
+        if len(vals) < nset:
+            diff.append([pv, vals])
+        elif all([v == vals[0] for v in vals[1:]]):
+            same.append([pv, vals])
+            continue
+        else:
+            diff.append([pv, vals])
+        #print i, pv, vals
+    return same, diff
