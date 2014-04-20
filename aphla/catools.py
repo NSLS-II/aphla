@@ -488,7 +488,7 @@ def putPvData(fname, group, **kwargs):
     pv, dat = [], []
     for k,v in grp.items():
         #caput(k, v)
-        if sponly and v.attrs["setpoint"] != 1:
+        if sponly and v.attrs.get("setpoint", 0) != 1:
             continue
         pv.append(k)
         dat.append(v)

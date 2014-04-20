@@ -395,7 +395,8 @@ def saveLattice(**kwargs):
         saveLattice(notes="Good one")
     """
     # save the lattice
-    output = outputFileName("snapshot", kwargs.get("subgroup",""))
+    output = kwargs.pop("output", 
+                        outputFileName("snapshot", kwargs.get("subgroup","")))
     lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
     unitsys = kwargs.get("unitsys", "phy")

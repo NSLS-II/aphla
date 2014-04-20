@@ -11,6 +11,7 @@ import logging
 import numpy as np
 import time
 import os
+import re
 from fnmatch import fnmatch
 from datetime import datetime
 from catools import caget, caput, CA_OFFLINE, savePvData
@@ -1160,20 +1161,23 @@ def calcTuneRm(quad, **kwargs):
 
 def compareLattice(*argv, **kwargs):
     """
-    - withlive, False
     - group, HDF5 file group, default lattice name
     - sponly, True, compare only the setpoint PVs
     - elements, None, or a list of family names ["QUAD"]
+    - ignore, regular expression
 
     returns same and diff. Each is a list of (pv, values).
 
     >>> same, diff = compareLattice("file1.hdf5", elements=["QUAD"])
     >>> sm, df = compareLattice("file1.hdf5", elements=["COR", "BPM", "UBPM"])
     >>> sm, df = compareLattice("file1.hdf5", sponly=True)
+    >>> sm, df = compareLattice("file1.hdf5", sponly=True, ignore=["SR:.+BPM.*Ampl.*"])
     """
     group = kwargs.get("group", machines._lat.name)
     sponly = kwargs.get("sponly", False)
     elements = kwargs.get("elements", None)
+    ignore = kwargs.get("ignore", None)
+
     # filter the PVs
     if elements is not None:
         pvlst = []
@@ -1194,11 +1198,15 @@ def compareLattice(*argv, **kwargs):
                 continue
             if sponly and val.attrs.get("setpoint", 0) != 1:
                 continue
+            if ignore and any([re.match(p,pv) for p in ignore]):
+                continue
             dat.setdefault(pv, [])
             if g[pv].dtype in ['float64']:
                 dat[pv].append(float(val.value))
+            elif g[pv].dtype in ['int32', 'int64']:
+                dat[pv].append(int(val.value))
             else:
-                raise RuntimeError("unknown {0} data type: {0}".format(
+                raise RuntimeError("unknown {0} data type: {1}".format(
                         pv, g[pv].dtype))
         h5f.close()
     if len(dat) > 0 and kwargs.get("withlive", False):
