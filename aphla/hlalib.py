@@ -1049,7 +1049,6 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
 
     ::
         saveLattice("snapshot.hdf5", lat, [("COR", ("x", "y")), ("QUAD", ("b1",))], "Good one")
-
     """
     # save the lattice
     verbose = kwargs.get("verbose", 0)

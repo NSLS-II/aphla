@@ -412,7 +412,6 @@ def saveLattice(**kwargs):
                          "xref0", "xref1", "yref0", "yref1", "ampl")),
                 ("RFCAVITY", ("f", "v", "phi")),
                 ("DCCT", ("I", 'tau', "Iavg"))]
-
     nlive, ndead = _saveLattice(
         output, lat, elemflds, notes, **kwargs)
 
@@ -431,6 +430,7 @@ def saveLattice(**kwargs):
     h5f.close()
     
     return output
+
 
 def putLattice(fname, **kwargs):
     putPvData(fname, machines._lat.name, **kwargs)
