@@ -134,7 +134,9 @@ class CaDataMonitor(QtCore.QObject):
 
     def getRange(self):
         vals = [v[-1] for k,v in self.data.items() if v and v[-1].ok] 
-        return min(vals), max(vals)
+        if vals: 
+            return min(vals), max(vals)
+        return 0, 1
 
     def waveFormSize(self, pv):
         return self._wfsize.get(pv, None)

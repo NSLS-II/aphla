@@ -1169,7 +1169,8 @@ class ApCaArrayPlot(ApCaPlot):
                     Qwt.QwtAbstractScaleDraw.Backbone, False)
 
     def setErrorBar(self, on):
-        self.curves1[0].errorOnTop = on
+        for c in self.curves:
+            c.errorOnTop = on
 
     def moveCurves(self, ax, fraction = 0.80):
         scalediv = self.axisScaleDiv(ax)

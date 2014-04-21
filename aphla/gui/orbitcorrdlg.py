@@ -25,7 +25,7 @@ import PyQt4.Qwt5 as Qwt
 
 import numpy as np
 from aporbitplot import ApCaPlot, ApCaArrayPlot
-from aphla import (catools, getElements, setLocalBump,
+from aphla import (catools, getElements, setLocalBump, fget,
                    getTwiss, getTunes, getTwissAt, getBeamlineProfile)
 from functools import partial
 
@@ -406,8 +406,8 @@ class CorrectorViewer(QtGui.QWidget):
 
         #self.connect(self.table4, SIGNAL("doubleClicked(QModelIndex)"),
         #             self.delCorrector)
-        self._x0 = ap.fget(self._cors, "x", handle="setpoint", unitsys=None)
-        self._y0 = ap.fget(self._cors, "y", handle="setpoint", unitsys=None)
+        self._x0 = fget(self._cors, "x", handle="setpoint", unitsys=None)
+        self._y0 = fget(self._cors, "y", handle="setpoint", unitsys=None)
 
 
     def addCorrector(self, idx):
@@ -629,8 +629,8 @@ class BumpNCor(QtGui.QWidget):
                      self.corview.applyKick)
         self.connect(btnZoomin, SIGNAL("clicked()"),
                      self._zoom_in)
-        self._x0 = ap.fget(cors, "x", handle="setpoint", unitsys=None)
-        self._y0 = ap.fget(cors, "y", handle="setpoint", unitsys=None)
+        self._x0 = fget(cors, "x", handle="setpoint", unitsys=None)
+        self._y0 = fget(cors, "y", handle="setpoint", unitsys=None)
 
     def clear(self):
         self.corview.clear()
