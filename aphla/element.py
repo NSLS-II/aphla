@@ -465,7 +465,8 @@ class CaAction:
             if self._all_within_range(rawval[i], lowhigh): continue
 
             if bc == 'exception':
-                raise OverflowError(bc_err)
+                raise OverflowError(
+                    "value {0} is outside of boundary {1}".format(val, lowhigh))
             elif bc == 'boundary':
                 _logger.info("setting {0} to its boundary {1} instead of {2}".\
                                  format(self.pvsp[i], lowhigh, rawval[i]))
@@ -803,6 +804,15 @@ class CaElement(AbstractElement):
                 return decr.pvrb + decr.pvsp
             else:
                 return []
+        elif kwargs.get('handle', None):
+            pvl = []
+            if kwargs["handle"] == "setpoint":
+                for fld,act in self._field.items():
+                    pvl.extend(act.pvsp)
+            elif kwargs["handle"] == "readback":
+                for fld,act in self._field.items():
+                    pvl.extend(act.pvrb)
+            return pvl
         return []
 
     def _pv_tags(self, tags):
@@ -940,6 +950,8 @@ class CaElement(AbstractElement):
 
     def convertible(self, field, src, dst):
         """check the unit conversion is possible or not"""
+
+        if not self._field.has_key(field): return False
 
         if src is None and dst is None: return True
 

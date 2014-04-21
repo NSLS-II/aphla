@@ -473,3 +473,26 @@ def savePvData(fname, pvs, **kwargs):
     h5f.close()
     return nlive, ndead
 
+def putPvData(fname, group, **kwargs):
+    """
+    put saved lattice to real machine.
+
+    sponly - only put setpoint pvs to the machine. default True
+    """
+    sponly = kwargs.get("sponly", True)
+    
+    import h5py
+    h5f = h5py.File(fname, 'r')
+    grp = h5f[group]
+    
+    pv, dat = [], []
+    for k,v in grp.items():
+        #caput(k, v)
+        if sponly and v.attrs.get("setpoint", 0) != 1:
+            continue
+        pv.append(k)
+        dat.append(v)
+    caput(pv, dat)
+
+    pass
+

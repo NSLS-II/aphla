@@ -250,7 +250,8 @@ def load(machine, submachine = "*", **kwargs):
         lat.loop = bool(d.get("loop", True))
         lat.machine = machname
         lat.machdir = machdir
-        lat.arpvs = d.get("archive_pvs", None)
+        if d.get("archive_pvs", None):
+            lat.arpvs = os.path.join(machdir, d["archive_pvs"])
         lat.OUTPUT_DIR = d.get("output_dir", 
                                os.path.join(HLA_OUTPUT_DIR, msect))
 

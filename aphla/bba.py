@@ -45,14 +45,14 @@ class BbaBowtie:
     >>> 'par = {'bpm':
 
     """
-    def __init__(self, **kwargs):
+    def __init__(self, bpm, quad, cor, **kwargs):
         """
         Read config from a big table, link quadrupole, bpm and correctors
         """
         # bpm,trim,quad triplet
-        self._b, self._bf = kwargs.get("bpm",  [None]*2)
-        self._q, self._qf = kwargs.get("quad", [None]*2)
-        self._c, self._cf = kwargs.get("cor",  [None]*2)
+        self._b, self._bf = bpm
+        self._q, self._qf = quad
+        self._c, self._cf = cor
 
         self.quad_dkick = kwargs.get("quad_dkick", 0.0)
         self.cor_dkicks  = kwargs.get('cor_dkicks', [])
@@ -70,19 +70,13 @@ class BbaBowtie:
         # do not extend for the intersection with x-axis.
         #self.line_segment_only = False  
         self.orbit_diffstd = 1e-6
-        self.minwait = 6
-
-    def setInput(self, bpm, quad, cor, quad_dkick, cor_dkicks):
-        """ignore if input is None"""
-        if bpm is not None: self._b, self._bf = bpm
-        if quad is not None: self._q, self._qf = quad
-        if cor is not None: self._c, self._cf = cor
-        if quad_dkick is not None: self.quad_dkick = quad_dkick
-        if cor_dkicks is not None: self.cor_dkicks = cor_dkicks
+        self.minwait = 2
 
     def _get_orbit(self):
-        if self._bf == 'x': return getOrbit()[:,0]
-        if self._bf == 'y': return getOrbit()[:,1]
+        if self._bf == 'x':
+            return getOrbit()[:,0]
+        elif self._bf == 'y':
+            return getOrbit()[:,1]
         return None
 
     def _filterLines(self, x, y, p_slope = 0.8, p_xintercept=0.9,
@@ -139,11 +133,6 @@ class BbaBowtie:
         - if dkick is set, kick will be renewed.
         - if dqk1 is set, qk1 will be renewed.
         """
-        # guihook QApplication::processEvents
-        guihook = kwargs.get("guihook", None)
-        # progress bar widget
-        pbar = kwargs.get("progress", None)
-
         #print __file__, "measuring bba"
         verbose = kwargs.get('verbose', 0)
 
@@ -154,7 +143,6 @@ class BbaBowtie:
         #print "getting {0} {1}".format(qk0, xp0)
         self._vq0 = qk0
         self._vc0 = xp0
-        if pbar: pbar.setValue(5)
 
         # ignore kick list if dkick is provided.
         self.cor_kick = [xp0 + dk for dk in self.cor_dkicks]
@@ -169,9 +157,6 @@ class BbaBowtie:
         # change quad
         self._q.put(self._qf, qk0 + self.quad_dkick, unitsys=None)
 
-        if guihook is not None: guihook()
-        if pbar: pbar.setValue(10)
-
         timeout, log = waitStableOrbit(
             obtref, diffstd_list=True, verbose=verbose, 
             diffstd=self.orbit_diffstd, minwait=self.minwait)
@@ -183,8 +168,6 @@ class BbaBowtie:
 
         #print "step down quad"
         #print "-- reset quad:", self._q.name
-        if guihook is not None: guihook()
-        if pbar: pbar.setValue(20)
 
         obtref = getOrbit()
         self._q.put(self._qf, qk0, unitsys=None)
@@ -195,7 +178,6 @@ class BbaBowtie:
 
         #print "   reading orbit", np.shape(getOrbit())
         obt02 = self._get_orbit()
-        if guihook is not None: guihook()
 
         # initial qk
         for j,dxp in enumerate(self.cor_kick):
@@ -252,8 +234,6 @@ class BbaBowtie:
                      "q={0}, dq={1}, b={2}, c={3}, dc={4}".format(
                          self._q.name, self.quad_dkick,
                          self._b.name, self._c.name, self.cor_dkicks))
-
-        if pbar: pbar.setValue(100)
 
 
     def align(self, **kwargs):
