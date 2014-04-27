@@ -355,7 +355,8 @@ def caRmCorrect(resp, kker, m, **kwarg):
     k1 = k0 + dk*scale
 
     kkerin, k1in = [], []
-    if dImax is not None:
+    if dImax is not None and np.max(np.abs(dk)) > dImax:
+        # scale only if necessary
         im = np.argmax(np.abs(dk))
         dk = dk/np.abs(dk[im]) * dImax
         kkerin = [pv for pv in kker]
@@ -377,7 +378,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
     if verbose > 0:
         for i,pv in enumerate(kkerin):
             print i, pv, k1in[i], k1in[i] - k0[i]
-        
+
     # the real setting
     if dryrun:
         return (0, "setting {0} cors, min= {1} max= {2}".format(
@@ -477,8 +478,11 @@ def putPvData(fname, group, **kwargs):
     """
     put saved lattice to real machine.
 
-    sponly - only put setpoint pvs to the machine. default True
+    sponly - only put setpoint pvs to the machine. default True.
+
+    setpoint property is explicit, i.e. ff there is no "setpoint" information about the PV, then it is treated as non-setpoint.
     """
+
     sponly = kwargs.get("sponly", True)
     
     import h5py
@@ -493,6 +497,4 @@ def putPvData(fname, group, **kwargs):
         pv.append(k)
         dat.append(v)
     caput(pv, dat)
-
-    pass
 

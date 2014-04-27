@@ -1205,8 +1205,7 @@ def compareLattice(*argv, **kwargs):
             elif g[pv].dtype in ['int32', 'int64']:
                 dat[pv].append(int(val.value))
             else:
-                raise RuntimeError("unknown {0} data type: {1}".format(
-                        pv, g[pv].dtype))
+                print "unknown {0} data type: {1}".format(pv, g[pv].dtype)
         h5f.close()
     if len(dat) > 0 and kwargs.get("withlive", False):
         pvs = dat.keys()

@@ -159,10 +159,10 @@ def setLocalBump(bpmrec, correc, ref, **kwargs):
     for i in range(repeat):
         #for k,b in enumerate(bpmpvs):
         #    if bpmref[k] != 0.0: print(k, bpmlst[k], b, bpmref[k])
-        ret = caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref), **kwargs)
-        if ret[0] != 0: return ret
+        err, msg = caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref), **kwargs)
+        if err != 0:
+            raise RuntimeError("ERROR at iteration %d/%d: %s" % (i,repeat,msg))
 
-    return (0, None)
 
 def correctOrbit(bpm, cor, **kwargs):
     """
@@ -217,6 +217,7 @@ def correctOrbit(bpm, cor, **kwargs):
         print("Using: %d bpms, %d cors" % (len(bpmr), len(corr)))
     kwargs["fullm"] = False
     setLocalBump(bpmr, corr, ref, **kwargs)
+
 
 def _random_kick(plane = 'V', amp=1e-9, verbose = 0):
     """

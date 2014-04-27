@@ -716,7 +716,11 @@ class ApCaPlot(Qwt.QwtPlot):
         if s is not None:
             symb.setStyle(s)
         if dsize is not None:
-            sz = symb.size() + QtCore.QSize(dsize, dsize)
+            sz = symb.size()
+            if sz0 > 0:
+                sz += QtCore.QSize(dsize, dsize)
+            else:
+                sz = QtCore.QSize(dsize+1, dsize+1)
             symb.setSize(sz)
             #print "New size:", sz.width(), sz.height()
         c.setSymbol(symb)
@@ -729,7 +733,10 @@ class ApCaPlot(Qwt.QwtPlot):
             pen.setStyle(ls)
             c.setPen(pen)
         if dwidth is not None:
-            pen.setWidth(pen.width() + dwidth)
+            if pen.width() == 0:
+                pen.setWidth(1.0 + dwidth)
+            else:
+                pen.setWidth(pen.width() + dwidth())
             c.setPen(pen)
         if color is not None:
             pen.setColor(color)
