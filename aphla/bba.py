@@ -164,6 +164,7 @@ class BbaBowtie:
             # change quad
             self._q.put(self._qf, self._vq0 + dqk, unitsys=None)
             time.sleep(self.wait)
+            self._q.put(self._qf, self._vq0 + dqk, unitsys=None)
             if verbose > 0:
                 print "setting {0}.{1} to {2} (delta={3})".format(
                 self._q.name, self._qf, self._vq0 + dqk, self.quad_dkick)
@@ -171,10 +172,10 @@ class BbaBowtie:
             for j,dck in enumerate(self.cor_kick):
                 self._c.put(self._cf, dck, unitsys=None)
                 time.sleep(self.wait)
+                self._c.put(self._cf, dck, unitsys=None)
                 tobt = np.zeros(len(obt00), 'd')
                 for jj in range(sample):
                     tobt[:] = tobt[:] + self._get_orbit()
-                    time.sleep(1)
                 k = i * len(self.cor_kick) + j
                 self.orbit[:,k] = tobt/sample
                 print np.min(tobt/sample), np.max(tobt/sample)
