@@ -14,7 +14,7 @@ import os
 import re
 from fnmatch import fnmatch
 from datetime import datetime
-from catools import caget, caput, CA_OFFLINE, savePvData
+from catools import caget, caput, CA_OFFLINE, savePvData, waitPv
 import machines
 import element
 import itertools
@@ -1227,3 +1227,34 @@ def compareLattice(*argv, **kwargs):
             diff.append([pv, vals])
         #print i, pv, vals
     return same, diff
+
+def waitRamping(elem, **kwargs):
+    """
+    waiting until elem finished ramping.
+
+    - elem, single element object or list of objects
+    - timeout, default 5 seconds.
+    - wait, default 0 seconds. Minimal waiting.
+    - stop, default 0, stop value
+    """
+
+    wait = kwargs.get("wait", 0)
+    stop = kwargs.get("stop", 0)
+    timeout = kwargs.get("timeout", 5)
+    dt = kwargs.get("dt", 0.2)
+
+    if wait > 0:
+        time.sleep(wait)
+
+    if isinstance(elem, element.CaElement):
+        elemlst = [elem]
+        pvl = elem.pv(field="ramping")
+    elif isinstance(elem, (list, tuple)) and \
+            all([isinstance(e, element.CaElement) for e in elem]):
+        pvl = reduce(lambda x,y: x + y, 
+                     [e.pv(field="ramping") for e in elem])
+    
+    wdt = waitPv(pvl, stop = stop, timeout = timeout, dt = dt)
+    if kwargs.get("verbose", 0) > 0:
+        print "waited for ", wdt, "seconds"
+    

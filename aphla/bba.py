@@ -95,7 +95,7 @@ class BbaBowtie:
         p, res, rank, sigv, rcond = np.polyfit(x, y, 1, full=True)
         #print "slope:", p[-2]
         #print "constant:", p[-1]
-        print "xintercept:", np.average(-p[-1]/p[-2])
+        #print "xintercept:", np.average(-p[-1]/p[-2])
         # keep the larger slope center part
         i1 = int(n*(1.0-p_slope))
         kept1 = np.argsort(np.abs(p[-2,:]))[i1:]
@@ -178,7 +178,7 @@ class BbaBowtie:
                     tobt[:] = tobt[:] + self._get_orbit()
                 k = i * len(self.cor_kick) + j
                 self.orbit[:,k] = tobt/sample
-                print np.min(tobt/sample), np.max(tobt/sample)
+                #print np.min(tobt/sample), np.max(tobt/sample)
                 self.bpm_cob.append(self._b.get(self._bf, unitsys=None))
         # reset qk
         if verbose > 0:
@@ -239,12 +239,12 @@ class BbaBowtie:
         if not self.cor_kick:
             _logger.warn("no cor setpoint to analyze")
             return
-        print self.cor_kick
+        #print self.cor_kick
         n = len(self.cor_kick)
         dobt = np.transpose(self.orbit[:,n:2*n] - self.orbit[:,:n])
-        print "dObt: min", np.min(dobt, axis=1)
-        print "dObt: max", np.max(dobt, axis=1)
-        print "dObt: var", np.var(dobt, axis=1)
+        #print "dObt: min", np.min(dobt, axis=1)
+        #print "dObt: max", np.max(dobt, axis=1)
+        #print "dObt: var", np.var(dobt, axis=1)
  
         kick = self._filterLines(self.cor_kick, dobt)
 

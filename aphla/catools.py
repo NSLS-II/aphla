@@ -498,3 +498,18 @@ def putPvData(fname, group, **kwargs):
         dat.append(v)
     caput(pv, dat)
 
+
+def waitPv(pvs, stop = 0, timeout = 5, dt = 0.2):
+    t0 = datetime.now()
+    while True:
+        dt10 = (datetime.now() - t0).total_seconds()
+        if all([v == stop for v in caget(pvs)]):
+            return dt10
+        if dt10 > timeout:
+            raise RuntimeError(
+                "Timeout when waiting for {0} == {1} ({2} sec)".format(
+                    pvs, stop, timeout))
+        time.sleep(dt)
+    return None
+
+
