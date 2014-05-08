@@ -51,7 +51,7 @@ def _ca_put_sim(pvs, vals):
     return ct.ca_nothing
 
 def caget(pvs, timeout=6, datatype=None, format=ct.FORMAT_TIME,
-           count=0, throw=False):
+           count=0, throw=False, verbose=0):
     """channel access read
     
     This is a simple wrap of cothread.catools, support UTF8 string
@@ -499,17 +499,66 @@ def putPvData(fname, group, **kwargs):
     caput(pv, dat)
 
 
-def waitPv(pvs, stop = 0, timeout = 5, dt = 0.2):
+def caWait(pvs, stop = 0, timeout = 5, dt = 0.2):
+    """
+    wait until all pvs == stop.
+    """
     t0 = datetime.now()
     while True:
         dt10 = (datetime.now() - t0).total_seconds()
-        if all([v == stop for v in caget(pvs)]):
+        vals = caget(pvs)
+        if all([v == stop for v in vals]):
             return dt10
         if dt10 > timeout:
             raise RuntimeError(
-                "Timeout when waiting for {0} == {1} ({2} sec)".format(
-                    pvs, stop, timeout))
+                "Timeout ({4}/{2} sec) when waiting for {0} == {1} ({3})".format(
+                    pvs, stop, timeout, vals, dt10))
         time.sleep(dt)
     return None
 
+
+def caWaitStable(pvs, values, vallo, valhi, **kwargs):
+    """read pvs and wait until the std less than epsilon
+
+    Parameters
+    -----------
+    pvs : list or tuple. A list of PVs
+    values : list or tuple. Same size as elemfld
+    vallo : list or tuple with low boundary values.
+    valhi : list or tuple with high boundary values.
+    sample : int, optional, default 3, averaged over to compare
+    timeout : int, optional, default 5, in seconds.
+    dt      : float, default 0.1 second. waiting between each check.
+ 
+    Examples
+    ---------
+    >>> cors = getElements("COR")
+    >>> pvs = [cors[0].pv(field='x', handle="readback")[0], ]
+    >>> cors[0].x = 0
+    >>> waitReadback(pvs, [0.0, ], [-0.001,], [0.001,])
+
+    """
+
+    nsample = kwargs.pop("sample", 3)
+    dt      = kwargs.pop("dt", 0.1)
+
+    n, t0 = len(pvs), datetime.now()
+    diff = np.zeros((nsample, n), 'd')
+    for i in range(nsample):
+        diff[i,:] = caget(pvs, **kwargs)
+
+    iloop = 0
+    while True:
+        diff[iloop % nsample,:] = caget(pvs, **kwargs)
+        avg = np.average(diff, axis=0)
+        if all([vallo[i] <= avg[i] <= valhi[i] for i in range(n)]):
+            break
+        t1 = datetime.now()
+        if (t1 - t0).total_seconds() > kwargs.get("timeout", 5):
+            vdiff = [avg[i] - values[i] for i in range(n)]
+            raise RuntimeError("Timeout, tried {0} times, "
+                               "diff= {1} lo= {2} hi={3}".format(
+                    iloop, vdiff, vallo, valhi))
+        time.sleep(dt)
+        iloop = iloop + 1
 

@@ -18,14 +18,13 @@ from . import machines
 from catools import caRmCorrect, measCaRmCol
 from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
     getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
-    getLocations, outputFileName)
-from respmat import OrbitRespMat
+    getLocations, outputFileName, fget, fput)
 import logging
 
 __all__ = [ 'calcLifetime', 'getLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
-    'stripView'
+    'stripView', 'measRmCol'
 ]
 
 _logger = logging.getLogger(__name__)
@@ -732,6 +731,42 @@ def measChromRm(sextlst):
     :warn: NotImplemented
     """
     raise NotImplementedError()
+
+def measRmCol(resp, kker, kfld, klst, **kwargs):
+    """
+    measure the response matrix of `resp` from `kicker`
+
+    :param list resp: list of the response (elem, field)
+    :param kker: the kicker object
+    :param kfld: the kicker field
+    :param list klst: the kicker setpoints (ki0, ki1, ...)
+    :param int sample: observatins per kicker setpoint
+    :param int deg: degree of the fitting polynomial
+    :param int verbose:
+
+    returns slope, rawdata (nk, nresp, nsamle)
+    """
+    unitsys = kwargs.pop("unitsys", None)
+    sample  = kwargs.pop("sample", 3)
+    deg     = kwargs.pop("deg", 1)
+
+    dat = np.zeros((len(klst), len(resp), sample), 'd')
+    klstrb = np.zeros((len(klst), sample), 'd')
+    k0 = kker.get(kfld, handle="setpoint", unitsys=None)
+    for i,ki in enumerate(klst):
+        fput([(kker, kfld, ki),], unitsys=unitsys, wait_readback=True)
+        for j in range(sample):
+            klstrb[i,j] = kker.get(kfld, handle="readback", unitsys=unitsys)
+            dat[i,:,j] = fget(resp, **kwargs)
+
+    # nonblocking
+    kker.put(kfld, k0, unitsys=None)
+    p, resi, rank, sv, rcond = np.polyfit(
+        klst, np.average(dat, axis=-1), deg, full = True)
+    # blocking
+    fput([(kker, kfld, k0),], unitsys=None, wait_readback=True)
+
+    return p[-2,:], p[-1,:], klstrb, dat
 
 #
 def measOrbitRm(bpm, cor, **kwargs):

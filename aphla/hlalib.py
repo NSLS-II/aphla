@@ -14,7 +14,7 @@ import os
 import re
 from fnmatch import fnmatch
 from datetime import datetime
-from catools import caget, caput, CA_OFFLINE, savePvData, waitPv
+from catools import caget, caput, CA_OFFLINE, savePvData, caWait, caWaitStable
 import machines
 import element
 import itertools
@@ -232,32 +232,45 @@ def getExactElement(elemname):
 def eget(elem, fields = None, **kwargs):
     raise RuntimeError("deprecated! please revise it to `fget(elem,field)`")
 
-def fget(elem, field, **kwargs):
+def fget(*argv, **kwargs):
+    """
+    >>> fget("BPM", "x")
+    >>> fget([(bpm1, 'x'), (bpm2, 'y')])
+    """
+    if len(argv) == 1:
+        elem, fld = zip(*(argv[0]))
+        return _fget_2(elem, fld, **kwargs)
+    elif len(argv) == 2:
+        elst = getElements(argv[0])
+        if not elst: return None
+        return _fget_2(elst, [argv[1]] * len(elst), **kwargs)
+    else:
+        raise RuntimeError("Unknown input {0}".format(argv))
+
+def _fget_2(elst, field, **kwargs):
     """get elements field values for a family
 
     Parameters
     -----------
-    elem : str, list. element name, name list, pattern or object list
-    fields : str, list. field name or name list
+    elem : list. element name, name list, pattern or object list
+    fields : list. field name or name list
     handle : str, optional, default "readback"
-    unitsys : str, optional, default None, unit system, 
+    unitsys : str, optional, default "phy", unit system, 
+
     Examples
     ---------
-    >>> eget('DCCT', 'value')
-    >>> eget('BPM', 'x')
-    >>> eget('p*c30*', 'x')
+    >>> fget('DCCT', 'value')
+    >>> fget('BPM', 'x')
+    >>> fget('p*c30*', 'x')
 
     >>> bpm = getElements('p*c30*')
-    >>> eget(bpm, 'x', handle="setpoint", unitsys = None)
+    >>> fget(bpm, 'x', handle="setpoint", unitsys = None)
     """
 
     handle = kwargs.pop('handle', "readback")
-    unitsys = kwargs.pop("unitsys", None)
+    unitsys = kwargs.pop("unitsys", "phy")
 
-    elst = getElements(elem)
-    if not elst: return None
-
-    v = [e.pv(field=field, handle=handle) for e in elst]
+    v = [e.pv(field=fld, handle=handle) for e,fld in zip(elst, field)]
     assert len(set([len(pvl) for pvl in v])) <= 1, \
         "Must be exact one pv for each field"
     pvl = reduce(lambda x,y: x + y, v)
@@ -265,17 +278,70 @@ def fget(elem, field, **kwargs):
     dat = caget(pvl, **kwargs)
     if unitsys is None: return dat
 
-    ret = [e.convertUnit(field, dat[i], None, unitsys)
+    ret = [e.convertUnit(field[i], dat[i], None, unitsys)
                for i,e in enumerate(elst)]
     return ret
 
         
-def getPvList(elem, field, handle = 'readback', **kwargs):
+def fput(elemfld_vals, **kwargs):
+    """get elements field values for a family
+
+    Parameters
+    -----------
+    elemfld_vals : list or tuple. A list of (element, field, value)
+    wait_readback : True/False. default False. Waiting until readback agrees
+    timeout : int, optional, default 5, in seconds.
+    unitsys : None or str, default "phy", unit system.
+    epsilon : float, list or tuple. default None.
+ 
+    Examples
+    ---------
+    >>> cors = getElements("COR")
+    >>> elemfld = [(cors[0], 'x'), (cors[0], 'y')]
+    >>> fput(elemfld, [0.0, 0.0], wait_readback = True, epsilon=[0.1, 0.1])
+
+    If epsilon is not provided, use system configured.
+    """
+
+    # timeout = kwargs.pop('timeout', 5)
+    unitsys = kwargs.pop('unitsys', "phy")
+    wait_readback = kwargs.pop('wait_readback', False)
+    epsilon = kwargs.pop("epsilon", None)
+
+    # a list of (pv, spval, elem, field)
+    pvl = []
+    # expand to a list
+    epsl = kwargs.pop("epsilon", None)
+
+    if epsilon is None:
+        epsl = [e.getEpsilon(fld) for e,fld,v in elemfld_vals]
+    elif isinstance(epsilon, (list, tuple)):
+        epsl = epsilon
+    else:
+        epsl = [epsilon] * len(elemfld_vals)
+
+    for i,r in enumerate(elemfld_vals):
+        elem, fld, val = r
+        valrec = [val, val - epsl[i], val + epsl[i]]
+        if unitsys is not None:
+            valrec = [elem.convertUnit(fld, v, unitsys, None)
+                      for v in valrec]
+        for j,pv in enumerate(elem.pv(field=fld, handle="setpoint")):
+            pvl.append([pv, elem, fld] + valrec)
+
+    pvs, vals = [v[0] for v in pvl], [v[3] for v in pvl]
+    ret = caput(pvs, vals, **kwargs)
+    if wait_readback:
+        vallo, valhi = [v[4] for v in pvl], [v[5] for v in pvl]
+        caWaitStable(pvs, vals, vallo, valhi, **kwargs)
+
+
+def getPvList(elems, field, handle = 'readback', **kwargs):
     """return a pv list for given element or element list
 
     Parameters
     ------------
-    elem : element pattern, name list or CaElement object list
+    elems : element pattern, name list or CaElement object list
     field : e.g. 'x', 'y', 'k1'
     handle : 'readback' or 'setpoint'
 
@@ -934,7 +1000,7 @@ def _release_lock(tag):
 
 
 
-def waitChanged(elemlst, fields, v0, **kwargs):
+def _waitChanged(elemlst, fields, v0, **kwargs):
     """
     set pvs and waiting until the setting takes effect
 
@@ -990,7 +1056,8 @@ def waitChanged(elemlst, fields, v0, **kwargs):
         if ntrial >= maxtrial: return False
         else: return True
 
-def waitStable(elemlst, fields, maxstd, **kwargs):
+
+def _waitStable(elemlst, fields, maxstd, **kwargs):
     """
     set pvs and waiting until the setting takes effect
 
@@ -1235,9 +1302,18 @@ def waitRamping(elem, **kwargs):
     - elem, single element object or list of objects
     - timeout, default 5 seconds.
     - wait, default 0 seconds. Minimal waiting.
-    - stop, default 0, stop value
-    """
+    - stop, default 0, stop value. This is related to the ramping command PV.
 
+    >>> cors = getElements("COR")
+    >>> cors[0] = 0.0
+    >>> waitRamping(cors[0])
+    >>> correctorOrbit()
+    >>> waitRamping(cors)
+
+    For EPICS, It looks at "ramping" field for the elements and wait until all
+    of the values equal to *stop*.
+    """
+    t0 = datetime.now()
     wait = kwargs.get("wait", 0)
     stop = kwargs.get("stop", 0)
     timeout = kwargs.get("timeout", 5)
@@ -1254,7 +1330,8 @@ def waitRamping(elem, **kwargs):
         pvl = reduce(lambda x,y: x + y, 
                      [e.pv(field="ramping") for e in elem])
     
-    wdt = waitPv(pvl, stop = stop, timeout = timeout, dt = dt)
+
+    wdt = caWait(pvl, stop = stop, timeout = timeout, dt = dt)
     if kwargs.get("verbose", 0) > 0:
-        print "waited for ", wdt, "seconds"
+        print "waited for ", wdt, (datetime.now() - t0).total_seconds(), "seconds"
     

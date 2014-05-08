@@ -243,7 +243,7 @@ class ChannelFinderAgent(object):
 
         tags are separated by ';'
 
-        pv name can be duplicate (chained element)
+        pv name can be duplicate (chained element).
         """
         conn = sqlite3.connect(fname)
         # use byte string instead of the default unicode
