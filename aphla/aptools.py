@@ -754,9 +754,12 @@ def measRmCol(resp, kker, kfld, klst, **kwargs):
     klstrb = np.zeros((len(klst), sample), 'd')
     k0 = kker.get(kfld, handle="setpoint", unitsys=None)
     for i,ki in enumerate(klst):
-        fput([(kker, kfld, ki),], unitsys=unitsys, wait_readback=True)
+        fput([(kker, kfld, ki),], unitsys=unitsys,
+             wait_readback=True, verbose=1)
         for j in range(sample):
             klstrb[i,j] = kker.get(kfld, handle="readback", unitsys=unitsys)
+            if kwargs.get("verbose", 0) > 0:
+                print("Reading", kker, klstrb[i,j])
             dat[i,:,j] = fget(resp, **kwargs)
 
     # nonblocking

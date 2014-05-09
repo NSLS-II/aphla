@@ -118,7 +118,7 @@ def cagetr(pvs, **kwargs):
     return [cagetr(pv, **kwargs) for pv in pvs]
 
 
-def caput(pvs, values, timeout=2, wait=True, throw=True):
+def caput(pvs, values, timeout=2, wait=True, throw=True, verbose = 0):
     """channel access write.
 
     This is simple wrap of `cothread.catools.caput` to support UTF8 string
@@ -529,7 +529,8 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
     sample : int, optional, default 3, averaged over to compare
     timeout : int, optional, default 5, in seconds.
     dt      : float, default 0.1 second. waiting between each check.
- 
+    verbose : int.
+
     Examples
     ---------
     >>> cors = getElements("COR")
@@ -541,16 +542,23 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
 
     nsample = kwargs.pop("sample", 3)
     dt      = kwargs.pop("dt", 0.1)
+    verbose = kwargs.get("verbose", 0)
 
     n, t0 = len(pvs), datetime.now()
     diff = np.zeros((nsample, n), 'd')
-    for i in range(nsample):
-        diff[i,:] = caget(pvs, **kwargs)
 
     iloop = 0
     while True:
-        diff[iloop % nsample,:] = caget(pvs, **kwargs)
+        for i in range(nsample):
+            time.sleep(dt/(nsample+1.0))
+            diff[i,:] = caget(pvs, **kwargs)
+            
         avg = np.average(diff, axis=0)
+        #if verbose > 0:
+        #    print "V:", avg
+        #    print vallo
+        #    print valhi
+
         if all([vallo[i] <= avg[i] <= valhi[i] for i in range(n)]):
             break
         t1 = datetime.now()
@@ -559,6 +567,5 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
             raise RuntimeError("Timeout, tried {0} times, "
                                "diff= {1} lo= {2} hi={3}".format(
                     iloop, vdiff, vallo, valhi))
-        time.sleep(dt)
         iloop = iloop + 1
 

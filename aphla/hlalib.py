@@ -293,7 +293,8 @@ def fput(elemfld_vals, **kwargs):
     timeout : int, optional, default 5, in seconds.
     unitsys : None or str, default "phy", unit system.
     epsilon : float, list or tuple. default None.
- 
+    verbose : int, verbose
+
     Examples
     ---------
     >>> cors = getElements("COR")
@@ -326,14 +327,17 @@ def fput(elemfld_vals, **kwargs):
         if unitsys is not None:
             valrec = [elem.convertUnit(fld, v, unitsys, None)
                       for v in valrec]
-        for j,pv in enumerate(elem.pv(field=fld, handle="setpoint")):
-            pvl.append([pv, elem, fld] + valrec)
-
-    pvs, vals = [v[0] for v in pvl], [v[3] for v in pvl]
-    ret = caput(pvs, vals, **kwargs)
+        pvsp = elem.pv(field=fld, handle="setpoint")
+        pvrb = elem.pv(field=fld, handle="readback")
+        for j,pv in enumerate(zip(pvsp, pvrb)):
+            pvl.append([elem, fld, pv[0], pv[1]] + valrec)
+    pvsp = [v[2] for v in pvl]
+    pvrb = [v[3] for v in pvl]
+    vals = [v[4] for v in pvl]
+    ret = caput(pvsp, vals, **kwargs)
     if wait_readback:
-        vallo, valhi = [v[4] for v in pvl], [v[5] for v in pvl]
-        caWaitStable(pvs, vals, vallo, valhi, **kwargs)
+        vallo, valhi = [v[5] for v in pvl], [v[6] for v in pvl]
+        caWaitStable(pvrb, vals, vallo, valhi, **kwargs)
 
 
 def getPvList(elems, field, handle = 'readback', **kwargs):
