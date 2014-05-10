@@ -212,7 +212,7 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1), maxtrial=20):
         elif ntrial > maxtrial:
             return False
 
-def measCaRmCol(kker, resp, **kwargs):
+def measCaRmCol(resp, kker, dxlst, **kwargs):
     """
     measure the response matrix column between PVs: dresp/dkker.
     kker - PV for variable
@@ -223,10 +223,7 @@ def measCaRmCol(kker, resp, **kwargs):
     timeout - default 5 sec, EPICS CA timeout
     sample - default 5, observation per kick
     verbose - default 0
-    output - output h5 file name
     dxlst - list of delta kick
-    xlist - list of new kick
-    dxmax - the range of kick [-dxmax, dxmax]
 
     returns m, dxlst, raw_data
     m - the response matrix column where m_i=dresp_i/dkker
@@ -241,21 +238,10 @@ def measCaRmCol(kker, resp, **kwargs):
 
     t0 = datetime.now()
     n0 = len(resp)
-    dxlst, x0 = [], caget(kker, timeout=timeout)
+    x0 = caget(kker, timeout=timeout)
     if not x0.ok:
         raise RuntimeError("can not get data from %s" % kker)
 
-    if "dxlst" in kwargs:
-        dxlst = kwargs.get("dxlst")
-    elif "xlst" in kwargs:
-        dxlst = [ x - x0 for x in kwargs["xlst"][i]]
-    elif "dxmax" in kwargs:
-        nx = kwargs.get("nx", 5)
-        dxmax = np.abs(kwargs["dxmax"])
-        dxlst = list(np.linspace(-dxmax, dxmax, nx))
-    else:
-        raise RuntimeError("need input for at least of the parameters: "
-                           "dxlst, xlst, dxmax")
     if verbose > 0:
         print "dx:", dxlst
     n1 = len(dxlst)
@@ -276,29 +262,7 @@ def measCaRmCol(kker, resp, **kwargs):
         m[i] = p[1]
     if verbose > 0:
         print "dy/dx:", m
-    t1 = datetime.now()
-    output = kwargs.get("output", None)
-    if not output:
-        return m, dxlst, raw_data, None
-    try:
-        import h5py
-        f = h5py.File(output)
-        g = f.create_group(kker)
-        g["resp"]     = resp
-        g["dxlst"]    = dxlst
-        g["raw_data"] = raw_data
-        g["rmcol"]    = m
-        g.attrs["sample"] = sample
-        g.attrs["wait"] = wait
-        g.attrs["timeout"] = timeout
-        g.attrs["rm_t0"] = t0.strftime("%Y_%m_%d_%H:%M:%S.%f")
-        g.attrs["rm_t1"] = t1.strftime("%Y_%m_%d_%H:%M:%S.%f")
-        f.close()
-    except:
-        print "ERROR: can not create output file '%s'" % output
-        raise
-        return m, dxlst, raw_data
-    return m, dxlst, raw_data, output
+    return m, dxlst, raw_data
 
 
 def caRmCorrect(resp, kker, m, **kwarg):
@@ -545,15 +509,16 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
     verbose = kwargs.get("verbose", 0)
 
     n, t0 = len(pvs), datetime.now()
-    diff = np.zeros((nsample, n), 'd')
+    buf = np.zeros((nsample, n), 'd')
 
     iloop = 0
     while True:
         for i in range(nsample):
-            time.sleep(dt/(nsample+1.0))
-            diff[i,:] = caget(pvs, **kwargs)
+            # delay a bit
+            time.sleep(0.1/(nsample+1.0))
+            buf[i,:] = caget(pvs, **kwargs)
             
-        avg = np.average(diff, axis=0)
+        avg = np.average(buf, axis=0)
         #if verbose > 0:
         #    print "V:", avg
         #    print vallo
@@ -564,8 +529,9 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
         t1 = datetime.now()
         if (t1 - t0).total_seconds() > kwargs.get("timeout", 5):
             vdiff = [avg[i] - values[i] for i in range(n)]
-            raise RuntimeError("Timeout, tried {0} times, "
-                               "diff= {1} lo= {2} hi={3}".format(
-                    iloop, vdiff, vallo, valhi))
+            raise RuntimeError("Timeout, tried {0} times, pv={1} "
+                               "vals= {2} lo= {3} hi={4}\n"
+                               "above: {5}\nbelow: {6}".format(
+                    iloop, pvs, avg, vallo, valhi, avg-vallo, valhi-avg))
         iloop = iloop + 1
-
+        time.sleep(dt)
