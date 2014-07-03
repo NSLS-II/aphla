@@ -115,14 +115,6 @@ def stepRfFrequency(df = 0.010):
     f0 = getRfFrequency()
     putRfFrequency(f0 + df)
 
-def _reset_rf():
-    """
-    reset the RF requency, used only in Tracy-II simulator to zero the orbit
-    """
-    _rf, = getElements('RFCAVITY')
-    _rf.f = 499.680528631
-
-
 #
 #
 
@@ -284,7 +276,7 @@ def _fget_2(elst, field, **kwargs):
 
         
 def fput(elemfld_vals, **kwargs):
-    """get elements field values for a family
+    """set elements field values for a family
 
     Parameters
     -----------
