@@ -13,6 +13,7 @@ from __future__ import print_function
 import os
 from os.path import join
 from catools import caget, caput
+import time
 import numpy as np
 from hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes, 
                     waitStableOrbit, getRfFrequency, setRfFrequency)
@@ -95,7 +96,7 @@ def measBeta(elem, dqk1 = 0.01, full = False, num_points = 3, verbose=0):
     if full: return beta, k1, nu
     else: return beta
 
-def measDispersion(elem, dfreq = 1e-6, alphac = 3.6261976841792413e-04,
+def measDispersion(elem, dfreq = 5e-7, alphac = 3.6261976841792413e-04,
                    gamma = 5.870841487279844e3, num_points = 5,
                    full = False, verbose = 0):
     """measure dispersion at BPMs
@@ -129,9 +130,13 @@ def measDispersion(elem, dfreq = 1e-6, alphac = 3.6261976841792413e-04,
     _logger.info("measure dispersions at %d elements '%s'" % 
                 (len(bpmnames), str(elem)))
 
-    # f in MHz
-    f0 = getRfFrequency()
+    f0 = getRfFrequency(handle="setpoint")
     dflst = np.linspace(-abs(dfreq),  abs(dfreq), num_points)
+
+    # incase RF does not allow large step change, ramp down first
+    for df in np.linspace(0, abs(dfreq), num_points)[1:]:
+        setRfFrequency(f0 - df)
+        time.sleep(2.0 / num_points)
 
     # avoid a bug in virtac
     obt0 = getOrbit(bpmnames)
@@ -152,7 +157,9 @@ def measDispersion(elem, dfreq = 1e-6, alphac = 3.6261976841792413e-04,
         cod[i,nbpm:] = obt[:,1] - obt0[:,1]
 
     # restore
-    setRfFrequency(f0)
+    for df in np.linspace(0, abs(dfreq), num_points):
+        setRfFrequency(f0 + abs(dfreq) - df)
+        time.sleep(2.0 / num_points)
 
     # fitting
     p = np.polyfit(dflst, cod, deg = 1)

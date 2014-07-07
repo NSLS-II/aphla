@@ -377,8 +377,7 @@ def saveLattice(**kwargs):
 
     - lattice, default the current active lattice
     - subgroup, default "", used for output file name
-    - elements, default "*"
-    - notes, default ""
+    - note, default ""  (notes is deprecated)
     - unitsys, default "phy", 
 
     returns the output file name.
@@ -392,7 +391,9 @@ def saveLattice(**kwargs):
     - DCCT: I, tau, Iavg
 
     ::
-        saveLattice(notes="Good one")
+        saveLattice(note="Good one")
+
+    Besides all SR PVs, there are some BTS pvs saved without physics properties. The saved file does not known if the BTS pvs are readback or setpoint. This makes `putLattice` more safe when specifying put setpoint pvs only.
     """
     # save the lattice
     output = kwargs.pop("output", 
@@ -400,7 +401,7 @@ def saveLattice(**kwargs):
     lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
     unitsys = kwargs.get("unitsys", "phy")
-    notes = kwargs.pop("notes", "")
+    notes = kwargs.pop("note", kwargs.pop("notes", ""))
 
     elemflds = [("BEND", ("b0", "db0")),
                 ("QUAD", ("b1",)),
@@ -412,7 +413,6 @@ def saveLattice(**kwargs):
                          "xref0", "xref1", "yref0", "yref1", "ampl")),
                 ("RFCAVITY", ("f", "v", "phi")),
                 ("DCCT", ("I", 'tau', "Iavg"))]
-
     nlive, ndead = _saveLattice(
         output, lat, elemflds, notes, **kwargs)
 
@@ -423,14 +423,19 @@ def saveLattice(**kwargs):
             for fld in flds:
                 if not e.convertible(fld, None, unitsys): continue
                 uname = e.getUnit(fld, unitsys=unitsys)
-                for pv in e.pv(field=fld):
+                pvsp = e.pv(field=fld, handle="setpoint")
+                pvrb = e.pv(field=fld, handle="readback")
+                for pv in pvsp + pvrb:
                     d0 = h5g[pv].value
                     d1 = e.convertUnit(fld, d0, None, unitsys)
                     s = "%s.%s.%s[%s]" % (e.name, fld, unitsys, uname)
                     h5g[pv].attrs[s] = d1
+                for pv in pvsp:
+                    h5g[pv].attrs["setpoint"] = 1
     h5f.close()
     
     return output
+
 
 def putLattice(fname, **kwargs):
     putPvData(fname, machines._lat.name, **kwargs)
