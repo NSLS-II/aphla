@@ -12,7 +12,7 @@ A procedural interface is provided.
 
 from __future__ import print_function
 
-__version__ = "0.8.18"
+__version__ = "0.8.19"
 try:
     from version import version as __version__
 except:

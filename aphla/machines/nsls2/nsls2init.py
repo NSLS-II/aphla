@@ -12,7 +12,7 @@ from .. import (OrmData, TwissData)
 from fnmatch import fnmatch
 import logging
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+#_logger.setLevel(logging.DEBUG)
 
 _cf_map = {'elemName': 'name', 
            'elemField': 'field', 
