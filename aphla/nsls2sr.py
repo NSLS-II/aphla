@@ -278,6 +278,7 @@ def getSrBpmData(**kwargs):
     timeout - 6sec
     sleep - 4sec
     output - True, use default file name, str - user specified filename
+    h5group - output group
 
     returns name, x, y, Isum, timestamp, offset
 

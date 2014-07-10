@@ -96,7 +96,7 @@ def measBeta(elem, dqk1 = 0.01, full = False, num_points = 3, verbose=0):
     if full: return beta, k1, nu
     else: return beta
 
-def measDispersion(elem, dfreq = 5e-7, alphac = 3.6261976841792413e-04,
+def measDispersion(elem, dfmax = 5e-7, alphac = 3.6261976841792413e-04,
                    gamma = 5.870841487279844e3, num_points = 5,
                    full = False, verbose = 0):
     """measure dispersion at BPMs
@@ -104,7 +104,7 @@ def measDispersion(elem, dfreq = 5e-7, alphac = 3.6261976841792413e-04,
     Parameters
     -----------
     elem : BPM name, list or pattern
-    dfreq : float. frequency change (check the unit)
+    dfmax : float. frequency change (check the unit)
     alphac : float. momentum compaction factor.
     gamma : float. beam energy.
     num_points : int. points to fit line
@@ -131,10 +131,10 @@ def measDispersion(elem, dfreq = 5e-7, alphac = 3.6261976841792413e-04,
                 (len(bpmnames), str(elem)))
 
     f0 = getRfFrequency(handle="setpoint")
-    dflst = np.linspace(-abs(dfreq),  abs(dfreq), num_points)
+    dflst = np.linspace(-abs(dfmax),  abs(dfmax), num_points)
 
     # incase RF does not allow large step change, ramp down first
-    for df in np.linspace(0, abs(dfreq), num_points)[1:]:
+    for df in np.linspace(0, abs(dfmax), num_points)[1:-1]:
         setRfFrequency(f0 - df)
         time.sleep(2.0 / num_points)
 
@@ -157,8 +157,8 @@ def measDispersion(elem, dfreq = 5e-7, alphac = 3.6261976841792413e-04,
         cod[i,nbpm:] = obt[:,1] - obt0[:,1]
 
     # restore
-    for df in np.linspace(0, abs(dfreq), num_points):
-        setRfFrequency(f0 + abs(dfreq) - df)
+    for df in np.linspace(0, abs(dfmax), num_points):
+        setRfFrequency(f0 + abs(dfmax) - df)
         time.sleep(2.0 / num_points)
 
     # fitting
@@ -184,37 +184,56 @@ def measChromaticity(**kwargs):
     gamma - beam, 3.0/0.511e-3
     alphac - momentum compaction factor, 3.62619e-4
     wait - 1.5 second
+    num_points - 5
 
-    returns f, nu, chrom
-    f - RF frequency setpoint
+    returns dp/p, nu, chrom
+    dpp - dp/p energy deviation
     nu - tunes 
     chrom - result chromaticities 
+    obt - orbit at each f settings (initial, every df, final).
     """
-    dfreq  = kwargs.get("dfmax", 1e-6)
+    dfmax  = kwargs.get("dfmax", 1e-6)
     gamma  = kwargs.get("gamma", 3.0e3/.511)
     alphac = kwargs.get("alphac", 3.6261976841792413e-04)
     wait   = kwargs.get("wait", 1.5)
-    npt    = kwargs.get("npoints", 6)
+    npt    = kwargs.get("num_points", 5)
     verbose = kwargs.get("verbose", 0)
 
     eta = alphac - 1/gamma/gamma
-
-    f0 = getRfFrequency()
+    
+    obt = []
+    f0 = getRfFrequency(handle="setpoint")
     nu0 = getTunes()
+    obt.append(getOrbit(spos=True))
     _logger.info("Initial RF freq=%s, tunes=%s" % (str(f0), str(nu0)))
+
+    # incase RF does not allow large step change, ramp down first
+    if verbose:
+        print("Initial RF freq= %g, stepping down %g in %d steps",
+              f0, -dfmax, npt)
+    for df in np.linspace(0, abs(dfmax), npt)[1:-1]:
+        setRfFrequency(f0 - df)
+        time.sleep(2.0 / npt)
 
     f = np.linspace(f0 - dfmax, f0 + dfmax, npt)
     nu = np.zeros((len(f), 2), 'd')
     for i,f1 in enumerate(f):
         if verbose > 0:
             print("freq= ", f1, end=" ")
-        putRfFrequency(f1)
+        setRfFrequency(f1)
         time.sleep(wait)
         nu[i,:] = getTunes()
+        obt.append(getOrbit(spos=True))
         if verbose > 0:
-            print("tunes:", nu[i,0], nu[i,1])
+            print("tunes:", nu[i,0], nu[i,1],
+                  np.min(obt[-1][:,0]), np.max(obt[-1][:,0]),
+                  np.min(obt[-1][:,1]), np.max(obt[-1][:,1]))
 
-    putRfFrequency(f0)
+    for df in np.linspace(0, abs(dfmax), npt):
+        setRfFrequency(f0 + abs(dfmax) - df)
+        time.sleep(2.0 / npt)
+
+    obt.append(getOrbit(spos=True))
 
     df = f - f0
     dnu = nu - np.array(nu0)
@@ -224,5 +243,5 @@ def measChromaticity(**kwargs):
         print("Coef:", p)
         print("Resi:", resi)
         print("Chrom:", chrom)
-    return f, nu, chrom
+    return df/(-f0*eta), nu, chrom, obt
 
