@@ -275,8 +275,12 @@ def _saveSrBpmData(fname, waveform, data, **kwargs):
 
 def getSrBpmData(**kwargs):
     """
-    timeout - 6sec
-    sleep - 4sec
+    trig - 0 (default internal), 1=external.
+    verbose - 0
+    waveform - "Tbt", "Fa"
+    bpms - a list of Element object
+    name - BPM name or pattern, overwritten by *bpms*
+    count - length of waveform.
     output - True, use default file name, str - user specified filename
     h5group - output group
 
@@ -287,7 +291,7 @@ def getSrBpmData(**kwargs):
     trig_src = kwargs.get("trig", 0)
     verbose  = kwargs.get("verbose", 0)
     waveform = kwargs.pop("waveform", "Tbt")
-    name     = kwargs.pop("name", "BPM")
+    name     = kwargs.pop("bpms", kwargs.pop("name", "BPM"))
     count    = kwargs.get("count", 0)
     #timeout  = kwargs.get("timeout", 6)
     output   = kwargs.get("output", None)
@@ -300,7 +304,6 @@ def getSrBpmData(**kwargs):
 
     #pv_dcct = "BR-BI{DCCT:1}I-Wf"
     #dcct1 = caget(pv_dcct, count=1000)
-
     elems = [e for e in getElements(name) if e.pv(field="x")]
     pvpref = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "")
               for bpm in elems]
