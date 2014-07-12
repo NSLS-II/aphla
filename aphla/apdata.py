@@ -20,7 +20,7 @@ import warnings
 
 import logging
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+#_logger.setLevel(logging.DEBUG)
 
 class OrmData:
     r"""Orbit Response Matrix Data
@@ -721,6 +721,8 @@ def createLatticePvDb(dbfname, csv2fname = None):
                   hlaStep   REAL,
                   hlaValRef REAL,
                   archive INT DEFAULT 0,
+                  size    INT DEFAULT 0,
+                  epsilon REAL DEFAULT 0.0,
                   UNIQUE (pv,elemName,elemField) ON CONFLICT REPLACE,
                   FOREIGN KEY(elemName) REFERENCES elements(elemName))""")
     conn.commit()

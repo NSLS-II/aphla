@@ -275,9 +275,14 @@ def _saveSrBpmData(fname, waveform, data, **kwargs):
 
 def getSrBpmData(**kwargs):
     """
-    timeout - 6sec
-    sleep - 4sec
+    trig - 0 (default internal), 1=external.
+    verbose - 0
+    waveform - "Tbt", "Fa"
+    bpms - a list of Element object
+    name - BPM name or pattern, overwritten by *bpms*
+    count - length of waveform.
     output - True, use default file name, str - user specified filename
+    h5group - output group
 
     returns name, x, y, Isum, timestamp, offset
 
@@ -286,7 +291,7 @@ def getSrBpmData(**kwargs):
     trig_src = kwargs.get("trig", 0)
     verbose  = kwargs.get("verbose", 0)
     waveform = kwargs.pop("waveform", "Tbt")
-    name     = kwargs.pop("name", "BPM")
+    name     = kwargs.pop("bpms", kwargs.pop("name", "BPM"))
     count    = kwargs.get("count", 0)
     #timeout  = kwargs.get("timeout", 6)
     output   = kwargs.get("output", None)
@@ -299,7 +304,6 @@ def getSrBpmData(**kwargs):
 
     #pv_dcct = "BR-BI{DCCT:1}I-Wf"
     #dcct1 = caget(pv_dcct, count=1000)
-
     elems = [e for e in getElements(name) if e.pv(field="x")]
     pvpref = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "")
               for bpm in elems]
@@ -377,8 +381,7 @@ def saveLattice(**kwargs):
 
     - lattice, default the current active lattice
     - subgroup, default "", used for output file name
-    - elements, default "*"
-    - notes, default ""
+    - note, default ""  (notes is deprecated)
     - unitsys, default "phy", 
 
     returns the output file name.
@@ -392,14 +395,17 @@ def saveLattice(**kwargs):
     - DCCT: I, tau, Iavg
 
     ::
-        saveLattice(notes="Good one")
+        saveLattice(note="Good one")
+
+    Besides all SR PVs, there are some BTS pvs saved without physics properties. The saved file does not known if the BTS pvs are readback or setpoint. This makes `putLattice` more safe when specifying put setpoint pvs only.
     """
     # save the lattice
-    output = outputFileName("snapshot", kwargs.get("subgroup",""))
+    output = kwargs.pop("output", 
+                        outputFileName("snapshot", kwargs.get("subgroup","")))
     lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
     unitsys = kwargs.get("unitsys", "phy")
-    notes = kwargs.pop("notes", "")
+    notes = kwargs.pop("note", kwargs.pop("notes", ""))
 
     elemflds = [("BEND", ("b0", "db0")),
                 ("QUAD", ("b1",)),
@@ -411,6 +417,7 @@ def saveLattice(**kwargs):
                          "xref0", "xref1", "yref0", "yref1", "ampl")),
                 ("RFCAVITY", ("f", "v", "phi")),
                 ("DCCT", ("I", 'tau', "Iavg"))]
+    t0 = datetime.now()
     nlive, ndead = _saveLattice(
         output, lat, elemflds, notes, **kwargs)
 
@@ -421,11 +428,24 @@ def saveLattice(**kwargs):
             for fld in flds:
                 if not e.convertible(fld, None, unitsys): continue
                 uname = e.getUnit(fld, unitsys=unitsys)
-                for pv in e.pv(field=fld):
+                pvsp = e.pv(field=fld, handle="setpoint")
+                pvrb = e.pv(field=fld, handle="readback")
+                for pv in pvsp + pvrb:
                     d0 = h5g[pv].value
                     d1 = e.convertUnit(fld, d0, None, unitsys)
                     s = "%s.%s.%s[%s]" % (e.name, fld, unitsys, uname)
                     h5g[pv].attrs[s] = d1
+                for pv in pvsp:
+                    h5g[pv].attrs["setpoint"] = 1
+    t1 = datetime.now()
+    try:
+        import getpass
+        h5g.attrs["_author_"] = getpass.getuser()
+    except:
+        pass
+    h5g.attrs["t_start"] = t0.strftime("%Y-%m-%d %H:%M:%S.%f")
+    h5g.attrs["t_end"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
+
     h5f.close()
     
     return output

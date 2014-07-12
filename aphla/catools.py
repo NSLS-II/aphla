@@ -51,7 +51,7 @@ def _ca_put_sim(pvs, vals):
     return ct.ca_nothing
 
 def caget(pvs, timeout=6, datatype=None, format=ct.FORMAT_TIME,
-           count=0, throw=False):
+           count=0, throw=False, verbose=0):
     """channel access read
     
     This is a simple wrap of cothread.catools, support UTF8 string
@@ -118,7 +118,7 @@ def cagetr(pvs, **kwargs):
     return [cagetr(pv, **kwargs) for pv in pvs]
 
 
-def caput(pvs, values, timeout=2, wait=True, throw=True):
+def caput(pvs, values, timeout=2, wait=True, throw=True, verbose = 0):
     """channel access write.
 
     This is simple wrap of `cothread.catools.caput` to support UTF8 string
@@ -212,7 +212,7 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1), maxtrial=20):
         elif ntrial > maxtrial:
             return False
 
-def measCaRmCol(kker, resp, **kwargs):
+def measCaRmCol(resp, kker, dxlst, **kwargs):
     """
     measure the response matrix column between PVs: dresp/dkker.
     kker - PV for variable
@@ -223,10 +223,7 @@ def measCaRmCol(kker, resp, **kwargs):
     timeout - default 5 sec, EPICS CA timeout
     sample - default 5, observation per kick
     verbose - default 0
-    output - output h5 file name
     dxlst - list of delta kick
-    xlist - list of new kick
-    dxmax - the range of kick [-dxmax, dxmax]
 
     returns m, dxlst, raw_data
     m - the response matrix column where m_i=dresp_i/dkker
@@ -241,21 +238,10 @@ def measCaRmCol(kker, resp, **kwargs):
 
     t0 = datetime.now()
     n0 = len(resp)
-    dxlst, x0 = [], caget(kker, timeout=timeout)
+    x0 = caget(kker, timeout=timeout)
     if not x0.ok:
         raise RuntimeError("can not get data from %s" % kker)
 
-    if "dxlst" in kwargs:
-        dxlst = kwargs.get("dxlst")
-    elif "xlst" in kwargs:
-        dxlst = [ x - x0 for x in kwargs["xlst"][i]]
-    elif "dxmax" in kwargs:
-        nx = kwargs.get("nx", 5)
-        dxmax = np.abs(kwargs["dxmax"])
-        dxlst = list(np.linspace(-dxmax, dxmax, nx))
-    else:
-        raise RuntimeError("need input for at least of the parameters: "
-                           "dxlst, xlst, dxmax")
     if verbose > 0:
         print "dx:", dxlst
     n1 = len(dxlst)
@@ -276,29 +262,7 @@ def measCaRmCol(kker, resp, **kwargs):
         m[i] = p[1]
     if verbose > 0:
         print "dy/dx:", m
-    t1 = datetime.now()
-    output = kwargs.get("output", None)
-    if not output:
-        return m, dxlst, raw_data, None
-    try:
-        import h5py
-        f = h5py.File(output)
-        g = f.create_group(kker)
-        g["resp"]     = resp
-        g["dxlst"]    = dxlst
-        g["raw_data"] = raw_data
-        g["rmcol"]    = m
-        g.attrs["sample"] = sample
-        g.attrs["wait"] = wait
-        g.attrs["timeout"] = timeout
-        g.attrs["rm_t0"] = t0.strftime("%Y_%m_%d_%H:%M:%S.%f")
-        g.attrs["rm_t1"] = t1.strftime("%Y_%m_%d_%H:%M:%S.%f")
-        f.close()
-    except:
-        print "ERROR: can not create output file '%s'" % output
-        raise
-        return m, dxlst, raw_data
-    return m, dxlst, raw_data, output
+    return m, dxlst, raw_data
 
 
 def caRmCorrect(resp, kker, m, **kwarg):
@@ -355,7 +319,8 @@ def caRmCorrect(resp, kker, m, **kwarg):
     k1 = k0 + dk*scale
 
     kkerin, k1in = [], []
-    if dImax is not None:
+    if dImax is not None and np.max(np.abs(dk)) > dImax:
+        # scale only if necessary
         im = np.argmax(np.abs(dk))
         dk = dk/np.abs(dk[im]) * dImax
         kkerin = [pv for pv in kker]
@@ -377,7 +342,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
     if verbose > 0:
         for i,pv in enumerate(kkerin):
             print i, pv, k1in[i], k1in[i] - k0[i]
-        
+
     # the real setting
     if dryrun:
         return (0, "setting {0} cors, min= {1} max= {2}".format(
@@ -477,8 +442,11 @@ def putPvData(fname, group, **kwargs):
     """
     put saved lattice to real machine.
 
-    sponly - only put setpoint pvs to the machine. default True
+    sponly - only put setpoint pvs to the machine. default True.
+
+    setpoint property is explicit, i.e. ff there is no "setpoint" information about the PV, then it is treated as non-setpoint.
     """
+
     sponly = kwargs.get("sponly", True)
     
     import h5py
@@ -488,11 +456,82 @@ def putPvData(fname, group, **kwargs):
     pv, dat = [], []
     for k,v in grp.items():
         #caput(k, v)
-        if sponly and v.attrs["setpoint"] != 1:
+        if sponly and v.attrs.get("setpoint", 0) != 1:
             continue
         pv.append(k)
         dat.append(v)
     caput(pv, dat)
 
-    pass
 
+def caWait(pvs, stop = 0, timeout = 5, dt = 0.2):
+    """
+    wait until all pvs == stop.
+    """
+    t0 = datetime.now()
+    while True:
+        dt10 = (datetime.now() - t0).total_seconds()
+        vals = caget(pvs)
+        if all([v == stop for v in vals]):
+            return dt10
+        if dt10 > timeout:
+            raise RuntimeError(
+                "Timeout ({4}/{2} sec) when waiting for {0} == {1} ({3})".format(
+                    pvs, stop, timeout, vals, dt10))
+        time.sleep(dt)
+    return None
+
+
+def caWaitStable(pvs, values, vallo, valhi, **kwargs):
+    """read pvs and wait until the std less than epsilon
+
+    Parameters
+    -----------
+    pvs : list or tuple. A list of PVs
+    values : list or tuple. Same size as elemfld
+    vallo : list or tuple with low boundary values.
+    valhi : list or tuple with high boundary values.
+    sample : int, optional, default 3, averaged over to compare
+    timeout : int, optional, default 5, in seconds.
+    dt      : float, default 0.1 second. waiting between each check.
+    verbose : int.
+
+    Examples
+    ---------
+    >>> cors = getElements("COR")
+    >>> pvs = [cors[0].pv(field='x', handle="readback")[0], ]
+    >>> cors[0].x = 0
+    >>> waitReadback(pvs, [0.0, ], [-0.001,], [0.001,])
+
+    """
+
+    nsample = kwargs.pop("sample", 3)
+    dt      = kwargs.pop("dt", 0.1)
+    verbose = kwargs.get("verbose", 0)
+
+    n, t0 = len(pvs), datetime.now()
+    buf = np.zeros((nsample, n), 'd')
+
+    iloop = 0
+    while True:
+        for i in range(nsample):
+            # delay a bit
+            time.sleep(0.1/(nsample+1.0))
+            buf[i,:] = caget(pvs, **kwargs)
+            
+        avg = np.average(buf, axis=0)
+        #if verbose > 0:
+        #    print "V:", avg
+        #    print vallo
+        #    print valhi
+
+        if all([vallo[i] <= avg[i] <= valhi[i] for i in range(n)]):
+            break
+        t1 = datetime.now()
+        if (t1 - t0).total_seconds() > kwargs.get("timeout", 5):
+            vdiff = [avg[i] - values[i] for i in range(n)]
+            raise RuntimeError("Timeout, tried {0} times, pv={1} "
+                               "vals= {2} lo= {3} hi={4}\n"
+                               "above: {5}\nbelow: {6}".format(
+                    iloop, pvs, avg, vallo, valhi, avg-vallo, valhi-avg))
+        iloop = iloop + 1
+        time.sleep(dt)

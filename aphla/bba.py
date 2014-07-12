@@ -18,7 +18,7 @@ each quadrupole alignment:
 """
 
 from hlalib import (getElements, getNeighbors, getDistance, getOrbit, 
-    waitStableOrbit)
+    waitStableOrbit, waitRamping)
 
 import time
 import numpy as np
@@ -57,6 +57,7 @@ class BbaBowtie:
         self.quad_dkick = kwargs.get("quad_dkick", 0.0)
         self.cor_dkicks  = kwargs.get('cor_dkicks', [])
         self.cor_kick = []
+        self.bpm_cob = []
 
         # the initial values of C/BPM/Q reading
         self._vc0, self._vb0, self._vq0 = None, None, None
@@ -88,13 +89,13 @@ class BbaBowtie:
         """
         m, n = np.shape(y)
         assert len(x) == m, "different size of x, y ({0} != {1})".format(len(x), m)
-        print "fitting x:", x
-        print "fitting y:", y
+        #print "fitting x:", x
+        #print "fitting y:", y
         # p[-1] is constant, p[-2] is slope
         p, res, rank, sigv, rcond = np.polyfit(x, y, 1, full=True)
-        print "slope:", p[-2]
-        print "constant:", p[-1]
-        print "xintercept:", -p[-1]/p[-2]
+        #print "slope:", p[-2]
+        #print "constant:", p[-1]
+        #print "xintercept:", np.average(-p[-1]/p[-2])
         # keep the larger slope center part
         i1 = int(n*(1.0-p_slope))
         kept1 = np.argsort(np.abs(p[-2,:]))[i1:]
@@ -134,14 +135,16 @@ class BbaBowtie:
         """
         - if dkick is set, kick will be renewed.
         - if dqk1 is set, qk1 will be renewed.
+        - Ieps, compare readback and setpoint
         """
         #print __file__, "measuring bba"
         verbose = kwargs.get('verbose', 0)
+        sample = kwargs.get('sample', 1)
 
         # record the initial values
         self._vb0 = self._b.get(self._bf, unitsys=None)
-        self._vq0 = self._q.get(self._qf, unitsys=None)
-        self._vc0 = self._c.get(self._cf, unitsys=None)
+        self._vq0 = self._q.get(self._qf, handle="setpoint", unitsys=None)
+        self._vc0 = self._c.get(self._cf, handle="setpoint", unitsys=None)
         if verbose > 0:
             print "getting q={0}  c={1}".format(self._vq0, self._vc0)
 
@@ -161,29 +164,58 @@ class BbaBowtie:
         for i,dqk in enumerate([0.0, self.quad_dkick]):
             # change quad
             self._q.put(self._qf, self._vq0 + dqk, unitsys=None)
+            #time.sleep(self.wait)
+            #self._q.put(self._qf, self._vq0 + dqk, unitsys=None)
+            waitRamping(self._q, wait = self.wait)
+            _logger.info("{0} Quad sp= {1} rb= {2}".format(i,
+                    self._q.get(self._qf, handle="setpoint", unitsys=None),
+                    self._q.get(self._qf, unitsys=None)))
             if verbose > 0:
                 print "setting {0}.{1} to {2} (delta={3})".format(
                 self._q.name, self._qf, self._vq0 + dqk, self.quad_dkick)
                 
             for j,dck in enumerate(self.cor_kick):
                 self._c.put(self._cf, dck, unitsys=None)
-                time.sleep(self.wait)
+                #time.sleep(self.wait)
+                #self._c.put(self._cf, dck, unitsys=None)
+                waitRamping(self._c, wait = self.wait)
+                time.sleep(0.5)
+                c1sp = self._c.get(self._cf, handle="setpoint", unitsys=None)
+                c1rb = self._c.get(self._cf, unitsys=None)
+                _logger.info("{0}.{1} sp= {2} rb= {3}".format(i, j, c1sp, c1rb))
+                if verbose > 0:
+                    print "setting {0}.{1} to {2} (rb= {3})".format(
+                        self._c.name, self._cf, dck, c1rb)
+                tobt = np.zeros(len(obt00), 'd')
+                for jj in range(sample):
+                    tobt[:] = tobt[:] + self._get_orbit()
                 k = i * len(self.cor_kick) + j
-                self.orbit[:,k] = self._get_orbit()
-
+                self.orbit[:,k] = tobt/sample
+                #print np.min(tobt/sample), np.max(tobt/sample)
+                self.bpm_cob.append(self._b.get(self._bf, unitsys=None))
         # reset qk
         if verbose > 0:
-            print "reset quad and trim"
+            print "reset quad and trim to %f %f" % (self._vq0, self._vc0)
         #caput(self.quad_pvsp, qk0)
         #caput(self.trim_pvsp, xp0)
         self._q.put(self._qf, self._vq0, unitsys=None)
         self._c.put(self._cf, self._vc0, unitsys=None)
-        time.sleep(self.wait)
+        waitRamping([self._c, self._q], wait = self.wait)
+        _logger.info("restoring {0} Quad sp= {1} rb= {2}".format(
+                self._q.name, 
+                self._q.get(self._qf, handle="setpoint", unitsys=None),
+                self._q.get(self._qf, unitsys=None)))
+        _logger.info("restoring {0} Cor sp= {1} rb= {2}".format(
+                self._c.name, 
+                self._c.get(self._cf, handle="setpoint", unitsys=None),
+                self._c.get(self._cf, unitsys=None)))
+
         self.orbit[:,-1] = self._get_orbit()
+        self.bpm_cob.append(self._b.get(self._bf, unitsys=None))
         _logger.info("measurement done: " \
-                     "q={0}, dq={1}, b={2}, c={3}, dc={4}".format(
-                         self._q.name, self.quad_dkick,
-                         self._b.name, self._c.name, self.cor_dkicks))
+                         "q={0}, dq={1}, b={2}, c={3}, dc={4}".format(
+                self._q.name, self.quad_dkick,
+                self._b.name, self._c.name, self.cor_dkicks))
 
 
     def align(self, **kwargs):
@@ -201,12 +233,14 @@ class BbaBowtie:
             _logger.warn("no cor fitted. abort.")
             return
         # 
-        # change quad
-        self._c.put(self._cf, self.cor_fitted, unitsys=None)
-        time.sleep(self.wait)
-        self.bpm_fitted = self._b.get(self._bf, unitsys = None)
-        # use new values ? or the original one
-        self._c.put(self._cf, self._vc0, unitsys=None)
+        # change cor
+        if kwargs.get("noset", False):
+            self._c.put(self._cf, self.cor_fitted, unitsys=None)
+            waitRamping(self._c, wait = self.wait)
+            self.bpm_fitted = self._b.get(self._bf, unitsys = None)
+            # use new values ? or the original one
+            self._c.put(self._cf, self._vc0, unitsys=None)
+            waitRamping(self._c, wait = self.wait)
 
 
     def _analyze(self):
@@ -228,11 +262,14 @@ class BbaBowtie:
         if not self.cor_kick:
             _logger.warn("no cor setpoint to analyze")
             return
-        print self.cor_kick
+        #print self.cor_kick
         n = len(self.cor_kick)
         dobt = np.transpose(self.orbit[:,n:2*n] - self.orbit[:,:n])
-        kick = self._filterLines(self.cor_kick, dobt)
+        #print "dObt: min", np.min(dobt, axis=1)
+        #print "dObt: max", np.max(dobt, axis=1)
+        #print "dObt: var", np.var(dobt, axis=1)
  
+        kick = self._filterLines(self.cor_kick, dobt)
 
     def plot(self, axbowtie = None, axhist = None, factor = (1.0, 1.0)):
         """
@@ -321,24 +358,34 @@ class BbaBowtie:
         #return self._quadcenter[:]
         pass
 
-    def save(self, output, group = "BeamBasedAlignment"):
+    def save(self, output, group = "BeamBasedAlignment", iloop = 0):
         """
         save the result to HDF5 file
         """
         import h5py
         h5f = h5py.File(output)
         pgrp = h5f.require_group(group)
-        grpname = "{0}.{1}-{2}.{3}-{4}.{5}".format(
+        grpname = "{0}.{1}-{2}.{3}-{4}.{5}_{6}".format(
             self._b.name, self._bf,
             self._q.name, self._qf,
-            self._c.name, self._cf)
-                                                   
-        grp = pgrp.require_group(grpname)
+            self._c.name, self._cf, iloop)
+        if grpname in pgrp:
+            del pgrp[grpname]
+        grp = pgrp.create_group(grpname)
         grp["orbit"] = self.orbit
         grp['keep']  = self.mask
         grp['cor_fitted'] = self.cor_fitted
         grp['cor_kick']   = self.cor_kick
         grp['cor_dkicks'] = self.cor_dkicks
         grp['quad_dkick'] = self.quad_dkick
+        grp['bpm_cob']    = self.bpm_cob
         grp["slope"] = self.slope
         grp["x_intercept"] = self.x_intercept
+        grp.attrs["bpm"]  = self._b.name
+        grp.attrs["quad"] = self._q.name
+        grp.attrs["cor"]  = self._c.name
+        grp.attrs["bpm_field"]  = self._bf
+        grp.attrs["quad_field"] = self._qf
+        grp.attrs["cor_field"]  = self._cf
+        grp.attrs["iloop"] = iloop
+        grp.attrs["_FORMAT_"] = 2

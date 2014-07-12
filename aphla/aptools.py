@@ -9,7 +9,8 @@ Accelerator Physics Tools module defines some small AP routines.
 from __future__ import print_function
 
 import numpy as np
-import time, datetime, sys, os
+import time, sys, os
+from datetime import datetime
 import itertools
 import tempfile
 import h5py
@@ -18,14 +19,13 @@ from . import machines
 from catools import caRmCorrect, measCaRmCol
 from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
     getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
-    getLocations, outputFileName)
-from respmat import OrbitRespMat
+    getLocations, outputFileName, fget, fput)
 import logging
 
 __all__ = [ 'calcLifetime', 'getLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
-    'stripView'
+    'stripView', 'measRmCol', 'getArchiverData',
 ]
 
 _logger = logging.getLogger(__name__)
@@ -66,13 +66,13 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
 
     # data points
     ret = np.zeros((npoints, 2), 'd')
-    d0 = datetime.datetime.now()
+    d0 = datetime.now()
     ret[0, 1] = getCurrent()
     for i in range(1, npoints):
         # sleep for next reading
         time.sleep(tinterval)
         ret[i, 1] = getCurrent()
-        dt = datetime.datetime.now() - d0
+        dt = datetime.now() - d0
         ret[i, 0] = (dt.microseconds/1000000.0 + dt.seconds)/3600.0 + \
             dt.days*24.0
         if verbose:
@@ -159,10 +159,10 @@ def setLocalBump(bpmrec, correc, ref, **kwargs):
     for i in range(repeat):
         #for k,b in enumerate(bpmpvs):
         #    if bpmref[k] != 0.0: print(k, bpmlst[k], b, bpmref[k])
-        ret = caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref), **kwargs)
-        if ret[0] != 0: return ret
+        err, msg = caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref), **kwargs)
+        if err != 0:
+            raise RuntimeError("ERROR at iteration %d/%d: %s" % (i,repeat,msg))
 
-    return (0, None)
 
 def correctOrbit(bpm, cor, **kwargs):
     """
@@ -170,13 +170,15 @@ def correctOrbit(bpm, cor, **kwargs):
 
     Parameters
     -----------
-    bpmlst : list of BPM objects, default all 'BPM'
-    trimlst : list of Trim objects, default all 'COR'
+    bpm : list of BPM objects, default all 'BPM'
+    cor : list of Trim objects, default all 'COR'
     plane : optional, [ 'XY' | 'X' | 'Y' ], default 'XY'
     rcond : optional, cutting ratio for singular values, default 1e-4.
     scale : optional, scaling corrector strength, default 0.68
     repeat : optional, integer, default 1. numbers of correction 
     deadlst : list of dead BPM and corrector names.
+    dImax : optional, maximum corrector change at correction.
+
 
     Notes
     -----
@@ -217,6 +219,7 @@ def correctOrbit(bpm, cor, **kwargs):
         print("Using: %d bpms, %d cors" % (len(bpmr), len(corr)))
     kwargs["fullm"] = False
     setLocalBump(bpmr, corr, ref, **kwargs)
+
 
 def _random_kick(plane = 'V', amp=1e-9, verbose = 0):
     """
@@ -732,65 +735,136 @@ def measChromRm(sextlst):
     """
     raise NotImplementedError()
 
+def measRmCol(resp, kker, kfld, dklst, **kwargs):
+    """
+    measure the response matrix of `resp` from `kicker`
+
+    :param list resp: list of the response (elem, field)
+    :param kker: the kicker object
+    :param kfld: the kicker field
+    :param list dklst: the kicker setpoints (ki0, ki1, ...)
+    :param int sample: observatins per kicker setpoint
+    :param int deg: degree of the fitting polynomial
+    :param int verbose:
+
+    returns slope, klst(readback), rawdata (nk, nresp, nsamle)
+    """
+    unitsys = kwargs.pop("unitsys", None)
+    sample  = kwargs.pop("sample", 3)
+    deg     = kwargs.pop("deg", 1)
+
+    dat = np.zeros((len(dklst), len(resp), sample), 'd')
+    klstrb = np.zeros((len(dklst), sample), 'd')
+    k0 = kker.get(kfld, handle="setpoint", unitsys=None)
+    for i,dki in enumerate(dklst):
+        try:
+            fput([(kker, kfld, k0+dki),], unitsys=unitsys,
+                 wait_readback=True, verbose=1)
+        except:
+            #kker.put(kfld, k0, unitsys=None)
+            msg = "Timeout at {0}.{1}= {2}, i= {3}, delta= {4}".format(
+                kker.name, kfld, k0+dki, i, dki)
+            _logger.warn(msg)
+            print(msg)
+            sys.stdout.flush()
+
+        for j in range(sample):
+            klstrb[i,j] = kker.get(kfld, handle="readback", unitsys=unitsys)
+            if kwargs.get("verbose", 0) > 0:
+                print("Reading", kker, klstrb[i,j])
+            dat[i,:,j] = fget(resp, **kwargs)
+
+    # nonblocking
+    kker.put(kfld, k0, unitsys=None)
+    p, resi, rank, sv, rcond = np.polyfit(
+        dklst, np.average(dat, axis=-1), deg, full = True)
+    # blocking
+    try:
+        fput([(kker, kfld, k0),], unitsys=None, wait_readback=True)
+    except:
+        kker.put(kfld, k0, unitsys=None)
+        msg = "Timeout at restoring {0}.{1}= {2}".format(kker.name, kfld, k0)
+        _logger.warn(msg)
+        print(msg)
+        sys.stdout.flush()
+        
+    return p[-2,:], klstrb, dat
+
 #
-def measOrbitRm(bpm, cor, **kwargs):
+def measOrbitRm(bpmfld, corfld, **kwargs):
     """
     Measure the orbit response matrix
 
-    :param list bpm: list of bpm names, name pattern
-    :param list trim: list of trim names, name pattern
+    :param list bpm: list of (bpm, field)
+    :param list trim: list of (trim, field)
     :param str output: output filename
     :param float minwait: waiting seconds before each orbit measurement.
+    :param list dxlst:
+    :param list dxmax: 
+    :param int nx: default 4
 
     seealso :class:`~aphla.respmat.OrbitRespMat`, 
     :func:`~aphla.respmat.OrbitRespMat.measure`
     """
     verbose = kwargs.pop("verbose", 0)
     output  = kwargs.pop("output", None)
-
     if output is True:
         output = outputFileName("respm", "orm")
 
-    _logger.info("Orbit RM shape (%d %d)" % (len(bpm), len(cor)))
-    bpms, cors = [], []
-    # if it is EPICS
-    for fld in ["x", "y"]:
-        for e in getElements(bpm):
-            if fld not in e.fields(): continue
-            for pv in e.pv(field=fld, handle="readback"):
-                bpms.append((e.name, fld, pv))
-        for e in getElements(cor):
-            if fld not in e.fields(): continue
-            for pv in e.pv(field=fld, handle="setpoint"):
-                cors.append((e.name, fld, pv))
+    _logger.info("Orbit RM shape (%d %d)" % (len(bpmfld), len(corfld)))
+    #bpms, cors = [], []
+    ## if it is EPICS
+    #for fld in ["x", "y", "db0"]:
+    #    for e in getElements(bpm):
+    #        if fld not in e.fields(): continue
+    #        for pv in e.pv(field=fld, handle="readback"):
+    #            bpms.append((e.name, fld, pv))
+    #    for e in getElements(cor):
+    #        if fld not in e.fields(): continue
+    #        for pv in e.pv(field=fld, handle="setpoint"):
+    #            cors.append((e.name, fld, pv))
     # measure the column
-    m = np.zeros((len(bpms), len(cors)), 'd')
-    pv_bpm = [r[2] for r in bpms] # the response
-    pv_cor = [r[2] for r in cors] # the corrector
+
+    if "dxlst" in kwargs:
+        dxlst = kwargs.pop("dxlst")
+    elif "dxmax" in kwargs:
+        dxmax, nx = np.abs(kwargs.pop("dxmax", 0.0)), kwargs.pop("nx", 4)
+        dxlst = list(np.linspace(-dxmax, dxmax, nx))
+    else:
+        raise RuntimeError("need input for at least of the parameters: "
+                           "dxlst, dxmax")
+
+    t0 = datetime.now()
+    m = np.zeros((len(bpmfld), len(corfld)), 'd')
     if verbose > 0: kwargs["verbose"] = verbose - 1
-    for i,(name, fld, pv) in enumerate(cors):
+    for i,(cor, fld) in enumerate(corfld):
         # save each column
-        m[:,i], dx, dat, opt = measCaRmCol(pv, pv_bpm, **kwargs)
+        m[:,i], xlst, dat = measRmCol(bpmfld, cor, fld, dxlst, **kwargs)
+
         if verbose:
-            print("%d/%d" % (i,len(cors)), name, np.min(m[:,i]), np.max(m[:,i]))
+            print("%d/%d" % (i, len(corfld)), cor.name, np.min(m[:,i]), np.max(m[:,i]))
+
         if output:
             f = h5py.File(output)
             g0 = f.require_group("OrbitResponseMatrix")
-            if pv in g0:
-                del g0[pv]
-            g = g0.create_group(pv)
+            grpname = "resp__%s.%s" % (cor.name, fld)
+            if grpname in g0: del g0[pv]
+            g = g0.create_group(grpname)
             g["m"] = m[:,i]
-            g["m"].attrs["cor_name"] = name
+            g["m"].attrs["cor_name"] = cor.name
             g["m"].attrs["cor_field"] = fld
-            g["m"].attrs["cor_pv"] = pv
-            g["m"].attrs["bpm_pv"] = pv_bpm
-            g["m"].attrs["bpm_name"] = [r[0] for r in bpms]
-            g["m"].attrs["bpm_field"] = [r[1] for r in bpms]
+            g["m"].attrs["cor_dxlst_sp"] = dxlst
+            g["m"].attrs["cor_xlst_rb"] = xlst
+            #g["m"].attrs["cor_pv"] = cor.pv(field=fld, handle="setpoint")
+            #g["m"].attrs["bpm_pv"] = [b.pv(field=fld) for b,fld in bpmfld]
+            g["m"].attrs["bpm_name"] = [b.name for b,fld in bpmfld]
+            g["m"].attrs["bpm_field"] = [fld for b,fld in bpmfld]
             g["orbit"] = dat
-            g["orbit"].attrs["pv"] = pv_bpm
-            g["dx"] = dx
+            #g["orbit"].attrs["pv"] = [b.pv(field=fld) for b,fld in bpmfld]
+            g["cor"] = xlst
             f.close()
 
+    t1 = datetime.now()
     if output:
         # save the overall matrix
         f = h5py.File(output)
@@ -798,12 +872,20 @@ def measOrbitRm(bpm, cor, **kwargs):
         if "m" in g:
             del g["m"]
         g["m"] = m
-        g["m"].attrs["cor_name"]  = [r[0] for r in cors]
-        g["m"].attrs["cor_field"] = [r[1] for r in cors]
-        g["m"].attrs["cor_pv"]    = pv_cor
-        g["m"].attrs["bpm_name"]  = [r[0] for r in bpms]
-        g["m"].attrs["bpm_field"] = [r[1] for r in bpms]
-        g["m"].attrs["bpm_pv"]    = pv_bpm
+        g["m"].attrs["cor_name"]  = [c.name for c,fld in corfld]
+        g["m"].attrs["cor_field"] = [fld for c,fld in corfld]
+        #corpvs = reduce(lambda x,y: x+y, [c.pv(field=fld) for c,fld in corfld])
+        #g["m"].attrs["cor_pv"]    = corpvs
+        g["m"].attrs["bpm_name"]  = [b.name for b,fld in bpmfld]
+        g["m"].attrs["bpm_field"] = [fld for b,fld in bpmfld]
+        #g["m"].attrs["bpm_pv"]    = pv_bpm
+        try:
+            import getpass
+            g["m"].attrs["_author_"] = getpass.getuser()
+        except:
+            pass
+        g["m"].attrs["t_start"] = t0.strftime("%Y-%m-%d %H:%M:%S.%f")
+        g["m"].attrs["t_end"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
         f.close()
 
     return m, output
@@ -871,4 +953,38 @@ Strip.Option.GraphLineWidth   2
 
     from subprocess import Popen
     Popen(["striptool", fname])
+
+
+def getArchiverData(*argv, **kwargs):
+    """
+    >>> getArchiverData("DCCT", "I")
+    >>> getArchiverData("SR:C03-BI{DCCT:1}AveI-I")
+
+    At this moment, only return data back to one hour earlier.
+    """
+    if len(argv) == 1 and isinstance(argv[0], (str, unicode)):
+        pvs = argv
+    elif len(argv) == 1 and isinstance(argv[0], (list, tuple)):
+        pvs = argv[0]
+    elif len(argv) == 2:
+        pvs = reduce(lambda x,y: x + y, 
+                     [e.pv(field=argv[1],
+                           handle=kwargs.get("handle", "readback"))
+                      for e in getElements(argv[0])])
+    t0 = datetime.now()
+    import subprocess
+    out = subprocess.check_output(["arget", "-s", kwargs.get("s", "-1 h")] + pvs)
+    import re
+    pv, dat = "", {}
+    for s in out.split("\n"):
+        if re.match(r"Found [0-9]+ points", s): continue
+        if re.match(r"[1-9][0-9]+-[0-9]+-[0-9]+ ", s):
+            d0, d1, v = s.split()
+            t1 = datetime.strptime("%s %s" % (d0, d1), "%Y-%m-%d %H:%M:%S.%f")
+            dat[pv].append(((t1-t0).total_seconds(), float(v)))
+        elif s.strip():
+            pv = s.strip()
+            dat.setdefault(pv, [])
+
+    return dat
 

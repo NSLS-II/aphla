@@ -482,6 +482,7 @@ class OrbitPlotMainWindow(QMainWindow):
         for fld in field_list:
             si, pvsi = [], []
             for e in elems:
+                if not e.isEnabled(): continue
                 epv = e.pv(field=fld, handle=handle)
                 if not epv: continue
                 pvsi.append(epv[0])

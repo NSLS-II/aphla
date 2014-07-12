@@ -245,6 +245,7 @@ class CaAction:
         self.trace_limit = 200
         self.unitconv = {}
         self.timeout = 2
+        self.sprb_epsilon = None
 
     def __eq__(self, other):
         return self.pvrb == other.pvrb and \
@@ -423,10 +424,14 @@ class CaAction:
         """
         if self.pvsp:
             rawret = caget(self.pvsp, timeout=self.timeout, format=FORMAT_CTRL)
+            # update the limits when necessary
             for i in range(len(self.pvsp)):
                 if self.pvlim[i] is None:
-                    self.pvlim[i] = (rawret[i].lower_ctrl_limit,
-                                     rawret[i].upper_ctrl_limit)
+                    try:
+                        self.pvlim[i] = (rawret[i].lower_ctrl_limit,
+                                         rawret[i].upper_ctrl_limit)
+                    except:
+                        pass
             if len(self.pvsp) == 1:
                 return self._unit_conv(rawret[0], None, unitsys)
             else:
@@ -465,7 +470,8 @@ class CaAction:
             if self._all_within_range(rawval[i], lowhigh): continue
 
             if bc == 'exception':
-                raise OverflowError(bc_err)
+                raise OverflowError(
+                    "value {0} is outside of boundary {1}".format(val, lowhigh))
             elif bc == 'boundary':
                 _logger.info("setting {0} to its boundary {1} instead of {2}".\
                                  format(self.pvsp[i], lowhigh, rawval[i]))
@@ -768,7 +774,8 @@ class CaElement(AbstractElement):
         #AbstractElement.__init__(self, **kwargs)
         self.__dict__['_field'] = {}
         self.__dict__['_golden'] = {}  # the golden values for fields.
-        self.__dict__['_pvtags'] = { '_archive': [] }
+        self.__dict__['_pvtags'] = {}
+        self.__dict__['_pvarchive'] = []
         self.__dict__['virtual'] = kwargs.get('virtual', 0)
         self.__dict__['trace'] = kwargs.get('trace', False)
         # the linked element, alias
@@ -1033,6 +1040,11 @@ class CaElement(AbstractElement):
             if k[0] == unitsys: v.srcunit = u
             elif k[1] == unitsys: v.dstunit = u
 
+    def getEpsilon(self, field):
+        return self._field[field].sprb_epsilon
+
+    def setEpsilon(self, field, eps):
+        self._field[field].sprb_epsilon = eps
 
     def updatePvRecord(self, pvname, properties, tags = []):
         """update the pv with property dictionary and tag list."""
@@ -1065,6 +1077,8 @@ class CaElement(AbstractElement):
                 if pvunit: self._field[fieldname].pvunit = pvunit
                 _logger.debug("'%s' field '%s'[%s] = '%s'" % (
                         elemhandle, fieldname, idx, pvname))
+                if properties.has_key("epsilon"):
+                    self.setEpsilon(fieldname, properties["epsilon"])
 
         # check element field
         #for t in tags:

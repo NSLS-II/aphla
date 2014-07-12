@@ -16,8 +16,8 @@ import sys, time
 import numpy as np
 
 #import matplotlib.pylab as plt
-from hlalib import getElements, getPvList, waitChanged, getTunes, eget
-from catools import caget, caput, caputwait, Timedout
+from hlalib import getElements, getPvList, getTunes, fget, fput
+from catools import caget, caput, Timedout
 from apdata import OrmData
 import itertools
 import logging
@@ -89,10 +89,11 @@ class RmCol:
         print "Kicker sp:", kstrength
         for i,kx in enumerate(kstrength[1:]):
             v0 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
-            self.kicker.put(kfield, kx, unitsys=self.unit)
-            st = waitChanged(self.resplst, respfields, v0, 
-                             wait=wait, diffstd=self.bpmdiffstd)
-
+            #self.kicker.put(kfield, kx, unitsys=self.unit)
+            #st = waitChanged(self.resplst, respfields, v0, 
+            #                 wait=wait, diffstd=self.bpmdiffstd)
+            fput([(self.kicker, kfield, kx),],
+                 unitsys=self.unit, wait_readback = True)
             v1 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
             ret[i+1,:] = v1[:]
             
@@ -108,7 +109,9 @@ class RmCol:
             kstrength[1:-1], ret[1:-1,:], 1, full=True)
 
         # reset the kicker
-        self.kicker.put(kfield, kx0, unitsys=self.unit)
+        #self.kicker.put(kfield, kx0, unitsys=self.unit)
+        fput([(self.kicker, kfield, kx0),],
+             unitsys=self.unit, wait_readback=True)
         self.rawkick = kstrength
         self.rawresp = ret
         self.m = p[0,:] # the slope

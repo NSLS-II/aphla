@@ -12,7 +12,7 @@ from channelfinder import Channel, Property, Tag
 
 import logging
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+#_logger.setLevel(logging.DEBUG)
 
 def _nsls2_filter_element_type_group(elemlst):
     """
