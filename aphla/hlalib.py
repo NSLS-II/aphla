@@ -249,6 +249,8 @@ def _fget_2(elst, field, **kwargs):
     handle : str, optional, default "readback"
     unitsys : str, optional, default "phy", unit system, 
 
+    returns a flat 1D array. 
+
     Examples
     ---------
     >>> fget('DCCT', 'value')
@@ -256,16 +258,35 @@ def _fget_2(elst, field, **kwargs):
     >>> fget('p*c30*', 'x')
 
     >>> bpm = getElements('p*c30*')
-    >>> fget(bpm, 'x', handle="setpoint", unitsys = None)
+    >>> fget(bpm, 'x', handle="readback", unitsys = None)
+
+    Note
+    -----
+
+    if handle is not specified, try readback pvs first, if not exist, use
+    setpoint.
+
+    It will be confusing if the (elem,field) has other than one output value.
     """
 
-    handle = kwargs.pop('handle', "readback")
     unitsys = kwargs.pop("unitsys", "phy")
+    handle = kwargs.get('handle', "readback")
 
-    v = [e.pv(field=fld, handle=handle) for e,fld in zip(elst, field)]
-    assert len(set([len(pvl) for pvl in v])) <= 1, \
-        "Must be exact one pv for each field"
-    pvl = reduce(lambda x,y: x + y, v)
+    if "handle" in kwargs:
+        v = [e.pv(field=fld, handle=handle) for e,fld in zip(elst, field)]
+        assert len(set([len(pvl) for pvl in v])) <= 1, \
+            "Must be exact one pv for each field"
+        pvl = reduce(lambda x,y: x + y, v)
+    else:
+        # if handle is not specified, try readback and setpoint
+        pvlrb, pvlsp = [], []
+        for e,fld in zip(elst, field):
+            pvlrb.extend(e.pv(field=fld, handle="readback"))
+            pvlsp.extend(e.pv(field=fld, handle="setpoint"))
+        if pvlrb:
+            pvl = pvlrb
+        else:
+            pvl = pvlsp
 
     dat = caget(pvl, **kwargs)
     if unitsys is None: return dat
@@ -1111,7 +1132,8 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
     returns the output file name.
 
     ::
-        saveLattice("snapshot.hdf5", lat, [("COR", ("x", "y")), ("QUAD", ("b1",))], "Good one")
+        >>> elemflds = [("COR", ("x", "y")), ("QUAD", ("b1",))]
+        >>> saveLattice("snapshot.hdf5", lat, elemflds, "Good one")
     """
     # save the lattice
     verbose = kwargs.get("verbose", 0)
@@ -1134,10 +1156,23 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
 
     nlive, ndead = savePvData(output, pvs, group=lat.name, notes=notes)
 
-    # add the setpoint 
     import h5py
     h5f = h5py.File(output)
     grp = h5f[lat.name]
+    # add elem field information
+    grp.attrs["_query_"] = [
+      "%s(%s)" % (elfam, ",".join(flds)) for elfam,flds in elemflds]
+    #
+    # save the query command for each PV (overhead)
+    #for elfam,flds in elemflds:
+    #    el = lat.getElementList(elfam, virtual=False)
+    #    for fld in flds:
+    #        for pv in e.pv(field=fld):
+    #            grp[pv].attrs["_query_"] = [elfam, fld]
+    #        for pv in e.pv(field=fld, handle="setpoint"):
+    #            grp[pv].attrs["_query_"] = [elfam, fld]
+
+    # add the setpoint 
     for pv in kwargs.get("pvsp", []):
         grp[pv].attrs["setpoint"] = 1
     h5f.close()

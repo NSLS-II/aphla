@@ -9,7 +9,8 @@ Accelerator Physics Tools module defines some small AP routines.
 from __future__ import print_function
 
 import numpy as np
-import time, datetime, sys, os
+import time, sys, os
+from datetime import datetime
 import itertools
 import tempfile
 import h5py
@@ -65,13 +66,13 @@ def getLifetime(tinterval=3, npoints = 8, verbose=False):
 
     # data points
     ret = np.zeros((npoints, 2), 'd')
-    d0 = datetime.datetime.now()
+    d0 = datetime.now()
     ret[0, 1] = getCurrent()
     for i in range(1, npoints):
         # sleep for next reading
         time.sleep(tinterval)
         ret[i, 1] = getCurrent()
-        dt = datetime.datetime.now() - d0
+        dt = datetime.now() - d0
         ret[i, 0] = (dt.microseconds/1000000.0 + dt.seconds)/3600.0 + \
             dt.days*24.0
         if verbose:
@@ -807,7 +808,6 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
     """
     verbose = kwargs.pop("verbose", 0)
     output  = kwargs.pop("output", None)
-
     if output is True:
         output = outputFileName("respm", "orm")
 
@@ -834,6 +834,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
         raise RuntimeError("need input for at least of the parameters: "
                            "dxlst, dxmax")
 
+    t0 = datetime.now()
     m = np.zeros((len(bpmfld), len(corfld)), 'd')
     if verbose > 0: kwargs["verbose"] = verbose - 1
     for i,(cor, fld) in enumerate(corfld):
@@ -863,6 +864,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
             g["cor"] = xlst
             f.close()
 
+    t1 = datetime.now()
     if output:
         # save the overall matrix
         f = h5py.File(output)
@@ -877,6 +879,13 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
         g["m"].attrs["bpm_name"]  = [b.name for b,fld in bpmfld]
         g["m"].attrs["bpm_field"] = [fld for b,fld in bpmfld]
         #g["m"].attrs["bpm_pv"]    = pv_bpm
+        try:
+            import getpass
+            g["m"].attrs["_author_"] = getpass.getuser()
+        except:
+            pass
+        g["m"].attrs["t_start"] = t0.strftime("%Y-%m-%d %H:%M:%S.%f")
+        g["m"].attrs["t_end"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
         f.close()
 
     return m, output
@@ -950,6 +959,8 @@ def getArchiverData(*argv, **kwargs):
     """
     >>> getArchiverData("DCCT", "I")
     >>> getArchiverData("SR:C03-BI{DCCT:1}AveI-I")
+
+    At this moment, only return data back to one hour earlier.
     """
     if len(argv) == 1 and isinstance(argv[0], (str, unicode)):
         pvs = argv
@@ -960,7 +971,6 @@ def getArchiverData(*argv, **kwargs):
                      [e.pv(field=argv[1],
                            handle=kwargs.get("handle", "readback"))
                       for e in getElements(argv[0])])
-    from datetime import datetime
     t0 = datetime.now()
     import subprocess
     out = subprocess.check_output(["arget", "-s", kwargs.get("s", "-1 h")] + pvs)
