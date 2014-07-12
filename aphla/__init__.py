@@ -68,7 +68,8 @@ import bba
 
 #import contrib
 
-import gui
+# it's better to import this package separately
+#import gui
 
 import nsls2
 #import nsls2br
