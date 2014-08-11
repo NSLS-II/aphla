@@ -437,7 +437,7 @@ class ConfigAbstractModel(QObject):
                         'old unit conversion.\n\nIf Cancel is selected, '
                         'configuration loading will be cancelled.')
             msg.addButton(QMessageBox.Yes)
-            msg.addButton(QMessageBox,No)
+            msg.addButton(QMessageBox.No)
             msg.addButton(QMessageBox.Cancel)
             msg.setDefaultButton(QMessageBox.Yes)
             msg.setEscapeButton(QMessageBox.Cancel)
