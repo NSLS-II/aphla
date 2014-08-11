@@ -424,10 +424,14 @@ class CaAction:
         """
         if self.pvsp:
             rawret = caget(self.pvsp, timeout=self.timeout, format=FORMAT_CTRL)
+            # update the limits when necessary
             for i in range(len(self.pvsp)):
                 if self.pvlim[i] is None:
-                    self.pvlim[i] = (rawret[i].lower_ctrl_limit,
-                                     rawret[i].upper_ctrl_limit)
+                    try:
+                        self.pvlim[i] = (rawret[i].lower_ctrl_limit,
+                                         rawret[i].upper_ctrl_limit)
+                    except:
+                        pass
             if len(self.pvsp) == 1:
                 return self._unit_conv(rawret[0], None, unitsys)
             else:

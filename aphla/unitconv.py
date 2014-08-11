@@ -12,7 +12,7 @@ import re
 import os
 
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+#_logger.setLevel(logging.DEBUG)
 
 class UcAbstract(object):
     """an identity conversion with unit names.

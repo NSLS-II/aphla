@@ -21,8 +21,6 @@ from ..chanfinder import ChannelFinderAgent
 from ..resource import getResource
 from .. import catools
 
-import utils
-
 import os
 import glob
 import re
@@ -32,7 +30,7 @@ import ConfigParser
 import fnmatch
 import logging
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+#_logger.setLevel(logging.DEBUG)
 #
 HLA_TAG_PREFIX = 'aphla'
 #HLA_TAG_EGET = HLA_TAG_PREFIX + '.eget'
@@ -110,7 +108,7 @@ def load_v1(machine, submachines = "*", **kwargs):
             return
         
     #importlib.import_module(machine, 'machines')
-    _logger.debug("importing '%s'" % machine)
+    _logger.info("importing '%s'" % machine)
     m = __import__(machine, globals(), locals(), [], -1)
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
     # update machine name for each lattice
@@ -127,12 +125,12 @@ def load_v1(machine, submachines = "*", **kwargs):
         
 def _findMachinePath(machine):
     # if machine is an abs path
-    _logger.debug("trying abs path '%s'" % machine)
+    _logger.info("trying abs path '%s'" % machine)
     if os.path.isabs(machine) and os.path.isdir(machine):
         mname = os.path.basename(os.path.realpath(machine))
         return machine, mname
     # try "machine" in APHLA_CONFIG_DIR and ~/.aphla/ (default)
-    _logger.debug("trying path '%s' '%s'" % (HLA_CONFIG_DIR, machine))
+    _logger.info("trying path '%s' '%s'" % (HLA_CONFIG_DIR, machine))
     home_machine = os.path.join(HLA_CONFIG_DIR, machine)
     if os.path.isdir(home_machine):
         mname = os.path.basename(os.path.realpath(machine))
@@ -191,12 +189,12 @@ def load(machine, submachine = "*", **kwargs):
         _logger.error(msg)
         raise RuntimeError(msg)
 
-    _logger.debug("importing '%s' from '%s'" % (machine, machdir))
+    _logger.info("importing '%s' from '%s'" % (machine, machdir))
 
     cfg = ConfigParser.ConfigParser()
     try:
         cfg.readfp(open(os.path.join(machdir, "aphla.ini"), 'r'))
-        _logger.debug("using config file: 'aphla.ini'")
+        _logger.info("using config file: 'aphla.ini'")
     except:
         raise RuntimeError("can not open '%s' to read configurations" % (
                 os.path.join(machdir, "aphla.ini")))
@@ -225,17 +223,17 @@ def load(machine, submachine = "*", **kwargs):
         cfa = ChannelFinderAgent()
         accsqlite = os.path.join(machdir, accstruct)
         if re.match(r"https?://.*", accstruct, re.I):
-            _logger.debug("using CFS '%s' for '%s'" % (accstruct, msect))
+            _logger.info("using CFS '%s' for '%s'" % (accstruct, msect))
             #cfa.downloadCfs(accstruct, property=[('elemName', '*'), 
             #                                     ('iocName', '*')],
             #                tagName=acctag)
             cfa.downloadCfs(accstruct, property=[('elemName', '*'),], tagName=acctag)
         elif os.path.isfile(accsqlite):
-            _logger.debug("using SQlite '%s'" % accsqlite)
+            _logger.info("using SQlite '%s'" % accsqlite)
             cfa.loadSqlite(accsqlite)
         else:
-            _logger.debug("NOT CFS '%s'" % accstruct)
-            _logger.debug("NOT SQlite '%s'" % accsqlite)
+            _logger.warn("NOT CFS '%s'" % accstruct)
+            _logger.warn("NOT SQlite '%s'" % accsqlite)
             raise RuntimeError("Unknown accelerator data source '%s'" % accstruct)
 
         cfa.splitPropertyValue('elemGroups')
@@ -257,19 +255,16 @@ def load(machine, submachine = "*", **kwargs):
 
         uconvfile = d.get("unit_conversion", None)
         if uconvfile is not None: 
-            _logger.debug("loading unit conversion '%s'" % uconvfile)
+            _logger.info("loading unit conversion '%s'" % uconvfile)
             loadUnitConversion(lat, machdir, uconvfile.split(", "))
 
         physics_data = d.get("physics_data", None)
         if physics_data is not None:
+            _logger.info("loading physics data '%s'" % physics_data)
             phy_fname = os.path.join(machdir, physics_data)
-            #_logger.debug("loading ORM data '%s'" % ormfile)
             lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix")
-            #_logger.debug("loading Twiss data '%s'" % twissfile)
             lat._twiss = TwissData(phy_fname)
             lat._twiss.load(phy_fname, group="Twiss")
-            #_logger.debug("loaded {0} twiss data".format(len(lat._twiss.element)))
-            #_logger.debug("using golden lattice data '%s'" % goldenfile)
             setGoldenLattice(lat, phy_fname, "Golden")
 
         vex = lambda k: re.findall(r"\w+", d.get(k, ""))
@@ -296,7 +291,7 @@ def load(machine, submachine = "*", **kwargs):
     # set the default submachine, if no, use the first one
     lat0 = lat_dict.get(accdefault, None)
     if lat0 is None and len(lat_dict) > 0:
-        _logger.debug("default submachine not defined, "
+        _logger.warn("default submachine not defined, "
                       "use the first available one '%s'" % k)
         lat0 = lat_dict[sorted(lat_dict.keys())[0]]
 
@@ -474,7 +469,7 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
     """
 
     _logger.debug("creating '%s':%s" % (latname, desc))
-    _logger.debug("%d pvs found in '%s'" % (len(pvrec), latname))
+    _logger.info("%d pvs found in '%s'" % (len(pvrec), latname))
     # a new lattice
     lat = Lattice(latname, desc)
     for rec in pvrec:
@@ -488,10 +483,10 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
         if 'name' not in rec[1]: continue
         #print "PASSED"
         prpt = rec[1]
-        if "hostName" not in prpt:
-            _logger.warn("no 'hostName' for {0}".format(rec))
-        if "iocName" not in prpt:
-            _logger.warn("no 'iocName' for {0}".format(rec))
+        #if "hostName" not in prpt:
+        #    _logger.warn("no 'hostName' for {0}".format(rec))
+        #if "iocName" not in prpt:
+        #    _logger.warn("no 'iocName' for {0}".format(rec))
 
         if 'se' in prpt:
             prpt['sb'] = float(prpt['se']) - float(prpt.get('length', 0))
@@ -537,7 +532,7 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
     lat.circumference = lat[-1].se if lat.size() > 0 else 0.0
     
     _logger.debug("mode {0}".format(lat.mode))
-    _logger.debug("'%s' has %d elements" % (lat.name, lat.size()))
+    _logger.info("'%s' has %d elements" % (lat.name, lat.size()))
     for g in sorted(lat._group.keys()):
         _logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))

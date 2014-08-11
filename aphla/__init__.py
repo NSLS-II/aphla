@@ -12,7 +12,7 @@ A procedural interface is provided.
 
 from __future__ import print_function
 
-__version__ = "0.8.6"
+__version__ = "0.8.19"
 try:
     from version import version as __version__
 except:
@@ -37,7 +37,7 @@ _lgfmt = logging.Formatter(
     "%(asctime)s - %(name)s [%(levelname)s]: %(message)s")
 # set null handler when logging for a library.
 _lghdl = _NullHandler()
-_lghdl.setLevel(logging.INFO)
+_lghdl.setLevel(logging.WARNING)
 _lghdl.setFormatter(_lgfmt)
 logging.getLogger('aphla').addHandler(_lghdl)
 
@@ -68,7 +68,8 @@ import bba
 
 #import contrib
 
-import gui
+# it's better to import this package separately
+#import gui
 
 import nsls2
 #import nsls2br

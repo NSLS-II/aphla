@@ -20,6 +20,9 @@ from fnmatch import fnmatch
 from time import gmtime, strftime
 import sqlite3
 
+import logging
+_logger = logging.getLogger(__name__)
+
 __all__ = ['ChannelFinderAgent']
 
 class ChannelFinderAgent(object):
@@ -104,6 +107,12 @@ class ChannelFinderAgent(object):
             if self.rows[-1][1]:
                 for k in converter:
                     self.rows[-1][1][k] = converter[k](prpts[k])
+            # warn if hostName or iocName does not present
+            if "hostName" not in self.rows[-1][1]:
+                _logger.warn("no 'hostName' for {0}".format(self.rows[-1]))
+            if "iocName" not in self.rows[-1][1]:
+                _logger.warn("no 'iocName' for {0}".format(self.rows[-1]))
+
             del prptdict
 
 
