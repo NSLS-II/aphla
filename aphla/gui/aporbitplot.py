@@ -16,7 +16,7 @@ if __name__ == "__main__":
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (
     PYQT_VERSION_STR, QFile, QFileInfo, QSettings,
-    QObject, QString, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
+    QObject, QT_VERSION_STR, QTimer, QVariant, Qt, SIGNAL,
     QSize, QRectF, QLine, pyqtSignal)
 
 from PyQt4.QtGui import (

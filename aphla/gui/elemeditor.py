@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import (QAbstractTableModel, QDataStream, QFile,
-        QIODevice, QModelIndex, QRegExp, QSize, QString, QVariant, Qt,
+        QIODevice, QModelIndex, QRegExp, QSize, QVariant, Qt,
         SIGNAL, QEvent)
 from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
         QSpinBox, QStyle, QTextDocument, QTextEdit, 

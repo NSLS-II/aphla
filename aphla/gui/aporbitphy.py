@@ -6,7 +6,7 @@ Physics Routines for aporbit
 import numpy as np
 import aphla as ap
 
-from PyQt4.QtCore import QObject, Qt, QSettings, QSize, QString, QThread, SIGNAL
+from PyQt4.QtCore import QObject, Qt, QSettings, QSize, QThread, SIGNAL
 from PyQt4.QtGui import QApplication, QBrush, QMdiArea, QMessageBox, QPen, QDialog
 import PyQt4.Qwt5 as Qwt
 
