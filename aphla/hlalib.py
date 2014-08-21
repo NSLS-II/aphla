@@ -871,13 +871,14 @@ def getOrbit(pat = '', spos = False):
 
     # need match the element name
     if isinstance(pat, (unicode, str)):
-        elem = [e for e in getBpms() if fnmatch(e.name, pat)]
-        if not elem: return None
-        ret = [[e.x, e.y, e.sb] for e in elem]
+        elems = [e for e in getBpms()
+                if fnmatch(e.name, pat) and e.isEnabled()]
+        if not elems: return None
+        ret = [[e.x, e.y, e.sb] for e in elems]
     elif isinstance(pat, (list,)):
-        elem = machines._lat.getElementList(pat)
-        if not elem: return None
-        bpm = [e.name for e in getBpms()]
+        elems = machines._lat.getElementList(pat)
+        if not elems: return None
+        bpm = [e.name for e in getBpms() if e.isEnabled()]
         ret = []
         for e in elem:
             if not e.name in bpm: ret.append([None, None, None])
@@ -1182,6 +1183,37 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
     return nlive, ndead
 
 
+def loadLattice(h5fname, elemflds, **kwargs):
+    """
+    """
+    nstep = kwargs.get("nstep", 3)
+    tspan = kwargs.get("tspan", 3.0)
+
+    lat = machines._lat
+    pvspl, pvs = [], []
+    for elfam,flds in elemflds:
+        el = lat.getElementList(elfam, virtual=False)
+        for fld in flds:
+            pvs.extend(
+                reduce(lambda a,b: a+b, [e.pv(field=fld) for e in el]))
+            pvspl.extend(
+                reduce(lambda a,b: a+b,
+                       [e.pv(field=fld, handle="setpoint") for e in el]))
+    
+    import h5py
+    h5f = h5py.File(output, 'r')
+    grp = h5f[lat.name]
+    vals = [grp[pv].value for pv in pvspl]
+    dv = [(vals[j] - v) / nstep for j,v in enumerate(caget(pvspl))]
+    for i in range(nstep):
+        t0 = datetime.now()
+        vi = [vals[j] - (nstep - 1 - i)*dv[j] for j in range(len(vals))]
+        caput(pvspl, vi, timeout=tspan)
+        dt = (datetime.now() - t0).total_seconds()
+        if dt < tspan * 1.0 / nstep:
+            time.sleep(tspan * 1.0 / nstep - dt + 0.1)
+
+
 def outputFileName(group, subgroup, create_path = True):
     """generate the system default output data file name
 
@@ -1303,7 +1335,8 @@ def compareLattice(*argv, **kwargs):
             elif g[pv].dtype in ['int32', 'int64']:
                 dat[pv].append(int(val.value))
             else:
-                print "unknown {0} data type: {1}".format(pv, g[pv].dtype)
+                print "unknown {0} data type: {1}, value: {2}".format(
+                    pv, g[pv].dtype, g[pv].value)
         h5f.close()
     if len(dat) > 0 and kwargs.get("withlive", False):
         pvs = dat.keys()

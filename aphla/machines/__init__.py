@@ -232,8 +232,8 @@ def load(machine, submachine = "*", **kwargs):
             _logger.info("using SQlite '%s'" % accsqlite)
             cfa.loadSqlite(accsqlite)
         else:
-            _logger.info("NOT CFS '%s'" % accstruct)
-            _logger.info("NOT SQlite '%s'" % accsqlite)
+            _logger.warn("NOT CFS '%s'" % accstruct)
+            _logger.warn("NOT SQlite '%s'" % accsqlite)
             raise RuntimeError("Unknown accelerator data source '%s'" % accstruct)
 
         cfa.splitPropertyValue('elemGroups')
