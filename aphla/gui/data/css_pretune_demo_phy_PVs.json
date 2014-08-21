@@ -1,0 +1,80 @@
+{
+  "channels": [
+    [
+      "QH1",
+      "SR.qh1g2c30a.mck",
+      1.0000000000000000e+00,
+      1,
+      "SR:C30-MG{PS:QH1A}K:Sp1-SP",
+      "SR:C30-MG{PS:QH1A}K:Ps1DCCT1-I",
+      "nsls2.SR.qh1g2c30a.mck",
+      "",
+      "ch0"
+    ],
+    [
+      "QH2",
+      "SR.qh2g2c30a.mck",
+      2.0000000000000000e+00,
+      1,
+      "SR:C30-MG{PS:QH2A}K:Sp1-SP",
+      "SR:C30-MG{PS:QH2A}K:Ps1DCCT1-I",
+      "nsls2.SR.qh2g2c30a.mck",
+      "",
+      "ch0"
+    ],
+    [
+      "QM1",
+      "SR.qm1g4c30a.mck",
+      -1.0000000000000000e+00,
+      1,
+      "SR:C30-MG{PS:QM1A}K:Sp1-SP",
+      "SR:C30-MG{PS:QM1A}K:Ps1DCCT1-I",
+      "nsls2.SR.qm1g4c30a.mck",
+      "",
+      "ch0"
+    ]
+  ],
+  "column_names": [
+    "group_name",
+    "channel_name",
+    "config_weight",
+    "config_caput_enabled",
+    "pvsp",
+    "pvrb",
+    "aphla_channel_name",
+    "unitsys",
+    "unitconv_key"
+  ],
+  "config_ctime": "2014-07-23 (Wed) 19:18:19.940014",
+  "config_description": "",
+  "config_id": 27,
+  "config_masar_id": null,
+  "config_name": "CSS Pretune Demo (phy. unit PVs)",
+  "config_ref_step_size": 1.0000000000000000e+00,
+  "config_synced_group_weight": 1,
+  "unitconv_dict": {
+    "ch0": [
+      {
+        "conv_data": null,
+        "dst_unitsymb": "",
+        "dst_unitsys": "",
+        "inv": 0,
+        "polarity": 1,
+        "src_unitsymb": "",
+        "src_unitsys": null,
+        "type": "NoConversion"
+      },
+      {
+        "conv_data": null,
+        "dst_unitsymb": "",
+        "dst_unitsys": null,
+        "inv": 0,
+        "polarity": 1,
+        "src_unitsymb": "",
+        "src_unitsys": "",
+        "type": "NoConversion"
+      }
+    ]
+  },
+  "username": "yhidaka"
+}
