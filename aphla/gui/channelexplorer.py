@@ -2111,8 +2111,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         t.contextMenuForChannels = QMenu()
         t.contextMenuForElems = QMenu()
 
-        if caller in ('aptinker', 'aplattuner'):
-            # TODO: Remove 'aplattuner' once 'aptinker' is completed
+        if caller in ('aptinker'):
             t.contextMenuForChannels.addAction(t.actionCopySelectedItemsTexts)
 
             t.contextMenuForElems.addAction(t.actionCopySelectedItemsTexts)

@@ -1,3 +1,0 @@
-import tunerdb
-
-tunerdb.startServer()
