@@ -888,6 +888,20 @@ def getOrbit(pat = '', spos = False):
     if not spos: return obt[:,:2]
     else: return obt
 
+def getAverageOrbit(pat = '', spos=False, nsample = 5, dt = 0.1):
+    t0 = datetime.datetime.now()
+    obt0 = getOrbit(pat=pat, spos=spos)
+    nbpm, ncol = np.shape(obt0)
+    obt = np.zeros((nbpm, ncol, nsample), 'd')
+    obt[:,:,0] = obt0[:,:]
+    for i in range(1, nsample):
+        t1 = datetime.datetime.now()
+        dts = (t1 - t0).total_seconds()
+        if dts < dt * i:
+            time.sleep(dt*i - dts + 0.001)
+        obt[:,:,i] = getOrbit(pat=pat, spos=spos)
+    return np.average(obt, axis=-1), np.std(obt, axis=-1)
+
 
 def getOrbitResponseMatrix():
     """
@@ -1399,3 +1413,34 @@ def waitRamping(elem, **kwargs):
     if kwargs.get("verbose", 0) > 0:
         print "waited for ", wdt, (datetime.now() - t0).total_seconds(), "seconds"
     
+def getBoundedElements(group, s0, s1):
+    """
+    get list of elements within [s0, s1] or outside.
+
+    group - pattern, name, type, see `getElements`
+    s0, s1 - the boundary
+    outside - True: inside boundary [s0,s1], False: in [0, s0] or [s1, end]
+
+    if s0 > s1, it will be treated as a ring.
+
+    >>> inside, outside = getBoundedElements("BPM", 700, 100)
+
+    The returned elements are sorted in s order. In the case of s0 > s1, it
+    starts from [0, s0] and then [s1, end].
+    """
+
+    allelems = getElements(group)
+    inside = [False] * len(allelems)
+    for i,e in enumerate(allelems):
+        # keep the elements fully inside [s0, s1]
+        if s1 > s0 and e.sb > s0 and e.se < s1:
+            inside[i] = True
+        elif s1 < s0 and (e.sb > s0 or e.se < s1):
+            inside[i] = True
+        else:
+            inside[i] = False
+
+    return ([e for i,e in enumerate(allelems) if inside[i]],
+            [e for i,e in enumerate(allelems) if not inside[i]])
+
+

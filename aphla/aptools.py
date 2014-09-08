@@ -19,13 +19,14 @@ from . import machines
 from catools import caRmCorrect, measCaRmCol
 from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
     getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
-    getLocations, outputFileName, fget, fput)
+    getLocations, outputFileName, fget, fput, getBoundedElements)
 import logging
 
 __all__ = [ 'calcLifetime', 'getLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
     'stripView', 'measRmCol', 'getArchiverData',
+    'set3CorBump', 'set4CorBump'
 ]
 
 _logger = logging.getLogger(__name__)
@@ -798,6 +799,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
     :param list bpm: list of (bpm, field)
     :param list trim: list of (trim, field)
     :param str output: output filename
+    :param str h5group: data group name for HDF5 output, "OrbitResponseMatrix"
     :param float minwait: waiting seconds before each orbit measurement.
     :param list dxlst:
     :param list dxmax: 
@@ -810,6 +812,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
     output  = kwargs.pop("output", None)
     if output is True:
         output = outputFileName("respm", "orm")
+    h5group = kwargs.pop("h5group", "OrbitResponseMatrix")
 
     _logger.info("Orbit RM shape (%d %d)" % (len(bpmfld), len(corfld)))
     #bpms, cors = [], []
@@ -846,7 +849,8 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
 
         if output:
             f = h5py.File(output)
-            g0 = f.require_group("OrbitResponseMatrix")
+            #g0 = f.require_group("OrbitResponseMatrix")
+            g0 = f.require_group(h5group)
             grpname = "resp__%s.%s" % (cor.name, fld)
             if grpname in g0: del g0[pv]
             g = g0.create_group(grpname)
@@ -868,7 +872,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
     if output:
         # save the overall matrix
         f = h5py.File(output)
-        g = f.require_group("OrbitResponseMatrix")
+        g = f.require_group(h5group)
         if "m" in g:
             del g["m"]
         g["m"] = m
@@ -988,3 +992,78 @@ def getArchiverData(*argv, **kwargs):
 
     return dat
 
+
+def set3CorBump(cors, dIc0, **kwargs):
+    """
+    cors - list of three correctors
+    dIc0 - the I change for the first corrector in *cors* (i.e. raw unit)
+    plane - 'x' or 'y' (default 'x')
+
+    set the cors and returns the current change (i.e. delta I)
+    """
+    corls = getElements(cors)
+    plane = kwargs.get("plane", 'x').lower()
+    bpms  = kwargs.get("bpms", getElements("BPM"))
+    bpmsi, bpmso = getBoundedElements(bpms, corls[0].sb, corls[-1].se)
+    ibpmsi = [i for i,e in enumerate(bpms) if e in bpmsi]
+    ibpmso = [i for i,e in enumerate(bpms) if e in bpmso]
+
+    nsample = 3
+    obt0 = np.zeros((len(bpms), nsample), 'd')
+    for i in range(nsample):
+        obt0[:,i] = fget(bpms, plane, unitsys=None)
+        time.sleep(0.15)
+
+    print(ibpmsi)
+    # remeasure the response matrix
+    mfull, output = measOrbitRm([(b, plane) for b in bpms],
+                            [(c, plane) for c in corls],
+                            dxmax = 0.2, nx = 2)
+    m = np.take(mfull, ibpmso, axis=0)
+
+    bpmpvs = [bpms[i].pv(field=plane)[0] for i in ibpmso]
+    corpvs = [c.pv(field=plane)[0] for c in cors[1:]]
+
+    cv0 = fget(cors, plane, unitsys=None)
+    cors[0].put(plane, cv0[0] + dIc0, unitsys=None)
+    time.sleep(0.3)
+    obt1 = np.zeros((len(bpms), nsample), 'd')
+    for i in range(nsample):
+        obt1[:,i] = fget(bpms, plane, unitsys=None)
+        time.sleep(0.15)
+    err, msg = caRmCorrect(bpmpvs, corpvs, m[:,1:])
+    cv1 = fget(cors, plane, unitsys=None)
+    for i,c in enumerate(cors):
+        print(i, c.name, cv1[i] - cv0[i])
+
+
+def set4CorBump(cors, dA1, dA2, **kwargs):
+    """
+    superposition of two 3Cor bumps
+    
+    i1, i2 - indices for BPMs to look at dA1 and dA2
+    """
+    i1 = kwargs.get("i1", 1)
+    i2 = kwargs.get("i2", 2)
+    plane = kwargs.get("plane", 'x')
+    bpms  = kwargs.get("bpms", getElements("BPM"))
+    bpmsi, bpmso = getBoundedElements(bpms, cors[0].sb, cors[-1].se)
+    ibpmsi = [i for i,e in enumerate(bpms) if e in bpmsi]
+    ibpmso = [i for i,e in enumerate(bpms) if e in bpmso]
+
+    xv0 = fget(bpmsi, plane, unitsys=None)
+    cv0 = fget(cors, plane, unitsys=None)
+    set3CorBump(cors[:3], 0.5, **kwargs)
+    fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
+    time.sleep(1)
+    xv1 = fget(bpmsi, plane, unitsys=None)
+    cv1 = fget(cors, plane, unitsys=None)
+
+    set3CorBump(cors[1:], -0.5, **kwargs)
+    fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
+    time.sleep(1)
+    xv2 = fget(bpmsi, plane, unitsys=None)
+    cv2 = fget(cors, plane, unitsys=None)
+    
+    print([cv1[i] - cv0[i] for i in range(len(cors))],
+          [cv2[i] - cv0[i] for i in range(len(cors))])
