@@ -2,6 +2,7 @@
 
 	* add dms/nsls2.py for physics IOC
 	* add saveElement/putElement
+	* add attrs into nsls2 lat snapshot
 
 2013-01-06  Lingyun Yang  <lyyang@nsls2yang.nsls2.bnl.gov>
 
