@@ -423,9 +423,13 @@ def saveLattice(**kwargs):
 
     h5f = h5py.File(output)
     h5g = h5f[lat.name]
+    nameinfo = {}
     for elfam,flds in elemflds:
         for e in lat.getElementList(elfam, virtual=False):
             for fld in flds:
+                for pv in e.pv(field=fld):
+                    els = nameinfo.setdefault(pv, [])
+                    els.append("%s.%s" % (e.name, fld)) 
                 if not e.convertible(fld, None, unitsys): continue
                 uname = e.getUnit(fld, unitsys=unitsys)
                 pvsp = e.pv(field=fld, handle="setpoint")
@@ -437,6 +441,10 @@ def saveLattice(**kwargs):
                     h5g[pv].attrs[s] = d1
                 for pv in pvsp:
                     h5g[pv].attrs["setpoint"] = 1
+
+    for pv,els in nameinfo.items():
+        h5g[pv].attrs["element.field"] = els
+
     t1 = datetime.now()
     try:
         import getpass
