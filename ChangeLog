@@ -1,3 +1,7 @@
+2014-09-10  Lingyun Yang  <lyyang@debian7>
+
+	* add measKickedTbtData
+
 2014-09-09  Lingyun Yang  <lyyang@debian7>
 
 	* add dms/nsls2.py for physics IOC
