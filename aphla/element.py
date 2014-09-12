@@ -227,9 +227,9 @@ class CaAction:
     None in unit conversion means the lower level unit, like the PV in EPICS.
     """
     def __init__(self, **kwargs):
-        self.pvrb = []
-        self.pvsp = []
-        self.golden = []
+        self.pvrb = [] # readback pv
+        self.pvsp = [] # setpoint pv
+        self.golden = [] # some setpoint can saved as golden value
         self.pvh  = [] # step size
         self.pvlim = [] # lower/upper limit 
         # buffer the initial value and last setting/reading

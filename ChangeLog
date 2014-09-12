@@ -1,6 +1,8 @@
 2014-09-10  Lingyun Yang  <lyyang@debian7>
 
 	* add measKickedTbtData
+	* add getLifetime and rename old one to measLifetime
+	* add getLifetimeCurrent
 
 2014-09-09  Lingyun Yang  <lyyang@debian7>
 

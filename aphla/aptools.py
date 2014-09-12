@@ -22,7 +22,7 @@ from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
     getLocations, outputFileName, fget, fput, getBoundedElements)
 import logging
 
-__all__ = [ 'calcLifetime', 'getLifetime',  'measOrbitRm',
+__all__ = [ 'calcLifetime', 'measLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
     'stripView', 'measRmCol', 'getArchiverData',
@@ -50,7 +50,7 @@ def _zip_element_field(elems, fields, **kwargs):
     return ret
 
 
-def getLifetime(tinterval=3, npoints = 8, verbose=False):
+def measLifetime(tinterval=3, npoints = 8, verbose=False):
     """
     Monitor current change in a time interval, calculate lifetime I/(dI/dt)
 

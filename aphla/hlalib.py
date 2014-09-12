@@ -59,16 +59,44 @@ def getCurrent(name='dcct', field='I', unitsys=None):
     """Get the current from the first DCCT element
 
     :param str name: the name of DCCT, default 'dcct'
-    :param str field: the field of DCCT, default 'value'
+    :param str field: the field of DCCT, default 'I'
     :param unit: the desired unit sytem, default None, no conversion.
 
     returns None if no 'dcct' element found
-
-    seealso :func:`eget`
     """
     _current = getElements(name)
     if _current: return _current[0].get(field, unitsys=unitsys)
     else: return None
+
+# current lifetime
+def getLifetime(name='dcct', field='tau', unitsys=None):
+    """Get the lifetime from the first DCCT element
+
+    :param str name: the name of DCCT, default 'dcct'
+    :param str field: the field of DCCT, default 'tau'
+    :param unit: the desired unit sytem, default None, no conversion.
+
+    returns None if no 'dcct' element found
+    """
+    _current = getElements(name)
+    if _current: return _current[0].get(field, unitsys=unitsys)
+    else: return None
+
+# lifetime and current
+def getLifetimeCurrent(name='dcct', unitsys=None):
+    """Get the beam lifetime and current from the first DCCT element
+
+    :param str name: the name of DCCT, default 'dcct'
+    :param unit: the desired unit sytem, default None, no conversion.
+
+    returns (None, None) if no 'dcct' element found
+    """
+    _current = getElements(name)
+    if not _current:
+        return None, None
+    I   = _current[0].get("I",   unitsys=unitsys)
+    tau = _current[0].get("tau", unitsys=unitsys)
+    return tau, I
 
 # rf
 def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None, handle="readback"):
@@ -966,13 +994,12 @@ def _reset_quad():
 
 def waitStableOrbit(reforbit, **kwargs):
     """
-    set pv to a value, waiting for timeout or the std of monipv is greater
-    than diffstd
+    set pv to a value, waiting for timeout or the new orbit is stable around reforbit.
 
-    - *diffstd* = 1e-7
-    - *minwait* = 2
-    - *maxwait* =30
-    - *step* = 2
+    - *diffstd* = 1e-7, std(obt - reforbit) < diffstd means stable
+    - *minwait* = 2, wait at least *minwait* seconds.
+    - *maxwait* =30, timeout seconds.
+    - *step* = 2, sleep at each step.
     - *diffstd_list* = False
     """
 
