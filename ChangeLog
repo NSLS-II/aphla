@@ -1,3 +1,8 @@
+2014-09-13  Lingyun Yang  <lyyang@NSLS2LANG-LT.local>
+
+	* aphla/hlalib.py (getTimestamp): add
+	* aphla/element.py: add wait option in element.put
+
 2014-09-10  Lingyun Yang  <lyyang@debian7>
 
 	* add measKickedTbtData
