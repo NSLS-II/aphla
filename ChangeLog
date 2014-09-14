@@ -1,3 +1,7 @@
+2014-09-13  Lingyun Yang  <lyyang@NSLS2LANG-LT.local>
+
+	* aphla/hlalib.py (getTimestamp): add 
+
 2013-01-06  Lingyun Yang  <lyyang@nsls2yang.nsls2.bnl.gov>
 
 	* merge heads
