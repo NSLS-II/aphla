@@ -19,7 +19,7 @@ import machines
 import element
 import itertools
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 #__all__ = [
 #    'addGroup', 'addGroupMembers', 'eget',  
@@ -152,7 +152,7 @@ def _reset_trims(verbose=False):
     else:
         caput(pv, 0.0)
 
-    logger.info("reset all trims")
+    _logger.info("reset all trims")
     #print "DONE"
 
 
@@ -641,7 +641,7 @@ def getTwiss(names, columns, **kwargs):
     src = kwargs.pop("source", "database")
     if src == "database":
         if not machines._lat._twiss:
-            logger.error("ERROR: no twiss data loaded")
+            _logger.error("ERROR: no twiss data loaded")
             return None
         return machines._lat._twiss.get(names, col=col)
     elif src == "VA":
@@ -671,7 +671,7 @@ def getTwissAt(s, columns, **kwargs):
     src = kwargs.pop("source", "database")
     if src == "database":
         if not machines._lat._twiss:
-            logger.error("ERROR: no twiss data loaded")
+            _logger.error("ERROR: no twiss data loaded")
             return None
         return machines._lat._twiss.at(s, col=col)
     else:
@@ -902,6 +902,20 @@ def getOrbit(pat = '', spos = False):
     if not spos: return obt[:,:2]
     else: return obt
 
+def getAverageOrbit(pat = '', spos=False, nsample = 5, dt = 0.1):
+    t0 = datetime.datetime.now()
+    obt0 = getOrbit(pat=pat, spos=spos)
+    nbpm, ncol = np.shape(obt0)
+    obt = np.zeros((nbpm, ncol, nsample), 'd')
+    obt[:,:,0] = obt0[:,:]
+    for i in range(1, nsample):
+        t1 = datetime.datetime.now()
+        dts = (t1 - t0).total_seconds()
+        if dts < dt * i:
+            time.sleep(dt*i - dts + 0.001)
+        obt[:,:,i] = getOrbit(pat=pat, spos=spos)
+    return np.average(obt, axis=-1), np.std(obt, axis=-1)
+
 
 def getOrbitResponseMatrix():
     """
@@ -940,7 +954,7 @@ def _reset_bpm_offset():
         #print b.pv(tags=['aphla.offset', 'aphla.eput'])
         pvs.extend(b.pv(tags=['aphla.offset', 'aphla.eput']))
     if pvs: caput(pvs, 0.0)
-    logger.info("Reset the bpm offset")
+    _logger.info("Reset the bpm offset")
 
 
 def _reset_quad():
@@ -1197,7 +1211,7 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
     return nlive, ndead
 
 
-def loadLattice(h5fname, elemflds, **kwargs):
+def putLattice(h5fname, elemflds, **kwargs):
     """
     """
     nstep = kwargs.get("nstep", 3)
@@ -1244,7 +1258,7 @@ def outputFileName(group, subgroup, create_path = True):
         output_dir = os.path.join(output_dir, subdir)
         if not os.path.exists(output_dir):
             if create_path:
-                logger.info("creating new directory: {0}".format(output_dir))
+                _logger.info("creating new directory: {0}".format(output_dir))
                 os.mkdir(output_dir)
                 os.chmod(output_dir, stat.S_ISGID | stat.S_IRWXU | stat.S_IRWXG | \
                          stat.S_IROTH | stat.S_IXOTH)
@@ -1413,3 +1427,84 @@ def waitRamping(elem, **kwargs):
     if kwargs.get("verbose", 0) > 0:
         print "waited for ", wdt, (datetime.now() - t0).total_seconds(), "seconds"
     
+def getBoundedElements(group, s0, s1):
+    """
+    get list of elements within [s0, s1] or outside.
+
+    group - pattern, name, type, see `getElements`
+    s0, s1 - the boundary
+    outside - True: inside boundary [s0,s1], False: in [0, s0] or [s1, end]
+
+    if s0 > s1, it will be treated as a ring.
+
+    >>> inside, outside = getBoundedElements("BPM", 700, 100)
+
+    The returned elements are sorted in s order. In the case of s0 > s1, it
+    starts from [0, s0] and then [s1, end].
+    """
+
+    allelems = getElements(group)
+    inside = [False] * len(allelems)
+    for i,e in enumerate(allelems):
+        # keep the elements fully inside [s0, s1]
+        if s1 > s0 and e.sb > s0 and e.se < s1:
+            inside[i] = True
+        elif s1 < s0 and (e.sb > s0 or e.se < s1):
+            inside[i] = True
+        else:
+            inside[i] = False
+
+    return ([e for i,e in enumerate(allelems) if inside[i]],
+            [e for i,e in enumerate(allelems) if not inside[i]])
+
+
+def saveElement(elem, output, h5group = "/"):
+    """
+    save element info to HDF5 file *output* in *h5group*
+    """
+    import h5py
+    h5f = h5py.File(output)
+    grp = h5f.require_group(h5group)
+    for fld in elem.fields():
+        try:
+            val = elem.get(fld, handle="setpoint", unitsys=None)
+            grp[fld + ".sp"] = val
+        except:
+            pass
+        try:
+            val = elem.get(fld, handle="readback", unitsys=None)
+            grp[fld + ".rb"] = val
+        except:
+            pass
+    grp.attrs["name"]   = elem.name
+    grp.attrs["family"] = elem.family
+    grp.attrs["cell"]   = elem.cell
+    grp.attrs["girder"] = elem.girder
+    h5f.close()
+
+
+def putElement(elem, output, h5group = "/", force = False):
+    """
+    put saved element data to hardware
+    """
+    import h5py
+    h5f = h5py.File(output, 'r')
+    grp = h5f[h5group]
+
+    if elem.name != grp.attrs["name"]:
+        _logger.warn("not same element name: %s != %s" % (
+                elem.name, grp.attrs["name"]))
+        if not force:
+            h5f.close()
+            return
+
+    for fld in elem.fields():
+        dsname = fld + '.sp'
+        if dsname not in grp.keys():
+            _logger.warn("%s not found in %s/%s" % (dsname, output, h5group))
+            continue
+        val = grp[dsname].value
+        elem.put(fld, val, unitsys=None)
+    h5f.close()
+
+

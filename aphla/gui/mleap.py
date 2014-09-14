@@ -153,7 +153,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.createMenuToolBar()
         
         # the first machine is the default
-        self.machBox.addItems([QString(v) for v in self._mach.keys()])
+        self.machBox.addItems([v for v in self._mach.keys()])
         self.reloadLatticeNames(self.machBox.currentText())
         self.connect(self.machBox, SIGNAL("currentIndexChanged(QString)"),
                      self.reloadLatticeNames)
@@ -188,7 +188,7 @@ class OrbitPlotMainWindow(QMainWindow):
         self.latBox.clear()
         cur_mach = str(self.machBox.currentText())
         lats, lat0, pvm = self._mach.get(cur_mach, ({}, None, None))
-        self.latBox.addItems([QString(lat) for lat in lats.keys()])
+        self.latBox.addItems([lat for lat in lats.keys()])
         if lat0:
             i = self.latBox.findText(lat0.name)
             self.latBox.setCurrentIndex(i)

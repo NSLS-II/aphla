@@ -15,7 +15,7 @@ import aphla
 import pvmanager
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt, SIGNAL, QString, QVariant
+from PyQt4.QtCore import Qt, SIGNAL, QVariant
 import PyQt4.Qwt5 as Qwt
 from pvmanager import CaDataMonitor
 from aporbitplot import ApCaPlot, ApCaWaveformPlot

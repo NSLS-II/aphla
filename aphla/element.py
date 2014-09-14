@@ -441,7 +441,7 @@ class CaAction:
             return None
 
 
-    def putSetpoint(self, val, unitsys = None, bc = 'exception'):
+    def putSetpoint(self, val, unitsys = None, bc = 'exception', wait=True):
         """
         set a new setpoint.
 
@@ -465,6 +465,7 @@ class CaAction:
 
         # under and over flow check
         for i,lim in enumerate(self.pvlim):
+            # update boundary if not done before
             if lim is None: self._update_sp_lim_h(i)
             lowhigh = self.pvlim[i]
             if self._all_within_range(rawval[i], lowhigh): continue
@@ -492,7 +493,7 @@ class CaAction:
                 # keep the first for reset
                 self.sp.pop(1)
 
-        retlst = caput(self.pvsp, rawval, wait=True)
+        retlst = caput(self.pvsp, rawval, wait=wait)
         for i,ret in enumerate(retlst):
             if ret.ok: continue
             raise RuntimeError("Failed at setting {0} to {1}".format(
@@ -935,6 +936,7 @@ class CaElement(AbstractElement):
 
     def __setattr__(self, att, val):
         # this could be called by AbstractElement.__init__ or Element.__init__
+        # Note: the quick way has wait=False
         if hasattr(super(CaElement, self), att):
             super(CaElement, self).__setattr__(att, val)
         elif self.__dict__['_field'].has_key(att):
@@ -945,7 +947,11 @@ class CaElement(AbstractElement):
             if not decr.pvsp:
                 raise ValueError("field '%s' in '%s' is not writable" % (
                         att, self.name))
-            decr.putSetpoint(val)
+            decr.putSetpoint(val, wait=False)
+            # if _field_trig exists, trig it, do not wait
+            decr_trig = self.__dict__['_field'].get(att + "_trig", None)
+            if decr_trig:
+                decr_trig.putSetpoint(1, wait=False)
         elif att in self.__dict__.keys():
             self.__dict__[att] = val
         else:
@@ -1121,7 +1127,7 @@ class CaElement(AbstractElement):
         return self._field.keys()
 
     def stepSize(self, field):
-        """return the stepsize of field"""
+        """return the stepsize of field (hardware unit)"""
         return self._field[field].stepSize()
 
     def updateBoundary(self, field = None, lowhi = None, r = None):
@@ -1136,6 +1142,10 @@ class CaElement(AbstractElement):
         >>> updateBoundary('b1', (0, 2), 10) 
 
         The above example sets 'b1' range to (0, 2) and stepsize 0.2
+
+        If this field has been set once, its boundary has been updated at the
+        first time putting a value to it. Since putting a value needs to know
+        the boundary and check if the value is inside.
         """
         if field is None: fields = self._field.keys()
         else: fields = [field]
@@ -1293,11 +1303,11 @@ class CaElement(AbstractElement):
                         att, self.name))
 
         bc = kwargs.get('bc', 'exception')
+        wait = kwargs.get("wait", True)
+        decr.putSetpoint(val, unitsys, bc=bc, wait=wait)
 
-        decr.putSetpoint(val, unitsys, bc=bc)
 
-
-    def put(self, field, val, unitsys = 'phy', bc='exception'):
+    def put(self, field, val, unitsys = 'phy', bc='exception', wait=True):
         """set *val* to *field*.
 
         Parameters
@@ -1308,11 +1318,12 @@ class CaElement(AbstractElement):
         bc : str. Bounds checking: "exception" will raise a ValueError. 
             "ignore" will abort the whole setting. "boundary" will use the 
             boundary value it is crossing.
-
+        wait : as in caput
         seealso :func:`pv(field=field)`
         """
-        self._put_field(field, val, unitsys=unitsys, bc=bc)
-        for e in self.alias: e._put_field(field, val, unitsys=unitsys, bc=bc)
+        self._put_field(field, val, unitsys=unitsys, bc=bc, wait=wait)
+        for e in self.alias:
+            e._put_field(field, val, unitsys=unitsys, bc=bc, wait=wait)
 
     def setGolden(self, field, val, unitsys = 'phy'):
         """set the golden value for field"""
