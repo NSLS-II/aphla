@@ -36,6 +36,20 @@ _logger = logging.getLogger(__name__)
 #    'waitStableOrbit', 
 #]
 
+def getTimestamp(t = None, us = True):
+    """
+    generate the timestamp string
+
+    t - user provided datetime object or new a datetime.now()
+    us - with microsecond or not.
+    """
+    fmt = "%Y-%m-%d_%H:%M:%S"
+    if us: fmt = fmt + ".%f"
+    if t is None:
+        t = datetime.now()
+
+    return t.strftime(fmt)
+
 def setEnergy(Ek):
     """set energy (MeV) for current submachine
 
