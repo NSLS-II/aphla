@@ -1325,6 +1325,15 @@ class CaElement(AbstractElement):
         for e in self.alias:
             e._put_field(field, val, unitsys=unitsys, bc=bc, wait=wait)
 
+    def ramp(self, field, val, trigger = 1, timeout = 30, unitsys = 'phy', bc='exception', wait=True):
+        """
+        put(field, val) and then put(field +"_ramp", trigger)
+        """
+        self.put(field, val, unitsys=unitsys, bc=bc, wait=wait)
+        #self.put(field + "_ramp", trigger, timeout=0, unitsys=None, wait=True)
+        pv = self.pv(field=field+"_ramp", handle="setpoint")[0]
+        caput(pv, trigger, timeout=timeout, wait=True)
+
     def setGolden(self, field, val, unitsys = 'phy'):
         """set the golden value for field"""
         try:
