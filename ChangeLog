@@ -1,3 +1,7 @@
+2014-09-22  Lingyun Yang  <lyyang@725-controldesk05.cs.nsls2.local>
+
+	* aphla/element.py (CaElement.put): add ramp
+
 2014-09-13  Lingyun Yang  <lyyang@NSLS2LANG-LT.local>
 
 	* aphla/hlalib.py (getTimestamp): add
