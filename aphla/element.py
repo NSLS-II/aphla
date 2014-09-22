@@ -441,7 +441,7 @@ class CaAction:
             return None
 
 
-    def putSetpoint(self, val, unitsys = None, bc = 'exception', wait=True):
+    def putSetpoint(self, val, unitsys = None, bc = 'exception', wait=True, timeout = 5):
         """
         set a new setpoint.
 
@@ -493,7 +493,7 @@ class CaAction:
                 # keep the first for reset
                 self.sp.pop(1)
 
-        retlst = caput(self.pvsp, rawval, wait=wait)
+        retlst = caput(self.pvsp, rawval, wait=wait, timeout=timeout)
         for i,ret in enumerate(retlst):
             if ret.ok: continue
             raise RuntimeError("Failed at setting {0} to {1}".format(
@@ -1304,10 +1304,11 @@ class CaElement(AbstractElement):
 
         bc = kwargs.get('bc', 'exception')
         wait = kwargs.get("wait", True)
-        decr.putSetpoint(val, unitsys, bc=bc, wait=wait)
+        timeout = kwargs.get("timeout", 5)
+        decr.putSetpoint(val, unitsys, bc=bc, wait=wait, timeout=timeout)
 
 
-    def put(self, field, val, unitsys = 'phy', bc='exception', wait=True):
+    def put(self, field, val, **kwargs):
         """set *val* to *field*.
 
         Parameters
@@ -1319,21 +1320,23 @@ class CaElement(AbstractElement):
             "ignore" will abort the whole setting. "boundary" will use the 
             boundary value it is crossing.
         wait : as in caput
+        timeout : 
         seealso :func:`pv(field=field)`
         """
-        self._put_field(field, val, unitsys=unitsys, bc=bc, wait=wait)
+        unitsys = kwargs.get("unitsys", 'phy')
+        bc = kwargs.get("bc", 'exception')
+        wait = kwargs.get("wait", True)
+        trig = kwargs.get("trig", None)
+        timeout = kwargs.get("timeout", 5)
+
+        self._put_field(field, val, timeout=timeout, unitsys=unitsys, bc=bc, wait=wait)
         for e in self.alias:
-            e._put_field(field, val, unitsys=unitsys, bc=bc, wait=wait)
+            e._put_field(field, val, timeout=timeout, unitsys=unitsys, bc=bc, wait=wait)
 
-    def ramp(self, field, val, trigger = 1, timeout = 30, unitsys = 'phy', bc='exception', wait=True):
-        """
-        put(field, val) and then put(field +"_ramp", trigger)
-        """
-        self.put(field, val, unitsys=unitsys, bc=bc, wait=wait)
-        #self.put(field + "_ramp", trigger, timeout=0, unitsys=None, wait=True)
-        pv = self.pv(field=field+"_ramp", handle="setpoint")[0]
-        caput(pv, trigger, timeout=timeout, wait=True)
-
+        if trig is not None:
+            self._put_field(field + "_trig", trig,
+                            unitsys=None, timeout=timeout, wait=True)
+            
     def setGolden(self, field, val, unitsys = 'phy'):
         """set the golden value for field"""
         try:
