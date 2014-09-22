@@ -766,7 +766,8 @@ def measRmCol(resp, kker, kfld, dklst, **kwargs):
             msg = "Timeout at {0}.{1}= {2}, i= {3}, delta= {4}".format(
                 kker.name, kfld, k0+dki, i, dki)
             _logger.warn(msg)
-            print(msg)
+            print("{0}.{1}= {2}".format(kker.name, kfld,
+                                        kker.get(kfld, unitsys=unitsys)))
             sys.stdout.flush()
 
         for j in range(sample):
