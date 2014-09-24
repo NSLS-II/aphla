@@ -63,7 +63,7 @@ _params = {
 
 def putPar(ID, parList, **kwargs):
     """
-    Put (write) a set of parameters (list) on an ID while the hardware 
+    Put (write) a set of parameters (list) on an ID while the hardware
     itself (motor control) checks whether the target state is reached or not.
 
     inputs:
@@ -71,10 +71,10 @@ def putPar(ID, parList, **kwargs):
 
      parList: 2d parameter list in the format of [name, value, tolerance]
      [['gap',15,1e-4],['phase',12,1e-4]]
-    
+
      timeout: Maximum time the motor control should wait for each "put"
      in the unit of seconds.
-    
+
      verbose: integer larger means more details.
      throw: raise exception if True, otherwise return False
 
@@ -110,12 +110,12 @@ def createCorrectorField(ID):
 def createParList(ID, parScale):
     """
     create parameter list based on the paraneter range, spaced type
-     parRange: 2d parameter range in the format of 
+     parRange: 2d parameter range in the format of
      [[name, spacedType, start, end, step, tolerance],...]
      example:[['gap','log',150,15,21,0.1]]
-     scan table will cover 15~150 with 21 steps, tolerance is 0.1, 
+     scan table will cover 15~150 with 21 steps, tolerance is 0.1,
      spacedType: log or linear
-    
+
     return parameter list for communicating with hardware, table for data
     archive
     """
@@ -246,7 +246,7 @@ def switchFeedback(fftable = "off"):
             print "WARNING: inconsistent naming '{0}'".format(pv)
         pvffwd = "{0}{{{1}}}MPS:Lookup_.INPA".format(m.group(1), m.group(2))
         pvffwd_pref = "{0}{{{1}-Mtr:Gap}}.RBV ".format(m.group(1), m.group(2))
-        
+
         pvffwd_val = {"on": pvffwd_pref + "CP NM",
                       "off": pvffwd_pref + "NPP N"}
         print "set {0}='{1}'".format(pvffwd, pvffwd_val[fftable])
@@ -306,3 +306,192 @@ def saveToDB(fileName):
 def measOrbitResponse(IDflds, bpmflds, output, h5group):
 
     pass
+
+def save1DFeedFowardTable(filepath, table, fmt='%.16e'):
+    """
+    Save a valid 1-D Stepped Feedforward table (NSLS-II format) to a text file.
+    """
+
+    np.savetxt(filepath, table, fmt=fmt, delimiter=', ', newline='\n')
+
+def create1DFeedForwardTable(centers, half_widths, dI_array, I0_array=None):
+    """
+    Create a valid 1-D Stepped Feedforward table (NSLS-II format)
+    """
+
+    if I0_array is None:
+        I_array = dI_array
+    else:
+        I_array = I0_array + dI_array
+
+    table = np.hstack((np.array(centers).reshape((-1,1)),
+                       np.array(half_widths).reshape((-1,1)),
+                       I_array))
+
+    return table
+
+def calc1DFeedForwardColumns(
+    ID_filepath, n_interp_pts=None, interp_step_size=None, step_size_unit=None,
+    cor_inds_ignored=None, bpm_inds_ignored=None, nsv=None):
+    """
+    """
+
+    # TODO: Make sure all the units are correct in the generated table
+    # Gap & interval are in microns => [um]
+    # Currents in ppm of 10 Amps => [10uA]
+
+    compIterInds = getCompletedIterIndexes(ID_filepath)
+    nCompletedIter = len(compIterInds)
+
+    f = h5py.File(ID_filepath, 'r')
+
+    ID_name = f.keys()[0]
+    grp = f[ID_name]
+
+    meas_state_1d_array = grp['parameters']['scanTable'].value
+    state_unitsymb = grp['parameters']['scanTable'].attrs['unit'] # TODO: need unit conversion
+    nIter, ndim = meas_state_1d_array.shape
+    if ndim != 1:
+        f.close()
+        raise NotImplementedError('Only 1-D scan has been implemented.')
+    if nCompletedIter != nIter:
+        print '# of completed scan states:', nCompletedIter
+        print '# of requested scan states:', nIter
+        f.close()
+        raise RuntimeError('You have not scanned all specified states.')
+    meas_state_1d_array = meas_state_1d_array.flatten()
+    state_min = np.min(meas_state_1d_array)
+    state_max = np.max(meas_state_1d_array)
+
+    if (n_interp_pts is not None) and (interp_step_size is not None):
+        f.close()
+        raise ValueError(('You can only specify either one of "n_interp_pts" '
+                          'or "interp_step_size", not both.'))
+    elif n_interp_pts is not None:
+        interp_state_1d_array = np.linspace(state_min, state_max, n_interp_pts)
+    elif interp_step_size is not None:
+        interp_state_1d_array = np.arange(state_min, state_max, interp_step_size)
+        if interp_state_1d_array[-1] != state_max:
+            interp_state_1d_array = np.array(interp_state_1d_array.tolist()+
+                                             [state_max])
+    else:
+        interp_state_1d_array = meas_state_1d_array
+
+    M_list        = [None]*nIter
+    diff_orb_list = [None]*nIter
+    for k in grp.keys():
+        if k.startswith('iter_'):
+
+            iIter = grp[k].attrs['iteration']
+
+            M_list[iIter] = grp[k]['orm']['m'].value
+
+            orb = grp[k]['orbit'].value
+
+            bkgGroup = grp[k].attrs['background']
+            orb0 = grp[bkgGroup]['orbit'].value[:,:-1] # Ignore s-pos column
+
+            diff_orb_list[iIter] = orb - orb0
+
+
+    f.close()
+
+    interp_state_1d_array = np.sort(interp_state_1d_array)
+
+    center_list = interp_state_1d_array.tolist()
+
+    half_width_list = (np.diff(interp_state_1d_array)/2.0).tolist()
+    half_width_list.append(center_list[-1]-center_list[-2]-half_width_list[-1])
+
+    dI_list = []
+    for M, diff_orb in zip(M_list, diff_orb_list):
+
+        TF = np.ones(diff_orb.shape)
+        if bpm_inds_ignored is not None:
+            for i in bpm_inds_ignored:
+                TF[i,:] = 0
+        TF = TF.astype(bool)
+
+        diff_orb_trunc = diff_orb[TF].reshape((-1,2))
+
+        # Reverse sign to get desired orbit change
+        dObs = (-1.0)*diff_orb_trunc.T.flatten().reshape((-1,1))
+
+        TF = np.ones(M.shape)
+        if cor_inds_ignored is not None:
+            for i in cor_inds_ignored:
+                TF[:,i] = 0
+        if bpm_inds_ignored is not None:
+            nBPM = M.shape[0]/2
+            try:
+                assert nBPM*2 == M.shape[0]
+            except:
+                raise ValueError('Number of rows for response matrix must be 2*nBPM.')
+            for i in bpm_inds_ignored:
+                TF[i     ,:] = 0
+                TF[i+nBPM,:] = 0
+        TF = TF.astype(bool)
+
+        M_trunc = M[TF].reshape((dObs.size,-1))
+
+        U, sv, V = np.linalg.svd(M_trunc, full_matrices=0, compute_uv=1)
+
+        S_inv = np.linalg.inv(np.diag(sv))
+        if nsv is not None:
+            S_inv[nsv:, nsv:] = 0.0
+
+        dI = V.T.dot(S_inv.dot(U.T.dot(dObs))).flatten().tolist()
+
+        if cor_inds_ignored is not None:
+            for i in cor_inds_ignored:
+                # Set 0 Amp for unused correctors
+                dI.insert(i, 0.0)
+
+        dI_list.append(dI)
+
+    dI_array = np.array(dI_list)
+    nCor = dI_array.shape[1]
+    interp_dI_array = np.zeros((interp_state_1d_array.size, nCor))
+    for i in range(nCor):
+        interp_dI_array[:,i] = np.interp(
+            interp_state_1d_array, meas_state_1d_array, dI_array[:,i])
+
+    return {'centers': np.array(center_list),
+            'half_widths': np.array(half_width_list),
+            'raw_dIs': dI_array, 'interp_dIs': interp_dI_array}
+
+#----------------------------------------------------------------------
+def getCompletedIterIndexes(ID_filepath):
+    """"""
+
+    f = h5py.File(ID_filepath, 'r')
+
+    ID_name = f.keys()[0]
+    grp = f[ID_name]
+
+    completed_iter_indexes = []
+    for k in grp.keys():
+        if k.startswith('iter_') and grp[k].attrs.has_key('completed'):
+            completed_iter_indexes.append(grp[k].attrs['iteration'].value)
+
+    f.close()
+
+    if completed_iter_indexes != []:
+        if not np.all(np.diff(completed_iter_indexes) == 1):
+            raise RuntimeError(
+                'List of completed iteration indexes has some missing indexes.')
+        if np.min(completed_iter_indexes) != 0:
+            raise RuntimeError('List of completed iteration indexes does not start from 0.')
+
+    return completed_iter_indexes
+
+if __name__ == '__main__':
+
+    ID_filepath = '/epics/data/aphla/SR/2014_09/ID/dw100g1c08u_2014_09_24_142644.hdf5'
+
+    d = calc1DFeedForwardColumns(ID_filepath, interp_step_size=1.0,
+                                 cor_inds_ignored=[2,3],
+                                 bpm_inds_ignored=None, nsv=None)
+    table = create1DFeedForwardTable(d['centers'], d['half_widths'],
+                                     d['interp_dIs'])
+    save1DFeedFowardTable('test_ff.txt', table, fmt='%.16e')
