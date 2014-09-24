@@ -13,49 +13,55 @@ import h5py
 _params = {
     "dw100g1c08u":
         {"unitsys": "phy",
-         "gap": (119.0, 147.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.1),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "background": {"gap": 147.0},
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c08d":
         {"unitsys": "phy",
-         "gap": (119.0, 147.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.1),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "background": {"gap": 147.0},
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c18u":
         {"unitsys": "phy",
-         "gap": (119.0, 147.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.1),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "background": {"gap": 147.0},
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c18d":
         {"unitsys": "phy",
-         "gap": (119.0, 147.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.1),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "background": {"gap": 147.0},
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c28u":
         {"unitsys": "phy",
-         "gap": (119.0, 147.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.1),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "background": {"gap": 147.0},
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c28d":
         {"unitsys": "phy",
-         "gap": (119.0, 147.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.1),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "background": {"gap": 147.0},
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     }
 
-def putPar(ID, parList, timeout=30, throw=True, unitsys='phy', verbose=0):
+def putPar(ID, parList, **kwargs):
     """
     Put (write) a set of parameters (list) on an ID while the hardware 
     itself (motor control) checks whether the target state is reached or not.
@@ -74,6 +80,11 @@ def putPar(ID, parList, timeout=30, throw=True, unitsys='phy', verbose=0):
 
     returns: True if success, otherwise False
     """
+    timeout = kwargs.get("timeout", _params[ID.name].get("timeout", 150))
+    unitsys = kwargs.get("unitsys", _params[ID.name].get("unitsys", 'phy'))
+    throw = kwargs.get("throw", True)
+    verbose = kwargs.get("verbose", 0)
+
     agree = True
     for par in parList:
         ID.put(par[0], par[1], timeout=timeout, unitsys=unitsys, trig=1)
@@ -135,29 +146,33 @@ def createParList(ID, parScale):
     return parList, nlist, table
 
 
-def putBackground(ID, gapMax, gapTol, zeroPhase, phaseTol, timeout=150,
-                  throw=True, unitsys='phy', verbose=False):
+def putBackground(ID, **kwargs):
     """
     put ID to passive status,
     gap to max, phase to 0 if apply, all correction cch to zeros
     """
-    flds = ID.getFields()
+    gapMin, gapMax, gapStep, gapTol = kwargs.get("gap",
+                                                 _params[ID.name]["gap"])
+    phaseMin, phaseMax, phaseStep, phaseTol = \
+        kwargs.get("phase",  _params[ID.name].get("phase", (None, None, None, None)))
+    zeroPhase = 0.0
+    timeout = kwargs.get("timeout", 150)
+    throw   = kwargs.get("throw", True)
+    unitsys = kwargs.get("unitsys", 'phy')
+    verbose = kwargs.get("verbose", 0)
+
+    flds = ID.fields()
     parList = []
-    for fld in flds:
-        if fld == 'gap':
-            parList.append(['gap',gapMax,gapTol])
-            continue
-        if fld == 'phase':
-            parList.append(['phase',zeroPhase,phaseTol])
-            continue
-        else:
-            ID.put(fld,0)
-    if putPar(ID,parList,timeout=timeout,
+    if 'gap' in flds:
+        parList.append(['gap',gapMax,gapTol])
+    if 'phase' in flds:
+        parList.append(['phase',zeroPhase,phaseTol])
+
+    if putPar(ID, parList, timeout=timeout,
               throw=throw, unitsys=unitsys, verbose=verbose):
         # put correcting coils to zeros
-        nIDCor = len(ID.cch)
-        for i in range(nIDcor):
-            np.put(ID,'cch'+str(i),0)
+        for i in range(len(ID.cch)):
+            ID.put('cch'+str(i), 0.0, unitsys=None)
         return True
     else:
         return False
@@ -193,11 +208,13 @@ def checkGapPhase(ID, **kwargs):
     throw   = kwargs.get("throw", True)
     unitsys = kwargs.get("unitsys", _params[ID.name]["unitsys"])
     verbose = kwargs.get("verbose", 0)
+    gapStep = kwargs.get("gapStep", gapStep)
+    phaseStep = kwargs.get("phaseStep", phaseStep)
 
     flds = ID.fields()
     if 'gap' in flds:
-        for gap in np.linspace(gapMin,gapMax,gapStep):
-            gapList = [['gap',gap,gapTol]]
+        for gap in np.linspace(gapMin, gapMax, gapStep):
+            gapList = [['gap',gap, gapTol]]
             gapStatus = putPar(ID,gapList,timeout=timeout,
                                throw=throw,unitsys=unitsys,verbose=verbose)
             if not gapStatus:
@@ -246,12 +263,14 @@ def initFile(ID, fieldList, parTable):
     grp = fid.require_group(ID.name)
     grp.attrs["__FORMAT__"] = 1
     # setup parameters
-    subg = fid.require_group("parameters")
+    subg = grp.require_group("parameters")
     subg["scanTable"] = parTable #
     subg["scanTable"].attrs["columns"] = fieldList
     #for p in nameList:
     #    subg["scanTable"].attrs[p] = []
-    subg["background"] = [] # like one row of scanTable, same columns
+    bkg = _params[ID.name]["background"]
+    # like one row of scanTable, same columns
+    subg["background"] = [bkg[fld] for fld in fieldList]
     subg["background"].attrs["columns"] = fieldList
     # timestamp ISO "2007-03-01 13:00:00"
     subg["minCurrent"] = _params[ID.name]["Imin"]
@@ -285,4 +304,5 @@ def saveToDB(fileName):
     pass
 
 def measOrbitResponse(IDflds, bpmflds, output, h5group):
+
     pass
