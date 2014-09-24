@@ -8,6 +8,52 @@ import aphla as ap
 import itertools
 import numpy as np
 import re
+import h5py
+
+_params = {
+    "dw100g1c08u":
+        {"unitsys": "phy",
+         "gap": (15.0, 150.0, 30, 0.01),
+         "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "Imin": 2.0, # mA
+         "Tmin": 2.0, # hour
+         "timeout": 150, },
+    "dw100g1c08d":
+        {"unitsys": "phy",
+         "gap": (15.0, 150.0, 30, 0.01),
+         "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "Imin": 2.0, # mA
+         "Tmin": 2.0, # hour
+         "timeout": 150, },
+    "dw100g1c18u":
+        {"unitsys": "phy",
+         "gap": (15.0, 150.0, 30, 0.01),
+         "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "Imin": 2.0, # mA
+         "Tmin": 2.0, # hour
+         "timeout": 150, },
+    "dw100g1c18d":
+        {"unitsys": "phy",
+         "gap": (15.0, 150.0, 30, 0.01),
+         "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "Imin": 2.0, # mA
+         "Tmin": 2.0, # hour
+         "timeout": 150, },
+    "dw100g1c28u":
+        {"unitsys": "phy",
+         "gap": (15.0, 150.0, 30, 0.01),
+         "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "Imin": 2.0, # mA
+         "Tmin": 2.0, # hour
+         "timeout": 150, },
+    "dw100g1c28d":
+        {"unitsys": "phy",
+         "gap": (15.0, 150.0, 30, 0.01),
+         "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "Imin": 2.0, # mA
+         "Tmin": 2.0, # hour
+         "timeout": 150, },
+    }
 
 def putPar(ID, parList, timeout=30, throw=True, unitsys='phy', verbose=0):
     """
@@ -47,7 +93,10 @@ def putPar(ID, parList, timeout=30, throw=True, unitsys='phy', verbose=0):
     return agree
 
 
-def createParList(parRange):
+def createCorrectorField(ID):
+    return [(ID, fld) for fld in _params[ID.name].get("cch", [])]
+
+def createParList(ID, parScale):
     """
     create parameter list based on the paraneter range, spaced type
      parRange: 2d parameter range in the format of 
@@ -60,18 +109,20 @@ def createParList(parRange):
     archive
     """
     nlist,vlist,tlist = [],[],[] #name, value and tolerance list
-    for p in parRange:
-        nlist.append(p[0])
-        if p[1] == 'linear':
-            vlist.append(list(np.linspace(p[2],p[3],int(p[4]))))
-        elif p[1] == 'log':
-            if p[2]<=0 or p[3]<=0:
+    for fld, scale in parScale:
+        if not _params[ID.name].get(fld, None): continue
+        nlist.append(fld)
+        vmin, vmax, vstep, vtol = _params[ID.name][fld]
+        if scale == 'linear':
+            vlist.append(list(np.linspace(vmin, vmax, int(vstep))))
+        elif scale == 'log':
+            if vmin<=0 or vmax<=0:
                 raise RuntimeError('negative boundary can not be spaced Logarithmically')
             else:
-                vlist.append(list(np.logspace(np.log10(p[2]),np.log10(p[3]),int(p[4]))))
+                vlist.append(list(np.logspace(np.log10(vmin),np.log10(vmax),int(vstep))))
         else:
             raise RuntimeError('unknown spaced pattern: %s'%p[1])
-        tlist.append(p[5])
+        tlist.append(vtol)
     valueList = itertools.product(*vlist)
     parList = []
     for v in valueList:
@@ -81,7 +132,7 @@ def createParList(parRange):
         parList.append(tmp)
     valueList = itertools.product(*vlist)
     table = np.array([vi for vi in valueList])
-    return parList, nlist, vlist, table
+    return parList, nlist, table
 
 
 def putBackground(ID, gapMax, gapTol, zeroPhase, phaseTol, timeout=150,
@@ -129,13 +180,24 @@ def checkBeam(Imin=2, Tmin=2, online=False):
     return True
 
 
-def checkGapPhase(ID, gapMin, gapMax, gapStep, gapTol,
-                  phaseMin=None, phaseMax=None, phaseStep=3, phaseTol=None,
-                  timeout=150, throw=True, unitsys='phy', verbose=True):
+def checkGapPhase(ID, **kwargs):
     """
     check ID gap, phase
     return True if success, otherwise False
     """
+    gapMin = kwargs.get("gapMin",  _params[ID.name]["gap"][0])
+    gapMax = kwargs.get("gapMax",  _params[ID.name]["gap"][1])
+    gapStep= kwargs.get("gapStep", _params[ID.name]["gap_step"])
+    gapTol = kwargs.get("gapTol",  _params[ID.name]["gap_tolerance"])
+    phaseMin = kwargs.get("phaseMin",  _params[ID.name]["phase"][0])
+    phaseMax = kwargs.get("phaseMin",  _params[ID.name]["phase"][0])
+    phaseStep= kwargs.get("phaseStep", _params[ID.name]["phase_step"])
+    phaseTol = kwargs.get("phaseTol",  _params[ID.name]["phase_tolerance"])
+    timeout = kwargs.get("timeout", 150)
+    throw   = kwargs.get("throw", True)
+    unitsys = kwargs.get("unitsys", _params[ID.name]["unitsys"])
+    verbose = kwargs.get("verbose", 0)
+
     flds = ID.fields()
     if 'gap' in flds:
         for gap in np.linspace(gapMin,gapMax,gapStep):
@@ -181,7 +243,7 @@ def switchFeedback(fftable = "off"):
     # all ID feed forward
     # weixing Bunch by Bunch
 
-def initFile(ID, nameList, parTable, Imin, Tmin):
+def initFile(ID, fieldList, parTable):
     """initilize file name with path, save parameter table to hdf5"""
     fileName = ap.outputFileName("ID", ID.name+"_")
     fid = h5py.File(fileName)
@@ -190,15 +252,15 @@ def initFile(ID, nameList, parTable, Imin, Tmin):
     # setup parameters
     subg = fid.require_group("parameters")
     subg["scanTable"] = parTable #
-    subg["scanTable"].attrs["columns"] = nameList
+    subg["scanTable"].attrs["columns"] = fieldList
     #for p in nameList:
     #    subg["scanTable"].attrs[p] = []
     subg["background"] = [] # like one row of scanTable, same columns
-    subg["background"].attrs["columns"] = parName
+    subg["background"].attrs["columns"] = fieldList
     # timestamp ISO "2007-03-01 13:00:00"
-    subg["minCurrent"] = Imin
+    subg["minCurrent"] = _params[ID.name]["Imin"]
     subg["minCurrent"].attrs["unit"] = "mA"
-    subg["minLifetime"] = Tmin
+    subg["minLifetime"] = _params[ID.name]["Tmin"]
     subg["minLifetime"].attrs["unit"] = "hr"
     fid.close()
 
@@ -225,3 +287,5 @@ def chooseBpmCor(ID, userBpm=False):
 def saveToDB(fileName):
     print "save to file (Guobao's DB)"
     pass
+
+def measOrbitResponse(IDflds, bpmflds, output, h5group):
