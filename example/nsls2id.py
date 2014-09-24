@@ -1,14 +1,16 @@
-'''
-NSLS-II insertion device commissioning library
-2014-10-23
-'''
+"""
+NSLS-II insertion device commissioning/operation
+
+copyright (C) 2014, Yongjun Li, Yoshi Hidaka, Lingyun Yang
+"""
+
 import aphla as ap
 import itertools
 import numpy as np
+import re
 
-def putPar(ID, parList, timeout=30, 
-           throw=True, unitsys='phy', verbose=False):
-    '''
+def putPar(ID, parList, timeout=30, throw=True, unitsys='phy', verbose=0):
+    """
     Put (write) a set of parameters (list) on an ID while the hardware 
     itself (motor control) checks whether the target state is reached or not.
 
@@ -21,12 +23,11 @@ def putPar(ID, parList, timeout=30,
      timeout: Maximum time the motor control should wait for each "put"
      in the unit of seconds.
     
-     verbose: when fail to set parameter, print details if True
-
-     throw: raise error if True, otherwise return False
+     verbose: integer larger means more details.
+     throw: raise exception if True, otherwise return False
 
     returns: True if success, otherwise False
-    '''
+    """
     agree = True
     for par in parList:
         ID.put(par[0], par[1], timeout=timeout, unitsys=unitsys, trig=1)
@@ -47,7 +48,7 @@ def putPar(ID, parList, timeout=30,
 
 
 def createParList(parRange):
-    '''
+    """
     create parameter list based on the paraneter range, spaced type
      parRange: 2d parameter range in the format of 
      [[name, spacedType, start, end, step, tolerance],...]
@@ -55,8 +56,9 @@ def createParList(parRange):
      scan table will cover 15~150 with 21 steps, tolerance is 0.1, 
      spacedType: log or linear
     
-    return parameter list for communicating with hardware, table for data archive
-    '''
+    return parameter list for communicating with hardware, table for data
+    archive
+    """
     nlist,vlist,tlist = [],[],[] #name, value and tolerance list
     for p in parRange:
         nlist.append(p[0])
@@ -84,10 +86,10 @@ def createParList(parRange):
 
 def putBackground(ID, gapMax, gapTol, zeroPhase, phaseTol, timeout=150,
                   throw=True, unitsys='phy', verbose=False):
-    '''
+    """
     put ID to passive status,
     gap to max, phase to 0 if apply, all correction cch to zeros
-    '''
+    """
     flds = ID.getFields()
     parList = []
     for fld in flds:
@@ -111,21 +113,18 @@ def putBackground(ID, gapMax, gapTol, zeroPhase, phaseTol, timeout=150,
 
 
 def checkBeam(Imin=2, Tmin=2, online=False):
-    '''
+    """
     check beam life time and current
     if beam lifetime is less than Tmin [hr], 2hrs by default,
     or current is less then Imin [mA], 2mA by default
     return False, otherwise True
-    '''
-    Ibpvrb = 'SR:C03-BI{DCCT:1}I:Total-I'
-    Ib = ap.caget(Ibpvrb)
-    ltpvrb = 'SR:C03-BI{DCCT:1}Lifetime-I' #'SR-BI{}BPM_lifetimeAve-I'
-    lt = ap.caget(ltpvrb)
+    """
+    tau, Ib = ap.getLifetimeCurrent()
     if Ib < Imin:
         print 'Beam current too low ({0} < {1})'.format(Ib, Imin)
         return False
-    if lt < Tmin:
-        print 'Beam lifetime too short ({0} < {1})'.format(lt, Tmin)
+    if tau < Tmin:
+        print 'Beam lifetime too short ({0} < {1})'.format(tau, Tmin)
         return False
     return True
 
@@ -133,10 +132,10 @@ def checkBeam(Imin=2, Tmin=2, online=False):
 def checkGapPhase(ID, gapMin, gapMax, gapStep, gapTol,
                   phaseMin=None, phaseMax=None, phaseStep=3, phaseTol=None,
                   timeout=150, throw=True, unitsys='phy', verbose=True):
-    '''
+    """
     check ID gap, phase
     return True if success, otherwise False
-    '''
+    """
     flds = ID.fields()
     if 'gap' in flds:
         for gap in np.linspace(gapMin,gapMax,gapStep):
@@ -155,15 +154,35 @@ def checkGapPhase(ID, gapMin, gapMax, gapStep, gapTol,
     return True
 
 
-def switchoffFeedback():
-    print "switch off feedback and disable ID feedforward"
-    pass
+def switchFeedback(fftable = "off"):
+    """
+    switchFeedback("on") or "off"
+    """
+    if fftable not in ["on", "off"]:
+        raise RuntimeError("invalid feed forward table state: ('on'|'off')")
+
+    for dw in ap.getGroupMembers(["DW",], op="union"):
+        if "gap" not in dw.fields():
+            print "WARNING: no 'gap' field in {0}".format(dw.name)
+            continue
+        pv = dw.pv(field="gap", handle="setpoint")[0]
+        m = re.match(r"([^\{\}]+)\{(.+)\}", pv)
+        if not m:
+            print "WARNING: inconsistent naming '{0}'".format(pv)
+        pvffwd = "{0}{{{1}}}MPS:Lookup_.INPA".format(m.group(1), m.group(2))
+        pvffwd_pref = "{0}{{{1}-Mtr:Gap}}.RBV ".format(m.group(1), m.group(2))
+        
+        pvffwd_val = {"on": pvffwd_pref + "CP NM",
+                      "off": pvffwd_pref + "NPP N"}
+        print "set {0}='{1}'".format(pvffwd, pvffwd_val[fftable])
+        ap.caput(pvffwd, pvffwd_val[fftable])
+
     # fast/slow co
     # all ID feed forward
     # weixing Bunch by Bunch
 
-def initFile(ID,nameList,parTable,Imin,Tmin):
-    '''initilize file name with path, save parameter table to hdf5'''
+def initFile(ID, nameList, parTable, Imin, Tmin):
+    """initilize file name with path, save parameter table to hdf5"""
     fileName = ap.outputFileName("ID", ID.name+"_")
     fid = h5py.File(fileName)
     grp = fid.require_group(ID.name)
@@ -182,12 +201,13 @@ def initFile(ID,nameList,parTable,Imin,Tmin):
     subg["minLifetime"] = Tmin
     subg["minLifetime"].attrs["unit"] = "hr"
     fid.close()
+
     return fileName
 
-def chooseBpmCor(ID,userBpm=False):
-    '''
+def chooseBpmCor(ID, userBpm=False):
+    """
     choose bpm and corrector
-    '''
+    """
     bpms = ap.getElements('BPM')
     if userBpm:
         bpms += ap.getElements('UBPM')
@@ -201,11 +221,6 @@ def chooseBpmCor(ID,userBpm=False):
         corflds.append([ID,'cch'+'%i'%i])
 
     return bpmFields, corFields
-
-def switchonFeedback():
-    print "switch on feed back and enable ID feed-forward"
-    pass
-
 
 def saveToDB(fileName):
     print "save to file (Guobao's DB)"
