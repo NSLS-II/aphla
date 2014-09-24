@@ -13,42 +13,42 @@ import h5py
 _params = {
     "dw100g1c08u":
         {"unitsys": "phy",
-         "gap": (15.0, 150.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c08d":
         {"unitsys": "phy",
-         "gap": (15.0, 150.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c18u":
         {"unitsys": "phy",
-         "gap": (15.0, 150.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c18d":
         {"unitsys": "phy",
-         "gap": (15.0, 150.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c28u":
         {"unitsys": "phy",
-         "gap": (15.0, 150.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
          "timeout": 150, },
     "dw100g1c28d":
         {"unitsys": "phy",
-         "gap": (15.0, 150.0, 30, 0.01),
+         "gap": (119.0, 147.0, 30, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
@@ -185,14 +185,10 @@ def checkGapPhase(ID, **kwargs):
     check ID gap, phase
     return True if success, otherwise False
     """
-    gapMin = kwargs.get("gapMin",  _params[ID.name]["gap"][0])
-    gapMax = kwargs.get("gapMax",  _params[ID.name]["gap"][1])
-    gapStep= kwargs.get("gapStep", _params[ID.name]["gap_step"])
-    gapTol = kwargs.get("gapTol",  _params[ID.name]["gap_tolerance"])
-    phaseMin = kwargs.get("phaseMin",  _params[ID.name]["phase"][0])
-    phaseMax = kwargs.get("phaseMin",  _params[ID.name]["phase"][0])
-    phaseStep= kwargs.get("phaseStep", _params[ID.name]["phase_step"])
-    phaseTol = kwargs.get("phaseTol",  _params[ID.name]["phase_tolerance"])
+    gapMin, gapMax, gapStep, gapTol = kwargs.get("gap",
+                                                 _params[ID.name]["gap"])
+    phaseMin, phaseMax, phaseStep, phaseTol = \
+        kwargs.get("phase",  _params[ID.name].get("phase", (None, None, None, None)))
     timeout = kwargs.get("timeout", 150)
     throw   = kwargs.get("throw", True)
     unitsys = kwargs.get("unitsys", _params[ID.name]["unitsys"])
@@ -289,3 +285,4 @@ def saveToDB(fileName):
     pass
 
 def measOrbitResponse(IDflds, bpmflds, output, h5group):
+    pass
