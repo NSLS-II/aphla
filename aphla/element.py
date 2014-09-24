@@ -466,7 +466,12 @@ class CaAction:
         # under and over flow check
         for i,lim in enumerate(self.pvlim):
             # update boundary if not done before
-            if lim is None: self._update_sp_lim_h(i)
+            if lim is None:
+                try:
+                    self._update_sp_lim_h(i)
+                except:
+                    _logger.warn("can not update limits for {0}".format(
+                            self.pvsp[i]))
             lowhigh = self.pvlim[i]
             if self._all_within_range(rawval[i], lowhigh): continue
 
