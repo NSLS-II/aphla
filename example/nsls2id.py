@@ -303,9 +303,26 @@ def saveToDB(fileName):
     print "save to file (Guobao's DB)"
     pass
 
-def measOrbitResponse(IDflds, bpmflds, output, h5group):
-
-    pass
+def measBackground(ID, output, iiter):
+    """measure the background and return saved group name"""
+    if not nsls2id.putBackground(ID):
+        print "Failed at setting {0} to background mode".format(ID)
+        return None
+    # create background subgroup with index
+    fid = h5py.File(output)
+    prefix = "iter_"
+    iterindex = max([int(g[len(prefix):]) for g in fid[ID.name].keys()
+                     if g.startswith(prefix)] + [-1]) + 1
+    bkgGroup = "iter_{0:04d}".format(iterindex)
+    grp = fid[ID.name].create_group(bkgGroup)
+    orb0 = ap.getOrbit(spos=True)
+    grp["orbit"] = orb0
+    tau, I = ap.getLifetimeCurrent()
+    grp["lifetime"] = tau
+    grp["current"] = I
+    grp.attrs["iter"] = iiter
+    fid.close()
+    return bkgGroup
 
 def save1DFeedFowardTable(filepath, table, fmt='%.16e'):
     """
@@ -462,7 +479,8 @@ def calc1DFeedForwardColumns(
 
 #----------------------------------------------------------------------
 def getCompletedIterIndexes(ID_filepath):
-    """"""
+    """
+    """
 
     f = h5py.File(ID_filepath, 'r')
 
