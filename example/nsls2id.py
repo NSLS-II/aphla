@@ -61,6 +61,20 @@ _params = {
          "timeout": 150, },
     }
 
+def getBrho(E_GeV):
+    """
+    """
+
+    import scipy.constants as const
+
+    m_e_GeV = const.m_e*const.c*const.c/const.e/1e9
+    gamma = E_GeV / m_e_GeV
+
+    Brho = const.m_e * const.c * gamma / const.e # magnetic rigidity [T*m]
+
+    return Brho
+
+
 def putPar(ID, parList, **kwargs):
     """
     Put (write) a set of parameters (list) on an ID while the hardware
@@ -145,6 +159,92 @@ def createParList(ID, parScale):
     table = np.array([vi for vi in valueList])
     return parList, nlist, table
 
+
+def putParHardCheck(ID, parList, timeout=30, throw=True, unitsys='phy'):
+    '''
+    Put (write) a set of parameters (list) on an ID while the hardware 
+    itself (motor control) checks whether the target state is reached or not.
+
+    ID: aphla ID instance
+
+    parList: 2d parameter list in the format of [name, value, tolerance]
+    [['gap',15,1e-4],['phase',12,1e-4]]
+    
+    timeout: Maximum time the motor control should wait for each "put"
+    in the unit of seconds.
+    
+    return: True if success, otherwise throws an exception.
+    '''
+    
+    agree = True
+    for par in parList:
+        ID.put(par[0], par[1], timeout=timeout, unitsys=unitsys, trig=1)
+        # raw unit for "gap"   = [um]
+        # raw unit for "phase" = [um?]
+        
+        p0 = ID.get(par[0], unitsys=unitsys)
+        
+        if abs(p0-par[1]) <= par[2]: # TODO: readback & setpoint unit may be different! Check it!
+            continue # print "Agree: ", p0, par[1], "eps=", par[2]
+        # error handling
+        agree = False
+        print 'For "{0}" of {1}:'.format(par[0], ID.name)
+        print 'Target Setpoint = {0:.9g}, Current Readback = {1:.9g}, Tolerance = {2:.9g}'.format(
+            par[1], p0, par[2])
+        if throw:
+            raise RuntimeError('Failed to set device within tolerance.')
+        else:
+            break
+    return agree
+
+# <codecell>
+
+def putParSoftCheck(ID, parList, timeout=30, online=False):
+    '''
+    Put (write) a set of parameters (list) on an ID while this function 
+    checks whether the target state is reached or not through readbacks
+    for given tolerances.
+
+    ID: aphla ID instance
+    
+    parList: 2d parameter list in the format of [name, value, tolerance]
+    [['gap',15,1e-4],['phase',12,1e-4]]
+
+    timeout: Maximum time the motor control should wait for each "put"
+    in the unit of seconds.
+
+    return: True if success, otherwise throws an exception.
+    '''
+
+    if not online: return True # TODO: To be reomved once we are allowed to move ID motors
+
+    for par in parList:
+        t0 = datetime.now()
+        converged = False
+
+        try:
+            ID.put(par[0], par[1], unitsys=None) # raw unit
+        except:
+            print 'Failed to set the setpoint for {0} to {1}'.format(par[0], par[1])
+            raise
+        
+        # TODO: remove hardcoding
+        ap.caput("SR:C28-ID:G1{DW100:2}ManG:Go_.PROC", 1, wait=False)
+        
+        while not converged:
+            p0 = ID.get(par[0], unitsys=None)
+            if abs(p0-par[1]) <= par[2]: # TODO: readback & setpoint unit may be different! Check it!
+                # print "Agree: ", p0, par[1], "eps=", par[2]
+                converged = True
+                break
+            t1 = datetime.now()
+            if (t1-t0).total_seconds() > timeout:
+                break
+            time.sleep(0.5)
+        if not converged:
+            raise RuntimeError("timeout at setting {0}={1} (epsilon={2})".format(par[0], par[1], par[2]))
+            
+    return True
 
 def putBackground(ID, **kwargs):
     """
@@ -324,12 +424,147 @@ def measBackground(ID, output, iiter):
     fid.close()
     return bkgGroup
 
+def virtKicks2FldInt(virtK1, virtK2, idLen, idKickOffset1, idKickOffset2, E_GeV):
+    """
+    Calculate the 1st and 2nd field integrals of an insertion device (ID)
+    from the given upstream/downstream virtual kicks.
+
+    Parameters
+    ----------
+    virtK1, virtK2 : float
+       Virtual kick values [rad] at the upsteam and downstream of the ID,
+       respectively.
+
+    idLen : float
+       Length of the ID [m].
+
+    idKickOffset1, idKickOffset2 : float
+       Position offset [m] of virtual kicks with respect to the undulator
+       extremeties. `idKickOffset1` == 0 means that the upstream virtual kick
+       is exactly located at the upstream entrance of the ID. If `idKickOffset1`
+       is a positive value, then the virtual kick is inside of the ID by the
+       amount `idKickOffset1`. If negative, the virtual kick is outside of the
+       ID by the absolute value of `idKickOffset1`. The same is true for the
+       downstream side.
+
+    E_GeV : float
+       Electron beam energy [GeV].
+
+    Returns
+    -------
+    I1 : float
+       First field integral [G*m].
+
+    I2 : float
+       Second field integral [G*(m^2)].
+    """
+
+    Brho = getBrho(E_GeV) # magnetic rigidity [T*m]
+
+    common = Brho * 1e4
+    I1 = common * (virtK1 + virtK2) # [G*m]
+    I2 = common * ((idLen-idKickOffset1)*virtK1 + idKickOffset2*virtK2) # [G*(m^2)]
+
+    return I1, I2
+
+# <codecell>
+
+def fldInt2VirtKicks(I1, I2, idLen, idKickOffset1, idKickOffset2, E_GeV):
+    """
+    Calculate upstream/downstream virtual kicks from the given 1st and 2nd field
+    integrals of an insertion device (ID).
+
+    Parameters
+    ----------
+    I1 : float
+       First field integral [G*m].
+
+    I2 : float
+       Second field integral [G*(m^2)].
+
+    idLen : float
+       Length of the ID [m].
+
+    idKickOffset1, idKickOffset2 : float
+       Position offset [m] of virtual kicks with respect to the undulator
+       extremeties. `idKickOffset1` == 0 means that the upstream virtual kick
+       is exactly located at the upstream entrance of the ID. If `idKickOffset1`
+       is a positive value, then the virtual kick is inside of the ID by the
+       amount `idKickOffset1`. If negative, the virtual kick is outside of the
+       ID by the absolute value of `idKickOffset1`. The same is true for the
+       downstream side.
+
+    E_GeV : float
+       Electron beam energy [GeV].
+
+    Returns
+    -------
+    virtK1, virtK2 : float
+       Virtual kick values [rad] at the upsteam and downstream of the ID,
+       respectively.
+    """
+
+    Brho = getBrho(E_GeV) # magnetic rigidity [T*m]
+
+    common = 1e-4 / Brho / (idLen-idKickOffset1-idKickOffset2)
+    virtK1 = common * (I2 - I1 * idKickOffset2)         # [rad]
+    virtK2 = common * (I1 * (idLen-idKickOffset1) - I2) # [rad]
+
+    return virtK1, virtK2
+
+
 def save1DFeedFowardTable(filepath, table, fmt='%.16e'):
     """
     Save a valid 1-D Stepped Feedforward table (NSLS-II format) to a text file.
     """
 
     np.savetxt(filepath, table, fmt=fmt, delimiter=', ', newline='\n')
+
+def get1DFeedForwardTable(centers, half_widths, dI_array, 
+                          I0_array=None, fmt='%.16e'):
+    """
+    Get a valid 1-D Stepped Feedforward table (NSLS-II format)
+    """
+    
+    if I0_array is None:
+        I_array = dI_array
+    else:
+        I_array = I0_array + dI_array
+
+    table = np.hstack((np.array(centers).reshape((-1,1)),
+                       np.array(half_widths).reshape((-1,1)),
+                       I_array))
+
+    return table    
+    
+def getZeroed1DFeedForwardTable(parDict, nIDCor):
+    """
+    Get a valid 1-D Stepped Feedforward table (NSLS-II format) with
+    all ID correctors being set to zero for all the entire range of
+    ID property specified in "parDict".
+    """
+
+    try:
+        scanVectors = parDict['vectors']
+        bkgList = parDict['bkgTable'].flatten().tolist()
+        
+        assert len(scanVectors) == len(bkgList) == 1
+    except:
+        print 'len(scanVectors) = {0:d}'.format(len(scanVectors))
+        print 'len(bkgList) = {0:d}'.format(len(bkgList))
+        print 'This function is only for 1D feedforward table.'
+        raise RuntimeError(('Lengths of "scanVectors" and "bkgList" must be 1.'))
+
+    array = scanVectors[0] + [bkgList[0]]
+    minVal, maxVal = np.min(array), np.max(array)
+
+    centers = [(minVal + maxVal) / 2.0]
+    half_widths = [(maxVal - minVal) / 2.0 * 1.01] # Extra margin of 1% added
+    dI_array = np.array([0.0]*nIDCor).reshape((1,-1))
+    
+    return get1DFeedForwardTable(centers, half_widths, dI_array, 
+                                 I0_array=None, fmt='%.16e')
+        
 
 def create1DFeedForwardTable(centers, half_widths, dI_array, I0_array=None):
     """
@@ -502,6 +737,8 @@ def getCompletedIterIndexes(ID_filepath):
             raise RuntimeError('List of completed iteration indexes does not start from 0.')
 
     return completed_iter_indexes
+
+
 
 if __name__ == '__main__':
 
