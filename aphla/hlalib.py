@@ -271,15 +271,25 @@ def fget(*argv, **kwargs):
     >>> fget("BPM", "x")
     >>> fget([(bpm1, 'x'), (bpm2, 'y')])
     """
-    if len(argv) == 1:
-        elem, fld = zip(*(argv[0]))
-        return _fget_2(elem, fld, **kwargs)
-    elif len(argv) == 2:
-        elst = getElements(argv[0])
-        if not elst: return None
-        return _fget_2(elst, [argv[1]] * len(elst), **kwargs)
-    else:
-        raise RuntimeError("Unknown input {0}".format(argv))
+    sample = kwargs.pop("sample", 1)
+    dt = kwargs.pop("sleep", 0.15)
+    rawd = []
+    for i in range(sample):
+        if len(argv) == 1:
+            elem, fld = zip(*(argv[0]))
+            d = _fget_2(elem, fld, **kwargs)
+        elif len(argv) == 2:
+            elst = getElements(argv[0])
+            if not elst: return None
+            d = _fget_2(elst, [argv[1]] * len(elst), **kwargs)
+        else:
+            raise RuntimeError("Unknown input {0}".format(argv))
+        rawd.append(d)
+        if i < sample - 1:
+            time.sleep(dt)
+
+    return np.average(rawd, axis=0)
+
 
 def _fget_2(elst, field, **kwargs):
     """get elements field values for a family
@@ -922,7 +932,7 @@ def getOrbit(pat = '', spos = False):
         if not elems: return None
         bpm = [e.name for e in getBpms() if e.isEnabled()]
         ret = []
-        for e in elem:
+        for e in elems:
             if not e.name in bpm: ret.append([None, None, None])
             else: ret.append([e.x, e.y, e.sb])
     if not ret: return None

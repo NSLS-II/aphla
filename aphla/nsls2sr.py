@@ -467,6 +467,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     """
     idriver - 3 or 4, i.e. injection kicker 3 or 4. vertical pinger is 5
     ampl - [kV for kicker or pinger]
+    output - output file name, default True saves to the default dir.
+    verbose - default 0
     """
     verbose = kwargs.get("verbose", 0)
     output = kwargs.get("output", True)
@@ -518,6 +520,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     g.attrs["pvrb"] = kpvrb
     g.attrs["pvon"] = kpvon
     f.close()
+
+    return (name, x, y, Isum, ts, offset), output
 
 
 def plotChromaticity(f, nu, chrom):

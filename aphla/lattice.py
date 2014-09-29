@@ -27,6 +27,7 @@ import shelve
 import numpy as np
 from fnmatch import fnmatch
 from datetime import datetime
+from element import AbstractElement
 
 import logging
 logger = logging.getLogger(__name__)
@@ -76,6 +77,7 @@ class Lattice:
         """
         exact matching of element name, None if not.
         """
+        if isinstance(name, AbstractElement): return name
         for e in self._elements:
             if e.name == name: return e
         return None

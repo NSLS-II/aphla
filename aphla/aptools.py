@@ -1001,6 +1001,8 @@ def set3CorBump(cors, dIc0, **kwargs):
     plane - 'x' or 'y' (default 'x')
 
     set the cors and returns the current change (i.e. delta I)
+
+    returns orbit change inside bump, current change of cors, std of outside BPMs.
     """
     corls = getElements(cors)
     plane = kwargs.get("plane", 'x').lower()
@@ -1009,14 +1011,14 @@ def set3CorBump(cors, dIc0, **kwargs):
     ibpmsi = [i for i,e in enumerate(bpms) if e in bpmsi]
     ibpmso = [i for i,e in enumerate(bpms) if e in bpmso]
 
-    nsample = 3
+    nsample = 5
     obt0 = np.zeros((len(bpms), nsample), 'd')
     for i in range(nsample):
         obt0[:,i] = fget(bpms, plane, unitsys=None)
         time.sleep(0.15)
 
     print(ibpmsi)
-    # remeasure the response matrix
+    # remeasure the response matrix (n,3)
     mfull, output = measOrbitRm([(b, plane) for b in bpms],
                             [(c, plane) for c in corls],
                             dxmax = 0.2, nx = 2)
@@ -1025,7 +1027,7 @@ def set3CorBump(cors, dIc0, **kwargs):
     bpmpvs = [bpms[i].pv(field=plane)[0] for i in ibpmso]
     corpvs = [c.pv(field=plane)[0] for c in cors[1:]]
 
-    cv0 = fget(cors, plane, unitsys=None)
+    cv0 = fget(cors, plane, unitsys=None, handle="setpoint")
     cors[0].put(plane, cv0[0] + dIc0, unitsys=None)
     time.sleep(0.3)
     obt1 = np.zeros((len(bpms), nsample), 'd')
@@ -1034,9 +1036,11 @@ def set3CorBump(cors, dIc0, **kwargs):
         time.sleep(0.15)
     err, msg = caRmCorrect(bpmpvs, corpvs, m[:,1:])
     cv1 = fget(cors, plane, unitsys=None)
-    for i,c in enumerate(cors):
-        print(i, c.name, cv1[i] - cv0[i])
-
+    #for i,c in enumerate(cors):
+    #    print(i, c.name, cv1[i] - cv0[i])
+    dc = [cv1[i] - cv0[i] for i,c in enumerate(cors)]
+    dobt = np.average(obt1 - obt0, axis=1)
+    return [dobt[i] for i in ibpmsi], dc, np.std([dobt[i] for i in ibpmso])
 
 def set4CorBump(cors, dA1, dA2, **kwargs):
     """
@@ -1054,13 +1058,13 @@ def set4CorBump(cors, dA1, dA2, **kwargs):
 
     xv0 = fget(bpmsi, plane, unitsys=None)
     cv0 = fget(cors, plane, unitsys=None)
-    set3CorBump(cors[:3], 0.5, **kwargs)
+    dxin1, dc1, dx1std = set3CorBump(cors[:3], 0.5, **kwargs)
     fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
     time.sleep(1)
     xv1 = fget(bpmsi, plane, unitsys=None)
     cv1 = fget(cors, plane, unitsys=None)
 
-    set3CorBump(cors[1:], -0.5, **kwargs)
+    dxin2, dc2, dx2std = set3CorBump(cors[1:], -0.5, **kwargs)
     fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
     time.sleep(1)
     xv2 = fget(bpmsi, plane, unitsys=None)
@@ -1068,3 +1072,16 @@ def set4CorBump(cors, dA1, dA2, **kwargs):
     
     print([cv1[i] - cv0[i] for i in range(len(cors))],
           [cv2[i] - cv0[i] for i in range(len(cors))])
+
+
+def setIdBump(idname, x1, x2, **kwargs):
+    """
+    idname - name of ID in the middle of 4 BPMs. 2 BPMs each side.
+    x1 - BPM reading, x or y, before ID.
+    x2 - BPM reading, x or y, after ID.
+    
+    """
+    nbs = getNeighbors(idname, "COR", n = 2)
+    cors = [nbs[0], nbs[1], nbs[-2], nbs[-1]]
+    
+    pass
