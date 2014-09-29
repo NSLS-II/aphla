@@ -271,7 +271,7 @@ def fget(*argv, **kwargs):
     >>> fget("BPM", "x")
     >>> fget([(bpm1, 'x'), (bpm2, 'y')])
     """
-    sample = kwargs.pop("sample", 5)
+    sample = kwargs.pop("sample", 1)
     dt = kwargs.pop("sleep", 0.15)
     rawd = []
     for i in range(sample):
@@ -288,7 +288,7 @@ def fget(*argv, **kwargs):
         if i < sample - 1:
             time.sleep(dt)
 
-    return np.average(np.array(rawd), axis=-1)
+    return np.average(rawd, axis=0)
 
 
 def _fget_2(elst, field, **kwargs):
@@ -932,7 +932,7 @@ def getOrbit(pat = '', spos = False):
         if not elems: return None
         bpm = [e.name for e in getBpms() if e.isEnabled()]
         ret = []
-        for e in elem:
+        for e in elems:
             if not e.name in bpm: ret.append([None, None, None])
             else: ret.append([e.x, e.y, e.sb])
     if not ret: return None
