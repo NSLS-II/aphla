@@ -268,8 +268,14 @@ def eget(elem, fields = None, **kwargs):
 
 def fget(*argv, **kwargs):
     """
+    fast get data.
+
+    If provided, it will take *sample* readings separated by *sleep* seconds
+    each step and do an average.
+
     >>> fget("BPM", "x")
     >>> fget([(bpm1, 'x'), (bpm2, 'y')])
+    >>> fget([bpm1, bpm2, bpm3], 'x', sample=5, sleep=0.15)
     """
     sample = kwargs.pop("sample", 1)
     dt = kwargs.pop("sleep", 0.15)
@@ -340,6 +346,7 @@ def _fget_2(elst, field, **kwargs):
         else:
             pvl = pvlsp
 
+    kwargs.pop("handle", None)
     dat = caget(pvl, **kwargs)
     if unitsys is None: return dat
 
