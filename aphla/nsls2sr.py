@@ -469,6 +469,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     ampl - [kV for kicker or pinger]
     output - output file name, default True saves to the default dir.
     verbose - default 0
+
+    it will set kicker/pinger and wait 100sec or readback-setpoint agree.
     """
     verbose = kwargs.get("verbose", 0)
     output = kwargs.get("output", True)
@@ -479,9 +481,15 @@ def measKickedTbtData(idriver, ampl, **kwargs):
         kpvrb = 'SR:IS-PS{Kick:%d}Hvps-V-Rb-1st' % idriver
         kpvon = 'SR:IS-PS{Kick:%d}HvpsOnOff_Cmd' % idriver
     elif idriver in [5,]:
+        # vertical pinger
         kpvsp = 'SR:C21-PS{Pinger:V}V-Sp'
         kpvrb = 'SR:C21-PS{Pinger:V}Setpoint-Rb.VALA'
         kpvon = 'SR:C21-PS{Pinger:V}HvpsOnOff_Cmd'
+    elif idriver in [6,]:
+        # horizontal pinger
+        kpvsp = 'SR:C21-PS{Pinger:H}V-Sp'
+        kpvrb = 'SR:C21-PS{Pinger:H}Setpoint-Rb.VALA'
+        kpvon = 'SR:C21-PS{Pinger:H}HvpsOnOff_Cmd'
 
     caput(kpvsp, 0.0)
     for i in range(100):
