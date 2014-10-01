@@ -1087,8 +1087,9 @@ def meas4CorBump(cors, bpmins, bpmouts, bpmdx, **kwargs):
     dc1 = (m[1,1]*bpmdx[0] - m[0,1]*bpmdx[1]) / mdet
     dc2 = (-m[1,0]*bpmdx[0] + m[0,0]*bpmdx[1]) / mdet
     dcs = np.zeros(4, 'd')
-    dcs[:3] = dcls1 / dA1 *dc1
-    dcs[1:] = dcs[1:] + dcls2 / dA2 *dc2
+    for i in range(3):
+        dcs[i] = dcs[i] + dcls1[i] / dA1 *dc1
+        dcs[i+1] = dcs[i+1] + dcls2[i] / dA2 *dc2
     return dcs
 
 
