@@ -465,37 +465,55 @@ def putLattice(fname, **kwargs):
 
 def measKickedTbtData(idriver, ampl, **kwargs):
     """
-    idriver - 3 or 4, i.e. injection kicker 3 or 4. vertical pinger is 5
+    idriver - 3 or 4, i.e. injection kicker 3 or 4. vertical pinger is 5, h-pinger is 6.
     ampl - [kV for kicker or pinger]
-    output - output file name, default True saves to the default dir.
+    output - output file name, default True saves to the default dir. False - no saving to file.
     verbose - default 0
 
     it will set kicker/pinger and wait 100sec or readback-setpoint agree.
+
+    >>> measKickedTbtData(7, (0.1, 0.2))
     """
     verbose = kwargs.get("verbose", 0)
     output = kwargs.get("output", True)
     kpvsp, kpvrb = None, None
-
-    if idriver in [3, 4]:
-        kpvsp = 'SR:IS-PS{Kick:%d}V-Sp' % idriver
-        kpvrb = 'SR:IS-PS{Kick:%d}Hvps-V-Rb-1st' % idriver
-        kpvon = 'SR:IS-PS{Kick:%d}HvpsOnOff_Cmd' % idriver
-    elif idriver in [5,]:
-        # vertical pinger
-        kpvsp = 'SR:C21-PS{Pinger:V}V-Sp'
-        kpvrb = 'SR:C21-PS{Pinger:V}Setpoint-Rb.VALA'
-        kpvon = 'SR:C21-PS{Pinger:V}HvpsOnOff_Cmd'
-    elif idriver in [6,]:
-        # horizontal pinger
-        kpvsp = 'SR:C21-PS{Pinger:H}V-Sp'
-        kpvrb = 'SR:C21-PS{Pinger:H}Setpoint-Rb.VALA'
-        kpvon = 'SR:C21-PS{Pinger:H}HvpsOnOff_Cmd'
-
-    caput(kpvsp, 0.0)
-    for i in range(100):
-        if caget(kpvrb, count=1) < 0.001: break
-        time.sleep(1)
-    caput(kpvon, 1)
+    # 0 - both off, 1 - V-on, 2-H-on, 3-both-on
+    pv_pinger_mode = "SR:C21-PS{Pinger}Mode:Trig-Sel"
+    if idriver in [3,4,5,6]:
+        if idriver in [3, 4]:
+            kpvsp = 'SR:IS-PS{Kick:%d}V-Sp' % idriver
+            kpvrb = 'SR:IS-PS{Kick:%d}Hvps-V-Rb-1st' % idriver
+            kpvon = 'SR:IS-PS{Kick:%d}HvpsOnOff_Cmd' % idriver
+        elif idriver in [5,]:
+            # vertical pinger
+            kpvsp = 'SR:C21-PS{Pinger:V}V-Sp'
+            kpvrb = 'SR:C21-PS{Pinger:V}Setpoint-Rb.VALA'
+            kpvon = 'SR:C21-PS{Pinger:V}HvpsOnOff_Cmd'
+            caput(pv_pinger_mode, 1)
+        elif idriver in [6,]:
+            # horizontal pinger
+            kpvsp = 'SR:C21-PS{Pinger:H}V-Sp'
+            kpvrb = 'SR:C21-PS{Pinger:H}Setpoint-Rb.VALA'
+            kpvon = 'SR:C21-PS{Pinger:H}HvpsOnOff_Cmd'
+            caput(pv_pinger_mode, 2)
+        #
+        caput(kpvsp, 0.0)
+        for i in range(100):
+            if caget(kpvrb, count=1) < 0.001: break
+            time.sleep(1)
+        caput(kpvon, 1)
+    elif idriver in [7,]:
+        # both pinger
+        kpvsp = ['SR:C21-PS{Pinger:H}V-Sp', 'SR:C21-PS{Pinger:V}V-Sp']
+        kpvrb = ['SR:C21-PS{Pinger:H}Setpoint-Rb.VALA', 'SR:C21-PS{Pinger:V}Setpoint-Rb.VALA']
+        kpvon = ['SR:C21-PS{Pinger:H}HvpsOnOff_Cmd', 'SR:C21-PS{Pinger:V}HvpsOnOff_Cmd']
+        caput(pv_pinger_mode, 3)
+        caput(kpvsp, [0.0, 0.0])
+        for i in range(100):
+            rb = caget(kpvrb, count=1)
+            if rb[0] < 0.001 and rb[1] < 0.001: break
+            time.sleep(0.5)
+        caput(kpvon, [1, 1])
 
     #(name, x, y, Isum, ts, offset), output = ap.nsls2.getSrBpmData(
     #    trig=1, count=5000, output=True, h5group="k_%d" % idriver)
@@ -504,32 +522,34 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     time.sleep(2)
 
     # request an injection:
-    caput('ACC-TS{EVG-SSC}Request-Sel', 1)
+    if idriver in [3,4,]:
+        caput('ACC-TS{EVG-SSC}Request-Sel', 1)
+    elif idriver in [5,6,7]:
+        caput('SR:C21-PS{Pinger}Ping-Cmd', 1)
     time.sleep(3)
     Idcct1 = caget('SR:C03-BI{DCCT:1}I:Total-I')
-    (name, x, y, Isum, ts, offset), output = getSrBpmData(
-        trig=1, count=2000, output=output, h5group=h5g)
-
-    #if verbose > 0:
-    #    print ts
-
+    bpmdata = getSrBpmData(trig=1, count=2000, output=output, h5group=h5g)
+    # repeat_value=True
     caput(kpvon, 0)
     caput(kpvsp, 0.0)
 
-    f = h5py.File(output)
-    g = f[h5g]
-    g["I"]  = Idcct1
-    g["I"].attrs["dI"] = Idcct1 - Idcct0
-    g["RF_SP"] = float(caget('RF{Osc:1}Freq:SP'))
-    g["RF_I"]  = float(caget('RF{Osc:1}Freq:I'))
-    g.attrs["ampl"]  = ampl
-    g.attrs["idriver"] = idriver
-    g.attrs["pvsp"] = kpvsp
-    g.attrs["pvrb"] = kpvrb
-    g.attrs["pvon"] = kpvon
-    f.close()
+    if output:
+        (name, x, y, Isum, ts, offset), output = bpmdata
+        
+        f = h5py.File(output)
+        g = f[h5g]
+        g["I"]  = Idcct1
+        g["I"].attrs["dI"] = Idcct1 - Idcct0
+        g["RF_SP"] = float(caget('RF{Osc:1}Freq:SP'))
+        g["RF_I"]  = float(caget('RF{Osc:1}Freq:I'))
+        g.attrs["ampl"]  = ampl
+        g.attrs["idriver"] = idriver
+        g.attrs["pvsp"] = kpvsp
+        g.attrs["pvrb"] = kpvrb
+        g.attrs["pvon"] = kpvon
+        f.close()
 
-    return (name, x, y, Isum, ts, offset), output
+    return bpmdata
 
 
 def plotChromaticity(f, nu, chrom):

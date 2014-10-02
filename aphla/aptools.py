@@ -995,14 +995,15 @@ def getArchiverData(*argv, **kwargs):
     return dat
 
 
-def set3CorBump(cors, dIc0, bpmouts, **kwargs):
+def set3CorBump(cors, dIc0, bpmins, bpmouts, **kwargs):
     """
     cors - list of three correctors
     dIc0 - the I change for the first corrector in *cors* (i.e. raw unit)
     bpmouts - bpm outside the bump
-    bpmins - optional, bpm inside the bump
+    bpmins - bpm inside the bump
     plane - 'x' or 'y' (default 'x')
     dxmax - max dI for ORM measurement, default 0.2
+    orm - optional, orbit response matrix (n,3) shape.
 
     set the cors and returns the current change (i.e. delta I)
 
@@ -1012,14 +1013,15 @@ def set3CorBump(cors, dIc0, bpmouts, **kwargs):
     corls = getElements(cors)
     plane = kwargs.get("plane", 'x').lower()
     dxmax = kwargs.get("dxmax", 0.2)
-    bpmins = kwargs.get("bpmins", [])
+    m = kwargs.get("orm", None)
 
     obt0 = fget(bpmouts+bpmins, plane, unitsys=None, sample=5)
 
     # remeasure the response matrix (n,3)
-    m, output = measOrbitRm([(b, plane) for b in bpmouts],
-                            [(c, plane) for c in corls],
-                            dxmax = dxmax, nx = 2, unitsys=None)
+    if m is None:
+        m, output = measOrbitRm([(b, plane) for b in bpmouts],
+                                [(c, plane) for c in corls],
+                                dxmax = dxmax, nx = 2, unitsys=None)
 
     bpmpvs = [b.pv(field=plane)[0] for b in bpmouts]
     corpvs = [c.pv(field=plane)[0] for c in corls]
@@ -1053,7 +1055,6 @@ def meas4CorBump(cors, bpmins, bpmouts, bpmdx, **kwargs):
     dA1 = kwargs.pop("dA1", 0.2)
     dA2 = kwargs.pop("dA2", 0.2)
     plane = kwargs.get("plane", 'x')
-    kwargs["bpmins"] = bpmins
 
     # two bpms
     if len(bpmins) != 2 or len(cors) != 4:
@@ -1064,13 +1065,13 @@ def meas4CorBump(cors, bpmins, bpmouts, bpmdx, **kwargs):
     cv0 = fget(cors, plane, unitsys=None, handle="setpoint")
 
     m = np.zeros((2, 2), 'd')
-    dxout1, dxin1, dcls1 = set3CorBump(cors[:3], dA1, bpmouts, **kwargs)
+    dxout1, dxin1, dcls1 = set3CorBump(cors[:3], dA1, bpmins, bpmouts, **kwargs)
     fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
     time.sleep(0.5)
     xv1 = fget(bpmins, plane, unitsys=None, sample=5)
     cv1 = fget(cors, plane, unitsys=None, handle="setpoint")
 
-    dxout2, dxin2, dcls2 = set3CorBump(cors[1:], dA2, bpmouts, **kwargs)
+    dxout2, dxin2, dcls2 = set3CorBump(cors[1:], dA2, bpmins, bpmouts, **kwargs)
     fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
     time.sleep(0.5)
     xv2 = fget(bpmins, plane, unitsys=None, sample=5)
@@ -1118,7 +1119,7 @@ def setIdBump(idname, xc, thetac, **kwargs):
     cx0 = fget(cors, plane, unitsys=None, handle="setpoint")
 
     # assuming each ID has two UBPM
-    bpmsact = getNeighbors(idname, "UBPM", n = 1)
+    bpmsact = getNeighbors(idname, "BPM", n = 1)
     if len(bpmsact) < 3:
         raise RuntimeError("can not find two bounding UBPMs "
                            "for {0}".format(idname))
@@ -1132,7 +1133,7 @@ def setIdBump(idname, xc, thetac, **kwargs):
     L = (bpmsact[-1].se + bpmsact[-1].sb) / 2.0 - \
         (bpmsact[0].se + bpmsact[0].sb) / 2.0
     if L <= 0.0 or L > 20.0:
-        raise RuntimeError("UBPM distance might be wrong: {0}".format(L))
+        raise RuntimeError("ID BPM distance might be wrong: {0}".format(L))
     x0 = xc - (sc-s0)/1000.0 * thetac
     x1 = xc + (s1-sc)/1000.0 * thetac
     dvx = np.array([x0, x1], 'd') - vx0
@@ -1140,4 +1141,4 @@ def setIdBump(idname, xc, thetac, **kwargs):
     for i,c in enumerate(cors):
         print(i, c.name, dcs[i])
         c.put(plane, dcs[i] + cx0[i], unitsys=None)
-    pass
+

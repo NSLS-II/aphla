@@ -1360,6 +1360,35 @@ def calcTuneRm(quad, **kwargs):
     return m
 
 
+def calcBetaBeatRm(bpms, quads, **kwargs):
+    """
+    M_ij = d(db/b)_i/dkl_j
+
+    db/b is measured at BPMs.
+
+    db/b = -\sum dkl_j*\beta_j\cos(2\nu_0(\pi+phi_i-phi_j)
+
+    where phi_i is the phase normalized within 2\pi range.
+
+    See. S.Y. Lee Chap 2.III
+    """
+    NBPM, NQUAD = len(bpms), len(quads)
+    m = np.zeros((NBPM * 2, NQUAD), 'd')
+    tunes = getTunes(source="database")
+    twcols = ['s', 'betax', 'betay', 'psix', 'psiy']
+    twbpm  = getTwiss([b.name for b in bpms], twcols)
+    twquad = getTwiss([q.name for q in quads], twcols)
+    for i in range(NBPM):
+        phix0, phiy0 = twbpm[i,3:5]
+        for j in range(NQUAD):
+            phix1, phiy1 = twquad[i,3:5]
+            m[i,j] = -twquad[j,1]/2.0/np.sin(tunes[0]*2*np.pi) * \
+                np.cos(2.0*np.pi*tunes[0] + 2*phix0 - 2*phix1)
+            m[i+NBPM,j] = twquad[j,2]/2.0/np.sin(tunes[1]*2*np.pi) * \
+                np.cos(2.0*np.pi*tunes[1] + 2*phiy0 - 2*phiy1)
+    return m
+
+
 def compareLattice(*argv, **kwargs):
     """
     - group, HDF5 file group, default lattice name
