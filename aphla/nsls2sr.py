@@ -37,11 +37,13 @@ def _maxTimeSpan(timestamps):
     return max(delta) - min(delta)
 
 
-def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0):
+def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0, evcode = None):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
     Adc, Tbt and Fa waveforms. The Wfm size is set to 1,000,000 for ADC,
     100,000 for Tbt and 9,000 for Fa.
+
+    evcode - 15(LINAC), 32(1Hz, sync acquisition), 33(SR RF BPM trigger), 47(1Hz), 66(Booster extraction)
     """
     elems = [e for e in getElements(name) if e.pv(field="x")]
     pvprefs = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "") for bpm in elems]
@@ -86,8 +88,12 @@ def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0):
     pvs = [ pvx + "ERec:FaEnableLen-SP" for pvx in pvprefs]
     #if verbose: print pvs
     caput(pvs,   [9000] * len(pvs), wait=True)
-    
-    
+    #
+    if evcode is not None:
+        pvs = [ pvx + "Trig:EventNo-SP" for pvx in pvprefs]
+        caput(pvs, evcode, wait=True)
+
+
 def _srBpmTrigData(pvprefs, waveform, **kwargs):
     """
     """
@@ -114,6 +120,7 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
     pv_ts, pv_tsns = [], [] # timestamp second and nano sec
     pv_trigts, pv_trigtsns = [], [] # trigger timestamp
     pv_ddrtx = [] # DDR transfer busy
+    pv_evtcode = []
     # did not consider the 'ddrTbtWfEnable' PV
     for i,pvx in enumerate(pvprefs):
         #print bpm.name, pvh, caget(pvh)
@@ -143,6 +150,7 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
         pv_facalen.append( pvx + "ERec:FaEnableLen-SP")
 
         pv_ddrtx.append(pvx + "DDR:TxStatus-I")
+        pv_evtcode.append(pvx + "Trig:EventNo-I")
 
     # save initial val
     wfsel0   = caget(pv_wfmsel, timeout=tc)
@@ -225,12 +233,18 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
     #caput(pv_trig, 1, wait=True)
     caput(pv_wfmsel, wfsel0, wait=True, timeout=tc)
     caput(pv_trig, trig0, wait=True, timeout=tc)
-    
+    ext_data = {
+        "ddr_timestamp": ddrts0,
+        "ddr_offset": ddroffset,
+        "bba_xoffset": xbbaofst,
+        "bba_yoffset": ybbaofst,
+        "event_code": caget(pv_evtcode)}
     #return data[0], data[1], data[2], ddrts0, ddroffset, ts
-    return data[0], data[1], data[2], ddrts0, ddroffset, xbbaofst, ybbaofst
+    return (data[0], data[1], data[2], ext_data)
+    #ddrts0, ddroffset, xbbaofst, ybbaofst, ext_data
 
 
-def _saveSrBpmData(fname, waveform, data, **kwargs):
+def _saveSrBpmData(fname, waveform, names, x, y, Is, **kwargs):
     group = kwargs.get("h5group", "/")
     dcct_data = kwargs.get("dcct_data", None)
     pvpref = kwargs.get("pvpref", None)
@@ -240,17 +254,20 @@ def _saveSrBpmData(fname, waveform, data, **kwargs):
     if group != "/":
         grp = h5f.create_group(group)
     grp = h5f[group]
-    grp["%s_name" % waveform]   = data[0]
-    grp["%s_x" % waveform]      = data[1]
-    grp["%s_y" % waveform]      = data[2]
-    grp["%s_sum" % waveform]    = data[3]
-    grp["%s_ts" % waveform]     = data[4]
-    grp["%s_offset" % waveform] = data[5]
-
-    if "xbbaoffset" in kwargs:
-        grp["bba_x_offset"] = kwargs["xbbaoffset"]
-    if "ybbaoffset" in kwargs:
-        grp["bba_y_offset"] = kwargs["ybbaoffset"]
+    grp["%s_name" % waveform]   = names
+    grp["%s_x" % waveform]      = x
+    grp["%s_y" % waveform]      = y
+    grp["%s_sum" % waveform]    = Is
+    if "ddr_timestamp" in kwargs:
+        grp["%s_ts" % waveform] = kwargs["ddr_timestamp"]
+    if "ddr_offset" in kwargs:
+        grp["%s_offset" % waveform] = kwargs["ddr_offset"]
+    if "bba_xoffset" in kwargs:
+        grp["bba_x_offset"] = kwargs["bba_xoffset"]
+    if "bba_yoffset" in kwargs:
+        grp["bba_y_offset"] = kwargs["bba_yoffset"]
+    if "event_code" in kwargs:
+        grp["event_code"]  = kwargs["event_code"]
 
     #grp.attrs["timespan"] = _maxTimeSpan(data[4])
 
@@ -311,8 +328,9 @@ def getSrBpmData(**kwargs):
 
     if trig_src == 0 and waveform in ["Tbt", "Fa"]:
         # internal trig
-        ret = _srBpmTrigData(pvpref, waveform, **kwargs)
-        x, y, Is, ts, offset, xbbaofst, ybbaofst = ret
+        # ret = _srBpmTrigData(pvpref, waveform, **kwargs)
+        # x, y, Is, ts, offset, xbbaofst, ybbaofst, extdata = ret
+        x, y, Is, extdata = _srBpmTrigData(pvpref, waveform, **kwargs)
     else:
         if waveform == "Tbt":
             pv_x = [pv + "TBT-X" for pv in pvpref]
@@ -328,13 +346,18 @@ def getSrBpmData(**kwargs):
         pv_ts = [pv + "TS:DdrTrigDate-I" for pv in pvpref]
         pv_bbaxoff = [ pv + "BbaXOff-SP" for pv in pvpref]
         pv_bbayoff = [ pv + "BbaYOff-SP" for pv in pvpref]
+        pv_evtcode = [ pv + "Trig:EventNo-I" for pv in pvpref]
+
         x  = caget(pv_x, count=count)
         y  = caget(pv_y, count=count)
         Is = caget(pv_S, count=count)
-        ts  = np.array(caget(pv_ts))
-        offset = np.array(caget(pv_offset), 'i')
-        xbbaofst = np.array(caget(pv_bbaxoff))
-        ybbaofst = np.array(caget(pv_bbayoff))
+        # check srBpmTrigData, key must agrees
+        extdata = {
+            "ddr_timestamp": np.array(caget(pv_ts)),
+            "ddr_offset": np.array(caget(pv_offset), 'i'),
+            "bba_xoffset": np.array(caget(pv_bbaxoff)),
+            "bba_yoffset": np.array(caget(pv_bbayoff)),
+            "event_code": np.array(caget(pv_evtcode))}
     # in case they have difference size
     d = []
     for v in [x, y, Is]:
@@ -348,7 +371,7 @@ def getSrBpmData(**kwargs):
     #dcct2 = caget(pv_dcct, count=1000)
     #t1 = datetime.now()
 
-    data = (names, x, y, Is, ts, offset)
+    data = (names, x, y, Is, extdata["ddr_timestamp"], extdata["ddr_offset"])
 
     if not output: return data
     
@@ -365,13 +388,11 @@ def getSrBpmData(**kwargs):
 
     t1 = datetime.now()
     # save the data
-    _saveSrBpmData(output, waveform, data,
+    _saveSrBpmData(output, waveform, names, x, y, Is,
                    h5group=kwargs.get("h5group", "/"),
-                   #dcct_data = (dcct1, dcct2),
-                   xbbaoffset = xbbaofst,
-                   ybbaoffset = ybbaofst,
                    ts = (t0, t1),
-                   pvpref = pvpref)
+                   pvpref = pvpref,
+                   **extdata)
     return data, output
 
 
@@ -476,6 +497,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     """
     verbose = kwargs.get("verbose", 0)
     output = kwargs.get("output", True)
+    sleep = kwargs.get("sleep", 5)
+
     kpvsp, kpvrb = None, None
     # 0 - both off, 1 - V-on, 2-H-on, 3-both-on
     pv_pinger_mode = "SR:C21-PS{Pinger}Mode:Trig-Sel"
@@ -515,11 +538,13 @@ def measKickedTbtData(idriver, ampl, **kwargs):
             time.sleep(0.5)
         caput(kpvon, [1, 1])
 
+    # set the kicker/pinger voltage
+    caput(kpvsp, ampl, wait=True)
     #(name, x, y, Isum, ts, offset), output = ap.nsls2.getSrBpmData(
     #    trig=1, count=5000, output=True, h5group="k_%d" % idriver)
     h5g = "k_%d" % idriver
     Idcct0 = caget('SR:C03-BI{DCCT:1}I:Total-I')
-    time.sleep(2)
+    time.sleep(sleep)
 
     # request an injection:
     if idriver in [3,4,]:
@@ -529,6 +554,16 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     time.sleep(3)
     Idcct1 = caget('SR:C03-BI{DCCT:1}I:Total-I')
     bpmdata = getSrBpmData(trig=1, count=2000, output=output, h5group=h5g)
+    # record pinger wave, V-chan1, H-chan2
+    pinger_delay, pinger_wave, pinger_mode = None, None, None
+    if idriver in [5,6,7]:
+        pinger_wave = caget(["SR:C21-PS{Dig:Png1}TimeScale-I",
+                             "SR:C21-PS{Dig:Png1}Data:Chan2-I",
+                             "SR:C21-PS{Dig:Png1}Data:Chan1-I"])
+        pinger_delay = caget(["SR:C21-PS{Pinger:H}Delay-SP",
+                              "SR:C21-PS{Pinger:V}Delay-SP"])
+        pinger_mode = caget("SR:C21-PS{Pinger}Mode:Trig-Sts")
+        
     # repeat_value=True
     caput(kpvon, 0)
     caput(kpvsp, 0.0)
@@ -547,6 +582,12 @@ def measKickedTbtData(idriver, ampl, **kwargs):
         g.attrs["pvsp"] = kpvsp
         g.attrs["pvrb"] = kpvrb
         g.attrs["pvon"] = kpvon
+        if pinger_wave is not None:
+            g["pinger_wave"] = np.array(pinger_wave, 'd').transpose()
+        if pinger_delay is not None:
+            g["pinger_delay"] = pinger_delay
+        if pinger_mode is not None:
+            g["pinger_mode"] = pinger_mode
         f.close()
 
     return bpmdata

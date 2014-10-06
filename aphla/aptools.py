@@ -17,10 +17,12 @@ import h5py
 
 from . import machines
 from catools import caRmCorrect, measCaRmCol
-from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
+from hlalib import (getCurrent, getLifetimeCurrent, getExactElement,
+    getElements, getNeighbors,
     getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
     getLocations, outputFileName, fget, fput, getBoundedElements,
     getGroupMembers)
+
 import logging
 
 __all__ = [ 'calcLifetime', 'measLifetime',  'measOrbitRm',
@@ -764,11 +766,16 @@ def measRmCol(resp, kker, kfld, dklst, **kwargs):
                  wait_readback=True, verbose=1)
         except:
             #kker.put(kfld, k0, unitsys=None)
-            msg = "Timeout at {0}.{1}= {2}, i= {3}, delta= {4}".format(
+            _logger.error("{0}".format(sys.exc_info()[0]))
+            _logger.error("{0}".format(sys.exc_info()[1]))
+            #_logger.error("{0}".format(sys.exc_info()[2]))
+            msg = "Timeout at setting {0}.{1}= {2}, i= {3}, delta= {4}".format(
                 kker.name, kfld, k0+dki, i, dki)
             _logger.warn(msg)
-            print("{0}.{1}= {2}".format(kker.name, kfld,
-                                        kker.get(kfld, unitsys=unitsys)))
+            time.sleep(5.0)
+            print("{0}.{1}= {2} (set:{3}). continued after 5.0 second".format(
+                    kker.name, kfld,
+                    kker.get(kfld, unitsys=unitsys), k0+dki))
             sys.stdout.flush()
 
         for j in range(sample):
@@ -809,9 +816,13 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
 
     seealso :class:`~aphla.respmat.OrbitRespMat`, 
     :func:`~aphla.respmat.OrbitRespMat.measure`
+
+    quit when beam current < Imin(0.1mA)
     """
     verbose = kwargs.pop("verbose", 0)
     output  = kwargs.pop("output", None)
+    Imin    = kwargs.pop("Imin", 0.1)
+
     if output is True:
         output = outputFileName("respm", "orm")
     h5group = kwargs.pop("h5group", "OrbitResponseMatrix")
@@ -840,12 +851,13 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
                            "dxlst, dxmax")
 
     t0 = datetime.now()
+    tau0, Icur0 = getLifetimeCurrent()
     m = np.zeros((len(bpmfld), len(corfld)), 'd')
     if verbose > 0: kwargs["verbose"] = verbose - 1
     for i,(cor, fld) in enumerate(corfld):
         # save each column
         m[:,i], xlst, dat = measRmCol(bpmfld, cor, fld, dxlst, **kwargs)
-
+        tau, Icur = getLifetimeCurrent()
         if verbose:
             print("%d/%d" % (i, len(corfld)), cor.name, np.min(m[:,i]), np.max(m[:,i]))
 
@@ -856,6 +868,8 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
             grpname = "resp__%s.%s" % (cor.name, fld)
             if grpname in g0: del g0[pv]
             g = g0.create_group(grpname)
+            g.attrs["lifetime"] = tau
+            g.attrs["current"] = Icur
             g["m"] = m[:,i]
             g["m"].attrs["cor_name"] = cor.name
             g["m"].attrs["cor_field"] = fld
@@ -869,8 +883,10 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
             #g["orbit"].attrs["pv"] = [b.pv(field=fld) for b,fld in bpmfld]
             g["cor"] = xlst
             f.close()
+        if Icur < Imin: break
 
     t1 = datetime.now()
+    tau1, Icur1 = getLifetimeCurrent()
     if output:
         # save the overall matrix
         f = h5py.File(output)
@@ -892,6 +908,9 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
             pass
         g["m"].attrs["t_start"] = t0.strftime("%Y-%m-%d %H:%M:%S.%f")
         g["m"].attrs["t_end"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
+        g.attrs["timespan"] = (t1-t0).total_seconds()
+        g.attrs["current"] = [Icur0, Icur1]
+        g.attrs["lifetime"] = [tau0, tau1]
         f.close()
 
     return m, output
@@ -1020,15 +1039,16 @@ def set3CorBump(cors, dIc0, bpmins, bpmouts, **kwargs):
     # remeasure the response matrix (n,3)
     if m is None:
         m, output = measOrbitRm([(b, plane) for b in bpmouts],
-                                [(c, plane) for c in corls],
+                                [(c, plane) for c in corls[1:]],
                                 dxmax = dxmax, nx = 2, unitsys=None)
 
     bpmpvs = [b.pv(field=plane)[0] for b in bpmouts]
-    corpvs = [c.pv(field=plane)[0] for c in corls]
+    corpvs = [c.pv(field=plane)[0] for c in corls[1:]]
 
     cv0 = fget(corls, plane, unitsys=None, handle="setpoint")
     cors[0].put(plane, cv0[0] + dIc0, unitsys=None)
     time.sleep(0.3)
+
     obt1 = fget(bpmouts+bpmins, plane, unitsys=None, sample=5)
     err, msg = caRmCorrect(bpmpvs, corpvs, m)
     cv1 = fget(cors, plane, unitsys=None)

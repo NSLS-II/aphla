@@ -505,7 +505,7 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
     """
 
     nsample = kwargs.pop("sample", 3)
-    dt      = kwargs.pop("dt", 0.1)
+    dt      = kwargs.pop("dt", 0.2)
     verbose = kwargs.get("verbose", 0)
 
     n, t0 = len(pvs), datetime.now()
@@ -515,7 +515,7 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
     while True:
         for i in range(nsample):
             # delay a bit
-            time.sleep(0.1/(nsample+1.0))
+            time.sleep(dt/(nsample+1.0))
             buf[i,:] = caget(pvs, **kwargs)
             
         avg = np.average(buf, axis=0)
@@ -530,7 +530,7 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
         if (t1 - t0).total_seconds() > kwargs.get("timeout", 5):
             vdiff = [avg[i] - values[i] for i in range(n)]
             raise RuntimeError("Timeout, tried {0} times, pv={1} "
-                               "vals= {2} lo= {3} hi={4}\n"
+                               "avg_vals= {2} lo= {3} hi={4}\n"
                                "above: {5}\nbelow: {6}".format(
                     iloop, pvs, avg, vallo, valhi, avg-vallo, valhi-avg))
         iloop = iloop + 1

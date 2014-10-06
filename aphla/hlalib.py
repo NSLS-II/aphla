@@ -409,7 +409,11 @@ def fput(elemfld_vals, **kwargs):
     ret = caput(pvsp, vals, **kwargs)
     if wait_readback:
         vallo, valhi = [v[5] for v in pvl], [v[6] for v in pvl]
-        caWaitStable(pvrb, vals, vallo, valhi, **kwargs)
+        try:
+            caWaitStable(pvrb, vals, vallo, valhi, **kwargs)
+        except:
+            _logger.error("failed setting {0}={1}".format(pvsp, vals))
+            raise
 
 
 def getPvList(elems, field, handle = 'readback', **kwargs):
@@ -718,7 +722,12 @@ def getTwissAt(s, columns, **kwargs):
         if not machines._lat._twiss:
             _logger.error("ERROR: no twiss data loaded")
             return None
-        return machines._lat._twiss.at(s, col=col)
+        try:
+            twl = [machines._lat._twiss.at(si, col=col)
+                   for si in s]
+            return np.array(twl, 'd')
+        except:
+            return machines._lat._twiss.at(s, col=col)
     else:
         return [None] * len(columns)
 
@@ -1375,9 +1384,9 @@ def calcBetaBeatRm(bpms, quads, **kwargs):
     NBPM, NQUAD = len(bpms), len(quads)
     m = np.zeros((NBPM * 2, NQUAD), 'd')
     tunes = getTunes(source="database")
-    twcols = ['s', 'betax', 'betay', 'psix', 'psiy']
-    twbpm  = getTwiss([b.name for b in bpms], twcols)
-    twquad = getTwiss([q.name for q in quads], twcols)
+    twcols = ['s', 'betax', 'betay', 'phix', 'phiy']
+    twbpm  = getTwissAt([b.se for b in bpms], twcols)
+    twquad = getTwissAt([q.se for q in quads], twcols)
     for i in range(NBPM):
         phix0, phiy0 = twbpm[i,3:5]
         for j in range(NQUAD):
