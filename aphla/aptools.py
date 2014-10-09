@@ -1041,7 +1041,8 @@ def set3CorBump(cors, dIc0, bpmins, bpmouts, **kwargs):
         m, output = measOrbitRm([(b, plane) for b in bpmouts],
                                 [(c, plane) for c in corls[1:]],
                                 dxmax = dxmax, nx = 2, unitsys=None)
-
+    print("ORM:", m)
+    print("output:", output)
     bpmpvs = [b.pv(field=plane)[0] for b in bpmouts]
     corpvs = [c.pv(field=plane)[0] for c in corls[1:]]
 
@@ -1050,6 +1051,7 @@ def set3CorBump(cors, dIc0, bpmins, bpmouts, **kwargs):
     time.sleep(0.3)
 
     obt1 = fget(bpmouts+bpmins, plane, unitsys=None, sample=5)
+    print("dx after one kick:", obt1 - obt0)
     err, msg = caRmCorrect(bpmpvs, corpvs, m)
     cv1 = fget(cors, plane, unitsys=None)
     obt2 = fget(bpmouts+bpmins, plane, unitsys=None, sample=5)

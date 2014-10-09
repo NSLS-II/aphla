@@ -37,13 +37,21 @@ def _maxTimeSpan(timestamps):
     return max(delta) - min(delta)
 
 
-def resetSrBpms(wfmsel = 1, name = "BPM", verbose=0, evcode = None):
+def resetSrBpms(wfmsel = 1, name = "BPM", evcode = None, verbose=0):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
     Adc, Tbt and Fa waveforms. The Wfm size is set to 1,000,000 for ADC,
     100,000 for Tbt and 9,000 for Fa.
 
-    evcode - 15(LINAC), 32(1Hz, sync acquisition), 33(SR RF BPM trigger), 47(1Hz), 66(Booster extraction)
+    Parameters
+    -----------
+    wfmsel : int
+        Waveform selection: Adc(0), Tbt(1), Fa(2).
+    name : str, list of element object
+        Element name, group name or list of objects, as in ``getElements``
+    evcode : int
+        Event code: - 15(LINAC), 32(1Hz, sync acquisition), 33(SR RF BPM
+        trigger), 47(1Hz), 66(Booster extraction), 35(pinger).
     """
     elems = [e for e in getElements(name) if e.pv(field="x")]
     pvprefs = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "") for bpm in elems]
@@ -292,16 +300,39 @@ def _saveSrBpmData(fname, waveform, names, x, y, Is, **kwargs):
 
 def getSrBpmData(**kwargs):
     """
-    trig - 0 (default internal), 1=external.
-    verbose - 0
-    waveform - "Tbt", "Fa"
-    bpms - a list of Element object
-    name - BPM name or pattern, overwritten by *bpms*
-    count - length of waveform.
-    output - True, use default file name, str - user specified filename
-    h5group - output group
+    NSLS-II SR BPM data acquisition.
 
-    returns name, x, y, Isum, timestamp, offset
+    Parameters
+    -----------
+    trig : int, optional
+        Internal(0) or external(1) trigger.
+    verbose : int
+    waveform : str
+        Waveform selection: ``"Tbt"``, ``"Fa"``
+    bpms : list
+        A list of BPM object.
+    name : str
+        BPM name or pattern, overwritten by parameter *bpms*
+    count : int
+        Waveform length. default all (0).
+    output : str, True, False
+        output file name, or default name (True), or no output (False).
+    h5group : str
+        output HDF5 group
+
+    Returns
+    --------
+    name : list
+        a list of BPM name
+    x : array (nbpm, count)
+        x orbit, shape (nbpm, waveform_length).
+    y : array (nbpm, count)
+        y orbit
+    Isum : array (nbpm, count)
+        Sum signal
+    timestamp : list
+    offset : list
+        offset from the FPGA buffer.
 
     There will be warning if timestamp differs more than 1 second
     """
@@ -400,12 +431,20 @@ def saveLattice(**kwargs):
     """
     save the current lattice info to a HDF5 file.
 
-    - lattice, default the current active lattice
-    - subgroup, default "", used for output file name
-    - note, default ""  (notes is deprecated)
-    - unitsys, default "phy", 
+    Parameters
+    -----------
+    lattice : Lattice
+        lattice object, default the current active lattice
+    subgroup : str, default ""
+        used for output file name
+    note : str, default ""  (notes is deprecated)
+    unitsys : str, None
+        default "phy", 
 
-    returns the output file name.
+    Returns
+    -------
+    out : str
+        the output file name.
 
     Saved data with unitsys=None and "phy":
 
@@ -415,10 +454,16 @@ def saveLattice(**kwargs):
     - RFCAVITY: f
     - DCCT: I, tau, Iavg
 
-    ::
-        saveLattice(note="Good one")
+    Notes
+    ------
+    Besides all SR PVs, there are some BTS pvs saved without physics
+    properties. The saved file does not known if the BTS pvs are readback or
+    setpoint. This makes `putLattice` more safe when specifying put setpoint
+    pvs only.
 
-    Besides all SR PVs, there are some BTS pvs saved without physics properties. The saved file does not known if the BTS pvs are readback or setpoint. This makes `putLattice` more safe when specifying put setpoint pvs only.
+    Examples
+    ---------
+    >>> saveLattice(note="Good one")
     """
     # save the lattice
     output = kwargs.pop("output", 
@@ -481,20 +526,51 @@ def saveLattice(**kwargs):
 
 
 def putLattice(fname, **kwargs):
+    """
+    restore saved machine snapshot.
+
+    Parameters
+    -----------
+    fname : str
+        The data file name
+
+    See also
+    ---------
+    saveLattice, compareLattice
+
+    Examples
+    ---------
+    >>> output = saveLattice(note="example")
+    >>> putLattice(output)
+    """
     putPvData(fname, machines._lat.name, **kwargs)
 
 
 def measKickedTbtData(idriver, ampl, **kwargs):
     """
-    idriver - 3 or 4, i.e. injection kicker 3 or 4. vertical pinger is 5, h-pinger is 6.
-    ampl - [kV for kicker or pinger]
-    output - output file name, default True saves to the default dir. False - no saving to file.
-    verbose - default 0
+    take turn-by-turn BPM data after kicking the beam.
+
+    Parameters
+    -----------
+    idriver : int
+        which driver used to kick the beam: injection kicker 3(3) or 4(4),
+        vertical pinger(5), horizontal pinger(6), both H/V pingers(7).
+    ampl : float, tuple
+        kicking amplitude.
+    output : str, True, False
+        output file name, or default (True), or no output (False)
+    verbose : int
 
     it will set kicker/pinger and wait 100sec or readback-setpoint agree.
 
-    >>> measKickedTbtData(7, (0.1, 0.2))
+    Same returns as `getSrBpmData`
+
+    Examples
+    ---------
+    >>> (name, x, y, Isum, ts, offset) = measKickedTbtData(7, (0.1, 0.2))
+    >>> (name, x, y, Isum, ts, offset), output = measKickedTbtData(7, (0.1, 0.2), output=True)
     """
+
     verbose = kwargs.get("verbose", 0)
     output = kwargs.get("output", True)
     sleep = kwargs.get("sleep", 5)
@@ -550,6 +626,7 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     if idriver in [3,4,]:
         caput('ACC-TS{EVG-SSC}Request-Sel', 1)
     elif idriver in [5,6,7]:
+        resetSrBPms(evcode=35)
         caput('SR:C21-PS{Pinger}Ping-Cmd', 1)
     time.sleep(3)
     Idcct1 = caget('SR:C03-BI{DCCT:1}I:Total-I')
