@@ -1116,7 +1116,7 @@ def meas4CorBump(cors, bpmins, bpmouts, bpmdx, **kwargs):
     return dcs
 
 
-def setIdBump(idname, xc, thetac, **kwargs):
+def _setIdBump(idname, xc, thetac, **kwargs):
     """
     idname - name of ID in the middle of 4 BPMs. 2 BPMs each side.
     xc - beam position at center of ID. [mm]
@@ -1163,4 +1163,61 @@ def setIdBump(idname, xc, thetac, **kwargs):
     for i,c in enumerate(cors):
         print(i, c.name, dcs[i])
         c.put(plane, dcs[i] + cx0[i], unitsys=None)
+
+
+def setIdBump(idname, xc, thetac, **kwargs):
+    """
+    idname - name of ID in the middle of 4 BPMs. 2 BPMs each side.
+    xc - beam position at center of ID. [mm]
+    thetac - bema angle at center of ID. [mrad]
+    plane - 'x' or 'y'. default 'x'.
+
+    Hard coded Error if absolute value:
+      - bpms distance > 20.0m or,
+      - xc > 5mm, or
+      - thetac > 1mrad
+
+    TODO: fix the [mm], [mrad] default unit
+    """
+    if np.abs(xc) > 5.0 or np.abs(thetac) > 1.0:
+        raise RuntimeError("xc or thetac overflow: {0}, {1}".format(
+                xc, thetac))
+
+    plane = kwargs.get("plane", 'x')
+
+    idobj = ap.getElements(idname)[0]
+    bpms = ap.getGroupMembers(["BPM", "UBPM"], op="union")
+    cors = ap.getElements("COR")
+
+    ref = []
+    bpm_s = [[0,bpms[0].sb], [len(bpms)-1, bpms[-1].sb]]
+    x0 = ap.fget(bpms, 'x', unitsys=None)
+    y0 = ap.fget(bpms, 'y', unitsys=None)
+    for i,b in enumerate(bpms):
+        if b.sb > bpm_s[0] and b.se < idobj.sb:
+            bpm_s[0] = [i, b.sb]
+        if b.sb < bpm_s[1] and b.sb > idobj.se:
+            bpm_s[1] = [i, b.sb]
+        ref.append([x0[i], y0[i]])
+
+    # find two bounding BPMS
+    ibpm0, ibpm1 = bpm_s[0][0], bpm_s[1][0]
+    bpm0, bpm1 = bpms[ibpm0]], bpms[ibpm1]
+    s0, s1 = [(b.se + b.sb) / 2.0 for b in [bpm0, bpm1]]
+    sc = (idobj.sb + idobj.se) / 2.0 
+    L = bpm1.se - bpm0.sb
+    if L <= 0.0 or L > 20.0:
+        raise RuntimeError("UBPM distance might be wrong: {0}".format(L))
+    x0 = xc - (sc-s0)/1000.0 * thetac
+    x1 = xc + (s1-sc)/1000.0 * thetac
+    if plane in ["x", "X"]:
+        ref[ibpm0][0] = x0
+        ref[ibpm1][0] = x1
+    elif plane in ["y", "Y"]:
+        ref[ibpm0][1] = x0
+        ref[ibpm1][1] = x1
+
+    bpmrec = [(b, 'x') for b in bpms] + [(b, 'y') for b in bpms]
+    correc = [(c, 'x') for c in cors] + [(c, 'y') for c in cors]
+    return setLocalBump(bpmrec, correc, ref, dImax=0.5, check=False) 
 
