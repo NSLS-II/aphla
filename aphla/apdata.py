@@ -5,8 +5,7 @@
 :license:
 
 """
-
-__all__ = ['OrmData', 'TwissData', 'saveSnapshotH5']
+from __future__ import print_function
 
 import os
 from os.path import splitext
@@ -21,6 +20,8 @@ import warnings
 import logging
 _logger = logging.getLogger(__name__)
 #_logger.setLevel(logging.DEBUG)
+
+__all__ = ['OrmData', 'TwissData', 'saveSnapshotH5']
 
 class OrmData:
     r"""Orbit Response Matrix Data
@@ -611,7 +612,7 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
             c.executemany("UPDATE elements set %s=? where elemName=?" % col,
                           vals)
         except:
-            print "Error at updating {0} {1}".format(col, vals)
+            print("Error at updating {0} {1}".format(col, vals))
             raise
 
         conn.commit()
@@ -628,8 +629,8 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
             pv, prpts, tags = rec
             if col not in prpts: continue
             if not prpts.has_key("elemField") or not prpts.has_key("elemName"):
-                print "Incomplete record for pv={0}: {1} {2}".format(
-                    pv, prpts, tags)
+                print("Incomplete record for pv={0}: {1} {2}".format(
+                    pv, prpts, tags))
                 continue
             # elemGroups is a list
             vals.append((prpts[col], pv, prpts["elemName"], prpts["elemField"]))
@@ -650,8 +651,8 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
         pv, prpts, tags = rec
         if not tags: continue
         if not prpts.has_key("elemField") or not prpts.has_key("elemName"):
-            print "Incomplete record for pv={0}: {1} {2}. IGNORED".format(
-                pv, prpts, tags)
+            print("Incomplete record for pv={0}: {1} {2}. IGNORED".format(
+                pv, prpts, tags))
             continue
         vals.append((sep.join(sorted(tags)),
                      pv, prpts["elemName"], prpts["elemField"]))
@@ -755,6 +756,6 @@ if __name__ == "__main__":
     #m = OrmData("machines/nsls2v2/v2sr.hdf5", "OrbitResponseMatrix")
     #m._save_hdf5("test_orm.hdf5", "OrbitResponseMatrix")
     m = OrmData("test_orm.hdf5", "OrbitResponseMatrix")
-    print m.getBpmNames()
-    print m.has('ph2g6c21b', 'x')
+    print(m.getBpmNames())
+    print(m.has('ph2g6c21b', 'x'))
 

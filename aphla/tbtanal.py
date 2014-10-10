@@ -20,6 +20,12 @@ __all__ = [ 'calcPhase', 'calcPhaseAdvance', 'calcBetaAu']
 _logger = logging.getLogger(__name__)
 
 
+def calcTunes(x, y, **kwargs):
+    """
+    x, y - (nbpm, nturns) data
+    """
+    pass
+
 def _calcPhase(x, **kwargs):
     """
     x - 1D Tbt data
