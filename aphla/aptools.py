@@ -1185,24 +1185,24 @@ def setIdBump(idname, xc, thetac, **kwargs):
 
     plane = kwargs.get("plane", 'x')
 
-    idobj = ap.getElements(idname)[0]
-    bpms = ap.getGroupMembers(["BPM", "UBPM"], op="union")
-    cors = ap.getElements("COR")
+    idobj = getElements(idname)[0]
+    bpms = getGroupMembers(["BPM", "UBPM"], op="union")
+    cors = getElements("COR")
 
     ref = []
     bpm_s = [[0,bpms[0].sb], [len(bpms)-1, bpms[-1].sb]]
-    x0 = ap.fget(bpms, 'x', unitsys=None)
-    y0 = ap.fget(bpms, 'y', unitsys=None)
+    x0 = fget(bpms, 'x', unitsys=None)
+    y0 = fget(bpms, 'y', unitsys=None)
     for i,b in enumerate(bpms):
-        if b.sb > bpm_s[0] and b.se < idobj.sb:
+        if b.sb > bpm_s[0][1] and b.se < idobj.sb:
             bpm_s[0] = [i, b.sb]
-        if b.sb < bpm_s[1] and b.sb > idobj.se:
+        if b.sb < bpm_s[1][1] and b.sb > idobj.se:
             bpm_s[1] = [i, b.sb]
         ref.append([x0[i], y0[i]])
 
     # find two bounding BPMS
     ibpm0, ibpm1 = bpm_s[0][0], bpm_s[1][0]
-    bpm0, bpm1 = bpms[ibpm0]], bpms[ibpm1]
+    bpm0, bpm1 = bpms[ibpm0], bpms[ibpm1]
     s0, s1 = [(b.se + b.sb) / 2.0 for b in [bpm0, bpm1]]
     sc = (idobj.sb + idobj.se) / 2.0 
     L = bpm1.se - bpm0.sb
@@ -1217,7 +1217,8 @@ def setIdBump(idname, xc, thetac, **kwargs):
         ref[ibpm0][1] = x0
         ref[ibpm1][1] = x1
 
-    bpmrec = [(b, 'x') for b in bpms] + [(b, 'y') for b in bpms]
-    correc = [(c, 'x') for c in cors] + [(c, 'y') for c in cors]
+    ref = [v[0] for v in ref] + [v[1] for v in ref]
+    bpmrec = [(b.name, 'x') for b in bpms] + [(b.name, 'y') for b in bpms]
+    correc = [(c.name, 'x') for c in cors] + [(c.name, 'y') for c in cors]
     return setLocalBump(bpmrec, correc, ref, dImax=0.5, check=False) 
 
