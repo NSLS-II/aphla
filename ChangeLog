@@ -1,3 +1,8 @@
+2014-09-29  Lingyun Yang  <lyyang@NSLS2LANG-LT.local>
+
+	* aphla/aptools.py (setIdBump): use abs BPM x (raw)
+	* aphla/hlalib.py (fput): add sample and sleep
+
 2014-09-22  Lingyun Yang  <lyyang@725-controldesk05.cs.nsls2.local>
 
 	* aphla/element.py (CaElement.put): merge ramp to put with trig=1

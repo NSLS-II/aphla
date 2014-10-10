@@ -19,14 +19,15 @@ from . import machines
 from catools import caRmCorrect, measCaRmCol
 from hlalib import (getCurrent, getExactElement, getElements, getNeighbors,
     getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
-    getLocations, outputFileName, fget, fput, getBoundedElements)
+    getLocations, outputFileName, fget, fput, getBoundedElements,
+    getGroupMembers)
 import logging
 
 __all__ = [ 'calcLifetime', 'measLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
     'stripView', 'measRmCol', 'getArchiverData',
-    'set3CorBump', 'set4CorBump'
+    'set3CorBump', 'setIdBump'
 ]
 
 _logger = logging.getLogger(__name__)
@@ -774,7 +775,7 @@ def measRmCol(resp, kker, kfld, dklst, **kwargs):
             klstrb[i,j] = kker.get(kfld, handle="readback", unitsys=unitsys)
             if kwargs.get("verbose", 0) > 0:
                 print("Reading", kker, klstrb[i,j])
-            dat[i,:,j] = fget(resp, **kwargs)
+            dat[i,:,j] = fget(resp, unitsys=None, **kwargs)
 
     # nonblocking
     kker.put(kfld, k0, unitsys=None)
@@ -994,77 +995,149 @@ def getArchiverData(*argv, **kwargs):
     return dat
 
 
-def set3CorBump(cors, dIc0, **kwargs):
+def set3CorBump(cors, dIc0, bpmouts, **kwargs):
     """
     cors - list of three correctors
     dIc0 - the I change for the first corrector in *cors* (i.e. raw unit)
+    bpmouts - bpm outside the bump
+    bpmins - optional, bpm inside the bump
     plane - 'x' or 'y' (default 'x')
+    dxmax - max dI for ORM measurement, default 0.2
 
     set the cors and returns the current change (i.e. delta I)
+
+    returns orbit change outside bump, inside bump and current change of cors.
+    if no bpmins provided, None returned for orbit change inside bump.
     """
     corls = getElements(cors)
     plane = kwargs.get("plane", 'x').lower()
-    bpms  = kwargs.get("bpms", getElements("BPM"))
-    bpmsi, bpmso = getBoundedElements(bpms, corls[0].sb, corls[-1].se)
-    ibpmsi = [i for i,e in enumerate(bpms) if e in bpmsi]
-    ibpmso = [i for i,e in enumerate(bpms) if e in bpmso]
+    dxmax = kwargs.get("dxmax", 0.2)
+    bpmins = kwargs.get("bpmins", [])
 
-    nsample = 3
-    obt0 = np.zeros((len(bpms), nsample), 'd')
-    for i in range(nsample):
-        obt0[:,i] = fget(bpms, plane, unitsys=None)
-        time.sleep(0.15)
+    obt0 = fget(bpmouts+bpmins, plane, unitsys=None, sample=5)
 
-    print(ibpmsi)
-    # remeasure the response matrix
-    mfull, output = measOrbitRm([(b, plane) for b in bpms],
+    # remeasure the response matrix (n,3)
+    m, output = measOrbitRm([(b, plane) for b in bpmouts],
                             [(c, plane) for c in corls],
-                            dxmax = 0.2, nx = 2)
-    m = np.take(mfull, ibpmso, axis=0)
+                            dxmax = dxmax, nx = 2, unitsys=None)
 
-    bpmpvs = [bpms[i].pv(field=plane)[0] for i in ibpmso]
-    corpvs = [c.pv(field=plane)[0] for c in cors[1:]]
+    bpmpvs = [b.pv(field=plane)[0] for b in bpmouts]
+    corpvs = [c.pv(field=plane)[0] for c in corls]
 
-    cv0 = fget(cors, plane, unitsys=None)
+    cv0 = fget(corls, plane, unitsys=None, handle="setpoint")
     cors[0].put(plane, cv0[0] + dIc0, unitsys=None)
     time.sleep(0.3)
-    obt1 = np.zeros((len(bpms), nsample), 'd')
-    for i in range(nsample):
-        obt1[:,i] = fget(bpms, plane, unitsys=None)
-        time.sleep(0.15)
-    err, msg = caRmCorrect(bpmpvs, corpvs, m[:,1:])
+    obt1 = fget(bpmouts+bpmins, plane, unitsys=None, sample=5)
+    err, msg = caRmCorrect(bpmpvs, corpvs, m)
     cv1 = fget(cors, plane, unitsys=None)
-    for i,c in enumerate(cors):
-        print(i, c.name, cv1[i] - cv0[i])
+    obt2 = fget(bpmouts+bpmins, plane, unitsys=None, sample=5)
+    dc = [cv1[i] - cv0[i] for i,c in enumerate(corls)]
+    dxins = (obt2 - obt0)[len(bpmouts):] if bpmins else None
+    dxouts = (obt2 - obt0)[:len(bpmouts)]
+    return dxouts, dxins, dc
 
 
-def set4CorBump(cors, dA1, dA2, **kwargs):
+def meas4CorBump(cors, bpmins, bpmouts, bpmdx, **kwargs):
     """
     superposition of two 3Cor bumps
     
-    i1, i2 - indices for BPMs to look at dA1 and dA2
+    cors - list of correctors (4)
+    bpmins - BPMs inside the bump
+    bpmouts - 
+    bpmdx - desired change of orbit for bpmins
+
+    dA1 - change of one cor for ORM fitting, default 0.2
+    dA2 - change of one cor for ORM fitting, default 0.2
+
     """
-    i1 = kwargs.get("i1", 1)
-    i2 = kwargs.get("i2", 2)
+    dA1 = kwargs.pop("dA1", 0.2)
+    dA2 = kwargs.pop("dA2", 0.2)
     plane = kwargs.get("plane", 'x')
-    bpms  = kwargs.get("bpms", getElements("BPM"))
-    bpmsi, bpmso = getBoundedElements(bpms, cors[0].sb, cors[-1].se)
-    ibpmsi = [i for i,e in enumerate(bpms) if e in bpmsi]
-    ibpmso = [i for i,e in enumerate(bpms) if e in bpmso]
+    kwargs["bpmins"] = bpmins
 
-    xv0 = fget(bpmsi, plane, unitsys=None)
-    cv0 = fget(cors, plane, unitsys=None)
-    set3CorBump(cors[:3], 0.5, **kwargs)
-    fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
-    time.sleep(1)
-    xv1 = fget(bpmsi, plane, unitsys=None)
-    cv1 = fget(cors, plane, unitsys=None)
+    # two bpms
+    if len(bpmins) != 2 or len(cors) != 4:
+        raise RuntimeError("wrong number of bpms/cors, {0}/{1}".format(
+                len(bpmins), len(cors)))
 
-    set3CorBump(cors[1:], -0.5, **kwargs)
+    xv0 = fget(bpmins, plane, unitsys=None, sample=5)
+    cv0 = fget(cors, plane, unitsys=None, handle="setpoint")
+
+    m = np.zeros((2, 2), 'd')
+    dxout1, dxin1, dcls1 = set3CorBump(cors[:3], dA1, bpmouts, **kwargs)
     fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
-    time.sleep(1)
-    xv2 = fget(bpmsi, plane, unitsys=None)
-    cv2 = fget(cors, plane, unitsys=None)
+    time.sleep(0.5)
+    xv1 = fget(bpmins, plane, unitsys=None, sample=5)
+    cv1 = fget(cors, plane, unitsys=None, handle="setpoint")
+
+    dxout2, dxin2, dcls2 = set3CorBump(cors[1:], dA2, bpmouts, **kwargs)
+    fput([(cors[i], plane, cv0[i]) for i in range(len(cors))], unitsys=None)
+    time.sleep(0.5)
+    xv2 = fget(bpmins, plane, unitsys=None, sample=5)
+    cv2 = fget(cors, plane, unitsys=None, handle="setpoint")
     
-    print([cv1[i] - cv0[i] for i in range(len(cors))],
-          [cv2[i] - cv0[i] for i in range(len(cors))])
+    m[:,0] = dxin1 / dA1
+    m[:,1] = dxin2 / dA2
+
+    mdet = np.linalg.det(m)
+    if mdet == 0.0:
+        raise RuntimeError("singular config of ({0},{1}) vs ({2},{3})".format(
+                bpmins[0].name, bpmins[1].name,
+                cors[0].name, cors[1].name))
+    dc1 = (m[1,1]*bpmdx[0] - m[0,1]*bpmdx[1]) / mdet
+    dc2 = (-m[1,0]*bpmdx[0] + m[0,0]*bpmdx[1]) / mdet
+    dcs = np.zeros(4, 'd')
+    for i in range(3):
+        dcs[i] = dcs[i] + dcls1[i] / dA1 *dc1
+        dcs[i+1] = dcs[i+1] + dcls2[i] / dA2 *dc2
+    return dcs
+
+
+def setIdBump(idname, xc, thetac, **kwargs):
+    """
+    idname - name of ID in the middle of 4 BPMs. 2 BPMs each side.
+    xc - beam position at center of ID. [mm]
+    thetac - bema angle at center of ID. [mrad]
+    plane - 'x' or 'y'. default 'x'.
+
+    Hard coded Error if absolute value:
+      - bpms distance > 20.0m or,
+      - xc > 5mm, or
+      - thetac > 1mrad
+
+    TODO: fix the [mm], [mrad] default unit
+    """
+    if np.abs(xc) > 5.0 or np.abs(thetac) > 1.0:
+        raise RuntimeError("xc or thetac overflow: {0}, {1}".format(
+                xc, thetac))
+
+    plane = kwargs.get("plane", 'x')
+
+    nbs = getNeighbors(idname, "COR", n = 2)
+    cors = [nbs[0], nbs[1], nbs[-2], nbs[-1]]
+    cx0 = fget(cors, plane, unitsys=None, handle="setpoint")
+
+    # assuming each ID has two UBPM
+    bpmsact = getNeighbors(idname, "UBPM", n = 1)
+    if len(bpmsact) < 3:
+        raise RuntimeError("can not find two bounding UBPMs "
+                           "for {0}".format(idname))
+    bpmsact = [bpmsact[0], bpmsact[-1]]
+    allbpms = getGroupMembers(["BPM", "UBPM"], op="union")
+    bpmsi, bpmso = getBoundedElements(allbpms, cors[0].sb, cors[-1].se)
+    vx0 = fget(bpmsact, plane, unitsys=None)
+    # sposition of bpms and ID center
+    s0, s1 = [(b.se + b.sb) / 2.0 for b in bpmsact]
+    sc = [(c.sb + c.se) / 2.0 for c in getElements(idname)][0]
+    L = (bpmsact[-1].se + bpmsact[-1].sb) / 2.0 - \
+        (bpmsact[0].se + bpmsact[0].sb) / 2.0
+    if L <= 0.0 or L > 20.0:
+        raise RuntimeError("UBPM distance might be wrong: {0}".format(L))
+    x0 = xc - (sc-s0)/1000.0 * thetac
+    x1 = xc + (s1-sc)/1000.0 * thetac
+    dvx = np.array([x0, x1], 'd') - vx0
+    dcs = meas4CorBump(cors, bpmsact, bpmso, dvx)
+    for i,c in enumerate(cors):
+        print(i, c.name, dcs[i])
+        c.put(plane, dcs[i] + cx0[i], unitsys=None)
+    pass
