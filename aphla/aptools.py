@@ -756,6 +756,7 @@ def measRmCol(resp, kker, kfld, dklst, **kwargs):
     unitsys = kwargs.pop("unitsys", None)
     sample  = kwargs.pop("sample", 3)
     deg     = kwargs.pop("deg", 1)
+    minwait = kwargs.pop("minwait", 0.0)
 
     dat = np.zeros((len(dklst), len(resp), sample), 'd')
     klstrb = np.zeros((len(dklst), sample), 'd')
@@ -778,6 +779,7 @@ def measRmCol(resp, kker, kfld, dklst, **kwargs):
                     kker.get(kfld, unitsys=unitsys), k0+dki))
             sys.stdout.flush()
 
+        time.sleep(minwait)
         for j in range(sample):
             klstrb[i,j] = kker.get(kfld, handle="readback", unitsys=unitsys)
             if kwargs.get("verbose", 0) > 0:
@@ -822,6 +824,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
     verbose = kwargs.pop("verbose", 0)
     output  = kwargs.pop("output", None)
     Imin    = kwargs.pop("Imin", 0.1)
+    minwait = kwargs.get("minwait", 0.0)
 
     if output is True:
         output = outputFileName("respm", "orm")
@@ -853,7 +856,10 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
     t0 = datetime.now()
     tau0, Icur0 = getLifetimeCurrent()
     m = np.zeros((len(bpmfld), len(corfld)), 'd')
-    if verbose > 0: kwargs["verbose"] = verbose - 1
+    if verbose > 0:
+        print("total steps: %d" % len(corfld))
+        kwargs["verbose"] = verbose - 1
+    
     for i,(cor, fld) in enumerate(corfld):
         # save each column
         m[:,i], xlst, dat = measRmCol(bpmfld, cor, fld, dxlst, **kwargs)

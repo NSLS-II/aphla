@@ -1338,7 +1338,8 @@ class CaElement(AbstractElement):
         for e in self.alias:
             e._put_field(field, val, timeout=timeout, unitsys=unitsys, bc=bc, wait=wait)
 
-        if trig is not None:
+        trig_fld = field + "_trig"
+        if trig_fld in self.fields() and trig is not None:
             self._put_field(field + "_trig", trig,
                             unitsys=None, timeout=timeout, wait=True)
             
