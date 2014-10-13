@@ -1202,7 +1202,7 @@ def setIdBump(idname, xc, thetac, **kwargs):
 
     # find two bounding BPMS
     ibpm0, ibpm1 = bpm_s[0][0], bpm_s[1][0]
-    bpm0, bpm1 = bpms[ibpm0]], bpms[ibpm1]
+    bpm0, bpm1 = bpms[ibpm0], bpms[ibpm1]
     s0, s1 = [(b.se + b.sb) / 2.0 for b in [bpm0, bpm1]]
     sc = (idobj.sb + idobj.se) / 2.0 
     L = bpm1.se - bpm0.sb

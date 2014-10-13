@@ -624,6 +624,8 @@ class Lattice:
         :Example:
         
             >>> getGroupMembers(['C0[2-3]', 'BPM'], op = 'intersection')
+
+        Note: an element pattern, e.g. "p*g1c23a" is not a pattern of `groups`
         """
         if not groups: return None
         ret = {}
@@ -655,15 +657,15 @@ class Lattice:
         
         return self.getElementList(self.sortElements(r))
 
-    def getNeighbors(self, elemname, group, n):
+    def getNeighbors(self, elemname, groups, n):
         """
         Assuming self._elements is in s order
 
         the element matched with input 'element' string should be unique
         and exact.
 
-        If the input *element* name is also in *group*, no duplicate the
-        result. 
+        If the input *element* name is also in one of the *groups*, no
+        duplicate the result.
 
         :Example:
 
@@ -671,14 +673,19 @@ class Lattice:
             ['P2', 'P3', 'P4', 'P5', 'P6']
             >>> getNeighbors('Q3', 'BPM', 2)
             ['P2', 'P3', 'Q3', 'P4', 'P5']
+            >>> getNeighbors('Q3', ["BPM", "SEXT"], 2)
         """
 
         e0 = self._find_exact_element(elemname)
         if not e0: raise ValueError("element %s does not exist" % elemname)
 
-        el = self.getElementList(group, virtual=0)
+        el = []
+        if isinstance(groups, (str, unicode)):
+            el = self.getElementList(groups, virtual=0)
+        elif isinstance(groups, (list, tuple)):
+            el = self.getGroupMembers(groups, op="union")
 
-        if not el: raise ValueError("elements/group %s does not exist" % group)
+        if not el: raise ValueError("elements/group %s does not exist" % groups)
         if e0 in el: el.remove(e0)
 
         i0 = len(el)
@@ -694,7 +701,7 @@ class Lattice:
             ret.append(el[r])
         return ret
         
-    def getClosest(self, elemname, group):
+    def getClosest(self, elemname, groups):
         """
         Assuming self._elements is in s order
 
@@ -705,6 +712,7 @@ class Lattice:
 
             >>> getClosest('P4', 'BPM')
             >>> getClosest('Q3', 'BPM')
+            >>> getClosest('Q3', ["QUAD", "SEXT"])
 
         The result can not be virtual element.
         """
@@ -712,9 +720,13 @@ class Lattice:
         e0 = self._find_exact_element(elemname)
         if not e0: raise ValueError("element %s does not exist" % elemname)
 
-        el = self.getElementList(group, virtual=0)
+        el = []
+        if isinstance(groups, (str, unicode)):
+            el = self.getElementList(groups, virtual=0)
+        elif isinstance(groups, (list, tuple)):
+            el = self.getGroupMembers(groups, op="union"):
 
-        if not el: raise ValueError("elements/group %s does not exist" % group)
+        if not el: raise ValueError("elements/group %s does not exist" % groups)
 
         idx, ds = 0, el[-1].sb
         for i,e in enumerate(el):

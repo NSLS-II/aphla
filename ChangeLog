@@ -1,3 +1,8 @@
+2014-10-12  Lingyun Yang  <lyyang@nsls2lang-lt>
+
+	* aphla/lattice.py (Lattice.getNeighbors): accept a list of groups
+	* aphla/lattice.py (Lattice.getClosest): accept a list of groups
+
 2014-09-29  Lingyun Yang  <lyyang@NSLS2LANG-LT.local>
 
 	* aphla/aptools.py (setIdBump): use abs BPM x (raw)

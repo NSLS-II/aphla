@@ -597,7 +597,7 @@ def getNeighbors(element, group, n = 3):
       ['PL2G6C10B', 'PL1G6C10B', 'PH2G6C25B', 'PH1G2C10A', 'PH2G2C10A']
     >>> [e.sb for e in el]
       [284.233, 286.797, 678.903, 268.921, 271.446]
-
+    >>> hla.getNeighbors("X", ["BPM", "QUAD"], 2)
     """
 
     if isinstance(element, (str, unicode)):
@@ -620,7 +620,7 @@ def getClosest(element, group):
     Examples
     ----------
     >>> getClosest('pm1g4c27b', 'BPM') # find the closest BPM to 'pm1g4c27b'
-
+    >>> getClosest('pm1g4c27b', ["QUAD", "BPM"])
     """
     if isinstance(element, (str, unicode)):
         return machines._lat.getClosest(element, group)
