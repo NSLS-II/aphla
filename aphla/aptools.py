@@ -991,7 +991,7 @@ def getArchiverData(*argv, **kwargs):
     >>> getArchiverData("DCCT", "I")
     >>> getArchiverData("SR:C03-BI{DCCT:1}AveI-I")
 
-    At this moment, only return data back to one hour earlier.
+    At this moment, only return data back to 24 hour earlier.
     """
     if len(argv) == 1 and isinstance(argv[0], (str, unicode)):
         pvs = argv
@@ -1004,19 +1004,23 @@ def getArchiverData(*argv, **kwargs):
                       for e in getElements(argv[0])])
     t0 = datetime.now()
     import subprocess
-    out = subprocess.check_output(["arget", "-s", kwargs.get("s", "-1 h")] + pvs)
+    out = subprocess.check_output(["arget", "-s", kwargs.get("s", "-24 h")] + pvs)
     import re
     pv, dat = "", {}
     for s in out.split("\n"):
         if re.match(r"Found [0-9]+ points", s): continue
-        if re.match(r"[1-9][0-9]+-[0-9]+-[0-9]+ ", s):
-            d0, d1, v = s.split()
-            t1 = datetime.strptime("%s %s" % (d0, d1), "%Y-%m-%d %H:%M:%S.%f")
-            dat[pv].append(((t1-t0).total_seconds(), float(v)))
-        elif s.strip():
-            pv = s.strip()
-            dat.setdefault(pv, [])
-
+        if s.find("Disconnected") > 0: continue
+        try:
+            if re.match(r"[1-9][0-9]+-[0-9]+-[0-9]+ ", s):
+                d0, d1, v = s.split()
+                t1 = datetime.strptime("%s %s" % (d0, d1), "%Y-%m-%d %H:%M:%S.%f")
+                dat[pv].append(((t1-t0).total_seconds(), float(v)))
+            elif s.strip():
+                pv = s.strip()
+                dat.setdefault(pv, [])
+        except:
+            print("invalid format '{0}'".format(s))
+            raise
     return dat
 
 
