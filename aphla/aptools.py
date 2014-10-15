@@ -1201,25 +1201,22 @@ def setIdBump(idname, xc, thetac, **kwargs):
     ncor = kwargs.get("ncor", 6)
     dImax = kwargs.get("dImax", 0.5)
 
-    idobj = ap.getElements(idname)[0]
+    idobj = getElements(idname)[0]
 
     # find the correctors, 3 before ID, 3 after
-    cors_ = ap.getNeighbors(idname, "COR", n=ncor)
+    cors_ = getNeighbors(idname, "COR", n=ncor)
     cors = cors_[:ncor] + cors_[-ncor:]
 
-    bpms_c = ap.getNeighbors(idname, ["BPM", "UBPM"], n = 1)
-    bpms_l = ap.getNeighbors(cors[0].name, "BPM", n = ncor-1)[:ncor-1]
-    bpms_r = ap.getNeighbors(cors[-1].name, "BPM", n = ncor-1)[1-ncor:]
+    bpms_c = getNeighbors(idname, ["BPM", "UBPM"], n = 1)
+    bpms_l = getNeighbors(cors[0].name, "BPM", n = ncor-1)[:ncor-1]
+    bpms_r = getNeighbors(cors[-1].name, "BPM", n = ncor-1)[1-ncor:]
     bpms = bpms_l + bpms_c[:1] + bpms_c[-1:] + bpms_r
 
-    bpms = ap.getGroupMembers(["BPM", "UBPM"], op="union")
-    cors = ap.getElements("COR")
-
-    ref = ap.fget(bpms, fld, unitsys=None)
+    ref = fget(bpms, fld, unitsys=None)
     b0, b1 = bpms[ncor-1], bpms[ncor]
     L = b1.sb - b0.sb
-    ref[ncor-1] = cx - L*ctheta
-    ref[ncor] =cx + L*ctheta
+    ref[ncor-1] = xc - L*thetac/2.0
+    ref[ncor] =xc + L*thetac/2.0
     norm0, norm1, norm2, corvals = \
         setLocalBump([(b.name, fld) for b in bpms],
                      [(c.name, fld) for c in cors],
