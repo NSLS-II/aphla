@@ -284,14 +284,15 @@ def caRmCorrect(resp, kker, m, **kwarg):
 
     Returns
     --------
-    err : converged or not checked (0), error (>0).
-    msg : error message or None
-
+    norm0 : initial norm
+    norm1 : calculated norm
+    norm2 : realized norm
+    kker : setpoint, new or previous one if failed.
     """
     scale  = kwarg.get('scale', 0.68)
     ref    = kwarg.get('ref', None)
     check  = kwarg.get('check', True)
-    wait   = kwarg.get('wait', 6)
+    wait   = kwarg.get('wait', 1)
     rcond  = kwarg.get('rcond', 1e-3)
     verbose = kwarg.get('verbose', 0)
     lim    = kwarg.get('kkerlim', None)
@@ -345,18 +346,21 @@ def caRmCorrect(resp, kker, m, **kwarg):
 
     # the real setting
     if dryrun:
-        return (0, "setting {0} cors, min= {1} max= {2}".format(
-                len(kkerin), np.min(k1in), np.max(k1in)))
+        return norm0, norm1, None, None
     else:
         caput(kkerin, k1in)
 
     # wait and check
-    if check == True:
-        time.sleep(wait)
-        v1 = np.array(caget(resp), 'd')
+    time.sleep(wait)
+    v1 = np.zeros((5, len(resp)), 'd')
+    for i in range(len(v1)):
+        v1[i,:] = np.array(caget(resp), 'd')
+        time.sleep(wait * 1.0/len(v1))
+    v1 = np.average(v1, axis=0)
+    if ref is not None: v1 = v1 - np.array(ref)
+    norm2 = np.linalg.norm(v1)
 
-        if ref is not None: v1 = v1 - np.array(ref)
-        norm2 = np.linalg.norm(v1)
+    if check == True:
         msg = "Euclidian norm: pred./realized", norm1/norm0, norm2/norm0
         _logger.info(msg)
         if verbose > 0:
@@ -366,11 +370,10 @@ def caRmCorrect(resp, kker, m, **kwarg):
             _logger.warn(msg) 
             #print(msg, norm0, norm2)
             caput(kker, k0)
-            return (2, "{0} {1} {2}".format(msg, norm0, norm2))
-        else:
-            return (0, None)
-    else:
-        return (0, None)
+            return norm0, norm1, norm2, None
+
+    return norm0, norm1, norm2, k1in
+
 
 def readPvs(pvs, **kwargs):
     """

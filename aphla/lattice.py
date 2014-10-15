@@ -724,7 +724,7 @@ class Lattice:
         if isinstance(groups, (str, unicode)):
             el = self.getElementList(groups, virtual=0)
         elif isinstance(groups, (list, tuple)):
-            el = self.getGroupMembers(groups, op="union"):
+            el = self.getGroupMembers(groups, op="union")
 
         if not el: raise ValueError("elements/group %s does not exist" % groups)
 
