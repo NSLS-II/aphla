@@ -91,10 +91,10 @@ def setLocalBump(bpmrec, correc, ref, **kwargs):
     """
     create a local bump at certain BPM, while keep all other orbit untouched
     
-    :param list bpm: list of BPMs objects for new bumpped orbit. 
-    :param list trim: list of corrector objects used for orbit correction. 
+    :param list bpm: list of (name, field) for BPMs. 
+    :param list trim: list of (name, field) for correctors. 
     :param list dead: name list of dead BPMs and correctors names.
-    :param list ref: target orbit with shape (len(bpm),2), e.g. [[0, 0], [0, 0], [0, 0]]
+    :param list ref: target values for the list of (bpmname, field).
     :param float scale: optional, factor to scale calculated kick strength change, between 0 and 1.0
     :param bool check: optional, roll back the corrector settings if the orbit gets worse.
     :param float rcond: optional, (1e-4). rcond*max_singularvalue will be kept.
@@ -160,12 +160,15 @@ def setLocalBump(bpmrec, correc, ref, **kwargs):
                for t,f in corr]
 
     # correct orbit using default ORM (from current lattice)
+    norm0, norm1, norm2, corvals = None, None, None, None
     for i in range(repeat):
         #for k,b in enumerate(bpmpvs):
         #    if bpmref[k] != 0.0: print(k, bpmlst[k], b, bpmref[k])
-        err, msg = caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref), **kwargs)
-        if err != 0:
-            raise RuntimeError("ERROR at iteration %d/%d: %s" % (i,repeat,msg))
+        norm0, norm1, norm2, corvals = \
+            caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref), **kwargs)
+        if corvals is None: break
+
+    return norm0, norm1, norm2, corvals
 
 
 def correctOrbit(bpm, cor, **kwargs):
@@ -1181,6 +1184,7 @@ def setIdBump(idname, xc, thetac, **kwargs):
     xc - beam position at center of ID. [mm]
     thetac - bema angle at center of ID. [mrad]
     plane - 'x' or 'y'. default 'x'.
+    ncor - number of correctors, default 6 each side.
 
     Hard coded Error if absolute value:
       - bpms distance > 20.0m or,
@@ -1193,42 +1197,31 @@ def setIdBump(idname, xc, thetac, **kwargs):
         raise RuntimeError("xc or thetac overflow: {0}, {1}".format(
                 xc, thetac))
 
-    plane = kwargs.get("plane", 'x')
+    fld = kwargs.get("plane", 'x')
+    ncor = kwargs.get("ncor", 6)
+    dImax = kwargs.get("dImax", 0.5)
 
-    idobj = getElements(idname)[0]
-    bpms = getGroupMembers(["BPM", "UBPM"], op="union")
-    cors = getElements("COR")
+    idobj = ap.getElements(idname)[0]
 
-    ref = []
-    bpm_s = [[0,bpms[0].sb], [len(bpms)-1, bpms[-1].sb]]
-    x0 = fget(bpms, 'x', unitsys=None)
-    y0 = fget(bpms, 'y', unitsys=None)
-    for i,b in enumerate(bpms):
-        if b.sb > bpm_s[0][1] and b.se < idobj.sb:
-            bpm_s[0] = [i, b.sb]
-        if b.sb < bpm_s[1][1] and b.sb > idobj.se:
-            bpm_s[1] = [i, b.sb]
-        ref.append([x0[i], y0[i]])
+    # find the correctors, 3 before ID, 3 after
+    cors_ = ap.getNeighbors(idname, "COR", n=ncor)
+    cors = cors_[:ncor] + cors_[-ncor:]
 
-    # find two bounding BPMS
-    ibpm0, ibpm1 = bpm_s[0][0], bpm_s[1][0]
-    bpm0, bpm1 = bpms[ibpm0], bpms[ibpm1]
-    s0, s1 = [(b.se + b.sb) / 2.0 for b in [bpm0, bpm1]]
-    sc = (idobj.sb + idobj.se) / 2.0 
-    L = bpm1.se - bpm0.sb
-    if L <= 0.0 or L > 20.0:
-        raise RuntimeError("UBPM distance might be wrong: {0}".format(L))
-    x0 = xc - (sc-s0)/1000.0 * thetac
-    x1 = xc + (s1-sc)/1000.0 * thetac
-    if plane in ["x", "X"]:
-        ref[ibpm0][0] = x0
-        ref[ibpm1][0] = x1
-    elif plane in ["y", "Y"]:
-        ref[ibpm0][1] = x0
-        ref[ibpm1][1] = x1
+    bpms_c = ap.getNeighbors(idname, ["BPM", "UBPM"], n = 1)
+    bpms_l = ap.getNeighbors(cors[0].name, "BPM", n = ncor-1)[:ncor-1]
+    bpms_r = ap.getNeighbors(cors[-1].name, "BPM", n = ncor-1)[1-ncor:]
+    bpms = bpms_l + bpms_c[:1] + bpms_c[-1:] + bpms_r
 
-    ref = [v[0] for v in ref] + [v[1] for v in ref]
-    bpmrec = [(b.name, 'x') for b in bpms] + [(b.name, 'y') for b in bpms]
-    correc = [(c.name, 'x') for c in cors] + [(c.name, 'y') for c in cors]
-    return setLocalBump(bpmrec, correc, ref, dImax=0.5, check=False) 
+    bpms = ap.getGroupMembers(["BPM", "UBPM"], op="union")
+    cors = ap.getElements("COR")
 
+    ref = ap.fget(bpms, fld, unitsys=None)
+    b0, b1 = bpms[ncor-1], bpms[ncor]
+    L = b1.sb - b0.sb
+    ref[ncor-1] = cx - L*ctheta
+    ref[ncor] =cx + L*ctheta
+    norm0, norm1, norm2, corvals = \
+        setLocalBump([(b.name, fld) for b in bpms],
+                     [(c.name, fld) for c in cors],
+                     ref, dImax=dImax, check=True, fullm=False)
+    return norm0, norm1, norm2, corvals
