@@ -21,7 +21,7 @@ import warnings
 import machines
 from catools import caget, caput, savePvData
 from catools import putPvData
-from hlalib import getElements, outputFileName
+from hlalib import getElements, outputFileName, getGroupMembers
 from hlalib import saveLattice as _saveLattice
 
 def _maxTimeSpan(timestamps):
@@ -37,7 +37,7 @@ def _maxTimeSpan(timestamps):
     return max(delta) - min(delta)
 
 
-def resetSrBpms(wfmsel = 1, name = "BPM", evcode = None, verbose=0):
+def resetSrBpms(wfmsel = 1, name = "BPM", evcode = None, verbose=0, bpms=None):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
     Adc, Tbt and Fa waveforms. The Wfm size is set to 1,000,000 for ADC,
@@ -49,11 +49,13 @@ def resetSrBpms(wfmsel = 1, name = "BPM", evcode = None, verbose=0):
         Waveform selection: Adc(0), Tbt(1), Fa(2).
     name : str, list of element object
         Element name, group name or list of objects, as in ``getElements``
+    bpms : list of element object
+        overwrite `name` if presents.
     evcode : int
         Event code: - 15(LINAC), 32(1Hz, sync acquisition), 33(SR RF BPM
         trigger), 47(1Hz), 66(Booster extraction), 35(pinger).
     """
-    elems = [e for e in getElements(name) if e.pv(field="x")]
+    elems = bpms if bpms else [e for e in getElements(name) if e.pv(field="x")]
     pvprefs = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "") for bpm in elems]
 
     if verbose:
@@ -557,6 +559,10 @@ def measKickedTbtData(idriver, ampl, **kwargs):
         vertical pinger(5), horizontal pinger(6), both H/V pingers(7).
     ampl : float, tuple
         kicking amplitude.
+    bpms : list of element objects.
+        provide the BPMs to take data from, default ["BPM" or "UBPM"]
+    count : int
+        number of turns.
     output : str, True, False
         output file name, or default (True), or no output (False)
     verbose : int
@@ -574,6 +580,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     verbose = kwargs.get("verbose", 0)
     output = kwargs.get("output", True)
     sleep = kwargs.get("sleep", 5)
+    bpms = kwargs.get("bpms", getGroupMembers(["BPM", "UBPM"], op="union"))
+    count = kwargs.get("count", 2000)
 
     kpvsp, kpvrb = None, None
     # 0 - both off, 1 - V-on, 2-H-on, 3-both-on
@@ -626,11 +634,11 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     if idriver in [3,4,]:
         caput('ACC-TS{EVG-SSC}Request-Sel', 1)
     elif idriver in [5,6,7]:
-        resetSrBPms(evcode=35)
+        resetSrBpms(bpms=bpms, evcode=35)
         caput('SR:C21-PS{Pinger}Ping-Cmd', 1)
     time.sleep(3)
     Idcct1 = caget('SR:C03-BI{DCCT:1}I:Total-I')
-    bpmdata = getSrBpmData(trig=1, count=2000, output=output, h5group=h5g)
+    bpmdata = getSrBpmData(trig=1, bpms=bpms, count=count, output=output, h5group=h5g)
     # record pinger wave, V-chan1, H-chan2
     pinger_delay, pinger_wave, pinger_mode = None, None, None
     if idriver in [5,6,7]:
