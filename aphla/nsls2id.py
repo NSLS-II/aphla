@@ -9,6 +9,7 @@ import itertools
 import numpy as np
 import re
 import h5py
+from datetime import datetime
 
 _params = {
     "dw100g1c08u":
@@ -45,20 +46,20 @@ _params = {
          "timeout": 150, },
     "dw100g1c28u":
         {"unitsys": "phy",
-         "gap": (119.0, 147.0, 30, 0.1),
+         "gap": (17.0, 150.0, 30, 0.1),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
-         "background": {"gap": 147.0},
+         "background": {"gap": 150.0},
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
-         "timeout": 150, },
+         "timeout": 180, },
     "dw100g1c28d":
         {"unitsys": "phy",
-         "gap": (119.0, 147.0, 30, 0.1),
+         "gap": (17.0, 150.0, 30, 0.1),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
-         "background": {"gap": 147.0},
+         "background": {"gap": 150.0},
          "Imin": 2.0, # mA
          "Tmin": 2.0, # hour
-         "timeout": 150, },
+         "timeout": 180, },
     }
 
 def getBrho(E_GeV):
@@ -278,7 +279,7 @@ def putBackground(ID, **kwargs):
         return False
 
 
-def checkBeam(Imin=2, Tmin=2, online=False):
+def checkBeam(Imin=2.0, Tmin=2.0):
     """
     check beam life time and current
     if beam lifetime is less than Tmin [hr], 2hrs by default,
@@ -329,28 +330,36 @@ def checkGapPhase(ID, **kwargs):
     return True
 
 
-def switchFeedback(fftable = "off"):
+def switchFeedback(ID, fftable = "off"):
     """
     switchFeedback("on") or "off"
     """
     if fftable not in ["on", "off"]:
         raise RuntimeError("invalid feed forward table state: ('on'|'off')")
+    # 0 - manual, 1 - auto
+    val = 0 if fftable == "off" else 1
 
-    for dw in ap.getGroupMembers(["DW",], op="union"):
-        if "gap" not in dw.fields():
-            print "WARNING: no 'gap' field in {0}".format(dw.name)
-            continue
-        pv = dw.pv(field="gap", handle="setpoint")[0]
-        m = re.match(r"([^\{\}]+)\{(.+)\}", pv)
-        if not m:
-            print "WARNING: inconsistent naming '{0}'".format(pv)
-        pvffwd = "{0}{{{1}}}MPS:Lookup_.INPA".format(m.group(1), m.group(2))
-        pvffwd_pref = "{0}{{{1}-Mtr:Gap}}.RBV ".format(m.group(1), m.group(2))
-
-        pvffwd_val = {"on": pvffwd_pref + "CP NM",
-                      "off": pvffwd_pref + "NPP N"}
-        print "set {0}='{1}'".format(pvffwd, pvffwd_val[fftable])
-        ap.caput(pvffwd, pvffwd_val[fftable])
+    if ID.name == "epu49g1c23u":
+        ap.caput("SR:C23-ID:G1A{EPU:1-FF:0}Ena-Sel", val)
+        ap.caput("SR:C23-ID:G1A{EPU:1-FF:1}Ena-Sel", val)
+        ap.caput("SR:C23-ID:G1A{EPU:1-FF:2}Ena-Sel", val)
+        ap.caput("SR:C23-ID:G1A{EPU:1-FF:3}Ena-Sel", val)
+        ap.caput("SR:C23-ID:G1A{EPU:1-FF:4}Ena-Sel", val)
+        ap.caput("SR:C23-ID:G1A{EPU:1-FF:5}Ena-Sel", val)
+    elif ID.name == "dw100g1c28u":
+        ap.caput("SR:C28-ID:G1{DW100:1-FF:0}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:1-FF:1}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:1-FF:2}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:1-FF:3}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:1-FF:4}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:1-FF:5}Ena-Sel", val)
+    elif ID.name == "dw100g1c28d":
+        ap.caput("SR:C28-ID:G1{DW100:2-FF:0}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:2-FF:1}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:2-FF:2}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:2-FF:3}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:2-FF:4}Ena-Sel", val)
+        ap.caput("SR:C28-ID:G1{DW100:2-FF:5}Ena-Sel", val)
 
     # fast/slow co
     # all ID feed forward
@@ -364,10 +373,9 @@ def initFile(ID, fieldList, parTable):
     grp.attrs["__FORMAT__"] = 1
     # setup parameters
     subg = grp.require_group("parameters")
-    subg["scanTable"] = parTable #
-    subg["scanTable"].attrs["columns"] = fieldList
-    #for p in nameList:
-    #    subg["scanTable"].attrs[p] = []
+    if parTable and fieldList:
+        subg["scanTable"] = parTable #
+        subg["scanTable"].attrs["columns"] = fieldList
     bkg = _params[ID.name]["background"]
     # like one row of scanTable, same columns
     subg["background"] = [bkg[fld] for fld in fieldList]
@@ -403,26 +411,40 @@ def saveToDB(fileName):
     print "save to file (Guobao's DB)"
     pass
 
-def measBackground(ID, output, iiter):
-    """measure the background and return saved group name"""
-    if not nsls2id.putBackground(ID):
-        print "Failed at setting {0} to background mode".format(ID)
-        return None
+
+def saveState(idobj, output, iiter,
+              parnames = ["gap"], background=None, extdata={}):
+    """
+    background - the group name for its last background.
+    extdata - extra data dictionary.
+
+    returns data group name
+    """
+    t1 = datetime.now()
+    prefix = "background" if background is None else "iter"
+        
     # create background subgroup with index
     fid = h5py.File(output)
-    prefix = "iter_"
-    iterindex = max([int(g[len(prefix):]) for g in fid[ID.name].keys()
+    iterindex = max([int(g[len(prefix)+1:]) for g in fid[idobj.name].keys()
                      if g.startswith(prefix)] + [-1]) + 1
-    bkgGroup = "iter_{0:04d}".format(iterindex)
-    grp = fid[ID.name].create_group(bkgGroup)
+    groupName = "{0}_{1:04d}".format(prefix, iterindex)
+    grp = fid[idobj.name].create_group(groupName)
     orb0 = ap.getOrbit(spos=True)
     grp["orbit"] = orb0
     tau, I = ap.getLifetimeCurrent()
     grp["lifetime"] = tau
     grp["current"] = I
+    for par in parnames:
+        grp[par] = idobj.get(par, unitsys=None)
+    for k,v in extdata.items():
+        grp[k] = v
     grp.attrs["iter"] = iiter
+    if background:
+        grp.attrs["background"] = background
+    grp.attrs["completed"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
     fid.close()
-    return bkgGroup
+    return groupName
+
 
 def virtKicks2FldInt(virtK1, virtK2, idLen, idKickOffset1, idKickOffset2, E_GeV):
     """

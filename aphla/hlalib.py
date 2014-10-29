@@ -1328,6 +1328,7 @@ def calcTuneRm(quad, **kwargs):
 
     quad - quadrupoles. same input as getElements.
     setpoint - default None, or a list of ("b1", raw_value, dval).
+    unitsys - default None
 
     In physics unit, dnu/dkl = beta/4pi. When asking for raw unit (in A), we
     need to have a setpoint for Quad and convert the unit dkl/dI to get
