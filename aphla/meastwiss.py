@@ -61,8 +61,8 @@ def measBeta(elem, dqk1 = 0.01, full = False, num_points = 3, verbose=0):
 
     Notes
     ------
-    see `getElements` for acceptable *elem* format. 
-
+    see `getElements` for acceptable *elem* format. Some users prefer using
+    turn-by-turn BPM data to calculate the beta functions
     """
 
     elems = getElements(elem)
@@ -205,12 +205,12 @@ def measChromaticity(**kwargs):
     f0 = getRfFrequency(handle="setpoint")
     nu0 = getTunes()
     obt.append(getOrbit(spos=True))
-    _logger.info("Initial RF freq=%s, tunes=%s" % (str(f0), str(nu0)))
+    _logger.info("Initial RF freq= {0}, tunes= {1}" % (f0, nu0))
 
     # incase RF does not allow large step change, ramp down first
     if verbose:
-        print("Initial RF freq= %g, stepping down %g in %d steps",
-              f0, -dfmax, npt)
+        print("Initial RF freq= {0}, stepping down {1} in {2} steps".format(
+              f0, -dfmax, npt))
     for df in np.linspace(0, abs(dfmax), npt)[1:-1]:
         setRfFrequency(f0 - df)
         time.sleep(2.0 / npt)

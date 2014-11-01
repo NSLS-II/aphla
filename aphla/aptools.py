@@ -225,7 +225,7 @@ def correctOrbit(bpm, cor, **kwargs):
     if kwargs.get("verbose", 0) > 0:
         print("Using: %d bpms, %d cors" % (len(bpmr), len(corr)))
     kwargs["fullm"] = False
-    setLocalBump(bpmr, corr, ref, **kwargs)
+    return setLocalBump(bpmr, corr, ref, **kwargs)
 
 
 def _random_kick(plane = 'V', amp=1e-9, verbose = 0):

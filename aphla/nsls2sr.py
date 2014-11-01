@@ -19,7 +19,7 @@ import re
 import warnings
 
 import machines
-from catools import caget, caput, savePvData
+from catools import caget, caput, savePvData, ca_nothing
 from catools import putPvData
 from hlalib import getElements, outputFileName, getGroupMembers
 from hlalib import saveLattice as _saveLattice
@@ -37,7 +37,7 @@ def _maxTimeSpan(timestamps):
     return max(delta) - min(delta)
 
 
-def resetSrBpms(wfmsel = 1, name = "BPM", evcode = None, verbose=0, bpms=None):
+def resetSrBpms(wfmsel = None, name = "BPM", evcode = None, verbose=0, bpms=None, trigsrc = None):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
     Adc, Tbt and Fa waveforms. The Wfm size is set to 1,000,000 for ADC,
@@ -45,8 +45,8 @@ def resetSrBpms(wfmsel = 1, name = "BPM", evcode = None, verbose=0, bpms=None):
 
     Parameters
     -----------
-    wfmsel : int
-        Waveform selection: Adc(0), Tbt(1), Fa(2).
+    wfmsel : int, None
+        Waveform selection: Adc(0), Tbt(1), Fa(2). default None, keep old values.
     name : str, list of element object
         Element name, group name or list of objects, as in ``getElements``
     bpms : list of element object
@@ -54,6 +54,8 @@ def resetSrBpms(wfmsel = 1, name = "BPM", evcode = None, verbose=0, bpms=None):
     evcode : int
         Event code: - 15(LINAC), 32(1Hz, sync acquisition), 33(SR RF BPM
         trigger), 47(1Hz), 66(Booster extraction), 35(pinger).
+    trigsrc : int, None
+        None - default, keep original values. 0 - internal, 1 - external
     """
     elems = bpms if bpms else [e for e in getElements(name) if e.pv(field="x")]
     pvprefs = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "") for bpm in elems]
@@ -61,11 +63,13 @@ def resetSrBpms(wfmsel = 1, name = "BPM", evcode = None, verbose=0, bpms=None):
     if verbose:
         print "resetting {0} BPMS: {1}".format(len(elems), elems)
 
-    pvs = [ pvx + "Trig:TrigSrc-SP" for pvx in pvprefs ]
-    caput(pvs, [1] * len(pvs), wait=True)
-    # 0 - Adc, 1 - Tbt, 2 - Fa
-    pvs = [ pvx + "DDR:WfmSel-SP" for pvx in pvprefs]
-    caput(pvs, [wfmsel] * len(pvs), wait=True)
+    if trigsrc is not None:
+        pvs = [ pvx + "Trig:TrigSrc-SP" for pvx in pvprefs ]
+        caput(pvs, [trigsrc] * len(pvs), wait=True)
+    if wfmsel is not None: 
+        # 0 - Adc, 1 - Tbt, 2 - Fa
+        pvs = [ pvx + "DDR:WfmSel-SP" for pvx in pvprefs]
+        caput(pvs, [wfmsel] * len(pvs), wait=True)
 
     # enable all three waveforms
     #pvs = [ pvx + "ddrAdcWfEnable" for pvx in pvprefs]
@@ -381,9 +385,9 @@ def getSrBpmData(**kwargs):
         pv_bbayoff = [ pv + "BbaYOff-SP" for pv in pvpref]
         pv_evtcode = [ pv + "Trig:EventNo-I" for pv in pvpref]
 
-        x  = caget(pv_x, count=count)
-        y  = caget(pv_y, count=count)
-        Is = caget(pv_S, count=count)
+        x  = caget(pv_x, count=count, throw=False)
+        y  = caget(pv_y, count=count, throw=False)
+        Is = caget(pv_S, count=count, throw=False)
         # check srBpmTrigData, key must agrees
         extdata = {
             "ddr_timestamp": np.array(caget(pv_ts)),
@@ -394,7 +398,7 @@ def getSrBpmData(**kwargs):
     # in case they have difference size
     d = []
     for v in [x, y, Is]:
-        nx = max([len(r) for r in v])
+        nx = max([len(r) for r in v if not isinstance(r, ca_nothing)])
         rec = np.zeros((len(v), nx), 'd')
         for i in range(len(v)):
             rec[i,:len(v[i])] = v[i]

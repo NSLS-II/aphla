@@ -23,7 +23,7 @@ import cothread
 import cothread.catools as ct
 from datetime import datetime
 from cothread import Timedout
-from cothread.catools import camonitor, FORMAT_TIME, FORMAT_CTRL
+from cothread.catools import camonitor, ca_nothing, FORMAT_TIME, FORMAT_CTRL
 import random
 
 import numpy as np
