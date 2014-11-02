@@ -75,7 +75,16 @@ def restoreBpmStatus(bpmstats):
     see also `getBpmStatus`
     """
     for k,v in bpmstats.items():
-        caput(v[0], v[1], throw = True)
+        v0 = caget(v[0])
+        idx = [i for i in range(len(v[1])) if v[1][i] != v0[i]]
+        pvs = [v[0][i] for i in idx]
+        vals = [v[1][i] for i in idx]
+        try:
+            caput(pvs, vals, throw = True, timeout=5)
+        except:
+            for i,pv in numerate(pvs):
+                caput(pv, vals, timeout=5)
+
 
     
 def resetSrBpms(wfmsel = None, name = "BPM", evcode = None, verbose=0, bpms=None, trigsrc = None):
@@ -733,10 +742,9 @@ def measKickedTbtData(idriver, ampl, **kwargs):
 
     return bpmdata
 
-
-def measTbtTunes(idrive = 7, ampl = (0.15, 0.2)):
+def measTbtTunes(idrive = 7, ampl = (0.15, 0.2), sleep=3, count=5000):
     names, x0, y0, Isum0, timestamp, offset = \
-        measKickedTbtData(idrive, ampl, sleep=10, output=False)
+        measKickedTbtData(idrive, ampl, sleep=sleep, output=False, count=count)
     return calcFftTune(x0), calcFftTune(y0)
 
 

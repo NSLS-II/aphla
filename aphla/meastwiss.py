@@ -249,15 +249,16 @@ def measChromaticity(dfmax = 1e-6, gamma = 3.0e3/0.511, alphac = 3.626e-4,
     nu = np.zeros((len(f), 2), 'd')
     for i,f1 in enumerate(f):
         if verbose > 0:
-            print("freq= ", f1, end=" ")
+            print("dfreq= {0: .2e}".format(f1 - f0), end=" ")
         putRfFrequency(f1)
         time.sleep(wait)
         nu[i,:] = fMeasTunes() if fMeasTunes else getTunes()
         obt.append(getOrbit(spos=True))
         if verbose > 0:
-            print("tunes:", nu[i,0], nu[i,1],
-                  np.min(obt[-1][:,0]), np.max(obt[-1][:,0]),
-                  np.min(obt[-1][:,1]), np.max(obt[-1][:,1]))
+            print("tunes: {0:.5f} {1:.5f}".format(nu[i,0], nu[i,1]),
+                  "orbit min-max: {0:.2e} {1:.2e}, {2:.2e} {3:.2e}".format( 
+                    np.min(obt[-1][:,0]), np.max(obt[-1][:,0]),
+                  np.min(obt[-1][:,1]), np.max(obt[-1][:,1])))
 
     for df in np.linspace(0, abs(dfmax), num_points):
         putRfFrequency(f0 + abs(dfmax) - df)
