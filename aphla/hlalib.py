@@ -124,7 +124,7 @@ def getRfFrequency(name = 'rfcavity', field = 'f', unitsys=None, handle="readbac
     else: return None
 
 
-def setRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
+def putRfFrequency(f, name = 'rfcavity', field = 'f', unitsys=None):
     """set the rf frequency for the first 'RFCAVITY' element"""
     _rf = getElements(name)
     if _rf: return _rf[0].put(field, f, unitsys=unitsys)
@@ -570,7 +570,7 @@ def getGroupMembers(groups, op = 'intersection', **kwargs):
     return machines._lat.getGroupMembers(groups, op, **kwargs)
 
 
-def getNeighbors(element, group, n = 3):
+def getNeighbors(element, group, n = 3, elemself = True):
     """
     Get a list of n objects in *group* before and after *element* 
 
@@ -581,11 +581,14 @@ def getNeighbors(element, group, n = 3):
     -----------
     element: str, object. the central element name
     group: str, the neighbors belong to
+    n : int, default 3, number of neighbors each side. 
+    elemself : default True, return the element itself.
 
     Returns
     --------
-    elems : a list of element in given group with size 2*n+1. The list is
-        sorted along s (the beam direction).
+    elems : a list of element in given group. The list is
+        sorted along s (the beam direction). There is 2*n+1 elements if
+        elemself=True, else 2*n.
 
 
     Examples
@@ -601,9 +604,9 @@ def getNeighbors(element, group, n = 3):
     """
 
     if isinstance(element, (str, unicode)):
-        return machines._lat.getNeighbors(element, group, n)
+        return machines._lat.getNeighbors(element, group, n, elemself)
     else:
-        return machines._lat.getNeighbors(element.name, group, n)
+        return machines._lat.getNeighbors(element.name, group, n, elemself)
         
 
 def getClosest(element, group):

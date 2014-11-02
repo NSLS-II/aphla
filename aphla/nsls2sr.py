@@ -23,6 +23,8 @@ from catools import caget, caput, savePvData, ca_nothing
 from catools import putPvData
 from hlalib import getElements, outputFileName, getGroupMembers
 from hlalib import saveLattice as _saveLattice
+from tbtanal import calcFftTune
+
 
 def _maxTimeSpan(timestamps):
     # take out the part beyond microsecond (nano second + ' EST')
@@ -37,6 +39,45 @@ def _maxTimeSpan(timestamps):
     return max(delta) - min(delta)
 
 
+def getBpmStatus(bpms):
+    """
+    returns the BPM status.
+
+    bpms : list of BPM object
+
+    it saves
+      - event code: `Trig:EventNo-SP`
+      - trig source: `Trig:TrigSrc-SP`
+      - waveform selection: `DDR:WfmSel-SP`
+      - offsets: `ddrAdcOffset`, `ddrTbtOffset`, `ddrFaOffset`
+      - burst length: `Burst:AdcEnableLen-SP`, `Burst:TbtEnableLen-SP`, `Burst:FaEnableLen-SP`
+      - record length: `ERec:AdcEnableLen-SP`, `ERec:TbtEnableLen-SP`, `ERec:FaEnableLen-SP`
+
+    see also `restoreBpmStatus`
+    """
+    pvprefs = [e.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "")
+               for e in bpms]
+    info = {}
+    for pat in ["Trig:TrigSrc-SP", "DDR:WfmSel-SP",
+                "ddrAdcOffset", "ddrTbtOffset", "ddrFaOffset",
+                "Burst:AdcEnableLen-SP", "Burst:TbtEnableLen-SP", "Burst:FaEnableLen-SP",
+                "ERec:AdcEnableLen-SP", "ERec:TbtEnableLen-SP", "ERec:FaEnableLen-SP",
+                "Trig:EventNo-SP",]:
+        pvs = [pvx + pat for pvx in pvprefs]
+        info[pat] = [pvs, caget(pvs, throw=False)]
+
+    return info
+
+def restoreBpmStatus(bpmstats):
+    """
+    restore BPM status from the output of getBpmStatus
+
+    see also `getBpmStatus`
+    """
+    for k,v in bpmstats.items():
+        caput(v[0], v[1], throw = True)
+
+    
 def resetSrBpms(wfmsel = None, name = "BPM", evcode = None, verbose=0, bpms=None, trigsrc = None):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
@@ -53,7 +94,7 @@ def resetSrBpms(wfmsel = None, name = "BPM", evcode = None, verbose=0, bpms=None
         overwrite `name` if presents.
     evcode : int
         Event code: - 15(LINAC), 32(1Hz, sync acquisition), 33(SR RF BPM
-        trigger), 47(1Hz), 66(Booster extraction), 35(pinger).
+        trigger), 47(SR first turn), 66(Booster extraction), 35(pinger).
     trigsrc : int, None
         None - default, keep original values. 0 - internal, 1 - external
     """
@@ -573,6 +614,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
 
     it will set kicker/pinger and wait 100sec or readback-setpoint agree.
 
+    event code 47 will be used for kicker 3 and 4, 35 used for pingers.
+
     Same returns as `getSrBpmData`
 
     Examples
@@ -586,6 +629,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     sleep = kwargs.get("sleep", 5)
     bpms = kwargs.get("bpms", getGroupMembers(["BPM", "UBPM"], op="union"))
     count = kwargs.get("count", 2000)
+
+    bpmstats = getBpmStatus(bpms)
 
     kpvsp, kpvrb = None, None
     # 0 - both off, 1 - V-on, 2-H-on, 3-both-on
@@ -636,13 +681,17 @@ def measKickedTbtData(idriver, ampl, **kwargs):
 
     # request an injection:
     if idriver in [3,4,]:
+        resetSrBpm(bpms=bpms, evcode=47)
+        time.sleep(1)
         caput('ACC-TS{EVG-SSC}Request-Sel', 1)
     elif idriver in [5,6,7]:
         resetSrBpms(bpms=bpms, evcode=35)
+        time.sleep(1)
         caput('SR:C21-PS{Pinger}Ping-Cmd', 1)
-    time.sleep(3)
+    time.sleep(2)
     Idcct1 = caget('SR:C03-BI{DCCT:1}I:Total-I')
-    bpmdata = getSrBpmData(trig=1, bpms=bpms, count=count, output=output, h5group=h5g)
+    bpmdata = getSrBpmData(trig=1, bpms=bpms, count=count,
+                           output=output, h5group=h5g)
     # record pinger wave, V-chan1, H-chan2
     pinger_delay, pinger_wave, pinger_mode = None, None, None
     if idriver in [5,6,7]:
@@ -656,7 +705,7 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     # repeat_value=True
     caput(kpvon, 0)
     caput(kpvsp, 0.0)
-
+    
     if output:
         (name, x, y, Isum, ts, offset), output = bpmdata
         
@@ -679,30 +728,15 @@ def measKickedTbtData(idriver, ampl, **kwargs):
             g["pinger_mode"] = pinger_mode
         f.close()
 
+    # restore
+    restoreBpmStatus(bpmstats)
+
     return bpmdata
 
 
-def plotChromaticity(f, nu, chrom):
-    """
-    see measChromaticity
-    """
-    import matplotlib.pylab as plt
+def measTbtTunes(idrive = 7, ampl = (0.15, 0.2)):
+    names, x0, y0, Isum0, timestamp, offset = \
+        measKickedTbtData(idrive, ampl, sleep=10, output=False)
+    return calcFftTune(x0), calcFftTune(y0)
 
-    df = f - np.mean(f)
-    p, resi, rank, sing, rcond = np.polyfit(df, nu, deg=2, full=True)
-    t = np.linspace(1.1*df[0], 1.1*df[-1], 100)
-    plt.clf()
-    plt.plot(f - f0, nu[:,0] - nu0[0], '-rx')
-    plt.plot(f - f0, nu[:,1] - nu0[1], '-go')
-    plt.plot(t, t*t*p[-3,0]+t*p[-2,0] + p[-1,0], '--r',
-             label="H: %.1fx^2%+.2fx%+.1f" % (p[-3,0], p[-2,0], p[-1,0]))
-    plt.plot(t, t*t*p[-3,1]+t*p[-2,1] + p[-1,1], '--g',
-             label="V: %.1fx^2%+.2fx%+.1f" % (p[-3,1], p[-2,1], p[-1,1]))
-    plt.text(min(df), min(dnu[:,0]),
-             r"$\eta=%.3e,\quad C_x=%.2f,\quad C_y=%.2f$" %\
-             (eta, chrom[0], chrom[1]))
-    
-    plt.legend(loc='upper right')
-    plt.xlabel("$f-f_0$ [MHz]")
-    plt.ylabel(r"$\nu-\nu_0$")
-    plt.savefig('measchrom.png')
+

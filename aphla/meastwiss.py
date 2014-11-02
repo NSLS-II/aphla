@@ -16,7 +16,7 @@ from catools import caget, caput
 import time
 import numpy as np
 from hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes, 
-                    waitStableOrbit, getRfFrequency, setRfFrequency)
+                    waitStableOrbit, getRfFrequency, putRfFrequency)
 
 __all__ = [ 'measBeta', 'measDispersion', 'measChromaticity' ]
 
@@ -135,7 +135,7 @@ def measDispersion(elem, dfmax = 5e-7, alphac = 3.6261976841792413e-04,
 
     # incase RF does not allow large step change, ramp down first
     for df in np.linspace(0, abs(dfmax), num_points)[1:-1]:
-        setRfFrequency(f0 - df)
+        putRfFrequency(f0 - df)
         time.sleep(2.0 / num_points)
 
     # avoid a bug in virtac
@@ -144,7 +144,7 @@ def measDispersion(elem, dfmax = 5e-7, alphac = 3.6261976841792413e-04,
     cod = np.zeros((len(dflst), 2*nbpm), 'd')
     for i,df in enumerate(dflst): 
         v0 = getOrbit()
-        setRfFrequency(f0 + df)
+        putRfFrequency(f0 + df)
         if verbose > 0:
             print(i, "df=", df, " f=", f0)
         waitStableOrbit(v0)
@@ -158,7 +158,7 @@ def measDispersion(elem, dfmax = 5e-7, alphac = 3.6261976841792413e-04,
 
     # restore
     for df in np.linspace(0, abs(dfmax), num_points):
-        setRfFrequency(f0 + abs(dfmax) - df)
+        putRfFrequency(f0 + abs(dfmax) - df)
         time.sleep(2.0 / num_points)
 
     # fitting
@@ -175,7 +175,105 @@ def measDispersion(elem, dfmax = 5e-7, alphac = 3.6261976841792413e-04,
     return ret
 
 
-def measChromaticity(**kwargs):
+def calcChromaticity(f0, freqlst, tunelst, deg = 2,
+                     gamma = 3.0e3/0.511, alphac = 3.6262e-4, verbose=0):
+    """
+    f0 : original RF frequency
+    freqlst : a list of RF frequency for tune measurement
+    tunelst : a list of tunes at different RF frequency, (n,2) shape.
+    deg : degree for polynomial fitting
+    gamma : beam energy. NSLS-II default is 3000.0/0.511.
+    alphac : momentum compaction factor. NSLS-II default is 3.6e-4
+
+    return chromaticities (cx, cy)
+    """
+    eta = alphac - 1/gamma/gamma
+    dpp = (freqlst - f0) / (-f0*eta)
+    p, resi, rank, sing, rcond = np.polyfit(dpp, tunelst, deg=deg, full=True)
+    # chrom = p[-2,:] * (-f0*eta)
+    chrom = p[-2,:]
+    if verbose > 0:
+        print("Coef:", p)
+        print("Resi:", resi)
+        print("Chrom:", chrom)
+    return chrom, dpp, p
+
+
+def measChromaticity(dfmax = 1e-6, gamma = 3.0e3/0.511, alphac = 3.626e-4,
+                     num_points = 5, fMeasTunes = None, deg = 2,
+                     wait = 0.5, verbose=0):
+    """Measure the chromaticity
+
+    Parameters
+    -----------
+    dfmax - max RF frequency change (within plus/minus), 1e-6
+    gamma - beam, 3.0/0.511e-3
+    alphac - momentum compaction factor, 3.62619e-4
+    wait - 1.5 second
+    num_points - 5
+    fMeasTunes - function used to get tunes. default None, use getTunes().
+
+    returns
+    --------
+    chrom : chromaticity, (chx, chy)
+    info : dictionary
+        freq : list of frequency setting
+        freq0 : initial frequency setpoint
+        tune : list of tunes,  shape (num_points, 2)
+        dpp : dp/p energy deviation
+        obt : orbit at each f settings (initial, every df, final).
+        deg : degree of polynomial fitting.
+        p : polynomial coeff, shape (deg+1, 2)
+    """
+    obt = []
+    f0 = getRfFrequency(handle="setpoint")
+
+    #names, x0, y0, Isum0, timestamp, offset = \
+    #    measKickedTbtData(7, (0.15, 0.2), sleep=10, output=False)
+    #nu0 = (calcFftTunes(x0), calcFftTunes(y0))
+    nu0 = fMeasTunes() if fMeasTunes else getTunes()
+
+
+    obt.append(getOrbit(spos=True))
+    #_logger.info("Initial RF freq= {0}, tunes= {1}" % (f0, nu0))
+
+    # incase RF does not allow large step change, ramp down first
+    if verbose:
+        print("Initial RF freq= {0}, stepping down {1} in {2} steps".format(
+              f0, -dfmax, num_points))
+    for df in np.linspace(0, abs(dfmax), num_points)[1:-1]:
+        putRfFrequency(f0 - df)
+        time.sleep(2.0 / num_points)
+
+    f = np.linspace(f0 - dfmax, f0 + dfmax, num_points)
+    nu = np.zeros((len(f), 2), 'd')
+    for i,f1 in enumerate(f):
+        if verbose > 0:
+            print("freq= ", f1, end=" ")
+        putRfFrequency(f1)
+        time.sleep(wait)
+        nu[i,:] = fMeasTunes() if fMeasTunes else getTunes()
+        obt.append(getOrbit(spos=True))
+        if verbose > 0:
+            print("tunes:", nu[i,0], nu[i,1],
+                  np.min(obt[-1][:,0]), np.max(obt[-1][:,0]),
+                  np.min(obt[-1][:,1]), np.max(obt[-1][:,1]))
+
+    for df in np.linspace(0, abs(dfmax), num_points):
+        putRfFrequency(f0 + abs(dfmax) - df)
+        time.sleep(2.0 / num_points)
+    obt.append(getOrbit(spos=True))
+
+    # calculate chrom, return info
+    info = {"freq": f, "tune": nu, "orbit": obt, "freq0": f0, "deg": deg}
+    chrom, dpp, p = calcChromaticity(f0, f, nu, deg=deg)
+    info["dpp"] = dpp
+    info["p"]   = p
+
+    return chrom, info
+
+
+def _measChromaticity(**kwargs):
     """Measure the chromaticity
 
     Parameters
@@ -212,7 +310,7 @@ def measChromaticity(**kwargs):
         print("Initial RF freq= {0}, stepping down {1} in {2} steps".format(
               f0, -dfmax, npt))
     for df in np.linspace(0, abs(dfmax), npt)[1:-1]:
-        setRfFrequency(f0 - df)
+        putRfFrequency(f0 - df)
         time.sleep(2.0 / npt)
 
     f = np.linspace(f0 - dfmax, f0 + dfmax, npt)
@@ -220,7 +318,7 @@ def measChromaticity(**kwargs):
     for i,f1 in enumerate(f):
         if verbose > 0:
             print("freq= ", f1, end=" ")
-        setRfFrequency(f1)
+        putRfFrequency(f1)
         time.sleep(wait)
         nu[i,:] = getTunes()
         obt.append(getOrbit(spos=True))
@@ -230,7 +328,7 @@ def measChromaticity(**kwargs):
                   np.min(obt[-1][:,1]), np.max(obt[-1][:,1]))
 
     for df in np.linspace(0, abs(dfmax), npt):
-        setRfFrequency(f0 + abs(dfmax) - df)
+        putRfFrequency(f0 + abs(dfmax) - df)
         time.sleep(2.0 / npt)
 
     obt.append(getOrbit(spos=True))

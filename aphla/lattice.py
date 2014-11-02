@@ -657,7 +657,7 @@ class Lattice:
         
         return self.getElementList(self.sortElements(r))
 
-    def getNeighbors(self, elemname, groups, n):
+    def getNeighbors(self, elemname, groups, n, elemself = True):
         """
         Assuming self._elements is in s order
 
@@ -693,7 +693,7 @@ class Lattice:
             if e.sb < e0.sb: continue
             i0 = i
             break
-        ret = [e0]
+        ret = [e0] if elemself else []
         for i in range(n):
             fac, r = divmod(i0 - i - 1, len(el))
             ret.insert(0, el[r])

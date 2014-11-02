@@ -1,3 +1,10 @@
+2014-11-02  Lingyun Yang  <lyyang@cdesk07>
+
+	* aphla/meastwiss.py: add fMeasTunes for measChromaticity
+	* aphla/nsls2sr.py: add getBpmStatus and restoreBpmStatus
+	* aphla/nsls2sr.py: add resetSrBpm for measKickedTbtData
+	* aphla/lattice.py: add elemself parameter for getNeighbors
+
 2014-10-12  Lingyun Yang  <lyyang@nsls2lang-lt>
 
 	* aphla/lattice.py (Lattice.getNeighbors): accept a list of groups

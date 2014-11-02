@@ -19,7 +19,7 @@ from . import machines
 from catools import caRmCorrect, measCaRmCol
 from hlalib import (getCurrent, getLifetimeCurrent, getExactElement,
     getElements, getNeighbors,
-    getClosest, getRfFrequency, setRfFrequency, getTunes, getOrbit,
+    getClosest, getRfFrequency, putRfFrequency, getTunes, getOrbit,
     getLocations, outputFileName, fget, fput, getBoundedElements,
     getGroupMembers)
 
@@ -29,7 +29,7 @@ __all__ = [ 'calcLifetime', 'measLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
     'stripView', 'measRmCol', 'getArchiverData',
-    'set3CorBump', 'setIdBump', 'calcFftTunes'
+    'set3CorBump', 'setIdBump'
 ]
 
 _logger = logging.getLogger(__name__)
@@ -1223,16 +1223,3 @@ def setIdBump(idname, xc, thetac, **kwargs):
                      ref, dImax=dImax, check=True, fullm=False)
     return norm0, norm1, norm2, corvals
 
-
-def calcFftTunes(x):
-    """
-    x - (nbpm, nturns)
-    """
-    nbpm, nturn = np.shape(x)
-    xc = np.average(x, axis=-1)
-    Fx = np.zeros_like(x)
-    for i in range(nbpm): #[1,2,3,4,5,6]:
-        Fx[i,:] = np.abs(np.fft.fft(x[i,:] - xc[i]))
-    Fs = np.sum(Fx, axis=0)
-    i = np.argmax(Fs[:nturn/2])
-    return i * 1.0/nturn

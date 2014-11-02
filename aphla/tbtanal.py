@@ -15,16 +15,33 @@ import tempfile
 from . import machines
 import logging
 
-__all__ = [ 'calcPhase', 'calcPhaseAdvance', 'calcBetaAu']
+__all__ = [ 'calcFftTune', 'calcTunes',
+            'calcPhase', 'calcPhaseAdvance', 'calcBetaAu']
 
 _logger = logging.getLogger(__name__)
 
+
+
+def calcFftTune(x):
+    """
+    x - (nbpm, nturns)
+    """
+    nbpm, nturn = np.shape(x)
+    xc = np.average(x, axis=-1)
+    Fx = np.zeros_like(x)
+    for i in range(nbpm): #[1,2,3,4,5,6]:
+        Fx[i,:] = np.abs(np.fft.fft(x[i,:] - xc[i]))
+    Fs = np.sum(Fx, axis=0)
+    i = np.argmax(Fs[:nturn/2])
+    return i * 1.0/nturn
 
 def calcTunes(x, y, **kwargs):
     """
     x, y - (nbpm, nturns) data
     """
-    pass
+    nux = calcFftTune(x)
+    nuy = calcFftTune(y)
+    return (nux, nuy)
 
 def _calcPhase(x, **kwargs):
     """
