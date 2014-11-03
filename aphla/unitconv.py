@@ -204,6 +204,8 @@ def loadUnitConversionH5(lat, h5file, group):
 
         # integer - invertible
         uc.polarity   = v.attrs.get('polarity', 1)
+        uhandles = v.attrs.get('handle', [])
+
         # find the element list
         elems = v.attrs.get('elements', [])
 
@@ -245,7 +247,8 @@ def loadUnitConversionH5(lat, h5file, group):
             _logger.info("adding unit conversion for {0}.{1}, "
                          "from {2}[{3}] to {4}[{5}]".format(
                     eobj.name, fld, usrcsys, usrc, udstsys, udst))
-            eobj.addUnitConversion(fld, uc, usrcsys, udstsys)
+            for handle in uhandles:
+                eobj.addUnitConversion(fld, uc, usrcsys, udstsys, handle=handle)
 
 def loadUnitConversionIni(lat, fname):
     """load the unit conversion for lattice from INI file"""

@@ -226,14 +226,22 @@ class CaAction:
 
     None in unit conversion means the lower level unit, like the PV in EPICS.
     """
+    ALLDATA  = 0
+    READBACK = 1
+    SETPOINT = 2
+    GOLDEN   = 3
     def __init__(self, **kwargs):
         self.pvrb = [] # readback pv
         self.pvsp = [] # setpoint pv
+        # self.unitconv = {}
+        self.ucrb = {}  # unit conversion for readback
+        self.ucsp = {}  # unit conversion for setpoint
         self.golden = [] # some setpoint can saved as golden value
         self.pvh  = [] # step size
         self.pvlim = [] # lower/upper limit 
         # buffer the initial value and last setting/reading
-        self.pvunit = '' # most of the cases, the unit is "Ampere", the current
+        self.pvrbunit = '' # unit for readback PVs
+        self.pvspunit = '' # overwrite unit in unit conversions
         self.rb = []  # bufferred readback value 
         self.sp = []  # bufferred setpoint value
         self._sp1 = [] # the last bufferred sp value when sp dimension changes.
@@ -243,7 +251,6 @@ class CaAction:
         self.opflags = 0
         self.trace = kwargs.get('trace', False)
         self.trace_limit = 200
-        self.unitconv = {}
         self.timeout = 2
         self.sprb_epsilon = None
 
@@ -276,16 +283,16 @@ class CaAction:
         lst.append(v)
         return len(lst) - 1
 
-    def _unit_conv(self, x, src, dst):
+    def _unit_conv(self, x, src, dst, unitconv):
         if (src, dst) == (None, None): return x
 
         # try (src, dst) first
-        uc = self.unitconv.get((src, dst), None)
+        uc = unitconv.get((src, dst), None)
         if uc is not None:
             return uc.eval(x)
 
         # then inverse (dst, src)
-        uc = self.unitconv.get((dst, src), None)
+        uc = unitconv.get((dst, src), None)
         if uc is not None and uc.invertible:
             return uc.eval(x, True)
         else:
@@ -393,21 +400,21 @@ class CaAction:
                     # keep the first one for `reset`
                     self.rb.pop(1)
             if len(self.pvrb) == 1: 
-                return self._unit_conv(rawret[0], None, unitsys)
+                return self._unit_conv(rawret[0], None, unitsys, self.ucrb)
             else: 
-                return self._unit_conv(rawret, None, unitsys)
+                return self._unit_conv(rawret, None, unitsys, self.ucrb)
         else: return None
 
     def getGolden(self, unitsys = None):
         """return golden value in unitsys"""
         if len(self.golden) == 1:
-            return self._unit_conv(self.golden[0], None, unitsys)
+            return self._unit_conv(self.golden[0], None, unitsys, self.ucsp)
         else:
-            return self._unit_conv(self.golden, None, unitsys)
+            return self._unit_conv(self.golden, None, unitsys, self.ucsp)
 
     def setGolden(self, val, unitsys = None):
         """set golden value in unitsys"""
-        ret = self._unit_conv(val, unitsys, None)
+        ret = self._unit_conv(val, unitsys, None, self.ucsp)
         if isinstance(ret, (list, tuple)):
             for i in range(len(self.golden)):
                 self.golden[i] = ret[i]
@@ -433,9 +440,9 @@ class CaAction:
                     except:
                         pass
             if len(self.pvsp) == 1:
-                return self._unit_conv(rawret[0], None, unitsys)
+                return self._unit_conv(rawret[0], None, unitsys, self.ucsp)
             else:
-                return self._unit_conv(rawret, None, unitsys)
+                return self._unit_conv(rawret, None, unitsys, self.ucsp)
         else: 
             #raise ValueError("no setpoint PVs")
             return None
@@ -458,10 +465,11 @@ class CaAction:
         if self.opflags & _READONLY: raise IOError("setting a readonly field")
 
         if isinstance(val, (float, int, str)):
-            rawval = [self._unit_conv(val, unitsys, None)] * len(self.pvsp)
+            rawval = [self._unit_conv(val, unitsys, None, self.ucsp)] * \
+                len(self.pvsp)
         else:
             # one more level of nest, due to pvsp=[]
-            rawval = [ [self._unit_conv(v, unitsys, None) for v in val] ]
+            rawval = [ [self._unit_conv(v, unitsys, None, self.ucsp) for v in val] ]
 
         # under and over flow check
         for i,lim in enumerate(self.pvlim):
@@ -965,49 +973,77 @@ class CaElement(AbstractElement):
             #raise AttributeError("Error")
         for e in self.alias: e.__setattr__(att, val)
 
-    def convertible(self, field, src, dst):
-        """check the unit conversion is possible or not"""
+    def _get_unitconv(self, field, handle):
+        if not self._field.has_key(field): return {}
+        if handle == "readback":
+            return self._field[field].ucrb
+        elif handle == "setpoint":
+            return self._field[field].ucsp
+        else:
+            return {}
+
+    def convertible(self, field, src, dst, handle = "readback"):
+        """
+        check the unit conversion is possible or not
+
+        handle : ["readback"|"setpoint"|None]
+            check readback, setpoint or all handle values.
+
+        returns True or False. If no specified handle, returns False.
+        """
 
         if not self._field.has_key(field): return False
 
         if src is None and dst is None: return True
 
-        uc = self._field[field].unitconv.get((src, dst), None)
-        if uc is not None: return True
-        
-        uc = self._field[field].unitconv.get((dst, src), None)
-        if uc is not None and uc.invertible: return True
+        unitconv = self._get_unitconv(field, handle)
 
+        if (src, dst) in unitconv: return True
+        
+        uc = unitconv.get((dst, src), None)
+        if uc is not None and uc.invertible: return True
         return False
 
-    def addUnitConversion(self, field, uc, src, dst):
-        """add unit conversion for field"""
+    def addUnitConversion(self, field, uc, src, dst, handle=None):
+        """
+        add unit conversion for field.
+
+        handle : ["readback"|"setpoint"|None].
+            None means for every named handles.
+        """
         # src, dst is unit system name, e.g. None for raw, phy
-        self._field[field].unitconv[(src, dst)] = uc
-        # just overwrite, need to check ?
-        if src is None: self._field[field].pvunit = uc.srcunit
-        elif dst is None: self._field[field].pvunit = uc.dstunit
+        if handle is None or handle == "readback":
+            self._field[field].ucrb[(src, dst)] = uc
+            if src is None: self._field[field].pvrbunit = uc.srcunit
+            elif dst is None: self._field[field].pvrbunit = uc.dstunit
+        if handle is None or handle == "setpoint":
+            self._field[field].ucsp[(src, dst)] = uc
+            if src is None: self._field[field].pvspunit = uc.srcunit
+            elif dst is None: self._field[field].pvspunit = uc.dstunit
 
-    def convertUnit(self, field, x, src, dst):
+    def convertUnit(self, field, x, src, dst, handle = "readback"):
         """convert value x between units without setting hardware"""
-        return self._field[field]._unit_conv(x, src, dst)
 
-    def get_unit_systems(self, field):
+        uc = self._get_unitconv(field, handle)
+        return self._field[field]._unit_conv(x, src, dst, uc)
+            
+
+    def get_unit_systems(self, field, handle = "readback"):
         """get a list of all unit systems for field. 
 
         None is the lower level unit, e.g. in EPICS channel. Use convertible
         to see if the conversion is possible between any two unit systems.
 
         """
-        if not self._field[field].unitconv: return [None]
-        #if not self._field[field].unitconv.keys(): return []
+        unitconv = self._get_unitconv(field, handle)
+        if not unitconv: return [None]
 
-        src, dst = zip(*(self._field[field].unitconv.keys()))
+        src, dst = zip(*(unitconv.keys()))
 
         ret = set(src).union(set(dst))
         return list(ret)
 
-    def getUnitSystems(self, field = None):
+    def getUnitSystems(self, field = None, handle = "readback"):
         """return a list of available unit systems for field. 
 
         If no field specified, return a dictionary for all fields and their
@@ -1016,29 +1052,36 @@ class CaElement(AbstractElement):
         None means the unit used in the lower level control system, e.g. EPICS.
         """
         if field is None:
-            return dict([(f, self.get_unit_systems(f)) for f \
+            return dict([(f, self.get_unit_systems(f, handle)) for f \
                              in self._field.keys()])
         else:
-            return self.get_unit_systems(field)
+            return self.get_unit_systems(field, handle)
 
-    def getUnit(self, field, unitsys='phy'):
+    def getUnit(self, field, unitsys='phy', handle = "readback"):
         """get the unit symbol of a unit system, e.g. unitsys='phy'
 
         The unit name, e.g. "T/m" for integrated quadrupole strength, is
         helpful for plotting routines.
 
-        return '' if no such unit system.
+        return '' if no such unit system. A tuple of all handles when *handle*
+        is None
         """
         if field in self._field.keys() and unitsys == None: 
-            return self._field[field].pvunit
+            if handle == "readback":
+                return self._field[field].pvrbunit
+            elif handle == "setpoint":
+                return self._field[field].pvspunit
+            else:
+                return ""
 
-        for k,v in self._field[field].unitconv.iteritems():
+        unitconv = self._get_unitconv(field, handle)
+        for k,v in unitconv.iteritems():
             if k[0] == unitsys: return v.srcunit
             elif k[1] == unitsys: return v.dstunit
 
-        return None
+        return ""
 
-    def setUnit(self, field, u, unitsys='phy'):
+    def setUnit(self, field, u, unitsys = 'phy', handle = "readback"):
         """set the unit symbol for a unit system
         """
         if field not in self._field.keys(): 
@@ -1046,8 +1089,8 @@ class CaElement(AbstractElement):
                                    self.name, field)
 
         if unitsys is None: self._field[field].pvunit = u
-            
-        for k,v in self._field[field].unitconv.iteritems():
+        
+        for k,v in self._get_unitconv(field, handle).iteritems():
             if k[0] == unitsys: v.srcunit = u
             elif k[1] == unitsys: v.dstunit = u
 
