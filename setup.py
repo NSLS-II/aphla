@@ -98,7 +98,7 @@ setup(
             ]
         },
     description = "Accelerator control and experiment toolkit",
-    author = "Lingyun Yang, Yoshiteru Hidaka, Jinhyuk Choi",
+    author = "Lingyun Yang, Yoshiteru Hidaka",
     maintainer = "Lingyun Yang",
     maintainer_email = "lyyang@bnl.gov",
     url = 'http://code.nsls2.bnl.gov/hg/ap/hla',

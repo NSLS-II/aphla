@@ -123,7 +123,6 @@ def _filter_lat_rec(r, exclude, exclude_pvs):
         if all(v): return True
 
 
-
 def calcBetaAu(xtbt, **kwargs):
     """
     calculate the beta function in arbitrary unit (Au).

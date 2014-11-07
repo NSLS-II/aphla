@@ -505,8 +505,7 @@ def saveLattice(**kwargs):
     Saved data with unitsys=None and "phy":
 
     - Magnet: BEND: b0, db0; QUAD: b1; SEXT: b2; COR: x, y;
-    - BPM: x, x0, xbba, xref0, xref1 (same for y)
-    - UBPM: user bpms, same as BPM
+    - BPM and UBPM: x, x0, xbba, xref0, xref1 (same for y)
     - RFCAVITY: f
     - DCCT: I, tau, Iavg
 
@@ -629,15 +628,17 @@ def measKickedTbtData(idriver, ampl, **kwargs):
 
     Examples
     ---------
-    >>> (name, x, y, Isum, ts, offset) = measKickedTbtData(7, (0.1, 0.2))
-    >>> (name, x, y, Isum, ts, offset), output = measKickedTbtData(7, (0.1, 0.2), output=True)
+    >>> (name, x, y, Isum, ts, offset) = measKickedTbtData(7, (0.15, 0.2))
+    >>> (name, x, y, Isum, ts, offset), output = measKickedTbtData(7, (0.15, 0.2), output=True)
     """
 
     verbose = kwargs.get("verbose", 0)
     output = kwargs.get("output", True)
     sleep = kwargs.get("sleep", 5)
-    bpms = kwargs.get("bpms", getGroupMembers(["BPM", "UBPM"], op="union"))
     count = kwargs.get("count", 2000)
+    bpms  = [ b for b in kwargs.get("bpms",
+                                   getGroupMembers(["BPM", "UBPM"], op="union"))
+              if b.isEnabled()]
 
     bpmstats = getBpmStatus(bpms)
 
@@ -695,6 +696,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
         caput('ACC-TS{EVG-SSC}Request-Sel', 1)
     elif idriver in [5,6,7]:
         resetSrBpms(bpms=bpms, evcode=35)
+        # do it twice
+        caput('SR:C21-PS{Pinger}Ping-Cmd', 1)
         time.sleep(1)
         caput('SR:C21-PS{Pinger}Ping-Cmd', 1)
     time.sleep(2)
