@@ -37,6 +37,7 @@ class Lattice:
 
     - *name*
     - *mode*
+    - *source* where it was created. URL, Sqlite3 DB filename, ...
     - *tune* [nux, nuy]
     - *chromaticity* [cx, cy]
     - *sb*, *se* s-position of begin and end. 
@@ -45,7 +46,7 @@ class Lattice:
     """
     # ginore those "element" when construct the lattice object
 
-    def __init__(self, name, mode = 'undefined'):
+    def __init__(self, name, source = 'undefined', mode = ''):
         self.machine = ''
         self.machdir = ''
         self.name = name
@@ -64,6 +65,7 @@ class Lattice:
         self.Ek = None
         self.arpvs = None
         self.OUTPUT_DIR = ''
+        self.source = source
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -196,6 +198,7 @@ class Lattice:
         f[pref+'group']   = self._group
         f[pref+'elements'] = self._elements
         f[pref+'mode']    = self.mode
+        f[pref+"source"]  = self.source
         f[pref+'tune']    = self.tune
         f[pref+'chromaticity'] = self.chromaticity
         f.close()
@@ -213,6 +216,7 @@ class Lattice:
         self._group  = f[pref+'group']
         self._elements  = f[pref+'elements']
         self.mode     = f[pref+'mode']
+        self.source   = f[pref+"source"]
         self.tune     = f[pref+'tune']
         self.chromaticity = f[pref+'chromaticity']
         if self._elements:

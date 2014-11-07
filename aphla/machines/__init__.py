@@ -451,7 +451,7 @@ def findCfaConfig(srcname, machine, submachines):
 
     return cfa
 
-def createLattice(latname, pvrec, systag, desc = 'channelfinder', 
+def createLattice(latname, pvrec, systag, src = 'channelfinder', 
                   vbpm = True, vcor = True):
     """
     create a lattice from channel finder data
@@ -461,17 +461,17 @@ def createLattice(latname, pvrec, systag, desc = 'channelfinder',
     name: lattice name, e.g. 'SR', 'LTD'
     pvrec: list of pv records `(pv, property dict, list of tags)`
     systag: process records which has this systag. e.g. `aphla.sys.SR`
-    desc: description is this lattice
+    src: source URL or filename of this lattice
     
     Returns
     ---------
     lat : the :class:`~aphla.lattice.Lattice` type.
     """
 
-    _logger.debug("creating '%s':%s" % (latname, desc))
+    _logger.debug("creating '%s':%s" % (latname, src))
     _logger.info("%d pvs found in '%s'" % (len(pvrec), latname))
     # a new lattice
-    lat = Lattice(latname, desc)
+    lat = Lattice(latname, src)
     for rec in pvrec:
         _logger.debug("processing {0}".format(rec))
         # skip if there's no properties.

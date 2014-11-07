@@ -545,15 +545,28 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
     """
     update sqlite3 DB with a list of (pv, properties, tags)
 
-    It only updates common columns of DB table and cfslist.
+    dbfname : str
+    cflist : list of (pv, properties, tags)
+    sep : str. ";". separate single string to a list.
+    quiet : False. do not insert a log entry.
+
+    It only updates columns which are in both DB table and cfslist. The
+    existing data will be updated and new data will be added.
+
+    Ignore the tags if it is None.
 
     Constraints:
 
     - elemName is unique
     - (pv,elemName,elemField) is unique
     - elemType can not be NULL
+
+    if pv is false, the pv part is not updated. Same as elemName part.
     """
-    sep    = kwargs.get("sep", ";")
+
+    sep   = kwargs.get("sep", ";")
+    quiet = kwargs.get("quiet", False)
+
     # elemName, elemType, system is "NOT NULL"
     conn = sqlite3.connect(dbfname)
     # save byte string instead of the default unicode
@@ -568,14 +581,14 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
                 prpts.get("elemType", ""))
         # skip if already in the to-be-inserted list
         # elemName has to be unique
-        if ukey[0] not in [v[0] for v in elem_sets]:
+        if ukey[0] and ukey[0] not in [v[0] for v in elem_sets]:
             c.execute("""SELECT * from elements where elemName=?""", (ukey[0],))
             # no need to insert if exists
             if len(c.fetchall()) == 0:
                 elem_sets.append(ukey)
         # same as elemName, find the new pvs
         ukey = (pv, prpts.get("elemName", ""), prpts.get("elemField", ""))
-        if ukey not in pv_sets:
+        if pv and ukey not in pv_sets:
             c.execute("""SELECT * from pvs where """
                       """pv=? and elemName=? and elemField=?""",
                       ukey)
@@ -642,14 +655,14 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
                       """elemName=? and elemField=?""" % col,
                       vals)
         conn.commit()
-        _logger.debug("pvs: updated column '{0}' with {1} records".format(
-                col, len(vals)))
+        _logger.debug("pvs: updated column '{0}' with {1} records '{2}'".format(
+                col, len(vals), [v[0] for v in vals]))
 
     # update tags
     vals = []
     for i,rec in enumerate(cfslist):
         pv, prpts, tags = rec
-        if not tags: continue
+        if tags is None: continue
         if not prpts.has_key("elemField") or not prpts.has_key("elemName"):
             print("Incomplete record for pv={0}: {1} {2}. IGNORED".format(
                 pv, prpts, tags))
@@ -662,10 +675,11 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
         conn.commit()
         _logger.debug("pvs: updated tags for {0} rows".format(len(vals)))
 
-    msg = "[%s] updated %d records" % (__name__, len(cfslist))
-    c.execute("""insert into info(timestamp,name,value)
+    if not quiet:
+        msg = "[%s] updated %d records" % (__name__, len(cfslist))
+        c.execute("""insert into info(timestamp,name,value)
                  values (datetime('now'), "log", ? )""", (msg,))
-    conn.commit()
+        conn.commit()
     conn.close()
 
 
@@ -732,7 +746,55 @@ def createLatticePvDb(dbfname, csv2fname = None):
     if csv2fname is not None: updateLatticePvDb(dbfname, csv2fname)
 
 
+def updateDbElement(dbfname, submachine, element, **kwargs):
+    """
+    dbfname : str. SQLite3 database file name
+    submachine : str, e.g. "SR"
+    element : str, element name in lattice
+    elemType : str
+    cell : str
+    girder : str
+    symmetry : str
+    elemLength : float
+    elemPosition : float
+    elemIndex : int
+    elemGroups : str. separated by ";"
+    virtual : int. 
+    tags : list of str.
+    """
+    kw = {"elemName": element}
+    for k in ["elemType", "cell", "girder", "symmetry",
+              "elemLength", "elemPosition", "elemIndex", "elemGroups",
+              "virtual"]:
+        if k not in kwargs or kwargs[k] is None: continue
+        kw[k] = kwargs.pop(k)
+
+    _updateLatticePvDb(dbfname, [("", kw, None), ], **kwargs)
+
+
+def updateDbPv(dbfname, pv, element, field, **kwargs):
+    """
+    """
+    kw = {"elemName": element, "elemField": field}
+    tags = kwargs.get("tags", None)
+    for k in ["elemHandle", "hostName", "devName", "iocName",
+              "speed", "hlaHigh", "hlaLow", "hlaStepsize", "hlaValRef",
+              "archive", "size", "epsilon"]:
+        if k not in kwargs or kwargs[k] is None: continue
+        kw[k] = kwargs.pop(k)
+
+    _updateLatticePvDb(dbfname, [(pv, kw, tags), ], **kwargs)
+        
+
 def saveSnapshotH5(fname, dscalar, dvector):
+    """
+    save machine snapshot data as HDF5.
+
+    - dscalar : (name, field, value) scalar data
+    - dvector : (name, field, value) waveform data
+
+    All scalar data is in one dataset, each waveform is in one dataset.
+    """
     N1 = max([len(v[0]) for v in dscalar])
     N2 = max([len(v[1]) for v in dscalar])
     dt = np.dtype([('element', "S%d" % N1),
