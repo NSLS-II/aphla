@@ -29,7 +29,7 @@ __all__ = [ 'calcLifetime', 'measLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
     'stripView', 'measRmCol', 'getArchiverData',
-    'set3CorBump', 'setIdBump'
+    '_set3CorBump', 'setIdBump'
 ]
 
 _logger = logging.getLogger(__name__)
@@ -1013,35 +1013,38 @@ def getArchiverData(*argv, **kwargs):
                      [e.pv(field=argv[1],
                            handle=kwargs.get("handle", "readback"))
                       for e in getElements(argv[0])])
-    t0 = datetime.now()
+    t0 = float(datetime.now().strftime("%s.%f"))
     import subprocess
     tspan = ["-s", kwargs.get("s", "-24 h") ]
     if kwargs.has_key("e"):
         tspan.extend(["-e", kwargs["e"]])
-    out = subprocess.check_output(["arget",] + tspan + pvs)
+    out = subprocess.check_output(["arget", "-T", "posix"] + tspan + pvs)
+    if kwargs.get("debug", 0):
+        print(out)
+
     import re
     pv, dat = "", {}
     for s in out.split("\n"):
         if re.match(r"Found [0-9]+ points", s): continue
-        if s.find("Disconnected") > 0: continue
+        rec = s.split()
+        #if s.find("Disconnected") > 0: continue
+        if not rec: continue
+        # a single line PV name
+        if rec[0] in pvs:
+            pv = s.strip()
+            dat.setdefault(pv, [])
+            continue
+
         try:
-            if re.match(r"[1-9][0-9]+-[0-9]+-[0-9]+ ", s):
-                d0, d1, v = s.split()
-                if len(d1) < 9:
-                    t1 = datetime.strptime("%s %s" % (d0, d1), "%Y-%m-%d %H:%M:%S")
-                else:
-                    t1 = datetime.strptime("%s %s" % (d0, d1), "%Y-%m-%d %H:%M:%S.%f")
-                dat[pv].append(((t1-t0).total_seconds(), float(v)))
-            elif s.strip():
-                pv = s.strip()
-                dat.setdefault(pv, [])
+            d0, v = rec[0], rec[1]
+            dat[pv].append((float(d0)-t0, float(v)))
         except:
-            print("invalid format '{0}'".format(s))
+            print("invalid format '{0}' for {1}".format(s, pv))
             raise
-    return dat
+    return dict([(k, np.array(v)) for k,v in dat.items()])
 
 
-def set3CorBump(cors, dIc0, bpmins, bpmouts, **kwargs):
+def _set3CorBump(cors, dIc0, bpmins, bpmouts, **kwargs):
     """
     cors - list of three correctors
     dIc0 - the I change for the first corrector in *cors* (i.e. raw unit)
@@ -1088,7 +1091,7 @@ def set3CorBump(cors, dIc0, bpmins, bpmouts, **kwargs):
     return dxouts, dxins, dc
 
 
-def meas4CorBump(cors, bpmins, bpmouts, bpmdx, **kwargs):
+def _meas4CorBump(cors, bpmins, bpmouts, bpmdx, **kwargs):
     """
     superposition of two 3Cor bumps
     
