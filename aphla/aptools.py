@@ -992,9 +992,17 @@ Strip.Option.GraphLineWidth   2
 def getArchiverData(*argv, **kwargs):
     """
     >>> getArchiverData("DCCT", "I")
-    >>> getArchiverData("SR:C03-BI{DCCT:1}AveI-I")
+    >>> getArchiverData(["SR:C03-BI{DCCT:1}AveI-I",])
+    >>> getArchiverData(["pv1", "pv2"], s="-1 h")
+    >>> getArchiverData(["pv1", "pv2"], s="-2 h", e="-1 h")
+    >>> getArchiverData(["pv1", "pv2"], s="2014-11-11 00:00:00", e="-1 h")
 
-    At this moment, only return data back to 24 hour earlier.
+    see manual arget for "-s" and "-e" parameter.
+
+    Returns a dictionary of (pv, data). The data is (n,2) array. 2 columns are
+    t-t0 seconds and the data. t0 is a time point when calling this
+    function. The first column data are all negative to reflect some seconds
+    before.
     """
     if len(argv) == 1 and isinstance(argv[0], (str, unicode)):
         pvs = argv
@@ -1007,7 +1015,10 @@ def getArchiverData(*argv, **kwargs):
                       for e in getElements(argv[0])])
     t0 = datetime.now()
     import subprocess
-    out = subprocess.check_output(["arget", "-s", kwargs.get("s", "-24 h")] + pvs)
+    tspan = ["-s", kwargs.get("s", "-24 h") ]
+    if kwargs.has_key("e"):
+        tspan.extend(["-e", kwargs["e"]])
+    out = subprocess.check_output(["arget",] + tspan + pvs)
     import re
     pv, dat = "", {}
     for s in out.split("\n"):
@@ -1016,7 +1027,10 @@ def getArchiverData(*argv, **kwargs):
         try:
             if re.match(r"[1-9][0-9]+-[0-9]+-[0-9]+ ", s):
                 d0, d1, v = s.split()
-                t1 = datetime.strptime("%s %s" % (d0, d1), "%Y-%m-%d %H:%M:%S.%f")
+                if len(d1) < 9:
+                    t1 = datetime.strptime("%s %s" % (d0, d1), "%Y-%m-%d %H:%M:%S")
+                else:
+                    t1 = datetime.strptime("%s %s" % (d0, d1), "%Y-%m-%d %H:%M:%S.%f")
                 dat[pv].append(((t1-t0).total_seconds(), float(v)))
             elif s.strip():
                 pv = s.strip()

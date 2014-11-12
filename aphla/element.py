@@ -1110,7 +1110,7 @@ class CaElement(AbstractElement):
             self.updateProperties(properties)
 
         
-        # the default handle is 'READBACK'
+        # the default handle is 'readback'
         if properties is not None:
             elemhandle = properties.get('handle', 'readback')
             fieldfname = properties.get('field', None)
