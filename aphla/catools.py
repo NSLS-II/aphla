@@ -32,6 +32,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 CA_OFFLINE = False
+CA_TIMEOUT = 10
 
 def _ca_get_sim(pvs):
     """
@@ -50,7 +51,7 @@ def _ca_put_sim(pvs, vals):
     """
     return ct.ca_nothing
 
-def caget(pvs, timeout=6, datatype=None, format=ct.FORMAT_TIME,
+def caget(pvs, timeout=CA_TIMEOUT, datatype=None, format=ct.FORMAT_TIME,
            count=0, throw=False, verbose=0):
     """channel access read
     
@@ -118,7 +119,7 @@ def cagetr(pvs, **kwargs):
     return [cagetr(pv, **kwargs) for pv in pvs]
 
 
-def caput(pvs, values, timeout=2, wait=True, throw=True, verbose = 0):
+def caput(pvs, values, timeout=CA_TIMEOUT, wait=True, throw=True, verbose = 0):
     """channel access write.
 
     This is simple wrap of `cothread.catools.caput` to support UTF8 string
@@ -232,7 +233,7 @@ def measCaRmCol(resp, kker, dxlst, **kwargs):
     """
 
     wait    = kwargs.get("wait", 1.5)
-    timeout = kwargs.get("timeout", 5)
+    timeout = kwargs.get("timeout", CA_TIMEOUT)
     verbose = kwargs.get("verbose", 0)
     sample  = kwargs.get("sample", 5)
 
@@ -379,7 +380,7 @@ def readPvs(pvs, **kwargs):
     """
     returns a list of (value, length, timestamp)
     """
-    timeout = kwargs.get("timeout", 3)
+    timeout = kwargs.get("timeout", CA_TIMEOUT)
     niter   = kwargs.get("niter", 3)
     # avoid double read in case pvs has duplicates.
     tmp = dict([(pv, None) for pv in pvs])
@@ -415,7 +416,7 @@ def savePvData(fname, pvs, **kwargs):
     group  = kwargs.get("group", '/')
     mode   = kwargs.pop("mode", 'a')
     ignore = kwargs.get("ignore", [])
-    timeout = kwargs.get("timeout", 10)
+    timeout = kwargs.get("timeout", CA_TIMEOUT)
 
     import h5py
     h5f = h5py.File(fname, mode)
@@ -466,7 +467,7 @@ def putPvData(fname, group, **kwargs):
     caput(pv, dat)
 
 
-def caWait(pvs, stop = 0, timeout = 5, dt = 0.2):
+def caWait(pvs, stop = 0, timeout = CA_TIMEOUT, dt = 0.2):
     """
     wait until all pvs == stop.
     """
@@ -530,7 +531,7 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
         if all([vallo[i] <= avg[i] <= valhi[i] for i in range(n)]):
             break
         t1 = datetime.now()
-        if (t1 - t0).total_seconds() > kwargs.get("timeout", 5):
+        if (t1 - t0).total_seconds() > kwargs.get("timeout", CA_TIMEOUT):
             vdiff = [avg[i] - values[i] for i in range(n)]
             raise RuntimeError("Timeout, tried {0} times, pv={1} "
                                "avg_vals= {2} lo= {3} hi={4}\n"
