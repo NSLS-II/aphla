@@ -1000,9 +1000,8 @@ def getArchiverData(*argv, **kwargs):
     see manual arget for "-s" and "-e" parameter.
 
     Returns a dictionary of (pv, data). The data is (n,2) array. 2 columns are
-    t-t0 seconds and the data. t0 is a time point when calling this
-    function. The first column data are all negative to reflect some seconds
-    before.
+    t seconds and the data. If data is an empty list, the pv might not being
+    archived.
     """
     if len(argv) == 1 and isinstance(argv[0], (str, unicode)):
         pvs = argv
@@ -1013,14 +1012,23 @@ def getArchiverData(*argv, **kwargs):
                      [e.pv(field=argv[1],
                            handle=kwargs.get("handle", "readback"))
                       for e in getElements(argv[0])])
+    fh, fname = tempfile.mkstemp(prefix="aphla_arget_")
+    for pv in pvs:
+        os.write(fh, "%s\n" % pv)
+    os.close(fh)
+
     t0 = float(datetime.now().strftime("%s.%f"))
     import subprocess
-    tspan = ["-s", kwargs.get("s", "-24 h") ]
-    if kwargs.has_key("e"):
-        tspan.extend(["-e", kwargs["e"]])
-    out = subprocess.check_output(["arget", "-T", "posix"] + tspan + pvs)
+    tspan = ["--start", kwargs.get("start", "-24 h") ]
+    if kwargs.has_key("end"):
+        tspan.extend(["--end", kwargs["end"]])
+    if kwargs.has_key("count"):
+        tspan.extend(["--count", str(kwargs["count"])])
+    out = subprocess.check_output(["arget", "--pv-list", fname, "-T", "posix"]
+                                  + tspan + pvs)
     if kwargs.get("debug", 0):
         print(out)
+    os.remove(fname)
 
     import re
     pv, dat = "", {}
@@ -1037,7 +1045,8 @@ def getArchiverData(*argv, **kwargs):
 
         try:
             d0, v = rec[0], rec[1]
-            dat[pv].append((float(d0)-t0, float(v)))
+            #dat[pv].append((float(d0)-t0, float(v)))
+            dat[pv].append((float(d0), float(v)))
         except:
             print("invalid format '{0}' for {1}".format(s, pv))
             raise
