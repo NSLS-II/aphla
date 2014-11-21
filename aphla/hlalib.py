@@ -383,8 +383,6 @@ def fput(elemfld_vals, **kwargs):
 
     # a list of (pv, spval, elem, field)
     pvl = []
-    # expand to a list
-    epsl = kwargs.pop("epsilon", None)
 
     if epsilon is None:
         epsl = [e.getEpsilon(fld) for e,fld,v in elemfld_vals]
