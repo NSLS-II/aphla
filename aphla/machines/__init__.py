@@ -581,10 +581,6 @@ def createLattice(latname, pvrec, systag, src = 'channelfinder',
         if handle == 'get': prpt['handle'] = 'readback'
         elif handle == 'put': prpt['handle'] = 'setpoint'
 
-        handle = prpt.get('handle', '').lower()
-        if handle == 'get': prpt['handle'] = 'READBACK'
-        elif handle == 'put': prpt['handle'] = 'SETPOINT'
-
         pv = rec[0]
         if pv: elem.updatePvRecord(pv, prpt, rec[2])
 

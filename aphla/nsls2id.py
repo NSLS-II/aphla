@@ -9,6 +9,7 @@ import itertools
 import numpy as np
 import re
 import h5py
+import time
 from datetime import datetime
 
 _params = {
@@ -97,7 +98,7 @@ _params = {
     "ivu22g1c10c":
         {"unitsys": "phy",
          "gap": (5.0, 40.0, 30, 0.1),
-         "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "cch": ("cch0", "cch1", "cch2", "cch3"),
          "background": {"gap": 40.0},
          "Imin": 0.2, # mA
          "Tmin": 0.2, # hour
@@ -152,19 +153,29 @@ def putPar(ID, parList, **kwargs):
 
     agree = True
     for par in parList:
+        t0 = datetime.now()
+        agree = False
         ID.put(par[0], par[1], timeout=timeout, unitsys=unitsys, trig=1)
         p0 = ID.get(par[0], unitsys=unitsys)
-        if abs(p0-par[1]) <= par[2]:
+        while True:
+            if abs(p0-par[1]) < par[2]:
+                agree = True
+                break
+            if (datetime.now() - t0).total_seconds() > timeout:
+                break
+            time.sleep(2)
+            p0 = ID.get(par[0], unitsys=unitsys)
+        if agree:
             continue
+
         # error handling
-        agree = False
-        if verbose:
-            print 'For "{0}" of {1}:'.format(par[0], ID.name)
-            print 'Target SP = {0:.9g}, Current RB = {1:.9g}, Tol = {2:.9g}'.\
+        msg = 'Target SP = {0:.9g}, Current RB = {1:.9g}, Tol = {2:.9g}'.\
                 format(par[1], p0, par[2])
-        if throw:
-            raise RuntimeError('Failed to set device within tolerance.')
-        else:
+        if verbose:
+            print 'For "{0}" of {1}: {2}'.format(par[0], ID.name, msg)
+        if throw and not agree:
+            raise RuntimeError('Failed to set device within tolerance: '+ msg)
+        elif not agree:
             break
     return agree
 
@@ -390,26 +401,29 @@ def switchFeedback(ID, fftable = "off"):
     val = 0 if fftable == "off" else 1
 
     if ID.name == "epu49g1c23u":
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:0}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:1}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:2}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:3}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:4}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:5}Ena-Sel", val)
+        for i in range(6):
+            ap.caput("SR:C23-ID:G1A{EPU:1-FF:%d}Ena-Sel" % i, val)
+    if ID.name == "epu49g1c23d":
+        for i in range(6):
+            ap.caput("SR:C23-ID:G1A{EPU:2-FF:%d}Ena-Sel" % i, val)        
     elif ID.name == "dw100g1c28u":
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:0}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:1}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:2}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:3}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:4}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:5}Ena-Sel", val)
+        for i in range(6):
+            ap.caput("SR:C28-ID:G1{DW100:1-FF:%d}Ena-Sel" % i, val)
     elif ID.name == "dw100g1c28d":
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:0}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:1}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:2}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:3}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:4}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:5}Ena-Sel", val)
+        for i in range(6):
+            ap.caput("SR:C28-ID:G1{DW100:2-FF:%d}Ena-Sel" % i, val)
+    elif ID.name == "ivu20g1c03c":
+        for i in range(6):
+            ap.caput("SR:C3-ID:G1{IVU20:1-FF:%d}Ena-Sel" % i, val)
+    elif ID.name == "ivu21g1c05d":
+        for i in range(6):
+            ap.caput("SR:C5-ID:G1{IVU21:1-FF:%d}Ena-Sel" % i, val)
+    elif ID.name == "ivu22g1c10c":
+        for i in range(4):
+            ap.caput("SR:C10-ID:G1{IVU22:1-FF:%d}Ena-Sel" % i, val)
+    elif ID.name == "ivu20g1c11c":
+        for i in range(6):
+            ap.caput("SR:C11-ID:G1{IVU20:1-FF:%d}Ena-Sel" % i, val)
 
     # fast/slow co
     # all ID feed forward
