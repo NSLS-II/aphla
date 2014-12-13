@@ -519,28 +519,31 @@ The following file does not exist:
 
         elif header_type == 'python':
             help_header_quote = ''
-            with open(f, 'r') as fobj:
-                for line in fobj:
-                    if help_header_quote == '':
-                        line = line.lstrip()
-                        if line.startswith('#') or (line == ''):
-                            pass
-                        elif line.startswith(('"""', "'''")):
-                            help_header_quote = line[:3]
-                            help_text = line[3:]
-                            if help_header_quote in help_text:
-                                i = help_text.index(help_header_quote)
-                                help_text = help_text[:i]
+            try:
+                with open(f, 'r') as fobj:
+                    for line in fobj:
+                        if help_header_quote == '':
+                            line = line.lstrip()
+                            if line.startswith('#') or (line == ''):
+                                pass
+                            elif line.startswith(('"""', "'''")):
+                                help_header_quote = line[:3]
+                                help_text = line[3:]
+                                if help_header_quote in help_text:
+                                    i = help_text.index(help_header_quote)
+                                    help_text = help_text[:i]
+                                    break
+                            else:
                                 break
                         else:
-                            break
-                    else:
-                        if ('"""' in line) or ("'''" in line):
-                            i = line.index(help_header_quote)
-                            help_text += line[:i]
-                            break
-                        else:
-                            help_text += line
+                            if ('"""' in line) or ("'''" in line):
+                                i = line.index(help_header_quote)
+                                help_text += line[:i]
+                                break
+                            else:
+                                help_text += line
+            except:
+                print '* Failed to get help text for the file "{0}"'.format(f)
 
         elif header_type == 'matlab':
             in_header_quote = False
