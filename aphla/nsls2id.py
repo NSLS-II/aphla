@@ -65,16 +65,18 @@ _params = {
     "epu49g1c23u":
         {"unitsys": "phy",
          "gap": (11.5, 240.0, 30, 0.1),
+         "phase": (-24.6, 24.6, 11, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
-         "background": {"gap": 240.0},
+         "background": {"gap": 240.0, "phase": 0.0},
          "Imin": 0.2, # mA
          "Tmin": 0.2, # hour
          "timeout": 180, },
     "epu49g1c23d":
         {"unitsys": "phy",
          "gap": (11.5, 240.0, 30, 0.1),
+         "phase": (-24.6, 24.6, 11, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
-         "background": {"gap": 240.0},
+         "background": {"gap": 240.0, "phase": 0.0},
          "Imin": 0.2, # mA
          "Tmin": 0.2, # hour
          "timeout": 180, },
