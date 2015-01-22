@@ -443,14 +443,19 @@ def initFile(ID, fieldList, parTable):
     grp = fid.require_group(ID.name)
     grp.attrs["__FORMAT__"] = 1
     # setup parameters
+    unitsymbs = [
+        ID.getUnit(f, unitsys=_params[ID.name]['unitsys'], handle='setpoint')
+        for f in fieldList]
     subg = grp.require_group("parameters")
     if parTable and fieldList:
         subg["scanTable"] = parTable #
-        subg["scanTable"].attrs["columns"] = fieldList
+        subg["scanTable"].attrs["columns"]   = fieldList
+        subg["scanTable"].attrs["unitsymbs"] = unitsymbs
     bkg = _params[ID.name]["background"]
     # like one row of scanTable, same columns
     subg["background"] = [bkg[fld] for fld in fieldList]
-    subg["background"].attrs["columns"] = fieldList
+    subg["background"].attrs["columns"]   = fieldList
+    subg["background"].attrs["unitsymbs"] = unitsymbs
     # timestamp ISO "2007-03-01 13:00:00"
     subg["minCurrent"] = _params[ID.name]["Imin"]
     subg["minCurrent"].attrs["unit"] = "mA"
