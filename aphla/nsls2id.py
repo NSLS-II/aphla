@@ -475,8 +475,9 @@ def saveToDB(fileName):
 
 
 def saveState(idobj, output, iiter,
-              parnames = ["gap"], background=None, extdata={}):
+              parnames=None, background=None, extdata={}):
     """
+    parnames - list of extra fields of idobj to be saved.
     background - the group name for its last background.
     extdata - extra data dictionary.
 
@@ -496,13 +497,60 @@ def saveState(idobj, output, iiter,
     tau, I = ap.getLifetimeCurrent()
     grp["lifetime"] = tau
     grp["current"] = I
+    if parnames is None:
+        parnames = ['gap', 'phase', 'mode']
+    else:
+        parnames = ['gap', 'phase', 'mode'] + list(parnames)
+    parnames = np.unique(parnames).tolist()
+    fields = idobj.fields()
     for par in parnames:
-        grp[par] = idobj.get(par, unitsys=None)
+        if par in fields:
+            grp[par] = idobj.get(par, unitsys=None)
+            grp[par].attrs['unitsymb'] = idobj.getUnit(par, unitsys=None)
     for k,v in extdata.items():
         grp[k] = v
     grp.attrs["iter"] = iiter
     if background:
         grp.attrs["background"] = background
+    else:
+        # Save current ID trim setpoints
+        elemflds = createCorrectorField(idobj)
+        _, flds = zip(*elemflds)
+        trim_sps = [idobj.get(ch, unitsys=None, handle='setpoint') for ch in flds]
+        grp['trim_sp'] = trim_sps
+        grp['trim_sp'].attrs['fields'] = flds
+
+        # Save current BPM offsets
+        try:
+            bpm_offset_pvs         = saveState.bpm_offset_pvs
+            bpm_offset_pv_suffixes = saveState.bpm_offset_pv_suffixes
+            bpm_offset_fields      = saveState.bpm_offset_fields
+            bpm_names              = saveState.bpm_names
+        except AttributeError:
+            bpms = ap.getElements('p[uhlm]*')
+            bpm_names = [b.name for b in bpms]
+            bpm_pv_prefixes = [b.pv(field='xbba')[0].replace('BbaXOff-SP', '')
+                               for b in bpms]
+            bpm_offset_fields = ['xbba', 'ybba', 'xref1', 'yref1', 'xref2', 'yref2']
+            bpm_offset_pv_suffixes = [
+                bpms[0].pv(field=f)[0].replace(bpm_pv_prefixes[0], '')
+                for f in bpm_offset_fields]
+            bpm_offset_pvs = []
+            for suf in bpm_offset_pv_suffixes:
+                bpm_offset_pvs += [prefix+suf for prefix in bpm_pv_prefixes]
+            saveState.bpm_offset_pvs         = bpm_offset_pvs
+            saveState.bpm_offset_pv_suffixes = bpm_offset_pv_suffixes
+            saveState.bpm_offset_fields      = bpm_offset_fields
+            saveState.bpm_names              = bpm_names
+        bpm_offsets = np.array(
+            [d.real if d.ok else np.nan
+             for d in ap.caget(bpm_offset_pvs, throw=False)]).reshape(
+                 (len(bpm_offset_pv_suffixes), -1)).T
+        grp.create_dataset('bpm_offsets', data=bpm_offsets, compression='gzip')
+        grp['bpm_offsets'].attrs['fields']      = bpm_offset_fields
+        grp['bpm_offsets'].attrs['pv_suffixes'] = bpm_offset_pv_suffixes
+        grp['bpm_offsets'].attrs['bpm_names']   = bpm_names
+
     grp.attrs["completed"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
     fid.close()
     return groupName
