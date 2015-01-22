@@ -316,10 +316,17 @@ def putBackground(ID, **kwargs):
     phaseMin, phaseMax, phaseStep, phaseTol = \
         kwargs.get("phase",  _params[ID.name].get("phase", (None, None, None, None)))
     zeroPhase = 0.0
-    timeout = kwargs.get("timeout", 150)
-    throw   = kwargs.get("throw", True)
-    unitsys = kwargs.get("unitsys", 'phy')
-    verbose = kwargs.get("verbose", 0)
+    timeout     = kwargs.get("timeout", 150)
+    throw       = kwargs.get("throw", True)
+    unitsys     = kwargs.get("unitsys", 'phy')
+    verbose     = kwargs.get("verbose", 0)
+    bkg_trim_sp = kwargs.get("bkg_trim_sp", None)
+
+    if bkg_trim_sp is None:
+        bkg_trim_sp = [0.0]*len(ID.cch)
+    else:
+        if len(bkg_trim_sp) != len(ID.cch):
+            raise ValueError('Length of "bkg_trim_sp" must be {0:d}.'.format(len(ID.cch)))
 
     flds = ID.fields()
     parList = []
@@ -330,9 +337,9 @@ def putBackground(ID, **kwargs):
 
     if putPar(ID, parList, timeout=timeout,
               throw=throw, unitsys=unitsys, verbose=verbose):
-        # put correcting coils to zeros
-        for i in range(len(ID.cch)):
-            ID.put('cch'+str(i), 0.0, unitsys=None)
+        # put correcting coils to specified background values
+        for i, v in enumerate(bkg_trim_sp):
+            ID.put('cch'+str(i), v, unitsys=None)
         return True
     else:
         return False
