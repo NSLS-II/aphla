@@ -197,6 +197,15 @@ def createParList(ID, parScale):
     return parameter list for communicating with hardware, table for data
     archive
     """
+    # Make sure that "gap" specification (if exists) comes at the end.
+    # This is important since, for example, adjusting the gap first and then
+    # adjusting the phase would may well result in an unintentional gap change
+    # due to the associated magnetic force change.
+    fields = [fld for fld, _ in parScale]
+    if 'gap' in fields:
+        gap_index = fields.index('gap')
+        gap_scale = parScale.pop(gap_index)
+        parScale.append(gap_scale)
     nlist,vlist,tlist = [],[],[] #name, value and tolerance list
     for fld, scale in parScale:
         if not _params[ID.name].get(fld, None): continue
@@ -209,6 +218,9 @@ def createParList(ID, parScale):
                 raise RuntimeError('negative boundary can not be spaced Logarithmically')
             else:
                 vlist.append(list(np.logspace(np.log10(vmin),np.log10(vmax),int(vstep))))
+        elif not isinstance(scale, (str, unicode)):
+            # "scale" is a user-specified array for the parameter
+            vlist.append(list(scale))
         else:
             raise RuntimeError('unknown spaced pattern: %s'%p[1])
         tlist.append(vtol)
@@ -220,7 +232,7 @@ def createParList(ID, parScale):
             tmp.append([n,v[i],tlist[i]])
         parList.append(tmp)
     valueList = itertools.product(*vlist)
-    table = np.array([vi for vi in valueList])
+    table = [vi for vi in valueList]
     return parList, nlist, table
 
 
