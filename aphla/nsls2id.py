@@ -153,7 +153,7 @@ def putPar(ID, parList, **kwargs):
     agree = True
     for par in parList:
         ID.put(par[0], par[1], timeout=timeout, unitsys=unitsys, trig=1)
-        p0 = ID.get(par[0], unitsys=unitsys)
+        p0 = ID.get(par[0], unitsys=unitsys, handle="readback")
         if abs(p0-par[1]) <= par[2]:
             continue
         # error handling
