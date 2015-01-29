@@ -160,24 +160,48 @@ def putPar(ID, parList, **kwargs):
     for par in parList:
         t0 = datetime.now()
         agree = False
-        ID.put(par[0], par[1], timeout=timeout, unitsys=unitsys, trig=1)
-        p0 = ID.get(par[0], unitsys=unitsys)
+        fld, target, tol = par[:3]
+
+        p_init = ID.get(fld, unitsys=unitsys)
+        if np.abs(p_init - target) < tol:
+            print ('Target SP for "{0}" within specified tolerance. No "put" '
+                   'will be performed.').format(fld)
+            continue
+
+        nMaxReput   = 3
+        put_counter = 0
+
+        ID.put(fld, target, timeout=timeout, unitsys=unitsys, trig=1)
+        p_now = ID.get(fld, unitsys=unitsys)
         while True:
-            if abs(p0-par[1]) < par[2]:
+            if abs(p_now-target) < tol:
                 agree = True
                 break
             if (datetime.now() - t0).total_seconds() > timeout:
                 break
             time.sleep(2)
-            p0 = ID.get(par[0], unitsys=unitsys)
+            p_now = ID.get(fld, unitsys=unitsys)
+
+            if (p_now-p_init) < tol:
+                if put_counter >= nMaxReput:
+                    print ('* Too many "put" failures for "{0}" change. Something '
+                           'is wrong with "{0}" control. Aborting now.').format(fld)
+                    break
+                print ('* Apparently previous "put" did not start the '
+                       '"{0}" change.').format(fld)
+                print 'Requesting again for the "{0}" change.'.format(fld)
+                time.sleep(3) # wait extra before re-put
+                ID.put(fld, target, timeout=timeout, unitsys=unitsys, trig=1)
+                put_counter += 1
+
         if agree:
             continue
 
         # error handling
         msg = 'Target SP = {0:.9g}, Current RB = {1:.9g}, Tol = {2:.9g}'.\
-                format(par[1], p0, par[2])
+                format(target, p_now, tol)
         if verbose:
-            print 'For "{0}" of {1}: {2}'.format(par[0], ID.name, msg)
+            print 'For "{0}" of {1}: {2}'.format(fld, ID.name, msg)
         if throw and not agree:
             raise RuntimeError('Failed to set device within tolerance: '+ msg)
         elif not agree:
