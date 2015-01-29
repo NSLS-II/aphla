@@ -621,9 +621,21 @@ def saveState(idobj, output, iiter,
         grp['bpm_offsets'].attrs['pv_suffixes'] = bpm_offset_pv_suffixes
         grp['bpm_offsets'].attrs['bpm_names']   = bpm_names
 
-    grp.attrs["completed"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
+    grp.attrs["state_saved"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
     fid.close()
     return groupName
+
+def recordMeasCompletion(h5filepath, IDName, groupName):
+    """
+    Mark the HDF5 group /{IDName}/{groupName}/ as an iteration for which all
+    the user-requested measurements have been successfully completed.
+    """
+
+    fid = h5py.File(h5filepath)
+    grp = fid[IDName][groupName]
+    t1 = datetime.now()
+    grp.attrs['meas_completed'] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
+    fid.close()
 
 
 def virtKicks2FldInt(virtK1, virtK2, idLen, idKickOffset1, idKickOffset2, E_GeV):
