@@ -11,6 +11,7 @@ import re
 import h5py
 import time
 from datetime import datetime
+from copy import deepcopy
 
 _params = {
     "dw100g1c08u":
@@ -114,6 +115,8 @@ _params = {
          "Tmin": 0.2, # hour
          "timeout": 180, },
     }
+
+_default_params = deepcopy(_params)
 
 def getBrho(E_GeV):
     """
@@ -221,6 +224,13 @@ def createParList(ID, parScale):
         elif not isinstance(scale, (str, unicode)):
             # "scale" is a user-specified array for the parameter
             vlist.append(list(scale))
+            if fld == 'gap':
+                # Reset the background "gap" to be the max of use-specified gap array
+                _params[ID.name]['background'][fld] = np.max(scale)
+                # Reset the "gap" in _params
+                temp_gap = (np.min(scale), np.max(scale),
+                            _params[ID.name]['gap'][2], _params[ID.name]['gap'][3])
+                _params[ID.name]['gap'] = temp_gap
         else:
             raise RuntimeError('unknown spaced pattern: %s'%p[1])
         tlist.append(vtol)
@@ -234,6 +244,11 @@ def createParList(ID, parScale):
     valueList = itertools.product(*vlist)
     table = [vi for vi in valueList]
     return parList, nlist, table
+
+def restoreDefaultParams():
+    """"""
+
+    _params = deepcopy(_default_params)
 
 
 def putParHardCheck(ID, parList, timeout=30, throw=True, unitsys='phy'):
@@ -327,6 +342,11 @@ def putBackground(ID, **kwargs):
     """
     gapMin, gapMax, gapStep, gapTol = kwargs.get("gap",
                                                  _params[ID.name]["gap"])
+    # Reset the "gap" in _params['background']
+    _params[ID.name]['background']['gap'] = gapMax
+    # Reset the "gap" in _params
+    _params[ID.name]['gap'] = (gapMin, gapMax, gapStep, gapTol)
+
     phaseMin, phaseMax, phaseStep, phaseTol = \
         kwargs.get("phase",  _params[ID.name].get("phase", (None, None, None, None)))
     zeroPhase = 0.0
