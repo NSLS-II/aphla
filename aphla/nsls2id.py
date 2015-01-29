@@ -738,16 +738,23 @@ def getCompletedIterIndexes(ID_filepath):
 
     completed_iter_indexes = []
     for k in grp.keys():
-        if k.startswith('iter_') and grp[k].attrs.has_key('completed'):
-            completed_iter_indexes.append(grp[k].attrs['iteration'].value)
+        if k.startswith('iter_'):
+            if 'meas_completed' in grp[k].attrs.keys():
+                completed_iter_indexes.append(grp[k].attrs['iter'])
+            elif 'completed' in grp[k].attrs.keys(): # for backward compatibility
+                try:
+                    completed_iter_indexes.append(grp[k].attrs['iter'])
+                except: # for backward compatibility
+                    completed_iter_indexes.append(grp[k].attrs['iteration'])
 
     f.close()
 
     if completed_iter_indexes != []:
-        if not np.all(np.diff(completed_iter_indexes) == 1):
-            raise RuntimeError(
-                'List of completed iteration indexes has some missing indexes.')
-        if np.min(completed_iter_indexes) != 0:
-            raise RuntimeError('List of completed iteration indexes does not start from 0.')
+        completed_iter_indexes = np.unique(completed_iter_indexes).tolist()
+        #if not np.all(np.diff(completed_iter_indexes) == 1):
+            #raise RuntimeError(
+                #'List of completed iteration indexes has some missing indexes.')
+        #if np.min(completed_iter_indexes) != 0:
+            #raise RuntimeError('List of completed iteration indexes does not start from 0.')
 
     return completed_iter_indexes
