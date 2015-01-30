@@ -22,6 +22,7 @@ from ..resource import getResource
 from .. import catools
 
 import os
+import time
 import glob
 import re
 from pkg_resources import resource_string, resource_exists, resource_filename
@@ -58,13 +59,13 @@ HLA_DEBUG      = int(os.environ.get('APHLA_DEBUG', 0))
 # the properties used for initializing Element are different than
 # ChannelFinderAgent (CFS or SQlite). This needs a re-map.
 # convert from CFS property to Element property
-_cf_map = {'elemName': 'name', 
-           'elemField': 'field', 
+_cf_map = {'elemName': 'name',
+           'elemField': 'field',
            'devName': 'devname',
            'elemType': 'family',
-           'elemGroups': 'groups', 
+           'elemGroups': 'groups',
            'elemHandle': 'handle',
-           'elemIndex': 'index', 
+           'elemIndex': 'index',
            'elemPosition': 'se',
            'elemLength': 'length',
            'system': 'system'
@@ -92,10 +93,10 @@ def load_v1(machine, submachines = "*", **kwargs):
     use_cache: bool. default False. use cache
     save_cache: bool. default False, save cache
     """
-    
+
     use_cache = kwargs.get('use_cache', False)
     save_cache = kwargs.get('save_cache', False)
-    
+
     if use_cache:
         try:
             loadCache(machine)
@@ -106,13 +107,13 @@ def load_v1(machine, submachines = "*", **kwargs):
         else:
             # Loading from cache was successful.
             return
-        
+
     #importlib.import_module(machine, 'machines')
     _logger.info("importing '%s'" % machine)
     m = __import__(machine, globals(), locals(), [], -1)
     lats, lat = m.init_submachines(machine, submachines, **kwargs)
     # update machine name for each lattice
-    
+
     global _lat, _lattice_dict
     _lattice_dict.update(lats)
     _lat = lat
@@ -122,7 +123,7 @@ def load_v1(machine, submachines = "*", **kwargs):
         selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
                                  if _lat == v][0]
         saveCache(machine, _lattice_dict, selected_lattice_name)
-        
+
 def _findMachinePath(machine):
     # if machine is an abs path
     _logger.info("trying abs path '%s'" % machine)
@@ -158,7 +159,7 @@ def load(machine, submachine = "*", **kwargs):
 
     This machine can be a path to config dir.
     """
-    
+
     global _lattice_dict, _lat
 
     lat_dict, lat0 = {}, None
@@ -178,7 +179,7 @@ def load(machine, submachine = "*", **kwargs):
         else:
             # Loading from cache was successful.
             return
-        
+
     #importlib.import_module(machine, 'machines')
     machdir, machname = _findMachinePath(machine)
     if verbose:
@@ -224,7 +225,7 @@ def load(machine, submachine = "*", **kwargs):
         accsqlite = os.path.join(machdir, accstruct)
         if re.match(r"https?://.*", accstruct, re.I):
             _logger.info("using CFS '%s' for '%s'" % (accstruct, msect))
-            #cfa.downloadCfs(accstruct, property=[('elemName', '*'), 
+            #cfa.downloadCfs(accstruct, property=[('elemName', '*'),
             #                                     ('iocName', '*')],
             #                tagName=acctag)
             cfa.downloadCfs(accstruct, property=[('elemName', '*'),], tagName=acctag)
@@ -250,11 +251,11 @@ def load(machine, submachine = "*", **kwargs):
         lat.machdir = machdir
         if d.get("archive_pvs", None):
             lat.arpvs = os.path.join(machdir, d["archive_pvs"])
-        lat.OUTPUT_DIR = d.get("output_dir", 
+        lat.OUTPUT_DIR = d.get("output_dir",
                                os.path.join(HLA_OUTPUT_DIR, msect))
 
         uconvfile = d.get("unit_conversion", None)
-        if uconvfile is not None: 
+        if uconvfile is not None:
             _logger.info("loading unit conversion '%s'" % uconvfile)
             loadUnitConversion(lat, machdir, uconvfile.split(", "))
 
@@ -287,7 +288,7 @@ def load(machine, submachine = "*", **kwargs):
                 len(lat.getElementList('BPM')), len(lat.getElementList('COR')),
                 len(lat.getElementList('QUAD')),
                 len(lat.getElementList('SEXT')))
-        
+
     # set the default submachine, if no, use the first one
     lat0 = lat_dict.get(accdefault, None)
     if lat0 is None and len(lat_dict) > 0:
@@ -295,7 +296,7 @@ def load(machine, submachine = "*", **kwargs):
                       "use the first available one '%s'" % k)
         lat0 = lat_dict[sorted(lat_dict.keys())[0]]
 
-    if lat0 is None: 
+    if lat0 is None:
         raise RuntimeError("NO accelerator structures available")
 
     _lat = lat0
@@ -311,15 +312,73 @@ def load(machine, submachine = "*", **kwargs):
     if return_lattices:
         return lat0, lat_dict
 
+def loadfast(machine, submachine = "*"):
+    """
+    :author: Yoshtieru Hidaka <yhidaka@bnl.gov>
+    """
+
+    machine_folderpath = os.path.join(HLA_CONFIG_DIR, machine)
+
+    check_filename_ext_list = [
+        '*.sqlite', '*.py', '*.ini', '*.hdf5',]
+    check_filepaths = sum(
+        [glob.glob(os.path.join(machine_folderpath, pattern))
+         for pattern in check_filename_ext_list], [])
+
+    current_timestamp = time.time()
+
+    mod_timestamps = [os.path.getmtime(fp) for fp in check_filepaths]
+
+    cache_filepath = os.path.join(_home_hla, machine+'_lattices.cpkl')
+
+    if os.path.exists(cache_filepath):
+        cache_file_timestamp = os.path.getmtime(cache_filepath)
+
+        # If the cache file is more than 24 hours old, force cache update.
+        if (current_timestamp - cache_file_timestamp) >= 24.0*60.0*60.0:
+            update_cache = True
+            print ('* The lattice cache file for the machine "{0}" is more than '
+                   '24 hours old.').format(machine)
+
+        # If any of the aphla database files have a timestamp later
+        # than that of the cache file, force cache update
+        elif np.any(np.array(mod_timestamps) - cache_file_timestamp > 0.0):
+            update_cache = True
+            print ('* Some of the database files related to the machine "{0}" '
+                   'are newer than the lattice cache file.').format(machine)
+
+        else:
+            update_cache = False
+    else:
+        print ('* The lattice cache file for the machine "{0}" does not '
+               'exist.').format(machine)
+        update_cache = True
+
+    if update_cache:
+        print ('* Auto-updating the lattice cache file for the '
+               'machine "{0}"...').format(machine)
+        load(machine, use_cache=False, save_cache=True)
+        print '* Finished updating the cache file.'
+    else:
+        load(machine, use_cache=True, save_cache=False)
+
+    try:
+        use(submachine)
+    except:
+        pass
 
 def loadCache(machine_name):
-    """load the cached machine"""
+    """
+    load the cached machine
+
+    :author: Yoshtieru Hidaka <yhidaka@bnl.gov>
+    """
     global _lat, _lattice_dict
 
     cache_folderpath = _home_hla
     cache_filepath = os.path.join(cache_folderpath,
                                   machine_name+'_lattices.cpkl')
-    
+
     print 'Loading cached lattice from {0:s}...'.format(cache_filepath)
 
     with open(cache_filepath,'rb') as f:
@@ -329,10 +388,14 @@ def loadCache(machine_name):
     print 'Finished loading cached lattice.'
 
     _lat = _lattice_dict[selected_lattice_name]
-        
+
 
 def saveCache(machine_name, lattice_dict, selected_lattice_name):
-    """save machine as cache"""
+    """
+    save machine as cache
+
+    :author: Yoshtieru Hidaka <yhidaka@bnl.gov>
+    """
 
     cache_folderpath = _home_hla
     if not os.path.exists(cache_folderpath):
@@ -349,11 +412,11 @@ def saveChannelFinderDb(dst, url = None):
     Parameters
     -----------
     url : str. channel finder URL, default use environment *APHLA_CFS_URL*
-    dst : str. destination db filename. 
+    dst : str. destination db filename.
     """
     cfa = ChannelFinderAgent()
     if url is None: url = os.environ.get('APHLA_CFS_URL', None)
-    if url is None: 
+    if url is None:
         raise RuntimeError("no URL defined for downloading")
     cfa.downloadCfs(url, property=[
                 ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
@@ -431,14 +494,14 @@ def findCfaConfig(srcname, machine, submachines):
         #        ('hostName', '*'), ('iocName', '*')], tagName='aphla.sys.*')
         cfa.downloadCfs(HLA_CFS_URL, tagName='aphla.sys.*')
     elif resource_exists(__name__, os.path.join(machine, srcname + '.csv')):
-        name = resource_filename(__name__, os.path.join(machine, 
+        name = resource_filename(__name__, os.path.join(machine,
                                                         srcname + '.csv'))
         #src_pkg_csv = conf.filename(cfs_filename)
         msg = "Creating lattice from '%s'" % name
         _logger.info(msg)
         cfa.importCsv(name)
     elif resource_exists(__name__, os.path.join(machine, srcname + '.sqlite')):
-        name = resource_filename(__name__, os.path.join(machine, 
+        name = resource_filename(__name__, os.path.join(machine,
                                                         srcname + '.sqlite'))
         msg = "Creating lattice from '%s'" % name
         _logger.info(msg)
@@ -451,7 +514,7 @@ def findCfaConfig(srcname, machine, submachines):
 
     return cfa
 
-def createLattice(latname, pvrec, systag, src = 'channelfinder', 
+def createLattice(latname, pvrec, systag, src = 'channelfinder',
                   vbpm = True, vcor = True):
     """
     create a lattice from channel finder data
@@ -462,7 +525,7 @@ def createLattice(latname, pvrec, systag, src = 'channelfinder',
     pvrec: list of pv records `(pv, property dict, list of tags)`
     systag: process records which has this systag. e.g. `aphla.sys.SR`
     src: source URL or filename of this lattice
-    
+
     Returns
     ---------
     lat : the :class:`~aphla.lattice.Lattice` type.
@@ -476,7 +539,7 @@ def createLattice(latname, pvrec, systag, src = 'channelfinder',
         _logger.debug("processing {0}".format(rec))
         # skip if there's no properties.
         if rec[1] is None: continue
-        if rec[0] and systag not in rec[2]: 
+        if rec[0] and systag not in rec[2]:
             _logger.debug("%s is not tagged '%s'" % (rec[0], systag))
             continue
         #if rec[1].get("system", "") != latname: continue
@@ -504,23 +567,19 @@ def createLattice(latname, pvrec, systag, src = 'channelfinder',
             except:
                 _logger.error("Error: creating element '{0}' with '{1}'".format(name, prpt))
                 raise
-            
+
             _logger.debug("created new element: '%s'" % name)
             #print "inserting:", elem
             #lat.appendElement(elem)
             lat.insertElement(elem)
         else:
             _logger.debug("using existed element %s" % (name,))
-        # 
+        #
         if HLA_VFAMILY in prpt.get('group', []): elem.virtual = 1
 
         handle = prpt.get('handle', '').lower()
         if handle == 'get': prpt['handle'] = 'readback'
         elif handle == 'put': prpt['handle'] = 'setpoint'
-
-        handle = prpt.get('handle', '').lower()
-        if handle == 'get': prpt['handle'] = 'READBACK'
-        elif handle == 'put': prpt['handle'] = 'SETPOINT'
 
         pv = rec[0]
         if pv: elem.updatePvRecord(pv, prpt, rec[2])
@@ -530,13 +589,13 @@ def createLattice(latname, pvrec, systag, src = 'channelfinder',
     # !IMPORTANT! since Channel finder has no order, but lat class has
     lat.sortElements()
     lat.circumference = lat[-1].se if lat.size() > 0 else 0.0
-    
+
     _logger.debug("mode {0}".format(lat.mode))
     _logger.info("'%s' has %d elements" % (lat.name, lat.size()))
     for g in sorted(lat._group.keys()):
         _logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
-    
+
     return lat
 
 
@@ -615,6 +674,6 @@ def lattices():
 def machines():
     """all available machines"""
     from pkg_resources import resource_listdir, resource_isdir
-    return [d for d in resource_listdir(__name__, ".") 
+    return [d for d in resource_listdir(__name__, ".")
             if resource_isdir(__name__, d)]
 

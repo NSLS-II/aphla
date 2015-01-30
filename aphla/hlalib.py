@@ -383,8 +383,6 @@ def fput(elemfld_vals, **kwargs):
 
     # a list of (pv, spval, elem, field)
     pvl = []
-    # expand to a list
-    epsl = kwargs.pop("epsilon", None)
 
     if epsilon is None:
         epsl = [e.getEpsilon(fld) for e,fld,v in elemfld_vals]
@@ -1219,27 +1217,35 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
     ::
         >>> elemflds = [("COR", ("x", "y")), ("QUAD", ("b1",))]
         >>> saveLattice("snapshot.hdf5", lat, elemflds, "Good one")
+
+    the duplicate PVs will save only one instance.
     """
     # save the lattice
     verbose = kwargs.get("verbose", 0)
 
+    pvstat = {}
     pvs, pvspl = [], []
     for elfam,flds in elemflds:
         el = lat.getElementList(elfam, virtual=False)
         for fld in flds:
-            pvs.extend(
-                reduce(lambda a,b: a+b, [e.pv(field=fld) for e in el]))
-            pvspl.extend(
-                reduce(lambda a,b: a+b,
-                       [e.pv(field=fld, handle="setpoint") for e in el]))
-
+            fpvs = reduce(lambda a,b: a+b, [e.pv(field=fld) for e in el])
+            pvs.extend(fpvs)
+            sppvs = reduce(lambda a,b: a+b,
+                           [e.pv(field=fld, handle="setpoint") for e in el])
+            pvspl.extend(sppvs)
+            pvstat[(elfam, fld)] = (len(fpvs), len(sppvs))
+            if verbose:
+                print "{0}.{1}: {2} pvs, {3} setpoint".format(
+                    elfam, fld, len(fpvs), len(sppvs))
+                
     if lat.arpvs is not None:
         for s in open(lat.arpvs, 'r').readlines():
             pv = s.strip()
             if pv in pvs: continue
             pvs.append(pv)
 
-    nlive, ndead = savePvData(output, pvs, group=lat.name, notes=notes)
+    nlive, ndead = savePvData(output, pvs,
+                              group=lat.name, notes=notes, **kwargs)
 
     import h5py
     h5f = h5py.File(output)
@@ -1247,6 +1253,8 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
     # add elem field information
     grp.attrs["_query_"] = [
       "%s(%s)" % (elfam, ",".join(flds)) for elfam,flds in elemflds]
+    for k,v in pvstat.items():
+        grp.attrs["%s_%s_pvs" % (k[0], k[1])] = v
     #
     # save the query command for each PV (overhead)
     #for elfam,flds in elemflds:
@@ -1263,15 +1271,24 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
     h5f.close()
 
     if verbose > 0:
-        print "PV dead: %d, live: %d" % (nlive, ndead)
+        print "--------"
+        print "PVs: live= %d, dead= %d" % (nlive, ndead)
     return nlive, ndead
 
 
-def putLattice(h5fname, elemflds, **kwargs):
+def putLattice(h5fname, **kwargs):
     """
+    elemflds : list of (elementfam, list_of_fields), e.g. [("COR", ("x", "y"))]
+    nstep : 3, split each setpoint in steps
+    tspan : 3.0, span over tspan seconds when set magnet in several steps.
+
+    ::
+
+    >>> putLattice("sr_snapshot.hdf5", elemflds=[("COR", ("x", "y"))])
     """
     nstep = kwargs.get("nstep", 3)
     tspan = kwargs.get("tspan", 3.0)
+    elemflds = kwargs.get("elemflds", [])
 
     lat = machines._lat
     pvspl, pvs = [], []
@@ -1283,19 +1300,29 @@ def putLattice(h5fname, elemflds, **kwargs):
             pvspl.extend(
                 reduce(lambda a,b: a+b,
                        [e.pv(field=fld, handle="setpoint") for e in el]))
-    
     import h5py
-    h5f = h5py.File(output, 'r')
+    h5f = h5py.File(h5fname, 'r')
     grp = h5f[lat.name]
-    vals = [grp[pv].value for pv in pvspl]
-    dv = [(vals[j] - v) / nstep for j,v in enumerate(caget(pvspl))]
-    for i in range(nstep):
-        t0 = datetime.now()
-        vi = [vals[j] - (nstep - 1 - i)*dv[j] for j in range(len(vals))]
-        caput(pvspl, vi, timeout=tspan)
-        dt = (datetime.now() - t0).total_seconds()
-        if dt < tspan * 1.0 / nstep:
-            time.sleep(tspan * 1.0 / nstep - dt + 0.1)
+    if not pvspl:
+        print "Please select element family and fields in this snapshot:"
+        for famflds in grp.attrs.get("_query_", []):
+            m =re.match(r"([^(]+)\((.+)\)", famflds)
+            if not m:
+                print famflds
+                continue
+            print m.group(1), m.group(2).split(",")
+        #print grp.attrs.get("_query_", [])
+    else:
+        vals = [grp[pv].value for pv in pvspl]
+        dv = [(vals[j] - v) / nstep for j,v in enumerate(caget(pvspl))]
+        for i in range(nstep):
+            t0 = datetime.now()
+            vi = [vals[j] - (nstep - 1 - i)*dv[j] for j in range(len(vals))]
+            caput(pvspl, vi, timeout=tspan)
+            dt = (datetime.now() - t0).total_seconds()
+            if dt < tspan * 1.0 / nstep:
+                time.sleep(tspan * 1.0 / nstep - dt + 0.1)
+    h5f.close()
 
 
 def outputFileName(group, subgroup, create_path = True):

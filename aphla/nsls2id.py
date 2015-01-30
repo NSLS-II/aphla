@@ -9,6 +9,7 @@ import itertools
 import numpy as np
 import re
 import h5py
+import time
 from datetime import datetime
 
 _params = {
@@ -60,20 +61,22 @@ _params = {
          "Imin": 0.2, # mA
          "Tmin": 0.2, # hour
          "timeout": 180, },
-    # 
+    #
     "epu49g1c23u":
         {"unitsys": "phy",
          "gap": (11.5, 240.0, 30, 0.1),
+         "phase": (-24.6, 24.6, 11, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
-         "background": {"gap": 240.0},
+         "background": {"gap": 240.0, "phase": 0.0},
          "Imin": 0.2, # mA
          "Tmin": 0.2, # hour
          "timeout": 180, },
     "epu49g1c23d":
         {"unitsys": "phy",
          "gap": (11.5, 240.0, 30, 0.1),
+         "phase": (-24.6, 24.6, 11, 0.01),
          "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
-         "background": {"gap": 240.0},
+         "background": {"gap": 240.0, "phase": 0.0},
          "Imin": 0.2, # mA
          "Tmin": 0.2, # hour
          "timeout": 180, },
@@ -97,7 +100,7 @@ _params = {
     "ivu22g1c10c":
         {"unitsys": "phy",
          "gap": (5.0, 40.0, 30, 0.1),
-         "cch": ("cch0", "cch1", "cch2", "cch3", "cch4", "cch5"),
+         "cch": ("cch0", "cch1", "cch2", "cch3"),
          "background": {"gap": 40.0},
          "Imin": 0.2, # mA
          "Tmin": 0.2, # hour
@@ -152,19 +155,29 @@ def putPar(ID, parList, **kwargs):
 
     agree = True
     for par in parList:
+        t0 = datetime.now()
+        agree = False
         ID.put(par[0], par[1], timeout=timeout, unitsys=unitsys, trig=1)
         p0 = ID.get(par[0], unitsys=unitsys, handle="readback")
-        if abs(p0-par[1]) <= par[2]:
+        while True:
+            if abs(p0-par[1]) < par[2]:
+                agree = True
+                break
+            if (datetime.now() - t0).total_seconds() > timeout:
+                break
+            time.sleep(2)
+            p0 = ID.get(par[0], unitsys=unitsys)
+        if agree:
             continue
+
         # error handling
-        agree = False
-        if verbose:
-            print 'For "{0}" of {1}:'.format(par[0], ID.name)
-            print 'Target SP = {0:.9g}, Current RB = {1:.9g}, Tol = {2:.9g}'.\
+        msg = 'Target SP = {0:.9g}, Current RB = {1:.9g}, Tol = {2:.9g}'.\
                 format(par[1], p0, par[2])
-        if throw:
-            raise RuntimeError('Failed to set device within tolerance.')
-        else:
+        if verbose:
+            print 'For "{0}" of {1}: {2}'.format(par[0], ID.name, msg)
+        if throw and not agree:
+            raise RuntimeError('Failed to set device within tolerance: '+ msg)
+        elif not agree:
             break
     return agree
 
@@ -184,6 +197,15 @@ def createParList(ID, parScale):
     return parameter list for communicating with hardware, table for data
     archive
     """
+    # Make sure that "gap" specification (if exists) comes at the end.
+    # This is important since, for example, adjusting the gap first and then
+    # adjusting the phase would may well result in an unintentional gap change
+    # due to the associated magnetic force change.
+    fields = [fld for fld, _ in parScale]
+    if 'gap' in fields:
+        gap_index = fields.index('gap')
+        gap_scale = parScale.pop(gap_index)
+        parScale.append(gap_scale)
     nlist,vlist,tlist = [],[],[] #name, value and tolerance list
     for fld, scale in parScale:
         if not _params[ID.name].get(fld, None): continue
@@ -196,6 +218,9 @@ def createParList(ID, parScale):
                 raise RuntimeError('negative boundary can not be spaced Logarithmically')
             else:
                 vlist.append(list(np.logspace(np.log10(vmin),np.log10(vmax),int(vstep))))
+        elif not isinstance(scale, (str, unicode)):
+            # "scale" is a user-specified array for the parameter
+            vlist.append(list(scale))
         else:
             raise RuntimeError('unknown spaced pattern: %s'%p[1])
         tlist.append(vtol)
@@ -207,34 +232,34 @@ def createParList(ID, parScale):
             tmp.append([n,v[i],tlist[i]])
         parList.append(tmp)
     valueList = itertools.product(*vlist)
-    table = np.array([vi for vi in valueList])
+    table = [vi for vi in valueList]
     return parList, nlist, table
 
 
 def putParHardCheck(ID, parList, timeout=30, throw=True, unitsys='phy'):
     '''
-    Put (write) a set of parameters (list) on an ID while the hardware 
+    Put (write) a set of parameters (list) on an ID while the hardware
     itself (motor control) checks whether the target state is reached or not.
 
     ID: aphla ID instance
 
     parList: 2d parameter list in the format of [name, value, tolerance]
     [['gap',15,1e-4],['phase',12,1e-4]]
-    
+
     timeout: Maximum time the motor control should wait for each "put"
     in the unit of seconds.
-    
+
     return: True if success, otherwise throws an exception.
     '''
-    
+
     agree = True
     for par in parList:
         ID.put(par[0], par[1], timeout=timeout, unitsys=unitsys, trig=1)
         # raw unit for "gap"   = [um]
         # raw unit for "phase" = [um?]
-        
+
         p0 = ID.get(par[0], unitsys=unitsys)
-        
+
         if abs(p0-par[1]) <= par[2]: # TODO: readback & setpoint unit may be different! Check it!
             continue # print "Agree: ", p0, par[1], "eps=", par[2]
         # error handling
@@ -248,16 +273,14 @@ def putParHardCheck(ID, parList, timeout=30, throw=True, unitsys='phy'):
             break
     return agree
 
-# <codecell>
-
 def putParSoftCheck(ID, parList, timeout=30, online=False):
     '''
-    Put (write) a set of parameters (list) on an ID while this function 
+    Put (write) a set of parameters (list) on an ID while this function
     checks whether the target state is reached or not through readbacks
     for given tolerances.
 
     ID: aphla ID instance
-    
+
     parList: 2d parameter list in the format of [name, value, tolerance]
     [['gap',15,1e-4],['phase',12,1e-4]]
 
@@ -278,10 +301,10 @@ def putParSoftCheck(ID, parList, timeout=30, online=False):
         except:
             print 'Failed to set the setpoint for {0} to {1}'.format(par[0], par[1])
             raise
-        
+
         # TODO: remove hardcoding
         ap.caput("SR:C28-ID:G1{DW100:2}ManG:Go_.PROC", 1, wait=False)
-        
+
         while not converged:
             p0 = ID.get(par[0], unitsys=None)
             if abs(p0-par[1]) <= par[2]: # TODO: readback & setpoint unit may be different! Check it!
@@ -294,7 +317,7 @@ def putParSoftCheck(ID, parList, timeout=30, online=False):
             time.sleep(0.5)
         if not converged:
             raise RuntimeError("timeout at setting {0}={1} (epsilon={2})".format(par[0], par[1], par[2]))
-            
+
     return True
 
 def putBackground(ID, **kwargs):
@@ -307,10 +330,17 @@ def putBackground(ID, **kwargs):
     phaseMin, phaseMax, phaseStep, phaseTol = \
         kwargs.get("phase",  _params[ID.name].get("phase", (None, None, None, None)))
     zeroPhase = 0.0
-    timeout = kwargs.get("timeout", 150)
-    throw   = kwargs.get("throw", True)
-    unitsys = kwargs.get("unitsys", 'phy')
-    verbose = kwargs.get("verbose", 0)
+    timeout     = kwargs.get("timeout", 150)
+    throw       = kwargs.get("throw", True)
+    unitsys     = kwargs.get("unitsys", 'phy')
+    verbose     = kwargs.get("verbose", 0)
+    bkg_trim_sp = kwargs.get("bkg_trim_sp", None)
+
+    if bkg_trim_sp is None:
+        bkg_trim_sp = [0.0]*len(ID.cch)
+    else:
+        if len(bkg_trim_sp) != len(ID.cch):
+            raise ValueError('Length of "bkg_trim_sp" must be {0:d}.'.format(len(ID.cch)))
 
     flds = ID.fields()
     parList = []
@@ -321,9 +351,9 @@ def putBackground(ID, **kwargs):
 
     if putPar(ID, parList, timeout=timeout,
               throw=throw, unitsys=unitsys, verbose=verbose):
-        # put correcting coils to zeros
-        for i in range(len(ID.cch)):
-            ID.put('cch'+str(i), 0.0, unitsys=None)
+        # put correcting coils to specified background values
+        for i, v in enumerate(bkg_trim_sp):
+            ID.put('cch'+str(i), v, unitsys=None)
         return True
     else:
         return False
@@ -390,26 +420,29 @@ def switchFeedback(ID, fftable = "off"):
     val = 0 if fftable == "off" else 1
 
     if ID.name == "epu49g1c23u":
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:0}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:1}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:2}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:3}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:4}Ena-Sel", val)
-        ap.caput("SR:C23-ID:G1A{EPU:1-FF:5}Ena-Sel", val)
+        for i in range(6):
+            ap.caput("SR:C23-ID:G1A{EPU:1-FF:%d}Ena-Sel" % i, val)
+    if ID.name == "epu49g1c23d":
+        for i in range(6):
+            ap.caput("SR:C23-ID:G1A{EPU:2-FF:%d}Ena-Sel" % i, val)
     elif ID.name == "dw100g1c28u":
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:0}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:1}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:2}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:3}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:4}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:1-FF:5}Ena-Sel", val)
+        for i in range(6):
+            ap.caput("SR:C28-ID:G1{DW100:1-FF:%d}Ena-Sel" % i, val)
     elif ID.name == "dw100g1c28d":
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:0}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:1}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:2}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:3}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:4}Ena-Sel", val)
-        ap.caput("SR:C28-ID:G1{DW100:2-FF:5}Ena-Sel", val)
+        for i in range(6):
+            ap.caput("SR:C28-ID:G1{DW100:2-FF:%d}Ena-Sel" % i, val)
+    elif ID.name == "ivu20g1c03c":
+        for i in range(6):
+            ap.caput("SR:C3-ID:G1{IVU20:1-FF:%d}Ena-Sel" % i, val)
+    elif ID.name == "ivu21g1c05d":
+        for i in range(6):
+            ap.caput("SR:C5-ID:G1{IVU21:1-FF:%d}Ena-Sel" % i, val)
+    elif ID.name == "ivu22g1c10c":
+        for i in range(4):
+            ap.caput("SR:C10-ID:G1{IVU22:1-FF:%d}Ena-Sel" % i, val)
+    elif ID.name == "ivu20g1c11c":
+        for i in range(6):
+            ap.caput("SR:C11-ID:G1{IVU20:1-FF:%d}Ena-Sel" % i, val)
 
     # fast/slow co
     # all ID feed forward
@@ -422,14 +455,19 @@ def initFile(ID, fieldList, parTable):
     grp = fid.require_group(ID.name)
     grp.attrs["__FORMAT__"] = 1
     # setup parameters
+    unitsymbs = [
+        ID.getUnit(f, unitsys=_params[ID.name]['unitsys'], handle='setpoint')
+        for f in fieldList]
     subg = grp.require_group("parameters")
     if parTable and fieldList:
         subg["scanTable"] = parTable #
-        subg["scanTable"].attrs["columns"] = fieldList
+        subg["scanTable"].attrs["columns"]   = fieldList
+        subg["scanTable"].attrs["unitsymbs"] = unitsymbs
     bkg = _params[ID.name]["background"]
     # like one row of scanTable, same columns
     subg["background"] = [bkg[fld] for fld in fieldList]
-    subg["background"].attrs["columns"] = fieldList
+    subg["background"].attrs["columns"]   = fieldList
+    subg["background"].attrs["unitsymbs"] = unitsymbs
     # timestamp ISO "2007-03-01 13:00:00"
     subg["minCurrent"] = _params[ID.name]["Imin"]
     subg["minCurrent"].attrs["unit"] = "mA"
@@ -463,8 +501,9 @@ def saveToDB(fileName):
 
 
 def saveState(idobj, output, iiter,
-              parnames = ["gap"], background=None, extdata={}):
+              parnames=None, background=None, extdata={}):
     """
+    parnames - list of extra fields of idobj to be saved.
     background - the group name for its last background.
     extdata - extra data dictionary.
 
@@ -472,7 +511,7 @@ def saveState(idobj, output, iiter,
     """
     t1 = datetime.now()
     prefix = "background" if background is None else "iter"
-        
+
     # create background subgroup with index
     fid = h5py.File(output)
     iterindex = max([int(g[len(prefix)+1:]) for g in fid[idobj.name].keys()
@@ -484,13 +523,60 @@ def saveState(idobj, output, iiter,
     tau, I = ap.getLifetimeCurrent()
     grp["lifetime"] = tau
     grp["current"] = I
+    if parnames is None:
+        parnames = ['gap', 'phase', 'mode']
+    else:
+        parnames = ['gap', 'phase', 'mode'] + list(parnames)
+    parnames = np.unique(parnames).tolist()
+    fields = idobj.fields()
     for par in parnames:
-        grp[par] = idobj.get(par, unitsys=None)
+        if par in fields:
+            grp[par] = idobj.get(par, unitsys=None)
+            grp[par].attrs['unitsymb'] = idobj.getUnit(par, unitsys=None)
     for k,v in extdata.items():
         grp[k] = v
     grp.attrs["iter"] = iiter
     if background:
         grp.attrs["background"] = background
+    else:
+        # Save current ID trim setpoints
+        elemflds = createCorrectorField(idobj)
+        _, flds = zip(*elemflds)
+        trim_sps = [idobj.get(ch, unitsys=None, handle='setpoint') for ch in flds]
+        grp['trim_sp'] = trim_sps
+        grp['trim_sp'].attrs['fields'] = flds
+
+        # Save current BPM offsets
+        try:
+            bpm_offset_pvs         = saveState.bpm_offset_pvs
+            bpm_offset_pv_suffixes = saveState.bpm_offset_pv_suffixes
+            bpm_offset_fields      = saveState.bpm_offset_fields
+            bpm_names              = saveState.bpm_names
+        except AttributeError:
+            bpms = ap.getElements('p[uhlm]*')
+            bpm_names = [b.name for b in bpms]
+            bpm_pv_prefixes = [b.pv(field='xbba')[0].replace('BbaXOff-SP', '')
+                               for b in bpms]
+            bpm_offset_fields = ['xbba', 'ybba', 'xref1', 'yref1', 'xref2', 'yref2']
+            bpm_offset_pv_suffixes = [
+                bpms[0].pv(field=f)[0].replace(bpm_pv_prefixes[0], '')
+                for f in bpm_offset_fields]
+            bpm_offset_pvs = []
+            for suf in bpm_offset_pv_suffixes:
+                bpm_offset_pvs += [prefix+suf for prefix in bpm_pv_prefixes]
+            saveState.bpm_offset_pvs         = bpm_offset_pvs
+            saveState.bpm_offset_pv_suffixes = bpm_offset_pv_suffixes
+            saveState.bpm_offset_fields      = bpm_offset_fields
+            saveState.bpm_names              = bpm_names
+        bpm_offsets = np.array(
+            [d.real if d.ok else np.nan
+             for d in ap.caget(bpm_offset_pvs, throw=False)]).reshape(
+                 (len(bpm_offset_pv_suffixes), -1)).T
+        grp.create_dataset('bpm_offsets', data=bpm_offsets, compression='gzip')
+        grp['bpm_offsets'].attrs['fields']      = bpm_offset_fields
+        grp['bpm_offsets'].attrs['pv_suffixes'] = bpm_offset_pv_suffixes
+        grp['bpm_offsets'].attrs['bpm_names']   = bpm_names
+
     grp.attrs["completed"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
     fid.close()
     return groupName
@@ -584,206 +670,6 @@ def fldInt2VirtKicks(I1, I2, idLen, idKickOffset1, idKickOffset2, E_GeV):
 
     return virtK1, virtK2
 
-
-def save1DFeedFowardTable(filepath, table, fmt='%.16e'):
-    """
-    Save a valid 1-D Stepped Feedforward table (NSLS-II format) to a text file.
-    """
-
-    np.savetxt(filepath, table, fmt=fmt, delimiter=', ', newline='\n')
-
-def get1DFeedForwardTable(centers, half_widths, dI_array, 
-                          I0_array=None, fmt='%.16e'):
-    """
-    Get a valid 1-D Stepped Feedforward table (NSLS-II format)
-    """
-    
-    if I0_array is None:
-        I_array = dI_array
-    else:
-        I_array = I0_array + dI_array
-
-    table = np.hstack((np.array(centers).reshape((-1,1)),
-                       np.array(half_widths).reshape((-1,1)),
-                       I_array))
-
-    return table    
-    
-def getZeroed1DFeedForwardTable(parDict, nIDCor):
-    """
-    Get a valid 1-D Stepped Feedforward table (NSLS-II format) with
-    all ID correctors being set to zero for all the entire range of
-    ID property specified in "parDict".
-    """
-
-    try:
-        scanVectors = parDict['vectors']
-        bkgList = parDict['bkgTable'].flatten().tolist()
-        
-        assert len(scanVectors) == len(bkgList) == 1
-    except:
-        print 'len(scanVectors) = {0:d}'.format(len(scanVectors))
-        print 'len(bkgList) = {0:d}'.format(len(bkgList))
-        print 'This function is only for 1D feedforward table.'
-        raise RuntimeError(('Lengths of "scanVectors" and "bkgList" must be 1.'))
-
-    array = scanVectors[0] + [bkgList[0]]
-    minVal, maxVal = np.min(array), np.max(array)
-
-    centers = [(minVal + maxVal) / 2.0]
-    half_widths = [(maxVal - minVal) / 2.0 * 1.01] # Extra margin of 1% added
-    dI_array = np.array([0.0]*nIDCor).reshape((1,-1))
-    
-    return get1DFeedForwardTable(centers, half_widths, dI_array, 
-                                 I0_array=None, fmt='%.16e')
-        
-
-def create1DFeedForwardTable(centers, half_widths, dI_array, I0_array=None):
-    """
-    Create a valid 1-D Stepped Feedforward table (NSLS-II format)
-    """
-
-    if I0_array is None:
-        I_array = dI_array
-    else:
-        I_array = I0_array + dI_array
-
-    table = np.hstack((np.array(centers).reshape((-1,1)),
-                       np.array(half_widths).reshape((-1,1)),
-                       I_array))
-
-    return table
-
-def calc1DFeedForwardColumns(
-    ID_filepath, n_interp_pts=None, interp_step_size=None, step_size_unit=None,
-    cor_inds_ignored=None, bpm_inds_ignored=None, nsv=None):
-    """
-    """
-
-    # TODO: Make sure all the units are correct in the generated table
-    # Gap & interval are in microns => [um]
-    # Currents in ppm of 10 Amps => [10uA]
-
-    compIterInds = getCompletedIterIndexes(ID_filepath)
-    nCompletedIter = len(compIterInds)
-
-    f = h5py.File(ID_filepath, 'r')
-
-    ID_name = f.keys()[0]
-    grp = f[ID_name]
-
-    meas_state_1d_array = grp['parameters']['scanTable'].value
-    state_unitsymb = grp['parameters']['scanTable'].attrs['unit'] # TODO: need unit conversion
-    nIter, ndim = meas_state_1d_array.shape
-    if ndim != 1:
-        f.close()
-        raise NotImplementedError('Only 1-D scan has been implemented.')
-    if nCompletedIter != nIter:
-        print '# of completed scan states:', nCompletedIter
-        print '# of requested scan states:', nIter
-        f.close()
-        raise RuntimeError('You have not scanned all specified states.')
-    meas_state_1d_array = meas_state_1d_array.flatten()
-    state_min = np.min(meas_state_1d_array)
-    state_max = np.max(meas_state_1d_array)
-
-    if (n_interp_pts is not None) and (interp_step_size is not None):
-        f.close()
-        raise ValueError(('You can only specify either one of "n_interp_pts" '
-                          'or "interp_step_size", not both.'))
-    elif n_interp_pts is not None:
-        interp_state_1d_array = np.linspace(state_min, state_max, n_interp_pts)
-    elif interp_step_size is not None:
-        interp_state_1d_array = np.arange(state_min, state_max, interp_step_size)
-        if interp_state_1d_array[-1] != state_max:
-            interp_state_1d_array = np.array(interp_state_1d_array.tolist()+
-                                             [state_max])
-    else:
-        interp_state_1d_array = meas_state_1d_array
-
-    M_list        = [None]*nIter
-    diff_orb_list = [None]*nIter
-    for k in grp.keys():
-        if k.startswith('iter_'):
-
-            iIter = grp[k].attrs['iteration']
-
-            M_list[iIter] = grp[k]['orm']['m'].value
-
-            orb = grp[k]['orbit'].value
-
-            bkgGroup = grp[k].attrs['background']
-            orb0 = grp[bkgGroup]['orbit'].value[:,:-1] # Ignore s-pos column
-
-            diff_orb_list[iIter] = orb - orb0
-
-
-    f.close()
-
-    interp_state_1d_array = np.sort(interp_state_1d_array)
-
-    center_list = interp_state_1d_array.tolist()
-
-    half_width_list = (np.diff(interp_state_1d_array)/2.0).tolist()
-    half_width_list.append(center_list[-1]-center_list[-2]-half_width_list[-1])
-
-    dI_list = []
-    for M, diff_orb in zip(M_list, diff_orb_list):
-
-        TF = np.ones(diff_orb.shape)
-        if bpm_inds_ignored is not None:
-            for i in bpm_inds_ignored:
-                TF[i,:] = 0
-        TF = TF.astype(bool)
-
-        diff_orb_trunc = diff_orb[TF].reshape((-1,2))
-
-        # Reverse sign to get desired orbit change
-        dObs = (-1.0)*diff_orb_trunc.T.flatten().reshape((-1,1))
-
-        TF = np.ones(M.shape)
-        if cor_inds_ignored is not None:
-            for i in cor_inds_ignored:
-                TF[:,i] = 0
-        if bpm_inds_ignored is not None:
-            nBPM = M.shape[0]/2
-            try:
-                assert nBPM*2 == M.shape[0]
-            except:
-                raise ValueError('Number of rows for response matrix must be 2*nBPM.')
-            for i in bpm_inds_ignored:
-                TF[i     ,:] = 0
-                TF[i+nBPM,:] = 0
-        TF = TF.astype(bool)
-
-        M_trunc = M[TF].reshape((dObs.size,-1))
-
-        U, sv, V = np.linalg.svd(M_trunc, full_matrices=0, compute_uv=1)
-
-        S_inv = np.linalg.inv(np.diag(sv))
-        if nsv is not None:
-            S_inv[nsv:, nsv:] = 0.0
-
-        dI = V.T.dot(S_inv.dot(U.T.dot(dObs))).flatten().tolist()
-
-        if cor_inds_ignored is not None:
-            for i in cor_inds_ignored:
-                # Set 0 Amp for unused correctors
-                dI.insert(i, 0.0)
-
-        dI_list.append(dI)
-
-    dI_array = np.array(dI_list)
-    nCor = dI_array.shape[1]
-    interp_dI_array = np.zeros((interp_state_1d_array.size, nCor))
-    for i in range(nCor):
-        interp_dI_array[:,i] = np.interp(
-            interp_state_1d_array, meas_state_1d_array, dI_array[:,i])
-
-    return {'centers': np.array(center_list),
-            'half_widths': np.array(half_width_list),
-            'raw_dIs': dI_array, 'interp_dIs': interp_dI_array}
-
 #----------------------------------------------------------------------
 def getCompletedIterIndexes(ID_filepath):
     """
@@ -809,16 +695,3 @@ def getCompletedIterIndexes(ID_filepath):
             raise RuntimeError('List of completed iteration indexes does not start from 0.')
 
     return completed_iter_indexes
-
-
-
-if __name__ == '__main__':
-
-    ID_filepath = '/epics/data/aphla/SR/2014_09/ID/dw100g1c08u_2014_09_24_142644.hdf5'
-
-    d = calc1DFeedForwardColumns(ID_filepath, interp_step_size=1.0,
-                                 cor_inds_ignored=[2,3],
-                                 bpm_inds_ignored=None, nsv=None)
-    table = create1DFeedForwardTable(d['centers'], d['half_widths'],
-                                     d['interp_dIs'])
-    save1DFeedFowardTable('test_ff.txt', table, fmt='%.16e')

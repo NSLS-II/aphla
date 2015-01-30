@@ -252,7 +252,7 @@ class CaAction:
         self.trace = kwargs.get('trace', False)
         self.trace_limit = 200
         self.timeout = 2
-        self.sprb_epsilon = None
+        self.sprb_epsilon = 0
 
     def __eq__(self, other):
         return self.pvrb == other.pvrb and \
@@ -594,7 +594,7 @@ class CaAction:
                 if v.is_integer(): self.pvh[i] = 1
                 else: self.pvh[i] = (self.pvlim[i][1] - self.pvlim[0])/r
         except:
-            _logger.error("error on reading PV limits {0}".format(self.pvsp[i]))
+            _logger.warn("error on reading PV limits {0}".format(self.pvsp[i]))
 
     def setStepSize(self, val, **kwargs):
         """
@@ -1110,7 +1110,7 @@ class CaElement(AbstractElement):
             self.updateProperties(properties)
 
         
-        # the default handle is 'READBACK'
+        # the default handle is 'readback'
         if properties is not None:
             elemhandle = properties.get('handle', 'readback')
             fieldfname = properties.get('field', None)
