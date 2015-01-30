@@ -72,11 +72,16 @@ class BbaBowtie:
         #self.line_segment_only = False  
         self.wait = kwargs.get("wait", 2)
 
-    def _get_orbit(self):
+    def _get_orbit(self, n = 3, sleep=0.1):
+        bl = []
+        for i in range(n):
+            bl.append(getOrbit())
+            time.sleep(sleep)
+        b = np.average(np.array(bl), axis=0)
         if self._bf == 'x':
-            return getOrbit()[:,0]
+            return b[:,0]
         elif self._bf == 'y':
-            return getOrbit()[:,1]
+            return b[:,1]
         return None
 
     def _filterLines(self, x, y, p_slope = 0.8, p_xintercept=0.9,
@@ -105,6 +110,7 @@ class BbaBowtie:
         # keep the lines with x_intercept smaller than x_intercept*sigma
         xitc = -p[-1,:]/p[-2,:]
         hist, edge = np.histogram(xitc, 10)
+        rg = np.min(xitc), np.max(xitc)
         while sum(hist) > n*p_xintercept:
             im = np.argmax(hist)
             if im < 5: rg = edge[0], edge[-2]
