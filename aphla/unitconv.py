@@ -204,7 +204,7 @@ def loadUnitConversionH5(lat, h5file, group):
 
         # integer - invertible
         uc.polarity   = v.attrs.get('polarity', 1)
-        uhandles = v.attrs.get('handle', [])
+        uhandles = v.attrs.get('handle', ["readback", "setpoint"])
 
         # find the element list
         elems = v.attrs.get('elements', [])
@@ -245,8 +245,9 @@ def loadUnitConversionH5(lat, h5file, group):
                     eobj.addAliasField(fld, realfld)
 
             _logger.info("adding unit conversion for {0}.{1}, "
-                         "from {2}[{3}] to {4}[{5}]".format(
-                    eobj.name, fld, usrcsys, usrc, udstsys, udst))
+                         "from {2}[{3}] to {4}[{5}] handles={6}".format(
+                             eobj.name, fld, usrcsys, usrc, udstsys, udst,
+                             uhandles))
             for handle in uhandles:
                 eobj.addUnitConversion(fld, uc, usrcsys, udstsys, handle=handle)
 

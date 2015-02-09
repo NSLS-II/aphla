@@ -370,8 +370,8 @@ def fput(elemfld_vals, **kwargs):
     Examples
     ---------
     >>> cors = getElements("COR")
-    >>> elemfld = [(cors[0], 'x'), (cors[0], 'y')]
-    >>> fput(elemfld, [0.0, 0.0], wait_readback = True, epsilon=[0.1, 0.1])
+    >>> elemfld = [(cors[0], 'x', 0.0), (cors[0], 'y')]
+    >>> fput(elemfld, wait_readback = True, epsilon=[0.1, 0.1])
 
     If epsilon is not provided, use system configured.
     """

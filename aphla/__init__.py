@@ -37,7 +37,7 @@ _lgfmt = logging.Formatter(
     "%(asctime)s - %(name)s [%(levelname)s]: %(message)s")
 # set null handler when logging for a library.
 _lghdl = _NullHandler()
-_lghdl.setLevel(logging.WARNING)
+_lghdl.setLevel(logging.INFO)
 _lghdl.setFormatter(_lgfmt)
 logging.getLogger('aphla').addHandler(_lghdl)
 

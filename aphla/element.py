@@ -20,6 +20,7 @@ __all__ = [ "CaElement", "merge",
             "ASCENDING", "DESCENDING", "UNSPECIFIED" ]
 
 _logger = logging.getLogger(__name__)
+#_logger.setLevel(logging.DEBUG)
 
 # flags bit pattern
 _DISABLED = 0x01
@@ -1013,10 +1014,12 @@ class CaElement(AbstractElement):
         """
         # src, dst is unit system name, e.g. None for raw, phy
         if handle is None or handle == "readback":
+            _logger.info("add unit conv for handle={0}".format(handle))
             self._field[field].ucrb[(src, dst)] = uc
             if src is None: self._field[field].pvrbunit = uc.srcunit
             elif dst is None: self._field[field].pvrbunit = uc.dstunit
         if handle is None or handle == "setpoint":
+            _logger.info("add unit conv for handle={0}".format(handle))
             self._field[field].ucsp[(src, dst)] = uc
             if src is None: self._field[field].pvspunit = uc.srcunit
             elif dst is None: self._field[field].pvspunit = uc.dstunit
