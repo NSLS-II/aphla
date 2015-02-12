@@ -156,7 +156,6 @@ def putPar(ID, parList, **kwargs):
     throw = kwargs.get("throw", True)
     verbose = kwargs.get("verbose", 0)
 
-    agree = True
     for par in parList:
         t0 = datetime.now()
         agree = False
@@ -166,6 +165,7 @@ def putPar(ID, parList, **kwargs):
         if np.abs(p_init - target) < tol:
             print ('Target SP for "{0}" within specified tolerance. No "put" '
                    'will be performed.').format(fld)
+            agree = True
             continue
 
         nMaxReput   = 3
