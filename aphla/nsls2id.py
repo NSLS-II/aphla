@@ -182,7 +182,7 @@ def putPar(ID, parList, **kwargs):
             time.sleep(2)
             p_now = ID.get(fld, unitsys=unitsys)
 
-            if (p_now-p_init) < tol:
+            if np.abs(p_now-p_init) < tol:
                 if put_counter >= nMaxReput:
                     print ('* Too many "put" failures for "{0}" change. Something '
                            'is wrong with "{0}" control. Aborting now.').format(fld)
