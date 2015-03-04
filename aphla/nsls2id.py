@@ -156,7 +156,6 @@ def putPar(ID, parList, **kwargs):
     throw = kwargs.get("throw", True)
     verbose = kwargs.get("verbose", 0)
 
-    agree = True
     for par in parList:
         t0 = datetime.now()
         agree = False
@@ -166,6 +165,7 @@ def putPar(ID, parList, **kwargs):
         if np.abs(p_init - target) < tol:
             print ('Target SP for "{0}" within specified tolerance. No "put" '
                    'will be performed.').format(fld)
+            agree = True
             continue
 
         nMaxReput   = 3
@@ -182,7 +182,7 @@ def putPar(ID, parList, **kwargs):
             time.sleep(2)
             p_now = ID.get(fld, unitsys=unitsys)
 
-            if (p_now-p_init) < tol:
+            if np.abs(p_now-p_init) < tol:
                 if put_counter >= nMaxReput:
                     print ('* Too many "put" failures for "{0}" change. Something '
                            'is wrong with "{0}" control. Aborting now.').format(fld)
@@ -238,6 +238,38 @@ def createParList(ID, parScale):
         if not _params[ID.name].get(fld, None): continue
         nlist.append(fld)
         vmin, vmax, vstep, vtol = _params[ID.name][fld]
+
+        # Make sure that the scan vector and background values stay within
+        # the minimum and maximum gap/phase allowed.
+        raw2phy = ID.convertUnit(fld, 1.0, None, 'phy', handle='setpoint')
+        field_pvsp = ID.pv(field=fld, handle='setpoint')[0]
+        try:
+            LLim_pv = field_pvsp + '.DRVL'
+            LLim_mm = ap.caget(LLim_pv)*raw2phy
+            print 'Lower Limit for {0} = {1:.3g} mm'.format(fld, LLim_mm)
+            if vmin < LLim_mm:
+                vmin = LLim_mm
+                temp_list = list(_params[ID.name][fld])
+                temp_list[0] = LLim_mm
+                _params[ID.name][fld] = tuple(temp_list)
+        except:
+            raise
+            print '# WARNING # Lower limit for {0} could not be retrieved.'.format(fld)
+            LLim_mm = None
+        #
+        try:
+            HLim_pv = field_pvsp + '.DRVH'
+            HLim_mm = ap.caget(HLim_pv)*raw2phy
+            print 'Upper Limit for {0} = {1:.3g} mm'.format(fld, HLim_mm)
+            if vmax < HLim_mm:
+                vmax = HLim_mm
+                temp_list = list(_params[ID.name][fld])
+                temp_list[1] = HLim_mm
+                _params[ID.name][fld] = tuple(temp_list)
+        except:
+            print '# WARNING # Upper limit for {0} could not be retrieved.'.format(fld)
+            HLim_mm = None
+
         if scale == 'linear':
             vlist.append(list(np.linspace(vmin, vmax, int(vstep))))
         elif scale == 'log':
@@ -247,17 +279,38 @@ def createParList(ID, parScale):
                 vlist.append(list(np.logspace(np.log10(vmin),np.log10(vmax),int(vstep))))
         elif not isinstance(scale, (str, unicode)):
             # "scale" is a user-specified array for the parameter
+            vmin = np.min(scale)
+            vmax = np.max(scale)
+            if (LLim_mm is not None) and (vmin < LLim_mm):
+                raise ValueError(
+                    ('Specified array for {0} contains a value smaller than '
+                     'the lower limit ({1:.3g} mm)').format(fld, LLim_mm))
+            if (HLim_mm is not None) and (vmax > HLim_mm):
+                raise ValueError(
+                    ('Specified array for {0} contains a value larger than '
+                     'the upper limit ({1:.3g} mm)').format(fld, HLim_mm))
             vlist.append(list(scale))
             if fld == 'gap':
-                # Reset the background "gap" to be the max of use-specified gap array
-                _params[ID.name]['background'][fld] = np.max(scale)
-                # Reset the "gap" in _params
-                temp_gap = (np.min(scale), np.max(scale),
-                            _params[ID.name]['gap'][2], _params[ID.name]['gap'][3])
-                _params[ID.name]['gap'] = temp_gap
+                print 'Resetting the background "gap" to be the max of user-specified gap array'
+                _params[ID.name]['background'][fld] = vmax
+            # Reset the "gap" or "phase" tuples in _params
+            temp_tup = (vmin, vmax,
+                        _params[ID.name][fld][2], _params[ID.name][fld][3])
+            _params[ID.name][fld] = temp_tup
         else:
             raise RuntimeError('unknown spaced pattern: %s'%p[1])
+
+        if (HLim_mm is not None) and (_params[ID.name]['background'][fld] > HLim_mm):
+            _params[ID.name]['background'][fld] = HLim_mm
+            print ('Background value of {0} cannot be larger than the '
+                   'upper limit ({1:.3g} mm)').format(fld, HLim_mm)
+        if (LLim_mm is not None) and (_params[ID.name]['background'][fld] < LLim_mm):
+            raise ValueError(
+                ('Background value of {0} cannot be smaller than the '
+                 'lower limit ({1:.3g} mm)').format(fld, LLim_mm))
+
         tlist.append(vtol)
+
     valueList = itertools.product(*vlist)
     parList = []
     for v in valueList:
