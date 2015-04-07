@@ -380,9 +380,10 @@ def fput(elemfld_vals, **kwargs):
     unitsys = kwargs.pop('unitsys', "phy")
     wait_readback = kwargs.pop('wait_readback', False)
     epsilon = kwargs.pop("epsilon", None)
-
+    verbose = kwargs.get("verbose", 0)
+    
     # a list of (pv, spval, elem, field)
-    pvl = []
+    pvl, pvlsp = [], []
 
     if epsilon is None:
         epsl = [e.getEpsilon(fld) for e,fld,v in elemfld_vals]
@@ -401,17 +402,34 @@ def fput(elemfld_vals, **kwargs):
         pvrb = elem.pv(field=fld, handle="readback")
         for j,pv in enumerate(zip(pvsp, pvrb)):
             pvl.append([elem, fld, pv[0], pv[1]] + valrec)
-    pvsp = [v[2] for v in pvl]
-    pvrb = [v[3] for v in pvl]
-    vals = [v[4] for v in pvl]
-    ret = caput(pvsp, vals, **kwargs)
+        for j,pv in enumerate(pvsp):
+            pvlsp.append([elem, fld, pv, None] + valrec)
+
+    # pvsp and pvl could be different size
     if wait_readback:
+        if len(pvlsp) != len(pvl):
+            raise RuntimeError("invalid size READBACK != SETPOINT (%d != %d)" %
+                               (len(pvl), len(pvlsp)))
+        pvsp = [v[2] for v in pvl]
+        pvrb = [v[3] for v in pvl]
+        vals = [v[4] for v in pvl]
+        if verbose:
+            print len(pvsp), pvsp
+            print len(vals), vals
+        ret = caput(pvsp, vals, **kwargs)
         vallo, valhi = [v[5] for v in pvl], [v[6] for v in pvl]
         try:
             caWaitStable(pvrb, vals, vallo, valhi, **kwargs)
         except:
             _logger.error("failed setting {0}={1}".format(pvsp, vals))
             raise
+    else:
+        pvsp = [v[2] for v in pvlsp]
+        vals = [v[4] for v in pvlsp]
+        if verbose:
+            print len(pvsp), pvsp
+            print len(vals), vals
+        ret = caput(pvsp, vals, **kwargs)
 
 
 def getPvList(elems, field, handle = 'readback', **kwargs):

@@ -1211,6 +1211,7 @@ def setIdBump(idname, xc, thetac, **kwargs):
     thetac - bema angle at center of ID. [mrad]
     plane - 'x' or 'y'. default 'x'.
     ncor - number of correctors, default 6 each side.
+    check - True/False, default True
 
     Hard coded Error if absolute value:
       - bpms distance > 20.0m or,
@@ -1226,7 +1227,8 @@ def setIdBump(idname, xc, thetac, **kwargs):
     fld = kwargs.get("plane", 'x')
     ncor = kwargs.get("ncor", 6)
     dImax = kwargs.get("dImax", 0.5)
-
+    check = kwargs.get("check", True)
+    
     idobj = getElements(idname)[0]
 
     # find the correctors, 3 before ID, 3 after
@@ -1246,6 +1248,6 @@ def setIdBump(idname, xc, thetac, **kwargs):
     norm0, norm1, norm2, corvals = \
         setLocalBump([(b.name, fld) for b in bpms],
                      [(c.name, fld) for c in cors],
-                     ref, dImax=dImax, check=True, fullm=False)
+                     ref, dImax=dImax, check=check, fullm=False)
     return norm0, norm1, norm2, corvals
 

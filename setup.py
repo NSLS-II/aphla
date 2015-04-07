@@ -8,21 +8,22 @@ MICRO = 29
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
-def hg_version():
-    def _minimal_ext_cmd(cmd):
-        # construct minimal environment
-        env = {}
-        for k in ['SYSTEMROOT', 'PATH']:
-            v = os.environ.get(k)
-            if v is not None:
-                env[k] = v
-        # LANGUAGE is used on win32
-        env['LANGUAGE'] = 'C'
-        env['LANG'] = 'C'
-        env['LC_ALL'] = 'C'
-        out = subprocess.Popen(cmd, stdout = subprocess.PIPE, env=env).communicate()[0]
-        return out
+def _minimal_ext_cmd(cmd):
+    # construct minimal environment
+    env = {}
+    for k in ['SYSTEMROOT', 'PATH']:
+        v = os.environ.get(k)
+        if v is not None:
+            env[k] = v
+    # LANGUAGE is used on win32
+    env['LANGUAGE'] = 'C'
+    env['LANG'] = 'C'
+    env['LC_ALL'] = 'C'
+    out = subprocess.Popen(cmd, stdout = subprocess.PIPE, env=env).communicate()[0]
+    return out
 
+
+def hg_revision():
     try:
         out = _minimal_ext_cmd(['hg', 'id', '-n', '-i'])
         HG_REVISION = out.strip().decode('ascii')
@@ -31,13 +32,22 @@ def hg_version():
 
     return HG_REVISION
 
+def git_revision():
+    try:
+        out = _minimal_ext_cmd(['git', "rev-parse", "HEAD"])
+        GIT_REVISION = out.strip().decode('ascii')
+    except OSError:
+        GIT_REVISION = "Unknown"
+
+    return GIT_REVISION
+
 def write_version_py(filename='aphla/version.py'):
     cnt = """
 # THIS FILE IS GENERATED FROM APHLA SETUP.PY
 short_version = '%(version)s'
 version = '%(version)s'
 full_version = '%(full_version)s'
-hg_revision = '%(hg_revision)s'
+revision = '%(revision)s'
 release = %(isrelease)s
 
 if not release:
@@ -47,21 +57,23 @@ if not release:
     # otherwise the import of numpy.version messes up the build under Python 3.
     FULLVERSION = VERSION
     if os.path.exists('.hg'):
-        HG_REVISION = hg_version()
+        AP_REVISION = hg_revision()
+    elif os.path.exists(".git"):
+        AP_REVISION = git_revision()
     elif os.path.exists('aphla/version.py'):
         # must be a source distribution, use existing version file
-        from aphla.version import hg_revision as HG_REVISION
+        from aphla.version import revision as AP_REVISION
     else:
-        HG_REVISION = "Unknown"
+        AP_REVISION = "Unknown"
 
     if not ISRELEASED:
-        FULLVERSION += '.dev-' + HG_REVISION[:7]
+        FULLVERSION += '.dev-' + AP_REVISION[:7]
 
     a = open(filename, 'w')
     try:
         a.write(cnt % {'version': VERSION,
                        'full_version' : FULLVERSION,
-                       'hg_revision' : HG_REVISION,
+                       'revision' : AP_REVISION,
                        'isrelease': str(ISRELEASED)})
     finally:
         a.close()

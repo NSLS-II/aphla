@@ -395,3 +395,5 @@ class BbaBowtie:
         grp.attrs["cor_field"]  = self._cf
         grp.attrs["iloop"] = iloop
         grp.attrs["_FORMAT_"] = 2
+        h5f.close()
+

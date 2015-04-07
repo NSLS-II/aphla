@@ -25,6 +25,8 @@ _logger = logging.getLogger(__name__)
 def calcFftTune(x):
     """
     x - (nbpm, nturns)
+
+    returns tune, sum spectrum
     """
     nbpm, nturn = np.shape(x)
     xc = np.average(x, axis=-1)
@@ -33,14 +35,14 @@ def calcFftTune(x):
         Fx[i,:] = np.abs(np.fft.fft(x[i,:] - xc[i]))
     Fs = np.sum(Fx, axis=0)
     i = np.argmax(Fs[:nturn/2])
-    return i * 1.0/nturn
+    return i * 1.0/nturn, Fs
 
 def calcTunes(x, y, **kwargs):
     """
     x, y - (nbpm, nturns) data
     """
-    nux = calcFftTune(x)
-    nuy = calcFftTune(y)
+    nux, Fx = calcFftTune(x)
+    nuy, Fy = calcFftTune(y)
     return (nux, nuy)
 
 def _calcPhase(x, **kwargs):

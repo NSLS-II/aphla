@@ -1,3 +1,7 @@
+2015-02-11  Lingyun Yang  <lyyang@cdesk06.cs.nsls2.local>
+
+	* aphla/hlali.py: bugfix fput when pvrb is empty.
+
 2014-11-02  Lingyun Yang  <lyyang@cdesk07>
 
 	* aphla/meastwiss.py: add fMeasTunes for measChromaticity
