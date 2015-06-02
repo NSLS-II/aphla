@@ -164,7 +164,7 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
     offset = kwargs.pop("offset", 0)
     sleep  = kwargs.pop("sleep", 0.5)
     count  = kwargs.pop("count", 0)
-    tc = kwargs.get("timeout", 6)
+    tc = kwargs.get("timeout", 15)
     verbose = kwargs.get("verbose", 0)
 
     t0 = datetime.now()

@@ -596,7 +596,7 @@ def getNeighbors(element, group, n = 3, elemself = True):
     Parameters
     -----------
     element: str, object. the central element name
-    group: str, the neighbors belong to
+    group: str or list of elem object, the neighbors belong to
     n : int, default 3, number of neighbors each side. 
     elemself : default True, return the element itself.
 
@@ -617,6 +617,7 @@ def getNeighbors(element, group, n = 3, elemself = True):
     >>> [e.sb for e in el]
       [284.233, 286.797, 678.903, 268.921, 271.446]
     >>> hla.getNeighbors("X", ["BPM", "QUAD"], 2)
+    >>> hla.getNeighbors("X", getElements("BPM"), 3)
     """
 
     if isinstance(element, (str, unicode)):

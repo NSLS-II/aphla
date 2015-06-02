@@ -151,6 +151,7 @@ def setLocalBump(bpmrec, correc, ref, **kwargs):
             for j,cr in enumerate(corr):
                 m[i,j] = ormdata.get(br, cr)
 
+    # if ref orbit is not provided, use the current reading
     for i,(name,field) in enumerate(bpmr):
         if obtref[i] is not None: continue
         obtref[i] = getExactElement(name).get(field, unitsys=None)
@@ -1169,7 +1170,7 @@ def _setIdBump(idname, xc, thetac, **kwargs):
 
     TODO: fix the [mm], [mrad] default unit
     """
-    if np.abs(xc) > 5.0 or np.abs(thetac) > 1.0:
+    if kwargs.get("manual", False) and (np.abs(xc) > 5.0 or np.abs(thetac) > 1.0):
         raise RuntimeError("xc or thetac overflow: {0}, {1}".format(
                 xc, thetac))
 
@@ -1220,14 +1221,15 @@ def setIdBump(idname, xc, thetac, **kwargs):
 
     TODO: fix the [mm], [mrad] default unit
     """
-    if np.abs(xc) > 5.0 or np.abs(thetac) > 1.0:
+    if not kwargs.pop("manual", False) and (np.abs(xc) > 5.0 or np.abs(thetac) > 1.0):
         raise RuntimeError("xc or thetac overflow: {0}, {1}".format(
                 xc, thetac))
 
-    fld = kwargs.get("plane", 'x')
-    ncor = kwargs.get("ncor", 6)
-    dImax = kwargs.get("dImax", 0.5)
-    check = kwargs.get("check", True)
+    fld = kwargs.pop("plane", 'x')
+    ncor = kwargs.pop("ncor", 6)
+    dImax = kwargs.pop("dImax", 0.5)
+    check = kwargs.pop("check", True)
+    ignores = kwargs.pop("ignores", [])
     
     idobj = getElements(idname)[0]
 
@@ -1246,8 +1248,10 @@ def setIdBump(idname, xc, thetac, **kwargs):
     ref[ncor-1] = xc - L*thetac/2.0
     ref[ncor] =xc + L*thetac/2.0
     norm0, norm1, norm2, corvals = \
-        setLocalBump([(b.name, fld) for b in bpms],
-                     [(c.name, fld) for c in cors],
-                     ref, dImax=dImax, check=check, fullm=False)
+        setLocalBump([(b.name, fld) for b in bpms
+                      if (b.name, fld) not in ignores],
+                     [(c.name, fld) for c in cors
+                      if (c.name, fld) not in ignores],
+                     ref, dImax=dImax, check=check, fullm=False, **kwargs)
     return norm0, norm1, norm2, corvals
 

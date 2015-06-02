@@ -282,6 +282,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
     wait : waiting (seconds) before check.
     bc: str. bounds checking. 'ignore', 'abort', 'boundary', None
     kkerlim: (ncor, 2) array. The limits for controllers
+    dImax: maximum increase of kker, None if no upper limit.
 
     Returns
     --------

@@ -76,11 +76,11 @@ class OrmData:
         m, n = np.shape(self.m)
         dst = grp.create_dataset('m', (m,n), data=self.m, compression=h5zip)
         #
-        name, spos, plane = zip(*self.bpm)
+        name, plane = zip(*self.bpm)
         name = [v.encode('ascii') for v in name]
         dst.attrs["bpm_name"] = name
         dst.attrs["bpm_field"] = plane
-        name, spos, plane = zip(*self.trim)
+        name, plane = zip(*self.cor)
         dst.attrs["cor_name"] = name
         dst.attrs["cor_field"] = plane
         if self.bpm_pv:
@@ -543,7 +543,7 @@ class TwissData:
 
 def _updateLatticePvDb(dbfname, cfslist, **kwargs):
     """
-    update sqlite3 DB with a list of (pv, properties, tags)
+    update(or add new) sqlite3 DB with a list of (pv, properties, tags)
 
     dbfname : str
     cflist : list of (pv, properties, tags)
@@ -748,6 +748,8 @@ def createLatticePvDb(dbfname, csv2fname = None):
 
 def updateDbElement(dbfname, submachine, element, **kwargs):
     """
+    add or update element in the DB
+
     dbfname : str. SQLite3 database file name
     submachine : str, e.g. "SR"
     element : str, element name in lattice

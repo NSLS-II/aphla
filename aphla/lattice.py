@@ -678,6 +678,8 @@ class Lattice:
             >>> getNeighbors('Q3', 'BPM', 2)
             ['P2', 'P3', 'Q3', 'P4', 'P5']
             >>> getNeighbors('Q3', ["BPM", "SEXT"], 2)
+            >>> bpms = getElements("BPM")
+            >>> getNeighbors("Q3", bpms, 3)
         """
 
         e0 = self._find_exact_element(elemname)
@@ -687,7 +689,10 @@ class Lattice:
         if isinstance(groups, (str, unicode)):
             el = self.getElementList(groups, virtual=0)
         elif isinstance(groups, (list, tuple)):
-            el = self.getGroupMembers(groups, op="union")
+            if all([isinstance(ei, AbstractElement) for ei in groups]):
+                el = [ei for ei in groups]
+            else:
+                el = self.getGroupMembers(groups, op="union")
 
         if not el: raise ValueError("elements/group %s does not exist" % groups)
         if e0 in el: el.remove(e0)
