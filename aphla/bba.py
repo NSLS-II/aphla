@@ -182,7 +182,7 @@ class BbaBowtie:
                 
             for j,dck in enumerate(self.cor_kick):
                 self._c.put(self._cf, dck, unitsys=None)
-                #time.sleep(self.wait)
+                #time.sleep(sleep)
                 #self._c.put(self._cf, dck, unitsys=None)
                 waitRamping(self._c, wait = self.wait)
                 time.sleep(0.5)
