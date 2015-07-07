@@ -170,7 +170,7 @@ class BbaBowtie:
         for i,dqk in enumerate([0.0, self.quad_dkick]):
             # change quad
             self._q.put(self._qf, self._vq0 + dqk, unitsys=None)
-            #time.sleep(self.wait)
+            time.sleep(self.wait)
             #self._q.put(self._qf, self._vq0 + dqk, unitsys=None)
             waitRamping(self._q, wait = self.wait)
             _logger.info("{0} Quad sp= {1} rb= {2}".format(i,
@@ -183,6 +183,7 @@ class BbaBowtie:
             for j,dck in enumerate(self.cor_kick):
                 self._c.put(self._cf, dck, unitsys=None)
                 #time.sleep(sleep)
+                time.sleep(self.wait)
                 #self._c.put(self._cf, dck, unitsys=None)
                 waitRamping(self._c, wait = self.wait)
                 time.sleep(0.5)
