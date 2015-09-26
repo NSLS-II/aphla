@@ -361,7 +361,7 @@ def getSrBpmData(**kwargs):
     Parameters
     -----------
     trig : int, optional
-        Internal(0) or external(1) trigger.
+        Internal(0) or external(1) trigger. trig=1 will not set the trig PV.
     verbose : int
     waveform : str
         Waveform selection: ``"Tbt"``, ``"Fa"``
@@ -641,6 +641,11 @@ def measKickedTbtData(idriver, ampl, **kwargs):
               if b.isEnabled()]
 
     bpmstats = getBpmStatus(bpms)
+
+    # AC contactor has to be on
+    if ap.caget("SR:C21-PS{Pinger:H}AcOnOff_Cmd") == 0 or \
+            ap.caget("SR:C21-PS{Pinger:V}AcOnOff_Cmd") == 0:
+        raise RuntimeError("AC Contactors are off now")
 
     kpvsp, kpvrb = None, None
     # 0 - both off, 1 - V-on, 2-H-on, 3-both-on

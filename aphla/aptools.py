@@ -1219,6 +1219,12 @@ def setIdBump(idname, xc, thetac, **kwargs):
       - xc > 5mm, or
       - thetac > 1mrad
 
+    return:
+      norm0 - initial norm of orbit
+      norm1 - predicted (calculated) 
+      norm2 - relized
+      corvals - the new cor settings
+
     TODO: fix the [mm], [mrad] default unit
     """
     if not kwargs.pop("manual", False) and (np.abs(xc) > 5.0 or np.abs(thetac) > 1.0):

@@ -199,7 +199,7 @@ def calcChromaticity(f0, freqlst, tunelst, deg = 2,
     return chrom, dpp, p
 
 
-def measChromaticity(dfmax = 1e-6, gamma = 3.0e3/0.511, alphac = 3.626e-4,
+def measChromaticity(dfmax = 2e-7, gamma = 3.0e3/0.511, alphac = 3.626e-4,
                      num_points = 5, fMeasTunes = None, deg = 2,
                      wait = 0.5, verbose=0):
     """Measure the chromaticity
@@ -224,6 +224,12 @@ def measChromaticity(dfmax = 1e-6, gamma = 3.0e3/0.511, alphac = 3.626e-4,
         obt : orbit at each f settings (initial, every df, final).
         deg : degree of polynomial fitting.
         p : polynomial coeff, shape (deg+1, 2)
+
+
+    Note
+    -----
+    If the dfmax is too large, dispersion induced orbit change may trip the
+    beam due to RF vacuum (1khz for NSLS-II case).
     """
     obt = []
     f0 = getRfFrequency(handle="setpoint")
