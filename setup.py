@@ -4,7 +4,7 @@ import subprocess
 
 MAJOR = 0
 MINOR = 8
-MICRO = 29
+MICRO = 30
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 

@@ -1213,6 +1213,7 @@ def setIdBump(idname, xc, thetac, **kwargs):
     plane - 'x' or 'y'. default 'x'.
     ncor - number of correctors, default 6 each side.
     check - True/False, default True
+    bbpms - two bounding bpms
 
     Hard coded Error if absolute value:
       - bpms distance > 20.0m or,
@@ -1230,34 +1231,49 @@ def setIdBump(idname, xc, thetac, **kwargs):
     if not kwargs.pop("manual", False) and (np.abs(xc) > 5.0 or np.abs(thetac) > 1.0):
         raise RuntimeError("xc or thetac overflow: {0}, {1}".format(
                 xc, thetac))
-
+    #print("kwargs:", kwargs)
     fld = kwargs.pop("plane", 'x')
     ncor = kwargs.pop("ncor", 6)
     dImax = kwargs.pop("dImax", 0.5)
     check = kwargs.pop("check", True)
     ignores = kwargs.pop("ignores", [])
-    
-    idobj = getElements(idname)[0]
+    bbpms = getElements(kwargs.pop("bbpms", [])) # bounding bpms
+    #print("bbpms", bbpms, kwargs)
 
     # find the correctors, 3 before ID, 3 after
+    # the 
     cors_ = getNeighbors(idname, "COR", n=ncor)
     cors = cors_[:ncor] + cors_[-ncor:]
+    if not bbpms:
+        print("using bpm/ubpm near id")
+        bpms_c = getNeighbors(idname, ["BPM", "UBPM"], n = 1)
+    elif bbpms and len(bbpms) == 2:
+        print("using provided 2 bpms:", bbpms)
+        bpms_c = [bbpms[0], None, bbpms[1]]
+    else:
+        raise RuntimeError("invalid bouding bpms")
 
-    bpms_c = getNeighbors(idname, ["BPM", "UBPM"], n = 1)
+    # NOTE: the L/R bpms should be outside of CORs, i.e. BPMS, CORS, IDBPMS, ID
     bpms_l = getNeighbors(cors[0].name, "BPM", n = ncor-1)[:ncor-1]
     bpms_r = getNeighbors(cors[-1].name, "BPM", n = ncor-1)[1-ncor:]
     bpms = bpms_l + bpms_c[:1] + bpms_c[-1:] + bpms_r
+
+    idobj = getElements(idname)[0]
+
+    #print("using bpms:", bpms)
 
     ref = fget(bpms, fld, unitsys=None)
     b0, b1 = bpms[ncor-1], bpms[ncor]
     L = b1.sb - b0.sb
     ref[ncor-1] = xc - L*thetac/2.0
     ref[ncor] =xc + L*thetac/2.0
+    print("Before Bump, Angle=", (b1.x - b0.x)/L, "Center=", (b1.x+b0.x)/2.0)
     norm0, norm1, norm2, corvals = \
         setLocalBump([(b.name, fld) for b in bpms
                       if (b.name, fld) not in ignores],
                      [(c.name, fld) for c in cors
                       if (c.name, fld) not in ignores],
                      ref, dImax=dImax, check=check, fullm=False, **kwargs)
+    print("After Bump, Angle=", (b1.x - b0.x)/L, "Center=", (b1.x+b0.x)/2.0)
     return norm0, norm1, norm2, corvals
 
