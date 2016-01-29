@@ -166,7 +166,10 @@ def setLocalBump(bpmrec, correc, ref, **kwargs):
         #for k,b in enumerate(bpmpvs):
         #    if bpmref[k] != 0.0: print(k, bpmlst[k], b, bpmref[k])
         norm0, norm1, norm2, corvals = \
-            caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref), **kwargs)
+            caRmCorrect(bpmpvs, corpvs, m, ref=np.array(obtref),
+                        nrespavg = 5, dtresp = 0.2,
+                        kkerstep=5, dtkker = 0.3,
+                        **kwargs)
         if corvals is None: break
 
     return norm0, norm1, norm2, corvals
@@ -1274,6 +1277,11 @@ def setIdBump(idname, xc, thetac, **kwargs):
                      [(c.name, fld) for c in cors
                       if (c.name, fld) not in ignores],
                      ref, dImax=dImax, check=check, fullm=False, **kwargs)
-    print("After Bump, Angle=", (b1.x - b0.x)/L, "Center=", (b1.x+b0.x)/2.0)
-    return norm0, norm1, norm2, corvals
+    print("After Bump, Angle=", (b1.x - b0.x)/L, "Center=", (b1.x+b0.x)/2.0, corvals)
+    j, corenc = 0, []
+    for i,c in enumerate(cors):
+        if (c.name, fld) in ignores: continue
+        corenc.append((c.name, fld, corvals[j]))
+        j = j + 1
+    return norm0, norm1, norm2, corenc
 

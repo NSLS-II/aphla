@@ -399,6 +399,7 @@ def getSrBpmData(**kwargs):
     count    = kwargs.get("count", 0)
     #timeout  = kwargs.get("timeout", 6)
     output   = kwargs.get("output", None)
+    timeout  = kwargs.get("timeout", 30)
 
     lat = machines.getLattice()
     if lat.name != "SR":
@@ -414,6 +415,12 @@ def getSrBpmData(**kwargs):
     names = [bpm.name for bpm in elems]
 
     if trig_src == 0 and waveform in ["Tbt", "Fa"]:
+        # wait while waveform is transmitting data
+        while any(caget([p + "DDR:TxStatus-I" for p in pvpref])):
+            if (datetime.now() - t0).total_seconds() > timeout:
+                raise RuntimeError("timeout after {0} seconds".format(timeout))
+            time.sleep(1)
+
         # internal trig
         # ret = _srBpmTrigData(pvpref, waveform, **kwargs)
         # x, y, Is, ts, offset, xbbaofst, ybbaofst, extdata = ret
@@ -636,6 +643,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     output = kwargs.get("output", True)
     sleep = kwargs.get("sleep", 5)
     count = kwargs.get("count", 2000)
+    timeout = kwargs.get("timeout", 60)
+
     bpms  = [ b for b in kwargs.get("bpms",
                                    getGroupMembers(["BPM", "UBPM"], op="union"))
               if b.isEnabled()]
@@ -643,8 +652,8 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     bpmstats = getBpmStatus(bpms)
 
     # AC contactor has to be on
-    if ap.caget("SR:C21-PS{Pinger:H}AcOnOff_Cmd") == 0 or \
-            ap.caget("SR:C21-PS{Pinger:V}AcOnOff_Cmd") == 0:
+    if caget("SR:C21-PS{Pinger:H}AcOnOff_Cmd") == 0 or \
+            caget("SR:C21-PS{Pinger:V}AcOnOff_Cmd") == 0:
         raise RuntimeError("AC Contactors are off now")
 
     kpvsp, kpvrb = None, None
@@ -708,7 +717,7 @@ def measKickedTbtData(idriver, ampl, **kwargs):
     time.sleep(2)
     Idcct1 = caget('SR:C03-BI{DCCT:1}I:Total-I')
     bpmdata = getSrBpmData(trig=1, bpms=bpms, count=count,
-                           output=output, h5group=h5g)
+                           output=output, h5group=h5g, timeout=timeout)
     # record pinger wave, V-chan1, H-chan2
     pinger_delay, pinger_wave, pinger_mode = None, None, None
     if idriver in [5,6,7]:
@@ -755,4 +764,25 @@ def measTbtTunes(idrive = 7, ampl = (0.15, 0.2), sleep=3, count=5000):
         measKickedTbtData(idrive, ampl, sleep=sleep, output=False, count=count)
     return calcFftTune(x0), calcFftTune(y0)
 
+
+def measFaPsd(count=5000, nfft=4096, sleep=3, output=False):
+    # trig=0 is internal, trig=1 is external
+    if output:
+        (names, x0, y0, Isum0, timestamp, offset), output = \
+            getSrBpmData(waveform="Fa",trig=1, count=count, output=output)
+    else:
+        names, x0, y0, Isum0, timestamp, offset = \
+            getSrBpmData(waveform="Fa",trig=1, count=count, output=False)
+        output = None
+    # adjust the offset, align to the original zero
+    nbpm, nturns = np.shape(Isum0)
+    from scipy import signal
+    # 10khz, f=1e4
+    Pfx = [signal.periodogram(x0[i,:] - np.average(x0[i,:]), 1e4, nfft=nfft)
+          for i in range(nbpm)]
+    Pfy = [signal.periodogram(y0[i,:] - np.average(y0[i,:]), 1e4, nfft=nfft)
+          for i in range(nbpm)]
+    Px = np.array([pf[1] for pf in Pfx], 'd')
+    Py = np.array([pf[1] for pf in Pfy], 'd')
+    return Pfx[0][0], Px, Py, output
 

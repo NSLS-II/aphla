@@ -13,7 +13,7 @@ caget will have noises and caput will do nothing.
 """
 
 __all__ = [
-    'caget', 'caput', 'caputwait', 'caRmCorrect', 
+    'caget', 'casample', 'caput', 'caputwait', 'caRmCorrect', 
     'readPvs', 'measCaRmCol',
     'Timedout', 'CA_OFFLINE', 'FORMAT_TIME'
 ]
@@ -52,7 +52,7 @@ def _ca_put_sim(pvs, vals):
     return ct.ca_nothing
 
 def caget(pvs, timeout=CA_TIMEOUT, datatype=None, format=ct.FORMAT_TIME,
-           count=0, throw=False, verbose=0):
+           count=0, throw=False, verbose=0, missing_values = None):
     """channel access read
     
     This is a simple wrap of cothread.catools, support UTF8 string
@@ -96,16 +96,15 @@ def caget(pvs, timeout=CA_TIMEOUT, datatype=None, format=ct.FORMAT_TIME,
     elif isinstance(pvs, (tuple, list)):
         pvs2 = [pv.encode("ascii") for pv in pvs if pv]
         dr = ct.caget(pvs2, timeout=timeout, datatype=datatype,
-                      format=format, count=count, throw=throw)
-        if len(pvs2) == len(pvs): return [v for v in dr]
+                       format=format, count=count, throw=throw)
 
-        j, rt = 0, []
+        rt, j = [], 0
         for i,pv in enumerate(pvs):
-            if not pv: 
-                rt.append(None)
-                continue
-            rt.append(dr[j])
-            j += 1
+            if not pv:
+                rt.append(missing_values)
+            else:
+                rt.append(dr[j])
+                j = j + 1
         return rt
     else:
         raise ValueError("Unknown type " + str(type(pvs)))
@@ -118,7 +117,14 @@ def cagetr(pvs, **kwargs):
         return caget(pvs, **kwargs)
     return [cagetr(pv, **kwargs) for pv in pvs]
 
-
+def casample(pvs, nsample = 5, T=1):
+    vl = []
+    for i in range(nsample):
+        vl.append(caget(pvs, missing_values=np.nan))
+        time.sleep(T*1.0/nsample)
+    va = np.array(vl)
+    return np.average(va, axis=0), np.std(va, axis=0)
+    
 def caput(pvs, values, timeout=CA_TIMEOUT, wait=True, throw=True, verbose = 0):
     """channel access write.
 
@@ -283,6 +289,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
     bc: str. bounds checking. 'ignore', 'abort', 'boundary', None
     kkerlim: (ncor, 2) array. The limits for controllers
     dImax: maximum increase of kker, None if no upper limit.
+    nrespavg: takes average for resp
 
     Returns
     --------
@@ -301,11 +308,15 @@ def caRmCorrect(resp, kker, m, **kwarg):
     bc     = kwarg.get('bc', None)
     dImax  = kwarg.get('dImax', None)
     dryrun = kwarg.get('dryrun', False)
-
+    nrespavg = kwarg.get('nrespavg', 5)
+    dtresp = kwarg.get("dtresp", 0.2)
+    kkerstep = kwarg.get("kkerstep", 1)
+    dtkker = kwarg.get("dtkker", 0.3)
+    
     _logger.info("nkk={0}, nresp={1}, scale={2}, rcond={3}, wait={4}".format(
             len(kker), len(resp), scale, rcond, wait))
 
-    v0 = np.array(caget(resp), 'd')
+    v0, sig = casample(resp, nsample=nrespavg, T=nrespavg*dtresp)
     if ref is not None: v0 = v0 - ref
     
     # the initial norm
@@ -317,7 +328,6 @@ def caRmCorrect(resp, kker, m, **kwarg):
     # solve for m*dk + (v0 - ref) = 0
     dk, resids, rank, s = np.linalg.lstsq(m, -1.0*v0, rcond = rcond)
 
-    norm1 = np.linalg.norm(m.dot(dk*scale) + v0)
     k0 = np.array(caget(kker), 'd')
     k1 = k0 + dk*scale
 
@@ -327,10 +337,11 @@ def caRmCorrect(resp, kker, m, **kwarg):
         im = np.argmax(np.abs(dk))
         dk = dk/np.abs(dk[im]) * dImax
         kkerin = [pv for pv in kker]
-        k1in = k0 + dk
+        #k1in = k0 + dk
     elif not lim:
         kkerin = [pv for pv in kker]
-        k1in   = [val for val in k1]
+        dk = dk * scale
+        #k1in   = [val for val in k1]
     elif np.shape(lim) == (len(dk), 2):
         alim = np.array(lim, 'd')
         kbd0 = min([v for v in (alim[:,1] - k0)/dk if v > 0.0])
@@ -338,27 +349,28 @@ def caRmCorrect(resp, kker, m, **kwarg):
         ksc = min([kbd0, kbd1, scale])
         _logger.info("autoscale the set point with factor {0}({1})".format(
                 ksc, scale))
-        k1in = [val for val in k0 + dk*ksc]
+        #k1in = [val for val in k0 + dk*ksc]
+        dk = dk * ksc
     else:
         raise RuntimeError("boundary values set but no method")
 
     if verbose > 0:
         for i,pv in enumerate(kkerin):
-            print i, pv, k1in[i], k1in[i] - k0[i]
+            print i, pv, "k0=", k0[i], " dk=", dk[i]
 
+    norm1 = np.linalg.norm(m.dot(dk) + v0)
     # the real setting
     if dryrun:
-        return norm0, norm1, None, None
+        return norm0, norm1, norm0, np.zeros_like(dk)
     else:
-        caput(kkerin, k1in)
+        for i in range(kkerstep):
+            k1in = k0 + dk * (i+1.0) / kkerstep
+            caput(kkerin, k1in)
+            time.sleep(dtkker)
 
     # wait and check
     time.sleep(wait)
-    v1 = np.zeros((5, len(resp)), 'd')
-    for i in range(len(v1)):
-        v1[i,:] = np.array(caget(resp), 'd')
-        time.sleep(wait * 1.0/len(v1))
-    v1 = np.average(v1, axis=0)
+    v1, sig = casample(resp, nsample=nrespavg, T=nrespavg*dtresp)
     if ref is not None: v1 = v1 - np.array(ref)
     norm2 = np.linalg.norm(v1)
 
@@ -372,9 +384,9 @@ def caRmCorrect(resp, kker, m, **kwarg):
             _logger.warn(msg) 
             #print(msg, norm0, norm2)
             caput(kker, k0)
-            return norm0, norm1, norm2, None
+            return norm0, norm1, norm2, np.zeros_like(k0)
 
-    return norm0, norm1, norm2, k1in
+    return norm0, norm1, norm2, dk
 
 
 def readPvs(pvs, **kwargs):
