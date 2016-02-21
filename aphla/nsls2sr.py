@@ -309,6 +309,11 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
 
 
 def _saveSrBpmData(fname, waveform, names, x, y, Is, **kwargs):
+    """
+    kwargs:
+      - bba_x_offset, bba_y_offset
+      - event
+    """
     group = kwargs.get("h5group", "/")
     dcct_data = kwargs.get("dcct_data", None)
     pvpref = kwargs.get("pvpref", None)
@@ -326,13 +331,10 @@ def _saveSrBpmData(fname, waveform, names, x, y, Is, **kwargs):
         grp["%s_ts" % waveform] = kwargs["ddr_timestamp"]
     if "ddr_offset" in kwargs:
         grp["%s_offset" % waveform] = kwargs["ddr_offset"]
-    if "bba_xoffset" in kwargs:
-        grp["bba_x_offset"] = kwargs["bba_xoffset"]
-    if "bba_yoffset" in kwargs:
-        grp["bba_y_offset"] = kwargs["bba_yoffset"]
-    if "event_code" in kwargs:
-        grp["event_code"]  = kwargs["event_code"]
 
+    for k in ["bba_xoffset", "bba_yoffset", "event_code", "note"]:
+        if k in kwargs:
+            grp[k] = kwargs[k]
     #grp.attrs["timespan"] = _maxTimeSpan(data[4])
 
     if dcct_data:
@@ -765,11 +767,11 @@ def measTbtTunes(idrive = 7, ampl = (0.15, 0.2), sleep=3, count=5000):
     return calcFftTune(x0), calcFftTune(y0)
 
 
-def measFaPsd(count=5000, nfft=4096, sleep=3, output=False):
+def measFaPsd(count=5000, nfft=4096, sleep=3, output=False, h5group="/", note=""):
     # trig=0 is internal, trig=1 is external
     if output:
         (names, x0, y0, Isum0, timestamp, offset), output = \
-            getSrBpmData(waveform="Fa",trig=1, count=count, output=output)
+            getSrBpmData(waveform="Fa",trig=1, count=count, output=output, h5group=h5group)
     else:
         names, x0, y0, Isum0, timestamp, offset = \
             getSrBpmData(waveform="Fa",trig=1, count=count, output=False)
@@ -784,5 +786,17 @@ def measFaPsd(count=5000, nfft=4096, sleep=3, output=False):
           for i in range(nbpm)]
     Px = np.array([pf[1] for pf in Pfx], 'd')
     Py = np.array([pf[1] for pf in Pfy], 'd')
+    if output:
+        pvs = ['SR:C03-BI{DCCT:1}I:Total-I', 'SR:FOFB{}FOFBOn',
+               'SR:C16-BI{FPM:2}BunchQ-Wf',
+               "SR-FOFB{}Kp1", "SR-FOFB{}Ki1", ]
+        h5f = h5py.File(output)
+        h5f["DCCT"] = caget('SR:C03-BI{DCCT:1}I:Total-I')
+        h5f["FOFB"] = caget('SR:FOFB{}FOFBOn')
+        h5f["fillpattern"] = caget('SR:C16-BI{FPM:2}BunchQ-Wf')
+        for i,vi in enumerate(caget(pvs)):
+            h5f[pvs[i]] = vi
+        h5f.close()
+
     return Pfx[0][0], Px, Py, output
 

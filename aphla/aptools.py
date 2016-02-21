@@ -997,11 +997,11 @@ def getArchiverData(*argv, **kwargs):
     """
     >>> getArchiverData("DCCT", "I")
     >>> getArchiverData(["SR:C03-BI{DCCT:1}AveI-I",])
-    >>> getArchiverData(["pv1", "pv2"], s="-1 h")
-    >>> getArchiverData(["pv1", "pv2"], s="-2 h", e="-1 h")
-    >>> getArchiverData(["pv1", "pv2"], s="2014-11-11 00:00:00", e="-1 h")
+    >>> getArchiverData(["pv1", "pv2"], start="-1 h")
+    >>> getArchiverData(["pv1", "pv2"], start="-2 h", end="-1 h")
+    >>> getArchiverData(["pv1", "pv2"], start="2014-11-11 00:00:00", end="-1 h")
 
-    see manual arget for "-s" and "-e" parameter.
+    see manual arget for "-s" and "-e" parameter. Example time span: "30 min".
 
     Returns a dictionary of (pv, data). The data is (n,2) array. 2 columns are
     t seconds and the data. If data is an empty list, the pv might not being
