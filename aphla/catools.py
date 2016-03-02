@@ -29,7 +29,7 @@ import random
 import numpy as np
 
 import logging
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.catools")
 
 CA_OFFLINE = False
 CA_TIMEOUT = 10

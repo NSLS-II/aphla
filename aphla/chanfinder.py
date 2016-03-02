@@ -21,7 +21,7 @@ from time import gmtime, strftime
 import sqlite3
 
 import logging
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.chanfinder")
 
 __all__ = ['ChannelFinderAgent']
 

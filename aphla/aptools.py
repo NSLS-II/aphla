@@ -10,7 +10,7 @@ from __future__ import print_function
 
 import numpy as np
 import time, sys, os
-from datetime import datetime
+from datetime import datetime, timedelta
 import itertools
 import tempfile
 import h5py
@@ -28,11 +28,11 @@ import logging
 __all__ = [ 'calcLifetime', 'measLifetime',  'measOrbitRm',
     'correctOrbit', 'setLocalBump', 'measTuneRm',
     'saveImage', 'fitGaussian1', 'fitGaussianImage',
-    'stripView', 'measRmCol', 'getArchiverData',
+    'stripView', 'measRmCol', 'getArchiverData', 'getMaskedArchiverData',
     '_set3CorBump', 'setIdBump'
 ]
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.aptools")
 
 def _zip_element_field(elems, fields, **kwargs):
     """
@@ -126,6 +126,7 @@ def setLocalBump(bpmrec, correc, ref, **kwargs):
     repeat = kwargs.pop('repeat', 1)
     fullm = kwargs.pop("fullm", True)
 
+
     if ormdata is None:
         raise RuntimeError("No Orbit Response Matrix available for '%s'" %
             machines._lat.name)
@@ -188,7 +189,7 @@ def correctOrbit(bpm, cor, **kwargs):
     scale : optional, scaling corrector strength, default 0.68
     repeat : optional, integer, default 1. numbers of correction 
     deadlst : list of dead BPM and corrector names.
-    dImax : optional, maximum corrector change at correction.
+    dImax : optional, default 0.1, maximum corrector change at correction.
 
 
     Notes
@@ -210,7 +211,8 @@ def correctOrbit(bpm, cor, **kwargs):
     # using rcond 1e-4 if not provided.
     kwargs.setdefault('rcond', 1e-4)
     kwargs.setdefault('scale', 0.68)
-
+    kwargs.setdefault("dImax", 0.1)
+    
     bpmlst = [e for e in getElements(bpm) if e.isEnabled()]
     corlst = [e for e in getElements(cor) if e.isEnabled()]
 
@@ -993,6 +995,25 @@ Strip.Option.GraphLineWidth   2
     Popen(["striptool", fname])
 
 
+def _cut_ardata_window(data, tstart, tend):
+    d0, d1 = 0, 0
+    try:
+        # fmt = "\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"
+        fmt = "%Y-%m-%d %H:%M:%S"
+        d0 = time.mktime(time.strptime(tstart, fmt))
+        d1 = time.mktime(time.strptime(tend,   fmt))
+    except:
+        return
+    for k,v in data.items():
+        if len(v) == 1:
+            v[0] = (d0, v[0][1])
+            v.append((d1, v[0][1]))
+            continue
+        if v[0][0] < d0: v[0] = (d0, v[0][1]) 
+        if v[-1][0] > d1: v[-1] = (d1, v[-1][1])
+        else: v.append((d1, v[-1][1]))
+    
+
 def getArchiverData(*argv, **kwargs):
     """
     >>> getArchiverData("DCCT", "I")
@@ -1006,6 +1027,9 @@ def getArchiverData(*argv, **kwargs):
     Returns a dictionary of (pv, data). The data is (n,2) array. 2 columns are
     t seconds and the data. If data is an empty list, the pv might not being
     archived.
+
+    NOTE: at this moment, the window = True (default) only align the Timestamp
+    window for fortmat both start and end="YYYY-mm-dd HH:MM:SS".
     """
     if len(argv) == 1 and isinstance(argv[0], (str, unicode)):
         pvs = argv
@@ -1035,6 +1059,7 @@ def getArchiverData(*argv, **kwargs):
     os.remove(fname)
 
     import re
+
     pv, dat = "", {}
     for s in out.split("\n"):
         if re.match(r"Found [0-9]+ points", s): continue
@@ -1054,6 +1079,8 @@ def getArchiverData(*argv, **kwargs):
         except:
             print("invalid format '{0}' for {1}".format(s, pv))
             raise
+    if kwargs.get("window", True):
+        _cut_ardata_window(dat, kwargs.get("start", ""), kwargs.get("end", "")) 
     return dict([(k, np.array(v)) for k,v in dat.items()])
 
 
@@ -1285,3 +1312,70 @@ def setIdBump(idname, xc, thetac, **kwargs):
         j = j + 1
     return norm0, norm1, norm2, corenc
 
+
+def getMaskedArchiverData(pv, tstart, tend, minval, dhour=8, verbose=0):
+    """
+    cut the data in to ranges, ignore the values < minval.
+    It is useful for filtering out data when DCCT < 0.2 for example:
+
+    >>> pv = 'SR:C03-BI{DCCT:1}I:Total-I'
+    >>> tstart = "2016-02-23 21:00:00"
+    >>> tend = "2016-02-23 22:00:00"
+    >>> data = getMaskedArchiverData(pv, tstart, tend, 0.2)
+    """
+
+    _tstart = datetime.strptime(tstart, "%Y-%m-%d %H:%M:%S")
+    _tend =  datetime.strptime(tend, "%Y-%m-%d %H:%M:%S")
+    dt = timedelta(hours=dhour)
+
+    buf = [] # deque()
+    extrm = []
+    _GAP = timedelta(seconds = 0)
+    _MINVAL = 0.2
+    _MINSPAN = 60
+    ncut = 0
+    while _tstart < _tend:
+        t0 = _tstart - _GAP
+        t1 = min(_tstart + dt, _tend)
+        data = getArchiverData([pv,], start=t0.strftime("%Y-%m-%d %H:%M:%S"),
+                                  end= t1.strftime("%Y-%m-%d %H:%M:%S"))
+        val = data.get(pv, [])
+        if verbose:
+            print("{0}/{1}: data size {2}".format(t0, t1, len(val)))
+        i, j = 0, 0
+        while j < len(val):
+            while i < len(val) and val[i,1] < _MINVAL:
+                ncut = ncut + 1
+                i = i + 1
+            j = i + 1
+            vmin, vmax = sys.float_info.max, sys.float_info.min
+            tmin, tmax = 0, 0
+            while j < len(val) and val[j,1] >= _MINVAL:
+                if val[j,1] > vmax:
+                    tmax, vmax = val[j,:]
+                elif val[j,1] < vmin:
+                    tmin, vmin = val[j,:]
+                j = j + 1
+            if j == i + 1:
+                i = j
+                continue
+            if not buf or ncut > 0:
+                buf.append(val[i:j,:])
+                extrm.append([tmin, vmin, tmax, vmax])
+            else:
+                buf[-1] = np.vstack([buf[-1], val[i:j,:]])
+                #v0 = extrm[-1]
+                if vmin < extrm[-1][1]:
+                    extrm[-1][:2] = [tmin, vmin]
+                if vmax > extrm[-1][3]:
+                    extrm[-1][2:4] = [tmax, vmax]
+            if j < len(val):
+                ncut = 1
+            else:
+                ncut = 0
+            i = j
+
+        _tstart = t1
+    return buf
+
+        

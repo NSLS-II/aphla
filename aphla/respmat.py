@@ -21,7 +21,7 @@ from catools import caget, caput, Timedout
 from apdata import OrmData
 import itertools
 import logging
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.respmat")
 
 class RmCol:
     """
@@ -149,8 +149,8 @@ class OrbitRespMat:
         self.bpmhdr = None # the header [(name, sb, field, pv=None), ...] 
         self.trimhdr = None # the header [(name, sb, field, pvrb, pvsp), ...] 
 
-        logger.info("bpm rec: %s" % str(self.bpm))
-        logger.info("trim rec: %s" % str(self.trim))
+        _logger.info("bpm rec: %s" % str(self.bpm))
+        _logger.info("trim rec: %s" % str(self.trim))
         
         # count the dimension of matrix
         #nbpm, ntrim  = len(set(bpm)), len(set(trim))

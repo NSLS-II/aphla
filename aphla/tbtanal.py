@@ -18,7 +18,7 @@ import logging
 __all__ = [ 'calcFftTune', 'calcTunes',
             'calcPhase', 'calcPhaseAdvance', 'calcBetaAu']
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.tbtanal")
 
 
 

@@ -11,7 +11,7 @@ import logging
 import re
 import os
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.unitconv")
 #_logger.setLevel(logging.DEBUG)
 
 class UcAbstract(object):

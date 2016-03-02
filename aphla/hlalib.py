@@ -19,7 +19,7 @@ import machines
 import element
 import itertools
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.hlalib")
 
 #__all__ = [
 #    'addGroup', 'addGroupMembers', 'eget',  
@@ -276,6 +276,8 @@ def fget(*argv, **kwargs):
     >>> fget("BPM", "x")
     >>> fget([(bpm1, 'x'), (bpm2, 'y')])
     >>> fget([bpm1, bpm2, bpm3], 'x', sample=5, sleep=0.15)
+    >>> fget("HCOR", "x", handle="readback", unitsys=None)
+    >>> fget("HCOR", "x", handle="setpoint")
     """
     sample = kwargs.pop("sample", 1)
     dt = kwargs.pop("sleep", 0.15)
@@ -290,6 +292,8 @@ def fget(*argv, **kwargs):
             d = _fget_2(elst, [argv[1]] * len(elst), **kwargs)
         else:
             raise RuntimeError("Unknown input {0}".format(argv))
+        if len(d) == 0:
+            raise ValueError("No data retrieved")
         rawd.append(d)
         if i < sample - 1:
             time.sleep(dt)
@@ -346,9 +350,11 @@ def _fget_2(elst, field, **kwargs):
         else:
             pvl = pvlsp
 
+    #if len(pvl) == 0:
+    #    raise ValueError("No PVs was found")
     kwargs.pop("handle", None)
     dat = caget(pvl, **kwargs)
-    if unitsys is None: return dat
+    if unitsys is None or len(pvl) == 0: return dat
 
     ret = [e.convertUnit(field[i], dat[i], None, unitsys)
                for i,e in enumerate(elst)]
@@ -1531,7 +1537,7 @@ def waitRamping(elem, **kwargs):
     >>> cors = getElements("COR")
     >>> cors[0] = 0.0
     >>> waitRamping(cors[0])
-    >>> correctorOrbit()
+    >>> correctOrbit()
     >>> waitRamping(cors)
 
     For EPICS, It looks at "ramping" field for the elements and wait until all

@@ -23,7 +23,7 @@ from hlalib import (getElements, getNeighbors, getDistance, getOrbit,
 import time
 import numpy as np
 import logging
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.bba")
 
 class BbaBowtie:
     """beam based alignment with bowtie plot method (ALS)

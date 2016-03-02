@@ -18,7 +18,7 @@ import sqlite3
 import warnings
 
 import logging
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.apdata")
 #_logger.setLevel(logging.DEBUG)
 
 __all__ = ['OrmData', 'TwissData', 'saveSnapshotH5']

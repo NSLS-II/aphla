@@ -30,7 +30,7 @@ from datetime import datetime
 from element import AbstractElement
 
 import logging
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.lattice")
 
 class Lattice:
     """Lattice
@@ -248,7 +248,7 @@ class Lattice:
 
         for child in chlist:
             if not self._group.has_key(child):
-                logger.warn("WARNING: no %s group found" % child)
+                _logger.warn("WARNING: no %s group found" % child)
                 continue
             for elem in self._group[child]:
                 if elem in pl: continue

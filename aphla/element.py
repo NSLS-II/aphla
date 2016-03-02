@@ -19,7 +19,7 @@ from unitconv import *
 __all__ = [ "CaElement", "merge",
             "ASCENDING", "DESCENDING", "UNSPECIFIED" ]
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.element")
 #_logger.setLevel(logging.DEBUG)
 
 # flags bit pattern

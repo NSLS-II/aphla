@@ -12,7 +12,7 @@ A procedural interface is provided.
 
 from __future__ import print_function
 
-__version__ = "0.8.19"
+__version__ = "0.8.32"
 try:
     from version import version as __version__
 except:
@@ -39,13 +39,19 @@ _lgfmt = logging.Formatter(
 _lghdl = _NullHandler()
 _lghdl.setLevel(logging.INFO)
 _lghdl.setFormatter(_lgfmt)
-logging.getLogger('aphla').addHandler(_lghdl)
+# logging.getLogger('aphla').addHandler(_lghdl)
 
-def enableLog(f = "aphla.log", level=logging.DEBUG):
-    _lgh = logging.FileHandler(f)
+def enableLog(f = "aphla.log", level=logging.INFO):
+    # print(logging.getLogger())
+    # print(logging.getLogger().handlers)    
+    from logging.handlers import RotatingFileHandler
+    _lgh = RotatingFileHandler(f, maxBytes=100*1024*1024)
     _lgh.setLevel(level)
     _lgh.setFormatter(_lgfmt)
-    logging.getLogger('aphla').addHandler(_lgh)
+    _lg = logging.getLogger("aphla")
+    _lg.setLevel(level)
+    _lg.propagate = 0 # do not propagate to parent logger, too much for IPython Notebook
+    _lg.addHandler(_lgh)
 
 #
 

@@ -21,7 +21,7 @@ from hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes,
 __all__ = [ 'measBeta', 'measDispersion', 'measChromaticity' ]
 
 import logging
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("aphla.meastwiss")
 
 def _measBetaQuad(elem, **kwargs):
     dqk1 = abs(kwargs.get('dqk1', 0.01))
