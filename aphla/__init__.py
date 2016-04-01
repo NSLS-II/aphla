@@ -39,7 +39,7 @@ _lgfmt = logging.Formatter(
 _lghdl = _NullHandler()
 _lghdl.setLevel(logging.INFO)
 _lghdl.setFormatter(_lgfmt)
-# logging.getLogger('aphla').addHandler(_lghdl)
+logging.getLogger('aphla').addHandler(_lghdl)
 
 def enableLog(f = "aphla.log", level=logging.INFO):
     # print(logging.getLogger())

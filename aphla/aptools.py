@@ -865,6 +865,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
     t0 = datetime.now()
     tau0, Icur0 = getLifetimeCurrent()
     m = np.zeros((len(bpmfld), len(corfld)), 'd')
+    _logger.info("ORM total steps: {0}".format(len(corfld)))
     if verbose > 0:
         print("total steps: %d" % len(corfld))
         kwargs["verbose"] = verbose - 1
@@ -873,8 +874,7 @@ def measOrbitRm(bpmfld, corfld, **kwargs):
         # save each column
         m[:,i], xlst, dat = measRmCol(bpmfld, cor, fld, dxlst, **kwargs)
         tau, Icur = getLifetimeCurrent()
-        if verbose:
-            print("%d/%d" % (i, len(corfld)), cor.name, np.min(m[:,i]), np.max(m[:,i]))
+        _logger.info("%d/%d" % (i, len(corfld)), cor.name, np.min(m[:,i]), np.max(m[:,i]))
 
         if output:
             f = h5py.File(output)
@@ -1331,7 +1331,7 @@ def getMaskedArchiverData(pv, tstart, tend, minval, dhour=8, verbose=0):
     buf = [] # deque()
     extrm = []
     _GAP = timedelta(seconds = 0)
-    _MINVAL = 0.2
+    _MINVAL = minval
     _MINSPAN = 60
     ncut = 0
     while _tstart < _tend:

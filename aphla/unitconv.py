@@ -214,8 +214,8 @@ def loadUnitConversionH5(lat, h5file, group):
         for ename in elems:
             eobj = lat._find_exact_element(ename)
             if not eobj: 
-                _logger.warn("dataset '{0}': element {1} not found. ignored".format(
-                    k, ename))
+                _logger.warn("dataset '{0}': element {1}.{2} not found. ignored".format(
+                    k, lat.name, ename))
                 continue
             eobjs.append(eobj)
 
@@ -223,8 +223,8 @@ def loadUnitConversionH5(lat, h5file, group):
         for fam in fams:
             egrps = lat.getElementList(fam)
             if not egrps:
-                _logger.warn("dataset '{0}': group {1} not found. ignored".format(
-                    k, fam))
+                _logger.warn("dataset '{0}': group {1}.{2} not found. ignored".format(
+                    k, lat.name, fam))
             eobjs += egrps
 
         _logger.info("unitconversion data {0}[{1}] -> {2}[{3}] for elems={4}, "
@@ -238,8 +238,8 @@ def loadUnitConversionH5(lat, h5file, group):
             if fld not in eobj.fields():
                 realfld = v.attrs.get('rawfield', None)
                 if realfld is None:
-                    _logger.warn("'%s' has no field '%s' for unit conversion" \
-                                     % (eobj.name, fld))
+                    _logger.warn("'%s.%s' has no field '%s' for unit conversion" \
+                                     % (lat.name, eobj.name, fld))
                     continue
                 else:
                     eobj.addAliasField(fld, realfld)
@@ -306,7 +306,8 @@ def loadUnitConversionIni(lat, fname):
         for ename in elems:
             eobj = lat._find_exact_element(ename)
             if not eobj: 
-                _logger.warn("element {0} not found. ignored".format(ename))
+                _logger.warn("element {0}/{1} not found. ignored".format(
+                        lat.name, ename))
                 continue
             eobjs.append(eobj)
 
@@ -314,7 +315,8 @@ def loadUnitConversionIni(lat, fname):
         for fam in fams:
             egrps = lat.getElementList(fam)
             if not egrps:
-                _logger.warn("group '{0}' not found. ignored".format(fam))
+                _logger.warn("group '{0}/{1}' not found. ignored".format(
+                        lat.name, fam))
             eobjs += egrps
 
         _logger.info("unitconversion data for field= '{0}' elems={1}, "
@@ -326,8 +328,8 @@ def loadUnitConversionIni(lat, fname):
                 # fld is the converted value.
                 realfld = d.get('rawfield', None)
                 if realfld is None:
-                    _logger.warn("'%s' has no field '%s' for unit conversion" % 
-                                 (eobj.name, fld))
+                    _logger.warn("'%s/%s' has no field '%s' for unit conversion" % 
+                                 (lat.name, eobj.name, fld))
                     continue
                 else:
                     # the fld is not available, but it will be an alias to
