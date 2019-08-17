@@ -1482,9 +1482,9 @@ def merge(elems, field = None, **kwargs):
                     e.name for e in elems]))
     # if all raw units are the same, so are the merged element
     for fld in elem.fields():
-        units = sorted([e.getUnit(fld, unitsys=None) for e in elems if fld in e.fields()])
-        if units[0] == units[-1]:
-            elem.setUnit(fld, units[0], unitsys=None)
+        unique_units = set([e.getUnit(fld, unitsys=None) for e in elems if fld in e.fields()])
+        if len(unique_units) == 1:
+            elem.setUnit(fld, unique_units.pop(), unitsys=None)
 
     return elem
 
