@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Some NSLS2 specific routines
 =============================
@@ -9,5 +11,5 @@ br - Booster Ring
 sr - Storage Ring
 """
 
-from nsls2br import *
-from nsls2sr import *
+from .nsls2br import *
+from .nsls2sr import *

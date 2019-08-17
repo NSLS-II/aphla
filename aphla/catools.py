@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
+from six import string_types
 
 """
 CA Tools
@@ -13,7 +15,7 @@ caget will have noises and caput will do nothing.
 """
 
 __all__ = [
-    'caget', 'casample', 'caput', 'caputwait', 'caRmCorrect', 
+    'caget', 'casample', 'caput', 'caputwait', 'caRmCorrect',
     'readPvs', 'measCaRmCol',
     'Timedout', 'CA_OFFLINE', 'FORMAT_TIME'
 ]
@@ -38,7 +40,7 @@ def _ca_get_sim(pvs):
     """
     get random simulation double single value or list. No STRING considered.
     """
-    if isinstance(pvs, (str, unicode)):
+    if isinstance(pvs, string_types):
         return random.random()
     elif isinstance(pvs, (tuple, list)):
         return [random.random() for i in range(len(pvs))]
@@ -54,7 +56,7 @@ def _ca_put_sim(pvs, vals):
 def caget(pvs, timeout=CA_TIMEOUT, datatype=None, format=ct.FORMAT_TIME,
            count=0, throw=False, verbose=0, missing_values = None):
     """channel access read
-    
+
     This is a simple wrap of cothread.catools, support UTF8 string
 
     Throw cothread.Timedout exception when timeout. This is a wrap of original
@@ -68,7 +70,7 @@ def caget(pvs, timeout=CA_TIMEOUT, datatype=None, format=ct.FORMAT_TIME,
     timeout : int. timeout in seconds
     throw : bool. throw exception or not
     count : specify number of waveform points
-    
+
     Returns
     ---------
     val : list or value. channel value
@@ -86,15 +88,18 @@ def caget(pvs, timeout=CA_TIMEOUT, datatype=None, format=ct.FORMAT_TIME,
     # in case of testing ...
     if CA_OFFLINE: return _ca_get_sim(pvs)
 
-    if isinstance(pvs, str):
-        return ct.caget(pvs, timeout=timeout, datatype=datatype,
-                        format=format, count=count, throw=throw)
-    elif isinstance(pvs, unicode):
-        pvs2 = pvs.encode("ascii")
+    if isinstance(pvs, string_types):
+        if hasattr(pvs, 'decode'):
+            pvs2 = pvs.decode()
+        else:
+            pvs2 = pvs
+
         return ct.caget(pvs2, timeout=timeout, datatype=datatype,
                         format=format, count=count, throw=throw)
+
     elif isinstance(pvs, (tuple, list)):
-        pvs2 = [pv.encode("ascii") for pv in pvs if pv]
+        pvs2 = [pv.decode() if hasattr(pv, 'decode') else pv
+                for pv in pvs if pv]
         dr = ct.caget(pvs2, timeout=timeout, datatype=datatype,
                        format=format, count=count, throw=throw)
 
@@ -112,8 +117,8 @@ def caget(pvs, timeout=CA_TIMEOUT, datatype=None, format=ct.FORMAT_TIME,
 def cagetr(pvs, **kwargs):
     """caget recursive version"""
     if not pvs: return None
-    if isinstance(pvs, (str, unicode)): return caget(pvs, **kwargs)
-    if all([isinstance(pv, (str, unicode)) or pv is None for pv in pvs]):
+    if isinstance(pvs, string_types): return caget(pvs, **kwargs)
+    if all([isinstance(pv, string_types) or pv is None for pv in pvs]):
         return caget(pvs, **kwargs)
     return [cagetr(pv, **kwargs) for pv in pvs]
 
@@ -124,7 +129,7 @@ def casample(pvs, nsample = 5, T=1):
         time.sleep(T*1.0/nsample)
     va = np.array(vl)
     return np.average(va, axis=0), np.std(va, axis=0)
-    
+
 def caput(pvs, values, timeout=CA_TIMEOUT, wait=True, throw=True, verbose = 0):
     """channel access write.
 
@@ -155,12 +160,13 @@ def caput(pvs, values, timeout=CA_TIMEOUT, wait=True, throw=True, verbose = 0):
 
     if CA_OFFLINE: return _ca_put_sim(pvs, values)
 
-    if isinstance(pvs, str):
-        pvs2 = pvs
-    elif isinstance(pvs, unicode):
-        pvs2 = pvs.encode("ascii")
+    if isinstance(pvs, string_types):
+        if hasattr(pvs, 'decode'):
+            pvs2 = pvs.decode()
+        else:
+            pvs2 = pvs
     elif isinstance(pvs, list):
-        pvs2 = [pv.encode("ascii") for pv in pvs]
+        pvs2 = [pv.decode() for pv in pvs]
     else:
         raise ValueError("Unknown type " + str(type(pvs)))
 
@@ -168,7 +174,7 @@ def caput(pvs, values, timeout=CA_TIMEOUT, wait=True, throw=True, verbose = 0):
         return ct.caput(pvs2, values, timeout=timeout, wait=wait, throw=throw)
     except cothread.Timedout:
         if os.environ.get('APHLAS_DISABLE_CA', 0):
-            print "TIMEOUT: reading", pvs
+            print("TIMEOUT: reading {0}".format(str(pvs)))
         else:
             raise cothread.Timedout
 
@@ -180,7 +186,7 @@ def caputwait(pvs, values, pvmonitors, diffstd=1e-6, wait=(2, 1), maxtrial=20):
     pvs : str, list. PVs for setting
     values : list. setting values for *pvs*
     pvmonitors : list. PVs for testing the effects of new PV setting.
-    diffstd : float. optional(1e-6). threshold value of effective change 
+    diffstd : float. optional(1e-6). threshold value of effective change
         of *pvmonitors*.
     wait : tuple, optional(2,1). waiting time for initial and each step,
         in seconds
@@ -250,7 +256,7 @@ def measCaRmCol(resp, kker, dxlst, **kwargs):
         raise RuntimeError("can not get data from %s" % kker)
 
     if verbose > 0:
-        print "dx:", dxlst
+        print(("dx:", dxlst))
     n1 = len(dxlst)
     m = np.zeros(n0, 'd')
     raw_data = np.zeros((n1, n0, sample), 'd')
@@ -268,7 +274,7 @@ def measCaRmCol(resp, kker, dxlst, **kwargs):
             dxlst, np.average(raw_data[:,i,:], axis=1), 2, full=True)
         m[i] = p[1]
     if verbose > 0:
-        print "dy/dx:", m
+        print(("dy/dx:", m))
     return m, dxlst, raw_data
 
 
@@ -282,7 +288,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
     m : response matrix where :math:`m_{ij}=\Delta resp_i/\Delta kker_j`
     scale : scaling factor applied to the calculated kker
     ref : the targeting value of resp PVs
-    rcond : the rcond for cutting singular values. 
+    rcond : the rcond for cutting singular values.
     nsv: use how many singular values, overwrite the option of rcond
     check : stop if the orbit gets worse.
     wait : waiting (seconds) before check.
@@ -312,13 +318,13 @@ def caRmCorrect(resp, kker, m, **kwarg):
     dtresp = kwarg.get("dtresp", 0.2)
     kkerstep = kwarg.get("kkerstep", 1)
     dtkker = kwarg.get("dtkker", 0.3)
-    
+
     _logger.info("nkk={0}, nresp={1}, scale={2}, rcond={3}, wait={4}".format(
             len(kker), len(resp), scale, rcond, wait))
 
     v0, sig = casample(resp, nsample=nrespavg, T=nrespavg*dtresp)
     if ref is not None: v0 = v0 - ref
-    
+
     # the initial norm
     norm0 = np.linalg.norm(v0)
     U, s, V = np.linalg.svd(m)
@@ -356,7 +362,7 @@ def caRmCorrect(resp, kker, m, **kwarg):
 
     if verbose > 0:
         for i,pv in enumerate(kkerin):
-            print i, pv, "k0=", k0[i], " dk=", dk[i]
+            print((i, pv, "k0=", k0[i], " dk=", dk[i]))
 
     norm1 = np.linalg.norm(m.dot(dk) + v0)
     # the real setting
@@ -380,8 +386,8 @@ def caRmCorrect(resp, kker, m, **kwarg):
         if verbose > 0:
             print(msg)
         if norm2 > norm0:
-            msg = "Failed to reduce orbit distortion, restoring..." 
-            _logger.warn(msg) 
+            msg = "Failed to reduce orbit distortion, restoring..."
+            _logger.warn(msg)
             #print(msg, norm0, norm2)
             caput(kker, k0)
             return norm0, norm1, norm2, np.zeros_like(k0)
@@ -417,7 +423,7 @@ def readPvs(pvs, **kwargs):
 def savePvData(fname, pvs, **kwargs):
     """
     save pv data
-    
+
     - group, default "/"
     - mode, default 'a' (append)
     - ignore, list of pvs to ignore
@@ -465,11 +471,11 @@ def putPvData(fname, group, **kwargs):
     """
 
     sponly = kwargs.get("sponly", True)
-    
+
     import h5py
     h5f = h5py.File(fname, 'r')
     grp = h5f[group]
-    
+
     pv, dat = [], []
     for k,v in grp.items():
         #caput(k, v)
@@ -534,7 +540,7 @@ def caWaitStable(pvs, values, vallo, valhi, **kwargs):
             # delay a bit
             time.sleep(dt/(nsample+1.0))
             buf[i,:] = caget(pvs, **kwargs)
-            
+
         avg = np.average(buf, axis=0)
         #if verbose > 0:
         #    print "V:", avg

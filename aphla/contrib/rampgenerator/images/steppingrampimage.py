@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 import collections
 import struct
 import numpy as np
@@ -27,13 +29,13 @@ def get_pack_format(dtype):
                 'unsigned int': 'I',
                 'float': 'f'
             }[dtype]
-            
+
 
 class SteppingRampImage(RampImage):
     """Represents a binary image of ramp list that can be loaded into the hardware"""
     def __init__(self, bipolar, max_time_slices, max_key_stones):
         super(SteppingRampImage, self).__init__(bipolar, max_time_slices)
-        
+
         self.max_key_stones = max_key_stones
 
         self._length_pack_type_ = 'unsigned int'
@@ -66,7 +68,7 @@ class SteppingRampImage(RampImage):
             ramps = ramp_list.ramps
             lengths = [len(ramp.points) for ramp in ramps]
             if sum(lengths) > self.max_key_stones:
-                print "The image is too long to fit in one MTU. Soz."
+                print("The image is too long to fit in one MTU. Soz.")
                 self._invalidate()
                 return self.image
             voltages = [voltage for time, voltage in flatten([ramp.points for ramp in ramps])]

@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 import sip
 sip.setapi('QString', 2)
@@ -319,9 +320,9 @@ class Model(QObject):
                     continue
 
                 inv = 0
-                if uc_dict.has_key((None, unitsys)):
+                if (None, unitsys) in uc_dict:
                     uc = uc_dict[(None, unitsys)]
-                elif uc_dict.has_key((unitsys, None)):
+                elif (unitsys, None) in uc_dict:
                     uc = uc_dict[(unitsys, None)]
                     if uc.invertible:
                         inv = 1
@@ -340,9 +341,9 @@ class Model(QObject):
                 src_unitsymb, dst_unitsymb = dst_unitsymb, src_unitsymb
 
                 inv = 0
-                if uc_dict.has_key((unitsys, None)):
+                if (unitsys, None) in uc_dict:
                     uc = uc_dict[(unitsys, None)]
-                elif uc_dict.has_key((None, unitsys)):
+                elif (None, unitsys) in uc_dict:
                     uc = uc_dict[(None, unitsys)]
                     if uc.invertible:
                         inv = 1
@@ -375,7 +376,7 @@ class Model(QObject):
             msg.exec_()
             return None
         else:
-            for _, v in unitconv_dict.iteritems():
+            for _, v in unitconv_dict.items():
                 for dd in v:
                     if dd['src_unitsys'] is None: dd['src_unitsys'] = ''
                     if dd['dst_unitsys'] is None: dd['dst_unitsys'] = ''
@@ -384,7 +385,7 @@ class Model(QObject):
                 unitconv_key_list, unitsys_list)):
                 if key in ('', None):
                     pass
-                elif unitconv_dict.has_key(key):
+                elif key in unitconv_dict:
                     uc_list = unitconv_dict[key]
                     for uc in uc_list:
                         if (uc['src_unitsys'] == '') and \
@@ -460,10 +461,10 @@ class Model(QObject):
                     if (ap_ch_name not in (None, '')) and
                     (uc_key not in (None, ''))]
                 if double_uc_definitions != []:
-                    print '### Unit-Conversion Definitions specified for both'
-                    print 'by APHLA elements and JSON unit-conversion dict'
-                    print 'for the following:'
-                    print double_uc_definitions
+                    print('### Unit-Conversion Definitions specified for both')
+                    print('by APHLA elements and JSON unit-conversion dict')
+                    print('for the following:')
+                    print(double_uc_definitions)
                     title = 'Source of Unit Conversion Data'
                     prompt = ('For some channels, unit conversion definitions\n'
                               'are available both from APHLA channel data and\n'
@@ -631,12 +632,12 @@ class Model(QObject):
                 group_name, append_new=True)
             for group_name in d['group_name']]
 
-        if not d.has_key('unitsys'):
+        if 'unitsys' not in d:
             channel_ids = self.get_channel_ids(d['pvsp'], d['pvrb'],
                                                d['channel_name'])
         else:
-            if (not d.has_key('unitconv_key')) and \
-               (not d.has_key('aphla_channel_name')):
+            if ('unitconv_key' not in d) and \
+               ('aphla_channel_name' not in d):
                 msg = QMessageBox()
                 msg.setText(
                     ('If `column_names` include "unitsys", `column_names` '
@@ -645,9 +646,9 @@ class Model(QObject):
                 msg.exec_()
                 return
 
-            if d.has_key('unitconv_key'):
+            if 'unitconv_key' in d:
                 unitconv_key_list = d['unitconv_key']
-                if json_dict.has_key('unitconv_dict'):
+                if 'unitconv_dict' in json_dict:
                     unitconv_dict = json_dict['unitconv_dict']
                 else:
                     msg = QMessageBox()
@@ -661,7 +662,7 @@ class Model(QObject):
                 unitconv_key_list = None
                 unitconv_dict     = None
 
-            if d.has_key('aphla_channel_name'):
+            if 'aphla_channel_name' in d:
                 aphla_channel_name_list = d['aphla_channel_name']
             else:
                 aphla_channel_name_list = None
@@ -678,11 +679,11 @@ class Model(QObject):
         self.abstract.group_name_ids.extend(group_name_ids)
         self.abstract.channel_ids.extend(channel_ids)
         n_channels = len(channel_ids)
-        if d.has_key('config_weight'):
+        if 'config_weight' in d:
             self.abstract.weights.extend(d['config_weight'])
         else:
             self.abstract.weights.extend(np.array([1.0]*n_channels))
-        if d.has_key('config_caput_enabled'):
+        if 'config_caput_enabled' in d:
             self.abstract.caput_enabled_rows.extend(d['config_caput_enabled'])
         else:
             self.abstract.caput_enabled_rows.extend(np.array([True]*n_channels))
@@ -1078,13 +1079,13 @@ class View(QDialog, Ui_Dialog):
     def _groupChannels(self):
         """"""
 
-        print 'Not implemented yet'
+        print('Not implemented yet')
 
     #----------------------------------------------------------------------
     def _ungroupChannels(self):
         """"""
 
-        print 'Not implemented yet'
+        print('Not implemented yet')
 
     #----------------------------------------------------------------------
     def _openContextMenu(self, point):
@@ -1347,7 +1348,7 @@ def main():
     app = make(use_cached_lattice=use_cached_lattice)
 
     cothread.WaitForQuit()
-    print app.model.output
+    print(app.model.output)
 
 
 if __name__ == '__main__':

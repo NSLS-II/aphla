@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Machine Structure Initialization
 --------------------------------
@@ -26,8 +28,8 @@ import time
 import glob
 import re
 from pkg_resources import resource_string, resource_exists, resource_filename
-import cPickle as pickle
-import ConfigParser
+from six.moves import cPickle as pickle
+from six.moves import configparser
 import fnmatch
 import logging
 _logger = logging.getLogger(__name__)
@@ -120,7 +122,7 @@ def load_v1(machine, submachines = "*", **kwargs):
     _logger.info("setting default lattice '%s'" % _lat.name)
 
     if save_cache:
-        selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
+        selected_lattice_name = [k for (k,v) in _lattice_dict.items()
                                  if _lat == v][0]
         saveCache(machine, _lattice_dict, selected_lattice_name)
 
@@ -183,7 +185,7 @@ def load(machine, submachine = "*", **kwargs):
     #importlib.import_module(machine, 'machines')
     machdir, machname = _findMachinePath(machine)
     if verbose:
-        print "loading machine data '%s: %s'" % (machname, machdir)
+        print("loading machine data '%s: %s'" % (machname, machdir))
 
     if machdir is None:
         msg = "can not find machine data directory for '%s'" % machine
@@ -192,7 +194,7 @@ def load(machine, submachine = "*", **kwargs):
 
     _logger.info("importing '%s' from '%s'" % (machine, machdir))
 
-    cfg = ConfigParser.ConfigParser()
+    cfg = configparser.ConfigParser()
     try:
         cfg.readfp(open(os.path.join(machdir, "aphla.ini"), 'r'))
         _logger.info("using config file: 'aphla.ini'")
@@ -239,7 +241,7 @@ def load(machine, submachine = "*", **kwargs):
 
         cfa.splitPropertyValue('elemGroups')
         cfa.splitChainedElement('elemName')
-        for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+        for k,v in _cf_map.items(): cfa.renameProperty(k, v)
 
         #print "New CFA:", cfa.rows
 
@@ -281,13 +283,13 @@ def load(machine, submachine = "*", **kwargs):
         if verbose:
             nelems = len(lat.getElementList('*'))
             if msect == accdefault:
-                print "%s (*): %d elements" % (msect, nelems)
+                print("%s (*): %d elements" % (msect, nelems))
             else:
-                print "%s: %d elements" % (msect, nelems)
-            print "  BPM: %d, COR: %d, QUAD: %d, SEXT: %d" % (
+                print("%s: %d elements" % (msect, nelems))
+            print("  BPM: %d, COR: %d, QUAD: %d, SEXT: %d" % (
                 len(lat.getElementList('BPM')), len(lat.getElementList('COR')),
                 len(lat.getElementList('QUAD')),
-                len(lat.getElementList('SEXT')))
+                len(lat.getElementList('SEXT'))))
 
     # set the default submachine, if no, use the first one
     lat0 = lat_dict.get(accdefault, None)
@@ -302,7 +304,7 @@ def load(machine, submachine = "*", **kwargs):
     _lat = lat0
     _lattice_dict.update(lat_dict)
     if save_cache:
-        selected_lattice_name = [k for (k,v) in _lattice_dict.iteritems()
+        selected_lattice_name = [k for (k,v) in _lattice_dict.items()
                                  if _lat == v][0]
         saveCache(machine, _lattice_dict, selected_lattice_name)
 
@@ -337,28 +339,28 @@ def loadfast(machine, submachine = "*"):
         # If the cache file is more than 24 hours old, force cache update.
         if (current_timestamp - cache_file_timestamp) >= 24.0*60.0*60.0:
             update_cache = True
-            print ('* The lattice cache file for the machine "{0}" is more than '
-                   '24 hours old.').format(machine)
+            print(('* The lattice cache file for the machine "{0}" is more than '
+                   '24 hours old.').format(machine))
 
         # If any of the aphla database files have a timestamp later
         # than that of the cache file, force cache update
         elif np.any(np.array(mod_timestamps) - cache_file_timestamp > 0.0):
             update_cache = True
-            print ('* Some of the database files related to the machine "{0}" '
-                   'are newer than the lattice cache file.').format(machine)
+            print(('* Some of the database files related to the machine "{0}" '
+                   'are newer than the lattice cache file.').format(machine))
 
         else:
             update_cache = False
     else:
-        print ('* The lattice cache file for the machine "{0}" does not '
-               'exist.').format(machine)
+        print(('* The lattice cache file for the machine "{0}" does not '
+               'exist.').format(machine))
         update_cache = True
 
     if update_cache:
-        print ('* Auto-updating the lattice cache file for the '
-               'machine "{0}"...').format(machine)
+        print(('* Auto-updating the lattice cache file for the '
+               'machine "{0}"...').format(machine))
         load(machine, use_cache=False, save_cache=True)
-        print '* Finished updating the cache file.'
+        print('* Finished updating the cache file.')
     else:
         load(machine, use_cache=True, save_cache=False)
 
@@ -379,13 +381,13 @@ def loadCache(machine_name):
     cache_filepath = os.path.join(cache_folderpath,
                                   machine_name+'_lattices.cpkl')
 
-    print 'Loading cached lattice from {0:s}...'.format(cache_filepath)
+    print('Loading cached lattice from {0:s}...'.format(cache_filepath))
 
     with open(cache_filepath,'rb') as f:
         selected_lattice_name = pickle.load(f)
         _lattice_dict = pickle.load(f)
 
-    print 'Finished loading cached lattice.'
+    print('Finished loading cached lattice.')
 
     _lat = _lattice_dict[selected_lattice_name]
 
@@ -506,7 +508,7 @@ def findCfaConfig(srcname, machine, submachines):
         msg = "Creating lattice from '%s'" % name
         _logger.info(msg)
         cfa.importSqlite(name)
-        #for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
+        #for k,v in _db_map.items(): cfa.renameProperty(k, v)
     else:
         _logger.error("Lattice data are available for machine '%s'" % machine)
         raise RuntimeError("Failed at loading data file '%s' from '%s'" % (
@@ -606,11 +608,15 @@ def setGoldenLattice(lat, h5fname, grp = "Golden"):
         _logger.warn("no '%s' in '%s'. Ignore" % (grp, h5fname))
         return
     g = f[grp]
-    for elem in lat.getElementList(g.keys()):
+    #for elem in lat.getElementList(g.keys()):
+    for elem in lat.getElementList(list(g)):
         g1 = g[elem.name]
         for fld in g1.keys():
             ds = g1[fld]
-            elem.setGolden(fld, ds, unitsys=ds.attrs.get("unitsys", None))
+            unitsys = ds.attrs.get("unitsys", None)
+            if unitsys is not None:
+                unitsys = unitsys.decode()
+            elem.setGolden(fld, ds, unitsys=unitsys)
     # the waveform ... ignored now
 
 

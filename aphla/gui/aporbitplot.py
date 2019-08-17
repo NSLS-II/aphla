@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 aporbit Plot
 ============
@@ -53,7 +55,7 @@ if sip.SIP_VERSION_STR > '4.10.2':
 
 COLORS = [("Blue", Qt.blue),
           ("Green", Qt.green),
-          ("Red", Qt.red), 
+          ("Red", Qt.red),
           ("Cyan", Qt.cyan),
           ("Magenta", Qt.magenta),
           ("Yellow", Qt.yellow),
@@ -114,7 +116,7 @@ _L4 = [[[0.0, 1.0], [0.25, 0.25], (0, 4, 1), '4y=1'],
        [[0.6666666666666666, 0.3333333333333333], [0.0, 1.0], (3, 1, 2), '3x+y=2'],
        [[1.0, 0.6666666666666666], [0.0, 1.0], (3, 1, 3), '3x+y=3'],
        [[0.0, 0.3333333333333333], [0.0, 1.0], (3, -1, 0), '3x-y=0'],
-       [[0.3333333333333333, 0.6666666666666666], [0.0, 1.0], (3, -1, 1), '3x-y=1'], 
+       [[0.3333333333333333, 0.6666666666666666], [0.0, 1.0], (3, -1, 1), '3x-y=1'],
        [[0.6666666666666666, 1.0], [0.0, 1.0], (3, -1, 2), '3x-y=2']]
 
 
@@ -151,7 +153,7 @@ class ApCaPlotScaleDlg(QtGui.QDialog):
             return (float(self.y0.text()), float(self.y1.text()))
         except:
             return None
-    
+
 
 class MagnetPicker(Qwt.QwtPlotPicker):
     """
@@ -182,10 +184,10 @@ class MagnetPicker(Qwt.QwtPlotPicker):
         #self.elementSelected = pyqtSignal(list)
 
     def activate_element(self, p):
-        print "Active element:", p
+        print("Active element:", p)
 
     def addMagnetProfile(self, sb, se, name, minlen = 0.2):
-        if se < sb: 
+        if se < sb:
             raise ValueError("s range of %s is wrong, must be se > sb" % name)
 
         c = (sb + se)/2.0
@@ -280,7 +282,7 @@ class ApErrBarCurve(Qwt.QwtPlotCurve):
         self.errorCap = kw.get('errorCap', 0)
         self.errorOnTop = kw.get('errorOnTop', False)
         self.setTitle(kw.get("title", ""))
-        
+
     def data(self):
         d = Qwt.QwtPlotCurve.data(self)
         x = [d.x(i) for i in range(d.size())]
@@ -301,7 +303,7 @@ class ApErrBarCurve(Qwt.QwtPlotCurve):
         data = Qwt.QwtPlotCurve.data(self)
         if data.size() == 0:
             return Qwt.QwtPlotCurve.boundingRect(self)
-        
+
         if self.e1 is None:
             return data.boundingRect()
 
@@ -313,7 +315,7 @@ class ApErrBarCurve(Qwt.QwtPlotCurve):
         w = xmax - xmin
         h = ymax - ymin
         return QRectF(xmin, ymin, w, h)
-        
+
 
     def drawFromTo(self, painter, xMap, yMap, first, last = -1):
         """
@@ -324,7 +326,7 @@ class ApErrBarCurve(Qwt.QwtPlotCurve):
         xMap is the Qwt.QwtDiMap used to map x-values to pixels
 
         yMap is the Qwt.QwtDiMap used to map y-values to pixels
-        
+
         first is the index of the first data point to draw
 
         last is the index of the last data point to draw. If last < 0, last
@@ -496,7 +498,7 @@ class ApCaPlot(Qwt.QwtPlot):
             mags.extend(rec[0])
             magv.extend(rec[1])
             if rec[3]:
-                magp.append((min(rec[0]), max(rec[0]), 
+                magp.append((min(rec[0]), max(rec[0]),
                              rec[3].encode('ascii')))
         self.curvemag.setData(mags, magv)
         self.curvemag.setYAxis(Qwt.QwtPlot.yRight)
@@ -513,10 +515,10 @@ class ApCaPlot(Qwt.QwtPlot):
             #names = [v[2] for v in magp]
             #self.picker1.addMagnetProfile(sb, se, names)
             self.picker1.setTrackerPen(QPen(Qt.red, 4))
-            self.connect(self.picker1, 
+            self.connect(self.picker1,
                          SIGNAL("elementDoubleClicked(PyQt_PyObject)"),
                          self.elementDoubleClicked)
-        
+
         #self.connect(self.zoomer1, SIGNAL("zoomed(QRectF)"),
         #             self.zoomed1)
         #self.timerId = self.startTimer(1000)
@@ -672,7 +674,7 @@ class ApCaPlot(Qwt.QwtPlot):
 
         # leave replot to the caller
         self.replot()
-        
+
     def scaleY(self, factor = None, axis = Qwt.QwtPlot.yLeft):
         if self.axisAutoScale(axis):
             self._setAutoScale(False)
@@ -761,7 +763,7 @@ class ApCaPlot(Qwt.QwtPlot):
                     if name == st: self._set_line(c, val)
             elif st in [v[0] for v in SYMBOLS]:
                 for name,val in SYMBOLS:
-                    if name == st: self._set_symbol(c, val)            
+                    if name == st: self._set_symbol(c, val)
             elif st == "Increase Line Width":
                 self._set_line(c, None, 1)
             elif st == "Decrease Line Width":
@@ -782,7 +784,7 @@ class ApCaPlot(Qwt.QwtPlot):
                 self._set_symbol(c, None, -1)
             elif st in [v[0] for v in SYMBOLS]:
                 for name,val in SYMBOLS:
-                    if name == st: self._set_symbol(c, val)            
+                    if name == st: self._set_symbol(c, val)
             color = kwargs.get("color", None)
             if color in [v[1] for v in COLORS]:
                 self._set_symbol(c, color=color)
@@ -804,7 +806,7 @@ class ApCaTimeSeriesPlot(ApCaPlot):
         scaleWidget = self.axisWidget(Qwt.QwtPlot.xBottom)
         fmh = QFontMetrics(scaleWidget.font()).height()
         #scaleWidget.setMinBorderDist(0, fmh/2)
-        
+
         #self.setAxisTitle(Qwt.QwtPlot.yLeft, "I")
         #self.setAxisScale(Qwt.QwtPlot.yLeft, 0, 550)
         if sip.SIP_VERSION_STR > '4.10.2':
@@ -827,7 +829,7 @@ class ApCaTimeSeriesPlot(ApCaPlot):
             c.attach(self)
 
         self._timerId = self.startTimer(1500)
-        
+
     def timerEvent(self, e):
         if not self.live: return
         if self._hold: return
@@ -843,7 +845,7 @@ class ApCaTimeSeriesPlot(ApCaPlot):
         else:
             for i,pv in enumerate(self._pvs):
                 self.curves[i].setData(self._t, self._vals[pv])
-            
+
         self.setAxisScale(Qwt.QwtPlot.xBottom, self._t[0], self._t[-1])
         #self.zoomer.setZoomBase(False)
         self.replot()
@@ -857,21 +859,21 @@ class ApCaTimeSeriesPlot(ApCaPlot):
         self._t.append(float(datetime.now().strftime("%s")))
         for i,v in enumerate(caget(self._pvs, timeout=0.8)):
             self._vals[v.name].append(v if v.ok else np.nan)
-        
+
     def closeEvent(self, e):
-        print "Close"
+        print("Close")
         e.accept()
 
 
 class ApCaWaveformPlot(ApCaPlot):
     def __init__(self, pvs, **kwargs):
         """initialization
-        
+
         Parameters
         -----------
         pvs: waveform PV list
         parent : None
-        title : 
+        title :
         """
         parent = kwargs.pop("parent", None)
         super(ApCaWaveformPlot, self).__init__(parent)
@@ -943,7 +945,7 @@ class ApCaWaveformPlot(ApCaPlot):
     #def elementDoubleClicked(self, elem):
     #    print "element selected:", elem
     #    self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
-    
+
     def contextMenuEvent(self, e):
         cmenu = QMenu()
         m_drift = QAction("Drift", self)
@@ -997,12 +999,12 @@ class ApCaWaveformPlot(ApCaPlot):
 class ApCaArrayPlot(ApCaPlot):
     def __init__(self, pvs, **kwargs):
         """initialization
-        
+
         Parameters
         -----------
         pvs: waveform PV list
         parent : None
-        title : 
+        title :
         """
         parent = kwargs.pop("parent", None)
         super(ApCaArrayPlot, self).__init__(parent, kwargs.get("iqt", None))
@@ -1045,7 +1047,7 @@ class ApCaArrayPlot(ApCaPlot):
             self._y.append([0.0] * len(pvl))
         # one more plot with second y axis
         self.curve2 = Qwt.QwtPlotCurve()
-        
+
         for c in self.curves:
             self.showCurve(c, True)
 
@@ -1062,7 +1064,7 @@ class ApCaArrayPlot(ApCaPlot):
         self._t0 = 0.0
         self._cadata.start()
         self._timerId = self.startTimer(1500)
-        
+
     def timerEvent(self, e):
         if self._hold: return
         if not self.live: return
@@ -1160,7 +1162,7 @@ class ApCaArrayPlot(ApCaPlot):
     def elementDoubleClicked(self, elem):
         #print "element selected:", elem
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
-    
+
     def alignScales(self):
         # raise RuntimeError("ERROR")
         return
@@ -1204,7 +1206,7 @@ class ApCaArrayPlot(ApCaPlot):
 
         # leave replot to the caller
         #self.replot()
-        
+
     def scaleYLeft(self, factor = None):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
         sr, sl = scalediv.upperBound(), scalediv.lowerBound()
@@ -1216,7 +1218,7 @@ class ApCaArrayPlot(ApCaPlot):
             bound = self.curvesBound()
             w = bound.width()
             h = bound.height()
-        
+
             #bound.adjust(0.0, -h*.1, 0.0, h*.1)
             ymin = bound.top() - h*.05
             ymax = bound.bottom() + h*.03
@@ -1250,7 +1252,7 @@ class ApCaArrayPlot(ApCaPlot):
 class ApCaTunesPlot(ApCaPlot):
     def __init__(self, pvs, **kwargs):
         """initialization
-        
+
         Parameters
         -----------
         pvs: two tunes PV
@@ -1372,7 +1374,7 @@ class ApCaTunesPlot(ApCaPlot):
     def updateData(self):
         #self._t.append(float(datetime.now().strftime("%s")))
         d = caget(self._pvs, timeout=0.8)
-        if all([len(self._vals[i]) and self._vals[i][-1] == d[i] 
+        if all([len(self._vals[i]) and self._vals[i][-1] == d[i]
                 for i in range(len(d))]):
             return
 
@@ -1402,7 +1404,7 @@ class ApCaTunesPlot(ApCaPlot):
     def elementDoubleClicked(self, elem):
         #print "element selected:", elem
         self.emit(SIGNAL("elementSelected(PyQt_PyObject)"), elem)
-    
+
     def alignScales(self):
         # raise RuntimeError("ERROR")
         return
@@ -1445,7 +1447,7 @@ class ApCaTunesPlot(ApCaPlot):
 
         # leave replot to the caller
         #self.replot()
-        
+
     def scaleYLeft(self, factor = None):
         scalediv = self.axisScaleDiv(Qwt.QwtPlot.yLeft)
         sr, sl = scalediv.upperBound(), scalediv.lowerBound()
@@ -1457,7 +1459,7 @@ class ApCaTunesPlot(ApCaPlot):
             bound = self.curvesBound()
             w = bound.width()
             h = bound.height()
-        
+
             #bound.adjust(0.0, -h*.1, 0.0, h*.1)
             ymin = bound.top() - h*.05
             ymax = bound.bottom() + h*.03
@@ -1550,7 +1552,7 @@ class ApMdiSubPlot(QMdiSubWindow):
     #    return self.data.machine
 
     #def fullname(self):
-    #    return (self.data.machine, self.data.lattice, 
+    #    return (self.data.machine, self.data.lattice,
     #            self.data.name, self.data.yfield)
 
     #def plotCurve2(self, y, x = None):
@@ -1592,7 +1594,7 @@ class ApSvdPlot(QDialog):
         hb = QHBoxLayout()
         hb.addWidget(QLabel("Show top"))
         self.ns = QComboBox()
-        for i in [5,10,25,40,60,80,100,120,160] + range(200,len(s)+1,50): 
+        for i in [5,10,25,40,60,80,100,120,160] + range(200,len(s)+1,50):
             self.ns.addItem("%d" % i)
         self.ns.addItem("%d" % len(s))
 

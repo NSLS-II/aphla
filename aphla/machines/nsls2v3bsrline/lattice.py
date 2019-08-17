@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 NSLS2V3BsrLine Machine Structure Initialization
 -------------------------------------------------
@@ -15,12 +17,12 @@ import os
 import logging
 logger = logging.getLogger(__name__)
 
-_cf_map = {'elemName': 'name', 
-           'elemField': 'field', 
+_cf_map = {'elemName': 'name',
+           'elemField': 'field',
            'devName': 'devname',
-           'elemType': 'family', 
+           'elemType': 'family',
            'elemHandle': 'handle',
-           'elemIndex': 'index', 
+           'elemIndex': 'index',
            'elemPosition': 'se',
            'elemLength': 'length',
            'system': 'system'
@@ -29,7 +31,7 @@ _cf_map = {'elemName': 'name',
 _db_map = {}
 
 
-def createLattice(name, pvrec, systag, desc = 'channelfinder', 
+def createLattice(name, pvrec, systag, desc = 'channelfinder',
                   create_vbpm = True):
     """
     create a lattice from channel finder data
@@ -70,7 +72,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
 
             #lat.appendElement(elem)
             lat.insertElement(elem)
-        
+
         handle = prpt.get('handle', None).lower()
         if handle == 'get': prpt['handle'] = 'readback'
         elif handle == 'put': prpt['handle'] = 'setpoint'
@@ -85,17 +87,17 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
     # !IMPORTANT! since Channel finder has no order, but lat class has
     lat.sortElements()
     lat.circumference = lat[-1].se if lat.size() > 0 else 0.0
-    
+
     logger.debug("mode {0}".format(lat.mode))
     logger.debug("'%s' has %d elements" % (lat.name, lat.size()))
     for g in sorted(lat._group.keys()):
         logger.debug("lattice '%s' group %s(%d)" % (
                 lat.name, g, len(lat._group[g])))
-        
+
     if create_vbpm:
         # a virtual bpm. its field is a "merge" of all bpms.
         bpms = lat.getElementList('BPM')
-        allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM, 
+        allbpm = merge(bpms, **{'virtual': 1, 'name': HLA_VBPM,
                                 'family': HLA_VFAMILY, 'index': 100000})
         lat.insertElement(allbpm, groups=[HLA_VFAMILY])
 
@@ -103,7 +105,7 @@ def createLattice(name, pvrec, systag, desc = 'channelfinder',
 
 
 def init_submachines(machine, submachines, **kwargs):
-    """ 
+    """
     initialize the virtual accelerator 'V3BSRLINE'
 
     This is a temp ring, always use database in the package
@@ -113,7 +115,7 @@ def init_submachines(machine, submachines, **kwargs):
     srcname = resource_filename(__name__, 'nsls2v3bsrline.sqlite')
     cfa = ChannelFinderAgent()
 
-    #name = resource_filename(__name__, os.path.join(machine, 
+    #name = resource_filename(__name__, os.path.join(machine,
     #                                                srcname + '.sqlite'))
     msg = "Creating lattice from '%s'" % srcname
     logger.info(msg)
@@ -121,7 +123,7 @@ def init_submachines(machine, submachines, **kwargs):
     logger.info(msg)
     cfa.importSqlite(srcname)
 
-    for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+    for k,v in _cf_map.items(): cfa.renameProperty(k, v)
 
     # should be 'aphla.sys.' + ['VSR', 'VLTB', 'VLTD1', 'VLTD2']
     logger.info("Initializing lattice according to the tags: %s" % HLA_TAG_SYS_PREFIX)
@@ -134,7 +136,7 @@ def init_submachines(machine, submachines, **kwargs):
                                                desc = cfa.source, create_vbpm = False)
         if lattice_dict[latname].size() == 0:
             logger.warn("lattice '%s' has no elements" % latname)
-            
+
         lattice_dict[latname].machine = machine
 
     lattice_dict['V3BSRLINE'].loop = False
@@ -157,10 +159,10 @@ def init_submachines(machine, submachines, **kwargs):
         logger.info("searching alias for '{0}'".format(e.name))
         for t in ['_t2', '_t3']:
             ealias = _lat.getElementList(e.name[:-3] + t)
-            if not ealias: 
+            if not ealias:
                 logger.info("no alias for '{0}'".format(e.name))
                 continue
-            if len(ealias) > 1: 
+            if len(ealias) > 1:
                 raise RuntimeError(
                     "element '{0}' alias are not unique: {1}".format(
                         e.name, ealias))
@@ -202,7 +204,7 @@ def init_submachines(machine, submachines, **kwargs):
     #logger.debug("bpms:{0}".format(bpms))
     #for i,e in enumerate(bpms):
     #    logger.debug("{0}: {1}".format(i, e))
-    #    
+    #
     #allbpm = element.merge(bpms, **{'virtual': 1, 'name': HLA_VBPM,
     #                        'family': HLA_VFAMILY})
     #_lat.insertElement(allbpm, groups=[HLA_VFAMILY])

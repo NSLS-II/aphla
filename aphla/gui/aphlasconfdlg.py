@@ -8,7 +8,7 @@ aphla Config
 import sys
 
 from PyQt4.QtCore import QSize, SIGNAL, Qt
-from PyQt4.QtGui import (QDialog, QAction, QActionGroup, QVBoxLayout, 
+from PyQt4.QtGui import (QDialog, QAction, QActionGroup, QVBoxLayout,
     QWidget, QTabWidget, QLabel, QIcon, QApplication, QImage, QPixmap,
     QSizePolicy, QFileDialog, QTableWidget, QHBoxLayout, QTableWidgetItem,
     QHeaderView)
@@ -16,7 +16,7 @@ from PyQt4.QtGui import (QDialog, QAction, QActionGroup, QVBoxLayout,
 class ApHlasConfDlg(QDialog):
     def __init__(self, width, height, parent = None):
         super(ApHlasConfDlg, self).__init__(parent)
-        
+
         table1 = QTableWidget(5, 5)
         table1.connect(table1, SIGNAL("cellActivated(int, int)"), self.showTags)
         table1.connect(table1, SIGNAL("cellClicked(int, int)"), self.showTags)
@@ -35,19 +35,19 @@ class ApHlasConfDlg(QDialog):
 
     def showTags(self, row, col):
         for i in range(3):
-            print i
+            print(i)
             it = self.tagsTable.item(i, 0)
-            if it is None: 
-                print "New an item at ", i, 0
+            if it is None:
+                print("New an item at ", i, 0)
                 it = QTableWidgetItem("tags: %d (%d,%d)" % (i, row, col))
                 self.tagsTable.setItem(i, 0, it)
             else:
-                print "Existing item", i, 0
+                print("Existing item", i, 0)
                 it.setText("this is a very long tags: %d (%d,%d)" % (i, row, col))
         #self.tagsTable.resizeColumnsToContents()
 
 
-    
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     dlg = ApHlasConfDlg(640, 480)

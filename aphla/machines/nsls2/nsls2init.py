@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 NSLS2 Machine Structure Initialization
 --------------------------------------
@@ -14,12 +16,12 @@ import logging
 _logger = logging.getLogger(__name__)
 #_logger.setLevel(logging.DEBUG)
 
-_cf_map = {'elemName': 'name', 
-           'elemField': 'field', 
+_cf_map = {'elemName': 'name',
+           'elemField': 'field',
            'devName': 'devname',
-           'elemType': 'family', 
+           'elemType': 'family',
            'elemHandle': 'handle',
-           'elemIndex': 'index', 
+           'elemIndex': 'index',
            'elemPosition': 'se',
            'elemLength': 'length',
            'system': 'system'
@@ -36,7 +38,7 @@ _db_map = {'elem_type': 'family',
 
 
 def init_submachines(machine, submachines, **kwargs):
-    """ 
+    """
     """
     # if src provides an explicit filename/url to initialize
     srcname = kwargs.get('src', 'nsls2')
@@ -45,9 +47,9 @@ def init_submachines(machine, submachines, **kwargs):
     # the column name in CSV or the property name in channel finder is
     # different from the Lattice class property, need to rename.
     if cfa.source.endswith(".sqlite") or cfa.source.endswith(".csv"):
-        for k,v in _db_map.iteritems(): cfa.renameProperty(k, v)
+        for k,v in _db_map.items(): cfa.renameProperty(k, v)
     elif cfa.source.startswith("http"):
-        for k,v in _cf_map.iteritems(): cfa.renameProperty(k, v)
+        for k,v in _cf_map.items(): cfa.renameProperty(k, v)
 
     lattice_dict = {}
 
@@ -79,13 +81,13 @@ def init_submachines(machine, submachines, **kwargs):
     # tune element from twiss
     #twiss = _lattice_dict['V2SR'].getElementList('twiss')[0]
     #tune = CaElement(name='tune', virtual=0)
-    #tune.updatePvRecord(twiss.pv(field='tunex')[-1], None, 
+    #tune.updatePvRecord(twiss.pv(field='tunex')[-1], None,
     #                    [HLA_TAG_PREFIX+'.elemfield.x'])
     #tune.updatePvRecord(twiss.pv(field='tuney')[-1], None,
     #                    [HLA_TAG_PREFIX+'.elemfield.y'])
     #_lattice_dict['V2SR'].insertElement(tune, 0)
     #
-    # LTB 
+    # LTB
     if 'LTB' in lattice_dict: lattice_dict['LTB'].loop = False
     data_filename = getResource('ltb_unitconv.hdf5', __name__)
     setUnitConversion(lattice_dict['LTD1'], data_filename, "unitconv")

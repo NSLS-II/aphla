@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 from ramploader import RampLoader
 from ..images.steppingrampimage import SteppingRampImage
 from ..core.defaults import MAX_TIME_SLICES, MAX_KEY_STONES
@@ -10,7 +12,7 @@ try:
     _NO_CATOOLS_ = False
 except ImportError:
     if __debug__:
-        print "ImportError: I can not import the catools module!"
+        print("ImportError: I can not import the catools module!")
     _NO_CATOOLS_ = True
 
 
@@ -31,11 +33,11 @@ class SteppingRampLoader(RampLoader):
             return None
 
         if __debug__ == True:
-            print "I am going to write the stepping binary image to PV: {0}...".format(self.pv_name)
+            print("I am going to write the stepping binary image to PV: {0}...".format(self.pv_name))
             if _NO_CATOOLS_ == True:
-                print "...but I see no catools module imported."
-            print "Image: ", ramp_image.image
-            print "Image len, bytes:", len(ramp_image.image)
+                print("...but I see no catools module imported.")
+            print("Image: ", ramp_image.image)
+            print("Image len, bytes:", len(ramp_image.image))
 
         if _NO_CATOOLS_ == True:
             return None
@@ -45,7 +47,7 @@ class SteppingRampLoader(RampLoader):
             caput(self.pv_name, ramp_image.image, wait=True)
         except:
             if __debug__ == True:
-                print "My write to CA has failed."
+                print("My write to CA has failed.")
             return None
 
         return 0

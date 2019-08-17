@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 """
 Response Matrix
@@ -7,7 +8,7 @@ Response Matrix
 :author: Lingyun Yang
 :license:
 
-:class:`~hla.respmat.OrbitRespMat` is an Orbit Response Matrix (ORM) 
+:class:`~hla.respmat.OrbitRespMat` is an Orbit Response Matrix (ORM)
 
 
 """
@@ -55,10 +56,10 @@ class RmCol:
 
     def measure(self, respfields, kfield, **kwargs):
         """
-        Measure the RM by change one kicker. 
+        Measure the RM by change one kicker.
 
         :param respfields: response fields, a list
-        
+
         """
         verbose = kwargs.get('verbose', 0)
         dklst = kwargs.get('dklst', None)
@@ -66,12 +67,12 @@ class RmCol:
         kx0 = self.kicker.get(kfield, unitsys=self.unit) # get EPICS value
         wait = (self.minwait, self.stepwait, 0)
         if verbose:
-            print "kicker: '%s.%s'= %e" % (self.kicker.name, kfield, kx0) 
+            print("kicker: '%s.%s'= %e" % (self.kicker.name, kfield, kx0) )
 
         points = self.points
         if dklst is not None:
             points = len(dklst)
-            print "Using external dklst:", dklst
+            print(("Using external dklst:", dklst))
         else:
             dklst = np.linspace(-self.maxdk, self.maxdk, points)
 
@@ -86,21 +87,21 @@ class RmCol:
 
         kstrength = np.ones(points+2, 'd') * kx0
         kstrength[1:-1] = [dklst[i] + kx0 for i in range(points)]
-        print "Kicker sp:", kstrength
+        print(("Kicker sp:", kstrength))
         for i,kx in enumerate(kstrength[1:]):
             v0 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
             #self.kicker.put(kfield, kx, unitsys=self.unit)
-            #st = waitChanged(self.resplst, respfields, v0, 
+            #st = waitChanged(self.resplst, respfields, v0,
             #                 wait=wait, diffstd=self.bpmdiffstd)
             fput([(self.kicker, kfield, kx),],
                  unitsys=self.unit, wait_readback = True)
             v1 = np.ravel(eget(self.resplst, respfields, unitsys=self.unit))
             ret[i+1,:] = v1[:]
-            
+
             if verbose:
-                print "kx= % .2e  resp= [% .4e, % .4e], stable= %s" % (
+                print("kx= % .2e  resp= [% .4e, % .4e], stable= %s" % (
                     kx, min(ret[i+1,:] - ret[0,:]), max(ret[i+1,:]-ret[0,:]),
-                    str(st))
+                    str(st)))
 
             sys.stdout.flush()
 
@@ -115,7 +116,7 @@ class RmCol:
         self.rawkick = kstrength
         self.rawresp = ret
         self.m = p[0,:] # the slope
-        self._c = p[1,:] # the constant 
+        self._c = p[1,:] # the constant
 
 
 
@@ -131,9 +132,9 @@ class OrbitRespMat:
         Initialize an Orm object with a list of BPMs and Trims
 
         .. highlight:: python
-        
+
           orm = OrbitRespMat(['BPM1', 'BPM2'], ['TRIM1', 'TRIM2'])
-        
+
         """
         # points for trim setting when calc dx/dkick
         self.ormdata = None
@@ -146,12 +147,12 @@ class OrbitRespMat:
         self.bpm = getElements(bpm)
         self.trim = getElements(trim)
 
-        self.bpmhdr = None # the header [(name, sb, field, pv=None), ...] 
-        self.trimhdr = None # the header [(name, sb, field, pvrb, pvsp), ...] 
+        self.bpmhdr = None # the header [(name, sb, field, pv=None), ...]
+        self.trimhdr = None # the header [(name, sb, field, pvrb, pvsp), ...]
 
         _logger.info("bpm rec: %s" % str(self.bpm))
         _logger.info("trim rec: %s" % str(self.trim))
-        
+
         # count the dimension of matrix
         #nbpm, ntrim  = len(set(bpm)), len(set(trim))
         nbpmpv, ntrimpv = len(self.bpm), len(self.trim)
@@ -162,7 +163,7 @@ class OrbitRespMat:
         self._rawkick = None #np.zeros((ntrimpv, npts+2), 'd')
         self.m = None # np.zeros((nbpmpv, ntrimpv), 'd')
         self.unit = None # raw unit
-        
+
     def save(self, filename, fmt = ''):
         """
         save the orm data into one file:
@@ -199,7 +200,7 @@ class OrbitRespMat:
         rflds = kwargs.get("bpmfields", ['x', 'y'])
         trimflds = kwargs.get("trimfields", ['x', 'y'])
 
-        # the header of matrix, this must be same order as 
+        # the header of matrix, this must be same order as
         # eget(self.bpm, ['x', 'y'])
         self.bpmhdr = [(b.name, b.sb, f) for b in self.bpm for f in rflds]
         self.trimhdr = [(b.name, b.sb, f) for b in self.trim for f in trimflds]
@@ -207,7 +208,7 @@ class OrbitRespMat:
         t_start = time.time()
         self._rawkick = []
         rawobt, rawm, rawkick = [], [], []
-        # a flat list of (trim, plane) 
+        # a flat list of (trim, plane)
         trimsets = list(itertools.product(self.trim, trimflds))
         for i,krec in enumerate(trimsets):
             kicker, kfld = krec
@@ -222,8 +223,8 @@ class OrbitRespMat:
                 nlines = 0
 
             if verbose:
-                print "%d/%d '%s/%s.%s'" % (
-                    i, len(trimsets), rflds, kicker.name, kfld)
+                print("%d/%d '%s/%s.%s'" % (
+                    i, len(trimsets), rflds, kicker.name, kfld))
 
             # measure one column of RM
             ormline.measure(rflds, kfld, unitsys=self.unit, **kwargs)
@@ -252,9 +253,9 @@ class OrbitRespMat:
                 if bpmfield != kfld: continue
 
                 if verbose:
-                    print "WARNING: %s.%s/%s.%s orbit=[% .3e, % .3e] slop=%f, r=%e" % (
+                    print("WARNING: %s.%s/%s.%s orbit=[% .3e, % .3e] slop=%f, r=%e" % (
                         bpmname, bpmfield, kicker.name, kfld, x1, x2,
-                        ormline.m[j], ormline.residuals[j])
+                        ormline.m[j], ormline.residuals[j]))
 
                 if verbose > 1:
                     nlines += 1
@@ -275,11 +276,11 @@ class OrbitRespMat:
         # save for every trim settings
         self.save(output)
         t_end = time.time()
-        print "-- Time cost: %.2f min" % ((t_end - t_start)/60.0)
+        print("-- Time cost: %.2f min" % ((t_end - t_start)/60.0))
 
     def getBpms(self):
         return [v[0] for v in self.bpm]
-    
+
     def hasBpm(self, bpm):
         """
         check if the bpm is used in this ORM measurement
@@ -291,7 +292,7 @@ class OrbitRespMat:
 
     def getTrims(self):
         return [v[0] for v in self.trim]
-    
+
     def hasTrim(self, trim):
         """
         check if the trim is used in this ORM measurement
@@ -302,7 +303,7 @@ class OrbitRespMat:
 
     def maskCrossTerms(self):
         """
-        mask the H/V and V/H terms. 
+        mask the H/V and V/H terms.
 
         If the coupling between horizontal/vertical kick and
         vertical/horizontal BPM readings, it's reasonable to mask out
@@ -324,7 +325,7 @@ class OrbitRespMat:
             if t[2] == pv or t[3] == pv:
                 return j
         return -1
-    
+
     def update(self, src, masked=False):
         """
         merge two orm into one
@@ -345,9 +346,9 @@ class OrbitRespMat:
             if self._pv_index(t[2]) < 0:
                 trim.append(t)
         npts, nbpm0, ntrim0 = np.shape(self._rawmatrix)
-        
+
         nbpm, ntrim = len(bpm), len(trim)
-        print "(%d,%d) -> (%d,%d)" % (nbpm0, ntrim0, nbpm, ntrim)
+        print("(%d,%d) -> (%d,%d)" % (nbpm0, ntrim0, nbpm, ntrim))
         # the merged is larger
         rawmatrix = np.zeros((npts, nbpm, ntrim), 'd')
         mask      = np.zeros((nbpm, ntrim), 'i')
@@ -365,7 +366,7 @@ class OrbitRespMat:
         trimsp = [t[3] for t in trim]
         ibpm  = [ bpmrb.index(b[2]) for b in src.bpm ]
         itrim = [ trimsp.index(t[3]) for t in src.trim ]
-        
+
         for j, t in enumerate(src.trim):
             jj = itrim[j]
             rawkick[jj,:] = src._rawkick[j,:]
@@ -382,7 +383,7 @@ class OrbitRespMat:
         self.m = m
 
         self.bpmrb, self.trimsp = bpmrb, trimsp
-        
+
     def getSubMatrix(self, bpm, trim, flags='XX'):
         """
         if only bpm name given, the return matrix will not equal to
@@ -390,7 +391,7 @@ class OrbitRespMat:
         """
         if not bpm or not trim: return None
         if not flags in ['XX', 'XY', 'YY', 'YX']: return None
-        
+
         bpm_st  = set([v[0] for v in self.bpm])
         trim_st = set([v[0] for v in self.trim])
 
@@ -403,7 +404,7 @@ class OrbitRespMat:
         if len(tsub) < len(trim):
             raise ValueError("Some Trims are absent in orm measurement")
             pass
-        
+
         mat = np.zeros((len(bpm), len(trim)), 'd')
         for i,b in enumerate(self.bpm):
             if b[1] != flags[0] or not b[0] in bpm: continue
@@ -419,7 +420,7 @@ class OrbitRespMat:
         """
         check the linearity of each orm term.
 
-        This routine detects the BPMs which do not reponse to trim well. 
+        This routine detects the BPMs which do not reponse to trim well.
         """
         import matplotlib.pylab as plt
         npoints, nbpm, ntrim = np.shape(self._rawmatrix)
@@ -451,9 +452,9 @@ class OrbitRespMat:
                 if p[0] < 1e-10: continue
                 relerr = abs((p[0] - self.m[i,j])/p[0])
                 if verbose:
-                    print "%3d,%3d" % (i,j), self.bpm[i][0], self.trim[j][0], \
-                        p[0], self.m[i,j], relerr, residuals, rank, \
-                        singular_values, rcond
+                    print(("%3d,%3d" % (i,j), self.bpm[i][0], self.trim[j][0],
+                           p[0], self.m[i,j], relerr, residuals, rank,
+                           singular_values, rcond))
 
                 # check if the reading is repeating.
                 distavg = (max(m) - min(m))/(len(m)-1)
@@ -465,7 +466,7 @@ class OrbitRespMat:
                 if residuals[0] > 2e-11:
                     if not i in deadbpm: deadbpm.append(i)
                     if not j in deadtrim: deadtrim.append(j)
-                    print i,j, "mask=",self._mask[i,j],residuals[0]
+                    print((i,j, "mask=",self._mask[i,j],residuals[0]))
                     plt.clf()
                     plt.plot(k, m, '--o', label="%s/%s" % (
                             self.bpm[i][0], self.trim[j][0]))
@@ -477,21 +478,21 @@ class OrbitRespMat:
                 res.append(residuals[0])
             # end of all bpm
             if not verbose:
-                print j,
+                print((j,))
                 sys.stdout.flush()
-        print len(res), np.average(res), np.var(res)
+        print((len(res), np.average(res), np.var(res)))
         plt.clf()
         plt.hist(np.log10(res), 50, normed=0, log=True)
         plt.savefig("orm-hist-residuals.png")
-        print "Dead bpm:", deadbpm
-        print "Dead trim:", 
-        for i in deadtrim: print self.trim[i][0],
-        print ""
+        print(("Dead bpm:", deadbpm))
+        print(("Dead trim:",))
+        for i in deadtrim: print((self.trim[i][0],))
+        print("")
 
     def checkOrbitReproduce(self, bpm, trim):
-        print "checking ..."
-        print "    bpm:", len(bpm)
-        print "    trim:", trim
+        print("checking ...")
+        print(("    bpm:", len(bpm)))
+        print(("    trim:", trim))
 
         # skip the masked value
         itrim, ibpm = [], []
@@ -502,7 +503,7 @@ class OrbitRespMat:
         if len(itrim) == 0:
             # No trim specified.
             return
-        
+
         kick0 = np.zeros(len(itrim), 'd')
         for j,jt in enumerate(itrim):
             # read the setpoint
@@ -513,7 +514,7 @@ class OrbitRespMat:
         x0 = np.zeros(len(ibpm), 'd')
         for i,ib in enumerate(ibpm):
             x0[i] = caget(self.bpm[ib][2])
-        
+
         dx = np.zeros(len(ibpm), 'd')
         for i,ib in enumerate(ibpm):
             for j,jt in enumerate(itrim):

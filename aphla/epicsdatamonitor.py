@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 EPICS Data Monitor
 -------------------
@@ -20,13 +22,13 @@ class SimData(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        print "Running simdata"
+        print("Running simdata")
         while not self.exitFlag:
             time.sleep(1)
             i = random.randint(0, self.N-1)
             val = random.random()
             self.update(val, i)
-            print i, val
+            print('{0}, {1}'.format(i, val))
 
 class CaDataMonitor:
     def __init__(self, pvs, samples=20, **kwargs):
@@ -38,7 +40,7 @@ class CaDataMonitor:
         - simulation [True|False] use simulated data or real pv data
         """
         self.samples = samples
-        
+
         self.simulation = kwargs.get('simulation', False)
 
         n = 1
@@ -69,7 +71,7 @@ class CaDataMonitor:
         else:
             self.monitors = SimData(self._ca_update, len(self.pvs))
             self.monitors.start()
-            print "Thread is running"
+            print("Thread is running")
 
     def closeMonitors(self):
         if self.simulation:
@@ -94,7 +96,8 @@ class CaDataMonitor:
         """
         update the reading, average, index and variance.
         """
-        print "updating", val, idx, self.avg[idx], self.std[idx]
+        print("updating {0}, {1}, {2}, {3}".format(
+            val, idx, self.avg[idx], self.std[idx]))
         self.recent[idx] = val
         self._count[idx] += 1
         i0 = self._icur[idx]
@@ -118,28 +121,28 @@ class CaDataMonitor:
 def _test1():
     import time
     a = CaDataMonitor(['V:2-SR:C02-BI:G2{PH1:245}SA:X', 'V:2-SR:C02-BI:G2{PH1:245}SA:Y'])
-    print a.data
+    print(a.data)
 
-    print "A"
+    print("A")
 
     a.closeMonitors()
 
-    print "press Ctrl-C to quit"
+    print("press Ctrl-C to quit")
     import cothread
     cothread.WaitForQuit()
 
 def _test2():
     import time
     a = CaDataMonitor(['a', 'b', 'c'], simulation=True)
-    print "created, sleeping"
+    print("created, sleeping")
     time.sleep(5)
-    print "Sleep done"
+    print("Sleep done")
     a.closeMonitors()
 
     b = CaDataMonitor(['a', 'b', 'c'], simulation=True)
-    print "created, sleeping"
+    print("created, sleeping")
     time.sleep(5)
-    print "Sleep done"
+    print("Sleep done")
     b.closeMonitors()
 
 if __name__ == "__main__":

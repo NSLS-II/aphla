@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 """
 :author: Lingyun Yang <lyyang@bnl.gov>
@@ -32,7 +33,7 @@ class ElementPickDlg(QtGui.QDialog):
             w.setCheckState(0, status)
             self.elemlst.addTopLevelItem(w)
         #self.elemlst.setSortingEnabled(True)
-        
+
         elemLabel = QtGui.QLabel(title)
 
         buttonBox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok|
@@ -94,11 +95,11 @@ class ElementPickDlg(QtGui.QDialog):
             if it.checkState(0) != Qt.Checked: continue
             ret.append(str(it.data(0, Qt.DisplayRole).toString()))
         return ret
-    
+
     def checkedIndices(self):
         return [ i for i in range(self.elemlst.topLevelItemCount())
                  if self.elemlst.topLevelItem(i).checkState(0) == Qt.Checked]
-        
+
 
 if __name__ == "__main__":
     import sys
@@ -109,5 +110,5 @@ if __name__ == "__main__":
     form.show()
     app.exec_()
 
-    print "selected: ", form.checkedNames()
-    print "selected: ", form.checkedIndices()
+    print("selected: ", form.checkedNames())
+    print("selected: ", form.checkedIndices())

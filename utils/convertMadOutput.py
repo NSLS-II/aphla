@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 import sys, re
 
@@ -15,8 +16,8 @@ def readTwiss(f):
         else:
             data = line.split()
             if len(data) != len(table_head):
-                print "ERROR: data columns != table head (%d != %d)" %  \
-                    (len(data), len(table_head))
+                print("ERROR: data columns != table head (%d != %d)" %  \
+                    (len(data), len(table_head)))
             else:
                 table_data.append(data)
 
@@ -33,7 +34,7 @@ def countElements(head, dat):
         ct[elem] += 1
 
     #print "# %d lines, %d elements" % (len(dat), len(ct))
-    #for k,v in ct.iteritems():
+    #for k,v in ct.items():
     #    if v > 1: print k, v
     return ct
 
@@ -44,8 +45,8 @@ def findElementProperties(name, twiss):
     else:
         return ""
 
-    rec = {'ordinal': str(k), 'system': 'SR', 
-           'devName': None, 'elemType': None, 'handle': None, 'length': None, 
+    rec = {'ordinal': str(k), 'system': 'SR',
+           'devName': None, 'elemType': None, 'handle': None, 'length': None,
            'sEnd': None}
     if 'KEYWORD' in twiss['head']:
         j = twiss['head'].index('KEYWORD')
@@ -55,7 +56,7 @@ def findElementProperties(name, twiss):
         rec.update([('sEnd', d[j])])
 
     s = ''
-    for k, v in rec.iteritems():
+    for k, v in rec.items():
         if v is None: continue
         s += ", %s= %s" % (k, v)
     return s
@@ -70,24 +71,24 @@ def readPvName(f, twiss = None):
             continue
         if newblock:
             # the comment line
-            print "##", line.strip()
+            print("##", line.strip())
             newblock = False
             continue
-        
+
         t = line.split(',')
-        rec = {'pv': t[0].replace("'", "").strip(), 
+        rec = {'pv': t[0].replace("'", "").strip(),
                'elemName': t[2].strip()}
         if t[1].find('setpoint') >= 0:
             rec['handle'] = 'SETPOINT'
         elif t[1].find('readback') >=0:
             rec['handle'] = 'READBACK'
 
-        print "%(pv)s, elemName=%(elemName)s, handle=%(handle)s" % rec,
+        print("%(pv)s, elemName=%(elemName)s, handle=%(handle)s" % rec,)
 
         if twiss is not None:
-            print findElementProperties(rec['elemName'], twiss)
+            print(findElementProperties(rec['elemName'], twiss))
         else:
-            print ""
+            print("")
 
 if __name__ == "__main__":
     d = readTwiss(sys.argv[1])

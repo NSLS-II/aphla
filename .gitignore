@@ -1,3 +1,9 @@
+aphla.egg-info/
+build/
+dist/
+
 *.pyc
 
 */.ipynb_checkpoints/*
+
+aphla/version.py

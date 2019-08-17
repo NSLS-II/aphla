@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
@@ -285,7 +287,7 @@ class OrderSelectorView(QObject):
             item = SMod.itemFromIndex(mod_ind)
             text = item.text()
             if text in self.model.permanently_selected_string_list:
-                print '"' + text + '"' + ' cannot be unselected.'
+                print('"' + text + '"' + ' cannot be unselected.')
                 return
             else:
                 new_item = item.clone()

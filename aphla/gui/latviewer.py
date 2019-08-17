@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Lattice Viewer
 =======================
@@ -103,7 +105,7 @@ class SnapshotRow(object):
                         self.diffs[i][j] = vj / vr
 
     def updateDiff(self, iref, mode):
-        """calculate the difference, relative or absolute, returns None if 
+        """calculate the difference, relative or absolute, returns None if
         the data does not make sense"""
         n = len(self.values)
         try:
@@ -111,7 +113,7 @@ class SnapshotRow(object):
                 for i in range(n): self.diffs[i] = None
                 return
         except:
-            print self.pv, n, len(self.dead), self.values, self.diffs, self.dead
+            print(self.pv, n, len(self.dead), self.values, self.diffs, self.dead)
             raise
 
         self._update_abs_diff(iref)
@@ -151,7 +153,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
     def updateCells(self, **kwargs):
         i0 = kwargs.get("i0", 0)
         i1 = kwargs.get("i1", len(self._rows))
-        
+
         for i in range(i0, i1):
             r = self._rows[i]
             # ignore dead PV.
@@ -169,13 +171,13 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
 
     def _choose_common_lattice(self, fileNames):
         grps = {}
-        for fname in fileNames: 
+        for fname in fileNames:
             f = h5py.File(str(fname), 'r')
             for k,v in f.items():
                 if not isinstance(v, h5py.Group): continue
                 grps.setdefault(k, 0)
                 grps[k] += 1
-        print grps
+        print(grps)
         comm_lat = [k for k,v in grps.items() if v == len(fileNames)]
         if len(comm_lat) == 1: return comm_lat[0]
 
@@ -203,7 +205,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
         if dlg.exec_() == QtGui.QDialog.Rejected: return
         latname = ""
         for bt in rbt:
-            if bt.isChecked(): 
+            if bt.isChecked():
                 return str(bt.text())
 
         return None
@@ -218,11 +220,11 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
         else:
             fileNames = fnames
 
-        print "Checking files:", fileNames
+        print("Checking files:", fileNames)
         latname = self._choose_common_lattice(fileNames)
         if not latname: return
-        
-        print "Accepted the choice:", latname
+
+        print("Accepted the choice:", latname)
         for fname in fileNames:
             f = h5py.File(str(fname), 'r')
             ds = f[latname]["__scalars__"]
@@ -285,14 +287,14 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
         self._cadata.addPv(pvs)
         self.dstitle.append(kwarg.get("title", ""))
         self.dstimestamp.append(max(ts))
-        print "ds:", len(self.dstitle), self.dstitle, len(self._rows[0].values)
+        print("ds:", len(self.dstitle), self.dstitle, len(self._rows[0].values))
 
         idx0 = self.index(0, C_VALUES - 1)
         idx1 = self.index(self.rowCount()-1, self.columnCount() - 1)
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
                   idx0, idx1)
         #print self._cadata.data
-        
+
     def sort(self, col, order):
         #print self._rows
         if col == C_PV:
@@ -311,7 +313,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
 
     def filterRows(self, name, field, pv):
         self.emit(SIGNAL("layoutAboutToBeChanged()"))
-        validrows =  [ r for i,r in enumerate(self._rows) 
+        validrows =  [ r for i,r in enumerate(self._rows)
                       if self._mask[i] == 0 ]
         #self.removeRows(0, len(validrows))
         n0 = len(validrows)
@@ -327,7 +329,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
         idx0 = self.index(0, self.columnCount() - 1)
         idx1 = self.index(len(self._rows), self.columnCount() - 1)
 
-        validrows =  [ r for i,r in enumerate(self._rows) 
+        validrows =  [ r for i,r in enumerate(self._rows)
                       if self._mask[i] == 0 ]
         n1 = len(validrows)
         self.insertRows(0, len(validrows))
@@ -424,7 +426,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
         #elif role == Qt.CheckStateRole:
         #    if vals is not None: return QVariant()
         #    elif r in self._inactive: return Qt.Unchecked
-        #    else: return Qt.Checked 
+        #    else: return Qt.Checked
         else:
             return QVariant()
         #print "Asking data role=", role
@@ -448,7 +450,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
                 #print "ds:", len(self.dstimestamp), len(self.dstitle), ids
                 ts = self.dstimestamp[ids]
                 return QVariant("%s\n%s" % (
-                    os.path.basename(self.dstitle[ids]), 
+                    os.path.basename(self.dstitle[ids]),
                     datetime.fromtimestamp(ts)))
             return QVariant()
         elif orientation == Qt.Vertical:
@@ -471,7 +473,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
             return  Qt.ItemFlags(QtCore.QAbstractTableModel.flags(self, index) |
                                  Qt.ItemIsSelectable)
         return Qt.ItemIsEnabled
-        
+
     def rowCount(self, index=QtCore.QModelIndex()):
         #validrows = [i for i in range(len(self._rows)) if self._mask[i] == 0]
         #return len(validrows)
@@ -484,7 +486,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
     def setData(self, index, value, role=Qt.EditRole):
         #print "setting data", index.row(), index.column(), value.toInt()
         if not index.isValid(): return False
-        
+
         #if index.isValid() and 0 <= index.row() < self._NF:
         ri, cj = index.row(), index.column()
         if cj == C_FIELD:
@@ -493,7 +495,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
             if checkstate == Qt.Unchecked:
                 #print "disable row ", row
                 self.setElementActive(row, False)
-                self.emit(SIGNAL("toggleElementState(PyQt_PyObject, bool)"), 
+                self.emit(SIGNAL("toggleElementState(PyQt_PyObject, bool)"),
                           elem, False)
             elif checkstate == Qt.Checked:
                 #print "enable row", row
@@ -535,7 +537,7 @@ class LatSnapshotTableModel(QtCore.QAbstractTableModel):
         self._value = []
         self._unit = []
 
-    
+
 class LatSnapshotDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, parent=None):
         super(LatSnapshotDelegate, self).__init__(parent)
@@ -547,7 +549,7 @@ class LatSnapshotDelegate(QtGui.QStyledItemDelegate):
         model = index.model()
         row, col = index.row(), index.column()
         QtGui.QStyledItemDelegate.paint(self, painter, option, index)
-        
+
     def sizeHint(self, option, index):
         fm = option.fontMetrics
         row, col = index.row(), index.column()
@@ -565,7 +567,7 @@ class LatSnapshotDelegate(QtGui.QStyledItemDelegate):
                 return QtCore.QSize(document.idealWidth(), fm.height())
             else:
                 return QtCore.QSize(sz, fm.height())
-            
+
         return QtGui.QStyledItemDelegate.sizeHint(self, option, index)
 
     def createEditor(self, parent, option, index):
@@ -590,7 +592,7 @@ class LatSnapshotDelegate(QtGui.QStyledItemDelegate):
                                                     index)
 
         if not isinstance(model._value[row][col-1], (int, float)):
-            print "Can not create editor"
+            print("Can not create editor")
             return QtGui.QStyledItemDelegate.createEditor(self, parent, option,
                                                     index)
 
@@ -659,7 +661,7 @@ class LatSnapshotDelegate(QtGui.QStyledItemDelegate):
             #_logger.error("unknown editor, can not set its data")
             pass
 
-        self.emit(SIGNAL("editingElement(PyQt_PyObject)"), 
+        self.emit(SIGNAL("editingElement(PyQt_PyObject)"),
                   index.model()._elemrec[row])
 
     def setModelData(self, editor, model, index):
@@ -707,7 +709,7 @@ class LatSnapshotDelegate(QtGui.QStyledItemDelegate):
         #opt.rect.adjust(0, 30, 100, 60)
         QtGui.QStyledItemDelegate.updateEditorGeometry(self, editor, opt, index)
 
-        
+
 class LatSnapshotView(QtGui.QTableView):
     def __init__(self, parent = None):
         QtGui.QTableView.__init__(self, parent)
@@ -719,12 +721,12 @@ class LatSnapshotView(QtGui.QTableView):
         self.headers.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
 
     def show_header(self, position):
-        print "Position", position, self.headers.logicalIndexAt(position)
+        print("Position", position, self.headers.logicalIndexAt(position))
         for i in range(self.headers.count()):
-            print self.headers.headerData(i, Qt.Horizontal)
+            print(self.headers.headerData(i, Qt.Horizontal))
         cmenu = QtGui.QMenu()
         #c = QApplication.clipboard()
-        #    cmenu.addAction("&Copy", 
+        #    cmenu.addAction("&Copy",
         #                    partial(c.setText, d.toString()), "CTRL+C")
         #    cmenu.addAction("Copy Column", partial(self.copy_pvs, c.setText))
         #cmenu.exec_(e.globalPos())
@@ -740,7 +742,7 @@ class LatSnapshotView(QtGui.QTableView):
         cmenu = QtGui.QMenu()
         c = QApplication.clipboard()
         if icol == C_PV:
-            cmenu.addAction("&Copy", 
+            cmenu.addAction("&Copy",
                             partial(c.setText, d.toString()), "CTRL+C")
             cmenu.addAction("Copy Column", partial(self.copy_pvs, c.setText))
         cmenu.exec_(e.globalPos())
@@ -803,7 +805,7 @@ class SnapshotViewerWidget(QtGui.QWidget):
         self.lblRange = QtGui.QLabel()
         self.valMeter = Qwt.QwtThermo()
         self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
-        self.valMeter.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, 
+        self.valMeter.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
                                     QtGui.QSizePolicy.Fixed)
         self.valMeter.setEnabled(False)
         self.cmbRefDs = QtGui.QComboBox()
@@ -916,9 +918,9 @@ class SnapshotViewerWidget(QtGui.QWidget):
 
         self.setLayout(vbox2)
 
-        #self.connect(self.elemBox, SIGNAL("editingFinished()"), 
+        #self.connect(self.elemBox, SIGNAL("editingFinished()"),
         #             self.refreshTable)
-        #self.connect(self.elemNameBox, SIGNAL("returnPressed()"), 
+        #self.connect(self.elemNameBox, SIGNAL("returnPressed()"),
         #             self.refreshTable)
         #self.connect(self.elemBox, SIGNAL("currentIndexChanged(QString)"),
         #             self.refreshTable)
@@ -963,14 +965,14 @@ class SnapshotViewerWidget(QtGui.QWidget):
         rows = [i.top() for i in i1]
         if not rows: return
 
-        if len(rows) != 1: 
+        if len(rows) != 1:
             self.extraPlot.hide()
             raise RuntimeError("Invalid selections: {0}".format(rows))
         #print rows
         row = rows[0]
         r = self.model.getSnapshotRecord(row)
         if not x or not dat:
-            print "Data is invalid", rows, x, dat
+            print("Data is invalid", rows, x, dat)
             self.extraPlot.hide()
             return
 
@@ -979,7 +981,7 @@ class SnapshotViewerWidget(QtGui.QWidget):
         p.curve2.detach()
         n = len(dat[0]) // 2
         #p = self.plt
-        pens = [QtGui.QPen(Qt.red, 1.0),  QtGui.QPen(Qt.green, 1.0), 
+        pens = [QtGui.QPen(Qt.red, 1.0),  QtGui.QPen(Qt.green, 1.0),
                 QtGui.QPen(Qt.blue, 1.0),
                 QtGui.QPen(Qt.black, 1.0)]
         symbs = [Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
@@ -997,7 +999,7 @@ class SnapshotViewerWidget(QtGui.QWidget):
         #print len(dat), len(dat[0]), min([len(d) for d in dat]), max([len(d) for d in dat])
         n = len(dat) // 2
         if n != len(self.model.dstitle):
-            print n, self.model.dstitle, "does not agree"
+            print(n, self.model.dstitle, "does not agree")
             for c in p.excurv: c.setData([], [], None)
             self.extraPlot.hide()
             return
@@ -1036,7 +1038,7 @@ class SnapshotViewerWidget(QtGui.QWidget):
                 for c in p.excurv: c.setData([], [], None)
                 return
             #p = self.plt
-            pens = [QtGui.QPen(Qt.red, 1.0),  QtGui.QPen(Qt.green, 1.0), 
+            pens = [QtGui.QPen(Qt.red, 1.0),  QtGui.QPen(Qt.green, 1.0),
                     QtGui.QPen(Qt.blue, 1.0),
                     QtGui.QPen(Qt.black, 1.0)]
             symbs = [
@@ -1056,7 +1058,7 @@ class SnapshotViewerWidget(QtGui.QWidget):
             for i in range(len(self.model.dstitle)):
                 x, y = [], []
                 if i >= len(p.excurv):
-                    print "Add a new line:", i
+                    print("Add a new line:", i)
                     p.addCurve(x=x, y=y, curveStyle=Qwt.QwtPlotCurve.Lines,
                                curvePen=pens[i % len(pens)],
                                curveSymbol=symbs[i % len(symbs)],
@@ -1127,7 +1129,7 @@ class SnapshotViewerWidget(QtGui.QWidget):
             del self.delegate
             #self.model.clear()
         self.model = ElementPropertyTableModel(elems)
-        self.connect(self.model, 
+        self.connect(self.model,
                      SIGNAL("toggleElementState(PyQt_PyObject, bool)"),
                      self.elementStateChanged)
 
@@ -1160,7 +1162,7 @@ class SnapshotViewerWidget(QtGui.QWidget):
         #self.tableview.setMinimumWidth(fullwidth+20)
         #self.tableview.setMaximumWidth(fullwidth+60)
         #self.tableview.adjustSize()
-        #self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"), 
+        #self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"),
         #             self.processCell)
         t3 = time.time()
         #self._addElements(elems)
@@ -1182,14 +1184,14 @@ class SnapshotViewerWidget(QtGui.QWidget):
         self.lblNameField.setText("{0}.{1}".format(elem.name, fld))
         if True:
             self.lblRange.setText(str(bd))
-        elif bd is None or bd[0] is None or bd[1] is None: 
+        elif bd is None or bd[0] is None or bd[1] is None:
             self.valMeter.setEnabled(False)
         else:
             rg = Qwt.QwtDoubleInterval(bd[0], bd[1])
             self.valMeter.setScale(rg, (bd[1]-bd[0])/2.01)
             self.valMeter.setValue(elem.get(fld, unitsys = None))
-            print elem.get(fld, unitsys=None)
-            print self.valMeter.value()
+            print(elem.get(fld, unitsys=None))
+            print(self.valMeter.value())
             self.valMeter.setEnabled(True)
 
     def elementStateChanged(self, elem, stat):
@@ -1259,7 +1261,7 @@ class SaveSnapshotWidget(QtGui.QWidget):
         self.lblRange = QtGui.QLabel()
         self.valMeter = Qwt.QwtThermo()
         self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
-        self.valMeter.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, 
+        self.valMeter.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
                                     QtGui.QSizePolicy.Fixed)
         self.valMeter.setEnabled(False)
         self.cmbMach = QtGui.QComboBox()
@@ -1321,7 +1323,7 @@ class SaveSnapshotWidget(QtGui.QWidget):
             "%s<br>"
             "Create them ?" % dpath,
             QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if r == QtGui.QMessageBox.Yes: 
+        if r == QtGui.QMessageBox.Yes:
             qd = QtCore.QDir()
             qd.mkpath(dpath)
             self._logger.info("created '%s'" % dpath)
@@ -1377,7 +1379,7 @@ class SaveSnapshotWidget(QtGui.QWidget):
         fname = fname_pref + mach + ".hdf5"
         if self.cmbLat.currentText() != "*":
             fname = fname_pref + str(self.cmbLat.currentText()) + ".hdf5"
-        print fname
+        print(fname)
 
         fileName = QtGui.QFileDialog.getSaveFileName(
             self, "Save Lattice Snapshot Data",
@@ -1409,7 +1411,7 @@ class SaveSnapshotWidget(QtGui.QWidget):
             size = [d[1] if d is not None else None for d in dat]
             tmstamp = [d[2] if d is not None else None for d in dat]
             elemnames, fams, flds, rbsp = zip(*allpvr)[1:]
-            aphla.lattice.saveSnapshot(fileName, latname, 
+            aphla.lattice.saveSnapshot(fileName, latname,
                                        pvs, vals, size, tmstamp, rbsp,
                                        elemnames, flds, mode='w')
             self._logger.info("snapshot '%s' created: '%s'" % (
@@ -1427,7 +1429,7 @@ class LatSnapshotMain(QtGui.QDialog):
         self.setWindowFlags(Qt.WindowCloseButtonHint|Qt.WindowMinMaxButtonsHint)
         snapview = SnapshotViewerWidget(self, latdict, mach, logger)
         snapsave = SaveSnapshotWidget(self, latdict, mach, logger)
-        
+
         tabs = QtGui.QTabWidget()
         tabs.addTab(snapview, "View")
         tabs.addTab(snapsave, "Save")
@@ -1449,7 +1451,7 @@ class MTestForm(QtGui.QDialog):
                "V:2-SR:C30-BI:G4{PM1:65}SA:Y",
                "V:2-SR:C30-BI:G6{PL1:105}SA:X",
                "V:2-SR:C30-BI:G6{PL1:105}SA:Y"]
-    
+
         e = ["e1", "e1", "e2", "e2"]
         f = ["f4", "f3", "f2", "f1"]
         self.model.addDataSet(pvs[:4], e, f, [1.0, 2.0, 3.0, 4.0],
@@ -1461,12 +1463,12 @@ class MTestForm(QtGui.QDialog):
         self.tablev.setModel(self.model)
         self.tablev.setItemDelegate(LatSnapshotDelegate(self))
         self.tablev.setSortingEnabled(True)
-                                   
+
         #for i in self.model.subHeadIndex():
-        #    self.tablev.setSpan(i, 0, 1, self.model.columnCount()) 
+        #    self.tablev.setSpan(i, 0, 1, self.model.columnCount())
         #for i in range(self.model.columnCount()):
         self.tablev.resizeColumnsToContents()
-        
+
         vbox = QVBoxLayout()
         vbox.addWidget(self.tablev)
         self.setLayout(vbox)

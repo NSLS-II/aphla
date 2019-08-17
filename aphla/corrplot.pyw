@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 # for debugging, requires: python configure.py --trace ...
 if 0:
@@ -18,7 +19,7 @@ from hla import caget, caput
 #from cothread.catools import caget, caput
 
 class Spy(Qt.QObject):
-    
+
     def __init__(self, parent):
         Qt.QObject.__init__(self, parent)
         parent.setMouseTracking(True)
@@ -83,7 +84,7 @@ class CorrCurve(Qwt.QwtPlotCurve):
         Qwt.QwtPlotCurve.setData(self, self.x, self.y)
 
     # setData()
-        
+
     def boundingRect(self):
         """Return the bounding rectangle of the data, error bars included.
         """
@@ -97,7 +98,7 @@ class CorrCurve(Qwt.QwtPlotCurve):
         ymax = max(self.y)
 
         return Qt.QRectF(xmin, ymin, xmax-xmin, ymax-ymin)
-        
+
     # boundingRect()
 
 # class OrbitPlotCurve
@@ -106,7 +107,7 @@ class CorrPlot(Qwt.QwtPlot):
     def __init__(self, parent = None, data = None, plane = 'H'):
         super(CorrPlot, self).__init__(parent)
         #Qwt.QwtPlot.__init__(self, *args)
-        
+
         self.setCanvasBackground(Qt.Qt.white)
         self.plotLayout().setAlignCanvasToScales(True)
 
@@ -128,7 +129,7 @@ class CorrPlot(Qwt.QwtPlot):
         picker1.setTrackerPen(Qt.QPen(Qt.Qt.red))
         self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
         self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
-        
+
     def minimumSizeHint(self):
         return Qt.QSize(600, 450)
 
@@ -224,7 +225,7 @@ class CorrPlotMainWindow(Qt.QMainWindow):
         #fileQuitAction.setIcon(Qt.QIcon(":/filequit.png"))
         self.connect(fileQuitAction, Qt.SIGNAL("triggered()"),
                      self.close)
-        
+
         #
         self.fileMenu.addAction(filetest)
         self.fileMenu.addAction(fileQuitAction)
@@ -289,7 +290,7 @@ class CorrPlotMainWindow(Qt.QMainWindow):
         """Switch on/off live data taking"""
         self.plot1.liveData(on)
         self.plot2.liveData(on)
-    
+
     def errorBar(self, on):
         self.plot1.setErrorBar(on)
         self.plot2.setErrorBar(on)
@@ -309,14 +310,14 @@ class CorrPlotMainWindow(Qt.QMainWindow):
     def test(self):
         self.plot1.appendVariables("SR:C01-MG:G06B<HCM:H2>Fld-RB",
                                    "SR:C29-BI:G04A<BPM:M1>Pos-X")
-        
+
         t = caget("SR:C01-MG:G06B<HCM:H2>Fld-RB")
         for i in [-4, -2, 0, 2, 4]:
             caput("SR:C01-MG:G06B<HCM:H2>Fld-SP", t + i *.0002)
-            print i, caget("SR:C01-MG:G06B<HCM:H2>Fld-RB"),  
+            print i, caget("SR:C01-MG:G06B<HCM:H2>Fld-RB"),
             #print caget("SR:C29-BI:G04A<BPM:M1>Pos-X")
             time.sleep(5)
-            print i, caget("SR:C01-MG:G06B<HCM:H2>Fld-RB"),  
+            print i, caget("SR:C01-MG:G06B<HCM:H2>Fld-RB"),
             print caget("SR:C29-BI:G04A<BPM:M1>Pos-X")
             self.plot1.update()
         time.sleep(2)

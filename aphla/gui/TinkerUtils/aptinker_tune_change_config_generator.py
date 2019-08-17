@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 import aphla as ap
 import numpy as np
 import matplotlib.pylab as plt
@@ -126,7 +128,7 @@ for i, q in enumerate(quads):
     m[1,i] = -betas[i,1]/4.0/np.pi
 m_aphla = ap.calcTuneRm(quads, unitsys='phy')
 
-print 'Matrix max abs diff = ', np.max(np.abs((m_aphla - m).flatten()))
+print('Matrix max abs diff = ', np.max(np.abs((m_aphla - m).flatten())))
 
 #dnux = 0.001
 #dnuy = 0.0
@@ -137,19 +139,19 @@ dnuy = 0.001
 filepath = 'dnuy_1em3_dK_vec.txt'
 
 dKL = np.linalg.pinv(m, rcond=1e-5).dot(np.array([dnux, dnuy]).reshape((2,1)))
-print 'nux diff from target:', m.dot(dKL)[0] - dnux
-print 'nuy diff from target:', m.dot(dKL)[1] - dnuy
+print('nux diff from target:', m.dot(dKL)[0] - dnux)
+print('nuy diff from target:', m.dot(dKL)[1] - dnuy)
 
 mean_QL1_dKL = np.mean(dKL[ql1_inds,0])
 mean_QL2_dKL = np.mean(dKL[ql2_inds,0])
 mean_QL3_dKL = np.mean(dKL[ql3_inds,0])
 
-print 'QL1 dKL/mean(dKL) max diff [%] = ', \
-      np.max(np.abs(np.diff(dKL[ql1_inds,0])/mean_QL1_dKL))*100.0
-print 'QL2 dKL/mean(dKL) max diff [%] = ', \
-      np.max(np.abs(np.diff(dKL[ql2_inds,0])/mean_QL2_dKL))*100.0
-print 'QL3 dKL/mean(dKL) max diff [%] = ', \
-      np.max(np.abs(np.diff(dKL[ql3_inds,0])/mean_QL3_dKL))*100.0
+print('QL1 dKL/mean(dKL) max diff [%] = ',
+      np.max(np.abs(np.diff(dKL[ql1_inds,0])/mean_QL1_dKL))*100.0)
+print('QL2 dKL/mean(dKL) max diff [%] = ',
+      np.max(np.abs(np.diff(dKL[ql2_inds,0])/mean_QL2_dKL))*100.0)
+print('QL3 dKL/mean(dKL) max diff [%] = ',
+      np.max(np.abs(np.diff(dKL[ql3_inds,0])/mean_QL3_dKL))*100.0)
 
 dKL_using_means = [0.0]*dKL.size
 for ind in ql1_inds:

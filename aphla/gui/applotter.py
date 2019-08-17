@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 
 GUI application for data plotting
@@ -401,7 +403,7 @@ class CurvesDockModel(Qt.QStandardItemModel):
         y = self.datasetsModel.ds[d['yVarName']]
         if type(y) != np.ndarray:
             errorMsg = 'Y Variable must be of type numpy.ndarray.'
-            print errorMsg
+            print(errorMsg)
             self.mainView.statusbar.showMessage(errorMsg)
             return
         if d['xVarName'] == 'index':
@@ -416,7 +418,7 @@ class CurvesDockModel(Qt.QStandardItemModel):
             x = self.datasetsModel.ds[d['xVarName']]
             if type(x) != np.ndarray:
                 errorMsg = 'X Variable must be of type numpy.ndarray.'
-                print errorMsg
+                print(errorMsg)
                 self.mainView.statusbar.showMessage(errorMsg)
                 return
             #
@@ -935,9 +937,9 @@ class DatasetsDockModel(Qt.QStandardItemModel):
                 codeObj = compile(codeSource, '<string>', 'exec')
             except:
                 erroMsg = str(sys.exc_info())
-                print erroMsg
+                print(erroMsg)
                 self.mainView.statusbar.showMessage(erroMsg)
-                print 'Expression compilation failed.'
+                print('Expression compilation failed.')
                 return None
 
         #make a list of safe functions
@@ -956,7 +958,7 @@ class DatasetsDockModel(Qt.QStandardItemModel):
         safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
         #add any needed builtins back in.
         safe_dict['abs'] = abs
-        for (k,v) in args.iteritems():
+        for (k,v) in args.items():
             safe_dict[k] = v
         custom_builtins = {'True':True, 'False':False, '__import__':__import__}
         try:
@@ -965,18 +967,18 @@ class DatasetsDockModel(Qt.QStandardItemModel):
             output = eval(codeObj, {}, safe_dict) # Allow __builtins__ in eval
         except:
             erroMsg = str(sys.exc_info())
-            print erroMsg
+            print(erroMsg)
             self.mainView.statusbar.showMessage(erroMsg)
             return None
 
         if output != None: # When code string was a single expression (using 'eval')
             return output
         else: # When code string was a sequence of statements (using 'exec')
-            if safe_dict.has_key('output'):
+            if 'output' in safe_dict:
                 return safe_dict['output']
             else:
                 errorMsg = 'You must assign a value to the variable "output".'
-                print errorMsg
+                print(errorMsg)
                 self.mainView.statusbar.showMessage(errorMsg)
                 return None
 

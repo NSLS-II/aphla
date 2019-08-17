@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Orbit Data
 ==========
@@ -23,7 +25,7 @@ class ApPlotData(object):
     - *pvs* list of channel names
     - *mode* 'EPICS' | 'sim', default is 'EPICS'
     - *keep* mask for ignore(0) or keep(1) that data point.
-    - *elements* 
+    - *elements*
     """
     def __init__(self, s, **kw):
         self.s        = s
@@ -69,7 +71,7 @@ class ApPlotData(object):
         c, i = divmod(self.icount - 1, self.samples)
         data = np.compress(self.keep, self.y, axis=1)
         return np.max(data)
-        
+
     def average(self, axis='s'):
         """average of the whole curve"""
         c, i = divmod(self.icount - 1, self.samples)
@@ -97,8 +99,8 @@ class ApPlotData(object):
             return ret
         else:
             return np.compress(self.keep, ret, axis=1)
-        
-    
+
+
 class ApVirtualElemData(ApPlotData):
     def __init__(self, velem, field, **kw):
         """
@@ -111,7 +113,7 @@ class ApVirtualElemData(ApPlotData):
         self.velem = velem
         self.name    = velem.name
         sb, se = np.array(self.velem.sb), np.array(self.velem.se)
-        if not kw.has_key('s'): kw.update({'s': 0.5*(sb+se)})
+        if 's' not in kw: kw.update({'s': 0.5*(sb+se)})
 
         ApPlotData.__init__(self, **kw)
 
@@ -119,7 +121,7 @@ class ApVirtualElemData(ApPlotData):
         # prefer 'phy' unit
         if 'phy' in self.velem.getUnitSystems(field):  self.yunitsys = 'phy'
         if kw.get('update', True): self.update()
-        
+
         self.yunit = self.velem.getUnit(self.yfield, self.yunitsys)
 
     def label(self):
@@ -154,7 +156,7 @@ class ApVirtualElemData(ApPlotData):
         """remove name from velem, raise error if name is not in velem"""
         #if name not in self.velem._name: return
         i = self.velem._name.index(name)
-        for fld,act in self.velem._field.iteritems():
+        for fld,act in self.velem._field.items():
             pv = act.pvrb[i]
             act.remove(pv)
 
@@ -191,7 +193,7 @@ class ManagedPvData(ApPlotData):
             try:
                 self.y[i,j] = self._pvm.get(pv)
             except:
-                print "MESSAGE: pv='{0}', val='{1}'".format(pv, self._pvm.get(pv))
+                print("MESSAGE: pv='{0}', val='{1}'".format(pv, self._pvm.get(pv)))
                 raise
 
             self.yerrbar[j] = np.std(self.y[:,j])

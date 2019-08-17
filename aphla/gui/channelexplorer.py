@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 """
 
@@ -222,17 +223,17 @@ class Filter():
                     x = str(unitsys_dict)
                 elif propertyName == 'unit':
                     unit_str_dict = deepcopy(unitsys_dict)
-                    for field, unitsys_list in unit_str_dict.iteritems():
+                    for field, unitsys_list in unit_str_dict.items():
                         unit_str_list = [element.getUnit(field, unitsys=unitsys)
                                          for unitsys in unitsys_list]
                         unit_str_dict[field] = unit_str_list
                     x = str(unit_str_dict)
                 elif propertyName == 'unicon':
                     unicon_dict = {}
-                    for field, CaAction in element._field.iteritems():
+                    for field, CaAction in element._field.items():
                         unicon_dict[field] = []
                         for (src_unit, dst_unit), unicon \
-                            in CaAction.unitconv.iteritems():
+                            in CaAction.unitconv.items():
                             d = dict(src=src_unit, dst=dst_unit)
                             if isinstance(unicon, ap.unitconv.UcPoly):
                                 coeffs = list(unicon.p.coeffs)
@@ -295,7 +296,7 @@ class Filter():
                     CaAction = element._field[field]
                     unicon_list = []
                     for (src_unit, dst_unit), unicon \
-                        in CaAction.unitconv.iteritems():
+                        in CaAction.unitconv.items():
                         d = dict(src=src_unit, dst=dst_unit)
                         if isinstance(unicon, ap.unitconv.UcPoly):
                             coeffs = list(unicon.p.coeffs)
@@ -1186,7 +1187,7 @@ class FilterTableItemDelegate(QStyledItemDelegate):
             if text != old_value:
                 model.setData(index, text, role=QtCore.Qt.EditRole)
 
-                print col_handle, 'data set to ', text
+                print(col_handle, 'data set to ', text)
 
         else:
             QStyledItemDelegate.setModelData(self, editor, model, index)
@@ -1383,7 +1384,7 @@ class ChannelExplorerModel(QObject):
     def on_lattice_change(self, lattice_name):
         """"""
 
-        print 'Using Lattice:', lattice_name
+        print('Using Lattice:', lattice_name)
         ap.machines.use(lattice_name)
 
         self.update_allDict_on_machine_or_lattice_change(self.object_type)
@@ -1456,11 +1457,11 @@ class ChannelExplorerModel(QObject):
             return
 
         current_filter = self.current_filters[self.selected_filter_index]
-        print 'Search initiated for', current_filter.name
+        print('Search initiated for', current_filter.name)
 
         tStart = tic()
         self.emit(SIGNAL('filtersChanged'), current_filter.name)
-        print 'Search update took', toc(tStart), ' seconds'
+        print('Search update took', toc(tStart), ' seconds')
 
     #----------------------------------------------------------------------
     def updateFilters(self, modified_filter_name):
@@ -1507,7 +1508,7 @@ class ChannelExplorerModel(QObject):
                     self.update_matched_table_model(f)
 
         if self.debug:
-            print 'model.updateFilters:', toc(tStart)
+            print('model.updateFilters:', toc(tStart))
 
         self.emit(SIGNAL('filtersUpdated'))
 
@@ -1546,12 +1547,12 @@ class ChannelExplorerModel(QObject):
         tableModel.blockSignals(False)
 
         if self.debug:
-            print 'model.update_matched_table_model (before modelReset):', toc(tStart)
+            print('model.update_matched_table_model (before modelReset):', toc(tStart))
 
         tableModel.emit(SIGNAL('modelReset()'))
 
         if self.debug:
-            print 'model.update_matched_table_model (after modelReset):', toc(tStart)
+            print('model.update_matched_table_model (after modelReset):', toc(tStart))
 
     #----------------------------------------------------------------------
     def any_fnmatchcase_for_pattern_str_list(self, string, pattern_str_list):
@@ -2202,13 +2203,13 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
     def openTunerForSelectedChannels(self):
         """"""
 
-        print 'Not implemented yet'
+        print('Not implemented yet')
 
     #----------------------------------------------------------------------
     def openPlotterForSelectedChannels(self):
         """"""
 
-        print 'Not implemented yet'
+        print('Not implemented yet')
 
 
     #----------------------------------------------------------------------
@@ -2229,7 +2230,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
             col_name = column_name_list[i]
             prop_name_and_full_name_and_data_type = \
                 [(k,v[ENUM_ELEM_FULL_DESCRIP_NAME],v[ENUM_ELEM_DATA_TYPE])
-                 for (k,v) in ELEM_PROPERTIES.iteritems()
+                 for (k,v) in ELEM_PROPERTIES.items()
                  if v[ENUM_ELEM_SHORT_DESCRIP_NAME] == col_name][0]
             prop_name, full_name, data_type = \
                 prop_name_and_full_name_and_data_type
@@ -2288,7 +2289,7 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
 
         full_prop_name = self.comboBox_choice_list.currentText().split('[')[0].strip()
         try:
-            prop_name = [k for (k,v) in ELEM_PROPERTIES.iteritems()
+            prop_name = [k for (k,v) in ELEM_PROPERTIES.items()
                          if v[ENUM_ELEM_FULL_DESCRIP_NAME]==full_prop_name][0]
         except:
             # At initialization, the clause just above will fail
@@ -2596,12 +2597,12 @@ class ChannelExplorerView(QDialog, Ui_Dialog):
         #t.selectAll()
 
         if self.debug:
-            print 'view.update_tables:', toc(tStart)
+            print('view.update_tables:', toc(tStart))
 
         self.emit(SIGNAL('readyForChoiceListUpdate'))
 
         if self.debug:
-            print 'view.update_tables (after readyForChoiceListUpdate):', toc(tStart)
+            print('view.update_tables (after readyForChoiceListUpdate):', toc(tStart))
 
     #----------------------------------------------------------------------
     def on_matched_table_selection_behavior_change(self, check_state_int):
@@ -2976,22 +2977,22 @@ class ChannelExplorerApp(QObject):
             if machine_name not in ap.machines.machines():
                 machine_name = 'nsls2'
 
-            print 'Machine Name = {0:s}'.format(machine_name)
+            print('Machine Name = {0:s}'.format(machine_name))
             initMachine(machine_name, use_cached_lattice=use_cached_lattice,
                         save_lattice_to_cache=save_lattice_to_cache)
             success = True
         except:
-            print 'Failed to load {0:s}'.format(machine_name)
+            print('Failed to load {0:s}'.format(machine_name))
             success = False
 
         if not success:
             for machine_name in ap.machines.machines():
                 try:
-                    print 'Machine Name = {0:s}'.format(machine_name)
+                    print('Machine Name = {0:s}'.format(machine_name))
                     initMachine(machine_name, use_cached_lattice=use_cached_lattice)
                     break
                 except:
-                    print 'Failed to load {0:s}'.format(machine_name)
+                    print('Failed to load {0:s}'.format(machine_name))
 
         self.settings.machine_name = machine_name
 
@@ -2999,14 +3000,14 @@ class ChannelExplorerApp(QObject):
             lattice_name = self.settings.lattice_name
 
         try:
-            print 'Using Lattice:', lattice_name
+            print('Using Lattice:', lattice_name)
             ap.machines.use(lattice_name)
             self.settings.lattice_name = lattice_name
         except:
-            print 'Lattice loading failed.'
+            print('Lattice loading failed.')
             lattice_name_list = ap.machines.lattices()
             fallback_lattice_name = lattice_name_list[0]
-            print 'Will try using Lattice:', fallback_lattice_name
+            print('Will try using Lattice:', fallback_lattice_name)
             ap.machines.use(fallback_lattice_name)
             self.settings.lattice_name = fallback_lattice_name
 
@@ -3426,7 +3427,7 @@ class StartupSettingsDialog(QDialog, Ui_Dialog_startup_settings):
 def propertyKeyAndDataTypeFromDisplayedPropertyName(displayed_property_name):
     """"""
 
-    for (k,v) in ELEM_PROPERTIES.iteritems():
+    for (k,v) in ELEM_PROPERTIES.items():
         if v[ENUM_ELEM_FULL_DESCRIP_NAME] == displayed_property_name:
             data_type = v[ENUM_ELEM_DATA_TYPE]
             property_key = k
@@ -3454,11 +3455,11 @@ def initMachine(machine_name, use_cached_lattice=False,
 
     machine_init_folder_name = machine_name
 
-    print 'Initializing lattices...'
+    print('Initializing lattices...')
     tStart = tic()
     ap.machines.load(machine_init_folder_name, use_cache=use_cached_lattice,
                      save_cache=save_lattice_to_cache)
-    print 'Initialization took', toc(tStart), 'seconds.'
+    print('Initialization took', toc(tStart), 'seconds.')
 
 #----------------------------------------------------------------------
 def make(modal = True, parentWindow = None,
@@ -3516,15 +3517,15 @@ def main():
         use_cached_lattice = False
     elif len(args) == 2:
         if args[1] == '--help':
-            print __doc__
+            print(__doc__)
             return
         elif args[1] == '--use-cache':
             use_cached_lattice = True
         else:
-            print 'Unexpected option: {0:s}'.format(args[1])
+            print('Unexpected option: {0:s}'.format(args[1]))
             raise ValueError(valid_options_str)
     else:
-        print 'There can be at most one option.'
+        print('There can be at most one option.')
         raise ValueError(valid_options_str)
 
     cothread.iqt()
@@ -3537,12 +3538,12 @@ def main():
                   use_cached_lattice=use_cached_lattice,
                   caller='__main__', debug=False)
 
-    if result.has_key('dialog_result'): # When modal
+    if 'dialog_result' in result: # When modal
         app           = result['app']
         dialog_result = result['dialog_result']
 
-        print dialog_result
-        print 'Length = {0:d}'.format(len(dialog_result['selection']))
+        print(dialog_result)
+        print('Length = {0:d}'.format(len(dialog_result['selection'])))
 
 
     else: # When non-modal

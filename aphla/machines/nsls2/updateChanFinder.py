@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 """
 This script initialized some PVs in channel finder. The PVs are only those
@@ -37,7 +38,7 @@ import conf
 import aphla as ap
 
 cfsurl = os.environ.get(
-    'APHLA_CFS_URL', 
+    'APHLA_CFS_URL',
     'https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder')
 
 cfinput = {
@@ -68,30 +69,30 @@ def simple_test():
     #if chs is not None:
     #    for ch in chs:
     #        print ch.Name
-    #        for p in ch.Properties: 
+    #        for p in ch.Properties:
     #            print "  ", p.Name,"=",p.Value, p.Owner, ", "
     #        print "/"
 
-    cf.delete(property=Property('test-prop2', 'cf-asd', 'v1'), 
+    cf.delete(property=Property('test-prop2', 'cf-asd', 'v1'),
               channelNames=[pvname2, pvname3])
     chs = cf.find(property=[('test-prop2', '*')])
     if chs is not None:
         for ch in chs:
-            print ch.Name,
-            for p in ch.Properties: 
-                print p.Name,"=",p.Value,", ", 
-            print " /"
+            print(ch.Name,)
+            for p in ch.Properties:
+                print(p.Name,"=",p.Value,", ",)
+            print(" /")
 
     #cf.update(property=Property('test-prop4', 'cf-asd', 'vt1'),
     #          channelNames=[pvname1, pvname2, pvname3])
-    #cf.delete(property=Property('test-prop4', 'cf-asd'), 
+    #cf.delete(property=Property('test-prop4', 'cf-asd'),
     #          channelNames=[pvname2, pvname3])
     #chs = cf.find(property=[('test-prop4', '*')])
     #if chs is not None:
     #    for ch in chs:
     #        print ch.Name,
-    #        for p in ch.Properties: 
-    #            print p.Name,"=",p.Value,", ", 
+    #        for p in ch.Properties:
+    #            print p.Name,"=",p.Value,", ",
     #        print " /"
 
 def run_simple_task():
@@ -100,17 +101,17 @@ def run_simple_task():
     chs = cf.find(property=[('elemType', 'RFCAVITY')])
     if chs is not None:
         for ch in chs:
-            print ch.Name,
+            print(ch.Name,)
             for p in ch.Properties:
-                print p.Name,"=",p.Value,", ",
-            print " /"
+                print(p.Name,"=",p.Value,", ",)
+            print(" /")
             #addPvProperty(cf, ch.Name, "elemPosition", "633.566", PRPTOWNER)
             #addPvProperty(cf, ch.Name, "elemIndex", "2928", PRPTOWNER)
             #addPvProperty(cf, ch.Name, "elemLength", "0.0", PRPTOWNER)
             #addPvProperty(cf, ch.Name, "cell", "C24", PRPTOWNER)
             addPvProperty(cf, ch.Name, "girder", "G", PRPTOWNER)
     else:
-        print "did not found RFCAVITY"
+        print("did not found RFCAVITY")
 
 def hasPvs(cf, pvs):
     """check if the pvs exist"""
@@ -118,7 +119,7 @@ def hasPvs(cf, pvs):
         if not cf.find(name=pv): return False
     return True
 
-    
+
 def hasTag(cf, tag):
     """check if tag exists"""
     for t in cf.getAllTags():
@@ -131,7 +132,7 @@ def hasProperty(cf, prpt):
     # a property exists if its name exists. Not its whole (p,v) pair.  if want
     # to check existance before creating a new one, we should check the name
     # first (no value). If no, set then update value with PV.
-    for p in cf.getAllProperties(): 
+    for p in cf.getAllProperties():
         if p.Name == prpt: return True
 
     return False
@@ -166,7 +167,7 @@ def renamePvTag(cf, pv, src, dst):
     if src == dst: return False
     cftag = cf.find(tagName=src, name=pv)
     if cftag is None:
-        logging.warn("'%s' has no tag '%s'" % 
+        logging.warn("'%s' has no tag '%s'" %
                      (pv, src))
         return False
     addPvTag(cf, pv, dst)
@@ -179,7 +180,7 @@ def addTagPvs(cf, tag, pvs, owner):
     cf.update(tag=Tag(tag, owner), channelNames=pvs)
     logging.info("--batch add tag '%s' to %d pvs" % (tag, len(pvs)))
     for i, pv in enumerate(pvs):
-        logging.info("add tag '%s' to '%s' (%d/%d)" % 
+        logging.info("add tag '%s' to '%s' (%d/%d)" %
                      (tag, pv, i, len(pvs)))
     logging.info("--end batch tag add")
 
@@ -187,7 +188,7 @@ def removeTagPvs(cf, tag, pvs, owner):
     cf.delete(tag=Tag(tag, owner), channelNames=pvs)
     logging.info("--batch remove tag '%s' to %d pvs" % (tag, len(pvs)))
     for i, pv in enumerate(pvs):
-        logging.info("remove tag '%s' from '%s' (%d/%d)" % 
+        logging.info("remove tag '%s' from '%s' (%d/%d)" %
                      (tag, pv, i, len(pvs)))
     logging.info("--end batch tag remove")
 
@@ -196,13 +197,13 @@ def removePvProperty(cf, pvname, prpt, prptval):
     """remove pv property"""
     cfprpt = cf.find(name=pvname, property = [(prpt, prptval)])
     if cfprpt is None:
-        logging.warn("'%s' has no property {'%s': %s}"  % 
+        logging.warn("'%s' has no property {'%s': %s}"  %
                      (pvname, prpt, str(prptval)))
         return False
     cf.delete(channelName = pvname, property = cfprpt)
-    
+
 def removePropertyPvs(cf, p, owner, pvs):
-    logging.info("remove property '%s' from %d pvs '%s'" % 
+    logging.info("remove property '%s' from %d pvs '%s'" %
                  (p, len(pvs), str(pvs)))
     cf.delete(property = Property(p, owner), channelNames = pvs)
 
@@ -249,7 +250,7 @@ def appendPropertyPvs(cf, p, owner, v, pvs, sep=";"):
             val0 = ch[0].getProperties().get(p, "")
             for val in val0.split(sep):
                 vals.add(val)
-            print v, vals
+            print(v, vals)
             vals = set(v.split(sep) + list(vals))
             val = sep.join(sorted(list(vals)))
             cf.update(property=Property(p, owner, val), channelName=pv)
@@ -279,7 +280,7 @@ def cfs_append_from_csv1(rec_list, update_only):
     for i, h in enumerate(header):
         if i == ipv: continue
         # if the header is empty, it is a tag
-        if len(h.strip()) == 0: 
+        if len(h.strip()) == 0:
             itags.append(i)
         else:
             iprpt.append(i)
@@ -311,14 +312,14 @@ def cfs_append_from_csv1(rec_list, update_only):
                 cf.update(channelName=s[ipv], property=p)
 
     logging.info("finished updating properties")
-    for t,pvs in tags.iteritems():
+    for t,pvs in tags.items():
         if not hasTag(cf, t): cf.set(tag=Tag(t, tag_owner))
         if 'V:1-SR-BI{BETA}X-I' in pvs: continue
         if 'V:1-SR-BI{BETA}Y-I' in pvs: continue
         try:
             cf.update(tag=Tag(t, tag_owner), channelNames=pvs)
         except:
-            print t, pvs
+            print(t, pvs)
             raise
 
         logging.info("update '{0}' for {1} pvs".format(t, len(pvs)))
@@ -342,7 +343,7 @@ def cfs_append_from_csv2(rec_list, update_only):
         if not s: continue
         if not s[0].strip(): continue
         if s[0].strip().startswith('#'): continue
-        
+
         pv = s[0].strip()
         logging.info("updating '{0}'".format(pv))
         #cf.update(property=Property('elemType', PRPTOWNER, 'QUAD'),
@@ -368,16 +369,16 @@ def cfs_append_from_csv2(rec_list, update_only):
                 #tag_list.append(Tag(r.strip()), tag_owner)
                 logging.info("{0}: {1} ({2})".format(pv, tag, tag_owner))
                 #addPvTag(cf, pv, tag, tag_owner)
-        
+
     errpvs = []
     for pv in allpvs:
         chs = cf.find(name=pv)
         if not chs:
             errpvs.append(pv)
-            print "PV '%s' does not exist" % pv
+            print("PV '%s' does not exist" % pv)
             continue
         elif len(chs) != 1:
-            print "Find two results for pv=%s" % pv
+            print("Find two results for pv=%s" % pv)
             continue
         for prpt,val in chs[0].getProperties().items():
             pvlst = prpt_data.get((prpt, val), [])
@@ -389,20 +390,20 @@ def cfs_append_from_csv2(rec_list, update_only):
                 # the existing data is not in the update list, skip
                 pass
 
-    #if errpvs: 
+    #if errpvs:
     #    #raise RuntimeError("PVs '{0}' are missing".format(errpvs))
-    #    print 
+    #    print
 
     logging.warn("{0} does not exist in DB".format(errpvs))
 
-    for k,v in prpt_data.iteritems():
+    for k,v in prpt_data.items():
         vf = [pv for pv in v if pv not in errpvs]
-        if not vf: 
+        if not vf:
             logging.info("no valid PVs for {0}".format(k))
             continue
         updatePropertyPvs(cf, k[0], prpt_owner, k[1], vf)
         logging.info("add property {0} for pvs {1}".format(k, vf))
-    for k,v in tag_data.iteritems():
+    for k,v in tag_data.items():
         vf = [pv for pv in v if pv not in errpvs]
         addTagPvs(cf, k, vf, tag_owner)
         logging.info("add tag {0} for pvs {1}".format(k, vf))
@@ -428,7 +429,7 @@ def cfs_append_from_sqlite(fname, update_only):
         if pv in allpvs: continue
         if pv.find("SR:") != 0: continue
         logging.info("updating '{0}'".format(pv))
-        
+
         allpvs.append(pv)
         prpt_list, tag_list = [], []
         for k,v in prpts.items():
@@ -443,16 +444,16 @@ def cfs_append_from_sqlite(fname, update_only):
             #tag_list.append(Tag(r.strip()), tag_owner)
             logging.info("{0}: {1} ({2})".format(pv, tag, tag_owner))
             #addPvTag(cf, pv, tag, tag_owner)
-        
+
     errpvs = []
     for pv in allpvs:
         chs = cf.find(name=pv)
         if not chs:
             errpvs.append(pv)
-            print "PV '%s' does not exist" % pv
+            print("PV '%s' does not exist" % pv)
             continue
         elif len(chs) != 1:
-            print "Find two results for pv=%s" % pv
+            print("Find two results for pv=%s" % pv)
             continue
         prpts = chs[0].getProperties()
         if not prpts: continue
@@ -466,20 +467,20 @@ def cfs_append_from_sqlite(fname, update_only):
                 # the existing data is not in the update list, skip
                 pass
 
-    #if errpvs: 
+    #if errpvs:
     #    #raise RuntimeError("PVs '{0}' are missing".format(errpvs))
-    #    print 
+    #    print
 
     logging.warn("{0} does not exist in DB".format(errpvs))
 
-    for k,v in prpt_data.iteritems():
+    for k,v in prpt_data.items():
         vf = [pv for pv in v if pv not in errpvs]
-        if not vf: 
+        if not vf:
             logging.info("no valid PVs for {0}".format(k))
             continue
         updatePropertyPvs(cf, k[0], prpt_owner, k[1], vf)
         logging.info("add property {0} for pvs {1}".format(k, vf))
-    for k,v in tag_data.iteritems():
+    for k,v in tag_data.items():
         vf = [pv for pv in v if pv not in errpvs]
         addTagPvs(cf, k, vf, tag_owner)
         logging.info("add tag {0} for pvs {1}".format(k, vf))
@@ -497,19 +498,19 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
 
     The properties are updated as 'cf-asd' account, and tags in 'cf-aphla'
     """
-    print "# Updating CFS from text file"
-    
+    print("# Updating CFS from text file")
+
     cf = ChannelFinderClient(**cfinput)
 
     pvs = []
-    
+
     # read each line of the txt command file
     for i, line in enumerate(cmd_list.readlines()):
         if not line.strip(): continue
         if line.strip().find('#') == 0: continue
 
         rec = [v.strip() for v in line.strip().split()]
-        if len(rec) <= 2: 
+        if len(rec) <= 2:
             logging.warning("skiping line %d: %s" % (i, line))
             continue
 
@@ -537,7 +538,7 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
             pvs = [pv.strip() for pv in rec[2].split(',')]
             prpt = rec[1].strip()
             removePropertyPvs(cf, prpt, PRPTOWNER, pvs)
-            
+
         pv = rec[0]
         cmd = rec[1]
         newval = ''.join(rec[2:])
@@ -546,7 +547,7 @@ def cfs_append_from_cmd(cmd_list, update_only = False):
                 # it is a property
                 prpt, val = v.split('=')
                 if cmd == 'add':
-                    print "add", prpt, val
+                    print("add", prpt, val)
                     addPvProperty(cf, pv, prpt, val, PRPTOWNER)
             else:
                 # tag:
@@ -560,22 +561,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--cmd', type=file, help="run command list")
-    group.add_argument('--csv1', type=file, 
+    group.add_argument('--csv1', type=file,
                        help="update with csv1 file (table)")
-    group.add_argument('--csv2', type=file, 
+    group.add_argument('--csv2', type=file,
                        help="update with csv2 file (explicit dict)")
     group.add_argument('--sqlite', type=str,
                        help="update with sqlite file")
-    parser.add_argument('-u', '--update-only', action="store_true", 
+    parser.add_argument('-u', '--update-only', action="store_true",
                         help="do not create new")
-    
+
     arg = parser.parse_args()
 
-    print "#", channelfinder.__file__,
-    print "#", time.ctime(os.path.getmtime(channelfinder.__file__))
+    print("#", channelfinder.__file__,)
+    print("#", time.ctime(os.path.getmtime(channelfinder.__file__)))
 
     if arg.cmd:
-        print "CMD"
+        print("CMD")
         cfs_append_from_cmd(arg.cmd, update_only = arg.update_only)
     elif arg.csv1:
         cfs_append_from_csv1(arg.csv1, update_only = arg.update_only)
@@ -598,4 +599,4 @@ if __name__ == "__main__":
     #    update_cfs_from_txt(sys.argv[1])
     #else:
     #    print "Usage: %s txtfile" % (sys.argv[0],)
-        
+

@@ -1,9 +1,11 @@
+from __future__ import print_function, division, absolute_import
+from six import string_types
+
 """
 NSLS-II insertion device commissioning/operation
 
 copyright (C) 2014, Yongjun Li, Yoshi Hidaka, Lingyun Yang
 """
-
 import aphla as ap
 import itertools
 import numpy as np
@@ -163,8 +165,8 @@ def putPar(ID, parList, **kwargs):
 
         p_init = ID.get(fld, unitsys=unitsys)
         if np.abs(p_init - target) < tol:
-            print ('Target SP for "{0}" within specified tolerance. No "put" '
-                   'will be performed.').format(fld)
+            print(('Target SP for "{0}" within specified tolerance. No "put" '
+                   'will be performed.').format(fld))
             agree = True
             continue
 
@@ -184,12 +186,12 @@ def putPar(ID, parList, **kwargs):
 
             if np.abs(p_now-p_init) < tol:
                 if put_counter >= nMaxReput:
-                    print ('* Too many "put" failures for "{0}" change. Something '
-                           'is wrong with "{0}" control. Aborting now.').format(fld)
+                    print(('* Too many "put" failures for "{0}" change. Something '
+                           'is wrong with "{0}" control. Aborting now.').format(fld))
                     break
-                print ('* Apparently previous "put" did not start the '
-                       '"{0}" change.').format(fld)
-                print 'Requesting again for the "{0}" change.'.format(fld)
+                print(('* Apparently previous "put" did not start the '
+                       '"{0}" change.').format(fld))
+                print('Requesting again for the "{0}" change.'.format(fld))
                 time.sleep(3) # wait extra before re-put
                 ID.put(fld, target, timeout=timeout, unitsys=unitsys, trig=1)
                 put_counter += 1
@@ -201,7 +203,7 @@ def putPar(ID, parList, **kwargs):
         msg = 'Target SP = {0:.9g}, Current RB = {1:.9g}, Tol = {2:.9g}'.\
                 format(target, p_now, tol)
         if verbose:
-            print 'For "{0}" of {1}: {2}'.format(fld, ID.name, msg)
+            print('For "{0}" of {1}: {2}'.format(fld, ID.name, msg))
         if throw and not agree:
             raise RuntimeError('Failed to set device within tolerance: '+ msg)
         elif not agree:
@@ -246,7 +248,7 @@ def createParList(ID, parScale):
         try:
             LLim_pv = field_pvsp + '.DRVL'
             LLim_mm = ap.caget(LLim_pv)*raw2phy
-            print 'Lower Limit for {0} = {1:.3g} mm'.format(fld, LLim_mm)
+            print('Lower Limit for {0} = {1:.3g} mm'.format(fld, LLim_mm))
             if vmin < LLim_mm:
                 vmin = LLim_mm
                 temp_list = list(_params[ID.name][fld])
@@ -254,20 +256,20 @@ def createParList(ID, parScale):
                 _params[ID.name][fld] = tuple(temp_list)
         except:
             raise
-            print '# WARNING # Lower limit for {0} could not be retrieved.'.format(fld)
+            print('# WARNING # Lower limit for {0} could not be retrieved.'.format(fld))
             LLim_mm = None
         #
         try:
             HLim_pv = field_pvsp + '.DRVH'
             HLim_mm = ap.caget(HLim_pv)*raw2phy
-            print 'Upper Limit for {0} = {1:.3g} mm'.format(fld, HLim_mm)
+            print('Upper Limit for {0} = {1:.3g} mm'.format(fld, HLim_mm))
             if vmax < HLim_mm:
                 vmax = HLim_mm
                 temp_list = list(_params[ID.name][fld])
                 temp_list[1] = HLim_mm
                 _params[ID.name][fld] = tuple(temp_list)
         except:
-            print '# WARNING # Upper limit for {0} could not be retrieved.'.format(fld)
+            print('# WARNING # Upper limit for {0} could not be retrieved.'.format(fld))
             HLim_mm = None
 
         if scale == 'linear':
@@ -277,7 +279,7 @@ def createParList(ID, parScale):
                 raise RuntimeError('negative boundary can not be spaced Logarithmically')
             else:
                 vlist.append(list(np.logspace(np.log10(vmin),np.log10(vmax),int(vstep))))
-        elif not isinstance(scale, (str, unicode)):
+        elif not isinstance(scale, string_types):
             # "scale" is a user-specified array for the parameter
             vmin = np.min(scale)
             vmax = np.max(scale)
@@ -291,7 +293,7 @@ def createParList(ID, parScale):
                      'the upper limit ({1:.3g} mm)').format(fld, HLim_mm))
             vlist.append(list(scale))
             if fld == 'gap':
-                print 'Resetting the background "gap" to be the max of user-specified gap array'
+                print('Resetting the background "gap" to be the max of user-specified gap array')
                 _params[ID.name]['background'][fld] = vmax
             # Reset the "gap" or "phase" tuples in _params
             temp_tup = (vmin, vmax,
@@ -302,8 +304,8 @@ def createParList(ID, parScale):
 
         if (HLim_mm is not None) and (_params[ID.name]['background'][fld] > HLim_mm):
             _params[ID.name]['background'][fld] = HLim_mm
-            print ('Background value of {0} cannot be larger than the '
-                   'upper limit ({1:.3g} mm)').format(fld, HLim_mm)
+            print(('Background value of {0} cannot be larger than the '
+                   'upper limit ({1:.3g} mm)').format(fld, HLim_mm))
         if (LLim_mm is not None) and (_params[ID.name]['background'][fld] < LLim_mm):
             raise ValueError(
                 ('Background value of {0} cannot be smaller than the '
@@ -356,9 +358,9 @@ def putParHardCheck(ID, parList, timeout=30, throw=True, unitsys='phy'):
             continue # print "Agree: ", p0, par[1], "eps=", par[2]
         # error handling
         agree = False
-        print 'For "{0}" of {1}:'.format(par[0], ID.name)
-        print 'Target Setpoint = {0:.9g}, Current Readback = {1:.9g}, Tolerance = {2:.9g}'.format(
-            par[1], p0, par[2])
+        print('For "{0}" of {1}:'.format(par[0], ID.name))
+        print('Target Setpoint = {0:.9g}, Current Readback = {1:.9g}, Tolerance = {2:.9g}'.format(
+            par[1], p0, par[2]))
         if throw:
             raise RuntimeError('Failed to set device within tolerance.')
         else:
@@ -391,7 +393,7 @@ def putParSoftCheck(ID, parList, timeout=30, online=False):
         try:
             ID.put(par[0], par[1], unitsys=None) # raw unit
         except:
-            print 'Failed to set the setpoint for {0} to {1}'.format(par[0], par[1])
+            print('Failed to set the setpoint for {0} to {1}'.format(par[0], par[1]))
             raise
 
         # TODO: remove hardcoding
@@ -465,10 +467,10 @@ def checkBeam(Imin=2.0, Tmin=2.0):
     """
     tau, Ib = ap.getLifetimeCurrent()
     if Ib < Imin:
-        print 'Beam current too low ({0} < {1})'.format(Ib, Imin)
+        print('Beam current too low ({0} < {1})'.format(Ib, Imin))
         return False
     if tau < Tmin:
-        print 'Beam lifetime too short ({0} < {1})'.format(tau, Tmin)
+        print('Beam lifetime too short ({0} < {1})'.format(tau, Tmin))
         return False
     return True
 
@@ -593,7 +595,7 @@ def chooseBpmCor(ID, userBpm=False):
     return bpmFields, corFields
 
 def saveToDB(fileName):
-    print "save to file (Guobao's DB)"
+    print("save to file (Guobao's DB)")
     pass
 
 

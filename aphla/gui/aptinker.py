@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+from __future__ import print_function, division, absolute_import
+
 """GUI application for adjusting lattice parameters with certain ratios
 between different groups of parameters.
 
@@ -104,8 +106,8 @@ def get_running_aptinker_pids():
     out, err = p2.communicate()
 
     if err:
-        print 'ERROR:'
-        print err
+        print('ERROR:')
+        print(err)
         return None
 
     if out == '':
@@ -685,7 +687,7 @@ class TinkerDockWidget(QDockWidget):
 
         self._initUI(parent)
 
-        for col_key, editable in self.ss_abstract.user_editable.iteritems():
+        for col_key, editable in self.ss_abstract.user_editable.items():
             if editable:
                 self.ssDBView.comboBox_column_name.addItem(
                     self.ss_abstract.all_col_names[
@@ -1409,7 +1411,7 @@ is specfied. If it does not start, try toggling the check states.''')
 
         self.update()
 
-        print 'Updating window title'
+        print('Updating window title')
 
     #----------------------------------------------------------------------
     def updateMetaDataTab(self):
@@ -1987,7 +1989,7 @@ class TinkerView(QMainWindow, Ui_MainWindow):
             if config_id is None:
                 continue
 
-            print 'Loading Configuration (ID={0:d})...'.format(config_id)
+            print('Loading Configuration (ID={0:d})...'.format(config_id))
             m = ConfigAbstractModel()
 
             m.config_id = config_id
@@ -2001,8 +2003,8 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                 condition_str='config_id={0:d}'.format(config_id))
 
             if out == []:
-                print 'config_id of {0:d} could not be found.'.format(
-                    config_id)
+                print('config_id of {0:d} could not be found.'.format(
+                    config_id))
                 continue
 
             ((m.name,), (m.description,), (m.masar_id,), (m.ref_step_size,),
@@ -2023,9 +2025,9 @@ class TinkerView(QMainWindow, Ui_MainWindow):
                 if m.check_aphla_unitconv_updates():
                     newly_created_dockwidgets.append(self.createDockWidget(m))
                 else:
-                    print 'Aborting configuration loading.'
+                    print('Aborting configuration loading.')
 
-            print 'Configuration loading process finished.'
+            print('Configuration loading process finished.')
 
         db.close(vacuum=False)
 
@@ -2151,26 +2153,26 @@ def main():
 
     if ap.machines._lat is None:
         try:
-            print 'Trying to load machine "{0}"...'.format(config.HLA_MACHINE)
+            print('Trying to load machine "{0}"...'.format(config.HLA_MACHINE))
             ap.machines.load(config.HLA_MACHINE, use_cache=args.use_cache)
             success = True
-            print 'Successfully loaded {0}'.format(config.HLA_MACHINE)
+            print('Successfully loaded {0}'.format(config.HLA_MACHINE))
         except:
-            print 'Failed to load {0}'.format(config.HLA_MACHINE)
+            print('Failed to load {0}'.format(config.HLA_MACHINE))
             success = False
 
         if not success:
             for machine_name in ap.machines.machines():
                 if machine_name != config.HLA_MACHINE:
                     try:
-                        print 'Trying to load machine "{0}"...'.format(
-                            machine_name)
+                        print('Trying to load machine "{0}"...'.format(
+                            machine_name))
                         ap.machines.load(machine_name,
                                          use_cache=args.use_cache)
-                        print 'Successfully loaded {0}'.format(machine_name)
+                        print('Successfully loaded {0}'.format(machine_name))
                         break
                     except:
-                        print 'Failed to load {0}'.format(machine_name)
+                        print('Failed to load {0}'.format(machine_name))
 
     pref = get_preferences()
     font = QFont()

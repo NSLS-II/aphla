@@ -1,8 +1,8 @@
 """
 :author: Lingyun Yang, Yoshiteru Hidaka
-:license: 
+:license:
 
-``aphla`` is a set accelerator physics high level applications and scripts. 
+``aphla`` is a set accelerator physics high level applications and scripts.
 
 an object-orient high level accelerator control library.
 
@@ -10,7 +10,7 @@ A procedural interface is provided.
 
 """
 
-from __future__ import print_function
+from __future__ import print_function, division, absolute_import
 
 __version__ = "0.8.32"
 try:
@@ -43,7 +43,7 @@ logging.getLogger('aphla').addHandler(_lghdl)
 
 def enableLog(f = "aphla.log", level=logging.INFO):
     # print(logging.getLogger())
-    # print(logging.getLogger().handlers)    
+    # print(logging.getLogger().handlers)
     from logging.handlers import RotatingFileHandler
     _lgh = RotatingFileHandler(f, maxBytes=100*1024*1024)
     _lgh.setLevel(level)
@@ -55,18 +55,18 @@ def enableLog(f = "aphla.log", level=logging.INFO):
 
 #
 
-from catools import *
-from chanfinder import *
-import machines
-from hlalib import *
-from apdata import OrmData
+from .catools import *
+from .chanfinder import *
+from . import machines
+from .hlalib import *
+from .apdata import OrmData
 
-from meastwiss import *
-from aptools import *
-from tbtanal import *
-import snapshot
+from .meastwiss import *
+from .aptools import *
+from .tbtanal import *
+from . import snapshot
 
-import bba
+from . import bba
 
 # Added by Y. Hidaka
 # require newer version of scipy, not available in controls terminal yet.
@@ -77,6 +77,6 @@ import bba
 # it's better to import this package separately
 #import gui
 
-import nsls2
-#import nsls2br
-import nsls2id
+from . import nsls2
+#from . import nsls2br
+from . import nsls2id

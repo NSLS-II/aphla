@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 import os
 import subprocess
 
-MAJOR = 0
-MINOR = 9
+MAJOR = 1
+MINOR = 0
 MICRO = 0
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -85,7 +85,7 @@ setup(
     version = VERSION,
     packages = find_packages(exclude=['tests']),
     include_package_data = True,
-    package_data = {'aphla.gui.TinkerUtils': ['tinker_columns.sqlite']},
+    #package_data = {'aphla.gui.TinkerUtils': ['tinker_columns.sqlite']},
     #package_data = {
     #    # any these files
     #    'aphla.gui': ['data/*'],
@@ -100,19 +100,19 @@ setup(
     #install_requires = ['distribute', 'matplotlib', 'cothread',
     #                    'numpy', 'scipy'],
     entry_points = {
-        'gui_scripts': [
-            'mleap = aphla.gui.mleap:main',
-            'apbba = aphla.gui.apbba:main',
-            'aplauncher = aphla.gui.aplauncher:main',
-            'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',
-            'apchx = aphla.gui.channelexplorer:main',
-            'aptinker = aphla.gui.aptinker:main'
-            ]
+        #'gui_scripts': [
+            #'mleap = aphla.gui.mleap:main',
+            #'apbba = aphla.gui.apbba:main',
+            #'aplauncher = aphla.gui.aplauncher:main',
+            #'apcurrentmonitor = aphla.gui.apcurrentmonitor:main',
+            #'apchx = aphla.gui.channelexplorer:main',
+            #'aptinker = aphla.gui.aptinker:main'
+            #]
         },
     description = "Accelerator control and experiment toolkit",
     author = "Lingyun Yang, Yoshiteru Hidaka",
-    maintainer = "Lingyun Yang",
-    maintainer_email = "lyyang@bnl.gov",
-    url = 'http://code.nsls2.bnl.gov/hg/ap/hla',
+    maintainer = "Yoshiteru Hidaka",
+    maintainer_email = "yhidaka@bnl.gov",
+    url = 'https://gitlab.nsls2.bnl.gov/yhidaka/aphla',
     )
 

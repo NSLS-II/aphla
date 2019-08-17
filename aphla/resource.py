@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Resource Management
 --------------------
@@ -57,7 +59,7 @@ def inHome(resname):
     check if resource is in user's HOME directory
     """
     prv_filename = os.path.join(os.getenv("HOME"), ".aphla", resname)
-    if os.path.exists(prv_filename): 
+    if os.path.exists(prv_filename):
         return True
-    else: 
+    else:
         return False

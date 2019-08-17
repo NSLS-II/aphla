@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import print_function, division, absolute_import
 
 from numpy import *
 import os
@@ -11,7 +12,7 @@ import re
 import string
 import sys
 
-# python 
+# python
 '''
 from extendwf import *
 outputwf=extendwf(Nwflength,inputwf)
@@ -19,23 +20,23 @@ Nwflength:output waveform length to be extended to,inputwf: input waveform,outpu
 '''
 
 def extendwf(Nwflength,inputwf):
-        '''
-	extend input array length to length Nwflength by setting the  
+    '''
+    extend input array length to length Nwflength by setting the
 
-	from extendwf import *
-	outputwf=extendwf(Nwflength,inputwf)
+    from extendwf import *
+    outputwf=extendwf(Nwflength,inputwf)
 
-	Nwflength:output waveform length to be extended to,inputwf: input waveform,
-	outputwf: return output waveform with length Nwflength)
-	'''
-	outputwf=zeros(Nwflength)
-	Nin=len(inputwf)
-	for i in range(Nwflength):
-		if i<Nin:
-			outputwf[i]= inputwf[i]
-		else:
-			outputwf[i]= inputwf[Nin-1]
+    Nwflength:output waveform length to be extended to,inputwf: input waveform,
+    outputwf: return output waveform with length Nwflength)
+    '''
+    outputwf=zeros(Nwflength)
+    Nin=len(inputwf)
+    for i in range(Nwflength):
+        if i<Nin:
+            outputwf[i]= inputwf[i]
+        else:
+            outputwf[i]= inputwf[Nin-1]
 
-	print outputwf
+    print(outputwf)
 
-	return outputwf
+    return outputwf

@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 NSLS2 Booster Ring Specific Routines
 ============================================
@@ -16,12 +18,12 @@ import h5py
 import re
 import warnings
 
-import machines
-from catools import caget, caput
-from hlalib import getElements
+from . import machines
+from .catools import caget, caput
+from .hlalib import getElements
 
 
-    
+
 def _brBpmScrub(**kwargs):
     """
     waveforms - list of Tbt, Fa and Adc
@@ -102,7 +104,7 @@ def resetBrBpms(wfmsel = 1):
         pvs = [  pvx + "ddrFaOffset" for pvx in pvprefs]
         caput(pvs, 0, wait=True)
         #
-    
+
 def _brBpmTrigData(pvprefs, waveform, **kwargs):
     """
     """
@@ -208,13 +210,13 @@ def _brBpmTrigData(pvprefs, waveform, **kwargs):
             raise RuntimeError("BPMs are not ready after %d trials" % n)
 
     if verbose > 0:
-        print "Trials: %d, Trig=%.2e, DDR Trig=%.2e seconds." % (n, mdt, mdt_s)
+        print("Trials: %d, Trig=%.2e, DDR Trig=%.2e seconds." % (n, mdt, mdt_s))
 
     # redundent check
     ddrts0   = caget(pv_ddrts, timeout=tc)
     mdt = _maxTimeSpan(ddrts0)
     if mdt > 1.0:
-        print "ERROR: Timestamp does not agree (max dt= %f), wait ..." % mdt
+        print("ERROR: Timestamp does not agree (max dt= %f), wait ..." % mdt)
 
     ddroffset = caget(pv_ddroffset, timeout=tc)
     data = (caget(pv_x),
@@ -312,7 +314,7 @@ def getBrBpmData(**kwargs):
 
         pv_ts = [pv + "TS:DdrTrigDate-I" for pv in pvpref]
         x  = np.array(caget(pv_x), 'd')
-        y  = np.array(caget(pv_y), 'd') 
+        y  = np.array(caget(pv_y), 'd')
         Is = np.array(caget(pv_S), 'd')
         ts = caget(pv_ts)
         offset = caget(pv_offset)
@@ -360,7 +362,7 @@ def plotBrRmData(fname, group, **kwargs):
 
     h5f = h5py.File(fname, 'r')
     if group not in h5f: return None
-    
+
     for ibpm in range(nbpm):
         for i in range(ndx):
             plt.clf()
@@ -386,8 +388,8 @@ def plotBrRmData(fname, group, **kwargs):
                 nlines = nlines + 1
             if nlines > 0:
                 plt.savefig("%s_bpm_%d_dx%d.png" % (output, ibpm, i))
-            plt.clf()    
-    h5f.close()        
+            plt.clf()
+    h5f.close()
 
 def calcBrRmCol(fname, group, **kwargs):
     """
@@ -402,9 +404,9 @@ def calcBrRmCol(fname, group, **kwargs):
     nbpm = kwargs.get("nbpm", 36)
     plot = kwargs.get("plot", False)
     wfmslice = kwargs.get("wfmslice", (10,100))
-    wfm = kwargs.get("waveform", "Fa") 
+    wfm = kwargs.get("waveform", "Fa")
     output = kwargs.get("output", "images/br_orm")
-    
+
     # check what data are available
     h5f = h5py.File(fname, 'r')
     if group not in h5f: return None
@@ -417,7 +419,7 @@ def calcBrRmCol(fname, group, **kwargs):
             #  number of kicks and number of reading for each kick
             grps.append((int(m.group(1)), int(m.group(2))))
     if len(grps) == 0:
-        print "WARNING: did not find any valid data"
+        print("WARNING: did not find any valid data")
         return None
     # the maximum possible kicks and readings
     ndx = max([i for i, j in grps]) + 1
@@ -433,9 +435,9 @@ def calcBrRmCol(fname, group, **kwargs):
     bpmr = np.zeros((nbpm, 4), 'd')
     # show data for iBPM, for turns i0:i1
     dxlst = np.array(h5f["%s/dxlst" % group], 'd')
-    
+
     for i in range(ndx):
-        # possible readings 
+        # possible readings
         mtx, mty = [], []
         for j in range(npt):
             # skip the deleted data
@@ -451,7 +453,7 @@ def calcBrRmCol(fname, group, **kwargs):
 
         if len(mtx) == 0:
             # we do not have any readings at this kick point
-            print "WARNING: no valid points found at dx=", dxlst[i]
+            print(("WARNING: no valid points found at dx=", dxlst[i]))
             msk[i] = 0
             continue
         # average over all readings for ith kick
@@ -477,7 +479,7 @@ def calcBrRmCol(fname, group, **kwargs):
             plt.close()
 
     # remove the missing points
-    mxij = np.compress(msk, mxij, axis=1)  
+    mxij = np.compress(msk, mxij, axis=1)
     myij = np.compress(msk, myij, axis=1)
     dxlst = np.compress(msk, dxlst)
     h5f.close()
@@ -522,7 +524,7 @@ def calcBrRmCol(fname, group, **kwargs):
 
     mcol, pol = [], []
     for i in range(nbpm):
-        # fit polynomial, 
+        # fit polynomial,
         px = np.polyfit(dxlst, mxij[i,:,0], 1)
         py = np.polyfit(dxlst, myij[i,:,0], 1)
         # take the linear coef.
@@ -542,7 +544,7 @@ def calcBrRmCol(fname, group, **kwargs):
             ax1.plot(dxlst, mxij[i,:,0], 'bo')
             ax1.errorbar(dxlst, mxij[i,:,0], yerr=mxij[i,:,1], color='b')
             ax1.plot(t, np.polyval(px, t), 'b-')
-            ax1.text(0.05, 0.95, "BPM %d: x=%.2f*k+%.2f\n (%s)" % (i, px[-2], px[-1], group), 
+            ax1.text(0.05, 0.95, "BPM %d: x=%.2f*k+%.2f\n (%s)" % (i, px[-2], px[-1], group),
                      size="large",  horizontalalignment='left', verticalalignment='top', transform=ax1.transAxes)
             for tl in ax1.get_yticklabels():
                 tl.set_color('b')
@@ -551,7 +553,7 @@ def calcBrRmCol(fname, group, **kwargs):
             ax2.plot(dxlst, myij[i,:,0], 'ro')
             ax2.errorbar(dxlst, myij[i,:,0], yerr=myij[i,:,1], color='r')
             ax2.plot(t, np.polyval(py, t), 'r-')
-            ax2.text(0.05, 0.95, "BPM %d: y=%.2f*k+%.2f\n (%s)" % (i, py[-2], py[-1], group), 
+            ax2.text(0.05, 0.95, "BPM %d: y=%.2f*k+%.2f\n (%s)" % (i, py[-2], py[-1], group),
                      size="large",  horizontalalignment='left', verticalalignment='top', transform=ax.transAxes)
             for tl in ax2.get_yticklabels():
                 tl.set_color('r')
@@ -613,7 +615,7 @@ def plotBrOrbits(**kwargs):
     ax2.set_xticks(range(len(name)))
     ax2.set_xticklabels(labels, rotation="vertical")
     plt.show()
-    print "Time stamp:", ts[0]
+    print(("Time stamp:", ts[0]))
     return (bpm, x, y, Isum, ts, offset)
 
 
@@ -626,7 +628,7 @@ def correctBrOrbit(kker, m, **kwarg):
     m : response matrix where :math:`m_{ij}=\Delta orbit_i/\Delta kker_j`
     scale : scaling factor applied to the calculated kker
     ref : the targeting value of orbit
-    rcond : the rcond for cutting singular values. 
+    rcond : the rcond for cutting singular values.
     check : stop if the orbit gets worse.
     wait : waiting (seconds) before check.
 
@@ -650,14 +652,14 @@ def correctBrOrbit(kker, m, **kwarg):
     #u, s, v = np.linalg.svd(m)
     #plt.semilogy(s/s[0], 'x-')
     #plt.show()
-    
+
     i0, i1 = wfmslice
     nbpm, ncor = np.shape(m)
     mask_row = np.ones(nbpm, 'i')
     for i in exrows: mask_row[i] = 0
     m = np.compress(mask_row, m, axis=0)
 
-    print "New m shape:", np.shape(m)
+    print(("New m shape:", np.shape(m)))
 
     name, x0, y0, Isum0, ts, offset = getBrBpmData(waveform=wfm, trig=0)
 
@@ -673,7 +675,7 @@ def correctBrOrbit(kker, m, **kwarg):
     if ref is not None: v0 = v0 - ref
     if len(v0) != len(m):
         raise RuntimeError("inconsistent BPM and ORM size")
-    
+
     # the initial norm
     norm0 = np.linalg.norm(v0)
 
@@ -685,7 +687,7 @@ def correctBrOrbit(kker, m, **kwarg):
     # get the DC kicker
     kl0 = np.array(caget(kker), 'd')
     k0 = np.average(kl0, axis=1)
-    print np.shape(kl0)
+    print(np.shape(kl0))
     #print k0, dk, scale
     k1 = k0 + dk*scale
     vk1 = [[k] * len(kl0[i]) for i,k in enumerate(k1)]
@@ -697,7 +699,7 @@ def correctBrOrbit(kker, m, **kwarg):
         caput(kker, vk1, wait=True)
     else:
         for i,pv in enumerate(kker):
-            print i, pv, k1[i], "dk=", dk[i]
+            print((i, pv, k1[i], "dk=", dk[i]))
 
     time.sleep(wait)
     name, x1, y1, Isum1, ts, offset = getBrBpmData(waveform=wfm, trig=0)
@@ -705,7 +707,7 @@ def correctBrOrbit(kker, m, **kwarg):
     vl1 = np.compress(mask_row, np.vstack((x1, y1)), axis=0)
     v1 = np.average(vl1[:,i0:i1], axis=1)
 
-    print norm0, "predicted norm= ", norm1, "realized:", np.linalg.norm(v1)
+    print((norm0, "predicted norm= ", norm1, "realized:", np.linalg.norm(v1)))
 
     return v0, v1, k0, k1
 
@@ -731,14 +733,14 @@ def generateBrRamping(IFb, IFt, **kwargs):
 
     dIdt0 = kwargs.get("dIu", dIdt0_m)
     dIdt1 = kwargs.get("dId", dIdt1_m)
-    
+
     v = np.zeros(10150, 'd')
     # 1. injection flat top
     a, b, c, d = (IFb, 0.0, 0.0, 0.0)
     for i in range(T1):
         dt = i
         v[i] = a + b*dt + c*dt**3 + d * dt**4
-    # 2. 
+    # 2.
     DT2 = T2 - T1
     a, b, c, d = (IFb, 0.0, dIdt0/DT2**2, -0.5*dIdt0/DT2**3)
     for i in range(T1, T2):
@@ -878,7 +880,7 @@ def measBrCaRmCol(kker, **kwargs):
     verbose = kwargs.pop("verbose", 0)
     npt     = kwargs.pop("npoints", 4)
     wfm     = kwargs.pop("waveform", "Fa")
-    
+
     t0 = datetime.now()
     dxlst, x0 = [], np.array(caget(kker, timeout=timeout), 'd')
     if "dxlst" in kwargs:
@@ -905,18 +907,18 @@ def measBrCaRmCol(kker, **kwargs):
     grp.attrs["orm_t0"] = t0.strftime("%Y_%m_%d_%H:%M:%S.%f")
     grp["dxlst"] = dxlst
     h5f.close()
-    
+
     # save the initial orbit
     getBrBpmData(waveform=wfm,
                  verbose=verbose-1,
                  output_file=output_file,
                  h5group="%s/%s0" % (kker, wfm),
                  **kwargs)
-    
+
     n1 = len(dxlst)
     for i,dx in enumerate(dxlst):
         if verbose > 0:
-            print "%d/%d: Setting %s " % (i, n1, kker), dx
+            print(("%d/%d: Setting %s " % (i, n1, kker), dx))
             sys.stdout.flush()
         try:
             nx0 = len(x0)
@@ -931,16 +933,16 @@ def measBrCaRmCol(kker, **kwargs):
                 waveform=wfm, verbose=verbose-1,
                 output_file=output_file,
                 h5group="%s/%s_dx%d__pt%d" % (kker, wfm, i, j),
-                **kwargs)    
+                **kwargs)
             if verbose > 1:
                 name, x, y, Is, ts, ddroffset = obt
-                print "  %d/%d" % (j,npt), np.average(x[0]), np.std(x[0])
+                print(("  %d/%d" % (j,npt), np.average(x[0]), np.std(x[0])))
                 sys.stdout.flush()
             time.sleep(wait)
         time.sleep(wait)
 
     caput(kker, x0, wait=True, timeout=timeout)
-    
+
     t1 = datetime.now()
 
     h5f = h5py.File(output_file)

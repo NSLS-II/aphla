@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Gauss Fitter
 -------------
@@ -9,7 +11,7 @@ Gauss Fitter
 
 #
 # tested by Lingyun Yang <lyyang@bnl.gov>, 10/04/2011
-# 
+#
 #
 
 import numpy
@@ -18,11 +20,11 @@ from numpy import pi
 #from scipy import optimize,stats,pi
 from mpfit import mpfit
 
-""" 
-Note about mpfit/leastsq: 
+"""
+Note about mpfit/leastsq:
 I switched everything over to the Markwardt mpfit routine for a few reasons,
 but foremost being the ability to set limits on parameters, not just force them
-to be fixed.  As far as I can tell, leastsq does not have that capability.  
+to be fixed.  As far as I can tell, leastsq does not have that capability.
 
 The version of mpfit I use can be found here:
     http://code.google.com/p/agpy/source/browse/trunk/mpfit
@@ -37,9 +39,9 @@ To do:
 def moments(data,circle,rotate,vheight,estimator=median,**kwargs):
     """Returns (height, amplitude, x, y, width_x, width_y, rotation angle)
     the gaussian parameters of a 2D distribution by calculating its
-    moments.  Depending on the input parameters, will only output 
+    moments.  Depending on the input parameters, will only output
     a subset of the above.
-    
+
     If using masked arrays, pass estimator=numpy.ma.median
     """
     total = numpy.abs(data).sum()
@@ -64,7 +66,7 @@ def moments(data,circle,rotate,vheight,estimator=median,**kwargs):
         if rotate==1:
             mylist = mylist + [0.] #rotation "moment" is just zero...
             # also, circles don't rotate.
-    else:  
+    else:
         mylist = mylist + [width]
     return mylist
 
@@ -90,7 +92,7 @@ def twodgaussian(inpars, circle=False, rotate=True, vheight=True, shape=None):
         However, the above values are passed by list.  The list should be:
     inpars : (height,amplitude,center_x,center_y,width_x,width_y,rota)
 
-        You can choose to ignore / neglect some of the above input parameters 
+        You can choose to ignore / neglect some of the above input parameters
         unumpy.sing the following options:
     circle : 0 default is an elliptical gaussian (different x, y
         widths), but can reduce the input by one parameter if it's a
@@ -135,7 +137,7 @@ def twodgaussian(inpars, circle=False, rotate=True, vheight=True, shape=None):
         raise ValueError("There are still input parameters:" + str(inpars) + \
                 " and you've input: " + str(inpars_old) + \
                 " circle=%d, rotate=%d, vheight=%d" % (circle,rotate,vheight) )
-            
+
     def rotgauss(x,y):
         if rotate==1:
             xp = x * numpy.cos(rota) - y * numpy.sin(rota)
@@ -162,19 +164,19 @@ def gaussfit(data,err=None,params=(),autoderiv=True,return_all=False,circle=Fals
     """
     Gaussian fitter with the ability to fit a variety of different forms of
     2-dimensional gaussian.
-    
+
     Parameters
     -----------
     data : 2-dimensional data array
     err : None - error array with same size as data array
     params : [] - initial input parameters for Gaussian function.
         (height, amplitude, x, y, width_x, width_y, rota)
-        if not input, these will be determined from the moments of the system, 
+        if not input, these will be determined from the moments of the system,
         assuming no rotation.
     autoderiv : 1 - use the autoderiv provided in the lmder.f function (the
         alternative is to us an analytic derivative with lmdif.f: this method
         is less robust)
-    return_all : 0 - Default is to return only the Gaussian parameters.  
+    return_all : 0 - Default is to return only the Gaussian parameters.
         1 - fit params, fit error
     returnfitimage : returns (best fit params,best fit image)
     returnmp : returns the full mpfit struct
@@ -214,7 +216,7 @@ def gaussfit(data,err=None,params=(),autoderiv=True,return_all=False,circle=Fals
 
 
     # mpfit will fail if it is given a start parameter outside the allowed range:
-    for i in xrange(len(params)): 
+    for i in xrange(len(params)):
         if params[i] > maxpars[i] and limitedmax[i]: params[i] = maxpars[i]
         if params[i] < minpars[i] and limitedmin[i]: params[i] = minpars[i]
 
@@ -233,8 +235,8 @@ def gaussfit(data,err=None,params=(),autoderiv=True,return_all=False,circle=Fals
                     (*numpy.indices(data.shape)))/err)]
         return f
 
-                    
-    parinfo = [ 
+
+    parinfo = [
                 {'n':1,'value':params[1],'limits':[minpars[1],maxpars[1]],'limited':[limitedmin[1],limitedmax[1]],'fixed':fixed[1],'parname':"AMPLITUDE",'error':0},
                 {'n':2,'value':params[2],'limits':[minpars[2],maxpars[2]],'limited':[limitedmin[2],limitedmax[2]],'fixed':fixed[2],'parname':"XSHIFT",'error':0},
                 {'n':3,'value':params[3],'limits':[minpars[3],maxpars[3]],'limited':[limitedmin[3],limitedmax[3]],'fixed':fixed[3],'parname':"YSHIFT",'error':0},
@@ -273,9 +275,9 @@ def onedmoments(Xax,data,vheight=True,estimator=median,negamp=None,
         veryverbose=False, **kwargs):
     """Returns (height, amplitude, x, width_x)
     the gaussian parameters of a 1D distribution by calculating its
-    moments.  Depending on the input parameters, will only output 
+    moments.  Depending on the input parameters, will only output
     a subset of the above.
-    
+
     If using masked arrays, pass estimator=numpy.ma.median
     'estimator' is used to measure the background level (height)
 
@@ -286,7 +288,7 @@ def onedmoments(Xax,data,vheight=True,estimator=median,negamp=None,
     dx = numpy.mean(Xax[1:] - Xax[:-1]) # assume a regular grid
     integral = (data*dx).sum()
     height = estimator(data)
-    
+
     # try to figure out whether pos or neg based on the minimum width of the pos/neg peaks
     Lpeakintegral = integral - height*len(Xax)*dx - (data[data>height]*dx).sum()
     Lamplitude = data.min()-height
@@ -302,16 +304,17 @@ def onedmoments(Xax,data,vheight=True,estimator=median,negamp=None,
     if negamp: # can force the guess to be negative
         xcen,amplitude,width_x = Xax[numpy.argmin(data)],Lamplitude,Lwidth_x
     elif negamp is None:
-        if Hstddev < Lstddev: 
+        if Hstddev < Lstddev:
             xcen,amplitude,width_x, = Xax[numpy.argmax(data)],Hamplitude,Hwidth_x
-        else:                                                                   
+        else:
             xcen,amplitude,width_x, = Xax[numpy.argmin(data)],Lamplitude,Lwidth_x
     else:  # if negamp==False, make positive
         xcen,amplitude,width_x = Xax[numpy.argmax(data)],Hamplitude,Hwidth_x
 
     if veryverbose:
-        print "negamp: %s  amp,width,cen Lower: %g, %g   Upper: %g, %g  Center: %g" %\
-                (negamp,Lamplitude,Lwidth_x,Hamplitude,Hwidth_x,xcen)
+        print(
+            "negamp: %s  amp,width,cen Lower: %g, %g   Upper: %g, %g  Center: %g" %
+            (negamp,Lamplitude,Lwidth_x,Hamplitude,Hwidth_x,xcen))
     mylist = [amplitude,xcen,width_x]
     if numpy.isnan(width_x) or numpy.isnan(height) or numpy.isnan(amplitude):
         raise ValueError("something is nan")
@@ -365,13 +368,13 @@ def onedgaussfit(xax, data, err=None,
     if xax == None:
         xax = numpy.arange(len(data))
 
-    if vheight is False: 
+    if vheight is False:
         height = params[0]
         fixed[0] = True
     if usemoments:
         params = onedmoments(xax,data,vheight=vheight,negamp=negamp, veryverbose=veryverbose)
         if vheight is False: params = [height]+params
-        if veryverbose: print "OneD moments: h: %g  a: %g  c: %g  w: %g" % tuple(params)
+        if veryverbose: print("OneD moments: h: %g  a: %g  c: %g  w: %g" % tuple(params))
 
     parinfo = [ {'n':0,'value':params[0],'limits':[minpars[0],maxpars[0]],'limited':[limitedmin[0],limitedmax[0]],'fixed':fixed[0],'parname':"HEIGHT",'error':0} ,
                 {'n':1,'value':params[1],'limits':[minpars[1],maxpars[1]],'limited':[limitedmin[1],limitedmax[1]],'fixed':fixed[1],'parname':"AMPLITUDE",'error':0},
@@ -387,11 +390,11 @@ def onedgaussfit(xax, data, err=None,
         raise Exception(mp.errmsg)
 
     if (not shh) or veryverbose:
-        print "Fit status: ",mp.status
+        print(("Fit status: ",mp.status))
         for i,p in enumerate(mpp):
             parinfo[i]['value'] = p
-            print parinfo[i]['parname'],p," +/- ",mpperr[i]
-        print "Chi2: ",mp.fnorm," Reduced Chi2: ",mp.fnorm/len(data)," DOF:",len(data)-len(mpp)
+            print((parinfo[i]['parname'],p," +/- ",mpperr[i]))
+        print(("Chi2: ",mp.fnorm," Reduced Chi2: ",mp.fnorm/len(data)," DOF:",len(data)-len(mpp)))
 
     return mpp,onedgaussian(xax,*mpp),mpperr,chi2
 
@@ -459,7 +462,7 @@ def multigaussfit(xax, data, ngauss=1, err=None, params=[1,0,1],
     """
 
     if len(params) != ngauss and (len(params) / 3) > ngauss:
-        ngauss = len(params) / 3 
+        ngauss = len(params) / 3
 
     if isinstance(params,numpy.ndarray): params=params.tolist()
 
@@ -468,8 +471,8 @@ def multigaussfit(xax, data, ngauss=1, err=None, params=[1,0,1],
         if len(parlist) != 3*ngauss:
             # if you leave the defaults, or enter something that can be multiplied by 3 to get to the
             # right number of gaussians, it will just replicate
-            if len(parlist) == 3: 
-                parlist *= ngauss 
+            if len(parlist) == 3:
+                parlist *= ngauss
             elif parlist==params:
                 parlist[:] = [1,0,1] * ngauss
             elif parlist==fixed or parlist==limitedmax:
@@ -494,12 +497,12 @@ def multigaussfit(xax, data, ngauss=1, err=None, params=[1,0,1],
     parinfo = [ {'n':ii, 'value':params[ii],
         'limits':[minpars[ii],maxpars[ii]],
         'limited':[limitedmin[ii],limitedmax[ii]], 'fixed':fixed[ii],
-        'parname':parnames[ii%3]+str(ii%3), 'error':ii} 
+        'parname':parnames[ii%3]+str(ii%3), 'error':ii}
         for ii in xrange(len(params)) ]
 
     if veryverbose:
-        print "GUESSES: "
-        print "\n".join(["%s: %s" % (p['parname'],p['value']) for p in parinfo])
+        print("GUESSES: ")
+        print("\n".join(["%s: %s" % (p['parname'],p['value']) for p in parinfo]))
 
     mp = mpfit(mpfitfun(xax,data,err),parinfo=parinfo,quiet=quiet)
     mpp = mp.params
@@ -510,11 +513,11 @@ def multigaussfit(xax, data, ngauss=1, err=None, params=[1,0,1],
         raise Exception(mp.errmsg)
 
     if not shh:
-        print "Final fit values: "
+        print("Final fit values: ")
         for i,p in enumerate(mpp):
             parinfo[i]['value'] = p
-            print parinfo[i]['parname'],p," +/- ",mpperr[i]
-        print "Chi2: ",mp.fnorm," Reduced Chi2: ",mp.fnorm/len(data)," DOF:",len(data)-len(mpp)
+            print((parinfo[i]['parname'],p," +/- ",mpperr[i]))
+        print(("Chi2: ",mp.fnorm," Reduced Chi2: ",mp.fnorm/len(data)," DOF:",len(data)-len(mpp)))
 
     return mpp,n_gaussian(pars=mpp)(xax),mpperr,chi2
 
@@ -536,14 +539,15 @@ def collapse_gaussfit(cube,xax=None,axis=2,negamp=False,usemoments=True,nsigcut=
     if xax is None:
         xax = numpy.arange(cube.shape[0])
     starttime = time.time()
-    print "Cube shape: ",cube.shape
+    print(("Cube shape: ",cube.shape))
     if negamp: extremum=numpy.min
     else: extremum=numpy.max
-    print "Fitting a total of %i spectra with peak signal above %f" % ((numpy.abs(extremum(cube,axis=0)) > (mean_std*nsigcut)).sum(),mean_std*nsigcut)
+    print("Fitting a total of %i spectra with peak signal above %f" %
+          ((numpy.abs(extremum(cube,axis=0)) > (mean_std*nsigcut)).sum(),mean_std*nsigcut))
     for i in xrange(cube.shape[1]):
         t0 = time.time()
         nspec = (numpy.abs(extremum(cube[:,i,:],axis=0)) > (mean_std*nsigcut)).sum()
-        print "Working on row %d with %d spectra to fit" % (i,nspec) ,
+        print("Working on row %d with %d spectra to fit" % (i,nspec))
         for j in xrange(cube.shape[2]):
             if numpy.abs(extremum(cube[:,i,j])) > (mean_std*nsigcut):
                 mpp,gfit,mpperr,chi2 = onedgaussfit(xax,cube[:,i,j],err=numpy.ones(cube.shape[0])*mean_std,negamp=negamp,usemoments=usemoments,**kwargs)
@@ -557,10 +561,10 @@ def collapse_gaussfit(cube,xax=None,axis=2,negamp=False,usemoments=True,nsigcut=
                     amp_err[i,j] = mpperr[1]
         dt = time.time()-t0
         if nspec > 0:
-            print "in %f seconds (average: %f)" % (dt,dt/float(nspec))
+            print("in %f seconds (average: %f)" % (dt,dt/float(nspec)))
         else:
-            print "in %f seconds" % (dt)
-    print "Total time %f seconds" % (time.time()-starttime)
+            print("in %f seconds" % (dt))
+    print("Total time %f seconds" % (time.time()-starttime))
 
     if return_errors:
         return width_arr,offset_arr,amp_arr,width_err,offset_err,amp_err,chi2_arr
@@ -578,7 +582,7 @@ if __name__ == "__main__":
     X, Y = numpy.meshgrid(x, y)
     Z = g(X, Y) + 0.1*numpy.random.rand(len(x), len(y))
     out = gaussfit(Z)
-    print "In pixel unit:", out
+    print(("In pixel unit:", out))
     #plt.pcolor(X, Y, Z)
     plt.imshow(Z, cmap=plt.cm.jet)
     plt.colorbar()
@@ -592,4 +596,4 @@ if __name__ == "__main__":
     fig.colorbar(surf, shrink=0.5, aspect=5)
     plt.show()
 
-    
+

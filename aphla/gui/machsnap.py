@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Element Property Editor
 =======================
@@ -12,10 +14,10 @@ A table view for HLA element, with delegates user can modify value online
 from PyQt4.QtCore import (QAbstractTableModel, QDataStream, QFile,
         QIODevice, QModelIndex, QRegExp, QSize, QString, QVariant, Qt,
         SIGNAL, QEvent)
-from PyQt4.QtGui import (QCheckBox, 
+from PyQt4.QtGui import (QCheckBox,
         QColor, QComboBox, QLineEdit, QDoubleSpinBox,
-        QSpinBox, QStyle, QStyledItemDelegate, QTextDocument, QTextEdit, 
-        QDialog, QDockWidget, QGroupBox, QPushButton, QHBoxLayout, 
+        QSpinBox, QStyle, QStyledItemDelegate, QTextDocument, QTextEdit,
+        QDialog, QDockWidget, QGroupBox, QPushButton, QHBoxLayout,
         QGridLayout, QVBoxLayout, QTableView, QWidget, QApplication,
         QTableWidget, QDialogButtonBox, QStatusBar, QTableWidgetItem,
         QFormLayout, QLabel, QSizePolicy, QCompleter, QMenu, QAction)
@@ -49,10 +51,10 @@ class SimpleListDlg(QDialog):
                 #print i, val.toFloat()
                 self.values.append(val.toFloat()[0])
                 it = QTableWidgetItem("%g" % val.toFloat()[0])
-                if self.mode == 'r': 
+                if self.mode == 'r':
                     it.setFlags(it.flags() & ~Qt.ItemIsEditable)
                 self.tbl.setItem(i,0,it)
-        
+
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
                                      QDialogButtonBox.Cancel)
         layout = QVBoxLayout()
@@ -91,7 +93,7 @@ class SnapshotTableModel(QAbstractTableModel):
         f = h5py.File(fname, 'r')
         grp = f['V2SR']
         self._snaplist.append([None] * len(self._elemvar))
-        for k,v in grp.iteritems():
+        for k,v in grp.items():
             try:
                 i = self._elemvar.index(k)
             except:
@@ -145,17 +147,17 @@ class SnapshotTableModel(QAbstractTableModel):
         if orientation == Qt.Horizontal:
             if section == C_ELEMVAR:
                 return QVariant("Element & Field")
-            if section == C_PVSTR: 
+            if section == C_PVSTR:
                 return QVariant("EPICS PV")
 
         return QVariant(int(section+1))
 
     def flags(self, index):
         return Qt.ItemIsEnabled
-        
+
     def rowCount(self, index=QModelIndex()):
         return len(self._elemvar)
-    
+
     def columnCount(self, index=QModelIndex()):
         return 3 + len(self._snaplist) + 1
 
@@ -166,7 +168,7 @@ class SnapshotTableModel(QAbstractTableModel):
         self._value = []
         self._unit = []
 
-    
+
 class SnapshotItemDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super(SnapshotItemDelegate, self).__init__(parent)
@@ -176,7 +178,7 @@ class SnapshotItemDelegate(QStyledItemDelegate):
         model = index.model()
         row, col = index.row(), index.column()
         QStyledItemDelegate.paint(self, painter, option, index)
-        
+
     def sizeHint(self, option, index):
         return QStyledItemDelegate.sizeHint(self, option, index)
 
@@ -221,7 +223,7 @@ class SnapshotItemDelegate(QStyledItemDelegate):
         else:
             _logger.error("unknown editor, can not set its data")
 
-        self.emit(SIGNAL("editingElement(PyQt_PyObject)"), 
+        self.emit(SIGNAL("editingElement(PyQt_PyObject)"),
                   index.model()._elemrec[row])
 
     def setModelData(self, editor, model, index):
@@ -269,7 +271,7 @@ class SnapshotItemDelegate(QStyledItemDelegate):
         #opt.rect.adjust(0, 30, 100, 60)
         QStyledItemDelegate.updateEditorGeometry(self, editor, opt, index)
 
-        
+
 class SnapshotTableView(QTableView):
     def __init__(self, parent = None):
         QTableView.__init__(self, parent)
@@ -278,7 +280,7 @@ class SnapshotTableView(QTableView):
 
     def disableElement(self, checked=True, irow=-1):
         if irow < 0: return
-        print "Disable element:", irow
+        print("Disable element:", irow)
         self.model().setElementActive(irow, not checked)
 
     def timerEvent(self, e):
@@ -345,7 +347,7 @@ class ElementEditorDock(QDockWidget):
         self.lblRange = QLabel()
         self.valMeter = Qwt.QwtThermo()
         self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
-        self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding, 
+        self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding,
                                     QSizePolicy.Fixed)
         self.valMeter.setEnabled(False)
         #fmbox2.addRow("Name", self.lblName)
@@ -372,9 +374,9 @@ class ElementEditorDock(QDockWidget):
         cw.setLayout(vbox)
         self.setWidget(cw)
 
-        #self.connect(self.elemBox, SIGNAL("editingFinished()"), 
+        #self.connect(self.elemBox, SIGNAL("editingFinished()"),
         #             self.refreshTable)
-        self.connect(self.elemBox, SIGNAL("returnPressed()"), 
+        self.connect(self.elemBox, SIGNAL("returnPressed()"),
                      self.refreshTable)
         #self.connect(self.elemBox, SIGNAL("currentIndexChanged(QString)"),
         #             self.refreshTable)
@@ -399,7 +401,7 @@ class ElementEditorDock(QDockWidget):
             del self.delegate
             #self.model.clear()
         self.model = ElementPropertyTableModel(elems)
-        self.connect(self.model, 
+        self.connect(self.model,
                      SIGNAL("toggleElementState(PyQt_PyObject, bool)"),
                      self.elementStateChanged)
 
@@ -432,11 +434,11 @@ class ElementEditorDock(QDockWidget):
         #self.tableview.setMinimumWidth(fullwidth+20)
         #self.tableview.setMaximumWidth(fullwidth+60)
         #self.tableview.adjustSize()
-        #self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"), 
+        #self.connect(self.tableview, SIGNAL("clicked(QModelIndex)"),
         #             self.processCell)
         t3 = time.time()
         #self._addElements(elems)
-        print "DT:", t1 - t0, t2 - t1, t3 - t2
+        print("DT:", t1 - t0, t2 - t1, t3 - t2)
         self.elemBox.deselect()
         self.tableview.setFocus()
         self.tableview.resizeColumnToContents(0)
@@ -451,7 +453,7 @@ class ElementEditorDock(QDockWidget):
         bd = elem.boundary(fld)
         if True:
             self.lblRange.setText(str(bd))
-        elif bd is None or bd[0] is None or bd[1] is None: 
+        elif bd is None or bd[0] is None or bd[1] is None:
             self.valMeter.setEnabled(False)
         else:
             rg = Qwt.QwtDoubleInterval(bd[0], bd[1])
@@ -515,7 +517,7 @@ class MTestForm(QDialog):
         #for i in range(self.model.columnCount()):
         self.tablev.resizeColumnsToContents()
         self.tablev.setColumnHidden(1, True)
-        
+
         hb1 = QHBoxLayout()
         vb2 = QVBoxLayout()
         vb2.addWidget(ApPlotWidget(), 1.0)
@@ -526,7 +528,7 @@ class MTestForm(QDialog):
         vb3a.addWidget(cb)
         vb3a.addStretch()
 
-        vb3b = QVBoxLayout() 
+        vb3b = QVBoxLayout()
         vb3b.addWidget(QPushButton("Refresh"))
         vb3b.addWidget(QPushButton("Plot"))
         vb3b.addWidget(QPushButton("Ramp"))
