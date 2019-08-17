@@ -339,11 +339,11 @@ def loadfast(machine, submachine = "*"):
     if os.path.exists(cache_filepath):
         cache_file_timestamp = os.path.getmtime(cache_filepath)
 
-        # If the cache file is more than 24 hours old, force cache update.
-        if (current_timestamp - cache_file_timestamp) >= 24.0*60.0*60.0:
+        # If the cache file is more than 30 days old, force cache update.
+        if (current_timestamp - cache_file_timestamp) >= 24.0*60.0*60.0 * 30:
             update_cache = True
             print(('* The lattice cache file for the machine "{0}" is more than '
-                   '24 hours old.').format(machine))
+                   '30 days old.').format(machine))
 
         # If any of the aphla database files have a timestamp later
         # than that of the cache file, force cache update
