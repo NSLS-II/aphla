@@ -23,6 +23,7 @@ from ..chanfinder import ChannelFinderAgent
 from ..resource import getResource
 from .. import catools
 
+import sys
 import os
 import time
 import glob
@@ -175,8 +176,10 @@ def load(machine, submachine = "*", **kwargs):
         try:
             loadCache(machine)
         except:
-            _logger.error('Lattice initialization using cache failed. ' +
+            msg = ('Lattice initialization using cache failed. ' +
                   'Will attempt initialization with other method(s).')
+            print(msg)
+            _logger.error(msg)
             save_cache = True
         else:
             # Loading from cache was successful.
@@ -385,7 +388,14 @@ def loadCache(machine_name):
 
     with open(cache_filepath,'rb') as f:
         selected_lattice_name = pickle.load(f)
-        _lattice_dict = pickle.load(f)
+        if sys.version_info.major == 3:
+            _lattice_dict = pickle.load(f, encoding='latin1')
+            # ^ encoding kwarg added to deal with a Py2 cPickle and Py3 pickle
+            #   compatibility issue.
+        elif sys.version_info.major == 2:
+            _lattice_dict = pickle.load(f)
+        else:
+            raise RuntimeError('Python version must be either 2 or 3.')
 
     print('Finished loading cached lattice.')
 
