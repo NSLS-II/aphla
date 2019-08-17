@@ -1177,8 +1177,8 @@ class CaElement(AbstractElement):
         self._field[field].setSetpointPv(v, idx)
 
     def fields(self):
-        """return element's fields, not sorted."""
-        return self._field.keys()
+        """return element's fields, sorted."""
+        return sorted(self._field)
 
     def stepSize(self, field):
         """return the stepsize of field (hardware unit)"""
