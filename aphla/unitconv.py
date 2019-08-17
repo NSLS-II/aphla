@@ -182,8 +182,8 @@ def loadUnitConversionH5(lat, h5file, group):
         else:
             fld = fld.decode()
 
-        usrcsys = v.attrs.get('src_unit_sys', '').decode()
-        udstsys = v.attrs.get('dst_unit_sys', '').decode()
+        usrcsys = v.attrs.get('src_unit_sys', b'').decode()
+        udstsys = v.attrs.get('dst_unit_sys', b'').decode()
         #if fld is None:
         #    fld, usrcsys, udstsys = v.attrs.get('unitsys', ",,").split(',')
 
@@ -192,8 +192,8 @@ def loadUnitConversionH5(lat, h5file, group):
         if udstsys == '': udstsys = None
         # the unit name, e.g., A, T/m, ...
         # check src_unit/dst_unit first, then direction as a backup
-        usrc = v.attrs.get('src_unit', '').decode()
-        udst = v.attrs.get('dst_unit', '').decode()
+        usrc = v.attrs.get('src_unit', b'').decode()
+        udst = v.attrs.get('dst_unit', b'').decode()
 
         # the calibration factor
         yfac = v.attrs.get('calib_factor', 1.0)
@@ -209,7 +209,7 @@ def loadUnitConversionH5(lat, h5file, group):
 
         # integer - invertible
         uc.polarity   = v.attrs.get('polarity', 1)
-        uhandles = [_s.decode() for _s in v.attrs.get('handle', ["readback", "setpoint"])]
+        uhandles = [_s.decode() for _s in v.attrs.get('handle', [b"readback", b"setpoint"])]
 
         # find the element list
         elems = [_s.decode() for _s in v.attrs.get('elements', [])]
