@@ -113,6 +113,6 @@ setup(
     author = "Lingyun Yang, Yoshiteru Hidaka",
     maintainer = "Yoshiteru Hidaka",
     maintainer_email = "yhidaka@bnl.gov",
-    url = 'https://gitlab.nsls2.bnl.gov/yhidaka/aphla',
+    url = 'https://github.com/NSLS-II/aphla',
     )
 
