@@ -12,11 +12,10 @@ A procedural interface is provided.
 
 from __future__ import print_function, division, absolute_import
 
-__version__ = "0.8.32"
 try:
-    from version import version as __version__
+    from .version import version as __version__
 except:
-    pass
+    raise
 
 import os
 import tempfile
