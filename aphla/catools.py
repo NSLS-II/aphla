@@ -166,7 +166,7 @@ def caput(pvs, values, timeout=CA_TIMEOUT, wait=True, throw=True, verbose = 0):
         else:
             pvs2 = pvs
     elif isinstance(pvs, list):
-        pvs2 = [pv.decode() for pv in pvs]
+        pvs2 = [pv.decode() if hasattr(pv, 'decode') else pv for pv in pvs]
     else:
         raise ValueError("Unknown type " + str(type(pvs)))
 

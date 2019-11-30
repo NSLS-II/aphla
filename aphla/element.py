@@ -876,7 +876,7 @@ class CaElement(AbstractElement):
         seealso :class:`CaAction`
         """
         if len(kwargs) == 0:
-            return self._pvtags.keys()
+            return list(self._pvtags)
         elif len(kwargs) == 1:
             return self._pv_1(**kwargs)
         elif len(kwargs) == 2:
@@ -922,11 +922,11 @@ class CaElement(AbstractElement):
         string representation of value, golden setpoint, range for each field.
         """
         ret = self.name
-        if not self._field.keys(): return ret
+        if not list(self._field): return ret
 
-        maxlen = max([len(att) for att in self._field.keys()])
+        maxlen = max([len(att) for att in list(self._field)])
         head = '\n%%%ds: ' % (maxlen+2)
-        for att in self._field.keys():
+        for att in list(self._field):
             decr = self._field[att]
             if not decr: continue
             val = decr.getReadback()
@@ -969,7 +969,7 @@ class CaElement(AbstractElement):
             decr_trig = self.__dict__['_field'].get(att + "_trig", None)
             if decr_trig:
                 decr_trig.putSetpoint(1, wait=False)
-        elif att in self.__dict__.keys():
+        elif att in list(self.__dict__):
             self.__dict__[att] = val
         else:
             # new attribute for superclass
@@ -1044,7 +1044,7 @@ class CaElement(AbstractElement):
         unitconv = self._get_unitconv(field, handle)
         if not unitconv: return [None]
 
-        src, dst = zip(*(unitconv.keys()))
+        src, dst = zip(*(list(unitconv)))
 
         ret = set(src).union(set(dst))
         return list(ret)
@@ -1059,7 +1059,7 @@ class CaElement(AbstractElement):
         """
         if field is None:
             return dict([(f, self.get_unit_systems(f, handle)) for f \
-                             in self._field.keys()])
+                             in list(self._field)])
         else:
             return self.get_unit_systems(field, handle)
 
@@ -1072,7 +1072,7 @@ class CaElement(AbstractElement):
         return '' if no such unit system. A tuple of all handles when *handle*
         is None
         """
-        if field in self._field.keys() and unitsys == None:
+        if field in list(self._field) and unitsys == None:
             if handle == "readback":
                 return self._field[field].pvrbunit
             elif handle == "setpoint":
@@ -1090,7 +1090,7 @@ class CaElement(AbstractElement):
     def setUnit(self, field, u, unitsys = 'phy', handle = "readback"):
         """set the unit symbol for a unit system
         """
-        if field not in self._field.keys():
+        if field not in list(self._field):
             raise RuntimeError("element '%s' has no '%s' field" % \
                                    self.name, field)
 
@@ -1151,7 +1151,7 @@ class CaElement(AbstractElement):
         #        _logger.info("%s %s[%d]" % (pvname, fieldname, idx))
 
         # update the (pv, tags) dictionary
-        if pvname in self._pvtags.keys(): self._pvtags[pvname].update(tags)
+        if pvname in list(self._pvtags): self._pvtags[pvname].update(tags)
         else: self._pvtags[pvname] = set(tags)
 
     def setGetAction(self, v, field, idx = None, desc = ''):
@@ -1201,7 +1201,7 @@ class CaElement(AbstractElement):
         first time putting a value to it. Since putting a value needs to know
         the boundary and check if the value is inside.
         """
-        if field is None: fields = self._field.keys()
+        if field is None: fields = list(self._field)
         else: fields = [field]
 
         kw = {}
@@ -1246,7 +1246,7 @@ class CaElement(AbstractElement):
 
 
     def __dir__(self):
-        return dir(CaElement) + list(self.__dict__) + self._field.keys()
+        return dir(CaElement) + list(self.__dict__) + list(self._field)
 
     def __repr__(self):
         if self.virtual:
@@ -1402,7 +1402,7 @@ class CaElement(AbstractElement):
 
     def settable(self, field):
         """check if the field can be changed. not disabled, nor readonly."""
-        if field not in self._field.keys(): return False
+        if field not in list(self._field): return False
         if self._field[field].opflags & _DISABLED: return False
         if self._field[field].opflags & _READONLY: return False
 
@@ -1410,7 +1410,7 @@ class CaElement(AbstractElement):
 
     def readable(self, field):
         """check if the field readable (not disabled)."""
-        if field not in self._field.keys(): return False
+        if field not in list(self._field): return False
         if self._field[field].opflags & _DISABLED: return False
         return True
 
@@ -1460,7 +1460,7 @@ def merge(elems, field = None, **kwargs):
             if v < len(elems):
                 _logger.warn("field '%s' has %d < %d" % (k, v, len(elems)))
                 pvdict.pop(k)
-        #print pvdict.keys()
+        #print list(pvdict)
         for fld,pvs in pvdict.items():
             if len(pvs[0]) > 0: elem.setGetAction(pvs[0], fld, None, '')
             if len(pvs[1]) > 0: elem.setPutAction(pvs[1], fld, None, '')

@@ -613,7 +613,7 @@ def saveState(idobj, output, iiter,
 
     # create background subgroup with index
     fid = h5py.File(output)
-    iterindex = max([int(g[len(prefix)+1:]) for g in fid[idobj.name].keys()
+    iterindex = max([int(g[len(prefix)+1:]) for g in list(fid[idobj.name])
                      if g.startswith(prefix)] + [-1]) + 1
     groupName = "{0}_{1:04d}".format(prefix, iterindex)
     grp = fid[idobj.name].create_group(groupName)
@@ -788,15 +788,15 @@ def getCompletedIterIndexes(ID_filepath):
 
     f = h5py.File(ID_filepath, 'r')
 
-    ID_name = f.keys()[0]
+    ID_name = list(f)[0]
     grp = f[ID_name]
 
     completed_iter_indexes = []
-    for k in grp.keys():
+    for k in list(grp):
         if k.startswith('iter_'):
-            if 'meas_completed' in grp[k].attrs.keys():
+            if 'meas_completed' in list(grp[k].attrs):
                 completed_iter_indexes.append(grp[k].attrs['iter'])
-            elif 'completed' in grp[k].attrs.keys(): # for backward compatibility
+            elif 'completed' in list(grp[k].attrs): # for backward compatibility
                 try:
                     completed_iter_indexes.append(grp[k].attrs['iter'])
                 except: # for backward compatibility

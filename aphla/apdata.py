@@ -103,9 +103,11 @@ class OrmData:
             return
 
         g = f[group]
-        self.bpm = list(zip(g["m"].attrs["bpm_name"], g["m"].attrs["bpm_field"]))
+        self.bpm = list(zip(g["m"].attrs["bpm_name"].astype(str),
+                            g["m"].attrs["bpm_field"].astype(str)))
         self.bpm_pv = g["m"].attrs.get("bpm_pv", None)
-        self.cor = list(zip(g["m"].attrs["cor_name"], g["m"].attrs["cor_field"]))
+        self.cor = list(zip(g["m"].attrs["cor_name"].astype(str),
+                            g["m"].attrs["cor_field"].astype(str)))
         self.cor_pv = g["m"].attrs.get("cor_pv", None)
         self.cor_pvrb = None
         nbpm, ncor = len(self.bpm), len(self.cor)

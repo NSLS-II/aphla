@@ -397,7 +397,7 @@ class Lattice:
         if elem is not None: return [elem]
 
         # do exact group name match
-        if isinstance(group, Hashable) and (group in self._group.keys()):
+        if isinstance(group, Hashable) and (group in list(self._group)):
             return self._group[group][:]
 
         if isinstance(group, bytes):
@@ -615,7 +615,7 @@ class Lattice:
 
         The input string is wildcard matched against each element.
         """
-        if element is None: return self._group.keys()
+        if element is None: return list(self._group)
 
         ret = []
         for k, elems in self._group.items():
@@ -646,7 +646,7 @@ class Lattice:
         girder = kwargs.get('girder', '*')
         symmetry = kwargs.get('symmetry', '*')
 
-        if groups in self._group.keys():
+        if groups in list(self._group):
             return self._group[groups]
 
         for g in groups:
