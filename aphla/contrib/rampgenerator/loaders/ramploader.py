@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 from ..core.defaults import MAX_TIME_SLICES
 
 
@@ -52,7 +54,7 @@ class RampLoader(object):
                 pass
         except IOError:
             if __debug__ == True:
-                print "Unable to open file for loading."
+                print("Unable to open file for loading.")
             return None
         max_delta, points_list = self._parse_file(file_name)
         return self.load_from_list(max_delta, points_list)

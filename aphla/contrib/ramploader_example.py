@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function, division, absolute_import
 
 import sys
 
@@ -16,7 +17,7 @@ def main():
     ramp = zip(t, x)
 
     rl = Loader('plain', pv_name=pv_name, bipolar=BIPOLAR, max_time_slices=MAX_TIME_SLICES)
-    print rl.load_from_list(MAX_DELTA, ramp)
+    print(rl.load_from_list(MAX_DELTA, ramp))
 
 if __name__ == '__main__':
     main()

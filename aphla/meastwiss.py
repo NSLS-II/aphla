@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-
+from __future__ import print_function, division, absolute_import
+#
 """
 TWISS Measurement
 ~~~~~~~~~~~~~~~~~
@@ -8,15 +9,14 @@ TWISS Measurement
 :license:
 
 """
-from __future__ import print_function
 
 import os
 from os.path import join
-from catools import caget, caput
+from .catools import caget, caput
 import time
 import numpy as np
-from hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes, 
-                    waitStableOrbit, getRfFrequency, putRfFrequency)
+from .hlalib import (getOrbit, getElements, getClosest, getNeighbors, getTunes,
+                     waitStableOrbit, getRfFrequency, putRfFrequency)
 
 __all__ = [ 'measBeta', 'measDispersion', 'measChromaticity' ]
 
@@ -71,7 +71,7 @@ def measBeta(elem, dqk1 = 0.01, full = False, num_points = 3, verbose=0):
     if verbose:
         print("# fitting %d quadrupoles:" % len(elems))
         print("# " + ' '.join([q.name for q in elems]))
-        
+
 
     kwargs = {'dqk1': dqk1, 'num_points': num_points, 'verbose': verbose}
 
@@ -122,12 +122,12 @@ def measDispersion(elem, dfmax = 5e-7, alphac = 3.6261976841792413e-04,
 
     eta = alphac - 1.0/gamma/gamma
 
-    bpmobj = [ b for b in getElements(elem) 
+    bpmobj = [ b for b in getElements(elem)
                if b.family == 'BPM']
     bpmnames = [b.name for b in bpmobj]
     nbpm = len(bpmnames)
 
-    _logger.info("measure dispersions at %d elements '%s'" % 
+    _logger.info("measure dispersions at %d elements '%s'" %
                 (len(bpmnames), str(elem)))
 
     f0 = getRfFrequency(handle="setpoint")
@@ -142,13 +142,13 @@ def measDispersion(elem, dfmax = 5e-7, alphac = 3.6261976841792413e-04,
     obt0 = getOrbit(bpmnames)
 
     cod = np.zeros((len(dflst), 2*nbpm), 'd')
-    for i,df in enumerate(dflst): 
+    for i,df in enumerate(dflst):
         v0 = getOrbit()
         putRfFrequency(f0 + df)
         if verbose > 0:
             print(i, "df=", df, " f=", f0)
         waitStableOrbit(v0)
-        
+
         # repeat the put/get in case simulator did not response latest results
         obt = getOrbit(bpmnames)
         #print i, obt[0,:2], obt0[0,:2], np.shape(obt), np.shape(obt0)
@@ -262,7 +262,7 @@ def measChromaticity(dfmax = 2e-7, gamma = 3.0e3/0.511, alphac = 3.626e-4,
         obt.append(getOrbit(spos=True))
         if verbose > 0:
             print("tunes: {0:.5f} {1:.5f}".format(nu[i,0], nu[i,1]),
-                  "orbit min-max: {0:.2e} {1:.2e}, {2:.2e} {3:.2e}".format( 
+                  "orbit min-max: {0:.2e} {1:.2e}, {2:.2e} {3:.2e}".format(
                     np.min(obt[-1][:,0]), np.max(obt[-1][:,0]),
                   np.min(obt[-1][:,1]), np.max(obt[-1][:,1])))
 
@@ -293,8 +293,8 @@ def _measChromaticity(**kwargs):
 
     returns dp/p, nu, chrom
     dpp - dp/p energy deviation
-    nu - tunes 
-    chrom - result chromaticities 
+    nu - tunes
+    chrom - result chromaticities
     obt - orbit at each f settings (initial, every df, final).
     """
     dfmax  = kwargs.get("dfmax", 1e-6)
@@ -305,7 +305,7 @@ def _measChromaticity(**kwargs):
     verbose = kwargs.get("verbose", 0)
 
     eta = alphac - 1/gamma/gamma
-    
+
     obt = []
     f0 = getRfFrequency(handle="setpoint")
     nu0 = getTunes()

@@ -1,4 +1,5 @@
 #!/usr/bin/env
+from __future__ import print_function, division, absolute_import
 
 import cothread
 from cothread.catools import caput, caget, camonitor
@@ -12,8 +13,8 @@ from PyQt4.QtGui import (QAction, QActionGroup, QApplication, QWidget,
         QImageWriter, QInputDialog, QKeySequence, QLabel, QListWidget,
         QMainWindow, QMessageBox, QPainter, QPixmap, QPrintDialog,
         QPrinter, QDoubleSpinBox, QPen, QBrush, QVBoxLayout, QTabWidget,
-        QTableWidget, QTableWidgetItem, QDialog, QHBoxLayout, 
-        QDialogButtonBox, QGridLayout, QItemDelegate, QStandardItemModel, 
+        QTableWidget, QTableWidgetItem, QDialog, QHBoxLayout,
+        QDialogButtonBox, QGridLayout, QItemDelegate, QStandardItemModel,
         QPushButton, QLineEdit, QTableView, QAbstractItemView)
 
 
@@ -26,7 +27,7 @@ class PvTunerDlg(QDialog):
     COL_READBACK = 4
     COL_SETPOINT = 5
     FMT_READBACK = "%.4e"
-    def __init__(self, parent=None):  
+    def __init__(self, parent=None):
         super(PvTunerDlg, self).__init__(parent)
 
         self.setAttribute(Qt.WA_DeleteOnClose)
@@ -104,12 +105,12 @@ class PvTunerDlg(QDialog):
         item = QTableWidgetItem(elem)
         item.setFlags(item.flags() & (~Qt.ItemIsEditable))
         self.table.setItem(m, self.COL_ELEMENT, item)
-        
+
         item = QTableWidgetItem(field)
         item.setFlags(item.flags() & (~Qt.ItemIsEditable))
         self.table.setItem(m, self.COL_FIELD, item)
 
-        
+
         item = QTableWidgetItem(', '.join(pvsrb))
         #item.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEnabled)
         self.table.setItem(m, self.COL_PV, item)
@@ -131,9 +132,9 @@ class PvTunerDlg(QDialog):
             #self.spinbox[-1].setValue(float(10.0))
             self.spinbox[-1].setSingleStep(stepsize)
             self.spinbox[-1].setDecimals(10)
-            
+
             self.spinbox[-1].valueChanged.connect(self._writePv)
-            
+
             self.table.setCellWidget(m, self.COL_SETPOINT, self.spinbox[-1])
 
             sp = float(caget(pvssp)[0])
@@ -149,7 +150,7 @@ class PvTunerDlg(QDialog):
 
         self.table.resizeColumnsToContents()
 
-        
+
     def addPv(self):
         self._appendRecord(str(self.inputBox.text()))
         self._updateMonitors()
@@ -179,7 +180,7 @@ class PvTunerDlg(QDialog):
             for j in range(len(self.pvs_rb[i])):
                 self.pvs_rb_val.append([i, 0.0])
             pvs.extend(self.pvs_rb[i])
-        
+
         for p in self.pvmoni: p.close()
         self.pvmoni = camonitor(pvs, self._updatePvValues)
         #print self.pvmoni
@@ -214,7 +215,7 @@ class PvTunerDlg(QDialog):
 if __name__ == "__main__":
     import sys
     hla.machines.initNSLS2VSRTxt()
-    print "Good !"
+    print("Good !")
 
     #app = QApplication(sys.argv)
     form = PvTunerDlg()

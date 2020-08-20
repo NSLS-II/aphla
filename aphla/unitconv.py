@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Unit Conversion
 ----------------
@@ -61,7 +63,7 @@ class UcPoly(UcAbstract):
     def _inv_eval(self, x):
         """evaluate the inverse"""
         if not self.invertible:
-            raise RuntimeError("inverse is not permitted for (%s -> %s)" % 
+            raise RuntimeError("inverse is not permitted for (%s -> %s)" %
                                self.direction)
         if self.p.order == 1:
             # y = ax + b
@@ -69,7 +71,7 @@ class UcPoly(UcAbstract):
             a, b = self.p.coeffs
             ar, br = 1.0/a, -b*1.0/a
             if isinstance(x, Iterable):
-                # keep None to None 
+                # keep None to None
                 return [(ar*self.polarity*v + br)
                         if v is not None else None for v in x]
             else:
@@ -85,9 +87,9 @@ class UcPoly(UcAbstract):
         if x is None: return None
 
         if inv: return self._inv_eval(x)
-        
+
         if isinstance(x, Iterable):
-            return [self.polarity * self.p(v) 
+            return [self.polarity * self.p(v)
                     if v is not None else None for v in x]
         else:
             return self.polarity * self.p(x)
@@ -125,7 +127,7 @@ class UcInterp1(UcAbstract):
             if not self.invertible: return None
             else:
                 return self._inv_eval(x)
-        # 
+        #
         if x is None: return None
         # interp returns boundary if x is outside of xp
         return self.polarity*np.interp(x, self.xp, self.fp,
@@ -171,14 +173,17 @@ def loadUnitConversionH5(lat, h5file, group):
     if group: g = g[group]
 
     for k,v in g.items():
-        #if not v.attrs.get('_class_', None): continue 
+        #if not v.attrs.get('_class_', None): continue
 
         # use separated three attrs first, otherwise, use 'unitsys' attr.
         fld = v.attrs.get('field', None)
-        if not fld: continue
+        if not fld:
+            continue
+        else:
+            fld = fld.decode()
 
-        usrcsys = v.attrs.get('src_unit_sys', None)
-        udstsys = v.attrs.get('dst_unit_sys', None)
+        usrcsys = v.attrs.get('src_unit_sys', b'').decode()
+        udstsys = v.attrs.get('dst_unit_sys', b'').decode()
         #if fld is None:
         #    fld, usrcsys, udstsys = v.attrs.get('unitsys', ",,").split(',')
 
@@ -187,39 +192,39 @@ def loadUnitConversionH5(lat, h5file, group):
         if udstsys == '': udstsys = None
         # the unit name, e.g., A, T/m, ...
         # check src_unit/dst_unit first, then direction as a backup
-        usrc = v.attrs.get('src_unit', '')
-        udst = v.attrs.get('dst_unit', '')
+        usrc = v.attrs.get('src_unit', b'').decode()
+        udst = v.attrs.get('dst_unit', b'').decode()
 
         # the calibration factor
         yfac = v.attrs.get('calib_factor', 1.0)
-        if v.attrs['_class_'] == 'polynomial':
+        if v.attrs['_class_'].decode() == 'polynomial':
             a = [yfac**i for i in range(len(v))]
             a.reverse() # in place
             newp = [v[i]*c for i,c in enumerate(a)]
             uc = UcPoly(usrc, udst, newp)
-        elif v.attrs['_class_'] == 'interpolation':
+        elif v.attrs['_class_'].decode() == 'interpolation':
             uc = UcInterp1(usrc, udst, list(v[:,0]), list(v[:,1]*yfac))
         else:
             raise RuntimeError("unknow unit converter")
 
         # integer - invertible
         uc.polarity   = v.attrs.get('polarity', 1)
-        uhandles = v.attrs.get('handle', ["readback", "setpoint"])
+        uhandles = [_s.decode() for _s in v.attrs.get('handle', [b"readback", b"setpoint"])]
 
         # find the element list
-        elems = v.attrs.get('elements', [])
+        elems = [_s.decode() for _s in v.attrs.get('elements', [])]
 
         eobjs = []
         #lat._find_exact_element(ename) for ename in elems if lat.hasElement(ename)]
         for ename in elems:
             eobj = lat._find_exact_element(ename)
-            if not eobj: 
+            if not eobj:
                 _logger.warn("dataset '{0}': element {1}.{2} not found. ignored".format(
                     k, lat.name, ename))
                 continue
             eobjs.append(eobj)
 
-        fams = v.attrs.get('groups', [])
+        fams = [fam.decode() for fam in v.attrs.get('groups', [])]
         for fam in fams:
             egrps = lat.getElementList(fam)
             if not egrps:
@@ -242,7 +247,7 @@ def loadUnitConversionH5(lat, h5file, group):
                                      % (lat.name, eobj.name, fld))
                     continue
                 else:
-                    eobj.addAliasField(fld, realfld)
+                    eobj.addAliasField(fld, realfld.decode())
 
             _logger.info("adding unit conversion for {0}.{1}, "
                          "from {2}[{3}] to {4}[{5}] handles={6}".format(
@@ -255,10 +260,10 @@ def loadUnitConversionIni(lat, fname):
     """load the unit conversion for lattice from INI file"""
     _logger.info("loading unit conversion for lattice {0} from "
                  "file '{1}'".format(lat.name, fname))
-    import ConfigParser
+    from six.moves import configparser
     # python 2.7 only:
-    #cfg = ConfigParser.ConfigParser(allow_no_value=False)
-    cfg = ConfigParser.ConfigParser()
+    #cfg = configparser.ConfigParser(allow_no_value=False)
+    cfg = configparser.ConfigParser()
     cfg.readfp(open(fname), 'r')
     for sec in cfg.sections():
         if not cfg.has_option(sec, 'field'):
@@ -294,7 +299,7 @@ def loadUnitConversionIni(lat, fname):
             uc = UcInterp1(usrc, udst, v[:,int(ix)], v[:,int(iy)])
         else:
             raise RuntimeError("unknow unit converter")
-        
+
         # the unit symbol
         uc.srcunit = usrc
         uc.dstunit = udst
@@ -305,7 +310,7 @@ def loadUnitConversionIni(lat, fname):
         eobjs = []
         for ename in elems:
             eobj = lat._find_exact_element(ename)
-            if not eobj: 
+            if not eobj:
                 _logger.warn("element {0}/{1} not found. ignored".format(
                         lat.name, ename))
                 continue
@@ -328,7 +333,7 @@ def loadUnitConversionIni(lat, fname):
                 # fld is the converted value.
                 realfld = d.get('rawfield', None)
                 if realfld is None:
-                    _logger.warn("'%s/%s' has no field '%s' for unit conversion" % 
+                    _logger.warn("'%s/%s' has no field '%s' for unit conversion" %
                                  (lat.name, eobj.name, fld))
                     continue
                 else:
@@ -352,7 +357,7 @@ def addIdentityUnitConversion(elem, fld, usrcsys, udstsys):
     uc.dstunit = elem.getUnit(fld, usrcsys)
     uc.srcunit = uc.dstunit
     elem.addUnitConversion(fld, uc, usrcsys, udstsys)
-    
+
 def loadUnitConversion(lat, machdir, datafile):
     """
     datafile = ['file name'] or ['file name', 'group']

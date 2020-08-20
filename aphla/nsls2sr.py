@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 NSLS2 Storage Ring Specific Routines
 ============================================
@@ -18,12 +20,12 @@ import h5py
 import re
 import warnings
 
-import machines
-from catools import caget, caput, savePvData, ca_nothing
-from catools import putPvData
-from hlalib import getElements, outputFileName, getGroupMembers
-from hlalib import saveLattice as _saveLattice
-from tbtanal import calcFftTune
+from . import machines
+from .catools import caget, caput, savePvData, ca_nothing
+from .catools import putPvData
+from .hlalib import getElements, outputFileName, getGroupMembers
+from .hlalib import saveLattice as _saveLattice
+from .tbtanal import calcFftTune
 
 
 def _maxTimeSpan(timestamps):
@@ -86,7 +88,7 @@ def restoreBpmStatus(bpmstats):
                 caput(pv, vals, timeout=5)
 
 
-    
+
 def resetSrBpms(wfmsel = None, name = "BPM", evcode = None, verbose=0, bpms=None, trigsrc = None):
     """
     reset the BPMs to external trigger and Tbt waveform. Offset is 0 for all
@@ -111,12 +113,12 @@ def resetSrBpms(wfmsel = None, name = "BPM", evcode = None, verbose=0, bpms=None
     pvprefs = [bpm.pv(field="x")[0].replace("Pos:XwUsrOff-Calc", "") for bpm in elems]
 
     if verbose:
-        print "resetting {0} BPMS: {1}".format(len(elems), elems)
+        print("resetting {0} BPMS: {1}".format(len(elems), elems))
 
     if trigsrc is not None:
         pvs = [ pvx + "Trig:TrigSrc-SP" for pvx in pvprefs ]
         caput(pvs, [trigsrc] * len(pvs), wait=True)
-    if wfmsel is not None: 
+    if wfmsel is not None:
         # 0 - Adc, 1 - Tbt, 2 - Fa
         pvs = [ pvx + "DDR:WfmSel-SP" for pvx in pvprefs]
         caput(pvs, [wfmsel] * len(pvs), wait=True)
@@ -191,7 +193,7 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
         #
         pv_bbaxoff.append( pvx + "BbaXOff-SP")
         pv_bbayoff.append( pvx + "BbaYOff-SP")
-        # 
+        #
         pv_trig.append(  pvx + "Trig:TrigSrc-SP")
         pv_wfmsel.append(pvx + "DDR:WfmSel-SP")
         pv_ddrts.append( pvx + "TS:DdrTrigDate-I")
@@ -277,11 +279,11 @@ def _srBpmTrigData(pvprefs, waveform, **kwargs):
                            "{2}\n{3}".format(n, mdt, ts, caget(pv_ddrtx)))
 
     if verbose > 0:
-        print "Trials: %d, Trig=%.2e ns." % (n, mdt)
-        print "Sec:", tss_r
-        print "dSec: ", [s - min(tss) for s in tss]
-        print "dNsec:", [s - min(tsns) for s in tsns]
-        print "NSec", tsns
+        print("Trials: %d, Trig=%.2e ns." % (n, mdt))
+        print(("Sec:", tss_r))
+        print(("dSec: ", [s - min(tss) for s in tss]))
+        print(("dNsec:", [s - min(tsns) for s in tsns]))
+        print(("NSec", tsns))
 
     # redundent check
     #ddrts0 = caget(pv_ddrts)
@@ -470,7 +472,7 @@ def getSrBpmData(**kwargs):
     data = (names, x, y, Is, extdata["ddr_timestamp"], extdata["ddr_offset"])
 
     if not output: return data
-    
+
     if output is True:
         # use the default file name
         output_dir = os.path.join(machines.getOutputDir(),
@@ -504,7 +506,7 @@ def saveLattice(**kwargs):
         used for output file name
     note : str, default ""  (notes is deprecated)
     unitsys : str, None
-        default "phy", 
+        default "phy",
 
     Returns
     -------
@@ -530,7 +532,7 @@ def saveLattice(**kwargs):
     >>> saveLattice(note="Good one")
     """
     # save the lattice
-    output = kwargs.pop("output", 
+    output = kwargs.pop("output",
                         outputFileName("snapshot", kwargs.get("subgroup","")))
     lat = kwargs.get("lattice", machines._lat)
     verbose = kwargs.get("verbose", 0)
@@ -559,7 +561,7 @@ def saveLattice(**kwargs):
             for fld in flds:
                 for pv in e.pv(field=fld):
                     els = nameinfo.setdefault(pv, [])
-                    els.append("%s.%s" % (e.name, fld)) 
+                    els.append("%s.%s" % (e.name, fld))
                 if not e.convertible(fld, None, unitsys): continue
                 uname = e.getUnit(fld, unitsys=unitsys)
                 pvsp = e.pv(field=fld, handle="setpoint")
@@ -585,7 +587,7 @@ def saveLattice(**kwargs):
     h5g.attrs["t_end"] = t1.strftime("%Y-%m-%d %H:%M:%S.%f")
 
     h5f.close()
-    
+
     return output
 
 
@@ -729,14 +731,14 @@ def measKickedTbtData(idriver, ampl, **kwargs):
         pinger_delay = caget(["SR:C21-PS{Pinger:H}Delay-SP",
                               "SR:C21-PS{Pinger:V}Delay-SP"])
         pinger_mode = caget("SR:C21-PS{Pinger}Mode:Trig-Sts")
-        
+
     # repeat_value=True
     caput(kpvon, 0)
     caput(kpvsp, 0.0)
-    
+
     if output:
         (name, x, y, Isum, ts, offset), output = bpmdata
-        
+
         f = h5py.File(output)
         g = f[h5g]
         g["I"]  = Idcct1

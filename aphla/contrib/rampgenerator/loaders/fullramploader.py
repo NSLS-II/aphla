@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 from ramploader import RampLoader
 from ..images.fullrampimage import FullRampImage
 from ..core.defaults import MAX_TIME_SLICES
@@ -9,7 +11,7 @@ try:
     _NO_CATOOLS_ = False
 except ImportError:
     if __debug__:
-        print "ImportError: I can not import the catools module!"
+        print("ImportError: I can not import the catools module!")
     _NO_CATOOLS_ = True
 
 
@@ -32,19 +34,19 @@ class FullRampLoader(RampLoader):
             return None
 
         if self.channel_index == None:
-            return None      
+            return None
 
         pRamping = self.pv_name + 'Chan' + str(self.channel_index) + '-Asyn.BOUT'
 
         if __debug__ == True:
-            print "Preparing to load full ramp in channel " + str(self.channel_index) + " using PV:"
-            print pRamping
-            print "Destination channel index is", self.channel_index
-            print "I am going to write the binary image of full ramp to PV with prefix: {0}...".format(self.pv_name)
+            print("Preparing to load full ramp in channel " + str(self.channel_index) + " using PV:")
+            print(pRamping)
+            print("Destination channel index is", self.channel_index)
+            print("I am going to write the binary image of full ramp to PV with prefix: {0}...".format(self.pv_name))
             if _NO_CATOOLS_ == True:
-                print "...but I see no catools module imported."
+                print("...but I see no catools module imported.")
             #print "Image: ", ramp_image.image
-            print "Image len, bytes:", len(ramp_image.image)
+            print("Image len, bytes:", len(ramp_image.image))
 
         if _NO_CATOOLS_ == True:
             return None
@@ -56,7 +58,7 @@ class FullRampLoader(RampLoader):
 
         except:
             if __debug__ == True:
-                print "My write to CA has failed."
+                print("My write to CA has failed.")
             return None
 
         return 0

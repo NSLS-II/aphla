@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Dialog for Orbit Correction and Local Bump
 ------------------------------------------
@@ -19,7 +21,7 @@ from PyQt4.QtGui import (QDialog, QTableWidget, QTableWidgetItem,
                          QHBoxLayout, QSizePolicy, QHeaderView,
                          QDialogButtonBox, QPushButton, QApplication,
                          QLabel, QGroupBox, QLineEdit, QDoubleValidator,
-                         QIntValidator, QSizePolicy, QDialogButtonBox, 
+                         QIntValidator, QSizePolicy, QDialogButtonBox,
                          QFormLayout, QSpinBox, QProgressBar, QAbstractButton)
 import PyQt4.Qwt5 as Qwt
 
@@ -120,8 +122,8 @@ class OrbitCorrGeneral(QtGui.QWidget):
                 it = QTableWidgetItem(str(0.0))
                 it.setData(Qt.DisplayRole, str(0.0))
                 it.setFlags(it.flags() | Qt.ItemIsEditable)
-                self.table.setItem(i, j, it) 
-            # use the current orbit 
+                self.table.setItem(i, j, it)
+            # use the current orbit
             #self.table.item(i,4).setData(Qt.DisplayRole, str(self.x0[i]))
             #self.table.item(i,5).setData(Qt.DisplayRole, str(self.y0[i]))
 
@@ -204,14 +206,14 @@ class OrbitCorrGeneral(QtGui.QWidget):
 
         vbox1.addStretch()
         vbox1.addLayout(gbox)
-        
+
         hbox1 = QtGui.QHBoxLayout()
         hbox1.addWidget(self.table, 2)
         hbox1.addLayout(vbox1, 0)
         self.setLayout(hbox1)
 
         self.connect(self.base_orbit_box,
-                     SIGNAL("currentIndexChanged(QString)"), 
+                     SIGNAL("currentIndexChanged(QString)"),
                      self.updateTargetOrbit)
         self.connect(self.repeatbox, SIGNAL("valueChanged(int)"),
                      self.progress.setMaximum)
@@ -254,12 +256,12 @@ class OrbitCorrGeneral(QtGui.QWidget):
             QApplication.processEvents()
             if err != 0:
                 QtGui.QMessageBox.critical(
-                    self, "Local Orbit Bump", 
+                    self, "Local Orbit Bump",
                     "ERROR: {0}\nAbort.".format(msg),
                     QtGui.QMessageBox.Ok)
                 #self.progress.setValue(0)
                 break
-       
+
         self.correctOrbitBtn.setEnabled(True)
 
     def getTargetOrbit(self):
@@ -336,7 +338,7 @@ class CorrectorViewer(QtGui.QWidget):
             it.setText(self._header["Family"], c.family)
             it.setText(self._header["s [m]"], "%.3f" % c.sb)
             try:
-                tw = getTwiss(c.name, 
+                tw = getTwiss(c.name,
                               ["s", "alphax", "alphay", "betax", "betay",
                                "phix", "phiy", "etax"])
                 self._twiss[i,:] = tw[0,:]
@@ -416,7 +418,7 @@ class CorrectorViewer(QtGui.QWidget):
         nrow = self.table4.rowCount()
         if nrow >= self._nmax:
             QtGui.QMessageBox.critical(
-                self, "Local Orbit Bump", 
+                self, "Local Orbit Bump",
                 "ERROR: We need only {0} correctors.".format(self._nmax),
                 QtGui.QMessageBox.Ok)
                 #self.progress.setValue(0)
@@ -469,7 +471,7 @@ class CorrectorViewer(QtGui.QWidget):
             elemname = self.table4.item(i,0).data(Qt.DisplayRole).toString()
             it0 = self._corlst1.findItems(
                 elemname, Qt.MatchExactly | Qt.MatchRecursive)[0]
-            
+
             self.table4.item(i,2).setText(it0.text(jl[0]))
             self.table4.item(i,3).setText(it0.text(jl[1]))
             self.table4.item(i,4).setText(it0.text(jl[2]))
@@ -504,7 +506,7 @@ class CorrectorViewer(QtGui.QWidget):
             for j in range(self._corlst1.columnCount()):
                 it0.setForeground(j, Qt.black)
         self.table4.setRowCount(0)
-    
+
     def updateCorReadings(self):
         for i in range(self.table4.rowCount()):
             icor, ok = self.table4.item(i,0).data(Qt.UserRole).toInt()
@@ -638,19 +640,19 @@ class BumpNCor(QtGui.QWidget):
     def changeField(self, field):
         if field not in ['x', 'y']:
             QtGui.QMessageBox.critical(
-                self, "Local Orbit Bump", 
+                self, "Local Orbit Bump",
                 "ERROR: The field should be one of ['x', 'y']",
                 QtGui.QMessageBox.Ok)
             return
         self.corview._field = field
-        print "Change field to {0}".format(self.corview._field)
+        print("Change field to {0}".format(self.corview._field))
         self.corview.updateTwiss()
         self.corview.updateCorReadings()
 
     def _zoom_in(self):
         self.emit(SIGNAL("zoomInCorrectors(PyQt_PyObject)"),
                   self.corview.selectedCorrectors())
-    
+
 # Bump from corrector strength
 class Bump3XCor(BumpNCor):
     def __init__(self, cors, parent = None):
@@ -671,7 +673,7 @@ class Bump3XCor(BumpNCor):
 
         vbox1.addStretch()
         vbox1.addLayout(self.gboxBtn)
-        
+
         hbox1 = QtGui.QHBoxLayout()
         hbox1.addWidget(self.corview, 1)
         hbox1.addLayout(vbox1)
@@ -704,9 +706,9 @@ class Bump3XCor(BumpNCor):
 
         bta, dph = tw['Beta'], tw["dPhi"]
         #print bta, dph
-        cx21 = -np.sqrt(bta[0]/bta[1])*(np.sin(dph[2] - dph[0]) / 
+        cx21 = -np.sqrt(bta[0]/bta[1])*(np.sin(dph[2] - dph[0]) /
                                         np.sin(dph[2] - dph[1]))
-        cx31 = -np.sqrt(bta[0]/bta[2])*(np.sin(dph[1] - dph[0]) / 
+        cx31 = -np.sqrt(bta[0]/bta[2])*(np.sin(dph[1] - dph[0]) /
                                         np.sin(dph[1] - dph[2]))
 
         fc = [1.0, cx21, cx31]
@@ -715,14 +717,14 @@ class Bump3XCor(BumpNCor):
     def _update_dbump(self):
         if len(self.corview.selectedCorrectors()) < 3:
             QtGui.QMessageBox.critical(
-                self, "Local Orbit Bump", 
+                self, "Local Orbit Bump",
                 "ERROR: please select 3 correctors.",
                 QtGui.QMessageBox.Ok)
             return
-        tw = self.corview.getTwiss()        
+        tw = self.corview.getTwiss()
         if not self.dxi.text():
             QtGui.QMessageBox.critical(
-                self, "3 Cor Orbit Bump", 
+                self, "3 Cor Orbit Bump",
                 "ERROR: Set reference corrector current first",
                 QtGui.QMessageBox.Ok)
             return
@@ -763,7 +765,7 @@ class Bump3XSrc(BumpNCor):
         vbox1.addWidget(lbl)
 
         vbox1.addLayout(self.gboxBtn)
-        
+
         hbox1 = QtGui.QHBoxLayout()
         hbox1.addWidget(self.corview, 1)
         hbox1.addLayout(vbox1)
@@ -783,7 +785,7 @@ class Bump3XSrc(BumpNCor):
         self.lblBeta.setText("")
         self.lblAlfa.setText("")
         self.lblPhi.setText("")
-        
+
     def _clear_dkick(self):
         self.lblBeta.setText("")
         self.lblAlfa.setText("")
@@ -802,7 +804,7 @@ class Bump3XSrc(BumpNCor):
 
         if st < s1 or st > s3:
             QtGui.QMessageBox.critical(
-                self, "Local Orbit Bump", 
+                self, "Local Orbit Bump",
                 "ERROR: The position should be lcally within 3 correctors: ["
                 "{0}, {1}].".format(s1, s2),
                 QtGui.QMessageBox.Ok)
@@ -813,9 +815,9 @@ class Bump3XSrc(BumpNCor):
         ph1, ph2, ph3, pht = tw["Phi"][:4]
         dph1, dph2, dph3 = tw["dPhi"][:3]
 
-        cx21 = -np.sqrt(bt1/bt2)*(np.sin(dph3 - dph1) / 
+        cx21 = -np.sqrt(bt1/bt2)*(np.sin(dph3 - dph1) /
                                 np.sin(dph3 - dph2))
-        cx31 = -np.sqrt(bt1/bt3)*(np.sin(dph2 - dph1) / 
+        cx31 = -np.sqrt(bt1/bt3)*(np.sin(dph2 - dph1) /
                                   np.sin(dph2 - dph3))
 
         fc = [1.0, cx21, cx31]
@@ -832,11 +834,11 @@ class Bump3XSrc(BumpNCor):
     def _update_dx(self):
         if len(self.corview.selectedCorrectors()) < 3:
             QtGui.QMessageBox.critical(
-                self, "Local Orbit Bump", 
+                self, "Local Orbit Bump",
                 "ERROR: please select 3 correctors.",
                 QtGui.QMessageBox.Ok)
             return
-        tw = self.corview.getTwiss()        
+        tw = self.corview.getTwiss()
         if not self.loc.text() or not self.dxi.text():
             return
         st = float(self.loc.text())
@@ -877,7 +879,7 @@ class Bump4XCor(BumpNCor):
 
         vbox1.addStretch()
         vbox1.addLayout(self.gboxBtn)
-        
+
         hbox1 = QtGui.QHBoxLayout()
         hbox1.addWidget(self.corview, 1)
         hbox1.addLayout(vbox1)
@@ -914,11 +916,11 @@ class Bump4XCor(BumpNCor):
     def _update_dx(self):
         if len(self.corview.selectedCorrectors()) < 4:
             QtGui.QMessageBox.critical(
-                self, "Local Orbit Bump", 
+                self, "Local Orbit Bump",
                 "ERROR: please select 4 correctors.",
                 QtGui.QMessageBox.Ok)
             return
-        tw = self.corview.getTwiss()        
+        tw = self.corview.getTwiss()
         if not self.dxi1.text() or not self.dxi2.text():
             return
         dkick = self.dx(tw, float(self.dxi1.text()), float(self.dxi2.text()))
@@ -935,7 +937,7 @@ class Bump4XSrc(BumpNCor):
         fmbox.addRow("Location", self.loc)
         fmbox.addRow("dX (dY)",  self.dxi)
         fmbox.addRow("Angle",    self.ang)
-        
+
         vbox1 = QtGui.QVBoxLayout()
         vbox1.addWidget(self.grpPlane)
         vbox1.addLayout(fmbox)
@@ -949,7 +951,7 @@ class Bump4XSrc(BumpNCor):
 
         vbox1.addStretch()
         vbox1.addLayout(self.gboxBtn)
-        
+
         hbox1 = QtGui.QHBoxLayout()
         hbox1.addWidget(self.corview, 1)
         hbox1.addLayout(vbox1)
@@ -966,7 +968,7 @@ class Bump4XSrc(BumpNCor):
         a0,  a1,  a2,  a3,  at  = tw["Alpha"]
         b0,  b1,  b2,  b3,  bt  = tw["Beta"]
         ph0, ph1, ph2, ph3, pht = tw["dPhi"]
-        
+
         dt1 = dx*(np.cos(pht-ph1) - at*np.sin(pht-ph1))/\
             np.sqrt(bt*b0)*np.sin(ph1-ph0) - \
             dxp*np.sqrt(bt/b0)*np.sin(pht-ph1)/np.sin(ph1-ph0)
@@ -990,11 +992,11 @@ class Bump4XSrc(BumpNCor):
     def _update_dx(self):
         if len(self.corview.selectedCorrectors()) < 4:
             QtGui.QMessageBox.critical(
-                self, "Local Orbit Bump", 
+                self, "Local Orbit Bump",
                 "ERROR: please select 4 correctors.",
                 QtGui.QMessageBox.Ok)
             return
-        tw = self.corview.getTwiss()        
+        tw = self.corview.getTwiss()
         try:
             st  = float(self.loc.text())
             dxt = float(self.dxi.text())
@@ -1125,7 +1127,7 @@ class OrbitCorrDlg(QDialog):
 
         tabs = QtGui.QTabWidget()
         tab_general_cor = OrbitCorrGeneral(bpmls, corls)
-        self.connect(tab_general_cor, 
+        self.connect(tab_general_cor,
                      SIGNAL("targetOrbitChanged(PyQt_PyObject, PyQt_PyObject)"),
                      self._update_orbit_plot)
         xobt, yobt = tab_general_cor.getTargetOrbit()
@@ -1137,7 +1139,7 @@ class OrbitCorrDlg(QDialog):
         tab_bump4xcor = Bump4XCor(corls, "x")
         tab_bump4xsrc = Bump4XSrc(corls, "x")
         #plots=[self.bpm_plot, self.cor_plot, self.tw_plot])
-        #self.connect(tab_nbump_cor, 
+        #self.connect(tab_nbump_cor,
         #             SIGNAL("correctorChanged(PyQt_PyObject)"),
         #             self._update_corr_plot)
         tabs.addTab(tab_bump3xcor, "3 Cors. dI")
@@ -1236,12 +1238,12 @@ class OrbitCorrDlg(QDialog):
 
 
     def _help(self):
-        print "HELP"
+        print("HELP")
 
     #def done(self, r):
     #    #for p in self.bpm_plots:
     #    #    p.plotCurve2(None, None)#
-    #    
+    #
     #    QDialog.done(self, r)
 
     def _action(self, btn):
@@ -1269,7 +1271,7 @@ if __name__ == "__main__":
     bpms[1].setEnabled(False)
     cors[1].setEnabled(False)
 
-    form = OrbitCorrDlg(bpms) 
+    form = OrbitCorrDlg(bpms)
     #form = OrbitCorrGeneral(bpms, cors)
     #form = OrbitCorrNBumps(bpms, cors)
     #form = CorrectorViewer(cors)

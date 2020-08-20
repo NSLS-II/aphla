@@ -1,5 +1,10 @@
 #!/usr/env/python
+from __future__ import print_function, division, absolute_import
+from __future__ import unicode_literals
+from six import string_types
+from collections import Hashable
 
+#
 """
 Lattice
 ~~~~~~~~
@@ -8,7 +13,7 @@ Lattice
 :date: 2012-07-09 16:50
 
 A lattice is equivalent to a machine: a storage ring, a LINAC or a transport
-line. 
+line.
 
 the lattice object manages a set of elements
 (e.g. :class:`~aphla.element.CaElement`) and their group information, a twiss
@@ -17,9 +22,6 @@ data, an orbit response matrix data and more.
 seealso :mod:`~aphla.element`, :mod:`~aphla.twiss`, :mod:`~aphla.machines`
 """
 
-from __future__ import print_function, unicode_literals
-#from __future__ import print_function
-
 import sys
 import re
 from math import log10
@@ -27,7 +29,7 @@ import shelve
 import numpy as np
 from fnmatch import fnmatch
 from datetime import datetime
-from element import AbstractElement
+from .element import AbstractElement
 
 import logging
 _logger = logging.getLogger("aphla.lattice")
@@ -40,7 +42,7 @@ class Lattice:
     - *source* where it was created. URL, Sqlite3 DB filename, ...
     - *tune* [nux, nuy]
     - *chromaticity* [cx, cy]
-    - *sb*, *se* s-position of begin and end. 
+    - *sb*, *se* s-position of begin and end.
     - *ormdata* orbit response matrix data
     - *loop* as a ring or line
     """
@@ -70,7 +72,7 @@ class Lattice:
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._elements[key]
-        elif isinstance(key, str) or isinstance(key, unicode):
+        elif isinstance(key, string_types):
             return self._find_exact_element(name=key)
         else:
             return None
@@ -85,7 +87,7 @@ class Lattice:
         return None
 
     def _find_element_s(self, s, eps = 1e-9, loc='left'):
-        """given s location, find an element at this location. 
+        """given s location, find an element at this location.
 
         If this is drift space, find the element at 'left' or 'right' of the
         given point.
@@ -136,16 +138,19 @@ class Lattice:
         else:
             if len(self._elements) == 0: self._elements.append(elem)
             else:
-                k = 0
-                for e in self._elements:
-                    if e.sb < elem.sb: 
-                        k += 1
-                        continue
-                if k == len(self._elements): self._elements.append(elem)
-                else: self._elements.insert(k, elem)
+                if elem.virtual == 0:
+                    k = 0
+                    for e in self._elements:
+                        if e.sb < elem.sb:
+                            k += 1
+                            continue
+                    if k == len(self._elements): self._elements.append(elem)
+                    else: self._elements.insert(k, elem)
+                else: # Virtual elements should be simply appended
+                    self._elements.append(elem)
         if groups is not None:
             for g in groups:
-                if self._group.has_key(g): self._group[g].append(elem)
+                if g in self._group: self._group[g].append(elem)
                 else: self._group[g] = [elem]
 
 
@@ -168,7 +173,7 @@ class Lattice:
         else: return None
 
     def appendElement(self, elem):
-        """append a new element to lattice. 
+        """append a new element to lattice.
 
         callers are responsible for avoiding duplicate elements (call
         hasElement before).
@@ -208,7 +213,7 @@ class Lattice:
 
         In the db file, all lattice has a key with prefix 'lat.mode.'. If the
         given mode is empty string, then use 'lat.'
-        
+
         seealso Python Standard Lib `shelve`
         """
         f = shelve.open(fname, 'r')
@@ -228,7 +233,7 @@ class Lattice:
 
         the new parent group is replaced by this new merge of children
         groups. no duplicate element will appears in merged *parent* group
-        
+
         Examples
         ---------
         >>> mergeGroups('BPM', ['BPMX', 'BPMY'])
@@ -243,11 +248,11 @@ class Lattice:
         else:
             raise ValueError("children can be string or list of string")
 
-        #if not self._group.has_key(parent):
+        #if parent not in self._group:
         pl = []
 
         for child in chlist:
-            if not self._group.has_key(child):
+            if child not in self._group:
                 _logger.warn("WARNING: no %s group found" % child)
                 continue
             for elem in self._group[child]:
@@ -255,21 +260,21 @@ class Lattice:
                 pl.append(elem)
         self._group[parent] = pl
 
-            
+
     def sortElements(self, namelist = None):
         """
         sort the element list to the order of *s*
 
         use sorted() for a list of element object.
 
-        The group needs to be rebuild, since *getElementList* relies on a 
+        The group needs to be rebuild, since *getElementList* relies on a
         sorted group dict.
         """
         if not namelist:
             self._elements = sorted(self._elements)
             self.buildGroups()
             return
-        
+
         ret = []
         for e in self._elements:
             if e.name in ret: continue
@@ -281,7 +286,7 @@ class Lattice:
             raise ValueError("Some elements are missing in the results")
         elif len(ret) > len(namelist):
             raise ValueError("something wrong on sorting element list")
- 
+
         return ret[:]
 
     def getLocations(self, elemsname):
@@ -291,7 +296,7 @@ class Lattice:
         return a list. None if the element in this list is not found.
 
         .. warning::
-        
+
           If there are duplicate elements in *elems*, only first
           appearance has location returned.
 
@@ -319,7 +324,7 @@ class Lattice:
         s0, s1 = 0.0, 1.0
         for elem in self._elements:
             if elem.virtual: continue
-            if isinstance(elem.sb, (int, float)): 
+            if isinstance(elem.sb, (int, float)):
                 s0 = elem.sb
                 break
         for i in range(1, 1+len(self._elements)):
@@ -392,10 +397,14 @@ class Lattice:
         if elem is not None: return [elem]
 
         # do exact group name match
-        if group in self._group.keys():
+        if isinstance(group, Hashable) and (group in list(self._group)):
             return self._group[group][:]
 
-        if isinstance(group, str) or isinstance(group, unicode):
+        if isinstance(group, bytes):
+            group = group.decode()
+
+        #if isinstance(group, str) or isinstance(group, unicode):
+        if isinstance(group, string_types):
             # do pattern match on element name
             ret, names = [], []
             for e in self._elements:
@@ -408,31 +417,31 @@ class Lattice:
         elif isinstance(group, list):
             # exact one-by-one match, None if not found
             return [self._find_exact_element(e) for e in group]
-            
+
     def _matchElementCgs(self, elem, **kwargs):
         """check properties of an element
-        
+
         - *cell*
         - *girder*
         - *symmetry*
         """
 
         cell = kwargs.get("cell", None)
-        
+
         if isinstance(cell, str) and elem.cell != cell:
             return False
         elif hasattr(cell, "__iter__") and not elem.cell in cell:
             return False
 
         girder = kwargs.get("girder", None)
-        
+
         if isinstance(girder, str) and elem.girder != girder:
             return False
         elif hasattr(girder, "__iter__") and not elem.girder in girder:
             return False
 
         symmetry = kwargs.get("symmetry", None)
-        
+
         if isinstance(symmetry, str) and elem.symmetry != symmetry:
             return False
         elif hasattr(symmetry, "__iter__") and not elem.symmetry in symmetry:
@@ -440,12 +449,12 @@ class Lattice:
 
         return True
 
-        
-        
+
+
     def _getElementsCgs(self, group = '*', **kwargs):
         """
         call signature::
-        
+
           getElementsCgs(group)
 
         Get a list of elements from cell, girder and sequence
@@ -471,7 +480,7 @@ class Lattice:
 
         # return empty set if not specified the group
         if not group: return None
-        
+
         elem = []
         for e in self._elements:
             # skip for duplicate
@@ -479,18 +488,18 @@ class Lattice:
 
             if not self._matchElementCgs(e, **kwargs):
                 continue
-            
+
             if e.name in self._group.get(group, []):
                 elem.append(e.name)
             elif fnmatch(e.name, group):
                 elem.append(e.name)
             else:
                 pass
-                
+
             #if cell and not e.cell in cell: continue
             #if girder and not e.girder in girder: continue
             #if symmetry and not e.symmetry in symmetry: continue
-        
+
         return elem
 
     def _illegalGroupName(self, group):
@@ -522,9 +531,9 @@ class Lattice:
         create a new group
 
         :Example:
-        
+
             >>> addGroup(group)
-          
+
         Input *group* is a combination of alphabetic and numeric
         characters and underscores. i.e. "[a-zA-Z0-9\_]"
 
@@ -533,7 +542,7 @@ class Lattice:
         if self._illegalGroupName(group):
             raise ValueError('illegal group name %s' % group)
 
-        if not self._group.has_key(group):
+        if group not in self._group:
             self._group[group] = []
         else:
             raise ValueError('group %s exists' % group)
@@ -543,7 +552,7 @@ class Lattice:
         remove a group only when it is empty
         """
         if self._illegalGroupName(group): return
-        if not self._group.has_key(group):
+        if group not in self._group:
             raise ValueError("Group %s does not exist" % group)
         if len(self._group[group]) > 0:
             raise ValueError("Group %s is not empty" % group)
@@ -581,7 +590,7 @@ class Lattice:
         """
         check if group exists or not.
         """
-        return self._group.has_key(group)
+        return group in self._group
 
     def removeGroupMember(self, group, member):
         """
@@ -603,10 +612,10 @@ class Lattice:
             >>> getGroups() # list all groups, including the empty groups
             >>> getGroups('*') # all groups, not including empty ones
             >>> getGroups('Q?')
-          
+
         The input string is wildcard matched against each element.
         """
-        if element is None: return self._group.keys()
+        if element is None: return list(self._group)
 
         ret = []
         for k, elems in self._group.items():
@@ -618,7 +627,7 @@ class Lattice:
 
     def getGroupMembers(self, groups, op, **kwargs):
         """
-        return members in a list of groups. 
+        return members in a list of groups.
 
         can take a union or intersections of members in each group
 
@@ -626,7 +635,7 @@ class Lattice:
         - op = ['union' | 'intersection']
 
         :Example:
-        
+
             >>> getGroupMembers(['C0[2-3]', 'BPM'], op = 'intersection')
 
         Note: an element pattern, e.g. "p*g1c23a" is not a pattern of `groups`
@@ -637,14 +646,14 @@ class Lattice:
         girder = kwargs.get('girder', '*')
         symmetry = kwargs.get('symmetry', '*')
 
-        if groups in self._group.keys():
+        if groups in list(self._group):
             return self._group[groups]
 
         for g in groups:
             ret[g] = []
             imatched = 0
             for k, elems in self._group.items():
-                if fnmatch(k, g): 
+                if fnmatch(k, g):
                     imatched += 1
                     ret[g].extend([e.name for e in elems])
 
@@ -658,7 +667,7 @@ class Lattice:
                 r = r.intersection(set(v))
         else:
             raise ValueError("%s not defined" % op)
-        
+
         return self.getElementList(self.sortElements(r))
 
     def getNeighbors(self, elemname, groups, n, elemself = True):
@@ -686,7 +695,7 @@ class Lattice:
         if not e0: raise ValueError("element %s does not exist" % elemname)
 
         el = []
-        if isinstance(groups, (str, unicode)):
+        if isinstance(groups, string_types):
             el = self.getElementList(groups, virtual=0)
         elif isinstance(groups, (list, tuple)):
             if all([isinstance(ei, AbstractElement) for ei in groups]):
@@ -709,7 +718,7 @@ class Lattice:
             fac, r = divmod(i0 + i, len(el))
             ret.append(el[r])
         return ret
-        
+
     def getClosest(self, elemname, groups):
         """
         Assuming self._elements is in s order
@@ -730,7 +739,7 @@ class Lattice:
         if not e0: raise ValueError("element %s does not exist" % elemname)
 
         el = []
-        if isinstance(groups, (str, unicode)):
+        if isinstance(groups, string_types):
             el = self.getElementList(groups, virtual=0)
         elif isinstance(groups, (list, tuple)):
             el = self.getGroupMembers(groups, op="union")
@@ -749,7 +758,7 @@ class Lattice:
             ds = ds0
 
         return el[idx]
-        
+
     def __repr__(self):
         s = '# %s: index, name, family, position, length\n' % self.name
         ml_name, ml_family = 0, 0
@@ -793,7 +802,7 @@ class Lattice:
         return dispersion from the twiss data
         """
         return self._get_twiss(elem, ['etax', 'etay'], spos)
-    
+
     def getTunes(self):
         """return tunes -> (nux, nuy) from twiss data"""
         return self._twiss.tune
@@ -848,7 +857,7 @@ def _parseElementName(name):
     girder='G1', cell='C30', symmetry='A'
 
     :Example:
-    
+
       >>> parseElementName('CFXH1G1C30A')
       'C30', 'G1', 'A'
     """
@@ -865,7 +874,7 @@ def _parseElementName(name):
     return cell, girder, symmetry
 
 
-    
+
 def saveArchivePvs(lat, **kwargs):
     """
     generate file for archiving lattice

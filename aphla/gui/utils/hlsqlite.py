@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 '''
 High-Level Interface to SQLite
 '''
@@ -7,7 +9,7 @@ import sqlite3 # command-line SQLite3 does NOT need to be installed to use
 # this Python module
 from time import time, sleep
 import zlib
-import cPickle
+from six.moves import cPickle as pickle
 import traceback
 from pprint import pprint
 from collections import namedtuple
@@ -29,7 +31,7 @@ def blobdumps(py_obj, cPickle_protocol=2, compression_level=7):
         The higher the level is, the more compressed the object will be.
     """
 
-    return zlib.compress(cPickle.dumps(py_obj, cPickle_protocol),
+    return zlib.compress(pickle.dumps(py_obj, cPickle_protocol),
                          compression_level).decode('latin1')
 
 #----------------------------------------------------------------------
@@ -42,8 +44,8 @@ def blobloads(blob):
     Returns a Python object.
     """
 
-    return cPickle.loads(zlib.decompress(blob.encode('latin1')))
-    # No need to specify cPickle protocol, as it will be automatically
+    return pickle.loads(zlib.decompress(blob.encode('latin1')))
+    # No need to specify pickle protocol, as it will be automatically
     # determined.
 
 ########################################################################
@@ -140,9 +142,9 @@ class SQLiteDatabase():
                 sleep(1.)
                 self.con = sqlite3.connect(self.filepath)
             else:
-                print 'Folder', parent_folderpath, 'must exist.'
-                print 'Or, set "create_folder=True" when instantiating ' + \
-                      'SQLiteDatabase class to have the folder created automatically.'
+                print('Folder', parent_folderpath, 'must exist.')
+                print('Or, set "create_folder=True" when instantiating ' +
+                      'SQLiteDatabase class to have the folder created automatically.')
                 return
 
         self.cur = self.con.cursor()
@@ -244,7 +246,7 @@ class SQLiteDatabase():
                            for tup in self.cur.fetchall()]
 
         if DEBUG:
-            print 'Existing tables:', table_name_list
+            print('Existing tables:', table_name_list)
 
         return table_name_list
 
@@ -274,7 +276,7 @@ class SQLiteDatabase():
                           for tup in self.cur.fetchall()]
 
         if DEBUG:
-            print 'Existing tables:', view_name_list
+            print('Existing tables:', view_name_list)
 
         return view_name_list
 
@@ -401,7 +403,7 @@ class SQLiteDatabase():
         sql_cmd = self.createSelectSQLStatement(table_name, column_name_list,
                                                 condition_str, order_by_str)
         if print_cmd:
-            print sql_cmd
+            print(sql_cmd)
 
         if binding_tuple is not None:
             self.cur.execute(sql_cmd, binding_tuple)
@@ -499,13 +501,13 @@ class SQLiteDatabase():
 
         try:
             if DEBUG:
-                print sql_cmd
+                print(sql_cmd)
 
             with self.con:
                 self.cur.execute(sql_cmd)
         except:
             traceback.print_exc()
-            print 'SQL cmd:', sql_cmd
+            print('SQL cmd:', sql_cmd)
 
     #----------------------------------------------------------------------
     def createTable(self, table_name, column_definition_list):
@@ -564,13 +566,13 @@ class SQLiteDatabase():
 
         try:
             if DEBUG:
-                print sql_cmd
+                print(sql_cmd)
 
             with self.con:
                 self.cur.execute(sql_cmd)
         except:
             traceback.print_exc()
-            print 'SQL cmd:', sql_cmd
+            print('SQL cmd:', sql_cmd)
 
     #----------------------------------------------------------------------
     def dropAllTables(self):
@@ -803,12 +805,12 @@ class SQLiteDatabase():
             pattern = " | ".join(formats)
             hpattern = " | ".join(hformats)
             separator = "-+-".join(['-' * n for n in lens])
-            print hpattern % tuple(headers)
-            print separator
+            print(hpattern % tuple(headers))
+            print(separator)
             for line in rows:
-                print pattern % tuple(line)
+                print(pattern % tuple(line))
         elif len(rows) == 1:
             row = rows[0]
             hwidth = len(max(row._fields,key=lambda x: len(x)))
             for i in range(len(row)):
-                print "%*s = %s" % (hwidth,row._fields[i],row[i])
+                print("%*s = %s" % (hwidth,row._fields[i],row[i]))

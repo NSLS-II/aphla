@@ -1,3 +1,6 @@
+from __future__ import print_function, division, absolute_import
+from six import string_types
+
 """
 Core APHLA Libraries
 ---------------------
@@ -14,26 +17,26 @@ import os
 import re
 from fnmatch import fnmatch
 from datetime import datetime
-from catools import caget, caput, CA_OFFLINE, savePvData, caWait, caWaitStable
-import machines
-import element
+from .catools import caget, caput, CA_OFFLINE, savePvData, caWait, caWaitStable
+from . import machines
+from . import element
 import itertools
 
 _logger = logging.getLogger("aphla.hlalib")
 
 #__all__ = [
-#    'addGroup', 'addGroupMembers', 'eget',  
-#    'getBeamlineProfile', 'getBeta', 
-#    'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest', 
-#    'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance', 
-#    'getElements', 'getEta', 'getFastOrbit', 'getFftTune', 
-#    'getGroupMembers', 'getGroups', 'getLocations', 'getModes', 
-#    'getNeighbors', 'getOrbit', 'getPhase', 'getPvList', 'getRfFrequency', 
-#    'getRfVoltage', 'getStepSize', 'getTbtOrbit', 'getTuneRm', 
-#    'getTune', 'getTunes', 
+#    'addGroup', 'addGroupMembers', 'eget',
+#    'getBeamlineProfile', 'getBeta',
+#    'getBpms', 'getChromaticityRm', 'getChromaticity', 'getClosest',
+#    'getCurrent', 'getCurrentMode', 'getDispersion', 'getDistance',
+#    'getElements', 'getEta', 'getFastOrbit', 'getFftTune',
+#    'getGroupMembers', 'getGroups', 'getLocations', 'getModes',
+#    'getNeighbors', 'getOrbit', 'getPhase', 'getPvList', 'getRfFrequency',
+#    'getRfVoltage', 'getStepSize', 'getTbtOrbit', 'getTuneRm',
+#    'getTune', 'getTunes',
 #    'removeGroup', 'removeGroupMembers', 'putRfFrequency',
-#    'stepRfFrequency', 
-#    'waitStableOrbit', 
+#    'stepRfFrequency',
+#    'waitStableOrbit',
 #]
 
 def getTimestamp(t = None, us = True):
@@ -65,7 +68,7 @@ def getEnergy():
     return machines._lat.Ek
 
 def getOutputDir():
-    """get the output data dir for the current lattice""" 
+    """get the output data dir for the current lattice"""
     return machines._lat.OUTPUT_DIR
 
 # current
@@ -150,7 +153,7 @@ def stepRfFrequency(df = 0.010):
 
     seealso :func:`getRfFrequency`, :func:`putRfFrequency`
 
-    .. warning:: 
+    .. warning::
 
       Need check the unit for real machine
     """
@@ -171,12 +174,12 @@ def _reset_trims(verbose=False):
         pv.extend(e.pv(field='y', handle='setpoint'))
     if not pv:
         raise ValueError("no pv for trims found")
-    
+
     if verbose:
-        for p in pv: 
-            print p, caget(p),
+        for p in pv:
+            print((p, caget(p),))
             caput(p, 0.0, wait=True)
-            print caget(p)
+            print(caget(p))
     else:
         caput(pv, 0.0)
 
@@ -224,7 +227,7 @@ def getElements(group, include_virtual=False):
     Returns
     ---------
      elemlist : a list of matched element objects.
-    
+
     Examples
     ----------
     >>> getElements('NO_SUCH_ELEMENT')
@@ -250,7 +253,7 @@ def getElements(group, include_virtual=False):
     elems = machines._lat.getElementList(group)
     ret = []
     for e in elems:
-        if e is None: 
+        if e is None:
             ret.append(e)
             continue
 
@@ -309,9 +312,9 @@ def _fget_2(elst, field, **kwargs):
     elem : list. element name, name list, pattern or object list
     fields : list. field name or name list
     handle : str, optional, default "readback"
-    unitsys : str, optional, default "phy", unit system, 
+    unitsys : str, optional, default "phy", unit system,
 
-    returns a flat 1D array. 
+    returns a flat 1D array.
 
     Examples
     ---------
@@ -360,7 +363,7 @@ def _fget_2(elst, field, **kwargs):
                for i,e in enumerate(elst)]
     return ret
 
-        
+
 def fput(elemfld_vals, **kwargs):
     """set elements field values for a family
 
@@ -387,7 +390,7 @@ def fput(elemfld_vals, **kwargs):
     wait_readback = kwargs.pop('wait_readback', False)
     epsilon = kwargs.pop("epsilon", None)
     verbose = kwargs.get("verbose", 0)
-    
+
     # a list of (pv, spval, elem, field)
     pvl, pvlsp = [], []
 
@@ -420,8 +423,8 @@ def fput(elemfld_vals, **kwargs):
         pvrb = [v[3] for v in pvl]
         vals = [v[4] for v in pvl]
         if verbose:
-            print len(pvsp), pvsp
-            print len(vals), vals
+            print((len(pvsp), pvsp))
+            print((len(vals), vals))
         ret = caput(pvsp, vals, **kwargs)
         vallo, valhi = [v[5] for v in pvl], [v[6] for v in pvl]
         try:
@@ -433,8 +436,8 @@ def fput(elemfld_vals, **kwargs):
         pvsp = [v[2] for v in pvlsp]
         vals = [v[4] for v in pvlsp]
         if verbose:
-            print len(pvsp), pvsp
-            print len(vals), vals
+            print((len(pvsp), pvsp))
+            print((len(vals), vals))
         ret = caput(pvsp, vals, **kwargs)
 
 
@@ -449,7 +452,7 @@ def getPvList(elems, field, handle = 'readback', **kwargs):
 
     Keyword arguments:
 
-      - *first_only* (False) use only the first PV for each element. 
+      - *first_only* (False) use only the first PV for each element.
       - *compress_empty* (False) remove element with no PV.
 
     :Example:
@@ -471,7 +474,7 @@ def getPvList(elems, field, handle = 'readback', **kwargs):
     first_only = kwargs.get('first_only', False)
     compress_empty = kwargs.get('compress_empty', False)
 
-    # did not check if it is a BPM 
+    # did not check if it is a BPM
     elemlst = getElements(elem)
     pvlst = []
     for elem in elemlst:
@@ -482,7 +485,7 @@ def getPvList(elems, field, handle = 'readback', **kwargs):
         if len(pvs) == 0 and not compress_empty:
             raise ValueError("element '%s' has no readback pv" % elem.name)
         elif len(pvs) > 1 and not first_only:
-            raise ValueError("element '%s' has more %d (>1) pv" % 
+            raise ValueError("element '%s' has more %d (>1) pv" %
                              (elem.name, len(pvs)))
 
         pvlst.append(pvs[0])
@@ -504,7 +507,7 @@ def getLocations(group):
     It has a same input as :func:`getElements` and accepts group name,
     element name, element name pattern and a list of element names.
     """
-    
+
     elem = getElements(group)
     if isinstance(elem, (list, set, tuple)):
         return [e.sb for e in elem]
@@ -536,7 +539,7 @@ def addGroupMembers(group, member):
     ::
 
       >>> addGroupMembers('HCOR', 'CX1')
-      >>> addGroupMembers('HCOR', ['CX1', 'CX2']) 
+      >>> addGroupMembers('HCOR', ['CX1', 'CX2'])
 
     it calls :meth:`~aphla.lattice.Lattice.addGroupMember` of the current
     lattice.
@@ -573,7 +576,7 @@ def getGroups(element = '*'):
     """
     Get all groups own these elements, '*' returns all possible groups,
     since it matches every element
-    
+
     it calls :func:`~aphla.lattice.Lattice.getGroups` of the current lattice.
     """
     return machines._lat.getGroups(element)
@@ -594,7 +597,7 @@ def getGroupMembers(groups, op = 'intersection', **kwargs):
 
 def getNeighbors(element, group, n = 3, elemself = True):
     """
-    Get a list of n objects in *group* before and after *element* 
+    Get a list of n objects in *group* before and after *element*
 
     it calls :meth:`~aphla.lattice.Lattice.getNeighbors` of the current
     lattice to get neighbors.
@@ -603,7 +606,7 @@ def getNeighbors(element, group, n = 3, elemself = True):
     -----------
     element: str, object. the central element name
     group: str or list of elem object, the neighbors belong to
-    n : int, default 3, number of neighbors each side. 
+    n : int, default 3, number of neighbors each side.
     elemself : default True, return the element itself.
 
     Returns
@@ -626,11 +629,11 @@ def getNeighbors(element, group, n = 3, elemself = True):
     >>> hla.getNeighbors("X", getElements("BPM"), 3)
     """
 
-    if isinstance(element, (str, unicode)):
+    if isinstance(element, string_types):
         return machines._lat.getNeighbors(element, group, n, elemself)
     else:
         return machines._lat.getNeighbors(element.name, group, n, elemself)
-        
+
 
 def getClosest(element, group):
     """
@@ -648,7 +651,7 @@ def getClosest(element, group):
     >>> getClosest('pm1g4c27b', 'BPM') # find the closest BPM to 'pm1g4c27b'
     >>> getClosest('pm1g4c27b', ["QUAD", "BPM"])
     """
-    if isinstance(element, (str, unicode)):
+    if isinstance(element, string_types):
         return machines._lat.getClosest(element, group)
     else:
         return machines._lat.getClosest(element.name, group)
@@ -723,7 +726,7 @@ def getTwiss(names, columns, **kwargs):
         vas = getElements("VA")
         if not vas: return None
         twiss = vas[kwargs.get("iva", 0)]
-        if isinstance(names, (str, unicode)):
+        if isinstance(names, string_types):
             namelst = [i for i,s in enumerate(twiss.names) if fnmatch(s, names)]
         elif isinstance(names, (list, tuple)):
             namelst = [i for i,s in enumerate(twiss.names) if s in names]
@@ -757,7 +760,7 @@ def getTwissAt(s, columns, **kwargs):
     else:
         return [None] * len(columns)
 
-    
+
 def getPhi(group, **kwargs):
     """
     get the phase from stored data
@@ -787,7 +790,7 @@ def getAlpha(group, **kwargs):
 #
 def getBeta(group, **kwargs):
     """get the beta function of *group* from stored data.
-    
+
     Parameters
     -----------
     src : str.
@@ -817,7 +820,7 @@ def getEta(group, **kwargs):
 
     Parameters
     -----------
-    source : str. 
+    source : str.
         'database' from database; 'VA' from virtual accelerator where a 'twiss'
         element must exist.
 
@@ -843,7 +846,7 @@ def getChromaticity(source='database'):
         vas = getElements('VA')
         if not vas: return None
         twiss = vas[kwargs.get("iva", 0)]
-        return twiss.chromx, twiss.chromy        
+        return twiss.chromx, twiss.chromy
     else:
         raise ValueError("Unknown source: '%s'" % source)
 
@@ -856,7 +859,7 @@ def getTunes(source='machine', **kwargs):
         # return only the first matched element
         nu = getElements('tune')
         if not nu:
-            raise RuntimeError("can not find element 'tune'") 
+            raise RuntimeError("can not find element 'tune'")
         return nu[0].x, nu[0].y
     elif source == 'database':
         return machines._lat.getTunes()
@@ -964,7 +967,7 @@ def getOrbit(pat = '', spos = False):
         return ret
 
     # need match the element name
-    if isinstance(pat, (unicode, str)):
+    if isinstance(pat, string_types):
         elems = [e for e in getBpms()
                 if fnmatch(e.name, pat) and e.isEnabled()]
         if not elems: return None
@@ -1015,7 +1018,7 @@ def _getTbtOrbit(**kwargs):
     field = kwargs.get('field', 'X')
     pref = 'LTB:BI{BPM:1}' + 'TBT-'
     return caget(pref + field)
-    
+
 def _getFastOrbit(**kwargs):
     """
     return fast 10kHz turn-by-turn BPM data.
@@ -1040,7 +1043,7 @@ def _reset_bpm_offset():
 def _reset_quad():
     #raise RuntimeError("does not work for SR above V1SR")
 
-    qtag = {'H2': (1.47765, 30), 
+    qtag = {'H2': (1.47765, 30),
             'H3': (-1.70755, 30),
             'H1': (-0.633004, 30),
             'M1': (-0.803148, 60),
@@ -1048,7 +1051,7 @@ def _reset_quad():
             'L2': (1.81307, 30),
             'L3': (-1.48928, 30),
             'L1': (-1.56216, 30)}
-    
+
     for tag, v in qtag.items():
         qlst = getElements('Q%s' % tag)
         qval, qnum = v
@@ -1099,13 +1102,13 @@ def _wait_for_lock(tag, maxwait=60):
     """
     wait until the virtual accelerator is available to me.
     """
-    print "# Locking the mathine for userid=%d" % tag
+    print("# Locking the mathine for userid=%d" % tag)
     if tag == 0:
         raise ValueError("you tag (=%d)  must be > 0." % tag)
 
     t0 = time.time()
     while caget('SVR:LOCKED') > 0:
-        print "# waiting ... for user %d ..." % int(caget('SVR:LOCKED'))
+        print("# waiting ... for user %d ..." % int(caget('SVR:LOCKED')))
         time.sleep(1)
         if time.time() - t0 > maxwait: break
 
@@ -1121,7 +1124,7 @@ def _release_lock(tag):
         raise ValueError("it is not locked by me, abort")
 
     caput('SVR:LOCKED', 0)
-    print "released the lock for userid=%d" % tag
+    print("released the lock for userid=%d" % tag)
 
 
 
@@ -1158,7 +1161,7 @@ def _waitChanged(elemlst, fields, v0, **kwargs):
     full = kwargs.get('full', False)
     unitsys = kwargs.get('unitsys', None)
 
-    if CA_OFFLINE: 
+    if CA_OFFLINE:
         if full: return (True, 0)
         else: return True
 
@@ -1177,7 +1180,7 @@ def _waitChanged(elemlst, fields, v0, **kwargs):
     if full:
         if ntrial >= maxtrial: return (False, ntrial)
         else: return (True, ntrial)
-    else: 
+    else:
         if ntrial >= maxtrial: return False
         else: return True
 
@@ -1224,7 +1227,7 @@ def _waitStable(elemlst, fields, maxstd, **kwargs):
     time.sleep(wait[2])
     if np.average(np.std(v, axis=0)) < maxstd: return True
     else: return False
-    
+
 
 
 def saveLattice(output, lat, elemflds, notes, **kwargs):
@@ -1260,9 +1263,9 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
             pvspl.extend(sppvs)
             pvstat[(elfam, fld)] = (len(fpvs), len(sppvs))
             if verbose:
-                print "{0}.{1}: {2} pvs, {3} setpoint".format(
-                    elfam, fld, len(fpvs), len(sppvs))
-                
+                print("{0}.{1}: {2} pvs, {3} setpoint".format(
+                    elfam, fld, len(fpvs), len(sppvs)))
+
     if lat.arpvs is not None:
         for s in open(lat.arpvs, 'r').readlines():
             pv = s.strip()
@@ -1290,14 +1293,14 @@ def saveLattice(output, lat, elemflds, notes, **kwargs):
     #        for pv in e.pv(field=fld, handle="setpoint"):
     #            grp[pv].attrs["_query_"] = [elfam, fld]
 
-    # add the setpoint 
+    # add the setpoint
     for pv in kwargs.get("pvsp", []):
         grp[pv].attrs["setpoint"] = 1
     h5f.close()
 
     if verbose > 0:
-        print "--------"
-        print "PVs: live= %d, dead= %d" % (nlive, ndead)
+        print("--------")
+        print("PVs: live= %d, dead= %d" % (nlive, ndead))
     return nlive, ndead
 
 
@@ -1329,13 +1332,13 @@ def putLattice(h5fname, **kwargs):
     h5f = h5py.File(h5fname, 'r')
     grp = h5f[lat.name]
     if not pvspl:
-        print "Please select element family and fields in this snapshot:"
+        print("Please select element family and fields in this snapshot:")
         for famflds in grp.attrs.get("_query_", []):
             m =re.match(r"([^(]+)\((.+)\)", famflds)
             if not m:
-                print famflds
+                print(famflds)
                 continue
-            print m.group(1), m.group(2).split(",")
+            print((m.group(1), m.group(2).split(",")))
         #print grp.attrs.get("_query_", [])
     else:
         vals = [grp[pv].value for pv in pvspl]
@@ -1501,8 +1504,8 @@ def compareLattice(*argv, **kwargs):
             elif g[pv].dtype in ['int32', 'int64']:
                 dat[pv].append(int(val.value))
             else:
-                print "unknown {0} data type: {1}, value: {2}".format(
-                    pv, g[pv].dtype, g[pv].value)
+                print("unknown {0} data type: {1}, value: {2}".format(
+                    pv, g[pv].dtype, g[pv].value))
         h5f.close()
     if len(dat) > 0 and kwargs.get("withlive", False):
         pvs = dat.keys()
@@ -1557,14 +1560,14 @@ def waitRamping(elem, **kwargs):
         pvl = elem.pv(field="ramping")
     elif isinstance(elem, (list, tuple)) and \
             all([isinstance(e, element.CaElement) for e in elem]):
-        pvl = reduce(lambda x,y: x + y, 
+        pvl = reduce(lambda x,y: x + y,
                      [e.pv(field="ramping") for e in elem])
-    
+
 
     wdt = caWait(pvl, stop = stop, timeout = timeout, dt = dt)
     if kwargs.get("verbose", 0) > 0:
-        print "waited for ", wdt, (datetime.now() - t0).total_seconds(), "seconds"
-    
+        print(("waited for ", wdt, (datetime.now() - t0).total_seconds(), "seconds"))
+
 def getBoundedElements(group, s0, s1):
     """
     get list of elements within [s0, s1] or outside.

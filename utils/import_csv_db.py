@@ -91,21 +91,21 @@ def update_sqlite_db(inpt, dbfname = "us_nsls2.db"):
 
         # required properties
         for k in ['elemHandle', 'elemName']:
-            if not prpts.has_key(k):
+            if k not in prpts:
                 raise RuntimeError("missing '%s' for %s" % (k,s))
 
         elem = session.query(Element).\
             filter(Element.name == prpts['elemName'].lower()).first()
         if not elem:
-            elem = Element(prpts['elemName'].lower(), 
+            elem = Element(prpts['elemName'].lower(),
                            prpts['elemType'], prpts['system'])
         elem.s_end = prpts['elemPosition']
         elem.length = prpts['elemLength']
 
-        if prpts.has_key('cell'): elem.cell = prpts['cell']
-        if prpts.has_key('girder'): elem.girder = prpts['girder']
-        if prpts.has_key('elemIndex'): elem.el_idx = prpts['elemIndex']
-        if prpts.has_key('symmetry'): elem.symmetry = prpts['symmetry']
+        if 'cell' in prpts: elem.cell = prpts['cell']
+        if 'girder' in prpts: elem.girder = prpts['girder']
+        if 'elemIndex' in prpts: elem.el_idx = prpts['elemIndex']
+        if 'symmetry' in prpts: elem.symmetry = prpts['symmetry']
 
         pvr = session.query(ChannelRecord).\
             filter(ChannelRecord.pv == pv).first()
@@ -113,7 +113,7 @@ def update_sqlite_db(inpt, dbfname = "us_nsls2.db"):
             pvr = ChannelRecord(pv, elem.name, prpts['elemHandle'])
         pvr.element = elem
         pvr.tags = ','.join(tags)
-        if prpts.has_key('elemField'): pvr.elem_field = prpts['elemField']
+        if 'elemField' in prpts: pvr.elem_field = prpts['elemField']
 
         session.add(pvr)
 

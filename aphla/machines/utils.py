@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 import re
@@ -24,7 +26,7 @@ def _nsls2_filter_element_type_group(elemlst):
         idx, name, tp, s0, L, s1 = elem
         grp, cell, girder, symm = "", "", "", ""
         g = re.match(r"([A-Z0-9]+)(G[0-9])(C[0-9][0-9])(.+)", name, re.I)
-        if g: 
+        if g:
             grp, girder, cell, symm = [g.group(i) for i in range(1,5)]
 
         if tp in ['DRIF', 'MARK']:
@@ -44,18 +46,18 @@ def _nsls2_filter_element_type_group(elemlst):
                             cell, girder, symm, grp])
         elif tp == 'SQ_TRIM':
             newgrp = ";".join(sorted([grp, "HCOR", "VCOR", "SQCOR"]))
-            relst.append([name, idx, "COR", s0, L, s1, 
+            relst.append([name, idx, "COR", s0, L, s1,
                           cell, girder, symm, newgrp])
             pass
         elif tp == 'DIPOLE':
             #warnings.warn("'{0}: {1}' is not processed".format(name, fam))
-            relst.append([name, idx, "BEND", s0, L, s1, 
+            relst.append([name, idx, "BEND", s0, L, s1,
                             cell, girder, symm, grp])
             pass
         elif tp == "TRIMX":
             #warnings.warn("'{0}: {1}' is not processed".format(name, fam))
             newgrp = ";".join(sorted([grp, "HCOR"]))
-            relst.append([name, idx, "COR", s0, L, s1, 
+            relst.append([name, idx, "COR", s0, L, s1,
                           cell, girder, symm, newgrp])
             pass
         elif tp == "TRIMY":
@@ -75,10 +77,10 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
     """convert the NSLS2 lattice table
 
      ElementName  ElementType  L       s        K1    K2    Angle  KickMapFile
-                               m       m        1/m2  1/m3  rad   
+                               m       m        1/m2  1/m3  rad
      ----------------------------------------------------------------------
      _BEG_        MARK         0       0        0     0     0
-     DH05G1C30A   DRIF         4.29379 4.29379  0     0     0    
+     DH05G1C30A   DRIF         4.29379 4.29379  0     0     0
      FH2G1C30A    FTRIM        0.044   4.33779  0     0     0
 
      - split combine function magnet
@@ -90,7 +92,7 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
     srclines = open(fsrc, 'r').readlines()
     i = 0
     while srclines[i].find("_BEG_") < 0: i += 1
-    if not srclines[i-1].strip().startswith("-----"): 
+    if not srclines[i-1].strip().startswith("-----"):
         raise RuntimeError("Invalid lattice table")
 
     elems_0, elems_1 = [], []
@@ -120,7 +122,7 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
         elems_1 = elems
         if ncmb == 0: break
     #print "# New finite length elements:", len(elems)
-    
+
     # filter zero length element
     elems = []
     for i,e0 in enumerate(elems_0):
@@ -160,9 +162,9 @@ def convNSLS2LatTable(fdst, fsrc, eps = 1e-6):
     for i,elem in enumerate(elems):
         gstat.setdefault(elem[2], 0)
         gstat[elem[2]] += 1
-    print "Imported elements:", len(elems), fsrc
+    print(("Imported elements:", len(elems), fsrc))
     for g,n in gstat.items():
-        print "{0:>10} {1}".format(g,n)
+        print("{0:>10} {1}".format(g,n))
 
     f = open(fdst, 'w')
     for i,elem in enumerate(elems):
@@ -203,7 +205,7 @@ def convVirtAccTwiss(fdst, fsrc, **kwargs):
     for e in elems:
         f.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}\n".format(*e))
     f.close()
-    
+
 
 def convVirtAccPvs(fdst, fsrc, sep = ",", grpname=False):
     """
@@ -246,7 +248,7 @@ def convVirtAccPvs(fdst, fsrc, sep = ",", grpname=False):
                 lines[0]))
     ipv, ihandle, iidx, ielem, itype, ifield, icell, igirder, isys = [
         head.index(v) for v in (
-            "#pv_name", "handle", "el_idx_va", "el_name_va", 
+            "#pv_name", "handle", "el_idx_va", "el_name_va",
             "el_type_va", "el_field_va", "cell", "girder",
             "machine")]
     pvr = []
@@ -277,7 +279,7 @@ def _insert_elements(fdb, felem, **kwargs):
                   """elemLength,elemPosition,"""
                   """cell,girder,symmetry,elemGroups)"""
                   """VALUES (?,?,?,?,?,?,?,?,?)""",
-                  [(name,idx,tp,L,s1,cl,gd,sm,grp) 
+                  [(name,idx,tp,L,s1,cl,gd,sm,grp)
                    for (name, idx, tp, s0, L, s1, cl, gd, sm, grp)
                    in elems])
     conn.commit()
@@ -315,7 +317,7 @@ def _insert_pvs(fdb, fpv, **kwargs):
     c.executemany("""INSERT into pvs """
                   """(pv,elemName,elemHandle,elemField,tags) """
                   """values (?,?,?,?,?)""",
-                  [(pv,ename,hdl,fld,systag) 
+                  [(pv,ename,hdl,fld,systag)
                    for (pv,hdl,ename,eidx,etp,fld) in pvs])
     conn.commit()
     msg = "[%s] updated 'pvs' table" % (__name__,)
@@ -385,20 +387,20 @@ def createSqliteDb(fdb, felem, fpv, **kwargs):
 def _saveSqliteDb(cfa, fname, sep=";"):
     """
     save cfa data to sqlite db file.
-    
+
     the input groups, elemNames like "QH1;QH" has to be separated as list.
     """
     raise RuntimeError("Not Implemented")
     uniq, pvs, elems = set(), [], []
     for i,r in enumerate(cfa.rows):
         pv,prpt,tags = r
-        if not prpt.get("elemName", None): 
+        if not prpt.get("elemName", None):
             raise RuntimeError("no element name defined {0}".format(r))
         if not prpt.get("elemType", None):
             raise RuntimeError("no element type defined {0}".format(r))
-        
+
         elemname = prpt["elemName"].lower()
-        if elemname.find(sep) >= 0: 
+        if elemname.find(sep) >= 0:
             raise RuntimeError("elemName can not have %s: %s" % (
                     sep, elemname))
         if elemname in uniq: continue
@@ -414,10 +416,10 @@ def _saveSqliteDb(cfa, fname, sep=";"):
                       prpt.get("girder", None),
                       prpt.get("symmetry", None),
                       grps))
-    print fname, len(elems)
+    print((fname, len(elems)))
     for i,e in enumerate(elems):
         if i > 5: break
-        print e
+        print(e)
 
     createLatticePvDb(fname)
     conn = sqlite3.connect(fname)
@@ -428,7 +430,7 @@ def _saveSqliteDb(cfa, fname, sep=";"):
                   """elemLength,elemPosition,"""
                   """cell,girder,symmetry,elemGroups)"""
                   """VALUES (?,?,?,?,?,?,?,?,?)""",
-                  [(name,idx,tp,L,s1,cl,gd,sm,grp) 
+                  [(name,idx,tp,L,s1,cl,gd,sm,grp)
                    for (name, idx, tp, s0, L, s1, cl, gd, sm, grp)
                    in elems])
     conn.commit()
@@ -439,11 +441,11 @@ def convCfsToSqlite(url, prefix = '', ignore = []):
     """
     url - channel finder server URL
     prefix - output DB file name prefix
-    ignore - list of ignored lattice name 
+    ignore - list of ignored lattice name
     """
     cf = ChannelFinderClient(BaseURL=url)
     tagprefx = "aphla.sys."
-    tags = [tag.Name for tag in cf.getAllTags() 
+    tags = [tag.Name for tag in cf.getAllTags()
             if tag.Name.startswith(tagprefx)]
     for tag in tags:
         latname = tag[len(tagprefx):]
@@ -515,8 +517,8 @@ def _read_elegant_twi(fname, i0=100):
         sb = twi["s"][i-1]
         se = twi["s"][i]
         if int(twi["ElementOccurence"][i]) > 1:
-            print "Duplicate element name '%s'(%s) at se= %s" % (
-                name, twi["ElementOccurence"][i], se) 
+            print("Duplicate element name '%s'(%s) at se= %s" % (
+                name, twi["ElementOccurence"][i], se))
             name = "%s:%s" % (name, twi["ElementOccurence"][i])
         L = float(se) - float(sb)
         cell, girder, sym, grp = "", "", "", ""
@@ -535,4 +537,4 @@ def convElegantToSqlite(fdb, ftwi, **kwargs):
     fpv = kwargs.pop("fpv", None)
     if fpv is not None:
         _insert_pvs(fdb, fpv, **kwargs)
- 
+

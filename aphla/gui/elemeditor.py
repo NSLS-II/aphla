@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Element Property Editor
 =======================
@@ -20,8 +22,8 @@ from PyQt4.QtCore import (QAbstractTableModel, QDataStream, QFile,
         QIODevice, QModelIndex, QRegExp, QSize, QVariant, Qt,
         SIGNAL, QEvent)
 from PyQt4.QtGui import (QColor, QComboBox, QLineEdit, QDoubleSpinBox,
-        QSpinBox, QStyle, QTextDocument, QTextEdit, 
-        QDialog, QDockWidget, QGroupBox, QPushButton, QHBoxLayout, 
+        QSpinBox, QStyle, QTextDocument, QTextEdit,
+        QDialog, QDockWidget, QGroupBox, QPushButton, QHBoxLayout,
         QGridLayout, QVBoxLayout, QTableView, QWidget, QApplication,
         QTableWidget, QDialogButtonBox, QStatusBar, QTableWidgetItem,
         QFormLayout, QLabel, QSizePolicy, QCompleter, QMenu, QAction)
@@ -154,7 +156,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
                             continue
                         self._data[i][j+isys+1][k] = \
                             elem.convertUnit(fld, val, None, usys)
-        print "Updated"
+        print("Updated")
         idx0 = self.index(row0, C_VAL_SP)
         idx1 = self.index(row1-1, self.columnCount()-1)
         self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
@@ -195,7 +197,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def isSubHeader(self, i):
         return self._data[i][1] is None
 
-        
+
     def data(self, index, role=Qt.DisplayRole):
         """return data as a QVariant"""
         #print "data model=",role
@@ -221,7 +223,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
             except:
                 return QVariant()
         #elif role == Qt.EditRole:
-        #    if col == C_FIELD: 
+        #    if col == C_FIELD:
         #        raise RuntimeError("what is this ?")
         #        return QVariant(self._field[r]+self._fieldpfx[r])
         #    #print r, col, self._field[r], self._value[r]
@@ -261,7 +263,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         elif role == Qt.CheckStateRole:
             #if vals is not None: return QVariant()
             #elif r in self._inactive: return Qt.Unchecked
-            #else: return Qt.Checked 
+            #else: return Qt.Checked
             #if idx == 0 and col == C_FIELD: return Qt.Checked
             return QVariant()
         else:
@@ -295,7 +297,7 @@ class ElementPropertyTableModel(QAbstractTableModel):
         return QVariant()
 
     def flags(self, index):
-        #print "flags:", 
+        #print "flags:",
         if not index.isValid():
             return Qt.ItemIsEnabled
         row, col = index.row(), index.column()
@@ -307,10 +309,10 @@ class ElementPropertyTableModel(QAbstractTableModel):
             #return Qt.ItemFlags(QAbstractTableModel.flags(self, index) |
             #    Qt.ItemIsEditable)
         return Qt.ItemIsEnabled
-        
+
     def rowCount(self, index=QModelIndex()):
         return len(self._data)
-    
+
     def columnCount(self, index=QModelIndex()):
         return C_VAL_RB + len(self._unitsys) + 1
 
@@ -329,14 +331,14 @@ class ElementPropertyTableModel(QAbstractTableModel):
     def isActive(self, irow):
         return irow not in self._inactive
 
-    
+
 class ElementPropertyView(QTableView):
     def __init__(self, parent = None):
         QTableView.__init__(self, parent)
 
     def disableElement(self, checked=True, irow=-1):
         if irow < 0: return
-        print "Disable element:", irow
+        print("Disable element:", irow)
         self.model().setElementActive(irow, not checked)
 
 
@@ -360,7 +362,7 @@ class ElementPropertyView(QTableView):
             cmenu.addAction(
                 "&Copy PV",
                 partial(c.setText, pvs), "CTRL+C")
-                            
+
         cmenu.addAction(m_dis)
         cmenu.exec_(e.globalPos())
 
@@ -427,7 +429,7 @@ class ElementEditor(QtGui.QDialog):
         self.lblRange = QLabel("")
         self.valMeter = Qwt.QwtThermo()
         self.valMeter.setOrientation(Qt.Horizontal, Qwt.QwtThermo.BottomScale)
-        self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding, 
+        self.valMeter.setSizePolicy(QSizePolicy.MinimumExpanding,
                                     QSizePolicy.Fixed)
         self.valMeter.setEnabled(False)
         self.ledSet = QLineEdit("")
@@ -495,7 +497,7 @@ class ElementEditor(QtGui.QDialog):
         self.gpCellEditor.setVisible(False)
 
         self.model = ElementPropertyTableModel()
-        self.connect(self.model, 
+        self.connect(self.model,
                      SIGNAL("toggleElementState(PyQt_PyObject, bool)"),
                      self.elementStateChanged)
         self.tableview = ElementPropertyView()
@@ -521,11 +523,11 @@ class ElementEditor(QtGui.QDialog):
         vbox.addWidget(self.gpCellEditor)
         self.setLayout(vbox)
 
-        #self.connect(self.elemName, SIGNAL("editingFinished()"), 
+        #self.connect(self.elemName, SIGNAL("editingFinished()"),
         #             self.refreshTable)
-        self.connect(self.elemName, SIGNAL("returnPressed()"), 
+        self.connect(self.elemName, SIGNAL("returnPressed()"),
                      self._reload_elements)
-        self.connect(self.elemField, SIGNAL("returnPressed()"), 
+        self.connect(self.elemField, SIGNAL("returnPressed()"),
                      self._reload_elements)
         #self.connect(self.elemName, SIGNAL("currentIndexChanged(QString)"),
         #             self.refreshTable)
@@ -555,7 +557,7 @@ class ElementEditor(QtGui.QDialog):
 
     #def timerEvent(self, e):
     #    if self.model.rowCount() < 1: return
-    # 
+    #
     #    #row1 = self.tableview.rowAt(0)
     #    #if row1 == -1: row1 = 0
     #    #row2 = self.tableview.rowAt(self.height())
@@ -576,7 +578,7 @@ class ElementEditor(QtGui.QDialog):
 
     def reloadElements(self, elems):
         self.model.loadElements(elems)
-        print "model size:", self.model.rowCount(), self.model.columnCount()
+        print("model size:", self.model.rowCount(), self.model.columnCount())
         #for i in range(self.model.rowCount()):
         #    #print i, elem.name, fld, self.model._value[i]
         #    if self.model.isSubHeader(i):
@@ -620,8 +622,8 @@ class ElementEditor(QtGui.QDialog):
         self._active_idx = idx
         val, succ = self.model.data(idx).toDouble()
         if not succ:
-            print "can not convert value {0} for {1}.{2}".format(
-                self.model.data(idx), elem, fld)
+            print("can not convert value {0} for {1}.{2}".format(
+                self.model.data(idx), elem, fld))
         self._active_sp = val
         #print "{0}, {1}".format(elem, fld), val
         if elem.boundary(fld) is None:
@@ -669,7 +671,7 @@ class ElementEditor(QtGui.QDialog):
         self.lblNameField.setText("{0}.{1}".format(elem.name, fld))
         if True:
             self.lblRange.setText(str(bd))
-        elif bd is None or bd[0] is None or bd[1] is None: 
+        elif bd is None or bd[0] is None or bd[1] is None:
             self.valMeter.setEnabled(False)
         else:
             rg = Qwt.QwtDoubleInterval(bd[0], bd[1])
@@ -745,7 +747,7 @@ if __name__ == "__main__":
     form = ElementEditor(None)
     form.reloadElements(elems)
     #form.resize(800, 600)
-    print "Elements reloaded"
+    print("Elements reloaded")
     #form.reloadElements("*")
     form.show()
     cothread.WaitForQuit()

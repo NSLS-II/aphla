@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 import sys, os
 import os.path as osp
 import stat
@@ -64,10 +66,10 @@ class TinkerMainDatabase(SQLiteDatabase):
             os.chmod(filepath, st.st_mode | stat.S_IWGRP)
             SQLiteDatabase.__init__(self, filepath=filepath,
                                     create_folder=False)
-            print 'aptinker Main database file not found.'
-            print 'Creating and initializing the Main database...'
+            print('aptinker Main database file not found.')
+            print('Creating and initializing the Main database...')
             self._initTables()
-            print 'Done'
+            print('Done')
 
     #----------------------------------------------------------------------
     def _initTables(self):
@@ -422,7 +424,7 @@ class TinkerMainDatabase(SQLiteDatabase):
         conv_data_list = []
         for e in all_elems:
             d = e.getUnitSystems()
-            for f, unitsys in d.iteritems():
+            for f, unitsys in d.items():
                 if len(unitsys) == 1:
                     inv = 0
                     polarity = +1
@@ -444,7 +446,7 @@ class TinkerMainDatabase(SQLiteDatabase):
                     conv_data_list.append(conv_data)
 
                 else:
-                    for k, v in e._field[f].unitconv.iteritems():
+                    for k, v in e._field[f].unitconv.items():
                         inv = 0
                         src_unitsys, dst_unitsys = k
                         src_unitsymb = e.getUnit(f, unitsys=src_unitsys)
@@ -1121,9 +1123,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                     dst_unitsymb=src_unitsymb, inv=0, append_new=append_new)
             else:
                 inv = 0
-                if unitconv_dict.has_key((None, dst_unitsys)):
+                if (None, dst_unitsys) in unitconv_dict:
                     uc = unitconv_dict[(None, dst_unitsys)]
-                elif unitconv_dict.has_key((dst_unitsys, None)):
+                elif (dst_unitsys, None) in unitconv_dict:
                     uc = unitconv_dict[(dst_unitsys, None)]
                     if uc.invertible:
                         inv = 1
@@ -1146,9 +1148,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                     dst_unitsymb=dst_unitsymb, inv=inv, append_new=append_new)
 
                 inv = 0
-                if unitconv_dict.has_key((dst_unitsys, None)):
+                if (dst_unitsys, None) in unitconv_dict:
                     uc = unitconv_dict[(dst_unitsys, None)]
-                elif unitconv_dict.has_key((None, dst_unitsys)):
+                elif (None, dst_unitsys) in unitconv_dict:
                     uc = unitconv_dict[(None, dst_unitsys)]
                     if uc.invertible:
                         inv = 1
@@ -1214,15 +1216,15 @@ class TinkerMainDatabase(SQLiteDatabase):
             elif unitconv_type == 'interp1':
                 xp, fp = uc['conv_data']
                 if not np.all(np.diff(xp) > 0.0):
-                    print 'Error for unit conversion definition: '
-                    print uc
+                    print('Error for unit conversion definition: ')
+                    print(uc)
                     raise ValueError('Monotonically increasing x array needed '
                                      'for interpolation')
                 if (inv == 1) and \
                    (not np.all(np.diff(fp) > 0.0)) and \
                    (not np.all(np.diff(fp) < 0.0)):
-                    print 'Error for unit conversion definition: '
-                    print uc
+                    print('Error for unit conversion definition: ')
+                    print(uc)
                     raise ValueError(
                         'y array must be monotonically increasing or decreasing '
                         'for the interpolation to be invertible.')
@@ -1285,9 +1287,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                                 (nCol-1,
                                  self.getCurrentEpochTimestampSQLiteFuncStr(
                                      data_type='float'))])
-                print ('Added the following as a new row to Table "{0:s}"'.
-                       format(table_name))
-                print list_of_tuples
+                print('Added the following as a new row to Table "{0:s}"'.
+                      format(table_name))
+                print(list_of_tuples)
                 return self.get_unitconv_id(
                     uc, src_unitsys_id, dst_unitsys_id,
                     src_unitsymb, dst_unitsymb, inv, append_new=False)
@@ -1361,9 +1363,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                     comparison_value_repr = comparison_value
                 else:
                     comparison_value_repr = blobloads(comparison_value)
-                print 'Added a new row with', comparison_value_repr, \
+                print('Added a new row with', comparison_value_repr,
                       ('for Column "{0:s}" in Table "{1:s}"'.
-                       format(comparison_col_name, table_name))
+                       format(comparison_col_name, table_name)))
                 return self.getMatchingPrimaryKeyIdFrom2ColTable(
                     table_name, primary_col_name, comparison_col_name,
                     comparison_value, blob=blob, append_new=False)
@@ -1416,9 +1418,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                                     (nCol-1,
                                      self.getCurrentEpochTimestampSQLiteFuncStr(
                                          data_type='float'))])
-                print ('Added the following as a new row to Table "{0:s}"'.
-                       format(table_name))
-                print list_of_tuples
+                print('Added the following as a new row to Table "{0:s}"'.
+                      format(table_name))
+                print(list_of_tuples)
                 return self.get_elem_prop_id(
                     machine_name_id, lattice_name_id, aphla_elem,
                     append_new=False)
@@ -1449,9 +1451,9 @@ class TinkerMainDatabase(SQLiteDatabase):
 
                 list_of_tuples = [(elem_prop_id, field_id)]
                 self.insertRows(table_name, list_of_tuples)
-                print ('Added the following as a new row to Table "{0:s}"'.
-                       format(table_name))
-                print list_of_tuples
+                print('Added the following as a new row to Table "{0:s}"'.
+                      format(table_name))
+                print(list_of_tuples)
                 return self.get_aphla_ch_id(
                     elem_prop_id, field_id, append_new=False)
 
@@ -1541,9 +1543,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                 list_of_tuples = [(pv_str, readonly, array_size,
                                    pv_data_type_id)]
                 self.insertRows(table_name, list_of_tuples)
-                print ('Added the following as a new row to Table "{0:s}"'.
-                       format(table_name))
-                print list_of_tuples
+                print('Added the following as a new row to Table "{0:s}"'.
+                      format(table_name))
+                print(list_of_tuples)
                 return self.get_pv_id(pv_str, readonly, append_new=False)
             else:
                 return None
@@ -1640,7 +1642,7 @@ class TinkerMainDatabase(SQLiteDatabase):
             if append_new:
                 pv_array_sizes = self.get_pv_array_sizes(pvsp_id, pvrb_id)
                 if pv_array_sizes is None:
-                    print 'PV ids not found. A new channel will NOT be created.'
+                    print('PV ids not found. A new channel will NOT be created.')
                 else:
                     pvsp_array_size, pvrb_array_size = pv_array_sizes
                 nCol = len(self.getColumnNames(table_name))
@@ -1653,9 +1655,9 @@ class TinkerMainDatabase(SQLiteDatabase):
                                     (nCol-1,
                                      self.getCurrentEpochTimestampSQLiteFuncStr(
                                          data_type='float'))])
-                print ('Added the following as a new row to Table "{0:s}"'.
-                       format(table_name))
-                print list_of_tuples
+                print('Added the following as a new row to Table "{0:s}"'.
+                      format(table_name))
+                print(list_of_tuples)
                 return self.get_channel_id(
                     pvsp_id, pvrb_id, unitsys_id, channel_name_id,
                     unitconv_toraw_id, unitconv_fromraw_id,
@@ -1714,7 +1716,7 @@ class TinkerMainDatabase(SQLiteDatabase):
         ss_folderpath = osp.join(config.SNAPSHOT_FOLDERPATH,
                                  date_month_folder_str(ss_ctime))
         if not osp.exists(ss_folderpath):
-            os.makedirs(ss_folderpath, mode=0764)
+            os.makedirs(ss_folderpath, mode=0o764)
             # ^ make the folder also writable by group
 
         ss_filepath = osp.join(
@@ -1841,9 +1843,9 @@ class TinkerMainDatabase(SQLiteDatabase):
             if append_new:
                 list_of_tuples = [userinfo_tuple]
                 self.insertRows(table_name, list_of_tuples)
-                print ('Added the following as a new row to Table "{0:s}"'.
-                       format(table_name))
-                print list_of_tuples
+                print('Added the following as a new row to Table "{0:s}"'.
+                      format(table_name))
+                print(list_of_tuples)
                 return self.get_user_id(userinfo_tuple, append_new=False)
             else:
                 return None

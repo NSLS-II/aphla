@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 class Ramp(object):
     """Represents a ramp that consists of key points descriptions"""
     def __init__(self, bipolar, max_time_slices):
@@ -51,11 +53,11 @@ class Ramp(object):
                     errors += 1
 
         if (int(self.points[0][0]) != 0):
-            print "Initial time stamp (0) not found: first is", self.points[0][0]
+            print("Initial time stamp (0) not found: first is", self.points[0][0])
             errors += 1
 
         if (int(self.points[-1][0]) != self.max_time_slices - 1):
-            print "Final time stamp (", self.max_time_slices - 1, ") not found: latest is", self.points[-1][0]
+            print("Final time stamp (", self.max_time_slices - 1, ") not found: latest is", self.points[-1][0])
             errors += 1
 
         return errors
@@ -63,7 +65,7 @@ class Ramp(object):
     def _verify(self):
         errors = self._verify_key_points()
         if (errors != 0):
-            print "Verification failure:", errors, "error(s). Check mistakes above."
+            print("Verification failure:", errors, "error(s). Check mistakes above.")
             self._invalidate()
 
     def construct(self, max_delta, points):
@@ -74,7 +76,7 @@ class Ramp(object):
             if len(self.points) != 0:
                 self._verify()
         except (TypeError, ValueError) as e:
-            print "Exception caused by Ramp construction parameters: {0}.".format(e)
+            print("Exception caused by Ramp construction parameters: {0}.".format(e))
             self.points = None
 
         return self.points

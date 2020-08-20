@@ -1,9 +1,11 @@
+from __future__ import print_function, division, absolute_import
+
 import numpy as np
 import h5py
 
-from catools import caget
-from machines import lattices, getLattice
-from hlalib import getElements, fget
+from .catools import caget
+from .machines import lattices, getLattice
+from .hlalib import getElements, fget
 
 class Snapshot(object):
     def __init__(self):
@@ -33,7 +35,7 @@ class Snapshot(object):
         return self._rec[i], self._diff[i]
 
     def load(self, h5fname, latname):
-        print "Loading", h5fname, latname
+        print("Loading {0} {1}".format(h5fname, latname))
         f = h5py.File(str(h5fname), 'r')
         self._rec.extend(self._read_h5_subgroup(f[latname], "__scalars__"))
         self._rec.extend(self._read_h5_subgroup(f[latname], "__dead__"))
@@ -43,7 +45,7 @@ class Snapshot(object):
             if not k.startswith("wf_"): continue
             self._rec.append(
                 (v.attrs["element"], v.attrs["field"], list(v),
-                 v.attrs["pv"], v.attrs["rw"], len(v), 
+                 v.attrs["pv"], v.attrs["rw"], len(v),
                  v.attrs["timestamp"]))
         f.close()
         self._diff = [None] * len(self._rec)
@@ -63,7 +65,7 @@ class Snapshot(object):
 
         if rel: return rdiff
         else: return diff
-        
+
 
     def sub(self, rhs, relative = False):
         #k1 = dict([((r[0], r[1]), i) for i,r in enumerate(self._rec)])
@@ -78,13 +80,13 @@ class Snapshot(object):
             if i2 is None:
                 self._diff[i] = None
                 continue
-            
+
             self._diff[i] = self._calc_diff(r[2], r2[2], r[5], relative)
 
 
 #def plotLatticeOrbit(dsnames, withLive=True, figsize=(16,4)):
 #
-    
+
 def plotLattice(fname, h5group = "/", pvs = [], elemflds = [],
                 withLive=False, figsize=(16,4)):
     """
@@ -124,6 +126,6 @@ def plotLattice(fname, h5group = "/", pvs = [], elemflds = [],
         ax2.set_ylabel("Live-snapshot")
     else:
         plt.plot(data[:,0], '-x', label="snapshot")
-        
+
     plt.grid(True)
     return fig

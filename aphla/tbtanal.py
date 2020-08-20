@@ -1,11 +1,11 @@
+from __future__ import print_function, division, absolute_import
+
 """
 :author: Lingyun Yang <lyyang@bnl.gov>
 :license:
 
 BPM turn-by-turn data analysis
 """
-
-from __future__ import print_function
 
 import numpy as np
 import time, datetime, sys, os
@@ -63,7 +63,7 @@ def _calcPhase(x, **kwargs):
         i0, i1 = int(np.floor(nulim[0] * N)), int(np.ceil(nulim[1] * N))
         f = np.fft.fftfreq(N)
         i = np.argmax(np.abs(X[i0:i1])) + i0
-        nu = 1+f[i] if f[i] < 0.0 else f[i] 
+        nu = 1+f[i] if f[i] < 0.0 else f[i]
 
     t = np.arange(N)
     c = np.sum(np.cos(2*np.pi*nu*t) * x)
@@ -104,7 +104,7 @@ def _cor(x1, x2):
 def calcPhaseAdvance(xtbt, **kwargs):
     """
     calculate the phase advance from turn-by-turn data
-    
+
     xtbt - turn by turn data (nbpm, nturns)
 
     Note: This is not the Castro method where tune is needed, from DFT or elsewhere.

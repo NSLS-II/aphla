@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 """GUI application for launching other GUI applications
 
@@ -97,7 +98,7 @@ ICONS = dict(page=':/folder.png', info=':/info_item.png', txt=':/txt_item.png',
              mfile=':/matlab_mfile.png')
 DEFAULT_ICON_NAMES = dict(page='page', info='info', txt='txt', py='py',
                           exe='gui_app')
-DEFAULT_ICONS = {k: ICONS[v] for (k,v) in DEFAULT_ICON_NAMES.iteritems()}
+DEFAULT_ICONS = {k: ICONS[v] for (k,v) in DEFAULT_ICON_NAMES.items()}
 ITEM_PROPERTIES_DIALOG_OBJECTS = dict(
     dispName = 'lineEdit_dispName',
     itemType = 'comboBox_itemType',
@@ -327,7 +328,7 @@ class LauncherModel(QStandardItemModel):
             k = temp_alias['key']
             v = temp_alias['value']
             if len(k.split()) != 1:
-                print 'An alias cannot contain any whitespace.'
+                print('An alias cannot contain any whitespace.')
                 raise ValueError('Invalid alias found: {0:s}'.format(k))
             else:
                 aliases[i]['key']   = '%' + k
@@ -344,7 +345,7 @@ class LauncherModel(QStandardItemModel):
             k = alias['key']
             v = alias['value']
             if len(k.split()) != 1:
-                print 'An alias cannot contain any whitespace.'
+                print('An alias cannot contain any whitespace.')
                 raise ValueError('Invalid alias found: {0:s}'.format(k))
             else:
                 aliases[i]['key']   = k[1:] # Remove the prefix "%"
@@ -474,14 +475,14 @@ class LauncherModel(QStandardItemModel):
                     cwd = self.subs_aliases(item.cwd)
                     cwd = _subs_tilde_with_home(cwd)
                     if osp.exists(cwd):
-                        print 'Changing directory to {0:s}'.format(cwd)
+                        print('Changing directory to {0:s}'.format(cwd))
                         os.chdir(cwd)
                         if cwd not in sys.path:
                             sys.path.insert(0, cwd)
                     else:
-                        print 'No such directory exist: {0:s}'.format(cwd)
-                        print ('Trying to import "{0:s}" without cd...'.
-                               format(item.moduleName))
+                        print('No such directory exist: {0:s}'.format(cwd))
+                        print(('Trying to import "{0:s}" without cd...'.
+                               format(item.moduleName)))
 
                 topLevelModule = __import__(item.moduleName)
                 submod_list = item.moduleName.split('.')
@@ -543,7 +544,7 @@ The following file does not exist:
                             else:
                                 help_text += line
             except:
-                print '* Failed to get help text for the file "{0}"'.format(f)
+                print('* Failed to get help text for the file "{0}"'.format(f))
 
         elif header_type == 'matlab':
             in_header_quote = False
@@ -574,17 +575,17 @@ The following file does not exist:
             source_dict = xmltodict.parse(css_text)
             help_button_widget = [
                 w for w in source_dict['display']['widget']
-                if w.has_key('text') \
+                if 'text' in w \
                 and isinstance(w['text'], (str, unicode)) \
                 and (w['text'].strip().lower() == 'help') \
-                and w.has_key('@typeId') \
+                and '@typeId' in w \
                 and (w['@typeId'] ==
                      'org.csstudio.opibuilder.widgets.ActionButton') \
-                and w.has_key('actions') \
-                and w['actions'].has_key('action') \
-                and w['actions']['action'].has_key('@type') \
+                and 'actions' in w \
+                and 'action' in w['actions'] \
+                and '@type' in w['actions']['action'] \
                 and (w['actions']['action']['@type'] == 'OPEN_DISPLAY') \
-                and w['actions']['action'].has_key('path')
+                and 'path' in w['actions']['action']
             ]
 
             if len(help_button_widget) == 0:
@@ -617,10 +618,10 @@ The following file does not exist:
                         w['widget'] for w in help_dict['display']['widget']
                         if (w['@typeId'] ==
                             'org.csstudio.opibuilder.widgets.groupingContainer') \
-                        and w['widget'].has_key('@typeId') \
+                        and '@typeId' in w['widget'] \
                         and (w['widget']['@typeId'] ==
                              'org.csstudio.opibuilder.widgets.Label')
-                        and w['widget'].has_key('text')
+                        and 'text' in w['widget']
                     ]
 
                     if len(help_label_widget) == 0:
@@ -654,9 +655,9 @@ The following file does not exist:
         """
 
         if version == '1.0':
-            if xml_dict.has_key('hierarchy'):
+            if 'hierarchy' in xml_dict:
                 h = xml_dict['hierarchy']
-                if h.has_key('alias'):
+                if 'alias' in h:
                     for a in self._validate_aliases(h['alias']):
                         existing_alias_keys = [a2['key'] for a2 in self.aliases]
                         if a['key'] in existing_alias_keys:
@@ -668,7 +669,7 @@ The following file does not exist:
             else:
                 d = xml_dict
 
-            if d.has_key('dispName'):
+            if 'dispName' in d:
                 dispName = d['dispName']
 
                 item = LauncherModelItem(dispName)
@@ -694,7 +695,7 @@ The following file does not exist:
 
                 item.updateIconAndColor()
 
-                if d.has_key('item'):
+                if 'item' in d:
                     if isinstance(d['item'], list):
                         child_items = d['item']
                     else:
@@ -1237,7 +1238,7 @@ class IconPickerModel(QStandardItemModel):
 
         QStandardItemModel.__init__(self)
 
-        for i, (k, v) in enumerate(ICONS.iteritems()):
+        for i, (k, v) in enumerate(ICONS.items()):
             item = QStandardItem()
             item.setToolTip(k)
             item.setIcon(QIcon(v))
@@ -1339,7 +1340,7 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
                                                       Qt.MatchExactly)
                             obj.setCurrentIndex(matchedInd)
                         else:
-                            print 'No matching item found in {0:s}'.format(objName)
+                            print('No matching item found in {0:s}'.format(objName))
                             search_string = DEFAULT_XML_ITEM[propName]
                             print ('Using default value of "{0:s}" for "{1:s}"'.
                                    format(search_string, propName))
@@ -1662,7 +1663,7 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
             obj.setEnabled(False)
 
             for (propName, objName) in \
-                ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
+                ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].items():
                 obj = getattr(self, objName)
                 if isinstance(obj, (QLineEdit, QPlainTextEdit)):
                     obj.setReadOnly(True)
@@ -1688,7 +1689,7 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
                 obj.setIcon(QIcon(DEFAULT_ICONS[itemType]))
                 obj.setToolTip(DEFAULT_ICON_NAMES[itemType])
 
-        for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
+        for (propName, objName) in ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].items():
             obj = getattr(self, objName)
             if objName in disabledObjectNames:
                 obj.setEnabled(False)
@@ -1771,7 +1772,7 @@ class LauncherModelItemPropertiesDialog(QDialog, Ui_Dialog):
         self.origItem.icon = obj.toolTip()
 
         for (propName, objName) in \
-            ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].iteritems():
+            ITEM_PROPERTIES_DIALOG_OBJECTS[itemType].items():
             obj = getattr(self, objName)
             if objName.startswith('lineEdit'):
                 setattr(self.origItem, propName, obj.text())
@@ -2415,9 +2416,9 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         if osp.exists(USER_TEMP_XML_FILEPATH):
             try: os.remove(USER_TEMP_XML_FILEPATH)
             except:
-                print ' '
-                print 'WARNING: Failed to delete temporary user XML file.'
-                print ' '
+                print (' ')
+                print ('WARNING: Failed to delete temporary user XML file.')
+                print (' ')
 
         # Save QSettings
         self.saveSettings()
@@ -2777,7 +2778,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
 
         else: # When right-clicked on side pane
 
-            print self.getCurrentRootPath()
+            print(self.getCurrentRootPath())
 
             if not self.selectedItemList:
                 return
@@ -3006,7 +3007,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             elif listView.viewMode() == CustomListView.ListMode:
                 self.comboBox_view_mode.setCurrentIndex(self.view_mode_index_list)
             else:
-                print 'unknown view mode'
+                print('unknown view mode')
 
             self.onSelectionChange(listView.selectionModel(), None)
 
@@ -3018,7 +3019,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             self.onSelectionChange(treeView.selectionModel(), None)
 
         else:
-            print 'invalid visible stack page index'
+            print('invalid visible stack page index')
 
         self.updatePath()
 
@@ -3618,8 +3619,8 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         else:
             shutil.copy(USER_XML_FILEPATH, save_filepath)
 
-        print ('Successfully exported current launcher user hierarchy to {0:s}'.
-               format(save_filepath))
+        print('Successfully exported current launcher user hierarchy to {0:s}'.
+              format(save_filepath))
 
     #----------------------------------------------------------------------
     def openPropertiesDialog(self):
@@ -4388,7 +4389,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
             matchedMainPane = [m for m in self.mainPaneList
                                if m.treeView == childWidget]
         else:
-            print 'Unexpected child widget type'
+            print('Unexpected child widget type')
             return None
 
         if len(matchedMainPane) == 1:
@@ -4476,7 +4477,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         if parentPathIndex.isValid():
             pModelIndex = QPersistentModelIndex(parentPathIndex)
         else:
-            print 'Invalid model index detected.'
+            print('Invalid model index detected.')
             return
 
         m.pathHistory = m.pathHistory[:(m.pathHistoryCurrentIndex+1)]
@@ -4578,7 +4579,7 @@ class LauncherView(QMainWindow, Ui_MainWindow):
         elif view_mode_str == 'Details View':
             triggeredAction = self.actionDetailsView
         else:
-            print 'Unknown view mode'
+            print('Unknown view mode')
 
         triggeredAction.setChecked(True)
         self.actionGroupViewMode.emit(SIGNAL('triggered(QAction *)'),
@@ -5121,18 +5122,18 @@ class LauncherApp(QObject):
             message = ('### Trying to launch "{0:s}"...'.
                        format(command_expression))
             self.view.statusBar().showMessage(message)
-            print message
+            print(message)
             self.view.repaint()
             subs_cmd = self.model.subs_aliases(command_expression)
             subs_cmd = _subs_tilde_with_home(subs_cmd)
             p = Popen(subs_cmd, shell=True, stdin=PIPE, cwd=workingDir)
-            print '** PID = {0:d}'.format(p.pid)
-            print ' '
+            print('** PID = {0:d}'.format(p.pid))
+            print(' ')
             message = ('# Launch sequence for "{0:s}" has been completed.'.
                        format(subs_cmd))
             self.view.statusBar().showMessage(message)
-            print ' '
-            print message
+            print(' ')
+            print(message)
             self.subprocs.append(dict(p=p, path=item_path,
                                       cmd=command_expression))
             if subs_cmd.startswith('run-css '):
@@ -5165,8 +5166,8 @@ class LauncherApp(QObject):
             err_info_str += ('\nError occurred at aplauncher.py on Line '
                              '{0:d}'.format(ei[-1].tb_lineno))
             msgBox.setInformativeText(err_info_str)
-            print '#', message
-            print err_info_str
+            print('#', message)
+            print(err_info_str)
             msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
 
@@ -5243,20 +5244,20 @@ class LauncherApp(QObject):
             message = ('### Trying to open "{0:s}" with the editor "{1:s}"...'.
                        format(filepath, editor))
             self.view.statusBar().showMessage(message)
-            print message
+            print(message)
             self.view.repaint()
             if editor == 'gedit':
                 stdin = open(os.devnull, 'r')
             else:
                 stdin = PIPE
             p = Popen(cmd, shell=True, stdin=stdin)
-            print '** PID = {0:d}'.format(p.pid)
-            print ' '
+            print('** PID = {0:d}'.format(p.pid))
+            print(' ')
             message = ('# Launch sequence for editing "{0:s}" has been completed.'.
                        format(filepath))
             self.view.statusBar().showMessage(message)
-            print ' '
-            print message
+            print(' ')
+            print(message)
             self.subprocs.append(dict(p=p, path=item_path, cmd=cmd))
 
         except:
@@ -5269,8 +5270,8 @@ class LauncherApp(QObject):
             err_info_str += ('\nError occurred at aplauncher.py on Line '
                              '{0:d}'.format(ei[-1].tb_lineno))
             msgBox.setInformativeText(err_info_str)
-            print '#', message
-            print err_info_str
+            print('#', message)
+            print(err_info_str)
             msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
 
@@ -5300,16 +5301,16 @@ class LauncherApp(QObject):
             message = ('### Trying to open {0:s} "{1:s}"...'.
                        format(sub_msg, filepath))
             self.view.statusBar().showMessage(message)
-            print message
+            print(message)
             self.view.repaint()
             p = Popen(cmd, shell=True, stdin=PIPE, cwd=wd)
-            print '** PID = {0:d}'.format(p.pid)
-            print ' '
+            print('** PID = {0:d}'.format(p.pid))
+            print(' ')
             message = ('# Launch sequence for opening {0:s} "{1:s}" has been completed.'.
                        format(sub_msg, filepath))
             self.view.statusBar().showMessage(message)
-            print ' '
-            print message
+            print(' ')
+            print(message)
             self.subprocs.append(dict(p=p, path=item_path, cmd=cmd))
 
 
@@ -5323,8 +5324,8 @@ class LauncherApp(QObject):
             err_info_str += ('\nError occurred at aplauncher.py on Line '
                              '{0:d}'.format(ei[-1].tb_lineno))
             msgBox.setInformativeText(err_info_str)
-            print '#', message
-            print err_info_str
+            print('#', message)
+            print(err_info_str)
             msgBox.setIcon(QMessageBox.Critical)
             msgBox.exec_()
 
@@ -5349,7 +5350,7 @@ class LauncherApp(QObject):
             workingDir = self.model.subs_aliases(workingDir)
             workingDir = _subs_tilde_with_home(workingDir)
             os.chdir(workingDir)
-            print 'Changed working directory to {0:s}'.format(workingDir)
+            print('Changed working directory to {0:s}'.format(workingDir))
             if workingDir not in sys.path:
                 sys.path.insert(0, workingDir)
 
@@ -5358,14 +5359,14 @@ class LauncherApp(QObject):
         try:
             message = 'Trying to import ' + module_name + '...'
             self.view.statusBar().showMessage(message)
-            print message
+            print(message)
             self.view.repaint()
             __import__(module_name)
             module = sys.modules[module_name]
         except ImportError as e:
             message = 'Importing {0:s} failed: {1:s}'.format(module_name, str(e))
             self.view.statusBar().showMessage(message)
-            print message
+            print(message)
             msgBox = QMessageBox()
             msgBox.setText(message)
             #msgBox.setInformativeText( str(e) )
@@ -5383,7 +5384,7 @@ class LauncherApp(QObject):
             try:
                 message = 'Trying to launch ' + module_name + '...'
                 self.view.statusBar().showMessage(message)
-                print message
+                print(message)
                 self.view.repaint()
                 if args not in ('', 'N/A'):
                     if ('"' in args) and (args.count('"') % 2 == 0):
@@ -5398,14 +5399,14 @@ class LauncherApp(QObject):
                     arg_list = [False if a in ('False', 'false') else a
                                 for a in arg_list]
 
-                    print 'Arguments ='
-                    print arg_list
+                    print('Arguments =')
+                    print(arg_list)
                     self.appList.append(module.make(*arg_list))
                 else:
                     self.appList.append(module.make())
                 message = module_name + ' successfully launched.'
                 self.view.statusBar().showMessage(message)
-                print message
+                print(message)
             except:
                 msgBox = QMessageBox()
                 msgBox.setText( (
@@ -5438,16 +5439,16 @@ class LauncherApp(QObject):
 
         self.update_running_subprocs()
 
-        print ' '
-        print '### Currently Running Subprocesses ###'
-        print '(PID) : (Path in Launcher) : (Command Expression)'
+        print(' ')
+        print('### Currently Running Subprocesses ###')
+        print('(PID) : (Path in Launcher) : (Command Expression)')
 
         if len(self.subprocs) == 0:
-            print '* There is currently no running subprocess.'
+            print('* There is currently no running subprocess.')
         else:
             for subp_dict in self.subprocs:
-                print '{0:d} : {1:s} : {2:s}'.format(
-                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd'])
+                print('{0:d} : {1:s} : {2:s}'.format(
+                    subp_dict['p'].pid, subp_dict['path'], subp_dict['cmd']))
 
     #----------------------------------------------------------------------
     def _shutdown_subprocs(self):
@@ -5482,8 +5483,8 @@ class LauncherApp(QObject):
         pp = Popen(cmd, shell=True, stdout=PIPE)
         out, err = pp.communicate()
         if err:
-            print cmd
-            print 'ERROR: {0:s}'.format(err)
+            print(cmd)
+            print('ERROR: {0:s}'.format(err))
         else:
             lines = out.splitlines()
             split_lines = [line.split()[1:] for line in lines]
@@ -5512,16 +5513,16 @@ class LauncherApp(QObject):
         if parent_Popen_obj is not None:
             if parent_Popen_obj.poll() is not None:
                 parent_Popen_obj.kill()
-                print 'Force killed {0:s}'.format(process_tag)
+                print('Force killed {0:s}'.format(process_tag))
             else:
-                print 'Gracefully terminated {0:s}'.format(process_tag)
+                print('Gracefully terminated {0:s}'.format(process_tag))
         else:
             try:
                 os.kill(parent_pid, 0)
                 os.kill(parent_pid, SIGKILL)
-                print 'Force killed {0:s}'.format(process_tag)
-            except OSError, e:
-                print 'Gracefully terminated {0:s}'.format(process_tag)
+                print('Force killed {0:s}'.format(process_tag))
+            except OSError as e:
+                print('Gracefully terminated {0:s}'.format(process_tag))
 
     #----------------------------------------------------------------------
     def getusername(self):
@@ -5566,7 +5567,7 @@ def make(initRootPath='', new_window=False):
     global APP
 
     if new_window:
-        print 'Starting a launcher in a new window'
+        print('Starting a launcher in a new window')
 
         new_app = LauncherApp(initRootPath)
         new_app.view.show()
@@ -5584,7 +5585,7 @@ def isCothreadUsed():
     g = copy(globals())
 
     using_cothread = False
-    for (k,v) in g.iteritems():
+    for (k,v) in g.items():
         if isinstance(v, types.ModuleType):
             if v.__name__ == 'cothread':
                 using_cothread = True
@@ -5630,10 +5631,10 @@ def main():
 
     global APP
 
-    #print sys.argv
+    #print(sys.argv)
     if len(sys.argv) == 2:
         initRootPath = sys.argv[1]
-        print 'Initial path set to {0:s}'.format(initRootPath)
+        print('Initial path set to {0:s}'.format(initRootPath))
     else:
         initRootPath = SEPARATOR + 'root'
 

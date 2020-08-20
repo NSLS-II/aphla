@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 import sip
 sip.setapi('QString', 2)
@@ -954,7 +955,7 @@ class ConfigTableModel(QAbstractTableModel):
                            in set(self.abstract.channel_ids)]))
          )
         id_map = [u_channel_ids.index(i) for i in self.abstract.channel_ids]
-        for k, v in unique.iteritems():
+        for k, v in unique.items():
             self.d[k] = [v[i] for i in id_map]
         unitconv_toraw_ids   = [u_unitconv_toraw_ids[i]   for i in id_map]
         unitconv_fromraw_ids = [u_unitconv_fromraw_ids[i] for i in id_map]
@@ -981,7 +982,7 @@ class ConfigTableModel(QAbstractTableModel):
                 ','.join([str(ch_id) for ch_id in u_channel_ids]))
         )
         id_map = [u_channel_ids.index(i) for i in self.abstract.channel_ids]
-        for k, v in unique.iteritems():
+        for k, v in unique.items():
             self.d[k] = [v[i] for i in id_map]
 
         # Change string representation into floats so that these columns
@@ -1238,7 +1239,7 @@ class ConfigTableModel(QAbstractTableModel):
             self.blockSignals(False)
             return False
 
-        np_array_keys = [k for k, v in self.d.iteritems()
+        np_array_keys = [k for k, v in self.d.items()
                          if isinstance(v, np.ndarray)]
 
         for r in row_list[::-1]:
@@ -1247,7 +1248,7 @@ class ConfigTableModel(QAbstractTableModel):
             self.abstract.weights.pop(r)
             self.abstract.caput_enabled_rows.pop(r)
 
-            for k, v in self.d.iteritems():
+            for k, v in self.d.items():
                 if k not in np_array_keys:
                     v.pop(r)
 
@@ -1970,10 +1971,10 @@ class SnapshotAbstractModel(QObject):
 
         tEnd_model_view = time.time()
 
-        print '# caget update only took {:.6f} seconds'.format(
-            tEnd_caget - self.caget_sent_ts_second)
-        print '# caget & model/view update took {:.6f} seconds'.format(
-            tEnd_model_view - self.caget_sent_ts_second)
+        print('# caget update only took {:.6f} seconds'.format(
+            tEnd_caget - self.caget_sent_ts_second))
+        print('# caget & model/view update took {:.6f} seconds'.format(
+            tEnd_model_view - self.caget_sent_ts_second))
 
     #----------------------------------------------------------------------
     def get_index_map_get2put(self):
@@ -2440,7 +2441,7 @@ class SnapshotTableModel(QAbstractTableModel):
     def _init_d(self):
         """"""
 
-        for k, v in self._config_table.d.iteritems():
+        for k, v in self._config_table.d.items():
             self.d[k] = v
 
         for k in self.abstract.ss_only_col_keys:
@@ -2584,8 +2585,8 @@ class SnapshotTableModel(QAbstractTableModel):
                             self._config_abstract.weights[r] = new_weight
                             self.abstract.weight_array[r]    = new_weight
             elif col_key in ('tar_SP', 'tar_ConvSP'):
-                print 'WARNING: tar_SP & tar_ConvSP are not implemented yet in'
-                print 'tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract'
+                print('WARNING: tar_SP & tar_ConvSP are not implemented yet in')
+                print('tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract')
             else:
                 return
         else:
@@ -2605,8 +2606,8 @@ class SnapshotTableModel(QAbstractTableModel):
                 self._config_abstract.weights = new_weight_array.tolist()
                 self.abstract.weight_array = new_weight_array
             elif col_key in ('tar_SP', 'tar_ConvSP'):
-                print 'WARNING: tar_SP & tar_ConvSP are not implemented yet in'
-                print 'tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract'
+                print('WARNING: tar_SP & tar_ConvSP are not implemented yet in')
+                print('tinkerModels.py: SnapshotTableModel.propagate_change_to_abstract')
             else:
                 return
 
@@ -2817,7 +2818,7 @@ class SnapshotTableModel(QAbstractTableModel):
 
                 caget_raws_arrays = []
                 if 'caget_raws_arrays' in f:
-                    for k, v in f['caget_raws_arrays'].iteritems():
+                    for k, v in f['caget_raws_arrays'].items():
                         caget_raws_arrays.append(v.value)
                 caget_raws = np.array(
                     f['caget_raws_scalars'].value.tolist() + caget_raws_arrays,
@@ -2837,7 +2838,7 @@ class SnapshotTableModel(QAbstractTableModel):
 
                 caput_raws_arrays = []
                 if 'caput_raws_arrays' in f:
-                    for k, v in f['caput_raws_arrays'].iteritems():
+                    for k, v in f['caput_raws_arrays'].items():
                         caput_raws_arrays.append(v.value)
                 caput_raws = np.array(
                     f['caput_raws_scalars'].value.tolist() + caput_raws_arrays,

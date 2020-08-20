@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
@@ -626,7 +628,7 @@ class ConfigDBSelector(QDialog, Ui_Dialog):
                 self.search_result[k] = []
         else:
             condition_str = ''
-            for k, v in self.search_params.iteritems():
+            for k, v in self.search_params.items():
                 if k in ('config_name', 'config_description'):
                     if v:
                         if condition_str != '':
@@ -789,7 +791,7 @@ def main():
     dialog = make(isModal=False, parentWindow=None)
 
     cothread.WaitForQuit()
-    print dialog.config_model.abstract.channel_ids
+    print(dialog.config_model.abstract.channel_ids)
 
 if __name__ == '__main__':
     #main()

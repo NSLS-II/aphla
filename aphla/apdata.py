@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
+from six import string_types
 
 """
 :author: Lingyun Yang <lyyang@bnl.gov>
 :license:
 
 """
-from __future__ import print_function
 
 import os
 from os.path import splitext
@@ -89,7 +90,7 @@ class OrmData:
             dst.attrs["cor_pv"] = self.cor_pv
         if self.cor_pvrb:
             dst.attrs["cor_pvrb"] = self.cor_pvrb
-            
+
         f.close()
 
     def _load_hdf5(self, filename, group = "OrbitResponseMatrix"):
@@ -102,9 +103,11 @@ class OrmData:
             return
 
         g = f[group]
-        self.bpm = zip(g["m"].attrs["bpm_name"], g["m"].attrs["bpm_field"])
+        self.bpm = list(zip(g["m"].attrs["bpm_name"].astype(str),
+                            g["m"].attrs["bpm_field"].astype(str)))
         self.bpm_pv = g["m"].attrs.get("bpm_pv", None)
-        self.cor = zip(g["m"].attrs["cor_name"], g["m"].attrs["cor_field"])
+        self.cor = list(zip(g["m"].attrs["cor_name"].astype(str),
+                            g["m"].attrs["cor_field"].astype(str)))
         self.cor_pv = g["m"].attrs.get("cor_pv", None)
         self.cor_pvrb = None
         nbpm, ncor = len(self.bpm), len(self.cor)
@@ -136,7 +139,7 @@ class OrmData:
         """
         if not os.path.exists(filename):
             raise ValueError("ORM data %s does not exist" % filename)
-        
+
         fmt = kwargs.get("format", None)
         if fmt == 'HDF5' or filename.endswith(".hdf5"):
             self._load_hdf5(filename, **kwargs)
@@ -144,14 +147,14 @@ class OrmData:
             raise ValueError("format %s is not supported" % format)
 
     def getBpm(self):
-        """The BPM names of ORM. 
+        """The BPM names of ORM.
 
         It has same order as appeared in orm rows. For a full matrix with
         coupling terms, the result may have duplicate bpm names in the return
         list.
         """
         return [(v[0], v[1]) for v in self.bpm]
-    
+
     def has(self, name, field):
         """check if the bpm is used in this ORM measurement"""
 
@@ -163,14 +166,14 @@ class OrmData:
 
     def getCor(self):
         """a list of corrector names.
-        
+
         The same order as appeared in orm columns. For a full matrix with
         coupling terms, it may have duplicate trim names in the return list.
         """
         return [(v[0], v[1]) for v in self.cor]
 
     def maskCrossTerms(self):
-        """mask the H/V and V/H terms. 
+        """mask the H/V and V/H terms.
 
         If the coupling between horizontal/vertical kick and
         vertical/horizontal BPM readings, it's reasonable to mask out
@@ -183,7 +186,7 @@ class OrmData:
                 if bfld != cfld: self._mask[i,j] = 1
 
     def index(self, elem, field):
-        """return the index for given (element, fields). 
+        """return the index for given (element, fields).
 
         Raise ValueError if does not exist.
 
@@ -197,7 +200,7 @@ class OrmData:
             if b[0] == elem and b[1] == field: return i
         for i,t in enumerate(self.cor):
             if t[0] == elem and t[1] == field: return i
-            
+
         raise ValueError("(%s,%s) are not in this ORM data" % (elem, field))
 
 
@@ -267,7 +270,7 @@ class TwissData:
         if isinstance(key, int):
             i = key
             return self._twtable[i]
-        elif isinstance(key, str) or isinstance(key, unicode):
+        elif isinstance(key, string_types):
             i = self._find_element(key)
             return self._twtable[i]
         else:
@@ -306,14 +309,14 @@ class TwissData:
     def get(self, names, col, **kwargs):
         """get a list of twiss functions when given a name pattern or a list of
         element names.
-        
+
         Parameters
         -----------
-        names : list, str 
+        names : list, str
             name pattern or list of elements.
-        col : list. 
+        col : list.
             columns can be 's', 'betax', 'betay', 'alphax', 'alphay', 'phix',
-            'phiy', 'etax', 'etaxp', 'etay', 'etayp'. 
+            'phiy', 'etax', 'etaxp', 'etay', 'etayp'.
 
         Examples
         ---------
@@ -340,17 +343,17 @@ class TwissData:
 
         return self._get_elems(elemlst, col, **kwargs)
 
-        
+
     def _get_elems(self, elemlst, col, **kwargs):
         """get a list of twiss functions when given a list of element names.
-        
+
         Parameters
         -----------
-        elemlst : list. 
+        elemlst : list.
             names of elements.
-        col : list. 
+        col : list.
             columns can be 's', 'betax', 'betay', 'alphax', 'alphay', 'phix',
-            'phiy', 'etax', 'etaxp', 'etay', 'etayp'. 
+            'phiy', 'etax', 'etaxp', 'etay', 'etayp'.
 
         Examples
         ---------
@@ -441,7 +444,7 @@ class TwissData:
             #print self._twtable[-1]
         #self._twtable = np.array(self._twtable, 'd')
         f.close()
-                
+
 
     def _load_hdf5_v1(self, filename, group = "Twiss"):
         """read data from HDF5 file in *group*"""
@@ -470,7 +473,7 @@ class TwissData:
 
     def _save_hdf5_v2(self, filename, group = "Twiss"):
         # data type
-        dt = np.dtype( [ 
+        dt = np.dtype( [
             ('element', h5py.special_dtype(vlen=bytes)),
             ('s',      np.float64),
             ('alphax', np.float64),
@@ -530,13 +533,13 @@ class TwissData:
         c.execute(qline)
         self.tune  = [None, None]
         self.chrom = [None, None]
-        
+
         for row in c:
             if row[0] == 'tunex': self.tune[0] = row[2]
             elif row[0] == 'tuney': self.tune[1] = row[2]
             elif row[0] == 'chromx': self.chrom[0] = row[2]
             elif row[0] == 'chromy': self.chrom[1] = row[2]
-        
+
         c.close()
         conn.close()
 
@@ -641,7 +644,7 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
         for i,rec in enumerate(cfslist):
             pv, prpts, tags = rec
             if col not in prpts: continue
-            if not prpts.has_key("elemField") or not prpts.has_key("elemName"):
+            if ("elemField" not in prpts) or ("elemName" not in prpts):
                 print("Incomplete record for pv={0}: {1} {2}".format(
                     pv, prpts, tags))
                 continue
@@ -663,13 +666,13 @@ def _updateLatticePvDb(dbfname, cfslist, **kwargs):
     for i,rec in enumerate(cfslist):
         pv, prpts, tags = rec
         if tags is None: continue
-        if not prpts.has_key("elemField") or not prpts.has_key("elemName"):
+        if "elemField" not in prpts or "elemName" not in prpts:
             print("Incomplete record for pv={0}: {1} {2}. IGNORED".format(
                 pv, prpts, tags))
             continue
         vals.append((sep.join(sorted(tags)),
                      pv, prpts["elemName"], prpts["elemField"]))
-    if len(vals) > 0: 
+    if len(vals) > 0:
         c.executemany("""UPDATE pvs set tags=? where pv=? and """
                       """elemName=? and elemField=?""", vals)
         conn.commit()
@@ -761,7 +764,7 @@ def updateDbElement(dbfname, submachine, element, **kwargs):
     elemPosition : float
     elemIndex : int
     elemGroups : str. separated by ";"
-    virtual : int. 
+    virtual : int.
     tags : list of str.
     """
     kw = {"elemName": element}
@@ -786,7 +789,7 @@ def updateDbPv(dbfname, pv, element, field, **kwargs):
         kw[k] = kwargs.pop(k)
 
     _updateLatticePvDb(dbfname, [(pv, kw, tags), ], **kwargs)
-        
+
 
 def saveSnapshotH5(fname, dscalar, dvector):
     """

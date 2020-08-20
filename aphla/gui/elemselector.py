@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 """
 
@@ -170,7 +171,7 @@ class ElementSelectorData(Qt.QObject):
         # Initialization: Remove all filters
         self.matched[index] = [True]*len(self.allElements)
 
-        for (prop, val) in pattern_filter_dict.iteritems():
+        for (prop, val) in pattern_filter_dict.items():
             if prop in self.not_implemented_filter_list:
                 pass
             elif prop in self.numeric_filter_list: # numerical filter
@@ -385,7 +386,7 @@ class ElementSelectorView(Qt.QDialog, Ui_Dialog):
         for (j, spec) in enumerate(self.data.filter_spec):
             for (i, filter_prop) in enumerate(self.data.filter_property_list):
                 if filter_prop is not 'exclude':
-                    if spec[0].has_key(filter_prop):
+                    if filter_prop in spec[0]:
                         item_string = spec[0][filter_prop]
                     else:
                         item_string = ''
@@ -775,7 +776,7 @@ def main(args):
 
     #result = make(modal = True, output_type = TYPE_ELEMENT)
 
-    #if result.has_key('dialog_result'): # When modal
+    #if 'dialog_result' in result: # When modal
         #app           = result['app']
         #dialog_result = result['dialog_result']
 
@@ -792,12 +793,12 @@ def main(args):
 
     result = make(modal=True, output_type=TYPE_ELEMENT)
 
-    if result.has_key('dialog_result'): # When modal
+    if 'dialog_result' in result: # When modal
         app           = result['app']
         dialog_result = result['dialog_result']
 
-        print dialog_result
-        print 'Length = ', len(dialog_result)
+        print(dialog_result)
+        print('Length = ', len(dialog_result))
 
 
     else: # When non-modal

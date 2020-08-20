@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Channel Finder
 ---------------
@@ -13,8 +15,6 @@ it is linked.
 """
 
 # :author: Lingyun Yang <lyyang@bnl.gov>
-
-from __future__ import print_function, unicode_literals
 
 from fnmatch import fnmatch
 from time import gmtime, strftime
@@ -32,7 +32,7 @@ class ChannelFinderAgent(object):
     This module builds a local cache of channel finder service. It can imports
     data from CSV format file.
     """
-    
+
     def __init__(self, **kwargs):
         """
         initialzation.
@@ -42,12 +42,12 @@ class ChannelFinderAgent(object):
         self.use_unicode = False
         # the data is in `rows`. It has (n,3) shape, n*(pv, prpts, tags) with
         # type (str, dict, list)
-        self.rows = []  
+        self.rows = []
 
     def downloadCfs(self, cfsurl, **kwargs):
         """
         downloads data from channel finder service.
-        
+
         :param cfsurl: the URL of channel finder service.
         :type cfsurl: str
         :param keep: if present, it only downloads specified properties.
@@ -64,7 +64,7 @@ class ChannelFinderAgent(object):
             >>> downloadCfs(URL, property=[('hostName', 'virtac')], tagName='aphla.*')
 
         The channel finder client API provides *property* and *tagName* as
-        keywords parameters. 
+        keywords parameters.
         """
         keep_prpts = kwargs.pop('keep', None)
         converter  = kwargs.pop('converter', {})
@@ -82,28 +82,42 @@ class ChannelFinderAgent(object):
         if keep_prpts is None:
             # use all possible property names
             keep_prpts = [p.Name for p in cf.getAllProperties()]
-            
+
         #print "# include properties", properties
         for ch in chs:
             # keep only known properties
             prptdict = ch.getProperties()
             # prpts is known part from prptdict, otherwise empty dict
             if prptdict is not None:
-                prpts = dict([v for v in prptdict.iteritems()])
+                prpts = dict([v for v in prptdict.items()])
                 # convert the data type
             else:
                 prpts = None
             # the empty tags could be None
             if self.use_unicode:
-                self.rows.append([unicode(ch.Name), 
-                                  dict([(unicode(k), unicode(v))
-                                        for k,v in prpts.iteritems()]),
-                                  [unicode(v) for v in ch.getTags()]])
+                #self.rows.append([unicode(ch.Name),
+                                  #dict([(unicode(k), unicode(v))
+                                        #for k,v in prpts.items()]),
+                                  #[unicode(v) for v in ch.getTags()]])
+                self.rows.append([
+                    ch.Name.decode() if hasattr(ch.Name, 'decode') else ch.Name,
+                    dict([(k.decode() if hasattr(k, 'decode') else k,
+                           v.decode() if hasattr(v, 'decode') else v)
+                          for k,v in prpts.items()]),
+                    [v.decode() if hasattr(v, 'decode') else v
+                     for v in ch.getTags()]])
             else:
-                self.rows.append([ch.Name.encode('ascii'), 
-                                  dict([(k.encode('ascii'), v.encode('ascii'))
-                                        for k,v in prpts.iteritems()]),
-                                  [v.encode('ascii') for v in ch.getTags()]])
+                #self.rows.append([ch.Name.encode('ascii'),
+                                  #dict([(k.encode('ascii'), v.encode('ascii'))
+                                        #for k,v in prpts.items()]),
+                                  #[v.encode('ascii') for v in ch.getTags()]])
+                self.rows.append([
+                    ch.Name.encode('ascii') if hasattr(ch.Name, 'encode') else ch.Name,
+                    dict([(k.encode('ascii') if hasattr(k, 'encode') else k,
+                           v.encode('ascii') if hasattr(v, 'encode') else v)
+                          for k,v in prpts.items()]),
+                    [v.encode('ascii') if hasattr(v, 'encode') else v
+                     for v in ch.getTags()]])
             if self.rows[-1][1]:
                 for k in converter:
                     self.rows[-1][1][k] = converter[k](prpts[k])
@@ -129,7 +143,7 @@ class ChannelFinderAgent(object):
         if fld == 'pv':
             self.rows.sort(key = itemgetter(0))
         elif dtype is None:
-            self.rows.sort(key=lambda k: k[1][fld])            
+            self.rows.sort(key=lambda k: k[1][fld])
         elif dtype == 'str':
             self.rows.sort(key=lambda k: str(k[1].get(fld, "")))
         elif dtype == 'float':
@@ -148,7 +162,7 @@ class ChannelFinderAgent(object):
             n += 1
         #print("Renamed %s records" % n)
 
-    
+
     def loadCsv(self, fname):
         """
         import data from CSV (comma separated values).
@@ -158,7 +172,7 @@ class ChannelFinderAgent(object):
             - with header. The first line of csv file must be the "header"
               which describes the meaning of each column.  The column of PVs
               has a fixed header "pv" and the tags columns have an empty
-              header. The order of columns does matter.  
+              header. The order of columns does matter.
             - explicit properties. No header as the first line. The first
               column is the pv name, then is the "property= value" cells. The
               last set of cells are tags where no "=" in the string.
@@ -192,7 +206,7 @@ class ChannelFinderAgent(object):
         for i, h in enumerate(header):
             if i == ipv: continue
             # if the header is empty, it is a tag
-            if len(h.strip()) == 0: 
+            if len(h.strip()) == 0:
                 itags.append(i)
             else:
                 iprpt.append(i)
@@ -208,7 +222,7 @@ class ChannelFinderAgent(object):
 
     def _load_csv_2(self, fname):
         """
-        import data from CSV (comma separated values). 
+        import data from CSV (comma separated values).
 
         each line of csv starts with pv name, then property list and tags. An
         example is in the following::
@@ -238,16 +252,16 @@ class ChannelFinderAgent(object):
     def loadSqlite(self, fname, **kwargs):
         """
         import from sqlite database (v1 with two tables)
-        
+
         :param fname: sqlite db file name
-        
+
         - NULL/None or '' will be ignored
         - *properties*, a list of column names for properties
         - *pvcol* default 'pv', the column name for pv
         - *tagscol* default 'tags', the column name for tags
         - *sep* default ';'
 
-        The default properties will have all in 'elements' and 'pvs' tables, 
+        The default properties will have all in 'elements' and 'pvs' tables,
         except the pv and tags columns.
 
         tags are separated by ';'
@@ -285,7 +299,7 @@ class ChannelFinderAgent(object):
             if not row[itags]:
                 tags = []
             else:
-                tags = [v.strip().encode('ascii') 
+                tags = [v.strip()#.encode('ascii')
                         for v in row[itags].split(sep)]
             self.rows.append([pv, prpts, tags])
 
@@ -310,10 +324,10 @@ class ChannelFinderAgent(object):
             if not row[itags]:
                 tags = []
             else:
-                tags = [v.strip().encode('ascii') 
+                tags = [v.strip()#.encode('ascii')
                         for v in row[itags].split(sep)]
             self.rows.append([pv, prpts, tags])
-        
+
         c.close()
         conn.close()
         self.source = fname
@@ -336,7 +350,7 @@ class ChannelFinderAgent(object):
         prpts_set = set()
         for r in self.rows:
             if r[1] is None: continue
-            for k in r[1]: 
+            for k in r[1]:
                 prpts_set.add(k)
         header = sorted(list(prpts_set))
         #print header
@@ -346,11 +360,11 @@ class ChannelFinderAgent(object):
         for r in self.rows:
             prpt = []
             for k in header:
-                if r[1] is None: 
+                if r[1] is None:
                     prpt.append('')
-                elif k not in r[1]: 
+                elif k not in r[1]:
                     prpt.append('')
-                else: 
+                else:
                     prpt.append(r[1][k])
             if r[2] is None:
                 writer.writerow([r[0]] + prpt)
@@ -430,7 +444,7 @@ class ChannelFinderAgent(object):
           groups()
           {'BPM1': [0, 3], 'Q1': [1], 'COR1' : [2]}
         """
-        
+
         ret = {}
         for i, r in enumerate(self.rows):
             # skip if no properties
@@ -472,14 +486,14 @@ class ChannelFinderAgent(object):
         samp = dict([(rec[0],i) for i,rec in enumerate(rhs.rows)])
         ret = {}
         for pv, prpt, tags in self.rows:
-            if not samp.has_key(pv):
+            if pv not in samp:
                 ret[pv] = (prpt, tags)
                 continue
             rec2 = rhs.rows[samp[pv]]
             p2, t2 = rec2[1], rec2[2]
             ret[pv] = [{}, []]
-            for k,v in prpt.iteritems():
-                if not p2.has_key(k):
+            for k,v in prpt.items():
+                if k not in p2:
                     ret[pv][0][k] = v
                     continue
                 elif p2[k] != v:
@@ -491,7 +505,7 @@ class ChannelFinderAgent(object):
 
         #print(pv, prpt, tags)
 
-     
+
 if __name__ == "__main__":
     cfa = ChannelFinderAgent()
     cfa._importSqliteDb1('test.sqlite')

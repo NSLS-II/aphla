@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 """
 :author: Lingyun Yang <lyyang@bnl.gov>
-:license: 
+:license:
 
 Remember:
 1. Kicker has strength limit, check before set.
@@ -17,7 +18,7 @@ each quadrupole alignment:
 3. quadrupole pvsp, dk1
 """
 
-from hlalib import (getElements, getNeighbors, getDistance, getOrbit, 
+from .hlalib import (getElements, getNeighbors, getDistance, getOrbit,
     waitStableOrbit, waitRamping)
 
 import time
@@ -36,7 +37,7 @@ class BbaBowtie:
     of that quadrupole. This algorithm fits a line for a proper corrector
     strength which kicks the beam through the center of the quadrupole. When
     this strength applied, the BPM reading is the center of that quadrupole.
- 
+
     Examples
     ---------
     >>> quadname = 'qh1g2c02a'
@@ -65,11 +66,11 @@ class BbaBowtie:
         self.bpm_fitted = None
 
         self.orbit  = None
-        self.mask   = None # mask lines that are kept. 
+        self.mask   = None # mask lines that are kept.
         self.slope  = None
         self.x_intercept = None
         # do not extend for the intersection with x-axis.
-        #self.line_segment_only = False  
+        #self.line_segment_only = False
         self.wait = kwargs.get("wait", 2)
 
     def _get_orbit(self, n = 3, sleep=0.1):
@@ -127,7 +128,7 @@ class BbaBowtie:
             if i not in kept3: ikept2[i] = False
             #if self.line_segment_only and (xitc[i] < x[0] or xitc[i] > x[1]):
             #    ikept2[i] = False
-        # 
+        #
         self.mask = ikept2
         self.slope, self.x_intercept = p[-2,:], xitc
         # the final subset of slope and y_intercept
@@ -152,7 +153,7 @@ class BbaBowtie:
         self._vq0 = self._q.get(self._qf, handle="setpoint", unitsys=None)
         self._vc0 = self._c.get(self._cf, handle="setpoint", unitsys=None)
         if verbose > 0:
-            print "getting q={0}  c={1}".format(self._vq0, self._vc0)
+            print("getting q={0}  c={1}".format(self._vq0, self._vc0))
 
         # ignore kick list if dkick is provided.
         self.cor_kick = [self._vc0 + dk for dk in self.cor_dkicks]
@@ -160,7 +161,7 @@ class BbaBowtie:
             _logger.warn("no cor setpoints specified")
             return
         if verbose > 0:
-            print "cor setpoints: {0}".format(self.cor_kick)
+            print("cor setpoints: {0}".format(self.cor_kick))
         obt00 = self._get_orbit()
         #print "obtshape:", np.shape(obt00)
         self.orbit = np.zeros((len(obt00), 1+2*len(self.cor_kick)), 'd')
@@ -177,9 +178,9 @@ class BbaBowtie:
                     self._q.get(self._qf, handle="setpoint", unitsys=None),
                     self._q.get(self._qf, unitsys=None)))
             if verbose > 0:
-                print "setting {0}.{1} to {2} (delta={3})".format(
-                self._q.name, self._qf, self._vq0 + dqk, self.quad_dkick)
-                
+                print("setting {0}.{1} to {2} (delta={3})".format(
+                    self._q.name, self._qf, self._vq0 + dqk, self.quad_dkick))
+
             for j,dck in enumerate(self.cor_kick):
                 self._c.put(self._cf, dck, unitsys=None)
                 #time.sleep(sleep)
@@ -191,8 +192,8 @@ class BbaBowtie:
                 c1rb = self._c.get(self._cf, unitsys=None)
                 _logger.info("{0}.{1} sp= {2} rb= {3}".format(i, j, c1sp, c1rb))
                 if verbose > 0:
-                    print "setting {0}.{1} to {2} (rb= {3})".format(
-                        self._c.name, self._cf, dck, c1rb)
+                    print("setting {0}.{1} to {2} (rb= {3})".format(
+                        self._c.name, self._cf, dck, c1rb))
                 tobt = np.zeros(len(obt00), 'd')
                 for jj in range(sample):
                     tobt[:] = tobt[:] + self._get_orbit()
@@ -202,18 +203,18 @@ class BbaBowtie:
                 self.bpm_cob.append(self._b.get(self._bf, unitsys=None))
         # reset qk
         if verbose > 0:
-            print "reset quad and trim to %f %f" % (self._vq0, self._vc0)
+            print("reset quad and trim to %f %f" % (self._vq0, self._vc0))
         #caput(self.quad_pvsp, qk0)
         #caput(self.trim_pvsp, xp0)
         self._q.put(self._qf, self._vq0, unitsys=None)
         self._c.put(self._cf, self._vc0, unitsys=None)
         waitRamping([self._c, self._q], wait = self.wait)
         _logger.info("restoring {0} Quad sp= {1} rb= {2}".format(
-                self._q.name, 
+                self._q.name,
                 self._q.get(self._qf, handle="setpoint", unitsys=None),
                 self._q.get(self._qf, unitsys=None)))
         _logger.info("restoring {0} Cor sp= {1} rb= {2}".format(
-                self._c.name, 
+                self._c.name,
                 self._c.get(self._cf, handle="setpoint", unitsys=None),
                 self._c.get(self._cf, unitsys=None)))
 
@@ -239,7 +240,7 @@ class BbaBowtie:
         if not self.cor_fitted:
             _logger.warn("no cor fitted. abort.")
             return
-        # 
+        #
         # change cor
         if kwargs.get("noset", False):
             self._c.put(self._cf, self.cor_fitted, unitsys=None)
@@ -275,7 +276,7 @@ class BbaBowtie:
         #print "dObt: min", np.min(dobt, axis=1)
         #print "dObt: max", np.max(dobt, axis=1)
         #print "dObt: var", np.var(dobt, axis=1)
- 
+
         kick = self._filterLines(self.cor_kick, dobt)
 
     def plot(self, axbowtie = None, axhist = None, factor = (1.0, 1.0)):
@@ -285,7 +286,7 @@ class BbaBowtie:
 
         # plotting
         import matplotlib.pylab as plt
-        if axbowtie is None: 
+        if axbowtie is None:
             fig = plt.figure()
             axbowtie = fig.add_subplot(111)
         else:
@@ -306,18 +307,18 @@ class BbaBowtie:
         for i in range(len(self.mask)):
             if not self.mask[i]: continue
             slope2 = self.slope[i]*factor[1]/factor[0]
-            yitc = -slope2 * self.x_intercept[i] * factor[0] 
+            yitc = -slope2 * self.x_intercept[i] * factor[0]
             axbowtie.plot(t, slope2*t + yitc, 'r-')
         # draw the points
         for i in range(len(self.mask)):
             xitc = self.x_intercept[i]*factor[0]
-            if self.mask[i]: 
+            if self.mask[i]:
                 axbowtie.plot(xitc, 0.0, 'go')
             else:
                 axbowtie.plot(xitc, 0.0, 'bx')
         axbowtie.set_xlim(min(t), max(t))
         ##
-        if axhist is None: 
+        if axhist is None:
             fig = plt.figure()
             axhist = fig.add_subplot(111)
         else:
@@ -327,8 +328,8 @@ class BbaBowtie:
         hnbin = 3
         d = (max(d1) - min(d1))/hnbin
         hn,hbins,hpatch = axhist.hist(
-            d1, hnbin, normed=False, color='g', 
-            facecolor='green', alpha=0.8, histtype='stepfilled', 
+            d1, hnbin, normed=False, color='g',
+            facecolor='green', alpha=0.8, histtype='stepfilled',
             label='filtered')
         hbins2 = hbins.tolist()
         #print "bins:", min(hbins2), max(hbins2)
@@ -349,7 +350,7 @@ class BbaBowtie:
         #print hn, hbins, hpatch
         #print n, len(kept1), sum(ikept2), len(kept3)
 
-        
+
     def _check(self, **kwargs):
         """
         check the orbit shift due to changing quadruple strength.

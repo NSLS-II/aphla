@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Physics Routines for aporbit
 ============================
@@ -29,7 +31,7 @@ def chooseElement(fam):
     form = ElementPickDlg(allelems, title="Choose {0}".format(fam),
                           extra_cols = extra_cols)
 
-    if form.exec_(): 
+    if form.exec_():
         enabled = form.checkedIndices()
         el0, el1 = [], []
         for i,e in enumerate(elems):
@@ -51,9 +53,9 @@ def chooseElement(fam):
 def openLocalBump():
     """create local bump"""
     corbitdlg = OrbitCorrDlg(
-        ap.getElements(wx.data.names()), 
+        ap.getElements(wx.data.names()),
         s, x, y, xunit = xunit, yunit=yunit,
-        stepsize = 200e-6, 
+        stepsize = 200e-6,
         orbit_plots=(wx, wy),
         correct_orbit = self.correctOrbit)
     #corbitdlg.resize(600, 500)
@@ -81,7 +83,7 @@ class ApOrbitPhysics:
                 if e.name not in w.data.names(): continue
                 w.data.disable(e.name)
 
-        
+
 
     def measBeta(self):
         p = ApMdiSubPlot(live=False)
@@ -100,7 +102,7 @@ class ApOrbitPhysics:
                                           QPen(Qt.black, 1),
                                           QSize(8, 8)))
         curves[3].setPen(QPen(Qt.blue, 1.5))
-        
+
         #p.aplot.curve1.setStyle(Qwt.QwtPlotCurve.)
 
         #p.setWindowTitle("[%s.%s] %s %s" % (mach, lat, title, fld))
@@ -168,7 +170,7 @@ class ApOrbitPhysics:
                                           QBrush(Qt.blue),
                                           QPen(Qt.black, 1),
                                           QSize(8, 8)))
-        
+
         #p.aplot.curve1.setStyle(Qwt.QwtPlotCurve.)
 
         #p.setWindowTitle("[%s.%s] %s %s" % (mach, lat, title, fld))
@@ -214,7 +216,7 @@ class ApOrbitPhysics:
         # set the zoom stack
         #print "autozoom"
         #p.aplot.setErrorBar(self.error_bar)
-        
+
     def runBba(self, bpms):
         """create local bump"""
         inp = {'bpms': [], 'quads': [], 'cors': [], 'quad_dkicks': [],
@@ -230,16 +232,16 @@ class ApOrbitPhysics:
             inp['quad_dkicks'].extend([1e-2, 1e-2])
             inp['cor_dkicks'].extend([np.linspace(-6e-5, 6e-5, 4),
                                      np.linspace(-6e-5, 6e-5, 4)])
-                                     
+
         if self.bbadlg is None:
             #print self.obtdata.elem_names
             # assuming BPM has both x and y, the following s are same
             self.bbadlg = ApBbaDlg()
             self.bbadlg.resize(500, 200)
             self.bbadlg.setWindowTitle("Beam based alignment")
-            #self.obtxplot.plotDesiredOrbit(self.orbitx_data.golden(), 
+            #self.obtxplot.plotDesiredOrbit(self.orbitx_data.golden(),
             #                            self.orbitx_data.x)
-            #self.obtyplot.plotDesiredOrbit(self.orbity_data.golden(), 
+            #self.obtyplot.plotDesiredOrbit(self.orbity_data.golden(),
             #                            self.orbity_data.x)
 
         self.bbadlg.show()
@@ -247,6 +249,6 @@ class ApOrbitPhysics:
         self.bbadlg.activateWindow()
 
         from cothread.catools import caget, caput
-        print __file__, "BBA align", caget('V:2-SR:C30-BI:G2{PH1:11}SA:X')
+        print(__file__, "BBA align", caget('V:2-SR:C30-BI:G2{PH1:11}SA:X'))
 
         self.bbadlg.runAlignment(**inp)

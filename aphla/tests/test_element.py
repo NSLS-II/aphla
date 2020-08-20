@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 """
 Unit Test: element
 -------------------
@@ -61,7 +63,7 @@ class TestElement(unittest.TestCase):
         self.assertEqual(bpm.index, -1)
         self.assertFalse(bpm.virtual)
         self.assertEqual(bpm.virtual, 0)
-        
+
 
     def test_hcor_l0(self):
         # hcor
@@ -89,7 +91,7 @@ class TestElement(unittest.TestCase):
         hcor.updateBoundary()
         self.assertIsNone(hcor.boundary('x')[0])
         self.assertIsNone(hcor.boundary('x')[1])
-        
+
         self.assertEqual(hcor.pv(field='y'), [])
         self.assertEqual(hcor.pv(field='y', handle='readback'), [])
         self.assertEqual(hcor.pv(field='y', handle='setpoint'), [])
@@ -97,12 +99,12 @@ class TestElement(unittest.TestCase):
 
     def __compareElements(self, e1, e2):
         self.assertEqual(sorted(e1.__dict__.keys()), sorted(e2.__dict__.keys()))
-        for k,v in e1.__dict__.iteritems():
+        for k,v in e1.__dict__.items():
             v2 = getattr(e2, k)
             self.assertEqual(
                 v, v2, "{0} field {1}: {2} != {3}".format(e1.name, k, v,v2))
 
-        
+
     def test_pickle_l0(self):
         dcct = element.CaElement(
             name = 'CURRENT', index = -1, devname = 'DCCT', family = 'DCCT')
@@ -143,7 +145,7 @@ class TestElement(unittest.TestCase):
         el = sorted([elem1, elem2, elem3])
         self.assertTrue(el[0].sb < el[1].sb)
         self.assertTrue(el[1].sb < el[2].sb)
-        
+
 
 if __name__ == "__main__":
     unittest.main()

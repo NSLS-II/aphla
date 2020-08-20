@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, absolute_import
 
 import sys
 
@@ -24,33 +25,33 @@ def download_cfs(cfsurl, **cfinput):
 
         ret.update(pv = pv, properties = prpt, tags = tags)
     return ret
-    
+
 
 def print_kv(k, v):
     s = ''
     if len(v[0]) == 0 and len(v[1]) == 0: return
     elif len(v[1]) == 0:
-        for p,vv in v[0].iteritems():
+        for p,vv in v[0].items():
             if vv is None: continue
             s = s + "{0}={1}, ".format(p, vv)
         if s:
-            print k, s[:-2]
+            print(k, s[:-2])
     elif len(v[0]) == 0:
-        print k, 
+        print(k,)
         for p in v[1]:
-            print "%s," % p,
-        print ""
+            print("%s," % p,)
+        print("")
     else:
-        print k,
-        for p,vv in v[0].iteritems():
-            print "%s=%s" % (str(p), str(vv)),
+        print(k,)
+        for p,vv in v[0].items():
+            print("%s=%s" % (str(p), str(vv)),)
         for p in v[1]:
-            print "%s," % p
-        print ""
+            print("%s," % p)
+        print("")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print sys.argv[0], "us_nsls2_cfs.csv"
+        print(sys.argv[0], "us_nsls2_cfs.csv")
         sys.exit(0)
 
     cfa1 = ap.ChannelFinderAgent()
@@ -59,11 +60,11 @@ if __name__ == "__main__":
     cfa2 = ap.ChannelFinderAgent()
     cfa2.downloadCfs(cfsurl, tagName='aphla.*')
 
-    print "<<<< local - CFS"
-    for k, v in (cfa1 - cfa2).iteritems():
+    print("<<<< local - CFS")
+    for k, v in (cfa1 - cfa2).items():
         print_kv(k, v)
-    print "--------------"
-    for k, v in (cfa2 - cfa1).iteritems():
+    print("--------------")
+    for k, v in (cfa2 - cfa1).items():
         print_kv(k, v)
-    print ">>>> CFS - local"
+    print(">>>> CFS - local")
 
