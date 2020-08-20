@@ -1,5 +1,6 @@
 from __future__ import print_function, division, absolute_import
 from six import string_types
+from six.moves import reduce
 
 """
 :author: Lingyun Yang <lyyang@bnl.gov>
@@ -316,7 +317,7 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
 
     """
 
-    if isinstance(t, (float, int)) :
+    if isinstance(t, (float, int, np.integer)) :
         t = np.array([t])
     elif isinstance(t, list) :
         t = np.array(t)
@@ -327,7 +328,7 @@ def calcLifetime(t, I, data_subdiv_method = 'NoSubdiv',
                          'float, int, or list of (int,float), or NumPy array.')
 
 
-    if isinstance(I, (float, int)) :
+    if isinstance(I, (float, int, np.integer)) :
         I = np.array([I])
     elif isinstance(I, list) :
         I = np.array(I)

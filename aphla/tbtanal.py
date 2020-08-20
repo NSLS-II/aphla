@@ -34,7 +34,7 @@ def calcFftTune(x):
     for i in range(nbpm): #[1,2,3,4,5,6]:
         Fx[i,:] = np.abs(np.fft.fft(x[i,:] - xc[i]))
     Fs = np.sum(Fx, axis=0)
-    i = np.argmax(Fs[:nturn/2])
+    i = np.argmax(Fs[:nturn//2])
     return i * 1.0/nturn, Fs
 
 def calcTunes(x, y, **kwargs):

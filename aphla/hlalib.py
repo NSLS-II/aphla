@@ -1,5 +1,6 @@
 from __future__ import print_function, division, absolute_import
 from six import string_types
+from six.moves import reduce
 
 """
 Core APHLA Libraries
