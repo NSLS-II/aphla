@@ -567,9 +567,18 @@ def saveLattice(**kwargs):
                 pvsp = e.pv(field=fld, handle="setpoint")
                 pvrb = e.pv(field=fld, handle="readback")
                 for pv in pvsp + pvrb:
-                    d0 = h5g[pv].value
-                    d1 = e.convertUnit(fld, d0, None, unitsys)
+                    d0 = h5g[pv][()]
                     s = "%s.%s.%s[%s]" % (e.name, fld, unitsys, uname)
+                    try:
+                        if h5g[pv].attrs['ok']:
+                            d1 = e.convertUnit(fld, d0, None, unitsys)
+                        else:
+                            print(f'Data NOT ok for "{pv}". Not converting unit.')
+                            d1 = np.nan
+                    except:
+                        print(f'"{s}": Unit conversion failed for the raw value of "{d0}"')
+                        print(sys.exc_info()[:2])
+                        d1 = np.nan
                     h5g[pv].attrs[s] = d1
                 for pv in pvsp:
                     h5g[pv].attrs["setpoint"] = 1
