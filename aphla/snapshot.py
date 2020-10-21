@@ -4,7 +4,6 @@ import numpy as np
 import h5py
 
 from .catools import caget
-from .machines import lattices, getLattice
 from .hlalib import getElements, fget
 
 class Snapshot(object):

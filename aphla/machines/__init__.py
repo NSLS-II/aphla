@@ -632,9 +632,9 @@ def setGoldenLattice(lat, h5fname, grp = "Golden"):
 
 def use(lattice):
     """
-    switch to a lattice
+    switch to a submachine (used to be called as "lattice" in v1 aphla)
 
-    use :func:`~hla.machines.lattices` to get a dict of lattices and its mode
+    use :func:`~hla.machines.names` to get a list of submachine names
     name
     """
     global _lat, _lattice_dict
@@ -666,25 +666,26 @@ def getLattice(lat = None):
     a :class:`~aphla.lattice.Lattice` object with given name. return the
     current lattice by default.
 
-    .. seealso:: :func:`~aphla.machines.lattices`
+    .. seealso:: :func:`~aphla.machines.names`
     """
     if lat is None:  return _lat
 
     global _lattice_dict
     return _lattice_dict.get(lat, None)
 
-def lattices():
+def names():
     """
-    get a list of available lattices
+    get a list of available submachine names (or used to be called "lattices"
+    in v1 aphla)
 
     Examples
     --------
-    >>> lattices()
-      [ 'LTB', 'LTB-txt', 'SR', 'SR-txt']
-    >>> use('LTB-txt')
+    >>> names()
+      ['LN', 'LTD1', 'LTD2', 'LTB', 'BR', 'BTS', 'SR']
+    >>> use('SR')
 
     """
-    return _lattice_dict.keys()
+    return list(_lattice_dict)
 
 
 def machines():
