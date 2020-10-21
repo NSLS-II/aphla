@@ -659,19 +659,20 @@ def getOutputDir(lat = None):
     else:
         raise RuntimeError("no output_dir defined for lattice '%s'" % lat)
 
-def getLattice(lat = None):
+def getMachine(name = None):
     """
-    return the lattice with given name, if None returns the current lattice.
+    return the summachine (lattice) object with given name, if None returns the
+    current submachine (lattice) object.
 
     a :class:`~aphla.lattice.Lattice` object with given name. return the
     current lattice by default.
 
     .. seealso:: :func:`~aphla.machines.names`
     """
-    if lat is None:  return _lat
+    if name is None:  return _lat
 
     global _lattice_dict
-    return _lattice_dict.get(lat, None)
+    return _lattice_dict.get(name, None)
 
 def names():
     """

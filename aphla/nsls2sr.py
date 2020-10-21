@@ -405,9 +405,9 @@ def getSrBpmData(**kwargs):
     output   = kwargs.get("output", None)
     timeout  = kwargs.get("timeout", 30)
 
-    lat = machines.getLattice()
+    lat = machines.getMachine()
     if lat.name != "SR":
-        raise RuntimeError("the current lattice is not 'BR': %s" % lat.name)
+        raise RuntimeError("the current lattice is not 'SR': %s" % lat.name)
 
     t0 = datetime.now()
 

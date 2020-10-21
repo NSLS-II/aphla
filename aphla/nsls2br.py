@@ -29,7 +29,7 @@ def _brBpmScrub(**kwargs):
     waveforms - list of Tbt, Fa and Adc
     """
 
-    lat = machines.getLattice()
+    lat = machines.getMachine()
     if lat.name != "BR":
         raise RuntimeError("the current lattice is not 'BR': %s" % lat.name)
 
@@ -284,7 +284,7 @@ def getBrBpmData(**kwargs):
     name     = kwargs.pop("name", "BPM")
     #timeout  = kwargs.get("timeout", 6)
 
-    lat = machines.getLattice()
+    lat = machines.getMachine()
     if lat.name != "BR":
         raise RuntimeError("the current lattice is not 'BR': %s" % lat.name)
 

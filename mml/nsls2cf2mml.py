@@ -42,9 +42,9 @@ def patch(latname, elem, k, **kwargs):
     except:
         v = d[latname]
         for fam in v.keys():
-            if fnmatch(elem, fam): 
+            if fnmatch(elem, fam):
                 return v[fam][k]
-    print "Did not find '%s.%s'" % (elem, k) 
+    print "Did not find '%s.%s'" % (elem, k)
     return k
 
 def convert_at_lattice(latname):
@@ -52,7 +52,7 @@ def convert_at_lattice(latname):
     elems = ap.getElements('*')
     # remove the VCOR
     # elems = [e for e in elems if e.family not in ['VCOR', 'VFCOR']]
-    
+
     dft = {'name': None, 'sb': None, 'length': None,
            'atclass': 'drift', 'atfamily': 'HALFD'}
     for i,e in enumerate(elems):
@@ -60,10 +60,10 @@ def convert_at_lattice(latname):
         rec = {'name': e.name, 'family': e.family,
                'sb': e.sb, 'length': e.length,
                'atclass': 'drift', 'atfamily': e.family}
-        
+
         if e.family in ['FLAG', 'ICT']:
             # name, family, new: (name, type, family)
-            # 
+            #
             rec['sb'] = e.sb + e.length/2.0
             rec['length'] = 0.0
             rec['atfamily'] = e.family
@@ -82,7 +82,7 @@ def convert_at_lattice(latname):
 
         if e.family in ['BPM']:
             # name, family, new: (name, type, family)
-            # 
+            #
             rec['sb'] = e.sb + e.length/2.0
             rec['length'] = 0.0
             rec['atfamily'] = e.family
@@ -102,7 +102,7 @@ def convert_at_lattice(latname):
             rec['name'] = e.name
             rec['atfamil'] = 'HVCM'
             rec['atclass'] = 'corrector'
-            oupt.append(rec.copy())            
+            oupt.append(rec.copy())
         elif e.family in ['DIPOLE']:
             rec['atfamily'] = 'BEND'
             rec['atclass'] = 'rbend'
@@ -129,7 +129,7 @@ def convert_at_lattice(latname):
         elif e.family in ['RFCAVITY']:
             rec['name'] = 'cav'
             rec['atclass'] = 'rfcavity'
-            oupt.append(rec.copy()) 
+            oupt.append(rec.copy())
             #print rec
         elif e.family in ['', None, 'DCCT']:
             pass
@@ -183,7 +183,7 @@ def at_definition(latname, rec):
             L, volt, freq, hm)
     else:
         raise RuntimeError("unknown AT type '%s'" % cla)
-    
+
 def export_at_lattice(template, latname, C = 791.958):
     lat = convert_at_lattice(latname)
     #for i,e in enumerate(lat):
@@ -273,7 +273,7 @@ def export_mml_init(template, latname):
         'bpmy_monitor_pv': bpmy_monitor_pv,
         'bpmx_sum_pv': bpmx_sum_pv,
         'bpmy_sum_pv': bpmy_sum_pv}
-    
+
     hvcms = ap.getElements('COR')
     #for i,e in enumerate(hcms):
     #    print i, e, e.pv(field='x', handle='readback')
@@ -306,7 +306,7 @@ def export_mml_init(template, latname):
         'vcm_fault_pv': vcm_fault_pv}
 
     #[('SH1', 'SH1'), ('SH4', 'SH4'), ('SH3', 'SH3'), ('SL1', 'SL1'),
-    #('SL2', 'SL2'), ('SL3', 'SL3'), ('SM1A', 'SM1A'), ('SM1B', 'SM1B'), 
+    #('SL2', 'SL2'), ('SL3', 'SL3'), ('SM1A', 'SM1A'), ('SM1B', 'SM1B'),
     # ('SM2', 'SM2'),
     #             ]:
     ao_quad = ''
@@ -385,7 +385,7 @@ if __name__ == "__main__":
     ap.machines.load("nsls2")
 
     # save the current lattice
-    lat = ap.machines.getLattice()    
+    lat = ap.machines.getMachine()
 
     ## switch lattice
     #latname = 'V1LTD1'
@@ -396,9 +396,9 @@ if __name__ == "__main__":
     latname = 'SR'
     ap.machines.use(latname)
     export_at_lattice("nsls2v2sr.m.template", latname)
-    templates = {'main': "v2srinit.m.template", 
-                 'bpm': "v2srinit_ao_bpm.m.template", 
-                 'hvcm': "v2srinit_ao_hvcm.m.template", 
+    templates = {'main': "v2srinit.m.template",
+                 'bpm': "v2srinit_ao_bpm.m.template",
+                 'hvcm': "v2srinit_ao_hvcm.m.template",
                  'quad': "v2srinit_ao_q.m.template"}
 
     export_mml_init(templates, latname)
