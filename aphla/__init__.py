@@ -20,6 +20,7 @@ except:
 import os
 import tempfile
 import logging
+from enum import Enum
 
 # for compatibilities with Python < 2.7
 class _NullHandler(logging.Handler):
@@ -79,3 +80,26 @@ from . import bba
 from . import nsls2
 #from . import nsls2br
 from . import nsls2id
+
+class OperationMode(Enum):
+    ONLINE = 0
+    SIMULATION = 1
+
+OP_MODE = OperationMode.ONLINE
+
+def get_op_mode():
+    """"""
+
+    return OP_MODE
+
+def set_op_mode(new_mode):
+    """"""
+
+    global OP_MODE
+
+    try:
+        new_mode = OperationMode(new_mode)
+    except ValueError:
+        new_mode = OperationMode[new_mode]
+
+    OP_MODE = new_mode
