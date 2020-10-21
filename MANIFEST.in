@@ -1,2 +1,0 @@
-recursive-include aphla/machines *.hdf5 *.sqlite *.csv *.json *.xml *.ini
-

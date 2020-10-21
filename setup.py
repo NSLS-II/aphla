@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 import os
 import subprocess
 
-MAJOR = 1
+MAJOR = 2
 MINOR = 0
-MICRO = 1
-ISRELEASED = True
+MICRO = 0
+ISRELEASED = False
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 def _minimal_ext_cmd(cmd):
@@ -83,8 +83,12 @@ write_version_py()
 setup(
     name = "aphla",
     version = VERSION,
-    packages = find_packages(exclude=['tests']),
-    include_package_data = True,
+    packages = find_packages(
+        exclude=['aphla.tests', 'aphla.gui', 'aphla.gui.*', 'aphla.contrib',
+                 'aphla.contrib.*', 'aphla.mpfit', 'aphla.dms',
+                 'aphla.machines.*']),
+    #include_package_data = True,
+    package_data = {},
     #package_data = {'aphla.gui.TinkerUtils': ['tinker_columns.sqlite']},
     #package_data = {
     #    # any these files
