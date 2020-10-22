@@ -22,16 +22,6 @@ def _minimal_ext_cmd(cmd):
     out = subprocess.Popen(cmd, stdout = subprocess.PIPE, env=env).communicate()[0]
     return out
 
-
-def hg_revision():
-    try:
-        out = _minimal_ext_cmd(['hg', 'id', '-n', '-i'])
-        HG_REVISION = out.strip().decode('ascii')
-    except OSError:
-        HG_REVISION = "Unknown"
-
-    return HG_REVISION
-
 def git_revision():
     try:
         out = _minimal_ext_cmd(['git', "rev-parse", "HEAD"])
@@ -56,9 +46,7 @@ if not release:
     # Adding the git rev number needs to be done inside write_version_py(),
     # otherwise the import of numpy.version messes up the build under Python 3.
     FULLVERSION = VERSION
-    if os.path.exists('.hg'):
-        AP_REVISION = hg_revision()
-    elif os.path.exists(".git"):
+    if os.path.exists(".git"):
         AP_REVISION = git_revision()
     elif os.path.exists('aphla/version.py'):
         # must be a source distribution, use existing version file
