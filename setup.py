@@ -1,6 +1,9 @@
 from setuptools import setup, find_packages
+from setuptools.command.install import install
+import sys
 import os
 import subprocess
+import json
 
 MAJOR = 2
 MINOR = 0
@@ -68,15 +71,98 @@ if not release:
 
 write_version_py()
 
+program_name = 'aphla'
+
+facility_json_filename = 'facility.json'
+
+facility_name_arg = 'facility-name'
+
+com_req_pakcages = ['numpy', 'cothread', 'h5py', 'ruamel.yaml']
+
+if ('install' in sys.argv) or ('sdist' in sys.argv):
+
+    facility_name_opt = [v for v in sys.argv
+                         if v.startswith(f'--{facility_name_arg}=')]
+    if len(facility_name_opt) == 0:
+        raise ValueError(f'Required arg "--{facility_name_arg}" is missing')
+    elif len(facility_name_opt) > 1:
+        raise ValueError(f'Multiple arg "--{facility_name_arg}" found')
+
+    facility_name = facility_name_opt[0][len(f'--{facility_name_arg}='):]
+
+    available_facility_names = ['generic', 'nsls2']
+    if facility_name not in available_facility_names:
+        print('* Only the following facility names are available:')
+        print('      ' + ', '.join(available_facility_names))
+        raise ValueError(
+            f'Specified facility_name "{facility_name}" is not available.')
+
+    this_folder = os.path.dirname(os.path.abspath(__file__))
+
+    facility_json_filepath = os.path.join(
+        this_folder, 'aphla', facility_json_filename)
+    with open(facility_json_filepath, 'w') as f:
+        if facility_name == 'nsls2':
+            json.dump({
+                'name': facility_name,
+                'engines': ['pyelegant'],
+                }, f)
+        else:
+            json.dump({'name': facility_name}, f)
+
+    sys.argv.remove(facility_name_opt[0])
+
+    if 'sdist' in sys.argv:
+        # Modify the tarball name to be "aphla-{facility_name}-?.?.?.tar.gz"
+        program_name += f'-{facility_name}'
+
+    req_pakcages = []
+    if facility_name == 'nsls2':
+        req_pakcages += []
+
+    other_setup_opts = dict(
+        install_requires=req_pakcages,
+        # ^ These requirements are actually NOT being checked (as of 04/01/2020)
+        #   due to the known bug with the custom install:
+        #       (https://github.com/pypa/setuptools/issues/456)
+        )
+elif 'egg_info' in sys.argv:
+    other_setup_opts = dict(install_requires=com_req_pakcages)
+else:
+    raise RuntimeError()
+
+class InstallCommand(install):
+    """"""
+
+    user_options = install.user_options + [
+        (f'{facility_name_arg}=', None, 'Facility name for "aphla" installation')
+    ]
+
+    def initialize_options(self):
+        """"""
+        install.initialize_options(self)
+        self.facility_name = facility_name
+
+    def finalize_options(self):
+        """"""
+        print((f'Specified facility name for "aphla" installation is '
+               f'"{self.facility_name}"'))
+        install.finalize_options(self)
+
+    def run(self):
+        """"""
+        print(self.facility_name)
+        install.run(self)
+
 setup(
-    name = "aphla",
+    name = program_name,
     version = VERSION,
     packages = find_packages(
         exclude=['aphla.tests', 'aphla.gui', 'aphla.gui.*', 'aphla.contrib',
                  'aphla.contrib.*', 'aphla.mpfit', 'aphla.dms',
                  'aphla.machines.*']),
     #include_package_data = True,
-    package_data = {},
+    package_data = {'aphla': [facility_json_filename]},
     #package_data = {'aphla.gui.TinkerUtils': ['tinker_columns.sqlite']},
     #package_data = {
     #    # any these files
@@ -106,5 +192,7 @@ setup(
     maintainer = "Yoshiteru Hidaka",
     maintainer_email = "yhidaka@bnl.gov",
     url = 'https://github.com/NSLS-II/aphla',
+    cmdclass={'install': InstallCommand},
+    **other_setup_opts
     )
 

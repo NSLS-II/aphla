@@ -20,6 +20,7 @@ except:
 import os
 import tempfile
 import logging
+import json
 from enum import Enum
 
 # for compatibilities with Python < 2.7
@@ -77,9 +78,19 @@ from . import bba
 # it's better to import this package separately
 #import gui
 
-from . import nsls2
-#from . import nsls2br
-from . import nsls2id
+this_folder = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(this_folder, 'facility.json'), 'r') as f:
+    facility_d = json.load(f)
+
+facility_name = facility_d['name']
+
+if facility_name == 'nsls2':
+    from . import nsls2
+    #from . import nsls2br
+    from . import nsls2id
+
+from . import engines
 
 class OperationMode(Enum):
     ONLINE = 0

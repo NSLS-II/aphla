@@ -7,3 +7,5 @@ dist/
 */.ipynb_checkpoints/*
 
 aphla/version.py
+
+facility.json
