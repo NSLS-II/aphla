@@ -28,11 +28,15 @@ import os
 import time
 import glob
 import re
+from pathlib import Path
 from pkg_resources import resource_string, resource_exists, resource_filename
 from six.moves import cPickle as pickle
 from six.moves import configparser
 import fnmatch
 import logging
+
+from ruamel import yaml
+
 _logger = logging.getLogger(__name__)
 #_logger.setLevel(logging.DEBUG)
 #
@@ -197,102 +201,197 @@ def load(machine, submachine = "*", **kwargs):
 
     _logger.info("importing '%s' from '%s'" % (machine, machdir))
 
-    cfg = configparser.ConfigParser()
-    try:
-        cfg.readfp(open(os.path.join(machdir, "aphla.ini"), 'r'))
-        _logger.info("using config file: 'aphla.ini'")
-    except:
-        raise RuntimeError("can not open '%s' to read configurations" % (
-                os.path.join(machdir, "aphla.ini")))
+    config_filepath = Path(machdir).joinpath('aphla.yaml')
+    if config_filepath.exists():
+        try:
+            cfg = yaml.YAML().load(config_filepath.read_text())
+            _logger.info(f"using config file: '{config_filepath}'")
+        except:
+            raise RuntimeError(f"can not open '{config_filepath}' to read configurations")
 
-    d = dict(cfg.items("COMMON"))
-    # set proper output directory in the order of env > aphla.ini > $HOME
-    HLA_OUTPUT_DIR = os.environ.get("HLA_DATA_DIR",
-                                    d.get("output_dir",
-                                          os.path.expanduser('~')))
-    # the default submachine
-    accdefault = d.get("default_submachine", "")
+        d = cfg['COMMON']
+        # set proper output directory in the order of env > aphla.yaml > $HOME
+        HLA_OUTPUT_DIR = os.environ.get("HLA_DATA_DIR",
+                                        d.get("output_dir",
+                                              os.path.expanduser('~')))
+        # the default submachine
+        accdefault = d.get("default_submachine", "")
 
-    # print(cfg.sections())
-    # for all submachines specified in INI and matches the pattern
-    msects = [subm for subm in re.findall(r'\w+', d.get("submachines", ""))
-             if fnmatch.fnmatch(subm, submachine)]
-    # print(msect)
-    for msect in msects:
-        d = dict(cfg.items(msect))
-        accstruct = d.get("cfs_url", None)
-        if accstruct is None:
-            raise RuntimeError("No accelerator data source (cfs_url) available "
-                               "for '%s'" % msect)
-        #print cfa.rows[:3]
-        acctag = d.get("cfs_tag", "aphla.sys.%s" % msect)
-        cfa = ChannelFinderAgent()
-        accsqlite = os.path.join(machdir, accstruct)
-        if re.match(r"https?://.*", accstruct, re.I):
-            _logger.info("using CFS '%s' for '%s'" % (accstruct, msect))
-            #cfa.downloadCfs(accstruct, property=[('elemName', '*'),
-            #                                     ('iocName', '*')],
-            #                tagName=acctag)
-            cfa.downloadCfs(accstruct, property=[('elemName', '*'),], tagName=acctag)
-        elif os.path.isfile(accsqlite):
-            _logger.info("using SQlite '%s'" % accsqlite)
-            cfa.loadSqlite(accsqlite)
-        else:
-            _logger.warn("NOT CFS '%s'" % accstruct)
-            _logger.warn("NOT SQlite '%s'" % accsqlite)
-            raise RuntimeError("Unknown accelerator data source '%s'" % accstruct)
-
-        cfa.splitPropertyValue('elemGroups')
-        cfa.splitChainedElement('elemName')
-        for k,v in _cf_map.items(): cfa.renameProperty(k, v)
-
-        #print "New CFA:", cfa.rows
-
-        lat = createLattice(msect, cfa.rows, acctag, cfa.source)
-        lat.sb = float(d.get("s_begin", 0.0))
-        lat.se = float(d.get("s_end", 0.0))
-        lat.loop = bool(d.get("loop", True))
-        lat.machine = machname
-        lat.machdir = machdir
-        if d.get("archive_pvs", None):
-            lat.arpvs = os.path.join(machdir, d["archive_pvs"])
-        lat.OUTPUT_DIR = d.get("output_dir",
-                               os.path.join(HLA_OUTPUT_DIR, msect))
-
-        uconvfile = d.get("unit_conversion", None)
-        if uconvfile is not None:
-            _logger.info("loading unit conversion '%s'" % uconvfile)
-            loadUnitConversion(lat, machdir, uconvfile.split(", "))
-
-        physics_data = d.get("physics_data", None)
-        if physics_data is not None:
-            _logger.info("loading physics data '%s'" % physics_data)
-            phy_fname = os.path.join(machdir, physics_data)
-            lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix")
-            lat._twiss = TwissData(phy_fname)
-            lat._twiss.load(phy_fname, group="Twiss")
-            setGoldenLattice(lat, phy_fname, "Golden")
-
-        vex = lambda k: re.findall(r"\w+", d.get(k, ""))
-        vfams = { HLA_VBPM:  ('BPM',  vex("virtual_bpm_exclude")),
-                  HLA_VHCOR: ('HCOR', vex("virtual_hcor_exclude")),
-                  HLA_VVCOR: ('VCOR', vex("virtual_vcor_exclude")),
-                  HLA_VCOR:  ('COR',  vex("virtual_cor_exclude")),
-                  HLA_VQUAD: ('QUAD', vex("virtual_quad_exclude")),
-                  HLA_VSEXT: ('SEXT', vex("virtual_sext_exclude")),
-        }
-        createVirtualElements(lat, vfams)
-        lat_dict[msect] = lat
-        if verbose:
-            nelems = len(lat.getElementList('*'))
-            if msect == accdefault:
-                print("%s (*): %d elements" % (msect, nelems))
+        # For all submachines specified in the config file that matches the pattern
+        msects = [subm for subm in d.get("submachines", [])
+                 if fnmatch.fnmatch(subm, submachine)]
+        # print(msect)
+        for msect in msects:
+            d = cfg[msect]
+            accstruct = d.get("cfs_url", None)
+            if accstruct is None:
+                raise RuntimeError((f"No accelerator data source (cfs_url) available "
+                                    f"for '{msect}'"))
+            acctag = d.get("cfs_tag", f"aphla.sys.{msect}")
+            cfa = ChannelFinderAgent()
+            accsqlite = Path(machdir).joinpath(accstruct)
+            if re.match(r"https?://.*", accstruct, re.I):
+                _logger.info(f"using CFS '{accstruct}' for '{msect}'")
+                #cfa.downloadCfs(accstruct, property=[('elemName', '*'),
+                #                                     ('iocName', '*')],
+                #                tagName=acctag)
+                cfa.downloadCfs(accstruct, property=[('elemName', '*'),], tagName=acctag)
+            elif accsqlite.exists():
+                _logger.info(f"using SQlite '{accsqlite}'")
+                cfa.loadSqlite(accsqlite)
             else:
-                print("%s: %d elements" % (msect, nelems))
-            print("  BPM: %d, COR: %d, QUAD: %d, SEXT: %d" % (
-                len(lat.getElementList('BPM')), len(lat.getElementList('COR')),
-                len(lat.getElementList('QUAD')),
-                len(lat.getElementList('SEXT'))))
+                _logger.warn(f"NOT CFS '{accstruct}'")
+                _logger.warn(f"NOT SQlite '{accsqlite}'")
+                raise RuntimeError(f"Unknown accelerator data source '{accstruct}'")
+
+            cfa.splitPropertyValue('elemGroups')
+            cfa.splitChainedElement('elemName')
+            for k,v in _cf_map.items(): cfa.renameProperty(k, v)
+
+            #print('New CFA:')
+            #print(cfa.rows)
+
+            lat = createLattice(msect, cfa.rows, acctag, cfa.source)
+            lat.sb = float(d.get("s_begin", 0.0))
+            lat.se = float(d.get("s_end", 0.0))
+            lat.loop = bool(d.get("loop", True))
+            lat.machine = machname
+            lat.machdir = machdir
+            if "archive_pvs" in d:
+                lat.arpvs = Path(machdir).joinpath(d["archive_pvs"])
+            lat.OUTPUT_DIR = d.get("output_dir",
+                                   Path(HLA_OUTPUT_DIR).joinpath(msect))
+
+            if 'unit_conversion' in d:
+                _logger.info("loading unit conversion '%s'"
+                             % ', '.join(d['unit_conversion']))
+                loadUnitConversion(lat, machdir, d['unit_conversion'])
+
+            if 'physics_data' in d:
+                _logger.info(f"loading physics data '{d['physics_data']}'")
+                phy_fname = str(Path(machdir).joinpath(d['physics_data']))
+                lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix")
+                lat._twiss = TwissData(phy_fname)
+                lat._twiss.load(phy_fname, group="Twiss")
+                setGoldenLattice(lat, phy_fname, "Golden")
+
+            vfams = { HLA_VBPM:  ('BPM',  d.get("virtual_bpm_exclude", [])),
+                      HLA_VHCOR: ('HCOR', d.get("virtual_hcor_exclude", [])),
+                      HLA_VVCOR: ('VCOR', d.get("virtual_vcor_exclude", [])),
+                      HLA_VCOR:  ('COR',  d.get("virtual_cor_exclude", [])),
+                      HLA_VQUAD: ('QUAD', d.get("virtual_quad_exclude", [])),
+                      HLA_VSEXT: ('SEXT', d.get("virtual_sext_exclude", [])),
+            }
+            createVirtualElements(lat, vfams)
+            lat_dict[msect] = lat
+            if verbose:
+                nelems = len(lat.getElementList('*'))
+                if msect == accdefault:
+                    print(f"{msect} (*): {nelems:d} elements")
+                else:
+                    print(f"{msect}: {nelems:d} elements")
+                print("  BPM: %d, COR: %d, QUAD: %d, SEXT: %d" % (
+                    len(lat.getElementList('BPM')), len(lat.getElementList('COR')),
+                    len(lat.getElementList('QUAD')),
+                    len(lat.getElementList('SEXT'))))
+
+    else:
+        cfg = configparser.ConfigParser()
+        try:
+            cfg.readfp(open(os.path.join(machdir, "aphla.ini"), 'r'))
+            _logger.info("using config file: 'aphla.ini'")
+        except:
+            raise RuntimeError("can not open '%s' to read configurations" % (
+                    os.path.join(machdir, "aphla.ini")))
+
+        d = dict(cfg.items("COMMON"))
+        # set proper output directory in the order of env > aphla.ini > $HOME
+        HLA_OUTPUT_DIR = os.environ.get("HLA_DATA_DIR",
+                                        d.get("output_dir",
+                                              os.path.expanduser('~')))
+        # the default submachine
+        accdefault = d.get("default_submachine", "")
+
+        # print(cfg.sections())
+        # for all submachines specified in INI and matches the pattern
+        msects = [subm for subm in re.findall(r'\w+', d.get("submachines", ""))
+                 if fnmatch.fnmatch(subm, submachine)]
+        # print(msect)
+        for msect in msects:
+            d = dict(cfg.items(msect))
+            accstruct = d.get("cfs_url", None)
+            if accstruct is None:
+                raise RuntimeError("No accelerator data source (cfs_url) available "
+                                   "for '%s'" % msect)
+            #print cfa.rows[:3]
+            acctag = d.get("cfs_tag", "aphla.sys.%s" % msect)
+            cfa = ChannelFinderAgent()
+            accsqlite = os.path.join(machdir, accstruct)
+            if re.match(r"https?://.*", accstruct, re.I):
+                _logger.info("using CFS '%s' for '%s'" % (accstruct, msect))
+                #cfa.downloadCfs(accstruct, property=[('elemName', '*'),
+                #                                     ('iocName', '*')],
+                #                tagName=acctag)
+                cfa.downloadCfs(accstruct, property=[('elemName', '*'),], tagName=acctag)
+            elif os.path.isfile(accsqlite):
+                _logger.info("using SQlite '%s'" % accsqlite)
+                cfa.loadSqlite(accsqlite)
+            else:
+                _logger.warn("NOT CFS '%s'" % accstruct)
+                _logger.warn("NOT SQlite '%s'" % accsqlite)
+                raise RuntimeError("Unknown accelerator data source '%s'" % accstruct)
+
+            cfa.splitPropertyValue('elemGroups')
+            cfa.splitChainedElement('elemName')
+            for k,v in _cf_map.items(): cfa.renameProperty(k, v)
+
+            #print "New CFA:", cfa.rows
+
+            lat = createLattice(msect, cfa.rows, acctag, cfa.source)
+            lat.sb = float(d.get("s_begin", 0.0))
+            lat.se = float(d.get("s_end", 0.0))
+            lat.loop = bool(d.get("loop", True))
+            lat.machine = machname
+            lat.machdir = machdir
+            if d.get("archive_pvs", None):
+                lat.arpvs = os.path.join(machdir, d["archive_pvs"])
+            lat.OUTPUT_DIR = d.get("output_dir",
+                                   os.path.join(HLA_OUTPUT_DIR, msect))
+
+            uconvfile = d.get("unit_conversion", None)
+            if uconvfile is not None:
+                _logger.info("loading unit conversion '%s'" % uconvfile)
+                loadUnitConversion(lat, machdir, uconvfile.split(", "))
+
+            physics_data = d.get("physics_data", None)
+            if physics_data is not None:
+                _logger.info("loading physics data '%s'" % physics_data)
+                phy_fname = os.path.join(machdir, physics_data)
+                lat.ormdata = OrmData(phy_fname, "OrbitResponseMatrix")
+                lat._twiss = TwissData(phy_fname)
+                lat._twiss.load(phy_fname, group="Twiss")
+                setGoldenLattice(lat, phy_fname, "Golden")
+
+            vex = lambda k: re.findall(r"\w+", d.get(k, ""))
+            vfams = { HLA_VBPM:  ('BPM',  vex("virtual_bpm_exclude")),
+                      HLA_VHCOR: ('HCOR', vex("virtual_hcor_exclude")),
+                      HLA_VVCOR: ('VCOR', vex("virtual_vcor_exclude")),
+                      HLA_VCOR:  ('COR',  vex("virtual_cor_exclude")),
+                      HLA_VQUAD: ('QUAD', vex("virtual_quad_exclude")),
+                      HLA_VSEXT: ('SEXT', vex("virtual_sext_exclude")),
+            }
+            createVirtualElements(lat, vfams)
+            lat_dict[msect] = lat
+            if verbose:
+                nelems = len(lat.getElementList('*'))
+                if msect == accdefault:
+                    print("%s (*): %d elements" % (msect, nelems))
+                else:
+                    print("%s: %d elements" % (msect, nelems))
+                print("  BPM: %d, COR: %d, QUAD: %d, SEXT: %d" % (
+                    len(lat.getElementList('BPM')), len(lat.getElementList('COR')),
+                    len(lat.getElementList('QUAD')),
+                    len(lat.getElementList('SEXT'))))
 
     # set the default submachine, if no, use the first one
     lat0 = lat_dict.get(accdefault, None)
