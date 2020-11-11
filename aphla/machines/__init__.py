@@ -725,7 +725,8 @@ def setGoldenLattice(lat, h5fname, grp = "Golden"):
             unitsys = ds.attrs.get("unitsys", None)
             if unitsys is not None:
                 unitsys = unitsys.decode()
-            elem.setGolden(fld, ds, unitsys=unitsys)
+            v = ds[()]
+            elem.setGolden(fld, v, unitsys=unitsys)
     # the waveform ... ignored now
 
 

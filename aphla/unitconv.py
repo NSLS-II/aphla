@@ -7,11 +7,14 @@ Unit Conversion
 
 # :author: Lingyun Yang <lyyang@bnl.gov>
 
-import numpy as np
 from collections import Iterable
 import logging
 import re
 import os
+from pathlib import Path
+import pickle
+
+import numpy as np
 
 _logger = logging.getLogger("aphla.unitconv")
 #_logger.setLevel(logging.DEBUG)
@@ -160,6 +163,93 @@ class _UcInterpN(UcAbstract):
                 ret.append(np.interp(x[i], self.xp[i], self.fp[i]))
         return ret
 
+def loadUnitConversionYaml(lat, yaml_file):
+    """set the unit conversion for lattice with input from yaml file and its
+    associated pickle file that contains interpolation tables """
+
+    _logger.info(f"setting unit conversion for lattice {lat.name} "
+                 f"from data file '{yaml_file}'")
+
+    from ruamel import yaml
+
+    y = yaml.YAML(typ='safe').load(Path(yaml_file).read_text())
+
+    if 'table_filepath' in y:
+        with open(y['table_filepath'], 'rb') as f:
+            all_tables = pickle.load(f)
+        tables = all_tables[lat.name]
+    else:
+        tables = None
+
+    db = y[lat.name]
+
+    for k, v in db.items():
+
+        # None is the unit for lower level(epics) data
+        usrcsys = v['src_unitsys']
+        udstsys = v['dst_unitsys']
+
+        usrc = v['src_unit']
+        udst = v['dst_unit']
+
+        # Calibration factor
+        yfac = v.get('calib_factor', 1.0)
+        if v['class'] == 'polynomial':
+            a = [yfac**i for i in range(len(v['coeffs']))]
+            a.reverse() # in place
+            newp = [v['coeffs'][i]*c for i,c in enumerate(a)]
+            uc = UcPoly(usrc, udst, newp)
+        elif v['class'] == 'interpolation':
+            t = tables[v['table_key']]
+            uc = UcInterp1(usrc, udst, t[:,0], t[:,1] * yfac)
+        else:
+            raise RuntimeError("Unknown unit converter")
+
+        uc.polarity = v.get('polarity', 1)
+        uc.invertible = int(v.get('invertible', True))
+
+        uhandles = v.get('handles', ['readback', 'setpoint'])
+
+        # find the "elements" list
+        elems = v.get('elements', [])
+
+        eobjs = []
+        for ename in elems:
+            eobj = lat._find_exact_element(ename)
+            if not eobj:
+                _logger.warn(f"dataset '{k}': element {lat.name}.{ename} not found. ignored")
+                continue
+            eobjs.append(eobj)
+
+        fams = v.get('groups', [])
+        for fam in fams:
+            egrps = lat.getElementList(fam)
+            if not egrps:
+                _logger.warn(f"dataset '{k}': group {lat.name}.{fam} not found. ignored")
+            eobjs += egrps
+
+        _logger.info(
+            f"unitconversion data {usrcsys}[{usrc}] -> {udstsys}[{udst}] "
+            f"for elems={elems}, fams={fams}")
+        _logger.info(
+            f"unitconversion will be updated for {[e.name for e in eobjs]}")
+        _logger.info(f"used calibration factor {yfac}")
+
+        for eobj in eobjs:
+            for fld in v.get('fields', []):
+                if fld not in eobj.fields():
+                    realfld = v.get('rawfield', None)
+                    if realfld is None:
+                        _logger.warn(f"'{lat.name}.{eobj.name}' has no field '{fld}' for unit conversion")
+                        continue
+                    else:
+                        eobj.addAliasField(fld, realfld)
+
+                _logger.info(
+                    f"adding unit conversion for {eobj.name}.{fld}, "
+                    f"from {usrcsys}[{usrc}] to {udstsys}[{udst}] handles={uhandles}")
+                for handle in uhandles:
+                    eobj.addUnitConversion(fld, uc, usrcsys, udstsys, handle=handle)
 
 def loadUnitConversionH5(lat, h5file, group):
     """set the unit conversion for lattice with input from hdf5 file"""
@@ -368,6 +458,8 @@ def loadUnitConversion(lat, machdir, datafile):
         loadUnitConversionIni(lat, os.path.join(machdir, fname))
     elif ext.upper() in [".HDF5", ".H5"]:
         loadUnitConversionH5(lat, os.path.join(machdir, fname), grp)
+    elif ext.upper() in (".YML", ".YAML"):
+        loadUnitConversionYaml(lat, os.path.join(machdir, fname))
     else:
         raise RuntimeError("unknown unit conversion: {0}{1}".format(
             machdir, datafile))
