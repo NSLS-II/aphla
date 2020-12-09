@@ -251,7 +251,15 @@ def loadUnitConversionYaml(lat, yaml_file):
     y = yaml.YAML(typ='safe').load(Path(yaml_file).read_text())
 
     if 'table_filepath' in y:
-        with open(y['table_filepath'], 'rb') as f:
+
+        table_filepath = Path(y['table_filepath'])
+        if not table_filepath.exists():
+            table_filepath = Path(yaml_file).parent.joinpath(table_filepath)
+            if not table_filepath.exists():
+                raise FileNotFoundError(
+                    f"Unit conversion table file \"{y['table_filepath']}\"")
+
+        with open(table_filepath, 'rb') as f:
             all_tables = pickle.load(f)
         tables = all_tables[lat.name]
     else:
