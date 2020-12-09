@@ -163,6 +163,82 @@ class _UcInterpN(UcAbstract):
                 ret.append(np.interp(x[i], self.xp[i], self.fp[i]))
         return ret
 
+class UcComposite(UcAbstract):
+    """
+    a composite unit conversion that consists of a sequence of unit conversions.
+
+    The conversion is invertible only if all the sequence of unit conversions
+    themselves are invertible.
+
+    """
+    def __init__(self, src, dst, uc_list):
+
+        # Make sure that the sequence of unit conversions are properly connected.
+        prev_dst = src
+        for uc in uc_list:
+            next_src, next_dst = uc.direction
+            assert next_src == prev_dst
+            prev_dst = next_dst
+        assert next_dst == dst
+
+        super(UcComposite, self).__init__(src, dst)
+        self.uc_list = uc_list
+
+        if all([uc.invertible for uc in uc_list]):
+            self.invertible = 1
+        else:
+            self.invertible = 0
+
+    def __str__(self):
+        src, dst = self.direction[0], self.direction[1]
+        repr_list = []
+        indent = '  '
+        for uc in self.uc_list:
+            repr_list.append(
+                '\n'.join([indent + L for L in uc.__str__().split('\n')]))
+        return "%s -> %s: \n%s" % (src, dst, '\n'.join(repr_list))
+
+    def _inv_eval(self, x):
+        """evaluate the inverse"""
+        if not self.invertible:
+            raise RuntimeError("inverse is not permitted for (%s -> %s)" %
+                               self.direction)
+
+        if isinstance(x, Iterable):
+            return [self._recursive_inv_eval(v)
+                    if v is not None else None for v in x]
+        else:
+            self._recursive_inv_eval(x)
+
+    def eval(self, x, inv = False):
+        if x is None: return None
+
+        if inv: return self._inv_eval(x)
+
+        if isinstance(x, Iterable):
+            return [self._recursive_eval(v)
+                    if v is not None else None for v in x]
+        else:
+            return self._recursive_eval(x)
+
+    def _recursive_eval(self, x):
+        """"""
+
+        y = x
+        for uc in self.uc_list:
+            y = uc.eval(y)
+
+        return y
+
+    def _recursive_inv_eval(self, y):
+        """"""
+
+        x = y
+        for uc in self.uc_list[::-1]:
+            x = uc.eval(x, inv=True)
+
+        return x
+
 def loadUnitConversionYaml(lat, yaml_file):
     """set the unit conversion for lattice with input from yaml file and its
     associated pickle file that contains interpolation tables """
@@ -194,6 +270,7 @@ def loadUnitConversionYaml(lat, yaml_file):
 
         # Calibration factor
         yfac = v.get('calib_factor', 1.0)
+
         if v['class'] == 'polynomial':
             a = [yfac**i for i in range(len(v['coeffs']))]
             a.reverse() # in place
@@ -202,6 +279,8 @@ def loadUnitConversionYaml(lat, yaml_file):
         elif v['class'] == 'interpolation':
             t = tables[v['table_key']]
             uc = UcInterp1(usrc, udst, t[:,0], t[:,1] * yfac)
+        elif v['class'] == 'composite':
+            raise NotImplementedError
         else:
             raise RuntimeError("Unknown unit converter")
 
