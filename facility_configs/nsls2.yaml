@@ -1,0 +1,12 @@
+name: nsls2
+submachines:
+  available: [LN, LTD1, LTD2, LTB, BR, BTD, BTS, SR]
+  default: SR
+engines:
+  available: [pyelegant]
+  default: pyelegant
+models:
+  SR:
+    pyelegant:
+      available: ['bare', '3dw', '17ids']
+      default: '17ids'

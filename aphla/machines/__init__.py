@@ -15,14 +15,6 @@ elements, magnet or instrument. The submachines/lattices can share elements.
 
 # :author: Lingyun Yang <lyyang@bnl.gov>
 
-from ..unitconv import *
-from ..element import *
-from ..apdata import *
-from ..lattice import Lattice
-from ..chanfinder import ChannelFinderAgent
-from ..resource import getResource
-from .. import catools
-
 import sys
 import os
 import time
@@ -34,8 +26,22 @@ from six.moves import cPickle as pickle
 from six.moves import configparser
 import fnmatch
 import logging
+from pathlib import Path
+import gzip
+import collections
+import warnings
 
 from ruamel import yaml
+
+from ..version import short_version
+from .. import facility_d
+from ..unitconv import *
+from ..element import *
+from ..apdata import *
+from ..lattice import Lattice
+from ..chanfinder import ChannelFinderAgent
+from ..resource import getResource
+from .. import catools
 
 _logger = logging.getLogger(__name__)
 #_logger.setLevel(logging.DEBUG)
@@ -78,58 +84,16 @@ _cf_map = {'elemName': 'name',
            'system': 'system'
 }
 
+CACHE_FILEPATH_TEMPLATE = {}
+for k in ['machine', 'models']:
+    CACHE_FILEPATH_TEMPLATE[k] = str(Path(_home_hla).joinpath(
+        f'{{machine}}_{{submachine}}_{k}_v{short_version}.pgz'))
 
 # keep all loaded lattice
 _lattice_dict = {}
 
 # the current lattice
 _lat = None
-
-def _init(machine, submachines = "*", **kwargs):
-    """use load instead"""
-    load_v1(machine, submachines = submachines, **kwargs)
-
-def load_v1(machine, submachines = "*", **kwargs):
-    """
-    load submachine lattices in machine.
-
-    Parameters
-    -----------
-    machine: str. the exact name of machine
-    submachine: str. default '*'. pattern of sub machines
-    use_cache: bool. default False. use cache
-    save_cache: bool. default False, save cache
-    """
-
-    use_cache = kwargs.get('use_cache', False)
-    save_cache = kwargs.get('save_cache', False)
-
-    if use_cache:
-        try:
-            loadCache(machine)
-        except:
-            _logger.error('Lattice initialization using cache failed. ' +
-                          'Will attempt initialization with other method(s).')
-            save_cache = True
-        else:
-            # Loading from cache was successful.
-            return
-
-    #importlib.import_module(machine, 'machines')
-    _logger.info("importing '%s'" % machine)
-    m = __import__(machine, globals(), locals(), [], -1)
-    lats, lat = m.init_submachines(machine, submachines, **kwargs)
-    # update machine name for each lattice
-
-    global _lat, _lattice_dict
-    _lattice_dict.update(lats)
-    _lat = lat
-    _logger.info("setting default lattice '%s'" % _lat.name)
-
-    if save_cache:
-        selected_lattice_name = [k for (k,v) in _lattice_dict.items()
-                                 if _lat == v][0]
-        saveCache(machine, _lattice_dict, selected_lattice_name)
 
 def _findMachinePath(machine):
     # if machine is an abs path
@@ -153,6 +117,21 @@ def _findMachinePath(machine):
     _logger.warn("can not find machine dir")
     return None, ""
 
+def flatten_dict(d, parent_key='', sep='_'):
+    """
+    Based on the answers by Imran & mythsmith on https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys
+    """
+
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, collections.MutableMapping):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+
+    return dict(items)
+
 def load(machine, submachine = "*", **kwargs):
     """
     load submachine lattices in machine.
@@ -161,8 +140,9 @@ def load(machine, submachine = "*", **kwargs):
     -----------
     machine: str. the exact name of machine
     submachine: str. default '*'. pattern of sub machines
-    use_cache: bool. default False. use cache
-    save_cache: bool. default False, save cache
+    use_cache: bool. default True. If True, use cache, but this option will be
+               ignored if "save_cache" is True.
+    save_cache: bool. default False, If True, save cache.
 
     This machine can be a path to config dir.
     """
@@ -171,23 +151,16 @@ def load(machine, submachine = "*", **kwargs):
 
     lat_dict, lat0 = {}, None
 
-    use_cache = kwargs.get('use_cache', False)
+    use_cache = kwargs.get('use_cache', True)
     save_cache = kwargs.get('save_cache', False)
     verbose = kwargs.get('verbose', 0)
     return_lattices = kwargs.get("return_lattices", False)
 
-    if use_cache:
-        try:
-            loadCache(machine)
-        except:
-            msg = ('Lattice initialization using cache failed. ' +
-                  'Will attempt initialization with other method(s).')
-            print(msg)
-            _logger.error(msg)
-            save_cache = True
-        else:
-            # Loading from cache was successful.
-            return
+    if save_cache:
+        if use_cache:
+            print('* WARNING: The cache file will NOT be used because '
+                  '"save_cache" is set to True.')
+        use_cache = False
 
     #importlib.import_module(machine, 'machines')
     machdir, machname = _findMachinePath(machine)
@@ -217,32 +190,138 @@ def load(machine, submachine = "*", **kwargs):
         # the default submachine
         accdefault = d.get("default_submachine", "")
 
+        if use_cache:
+            if submachine == '*':
+                selected_submachine = d.get("default_submachine", "")
+                if selected_submachine == "":
+                    _submachines = d.get("submachines", [])
+                    if len(_submachines) == 0:
+                        raise ValueError
+                    else: # Pick the first one
+                        selected_submachine = _submachines[0]
+            else:
+                matched_submachines = [subm for subm in d.get("submachines", [])
+                                       if fnmatch.fnmatch(subm, submachine)]
+                if len(matched_submachines) == 1:
+                    selected_submachine = matched_submachines[0]
+                elif len(matched_submachines) == 0:
+                    raise ValueError(f'Specified submachine pattern "{submachine}" does not match any submachine.')
+                else:
+                    raise ValueError(f'Specified submachine pattern "{submachine}" matches multiple choices.')
+
+            db_filepaths = [config_filepath]
+            _subm_cfg = flatten_dict(cfg[selected_submachine])
+            for k, v in _subm_cfg.items():
+                if k != 'unit_conversion':
+                    if isinstance(v, str):
+                        fp = Path(machdir).joinpath(v)
+                        if fp.exists():
+                            db_filepaths.append(fp)
+                else:
+                    for fname in v:
+                        fp = Path(machdir).joinpath(fname)
+                        db_filepaths.append(fp)
+
+                        with open(fp, 'r') as f:
+                            while True:
+                                try:
+                                    line = f.readline().strip()
+                                    if line != '':
+                                        _uc = yaml.YAML().load(line)
+                                        if 'table_filepath' in _uc:
+                                            db_filepaths.append(
+                                                Path(machdir).joinpath(_uc['table_filepath']))
+                                        break
+                                except EOFError:
+                                    break
+
+            #mod_timestamps = [os.path.getmtime(fp) for fp in db_filepaths]
+            mod_timestamps = [fp.stat().st_mtime for fp in db_filepaths]
+
+            cache_filepstr = CACHE_FILEPATH_TEMPLATE['machine'].format(
+                machine=machine,
+                submachine=selected_submachine)
+            cache_filep = Path(cache_filepstr)
+
+            if cache_filep.exists():
+                cache_file_timestamp = cache_filep.stat().st_mtime
+
+                # If any of the aphla database files have a last-modified
+                # timestamp later than that of the cache file, machine loading
+                # should proceed without using the cache file, and update the
+                # cache file after normal loading.
+                if np.any(np.array(mod_timestamps) - cache_file_timestamp > 0.0):
+                    need_cache_update = True
+                    print(f'* Some of the database files related to the machine '
+                          f'"{machine}" submachine "{selected_submachine}" are '
+                          f'newer than the lattice cache file.')
+                else:
+                    print(f'* The lattice cache file for the machine "{machine}" '
+                          f'submachine "{selected_submachine}" exists and '
+                          f'appears to be up to date.')
+                    need_cache_update = False
+            else:
+                print(f'* The lattice cache file for the machine "{machine}" '
+                      f'submachine "{selected_submachine}" does NOT exist.')
+                need_cache_update = True
+
+            if not need_cache_update:
+                try:
+                    loadCache(machine, selected_submachine)
+                except:
+                    msg = ('Lattice initialization using cache failed. ' +
+                           'Will attempt initialization without a cache file.')
+                    print(msg)
+                    _logger.error(msg)
+                    save_cache = True
+                else:
+                    # Loading from cache was successful.
+                    return
+            else:
+                save_cache = True
+
+        print('* Constructing the machine lattice from the database files...')
+
         # For all submachines specified in the config file that matches the pattern
         msects = [subm for subm in d.get("submachines", [])
-                 if fnmatch.fnmatch(subm, submachine)]
+                  if fnmatch.fnmatch(subm, submachine)]
         # print(msect)
         for msect in msects:
             d = cfg[msect]
-            accstruct = d.get("cfs_url", None)
+            accstruct = d.get("cfs", None)
             if accstruct is None:
-                raise RuntimeError((f"No accelerator data source (cfs_url) available "
+                raise RuntimeError((f"No accelerator data source (cfs) available "
                                     f"for '{msect}'"))
-            acctag = d.get("cfs_tag", f"aphla.sys.{msect}")
+            acctag = accstruct.get("tag", f"aphla.sys.{msect}")
             cfa = ChannelFinderAgent()
-            accsqlite = Path(machdir).joinpath(accstruct)
-            if re.match(r"https?://.*", accstruct, re.I):
-                _logger.info(f"using CFS '{accstruct}' for '{msect}'")
-                #cfa.downloadCfs(accstruct, property=[('elemName', '*'),
+            source_type = accstruct.get('type', None)
+            if source_type is None:
+                raise RuntimeError((f"Type of accelerator data source NOT specified "
+                                    f"for '{msect}'"))
+            source_path = accstruct.get('path', None)
+            if source_path is None:
+                raise RuntimeError((f"Path to accelerator data source NOT specified "
+                                    f"for '{msect}'"))
+
+            if (source_type == 'url') and re.match(r"https?://.*", source_path, re.I):
+                _logger.info(f"using CFS '{source_path}' for '{msect}'")
+                #cfa.downloadCfs(source_path, property=[('elemName', '*'),
                 #                                     ('iocName', '*')],
                 #                tagName=acctag)
-                cfa.downloadCfs(accstruct, property=[('elemName', '*'),], tagName=acctag)
-            elif accsqlite.exists():
-                _logger.info(f"using SQlite '{accsqlite}'")
-                cfa.loadSqlite(accsqlite)
+                cfa.downloadCfs(source_path, property=[('elemName', '*'),], tagName=acctag)
+            elif source_type == 'pgz':
+                accpgz = Path(machdir).joinpath(source_path)
+                if accpgz.exists():
+                    _logger.info(f"using gzip-ed pickle file '{accpgz}'")
+                    cfa.loadPgzFile(accpgz)
+            elif source_type == 'sqlite':
+                accsqlite = Path(machdir).joinpath(source_path)
+                if accsqlite.exists():
+                    _logger.info(f"using SQlite '{accsqlite}'")
+                    cfa.loadSqlite(accsqlite)
             else:
-                _logger.warn(f"NOT CFS '{accstruct}'")
-                _logger.warn(f"NOT SQlite '{accsqlite}'")
-                raise RuntimeError(f"Unknown accelerator data source '{accstruct}'")
+                raise RuntimeError(
+                    f"Unknown accelerator data source type '{source_type}'")
 
             cfa.splitPropertyValue('elemGroups')
             cfa.splitChainedElement('elemName')
@@ -418,8 +497,13 @@ def load(machine, submachine = "*", **kwargs):
 
 def loadfast(machine, submachine = "*"):
     """
+    Deprecated. load() with "use_cache=True" should be used instead.
+
     :author: Yoshtieru Hidaka <yhidaka@bnl.gov>
     """
+
+    warnings.warn('load() with "use_cache=True" should be used instead',
+                  DeprecationWarning)
 
     machine_folderpath = os.path.join(HLA_CONFIG_DIR, machine)
 
@@ -471,34 +555,54 @@ def loadfast(machine, submachine = "*"):
     except:
         pass
 
-def loadCache(machine_name):
+def loadCache(machine_name, submachine_name):
     """
     load the cached machine
 
     :author: Yoshtieru Hidaka <yhidaka@bnl.gov>
     """
-    global _lat, _lattice_dict
 
-    cache_folderpath = _home_hla
-    cache_filepath = os.path.join(cache_folderpath,
-                                  machine_name+'_lattices.cpkl')
+    global _lat
 
-    print('Loading cached lattice from {0:s}...'.format(cache_filepath))
+    if False:
+        global _lattice_dict
 
-    with open(cache_filepath,'rb') as f:
-        selected_lattice_name = pickle.load(f)
-        if sys.version_info.major == 3:
-            _lattice_dict = pickle.load(f, encoding='latin1')
-            # ^ encoding kwarg added to deal with a Py2 cPickle and Py3 pickle
-            #   compatibility issue.
-        elif sys.version_info.major == 2:
-            _lattice_dict = pickle.load(f)
-        else:
-            raise RuntimeError('Python version must be either 2 or 3.')
+        cache_folderpath = _home_hla
+        cache_filepath = os.path.join(cache_folderpath,
+                                      machine_name+'_lattices.cpkl')
 
-    print('Finished loading cached lattice.')
+        print('Loading cached lattice from {0:s}...'.format(cache_filepath))
 
-    _lat = _lattice_dict[selected_lattice_name]
+        with open(cache_filepath,'rb') as f:
+            selected_lattice_name = pickle.load(f)
+            if sys.version_info.major == 3:
+                _lattice_dict = pickle.load(f, encoding='latin1')
+                # ^ encoding kwarg added to deal with a Py2 cPickle and Py3 pickle
+                #   compatibility issue.
+            elif sys.version_info.major == 2:
+                _lattice_dict = pickle.load(f)
+            else:
+                raise RuntimeError('Python version must be either 2 or 3.')
+
+        print('Finished loading cached lattice.')
+
+        _lat = _lattice_dict[selected_lattice_name]
+    else:
+        cache_filepstr = CACHE_FILEPATH_TEMPLATE['machine'].format(
+            machine=machine_name,
+            submachine=submachine_name)
+
+        print(f'Loading the cached lattice from {cache_filepstr}...')
+
+        with gzip.GzipFile(cache_filepstr, 'r') as f:
+            selected_lattice_name = pickle.load(f)
+            assert selected_lattice_name == submachine_name
+            _saved_lat = pickle.load(f)
+
+        _lattice_dict[submachine_name] = _saved_lat
+        _lat = _saved_lat
+
+        print('Finished loading the cached lattice.')
 
 
 def saveCache(machine_name, lattice_dict, selected_lattice_name):
@@ -508,14 +612,27 @@ def saveCache(machine_name, lattice_dict, selected_lattice_name):
     :author: Yoshtieru Hidaka <yhidaka@bnl.gov>
     """
 
-    cache_folderpath = _home_hla
-    if not os.path.exists(cache_folderpath):
-        os.mkdir(cache_folderpath)
-    cache_filepath = os.path.join(cache_folderpath,
-                                  machine_name+'_lattices.cpkl')
-    with open(cache_filepath,'wb') as f:
-        pickle.dump(selected_lattice_name,f,2)
-        pickle.dump(lattice_dict,f,2)
+    if False:
+        cache_folderpath = _home_hla
+        if not os.path.exists(cache_folderpath):
+            os.mkdir(cache_folderpath)
+        cache_filepath = os.path.join(cache_folderpath,
+                                      machine_name+'_lattices.cpkl')
+        with open(cache_filepath,'wb') as f:
+            pickle.dump(selected_lattice_name,f,2)
+            pickle.dump(lattice_dict,f,2)
+    else:
+        cache_filepstr = CACHE_FILEPATH_TEMPLATE['machine'].format(
+            machine=machine_name,
+            submachine=selected_lattice_name)
+
+        print(f'Saving the lattice to the cache file "{cache_filepstr}"...')
+
+        with gzip.GzipFile(cache_filepstr, 'w') as f:
+            pickle.dump(selected_lattice_name, f)
+            pickle.dump(lattice_dict[selected_lattice_name], f)
+
+        print('Finished saving the cached lattice.')
 
 def saveChannelFinderDb(dst, url = None):
     """save the channel finder as a local DB
@@ -695,6 +812,13 @@ def createLattice(latname, pvrec, systag, src = 'channelfinder',
         pv = rec[0]
         if pv: elem.updatePvRecord(pv, prpt, rec[2])
 
+        mv = rec[3]
+        if mv:
+            # If elem.updatePvRecord() has been already called, property updating
+            # within elem.updateMvRecord() should be skipped, as it'll be redundant.
+            update_prop = False if pv else True
+            elem.updateMvRecord(mv, prpt, update_prop=update_prop)
+
     # group info is a redundant info, needs rebuild based on each element
     lat.buildGroups()
     # !IMPORTANT! since Channel finder has no order, but lat class has
@@ -761,7 +885,7 @@ def getOutputDir(lat = None):
 
 def getMachine(name = None):
     """
-    return the summachine (lattice) object with given name, if None returns the
+    return the submachine (lattice) object with given name, if None returns the
     current submachine (lattice) object.
 
     a :class:`~aphla.lattice.Lattice` object with given name. return the
@@ -774,7 +898,14 @@ def getMachine(name = None):
     global _lattice_dict
     return _lattice_dict.get(name, None)
 
-def names():
+def getMachineName():
+    """
+    Return currently selected submachine name
+    """
+
+    return _lat.name
+
+def avail_names():
     """
     get a list of available submachine names (or used to be called "lattices"
     in v1 aphla)
@@ -783,6 +914,21 @@ def names():
     --------
     >>> names()
       ['LN', 'LTD1', 'LTD2', 'LTB', 'BR', 'BTS', 'SR']
+    >>> use('SR')
+
+    """
+
+    return facility_d['submachines']['available']:
+
+def names():
+    """
+    get a list of loaded submachine names (or used to be called "lattices"
+    in v1 aphla)
+
+    Examples
+    --------
+    >>> names()
+      ['SR']
     >>> use('SR')
 
     """

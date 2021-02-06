@@ -7,5 +7,6 @@ dist/
 */.ipynb_checkpoints/*
 
 aphla/version.py
+aphla/facility.yaml
 
-facility.json
+v2tests/nsls2unitconv_quads_sexts.yaml

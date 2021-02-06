@@ -16,7 +16,10 @@ import logging
 import warnings
 from .catools import caget, caput, FORMAT_CTRL, FORMAT_TIME
 from collections import Iterable
+
+from . import OperationMode, OP_MODE
 from .unitconv import *
+from .models import modelget #, modelput
 
 # public symbols
 __all__ = [ "CaElement", "merge",
@@ -235,8 +238,10 @@ class CaAction:
     SETPOINT = 2
     GOLDEN   = 3
     def __init__(self, **kwargs):
-        self.pvrb = [] # readback pv
-        self.pvsp = [] # setpoint pv
+        self.pvrb = [] # readback pv (process variable)
+        self.pvsp = [] # setpoint pv (process variable)
+        self.mvrb = [] # readback mv (model variable)
+        self.mvsp = [] # setpoint mv (model variable)
         # self.unitconv = {}
         self.ucrb = {}  # unit conversion for readback
         self.ucsp = {}  # unit conversion for setpoint
@@ -394,20 +399,31 @@ class CaAction:
         """
         if self.opflags & _DISABLED: raise IOError("reading a disabled element")
 
-        if self.pvrb:
-            #print __name__
-            #_logger.info("testing")
-            rawret = caget(self.pvrb, timeout=self.timeout)
-            if self.trace:
-                self.rb.append(copy.deepcopy(rawret))
-                if len(self.rb) > self.trace_limit:
-                    # keep the first one for `reset`
-                    self.rb.pop(1)
-            if len(self.pvrb) == 1:
-                return self._unit_conv(rawret[0], None, unitsys, self.ucrb)
+        if OP_MODE == OperationMode.ONLINE:
+            if self.pvrb:
+                #print __name__
+                #_logger.info("testing")
+                rawret = caget(self.pvrb, timeout=self.timeout)
+                if self.trace:
+                    self.rb.append(copy.deepcopy(rawret))
+                    if len(self.rb) > self.trace_limit:
+                        # keep the first one for `reset`
+                        self.rb.pop(1)
+                if len(self.pvrb) == 1:
+                    return self._unit_conv(rawret[0], None, unitsys, self.ucrb)
+                else:
+                    return self._unit_conv(rawret, None, unitsys, self.ucrb)
             else:
-                return self._unit_conv(rawret, None, unitsys, self.ucrb)
-        else: return None
+                return None
+        else:
+            if self.mvrb:
+                rawret = modelget(self.mvrb)
+                if len(self.mvrb) == 1:
+                    return self._unit_conv(rawret[0], 'model', unitsys, self.ucrb)
+                else:
+                    return self._unit_conv(rawret, 'model', unitsys, self.ucrb)
+            else:
+                return None
 
     def getGolden(self, unitsys = None):
         """return golden value in unitsys"""
@@ -433,24 +449,34 @@ class CaAction:
         """
         return the value of setpoint PV or None if such PV is not defined.
         """
-        if self.pvsp:
-            rawret = caget(self.pvsp, timeout=self.timeout, format=FORMAT_CTRL)
-            # update the limits when necessary
-            for i in range(len(self.pvsp)):
-                if self.pvlim[i] is None:
-                    try:
-                        self.pvlim[i] = (rawret[i].lower_ctrl_limit,
-                                         rawret[i].upper_ctrl_limit)
-                    except:
-                        pass
-            if len(self.pvsp) == 1:
-                return self._unit_conv(rawret[0], None, unitsys, self.ucsp)
-            else:
-                return self._unit_conv(rawret, None, unitsys, self.ucsp)
-        else:
-            #raise ValueError("no setpoint PVs")
-            return None
 
+        if OP_MODE == OperationMode.ONLINE:
+            if self.pvsp:
+                rawret = caget(self.pvsp, timeout=self.timeout, format=FORMAT_CTRL)
+                # update the limits when necessary
+                for i in range(len(self.pvsp)):
+                    if self.pvlim[i] is None:
+                        try:
+                            self.pvlim[i] = (rawret[i].lower_ctrl_limit,
+                                             rawret[i].upper_ctrl_limit)
+                        except:
+                            pass
+                if len(self.pvsp) == 1:
+                    return self._unit_conv(rawret[0], None, unitsys, self.ucsp)
+                else:
+                    return self._unit_conv(rawret, None, unitsys, self.ucsp)
+            else:
+                #raise ValueError("no setpoint PVs")
+                return None
+        else:
+            if self.mvsp:
+                rawret = modelget(self.mvsp)
+                if len(self.mvsp) == 1:
+                    return self._unit_conv(rawret[0], 'model', unitsys, self.ucsp)
+                else:
+                    return self._unit_conv(rawret, 'model', unitsys, self.ucsp)
+            else:
+                return None
 
     def putSetpoint(self, val, unitsys = None, bc = 'exception', wait=True, timeout = 5):
         """
@@ -468,53 +494,64 @@ class CaAction:
             raise IOError("setting an disabled element")
         if self.opflags & _READONLY: raise IOError("setting a readonly field")
 
-        if isinstance(val, (float, int, str)):
-            rawval = [self._unit_conv(val, unitsys, None, self.ucsp)] * \
-                len(self.pvsp)
-        else:
-            # one more level of nest, due to pvsp=[]
-            rawval = [ [self._unit_conv(v, unitsys, None, self.ucsp) for v in val] ]
-
-        # under and over flow check
-        for i,lim in enumerate(self.pvlim):
-            # update boundary if not done before
-            if lim is None:
-                try:
-                    self._update_sp_lim_h(i)
-                except:
-                    _logger.warn("can not update limits for {0}".format(
-                            self.pvsp[i]))
-            lowhigh = self.pvlim[i]
-            if self._all_within_range(rawval[i], lowhigh): continue
-
-            if bc == 'exception':
-                raise OverflowError(
-                    "value {0} is outside of boundary {1}".format(val, lowhigh))
-            elif bc == 'boundary':
-                _logger.info("setting {0} to its boundary {1} instead of {2}".\
-                                 format(self.pvsp[i], lowhigh, rawval[i]))
-                #rawval[i] = bc_val
-            elif bc == 'ignore':
-                pass
-
-        if self.trace:
-            if isinstance(val, (list, tuple)):
-                self.sp.append(rawval[:])
-            elif isinstance(val, (float, int)):
-                self.sp.append(rawval)
+        if OP_MODE == OperationMode.ONLINE:
+            if isinstance(val, (float, int, str)):
+                rawval = [self._unit_conv(val, unitsys, None, self.ucsp)] * \
+                    len(self.pvsp)
             else:
-                raise RuntimeError("unsupported datatype '%s' "
-                                   "for tracing object value." %
-                                   type(val))
-            if len(self.sp) > self.trace_limit:
-                # keep the first for reset
-                self.sp.pop(1)
+                # one more level of nest, due to pvsp=[]
+                rawval = [ [self._unit_conv(v, unitsys, None, self.ucsp) for v in val] ]
 
-        retlst = caput(self.pvsp, rawval, wait=wait, timeout=timeout)
-        for i,ret in enumerate(retlst):
-            if ret.ok: continue
-            raise RuntimeError("Failed at setting {0} to {1}".format(
-                    self.pvsp[i], rawval[i]))
+            # under and over flow check
+            for i,lim in enumerate(self.pvlim):
+                # update boundary if not done before
+                if lim is None:
+                    try:
+                        self._update_sp_lim_h(i)
+                    except:
+                        _logger.warn("can not update limits for {0}".format(
+                                self.pvsp[i]))
+                lowhigh = self.pvlim[i]
+                if self._all_within_range(rawval[i], lowhigh): continue
+
+                if bc == 'exception':
+                    raise OverflowError(
+                        "value {0} is outside of boundary {1}".format(val, lowhigh))
+                elif bc == 'boundary':
+                    _logger.info("setting {0} to its boundary {1} instead of {2}".\
+                                     format(self.pvsp[i], lowhigh, rawval[i]))
+                    #rawval[i] = bc_val
+                elif bc == 'ignore':
+                    pass
+
+            if self.trace:
+                if isinstance(val, (list, tuple)):
+                    self.sp.append(rawval[:])
+                elif isinstance(val, (float, int)):
+                    self.sp.append(rawval)
+                else:
+                    raise RuntimeError("unsupported datatype '%s' "
+                                       "for tracing object value." %
+                                       type(val))
+                if len(self.sp) > self.trace_limit:
+                    # keep the first for reset
+                    self.sp.pop(1)
+
+            retlst = caput(self.pvsp, rawval, wait=wait, timeout=timeout)
+            for i,ret in enumerate(retlst):
+                if ret.ok: continue
+                raise RuntimeError("Failed at setting {0} to {1}".format(
+                        self.pvsp[i], rawval[i]))
+        else:
+            if isinstance(val, (float, int, str)):
+                rawval = [self._unit_conv(val, unitsys, 'model', self.ucsp)] * \
+                    len(self.pvsp)
+            else:
+                # one more level of nest, due to pvsp=[]
+                rawval = [ [self._unit_conv(v, unitsys, 'model', self.ucsp)
+                            for v in val] ]
+
+            retlst = modelput(self.mvsp, rawval)
 
         return retlst
 
@@ -599,6 +636,37 @@ class CaAction:
                 else: self.pvh[i] = (self.pvlim[i][1] - self.pvlim[0])/r
         except:
             _logger.warn("error on reading PV limits {0}".format(self.pvsp[i]))
+
+    def setReadbackMv(self, mv, idx=None):
+        """ Set/replace the MV (model variable)"""
+
+        if idx is None:
+            if isinstance(mv, dict):
+                self.mvrb = [mv]
+            elif isinstance(mv, (tuple, list)):
+                self.mvrb = [m for m in mv]
+        elif not isinstance(mv, (tuple, list)):
+            while idx >= len(self.mvrb):
+                self.mvrb.append(None)
+            self.mvrb[idx] = mv
+        else:
+            raise RuntimeError(f"invalid mv '{str(mv)}' for index '{idx}'")
+
+    def setSetpointMv(self, mv, idx=None):
+        """ Set/replace the MV (model variable)"""
+
+        if idx is None:
+            if isinstance(mv, dict):
+                self.mvsp = [mv]
+            elif isinstance(mv, (tuple, list)):
+                self.mvsp = [m for m in mv]
+        elif not isinstance(mv, (tuple, list)):
+            while idx >= len(self.mvsp):
+                self.mvsp.append(None)
+            self.mvsp[idx] = mv
+        else:
+            raise RuntimeError(f"invalid mv '{str(mv)}' for index '{idx}'")
+
 
     def setStepSize(self, val, **kwargs):
         """
@@ -1153,6 +1221,34 @@ class CaElement(AbstractElement):
         # update the (pv, tags) dictionary
         if pvname in list(self._pvtags): self._pvtags[pvname].update(tags)
         else: self._pvtags[pvname] = set(tags)
+
+    def updateMvRecord(self, mv, properties, update_prop=False):
+        """"""
+
+        # update the properties
+        if (properties is not None) and update_prop:
+            self.updateProperties(properties)
+
+        if properties is not None:
+            elemhandle = properties.get('handle', 'readback')
+            fieldfname = properties.get('field', None)
+            if fieldfname is not None:
+                g = re.match(r'([\w\d]+)(\[\d+\])?', fieldfname)
+                if g is None:
+                    raise ValueError("invalid field '%s'" % fieldfname)
+                fieldname, idx = g.group(1), g.group(2)
+                if idx is not None: idx = int(idx[1:-1])
+
+                if fieldname not in self._field:
+                    self._field[fieldname] = CaAction(trace=self.trace)
+
+                if elemhandle == 'readback':
+                    self._field[fieldname].setReadbackMv(mv, idx)
+                elif elemhandle == 'setpoint':
+                    self._field[fieldname].setSetpointMv(mv, idx)
+                else:
+                    raise ValueError(
+                        f"invalid handle value '{elemhandle}' for mv '{str(mv)}'")
 
     def setGetAction(self, v, field, idx = None, desc = ''):
         """set the action when reading *field*.

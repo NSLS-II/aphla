@@ -20,8 +20,9 @@ except:
 import os
 import tempfile
 import logging
-import json
-from enum import Enum
+from pathlib import Path
+
+from ruamel import yaml
 
 # for compatibilities with Python < 2.7
 class _NullHandler(logging.Handler):
@@ -56,8 +57,82 @@ def enableLog(f = "aphla.log", level=logging.INFO):
 
 #
 
+class OperationMode():
+
+    ONLINE = 0
+    SIMULATION = 1
+
+    def __init__(self, value=0):
+        """"""
+
+        self.mode = value
+
+    @property
+    def mode(self):
+        """"""
+
+        return self._mode
+
+    @mode.setter
+    def mode(self, value):
+        """"""
+
+        if value not in (self.ONLINE, self.SIMULATION):
+            raise ValueError(f'Valid values are {self.ONLINE} or {self.SIMULATION}.')
+
+        self._mode = value
+
+    def __repr__(self):
+
+        if self._mode == self.ONLINE:
+            return 'ONLINE'
+        else:
+            return 'SIMULATION'
+
+    def _get_valid_str_values(self):
+        """"""
+
+        return ['ONLINE', 'SIMULATION']
+
+
+OP_MODE = OperationMode(OperationMode.ONLINE)
+
+def get_op_mode():
+    """"""
+
+    return OP_MODE.mode
+
+def set_op_mode(new_mode):
+    """"""
+
+    OP_MODE.mode = new_mode
+
+def get_op_mode_str():
+    """"""
+
+    return OP_MODE.__repr__()
+
+def set_op_mode_str(new_mode_str):
+    """"""
+
+    upper_new_mode_str = new_mode_str.upper()
+
+    if hasattr(OP_MODE, upper_new_mode_str):
+        OP_MODE.mode = getattr(OP_MODE, upper_new_mode_str)
+    else:
+        valid_str = ', '.join([f'"{s}"' for s in OP_MODE._get_valid_str_values()])
+        raise ValueError(
+            f'Invalid string: "{upper_new_mode_str}" '
+            f'(Valid str values are {valid_str})')
+
+this_folder = os.path.dirname(os.path.abspath(__file__))
+facility_d = yaml.YAML().load(Path(this_folder).joinpath('facility.yaml').read_text())
+facility_name = facility_d['name']
+
 from .catools import *
 from .chanfinder import *
+from . import engines
+from . import models
 from . import machines
 from .hlalib import *
 from .apdata import OrmData
@@ -78,39 +153,7 @@ from . import bba
 # it's better to import this package separately
 #import gui
 
-this_folder = os.path.dirname(os.path.abspath(__file__))
-
-with open(os.path.join(this_folder, 'facility.json'), 'r') as f:
-    facility_d = json.load(f)
-
-facility_name = facility_d['name']
-
 if facility_name == 'nsls2':
     from . import nsls2
     #from . import nsls2br
     from . import nsls2id
-
-from . import engines
-
-class OperationMode(Enum):
-    ONLINE = 0
-    SIMULATION = 1
-
-OP_MODE = OperationMode.ONLINE
-
-def get_op_mode():
-    """"""
-
-    return OP_MODE
-
-def set_op_mode(new_mode):
-    """"""
-
-    global OP_MODE
-
-    try:
-        new_mode = OperationMode(new_mode)
-    except ValueError:
-        new_mode = OperationMode[new_mode]
-
-    OP_MODE = new_mode

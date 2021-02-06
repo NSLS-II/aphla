@@ -19,6 +19,9 @@ it is linked.
 from fnmatch import fnmatch
 from time import gmtime, strftime
 import sqlite3
+import pickle
+import gzip
+from copy import deepcopy
 
 import logging
 _logger = logging.getLogger("aphla.chanfinder")
@@ -247,6 +250,35 @@ class ChannelFinderAgent(object):
                     tags.append(col.strip())
 
             self.rows.append([pv, prpts, tags])
+
+    def loadPgzFile(self, fname):
+        """
+        Load data from a gzip-ed pickle file that contains a dictionary
+        for all the elements, PVs, and model variables (MVs).
+        """
+
+        with gzip.GzipFile(fname, 'rb') as f:
+            d = pickle.load(f)
+
+        self.source = fname
+
+        for elem_name, elem_props in d.items():
+            map_d = elem_props.pop('map', {})
+            tags = elem_props.pop('tags', [])
+
+            for field, get_put_d in map_d.items():
+                for handle, pv_mv_d in get_put_d.items():
+                    prpts = deepcopy(elem_props)
+                    prpts['elemName'] = elem_name
+
+                    pv = pv_mv_d.get('pv', '')
+                    if pv:
+                        prpts['elemField'] = field
+                        prpts['elemHandle'] = handle
+                        if 'epsilon' in pv_mv_d:
+                            prpts['epsilon'] = pv_mv_d['epsilon']
+
+                    self.rows.append([pv, prpts, tags, pv_mv_d.get('mv', {})])
 
 
     def loadSqlite(self, fname, **kwargs):

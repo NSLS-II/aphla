@@ -3,7 +3,8 @@ from setuptools.command.install import install
 import sys
 import os
 import subprocess
-import json
+from pathlib import Path
+import shutil
 
 MAJOR = 2
 MINOR = 0
@@ -73,8 +74,6 @@ write_version_py()
 
 program_name = 'aphla'
 
-facility_json_filename = 'facility.json'
-
 facility_name_arg = 'facility-name'
 
 com_req_pakcages = ['numpy', 'cothread', 'h5py', 'ruamel.yaml']
@@ -99,16 +98,9 @@ if ('install' in sys.argv) or ('sdist' in sys.argv):
 
     this_folder = os.path.dirname(os.path.abspath(__file__))
 
-    facility_json_filepath = os.path.join(
-        this_folder, 'aphla', facility_json_filename)
-    with open(facility_json_filepath, 'w') as f:
-        if facility_name == 'nsls2':
-            json.dump({
-                'name': facility_name,
-                'engines': ['pyelegant'],
-                }, f)
-        else:
-            json.dump({'name': facility_name}, f)
+    facility_yaml_filename = 'facility.yaml'
+    shutil.copy(Path(this_folder).joinpath('facility_configs', f'{facility_name}.yaml'),
+                Path(this_folder).joinpath('aphla', facility_yaml_filename))
 
     sys.argv.remove(facility_name_opt[0])
 
@@ -162,7 +154,7 @@ setup(
                  'aphla.contrib.*', 'aphla.mpfit', 'aphla.dms',
                  'aphla.machines.*']),
     #include_package_data = True,
-    package_data = {'aphla': [facility_json_filename]},
+    package_data = {'aphla': [facility_yaml_filename]},
     #package_data = {'aphla.gui.TinkerUtils': ['tinker_columns.sqlite']},
     #package_data = {
     #    # any these files

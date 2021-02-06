@@ -1,0 +1,3510 @@
+table_filepath: nsls2unitconv_tables.pkl
+
+SR:
+  #-------------------------------------
+  # Unit conversions defined by "groups"
+  #-------------------------------------
+  BPM:
+    groups: [BPM, UBPM]
+    fields: [x, x0, y, y0]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: mm
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+  BPM_ref:
+    groups: [BPM, UBPM]
+    fields: [xref1, xref2, yref1, yref2]
+    handles: [setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: mm
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+  BPM_bba:
+    groups: [BPM, UBPM]
+    fields: [xbba, ybba]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: mm
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+  BPM_fa_tbt:
+    groups: [BPM, UBPM]
+    fields: [xfa, xtbt, yfa, ytbt]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: nm
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-6, 0.0]
+  Xray_BPM:
+    groups: [XBPM]
+    fields: [x, x0, y, y0]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: um
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  FCOR:
+    groups: [FCOR]
+    fields: [x, xjump, y, yjump]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    coeffs: [0.012, 0.0]
+  FCOR_2ndCh:
+    groups: [FCOR]
+    fields: [x2, y2]
+    handles: [readback]
+    src_unitsys:
+    dst_unitsys: eng
+    src_unit: count
+    dst_unit: A
+    class: polynomial
+    invertible: True
+    coeffs: [2.384222171358816e-6, -1.25]
+
+  SKQUAD:
+    groups: [SKQUAD]
+    fields: [b1, b1_2nd]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "m^{-1}"
+    class: polynomial
+    invertible: True
+    coeffs: [3.968e-4, 0.0]
+
+  ID_DW_gap: &ID_DW_gap
+    groups: [DW]
+    fields: [
+      gap,
+      orbff0_m0_gap, orbff1_m0_gap, orbff2_m0_gap, orbff3_m0_gap,
+      orbff4_m0_gap, orbff5_m0_gap, orbff6_m0_gap, orbff7_m0_gap,
+      orbff8_m0_gap, orbff9_m0_gap, orbff10_m0_gap, orbff11_m0_gap,
+      orbff12_m0_gap, orbff13_m0_gap]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: um
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  ID_DW_gap_readonly:
+    <<: *ID_DW_gap
+    fields: [
+      gap_hilim, gap_lolim, gap_hinominal, gap_lonominal,
+      ]
+    handles: [readback]
+
+  ID_EPU_mode:
+    groups: [EPU]
+    fields: [mode]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: enum
+    dst_unit: enum
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  #--------------------------------------
+  # Unit conversions defined by "elements"
+  #--------------------------------------
+
+  "SR-MG-CRR-1000_H":
+    elements: [
+      cm1g4c30a, cl2g6c30b, cl1g6c30b, cl1g2c01a, cl2g2c01a, ch1g6c01b,
+      cm1g4c02a, cl2g6c02b, cl1g6c02b, cl1g2c03a, cl2g2c03a, ch1g6c03b,
+      cm1g4c04a, cl2g6c04b, cl1g6c04b, cl1g2c05a, cl2g2c05a, ch1g6c05b,
+      cm1g4c06a, cl2g6c06b, cl1g6c06b, cl1g2c07a, cl2g2c07a, ch1g6c07b,
+      cm1g4c08a, cl2g6c08b, cl1g6c08b, cl1g2c09a, cl2g2c09a, ch1g6c09b,
+      cm1g4c10a, cl2g6c10b, cl1g6c10b, cl1g2c11a, cl2g2c11a, ch1g6c11b,
+      cm1g4c12a, cl2g6c12b, cl1g6c12b, cl1g2c13a, cl2g2c13a, ch1g6c13b,
+      cm1g4c14a, cl2g6c14b, cl1g6c14b, cl1g2c15a, cl2g2c15a, ch1g6c15b,
+      cm1g4c16a, cl2g6c16b, cl1g6c16b, cl1g2c17a, cl2g2c17a, ch1g6c17b,
+      cm1g4c18a, cl2g6c18b, cl1g6c18b, cl1g2c19a, cl2g2c19a, ch1g6c19b,
+      cm1g4c20a, cl2g6c20b, cl1g6c20b, cl1g2c21a, cl2g2c21a, ch1g6c21b,
+      cm1g4c22a, cl2g6c22b, cl1g6c22b, cl1g2c23a, cl2g2c23a, ch1g6c23b,
+      cm1g4c24a, cl2g6c24b, cl1g6c24b, cl1g2c25a, cl2g2c25a, ch1g6c25b,
+      cm1g4c26a, cl2g6c26b, cl1g6c26b, cl1g2c27a, cl2g2c27a, ch1g6c27b,
+      cm1g4c28a, cl2g6c28b, cl1g6c28b, cl1g2c29a, cl2g2c29a, ch1g6c29b]
+    fields: [x, x_2nd]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    calib_factor: 0.9988
+    coeffs: [-0.05516976946368076, 0.0]
+  "SR-MG-CRR-1000_V":
+    elements: [
+      cm1g4c30a, cl2g6c30b, cl1g6c30b, cl1g2c01a, cl2g2c01a, ch1g6c01b,
+      cm1g4c02a, cl2g6c02b, cl1g6c02b, cl1g2c03a, cl2g2c03a, ch1g6c03b,
+      cm1g4c04a, cl2g6c04b, cl1g6c04b, cl1g2c05a, cl2g2c05a, ch1g6c05b,
+      cm1g4c06a, cl2g6c06b, cl1g6c06b, cl1g2c07a, cl2g2c07a, ch1g6c07b,
+      cm1g4c08a, cl2g6c08b, cl1g6c08b, cl1g2c09a, cl2g2c09a, ch1g6c09b,
+      cm1g4c10a, cl2g6c10b, cl1g6c10b, cl1g2c11a, cl2g2c11a, ch1g6c11b,
+      cm1g4c12a, cl2g6c12b, cl1g6c12b, cl1g2c13a, cl2g2c13a, ch1g6c13b,
+      cm1g4c14a, cl2g6c14b, cl1g6c14b, cl1g2c15a, cl2g2c15a, ch1g6c15b,
+      cm1g4c16a, cl2g6c16b, cl1g6c16b, cl1g2c17a, cl2g2c17a, ch1g6c17b,
+      cm1g4c18a, cl2g6c18b, cl1g6c18b, cl1g2c19a, cl2g2c19a, ch1g6c19b,
+      cm1g4c20a, cl2g6c20b, cl1g6c20b, cl1g2c21a, cl2g2c21a, ch1g6c21b,
+      cm1g4c22a, cl2g6c22b, cl1g6c22b, cl1g2c23a, cl2g2c23a, ch1g6c23b,
+      cm1g4c24a, cl2g6c24b, cl1g6c24b, cl1g2c25a, cl2g2c25a, ch1g6c25b,
+      cm1g4c26a, cl2g6c26b, cl1g6c26b, cl1g2c27a, cl2g2c27a, ch1g6c27b,
+      cm1g4c28a, cl2g6c28b, cl1g6c28b, cl1g2c29a, cl2g2c29a, ch1g6c29b]
+    fields: [y, y_2nd]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    calib_factor: 0.9988
+    coeffs: [-0.04544449298141176, 0.0]
+
+  "SR-MG-CRR-1001_H":
+    elements: [
+      ch1g2c30a, cm1g4c01a, ch1g2c02a, cm1g4c03a, ch1g2c04a, cm1g4c05a,
+      ch1g2c06a, cm1g4c07a, ch1g2c08a, cm1g4c09a, ch1g2c10a, cm1g4c11a,
+      ch1g2c12a, cm1g4c13a, ch1g2c14a, cm1g4c15a, ch1g2c16a, cm1g4c17a,
+      ch1g2c18a, cm1g4c19a, ch1g2c20a, cm1g4c21a, ch1g2c22a, cm1g4c23a,
+      ch1g2c24a, cm1g4c25a, ch1g2c26a, cm1g4c27a, ch1g2c28a, cm1g4c29a]
+    fields: [x, x_2nd]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    calib_factor: 0.9988
+    coeffs: [-0.0553476744844494, 0.0]
+  "SR-MG-CRR-1001_V":
+    elements: [
+      ch1g2c30a, cm1g4c01a, ch1g2c02a, cm1g4c03a, ch1g2c04a, cm1g4c05a,
+      ch1g2c06a, cm1g4c07a, ch1g2c08a, cm1g4c09a, ch1g2c10a, cm1g4c11a,
+      ch1g2c12a, cm1g4c13a, ch1g2c14a, cm1g4c15a, ch1g2c16a, cm1g4c17a,
+      ch1g2c18a, cm1g4c19a, ch1g2c20a, cm1g4c21a, ch1g2c22a, cm1g4c23a,
+      ch1g2c24a, cm1g4c25a, ch1g2c26a, cm1g4c27a, ch1g2c28a, cm1g4c29a]
+    fields: [y, y_2nd]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    calib_factor: 0.9988
+    coeffs: [-0.045554163543883835, 0.0]
+
+  "SR-MG-CRR-1560_H":
+    elements: [
+      ch2g2c30a, cm1g4c30b, cm1g4c01b, ch2g6c01b, ch2g2c02a, cm1g4c02b,
+      cm1g4c03b, ch2g6c03b, ch2g2c04a, cm1g4c04b, cm1g4c05b, ch2g6c05b,
+      ch2g2c06a, cm1g4c06b, cm1g4c07b, ch2g6c07b, ch2g2c08a, cm1g4c08b,
+      cm1g4c09b, ch2g6c09b, ch2g2c10a, cm1g4c10b, cm1g4c11b, ch2g6c11b,
+      ch2g2c12a, cm1g4c12b, cm1g4c13b, ch2g6c13b, ch2g2c14a, cm1g4c14b,
+      cm1g4c15b, ch2g6c15b, ch2g2c16a, cm1g4c16b, cm1g4c17b, ch2g6c17b,
+      ch2g2c18a, cm1g4c18b, cm1g4c19b, ch2g6c19b, ch2g2c20a, cm1g4c20b,
+      cm1g4c21b, ch2g6c21b, ch2g2c22a, cm1g4c22b, cm1g4c23b, ch2g6c23b,
+      ch2g2c24a, cm1g4c24b, cm1g4c25b, ch2g6c25b, ch2g2c26a, cm1g4c26b,
+      cm1g4c27b, ch2g6c27b, ch2g2c28a, cm1g4c28b, cm1g4c29b, ch2g6c29b]
+    fields: [x, x_2nd]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    calib_factor: 0.9988
+    coeffs: [-0.05436019426207392, 0.0]
+  "SR-MG-CRR-1560_V":
+    elements: [
+      ch2g2c30a, cm1g4c30b, cm1g4c01b, ch2g6c01b, ch2g2c02a, cm1g4c02b,
+      cm1g4c03b, ch2g6c03b, ch2g2c04a, cm1g4c04b, cm1g4c05b, ch2g6c05b,
+      ch2g2c06a, cm1g4c06b, cm1g4c07b, ch2g6c07b, ch2g2c08a, cm1g4c08b,
+      cm1g4c09b, ch2g6c09b, ch2g2c10a, cm1g4c10b, cm1g4c11b, ch2g6c11b,
+      ch2g2c12a, cm1g4c12b, cm1g4c13b, ch2g6c13b, ch2g2c14a, cm1g4c14b,
+      cm1g4c15b, ch2g6c15b, ch2g2c16a, cm1g4c16b, cm1g4c17b, ch2g6c17b,
+      ch2g2c18a, cm1g4c18b, cm1g4c19b, ch2g6c19b, ch2g2c20a, cm1g4c20b,
+      cm1g4c21b, ch2g6c21b, ch2g2c22a, cm1g4c22b, cm1g4c23b, ch2g6c23b,
+      ch2g2c24a, cm1g4c24b, cm1g4c25b, ch2g6c25b, ch2g2c26a, cm1g4c26b,
+      cm1g4c27b, ch2g6c27b, ch2g2c28a, cm1g4c28b, cm1g4c29b, ch2g6c29b]
+    fields: [y, y_2nd]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    calib_factor: 0.9988
+    coeffs: [-0.05082624336720927, 0.0]
+
+  ID_IVU_gap: &ID_IVU_gap
+    elements: [ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u, ivu22g1c10c,
+               ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
+               ivu18g1c19u]
+    fields: [
+      gap,
+      orbff0_m0_gap, orbff1_m0_gap, orbff2_m0_gap, orbff3_m0_gap,
+      orbff4_m0_gap, orbff5_m0_gap]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: um
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  ID_IVU_gap_readonly:
+    <<: *ID_IVU_gap
+    fields: [
+      gap_hilim, gap_lolim, gap_hinominal, gap_lonominal,
+      ]
+    handles: [readback]
+
+  ID_IVU_gap_speed:
+    elements: [ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u, ivu22g1c10c,
+               ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
+               ivu18g1c19u]
+    fields: [gap_speed]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: "um/s"
+    dst_unit: "mm/s"
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  ID_EPU_gap_phase_type1: &ID_EPU_gap_phase_type1
+    elements: [epu57g1c02c, epu57g1c21u, epu105g1c21d]
+    fields: [
+      gap, phase,
+      orbff0_m0_gap, orbff0_m1_gap, orbff0_m2_gap, orbff0_m3_gap,
+      orbff1_m0_gap, orbff1_m1_gap, orbff1_m2_gap, orbff1_m3_gap,
+      orbff2_m0_gap, orbff2_m1_gap, orbff2_m2_gap, orbff2_m3_gap,
+      orbff3_m0_gap, orbff3_m1_gap, orbff3_m2_gap, orbff3_m3_gap,
+      orbff4_m0_gap, orbff4_m1_gap, orbff4_m2_gap, orbff4_m3_gap,
+      orbff5_m0_gap, orbff5_m1_gap, orbff5_m2_gap, orbff5_m3_gap,
+      orbff0_m0_phase, orbff0_m1_phase, orbff0_m2_phase, orbff0_m3_phase,
+      orbff1_m0_phase, orbff1_m1_phase, orbff1_m2_phase, orbff1_m3_phase,
+      orbff2_m0_phase, orbff2_m1_phase, orbff2_m2_phase, orbff2_m3_phase,
+      orbff3_m0_phase, orbff3_m1_phase, orbff3_m2_phase, orbff3_m3_phase,
+      orbff4_m0_phase, orbff4_m1_phase, orbff4_m2_phase, orbff4_m3_phase,
+      orbff5_m0_phase, orbff5_m1_phase, orbff5_m2_phase, orbff5_m3_phase,
+      ]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: mm
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  ID_EPU_gap_phase_type1_readonly:
+    <<: *ID_EPU_gap_phase_type1
+    fields: [
+      gap_hilim, gap_lolim, gap_hinominal, gap_lonominal,
+      phase_hilim, phase_lolim,
+      ]
+    handles: [readback]
+
+  ID_EPU_gap_phase_type2: &ID_EPU_gap_phase_type2
+    elements: [epu60g1c07d, epu49g1c23u, epu49g1c23d]
+    fields: [
+      gap, phase,
+      orbff0_m0_gap, orbff0_m1_gap, orbff0_m2_gap, orbff0_m3_gap,
+      orbff1_m0_gap, orbff1_m1_gap, orbff1_m2_gap, orbff1_m3_gap,
+      orbff2_m0_gap, orbff2_m1_gap, orbff2_m2_gap, orbff2_m3_gap,
+      orbff3_m0_gap, orbff3_m1_gap, orbff3_m2_gap, orbff3_m3_gap,
+      orbff4_m0_gap, orbff4_m1_gap, orbff4_m2_gap, orbff4_m3_gap,
+      orbff5_m0_gap, orbff5_m1_gap, orbff5_m2_gap, orbff5_m3_gap,
+      orbff0_m0_phase, orbff0_m1_phase, orbff0_m2_phase, orbff0_m3_phase,
+      orbff1_m0_phase, orbff1_m1_phase, orbff1_m2_phase, orbff1_m3_phase,
+      orbff2_m0_phase, orbff2_m1_phase, orbff2_m2_phase, orbff2_m3_phase,
+      orbff3_m0_phase, orbff3_m1_phase, orbff3_m2_phase, orbff3_m3_phase,
+      orbff4_m0_phase, orbff4_m1_phase, orbff4_m2_phase, orbff4_m3_phase,
+      orbff5_m0_phase, orbff5_m1_phase, orbff5_m2_phase, orbff5_m3_phase,
+      ]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: um
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  ID_EPU_gap_phase_type2_readonly:
+    <<: *ID_EPU_gap_phase_type2
+    fields: [
+      gap_hilim, gap_lolim, gap_hinominal, gap_lonominal,
+      phase_hilim, phase_lolim,
+      ]
+    handles: [readback]
+
+  ID_EPU_gap_phase_speed_type1:
+    elements: [epu57g1c02c, epu57g1c21u, epu105g1c21d]
+    fields: [gap_speed, phase_speed]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: "mm/s"
+    dst_unit: "mm/s"
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  ID_EPU_gap_phase_speed_type2:
+    elements: [epu60g1c07d, epu49g1c23u, epu49g1c23d]
+    fields: [gap_speed, phase_speed]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: "um/s"
+    dst_unit: "mm/s"
+    class: polynomial
+    invertible: True
+    coeffs: [1e-3, 0.0]
+
+  ID_orb_cor_channel_type1: &ID_orb_cor_channel_type1
+    elements: [dw100g1c28u, dw100g1c28d, epu49g1c23u, epu49g1c23d]
+    fields: [
+      cch0, cch1, cch2, cch3, cch4, cch5,
+      orbff0_m0_I, orbff1_m0_I, orbff2_m0_I, orbff3_m0_I, orbff4_m0_I,
+      orbff5_m0_I, orbff6_m0_I, orbff7_m0_I, orbff8_m0_I, orbff9_m0_I,
+      orbff10_m0_I, orbff11_m0_I,
+      orbff0_m1_I, orbff1_m1_I, orbff2_m1_I, orbff3_m1_I, orbff4_m1_I,
+      orbff5_m1_I,
+      orbff0_m2_I, orbff1_m2_I, orbff2_m2_I, orbff3_m2_I, orbff4_m2_I,
+      orbff5_m2_I,
+      orbff0_m3_I, orbff1_m3_I, orbff2_m3_I, orbff3_m3_I, orbff4_m3_I,
+      orbff5_m3_I,
+      ]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: "10uA"
+    dst_unit: A
+    class: polynomial
+    invertible: True
+    coeffs: [1e-5, 0.0]
+
+  ID_orb_cor_channel_type1_readonly:
+    <<: *ID_orb_cor_channel_type1
+    fields: [cch0rb1, cch1rb1, cch2rb1, cch3rb1, cch4rb1, cch5rb1]
+    handles: [readback]
+
+  ID_orb_cor_channel_type2: &ID_orb_cor_channel_type2
+    elements: [epu57g1c02c, epu60g1c07d, epu57g1c21u, epu105g1c21d,
+               ivu20g1c03c, ivu23g1c04u, ivu21g1c05d, ovu42g1c07u, ivu22g1c10c,
+               ivu20g1c11c, ivu23g1c12d, ivu23g1c16c, ivu21g1c17u, ivu21g1c17d,
+               ivu18g1c19u,
+               dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d]
+    fields: [
+      cch0, cch1, cch2, cch3, cch4, cch5, cch6, cch7, cch8, cch9,
+      orbff0_m0_I, orbff1_m0_I, orbff2_m0_I, orbff3_m0_I, orbff4_m0_I,
+      orbff5_m0_I, orbff6_m0_I, orbff7_m0_I, orbff8_m0_I, orbff9_m0_I,
+      orbff10_m0_I, orbff11_m0_I,
+      orbff0_m1_I, orbff1_m1_I, orbff2_m1_I, orbff3_m1_I, orbff4_m1_I,
+      orbff5_m1_I,
+      orbff0_m2_I, orbff1_m2_I, orbff2_m2_I, orbff3_m2_I, orbff4_m2_I,
+      orbff5_m2_I,
+      orbff0_m3_I, orbff1_m3_I, orbff2_m3_I, orbff3_m3_I, orbff4_m3_I,
+      orbff5_m3_I,
+      ]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: A
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  ID_orb_cor_channel_type2_readonly:
+    <<: *ID_orb_cor_channel_type2
+    fields: [
+      cch0rb1, cch1rb1, cch2rb1, cch3rb1, cch4rb1, cch5rb1,
+      ]
+    handles: [readback]
+
+  ID_DW_orbff_channel_regcors:
+    elements: [dw100g1c08u, dw100g1c08d, dw100g1c18u, dw100g1c18d,
+               dw100g1c28u, dw100g1c28d]
+    fields: [orbff12_m0_I, orbff13_m0_I]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: A
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+  ID_EPU_current_strip_channel:
+    elements: [epu57g1c02c, epu57g1c21u, epu105g1c21d, epu49g1c23u, epu49g1c23d]
+    fields: [
+      csch0, csch1, csch2, csch3, csch4, csch5, csch6, csch7, csch8,
+      csch9, csch10, csch11, csch12, csch13, csch14, csch15, csch16,
+      csch17, csch18, csch19,
+      csch0rb1, csch1rb1, csch2rb1, csch3rb1, csch4rb1, csch5rb1,
+      csch6rb1, csch7rb1, csch8rb1, csch9rb1, csch10rb1, csch11rb1,
+      csch12rb1, csch13rb1, csch14rb1, csch15rb1, csch16rb1, csch17rb1,
+      csch18rb1, csch19rb1,
+      ]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: A
+    class: polynomial
+    invertible: True
+    coeffs: [1.0, 0.0]
+
+
+
+  qm1g4c24b: &quad
+    elements: [qm1g4c24b]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "m^{-1}"
+    class: interpolation
+    invertible: True
+    calib_factor: 0.9988
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0001_001.xls
+  qm1g4c25b:
+    <<: *quad
+    elements: [qm1g4c25b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0002_001.xls
+  qm1g4c26b:
+    <<: *quad
+    elements: [qm1g4c26b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0003_001.xls
+  qm1g4c29b:
+    <<: *quad
+    elements: [qm1g4c29b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0004_000.xls
+  qm1g4c03b:
+    <<: *quad
+    elements: [qm1g4c03b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0005_000.xls
+  qm1g4c15b:
+    <<: *quad
+    elements: [qm1g4c15b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0006_000.xls
+  qm1g4c08b:
+    <<: *quad
+    elements: [qm1g4c08b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0007_000.xls
+  qm1g4c05b:
+    <<: *quad
+    elements: [qm1g4c05b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0008_000.xls
+  qm1g4c02b:
+    <<: *quad
+    elements: [qm1g4c02b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0009_000.xls
+  qm1g4c04b:
+    <<: *quad
+    elements: [qm1g4c04b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0010_000.xls
+  qm1g4c06b:
+    <<: *quad
+    elements: [qm1g4c06b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0011_000.xls
+  qm1g4c10b:
+    <<: *quad
+    elements: [qm1g4c10b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0012_000.xls
+  qm1g4c14b:
+    <<: *quad
+    elements: [qm1g4c14b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0013_000.xls
+  qm1g4c09b:
+    <<: *quad
+    elements: [qm1g4c09b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0014_000.xls
+  qm1g4c11b:
+    <<: *quad
+    elements: [qm1g4c11b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0015_000.xls
+  qm1g4c01b:
+    <<: *quad
+    elements: [qm1g4c01b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0016_000.xls
+  qm1g4c16b:
+    <<: *quad
+    elements: [qm1g4c16b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0017_000.xls
+  qm1g4c23b:
+    <<: *quad
+    elements: [qm1g4c23b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0018_000.xls
+  qm1g4c18b:
+    <<: *quad
+    elements: [qm1g4c18b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0019_000.xls
+  qm1g4c27b:
+    <<: *quad
+    elements: [qm1g4c27b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0020_000.xls
+  qm1g4c07b:
+    <<: *quad
+    elements: [qm1g4c07b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0021_000.xls
+  qm1g4c13b:
+    <<: *quad
+    elements: [qm1g4c13b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0022_000.xls
+  qm1g4c30b:
+    <<: *quad
+    elements: [qm1g4c30b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0023_000.xls
+  qm1g4c12b:
+    <<: *quad
+    elements: [qm1g4c12b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0024_000.xls
+  qm1g4c20b:
+    <<: *quad
+    elements: [qm1g4c20b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0025_000.xls
+  qm1g4c28b:
+    <<: *quad
+    elements: [qm1g4c28b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0026_000.xls
+  qm1g4c19b:
+    <<: *quad
+    elements: [qm1g4c19b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0027_000.xls
+  qm1g4c22b:
+    <<: *quad
+    elements: [qm1g4c22b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0028_000.xls
+  qm1g4c17b:
+    <<: *quad
+    elements: [qm1g4c17b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0029_000.xls
+  qm1g4c21b:
+    <<: *quad
+    elements: [qm1g4c21b]
+    polarity: -1
+    table_key: rot_coil_QDP-9801-0030_000.xls
+  ql2g2c09a:
+    <<: *quad
+    elements: [ql2g2c09a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0001_001.xls
+  ql2g2c25a:
+    <<: *quad
+    elements: [ql2g2c25a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0002_001.xls
+  ql2g2c27a:
+    <<: *quad
+    elements: [ql2g2c27a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0003_001.xls
+  qh2g2c26a:
+    <<: *quad
+    elements: [qh2g2c26a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0004_000.xls
+  ql2g2c29a:
+    <<: *quad
+    elements: [ql2g2c29a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0005_000.xls
+  qh2g2c06a:
+    <<: *quad
+    elements: [qh2g2c06a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0006_000.xls
+  qh2g2c02a:
+    <<: *quad
+    elements: [qh2g2c02a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0007_000.xls
+  ql2g2c01a:
+    <<: *quad
+    elements: [ql2g2c01a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0008_000.xls
+  ql2g2c11a:
+    <<: *quad
+    elements: [ql2g2c11a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0009_000.xls
+  qh2g2c28a:
+    <<: *quad
+    elements: [qh2g2c28a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0010_000.xls
+  ql2g2c13a:
+    <<: *quad
+    elements: [ql2g2c13a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0011_000.xls
+  ql2g2c17a:
+    <<: *quad
+    elements: [ql2g2c17a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0012_000.xls
+  qh2g2c18a:
+    <<: *quad
+    elements: [qh2g2c18a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0013_000.xls
+  qh2g2c14a:
+    <<: *quad
+    elements: [qh2g2c14a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0014_000.xls
+  ql2g2c21a:
+    <<: *quad
+    elements: [ql2g2c21a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0015_000.xls
+  ql2g2c23a:
+    <<: *quad
+    elements: [ql2g2c23a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0016_000.xls
+  ql2g2c15a:
+    <<: *quad
+    elements: [ql2g2c15a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0017_000.xls
+  qh2g2c16a:
+    <<: *quad
+    elements: [qh2g2c16a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0018_000.xls
+  qh2g2c20a:
+    <<: *quad
+    elements: [qh2g2c20a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0019_000.xls
+  qh2g2c10a:
+    <<: *quad
+    elements: [qh2g2c10a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0020_000.xls
+  qh2g2c30a:
+    <<: *quad
+    elements: [qh2g2c30a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0021_000.xls
+  ql2g2c03a:
+    <<: *quad
+    elements: [ql2g2c03a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0022_000.xls
+  qh2g2c08a:
+    <<: *quad
+    elements: [qh2g2c08a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0023_000.xls
+  ql2g2c19a:
+    <<: *quad
+    elements: [ql2g2c19a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0024_000.xls
+  qh2g2c24a:
+    <<: *quad
+    elements: [qh2g2c24a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0025_000.xls
+  ql2g2c07a:
+    <<: *quad
+    elements: [ql2g2c07a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0026_000.xls
+  ql2g2c05a:
+    <<: *quad
+    elements: [ql2g2c05a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0027_000.xls
+  qh2g2c12a:
+    <<: *quad
+    elements: [qh2g2c12a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0028_000.xls
+  qh2g2c04a:
+    <<: *quad
+    elements: [qh2g2c04a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0029_000.xls
+  qh2g2c22a:
+    <<: *quad
+    elements: [qh2g2c22a]
+    polarity: 1
+    table_key: rot_coil_QDP-9804-0030_000.xls
+  qh2g6c17b:
+    <<: *quad
+    elements: [qh2g6c17b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0002_000.xls
+  ql2g6c24b:
+    <<: *quad
+    elements: [ql2g6c24b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0003_001.xls
+  ql2g6c26b:
+    <<: *quad
+    elements: [ql2g6c26b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0004_001.xls
+  qh2g6c25b:
+    <<: *quad
+    elements: [qh2g6c25b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0005_000.xls
+  ql2g6c28b:
+    <<: *quad
+    elements: [ql2g6c28b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0006_000.xls
+  qh2g6c29b:
+    <<: *quad
+    elements: [qh2g6c29b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0007_000.xls
+  qh2g6c09b:
+    <<: *quad
+    elements: [qh2g6c09b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0008_000.xls
+  ql2g6c06b:
+    <<: *quad
+    elements: [ql2g6c06b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0009_000.xls
+  ql2g6c04b:
+    <<: *quad
+    elements: [ql2g6c04b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0010_000.xls
+  ql2g6c10b:
+    <<: *quad
+    elements: [ql2g6c10b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0011_000.xls
+  qh2g6c23b:
+    <<: *quad
+    elements: [qh2g6c23b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0012_000.xls
+  ql2g6c22b:
+    <<: *quad
+    elements: [ql2g6c22b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0013_000.xls
+  qh2g6c27b:
+    <<: *quad
+    elements: [qh2g6c27b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0014_000.xls
+  ql2g6c02b:
+    <<: *quad
+    elements: [ql2g6c02b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0015_000.xls
+  qh2g6c19b:
+    <<: *quad
+    elements: [qh2g6c19b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0016_000.xls
+  qh2g6c01b:
+    <<: *quad
+    elements: [qh2g6c01b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0017_000.xls
+  ql2g6c30b:
+    <<: *quad
+    elements: [ql2g6c30b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0018_000.xls
+  qh2g6c05b:
+    <<: *quad
+    elements: [qh2g6c05b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0019_000.xls
+  ql2g6c08b:
+    <<: *quad
+    elements: [ql2g6c08b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0020_000.xls
+  qh2g6c03b:
+    <<: *quad
+    elements: [qh2g6c03b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0021_000.xls
+  qh2g6c07b:
+    <<: *quad
+    elements: [qh2g6c07b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0022_000.xls
+  ql2g6c12b:
+    <<: *quad
+    elements: [ql2g6c12b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0023_000.xls
+  qh2g6c11b:
+    <<: *quad
+    elements: [qh2g6c11b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0024_000.xls
+  ql2g6c14b:
+    <<: *quad
+    elements: [ql2g6c14b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0025_000.xls
+  qh2g6c15b:
+    <<: *quad
+    elements: [qh2g6c15b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0026_000.xls
+  qh2g6c13b:
+    <<: *quad
+    elements: [qh2g6c13b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0027_000.xls
+  ql2g6c16b:
+    <<: *quad
+    elements: [ql2g6c16b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0028_000.xls
+  qh2g6c21b:
+    <<: *quad
+    elements: [qh2g6c21b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0029_000.xls
+  ql2g6c20b:
+    <<: *quad
+    elements: [ql2g6c20b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0030_000.xls
+  ql2g6c18b:
+    <<: *quad
+    elements: [ql2g6c18b]
+    polarity: 1
+    table_key: rot_coil_QDP-9807-0031_000.xls
+  ql1g6c24b:
+    <<: *quad
+    elements: [ql1g6c24b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0001_001.xls
+  ql1g2c25a:
+    <<: *quad
+    elements: [ql1g2c25a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0003_002.xls
+  ql3g2c25a:
+    <<: *quad
+    elements: [ql3g2c25a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0004_001.xls
+  ql1g6c26b:
+    <<: *quad
+    elements: [ql1g6c26b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0005_000.xls
+  qh1g6c29b:
+    <<: *quad
+    elements: [qh1g6c29b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0006_000.xls
+  qh1g6c25b:
+    <<: *quad
+    elements: [qh1g6c25b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0007_000.xls
+  ql1g6c28b:
+    <<: *quad
+    elements: [ql1g6c28b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0008_000.xls
+  qh1g2c26a:
+    <<: *quad
+    elements: [qh1g2c26a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0009_000.xls
+  qh3g2c26a:
+    <<: *quad
+    elements: [qh3g2c26a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0010_000.xls
+  ql1g6c06b:
+    <<: *quad
+    elements: [ql1g6c06b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0011_000.xls
+  qh1g6c09b:
+    <<: *quad
+    elements: [qh1g6c09b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0012_000.xls
+  ql1g6c10b:
+    <<: *quad
+    elements: [ql1g6c10b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0013_000.xls
+  ql1g2c29a:
+    <<: *quad
+    elements: [ql1g2c29a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0014_000.xls
+  ql3g2c29a:
+    <<: *quad
+    elements: [ql3g2c29a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0015_000.xls
+  qh1g6c27b:
+    <<: *quad
+    elements: [qh1g6c27b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0016_000.xls
+  ql1g2c01a:
+    <<: *quad
+    elements: [ql1g2c01a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0017_000.xls
+  ql3g2c01a:
+    <<: *quad
+    elements: [ql3g2c01a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0018_000.xls
+  qh1g2c06a:
+    <<: *quad
+    elements: [qh1g2c06a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0019_000.xls
+  qh3g2c06a:
+    <<: *quad
+    elements: [qh3g2c06a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0020_000.xls
+  ql1g6c30b:
+    <<: *quad
+    elements: [ql1g6c30b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0021_000.xls
+  ql3g2c09a:
+    <<: *quad
+    elements: [ql3g2c09a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0022_000.xls
+  qh1g6c01b:
+    <<: *quad
+    elements: [qh1g6c01b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0023_000.xls
+  ql1g6c02b:
+    <<: *quad
+    elements: [ql1g6c02b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0024_000.xls
+  ql1g2c09a:
+    <<: *quad
+    elements: [ql1g2c09a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0025_000.xls
+  qh3g2c02a:
+    <<: *quad
+    elements: [qh3g2c02a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0026_000.xls
+  ql1g2c27a:
+    <<: *quad
+    elements: [ql1g2c27a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0027_000.xls
+  ql1g6c04b:
+    <<: *quad
+    elements: [ql1g6c04b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0028_000.xls
+  qh1g2c02a:
+    <<: *quad
+    elements: [qh1g2c02a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0029_000.xls
+  ql3g2c27a:
+    <<: *quad
+    elements: [ql3g2c27a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0030_000.xls
+  qh1g6c23b:
+    <<: *quad
+    elements: [qh1g6c23b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0031_000.xls
+  ql1g2c23a:
+    <<: *quad
+    elements: [ql1g2c23a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0032_000.xls
+  qh1g2c28a:
+    <<: *quad
+    elements: [qh1g2c28a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0033_000.xls
+  qh1g6c05b:
+    <<: *quad
+    elements: [qh1g6c05b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0034_000.xls
+  qh1g2c30a:
+    <<: *quad
+    elements: [qh1g2c30a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0035_000.xls
+  qh3g2c30a:
+    <<: *quad
+    elements: [qh3g2c30a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0036_000.xls
+  ql3g2c23a:
+    <<: *quad
+    elements: [ql3g2c23a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0037_000.xls
+  ql1g2c03a:
+    <<: *quad
+    elements: [ql1g2c03a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0038_000.xls
+  ql1g6c08b:
+    <<: *quad
+    elements: [ql1g6c08b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0039_000.xls
+  ql1g2c19a:
+    <<: *quad
+    elements: [ql1g2c19a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0040_001.xls
+  ql3g2c03a:
+    <<: *quad
+    elements: [ql3g2c03a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0041_000.xls
+  qh1g2c08a:
+    <<: *quad
+    elements: [qh1g2c08a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0042_000.xls
+  qh1g6c07b:
+    <<: *quad
+    elements: [qh1g6c07b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0043_000.xls
+  qh1g2c24a:
+    <<: *quad
+    elements: [qh1g2c24a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0044_000.xls
+  qh3g2c24a:
+    <<: *quad
+    elements: [qh3g2c24a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0045_000.xls
+  qh1g6c03b:
+    <<: *quad
+    elements: [qh1g6c03b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0046_000.xls
+  qh1g2c10a:
+    <<: *quad
+    elements: [qh1g2c10a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0047_000.xls
+  qh3g2c10a:
+    <<: *quad
+    elements: [qh3g2c10a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0048_000.xls
+  ql1g2c07a:
+    <<: *quad
+    elements: [ql1g2c07a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0049_000.xls
+  ql1g6c12b:
+    <<: *quad
+    elements: [ql1g6c12b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0050_000.xls
+  ql3g2c07a:
+    <<: *quad
+    elements: [ql3g2c07a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0051_000.xls
+  qh1g6c11b:
+    <<: *quad
+    elements: [qh1g6c11b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0052_000.xls
+  ql3g2c21a:
+    <<: *quad
+    elements: [ql3g2c21a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0053_000.xls
+  ql1g2c11a:
+    <<: *quad
+    elements: [ql1g2c11a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0054_000.xls
+  qh1g2c04a:
+    <<: *quad
+    elements: [qh1g2c04a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0055_000.xls
+  qh3g2c04a:
+    <<: *quad
+    elements: [qh3g2c04a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0056_000.xls
+  ql1g2c05a:
+    <<: *quad
+    elements: [ql1g2c05a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0057_000.xls
+  ql3g2c05a:
+    <<: *quad
+    elements: [ql3g2c05a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0058_000.xls
+  qh1g2c12a:
+    <<: *quad
+    elements: [qh1g2c12a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0059_000.xls
+  ql1g6c14b:
+    <<: *quad
+    elements: [ql1g6c14b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0060_001.xls
+  ql1g2c13a:
+    <<: *quad
+    elements: [ql1g2c13a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0061_000.xls
+  qh3g2c12a:
+    <<: *quad
+    elements: [qh3g2c12a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0062_000.xls
+  qh1g6c13b:
+    <<: *quad
+    elements: [qh1g6c13b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0063_000.xls
+  ql3g2c17a:
+    <<: *quad
+    elements: [ql3g2c17a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0064_000.xls
+  ql3g2c13a:
+    <<: *quad
+    elements: [ql3g2c13a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0065_000.xls
+  ql1g2c15a:
+    <<: *quad
+    elements: [ql1g2c15a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0066_000.xls
+  qh1g2c14a:
+    <<: *quad
+    elements: [qh1g2c14a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0067_000.xls
+  qh3g2c14a:
+    <<: *quad
+    elements: [qh3g2c14a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0068_000.xls
+  ql3g2c15a:
+    <<: *quad
+    elements: [ql3g2c15a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0069_000.xls
+  qh1g6c15b:
+    <<: *quad
+    elements: [qh1g6c15b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0070_000.xls
+  ql3g2c11a:
+    <<: *quad
+    elements: [ql3g2c11a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0071_000.xls
+  ql1g6c16b:
+    <<: *quad
+    elements: [ql1g6c16b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0072_000.xls
+  qh1g6c17b:
+    <<: *quad
+    elements: [qh1g6c17b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0073_000.xls
+  qh1g2c16a:
+    <<: *quad
+    elements: [qh1g2c16a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0074_000.xls
+  qh3g2c16a:
+    <<: *quad
+    elements: [qh3g2c16a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0075_000.xls
+  qh1g2c20a:
+    <<: *quad
+    elements: [qh1g2c20a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0076_000.xls
+  qh1g2c18a:
+    <<: *quad
+    elements: [qh1g2c18a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0077_000.xls
+  ql1g6c22b:
+    <<: *quad
+    elements: [ql1g6c22b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0078_000.xls
+  ql1g2c17a:
+    <<: *quad
+    elements: [ql1g2c17a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0079_000.xls
+  qh1g2c22a:
+    <<: *quad
+    elements: [qh1g2c22a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0080_000.xls
+  ql1g6c18b:
+    <<: *quad
+    elements: [ql1g6c18b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0081_000.xls
+  qh1g6c21b:
+    <<: *quad
+    elements: [qh1g6c21b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0082_000.xls
+  qh3g2c20a:
+    <<: *quad
+    elements: [qh3g2c20a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0083_000.xls
+  qh3g2c22a:
+    <<: *quad
+    elements: [qh3g2c22a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0084_000.xls
+  ql1g6c20b:
+    <<: *quad
+    elements: [ql1g6c20b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0085_000.xls
+  ql1g2c21a:
+    <<: *quad
+    elements: [ql1g2c21a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0087_000.xls
+  qh1g6c19b:
+    <<: *quad
+    elements: [qh1g6c19b]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0090_000.xls
+  ql3g2c19a:
+    <<: *quad
+    elements: [ql3g2c19a]
+    polarity: -1
+    table_key: rot_coil_QDP-9809-0091_000.xls
+  qh3g2c28a:
+    <<: *quad
+    elements: [qh3g2c28a]
+    polarity: -1
+    table_key: rot_coil_QDP-9810-0001_000.xls
+  qh3g2c08a:
+    <<: *quad
+    elements: [qh3g2c08a]
+    polarity: -1
+    table_key: rot_coil_QDP-9810-0002_000.xls
+  qh3g2c18a:
+    <<: *quad
+    elements: [qh3g2c18a]
+    polarity: -1
+    table_key: rot_coil_QDP-9810-0003_000.xls
+  qm2g4c24a:
+    <<: *quad
+    elements: [qm2g4c24a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0001_001.xls
+  qm2g4c24b:
+    <<: *quad
+    elements: [qm2g4c24b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0002_001.xls
+  qm2g4c25a:
+    <<: *quad
+    elements: [qm2g4c25a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0003_001.xls
+  qm2g4c02a:
+    <<: *quad
+    elements: [qm2g4c02a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0004_000.xls
+  qm2g4c12a:
+    <<: *quad
+    elements: [qm2g4c12a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0005_000.xls
+  qm2g4c02b:
+    <<: *quad
+    elements: [qm2g4c02b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0006_000.xls
+  qm2g4c29a:
+    <<: *quad
+    elements: [qm2g4c29a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0007_000.xls
+  qm2g4c09a:
+    <<: *quad
+    elements: [qm2g4c09a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0008_000.xls
+  qm2g4c29b:
+    <<: *quad
+    elements: [qm2g4c29b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0009_000.xls
+  qm2g4c26a:
+    <<: *quad
+    elements: [qm2g4c26a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0010_000.xls
+  qm2g4c09b:
+    <<: *quad
+    elements: [qm2g4c09b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0011_000.xls
+  qm2g4c25b:
+    <<: *quad
+    elements: [qm2g4c25b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0012_001.xls
+  qm2g4c26b:
+    <<: *quad
+    elements: [qm2g4c26b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0013_000.xls
+  qm2g4c03a:
+    <<: *quad
+    elements: [qm2g4c03a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0014_000.xls
+  qm2g4c03b:
+    <<: *quad
+    elements: [qm2g4c03b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0015_000.xls
+  qm2g4c05a:
+    <<: *quad
+    elements: [qm2g4c05a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0016_000.xls
+  qm2g4c05b:
+    <<: *quad
+    elements: [qm2g4c05b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0017_000.xls
+  qm2g4c04b:
+    <<: *quad
+    elements: [qm2g4c04b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0018_000.xls
+  qm2g4c01a:
+    <<: *quad
+    elements: [qm2g4c01a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0019_000.xls
+  qm2g4c04a:
+    <<: *quad
+    elements: [qm2g4c04a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0020_000.xls
+  qm2g4c08a:
+    <<: *quad
+    elements: [qm2g4c08a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0021_000.xls
+  qm2g4c10b:
+    <<: *quad
+    elements: [qm2g4c10b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0022_000.xls
+  qm2g4c12b:
+    <<: *quad
+    elements: [qm2g4c12b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0023_000.xls
+  qm2g4c13a:
+    <<: *quad
+    elements: [qm2g4c13a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0024_000.xls
+  qm2g4c13b:
+    <<: *quad
+    elements: [qm2g4c13b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0025_000.xls
+  qm2g4c23a:
+    <<: *quad
+    elements: [qm2g4c23a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0026_000.xls
+  qm2g4c23b:
+    <<: *quad
+    elements: [qm2g4c23b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0027_000.xls
+  qm2g4c06a:
+    <<: *quad
+    elements: [qm2g4c06a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0028_000.xls
+  qm2g4c06b:
+    <<: *quad
+    elements: [qm2g4c06b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0029_000.xls
+  qm2g4c11a:
+    <<: *quad
+    elements: [qm2g4c11a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0030_000.xls
+  qm2g4c11b:
+    <<: *quad
+    elements: [qm2g4c11b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0031_000.xls
+  qm2g4c14a:
+    <<: *quad
+    elements: [qm2g4c14a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0032_000.xls
+  qm2g4c14b:
+    <<: *quad
+    elements: [qm2g4c14b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0033_000.xls
+  qm2g4c15a:
+    <<: *quad
+    elements: [qm2g4c15a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0034_000.xls
+  qm2g4c15b:
+    <<: *quad
+    elements: [qm2g4c15b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0035_000.xls
+  qm2g4c10a:
+    <<: *quad
+    elements: [qm2g4c10a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0036_000.xls
+  qm2g4c27a:
+    <<: *quad
+    elements: [qm2g4c27a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0037_000.xls
+  qm2g4c08b:
+    <<: *quad
+    elements: [qm2g4c08b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0038_000.xls
+  qm2g4c16a:
+    <<: *quad
+    elements: [qm2g4c16a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0039_000.xls
+  qm2g4c16b:
+    <<: *quad
+    elements: [qm2g4c16b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0040_000.xls
+  qm2g4c27b:
+    <<: *quad
+    elements: [qm2g4c27b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0041_000.xls
+  qm2g4c01b:
+    <<: *quad
+    elements: [qm2g4c01b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0042_000.xls
+  qm2g4c07a:
+    <<: *quad
+    elements: [qm2g4c07a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0043_000.xls
+  qm2g4c07b:
+    <<: *quad
+    elements: [qm2g4c07b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0044_000.xls
+  qm2g4c28a:
+    <<: *quad
+    elements: [qm2g4c28a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0045_000.xls
+  qm2g4c28b:
+    <<: *quad
+    elements: [qm2g4c28b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0046_000.xls
+  qm2g4c20a:
+    <<: *quad
+    elements: [qm2g4c20a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0047_000.xls
+  qm2g4c22a:
+    <<: *quad
+    elements: [qm2g4c22a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0048_000.xls
+  qm2g4c22b:
+    <<: *quad
+    elements: [qm2g4c22b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0049_000.xls
+  qm2g4c18a:
+    <<: *quad
+    elements: [qm2g4c18a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0050_000.xls
+  qm2g4c18b:
+    <<: *quad
+    elements: [qm2g4c18b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0051_000.xls
+  qm2g4c30a:
+    <<: *quad
+    elements: [qm2g4c30a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0052_000.xls
+  qm2g4c30b:
+    <<: *quad
+    elements: [qm2g4c30b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0053_000.xls
+  qm2g4c17a:
+    <<: *quad
+    elements: [qm2g4c17a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0054_000.xls
+  qm2g4c17b:
+    <<: *quad
+    elements: [qm2g4c17b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0055_000.xls
+  qm2g4c19a:
+    <<: *quad
+    elements: [qm2g4c19a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0056_000.xls
+  qm2g4c19b:
+    <<: *quad
+    elements: [qm2g4c19b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0057_000.xls
+  qm2g4c21a:
+    <<: *quad
+    elements: [qm2g4c21a]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0058_000.xls
+  qm2g4c21b:
+    <<: *quad
+    elements: [qm2g4c21b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0059_000.xls
+  qm2g4c20b:
+    <<: *quad
+    elements: [qm2g4c20b]
+    polarity: 1
+    table_key: rot_coil_QDP-9815-0060_000.xls
+  qm1g4c24a:
+    <<: *quad
+    elements: [qm1g4c24a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0001_001.xls
+  qm1g4c25a:
+    <<: *quad
+    elements: [qm1g4c25a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0002_001.xls
+  qm1g4c26a:
+    <<: *quad
+    elements: [qm1g4c26a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0003_001.xls
+  qm1g4c02a:
+    <<: *quad
+    elements: [qm1g4c02a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0004_000.xls
+  qm1g4c03a:
+    <<: *quad
+    elements: [qm1g4c03a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0005_000.xls
+  qm1g4c29a:
+    <<: *quad
+    elements: [qm1g4c29a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0006_000.xls
+  qm1g4c09a:
+    <<: *quad
+    elements: [qm1g4c09a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0007_000.xls
+  qm1g4c05a:
+    <<: *quad
+    elements: [qm1g4c05a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0008_000.xls
+  qm1g4c04a:
+    <<: *quad
+    elements: [qm1g4c04a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0009_000.xls
+  qm1g4c08a:
+    <<: *quad
+    elements: [qm1g4c08a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0010_000.xls
+  qm1g4c06a:
+    <<: *quad
+    elements: [qm1g4c06a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0011_000.xls
+  qm1g4c11a:
+    <<: *quad
+    elements: [qm1g4c11a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0012_000.xls
+  qm1g4c22a:
+    <<: *quad
+    elements: [qm1g4c22a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0013_000.xls
+  qm1g4c15a:
+    <<: *quad
+    elements: [qm1g4c15a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0014_000.xls
+  qm1g4c23a:
+    <<: *quad
+    elements: [qm1g4c23a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0015_000.xls
+  qm1g4c12a:
+    <<: *quad
+    elements: [qm1g4c12a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0016_000.xls
+  qm1g4c14a:
+    <<: *quad
+    elements: [qm1g4c14a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0017_000.xls
+  qm1g4c28a:
+    <<: *quad
+    elements: [qm1g4c28a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0018_000.xls
+  qm1g4c07a:
+    <<: *quad
+    elements: [qm1g4c07a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0019_000.xls
+  qm1g4c10a:
+    <<: *quad
+    elements: [qm1g4c10a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0020_000.xls
+  qm1g4c13a:
+    <<: *quad
+    elements: [qm1g4c13a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0021_000.xls
+  qm1g4c16a:
+    <<: *quad
+    elements: [qm1g4c16a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0022_000.xls
+  qm1g4c30a:
+    <<: *quad
+    elements: [qm1g4c30a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0023_000.xls
+  qm1g4c27a:
+    <<: *quad
+    elements: [qm1g4c27a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0024_000.xls
+  qm1g4c18a:
+    <<: *quad
+    elements: [qm1g4c18a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0025_000.xls
+  qm1g4c21a:
+    <<: *quad
+    elements: [qm1g4c21a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0026_000.xls
+  qm1g4c17a:
+    <<: *quad
+    elements: [qm1g4c17a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0027_000.xls
+  qm1g4c01a:
+    <<: *quad
+    elements: [qm1g4c01a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0028_000.xls
+  qm1g4c20a:
+    <<: *quad
+    elements: [qm1g4c20a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0029_000.xls
+  qm1g4c19a:
+    <<: *quad
+    elements: [qm1g4c19a]
+    polarity: -1
+    table_key: rot_coil_QDW-9802-0030_000.xls
+  qh3g6c25b:
+    <<: *quad
+    elements: [qh3g6c25b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0002_000.xls
+  ql3g6c24b:
+    <<: *quad
+    elements: [ql3g6c24b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0004_001.xls
+  ql3g6c26b:
+    <<: *quad
+    elements: [ql3g6c26b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0005_000.xls
+  ql3g6c28b:
+    <<: *quad
+    elements: [ql3g6c28b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0006_000.xls
+  qh3g6c29b:
+    <<: *quad
+    elements: [qh3g6c29b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0007_000.xls
+  ql3g6c06b:
+    <<: *quad
+    elements: [ql3g6c06b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0008_000.xls
+  ql3g6c10b:
+    <<: *quad
+    elements: [ql3g6c10b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0009_000.xls
+  qh3g6c09b:
+    <<: *quad
+    elements: [qh3g6c09b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0010_000.xls
+  ql3g6c30b:
+    <<: *quad
+    elements: [ql3g6c30b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0011_000.xls
+  qh3g6c01b:
+    <<: *quad
+    elements: [qh3g6c01b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0012_000.xls
+  ql3g6c04b:
+    <<: *quad
+    elements: [ql3g6c04b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0013_000.xls
+  qh3g6c23b:
+    <<: *quad
+    elements: [qh3g6c23b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0014_000.xls
+  ql3g6c02b:
+    <<: *quad
+    elements: [ql3g6c02b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0015_000.xls
+  qh3g6c05b:
+    <<: *quad
+    elements: [qh3g6c05b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0016_000.xls
+  ql3g6c08b:
+    <<: *quad
+    elements: [ql3g6c08b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0017_000.xls
+  qh3g6c03b:
+    <<: *quad
+    elements: [qh3g6c03b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0018_000.xls
+  ql3g6c12b:
+    <<: *quad
+    elements: [ql3g6c12b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0019_000.xls
+  qh3g6c13b:
+    <<: *quad
+    elements: [qh3g6c13b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0020_000.xls
+  ql3g6c14b:
+    <<: *quad
+    elements: [ql3g6c14b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0021_000.xls
+  qh3g6c15b:
+    <<: *quad
+    elements: [qh3g6c15b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0022_001.xls
+  qh3g6c11b:
+    <<: *quad
+    elements: [qh3g6c11b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0023_001.xls
+  ql3g6c20b:
+    <<: *quad
+    elements: [ql3g6c20b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0024_000.xls
+  ql3g6c18b:
+    <<: *quad
+    elements: [ql3g6c18b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0025_000.xls
+  ql3g6c16b:
+    <<: *quad
+    elements: [ql3g6c16b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0026_000.xls
+  qh3g6c21b:
+    <<: *quad
+    elements: [qh3g6c21b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0028_000.xls
+  ql3g6c22b:
+    <<: *quad
+    elements: [ql3g6c22b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0029_000.xls
+  qh3g6c19b:
+    <<: *quad
+    elements: [qh3g6c19b]
+    polarity: -1
+    table_key: rot_coil_QDW-9812-0032_000.xls
+  qh3g6c27b:
+    <<: *quad
+    elements: [qh3g6c27b]
+    polarity: -1
+    table_key: rot_coil_QDW-9813-0001_000.xls
+  qh3g6c17b:
+    <<: *quad
+    elements: [qh3g6c17b]
+    polarity: -1
+    table_key: rot_coil_QDW-9813-0002_000.xls
+  qh3g6c07b:
+    <<: *quad
+    elements: [qh3g6c07b]
+    polarity: -1
+    table_key: rot_coil_QDW-9813-0003_000.xls
+
+
+
+  sl1g2c19a: &sext
+    elements: [sl1g2c19a]
+    fields: [b2]
+    handles: [readback, setpoint]
+    src_unitsys:
+    dst_unitsys: phy
+    src_unit: A
+    dst_unit: "m^{-2}"
+    class: interpolation
+    invertible: True
+    calib_factor: 0.9988
+    polarity: -1
+    table_key: rot_coil_STP-9801-0001_000.xls
+  sl2g2c19a:
+    <<: *sext
+    elements: [sl2g2c19a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0005_000.xls
+  sm1g4c12b:
+    <<: *sext
+    elements: [sm1g4c12b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0006_000.xls
+  sh1g6c27b:
+    <<: *sext
+    elements: [sh1g6c27b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0007_001.xls
+  sl1g2c27a:
+    <<: *sext
+    elements: [sl1g2c27a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0008_001.xls
+  sl2g2c27a:
+    <<: *sext
+    elements: [sl2g2c27a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0009_001.xls
+  sm1g4c24b:
+    <<: *sext
+    elements: [sm1g4c24b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0010_001.xls
+  sl1g6c06b:
+    <<: *sext
+    elements: [sl1g6c06b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0011_001.xls
+  sl1g2c25a:
+    <<: *sext
+    elements: [sl1g2c25a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0012_001.xls
+  sl2g6c30b:
+    <<: *sext
+    elements: [sl2g6c30b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0013_001.xls
+  sl1g6c30b:
+    <<: *sext
+    elements: [sl1g6c30b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0014_001.xls
+  sh1g2c22a:
+    <<: *sext
+    elements: [sh1g2c22a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0015_000.xls
+  sh1g2c08a:
+    <<: *sext
+    elements: [sh1g2c08a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0016_002.xls
+  sm1g4c13b:
+    <<: *sext
+    elements: [sm1g4c13b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0017_000.xls
+  sh1g6c01b:
+    <<: *sext
+    elements: [sh1g6c01b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0018_001.xls
+  sm1g4c15b:
+    <<: *sext
+    elements: [sm1g4c15b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0019_001.xls
+  sl2g2c25a:
+    <<: *sext
+    elements: [sl2g2c25a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0020_001.xls
+  sl2g6c24b:
+    <<: *sext
+    elements: [sl2g6c24b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0021_001.xls
+  sl1g6c24b:
+    <<: *sext
+    elements: [sl1g6c24b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0022_001.xls
+  sm1g4c25b:
+    <<: *sext
+    elements: [sm1g4c25b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0023_001.xls
+  sm1g4c26b:
+    <<: *sext
+    elements: [sm1g4c26b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0024_001.xls
+  sl3g2c25a:
+    <<: *sext
+    elements: [sl3g2c25a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0025_001.xls
+  sm1g4c02b:
+    <<: *sext
+    elements: [sm1g4c02b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0026_000.xls
+  sm1g4c03b:
+    <<: *sext
+    elements: [sm1g4c03b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0027_000.xls
+  sm1g4c29b:
+    <<: *sext
+    elements: [sm1g4c29b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0028_000.xls
+  sm1g4c05b:
+    <<: *sext
+    elements: [sm1g4c05b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0029_000.xls
+  sm1g4c04b:
+    <<: *sext
+    elements: [sm1g4c04b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0030_000.xls
+  sm1g4c06b:
+    <<: *sext
+    elements: [sm1g4c06b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0031_000.xls
+  sm1g4c09b:
+    <<: *sext
+    elements: [sm1g4c09b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0032_000.xls
+  sh1g2c26a:
+    <<: *sext
+    elements: [sh1g2c26a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0033_000.xls
+  sh3g2c26a:
+    <<: *sext
+    elements: [sh3g2c26a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0034_000.xls
+  sh4g2c26a:
+    <<: *sext
+    elements: [sh4g2c26a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0035_000.xls
+  sh1g6c29b:
+    <<: *sext
+    elements: [sh1g6c29b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0036_000.xls
+  sl1g2c29a:
+    <<: *sext
+    elements: [sl1g2c29a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0037_000.xls
+  sl2g6c02b:
+    <<: *sext
+    elements: [sl2g6c02b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0038_001.xls
+  sl2g2c29a:
+    <<: *sext
+    elements: [sl2g2c29a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0039_001.xls
+  sl3g2c29a:
+    <<: *sext
+    elements: [sl3g2c29a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0040_001.xls
+  sl2g6c10b:
+    <<: *sext
+    elements: [sl2g6c10b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0041_001.xls
+  sl1g6c10b:
+    <<: *sext
+    elements: [sl1g6c10b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0042_001.xls
+  sl2g2c09a:
+    <<: *sext
+    elements: [sl2g2c09a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0043_001.xls
+  sl3g2c09a:
+    <<: *sext
+    elements: [sl3g2c09a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0044_001.xls
+  sm1g4c11b:
+    <<: *sext
+    elements: [sm1g4c11b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0045_001.xls
+  sh1g2c06a:
+    <<: *sext
+    elements: [sh1g2c06a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0046_001.xls
+  sm1g4c14b:
+    <<: *sext
+    elements: [sm1g4c14b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0047_001.xls
+  sh1g6c09b:
+    <<: *sext
+    elements: [sh1g6c09b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0048_001.xls
+  sm1g4c16b:
+    <<: *sext
+    elements: [sm1g4c16b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0049_001.xls
+  sh1g6c25b:
+    <<: *sext
+    elements: [sh1g6c25b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0050_001.xls
+  sl2g6c26b:
+    <<: *sext
+    elements: [sl2g6c26b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0051_001.xls
+  sl1g6c26b:
+    <<: *sext
+    elements: [sl1g6c26b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0052_001.xls
+  sm1g4c23b:
+    <<: *sext
+    elements: [sm1g4c23b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0053_001.xls
+  sl2g6c28b:
+    <<: *sext
+    elements: [sl2g6c28b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0054_000.xls
+  sl1g6c28b:
+    <<: *sext
+    elements: [sl1g6c28b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0055_000.xls
+  sm1g4c10b:
+    <<: *sext
+    elements: [sm1g4c10b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0056_000.xls
+  sh3g2c06a:
+    <<: *sext
+    elements: [sh3g2c06a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0057_001.xls
+  sh4g2c06a:
+    <<: *sext
+    elements: [sh4g2c06a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0058_000.xls
+  sl3g2c27a:
+    <<: *sext
+    elements: [sl3g2c27a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0059_000.xls
+  sl2g6c06b:
+    <<: *sext
+    elements: [sl2g6c06b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0060_000.xls
+  sm1g4c27b:
+    <<: *sext
+    elements: [sm1g4c27b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0061_000.xls
+  sm1g4c28b:
+    <<: *sext
+    elements: [sm1g4c28b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0062_000.xls
+  sl1g2c09a:
+    <<: *sext
+    elements: [sl1g2c09a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0063_000.xls
+  sl1g6c02b:
+    <<: *sext
+    elements: [sl1g6c02b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0064_000.xls
+  sm1g4c07b:
+    <<: *sext
+    elements: [sm1g4c07b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0065_000.xls
+  sm1g4c08b:
+    <<: *sext
+    elements: [sm1g4c08b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0066_000.xls
+  sh1g2c02a:
+    <<: *sext
+    elements: [sh1g2c02a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0067_000.xls
+  sh3g2c02a:
+    <<: *sext
+    elements: [sh3g2c02a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0068_000.xls
+  sh4g2c02a:
+    <<: *sext
+    elements: [sh4g2c02a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0069_000.xls
+  sh1g2c28a:
+    <<: *sext
+    elements: [sh1g2c28a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0070_000.xls
+  sh3g2c28a:
+    <<: *sext
+    elements: [sh3g2c28a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0071_000.xls
+  sh4g2c28a:
+    <<: *sext
+    elements: [sh4g2c28a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0072_000.xls
+  sl1g2c21a:
+    <<: *sext
+    elements: [sl1g2c21a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0073_001.xls
+  sl1g2c01a:
+    <<: *sext
+    elements: [sl1g2c01a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0074_000.xls
+  sl1g2c05a:
+    <<: *sext
+    elements: [sl1g2c05a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0075_000.xls
+  sl2g2c05a:
+    <<: *sext
+    elements: [sl2g2c05a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0076_000.xls
+  sl2g6c08b:
+    <<: *sext
+    elements: [sl2g6c08b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0077_000.xls
+  sl1g6c08b:
+    <<: *sext
+    elements: [sl1g6c08b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0078_000.xls
+  sh1g2c30a:
+    <<: *sext
+    elements: [sh1g2c30a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0079_000.xls
+  sl2g6c12b:
+    <<: *sext
+    elements: [sl2g6c12b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0080_000.xls
+  sl2g2c01a:
+    <<: *sext
+    elements: [sl2g2c01a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0081_000.xls
+  sl1g6c12b:
+    <<: *sext
+    elements: [sl1g6c12b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0082_000.xls
+  sh3g2c30a:
+    <<: *sext
+    elements: [sh3g2c30a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0083_000.xls
+  sl3g2c01a:
+    <<: *sext
+    elements: [sl3g2c01a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0084_000.xls
+  sh4g2c30a:
+    <<: *sext
+    elements: [sh4g2c30a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0085_000.xls
+  sl2g6c04b:
+    <<: *sext
+    elements: [sl2g6c04b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0086_000.xls
+  sl1g6c04b:
+    <<: *sext
+    elements: [sl1g6c04b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0087_000.xls
+  sh3g2c22a:
+    <<: *sext
+    elements: [sh3g2c22a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0088_000.xls
+  sl1g2c15a:
+    <<: *sext
+    elements: [sl1g2c15a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0089_000.xls
+  sh3g2c08a:
+    <<: *sext
+    elements: [sh3g2c08a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0090_000.xls
+  sm1g4c20b:
+    <<: *sext
+    elements: [sm1g4c20b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0091_000.xls
+  sh1g6c07b:
+    <<: *sext
+    elements: [sh1g6c07b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0092_000.xls
+  sh1g6c21b:
+    <<: *sext
+    elements: [sh1g6c21b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0093_001.xls
+  sl3g2c03a:
+    <<: *sext
+    elements: [sl3g2c03a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0094_000.xls
+  sl2g2c03a:
+    <<: *sext
+    elements: [sl2g2c03a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0095_000.xls
+  sl1g2c03a:
+    <<: *sext
+    elements: [sl1g2c03a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0096_000.xls
+  sh4g2c08a:
+    <<: *sext
+    elements: [sh4g2c08a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0097_000.xls
+  sl1g2c07a:
+    <<: *sext
+    elements: [sl1g2c07a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0098_000.xls
+  sl2g2c07a:
+    <<: *sext
+    elements: [sl2g2c07a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0099_000.xls
+  sh1g6c05b:
+    <<: *sext
+    elements: [sh1g6c05b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0100_000.xls
+  sh1g6c23b:
+    <<: *sext
+    elements: [sh1g6c23b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0101_000.xls
+  sl1g2c23a:
+    <<: *sext
+    elements: [sl1g2c23a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0102_000.xls
+  sl3g2c07a:
+    <<: *sext
+    elements: [sl3g2c07a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0103_000.xls
+  sl3g2c05a:
+    <<: *sext
+    elements: [sl3g2c05a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0104_000.xls
+  sl2g2c23a:
+    <<: *sext
+    elements: [sl2g2c23a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0105_000.xls
+  sm1g4c22b:
+    <<: *sext
+    elements: [sm1g4c22b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0106_000.xls
+  sl3g2c23a:
+    <<: *sext
+    elements: [sl3g2c23a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0107_000.xls
+  sh3g2c12a:
+    <<: *sext
+    elements: [sh3g2c12a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0108_000.xls
+  sh4g2c12a:
+    <<: *sext
+    elements: [sh4g2c12a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0109_000.xls
+  sl1g2c11a:
+    <<: *sext
+    elements: [sl1g2c11a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0110_000.xls
+  sl2g2c11a:
+    <<: *sext
+    elements: [sl2g2c11a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0111_000.xls
+  sl3g2c11a:
+    <<: *sext
+    elements: [sl3g2c11a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0112_000.xls
+  sh1g2c16a:
+    <<: *sext
+    elements: [sh1g2c16a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0113_000.xls
+  sl1g2c13a:
+    <<: *sext
+    elements: [sl1g2c13a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0114_000.xls
+  sl2g2c13a:
+    <<: *sext
+    elements: [sl2g2c13a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0115_000.xls
+  sl2g6c18b:
+    <<: *sext
+    elements: [sl2g6c18b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0116_000.xls
+  sm1g4c17b:
+    <<: *sext
+    elements: [sm1g4c17b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0117_000.xls
+  sl1g2c17a:
+    <<: *sext
+    elements: [sl1g2c17a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0118_000.xls
+  sl2g2c21a:
+    <<: *sext
+    elements: [sl2g2c21a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0119_000.xls
+  sh1g6c11b:
+    <<: *sext
+    elements: [sh1g6c11b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0120_000.xls
+  sl2g2c17a:
+    <<: *sext
+    elements: [sl2g2c17a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0121_000.xls
+  sh3g2c16a:
+    <<: *sext
+    elements: [sh3g2c16a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0122_000.xls
+  sm1g4c21b:
+    <<: *sext
+    elements: [sm1g4c21b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0123_000.xls
+  sh1g2c12a:
+    <<: *sext
+    elements: [sh1g2c12a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0124_000.xls
+  sl3g2c21a:
+    <<: *sext
+    elements: [sl3g2c21a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0125_000.xls
+  sh1g2c14a:
+    <<: *sext
+    elements: [sh1g2c14a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0126_000.xls
+  sl1g6c18b:
+    <<: *sext
+    elements: [sl1g6c18b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0127_000.xls
+  sh3g2c14a:
+    <<: *sext
+    elements: [sh3g2c14a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0128_000.xls
+  sh1g2c18a:
+    <<: *sext
+    elements: [sh1g2c18a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0129_000.xls
+  sl2g6c20b:
+    <<: *sext
+    elements: [sl2g6c20b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0130_000.xls
+  sh4g2c14a:
+    <<: *sext
+    elements: [sh4g2c14a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0131_000.xls
+  sh1g6c15b:
+    <<: *sext
+    elements: [sh1g6c15b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0132_000.xls
+  sm1g4c30a:
+    <<: *sext
+    elements: [sm1g4c30a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0133_000.xls
+  sm1g4c01b:
+    <<: *sext
+    elements: [sm1g4c01b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0134_000.xls
+  sh1g2c04a:
+    <<: *sext
+    elements: [sh1g2c04a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0135_000.xls
+  sh1g6c03b:
+    <<: *sext
+    elements: [sh1g6c03b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0136_000.xls
+  sh3g2c04a:
+    <<: *sext
+    elements: [sh3g2c04a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0137_000.xls
+  sh4g2c04a:
+    <<: *sext
+    elements: [sh4g2c04a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0138_000.xls
+  sh1g2c24a:
+    <<: *sext
+    elements: [sh1g2c24a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0139_000.xls
+  sh3g2c24a:
+    <<: *sext
+    elements: [sh3g2c24a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0140_000.xls
+  sh4g2c24a:
+    <<: *sext
+    elements: [sh4g2c24a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0141_000.xls
+  sh1g2c10a:
+    <<: *sext
+    elements: [sh1g2c10a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0142_000.xls
+  sh3g2c10a:
+    <<: *sext
+    elements: [sh3g2c10a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0143_000.xls
+  sh4g2c10a:
+    <<: *sext
+    elements: [sh4g2c10a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0144_000.xls
+  sm1g4c18b:
+    <<: *sext
+    elements: [sm1g4c18b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0145_000.xls
+  sl3g2c13a:
+    <<: *sext
+    elements: [sl3g2c13a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0146_000.xls
+  sm1g4c30b:
+    <<: *sext
+    elements: [sm1g4c30b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0147_000.xls
+  sm1g4c19b:
+    <<: *sext
+    elements: [sm1g4c19b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0148_000.xls
+  sl2g2c15a:
+    <<: *sext
+    elements: [sl2g2c15a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0149_000.xls
+  sh4g2c22a:
+    <<: *sext
+    elements: [sh4g2c22a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0150_000.xls
+  sl3g2c15a:
+    <<: *sext
+    elements: [sl3g2c15a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0151_000.xls
+  sl2g6c14b:
+    <<: *sext
+    elements: [sl2g6c14b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0152_000.xls
+  sl1g6c14b:
+    <<: *sext
+    elements: [sl1g6c14b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0153_000.xls
+  sh1g6c13b:
+    <<: *sext
+    elements: [sh1g6c13b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0154_000.xls
+  sl2g6c16b:
+    <<: *sext
+    elements: [sl2g6c16b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0155_000.xls
+  sl1g6c16b:
+    <<: *sext
+    elements: [sl1g6c16b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0156_000.xls
+  sl2g6c22b:
+    <<: *sext
+    elements: [sl2g6c22b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0157_000.xls
+  sh1g6c19b:
+    <<: *sext
+    elements: [sh1g6c19b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0158_000.xls
+  sh1g6c17b:
+    <<: *sext
+    elements: [sh1g6c17b]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0159_000.xls
+  sh4g2c16a:
+    <<: *sext
+    elements: [sh4g2c16a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0160_000.xls
+  sh3g2c18a:
+    <<: *sext
+    elements: [sh3g2c18a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0161_000.xls
+  sl3g2c17a:
+    <<: *sext
+    elements: [sl3g2c17a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0162_000.xls
+  sl3g2c19a:
+    <<: *sext
+    elements: [sl3g2c19a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0163_000.xls
+  sh4g2c18a:
+    <<: *sext
+    elements: [sh4g2c18a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0164_000.xls
+  sl1g6c22b:
+    <<: *sext
+    elements: [sl1g6c22b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0165_000.xls
+  sl1g6c20b:
+    <<: *sext
+    elements: [sl1g6c20b]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0166_000.xls
+  sh1g2c20a:
+    <<: *sext
+    elements: [sh1g2c20a]
+    polarity: 1
+    table_key: rot_coil_STP-9801-0167_000.xls
+  sh3g2c20a:
+    <<: *sext
+    elements: [sh3g2c20a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0168_000.xls
+  sh4g2c20a:
+    <<: *sext
+    elements: [sh4g2c20a]
+    polarity: -1
+    table_key: rot_coil_STP-9801-0169_000.xls
+  sm1g4c02a:
+    <<: *sext
+    elements: [sm1g4c02a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0009_001.xls
+  sm1g4c24a:
+    <<: *sext
+    elements: [sm1g4c24a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0010_002.xls
+  sl3g6c24b:
+    <<: *sext
+    elements: [sl3g6c24b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0011_001.xls
+  sm1g4c25a:
+    <<: *sext
+    elements: [sm1g4c25a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0012_001.xls
+  sm1g4c09a:
+    <<: *sext
+    elements: [sm1g4c09a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0013_000.xls
+  sm1g4c05a:
+    <<: *sext
+    elements: [sm1g4c05a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0014_000.xls
+  sm1g4c03a:
+    <<: *sext
+    elements: [sm1g4c03a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0015_001.xls
+  sl3g6c28b:
+    <<: *sext
+    elements: [sl3g6c28b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0016_000.xls
+  sl3g6c20b:
+    <<: *sext
+    elements: [sl3g6c20b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0017_001.xls
+  sm1g4c06a:
+    <<: *sext
+    elements: [sm1g4c06a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0018_000.xls
+  sh3g6c25b:
+    <<: *sext
+    elements: [sh3g6c25b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0019_000.xls
+  sh3g6c29b:
+    <<: *sext
+    elements: [sh3g6c29b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0020_000.xls
+  sl3g6c26b:
+    <<: *sext
+    elements: [sl3g6c26b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0021_002.xls
+  sm1g4c26a:
+    <<: *sext
+    elements: [sm1g4c26a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0022_001.xls
+  sh4g6c25b:
+    <<: *sext
+    elements: [sh4g6c25b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0023_000.xls
+  sm1g4c29a:
+    <<: *sext
+    elements: [sm1g4c29a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0024_002.xls
+  sm1g4c04a:
+    <<: *sext
+    elements: [sm1g4c04a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0025_001.xls
+  sh4g6c21b:
+    <<: *sext
+    elements: [sh4g6c21b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0026_000.xls
+  sm1g4c10a:
+    <<: *sext
+    elements: [sm1g4c10a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0027_000.xls
+  sm1g4c27a:
+    <<: *sext
+    elements: [sm1g4c27a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0028_000.xls
+  sl3g6c06b:
+    <<: *sext
+    elements: [sl3g6c06b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0029_000.xls
+  sh4g6c01b:
+    <<: *sext
+    elements: [sh4g6c01b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0030_000.xls
+  sm1g4c12a:
+    <<: *sext
+    elements: [sm1g4c12a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0031_001.xls
+  sm1g4c14a:
+    <<: *sext
+    elements: [sm1g4c14a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0032_001.xls
+  sh4g6c29b:
+    <<: *sext
+    elements: [sh4g6c29b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0033_001.xls
+  sm1g4c11a:
+    <<: *sext
+    elements: [sm1g4c11a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0034_000.xls
+  sm1g4c16a:
+    <<: *sext
+    elements: [sm1g4c16a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0035_002.xls
+  sl3g6c02b:
+    <<: *sext
+    elements: [sl3g6c02b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0036_000.xls
+  sl3g6c12b:
+    <<: *sext
+    elements: [sl3g6c12b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0037_000.xls
+  sm1g4c13a:
+    <<: *sext
+    elements: [sm1g4c13a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0038_000.xls
+  sm1g4c28a:
+    <<: *sext
+    elements: [sm1g4c28a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0039_000.xls
+  sh4g6c09b:
+    <<: *sext
+    elements: [sh4g6c09b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0040_000.xls
+  sh4g6c19b:
+    <<: *sext
+    elements: [sh4g6c19b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0041_000.xls
+  sh3g6c09b:
+    <<: *sext
+    elements: [sh3g6c09b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0042_000.xls
+  sh4g6c27b:
+    <<: *sext
+    elements: [sh4g6c27b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0043_000.xls
+  sh3g6c27b:
+    <<: *sext
+    elements: [sh3g6c27b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0044_000.xls
+  sh3g6c01b:
+    <<: *sext
+    elements: [sh3g6c01b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0045_000.xls
+  sm1g4c23a:
+    <<: *sext
+    elements: [sm1g4c23a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0046_000.xls
+  sm1g4c15a:
+    <<: *sext
+    elements: [sm1g4c15a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0047_001.xls
+  sl3g6c10b:
+    <<: *sext
+    elements: [sl3g6c10b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0048_000.xls
+  sl3g6c30b:
+    <<: *sext
+    elements: [sl3g6c30b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0049_000.xls
+  sm1g4c08a:
+    <<: *sext
+    elements: [sm1g4c08a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0050_000.xls
+  sm1g4c07a:
+    <<: *sext
+    elements: [sm1g4c07a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0051_000.xls
+  sl3g6c04b:
+    <<: *sext
+    elements: [sl3g6c04b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0052_000.xls
+  sh4g6c23b:
+    <<: *sext
+    elements: [sh4g6c23b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0053_000.xls
+  sh3g6c23b:
+    <<: *sext
+    elements: [sh3g6c23b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0054_000.xls
+  sm1g4c19a:
+    <<: *sext
+    elements: [sm1g4c19a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0055_001.xls
+  sl3g6c08b:
+    <<: *sext
+    elements: [sl3g6c08b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0056_000.xls
+  sh3g6c11b:
+    <<: *sext
+    elements: [sh3g6c11b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0057_000.xls
+  sh4g6c07b:
+    <<: *sext
+    elements: [sh4g6c07b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0058_000.xls
+  sh4g6c05b:
+    <<: *sext
+    elements: [sh4g6c05b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0059_000.xls
+  sh3g6c05b:
+    <<: *sext
+    elements: [sh3g6c05b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0060_000.xls
+  sh4g6c11b:
+    <<: *sext
+    elements: [sh4g6c11b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0061_000.xls
+  sh3g6c07b:
+    <<: *sext
+    elements: [sh3g6c07b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0062_000.xls
+  sh4g6c03b:
+    <<: *sext
+    elements: [sh4g6c03b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0063_000.xls
+  sh3g6c03b:
+    <<: *sext
+    elements: [sh3g6c03b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0064_000.xls
+  sm1g4c22a:
+    <<: *sext
+    elements: [sm1g4c22a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0065_001.xls
+  sm1g4c20a:
+    <<: *sext
+    elements: [sm1g4c20a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0066_000.xls
+  sh4g6c15b:
+    <<: *sext
+    elements: [sh4g6c15b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0068_000.xls
+  sh3g6c15b:
+    <<: *sext
+    elements: [sh3g6c15b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0069_000.xls
+  sm1g4c01a:
+    <<: *sext
+    elements: [sm1g4c01a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0070_000.xls
+  sh4g6c13b:
+    <<: *sext
+    elements: [sh4g6c13b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0071_000.xls
+  sh3g6c13b:
+    <<: *sext
+    elements: [sh3g6c13b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0072_000.xls
+  sl3g6c14b:
+    <<: *sext
+    elements: [sl3g6c14b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0073_000.xls
+  sm1g4c18a:
+    <<: *sext
+    elements: [sm1g4c18a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0074_000.xls
+  sm1g4c21a:
+    <<: *sext
+    elements: [sm1g4c21a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0075_000.xls
+  sm1g4c17a:
+    <<: *sext
+    elements: [sm1g4c17a]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0076_001.xls
+  sl3g6c22b:
+    <<: *sext
+    elements: [sl3g6c22b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0077_000.xls
+  sh4g6c17b:
+    <<: *sext
+    elements: [sh4g6c17b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0078_000.xls
+  sh3g6c17b:
+    <<: *sext
+    elements: [sh3g6c17b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0079_000.xls
+  sh3g6c21b:
+    <<: *sext
+    elements: [sh3g6c21b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0080_000.xls
+  sl3g6c16b:
+    <<: *sext
+    elements: [sl3g6c16b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0081_000.xls
+  sh3g6c19b:
+    <<: *sext
+    elements: [sh3g6c19b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0082_000.xls
+  sl3g6c18b:
+    <<: *sext
+    elements: [sl3g6c18b]
+    polarity: -1
+    table_key: rot_coil_STP-9802-0083_000.xls
+  sm2g4c24b:
+    <<: *sext
+    elements: [sm2g4c24b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0001_001.xls
+  sm2g4c25b:
+    <<: *sext
+    elements: [sm2g4c25b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0002_001.xls
+  sm2g4c26b:
+    <<: *sext
+    elements: [sm2g4c26b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0003_001.xls
+  sm2g4c02b:
+    <<: *sext
+    elements: [sm2g4c02b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0004_000.xls
+  sm2g4c29b:
+    <<: *sext
+    elements: [sm2g4c29b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0005_000.xls
+  sm2g4c03b:
+    <<: *sext
+    elements: [sm2g4c03b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0007_000.xls
+  sm2g4c04b:
+    <<: *sext
+    elements: [sm2g4c04b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0008_000.xls
+  sm2g4c05b:
+    <<: *sext
+    elements: [sm2g4c05b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0009_000.xls
+  sm2g4c06b:
+    <<: *sext
+    elements: [sm2g4c06b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0010_000.xls
+  sm2g4c09b:
+    <<: *sext
+    elements: [sm2g4c09b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0011_000.xls
+  sm2g4c13b:
+    <<: *sext
+    elements: [sm2g4c13b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0012_000.xls
+  sm2g4c10b:
+    <<: *sext
+    elements: [sm2g4c10b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0013_000.xls
+  sm2g4c07b:
+    <<: *sext
+    elements: [sm2g4c07b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0014_000.xls
+  sm2g4c12b:
+    <<: *sext
+    elements: [sm2g4c12b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0015_000.xls
+  sm2g4c15b:
+    <<: *sext
+    elements: [sm2g4c15b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0016_000.xls
+  sm2g4c11b:
+    <<: *sext
+    elements: [sm2g4c11b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0017_000.xls
+  sm2g4c16b:
+    <<: *sext
+    elements: [sm2g4c16b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0018_000.xls
+  sm2g4c08b:
+    <<: *sext
+    elements: [sm2g4c08b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0019_000.xls
+  sm2g4c14b:
+    <<: *sext
+    elements: [sm2g4c14b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0020_000.xls
+  sm2g4c23b:
+    <<: *sext
+    elements: [sm2g4c23b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0021_000.xls
+  sm2g4c27b:
+    <<: *sext
+    elements: [sm2g4c27b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0023_000.xls
+  sm2g4c28b:
+    <<: *sext
+    elements: [sm2g4c28b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0024_000.xls
+  sm2g4c30b:
+    <<: *sext
+    elements: [sm2g4c30b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0028_000.xls
+  sm2g4c01b:
+    <<: *sext
+    elements: [sm2g4c01b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-0029_000.xls
+  sm2g4c20b:
+    <<: *sext
+    elements: [sm2g4c20b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-1001_000.xls
+  sm2g4c21b:
+    <<: *sext
+    elements: [sm2g4c21b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-1002_000.xls
+  sm2g4c17b:
+    <<: *sext
+    elements: [sm2g4c17b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-1003_000.xls
+  sm2g4c22b:
+    <<: *sext
+    elements: [sm2g4c22b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-1004_001.xls
+  sm2g4c18b:
+    <<: *sext
+    elements: [sm2g4c18b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-1005_001.xls
+  sm2g4c19b:
+    <<: *sext
+    elements: [sm2g4c19b]
+    polarity: 1
+    table_key: rot_coil_STP-9816-1006_000.xls
+
+
+  #-------------------------------------
+  # Model unit conversions defined by "groups" for "pyelegant" engine
+  #-------------------------------------
+
+  Model_SCOR_FCOR:
+    groups: [COR, FCOR]
+    fields: [x, y]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: rad
+    dst_unit: mrad
+    class: polynomial
+    invertible: True
+    coeffs: [1e3, 0.0]
+
+  Model_BPM:
+    groups: [BPM, UBPM]
+    fields: [x, x0, y, y0]
+    handles: [readback]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: m
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e3, 0.0]
+  Model_BPM_ref:
+    groups: [BPM, UBPM]
+    fields: [xref1, xref2, yref1, yref2]
+    handles: [setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: m
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e3, 0.0]
+  Model_BPM_bba:
+    groups: [BPM, UBPM]
+    fields: [xbba, ybba]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: m
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e3, 0.0]
+  Model_BPM_fa_tbt:
+    groups: [BPM, UBPM]
+    fields: [xfa, xtbt, yfa, ytbt]
+    handles: [readback]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: m
+    dst_unit: mm
+    class: polynomial
+    invertible: True
+    coeffs: [1e3, 0.0]
+
+  Model_SKQUAD:
+    groups: [SKQUAD]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: "m^{-2}" # = K1
+    dst_unit: "m^{-1}" # = K1 * L
+    class: polynomial
+    invertible: True
+    coeffs: [0.2, 0.0]
+
+  Model_QHL13:
+    groups: [QH1, QH3, QL1, QL3]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: "m^{-2}" # = K1
+    dst_unit: "m^{-1}" # = K1 * L
+    class: polynomial
+    invertible: True
+    coeffs: [0.268, 0.0]
+  Model_QHL2:
+    groups: [QH2, QL2]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: "m^{-2}" # = K1
+    dst_unit: "m^{-1}" # = K1 * L
+    class: polynomial
+    invertible: True
+    coeffs: [0.46, 0.0]
+  Model_QM1:
+    groups: [QM1]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: "m^{-2}" # = K1
+    dst_unit: "m^{-1}" # = K1 * L
+    class: polynomial
+    invertible: True
+    coeffs: [0.247, 0.0]
+  Model_QM2:
+    groups: [QM2]
+    fields: [b1]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: "m^{-2}" # = K1
+    dst_unit: "m^{-1}" # = K1 * L
+    class: polynomial
+    invertible: True
+    coeffs: [0.282, 0.0]
+
+  Model_Sext1:
+    groups: [SH1, SH3, SH4, SL1, SL2, SL3, SM1]
+    fields: [b2]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: "m^{-3}" # = K3
+    dst_unit: "m^{-2}" # = K3 * L
+    class: polynomial
+    invertible: True
+    coeffs: [0.2, 0.0]
+  Model_Sext2:
+    groups: [SM2]
+    fields: [b2]
+    handles: [readback, setpoint]
+    src_unitsys: pyelegant
+    dst_unitsys: phy
+    src_unit: "m^{-3}" # = K3
+    dst_unit: "m^{-2}" # = K3 * L
+    class: polynomial
+    invertible: True
+    coeffs: [0.25, 0.0]
