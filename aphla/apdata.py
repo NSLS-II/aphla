@@ -249,9 +249,14 @@ class TwissData:
     """
     def __init__(self, name):
         self._name = name
-        self.tune   = (0.0, 0.0)
-        self.chrom  = (0.0, 0.0)
-        self.alphac = 0.0 #
+        self.tune   = None #(0.0, 0.0)
+        self.chrom  = None #(0.0, 0.0)
+        self.alphac = None #0.0
+        self.epsx0 = None # Natural horizontal emittance [m-rad]
+        self.Jx = self.Jy = self.Jdelta = None # Damping partitions
+        self.taux = self.tauy = self.taudelta = None # Damping times [s]
+        self.U0_MeV = None # Energy loss per turn
+        self.sigma_delta = None # Energy spread
         self.element = []
         self._twtable = []
         self._cols = ['s', 'alphax', 'alphay', 'betax', 'betay',
@@ -463,7 +468,8 @@ class TwissData:
             return
         grp = f[group]
         self.tune = tuple(grp['tune'])
-        self.element = list(grp['twtable']['element'])
+        self.element = [s.decode() if hasattr(s, 'decode') else s
+                        for s in grp['twtable']['element'][()]]
         self._twtable = np.zeros((len(self.element), 11), 'd')
         for i,k in enumerate(self._cols):
             self._twtable[:,i] = grp['twtable'][:,k]

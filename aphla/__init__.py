@@ -65,26 +65,26 @@ class OperationMode():
     def __init__(self, value=0):
         """"""
 
-        self.mode = value
+        self.value = value
 
     @property
-    def mode(self):
+    def value(self):
         """"""
 
-        return self._mode
+        return self._value
 
-    @mode.setter
-    def mode(self, value):
+    @value.setter
+    def value(self, new_value):
         """"""
 
-        if value not in (self.ONLINE, self.SIMULATION):
+        if new_value not in (self.ONLINE, self.SIMULATION):
             raise ValueError(f'Valid values are {self.ONLINE} or {self.SIMULATION}.')
 
-        self._mode = value
+        self._value = new_value
 
     def __repr__(self):
 
-        if self._mode == self.ONLINE:
+        if self._value == self.ONLINE:
             return 'ONLINE'
         else:
             return 'SIMULATION'
@@ -100,12 +100,12 @@ OP_MODE = OperationMode(OperationMode.ONLINE)
 def get_op_mode():
     """"""
 
-    return OP_MODE.mode
+    return OP_MODE.value
 
-def set_op_mode(new_mode):
+def set_op_mode(new_mode_value):
     """"""
 
-    OP_MODE.mode = new_mode
+    OP_MODE.value = new_mode_value
 
 def get_op_mode_str():
     """"""
@@ -118,7 +118,7 @@ def set_op_mode_str(new_mode_str):
     upper_new_mode_str = new_mode_str.upper()
 
     if hasattr(OP_MODE, upper_new_mode_str):
-        OP_MODE.mode = getattr(OP_MODE, upper_new_mode_str)
+        OP_MODE.value = getattr(OP_MODE, upper_new_mode_str)
     else:
         valid_str = ', '.join([f'"{s}"' for s in OP_MODE._get_valid_str_values()])
         raise ValueError(
@@ -131,9 +131,9 @@ facility_name = facility_d['name']
 
 from .catools import *
 from .chanfinder import *
+from . import machines
 from . import engines
 from . import models
-from . import machines
 from .hlalib import *
 from .apdata import OrmData
 

@@ -16,9 +16,12 @@ import logging
 import warnings
 from .catools import caget, caput, FORMAT_CTRL, FORMAT_TIME
 from collections import Iterable
+from functools import partial
+from itertools import permutations
 
 from . import OperationMode, OP_MODE
 from .unitconv import *
+from . import engines
 from .models import modelget #, modelput
 
 # public symbols
@@ -245,6 +248,8 @@ class CaAction:
         # self.unitconv = {}
         self.ucrb = {}  # unit conversion for readback
         self.ucsp = {}  # unit conversion for setpoint
+        self.ucfrb = {} # unit conversion function for readback
+        self.ucfsp = {} # unit conversion function for setpoint
         self.golden = [] # some setpoint can saved as golden value
         self.pvh  = [] # step size
         self.pvlim = [] # lower/upper limit
@@ -292,21 +297,29 @@ class CaAction:
         lst.append(v)
         return len(lst) - 1
 
-    def _unit_conv(self, x, src, dst, unitconv):
-        if (src, dst) == (None, None): return x
+    #def _unit_conv(self, x, src, dst, unitconv):
+        #if (src, dst) == (None, None): return x
 
-        # try (src, dst) first
-        uc = unitconv.get((src, dst), None)
-        if uc is not None:
-            return uc.eval(x)
+        ## try (src, dst) first
+        #uc = unitconv.get((src, dst), None)
+        #if uc is not None:
+            #return uc.eval(x)
 
-        # then inverse (dst, src)
-        uc = unitconv.get((dst, src), None)
-        if uc is not None and uc.invertible:
-            return uc.eval(x, True)
+        ## then inverse (dst, src)
+        #uc = unitconv.get((dst, src), None)
+        #if uc is not None and uc.invertible:
+            #return uc.eval(x, True)
+        #else:
+            #raise RuntimeError("no method for unit conversion from "
+                               #"'%s' to '%s'" % (src, dst))
+    def _unit_conv(self, x, src, dst, handle):
+
+        if handle == 'readback':
+            return self.ucfrb[(src, dst)](x)
+        elif handle == 'setpoint':
+            return self.ucfsp[(src, dst)](x)
         else:
-            raise RuntimeError("no method for unit conversion from "
-                               "'%s' to '%s'" % (src, dst))
+            raise ValueError(f'Invalid handle: {handle}')
 
     def _all_within_range(self, v, lowhigh):
         """if lowhigh is not valid, returns true"""
@@ -399,7 +412,7 @@ class CaAction:
         """
         if self.opflags & _DISABLED: raise IOError("reading a disabled element")
 
-        if OP_MODE == OperationMode.ONLINE:
+        if OP_MODE.value == OperationMode.ONLINE:
             if self.pvrb:
                 #print __name__
                 #_logger.info("testing")
@@ -410,31 +423,40 @@ class CaAction:
                         # keep the first one for `reset`
                         self.rb.pop(1)
                 if len(self.pvrb) == 1:
-                    return self._unit_conv(rawret[0], None, unitsys, self.ucrb)
+                    #return self._unit_conv(rawret[0], None, unitsys, self.ucrb)
+                    return self._unit_conv(rawret[0], None, unitsys, 'readback')
                 else:
                     return self._unit_conv(rawret, None, unitsys, self.ucrb)
             else:
                 return None
-        else:
+        elif OP_MODE.value == OperationMode.SIMULATION:
             if self.mvrb:
                 rawret = modelget(self.mvrb)
+                model_unitsys = engines.getEngineName()
+                if unitsys == 'model':
+                    unitsys = model_unitsys
                 if len(self.mvrb) == 1:
-                    return self._unit_conv(rawret[0], 'model', unitsys, self.ucrb)
+                    #return self._unit_conv(rawret[0], model_unitsys, unitsys, self.ucrb)
+                    return self._unit_conv(rawret[0], model_unitsys, unitsys, 'readback')
                 else:
-                    return self._unit_conv(rawret, 'model', unitsys, self.ucrb)
+                    return self._unit_conv(rawret, model_unitsys, unitsys, self.ucrb)
             else:
                 return None
+        else:
+            raise ValueError(f'Unexpected operation mode value : {OP_MODE.value}')
 
     def getGolden(self, unitsys = None):
         """return golden value in unitsys"""
         if len(self.golden) == 1:
-            return self._unit_conv(self.golden[0], None, unitsys, self.ucsp)
+            #return self._unit_conv(self.golden[0], None, unitsys, self.ucsp)
+            return self._unit_conv(self.golden[0], None, unitsys, 'setpoint')
         else:
             return self._unit_conv(self.golden, None, unitsys, self.ucsp)
 
     def setGolden(self, val, unitsys = None):
         """set golden value in unitsys"""
-        ret = self._unit_conv(val, unitsys, None, self.ucsp)
+        #ret = self._unit_conv(val, unitsys, None, self.ucsp)
+        ret = self._unit_conv(val, unitsys, None, 'setpoint')
         if isinstance(ret, (list, tuple)):
             for i in range(len(self.golden)):
                 self.golden[i] = ret[i]
@@ -462,7 +484,8 @@ class CaAction:
                         except:
                             pass
                 if len(self.pvsp) == 1:
-                    return self._unit_conv(rawret[0], None, unitsys, self.ucsp)
+                    #return self._unit_conv(rawret[0], None, unitsys, self.ucsp)
+                    return self._unit_conv(rawret[0], None, unitsys, 'setpoint')
                 else:
                     return self._unit_conv(rawret, None, unitsys, self.ucsp)
             else:
@@ -470,11 +493,15 @@ class CaAction:
                 return None
         else:
             if self.mvsp:
-                rawret = modelget(self.mvsp)
+                rawret = modelput(self.mvsp)
+                model_unitsys = engines.getEngineName()
+                if unitsys == 'model':
+                    unitsys = model_unitsys
                 if len(self.mvsp) == 1:
-                    return self._unit_conv(rawret[0], 'model', unitsys, self.ucsp)
+                    #return self._unit_conv(rawret[0], model_unitsys, unitsys, self.ucsp)
+                    return self._unit_conv(rawret[0], model_unitsys, unitsys, 'setpoint')
                 else:
-                    return self._unit_conv(rawret, 'model', unitsys, self.ucsp)
+                    return self._unit_conv(rawret, model_unitsys, unitsys, self.ucsp)
             else:
                 return None
 
@@ -496,11 +523,14 @@ class CaAction:
 
         if OP_MODE == OperationMode.ONLINE:
             if isinstance(val, (float, int, str)):
-                rawval = [self._unit_conv(val, unitsys, None, self.ucsp)] * \
+                #rawval = [self._unit_conv(val, unitsys, None, self.ucsp)] * \
+                    #len(self.pvsp)
+                rawval = [self._unit_conv(val, unitsys, None, 'setpoint')] * \
                     len(self.pvsp)
             else:
                 # one more level of nest, due to pvsp=[]
-                rawval = [ [self._unit_conv(v, unitsys, None, self.ucsp) for v in val] ]
+                #rawval = [ [self._unit_conv(v, unitsys, None, self.ucsp) for v in val] ]
+                rawval = [ [self._unit_conv(v, unitsys, None, 'setpoint') for v in val] ]
 
             # under and over flow check
             for i,lim in enumerate(self.pvlim):
@@ -543,12 +573,19 @@ class CaAction:
                 raise RuntimeError("Failed at setting {0} to {1}".format(
                         self.pvsp[i], rawval[i]))
         else:
+            model_unitsys = engines.getEngineName()
+            if unitsys == 'model':
+                unitsys = model_unitsys
             if isinstance(val, (float, int, str)):
-                rawval = [self._unit_conv(val, unitsys, 'model', self.ucsp)] * \
+                #rawval = [self._unit_conv(val, unitsys, model_unitsys, self.ucsp)] * \
+                    #len(self.pvsp)
+                rawval = [self._unit_conv(val, unitsys, model_unitsys, 'setpoint')] * \
                     len(self.pvsp)
             else:
                 # one more level of nest, due to pvsp=[]
-                rawval = [ [self._unit_conv(v, unitsys, 'model', self.ucsp)
+                #rawval = [ [self._unit_conv(v, unitsys, model_unitsys, self.ucsp)
+                            #for v in val] ]
+                rawval = [ [self._unit_conv(v, unitsys, model_unitsys, 'setpoint')
                             for v in val] ]
 
             retlst = modelput(self.mvsp, rawval)
@@ -1095,11 +1132,85 @@ class CaElement(AbstractElement):
             if src is None: self._field[field].pvspunit = uc.srcunit
             elif dst is None: self._field[field].pvspunit = uc.dstunit
 
+    def addUnitConversionFuncs(self, field):
+        """"""
+
+        for uc, ucf in [(self._field[field].ucrb, self._field[field].ucfrb),
+                        (self._field[field].ucsp, self._field[field].ucfsp)]:
+            if uc == {}:
+                continue
+
+            #uc = {(None, 'phy'): 1, ('phy', 'model'): 2, ('model', 'pyelegant'): 3}
+
+            u_unitsys = set([s for src_dst_tup in list(uc) for s in src_dst_tup])
+            for src in u_unitsys:
+                for dst in u_unitsys:
+                    k = (src, dst)
+                    if src == dst:
+                        ucf[k] = identity
+                    elif (src, dst) in uc:
+                        ucf[k] = uc[(src, dst)].eval
+                    elif (dst, src) in uc:
+                        ucf[k] = partial(uc[(dst, src)].eval, inv=True)
+                    else:
+                        # Search for composite unit conversions (e.g.,
+                        # conversion from None to "phy", followed by
+                        # conversion from "phy" to "model")
+                        intermediate_sys_list = [
+                            s for s in u_unitsys if s not in (src, dst)]
+                        match_found = False
+                        for n_comp in range(1, len(intermediate_sys_list)+1):
+                            seq = []
+                            for ini_src, fin_src in [(src, dst), (dst, src)]:
+                                interm_src = ini_src
+                                for interm_tup in permutations(
+                                    intermediate_sys_list, n_comp):
+                                    for interm_dst in interm_tup:
+                                        if (interm_src, interm_dst) in uc:
+                                            inv = False
+                                            seq.append([(interm_src, interm_dst), inv])
+                                        elif (interm_dst, interm_src) in uc:
+                                            inv = True
+                                            seq.append([(interm_dst, interm_src), inv])
+                                        else:
+                                            seq = []
+                                            interm_src = ini_src
+                                            break
+
+                                        interm_src = interm_dst
+
+                                    if seq != []:
+                                        interm_dst = fin_src
+                                        if (interm_src, interm_dst) in uc:
+                                            inv = False
+                                            seq.append([(interm_src, interm_dst), inv])
+                                            match_found = True
+                                        elif (interm_dst, interm_src) in uc:
+                                            inv = True
+                                            seq.append([(interm_dst, interm_src), inv])
+                                            match_found = True
+                                        else:
+                                            seq = []
+                                            interm_src = ini_src
+
+                                    if match_found:
+                                        break
+
+                                if match_found:
+                                    break
+
+                            if match_found:
+                                break
+
+                        ucf[k] = partial(recursive_eval, uc, seq)
+
+
     def convertUnit(self, field, x, src, dst, handle = "readback"):
         """convert value x between units without setting hardware"""
 
-        uc = self._get_unitconv(field, handle)
-        return self._field[field]._unit_conv(x, src, dst, uc)
+        #uc = self._get_unitconv(field, handle)
+        #return self._field[field]._unit_conv(x, src, dst, uc)
+        return self._field[field]._unit_conv(x, src, dst, handle)
 
 
     def get_unit_systems(self, field, handle = "readback"):
@@ -1147,6 +1258,9 @@ class CaElement(AbstractElement):
                 return self._field[field].pvspunit
             else:
                 return ""
+
+        if unitsys == 'model':
+            unitsys = engines.getEngineName()
 
         unitconv = self._get_unitconv(field, handle)
         for k,v in unitconv.items():

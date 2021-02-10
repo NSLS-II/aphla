@@ -8,13 +8,18 @@ from copy import deepcopy
 import numpy as np
 import pyelegant as pe
 
-aphla_config_folderp = Path('/epics/aphla/apconf/nsls2')
+import aphla as ap
+ap.machines.load('nsls2', 'SR')
+ap.set_op_mode_str('simulation')
+
+#aphla_config_folderp = Path('/epics/aphla/apconf/nsls2')
+aphla_config_folderp = Path(ap.machines.HLA_CONFIG_DIR).joinpath('nsls2')
 
 #base_LTE_filepath = '/home/yhidaka/git_repos/aphla/utils/20190125_VS_nsls2sr17idsmt_SQLC16.lte'
 base_LTE_filepath = str(aphla_config_folderp.joinpath(
     'models', 'SR', 'pyelegant', 'LTEs', '20190125_VS_nsls2sr17idsmt_SQLC16.lte'))
 
-used_beamline_name = 'RING'
+used_beamline_name = base_used_beamline_name = 'RING'
 
 LTE = pe.ltemanager.Lattice(LTE_filepath=base_LTE_filepath,
                             used_beamline_name=used_beamline_name)
@@ -140,19 +145,20 @@ sort_inds = np.argsort([
     flat_used_elem_names.index(name) for name in all_variable_elem_names])
 all_variable_elem_names_ordered = np.array(all_variable_elem_names)[sort_inds].tolist()
 
-elem_name_index_maps = {}
+# Mapping between element names and the indexes for the element definition list.
+elem_defs_index_maps = {}
 for name in all_variable_elem_names_ordered:
     i = elem_names.index(name)
     #print(name)
     #print(elem_defs[i])
     #print(LTE.parse_elem_properties(elem_defs[i][2]))
-    elem_name_index_maps[name] = i
+    elem_defs_index_maps[name] = i
 
 # You can create a new LTE file with only a certain property modified based
 # on the base LTE file as follows:
 '''
     name = ordered_quad_names[0]
-    elem_ind = elem_name_index_maps[name]
+    elem_ind = elem_defs_index_maps[name]
     orig_elem_def = LTE_d['elem_defs'][elem_ind]
     assert name == orig_elem_def[0]
 
@@ -168,11 +174,29 @@ for name in all_variable_elem_names_ordered:
 model_name = '17ids'
 model_filepath = aphla_config_folderp.joinpath(
     'models', 'SR', 'pyelegant', f'{model_name}.pgz')
+#
+# First save with only basic info
+to_save = [
+    [base_LTE_filepath, base_used_beamline_name],
+    [base_LTE_filepath, used_beamline_name],
+    [LTE_d['elem_defs'], LTE_d['beamline_defs']],
+    elem_defs_index_maps,
+]
 with gzip.GzipFile(model_filepath, 'wb') as f:
-    pickle.dump([base_LTE_filepath, used_beamline_name], f)
-    pickle.dump([LTE_d['elem_defs'], LTE_d['beamline_defs']], f)
-    pickle.dump(elem_name_index_maps, f)
+    for v in to_save:
+        pickle.dump(v, f)
 os.chmod(model_filepath, 0o644)
+#
+# Then load the basic model and compute the optional initial model data
+# such as the design Twiss values, orbit response matrix, etc.
+ap.models.load(model_name=model_name)
+opt_init_model_data = ap.models.getModel().getOptionalInitModelData()
+to_save.append(opt_init_model_data)
+with gzip.GzipFile(model_filepath, 'wb') as f:
+    for v in to_save:
+        pickle.dump(v, f)
+os.chmod(model_filepath, 0o644)
+
 
 # --------------- 3DW Lattice ---------------
 
@@ -189,7 +213,7 @@ dw3_elem_names = [v[0] for v in dw3_elem_defs]
 mod_elem_defs = deepcopy(LTE_d['elem_defs'])
 
 # Only need to modify Quads properties, but check all sext K2 values are the same
-for name, index in elem_name_index_maps.items():
+for name, index in elem_defs_index_maps.items():
     assert mod_elem_defs[index][0] == name
     if mod_elem_defs[index][1] == 'UKICKMAP':
         # Open all non-DW kickmaps
@@ -238,10 +262,27 @@ for name, index in elem_name_index_maps.items():
 model_name = '3dw'
 model_filepath = aphla_config_folderp.joinpath(
     'models', 'SR', 'pyelegant', f'{model_name}.pgz')
+#
+# First save with only basic info
+to_save = [
+    [base_LTE_filepath, base_used_beamline_name],
+    [dw3_LTE_filepath, used_beamline_name],
+    [mod_elem_defs, LTE_d['beamline_defs']],
+    elem_defs_index_maps,
+]
 with gzip.GzipFile(model_filepath, 'wb') as f:
-    pickle.dump([dw3_LTE_filepath, used_beamline_name], f)
-    pickle.dump([mod_elem_defs, LTE_d['beamline_defs']], f)
-    pickle.dump(elem_name_index_maps, f)
+    for v in to_save:
+        pickle.dump(v, f)
+os.chmod(model_filepath, 0o644)
+#
+# Then load the basic model and compute the optional initial model data
+# such as the design Twiss values, orbit response matrix, etc.
+ap.models.load(model_name=model_name)
+opt_init_model_data = ap.models.getModel().getOptionalInitModelData()
+to_save.append(opt_init_model_data)
+with gzip.GzipFile(model_filepath, 'wb') as f:
+    for v in to_save:
+        pickle.dump(v, f)
 os.chmod(model_filepath, 0o644)
 
 
@@ -266,7 +307,7 @@ bare_elem_names = [v[0] for v in bare_elem_defs]
 mod_elem_defs = deepcopy(LTE_d['elem_defs'])
 
 # Only need to modify Quads properties, but check all sext K2 values are the same
-for name, index in elem_name_index_maps.items():
+for name, index in elem_defs_index_maps.items():
     assert mod_elem_defs[index][0] == name
     if mod_elem_defs[index][1] == 'UKICKMAP':
         # Open all kickmaps
@@ -314,10 +355,27 @@ for name, index in elem_name_index_maps.items():
 model_name = 'bare'
 model_filepath = aphla_config_folderp.joinpath(
     'models', 'SR', 'pyelegant', f'{model_name}.pgz')
+#
+# First save with only basic info
+to_save = [
+    [base_LTE_filepath, base_used_beamline_name],
+    [bare_LTE_filepath, used_beamline_name],
+    [mod_elem_defs, LTE_d['beamline_defs']],
+    elem_defs_index_maps,
+]
 with gzip.GzipFile(model_filepath, 'wb') as f:
-    pickle.dump([bare_LTE_filepath, used_beamline_name], f)
-    pickle.dump([mod_elem_defs, LTE_d['beamline_defs']], f)
-    pickle.dump(elem_name_index_maps, f)
+    for v in to_save:
+        pickle.dump(v, f)
+os.chmod(model_filepath, 0o644)
+#
+# Then load the basic model and compute the optional initial model data
+# such as the design Twiss values, orbit response matrix, etc.
+ap.models.load(model_name=model_name)
+opt_init_model_data = ap.models.getModel().getOptionalInitModelData()
+to_save.append(opt_init_model_data)
+with gzip.GzipFile(model_filepath, 'wb') as f:
+    for v in to_save:
+        pickle.dump(v, f)
 os.chmod(model_filepath, 0o644)
 
 print('Finished')

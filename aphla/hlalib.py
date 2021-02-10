@@ -12,14 +12,18 @@ Defines the fundamental routines.
 # :author: Lingyun Yang
 
 import logging
-import numpy as np
 import time
 import os
 import re
 from fnmatch import fnmatch
 from datetime import datetime
+from functools import lru_cache
+
+import numpy as np
+
 from .catools import caget, caput, CA_OFFLINE, savePvData, caWait, caWaitStable
 from . import machines
+from . import models
 from . import element
 import itertools
 
@@ -54,19 +58,19 @@ def getTimestamp(t = None, us = True):
 
     return t.strftime(fmt)
 
-def setEnergy(Ek):
+def setEnergy(E_MeV):
     """set energy (MeV) for current submachine
 
     see also :func:`setEnergy`
     """
-    machines._lat.Ek = Ek
+    machines._lat.E_MeV = E_MeV
 
 def getEnergy():
     """get current submachine beam energy (MeV)
 
     see also :func:`setEnergy`
     """
-    return machines._lat.Ek
+    return machines._lat.E_MeV
 
 def getOutputDir():
     """get the output data dir for the current lattice"""
@@ -699,30 +703,60 @@ def getDistance(elem1, elem2, absolute=True):
     if absolute: return abs(ds)
     else: return ds
 
-#
-#
+@lru_cache(maxsize=256)
+def _getCahcedElemNames(group_name_or_pattern):
+    """"""
+
+    return [e.name for e in getElements(group_name_or_pattern)]
+
 def getTwiss(names, columns, **kwargs):
     """
     get the twiss data
-    - names, a list of element sames or a name pattern.
-    - columns, a sublist of [s, betax(y), alphax(y), gammax(y), etax(y), phix(y)]
-    - source, optional, default database (no other source yet)
+    - names: a list of element names or a name pattern or a group name (e.g.,
+        "BPM", "QUAD").
+    - columns: a sublist of [s, betax(y), alphax(y), gammax(y), etax(y), phix(y)]
+    - source: optional, default "model" if a model is currently loaded; otherwise,
+        "database".
+    - search_model_elem_names: optional, default False. If False, seach for
+        "names" will occur for all the elements in the currently selected
+        Lattice object. In this case, use of group names will work as in
+        getElements(). If True, search will be applied to the element names
+        in the model data file from which the Twiss data are being retrieved.
+        Since there is no group defined in those data files, a group name search
+        will not work as intended.
 
     example:
 
     >>> getTwiss("p*", ["s", "betax", "betay"])
     >>> getTwiss(["p1", "p2"], ["s", "etax"])
-
-    Unlike getElements, it will not accept group name "BPM", "QUAD", ...
     """
 
     col = [c for c in columns]
-    src = kwargs.pop("source", "database")
-    if src == "database":
+
+    m = models.getModel()
+    default_src = "database" if m is None else "model"
+    src = kwargs.pop("source", default_src)
+    search_model_elem_names = kwargs.pop("search_model_elem_names", False)
+
+    if src == "model":
+        m._recalc('twiss') # Make sure that Twiss data are updated, if not yet.
+        if not m._twiss:
+            _logger.error("ERROR: no twiss data in the current model")
+            return None
+        if (not search_model_elem_names) and isinstance(names, string_types):
+            _name_list = _getCahcedElemNames(names)
+            return m._twiss.get(_name_list, col=col)
+        else:
+            return m._twiss.get(names, col=col)
+    elif src == "database":
         if not machines._lat._twiss:
             _logger.error("ERROR: no twiss data loaded")
             return None
-        return machines._lat._twiss.get(names, col=col)
+        if (not search_model_elem_names) and isinstance(names, string_types):
+            _name_list = _getCahcedElemNames(names)
+            return machines._lat._twiss.get(_name_list, col=col)
+        else:
+            return machines._lat._twiss.get(names, col=col)
     elif src == "VA":
         vas = getElements("VA")
         if not vas: return None

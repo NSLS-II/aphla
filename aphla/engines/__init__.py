@@ -33,7 +33,7 @@ def load(engine_name=''):
 
     if engine_name == '':
         # Use the "default", if available. If not, use the first available engine.
-        engine_name = facility_d['engines'].get('default', names()[0])
+        engine_name = facility_d['engines'].get('default', avail_names()[0])
 
     if engine_name not in _ENGINES:
         raise ValueError((
@@ -44,6 +44,8 @@ def load(engine_name=''):
         _ENGINES[engine_name] = importlib.import_module(engine_name)
     except:
         print(f'WARNING: Engine "{engine_name}" could NOT be imported')
+
+    use(engine_name) # Select the loaded engine
 
 def use(engine_name):
     """

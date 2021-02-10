@@ -331,11 +331,12 @@ def load(machine, submachine = "*", **kwargs):
             #print(cfa.rows)
 
             lat = createLattice(msect, cfa.rows, acctag, cfa.source)
-            lat.sb = float(d.get("s_begin", 0.0))
-            lat.se = float(d.get("s_end", 0.0))
-            lat.loop = bool(d.get("loop", True))
+            lat.sb = d.get("s_begin", 0.0)
+            lat.se = d.get("s_end", 0.0)
+            lat.loop = d.get("loop", True)
             lat.machine = machname
             lat.machdir = machdir
+            lat.E_MeV = d.get('E_MeV', None)
             if "archive_pvs" in d:
                 lat.arpvs = Path(machdir).joinpath(d["archive_pvs"])
             lat.OUTPUT_DIR = d.get("output_dir",
@@ -918,7 +919,7 @@ def avail_names():
 
     """
 
-    return facility_d['submachines']['available']:
+    return facility_d['submachines']['available']
 
 def names():
     """

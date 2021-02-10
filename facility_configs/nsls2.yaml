@@ -10,3 +10,4 @@ models:
     pyelegant:
       available: ['bare', '3dw', '17ids']
       default: '17ids'
+      N_KICKS: {CSBEND: 40, KQUAD: 40, KSEXT: 20}
